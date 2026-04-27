@@ -15,6 +15,20 @@ cd projects/[project-name]/
 
 Replace `[project-name]` with a kebab-case identifier (e.g., `market-entry-analysis`).
 
+## 1.5 Update settings.json workspace path
+
+Open `.claude/settings.json` and replace the `{{WORKSPACE_ROOT}}` placeholder in `additionalDirectories` with the absolute path to your workspace root — the directory that contains `ai-resources/`.
+
+```json
+"additionalDirectories": [
+  "/absolute/path/to/your/workspace-root"
+]
+```
+
+This grants Claude Code read access to `ai-resources/` files (skills, commands, agents) from inside the project. If left as `{{WORKSPACE_ROOT}}` or pointed at the wrong directory, every skill symlink resolves to a path Claude cannot read and pipeline commands silently fail.
+
+**Verify:** after starting Claude Code in the project, `Read /your/workspace-root/ai-resources/CLAUDE.md` succeeds.
+
 ## 2. Initialize git
 
 ```bash
@@ -160,3 +174,4 @@ All placeholders used in template files:
 | `{{EVIDENCE_CALIBRATION}}` | CLAUDE.md | Evidence availability note |
 | `{{OPERATOR_NAME}}` | CLAUDE.md | Operator's name |
 | `{{SECTION_SEQUENCE}}` | reference/stage-instructions.md | Section ordering constraints |
+| `{{WORKSPACE_ROOT}}` | .claude/settings.json | Absolute path to workspace root containing ai-resources/ (set at step 1.5, before any session loads) |

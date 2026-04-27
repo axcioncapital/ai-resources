@@ -32,7 +32,7 @@
     ],
     "defaultMode": "bypassPermissions",
     "additionalDirectories": [
-      "/Users/patrik.lindeberg/Claude Code/Axcion AI Repo"
+      "{{WORKSPACE_ROOT}}"
     ]
   },
   "hooks": {
