@@ -1,3 +1,6 @@
+---
+model: opus
+---
 Stop and run an independent QC pass on the work you just produced or proposed.
 
 ## Why a subagent?

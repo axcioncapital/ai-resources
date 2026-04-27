@@ -1,5 +1,6 @@
 ---
 friction-log: true
+model: opus
 ---
 Produce prose draft for: $ARGUMENTS
 

@@ -1,3 +1,6 @@
+---
+model: sonnet
+---
 Display a structured research workflow status view, then run a QC health check via subagent.
 
 Both phases always run together — there is no display-only mode.

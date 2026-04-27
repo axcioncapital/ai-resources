@@ -1,3 +1,6 @@
+---
+model: sonnet
+---
 Inject prior research output from completed sessions into dependent session prompts.
 
 Usage: `/inject-dependency [session-letters]` — e.g., `/inject-dependency B,E` or `/inject-dependency A,B,C,D,E`

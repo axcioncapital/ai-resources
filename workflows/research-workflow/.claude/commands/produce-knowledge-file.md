@@ -1,3 +1,6 @@
+---
+model: opus
+---
 Produce a Chat knowledge file for: $ARGUMENTS
 
 $ARGUMENTS should specify the section (e.g., "1.1", "1.2") or "all" to produce knowledge files for every completed section.
@@ -10,7 +13,7 @@ Find the cited chapter files for the specified section in `report/chapters/`.
 
 - Cited chapters follow the naming pattern: `{section}-chapter-NN-cited.md`
 - Each section produces multiple chapters (e.g., section 1.1 produces chapters 01–04)
-- Use `report/{section}-architecture.md` to determine which chapters belong to the requested section
+- Use `report/architecture/{section}/{section}-architecture.md` to determine which chapters belong to the requested section
 
 If `all` is specified, identify every section that has a complete set of cited chapters and process each one.
 

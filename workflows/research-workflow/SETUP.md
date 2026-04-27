@@ -102,7 +102,17 @@ mkdir context/
 
 Use this for project briefs, domain knowledge files, content architecture docs, etc.
 
-## 8. Optional: Customize SOPs
+## 8. Required: Configure Confidentiality Boundaries
+
+Open `CLAUDE.md` and populate the `## Confidentiality Boundaries` section with any confidential identifiers (deal names, company names, financial terms) that must not appear in outbound GPT-5 API calls. The `/verify-chapter` command checks this section before every fact-verification call.
+
+If the project has no confidentiality constraints, replace the placeholder list with: "No confidentiality constraints for this project."
+
+## 8b. Required: Populate Fact-Verification Prompt
+
+Open `reference/sops/fact-verification-prompt.md` and replace the placeholder content with the GPT-5 system prompt used for fact verification. The `/verify-chapter` command reads this file in Step 2.
+
+## 8c. Optional: Customize SOPs
 
 Review and adjust `reference/sops/` if the project uses different API configurations or system prompts for Research Execution GPT or Perplexity.
 

@@ -1,3 +1,6 @@
+---
+model: sonnet
+---
 Intake raw research reports from Research Execution GPT or Perplexity sessions. Files and names them, checks dependencies, then hands off to `/run-execution` for extract creation and verification.
 
 This command owns Step 2.2b (filing) and Step 2.2a (dependency injection) only. It does NOT run Steps 2.3–2.4 or any downstream processing — those belong to `/run-execution`.

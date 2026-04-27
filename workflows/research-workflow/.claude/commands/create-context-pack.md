@@ -1,3 +1,6 @@
+---
+model: sonnet
+---
 Build a research context pack. The section identifier follows this prompt (e.g., "1.1").
 
 ## Instructions

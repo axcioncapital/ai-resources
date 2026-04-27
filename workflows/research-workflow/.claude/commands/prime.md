@@ -1,3 +1,6 @@
+---
+model: sonnet
+---
 Orient the session. Read state, brief the operator, wait for direction.
 
 1. Read the last entry from `/logs/session-notes.md`. This is the primary state source — it contains stage, next steps, and blockers from the previous session's `/wrap-session`.

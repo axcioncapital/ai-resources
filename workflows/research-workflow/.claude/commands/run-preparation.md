@@ -1,5 +1,6 @@
 ---
 friction-log: true
+model: sonnet
 ---
 Execute the Stage 1 preparation pipeline.
 

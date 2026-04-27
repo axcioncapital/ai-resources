@@ -1,3 +1,6 @@
+---
+model: opus
+---
 Audit the repository's folder structure, file naming, and placement against project conventions.
 
 This command is read-only. It does not create, move, or delete any files.

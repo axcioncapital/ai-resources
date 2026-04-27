@@ -1,3 +1,6 @@
+---
+model: opus
+---
 Run a full workspace health audit on this project.
 
 Input: $ARGUMENTS (optional — pass "full audit" to force a full audit instead of delta mode).

@@ -1,5 +1,6 @@
 ---
 friction-log: true
+model: sonnet
 ---
 Format prose for: $ARGUMENTS
 

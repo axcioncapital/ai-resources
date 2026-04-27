@@ -16,6 +16,17 @@
 
 {{OPERATOR_NAME}} is the sole operator. They review outputs at defined gates, make editorial decisions requiring domain judgment, and approve stage transitions. Claude Code executes; the operator reviews and directs.
 
+## Confidentiality Boundaries
+
+<!-- REQUIRED SETUP: Replace this section before running /verify-chapter. -->
+<!-- List all confidential identifiers (deal names, company names, financial terms) that must NOT appear in outbound GPT-5 API calls. /verify-chapter checks this list before constructing each API call. -->
+
+Confidential identifiers for this project:
+- {{CONFIDENTIAL_IDENTIFIER_1}}
+- {{CONFIDENTIAL_IDENTIFIER_2}}
+
+If this project has no confidentiality constraints, replace the list with: "No confidentiality constraints for this project."
+
 ## Workflow Overview
 
 Five-stage pipeline: Preparation → Execution → Analysis & Gap Resolution → Report Production → Final Production.
@@ -59,11 +70,7 @@ For non-critical issues (formatting, minor wording, small structural fixes), app
 
 ## Context Isolation Rules
 
-- Sub-agents receive content from the main agent, not file paths. The main agent reads the file and passes the content.
-- Exception: Verification Agent reads source files directly (independent derivation), but receives the main output from the main agent.
-- Exception: large read-only reference files (`style-reference.md`, `context/prose-quality-standards.md`) may be passed by absolute path when the subagent is instructed to read them before applying the skill. Rationale: avoids duplicating ~1,200 lines of reference content across main-agent context and each subagent brief. Operand artifacts (the document being worked on) and skill content remain content-passed per the general rule.
-- Sub-agents do not persist state between invocations. Each call is fresh. If prior results are needed, the main agent provides them explicitly.
-- Sub-agents do not inherit the parent agent's session state. When launching a sub-agent, pass the working state it needs — output directory paths, files already created, stages completed — so it does not rediscover what the parent already knows.
+See @reference/stage-instructions.md § Context Isolation Rules.
 
 ## Friction Logging
 
@@ -75,18 +82,11 @@ Pipeline commands auto-start a friction log session via hook (`friction-log: tru
 
 ## Citation Conversion Rule
 
-Every cited chapter file must include a complete bibliography listing all sources cited in that chapter. Never substitute a note like "sources listed in other modules" or "no new sources introduced." Even if every source was introduced in a prior module, the bibliography must reproduce the relevant entries. Each chapter is a self-contained cited artifact.
+See @reference/stage-instructions.md § Citation Conversion Rule.
 
-## Bright-Line Rule (All Fix Steps)
+## Bright-Line Rule
 
-Before applying ANY fix to report prose, run three checks:
-1. **Multi-paragraph scope:** Changes more than one paragraph? → PAUSE for operator approval.
-2. **Analytical claim alteration:** Changes, removes, or reframes an analytical claim? → PAUSE for operator approval.
-3. **Sourced statement modification:** Alters a statement attributed to a source or carrying a claim ID? → PAUSE for operator approval.
-
-If ANY check is true, the fix MUST NOT be applied without explicit operator approval. Log to `/logs/decisions.md`.
-
-Applies at: Step 4.2, Step 5.2, Step 5.7, and `/verify-chapter`.
+See @reference/stage-instructions.md § Bright-Line Rule.
 
 ## Input File Handling
 

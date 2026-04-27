@@ -1,5 +1,6 @@
 ---
 friction-log: true
+model: sonnet
 ---
 Execute the Stage 2 research pipeline for the current section.
 

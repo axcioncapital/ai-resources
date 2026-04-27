@@ -1,5 +1,6 @@
 ---
 friction-log: true
+model: sonnet
 ---
 Execute the Stage 4 report production pipeline.
 

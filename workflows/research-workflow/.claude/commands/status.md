@@ -1,3 +1,6 @@
+---
+model: sonnet
+---
 Provide a project status report.
 
 1. For each stage directory (preparation, execution, analysis, report, final):

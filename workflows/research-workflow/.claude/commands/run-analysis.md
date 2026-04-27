@@ -1,5 +1,6 @@
 ---
 friction-log: true
+model: sonnet
 ---
 Execute the cross-cluster Stage 3 pipeline.
 

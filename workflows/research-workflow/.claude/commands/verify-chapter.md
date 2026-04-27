@@ -1,5 +1,6 @@
 ---
 friction-log: true
+model: opus
 ---
 Run fact verification on a chapter.
 

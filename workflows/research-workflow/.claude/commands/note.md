@@ -1,3 +1,6 @@
+---
+model: sonnet
+---
 The user wants to log a workflow observation. Their note follows this prompt.
 
 ## Routing

@@ -1,5 +1,6 @@
 ---
 friction-log: true
+model: sonnet
 ---
 Execute the Stage 3 cluster synthesis pipeline (chapter drafting).
 

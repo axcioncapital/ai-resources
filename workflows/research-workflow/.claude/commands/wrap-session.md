@@ -1,3 +1,6 @@
+---
+model: sonnet
+---
 Wrap the current session. The operator's wrap-up context follows this prompt: $ARGUMENTS
 
 ## Instructions

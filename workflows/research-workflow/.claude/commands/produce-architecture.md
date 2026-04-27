@@ -1,5 +1,6 @@
 ---
 friction-log: true
+model: opus
 ---
 Produce document architecture for: $ARGUMENTS
 

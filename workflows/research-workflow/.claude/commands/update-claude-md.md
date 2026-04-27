@@ -1,3 +1,6 @@
+---
+model: sonnet
+---
 The user wants to add or update a rule in the project-level CLAUDE.md. Their instruction follows this prompt.
 
 1. Read CLAUDE.md in the current working directory and understand its section structure.

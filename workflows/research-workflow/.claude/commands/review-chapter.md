@@ -1,5 +1,6 @@
 ---
 friction-log: true
+model: opus
 ---
 Review a chapter against the research workflow's upstream artifacts.
 
