@@ -392,7 +392,7 @@ None.
 
 ### Files Modified
 
-- `.claude/commands/wrap-session.md` — Step 12a rewrite: explicit project scoping via `${CLAUDE_PROJECT_DIR:-$PWD}` + `git rev-parse --show-toplevel` + relative path filter; 24h mtime staleness filter; deleted paths always surface; added platform/scoping/staleness inline notes; updated prompt text to "stale dirty paths (>24h old)".
+- `.claude/commands/wrap-session.md` — Step 12a rewrite: explicit project scoping via `${CLAUDE_PROJECT_DIR:-$PWD}` + `git rev-parse --show-toplevel` + relative path filter; 24h mtime staleness filter; deleted paths always surface; added platform/scoping/staleness inline notes; updated prompt text to "stale dirty paths (>24h old)". **Mid-wrap follow-up:** renamed loop variable `path` → `dirty_path` and added a zsh-gotcha note. Reason: the harness runs Bash-tool commands via zsh, where `path` is a tied parameter that mirrors `PATH`; assigning `path="${line:3}"` clobbered `PATH`, so `stat` (in `/usr/bin`) became unreachable inside the loop. First real-world `/wrap-session` invocation of the new code surfaced the bug.
 
 ### Decisions Made
 
@@ -400,6 +400,7 @@ None.
 - **macOS-only by design** — `stat -f`, `date -v-24H`, `python3 -c relpath` are Darwin-specific. Linux substitutes documented inline for future portability.
 - **Working-tree mtime as the staleness signal** — a file modified >24h ago and recently `git add`-ed will surface. Intentional; it is exactly the "stale staged but uncommitted" class Step 12a was added to catch.
 - **Two display-only edge cases parked** — rename entries (`R old -> new`) and space-bearing/quoted filenames will produce ugly display lines but still surface the dirt. Operator can address as follow-up if encountered; the proper structural fix is `git status --porcelain -z` with null-delimited parsing.
+- **zsh tied-parameter trap** — both plan QC and post-edit QC missed the `path`/`PATH` interaction because they reasoned in bash semantics without execution. Lesson: when shell code is destined to run via the harness, validate by execution before declaring done. Memory candidate.
 
 ### Next Steps
 
@@ -446,6 +447,46 @@ Picked up the two top-priority items from yesterday's `/repo-dd` deep audit on `
 - **Remaining deep-audit findings deferred:** 4 Medium (no placeholder-validation hook; 3-hook Write density undocumented; model-frontmatter check missing from audit tooling; pending 2026-04-18 template refresh) + 1 Low (`## Operator Profile` 3-line section unreferenced). Reference: `audits/repo-dd-deep-2026-04-27-workflow-research-workflow.md` § Summary. Pick up in a future session if/when relevant.
 - **Pre-existing dirty working-tree state** (`.claude/settings.json` modified + `audits/risk-checks/2026-04-27-this-session-added-4-hooks-and-1-command-to-ai-resources.md` untracked) survived from concurrent sessions on 2026-04-25 / 2026-04-27. Not produced this session; deferred per the same rule used in prior wraps. Address via standalone commit or `/cleanup-worktree` next session.
 - **Tighten `/prime` Step 7** to specify "append at the END of session-notes.md (newest-at-bottom convention)" so future sessions don't re-trigger the archive-sweep failure mode this session hit.
+
+### Open Questions
+
+None.
+
+## 2026-04-27 — Innovation sweep + graduation batch from buy-side-service-plan (5 resources)
+
+### Summary
+
+Ran `/innovation-sweep` against `projects/buy-side-service-plan` (76 items across 9 categories; 9 graduate, 9 backport, 35 keep-local, 16 loose ends). Used `/recommend` to autonomously graduate the 5 clean candidates (4 hooks + 1 command). Operator-invoked `/risk-check` mid-flight on the batch returned PROCEED-WITH-CAUTION (5 dimensions: Medium / Low / Medium / Medium / Medium); applied mitigations 1, 3, 4 and deferred 5, 6. Closed with settings.json registration patch (4 hooks wired to PreToolUse[Skill] + PostToolUse[Write|Edit]) — `/qc-pass` verdict REVISE on verification items, all resolved before apply.
+
+### Files Created
+
+- `ai-resources/.claude/hooks/coach-reminder.sh` — PostToolUse Write hook nudging /coach after ≥7 sessions (commit `4b6cf0e`)
+- `ai-resources/.claude/hooks/friction-log-auto.sh` — PreToolUse Skill hook auto-starting friction sessions on `friction-log: true` frontmatter (commit `94a80f6`)
+- `ai-resources/.claude/hooks/improve-reminder.sh` — PostToolUse Write hook nudging /improve on significant-artifact paths (commits `00154fb`, fix `81cb6c2`)
+- `ai-resources/.claude/hooks/log-write-activity.sh` — PostToolUse Write/Edit hook appending file-write events to active friction log (commit `aa6737e`)
+- `ai-resources/.claude/commands/save-session.md` — mid-session scratchpad command for pre-/clear or pre-/compact handoff (commits `00d285c`, fix `9904dc6`)
+- `ai-resources/audits/innovation-sweep-buy-side-service-plan-2026-04-27.md` — full sweep report (commit `fd732d3`)
+
+### Files Modified
+
+- `ai-resources/.claude/settings.json` — registered 4 graduated hooks (PreToolUse[Skill] entry + new PostToolUse[Write|Edit] block) (commit `07cc6d6`)
+- `projects/buy-side-service-plan/logs/innovation-registry.md` — flipped save-session.md row from `triaged:graduate` to `graduated` (commit `bf75b70`, with 16 unrelated detect-innovation rows from prior sessions swept in from working tree)
+
+### Decisions Made
+
+- **Graduate 5 clean candidates autonomously via `/recommend`** rather than per-item operator approval. Reason: candidates were unambiguous and the sweep already classified them. Other items deferred to manual review.
+- **Generalize hardcoded fallback paths** in `friction-log-auto.sh` and `log-write-activity.sh` (replaced project-specific defaults with `${CLAUDE_PROJECT_DIR:-$(pwd)}`).
+- **Document `improve-reminder.sh` regex as research-workflow-shaped** via 4-line explanatory comment rather than refactor — the regex matches `/(approved|output|report/chapters|final/modules)/` paths, won't fire in projects without those directory names. Mitigation #3 from /risk-check.
+- **Register hooks under PostToolUse[Write|Edit] in canonical**, not Stop (which is how the source project registers `coach-reminder` and `improve-reminder`). The script logic reads `tool_input.file_path` — empty in Stop events — so source-project registration is a latent bug. Logged as housekeeping for next buy-side-service-plan session.
+- **Defer mitigations 5 (deploy-workflow registration policy doc) and 6 (revert-log persistence note)** as informational; no code change needed for graduation correctness.
+- **Bundle settings.json registration + source registry flip in two separate commits** (one per repo) rather than a single commit. The buy-side-service-plan commit picked up 16 unrelated detect-innovation rows that were uncommitted in the working tree — flagged but not split.
+
+### Next Steps
+
+- **Push** commits `07cc6d6` (ai-resources) and `bf75b70` (buy-side-service-plan) — requires operator approval per Autonomy Rules pause-trigger #2.
+- **Source-project housekeeping (next buy-side-service-plan session):** fix the latent Stop-registration bug in `projects/buy-side-service-plan/.claude/settings.json` for `coach-reminder.sh` and `improve-reminder.sh` — move both to PostToolUse[Write|Edit] to match script logic.
+- **Deferred mitigations from /risk-check** (informational): document `/deploy-workflow` registration policy (mitigation #5); add note to log-archive workflow about append-only persistence on revert (mitigation #6).
+- **Loose ends from sweep report (16 items):** review when relevant — full list at `ai-resources/audits/innovation-sweep-buy-side-service-plan-2026-04-27.md` § Findings.
 
 ### Open Questions
 

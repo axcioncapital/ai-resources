@@ -71,8 +71,8 @@ Accept shorthand: "yy" / "yes both" / "both" = both yes; "nn" / "skip both" = bo
     else
       git -C "$git_root" status --porcelain -- "$rel"
     fi | while IFS= read -r line; do
-      path="${line:3}"
-      full="$git_root/$path"
+      dirty_path="${line:3}"
+      full="$git_root/$dirty_path"
       if [ -e "$full" ]; then
         mtime=$(stat -f "%m" "$full" 2>/dev/null || echo 0)
         [ "$mtime" -ge "$threshold" ] && continue
@@ -83,6 +83,8 @@ Accept shorthand: "yy" / "yes both" / "both" = both yes; "nn" / "skip both" = bo
       echo "$line | $date_str"
     done
     ```
+
+    **zsh gotcha:** Do NOT rename `dirty_path` to `path` — `path` is a tied parameter in zsh that mirrors `PATH`. Assigning a string to `path` clobbers the executable search path and `stat` becomes unreachable. The harness runs Bash-tool commands via zsh, so this matters.
 
     **Platform note:** `stat -f`, `date -v-24H`, and `python3 -c relpath` are macOS-only (Darwin by design). Linux substitutes: `stat -c "%Y"`, `date -d "24 hours ago" +%s`, `realpath --relative-to`.
 
