@@ -39,17 +39,11 @@
       "Bash(*)",
       "Bash(rm *)",
       "Bash(git add *)",
-      "Bash(git add:*)",
       "Bash(git commit *)",
-      "Bash(git commit:*)",
       "Bash(git restore *)",
-      "Bash(git restore:*)",
       "Bash(chmod *)",
-      "Bash(chmod:*)",
       "Bash(mkdir *)",
-      "Bash(mkdir:*)",
-      "Bash(cp *)",
-      "Bash(cp:*)"
+      "Bash(cp *)"
     ],
     "deny": [
       "Bash(rm -rf *)",
@@ -77,6 +71,42 @@
             "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/check-heavy-tool.sh",
             "timeout": 5,
             "statusMessage": "Heavy-tool check..."
+          }
+        ]
+      },
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/friction-log-auto.sh",
+            "timeout": 5,
+            "statusMessage": "Checking friction log..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/log-write-activity.sh",
+            "timeout": 5,
+            "statusMessage": "Logging write activity..."
+          },
+          {
+            "type": "command",
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/coach-reminder.sh",
+            "timeout": 5,
+            "statusMessage": "Checking coach reminder..."
+          },
+          {
+            "type": "command",
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/improve-reminder.sh",
+            "timeout": 5,
+            "statusMessage": "Checking improve reminder..."
           }
         ]
       }
