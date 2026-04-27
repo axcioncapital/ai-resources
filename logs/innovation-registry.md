@@ -85,3 +85,7 @@
 | 2026-04-25 | agent | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/project-planning/.claude/agents/plan-evaluator.md | triaged:project-specific | — (paired with project-planning's own pipeline) |
 | 2026-04-25 | agent | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/project-planning/.claude/agents/spec-evaluator.md | triaged:project-specific | — (paired with project-planning's own pipeline) |
 | 2026-04-25 | command | .claude/commands/route-change.md | triaged:project-specific | — (already in ai-resources canonical location; no graduation needed) |
+| 2026-04-27 | command | workflows/research-workflow/.claude/commands/produce-knowledge-file.md | triaged:graduate | — (already canonical in ai-resources/workflows/research-workflow/) |
+| 2026-04-27 | command | workflows/research-workflow/.claude/commands/run-cluster.md | triaged:graduate | — (already canonical in ai-resources/workflows/research-workflow/) |
+| 2026-04-27 | command | .claude/commands/innovation-sweep.md | triaged:graduate | ai-resources/.claude/commands/innovation-sweep.md (already canonical — created directly in ai-resources) |
+| 2026-04-27 | agent | .claude/agents/innovation-triage-auditor.md | triaged:graduate | ai-resources/.claude/agents/innovation-triage-auditor.md (already canonical — created directly in ai-resources, paired with /innovation-sweep) |

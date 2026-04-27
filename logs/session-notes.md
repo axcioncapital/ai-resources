@@ -464,3 +464,50 @@ Followed up the prior session's per-project model routing implementation by appl
 ### Open Questions
 
 - WIP: `ai-resources/docs/repo-architecture.md` (deferred 2026-04-25; not produced this session). Already documented as Batch 5 deferral in the 2026-04-25 Commission Batch 5 (partial) entry above — must land with `/route-change` in next session's Batch 5 commit. No action needed from this session.
+
+## 2026-04-27 — Created /innovation-sweep + innovation-triage-auditor
+
+### Summary
+
+Built and shipped `/innovation-sweep` — a project-end audit command that scans a completed project across nine artifact categories (commands, agents, hooks, skills, prompts, scripts, style references, CLAUDE.md sections, settings patterns) plus a "divergent forks" meta-category, name-matches each item against `ai-resources/`, and spawns an Opus classifier subagent that assigns one of six verdicts (Already-graduated, Graduate, Backport, Accept-fork, Keep-local, Loose-end). Read-only against the project's `logs/innovation-registry.md`; output is a one-shot dated triage report under `audits/innovation-sweep-{project}-YYYY-MM-DD.md`. Operator runs `/graduate-resource` per applicable item; report produces manual-placement instructions for the categories `/graduate-resource` cannot handle. Plan went through full QC → Triage Auto-Loop (two post-edit passes); end-time `/risk-check` verdict: **GO**.
+
+### Files Created
+
+- `ai-resources/.claude/commands/innovation-sweep.md` (272 lines) — orchestrator command, `model: opus`.
+- `ai-resources/.claude/agents/innovation-triage-auditor.md` (196 lines) — Opus classifier subagent, `tools: Read, Bash, Glob, Grep, Write`.
+- `ai-resources/inbox/innovation-sweep-plan.md` — durable archive of the approved plan (source: `~/.claude/plans/1-all-of-these-valiant-blum.md`).
+
+### Files Modified
+
+- `ai-resources/logs/innovation-registry.md` — auto-appended by `detect-innovation.sh` for the two new files; manually triaged in the wrap (4 entries from today → `triaged:graduate`).
+- `ai-resources/logs/session-notes.md` — this entry.
+
+### Decisions Made
+
+**`/innovation-sweep` design:**
+- **Read-only registry contract** — the sweep never writes to the project's `innovation-registry.md`. Avoids the dedup race with `detect-innovation.sh` (registry's only writer) and keeps the registry from being bloated by sweep findings. Operator can manually add registry rows after reviewing the report.
+- **Per-category action paths** — categories 1–3 (commands, agents, hooks) invoke `/graduate-resource` because that command only handles those three types; categories 4–9 produce manual-placement instructions ("copy folder to `ai-resources/skills/`", "section-edit into workspace CLAUDE.md", etc.). Verified at design time against `graduate-resource.md` lines 11–16.
+- **Filename includes project slug** — `innovation-sweep-{project}-{date}.md` to prevent same-day collisions across projects.
+- **Working notes intentionally ephemeral** — written to `audits/working/` which is gitignored; only the dated report file is committed. Mirrors the `/audit-critical-resources` and `/audit-claude-md` pattern.
+- **No registry creation on missing-registry projects** — sweep runs anyway, flags missing-registry status in the report, but does not create one. Keeps the sweep non-destructive.
+- **Parked to v2:** symlinked-skills detection (Category 4); pre-extracted JSON parsing for `settings.json` (Category 9). Address only if first-run output shows real false-positive rates.
+
+**QC fixes from the auto-loop:**
+- Resolved registry-mutation contradiction by committing to read-only.
+- Specified project-path resolution as required argument or `AskUserQuestion` picker (dropped erroneous `$CLAUDE_PROJECT_DIR` reference).
+- Added explicit `tools:` declaration to subagent frontmatter.
+- Reconciled Step 9 commit description with `.gitignore` reality (only the dated report is committed; working notes are gitignored).
+- Dropped scope-creep items (cross-reference edit to `docs/ai-resource-creation.md`, future `--backport` flag).
+
+**Innovation triage at wrap:**
+- All four `detected` entries from today → `triaged:graduate`. The two new files (innovation-sweep, innovation-triage-auditor) are already canonical (created directly in `ai-resources/`). The two research-workflow entries (`produce-knowledge-file.md`, `run-cluster.md`) are also already canonical — they live in `ai-resources/workflows/research-workflow/` which is the canonical home for workflow-template commands.
+
+### Next Steps
+
+- **Push when ready** — operator action; nothing is auto-pushed.
+- **First real run on the buy-side service plan project** — `/innovation-sweep projects/buy-side-service-plan` will exercise the classifier against a real 57-row registry. Compare verdicts against existing triage decisions to calibrate heuristics.
+- **Park v2 refinements** — address only if the first run produces low-precision output on Category 4 (skills) or Category 9 (settings).
+
+### Open Questions
+
+None. Working tree has substantial dirt from concurrent research-workflow work + a `/repo-dd` audit run earlier today; left untouched per operator direction ("only commit what we did this session"). Sort that state out in a separate session, likely via `/cleanup-worktree`.
