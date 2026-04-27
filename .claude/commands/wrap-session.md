@@ -59,10 +59,41 @@ Accept shorthand: "yy" / "yes both" / "both" = both yes; "nn" / "skip both" = bo
 
 12. **Session telemetry.** If the operator declined telemetry in the preflight, skip this step with a one-line note in chat ("Telemetry skipped per preflight") and proceed to the commit step. Otherwise, run the usage analysis inline before committing. Execute the full `/usage-analysis` flow (build session summary, read existing `logs/usage-log.md` if it exists, delegate to the `session-usage-analyzer` subagent per `ai-resources/skills/session-usage-analyzer/SKILL.md`, write the returned entry to the log). For trivial sessions (single-file edit, one-question read, aborted session), skip with a one-line note in chat ("Telemetry skipped — trivial session") and proceed. Rationale: R14 telemetry baseline depends on consistent capture; inlining the analysis prevents the common failure mode where the operator forgets to invoke it post-wrap and the session drops out of the record.
 
-12a. **Working-tree dirt check.** Run `git status --porcelain` in the current working tree. If empty, skip this step. Otherwise, compare each dirty path against the session note's `Files Created` and `Files Modified` lists. For any dirty path NOT in those lists, capture its mtime (`stat -f "%Sm" -t "%Y-%m-%d" <path>` on macOS) and present once:
+12a. **Working-tree dirt check.** Run the scoped, age-filtered scan below. If it produces no output, skip this step.
 
-    > Working tree has dirty paths not produced this session:
-    > - {path} ({modified|untracked}, mtime: {YYYY-MM-DD})
+    ```bash
+    session_dir="${CLAUDE_PROJECT_DIR:-$PWD}"
+    git_root=$(git -C "$session_dir" rev-parse --show-toplevel 2>/dev/null) || { echo "Not in a git repo; skipping dirt check"; exit 0; }
+    rel=$(python3 -c "import os.path,sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))" "$session_dir" "$git_root")
+    threshold=$(date -v-24H +%s)
+    if [ "$rel" = "." ]; then
+      git -C "$git_root" status --porcelain
+    else
+      git -C "$git_root" status --porcelain -- "$rel"
+    fi | while IFS= read -r line; do
+      path="${line:3}"
+      full="$git_root/$path"
+      if [ -e "$full" ]; then
+        mtime=$(stat -f "%m" "$full" 2>/dev/null || echo 0)
+        [ "$mtime" -ge "$threshold" ] && continue
+        date_str=$(stat -f "%Sm" -t "%Y-%m-%d" "$full")
+      else
+        date_str="deleted"
+      fi
+      echo "$line | $date_str"
+    done
+    ```
+
+    **Platform note:** `stat -f`, `date -v-24H`, and `python3 -c relpath` are macOS-only (Darwin by design). Linux substitutes: `stat -c "%Y"`, `date -d "24 hours ago" +%s`, `realpath --relative-to`.
+
+    **Scoping:** `git -C "$git_root" status --porcelain -- "$rel"` bounds the listing to the session's project directory. When the session lives in a project without its own `.git/` (tracked by the workspace-root repo), this prevents sibling-project dirt from appearing.
+
+    **Staleness filter:** Uses working-tree file mtime. Paths whose mtime is within the last 24 hours are skipped (in-progress; leave for a future wrap or `/cleanup-worktree`). Deleted paths always surface. Known edge case: a file modified >24h ago and then `git add`-ed recently will appear — this is intentional, as it is exactly the "stale staged but uncommitted" class Step 12a was added to catch.
+
+    Otherwise (output present), compare each dirty path against the session note's `Files Created` and `Files Modified` lists. For any dirty path NOT in those lists, present once:
+
+    > Working tree has stale dirty paths (>24h old) not produced this session:
+    > - {path} ({modified|untracked|deleted}, mtime: {YYYY-MM-DD})
     > - ...
     >
     > Disposition each (one letter per path, in order): (c)ommit with this session, (d)efer as WIP, (i)gnore?
@@ -74,7 +105,7 @@ Accept shorthand: "yy" / "yes both" / "both" = both yes; "nn" / "skip both" = bo
 
     If any paths were ignored, include in your end-of-turn wrap summary: "{N} dirty path(s) deferred without disposition. Consider `/cleanup-worktree` next session." Skip silently if zero ignored.
 
-    Rationale: catches uncommitted edits and unstaged finished files that survive across sessions — the failure class observed on 2026-04-24 (telemetry-path migration sat in working tree for weeks; improvement-log-archive.md and setup-improvement-scan-2026-04-21.md sat untracked).
+    Rationale: catches stale uncommitted work that survives across sessions (the 2026-04-24 failure class) without flagging in-progress files from the current work day or dirty paths in sibling projects.
 
 12b. **End-time `/risk-check` gate.** If the session touched any structural change class (hook edits, permission changes, cross-cutting CLAUDE.md edits, new commands or skills, new symlinks, automation with shared-state effects — full list: `ai-resources/docs/audit-discipline.md` § Risk-check change classes), run `/risk-check` once now with `$ARGUMENTS` describing the executed change set across all touched files. Apply paired mitigations before commit if the verdict is PROCEED-WITH-CAUTION; redesign before commit if RECONSIDER. Skip silently if the session touched no class. Rationale: tactile prompt for the end-time gate at the natural session boundary, so the two-gate model doesn't rely solely on operator memory.
 
