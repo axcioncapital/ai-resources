@@ -4,7 +4,7 @@ Save mid-session state before `/clear` or `/compact`. The operator's context not
 
 **Do NOT run git commands or bash commands to discover files.** You already know what was produced from conversation context.
 
-1. Using conversation context and the operator's note (if provided), write a scratchpad file to `/logs/scratchpads/{YYYY-MM-DD}-{HH-MM}-scratchpad.md` with this structure:
+1. Using conversation context and the operator's note (if provided), write a scratchpad file to `logs/scratchpads/{YYYY-MM-DD}-{HH-MM}-scratchpad.md` (project-relative) with this structure:
 
    ```
    # Session Scratchpad — {date} {time}
