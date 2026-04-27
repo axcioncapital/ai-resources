@@ -12,7 +12,10 @@ SESSION_MARKER="/tmp/claude-improve-reminded-$PPID"
 FILE_PATH=$(jq -r '.tool_input.file_path // empty' 2>/dev/null)
 [ -z "$FILE_PATH" ] && exit 0
 
-# Check if the written file is a significant artifact
+# Check if the written file is a significant artifact.
+# Path patterns are research-workflow / draft-pipeline-shaped: projects
+# without these directory names will never trigger the nudge. Override
+# by editing this regex if your project uses different artifact paths.
 if echo "$FILE_PATH" | grep -qE '/(approved|output|report/chapters|final/modules)/'; then
   touch "$SESSION_MARKER"
   echo '{"systemMessage":"Significant artifact produced. Consider running /improve before wrapping the session."}'
