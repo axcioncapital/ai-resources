@@ -155,3 +155,30 @@ The "no-op acceptable" mitigation from the report is a valid disposition under t
 **Risk-check verdict:** PROCEED-WITH-CAUTION (5 dimensions: Medium / Low / Medium / Medium / Medium); 6 mitigations applied before commit.
 
 **Memory written:** `~/.claude/projects/.../memory/feedback_sonnet_1m_suffix.md` — codifies the `[1m]` suffix rule.
+
+## 2026-04-27 — Hook event registration (PostToolUse vs Stop)
+
+**Context:** Graduating four hooks (`coach-reminder.sh`, `friction-log-auto.sh`, `improve-reminder.sh`, `log-write-activity.sh`) from `projects/buy-side-service-plan` to `ai-resources/.claude/`. Source project registered `coach-reminder` and `improve-reminder` under the `Stop` hook event.
+
+**Decision:** Register both under `PostToolUse[Write|Edit]` in canonical, not `Stop`.
+
+**Rationale:** Both scripts read `tool_input.file_path` from the hook's stdin JSON. `Stop` events do not carry a `tool_input.file_path` field — that only exists for tool-call events. Source-project Stop registration means the scripts run but always early-exit (empty path), making the hook effectively dead. PostToolUse[Write|Edit] is the correct event class for both scripts.
+
+**Alternatives considered:**
+- Mirror source-project Stop registration for consistency. Rejected: would propagate the latent bug to all future projects.
+- Stop registration with script logic rewritten to detect "any Write event happened during the session." Rejected: that requires per-session state tracking the scripts don't have, and PostToolUse[Write|Edit] gets there for free.
+
+**Follow-up:** The source project's settings.json still has the Stop registration. Logged as housekeeping for the next buy-side-service-plan session — separate concern, not in scope this session.
+
+## 2026-04-27 — `/improve-reminder.sh` path regex documentation
+
+**Context:** `improve-reminder.sh` triggers when written file paths match `/(approved|output|report/chapters|final/modules)/`. These are research-workflow-shaped paths. The hook is now in `ai-resources/.claude/hooks/` and will deploy to all future projects via `/new-project` and `/deploy-workflow` — including projects whose artifact paths don't match this regex.
+
+**Decision:** Document the regex as research-workflow-shaped via a 4-line comment in the hook file (mitigation #3 from `/risk-check`), rather than refactor to a config-driven or auto-discovery model.
+
+**Rationale:** Refactoring would require deciding what "significant artifact" means generically — an open question with no clean answer right now. The comment is honest about the coupling and gives the operator (or a future graduate-resource pass) explicit license to edit the regex per-project. Refactor remains an option later if a non-research project hits this and the override comment proves insufficient.
+
+**Alternatives considered:**
+- Per-project override via env var or settings JSON config. Rejected: adds cognitive overhead for a hook that fires silently 99% of the time.
+- Auto-detect significant directories from git history. Rejected: complexity dwarfs the benefit.
+- Strip the regex entirely and fire on every Write. Rejected: violates the once-per-session signal model.

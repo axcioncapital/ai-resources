@@ -265,3 +265,33 @@
 - Anticipate the always-loaded surcharge before drafting `CLAUDE.md` pause-trigger or rule edits — set a target word budget (e.g., ≤100 words for a single pause-trigger entry) at the start, draft to fit, then run `/risk-check`. Saves ~2–3k tokens per always-loaded edit by avoiding the expand-then-trim cycle and the second `Edit` payload. Bigger than primary on policy-edit sessions; smaller frequency than the wrap-ledger pattern.
 - When concurrent-session disclosure is known at session start, scope `wrap-session.md` and other shared infra edits earlier in the session so commit-boundary collisions are visible before the other session wraps — saves 1 lost edit + 1 lost commit-boundary attribution per affected session, ~1–2k tokens of recovery overhead. Smaller than primary because concurrent-session collisions are infrequent.
 - Self-applied `/risk-check` worked — the gate caught the always-loaded surcharge that the main agent's draft missed. Worth codifying as a lever: for any always-loaded-content edit, make plan-time `/risk-check` mandatory rather than discretionary. Zero token savings (it's a quality lever, not a cost lever) but prevents the rework-cycle cost above.
+
+### 2026-04-27 | Acceptable
+
+**Task:** Ran `/innovation-sweep` against `projects/buy-side-service-plan` (76-item triage), used `/recommend` to autonomously graduate 5 candidates (4 hooks + 1 command), applied `/risk-check` PROCEED-WITH-CAUTION mitigations mid-flight, closed with `/qc-pass` REVISE on settings.json registration patch and committed.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~18 |
+| Files read | ~30 (re-reads: 4 on settings.json) |
+| Files written/edited | 9 |
+| Tool calls | ~56 |
+| Subagents | 4 |
+| Rework cycles | 2 (minor — save-session.md path fix; hook fallback path generalization) |
+
+**Findings:**
+- `ai-resources/.claude/settings.json` read ~4 times across the session (~100 lines each pass) — verification cycles after each Edit (jq parse + jq structure check + post-QC re-read) where pinning content after the first full read and trusting Edit's exact-match guarantee would have collapsed the duplicate reads. (Re-reads, Moderate)
+- `Read(audits/working/**)` deny rule blocked main-session reads of the 200+ line `innovation-notes-snapshot.md`, forcing a `cp` to /tmp workaround — pure overhead with no analytical value, and `/innovation-sweep` design gap surfaced. (Tool overhead, Moderate)
+- Multiple jq verification calls on settings.json after each Edit pass (~3-4 separate jq invocations across the session) where a single combined jq query (parse + structure + matcher check) would have sufficed per Edit. (Tool overhead, Minor)
+- 5 graduation candidates handled via `/recommend` batch rather than 5 separate `/graduate-resource` flows — saved ~5 command-flow round-trips, correct call. (No category — efficiency win)
+- `/risk-check` operator-invoked mid-flight; end-time `/risk-check` correctly skipped to avoid duplicate scope coverage — correct deduplication. (No category)
+- Stable relative to last 3 entries (Acceptable / Acceptable / Acceptable) — same moderate settings-file re-read pattern as 2026-04-25's ledger-tail anti-pattern, fourth session running with file-touch-then-verify cycles dominating per-session waste.
+
+**Recommendation:** When editing harness-config files (settings.json, hook scripts) and verifying with jq or structural checks, pin the file content in context after the first full Read and rely on Edit's exact-match guarantee for subsequent passes — verification re-reads should target only the 5–10 lines around the edit point, not full re-reads of the file.
+
+**Estimated savings:** ~3–4k tokens per harness-config-edit session. Derivation: 3 redundant full reads of settings.json × ~100 lines × ~12 tokens/line ≈ 3.6k tokens of duplicated structural overhead. Over 10–20 sessions touching `.claude/settings.json` (graduation, permission-sweep, and friday-checkup runs are all candidates): ~30–80k tokens.
+
+**Additional levers (ROI-ranked):**
+- Fix the `/innovation-sweep` design gap that requires a `cp audits/working/... /tmp/...` workaround — the deny rule on `audits/working/**` blocks main-session reads of the snapshot the command itself produced. Either narrow the deny rule or have `/innovation-sweep` write the operator-facing snapshot to a non-denied path. ~1–2k tokens per run avoided (the `cp` Bash + retry overhead) plus removes a recurring friction surface. Bigger than primary on every `/innovation-sweep` run; smaller in frequency since `/innovation-sweep` is project-end.
+- Batch the jq verifications into a single combined query (`jq '.hooks.PostToolUse | length, .permissions.allow | length, type'`) rather than 3–4 separate parse/structure checks per Edit. ~500–1k tokens per harness-config-edit session in tool-call overhead and re-narration. Smaller than primary because jq calls are cheap individually.
+- When a graduation involves cross-project event-matcher mismatch (here: source project registered hooks under `Stop`, graduated copies registered under `PostToolUse[Write|Edit]`), surface the latent source-project bug as a separate housekeeping note at graduation time rather than discovering it during `/risk-check` mitigation — saves ~500–800 tokens of mid-flight context-switching per affected graduation. Smaller than primary because graduation events are infrequent.

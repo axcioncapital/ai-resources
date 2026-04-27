@@ -286,3 +286,10 @@
 - **Decisions logged:** 1 (two-gate model adoption with alternatives, mitigations, cross-session note)
 - **QC cycles:** 0 (operator declined post-edit /qc-pass; judged trimmed CLAUDE.md + new /wrap-session step well-bounded)
 - **Gates:** 3 (1 changed) — service-design-disposition:changed (initial single-end-gate proposal refined by operator to two-gate "after plan + at end"), plan-approval:confirmed (three-file edit scope approved), qc-disposition:confirmed (operator chose direct wrap over /qc-pass after PROCEED-WITH-CAUTION mitigations applied)
+
+### 2026-04-27 — Innovation sweep + graduation batch from buy-side-service-plan (5 resources)
+- **Commands used:** /innovation-sweep, /recommend, /risk-check, /qc-pass, /wrap-session
+- **Iterations:** 0
+- **Decisions logged:** 2 (PostToolUse vs Stop event registration with latent source-bug rationale; improve-reminder.sh path regex documentation choice over refactor)
+- **QC cycles:** 1 (qc-reviewer on settings.json registration patch returned REVISE with three verification items — Skill matcher validity, script presence/executability, comma insertion — all resolved before applying patch; no revisions to design)
+- **Gates:** 4 (0 changed) — bright-line-review:confirmed (operator continued past PROCEED-WITH-CAUTION risk-check verdict without redesign), plan-approval:confirmed (settings.json registration patch approved per Autonomy Rule #8), qc-disposition:confirmed (REVISE verdict resolved via verification rather than redesign), plan-approval:confirmed (commit shape proposal approved, naturally split across two repos)
