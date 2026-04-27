@@ -2187,3 +2187,129 @@ Designed and built a UserPromptSubmit hook that addresses Patrik's recurring ove
 ### Open Questions
 
 None. (Remote-addition decision deferred to operator.)
+## 2026-04-25 — Commission Batch 5 (resume): draft /route-change + commit Batch 5 (docs/repo-architecture.md + /route-change)
+
+### Summary
+
+Resumed Batch 5 from prior session (which had drafted `docs/repo-architecture.md` and stopped before `/route-change` due to context-window concerns). Drafted the `/route-change` advisory command (lightweight, non-mutating, main-session, sonnet tier). QC → triage → post-edit QC loop returned REVISE then GO; four fixes landed (template gap, AI_RESOURCES upward-walk resolution, change-class citation in lieu of inline duplication, removal of hardcoded counts from architecture map). Synthetic-brief verification confirmed correct routing for a "skill that summarizes long documents" input. End-time `/risk-check` returned GO — all five dimensions Low. Mid-session: diagnosed and surfaced a workspace `settings.local.json` permission-shadow regression (operator applied the `defaultMode: bypassPermissions` fix manually).
+
+### Files Created
+
+- `ai-resources/.claude/commands/route-change.md` — Stage 1 routing advisor command. Sonnet tier, main session, no subagent. Reads `docs/repo-architecture.md` plus relevant CLAUDE.md / canonical doc layers (gated by keyword in `$ARGUMENTS`). Walks Q1–Q8 placement heuristics. Outputs structured chat-only recommendation: artifact type, canonical home, files to touch, pipeline pointer, /risk-check requirement, conditional Alternative-placement and Architecture-gap fields. Auto-wiring into `/create-skill` is OFF.
+- `ai-resources/audits/risk-checks/2026-04-25-add-new-slash-command-ai-resources-claude-commands-route.md` — end-time risk-check report (verdict GO, all dimensions Low).
+- `ai-resources/audits/working/qc-batch5-route-change-and-repo-architecture.md` — initial QC working notes.
+- `ai-resources/audits/working/post-edit-qc-batch5-2026-04-25.md` — post-edit QC working notes.
+
+### Files Modified
+
+- `ai-resources/docs/repo-architecture.md` — committed for the first time (was untracked from prior session). Triage F4 applied: dropped hardcoded counts ("38 files", "23 files", "9 files", "70 dirs") and named projects/ subdirectory list. Maintenance-rule self-consistency restored.
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/.claude/settings.local.json` — model identifier fix (`claude-sonnet-4-6` → `claude-sonnet-4-6[1m]`). Operator subsequently added `"defaultMode": "bypassPermissions"` to the permissions block (resolves the shadow regression — see Decisions Made).
+- `ai-resources/logs/session-notes.md` — this entry.
+
+### Decisions Made
+
+- **All four QC findings classified Fix (none deferred).** Triage applied them in one pass with no conflicts. F1 and F2 were load-bearing (template gap + invocation-from-projects ambiguity); F3 and F4 were durability (drift prevention).
+- **Post-edit QC selected mechanical-mode rubric.** Acceptable per workspace CLAUDE.md mechanical-mode QC rule — fixes were substitution-shaped on infrastructure files.
+- **Surfaced workspace settings.local.json permission shadow regression mid-session.** Workspace-level `settings.local.json` declared its own `permissions` block but lacked `defaultMode: bypassPermissions`, shadowing the parent's bypass setting. Operator applied the one-line fix manually after diagnosis. Memory entry `feedback_zero_permission_prompts.md` policy now honored across all four settings layers again. Did not auto-apply per pause-trigger #8 (harness-level config change).
+
+### Next Steps
+
+**Commission status: COMPLETE.** All five batches landed (Batch 1 = `/risk-check`; Batch 2 = `/friday-act` + tier output; Batch 3 = Friday cadence durability; Batch 4 = maintenance ledger aging; Batch 5 = Stage 1 repo architecture).
+
+**Suggested follow-ups (not commissioned):**
+- Run `/permission-sweep` against the workspace to verify the settings.local.json fix holds and no other layers drift. (The shadow rule should already be in the rulebook — confirm the sweep would have caught this regression.)
+- Quarterly checkup: review `docs/repo-architecture.md` for staleness against actual repo layout.
+- Consider whether `/route-change` should be wired into `/create-skill` Step 1 (decision parked: OFF until proven useful per Batch 5 plan).
+
+### Open Questions
+
+None. Commission closed.
+
+## 2026-04-25 — Commission Batch 5 (partial): docs/repo-architecture.md drafted; /route-change deferred
+
+### Summary
+
+Opened to execute the final commission batch (Stage 1 repo architecture: `docs/repo-architecture.md` + `/route-change` command). Drafted the architecture map (top-level layout, canonical homes by artifact type, symlink topology, cross-repo coupling points, Q1–Q8 placement heuristics). Stopped before drafting `/route-change` after diagnosing a context-window issue: workspace `settings.local.json` declares `"claude-sonnet-4-6"` (bare identifier, no `[1m]` suffix), which silently downgrades the session to 200k context. Operator chose to wrap and restart in a fresh 1M-context session rather than risk auto-compact mid-batch. Architecture doc remains in the working tree (untracked) for next session to bundle with `/route-change` in a single Batch 5 commit per the plan's "one commit per batch" discipline.
+
+### Files Created
+
+- `ai-resources/docs/repo-architecture.md` — Stage 1 repo architecture map. Sections: top-level layout (workspace / ai-resources / projects), canonical homes by artifact type (skills, commands, agents, hooks, docs, logs, prompts, audits, plans, CLAUDE.md layers), symlink topology (auto-sync rules + exclusions), cross-repo coupling points, Q1–Q8 placement heuristics (artifact type → home → spawn shape → log routing → /risk-check trigger), maintenance trigger list, related canonical sources. Hand-maintained; reviewed at quarterly checkup. **Deferred from this wrap commit — must land with `/route-change` in the Batch 5 commit next session.**
+
+### Files Modified
+
+- `logs/session-notes.md` — this entry.
+
+### Decisions Made
+
+Plan-level (resolved with recommended defaults per autonomy memory):
+- **Assumption 7** — `/route-change` non-mutating, not auto-wired into `/create-skill`. Default accepted.
+- **Assumption 2** — symlink policy treated as already satisfied (existing `auto-sync-shared.sh` covers tier-1/tier-2 placement). No drift-detection requested.
+- **Decision Gate 5** — `/route-change` auto-wiring into `/create-skill` = OFF until proven useful.
+
+Session-management:
+- **Stop Batch 5 mid-execution.** Context window showing "almost full" — diagnosed bare `claude-sonnet-4-6` identifier in workspace `settings.local.json` causing silent 200k downgrade. Cleaner to wrap and restart with 1M context than risk auto-compact mid-batch. Pre-compact-checkpoint pattern: this session note + the existing plan file are the resumption scratchpad.
+- **Defer `repo-architecture.md` from this wrap commit.** Bundle with `/route-change` in a single Batch 5 commit next session, preserving the plan's "one commit per batch" discipline (Assumption 10).
+
+### Next Steps
+
+**Before next session:**
+- **Fix workspace `settings.local.json`**: change `"model": "claude-sonnet-4-6"` → `"model": "claude-sonnet-4-6[1m]"`. Bare identifier silently downgrades to 200k. (Memory entry `feedback_sonnet_1m_suffix.md` documents this.)
+
+**Next session (resume Batch 5):**
+1. `/prime` to orient (will surface this entry as last session).
+2. Confirm `ai-resources/docs/repo-architecture.md` is still in the working tree (untracked, not committed).
+3. Draft `ai-resources/.claude/commands/route-change.md` — non-mutating routing advisor. Inputs: free-text change description via `$ARGUMENTS`. Reads `docs/repo-architecture.md` + relevant CLAUDE.md files. Outputs: canonical home + specific files/sections to touch + pipeline pointer (`/create-skill` etc.) + `/risk-check` recommendation if structural class. Main session, no subagent (lightweight). Sonnet tier (bounded mapping task).
+4. Post-edit QC subagent (`qc-reviewer`) on both files; apply triage if findings.
+5. Synthetic-brief verification: invoke `/route-change` with "I want to add a skill that does X" → verify recommendation cites `docs/repo-architecture.md` sections.
+6. End-time `/risk-check` on the executed change set (new command + new docs file qualify).
+7. Single commit: `new: Stage 1 repo architecture — docs/repo-architecture.md + /route-change`.
+
+**Plan reference:** `~/.claude/plans/here-s-an-idea-i-memoized-bumblebee.md` lines 146–160 (Batch 5 deliverables) and lines 222–226 (verification).
+
+### Open Questions
+
+- **WIP — `ai-resources/docs/repo-architecture.md` deferred from this commit (untracked in working tree).** Must be staged with `/route-change` in next session's Batch 5 commit. If next session inadvertently re-creates it from scratch, the existing draft is the better starting point — review before overwriting.
+
+## 2026-04-24 — Built /permission-sweep durable permission-prompt audit + remediation
+
+### Summary
+
+Designed and shipped a new command system that diagnoses structural Claude Code permission-prompt failure modes across every settings file in the workspace and (with explicit operator approval) applies surgical remediations. Addresses the recurring Edit/Delete prompts that resisted six reactive patch commits since 2026-04-20. Four structural root causes were identified and translated into a 13-rule detection rulebook driven by a single source-of-truth template doc. Prevention wired into /new-project (canonical template emitted per project) and /friday-checkup (weekly dry-run). Four clean commits on main, pushed to origin.
+
+### Files Created
+
+- `docs/permission-template.md` — single source of truth for canonical permission shapes at each layer (user / workspace / ai-resources / project) + the 13-rule detection rulebook. Referenced by /permission-sweep and /new-project.
+- `.claude/agents/permission-sweep-auditor.md` — Sonnet subagent (subagent-contract compliant: writes full notes to disk, returns ≤30-line summary) that walks all settings files and applies the rulebook.
+- `.claude/commands/permission-sweep.md` — three-phase command (diagnose → operator approval gate per autonomy pause-trigger #8 → surgical jq remediation). Flags: `--dry-run`, `--fix-narrow`, `--skip-user-level`.
+- `.claude/hooks/check-permission-sanity.sh` — SessionStart nudge that fires when defaultMode:bypassPermissions is missing or shadowed by settings.local.json. Tested against 5 known cases; all pass/nudge correctly.
+
+### Files Modified
+
+- `.claude/commands/new-project.md` — Post-Pipeline Enrichment step 2: CANONICAL_PERMS now includes `defaultMode: bypassPermissions`, `Edit(**/.claude/**)` + `Write(**/.claude/**)` dotfile-path globs, and `Bash(rm *)`. Added check-permission-sanity.sh as a second SessionStart hook alongside auto-sync-shared.sh.
+- `.claude/commands/friday-checkup.md` — weekly tier Step 5 subsection F: runs `/permission-sweep --dry-run` once per checkup (workspace-wide, not per-scope); CRITICAL findings roll into consolidated Friday report.
+- `.claude/settings.json` — self-heal: added `Bash(*)`, `Bash(rm *)`; expanded deny to include `Bash(rm -rf *)`, `Bash(sudo *)`, `Bash(git push*)` as universal safety floor.
+- `CLAUDE.md` — new "Permission Management" section pointing at the template doc and `/permission-sweep`.
+
+### Decisions Made
+
+**/permission-sweep command design:**
+- Named `/permission-sweep` (not `/diagnose-permissions` or `/fix-permissions`). Rationale: "audit" is overloaded in the workspace (3+ existing /audit-* commands); "sweep" signals durable-cleanup intent and pairs naturally with /fewer-permission-prompts (structural vs. empirical).
+- Single command with three phases, not two separate commands. Rationale: pause-trigger #8 requires operator approval between diagnose and remediate anyway; splitting forces the operator to remember the pairing; one command, one mental model.
+- Subagent does diagnosis only; remediation via jq stays in main session. Rationale: subagent contract requires summary return; remediation needs pause-trigger #8 gate in main session.
+- Composes with `/fewer-permission-prompts` rather than replacing it. Rationale: different detection modes (structural rulebook vs. empirical transcript scan); conflating them would bloat a tightly-scoped skill.
+
+**Canonical template:**
+- Added `Bash(rm *)` to canonical project allow. Rationale: fixes the Delete/Remove prompts operator reported; `Bash(rm -rf *)` stays on deny (narrow vs. destructive tradeoff accepted).
+- SessionStart sanity hook NOT added to ai-resources/.claude/settings.json. Rationale: ai-resources already has `defaultMode: bypassPermissions`, so the hook would pass silently — operator rejected the addition as noise.
+
+### Next Steps
+
+- Run `/permission-sweep` in a fresh session. It will scan all 16 settings files, report findings in plain language, and (on approval) apply remediations. This is the step that actually fixes the currently-active Edit/Delete prompts across other projects.
+- After remediation, `/clear` and test in a few projects: Edit a file, delete a file — expected silent behavior.
+- Optional follow-ups (not blocking):
+  - Cross-reference line in `fewer-permission-prompts` SKILL.md (no SKILL.md folder yet; defer until that skill graduates to ai-resources/skills/).
+  - Narrow `/audit-repo`'s settings-auditor to defer to `/permission-sweep`.
+
+### Open Questions
+
+None. Permission-sweep is ready to run.
