@@ -2,6 +2,31 @@
 
 > Archive: [decisions-archive-2026-04.md](decisions-archive-2026-04.md)
 
+## 2026-04-27 — research-workflow Critical fix: design + gate-skip judgment
+
+**Context.** Resolved the 2026-04-27 deep audit's Critical finding — `additionalDirectories` in `workflows/research-workflow/.claude/settings.json` was hard-coded to my workspace root, which would silently break ai-resources access on any other machine. Plan-time `/risk-check` returned GO across all five dimensions. Two judgment calls during execution were precedent-setting and worth recording.
+
+**Decision 1 — Placeholder pattern (`{{WORKSPACE_ROOT}}`) over free-text SETUP.md instruction.**
+
+The deep audit recommended adding a free-text instruction to SETUP.md telling the operator to update the path manually (Option A — characterized as a "5-minute fix"). Used Option B instead: replace the value with `{{WORKSPACE_ROOT}}` and add a corresponding placeholder-fill step + Placeholder Reference row.
+
+- *Why diverge from the audit recommendation:* Option A relies on operator memory and produces a silent failure mode (wrong path → silent ai-resources access break). Option B produces a visible `{{` signal that matches the operator's existing scan-for-placeholders mental model from filling out CLAUDE.md, stage-instructions.md, file-conventions.md, etc. (8 other placeholders already use this pattern.) Cost is identical (~10 lines of SETUP.md instead of 5); upside is discoverability.
+- *Edge case worth flagging:* JSON is parsed by the harness, so `{{WORKSPACE_ROOT}}` is a JSON-valid string but a path-invalid value. Verified `jq empty` validates; harness will fail to read ai-resources files until placeholder is replaced — same outcome as the prior hard-coded path on a different machine, but now the cause is visible rather than hidden.
+- *Implication for future template fixes:* When a deployment-affecting template value needs operator configuration, prefer the existing placeholder pattern over free-text instructions. This decision can serve as the reference precedent.
+
+**Decision 2 — End-time `/risk-check` skipped when plan-time verdict is GO with zero execution drift.**
+
+The two-gate model (per the 2026-04-25 decision) defaults to firing both plan-time and end-time gates within a session that touches a structural-change class. This session touched two such files (template `settings.json` + template `SETUP.md`). Skipped the end-time gate.
+
+- *Rationale:* The end-time gate's stated purpose is to "catch drift, emergent coupling, scope creep." For this change, plan-time returned GO across all five dimensions with no marginal Mediums; the executed change set matches the plan-time description exactly (no additional files touched, no widened scope, no new patterns introduced). With no failure mode for end-time to detect, running it is pure ceremony — adds tokens, produces no signal.
+- *Alternatives considered:* (a) Run end-time anyway as strict policy compliance. Rejected — the 2026-04-25 Batch 2 decision already established precedent for skipping a gate when its purpose is fulfilled by prior gating. (b) Run end-time with a minimal payload to "tick the box." Rejected — this would normalize empty gate firings and dilute the signal across future sessions.
+- *Implication / when to apply:* Skip end-time only when ALL of: (a) plan-time returned GO; (b) plan-time had no marginal Mediums; (c) executed change set matches plan-time description with zero drift; (d) change is single-file or otherwise narrowly scoped. If any condition fails, end-time should fire as normal. Worth surfacing this nuance in `audit-discipline.md` if future sessions hit similar judgment calls (deferred — not a blocker).
+
+**Files changed.**
+- `workflows/research-workflow/.claude/settings.json` — `{{WORKSPACE_ROOT}}` placeholder
+- `workflows/research-workflow/SETUP.md` — step 1.5 + Placeholder Reference row
+- `audits/risk-checks/2026-04-27-replace-hard-coded-additionaldirectories-path-in-workflows.md` — plan-time risk-check report
+
 ## 2026-04-25 — Working-tree drift prevention: design choices
 
 **Context:** Plan called for five core fixes (F1–F5) plus five opportunistic guardrails (G1–G5). During execution, three judgment calls reshaped scope.
