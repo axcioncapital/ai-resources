@@ -26,6 +26,12 @@ fi
 
 [ -z "$TYPE" ] && exit 0
 
+# Skip canonical resources and template sources — neither is project innovation.
+case "$FILE_PATH" in
+  */ai-resources/.claude/*) exit 0 ;;
+  */workflows/*/.claude/*)  exit 0 ;;
+esac
+
 # Skip self-detection (this script)
 BASENAME=$(basename "$FILE_PATH")
 [ "$BASENAME" = "detect-innovation.sh" ] && exit 0

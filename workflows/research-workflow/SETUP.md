@@ -84,7 +84,6 @@ done
 - evidence-to-report-writer
 - gap-assessment-gate
 - research-plan-creator
-- research-question-batcher
 - repo-health-analyzer
 - research-structure-creator
 - section-directive-drafter
