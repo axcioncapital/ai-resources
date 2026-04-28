@@ -317,3 +317,18 @@ When the extension is invoked, document one line in the wrap session note:
 **Alternatives considered.**
 - *Apply the workspace auto-loop verbatim (two automatic passes after each "QC pass" selection).* Rejected: defeats the explicit "force review step" the operator asked for. Two opaque passes per gate selection is worse, not better, than one transparent pass per selection.
 - *No iteration cap.* Rejected: 3-selection soft advisory protects against artifacts that aren't converging structurally.
+
+---
+
+## 2026-04-28 — Precondition-check guardrails on /triage and /recommend (vs. command rename)
+
+**Context.** `/triage` and `/recommend` sit at adjacent operator postures (proposals filter vs. open-question resolver). Both are operator-invoked unblock mechanisms acting on Claude's recent output, but they take different inputs (slate of proposals vs. clarifying questions/assumptions). Wrong-command invocation is a real risk, especially because `/recommend` is poorly named relative to its function (operator's framing during the session). The operator originally explored renaming `/recommend` (top candidate: `/proceed`); after considering blast radius, pivoted to guardrails as the more durable fix.
+
+**Decision.** Add a Step 1 "Verify trigger condition" precondition gate to each command. Each gate scans recent turns for the command's actual trigger and, on mismatch, stops and offers the sibling command instead of executing on the wrong input. Rename deferred indefinitely.
+
+**Rationale.** The gate fires at the moment of mis-invocation and is self-correcting — operator simply re-issues the right command. Rename would touch references in workspace CLAUDE.md, ai-resources CLAUDE.md, memory, docs, and any cross-project mentions — non-trivial blast radius for a problem the gate solves at the source. Gates are also additive: if the rename later proves necessary, the gates remain useful in their own right.
+
+**Alternatives considered.**
+- *Rename `/recommend` → `/proceed` (or `/decide`).* Top candidate by name elegance and pairing with `/triage` and `/clarify`. Rejected for now: invasive, doesn't prevent the underlying mis-invocation pattern, only makes it less likely.
+- *Unified routing command (`/decide-mode`) that detects intent and dispatches.* Rejected: adds a layer, dilutes explicit-intent benefit, doesn't fit the workspace's short-verb command idiom.
+- *Decision rule in workspace CLAUDE.md ("when proposals → /triage, when questions → /recommend").* Rejected: relies on operator recall at invocation time; doesn't actively prevent mis-invocation.

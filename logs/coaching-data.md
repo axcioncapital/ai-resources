@@ -1,5 +1,12 @@
 # Coaching Data
 
+### 2026-04-28 — /triage and /recommend: precondition-check guardrails
+- **Commands used:** /wrap-session (only slash command actually invoked; conversation explored /triage and /recommend as discussion subjects, and operator's natural-language "Proceed" mapped semantically to /recommend without invoking it as a slash)
+- **Iterations:** 0 (no drafting — small infra edits only)
+- **Decisions logged:** 1 (precondition-gate vs. rename)
+- **QC cycles:** 1 (post-edit qc-reviewer on guardrail edits: GO, mechanical-mode rubric, all M-checks Clear, zero findings, zero fixes applied)
+- **Gates:** 2 (1 changed, 1 confirmed) — plan-approval:changed (operator pivoted from rename discussion to guardrail design after I presented rename candidates), plan-approval:confirmed (operator approved guardrail proposal without revision via "Proceed")
+
 ### 2026-04-18 (deep night) — Prevention Session 3: detection + automation (questionnaire items + skill-size hook)
 - **Commands used:** /prime, /fewer-permission-prompts, /wrap-session
 - **Iterations:** 0

@@ -295,3 +295,29 @@
 - Fix the `/innovation-sweep` design gap that requires a `cp audits/working/... /tmp/...` workaround — the deny rule on `audits/working/**` blocks main-session reads of the snapshot the command itself produced. Either narrow the deny rule or have `/innovation-sweep` write the operator-facing snapshot to a non-denied path. ~1–2k tokens per run avoided (the `cp` Bash + retry overhead) plus removes a recurring friction surface. Bigger than primary on every `/innovation-sweep` run; smaller in frequency since `/innovation-sweep` is project-end.
 - Batch the jq verifications into a single combined query (`jq '.hooks.PostToolUse | length, .permissions.allow | length, type'`) rather than 3–4 separate parse/structure checks per Edit. ~500–1k tokens per harness-config-edit session in tool-call overhead and re-narration. Smaller than primary because jq calls are cheap individually.
 - When a graduation involves cross-project event-matcher mismatch (here: source project registered hooks under `Stop`, graduated copies registered under `PostToolUse[Write|Edit]`), surface the latent source-project bug as a separate housekeeping note at graduation time rather than discovering it during `/risk-check` mitigation — saves ~500–800 tokens of mid-flight context-switching per affected graduation. Smaller than primary because graduation events are infrequent.
+
+### 2026-04-28 | Efficient
+
+**Task:** Added Step 1 precondition trigger-check guardrails to `/triage` and `/recommend` commands so both refuse to run when their preconditions aren't met; one mechanical-mode QC pass returned GO with zero findings.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~10 |
+| Files read | not reported |
+| Files written/edited | 2 |
+| Tool calls | not reported |
+| Subagents | 1 |
+| Rework cycles | 0 |
+
+**Findings:**
+- Mechanical-mode QC pass returned GO with all M-checks Clear and zero findings — correct rubric selection and tight scope kept the QC → Triage Auto-Loop short-circuited (skipped per workspace rule when QC GO + mechanical-mode + Clear). (No category — efficiency win)
+- One isolated permission prompt fired on the second Edit (recommend.md) under bypassPermissions mode — diagnosed as harness-side transient, not a settings gap; no structural rework triggered. (Tool overhead, Minor — not actionable)
+- Improvement vs. last 3 entries (Acceptable / Acceptable / Acceptable) — first Efficient rating in the recent window; small infra-edit with disciplined scope, no drafting, no QC re-runs.
+
+**Recommendation:** No action needed.
+
+**Estimated savings:** N/A — no recommendation.
+
+**Additional levers (ROI-ranked):**
+- Session shape is the target profile for symmetric guardrail edits across paired infra commands — single decision (precondition-gate over rename), two parallel surgical Edits, single mechanical-mode QC, commit. Worth codifying as the reference envelope for Step-1-precondition-style edits to small command pairs.
+- Marginal: the bypassPermissions transient on Edit #2 is environmental noise — not worth a discipline change unless it recurs across multiple sessions on the same edit shape.
