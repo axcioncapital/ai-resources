@@ -56,18 +56,6 @@
             "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/log-write-activity.sh",
             "timeout": 5,
             "statusMessage": "Logging write activity..."
-          },
-          {
-            "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/coach-reminder.sh",
-            "timeout": 5,
-            "statusMessage": "Checking coach reminder..."
-          },
-          {
-            "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/improve-reminder.sh",
-            "timeout": 5,
-            "statusMessage": "Checking improve reminder..."
           }
         ]
       }
@@ -80,6 +68,22 @@
             "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/check-stop-reminders.sh",
             "timeout": 5,
             "statusMessage": "Checking session-end reminders..."
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/coach-reminder.sh",
+            "timeout": 5,
+            "statusMessage": "Checking coach reminder..."
+          },
+          {
+            "type": "command",
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/improve-reminder.sh",
+            "timeout": 5,
+            "statusMessage": "Checking improve reminder..."
           }
         ]
       }
