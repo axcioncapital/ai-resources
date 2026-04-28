@@ -2,50 +2,6 @@
 
 > Archive: [session-notes-archive-2026-04.md](session-notes-archive-2026-04.md)
 
-## 2026-04-27 — Innovation sweep on buy-side-service-plan project
-
-### Summary
-
-Targeted execution of 6 fixes from the 2026-04-27 innovation-sweep report on `projects/buy-side-service-plan/.claude/`. Operator selected the high-value subset (1–6) and explicitly deferred all 12 remaining sweep items. Work covered: name-collision rename of the project's local QC reviewer (avoids shadowing canonical `qc-reviewer`), missing-frontmatter fix on `friction-log.md` (silent-Sonnet-downgrade hazard), and four canonical-symlink replacements of stale forks (`prime.md`, `audit-repo.md`, `wrap-session.md`, `improve.md`, plus paired `improvement-analyst.md`). Plan-time `/risk-check` returned PROCEED-WITH-CAUTION; mitigations applied (manifest reconciliation, smoke-test deferred to this wrap as live exercise). Two commits landed: `82de07c` in the buy-side project repo, `4214b71` in ai-resources for the risk-check report.
-
-### Files Created
-
-- `audits/risk-checks/2026-04-27-replace-3-stale-project-files-with-symlinks-buy-side.md` — plan-time risk-check report for the symlink batch (verdict PROCEED-WITH-CAUTION; blast radius Medium, hidden coupling Medium)
-
-### Files Modified
-
-In `projects/buy-side-service-plan/.claude/` (committed in buy-side project repo `82de07c`):
-- `agents/qc-reviewer-buy-side.md` — renamed from `qc-reviewer.md`; `name:` field updated to `qc-reviewer-buy-side`
-- `commands/compile-wiki.md` — subagent reference updated to `qc-reviewer-buy-side`
-- `commands/content-review.md` — agent file reference updated to `qc-reviewer-buy-side.md`
-- `commands/friction-log.md` — added `model: sonnet` frontmatter (was missing entirely)
-- `commands/prime.md` — replaced with relative symlink to ai-resources canonical
-- `commands/audit-repo.md` — replaced with relative symlink to ai-resources canonical
-- `commands/wrap-session.md` — replaced with relative symlink to ai-resources canonical
-- `commands/improve.md` — replaced with relative symlink to ai-resources canonical
-- `agents/improvement-analyst.md` — replaced with relative symlink to ai-resources canonical
-- `shared-manifest.json` — moved 4 commands from `local` to `shared`, moved improvement-analyst from `local` to `shared`, added qc-reviewer-buy-side to `local` agents
-
-In `ai-resources/`:
-- `logs/innovation-registry.md` — 4 cross-project `detected` entries appended by the detect-innovation hook for the buy-side touches; triaged in Step 7 below
-- `logs/session-notes.md` — this entry
-
-### Decisions Made
-
-- **Scope: fix items 1–6 only; ignore the other 12 sweep items.** Operator-directed scoping decision. Selected fixes are either name-collisions, silent model downgrades, or canonical-symlink reunifications — all carry concrete maintenance cost if left. Remaining items are `detect-innovation` registry entries for prior-session work, lower-value forks, or project-specific scaffolding worth keeping local.
-- **Plan-time `/risk-check` covered items 4 + 5 (symlinks for `wrap-session.md`, `improve.md`, `improvement-analyst.md`).** Verdict PROCEED-WITH-CAUTION. Items 3 and 6 (`prime.md`, `audit-repo.md`) reused the same symlink shape as ~30 existing buy-side symlinks; not re-gated.
-- **Smoke-test deferred to this wrap-session run.** Mitigation called for an exercise of the new wrap-session symlink against the buy-side project's settings hooks. Wrapping THIS session in ai-resources doesn't exercise the buy-side path, so the smoke-test remains pending until the next /wrap-session run inside the buy-side project. Noted as Open Question.
-
-### Next Steps
-
-- Push approval pending: `projects/buy-side-service-plan` commit `82de07c`; `ai-resources` commits `4214b71` (risk-check) plus this wrap commit.
-- At next /wrap-session inside `projects/buy-side-service-plan`, watch Step 12a (dirt check), Step 12b (end-time risk-check), Step 11 (archive). If any fails, revert just `projects/buy-side-service-plan/.claude/commands/wrap-session.md` symlink.
-- The 12 deferred sweep items remain triaged in `audits/innovation-sweep-buy-side-service-plan-2026-04-27.md` for later passes.
-
-### Open Questions
-
-- Wrap-session symlink smoke-test on the buy-side project is still pending — exercise on first wrap inside that project.
-
 ## 2026-04-25 — Commission Batch 3+4: Friday cadence durability + maintenance ledger aging
 
 ### Summary
@@ -460,3 +416,49 @@ Ran `/permission-sweep` scoped to `ai-resources/` only (operator-narrowed). Audi
 ### Open Questions
 
 None.
+
+## 2026-04-28 — Stop-registration bug fix + 16 loose-end triage + deferred mitigations #5/#6
+
+### Summary
+
+Executed the three-track plan. **Track 1** fixed the Stop-registration bug from the 2026-04-27 graduation: `coach-reminder.sh` and `improve-reminder.sh` had been registered under `PostToolUse[Write|Edit]` instead of `Stop`. Mid-execution discovered both scripts also read `tool_input.file_path` from stdin JSON (a PostToolUse-only field) and would have silently no-opped under Stop — rewrote both to be Stop-compatible (coach drops file_path check entirely; improve uses `git status --porcelain` against artifact dir regex). **Track 2** applied all 16 loose-end-item defaults from the 2026-04-27 innovation-sweep audit of `projects/buy-side-service-plan/`: extracted Cross-Model Rules + Adaptive Thinking Override to workspace `CLAUDE.md` (paraphrased to tool-generic vocab), graduated `save-session.md` to canonical via symlink (also fixed deferred mitigation #2 absolute-path bug), deleted redundant Context Isolation Rules block from buy-side CLAUDE.md, logged 2 generalization candidates to improvement-log (#14 checkpoint-recency hook, #1 `/critique-draft` extract). **Track 3** applied deferred mitigations #5 (chose Option B — manual registration with structured jq checklist that dynamically generates the registration table from canonical `settings.json` at deploy time) and #6 (revert log persistence note appended to deploy-workflow.md). Plan-time `/risk-check` returned PROCEED-WITH-CAUTION; mitigations applied to plan before execution. Eight commits across three repos.
+
+### Files Created
+
+- `ai-resources/audits/risk-checks/2026-04-28-plan-stop-bug-16-loose-ends-mitigations-5-6.md` — plan-time risk-check report (PROCEED-WITH-CAUTION; load-bearing dimensions: Track 3 #5 Option A blast radius, Track 2 #11/#12 cross-cutting CLAUDE.md extracts)
+
+### Files Modified
+
+In `ai-resources/` (commits `6ab9367`, `029a4d9`, `dbe50d5`, `a0b8aab`, `28a363f`):
+- `.claude/settings.json` — moved coach + improve hook entries from `PostToolUse[Write|Edit]` to a new `Stop` entry alongside existing `check-stop-reminders.sh`. PostToolUse[Write|Edit] now contains only `log-write-activity.sh`. Stop block has 2 entries.
+- `.claude/hooks/coach-reminder.sh` — rewritten for Stop event compatibility. Dropped `tool_input.file_path` stdin-JSON read; relies on existing session-count-since-last-coach logic; added new-project guard for missing `session-notes.md`.
+- `.claude/hooks/improve-reminder.sh` — rewritten for Stop event compatibility. Replaced `tool_input.file_path` check with `git status --porcelain` scan against `^(approved|output|report/chapters|final/modules)/` artifact regex; skips silently outside git repos.
+- `.claude/commands/deploy-workflow.md` — Track 3 #5/#6: Option B registration checklist using jq to dynamically render the canonical hook table from ai-resources `settings.json` at deploy time (basename-normalized dedup pattern); appended "Append-only side effect" warning note covering hook-revert log-persistence behavior.
+- `logs/improvement-log.md` — appended 2 deferred entries: 2026-04-28 Stop[hook 0] checkpoint-recency generic version (Track 2 #14); 2026-04-28 `/critique-draft` extraction from challenge.md pattern (Track 2 #1).
+- `logs/session-notes-archive-2026-04.md` — auto-archive of 2 oldest entries (kept 10) including the prior wrap's 2026-04-27 buy-side innovation-sweep note (had been prepended at top by previous wrap; archive script's append-to-end assumption moved it to archive).
+
+In workspace root (commit `bc7cbdd`):
+- `CLAUDE.md` — added `## Cross-Model Rules` section (paraphrased to tool-generic terms: "evidence-producing tool" replaces "Research Execution GPT", "research-execution stage" replaces "Stage 2/4"); added `## Adaptive Thinking Override` section (framed as opt-in/recommended for analytical projects, not a workspace-wide default).
+
+In `projects/buy-side-service-plan/` (commits `85933e7`, `989253e`):
+- `.claude/commands/save-session.md` — replaced with relative symlink to ai-resources canonical (Track 2 #7; also fixed deferred-mitigation #2 absolute-path bug — canonical uses project-relative `logs/scratchpads/...`).
+- `.claude/shared-manifest.json` — added `save-session` to `commands.shared`.
+- `CLAUDE.md` — Cross-Model Rules section replaced with short pointer to workspace canonical + project-specific tool-assignment line; Adaptive Thinking Override replaced with short pointer + declaration that this project IS analytical/multi-step; Context Isolation Rules block deleted entirely (already graduated as workspace QC Independence Rule per audit verdict).
+
+### Decisions Made
+
+- **Track 3 #5 → Option B (manual registration + structured checklist), not Option A (auto-merge).** Today's Track 1 bug — a graduated hook registered under the wrong event — is itself the canonical example of why Option A is dangerous: a canonical mistake would broadcast to every deployed project on every re-run. Option B preserves manual gating per project but uses jq to dynamically generate the registration table from canonical `settings.json`, so the checklist stays in sync with the source without auto-applying.
+- **Track 1 followup → rewrite hook scripts to be Stop-compatible (not in original plan).** Discovered mid-execution that moving the settings.json registration alone was insufficient: both scripts read PostToolUse-shaped stdin JSON (`tool_input.file_path`) that doesn't exist under Stop, so they would have exited silently. Operator chose "Option 2 — finish the job" over leaving a half-fix.
+- **Track 2 #15 → delete Context Isolation Rules from buy-side CLAUDE.md, not keep-local.** Audit verdict was "keep-local (redundant)"; on inspection, the entire block was already graduated as the workspace-level QC Independence Rule. Deletion (with operator approval) is the cleaner shape — keeping a redundant rephrasing in always-loaded context wastes tokens on every turn for no marginal value.
+
+### Next Steps
+
+- Push 8 commits across 3 repos (operator confirmation per Autonomy Rule #2): ai-resources `6ab9367`, `029a4d9`, `dbe50d5`, `a0b8aab`, `28a363f`; workspace `bc7cbdd`; buy-side `85933e7`, `989253e`. Plus this wrap commit.
+- Start a new Claude session in any deployed project to pick up the new Stop registration — current session still has the cached PostToolUse[Write|Edit] hook wiring.
+- Pick up improvement-log entries when time permits: 2026-04-28 generic checkpoint-recency hook (#14); 2026-04-28 `/critique-draft` command extraction (#1); 2026-04-28 permission-sweep-auditor template-class classification fix (carried forward from prior session).
+- At next /wrap-session inside `projects/buy-side-service-plan`: validate the canonical wrap-session symlink lands cleanly (Steps 12a/12b/11) AND validate the new Stop-registered coach + improve hooks fire once at session end (not after each Write/Edit).
+- Wrap-session prepend-vs-append convention drift surfaced: the archive script (`logs/scripts/check-archive.sh`) expects append-to-end (keeps bottom N entries); recent wraps have been prepending. Future wraps should append to end to match the script. No fix needed in the script — convention should follow it.
+
+### Open Questions
+
+- Wrap-session symlink smoke-test on the buy-side project remains pending (carried forward from prior wrap) — exercise on first wrap inside that project. Now also validates Track 1 Stop-registration as a side benefit.

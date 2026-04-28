@@ -226,3 +226,32 @@ The "no-op acceptable" mitigation from the report is a valid disposition under t
 **Alternatives considered:**
 - Block landing on a hand-built smoke-test now: rejected; the only realistic test is the next live wrap inside buy-side, and forcing a synthetic one delays low-cost work without producing the signal that matters.
 - Re-run `/risk-check` to argue down the verdict: rejected; the verdict is correct, the mitigation list captures the right safety surface — defer-and-watch is itself the right shape of mitigation here.
+
+## 2026-04-28 — `/deploy-workflow` hook registration: Option B (checklist) over Option A (auto-merge)
+
+**Context.** Track 3 mitigation #5 from the 2026-04-27 risk-check on the 4-hook graduation asked: "Decide once whether `/deploy-workflow` auto-merges canonical hook entries into deployed projects' `settings.json`, or whether operators register per-project." The current `deploy-workflow.md:118–124` policy is manual registration. Option A would reverse the policy and auto-merge with idempotent jq deep-merge using basename-normalized dedup. Option B keeps manual registration but emits a structured checklist so the gap is visible at deploy time.
+
+**Decision.** Option B. Implemented as a new `#### Canonical hook-registration checklist` sub-step that uses `jq` to dynamically render the registration table (script basename → event matcher → timeout) from `ai-resources/.claude/settings.json` at deploy time. Includes the `[scan(...)] | last // .command` basename-extraction pattern that handles non-`.sh` commands robustly. Also addresses mitigation #6 (revert log persistence note) as part of the same edit.
+
+**Rationale.**
+- Today's Track 1 bug — `coach-reminder.sh` and `improve-reminder.sh` registered under `PostToolUse[Write|Edit]` instead of `Stop` by commit `07cc6d6` — is itself the canonical example of why Option A is dangerous. With Option A, a canonical-side mistake would broadcast to every deployed project on every re-run. Manual registration provides a per-project gating point at exactly the moment the operator is best positioned to catch the wrong matcher (deploy time, with the project's existing hooks visible).
+- Option B's dynamic checklist captures Option A's main upside (canonical-source-of-truth — checklist regenerates from the same `settings.json` that Option A would merge from), without taking on auto-write blast radius. If the checklist drifts from canonical, that's caught at the next deploy, not silently embedded across N deployed projects.
+- The basename-normalized dedup pattern (`[scan("[^/\\s]+\\.sh")] | last // .command`) matters for either option — buy-side registers commands as `"$CLAUDE_PROJECT_DIR/.claude/hooks/X"` while canonical uses `bash $CLAUDE_PROJECT_DIR/.claude/hooks/X`, so raw-string dedup would have double-registered on every re-run. Caught by independent QC review during plan iteration; encoded into the checklist's underlying jq form even though Option B doesn't merge.
+
+**Alternatives considered.**
+- **Option A (auto-merge):** rejected for the blast-radius reason above. The QC and risk-check cycles surfaced two rounds of jq pseudocode bugs in the merge form (`capture` errors on non-matching strings; `[.] | unique_by(...)` array-wrapping). Both bugs were caught in plan, but they show how easy it is to ship a broken merge to N deployed projects — exactly the failure mode Option B avoids.
+- **Status quo (no change):** rejected because the registration gap is what produced the Track 1 bug in the first place. A checklist makes the gap visible without reversing the policy.
+
+## 2026-04-28 — Track 1 followup: rewrite hook scripts for Stop-event compatibility (mid-plan scope decision)
+
+**Context.** Track 1 of the 2026-04-28 plan moved `coach-reminder.sh` and `improve-reminder.sh` registrations from `PostToolUse[Write|Edit]` to `Stop` in `ai-resources/.claude/settings.json`. While reading the script bodies during plan execution (to add Track 3 #6 header comments), discovered both scripts read `tool_input.file_path` from stdin JSON — a field present in PostToolUse events but not in Stop. Under Stop they would have exited silently at the file_path check. The Track 1 settings move alone was a half-fix.
+
+**Decision.** Rewrite both script bodies to be Stop-compatible, in-scope as a Track 1 followup commit. Coach drops the `tool_input.file_path` read entirely; relies on its existing session-count-vs-last-coach-run logic (which is intent-aligned with Stop). Improve replaces the file_path check with a `git status --porcelain` scan against the artifact-dir regex `^(approved|output|report/chapters|final/modules)/`, which is the Stop-appropriate trigger for "did this session produce significant artifacts."
+
+**Rationale.**
+- Operator-directed: explicitly chose "Option 2 — finish the job" over leaving the registration in `Stop` while keeping the PostToolUse-shaped script bodies. Half-fix would have produced silent no-ops on every Stop firing, which is worse than the original misregistration (at least the misregistration was visible as nuisance Write/Edit nudges).
+- Discovered during execution, not in plan — but the rewrite is conservative: drops a check, replaces another with an equivalently-purposeful one. No new behaviors, no new dependencies. Documenting the mid-plan scope expansion explicitly so future readers understand why two Track 1 commits exist instead of one.
+
+**Alternatives considered.**
+- **Land Track 1 settings move as-is and log the script rewrite to improvement-log:** rejected because the registration would silently no-op until the script rewrite landed — a regression from the buggy-but-firing PostToolUse state. Worse outcome than no fix.
+- **Revert Track 1 entirely until script bodies were rewritten:** rejected; the rewrite was small (~10 lines per script) and operator-confirmable in the same session.
