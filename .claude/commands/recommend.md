@@ -4,13 +4,19 @@ model: sonnet
 
 The operator is telling you to proceed using your own judgment rather than waiting for their answers. Apply this procedure:
 
-1. **Answer your own questions.** For each clarifying question you asked (or each open decision you surfaced in your previous turn), state the answer the operator would most likely give — reasoned from the stated goal, conversation context, prior session decisions, project CLAUDE.md, and operator preferences in memory. Be specific; do not hedge.
+1. **Verify trigger condition.** Scan recent turns for clarifying questions, assumption lists, or open decisions you surfaced. If the last relevant turn was instead a slate of proposals or suggestions, stop and ask the operator:
 
-2. **Confirm or revise assumptions.** Restate each assumption from your previous turn, marking it as kept or revised. If revised, state the replacement.
+   > *"I don't see open questions to resolve. Did you mean `/triage` (independently prioritize the suggestions I just made)?"*
 
-3. **State the final operating premise.** One short paragraph: "Based on the above, I will proceed as follows…" — name the work, the sequence, and anything you are explicitly skipping. This is the operator's last chance to interject before execution begins.
+   Wait for direction. Do not pick one of the proposals and execute.
 
-4. **Execute.** Run the work. As each material defaulted decision comes up during execution, announce it in chat so the operator can still course-correct mid-flight.
+2. **Answer your own questions.** For each clarifying question you asked (or each open decision you surfaced in your previous turn), state the answer the operator would most likely give — reasoned from the stated goal, conversation context, prior session decisions, project CLAUDE.md, and operator preferences in memory. Be specific; do not hedge.
+
+3. **Confirm or revise assumptions.** Restate each assumption from your previous turn, marking it as kept or revised. If revised, state the replacement.
+
+4. **State the final operating premise.** One short paragraph: "Based on the above, I will proceed as follows…" — name the work, the sequence, and anything you are explicitly skipping. This is the operator's last chance to interject before execution begins.
+
+5. **Execute.** Run the work. As each material defaulted decision comes up during execution, announce it in chat so the operator can still course-correct mid-flight.
 
 **Guardrails**
 
