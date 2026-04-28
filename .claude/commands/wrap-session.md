@@ -10,6 +10,8 @@ Wrap the current session. The operator's wrap-up context follows this prompt: $A
 
 0. As your first action, run `touch /tmp/claude-wrap-session-done` via Bash. This suppresses the session-end hook's "Session ended without /wrap-session" auto-append while this command runs, preventing a file-modification race on `logs/session-notes.md`. The hook deletes the lockfile after reading it, so no cleanup is needed.
 
+**Cost budget.** A typical wrap is ~10–15 tool calls. If you're past 25 tool calls with the wrap not yet committed, stop and ask the operator whether to abort the rest. This catches investigation rabbit-holes, redundant Reads, and ceremony-without-purpose firings before they compound. Self-check your running tool-call count at each step boundary; do not run a separate counter — just notice when you've crossed the threshold.
+
 **Preflight — operator preferences.** Before doing anything else, ask the operator in a single prompt and **wait for the answer**:
 
 > Wrap-session preflight — run these optional passes?
@@ -20,7 +22,7 @@ Accept shorthand: "yy" / "yes both" / "both" = both yes; "nn" / "skip both" = bo
 
 1. Read `/logs/session-notes.md` (last 5 lines only — to find the append point). If the file doesn't exist, create it with `# Session Notes` as the header. **Format guard:** If the file exists but has no `# Session Notes` header, prepend it. If the last non-empty line is a partial block (unclosed heading, unterminated list), append a blank line before the new entry.
 2. Read `/logs/decisions.md` (last 5 lines only — to find the append point). If the file doesn't exist, create it with `# Decision Journal` as the header.
-3. Using conversation context and the operator's summary, append a session note to `/logs/session-notes.md` with:
+3. Append a session note at the **END** of `/logs/session-notes.md` (newest entry is the LAST entry; do NOT prepend at the top — `check-archive.sh` interprets top entries as oldest and will archive them). Use conversation context and the operator's summary to populate:
    - `## {date} — {one-line title}` (e.g., "Created supplementary-query-brief-drafter skill")
    - `### Summary` — 2-4 sentences: what was accomplished, what was the focus
    - `### Files Created` — list from conversation context (path + short description)
@@ -59,59 +61,9 @@ Accept shorthand: "yy" / "yes both" / "both" = both yes; "nn" / "skip both" = bo
 
 12. **Session telemetry.** If the operator declined telemetry in the preflight, skip this step with a one-line note in chat ("Telemetry skipped per preflight") and proceed to the commit step. Otherwise, run the usage analysis inline before committing. Execute the full `/usage-analysis` flow (build session summary, read existing `logs/usage-log.md` if it exists, delegate to the `session-usage-analyzer` subagent per `ai-resources/skills/session-usage-analyzer/SKILL.md`, write the returned entry to the log). For trivial sessions (single-file edit, one-question read, aborted session), skip with a one-line note in chat ("Telemetry skipped — trivial session") and proceed. Rationale: R14 telemetry baseline depends on consistent capture; inlining the analysis prevents the common failure mode where the operator forgets to invoke it post-wrap and the session drops out of the record.
 
-12a. **Working-tree dirt check.** Run the scoped, age-filtered scan below. If it produces no output, skip this step.
-
-    ```bash
-    session_dir="${CLAUDE_PROJECT_DIR:-$PWD}"
-    git_root=$(git -C "$session_dir" rev-parse --show-toplevel 2>/dev/null) || { echo "Not in a git repo; skipping dirt check"; exit 0; }
-    rel=$(python3 -c "import os.path,sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))" "$session_dir" "$git_root")
-    threshold=$(date -v-24H +%s)
-    if [ "$rel" = "." ]; then
-      git -C "$git_root" status --porcelain
-    else
-      git -C "$git_root" status --porcelain -- "$rel"
-    fi | while IFS= read -r line; do
-      dirty_path="${line:3}"
-      full="$git_root/$dirty_path"
-      if [ -e "$full" ]; then
-        mtime=$(stat -f "%m" "$full" 2>/dev/null || echo 0)
-        [ "$mtime" -ge "$threshold" ] && continue
-        date_str=$(stat -f "%Sm" -t "%Y-%m-%d" "$full")
-      else
-        date_str="deleted"
-      fi
-      echo "$line | $date_str"
-    done
-    ```
-
-    **zsh gotcha:** Do NOT rename `dirty_path` to `path` — `path` is a tied parameter in zsh that mirrors `PATH`. Assigning a string to `path` clobbers the executable search path and `stat` becomes unreachable. The harness runs Bash-tool commands via zsh, so this matters.
-
-    **Platform note:** `stat -f`, `date -v-24H`, and `python3 -c relpath` are macOS-only (Darwin by design). Linux substitutes: `stat -c "%Y"`, `date -d "24 hours ago" +%s`, `realpath --relative-to`.
-
-    **Scoping:** `git -C "$git_root" status --porcelain -- "$rel"` bounds the listing to the session's project directory. When the session lives in a project without its own `.git/` (tracked by the workspace-root repo), this prevents sibling-project dirt from appearing.
-
-    **Staleness filter:** Uses working-tree file mtime. Paths whose mtime is within the last 24 hours are skipped (in-progress; leave for a future wrap or `/cleanup-worktree`). Deleted paths always surface. Known edge case: a file modified >24h ago and then `git add`-ed recently will appear — this is intentional, as it is exactly the "stale staged but uncommitted" class Step 12a was added to catch.
-
-    Otherwise (output present), compare each dirty path against the session note's `Files Created` and `Files Modified` lists. For any dirty path NOT in those lists, present once:
-
-    > Working tree has stale dirty paths (>24h old) not produced this session:
-    > - {path} ({modified|untracked|deleted}, mtime: {YYYY-MM-DD})
-    > - ...
-    >
-    > Disposition each (one letter per path, in order): (c)ommit with this session, (d)efer as WIP, (i)gnore?
-
-    Apply per-path decisions:
-    - **c (commit)** — stage the path explicitly so it lands in the wrap commit; add the path to the session note's `### Files Modified` list (Edit on the note file).
-    - **d (defer as WIP)** — leave the path dirty; append `- WIP: {path} (deferred {YYYY-MM-DD})` to the session note's `### Open Questions` section so it surfaces next session.
-    - **i (ignore)** — leave the path dirty; do not modify the note. Count these for the end-of-turn summary.
-
-    If any paths were ignored, include in your end-of-turn wrap summary: "{N} dirty path(s) deferred without disposition. Consider `/cleanup-worktree` next session." Skip silently if zero ignored.
-
-    Rationale: catches stale uncommitted work that survives across sessions (the 2026-04-24 failure class) without flagging in-progress files from the current work day or dirty paths in sibling projects.
-
 12b. **End-time `/risk-check` gate.** If the session touched any structural change class (hook edits, permission changes, cross-cutting CLAUDE.md edits, new commands or skills, new symlinks, automation with shared-state effects — full list: `ai-resources/docs/audit-discipline.md` § Risk-check change classes), run `/risk-check` once now with `$ARGUMENTS` describing the executed change set across all touched files. Apply paired mitigations before commit if the verdict is PROCEED-WITH-CAUTION; redesign before commit if RECONSIDER. Skip silently if the session touched no class. Rationale: tactile prompt for the end-time gate at the natural session boundary, so the two-gate model doesn't rely solely on operator memory.
 
-After updating logs, writing the telemetry entry, and processing the dirt check, stage and commit changes. **Stage by explicit file paths**, not directory wildcards — directory-level `git add` silently sweeps uncommitted files from concurrent sessions. Enumerate from the Files Created / Files Modified sections just written to the session note, plus always-present wrap-touched files:
+After updating logs and writing the telemetry entry, stage and commit changes. **Stage by explicit file paths**, not directory wildcards — directory-level `git add` silently sweeps uncommitted files from concurrent sessions. Enumerate from the Files Created / Files Modified sections just written to the session note, plus always-present wrap-touched files:
 - Always-staged (if modified this session): `logs/session-notes.md`, `logs/decisions.md`, `logs/coaching-data.md`, `logs/improvement-log.md`, `logs/improvement-log-archive.md`, `logs/innovation-registry.md`, `logs/usage-log.md`
 - Session-specific: every path listed in Files Created / Files Modified for this session, staged by explicit name
 

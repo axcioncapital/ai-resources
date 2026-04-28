@@ -37,6 +37,15 @@ for entry in "${ENTRIES[@]}"; do
     fi
 
     if [ "$LINES" -gt "$THRESHOLD" ]; then
+        # Date-guard: refuse to archive when the first dated entry is today's.
+        # Protects against silent-clobber when a writer prepends today's entry at the top
+        # of a bottom-ordered file and split-log.sh would then archive it as the "oldest".
+        TODAY="$(date +%Y-%m-%d)"
+        FIRST_DATED=$(grep -m1 "^## [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]" "$PATH_FULL" | awk '{print $2}')
+        if [ "$FIRST_DATED" = "$TODAY" ]; then
+            echo "Skipped archive of $FILE — first dated entry is today's ($TODAY); refusing to archive a fresh write."
+            continue
+        fi
         if ! bash "$SPLIT" "$PATH_FULL" "$KEEP" "$ORDER"; then
             echo "ARCHIVE FAILED for $FILE"
             FAILED=1

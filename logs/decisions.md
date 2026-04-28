@@ -255,3 +255,23 @@ The "no-op acceptable" mitigation from the report is a valid disposition under t
 **Alternatives considered.**
 - **Land Track 1 settings move as-is and log the script rewrite to improvement-log:** rejected because the registration would silently no-op until the script rewrite landed — a regression from the buggy-but-firing PostToolUse state. Worse outcome than no fix.
 - **Revert Track 1 entirely until script bodies were rewritten:** rejected; the rewrite was small (~10 lines per script) and operator-confirmable in the same session.
+
+## 2026-04-28 — End-time `/risk-check` skip rule extension
+
+**Context.** The 2026-04-27 entry above ("End-time `/risk-check` skipped when plan-time verdict is GO with zero execution drift") established a narrow skip rule: plan-time GO + zero drift. The 2026-04-28 wrap-session post-mortem identified a second class where end-time `/risk-check` adds no value: the plan-time verdict was PROCEED-WITH-CAUTION with mitigations applied AND the structural commits were already in the working tree's history. The end-time gate's "before commit" framing has nothing left to gate in that case.
+
+**Decision — Extend the skip rule.** End-time `/risk-check` may also skip when ALL of the following hold:
+
+1. Plan-time `/risk-check` returned GO or PROCEED-WITH-CAUTION with all paired mitigations applied (cite their commits in the wrap note).
+2. Executed-set drift from plan is bounded and conservative — drops a check, mechanical rewrite, no new files / new commands / new permissions / new hooks.
+3. Structural commits are already in the working tree's history (gate is informational, not blocking).
+
+When the extension is invoked, document one line in the wrap session note:
+
+> "End-time /risk-check skipped — plan-time covered, mitigations applied (commits X, Y), execution drift bounded."
+
+**Rationale.** End-time `/risk-check` exists to catch (a) design risk the plan-time gate missed, and (b) execution drift from the approved design. Once mitigations from a PROCEED-WITH-CAUTION plan-time verdict are committed and drift is bounded-and-conservative, both signals are absent — firing the subagent burns ~5–10× the rest of a wrap's tokens for no additional safety margin. Without the extension, the gate fails for the non-obvious reason that "all structural changes are already shipped" was never a recognized skip condition.
+
+**Alternatives considered.**
+- *Treat the extension as judgment-only, no codification.* Rejected: future sessions would either over-fire (waste tokens) or under-fire (skip without justification) since the principle isn't written down.
+- *Make the extension condition more permissive (drop the "mitigations applied" clause).* Rejected: that would let PROCEED-WITH-CAUTION verdicts skip end-time even when the operator hadn't applied the mitigations, defeating the gate's purpose.

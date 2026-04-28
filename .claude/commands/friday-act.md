@@ -218,7 +218,7 @@ Input: `$ARGUMENTS` (optional) — explicit path to a `friday-checkup-YYYY-MM-DD
     Suggested next: /wrap-session
     ```
 
-29. **Do NOT commit.** Fixes executed in Step 3 follow standard commit-directly rules (each fix's commit happens at execution time per workspace `Commit behavior`). The `maintenance-observations.md` append lands unstaged; the operator commits it at `/wrap-session` (Step 12a dirt check will surface it for explicit disposition).
+29. **Do NOT commit.** Fixes executed in Step 3 follow standard commit-directly rules (each fix's commit happens at execution time per workspace `Commit behavior`). The `maintenance-observations.md` append lands unstaged; the operator stages and commits it manually at session wrap (or invokes `/cleanup-worktree` if it accumulates).
 
 ---
 
