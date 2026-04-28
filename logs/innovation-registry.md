@@ -89,3 +89,7 @@
 | 2026-04-27 | command | workflows/research-workflow/.claude/commands/run-cluster.md | triaged:graduate | — (already canonical in ai-resources/workflows/research-workflow/) |
 | 2026-04-27 | command | .claude/commands/innovation-sweep.md | triaged:graduate | ai-resources/.claude/commands/innovation-sweep.md (already canonical — created directly in ai-resources) |
 | 2026-04-27 | agent | .claude/agents/innovation-triage-auditor.md | triaged:graduate | ai-resources/.claude/agents/innovation-triage-auditor.md (already canonical — created directly in ai-resources, paired with /innovation-sweep) |
+| 2026-04-28 | agent | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/buy-side-service-plan/.claude/agents/qc-reviewer-buy-side.md | triaged:project-specific | — (buy-side-only QC reviewer; rename of local fork) |
+| 2026-04-28 | command | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/buy-side-service-plan/.claude/commands/compile-wiki.md | triaged:project-specific | — (buy-side wiki/SCHEMA.md only) |
+| 2026-04-28 | command | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/buy-side-service-plan/.claude/commands/content-review.md | triaged:project-specific | — (paired with qc-reviewer-buy-side) |
+| 2026-04-28 | command | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/buy-side-service-plan/.claude/commands/friction-log.md | triaged:project-specific | — (buy-side variant) |

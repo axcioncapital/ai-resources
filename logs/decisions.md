@@ -214,3 +214,15 @@ The "no-op acceptable" mitigation from the report is a valid disposition under t
 **Alternatives considered:**
 - Apply the auditor fix this session (option b in the recommendation): rejected; harness-level agent edit per Autonomy Rule #9 should run through `/risk-check`, which is its own ceremony separate from `/permission-sweep`.
 - Leave only in the audit report, not in `improvement-log.md` (option c): rejected; the audit report alone is not a durable backlog tracker, and `/resolve-improvements` only consumes `improvement-log.md`.
+
+## 2026-04-27 — Smoke-test deferral on buy-side wrap-session symlink
+
+**Context.** Plan-time `/risk-check` on replacing `projects/buy-side-service-plan/.claude/commands/wrap-session.md` with a symlink to ai-resources canonical returned PROCEED-WITH-CAUTION (blast radius Medium, hidden coupling Medium). One mitigation called for a smoke-test of the new wrap-session against the buy-side project's settings hooks before landing — to catch any divergence between the canonical version's logic (dirt-check, archive, telemetry) and the buy-side directory layout.
+
+**Decision.** Apply the symlink without a synthesized smoke-test; defer the live exercise to the next /wrap-session run inside the buy-side project. Note as an Open Question and as a revert-target if Steps 12a/12b/11 fail there.
+
+**Rationale.** Wrapping the current ai-resources session does not exercise the buy-side path. The realistic smoke-test is the operator running `/wrap-session` from inside the buy-side project; a synthetic test from outside would not flush out hook-interaction or archive-script behavior. The blast radius is one project, the rollback is a single-line symlink revert, and the buy-side wrap is the natural next-touch point.
+
+**Alternatives considered:**
+- Block landing on a hand-built smoke-test now: rejected; the only realistic test is the next live wrap inside buy-side, and forcing a synthetic one delays low-cost work without producing the signal that matters.
+- Re-run `/risk-check` to argue down the verdict: rejected; the verdict is correct, the mitigation list captures the right safety surface — defer-and-watch is itself the right shape of mitigation here.

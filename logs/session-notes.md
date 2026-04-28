@@ -2,6 +2,50 @@
 
 > Archive: [session-notes-archive-2026-04.md](session-notes-archive-2026-04.md)
 
+## 2026-04-27 — Innovation sweep on buy-side-service-plan project
+
+### Summary
+
+Targeted execution of 6 fixes from the 2026-04-27 innovation-sweep report on `projects/buy-side-service-plan/.claude/`. Operator selected the high-value subset (1–6) and explicitly deferred all 12 remaining sweep items. Work covered: name-collision rename of the project's local QC reviewer (avoids shadowing canonical `qc-reviewer`), missing-frontmatter fix on `friction-log.md` (silent-Sonnet-downgrade hazard), and four canonical-symlink replacements of stale forks (`prime.md`, `audit-repo.md`, `wrap-session.md`, `improve.md`, plus paired `improvement-analyst.md`). Plan-time `/risk-check` returned PROCEED-WITH-CAUTION; mitigations applied (manifest reconciliation, smoke-test deferred to this wrap as live exercise). Two commits landed: `82de07c` in the buy-side project repo, `4214b71` in ai-resources for the risk-check report.
+
+### Files Created
+
+- `audits/risk-checks/2026-04-27-replace-3-stale-project-files-with-symlinks-buy-side.md` — plan-time risk-check report for the symlink batch (verdict PROCEED-WITH-CAUTION; blast radius Medium, hidden coupling Medium)
+
+### Files Modified
+
+In `projects/buy-side-service-plan/.claude/` (committed in buy-side project repo `82de07c`):
+- `agents/qc-reviewer-buy-side.md` — renamed from `qc-reviewer.md`; `name:` field updated to `qc-reviewer-buy-side`
+- `commands/compile-wiki.md` — subagent reference updated to `qc-reviewer-buy-side`
+- `commands/content-review.md` — agent file reference updated to `qc-reviewer-buy-side.md`
+- `commands/friction-log.md` — added `model: sonnet` frontmatter (was missing entirely)
+- `commands/prime.md` — replaced with relative symlink to ai-resources canonical
+- `commands/audit-repo.md` — replaced with relative symlink to ai-resources canonical
+- `commands/wrap-session.md` — replaced with relative symlink to ai-resources canonical
+- `commands/improve.md` — replaced with relative symlink to ai-resources canonical
+- `agents/improvement-analyst.md` — replaced with relative symlink to ai-resources canonical
+- `shared-manifest.json` — moved 4 commands from `local` to `shared`, moved improvement-analyst from `local` to `shared`, added qc-reviewer-buy-side to `local` agents
+
+In `ai-resources/`:
+- `logs/innovation-registry.md` — 4 cross-project `detected` entries appended by the detect-innovation hook for the buy-side touches; triaged in Step 7 below
+- `logs/session-notes.md` — this entry
+
+### Decisions Made
+
+- **Scope: fix items 1–6 only; ignore the other 12 sweep items.** Operator-directed scoping decision. Selected fixes are either name-collisions, silent model downgrades, or canonical-symlink reunifications — all carry concrete maintenance cost if left. Remaining items are `detect-innovation` registry entries for prior-session work, lower-value forks, or project-specific scaffolding worth keeping local.
+- **Plan-time `/risk-check` covered items 4 + 5 (symlinks for `wrap-session.md`, `improve.md`, `improvement-analyst.md`).** Verdict PROCEED-WITH-CAUTION. Items 3 and 6 (`prime.md`, `audit-repo.md`) reused the same symlink shape as ~30 existing buy-side symlinks; not re-gated.
+- **Smoke-test deferred to this wrap-session run.** Mitigation called for an exercise of the new wrap-session symlink against the buy-side project's settings hooks. Wrapping THIS session in ai-resources doesn't exercise the buy-side path, so the smoke-test remains pending until the next /wrap-session run inside the buy-side project. Noted as Open Question.
+
+### Next Steps
+
+- Push approval pending: `projects/buy-side-service-plan` commit `82de07c`; `ai-resources` commits `4214b71` (risk-check) plus this wrap commit.
+- At next /wrap-session inside `projects/buy-side-service-plan`, watch Step 12a (dirt check), Step 12b (end-time risk-check), Step 11 (archive). If any fails, revert just `projects/buy-side-service-plan/.claude/commands/wrap-session.md` symlink.
+- The 12 deferred sweep items remain triaged in `audits/innovation-sweep-buy-side-service-plan-2026-04-27.md` for later passes.
+
+### Open Questions
+
+- Wrap-session symlink smoke-test on the buy-side project is still pending — exercise on first wrap inside that project.
+
 ## 2026-04-25 — Commission Batch 3+4: Friday cadence durability + maintenance ledger aging
 
 ### Summary
