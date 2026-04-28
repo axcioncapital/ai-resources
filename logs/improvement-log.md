@@ -78,3 +78,27 @@ Suggested three-session sequence:
   - Apply via `/risk-check` per Autonomy Rules pause-trigger #9 (agent-definition edit is a harness-level structural change). Confirm no regression on the 2 currently-scanned files before landing.
 - **Target files:**
   - `ai-resources/.claude/agents/permission-sweep-auditor.md`
+
+### 2026-04-28 — Stop[hook 0] checkpoint-recency: design generic version
+
+- **Status:** logged (pending)
+- **Category:** command/skill
+- **Source:** 2026-04-27 innovation-sweep audit (`ai-resources/audits/innovation-sweep-buy-side-service-plan-2026-04-27.md` § Findings #14). Buy-side `.claude/settings.json` Stop[hook 0] runs `find -mmin -120` against `*/checkpoints/*checkpoint*` and emits a "no checkpoint written this session" warning if none is found. Pattern is reusable but the path glob is project-pipeline-specific.
+- **Disposition (2026-04-28 plan):** defer as graduate-candidate. Pattern is reusable; not urgent.
+- **Proposal:** factor out a generic Stop hook `check-checkpoint-recency.sh` under `ai-resources/.claude/hooks/` that takes the path glob as an env var (e.g., `CHECKPOINT_GLOB`) so projects with different artifact path conventions can configure it. Buy-side becomes a 1-line settings.json env override.
+- **Target files (when executed):**
+  - `ai-resources/.claude/hooks/check-checkpoint-recency.sh` (new)
+  - `ai-resources/.claude/settings.json` Stop block (registration)
+  - `projects/buy-side-service-plan/.claude/settings.json` Stop block (env var override)
+
+### 2026-04-28 — Extract challenge.md pattern as generic /critique-draft
+
+- **Status:** logged (pending)
+- **Category:** command/skill
+- **Source:** 2026-04-27 innovation-sweep audit (#1 of 16 loose ends). Buy-side `.claude/commands/challenge.md` invokes the project's strategic-critic agent on a draft and routes the verdict (ROBUST / CHALLENGED / EXPOSED) through the QC → Triage auto-loop. Audit said "registry says triaged:project-specific; classifier agrees but strategic-critic wrapper might generalize."
+- **Disposition (2026-04-28 plan):** "Extract pattern" — but the actual extract requires designing a generic strategic-critic agent (or accepting an agent name as input) which doesn't exist yet. Logged here for a future dedicated session rather than executed inline.
+- **Proposal:** design a generic `/critique-draft` command in `ai-resources/.claude/commands/` that takes (a) a draft file path and (b) an agent name. The command runs the agent on the draft, surfaces the verdict, and routes through QC → Triage based on the verdict's severity tier. The buy-side `challenge.md` then becomes a thin wrapper specifying its strategic-critic agent + verdict-mapping.
+- **Target files (when executed):**
+  - `ai-resources/.claude/commands/critique-draft.md` (new)
+  - Possibly a generic `ai-resources/.claude/agents/strategic-critic.md` if the verdict format is to be standardized
+  - `projects/buy-side-service-plan/.claude/commands/challenge.md` (refactor as wrapper)
