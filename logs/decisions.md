@@ -275,3 +275,45 @@ When the extension is invoked, document one line in the wrap session note:
 **Alternatives considered.**
 - *Treat the extension as judgment-only, no codification.* Rejected: future sessions would either over-fire (waste tokens) or under-fire (skip without justification) since the principle isn't written down.
 - *Make the extension condition more permissive (drop the "mitigations applied" clause).* Rejected: that would let PROCEED-WITH-CAUTION verdicts skip end-time even when the operator hadn't applied the mitigations, defeating the gate's purpose.
+
+---
+
+## 2026-04-28 — `/context-builder`: Path B (dedicated QC infrastructure) over Path A (reuse generic qc-reviewer)
+
+**Context.** New command `/context-builder` needed for Stage 1 of the project-planning pipeline (turn raw operator notes into a validated context pack ready for `/plan-draft`). Two implementation paths surfaced.
+
+**Decision.** Path B — build dedicated `context-evaluator` agent + `ref-context-pack.md` reference doc, mirroring the `plan-evaluator`/`spec-evaluator` + `ref-project-plan.md`/`ref-tech-spec.md` pattern already in place.
+
+**Rationale.** Operator's exact words: *"Context pack is a potential failure point downstream so I need to be sure that it is done properly."* A flawed context pack cascades — `/plan-draft` produces a flawed plan, `/spec-draft` extends the flaw, `/new-project` builds on broken foundations. Rigor proportional to downstream impact requires the same QC pattern as every artifact downstream of it.
+
+**Alternatives considered.**
+- *Path A — reuse generic `qc-reviewer` and the existing `context-pack-builder` skill.* Rejected: generic QC has no awareness of context-pack-specific quality dimensions (epistemic discipline, Fresh Claude Test). The same gap that motivated dedicated `plan-evaluator` and `spec-evaluator` motivates dedicated `context-evaluator`.
+- *Hybrid — generic `qc-reviewer` with a context-pack-specific rubric file.* Rejected: rubric injection is a leakier abstraction than a dedicated agent. The agent is the rubric.
+
+---
+
+## 2026-04-28 — `/context-builder`: preserve canonical `context-pack.md` alias at finalization
+
+**Context.** `/new-project` Stage 1 First Run discovers context packs at `output/{project-name}/context-pack.md` (bare canonical filename — `new-project.md` line 68: `[ -f "$SRC/context-pack.md" ]`). Plans and specs are auto-discovered via `sort -V` on versioned filenames; context packs are not. This pre-existing asymmetry is the question: do we drop the alias and refactor `/new-project` to auto-discover context packs too, or do we keep the alias and live with the asymmetry?
+
+**Decision.** Keep the alias. `/context-builder` Step 9 copies the latest version to `context-pack.md` after operator approval. Versioned files (`context-pack-v{n}.md`) remain in place as the audit trail.
+
+**Rationale.** Aligning all three artifact types (auto-discovery for context packs too) is a separate, cleaner refactor — it would require modifying `/new-project`'s discovery logic and validating that no other consumer depends on the bare canonical filename. Out of scope for the current task. Honoring the existing convention now keeps `/new-project` working without modification.
+
+**Alternatives considered.**
+- *Drop the alias and refactor `/new-project` to auto-discover.* Rejected as out-of-scope; clean refactor for a future session.
+- *Skip the alias and force operator to manually copy the version file.* Rejected: undermines the "approved artifact ready for downstream" guarantee.
+
+---
+
+## 2026-04-28 — `/context-builder`: gate-loop semantics replace workspace auto-loop two-pass cap
+
+**Context.** Workspace CLAUDE.md defines a `QC → Triage Auto-Loop` that runs up to two automatic post-edit QC passes. `/context-builder`'s Step 7 review gate is operator-controlled. Conflict: should the QC pass at Step 8 follow the auto-loop's two-pass behavior, or should each operator selection of "QC pass" trigger exactly one round-trip?
+
+**Decision.** Each operator selection of "QC pass" at Step 7 = exactly one round-trip (one parallel-subagent invocation, optional triage if findings exist, one fix-and-write to v{n+1}). Operator can re-select "QC pass" multiple times via the gate to iterate. Soft ceiling: after 3 selections in a single invocation, emit advisory note ("if not converging, the issue may be structural — consider Approve-with-known-gaps or restart").
+
+**Rationale.** Operator explicitly requested a "force review step" in the original brief. Gate-controlled iteration honors that — the human gate is the loop control, not an automatic pass count. The auto-loop's two-pass cap exists precisely to prevent runaway iteration without operator visibility; the gate replaces that safeguard with direct operator control, which is stronger.
+
+**Alternatives considered.**
+- *Apply the workspace auto-loop verbatim (two automatic passes after each "QC pass" selection).* Rejected: defeats the explicit "force review step" the operator asked for. Two opaque passes per gate selection is worse, not better, than one transparent pass per selection.
+- *No iteration cap.* Rejected: 3-selection soft advisory protects against artifacts that aren't converging structurally.

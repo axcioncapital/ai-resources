@@ -441,3 +441,58 @@ Operator AI-journal review surfaced session-cost concerns. Bundled 10 changes ac
 ### Open Questions
 
 - None.
+
+## 2026-04-28 — Created /context-builder slash command (Stage 1 of project-planning pipeline)
+
+### Summary
+
+Built the missing first step of the `projects/project-planning/` pipeline: a `/context-builder` command that turns raw operator notes into a validated context pack ready for `/plan-draft`. Implemented Path B (dedicated QC infrastructure mirroring `plan-evaluator`/`spec-evaluator`) — operator chose the heavier path because a bad context pack cascades through every downstream stage. Three artifacts created in the project-planning repo, one CLAUDE.md update, three commits shipped.
+
+### Files Created
+
+- `projects/project-planning/pipeline/ref-context-pack.md` — quality-bar reference for context packs (mirrors `ref-project-plan.md`); 11 required elements with "What good looks like" examples; two cross-cutting quality dimensions (Epistemic Discipline, Fresh Claude Test); PASS/FAIL criteria
+- `projects/project-planning/.claude/agents/context-evaluator.md` — context-isolated QC evaluator (frontmatter `model: claude-opus-4-7`, tools Read/Glob/Grep); element-by-element table with Present/Sufficient/Coherent columns; CRITICAL/MAJOR/MINOR severity
+- `projects/project-planning/.claude/commands/context-builder.md` — orchestrator command (no frontmatter, inherits Opus from workspace settings); 9 steps with 3 explicit pause gates; arguments `[raw-notes-path] [--output {dir}]` for default-mode + standalone-mode
+
+### Files Modified
+
+- `projects/project-planning/CLAUDE.md` — added `/context-builder` row at top of commands table; updated How It Works step 1 (preserved "any source" semantics, added `/context-builder` as first-class option); added `pipeline/ref-context-pack.md` to Reference Documents
+- `ai-resources/logs/innovation-registry.md` — two `detected` entries triaged below (this wrap)
+
+### Decisions Made
+
+**Architecture / scoping**
+- Path B over Path A — operator stated context pack is downstream failure point; rigor proportional to impact (also logged to decisions journal)
+- Canonical alias `context-pack.md` preserved at finalization — `/new-project` line 68 requires bare filename for context packs (asymmetry with plans/specs that auto-discover via `sort -V`); deliberate scope-out of cleanup refactor (also logged)
+- Gate-loop semantics replace workspace auto-loop two-pass cap — each operator "QC pass" selection = exactly one round-trip; soft ceiling at 3 selections with advisory (also logged)
+- No frontmatter on new command — matches `/plan-*` sibling pattern; Opus inherited from workspace `.claude/settings.local.json`
+
+**QC / refinement adjustments (operator-directed via QC → triage → refinement)**
+- Plan corrected from "9 elements" to "11 elements" (Constraints + Quality Criteria are separate sections in SKILL.md)
+- Step 8c clean-pass: explicit "no v{n+1} written" — filesystem is source of truth for current version
+- Step 7 option 2 reworded — "v{n+1} if changes were made, v{n} if QC was clean"
+- `{output-dir}` placeholder bound explicitly in Step 6 for both default and standalone modes
+- Step 4 question ceiling fixed (was "10–15", now "up to 15")
+- Step 5 standalone-mode fallback rewritten (no longer references nonexistent subdirectory)
+
+**Late addition**
+- Notes section in `/context-builder` mentions `/challenge` (project-scoped to `buy-side-service-plan/`) and "any other project-specific analytical pass" as supplementary lenses on context-pack drafts before approval (operator's explicit request)
+
+### Innovation triage (this session)
+
+- `projects/project-planning/.claude/agents/context-evaluator.md` → **triaged:project-specific** — workspace-scoped, paired with project-planning's pipeline (mirrors `plan-evaluator` and `spec-evaluator` which are also project-specific)
+- `projects/project-planning/.claude/commands/context-builder.md` → **triaged:project-specific** — workspace-scoped, only sensible inside project-planning's pipeline
+
+### End-time `/risk-check` — skipped with justification
+
+Triggered classes: new commands, new agents. Skipped because: (a) scope confined to `projects/project-planning/` workspace (no cross-cutting impact); (b) mirrors approved sibling patterns (`plan-evaluator`, `spec-evaluator`); (c) artifacts ran through `/qc-pass` + `/triage` + `/refinement-pass` during creation (functionally equivalent to plan-time risk-check on the design); (d) all commits shipped (5434e19, ce4702d, f9ef609); (e) no hooks, permission changes, symlinks, or shared-state automation; (f) drift bounded — refinement-pass produced minor textual adjustments only. Memory rule "skip when commits already shipped AND drift bounded" applies.
+
+### Next Steps
+
+- End-to-end verification test (deferred): run `/context-builder` against deliberately vague notes; exercise all three pause gates and the QC pass; verify canonical `context-pack.md` produced; verify `/plan-draft` accepts it (Plan §Implementation order step 5)
+- Push 3 commits in project-planning repo: `5434e19`, `ce4702d`, `f9ef609` (operator confirmation per Autonomy Rule #2). Plus this wrap commit in ai-resources.
+- Consider whether to mirror `/context-evaluate` and `/context-refine` as standalone re-runnable commands (deferred per plan; only worth building if standalone QC re-runs become a recurring need)
+
+### Open Questions
+
+- None.

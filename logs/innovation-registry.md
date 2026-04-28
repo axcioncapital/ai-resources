@@ -93,3 +93,5 @@
 | 2026-04-28 | command | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/buy-side-service-plan/.claude/commands/compile-wiki.md | triaged:project-specific | — (buy-side wiki/SCHEMA.md only) |
 | 2026-04-28 | command | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/buy-side-service-plan/.claude/commands/content-review.md | triaged:project-specific | — (paired with qc-reviewer-buy-side) |
 | 2026-04-28 | command | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/buy-side-service-plan/.claude/commands/friction-log.md | triaged:project-specific | — (buy-side variant) |
+| 2026-04-28 | agent | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/project-planning/.claude/agents/context-evaluator.md | triaged:project-specific | — (paired with project-planning's pipeline; mirrors plan-evaluator/spec-evaluator pattern) |
+| 2026-04-28 | command | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/project-planning/.claude/commands/context-builder.md | triaged:project-specific | — (Stage 1 of project-planning pipeline; only sensible inside that workspace) |
