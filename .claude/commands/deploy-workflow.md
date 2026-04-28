@@ -121,7 +121,35 @@ Hooks require corresponding entries in `.claude/settings.json` to be active. The
 
 > "Hook {name} was copied but has no entry in `.claude/settings.json`. It will not fire until registered. Add it manually or run `/sync-workflow` after deployment."
 
-Do NOT auto-modify `settings.json` — hook registration requires knowing the matcher, event type, and timeout, which varies per hook.
+Do NOT auto-modify `settings.json` — hook registration requires knowing the matcher, event type, and timeout, which varies per hook. To make the gap visible, emit the canonical hook-registration checklist below so the operator can copy the right entries into the deployed project's `settings.json`.
+
+> **Append-only side effect.** Some hooks append entries to `<project>/logs/friction-log.md` and `logs/improvement-log.md` when they fire. Reverting the hook scripts leaves prior log entries in deployed projects — manual cleanup required per project.
+
+#### Canonical hook-registration checklist
+
+Generated dynamically from `ai-resources/.claude/settings.json` so the list stays in sync with the source of truth. Run after the hooks-copy step (Step 4 enrichment logic) and before reporting "Project ready".
+
+```bash
+AI_SETTINGS="$AI_RESOURCES/.claude/settings.json"
+if [ -f "$AI_SETTINGS" ]; then
+  echo ""
+  echo "Hook-registration checklist (add to {PROJECT_DIR}/.claude/settings.json as needed):"
+  echo ""
+  jq -r '
+    .hooks // {}
+    | to_entries[]
+    | .key as $event
+    | .value[]
+    | (.matcher // null) as $matcher
+    | .hooks[]
+    | ((.command | [scan("[^/\\s]+\\.sh")] | last) // .command) as $base
+    | (.timeout // 5) as $timeout
+    | "  \($base) → \($event)\(if $matcher then "[\($matcher)]" else "" end) (timeout \($timeout))"
+  ' "$AI_SETTINGS"
+  echo ""
+  echo "Skip any hook that is not relevant to this project's workflow."
+fi
+```
 
 ### Ensure permissions baseline in deployed settings.json
 
