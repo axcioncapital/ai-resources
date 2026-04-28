@@ -2,74 +2,6 @@
 
 > Archive: [session-notes-archive-2026-04.md](session-notes-archive-2026-04.md)
 
-## 2026-04-25 — Commission Batch 3+4: Friday cadence durability + maintenance ledger aging
-
-### Summary
-
-Executed commission Batches 3 and 4 from the `bumblebee` plan. Batch 3 added non-Friday stale-state detection to the `friday-checkup-reminder.sh` hook and inserted Step 0 (Skipped-Friday Recovery) into `/friday-checkup`. Batch 4 added a Schema section to `improvement-log.md` and inserted step 3b (stale-pending surfacing with per-item disposition) into `/resolve-improvements`. One plan item dissolved: Batch 3's planned `friday-act.md` edit was already correctly implemented by Batch 2 (audits-directory listing + 10-day threshold). Risk-check end-time gate returned GO on all five dimensions.
-
-### Files Created
-
-- `audits/risk-checks/2026-04-25-batch-3-batch-4-changes-commission-plan-execution.md` — risk-check end-time gate report (verdict GO)
-
-### Files Modified
-
-- `logs/session-notes-archive-2026-04.md` — 3 entries auto-archived by check-archive.sh at wrap
-
-- `.claude/hooks/friday-checkup-reminder.sh` — added non-Friday branch: emit systemMessage warning if last `audits/friday-checkup-*.md` is > 10 days old (commit 7f3f5ce)
-- `.claude/commands/friday-checkup.md` — inserted Step 0 (Skipped-Friday Recovery) before Step 1: derives last-run date from audits listing; if > 10 days, offers recover-now (a) or defer (b) (commit 7f3f5ce)
-- `logs/improvement-log.md` — inserted Schema section after the title documenting all field conventions (Status / Verified / Age / Review-cycle / Category / Proposal / Target files) (commit 89447ea)
-- `.claude/commands/resolve-improvements.md` — inserted step 3b: identify Pending entries with header date > 42 days, surface with r/e/c/k disposition; step 8 summary extended with stale-pending count (commit 89447ea)
-
-### Decisions Made
-
-- **Batch 3 `friday-act.md` edit dissolved.** Plan called for replacing Step 1's freshness-check logic to derive from audits-directory listing. Batch 2 already implemented this pattern correctly (`ls -1 audits/friday-checkup-*.md | sort | tail -1` + 10-day check). No retroactive fix needed; 10-day threshold is now consistent across all three touchpoints (hook / `/friday-checkup` Step 0 / `/friday-act` Step 1).
-- **Three commits for two batches.** Batch 3 and Batch 4 committed separately per plan discipline (one commit per batch); risk-check report committed as a standalone audit commit rather than appended to either batch commit.
-- **End-time `/risk-check` gate covered both batches in a single invocation.** Hook edit (Batch 3) triggered the gate; command edits (Batch 4) bundled in per the two-gate model. Verdict GO — all dimensions Low.
-
-### Next Steps
-
-- **Push** — three new commits (`7f3f5ce`, `89447ea`, `6073b63`) plus earlier unpushed commits from prior sessions (workspace-root `bcf45a9`; ai-resources commits from 2026-04-24/25 sessions). Two repos, two pushes, requires operator approval.
-- **Batch 5** — Stage 1 repo architecture: `docs/repo-architecture.md` + `/route-change` command. Half-to-full session. Read the bumblebee plan (assumption 7 and assumption 2 confirmation prompts at batch open).
-- **Permission prompts on `.claude/**` paths** — surfaced this session. Consider running `/fewer-permission-prompts` to add an allowlist covering `Edit(.claude/commands/*.md)`, `Edit(.claude/hooks/*.sh)`, etc.
-
-### Open Questions
-
-- None.
-
-## 2026-04-25 — Zero-permission-prompt policy: bypassPermissions + autoMode.allow hardening
-
-### Summary
-
-Operator surfaced friction with `.claude/**` permission prompts (auto-mode classifier prompting on `.claude/commands/*.md` edits). Diagnosed root cause (auto mode was active and exited mid-session, dropping into default-prompt). Operator stated explicit, repeated directive: zero permission prompts in any future session, regardless of risk. Reconfigured user-level settings.json for maximally permissive operation: `defaultMode: "bypassPermissions"`, empty deny list, plus `autoMode.allow` natural-language rules as defense-in-depth in case `/auto` ever activates. Nothing in this repo was modified — all work is in `~/.claude/`.
-
-### Files Created
-
-- `~/.claude/projects/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/memory/feedback_zero_permission_prompts.md` — feedback memory codifying the zero-prompt policy, with explicit "do not suggest /auto, /plan, or deny-list additions" guidance.
-- `~/.claude/plans/proceed-imperative-hanrahan.md` — minimal plan file for the autoMode.allow hardening (created under harness-forced plan mode, per CLAUDE.md Plan Mode Discipline minimal-plan rule).
-
-### Files Modified
-
-- `~/.claude/settings.json` — `defaultMode: "bypassPermissions"`, `deny: []`, added top-level `autoMode.allow` block with $defaults + 3 natural-language rules. (User-level, not in repo.)
-- `~/.claude/projects/.../memory/MEMORY.md` — replaced old `feedback_permission_prompts.md` index entry with new `feedback_zero_permission_prompts.md` entry.
-- `~/.claude/projects/.../memory/feedback_permission_prompts.md` — DELETED (superseded by zero-prompts memory; old guidance to "suggest /fewer-permission-prompts at wrap" conflicted with new policy).
-
-### Decisions Made
-
-- **Zero permission prompts as account-level policy.** Operator explicitly accepted the tradeoffs (no harness brake on rm -rf, sudo, force-push, etc.; CLAUDE.md model-side Autonomy Rules + git as compensating controls). Policy applies to ALL Claude Code projects on this machine, not just ai-resources.
-- **`bypassPermissions` over `auto`.** First attempt set `defaultMode: "auto"` — operator pushed back; auto mode's classifier IS what was prompting. Bypass mode is the maximally permissive setting. Reverted.
-- **Defense-in-depth via `autoMode.allow`.** Added customization so even if `/auto` activates by accident, the classifier won't prompt on `.claude/**` or bash commands. Belt-and-suspenders for the operator's explicit zero-prompt requirement.
-- **Behavioral rule for future sessions:** do not suggest `/auto` or `/plan` modes — both can re-introduce classifier-driven prompts. Bypass mode is the floor.
-
-### Next Steps
-
-- **Verify the change at next session start.** New session should boot in bypass mode with no prompts. If a `.claude/**` edit prompts in any new session, the autoMode.allow rule wording needs adjustment.
-- **Concurrent session disposition** — see Open Questions below.
-
-### Open Questions
-
-- **Concurrent Claude Code session likely active.** Three commits (`7f3f5ce`, `89447ea`, `6073b63`) landed during this session, and 4 dirty paths exist that weren't from this session: `.claude/commands/friday-act.md`, `.claude/commands/wrap-session.md`, `logs/session-notes-archive-2026-04.md`, `logs/session-notes.md`. Session-notes.md already contained a complete session entry written by the concurrent session before this entry was appended. Wrap deferred staging until operator dispositions per dirt-check (Step 12a).
-
 ## 2026-04-25 — Per-project model routing: canonical doc + classifier hook + frontmatter coverage
 
 ### Summary
@@ -462,3 +394,50 @@ In `projects/buy-side-service-plan/` (commits `85933e7`, `989253e`):
 ### Open Questions
 
 - Wrap-session symlink smoke-test on the buy-side project remains pending (carried forward from prior wrap) — exercise on first wrap inside that project. Now also validates Track 1 Stop-registration as a side benefit.
+
+## 2026-04-28 — Token-cost trim + wrap-session post-mortem guardrails
+
+### Summary
+
+Operator AI-journal review surfaced session-cost concerns. Bundled 10 changes across two repos: 5 from the original token-trim plan (loader trim, Step 12a "dirt check" removal, cross-reference updates, stale memory cleanup) and 5 post-mortem guardrails (G1 trust-compaction-summary, G2 session-notes append direction + check-archive.sh date-guard, G3 end-time /risk-check skip extension, G4 wrap cost budget). Plan-time `/risk-check` was operator-declined; execution was approved as a single bundled change set across two commits. Wrap-session itself ran the new format (append-to-end) for the first time as a smoke-test of G2.
+
+### Files Created
+
+- None (all changes were edits/deletions on existing files).
+
+### Files Modified
+
+- `ai-resources/.claude/commands/wrap-session.md` — Step 12a (dirt check) deleted in full; Step 3 wording hardened to "append at END" with archive-script consequence noted; cost-budget paragraph added after Step 0.
+- `ai-resources/.claude/commands/friday-act.md` — line 221 cross-reference updated from "Step 12a dirt check" to "/cleanup-worktree if it accumulates".
+- `ai-resources/logs/improvement-log.md` — proposal #5 in the 2026-04-25 "Make /wrap-session leaner" entry marked obsolete.
+- `ai-resources/logs/decisions.md` — appended 2026-04-28 entry codifying end-time `/risk-check` skip-rule extension (3-condition skip).
+- `ai-resources/logs/scripts/check-archive.sh` — added date-guard refusing to archive when first dated entry is today's (closes silent-clobber on prepend writes).
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/CLAUDE.md` — added "Post-compact resumption — trust the summary" bullet under Working Principles (G1).
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/.claude/settings.json` — Change 1 (tail -60 → tail -20) became moot when operator subsequently removed all hooks; not staged by this session.
+- `~/.claude/projects/.../memory/feedback_dirt_check_scope.md` — DELETED (rule referenced removed step).
+- `~/.claude/projects/.../memory/MEMORY.md` — removed dirt-check-scope index line; added three new memory pointers (G1, G2, G3).
+- `~/.claude/projects/.../memory/feedback_trust_compaction_summary.md` — new (G1).
+- `~/.claude/projects/.../memory/feedback_session_notes_append_direction.md` — new (G2).
+- `~/.claude/projects/.../memory/feedback_end_time_risk_check_skip.md` — new (G3).
+- `ai-resources/logs/session-notes-archive-2026-04.md` — auto-archive triggered during this wrap (2 oldest entries archived, 10 kept). Date-guard verified — first dated entry was not today's, archive proceeded safely.
+
+### Decisions Made
+
+- **Loader trim threshold:** 60 → 20 lines (operator chose "Trim to last 20 lines (Recommended)" over "Trim to 30" or "Off entirely"). Subsequently moot — operator removed all SessionStart hooks.
+- **Step 12a disposition:** Remove entirely from `/wrap-session`. `/cleanup-worktree` retained as the heavyweight manual fallback. (Operator: "I am not seeing lots of value from it... Maybe turn it into something I can invoke manually once a week" — `/cleanup-worktree` already fits.)
+- **CLAUDE.md trim:** Deferred to its own `/audit-claude-md` session (20+ findings each requiring decisions; would dwarf the token-trim pass).
+- **Plan-time `/risk-check`:** Operator-declined ("Proceed with execution, don't run risk check"). Honored as direct override.
+- **End-time `/risk-check`:** Skipped — operator's plan-time decline carried through; structural commits already in working-tree history; drift bounded and conservative; no new commands or permissions introduced.
+- **Mid-session expansion:** After original plan was approved, operator surfaced post-mortem from a bad earlier wrap (3 compounding failures: investigation past sufficient post-compact, prepend-vs-append silent clobber, ceremony-without-purpose end-time risk-check). Four guardrails (G1–G4) added as Changes 6–10 alongside the original Changes 1–5. Bundled into one execution rather than split.
+
+### Next Steps
+
+- Push 2 commits across 2 repos (operator confirmation per Autonomy Rule #2): ai-resources `8317c45` (batch: wrap-session token trim + post-mortem guardrails); workspace `d10786f` (update: workspace CLAUDE.md G1 trust-compaction-summary rule). Plus this wrap commit.
+- Workspace `.claude/settings.json` has uncommitted user-side changes (operator removed all hooks during the session, separately from the planned `tail -60` → `tail -20` edit). Operator decides when/whether to commit.
+- Validate G2 (session-notes append-to-end) — this very wrap is the first append-to-end run; check-archive.sh with the new date-guard runs at Step 11. Confirm no clobber.
+- Schedule `/audit-claude-md` as its own focused session when bandwidth allows — surfaces 20+ findings for CLAUDE.md trim work that was deferred from this pass.
+- Consider whether wrap-session.md and friday-act.md changes need syncing to projects that maintain forks (per registry: most projects own their wrap-session.md; check at first wrap inside each).
+
+### Open Questions
+
+- None.

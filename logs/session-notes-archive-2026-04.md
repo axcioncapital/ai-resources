@@ -2607,3 +2607,70 @@ In `ai-resources/`:
 ### Open Questions
 
 - Wrap-session symlink smoke-test on the buy-side project is still pending — exercise on first wrap inside that project.
+## 2026-04-25 — Commission Batch 3+4: Friday cadence durability + maintenance ledger aging
+
+### Summary
+
+Executed commission Batches 3 and 4 from the `bumblebee` plan. Batch 3 added non-Friday stale-state detection to the `friday-checkup-reminder.sh` hook and inserted Step 0 (Skipped-Friday Recovery) into `/friday-checkup`. Batch 4 added a Schema section to `improvement-log.md` and inserted step 3b (stale-pending surfacing with per-item disposition) into `/resolve-improvements`. One plan item dissolved: Batch 3's planned `friday-act.md` edit was already correctly implemented by Batch 2 (audits-directory listing + 10-day threshold). Risk-check end-time gate returned GO on all five dimensions.
+
+### Files Created
+
+- `audits/risk-checks/2026-04-25-batch-3-batch-4-changes-commission-plan-execution.md` — risk-check end-time gate report (verdict GO)
+
+### Files Modified
+
+- `logs/session-notes-archive-2026-04.md` — 3 entries auto-archived by check-archive.sh at wrap
+
+- `.claude/hooks/friday-checkup-reminder.sh` — added non-Friday branch: emit systemMessage warning if last `audits/friday-checkup-*.md` is > 10 days old (commit 7f3f5ce)
+- `.claude/commands/friday-checkup.md` — inserted Step 0 (Skipped-Friday Recovery) before Step 1: derives last-run date from audits listing; if > 10 days, offers recover-now (a) or defer (b) (commit 7f3f5ce)
+- `logs/improvement-log.md` — inserted Schema section after the title documenting all field conventions (Status / Verified / Age / Review-cycle / Category / Proposal / Target files) (commit 89447ea)
+- `.claude/commands/resolve-improvements.md` — inserted step 3b: identify Pending entries with header date > 42 days, surface with r/e/c/k disposition; step 8 summary extended with stale-pending count (commit 89447ea)
+
+### Decisions Made
+
+- **Batch 3 `friday-act.md` edit dissolved.** Plan called for replacing Step 1's freshness-check logic to derive from audits-directory listing. Batch 2 already implemented this pattern correctly (`ls -1 audits/friday-checkup-*.md | sort | tail -1` + 10-day check). No retroactive fix needed; 10-day threshold is now consistent across all three touchpoints (hook / `/friday-checkup` Step 0 / `/friday-act` Step 1).
+- **Three commits for two batches.** Batch 3 and Batch 4 committed separately per plan discipline (one commit per batch); risk-check report committed as a standalone audit commit rather than appended to either batch commit.
+- **End-time `/risk-check` gate covered both batches in a single invocation.** Hook edit (Batch 3) triggered the gate; command edits (Batch 4) bundled in per the two-gate model. Verdict GO — all dimensions Low.
+
+### Next Steps
+
+- **Push** — three new commits (`7f3f5ce`, `89447ea`, `6073b63`) plus earlier unpushed commits from prior sessions (workspace-root `bcf45a9`; ai-resources commits from 2026-04-24/25 sessions). Two repos, two pushes, requires operator approval.
+- **Batch 5** — Stage 1 repo architecture: `docs/repo-architecture.md` + `/route-change` command. Half-to-full session. Read the bumblebee plan (assumption 7 and assumption 2 confirmation prompts at batch open).
+- **Permission prompts on `.claude/**` paths** — surfaced this session. Consider running `/fewer-permission-prompts` to add an allowlist covering `Edit(.claude/commands/*.md)`, `Edit(.claude/hooks/*.sh)`, etc.
+
+### Open Questions
+
+- None.
+
+## 2026-04-25 — Zero-permission-prompt policy: bypassPermissions + autoMode.allow hardening
+
+### Summary
+
+Operator surfaced friction with `.claude/**` permission prompts (auto-mode classifier prompting on `.claude/commands/*.md` edits). Diagnosed root cause (auto mode was active and exited mid-session, dropping into default-prompt). Operator stated explicit, repeated directive: zero permission prompts in any future session, regardless of risk. Reconfigured user-level settings.json for maximally permissive operation: `defaultMode: "bypassPermissions"`, empty deny list, plus `autoMode.allow` natural-language rules as defense-in-depth in case `/auto` ever activates. Nothing in this repo was modified — all work is in `~/.claude/`.
+
+### Files Created
+
+- `~/.claude/projects/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/memory/feedback_zero_permission_prompts.md` — feedback memory codifying the zero-prompt policy, with explicit "do not suggest /auto, /plan, or deny-list additions" guidance.
+- `~/.claude/plans/proceed-imperative-hanrahan.md` — minimal plan file for the autoMode.allow hardening (created under harness-forced plan mode, per CLAUDE.md Plan Mode Discipline minimal-plan rule).
+
+### Files Modified
+
+- `~/.claude/settings.json` — `defaultMode: "bypassPermissions"`, `deny: []`, added top-level `autoMode.allow` block with $defaults + 3 natural-language rules. (User-level, not in repo.)
+- `~/.claude/projects/.../memory/MEMORY.md` — replaced old `feedback_permission_prompts.md` index entry with new `feedback_zero_permission_prompts.md` entry.
+- `~/.claude/projects/.../memory/feedback_permission_prompts.md` — DELETED (superseded by zero-prompts memory; old guidance to "suggest /fewer-permission-prompts at wrap" conflicted with new policy).
+
+### Decisions Made
+
+- **Zero permission prompts as account-level policy.** Operator explicitly accepted the tradeoffs (no harness brake on rm -rf, sudo, force-push, etc.; CLAUDE.md model-side Autonomy Rules + git as compensating controls). Policy applies to ALL Claude Code projects on this machine, not just ai-resources.
+- **`bypassPermissions` over `auto`.** First attempt set `defaultMode: "auto"` — operator pushed back; auto mode's classifier IS what was prompting. Bypass mode is the maximally permissive setting. Reverted.
+- **Defense-in-depth via `autoMode.allow`.** Added customization so even if `/auto` activates by accident, the classifier won't prompt on `.claude/**` or bash commands. Belt-and-suspenders for the operator's explicit zero-prompt requirement.
+- **Behavioral rule for future sessions:** do not suggest `/auto` or `/plan` modes — both can re-introduce classifier-driven prompts. Bypass mode is the floor.
+
+### Next Steps
+
+- **Verify the change at next session start.** New session should boot in bypass mode with no prompts. If a `.claude/**` edit prompts in any new session, the autoMode.allow rule wording needs adjustment.
+- **Concurrent session disposition** — see Open Questions below.
+
+### Open Questions
+
+- **Concurrent Claude Code session likely active.** Three commits (`7f3f5ce`, `89447ea`, `6073b63`) landed during this session, and 4 dirty paths exist that weren't from this session: `.claude/commands/friday-act.md`, `.claude/commands/wrap-session.md`, `logs/session-notes-archive-2026-04.md`, `logs/session-notes.md`. Session-notes.md already contained a complete session entry written by the concurrent session before this entry was appended. Wrap deferred staging until operator dispositions per dirt-check (Step 12a).
