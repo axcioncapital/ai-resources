@@ -1,20 +1,17 @@
 #!/usr/bin/env bash
-# PostToolUse (Write) hook: remind operator to run /coach after accumulating enough sessions.
-# Fires when writing to session-notes.md and enough sessions have passed since last coaching run.
-# Non-blocking — always exits 0.
+# Stop hook: remind operator to run /coach after 7+ sessions since last coaching run.
+# Fires once at session end when the threshold is met. Non-blocking — always exits 0.
 
-# Dedup: one reminder per session
+# Dedup: one reminder per session (parent PID as session proxy)
 SESSION_MARKER="/tmp/claude-coach-reminded-$PPID"
 [ -f "$SESSION_MARKER" ] && exit 0
-
-# Only trigger on writes to session-notes.md
-FILE_PATH=$(jq -r '.tool_input.file_path // empty' 2>/dev/null)
-[ -z "$FILE_PATH" ] && exit 0
-echo "$FILE_PATH" | grep -q 'session-notes\.md' || exit 0
 
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
 NOTES="$PROJECT_DIR/logs/session-notes.md"
 COACHING_LOG="$PROJECT_DIR/logs/coaching-log.md"
+
+# If session-notes doesn't exist (new project), nothing to count
+[ -f "$NOTES" ] || exit 0
 
 # Count total session entries in session-notes
 TOTAL_SESSIONS=$(grep -c '^## 20' "$NOTES" 2>/dev/null || echo "0")

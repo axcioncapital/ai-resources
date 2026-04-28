@@ -1,24 +1,26 @@
 #!/usr/bin/env bash
-# PostToolUse (Write) hook: remind operator to run /improve after writing a significant artifact.
-# Fires once per session — uses a temp marker to avoid repeating.
-# Non-blocking — always exits 0.
+# Stop hook: remind operator to run /improve at session end if significant artifacts were produced.
+# Fires once at session end. Non-blocking — always exits 0.
 
-MARKER="/tmp/claude-improve-reminded-$$"
 # Dedup: one reminder per session (parent PID as session proxy)
 SESSION_MARKER="/tmp/claude-improve-reminded-$PPID"
 [ -f "$SESSION_MARKER" ] && exit 0
 
-# Read the file path from tool input
-FILE_PATH=$(jq -r '.tool_input.file_path // empty' 2>/dev/null)
-[ -z "$FILE_PATH" ] && exit 0
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
+cd "$PROJECT_DIR" 2>/dev/null || exit 0
 
-# Check if the written file is a significant artifact.
-# Path patterns are research-workflow / draft-pipeline-shaped: projects
-# without these directory names will never trigger the nudge. Override
-# by editing this regex if your project uses different artifact paths.
-if echo "$FILE_PATH" | grep -qE '/(approved|output|report/chapters|final/modules)/'; then
+# Skip if not in a git repo (artifact detection relies on git status)
+git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0
+
+# Check git status for changes (staged, unstaged, untracked) under artifact directories.
+# Path patterns are research-workflow / draft-pipeline-shaped: projects without
+# these directory names will never trigger the nudge. Override by editing this
+# regex if your project uses different artifact paths.
+ARTIFACT_RE='^(approved|output|report/chapters|final/modules)/'
+
+if git status --porcelain 2>/dev/null | awk '{ print $NF }' | grep -qE "$ARTIFACT_RE"; then
   touch "$SESSION_MARKER"
-  echo '{"systemMessage":"Significant artifact produced. Consider running /improve before wrapping the session."}'
+  echo '{"systemMessage":"Significant artifact produced this session. Consider running /improve before wrapping the session."}'
 fi
 
 exit 0
