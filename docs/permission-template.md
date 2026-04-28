@@ -130,13 +130,15 @@ Canonical shape:
     ],
     "deny": [
       "Bash(git push*)", "Bash(rm -rf *)", "Bash(sudo *)",
-      "Read(archive/**)", "Read(audits/working/**)",
+      "Read(archive/**)",
       "Read(logs/*-archive-*.md)", "Read(inbox/archive/**)",
       "Read(**/deprecated/**)", "Read(**/old/**)"
     ]
   }
 }
 ```
+
+**Note on `audits/working/`:** the canonical Layer C shape deliberately omits `Read(audits/working/**)` from `deny`. Rationale: the directory is gitignored at `ai-resources/.gitignore`, and the corresponding "main session reads summary only" discipline lives in `ai-resources/CLAUDE.md` § Subagent Contracts. Adding the deny rule mechanically blocks main-session reads of the auditor's `*.summary.md` files (which `/permission-sweep` Step 4 explicitly requires), so the deny was retired 2026-04-28. Do not restore it.
 
 **Key assertions:**
 - Must have `Bash(*)` in allow (root cause #4 — ai-resources previously had only narrow bash grants).
@@ -270,7 +272,7 @@ The hook is invoked directly from ai-resources — do not copy `check-permission
 
 12. `settings.local.json` tracked by git (should be gitignored per Claude Code convention).
 13. Typos / duplicate entries / syntax form inconsistencies (`Bash(foo *)` vs `Bash(foo:*)` — prefer the former).
-14. `Read(<dir>/**)` deny entry where `<dir>` is a single concrete directory (not a glob pattern like `**/...`) and `<dir>/` does not appear in the appropriate `.gitignore` (same repo as the settings file). Audit/scan commands writing into denied scratchpad directories pollute `git status` when the directory is not gitignored — e.g., `Read(audits/working/**)` paired with `audits/working/` in `ai-resources/.gitignore`. Canonical fix: add `<dir>/` to the `.gitignore` at the same repo root as the settings file declaring the deny.
+14. `Read(<dir>/**)` deny entry where `<dir>` is a single concrete directory (not a glob pattern like `**/...`) and `<dir>/` does not appear in the appropriate `.gitignore` (same repo as the settings file). Audit/scan commands writing into denied scratchpad directories pollute `git status` when the directory is not gitignored — e.g., `Read(inbox/archive/**)` paired with `inbox/archive/` in `ai-resources/.gitignore`. Canonical fix: add `<dir>/` to the `.gitignore` at the same repo root as the settings file declaring the deny.
 
 ---
 

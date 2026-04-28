@@ -2404,3 +2404,119 @@ Commit split:
 ### Open Questions
 
 - None. Remaining batches (2–5) have their own sign-off gates at the top of each batch per plan handoff notes.
+## 2026-04-25 — Working-tree drift prevention (5 fixes landed)
+
+### Summary
+
+Followup to the 2026-04-24 cleanup-worktree session, which uncovered four benign-but-symptomatic issues tracing to two structural gaps: session-end hygiene (uncommitted edits and unstaged finished files surviving across sessions) and canonical-state drift (settings.json deny entries silently regressing; denied scratchpad directory not gitignored). Operator also flagged that they ran /cleanup-worktree while a concurrent Claude Code session was active and asked for a programmatic guardrail. Designed and landed five preventative fixes (F1–F5); G1/G3/G4 deferred as opportunistic.
+
+### Files Created
+
+- `audits/risk-checks/2026-04-25-f2-add-a-concurrent-session-detection-and-abort-to-cleanup.md` — risk-check report on F2 (verdict RECONSIDER → operator-disclosure redesign)
+- `audits/risk-checks/2026-04-25-f3-g5-two-bundled-edits-to-workspace-claude-md.md` — risk-check report on F3+G5 (verdict PROCEED-WITH-CAUTION; G5 dropped per recommendation)
+- `audits/working/qc-f2-cleanup-worktree-disclosure-2026-04-25.md` — post-edit QC report for F2 (gitignored)
+
+### Files Modified
+
+- `.claude/commands/cleanup-worktree.md` — F2: mandatory operator-disclosure prompt at Step 1; refuses to run if another Claude Code session is active (commit d2d1b15)
+- `../CLAUDE.md` (workspace root) — F3: extends "Concurrent-session staging discipline" to name /cleanup-worktree and /permission-sweep as the dangerous commands (commit bcf45a9 in workspace-root repo)
+- `.claude/hooks/check-permission-sanity.sh` — F4: SessionStart hook now asserts safety-floor deny entries Bash(rm -rf *) and Bash(sudo *); nudges if missing (commit 5a45d37)
+- `docs/permission-template.md` — F5: adds Rule 14 to detection rulebook (gitignore-vs-deny parity for Read denies); ADVISORY severity (commit 8fd7435)
+- `.claude/agents/permission-sweep-auditor.md` — F5: rule count 13→14 in three places (commit 8fd7435)
+- `.claude/commands/wrap-session.md` — F1+G2: new Step 13a working-tree dirt check; surfaces dirty paths not produced this session, asks per-path disposition (commit/defer-WIP/ignore), nudges toward /cleanup-worktree if any deferred (commit 064e371)
+- `logs/session-notes.md` — wrap entry appended; auto-archived by check-archive.sh (3 older entries moved out)
+- `logs/session-notes-archive-2026-04.md` — archive file extended with 3 older April entries by check-archive.sh
+- `logs/decisions.md` — wrap entry appended (5-point design-choices)
+- `logs/coaching-data.md` — wrap entry appended
+
+### Decisions Made
+
+- **F2 redesign — operator disclosure over pgrep.** /risk-check returned RECONSIDER on the original mechanical-pgrep design (pgrep returned 12 matches in a single Claude Code session due to helper processes). Adopted the recommended redesign (option 1 in the report): a Step 1 disclosure prompt aligned with the existing CLAUDE.md "Concurrent-session staging discipline" pattern.
+- **G5 dropped as redundant.** F3 already documents the rule in the discipline section; adding /cleanup-worktree to Autonomy Rules pause-triggers would duplicate without adding load-bearing semantics. Risk-check report flagged this redundancy.
+- **F5 severity ADVISORY (plan said HIGH).** Existing rulebook taxonomy: HIGH = Delete/Edit prompts; this is hygiene (no live or future prompt). ADVISORY fits the existing severity structure.
+- **Stop after the core five.** G1 (stale-edit SessionStart hook), G3 (cleanup-worktree marker file), G4 (friday-checkup stale-work item) deferred. Core five cover both failure classes from the 2026-04-24 incident; G items are nice-to-have additions.
+- **Reduced /risk-check ceremony mid-session.** Operator pushback on overcomplication. After F3+G5 risk-check, skipped /risk-check on F4 and F5 — both small extensions to existing files (validation lines added to a hook, new check class added to an auditor), not new structural infrastructure.
+
+### Next Steps
+
+- **Push when ready** — workspace-root has commit `bcf45a9`; ai-resources has commits `d2d1b15`, `c52807e`, `5a45d37`, `8fd7435`, `064e371`. Two repos to push.
+- Optionally pick up G1 / G3 / G4 in a future session if the core five turn out to be insufficient.
+- F1 (wrap-session dirt check) is being exercised right now — this is the first invocation of /wrap-session after F1 landed. If anything in Step 13a feels off, log it as friction.
+
+### Open Questions
+
+- None.
+
+## 2026-04-25 — /risk-check trigger model: per-change → two-gate
+
+### Summary
+
+Operator flagged that `/risk-check` was firing too frequently mid-session under the per-change rule and burning tokens. Designed a two-gate model — plan-time (after plan approval, if the plan touches a structural class) and end-time (once before commit, batched across all in-class changes the session actually made) — replacing per-change firing. Edits landed across workspace `CLAUDE.md`, `ai-resources/docs/audit-discipline.md`, and `.claude/commands/risk-check.md`. Ran the new policy on itself (end-time gate); verdict PROCEED-WITH-CAUTION required two paired mitigations, both applied (workspace CLAUDE.md trim + `/wrap-session` Step 13b reminder).
+
+### Files Created
+
+- `audits/risk-checks/2026-04-25-change-risk-check-trigger-semantics-from-per-change-to-two.md` — risk-check report on the two-gate change set (verdict PROCEED-WITH-CAUTION; two mitigations required, both applied)
+
+### Files Modified
+
+- `../CLAUDE.md` (workspace root, separate git repo) — pause-trigger #9 reworded twice: first to two-gate semantics with full prose; then trimmed to ~95 words after end-time `/risk-check` flagged always-loaded surcharge. Detail moved to `audit-discipline.md`.
+- `docs/audit-discipline.md` — added "When to fire (two-gate model)" subsection under § Risk-check change classes; defines plan-time/end-time payloads and skip rules for unplanned/no-touch sessions.
+- `.claude/commands/risk-check.md` — added "Two intended call sites per session" block above invocation semantics.
+- `.claude/commands/wrap-session.md` — added Step 13b end-time `/risk-check` gate (between dirt check Step 13a and commit). Note: this edit was inadvertently swept into the concurrent session's wrap commit `26d9c7f` rather than being staged here. The change landed correctly; commit-message narrative is incomplete.
+- `audits/permission-sweep-2026-04-24.md` — pre-existing untracked file from 2026-04-24, committed with this session per operator disposition (c).
+- `audits/risk-checks/2026-04-24-workspace-claude-md-chat-communication-style.md` — pre-existing untracked file from 2026-04-24, committed with this session per operator disposition (c).
+- `workflows/research-workflow/.claude/settings.json` — pre-existing modification from 2026-04-24, committed with this session per operator disposition (c).
+
+### Decisions Made
+
+- **Adopted two-gate model** over per-change firing. Rationale: per-change pattern multiplied tokens during structural-change sessions without proportionate signal. Two gates preserve early design-risk catch and end-of-session drift catch while bounding firings to ≤2 per session. Complementary to the concurrent session's decision #5 ("Reduced /risk-check ceremony for small edits") — that decision narrows trigger *classes*; this decision changes firing *cadence* within those classes.
+- **Trimmed workspace CLAUDE.md pause-trigger #9** to ~95 words (matching prior baseline length) after end-time `/risk-check` flagged always-loaded token surcharge. Prose detail moved to `audit-discipline.md`.
+- **Added `/wrap-session` Step 13b** as the operator-tactile prompt for the end-time gate. Smallest viable mechanism so the two-gate model isn't dependent solely on operator memory.
+- **Declined post-edit `/qc-pass`** on the policy edits — operator chose direct wrap. Mechanical-mode rubric doesn't apply (policy edit, not substitution); operator judged trimmed CLAUDE.md and Step 13b are well-bounded enough to commit without external QC.
+
+### Next Steps
+
+- **Push** ai-resources commit (forthcoming) and workspace-root `CLAUDE.md` commit (forthcoming) — two repos, two pushes, requires operator approval per Autonomy Rules.
+- Watch the next 3–5 sessions under the new policy: confirm plan-time gate is firing post-approval (not per-change), and `/wrap-session` Step 13b actually surfaces the end-time gate in real wraps.
+- Re-evaluate at next `/token-audit` whether the always-loaded surcharge nets positive given session mix.
+
+### Open Questions
+
+- The concurrent session's commit `26d9c7f` swept this session's `wrap-session.md` edit (Step 13b) into its commit. The edit landed correctly but commit narrative is incomplete. Decide later whether to leave-as-is or note in a follow-up commit.
+
+## 2026-04-25 — Commission Batch 2: /friday-act + tier-differentiated /friday-checkup output
+
+
+### Summary
+
+Executed Commission Batch 2 per the approved plan at `/Users/patrik.lindeberg/.claude/plans/here-s-an-idea-i-memoized-bumblebee.md`. Built `/friday-act` (Session 2 of the Friday cadence) and added tier-differentiated output sections to `/friday-checkup` as the data contract `/friday-act` consumes. First real dogfood of `/risk-check` against a structural change set under the new two-gate model — verdict PROCEED-WITH-CAUTION with three Mediums, mitigations applied. Session committed as `6e80a7d`.
+
+### Files Created
+
+- `.claude/commands/friday-act.md` — Session 2 command (locate freshest report → 10-day staleness guard → tier-aware parse → tactical-fix loop with inline /risk-check gate → policy review monthly+ → quarterly retrospective → operator observations + 7-axis posture targets)
+- `logs/maintenance-observations.md` — append-only ledger seeded with header schema; written by /friday-act Steps 5–6
+- `audits/risk-checks/2026-04-25-commission-batch-2-friday-act-and-tier-differentiated-output.md` — end-time /risk-check report
+
+### Files Modified
+
+- `.claude/commands/friday-checkup.md` — Step 6/7 extended with three tier-differentiated output sections (Tactical follow-ups all tiers, Policy-level observations monthly+, Architectural retrospective quarterly only); renamed `## Operator follow-ups` → `## Tactical follow-ups`; added section-presence-by-tier data contract paragraph for /friday-act parsing
+- `logs/decisions-archive-2026-04.md` — auto-archive output (17 entries archived, 3 kept) from check-archive.sh during this wrap
+
+### Decisions Made
+
+- **Plan-time /risk-check skipped.** Original commission plan was QC'd + triaged in 2026-04-24 session; end-time gate alone covers the executed change set. Documented in commit body.
+- **Three /risk-check Medium-risk dimensions accepted with paired mitigations.** Blast radius (no-op acceptable per report), Reversibility (attestation only), Hidden coupling (one-line cross-reference comment added at /friday-act Step 2 → friday-checkup.md Step 7 schema-contract paragraph).
+- **Tactical-fix queue scoped to standard items only at MVP.** /friday-act consumes only the standard tactical items (resolve-improvements, cleanup-worktree, quarterly follow-ups) plus risk-graded extras; richer ingestion of `## Prioritized findings` deferred to Batch 3+ refinement if usage shows the queue is too narrow.
+- **No /wrap-session edit.** Plan called for `/wrap-session` to be untouched; maintenance-observations.md appends are caught by the existing Step 13a dirt check rather than added to the always-staged list.
+- **Coaching-log untouched.** 7 autonomy axes live in /friday-act output (forward-looking weekly posture); coaching-log keeps its 5 backward-looking session-pattern dimensions. Honored prior 2026-04-24 design decision.
+
+### Next Steps
+
+- **Push** ai-resources commits (`16d05a4`, `6e80a7d`) and workspace-root `bcf45a9` (from prior session) — two repos, requires operator approval.
+- **Batch 3** (durability supplements: hook stale-state detection + /friday-checkup Step 0 recovery + /friday-act freshness-check refactor). Half-session sized; Sonnet-suitable per earlier model recommendation.
+- After first real `/friday-act` invocation, watch whether the tactical-fix queue feels too narrow — if so, fold sub-report findings into Tactical follow-ups in a follow-up edit (deferred from this batch).
+- Pacing constraint from plan: ≤2 batches per session. Batches 3+4 pair well in a single Sonnet session.
+
+### Open Questions
+
+- None.

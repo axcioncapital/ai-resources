@@ -18,5 +18,8 @@ credentials*.json
 __pycache__/
 *.pyc
 
-# Ephemeral audit working notes (Layer C settings.json also denies Read on this path)
+# Ephemeral audit working notes (subagent-contract discipline lives in CLAUDE.md, not as a deny rule)
 audits/working/
+
+# Archived inbox briefs (Layer C settings.json also denies Read on this path)
+inbox/archive/
