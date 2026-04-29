@@ -1,8 +1,43 @@
 # Operational Frontmatter Fields
 
-Beyond the required `name` and `description` fields, these optional frontmatter fields control how a skill behaves at runtime. For every skill, actively decide on each field rather than skipping by default.
+In addition to `name` and `description`, every skill must declare two operational fields: `model:` and `effort:`. The remaining operational fields are optional but should be actively considered for each skill rather than skipped by default.
 
-## Two Design Questions
+## Required: model and effort
+
+Every skill must declare both `model:` and `effort:` in frontmatter. The Claude Code harness honors both — when the skill is invoked, the harness swaps to the declared model and effort for the rest of the turn, then reverts on the next user prompt. Without an explicit declaration, skills inherit the session model, so an Opus-tier judgment skill can silently run on Sonnet (the project default in `ai-resources`) and underperform.
+
+### Canonical Mapping
+
+| Work type | `model:` | `effort:` | Examples |
+|---|---|---|---|
+| **Judgment** — deciding what should be done; ambiguity-heavy synthesis, design, prose review, triage | `opus` | `high` | `refinement-deep`, `audit-critical-resources`, `triage`, `coach`, `summary` |
+| **Structured / execution** — doing what's been decided; repeatable factual workflows, scaffolding, orchestration | `sonnet` | `medium` | `wrap-session`, `prime`, `save-session`, `friction-log`, `request-skill` |
+| **Mechanical** — counts, format checks, log appends, pattern matching | `haiku` | `low` | `note`, `resolve-improvements` |
+
+### Decision Heuristic
+
+From `docs/model-routing.md`: *"Is the hard part deciding, or doing?"*
+
+- **Deciding** (under ambiguity, with judgment) → `opus` + `high`
+- **Doing** (executing a defined process) → `sonnet` + `medium`
+- **Mechanical** (counting, matching, appending) → `haiku` + `low`
+
+### Format
+
+Use the short form (`opus` / `sonnet` / `haiku`) and the 3-tier effort scale (`low` / `medium` / `high`) — matches the existing convention in `.claude/commands/*.md` and `.claude/agents/*.md`. Do not use `xhigh` or `max` (outside the current convention).
+
+Example skill frontmatter:
+
+```yaml
+---
+name: refinement-deep
+description: Run a deep review of the work you just produced...
+model: opus
+effort: high
+---
+```
+
+## Optional Fields — Two Design Questions
 
 Answer these for every skill before choosing fields:
 
@@ -19,9 +54,9 @@ Answer these for every skill before choosing fields:
 | `paths` | Glob patterns restricting when skill activates based on files being worked with | Scope skills to relevant directories. Critical at 100+ skills: skills without `paths` burn context on every session whether needed or not. Use `paths: ["research/**"]` to limit research skills to research directories. |
 | `context: fork` | Runs skill in isolated subagent | Skills that do extensive exploration or produce large intermediate output. Keeps main conversation clean. Fork when the skill does heavy file reading; keep inline when the skill needs conversation context. |
 | `agent` | Specifies subagent type (Explore, Plan, general-purpose, custom) | Paired with `context: fork`. Use Explore for read-only codebase research, Plan for architecture work. |
-| `effort` | Controls reasoning depth (low/medium/high/max) | `high` or `max` (Opus only) for complex analysis, architectural decisions. `low` for formatting, simple transformations. Match effort to the problem. |
+| `effort` | **REQUIRED** — see "Required: model and effort" above | Use `low` / `medium` / `high` per the canonical mapping. Do not use `xhigh` or `max` in this repo. |
 | `depends-on` | References other skills for composition | When skill wraps or extends another skill's functionality. Enables skill chains. |
-| `model` | Specifies model tier | When skill needs Opus-level reasoning to work, or works fine with Haiku for cost efficiency. |
+| `model` | **REQUIRED** — see "Required: model and effort" above | Use `opus` / `sonnet` / `haiku` per the canonical mapping. |
 | `hooks` | Hooks scoped to this skill's lifecycle | Deterministic checks that should run when this specific skill is active. |
 | `mode: true` | Marks as a mode command | Skills that modify Claude's behavior (debug-mode, review-mode). Appears in special section at top of skills list. |
 | `$ARGUMENTS` / `$ARGUMENTS[N]` | Dynamic parameter substitution | Parameterized skills where input varies per invocation. |

@@ -11,3 +11,17 @@ When a session identifies the need for a new or modified AI resource:
 3. **Capture the need, then route to the pipeline.** When working in a project and a skill gap surfaces, use `/request-skill` to write a structured brief to `ai-resources/inbox/`, then hand off to `/create-skill` in the same session. The `ai-resources/` directory is connected via `--add-dir` — no session switch needed.
 
 4. **Always use the canonical pipelines:** `/create-skill` for new skills, `/improve-skill` for modifications, `/migrate-skill` for converting existing prompts. These pipelines include QC gates — skipping them means skipping quality assurance.
+
+## Bulk-backfill Exception
+
+Rule #4 (canonical pipeline mandate) admits a narrow exception for one-time bulk frontmatter backfill operations: mechanical edits to many skills that change only frontmatter (no body changes), where running the full pipeline per skill would produce 50+ identical fix passes with no QC signal.
+
+When invoking the exception:
+
+1. **Document the exception** in the commit message (one line) and in `logs/improvement-log.md` (one entry naming the date, file count, and field(s) added).
+2. **Substitute single-batch verification** for per-file post-edit QC. Run grep checks across the entire backfilled set to confirm: (a) every targeted file received the new field(s); (b) every value is within the allowed convention. Document the verification commands in the commit message.
+3. **Limit scope.** The exception covers frontmatter-only edits with no body changes. Any edit that touches skill behavior (descriptions changed beyond formatting, body rewrites, structural reorganization) must use the canonical `/improve-skill` pipeline, not this exception.
+
+Recorded invocations:
+
+- **2026-04-28** — Bulk backfill of `model:` and `effort:` to all 69 existing skills (single mechanical 2-line insert per file). Verified via single-batch grep against required field presence and allowed values.

@@ -132,6 +132,7 @@ Read the skill's own YAML description and body. Check:
 5. **Cross-references** — Does the skill reference other skills or files? Do those references resolve?
 6. **Fix alignment** — Review the auto-fix log from Step 5. For each fix that changed functionality, verify the YAML description still accurately describes what the skill does.
 7. **Feedback resolution** — Review Patrik's original feedback from Step 1. For each item, verify: was it addressed in the final version? Rate each as Resolved / Partially resolved / Unresolved. If any item is Unresolved, flag it prominently.
+8. **Tier alignment gate** — Verify the SKILL.md frontmatter still contains both `model:` and `effort:` with values matching the canonical mapping (per `skills/ai-resource-builder/references/operational-frontmatter.md`). If the changes shifted the skill's work-type (e.g., from execution to judgment, or added/removed ambiguity-handling), confirm the existing values still match. If they no longer match, present the proposed tier change to Patrik in Step 7 — do not silently update. If either field is missing entirely (legacy skill not yet backfilled), this is a BLOCKING issue — fix before proceeding.
 
 Flag any mismatches between what the skill claims and what it actually does.
 

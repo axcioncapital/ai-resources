@@ -101,6 +101,7 @@ Read the skill's own YAML description and body. Check:
 4. **Input claims** — Does the skill say it expects certain inputs? Does the body handle missing/malformed inputs?
 5. **Cross-references** — Does the skill reference other skills or files? Do those references resolve?
 6. **Fix alignment** — Review the auto-fix log from Step 4. For each fix that changed functionality, verify the YAML description still accurately describes what the skill does.
+7. **Frontmatter completeness gate** — Verify the SKILL.md frontmatter contains both `model:` and `effort:` with values matching the canonical mapping (`model:` is `opus` / `sonnet` / `haiku`; `effort:` is `low` / `medium` / `high`). If either field is missing or holds an out-of-convention value, this is a BLOCKING issue — return to Step 2 and fix before proceeding. Do not commit a skill missing either field.
 
 Flag any mismatches between what the skill claims and what it actually does.
 

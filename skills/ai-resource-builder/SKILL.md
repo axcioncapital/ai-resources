@@ -108,6 +108,18 @@ Implement scripts, references, and assets first. Test added scripts by running t
 
 Apply the rules from the Frontmatter Standards section. After writing the description, verify the first 250 characters contain the primary trigger phrases.
 
+**Declare `model:` and `effort:`.** Both are required for every skill. The Claude Code harness honors them — when the skill is invoked, it swaps to the declared model and effort for that turn, then reverts on the next user prompt. Without them the skill inherits the session model and may underperform (e.g., an Opus-tier judgment skill silently running on Sonnet).
+
+Use the decision heuristic from `docs/model-routing.md` — *"Is the hard part deciding, or doing?"*
+
+| Work type | `model:` | `effort:` |
+|---|---|---|
+| Judgment (deciding under ambiguity, synthesis, design, prose review) | `opus` | `high` |
+| Structured / execution (repeatable factual workflows, scaffolding, orchestration) | `sonnet` | `medium` |
+| Mechanical (counts, format checks, log appends, pattern matching) | `haiku` | `low` |
+
+Use the short form (`opus` / `sonnet` / `haiku`) and the 3-tier effort scale (`low` / `medium` / `high`). Do not use `xhigh` or `max` — outside the current convention. Full mapping table and examples in [`references/operational-frontmatter.md`](references/operational-frontmatter.md).
+
 #### 4c. Write the Body
 
 Use imperative/infinitive form. Explain the *why* behind instructions — Claude works better with reasoning than rote commands.
@@ -365,7 +377,7 @@ Read these on demand. Do not load all references at the start of a session.
 |------|-----------|
 | `references/skill-architecture.md` | Designing a skill folder, restructuring an existing one, or deciding whether to add a sibling file. Contains folder structure, size budget, progressive disclosure rules, bundled resource types, and naming conventions. |
 | `references/evaluation-framework.md` | Running a full evaluation, or the pipeline commands need to pass a standalone framework to a subagent. Contains the complete 8-layer definitions, priority matrix, type-specific criteria, convention gate, and combined output format. |
-| `references/operational-frontmatter.md` | Configuring frontmatter fields beyond `name` and `description`, or needing description-field examples. Contains the full field table: allowed-tools, paths, context, effort, model, hooks, disable-model-invocation, and good/bad description examples. |
+| `references/operational-frontmatter.md` | Configuring frontmatter fields beyond `name` and `description`. Contains the canonical mapping for the REQUIRED `model:` and `effort:` fields, plus the full table of optional fields (allowed-tools, paths, context, hooks, disable-model-invocation, and more). |
 | `references/writing-standards.md` | Writing or reviewing SKILL.md body content. Contains degrees of freedom with examples, anti-railroading, capability vs. preference skills, bias countering, skill composition, and the full anti-patterns table. |
 | `references/required-sections.md` | Verifying which sections a resource should include (Known Pitfalls, Validation Loop, Runtime Recommendations, Examples, Failure Behavior, Bias Countering) and which resource types each applies to. |
 | `references/examples.md` | Needing calibration on what good output looks like for each mode. Contains condensed worked examples for Create, Evaluate, and Improve. |

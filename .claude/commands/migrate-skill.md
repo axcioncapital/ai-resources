@@ -93,6 +93,7 @@ Read the skill's own YAML description and body. Check:
 5. **Cross-references** — Does the skill reference other skills or files? Do those references resolve?
 6. **Fix alignment** — Review the auto-fix log from Step 4. For each fix that changed functionality, verify the YAML description still accurately describes what the skill does.
 7. **Migration fidelity** — Compare the final skill against the original Chat content. Flag any functional capability from the original that was lost or materially changed during migration (not formatting differences — actual behavior differences).
+8. **Frontmatter completeness gate** — Verify the migrated SKILL.md frontmatter contains both `model:` and `effort:` with values matching the canonical mapping (`model:` is `opus` / `sonnet` / `haiku`; `effort:` is `low` / `medium` / `high`). Migrated skills from Chat almost never carry these fields — assign the tier per the canonical mapping in `skills/ai-resource-builder/references/operational-frontmatter.md` based on the migrated skill's work-type. If either field is missing or holds an out-of-convention value, this is a BLOCKING issue — return to Step 2 and fix before proceeding.
 
 Flag any mismatches.
 
