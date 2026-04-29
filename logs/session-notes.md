@@ -2,104 +2,6 @@
 
 > Archive: [session-notes-archive-2026-04.md](session-notes-archive-2026-04.md)
 
-## 2026-04-27 — Created /innovation-sweep + innovation-triage-auditor
-
-### Summary
-
-Built and shipped `/innovation-sweep` — a project-end audit command that scans a completed project across nine artifact categories (commands, agents, hooks, skills, prompts, scripts, style references, CLAUDE.md sections, settings patterns) plus a "divergent forks" meta-category, name-matches each item against `ai-resources/`, and spawns an Opus classifier subagent that assigns one of six verdicts (Already-graduated, Graduate, Backport, Accept-fork, Keep-local, Loose-end). Read-only against the project's `logs/innovation-registry.md`; output is a one-shot dated triage report under `audits/innovation-sweep-{project}-YYYY-MM-DD.md`. Operator runs `/graduate-resource` per applicable item; report produces manual-placement instructions for the categories `/graduate-resource` cannot handle. Plan went through full QC → Triage Auto-Loop (two post-edit passes); end-time `/risk-check` verdict: **GO**.
-
-### Files Created
-
-- `ai-resources/.claude/commands/innovation-sweep.md` (272 lines) — orchestrator command, `model: opus`.
-- `ai-resources/.claude/agents/innovation-triage-auditor.md` (196 lines) — Opus classifier subagent, `tools: Read, Bash, Glob, Grep, Write`.
-- `ai-resources/inbox/innovation-sweep-plan.md` — durable archive of the approved plan (source: `~/.claude/plans/1-all-of-these-valiant-blum.md`).
-
-### Files Modified
-
-- `ai-resources/logs/innovation-registry.md` — auto-appended by `detect-innovation.sh` for the two new files; manually triaged in the wrap (4 entries from today → `triaged:graduate`).
-- `ai-resources/logs/session-notes.md` — this entry.
-
-### Decisions Made
-
-**`/innovation-sweep` design:**
-- **Read-only registry contract** — the sweep never writes to the project's `innovation-registry.md`. Avoids the dedup race with `detect-innovation.sh` (registry's only writer) and keeps the registry from being bloated by sweep findings. Operator can manually add registry rows after reviewing the report.
-- **Per-category action paths** — categories 1–3 (commands, agents, hooks) invoke `/graduate-resource` because that command only handles those three types; categories 4–9 produce manual-placement instructions ("copy folder to `ai-resources/skills/`", "section-edit into workspace CLAUDE.md", etc.). Verified at design time against `graduate-resource.md` lines 11–16.
-- **Filename includes project slug** — `innovation-sweep-{project}-{date}.md` to prevent same-day collisions across projects.
-- **Working notes intentionally ephemeral** — written to `audits/working/` which is gitignored; only the dated report file is committed. Mirrors the `/audit-critical-resources` and `/audit-claude-md` pattern.
-- **No registry creation on missing-registry projects** — sweep runs anyway, flags missing-registry status in the report, but does not create one. Keeps the sweep non-destructive.
-- **Parked to v2:** symlinked-skills detection (Category 4); pre-extracted JSON parsing for `settings.json` (Category 9). Address only if first-run output shows real false-positive rates.
-
-**QC fixes from the auto-loop:**
-- Resolved registry-mutation contradiction by committing to read-only.
-- Specified project-path resolution as required argument or `AskUserQuestion` picker (dropped erroneous `$CLAUDE_PROJECT_DIR` reference).
-- Added explicit `tools:` declaration to subagent frontmatter.
-- Reconciled Step 9 commit description with `.gitignore` reality (only the dated report is committed; working notes are gitignored).
-- Dropped scope-creep items (cross-reference edit to `docs/ai-resource-creation.md`, future `--backport` flag).
-
-**Innovation triage at wrap:**
-- All four `detected` entries from today → `triaged:graduate`. The two new files (innovation-sweep, innovation-triage-auditor) are already canonical (created directly in `ai-resources/`). The two research-workflow entries (`produce-knowledge-file.md`, `run-cluster.md`) are also already canonical — they live in `ai-resources/workflows/research-workflow/` which is the canonical home for workflow-template commands.
-
-### Next Steps
-
-- **Push when ready** — operator action; nothing is auto-pushed.
-- **First real run on the buy-side service plan project** — `/innovation-sweep projects/buy-side-service-plan` will exercise the classifier against a real 57-row registry. Compare verdicts against existing triage decisions to calibrate heuristics.
-- **Park v2 refinements** — address only if the first run produces low-precision output on Category 4 (skills) or Category 9 (settings).
-
-### Open Questions
-
-None. Working tree has substantial dirt from concurrent research-workflow work + a `/repo-dd` audit run earlier today; left untouched per operator direction ("only commit what we did this session"). Sort that state out in a separate session, likely via `/cleanup-worktree`.
-
-## 2026-04-27 — repo-dd deep audit on workflows/research-workflow
-
-### Summary
-
-Ran `/repo-dd` at deep tier on the canonical research-workflow template (`ai-resources/workflows/research-workflow/`). Subagent factual audit produced 11 findings (F1–F11); operator delegated autonomous resolution via `/recommend`. All 11 fixes applied and committed. Deep operational assessment produced 10 prioritized findings (1 Critical, 3 High, 4 Medium, 2 Low) — documented in the deep report; operator deferred resolution to a future session.
-
-### Files Created
-
-- `audits/repo-due-diligence-2026-04-27-workflow-research-workflow.md` — 46KB factual audit, 11 findings
-- `audits/repo-dd-deep-2026-04-27-workflow-research-workflow.md` — deep operational assessment, 10 findings
-- `workflows/research-workflow/.claude/commands/review-chapter.md` — chapter review command (renamed from `review.md` per F11)
-- `workflows/research-workflow/reference/sops/fact-verification-prompt.md` — placeholder stub for `/verify-chapter` (F8)
-- `workflows/research-workflow/reports/.gitkeep` — scaffolds missing `reports/` directory (F6)
-- `~/.claude/projects/.../memory/project_research_workflow_critical_items.md` — captures top-2 deep-audit items for next session
-- `logs/session-notes-archive-2026-04.md` — auto-archive output (3 entries archived, 10 kept) from check-archive.sh during this wrap
-
-### Files Modified
-
-- `workflows/research-workflow/.claude/settings.json` — F3: model identifier `sonnet[1m]` → `claude-sonnet-4-6[1m]`
-- `workflows/research-workflow/.claude/shared-manifest.json` — F5: removed `usage-analysis`; F9: added `produce-architecture`/`produce-formatting`/`produce-prose-draft` as local; F11: `review` → `review-chapter`
-- `workflows/research-workflow/.claude/commands/run-cluster.md` — F1: cluster-memo paths corrected to `{section}/{section}-cluster-$ARGUMENTS-memo.md`; F4: `model: sonnet`
-- `workflows/research-workflow/.claude/commands/produce-knowledge-file.md` — F2: architecture path corrected to `report/architecture/{section}/{section}-architecture.md`; F4: `model: opus`
-- All other 25 command files in the template — F4: explicit `model:` frontmatter (`opus` for analytical/audit/produce-/review-/verify-; `sonnet` for `run-`/intake/prime/wrap/note orchestrators)
-- `workflows/research-workflow/CLAUDE.md` — F7: added `## Confidentiality Boundaries` stub; F10: replaced full `Context Isolation Rules`, `Citation Conversion Rule`, `Bright-Line Rule` sections with single-line pointers to `reference/stage-instructions.md`
-- `workflows/research-workflow/SETUP.md` — F7: split `## 8. Optional: Customize SOPs` into `8. Required: Configure Confidentiality Boundaries`, `8b. Required: Populate Fact-Verification Prompt`, `8c. Optional: Customize SOPs`
-- `workflows/research-workflow/reference/stage-instructions.md` — F10: appended `## Context Isolation Rules`, `## Citation Conversion Rule`, `## Bright-Line Rule`
-
-### Files Deleted
-
-- `workflows/research-workflow/.claude/commands/review.md` — renamed to `review-chapter.md` (F11)
-
-### Decisions Made
-
-- **Audit scope and depth:** ai-resources/workflows/research-workflow at "deep" tier (operator selection — deep tier produces operational judgment in addition to factual findings).
-- **Autonomous resolution of all 11 OPERATOR findings via `/recommend`** — operator delegated per-item judgment to Claude.
-  - F4 model-tier classification by command class — orchestrators/log-append (`run-*`, `intake-*`, `prime`, `wrap-session`, `note`, `friction-log`, etc.) → `sonnet`; analytical/audit/produce-/review-/verify- → `opus`. Source rule: workspace `CLAUDE.md` § Model Tier.
-  - F7 Confidentiality Boundaries treated as required (not optional) — stubbed in CLAUDE.md and gated in SETUP.md, since "no confidentiality constraints" is itself a load-bearing project-level choice.
-  - F10 methodology placement — full bright-line / citation / context-isolation methodology moved to `stage-instructions.md` (read on stage entry); CLAUDE.md retains pointers only. Source rule: workspace `CLAUDE.md` § CLAUDE.md Scoping.
-- **Deep-audit recommendations: documented but not fixed** — operator deferred 10 findings to a future session. Top-2 (Critical: hard-coded `additionalDirectories`; High: missing `research-question-batcher` skill) captured in memory for resumption.
-
-### Next Steps
-
-- Address the 10 deep-audit findings in a fresh session, starting with Critical and High items. Memory pointer: `project_research_workflow_critical_items.md`.
-- Resolve dirty working-tree state outside this session: `.claude/hooks/detect-innovation.sh` (operator-applied template-maintenance fix today) + `.claude/settings.json` (permission-list dedup from 2026-04-25). Either commit standalone or roll into next `/cleanup-worktree`.
-- Confirm whether F4 model-frontmatter additions need to propagate to deployed copies of research-workflow (no deployed copies exist in `projects/` today — likely no propagation needed).
-- Run `/risk-check` at the start of next session before applying the Critical/High deep-audit fixes — they touch `additionalDirectories` (deployment-affecting) and SETUP.md (operator-onboarding).
-
-### Open Questions
-
-None.
-
 ## 2026-04-27 — Fixed /wrap-session Step 12a dirt check (scope + 24h staleness filter)
 
 ### Summary
@@ -468,3 +370,42 @@ Completed the four-phase plan to make `model:` and `effort:` mandatory in every 
 
 ### Open Questions
 - None. Plan is complete.
+
+## 2026-04-29 — Remove model-routing.md and all references
+
+### Summary
+Operator directed removal of `ai-resources/docs/model-routing.md` and all references to it across the workspace. The file served as a single source of truth for model tier selection rules, but its content was substantially duplicated in CLAUDE.md files and other operational files. All references were cleaned from 18 operational files across 6 git repos; historical files (audits, logs, project outputs) were left untouched as records.
+
+### Files Created
+None.
+
+### Files Modified
+- `ai-resources/docs/model-routing.md` — **deleted**
+- `ai-resources/CLAUDE.md` — removed "Routing rule" trailing sentence from Model Selection
+- `ai-resources/docs/repo-architecture.md` — removed table row and bullet referencing model-routing.md
+- `ai-resources/.claude/commands/prime.md` — removed routing rule reference line
+- `ai-resources/.claude/commands/route-change.md` — removed model-routing.md from conditional-read list
+- `ai-resources/.claude/commands/deploy-workflow.md` — removed model-routing.md inline reference
+- `ai-resources/.claude/commands/new-project.md` — removed 2 references (step intro + template body)
+- `ai-resources/docs/permission-template.md` — removed model-routing.md reference from key assertions
+- `ai-resources/skills/ai-resource-builder/SKILL.md` — removed "from docs/model-routing.md" attribution
+- `ai-resources/skills/ai-resource-builder/references/operational-frontmatter.md` — removed "From docs/model-routing.md:" attribution
+- `ai-resources/skills/repo-health-analyzer/agents/skill-auditor.md` — removed 2 references in Section 8
+- `CLAUDE.md` (workspace) — removed 2 "Routing rule" trailing sentences (Model Tier + Model Escalation)
+- `.claude/hooks/model-classifier.sh` — removed doc reference from additionalContext heredoc
+- `projects/corporate-identity/CLAUDE.md` — removed Routing rule sentence
+- `projects/repo-documentation/CLAUDE.md` — removed Routing rule sentence
+- `projects/project-planning/CLAUDE.md` — removed Routing rule sentence
+- `projects/obsidian-pe-kb/CLAUDE.md` — removed Routing rule sentence
+- `projects/global-macro-analysis/CLAUDE.md` — removed Routing rule sentence
+- `projects/nordic-pe-landscape-mapping-4-26/CLAUDE.md` — removed Routing rule sentence
+
+### Decisions Made
+- **Removal scope:** deleted the file and all operational references; historical files (audits, logs, project outputs) left as-is as frozen records.
+- **No content relocation:** the tier rules described in model-routing.md (Haiku/Sonnet/Opus table, decision heuristic, skill-level mapping) are already inlined in CLAUDE.md and skill/agent files; no content migration was needed.
+
+### Next Steps
+- Push all 6 repos (ai-resources, workspace, project-planning, obsidian-pe-kb, global-macro-analysis, nordic-pe-landscape-mapping-4-26).
+
+### Open Questions
+None.
