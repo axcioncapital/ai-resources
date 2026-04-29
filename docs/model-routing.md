@@ -46,14 +46,27 @@ The workspace has no global default model. Each project declares its own default
 
 The `model-classifier.sh` hook fires once per session on the first free-form prompt, classifies the task tier, compares against the active project's declared default, and recommends `/model` switch only when the gap is clear. Slash-command prompts skip the hook (the command's frontmatter declares its own tier).
 
-## Session-level vs agent-level routing
+## Session-level vs agent-level vs skill-level routing
 
-Two layers, with different scopes:
+Three layers, with different scopes:
 
 - **Session-level** (`/model`) — the model the main agent runs on. Set by the operator at session start, recommended by the classifier hook, defaulting to the project's declared default. **Binary at session level: Sonnet or Opus.** Haiku is never recommended at the session level.
 - **Agent-level** (`model:` in agent frontmatter) — the model a subagent runs on, independent of the session model. **All three tiers available.** Haiku is invoked only here.
+- **Skill-level** (`model:` and `effort:` in SKILL.md frontmatter) — the model and effort budget a skill invokes for the current turn, reverting to the session model on the next prompt. Every SKILL.md must declare both fields; missing either is a BLOCKING issue in the create/improve/migrate pipelines.
 
 The agent tier table at `ai-resources/docs/agent-tier-table.md` lists tier assignments for every agent in `ai-resources/.claude/agents/`.
+
+### Skill-level routing
+
+Canonical mapping for SKILL.md `model:` and `effort:` fields:
+
+| Work type | `model:` | `effort:` | Decision test |
+|-----------|----------|-----------|---------------|
+| Judgment — deciding what should be done; ambiguity, design, synthesis, QC | `opus` | `high` | The hard part is deciding. |
+| Structured execution — doing what's been decided; SOPs, scaffolding, drafting from templates | `sonnet` | `medium` | The hard part is doing. |
+| Mechanical — counts, format checks, pattern matching, log appends | `haiku` | `low` | The answer is a number, boolean, or list. |
+
+Use short form only (`opus` / `sonnet` / `haiku`; `high` / `medium` / `low`). The harness resolves to the current model in that tier. The `skill-auditor` Section 8 check flags skills missing either field or declaring an invalid value.
 
 ## Mid-session escalation pattern
 

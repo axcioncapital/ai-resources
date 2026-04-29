@@ -104,6 +104,24 @@ Find paths inside each SKILL.md that reference files under the skill's own `refe
 
 Dead internal reference = **Important**.
 
+### 8. Frontmatter completeness
+
+For each SKILL.md, verify the frontmatter contains both `model:` and `effort:`.
+
+**Required values:**
+- `model:` must be exactly one of: `opus`, `sonnet`, `haiku`
+- `effort:` must be exactly one of: `high`, `medium`, `low`
+
+Missing `model:` = **Important** ("skill inherits session model instead of declaring its own tier").
+Missing `effort:` = **Important** ("effort budget undefined; harness cannot apply skill-level allocation").
+Value outside the allowed set = **Important** ("harness may ignore the field; correct to a valid value").
+Model/effort pairing that conflicts with the description-inferred tier = **Minor** ("advisory — review against canonical mapping in `docs/model-routing.md` § Skill-level routing").
+
+Canonical mapping (from `docs/model-routing.md`):
+- Judgment work (deciding) → `model: opus` / `effort: high`
+- Structured execution (doing) → `model: sonnet` / `effort: medium`
+- Mechanical (counts, checks, pattern matching) → `model: haiku` / `effort: low`
+
 ## Output
 
 Write your findings as JSON to: `{TARGET}/reports/.audit-temp/skill-findings.json`
@@ -119,6 +137,7 @@ Write your findings as JSON to: `{TARGET}/reports/.audit-temp/skill-findings.jso
     "skills_over_300_lines": 0,
     "skills_over_500_lines": 0,
     "orphaned_skills": 0,
+    "skills_missing_tier_frontmatter": 0,
     "top_overlapping_pairs": [
       {
         "skill_a": "name",

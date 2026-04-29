@@ -102,3 +102,18 @@ Suggested three-session sequence:
   - `ai-resources/.claude/commands/critique-draft.md` (new)
   - Possibly a generic `ai-resources/.claude/agents/strategic-critic.md` if the verdict format is to be standardized
   - `projects/buy-side-service-plan/.claude/commands/challenge.md` (refactor as wrapper)
+
+### 2026-04-28 — Bulk backfill of model: and effort: to all 69 skills
+
+- **Status:** completed
+- **Category:** bulk-backfill-exception (per `docs/ai-resource-creation.md` § Bulk-backfill Exception)
+- **Files modified:** 69 — all `skills/*/SKILL.md`
+- **Fields added:** `model:` and `effort:` (2-line insert per file, after `description:` in frontmatter; body untouched)
+- **Tier mapping source:** `audits/working/skills-tier-inventory-2026-04-28.md` (69 skills: 38 opus/high, 30 sonnet/medium, 1 haiku/low)
+- **Bulk QC verification (substitutes for 69 per-file passes):**
+  - `grep -rL "^model:"  skills/*/SKILL.md` → 0 results
+  - `grep -rL "^effort:" skills/*/SKILL.md` → 0 results
+  - `grep -rh "^model:"  skills/*/SKILL.md | grep -vE ":(opus|sonnet|haiku)$"` → 0 lines
+  - `grep -rh "^effort:" skills/*/SKILL.md | grep -vE ":(low|medium|high)$"` → 0 lines
+- **Commits:** `a533595` (Phase A pipeline foundation), `a4f32e8` (Phase C bulk sweep)
+- **Exception justification:** 69 per-file pipeline runs would produce identical fix passes with no QC signal. One-time mechanical frontmatter insert only; no body changes. Documented in `docs/ai-resource-creation.md` before execution.
