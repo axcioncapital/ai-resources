@@ -332,3 +332,15 @@ When the extension is invoked, document one line in the wrap session note:
 - *Rename `/recommend` → `/proceed` (or `/decide`).* Top candidate by name elegance and pairing with `/triage` and `/clarify`. Rejected for now: invasive, doesn't prevent the underlying mis-invocation pattern, only makes it less likely.
 - *Unified routing command (`/decide-mode`) that detects intent and dispatches.* Rejected: adds a layer, dilutes explicit-intent benefit, doesn't fit the workspace's short-verb command idiom.
 - *Decision rule in workspace CLAUDE.md ("when proposals → /triage, when questions → /recommend").* Rejected: relies on operator recall at invocation time; doesn't actively prevent mis-invocation.
+
+## 2026-04-29 — /resolve architecture: reuse triage-reviewer
+
+**Context.** Planning a new `/resolve` command. Initial design included a new `resolve-reviewer` agent (opus) to classify QC findings by importance and recommend fixes.
+
+**Decision.** Drop `resolve-reviewer`; reuse the existing `triage-reviewer` subagent for importance classification. The main Claude session (not a subagent) drafts concrete fixes for the "Do" items.
+
+**Rationale.** QC during planning surfaced near-total overlap: both agents are opus, both are independent reviewers, both classify items by consequence/risk. The "Recommended Fix" column was the only net-new piece, and that can be handled by the main session after triage output is received.
+
+**Alternatives considered.**
+- *New `resolve-reviewer` agent (original plan).* Rejected: redundant with `triage-reviewer`; two near-duplicate opus agents accumulate maintenance surface and create routing ambiguity.
+- *Extend `/triage` with a "with-fixes" mode.* Rejected: complicates the existing command's interface; `/resolve` as a separate command preserves clean separation of concerns.

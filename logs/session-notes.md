@@ -409,3 +409,33 @@ None.
 
 ### Open Questions
 None.
+
+## 2026-04-29 — new /resolve command + auto-QC/resolve hooks
+
+### Summary
+Built the `/resolve` command, which compresses the post-QC workflow: takes findings from context, routes them through `triage-reviewer` for importance classification, then drafts concrete fixes for Real items so the operator only approves rather than diagnosing. Also built two shell hooks — `auto-qc-nudge.sh` (nudges `/qc-pass` after significant writes) and `auto-resolve-nudge.sh` (nudges `/resolve` after QC fires) — and registered both in `settings.json`. The planning phase went through a full 3-QC-pass / 2-triage-pass loop before approval.
+
+### Files Created
+- `.claude/commands/resolve.md` — `/resolve` slash command (model: opus); importance-verdict + fix-drafter using `triage-reviewer`
+- `.claude/hooks/auto-qc-nudge.sh` — PostToolUse Write/Edit hook; nudges Claude to run `/qc-pass` after significant writes (≥50 lines, excluding noise logs); path-hash dedup sentinel
+- `.claude/hooks/auto-resolve-nudge.sh` — Stop hook; nudges Claude to run `/resolve` when QC nudge fired this session; dedup sentinel
+
+### Files Modified
+- `.claude/settings.json` — added `auto-qc-nudge.sh` inside existing `Write|Edit` PostToolUse block; added `auto-resolve-nudge.sh` as third Stop hook group
+- `.claude/agents/triage-reviewer.md` — updated frontmatter description to acknowledge `/resolve` as a second caller (end-time `/risk-check` mitigation)
+- `audits/risk-checks/2026-04-29-new-resolve-command-claude-commands-resolve-md-model-opus.md` — risk-check report created during wrap (PROCEED-WITH-CAUTION verdict, hidden-coupling mitigation applied)
+
+### Decisions Made
+- **Architecture:** Reuse `triage-reviewer` instead of creating a new `resolve-reviewer` agent. QC triage during planning surfaced near-total overlap. `/resolve` is distinct from `/triage` only in that it adds the concrete-fix drafting step.
+- **"Low-stakes" scope:** Fire auto-QC nudge on all significant writes (≥50 lines), including `.claude/` infra files — no structural low-stakes signal is readable in a 5s shell script; infra edits are the canonical low-stakes case; nudge is advisory.
+- **resolve.md model:** `opus` — operator directed (overriding initial `sonnet` choice); judgment work in fix drafting warrants it.
+- **cksum implementation:** Hash path string, not file content (`echo "$FILE_PATH" | cksum | awk '{print $1}'`) — content hash changes on every edit, breaking per-file dedup.
+- **settings.json placement:** Auto-QC hook added inside existing `Write|Edit` block (not a parallel block) to maintain conventional structure.
+- **QC auto-loop:** Plan went through 3 QC passes + 2 triage passes; resolve.md command itself got 1 QC pass with GO verdict.
+
+### Next Steps
+- Push commit `1d426b4` and the wrap commit (and any other un-pushed commits)
+- Test auto-QC nudge: edit any non-noise file ≥50 lines and confirm nudge fires
+
+### Open Questions
+None.

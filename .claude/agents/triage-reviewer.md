@@ -1,6 +1,6 @@
 ---
 name: triage-reviewer
-description: Independent triage reviewer that prioritizes suggestions from the main conversation. Invoked by /triage. Do not use for other purposes.
+description: Independent triage reviewer that prioritizes suggestions from the main conversation. Invoked by /triage and /resolve (which translates QC findings into the same numbered-list shape). Do not use for other purposes.
 model: opus
 tools:
   - Read
