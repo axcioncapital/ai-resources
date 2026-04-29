@@ -441,3 +441,30 @@ A permission prompt fired on the second Edit call (`recommend.md`) despite setti
 ### Note
 
 - Pre-existing `M logs/innovation-registry.md` (modified before session start) was left untouched and not staged in this session's commit.
+
+## 2026-04-29 — model: and effort: enforcement plan — Phases B–D complete
+
+### Summary
+Completed the four-phase plan to make `model:` and `effort:` mandatory in every SKILL.md. Phase A (pipeline foundation, 6 files) and B.0 (tier inventory generation) shipped in the prior session. This session ran Phase B.1 (operator tier review — all 69 accepted via `/recommend`), Phase C (bulk sweep of all 69 SKILL.md files), and Phase D (skill-auditor Section 8 activation + model-routing cross-reference). All 69 skills now declare explicit model and effort tiers; the pipeline enforces both fields on every new/improved/migrated skill going forward.
+
+### Files Created
+- None new (all modifications).
+
+### Files Modified
+- `skills/*/SKILL.md` — all 69 files: `model:` and `effort:` frontmatter inserted after `description:` (Phase C bulk sweep)
+- `skills/repo-health-analyzer/agents/skill-auditor.md` — Section 8 (frontmatter completeness check) added; `skills_missing_tier_frontmatter` metric added to output schema
+- `docs/model-routing.md` — "Skill-level routing" subsection added as third layer (alongside session-level and agent-level); canonical mapping table included
+- `logs/improvement-log.md` — bulk-backfill exception entry appended (date, file count, fields, 4-command QC verification, commit cross-refs)
+
+### Decisions Made
+- **Tier classifications (Phase B.1):** All 69 skill tiers accepted as-is via `/recommend`. Ambiguous cases (10 skills) defaulted to conservative Sonnet/medium rather than Opus/high — appropriate bias. `workflow-system-analyzer` is the sole Haiku/low skill. Phase D's skill-auditor Section 8 serves as post-hoc correction mechanism if any tier is later judged wrong.
+- **QC approach (Phase C):** Single-batch 4-command grep verification substituted for 69 per-file QC passes, per the bulk-backfill exception documented in `docs/ai-resource-creation.md`. All 4 checks returned zero results.
+- **Phase D sequencing:** skill-auditor Section 8 was held until after Phase C committed, preventing mid-window false Important findings on the 68 not-yet-backfilled skills.
+
+### Next Steps
+- Push the 3 commits (`a533595`, `a4f32e8`, `8eb5579`) — requires explicit operator confirmation.
+- Verification tests (optional, from plan): run `/create-skill` on a dummy brief and confirm produced SKILL.md contains both fields; run `/improve-skill` on a small edit and confirm fields survive; invoke an Opus-tier skill in a Sonnet-default session to confirm model override fires.
+- End-time `/risk-check` skipped: plan-time check covered the entire change set with all 5 mitigations applied; commits already shipped; drift bounded to frontmatter-only insertions + agent/doc edits. Per feedback memory skip rule.
+
+### Open Questions
+- None. Plan is complete.
