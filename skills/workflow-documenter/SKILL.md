@@ -6,6 +6,8 @@ description: >
   stages, or workflow sketch and asks to "document this workflow," "formalize
   this process," "turn this into workflow documentation," or similar requests.
   Outputs structured markdown suitable for Notion.
+model: sonnet
+effort: medium
 ---
 
 # Workflow Documenter

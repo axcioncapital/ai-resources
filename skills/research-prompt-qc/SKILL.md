@@ -8,6 +8,8 @@ description: >
   verdicts (PASS / FLAG) and a batch verdict. Do NOT use for prompt creation
   (research-prompt-creator), answer spec QC (answer-spec-qc), or
   research extract verification (research-extract-verifier).
+model: sonnet
+effort: medium
 ---
 
 # Research Prompt QC

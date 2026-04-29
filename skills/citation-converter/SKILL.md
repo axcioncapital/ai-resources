@@ -10,6 +10,8 @@ description: >
   Use this skill only for standalone citation passes on already-written prose.
   Primary use case: applying citations to prose produced by evidence-to-report-writer
   with deferred citation conversion (claim IDs still inline).
+model: sonnet
+effort: medium
 ---
 
 ## Role + Scope

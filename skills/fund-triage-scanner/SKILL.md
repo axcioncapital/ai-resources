@@ -8,6 +8,8 @@ description: >
   "scan funds," "quick scan," or "run the triage pass." Do NOT use for deep fund
   research, multi-source analysis, or portfolio company extraction — those are
   separate downstream stages.
+model: sonnet
+effort: medium
 ---
 
 # Fund Triage Scanner

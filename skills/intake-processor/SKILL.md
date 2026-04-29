@@ -8,6 +8,8 @@ description: >
   the /kb-ingest command is run. Do NOT use for theme population runs (those use
   /kb-populate which has its own source discovery step) or for direct filing of
   entries (that is /kb-review).
+model: sonnet
+effort: medium
 ---
 
 # Intake Processor Skill

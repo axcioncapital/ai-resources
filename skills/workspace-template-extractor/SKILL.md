@@ -7,6 +7,8 @@ description: >
   replicating. Produces a clean template directory with parameterized placeholders
   for project-specific content. Requires an operator-provided extraction manifest
   classifying each file/folder.
+model: sonnet
+effort: medium
 ---
 
 # Workspace Template Extractor

@@ -9,6 +9,8 @@ description: >
   evidence grades. Do not use for: single-question summaries, raw source
   analysis, or final prose writing — this produces structured notes for a
   human editor, not reader-facing content.
+model: opus
+effort: high
 ---
 
 # Cluster Analysis Pass

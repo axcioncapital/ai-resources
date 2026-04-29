@@ -14,6 +14,8 @@ description: >
   Do NOT use for QC of Deep Research reports (that's research-extract-verifier).
   Do NOT use for merging evidence (that's supplementary-evidence-merger at
   Step 2.S4). Do NOT use for drafting queries (that's supplementary-query-brief-drafter).
+model: sonnet
+effort: medium
 ---
 
 # Supplementary Research QC

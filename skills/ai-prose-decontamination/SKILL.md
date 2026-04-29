@@ -13,6 +13,8 @@ description: >
   (chapter-prose-reviewer), compliance checking (prose-compliance-qc),
   formatting (prose-formatter), or rewriting content
   (decision-to-prose-writer / evidence-to-report-writer).
+model: opus
+effort: high
 ---
 
 ## Role + Scope

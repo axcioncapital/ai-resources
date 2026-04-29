@@ -9,6 +9,8 @@ description: >
   of a two-step workflow — establishes intent and scope before material
   gathering. Do NOT use for simple single-turn requests, mechanical tasks, or
   when the user has already provided a complete specification.
+model: opus
+effort: high
 ---
 
 # Context Pack Builder

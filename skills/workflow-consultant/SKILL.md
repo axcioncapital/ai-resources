@@ -8,6 +8,8 @@ description: >
   the Workflow Development workflow. Accepts a Workflow Need template or
   freeform problem description. Does NOT produce formal workflow designs,
   hand-off contracts, or documentation.
+model: opus
+effort: high
 ---
 
 # Workflow Consultant

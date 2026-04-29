@@ -14,6 +14,8 @@ description: >
   Do NOT use before initial memos exist, for writing report prose, for gap
   assessment (that's gap-assessment-gate), or as a substitute for operator
   editorial review.
+model: opus
+effort: high
 ---
 
 # Cluster Memo Refiner

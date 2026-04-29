@@ -8,6 +8,8 @@ description: >
   Specs and asks to verify, QC, check compliance, or run evidence-spec verification. Do NOT use for
   assessing research question coverage (gap-assessment-gate), evaluating evidence quality beyond
   structural rules, rewriting Evidence Packs, or any downstream synthesis work.
+model: sonnet
+effort: medium
 ---
 
 # Evidence-Spec Verifier

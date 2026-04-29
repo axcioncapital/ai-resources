@@ -11,6 +11,8 @@ description: >
   recommendations. Do NOT use for evaluating workflow document quality
   or architecture patterns (workflow-evaluator), creating workflows
   (workflow-creator), or analyzing individual skills (ai-resource-builder).
+model: opus
+effort: high
 ---
 
 # Workflow System Critic

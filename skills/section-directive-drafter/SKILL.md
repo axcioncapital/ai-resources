@@ -14,6 +14,8 @@ description: >
   without a pre-existing section list (that's research-structure-creator or manual
   architecture work), for style/voice decisions (that's specifying-output-style),
   or when memos have not been through editorial review.
+model: opus
+effort: high
 ---
 
 # Section Directive Drafter

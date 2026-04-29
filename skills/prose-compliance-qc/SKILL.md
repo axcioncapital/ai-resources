@@ -11,6 +11,8 @@ description: >
   report compliance (report-compliance-qc), editorial quality review
   (chapter-prose-reviewer) when run standalone, or cross-module integration
   (document-integration-qc).
+model: opus
+effort: high
 ---
 
 # Prose Compliance QC

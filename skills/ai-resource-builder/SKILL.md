@@ -7,6 +7,8 @@ description: >
   (3) improving an existing resource from feedback or bug reports.
   Do NOT use for: workflow design (use workflow-creator), non-AI documents,
   or executing/running skills.
+model: opus
+effort: high
 ---
 
 # AI Resource Builder

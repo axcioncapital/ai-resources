@@ -8,6 +8,8 @@ description: >
   "how should I build this workflow." Applies best practices (state pinning,
   context isolation, clean hand-offs, stop conditions) and flags friction
   points with proposed solutions.
+model: opus
+effort: high
 ---
 
 # Workflow Creator

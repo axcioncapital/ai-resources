@@ -12,6 +12,8 @@ description: >
   already clear and complete enough for Journal Wiki Creator to consume
   directly. Do NOT use for research notes, learning notes, or factual
   content — this skill handles personal development thinking only.
+model: opus
+effort: high
 ---
 
 # Journal Thinking Clarifier

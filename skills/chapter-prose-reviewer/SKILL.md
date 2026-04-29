@@ -11,6 +11,8 @@ description: >
   prose (that's document-optimizer), restructuring sections (that's
   refine-document-structure), or structural fit against architecture only
   (that's chapter-architecture-annotator).
+model: opus
+effort: high
 ---
 
 ## Role + Scope

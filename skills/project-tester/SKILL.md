@@ -7,6 +7,8 @@ description: >
   Use when the /new-project pipeline advances to Stage 5, or when the user asks to "test this
   implementation," "verify the build," "run checks," or "validate the setup." Do NOT use for
   designing, planning, or building — only for testing completed work.
+model: sonnet
+effort: medium
 ---
 
 # Project Tester

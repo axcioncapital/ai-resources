@@ -15,6 +15,8 @@ description: >
   document-optimizer), for expanding notes into prose (use
   messy-notes-into-polished-drafts), for tone/voice calibration, or for citation
   formatting decisions.
+model: opus
+effort: high
 ---
 
 # Research Structure Creator

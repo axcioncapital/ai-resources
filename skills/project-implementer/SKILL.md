@@ -7,6 +7,8 @@ description: >
   spec and asks to "build this," "implement this," "execute the spec," or "create these files."
   Do NOT use for designing architecture (use architecture-designer), writing specs
   (use implementation-spec-writer), or testing (use project-tester).
+model: sonnet
+effort: medium
 ---
 
 # Project Implementer

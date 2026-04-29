@@ -9,6 +9,8 @@ description: >
   h3-title-pass have run, before final review. Do NOT use for prose quality
   review (chapter-prose-reviewer), compliance checking (prose-compliance-qc),
   or applying formatting (prose-formatter).
+model: sonnet
+effort: medium
 ---
 
 # Formatting QC

@@ -9,6 +9,8 @@ description: >
   judgment about what to preserve and what to condense. Do NOT use for producing
   report prose (evidence-to-report-writer), research extracts
   (research-extract-creator), or analytical memos (cluster-analysis-pass).
+model: opus
+effort: high
 ---
 
 ## Role + Scope

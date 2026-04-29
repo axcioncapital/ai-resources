@@ -15,6 +15,8 @@ description: >
   (answer-spec-generator), execution routing (execution-manifest-creator),
   evidence compression, or direct research execution — this skill produces
   prompts for the operator to paste into the assigned execution tool.
+model: sonnet
+effort: medium
 ---
 
 # Research Prompt Creator

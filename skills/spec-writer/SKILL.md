@@ -11,6 +11,8 @@ description: >
   Do NOT use for implementation specs (file-level build instructions) — those belong in
   implementation-spec-writer. Do NOT use for project planning (use task-plan-creator or
   implementation-project-planner).
+model: opus
+effort: high
 ---
 
 # Spec Writer

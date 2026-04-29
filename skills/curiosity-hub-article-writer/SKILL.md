@@ -10,6 +10,8 @@ description: >
   Input is a complete GPT draft plus the mini research plan. Output is a fully
   rewritten article. Do NOT use for research planning, document formatting, or
   partial edits.
+model: opus
+effort: high
 ---
 
 # Curiosity Hub Article Writer

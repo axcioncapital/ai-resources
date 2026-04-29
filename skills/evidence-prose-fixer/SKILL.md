@@ -14,6 +14,8 @@ description: >
   CustomGPT), rewriting chapters from evidence (that's evidence-to-report-writer),
   evaluating prose quality (that's chapter-prose-reviewer), or evaluating
   structural fit (that's chapter-architecture-annotator).
+model: opus
+effort: high
 ---
 
 ## Role + Scope

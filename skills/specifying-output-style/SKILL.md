@@ -10,6 +10,8 @@ description: >
   spec," "document specification," (3) a draft is provided and parameters need
   to be crystallized. Do not use for: final document production, applying
   style/tone during writing, or structural editing of drafts.
+model: opus
+effort: high
 ---
 
 ## Role

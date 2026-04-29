@@ -10,6 +10,8 @@ description: >
   "apply formatting pass," "add visual hierarchy," "formatting standards."
   Do NOT use for prose editing, rewriting, or structural reorganization —
   this skill changes markup only, never words.
+model: sonnet
+effort: medium
 ---
 
 ## Role + Scope

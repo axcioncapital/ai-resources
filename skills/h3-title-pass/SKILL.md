@@ -8,6 +8,8 @@ description: >
   "add H3s," "heading pass," "title pass," or when a prose file has long H2
   sections without subheadings. Do NOT use for restructuring content,
   rewriting prose, or changing H2 titles.
+model: sonnet
+effort: medium
 ---
 
 ## Role + Scope

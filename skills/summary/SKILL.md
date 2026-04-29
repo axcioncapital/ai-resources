@@ -8,6 +8,7 @@ description: >
   <path> on a substantial markdown or plain-text document. Do NOT use for code files, reference
   data, analytical reframing, or trivially short inputs.
 model: opus
+effort: high
 allowed-tools: Read, Write
 disable-model-invocation: true
 ---

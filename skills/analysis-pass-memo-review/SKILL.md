@@ -11,6 +11,8 @@ description: >
   completed cluster memo is provided with expectation of editorial guidance. Do
   NOT use for writing the memo itself (use `cluster-analysis-pass`), for
   answering the questions it generates, or for final report review.
+model: opus
+effort: high
 ---
 
 # Analysis Pass Memo Review

@@ -11,6 +11,8 @@ description: >
   similar. Do NOT use for rewriting prose (evidence-prose-fixer), for
   evidence-level verification (evidence-spec-verifier), or for architectural
   review (chapter-architecture-annotator).
+model: opus
+effort: high
 ---
 
 # document-integration-qc

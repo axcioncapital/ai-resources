@@ -14,6 +14,8 @@ description: >
   from scratch (workflow-documenter), evaluating non-workflow resources like
   single-stage procedures, SOPs without tool transitions, or checklists
   (ai-resource-builder).
+model: opus
+effort: high
 ---
 
 # Workflow Evaluator

@@ -13,6 +13,8 @@ description: >
   Creator instead). Do NOT use for rewriting GPT drafts (use
   curiosity-hub-article-writer). Do NOT use for improving Claude's own outputs
   through diagnosis (use document-iteration).
+model: opus
+effort: high
 ---
 
 # Journal Wiki Integrator

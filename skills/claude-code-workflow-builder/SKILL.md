@@ -13,6 +13,8 @@ description: >
   (use workflow-documenter), or building the implementation files themselves
   (slash commands, hook scripts) — this skill specifies what's needed, not
   builds it.
+model: opus
+effort: high
 ---
 
 # Claude Code Workflow Builder

@@ -19,6 +19,8 @@ description: >
   research questions are well-formed (that's upstream). Do NOT use for editorial
   judgments about which findings matter most (that's cluster-analysis-pass). Do NOT use
   for supplementing evidence from training data or external knowledge.
+model: opus
+effort: high
 ---
 
 # Research Extract Verifier

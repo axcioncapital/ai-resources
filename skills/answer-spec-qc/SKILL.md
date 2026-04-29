@@ -1,6 +1,8 @@
 ---
 name: answer-spec-qc
 description: Full quality review of Answer Specs before they enter execution as the binding research contract. Produces per-spec verdicts (APPROVED / REVISE / ESCALATE) with routing instructions. Use when Patrik provides Answer Specs alongside a Task Plan and Research Plan and asks to QC, verify, review, check, or validate the specs. Triggers on requests like "QC these answer specs," "check specs before execution," "verify answer specs," "run spec QC," or when Answer Specs are provided with expectation of quality review before Stage 2. Do NOT use for evidence pack verification (that's evidence-spec-verifier), for gap assessment across clusters (that's gap-assessment-gate), for generating or regenerating Answer Specs (that's answer-spec-generator), or for fixing specs — this skill flags problems and routes, it does not remediate.
+model: opus
+effort: high
 ---
 
 # Answer Spec QC

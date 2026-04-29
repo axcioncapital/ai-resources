@@ -10,6 +10,8 @@ description: >
   Do NOT use for evaluating workflow document quality (workflow-evaluator),
   creating workflows (workflow-creator), or analyzing repo-level health
   (repo-health-analyzer).
+model: haiku
+effort: low
 ---
 
 # Workflow System Analyzer

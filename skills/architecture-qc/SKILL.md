@@ -9,6 +9,8 @@ description: >
   production begins. Do NOT use for creating the architecture (that's
   research-structure-creator), for writing chapter prose (that's
   evidence-to-report-writer), or for reviewing prose quality.
+model: opus
+effort: high
 ---
 
 # Architecture QC

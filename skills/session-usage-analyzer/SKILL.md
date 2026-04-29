@@ -7,6 +7,8 @@ description: >
   summary and existing log contents, returns ONLY a formatted log entry.
   Do NOT invoke interactively or use for mid-session optimization. This is a
   post-session review tool.
+model: sonnet
+effort: medium
 ---
 
 ## Role

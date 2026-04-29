@@ -10,6 +10,8 @@ description: >
   cross-module integration QC (that's document-integration-qc), inline draft
   review during Step 4.2 (that's chapter-prose-reviewer), or fact verification
   (that's verify-chapter).
+model: opus
+effort: high
 ---
 
 ## Role + Scope

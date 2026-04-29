@@ -15,6 +15,8 @@ description: >
   Step 2.3). Do NOT use for QC of supplementary results (that's
   supplementary-research-qc at Step 2.S3). Do NOT use for drafting queries
   (that's supplementary-query-brief-drafter at Step 2.S1).
+model: sonnet
+effort: medium
 ---
 
 # Supplementary Evidence Merger

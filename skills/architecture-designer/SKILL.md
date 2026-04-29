@@ -10,6 +10,8 @@ description: >
   design. Do NOT use for writing implementation specs (file-level instructions — that's
   implementation-spec-writer), for general project planning (use implementation-project-planner),
   or for writing technical specifications (use spec-writer).
+model: opus
+effort: high
 ---
 
 # Architecture Designer

@@ -15,6 +15,8 @@ description: >
   (research-plan-creator), answer spec generation (answer-spec-generator),
   writing execution prompts (research-prompt-creator), or evidence
   extraction.
+model: sonnet
+effort: medium
 ---
 
 # Execution Manifest Creator

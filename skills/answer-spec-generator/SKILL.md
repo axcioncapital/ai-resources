@@ -6,6 +6,8 @@ description: >
   answer components, evidence rules, and completion gates. Also trigger when user
   asks to "spec out" or "define what a good answer looks like" for research questions.
   Do NOT trigger for general research planning, evidence collection, or report writing.
+model: sonnet
+effort: medium
 ---
 
 ## Output Protocol

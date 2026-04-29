@@ -9,6 +9,8 @@ description: >
   SKILL.md creation or editing (use create-skill / improve-skill), CLAUDE.md
   rules or project instructions (use update-claude-md), or CustomGPT / Perplexity
   prompt formats (these follow tool-specific conventions in their respective skills).
+model: sonnet
+effort: medium
 ---
 
 # Prompt Creator

@@ -11,6 +11,8 @@ description: >
   NOT use for surfacing the decisions themselves (that's analysis-pass-memo-review),
   for QC'ing recommendations (that's editorial-recommendations-qc), for making
   final editorial calls (that's the operator), or for writing report prose.
+model: opus
+effort: high
 ---
 
 # Editorial Recommendations Generator

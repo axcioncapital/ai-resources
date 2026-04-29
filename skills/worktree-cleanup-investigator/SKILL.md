@@ -9,6 +9,8 @@ description: >
   Do NOT use for single-file commits (use regular commit flow), workspace
   health audits (use /audit-repo), structural reviews (use /repo-dd), or
   during active content-production sessions. Skill is Axcion-scoped.
+model: opus
+effort: high
 disable-model-invocation: true
 ---
 

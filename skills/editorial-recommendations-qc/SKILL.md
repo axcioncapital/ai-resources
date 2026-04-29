@@ -12,6 +12,8 @@ description: >
   recommendations (that's editorial-recommendations-generator), for surfacing the
   decisions (that's analysis-pass-memo-review), for making final editorial calls
   (that's the operator), or for writing report prose.
+model: opus
+effort: high
 ---
 
 # Editorial Recommendations QC

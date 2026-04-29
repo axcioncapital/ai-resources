@@ -15,6 +15,8 @@ description: >
   decisions (delegated to specifying-output-style), fact-verification, document
   formatting/layout, structural decisions about section order, or cluster-level
   analysis and evidence organization (handled by cluster-analysis-pass).
+model: opus
+effort: high
 ---
 
 ## Role + Scope

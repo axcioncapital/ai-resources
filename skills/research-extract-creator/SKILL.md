@@ -14,6 +14,8 @@ description: >
   (evidence-spec-verifier), cluster-level analysis (cluster-analysis-pass),
   report prose writing (evidence-to-report-writer), or supplementary research
   decisions (operator's review at Step 2.4).
+model: sonnet
+effort: medium
 ---
 
 # Research Extract Creator

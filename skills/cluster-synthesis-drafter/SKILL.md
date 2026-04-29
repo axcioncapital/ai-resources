@@ -11,6 +11,8 @@ description: >
   refinement happens downstream via chapter-prose-reviewer. Do NOT use for final
   report prose (evidence-to-report-writer), cluster analysis
   (cluster-analysis-pass), or section directives (section-directive-drafter).
+model: sonnet
+effort: medium
 ---
 
 ## Role + Scope

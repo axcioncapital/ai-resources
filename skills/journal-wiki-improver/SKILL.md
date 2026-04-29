@@ -12,6 +12,8 @@ description: >
   material (use journal-wiki-integrator), professional/Axcion documents (use
   document-optimizer or document-iteration), or restructuring (flag and suggest
   refine-document-structure instead).
+model: opus
+effort: high
 ---
 
 # Journal Wiki Improver

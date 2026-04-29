@@ -11,6 +11,8 @@ description: >
   Do NOT use when an existing article already covers the theme — use Journal
   Wiki Integrator instead. Do NOT use for research-based knowledge articles —
   use learning-wiki-creator instead.
+model: opus
+effort: high
 ---
 
 # Journal Wiki Creator

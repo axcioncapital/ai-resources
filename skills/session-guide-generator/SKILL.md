@@ -7,6 +7,8 @@ description: >
   "where are we," "create a session guide," or runs /session-guide. Also used as optional Stage 6 of
   /new-project. Do NOT use for project planning (use implementation-project-planner), testing
   (use project-tester), or post-session token analysis (use session-usage-analyzer).
+model: sonnet
+effort: medium
 ---
 
 # Session Guide Generator

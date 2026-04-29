@@ -1,6 +1,8 @@
 ---
 name: gap-assessment-gate
 description: Assesses evidence sufficiency across cluster analytical memos and routes gaps for resolution before committing to document architecture. Use when all cluster analytical memos are complete and the user needs a go/no-go decision on whether evidence supports the planned report sections. Triggers on requests like "assess gaps," "run gap gate," "are we ready to write," "check evidence sufficiency," or when cluster memos are provided with expectation of a proceed/hold recommendation. Takes cluster analytical memos (from cluster-analysis-pass) as primary input, with Coverage Trackers as optional supplement. Do NOT use before cluster analysis is complete, for individual question gap checking (that's the Evidence Pack QC step), for identifying what to research initially (that's research-plan-creator), or for post-draft quality review.
+model: opus
+effort: high
 ---
 
 # Gap Assessment Gate

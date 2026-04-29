@@ -8,6 +8,8 @@ description: >
   "build instructions," "file-level spec," or "translate this architecture into build steps."
   Do NOT use for architecture design (use architecture-designer) or for actually executing
   builds (use project-implementer).
+model: sonnet
+effort: medium
 ---
 
 # Implementation Spec Writer

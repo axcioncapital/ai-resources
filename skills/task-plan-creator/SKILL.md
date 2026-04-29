@@ -9,6 +9,8 @@ description: >
   (Background, Objective, Scope, Deliverables, Process, Resources, Success
   Criteria, Open Questions). Do not use for: creating workflow plans, research
   plans, or executing the work described in a Task Plan.
+model: opus
+effort: high
 ---
 
 # Task Plan Creator

@@ -9,6 +9,8 @@ description: >
   Sibling to evidence-to-report-writer (handles evidence-organized content).
   Do NOT use for: Part 1 evidence content (evidence-to-report-writer),
   tone/voice (specifying-output-style), fact-verification, or formatting/layout.
+model: opus
+effort: high
 ---
 
 ## Role + Scope

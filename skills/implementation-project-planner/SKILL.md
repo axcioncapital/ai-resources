@@ -8,6 +8,8 @@ description: >
   "plan a Claude Code project," "plan this implementation," or provides a context pack expecting
   a Claude Code implementation plan. Do NOT use for research project planning (use
   task-plan-creator), general task planning, or non-Claude-Code projects.
+model: opus
+effort: high
 ---
 
 # Implementation Project Planner

@@ -7,6 +7,8 @@ description: >
   does not detect. Use after the structural QC pass in /produce-knowledge-file. Do NOT use
   for structural/format QC (that's the inline criteria in the command's Step 5), report prose
   QC (report-compliance-qc), or chapter editorial review (chapter-prose-reviewer).
+model: opus
+effort: high
 ---
 
 # Knowledge File Completeness QC

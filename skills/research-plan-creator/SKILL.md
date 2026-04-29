@@ -9,6 +9,8 @@ description: >
   inquiry across confirmatory and exploratory research postures. Do not use for:
   creating Task Plans (upstream — see task-plan-creator), executing research
   (downstream), or synthesizing findings into deliverables.
+model: opus
+effort: high
 ---
 
 # Research Plan Creator

@@ -17,6 +17,8 @@ description: >
   Do NOT use for initial research execution (that's Stage 2 Steps 2.0–2.2 via
   Research Execution GPT). Do NOT use for extract creation or verification
   (Steps 2.3–2.4). Do NOT use for Stage 3 gap resolution (Subworkflow 3.S).
+model: opus
+effort: high
 ---
 
 # Supplementary Query Brief Drafter

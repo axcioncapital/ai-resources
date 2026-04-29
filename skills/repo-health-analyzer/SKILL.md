@@ -8,6 +8,8 @@ description: >
   Produces a scored health report with prioritized recommendations.
   Do NOT use for individual skill evaluation (use ai-resource-builder instead)
   or workflow quality checks (use workflow-evaluator instead).
+model: opus
+effort: high
 ---
 
 # Repo Health Analyzer

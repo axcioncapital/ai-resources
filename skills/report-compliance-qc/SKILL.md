@@ -8,6 +8,8 @@ description: >
   Do NOT use for editorial quality review (that's chapter-prose-reviewer), cross-module
   integration checks (that's document-integration-qc), or evidence completeness against
   answer specs (that's evidence-spec-verifier).
+model: sonnet
+effort: medium
 ---
 
 # Report Compliance QC

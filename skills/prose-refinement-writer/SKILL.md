@@ -9,6 +9,8 @@ description: >
   decision-to-prose-writer), voice/rhythm cleanup (use ai-prose-decontamination),
   evidence-fidelity fixes (use evidence-prose-fixer), or word/phrase tightening
   (use document-optimizer).
+model: opus
+effort: high
 ---
 
 # Prose Refinement Writer
