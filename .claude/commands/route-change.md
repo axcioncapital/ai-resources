@@ -41,7 +41,7 @@ This command is **not** auto-wired into `/create-skill` or any other pipeline. O
    - Touches ai-resources repo conventions → `{AI_RESOURCES}/CLAUDE.md`.
    - Touches a specific project (`projects/<name>/`) → that project's `CLAUDE.md`.
    - Touches permissions / settings.json → `{AI_RESOURCES}/docs/permission-template.md`.
-   - Touches model selection or tier → `{AI_RESOURCES}/docs/model-routing.md` and (for agents) `{AI_RESOURCES}/docs/agent-tier-table.md`.
+   - Touches model selection or tier → (for agents) `{AI_RESOURCES}/docs/agent-tier-table.md`.
    - Touches `/risk-check`, audit cadence, or change classes → `{AI_RESOURCES}/docs/audit-discipline.md`.
    - Touches resource creation pipelines → `{AI_RESOURCES}/docs/ai-resource-creation.md`.
 

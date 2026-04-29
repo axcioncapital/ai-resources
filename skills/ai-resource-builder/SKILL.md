@@ -112,7 +112,7 @@ Apply the rules from the Frontmatter Standards section. After writing the descri
 
 **Declare `model:` and `effort:`.** Both are required for every skill. The Claude Code harness honors them — when the skill is invoked, it swaps to the declared model and effort for that turn, then reverts on the next user prompt. Without them the skill inherits the session model and may underperform (e.g., an Opus-tier judgment skill silently running on Sonnet).
 
-Use the decision heuristic from `docs/model-routing.md` — *"Is the hard part deciding, or doing?"*
+Use the decision heuristic: *"Is the hard part deciding, or doing?"*
 
 | Work type | `model:` | `effort:` |
 |---|---|---|

@@ -16,7 +16,7 @@ Every skill must declare both `model:` and `effort:` in frontmatter. The Claude 
 
 ### Decision Heuristic
 
-From `docs/model-routing.md`: *"Is the hard part deciding, or doing?"*
+*"Is the hard part deciding, or doing?"*
 
 - **Deciding** (under ambiguity, with judgment) → `opus` + `high`
 - **Doing** (executing a defined process) → `sonnet` + `medium`

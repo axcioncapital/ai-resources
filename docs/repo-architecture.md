@@ -140,7 +140,7 @@ The workspace's auto-sync hook (`ai-resources/.claude/hooks/auto-sync-shared.sh`
 | Project → ai-resources | upward | `shared-manifest.json` declares which shared resources are local-only (opt-out); skill request briefs land in `inbox/`; new innovations bubble up via `detect-innovation.sh` hook. |
 | CLAUDE.md layering | three layers | Workspace CLAUDE.md (cross-project) + ai-resources CLAUDE.md (resource-repo rules) + project CLAUDE.md (project-specific). All always-loaded for sessions in their scope. |
 | Permission template | one source of truth | `ai-resources/docs/permission-template.md` defines canonical settings shapes for all four layers (user / workspace / ai-resources / project). `/permission-sweep` audits drift; `/new-project` emits canonical shape per project. |
-| Model routing | one source of truth | `ai-resources/docs/model-routing.md` defines per-project model selection. Each project's CLAUDE.md declares its default in a `## Model Selection` section. |
+
 | Audit discipline | one source of truth | `ai-resources/docs/audit-discipline.md` lists `/risk-check` change classes, two-gate firing model, and Friday-cadence tiers. |
 | Logs split | parallel | Workspace `logs/` (workspace-level decisions, innovations, sessions). ai-resources `logs/` (canonical resource-work logs). Project `logs/` (project-specific sessions). Each session writes to its own scope. |
 
@@ -243,7 +243,7 @@ Mechanical changes (renaming a single skill, adding the 71st skill, etc.) do **n
 - `ai-resources/docs/ai-resource-creation.md` — placement rules + canonical pipelines
 - `ai-resources/docs/audit-discipline.md` — `/risk-check` classes, Friday-cadence tiers
 - `ai-resources/docs/permission-template.md` — canonical settings shapes
-- `ai-resources/docs/model-routing.md` — per-project model selection
+
 - `ai-resources/docs/agent-tier-table.md` — agent model tiering
 - `ai-resources/docs/session-guardrails.md` — session-flag triggers
 - `ai-resources/docs/session-rituals.md` — session opening/closing rituals

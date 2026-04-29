@@ -195,7 +195,7 @@ fi
 }
 ```
 
-**Canonical model default.** The merge procedure below also sets `"model": "sonnet[1m]"` at the top level of `settings.json` if unset, establishing Sonnet 1M as the per-turn default per `ai-resources/docs/model-routing.md` (the `[1m]` suffix forces 1M context; bare `sonnet` resolves to 200k). Per-project overrides go in `.claude/settings.local.json` per the project's Model Selection section.
+**Canonical model default.** The merge procedure below also sets `"model": "sonnet[1m]"` at the top level of `settings.json` if unset, establishing Sonnet 1M as the per-turn default (the `[1m]` suffix forces 1M context; bare `sonnet` resolves to 200k). Per-project overrides go in `.claude/settings.local.json` per the project's Model Selection section.
 
 **Merge procedure:**
 

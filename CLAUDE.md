@@ -27,7 +27,7 @@ See `skills/ai-resource-builder/SKILL.md` for skill format, creation sequence, i
 
 ## Model Selection
 
-Default model for this project is Sonnet 1M (`claude-sonnet-4-6[1m]`). Reason: most ai-resources work is repo operation, command/skill editing, and orchestration — execution-tier. Judgment work (architecture decisions, plan reviews, drafting analytical artifacts) opts in via `/model opus` or via slash commands that declare `model: opus` in frontmatter. Routing rule: `docs/model-routing.md`.
+Default model for this project is Sonnet 1M (`claude-sonnet-4-6[1m]`). Reason: most ai-resources work is repo operation, command/skill editing, and orchestration — execution-tier. Judgment work (architecture decisions, plan reviews, drafting analytical artifacts) opts in via `/model opus` or via slash commands that declare `model: opus` in frontmatter..
 
 Agent model tiering: see workspace `CLAUDE.md` → Model Tier → Agents for the canonical rule and Agent Tier Table.
 

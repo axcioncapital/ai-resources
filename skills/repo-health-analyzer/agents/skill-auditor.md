@@ -115,9 +115,9 @@ For each SKILL.md, verify the frontmatter contains both `model:` and `effort:`.
 Missing `model:` = **Important** ("skill inherits session model instead of declaring its own tier").
 Missing `effort:` = **Important** ("effort budget undefined; harness cannot apply skill-level allocation").
 Value outside the allowed set = **Important** ("harness may ignore the field; correct to a valid value").
-Model/effort pairing that conflicts with the description-inferred tier = **Minor** ("advisory — review against canonical mapping in `docs/model-routing.md` § Skill-level routing").
+Model/effort pairing that conflicts with the description-inferred tier = **Minor** ("advisory — review model/effort pairing against the tier table").
 
-Canonical mapping (from `docs/model-routing.md`):
+Canonical mapping:
 - Judgment work (deciding) → `model: opus` / `effort: high`
 - Structured execution (doing) → `model: sonnet` / `effort: medium`
 - Mechanical (counts, checks, pattern matching) → `model: haiku` / `effort: low`

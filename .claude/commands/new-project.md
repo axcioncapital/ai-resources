@@ -143,7 +143,7 @@ Planning artifacts (context pack, project plan, optional technical spec) are pro
 
 11. **Announce what was discovered and copied.** Include: source directory, picked versions (e.g., `project-plan-v3.md`), whether a tech spec was found, any QC-verdict warnings. State that Stage 3a is starting. No separate confirmation gate before copy — the announcement names every file, `sources.md` records provenance, and any wrong picks are reversible via the existing `ABORT` gate.
 
-11a. **Scaffold the project's Model Selection section.** Per `ai-resources/docs/model-routing.md`, every project declares its own default model. Ask the operator one question:
+11a. **Scaffold the project's Model Selection section.** Every project declares its own default model. Ask the operator one question:
 
     > Project task profile?
     > (a) Heavy execution → Sonnet 1M (`claude-sonnet-4-6[1m]`) default. Most repo work, KB ops, operational projects.
@@ -157,7 +157,7 @@ Planning artifacts (context pack, project plan, optional technical spec) are pro
     ```
     ## Model Selection
 
-    Default model for this project is {Sonnet 1M | Opus 4.7} (`{full-form identifier}`, set in `.claude/settings.local.json`, which is gitignored — each operator applies the default manually per machine). Reason: {one-line rationale tied to the chosen profile}. {Optional: one line about which commands/agents opt out of the default and why.} Routing rule: `ai-resources/docs/model-routing.md`.
+    Default model for this project is {Sonnet 1M | Opus 4.7} (`{full-form identifier}`, set in `.claude/settings.local.json`, which is gitignored — each operator applies the default manually per machine). Reason: {one-line rationale tied to the chosen profile}. {Optional: one line about which commands/agents opt out of the default and why.}.
     ```
 
     Confirm the section was written by reading the file back and showing the operator the appended text. Do not write `.claude/settings.local.json` automatically — that is a per-operator manual step (gitignored).
