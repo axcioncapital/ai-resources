@@ -202,7 +202,7 @@ Change classes (per `audit-discipline.md`):
 | `logs/decisions.md` | Significant decisions with rationale + alternatives | Operator-driven, often via wrap-session |
 | `logs/friction-log.md` | Operator-observed friction events | `/friction-log` |
 | `logs/coaching-log.md` | Backward-looking session pattern ratings (5 dims) | `/coach` |
-| `logs/improvement-log.md` | Proposed improvements (Pending → Applied/Resolved) | `/improve`, `/resolve-improvements` |
+| `logs/improvement-log.md` | Proposed improvements (Pending → Applied/Resolved) | `/improve`, `/resolve-improvement-log` |
 | `logs/innovation-registry.md` | Auto-detected new resources / patterns | `detect-innovation.sh` hook |
 | `logs/maintenance-observations.md` | Repo-health observations from `/friday-act` | `/friday-act` |
 | `logs/usage-log.md` | Per-session usage telemetry | `/usage-analysis` |

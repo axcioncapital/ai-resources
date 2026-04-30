@@ -12,7 +12,7 @@ Every skill must declare both `model:` and `effort:` in frontmatter. The Claude 
 |---|---|---|---|
 | **Judgment** — deciding what should be done; ambiguity-heavy synthesis, design, prose review, triage | `opus` | `high` | `refinement-deep`, `audit-critical-resources`, `triage`, `coach`, `summary` |
 | **Structured / execution** — doing what's been decided; repeatable factual workflows, scaffolding, orchestration | `sonnet` | `medium` | `wrap-session`, `prime`, `save-session`, `friction-log`, `request-skill` |
-| **Mechanical** — counts, format checks, log appends, pattern matching | `haiku` | `low` | `note`, `resolve-improvements` |
+| **Mechanical** — counts, format checks, log appends, pattern matching | `haiku` | `low` | `note`, `resolve-improvement-log` |
 
 ### Decision Heuristic
 

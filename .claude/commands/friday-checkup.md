@@ -191,7 +191,7 @@ Permission-sweep scans every settings file in the workspace in one pass — it i
     - Hand-coded items below: `med` unless an upstream signal raises them.
 
     Standard tactical items:
-    - **Resolve-improvements:** in `ai-resources/logs/improvement-log.md`, count entries that have both `**Status:** applied` and `**Verified:**` lines. If count ≥ 5, add `` `/resolve-improvements` — {N} resolved entries pending archive `` (risk: `low`).
+    - **Resolve-improvements:** in `ai-resources/logs/improvement-log.md`, count entries that have both `**Status:** applied` and `**Verified:**` lines. If count ≥ 5, add `` `/resolve-improvement-log` — {N} resolved entries pending archive `` (risk: `low`).
     - **Cleanup-worktree:** run `git status --short` in `ai-resources/`. If non-empty, count modified vs untracked lines and add `` `/cleanup-worktree` — working tree dirty (M modified, U untracked) `` (risk: `med`).
     - **Quarterly follow-ups:** if `TIER=quarterly`, add one item per scope for `/repo-dd deep` (risk: `low`), and one item per directory under `workflows/` for `/analyze-workflow` (risk: `low`).
 
@@ -298,5 +298,5 @@ Permission-sweep scans every settings file in the workspace in one pass — it i
 
 - **Scope-slug convention:** `ai-resources`, `workspace`, `project-{name}`. Matches existing audit filename convention (see `repo-due-diligence-*.md` and `token-audit-*.md` under `ai-resources/audits/`).
 - **No subagent orchestration here.** Each sub-command manages its own subagents; this command only sequences them and consolidates outputs.
-- **Interactive sub-commands to avoid:** `/resolve-improvements` and `/cleanup-worktree` both prompt for confirmation mid-run. They are listed only in the follow-ups section, never auto-invoked. `/repo-dd deep` and `/analyze-workflow` are deferred to quarterly follow-ups for the same reason plus runtime.
+- **Interactive sub-commands to avoid:** `/resolve-improvement-log` and `/cleanup-worktree` both prompt for confirmation mid-run. They are listed only in the follow-ups section, never auto-invoked. `/repo-dd deep` and `/analyze-workflow` are deferred to quarterly follow-ups for the same reason plus runtime.
 - **Failure handling:** if a sub-command errors, record the error as the per-scope result and continue to the next check. Do not abort the whole run.

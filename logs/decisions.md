@@ -91,7 +91,7 @@ The new two-gate /risk-check policy (landed earlier 2026-04-25) calls for plan-t
 
 **Decision 2 — Tactical-fix queue scoped to standard items only at MVP.**
 
-`/friday-checkup` Step 7 has two distinct sections: `## Prioritized findings` (rolled-up HIGH/CRITICAL findings from sub-reports) and `## Tactical follow-ups` (the renamed Operator-follow-ups list with risk grading). `/friday-act` parses Tactical follow-ups as its fix queue. As written, Tactical follow-ups contains only the standard items (resolve-improvements, cleanup-worktree, quarterly /repo-dd × N) — NOT the rolled-up findings.
+`/friday-checkup` Step 7 has two distinct sections: `## Prioritized findings` (rolled-up HIGH/CRITICAL findings from sub-reports) and `## Tactical follow-ups` (the renamed Operator-follow-ups list with risk grading). `/friday-act` parses Tactical follow-ups as its fix queue. As written, Tactical follow-ups contains only the standard items (resolve-improvement-log, cleanup-worktree, quarterly /repo-dd × N) — NOT the rolled-up findings.
 
 The plan text ("Weekly: tactical follow-ups list + risk level per item — feeds /friday-act as tactical-fix queue") is ambiguous about whether sub-report findings should also feed the queue. Chose narrow MVP interpretation: standard items only; sub-report findings remain in `## Prioritized findings` for the operator to read manually.
 
@@ -213,7 +213,7 @@ The "no-op acceptable" mitigation from the report is a valid disposition under t
 
 **Alternatives considered:**
 - Apply the auditor fix this session (option b in the recommendation): rejected; harness-level agent edit per Autonomy Rule #9 should run through `/risk-check`, which is its own ceremony separate from `/permission-sweep`.
-- Leave only in the audit report, not in `improvement-log.md` (option c): rejected; the audit report alone is not a durable backlog tracker, and `/resolve-improvements` only consumes `improvement-log.md`.
+- Leave only in the audit report, not in `improvement-log.md` (option c): rejected; the audit report alone is not a durable backlog tracker, and `/resolve-improvement-log` only consumes `improvement-log.md`.
 
 ## 2026-04-27 — Smoke-test deferral on buy-side wrap-session symlink
 

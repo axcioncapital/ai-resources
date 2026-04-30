@@ -16,7 +16,7 @@ You receive up to three pieces of content from the main agent:
 
 1. **Friction log** — timestamped friction events logged by the operator during the session, plus auto-logged file write/edit activity
 2. **Improvement log** — past improvement suggestions and their statuses (may be empty if this is the first run)
-3. **Improvement log archive** (optional) — resolved entries that have been moved out of the active log by `/resolve-improvements`. The main agent passes this path only if the archive file exists. An archived entry with `**Status:** applied` AND `**Verified:**` represents a completed, confirmed fix — treat it as authoritative when checking recurrence, and do not re-propose it.
+3. **Improvement log archive** (optional) — resolved entries that have been moved out of the active log by `/resolve-improvement-log`. The main agent passes this path only if the archive file exists. An archived entry with `**Status:** applied` AND `**Verified:**` represents a completed, confirmed fix — treat it as authoritative when checking recurrence, and do not re-propose it.
 
 ## Your Task
 
