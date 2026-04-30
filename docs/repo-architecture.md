@@ -207,6 +207,7 @@ Change classes (per `audit-discipline.md`):
 | `logs/maintenance-observations.md` | Repo-health observations from `/friday-act` | `/friday-act` |
 | `logs/usage-log.md` | Per-session usage telemetry | `/usage-analysis` |
 | `logs/workflow-observations.md` | Workflow-pipeline observations | Workflow commands |
+| `logs/session-plan.md` | Session orchestration plan (intent, model, source material, autonomy posture, risk) | `/session-plan` |
 
 ### Q7: Is the artifact a dated audit output? Use `audits/`.
 

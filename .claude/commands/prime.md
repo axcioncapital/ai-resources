@@ -57,3 +57,5 @@ Orient the session. Read state, brief the operator, wait for direction.
 7. Once the operator has named the work, log a new session entry header to `/logs/session-notes.md` containing the date and the work description. If the operator states a scope boundary inline (e.g., "just the refactor, not the follow-up PRs"), capture it in the header too; otherwise omit.
 
 8. Begin execution immediately under full autonomy (per workspace CLAUDE.md Autonomy Rules). No second "go/proceed" confirmation required.
+
+**Optional:** Run `/session-plan` before execution to plan model tier, source material, autonomy posture, and structural risk for the session.
