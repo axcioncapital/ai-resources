@@ -240,6 +240,24 @@ Skip entirely if `TIER=weekly`. The weekly tier already runs `/improve` per scop
 
 5. Record the report path in `RESULTS` under scope label `repo-documentation:w2-4-improvements`.
 
+**K. Projects-layer refresh (repo-documentation only) — monthly and quarterly only**
+
+Skip entirely if `TIER=weekly`. Skip if scope `project repo-documentation` is not selected.
+
+This step refreshes the work-layer documentation: `projects.md` (project registry) and `repo-state.md` (current state snapshot).
+
+1. For each project under `projects/`:
+   a. Read the first 40 lines of the project's `CLAUDE.md` (extracts Purpose, Phase, Model, Status).
+   b. Read the last 20 lines of the project's `logs/session-notes.md` (if it exists) to extract the most recent open threads and pending steps.
+2. Update `projects/repo-documentation/output/phase-1/components/projects.md`: for each project H4 entry, update the `Status`, `Phase`, and optional prose if the project state has changed materially. Do not add or remove entries — that requires operator approval.
+3. Update `projects/repo-documentation/output/phase-1/repo-state.md`:
+   - §1 Active projects: update Phase, last session date, in-flight work, and open threads per project.
+   - §2 Pending manual steps: append any new pending steps found in session notes; mark completed steps as resolved (remove or annotate `resolved: {date}`).
+   - §4 Push state: note last known push date if determinable from git log.
+4. Update the `last_updated` frontmatter field in both files to `{TODAY}`.
+5. Update the vault equivalents at `projects/repo-documentation/vault/projects/projects.md` and `projects/repo-documentation/vault/architecture/repo-state.md` with the same changes (same content, vault-adapted format — wiki-links instead of relative markdown links).
+6. Record paths of modified files in `RESULTS` under scope label `repo-documentation:projects-refresh`.
+
 ---
 
 ### Step 6: Compile Follow-Ups
