@@ -439,3 +439,29 @@ Built the `/resolve` command, which compresses the post-QC workflow: takes findi
 
 ### Open Questions
 None.
+
+## 2026-04-30 — Created /session-plan command
+
+### Summary
+Created the `/session-plan` slash command — a session orchestrator that runs after `/prime` to plan HOW a session will run before execution starts. The command covers intent inference, model-tier recommendation, source material identification, autonomy posture selection, and a risk-class pointer. Went through the full clarify → plan → refinement → QC → risk-check pipeline before landing. End-time risk-check skipped (plan-time gate covered with all 5 PROCEED-WITH-CAUTION mitigations applied).
+
+### Files Created
+- `ai-resources/.claude/commands/session-plan.md` — new /session-plan command (opus/effort:high, Steps 0–8)
+- `ai-resources/audits/risk-checks/2026-04-29-new-slash-command-session-plan-added-to-ai-resources-claude.md` — plan-time risk-check report
+
+### Files Modified
+- `ai-resources/.claude/commands/prime.md` — added one-line optional pointer to /session-plan after Step 8
+- `ai-resources/docs/repo-architecture.md` — added logs/session-plan.md row to canonical logs table
+
+### Decisions Made
+- **Model: opus, not sonnet** — operator corrected initial sonnet frontmatter; /session-plan performs judgment work (intent assessment, model-tier mapping, autonomy posture recommendation) → opus/effort:high
+- **Resolve stub: runtime reminder only** — /resolve reminder emitted in chat during Step 4 but NOT written into the plan file artifact; plan file should not carry dead pointers to unbuilt tooling; conditional on QC findings in context
+- **All 5 risk-check mitigations applied** — plan-time gate returned PROCEED-WITH-CAUTION; all mitigations baked into command before commit: /prime precondition check (Step 0), disambiguation note (first para), conditional /resolve reminder (Step 4), risk-check pointer only in Step 6, cross-reference in prime.md
+
+### Next Steps
+- Run `/prime` then `/session-plan` in a real session to verify end-to-end behavior
+- Push commits when ready
+- Consider: add /session-plan to the skills list description in agent-tier-table.md or session-rituals.md if it warrants documentation there
+
+### Open Questions
+None.

@@ -344,3 +344,15 @@ When the extension is invoked, document one line in the wrap session note:
 **Alternatives considered.**
 - *New `resolve-reviewer` agent (original plan).* Rejected: redundant with `triage-reviewer`; two near-duplicate opus agents accumulate maintenance surface and create routing ambiguity.
 - *Extend `/triage` with a "with-fixes" mode.* Rejected: complicates the existing command's interface; `/resolve` as a separate command preserves clean separation of concerns.
+
+### 2026-04-30 — /session-plan: resolve reminder runtime-only, not in plan artifact
+
+**Context.** Designing the `/session-plan` command, which includes a reminder to invoke `/resolve` when QC findings are present. Initial plan baked a `## Resolve` section into the written plan file template.
+
+**Decision.** Emit the `/resolve` reminder as a runtime chat message (Step 4, conditional on QC findings in context) only. Do NOT include a Resolve section in the written `logs/session-plan.md` artifact.
+
+**Rationale.** The plan file is a QC-able artifact that persists across the session. Writing a pointer to an external command whose existence and interface could change creates a dead-pointer risk in every generated plan. The verbal reminder during execution is sufficient; the artifact should contain only stable, self-contained planning content (intent, model, source material, posture, risk).
+
+**Alternatives considered.**
+- *Include Resolve section in template (original design).* Rejected: bakes a forward-reference to tooling that may ship under a different name or not at all; QC reviewer flagged as scope risk.
+- *Remove the reminder entirely.* Rejected: operator explicitly requested the reminder as part of session setup flow.
