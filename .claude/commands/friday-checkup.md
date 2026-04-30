@@ -177,6 +177,69 @@ Permission-sweep scans every settings file in the workspace in one pass — it i
 4. The command writes the consolidated dry-run report to `ai-resources/audits/permission-sweep-{TODAY}.md` (same dated path regardless of scope).
 5. Record the report path in `RESULTS` under a synthetic scope label `permission-sweep (workspace-wide)`.
 
+**G. W2.1 — `doc-scanner-agent` (repo-documentation only) — monthly and quarterly only**
+
+Skip entirely if `TIER=weekly`. Skip if scope `project repo-documentation` is not selected.
+
+This step invokes the W2.1 component-registry drift scanner. It is project-local to repo-documentation; it does not run for other scopes.
+
+1. Verify `projects/repo-documentation/.claude/agents/doc-scanner-agent.md` exists. If missing, record `skipped: doc-scanner-agent not deployed` and continue.
+2. Spawn the agent via Agent tool, agent name `doc-scanner-agent`, with brief: "Scan live Axcion AI repo for component drift against the Phase 1 archived registry. Workspace root: `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo`. Project root: `projects/repo-documentation/`. Today: `{TODAY}`. Produce drift report at `projects/repo-documentation/output/phase-2/w2-1-doc-scan-{TODAY}.md`."
+3. After completion, record the report path in `RESULTS` under scope label `repo-documentation:w2-1-doc-scan`.
+
+**H. W2.2 — `principles-checker-agent` (repo-documentation only) — monthly and quarterly only**
+
+Skip entirely if `TIER=weekly`. Skip if scope `project repo-documentation` is not selected.
+
+1. Verify `projects/repo-documentation/.claude/agents/principles-checker-agent.md` exists. If missing, record `skipped: principles-checker-agent not deployed` and continue.
+2. Spawn the agent via Agent tool, agent name `principles-checker-agent`, with brief: "Scan live Axcion AI repo for violations of DR-1, DR-3, QS-6. Workspace root: `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo`. Today: `{TODAY}`. Produce violations report at `projects/repo-documentation/output/phase-2/w2-2-principles-{TODAY}.md`. Skip DR-4 (deprecated)."
+3. After completion, record the report path in `RESULTS` under scope label `repo-documentation:w2-2-principles`.
+
+**I. W2.3 — Maintenance consolidator (repo-documentation only) — monthly and quarterly only**
+
+Skip entirely if `TIER=weekly`. Skip if scope `project repo-documentation` is not selected. Runs AFTER §G (W2.1) so the drift report exists; runs after §J (W2.4 improvement-analyst) is irrelevant — independent.
+
+This is an orchestration step (no separate agent — D-7). It consolidates the §G drift report and (post-W2.5 vault deployment) `/kb-integrity` output into a single maintenance summary.
+
+1. Read the §G W2.1 drift report at `projects/repo-documentation/output/phase-2/w2-1-doc-scan-{TODAY}.md`. If missing (§G skipped or failed), record `skipped: w2-1 prerequisite missing` and continue.
+2. Determine vault state: check whether `projects/repo-documentation/vault/CLAUDE.md` exists. If yes (vault deployed):
+   a. Invoke `/kb-integrity` from `projects/repo-documentation/vault/`. The command writes `_integrity-report-{TODAY}.md` to vault root (gitignored content).
+   b. Read the produced integrity report.
+3. Compose a consolidated maintenance summary at `projects/repo-documentation/output/phase-2/w2-3-maintenance-{TODAY}.md` with sections:
+   - **Drift since last scan** — copied from §G drift report (Added/Removed/Modified counts and one-line per finding).
+   - **Integrity violations** — copied from `/kb-integrity` report if available; otherwise note `vault not yet deployed; integrity check skipped`.
+   - **Recommended actions** — operator-facing list combining both: registry pastes (from §G), drift investigations, integrity fixes.
+4. Record the consolidated report path in `RESULTS` under scope label `repo-documentation:w2-3-maintenance`.
+
+**J. W2.4 — `improvement-analyst` (Phase 2 cadence-driven catch-up) — monthly and quarterly only**
+
+Skip entirely if `TIER=weekly`. The weekly tier already runs `/improve` per scope at §B. This step is the Phase 2 monthly+ catch-up: it ensures Phase 2 friction-log + improvement-log analysis runs regardless of whether the operator invoked `/improve` mid-week.
+
+1. Verify `ai-resources/.claude/agents/improvement-analyst.md` exists (canonical agent — should always be present).
+2. Verify `ai-resources/logs/friction-log.md` exists (the Phase 2 input). If missing, record `skipped: no friction-log` and continue.
+3. Spawn the agent via Agent tool, agent name `improvement-analyst`, with brief: "Analyze friction patterns and propose improvements. Read: `ai-resources/logs/friction-log.md`, `ai-resources/logs/improvement-log.md`, and (if present) `ai-resources/logs/improvement-log-archive.md`. Project context: `projects/repo-documentation/`. Output findings as markdown. Up to 7 findings, ranked by impact-to-effort ratio."
+4. Capture the agent's findings output and write to `projects/repo-documentation/output/phase-2/w2-4-improvements-{TODAY}.md` with a frontmatter header:
+
+   ```markdown
+   ---
+   title: "W2.4 Improvement Analysis — {TODAY}"
+   date_created: {TODAY}
+   scan_type: w2-4
+   status: report
+   phase: phase-2
+   ---
+
+   # W2.4 Improvement Analysis — {TODAY}
+
+   {agent findings inline}
+
+   ## Operator notes
+
+   - Run `/friday-act` to triage findings. For each finding the operator approves: dispatch to `system-developer-agent` to draft an implementation proposal in `output/phase-2/w2-4-proposals/{TODAY}-{slug}.md`. Operator reviews the proposal before any live-file edit.
+   ```
+
+5. Record the report path in `RESULTS` under scope label `repo-documentation:w2-4-improvements`.
+
 ---
 
 ### Step 6: Compile Follow-Ups
@@ -189,6 +252,13 @@ Permission-sweep scans every settings file in the workspace in one pass — it i
     - Sub-report severity `MEDIUM` → `med`
     - Anything else (advisory, info) → `low`
     - Hand-coded items below: `med` unless an upstream signal raises them.
+    - W2.1 doc-scan Added entry → `[ ] Paste new entry into output/phase-1/components/{category}.md and review for Status: active — risk: low`
+    - W2.1 doc-scan Removed entry → `[ ] Investigate removed component {name}; if intentional deletion, mark Status: deprecated — risk: med`
+    - W2.1 doc-scan Modified entry → `[ ] Update registry field for {name} per drift report — risk: low`
+    - W2.2 principle violation severity `error` → `[ ] Fix DR/QS violation at {path} — risk: high`
+    - W2.2 principle violation severity `warn` → `[ ] Review possible violation at {path}; confirm legitimate or fix — risk: med`
+    - W2.3 maintenance: registry-vault drift detected → `[ ] Run /kb-update {category} to align vault with operator-approved registry pastes — risk: low`
+    - W2.4 improvement finding (any) → `[ ] Triage at /friday-act; if approved, dispatch to system-developer-agent — risk: med`
 
     Standard tactical items:
     - **Resolve-improvements:** in `ai-resources/logs/improvement-log.md`, count entries that have both `**Status:** applied` and `**Verified:**` lines. If count ≥ 5, add `` `/resolve-improvement-log` — {N} resolved entries pending archive `` (risk: `low`).
