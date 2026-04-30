@@ -88,6 +88,20 @@ Input: `$ARGUMENTS` (optional) — explicit path to a `friday-checkup-YYYY-MM-DD
     d. On `n`, append a one-line note to the session block in Step 5: `- Item {N} executed without /risk-check (operator override): {item text}`.
     e. On `skip`, treat as deferred (same as initial `d` disposition).
     f. Execute the approved fix per standard autonomy rules (workspace `CLAUDE.md` Autonomy Rules apply). For multi-step fixes, work them in sequence; do not batch unrelated fixes into one diff.
+    g. **W2.4 follow-up dispatch (additional sub-disposition).** After executing or before executing step 15f, if the current tactical follow-up's source label starts with `repo-documentation:w2-4-improvements` and the operator's disposition is `f` (fix), offer one more sub-disposition:
+       ```
+       This follow-up is from W2.4 (improvement analysis). How should it be implemented?
+         (a) auto-draft — spawn system-developer-agent to draft a proposal
+         (b) manual    — operator implements without agent assistance
+       ```
+       - On `auto-draft`:
+         1. Read the improvement entry text from `projects/repo-documentation/output/phase-2/w2-4-improvements-{LATEST}.md` (locate by finding the relevant finding section).
+         2. Derive a slug: lowercase, kebab-case, ≤8 words from the finding's title.
+         3. Spawn `system-developer-agent` via Agent tool with brief: "Improvement entry below. Project CLAUDE.md path: `projects/repo-documentation/CLAUDE.md`. Slug: `{slug}`. Today: `{TODAY}`. Draft a propose-only implementation. Forbidden: deletions of files in ai-resources/skills/, ai-resources/.claude/, any CLAUDE.md, any harness/, any output/phase-1/. Improvement entry: ```{entry text}```"
+         4. After completion, locate the produced proposal at `projects/repo-documentation/output/phase-2/w2-4-proposals/{TODAY}-{slug}.md`. Display the proposal path. State: "Operator must review the proposal before applying any diff. /friday-act stops here for this finding; manual diff application is the next step."
+         5. Record disposition in `RESULTS` as `auto-drafted: {proposal_path}`.
+         6. If the proposal contains `## Proposal Rejected — Forbidden Action`, surface the rejection to the operator and recommend revising the improvement entry. Do not retry.
+       - On `manual`: proceed with step 15f normally (operator implements without agent assistance).
 
 16. Items dispositioned `d` are accumulated for Step 5 logging.
 
