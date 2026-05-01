@@ -426,3 +426,35 @@ Executed /friday-act (monthly tier) against the 2026-05-01 friday-checkup report
 ### Open Questions
 - Permission-sweep CRITICAL: confirmed false positive (resolved from prior session open question)
 - Friction-log dormant since 2026-04-18: still no new entries at this wrap — pattern continues; not yet actionable
+
+## 2026-05-01 — friday-act: W2.1 + W2.3 registry fixes
+
+### Summary
+Session 2 of the Friday cadence (monthly tier). Started from the 2026-05-01 checkup report. Verified all open W2.1 doc-scan and W2.3 kb-integrity findings were still unresolved, then developed a fix plan and executed it. All tracked registry edits committed in one batch. W2.2 deferred (project on hold). Policy proposals captured in maintenance-observations.md will be run manually next week.
+
+### Files Created
+- None
+
+### Files Modified
+- `projects/repo-documentation/output/phase-1/components/agents.md` — 4 new agents added; pipeline-stage-2 and pipeline-stage-2-5 marked deprecated; repo-health-analyzer model corrected sonnet→opus
+- `projects/repo-documentation/output/phase-1/components/commands.md` — innovation-sweep entry added
+- `projects/repo-documentation/output/phase-1/components/claude-md-files.md` — vault CLAUDE.md entry added
+- `projects/repo-documentation/vault/components/agents.md` — same fixes (gitignored, disk-only)
+- `projects/repo-documentation/vault/components/commands.md` — innovation-sweep added (gitignored, disk-only)
+- `projects/repo-documentation/vault/components/claude-md-files.md` — vault CLAUDE.md added (gitignored, disk-only)
+- `projects/repo-documentation/vault/components/_index.md` — counts updated: hooks 14→16, agents 33→37, commands 47→48, claude-md files 13→14 (gitignored, disk-only)
+- `projects/repo-documentation/vault/_master-index.md` — links added for architecture/repo-state.md and architecture/risk-topology.md (gitignored, disk-only)
+
+### Decisions Made
+- **W2.2 deferred:** H1 title bulk fix (33 commands) and nordic-pe shared-manifest.json deferred — project on hold per operator
+- **Policy proposals manual:** Opted to run the 3 policy-proposal drafting + /risk-check passes in a local session next week rather than as a scheduled remote routine; proposals captured in maintenance-observations.md 2026-05-01 block
+- **Vault gitignore:** vault/components/ and vault/_master-index.md are gitignored by design (Obsidian sync); vault edits are disk-only, no commit needed
+- **session-guide.md no action:** Confirmed as symlink to canonical command — no new registry entry needed
+
+### Next Steps
+- Push commit `61afeda`
+- Next week: open a local session to draft + /risk-check the 3 policy proposals in `ai-resources/logs/maintenance-observations.md` (2026-05-01 block)
+- Remaining tactical defers still logged in maintenance-observations.md 2026-05-01 block
+
+### Open Questions
+- None
