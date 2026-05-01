@@ -7,10 +7,11 @@ Quick reference for working with Claude Code in the Axcion AI workspace.
 ## Session Start
 
 1. **`/prime`** — Orient the session. Reads workspace state, briefs you, waits for direction.
-2. **Pull latest** — `git pull` (if `/prime` didn't already).
-3. **Read the relevant SKILL.md** before starting any task that has a matching skill.
-4. **Declare the exit condition** — State one line: "This session is done when X." Examples: "done when 2.5 is approved," "done when all pending improvements are actioned." Without this, sessions drift and bleed into each other.
-5. **Set autonomy level** — State what Claude should auto-proceed on vs. pause for. Example: "Auto-apply all non-bright-line QC fixes. Show me bright-line items only. Auto-proceed through challenge unless verdict is EXPOSED or BROKEN."
+2. **`/session-plan`** *(optional)* — Plan HOW the session runs before execution starts. Recommends model tier, identifies source material, sets autonomy posture, and flags structural risk class. Run for non-trivial sessions; skip for quick edits.
+3. **Pull latest** — `git pull` (if `/prime` didn't already).
+4. **Read the relevant SKILL.md** before starting any task that has a matching skill.
+5. **Declare the exit condition** — State one line: "This session is done when X." Examples: "done when 2.5 is approved," "done when all pending improvements are actioned." Without this, sessions drift and bleed into each other.
+6. **Set autonomy level** — State what Claude should auto-proceed on vs. pause for. Example: "Auto-apply all non-bright-line QC fixes. Show me bright-line items only. Auto-proceed through challenge unless verdict is EXPOSED or BROKEN."
 
 ### Start with outcomes, not commands
 
