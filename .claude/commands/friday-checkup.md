@@ -376,6 +376,7 @@ This step refreshes the work-layer documentation: `projects.md` (project registr
       ai-resources/audits/friday-checkup-{TODAY}.md
 
     Review the report and commit at session wrap (`/wrap-session`).
+    Run `/resolve-improvement-log` to archive any resolved improvement entries.
     ```
 
 18. **Do NOT commit.** All files land unstaged. Operator reviews and commits at session wrap per workspace `Commit behavior` rules (handles concurrent-session staging enumeration correctly).
