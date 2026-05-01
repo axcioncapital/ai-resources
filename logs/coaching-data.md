@@ -300,3 +300,10 @@
 - **Decisions logged:** 2 (PostToolUse vs Stop event registration with latent source-bug rationale; improve-reminder.sh path regex documentation choice over refactor)
 - **QC cycles:** 1 (qc-reviewer on settings.json registration patch returned REVISE with three verification items — Skill matcher validity, script presence/executability, comma insertion — all resolved before applying patch; no revisions to design)
 - **Gates:** 4 (0 changed) — bright-line-review:confirmed (operator continued past PROCEED-WITH-CAUTION risk-check verdict without redesign), plan-approval:confirmed (settings.json registration patch approved per Autonomy Rule #8), qc-disposition:confirmed (REVISE verdict resolved via verification rather than redesign), plan-approval:confirmed (commit shape proposal approved, naturally split across two repos)
+
+### 2026-05-01 — Friday checkup (monthly/custom mixed-tier)
+- **Commands used:** /prime, /friday-checkup (plan + execution), /audit-repo, /improve, /coach (×3 scopes), /token-audit, /permission-sweep --dry-run, /wrap-session
+- **Iterations:** 0
+- **Decisions logged:** 0
+- **QC cycles:** 0
+- **Gates:** 5 (1 changed) — plan-approval:confirmed (friday-checkup plan approved after planning pass), scope-selection:changed (operator redirected from standard monthly to mixed-tier after runtime estimate exceeded 45 min threshold), scope-selection:confirmed (knowledge-bases include as custom scope), scope-selection:confirmed (W2.x skip entirely), bright-line-review:confirmed (116 min runtime explicitly approved)

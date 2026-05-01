@@ -1,35 +1,22 @@
 ---
-section: 2
-audit_date: 2026-04-24
-protocol_version: 1.2
+audit-section: 2
+audit-date: 2026-05-01
 ---
 
-# Section 2 Summary: Skill Census
+# Section 2: Skill Census Summary
 
-**Total skills:** 69 (67 canonical + 2 workflow-reference copies)
-**Total lines:** 14,334 | **Total words:** 126,050 | **Est. tokens:** ~164,000
+**Total findings:** 10 (3 HIGH, 5 MEDIUM, 2 LOW)
 
-## Findings Count
+**HIGH:** answer-spec-generator (487 lines, 59% oversized), research-plan-creator (466 lines, 21% oversized), ai-resource-builder (415 lines combining 3 modes)
 
-- **HIGH:** 6 (skills >300 lines)
-- **MEDIUM:** 1 (multi-mode bloat + high word density)
-- **LOW:** 2 (vague descriptions, file duplicates)
-- **Boundary findings:** 4 (within ±15% of 300-line threshold)
+**MEDIUM:** evidence-to-report-writer (334 lines), workflow-evaluator (318 lines), ai-prose-decontamination (5,658 tokens), chapter-prose-reviewer vs prose-compliance-qc ambiguity, 8 vague descriptions
 
-## Top 3 Findings
+**LOW:** Frontmatter gaps (3%), file duplication (reference copies)
 
-1. **Six oversized skills (HIGH):** `answer-spec-generator` (485L), `research-plan-creator` (464L), `ai-resource-builder` (401L), `evidence-to-report-writer` (332L), `workflow-evaluator` (316L), `ai-prose-decontamination` (314L). Combined ~19,000 estimated tokens.
+**Inventory:** 73 skills, 17,277 lines, ~197,791 tokens
 
-2. **Multi-mode skills load unused content (MEDIUM):** `ai-resource-builder` (3 modes) and `answer-spec-generator` (5 modes) combine independent workflows into single files. Splitting would save 1,500–2,000 tokens/session.
+**Annual waste:** answer-spec-generator (~18,600), research-plan-creator (~15,125), ai-resource-builder (~3,375) = **~46,000–50,000 tokens/year optimization potential**
 
-3. **Workflow reference copies duplicate canonical skills (LOW):** `knowledge-file-producer` and `report-compliance-qc` exist in both `skills/` and `workflows/research-workflow/reference/skills/`. Intentional (workflow self-containment) but creates maintenance risk.
+**Boundary-case skills (±15% of threshold):** evidence-to-report-writer, workflow-evaluator, ai-prose-decontamination — tag low-confidence Section 10.
 
-## Quality Metrics
-
-- Frontmatter complete: 100% (all 69 skills)
-- Descriptions trigger-rich: 97% (67 of 69)
-- Dead skills: 0
-- Semantic redundancy: 0
-- Size distribution: 0% (<50L) | 35% (50–150L) | 57% (150–300L) | 9% (>300L)
-
-Full evidence in `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/working/audit-working-notes-skills.md`.
+Full notes: `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/working/audit-working-notes-skills.md`

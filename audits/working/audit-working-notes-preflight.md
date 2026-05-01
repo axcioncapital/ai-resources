@@ -1,11 +1,11 @@
 # Section 0 Pre-Flight — Working Notes
 
-**Date:** 2026-04-24
+**Date:** 2026-05-01
 **AUDIT_ROOT:** /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources
 
 ## 0.1 — Baseline Session Metrics
 
-- `/cost`: not available in this execution environment (agent-tool context).
+- `/cost`: not available in this execution environment.
 - `/context`: not available in this execution environment.
 
 Audit token cost will be noted in Section 10 as unavailable.
@@ -15,44 +15,46 @@ Audit token cost will be noted in Section 10 as unavailable.
 - Skill: `skills/session-usage-analyzer/SKILL.md`
 - Output target per skill: consuming project's `logs/usage-log.md`.
 
-**Historical data discovered (2 locations):**
-- `logs/usage-log.md` — 122 lines, entries 2026-04-21 → 2026-04-22 (recent)
-- `usage/usage-log.md` — 227 lines, entries 2026-04-18 (older pre-migration artifact)
+**Historical data discovered:**
+- `logs/usage-log.md` — exists (canonical post-migration location)
 
-Two locations = prior migration from `usage/` → `logs/`. The older `usage/` copy is a likely orphan; Section 6 should flag.
-
-Date range available: 2026-04-18 → 2026-04-22.
+The orphan `usage/usage-log.md` flagged in 2026-04-24 — re-check in Section 6.
 
 ## 0.3 — Read(pattern) Deny-Rule Check
 
-**Settings files found (2):**
+**Settings files found (3):**
 
-1. `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/settings.json`
-   - `Read(...)` entries (1): `Read(archive/**)`
-   - Other deny entries (Bash) exist for destructive safety.
+1. `.claude/settings.json` — 5 Read(...) entries:
+   - `Read(archive/**)`
+   - `Read(logs/*-archive-*.md)`
+   - `Read(inbox/archive/**)`
+   - `Read(**/deprecated/**)`
+   - `Read(**/old/**)`
 
-2. `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/workflows/research-workflow/.claude/settings.json`
-   - `Read(...)` entries (5): `Read(archive/**)`, `Read(**/*.archive.*)`, `Read(logs/*-archive-*.md)`, `Read(**/deprecated/**)`, `Read(**/old/**)`
-   - Scoped to workflow subfolder only; doesn't cover ai-resources root.
+2. `.claude/settings.local.json` — no Read() denies
 
-**Covered directories via Read(...) deny at ai-resources root:** archive/
+3. `workflows/research-workflow/.claude/settings.json` — 5 Read(...) entries (workflow scope, similar coverage)
 
-**Missing expected coverage (ai-resources root):**
+**Covered directories at ai-resources root:**
+- `archive/` ✓
+- `logs/` (archive files only — partial)
+- `inbox/` (archive subdir only — partial)
+- `**/deprecated/` ✓ (forward-looking guard)
+- `**/old/` ✓ (forward-looking guard)
 
-| Dir | Present in repo? | Covered? |
-|---|---|---|
-| archive/ | yes | ✅ |
-| audits/ | yes (accumulates prior audit reports) | ❌ |
-| logs/ | yes | ❌ |
-| reports/ | yes | ❌ |
-| inbox/ | yes | ❌ |
-| output/ | no | n/a |
-| drafts/ | no | n/a |
-| deprecated/ | no | n/a (no guard) |
-| old/ | no | n/a (no guard) |
+**Missing expected coverage:**
+- `audits/` — uncovered
+- `reports/` — uncovered
+- Full `logs/` — only archive files
+- Full `inbox/` — only archive subdir
+- `output/`, `drafts/` — not present in repo, but pattern guards absent
 
-**Verdict: MEDIUM** (improved from 2026-04-18 HIGH — `Read(archive/**)` was added at some point since).
+**Verdict: MEDIUM** (4 of 9 expected directories still missing or only partially covered).
 
->2 expected directories still missing: audits/, logs/, reports/, inbox/ (and deprecated/old as forward-looking guards).
+**Delta vs. 2026-04-24 (HIGH→MEDIUM finding from previous audit):**
+Coverage **expanded materially** in the last 7 days:
+- 2026-04-24 had 1 Read() pattern: `Read(archive/**)`.
+- 2026-05-01 has 5: archive, logs-archive, inbox-archive, deprecated, old.
+This is direct evidence the H2 finding from 2026-04-24 was acted on. Severity drops from HIGH to MEDIUM as a result, but `audits/` and `reports/` remain uncovered — a 1-line addition closes the gap fully.
 
-**Trade-off note:** adding `Read(logs/**)` would block session-note handoff reads (which Prime, /coach, /improve rely on). A narrower pattern like `Read(logs/*-archive-*.md)` (already in workflow settings) would be safer and could be promoted to the main ai-resources settings.
+**Recommendation:** Add `Read(audits/**)` and `Read(reports/**)` to root settings.

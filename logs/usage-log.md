@@ -2,6 +2,33 @@
 
 <!-- entries below -->
 
+### 2026-05-01 | Acceptable
+
+**Task:** Monthly Friday checkup across ai-resources (full monthly tier), repo-documentation and obsidian-pe-kb (coach only; improve/audit-repo auto-skipped), and knowledge-bases (all checks auto-skipped). Pre-session: 1-line edit to session-rituals.md to add /session-plan.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~35 |
+| Files read | ~14 (re-reads: 1 — session-notes.md tail read twice) |
+| Files written/edited | 16 (12 new, 4 modified) |
+| Tool calls | ~90 |
+| Subagents | 8 |
+| Rework cycles | 0 |
+
+**Findings:**
+- **Context bloat — Moderate (recurring):** /coach pattern fired 3 times; each invocation returned ~100 lines of full coaching analysis to the main session (~300 lines total / ~4k tokens), all distilled to 15-line compact disk entries. Same pattern flagged on 2026-04-24 — second occurrence in the log. Pattern is structural: /coach is not yet wired to write notes-to-disk before returning to main session.
+- **Context bloat — Minor:** token-audit-protocol.md read in full (633 lines / ~8k tokens) — protocol-mandated, recurring each token-audit run. No enforcement mechanism prevents a full read on subsequent sessions where protocol is unchanged.
+- **Context bloat — Minor:** token-audit-2026-04-24-ai-resources.md read in full (~200 lines) for carry-forward findings; a targeted grep or short summary would have served the same purpose.
+
+**Recommendation:** Wire /collaboration-coach to write full analysis to a working-notes file on disk and return only a ≤20-line summary to the main session — matching the notes-to-disk contract already in place for token-audit-auditor-mechanical and permission-sweep-auditor. This eliminates ~300 lines of coaching content from main-session context per monthly/weekly run (higher multiplier during mixed-tier sessions with 3+ scopes).
+
+**Estimated savings:** ~4k tokens per mixed-tier session with 3 /coach invocations (~1.3k per invocation × 3). At weekly cadence with 1-2 /coach calls, ~1.3k–2.6k per run. Derivation: 100-line return → ~1.3k tokens × 3 scopes = ~4k avoided in main context; disk write is ~200 tokens, net save ~3.8k per full monthly run.
+
+**Additional levers (ROI-ranked):**
+1. **token-audit-protocol.md caching (~8k tokens/run):** If the protocol is unchanged since last audit, allow the auditor to load a compact "no-change confirmation" instead of full re-read. Potentially larger than the primary recommendation on single-scope audit sessions, but requires a change-detection mechanism (hash or git log check) so implementation cost is higher.
+2. **Carry-forward findings via grep (~2.5k tokens/run):** Prior audit read in full for ~3 carry-forward findings. A targeted grep for flagged patterns or a 10-line summary-only prior-audit read would avoid ~2.5k tokens. Lower ROI than /coach fix across mixed-tier runs, but near-zero implementation cost.
+3. **session-notes.md tail re-read (~200 tokens/run):** Two tail reads (pre-append check + coaching-data tail) could collapse into one batched read. Minimal absolute saving but a clean batching habit that compounds across high-frequency appends.
+
 ### 2026-04-25 | Acceptable
 
 **Task:** Designed and landed five preventative fixes (F1-F5) for working-tree drift and concurrent-session damage, including plan-mode design with 2 parallel Explore agents and 2 /risk-check gates that redirected F2 design and dropped G5.
