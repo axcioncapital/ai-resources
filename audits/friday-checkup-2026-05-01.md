@@ -22,12 +22,15 @@ None.
 2. **[ai-resources/token-audit] H2** — Split answer-spec-generator (487 lines) and research-plan-creator (466 lines) into per-mode SKILL.md. ~33,000 tokens/year recoverable.
 3. **[workflow settings] `{{WORKSPACE_ROOT}}` placeholder** — `workflows/research-workflow/.claude/settings.json` has unfilled template placeholder under `additionalDirectories`. Flagged independently by `/audit-repo` AND `/permission-sweep` (recurrence signal).
 
+4. **[W2.2/QS-6] 33/39 canonical commands missing H1 title** — QS-6 requires `# /command-name` as first body line. Only 6 commands comply. Systemic bulk-fix needed across ai-resources canonical command library.
+5. **[W2.2/DR-1] nordic-pe project missing shared-manifest.json** — 3 command files (prime.md, wrap-session.md, note.md) are project-local copies, not symlinks. Without a manifest, auto-sync can't classify them. Create manifest and declare explicitly.
+
 ### MEDIUM
 
-4. **[ai-resources/audit-repo] research-extract-verifier missing model/effort frontmatter** — workspace rule requires explicit tier declaration. Quick fix.
-5. **[ai-resources/token-audit] M1** — Add `Read(audits/**)` and `Read(reports/**)` to `.claude/settings.json`. Closes the H2-residual gap from 2026-04-24.
-6. **[ai-resources/token-audit] M2** — Split ai-resource-builder (415 lines, 3 modes).
-7. **[ai-resources/audit-repo] answer-spec-generator at 476 lines** — same skill as H2 above; cross-referenced.
+6. **[ai-resources/audit-repo] research-extract-verifier missing model/effort frontmatter** — workspace rule requires explicit tier declaration. Quick fix.
+7. **[ai-resources/token-audit] M1** — Add `Read(audits/**)` and `Read(reports/**)` to `.claude/settings.json`. Closes the H2-residual gap from 2026-04-24.
+8. **[ai-resources/token-audit] M2** — Split ai-resource-builder (415 lines, 3 modes).
+9. **[ai-resources/audit-repo] answer-spec-generator at 476 lines** — same skill as H2 above; cross-referenced.
 
 ### Improvement opportunities (LOW)
 
@@ -70,6 +73,23 @@ None.
 - **All checks SKIPPED** — no repo-health-analyzer deployed, no improvement-log, 0 wrapped sessions in `logs/session-notes.md`. CLAUDE.md exists but customized scope did not include /audit-claude-md.
 - **Recommendation:** at next checkup that includes monthly tier, deploy at least repo-health-analyzer or run `/audit-claude-md` standalone against `knowledge-bases/CLAUDE.md`.
 
+### project repo-documentation (W2.x — steps G/H/I/J/K, run 2026-05-01 session 2)
+
+- **W2.1 doc-scanner (step G):** 7 added, 2 removed, 1 modified. Report: `projects/repo-documentation/output/phase-2/w2-1-doc-scan-2026-05-01.md`
+  - Added: innovation-triage-auditor (agent), doc-scanner-agent (agent), principles-checker-agent (agent), system-developer-agent (agent), innovation-sweep (command), session-guide project-local (command — verify symlink), vault CLAUDE.md (claude-md-file)
+  - Removed: pipeline-stage-2, pipeline-stage-2-5 (both workspace-root agents — likely superseded; investigate)
+  - Modified: repo-health-analyzer Model field: sonnet → opus (live file declares opus)
+- **W2.2 principles-checker (step H):** 15 findings — 7 errors, 8 warnings. Report: `projects/repo-documentation/output/phase-2/w2-2-principles-2026-05-01.md`
+  - DR-1 (3 errors): nordic-pe project missing shared-manifest.json; 3 command files are project-local copies not symlinks (prime.md, wrap-session.md, note.md)
+  - DR-3 (5 warnings): SKILL.md outside ai-resources canonical path (nordic step-1, buy-side reference/skills); sub-project CLAUDE.md; vault CLAUDE.md (intentional); resolve-improvements.md missing from disk
+  - QS-6 (4 errors): 33/39 canonical commands missing H1 `# /command-name` title — highest-impact finding; also 3 nordic commands with no frontmatter/H1
+  - QS-6 (3 warnings): 39/39 canonical commands missing name:/description: frontmatter (policy decision needed); project-planning local commands (6 files, no frontmatter)
+- **W2.3 maintenance consolidator (step I):** Vault integrity scan (kb-integrity run inline). 3 findings — 1 error, 2 warnings. Report: `projects/repo-documentation/output/phase-2/w2-3-maintenance-2026-05-01.md`; integrity report at `vault/_integrity-report-2026-05-01.md`
+  - Error: hooks.md count mismatch (_index.md says 14, live file has 16)
+  - Warning (×2): architecture/repo-state.md and architecture/risk-topology.md not referenced in _master-index.md (added 2026-04-30 but master-index not updated)
+- **W2.4 improvement-analyst (step J):** No findings. Friction log has only 2 entries (2026-04-18), both verified-applied in archive. Report: `projects/repo-documentation/output/phase-2/w2-4-improvements-2026-05-01.md`
+- **K projects-layer refresh:** All 7 project entries updated in projects.md and repo-state.md (tracked + vault equivalents). Material changes: buy-side Phase updated (pre-execution → execution); corporate-identity Model populated (Opus 4.7); obsidian-pe-kb Phase updated (vault relocated, 5 gates pending); repo-documentation Phase current.
+
 ### Workspace-wide: /permission-sweep --dry-run
 
 - 20 settings files scanned across 5 layers. **1 CRITICAL, 1 HIGH, 9 ADVISORY.**
@@ -94,6 +114,24 @@ None.
 - [ ] Apply repo-documentation Coach's One Thing: `/clear` between scope changes — risk: low (workflow discipline)
 - [ ] Apply obsidian-pe-kb Coach's One Thing: promote tactical recurrences to rules within-project — risk: low (workflow discipline)
 
+**W2.1 doc-scan follow-ups:**
+- [ ] Paste 4 new agent entries (innovation-triage-auditor, doc-scanner-agent, principles-checker-agent, system-developer-agent) into `output/phase-1/components/agents.md` and `vault/components/agents.md`; populate all 12 fields; link innovation-triage-auditor ↔ innovation-sweep — risk: low
+- [ ] Verify `projects/repo-documentation/.claude/commands/session-guide.md` — if symlink to canonical, no additional registry entry needed; if separate file, paste command entry — risk: low
+- [ ] Paste innovation-sweep command entry and vault CLAUDE.md claude-md-file entry into both registries — risk: low
+- [ ] Investigate pipeline-stage-2 and pipeline-stage-2-5 (absent from live filesystem); if superseded by ai-resources canonical pipeline agents, mark Status: deprecated in agents.md — risk: med
+- [ ] Fix repo-health-analyzer Model field in both registries: `sonnet` → `opus` — risk: low
+
+**W2.2 principles violations follow-ups:**
+- [ ] Create `shared-manifest.json` for `projects/nordic-pe-landscape-mapping-4-26/`; declare prime, wrap-session, note under `commands.local` if intentionally project-specific — risk: high (DR-1 error)
+- [ ] Bulk fix: add `# /command-name` H1 title to 33 ai-resources canonical commands missing it — risk: high (QS-6 systemic; run `/friday-act` to dispatch to system-developer-agent)
+- [ ] Investigate `ai-resources/.claude/commands/resolve-improvements.md` — listed in registry but not on disk; check git history — risk: med (DR-3 warn)
+- [ ] Update DR-3 allowed-locations list in principles.md to include `vault/CLAUDE.md` as a documented intentional exception — risk: low
+- [ ] Policy decision: adopt `name:` + `description:` frontmatter for canonical commands (39/39 currently missing), or document that command frontmatter is intentionally minimal — risk: med
+
+**W2.3 kb-integrity follow-ups:**
+- [ ] Fix `vault/components/_index.md` Hooks row: 14 → 16 (two hooks added since initialization) — risk: low
+- [ ] Add `architecture/repo-state.md` and `architecture/risk-topology.md` to `vault/_master-index.md` (work-layer documentation added 2026-04-30; master-index not updated at that time) — risk: low
+
 ## Policy-level observations
 
 - **`{{WORKSPACE_ROOT}}` placeholder is a recurring finding** — flagged by both `/audit-repo` and `/permission-sweep` this run. If the file is meant to be a `/deploy-workflow` template, document that explicitly and exclude from settings audits to prevent re-flagging. Otherwise, resolve.
@@ -116,10 +154,19 @@ None.
 - `projects/repo-documentation/logs/coaching-log.md` (created; 1st entry — baseline)
 - `projects/obsidian-pe-kb/logs/coaching-log.md` (created; 1st entry — baseline)
 
+**W2.x reports (G–K, session 2):**
+- `projects/repo-documentation/output/phase-2/w2-1-doc-scan-2026-05-01.md` (W2.1 drift report)
+- `projects/repo-documentation/output/phase-2/w2-2-principles-2026-05-01.md` (W2.2 violations report)
+- `projects/repo-documentation/output/phase-2/w2-3-maintenance-2026-05-01.md` (W2.3 maintenance summary)
+- `projects/repo-documentation/vault/_integrity-report-2026-05-01.md` (kb-integrity, gitignored)
+- `projects/repo-documentation/output/phase-2/w2-4-improvements-2026-05-01.md` (W2.4 — no findings)
+- `projects/repo-documentation/output/phase-1/components/projects.md` (K — projects registry updated)
+- `projects/repo-documentation/output/phase-1/repo-state.md` (K — repo state updated)
+
 ## Notes
 
 - **Mixed-tier execution:** This run combined monthly (ai-resources) and weekly (other scopes) checks per operator's pre-flight request. The standard `/friday-checkup` command does not natively support per-scope tier mixing — execution adapted while preserving the monthly report structure.
 - **Skipped checks (auto):** repo-documentation /audit-repo (no skill), repo-documentation /improve (no log), obsidian-pe-kb /audit-repo (no skill), obsidian-pe-kb /improve (no log), knowledge-bases /audit-repo + /improve + /coach (no skill / no log / 0 sessions). All recorded in per-scope summaries above.
-- **W2.x (G–K) skipped entirely** per operator request. Not added as deferred follow-ups.
+- **W2.x (G–K) completed in session 2** (2026-05-01) after the main checkup run. G/H/I/J/K findings appended to this report. See W2.x reports section in "All reports generated."
 - **Commit behavior:** Per `/friday-checkup` Step 18, all files land unstaged for operator review at session wrap. Note conflict with `/token-audit` Step 17 (commit) — orchestrator no-commit rule takes precedence per workspace CLAUDE.md.
 - **Plan QC gap (carried from 2026-04-24):** ai-resources scope when workspace not selected → ai-resources CLAUDE.md gets no direct audit. Same gap as prior run; consider revising `/audit-claude-md` command spec.
