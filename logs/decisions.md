@@ -356,3 +356,31 @@ When the extension is invoked, document one line in the wrap session note:
 **Alternatives considered.**
 - *Include Resolve section in template (original design).* Rejected: bakes a forward-reference to tooling that may ship under a different name or not at all; QC reviewer flagged as scope risk.
 - *Remove the reminder entirely.* Rejected: operator explicitly requested the reminder as part of session setup flow.
+
+---
+
+## 2026-05-01 — {{WORKSPACE_ROOT}} placeholder: template, not a bug
+
+**Context.** /friday-act item 2 proposed resolving the `{{WORKSPACE_ROOT}}` placeholder in `workflows/research-workflow/.claude/settings.json`. Two independent auditors (/audit-repo and /permission-sweep) flagged it as an unfilled setting. Inline /risk-check returned RECONSIDER.
+
+**Decision.** Do not edit the template file. The placeholder is intentional. Fix the auditors.
+
+**Rationale.** The file is a deploy-time template; SETUP.md Step 1.5 documents `{{WORKSPACE_ROOT}}` as one of nine operator-filled placeholders. The 2026-04-27 risk-check explicitly approved introducing it to replace a prior hard-coded path. Both fix variants are harmful: substituting an absolute path bakes a machine-specific path into the template (breaks future deployments); removing the entry strips `ai-resources/` read access from deployed projects. The recurring auditor flag is a known false positive logged in permission-sweep-2026-04-27.md:35.
+
+**Alternatives considered.**
+- *Substitute with `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo`.* Rejected: bakes personal machine path into the template.
+- *Remove the additionalDirectories entry.* Rejected: breaks deployed project access to ai-resources/ skills and commands.
+- *Treat as real gap and apply blanket remediation.* Rejected: contradicts documented design and prior risk-check approval.
+
+---
+
+## 2026-05-01 — permission-sweep CRITICAL (Rule 4): confirmed false positive
+
+**Context.** /permission-sweep 2026-05-01 flagged a CRITICAL Rule 4 finding: "allow list missing entries" for ai-resources/.claude/settings.json. The report itself noted a bypass-mode caveat.
+
+**Decision.** Finding is a false positive. No changes to settings.json. Auditor Rule 4 needs a bypass-mode exception.
+
+**Rationale.** `defaultMode: bypassPermissions` is the agreed operator setup (per memory feedback_zero_permission_prompts.md). Under bypass mode, the allow list is a secondary safety layer, not the primary enforcement mechanism. The auditor's "missing entries" rule does not model this design. The correct fix is an auditor rule exception, not a file change.
+
+**Alternatives considered.**
+- *Add all flagged allow entries.* Rejected: redundant under bypass mode; adds noise to an intentionally minimal list; contradicts operator's zero-permission-prompt posture.

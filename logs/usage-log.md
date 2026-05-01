@@ -348,3 +348,29 @@
 **Additional levers (ROI-ranked):**
 - Session shape is the target profile for symmetric guardrail edits across paired infra commands — single decision (precondition-gate over rename), two parallel surgical Edits, single mechanical-mode QC, commit. Worth codifying as the reference envelope for Step-1-precondition-style edits to small command pairs.
 - Marginal: the bypassPermissions transient on Edit #2 is environmental noise — not worth a discipline change unless it recurs across multiple sessions on the same edit shape.
+
+### 2026-05-01 | Acceptable
+
+**Task:** /friday-act (monthly tier) against 2026-05-01 checkup — resolved 3 of 14 tactical items, investigated 4 auditor false positives, deleted pre-migration usage/usage-log.md, captured 2 policy proposals.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~18 |
+| Files read | ~19 (re-reads: 0) |
+| Files written/edited | 5 |
+| Tool calls | ~52 |
+| Subagents | 2 |
+| Rework cycles | 0 |
+
+**Findings:**
+- **Tool overhead — Minor:** /resolve aborted after 1 scan (no QC context) — ~3 tool calls wasted. Expected given session shape; no action needed.
+- **False-positive overhead — Moderate:** 4 of 14 tactical items were auditor false positives ({{WORKSPACE_ROOT}} template, permission-sweep CRITICAL, Read(audits/**) recommendation, research-extract-verifier frontmatter). Each required reads + bash calls with no file changes produced. Pattern is the same root cause: auditors don't model bypass-mode posture, template-class files, or multi-line frontmatter.
+- **Context bloat — Minor:** session-usage-analyzer SKILL.md read in full (149 lines) — protocol-mandated per wrap-session flow.
+
+**Recommendation:** Add a triage pre-filter in the /friday-act checklist or auditor rules to suppress false-positive classes before the operator sees them. If the false-positive rate across 2 more Friday cycles stays above 25% of tactical items, treat it as a systemic signal to fix the auditors (policy proposals already captured in maintenance-observations.md).
+
+**Estimated savings:** ~16k tokens/Friday-act cycle (4 false-positive items × ~4k investigation cost each). Over 12 cycles/year ≈ ~192k tokens/year if root-cause auditor fixes land.
+
+**Additional levers (ROI-ranked):**
+- Root-cause auditor fix (policy proposals A and A2 in maintenance-observations.md) — eliminates the false-positive overhead at the source; higher ROI than any per-session triage filter.
+- /resolve early-abort cost (3 tool calls) — negligible; not worth a dedicated fix.

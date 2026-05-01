@@ -307,3 +307,10 @@
 - **Decisions logged:** 0
 - **QC cycles:** 0
 - **Gates:** 5 (1 changed) — plan-approval:confirmed (friday-checkup plan approved after planning pass), scope-selection:changed (operator redirected from standard monthly to mixed-tier after runtime estimate exceeded 45 min threshold), scope-selection:confirmed (knowledge-bases include as custom scope), scope-selection:confirmed (W2.x skip entirely), bright-line-review:confirmed (116 min runtime explicitly approved)
+
+### 2026-05-01 — /friday-act monthly — tactical + policy review
+- **Commands used:** /prime, /friday-act, /resolve (aborted — no QC in context), /recommend, /schedule, /risk-check (inline ×1 via /friday-act), /wrap-session
+- **Iterations:** 0
+- **Decisions logged:** 2
+- **QC cycles:** 0
+- **Gates:** 1 (1 confirmed) — bright-line-review:confirmed (usage-log.md deletion explicitly approved by operator)

@@ -395,3 +395,34 @@ Monthly checkup with mixed-tier approach: ai-resources gets full monthly (audit-
 ### Open Questions
 - Permission-sweep CRITICAL finding: operator review needed — is the "missing allow entries" gap real or a rule-template mismatch with bypassPermissions mode?
 - Friction-log dormant since 2026-04-18: workflow stabilized (positive) or operator-logging lapsed? Confirm at next wrap.
+
+## 2026-05-01 — /friday-act monthly — tactical + policy review
+
+### Summary
+Executed /friday-act (monthly tier) against the 2026-05-01 friday-checkup report. 3 of 14 tactical items resolved: H1 session reminder scheduled as a remote routine (fires 2026-05-08), permission-sweep CRITICAL logged as a confirmed false positive vs bypass-mode design, research-extract-verifier frontmatter confirmed pre-existing and correct. Session discovered 4 auditor false positives across the tactical list — none of those items required file changes. Two policy proposals captured in maintenance-observations.md. Pre-migration usage/usage-log.md deleted per explicit operator approval.
+
+### Files Created
+- `audits/risk-checks/2026-05-01-resolve-the-workspace-root-placeholder-in-workflows-research.md` — RECONSIDER verdict report for {{WORKSPACE_ROOT}} placeholder; confirms file is intentional deploy-time template
+
+### Files Modified
+- `logs/maintenance-observations.md` — first /friday-act session block appended (monthly tier; 3 fix-now, 7 defer, 4 skip; 2 rule-change proposals)
+
+### Files Deleted
+- `usage/usage-log.md` — 227-line pre-migration artifact; canonical usage log is at `logs/usage-log.md`
+
+### Decisions Made
+- **{{WORKSPACE_ROOT}} placeholder is intentional:** Do NOT edit workflows/research-workflow/.claude/settings.json. RECONSIDER verdict from risk-check confirmed the file is a deploy-time template; prior 2026-04-27 risk-check approved introducing the placeholder. Fix is at the auditor rule level (template-class exception for `workflows/*/.claude/`).
+- **Permission-sweep CRITICAL is a false positive:** "Missing allow entries" finding does not apply under `defaultMode: bypassPermissions`. No settings.json edit required. Fix is at the auditor rule level (Rule 4 exception for files with bypassPermissions).
+- **Read(audits/**) + Read(reports/**) deferred:** Token-audit M1 recommendation would add these to the deny list, breaking /friday-act, /risk-check, /token-audit workflows that actively read those directories. Right fix is more nuanced (e.g., `Read(audits/working/**)` only). Not a quick win.
+- **research-extract-verifier:** opus/high frontmatter already present at lines 22-23 (after multi-line description block). Audit-repo finding was a false positive — auditor parser misses fields after multi-line descriptions.
+- **usage/usage-log.md deleted:** Pre-migration artifact; operator explicitly approved deletion.
+
+### Next Steps
+- Push commits
+- Run /cleanup-worktree — working tree still has untracked prior-session risk-check reports and the modified clarify.md
+- Approve orphan skill moves: `fund-triage-scanner` and `prose-refinement-writer` → `skills/deprecated/` (operator denied git mv during session; needs explicit re-approval)
+- Schedule follow-up session for 2 policy proposals in maintenance-observations.md: (1) auditor template-class exception for `workflows/*/.claude/`, (2) decisions-log nudge hook
+
+### Open Questions
+- Permission-sweep CRITICAL: confirmed false positive (resolved from prior session open question)
+- Friction-log dormant since 2026-04-18: still no new entries at this wrap — pattern continues; not yet actionable
