@@ -122,6 +122,12 @@ After all extracts are produced:
 6. ▸ /compact — verification context no longer needed.
 7. If all APPROVED: Stage 2 complete for this section.
 8. If FLAG — RE-EXTRACT on any extract: present the re-extraction instructions to the operator. Route flagged extracts back to Step 2.3 for re-extraction using the specific instructions from the verification report. Do NOT re-extract automatically — only when the operator requests it.
+9. **Quality log (trigger: all APPROVED):** Append one summary row to `/logs/research-quality-log.md`. Count source: step-2.4-checkpoint.md verdicts.
+   `| {YYYY-MM-DD} | {project name from CLAUDE.md} | {section} | {total questions} | {1st-pass approved} | {re-extracted then approved} | {scarcity} |`
+   - **1st-pass approved** — approved at Step 2.4 first verification run, no re-extraction
+   - **Re-extracted then approved** — required ≥1 re-extraction before reaching approval
+   - **Scarcity** — hit re-extraction ceiling without approval
+   Sum of three counts = total questions.
 
 ---
 
