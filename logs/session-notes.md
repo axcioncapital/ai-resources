@@ -458,3 +458,35 @@ Session 2 of the Friday cadence (monthly tier). Started from the 2026-05-01 chec
 
 ### Open Questions
 - None
+
+## 2026-05-02 — Claude Code improvement plan — evaluate suggestions + execute top 3
+
+### Summary
+Evaluated an external Claude Code suggestion document against the current stack and produced a prioritized implementation plan. Most suggestions were already in place; three actionable items were identified and executed: adding DISABLE_NON_ESSENTIAL_MODEL_CALLS=1 to global settings, culling MCP servers from 16 to 1 (github only), and aligning MAX_THINKING_TOKENS at workspace root. Session also included a /resolve-improvement-log pass confirming no resolved entries to archive.
+
+### Files Created
+- `audits/improvement-plan-claude-code-2026-05-01.md` — prioritized implementation plan (High/Medium/Skip tiers) for Claude Code improvements derived from external suggestion document
+
+### Files Modified
+- `~/.claude/settings.json` — added DISABLE_NON_ESSENTIAL_MODEL_CALLS=1 to env block (outside git repo)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/.claude/settings.json` — added MAX_THINKING_TOKENS=10000 env block (outside git repo)
+- 15 MCP plugin `.mcp.json` files renamed to `.mcp.json.disabled` under `~/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/` — disabled all plugins except github (outside git repo)
+
+### Decisions Made
+- **MCP servers — keep only github:** of 16 installed plugins, operator confirmed only github is used in Axcion sessions. 15 others disabled via .mcp.json.disabled (reversible).
+- **DISABLE_NON_ESSENTIAL_MODEL_CALLS:** applied as High ROI with [NEEDS VERIFICATION] flag — env var name unconfirmed; verify in next session by observing behavior.
+- **MAX_THINKING_TOKENS workspace root:** aligned at 10,000 to match ai-resources default; operator confirmed intent by approving execution.
+- **Improvement plan scope:** scoped to chat output initially, then upgraded to saved artifact at operator request.
+- **QC/refinement fixes:** two full QC → triage → fix cycles plus one manual operator-approved fix pass on the plan artifact.
+
+### Next Steps
+- Restart Claude Code for env var and MCP changes to take effect
+- Verify DISABLE_NON_ESSENTIAL_MODEL_CALLS took effect in first normal session (silent-fail mode — no error if var name unrecognized)
+- Push commits
+- Run /cleanup-worktree — untracked risk-check reports + modified clarify.md still pending from prior session
+- Approve orphan skill moves: fund-triage-scanner and prose-refinement-writer → skills/deprecated/
+- Dedicated session for H1: research-workflow prose-pipeline subagent return refactor (reminder scheduled 2026-05-08)
+- 2 policy proposals pending in maintenance-observations.md: (1) auditor template-class exception, (2) decisions-log nudge hook
+
+### Open Questions
+- Does DISABLE_NON_ESSENTIAL_MODEL_CALLS actually suppress anything in this Claude Code version? Confirm in next session.
