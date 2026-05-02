@@ -1,22 +1,19 @@
 # Section 4 summary — workflow: repo-dd
 
-**Total findings:** 9 (HIGH: 3, MEDIUM: 4, LOW: 2)
-**Telemetry:** none — all estimates structural.
-**Workflow scope:** 3-tier slash command (`/repo-dd`, `/repo-dd deep`, `/repo-dd full`); 1 subagent (`repo-dd-auditor`); reads `audits/questionnaire.md`.
+**Workflow scope:** `/repo-dd` (3 tiers: standard / deep / full); 3 subagents (`repo-dd-auditor` sonnet, `dd-extract-agent` haiku, `dd-log-sweep-agent` haiku).
+**Files measured:** command 314 lines / ~3,484 tokens; agents 75 / 67 / 109 lines; questionnaire 146 lines (subagent-only). Telemetry: none — estimates structural.
 
-**Start-of-workflow context (ai-resources scope, main-session, structural est.):**
-- Standard tier: ~19,400-25,500 tokens
-- Deep tier: ~46,400-55,500 tokens
-- Full tier: deep + marginal per-test cost
-
-**Severity counts:** HIGH 3 | MEDIUM 4 | LOW 2
+**Severity counts:** HIGH 0 | MEDIUM 3 | LOW 1 | PASS 4
 
 **Top 3 findings:**
-1. [HIGH] Triple re-read of the completed DD audit report (6,111-8,948 tokens) across Steps 10, 14, and 33 adds 12-18k redundant main-session tokens.
-2. [HIGH] Deep-tier log reads (Steps 48-51) consume ~20,000+ tokens in main session; session-notes.md alone is 9,304 words / ~12,095 tokens; delegable to a subagent per protocol's >3-4-file rule.
-3. [HIGH] Step 33 "Read DD_REPORT fully" in deep tier is a delegable triage-extraction task; a subagent could return ~1,500-2,500 tokens instead of the full 6-9k.
+1. [MEDIUM] No `/compact` or `/clear` instruction at the three natural tier boundaries (Steps 7, 12, 14). Only reactive "inform operator if context high" at lines 127, 236.
+2. [MEDIUM] `/repo-dd` runs Opus throughout (`model: opus`) including mechanical Steps 22–24 (apply fixes + verify) and Steps 62–66 (existence/symlink/file-pair pipeline tests). Subagents are correctly tiered; main session is not.
+3. [MEDIUM, boundary] Step 63 template-sync diffs each canonical-vs-deployed file pair in the main session with no subagent delegation pattern; cumulative cost depends on deployed-project count.
 
-**Subagent pattern verdict:** `repo-dd-auditor` itself is correctly output-to-disk with a small summary return; the waste is in the main session re-reading its artifact up to three times.
-**Boundary-proximity flags:** none (all findings well above threshold boundaries).
+**Output-to-disk pattern verdict:** correctly implemented. All 3 subagents return path + counts only; Steps 10/33/48 explicitly forbid re-reading DD_REPORT or raw logs. No "subagent returning >200 lines to main session" finding.
+
+**Main-session workflow-attributable load (estimates):** standard ~5,000 tokens; deep +~1,000; full +6,000–9,000 (DEEP_REPORT re-read at Step 67) plus variable Step 63 file-pair reads.
+
+**Boundary-proximity flags:** F3 tagged `(boundary)` — severity depends on deployed-pair count not enumerated in this audit.
 
 Full evidence in `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/working/audit-working-notes-workflow-repo-dd.md`. Main session should read the full notes only if a specific finding needs deeper review.

@@ -1,19 +1,15 @@
-# Summary — Workflow /new-project
+# Summary — Workflow /new-project (Section 4)
 
-**Total findings:** 8
-**By severity:** HIGH 0 | MEDIUM 6 | LOW 2
+**Total findings:** 8 (1 PASS + 5 MEDIUM + 2 LOW)
+**By severity:** HIGH 0 | MEDIUM 5 (3 boundary-tagged) | LOW 2 | PASS 1
 
-**Context at workflow start:** ~8,513 tokens (workspace CLAUDE.md 2,811 + ai-resources CLAUDE.md 1,084 + orchestrator 4,618).
-**Subagent spawns per run:** 6 to 8 (2, 2.5?, 3a, 3b, 3c, 4, 5, 6?). All artifacts write to disk; returns are 1-line announcements — compliant with best practice #10.
-**Heavy reads:** all delegated to subagents. No large reads in main session.
-**QC / compaction gates:** none defined in orchestrator between stages.
+**Workflow surface:** orchestrator `.claude/commands/new-project.md` (527 lines / ~6863 tokens) + 6 spawned agents (`pipeline-stage-3a/3b/3c/4/5`, `session-guide-generator`). Total agents 387 lines / ~1955 tokens. Estimated main-session start-of-workflow context: ~12,261 tokens (workspace CLAUDE.md + ai-resources CLAUDE.md + orchestrator body).
 
-**Top findings:**
-1. F2 MEDIUM — no `/compact` or `/clear` breakpoints between stages (0 matches in orchestrator).
-2. F3 MEDIUM — Stage 6 re-scans ai-resources that Stage 3a already inventoried (duplicate scan).
-3. F1 MEDIUM — orchestrator 351 lines / ~4,618 tokens loaded per invocation (boundary — near 300-line HIGH threshold).
+**Top 3 findings:**
+1. [MEDIUM] Five pipeline-stage agents (3a/3b/3c/4/5) lack an explicit return-size cap; only `session-guide-generator` declares "under 30 lines."
+2. [MEDIUM, boundary] Orchestrator file is 527 lines / ~6863 tokens with canonical blocks duplicated ~3× across reference text + heredoc + printf fallback (~60–90 redundant lines).
+3. [MEDIUM] No `/compact` breakpoint declared between pipeline stages; full 6-subagent run accumulates returns + gate exchanges without structural compaction prompt.
 
-Other MEDIUM: F4 no subagent output-size cap, F5 no QC subagent wired between stages, F8 Stage 3a repo scan unbounded (scales with ai-resources size).
-LOW: F6 orchestrator reloaded each continuation session, F7 2 pipeline skills over/near 300 lines (session-guide-generator 320, implementation-spec-writer 294 boundary).
+**Other findings:** Stage 3a inventory output structurally enables large-table echo if operator prompts (MEDIUM, boundary). Stages 3b and 3c both Read `repo-snapshot.md` — subagent-side duplication on opus tier (LOW). No QC/refinement subagents wired into pipeline; operator gates substitute (LOW). Model tiering correct: orchestrator + 3a/4/5/6 sonnet, 3b/3c opus (PASS).
 
-Full evidence in /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/working/audit-working-notes-workflow-new-project.md. Main session should read the full notes only if a specific finding needs deeper review.
+Full evidence in `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/working/audit-working-notes-workflow-new-project.md`. Main session should read the full notes only if a specific finding needs deeper review.

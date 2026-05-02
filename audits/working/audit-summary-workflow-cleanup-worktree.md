@@ -1,16 +1,18 @@
-# Section 4 summary — /cleanup-worktree workflow
+# Section 4 summary — /cleanup-worktree workflow (2026-05-02 re-audit)
 
-**Workflow:** /cleanup-worktree (command + worktree-cleanup-investigator skill)
-**Total findings:** 8
-**By severity:** HIGH 4 (one boundary) | MEDIUM 3 | LOW 1
-**Baseline context load (pre-plan, main session):** ~18,065 tokens across 6 mandatory files (1166 lines / 13,896 words), plus per-dirty-path reads (~4–8k tokens for 10–14 paths).
-**Subagent passes per run:** 3 mandatory (1st QC + triage + 2nd QC); up to 5 permitted before abort. Operator 2026-04-17 telemetry: ~220k tokens across 3 passes (~73k/subagent).
+**Workflow:** /cleanup-worktree (command + worktree-cleanup-investigator skill + 2 references)
+**Total findings:** 6 open (3 RESOLVED since prior 2026-04-18 audit; 1 OUT-OF-SCOPE)
+**By severity:** HIGH 2 | HIGH-boundary 1 | MEDIUM 2 | LOW 2
+**Baseline pre-plan main-session context (mandatory loads):** ~20,500–22,300 tokens / 6 files / 1,290 lines / 17,159 words. Plus per-path reads (~4–7k tokens for 10–14 paths). Total session-start ~24,500–30,000 tokens.
+**Subagents per run:** nominal 3 (1st QC + triage + 2nd QC); quick-tier-skip 2; max permitted 5.
 
-**Top 3 findings:**
-1. HIGH — Each of 3 mandatory subagents receives the full plan file verbatim per isolation contract (execution-protocol §3, command Step 6.15). Plan × 3 repasses = 9–18k tokens of plan-content duplication across the subagent fleet.
-2. HIGH — Main session loads execution-protocol.md (310 lines) + decision-taxonomy.md (230 lines) + SKILL.md (241 lines) = 781 lines / ~11,600 tokens up-front at Step 3 before any path classification begins. Contradicts SKILL.md's own "read on demand" guidance.
-3. HIGH — Both QC reports must be captured "Do not summarize it" (Step 6.17, Step 9.25) — full verbatim returns to main session. ~3,800 tokens returned across 3 subagent calls. No write-to-disk pattern.
+**Structural changes since 2026-04-18 (RESOLVED, no longer findings):** (a) plan content now path-passed to subagents (Step 6.15 explicit "Do NOT paste"); (b) all 3 subagent reports now write-to-disk + ≤20-line summary return (Steps 6.17 / 7.21 / 9.26); (c) two compact breakpoints present (Steps 4.48 / 7.85). The two prior HIGH findings on subagent verbatim I/O are gone.
 
-**Other notable:** MEDIUM — no `/compact` breakpoints in a 45–90 min workflow. MEDIUM — SKILL.md duplicates Bias Counters and Workflow overview already stated in command Step 4.11 / Steps 1–12 (double-loaded). HIGH(boundary) — execution-protocol.md at 310 lines sits within ±15% of the 300-line threshold.
+**Top 3 findings (current):**
+1. HIGH — SKILL.md (247 lines / ~4,703 tokens) loaded in full at command Step 3.6. Re-eval per operator brief: ~80–110 lines load-bearing (Invocation Contract, Bias Counters, Failure Behavior); ~130–160 lines non-load-bearing (Workflow overview duplicates command Steps 1–12; "When to Use" / "Cross-References" / Example / Validation Loop / Runtime Recs are skill-discovery or post-execution content). Estimated savings if split: ~2,500–3,000 tokens per invocation.
+2. HIGH (boundary) — execution-protocol.md at 337 lines / ~5,912 tokens; 12% over the 300-line threshold (within ±15% boundary band per token-estimation caveat). Grew ~27 lines since prior audit.
+3. HIGH — Reference files (decision-taxonomy.md 230 lines + execution-protocol.md 337 lines = ~8,547 tokens combined) "on-demand" loading degrades for typical 10–14 path session because trigger points span Steps 5/6/7/9/11; cumulative load approaches full file by mid-workflow.
 
-**Full evidence in** /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/working/audit-working-notes-workflow-cleanup-worktree.md. **Main session should read the full notes only if a specific finding needs deeper review.**
+**Operator question re-eval verdict:** Design rationale (mandatory plan mode, named confirmation phrases, operator-visible execution) justifies main-session loading of ~80–110 SKILL.md lines, NOT the full 247. Split is feasible.
+
+**Full evidence in** /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/working/audit-working-notes-workflow-cleanup-worktree.md. Main session should read full notes only if a specific finding needs deeper review.

@@ -1,188 +1,247 @@
-# Section 4 — Workflow Token Efficiency Audit: repo-dd
+# Section 4 — Workflow Token Efficiency: repo-dd
 
 **Audit root:** `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources`
-**Workflow scope:** `/repo-dd` (three tiers: standard / deep / full)
-**Protocol version:** 1.2
-**Telemetry available:** No. All "typical" estimates below are structural inferences from workflow instructions and file-loading patterns, not observed data.
+**Workflow:** `repo-dd` (3 depth tiers: standard / deep / full)
+**Protocol:** token-audit-protocol.md v1.3, Section 4
+**Token estimation:** word count × 1.3 (±30% caveat per protocol header)
 
 ---
 
-## Context loading chain
+## Workflow file inventory
 
-### Tier: standard (no arg)
+| Component | Path | Lines | Words | Est. tokens |
+|-----------|------|-------|-------|-------------|
+| Command | `ai-resources/.claude/commands/repo-dd.md` | 314 | 2,680 | ~3,484 |
+| Subagent: factual auditor | `ai-resources/.claude/agents/repo-dd-auditor.md` | 75 | 762 | ~991 |
+| Subagent: extract | `ai-resources/.claude/agents/dd-extract-agent.md` | 67 | 480 | ~624 |
+| Subagent: log sweep | `ai-resources/.claude/agents/dd-log-sweep-agent.md` | 109 | 600 | ~780 |
+| Loaded by auditor | `ai-resources/audits/questionnaire.md` | 146 | 1,580 | ~2,054 |
 
-Steps 1-7 of `repo-dd.md`. Flow:
+**Total command + agent surface:** 565 lines / 4,522 words / ~5,879 tokens (excludes questionnaire and CLAUDE.md, which are loaded by the auditor subagent context, not the main command body).
 
-1. **Session start** — root `CLAUDE.md` (136 lines, 2,162 words ≈ 2,811 tokens) + ai-resources `CLAUDE.md` (104 lines, 834 words ≈ 1,084 tokens).
-   - Combined CLAUDE.md load: ~3,895 tokens. Present on every turn of every session regardless of `/repo-dd` being invoked.
-2. **`/repo-dd` command body** loads into main session when invoked: `.claude/commands/repo-dd.md` — 301 lines, 2,626 words ≈ **~3,414 tokens**.
-3. **Step 2 does NOT read files** — only sets variables and searches for prior audit filenames via filesystem listing.
-4. **Step 3 launches `repo-dd-auditor` subagent.** Subagent context (fresh):
-   - Agent system prompt: `.claude/agents/repo-dd-auditor.md` — 75 lines, 762 words ≈ ~991 tokens.
-   - Agent reads `audits/questionnaire.md` — 137 lines, 1,328 words ≈ ~1,726 tokens.
-   - Agent walks AUDIT_ROOT and reads many files to answer 32 questions across 6 sections (see "Subagent pattern" below).
-   - If `PREVIOUS_AUDIT ≠ "None"`, agent reads the prior audit report. Prior audits observed: 4,699 → 6,326 → 6,883 words (6,111–8,948 tokens each, growing trend).
-5. **Step 3 step 10 — main agent reads the completed report** to verify it was written. Reports observed: 691–857 lines, 4,699–6,883 words ≈ **6,111 to 8,948 tokens**.
-6. **Step 4 triage** — main agent re-reads the report it just read (Step 14: "Read the completed audit report"). Functionally a re-read of the same ~6–9k-token report.
-7. **Step 5 operator gate** — no file loads.
-8. **Step 6 fixes** — main agent reads each file being fixed (variable, depends on approvals).
-9. **Step 7 commit** — git ops only.
+Subagent declared models (verified from frontmatter):
+- `repo-dd-auditor` → **sonnet** (executes the full questionnaire across the audit root; potentially heavy reads).
+- `dd-extract-agent` → **haiku** (mechanical restatement; correct tier).
+- `dd-log-sweep-agent` → **haiku** (mechanical pattern extraction; correct tier).
 
-**Total estimated start-of-workflow context for standard tier (main session only, excluding subagent):**
-
-- CLAUDE.md (both layers): ~3,895 tokens
-- `/repo-dd` command: ~3,414 tokens
-- Subagent summary return (standard): ~100-300 tokens (per agent spec: total findings count, breakdown by type, report path)
-- Main-session read of completed report: ~6,111-8,948 tokens (HIGH cost driver)
-- Main-session re-read for triage (same report): functionally doubles the report cost to ~12,000-18,000 tokens across two reads
-
-**Standard-tier main-session total: ~19,400-25,500 tokens** before any fixes are applied.
-
-### Tier: deep (adds Steps 8-12)
-
-Adds on top of standard tier:
-
-10. **Step 33 (in Step 8): "Read DD_REPORT fully."** This is a THIRD read of the same 691-857-line audit report (~6,111-8,948 tokens). The protocol text says "Read DD_REPORT fully ... Extract Section 3.4 ... into working memory." This is a full-file read followed by extraction, not a scoped read.
-11. **Step 34: discover log files.** Checks for `friction-log.md`, `improvement-log.md`, `session-notes.md`, `coaching-log.md`, `workflow-observations.md` per repo under AUDIT_ROOT. When AUDIT_ROOT = workspace, 11 log files are discovered across 5 projects + workspace root + ai-resources (see file inventory below).
-12. **Step 48-51: read ALL discovered logs.** For ai-resources scope only, `logs/session-notes.md` alone is 800 lines / 9,304 words ≈ **~12,095 tokens**. Adding `decisions.md` (7,099 tokens) and `coaching-data.md` (1,125 tokens) and `innovation-registry.md` (605 tokens) → **~20,924 tokens** just from ai-resources logs. At workspace scope, add per-project logs (not measured here but likely 5,000-15,000 additional tokens each).
-13. **Step 56: write deep report** to `DEEP_REPORT_PATH` — observed prior deep report: 245 lines, 2,674 words ≈ ~3,476 tokens written.
-
-**Deep-tier additional main-session load (ai-resources scope, structural estimate):**
-
-- Full DD_REPORT re-read at Step 33: ~6,111-8,948 tokens
-- All log files: ~20,924 tokens (ai-resources alone)
-- Deep report writing: output, not input
-
-**Deep-tier main-session total: standard + ~27,000-30,000 additional tokens ≈ 46,400-55,500 tokens.** All in the main session (no subagent delegation for Steps 8-12).
-
-### Tier: full (adds Step 13)
-
-14. **Step 62: Test 1 — symlink resolution.** Re-reads DD_REPORT Section 1.7. No new content beyond what's already loaded.
-15. **Step 63: Test 2 — template sync.** For each file that exists in both `ai-resources/skills/` or `ai-resources/workflows/` and `projects/X/`, compare content. At ai-resources scope this is minimal; at workspace scope with 5 projects and many symlinks this is substantial cross-project file reading.
-16. **Step 64-66: Tests 3-5 — preconditions.** Existence checks via `ls` / `find` — minimal token cost.
+`/repo-dd` command frontmatter: `model: opus`. Main session runs Opus throughout the workflow including Steps 4–6 (triage and apply fixes), Steps 8–11 (deep assessment synthesis), and Steps 12–13 (deep report drafting / pipeline tests).
 
 ---
 
-## File reads during execution
+## Step 4.2 — Token-flow map
 
-Main-session file reads (ai-resources scope, standard tier):
+### Question 1: What gets loaded at workflow start?
 
-| File | Size | Read in main/subagent | Necessary / Delegable? |
-|------|------|-----------------------|------------------------|
-| `CLAUDE.md` (root) | 136 lines / 2,162 words | Main (every session) | Necessary |
-| `ai-resources/CLAUDE.md` | 104 lines / 834 words | Main (every session) | Necessary |
-| `.claude/commands/repo-dd.md` | 301 lines / 2,626 words | Main (on invocation) | Necessary (workflow spec) |
-| `audits/questionnaire.md` | 137 lines / 1,328 words | **Subagent** (correct) | Delegated |
-| `.claude/agents/repo-dd-auditor.md` | 75 lines / 762 words | Subagent system prompt | Necessary for subagent |
-| `audits/repo-due-diligence-YYYY-MM-DD.md` (completed report) | ~700-860 lines / ~4,700-6,900 words | **Main (Step 10)** | Partially delegable — main only needs verification + triage-level extraction |
-| Same report again (Step 14 triage) | same | **Main, re-read** | Redundant with Step 10 read |
-| Same report again (Step 33 deep, fully) | same | **Main, third read** | Delegable to a triage-extraction subagent |
-| Previous audit report (if exists) | ~700-860 lines | **Subagent** (in Step 3 only) | Correctly delegated |
-| `logs/session-notes.md` | 800 lines / 9,304 words | **Main (Steps 48-51, deep tier)** | Delegable — deep tier should delegate log synthesis to a subagent |
-| `logs/decisions.md` | 124 lines / 5,461 words | Main (deep tier) | Delegable |
-| `logs/coaching-data.md` | 95 lines / 865 words | Main (deep tier) | Borderline |
-| `logs/innovation-registry.md` | 41 lines / 465 words | Main (deep tier) | Borderline |
-| Per-project logs (workspace scope): 11 files total at workspace scope | Unmeasured but likely >5,000 lines aggregate | Main (deep tier) | Delegable |
+When `/repo-dd` is invoked from a session anchored in `ai-resources/`:
 
-Subagent-scope file reads (`repo-dd-auditor`):
+1. Workspace CLAUDE.md (`/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/CLAUDE.md`) — 219 lines / 3,202 words / ~4,163 tokens (loaded every turn already; not workflow-attributable but lives in main-session context for the duration).
+2. ai-resources CLAUDE.md (`ai-resources/CLAUDE.md`) — 92 lines / 950 words / ~1,235 tokens (always loaded for sessions inside ai-resources).
+3. `/repo-dd` command body — 314 lines / 2,680 words / ~3,484 tokens (loaded into main-session context at invocation).
 
-- Walks AUDIT_ROOT exhaustively to answer 6 questionnaire sections (32 questions). Reads: all SKILL.md files (many — known skill count 40+ in ai-resources), all command files, all agent definitions, all hook scripts, both `CLAUDE.md` files, all symlinks, all templates, git history for commit dates.
-- This is correctly delegated — the subagent's scope is exactly the "heavy-read" pattern the protocol recommends.
+**Estimated start-of-workflow context (workflow-attributable, excluding always-loaded CLAUDE.md):** ~3,484 tokens for the command body itself.
+
+**Estimated total context inside the main session at the moment the command runs (CLAUDE.md + command):** ~3,484 + ~5,398 (CLAUDE.md stack) = ~8,882 tokens before any subagent call.
+
+Subagent contexts (not in main session):
+- `repo-dd-auditor` brief loads its own agent body (~991 tokens) plus questionnaire.md (~2,054 tokens) = ~3,045 tokens of its starting context, plus whatever main-session CLAUDE.md inheritance applies to subagents in this harness.
+- `dd-extract-agent` loads ~624 tokens of agent body plus the full DD_REPORT (~7,000–9,000 tokens for a workspace audit; ~5,000–7,000 for scoped).
+- `dd-log-sweep-agent` loads ~780 tokens of agent body plus discovered logs (variable, can be large).
+
+### Question 2: How many subagent calls does the workflow design involve?
+
+| Tier | Subagent calls | Identity |
+|------|---------------:|----------|
+| standard | 2 | `repo-dd-auditor` (Step 9), `dd-extract-agent` (Step 11) |
+| deep | 3 | above + `dd-log-sweep-agent` (Step 34) |
+| full | 3 | same as deep (no additional subagent for pipeline tests; main session runs them inline at Steps 62–66) |
+
+Each subagent has its own context. Main-session-attributable token cost is the **return payload** plus any file the main session subsequently reads from disk.
+
+### Question 3: Estimated output volume (subagent returns to main session)
+
+| Subagent | Designed return shape | Source citation |
+|----------|----------------------|-----------------|
+| `repo-dd-auditor` | "Total findings count, breakdown by type (discrepancy, missing item, violation, clean check), the report file path." | `repo-dd-auditor.md` lines 63–69 |
+| `dd-extract-agent` | "EXTRACT_PATH, total findings count, breakdown by inferred severity." | `dd-extract-agent.md` lines 57–61 |
+| `dd-log-sweep-agent` | "SWEEP_PATH, counts: friction patterns, unresolved improvements, friction-without-improvement, improvement-without-verification." | `dd-log-sweep-agent.md` lines 99–102 |
+
+All three subagents return a path + counts only. The **full audit report**, the **structured extract**, and the **log-sweep summary** are written to disk and not returned in the assistant message.
+
+**Disk-output sizes (measured from the most recent samples in `ai-resources/audits/`):**
+- DD_REPORT: 669 lines / 5,412 words (workflow-scoped 2026-04-27) up to 824 lines / 6,883 words (workspace 2026-04-12) → ~7,000–9,000 tokens.
+- `audits/working/dd-extract.md` (current): 102 lines / 1,047 words → ~1,361 tokens.
+- `audits/working/log-sweep.md` (current): 83 lines / 636 words → ~827 tokens.
+
+**Main-session reads of subagent outputs (per command body):**
+- Step 14: main session reads `EXTRACT_PATH` (the extract, not the full report). At ~1,361 tokens, this is well under the 200-line / "HIGH" threshold cited in the protocol.
+- Step 33 (deep tier): main session reads `EXTRACT_PATH` again for deep-tier sections (1.2, 2, 3.4, 5.1, 5.2). Same file, same ~1,361 tokens.
+- Step 48 (deep tier): main session reads `SWEEP_PATH` (~827 tokens). Under threshold.
+- Step 67 (full tier, pipeline testing): main session reads `DEEP_REPORT_PATH` to update Section 4. The deep report is **drafted by the main session itself** in Step 56, so this is a re-read of newly-authored content, not a fresh load.
+
+**Step 10 explicitly forbids re-reading DD_REPORT after the auditor returns** (`repo-dd.md` line 64: "Do not read the full report into main-session context — the dd-extract-agent (next step) will do that"). This is correctly enforced.
+
+**Step 33 also explicitly forbids re-reading DD_REPORT** in the deep tier (`repo-dd.md` line 157: "Do not re-read DD_REPORT").
+
+**Step 48 explicitly forbids re-reading raw logs** (`repo-dd.md` line 215: "Do not re-read the raw logs — the sweep agent already extracted the patterns").
+
+The output-to-disk pattern is implemented across all three subagents and enforced in the command body. Per protocol Section 8 best practice #10, this is a **structural pass** — no HIGH "subagent returning >200 lines to main session" finding.
+
+### Question 4: How many QC / refinement cycles does the workflow design for?
+
+`/repo-dd` does not invoke QC subagents. It is itself a QC instrument (the audit *is* an independent fresh-context review of the repo). Triage (Step 4) is performed by the main agent on the structured extract, then operator-gated (Step 5). Refinement is replaced by an operator approval loop, not a multi-pass QC subagent loop.
+
+**Refinement multiplier:** 1 main pass + 0 QC subagents per audit run. No refinement cycles in the protocol's sense.
+
+The deep tier (Steps 8–11) is sequential synthesis by the main session over the structured extract and log sweep. No QC subagent on the deep report itself.
+
+### Question 5: Where do files get read?
+
+Operations with file-reading semantics in `/repo-dd`:
+
+**Main session direct reads (from command body):**
+
+| Step | File | Size | Necessary? | Delegable? | Notes |
+|------|------|------|------------|------------|-------|
+| 14 | `EXTRACT_PATH` (`audits/working/dd-extract.md`) | ~102 lines / ~1,361 tokens | Yes — triage requires the findings list inline | Already delegated (extract is the subagent's output) | Under 200-line threshold. PASS. |
+| 23 | Each modified file (post-fix verify) | Varies | Yes — workspace CLAUDE.md "verify by reading the modified file" rule | Not delegable; verification must be in the writing context | Per-file. Typically <200 lines. |
+| 33 | `EXTRACT_PATH` (deep tier re-read for §1.2, §2, §3.4, §5.1, §5.2) | Same file | Yes — deep assessment uses extracted sections | N/A — same extract reused | PASS. |
+| 48 | `SWEEP_PATH` (`audits/working/log-sweep.md`) | ~83 lines / ~827 tokens | Yes — friction synthesis is main-session interpretation | Already delegated (sweep is the subagent's output) | Under threshold. PASS. |
+| 62 (full) | Symlinks recorded in `EXTRACT_PATH §1.7` | Path metadata only | Yes | N/A | Pipeline test, not content read. |
+| 63 (full) | Compare canonical vs. deployed copies | Each file pair | Yes — content diff required | Could be delegated to a subagent (potential refinement) | See finding F3 below. |
+| 64–66 (full) | Existence + structure checks on template files, agent files, settings | File presence/structure only | Yes | Lightweight — no content reads required | PASS. |
+| 67 (full) | `DEEP_REPORT_PATH` re-read | Just-written report (~6,000–8,000 tokens) | Yes — must edit Section 4 placeholder | Self-write context, not external read | PASS. |
+
+**Subagent-delegated reads (NOT in main session):**
+
+| Subagent | Reads |
+|----------|-------|
+| `repo-dd-auditor` | `audits/questionnaire.md` + walks AUDIT_ROOT (potentially hundreds of files: CLAUDE.md files, all skill/command/agent/hook files, settings, symlinks, deployed copies). This is the heavy-read step and is correctly delegated. |
+| `dd-extract-agent` | `DD_REPORT` (single file, 669–824 lines / ~7–9k tokens) and writes a structured digest. |
+| `dd-log-sweep-agent` | All `logs/*.md` files inside `AUDIT_ROOT` (logs/friction-log, improvement-log, session-notes, coaching-log, workflow-observations, decisions, innovation-registry — up to 7 files per repo, multi-repo at workspace scope). |
+
+**Files >100 lines being read in the main session that are delegable:** None identified. The two main-session reads (`dd-extract.md` ~102 lines, `log-sweep.md` ~83 lines) are themselves the digest outputs of subagents and must be read by the main session to produce the triage list, deep findings, and friction synthesis. Re-delegating them would be circular.
+
+### Question 6: Where do files get written?
+
+Main-session writes:
+
+| Step | File | Approx. size | Notes |
+|------|------|--------------|-------|
+| 22 | Each fix file (per AUTO-FIX or approved OPERATOR fix) | Varies | Writes-to-disk, not context. |
+| 56 | `DEEP_REPORT_PATH` | ~600–900 lines / ~6,000–9,000 tokens (estimated by structure: Sections 1–4 + Summary, comparable to past `repo-dd-deep` artifacts) | Drafted by main session from extract + sweep. Cannot be delegated to a subagent without splitting the synthesis logic. |
+| 67 (full) | `DEEP_REPORT_PATH` (re-write Section 4 placeholder) | Edits a single section | Edit, not full rewrite. |
+
+Subagent writes (output-to-disk pattern):
+
+| Subagent | Writes |
+|----------|--------|
+| `repo-dd-auditor` | `REPORT_PATH` (the full audit report, ~669–824 lines per recent samples). |
+| `dd-extract-agent` | `EXTRACT_PATH` (~102 lines per current sample). |
+| `dd-log-sweep-agent` | `SWEEP_PATH` (~83 lines per current sample). |
+
+All large outputs are written to disk. No "large output written to context" pattern detected.
 
 ---
 
-## Subagent pattern
+## Assessment per protocol checklist
 
-| Subagent | Returns to main? | Return size estimate | Verdict |
-|----------|------------------|---------------------|---------|
-| `repo-dd-auditor` (Step 3) | Writes full report to `REPORT_PATH`; returns only "total findings count, breakdown by type, report file path" per agent spec | ~100-300 tokens (good) | **CORRECT output-to-disk pattern.** Summary return only. |
-| (No subagent for Steps 4-6 triage) | Main session reads the on-disk report directly | ~6,111-8,948 tokens (full report) | **Missing delegation opportunity.** Triage-extraction could be delegated. |
-| (No subagent for Steps 8-12 deep assessment) | N/A | Main session reads DD_REPORT + all logs ≈ 27,000-30,000+ tokens | **Missing delegation opportunity.** Per protocol "tasks requiring >3-4 file reads go to subagent." Step 34-51 reads 4+ log files. |
-| (No subagent for Step 13 pipeline testing) | N/A | Small per-test cost; many small file-existence checks | Acceptable inline. |
+### A1. Subagent return volume
 
-**Subagent return volume verdict:** The one subagent (`repo-dd-auditor`) is well-designed. The workflow's main-session portion, however, reads the subagent's output artifact (the 6-9k-token audit report) up to three times (Steps 10, 14, 33) without any summarization or delegation.
+**PASS.** All three subagents are designed to return a path + counts only. The output-to-disk pattern is correctly implemented and enforced by the command body (Steps 10, 33, 48 all explicitly forbid re-reading the full DD_REPORT or raw logs in the main session).
 
----
+No HIGH severity finding for "subagent returning >200 lines to main session."
 
-## Refinement / QC cycles
+### A2. Unnecessary reads in main session
 
-- **Standard tier:** 0 designed refinement cycles. Step 5 is an operator gate, but not a QC refinement loop. The workflow does not call any independent QC pass on the audit report (contrast with `/create-skill` and `/improve-skill` which route through post-edit QC).
-- **Deep tier:** 0 designed refinement cycles. Step 12 writes the deep report directly; no QC review before Step 14 commits.
-- **Full tier:** 0 designed refinement cycles. Step 13 runs pipeline tests and inlines results into the existing deep report.
+**PASS for standard and deep tiers.** No file >100 lines is read in the main session that could be delegated to a subagent. The two main-session reads of subagent digests (`dd-extract.md`, `log-sweep.md`) are themselves intentionally compact summaries (~102 and ~83 lines respectively, under the 200-line MEDIUM/HIGH threshold).
 
-**Total typical runs (main + subagents):** standard = 1 main + 1 subagent = 2 sessions. Deep = 1 main + 1 subagent = 2 sessions. Full = 1 main + 1 subagent = 2 sessions. The "refinement multiplier" from the context pack does not apply here — the workflow does not design for multiple refinement cycles. This is a correct choice for an audit workflow, not a waste signal.
+**Potential MEDIUM for full tier (Step 63 — Test 2: Template sync).** Step 63 (`/repo-dd full` only) instructs the main session to compare each file that exists as both a canonical version (in `ai-resources/skills/` or `ai-resources/workflows/`) and a deployed copy (in `projects/`), recording diff counts. At workspace scope, this can require reading dozens of file pairs in the main session. The protocol provides no delegation pattern for this. Severity tag: MEDIUM (boundary — depends on how many template/deployed file pairs exist; if the count is small, this is a non-issue).
 
----
+### A3. Missing `/compact` opportunities
 
-## Natural compaction breakpoints
+**MEDIUM.** No `/compact` instruction or guidance appears in `/repo-dd` at any breakpoint. Search results for "compact" in `repo-dd.md` returned zero hits.
 
-| Breakpoint | Present in workflow? | Enforcement |
-|------------|--------------------|-------------|
-| After Step 3 (subagent returns, before main reads report) | No `/compact` prompt | Missing |
-| After Step 7 commit (end of standard tier) | No `/compact` prompt if continuing to deep | Missing |
-| After Step 12 deep report write, before Step 13 | No `/compact` prompt | Missing |
-| Step 25 ("If context usage is high, inform the operator") | **Present** — Step 25 (fix-apply), Step 55 (deep report generation) | Partial — instructs operator-awareness but does not enforce `/compact` or `/clear` |
+Natural compaction breakpoints that exist but are not instrumented:
+- After Step 7 (commit of the factual audit, end of standard tier) — if the operator continues into deep, the main session still holds the full triage state from Steps 4–6, the audit-report-existence-check from Step 10, and the dd-extract content read in Step 14. None of this is needed for Steps 8–11.
+- After Step 12 (deep report saved, end of deep tier) — if the operator runs `full`, Steps 13–14 only need the deep report and the symlink/template lists; the friction synthesis state from Step 11 and the extract content from Step 33 are no longer needed.
+- After Step 14 (deep report committed, end of full tier) — workflow ends; should hand off to `/clear` rather than dirty context. No such guidance in command body.
+
+The command body acknowledges context pressure twice (Step 25 line 127 "If context usage is high, inform the operator"; Step 55 line 236 same language) but offers only a fall-back of "save and continue in a fresh session" — there is no proactive `/compact` or `/clear` instruction at deterministic breakpoints. The workspace CLAUDE.md `Pre-compact checkpoint` rule is present but not workflow-specific.
+
+Severity: MEDIUM — multi-tier workflow with three sequential subagent calls, accumulated state across Steps 4–14, and explicit "context pressure may force a stop" language but no defined breakpoints.
+
+### A4. Refinement multiplier
+
+**N/A → PASS.** The workflow designs for 0 QC subagents and 0 refinement cycles. The audit *is* the QC. Triage is a single main-session pass over the extract, gated by operator approval.
+
+This is appropriate for an audit instrument: the extract is the structured restatement of the auditor's findings, and the main session's role is to triage + apply, not to second-guess the auditor.
+
+No HIGH severity finding for ">3 refinement cycles."
 
 ---
 
 ## Findings
 
 | # | Finding | Severity | Waste mechanism | Evidence |
-|---|---------|----------|----------------|---------|
-| 1 | Triple re-read of the completed DD report by the main session across Steps 10, 14, and 33 | **HIGH** | Main-session token drain: same 691-857 line / ~6,111-8,948 token file is read up to three times in deep tier. Second and third reads add 12,000-17,900 tokens with no new information. | `repo-dd.md` line 59 ("read the saved report at REPORT_PATH to verify it was written"); line 65 ("Read the completed audit report"); line 140 ("Read DD_REPORT fully"). Observed report size: `repo-due-diligence-2026-04-12.md` = 824 lines / 6,883 words. |
-| 2 | Main-session reading of log files in Steps 48-51 (deep tier) is delegable | **HIGH** | Per-protocol rule "tasks requiring >3-4 file reads go to subagent." Deep tier reads 4+ log files in main session; `session-notes.md` alone is 9,304 words ≈ 12,095 tokens. At workspace scope this cascades to 11 log files. | `repo-dd.md` lines 199-205 (Step 48-51); `logs/session-notes.md` = 800 lines / 9,304 words; workspace scope discovers 11 log files. |
-| 3 | Step 33 deep-assessment full DD_REPORT re-read is delegable | **HIGH** | The main session re-reads the entire audit report to "extract Sections 3.4, 5, 1.2, and 2 into working memory." A triage-extraction subagent could read the report once and return only the four extracted sections (~1,500-2,500 tokens) vs. the full 6-9k. | `repo-dd.md` lines 140 ("Read DD_REPORT fully. Extract Section 3.4 ... Section 5 ... Section 1.2 ... Section 2 into working memory"). |
-| 4 | No `/compact` or `/clear` breakpoints enforced between tiers | **MEDIUM** | Natural boundaries exist (end of Step 7 standard-tier commit; end of Step 12 deep-report write) but the workflow only "informs the operator" if context is high (Step 25, 55). No pre-tier compaction instruction. A deep+full run accumulates all prior tier context in one session. | `repo-dd.md` Step 25 ("If context usage is high, inform the operator"); Step 55 (same pattern). No `/compact` invocation. |
-| 5 | Output verification in Step 10 reads the entire report instead of a lightweight existence/size check | **MEDIUM** | Step 10 says "read the saved report at REPORT_PATH to verify it was written." Verification of "was written" only requires existence + non-empty check via `ls` or `wc -l`. Full-content read is excessive for verification. | `repo-dd.md` line 59. |
-| 6 | Deep-tier Section 3 (friction/improvement synthesis) reads many logs that could be paralleled across subagents | **MEDIUM** | Steps 48-52 read friction, improvement, session, coaching, and workflow-observations logs sequentially in main session and synthesize cross-repo patterns. At workspace scope this can cross 11+ files × multiple KB each. A synthesis subagent per log-type or per-repo would reduce main-session load. | `repo-dd.md` lines 199-217; log file inventory at workspace scope = 11 files. |
-| 7 | No designed QC pass on the factual audit report before triage | **LOW** | The `repo-dd-auditor` is independent (fresh context), but there is no post-audit QC check (e.g., for hallucinated file paths) before the main session uses the report for triage and fix application. Not a token-waste finding per se but relates to the refinement-multiplier assessment. | `repo-dd.md` Steps 3-4; compare with `/create-skill` / `/improve-skill` which mandate post-edit QC. |
-| 8 | `repo-dd.md` command file itself is 301 lines / 2,626 words ≈ ~3,414 tokens — loaded every time the command is invoked | **MEDIUM** | The command file combines three distinct tiers (standard, deep, full) into one file. Standard-tier sessions still load all deep+full instructions. A tier-conditional loading pattern (or splitting into `/repo-dd`, `/repo-dd-deep`, `/repo-dd-full`) would reduce invocation cost for the most-used tier. | `.claude/commands/repo-dd.md` = 301 lines / 2,626 words. Standard tier uses Steps 1-7; Steps 8-14 (Deep + Full) = lines 128-301 = 174 lines ≈ ~56% of file. |
-| 9 | Previous-audit read in subagent is full-file with no line-range scoping | **LOW** | The `repo-dd-auditor` (per `.claude/agents/repo-dd-auditor.md` line 49) reads the full prior audit for DELTA extraction. Prior audit = 691-857 lines / ~6,111-8,948 tokens. A targeted read of only sections whose answers have plausibly changed is theoretically possible but would require structural changes to the questionnaire. Classed as LOW because subagent context is bounded and does not return to main. | `repo-dd-auditor.md` line 49; observed prior audits 691-857 lines. |
+|---|---------|----------|-----------------|----------|
+| F1 | No `/compact` or `/clear` instruction at any of the three natural tier-boundary breakpoints (end of standard at Step 7; end of deep at Step 12; end of full at Step 14). Command body only reactively says "if context usage is high, inform operator" at Steps 25 and 55. | MEDIUM | Accumulated main-session state from triage (Steps 4–6), extract reads (Steps 14, 33), and deep-report drafting (Step 56) carries forward into subsequent tiers. At workspace scope with full tier, main session can hold ~25k+ tokens of accumulated workflow state by Step 14 with no defined release point. | `repo-dd.md` lines 127, 236 (reactive only); zero hits for "compact" / "/clear" / "breakpoint" in command body |
+| F2 | `/repo-dd` runs Opus throughout (frontmatter line 2: `model: opus`), including mechanical Steps 22–24 (apply approved fixes + read-to-verify) and Steps 62–66 (pipeline tests: existence checks, symlink resolves, file-pair diffs). | MEDIUM | Per workspace CLAUDE.md Model Tier rule, mechanical work belongs on Sonnet/Haiku. Opus on apply-fix and pipeline-existence-checks is over-tiered. The workflow already correctly tiers its subagents (auditor=sonnet, extract=haiku, log-sweep=haiku) but the main-session model is uniform Opus for the entire ~14-step pipeline. | `repo-dd.md` line 2 (`model: opus`); workspace CLAUDE.md "Model Tier" section |
+| F3 | Step 63 (`/repo-dd full` only — Test 2: Template sync) instructs the main session to compare each canonical-vs-deployed file pair and record diff counts. No subagent delegation pattern is provided. At workspace scope, multiple skills + workflow files may have deployed copies under `projects/`, which can require dozens of file-pair reads in the main session. | MEDIUM (boundary — actual count depends on deployed-project state; if low, finding drops to LOW) | Main-session file content reads where a subagent could perform the diff and return only the diverged-pair list. Per-file size is small (skills <300 lines), but cumulative cost across pairs can be significant. | `repo-dd.md` line 287 (Step 63) |
+| F4 | Subagent return contracts are short and path-only: `repo-dd-auditor` returns count + breakdown + path; `dd-extract-agent` returns path + counts; `dd-log-sweep-agent` returns path + counts. No "subagent returning full output to main session" pattern. | PASS (positive observation) | — | `repo-dd-auditor.md` lines 63–69; `dd-extract-agent.md` lines 57–61; `dd-log-sweep-agent.md` lines 99–102 |
+| F5 | Output-to-disk pattern is implemented and enforced. Steps 10, 33, 48 explicitly block content re-loading in the main session. | PASS (positive observation) | — | `repo-dd.md` lines 64, 157, 215 |
+| F6 | Questionnaire (`audits/questionnaire.md`, 146 lines / ~2,054 tokens) is loaded only inside the `repo-dd-auditor` subagent context, never in the main session. | PASS (positive observation) | — | `repo-dd-auditor.md` line 31 reads `{AUDIT_DIR}/questionnaire.md`; `repo-dd.md` Step 9 passes `AUDIT_DIR` to the subagent and does not pre-load the questionnaire in the main session |
+| F7 | Three subagent calls per deep/full run; agent files (auditor 75 lines, extract 67 lines, log-sweep 109 lines) are themselves compact and well-scoped. Subagent model tiers are correctly assigned (sonnet / haiku / haiku). | PASS (positive observation) | — | `wc -l` totals above; agent frontmatter |
+| F8 | Workflow has no explicit `[COST]` reset or session-boundary instruction at tier transitions. Workspace CLAUDE.md Session Guardrails declares `/repo-dd` as **exempted from `[COST]`**, so the operator gets no automated cost signal during long workflow runs. | LOW | At workspace full tier, the three subagent calls + main-session synthesis can exceed the normal `[COST]` threshold (≥4 subagents, ~20 turns, ≥8 artifacts). The exemption is intentional but combined with F1 (no compaction breakpoints) means there is no built-in feedback loop on context pressure beyond the two reactive "inform the operator" lines. | Workspace CLAUDE.md Session Guardrails section ("Exempted commands … `/repo-dd`"); `repo-dd.md` lines 127, 236 |
 
 ---
 
-## Boundary-proximity flags
+## Severity tally
 
-Per the protocol's ±15% boundary rule:
+| Severity | Count | Findings |
+|----------|------:|----------|
+| HIGH | 0 | — |
+| MEDIUM | 3 | F1, F2, F3 (F3 is boundary — depends on deployed-pair count) |
+| LOW | 1 | F8 |
+| PASS | 4 | F4, F5, F6, F7 |
 
-- None of the HIGH findings are within ±15% of a threshold boundary. Finding 1 (report read = ~6-9k tokens) and Finding 2 (logs = ~12k+ tokens per file) are well above the >200-lines / >500-token thresholds defining HIGH severity.
-- Finding 3 involves the same report size as Finding 1 → also well above thresholds.
-- Finding 8 (`repo-dd.md` = 301 lines) is a command-file size, not matched directly to the "skill >300 lines HIGH / 150-300 MEDIUM" rule (that rule targets skills, not commands). For command files the protocol's Section 3 uses ">500 tokens of loaded context" — 3,414 tokens is far above. No boundary proximity.
+---
 
-No findings in this audit are within the ±15% boundary-ambiguity band.
+## Token-flow summary (workflow-attributable, main session)
+
+| Stage | Estimated main-session token cost |
+|-------|----------------------------------:|
+| Workflow load (command body) | ~3,484 |
+| Step 14 read of `dd-extract.md` | ~1,361 |
+| Step 33 (deep) re-read of `dd-extract.md` | 0 (already in context if no compact between Steps 14 and 33) or ~1,361 (if reloaded after a compact) |
+| Step 48 (deep) read of `log-sweep.md` | ~827 |
+| Step 56 (deep) draft of DEEP_REPORT (output) | ~6,000–9,000 written to disk; tokens generated, not loaded |
+| Step 67 (full) re-read of DEEP_REPORT | ~6,000–9,000 (just-written, edited) |
+| Subagent return payloads (3 × ~50 tokens) | ~150 |
+
+**Standard tier main-session workflow-attributable load:** ~3,484 + ~1,361 + ~150 ≈ ~5,000 tokens (excludes triage/fix work which is operator-gated and varies).
+
+**Deep tier additional load:** + ~827 ≈ +1,000 tokens.
+
+**Full tier additional load:** + DEEP_REPORT re-read (~6,000–9,000) + Step 63 file-pair reads (variable). At workspace scope full tier this can push to ~12,000–18,000 main-session tokens of workflow-attributable load before triage/synthesis output generation.
 
 ---
 
 ## Protocol gaps
 
-- Section 4 refers repeatedly to "workflows" without explicitly distinguishing workflow-as-slash-command (like `/repo-dd`) from workflow-as-pipeline (like research-workflow/). This audit interprets `/repo-dd` as a slash-command-orchestrated workflow and treats each tier as a distinct execution mode.
-- The "refinement multiplier" criterion (>3 refinement cycles = MEDIUM finding) maps poorly to factual-audit workflows that deliberately do not iterate. I interpreted this as non-applicable rather than flagging it.
-- The protocol's threshold for "subagent returning >200 lines to main session = HIGH" is unambiguous for subagent returns but does not explicitly cover the case of the main session re-reading a subagent's disk-written output. I have treated re-reads of on-disk subagent output as equivalent to in-context returns for severity purposes.
+1. Section 4 protocol asks "estimated output volume" but does not distinguish between (a) tokens **returned in the assistant message** to main session vs. (b) tokens **written to a disk file the main session subsequently reads**. Both have main-session cost but the latter is opt-in (depends on whether the command body Reads the file). This audit treats both as findings worth recording but classifies (a) as the strict "subagent return volume" check from §A1.
+2. Section 4 protocol does not specify how to score `/compact` opportunities in workflows where context-pressure handling is partially present (e.g., `/repo-dd` has reactive "inform operator if high" language but no proactive breakpoints). Marked as MEDIUM per "No compaction instructions or breakpoints defined" but the workflow is between "fully missing" and "fully implemented."
+3. Step 63 file-pair diff is a borderline case for "large file reads in main session that could be delegated." Per-file size is small (skills typically <300 lines), but cumulative cost is real. Protocol's HIGH threshold ("Large file reads in main session that could be delegated") is binary; the cumulative case is not addressed. Recorded as MEDIUM (boundary).
+
+## Threshold-boundary findings (per token-estimation caveat)
+
+- **F3 (Step 63 template sync):** boundary — severity depends on the actual number of template/deployed file pairs at audit time. If <5 pairs, drops to LOW. If 10+ pairs of large files, escalates toward HIGH. Tagged `(boundary)`.
+- The two main-session reads (`dd-extract.md` 102 lines, `log-sweep.md` 83 lines) sit ~50% below the 200-line MEDIUM threshold — well clear, not boundary.
+- Command body at 314 lines is above any per-section threshold for skills/CLAUDE.md, but Section 4 of the protocol does not impose a line-count threshold on workflow command bodies themselves; this is noted only as context for F1/F2.
 
 ---
 
-## File inventory referenced by this audit
+## Confidence
 
-| Role | Path | Lines | Words | Est. tokens (words × 1.3) |
-|------|------|-------|-------|---------------------------|
-| Workspace CLAUDE.md | `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/CLAUDE.md` | 136 | 2,162 | ~2,811 |
-| ai-resources CLAUDE.md | `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/CLAUDE.md` | 104 | 834 | ~1,084 |
-| Workflow command | `ai-resources/.claude/commands/repo-dd.md` | 301 | 2,626 | ~3,414 |
-| Subagent spec | `ai-resources/.claude/agents/repo-dd-auditor.md` | 75 | 762 | ~991 |
-| Questionnaire | `ai-resources/audits/questionnaire.md` | 137 | 1,328 | ~1,726 |
-| Prior audit (newest) | `ai-resources/audits/repo-due-diligence-2026-04-12.md` | 824 | 6,883 | ~8,948 |
-| Prior audit | `ai-resources/audits/repo-due-diligence-2026-04-11.md` | 857 | 6,326 | ~8,224 |
-| Prior audit | `ai-resources/audits/repo-due-diligence-2026-04-06.md` | 691 | 4,699 | ~6,109 |
-| Prior deep report | `ai-resources/audits/repo-dd-deep-2026-04-06.md` | 245 | 2,674 | ~3,476 |
-| Log file (deep tier) | `ai-resources/logs/session-notes.md` | 800 | 9,304 | ~12,095 |
-| Log file (deep tier) | `ai-resources/logs/decisions.md` | 124 | 5,461 | ~7,099 |
-| Log file (deep tier) | `ai-resources/logs/coaching-data.md` | 95 | 865 | ~1,125 |
-| Log file (deep tier) | `ai-resources/logs/innovation-registry.md` | 41 | 465 | ~605 |
-
-**Summary totals by tier (ai-resources scope, main-session-only):**
-
-- Standard tier total: ~19,400-25,500 tokens
-- Deep tier total: ~46,400-55,500 tokens
-- Full tier total: deep + small per-test cost
-
-All estimates structural — no telemetry.
+- F1, F2, F4, F5, F6, F7: **HIGH** — direct file evidence, line/word counts measured.
+- F3: **MEDIUM** — depends on deployed-project state which was not enumerated.
+- F8: **MEDIUM** — depends on operator behavior and session-length norms which aren't measured here.

@@ -1,199 +1,251 @@
-# Section 4 — Workflow Token Efficiency: /new-project
+# Section 4 — Workflow Token Efficiency Audit
+## Workflow: new-project
 
-**Workflow name:** `/new-project`
-**Orchestrator file:** `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/new-project.md` (351 lines, 3,552 words, ~4,618 tokens)
-**Pipeline model:** 6 core stages (2, 2.5, 3a, 3b, 3c, 4, 5) + optional Stage 6 (session guide) — each delegated to a dedicated `pipeline-stage-*` subagent (or `session-guide-generator` for Stage 6).
-**Scope:** Orchestrator lives in `ai-resources/.claude/commands/`; pipeline runs at workspace scope (projects created under `projects/{name}/`).
-
-All token estimates use the protocol's word × 1.3 proxy. Per the header caveat, this can drift ±30% vs. a real tokenizer; findings within ±15% of a threshold are tagged `(boundary)`.
+**Audit root:** `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources`
+**Workflow scope:** `/new-project` orchestrator + spawned subagents
+**Telemetry available:** No session-usage-analyzer log was inspected for this section. All "typical" estimates below are **structural inferences** derived from workflow instructions and file-loading patterns, not observed run data.
 
 ---
 
-## 4.2.1 — What gets loaded at workflow start
+### File Inventory (workflow surface)
 
-Main session at `/new-project` invocation (from workspace root or a project):
+| File | Lines | Words | Est. tokens (×1.3) |
+|------|-------|-------|--------------------|
+| `.claude/commands/new-project.md` (orchestrator) | 527 | 5279 | ~6863 |
+| `.claude/agents/pipeline-stage-3a.md` | 135 | 743 | ~966 |
+| `.claude/agents/pipeline-stage-3b.md` | 46 | 234 | ~304 |
+| `.claude/agents/pipeline-stage-3c.md` | 44 | 235 | ~306 |
+| `.claude/agents/pipeline-stage-4.md` | 64 | 386 | ~502 |
+| `.claude/agents/pipeline-stage-5.md` | 41 | 227 | ~295 |
+| `.claude/agents/session-guide-generator.md` | 57 | 400 | ~520 |
+| **Sum (orchestrator + 6 agents)** | **914** | **7504** | **~9755** |
 
-| Item | Path | Lines | Words | Est. tokens |
-|------|------|-------|-------|-------------|
-| Workspace CLAUDE.md | `CLAUDE.md` | 136 | 2,162 | ~2,811 |
-| ai-resources CLAUDE.md | `ai-resources/CLAUDE.md` | 104 | 834 | ~1,084 |
-| Orchestrator body | `.claude/commands/new-project.md` | 351 | 3,552 | ~4,618 |
-| **Total start-of-workflow context (excluding skills lazy-load + tool defs)** | | **591** | **6,548** | **~8,513** |
+Skills loaded by subagents (each in its own subagent context, not main session):
 
-Notes:
-- Workspace CLAUDE.md loads always (harness pattern). ai-resources CLAUDE.md loads because ai-resources is connected via `--add-dir` (per CLAUDE.md / mandated by `/new-project` to reach shared skills + commands).
-- Orchestrator `new-project.md` is loaded in full when the slash command is invoked. 12 top-level sections. Contains two full jq bash procedures (~90 lines), a canonical Commit Rules block, a canonical Input File Handling block, a canonical permissions block, and a multi-branch heredoc for CLAUDE.md creation.
-- Pipeline stage agent files are NOT loaded at orchestrator start — they load only when the matching subagent is spawned (per Claude Code subagent loading semantics).
-- Skills listed in each stage agent's `skills:` frontmatter key are discovered at agent spawn, not eagerly loaded into the orchestrator.
+| Skill | Lines | Words | Est. tokens |
+|-------|-------|-------|-------------|
+| `skills/architecture-designer/SKILL.md` | 241 | 2104 | ~2735 |
+| `skills/implementation-spec-writer/SKILL.md` | 296 | 1717 | ~2232 |
+| `skills/project-implementer/SKILL.md` | 187 | 1096 | ~1425 |
+| `skills/project-tester/SKILL.md` | 222 | 1358 | ~1765 |
+| `skills/session-guide-generator/SKILL.md` | 247 | 2022 | ~2629 |
 
-## 4.2.2 — Subagent call count (workflow design)
+Workspace baseline (loaded every turn — not workflow-specific but in-scope for "what gets loaded at workflow start"):
 
-Per project run (happy path):
-
-| Stage | Subagent | Model | Spawned by |
-|-------|----------|-------|-----------|
-| 2 | `pipeline-stage-2` | inherit | `/new-project` orchestrator |
-| 2.5 (optional) | `pipeline-stage-2-5` | inherit | orchestrator (if not SKIP) |
-| 3a | `pipeline-stage-3a` | sonnet | orchestrator |
-| 3b | `pipeline-stage-3b` | opus | orchestrator |
-| 3c | `pipeline-stage-3c` | inherit | orchestrator |
-| 4 | `pipeline-stage-4` | inherit (isolation: worktree) | orchestrator |
-| 5 | `pipeline-stage-5` | sonnet | orchestrator |
-| 6 (optional) | `session-guide-generator` | inherit | orchestrator (if NEXT after 5) |
-
-Total subagent spawns per run: **6 to 8** (minimum: 2, 3a, 3b, 3c, 4, 5 = 6; with 2.5 and 6 = 8).
-
-Each stage has exactly one subagent call per invocation; no fan-out or parallel subagent patterns are defined. Refinement cycles (re-running a failed stage) multiply this count.
-
-## 4.2.3 — Estimated output volume returned to main session
-
-Per stage, the subagent writes a full artifact to disk under `projects/{name}/pipeline/`. The announcement back to the main orchestrator is a single sentence (template in each agent's "announce" block). Return content **per stage is a short announcement string** (1 line), not the full artifact.
-
-However: the orchestrator/user negotiation to approve each artifact (per `## Gate Protocol` "Never advance a stage without user confirmation (`NEXT`)") happens in the main session. Every stage's artifact must be reviewed by the user before NEXT — this implies the main session or the user reads the artifact from disk between stages. The orchestrator command itself does not instruct the main session to read the artifact, but in practice each stage's output is inspected before approving. Sizes of expected outputs:
-
-| Stage output | Expected size basis | Est. words | Est. tokens (if main reads) |
-|---|---|---|---|
-| `project-plan.md` (Stage 2) | implementation-project-planner skill defines structure; no size cap | unknown, typically ~1,500–3,000 words | ~1,950–3,900 |
-| `technical-spec.md` (Stage 2.5) | spec-writer skill; system design scope | unknown, typically ~1,500–4,000 words | ~1,950–5,200 |
-| `repo-snapshot.md` (Stage 3a) | mechanical repo scan — skill inventory + .claude/ subdirs + workflows + file tree for the entire ai-resources repo | unknown; scales with repo (current ai-resources has ~90+ skills alone) — likely 2,000–5,000+ words | ~2,600–6,500+ |
-| `architecture.md` (Stage 3b) | architecture-designer skill | ~1,500–3,000 words | ~1,950–3,900 |
-| `implementation-spec.md` (Stage 3c) | implementation-spec-writer skill (line-level ops) | ~2,000–5,000 words | ~2,600–6,500 |
-| `implementation-log.md` (Stage 4) | project-implementer log | ~500–2,000 words | ~650–2,600 |
-| `test-results.md` (Stage 5) | project-tester report | ~500–1,500 words | ~650–1,950 |
-| `session-guide.md` (Stage 6) | session-guide-generator | ~1,500–3,000 words | ~1,950–3,900 |
-
-These artifacts are not forced into main-session context by the orchestrator; loading only happens when the user (or main session) opens them for review. Return-to-main-session via the subagent's final message is **summary only** (one line with path and counts) — this conforms to best practice #10.
-
-## 4.2.4 — QC / refinement cycles the workflow designs for
-
-The orchestrator defines three gate commands per stage: NEXT / SKIP / ABORT. It does not design for QC-refinement multipliers — there is no `qc-reviewer` subagent invoked between stages. Each stage assumes one pass and user approval. If a stage is rejected, the user must either:
-
-- rerun the failed stage (manual re-invocation via orchestrator continuation logic), or
-- abort and fix manually.
-
-Stage 4 defines "Partial failure" vs "Fundamental failure" error recovery — fundamental failure can send the user back to Stage 3c or 3b, adding unbounded refinement cycles.
-
-No formal QC pass is defined post-stage. The workspace CLAUDE.md has a project-wide **"Post-edit QC pass is mandatory"** rule and a **"Plan QC pass before presenting plans for approval"** rule, but these are not explicitly wired into the `/new-project` orchestrator's stage-transition protocol.
-
-Typical refinement multiplier: structurally 1 per stage on happy path. If each stage lands cleanly, total session count = 1 orchestrator session with 6–8 subagent spawns. If any stage is rejected, +1 rerun per rejection. Without telemetry, the designed multiplier is 1.0; observed multiplier unknown.
-
-## 4.2.5 — File read mapping
-
-### Orchestrator (`new-project.md`) file reads during its own execution
-
-| File read | Trigger | Size | Main-session or subagent? | Necessary / Delegable |
-|---|---|---|---|---|
-| `projects/*/pipeline/pipeline-state.md` | Every invocation (first-run vs continuation check) | small (~20–40 lines) | main | Necessary (routing decision) |
-| `projects/*/pipeline-state.md` (legacy) | Fallback check | small | main | Necessary |
-| `.claude/shared-manifest.json` in new project | Post-pipeline enrichment | small (~10 lines) | main | Necessary |
-| `projects/{name}/.claude/settings.json` | Post-pipeline enrichment jq merge | small | main | Necessary |
-| `projects/{name}/CLAUDE.md` | Post-pipeline enrichment idempotency check | varies | main | Necessary |
-
-All orchestrator-level reads are small config/state files. None flagged.
-
-### Pipeline stage file reads (per stage, executed inside each subagent's context)
-
-| Stage | File reads in subagent | Subagent or main? | Notes |
-|---|---|---|---|
-| 2 | `context-pack.md` (user-provided, size varies — can be 1,000–5,000+ words) | subagent | Delegated correctly |
-| 2.5 | `context-pack.md` + `project-plan.md` | subagent | Delegated correctly |
-| 3a | Entire ai-resources repo scan: root CLAUDE.md + every SKILL.md + every `.claude/` subdir file + every workflow's `.claude/` subdir + 2-level file tree | subagent | **Heavy read** — this is the single largest file-read operation in the pipeline. All inside the stage-3a subagent's context (Model: sonnet). Returns only the snapshot markdown to disk, not raw content to main. Delegation is correct. |
-| 3b | `project-plan.md` + `repo-snapshot.md` + `decisions.md` + (optional) `technical-spec.md` | subagent | Model: opus. Delegated correctly. |
-| 3c | `architecture.md` + `repo-snapshot.md` + `decisions.md` + `project-plan.md` + (optional) `technical-spec.md` | subagent | Up to 5 files read inside subagent. Delegated correctly. |
-| 4 | `implementation-spec.md` + `decisions.md` | subagent | Plus executes file writes across the project (implementation ops). Isolation: worktree. |
-| 5 | `implementation-spec.md` + `implementation-log.md` | subagent | Model: sonnet. |
-| 6 | All pipeline artifacts + independent scan of CLAUDE.md, `skills/`, `.claude/commands/`, `.claude/agents/` | subagent | Model: inherit. Second repo-wide scan (duplicating 3a's work) — see finding F3. |
-
-**Flagged reads in main session:** None. All large reads are correctly delegated to subagents.
-
-### File writes
-
-All stages write outputs to disk in `projects/{name}/pipeline/`. No stage is designed to return its full artifact as subagent-return content. Compliant with best practice #10.
-
-## 4.2.6 — Context loading chain summary
-
-1. Workspace CLAUDE.md (~2,811 tokens) + ai-resources CLAUDE.md (~1,084 tokens) = ~3,895 tokens (always loaded).
-2. `/new-project` invocation loads orchestrator body (~4,618 tokens).
-3. At stage spawn: subagent loads its own agent file + the invoked skill's SKILL.md (each in isolated subagent context, NOT main).
-4. Main-session total at orchestrator start: **~8,513 tokens** (before any subagent spawn or any user context pack paste).
-5. Over a pipeline run spanning ~30 turns of gate interactions (6–8 NEXT confirmations + any in-stage discussion), per-turn cost of the above loading is ~8,513 × 30 = ~255,000 tokens in baseline loading (orchestrator + CLAUDE.md content preserved in context across turns).
+| File | Lines | Words | Est. tokens |
+|------|-------|-------|-------------|
+| Workspace `CLAUDE.md` | 219 | 3202 | ~4163 |
+| Project `CLAUDE.md` (`ai-resources/CLAUDE.md`) | 92 | 950 | ~1235 |
 
 ---
 
-## Findings (Section 4 severity classification applied)
+### Step 4.2 — Token Flow Map
 
-### F1 — Orchestrator file is 351 lines / ~4,618 tokens, loaded on every `/new-project` invocation
+#### 1. What gets loaded at workflow start
 
-**Severity:** MEDIUM
+Main-session orchestrator context at `/new-project` invocation:
 
-**Evidence:** `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/new-project.md`, 351 lines, 3,552 words. Contains multiple large embedded content blocks: canonical permissions block (~20 lines), full jq merge procedure (~20 lines), `additionalDirectories` jq procedure (~20 lines), canonical Commit Rules block (~7 lines, repeated in both "if missing" heredoc and "idempotent append" path = duplicated twice), canonical Input File Handling block (~9 lines, also duplicated twice), full CLAUDE.md heredoc including both blocks verbatim (~27 lines).
+1. Workspace `CLAUDE.md` — 219 lines, ~4163 tokens (every turn, not just workflow start)
+2. Project `CLAUDE.md` (`ai-resources/CLAUDE.md`) — 92 lines, ~1235 tokens (every turn)
+3. `.claude/commands/new-project.md` orchestrator body — 527 lines, ~6863 tokens (loaded on slash-command invocation)
+4. **Total estimated start-of-workflow main-session context: ~12,261 tokens** (CLAUDE.md ×2 + orchestrator)
 
-**Waste mechanism:** Large orchestrator command means every `/new-project` invocation loads ~4,618 tokens of prose + bash scaffolding, much of which is implementation scaffolding (jq commands, heredoc templates) rather than orchestration logic. Per the protocol's Section 4 assessment #1, large files in main session that could be delegated are HIGH; however, command files are necessarily main-session content. Treating as MEDIUM because the scaffolding could be extracted to a helper script. (boundary — near the 300-line HIGH threshold at 351 lines, just over +15%).
+The orchestrator body (~6863 tokens) is the workflow's dominant per-invocation load. It includes verbatim canonical blocks (Input File Handling, Commit Rules, Compaction, Session Boundaries) duplicated multiple times — once as `**Canonical block** (copy verbatim)` reference text inside the procedure description (lines ~382–428), once inside the `cat > "$CLAUDE_MD" <<'EOF' ... EOF` heredoc (lines ~432–472), and again inside the `printf` idempotent-append fallback (lines ~478–503). Net effect: each canonical block appears 2–3× inside the orchestrator file.
 
-### F2 — No `/compact` or `/clear` breakpoints defined between stages
+#### 2. Subagent calls per workflow run
 
-**Severity:** MEDIUM
+Six subagent invocations along the canonical First-Run full-pipeline path (including optional Stage 6):
 
-**Evidence:** `grep -i "compact|/clear|session boundary|breakpoint"` on `new-project.md` returns zero matches. The 6–8 stages run sequentially in a single orchestrator main session. Each stage requires user NEXT confirmation, each produces an artifact that is read for review, and the main session accumulates: orchestrator body + CLAUDE.md + pipeline-state reads + all review-time reads of artifacts.
+| Stage | Subagent | Model | Skill loaded inside subagent |
+|-------|----------|-------|------------------------------|
+| 3a | `pipeline-stage-3a` | sonnet | (none — mechanical scan) |
+| 3b | `pipeline-stage-3b` | opus | `architecture-designer` (241 lines) |
+| 3c | `pipeline-stage-3c` | opus | `implementation-spec-writer` (296 lines) |
+| 4 | `pipeline-stage-4` | sonnet | `project-implementer` (187 lines) |
+| 5 | `pipeline-stage-5` | sonnet | `project-tester` (222 lines) |
+| 6 (optional) | `session-guide-generator` | sonnet | `session-guide-generator` skill (247 lines) |
 
-**Waste mechanism:** Natural breakpoints exist at every NEXT/SKIP gate. Protocol section 4 assessment #3 flags "No compaction instructions or breakpoints defined" as MEDIUM. No guidance tells the operator or main session to `/compact` after (say) Stage 3a's large repo-snapshot read is reviewed, or to `/clear` between Stage 5 and Stage 6.
+Each subagent runs in its own context; only the subagent's *return* re-enters the main session.
 
-### F3 — Stage 6 (session-guide-generator) re-scans the repo that Stage 3a already inventoried
+#### 3. Estimated subagent return volume
 
-**Severity:** MEDIUM
+Each subagent file specifies what to **announce** to the main session. Five of the six lack an explicit ≤N-line cap on the return value. Concretely:
 
-**Evidence:** `pipeline-stage-3a.md` produces `repo-snapshot.md` covering CLAUDE.md, skills, `.claude/` infrastructure, workflows, file tree. `session-guide-generator.md` lines 28–29 state: "In all cases, also scan the repo state independently: CLAUDE.md, `skills/` directory, `.claude/commands/`, `.claude/agents/`." This is a second full repo scan, even though Stage 6 also reads `repo-snapshot.md` from pipeline artifacts.
+| Subagent | Return-shape spec in agent file | Cap declared? |
+|----------|---------------------------------|---------------|
+| `pipeline-stage-3a` | "Repo snapshot complete — {X} skills, {Y} subdirectories, {W} workflows. Saved to {path}." (line 129) — single sentence | **No explicit line cap** |
+| `pipeline-stage-3b` | "Stage 3b complete. Architecture saved to {path}. {N} design decisions recorded." (line 46) | **No explicit line cap** |
+| `pipeline-stage-3c` | "Stage 3c complete. Implementation spec saved to {path}. {N} operations defined." (line 45) | **No explicit line cap** |
+| `pipeline-stage-4` | "Stage 4 complete. {N} operations executed... Implementation log saved to {path}." (line 62) | **No explicit line cap** |
+| `pipeline-stage-5` | "Stage 5 complete. Test results saved to {path}. {passed}/{failed}/{warnings}..." (line 41) | **No explicit line cap** |
+| `session-guide-generator` | "Keep the returned summary under 30 lines... Do not echo the full guide" (lines 50–57) | **Yes — 30-line cap** |
 
-**Waste mechanism:** Duplicate repo scan. Both scans happen inside their respective subagents (isolated contexts), so the cost is not main-session token accumulation, but it doubles the per-pipeline-run scan work and re-measures ~90+ SKILL.md files. Since the 3a snapshot is available as a fresh artifact, the independent re-scan is avoidable.
+Each agent does **save full output to disk** (canonical paths under `{pipeline}/`), satisfying the output-to-disk pattern. The announce templates are short single-sentence strings, so structurally the return *should* be small. However, no agent file enforces a hard line-cap or "summary contract" comparable to `token-audit-auditor` / `repo-dd-auditor` (`ai-resources/CLAUDE.md` § Subagent Contracts). In practice subagents may append diagnostic content beyond the announce template; without a stated cap the bound is the model's discretion.
 
-### F4 — No subagent output-size cap or truncation instruction across any pipeline-stage agent
+Stage 3a is the most exposed: the announce template names {X}/{Y}/{W} counts but the agent's body explicitly enumerates "Skill Inventory ({count} skills)" and "{One section per subdirectory discovered under .claude/}" tables in its **output document** (lines 82–116). If an operator asks "summarize what you found," the inventory tables are large (current `ai-resources` has ~95 skills × 1 row each). Risk of accidental full-table echo into main session is structural.
 
-**Severity:** MEDIUM
+#### 4. QC / refinement cycles designed into the workflow
 
-**Evidence:** Read of all 8 stage agent files. None contains a line-count, word-count, or token-count cap on the artifact the subagent writes to disk. `pipeline-stage-3a.md` line 135 says "Keep the snapshot concise. Full file contents are NOT included — only summaries and metadata" but no numeric cap. Other stages (3b, 3c, 4, 5, 6) have no size guidance at all.
+The `/new-project` orchestrator does not invoke `qc-reviewer` / `triage-reviewer` / `refinement-reviewer` subagents at any stage. QC is implicit — the operator reviews each stage's saved artifact and gates the next stage with `NEXT` / `ABORT`. Each stage is therefore one-pass per attempt; refinement cycles materialize only if a stage is re-run after operator-driven correction (e.g., 3c warns of architecture gaps → return to 3b → re-run 3c).
 
-**Waste mechanism:** Artifacts could grow arbitrarily large. When the user (or main session) reads the artifact for review-before-NEXT, a 10,000-word artifact costs ~13,000 tokens of main-session context. No bound exists. Section 4 assessment #1 treats "subagent returning >200 lines to main session" as HIGH, but here the subagent technically writes to disk (not returns), so the severity lands at MEDIUM for the indirect main-session cost at review time.
+Refinement multiplier baseline: **1.0× per stage** under normal flow, with stage-3b/3c rework as the modeled exception. Under "happy path" the workflow executes 6 subagent invocations. Under "one architecture-gap rework" it executes ~8. No structural mechanism designs for >3 cycles.
 
-### F5 — No QC / independent review subagent wired between pipeline stages
+#### 5. File reads — main session vs delegable
 
-**Severity:** MEDIUM
+| Read site | File(s) | Size | Where | Necessary / Delegable |
+|-----------|---------|------|-------|----------------------|
+| First Run step 4 (orchestrator) | `$SRC/context-pack.md` (existence check via `[ -f ]`) | n/a — no Read tool call | main | Necessary (existence test) |
+| First Run step 4 (orchestrator) | `$SRC/plan-qc-verdict.md`, `$SRC/spec-qc-verdict.md` (grep -q only) | small | main | Necessary (small + advisory) |
+| First Run step 7 (orchestrator) | `cp` of `context-pack.md`, `project-plan.md`, optional `tech-spec.md` | varies; planning artifacts can be 200–800+ lines | main (shell copy, not Read tool) | Necessary if `cp` only — no context cost. **Note**: orchestrator does not specify whether main session also `Read`s these to populate `{project-description}` for CLAUDE.md scaffolding (step 11a / Post-Pipeline-Enrichment step 4 references "one-line description from the pipeline's context pack, or a generic placeholder if absent"). If main session Reads context-pack.md to extract description, that's a potentially-200+-line read into main context. **Delegable** — placeholder is allowed. |
+| Pre-flight identifier verification (step 11a) | `projects/buy-side-service-plan/CLAUDE.md` | ~50–150 lines | main | Necessary (small file, single-purpose check) |
+| Stage 3a subagent | full repo CLAUDE.md, every SKILL.md, every `.claude/{commands,agents,hooks}/*` file frontmatter, top-level dir listings | LARGE (~95 skills + ~75 commands + ~30 agents + workflows). Conservative aggregate ≥15,000 lines | **subagent** | Necessary; correctly delegated |
+| Stage 3b subagent | `project-plan.md`, `repo-snapshot.md`, optional `technical-spec.md`, `decisions.md` | repo-snapshot.md from 3a can be 1000–3000 lines; project-plan.md often 200–600 lines | **subagent** | Necessary; correctly delegated |
+| Stage 3c subagent | `architecture.md`, `repo-snapshot.md`, optional `technical-spec.md`, `decisions.md`, `project-plan.md` | similar large reads | **subagent** | Necessary; correctly delegated. **Note**: re-reads `repo-snapshot.md` already read by 3b — duplicate read across two opus-tier subagents. |
+| Stage 4 subagent | `implementation-spec.md`, `decisions.md` | implementation-spec.md typically 300–800 lines | **subagent** | Necessary; correctly delegated |
+| Stage 5 subagent | `implementation-spec.md`, `implementation-log.md` | both can be large | **subagent** | Necessary; correctly delegated |
+| Stage 6 subagent | `pipeline/project-plan.md`, optional `pipeline-state.md`, optional session notes | per skill cascade | **subagent** | Necessary; correctly delegated |
 
-**Evidence:** Workspace CLAUDE.md mandates: "Post-edit QC pass is mandatory" and "Plan QC pass before presenting plans for approval." `new-project.md` Gate Protocol defines only NEXT / SKIP / ABORT. No stage agent delegates to `qc-reviewer`, `evaluator`, or any independent-context reviewer before announcing completion. Stage 3b produces an architecture (large, plan-like artifact that by workspace rule deserves plan QC); no QC subagent is spawned.
+All large reads are delegated. The orchestrator main session itself does not perform any large-file Read in canonical flow. This is structurally healthy.
 
-**Waste mechanism:** Per Section 4 assessment #4, "Consistent need for >3 refinement cycles" is MEDIUM — and the absence of built-in QC typically correlates with higher refinement counts discovered at review time. If an architecture is rejected at stage 3b review, the re-run of 3b (and possibly 3c + 4 downstream) is a refinement multiplier. Since no telemetry exists, the designed multiplier is 1 but the observed risk is not mitigated. Flagged as MEDIUM (structural inference — no observed data).
+#### 6. File writes — disk vs context
 
-### F6 — Orchestrator reloaded on every `/new-project` continuation invocation
+| Write site | File | Where written |
+|------------|------|---------------|
+| First Run step 7 | `pipeline/{context-pack,project-plan,technical-spec}.md` | disk (cp) |
+| First Run step 8 | `pipeline/sources.md` | disk |
+| First Run step 9 | `pipeline/decisions.md` | disk |
+| First Run step 10 | `pipeline/pipeline-state.md` | disk |
+| First Run step 11a | append `## Model Selection` to `projects/{name}/CLAUDE.md` | disk |
+| Post-Pipeline Enrichment 1 | `.claude/shared-manifest.json` | disk |
+| Post-Pipeline Enrichment 2 | `.claude/settings.json` | disk (jq merge) |
+| Post-Pipeline Enrichment 4 | `projects/{name}/CLAUDE.md` (4 canonical blocks) | disk |
+| Stage 3a | `pipeline/repo-snapshot.md` | disk |
+| Stage 3b | `pipeline/architecture.md`, append to `pipeline/decisions.md` | disk |
+| Stage 3c | `pipeline/implementation-spec.md`, append to `pipeline/decisions.md` | disk |
+| Stage 4 | `pipeline/implementation-log.md`, files in worktree | disk |
+| Stage 5 | `pipeline/test-results.md` | disk |
+| Stage 6 | `pipeline/session-guide.md` | disk |
 
-**Severity:** LOW
-
-**Evidence:** Because pipeline runs typically span multiple sessions (per the "Continuation" mode in `new-project.md` lines 84–90), each new session that resumes the pipeline re-loads: workspace CLAUDE.md + ai-resources CLAUDE.md + full orchestrator body (~8,513 tokens) before a single turn of actual pipeline work. Across an 8-stage, 8-session pipeline, that is 8 × ~8,513 = ~68,100 tokens spent on startup loading alone.
-
-**Waste mechanism:** This is a fixed cost of the architecture, not a waste per se, but it is proportional to orchestrator size (F1) — shrinking the orchestrator compounds with session count. Severity LOW because the alternative (single-session pipeline) is not feasible given gate semantics.
-
-### F7 — 7 pipeline skills (1,707 lines combined, ~15,460 tokens) are loaded per-stage in isolated subagent contexts
-
-**Severity:** LOW
-
-**Evidence:** Per-skill line counts: implementation-project-planner 207, spec-writer 242, architecture-designer 239, implementation-spec-writer 294 (boundary — 294 is near but under the 300-line HIGH threshold), project-implementer 185, project-tester 220, session-guide-generator 320 (over 300-line HIGH threshold — HIGH per Section 2 criteria but LOW for Section 4 because loaded in a subagent, not main). Only one skill loads per stage subagent; each subagent has its own clean context.
-
-**Waste mechanism:** None directly for main session — the subagent isolation works correctly. Flagging here because the subagent context cost (subagent model tokens) adds up across 6–8 spawns per pipeline run. Skill sizes are the per-stage overhead for the subagent's own context budget.
-
-Skills with boundary/HIGH sizes that pipeline stages invoke:
-- `session-guide-generator/SKILL.md` — 320 lines (HIGH per Section 2 protocol)
-- `implementation-spec-writer/SKILL.md` — 294 lines (boundary — within 15% of HIGH)
-
-### F8 — Stage 3a (repo snapshot) is unbounded: scales with ai-resources repo size
-
-**Severity:** MEDIUM
-
-**Evidence:** `pipeline-stage-3a.md` lines 22–65. Instructions tell the subagent to read every skill's SKILL.md, every file in every `.claude/` subdirectory, every workflow's `.claude/` subdirectory (recursive), plus a 2-level deep file tree. The ai-resources repo currently contains 90+ skills (per Section 2 measurement from parallel audit). A single 3a run therefore reads 90+ skill frontmatters + N command files + N agent files + N hook files + workflow trees.
-
-**Waste mechanism:** Stage 3a subagent context cost grows linearly with ai-resources repo size. Output artifact (repo-snapshot.md) must summarize all this. Because this is in a subagent (not main), it doesn't hit main-session context, but it consumes subagent token budget and wall-clock time. If ai-resources continues to grow, this stage degrades first. Severity MEDIUM for subagent cost (best-practice recommends paginating or filtering large-file scans; no such filtering here).
+All artifacts go to disk. No "write to context" pattern observed.
 
 ---
 
-## Protocol gaps
+### Assessment Findings
 
-- Section 4 severity rules are written for scenarios where subagents return content to main. `/new-project`'s pattern (write-to-disk, return short announcement) complies with best practice #10 but shifts the main-session cost to artifact-review time, which is not explicitly covered by the HIGH/MEDIUM/LOW thresholds. I interpreted artifact-review-time cost as MEDIUM (indirect return), noted in F4.
-- Protocol does not specify how to weight per-stage-subagent skill loading (F7). Treated as a LOW informational finding.
-- "Consistent need for >3 refinement cycles" (Section 4 assessment #4) requires telemetry. No session-usage-analyzer data is available for this workflow, so F5 is a structural inference.
+#### Finding 1 — No explicit return-size cap on Stages 3a/3b/3c/4/5
+
+**Severity classification:** MEDIUM (per §4 severity rules: "Subagent returning >200 lines to main session → HIGH"; but here the agents only specify a 1-line announce template, not >200-line returns. The risk is *unbounded* not *quantified-large*. Documenting as MEDIUM "missing safeguard" since the 30-line cap pattern from `ai-resources/CLAUDE.md § Subagent Contracts` and the precedent in `session-guide-generator.md` (line 50: "under 30 lines") is not propagated to the five pipeline-stage agents.)
+**Evidence:** `pipeline-stage-3a.md` lines 127–129; `pipeline-stage-3b.md` lines 44–46; `pipeline-stage-3c.md` lines 43–45; `pipeline-stage-4.md` lines 60–62; `pipeline-stage-5.md` lines 39–41. None contain "under N lines" or "summary cap" wording.
+**Waste mechanism:** Without a hard cap, subagent returns are bounded only by the announce template plus model discretion. If a stage subagent appends diagnostic explanation, full tables, or a "what I did" recap to the announce string, the main session pays for it on every spawn and on every subsequent main-session turn until /compact.
+
+#### Finding 2 — Stage 3a inventory output structurally enables large-table echo into return
+
+**Severity classification:** MEDIUM (boundary — would be HIGH if the agent literally returned the inventory; current text returns a count summary. Rated MEDIUM because the body of the agent file describes producing "Skill Inventory ({count} skills)" and per-subdirectory tables, and the operator pattern of saying "show me what you found" can prompt the agent to echo the full snapshot. Tagging boundary because actual return depends on operator behavior.)
+**Evidence:** `pipeline-stage-3a.md` lines 82–116 (output template), line 129 (announce template). The two are in tension: the body makes the inventory document feel like the "deliverable," but the announce template is a 1-line summary.
+**Waste mechanism:** If echoed, current `ai-resources` skill count alone is ~95 skills × ~80–100 chars/row ≈ 7600–9500 chars (~2000–2500 tokens) just for the skill inventory table — and that's before commands/agents/workflows tables.
+
+#### Finding 3 — Orchestrator file is 527 lines / ~6863 tokens — over Section 1's >300-line HIGH threshold for instruction files
+
+**Severity classification:** MEDIUM (the protocol's >300-line HIGH rule in §1 explicitly targets CLAUDE.md, not command files; §3 does not set a hard line threshold for command files. Reporting as MEDIUM by analogy: a command file that loads on slash invocation costs ~6863 tokens once, plus stays in context for the orchestration session. Comparable to a "high-cost command" in §3. Boundary tagged because the §3 threshold is "loading >500 tokens of external context" and this file does not load external content into the main session — its own body is the cost.)
+**Evidence:** `wc -l .claude/commands/new-project.md` = 527; `wc -w` = 5279 → ~6863 tokens.
+**Waste mechanism:** Every `/new-project` session loads ~6863 tokens of orchestrator instructions, of which an estimated 30–40% is verbatim canonical block content (Input File Handling, Commit Rules, Compaction, Session Boundaries) appearing 2–3× — once as "copy verbatim" reference, once inside the heredoc, and again inside the `printf` idempotent-append fallback. Cf. lines ~382–504.
+
+#### Finding 4 — No `/compact` breakpoint declared between stages
+
+**Severity classification:** MEDIUM (per §4: "No compaction instructions or breakpoints defined → MEDIUM").
+**Evidence:** `grep -i "compact"` against `new-project.md` and all six agent files returns hits only on (a) the verbatim Compaction canonical block being scaffolded into the *project's* CLAUDE.md (orchestrator lines ~410–418, 460–467), and (b) `printf` idempotent-append fallback. **No instruction tells the orchestrator session to /compact between Stages 3a→3b, 3b→3c, etc.** The pipeline can run 6 sequential subagent spawns, each adding return tokens, plus operator NEXT/ABORT gates between them, without a structural compaction breakpoint.
+**Waste mechanism:** A long-running `/new-project` session accumulates: 6 subagent returns + 6 operator-gate exchanges + orchestrator pipeline-state.md updates after each stage (small but additive). For full pipeline runs this is a multi-hour, multi-turn session; absence of a /compact prompt at, e.g., post-Stage 3a or post-Stage 4 is a structural omission.
+
+#### Finding 5 — Verbatim canonical-block duplication inside orchestrator (3 surfaces × 4 blocks)
+
+**Severity classification:** MEDIUM (boundary — overlaps with Finding 3 above; this is the specific mechanism behind orchestrator file size).
+**Evidence:** `.claude/commands/new-project.md` lines 382–428 (canonical block reference text for Commit Rules, Input File Handling, Compaction, Session Boundaries — each shown as "copy verbatim" markdown), lines 432–472 (same blocks inside `cat > <<'EOF' ... EOF` heredoc), lines 478–503 (same blocks inside `printf` fallback statements with shell-escaped quoting). Each of the four canonical blocks (~3–10 lines each) appears ~3 times. Estimated 60–90 lines of duplicated content out of 527 total lines (~11–17% of file).
+**Waste mechanism:** Loaded on every `/new-project` invocation. The duplication is functional (the heredoc and printf paths both need the literal text since `<<'EOF'` doesn't expand variables and printf is the append-mode counterpart), but a `cat $CANONICAL_FILE` pattern reading from a single canonical-blocks file would compress this. Reporting as fact only.
+
+#### Finding 6 — Model selection (sonnet for orchestrator, opus for 3b/3c) is configured correctly
+
+**Severity classification:** PASS (out-of-scope for §4 severity rules; recording for completeness).
+**Evidence:** `.claude/commands/new-project.md` line 2: `model: sonnet`. Subagent models: 3a/4/5/6 = sonnet; 3b/3c = opus.
+
+#### Finding 7 — Stage 3c re-reads `repo-snapshot.md` already consumed by Stage 3b
+
+**Severity classification:** LOW (per §4: "Large file reads in main session that could be delegated → HIGH" applies to *main-session* reads. This is subagent→subagent duplication. The cost is real but each subagent's context is independent, so this affects subagent cost not main-session cost.)
+**Evidence:** `pipeline-stage-3b.md` lines 17–20 (reads `repo-snapshot.md`); `pipeline-stage-3c.md` lines 17–20 (also reads `repo-snapshot.md`).
+**Waste mechanism:** repo-snapshot.md is large (per Stage 3a output spec — full inventory across skills/commands/agents/workflows/dirs). Reading it twice across two opus-tier subagents (3b and 3c are both `model: opus`) adds opus-tier per-token cost. A digest pattern (3b extracts the architecture-relevant slice into architecture.md; 3c reads architecture.md not repo-snapshot.md) could remove the duplicate. Reporting as fact only.
+
+#### Finding 8 — Refinement multiplier ≤1; no QC subagents wired into pipeline
+
+**Severity classification:** LOW (per §4: ">3 refinement cycles → MEDIUM". Pipeline does not exceed 3.)
+**Evidence:** No invocations of `qc-reviewer`, `triage-reviewer`, `refinement-reviewer`, `qc-gate`, or `/qc-pass` anywhere in `new-project.md` or the six pipeline agent files. Operator gating substitutes for QC subagents.
+**Waste mechanism:** N/A as token-waste; flagged for completeness because the workspace `## QC Independence Rule` mandates fresh-context QC subagents for evaluation work, and pipeline-generated artifacts (architecture.md, implementation-spec.md, test-results.md) are evaluation-class outputs. Whether this is an audit gap or a deliberate design (operator IS the QC) is out of scope for §4.
+
+---
+
+### Report-Format Block (per protocol §4 template)
+
+#### Workflow: new-project
+
+**Context loading chain:**
+1. Workspace `CLAUDE.md` loads (~4163 tokens) — every turn, not workflow-specific
+2. `ai-resources/CLAUDE.md` loads (~1235 tokens) — every turn in this project
+3. Slash command `/new-project` invoked → loads `.claude/commands/new-project.md` body (~6863 tokens)
+4. Subagent spawns each carry their own context (not main-session cost) but each loads its agent file (~300–960 tokens) plus a skill (3b/3c/4/5/6 only — 1425–2735 tokens each)
+
+**Total estimated start-of-workflow main-session context:** ~12,261 tokens (CLAUDE.md ×2 + orchestrator body)
+
+**File reads during execution (main session):**
+
+| File | Size | Read in main/subagent | Necessary / Delegable |
+|------|------|-----------------------|------------------------|
+| `$SRC/plan-qc-verdict.md` (grep -q) | small | main | Necessary |
+| `$SRC/spec-qc-verdict.md` (grep -q) | small | main | Necessary |
+| `projects/buy-side-service-plan/CLAUDE.md` (precedent verification) | ~50–150 lines | main | Necessary |
+| `projects/{name}/pipeline/pipeline-state.md` (after each stage) | <30 lines | main | Necessary |
+| (Possibly) `pipeline/context-pack.md` for `{project-description}` | 200–800 lines | main if performed | Delegable / can be skipped (placeholder allowed) |
+
+**Subagent pattern:**
+
+| Subagent purpose | Returns to main? | Return size cap | Disk write |
+|-----------------|------------------|-----------------|-----------|
+| Stage 3a — repo snapshot | Yes (announce template) | None declared | `pipeline/repo-snapshot.md` |
+| Stage 3b — architecture | Yes (announce template) | None declared | `pipeline/architecture.md` |
+| Stage 3c — impl spec | Yes (announce template) | None declared | `pipeline/implementation-spec.md` |
+| Stage 4 — implementation | Yes (announce template) | None declared | `pipeline/implementation-log.md` + worktree files |
+| Stage 5 — testing | Yes (announce template) | None declared | `pipeline/test-results.md` |
+| Stage 6 — session guide | Yes | "under 30 lines" (line 50) | `pipeline/session-guide.md` |
+
+**Findings:**
+
+| # | Finding | Severity | Waste mechanism |
+|---|---------|----------|----------------|
+| 1 | Five pipeline-stage agents lack an explicit return-size cap | MEDIUM | Unbounded subagent returns to main session |
+| 2 | Stage 3a structurally exposes a large inventory document; risk of full-table echo if operator prompts | MEDIUM (boundary) | Inventory tables (~95 skills + commands + agents) returnable as text |
+| 3 | Orchestrator file ~6863 tokens loaded on every invocation | MEDIUM (boundary) | Per-invocation overhead in main session |
+| 4 | No `/compact` breakpoint between pipeline stages | MEDIUM | Multi-hour 6-subagent sessions accumulate context without compaction prompt |
+| 5 | Canonical blocks duplicated 3× inside orchestrator (~60–90 lines redundancy) | MEDIUM (boundary) | Inflates orchestrator load size |
+| 6 | Model selection configured correctly | PASS | n/a |
+| 7 | Stages 3b and 3c both Read `repo-snapshot.md` (subagent-side duplication) | LOW | Duplicate large-file read in opus-tier subagents |
+| 8 | No QC/refinement subagents wired into pipeline; operator-gate substitutes | LOW | Refinement multiplier ≤1; not a token waste in §4 framing |
+
+---
+
+### Severity Counts
+
+- HIGH: 0
+- MEDIUM: 4 (Findings 1, 4) + 2 boundary-tagged (Findings 2, 3, 5 — three MEDIUM-boundary)
+  - Net MEDIUM count: **5** (Findings 1, 2, 3, 4, 5; with 2/3/5 boundary-tagged)
+- LOW: 2 (Findings 7, 8)
+- PASS: 1 (Finding 6)
+- Total flagged findings: **7** (excluding the PASS)
+
+### Boundary-tagged findings (per token-estimation caveat)
+
+- Finding 2 (boundary) — severity depends on operator behavior, not file content
+- Finding 3 (boundary) — protocol §3/§4 do not specify a command-file line/word threshold; classified by analogy
+- Finding 5 (boundary) — duplication count of "3×" treats `cat <<'EOF'` heredoc and `printf` fallback as separate instances; under stricter counting this could be 2× not 3×
+
+### Protocol gaps
+
+- §4 severity rules target main-session reads, subagent returns, compaction, and refinement cycles. They do not directly classify (a) orchestrator file size (Finding 3) or (b) within-orchestrator content duplication (Finding 5). Both findings are reported as MEDIUM by analogy to §1 and §3 thresholds; main session may want to reclassify in §9.
+- The "subagent return volume" check in §4 step 1 asks whether subagents return full output vs summary; current pipeline-stage agents declare a *short announce template* but not a *cap*. This intermediate state is not directly addressed by the HIGH/MEDIUM rule list. Reported as MEDIUM "missing safeguard."
+- No live telemetry consulted for §4; estimates are structural per protocol guidance.

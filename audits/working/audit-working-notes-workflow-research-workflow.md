@@ -1,165 +1,380 @@
-# Section 4 Working Notes — Workflow: research-workflow
+# Section 4 — Workflow Token Efficiency Audit: research-workflow
 
-**Scope:** `ai-resources/workflows/research-workflow/` (template workflow; project-scoped instances inherit this structure).
-**Focus per orchestrator:** token flow through the three-command prose pipeline (`produce-architecture`, `produce-prose-draft`, `produce-formatting`), subagent return volumes, and inline file-loading that could be delegated.
-**Protocol:** token-audit-protocol v1.2, Section 4, Steps 4.1–4.2.
-**Token estimation method:** word count × 1.3 (±30% drift caveat per protocol header).
-
----
-
-### 4. Workflow Token Efficiency
-
-**Workflows identified:** `research-workflow` (template at `workflows/research-workflow/`). This invocation audits that workflow only; other workflow-like artifacts in `ai-resources/` (e.g., `/create-skill` pipeline, `/token-audit`) are out of scope.
-
-#### Workflow: research-workflow (prose sub-pipeline: produce-architecture → produce-prose-draft → produce-formatting)
-
-**Context loading chain (per-command start, main session):**
-
-`produce-architecture` (per-part, called once per Part 2/3):
-1. CLAUDE.md (project) ~1,768 tokens (1,360 w × 1.3)
-2. stage-instructions.md (via @ reference in CLAUDE.md; loaded on activation) ~2,870 tokens (2,208 w × 1.3)
-3. produce-architecture.md command body ~1,746 tokens (1,343 w × 1.3)
-4. Phase 2 reads: all section drafts (variable, 4–9 sections × ~1,500–3,000 words = ~7,800–35,000 tokens), `context/project-brief.md`, `context/content-architecture.md`, `research-structure-creator/SKILL.md` (~3,208 tokens, 2,468 w × 1.3)
-5. Phase 3 reads: `architecture-qc/SKILL.md` (~2,175 tokens), architecture file, all section drafts again (same content re-read in main session)
-
-**Estimated start-of-workflow context (produce-architecture, Phase 2 entry):** ~20,000–50,000 tokens depending on draft count.
-
-`produce-prose-draft` (per section, called N times per part):
-1. CLAUDE.md ~1,768 tokens
-2. stage-instructions.md (~2,870 tokens, ≈loaded; @ reference from CLAUDE.md)
-3. produce-prose-draft.md command body ~4,532 tokens (3,486 w × 1.3) — **by far the largest command file in the workflow**
-4. Phase 2 inline reads (main session): source document (~1,500–5,000 tokens), `decision-to-prose-writer/SKILL.md` (~3,110 tokens), architecture.md extracted subset (~500–1,500 tokens)
-5. Phase 3 inline reads: prose file (~2,000–6,000 tokens), source document again, `chapter-prose-reviewer/SKILL.md` (~2,898 tokens), `prose-compliance-qc/SKILL.md` (~2,591 tokens)
-6. Phase 4 inline reads: prose file + adjacent prose + non-adjacent prose (6+ sections; even with opening/closing excerpt rule, ~6,000–18,000 tokens)
-7. Phase 5 inline reads: prose file again, source document again, `ai-prose-decontamination/SKILL.md` (~5,652 tokens)
-
-**Estimated peak context (produce-prose-draft, before Phase 3 /compact):** ~18,000–25,000 tokens loaded into main session across Phases 1–3.
-
-`produce-formatting` (per section, called N times per part):
-1. CLAUDE.md ~1,768 tokens
-2. stage-instructions.md ~2,870 tokens (if loaded)
-3. produce-formatting.md command body ~2,583 tokens (1,987 w × 1.3)
-4. Phase 2 inline reads: prose file, `prose-formatter/SKILL.md` (~4,152 tokens), `h3-title-pass/SKILL.md` (~2,254 tokens). Style reference is passed by path — NOT read in main session (confirmed anti-pattern avoided).
-5. Phase 3 inline reads: prose file (post-Phase 2), `formatting-qc/SKILL.md` (~2,327 tokens), `document-integration-qc/SKILL.md` (~907 tokens), architecture.md again
-
-**Estimated start-of-command context (produce-formatting, Phase 2 entry):** ~14,000 tokens.
-
-**Full-part run estimate (Part 2 with ~8 sections):** 1× produce-architecture (~30k peak) + 8× produce-prose-draft (~20k peak each, fresh session per section is the implied discipline) + 8× produce-formatting (~14k peak). 17 command invocations per part.
+**Audit date:** 2026-05-02 (overwrite of 2026-05-01 prior content)
+**Workflow:** research-workflow
+**Scope:** `ai-resources/workflows/research-workflow/`
+**Protocol:** token-audit-protocol.md v1.3, Section 4
+**Token-estimation method:** word count × 1.3 (±30% drift caveat applies; findings within ±15% of a threshold tagged `(boundary)`)
 
 ---
 
-**File reads during execution (scope: the three produce-* commands):**
+## Workflow Identification
 
-| File | Est. size | Read in main/subagent | Necessary / Delegable? |
-|------|-----------|----------------------|------------------------|
-| `decision-to-prose-writer/SKILL.md` | ~3,100 tok | MAIN (prose-draft Phase 2 step 2) | Delegable — only the subagent applies the skill; main session does not reason over skill logic |
-| `chapter-prose-reviewer/SKILL.md` | ~2,900 tok | MAIN (prose-draft Phase 3 step 3) | Delegable — subagent applies it |
-| `prose-compliance-qc/SKILL.md` | ~2,600 tok | MAIN (prose-draft Phase 3 step 4) | Delegable — subagent applies it |
-| `ai-prose-decontamination/SKILL.md` | ~5,700 tok | MAIN (prose-draft Phase 5 step 3) | Delegable — subagent applies it; main session compacts immediately after |
-| `research-structure-creator/SKILL.md` | ~3,200 tok | MAIN (architecture Phase 2 step 4) | Delegable — subagent applies it |
-| `architecture-qc/SKILL.md` | ~2,200 tok | MAIN (architecture Phase 3 step 1) | Delegable — subagent applies it |
-| `prose-formatter/SKILL.md` | ~4,200 tok | MAIN (formatting Phase 2 step 2) | Delegable — subagent applies it |
-| `h3-title-pass/SKILL.md` | ~2,300 tok | MAIN (formatting Phase 2 step 3) | Delegable — subagent applies it |
-| `formatting-qc/SKILL.md` | ~2,300 tok | MAIN (formatting Phase 3 step 2) | Delegable — subagent applies it |
-| `document-integration-qc/SKILL.md` | ~900 tok | MAIN (formatting Phase 3 step 3) | Delegable (small but still delegable) |
-| Source document (decision doc) | ~1,500–5,000 tok | MAIN (prose-draft Phases 2, 3, 5) | Necessary in Phase 2; re-reads in Phases 3 and 5 delegable — subagent could read by path |
-| Architecture.md (full file) | variable | MAIN, "first 50 lines" in Phase 1 + extract in Phase 2 | Necessary (to extract section-specific subset before passing to subagent) |
-| All section drafts (architecture Phase 2) | ~7,800–35,000 tok | MAIN (architecture Phase 2 step 1 AND Phase 3 step 3) | Phase 2: necessary. Phase 3 re-read: delegable |
-| Adjacent + non-adjacent prose sections | ~6,000–18,000 tok | MAIN (prose-draft Phase 4 steps 5–6) | Delegable — integration-check subagent could glob + read internally |
-| Prose file (post-each-phase) | ~2,000–6,000 tok | MAIN (prose-draft Phases 3, 4, 5; formatting Phases 3, 4) | Phase 3 first read is necessary (main routes on findings). Subsequent re-reads delegable |
+The research-workflow is the canonical five-stage analytical research pipeline (Preparation → Execution → Analysis & Gap Resolution → Report Production → Final Production). It is referenced extensively in the workflow's own CLAUDE.md template, with 28 commands under `.claude/commands/`, 4 agents under `.claude/agents/`, and reference docs (`stage-instructions.md`, `file-conventions.md`, `quality-standards.md`, `style-guide.md`, two embedded skills, three SOPs). Execution chains call out to ~30+ skills under `ai-resources/skills/`.
 
-**Files correctly delegated (already in the workflow — not findings):**
-- `style-reference.md` — passed by absolute path to subagents in prose-draft Phases 2, 3, 5 and formatting Phase 2, 3. Main session never loads it. (Phase 2 step 0 of prose-draft, line 53, documents this.)
-- `context/prose-quality-standards.md` — same pattern; passed by absolute path.
-
-These two are the "Context Isolation Rules exception for large read-only reference files" documented in the workflow CLAUDE.md. The exception is applied correctly for these two files; finding #4 below notes the exception is NOT applied to skill files.
-
-**Files written during execution:**
-- Architecture outputs written to disk via subagent (`architecture.md`, `architecture-qc.md`). Main session only reads summary. Correct discipline.
-- Prose files written to disk via subagent (Phase 2, 3 fix, 5 outputs). Main session reads them back in subsequent phases. Write discipline correct; read discipline below.
-- Decontamination log written to disk (`decontamination-log.md`).
-- Formatted prose overwrites prose file (Phase 2 of produce-formatting). Main session reads it back in Phase 3.
+The workflow is template-based — files contain `{{PROJECT_TITLE}}`-style placeholders and are deployed into project workspaces via `auto-sync-shared.sh`. Token-flow analysis below applies to a deployed instance, not the template itself.
 
 ---
 
-**Subagent pattern:**
+## 4.1 — Workflow Inventory and Sizes
 
-`produce-architecture`:
+### Top-level template files (lines / words / approx tokens at ×1.3)
 
-| Subagent purpose | Returns to main? | Return size estimate |
-|-----------------|------------------|---------------------|
-| Phase 2: general-purpose — architecture generation (research-structure-creator) | Yes | "section count, processing order, flagged overlaps/conflicts/gaps, word count allocations per section" — structured summary, est. 30–100 lines |
-| Phase 3: qc-gate — architecture QC | File to disk; main also reads QC file in Phase 4 | QC file typically 50–150 lines; re-read in Phase 4 for operator presentation |
+| File | Lines | Words | Approx tokens |
+|------|-------|-------|---------------|
+| `CLAUDE.md` | 128 | 1,140 | ~1,482 |
+| `SETUP.md` | 177 | 879 | ~1,143 |
+| `reference/stage-instructions.md` | 155 | 2,651 | ~3,446 |
+| `reference/file-conventions.md` | 142 | 950 | ~1,235 |
+| `reference/quality-standards.md` | 72 | 727 | ~945 |
+| `reference/style-guide.md` | 35 | 439 | ~571 |
+| `reference/sops/research-executor-gpt.md` | 153 | 1,144 | ~1,487 |
+| `reference/sops/evidence-pack-compressor-gpt.md` | 146 | 1,207 | ~1,569 |
+| `reference/sops/fact-verification-prompt.md` | 24 | 125 | ~163 |
+| `reference/skills/knowledge-file-producer/SKILL.md` | 135 | 1,113 | ~1,447 |
+| `reference/skills/report-compliance-qc/SKILL.md` | 113 | 1,090 | ~1,417 |
 
-`produce-prose-draft`:
+### Commands (top 10 by size — lines / words / approx tokens)
 
-| Subagent purpose | Returns to main? | Return size estimate |
-|-----------------|------------------|---------------------|
-| Phase 2: general-purpose — decision-to-prose conversion | Yes | "file path, word count, section count, any flags" — ~10–20 lines |
-| Phase 3: qc-reviewer — merged diagnostic + compliance review | Yes — unified findings list combining all passes, with severity ratings and per-spec verdicts | **LARGE.** 4 compliance scans + 13 prose quality standards + expanded detection tests = est. 60–200+ lines for a real section |
-| Phase 3 (conditional): general-purpose — fix agent | Yes — writes corrected file + reports fixes | ~20–60 lines |
-| Phase 4 (conditional): general-purpose — integration check | Yes — transition drafts, redundancy/contradiction findings, clean-pass note | ~30–150 lines |
-| Phase 5: general-purpose (sonnet) — AI prose decontamination | Yes — change counts per pass and per sub-pattern, bright-line flags, constrained passages | ~30–80 lines |
+| Command | Lines | Words | Approx tokens |
+|---------|-------|-------|---------------|
+| `produce-prose-draft.md` | 212 | 3,695 | ~4,804 |
+| `run-execution.md` | 187 | 2,103 | ~2,734 |
+| `run-analysis.md` | 182 | 1,419 | ~1,845 |
+| `session-plan.md` | 163 | 933 | ~1,213 |
+| `audit-structure.md` | 148 | 1,018 | ~1,323 |
+| `produce-formatting.md` | 130 | 2,327 | ~3,025 |
+| `produce-architecture.md` | 101 | 1,345 | ~1,749 |
+| `run-report.md` | 85 | 818 | ~1,063 |
+| `review-chapter.md` | 79 | 539 | ~701 |
+| `produce-knowledge-file.md` | 76 | 456 | ~593 |
 
-`produce-formatting`:
+### Agents
 
-| Subagent purpose | Returns to main? | Return size estimate |
-|-----------------|------------------|---------------------|
-| Phase 2: general-purpose (sonnet) — formatting + H3 pass | Yes — MTC pre-scan results, formatting change log, H3 decisions table, SPLIT verdicts, final H3 count, flagged items | **LARGE.** H3 decisions table lists every heading with verdict + rationale + reversal instruction. Est. 50–200+ lines. Return explicitly required (line 49). |
-| Phase 3: qc-reviewer — merged formatting-qc + document-integration-qc | Yes — Stage 1 findings, fixes applied log, bright-line candidates, Stage 2 findings grouped by four check categories, transition drafts, verdict | **LARGE.** Two skills' findings + transition drafts. Est. 60–200+ lines. |
-
----
-
-**Findings:**
-
-| # | Finding | Severity | Waste mechanism | Location |
-|---|---------|----------|----------------|----------|
-| 1 | Phase 2 subagent of `produce-formatting` returns the full H3 decisions table + formatting change log + MTC pre-scan + SPLIT verdicts to main session. For a section with 10–20 headings, return volume commonly exceeds 200 lines. Required by design (operator must see REMOVE verdicts for reversal at Phase 4). | HIGH | Large subagent return written into main-session context; cannot be /compacted away before Phase 3 because Phase 3 passes "deferred items list from Phase 2" (line 76) and Phase 4 reports them (line 102–105). | `produce-formatting.md:49–55`, `:102–105` |
-| 2 | Phase 3 subagent of `produce-formatting` returns a unified two-stage QC report (formatting-qc + document-integration-qc findings, fixes applied log, bright-line candidates, Stage 2 findings grouped by four check categories, transition drafts, verdict). Est. 60–200+ lines. | HIGH | Large subagent return consumed by main session for routing (line 87–92) and Phase 4 handoff presentation. | `produce-formatting.md:71–86` |
-| 3 | Phase 3 subagent of `produce-prose-draft` returns a unified findings list combining chapter-prose-reviewer diagnostic review + prose-compliance-qc four-scan findings + 13 prose quality checks with severity ratings and per-spec verdicts. Est. 60–200+ lines for a real section. | HIGH | Large subagent return; main session routes on this content (Phase 3 step 6, five-way branch) and carries it forward into Phase 6 handoff (line 113 explicitly requires it survive /compact). | `produce-prose-draft.md:88–104`, `:113` |
-| 4 | Ten skill files are read in the main session before being passed to subagents. Total main-session skill-file load across the three-command pipeline per section: ~29,400 tokens of skill content (decision-to-prose-writer 3,100 + chapter-prose-reviewer 2,900 + prose-compliance-qc 2,600 + ai-prose-decontamination 5,700 + research-structure-creator 3,200 + architecture-qc 2,200 + prose-formatter 4,200 + h3-title-pass 2,300 + formatting-qc 2,300 + document-integration-qc 900). | HIGH | Inline read in main session for "content passing" to subagent. Main agent does not reason over the skill logic; the subagent does. Could be reduced to subagent reading the skill by path (symmetric with how `style-reference.md` and `prose-quality-standards.md` are already passed). The workflow CLAUDE.md names this exception; it is not applied to skill files. | `produce-prose-draft.md:55, 86, 87, 171`; `produce-architecture.md:46, 67`; `produce-formatting.md:34, 35, 65, 66` |
-| 5 | Source document is read in `produce-prose-draft` main session three times: Phase 2 step 1, Phase 3 step 2, Phase 5 step 2. Each phase's subagent then receives it as content in the brief. | HIGH | Redundant main-session file reads; typical decision doc 1,500–5,000 tokens × 3 phases = up to 15,000 wasted main-session tokens per section. | `produce-prose-draft.md:54, 85, 170` |
-| 6 | `produce-prose-draft` Phase 4 (integration check) reads adjacent prose sections AND all other completed prose sections in main session (steps 5–6). For a document part with 6+ completed sections, even with the "opening and closing paragraphs only" rule, this is 6,000–18,000 tokens loaded into main session before being passed to the subagent. | HIGH | Large main-session file read that is entirely delegable — the integration-check subagent could glob and read the files itself. | `produce-prose-draft.md:125, 129–130` |
-| 7 | `produce-architecture` Phase 3 re-reads all section drafts in main session (step 3) for the QC subagent, even though Phase 2 already loaded them. Drafts can total 7,800–35,000 tokens. (boundary — depends on whether Phase 2 draft reads are still in context or were compacted) | HIGH | Second full read of section drafts in main session when the QC subagent could read paths directly. | `produce-architecture.md:69` |
-| 8 | No `/compact` directive between phases of `produce-architecture` before Phase 3's re-read of section drafts. Phase 2 ends with `▸ /compact` (line 59) and Phase 3 ends with `▸ /compact` (line 84), but Phase 3 still reads section drafts after Phase 2's compact, meaning drafts re-enter context. | MEDIUM | Compaction markers exist but the re-read pattern defeats them (finding #7 above). | `produce-architecture.md:59, 84` |
-| 9 | `produce-prose-draft.md` command file itself is 3,486 words / ~4,532 tokens / 203 lines — the largest command file in the workflow. Loaded on every invocation. Command body is ~2.6× larger than `produce-architecture.md`. (boundary — protocol's 300-line threshold applies to skills; no explicit command-file threshold) | MEDIUM | Command file loaded once per invocation × N sections; each section invocation reloads the full command body. | `produce-prose-draft.md` file size |
-| 10 | Refinement multiplier: `produce-prose-draft` designs for up to 5 subagent launches per section (Phase 2 writer + Phase 3 reviewer + conditional Phase 3 fix + conditional Phase 4 integration + Phase 5 decontamination) plus routing decisions that can PAUSE and re-run Phase 2. Combined with `produce-architecture` (2 subagents) and `produce-formatting` (2 subagents), a single section routed through the full pipeline uses 7–9 subagent invocations. Documented target: "4–5 subagent launches" per produce-prose-draft section (line 8). | MEDIUM | Protocol flags ">3 refinement cycles consistently" as MEDIUM. 4–5 per command × 3 commands = structurally high. | `produce-prose-draft.md:8` header note |
-| 11 | Phase 3 of `produce-prose-draft` returns the unified findings list to a "handoff note for the main session" (line 113) that "must survive the compact" — meaning the large return is explicitly protected from /compact. This prevents the /compact at step 8 from reclaiming the tokens. | MEDIUM | Intentional context retention pattern: the findings list stays in main-session context through Phase 4, 5, 6. Increases effective session-long context footprint. | `produce-prose-draft.md:113, 115` |
-| 12 | `produce-formatting` Phase 3 passes "Cross-section integration findings from `/produce-prose-draft` Phase 4 (if available in the session context)" (line 77) — implying main-session carryover of Phase 4 findings across the boundary between the two commands. If both commands run back-to-back without /clear, Phase 4 findings from prose-draft + findings carried into formatting Phase 3 compound. | MEDIUM | Implicit cross-command context carryover; no explicit /clear between `produce-prose-draft` and `produce-formatting`. | `produce-formatting.md:77` |
-| 13 | `produce-formatting` Phase 1 step 4 "Decontamination check" only verifies the decontamination log contains an entry for the section; it does not gate on `/clear` between commands. Phase 4 handoff of `produce-prose-draft` already loaded the post-decontamination prose file (line 193), so if `/produce-formatting` runs in the same session, that content is still resident. (boundary — depends on operator session-break habits) | MEDIUM | No enforced session boundary between the three commands. | `produce-formatting.md:21–23`; `produce-prose-draft.md:193` |
-| 14 | `architecture.md` is read in main session in three places across the pipeline: `produce-prose-draft` Phase 1 step 4 ("first 50 lines"), Phase 2 step 0 subagent brief construction (extracted subset), Phase 4 step 4; `produce-formatting` Phase 3 step 4. The "first 50 lines" read is small verification; the full extraction in Phase 2 is delegable. | LOW | Small per-read size; accumulates modestly. | `produce-prose-draft.md:28, 62, 128`; `produce-formatting.md:67` |
-| 15 | Other workflow commands (`workflow-status`, `run-preparation`, `run-execution`, `run-analysis`, `run-report`, `run-synthesis`, `run-cluster`) are outside the scope of this audit. `run-execution.md` is 16,100 bytes — larger than the three produce-* commands — and warrants a future audit pass. | LOW (out of scope) | Not measured in this section. | `.claude/commands/run-execution.md` |
-| 16 | `produce-prose-draft.md` embeds very detailed Tier 1/2/3 standard lists inline in the subagent brief (Phase 2 step 3, task 4 — ~800 words of standards text) instead of referencing the quality-standards file by path. This text is loaded into main-session context on every section invocation even though the subagent also receives the path to `prose-quality-standards.md`. | MEDIUM | Duplication: quality standards file passed by path AND command body inlines a Tier 1/2/3 summary of the same standards. | `produce-prose-draft.md:72` |
-| 17 | `produce-prose-draft.md` Phase 3 inlines "Expanded detection tests for Standards 10, 11, 12, 13" (~400 words, line 102) directly in the subagent brief. Same pattern as #16 — these tests belong in `prose-quality-standards.md` or `prose-compliance-qc/SKILL.md`, not in the command body. | MEDIUM | Inline test specifications bloat the main-session-loaded command file on every invocation. | `produce-prose-draft.md:102` |
-| 18 | `CLAUDE.md` for research-workflow uses `@reference/stage-instructions.md` (128-line CLAUDE.md + 129-line stage-instructions = 257 lines of always-loaded project context, est. 3,568 w × 1.3 = ~4,640 tokens combined). The @ reference loads stage-instructions on every turn per CLAUDE.md conventions. (boundary — @ reference semantics are "load on activation") | MEDIUM | Near-always-loaded context for every command invocation. | `workflows/research-workflow/CLAUDE.md:15` |
-
-**/compact opportunity assessment:**
-- `produce-architecture` has `▸ /compact` at end of Phase 2 (line 59) and Phase 3 (line 84). Present, but undercut by Phase 3's re-read of section drafts (finding #7, #8).
-- `produce-prose-draft` has `▸ /compact` at end of Phase 2 (line 76), Phase 3 (line 115), Phase 4 (line 159), Phase 5 (line 187). Frequent. But Phase 3 handoff note is explicitly preserved across compact (line 113) — intentional but contributes to sustained context footprint.
-- `produce-formatting` has `▸ /compact` at end of Phase 2 (line 56) and Phase 3 (line 93). Present.
-- No `/clear` directive between commands. Findings #12 and #13 note this.
-
-**Subagent return-volume summary:**
-Seven to nine subagent calls in the three-command prose pipeline (architecture 2 + prose-draft 3–5 + formatting 2). Of these, five return structured findings/decision tables that can exceed 60–200 lines (findings #1, #2, #3; plus the prose-draft Phase 3 fix-agent return and Phase 4 integration-check return). Two return small summaries (prose-draft Phase 2 writer; prose-draft Phase 5 decontamination). Large-return subagents drive the majority of main-session context cost downstream.
-
-**Refinement multiplier (per section, full pipeline):**
-Structural: 7–9 subagent launches end-to-end. Protocol threshold for concern is ">3 consistently" — research-workflow structurally exceeds this. The April 2026 split (consolidated produce-prose.md → three commands) kept the launch count unchanged; it redistributed ownership into smaller per-command scopes.
+| Agent | Lines | Words | Model |
+|-------|-------|-------|-------|
+| `improvement-analyst.md` | 88 | 715 | opus |
+| `qc-gate.md` | 52 | 313 | sonnet |
+| `verification-agent.md` | 40 | 212 | sonnet |
+| `execution-agent.md` | 29 | 171 | sonnet |
 
 ---
 
-### Protocol gaps (interpretation notes)
+## 4.2 — Token Flow Mapping
 
-- Protocol Section 4 does not define a line threshold for command files themselves. Finding #9 (produce-prose-draft = 203 lines / ~4,532 tokens) is flagged by analogy to the skill 300-line threshold but is not strictly covered by the severity rules. Tagged MEDIUM (boundary).
-- Protocol's "~200 lines returned to main session → HIGH" threshold is applied to findings #1, #2, #3. All three are structurally capable of exceeding 200 lines for real prose sections; whether they do on any given run depends on section length and number of findings. Tagged HIGH but acknowledged as range estimates.
-- Findings #7, #13, #18, #9 are tagged `(boundary)` — they depend on session-state assumptions (whether /compact fully cleared prior loads; whether operator ran /clear between commands; @ reference loading semantics; command-line threshold by analogy) that cannot be verified from the command text alone.
-- The "session telemetry" referenced in the protocol is not available to this subagent scope — all estimates here are structural inferences from command text, not observed data.
+### Step 1: What gets loaded at workflow start (per-turn fixed cost)
 
-### File paths inspected
+**Always-loaded on every turn (CLAUDE.md + @-imports):**
 
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/workflows/research-workflow/CLAUDE.md` (loaded via system-reminder)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/workflows/research-workflow/reference/stage-instructions.md` (loaded via system-reminder)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/workflows/research-workflow/reference/file-conventions.md` (partial)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/workflows/research-workflow/.claude/commands/produce-architecture.md` (full)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/workflows/research-workflow/.claude/commands/produce-prose-draft.md` (full)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/workflows/research-workflow/.claude/commands/produce-formatting.md` (full)
-- Skill word counts: `decision-to-prose-writer`, `chapter-prose-reviewer`, `prose-compliance-qc`, `ai-prose-decontamination`, `prose-formatter`, `h3-title-pass`, `formatting-qc`, `document-integration-qc`, `research-structure-creator`, `architecture-qc` (inventory only — word counts measured, full SKILL.md bodies not read)
+`CLAUDE.md` (128 lines, ~1,482 tokens) contains four `@reference/...` imports:
+- `@reference/stage-instructions.md` (155 lines, ~3,446 tokens)
+- `@reference/file-conventions.md` (referenced via `IMPORTANT` paragraph at line 36)
+- `@reference/quality-standards.md` (72 lines, ~945 tokens)
+- `@reference/style-guide.md` (35 lines, ~571 tokens)
+
+CLAUDE.md line 36 reads: "For detailed stage instructions, read @reference/stage-instructions.md. For file naming rules, read @reference/file-conventions.md. For QC standards and evidence handling, read @reference/quality-standards.md. For writing voice and style, read @reference/style-guide.md. Only load these when actively working on the relevant stage or task."
+
+The `@` syntax in CLAUDE.md hydrates the referenced file at session start, regardless of stage. The "only load these when actively working" instruction is **inconsistent with the `@` mechanism** — see Finding F3.
+
+**Observed start-of-session base load (CLAUDE.md + the @-imported references):** ~7,679 tokens before any command runs (~1,482 CLAUDE.md + ~3,446 stage-instructions + ~1,235 file-conventions + ~945 quality-standards + ~571 style-guide).
+
+**Plus parent CLAUDE.md hierarchy** (workspace + ai-resources CLAUDE.md, both load via parent-traversal): adds substantial upstream context. Not specific to this workflow but compounds the base load.
+
+### Step 2: Subagent calls per typical workflow run
+
+A typical end-to-end run involves the following subagent invocations:
+
+**Stage 1 — Preparation** (`/run-preparation`): 5 subagents
+- task-plan-creator [delegate]
+- task-plan QC [delegate-qc]
+- research-plan-creator [delegate]
+- answer-spec-generator [delegate]
+- answer-spec-qc [delegate-qc] (runs once per spec file — typically 3–5 files = 3–5 sub-subagents)
+
+**Stage 2 — Execution** (`/run-execution`): 4–8+ subagents
+- answer-spec-qc gate [delegate-qc]
+- execution-manifest-creator [delegate]
+- research-prompt-creator [delegate]
+- research-prompt-qc [delegate-qc]
+- research-extract-creator [delegate, parallel per session — ~3–5 sessions]
+- research-extract-verifier [delegate-qc, parallel per session]
+- Optional 2.S supplementary: ~3 more (drafter, qc, merger) × up to 2 passes
+
+**Stage 3 — Analysis** (`/run-cluster` × N + `/run-analysis` + `/run-synthesis`): 6 + 3N subagents minimum
+- Per cluster (run-cluster): cluster-analysis-pass + cluster-memo-refiner = 2 × N clusters
+  - Note: per stage-instructions.md updated Step 3.2, clusters are intended to run in parallel with path-passing to subagents. The `run-cluster.md` command file still implements content-passing and a sequential-with-compact pattern (lines 17–25). See Finding F15.
+- run-analysis: gap-assessment-gate, section-directive-drafter (× N clusters), analysis-pass-memo-review, editorial-recommendations-generator, editorial-recommendations-qc, editorial-decisions-approver = 5 + N
+- run-synthesis: cluster-synthesis-drafter × N clusters
+- Optional 3.S gap-supplementary: 2–6 more invocations × up to 2 passes
+
+**Stage 4 — Report Production** (`/run-report`): per-chapter subagents × M chapters
+- Per chapter: evidence-to-report-writer + chapter-prose-reviewer + report-compliance-qc + citation-converter = 4 × M
+- Plus architecture (research-structure-creator) + architecture-qc = 2
+
+**Stage 5 — Final Production**: integration-qc, formatting fixes, citation reconciliation = ~5+
+
+**Plus the prose-pipeline commands** (Part 2/3 path): `/produce-architecture` (2 subagents), `/produce-prose-draft` (4–5 subagents per section: decision-to-prose-writer, merged review, optional integration-check, decontamination, fix-agent), `/produce-formatting` (2 subagents).
+
+**Conservative end-to-end count for a 3-cluster, 2-chapter section:** ~40 subagent invocations. For full document with all 5 stages: ~70–100+ subagent invocations.
+
+### Step 3: Estimated subagent return-volume
+
+**Compliance with output-to-disk pattern is mixed.** Strong implementations (✓):
+- `produce-prose-draft.md` Phase 3 enforces `Output-to-disk pattern (required — subagent-contract compliance)` with explicit ≤20-line return cap and `working_file` field (lines 106–112).
+- `produce-prose-draft.md` Phase 5 enforces same pattern.
+- `produce-formatting.md` Phase 2 (lines 51–66) and Phase 3 (lines 96–103) enforce ≤20-line returns with `working_file` field.
+
+**Non-compliant patterns (✗) — subagents instructed to "Return: ..." with no cap:**
+- `run-preparation.md` Step 1 (line 16): "Return: output file path, key scope decisions." No cap.
+- `run-preparation.md` Step 1b (line 25, qc-gate): "Return: verdict (APPROVED / REVISE) with findings." Findings list can be unbounded.
+- `run-preparation.md` Step 4 (line 50, answer-spec-generator): "Return: list of spec files produced (file paths, question coverage per file)."
+- `run-execution.md` Step 2.0 (line 27): "Return: routing table (question ID → tool → rationale), session groupings, execution wave plan." Full routing tables for ~10 questions could exceed 100 lines.
+- `run-execution.md` Step 2.1 (line 43): "Return: the session plan table (session letters, question assignments, tool assignment, rationale)."
+- `run-execution.md` Step 2.3 (line 105): "Return: list of extracts produced (question ID, file path, brief quality note)."
+- `run-execution.md` Step 2.4 (line 121): "Return: per-extract verdict (APPROVED / FLAG), flagged extract details and re-extraction instructions." Re-extraction instructions can be substantial paragraphs.
+- `run-cluster.md` Step 2 (line 25): "Return: output file path, key analytical themes, evidence gaps noted." Themes-and-gaps can run >50 lines.
+- `run-cluster.md` Step 3 (line 35): "Return: output file path, per-check outcomes, changes made." Six-check refinement × changes-made can run long.
+- `run-analysis.md` Step 2 (line 22): "Return: output file path, gap inventory (gap ID, cluster, path classification, severity)."
+- `run-analysis.md` Step 4 (line 42): "Return: output file path, scarcity items referenced, key editorial decisions." Per cluster, in parallel.
+- `run-analysis.md` Step 5 (line 52): "Return: output file path, editorial decisions surfaced, flags for operator attention." All editorial decisions surfaced — could be 30+ items.
+- `run-analysis.md` Step 5b (line 61): "Return: output file path, recommendation count, any confidence flags."
+- `run-analysis.md` Step 5c (line 70, qc-gate): "Return: output file path, verdict distribution (AGREE/DISAGREE/NUANCE counts), flagged disagreements."
+- `run-analysis.md` Step 5d (lines 95–115, auto-delegate): writes structured output format directly into return — multi-section format with `## Approved Decisions`, `## Nuance Adjustments Applied`, `## Noted Alternatives`, `## Dependency Consistency Check`.
+- `run-synthesis.md` Step 2 (line 24): "Return: output file path, chapter structure summary, evidence coverage notes."
+- `run-report.md` Step 4.1 (line 30): "Return: architecture summary (section count, chapter-to-section mapping, structural decisions)."
+- `run-report.md` Step 4.2a (line 56): "Return: chapter draft content, scarcity items addressed, evidence coverage notes." **"Chapter draft content" returned to main session — this is potentially 1,500–3,000 words returned per chapter.** (HIGH)
+- `run-report.md` Step 4.2b (line 59, chapter-prose-reviewer): "Return: review verdict, findings list, recommended changes." Full findings list returned. (HIGH)
+- `run-report.md` Step 4.2c (line 62, report-compliance-qc qc-gate): "Return: QC verdict (PASS/FAIL), per-item findings." Full findings list. (HIGH)
+- `run-report.md` Step 4.2i (line 77, citation-converter): "Return: citation count, CTL summary."
+- `review-chapter.md` Step 2 (line 49): qc-gate produces full review report in return — "Produce the findings report, verdict, priority fixes, and scarcity compliance summary" — no working-file pattern, full report returned to main session.
+- `verify-chapter.md` Step 3a (line 49, evidence-prose-fixer): "Return: correction list with per-item bright-line metadata."
+- `produce-architecture.md` Phase 2 (line 58): "Return: section count, processing order, flagged overlaps/conflicts/gaps, word count allocations per section." Full per-section allocations.
+
+**Pattern summary:** Out of ~50 subagent-launch sites across the workflow's commands, only **6 sites** (in produce-prose-draft and produce-formatting) explicitly enforce the output-to-disk + ≤20-line return contract. The remaining ~44 sites use unbounded "Return: ..." instructions. Per protocol Section 4 severity, subagent returning >200 lines triggers HIGH.
+
+### Step 4: QC/refinement cycles per workflow run
+
+Refinement-multiplier sites:
+
+- **Stage 2 extract verifier:** "After 2 re-extraction passes, remaining failures → confirmed evidence scarcity." Up to 2 retries per extract.
+- **Stage 2 supplementary research:** "Two-pass maximum (hard constraint)" — explicit cap, but each pass is ~5 subagents.
+- **Stage 3 gap supplementary:** "Loop ceiling: Max 2 passes."
+- **Stage 3 editorial-recommendations:** Generator + QC + auto-approver with operator pause on DISAGREE — typical first-pass converges; DISAGREE triggers manual operator resolution.
+- **`/produce-prose-draft`:** Phase 3 routing: Score 4–5 + LOW = no fix; Score 4–5 + MEDIUM+ = fix-agent; Score 3 = fix-agent + bright-line surfacing; Score 1–2 = re-run Phase 2.
+- **`/produce-formatting`:** Phase 3 stage-1 fixes auto-apply, stage-1 bright-line and stage-2 SUBSTANTIVE go to operator. No automated retry loop.
+- **`/run-report` Step 4.2:** Per chapter: write → review → compliance QC → operator pause → optional revisions.
+- **`/verify-chapter` Step 3:** Optional correction subagent; bright-line check on each correction.
+
+**Total typical-run cycle count:** Per chapter, expect ~3 QC subagent invocations (reviewer, compliance, optionally verify) plus optional fix-agent. Workflow design averages **~3–4 QC/refinement subagents per chapter unit** — at the MEDIUM threshold (>3 = MEDIUM per protocol).
+
+### Step 5: File-read sites in main session
+
+**Main-session reads of large files (instances where the main session reads files >100 lines and the read is delegable):**
+
+1. **`run-report.md` Step 4.0** (lines 14–22): Main session reads ALL chapter drafts, scarcity register, ALL section directives, ALL refined cluster memos, ALL research extracts, AND approved editorial recommendations. Reason given (line 22): "These inputs are referenced throughout the pipeline. Sub-agents receive content, not file paths (per context isolation rules)."
+   - For a typical 3-cluster section: chapter drafts (~5,000 words), 3 cluster memos (~6,000 words), ~10 research extracts (~15,000+ words), 3 directives (~3,000 words). **Estimated main-session load at Step 4.0: ~30,000+ tokens** before any subagent runs.
+   - Severity: HIGH — large file reads in main session that could be delegated. The "context isolation rules" justification is structural — if subagents need content rather than paths, the *main session* doesn't need the content.
+
+2. **`produce-prose-draft.md` Phase 4** (lines 133–138): Main session globs prose dir, reads current prose, architecture, adjacent prose sections, "Read all other completed prose sections (non-adjacent)." For 6+ completed sections this is opt-in to "opening and closing paragraphs only" but for early sections (3–5 done) reads the full set.
+   - For a 5-section part: ~5 × ~1,500 words = ~7,500 words = ~9,750 tokens read into main session before delegating to subagent.
+   - Severity: HIGH — delegable to a "cross-section integration subagent" that reads files itself.
+
+3. **`run-execution.md` Steps 2.1 + 2.3** (lines 36–39, 101–105): Main session reads Execution Manifest, Research Plan, all Answer Specs, then for 2.3 reads all raw reports + Answer Specs again. Raw reports are typically large (several thousand words each).
+   - Severity: HIGH — subagent receives content; main session doesn't need to retain it after dispatch.
+
+4. **`run-analysis.md` Step 5/5b/5c** (lines 49–73): Main session reads memo-review.md, recommendations.md, QC report, all refined cluster memos, scarcity register, all section directives — multiple times across Steps 5b, 5c, 5d.
+   - Severity: HIGH — same content re-loaded for each subagent dispatch instead of loaded once and passed.
+
+5. **`run-cluster.md` Step 1** (lines 17–18): Main session reads all research extracts + scarcity register. Per cluster, in main session, before delegating Step 2.
+   - Severity: HIGH — extracts are passed through to the subagent anyway; reading them in main session doubles the cost.
+   - **Spec divergence:** `stage-instructions.md` Step 3.2 (line 58) explicitly states "Main agent passes extract paths (not content) to one sub-agent per cluster; each sub-agent reads its own extracts" — but `run-cluster.md` does not implement this spec. See F15.
+
+6. **`run-preparation.md` Step 5** (lines 56–60): Main session reads checkpoint, then "for each answer spec file, delegate to a qc-gate sub-agent, passing: the skill's evaluation criteria and the answer spec content." Per-spec qc-gate subagents return into main session — sums up to all-spec output volume.
+   - Severity: MEDIUM — content-passing through main session is unavoidable per context-isolation rules but the *return* aggregation is unbounded.
+
+7. **`review-chapter.md` Step 1** (lines 20–27): Main session reads chapter prose + architecture + style reference + section directive + scarcity register + cluster memo + synthesis brief. Then content-passes all to qc-gate subagent in Step 2.
+   - Severity: HIGH — at least 6 large files read into main session. Total ~8,000–12,000 tokens loaded into main session for a single QC pass that then dispatches to a subagent that re-receives all of it.
+
+8. **`run-report.md` Step 4.2a** (line 56): Subagent receives chapter's research extracts + cluster memo + section directive + scarcity register + editorial recommendations + style reference (read by main session, content-passed). Per chapter × M chapters.
+
+9. **`verify-chapter.md` Step 1**: Main session reads chapter + research extracts. Then constructs API call (no actual subagent compute, but content-passed to execution-agent).
+   - Severity: MEDIUM — research extracts can be ~15,000+ words for a chapter's scope.
+
+10. **`produce-architecture.md` Phase 2 step 1**: Main session reads "all section drafts identified in Phase 1" — for a 9-section part, this is ~9 × ~2,000 words = ~18,000 words read into main session.
+    - Severity: HIGH — the subagent could read files itself given paths.
+
+### Step 6: File-write sites and disk-vs-context discipline
+
+**Writes to disk (correct disk-as-source-of-truth pattern):**
+- All artifacts go to disk: task plans, research plans, answer specs, manifests, prompts, raw reports, extracts, memos, directives, chapter drafts, cited chapters, knowledge files. Pattern is consistent across every command.
+- Checkpoints written to disk after each major step (`{stage}/checkpoints/{section}-step-N-checkpoint.md`).
+- Phase 2/3 working files in produce-prose-draft and produce-formatting. (✓ Compliant)
+
+**Writes to context (problematic):**
+- Subagent return-volume (cataloged in Step 3 above) is the primary "write to context not disk" issue. The structured output schemas embedded in command bodies (e.g., `run-analysis.md` Step 5d lines 95–115; `run-report.md` Step 4.2a "chapter draft content" returned) materialize content in the return rather than referencing disk paths.
+
+---
+
+## Findings
+
+### F1 — Subagent return contracts not enforced across most launch sites — HIGH
+
+**Evidence:** Of ~50 subagent-launch sites in the workflow's commands, only 6 sites (produce-prose-draft Phases 3 and 5; produce-formatting Phases 2 and 3) enforce the `Output-to-disk pattern (required — subagent-contract compliance)` with ≤20-line return cap and `working_file` field. The remaining ~44 sites use bare "Return: ..." instructions without caps.
+
+**Specific violations of the >200-line subagent return threshold (HIGH per protocol):**
+- `run-report.md` Step 4.2a (line 56): "Return: chapter draft content" — chapter prose returned in full to main session; typical chapter is 1,500–3,000 words = potentially ~3,900 tokens just for the prose body. (HIGH)
+- `run-report.md` Step 4.2b (line 59): "Return: review verdict, findings list, recommended changes" — full findings list including recommended changes. (HIGH)
+- `run-report.md` Step 4.2c (line 62): "Return: QC verdict (PASS/FAIL), per-item findings" — full per-item compliance findings. (HIGH)
+- `run-analysis.md` Step 5d (lines 95–115): structured output format embedded in command body containing `## Approved Decisions`, `## Nuance Adjustments Applied`, `## Noted Alternatives`, `## Dependency Consistency Check`. (HIGH)
+- `review-chapter.md` Step 2 (line 49): "Produce the findings report, verdict, priority fixes, and scarcity compliance summary" — full report returned to main session. (HIGH)
+- `verify-chapter.md` Step 3a (line 49): full correction list returned with per-item bright-line metadata.
+
+**Waste mechanism:** Each non-compliant return places full subagent output into main-session context. Across a typical run of 40+ subagent invocations, even a conservative 100-line average return = ~5,000 tokens × 40 = ~200,000 tokens of subagent output content materialized in the main session per workflow run.
+
+### F2 — Stage 4 main-session pre-load is large and partly delegable — HIGH
+
+**Evidence:** `run-report.md` Step 4.0 (lines 13–22): main session reads all chapter drafts, scarcity register, all section directives, all refined cluster memos, all research extracts, all editorial recommendations. Estimated ~30,000+ tokens loaded into main-session context before any subagent dispatch. Justification on line 22: "These inputs are referenced throughout the pipeline. Sub-agents receive content, not file paths (per context isolation rules)."
+
+**Waste mechanism:** Main session retains content for the duration of Stage 4. If Stage 4 processes 5 chapters × 4 subagents per chapter = 20 dispatches, the same content is content-passed 20 times. Disk-to-subagent direct read (per the existing exception in stage-instructions.md "Context Isolation Rules" allowing "large read-only reference files... may be passed by absolute path") would eliminate the main-session load entirely. The current rule treats memos/extracts/directives as content-pass-only, multiplying the cost.
+
+### F3 — `@-imports` in CLAUDE.md auto-load four reference files contradicting the "only load when working" instruction — HIGH
+
+**Evidence:** `CLAUDE.md` line 11 (`@reference/stage-instructions.md`), line 36 (4-file reference list framed as `IMPORTANT`), lines 73, 85, 89 (`See @reference/stage-instructions.md § ...`). The `@`-prefix triggers auto-load at session start. Line 36 instructs "Only load these when actively working on the relevant stage or task" — but the `@` mechanism cannot honor that conditional.
+
+**Per-session cost:** stage-instructions.md (~3,446 tokens) + file-conventions.md (~1,235 tokens) + quality-standards.md (~945 tokens) + style-guide.md (~571 tokens) = **~6,197 tokens loaded every turn** regardless of stage. Combined with CLAUDE.md itself (~1,482 tokens) the per-turn fixed cost is ~7,679 tokens.
+
+**Waste mechanism:** A user running `/status` (13 lines) still pays ~7,679 tokens of CLAUDE.md + reference imports. A 30-turn session on routine ops = ~230,000 tokens of always-loaded reference material that the conditional-load instruction was supposed to prevent. (boundary): per-session cost is at the boundary of the protocol's HIGH threshold (>10,000 tokens unnecessary loading) depending on session length.
+
+### F4 — Compaction discipline is well-marked at command level but not enforced across orchestration boundaries — MEDIUM
+
+**Evidence:** Compact markers `▸ /compact` are present in 12 of 28 commands. `run-execution.md` has 7 markers, `run-analysis.md` has 8, `run-cluster.md` has 3. Clear boundary discipline within these commands.
+
+**Gaps:**
+- `run-report.md` (85 lines): only 3 compact markers despite the longest pre-load and the per-chapter loop. Per-chapter `▸ /compact` between chapters appears only in step 4.2i (line 79), nowhere else in the chapter loop.
+- `review-chapter.md`: 1 compact marker at end (line 52) — full upstream load + qc-gate dispatch happens in main session with no mid-step compact.
+- `verify-chapter.md`: 2 compacts but no compact between Step 1 (chapter+extracts read) and Step 2 (API call construction).
+- `produce-architecture.md`: 2 compacts; appropriate for its 4-phase structure.
+- `produce-prose-draft.md` (212 lines): 6 compacts, well-distributed across 6 phases.
+- No global "compact at section boundary" rule — between consecutive `/run-cluster cluster-NN` invocations operator is reminded ("After this cluster completes, run /compact before starting the next cluster"), but the instruction is operator-prompted, not auto-enforced.
+
+**Waste mechanism:** Untracked context accumulation between commands. Compaction discipline is good *within* each command but does not survive multi-command sequences (e.g., `/run-cluster 01` → `/run-cluster 02` → `/run-analysis`).
+
+### F5 — Refinement multiplier crosses MEDIUM threshold per chapter unit — MEDIUM
+
+**Evidence:** Per-chapter Stage 4 sequence: evidence-to-report-writer (writer) + chapter-prose-reviewer (reviewer) + report-compliance-qc (compliance qc-gate) + optional fix-agent + citation-converter = 4–5 subagents per chapter. Plus optional `/review-chapter` (independent qc-gate) and `/verify-chapter` (execution-agent + optional evidence-prose-fixer). Per-chapter QC count: 3–5.
+
+**Per protocol:** "Consistent need for >3 refinement cycles → MEDIUM (may indicate instruction quality issue rather than token waste per se, but the token cost is real)."
+
+The per-section run also embeds `/produce-prose-draft` Phase 3 score routing (potential re-run of Phase 2 if score 1–2) and `/run-execution` Step 2.1b retry logic (one retry on REVISE-Moderate). Cumulative re-pass risk per section: low-bounded (caps at 2) but consistent. (boundary)
+
+### F6 — Multiple commands re-load same large content across consecutive steps — MEDIUM
+
+**Evidence:**
+- `run-analysis.md` Step 5b (line 61): main session reads memo-review.md, all refined cluster memos, scarcity register, all section directives — content-passes to subagent.
+- `run-analysis.md` Step 5c (line 70): main session re-reads memo-review.md, recommendations.md, all refined cluster memos, scarcity register, all section directives — content-passes to qc-gate subagent.
+- `run-analysis.md` Step 5d (line 80): main session re-reads memo-review, recommendations, qc-report — content-passes to auto-delegate subagent.
+
+The same memo set + directives + scarcity register passes through main session three times in run-analysis. With a 3-cluster section: 3 memos (~6,000 words) + 3 directives (~3,000 words) + scarcity register (~500 words) = ~9,500 words × 1.3 = ~12,350 tokens loaded into main session three times in succession. Single load + retain across the three dispatches would cut this by 2/3.
+
+**Waste mechanism:** Re-load cost without functional benefit. Compaction between steps is supposed to clear it, but content is re-read fresh each time.
+
+### F7 — `review-chapter.md` and `verify-chapter.md` both load all upstream artifacts in main session before delegating to qc-gate — HIGH
+
+**Evidence:** `review-chapter.md` Step 1 (lines 20–27) loads 7 inputs in main session: chapter prose, architecture extract, style reference, section directive, scarcity register, cluster memo, synthesis brief. Step 2 (line 38) then content-passes all 7 to qc-gate subagent. Estimated main-session load: ~8,000–12,000 tokens for a single review.
+
+Similarly `verify-chapter.md` Step 1: chapter + corresponding research extracts. Extracts can be ~15,000 words for a chapter's scope.
+
+**Waste mechanism:** Standalone `/review-chapter NN` and `/verify-chapter NN` pay the full main-session load cost on every invocation. Operator running these commands across 5 chapters pays the load cost 5× without overlap-deduplication.
+
+### F8 — `run-report.md` Step 4.2a returns chapter prose into main session — HIGH
+
+**Evidence:** Line 56: "Task: produce chapter prose. Return: chapter draft content, scarcity items addressed, evidence coverage notes."
+
+The chapter draft is then read again by Step 4.2b (review subagent), Step 4.2c (compliance qc-gate), and Step 4.2d (write to disk). The literal "chapter draft content" return places the prose in main-session context.
+
+**Waste mechanism:** Per chapter ~3,000 words = ~3,900 tokens of prose materialized in main session. The subagent could write the file and return only the path; subsequent steps read from disk.
+
+### F9 — `produce-prose-draft.md` Phase 4 reads non-adjacent prose sections in main session — MEDIUM
+
+**Evidence:** Lines 133–138: globs prose directory, "Read all other completed prose sections (non-adjacent) — for redundancy/contradiction checking. For large document parts (6+ completed sections), read only the opening and closing paragraphs of non-adjacent sections to manage context size."
+
+The opening-and-closing-only mitigation kicks in at 6 sections; for sections 2–5 of a part, all completed sections are read fully into main session.
+
+**Waste mechanism:** Section 5 of a 9-section part reads sections 1–4 in full (~6,000 words) into main session before content-passing to the integration subagent. The subagent could perform the read itself.
+
+### F10 — Improvement-analyst agent reads project state directly (correct pattern) but other agents content-pass — LOW (informational)
+
+**Evidence:** `improvement-analyst.md` Phase 1: reads CLAUDE.md, settings.json, list .claude/commands/, list .claude/hooks/, /logs/workflow-observations.md directly — gets context independently from main session.
+
+Other agents (`qc-gate`, `verification-agent`, `execution-agent`) per their definitions are content-pass-only with `tools: Read` (qc-gate, verification-agent) or `tools: Read, Bash` (execution-agent).
+
+The qc-gate definition `## Criteria Routing Table` (lines 41–53) explicitly says: "The main agent reads the criteria source and passes the relevant criteria text to the QC agent. The QC agent never reads skill files itself." This is the intended isolation rule but it's the precise mechanism that forces main-session content-loading documented in F2, F6, F7.
+
+**Note:** This is a structural design decision, not a defect — it exists for context isolation. The exception already noted in stage-instructions.md ("large read-only reference files ... may be passed by absolute path") could be expanded to operand artifacts when isolation is preserved by other means (fresh-context spawn).
+
+### F11 — Stage 4 inputs declared as `Read` in main session for "referenced throughout" reasons but each subagent gets content-pass — MEDIUM
+
+**Evidence:** `run-report.md` line 22: "These inputs are referenced throughout the pipeline. Sub-agents receive content, not file paths (per context isolation rules)."
+
+The justification is partial: if subagents receive content (passed by main session), the main session retains all of that content for the full Stage 4 duration. The savings from "load once, reference many" is ~zero because every subagent gets the same content content-passed.
+
+**Waste mechanism:** Content is held in main-session context for ~30+ subagent dispatches across Stage 4. If Stage 4 takes ~50 main-session turns at ~30,000 tokens of resident content = 1,500,000 token-turns just for the upfront load.
+
+### F12 — `intake-reports.md` mandates Opus for filing operations — LOW
+
+**Evidence:** `intake-reports.md` lines 10–11: "This command MUST run on Opus. Raw reports must be written verbatim — never summarized, truncated, or compressed. Lower-capability models (Haiku, Sonnet) have been observed to summarize instead of copying full content."
+
+**Note:** This is a model-tier choice, not strictly a token-flow waste. From a pure token-flow lens, the operation itself is cheap; from cost-per-token, it's the most expensive option.
+
+### F13 — Working-file pattern read at handoff phases is correctly structured — MEDIUM (boundary, informational)
+
+**Evidence:**
+- `produce-prose-draft.md` Phase 6 step 2: "Read `{prose_output_dir}/working/phase-3-qc-{section}.md` to retrieve the full Phase 3 findings list for operator surfacing."
+- `produce-formatting.md` Phase 4 steps 2–3: reads `formatting-phase-2-{section}.md` and `formatting-phase-3-qc-{section}.md` working files.
+
+The working files contain full subagent output (the disk-write that prevents main-session load during execution). The handoff phase legitimately needs the content to brief the operator, but the read happens in main session at the end.
+
+**Severity:** MEDIUM (boundary) — pattern is correctly designed. Flag is informational: any future change that pushes more content into the working files will increase the Phase 6 read cost.
+
+### F14 — Workflow has 28 commands without per-command activation/discoverability discipline — LOW
+
+**Evidence:** 28 command files. Pipeline-stage commands: `/run-preparation`, `/run-execution`, `/run-cluster`, `/run-analysis`, `/run-synthesis`, `/run-report`, `/produce-architecture`, `/produce-prose-draft`, `/produce-formatting`, `/produce-knowledge-file`, `/intake-reports`, `/inject-dependency`, `/review-chapter`, `/verify-chapter`, `/refinement-pass`, `/qc-pass`. Utility/operator: `/audit-repo`, `/audit-structure`, `/improve`, `/note`, `/prime`, `/session-plan`, `/wrap-session`, `/workflow-status`, `/status`, `/friction-log`, `/create-context-pack`, `/update-claude-md`.
+
+No documented "trigger" or activation-condition section per command (frontmatter has only `friction-log`, `model`, sometimes `argument-hint`).
+
+**Note:** This is a discoverability concern, not a token-cost concern directly. Listed for completeness — descriptions of `/refinement-pass` (23 lines) and `/qc-pass` (23 lines) would not necessarily disambiguate from `/review-chapter` based on description alone.
+
+### F15 — `run-cluster.md` command implementation diverges from updated `stage-instructions.md` Step 3.2 spec — MEDIUM
+
+**Evidence:** `stage-instructions.md` Step 3.2 (line 58) reads: "Apply `cluster-analysis-pass` logic for all clusters in parallel via `/run-cluster`. Main agent passes extract paths (not content) to one sub-agent per cluster; each sub-agent reads its own extracts and writes its analysis memo. Context isolation is handled within each sub-agent — no `/compact` between clusters needed in the main session."
+
+`run-cluster.md` Step 1 (lines 17–18) reads: "1. Read the research extracts for this cluster from `/execution/research-extracts/{section}/`. 2. Read the scarcity register..." Step 2 line 25: "Pass it: the skill content, the cluster's research extracts, and any relevant scarcity register entries." Then line 27: "▸ /compact — skill content and extract content no longer needed." And line 46: "After this cluster completes, run /compact before starting the next cluster..."
+
+The command implements the older sequential-with-content-pass pattern. The newer spec (path-pass + parallel + no inter-cluster compact) is not yet reflected in the command file.
+
+**Waste mechanism:** Operators running `/run-cluster` per the command file pay double the load cost (main session + subagent) and serialize the cluster work — directly counter to the spec's parallelism intent. For a 3-cluster section, ~3× extracts × content-pass = ~3× the necessary main-session load.
+
+---
+
+## Protocol gaps
+
+- The protocol's >200-line threshold for subagent returns is ambiguous about render format (line count of formatted text vs. word count). Interpreted here as effective content length — chapter-prose returns of 1,500+ words classify as HIGH regardless of render.
+- "Delegable" classification (Section 4 Step 5) is structural inference without telemetry. Severity ratings reflect that.
+- The `@-import` mechanism is not explicitly named in the protocol; interpreted as "loaded at workflow start" per Step 4.1 Question 1.
+- The protocol does not provide a specific severity for "command file diverges from spec doc" (F15) — applied MEDIUM by analogy to "consistent inefficient pattern."
+
+## Summary stats
+
+- **Findings:** 15
+- **HIGH:** 5 (F1, F2, F3, F7, F8)
+- **MEDIUM:** 7 (F4, F5, F6, F9, F11, F13, F15)
+- **LOW:** 3 (F10, F12, F14)
+- **Subagent-return contract enforcement rate:** 6/50 ≈ 12%
+- **Per-turn fixed cost estimate (CLAUDE.md + @-imports):** ~7,679 tokens
+- **Largest single command file:** produce-prose-draft.md, 212 lines, ~4,804 tokens
+
+## Boundary findings (within ±15% of severity threshold)
+
+- F3: per-session cost ~7,679 tokens — at the boundary of the HIGH threshold (>10,000 tokens) depending on session length. (boundary)
+- F5: refinement multiplier per-chapter is 3–5; the 3 boundary triggers MEDIUM. (boundary)
+- F13: structural-correct, flagged informationally. (boundary)

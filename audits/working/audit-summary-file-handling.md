@@ -1,26 +1,38 @@
-# Section 6 — File Handling Patterns — Summary
+# Section 6 Summary — File Handling Patterns
 
-**Audit date:** 2026-04-24  
-**Total findings:** 6
+**Audit date:** 2026-05-02  
+**Scope:** ai-resources  
+**Section:** 6 (File Handling Patterns)
 
-**By severity:**
-- HIGH: 0
-- MEDIUM: 4
-- LOW: 2
+---
 
-**Top 3 findings:**
-1. MEDIUM — `Read(pattern)` deny-rule coverage incomplete. Only 1 of 8 expected directories covered (`archive/`); missing coverage for `audits/`, `logs/`, `reports/`, `inbox/`, `drafts/`, and glob patterns.
-2. MEDIUM — `audits/` directory contains 13 large files (9 prior reports + 4 working notes) totaling ~8,000+ lines / 76,000+ estimated tokens, unprotected. Single Glob/Grep could load ~100,000 tokens.
-3. MEDIUM — `logs/session-notes.md` (437 lines / 5,362 words / 6,970 est. tokens) is largest single file in repo; stored in unprotected `logs/` directory alongside archive-marked files and decision logs.
+## Overview
 
-**Other MEDIUM findings:** `audits/working/` (in-progress audit notes), `reports/` (generated output), `logs/` (session archives).
+Found 6 findings across file handling, deny-rule coverage, and workspace hygiene. Read(pattern) deny rules are MEDIUM (incomplete — covers archive but misses audits/working/**).
 
-**LOW findings:** Archive-marked files at root of `logs/` despite archive naming convention; superseded repo-due-diligence versions (04-06, 04-11, 04-12) coexist without explicit deprecation.
+## Findings by severity
 
-**No deprecated/draft directories found.** Archive-named files exist in unprotected directories but naming is clear.
+- **HIGH:** 0
+- **MEDIUM:** 4
+- **LOW:** 2
 
-**Confidence:** HIGH (all measurements direct; based on file-size inspection, deny-rule inspection via jq, filename analysis).
+## Top 3 findings
 
-**Boundary findings:** None.
+1. **MEDIUM** — `audits/working/**/` (15+ files, 290–602 lines each) unignored and discoverable. Add `Read(audits/working/**)` to deny rules. (Unintended gap, aligns with operator constraint.)
 
-Full evidence in `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/working/audit-working-notes-file-handling.md`. Main session should read the full notes only if a specific finding needs deeper review.
+2. **MEDIUM** — Large active session logs (`logs/decisions.md`, `logs/session-notes.md`, `logs/usage-log.md`) grow unbounded (~24k tokens combined). Implement rotation when exceeds 600 lines each.
+
+3. **MEDIUM** — 11 prior audit reports (~92k tokens total) in `audits/` remain intentionally readable (trade-off for /friday-act, /risk-check, /token-audit support). No action needed, but trade-off noted.
+
+---
+
+## Deny-rule status (from Step 0.3)
+
+- **Covered:** `archive/**`, `**/deprecated/**`, `**/old/**`, `inbox/archive/**`, `logs/*-archive-*.md`
+- **Intentionally not covered:** `audits/`, `reports/` (needed by audit workflows)
+- **Not covered, should be:** `audits/working/**` (intermediate audit artifacts)
+- **Verdict:** MEDIUM — gap for audits/working/** is unintended
+
+---
+
+Full evidence in /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/working/audit-working-notes-file-handling.md. Main session should read the full notes only if a specific finding needs deeper review.
