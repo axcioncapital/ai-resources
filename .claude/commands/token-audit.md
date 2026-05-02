@@ -143,7 +143,7 @@ Input: $ARGUMENTS (optional) — scope selector:
 
 ### Step 13: Execute Section 8 (Best Practices Comparison) Inline
 
-39. Execute Section 8's 12-item comparison against the April 2026 best practices defined in the protocol. Rate each Present / Partial / Not implemented. Assign priority per the protocol's rule (by estimated token-savings impact, not by implementation status).
+39. Execute Section 8's 15-item comparison against the May 2026 best practices defined in the protocol. Rate each Present / Partial / Not implemented. Assign priority per the protocol's rule (by estimated token-savings impact, not by implementation status).
 40. Append `## 8. Best Practices Comparison` to `REPORT_PATH`.
 
 ---

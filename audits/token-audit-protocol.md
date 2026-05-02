@@ -1,9 +1,10 @@
 ---
 name: token-audit-protocol
-version: 1.2
+version: 1.3
 source: |
   v1.1 authored by operator (Patrik) in conversation 2026-04-18.
   v1.2 corrections applied during build session to address independent QC findings.
+  v1.3 Section 8 extended with 3 context engineering items (13–15) from Anthropic article 2026-05.
 rationale: |
   Tool-required canonical path. The token-audit-auditor subagent requires the protocol
   at {AUDIT_DIR}/token-audit-protocol.md. Per workspace CLAUDE.md Input File Handling,
@@ -14,13 +15,14 @@ corrections_applied:
   - Section 5 — workspace-scope conditional delegation rule added
   - Token estimation header — ±30% proxy-drift caveat added, cross-referenced from threshold sections
   - Section 0.4 — output path updated to {AUDIT_DIR}/token-audit-YYYY-MM-DD[-{SCOPE_SLUG}].md (incremental-write language preserved verbatim)
+  - Section 8 — items 13–15 added (inter-skill disambiguation, structured prompts, few-shot examples); date label updated to May 2026
 ---
 
 # Token Usage Optimization Audit Protocol
 
 ## For: Claude Code Execution Against the Axcíon AI Repo
 
-**Version:** 1.2
+**Version:** 1.3
 **Created:** April 2026
 **Purpose:** This protocol tells you (Claude Code) exactly what to inspect, how to measure it, and how to report findings. Execute sections sequentially when feasible. If token or context limits prevent full completion, follow the priority order in the Execution Notes and clearly mark any omitted sections as "SKIPPED — token budget constraint." Do not ask the operator clarifying questions unless you hit a genuine blocker — this document should answer everything you need.
 
@@ -506,9 +508,9 @@ When checking for specific commands (e.g., `/context`, `/cost`, `/effort`), equi
 
 ## 8. Best Practices Comparison
 
-**What to do:** Compare the repo's current configuration against the April 2026 best practices listed below. For each practice, assess whether the repo implements it, partially implements it, or doesn't implement it at all.
+**What to do:** Compare the repo's current configuration against the May 2026 best practices listed below. For each practice, assess whether the repo implements it, partially implements it, or doesn't implement it at all.
 
-**Current best practices (April 2026):**
+**Current best practices (May 2026):**
 
 1. **CLAUDE.md under 200 lines.** Move specialized instructions to skills. Only include what applies to every session.
 2. **`Read(pattern)` deny rules configured in `.claude/settings.json`.** Exclude build artifacts, data files, logs, and anything Claude doesn't need. Well-configured deny rules can reduce per-request context by 40–70%.
@@ -522,6 +524,9 @@ When checking for specific commands (e.g., `/context`, `/cost`, `/effort`), equi
 10. **Output-to-disk pattern for subagents.** Subagents write full output to files; return only file path + one-sentence summary to main session.
 11. **Precise prompts over vague ones.** "Fix the JWT validation in src/auth/validate.ts line 42" is dramatically cheaper than "fix the auth bug." *(Structural assessment only — assess based on any prompt guidance found in CLAUDE.md, skills, or workflow docs. No systematic evidence collection in earlier sections.)*
 12. **Session notes pattern.** At session end, summarize key decisions and next steps to a file. Start next session by loading that file instead of relying on conversation history or memory. *(Structural assessment only — assess based on any session handoff patterns found in CLAUDE.md or workflow docs.)*
+13. **Skills with similar triggers are explicitly disambiguated.** Where two or more skills could plausibly fire on the same task, their descriptions state the discriminator (e.g., "use X for A; use Y for B"). This extends Section 2's vague-description check by adding the inter-skill overlap dimension. *(Structural assessment — evaluate based on skill descriptions in the skills index and any disambiguation guidance in CLAUDE.md.)*
+14. **Agent and skill prompts use structured sections.** Prompts for agents and key skills use headers or XML tags to organize distinct concerns (context, task, constraints, output format). Flat-prose prompts are harder for the model to parse and increase the chance of instruction-following errors. *(Spot-check 3–4 agent files and any skills with complex prompts.)*
+15. **Few-shot examples present where useful.** Where agent or skill behavior is non-obvious or nuanced, 2–3 curated canonical examples are included in the prompt. Exhaustive examples are counterproductive. *(Structural assessment — grep for example blocks in agent and skill files.)*
 
 **Note:** Section 8 status ratings are descriptive (what is/isn't implemented). Section 9 priority rankings must be based on estimated token savings and risk, not simply on implementation status. A practice can be "not implemented" but low-priority if its impact in this repo is small.
 
@@ -534,6 +539,9 @@ When checking for specific commands (e.g., `/context`, `/cost`, `/effort`), equi
 |---|----------|--------|-----------------|----------|
 | 1 | CLAUDE.md under 200 lines | [Implemented / Partial / Not implemented] | [details] | [HIGH/MEDIUM/LOW] |
 | 2 | Read(pattern) deny rules configured | ... | ... | ... |
+| 13 | Skills with similar triggers disambiguated | ... | ... | ... |
+| 14 | Agent/skill prompts use structured sections | ... | ... | ... |
+| 15 | Few-shot examples present where useful | ... | ... | ... |
 ```
 
 ---
