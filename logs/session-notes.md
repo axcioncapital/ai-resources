@@ -321,3 +321,30 @@ Added 3 new best-practice items to token-audit Section 8 based on Anthropic's co
 
 ### Open Questions
 - None
+
+## 2026-05-02 — Research workflow improvements from Anthropic multi-agent article
+
+### Summary
+Read Anthropic's multi-agent research system engineering article and compared its design principles against the research workflow template. Identified three actionable gaps: no explicit broad-before-narrow query ordering, sequential cluster analysis (run-synthesis already had parallel), and no cross-project quality measurement. Planned, QC'd, and executed all three improvements.
+
+### Files Created
+- `workflows/research-workflow/logs/research-quality-log.md` — new cross-project extract quality log with header row and column definitions
+
+### Files Modified
+- `skills/supplementary-query-brief-drafter/SKILL.md` — added Pass 1 breadth principle (broad-before-narrow) and Pass 2 complementary narrowing rule
+- `workflows/research-workflow/reference/stage-instructions.md` — breadth notes at Steps 2.S1 and 3.S1; quality log note at Step 2.4 gate; Steps 3.2–3.3 updated for parallel cluster analysis (removed per-cluster /compact, changed gate to per-section)
+- `workflows/research-workflow/.claude/commands/run-cluster.md` — fully rewritten: processes all clusters in parallel via subagents, single operator gate replaces per-cluster gate
+- `workflows/research-workflow/.claude/commands/run-execution.md` — Step 2.4 now appends a quality log row when all extracts are APPROVED
+
+### Decisions Made
+- **Gate granularity (Improvement 2):** Per-section gate chosen over per-cluster (operator confirmed). All refined cluster memos now reviewed together at the end of /run-cluster, matching run-synthesis behavior.
+- **Quality log location (Improvement 3):** Local workflow log (`workflows/research-workflow/logs/`) chosen over ai-resources-level log. Avoids cross-repo write from project sessions; aggregation across projects is manual when needed.
+- **QC → resolve cycle:** Plan went through full QC pass + resolve. Six findings addressed: current-state reframing (Improvement 1), cross-repo write policy (Improvement 3), gate granularity split-out, lightweight main-context delegation for parallel subagents, explicit /compact removal, and mutually-exclusive log schema.
+
+### Next Steps
+- `/sync-workflow` to propagate run-cluster.md and run-execution.md changes to any deployed research projects
+- Push commit `d5f5e3c`
+- Run `/cleanup-worktree` — untracked risk-check reports and modified clarify.md still in working tree from prior session
+
+### Open Questions
+- None

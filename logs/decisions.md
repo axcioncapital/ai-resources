@@ -41,3 +41,28 @@
 - *Standalone /context-audit command.* Rejected: separate command to maintain; same coverage achievable by extending token-audit.
 - *New §L section in friday-checkup.* Rejected: requires friday-checkup edits; token-audit already runs monthly there.
 - *Extend token-audit + add to friday-checkup.* Rejected: redundant; token-audit already wired in.
+
+## 2026-05-02 — Cluster analysis gate granularity
+
+**Context:** Rewriting /run-cluster to use parallel subagents required choosing whether the operator review gate stays per-cluster (one pause per cluster as each memo is produced) or consolidates to per-section (one pause after all clusters complete).
+
+**Decision:** Per-section gate. All refined cluster memos reviewed together at the end of /run-cluster.
+
+**Rationale:** Parallel subagents produce all memos simultaneously, so per-cluster gating would require an artificial serialization that defeats the parallelism benefit. Per-section review is also more coherent — the operator sees all analytical threads at once before deciding whether to proceed. This matches the existing pattern in /run-synthesis. Operator confirmed without modification.
+
+**Alternatives considered:**
+- *Per-cluster gate (status quo).* Rejected: incompatible with parallel execution; would require sequential dispatch with artificial waits.
+- *Hybrid: per-section but with early-abort option.* Not needed — if a cluster memo has issues, the operator reviews them all anyway and can redirect before /run-analysis.
+
+---
+
+## 2026-05-02 — Quality log location for cross-project extract tracking
+
+**Context:** Adding a cross-project extract quality log raised the question of where it lives: inside ai-resources/logs/ (portfolio-level, one file) vs inside each deployed project's own logs/ directory (local, per-project).
+
+**Decision:** Local log at `workflows/research-workflow/logs/research-quality-log.md`. Each deployed project writes its own quality log; cross-project aggregation is manual when needed.
+
+**Rationale:** Workspace CLAUDE.md prohibits editing ai-resources skill files from project workspaces. While log-append is a different operation, putting the log in ai-resources would introduce a new cross-repo write convention that needs explicit policy exception. Local logging keeps each project self-contained and requires no policy change. The cost is that cross-project comparison requires manually aggregating individual project logs.
+
+**Alternatives considered:**
+- *ai-resources/logs/research-quality-log.md.* Rejected: requires cross-repo write from project sessions; introduces new convention that contradicts existing "no editing ai-resources from project workspaces" posture.
