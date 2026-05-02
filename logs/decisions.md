@@ -2,7 +2,26 @@
 
 > Archive: [decisions-archive-2026-04.md](decisions-archive-2026-04.md)
 
-## 2026-05-01 — permission-sweep CRITICAL (Rule 4): confirmed false positive
+## 2026-05-02 — Revert token-audit M1 (Read(audits/working/**) deny rule)
+
+**Context.** Token-audit 2026-05-02 M1 recommended adding `Read(audits/working/**)` to the ai-resources deny list to prevent "future sessions from reading stale working notes during exploration." Implemented in commit 9992cf2; end-time `/risk-check` flagged a load-bearing conflict.
+
+**Decision.** Revert M1. The deny rule blocks two existing main-session reads that operate within the same session that produces the working notes:
+- `/innovation-sweep` Step 7.27 (`commands/innovation-sweep.md:134`) — main session reads the just-written `WORKING_NOTES_PATH` to render the triage report.
+- `/audit-critical-resources` Step 26 (`commands/audit-critical-resources.md:200`) — main session iterates each per-resource working-notes file to extract per-resource sections for the final report.
+
+**Rationale.** The audit's premise — that working notes are "intermediate artifacts not consumed by active commands" — was wrong. Both commands legitimately read working notes within the same session. A blanket deny would break both workflows on next invocation. The audit's protective value (situational, MEDIUM) is outweighed by the operational cost of broken commands.
+
+**Alternatives considered.**
+- *Scope deny rule narrowly (e.g., `Read(audits/working/scratch/**)`).* Rejected: would require migrating files from working/ to working/scratch/ and updating both command paths. Net cost > revert.
+- *Update both commands to consume working-notes via a synthesis subagent (mirror H5 pattern).* Deferred: structural refactor of two commands; not within scope of this fix session. May revisit if a future audit re-flags working/ as a token-cost issue.
+- *Keep the rule and document the conflict.* Rejected: silent breakage on the next /innovation-sweep or /audit-critical-resources run.
+
+**Follow-up.** If working/ ever becomes large enough to warrant exclusion, the right pattern is the H5-style subagent delegation, not a blanket deny rule.
+
+---
+
+
 
 **Context.** /permission-sweep 2026-05-01 flagged a CRITICAL Rule 4 finding: "allow list missing entries" for ai-resources/.claude/settings.json. The report itself noted a bypass-mode caveat.
 

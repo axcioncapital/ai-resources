@@ -15,8 +15,7 @@
       "Read(logs/*-archive-*.md)",
       "Read(inbox/archive/**)",
       "Read(**/deprecated/**)",
-      "Read(**/old/**)",
-      "Read(audits/working/**)"
+      "Read(**/old/**)"
     ],
     "defaultMode": "bypassPermissions"
   },

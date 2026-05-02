@@ -384,3 +384,42 @@ Ran full 11-section token-usage efficiency audit (`/token-audit ai-resources`) a
 
 ### Open Questions
 - None
+
+## 2026-05-02 — Token-audit fixes: M3, H3, H5, M2 (M1 reverted post-risk-check)
+
+### Summary
+Acted on five recommendations from the 2026-05-02 token-audit report. Initial commit 9992cf2 applied all five (M1, M3, H3, H5, M2). End-time `/risk-check` returned PROCEED-WITH-CAUTION and surfaced a load-bearing conflict in M1: the new `Read(audits/working/**)` deny rule would break `/innovation-sweep` Step 7.27 and `/audit-critical-resources` Step 26, both of which legitimately read working notes within the same session that produces them. M1 was reverted in a follow-up commit; the four other fixes stand. M3 adds ≤30-line return contracts to all five `/new-project` pipeline-stage agents. H3 removes unconditional `@`-imports from the research-workflow CLAUDE.md template, saving ~6,200 tokens per turn in deployed research projects. H5 creates a new `findings-extractor` haiku-tier subagent and delegates friday-checkup Step 7.16 bulk-read to it (~10,300 tokens per friday-checkup saved). M2 adds `/compact` breakpoints at natural tier boundaries in `/new-project`, `/repo-dd`, `/friday-checkup`, and `/friday-act`. Also diagnosed a transient permission prompt on `pipeline-stage-3c.md`; confirmed same isolated-transient pattern as 2026-04-28; no settings fix required.
+
+### Files Created
+- `.claude/agents/findings-extractor.md` — new haiku-tier subagent for /friday-checkup findings extraction; returns ≤30-line structured findings list (H5)
+- `audits/risk-checks/2026-05-02-end-time-risk-check-on-token-audit-fix-set.md` — end-time risk-check report (PROCEED-WITH-CAUTION; M1 conflict surfaced)
+
+### Files Modified
+- `.claude/settings.json` — M1 attempted then reverted; net no change after risk-check feedback
+- `.claude/agents/pipeline-stage-3a.md` — added return contract section (M3)
+- `.claude/agents/pipeline-stage-3b.md` — added return contract section (M3)
+- `.claude/agents/pipeline-stage-3c.md` — added return contract section (M3)
+- `.claude/agents/pipeline-stage-4.md` — added return contract section (M3)
+- `.claude/agents/pipeline-stage-5.md` — added return contract section (M3)
+- `workflows/research-workflow/CLAUDE.md` — replaced 4 `@`-import directives with prose pointers (H3)
+- `.claude/commands/friday-checkup.md` — delegated Step 7.16 to findings-extractor; added /compact breakpoint before /token-audit (H5 + M2)
+- `.claude/commands/new-project.md` — added /compact suggestion at stage gate (M2)
+- `.claude/commands/repo-dd.md` — added /compact at factual→deep and deep→full tier boundaries (M2)
+- `.claude/commands/friday-act.md` — added /compact after tactical loop (M2)
+
+### Decisions Made
+- **M1 reverted (post-risk-check)** — the audit's premise that `audits/working/**` files were unconsumed intermediate artifacts was wrong; both `/innovation-sweep` and `/audit-critical-resources` consume them within the same session. Documented in decisions.md (2026-05-02). Right pattern if working/ ever needs exclusion in the future is H5-style subagent delegation, not a blanket deny rule.
+- M3, H3, H5, M2 executed as specified by the token-audit report. No analytical decisions required — implementations followed directly from audit recommendations.
+
+### Next Steps
+- Push commits `9992cf2` (initial fixes) and the M1-revert wrap commit
+- Consider deferred audit-discipline note: working notes consumed by their producing command should be flagged as load-bearing in token-audit Section 6 (not "stale intermediates")
+- End-time risk-check run this session (new agent file created) — verdict in risk-check report
+- Remaining token-audit HIGH findings deferred: H1 (research-workflow 44 launch-site return caps), H2 (run-report.md 30k pre-load refactor), H4 (cleanup-worktree SKILL.md split)
+- Run `/sync-workflow` to propagate H3 changes to any deployed research projects (CLAUDE.md @-imports removed)
+- Run `/cleanup-worktree` — untracked risk-check reports + modified clarify.md still in working tree from prior sessions
+- Approve orphan skill moves: `fund-triage-scanner` and `prose-refinement-writer` → `skills/deprecated/`
+- Dedicated session for H1: research-workflow prose-pipeline subagent return refactor (reminder scheduled 2026-05-08)
+
+### Open Questions
+- None
