@@ -39,3 +39,7 @@ Save the test report to: `{pipeline-directory}/test-results.md`
 When testing is complete, announce:
 
 > "Stage 5 complete. Test results saved to {path}. {passed} passed, {failed} failed, {warnings} warnings. [If all pass:] All checks passed. Say NEXT to advance to Stage 6 (Session Guide) or SKIP to finish the pipeline. [If failures:] Review the failures above and decide how to handle each one before advancing."
+
+## Return Contract
+
+Return to the orchestrator: ≤30 lines. Include stage name, test report path, pass/fail/warning counts, and the announcement text above. Do not return full test details.

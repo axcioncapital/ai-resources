@@ -181,7 +181,7 @@ After each stage subagent completes:
 
 1. Update `pipeline-state.md`: set the current stage to `completed` and record the artifact path.
 2. Wait for the user's command:
-   - **`NEXT`** → Set the next stage to `in_progress` in `pipeline-state.md`. Spawn the next stage subagent.
+   - **`NEXT`** → Set the next stage to `in_progress` in `pipeline-state.md`. If context has grown from the prior stage, suggest `▸ /compact` before spawning. Spawn the next stage subagent.
    - **`SKIP`** → Valid after Stage 5 only (skips Stage 6 — marks it `skipped`, announces pipeline complete). Not valid at other stages.
    - **`ABORT`** → Mark all remaining `pending` stages as `cancelled` in `pipeline-state.md`. Announce abort. Do not delete project artifacts.
 

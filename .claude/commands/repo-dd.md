@@ -140,6 +140,8 @@ INFO:      Z items
 29. Do NOT push.
 30. If $ARGUMENTS does not contain "deep" or "full", stop here. Present the audit summary to the operator.
 
+▸ **Context checkpoint:** The factual audit has accumulated context. Before proceeding to the deep tier, run `/compact` to clear it.
+
 ---
 
 ## Deep Operational Assessment
@@ -277,6 +279,8 @@ Steps 8-14 run only when $ARGUMENTS contains "deep" or "full". They produce a se
 58. Cross-check: no finding should duplicate a factual audit finding without adding new interpretation. The deep review adds judgment; the audit provides facts.
 59. If any section has zero findings, state: "No issues identified. Checked: {describe what was examined}."
 60. Save the deep report.
+
+▸ **Context checkpoint:** Before pipeline testing, run `/compact` to clear the deep assessment context.
 
 ---
 

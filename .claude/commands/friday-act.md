@@ -105,6 +105,8 @@ Input: `$ARGUMENTS` (optional) — explicit path to a `friday-checkup-YYYY-MM-DD
 
 16. Items dispositioned `d` are accumulated for Step 5 logging.
 
+▸ After the tactical loop, run `/compact` if context is heavy (many fix-now items executed).
+
 ---
 
 ### Step 4: Policy-level Review (monthly + quarterly only)

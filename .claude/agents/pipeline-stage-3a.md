@@ -133,3 +133,7 @@ When complete, announce:
 - This is a mechanical scan. Do not analyze, interpret, or recommend — just inventory.
 - If a file can't be read, note it in the output and continue. Don't stop the entire scan for one unreadable file.
 - Keep the snapshot concise. Full file contents are NOT included — only summaries and metadata.
+
+## Return Contract
+
+Return to the orchestrator: ≤30 lines. Include stage name, counts (skills, commands, workflows found), output artifact path (`{pipeline-directory}/repo-snapshot.md`), and the announcement text. Do not return the full snapshot content.

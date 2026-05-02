@@ -44,3 +44,7 @@ Save the approved architecture to: `{pipeline-directory}/architecture.md`
 When the architecture is approved by the user, announce:
 
 > "Stage 3b complete. Architecture saved to {path}. {N} design decisions recorded. Say NEXT to advance to Stage 3c (Implementation Spec)."
+
+## Return Contract
+
+Return to the orchestrator: ≤30 lines. Include stage name, artifact path, decision count, and the announcement text above. Do not return architecture content.

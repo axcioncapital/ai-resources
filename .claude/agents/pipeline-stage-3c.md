@@ -43,3 +43,7 @@ Save the approved implementation spec to: `{pipeline-directory}/implementation-s
 When approved by the user, announce:
 
 > "Stage 3c complete. Implementation spec saved to {path}. {N} operations defined. Say NEXT to advance to Stage 4 (Implementation)."
+
+## Return Contract
+
+Return to the orchestrator: ≤30 lines. Include stage name, artifact path, operation count, and the announcement text above. Do not return spec content.

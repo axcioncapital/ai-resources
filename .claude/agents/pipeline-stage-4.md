@@ -62,3 +62,7 @@ When implementation is complete, announce:
 > "Stage 4 complete. {N} operations executed ({completed} completed, {failed} failed, {skipped} skipped). Implementation log saved to {path}. All changes are on the worktree branch — review the diff before merging. Say NEXT to advance to Stage 5 (Testing)."
 
 **Post-merge cleanup (remind user after Stage 5):** After merging the worktree branch to main, clean up with: `git worktree remove {worktree-path}` and `git branch -D {worktree-branch-name}`.
+
+## Return Contract
+
+Return to the orchestrator: ≤30 lines. Include stage name, implementation log path, operation counts (completed/failed/skipped), and the announcement text above. Do not return file contents or per-operation details.

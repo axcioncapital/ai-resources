@@ -8,7 +8,7 @@
 
 **Current Section:** {{CURRENT_SECTION}}
 
-**Document architecture:** {{DOCUMENT_ARCHITECTURE}}. See @reference/stage-instructions.md for full sequence constraints.
+**Document architecture:** {{DOCUMENT_ARCHITECTURE}}. See `reference/stage-instructions.md` for full sequence constraints.
 
 **Evidence calibration:** {{EVIDENCE_CALIBRATION}}
 
@@ -33,7 +33,7 @@ Five-stage pipeline: Preparation → Execution → Analysis & Gap Resolution →
 
 Artifact chain: Task Plan → Research Plan → Answer Specs → Deep Research Reports → Research Extracts → Cluster Analytical Memos → Section Directives → Report Prose
 
-**IMPORTANT:** For detailed stage instructions, read @reference/stage-instructions.md. For file naming rules, read @reference/file-conventions.md. For QC standards and evidence handling, read @reference/quality-standards.md. For writing voice and style, read @reference/style-guide.md. Only load these when actively working on the relevant stage or task.
+**IMPORTANT:** For detailed stage instructions, read `reference/stage-instructions.md`. For file naming rules, read `reference/file-conventions.md`. For QC standards and evidence handling, read `reference/quality-standards.md`. For writing voice and style, read `reference/style-guide.md`. Only load these when actively working on the relevant stage or task.
 
 ## Skill Dependency Chain
 
@@ -70,7 +70,7 @@ For non-critical issues (formatting, minor wording, small structural fixes), app
 
 ## Context Isolation Rules
 
-See @reference/stage-instructions.md § Context Isolation Rules.
+See `reference/stage-instructions.md` § Context Isolation Rules.
 
 ## Friction Logging
 
@@ -82,11 +82,11 @@ Pipeline commands auto-start a friction log session via hook (`friction-log: tru
 
 ## Citation Conversion Rule
 
-See @reference/stage-instructions.md § Citation Conversion Rule.
+See `reference/stage-instructions.md` § Citation Conversion Rule.
 
 ## Bright-Line Rule
 
-See @reference/stage-instructions.md § Bright-Line Rule.
+See `reference/stage-instructions.md` § Bright-Line Rule.
 
 ## Input File Handling
 

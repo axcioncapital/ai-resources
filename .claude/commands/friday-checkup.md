@@ -156,6 +156,8 @@ For each scope:
 
 Record the produced audit report path in `RESULTS`.
 
+▸ **Context checkpoint (monthly/quarterly):** After `/audit-claude-md` and before `/token-audit`, run `/compact` — token-audit is the heaviest step in the cadence.
+
 **E. `/token-audit` — monthly and quarterly only**
 
 Skip entirely if `TIER=weekly`.
@@ -357,7 +359,7 @@ This step refreshes the work-layer documentation: `projects.md` (project registr
 
     `/friday-act` parses these section headings verbatim. Do not rename them.
 
-16. To extract findings: Read each sub-report produced in Step 5 (the snapshot audit-repo files, the audit-claude-md reports, the token-audit reports, the permission-sweep report). For each, look for sections titled `HIGH`, `CRITICAL`, `Top findings`, or the report's executive summary. Pull headline items; do not re-evaluate severity. If a report uses numeric scoring (e.g. repo-health RED/YELLOW/GREEN), surface RED findings only. For the permission-sweep dry-run, surface all CRITICAL findings (the primary signal of live permission-prompt issues) and HIGH findings in aggregate (e.g., "5 HIGH gaps across 3 projects — see report").
+16. To extract findings: Spawn the `findings-extractor` subagent (haiku tier). Pass it the complete list of report file paths recorded in `RESULTS` (snapshot audit-repo files, audit-claude-md reports, token-audit reports, permission-sweep report). The agent reads each report and returns a ≤30-line structured findings list. Use this returned list to populate the "Prioritized findings" section — do not read sub-reports directly into main-session context.
 
 ---
 
