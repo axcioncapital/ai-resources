@@ -348,3 +348,39 @@ Read Anthropic's multi-agent research system engineering article and compared it
 
 ### Open Questions
 - None
+
+## 2026-05-02 — Token audit: ai-resources repo
+
+### Summary
+Ran full 11-section token-usage efficiency audit (`/token-audit ai-resources`) against the ai-resources repo. Audit is diagnostic-only; fixes happen in a separate session. Configuration baseline assessed as solid (MCP cull, bypassPermissions, Sonnet default, MAX_THINKING_TOKENS aligned). Main remaining waste is research-workflow execution discipline and cleanup-worktree/friday-cadence load patterns.
+
+### Files Created
+- `audits/token-audit-2026-05-02-ai-resources.md` — full audit report, Sections 0–10 (504 lines)
+- `audits/working/audit-summary-workflow-friday-cadence.md` — gitignored working file (not committed)
+- `audits/working/audit-working-notes-workflow-friday-cadence.md` — gitignored working file (not committed)
+
+### Files Modified
+- `audits/working/audit-working-notes-preflight.md`
+- `audits/working/audit-summary-skills.md`
+- `audits/working/audit-working-notes-skills.md`
+- `audits/working/audit-summary-file-handling.md`
+- `audits/working/audit-working-notes-file-handling.md`
+- `audits/working/audit-summary-workflow-research-workflow.md`
+- `audits/working/audit-working-notes-workflow-research-workflow.md`
+- `audits/working/audit-summary-workflow-new-project.md`
+- `audits/working/audit-working-notes-workflow-new-project.md`
+- `audits/working/audit-summary-workflow-repo-dd.md`
+- `audits/working/audit-working-notes-workflow-repo-dd.md`
+- `audits/working/audit-summary-workflow-cleanup-worktree.md`
+- `audits/working/audit-working-notes-workflow-cleanup-worktree.md`
+
+### Decisions Made
+- None (audit is diagnostic-only; findings drive a separate fix session)
+
+### Next Steps
+- Start a fix session for audit HIGH findings: H1 (research-workflow return caps), H2 (run-report.md 30k pre-load), H3 (CLAUDE.md @-imports), H4 (cleanup-worktree SKILL.md split), H5 (friday-cadence Step 7.16 load)
+- Push commits d5f5e3c and c1de6a7
+- Run `/cleanup-worktree` — untracked risk-check reports and modified clarify.md still in working tree
+
+### Open Questions
+- None
