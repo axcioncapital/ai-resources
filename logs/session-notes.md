@@ -423,3 +423,30 @@ Acted on five recommendations from the 2026-05-02 token-audit report. Initial co
 
 ### Open Questions
 - None
+
+## 2026-05-04 — Deploy-KB: Obsidian KB Infrastructure Pipeline
+
+### Summary
+Executing plan from `.claude/plans/i-need-to-develop-scalable-quiche.md`. Building two artifacts: (1) `skills/obsidian-kb-builder/SKILL.md` via `/create-skill` pipeline, (2) `ai-resources/.claude/commands/deploy-kb.md` command.
+
+### Scope
+Deliverables only: SKILL.md + bundled templates + deploy-kb.md command. No other changes.
+
+### Files Created
+- `skills/obsidian-kb-builder/SKILL.md` — skill spec (146 lines, model: sonnet, effort: medium)
+- `skills/obsidian-kb-builder/templates/scaffold/` — 11 scaffold templates (vault-claude-md, _master-index, subfolder-index, kb-query, kb-update, kb-integrity, settings.json, 4 obsidian configs)
+- `skills/obsidian-kb-builder/templates/note-templates/` — 4 note templates (research, decision, architecture, finding)
+- `.claude/commands/deploy-kb.md` — 10-step deploy command
+
+### Decisions Made
+- Inbox and templates/ folders are intentionally indexless (not content-type folders)
+- Commit message in Option B git-init uses resolved KB display name (not template literal)
+- 90-day staleness, 5-read cap, 500-note scan limit are unexplained constants (C17 — parked for future improvement)
+
+### Next Steps
+- Push commits `d81bd68` and `189d78a`
+- Run `/wrap-session` if done
+- Test `/deploy-kb` on a real project to validate end-to-end
+
+### Open Questions
+- None
