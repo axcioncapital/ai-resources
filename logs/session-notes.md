@@ -450,3 +450,34 @@ Deliverables only: SKILL.md + bundled templates + deploy-kb.md command. No other
 
 ### Open Questions
 - None
+
+---
+
+## 2026-05-04 — audit-claude-md on workspace CLAUDE.md
+
+### Summary
+
+Ran `/audit-claude-md` (workspace-only scope) on the root `CLAUDE.md`. The audit produced 26 findings (9 HIGH, 11 MEDIUM, 6 LOW) and projects ~2,500 tokens/turn savings under a Trim + Move + Delete scenario, reducing the file from ~4,160 tokens to ~1,650 — inside the practitioner upper-bound target. The report is committed to `ai-resources`; the CLAUDE.md itself was not modified (diagnostic-only pass).
+
+### Files Changed
+
+**Created:**
+- `ai-resources/audits/claude-md-audit-2026-05-04-workspace-only.md` — 531-line audit report with per-block verdict table and savings projections (committed `375ff22`)
+- `ai-resources/audits/working/audit-claude-md-external-guidance-2026-05-04.md` — external guidance synthesis from Anthropic docs + 2026 practitioner sources (working file, not committed)
+- `ai-resources/audits/working/audit-claude-md-working-notes-2026-05-04.md` — file measurements and context notes (working file, not committed)
+
+### Decisions Made
+
+- Scoped audit to workspace-only (operator said "in the root folder"; no project subdirectory detected from cwd).
+
+### Next Steps
+
+1. **Review the findings report** — [ai-resources/audits/claude-md-audit-2026-05-04-workspace-only.md](../audits/claude-md-audit-2026-05-04-workspace-only.md) — and decide which blocks to Keep / Trim / Move / Delete.
+2. **Highest-leverage Moves** (6 blocks, ~2,200 tokens): `QC Independence Rule`, `QC → Triage Auto-Loop`, `Autonomy Rules` (trim to 5-line summary), `Session Guardrails` (already has a doc target), `File Write Discipline`, `Plan Mode Discipline` → `ai-resources/docs/` with `@`-import pointers.
+3. **Fix the two HIGH contradictions** identified in Tier 3: (a) add `Assumptions Gate` as Autonomy Rules pause-trigger #10; (b) clarify how the `v2.md` version-file rule composes with the `output/{project}/` Write rule.
+4. **Push** the `ai-resources` audit commit (`375ff22`).
+5. After CLAUDE.md edits land, run `/token-audit` to measure actual token reduction.
+
+### Open Questions
+
+- None — audit is diagnostic; all edits await operator direction.
