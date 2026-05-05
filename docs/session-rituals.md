@@ -17,9 +17,9 @@ Quick reference for working with Claude Code in the Axcion AI workspace.
 
 Instead of "/draft-section 2.5", say "I want section 2.5 drafted, QC'd, challenged, and reviewed today. Only stop for bright-line items and failed verdicts." Use plan mode at the session level — define the full arc, not just the first step.
 
-### First session of the week: full project scan
+### First session of the week: `/monday-prep`
 
-Go beyond `/prime` (which shows the last session). Run a broader scan: "Read the content architecture. For each section, report: approved / in-progress / not started. List any open questions from the last 5 session entries. List any pending improvements older than 3 days." This gives you the weekly strategic view that daily heads-down sessions miss.
+Run `/monday-prep` (at workspace root or ai-resources) to orient the week. It runs git pull, checks working-tree state, audits symlinks and CLAUDE.md for active projects, checks log health and permissions, reads inbox, reads harness state, and writes the week mandate to `harness/session/week-mandate-YYYY-Www.md`. Full cadence: `ai-resources/docs/weekly-cadence.md`.
 
 ## Before Starting Work
 
@@ -73,9 +73,13 @@ After 60 minutes of active work, pause for 2 minutes: "Summarize what we've done
 4. **`/usage-analysis`** — Optional. Analyzes the session's token efficiency and logs a review. Good for spotting waste patterns over time.
 5. **`/coach`** — Reviews collaboration patterns across sessions. Run periodically, not necessarily every session.
 
-## Weekly: Improvement Flush
+## Weekly: Friday Cadence
 
-Pick one fixed time per week (e.g., Friday afternoon). Run a 30-minute session that does nothing but action pending improvements. No content work, no infrastructure building. Just: read the improvement log, apply or dismiss each item, verify the ones marked "applied" actually worked. This is the closed-loop ritual the improvement pipeline needs.
+Two Friday sessions cover review, SO advisory, fixes, graduation, and harness work. Full mechanics: `ai-resources/docs/weekly-cadence.md` → Friday section.
+
+Session 1 order: F0 pre-checkup review → F1 `/friday-checkup` → F3 `/friday-so` (from `axcion-ai-system-owner/`) → F2 `/so-monthly` (monthly only, same cwd) → back to workspace root.
+
+Session 2 order: F4 `/friday-act` → F5 graduate resource review → F6 harness work.
 
 ## After Significant Workspace Changes
 
