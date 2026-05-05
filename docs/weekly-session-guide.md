@@ -76,14 +76,14 @@ Reference material: `harness-prep/` at workspace root (mandate template, report 
 
 ## Friday — Session 1: Review + Checkup + SO Advisory
 
-Start at ai-resources or workspace root. Switch cwd mid-session as shown.
+Start with `/prime`. Declare exit condition and autonomy level. Switch cwd mid-session as shown.
 
 | Step | Command | cwd |
 |---|---|---|
-| F0 | Read harness session reports, friction-log, session-notes, week mandate (no command) | — |
+| F0 | Read harness session reports, friction-log (since last Friday), last 50 lines of session-notes, week mandate — did the week deliver what was planned? (no command) | — |
 | F1 | `/friday-checkup` | ai-resources or workspace root |
 | F3 | `/friday-so` | `projects/axcion-ai-system-owner/` |
-| F2 | `/so-monthly` *(monthly only — first Friday of month)* | `projects/axcion-ai-system-owner/` |
+| F2 | `/so-monthly` *(first Friday of every month — monthly + quarterly tiers; aborts automatically on weekly tier)* | `projects/axcion-ai-system-owner/` |
 
 Switch back to workspace root after F2/F3.
 
@@ -93,7 +93,7 @@ F1 must complete before F3 and F2 — both abort if no checkup report is found.
 
 ## Friday — Session 2: Act + Graduate + Harness
 
-Run from workspace root or ai-resources.
+Start with `/prime`. Declare exit condition and autonomy level. Run from workspace root or ai-resources.
 
 | Step | Command | What it does |
 |---|---|---|
@@ -119,7 +119,7 @@ Run from workspace root or ai-resources.
 | `/wrap-session` | Every session end |
 | `/friday-checkup` | Every Friday Session 1 |
 | `/friday-so` | Every Friday Session 1 (after checkup) |
-| `/so-monthly` | First Friday of month only |
+| `/so-monthly` | First Friday of every month (monthly + quarterly tiers) |
 | `/friday-act` | Every Friday Session 2 |
 | `/graduate-resource` | Every Friday Session 2 |
 
