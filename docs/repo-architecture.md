@@ -22,7 +22,7 @@
 │   └── worktrees/                               # claude-code worktree state
 ├── ai-resources/                                # shared resource library (sub-repo, --add-dir)
 ├── harness/                                     # harness dev project (separate concern)
-├── harness-prep/                                # Phase 3 harness preparation material (templates, checklists, hardening log)
+│   └── prep/                                    # Phase 3 harness preparation material (templates, checklists, hardening log)
 ├── logs/                                        # workspace-level logs (decisions, innovation, sessions)
 ├── projects/                                    # research/advisory projects (each = sub-repo; current set varies)
 ├── reports/                                     # workspace-level audit reports

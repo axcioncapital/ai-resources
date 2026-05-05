@@ -1,7 +1,7 @@
 # Session Guide
 
 Quick-reference for running the week — repo maintenance and harness preparation in one place.
-Full details: `weekly-cadence.md`, `session-rituals.md`, `harness-prep/phase3-session-guide.md`.
+Full details: `weekly-cadence.md`, `session-rituals.md`, `harness/prep/phase3-session-guide.md`.
 
 ---
 
@@ -66,7 +66,7 @@ After each approved section: ask Claude to "flag contradictions across all appro
 
 ### Phase 3 harness session
 
-Run when doing a harness simulation session. Open `harness-prep/phase3-session-guide.md` first — that's the habit.
+Run when doing a harness simulation session. Open `harness/prep/phase3-session-guide.md` first — that's the habit.
 
 **Start**
 ```
@@ -79,7 +79,7 @@ Or skip the prompt and pass it directly:
 /session-start Update the QC checklist and verification docs. Out of scope: projects/. Done when both files are committed.
 ```
 
-Use `harness-prep/session-mandate-template.md` to draft the mandate before you start if the scope is complex.
+Use `harness/prep/session-mandate-template.md` to draft the mandate before you start if the scope is complex.
 
 **During — 3 habits**
 
@@ -91,13 +91,13 @@ Use `harness-prep/session-mandate-template.md` to draft the mandate before you s
    - No out-of-scope files touched ✓
    - Uncertainty logged if anything was unclear ✓
 
-   For the full checklist: `harness-prep/work-unit-checklist.md`.
+   For the full checklist: `harness/prep/work-unit-checklist.md`.
 
 3. **Log friction and judgment calls.**
    - Something awkward or broken → `/friction-log what happened`
    - Decision made without stopping → `/note judgment: what I decided and why`
 
-**Verification standard:** "Verified" means you can state which check passed — file exists at path, content matches spec, command exited 0, test passed, or operator confirmed. "Verified: yes" is not enough. See `harness-prep/verification-checklist.md`.
+**Verification standard:** "Verified" means you can state which check passed — file exists at path, content matches spec, command exited 0, test passed, or operator confirmed. "Verified: yes" is not enough. See `harness/prep/verification-checklist.md`.
 
 **End**
 ```
@@ -124,7 +124,7 @@ Start with `/prime`. Declare exit condition and autonomy level. Switch cwd mid-s
 
 | Step | Command | cwd |
 |---|---|---|
-| F0 | Read harness session reports, friction-log (since last Friday), last 50 lines of session-notes, week mandate — did the week deliver what was planned? Also scan `harness-prep/logs/prompt-hardening-log.md` for this week's entries — if Claude repeated a mistake twice, log it. (no command) | — |
+| F0 | Read harness session reports, friction-log (since last Friday), last 50 lines of session-notes, week mandate — did the week deliver what was planned? Also scan `harness/prep/logs/prompt-hardening-log.md` for this week's entries — if Claude repeated a mistake twice, log it. (no command) | — |
 | F1 | `/friday-checkup` | ai-resources or workspace root |
 | F3 | `/friday-so` | `projects/axcion-ai-system-owner/` |
 | F2 | `/so-monthly` *(first Friday of every month — monthly + quarterly tiers; aborts automatically on weekly tier — see Tier detection below)* | `projects/axcion-ai-system-owner/` |
@@ -172,7 +172,7 @@ Start with `/prime`. Declare exit condition and autonomy level. Run from workspa
 
 ## Harness-prep reference files
 
-All in `harness-prep/` at workspace root.
+All in `harness/prep/` at workspace root.
 
 | File | When to use |
 |---|---|

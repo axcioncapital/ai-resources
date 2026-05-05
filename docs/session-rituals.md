@@ -33,7 +33,7 @@ START   /prime             Orient: reads last session, briefs you, waits.
                            Writes: **Mandate:** line to logs/session-notes.md
 
 DURING  Work units         Each unit = one commit.
-                           Before/after each commit: harness-prep/work-unit-checklist.md
+                           Before/after each commit: harness/prep/work-unit-checklist.md
                            Log uncertainty: /friction-log or /note
 
 END     /wrap-session      Auto-generates Phase 3 report from conversation context.
@@ -41,7 +41,7 @@ END     /wrap-session      Auto-generates Phase 3 report from conversation conte
                            Report appears as ### Session Report in session-notes.
 ```
 
-Reference material: `harness-prep/` at workspace root — mandate template, report template, checklists, hardening log.
+Reference material: `harness/prep/` at workspace root — mandate template, report template, checklists, hardening log.
 
 ---
 
