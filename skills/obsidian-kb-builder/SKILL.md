@@ -1,12 +1,15 @@
 ---
 name: obsidian-kb-builder
 description: >
-  Defines and scaffolds Claude Code-queryable Obsidian knowledge bases for any project.
+  Defines and scaffolds Claude Code-queryable Obsidian knowledge bases for general-purpose
+  project documentation vaults (4-folder schema: research, architecture, decisions, findings).
   Bundles vault folder schema, branching-context-graph navigation spec, governance rules,
   and all template files consumed by /deploy-kb. Use when creating or auditing the
-  structure of a project KB vault. Do NOT use for querying or updating notes in an existing
-  vault — those are governed by the vault's own CLAUDE.md and /kb-query, /kb-update
-  commands deployed alongside it.
+  structure of a project documentation KB vault. Do NOT use for querying or updating notes in
+  an existing vault — those are governed by the vault's own CLAUDE.md and /kb-query, /kb-update
+  commands deployed alongside it. For multi-theme research systems with atomic-note intake
+  pipelines and synthesis layers, see `projects/global-macro-analysis/macro-kb/` as a reference
+  for a different pattern.
 model: sonnet
 effort: medium
 ---
@@ -14,6 +17,8 @@ effort: medium
 # Obsidian KB Builder
 
 Specification and template library for Claude Code-queryable Obsidian knowledge bases. This skill defines what a vault IS and how Claude Code should behave inside one. `/deploy-kb` reads from this skill's bundled templates to create a new vault.
+
+**Scope.** This skill targets general-purpose project documentation vaults using the 4-folder schema below (research, architecture, decisions, findings). Multi-theme research KBs with atomic-note intake pipelines and synthesis layers — e.g., `projects/global-macro-analysis/macro-kb/` — are a different pattern and do not use this skill or its templates.
 
 ## Vault Schema
 
