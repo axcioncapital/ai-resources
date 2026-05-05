@@ -26,9 +26,9 @@ Run at workspace root or ai-resources.
 
 What it does:
 - **Phase A** — git pull, working-tree scan, worktree scan, last session threads, last week's autonomy targets
-- **Phase B** — symlink audit, CLAUDE.md audit (guarded), log health, permission spot-check, inbox check, harness state
-- **Phase C** — review last Friday's checkup follow-ups, review improvement-log, write week mandate to `harness/session/week-mandate-YYYY-Www.md`
-- **Phase D** — log flags to session-notes, commit cleanup
+- **Phase B** — symlink audit; CLAUDE.md audit (skip if unmodified in last 14 days AND under 100 lines — both must hold); log health check (flag any file over 200 lines; for `improvement-log.md` over threshold run `/resolve-improvement-log` if resolved entries exist, for all others flag for manual archive — no auto-action); permission spot-check (`bypassPermissions` in settings files); inbox check; harness state
+- **Phase C** — review last Friday's checkup follow-ups, review improvement-log pending items, write week mandate to `harness/session/week-mandate-YYYY-Www.md`
+- **Phase D** — log flags to session-notes, commit cleanup (stage only what Monday's cadence produced — do not bundle pre-existing uncommitted changes)
 
 Output: a flags list and a week mandate file. Start every work session this week from the mandate.
 
@@ -127,7 +127,7 @@ Start with `/prime`. Declare exit condition and autonomy level. Switch cwd mid-s
 | F0 | Read harness session reports, friction-log (since last Friday), last 50 lines of session-notes, week mandate — did the week deliver what was planned? Also scan `harness-prep/logs/prompt-hardening-log.md` for this week's entries — if Claude repeated a mistake twice, log it. (no command) | — |
 | F1 | `/friday-checkup` | ai-resources or workspace root |
 | F3 | `/friday-so` | `projects/axcion-ai-system-owner/` |
-| F2 | `/so-monthly` *(first Friday of every month — monthly + quarterly tiers; aborts automatically on weekly tier)* | `projects/axcion-ai-system-owner/` |
+| F2 | `/so-monthly` *(first Friday of every month — monthly + quarterly tiers; aborts automatically on weekly tier — see Tier detection below)* | `projects/axcion-ai-system-owner/` |
 
 Switch back to workspace root after F2/F3.
 
@@ -142,8 +142,8 @@ Start with `/prime`. Declare exit condition and autonomy level. Run from workspa
 | Step | Command | What it does |
 |---|---|---|
 | F4 | `/friday-act` | Works through checkup follow-ups, policy review, autonomy-axis targets |
-| F5 | `/graduate-resource` (no args) | Reviews `innovation-registry.md` for `triaged:graduate` entries; scans new resources created this week |
-| F6 | Harness work | Phase 3: one manual harness-style session on a real work item |
+| F5 | `/graduate-resource` (no args) | Reviews `logs/innovation-registry.md` for `triaged:graduate` entries; scans `.claude/commands/` and `.claude/agents/` in each active project for resources created this week |
+| F6 | Harness work | **Phase 3 (current):** one manual harness-style session on a real work item — see Phase 3 harness session above for the ritual. Phase 4+: see `weekly-cadence.md` → Friday → F6 for what changes each phase. |
 
 **F6 Phase 3 output:** session report at `harness/session/YYYY-MM-DD-session-report.md`. Target: 5 session reports by end of month.
 

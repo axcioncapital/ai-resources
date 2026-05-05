@@ -2,6 +2,8 @@
 
 Quick reference for working with Claude Code in the Axcion AI workspace.
 
+**For a single guide covering the full weekly rhythm (Monday, standard sessions, Phase 3 harness, Friday cadence):** see `docs/weekly-session-guide.md`.
+
 ---
 
 ## Session Start
