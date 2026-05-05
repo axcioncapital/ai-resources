@@ -2,6 +2,35 @@
 
 <!-- entries below -->
 
+### 2026-05-05 | Acceptable
+
+**Task:** Designed a weekly Monday + Friday maintenance cadence plan through four iterations (v1–v4), with two QC passes (both REVISE) and one triage pass. Final plan committed to `ai-resources/docs/weekly-cadence.md`.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~20 |
+| Files read | ~20 (re-reads: 2 — session-notes.md tail ×2, improvement-log.md grep ×2) |
+| Files written/edited | 4 |
+| Tool calls | ~40 |
+| Subagents | 3 |
+| Rework cycles | 3 (v1→v2→v3 in-context; v4 first disk write) |
+
+**Findings:**
+- **Context bloat — Moderate:** Three large command files (friday-checkup.md ~5k tokens, permission-sweep.md ~4k tokens, friday-act.md ~3k tokens) read in full for orientation; ~12k tokens total, with much of the content not directly cited in the final output. Targeted section reads or grep-then-read would have sufficed for reference use.
+- **Rework — Moderate:** Three full plan rewrites occurred in context before first disk write (~150–200 lines each, ~2k tokens/version). Operator feedback and QC findings drove the iteration — not speculative — but keeping v1–v3 in conversation rather than writing drafts to disk inflated context continuously.
+- **Re-reads — Minor:** session-notes.md tail read twice (pre-append + post-archive check); improvement-log.md grepped twice (apply check + verify check). Low token cost individually, recurring pattern.
+
+Compared to the last three entries (all Acceptable), this session holds the same rating — no regression, no improvement. The rework pattern is new but was operator-driven rather than a discipline gap.
+
+**Recommendation:** For plan-drafting sessions with expected iteration, write v1 to disk immediately and use Edit operations for subsequent versions rather than regenerating full plan text in context. Converts in-context rework cost (~2k tokens/cycle × 3 cycles) to cheap file edits.
+
+**Estimated savings:** ~4–6k tokens per plan-drafting session (~2k tokens × 2 avoided in-context rewrites). Over 10–20 such sessions: 40–120k tokens.
+
+**Additional levers (ROI-ranked):**
+1. **Targeted reads on large command files (~8–10k tokens/session):** For orientation reads of files >200 lines, grep for section headers first, then read only the relevant sections. friday-checkup.md and permission-sweep.md alone account for ~9k tokens that could be halved.
+2. **Batch improvement-log.md checks into one grep (~200 tokens/session):** Apply-check and verify-check grep calls can be collapsed into a single call — minor but a recurring two-call pattern.
+3. **session-notes.md post-archive re-read (~100 tokens/session):** Skip the post-archive tail read; the archive script's exit code is sufficient confirmation.
+
 ### 2026-05-01 | Acceptable
 
 **Task:** Monthly Friday checkup across ai-resources (full monthly tier), repo-documentation and obsidian-pe-kb (coach only; improve/audit-repo auto-skipped), and knowledge-bases (all checks auto-skipped). Pre-session: 1-line edit to session-rituals.md to add /session-plan.

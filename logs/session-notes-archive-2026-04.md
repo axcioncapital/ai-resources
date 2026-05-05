@@ -3165,3 +3165,206 @@ Triggered classes: new commands, new agents. Skipped because: (a) scope confined
 ### Open Questions
 
 - None.
+## 2026-04-28 — /triage and /recommend: precondition-check guardrails
+
+### Summary
+
+Worked through the boundary between `/triage` and `/recommend` to clarify when each command is the right tool. Operator surfaced the real risk — wrong-command invocation — and pivoted from a rename discussion to a guardrail. Added a Step 1 "Verify trigger condition" precondition gate to both commands: each scans recent turns for its actual trigger (proposals slate for `/triage`; open questions/assumptions for `/recommend`) and offers the sibling command if the trigger doesn't match. Existing steps renumbered. Post-edit QC ran the mechanical-mode rubric, returned GO with all M-checks Clear, zero findings.
+
+### Files Created
+
+- None.
+
+### Files Modified
+
+- `ai-resources/.claude/commands/triage.md` — added Step 1 precondition gate; renumbered Steps 1–5 to 2–6
+- `ai-resources/.claude/commands/recommend.md` — added Step 1 precondition gate; renumbered Steps 1–4 to 2–5
+- `ai-resources/logs/session-notes-archive-2026-04.md` — auto-archive output (2 entries archived, 10 kept) from `check-archive.sh` during this wrap
+- `ai-resources/logs/decisions.md` — appended decision entry on precondition-gate vs. rename
+- `ai-resources/logs/coaching-data.md` — appended session profile entry
+- `ai-resources/logs/usage-log.md` — appended telemetry entry
+
+### Decisions Made
+
+- **Add Step 1 precondition gate over command rename.** Operator pivoted from a rename discussion (`/recommend` → `/proceed` was the leading candidate) to a guardrail because the gate fires at invocation time and self-corrects wrong-command cases without touching CLAUDE.md, memory, or doc references. Rename remains an open option if the gate proves insufficient over time. Logged to decisions journal.
+
+### Next Steps
+
+- Push commit `31d40fc` to remote (operator confirmation per Autonomy Rule #2).
+- Observe whether wrong-command invocations recur over the next few sessions; revisit rename if the guardrail proves insufficient.
+
+### Permission-prompt anomaly (observed, not actioned)
+
+A permission prompt fired on the second Edit call (`recommend.md`) despite settings being maximally permissive (`bypassPermissions` + `Edit(**)` allow at user and ai-resources layers, empty deny list). Retry succeeded silently. Likely a harness-side transient. One isolated occurrence; if it recurs, log via `/friction-log`.
+
+### Open Questions
+
+- None.
+
+### Note
+
+- Pre-existing `M logs/innovation-registry.md` (modified before session start) was left untouched and not staged in this session's commit.
+
+## 2026-04-29 — model: and effort: enforcement plan — Phases B–D complete
+
+### Summary
+Completed the four-phase plan to make `model:` and `effort:` mandatory in every SKILL.md. Phase A (pipeline foundation, 6 files) and B.0 (tier inventory generation) shipped in the prior session. This session ran Phase B.1 (operator tier review — all 69 accepted via `/recommend`), Phase C (bulk sweep of all 69 SKILL.md files), and Phase D (skill-auditor Section 8 activation + model-routing cross-reference). All 69 skills now declare explicit model and effort tiers; the pipeline enforces both fields on every new/improved/migrated skill going forward.
+
+### Files Created
+- None new (all modifications).
+
+### Files Modified
+- `skills/*/SKILL.md` — all 69 files: `model:` and `effort:` frontmatter inserted after `description:` (Phase C bulk sweep)
+- `skills/repo-health-analyzer/agents/skill-auditor.md` — Section 8 (frontmatter completeness check) added; `skills_missing_tier_frontmatter` metric added to output schema
+- `docs/model-routing.md` — "Skill-level routing" subsection added as third layer (alongside session-level and agent-level); canonical mapping table included
+- `logs/improvement-log.md` — bulk-backfill exception entry appended (date, file count, fields, 4-command QC verification, commit cross-refs)
+
+### Decisions Made
+- **Tier classifications (Phase B.1):** All 69 skill tiers accepted as-is via `/recommend`. Ambiguous cases (10 skills) defaulted to conservative Sonnet/medium rather than Opus/high — appropriate bias. `workflow-system-analyzer` is the sole Haiku/low skill. Phase D's skill-auditor Section 8 serves as post-hoc correction mechanism if any tier is later judged wrong.
+- **QC approach (Phase C):** Single-batch 4-command grep verification substituted for 69 per-file QC passes, per the bulk-backfill exception documented in `docs/ai-resource-creation.md`. All 4 checks returned zero results.
+- **Phase D sequencing:** skill-auditor Section 8 was held until after Phase C committed, preventing mid-window false Important findings on the 68 not-yet-backfilled skills.
+
+### Next Steps
+- Push the 3 commits (`a533595`, `a4f32e8`, `8eb5579`) — requires explicit operator confirmation.
+- Verification tests (optional, from plan): run `/create-skill` on a dummy brief and confirm produced SKILL.md contains both fields; run `/improve-skill` on a small edit and confirm fields survive; invoke an Opus-tier skill in a Sonnet-default session to confirm model override fires.
+- End-time `/risk-check` skipped: plan-time check covered the entire change set with all 5 mitigations applied; commits already shipped; drift bounded to frontmatter-only insertions + agent/doc edits. Per feedback memory skip rule.
+
+### Open Questions
+- None. Plan is complete.
+
+## 2026-04-29 — Remove model-routing.md and all references
+
+### Summary
+Operator directed removal of `ai-resources/docs/model-routing.md` and all references to it across the workspace. The file served as a single source of truth for model tier selection rules, but its content was substantially duplicated in CLAUDE.md files and other operational files. All references were cleaned from 18 operational files across 6 git repos; historical files (audits, logs, project outputs) were left untouched as records.
+
+### Files Created
+None.
+
+### Files Modified
+- `ai-resources/docs/model-routing.md` — **deleted**
+- `ai-resources/CLAUDE.md` — removed "Routing rule" trailing sentence from Model Selection
+- `ai-resources/docs/repo-architecture.md` — removed table row and bullet referencing model-routing.md
+- `ai-resources/.claude/commands/prime.md` — removed routing rule reference line
+- `ai-resources/.claude/commands/route-change.md` — removed model-routing.md from conditional-read list
+- `ai-resources/.claude/commands/deploy-workflow.md` — removed model-routing.md inline reference
+- `ai-resources/.claude/commands/new-project.md` — removed 2 references (step intro + template body)
+- `ai-resources/docs/permission-template.md` — removed model-routing.md reference from key assertions
+- `ai-resources/skills/ai-resource-builder/SKILL.md` — removed "from docs/model-routing.md" attribution
+- `ai-resources/skills/ai-resource-builder/references/operational-frontmatter.md` — removed "From docs/model-routing.md:" attribution
+- `ai-resources/skills/repo-health-analyzer/agents/skill-auditor.md` — removed 2 references in Section 8
+- `CLAUDE.md` (workspace) — removed 2 "Routing rule" trailing sentences (Model Tier + Model Escalation)
+- `.claude/hooks/model-classifier.sh` — removed doc reference from additionalContext heredoc
+- `projects/corporate-identity/CLAUDE.md` — removed Routing rule sentence
+- `projects/repo-documentation/CLAUDE.md` — removed Routing rule sentence
+- `projects/project-planning/CLAUDE.md` — removed Routing rule sentence
+- `projects/obsidian-pe-kb/CLAUDE.md` — removed Routing rule sentence
+- `projects/global-macro-analysis/CLAUDE.md` — removed Routing rule sentence
+- `projects/nordic-pe-landscape-mapping-4-26/CLAUDE.md` — removed Routing rule sentence
+
+### Decisions Made
+- **Removal scope:** deleted the file and all operational references; historical files (audits, logs, project outputs) left as-is as frozen records.
+- **No content relocation:** the tier rules described in model-routing.md (Haiku/Sonnet/Opus table, decision heuristic, skill-level mapping) are already inlined in CLAUDE.md and skill/agent files; no content migration was needed.
+
+### Next Steps
+- Push all 6 repos (ai-resources, workspace, project-planning, obsidian-pe-kb, global-macro-analysis, nordic-pe-landscape-mapping-4-26).
+
+### Open Questions
+None.
+
+## 2026-04-29 — new /resolve command + auto-QC/resolve hooks
+
+### Summary
+Built the `/resolve` command, which compresses the post-QC workflow: takes findings from context, routes them through `triage-reviewer` for importance classification, then drafts concrete fixes for Real items so the operator only approves rather than diagnosing. Also built two shell hooks — `auto-qc-nudge.sh` (nudges `/qc-pass` after significant writes) and `auto-resolve-nudge.sh` (nudges `/resolve` after QC fires) — and registered both in `settings.json`. The planning phase went through a full 3-QC-pass / 2-triage-pass loop before approval.
+
+### Files Created
+- `.claude/commands/resolve.md` — `/resolve` slash command (model: opus); importance-verdict + fix-drafter using `triage-reviewer`
+- `.claude/hooks/auto-qc-nudge.sh` — PostToolUse Write/Edit hook; nudges Claude to run `/qc-pass` after significant writes (≥50 lines, excluding noise logs); path-hash dedup sentinel
+- `.claude/hooks/auto-resolve-nudge.sh` — Stop hook; nudges Claude to run `/resolve` when QC nudge fired this session; dedup sentinel
+
+### Files Modified
+- `.claude/settings.json` — added `auto-qc-nudge.sh` inside existing `Write|Edit` PostToolUse block; added `auto-resolve-nudge.sh` as third Stop hook group
+- `.claude/agents/triage-reviewer.md` — updated frontmatter description to acknowledge `/resolve` as a second caller (end-time `/risk-check` mitigation)
+- `audits/risk-checks/2026-04-29-new-resolve-command-claude-commands-resolve-md-model-opus.md` — risk-check report created during wrap (PROCEED-WITH-CAUTION verdict, hidden-coupling mitigation applied)
+
+### Decisions Made
+- **Architecture:** Reuse `triage-reviewer` instead of creating a new `resolve-reviewer` agent. QC triage during planning surfaced near-total overlap. `/resolve` is distinct from `/triage` only in that it adds the concrete-fix drafting step.
+- **"Low-stakes" scope:** Fire auto-QC nudge on all significant writes (≥50 lines), including `.claude/` infra files — no structural low-stakes signal is readable in a 5s shell script; infra edits are the canonical low-stakes case; nudge is advisory.
+- **resolve.md model:** `opus` — operator directed (overriding initial `sonnet` choice); judgment work in fix drafting warrants it.
+- **cksum implementation:** Hash path string, not file content (`echo "$FILE_PATH" | cksum | awk '{print $1}'`) — content hash changes on every edit, breaking per-file dedup.
+- **settings.json placement:** Auto-QC hook added inside existing `Write|Edit` block (not a parallel block) to maintain conventional structure.
+- **QC auto-loop:** Plan went through 3 QC passes + 2 triage passes; resolve.md command itself got 1 QC pass with GO verdict.
+
+### Next Steps
+- Push commit `1d426b4` and the wrap commit (and any other un-pushed commits)
+- Test auto-QC nudge: edit any non-noise file ≥50 lines and confirm nudge fires
+
+### Open Questions
+None.
+
+## 2026-04-30 — Created /session-plan command
+
+### Summary
+Created the `/session-plan` slash command — a session orchestrator that runs after `/prime` to plan HOW a session will run before execution starts. The command covers intent inference, model-tier recommendation, source material identification, autonomy posture selection, and a risk-class pointer. Went through the full clarify → plan → refinement → QC → risk-check pipeline before landing. End-time risk-check skipped (plan-time gate covered with all 5 PROCEED-WITH-CAUTION mitigations applied).
+
+### Files Created
+- `ai-resources/.claude/commands/session-plan.md` — new /session-plan command (opus/effort:high, Steps 0–8)
+- `ai-resources/audits/risk-checks/2026-04-29-new-slash-command-session-plan-added-to-ai-resources-claude.md` — plan-time risk-check report
+
+### Files Modified
+- `ai-resources/.claude/commands/prime.md` — added one-line optional pointer to /session-plan after Step 8
+- `ai-resources/docs/repo-architecture.md` — added logs/session-plan.md row to canonical logs table
+
+### Decisions Made
+- **Model: opus, not sonnet** — operator corrected initial sonnet frontmatter; /session-plan performs judgment work (intent assessment, model-tier mapping, autonomy posture recommendation) → opus/effort:high
+- **Resolve stub: runtime reminder only** — /resolve reminder emitted in chat during Step 4 but NOT written into the plan file artifact; plan file should not carry dead pointers to unbuilt tooling; conditional on QC findings in context
+- **All 5 risk-check mitigations applied** — plan-time gate returned PROCEED-WITH-CAUTION; all mitigations baked into command before commit: /prime precondition check (Step 0), disambiguation note (first para), conditional /resolve reminder (Step 4), risk-check pointer only in Step 6, cross-reference in prime.md
+
+### Next Steps
+- Run `/prime` then `/session-plan` in a real session to verify end-to-end behavior
+- Push commits when ready
+- Consider: add /session-plan to the skills list description in agent-tier-table.md or session-rituals.md if it warrants documentation there
+
+### Open Questions
+None.
+
+## 2026-05-01 — Friday checkup (monthly/custom: ai-resources full, others light)
+
+### Summary
+Monthly checkup with mixed-tier approach: ai-resources gets full monthly (audit-repo, improve, coach, token-audit, permission-sweep); repo-documentation and obsidian-pe-kb get weekly light (coach only — audit-repo not deployed, no improvement-log); knowledge-bases fully skipped (0 sessions, no logs, no repo-health-analyzer). W2.x deferred entirely.
+
+### Files Created
+- `audits/friday-checkup-2026-05-01.md` — consolidated monthly checkup report (14 tactical + 5 policy items)
+- `audits/repo-health-ai-resources-2026-05-01.md` — cadence snapshot of /audit-repo (YELLOW, 0 Critical, 3 Important, 10 Minor)
+- `audits/token-audit-2026-05-01-ai-resources.md` — token-audit report (2 HIGH, 3 MEDIUM, 2 LOW; 2 prior findings resolved)
+- `audits/permission-sweep-2026-05-01.md` — permission-sweep dry-run report (1 CRITICAL with bypass-mode caveat, 1 HIGH, 9 ADVISORY)
+- `projects/repo-documentation/logs/coaching-log.md` — first coaching baseline for repo-documentation scope
+- `projects/obsidian-pe-kb/logs/coaching-log.md` — first coaching baseline for obsidian-pe-kb scope
+- `audits/working/audit-working-notes-preflight.md` — token-audit preflight notes (overwritten with 2026-05-01 data)
+- `audits/working/audit-summary-skills.md` + `audit-working-notes-skills.md` — token-audit Section 2 (skill census)
+- `audits/working/permission-sweep-2026-05-01.md` + `permission-sweep-2026-05-01.md.summary.md` — permission-sweep auditor notes
+
+### Files Modified
+- `reports/repo-health-report.md` — updated by /audit-repo (prior archived to repo-health-report-2026-04-24.md)
+- `reports/repo-health-report-2026-04-24.md` — created by /audit-repo (auto-archive of prior canonical report)
+- `logs/session-notes.md` — this session entry
+- `logs/coaching-log.md` — 2nd coaching entry appended (2026-05-01)
+- `docs/session-rituals.md` — added /session-plan as optional Step 2 in Session Start (committed e6308ed)
+
+### Decisions Made
+- **Mixed-tier scope:** ai-resources full monthly, repo-documentation/obsidian-pe-kb/knowledge-bases weekly light. Saves ~100 min vs. standard monthly. Pre-flight auto-skipped most light-scope checks (no skill deployed, no improvement-log).
+- **knowledge-bases:** included as custom scope per operator request; all checks auto-skipped (no repo-health-analyzer, no improvement-log, 0 wrapped sessions).
+- **W2.x (G–K):** skipped entirely this cycle — not added as deferred follow-up items.
+- **116 min runtime:** operator explicitly approved (long-run threshold).
+- **Token-audit Section 4:** workflow not re-measured to bound cost; H1 (research-workflow subagent returns) carried forward unchanged from 2026-04-24.
+- **Permission-sweep CRITICAL:** flagged with bypass-mode caveat rather than auto-applying — `defaultMode: bypassPermissions` is already set; "missing allow entries" may be rule-template mismatch, not a true gap. Operator review needed.
+
+### Next Steps
+- Push commits (`e6308ed` for session-rituals + this wrap commit)
+- Run `/cleanup-worktree` — 7 modified, 10 untracked (includes new audit files from this session)
+- Run `/friday-act` to action the 14 tactical + 5 policy-level findings in `audits/friday-checkup-2026-05-01.md`
+- Schedule dedicated session for H1 (research-workflow prose-pipeline subagent return refactor)
+- Consider deploying repo-health-analyzer to knowledge-bases/ for future checkups
+
+### Open Questions
+- Permission-sweep CRITICAL finding: operator review needed — is the "missing allow entries" gap real or a rule-template mismatch with bypassPermissions mode?
+- Friction-log dormant since 2026-04-18: workflow stabilized (positive) or operator-logging lapsed? Confirm at next wrap.

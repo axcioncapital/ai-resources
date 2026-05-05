@@ -85,3 +85,26 @@
 
 **Alternatives considered:**
 - *ai-resources/logs/research-quality-log.md.* Rejected: requires cross-repo write from project sessions; introduces new convention that contradicts existing "no editing ai-resources from project workspaces" posture.
+
+## 2026-05-05 — Weekly cadence: full `/audit-claude-md` on Monday (guarded)
+
+**Context:** Designing the Monday infrastructure check. Initial plan used a lightweight CLAUDE.md pointer scan (grep for broken `@`-references only). Operator stated intent was "audit CLAUDE.md for the projects I will be working on this week."
+
+**Decision:** Use the full `/audit-claude-md project <name>` command, guarded by a dual condition: skip if CLAUDE.md was not modified in the last 14 days AND is under 100 lines. Both conditions must hold to skip.
+
+**Rationale:** The pointer scan would miss redundancy, staleness, token bloat, and misplacement — the real maintenance value. The guard prevents the Opus subagent from firing on unchanged, small files where the cost exceeds the benefit.
+
+**Alternatives considered:**
+- *Lightweight scan every Monday.* Rejected: misses the token-cost and redundancy signals that make the audit valuable.
+- *Full audit unconditionally.* Rejected: Opus-tier subagent on every Monday is too heavy when CLAUDE.md hasn't changed.
+
+## 2026-05-05 — Weekly cadence: `/so-monthly` not `/systems-review` for monthly Friday slot
+
+**Context:** Designing the monthly Friday slot. Initial draft used `/systems-review` as the command name. QC pass identified this as incorrect — `/systems-review` does not exist as a deployed command.
+
+**Decision:** Replace `/systems-review` with `/so-monthly` (project-local at `projects/axcion-ai-system-owner/.claude/commands/so-monthly.md`). This is the correct command for the monthly systems-level review function.
+
+**Rationale:** `/so-monthly` is the deployed command. It reads the past month's Friday advisories and deferred items, aborts automatically on weekly tier, and writes to `output/monthly-reviews/`. Verified by reading the command file directly.
+
+**Alternatives considered:**
+- *Create `/systems-review` as a new command.* Rejected: `/so-monthly` already serves the stated purpose. Creating a duplicate would add unnecessary infrastructure.

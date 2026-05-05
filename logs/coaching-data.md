@@ -314,3 +314,10 @@
 - **Decisions logged:** 2
 - **QC cycles:** 0
 - **Gates:** 1 (1 confirmed) — bright-line-review:confirmed (usage-log.md deletion explicitly approved by operator)
+
+### 2026-05-05 — Designed Monday + Friday weekly maintenance cadence
+- **Commands used:** /qc-pass (×2), /triage, /recommend, /wrap-session
+- **Iterations:** 4 (cadence plan v1 → v2 → v3 → v4)
+- **Decisions logged:** 2
+- **QC cycles:** 2 (v2 REVISE → v3 produced; v3 REVISE → triage → v4 produced)
+- **Gates:** 5 (3 confirmed, 2 changed) — content-review:confirmed (plan direction after v1), content-review:changed (operator answered 4 design questions adjusting scope), plan-approval:confirmed (/recommend triggered), qc-disposition:changed (triage Do items applied), plan-approval:confirmed (operator approved v4 and proceed to commit)
