@@ -312,3 +312,55 @@ Designed a new two-day weekly cadence: Monday ("Oil the Gears") for infrastructu
 
 ### Open Questions
 - None
+
+---
+
+## 2026-05-05 — Continue weekly-cadence: /monday-prep + session-rituals update
+
+### Summary
+Built the /monday-prep command and updated session-rituals.md. /monday-prep executes Phases A–D from weekly-cadence.md: git pull + working-tree scan, symlink audit, CLAUDE.md audit (guarded), log health, permission spot-check, inbox, harness state, week mandate write, and session-notes append. Corrected harness path to workspace root (/harness/, not ai-resources/harness/).
+
+### Files Created/Modified
+- `ai-resources/.claude/commands/monday-prep.md` — new command (commit 46e2105)
+- `ai-resources/docs/session-rituals.md` — replaced "full project scan" with /monday-prep reference; replaced "Improvement Flush" with Friday cadence summary
+
+### Next Steps
+- Push commit 46e2105
+- Run /monday-prep on the next Monday to validate it end-to-end
+- Consider whether weekly-cadence.md needs explicit workspace-root path note for harness/ references (currently uses relative paths — clear in context, but could be made explicit)
+
+### Open Questions
+- None
+
+---
+
+## 2026-05-05 — Built /monday-prep and consolidated weekly session guide
+
+### Summary
+Built the /monday-prep command (Phases A–D from weekly-cadence.md) and created a single consolidated weekly-session-guide.md covering repo maintenance and harness preparation. The guide went through two QC passes (both REVISE) with fixes applied via triage. Harness path corrected to workspace root (/harness/, not ai-resources/harness/).
+
+### Files Created
+- `ai-resources/.claude/commands/monday-prep.md` — Monday infrastructure cadence command: git pull, working-tree scan, symlink audit, CLAUDE.md audit (guarded), log health, permission spot-check, inbox, harness state, week mandate write
+- `ai-resources/docs/weekly-session-guide.md` — consolidated single guide covering Monday /monday-prep, standard sessions, Phase 3 harness sessions, Friday two-session structure, harness-prep reference files, tier detection
+
+### Files Modified
+- `ai-resources/docs/session-rituals.md` — replaced "full project scan" with /monday-prep reference; replaced "Improvement Flush" with Friday cadence summary; added pointer to weekly-session-guide.md as canonical entry point
+
+### Decisions Made
+**Command build:**
+- Harness path corrected mid-session to workspace root (`/harness/`) — initial draft used `ai-resources/harness/` which does not exist
+- week mandate path: `harness/session/week-mandate-YYYY-Www.md` at workspace root
+
+**Session guide:**
+- Operator directed single consolidated guide (repo maintenance + harness prep) replacing separate docs
+- QC pass 1 (guide v1): triage → 4 Do items applied: /prime added to Friday session headers, F0 time bounds restored, F2 trigger phrasing fixed, /so-monthly quick-ref row aligned
+- QC pass 2 (consolidated guide): 6 items applied per operator instruction: Phase B guard rules, Phase D commit scoping rule, F2 forward-reference, F5 path corrected to logs/innovation-registry.md, F5 scan location detailed, F6 Phase 3 scope marked with Phase 4+ pointer
+- session-rituals.md: added pointer to weekly-session-guide.md as canonical weekly-rhythm entry point
+
+### Next Steps
+- Push all commits from this session
+- Run /monday-prep on next Monday to validate end-to-end
+- weekly-cadence.md uses relative harness/ paths — acceptable in context but could be made explicit with workspace-root note (low priority)
+
+### Open Questions
+- None
