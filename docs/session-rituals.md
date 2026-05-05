@@ -21,6 +21,28 @@ Instead of "/draft-section 2.5", say "I want section 2.5 drafted, QC'd, challeng
 
 Run `/monday-prep` (at workspace root or ai-resources) to orient the week. It runs git pull, checks working-tree state, audits symlinks and CLAUDE.md for active projects, checks log health and permissions, reads inbox, reads harness state, and writes the week mandate to `harness/session/week-mandate-YYYY-Www.md`. Full cadence: `ai-resources/docs/weekly-cadence.md`.
 
+## Phase 3 — Harness Simulation Ritual
+
+For sessions conducted as part of the six-month harness preparation plan (Phase 3). Workspace-scoped only.
+
+```
+START   /prime             Orient: reads last session, briefs you, waits.
+        /session-start     Mandate: state what you're doing in 2–5 sentences.
+                           Writes: **Mandate:** line to logs/session-notes.md
+
+DURING  Work units         Each unit = one commit.
+                           Before/after each commit: harness-prep/work-unit-checklist.md
+                           Log uncertainty: /friction-log or /note
+
+END     /wrap-session      Auto-generates Phase 3 report from conversation context.
+                           Asks 2 questions: judgment calls + improve next time.
+                           Report appears as ### Session Report in session-notes.
+```
+
+Reference material: `harness-prep/` at workspace root — mandate template, report template, checklists, hardening log.
+
+---
+
 ## Before Starting Work
 
 - **`/clarify`** — Before executing an ambiguous request. Forces scope alignment first.
