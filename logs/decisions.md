@@ -75,6 +75,33 @@
 
 ---
 
+## 2026-05-07 — Alternatives-selection format for Bird & Bird lunch prep
+
+**Context:** Preparing conversational answers to 7 questions for a relationship-building lunch with a Bird & Bird senior associate. Initial approach: produce full drafted answers in one pass. Operator reviewed a first draft and switched approach mid-session.
+
+**Decision:** Produce 3 alternative framings (A/B/C) per question instead of a single draft. Operator selects the framing that matches their natural voice; a final assembly pass combines the choices.
+
+**Rationale:** Full drafts are in the assistant's voice and require significant rewriting to feel natural. The alternatives format treats the operator as the voice owner and the assistant as a framing generator — faster to calibrate, less rewriting, more likely to produce answers the operator can actually use at lunch. Operator requested this explicitly.
+
+**Alternatives considered:**
+- *Full draft + revision loop.* Rejected: requires the operator to identify what sounds wrong, which is harder than choosing between concrete alternatives.
+- *Open-ended questions to surface the operator's voice first.* Not raised — operator moved directly to the alternatives format.
+
+---
+
+## 2026-05-07 — Q5 scoped to successes only
+
+**Context:** Q5 as originally posed was two-part: "which workflows have you successfully handed over to AI, and which ones did you try to automate but ended up pulling back from?" The initial draft flagged the second half as needing a real example from the operator.
+
+**Decision:** Answer only the first half. Drop "which ones did you try to automate but ended up pulling back from" from scope.
+
+**Rationale:** Operator directed this explicitly. The successes half can be answered confidently from the service model design; the failures half requires lived operational experience that may not yet exist at this stage of the business. Answering only the first half avoids a gap that could undermine credibility at the lunch.
+
+**Alternatives considered:**
+- *Keep both halves, leave second half with placeholder.* Rejected by operator — unnecessary scope for this meeting.
+
+---
+
 ## 2026-05-02 — Quality log location for cross-project extract tracking
 
 **Context:** Adding a cross-project extract quality log raised the question of where it lives: inside ai-resources/logs/ (portfolio-level, one file) vs inside each deployed project's own logs/ directory (local, per-project).

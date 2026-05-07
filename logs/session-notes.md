@@ -364,3 +364,30 @@ Built the /monday-prep command (Phases A–D from weekly-cadence.md) and created
 
 ### Open Questions
 - None
+
+## 2026-05-07 — Lunch prep: Bird & Bird senior associate meeting
+
+Preparing conversational answers to 7 likely questions from a Finnish M&A lawyer (Bird & Bird senior associate). Relationship-building lunch; he knows nothing about Axcion yet. Tone: plain spoken, smart-but-not-AI-hype, how-I'd-actually-answer-at-lunch.
+
+### Summary
+Prepared a session brief for an upcoming relationship-building lunch with a Bird & Bird senior associate. Initial approach was full drafted answers; operator switched to an alternatives-selection format (3 framings per question, operator picks). Brief is self-contained — next session reads it and runs the selection process without re-explaining. QC pass returned REVISE with 4 findings; all applied.
+
+### Files Created
+- `logs/session-plan.md` — session plan for this session (alternatives-selection brief work)
+- `projects/meeting-prep/bird-and-bird-lunch-brief.md` — self-contained brief: Axcion context, audience profile, tone target, 7 questions with A/B/C framing instructions, assembly pass instructions
+
+### Files Modified
+- `logs/session-notes.md` — session header appended by /prime
+
+### Decisions Made
+- **Alternatives-selection format chosen over final draft:** Operator switched approach mid-session — produce 3 framings (A/B/C) per question so operator can choose the one that matches their natural voice, rather than editing a single draft.
+- **Q5 scope narrowed:** Answer only "what have you successfully handed over to AI" — drop the "which did you try to automate but pull back from" half per operator direction.
+- **QC fixes applied:** Sentence length 3–4 (not 2–4); Q5 framings redesigned around successes only; Q5 "fallback" framing removed (no longer relevant after scope change); Q6 gap flag made firm (not optional).
+
+### Next Steps
+- Next session: read `projects/meeting-prep/bird-and-bird-lunch-brief.md` and run the alternatives-selection session (Q1 → Q7, one at a time, pick A/B/C)
+- Before that session: (1) optional — have a concrete example ready for Q6 (catching an AI error before it went out; makes framing B stronger); (2) confirm DPA status for Q7 — the lawyer will likely ask
+
+### Open Questions
+- Q6: do you have a concrete example of catching an AI error before it went out? Not required, but framing B needs it.
+- Q7: is a Data Processing Agreement in place? What is the lawful basis for processing fund criteria data? Lawyer will likely ask directly.
