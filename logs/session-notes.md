@@ -345,3 +345,28 @@ Implemented the output-validation gate for /friday-journal (Steps 5.4 + 5.5), ad
 
 ### Open Questions
 - /friday-act doesn't yet read `**Risk-check required:**` bullets — follow-up to integrate the contract on the /friday-act side
+
+## 2026-05-08 — /friday-act on audits/friday-journal-2026-05-08.md
+
+
+## 2026-05-08 — Diagnose and fix early auto-compact on 1M sessions
+
+### Summary
+Investigated premature auto-compact firing in Claude Code. User reported compaction triggering at ~25% context fill on 1M sessions. Confirmed the 1M window is active (not the silent-drop bug #50803); root cause is the early-trigger regression (#43989/#34332) where the internal threshold is calibrated to a 200k absolute count and ignores `autoCompactWindow`. Applied the `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` env-var fix to push the trigger to ~95% of the configured 950k window (~902k tokens).
+
+### Files Created
+None.
+
+### Files Modified
+- `~/.claude/settings.json` — added `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE: "95"` to `env` block
+
+### Decisions Made
+- Set override to `95` (not `90` or `80`) — gives ~97k buffer before hard 1M wall, enough for compaction to complete; operator instructed to lower to `90` if compaction failures occur.
+
+### Next Steps
+- Restart Claude Code for the env-var to take effect (new sessions only).
+- Monitor: run `/context` after next long session to confirm trigger moved.
+- If still compacting early after restart: override is also being ignored → escalate (check Claude Code changelog for 2.1.132 fix, or downgrade to 2.1.91 per #43989 workaround).
+
+### Open Questions
+- Whether v2.1.132 has a partial fix for #43989 that affects the override behavior — not confirmed.
