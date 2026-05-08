@@ -534,3 +534,35 @@ Continued 2026-05-08 friday-act execution. Resolved the 3-cycle {{WORKSPACE_ROOT
 
 ### Open Questions
 - None.
+
+## 2026-05-08 — Execute worktree cleanup (5 commits, working tree clean)
+
+### Summary
+Executed the pre-existing `/cleanup-worktree` plan (`mighty-nibbling-garden.md`) written and QC'd in a prior session. Verified working tree still matched the plan's Section 2 snapshot, ran all pre-commit additive checks, then landed 5 commits in order with no hard gates and no destructive operations. Working tree is clean.
+
+### Files Created
+- None (this session was execution-only against a pre-written plan)
+
+### Files Modified
+- `logs/session-notes.md` — this wrap entry
+
+### Files Committed This Session
+- `workflows/research-workflow/.claude/commands/session-plan.md` — tracked auto-synced symlink (C1)
+- `.gitignore` — added `archive/` rule mirroring `inbox/archive/` pattern (C2)
+- `.claude/commands/clarify.md` — added `/scope` reminder after operator answers (C3)
+- `audits/permission-sweep-2026-05-08-v2-restricted-applied.md` — tracked audit artifact (C4)
+- `audits/repo-due-diligence-2026-05-04-project-axcion-ai-system-owner.md` — tracked audit artifact (C4)
+- `audits/risk-checks/2026-04-29-*.md` through `audits/risk-checks/2026-05-04-*.md` (7 files) — tracked risk-check reports (C4)
+- `logs/friction-log.md` — session accumulation (C5)
+- `logs/scratchpads/2026-05-08-15-08-scratchpad.md` — /save-session output (C5)
+- `logs/scratchpads/2026-05-08-w24-implementation-plan.md` — W2.4 implementation plan (C5)
+
+### Decisions Made
+- None (execution-only session; all decisions were made in prior plan-writing session)
+
+### Next Steps
+- Push all commits (11 ahead of origin/main — includes today's earlier sessions + this cleanup)
+- Open item from C5 commit body: `logs/scratchpads/` tracking convention vs `audits/working/` gitignore precedent — needs a separate convention-setting decision before the next cleanup session
+
+### Open Questions
+- None.
