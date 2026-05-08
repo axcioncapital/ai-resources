@@ -4,7 +4,7 @@ model: sonnet
 
 # /friday-act — Session 2 of the Friday cadence (operator-driven fixes)
 
-Consume the freshest `/friday-checkup` report and drive structured fixes. Tier-differentiated decision shape: weekly = tactical fixes; monthly = + policy-level review; quarterly = + architectural retrospective. Inline `/risk-check` gate on fixes that fall in any required class. Captures repo-health observations and next-week autonomy-axis posture targets at exit.
+Consume the freshest `/friday-checkup` report, disposition items, and produce plan files for follow-up implementation sessions. Tier-differentiated decision shape: weekly = tactical fixes; monthly = + policy-level review; quarterly = + architectural retrospective. `/risk-check` annotations are written into plan files; the gate runs at execution time. Captures repo-health observations and next-week autonomy-axis posture targets at exit.
 
 This command is Session 2 of the Friday cadence. It does not re-run audits — `/friday-checkup` is Session 1. If audit logic is needed, this command refuses and redirects.
 
@@ -105,47 +105,18 @@ If `SO_ADVISORY_PATH`, `SO_REVIEW_PATH`, AND `JOURNAL_PATH` are all `MISSING`, c
       ...
 
     Per-item disposition (one letter per item, in order):
-      (f)ix-now    — execute this fix in this session
+      (f)ix-now    — queue into a plan file (executed in a follow-up session)
       (d)efer      — log to logs/maintenance-observations.md as deferred
       (s)kip       — drop without logging
     ```
     If `SO_ADVISORY_PATH`, `SO_REVIEW_PATH`, AND `JOURNAL_PATH` are all `MISSING`, omit the "System Owner inputs available" block entirely (do not print a stub).
 14. Wait for the operator's per-item disposition string. Validate length matches item count and characters are in `{f,d,s}`. Re-prompt on mismatch.
 15. For each item dispositioned `f`:
-    a. Determine whether the fix touches a `/risk-check` change class (per `ai-resources/docs/audit-discipline.md` § Risk-check change classes). Trigger the gate if the item description names any of: hook file (`.sh`), `settings.json`, workspace `CLAUDE.md`, project `CLAUDE.md`, a new command/skill path, a new symlink, or auto-write/cross-repo automation.
-    b. If gated, prompt the operator inline:
-       ```
-       Item {N} touches a /risk-check change class ({class}).
-       Run /risk-check before executing? (y/n/skip)
-         y    — run /risk-check inline (verdict gates execution)
-         n    — proceed without /risk-check (operator override; logged in observations)
-         skip — skip this item, treat as deferred
-       ```
-    c. On `y`, invoke `/risk-check` via the Skill tool with `$ARGUMENTS` describing the proposed fix (item text + any file paths inferable from the report). Honor the verdict:
-       - `GO` → proceed to execute.
-       - `PROCEED-WITH-CAUTION` → proceed only after applying the paired mitigations from the risk-check report; record the applied mitigations in the per-item execution log.
-       - `RECONSIDER` → do NOT execute; log as deferred with the recommended-redesign one-liner.
-    d. On `n`, append a one-line note to the session block in Step 5: `- Item {N} executed without /risk-check (operator override): {item text}`.
-    e. On `skip`, treat as deferred (same as initial `d` disposition).
-    f. Execute the approved fix per standard autonomy rules (workspace `CLAUDE.md` Autonomy Rules apply). For multi-step fixes, work them in sequence; do not batch unrelated fixes into one diff.
-    g. **W2.4 follow-up dispatch (additional sub-disposition).** After executing or before executing step 15f, if the current tactical follow-up's source label starts with `repo-documentation:w2-4-improvements` and the operator's disposition is `f` (fix), offer one more sub-disposition:
-       ```
-       This follow-up is from W2.4 (improvement analysis). How should it be implemented?
-         (a) auto-draft — spawn system-developer-agent to draft a proposal
-         (b) manual    — operator implements without agent assistance
-       ```
-       - On `auto-draft`:
-         1. Read the improvement entry text from `projects/repo-documentation/output/phase-2/w2-4-improvements-{LATEST}.md` (locate by finding the relevant finding section).
-         2. Derive a slug: lowercase, kebab-case, ≤8 words from the finding's title.
-         3. Spawn `system-developer-agent` via Agent tool with brief: "Improvement entry below. Project CLAUDE.md path: `projects/repo-documentation/CLAUDE.md`. Slug: `{slug}`. Today: `{TODAY}`. Draft a propose-only implementation. Forbidden: deletions of files in ai-resources/skills/, ai-resources/.claude/, any CLAUDE.md, any harness/, any output/phase-1/. Improvement entry: ```{entry text}```"
-         4. After completion, locate the produced proposal at `projects/repo-documentation/output/phase-2/w2-4-proposals/{TODAY}-{slug}.md`. Display the proposal path. State: "Operator must review the proposal before applying any diff. /friday-act stops here for this finding; manual diff application is the next step."
-         5. Record disposition in `RESULTS` as `auto-drafted: {proposal_path}`.
-         6. If the proposal contains `## Proposal Rejected — Forbidden Action`, surface the rejection to the operator and recommend revising the improvement entry. Do not retry.
-       - On `manual`: proceed with step 15f normally (operator implements without agent assistance).
+    a. Check whether the fix touches a `/risk-check` change class (per `ai-resources/docs/audit-discipline.md` § Risk-check change classes — hook file (`.sh`), `settings.json`, workspace `CLAUDE.md`, project `CLAUDE.md`, a new command/skill path, a new symlink, or auto-write/cross-repo automation). If yes, record `risk_check_required: true`; otherwise `false`. Do not prompt the operator — the gate runs at execution time in the follow-up session.
+    b. If the item's source label starts with `repo-documentation:w2-4-improvements`, record `w2_4_source: true`; otherwise `false`. No agent is spawned here — the auto-draft sub-disposition runs in the follow-up session when the operator executes the plan.
+    c. Append the item to `FIX_NOW_ITEMS` with fields: `{source: checkup, risk, text, risk_check_required, w2_4_source}`.
 
 16. Items dispositioned `d` are accumulated for Step 5 logging.
-
-▸ After the tactical loop, run `/compact` if context is heavy (many fix-now items executed).
 
 ---
 
@@ -171,9 +142,7 @@ where risk ∈ {high, med, low}. Empty line to finish, or `(none)` to skip.
 
 16c. Validate each pasted line against `^\[(high|med|low)\] .+$`. Re-prompt on malformed input. Capture accepted items as a parallel list to the Step 3 tactical follow-ups (preserve `risk` and `text`).
 
-16d. For each accepted SO-derived item, run the same disposition loop as Step 3 (items 14–15 logic), with two notes:
-- The same `/risk-check` change-class gate (item 15a–c) applies — SO-derived items can touch hooks, settings, CLAUDE.md, etc., the same as checkup-derived items.
-- The W2.4 sub-disposition (item 15g) does NOT apply — SO-derived items have no `repo-documentation:w2-4-improvements` source label.
+16d. For each accepted SO-derived item, run the same disposition loop as Step 3 (items 14–15c logic). For each `f` item: apply the risk-check-class check (15a) and W2.4 check (15b); append to `FIX_NOW_ITEMS` with `source: so-derived`.
 
 16e. Append accepted SO-derived dispositions into the same `RESULTS` structure used by Step 3, tagged with `source: so-derived` so Step 5 can subtotal them and the deferred-items list can label them.
 
@@ -191,10 +160,64 @@ where risk ∈ {high, med, low}. Empty line to finish, or `(none)` to skip.
 
   Per-item disposition (one letter per item, in order; same f/d/s vocabulary):
   ```
-- Feed them into the same disposition loop as items 14–15. The `/risk-check` change-class gate (15a–c) applies. The W2.4 sub-disposition (15g) does NOT apply (journal items have no `repo-documentation:w2-4-improvements` source label).
+- Feed them into the same disposition loop as items 14–15c. For each `f` item: apply the risk-check-class check (15a) and W2.4 check (15b); append to `FIX_NOW_ITEMS` with `source: journal-derived`.
 - Tag accepted dispositions in `RESULTS` with `source: journal-derived` so Step 5 subtotals them separately.
 
-▸ After the SO-derived and journal-derived loops, run `/compact` if context is heavy (compounding cost from Steps 3, 3.5 SO, and 3.5 journal combined).
+---
+
+### Step 3.6: Plan Generation
+
+> Runs after all disposition loops (Steps 3, 3.5) are complete. Produces one or more plan files in `{AI_RESOURCES}/audits/friday-plans/`.
+
+16g. If `FIX_NOW_ITEMS` is empty, print `No fix-now items — no plan files generated.` and skip to Step 4.
+
+16h. Count `TOTAL_FIX = |FIX_NOW_ITEMS|`. Sort `FIX_NOW_ITEMS` by risk descending (high → med → low); within each risk tier, preserve source-stable order (checkup items first, then so-derived, then journal-derived, in the order they were accumulated).
+
+16i. **Determine plan shape:**
+- If `TOTAL_FIX ≤ 4`: one consolidated plan. Set `PLANS = [{slug: "consolidated", items: FIX_NOW_ITEMS}]`.
+- If `TOTAL_FIX > 4`: group by area. For each item, derive an area slug using this precedence:
+  1. Scan for the first explicit file path (absolute or relative; e.g., `ai-resources/.claude/commands/friday-act.md` → slug `friday-act`).
+  2. If no file path, scan for the first slash-prefixed command name (e.g., `/friday-act` → slug `friday-act`, stripping the leading `/`).
+  3. If neither, scan for the first directory name mentioned (e.g., `audits/` → slug `audits`).
+  4. If none of the above, slug = `general`.
+  - Take the last path component of whatever was matched, strip the extension if any, and kebab-case it.
+  - Group items by slug. Items with slug `general` form a single group.
+  - Set `PLANS = [{slug, items}, ...]`.
+
+16j. Ensure `{AI_RESOURCES}/audits/friday-plans/` exists (`mkdir -p`). For each entry in `PLANS`, write a plan file to `{AI_RESOURCES}/audits/friday-plans/{TODAY}-{slug}.md` using this schema (ordinals reset to 1 per plan file):
+
+```markdown
+# Friday Act Plan — {TODAY} — {slug}
+
+**Source report:** friday-checkup-{REPORT_DATE}.md ({TIER} tier)
+**Journal report:** {JOURNAL_PATH | (none)}
+**Generated:** {TODAY}
+**Items:** {N}
+
+## Items
+
+### {ordinal}. [{risk}] {item text}
+- **Source:** {checkup | so-derived | journal-derived}
+- **Risk-check required:** {yes — change class: {class} | no}
+- **W2.4 auto-draft:** {yes — decide (a) auto-draft or (b) manual at execution time | no}
+
+(repeat for each item, ordered high → med → low within this plan)
+
+## Execution notes
+- Commit each fix separately (workspace commit-behavior rules).
+- For any item marked "Risk-check required: yes", run `/risk-check` before executing that item.
+- For any item marked "W2.4 auto-draft: yes", decide auto-draft vs. manual at execution time per the W2.4 sub-disposition in the `/friday-act` Step 3 W2.4 instructions.
+- Run `/wrap-session` when all items in this plan are done.
+```
+
+16k. Print to operator:
+```
+Plan(s) written ({TOTAL_FIX} fix-now items across {P} plan(s)):
+  {ordinal}. {absolute_path}  — {N} items
+  ...
+
+Open each plan in a follow-up session to execute. Implement all plans before next Friday.
+```
 
 ---
 
@@ -235,12 +258,16 @@ where risk ∈ {high, med, low}. Empty line to finish, or `(none)` to skip.
     - Journal Report: {JOURNAL_PATH | (none within 7 days)}
 
     ### Disposition summary
-    - Tactical: {F} fix-now, {D} defer, {S} skip (of {TOTAL} items; of which {SO_COUNT} System Owner-derived, {JOURNAL_COUNT} journal-derived)
+    - Tactical: {F} queued for plans, {D} defer, {S} skip (of {TOTAL} items; of which {SO_COUNT} System Owner-derived, {JOURNAL_COUNT} journal-derived)
     - Policy review: {R} rule-change proposed, {N} no-change, {D} defer (monthly+ only; omit for weekly)
     - Architectural retrospective: {captured | skipped} (quarterly only; omit otherwise)
 
     ### Deferred items (from this session)
     - {tactical or policy item text} — {risk if tactical}, {source: checkup | so-derived | policy}
+
+    ### Plans written (this session)
+    - {path} — {N} items
+    (omit if FIX_NOW_ITEMS was empty)
 
     ### Policy proposals (monthly+; omit if none)
     - For "{observation}": {operator's proposed rule edit}
@@ -317,7 +344,7 @@ where risk ∈ {high, med, low}. Empty line to finish, or `(none)` to skip.
 
     Source report: {REPORT_PATH}
     Tier: {TIER}
-    Tactical: {F} fix-now executed, {D} defer, {S} skip (of {TOTAL})
+    Tactical: {F} queued into {P} plan(s), {D} defer, {S} skip (of {TOTAL})
     {Policy review summary if monthly+}
     {Architectural retrospective summary if quarterly}
     Axis targets: {count of non-hold axes}/7 changed
@@ -330,7 +357,7 @@ where risk ∈ {high, med, low}. Empty line to finish, or `(none)` to skip.
     Suggested next: /wrap-session
     ```
 
-29. **Do NOT commit.** Fixes executed in Step 3 follow standard commit-directly rules (each fix's commit happens at execution time per workspace `Commit behavior`). The `maintenance-observations.md` append lands unstaged; the operator stages and commits it manually at session wrap (or invokes `/cleanup-worktree` if it accumulates).
+29. **Plan files.** Plan files written in Step 3.6 are unstaged. Stage and commit them manually or via `/cleanup-worktree` at session wrap. Each plan file's downstream execution follows standard commit-directly rules (each fix's commit happens at execution time in the follow-up session). The `maintenance-observations.md` append lands unstaged; the operator stages and commits it manually at session wrap (or invokes `/cleanup-worktree` if it accumulates).
 
 ---
 
@@ -340,8 +367,8 @@ where risk ∈ {high, med, low}. Empty line to finish, or `(none)` to skip.
 - **System Owner inputs (Steps 1.5 + 3.5).** `/friday-act` reads the freshest `/friday-so` advisory and `/systems-review` report (filtered to ≥ checkup date and ≤ 7 days old) as supplementary inputs. The SO outputs are prose; `/friday-act` does not parse their content — it displays the first 30 lines and lets the operator paste any actionable items as `[risk] {text}` for the same disposition loop as checkup items. If both SO files are missing, Step 3.5 self-skips. Producer-side commands (`/friday-so`, `/systems-review`) are not modified — coupling is one-way (consumer reads producer outputs).
 - **Journal Report (Steps 1.5 + 3 + 3.5 + 5).** `/friday-act` reads the freshest `/friday-journal` report (filtered to ≥ checkup date and ≤ 7 days old) as a third supplementary input. Unlike the SO outputs (prose), the journal report's `## Items` section is pre-structured to the same `[risk] {text}` shape as Step 3.5's regex — sub-step 16f extracts those lines directly and feeds them into the disposition loop with no paste-prompt. The producer-side schema-contract callout lives in `.claude/commands/friday-journal.md` Step 5; do not change the prefix syntax in either command without updating both ends. Coupling is one-way (consumer reads producer).
 - **7-day vs. 10-day filter rationale.** Supplementary inputs (Friday Advisory, Systems Review, Journal Report) all use a **7-day** filename-date filter — these are session-window-scoped artifacts produced for a specific Friday and stale beyond that week. The checkup report itself uses a **10-day** abort threshold (Step 1.7) because it pairs with the `friday-checkup-reminder.sh` hook's recovery-Friday window; a 10-day grace allows skipped-Friday recovery without re-running the audit. The two thresholds are intentionally distinct: 7-day = "fresh for this Friday's session"; 10-day = "fresh enough to still be the basis for action."
-- **Inline `/risk-check`.** Operator-confirmed (Step 3.b prompt), then dispatched via the Skill tool. This matches `risk-check.md`'s "operator-typed, or inline-prompted by other commands (e.g., `/friday-act`)." Auto-firing without consent is not permitted.
+- **`/risk-check` gate (Step 3.6).** The change-class check runs at plan-write time (Step 3.6) to annotate plan files — it does NOT prompt the operator or invoke the Skill tool during `/friday-act`. The gate runs in the follow-up session, immediately before executing the flagged item.
 - **No auto-edit of CLAUDE.md or audit-discipline.md.** Policy proposals (Step 4) capture intent; the rule edits themselves go through their own plan + `/risk-check` cycle.
 - **Coaching-log untouched.** The seven autonomy axes are forward-looking weekly posture targets; coaching-log's five session-pattern dimensions are backward-looking session ratings. Different orientation, kept separate (per workspace decision 2026-04-24).
-- **Failure handling.** If a sub-fix in Step 3 errors mid-execution, surface the error, log the item as `failed (error: {summary})` in the deferred-items section, and continue with the next item. Do not abort the whole run.
 - **Skipped-Friday recovery.** If `DAYS > 10` (Step 1.7), the command refuses. Recovery flow: run `/friday-checkup` first; that command's Step 0 will offer recovery-Friday vs. fold-into-next-Friday options; then re-invoke `/friday-act` against the fresh report.
+- **Plan branching (Step 3.6).** Fix-now items are written to plan files in `audits/friday-plans/`, never executed inline. Threshold: ≤ 4 items → one `{date}-consolidated.md`; > 4 → one `{date}-{area-slug}.md` per file/area group (items with no identifiable path target go into `{date}-general.md`). Plan files use a fixed schema (see Step 3.6). Each plan is implemented in its own follow-up session before the next Friday. W2.4 auto-draft sub-disposition is deferred to the execution session; the plan file annotates the item as W2.4-sourced.
