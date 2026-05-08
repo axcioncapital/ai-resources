@@ -29,3 +29,26 @@ Coaching feedback captured via `/coach`. Newest entries at the bottom.
 
 **The One Thing:** Treat your interruption-impulse as a deliberate review gate, not a correction. `editorial-disagreement` gate fired 5/5 changed across visible window — every pushback produced a structural rule change or scope correction. State the impulse explicitly before issuing the directive so rationale is captured at generation time rather than retrofitted through triage.
 **Prior recommendation status:** Substantially acted on — decisions/session rose from ~1 to 3.25 (3.25× increase); 65% of new decisions enumerate alternatives.
+
+---
+
+### 2026-05-08
+
+**Coverage:** 13 sessions (2026-05-01 → 2026-05-07), 9 decisions, 8 QC cycles. Coaching-data lags session-notes — only 1 entry post-2026-05-01 baseline, friction-log dormant since 2026-04-18.
+
+**Findings**
+
+| Dimension | Rating | Trend | Note |
+|-----------|--------|-------|------|
+| Iteration Efficiency | Watch | ↓ | Design-class artifacts: 5 REVISE in 8 QC cycles. Execution sessions: pass cleanly. |
+| Decision Patterns | Healthy | ↑ | 8/9 decisions enumerate alternatives. M1-revert exemplifies the "challenge upstream rec, log principle" pattern. |
+| QC Disposition | Watch | → | First-pass quality on plans/commands has slipped. All findings applied; no DISAGREE. |
+| Delegation Effectiveness | Healthy | → | H5 subagent + risk-check pattern continues. No scope drift. |
+| Workflow Evolution | Watch | mixed | Forward velocity high (/monday-prep, weekly-cadence, /deploy-kb shipped); backward resolution stalled (5 improvement-log entries pending 10–16 days; friction-log dormant 3+ weeks). |
+
+**The One Thing:** For design-class sessions (new plan/command/brief), spend the first 5 minutes writing the constraint set: target users, output shape, what it replaces, what it explicitly does NOT do, which paths/commands it references. The 2026-05-05 cluster spent 2 QC rounds discovering verifiable filesystem facts (`/systems-review` doesn't exist, harness path is workspace-root). The 2026-05-07 mid-session approach pivot is the same shape — format constraint discovered late.
+
+**Prior recommendation status:**
+- 2026-05-01 "interruption-impulse as deliberate review gate" — substantially acted on (M1-revert decision is the textbook case).
+- 2026-04-24 "decisions.md rigor" — acted on (89% of decisions enumerate alternatives).
+- New gap opened on design-session first-pass quality (verifiable factual errors caught in QC).

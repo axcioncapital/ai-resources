@@ -321,3 +321,10 @@
 - **Decisions logged:** 2
 - **QC cycles:** 2 (v2 REVISE → v3 produced; v3 REVISE → triage → v4 produced)
 - **Gates:** 5 (3 confirmed, 2 changed) — content-review:confirmed (plan direction after v1), content-review:changed (operator answered 4 design questions adjusting scope), plan-approval:confirmed (/recommend triggered), qc-disposition:changed (triage Do items applied), plan-approval:confirmed (operator approved v4 and proceed to commit)
+
+### 2026-05-08 — /friday-checkup weekly cadence
+- **Commands used:** /prime, /friday-checkup (/audit-repo, /improve ×2, /coach ×5, /permission-sweep --dry-run, doc-scanner-agent, kb-integrity, findings-extractor), /wrap-session
+- **Iterations:** 0 (maintenance cadence — no drafting)
+- **Decisions logged:** 0
+- **QC cycles:** 0
+- **Gates:** 3 (3 confirmed) — tier-confirmation:confirmed (weekly auto-detected), scope-selection:confirmed (1,3a,3d,3i), long-run-approval:confirmed (operator typed "proceed with long run")

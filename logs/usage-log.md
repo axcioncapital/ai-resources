@@ -2,6 +2,37 @@
 
 <!-- entries below -->
 
+### 2026-05-08 | Wasteful
+
+**Task:** Weekly /friday-checkup across 5 scopes (ai-resources, workspace, axcion-ai-system-owner, global-macro-analysis, repo-documentation), including /audit-repo, /improve, /coach, /permission-sweep --dry-run, W2.1/W2.3/kb-integrity for repo-documentation, consolidated report, and /wrap-session.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~30 |
+| Files read | ~18 (re-reads: 3) |
+| Files written/edited | 17 |
+| Tool calls | ~110 |
+| Subagents | 12 |
+| Rework cycles | 0 |
+
+**Findings:**
+- [Coaching return bloat — MAJOR — recurring] 5 collaboration-coach agents each returned 80–100 lines of full analysis (~6–8k tokens) to main session; main session wrote compact 15-line entries to disk. Pattern flagged in 2026-05-01 log as "wire coach to write to disk and return summary." Third consecutive session where this fires unresolved. Estimated waste: ~5–7k tokens per session.
+- [Subagent volume — MAJOR] 12 subagents totaling ~590k estimated tokens — largest session on record. repo-health-analyzer alone consumed ~116k with 7 internal sub-sub-agents. No waste within individual agents, but aggregate context load is the ceiling constraint.
+- [Parallel coaching returns — MODERATE] 4 coaching agents ran in background in parallel, but all 4 full returns still loaded into main context simultaneously. Parallelism benefits wall-clock only; token load is unchanged. 4 parallel returns worse than 4 sequential with incremental disk-write.
+- [Re-reads — Minor] session-notes.md ×2, coaching-log.md ×2, improvement-log.md ×2 — tail-then-full pattern. Low volume, no structural change needed.
+
+Regression from last 3 entries (all Acceptable) — first Wasteful rating. Two MAJOR findings driven by recurring unresolved coaching-return pattern and session scale.
+
+**Recommendation:** Implement the 2026-05-01 recommendation: wire collaboration-coach to write full analysis to a working-notes file on disk and return only a ≤20-line summary to the main session. Third session the pattern fires unresolved; eliminates the single largest recurring waste category.
+
+**Estimated savings:** ~6k tokens/session × 10 sessions = ~60k tokens. Derivation: 5 agents × 90-line return × ~13 tokens/line ≈ 5,850 tokens recovered per checkup.
+
+**Additional levers (ROI-ranked):**
+1. **repo-health-analyzer scope gate (~350k/month):** Add monthly-only tier gate — skip on weekly unless drift flag set. Saves ~116k tokens × 3 weekly runs between monthly checkups. Largest single lever by volume.
+2. **Coaching disk-write contract (~6k/session):** Same fix as primary recommendation — change coach SKILL.md to require working_notes_path write + ≤20-line return. One-time edit; fires every checkup.
+3. **Parallel-to-sequential coaching swap (~3.5k peak):** Run coaching agents sequentially with immediate disk-write after each return rather than batching all returns simultaneously. Reduces peak main-session context by ~3 agents × 90 lines.
+4. **Findings-extractor inline (~15k one-shot):** Replace with targeted grep/Read over already-written disk artifacts (permission-sweep notes, repo-health report) when those exist. Saves ~15k tokens per checkup.
+
 ### 2026-05-05 | Acceptable
 
 **Task:** Designed a weekly Monday + Friday maintenance cadence plan through four iterations (v1–v4), with two QC passes (both REVISE) and one triage pass. Final plan committed to `ai-resources/docs/weekly-cadence.md`.

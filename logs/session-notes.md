@@ -391,3 +391,37 @@ Prepared a session brief for an upcoming relationship-building lunch with a Bird
 ### Open Questions
 - Q6: do you have a concrete example of catching an AI error before it went out? Not required, but framing B needs it.
 - Q7: is a Data Processing Agreement in place? What is the lawful basis for processing fund criteria data? Lawyer will likely ask directly.
+
+## 2026-05-08 — /friday-checkup weekly cadence
+
+Ran the weekly Friday maintenance cadence across ai-resources, workspace root, axcion-ai-system-owner, global-macro-analysis, and repo-documentation.
+
+### Summary
+Full weekly tier checkup completed. Audit-repo found ai-resources RED (1 critical: broken consult.md symlink in research-workflow). Permission sweep found 3 HIGH (missing tool grants + additionalDirectories in ai-resources settings.json, unresolved placeholder in research-workflow). Coach ran for all 5 scopes — 3 new baseline logs created (workspace, axcion-ai-system-owner, global-macro-analysis). Improve ran for ai-resources (0 new; friction already resolved) and global-macro-analysis (3 entries logged: concurrent-session race, /kb-review skip condition, concurrency hook). W2.1 doc-scan: 44 added, 3 removed. Vault integrity: 1 error (innovation-sweep missing 5 schema fields), 8 warnings.
+
+### Files Created
+- `ai-resources/audits/friday-checkup-2026-05-08.md` — consolidated report
+- `ai-resources/audits/repo-health-ai-resources-2026-05-08.md` — audit-repo snapshot
+- `ai-resources/audits/permission-sweep-2026-05-08.md` — permission sweep dry-run report
+- `logs/coaching-log.md` — workspace coaching baseline
+- `projects/axcion-ai-system-owner/logs/coaching-log.md` — coaching baseline
+- `projects/global-macro-analysis/logs/coaching-log.md` — coaching baseline
+- `projects/global-macro-analysis/logs/improvement-log.md` — 3 entries appended
+- `projects/repo-documentation/output/phase-2/w2-1-doc-scan-2026-05-08.md`
+- `projects/repo-documentation/output/phase-2/w2-3-maintenance-2026-05-08.md`
+- `projects/repo-documentation/vault/_integrity-report-2026-05-08.md` (gitignored)
+
+### Files Modified
+- `ai-resources/logs/coaching-log.md` — 2026-05-08 entry appended
+- `projects/repo-documentation/logs/coaching-log.md` — 2026-05-08 entry appended
+- `ai-resources/reports/repo-health-report.md` — replaced by new audit
+
+### Next Steps
+- Fix `consult.md` symlink in research-workflow (3-level → 4-level path) — risk: high
+- Run `/permission-sweep` (without --dry-run) to fix ai-resources settings.json
+- Fix `innovation-sweep` schema entry in vault/components/commands.md
+- Run `/cleanup-worktree` to commit this session's outputs
+- Paste 44 new W2.1 entries into vault/components/ via /kb-update
+
+### Open Questions
+- None
