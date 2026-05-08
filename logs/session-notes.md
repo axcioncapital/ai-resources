@@ -430,3 +430,52 @@ Session 2 of the Friday cadence. Dispositoned 43 items (12 checkup + 31 journal)
 
 ### Open Questions
 None.
+
+## 2026-05-08 — Plan: /log-sweep cross-project log archival command
+
+### Summary
+Plan-mode session that designed a new `/log-sweep` slash command + `log-sweep-auditor` subagent + `log-archiver.sh` helper script to manage log file bloat across active projects. Phase 1 inventory showed 188 log files / 3.2 MB total across the workspace, with `audits/working/` (82 files / ~1 MB) as the biggest single bloat source. Plan iterated through clarify → Phase 2 design (Plan agent) → Phase 3 review → 2× QC passes (each REVISE → fix) → /risk-check (PROCEED-WITH-CAUTION → 6 mitigations applied). Plan approved; execution deferred to next session per operator direction.
+
+### Files Created
+- `/Users/patrik.lindeberg/.claude/plans/let-s-develop-some-sort-flickering-scroll.md` — full implementation plan (context, 7-category file classification, routing rules, reuse points, path conventions, edge cases, verification, risk-check mitigations, locked defaults)
+
+### Files Modified
+None (plan mode restricted writes to the plan file).
+
+### Decisions Made
+**Plan defaults (operator-confirmed):**
+- Command name: `/log-sweep` (vs `/archive-logs`, `/log-cleanup`)
+- `/friday-checkup` integration: weekly `--dry-run` only (no auto-apply)
+- Audit-notes age threshold: 60 days old + 30 days idle
+- Mode: automated after folder pick (no `apply N,M` approval gate)
+
+**Architectural decisions (Claude-recommended, operator-confirmed via "Fix" / "Proceed"):**
+- Wrap existing infra (`check-archive.sh`, `split-log.sh`) — do not modify
+- Three-actor pattern (orchestrator command + per-scope auditor subagent + helper bash script)
+- Discovery scope: `ai-resources/` and `projects/*/` only (excludes `workflows/*/`)
+- Topic-organized files (innovation-registry.md, session-plan.md, ai-journal.md, next-up.md) → Cat C inventory-only (cannot be header-rotated)
+- `.log` / `.jsonl` / `.ndjson` files → Cat F inventory-only (format-specific)
+- Manual `partN.md` files in buy-side-service-plan → skip via Cat E (no `--consolidate-parts` mode)
+- macOS path discipline: `python3 os.path.realpath` (not `readlink -f`); abort if python3 missing
+
+**QC fixes applied across two passes:**
+- Pass 1 (8 items): added Cat F for .log/.jsonl; restructured 5→7 categories from empirical header inspection of all candidate files; removed inserted approval gate (operator confirmed automated); dropped `--consolidate-parts`; dropped `workflows/*/`; fixed verification step 4 (auditor writes notes regardless of dry-run); added per-file routing rule decision tree.
+- Pass 2 (5 items): explicit `improvement-log.md` skip by filename in auditor; friday-checkup runtime estimator update added to plan; symlink-escape fallback hardened to abort vs silent pass; routing rule made deterministic.
+
+**Risk-check mitigations (6 items, plan-time gate):**
+1. Pre-apply manifest BEFORE rotation (not after)
+2. Cat D self-exclusion (`log-sweep-*.md`, `log-sweep-manifest-*.md` in glob exclusions)
+3. Cat B regex empirically VERIFIED on real `coaching-data.md`, `usage-log.md`, `coaching-log.md` — both extractor methods work; no further verification needed
+4. Name-collision cross-reference between `dd-log-sweep-agent` and new `log-sweep-auditor` (landing task)
+5. Idempotency contract documented in both `log-sweep.md` and `wrap-session.md`
+6. Explicit staging note for audit artifacts in final report
+
+### Next Steps
+- **Next session: execute the plan** at `/Users/patrik.lindeberg/.claude/plans/let-s-develop-some-sort-flickering-scroll.md`
+- First execution step: write the risk-check report to `ai-resources/audits/risk-checks/2026-05-08-log-sweep-command-auditor-archiver-script-friday-checkup.md` (could not be written in plan mode; agent return content preserved in plan)
+- Apply the 6 risk-check mitigations as binding implementation requirements (see plan § Risk-check mitigations)
+- Files to create at execution time: `ai-resources/.claude/commands/log-sweep.md`, `ai-resources/.claude/agents/log-sweep-auditor.md`, `ai-resources/logs/scripts/log-archiver.sh`
+- Files to update at execution time: `ai-resources/.claude/commands/friday-checkup.md` (add `/log-sweep --dry-run` + runtime estimator), `ai-resources/.claude/commands/wrap-session.md` (idempotency note)
+
+### Open Questions
+None — plan is complete and approved.

@@ -248,3 +248,16 @@
 
 **Alternatives considered:**
 - *Land 5 first, 6 in a later session:* Rejected — leaves root cause intact for at least one more cycle, extending the 3-cycle anti-pattern.
+
+## 2026-05-08 — /log-sweep: build new command vs extend check-archive.sh
+
+**Context:** Operator asked whether to build a new log-archival command or rely on existing infra (`check-archive.sh`, `split-log.sh`, `/resolve-improvement-log`, `dd-log-sweep-agent`). Phase 1 inventory: 188 log files / 3.2 MB workspace-wide; `audits/working/` alone has 82 files / ~1 MB with no policy; `coaching-data.md` excluded from `check-archive.sh` due to `### ` headers; `usage-log.md`, `innovation-registry.md`, `session-plan.md`, `friction-log.md` and per-project `projects/*/logs/` dirs all uncovered.
+
+**Decision:** Build `/log-sweep` as a wrapping orchestrator (new command + new auditor subagent + new helper script). Do not modify `check-archive.sh` or `split-log.sh`.
+
+**Rationale:** Existing infra is solid but partial — `check-archive.sh` is hard-bound to `ai-resources/logs/` (`PROJECT_DIR` resolved from script location at line 12), covers only 2 of 16 active log files, and explicitly excludes `coaching-data.md`. Per-file scripts cannot be retrofitted into cross-project bulk inventory without changing their `/wrap-session` contract. Wrapping (subprocess calls + new helper for gap categories) preserves the existing contracts while extending coverage to all gap files and all `projects/*/logs/` dirs.
+
+**Alternatives considered:**
+- *Refactor `check-archive.sh` to take a scope argument:* Rejected — risks breaking `/wrap-session` contract; no benefit over wrapping.
+- *Do nothing — current bloat is on-demand only (no auto-loading) and active logs are healthy:* Rejected — `audits/working/` has 82 ungoverned files, `coaching-data.md` and `usage-log.md` grow unbounded, and the 2026-05-01 token-audit explicitly flagged `audits/**` and `logs/` as MEDIUM-priority uncovered risk. Doing nothing leaves a known gap.
+- *Per-file rotation rules baked into individual writers (e.g., `usage-analysis` self-rotates):* Rejected — distributes archival logic across many writers, defeats centralization, and doesn't address `audits/working/` (which has no single writer).
