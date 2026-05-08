@@ -342,3 +342,35 @@ Executed plan files from 2026-05-08 /friday-act disposition. Completed consult p
 
 ### Open Questions
 - Item 5 operator decision still needed: (a) document {{WORKSPACE_ROOT}} as deploy-time template marker vs (b) replace with absolute path.
+
+## 2026-05-08 — Coaching log review + workflow improvements (Plans #2 and #3)
+
+### Summary
+Reviewed coaching logs across all active projects (ai-resources, global-macro-analysis, repo-documentation). Developed and executed two implementation plans: Plan #2 adds a Promotion candidates section to the collaboration-coach (flags acted-on recommendations for graduation routing); Plan #3 adds a closure mechanic for the improvement-log open tail (two-tier age detection, soft-cap advisory, friction-log dormancy check, STALE threshold lowered from >28 to >21 days). Plan QC produced REVISE; 9 of 12 findings were Real and all resolved before execution. Risk-check for Session B: GO (all 5 dimensions Low). 5 commits shipped.
+
+### Files Created
+- `audits/risk-checks/2026-05-08-session-b-edits-three-shared-infrastructure-command-file.md` — Session B risk-check report (GO verdict)
+- `/Users/patrik.lindeberg/.claude/plans/why-is-this-not-ancient-glacier.md` — Approved implementation plan (outside repo, plan mode artifact)
+
+### Files Modified
+- `.claude/agents/collaboration-coach.md` — Added Promotion candidates section to Phase 4 output template + charter rule ("flag only, no rule text")
+- `.claude/commands/coach.md` — Added `**Promotion candidates:**` one-liner to Step 6 log-entry template
+- `logs/coaching-log.md` — Appended entry `### 2026-05-08b` (5-dimension analysis; notes Promotion candidates section absent from test run)
+- `.claude/commands/resolve-improvement-log.md` — Step 3b replaced with two-tier age detection: WARM_PENDING (>21 days ≤42, informational) + STALE_PENDING (>42 days, existing r/e/c/k, unchanged)
+- `.claude/commands/friday-act.md` — Inserted Step 1.7: improvement-log soft-cap check (>7 active entries prompts y/n advisory)
+- `.claude/commands/friday-checkup.md` — Lowered STALE threshold >28→>21 days; added Friction-log dormancy tactical item ([FRICTION-DORMANT] if last entry >21 days)
+
+### Decisions Made
+- **STALE detection deduplication**: Chose Option B (lower existing friday-checkup threshold to >21 days, drop proposed duplicate in friday-act) over adding a separate warm-pending tier in friday-act — eliminates triple-overlap across three commands.
+- **Step numbering in friday-act**: New step numbered 1.7 (not 1.5) — Step 1.5 already exists; renaming would break prior documentation.
+- **Promotion candidates scope**: Single-cycle surface only (scan most recent coaching-log entry only); no cross-cycle identity matching — avoids false positives from recommendation drift across sessions.
+- **Coach charter extension**: "Flag only" — coach may surface graduation readiness but may NOT draft rule text, suggest targets, or propose system edits; structural changes route to /improve or CLAUDE.md edit session.
+- QC fixes (9 items): stepwise threshold dedup, numbering correction, scope descoping, charter clarification, verification checklist corrections (friction-log was 0 days old, not 20; max entry age 16 days), defaults confirmation gate added.
+
+### Next Steps
+- Add improvement-log entry for Promotion candidates section not firing in /coach test run (fix: move instruction to Phase 3 as mandatory step, not only Phase 4 output template)
+- Push 5 commits to origin (awaiting operator approval)
+- Deferred verifications: STALE >21 days check — verify on/after 2026-05-13; friction-log dormancy check — verify on/after 2026-05-29; soft-cap warning — verify when improvement-log exceeds 7 active entries
+
+### Open Questions
+- None new. Prior open question remains: Item 5 — {{WORKSPACE_ROOT}} template marker vs. absolute path.

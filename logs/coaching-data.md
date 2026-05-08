@@ -343,6 +343,13 @@
 - **QC cycles:** 1 (plan QC: REVISE → fixes → operator approved via ExitPlanMode; catch-up gate QC on report: 7 findings dispositioned)
 - **Gates:** 5 (4 confirmed, 1 changed) — plan-approval:changed (6 REVISE items fixed before approval), archive-confirmation:confirmed (32 entries), catch-up-gate-run:confirmed (recommended + approved), finding-disposition:confirmed (F1/F2/F3/F5 applied, F4/F8 kept), improvement-spec-proceed:confirmed
 
+### 2026-05-08b — Coaching log review + workflow improvements (Plans #2 and #3)
+- **Commands used:** /coach, /qc-pass, /resolve, /risk-check, /wrap-session
+- **Iterations:** 1 plan iteration (QC REVISE → 9 Real findings resolved → approved)
+- **Decisions logged:** 2 (STALE detection deduplication Option B; promotion candidates single-cycle scope)
+- **QC cycles:** 1 (implementation plan: REVISE → /resolve triage → 9 fixes → approved)
+- **Gates:** 3 (1 confirmed, 2 changed) — plan-approval:changed (plan initially written in chat; operator triggered plan mode for proper artifact), defaults-confirmation:confirmed (operator confirmed all defaults with "c"), qc-disposition:changed (plan REVISE; 9 of 12 findings Real, all resolved)
+
 ### 2026-05-08 — /friday-act: disposition of 2026-05-08 friday-checkup + journal
 - **Commands used:** /friday-act, /session-plan, /qc-pass ×3, /triage ×3, /wrap-session
 - **Iterations:** 3 revision passes (initial disposition → SO advisory full-read revision → improvement-log cross-reference revision); each revision added new plan items

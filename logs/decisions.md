@@ -275,3 +275,26 @@
 - *Option B (active-sessions.json stamp):* Rejected. TOCTOU race (check passes, Session B starts after check); stale entries on crash; per-tool JSON read overhead. No advantage over C without taking on A's lifecycle costs.
 - *Option E (PreToolUse mtime hook):* Rejected. Must track which files the current session wrote to avoid false positives on its own writes — converges to Option B's complexity for marginal gain over D.
 - *Option D alone:* Insufficient — doesn't raise operator awareness at session-start, when operator still has time to close the second terminal.
+
+## 2026-05-08 — STALE detection deduplication across three commands
+
+**Context:** Plan #3 initially proposed adding warm-pending age detection to both friday-act and friday-checkup, while also adding it to resolve-improvement-log. QC surfaced that this would create triple overlap: friday-checkup already had >28-day STALE detection; plan added a new tier at >21 days; friday-act warm-pending would duplicate friday-checkup's signal.
+
+**Decision:** Option B — lower the existing friday-checkup STALE threshold from >28 to >21 days (one-token edit), and drop the proposed warm-pending duplicate in friday-act. Warm-pending informational tier lives only in resolve-improvement-log (where it has no overlap).
+
+**Rationale:** Three separate checks for the same signal (stale improvement entries) across three commands creates maintenance surface and operator confusion about which check is authoritative. Single-source signal with aligned thresholds is cleaner. The one-token edit to friday-checkup is lower risk than a new tier block.
+
+**Alternatives considered:**
+- *Option A (keep all three tiers):* Rejected — triple overlap; which check fires depends on which command runs first; thresholds would drift.
+- *Option C (remove friday-checkup STALE detection entirely, rely on resolve-improvement-log):* Rejected — friday-checkup is the weekly health scan; removing its stale detection degrades its coverage.
+
+## 2026-05-08 — Promotion candidates: single-cycle scope only
+
+**Context:** Plan #2 asked the collaboration-coach to flag recommendations rated "acted on" as graduation candidates. Initial draft was silent on whether to track across cycles (e.g., "this recommendation was acted on in cycle 3, still relevant in cycle 5"). QC flagged the ambiguity as a false-positive risk.
+
+**Decision:** Single-cycle surface only — scan the most recent coaching-log.md entry only; do not match recommendations across entries or track cross-cycle identity. A recommendation that was acted on in a prior cycle but not surfaced in the current entry is not flagged.
+
+**Rationale:** Cross-cycle identity matching requires stable recommendation text (which drifts), and would surface stale recommendations that may no longer apply. Single-cycle surface is simpler, lower false-positive risk, and sufficient — the operator sees graduation candidates at the moment they're fresh.
+
+**Alternatives considered:**
+- *Cross-cycle tracking:* Rejected — recommendation text is not normalized; matching on fuzzy prose across entries is error-prone and would require a separate normalization step.
