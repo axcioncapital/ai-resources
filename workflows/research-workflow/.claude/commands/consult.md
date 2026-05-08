@@ -1,1 +1,1 @@
-../../../.claude/commands/consult.md
+../../../../.claude/commands/consult.md
