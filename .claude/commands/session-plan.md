@@ -43,6 +43,20 @@ If `$ARGUMENTS` is empty:
 
 ---
 
+## Step 1.5 — Classify session
+
+Ask the operator one question and **wait**:
+
+> Is this session **design** (creating or drafting something new — a skill, command, plan, brief, agent definition), **execution** (running or applying something that already exists — an audit, triage, research stage, edits from a clear plan), or **mixed**?
+>
+> Default if unsure: **design**.
+
+Set `CLASS` = the operator's answer (`design`, `execution`, or `mixed`). If mixed, note which class dominates in parentheses.
+
+If the response does not match one of the three canonical values exactly (case-insensitive), normalize by mapping to the closest canonical value (e.g., "Design" → `design`, "design session" → `design`, "exec" → `execution`). If no clear match, re-ask once with the three options listed explicitly. Do not loop.
+
+---
+
 ## Step 2 — Model selection
 
 Apply the three-tier heuristic from `ai-resources/skills/ai-resource-builder/references/operational-frontmatter.md`:
@@ -134,6 +148,9 @@ Write to `logs/session-plan.md` (overwrite if present):
 ## Intent
 {INTENT — one sentence}
 
+## Class
+{design | execution | mixed}
+
 ## Model
 {recommended tier} — {match | → /model {shortname}}
 
@@ -149,6 +166,10 @@ Write to `logs/session-plan.md` (overwrite if present):
 ## Risk
 {risk-check pointer, or "No structural change classes apparent — run /risk-check if scope changes."}
 ```
+
+After writing `session-plan.md`, locate today's `## {YYYY-MM-DD}` header in `logs/session-notes.md` (the entry `/prime` created in Step 0). Use `Edit` to insert `Class: {CLASS}` as a new line immediately below the header, before any existing content in the entry. The line should be in plain text form (not a heading, not a bullet) so downstream rules can grep for `^Class: ` reliably.
+
+Step 0 has already verified today's entry exists; if for any reason the header is missing at this point, skip the append and emit a one-line warning to the operator.
 
 ---
 
