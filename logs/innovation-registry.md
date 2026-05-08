@@ -95,3 +95,4 @@
 | 2026-04-28 | command | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/buy-side-service-plan/.claude/commands/friction-log.md | triaged:project-specific | — (buy-side variant) |
 | 2026-04-28 | agent | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/project-planning/.claude/agents/context-evaluator.md | triaged:project-specific | — (paired with project-planning's pipeline; mirrors plan-evaluator/spec-evaluator pattern) |
 | 2026-04-28 | command | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/project-planning/.claude/commands/context-builder.md | triaged:project-specific | — (Stage 1 of project-planning pipeline; only sensible inside that workspace) |
+| 2026-05-08 | command | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/repo-documentation/.claude/commands/archaeology.md | triaged:project-specific | — (M1.1 milestone scaffolding for repo-documentation; output paths and Decision D-1 baked in) |

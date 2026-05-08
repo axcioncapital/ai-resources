@@ -370,3 +370,26 @@ None.
 
 ### Open Questions
 - Whether v2.1.132 has a partial fix for #43989 that affects the override behavior — not confirmed.
+
+## 2026-05-08 — Add unpushed-commits check to /friday-checkup
+
+### Summary
+User asked whether there's an existing check that surfaces uncommitted or unpushed commits during Friday cadence. Audit found the existing Cleanup-worktree tactical item (Step 6) covers dirty working trees but nothing detects commits that are committed but not yet pushed. Patched friday-checkup to add an "Unpushed commits" tactical follow-up that checks both `ai-resources/` and the workspace root using `git log @{u}..HEAD`.
+
+### Files Created
+None.
+
+### Files Modified
+- `ai-resources/.claude/commands/friday-checkup.md` — added Unpushed commits tactical follow-up after Cleanup-worktree (Step 6, line 288)
+
+### Decisions Made
+- Placed check in Step 6 (Compile Follow-Ups) to mirror Cleanup-worktree pattern rather than adding a new early-phase pre-flight scan — consistent shape, no new step needed.
+- Covers both `ai-resources/` and workspace root (the Cleanup-worktree check only covers `ai-resources/`; extended scope because user's concern was repo-level sync, not just ai-resources).
+- Risk tier: `med` (matches Cleanup-worktree).
+
+### Next Steps
+- Consider adding the same check to `/monday-prep` Phase A (currently runs `git status --short` but no unpushed check) — suggested but not requested this session.
+- Push when ready.
+
+### Open Questions
+None.
