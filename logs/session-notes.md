@@ -264,3 +264,26 @@ Investigated J16 (concurrent-session guardrail) per memory reminder. Threat mode
 
 ### Open Questions
 None — investigation is complete; implementation is the next phase.
+
+## 2026-05-08 — Post-wrap: /resolve-improvement-log + error correction
+
+### Summary
+Continuation of the same session after the J16 investigation wrap. Ran /resolve-improvement-log: found 0 resolved entries, 7 pending, and 14 orphaned lines (a resolved-looking block at lines 20–33 missing its `### ` header). Operator caught a misleading claim from the first wrap ("5 applied entries") — the grep had matched schema/documentation text, not actual entries. Count corrected to 0.
+
+### Files Created
+None.
+
+### Files Modified
+- `logs/session-notes.md` — this entry
+
+### Decisions Made
+None — routine maintenance pass.
+
+### Next Steps
+- Push all today's commits (operator manual step; multiple sessions committed: J16 investigation + wrap logs)
+- Implementation session for J16 pilot (≤3h): Option D in `/kb-synthesize` + `/kb-review`, Option C SessionStart hook, CLAUDE.md doc — start with `/risk-check`
+- Fix orphaned entry in `improvement-log.md` (lines 20–33): add `### YYYY-MM-DD — {title}` header + `**Verified:**` line, then re-run `/resolve-improvement-log` to archive it
+- Fix `### 2026-04-28 — Bulk backfill...` Status: `completed` → `applied 2026-04-28` + add `**Verified:**` line to enable archival
+
+### Open Questions
+None.
