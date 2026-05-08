@@ -23,3 +23,6 @@ audits/working/
 
 # Archived inbox briefs (Layer C settings.json also denies Read on this path)
 inbox/archive/
+
+# Top-level archive directory (Layer C settings.json also denies Read on this path)
+archive/
