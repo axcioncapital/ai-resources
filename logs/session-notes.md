@@ -425,3 +425,46 @@ Full weekly tier checkup completed. Audit-repo found ai-resources RED (1 critica
 
 ### Open Questions
 - None
+
+## 2026-05-08 — /friday-so, /systems-review
+
+Running /friday-so → /systems-review. /so-monthly dropped — today's checkup is weekly tier; save for next monthly-tier Friday.
+
+### Next Steps
+- Execute the session plan: run /friday-so → /systems-review on Opus (plan at logs/session-plan.md)
+- Model pin removed from settings.local.json — use /model opus at session start before running these commands
+
+## 2026-05-08 — /friday-so + /systems-review + /friday-act SO awareness
+
+Ran /friday-so against today's checkup (weekly tier; produced friday-advisory v2 alongside the morning's v1 per workspace iteration rule), then /systems-review on a 4-projects + cadence-doc scope. Systems-review surfaced Loop 3 (System Owner outputs → action) as open. Operator directed closing it: edited /friday-act to read the freshest /friday-so + /systems-review outputs as supplementary inputs (Steps 1.5 + 3.5; manual paste, no prose parsing). Plan-time /risk-check returned PROCEED-WITH-CAUTION; three mitigations applied inline. Post-commit /qc-pass returned GO with one editorial flag (sub-item numbering collision; functional impact zero — declined).
+
+### Summary
+Three commands executed (/friday-so, /systems-review, /friday-act enhancement). The systems-review identified operator attention at the cadence-project interface as the binding constraint and named five Meadows leverage points. Operator chose to act on Leverage Point #2 (Information flows — close Loop 3) immediately by patching /friday-act. Two commits landed: workspace-root (SO outputs) and ai-resources (friday-act + risk-check audit).
+
+### Files Created
+- `projects/axcion-ai-system-owner/output/friday-advisories/friday-advisory-2026-05-08-v2.md` — v2 against today's weekly-tier checkup (v1 was generated earlier today against last week's monthly-tier checkup; preserved per iteration rule)
+- `projects/axcion-ai-system-owner/output/systems-reviews/systems-review-2026-05-08-4-projects-cadence-doc.md` — systems-thinking analysis of 4 projects + operator-maintenance-cadence doc
+- `audits/risk-checks/2026-05-08-edit-friday-act-md-to-make-it-aware-of-the-freshest-friday.md` — plan-time risk-check report (PROCEED-WITH-CAUTION)
+
+### Files Modified
+- `.claude/commands/friday-act.md` — added Step 1.5 (locate System Owner outputs), Step 3.5 (paste-driven disposition for SO-derived items), updated Step 3 display and Step 5 session block schema; added Notes bullet documenting the new awareness behavior
+- `logs/session-notes.md` — this entry
+
+### Decisions Made
+- **Shape A (same-Friday read in /friday-act) over Shape B (cross-week absorb in /friday-checkup):** Same-Friday closes the loop today rather than introducing a 7-day delay; the systems-review explicitly flagged delay-shortening as the right direction (LP 9). Logged separately to decisions.md.
+- **Manual paste (option b) over auto-extract (option a):** SO outputs are prose, not structured. Auto-parsing would create shape-fragile coupling vulnerable to producer-side prose changes. Logged separately to decisions.md.
+- **Wrote v2 friday-advisory alongside v1 (not overwrite):** Per workspace CLAUDE.md iteration rule. v1 grounded in last-week's monthly-tier checkup; v2 grounded in this-week's weekly-tier checkup.
+- **Skipped optional /risk-check mitigation #4 (producer-side notes in /friday-so + /systems-review):** Would stretch single-file scope; revisit if drift surfaces.
+- **Skipped end-time /risk-check per memory rule:** Plan-time covered, all required mitigations applied inline, drift bounded (executed plan exactly + one Notes-section bullet documenting the new behavior). Documented the skip in the friday-act commit body.
+- **Accepted /qc-pass GO with one editorial flag declined:** Sub-item numbering collision (Step 3 has item 16; Step 3.5 sub-items numbered 16a–16e) — reviewer explicitly tagged as editorial-only, functional impact zero. Renumbering would add churn without behavior change.
+
+### Next Steps
+- Push both commits when ready (operator approval required per Autonomy Rules #2). Two repos: workspace root (162efaa) and ai-resources (e9e0693).
+- Carry-forward from prior session-notes (still applicable):
+  - Fix consult.md symlink in research-workflow (3-level → 4-level path)
+  - Run /permission-sweep (without --dry-run) to fix ai-resources settings.json (3 HIGH)
+  - Fix innovation-sweep schema entry in vault/components/commands.md
+  - Paste 44 new W2.1 entries into vault/components/ via /kb-update
+
+### Open Questions
+- None

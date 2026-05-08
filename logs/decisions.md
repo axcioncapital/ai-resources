@@ -135,3 +135,18 @@
 
 **Alternatives considered:**
 - *Create `/systems-review` as a new command.* Rejected: `/so-monthly` already serves the stated purpose. Creating a duplicate would add unnecessary infrastructure.
+
+## 2026-05-08 — /friday-act reads SO outputs same-Friday with manual paste
+
+**Context:** This week's /systems-review on (4 projects + operator-maintenance-cadence) named Loop 3 (System Owner outputs → action) as open: today's /friday-so advisory and /systems-review report were not consumed by /friday-act, so their findings were orphaned from the Friday Session 2 action loop. Operator directed closing the loop.
+
+**Decision:** Patch /friday-act to read the freshest System Owner outputs same-Friday (Shape A) and accept actionable items via manual paste (option b). Specifically: Step 1.5 locates the freshest friday-advisory (newest by `(date, vN-as-int)` where vN suffix is parsed as integer) and the freshest systems-review (newest by date, with mtime fallback for same-day matches), filtered to ≥ checkup date and ≤ 7 days old. Step 3.5 displays the first 30 lines of each available file and prompts the operator to paste actionable items as `[risk] {text}` for the same disposition loop as checkup-derived items.
+
+**Rationale:**
+- *Same-Friday over cross-week absorb (Shape A over Shape B):* Cross-week absorption (in /friday-checkup) would introduce a 7-day delay between SO advisory production and action. The systems-review explicitly flagged delay-shortening as the right direction (LP 9 — "when delay can't be shortened, slow the rate of change; here we *can* shorten the delay"). Same-Friday closing matches the operator's mental model: today's action session sees today's analysis.
+- *Manual paste over auto-extract (option b over option a):* The SO outputs are prose (executive summary, narrative leverage points), not structured tables. Auto-extracting "candidate items" would require a parser tied to the producer's current prose conventions — shape-fragile coupling that would silently break the day someone changes the executive-summary format. Manual paste preserves operator judgment over what's actionable and decouples /friday-act from producer-side prose drift.
+
+**Alternatives considered:**
+- *Shape B (cross-week absorb in /friday-checkup):* Rejected — introduces 7-day delay; contradicts systems-review LP 9.
+- *Auto-extract from SO outputs:* Rejected — parsing fragility, shape-coupling risk, and the SO outputs are intentionally prose for operator interpretation, not machine extraction.
+- *No change (leave Loop 3 open):* Rejected — operator explicitly directed closing the loop.
