@@ -146,7 +146,7 @@ Input: `$ARGUMENTS` (optional) — explicit path to a journal file. If omitted, 
 
   - **Heading match (set-equality, both directions).** Every `## Items` line's text (after the `[tier] ` prefix) must appear verbatim as a `### ` heading under `## Item context`, AND every `### ` heading under `## Item context` must appear as an Items line. Both directions must hold — a lone heading without an Items entry is also a bug. Mismatch = bug in Step 5 Items↔Item-context coupling.
 
-  - **Frontmatter consistency.** `entry_count` (in frontmatter) ≤ `items_generated`. `items_generated` equals the count of `## Items` lines.
+  - **Frontmatter consistency.** `items_generated` equals the count of `## Items` lines. (Both `entry_count` and `items_generated` are present in frontmatter for traceability, but no inequality is enforced — drops + merges can make either side larger than the other depending on the run.)
 
   Aborts here are bugs in /friday-journal Step 5, not operator concerns. Surface them clearly so the producer logic gets fixed.
 
