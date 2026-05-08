@@ -371,4 +371,20 @@
 **Alternatives considered.**
 - *Ship the full five-rule package now:* Rejected. Higher debugging surface, harder to roll back, and the proposal itself recommended phased rollout.
 - *Add frontmatter class declarations to existing commands now (skip the prompt for known-class commands):* Deferred. The prompt is universal; frontmatter is an optimization that can land in week 2 once the classification taxonomy is validated.
+
+---
+
+## 2026-05-08 — Fading-gate detection: [FADING-GATE] items need no /friday-act intercept
+
+**Context.** Implementing the gate-health monitoring feature (deferred from the autonomy-posture-change session). Original plan included a dedicated triage handler in `/friday-act` that would intercept `[FADING-GATE]` items and present the three remediation options (retire / lower-frequency / recalibrate) before writing to `improvement-log.md`. QC pass flagged the insertion point was underspecified — specifically, how `[FADING-GATE]` items would be excluded from the standard `f/d/s` prompt to avoid double-disposition.
+
+**Decision.** No `/friday-act` change. `[FADING-GATE]` items are treated as standard medium-risk tactical follow-ups, flowing through the existing Step 3 `f/d/s` loop unchanged. When dispositioned `f`, Step 3.6 generates a plan file. The three-option pick (retire / lower-frequency / recalibrate) and the `improvement-log.md` write happen in the plan-file execution session, not during `/friday-act` triage.
+
+**Rationale.** Reading `/friday-act` in full showed the Step 3 `f/d/s` loop already handles all tactical items generically — there is no per-tag dispatch, and none is needed. `[FADING-GATE]` items contain the three-option prompt in their text (`"Pick: retire / lower-frequency / recalibrate"`), which is visible in the plan file the execution session receives. Adding an intercept in `/friday-act` would require specifying which sub-step intercepts the item, how to exclude it from the standard prompt, and how to route the chosen disposition — all overhead that the existing plan-file pattern handles for free.
+
+**Alternatives considered.**
+- *New intercept in /friday-act Step 3:* Rejected. Adds control-flow complexity (intercept point, exclusion from f/d/s, inline improvement-log write) for no practical gain — the plan file is sufficient context for the execution session.
+- *New sub-step in /friday-act Step 3.5 (SO-derived / journal-derived additions):* Rejected. Same overhead; [FADING-GATE] items are checkup-derived, not SO-derived.
+
+---
 - *Write only to `session-plan.md`, not `session-notes.md`:* Rejected. Downstream rules need a persistent grep target; session-plan.md is overwritten each session and can't carry historical signal.

@@ -475,3 +475,30 @@ Implemented Step 1 of a phased rollout that adds session-class classification to
 
 ### Open Questions
 - None.
+
+## 2026-05-08 — Design + implement fading-gate health check in /friday-checkup
+
+Class: design + execution
+
+### Summary
+Built a gate-fade detection system that surfaces confirmation-rate signals from existing coaching-data.md logs into the monthly /friday-checkup cadence. The feature was designed via /clarify (3 Explore agents), a plan-mode session with QC (REVISE → 3 fixes applied), and executed as a single bullet insertion in friday-checkup.md Step 6. Investigation found the coaching infrastructure already computes gate confirm-rates; the only missing piece was a structured, periodic action prompt routing fading gates to retire / lower-frequency / recalibrate.
+
+### Files Created
+- `~/.claude/plans/i-want-to-develop-compressed-tower.md` — implementation plan (outside repo)
+
+### Files Modified
+- `ai-resources/.claude/commands/friday-checkup.md` — added fading-gate detection bullet to Step 6 "Standard tactical items" (monthly + quarterly only); parses `{project}/logs/coaching-data.md` across active scopes, tallies per-(project, gate) confirm-rates over last 30 days, flags pairs with ≥8 firings AND ≥90% confirm-rate as `[FADING-GATE]` medium-risk tactical follow-ups
+
+### Decisions Made
+- **Monthly tier (not weekly, not standalone command):** Weekly cadence can't accumulate 8 samples per gate reliably; monthly aligns with existing friday-checkup monthly-tier pattern.
+- **Thresholds: ≥8 firings AND ≥90% confirm-rate:** Matches the coaching agent's existing minimum sample size; known live signal in global-macro content-review.
+- **Per-project rows (not cross-project totals):** A fading gate in one project may still earn its keep in another — per-project rows allow surgical action.
+- **No friday-act.md change:** `[FADING-GATE]` items flow through the existing Step 3 f/d/s loop unchanged; the three-option pick (retire / lower-frequency / recalibrate) happens in the plan-file execution session.
+- **Dispositions persist to improvement-log.md** using canonical schema (Proposal / Target files / Friction source), not a new dedicated log.
+
+### Next Steps
+- Push commit `879f751` (operator approval needed per Autonomy Rules #2)
+- First live test: 2026-06-06 (first Friday of June) — run `/friday-checkup monthly` with `global-macro-analysis` selected; expect `[FADING-GATE] project-global-macro-analysis/content-review` in Tactical follow-ups
+
+### Open Questions
+- None.
