@@ -261,3 +261,17 @@
 - *Refactor `check-archive.sh` to take a scope argument:* Rejected — risks breaking `/wrap-session` contract; no benefit over wrapping.
 - *Do nothing — current bloat is on-demand only (no auto-loading) and active logs are healthy:* Rejected — `audits/working/` has 82 ungoverned files, `coaching-data.md` and `usage-log.md` grow unbounded, and the 2026-05-01 token-audit explicitly flagged `audits/**` and `logs/` as MEDIUM-priority uncovered risk. Doing nothing leaves a known gap.
 - *Per-file rotation rules baked into individual writers (e.g., `usage-analysis` self-rotates):* Rejected — distributes archival logic across many writers, defeats centralization, and doesn't address `audits/working/` (which has no single writer).
+
+## 2026-05-08 — Concurrent-session guardrail: composite defense D+C+F vs single-option approaches
+
+**Context:** J16 investigation into concurrent-session guardrail design for `projects/global-macro-analysis/`. Race manifested 2026-05-07 14:28 when `/kb-synthesize` archive `cp` captured another session's content. Six options evaluated: A (flock-lock), B (active-sessions.json), C (warn-only SessionStart hook), D (in-command SHA check), E (PreToolUse mtime hook), F (detect-and-recover only).
+
+**Decision:** Composite defense — Layer 1: Option D (in-command SHA-256 check in `/kb-synthesize` and `/kb-review`); Layer 2: Option C (warn-only SessionStart hook); Layer 3: Option F (git recovery documented in CLAUDE.md). Pilot in `projects/global-macro-analysis/` only; 4-week post-pilot review before graduation.
+
+**Rationale:** No single option is sufficient. D prevents the actual race (captures SHA at Read, recomputes before Bash cp/Write, aborts on mismatch). C provides cheap awareness for accidental concurrent-session situations. F is already in place implicitly; making it explicit costs nothing. The composite covers prevention + detection + recovery at low total implementation cost (~2.5 hours + one bundled /risk-check).
+
+**Alternatives considered:**
+- *Option A (flock-style advisory lock):* Rejected. Claude Code's PreToolUse hook fires per-call, not per-session — cannot hold a lock across multiple tool calls. Stale-lock recovery on crash is more confusing than the original race.
+- *Option B (active-sessions.json stamp):* Rejected. TOCTOU race (check passes, Session B starts after check); stale entries on crash; per-tool JSON read overhead. No advantage over C without taking on A's lifecycle costs.
+- *Option E (PreToolUse mtime hook):* Rejected. Must track which files the current session wrote to avoid false positives on its own writes — converges to Option B's complexity for marginal gain over D.
+- *Option D alone:* Insufficient — doesn't raise operator awareness at session-start, when operator still has time to close the second terminal.
