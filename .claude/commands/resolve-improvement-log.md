@@ -56,6 +56,26 @@ Archive resolved entries from `ai-resources/logs/improvement-log.md` so stale it
    - `c` → set `**Status:** closed {TODAY}`.
    - `k` → no edit.
 
+3c. **No Active Friction Detection.** From the Pending set — after applying any Step 3b dispositions (entries marked closed or escalated this turn are excluded) — scan each remaining entry body for "no active friction" signals. An entry qualifies if it contains ANY of the following (case-insensitive exact-substring match):
+- The field `**Deferred reason:**`
+- Any of these phrases: `"not urgent"`, `"future dedicated session"`, `"future session"`, `"graduate-candidate"`, `"graduate candidate"`, `"no active blocking"`
+
+Call this set `NO_ACTIVE_FRICTION`.
+
+If `NO_ACTIVE_FRICTION` is empty, skip silently and continue to Step 4.
+
+If non-empty, display:
+```
+{N} entries have no active friction (intentionally parked):
+  1. {date} — {title}
+     Signal: "{matched phrase or field name}"
+  2. …
+
+Archive these? They will move to improvement-log-archive.md. [y/n/select]
+```
+
+Wait for the operator's reply. Accept the same shapes as Step 6 (`y`, `n`, `select`). On `select`, re-display the numbered list and accept numbers. On confirmation, archive using the Step 7 procedure (append verbatim to improvement-log-archive.md, remove from active log). On `n`, no changes. Then continue to Step 4.
+
 4. **Present resolved entries.** If zero resolved entries exist, tell the operator "No resolved entries to archive. Active log has N pending entries." and stop.
 
    Otherwise, show a numbered list: date and one-line title only, one entry per line. Then ask exactly:
@@ -94,6 +114,7 @@ Archive resolved entries from `ai-resources/logs/improvement-log.md` so stale it
    ```
    Moved N entries to improvement-log-archive.md.
    Active improvement-log: M pending entries remaining.
+   No-active-friction archived: {A} entries. [Omit line if NO_ACTIVE_FRICTION was empty or operator declined.]
    Stale-pending surfaced: {S} entries ({D} dispositioned, {K} kept as-is). [Omit line if STALE_PENDING was empty.]
    [If orphaned content: Skipped K orphaned lines (no `### ` header) — left in place.]
    ```
