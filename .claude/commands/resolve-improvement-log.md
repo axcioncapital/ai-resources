@@ -18,12 +18,22 @@ Archive resolved entries from `ai-resources/logs/improvement-log.md` so stale it
    - **Resolved** — the entry contains both a line starting `**Status:** applied` AND a line starting `**Verified:**`.
    - **Pending** — anything else (missing Status, Status is "logged"/"proposed"/"pending", or "applied" without a Verified line).
 
-3b. **Identify and surface stale-pending entries.** From the Pending set, flag any entry whose `### YYYY-MM-DD` header date is > 6 weeks ago (42 days; configurable by operator instruction at invocation). Compute age: extract the date from the `### ` header line, then `python3 -c "from datetime import date; print((date.today() - date.fromisoformat('ENTRY_DATE')).days)"`. Call this set `STALE_PENDING`.
+3b. **Two-tier age detection.** Compute age for each Pending entry: extract the date from the `### YYYY-MM-DD —` header line (or use the most recent `**Review-cycle:**` date if present — deferral resets the clock), then `python3 -c "from datetime import date; print((date.today() - date.fromisoformat('ENTRY_DATE')).days)"`. Skip entries with no parseable date; count them as Pending only.
 
-   - Skip age-checking for entries with no parseable `### YYYY-MM-DD` header; count them as Pending only.
+   **WARM_PENDING (> 21 days) — informational, no per-item prompt.** From the Pending set, collect entries whose age > 21 days and ≤ 42 days. If non-empty, display:
+   ```
+   {N} warm-pending entries (>21 days — aging):
+     1. {date} — {title} — {age} days
+     2. …
+   Consider reviewing these in the next /friday-act cycle.
+   ```
+   No disposition prompt. Continue automatically.
+
+   **STALE_PENDING (> 42 days) — per-item disposition required.** From the Pending set, flag entries whose age > 42 days (configurable by operator instruction at invocation). Call this set `STALE_PENDING`.
+
    - Entries with a `**Review-cycle:**` line are still flagged if the header date is > 42 days — include the Review-cycle value in the display so the operator sees the prior disposition.
 
-   If `STALE_PENDING` is empty, proceed silently to step 4.
+   If both `WARM_PENDING` and `STALE_PENDING` are empty, proceed silently to step 4.
 
    If non-empty, display:
    ```
