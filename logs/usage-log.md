@@ -434,3 +434,33 @@ Compared to the last three entries (all Acceptable), this session holds the same
 **Additional levers (ROI-ranked):**
 - Root-cause auditor fix (policy proposals A and A2 in maintenance-observations.md) — eliminates the false-positive overhead at the source; higher ROI than any per-session triage filter.
 - /resolve early-abort cost (3 tool calls) — negligible; not worth a dedicated fix.
+
+### 2026-05-08 | Acceptable
+
+**Task:** Built new `/friday-journal` command (~200 lines, model: opus, 7 steps) plus `logs/ai-journal.md` template, integrated into `/friday-act` via four edits (Steps 1.5/3/3.5/5 + Notes), and updated `weekly-cadence.md` and `operator-maintenance-cadence.md` (F3.5 rows). Plan-time and end-time `/risk-check` gates passed; committed as c3b1c15.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~25 |
+| Files read | ~12 (re-reads: 2 — friday-act.md ×2 across step edits, weekly-cadence.md ×2 plan→edit) |
+| Files written/edited | 8 (4 created, 4 modified) |
+| Tool calls | ~60 |
+| Subagents | 5 (qc-reviewer ×3, risk-check-reviewer ×2) |
+| Rework cycles | 3 (plan v1→v2 post-QC, plan v2→v3 post-QC, friday-journal.md v1→v2 post-QC) |
+
+**Findings:**
+- **Rework — Major:** Plan artifact required 2 QC REVISE cycles (v1→v2→v3) before ExitPlanMode approval; friday-journal.md required 1 QC REVISE cycle (variable rename JOURNAL_PATH→JOURNAL_SOURCE, entry-splitting clarification, same-day collision handling). 3 rework cycles total across 2 artifacts. Each REVISE surfaced real fixes, not arbitrary rejections, but the plan needing two passes suggests the v1 spec missed structural issues a tighter outline-first pass would have caught.
+- **Tool overhead — Moderate:** Mid-session /fewer-permission-prompts diagnosis fired on unrelated permission-prompt friction — root-caused to deny-list in `ai-resources/.claude/settings.json`, logged to ai-journal.md, but did not fix this session. Pure context drift from main task; ~2–3k tokens spent on a tangential diagnosis logged for later /risk-check + remediation rather than executed in-flight or deferred entirely.
+- **Re-reads — Minor:** friday-act.md read across 4 separate step-edit cycles (Steps 1.5/3/3.5/5 + Notes); weekly-cadence.md read at plan-time then again at edit-time. Tail-then-section pattern recurring.
+- **Subagent volume — Acceptable:** 5 subagents (3 QC + 2 risk-check) is on-protocol — QC→Triage Auto-Loop convergence behavior, not waste. Both /risk-check gates fired correctly (plan-time PROCEED-WITH-CAUTION with 4 mitigations, end-time GO confirming mitigations applied).
+
+Stable relative to last 3 entries (Wasteful 2026-05-08 / Acceptable 2026-05-05 / Acceptable 2026-05-01) — same Acceptable rating as the two pre-checkup sessions; the multi-cycle plan QC matches the rework pattern in 2026-05-05 (3 in-context plan revisions before disk write).
+
+**Recommendation:** Before invoking the first /qc-pass on a plan artifact, run a self-check against the QC rubric (governance, commit-window, scope, structural completeness) — same lever flagged in 2026-04-21 and 2026-05-05 entries. Two plan REVISE cycles in this session each surfaced single-class structural issues a self-check would have caught upstream, converting two external QC subagent rounds into one.
+
+**Estimated savings:** ~6–8k tokens per plan-heavy session by collapsing two QC REVISE cycles into one. Derivation: 1 avoided qc-reviewer subagent invocation (~3k brief + ~3–4k return) plus 1 avoided plan rewrite cycle (~150 lines × ~13 tokens/line ≈ 2k). Over 10–20 plan-heavy sessions: ~60–160k tokens. Recurring pattern flagged third session running.
+
+**Additional levers (ROI-ranked):**
+1. **Defer mid-session tangential diagnoses (~2–3k/session):** When an unrelated friction surface (here: permission prompts) fires during a substantive build, log it to a friction or journal file and resume — do not spawn a diagnostic command (/fewer-permission-prompts) inline. Saves the full diagnostic round-trip cost; smaller than primary because tangential firings are sporadic, not deterministic.
+2. **Pin friday-act.md once before multi-step edits (~1.5–2k/session):** ~70-line command file read across 4 step-edit cycles instead of pinned after first full Read. Smaller than primary because individual Reads are cheap but the pattern recurs on every multi-step infra-command edit session.
+3. **Outline-first plan drafting (~3–5k/session):** Same lever flagged in 2026-04-21 — write plan v1 to ~90% completeness with QC-anticipated structure (governance, commit-window, scope, mitigations) before first QC. Eliminates one full plan rewrite per QC REVISE; bigger than the per-file pin lever, smaller than the primary because primary captures both QC cycles' worth of avoidable cost.

@@ -328,3 +328,10 @@
 - **Decisions logged:** 0
 - **QC cycles:** 0
 - **Gates:** 3 (3 confirmed) — tier-confirmation:confirmed (weekly auto-detected), scope-selection:confirmed (1,3a,3d,3i), long-run-approval:confirmed (operator typed "proceed with long run")
+
+### 2026-05-08 — /friday-journal command + ai-journal workflow
+- **Commands used:** /clarify, /recommend ×2, /qc-pass ×3, /risk-check ×2 (plan-time + end-time), /fewer-permission-prompts, /wrap-session
+- **Iterations:** 3 (plan v1 → v2 → v3 after two QC REVISE cycles, then friday-journal.md draft → revised after one QC REVISE)
+- **Decisions logged:** 2 (report shape: flat-regex Items block; same-day collision: overwrite-with-prompt)
+- **QC cycles:** 3 (plan QC ×2 REVISE; friday-journal.md QC ×1 REVISE — all converged to APPROVE after fixes)
+- **Gates:** 6 (5 confirmed, 1 changed) — clarify-disposition:confirmed (operator answered all 4 questions), plan-approval:changed (round-1 QC fixes), plan-approval:changed (round-2 QC fixes), plan-approval:confirmed (revised plan approved), qc-disposition:confirmed (round-3 QC APPROVE on friday-journal.md), risk-check-disposition:confirmed (PROCEED-WITH-CAUTION mitigations applied; end-time GO)

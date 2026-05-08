@@ -149,4 +149,38 @@
 **Alternatives considered:**
 - *Shape B (cross-week absorb in /friday-checkup):* Rejected — introduces 7-day delay; contradicts systems-review LP 9.
 - *Auto-extract from SO outputs:* Rejected — parsing fragility, shape-coupling risk, and the SO outputs are intentionally prose for operator interpretation, not machine extraction.
+
+---
+
+## 2026-05-08 — /friday-journal report shape: flat-regex Items block over heading-blocks
+
+**Context:** The new `/friday-journal` command produces a report consumed by `/friday-act` Step 3.5. The first plan draft used heading-plus-multi-field blocks per item (target / outcome / priority / files / approach as separate fields under each `### Item N` heading). QC flagged that this would force a parser change in `/friday-act` to extract dispositionable lines.
+
+**Decision:** Restructure the report so `## Items` is a flat list — each line matches the existing `^\[(high|med|low)\] .+$` regex one-for-one, sorted high → med → low. Operator-readable detail (files, effort, recommended approach, source entry) lives in a parallel `## Item context` section that the parser ignores. The directive text in `## Items` and the heading in `## Item context` MUST be identical so the two halves stay coupled.
+
+**Rationale:**
+- *Zero parser change in /friday-act:* Step 3.5's existing regex applies unchanged. The journal report is structurally interchangeable with a paste-buffer of `[risk] {text}` lines — same shape, same disposition loop, same risk-check gate.
+- *Schema-contract pattern mirrors checkup→act:* The existing producer (`/friday-checkup`) and consumer (`/friday-act`) pair already uses an explicit callout naming the regex on both sides. Same pattern reused here — callout block in `friday-journal.md` Step 5 sub-step 14 references `friday-act.md` Step 3.5 sub-step 16f, and vice versa. Producer-side schema drift is caught at edit time because the bi-directional reference forces the editor to see both ends.
+- *Detail preserved without parser noise:* Operator-readable context (effort, files, approach, source-entry verbatim) still ships in the same report — just below the data contract, not embedded in it.
+
+**Alternatives considered:**
+- *Heading-blocks (original draft):* Rejected — forces a new parser in `/friday-act` Step 3.5 specifically to extract dispositionable lines from multi-field blocks; couples consumer to producer's prose layout.
+- *Two separate report files (data + context):* Rejected — locator complexity, dual auto-load logic, and the operator only needs one file open per Friday.
+
+---
+
+## 2026-05-08 — Same-day collision handling for friday-journal: overwrite-with-prompt over -vN suffix
+
+**Context:** `/friday-journal` writes to `audits/friday-journal-YYYY-MM-DD.md`. If invoked twice on the same Friday (e.g., operator added a new entry mid-Friday and re-ran), there will be two reports for the same date. The repo's established pattern for analytical revisions is `vN.md` alongside `v1.md` (workspace CLAUDE.md "Working Principles").
+
+**Decision:** Use overwrite-with-prompt instead of `-vN` suffix. On collision: prompt operator `(o)verwrite | (a)bort`. On `o`: replace existing file. On `a`: leave previous report standing.
+
+**Rationale:**
+- *Lex-sort tiebreaker is broken by `-`:* `/friday-act` Step 1.5 locator sorts files by parsed date, and on date-tie falls back to lex-order. The character `-` (0x2D) sorts before `.` (0x2E) in ASCII, so `friday-journal-2026-05-08-v2.md` lex-sorts BEFORE `friday-journal-2026-05-08.md`. Result: `/friday-act` would pick the v1 file — the older, superseded one — and silently ignore the v2.
+- *Single canonical file per day removes the ambiguity:* No suffix scheme means no tiebreaker logic to get wrong. The locator's existing single-glob path stays correct.
+- *Operator gate on overwrite preserves recovery:* The (o/a) prompt makes the destructive step explicit. Git working tree is the recovery path if the operator regrets.
+
+**Alternatives considered:**
+- *`-vN` suffix (workspace convention):* Rejected — breaks `/friday-act` Step 1.5 locator due to ASCII sort order. Would require adding tiebreaker logic specifically for journal reports, which the consumer already handles for SO advisories via `(date, vN-as-int)` parsing — not worth duplicating for a report that has no operator-driven need for revision history.
+- *Append-mode (merge new items into existing report):* Rejected — would require a partial parser/merger; risk of duplicate items if operator re-adds the same journal entry; complicates the archive step.
 - *No change (leave Loop 3 open):* Rejected — operator explicitly directed closing the loop.
