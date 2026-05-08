@@ -287,3 +287,32 @@ Built the `/friday-journal` command to convert the operator's freeform weekly AI
 
 ### Open Questions
 - None
+
+## 2026-05-08 — /friday-act plan-branching refactor
+
+Converted `/friday-act` from inline-execution to plan-file production. The command now dispositions items across all three sources (checkup, SO-derived, journal-derived) and writes one or more plan files to `audits/friday-plans/` instead of executing fixes inline. Threshold: ≤ 4 fix-now items → one consolidated plan; > 4 → per-area split. Also ran `/fewer-permission-prompts` — no changes needed (project already has `bypassPermissions` + `Bash(*)`).
+
+### Files Created
+- None (plan file lives in `~/.claude/plans/`, outside repo)
+
+### Files Modified
+- `.claude/commands/friday-act.md` — 8 change clusters: blurb update, disposition label, items 15a–g replaced with 15a–c, 16d/16f updated, new Step 3.6 (Plan Generation), Step 5 session block, Step 7 exit summary, Notes section
+
+### Decisions Made
+- **Split axis: by target file/area** — minimize context-switching cost per follow-up session
+- **Threshold N = 4** — ≤ 4 fix-now items → consolidated plan, > 4 → per-area split
+- **Inline execution removed entirely** — single execution model, no dual-path maintenance
+- **`/risk-check` gate deferred to execution time** — annotated in plan file; avoids heavy Opus subagent during /friday-act disposition
+- **W2.4 sub-disposition deferred to execution time** — `(a) auto-draft / (b) manual` choice made when opening plan, not at queue time
+- **Plan-file schema defined in this edit** — 7-field fixed schema in Step 3.6 ensures consistent plan files from day one
+- **End-time `/risk-check` skipped** — plan-time covered (2× /qc-pass + ExitPlanMode approval, all mitigations applied inline); commit shipped (af7811a); drift bounded (verified by grep against all 8 change clusters)
+
+### Next Steps
+- Push commit af7811a (ai-resources) + prior commits 162efaa (workspace root) + e9e0693 (ai-resources)
+- Fix `consult.md` symlink in research-workflow (3-level → 4-level path)
+- Run `/permission-sweep` (without `--dry-run`) to fix ai-resources settings.json (3 HIGH)
+- Fix `innovation-sweep` schema entry in vault/components/commands.md
+- Paste 44 new W2.1 entries into vault/components/ via /kb-update
+
+### Open Questions
+- None

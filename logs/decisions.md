@@ -184,3 +184,19 @@
 - *`-vN` suffix (workspace convention):* Rejected — breaks `/friday-act` Step 1.5 locator due to ASCII sort order. Would require adding tiebreaker logic specifically for journal reports, which the consumer already handles for SO advisories via `(date, vN-as-int)` parsing — not worth duplicating for a report that has no operator-driven need for revision history.
 - *Append-mode (merge new items into existing report):* Rejected — would require a partial parser/merger; risk of duplicate items if operator re-adds the same journal entry; complicates the archive step.
 - *No change (leave Loop 3 open):* Rejected — operator explicitly directed closing the loop.
+
+## 2026-05-08 — /friday-act plan-branching architecture
+
+**Context:** `/friday-act` now receives fix-now items from four sources (checkup, friday-so, systems-review, friday-journal). The volume on heavy Fridays exceeds what one implementation session can carry. A plan-branching refactor was scoped through /clarify → /scope → 2× /qc-pass → plan approval.
+
+**Decision:** Remove inline execution from `/friday-act` entirely. All fix-now items are collected into `FIX_NOW_ITEMS` across all three disposition loops (Steps 3, 3.5 SO-derived, 3.5 journal-derived), then written to plan files under `audits/friday-plans/` by new Step 3.6. Threshold: ≤ 4 items → one `{date}-consolidated.md`; > 4 → one `{date}-{area-slug}.md` per file/area group. The `/risk-check` change-class gate and W2.4 `(a)/(b)` sub-disposition are both deferred to execution time (follow-up session), annotated in the plan file.
+
+**Rationale:**
+- *Single execution model over threshold-conditional dual path:* Maintaining two paths (inline for light Fridays, plan-only for heavy) doubles bug surface and creates a week-to-week mental model flip. A single always-plan-only path is simpler and produces an audit-trail artifact even on light Fridays.
+- *Area-slug split over source-split or risk-split:* Minimizes context-switching cost per follow-up session — each plan covers one file/area, so the executor doesn't jump between unrelated subsystems.
+- *Gate deferred to execution time:* /risk-check runs are Opus-tier and heavy. Running them during /friday-act disposition would compound the session weight the refactor was designed to reduce.
+
+**Alternatives considered:**
+- *Threshold-conditional with inline path preserved:* Rejected — dual-path maintenance, arbitrary threshold behavior, doesn't fully solve heavy-Friday problem.
+- */risk-check at plan-write time:* Rejected — adds Opus subagent load during disposition; gate is more useful immediately before execution when the operator has full context.
+- *W2.4 sub-disposition at queue time:* Rejected — operator prefers to decide auto-draft vs. manual at execution time when they can see the full plan.
