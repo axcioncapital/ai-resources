@@ -94,6 +94,7 @@ Both CLAUDE.md skip conditions must hold simultaneously to skip the audit.
 | F1 | `/friday-checkup` | ai-resources or workspace root |
 | F3 | `/friday-so` | `projects/axcion-ai-system-owner/` |
 | F2 | `/so-monthly` (monthly only) | `projects/axcion-ai-system-owner/` |
+| F2b | `/systems-review` (monthly only) | workspace root |
 | F4 | `/friday-act` | workspace root or ai-resources |
 | F5 | Graduate resource review | workspace root |
 | F6 | Harness work | workspace root |
@@ -125,6 +126,10 @@ Reads the latest checkup report through a systems-thinking lens. Produces writte
 
 Reads the past month's Friday advisories and deferred items. Aborts automatically if the checkup tier is weekly. Produces written output at:
 `projects/axcion-ai-system-owner/output/monthly-reviews/so-monthly-YYYY-MM-DD.md`
+
+**F2b — `/systems-review`** (monthly only — first Friday of each month, same tier condition as F2)
+
+Runs a systems-thinking analysis of the workspace. Run from workspace root after switching back from `projects/axcion-ai-system-owner/`.
 
 ---
 
@@ -170,6 +175,7 @@ Run `/graduate-resource` with no arguments — checks `logs/innovation-registry.
 | `/friday-checkup` | Friday | Session 1, F1 | Every Friday |
 | `/friday-so` | Friday | Session 1, F3 | Every Friday |
 | `/so-monthly` | Friday | Session 1, F2 | Monthly (first Friday, monthly/quarterly tier) |
+| `/systems-review` | Friday | Session 1, F2b | Monthly (first Friday, monthly/quarterly tier) |
 | `/friday-act` | Friday | Session 2, F4 | Every Friday |
 | Graduate resource review | Friday | Session 2, F5 | Every Friday |
 | Harness work | Friday | Session 2, F6 | Every Friday (phase-dependent) |

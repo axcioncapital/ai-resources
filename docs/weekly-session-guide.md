@@ -128,8 +128,9 @@ Start with `/prime`. Declare exit condition and autonomy level. Switch cwd mid-s
 | F1 | `/friday-checkup` | ai-resources or workspace root |
 | F3 | `/friday-so` | `projects/axcion-ai-system-owner/` |
 | F2 | `/so-monthly` *(first Friday of every month — monthly + quarterly tiers; aborts automatically on weekly tier — see Tier detection below)* | `projects/axcion-ai-system-owner/` |
+| F2b | `/systems-review` *(first Friday of every month — same tier condition as F2)* | workspace root |
 
-Switch back to workspace root after F2/F3.
+Switch back to workspace root after F2/F3. Run F2b from workspace root after switching back.
 
 F1 must complete before F3 and F2 — both abort if no checkup report is found.
 
@@ -165,6 +166,7 @@ Start with `/prime`. Declare exit condition and autonomy level. Run from workspa
 | `/friday-checkup` | Every Friday Session 1 |
 | `/friday-so` | Every Friday Session 1 (after checkup) |
 | `/so-monthly` | First Friday of every month (monthly + quarterly tiers) |
+| `/systems-review` | First Friday of every month (monthly + quarterly tiers) |
 | `/friday-act` | Every Friday Session 2 |
 | `/graduate-resource` | Every Friday Session 2 |
 

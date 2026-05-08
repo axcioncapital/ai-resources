@@ -61,7 +61,7 @@ Start with `/prime`. Declare exit condition and autonomy level.
 | F1 | `/friday-checkup` | ai-resources or workspace root |
 | F3 | `/friday-so` | `projects/axcion-ai-system-owner/` |
 | F2 | `/so-monthly` — monthly only (first Friday of month, monthly/quarterly tiers) | `projects/axcion-ai-system-owner/` |
-| F2b | `/systems-review` — monthly only (first Friday of month) ⚠️ *new step — not yet in `weekly-cadence.md` or `weekly-session-guide.md`; propagate to those files* | workspace root |
+| F2b | `/systems-review` — monthly only (first Friday of month) | workspace root |
 | — | Read AI journal + check CC Fixes & Improvements panel for ideas | — |
 
 Switch back to workspace root after F3/F2. F1 must complete before F3 and F2 — both abort if no checkup report is found.
@@ -101,5 +101,4 @@ Ideas to act on — not active steps yet.
 
 1. **`/archive-logs` skill** — command to clean and archive logs across all active projects. Current gap: log hygiene in Session 2 is fully manual.
 2. **`/lean-resources` command** — reviews skills and commands for token efficiency; suggests trimming and restructuring.
-3. **`/systems-review` propagation** — add F2b to `weekly-cadence.md` and `weekly-session-guide.md` so the three files stay consistent.
-4. **`logs/learning-log.md`** — create this file to hold the weekly learning-routine entries.
+3. **`logs/learning-log.md`** — create this file to hold the weekly learning-routine entries.
