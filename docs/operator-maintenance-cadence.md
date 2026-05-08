@@ -1,5 +1,7 @@
 # Operator Maintenance Cadence
 
+This cadence exists to keep the four-project system compounding faster than it accumulates drift, with bounded operator attention. Every step decision (add / keep / remove) should be tested against that goal.
+
 Personal weekly rhythm — what to run, when, and what to watch for. Technical details in `weekly-cadence.md` and `weekly-session-guide.md`.
 
 ---
@@ -57,7 +59,7 @@ Start with `/prime`. Declare exit condition and autonomy level.
 
 | Step | Action | cwd |
 |---|---|---|
-| F0 | Read: harness session reports this week, friction-log since last Friday, last 50 lines of session-notes, week mandate — did the week deliver what was planned? | — |
+| F0 | Read: last 4 `projects/axcion-ai-system-owner/output/friday-advisories/*.md` (note recurring patterns vs single-instance signals); harness session reports this week; friction-log since last Friday; last 50 lines of session-notes; week mandate — did the week deliver what was planned? | — |
 | F1 | `/friday-checkup` | ai-resources or workspace root |
 | F3 | `/friday-so` | `projects/axcion-ai-system-owner/` |
 | F2 | `/so-monthly` — monthly only (first Friday of month, monthly/quarterly tiers) | `projects/axcion-ai-system-owner/` |
