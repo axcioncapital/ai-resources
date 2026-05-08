@@ -487,3 +487,35 @@ Stable relative to last 3 entries (Wasteful 2026-05-08 / Acceptable 2026-05-05 /
 **Recommendation:** No new pattern identified beyond those flagged in prior entries. The catch-up gate run was a one-time cost that surfaced real value; the auto-compaction issue warrants investigation as a platform-level concern.
 
 **Estimated savings:** ~3–4k tokens/session by self-checking plans against QC rubric before first subagent QC invocation (recurring lever). No new session-specific lever identified.
+
+---
+
+### 2026-05-08c | Wasteful
+
+**Task:** /friday-act Session 2 — dispositioned 43 items (12 checkup + 31 journal) from the 2026-05-08 friday-checkup and friday-journal reports into 15 fix-now / 35 defer / 1 skip. Produced 7 plan files under `audits/friday-plans/`.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~45 |
+| Files read | ~20 (re-reads: 4 — SO advisory ×2 under-read→full; improvement-log.md ×3 across 3 projects) |
+| Files written/edited | 15 |
+| Tool calls | ~84 (Read ×30, Edit ×20, Bash ×20, Write ×8, Agent ×6) |
+| Subagents | 6 (qc-reviewer ×2, triage-reviewer ×3, memory-write ×1) |
+| Rework cycles | 4 (session plan QC REVISE ×1; prioritization QC REVISE ×1; SO advisory under-read correction ×1; improvement-log under-read correction ×1) |
+
+**Findings:**
+- **Rework — Major (recurring):** 3 revision passes required — initial disposition, SO advisory full-read correction, improvement-log correction — compounded scope beyond initial plan. Two passes were operator-caught under-reads, not QC-surfaced. Pattern: partial read treated as sufficient when file required full read for coverage. Third session in current window with multi-cycle rework driven by incomplete initial reads.
+- **Re-reads — Major:** SO advisory read twice (30-line under-read then full read after operator challenge); improvement-log.md read across 3 separate project directories sequentially. Under-reads that required full re-reads on large files (SO advisory est. >200 lines) represent the most costly re-read pattern in recent log history.
+- **Context bloat — Moderate:** 43-item disposition processed across ~45 exchanges — largest /friday-act execution yet; auto-compact fired mid-session, indicating context ceiling was reached. Scale-driven bloat, partially structural (large input scope), partially addressable by batching plan file writes earlier.
+- **Tool overhead — Minor:** 6 subagents for a disposition + plan-file session within normal range for this scope; memory-write subagent adds minor overhead but appropriate for cross-session persistence.
+
+Regression from prior 2026-05-08 entries (Acceptable / Acceptable) — first Wasteful rating in the current Friday cluster. Two MAJOR findings from operator-caught under-reads and multi-cycle rework distinguish this from the prior Acceptable sessions today.
+
+**Recommendation:** When a file is referenced in the input scope (SO advisory, improvement-log entries) and the disposition task requires evaluating its content, default to a full read on first access — not a 30-line or section-scoped read. The cost of an under-read correction (re-read + rework + operator friction) exceeds the cost of the avoided full read in every case logged this session.
+
+**Estimated savings:** ~8–12k tokens per /friday-act session. Derivation: 2 under-read corrections × (full re-read ~200 lines × ~13 tokens/line ≈ 2.6k) + rework cycle per correction (~2 exchanges × ~1.5k tokens/exchange) ≈ ~10k tokens of avoidable cost. Over 10–20 /friday-act sessions: ~80–200k tokens.
+
+**Additional levers (ROI-ranked):**
+1. **Write plan files to disk earlier in large-disposition sessions (~5–8k tokens/session):** With 43 items across 7 plan files, plan content accumulated in-context before first disk write, contributing to auto-compact trigger. Writing plan files incrementally as each thematic group is dispositioned reduces peak context load.
+2. **Batch improvement-log reads into one pass per project at session start (~2–3k tokens/session):** improvement-log.md across 3 project directories read sequentially mid-session. A single orchestrated read pass at disposition start avoids mid-session context re-entry overhead.
+3. **Scope gate on /friday-act input size (~15k tokens/large-session):** 43-item input triggered auto-compact; prior /friday-act sessions handled 14 items (Acceptable). A scope gate splitting sessions >25 items into two sub-sessions would prevent auto-compact context loss and reduce per-session rework risk.

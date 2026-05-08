@@ -342,3 +342,10 @@
 - **Decisions logged:** 2 (drop `entry_count ≤ items_generated` rule; reuse qc-reviewer vs. new agent)
 - **QC cycles:** 1 (plan QC: REVISE → fixes → operator approved via ExitPlanMode; catch-up gate QC on report: 7 findings dispositioned)
 - **Gates:** 5 (4 confirmed, 1 changed) — plan-approval:changed (6 REVISE items fixed before approval), archive-confirmation:confirmed (32 entries), catch-up-gate-run:confirmed (recommended + approved), finding-disposition:confirmed (F1/F2/F3/F5 applied, F4/F8 kept), improvement-spec-proceed:confirmed
+
+### 2026-05-08 — /friday-act: disposition of 2026-05-08 friday-checkup + journal
+- **Commands used:** /friday-act, /session-plan, /qc-pass ×3, /triage ×3, /wrap-session
+- **Iterations:** 3 revision passes (initial disposition → SO advisory full-read revision → improvement-log cross-reference revision); each revision added new plan items
+- **Decisions logged:** 2 ({{WORKSPACE_ROOT}} operator decision deferred to execution; items 5+6 coupling)
+- **QC cycles:** 3 (session plan: REVISE → /triage → 1 fix applied; prioritization pass: REVISE → /triage → 1 fix; defer-list QC: no stuck items confirmed)
+- **Gates:** 4 (3 confirmed, 1 changed) — plan-approval:changed (session plan stop-point reworded before approval), under-read-correction:changed (SO advisory full-read — operator caught spec-literalism; missed strategic sections), improvement-log-review:changed (operator caught second under-read; triggered auditor fix addition), autonomy-posture:confirmed (Axis 3 loosened per operator rationale)

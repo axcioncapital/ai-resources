@@ -222,3 +222,29 @@
 
 **Alternatives considered:**
 - *New `friday-journal-qc` agent:* Rejected — code duplication, additional maintenance surface, no capability gained.
+
+---
+
+## 2026-05-08 — {{WORKSPACE_ROOT}} placeholder: operator decision deferred to execution
+
+**Context:** `research-workflow/.claude/settings.json` contains literal `{{WORKSPACE_ROOT}}` in `additionalDirectories`. This is a 3-cycle recurrence (v1 monthly checkup, v1 SO advisory, 2026-05-08 checkup). Prior /friday-act revision auto-picked "replace with absolute path" without surfacing the operator decision.
+
+**Decision:** Restore as an explicit operator (a)/(b) choice at execution time — not pre-resolved in the plan file. (a) document as a `/deploy-workflow` template marker + add audit exclusion; (b) replace with absolute path as deployed copy.
+
+**Rationale:** SO Rec 2 calls out OP-3 (loud failure over silent continuation) — three cycles without deciding reinforces an anti-pattern. Auto-picking removes the operator's ability to declare intent about whether this file is a template source or a deployed instance.
+
+**Alternatives considered:**
+- *Auto-pick (b):* Rejected — prior /friday-act revision did this and operator corrected it; decision belongs to operator.
+
+---
+
+## 2026-05-08 — Settings plan items 5+6 coupled: must land together
+
+**Context:** Settings plan has item 5 (fix {{WORKSPACE_ROOT}} symptom in research-workflow settings) and item 6 (fix permission-sweep-auditor template-class classification = the upstream reason the recurrence repeats every cycle).
+
+**Decision:** Items 5 and 6 must land together in the same execution session.
+
+**Rationale:** Item 6 is the durable fix — the auditor cannot distinguish template source from deployed instance, so without it, the recurrence continues regardless of what item 5 decides about the placeholder. Landing 5 alone clears this cycle but guarantees a fourth occurrence.
+
+**Alternatives considered:**
+- *Land 5 first, 6 in a later session:* Rejected — leaves root cause intact for at least one more cycle, extending the 3-cycle anti-pattern.

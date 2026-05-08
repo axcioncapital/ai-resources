@@ -393,3 +393,40 @@ None.
 
 ### Open Questions
 None.
+
+## 2026-05-08 — /friday-act: disposition of 2026-05-08 friday-checkup + journal
+
+### Summary
+Session 2 of the Friday cadence. Dispositoned 43 items (12 checkup + 31 journal) from the 2026-05-08 friday-checkup and friday-journal reports into 15 fix-now / 35 defer / 1 skip. Produced 7 plan files under `audits/friday-plans/`. Multiple revision passes were required after full reads of the SO advisory and systems review (initially under-read) and all 3 improvement-log files (initially skipped). Friction event logged for spec-literalism during SO advisory peek. J16 (concurrent-session guardrail) saved to memory as a today-scheduled investigation.
+
+### Files Created
+- `audits/friday-plans/2026-05-08-consult.md` — 1 item: Fix consult.md symlink (risk-check: yes, new symlink class)
+- `audits/friday-plans/2026-05-08-settings.md` — 6 items: /permission-sweep, settings hardening, model-key sweep, stale deny entry, {{WORKSPACE_ROOT}} operator decision, permission-sweep-auditor template-class fix (items 5+6 coupled)
+- `audits/friday-plans/2026-05-08-commands.md` — 1 item: innovation-sweep schema fields
+- `audits/friday-plans/2026-05-08-risk-topology.md` — 1 item: 4 dead wiki-links
+- `audits/friday-plans/2026-05-08-cleanup-worktree.md` — 1 item: /cleanup-worktree (run last)
+- `audits/friday-plans/2026-05-08-qc-pass.md` — 2 items: auto-/triage default after /qc-pass (J4), Edit-not-Write language audit (J18)
+- `audits/friday-plans/2026-05-08-cadence.md` — 3 items: /architecture-review wiring to monthly tier, cadence goal restatement, trend-aggregation pre-step
+- `memory/project_j16_today_reminder.md` — Today-scoped reminder for J16 concurrent-session guardrail investigation
+
+### Files Modified
+- `logs/session-plan.md` — /friday-act session plan (QC fix: stop-point reworded to reflect Step 15a re-derives independently)
+- `logs/maintenance-observations.md` — Session block appended with 3 revision notes; final tally 15 fix-now / 35 defer / 1 skip
+- `logs/friction-log.md` — Session block with 1 entry: spec-literalism during SO advisory peek (30-line floor, not ceiling)
+- `memory/MEMORY.md` — J16 today-reminder line added (item 15)
+
+### Decisions Made
+- **{{WORKSPACE_ROOT}} placeholder**: Reframed as operator (a)/(b) decision at execution time per SO Rec 2 — 3-cycle recurrence means auto-picking is blocked; operator must choose template-source vs deployed-copy interpretation.
+- **Items 5+6 coupled**: permission-sweep-auditor template-class fix (item 6) must land with item 5 (symptom fix) to break the recurrence; landing 5 alone leaves the loop intact.
+- **J16 deferred to today-separate**: Correctly deferred from fix-now — investigate+design-shaped, not implementable in ≤2 hours without design first. Memory reminder saved for today's separate session.
+- **Axis 3 (Autonomy) loosened**: Operator confirmed "I trust Claude to make decisions; my input rarely adds value" — posture: loosen on Axis 3.
+- **QC on defer list**: Confirmed no stuck-important items; J3 and J16 borderline but correctly deferred.
+- **Under-read corrections**: Two operator catches required mid-session revision passes (SO advisory, improvement logs). Friction-logged.
+
+### Next Steps
+- Execute 7 plan files before 2026-05-15 (see each plan for risk-check gates and coupling notes)
+- J16 concurrent-session guardrail investigation in a separate session today (2026-05-08)
+- Push all commits (operator manual step)
+
+### Open Questions
+None.
