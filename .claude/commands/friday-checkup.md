@@ -59,7 +59,7 @@ Input: `$ARGUMENTS` (optional) — `weekly` | `monthly` | `quarterly` to overrid
    Tier: {TIER}  ({auto-detected | operator-override})
 
    Auto-run checks:
-     Weekly:  /audit-repo, /improve, /coach (if ≥5 sessions), /permission-sweep --dry-run; W2.1 doc-scanner + /kb-integrity (if project repo-documentation selected)
+     Weekly:  /audit-repo, /improve, /coach (if ≥5 sessions), /permission-sweep --dry-run, /log-sweep --dry-run; W2.1 doc-scanner + /kb-integrity (if project repo-documentation selected)
      Monthly: + /audit-claude-md, /token-audit, W2.2 principles-checker, W2.4 improvement-analyst, Projects refresh
      Quarterly: (same auto-run as monthly)
 
@@ -103,10 +103,11 @@ Input: `$ARGUMENTS` (optional) — `weekly` | `monthly` | `quarterly` to overrid
     - `/improve` = 5 min per scope
     - `/coach` = 15 min per scope (skipped ones count 0)
     - `/permission-sweep --dry-run` = 2 min per scope (ai-resources + workspace + active projects)
+    - `/log-sweep --dry-run` = 2 min (ai-resources + active projects)
     - `/audit-claude-md` = 10 min per scope (workspace + active projects)
     - `/token-audit` = 30 min per scope (ai-resources + workspace + active projects)
-    - W2.1 doc-scanner (Step G) = 3 min (if `project repo-documentation` selected — all tiers after D-39)
-    - `/kb-integrity` (Step I) = 2 min (if `project repo-documentation` selected — all tiers after D-39)
+    - W2.1 doc-scanner (Step H) = 3 min (if `project repo-documentation` selected — all tiers after D-39)
+    - `/kb-integrity` (Step J) = 2 min (if `project repo-documentation` selected — all tiers after D-39)
 12. Display the estimate: `"Estimated runtime: ~{N} min"`.
 13. If estimate > 45 min, require the operator to type the exact phrase `proceed with long run` before continuing. Any other response aborts.
 
@@ -181,7 +182,18 @@ Permission-sweep scans every settings file in the workspace in one pass — it i
 4. The command writes the consolidated dry-run report to `ai-resources/audits/permission-sweep-{TODAY}.md` (same dated path regardless of scope).
 5. Record the report path in `RESULTS` under a synthetic scope label `permission-sweep (workspace-wide)`.
 
-**G. W2.1 — `doc-scanner-agent` (repo-documentation only) — all tiers**
+**G. `/log-sweep --dry-run` — all tiers, once per checkup run**
+
+Log-sweep scans `ai-resources/` and all selected project scopes in one pass — it is **not** per-scope in the sense of requiring separate invocations. Invoke it exactly once regardless of how many scopes are selected.
+
+1. `cd "{WORKSPACE_ROOT}"` (the workspace root, not a scope path).
+2. Verify `ai-resources/.claude/agents/log-sweep-auditor.md` exists. If missing, record `skipped: log-sweep-auditor not deployed` and continue.
+3. Verify `ai-resources/logs/scripts/log-archiver.sh` exists. If missing, record `skipped: log-archiver.sh not deployed` and continue.
+4. Invoke `/log-sweep --dry-run`. The command runs the auditor across all discovered scopes, writes per-scope working notes, and produces a dry-run report — no archive operations are applied.
+5. The command writes its dry-run report to `ai-resources/audits/log-sweep-{TODAY}.md`.
+6. Record the report path in `RESULTS` under a synthetic scope label `log-sweep (workspace-wide)`.
+
+**H. W2.1 — `doc-scanner-agent` (repo-documentation only) — all tiers**
 
 Skip if scope `project repo-documentation` is not selected.
 
@@ -191,7 +203,7 @@ This step invokes the W2.1 component-registry drift scanner. It is project-local
 2. Spawn the agent via Agent tool, agent name `doc-scanner-agent`, with brief: "Scan live Axcion AI repo for component drift against the vault component registry at `vault/components/`. Workspace root: `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo`. Project root: `projects/repo-documentation/`. Today: `{TODAY}`. Produce drift report at `projects/repo-documentation/output/phase-2/w2-1-doc-scan-{TODAY}.md`."
 3. After completion, record the report path in `RESULTS` under scope label `repo-documentation:w2-1-doc-scan`.
 
-**H. W2.2 — `principles-checker-agent` (repo-documentation only) — monthly and quarterly only**
+**I. W2.2 — `principles-checker-agent` (repo-documentation only) — monthly and quarterly only**
 
 Skip entirely if `TIER=weekly`. Skip if scope `project repo-documentation` is not selected.
 
@@ -199,23 +211,23 @@ Skip entirely if `TIER=weekly`. Skip if scope `project repo-documentation` is no
 2. Spawn the agent via Agent tool, agent name `principles-checker-agent`, with brief: "Scan live Axcion AI repo for violations of DR-1, DR-3, QS-6. Workspace root: `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo`. Today: `{TODAY}`. Produce violations report at `projects/repo-documentation/output/phase-2/w2-2-principles-{TODAY}.md`. Skip DR-4 (deprecated)."
 3. After completion, record the report path in `RESULTS` under scope label `repo-documentation:w2-2-principles`.
 
-**I. W2.3 — Maintenance consolidator (repo-documentation only) — all tiers**
+**J. W2.3 — Maintenance consolidator (repo-documentation only) — all tiers**
 
-Skip if scope `project repo-documentation` is not selected. Runs AFTER §G (W2.1) so the drift report exists; runs after §J (W2.4 improvement-analyst) is irrelevant — independent.
+Skip if scope `project repo-documentation` is not selected. Runs AFTER §H (W2.1) so the drift report exists; runs after §K (W2.4 improvement-analyst) is irrelevant — independent.
 
-This is an orchestration step (no separate agent — D-7). It consolidates the §G drift report and `/kb-integrity` output into a single maintenance summary.
+This is an orchestration step (no separate agent — D-7). It consolidates the §H drift report and `/kb-integrity` output into a single maintenance summary.
 
-1. Read the §G W2.1 drift report at `projects/repo-documentation/output/phase-2/w2-1-doc-scan-{TODAY}.md`. If missing (§G skipped or failed), record `skipped: w2-1 prerequisite missing` and continue.
+1. Read the §H W2.1 drift report at `projects/repo-documentation/output/phase-2/w2-1-doc-scan-{TODAY}.md`. If missing (§H skipped or failed), record `skipped: w2-1 prerequisite missing` and continue.
 2. Determine vault state: check whether `projects/repo-documentation/vault/CLAUDE.md` exists. If yes (vault accessible — gitignored content requires local copy):
    a. Invoke `/kb-integrity` from `projects/repo-documentation/vault/`. The command writes `_integrity-report-{TODAY}.md` to vault root (gitignored content).
    b. Read the produced integrity report.
 3. Compose a consolidated maintenance summary at `projects/repo-documentation/output/phase-2/w2-3-maintenance-{TODAY}.md` with sections:
-   - **Drift since last scan** — copied from §G drift report (Added/Removed/Modified counts and one-line per finding).
+   - **Drift since last scan** — copied from §H drift report (Added/Removed/Modified counts and one-line per finding).
    - **Integrity violations** — copied from `/kb-integrity` report if available; otherwise note `vault not accessible on this machine; integrity check skipped`.
-   - **Recommended actions** — operator-facing list combining both: registry pastes (from §G), drift investigations, integrity fixes.
+   - **Recommended actions** — operator-facing list combining both: registry pastes (from §H), drift investigations, integrity fixes.
 4. Record the consolidated report path in `RESULTS` under scope label `repo-documentation:w2-3-maintenance`.
 
-**J. W2.4 — `improvement-analyst` (Phase 2 cadence-driven catch-up) — monthly and quarterly only**
+**K. W2.4 — `improvement-analyst` (Phase 2 cadence-driven catch-up) — monthly and quarterly only**
 
 Skip entirely if `TIER=weekly`. The weekly tier already runs `/improve` per scope at §B. This step is the Phase 2 monthly+ catch-up: it ensures Phase 2 friction-log + improvement-log analysis runs regardless of whether the operator invoked `/improve` mid-week.
 
@@ -244,11 +256,11 @@ Skip entirely if `TIER=weekly`. The weekly tier already runs `/improve` per scop
 
 5. Record the report path in `RESULTS` under scope label `repo-documentation:w2-4-improvements`.
 
-**K. Projects-layer refresh (repo-documentation only) — monthly and quarterly only**
+**L. Projects-layer refresh (repo-documentation only) — monthly and quarterly only**
 
 Skip entirely if `TIER=weekly`. Skip if scope `project repo-documentation` is not selected.
 
-*After D-38 (2026-05-06), `output/phase-1/components/` is a frozen archive. K updates vault narrative-note paths only (`vault/projects/`, `vault/architecture/`). The component-registry version of `projects.md` (at `vault/components/projects.md`) is updated via `/kb-update` or W2.1, not here.*
+*After D-38 (2026-05-06), `output/phase-1/components/` is a frozen archive. L updates vault narrative-note paths only (`vault/projects/`, `vault/architecture/`). The component-registry version of `projects.md` (at `vault/components/projects.md`) is updated via `/kb-update` or W2.1, not here.*
 
 This step refreshes the work-layer documentation vault narrative notes: `vault/projects/projects.md` and `vault/architecture/repo-state.md`.
 
