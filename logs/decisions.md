@@ -298,3 +298,33 @@
 
 **Alternatives considered:**
 - *Cross-cycle tracking:* Rejected — recommendation text is not normalized; matching on fuzzy prose across entries is error-prone and would require a separate normalization step.
+
+---
+
+## 2026-05-08 — Settings item 5 ({{WORKSPACE_ROOT}} placeholder): option (a) template marker
+
+**Context.** 2026-05-08 friday-act settings plan item 5 — `additionalDirectories` in `ai-resources/workflows/research-workflow/.claude/settings.json` contains literal `{{WORKSPACE_ROOT}}`. 3-cycle recurrence per SO Rec 2; OP-3 forbade auto-picking. Two options: (a) keep literal + document as template marker + auditor exclusion, (b) replace with absolute path.
+
+**Decision.** Option (a) — keep `{{WORKSPACE_ROOT}}` literal. Pair with item 6 expanded to also fix `/deploy-workflow` so it substitutes `{{WORKSPACE_ROOT}}` at deploy time (Step 7 substitution, not Step 4 append).
+
+**Rationale.** `ai-resources/workflows/research-workflow/` is template-shaped by construction (CLAUDE.md filled with unsubstituted `{{...}}` placeholders; canonical-homes table marks `ai-resources/workflows/<name>/` as template home). Replacing the placeholder with an absolute path locks the template to one operator's filesystem layout — violates DR-1 (shared resources are reusable) and propagates the same recurrence to future template-shaped settings.json files. (a) pays the auditor + deploy-workflow fix cost once and closes the recurrence class.
+
+**Alternatives considered.**
+- *Option (b) absolute path:* Rejected. Faster today but specializes a template into a deployed copy. Future templates with workspace-root placeholders hit the same recurrence; auditor never learns the structural rule.
+
+**Application deferred.** Items 5+6 application is NOT in today's session scope. Item 6 expanded scope per /consult finding (auditor classification + `/deploy-workflow` Step 7 substitution + permission-template doc note). Application requires `/risk-check` (Permission change + agent-definition edit). Schedule a separate session.
+
+---
+
+## 2026-05-08 — W2.4 before W2.2/W2.3 — systems-review sequencing
+
+**Context.** `/systems-review` (full AI infrastructure, 2026-05-08) identified the binding constraint as operator attention budget on the act-on-findings stage. Five leverage points were surfaced; LP-4 (self-organization via W2.4 improvement loop) was highest-leverage. W2.2 (principles checker) and W2.3 (maintenance subagents) share design DNA with W2.4 and were candidates for concurrent design.
+
+**Decision.** Ship the smallest viable W2.4 improvement-loop slice this week (target: 2026-05-12). Do not start W2.2 or W2.3 design until W2.4 has run successfully for two Friday cycles (earliest: 2026-05-22).
+
+**Rationale.** W2.4 directly relieves the binding constraint by converting manual improvement-log closure into an automated close step. Starting W2.2 or W2.3 in the same window adds design surface without adding closure capacity — making the constraint worse, not better. Per `principles.md § DR-7` (no speculative abstraction): ship one slice, validate the pattern, then generalize. The systems review confirmed W2.4 is the right first target: the improvement-log pile-up is visible, the test target (3 "no active friction" entries) is concrete, and the rollback path is simple (config flag).
+
+**Alternatives considered.**
+- *Design W2.2 + W2.3 + W2.4 together:* Rejected. Violates DR-7; none ships faster; no second consumer exists yet to justify generalization.
+- *Start W2.2 (principles checker) first:* Rejected. W2.2 affects live enforcement — higher blast radius, more design complexity. W2.4 is safer to test the pattern.
+- *Continue friday-act backlog only, defer all W2.x:* Rejected. The systems review is unambiguous that backlog burn-down without closure automation just extends the constraint linearly; W2.4 is the leverage move.

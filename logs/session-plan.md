@@ -1,34 +1,27 @@
 # Session Plan — 2026-05-08
 
 ## Intent
-Execute the 7 friday-act plan files generated 2026-05-08 (15 fix-now items across consult, settings, commands, risk-topology, qc-pass, cadence, cleanup-worktree).
+Implement TODAY's items from the W2.4 implementation plan: run `/wrap-session` on the prior systems-review session (with push approval gate) and draft the W2.4 brief to `inbox/` for next week's `/create-skill` or planning session to pick up.
 
 ## Model
 sonnet — → /model sonnet
 
-(Work is dominantly execution-tier — applying defined fixes from plan files. Judgment-heavy substeps are off-loaded to Opus subagents via `/risk-check` gates already declared in each plan.)
+(Today's work is skill orchestration + drafting against a template — the plan already proposes the answers for trigger/input/action/boundary/rollback. Opus is over-tier for this. Switch before drafting; if the brief surfaces a real design ambiguity, escalate per Model Escalation rule.)
 
 ## Source Material
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/friday-plans/2026-05-08-consult.md
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/friday-plans/2026-05-08-settings.md
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/friday-plans/2026-05-08-commands.md
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/friday-plans/2026-05-08-risk-topology.md
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/friday-plans/2026-05-08-qc-pass.md
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/friday-plans/2026-05-08-cadence.md
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/friday-plans/2026-05-08-cleanup-worktree.md
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/audit-discipline.md
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/permission-template.md
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/repo-architecture.md
+- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/logs/scratchpads/2026-05-08-w24-implementation-plan.md (today's plan; spine)
+- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/output/systems-reviews/systems-review-2026-05-08-full-ai-infrastructure.md (W2.4 design rationale, binding constraint, leverage-point context)
+- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/logs/improvement-log.md (target file W2.4 operates on; contains the 3 "no active friction" entries to verify against on Tuesday)
+- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/wrap-session.md (the skill being invoked first)
+- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/create-skill.md (downstream consumer of inbox briefs — brief format must be compatible)
+- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/inbox/ (existing active briefs as format reference: codex-second-opinion-brief.md, innovation-sweep-plan.md, repo-review-brief.md)
 
 ## Autonomy Posture
 Gated
 
 **Stop points:**
-- Before each plan file's `/risk-check` gate fires (consult, settings, commands, risk-topology, cadence have risk-check declared).
-- `{{WORKSPACE_ROOT}}` operator (a)/(b) decision in settings plan item 5 (deferred to execution per 2026-05-08 decision — operator chooses template-source vs. deployed-copy interpretation).
-- Coupling check before commit on settings plan: items 5+6 must land together (decision: 2026-05-08).
-- Before invoking `/cleanup-worktree` (run last, after all other plans).
-- After `/permission-sweep` runs (settings item 1) — confirm no unexpected drift before continuing.
+- After `/wrap-session` completes — pause for operator push-approval decision on the 5 pending commits (Autonomy Rule #2: external write).
+- After W2.4 brief draft — operator review before commit (brief is the contract for next week's implementation; worth a sanity pass).
 
 ## Risk
-Run `/risk-check` per the plan-time gates declared in each plan file (consult: new symlink; settings: bundled permission changes per the plan's bundling note; commands: schema fields; risk-topology: dead-link cleanup; cadence: command wiring + cadence-doc edits). Run end-time `/risk-check` again before commit per `docs/audit-discipline.md`, unless the end-time skip rule applies (plan-time covered with mitigations applied AND commits already shipped AND drift bounded — document the skip in the wrap note).
+No structural change classes apparent for TODAY's scope — `/wrap-session` is the standard cadence, and writing a brief to `inbox/` is additive. The W2.4 implementation itself (Tuesday) will need plan-time `/risk-check` (touches log archival), but that's next week's gate, not today's. Run `/risk-check` if scope expands beyond wrap + brief.

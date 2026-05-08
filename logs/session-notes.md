@@ -374,3 +374,38 @@ Reviewed coaching logs across all active projects (ai-resources, global-macro-an
 
 ### Open Questions
 - None new. Prior open question remains: Item 5 — {{WORKSPACE_ROOT}} template marker vs. absolute path.
+
+## 2026-05-08 — Continue friday-act: settings item 5 + commands + risk-topology + cadence 2+3 + cleanup-worktree
+
+## 2026-05-08 — /systems-review on full AI infrastructure (with /session-plan first)
+
+### Summary
+Ran `/systems-review` on the full AI infrastructure scope using the `system-owner` Function E procedure. Report was preceded by a `/session-plan` (QC'd — GO) and the systems-thinking reference was read by the subagent. Report diagnosed the binding constraint as operator attention budget on the act-on-findings stage, identified five leverage points led by W2.4 (improvement-loop closure), and recommended shipping the smallest W2.4 slice this week before expanding to W2.3. Operator received a plain-English summary and a day-by-day implementation roadmap saved to scratchpads.
+
+### Files Created
+- `projects/axcion-ai-system-owner/output/systems-reviews/systems-review-2026-05-08-full-ai-infrastructure.md` — full Function E systems review report (binding constraint, leverage points, feedback loop health, delays, traps, recommended session focus)
+- `logs/scratchpads/2026-05-08-w24-implementation-plan.md` — W2.4 implementation roadmap for 2026-05-08 to 2026-05-15 (gitignored)
+
+### Files Modified
+- `logs/session-plan.md` — overwritten with this session's plan (/systems-review scope, opus match, source material, full autonomy, no structural risk)
+- `logs/session-notes.md` — this entry
+
+### Decisions Made
+- **W2.4 before W2.2/W2.3:** Ship the smallest W2.4 improvement-loop slice first this week; do not start W2.2 or W2.3 until W2.4 has run successfully for two Friday cycles. Rationale: W2.4 directly relieves the binding constraint (operator attention on closure); W2.2/W2.3 share design DNA and should wait for W2.4 to validate the pattern. Per LP-5 (rules) and `principles.md § DR-7`.
+- **No new detection this week:** Do not add new audit subagents, /coach metrics, or drift scans. Any new detection without paired closure makes the binding constraint worse.
+- **Friday-act backlog burn-down is nice-to-have, not required:** Drain 2–3 smallest plans (risk-topology, commands, qc-pass) as capacity allows; do not chase full clearance.
+
+### Next Steps
+- Push pending commits (5 from prior sessions + any new) — operator manual step
+- Write W2.4 brief in `inbox/` before end of day (optional: can defer to Monday)
+- Monday 2026-05-11: `/risk-check` on W2.4 brief + plan-mode design + `/qc-pass`
+- Tuesday 2026-05-12: Execute plan + test on 3 stale "no active friction" entries in `improvement-log.md`
+- Wednesday 2026-05-13: Verify + push + start friday-act backlog burn-down (risk-topology → commands → qc-pass)
+- Thursday 2026-05-14: Buffer (W2.4 fix if needed) or continue backlog (cadence → settings Gate A → cleanup-worktree)
+- Friday 2026-05-15: `/friday-checkup` + verify W2.4 success criteria (closure rate ≥ intake rate, no new paste-step, rollback confirmed)
+- Full roadmap: `logs/scratchpads/2026-05-08-w24-implementation-plan.md`
+
+### Open Questions
+- None.
+
+## 2026-05-08 — Implement W2.4 plan (today's items: wrap + write W2.4 brief to inbox)

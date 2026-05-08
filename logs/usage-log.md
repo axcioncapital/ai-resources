@@ -519,3 +519,30 @@ Regression from prior 2026-05-08 entries (Acceptable / Acceptable) — first Was
 1. **Write plan files to disk earlier in large-disposition sessions (~5–8k tokens/session):** With 43 items across 7 plan files, plan content accumulated in-context before first disk write, contributing to auto-compact trigger. Writing plan files incrementally as each thematic group is dispositioned reduces peak context load.
 2. **Batch improvement-log reads into one pass per project at session start (~2–3k tokens/session):** improvement-log.md across 3 project directories read sequentially mid-session. A single orchestrated read pass at disposition start avoids mid-session context re-entry overhead.
 3. **Scope gate on /friday-act input size (~15k tokens/large-session):** 43-item input triggered auto-compact; prior /friday-act sessions handled 14 items (Acceptable). A scope gate splitting sessions >25 items into two sub-sessions would prevent auto-compact context loss and reduce per-session rework risk.
+
+### 2026-05-08d | Wasteful
+
+**Task:** Ran /session-plan + QC pass on the plan + /systems-review (Function E) on full AI infrastructure. Produced a systems-thinking diagnosis with 5 leverage points and a W2.4 weekly implementation roadmap.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~15 |
+| Files read | 15 (re-reads: 7 on session-notes.md, 2 on decisions.md, 2 on session-plan.md, 2 on coaching-data.md, 2 on improvement-log.md) |
+| Files written/edited | 6 |
+| Tool calls | ~39 total |
+| Subagents | 3 |
+| Rework cycles | 1 |
+
+**Findings:**
+- logs/session-notes.md read 7 times across the session — 5 reads at progressively larger offsets during /prime to locate the most recent entry, then 2 more during /wrap-session. This is a Major re-reads finding (3x+ on a file with repeated offset scanning). Fix: on /prime, read from a large offset first (e.g., last 100 lines via Bash tail) rather than scanning forward from offset 0. (Re-reads — Major)
+- logs/session-plan.md Write failed on first attempt because the file had not been read first; required an extra Read then retry Write round-trip. (Rework — Moderate)
+- Trend: The prior three sessions rated Acceptable, Acceptable, Wasteful — this session is also Wasteful, indicating no improvement on the re-read pattern that triggered the previous Wasteful rating.
+
+**Recommendation:** Replace the /prime session-notes.md forward-scan pattern with a single Bash tail call (e.g., `tail -n 100`) to locate the most recent entry in one call, eliminating the 5-read offset progression that dominates waste in lightweight sessions.
+
+**Estimated savings:** ~6k tokens/session (4 surplus session-notes.md reads × ~1.5k tokens avg). Over 15 sessions: ~90k tokens.
+
+**Additional levers (ROI-ranked):**
+1. **Read-before-write discipline check at session start (~1–2k tokens/session):** Write failure on session-plan.md cost 1 extra Read + 1 failed Write call. At 15 sessions: ~15–30k tokens — smaller than primary but fully preventable.
+2. **Batch /wrap-session reads into parallel Bash calls (~1–2k tokens/session):** decisions.md, coaching-data.md, improvement-log.md, session-notes.md tail currently run sequentially. Parallelizing saves marginal context overhead (~15–30k over 15 sessions).
+3. No additional material levers — subagent volume (3) appropriate to session type; remaining reads non-redundant.
