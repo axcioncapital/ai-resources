@@ -73,6 +73,22 @@ If `SO_ADVISORY_PATH`, `SO_REVIEW_PATH`, AND `JOURNAL_PATH` are all `MISSING`, c
 
 ---
 
+### Step 1.7: Improvement-log health check
+
+Read `{AI_RESOURCES}/logs/improvement-log.md`. Count entries whose `**Status:**` line contains `logged` or `pending` (the active set). If the file does not exist, skip silently.
+
+Soft cap — if active count > 7:
+```
+Improvement-log has {N} active entries (soft cap: 7).
+Consider running /resolve-improvement-log before this session.
+Continue? (y/n)
+```
+Wait for response. On `n`, stop and tell the operator to run `/resolve-improvement-log` first, then re-invoke `/friday-act`.
+
+If active count ≤ 7, proceed silently.
+
+---
+
 ### Step 2: Parse Report and Detect Tier
 
 > **Schema contract:** the section headings parsed below are produced by `/friday-checkup` Step 7's "Section presence by tier" data contract. Do not rename them in either command without updating both ends — see `.claude/commands/friday-checkup.md` Step 7 (data-contract paragraph after the report template).
