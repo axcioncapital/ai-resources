@@ -58,4 +58,4 @@ Orient the session. Read state, brief the operator, wait for direction.
 
 8. Begin execution immediately under full autonomy (per workspace CLAUDE.md Autonomy Rules). No second "go/proceed" confirmation required.
 
-**Optional:** Run `/session-plan` before execution to plan model tier, source material, autonomy posture, and structural risk for the session.
+**Optional:** Run `/session-start` to capture a Phase 3 harness-style mandate. Run `/session-plan` to plan model tier, source material, autonomy posture, and structural risk for the session.
