@@ -357,3 +357,18 @@
 **Alternatives considered.**
 - *Run /risk-check anyway:* Rejected. The change is already shipped, and /risk-check at this stage would catch design risks that plan-time QC already addressed. No new findings expected.
 - *Roll back commits and run /risk-check pre-commit:* Rejected. The commits are clean and the plan was QC'd. Rolling back would introduce more risk than it removes.
+
+---
+
+## 2026-05-08 — Ship session-class classification as Step 1 only (defer downstream rules)
+
+**Context.** Operator proposed a session-class declaration mechanism (design vs execution vs mixed) for `/session-plan` to fix asymmetric failure modes — design sessions accumulate rework when constraints surface late, execution sessions pass cleanly. Full proposal included a five-rule package (constraint-set, path verification, higher QC expectations, heavier risk-check bias for design; trust-the-plan, first-pass-clean, skip-constraint-set for execution). The operator's own writeup recommended a phased rollout: ship the classification prompt only, run for a week, layer rules after.
+
+**Decision.** Implement only Step 1: the classification prompt in `/session-plan` plus persistence to `session-plan.md` and `session-notes.md`. Defer all downstream class-specific rules (constraint-set, path verification, frontmatter declarations on existing commands, QC-expectation adjustments) until after a one-week observation window.
+
+**Rationale.** Cost of a five-rule package on day one: high — five rules to debug simultaneously if the classification itself turns out to be wrong. Cost of Step 1 alone: minimal — one prompt, two writes, fully reversible by editing one file. Observability gain: Step 1 produces the data (`Class:` lines in session-notes) that lets the operator and downstream coaching see whether the classification feels natural before committing to rule wiring. Matches the operator's stated preference (memory: prefers automated infrastructure that fires automatically over disciplines maintained by hand) but also matches the proposal's own "smallest first move" framing.
+
+**Alternatives considered.**
+- *Ship the full five-rule package now:* Rejected. Higher debugging surface, harder to roll back, and the proposal itself recommended phased rollout.
+- *Add frontmatter class declarations to existing commands now (skip the prompt for known-class commands):* Deferred. The prompt is universal; frontmatter is an optimization that can land in week 2 once the classification taxonomy is validated.
+- *Write only to `session-plan.md`, not `session-notes.md`:* Rejected. Downstream rules need a persistent grep target; session-plan.md is overwritten each session and can't carry historical signal.

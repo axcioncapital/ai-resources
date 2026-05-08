@@ -449,3 +449,29 @@ Operator surfaced friction: Claude pauses too often mid-session to ask "what do 
 ### Open Questions
 
 - None.
+
+## 2026-05-08 — Session-class declaration in /session-plan (design vs execution)
+
+### Summary
+Implemented Step 1 of a phased rollout that adds session-class classification to `/session-plan`. After the operator confirms intent, the command now asks whether the session is **design** (creating something new) vs **execution** (running something that exists) vs **mixed**, then writes the answer into both `session-plan.md` and today's `session-notes.md` entry. No downstream class-specific rules wired yet — that's the deliberate phase boundary. Run for one week, then layer rules if classification feels accurate.
+
+### Files Created
+- `~/.claude/plans/what-do-you-think-iterative-avalanche.md` — implementation plan (workspace-level, not in repo)
+
+### Files Modified
+- `ai-resources/.claude/commands/session-plan.md` — added Step 1.5 (class prompt with non-canonical-response normalization), `## Class` field in Step 7 template, and a Step 7 sub-instruction that edits `logs/session-notes.md` to insert `Class: {CLASS}` below today's date header
+
+### Decisions Made
+- **Phase boundary:** ship only the classification prompt + write actions. No design-class rules (constraint-set, path verification, higher QC expectations) yet — those layer on after a one-week observation window.
+- **Persistence to both files:** classify once, write to `session-plan.md` (per-session plan) AND `session-notes.md` (historical record), not just one. Downstream rules grep `^Class: ` from session-notes.
+- **Normalization rule:** in Step 1.5, accept canonical (`design` / `execution` / `mixed`) verbatim; map case/phrasing variants ("Design", "design session", "exec") to the closest canonical; re-ask once if no clear match. Do not loop.
+- **QC fix (REVISE → fixed):** "Two additions" → "Three additions" header; named insertion point and Edit-vs-Write mechanism for the session-notes append; added the normalization sentence.
+
+### Next Steps
+- Push commit `f08cd83` (operator approval needed per Autonomy Rule #2).
+- Run `/session-plan` for one week of regular use; observe whether the design / execution / mixed split feels natural and whether classifications are accurate.
+- After one week: if classification works, layer the design-class rules on top (constraint-set step, path verification, adjusted QC expectations). If not, revisit the prompt wording or the class taxonomy.
+- Consider: should `/create-skill`, `/improve-skill`, `/audit-repo` declare a class in their frontmatter to skip the prompt? Deferred until after the trial.
+
+### Open Questions
+- None.
