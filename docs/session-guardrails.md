@@ -2,7 +2,7 @@
 
 > **When to read this file:** For the full trigger enumeration, exempted-command list, and tuning procedure behind the four advisory flags. The flag names and one-line purposes live in workspace CLAUDE.md; details live here.
 
-Four advisory flags surface session-risk signals in chat so the operator can decide whether to proceed. These are self-enforcement rules — no hook, no hard gate, no named confirmation phrase. When a trigger fires, emit the named flag in a single line and wait for the operator's one-word response (e.g., "proceed", "narrow", "clear", "/clarify").
+Four advisory flags surface session-risk signals in chat so the operator can decide whether to proceed. These are self-enforcement rules — no hook, no hard gate, no named confirmation phrase. When a trigger fires, emit the named flag in a single line and wait for the operator's one-word response (e.g., "proceed", "narrow", "clear", "/clarify"). Exception: `[AMBIGUOUS]` uses the self-resolving form — it does not wait for a one-word response unless the assumption cannot be resolved from context.
 
 Flag tags are stable, parseable strings: `[HEAVY]`, `[SCOPE]`, `[AMBIGUOUS]`, `[COST]`. Use them verbatim so future telemetry can count fire rates.
 
@@ -40,9 +40,10 @@ Fire at `/prime` step 6 or any task-naming moment if the brief is missing:
 - A count/scope bound on plural nouns ("fix the issues", "update the skills")
 - Definitions for terms whose interpretation materially changes scope
 
-Default recovery is `/clarify` — do not silently adopt an assumption without surfacing it.
+Default recovery: flag the assumption inline, attempt self-resolution from project files and loaded context, and proceed. Stop only if the interpretation cannot be determined from available context and guessing would materially change the output. Do not wait for a one-word response unless genuinely unresolvable.
 
-Flag format: `[AMBIGUOUS] Brief missing: {bullet list}. Run /clarify, state my assumption and proceed, or narrow the brief?`
+Flag format (default): `[AMBIGUOUS] Assuming: {interpretation}. Proceeding — stop me if wrong.`
+Flag format (blocking — only when genuinely unresolvable): `[AMBIGUOUS] Cannot determine: {X}. Needs operator input before proceeding.`
 
 ## `[COST]` — cost-escalation mid-session
 
