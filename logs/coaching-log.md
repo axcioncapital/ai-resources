@@ -52,3 +52,26 @@ Coaching feedback captured via `/coach`. Newest entries at the bottom.
 - 2026-05-01 "interruption-impulse as deliberate review gate" — substantially acted on (M1-revert decision is the textbook case).
 - 2026-04-24 "decisions.md rigor" — acted on (89% of decisions enumerate alternatives).
 - New gap opened on design-session first-pass quality (verifiable factual errors caught in QC).
+
+---
+
+### 2026-05-08b
+
+**Coverage:** 12 sessions (2026-05-02 → 2026-05-08), 14 decisions, 8 QC cycles. Coaching-data: 4 new entries since prior run. qc-log.md absent; friction-log 1 new event (2026-05-08).
+
+**Findings**
+
+| Dimension | Rating | Trend | Note |
+|-----------|--------|-------|------|
+| Iteration Efficiency | Watch | mixed | Dominant driver shifted from "verifiable factual errors" to "under-read upstream artifacts before disposition." |
+| Decision Patterns | Healthy | ↑ | 100% alternatives-considered; plan-approval gate changed 42% of the time (highest-leverage review point). |
+| QC Disposition | Watch | → | First-pass REVISE ratio unchanged (5/8). Prior recommendation not measurably acted on. |
+| Delegation Effectiveness | Healthy | → | H5 + risk-check pattern continues. J16 correctly kept main-session. |
+| Workflow Evolution | Watch | mixed | 4 commands shipped; same 5 improvement-log entries pending + 1 new orphan. |
+
+**The One Thing:** Match read scope to disposition consequence. Before any step that produces a disposition or schema binding to an existing artifact (sibling command, consumer regex, prior advisory), read that artifact fully and quote its load-bearing lines into working notes. This is the "constraint set" advice made specific: quoted text from upstream artifacts, not summaries.
+**Prior recommendation status:**
+- 2026-05-08 "constraint set first 5 minutes" — partially acted on (mechanism diagnosed more precisely, no ritual change yet visible).
+- 2026-05-01 "interruption-impulse as deliberate review gate" — held (stable).
+- 2026-04-24 "decisions.md rigor" — held (100% alternatives-considered this window).
+**Promotion candidates:** 2 flagged (decisions.md rigor, interruption-impulse gate) — Promotion candidates section absent from agent output; follow-up needed to make section fire reliably.

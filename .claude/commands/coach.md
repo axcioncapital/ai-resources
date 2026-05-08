@@ -39,6 +39,7 @@ Run the collaboration coach to analyze operator-AI collaboration patterns across
 
    **The One Thing:** {recommendation}
    **Prior recommendation status:** {acted on / not acted on / N/A}
+   **Promotion candidates:** {N flagged — see full output} | none this cycle
    ```
 
    If the file doesn't exist, create it with `# Coaching Log` as the first line before appending.

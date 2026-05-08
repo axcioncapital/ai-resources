@@ -197,6 +197,19 @@ Frame as behavioral insight, not automation recommendation. The operator decides
 ## Progression
 {If prior coaching-log entries exist: compare current ratings and trends to the most recent entry. Note which recommendations were acted on (evidence in logs) and which weren't. Note any rating changes.}
 {If first run: "Baseline established. Next run will show progression."}
+
+## Promotion candidates
+
+{Scan the most recent coaching-log.md entry. For each recommendation whose
+"Prior recommendation status" is "acted on" or "substantially acted on", list it as a candidate.
+Do NOT track cross-cycle history or match recommendations across entries — single-cycle surface only.}
+
+### {recommendation summary}
+- **Status this cycle:** acted on | substantially acted on
+- **Suggested next action:** invoke /improve (for skill/command changes) or a CLAUDE.md edit
+  session (for rules/policy) to convert this behavioral habit into a structural rule.
+
+{If no candidates: "No promotion candidates this cycle."}
 ```
 
 ## Rules
@@ -208,3 +221,4 @@ Frame as behavioral insight, not automation recommendation. The operator decides
 - **Self-referential only.** Compare the operator to their own history. Never invoke external benchmarks, "best practices," or what "most users" do.
 - **Maximum 5 dimension findings + 1 "One Thing."** Do not pad.
 - **Distinguish correlation from causation.** "Iteration count dropped after you started X" is correlation. Say so. Don't claim X caused the improvement unless the mechanism is clear.
+- **Promotion candidates: flag only.** The coach may surface that a recommendation has been acted on and is ready to graduate. It may NOT draft rule text, suggest specific targets, or propose system edits. Structural changes route through /improve or a CLAUDE.md edit session.
