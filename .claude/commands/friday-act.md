@@ -41,6 +41,30 @@ Input: `$ARGUMENTS` (optional) — explicit path to a `friday-checkup-YYYY-MM-DD
 
 ---
 
+### Step 1.5: Locate System Owner Outputs
+
+Locate the freshest System Owner outputs from this week's cadence. These are supplementary inputs alongside the checkup report. Either or both may be `MISSING`; that is acceptable — Step 3.5 self-skips when neither is present, and Step 2's tier-detection is unaffected.
+
+**Friday Advisory locator** — directory `projects/axcion-ai-system-owner/output/friday-advisories/`:
+
+- Glob `friday-advisory-*.md`.
+- For each match, parse `(date, version)` from the filename: `date` = `YYYY-MM-DD` immediately after `friday-advisory-`; `version` = integer N from a `-vN` suffix before `.md` (default `1` when no suffix). Treat the suffix as an integer, not a string — lexical sort would otherwise place `-v10` before `-v2`.
+- Sort descending by `(date, version)`. Take the first.
+- Apply filters: filename `date >= REPORT_DATE` AND filename `date >= TODAY - 7 days`. If filtered out, treat as `MISSING`.
+- Set `SO_ADVISORY_PATH` to the resolved absolute path or the literal string `MISSING`.
+
+**Systems Review locator** — directory `projects/axcion-ai-system-owner/output/systems-reviews/`:
+
+- Glob `systems-review-*.md`.
+- Parse `date` from each filename (the `YYYY-MM-DD` immediately after `systems-review-`).
+- Sort descending by `date`. When multiple matches share the same date (different scope slugs), fall back to file mtime — slug-alphabetical alone can pick the wrong same-day file.
+- Take the first. Apply the same filters as above.
+- Set `SO_REVIEW_PATH` to the resolved absolute path or the literal string `MISSING`.
+
+If both paths are `MISSING`, continue to Step 2 silently — `/friday-act` does not depend on SO outputs to function. Otherwise carry the resolved paths forward to Step 3 (display) and Step 3.5 (disposition prompt).
+
+---
+
 ### Step 2: Parse Report and Detect Tier
 
 > **Schema contract:** the section headings parsed below are produced by `/friday-checkup` Step 7's "Section presence by tier" data contract. Do not rename them in either command without updating both ends — see `.claude/commands/friday-checkup.md` Step 7 (data-contract paragraph after the report template).
@@ -57,8 +81,14 @@ Input: `$ARGUMENTS` (optional) — explicit path to a `friday-checkup-YYYY-MM-DD
 
 ### Step 3: Tactical Follow-ups Loop
 
-13. Display the tactical list as a numbered menu, ordered by risk descending (high → med → low):
+13. Display System Owner inputs (when at least one resolved in Step 1.5), then the tactical list ordered by risk descending (high → med → low):
     ```
+    System Owner inputs available (this Friday):
+      Friday Advisory: {SO_ADVISORY_PATH | (none within 7 days)}
+      Systems Review:  {SO_REVIEW_PATH | (none within 7 days)}
+    After dispositioning the checkup items below, you'll be prompted to add any
+    System Owner-derived items for disposition (Step 3.5).
+
     Tactical follow-ups from {REPORT_DATE} ({TIER} tier):
       1. [high] {item}
       2. [med]  {item}
@@ -70,6 +100,7 @@ Input: `$ARGUMENTS` (optional) — explicit path to a `friday-checkup-YYYY-MM-DD
       (d)efer      — log to logs/maintenance-observations.md as deferred
       (s)kip       — drop without logging
     ```
+    If both `SO_ADVISORY_PATH` and `SO_REVIEW_PATH` are `MISSING`, omit the "System Owner inputs available" block entirely (do not print a stub).
 14. Wait for the operator's per-item disposition string. Validate length matches item count and characters are in `{f,d,s}`. Re-prompt on mismatch.
 15. For each item dispositioned `f`:
     a. Determine whether the fix touches a `/risk-check` change class (per `ai-resources/docs/audit-discipline.md` § Risk-check change classes). Trigger the gate if the item description names any of: hook file (`.sh`), `settings.json`, workspace `CLAUDE.md`, project `CLAUDE.md`, a new command/skill path, a new symlink, or auto-write/cross-repo automation.
@@ -109,6 +140,36 @@ Input: `$ARGUMENTS` (optional) — explicit path to a `friday-checkup-YYYY-MM-DD
 
 ---
 
+### Step 3.5: System Owner-derived Additions
+
+Skip this step if both `SO_ADVISORY_PATH` and `SO_REVIEW_PATH` are `MISSING`. Otherwise:
+
+16a. For each available SO file, print the first 30 lines (lightweight peek, no parsing — headers, executive summary, and binding-constraint sections typically fit in this window). Display the source path as a header before each peek.
+
+16b. Prompt the operator:
+```
+System Owner inputs may suggest items not in the checkup tactical list. Skip
+items that duplicate Step 3 checkup items already dispositioned — the SO
+advisory often references the same finding the checkup raised; disposition once,
+not twice.
+
+Add System Owner-derived items? Paste one per line in shape:
+  [risk] {item text}
+where risk ∈ {high, med, low}. Empty line to finish, or `(none)` to skip.
+```
+
+16c. Validate each pasted line against `^\[(high|med|low)\] .+$`. Re-prompt on malformed input. Capture accepted items as a parallel list to the Step 3 tactical follow-ups (preserve `risk` and `text`).
+
+16d. For each accepted SO-derived item, run the same disposition loop as Step 3 (items 14–15 logic), with two notes:
+- The same `/risk-check` change-class gate (item 15a–c) applies — SO-derived items can touch hooks, settings, CLAUDE.md, etc., the same as checkup-derived items.
+- The W2.4 sub-disposition (item 15g) does NOT apply — SO-derived items have no `repo-documentation:w2-4-improvements` source label.
+
+16e. Append accepted SO-derived dispositions into the same `RESULTS` structure used by Step 3, tagged with `source: so-derived` so Step 5 can subtotal them and the deferred-items list can label them.
+
+▸ After the SO-derived loop, run `/compact` if context is heavy (compounding cost from Steps 3 and 3.5 combined).
+
+---
+
 ### Step 4: Policy-level Review (monthly + quarterly only)
 
 17. Skip this step if `TIER = weekly`.
@@ -138,13 +199,17 @@ Input: `$ARGUMENTS` (optional) — explicit path to a `friday-checkup-YYYY-MM-DD
     ```
     ## {TODAY} — Friday Act ({TIER} tier, source: friday-checkup-{REPORT_DATE}.md)
 
+    ### System Owner inputs (this session)
+    - Friday Advisory: {SO_ADVISORY_PATH | (none within 7 days)}
+    - Systems Review:  {SO_REVIEW_PATH | (none within 7 days)}
+
     ### Disposition summary
-    - Tactical: {F} fix-now, {D} defer, {S} skip (of {TOTAL} items)
+    - Tactical: {F} fix-now, {D} defer, {S} skip (of {TOTAL} items; of which {SO_COUNT} System Owner-derived)
     - Policy review: {R} rule-change proposed, {N} no-change, {D} defer (monthly+ only; omit for weekly)
     - Architectural retrospective: {captured | skipped} (quarterly only; omit otherwise)
 
     ### Deferred items (from this session)
-    - {tactical or policy item text} — {risk if tactical}, {source if policy}
+    - {tactical or policy item text} — {risk if tactical}, {source: checkup | so-derived | policy}
 
     ### Policy proposals (monthly+; omit if none)
     - For "{observation}": {operator's proposed rule edit}
@@ -241,6 +306,7 @@ Input: `$ARGUMENTS` (optional) — explicit path to a `friday-checkup-YYYY-MM-DD
 ### Notes
 
 - **Session 1/2 boundary.** This command refuses audit-rerun language (Step 1.8). Use `/friday-checkup` for evidence, `/friday-act` for action.
+- **System Owner inputs (Steps 1.5 + 3.5).** `/friday-act` reads the freshest `/friday-so` advisory and `/systems-review` report (filtered to ≥ checkup date and ≤ 7 days old) as supplementary inputs. The SO outputs are prose; `/friday-act` does not parse their content — it displays the first 30 lines and lets the operator paste any actionable items as `[risk] {text}` for the same disposition loop as checkup items. If both SO files are missing, Step 3.5 self-skips. Producer-side commands (`/friday-so`, `/systems-review`) are not modified — coupling is one-way (consumer reads producer outputs).
 - **Inline `/risk-check`.** Operator-confirmed (Step 3.b prompt), then dispatched via the Skill tool. This matches `risk-check.md`'s "operator-typed, or inline-prompted by other commands (e.g., `/friday-act`)." Auto-firing without consent is not permitted.
 - **No auto-edit of CLAUDE.md or audit-discipline.md.** Policy proposals (Step 4) capture intent; the rule edits themselves go through their own plan + `/risk-check` cycle.
 - **Coaching-log untouched.** The seven autonomy axes are forward-looking weekly posture targets; coaching-log's five session-pattern dimensions are backward-looking session ratings. Different orientation, kept separate (per workspace decision 2026-04-24).
