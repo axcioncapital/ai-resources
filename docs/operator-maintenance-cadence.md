@@ -62,7 +62,8 @@ Start with `/prime`. Declare exit condition and autonomy level.
 | F3 | `/friday-so` | `projects/axcion-ai-system-owner/` |
 | F2 | `/so-monthly` — monthly only (first Friday of month, monthly/quarterly tiers) | `projects/axcion-ai-system-owner/` |
 | F2b | `/systems-review` — monthly only (first Friday of month) | workspace root |
-| — | Read AI journal + check CC Fixes & Improvements panel for ideas | — |
+| F3.5 | `/friday-journal` — clarify the week's AI journal entries; produces report consumed by F4 | workspace root or ai-resources |
+| — | Check CC Fixes & Improvements panel for ideas | — |
 
 Switch back to workspace root after F3/F2. F1 must complete before F3 and F2 — both abort if no checkup report is found.
 

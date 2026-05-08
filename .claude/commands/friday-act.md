@@ -61,7 +61,15 @@ Locate the freshest System Owner outputs from this week's cadence. These are sup
 - Take the first. Apply the same filters as above.
 - Set `SO_REVIEW_PATH` to the resolved absolute path or the literal string `MISSING`.
 
-If both paths are `MISSING`, continue to Step 2 silently — `/friday-act` does not depend on SO outputs to function. Otherwise carry the resolved paths forward to Step 3 (display) and Step 3.5 (disposition prompt).
+**Journal Report locator** — directory `ai-resources/audits/`:
+
+- Glob `friday-journal-*.md`.
+- Parse `date` from each filename (the `YYYY-MM-DD` immediately after `friday-journal-`).
+- Sort descending by `date`. Take the first.
+- Apply filters: filename `date >= REPORT_DATE` AND filename `date >= TODAY - 7 days`. If filtered out, treat as `MISSING`.
+- Set `JOURNAL_PATH` to the resolved absolute path or the literal string `MISSING`.
+
+If `SO_ADVISORY_PATH`, `SO_REVIEW_PATH`, AND `JOURNAL_PATH` are all `MISSING`, continue to Step 2 silently — `/friday-act` does not depend on supplementary inputs to function. Otherwise carry the resolved paths forward to Step 3 (display) and Step 3.5 (disposition prompt).
 
 ---
 
@@ -86,8 +94,9 @@ If both paths are `MISSING`, continue to Step 2 silently — `/friday-act` does 
     System Owner inputs available (this Friday):
       Friday Advisory: {SO_ADVISORY_PATH | (none within 7 days)}
       Systems Review:  {SO_REVIEW_PATH | (none within 7 days)}
+      Journal Report:  {JOURNAL_PATH | (none within 7 days)}
     After dispositioning the checkup items below, you'll be prompted to add any
-    System Owner-derived items for disposition (Step 3.5).
+    System Owner-derived items and journal-derived items for disposition (Step 3.5).
 
     Tactical follow-ups from {REPORT_DATE} ({TIER} tier):
       1. [high] {item}
@@ -100,7 +109,7 @@ If both paths are `MISSING`, continue to Step 2 silently — `/friday-act` does 
       (d)efer      — log to logs/maintenance-observations.md as deferred
       (s)kip       — drop without logging
     ```
-    If both `SO_ADVISORY_PATH` and `SO_REVIEW_PATH` are `MISSING`, omit the "System Owner inputs available" block entirely (do not print a stub).
+    If `SO_ADVISORY_PATH`, `SO_REVIEW_PATH`, AND `JOURNAL_PATH` are all `MISSING`, omit the "System Owner inputs available" block entirely (do not print a stub).
 14. Wait for the operator's per-item disposition string. Validate length matches item count and characters are in `{f,d,s}`. Re-prompt on mismatch.
 15. For each item dispositioned `f`:
     a. Determine whether the fix touches a `/risk-check` change class (per `ai-resources/docs/audit-discipline.md` § Risk-check change classes). Trigger the gate if the item description names any of: hook file (`.sh`), `settings.json`, workspace `CLAUDE.md`, project `CLAUDE.md`, a new command/skill path, a new symlink, or auto-write/cross-repo automation.
@@ -140,9 +149,11 @@ If both paths are `MISSING`, continue to Step 2 silently — `/friday-act` does 
 
 ---
 
-### Step 3.5: System Owner-derived Additions
+### Step 3.5: System Owner-derived and Journal Additions
 
-Skip this step if both `SO_ADVISORY_PATH` and `SO_REVIEW_PATH` are `MISSING`. Otherwise:
+> **Schema contract.** Sub-step 16f below extracts items from the `## Items` section of the `/friday-journal` report. Each line MUST match the regex `^\[(high|med|low)\] .+$` — the same regex 16c uses for paste-validated SO-derived items. The producer side is `.claude/commands/friday-journal.md` Step 5 (report-shape spec). Do not change the prefix syntax in either command without updating both ends.
+
+Skip this step if `SO_ADVISORY_PATH`, `SO_REVIEW_PATH`, AND `JOURNAL_PATH` are all `MISSING`. Otherwise:
 
 16a. For each available SO file, print the first 30 lines (lightweight peek, no parsing — headers, executive summary, and binding-constraint sections typically fit in this window). Display the source path as a header before each peek.
 
@@ -166,7 +177,24 @@ where risk ∈ {high, med, low}. Empty line to finish, or `(none)` to skip.
 
 16e. Append accepted SO-derived dispositions into the same `RESULTS` structure used by Step 3, tagged with `source: so-derived` so Step 5 can subtotal them and the deferred-items list can label them.
 
-▸ After the SO-derived loop, run `/compact` if context is heavy (compounding cost from Steps 3 and 3.5 combined).
+16f. **Journal-derived items.** If `JOURNAL_PATH` is not `MISSING`:
+
+- Read `JOURNAL_PATH`. Locate the `## Items` section header (the section between `## Items` and the next `## ` heading).
+- Extract every line in that section matching `^\[(high|med|low)\] .+$`. Discard blank lines and any non-matching content (the report includes operator-readable detail under `## Item context` that the parser ignores by design).
+- Treat the extracted lines as a parallel list to the SO-derived items — same shape (`[risk] {text}`), same regex, **no paste-prompt** (they were validated by `/friday-journal` at write time).
+- Display the count and the items to the operator before disposition:
+  ```
+  Journal-derived items (from {JOURNAL_PATH}):
+    1. [high] {text}
+    2. [med]  {text}
+    ...
+
+  Per-item disposition (one letter per item, in order; same f/d/s vocabulary):
+  ```
+- Feed them into the same disposition loop as items 14–15. The `/risk-check` change-class gate (15a–c) applies. The W2.4 sub-disposition (15g) does NOT apply (journal items have no `repo-documentation:w2-4-improvements` source label).
+- Tag accepted dispositions in `RESULTS` with `source: journal-derived` so Step 5 subtotals them separately.
+
+▸ After the SO-derived and journal-derived loops, run `/compact` if context is heavy (compounding cost from Steps 3, 3.5 SO, and 3.5 journal combined).
 
 ---
 
@@ -203,8 +231,11 @@ where risk ∈ {high, med, low}. Empty line to finish, or `(none)` to skip.
     - Friday Advisory: {SO_ADVISORY_PATH | (none within 7 days)}
     - Systems Review:  {SO_REVIEW_PATH | (none within 7 days)}
 
+    ### Journal Report (this session)
+    - Journal Report: {JOURNAL_PATH | (none within 7 days)}
+
     ### Disposition summary
-    - Tactical: {F} fix-now, {D} defer, {S} skip (of {TOTAL} items; of which {SO_COUNT} System Owner-derived)
+    - Tactical: {F} fix-now, {D} defer, {S} skip (of {TOTAL} items; of which {SO_COUNT} System Owner-derived, {JOURNAL_COUNT} journal-derived)
     - Policy review: {R} rule-change proposed, {N} no-change, {D} defer (monthly+ only; omit for weekly)
     - Architectural retrospective: {captured | skipped} (quarterly only; omit otherwise)
 
@@ -307,6 +338,8 @@ where risk ∈ {high, med, low}. Empty line to finish, or `(none)` to skip.
 
 - **Session 1/2 boundary.** This command refuses audit-rerun language (Step 1.8). Use `/friday-checkup` for evidence, `/friday-act` for action.
 - **System Owner inputs (Steps 1.5 + 3.5).** `/friday-act` reads the freshest `/friday-so` advisory and `/systems-review` report (filtered to ≥ checkup date and ≤ 7 days old) as supplementary inputs. The SO outputs are prose; `/friday-act` does not parse their content — it displays the first 30 lines and lets the operator paste any actionable items as `[risk] {text}` for the same disposition loop as checkup items. If both SO files are missing, Step 3.5 self-skips. Producer-side commands (`/friday-so`, `/systems-review`) are not modified — coupling is one-way (consumer reads producer outputs).
+- **Journal Report (Steps 1.5 + 3 + 3.5 + 5).** `/friday-act` reads the freshest `/friday-journal` report (filtered to ≥ checkup date and ≤ 7 days old) as a third supplementary input. Unlike the SO outputs (prose), the journal report's `## Items` section is pre-structured to the same `[risk] {text}` shape as Step 3.5's regex — sub-step 16f extracts those lines directly and feeds them into the disposition loop with no paste-prompt. The producer-side schema-contract callout lives in `.claude/commands/friday-journal.md` Step 5; do not change the prefix syntax in either command without updating both ends. Coupling is one-way (consumer reads producer).
+- **7-day vs. 10-day filter rationale.** Supplementary inputs (Friday Advisory, Systems Review, Journal Report) all use a **7-day** filename-date filter — these are session-window-scoped artifacts produced for a specific Friday and stale beyond that week. The checkup report itself uses a **10-day** abort threshold (Step 1.7) because it pairs with the `friday-checkup-reminder.sh` hook's recovery-Friday window; a 10-day grace allows skipped-Friday recovery without re-running the audit. The two thresholds are intentionally distinct: 7-day = "fresh for this Friday's session"; 10-day = "fresh enough to still be the basis for action."
 - **Inline `/risk-check`.** Operator-confirmed (Step 3.b prompt), then dispatched via the Skill tool. This matches `risk-check.md`'s "operator-typed, or inline-prompted by other commands (e.g., `/friday-act`)." Auto-firing without consent is not permitted.
 - **No auto-edit of CLAUDE.md or audit-discipline.md.** Policy proposals (Step 4) capture intent; the rule edits themselves go through their own plan + `/risk-check` cycle.
 - **Coaching-log untouched.** The seven autonomy axes are forward-looking weekly posture targets; coaching-log's five session-pattern dimensions are backward-looking session ratings. Different orientation, kept separate (per workspace decision 2026-04-24).

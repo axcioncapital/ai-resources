@@ -95,6 +95,7 @@ Both CLAUDE.md skip conditions must hold simultaneously to skip the audit.
 | F3 | `/friday-so` | `projects/axcion-ai-system-owner/` |
 | F2 | `/so-monthly` (monthly only) | `projects/axcion-ai-system-owner/` |
 | F2b | `/systems-review` (monthly only) | workspace root |
+| F3.5 | `/friday-journal` | workspace root or ai-resources |
 | F4 | `/friday-act` | workspace root or ai-resources |
 | F5 | Graduate resource review | workspace root |
 | F6 | Harness work | workspace root |
@@ -130,6 +131,10 @@ Reads the past month's Friday advisories and deferred items. Aborts automaticall
 **F2b — `/systems-review`** (monthly only — first Friday of each month, same tier condition as F2)
 
 Runs a systems-thinking analysis of the workspace. Run from workspace root after switching back from `projects/axcion-ai-system-owner/`.
+
+**F3.5 — `/friday-journal`** (every Friday — closes Session 1)
+
+Reads `ai-resources/logs/ai-journal.md` (operator's freeform weekly notes), runs a clarification pass on messy entries, and writes a structured implementation report to `ai-resources/audits/friday-journal-YYYY-MM-DD.md`. The report is auto-loaded by `/friday-act` Step 1.5/3.5 alongside Friday Advisory and Systems Review. After the operator confirms, processed entries archive in-file. Run from workspace root or ai-resources.
 
 ---
 
@@ -176,6 +181,7 @@ Run `/graduate-resource` with no arguments — checks `logs/innovation-registry.
 | `/friday-so` | Friday | Session 1, F3 | Every Friday |
 | `/so-monthly` | Friday | Session 1, F2 | Monthly (first Friday, monthly/quarterly tier) |
 | `/systems-review` | Friday | Session 1, F2b | Monthly (first Friday, monthly/quarterly tier) |
+| `/friday-journal` | Friday | Session 1, F3.5 | Every Friday |
 | `/friday-act` | Friday | Session 2, F4 | Every Friday |
 | Graduate resource review | Friday | Session 2, F5 | Every Friday |
 | Harness work | Friday | Session 2, F6 | Every Friday (phase-dependent) |
