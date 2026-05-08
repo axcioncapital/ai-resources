@@ -375,8 +375,6 @@ Reviewed coaching logs across all active projects (ai-resources, global-macro-an
 ### Open Questions
 - None new. Prior open question remains: Item 5 — {{WORKSPACE_ROOT}} template marker vs. absolute path.
 
-## 2026-05-08 — Continue friday-act: settings item 5 + commands + risk-topology + cadence 2+3 + cleanup-worktree
-
 ## 2026-05-08 — /systems-review on full AI infrastructure (with /session-plan first)
 
 ### Summary
@@ -499,6 +497,40 @@ Built a gate-fade detection system that surfaces confirmation-rate signals from 
 ### Next Steps
 - Push commit `879f751` (operator approval needed per Autonomy Rules #2)
 - First live test: 2026-06-06 (first Friday of June) — run `/friday-checkup monthly` with `global-macro-analysis` selected; expect `[FADING-GATE] project-global-macro-analysis/content-review` in Tactical follow-ups
+
+### Open Questions
+- None.
+
+## 2026-05-08 — Continue friday-act: settings item 5 + commands + risk-topology + cadence 2+3 + cleanup-worktree
+
+### Summary
+Continued 2026-05-08 friday-act execution. Resolved the 3-cycle {{WORKSPACE_ROOT}} recurrence via /consult — decision: option (a) template marker, with item 6 expanded to also fix /deploy-workflow's substitution mechanism. Completed three no-gate mechanical fixes (vault schema, vault wiki-links, cadence doc). Ran /cleanup-worktree through plan + QC1 + triage; deferred execution to next session. Friction logged: /consult was overkill on item 5 — a targeted /deploy-workflow.md Read would have answered the same question at ~1/20th the token cost.
+
+### Files Created
+- `logs/scratchpads/` directory context — (vault edits not committed; vault is gitignored in repo-documentation)
+- `/Users/patrik.lindeberg/.claude/plans/mighty-nibbling-garden.md` — cleanup-worktree plan (5 commits queued, zero hard gates, QC1+triage complete, quick-tier 2nd-QC skip applied; execution deferred to next session)
+
+### Files Modified
+- `ai-resources/docs/operator-maintenance-cadence.md` — cadence goal restatement prepended + advisory-trend pre-step added to F0 (committed `4642228`)
+- `logs/decisions.md` — settings item 5 decision: option (a) template marker appended
+- `logs/friction-log.md` — 18:26 /consult-overkill entry appended (committed in next session's cleanup)
+- `projects/repo-documentation/vault/components/commands.md` — vault: 5 missing schema fields added to innovation-sweep entry (vault gitignored)
+- `projects/repo-documentation/vault/architecture/risk-topology.md` — vault: 3 dead wiki-links converted to relative markdown links (vault gitignored)
+- `projects/repo-documentation/vault/projects/projects.md` — vault: 1 dead wiki-link converted to relative markdown link (vault gitignored)
+- `logs/session-plan.md` — overwritten with this session's plan
+- `logs/session-notes.md` — this entry
+
+### Decisions Made
+- **Settings item 5 = option (a) template marker.** Keep `{{WORKSPACE_ROOT}}` literal in `ai-resources/workflows/research-workflow/.claude/settings.json`. File is template-shaped by construction (CLAUDE.md has unsubstituted `{{...}}`). Option (b) would lock template to one machine. Item 6 must expand to also fix `/deploy-workflow` Step 7 substitution (currently Step 4 appends absolute path without substituting the token — silent-tolerance pattern, OP-3).
+- **Items 5+6 application deferred to a future session.** Item 6 expanded scope (auditor classification + /deploy-workflow Step 7 fix) was not in today's scope.
+- **Dead wiki-link fix approach: relative markdown links.** Not in-vault stub notes, not plain prose — relative-path `[X](../../path/to/X.md)` form. Most truthful (targets are external), clickable in Obsidian, no stub-file proliferation.
+- **Friction: /consult before cheaper verification.** When I already have a confident recommendation, do the cheapest verification read first; reserve /consult for genuinely contested or load-bearing system-shape questions.
+
+### Next Steps
+- **Execute cleanup-worktree plan** (next session): open `/Users/patrik.lindeberg/.claude/plans/mighty-nibbling-garden.md`, run 5 commits in order (C1→C5). Zero hard gates, no destructive operations. Check Section 6 additive-only guards before each commit.
+- **Apply settings items 5+6** (separate dedicated session): (a) add template-marker doc note to workflow settings.json + update permission-sweep-auditor with template-class rule; (b) fix /deploy-workflow Step 7 to substitute `{{WORKSPACE_ROOT}}` as system-supplied placeholder. Run /risk-check before applying (Permission change + agent-definition edit classes).
+- Push commit `4642228` (operator manual step)
+- Remaining friday-act plans NOT touched today: qc-pass (2 items), cadence item 1 (/architecture-review in monthly tier — caution flag), settings items 1-4 (Gate A narrowed: /permission-sweep allow-grants + model key sweep + stale deny entry)
 
 ### Open Questions
 - None.
