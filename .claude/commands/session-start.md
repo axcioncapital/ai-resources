@@ -1,3 +1,7 @@
+---
+model: sonnet
+---
+
 Capture a lightweight session mandate for Phase 3 harness-style sessions. The operator's mandate context (if any) follows this prompt: $ARGUMENTS
 
 ---

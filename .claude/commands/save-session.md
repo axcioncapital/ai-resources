@@ -1,3 +1,7 @@
+---
+model: sonnet
+---
+
 Save mid-session state before `/clear` or `/compact`. The operator's context note (optional) follows: $ARGUMENTS
 
 ## Instructions

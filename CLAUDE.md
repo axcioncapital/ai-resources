@@ -19,7 +19,7 @@ These resources operate across a multi-tool ecosystem — not just Claude. Skill
 
 ## How I Work
 
-I am Patrik, a non-developer. Explain technical details in plain language. I review and approve all changes before they are committed or pushed.
+I am Patrik, a non-developer. Explain technical details in plain language. Pushes require my explicit approval; commits proceed directly per `## Commit Rules` below.
 
 ## Skill Creation and Improvement
 
