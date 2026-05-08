@@ -316,3 +316,32 @@ Converted `/friday-act` from inline-execution to plan-file production. The comma
 
 ### Open Questions
 - None
+
+## 2026-05-08 — /friday-journal validation gate + archive + improvement spec
+
+### Summary
+Implemented the output-validation gate for /friday-journal (Steps 5.4 + 5.5), adding a deterministic mechanical pre-check and an auto-spawned qc-reviewer pass between Step 5 (report generation) and Step 6 (archive). Archived all 32 active ai-journal entries. Ran the gate as a catch-up on today's report, applying 7 findings and tagging 12 items with `**Risk-check required:**` bullets. Drafted an 8-suggestion improvement spec for /friday-journal based on today's session friction.
+
+### Files Created
+- `audits/working/friday-journal-improvement-spec-2026-05-08.md` — 8 improvements (S1–S8) with sequencing, open questions, and recommended landing order (gitignored)
+
+### Files Modified
+- `.claude/commands/friday-journal.md` — Steps 5.4 (mech pre-check) + 5.5 (output validation gate) inserted; Step 5 frontmatter template updated to include `items_generated` field; Step 7 exit summary updated with validation telemetry; Notes section updated
+- `.claude/agents/qc-reviewer.md` — description updated to add `/friday-journal Step 5.5` as second invoker
+- `logs/ai-journal.md` — all 32 active entries archived to `## Archive — 2026-05-08`, active section cleared
+- `audits/friday-journal-2026-05-08.md` — catch-up gate applied: line 75→77 fix (×2), wording fix for E8 drop, bookkeeping ledger added to Summary, 12 items received `**Risk-check required:**` bullets
+
+### Decisions Made
+- **Reuse qc-reviewer vs. new agent:** qc-reviewer's 6-dimension rubric maps cleanly onto journal-output concerns; journal-specific focus areas passed as scope context in spawn prompt — no new agent file needed.
+- **`entry_count ≤ items_generated` rule dropped:** Today's run (32 entries → 31 items) revealed the inequality is wrong when drops+merges outnumber splits. Check now only enforces `items_generated == count of ## Items lines`.
+- **Catch-up gate run on already-generated report:** Recommended and approved over skipping to archive. Proved the gate produces useful findings (12 risk-class flags missed in original generation).
+- **F4 (clarify.md) and F8 (background-agent pattern) kept:** Operator overrides.
+
+### Next Steps
+- Push today's commits + 17 older unpushed commits (operator manual step)
+- Run `/friday-act` on `audits/friday-journal-2026-05-08.md` (31 items, 12 with `**Risk-check required:**`)
+- Review improvement spec open questions before promoting to implementation plan
+- Fix pre-existing dirty state: `M .claude/commands/clarify.md`, `M logs/session-plan.md`, 8 untracked risk-check files
+
+### Open Questions
+- /friday-act doesn't yet read `**Risk-check required:**` bullets — follow-up to integrate the contract on the /friday-act side

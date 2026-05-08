@@ -464,3 +464,26 @@ Stable relative to last 3 entries (Wasteful 2026-05-08 / Acceptable 2026-05-05 /
 1. **Defer mid-session tangential diagnoses (~2–3k/session):** When an unrelated friction surface (here: permission prompts) fires during a substantive build, log it to a friction or journal file and resume — do not spawn a diagnostic command (/fewer-permission-prompts) inline. Saves the full diagnostic round-trip cost; smaller than primary because tangential firings are sporadic, not deterministic.
 2. **Pin friday-act.md once before multi-step edits (~1.5–2k/session):** ~70-line command file read across 4 step-edit cycles instead of pinned after first full Read. Smaller than primary because individual Reads are cheap but the pattern recurs on every multi-step infra-command edit session.
 3. **Outline-first plan drafting (~3–5k/session):** Same lever flagged in 2026-04-21 — write plan v1 to ~90% completeness with QC-anticipated structure (governance, commit-window, scope, mitigations) before first QC. Eliminates one full plan rewrite per QC REVISE; bigger than the per-file pin lever, smaller than the primary because primary captures both QC cycles' worth of avoidable cost.
+
+### 2026-05-08b | Acceptable
+
+**Task:** Implemented /friday-journal output-validation gate (Steps 5.4 + 5.5 in friday-journal.md) from an approved plan; updated qc-reviewer.md description; archived 32 ai-journal entries; ran gate as a catch-up on today's existing report (7 findings applied, 12 risk-check flags added); drafted 8-suggestion improvement spec for /friday-journal.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~30 |
+| Files read | ~10 (friday-journal.md ×2, qc-reviewer.md, ai-journal.md, friday-journal-2026-05-08.md, spec file, wrap logs) |
+| Files written/edited | 7 (friday-journal.md, qc-reviewer.md, ai-journal.md, friday-journal-2026-05-08.md, improvement-spec, session-notes.md, decisions.md) |
+| Tool calls | ~50 |
+| Subagents | 2 (qc-reviewer: plan REVISE ×1, catch-up gate ×1) |
+| Rework cycles | 1 (plan QC: REVISE → 6 fixes → operator approved) |
+
+**Findings:**
+- **Rework — Minor:** Plan received 1 QC REVISE with 6 items (rubric-override clarification, qc-reviewer contract, items_generated frontmatter field, r-disposition regex constraint, ls→Glob fix, heading-match set-equality). All were legitimate corrections; single-cycle convergence. Lower rework cost than the prior 2026-05-08 session (3 cycles across 2 artifacts).
+- **Deliberate cost — Acceptable:** Catch-up gate run on already-generated report was operator-approved and proved value (12 risk-class flags caught that original generation missed). ~10 exchanges; expected for a non-routine catch-up.
+- **Auto-compaction ×2:** Platform fired auto-compact twice during this session. Operator noted this in conversation. Not a session-efficiency issue — root cause is Claude Code's compaction threshold logic, not session design. Tracked as open question for investigation.
+- **Improvement spec overhead — Minor:** 8-suggestion spec written at operator's explicit request. Per-suggestion analysis was thorough but produced a directly actionable artifact. Consistent with session scope.
+
+**Recommendation:** No new pattern identified beyond those flagged in prior entries. The catch-up gate run was a one-time cost that surfaced real value; the auto-compaction issue warrants investigation as a platform-level concern.
+
+**Estimated savings:** ~3–4k tokens/session by self-checking plans against QC rubric before first subagent QC invocation (recurring lever). No new session-specific lever identified.

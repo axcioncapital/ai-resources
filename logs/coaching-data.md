@@ -335,3 +335,10 @@
 - **Decisions logged:** 2 (report shape: flat-regex Items block; same-day collision: overwrite-with-prompt)
 - **QC cycles:** 3 (plan QC ×2 REVISE; friday-journal.md QC ×1 REVISE — all converged to APPROVE after fixes)
 - **Gates:** 6 (5 confirmed, 1 changed) — clarify-disposition:confirmed (operator answered all 4 questions), plan-approval:changed (round-1 QC fixes), plan-approval:changed (round-2 QC fixes), plan-approval:confirmed (revised plan approved), qc-disposition:confirmed (round-3 QC APPROVE on friday-journal.md), risk-check-disposition:confirmed (PROCEED-WITH-CAUTION mitigations applied; end-time GO)
+
+### 2026-05-08b — /friday-journal validation gate implementation + archive + improvement spec
+- **Commands used:** /friday-journal, /qc-pass ×1, ExitPlanMode, /wrap-session
+- **Iterations:** 2 (plan received REVISE verdict; 6 items fixed before implementation)
+- **Decisions logged:** 2 (drop `entry_count ≤ items_generated` rule; reuse qc-reviewer vs. new agent)
+- **QC cycles:** 1 (plan QC: REVISE → fixes → operator approved via ExitPlanMode; catch-up gate QC on report: 7 findings dispositioned)
+- **Gates:** 5 (4 confirmed, 1 changed) — plan-approval:changed (6 REVISE items fixed before approval), archive-confirmation:confirmed (32 entries), catch-up-gate-run:confirmed (recommended + approved), finding-disposition:confirmed (F1/F2/F3/F5 applied, F4/F8 kept), improvement-spec-proceed:confirmed

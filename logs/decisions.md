@@ -200,3 +200,25 @@
 - *Threshold-conditional with inline path preserved:* Rejected — dual-path maintenance, arbitrary threshold behavior, doesn't fully solve heavy-Friday problem.
 - */risk-check at plan-write time:* Rejected — adds Opus subagent load during disposition; gate is more useful immediately before execution when the operator has full context.
 - *W2.4 sub-disposition at queue time:* Rejected — operator prefers to decide auto-draft vs. manual at execution time when they can see the full plan.
+
+## 2026-05-08 — Drop `entry_count ≤ items_generated` from Step 5.4 consistency check
+
+**Context:** /friday-journal Step 5.4 originally included a frontmatter consistency rule: `entry_count ≤ items_generated`. Today's run had 32 journal entries → 31 items (3 drops, 4 merges, 4 splits). The inequality fired as a false failure — drops+merges outnumbered splits, flipping the expected relation.
+
+**Decision:** Remove the inequality entirely. Step 5.4 now only checks `items_generated == count of ## Items lines`. `entry_count` vs `items_generated` divergence is not an error condition — it is the expected outcome of splits, merges, and drops.
+
+**Rationale:** The original rule assumed entries always expand into more items. In practice, drops and merges contract the count. The only invariant that actually matters is schema consistency: the `items_generated` frontmatter field must match the literal count of `## Items` lines in the file.
+
+**Alternatives considered:**
+- *Keep inequality with bounds:* No clean bounds exist — ratio is unspecified and could be any value depending on how many entries were dropped/merged.
+
+## 2026-05-08 — Reuse qc-reviewer for /friday-journal gate vs. create dedicated agent
+
+**Context:** /friday-journal Step 5.5 needed an output-validation subagent for journal-specific concerns (contradictions, currency drift, already-done, vagueness, risk-class).
+
+**Decision:** Reuse existing `qc-reviewer` agent; pass journal focus areas as scope context in the spawn prompt. No new agent file.
+
+**Rationale:** qc-reviewer's 6-dimension rubric (Request Match, Scope Creep, Risky Assumptions, Things That Could Break, Simpler Alternative, Sibling Redundancy) maps naturally onto journal-output concerns — proven by running a manual /qc-pass today that caught real issues. A new agent would duplicate agent scaffolding without unique value. Journal-specific focus areas steer *what* the rubric looks for, not *how* it evaluates.
+
+**Alternatives considered:**
+- *New `friday-journal-qc` agent:* Rejected — code duplication, additional maintenance surface, no capability gained.
