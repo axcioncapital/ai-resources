@@ -287,3 +287,30 @@ None — routine maintenance pass.
 
 ### Open Questions
 None.
+
+## 2026-05-08 — Execute /log-sweep implementation plan
+
+### Summary
+Executed the approved /log-sweep plan. Created three new files (orchestrator command, haiku auditor subagent, bash helper script) and updated three existing files (friday-checkup.md, wrap-session.md, dd-log-sweep-agent.md). All six risk-check mitigations were applied at landing: pre-apply manifest ordering, Cat D self-exclusion, name-collision cross-references, idempotency documentation, and explicit staging note in the final report template. First action was writing the risk-check report that couldn't be written in plan-mode.
+
+### Files Created
+- `ai-resources/.claude/commands/log-sweep.md` — orchestrator command (sonnet, folder-selection gate + 10-step pipeline)
+- `ai-resources/.claude/agents/log-sweep-auditor.md` — per-scope inventory subagent (haiku, 7-category routing, ≤20-line summary)
+- `ai-resources/logs/scripts/log-archiver.sh` — helper script for Cat B (### headers) and Cat D (age-based whole-file moves)
+- `ai-resources/audits/risk-checks/2026-05-08-log-sweep-command-auditor-archiver-script-friday-checkup.md` — risk-check report (PROCEED-WITH-CAUTION, 6 mitigations)
+
+### Files Modified
+- `ai-resources/.claude/commands/friday-checkup.md` — added /log-sweep --dry-run to weekly rotation (new block G), updated runtime estimator, renamed old G-K → H-L
+- `ai-resources/.claude/commands/wrap-session.md` — added idempotency note for same-day /wrap-session + /log-sweep runs
+- `ai-resources/.claude/agents/dd-log-sweep-agent.md` — added name-collision distinguisher (mitigation #4)
+
+### Decisions Made
+- Model field uses full identifier `claude-sonnet-4-6[1m]` (not bare `model: sonnet`) — operator corrected during file write
+
+### Next Steps
+- Push commits (operator step)
+- J16: Concurrent-session guardrail investigation (scheduled today, still pending — separate session)
+- `/log-sweep` is ready to use; run `/log-sweep --dry-run` to verify against live workspace
+
+### Open Questions
+None.
