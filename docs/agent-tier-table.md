@@ -18,7 +18,9 @@ Every agent must declare `model:` explicitly in frontmatter — no implicit inhe
 | dd-extract-agent | haiku | Mechanical extraction for repo-dd. Correct. |
 | dd-log-sweep-agent | haiku | Mechanical log scan for repo-dd. Correct. |
 | execution-agent | sonnet | API-call dispatcher. Correct. |
+| findings-extractor | haiku | Mechanical extraction of HIGH/CRITICAL findings from audit sub-reports. Added 2026-05-08. |
 | improvement-analyst | opus | Judgment (friction-pattern analysis). Correct. |
+| innovation-triage-auditor | opus | Judgment (per-item verdict for innovation triage). Added 2026-05-08. |
 | permission-sweep-auditor | sonnet | Structured factual scan (settings/permissions audit). Added 2026-04-27. |
 | pipeline-stage-3a | sonnet | Structured inventory scan. Correct. |
 | pipeline-stage-3b | opus | Architectural design. Correct. |
@@ -30,6 +32,7 @@ Every agent must declare `model:` explicitly in frontmatter — no implicit inhe
 | repo-dd-auditor | sonnet | Questionnaire-driven factual audit. Correct. |
 | risk-check-reviewer | opus | Judgment (risk evaluation across five dimensions). Added 2026-04-27. |
 | session-guide-generator | sonnet | Structured generation. Retrofitted from inherit. |
+| system-owner | opus | Judgment (architectural advisory and synthesis). Added 2026-05-08. |
 | token-audit-auditor | opus | Judgment sections (4). Correct. |
 | token-audit-auditor-mechanical | haiku | Mechanical sections (2, 5, 6). Correct. |
 | triage-reviewer | opus | Prioritization judgment. Correct. |
