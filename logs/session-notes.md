@@ -314,3 +314,31 @@ Executed the approved /log-sweep plan. Created three new files (orchestrator com
 
 ### Open Questions
 None.
+
+## 2026-05-08 — Execute friday-act plan files (partial — 1/7 done)
+
+### Summary
+Executed plan files from 2026-05-08 /friday-act disposition. Completed consult plan (symlink fix). Settings plan stalled at Gate A — /risk-check returned RECONSIDER because the plan's item 2(a) (delete entire deny array) would wipe canonical safety guards. Redesigned Gate A: drop deny-array deletion, run /permission-sweep for allow grants only. Session stopped mid-execution at operator request.
+
+### Files Created
+- `audits/risk-checks/2026-05-08-fix-broken-relative-path-in-symlink-workflows-research.md` — risk-check report for consult symlink fix (GO)
+- `audits/risk-checks/2026-05-08-settings-gate-a-items-1-2-4-permission-changes.md` — risk-check report for settings Gate A (RECONSIDER)
+
+### Files Modified
+- `workflows/research-workflow/.claude/commands/consult.md` — symlink corrected from 3-level to 4-level relative path
+- `logs/session-plan.md` — execution session plan
+
+### Decisions Made
+- **Gate A redesign:** Drop item 2(a) (delete deny array wholesale) — risk-check confirmed it would wipe `Bash(rm -rf *)`, `Bash(sudo *)`, `Bash(git push*)` safety guards. Narrowed to: add missing allow grants via `/permission-sweep` only.
+- **Item 4 no-op:** `Read(archive/**)` is in the canonical Layer C template — removing it would conflict with template. Item 4 is already subsumed by template conformance.
+- **Item 2(b) already done:** `defaultMode: bypassPermissions` is already set in current settings.json.
+
+### Next Steps
+- **Settings plan (narrowed Gate A):** Run `/permission-sweep` (adds missing allow grants: Agent, Skill, TodoWrite, Glob, Grep, WebFetch, WebSearch, NotebookEdit, ToolSearch, Edit(**/.claude/**), Write(**/.claude/**), absolute-path patterns, Bash(rm *)). Re-run `/risk-check` on narrowed scope before applying.
+- Continue: item 3 (model key sweep), then operator (a)/(b) decision for item 5 ({{WORKSPACE_ROOT}}), then items 5+6 together.
+- Remaining plans: commands, risk-topology, qc-pass, cadence, cleanup-worktree (6 plans, ~14 items).
+- J16: Concurrent-session guardrail investigation (still pending — separate session).
+- Push commits when ready.
+
+### Open Questions
+- Item 5 operator decision still needed: (a) document {{WORKSPACE_ROOT}} as deploy-time template marker vs (b) replace with absolute path.
