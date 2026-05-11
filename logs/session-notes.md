@@ -313,3 +313,43 @@ Discovery-only session. The W2.4 improvement-loop closure brief turned out to be
 
 ### Open Questions
 - None.
+
+## 2026-05-11 — Push 3 repos + /prime Next Steps staleness friction
+Class: cleanup/maintenance
+**Mandate:** Push pending commits on the three repos identified during /prime. Done when: all four repos reconciled with origin AND any blockers resolved.
+- Out of scope: any new build work; inbox brief builds (still 2 pending)
+- Files in scope: working trees of ai-resources, axcion-ai-system-owner, global-macro-analysis, repo-documentation; `logs/friction-log.md`
+- Stop if: push fails or remote state diverges unexpectedly
+
+### Summary
+Cleanup session. /prime's brief reported Bundles 1+2+5 as "remaining" and ai-resources as "ahead of origin" — both wrong. Operator caught both errors. Investigation revealed /prime Step 1 copies "Next Steps" verbatim from the bottom session-notes entry; when same-day parallel sessions wrap out of order, that bottom entry's Next Steps was authored mid-execution and is stale at prime time. Friction-log entry written naming the failure mode and fix candidates. Verified actual push state across all four repos: ai-resources already pushed; axcion-ai-system-owner 4 commits ahead with 3 untracked duplicate command files; global-macro-analysis 2 commits ahead; repo-documentation never pushed (empty remote). Deleted 3 byte-identical duplicate command files in axcion-ai-system-owner (friday-journal.md, monday-prep.md, session-start.md — all unmodified copies of canonical ai-resources versions). Pushed all three remaining repos including first-push for repo-documentation with `-u origin main`. Committed friction-log update.
+
+### Files Created
+- None.
+
+### Files Modified
+- `ai-resources/logs/friction-log.md` — appended /prime "Next Steps" staleness entry (committed `6968f72`)
+- `ai-resources/logs/session-notes.md` — this entry (wrap)
+
+### Files Deleted
+- `projects/axcion-ai-system-owner/.claude/commands/friday-journal.md` (untracked duplicate)
+- `projects/axcion-ai-system-owner/.claude/commands/monday-prep.md` (untracked duplicate)
+- `projects/axcion-ai-system-owner/.claude/commands/session-start.md` (untracked duplicate)
+
+### Remote Pushes
+- `axcion-ai-system-owner`: 4 commits pushed (`2466840..c241f78`)
+- `global-macro-analysis`: 2 commits pushed (`52806c9..bd3336a`)
+- `repo-documentation`: first push to empty remote, upstream tracking set (`main → origin/main`)
+- `ai-resources`: already pushed before session started
+
+### Decisions Made
+- **Delete 3 duplicate command files in axcion-ai-system-owner.** They were byte-identical to the canonical ai-resources versions with no project-specific modifications. Operator-memory rule ("shared resources belong in ai-resources, project workspaces reference via copy or symlink, do not own them") applied. No information loss — pure duplicates.
+- **First-push for repo-documentation.** Remote `axcioncapital/repo-documentation-2` existed but was empty. Used `-u origin main` to establish upstream tracking on the first push.
+
+### Next Steps
+- 2 inbox briefs still pending dedicated build sessions: `repo-review-brief.md`, `codex-second-opinion-brief.md`
+- Consider `/improve` to analyze the /prime Next Steps staleness friction logged this session (recommended fix path: cross-check Next Steps items against git log since the entry's timestamp)
+- Optional cleanup: add `.DS_Store` to global-macro-analysis `.gitignore`
+
+### Open Questions
+- None.
