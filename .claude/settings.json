@@ -1,10 +1,24 @@
 {
   "permissions": {
     "allow": [
+      "Bash(*)",
+      "Read",
       "Edit",
       "Write",
       "MultiEdit",
-      "Bash(*)",
+      "Agent",
+      "Skill",
+      "TodoWrite",
+      "Glob",
+      "Grep",
+      "WebFetch",
+      "WebSearch",
+      "NotebookEdit",
+      "ToolSearch",
+      "Edit(**/.claude/**)",
+      "Write(**/.claude/**)",
+      "Edit(/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/**)",
+      "Write(/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/**)",
       "Bash(rm *)"
     ],
     "deny": [
