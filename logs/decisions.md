@@ -2,6 +2,26 @@
 
 > Archive: [decisions-archive-2026-05.md](decisions-archive-2026-05.md)
 
+## 2026-05-11 — Defer /new-project template rename: Input File Handling → File Write Discipline
+
+**Context.** During Bundle 3 (CLAUDE.md fixes for three projects), the audits identified that the workspace canonical section name is `## File Write Discipline` (not `## Input File Handling`), and renamed the corresponding section in two projects (`axcion-ai-system-owner`, `repo-documentation`). The `/new-project` template emitter (`ai-resources/.claude/commands/new-project.md`) still emits `## Input File Handling` in 11 places and uses `grep -q '^## Input File Handling'` (line 480) as an idempotency probe. This creates a three-way naming state: workspace canonical = "File Write Discipline" / two project CLAUDE.md files = "File Write Discipline" / `/new-project` template = "Input File Handling".
+
+**Decision.** Defer the `/new-project` template update. Captured under Bundle 3's risk-check mitigation option (b): bound Bundle 3 scope to project CLAUDE.md edits; do not touch `/new-project` template emission in the same session. The two affected projects carry an inline note explaining the intentional divergence.
+
+**Rationale.** Bundle 3's mandate explicitly scoped to three CLAUDE.md files. Touching `/new-project` in the same session would have expanded scope to 11 occurrences across the template body, plus the idempotency grep, plus retesting the template emission flow — large enough to justify its own session. The deferred-update follow-up: when a future session edits `/new-project` for an unrelated reason, or is dedicated to template hygiene, align the section name then.
+
+**Trigger for action.** Next `/new-project` template touch session OR next `/permission-sweep` template-class audit pass (whichever comes first). Update all 11 occurrences + the grep idempotency check + verify `/new-project` smoke-test still passes.
+
+**Affected files for the future fix.**
+- `ai-resources/.claude/commands/new-project.md` — lines 367, 388, 391, 402, 439, 450, 479, 480, 481, 483, 510
+- After fix: the inline divergence note in `projects/repo-documentation/CLAUDE.md` § File Write Discipline can be removed.
+
+**Alternatives considered.**
+- *Apply the template update in this Bundle 3 session:* Rejected. Scope expansion (12+ extra targets, plus retest) exceeds the session mandate and the bundle's risk-check verdict explicitly chose option (b).
+- *Leave the template inconsistent indefinitely:* Rejected. The divergence is documented in two places (this entry + inline CLAUDE.md note in `repo-documentation`) so the deferred work is discoverable.
+
+---
+
 ## 2026-05-08 — Ship session-class classification as Step 1 only (defer downstream rules)
 
 **Context.** Operator proposed a session-class declaration mechanism (design vs execution vs mixed) for `/session-plan` to fix asymmetric failure modes — design sessions accumulate rework when constraints surface late, execution sessions pass cleanly. Full proposal included a five-rule package (constraint-set, path verification, higher QC expectations, heavier risk-check bias for design; trust-the-plan, first-pass-clean, skip-constraint-set for execution). The operator's own writeup recommended a phased rollout: ship the classification prompt only, run for a week, layer rules after.
