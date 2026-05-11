@@ -381,6 +381,39 @@ Class: execution
 - Coordination: shared `logs/session-notes.md` with concurrent session — append-only, end of file (per memory rule)
 - Stop if: harness crash investigation expands beyond a 30-min scope; LOW items surface structural issues requiring /risk-check
 
+### Summary
+Applied all three W20 week mandate items. Item 10: archived session-notes for global-macro-analysis (477L → 442L, 1 entry to existing 2026-05 archive) using split-log.sh; archived repo-documentation (678L → 385L, 9 entries to new 2026-04 archive) after removing a template preamble block that prevented the script from running. Item 11: promoted D-7 (staleness threshold) to axcion-ai-system-owner/logs/decisions.md (scope-slug + halt-and-re-run already captured in D-4); marked 3 removed components deprecated in vault (resolve-improvements renamed, workflows/ directory removed); converted 5 short-name wiki-links to full-path form across 3 vault files. Item 9: harness crash on 2026-04-28 is stale pre-disable state — crash fired at 14:09, hooks intentionally disabled at 14:35 (commit 178b293); not a real crash; recovery judgment_call written to session-log.json.
+
+### Files Created
+- `logs/session-plan-bundle5.md` — Bundle 5 session plan (written to avoid overwriting concurrent session's session-plan.md)
+
+### Files Modified (in other project repos)
+- `projects/global-macro-analysis/logs/session-notes.md` — archived 1 entry; archive pointer added
+- `projects/global-macro-analysis/logs/session-notes-archive-2026-05.md` — 1 entry appended
+- `projects/repo-documentation/logs/session-notes.md` — preamble removed; 9 entries archived; archive pointer added
+- `projects/repo-documentation/logs/session-notes-archive-2026-04.md` — new file, 9 archived entries
+- `projects/axcion-ai-system-owner/logs/decisions.md` — D-7 added
+- `projects/repo-documentation/vault/components/commands.md` — resolve-improvements marked deprecated (gitignored vault file)
+- `projects/repo-documentation/vault/components/claude-md-files.md` — CLAUDE.md (workflows) marked deprecated
+- `projects/repo-documentation/vault/components/settings-files.md` — settings.local.json (workflows) marked deprecated
+- `projects/repo-documentation/vault/architecture/risk-topology.md` — 2× [[principles]] + [[system-doc]] converted to full-path form
+- `projects/repo-documentation/vault/architecture/repo-state.md` — [[projects]] + [[risk-topology]] converted
+- `projects/repo-documentation/vault/projects/projects.md` — [[projects]], [[risk-topology]], [[repo-state]] converted
+- `harness/session/session-log.json` — recovery judgment_call appended for 2026-04-28 crash (gitignored runtime file)
+
+### Decisions Made
+- **Coordination: session-plan-bundle5.md, not session-plan.md.** Concurrent sessions own session-plan.md; wrote Bundle 5 plan to a separate named file to avoid overwriting.
+- **Scope-slug + halt-and-re-run not promoted separately.** Both already captured in D-4 of axcion-ai-system-owner/logs/decisions.md. Added only the genuinely missing entry (D-7 staleness threshold).
+- **Harness crash verdict: false positive.** 2026-04-28 crash is stale state from 26 minutes before hooks were intentionally disabled. No harness fix needed.
+
+### Next Steps
+- Push (operator manual step): ai-resources commit `ae0994d`, global-macro-analysis `af03024`, repo-documentation `df5bc1a`, axcion-ai-system-owner `198daa1`
+- Vault file changes (gitignored in repo-documentation) are on disk only; persist to Obsidian vault when vault GitHub repo is established
+- Remaining W20 deferred work: Bundle 3 (CLAUDE.md fixes for 3 projects), Bundle 4 (inbox briefs)
+
+### Open Questions
+- None.
+
 ## 2026-05-11 — /new-project pipeline drift fix (H1+H2+H3)
 
 ### Summary
