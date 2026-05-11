@@ -329,3 +329,18 @@ Ran /monday-prep cadence through items 1–8 of the 2026-W20 week mandate. Resol
 
 ### Open Questions
 - None.
+
+## 2026-05-11 — Monday-prep deferred fixes: Bundles 1+2
+Class: execution
+**Mandate:** Apply Bundle 1 (permission-sweep fixes: 4 CRITICAL + 5 HIGH from audits/permission-sweep-2026-05-11.md) and Bundle 2 (settings items 5+6: 5-file risk-checked fix per audits/risk-checks/2026-05-11-two-part-settings-fix-for-deploy-workflow-permission-sweep.md, with 4 required mitigations applied first) — done when: both bundles' fixes applied + QC passed + committed; OR explicit "carry to next session" decision logged for any unfinished work.
+- Out of scope: Bundle 3 (CLAUDE.md fixes for 3 projects), Bundle 4 (inbox brief builds), Bundle 5 (week mandate items 9–11), pushing to remote (operator manual step)
+- Files in scope: Bundle 1 — settings.json files flagged in audits/permission-sweep-2026-05-11.md (4C+5H targets); Bundle 2 — .claude/commands/deploy-workflow.md, .claude/commands/new-project.md, .claude/commands/permission-sweep.md, docs/permission-template.md, .claude/agents/permission-sweep-auditor.md; this log (logs/session-notes.md)
+- Stop if: Either bundle fails QC twice in a row; risk-check returns BLOCK on any change; ≥8 subagent spawns triggers [COST] reassessment
+
+## 2026-05-11 — Monday-prep deferred fixes: Bundle 5 (W20 items 9–11)
+Class: execution
+**Mandate:** Apply W20 week mandate items 9–11 — item 10 (archive session-notes >200L for global-macro-analysis + repo-documentation), item 11 (LOW: promote decisions to axcion-ai-system-owner/logs/decisions.md; investigate W2.1 removed components; convert 5 short-name wiki-links), item 9 (investigate harness crash 2026-04-28). Done when: all items completed OR explicit "carry to next session" decision logged for unfinished work.
+- Out of scope: Bundle 1+2 (handled in concurrent session); Bundle 3 (CLAUDE.md fixes for 3 projects — separate dedicated sessions); Bundle 4 (inbox brief builds — separate build sessions); pushing to remote
+- Files in scope: projects/global-macro-analysis/logs/session-notes.md + archive; projects/repo-documentation/logs/session-notes.md + archive; projects/axcion-ai-system-owner/logs/decisions.md; projects/repo-documentation/vault/components/; this log
+- Coordination: shared `logs/session-notes.md` with concurrent session — append-only, end of file (per memory rule)
+- Stop if: harness crash investigation expands beyond a 30-min scope; LOW items surface structural issues requiring /risk-check
