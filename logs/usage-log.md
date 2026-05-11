@@ -593,3 +593,32 @@ Regression from prior 2026-05-08 entries (Acceptable / Acceptable) — first Was
 **Recommendation:** Use Read tool (not Bash `cat`) for initial context-gathering on settings files — satisfies Edit's read-first requirement in one pass. Cache session-notes.md content across prime/session-plan/wrap rather than re-reading each time.
 
 **Estimated savings:** ~3,700 tokens/session from eliminating double-reads (~37,000–74,000 over 10–20 sessions).
+
+### 2026-05-11 | Wasteful
+
+**Task:** Applied CLAUDE.md audit findings to three project CLAUDE.md files (axcion-ai-system-owner, global-macro-analysis, repo-documentation), each with /risk-check → edit → /qc-pass → commit. Extracted overflow methodology to reference files; ~1,410 tokens saved from always-loaded surfaces. Deferred /new-project template rename with decisions.md entry.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~22 |
+| Files read | 15+ (re-reads: session-notes.md ×4+, decisions.md ×2, repo-documentation CLAUDE.md ×2, session-plan.md ×2) |
+| Files written/edited | 13 |
+| Tool calls | ~50 total (Read ×15, Edit ×8, Write ×2, Bash ×18, Agent ×7) |
+| Subagents | 7 (risk-check-reviewer ×3, qc-reviewer ×4) |
+| Rework cycles | 2 (session-plan.md Write failed — file not Read before Write; session-plan QC REVISE — stop-point framing fix + re-QC) |
+
+**Findings:**
+- **Re-reads — Major (recurring):** session-notes.md read 4+ times across prime, session-start precondition, session-plan precondition, wrap append-point, and Write error recovery. Third consecutive session flagging this pattern with no observed improvement.
+- **Rework — Moderate (recurring):** session-plan.md Write failed because the file was not Read before the Write attempt — same failure mode recorded in two prior sessions this week. Rework cycle 2 (QC REVISE on session plan) required stop-point framing fix and re-QC pass.
+- **Re-reads — Moderate:** repo-documentation CLAUDE.md read twice (pre-edit + post-compaction resume); decisions.md read twice (prime and wrap). Compaction-triggered re-reads partially structural.
+
+Stability vs. prior entries — no improvement on session-notes.md re-read or Read-before-Write patterns; both have appeared in every session logged this week.
+
+**Recommendation:** Enforce Read-before-Write discipline as a mechanical pre-condition for session-plan.md and all log files: always issue the Read call in the same step as the decision to Write, before any other tool call intervenes. Eliminates the recurring Write-failure rework cycle that has now appeared in three consecutive sessions.
+
+**Estimated savings:** ~2–3k tokens/session from eliminating Write-failure rework cycle. Over 15 sessions: ~30–45k tokens. Secondary gain: session-notes.md re-read reduction adds ~4–6k tokens/session.
+
+**Additional levers (ROI-ranked):**
+1. **Tail-based session-notes.md access at /prime (~4–6k tokens/session):** Replace forward-scan reads with single `tail -n 100` call; over 15 sessions: ~60–90k tokens saved.
+2. **Post-compaction state restoration from summary only (~2–3k tokens/session):** Compaction summary sufficient for resumption; re-reads of decisions.md + project CLAUDE.md post-compaction add ~1–2k tokens each.
+3. **Parallelize independent risk-check subagent launches (~1–2k tokens/session):** Three independent project risk-checks can batch in one Agent call.

@@ -242,3 +242,42 @@ Created a new `/explain` slash command that re-explains Claude's most recent mea
 
 ### Open Questions
 - None
+
+## 2026-05-11 — Bundle 3: CLAUDE.md fixes for axcion-ai-system-owner, global-macro-analysis, repo-documentation
+
+**Mandate:** Apply CLAUDE.md audit findings to three projects (axcion-ai-system-owner, global-macro-analysis, repo-documentation) — each project: /risk-check + edit + /qc-pass + commit — done when all three committed.
+- Out of scope: /new-project template rename, Bundle 1/2/4/5 items
+- Files in scope: three project CLAUDE.md files + supporting references + ai-resources risk-check reports + logs
+- Stop if: risk-check returns RECONSIDER on any project
+
+### Summary
+Applied CLAUDE.md audit findings across three projects, saving ~1,410 tokens per turn from always-loaded surface. Each project received plan-time /risk-check, edits, /qc-pass, and commit. The /new-project template collision (section name "Input File Handling" vs canonical "File Write Discipline") was discovered in Projects 1 and 3; resolved via mitigation option (b) — defer template update, document in decisions.md, add inline divergence notes. Decisions.md entry written to ai-resources/logs/ with trigger conditions and affected file list.
+
+### Files Created
+- `projects/axcion-ai-system-owner/references/project-layout.md` — ASCII tree moved out of always-loaded CLAUDE.md; header marks it as not loaded by the agent
+- `projects/repo-documentation/references/phase-2-cadence.md` — Phase 2 cadence contract (triggering command, tier gate, subagents, findings destination, hard rule); moved from always-loaded CLAUDE.md
+- `ai-resources/audits/risk-checks/2026-05-11-axcion-ai-system-owner-claude-md-cleanup.md` — PROCEED-WITH-CAUTION (Blast Radius Medium, Hidden Coupling Medium)
+- `ai-resources/audits/risk-checks/2026-05-11-global-macro-analysis-claude-md-cleanup.md` — GO (all dimensions Low)
+- `ai-resources/audits/risk-checks/2026-05-11-repo-documentation-claude-md-cleanup.md` — PROCEED-WITH-CAUTION (Reversibility High, Hidden Coupling High)
+
+### Files Modified
+- `projects/axcion-ai-system-owner/CLAUDE.md` — 94→58 lines: renamed section, moved layout tree, compressed Grounding/Toolkit blocks, dropped Compaction scratchpad sentence
+- `projects/global-macro-analysis/CLAUDE.md` — 83→78 lines: deleted duplicate Commit Rules block, trimmed Command Scope Table, compressed Overview and Operational Notes
+- `projects/repo-documentation/CLAUDE.md` — 54→36 lines: renamed section, deleted duplicate Commit Rules block, trimmed Project Layout, trimmed Compaction, fixed ".." typo, added divergence note
+- `ai-resources/logs/decisions.md` — appended 2026-05-11 entry: deferred /new-project template rename (11 occurrences + grep probe at line 480)
+- `ai-resources/logs/session-plan.md` — Bundle 3 plan (intent, class, model, source material, autonomy posture, risk); stop-point framing fixed per QC finding
+- `ai-resources/logs/session-notes.md` — mandate line + Class: execution line written
+
+### Decisions Made
+- **Deferred /new-project template rename**: renaming "Input File Handling" → "File Write Discipline" in /new-project template deferred; 11 occurrences + idempotency grep (line 480) too large for Bundle 3 scope. Documented in decisions.md with trigger + affected file list.
+- **decisions.md placement (Projects 1+3)**: placed divergence note entry in ai-resources/logs/decisions.md (cross-cutting log) since /new-project is ai-resources property — QC reviewer flagged as assumption, accepted.
+- **Session plan QC fix**: moved stop-point directive from "Stop points:" bullet to Autonomy Posture body per QC finding.
+
+### Next Steps
+- Push all four repos: ai-resources, axcion-ai-system-owner, global-macro-analysis, repo-documentation
+- Verify: was inbox/w24-improvement-loop-closure-brief.md → inbox/archive/ rename (swept into commit b41e0f6) intentional? This brief was slated for Bundle 4.
+- Deferred: /new-project template rename (trigger: next template touch or /permission-sweep template-class pass) — see decisions.md 2026-05-11
+- Remaining bundles: Bundle 1 (permission-sweep 4C+5H), Bundle 2 (settings items 5+6), Bundle 4 (inbox brief builds), Bundle 5 (week items 9–11)
+
+### Open Questions
+- Was the w24-improvement-loop-closure-brief.md archive move intentional (parallel session action swept into b41e0f6)?

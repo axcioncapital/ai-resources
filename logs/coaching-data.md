@@ -384,3 +384,11 @@
 - **Decisions logged:** 2
 - **QC cycles:** 1 (session plan → GO)
 - **Gates:** 4 (1 changed, 3 confirmed) — qc-disposition:confirmed (session plan GO), content-review:changed (operator directed defer all permission-sweep fixes to next session), plan-approval:confirmed (risk-check deferral accepted), plan-approval:confirmed (CLAUDE.md fixes deferral accepted)
+
+### 2026-05-11 — Bundle 3: CLAUDE.md fixes for three projects
+
+- **Commands used:** /prime, /session-start, /session-plan, /risk-check (×3), /qc-pass (×4), /wrap-session
+- **Iterations:** 1 (session-plan QC finding → inline fix → approved)
+- **Decisions logged:** 1 (deferred /new-project template rename)
+- **QC cycles:** 4 (session-plan → fix → GO; Project 1 CLAUDE.md → GO; Project 2 CLAUDE.md → GO; Project 3 CLAUDE.md → GO)
+- **Gates:** 5 (1 changed) — plan-approval:confirmed (/session-start mandate), qc-disposition:changed (session-plan stop-point framing fixed), plan-approval:confirmed (Project 1 PROCEED-WITH-CAUTION proceed), plan-approval:confirmed (Project 2 GO proceed), plan-approval:confirmed (Project 3 PROCEED-WITH-CAUTION proceed)
