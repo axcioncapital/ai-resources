@@ -21,6 +21,9 @@ __pycache__/
 # Ephemeral audit working notes (subagent-contract discipline lives in CLAUDE.md, not as a deny rule)
 audits/working/
 
+# Ephemeral session scratchpads (/save-session outputs, implementation plans — lasting content graduates to session-notes or decisions.md)
+logs/scratchpads/
+
 # Archived inbox briefs (Layer C settings.json also denies Read on this path)
 inbox/archive/
 
