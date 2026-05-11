@@ -344,3 +344,29 @@ Class: execution
 - Files in scope: projects/global-macro-analysis/logs/session-notes.md + archive; projects/repo-documentation/logs/session-notes.md + archive; projects/axcion-ai-system-owner/logs/decisions.md; projects/repo-documentation/vault/components/; this log
 - Coordination: shared `logs/session-notes.md` with concurrent session — append-only, end of file (per memory rule)
 - Stop if: harness crash investigation expands beyond a 30-min scope; LOW items surface structural issues requiring /risk-check
+
+## 2026-05-11 — /new-project pipeline drift fix (H1+H2+H3)
+
+### Summary
+Applied three HIGH-severity drift fixes to `.claude/commands/new-project.md` per the approved drift report from the prior session (`/Users/patrik.lindeberg/.claude/plans/investigate-if-new-project-joyful-sphinx.md`). Fixes: H1 removed the `"model": "sonnet"` field from generated `settings.json` (conflicted with operator memory); H2 added the post-compact resumption paragraph to all three Compaction templates; H3 added the operator-pasted-content bullet to all three Input File Handling templates. Also added a friction-log entry noting that `/session-plan` produces skeleton plans that don't carry essential session information. Dry-scaffold verification confirmed all three checks pass.
+
+### Files Created
+- None.
+
+### Files Modified
+- `.claude/commands/new-project.md` — H1+H2+H3 drift fixes (8 insertions, 5 deletions across 9 edit points); committed `198f73c`
+- `logs/session-plan.md` — expanded from skeleton to self-contained plan with findings list, execution sequence, scope alternatives, and verification steps
+- `logs/friction-log.md` — new entry: `/session-plan` template produces sparse plans that lack essential information (findings, sequence, scope alternatives)
+- `logs/session-notes.md` — this entry
+
+### Decisions Made
+- **Recommended scope (H1+H2+H3) over Minimum or Thorough.** Per decision-point posture, defaulted to Recommended as stated in the drift report. MEDIUM findings M1–M3 deferred; LOW L1–L4 previously deferred.
+- **End-time `/risk-check` skipped.** Drift bounded to single file, findings applied verbatim per approved plan, plan-time gate covered by two prior QC cycles. Skip-rule conditions satisfied per memory.
+
+### Next Steps
+- Push commits (operator manual step — includes `198f73c` and any earlier unpushed commits)
+- Continue W20 work: Bundle 1 (permission-sweep 4C+5H) + Bundle 2 (settings items 5+6) per the ready execution briefs
+- MEDIUM findings M1–M3 in new-project.md remain deferred — pick up in a future session or when starting a new project
+
+### Open Questions
+- None.
