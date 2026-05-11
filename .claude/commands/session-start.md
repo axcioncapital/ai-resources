@@ -87,3 +87,5 @@ Output exactly:
 Mandate written → logs/session-notes.md
 Ready. Commit after each work unit.
 ```
+
+**Next:** Run `/session-plan` to plan model tier, source material, autonomy posture, and structural risk for the session.
