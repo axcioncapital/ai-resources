@@ -568,3 +568,28 @@ Regression from prior 2026-05-08 entries (Acceptable / Acceptable) — first Was
 **Recommendation:** Read session-plan.md before any Write attempt; enforce Read-before-Write discipline on log files touched at multiple stages.
 
 **Estimated savings:** ~2,000–4,000 tokens if rework cycle and compaction re-orientation overhead eliminated.
+
+---
+
+### 2026-05-11 | Wasteful
+
+**Task:** Applied permission-sweep Bundle 1 (4 CRITICAL + 5 HIGH settings fixes across 4 settings files in 3 repos) and Bundle 2 (jq `{{PLACEHOLDER}}` strip fix in 3 commands + INTENTIONAL-TEMPLATE classification in 2 reference files), as W20 monday-prep deferred fixes.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~25 |
+| Files read | 18+ (re-reads: 4 settings files ×2 each = 8 duplicate reads; session-notes.md ×3) |
+| Files written/edited | 11 |
+| Tool calls | ~53 total (Read ×18, Edit ×13, Bash ×22) |
+| Subagents | 0 |
+| Rework cycles | 1 (Write failed — file not Read before attempt; required re-read before retry) |
+
+**Findings:**
+- Settings files each read twice: first via Bash `cat` for context gathering, then again via Read tool to satisfy Edit's read-first requirement — 4 double-reads × ~85 lines avg = ~340 lines duplicated (Re-reads, Moderate)
+- session-notes.md read 3 times across prime, session-plan precondition check, and wrap append-point find (Re-reads, Moderate)
+- Write failed on first attempt because file was not Read before Write — required re-read and retry, adding at least 2 wasted tool calls (Rework, Moderate)
+- Concurrent session wrote to session-notes.md between reads, causing an Edit conflict that forced another re-read before retry (Tool overhead, Minor)
+
+**Recommendation:** Use Read tool (not Bash `cat`) for initial context-gathering on settings files — satisfies Edit's read-first requirement in one pass. Cache session-notes.md content across prime/session-plan/wrap rather than re-reading each time.
+
+**Estimated savings:** ~3,700 tokens/session from eliminating double-reads (~37,000–74,000 over 10–20 sessions).

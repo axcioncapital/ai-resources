@@ -1,5 +1,12 @@
 # Coaching Data
 
+### 2026-05-11 — Permission-sweep Bundles 1+2: 4C+5H fixes + jq placeholder-strip
+- **Commands used:** /prime, /session-start, /session-plan, /wrap-session
+- **Iterations:** 0
+- **Decisions logged:** 0
+- **QC cycles:** 0 (operator explicitly skipped /qc-pass on session plan and both bundles)
+- **Gates:** 3 (1 changed) — content-review:changed (all-bundles scope narrowed to B1+B2 only), plan-approval:confirmed (B1 commit), plan-approval:confirmed (B2 commit)
+
 ### 2026-04-28 — /triage and /recommend: precondition-check guardrails
 - **Commands used:** /wrap-session (only slash command actually invoked; conversation explored /triage and /recommend as discussion subjects, and operator's natural-language "Proceed" mapped semantically to /recommend without invoking it as a slash)
 - **Iterations:** 0 (no drafting — small infra edits only)
