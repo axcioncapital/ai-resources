@@ -50,6 +50,8 @@ Orient the session. Read state, brief the operator, wait for direction.
 {bulleted list from session notes}
 
 **Open questions:** {list or "None"}
+
+**Backlog check:** Run `/open-items` to surface unresolved work in this folder.
 ```
 
 6. After the status block, ask **"What are we working on?"** and wait for the operator's answer.

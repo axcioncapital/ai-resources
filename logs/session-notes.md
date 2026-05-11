@@ -353,3 +353,30 @@ Cleanup session. /prime's brief reported Bundles 1+2+5 as "remaining" and ai-res
 
 ### Open Questions
 - None.
+
+## 2026-05-11 — /open-items backlog-visibility command
+
+### Summary
+Created `/open-items`, a new slash command that scans the current project folder for unresolved items (friction, inbox briefs, next-up queue, applied-but-unverified improvements, deferred decisions, open session questions, session-plan checkboxes) and produces a tiered inline report. Default mode shows full detail for Tier 1 + Tier 2, with Tier 3 (low-signal backlog) as counts only. `/open-items full` expands Tier 3. A `[PRIORITY]` override section surfaces any item marked `[BLOCKING]` / `[HIGH]` / `[CRITICAL]` / `[URGENT]` regardless of source tier. Symlinked into 8 qualifying projects. Added a reminder line to `/prime` so the command surfaces every session.
+
+### Files Created
+- `ai-resources/.claude/commands/open-items.md` — canonical command file
+- 8 project-level symlinks at `projects/<name>/.claude/commands/open-items.md` → ai-resources canonical (axcion-ai-system-owner, buy-side-service-plan, corporate-identity, global-macro-analysis, nordic-pe-landscape-mapping-4-26, obsidian-pe-kb, project-planning, repo-documentation)
+
+### Files Modified
+- `ai-resources/.claude/commands/prime.md` — added `**Backlog check:** Run /open-items …` line to the status block so the command surfaces every session
+
+### Decisions Made
+- **Three-tier signal classification, not flat list.** Operator raised the "dust corners under the sofa" concern after QC. Adopted Tier 1 (likely-action) / Tier 2 (awaiting trigger) / Tier 3 (counts only) instead of a flat dump. Tier 3 expanded only via `/open-items full`. Hard exclusions for `[LOW]` / `someday` / `nice-to-have` / `deferred indefinitely` / `*archive*.md`.
+- **Universal `[PRIORITY]` override.** Items carrying `[BLOCKING]` / `[HIGH]` / `[CRITICAL]` / `[URGENT]` float to the top regardless of source tier — so explicit priority marking always wins.
+- **Recency filter at 14 days.** session-plan checkboxes and session-notes Open Questions older than 14 days drop to Tier 3 (count only). Avoids forgotten-but-not-deleted items consuming attention.
+- **Symlink fan-out to 8 of 9 projects.** Skipped `meeting-prep` because it has no `.claude/commands/` and no `logs/`. Matches existing pattern for shared commands like `friction-log.md`, `prime.md`, `wrap-session.md`.
+- **QC revisions applied before approval:** expanded source list to include `next-up.md`, `session-plan.md`, `friction-log.md`; dropped uninstructed workspace-root detection branch; tightened match rules; explicit archive-file exclusion.
+
+### Next Steps
+- Run `/open-items` from a real project folder to see the tiered output in practice
+- Consider whether `/new-project` should auto-add the open-items symlink for newly created projects
+- 2 inbox briefs still pending: `repo-review-brief.md`, `codex-second-opinion-brief.md`
+
+### Open Questions
+- None.
