@@ -566,3 +566,38 @@ Executed the pre-existing `/cleanup-worktree` plan (`mighty-nibbling-garden.md`)
 
 ### Open Questions
 - None.
+
+## 2026-05-11
+**Mandate:** Run /monday-prep to completion (all phases A–D), then /session-plan — done when: /monday-prep Phase D complete + /session-plan run
+- Out of scope: Any work outside the /monday-prep cadence and /session-plan
+- Files in scope: logs/session-notes.md, harness/session/week-mandate-{WEEK}.md, logs/improvement-log.md (if /resolve-improvement-log runs), any files the cadence modifies
+- Stop if: (none stated)
+
+## 2026-05-11 — Monday prep: 2026-W20
+
+### Flags
+- [BLOCKING] `logs/scratchpads/` tracking convention decision needed before next cleanup session
+- B6: Broken symlink `projects/repo-documentation/.claude/commands/resolve-improvements.md` — target renamed; candidates: `resolve-improvement-log.md` or `resolve.md`
+- B7: CLAUDE.md audit — global-macro-analysis: 1H/3M/3L → `audits/working/audit-claude-md-global-macro-analysis-2026-05-11.md`
+- B7: CLAUDE.md audit — repo-documentation: 3H/4M/2L → `audits/working/audit-claude-md-repo-documentation-2026-05-11.md`
+- B7: CLAUDE.md audit — axcion-ai-system-owner: 2H/5M/3L → `audits/working/audit-claude-md-project-axcion-ai-system-owner.md`
+- B8: `global-macro-analysis/session-notes.md` over threshold (477 lines) — flag for manual archive
+- B8: `repo-documentation/session-notes.md` over threshold (678 lines) — flag for manual archive
+- B10: Inbox: 4 pending briefs — codex-second-opinion-brief.md, innovation-sweep-plan.md, repo-review-brief.md, w24-improvement-loop-closure-brief.md
+- B11: Harness crash detected (2026-04-28): uncommitted_changes + incomplete_session_log
+
+### Mandate
+`harness/session/week-mandate-2026-W20.md`
+
+### Harness state
+- v1 unreleased (Phase 0-1 scaffolding); session files present: mandate.json (2026-04-25, repo-documentation /new-project), startup-state.json (crash 2026-04-28: uncommitted_changes + incomplete_session_log)
+
+### Next Steps
+- Resolve `logs/scratchpads/` tracking convention (blocking)
+- Fix broken symlink: resolve-improvements.md → correct target
+- Fix consult.md symlink in research-workflow (HIGH)
+- Run /permission-sweep (HIGH)
+- Fix innovation-sweep vault entry (HIGH)
+- Apply settings items 5+6
+- Process 4 inbox briefs
+- Apply CLAUDE.md fixes (3 projects)
