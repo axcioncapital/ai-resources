@@ -259,3 +259,34 @@ Ran /prime → /session-start → /monday-prep for week 2026-W20. Cadence produc
 
 ### Open Questions
 - None.
+
+## 2026-05-11 — /monday-prep cadence (continuation session)
+Class: mixed (execution-dominant)
+**Mandate:** Work the /monday-prep cadence to completion; address as many surfaced action items as possible — done when: cadence run AND surfaced items either resolved or explicitly carried to a follow-up session
+- Out of scope: (none stated)
+- Files in scope: Any files the /monday-prep cadence touches — logs/session-notes.md, harness/session/, logs/improvement-log.md, settings.json, audits/working/, plus files implicated by surfaced flags (broken symlinks, CLAUDE.md fixes, inbox briefs)
+- Stop if: (none stated)
+
+## 2026-05-11 — /new-project pipeline drift investigation (report only)
+
+### Summary
+Operator asked whether the `/new-project` pipeline still emits scaffolding aligned with the latest `ai-resources` canonical patterns before starting a new project. Plan-mode investigation: two parallel Explore agents (pipeline source map + canonical-patterns inventory), then line-by-line comparison of the boilerplate baked into `new-project.md` against the docs/ files. Produced a drift report with 3 HIGH + 3 MEDIUM + 4 LOW findings, plus tiered execution scope. Two QC cycles (both GO). Execution deferred to next session.
+
+### Files Created
+- `/Users/patrik.lindeberg/.claude/plans/investigate-if-new-project-joyful-sphinx.md` — drift report + execution brief for `/new-project`. Single-file scope for fixes (`.claude/commands/new-project.md`).
+
+### Files Modified
+- `logs/session-notes.md` — this entry
+
+### Decisions Made
+- **Drift-report-only deliverable; fixes deferred to next session.** Operator confirmed mid-session that scope was diagnostics, not implementation. Plan file is the execution brief for next session.
+- **Benchmark = `docs/` files for H2 and H3.** Cross-checked workspace CLAUDE.md against the docs — workspace has pointer-only entries for both Compaction and Input File Handling (no inline rules), so the docs are authoritative. No docs-vs-CLAUDE.md divergence risk.
+- **LOW findings (L1–L4) deferred.** L4 is already an operator-deferred item (session-class downstream rules); L1–L3 are low-impact pointers that don't block starting a new project.
+
+### Next Steps
+- Push commit (operator manual step).
+- Next session: open `/Users/patrik.lindeberg/.claude/plans/investigate-if-new-project-joyful-sphinx.md`, pick execution scope (Minimum / Recommended / Thorough), apply edits to `.claude/commands/new-project.md`. QC after edits, then run a dry-scaffold against a throwaway project name per the plan's Verification section.
+- After fixes land: start the new project the operator wanted to begin.
+
+### Open Questions
+- None blocking. Execution scope (Minimum/Recommended/Thorough) decided at start of next session.
