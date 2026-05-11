@@ -446,3 +446,33 @@ Class: execution
 - Out of scope: Bundles 1+2 (permission-sweep + settings items 5+6), Bundle 4 (inbox brief builds), Bundle 5 (week mandate items 9–11), pushing to remote
 - Files in scope: projects/axcion-ai-system-owner/CLAUDE.md, projects/global-macro-analysis/CLAUDE.md, projects/repo-documentation/CLAUDE.md; logs/session-notes.md
 - Stop if: /risk-check returns BLOCK on any change; any project fails QC twice in a row
+
+## 2026-05-11 — Bundle 4: inbox brief design — W2.4 Monday step
+Class: design (plan-mode + risk-check + QC; no execution today)
+**Mandate:** Per the W2.4 implementation roadmap from 2026-05-08 systems review, execute Monday's design step for the W2.4 improvement-loop closure brief: `/risk-check` on the proposed shape, plan-mode design, `/qc-pass` on the design. Execution deferred to Tuesday 2026-05-12 per roadmap. Done when: design exists, risk-check verdict logged, QC GO, and Tuesday's execution brief is ready.
+- In scope: `inbox/w24-improvement-loop-closure-brief.md` design pass; risk-check artifact; design notes
+- Out of scope: actual implementation of the closure mechanic (Tuesday); `/repo-review` and `/codex-dd` briefs (separate dedicated sessions per their own roadmaps); Bundle 3 (concurrent session); pushing to remote
+- Stop if: `/risk-check` returns BLOCK; design QC fails twice in a row; scope expands to a different brief
+
+### Summary
+Discovery session: W2.4 brief is fulfilled. Verifying inbox state against git history surfaced that commits `cd279d2` (2026-05-08 19:18 — add Step 3c No Active Friction Detection to `/resolve-improvement-log`) and `0ab0231` (2026-05-08 19:24 — archive 3 no-active-friction entries from improvement-log) implemented the brief same-day. The roadmap from the 2026-05-08 systems review (Mon = plan, Tue = execute) was superseded by Friday-evening execution. Brief was never moved to `inbox/archive/` after fulfillment; concurrent Bundle 3 session moved it today in commit `b41e0f6` at 10:51. No new work needed for W2.4. Bundle 4 scope reduced to 2 remaining briefs (`/repo-review`, `/codex-dd`).
+
+### Files Created
+- None (this entry only)
+
+### Files Modified
+- `logs/session-notes.md` — this entry
+- `inbox/w24-improvement-loop-closure-brief.md` → `inbox/archive/w24-improvement-loop-closure-brief.md` (rename already committed by concurrent Bundle 3 session in `b41e0f6`)
+
+### Decisions Made
+- **Bundle 4 W2.4 step closed without /risk-check + plan-mode + /qc-pass.** Implementation already shipped 2026-05-08; the brief's specified test target (3 stale no-active-friction entries) was already archived. Running the Monday design step against work that's already complete would produce a design doc for a non-existent build.
+- **Env-flag gap deferred.** The brief specified `W24_ARCHIVE_ENABLED` env flag for dry-run rollback; implementation uses the existing `[y/n/select]` operator-confirmation gate instead. The gate is documented as load-bearing ("Confirmation is load-bearing"). Auto-archive override deserves its own design pass — not a casual add — because it touches a deliberate trust gate. Filed as a follow-up consideration, not an action item.
+- **Detection-mechanism difference accepted.** Brief proposed friction-log cross-reference within 21-day window; implementation uses intra-entry phrase signals. Simpler and worked (3 entries archived successfully). No need to switch mechanisms.
+
+### Next Steps
+- `/repo-review` brief: dedicated session, judgment-heavy synthesis (friction logs + improvement logs + session notes + pipeline tests); multiple operator-decision points
+- `/codex-dd` brief: dedicated session, requires interactive `codex login` status check + throwaway probe to estimate cost/latency before first real run
+- Push: nothing new from this session
+
+### Open Questions
+- Whether to add the `W24_ARCHIVE_ENABLED` env flag as an opt-in auto-archive override to `/resolve-improvement-log` Step 3c. Touches a deliberate confirmation gate; would warrant `/risk-check` if pursued. Brief's success criterion ("closure rate ≥ intake rate, no new paste-step") is partially unmet because the gate is a paste-step.
