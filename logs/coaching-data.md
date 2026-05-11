@@ -370,3 +370,10 @@
 - **Decisions logged:** 1
 - **QC cycles:** 0
 - **Gates:** 4 (3 changed, 1 confirmed) — mandate-confirmation:changed (operator corrected to add /session-plan), week-mandate-approval:changed (operator pushed to proceed without confirmation), drift-investigation:changed (operator directed abandon-and-log), wrap-preflight:confirmed (operator answered n,y as offered)
+
+### 2026-05-11 — /monday-prep W20 cadence (items 1–8)
+- **Commands used:** /session-start, /session-plan, /qc-pass (session plan), /permission-sweep, /risk-check, /wrap-session
+- **Iterations:** 0
+- **Decisions logged:** 2
+- **QC cycles:** 1 (session plan → GO)
+- **Gates:** 4 (1 changed, 3 confirmed) — qc-disposition:confirmed (session plan GO), content-review:changed (operator directed defer all permission-sweep fixes to next session), plan-approval:confirmed (risk-check deferral accepted), plan-approval:confirmed (CLAUDE.md fixes deferral accepted)

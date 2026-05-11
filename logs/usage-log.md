@@ -546,3 +546,25 @@ Regression from prior 2026-05-08 entries (Acceptable / Acceptable) — first Was
 1. **Read-before-write discipline check at session start (~1–2k tokens/session):** Write failure on session-plan.md cost 1 extra Read + 1 failed Write call. At 15 sessions: ~15–30k tokens — smaller than primary but fully preventable.
 2. **Batch /wrap-session reads into parallel Bash calls (~1–2k tokens/session):** decisions.md, coaching-data.md, improvement-log.md, session-notes.md tail currently run sequentially. Parallelizing saves marginal context overhead (~15–30k over 15 sessions).
 3. No additional material levers — subagent volume (3) appropriate to session type; remaining reads non-redundant.
+
+### 2026-05-11 — /monday-prep W20 cadence (8/11 mandate items)
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~12 |
+| Files read | 12+ (re-reads: session-notes.md x4, decisions.md x2, innovation-registry.md x2) |
+| Files written/edited | 9 (4 Write, 2 Edit, 3 subagent-created) |
+| Tool calls | Read x12, Bash x20, Write x4, Edit x2, Agent x3 (~41 total) |
+| Subagents | 3 (permission-sweep-auditor, risk-check-reviewer, qc-reviewer) |
+| Rework cycles | 1 |
+
+**Rating:** Acceptable
+
+**Findings:**
+- session-notes.md read 4 times across session stages (Minor)
+- session-plan.md Write failed on first attempt — file not Read before Write (Moderate)
+- Mid-session compaction caused fresh-context re-orientation overhead (Minor)
+
+**Recommendation:** Read session-plan.md before any Write attempt; enforce Read-before-Write discipline on log files touched at multiple stages.
+
+**Estimated savings:** ~2,000–4,000 tokens if rework cycle and compaction re-orientation overhead eliminated.

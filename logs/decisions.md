@@ -43,3 +43,25 @@
 - *Continue /session-plan and execute the scratchpads-convention work:* Rejected. The work item is real but it was not the session's intent; conflating drifted-intent with operator-intent erodes the trust contract.
 - *Continue /session-plan but stop after writing session-plan.md (Option 2):* Rejected. The session-plan file would describe a future session we may run with a different framing; better to write that file fresh when actually starting that work.
 - *Roll back monday-prep commits and re-run:* Rejected. /monday-prep ran correctly through Phase D; the drift was only in the trailing /session-plan invocation, which produced no committed artifact.
+
+## 2026-05-11 — Scratchpads gitignore convention
+
+**Context:** /monday-prep surfaced that `logs/scratchpads/` was untracked with two stale files in the working tree. Decision: track or gitignore?
+
+**Decision:** Gitignore. Added `logs/scratchpads/` to `.gitignore` and removed the two stale files from git index.
+
+**Rationale:** Scratchpads are ephemeral session state — same lifecycle as `audits/working/` notes (already gitignored). Tracking them adds noise without value; gitignoring keeps the pattern consistent.
+
+**Alternatives considered:** Track all scratchpads (rejected — ephemeral state does not belong in history); track selectively by naming convention (rejected — adds manual discipline overhead).
+
+---
+
+## 2026-05-11 — Settings items 5+6 deferred: scope expanded, redesign required
+
+**Context:** Week mandate items 5+6 were a two-part fix (deploy-workflow.md jq snippet + permission-sweep-auditor template-class rule). /risk-check returned PROCEED-WITH-CAUTION with 4 required mitigations, and the proper scope expanded to 5 files (not 2) because the fix requires updating the canonical permission-template.md and the permission-sweep command as well.
+
+**Decision:** Defer to dedicated session. Risk-check report is the execution brief.
+
+**Rationale:** Applying the change without the mitigations would introduce a worse regression than the bug it fixes (over-stripping legitimate additionalDirectories entries). The proper 5-file scope + 4 mitigations is a self-contained unit of work — better done fresh than rushed at session end.
+
+**Alternatives considered:** Apply items 5+6 anyway with partial mitigations (rejected — PROCEED-WITH-CAUTION verdict is binding until mitigations are confirmed applied).

@@ -290,3 +290,42 @@ Operator asked whether the `/new-project` pipeline still emits scaffolding align
 
 ### Open Questions
 - None blocking. Execution scope (Minimum/Recommended/Thorough) decided at start of next session.
+
+## 2026-05-11 — Fix new-project pipeline drift
+Class: execution
+**Mandate:** Apply drift-fix edits to `.claude/commands/new-project.md` per the plan file, then run a dry-scaffold verification — done when: edits applied + QC passed + dry-scaffold run against a throwaway project name
+- Out of scope: LOW findings L1–L4 (previously deferred); starting the actual new project
+- Files in scope: `.claude/commands/new-project.md` (primary); `logs/session-notes.md` (this log)
+- Stop if: (none stated)
+
+## 2026-05-11 — /monday-prep W20 cadence (items 1–8)
+
+### Summary
+Ran /monday-prep cadence through items 1–8 of the 2026-W20 week mandate. Resolved scratchpads gitignore convention (item 1), repaired broken symlink in repo-documentation (item 3), ran full permission sweep and deferred all fixes to a dedicated session (item 6), triaged inbox and archived one fulfilled brief (item 7), and assessed CLAUDE.md fixes for 3 projects (item 8) — deferred due to gate budget. Settings items 5+6 required redesign per /risk-check verdict; also deferred. Items 9–11 (harness crash, log archive, LOW items) remain for future sessions.
+
+### Files Created
+- `ai-resources/audits/permission-sweep-2026-05-11.md` — full permission sweep report (26 files, 4 CRITICAL / 5 HIGH / 4 MEDIUM / 2 ADVISORY); all fixes deferred
+- `ai-resources/audits/risk-checks/2026-05-11-two-part-settings-fix-for-deploy-workflow-permission-sweep.md` — risk-check for settings items 5+6; verdict PROCEED-WITH-CAUTION, 4 required mitigations
+
+### Files Modified
+- `ai-resources/.gitignore` — added `logs/scratchpads/` rule; removed two stale scratchpad files from git index
+- `ai-resources/inbox/archive/innovation-sweep-plan.md` — moved from `inbox/` (brief fulfilled: command + auditor already exist)
+- `projects/repo-documentation/.claude/commands/resolve-improvements.md` — repaired broken symlink (now → `resolve-improvement-log.md`; committed in nested repo)
+- `ai-resources/logs/session-notes.md` — mandate + class line + this entry
+
+### Decisions Made
+- **Scratchpads gitignored.** Operator chose gitignore over tracking, matching `audits/working/` precedent. Applied `logs/scratchpads/` rule and removed stale files from index.
+- **Settings items 5+6 deferred.** /risk-check returned PROCEED-WITH-CAUTION with 4 required mitigations and scope expanded to 5 files (deploy-workflow.md, new-project.md, permission-sweep command, permission-template.md, permission-sweep-auditor.md). Requires a dedicated session starting from the risk-check report.
+- **CLAUDE.md fixes for 3 projects deferred.** Audit reports in `audits/working/` are execution-ready. Each project needs risk-check + edit + qc-pass (~3 gate invocations each × 3 projects = 9 gates). Exceeds session budget; execute in 3 separate dedicated sessions.
+- **innovation-sweep-plan.md archived.** `/innovation-sweep` command and `innovation-triage-auditor` agent already exist in ai-resources; brief is fulfilled. Moved to `inbox/archive/`.
+
+### Next Steps
+1. Permission-sweep fixes — dedicated session; apply 4C + 5H from `audits/permission-sweep-2026-05-11.md`
+2. Settings items 5+6 — dedicated session; start from `audits/risk-checks/2026-05-11-two-part-settings-fix-for-deploy-workflow-permission-sweep.md`; apply 4 mitigations first, then fix
+3. CLAUDE.md fixes — 3 separate sessions: `axcion-ai-system-owner`, `global-macro-analysis`, `repo-documentation`; audit specs in `audits/working/`
+4. Inbox briefs — separate build sessions: `codex-second-opinion-brief.md`, `repo-review-brief.md`, `w24-improvement-loop-closure-brief.md`
+5. Week mandate items 9–11 — harness crash (2026-04-28), session-notes archive for global-macro-analysis (477L) and repo-documentation (678L), LOW items
+6. Push — 4 commits ahead of origin (3 in ai-resources, 1 in repo-documentation)
+
+### Open Questions
+- None.
