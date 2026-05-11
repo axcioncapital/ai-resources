@@ -337,6 +337,42 @@ Class: execution
 - Files in scope: Bundle 1 — settings.json files flagged in audits/permission-sweep-2026-05-11.md (4C+5H targets); Bundle 2 — .claude/commands/deploy-workflow.md, .claude/commands/new-project.md, .claude/commands/permission-sweep.md, docs/permission-template.md, .claude/agents/permission-sweep-auditor.md; this log (logs/session-notes.md)
 - Stop if: Either bundle fails QC twice in a row; risk-check returns BLOCK on any change; ≥8 subagent spawns triggers [COST] reassessment
 
+### Summary
+
+Applied all 4 CRITICAL + 5 HIGH permission-sweep findings from the 2026-05-11 audit (Bundle 1) and all 5 changes + 4 mitigations from the W20 risk-check (Bundle 2). Both bundles committed. Dangling W20 risk-check file committed as part of Bundle 1 ai-resources commit. `logs/session-plan-bundle5.md` (an untracked W20 planning artifact) left uncommitted per operator direction — being handled in a separate session.
+
+### Files Modified
+
+**Bundle 1 (ai-resources commit `0514590`):**
+- `ai-resources/.claude/settings.json` — added 14 missing allow entries (CRITICAL #2)
+- `ai-resources/workflows/research-workflow/.claude/settings.json` — replaced `{{WORKSPACE_ROOT}}` with literal path (HIGH #8)
+
+**Bundle 1 (axcion-ai-system-owner commit `cfacc8c`):**
+- `vault/.claude/settings.json` — defaultMode + dotfile paths + Bash(rm*) + additionalDirectories + bare tools (CRITICAL #1, #4 / HIGH #5, #7, #9)
+
+**Bundle 1 (repo-documentation commit `b47f01d`):**
+- `vault/.claude/settings.json` — dotfile paths + Bash(rm*) + bare tools (CRITICAL #3 / HIGH #6, #9)
+
+**Bundle 2 (ai-resources commit `851a15d`):**
+- `.claude/commands/deploy-workflow.md` — jq `{{...}}` strip fix
+- `.claude/commands/new-project.md` — sibling sync
+- `.claude/commands/permission-sweep.md` — sibling sync + INTENTIONAL-TEMPLATE rules-table row
+- `docs/permission-template.md` — new INTENTIONAL-TEMPLATE section
+- `.claude/agents/permission-sweep-auditor.md` — Step 4a + Step 1 bullet
+
+### Decisions Made
+
+- **Bundle 5 planning file left uncommitted.** `logs/session-plan-bundle5.md` found uncommitted in working tree; operator confirmed it belongs to the separate Bundle 5 session.
+
+### Next Steps
+
+- Push all commits (operator manual step) — ai-resources: 2 new commits; axcion-ai-system-owner: 1; repo-documentation: 1
+- Bundles 3, 4, 5 ongoing in concurrent sessions
+
+### Open Questions
+
+- None.
+
 ## 2026-05-11 — Monday-prep deferred fixes: Bundle 5 (W20 items 9–11)
 Class: execution
 **Mandate:** Apply W20 week mandate items 9–11 — item 10 (archive session-notes >200L for global-macro-analysis + repo-documentation), item 11 (LOW: promote decisions to axcion-ai-system-owner/logs/decisions.md; investigate W2.1 removed components; convert 5 short-name wiki-links), item 9 (investigate harness crash 2026-04-28). Done when: all items completed OR explicit "carry to next session" decision logged for unfinished work.
@@ -372,6 +408,7 @@ Applied three HIGH-severity drift fixes to `.claude/commands/new-project.md` per
 - None.
 
 ## 2026-05-11 — Bundle 3: CLAUDE.md fixes (3 projects)
+Class: execution
 **Mandate:** Apply CLAUDE.md audit findings for axcion-ai-system-owner, global-macro-analysis, and repo-documentation — done when: all three CLAUDE.md files edited, QC passed, and committed
 - Out of scope: Bundles 1+2 (permission-sweep + settings items 5+6), Bundle 4 (inbox brief builds), Bundle 5 (week mandate items 9–11), pushing to remote
 - Files in scope: projects/axcion-ai-system-owner/CLAUDE.md, projects/global-macro-analysis/CLAUDE.md, projects/repo-documentation/CLAUDE.md; logs/session-notes.md
