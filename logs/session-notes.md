@@ -280,4 +280,36 @@ Applied CLAUDE.md audit findings across three projects, saving ~1,410 tokens per
 - Remaining bundles: Bundle 1 (permission-sweep 4C+5H), Bundle 2 (settings items 5+6), Bundle 4 (inbox brief builds), Bundle 5 (week items 9–11)
 
 ### Open Questions
-- Was the w24-improvement-loop-closure-brief.md archive move intentional (parallel session action swept into b41e0f6)?
+- Was the w24-improvement-loop-closure-brief.md archive move intentional (parallel session action swept into b41e0f6)? **Answered in next session (Bundle 4) — yes, intentional and correct: brief was already implemented 2026-05-08.**
+
+## 2026-05-11 — Bundle 4: W2.4 fulfilled (discovery), plain-English brief review
+Class: investigation/discovery (no new build)
+**Mandate:** Start Bundle 4 (inbox brief builds) per the W20 week mandate. Done when: surfaced state of each remaining inbox brief AND identified which need real build sessions vs. cleanup-only.
+- Out of scope: Bundles 1+2+3+5 (concurrent or prior sessions); pushing to remote; full builds of `/repo-review` or `/codex-dd` (operator-touch decision points → separate sessions)
+- Files in scope: `inbox/` (all briefs); `logs/session-notes.md`
+- Stop if: scope expands past discovery into full build work without operator intent
+
+### Summary
+Discovery-only session. The W2.4 improvement-loop closure brief turned out to be already fulfilled — commits `cd279d2` + `0ab0231` from 2026-05-08 shipped the Step 3c "No Active Friction Detection" path in `/resolve-improvement-log` and archived the 3 target stale entries on the same day the brief was filed. Concurrent Bundle 3 session moved the brief to `inbox/archive/` in commit `b41e0f6` at 10:51 today — confirmed intentional (answers Bundle 3's open question). No new build work for W2.4. Bundle 4 scope reduced from 3 briefs to 2 (`/repo-review`, `/codex-dd`). Provided plain-English explanations of both remaining briefs per operator follow-up. Telemetry + coaching skipped per preflight.
+
+### Files Created
+- None.
+
+### Files Modified
+- `logs/session-notes.md` — this entry (Bundle 4 wrap + Bundle 3 open-question resolution noted inline)
+- `inbox/w24-improvement-loop-closure-brief.md` → `inbox/archive/w24-improvement-loop-closure-brief.md` (rename already committed by concurrent Bundle 3 session in `b41e0f6`; my `git mv` was a no-op)
+
+### Decisions Made
+- **Skipped W2.4 Monday design step.** The 2026-05-08 systems-review roadmap prescribed `/risk-check` + plan-mode + `/qc-pass` for Monday. With the build already shipped, running the design step would produce a design doc for non-existent work. Honored the prior implementation rather than redoing it.
+- **Env-flag gap (`W24_ARCHIVE_ENABLED`) deferred.** Brief specified an env-flag rollback; implementation uses the existing `[y/n/select]` confirmation gate. The gate is documented as load-bearing ("Confirmation is load-bearing"). Adding an auto-archive override that bypasses the gate touches a deliberate trust choice and deserves dedicated `/risk-check` + design, not a casual follow-up.
+- **Detection-mechanism difference accepted.** Brief proposed friction-log cross-reference within 21-day recency window; implementation uses intra-entry phrase signals. Simpler approach worked (3 entries archived successfully); no need to switch.
+- **`/repo-review` and `/codex-dd` builds deferred.** Both warrant dedicated sessions: `/repo-review` is judgment-heavy with multiple operator-decision points (pipeline-test scope, criticality methodology, output schema); `/codex-dd` requires interactive `codex login` status check + throwaway cost-probe before first real run.
+
+### Next Steps
+- Push pending commits (operator manual step) — ai-resources is ahead of origin
+- `/repo-review` dedicated session — design pass first (decide pipeline-test approach: worktree isolation vs. mock vs. skip; decide criticality scoring method; check whether `/systems-review` already covers friction synthesis question); brief is ~1 month old, validate scope before building
+- `/codex-dd` dedicated session — Step 1 (`codex login` status) + Step 2 (throwaway probe to estimate cost/latency); brief is ~1 month old, Codex CLI surface may have shifted
+- Env-flag `W24_ARCHIVE_ENABLED` (open consideration only): if operator wants steady-state auto-archive, design with `/risk-check` first
+
+### Open Questions
+- None.
