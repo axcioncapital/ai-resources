@@ -17,3 +17,13 @@
 - **18:26** — /consult invoked when a 5-min targeted Read of /deploy-workflow.md would have answered the same question — overkill for a case where I already had a confident structural recommendation. Burned ~95k tokens and 2.5min on Opus when I could have done a focused file-read first and only escalated to /consult if the read surfaced a genuine ambiguity. Lesson: when I've already given a recommendation, do the cheapest verification read first; reserve /consult for genuinely contested or load-bearing system-shape questions.
 
 #### Write Activity
+
+## Session — 2026-05-11
+
+### Friction Events
+
+- **/session-start confirmation token ambiguous.** The mandate-confirmation prompt says *"Confirm, or correct any field."* but does not define the canonical confirmation token. Operator replied `c. Next /session-plan` meaning "confirm; next session will be /session-plan" — Claude parsed `c.` as a correction to field c ("Done when") and silently baked /session-plan into the current session's mandate. Net effect: session ran an extra command that wasn't supposed to be in this session. Fix: /session-start should state the confirmation token explicitly (e.g., `"Reply 'y' to confirm, or list specific field corrections like 'b: ...'"`) and reject single-letter ambiguous replies.
+
+- **/session-plan semantics conflate "current session" vs "next session" when invoked from /monday-prep C15.** /session-plan's Step 0 checks for today's `/prime` header and Step 5 talks about "this session's autonomy posture" — language that assumes the active session. But /monday-prep C15 invokes /session-plan as *"Run /session-plan for the first work session"* — meaning the *next* session. The mismatch made today's conversation feel like a topic shift mid-session (Monday prep → resolve-scratchpads-convention) when the operator only meant to run /monday-prep. Fix: either (a) /session-plan should know which mode it's in (pass a flag from C15), or (b) /monday-prep C15 should write a planning scaffold for the next session rather than invoking /session-plan inline. Related: the relationship between the week mandate (/monday-prep) and the per-session plan (/session-plan) is not documented anywhere — operator could reasonably expect them to be separate sessions.
+
+#### Write Activity

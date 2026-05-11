@@ -363,3 +363,10 @@
 - **Decisions logged:** 1 (W2.4 sequencing: ship before W2.2/W2.3)
 - **QC cycles:** 1 (session plan: GO — no findings)
 - **Gates:** 1 (confirmed) — plan-approval:confirmed (operator approved session plan after /qc-pass GO verdict, proceeded to /systems-review without changes)
+
+### 2026-05-11 — Monday prep wrap + drift recovery
+- **Commands used:** /prime, /session-start, /monday-prep, /session-plan (aborted mid-execution), /wrap-session
+- **Iterations:** 0
+- **Decisions logged:** 1
+- **QC cycles:** 0
+- **Gates:** 4 (3 changed, 1 confirmed) — mandate-confirmation:changed (operator corrected to add /session-plan), week-mandate-approval:changed (operator pushed to proceed without confirmation), drift-investigation:changed (operator directed abandon-and-log), wrap-preflight:confirmed (operator answered n,y as offered)
