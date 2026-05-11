@@ -355,7 +355,7 @@ Otherwise, install the three pieces:
 
    if [ -n "$WORKSPACE" ]; then
      jq --arg dir "$WORKSPACE" \
-       '.permissions.additionalDirectories = ((.permissions.additionalDirectories // []) + [$dir] | unique)' \
+       '.permissions.additionalDirectories = ((.permissions.additionalDirectories // [] | map(select(startswith("{{") | not))) + [$dir] | unique)' \
        "$SETTINGS" > "$SETTINGS.tmp" && mv "$SETTINGS.tmp" "$SETTINGS"
    fi
    ```

@@ -242,12 +242,12 @@ done
 
 if [ -n "$WORKSPACE" ]; then
   jq --arg dir "$WORKSPACE" \
-    '.permissions.additionalDirectories = ((.permissions.additionalDirectories // []) + [$dir] | unique)' \
+    '.permissions.additionalDirectories = ((.permissions.additionalDirectories // [] | map(select(startswith("{{") | not))) + [$dir] | unique)' \
     "$SETTINGS" > "$SETTINGS.tmp" && mv "$SETTINGS.tmp" "$SETTINGS"
 fi
 ```
 
-`unique` makes this idempotent. Report whether the workspace root was added or already present.
+`unique` makes this idempotent. The `map(select(...))` strip removes any `{{PLACEHOLDER}}` entries from the template before appending the real workspace path. Report whether the workspace root was added or already present.
 
 ## Step 5: Discover placeholders
 

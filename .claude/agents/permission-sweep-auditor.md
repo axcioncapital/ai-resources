@@ -29,6 +29,7 @@ The main agent passes you:
 Read TEMPLATE_PATH in full. It defines:
 - Canonical shapes for Layers A (user), B (workspace root), B′ (workspace local), C (ai-resources), D (project), D′ (project local).
 - The **intentional-narrow** detection heuristic (`Edit(path/**)` + paired `Write(path/**)` deny).
+- The **intentional-template** detection heuristic (`{{PLACEHOLDER}}` in path-type fields — see `§ Intentional-template exceptions`).
 - The **detection rulebook** (14 rules across CRITICAL / HIGH / MEDIUM / ADVISORY).
 
 Do not invent new rules. Apply only the rules defined in the template.
@@ -93,6 +94,16 @@ For INTENTIONAL-NARROW files:
 - Tag every finding with `[INTENTIONAL-NARROW]` prefix.
 - Do NOT downgrade severity.
 - Record an explicit `Remediation hint: SKIP by default; requires --fix-narrow to apply.`
+
+### Step 4a: Apply the intentional-template override
+
+Per `{TEMPLATE_PATH} § Intentional-template exceptions`: a finding is an INTENTIONAL-TEMPLATE false-positive if the triggering value matches the pattern `{{[A-Z_]+}}` in any path-type field (`additionalDirectories`, or a path argument inside `allow`/`deny`). This most commonly fires as a Rule 8 false-positive (missing/stale `additionalDirectories`) on workflow template settings files.
+
+For INTENTIONAL-TEMPLATE findings:
+- Tag the finding with `[INTENTIONAL-TEMPLATE]` prefix.
+- Downgrade severity to ADVISORY.
+- Record: `Remediation hint: Template placeholder — intentional, not a stale or broken path.`
+- Do NOT treat as a Rule 8 or Rule 9 violation.
 
 ### Step 5: Write the full notes file
 

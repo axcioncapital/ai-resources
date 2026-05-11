@@ -114,6 +114,7 @@ Examples:
     | 11 | "User-level settings differ from workspace settings on a critical rule." |
     | 12 | "`settings.local.json` is tracked in git — it should be gitignored." |
     | 13 | "Typo / duplicate entry / inconsistent syntax form." |
+    | INTENTIONAL-TEMPLATE | "Settings file contains an unfilled `{{PLACEHOLDER}}` value in a path-type field (e.g., `additionalDirectories`). This is a template file — the placeholder is intentional, not a stale or broken path." |
 
 22. Render the chat report:
 
@@ -209,7 +210,7 @@ Examples:
     **Add `additionalDirectories`** (rule 8):
     ```bash
     jq --arg dir "$WORKSPACE" '
-      .permissions.additionalDirectories = ((.permissions.additionalDirectories // []) + [$dir] | unique)
+      .permissions.additionalDirectories = ((.permissions.additionalDirectories // [] | map(select(startswith("{{") | not))) + [$dir] | unique)
     ' "$FILE" > "$FILE.tmp" && mv "$FILE.tmp" "$FILE"
     ```
 

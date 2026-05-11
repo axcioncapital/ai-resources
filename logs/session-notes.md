@@ -370,3 +370,9 @@ Applied three HIGH-severity drift fixes to `.claude/commands/new-project.md` per
 
 ### Open Questions
 - None.
+
+## 2026-05-11 — Bundle 3: CLAUDE.md fixes (3 projects)
+**Mandate:** Apply CLAUDE.md audit findings for axcion-ai-system-owner, global-macro-analysis, and repo-documentation — done when: all three CLAUDE.md files edited, QC passed, and committed
+- Out of scope: Bundles 1+2 (permission-sweep + settings items 5+6), Bundle 4 (inbox brief builds), Bundle 5 (week mandate items 9–11), pushing to remote
+- Files in scope: projects/axcion-ai-system-owner/CLAUDE.md, projects/global-macro-analysis/CLAUDE.md, projects/repo-documentation/CLAUDE.md; logs/session-notes.md
+- Stop if: /risk-check returns BLOCK on any change; any project fails QC twice in a row
