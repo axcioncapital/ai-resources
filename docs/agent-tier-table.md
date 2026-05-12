@@ -21,6 +21,7 @@ Every agent must declare `model:` explicitly in frontmatter — no implicit inhe
 | findings-extractor | haiku | Mechanical extraction of HIGH/CRITICAL findings from audit sub-reports. Added 2026-05-08. |
 | improvement-analyst | opus | Judgment (friction-pattern analysis). Correct. |
 | innovation-triage-auditor | opus | Judgment (per-item verdict for innovation triage). Added 2026-05-08. |
+| log-sweep-auditor | haiku | Mechanical log inventory and classification for /log-sweep. Added 2026-05-12. |
 | permission-sweep-auditor | sonnet | Structured factual scan (settings/permissions audit). Added 2026-04-27. |
 | pipeline-stage-3a | sonnet | Structured inventory scan. Correct. |
 | pipeline-stage-3b | opus | Architectural design. Correct. |
