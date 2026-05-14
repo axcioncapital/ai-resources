@@ -38,10 +38,13 @@ Parse the raw input (which may be messy, multi-theme, multi-source notes) and id
 
 - **Entry boundary rule:** One entry = one coherent idea with a single dominant theme. If a paragraph contains two distinct analytical claims about different structural dynamics, it becomes two entries. If two paragraphs develop the same idea from different angles, they stay as one entry.
 - Identify distinct content units — separate ideas, claims, or questions within the input.
-- Separate content into three types per entry:
+- Separate content into three decomposed types per entry:
   - **Claims:** Factual assertions and analytical observations from sources
   - **Questions Raised:** Open questions prompted by the material
   - **Personal Notes:** Patrik's own thinking, reactions, hypotheses, skepticism
+- **Operator Note:** Not decomposed from raw notes. After completing Stage A decomposition, elicit one Operator Note per proposed entry by prompting the operator: "Entry: '[title]' — provide one short paragraph reaction tied to the design filter (what macro/geopolitical/tech/capital-market developments change Nordic mid-market value, risk, exit logic, or buyer behaviour?)." This is the operator's deliberate judgment input, not a paraphrase of the raw notes. If the operator skips, leave the `## Operator Note` section blank.
+- **Business Relevance** and **Nordic Relevance:** Emit as empty H2 stub sections in every entry file. Never populate — filled by the operator during `/kb-review`.
+- The section order in generated entry files: Claims → Operator Note → Business Relevance → Nordic Relevance → Questions Raised → Personal Notes.
 - Preserve source attributions — author names, publication names, links. Attribute as specifically as the raw notes allow. Never strip attribution.
 - Do NOT make routing decisions in Stage A. Only structural decomposition.
 
@@ -79,6 +82,10 @@ For each candidate unit from Stage A:
 - `bootstrap` field: set based on the `ingest_mode` parameter passed by the calling command. Set `true` only when `ingest_mode` is `bootstrap`.
 - `source_type`: infer from the content — `youtube`, `podcast`, `book`, `article`, `news`, `research`, or `personal-analysis`.
 - `source_mode`: set based on context — `training-data` (if Claude is generating from training knowledge), `web-research` (if from web sources), `personal-notes` (if from Patrik's own notes).
+- `memo_relevance`: assign `high` / `medium` / `low` based on how directly this entry informs the Nordic mid-market PE and corporate finance memo. Apply the design filter: "What macro, geopolitical, technological, and capital-market developments are changing value, risk, exit logic, and buyer behaviour in the Nordic mid-market?" High = directly answers a recurring memo lens question. Low = background context with no clear Nordic mid-market consequence.
+- `memo_angle`: assign the primary memo lens this entry serves. One value only. Enum: `company-value | exit-logic | buyer-appetite | sector-positioning | financing-conditions | owner-readiness | capital-allocation | nordic-competitiveness | ai-operating-leverage | geopolitical-supply-chain-exposure | none`. Use `none` when `memo_relevance` is low or when no single lens fits. If multiple lenses apply, assign the strongest.
+- `pointer_source`: emit as empty string stub. Do not populate — filled by operator at review for pointer-tier entries.
+- `falsifiability`: emit as empty string stub. Do not populate — filled by operator at review or synthesis time.
 
 ---
 
@@ -102,6 +109,8 @@ The batch manifest must include:
   - `routing_confidence`: high | medium | low
   - `source`: source attribution string
   - `title`: descriptive title
+  - `memo_relevance`: high | medium | low
+  - `memo_angle`: memo lens value from enum
   - `flags`: array of flag strings (multi-theme-ambiguity, low-confidence-routing, etc.)
 - `unresolved[]`: entries with uncertain routing or notable ambiguities, each with:
   - `entry`: filename reference
