@@ -74,13 +74,13 @@ SKILLS_DIR="../../ai-resources/skills"  # adjust relative path if project is not
 
 for skill in "$SKILLS_DIR"/*/; do
   skill_name=$(basename "$skill")
-  # Skip if a local copy already exists (knowledge-file-producer, report-compliance-qc)
+  # Skip if a local copy already exists (knowledge-file-producer only — do not keep local copies of other skills)
   [ -d "reference/skills/$skill_name" ] && continue
   ln -s "$skill" "reference/skills/$skill_name"
 done
 ```
 
-**Verify:** `ls -la reference/skills/` should show symlinks pointing to `ai-resources/skills/`. Local skills (`knowledge-file-producer`, `report-compliance-qc`) remain as real directories.
+**Verify:** `ls -la reference/skills/` should show symlinks pointing to `ai-resources/skills/`. Local skills (`knowledge-file-producer`) remain as real directories; all others use the canonical ai-resources path.
 
 **Required skills (minimum set for the research workflow):**
 - analysis-pass-memo-review

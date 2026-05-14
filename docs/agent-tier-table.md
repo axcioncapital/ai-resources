@@ -50,6 +50,8 @@ These agents exist as regular-file copies (not symlinks) in `projects/nordic-pe-
 |---|---|---|
 | execution-agent | sonnet | Local copy of canonical. Same tier. Added 2026-05-14. |
 | improvement-analyst | opus | Local copy of canonical. Same tier. Added 2026-05-14. |
+| qc-gate | sonnet | Local copy of canonical. Same tier. Added 2026-05-14. |
+| verification-agent | sonnet | Local copy of canonical. Same tier. Added 2026-05-14. |
 
 ## Maintenance
 
