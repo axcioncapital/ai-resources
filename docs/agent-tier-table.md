@@ -28,6 +28,7 @@ Every agent must declare `model:` explicitly in frontmatter — no implicit inhe
 | pipeline-stage-3c | opus | Analytical (implementation spec). Retrofitted from inherit. |
 | pipeline-stage-4 | sonnet | Spec-following implementation. Retrofitted from inherit. |
 | pipeline-stage-5 | sonnet | Verification checks. Correct. |
+| qc-gate | sonnet | QC reviewer for stage transitions. Added 2026-05-14. |
 | qc-reviewer | opus | QC judgment. Correct. |
 | refinement-reviewer | opus | Refinement judgment. Correct. |
 | repo-dd-auditor | sonnet | Questionnaire-driven factual audit. Correct. |
@@ -37,8 +38,18 @@ Every agent must declare `model:` explicitly in frontmatter — no implicit inhe
 | token-audit-auditor | opus | Judgment sections (4). Correct. |
 | token-audit-auditor-mechanical | haiku | Mechanical sections (2, 5, 6). Correct. |
 | triage-reviewer | opus | Prioritization judgment. Correct. |
+| verification-agent | sonnet | Independent re-derivation for high-stakes outputs. Added 2026-05-14. |
 | workflow-analysis-agent | opus | Architectural analysis. Correct. |
 | workflow-critique-agent | opus | Critique judgment. Correct. |
+
+## Project-local agent copies (nordic-pe-macro-landscape-H1-2026)
+
+These agents exist as regular-file copies (not symlinks) in `projects/nordic-pe-macro-landscape-H1-2026/.claude/agents/`. They mirror the canonical ai-resources versions above. Tracked here to satisfy F-9 of the 2026-05-12 repo-dd audit.
+
+| Agent | Tier | Notes |
+|---|---|---|
+| execution-agent | sonnet | Local copy of canonical. Same tier. Added 2026-05-14. |
+| improvement-analyst | opus | Local copy of canonical. Same tier. Added 2026-05-14. |
 
 ## Maintenance
 
