@@ -4,6 +4,20 @@ model: sonnet
 
 Orient the session. Read state, brief the operator, wait for direction.
 
+0. **Pull latest.** Determine the cwd's git root: `CWD_REPO=$(git -C "$(pwd)" rev-parse --show-toplevel 2>/dev/null)`.
+   If this fails, note `Pulled: n/a (not a git repo)` in the brief and skip to step 1.
+
+   Define `AI_RESOURCES="/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources"`.
+
+   Run `GIT_TERMINAL_PROMPT=0 git -C "$CWD_REPO" pull`. If `$CWD_REPO` differs from `$AI_RESOURCES`,
+   also run `GIT_TERMINAL_PROMPT=0 git -C "$AI_RESOURCES" pull`. Capture each result:
+   - Exit 0 + "Already up to date." → `up to date`
+   - Exit 0, no "Already up to date." → `updated`
+   - Exit non-zero + "no tracking information" → `skip (no upstream configured)`
+   - Exit non-zero, other → `failed: {first relevant stderr line}`
+
+   Do not stop on failure — record and continue. Results appear as `**Pulled:**` in the step 5 brief.
+
 1. Read the last entry from `/logs/session-notes.md`. Extract: date, summary, next steps, open questions.
    If the file doesn't exist or is empty, this is the first session — note that and skip to step 2.
 
@@ -44,6 +58,7 @@ Orient the session. Read state, brief the operator, wait for direction.
 **Innovations:** {N} detected, pending triage
 **Recent decisions:** {list or "None"}
 **Working tree:** {clean | list of live-verified changes from step 4a}
+**Pulled:** {basename of CWD_REPO}: {result}[; ai-resources: {result} — omit when cwd IS ai-resources]
 **Model:** {session model} — project default {project default} ({match | → /model {default} to align})
 
 **Next steps (from last session):**
