@@ -54,7 +54,15 @@ Stop if:      {stop_if}
 ---
 ```
 
-Ask: `"Confirm, or correct any field."` Wait. Accept one correction pass only.
+Ask:
+
+> "Reply `confirm` (or `y`) to accept, or list field corrections in the form `b: <new text>`. Bare single letters other than `y` are treated as ambiguous and re-asked."
+
+Wait for one response. Apply these parser rules:
+- **Confirmation:** response is exactly `confirm`, `y`, or `yes` (case-insensitive, trimmed) → proceed to Step 3.
+- **Ambiguous single letter:** response matches `^[a-z]\.?(\s|$)` and is NOT exactly `y` → re-ask once:
+  `"Reply 'confirm' or 'y' to accept, or use 'b: new text' syntax for corrections. Single letters other than 'y' are ambiguous."` Accept the re-response and proceed regardless.
+- **Correction:** correction syntax is `<letter>: <replacement text>` (colon required, not period). Multiple corrections may appear on separate lines. Parse and apply each; unrecognised syntax is treated as free-text amendment to `work_scope`.
 
 ### Step 3 — Write the mandate line
 
