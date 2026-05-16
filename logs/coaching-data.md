@@ -392,3 +392,10 @@
 - **Decisions logged:** 1 (deferred /new-project template rename)
 - **QC cycles:** 4 (session-plan → fix → GO; Project 1 CLAUDE.md → GO; Project 2 CLAUDE.md → GO; Project 3 CLAUDE.md → GO)
 - **Gates:** 5 (1 changed) — plan-approval:confirmed (/session-start mandate), qc-disposition:changed (session-plan stop-point framing fixed), plan-approval:confirmed (Project 1 PROCEED-WITH-CAUTION proceed), plan-approval:confirmed (Project 2 GO proceed), plan-approval:confirmed (Project 3 PROCEED-WITH-CAUTION proceed)
+
+### 2026-05-16 — /friday-journal — ingest and process 15 journal entries
+- **Commands used:** /prime, /clarify, /scope, /friday-journal
+- **Iterations:** 0 (report produced in one pass; QC disposition loop applied)
+- **Decisions logged:** 0
+- **QC cycles:** 1 (qc-reviewer REVISE → 4 dispositioned → mechanical re-check pass)
+- **Gates:** 4 (4 confirmed) — plan-approval:confirmed (/clarify Q&A resolved), plan-approval:confirmed (/scope), content-review:confirmed (archive y/n), content-review:confirmed (preflight yy)

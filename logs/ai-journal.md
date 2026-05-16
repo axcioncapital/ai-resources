@@ -8,7 +8,6 @@ clarify entries on Friday.
 
 <!-- Active entries below this line. Add one per line or short paragraph. -->
 
-
 ## Archive
 
 <!-- Processed entries get appended here by /friday-journal as
@@ -81,3 +80,35 @@ End-of-session unresolved-items check — at session end, before /wrap-session, 
 Wrap-session addition: "are there any decisions or actions I need to take before finishing this session?" — useful prompt at end of day. Add to /wrap-session.
 
 Draft/approved artifact drift — develop a hook or detector that reminds of drift between draft/approved status. Example: buy-side service plan situation — original docs need to stay in check (e.g., when updating doc 2 vs 2.1–2.9 docs, the v1/v2 master doc and the working sub-docs drift). Permission prompt log: subagent making tool calls in ai-resources/ from a different project's session triggered Claude Code UI approval dialogs even with bypassPermissions in the project settings — sibling-directory edits surface prompts because each directory has its own settings. Fix: wire ai-resources settings to bypass before running heavy implementation stages from other projects.
+
+## Archive — 2026-05-16
+
+Hook to session start — at session start, capture mandate and wait for operator confirmation. Once confirmed, auto-invoke /session-plan. When /session-plan completes, auto-invoke /qc-pass on the session plan output, then auto-invoke /scope. No operator prompting needed at any step after mandate confirmation.
+
+Add QC pass to research-plan-creator — the command currently has no QC subagent by default. Investigate why and add a QC pass as a standard step.
+
+Audit-repo vs repo-dd — both commands exist; investigate overlap and produce a written recommendation on whether to merge, delete one, or keep both with clearly distinct roles.
+
+Fix repo-dd — add a step that compares CLAUDE.md and file structure between the project being audited and ai-resources. Treat ai-resources as the authoritative, always-most-up-to-date reference.
+
+Fix new-project pipeline — two issues: (1) new commands (e.g., session-start, session-plan) are not appearing in newly created projects; fix the pipeline to include all current canonical commands. (2) New projects don't get a decisions.md by default — add it to the project template.
+
+Strengthen decision-point posture — Claude stops too often at gates asking "what do you recommend" when the operator already trusts its judgment. Update CLAUDE.md (or equivalent) to explicitly allow Claude to make decisions freely at gates, pick a recommendation and proceed, and only surface decisions that are genuinely novel or high-risk. QC passes catch problems; operator will flag exceptions if something looks wrong.
+
+Improve /friday-act — after generating the execution plan, auto-QC it with the systems agent before presenting to operator.
+
+Improve /systems-review — investigate whether the command actually reviews the repo as a whole and surfaces systems-thinking improvement ideas. Clarify its scope and improve if not.
+
+Fix /friday-journal (QC sub-agent pass) — after the initial report is written, run a QC sub-agent pass that highlights vague or unclear content and combines items that should be merged. Approach: either ask the operator clarifying questions or search repo-documentation for answers.
+
+Fix /friday-journal (refinement pass from repo-docs) — run a second refinement pass where Claude adds relevant context from repo-documentation to enrich entries before finalising.
+
+Fix /friday-journal (drop-check) — after QC and refinement, verify that nothing from the original notes was silently dropped. Flag any missing items explicitly.
+
+Fix /friday-journal (risk-check) — run a risk-check on the final report; flag anything that carries implementation risk or shouldn't be there.
+
+Fix /friday-act input scope — the spec's minimum read is insufficient on heavy-disposition Fridays. Missing sources: SO Recommendations + Observations (always past line 30), Systems Review Leverage Points (always past line 30), improvement-log files, and project-internal session-notes/friction-logs. Fix: expand the spec's required reads to include these sources.
+
+Add coaching logs to Friday cadences — check whether coaching logs are already linked to /friday-checkup. If not, wire them in.
+
+Link /resolve-improvement-log to /friday-act — currently not connected. Connect them so /friday-act triggers or references /resolve-improvement-log as part of its execution flow.

@@ -410,3 +410,31 @@ Automated the manual "pull at session start" rule by adding Step 0 to /prime. Th
 
 ### Open Questions
 - None.
+
+## 2026-05-16 — /friday-journal — ingest and process 15 journal entries
+Class: execution
+**Mandate:** Run /friday-journal on ai-journal.md — done when: report written to audits/friday-journal-2026-05-16.md, QC passed, active section archived.
+
+### Summary
+Ran /friday-journal on a freshly populated ai-journal.md. Active section was initially empty from a prior archived run; 15 entries were written via a /clarify → /scope pass during the session (entries covered session-start hook chain, decision-point posture strengthening, friday-act/friday-journal improvements, new-project pipeline fixes, and /resolve-improvement-log wiring). /friday-journal generated a 15-item implementation report, ran mechanical pre-check (pass), QC subagent (REVISE verdict), and disposition loop (4 kept, 1 revised, 1 flagged for risk-check). Active section archived to ## Archive — 2026-05-16.
+
+### Files Created
+- `audits/friday-journal-2026-05-16.md` — /friday-journal implementation report, 15 items (high: 4, med: 8, low: 3)
+- `audits/working/journal-qc-2026-05-16.md` — QC working notes from qc-reviewer subagent
+
+### Files Modified
+- `logs/ai-journal.md` — 15 entries written to active section then archived under ## Archive — 2026-05-16; active section cleared
+
+### Decisions Made
+- **QC finding 3 (research-plan-creator target):** REVISED — item relabelled as skill target; Files updated to `skills/research-plan-creator/SKILL.md`. Prior item incorrectly pointed at a command path that doesn't exist.
+- **QC finding 4 (/new-project risk-class):** FLAGGED for /risk-check — shared-state automation class; `**Risk-check required:**` bullet added to Item context.
+- **QC findings 5+6 (composite alternative, sibling redundancy):** KEPT separate — independent dispositioning by /friday-act is the right granularity; QC and refinement passes have distinct purposes.
+- **Entry #10 (/friday-act input scope):** Logged as "expand spec's required reads" rather than operator-side pre-step — operator noting 3 rounds of correction means the burden should not stay with operator.
+
+### Next Steps
+- Commit this session's files: `audits/friday-journal-2026-05-16.md`, `audits/working/journal-qc-2026-05-16.md`, `logs/ai-journal.md`, `logs/session-notes.md`, `logs/decisions.md`
+- Run `/friday-act` — report auto-loads as journal source alongside checkup
+- Push when ready
+
+### Open Questions
+- None.

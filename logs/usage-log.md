@@ -622,3 +622,31 @@ Stability vs. prior entries — no improvement on session-notes.md re-read or Re
 1. **Tail-based session-notes.md access at /prime (~4–6k tokens/session):** Replace forward-scan reads with single `tail -n 100` call; over 15 sessions: ~60–90k tokens saved.
 2. **Post-compaction state restoration from summary only (~2–3k tokens/session):** Compaction summary sufficient for resumption; re-reads of decisions.md + project CLAUDE.md post-compaction add ~1–2k tokens each.
 3. **Parallelize independent risk-check subagent launches (~1–2k tokens/session):** Three independent project risk-checks can batch in one Agent call.
+
+### 2026-05-16 | Efficient
+
+**Task:** Ingested 15 AI journal entries via /clarify → /scope refinement, then ran /friday-journal: generated 15-item implementation report, passed mechanical pre-check, ran QC subagent (REVISE verdict), dispositioned 6 findings (4 kept, 1 revised, 1 flagged for risk-check), archived active section.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~20 |
+| Files read | `logs/ai-journal.md` (~113 lines, ×1), `audits/friday-checkup-2026-05-08.md` (~98 lines, ×1), `skills/session-usage-analyzer/SKILL.md` (~60 lines partial, ×1), `logs/usage-log.md` (~30 lines tail, ×1), `logs/session-notes.md` (~5 lines tail, ×2 — prime + wrap), `logs/decisions.md` (~5 lines tail, ×1), `logs/innovation-registry.md` (~20 lines + grep, ×1), `logs/improvement-log.md` (grep, ×1) |
+| Files written/edited | `logs/ai-journal.md` (edited ×2 — entries written, then active section cleared + archive appended), `audits/friday-journal-2026-05-16.md` (created), `audits/working/journal-qc-2026-05-16.md` (created by subagent), `logs/session-notes.md` (appended), `logs/coaching-data.md` (appended) |
+| Tool calls | ~29 total (Read ×8, Bash ×15, Edit ×4, Write ×1, Agent ×1) |
+| Subagents | 1 (qc-reviewer for /friday-journal Step 5.5) |
+| Rework cycles | 2 minor targeted edits post-QC disposition (relabel research-plan-creator entry + add risk-check bullet) — expected per skill design |
+
+**Findings:**
+- Re-reads — Minor: `logs/session-notes.md` read ×2 (prime + wrap); expected pattern, not unplanned
+- False positive grep — Minor: /prime innovation-count grep matched all pipe-starting table rows (98 hits) rather than "detected" status rows only; caused a misread that required correction; no material cost but signals grep pattern fragility
+- /clarify pre-pass — Positive: ambiguity eliminated before /friday-journal ingestion; no scope drift or mid-task reorientation
+
+Stability vs. prior entries — Significant improvement over 2026-05-11 (Wasteful, ~50 tool calls, 7 subagents, 4+ re-reads). This session held re-reads to one expected double-read, subagent count to 1, and rework to planned post-QC disposition edits. Tool call volume (~29) is well below the prior session's ~50.
+
+**Recommendation:** Fix the /prime innovation-count grep pattern to filter only rows with "detected" status (column-scoped match) so the 98-hit false positive does not recur.
+
+**Estimated savings:** Minimal headroom remaining at this efficiency level; grep fix prevents a small correction loop (~2–3 Bash calls) per session.
+
+**Additional levers (ROI-ranked):**
+1. Harden innovation-count grep to column-scoped match — eliminates false-positive correction loop each /prime run
+2. Consolidate session-notes.md tail read at prime into a shared state note so the wrap read is a confirmed append-point, not a re-read — saves one Read per session
