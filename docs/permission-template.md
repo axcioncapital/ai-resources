@@ -186,6 +186,7 @@ Canonical shape:
 - Dotfile-path glob `Edit(**/.claude/**)` (root cause #2).
 - `Bash(rm *)` in allow — fixes Delete/Remove prompts.
 - `additionalDirectories` granting workspace root — required for ai-resources symlinks to resolve.
+- The `deny` list includes Read-deny patterns for archival and deprecated paths (`archive/**`, `**/*.archive.*`, `**/deprecated/**`, `**/old/**`). These suppress permission prompts on stale content directories. Apply to any project that has an `archive/` or `deprecated/` structure; omit for projects that do not.
 
 ---
 
