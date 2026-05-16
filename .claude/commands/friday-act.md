@@ -155,7 +155,7 @@ If active count ≤ 7, proceed silently.
 
 Skip this step if `SO_ADVISORY_PATH`, `SO_REVIEW_PATH`, AND `JOURNAL_PATH` are all `MISSING`. Otherwise:
 
-16a. Display targeted section reads for each available supplementary input — not a 30-line peek (the actionable content typically lives past line 30; see Notes for token-cost rationale).
+16a. Display targeted section reads for each available supplementary input — not a 30-line peek (the actionable content typically lives past line 30; see Notes for token-cost rationale). The section-target spec below is a minimum read floor: if you intend to assert what an advisory contains (e.g., "the priority filter mirrors all 12 checkup items"), you must read the relevant sections in full before asserting — spec-literal compliance does not substitute for judgment about how much context a claim requires.
 
 **SO Advisory** — if `SO_ADVISORY_PATH` is not `MISSING`:
 - Display the file path as a header.
