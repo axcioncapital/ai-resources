@@ -438,3 +438,24 @@ Ran /friday-journal on a freshly populated ai-journal.md. Active section was ini
 
 ### Open Questions
 - None.
+
+## 2026-05-16 — fix /prime Step 2 innovation-count grep (BSD grep BRE false positive)
+
+### Summary
+Single targeted fix to /prime Step 2. The innovation-count grep used `\|` escapes which BSD grep on macOS treats as BRE alternation, causing the pattern to match every pipe-starting table row (returning 98 instead of 0). Replaced with a column-scoped awk command that correctly checks the Status column value.
+
+### Files Created
+- None.
+
+### Files Modified
+- `.claude/commands/prime.md` — Step 2 innovation-count: replaced broken grep pattern with `awk -F'|' 'NR>2 && $5~/^ detected $/{c++}END{print c+0}'`
+
+### Decisions Made
+- None beyond the bug fix itself.
+
+### Next Steps
+- Push: 2 commits pending (`9ff8b05` session wrap, `d3c27ff` prime fix)
+- Run `/friday-act` — friday-journal report is ready to consume
+
+### Open Questions
+- None.
