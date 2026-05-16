@@ -129,15 +129,15 @@ Files to read:
 - `projects/project-planning/output/interpersonal-communication/project-plan-v3.md` (project overview and rationale)
 - `projects/project-planning/output/interpersonal-communication/tech-spec-v2.md` (the implementation authority for each phase)
 
-**Step 8 — Set up your model tier**
+**Step 8 — Select your session model**
 
-The interpersonal-communication project uses Sonnet 1M as the default model. This setting is stored in a gitignored file you need to create yourself:
+Model defaults are deliberately not declared in `settings.json` or `CLAUDE.md` anywhere in this workspace (declaring one blocks in-session `/model` switches). Select the model manually at the start of each session.
 
-1. In your project folder, look for `.claude/settings.local.json`
-2. If it doesn't exist, create it
-3. Follow the `Model Selection` section in the project CLAUDE.md — it tells you the exact value to use
+1. At session start, run `/model` and pick the tier for the work ahead.
+2. For interpersonal-communication, recommended posture is **Sonnet 1M** for KB ops, command execution, and role-play drills; **Opus** for strategic analysis or `interpersonal-consultant` consultations. See `Model Selection` in the project CLAUDE.md for the full recommendation.
+3. Some slash commands and agents declare their own tier via `model:` frontmatter — those run on their declared tier regardless of your session-model choice. That is intentional.
 
-This is a one-time setup per machine. Once done, Claude will use the correct model tier automatically.
+This is per session, not a one-time setup.
 
 **Step 9 — You're oriented**
 

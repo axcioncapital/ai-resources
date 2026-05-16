@@ -27,7 +27,7 @@ See `skills/ai-resource-builder/SKILL.md` for skill format, creation sequence, i
 
 ## Model Selection
 
-Agent model tiering: see workspace `CLAUDE.md` → Model Tier → Agents for the canonical rule and Agent Tier Table.
+**Model defaults are prohibited.** Never add a `"model"` field to any `.claude/settings.json` or `.claude/settings.local.json`, and never declare a default model in any `CLAUDE.md`. The operator selects the session model via `/model`; settings/CLAUDE.md defaults block in-session model switches. See workspace `CLAUDE.md` → Model Tier for the full rule. Per-command, per-agent, and per-skill `model:` frontmatter (in slash-command files, agent definitions, and `SKILL.md` files) is the only permitted way to assert a tier outside the live session — see Agent Tier Table for agents.
 
 ## Subagent Contracts
 

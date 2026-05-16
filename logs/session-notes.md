@@ -282,3 +282,53 @@ Off-schedule Saturday run of `/friday-checkup` weekly tier across 5 scopes (ai-r
 
 ### Open Questions
 - None.
+
+## 2026-05-16 — Prohibit model defaults workspace-wide (settings.json AND CLAUDE.md)
+
+### Summary
+Operator reported that declaring a model in settings.json or as a default in CLAUDE.md prevents in-session `/model` switches from taking effect. Extended the existing "no model in settings.json" rule (originally 2026-05-08) to also cover CLAUDE.md — model defaults are now prohibited at every config layer workspace-wide. The only permitted mechanism for declaring a tier outside the live session is per-command, per-agent, and per-skill `model:` YAML frontmatter. Removed all model defaults from settings + CLAUDE.md, updated repo documentation, rewrote the related memory note.
+
+### Files Created
+- None.
+
+### Files Modified
+- `.claude/settings.json` — removed `"model": "sonnet[1m]"` (workspace root)
+- `projects/buy-side-service-plan/.claude/settings.local.json` — emptied to `{}`
+- `projects/project-planning/.claude/settings.local.json` — emptied to `{}`
+- `projects/obsidian-pe-kb/.claude/settings.local.json` — emptied to `{}`
+- `projects/obsidian-pe-kb/.claude/settings.json` — removed `"model"` field
+- `projects/interpersonal-communication/vault/.claude/settings.json` — removed `"model"` field
+- `ai-resources/workflows/research-workflow/.claude/settings.json` — removed `"model"` field
+- `ai-resources/skills/obsidian-kb-builder/templates/scaffold/settings.json` — removed `"model"` field (template; propagates to new vaults)
+- `CLAUDE.md` — workspace-level § Model Tier rewritten with explicit prohibition + rationale; per-skill frontmatter added to permitted mechanisms
+- `ai-resources/CLAUDE.md` — § Model Selection rewritten with prohibition pointer
+- `projects/buy-side-service-plan/CLAUDE.md` — Model Selection rewritten as recommended-posture only
+- `projects/project-planning/CLAUDE.md` — Model Selection rewritten as recommended-posture only
+- `projects/obsidian-pe-kb/CLAUDE.md` — Model Selection rewritten as recommended-posture only
+- `projects/interpersonal-communication/CLAUDE.md` — Model Selection rewritten as recommended-posture only
+- `projects/global-macro-analysis/CLAUDE.md` — Model Selection rewritten as recommended-posture only
+- `projects/personal/travel-os/CLAUDE.md` — Model Selection rewritten as recommended-posture only
+- `ai-resources/docs/permission-template.md` — removed `"model": "sonnet"` from canonical Layer C template; key-assertion flipped to "no `model` field" with rationale
+- `ai-resources/docs/audit-discipline.md` — model-default audit recommendations must be rejected outright, not run through the discipline
+- `ai-resources/docs/autonomy-rules.md` — Autonomy Rule #8 no longer lists model-default changes (prohibited outright, not gateable)
+- `ai-resources/docs/onboarding-daniel.md` — "Set up your model tier" rewritten as "Select your session model" (per-session via `/model`)
+- `ai-resources/docs/repo-architecture.md` — project directory map annotated "no default model — prohibited"
+- `ai-resources/.claude/commands/deploy-workflow.md` — canonical-merge no longer adds `model: sonnet[1m]`; uses `del(.model)` to strip pre-existing model fields on deploy
+- `~/.claude/projects/.../memory/feedback_no_model_in_settings_json.md` — rewritten to cover settings.json AND CLAUDE.md, clarifies per-command/agent/skill frontmatter remains permitted
+
+### Decisions Made
+- **Scope of prohibition.** Extended from settings.json-only (prior rule, 2026-05-08) to also cover CLAUDE.md, per operator directive. Rationale: same downstream effect — both layers block in-session `/model` switches.
+- **Recommended-posture preserved in project CLAUDE.md.** Operator did not direct removal of the per-project Model Selection sections; rewrote them as recommendation-only ("lean Opus for plan drafting; Sonnet for routine edits") rather than deleting. This preserves project-specific tier guidance without asserting a default.
+- **Skills added to permitted mechanisms** (operator correction mid-session: "Yes, and its also allowed for skills"). Initial draft only mentioned commands + agents; expanded to commands + agents + skills across workspace CLAUDE.md, ai-resources CLAUDE.md, and the memory note.
+- **deploy-workflow merge procedure now strips a pre-existing `model` field** via `del(.model)` rather than just not setting one. Catches drift from older deploys that ran the previous merge logic.
+
+### Next Steps
+- Push the upcoming commit (operator approval required).
+- Verify `/model` switches work as expected in the next session start.
+- Optional `/friday-act` candidate: scan archived/historical audit files for stale "add canonical model baseline" recommendations and tag them as superseded.
+
+### Open Questions
+- None.
+
+### End-time risk-check
+Skipped. Change scope was operator-directed end-to-end with a mid-session correction (skills added to permitted mechanisms) already incorporated. Touched classes: cross-cutting CLAUDE.md edits, settings edits, one shared command edit (`deploy-workflow.md`). All changes are reversible config/doc edits; no hook execution paths, no permission allow/deny shifts, no symlinks. Operator directive was explicit and tightly scoped. Coaching + telemetry both declined in preflight.

@@ -71,10 +71,10 @@
 
 ```
 ~/Claude Code/Axcion AI Repo/projects/<project>/  # one project sub-repo
-├── CLAUDE.md                                     # project-specific always-loaded rules + Model Selection
+├── CLAUDE.md                                     # project-specific always-loaded rules (no default model — prohibited)
 ├── .claude/
-│   ├── settings.json                             # project permissions
-│   ├── settings.local.json                       # per-machine (e.g., model override)
+│   ├── settings.json                             # project permissions (no "model" field — prohibited)
+│   ├── settings.local.json                       # per-machine overrides (no "model" field — prohibited)
 │   ├── shared-manifest.json                      # declares which commands/agents are local vs shared
 │   ├── commands/                                 # symlinks to ai-resources + project-local files
 │   ├── agents/                                   # symlinks to ai-resources + project-local files

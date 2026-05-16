@@ -107,3 +107,18 @@
 **Alternatives considered.**
 - *Apply the canonical denies anyway:* Rejected — operator policy is explicit and recent.
 - *Update the canonical template to reflect operator's chosen setup:* Out of scope for diagnostic-only session; logged as potential `/friday-act` candidate to align template with policy.
+
+---
+
+## 2026-05-16 — Extend model-default prohibition from settings.json to also cover CLAUDE.md
+
+**Context.** Existing rule (2026-05-08, `feedback_no_model_in_settings_json`) prohibited declaring a `"model"` field in any `.claude/settings.json`. Operator now reports that declaring a default model in `CLAUDE.md` produces the same downstream effect: in-session `/model` switches don't take effect reliably. Operator directive: "remove the default model in settings.json or claude.md. Also note somewhere that model default IS NOT ALLOWED in settings.json or claude.md ANYWHERE in the workspace."
+
+**Decision.** Extend the prohibition to cover both settings.json AND CLAUDE.md at every layer (user, workspace, ai-resources, project, vault). Per-command, per-agent, and per-skill `model:` YAML frontmatter remains the only permitted mechanism for declaring a tier outside the live session. Project-level `Model Selection` sections may describe *recommended posture* only (e.g., "lean Opus for plan drafting; Sonnet for routine edits") — never assert a default.
+
+**Rationale.** Same root cause (operator cannot reliably override via `/model` when a default is declared upstream). Treating CLAUDE.md and settings.json identically under the rule eliminates the loophole and makes the prohibition memorable as a single line. Recommended-posture text preserved because operator wants project-specific tier guidance to remain accessible — just not asserted as a binding default.
+
+**Alternatives considered.**
+- *Delete project CLAUDE.md `Model Selection` sections entirely.* Rejected — operator directed removal of the *default*, not removal of guidance. Recommended-posture text is useful onboarding signal for project-tier judgment.
+- *Restrict prohibition to settings.json only.* Rejected — operator directive explicitly named CLAUDE.md as a second affected layer.
+- *Strip model frontmatter from commands/agents/skills as well.* Rejected — frontmatter is the operator's preferred declaration mechanism. Operator confirmed mid-session: "commands can have frontmatter… Yes, and its also allowed for skills."

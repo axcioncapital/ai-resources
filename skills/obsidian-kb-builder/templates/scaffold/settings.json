@@ -17,6 +17,5 @@
       "Bash(rm -rf *)",
       "Bash(sudo *)"
     ]
-  },
-  "model": "sonnet[1m]"
+  }
 }

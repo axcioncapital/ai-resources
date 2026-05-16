@@ -159,7 +159,6 @@ Canonical shape:
 
 ```json
 {
-  "model": "sonnet",
   "permissions": {
     "defaultMode": "bypassPermissions",
     "allow": [
@@ -182,7 +181,7 @@ Canonical shape:
 ```
 
 **Key assertions:**
-- `model: "sonnet[1m]"` at top level (workspace-root fallback; the `[1m]` suffix forces 1M context). Projects override via `.claude/settings.local.json` per their declared Model Selection.
+- **No `"model"` field.** Model defaults are prohibited at every settings layer (see workspace `CLAUDE.md` § Model Tier). A declared model blocks the operator's in-session `/model` switch. Audit recommendations that suggest adding a "canonical model baseline" must be rejected.
 - `defaultMode: "bypassPermissions"` (root causes #1, #3).
 - Dotfile-path glob `Edit(**/.claude/**)` (root cause #2).
 - `Bash(rm *)` in allow — fixes Delete/Remove prompts.

@@ -195,7 +195,7 @@ fi
 }
 ```
 
-**Canonical model default.** The merge procedure below also sets `"model": "sonnet[1m]"` at the top level of `settings.json` if unset, establishing Sonnet 1M as the per-turn default (the `[1m]` suffix forces 1M context; bare `sonnet` resolves to 200k). Per-project overrides go in `.claude/settings.local.json` per the project's Model Selection section.
+**No model default is set.** Model defaults in `settings.json` are prohibited workspace-wide (workspace `CLAUDE.md` § Model Tier — a declared model blocks in-session `/model` switches). The operator selects the model per session via `/model`. If a pre-existing `settings.json` contains a `model` field, the merge procedure below strips it.
 
 **Merge procedure:**
 
@@ -210,11 +210,11 @@ CANONICAL_PERMS='{"allow":["Bash(*)","Read","Edit","Write","MultiEdit","Agent","
 
 jq --argjson perms "$CANONICAL_PERMS" '
   (if (.permissions.allow // []) | length > 0 then . else .permissions = $perms end)
-  | (if (.model // "") == "" then .model = "sonnet[1m]" else . end)
+  | del(.model)
 ' "$SETTINGS" > "$SETTINGS.tmp" && mv "$SETTINGS.tmp" "$SETTINGS"
 ```
 
-Report in the enrichment output whether `permissions` was added or already present, and whether `model: sonnet[1m]` was added or already present.
+Report in the enrichment output whether `permissions` was added or already present, and whether a pre-existing `model` field was stripped.
 
 **Interaction with the research-workflow template.** The template's own `settings.json` already carries a `permissions` block (added alongside this change), so on a fresh deploy the predicate returns true and this sub-step is a no-op. The sub-step remains load-bearing for (a) any future template that ships without a `permissions` block and (b) running `/sync-workflow` on older projects that were deployed before the template fix landed.
 
