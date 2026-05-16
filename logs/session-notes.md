@@ -370,3 +370,39 @@ Ran a full innovation triage sweep across 6 selected projects (axcion-ai-system-
 
 ### End-time risk-check
 Skipped — session touched no structural change classes (no hooks, no permission changes, no CLAUDE.md edits, no commands/skills/symlinks). Files produced were audit outputs and a registry log append only.
+
+## 2026-05-16 — /friday-act: weekly checkup triage, 7 plan files (28 fix-now items)
+Class: execution
+
+### Summary
+Ran /friday-act against the 2026-05-16 weekly checkup report. Disposititioned 46 items across three sources (17 checkup, 14 innovation-sweep, 15 friday-journal) into 28 fix-now and 18 deferred. Used /recommend to self-determine all dispositions after operator expanded scope to include the innovation-sweep report. Generated 7 plan files grouped by area. QC pass (qc-reviewer) returned REVISE verdict; 3 fixes applied before commit.
+
+### Files Created
+- `audits/friday-plans/2026-05-16-nordic-pe-macro.md` — 4 items: context/ restore decision, SKILL.md frontmatter, CLAUDE.md pipeline-frontmatter note, /improve run
+- `audits/friday-plans/2026-05-16-permission-sweep.md` — 3 items: gitignore fixes (H-2/H-3), additionalDirectories (H-4), form-normalization advisories
+- `audits/friday-plans/2026-05-16-ai-resources-maintenance.md` — 6 items: git push, /resolve-improvement-log, cleanup-worktree ×2, hardcoded path fix, usage-log archive
+- `audits/friday-plans/2026-05-16-permission-template.md` — 3 items: G1 SessionStart upward-walk, G2 deny-archive pattern, G5 PostToolUse taxonomy doc
+- `audits/friday-plans/2026-05-16-innovation.md` — 4 items: G6 compaction cost-test rule, LE4 broken symlink fix, LE5 model field removal, registry update
+- `audits/friday-plans/2026-05-16-journal-improvements.md` — 5 items: SessionStart hook chain, /new-project canonical commands, CLAUDE.md decision-point posture, /friday-act required-reads expansion, /audit-repo vs /repo-dd investigation
+- `audits/friday-plans/2026-05-16-friday-journal.md` — 3 items: QC sub-agent (vague/duplicate detection), drop-check step, risk-check auto-flagging step
+
+### Files Modified
+- `logs/maintenance-observations.md` — 2026-05-16 Friday Act session block appended (28 fix-now, 18 defer, 7 plan files, all-hold autonomy axes)
+
+### Decisions Made
+- **Disposition strategy (/recommend):** Self-dispositioned all 46 items; 28 fix-now across 7 plan files, 18 deferred, 0 skipped. Autonomy-axis all hold; operator observations defaulted to (none).
+- **Innovation-sweep scope expansion:** Operator requested inclusion of `audits/innovation-sweep-2026-05-16.md` findings alongside checkup and journal sources. Items labeled as source: innovation-sweep in maintenance-observations; plan files use `journal-derived` tag per /friday-act spec (only three allowed source values).
+- **Journal items retroactively dispositioned:** 15 friday-journal items were inadvertently dropped when the innovation-sweep was merged into the disposition prompt. Self-added dispositions via /recommend; 2 extra plan files written (journal-improvements, friday-journal).
+- **QC fixes applied (REVISE verdict):** (1) permission-template.md Item 1 — risk-check flag corrected from "no" to "yes — change class: settings.json/hooks" (cross-project hook updates are in-class even though the doc edit is not); (2) journal-improvements.md Item 4 — added execution-note caveat re shared-state-automation boundary; (3) friday-journal.md Items 1–3 — same caveat added.
+
+### Next Steps
+- Push: `git push` — 9 unpushed commits in ai-resources (8 prior sessions + this wrap commit)
+- Execute plan files in follow-up sessions — priority order:
+  1. `nordic-pe-macro` (CRITICAL: missing context/ directory)
+  2. `permission-sweep` (HIGH: gitignore + additionalDirectories)
+  3. `ai-resources-maintenance` (git push + resolve-improvement-log + cleanup)
+  4. `permission-template`, `innovation`, `journal-improvements`, `friday-journal` (in any order)
+- Each plan file is one follow-up session; run /risk-check for items flagged "yes" before executing those items
+
+### Open Questions
+- None.

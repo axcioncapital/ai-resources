@@ -703,3 +703,24 @@ Stability vs. prior entries — Significant improvement over 2026-05-11 (Wastefu
 
 **Additional levers (ROI-ranked):**
 No additional levers — session was efficient.
+
+### 2026-05-16 | Acceptable
+
+**Task:** Ran /friday-act against the 2026-05-16 weekly checkup report. Dispositioned 46 items across 3 sources into 28 fix-now / 18 deferred, wrote 7 plan files to audits/friday-plans/, applied 3 targeted edits after a QC-reviewer subagent returned a REVISE verdict.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | 15 |
+| Files read | 10 (re-reads: 1) |
+| Files written/edited | 10 |
+| Tool calls | ~35 total |
+| Subagents | 1 |
+| Rework cycles | 1 |
+
+**Findings:**
+- Re-reads: maintenance-observations.md read twice (append point + format check) — Minor. Combine into a single tail read.
+- Rework: QC-reviewer returned REVISE; 3 edits applied across 2 plan files — Moderate. Risk-check flag misclassification and missing execution-note caveats could be caught by a pre-write checklist.
+
+**Recommendation:** Add a pre-write checklist for plan files — confirm risk-check flag eligibility and caveat requirements before writing each artifact rather than catching gaps in the QC pass.
+
+**Estimated savings:** ~3–5k tokens/session in rework overhead avoided; ~1–2k from combining maintenance-observations reads.

@@ -413,3 +413,10 @@
 - **Decisions logged:** 0
 - **QC cycles:** 0
 - **Gates:** 3 (0 changed) — project-selection:confirmed, scope-approval:confirmed, plan-approval:confirmed
+
+### 2026-05-16 — /friday-act: weekly checkup triage, 7 plan files
+- **Commands used:** /prime, /friday-act, /recommend, /qc-pass, /wrap-session
+- **Iterations:** 0
+- **Decisions logged:** 0
+- **QC cycles:** 1 (REVISE → 3 fixes applied → commit)
+- **Gates:** 2 (changed) — content-review: changed (operator expanded scope to include innovation-sweep findings mid-presentation), qc-disposition: changed (operator directed "Fix" on REVISE verdict)
