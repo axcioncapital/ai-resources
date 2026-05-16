@@ -165,3 +165,45 @@
   - `ai-resources/.claude/commands/critique-draft.md` (new)
   - Possibly a generic `ai-resources/.claude/agents/strategic-critic.md` if the verdict format is to be standardized
   - `projects/buy-side-service-plan/.claude/commands/challenge.md` (refactor as wrapper)
+
+### 2026-05-16 — /session-start confirmation token is ambiguous and silently accepts corrections as confirmations
+- **Status:** applied 2026-05-16
+- **Verified:** 2026-05-16 — commit 9a58073 (update: session-start.md — explicit confirmation token + parser rules)
+- **Category:** command
+- **Friction source:** 2026-05-11 friction entry 1 — operator replied `c. Next /session-plan` meaning "confirm; next session will be /session-plan"; Claude parsed `c.` as a correction to field c ("Done when").
+- **Proposal:** Edit `.claude/commands/session-start.md` Step 2: (1) prompt becomes `"Reply 'confirm' (or 'y') to accept, or list field corrections in the form 'b: <new text>'. Bare single letters other than 'y' are treated as ambiguous and re-asked."`; (2) add rejection rule for `^[a-z]\.?(\s|$)` matches that are not exactly `y` — re-ask once with the valid forms listed; (3) parser rule: correction syntax requires `<letter>:` (colon, not period) followed by replacement text on the same line.
+
+### 2026-05-16 — /prime trusts a single state snapshot — third occurrence; promote to recurrence-fix
+- **Status:** applied 2026-05-16
+- **Verified:** 2026-05-16 — commit 480d5b0 (update: prime.md — cross-check Next Steps against git log)
+- **Category:** instruction-fix (RECURRING)
+- **Friction source:** 2026-05-11 friction entry 4 — /prime reported Bundles 1, 2, 5 as "deferred" when commits `f44684b`, `851a15d`, `62bf33f` had shipped them. Third instance in the same family (Apr-18 #1 and #2 archived/verified).
+- **Proposal:** Edit `.claude/commands/prime.md`: (1) new Step 1a — when extracting Next steps, parse source-entry timestamp; run `git log --since="<entry-timestamp>" --pretty=%s` and flag each bullet that matches a commit subject/body as `(likely DONE — commit <hash>)`; (2) sibling-entry sweep — if `logs/session-notes.md` has additional `## <today's date>` entries after the source, warn `"Multiple same-day session entries exist (parallel wraps possible). Next-Steps inherited from <Bundle X>; review against entries: <list>."`; (3) add top-of-file principle: `"Prime never asserts state from a single source. Each surfaced next-step / status claim must be cross-checked against git log since the claim's source timestamp."`
+
+### 2026-05-16 — /session-plan template produces sparse plans that fail as standalone execution briefs
+- **Status:** applied 2026-05-16
+- **Verified:** 2026-05-16 — commit 3894195 (update: session-plan.md — Step 7 template: Findings, Execution Sequence, Scope Alternatives)
+- **Category:** rule / command
+- **Friction source:** 2026-05-11 friction entry 3 — drift-fix session plan ended up as a pointer to the drift report; operator said "why is there so little information in the session plan?"
+- **Proposal:** Edit `.claude/commands/session-plan.md` Step 7 template to add three required sections before the QC trigger: `## Findings / Items to Address` (numbered list with source-doc anchor; minimum 1, no upper limit), `## Execution Sequence` (numbered steps with per-item verification), `## Scope Alternatives` (min / recommended / max, or "Single scope — no alternatives"). Add Step 7 precondition: if `INTENT` references a separate report/spec/drift file, the Findings section MUST inline one-line summaries of each item — bare link invalid. End-of-Step-7 self-check: "If the plan is fewer than 25 lines or contains a bare link as its only description of work items, expand before writing."
+
+### 2026-05-16 — /session-plan vs /monday-prep C15 conflate "current session" and "next session" semantics
+- **Status:** applied 2026-05-16
+- **Verified:** 2026-05-16 — commit e41c890 (update: monday-prep C15 + weekly-cadence — scope separation, no inline /session-plan)
+- **Category:** command / process
+- **Friction source:** 2026-05-11 friction entry 2 — /monday-prep C15 invokes `/session-plan` inline meaning "plan the *next* work session," but `/session-plan` Step 0 verifies today's `/prime` ran and Step 5 talks about "this session's autonomy posture" — both assume active session.
+- **Proposal:** Edit `.claude/commands/monday-prep.md` C15: replace the inline `/session-plan` invocation with a scaffold write. Print: `"Write a next-session planning scaffold to logs/session-plan-next.md? (y/n)"`. On `y`, write a stub file containing only the `## Intent` line populated from the week mandate's first work item, plus a one-line note: `"Run /session-plan in the next session to fill out this scaffold."` Do NOT call `/session-plan` from inside `/monday-prep`. Add a one-paragraph note to `docs/weekly-cadence.md` (create if absent) explicitly stating: week mandate (Monday) is week-scope; per-session plan is session-scope; they are written in separate sessions.
+
+### 2026-05-16 — /consult invoked when targeted Read would have answered
+- **Status:** applied 2026-05-16
+- **Verified:** 2026-05-16 — commit 2e71e1a (update: consult.md — Step 0 Read-first gate + reservation note)
+- **Category:** rule
+- **Friction source:** 2026-05-08 friction entry 18:26 — `/consult` burned ~95k tokens and 2.5 min on Opus when a 5-min targeted Read of `/deploy-workflow.md` would have answered the same question.
+- **Proposal:** Edit `.claude/commands/consult.md` to add a Step 0 precondition gate: `Before invoking /consult, answer: (a) Have I already given a recommendation on this question? (b) If yes, is there a single file (≤ 300 lines) whose contents would either confirm or refute it? If both = yes: do the Read first. Only invoke /consult if the Read surfaces a genuine ambiguity or a load-bearing conflict that cannot be resolved from the file.` Also add a one-line entry to the `/consult` usage rationale: "Reserve for genuinely contested or load-bearing system-shape questions, not for verification of already-confident recommendations."
+
+### 2026-05-16 — /friday-act spec's "30-line peek" treated as ceiling instead of floor on heavy-disposition days
+- **Status:** applied 2026-05-16
+- **Verified:** 2026-05-16 — commit 6888a4a (update: read-scope floors — workspace CLAUDE.md § Working Principles + friday-act.md Step 16a)
+- **Category:** rule / command
+- **Friction source:** 2026-05-08 friction entry 14:05 — Claude read the SO advisory + systems-review spec as "first 30 lines peek" and made claims it could not verify. Operator said "this was supposed to be your job as well" — judgment about reading scope was Claude's.
+- **Proposal:** Edit `.claude/commands/friday-act.md` (and `.claude/commands/friday-so.md` if it uses the same pattern) to add explicit "Read-scope is a floor, not a ceiling" note in the initial read step: `The N-line peek below is the minimum read scope. If you intend to make disposition claims about the document's contents (e.g., "the priority filter mirrors all 12 items"), you MUST read the relevant sections in full first. Spec-literal compliance does not substitute for judgment about how much context a downstream claim requires.` Add related entry to workspace `CLAUDE.md` under "Design Judgment Principles" or "Working Principles": `"Read-scope floors. When a command specifies a minimum read scope (e.g., 'first 30 lines'), treat it as a floor. Expand when downstream claims are load-bearing — judgment about adequate context is yours, not the spec's."`
