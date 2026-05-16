@@ -509,15 +509,94 @@ EOF
    Report in the step output:
    - created new CLAUDE.md / appended Input File Handling / appended Commit Rules / appended Compaction / appended Session Boundaries / already present (per section)
 
+4a. **Scaffold `projects/{name}/logs/` with `decisions.md`.** Every project tracks session-level decisions in `logs/decisions.md` (mirror of the ai-resources logs convention; consumed by `/prime` Step 4 and `/wrap-session`). Create the directory and a minimal scaffold file. Idempotent — skip the write if the file already exists, but still ensure the directory is present.
+
+   ```bash
+   LOGS_DIR="projects/{name}/logs"
+   mkdir -p "$LOGS_DIR"
+
+   if [ ! -f "$LOGS_DIR/decisions.md" ]; then
+     cat > "$LOGS_DIR/decisions.md" <<'EOF'
+# Decisions — {name}
+
+Cross-session decisions log. Newest entries at the bottom (append-only).
+
+Each entry uses the canonical shape:
+
+```
+## YYYY-MM-DD — {one-line decision title}
+
+**Context.** {what prompted the decision; one short paragraph}
+
+**Decision.** {what was decided; one or two sentences}
+
+**Rationale.** {why this choice over alternatives; one paragraph}
+
+**Alternatives considered.**
+- *{alternative 1}:* {one line on why not}
+- *{alternative 2}:* {one line on why not}
+```
+EOF
+     # Note: `{name}` is substituted by the calling agent before this bash block
+     # executes — same convention as all other `{name}` references in this file.
+     echo "Created $LOGS_DIR/decisions.md"
+   else
+     echo "$LOGS_DIR/decisions.md already present — skipping"
+   fi
+   ```
+
+   Report in the step output:
+   - created `logs/decisions.md` / already present
+
 5. **Initial sync** — run the hook once now so the project starts with all shared commands/agents already linked, instead of waiting for the next session start:
 
    ```bash
    CLAUDE_PROJECT_DIR="projects/{name}" bash ai-resources/.claude/hooks/auto-sync-shared.sh
    ```
 
+5a. **Canonical command verification.** After the initial sync, verify the minimum-required canonical commands are present in `projects/{name}/.claude/commands/`. The auto-sync hook should have installed all of these — this step is a safety-net that catches regressions in the hook's exclusion logic or in the project's `shared-manifest.json`.
+
+   Required canonical commands (every project must have these on session 1):
+   - `prime.md` — session orientation
+   - `wrap-session.md` — session closeout
+   - `session-start.md` — Phase-3 mandate capture
+   - `session-plan.md` — session-orchestration planning
+   - `open-items.md` — backlog inventory
+   - `qc-pass.md` — independent QC pass
+   - `resolve.md` — QC-finding triage and resolution
+   - `clarify.md` — request-clarification structured prompt
+   - `scope.md` — scope-summary generator
+   - `recommend.md` — operator-defers-to-Claude self-decision path
+
+   ```bash
+   MISSING=()
+   for cmd in prime wrap-session session-start session-plan open-items qc-pass resolve clarify scope recommend; do
+     if [ ! -L "projects/{name}/.claude/commands/${cmd}.md" ] && [ ! -f "projects/{name}/.claude/commands/${cmd}.md" ]; then
+       MISSING+=("${cmd}.md")
+     fi
+   done
+
+   if [ ${#MISSING[@]} -gt 0 ]; then
+     echo "WARN: ${#MISSING[@]} canonical command(s) missing after initial sync:"
+     printf '  - %s\n' "${MISSING[@]}"
+     echo ""
+     echo "Re-run the auto-sync hook manually:"
+     echo "  CLAUDE_PROJECT_DIR=\"projects/{name}\" bash ai-resources/.claude/hooks/auto-sync-shared.sh"
+     echo ""
+     echo "If the commands remain missing after the manual re-run, investigate:"
+     echo "  - projects/{name}/.claude/shared-manifest.json — check commands.local for accidental inclusions"
+     echo "  - ai-resources/.claude/hooks/auto-sync-shared.sh — check the baked-in exclusion list"
+   else
+     echo "All 10 canonical commands present."
+   fi
+   ```
+
+   Report in the step output:
+   - canonical commands status: all present / N missing (named) + remediation hint emitted
+
 ### Report
 
-Report what was created: manifest path, settings.json modifications (permissions block, SessionStart hook, `additionalDirectories` grant), CLAUDE.md state (created / appended / already present), and the list of files the initial sync symlinked. Do not commit — the operator reviews the enrichment alongside the pipeline output. From this point on, any new command added to `ai-resources/.claude/commands/` will be available in this project on the next session start automatically, and skills under `ai-resources/skills/` are reachable via the filesystem grant.
+Report what was created: manifest path, settings.json modifications (permissions block, SessionStart hook, `additionalDirectories` grant), CLAUDE.md state (created / appended / already present), `logs/decisions.md` scaffold (created / already present), the list of files the initial sync symlinked, and the canonical command verification result (all 10 present / N missing). Do not commit — the operator reviews the enrichment alongside the pipeline output. From this point on, any new command added to `ai-resources/.claude/commands/` will be available in this project on the next session start automatically, and skills under `ai-resources/skills/` are reachable via the filesystem grant.
 
 ## Key Rules
 
