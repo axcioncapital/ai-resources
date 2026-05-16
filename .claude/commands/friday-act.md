@@ -69,7 +69,19 @@ Locate the freshest System Owner outputs from this week's cadence. These are sup
 - Apply filters: filename `date >= REPORT_DATE` AND filename `date >= TODAY - 7 days`. If filtered out, treat as `MISSING`.
 - Set `JOURNAL_PATH` to the resolved absolute path or the literal string `MISSING`.
 
-If `SO_ADVISORY_PATH`, `SO_REVIEW_PATH`, AND `JOURNAL_PATH` are all `MISSING`, continue to Step 2 silently — `/friday-act` does not depend on supplementary inputs to function. Otherwise carry the resolved paths forward to Step 3 (display) and Step 3.5 (disposition prompt).
+**Project-internal logs locator** — depends on the `## Scopes audited` block in `REPORT_PATH`:
+
+- Lightweight extract of `## Scopes audited` from `REPORT_PATH` (the full report is read in Step 2; this locator only needs the scope-list block). Each bullet starting with `- project ` names a scoped project (e.g., `- project nordic-pe-macro-landscape-H1-2026`). Strip the `- project ` prefix to get the project directory name.
+- Set `WORKSPACE` = parent directory of `AI_RESOURCES`.
+- For each scoped project name, resolve three optional paths under `{WORKSPACE}/projects/{name}/logs/`:
+  - `improvement-log.md`
+  - `session-notes.md`
+  - `friction-log.md`
+- Set `PROJECT_LOG_BUNDLES` to a list of `{project, improvement_path, session_notes_path, friction_log_path}` records. Include only paths that exist on disk; if a project has none of the three files, omit that project from the list entirely.
+- If `## Scopes audited` is absent from `REPORT_PATH` or contains no `- project ` rows, set `PROJECT_LOG_BUNDLES` to the empty list.
+- Project-internal logs for `ai-resources` are already covered by Step 1.7 (improvement-log health check) — do not duplicate that read here.
+
+If `SO_ADVISORY_PATH`, `SO_REVIEW_PATH`, and `JOURNAL_PATH` are all `MISSING` AND `PROJECT_LOG_BUNDLES` is empty, continue to Step 2 silently — `/friday-act` does not depend on supplementary inputs to function. Otherwise carry the resolved paths forward to Step 3 (display) and Step 3.5 (disposition prompt).
 
 ---
 
@@ -111,8 +123,9 @@ If active count ≤ 7, proceed silently.
       Friday Advisory: {SO_ADVISORY_PATH | (none within 7 days)}
       Systems Review:  {SO_REVIEW_PATH | (none within 7 days)}
       Journal Report:  {JOURNAL_PATH | (none within 7 days)}
+      Project logs:    {len(PROJECT_LOG_BUNDLES)} scoped project(s){ — names list, or (none)}
     After dispositioning the checkup items below, you'll be prompted to add any
-    System Owner-derived items and journal-derived items for disposition (Step 3.5).
+    System Owner-derived items, journal-derived items, and project-derived items for disposition (Step 3.5).
 
     Tactical follow-ups from {REPORT_DATE} ({TIER} tier):
       1. [high] {item}
@@ -142,16 +155,36 @@ If active count ≤ 7, proceed silently.
 
 Skip this step if `SO_ADVISORY_PATH`, `SO_REVIEW_PATH`, AND `JOURNAL_PATH` are all `MISSING`. Otherwise:
 
-16a. For each available SO file, print the first 30 lines (lightweight peek, no parsing — headers, executive summary, and binding-constraint sections typically fit in this window). Display the source path as a header before each peek.
+16a. Display targeted section reads for each available supplementary input — not a 30-line peek (the actionable content typically lives past line 30; see Notes for token-cost rationale).
+
+**SO Advisory** — if `SO_ADVISORY_PATH` is not `MISSING`:
+- Display the file path as a header.
+- Extract every `## ` section whose heading contains the substring `Recommendation` (case-insensitive) OR `Observation` (case-insensitive). The substring match handles section-name variations across SO versions (e.g., `## Incremental Recommendations`, `## Systems-Thinking Observations`, or `## Recommendations` / `## Observations` in older formats).
+- For each matched section, display the full section content (from the `## ` heading line through the line before the next `## ` heading or EOF).
+- If no matching sections are found, fall back to printing the first 30 lines with the note `(section-target match failed — falling back to 30-line peek; report may use unfamiliar section names)`.
+
+**Systems Review** — if `SO_REVIEW_PATH` is not `MISSING`:
+- Display the file path as a header.
+- Extract every `## ` section whose heading contains the substring `Leverage Point` (case-insensitive — matches both `## Leverage Point Assessment` and `## Leverage Points`).
+- For each matched section, display the full section content (heading through line before next `## ` or EOF).
+- If no matching section is found, fall back to the 30-line peek with the same fallback note.
+
+**Project-internal logs** — for each entry in `PROJECT_LOG_BUNDLES`:
+- Display a header: `Project: {project}`
+- If `improvement_path` is set: read the file and display every entry whose `**Status:**` line contains `logged` or `pending` (active set; same parser as Step 1.7). If no active entries, print `(no active improvement-log entries)`.
+- If `session_notes_path` is set: read the file and display the last 3 entries (most-recent `## ` headers and their bodies, in reverse chronological order). If fewer than 3 entries exist, display whatever's available.
+- If `friction_log_path` is set: read the file and display the last 5 entries (most-recent friction-log entries — friction-log entry separators vary across projects; if no clear `## ` or `---` separator is detectable, fall back to displaying the last 100 lines with a note).
+
+The operator uses these expanded reads to identify items not in the checkup tactical list (e.g., an SO recommendation that didn't surface as a finding, a recurring friction entry that suggests a new tactical item) and pastes them via the 16b prompt below.
 
 16b. Prompt the operator:
 ```
-System Owner inputs may suggest items not in the checkup tactical list. Skip
-items that duplicate Step 3 checkup items already dispositioned — the SO
-advisory often references the same finding the checkup raised; disposition once,
-not twice.
+System Owner inputs and project-internal logs may suggest items not in the
+checkup tactical list. Skip items that duplicate Step 3 checkup items already
+dispositioned — the SO advisory often references the same finding the checkup
+raised; disposition once, not twice.
 
-Add System Owner-derived items? Paste one per line in shape:
+Add System Owner-derived and project-derived items? Paste one per line in shape:
   [risk] {item text}
 where risk ∈ {high, med, low}. Empty line to finish, or `(none)` to skip.
 ```
@@ -382,6 +415,8 @@ Open each plan in a follow-up session to execute. Implement all plans before nex
 - **Session 1/2 boundary.** This command refuses audit-rerun language (Step 1.8). Use `/friday-checkup` for evidence, `/friday-act` for action.
 - **System Owner inputs (Steps 1.5 + 3.5).** `/friday-act` reads the freshest `/friday-so` advisory and `/systems-review` report (filtered to ≥ checkup date and ≤ 7 days old) as supplementary inputs. The SO outputs are prose; `/friday-act` does not parse their content — it displays the first 30 lines and lets the operator paste any actionable items as `[risk] {text}` for the same disposition loop as checkup items. If both SO files are missing, Step 3.5 self-skips. Producer-side commands (`/friday-so`, `/systems-review`) are not modified — coupling is one-way (consumer reads producer outputs).
 - **Journal Report (Steps 1.5 + 3 + 3.5 + 5).** `/friday-act` reads the freshest `/friday-journal` report (filtered to ≥ checkup date and ≤ 7 days old) as a third supplementary input. Unlike the SO outputs (prose), the journal report's `## Items` section is pre-structured to the same `[risk] {text}` shape as Step 3.5's regex — sub-step 16f extracts those lines directly and feeds them into the disposition loop with no paste-prompt. The producer-side schema-contract callout lives in `.claude/commands/friday-journal.md` Step 5; do not change the prefix syntax in either command without updating both ends. Coupling is one-way (consumer reads producer).
+- **Project-internal logs (Steps 1.5 + 16a).** `/friday-act` enumerates scoped projects from the checkup report's `## Scopes audited` block and reads each scoped project's `improvement-log.md` (active entries), `session-notes.md` (last 3 entries), and `friction-log.md` (last 5 entries, if present) at Step 16a. These reads surface project-internal context the checkup roll-up may have compressed — recurring friction, in-flight improvement work, recent decisions. Items derived from these reads feed into the same paste-prompt as SO-derived items (16b–16e) and are labeled `so-derived` in `RESULTS` for subtotal purposes (the source label distinguishes paste-input from journal-derived; project-derived items are paste-input mechanically).
+- **Token cost of expanded reads (Step 16a).** Targeted section reads for SO Advisory + Systems Review typically yield 50–200 lines of additional context per file (vs the prior 30-line peek). Project-internal log displays add 100–400 lines per scoped project depending on log activity (improvement-log active entries + 3 session-notes entries + 5 friction-log entries). For a typical weekly checkup with 2–3 scoped projects and both SO files present, expect ~500–1500 lines of additional context in Step 16a alone. If running near context limits, prefer to split the disposition session: run Step 3 (checkup tactical follow-ups) in one session and Step 3.5 (supplementary inputs) in a follow-up after `/compact`. Step 3 and the checkup report itself are unaffected by this cost.
 - **7-day vs. 10-day filter rationale.** Supplementary inputs (Friday Advisory, Systems Review, Journal Report) all use a **7-day** filename-date filter — these are session-window-scoped artifacts produced for a specific Friday and stale beyond that week. The checkup report itself uses a **10-day** abort threshold (Step 1.7) because it pairs with the `friday-checkup-reminder.sh` hook's recovery-Friday window; a 10-day grace allows skipped-Friday recovery without re-running the audit. The two thresholds are intentionally distinct: 7-day = "fresh for this Friday's session"; 10-day = "fresh enough to still be the basis for action."
 - **`/risk-check` gate (Step 3.6).** The change-class check runs at plan-write time (Step 3.6) to annotate plan files — it does NOT prompt the operator or invoke the Skill tool during `/friday-act`. The gate runs in the follow-up session, immediately before executing the flagged item.
 - **No auto-edit of CLAUDE.md or audit-discipline.md.** Policy proposals (Step 4) capture intent; the rule edits themselves go through their own plan + `/risk-check` cycle.
