@@ -2,6 +2,32 @@
 
 <!-- entries below -->
 
+### 2026-05-16 | Acceptable
+
+**Task:** Proposed, QC'd, and executed a 6-item improvement-log sprint targeting recurring friction in session infrastructure (prime, session-start, session-plan, monday-prep, consult, friday-act + workspace CLAUDE.md). Each item: read → edit → pre-commit /qc-pass → commit.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~32 |
+| Files read | 18 (re-reads: 1) |
+| Files written/edited | 13 |
+| Tool calls | ~63 |
+| Subagents | 11 |
+| Rework cycles | 2 (session plan only) |
+
+**Findings:**
+- **Rework — Moderate:** Session plan required 2 QC REVISE cycles before approval (friday-so.md conditional underspecified, item #4 new file underspecified, QC sequencing inverted, item #6 commit boundary unclear). Catchable at draft time with a tighter plan-authoring checklist.
+- **Re-reads — Minor:** `decisions.md` read twice (~140 lines total) at different offsets to find append point; tail read at wrap start would have sufficed.
+- **Tool overhead — Minor:** `prime.md` received 3 sequential Edit calls where the symbol fix could have been bundled with prior edits had it been caught at draft time.
+
+**Recommendation:** Add a plan-draft self-check pass before invoking the first /qc-pass — specifically targeting the four recurring REVISE triggers (conditional underspecification, new-file scope, QC sequencing, commit boundary clarity). Would have eliminated 1 of 2 REVISE cycles here.
+
+**Estimated savings:** ~3-5K tokens per session where session plan needs REVISE (one fewer plan-QC round = subagent + plan re-read + diff edit). At ~1 multi-item plan session/week: ~30-50K tokens over 10 sessions, ~60-100K over 20 sessions.
+
+**Additional levers (ROI-ranked):**
+- Cache `decisions.md` tail at session open (saves ~1 read/session ≈ 1-2K tokens, ~20-40K over 20 sessions)
+- Bundle pre-commit Edit calls per file when multiple small fixes target the same file (~500-1K tokens per avoided Edit round-trip, ~10-20K over 20 sessions)
+
 ### TREND — 2026-04-21 to 2026-05-08
 
 | Rating | Count |

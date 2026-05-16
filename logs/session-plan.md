@@ -1,49 +1,37 @@
 # Session Plan — 2026-05-16
 
 ## Intent
-Execute 8 Tier 3 items from `audits/friday-plans/2026-05-16-journal-improvements.md` (5 items) and `audits/friday-plans/2026-05-16-friday-journal.md` (3 items) in 4 sequenced waves; commit each item separately; defer any item that returns RECONSIDER from `/risk-check`.
-
-**Wave breakdown:**
-- **Wave 1** (no risk-check): journal-improvements #5 (audit-repo vs repo-dd recommendation doc), journal-improvements #4 (friday-act.md Step 1.5 required-reads expansion)
-- **Wave 2** (one batched risk-check if reclassified): friday-journal #1 + #2 + #3 (all edit `friday-journal.md` — Step 5.5 extension + drop-check + risk-check step)
-- **Wave 3** (risk-check required): journal-improvements #3 (workspace `CLAUDE.md` §Decision-Point Posture wording strengthening)
-- **Wave 4** (heaviest; risk-check per item): journal-improvements #2 (`/new-project` canonical install + decisions.md scaffold), journal-improvements #1 (SessionStart hook chain)
+Execute 6 improvement-log items (prime staleness fix, session-start token, session-plan template, monday-prep C15 semantics, consult Read-first gate, friday-act floor note + workspace CLAUDE.md) to eliminate recurring friction patterns across the session infrastructure.
 
 ## Class
 execution
 
 ## Model
-opus — match
+sonnet — match
 
-(Mixed mechanical + architectural workload. Mechanical portions — friday-act required-reads spec edit, friday-journal command-spec edits, CLAUDE.md wording strengthening — would be Sonnet-tier in isolation. Architectural portions — SessionStart hook chain, `/new-project` pipeline fix, audit-repo vs repo-dd synthesis — are Opus-tier. Heavy items dominate; staying on Opus avoids mid-session tier switches.)
+(All 6 items are executing edits from a defined improvement-log plan — "doing" not "deciding". Active model claude-sonnet-4-6[1m] is sonnet-tier. No design or architectural judgment required; the improvement-log entries specify the changes.)
 
 ## Source Material
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/friday-plans/2026-05-16-journal-improvements.md — execution spec for items 1–5
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/friday-plans/2026-05-16-friday-journal.md — execution spec for items 1–3
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/friday-journal-2026-05-16.md — upstream journal report (source items 1, 2, 3, 4, 6 referenced by journal-improvements; items 9, 11, 14 referenced by friday-journal)
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/friday-journal.md — target for friday-journal #1, #2, #3 (Step 5.5 + new step before Step 6)
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/friday-act.md — target for journal-improvements #4 (Step 1.5 + Step 16a)
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/new-project.md — target for journal-improvements #2 (pipeline stages 3a–5)
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/audit-repo.md — input for journal-improvements #5 synthesis
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/repo-dd.md — input for journal-improvements #5 synthesis
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/session-start.md — touched by journal-improvements #1 (SessionStart hook chain)
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/session-plan.md — touched by journal-improvements #1 (auto-invoke target)
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/CLAUDE.md — target for journal-improvements #3 (§Decision-Point Posture wording)
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/.claude/settings.json — target for journal-improvements #1 (SessionStart hook wiring)
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/audit-discipline.md — risk-check change-class reference (consulted by friday-journal #3 and by every risk-check pause in this session)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/logs/improvement-log.md` — execution spec for all 6 items
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/prime.md` — item #1 target
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/session-start.md` — item #2 target
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/session-plan.md` — item #3 target
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/monday-prep.md` — item #4 target (+ new `docs/weekly-cadence.md` containing one paragraph: week mandate is week-scope, per-session plan is session-scope, they are written in separate sessions — do not call `/session-plan` from inside `/monday-prep`)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/consult.md` — item #5 target
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/friday-act.md` — item #6 target
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/friday-so.md` — item #6 conditional: scan for a "first N lines" or "30-line peek" read-scope instruction applied to the SO advisory or systems-review doc; if found, add the same floor-not-ceiling note used in friday-act.md; if not found, skip friday-so.md entirely
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/CLAUDE.md` — item #6 CLAUDE.md target (workspace-level, cross-cutting)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/audit-discipline.md` — structural change class reference (item #6 class boundary)
 
 ## Autonomy Posture
 Gated
 
 **Stop points:**
-- After each `/risk-check` verdict (estimated 3 mandatory: journal-improvements #1, #2, #3; possibly +1 batched call if friday-journal #1/#2/#3 cross the shared-state-automation boundary on re-evaluation). RECONSIDER → defer that item, continue rest. PROCEED-WITH-CAUTION → apply listed mitigations before commit.
-- Before entering Wave 4 (the two heaviest items — SessionStart hook chain + `/new-project` fix): confirm context budget remains; if <50% headroom, commit Waves 1–3 and defer Wave 4.
-- At ~30 turns elapsed without natural break: checkpoint, summarize progress, and wrap to a fresh session.
-- If a wave's target file diverges materially from what the plan-file spec assumes (e.g., the Step 5.5 anchor in `friday-journal.md` doesn't exist as described): pause and reassess before editing.
+- Before item #6 execution: plan-time `/risk-check` must return GO or PROCEED-WITH-CAUTION before any edits to `CLAUDE.md` or `friday-act.md`. RECONSIDER → defer item #6 entirely (or defer only the CLAUDE.md part); proceed with items 1–5.
+- Before committing each item: run `/qc-pass` on that item's edit, then commit. QC is pre-commit, not post-commit.
+- Before committing item #6: end-time `/risk-check` batched across all class-crossing changes this session. Item #6 ships as one commit covering all its sub-targets (friday-act.md + friday-so.md if edited + workspace CLAUDE.md) — the end-time gate fires once, after that commit group is staged but before it lands.
 
 ## Risk
-Run `/risk-check` after the plan is approved (plan-time gate) on these items: journal-improvements #1 (SessionStart hook + shared-state automation; touches `.claude/settings.json` + two command files), #2 (`/new-project` pipeline edit — affects every future project, shared-state automation), #3 (cross-cutting workspace `CLAUDE.md` edit). Re-evaluate the risk-check boundary for friday-journal #1/#2/#3 at execution time — all three add automation logic to a shared command (subagent invocation, deterministic check, cross-reference step) and may cross the shared-state-automation boundary, even though the literal change-class list says no. If reclassified, run one batched `/risk-check` on the friday-journal trio (single command file, single change unit).
+Run `/risk-check` after the plan is approved (plan-time gate) — item #6 touches workspace `CLAUDE.md` (cross-cutting always-loaded content, in-class). Run it again before committing item #6 (end-time gate). Items 1–5 and the `friday-act.md`/`friday-so.md` parts of item #6 are not in class — no risk-check required for those.
 
-Run `/risk-check` once at end-time (end-time gate), batched across every in-class change made this session, per the two-gate model in `docs/audit-discipline.md`. This fires regardless of individual plan-time verdicts — it is not conditional on PROCEED-WITH-CAUTION.
-
-Items with no structural class per literal change-class list: journal-improvements #5 (analysis artifact only — produces a new recommendation doc, no structural change). Journal-improvements #4 (friday-act.md spec edit): source plan explicitly flags this as close to the shared-state-automation boundary — the new Loop 2 reads and improvement-log reads behavior is additive but pattern-adjacent to shared-state automation. Re-evaluate the risk-check boundary for #4 at execution time before landing; if reclassified, run `/risk-check` before committing.
+Item #4 creates a new file (`docs/weekly-cadence.md`) — new markdown docs are not a structural change class; no risk-check needed.

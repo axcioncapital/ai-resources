@@ -434,3 +434,10 @@
 - **Decisions logged:** 1 (deferred-item rationale for SessionStart hook chain)
 - **QC cycles:** 1 (session-plan QC → REVISE → 2 fixes applied → ready)
 - **Gates:** 4 (3 changed) — plan-approval:confirmed (operator "ok proceed"), qc-disposition:changed (REVISE on session-plan triggered 2 fixes), risk-check:confirmed (Wave 3 GO), risk-check:confirmed (Wave 4 #2 GO), risk-check:changed (Wave 4 #1 PROCEED-WITH-CAUTION → deferred)
+
+### 2026-05-16 — Improvement-log execution sprint: 6 friction fixes
+- **Commands used:** /prime, /open-items, /qc-pass (×8), /session-plan, /risk-check (×2), /wrap-session
+- **Iterations:** 2 (session plan: draft → REVISE round 1 → REVISE round 2 → approved)
+- **Decisions logged:** 0
+- **QC cycles:** 8 (2 on session plan: both REVISE; 6 on item edits: all GO)
+- **Gates:** 3 (1 changed) — plan-approval:changed (operator approved after 2 QC revision rounds), risk-check:changed (item #6 plan-time PROCEED-WITH-CAUTION → mitigations applied), risk-check:confirmed (item #6 end-time GO)
