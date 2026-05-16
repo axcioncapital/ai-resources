@@ -243,7 +243,20 @@ When `/permission-sweep` encounters this pattern, it tags the affected finding a
 
 ## Hook wiring for prevention
 
-Every project's `.claude/settings.json` should wire the SessionStart sanity check alongside `auto-sync-shared.sh`. Canonical hook block (appended to `hooks.SessionStart`):
+Every project's `.claude/settings.json` should wire two SessionStart hooks: `auto-sync-shared.sh` (which symlinks shared commands/agents from ai-resources into the project) and `check-permission-sanity.sh` (which nudges on permission drift). Both use the **upward-walk idiom** — they discover ai-resources by walking parent directories from `$CLAUDE_PROJECT_DIR` rather than relying on hardcoded paths. This keeps projects portable across workspace moves and nesting depths.
+
+Canonical SessionStart hook block #1 — `auto-sync-shared.sh`:
+
+```json
+{
+  "type": "command",
+  "command": "d=\"$CLAUDE_PROJECT_DIR\"; while [ \"$d\" != '/' ]; do d=$(dirname \"$d\"); [ -x \"$d/ai-resources/.claude/hooks/auto-sync-shared.sh\" ] && { \"$d/ai-resources/.claude/hooks/auto-sync-shared.sh\"; exit; }; done",
+  "timeout": 10,
+  "statusMessage": "Syncing shared commands from ai-resources..."
+}
+```
+
+Canonical SessionStart hook block #2 — `check-permission-sanity.sh`:
 
 ```json
 {
@@ -254,7 +267,7 @@ Every project's `.claude/settings.json` should wire the SessionStart sanity chec
 }
 ```
 
-The hook is invoked directly from ai-resources — do not copy `check-permission-sanity.sh` into the project's hooks directory.
+Both hooks are invoked directly from ai-resources — do not copy `auto-sync-shared.sh` or `check-permission-sanity.sh` into the project's hooks directory.
 
 ---
 
