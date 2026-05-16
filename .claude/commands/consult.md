@@ -11,6 +11,19 @@ Input: `$ARGUMENTS` — free-text question or situation. Examples:
 - `/consult How should I think about token efficiency when adding a new orchestration command?`
 - `/consult Should the friday-checkup auto-fire from a Stop hook?`
 
+**Reserve for genuinely contested or load-bearing system-shape questions, not for verification of already-confident recommendations.**
+
+---
+
+### Step 0 — Read-first gate
+
+Before invoking `/consult`, answer:
+
+(a) Have I already given a recommendation on this question?
+(b) If yes, is there a single file (≤ 300 lines) whose contents would either confirm or refute it?
+
+If both (a) and (b) are yes: do the Read first. Only proceed to `/consult` if the Read surfaces a genuine ambiguity or a load-bearing conflict that cannot be resolved from the file.
+
 ---
 
 ### Step 1 — Input validation
