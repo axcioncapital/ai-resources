@@ -334,3 +334,26 @@ Oriented the harness project from scratch: clarified the Phase 0–8 build struc
 
 ### Open Questions
 - None.
+
+## 2026-05-16 — /resolve-improvement-log: archive 6 applied sprint entries
+
+### Summary
+Oriented session with /prime and /open-items (ai-resources scope, harness excluded). Ran /resolve-improvement-log against the improvement log: found 0 resolved entries initially (6 sprint fixes were committed but log not updated). Updated all 6 improvement-log entries from the 2026-05-16 improvement-sprint with `Status: applied 2026-05-16` and `Verified:` lines, then archived them to improvement-log-archive.md. Active log reduced from 8 entries to 3 pending.
+
+### Files Created
+- None.
+
+### Files Modified
+- `logs/improvement-log-archive.md` — 6 entries appended (commit 356bfeb)
+- `logs/improvement-log.md` — 6 entries marked applied + verified, then archived (net: back to committed HEAD state)
+
+### Decisions Made
+- None beyond routine operational work.
+
+### Next Steps
+- Push all repos (operator approval): ai-resources (~10 unpushed commits)
+- Pick up inbox briefs: `inbox/codex-second-opinion-brief.md` and `inbox/repo-review-brief.md` — run `/create-skill` (or command equivalent) per brief
+- `/friday-act` deferred to dedicated session (22 checkup follow-ups; 1 critical: nordic-pe-macro missing `context/` directory)
+
+### Open Questions
+- None.
