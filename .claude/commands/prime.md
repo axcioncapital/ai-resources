@@ -4,6 +4,8 @@ model: sonnet
 
 Orient the session. Read state, brief the operator, wait for direction.
 
+**Principle:** Prime never asserts state from a single source. Each surfaced next-step or status claim must be cross-checked against git log since the claim's source timestamp before being reported as current.
+
 0. **Pull latest.** Determine the cwd's git root: `CWD_REPO=$(git -C "$(pwd)" rev-parse --show-toplevel 2>/dev/null)`.
    If this fails, note `Pulled: n/a (not a git repo)` in the brief and skip to step 1.
 
@@ -25,6 +27,15 @@ Orient the session. Read state, brief the operator, wait for direction.
 
 1. Read the last entry from `/logs/session-notes.md`. Extract: date, summary, next steps, open questions.
    If the file doesn't exist or is empty, this is the first session — note that and skip to step 2.
+
+1a. **Cross-check Next Steps against git log and sibling entries.**
+
+   *Git cross-check:* Parse the `## YYYY-MM-DD` header date from the source entry. Run:
+   `git -C "$CWD_REPO" log --since="<entry-date>T00:00:00" --pretty="%h %s" --all 2>/dev/null`
+   For each Next Steps bullet, check if any commit subject contains keywords from that bullet. Flag any match as `(likely DONE — commit <hash>)` in the output. Do not remove the bullet — preserve it so the operator can verify. If the git command fails or returns nothing, skip silently and report steps as-is.
+
+   *Sibling-entry sweep:* Scan `logs/session-notes.md` for additional `## <source-entry-date>` headers that appear **after** the source entry (same calendar date, later position in file). If any exist, emit this warning before the Next Steps list:
+   > WARNING: Multiple same-day entries exist (parallel wraps possible). Next Steps inherited from `{source entry title}`; also review: `{list of sibling entry titles}`.
 
 2. Read `/logs/innovation-registry.md`. The registry is a pipe-delimited markdown table with columns
    `| Date | Type | File | Status | Graduated To |`. Count data rows whose Status column equals
