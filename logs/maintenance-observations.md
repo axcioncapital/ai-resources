@@ -164,3 +164,69 @@ Operator caught a second under-read: I had not opened the actual improvement-log
 ### Final tally (post-revision 2)
 - Tactical: 15 queued for plans (across 7 plan files), 35 defer, 1 skip
 - Plan files: 7 (settings.md now has 6 items; cadence.md has 3 items)
+
+---
+
+## 2026-05-16 — Friday Act (weekly tier, source: friday-checkup-2026-05-16.md)
+
+### System Owner inputs (this session)
+- Friday Advisory: (none within 7 days — most recent: friday-advisory-2026-05-08.md)
+- Systems Review:  (none within 7 days — most recent: systems-review-2026-05-08-full-ai-infrastructure.md)
+
+### Journal Report (this session)
+- Journal Report: ai-resources/audits/friday-journal-2026-05-16.md
+- Innovation Sweep: ai-resources/audits/innovation-sweep-2026-05-16.md (operator-requested supplementary input)
+
+### Disposition summary
+- Tactical (checkup): 13 fix-now, 4 defer, 0 skip (of 17 items)
+- Innovation-sweep: 7 fix-now, 7 defer, 0 skip (of 14 items — 6 graduate candidates + 8 loose ends)
+- Journal-derived: 8 fix-now, 7 defer, 0 skip (of 15 items)
+- **Grand total: 28 fix-now, 18 defer, 0 skip (of 46 items considered)**
+- Note: SO advisory and systems review both outside 7-day filter; no SO-derived items this session.
+
+### Deferred items (from this session)
+
+**From checkup:**
+- Add trigger/exclusion language to 14 ai-resources skills (/improve-skill pass) — risk: low, source: checkup
+- Content extraction for answer-spec-generator (487 lines) and research-plan-creator (466 lines) — risk: low, source: checkup
+- Resolve 2 orphaned skills (fund-triage-scanner, prose-refinement-writer) — risk: low, source: checkup
+- Backfill coaching-data.md in project-planning (lags by 3 sessions) — risk: low, source: checkup
+
+**From innovation sweep:**
+- G3: Graduate UserPromptSubmit decision-logging hook — risk: med, source: innovation-sweep — needs own /risk-check + design session before wiring
+- G4: Graduate Stop hook checkpoint-not-written nag — risk: med, source: innovation-sweep — same; new hook, needs own session
+- LE1: today-drill.md rotation mechanic (interpersonal-comm) — graduate pattern or keep local — risk: low, source: innovation-sweep
+- LE2: CLAUDE.md §Autonomy Rules (nordic-pe) — graduate to workspace or keep local — risk: med, source: innovation-sweep — overlap with existing workspace Autonomy Rules section needs careful comparison
+- LE3: Auto-commit-on-Write hook (nordic-pe) — keep local; policy conflict with workspace Commit Rules unresolved — risk: high, source: innovation-sweep
+- LE6+LE8: friction-log-trigger.sh + PostToolUse wiring (repo-documentation) — not fully assessed; defer to dedicated graduation session — risk: med, source: innovation-sweep
+- LE7: CLAUDE.md §Compaction scratchpad pattern (repo-documentation) — defer to compaction-protocol review — risk: low, source: innovation-sweep
+
+**From journal:**
+- Add default QC subagent to research-plan-creator skill — risk: med, source: journal-derived
+- Add /repo-dd step comparing CLAUDE.md + file structure to ai-resources — risk: med, source: journal-derived
+- Add auto-QC of /friday-act execution plan (systems agent) — risk: med, source: journal-derived (improvement would affect current command; circular in this session)
+- Add refinement pass to /friday-journal enriching with repo-documentation context — risk: med, source: journal-derived
+- Wire /resolve-improvement-log into /friday-act execution flow — risk: med, source: journal-derived (structural wiring; needs /risk-check)
+- Audit /systems-review scope and confirm it surfaces systems-thinking improvements — risk: low, source: journal-derived
+- Investigate coaching logs + /friday-checkup wiring (verify already linked) — risk: low, source: journal-derived
+
+### Plans written (this session)
+- ai-resources/audits/friday-plans/2026-05-16-nordic-pe-macro.md — 4 items
+- ai-resources/audits/friday-plans/2026-05-16-permission-sweep.md — 3 items
+- ai-resources/audits/friday-plans/2026-05-16-ai-resources-maintenance.md — 6 items
+- ai-resources/audits/friday-plans/2026-05-16-permission-template.md — 3 items
+- ai-resources/audits/friday-plans/2026-05-16-innovation.md — 4 items
+- ai-resources/audits/friday-plans/2026-05-16-journal-improvements.md — 5 items
+- ai-resources/audits/friday-plans/2026-05-16-friday-journal.md — 3 items
+
+### Operator observations
+(none)
+
+### Autonomy-axis posture targets (week ahead)
+- Guardrails: hold
+- Optimization: hold
+- Autonomy: hold
+- Capability: hold
+- Reliability: hold
+- Observability: hold
+- Operator load: hold
