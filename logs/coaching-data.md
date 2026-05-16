@@ -399,3 +399,10 @@
 - **Decisions logged:** 0
 - **QC cycles:** 1 (qc-reviewer REVISE → 4 dispositioned → mechanical re-check pass)
 - **Gates:** 4 (4 confirmed) — plan-approval:confirmed (/clarify Q&A resolved), plan-approval:confirmed (/scope), content-review:confirmed (archive y/n), content-review:confirmed (preflight yy)
+
+### 2026-05-16 — /friday-checkup (weekly tier, off-schedule Saturday)
+- **Commands used:** /prime, /friday-checkup, /session-start, /session-plan, /audit-repo (×2), /improve, /coach (×3), /permission-sweep --dry-run, /log-sweep --dry-run, /wrap-session
+- **Iterations:** 0 (audit/diagnostic session, no drafting)
+- **Decisions logged:** 1 (skip permission-sweep H-1 and M-1 per operator deny-list policy)
+- **QC cycles:** 0
+- **Gates:** 4 (1 changed) — tier-selection:confirmed, scope-selection:confirmed, mandate-confirmation:confirmed, improve-disposition:changed (operator directive "diagnostic only" reframed all 6 findings from apply→log)

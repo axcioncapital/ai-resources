@@ -95,3 +95,15 @@
 **Rationale:** /prime is the canonical orientation entry point and is already run consistently — the gap was content, not adoption. A SessionStart hook would fire even on `/clear`-continuations and lack the repo-detection context /prime has. Pulling cwd + ai-resources together handles all three session contexts (project / workspace root / ai-resources) without per-project configuration. Unpushed-commits visibility addresses the operator's concern that git pull alone could let a forgotten push linger silently.
 
 **Alternatives considered:** SessionStart hook running git pull (rejected — fires too broadly, lacks context, and /prime adoption was already consistent).
+
+## 2026-05-16 — Skip permission-sweep H-1 and M-1 findings (deny-list conflict)
+
+**Context.** `/permission-sweep --dry-run` returned 1 HIGH (`Bash(git push *)` allow→deny in workspace Layer B) and 1 MEDIUM (empty user-level deny list — canonical specifies `["Bash(rm -rf *)", "Bash(sudo *)"]`).
+
+**Decision.** Both findings recorded as flagged-deferred in the consolidated report. Do not apply during `/friday-act`.
+
+**Rationale.** Both findings recommend adding entries to a deny list. This conflicts with the stored operator policy (`feedback_zero_permission_prompts`): "never add to deny list; bypassPermissions floor + CLAUDE.md model-side rules is the agreed setup." Applying canonical-template values blindly would override a deliberate operator setup choice.
+
+**Alternatives considered.**
+- *Apply the canonical denies anyway:* Rejected — operator policy is explicit and recent.
+- *Update the canonical template to reflect operator's chosen setup:* Out of scope for diagnostic-only session; logged as potential `/friday-act` candidate to align template with policy.

@@ -75,3 +75,33 @@ Coaching feedback captured via `/coach`. Newest entries at the bottom.
 - 2026-05-01 "interruption-impulse as deliberate review gate" — held (stable).
 - 2026-04-24 "decisions.md rigor" — held (100% alternatives-considered this window).
 **Promotion candidates:** 2 flagged (decisions.md rigor, interruption-impulse gate) — Promotion candidates section absent from agent output; follow-up needed to make section fire reliably.
+
+### 2026-05-16
+**Coverage:** 16 session-notes entries (2026-04-25 → 2026-05-16); 35 coaching-data entries (2026-04-06 → 2026-05-11); 7 decisions; ~55 QC cycles (qc-log absent — reconstructed)
+
+| Dimension | Rating | Trend |
+|-----------|--------|-------|
+| Iteration Efficiency | Healthy | ↑ |
+| Decision Patterns | Watch | → |
+| QC Disposition | Healthy | ↑ |
+| Delegation Effectiveness | Healthy | → |
+| Workflow Evolution | Watch | mixed |
+
+**The One Thing:** Before invoking a synthesis/orientation command (`/prime`, `/consult`, `/friday-act` 30-line peeks), name the load-bearing claim it will produce; if a sub-300-line targeted Read could verify that claim directly, do the Read first. Same root cause behind 2026-05-08 `/consult` 95k-token burn, 2026-05-08 SO-advisory under-read, and 2026-05-11 `/prime` Bundles 1/2/5 stale-state misreport.
+**Prior recommendation status:** 2026-05-08b "match read scope to disposition consequence" — partially acted on; recurred 2026-05-11 as `/prime` Next-Steps staleness (third occurrence, promoted to RECURRING in improvement-log).
+**Promotion candidates:** 2 — (1) decisions.md rigor (100% alternatives-considered held); (2) interruption-impulse-as-review-gate (Bundle 4 W2.4 abandon-design-when-shipped is textbook). Full notes: audits/working/coaching-ai-resources-2026-05-16.md
+
+### 2026-05-16 (friday-checkup weekly)
+**Coverage:** 13 session-notes entries (2026-05-11 → 2026-05-16) + 40+ coaching-data entries (2026-04-06 → 2026-05-11)
+
+| Dimension | Rating | Trend |
+|-----------|--------|-------|
+| Iteration Efficiency | Healthy | ↑ |
+| Decision Patterns | Watch | → |
+| QC Disposition | Healthy | ↑ |
+| Delegation Effectiveness | Healthy | → |
+| Workflow Evolution | Watch | mixed |
+
+**The One Thing:** Run one dedicated `/resolve-improvement-log` execution session against the three 2026-05-16 entries (session-start confirmation token, /prime single-snapshot RECURRING, /session-plan sparse template). All three have execution-ready Proposal blocks. The `/prime` issue is now its third occurrence — promoted to RECURRING. A fourth occurrence would be a coaching failure, not a system failure.
+**Prior recommendation status:** 2026-05-16 prior recommendation "name the load-bearing claim before synthesis/orientation commands" — partially acted on (operator caught /prime Next-Steps staleness mid-session, but structural fix remains logged-pending; same root cause repeated).
+**Promotion candidates:** 3 — (1) Mandate + class + scope discipline (constraint-set first; ready to graduate from habit to template field); (2) decisions.md alternatives-considered rigor (held 86–100% across 4 cycles); (3) interruption-impulse as deliberate review gate (editorial-disagreement gate 100% change-rate). Bright-line-review gate flagged as rubber-stamp (78% confirm) — recommend naming the specific bright-line before invoking. Full output retained in agent run context.

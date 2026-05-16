@@ -2,6 +2,35 @@
 
 <!-- entries below -->
 
+### 2026-05-16 | Acceptable
+
+**Task:** Off-schedule Saturday `/friday-checkup` (diagnostic-only) across 5 scopes; produced consolidated report with 22 follow-ups, 4 HIGH permission findings, 3 fresh coaching entries. No fixes applied.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~14 |
+| Files read | 11 unique (re-reads: 2 — session-notes x3, decisions x2) |
+| Files written/edited | 12 |
+| Tool calls | ~46 |
+| Subagents | 11 |
+| Rework cycles | 2 |
+
+**Findings:**
+- **Re-reads (Moderate):** session-notes.md read 3x (prime / session-start precondition / wrap append-point) — recurring pattern across multiple sessions; same file, same lines.
+- **Rework (Moderate):** session-plan.md Write failed Read-before-Write gate — third recurrence of this exact failure in recent sessions (2026-05-11 log entries flagged the same pattern).
+- **Rework (Moderate):** Agent call used unregistered subagent_type "repo-health-analyzer" before falling back to general-purpose — one wasted Agent invocation.
+- **Missed parallelization (Moderate):** 2 repo-health-analyzer instances (ai-resources + nordic-pe-macro) ran sequentially; each internally spawns 7 sub-auditors so wall-clock cost was material. Coach (3x) and log-sweep (4x) were correctly parallelized — repo-health was the outlier.
+
+**Recommendation:** Fix the recurring session-plan.md Read-before-Write failure at the harness level — add a pre-Write Read of session-plan.md to the `/session-plan` skill's preamble, OR convert the session-plan write to an Edit-with-fallback-to-Write pattern. Three identical failures in five sessions means model-side discipline isn't holding; it needs a structural fix.
+
+**Estimated savings:** ~3 tool calls per recurrence (1 failed Write + 1 corrective Read + 1 retry Write → 1 Read + 1 Edit). At observed ~1 recurrence per 2 sessions, projected savings over 10–20 sessions: 15–30 tool calls + 5–10 operator-visible error states. Parallelizing the 2 repo-health-analyzer calls saves ~1 sequential wait per checkup (~10–15 min wall-clock per `/friday-checkup`); over 10–20 sessions at ~1 checkup per week, ~2–4 wall-clock hours.
+
+**Additional levers (ROI-ranked):**
+- Cache session-notes.md tail in main-session memory across prime → session-start → wrap (eliminates 2 of 3 reads per session; recurs every session).
+- Add a registered-subagent-name precheck to Agent dispatch, OR rename the general-purpose call path so `repo-health-analyzer` resolves correctly — eliminates the retry class of waste entirely.
+- Batch the two repo-health-analyzer Agent calls in a single message — one-line fix, immediate win on every multi-scope checkup.
+- Consider tightening `/friday-checkup` to emit a single combined repo-health spawn for all named scopes rather than one per scope (architectural, lower ROI but eliminates the parallelization decision point).
+
 ### 2026-05-08 | Wasteful
 
 **Task:** Weekly /friday-checkup across 5 scopes (ai-resources, workspace, axcion-ai-system-owner, global-macro-analysis, repo-documentation), including /audit-repo, /improve, /coach, /permission-sweep --dry-run, W2.1/W2.3/kb-integrity for repo-documentation, consolidated report, and /wrap-session.

@@ -1,30 +1,26 @@
-# Session Plan — 2026-05-11
+# Session Plan — 2026-05-16
 
 ## Intent
-Apply CLAUDE.md audit findings for three projects (axcion-ai-system-owner, global-macro-analysis, repo-documentation) — each gets /risk-check + edit + /qc-pass per the ready audit specs in `audits/working/`.
+Weekly /friday-checkup (weekly tier) across ai-resources, workspace, interpersonal-communication, nordic-pe-macro-landscape-H1-2026, project-planning — off-schedule Saturday 2026-05-16 run.
 
 ## Class
 execution
 
 ## Model
-sonnet — match (active session: `claude-sonnet-4-6[1m]`; "doing" tier — mechanical edits from a clear plan)
+sonnet — match (claude-sonnet-4-6[1m] active; execution work = sonnet tier)
 
 ## Source Material
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/working/audit-claude-md-project-axcion-ai-system-owner.md`
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/working/audit-claude-md-global-macro-analysis-2026-05-11.md`
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/working/audit-claude-md-repo-documentation-2026-05-11.md`
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/CLAUDE.md`
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/global-macro-analysis/CLAUDE.md`
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/repo-documentation/CLAUDE.md`
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/audit-discipline.md`
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/agents/improvement-analyst.md`
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/agents/collaboration-coach.md`
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/agents/permission-sweep-auditor.md`
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/agents/log-sweep-auditor.md`
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/skills/repo-health-analyzer/agents/repo-health-analyzer.md`
 
 ## Autonomy Posture
-Full autonomy — audit specs are complete and execution-ready; per-project /risk-check and /qc-pass are the structural gates. Token-saving "trim vs. move" decisions where the audit spec lists alternatives: pick the recommended default and proceed; surface the choice inline.
+Full autonomy
 
 **Stop points:**
-- /risk-check returns BLOCK on any project's planned edits
-- /qc-pass DISAGREE on editorial choice that requires operator judgment
-- Any project fails QC twice in a row (per mandate stop-condition)
+- None — /friday-checkup is a fully defined sequential command; consolidated report is the exit artifact. Operator reviews and commits at session wrap.
 
 ## Risk
-CLAUDE.md edits are a structural change class (cross-cutting always-loaded content per `audit-discipline.md`). Run `/risk-check` per project at plan-time (before edits) and per project at end-time (before commit) — six gate invocations total, but each is bounded to a single file and a documented audit spec, so cost per gate is low.
+No structural change classes apparent — run `/risk-check` if scope changes. Checkup is read+report only (writes audit snapshots and log appends; no CLAUDE.md edits, no permission changes, no new commands or skills).
