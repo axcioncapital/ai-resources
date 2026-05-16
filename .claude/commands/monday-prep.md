@@ -251,9 +251,20 @@ Wait for reply:
 - `edit` → ask what to change, apply, re-present, repeat until `y` or `skip`.
 - `skip` → note `"mandate skipped for {WEEK}"`.
 
-**C15 — Session plan (optional)**
+**C15 — Session plan scaffold (optional)**
 
-Print: "Run /session-plan for the first work session? (y/n)". If `y`, invoke `/session-plan`. If `n`, continue.
+Print: "Write a next-session planning scaffold to `logs/session-plan-next.md`? (y/n)".
+
+- `y` → write `logs/session-plan-next.md` with the following content only:
+  ```
+  ## Intent
+  {first work item from the week mandate}
+
+  Run /session-plan in the next session to fill out this scaffold.
+  ```
+- `n` → continue.
+
+Do NOT invoke `/session-plan` from inside `/monday-prep`. The week mandate is week-scope; the per-session plan is session-scope — they are written in separate sessions. See `ai-resources/docs/weekly-cadence.md` § Scope separation.
 
 ---
 

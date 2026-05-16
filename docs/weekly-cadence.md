@@ -73,7 +73,9 @@ Both CLAUDE.md skip conditions must hold simultaneously to skip the audit.
     - What quality checks must run
     - Any threshold overrides for this week
 
-15. `/session-plan` for the first work session (optional).
+15. **Session plan scaffold** (optional) — write a stub `logs/session-plan-next.md` with the intent line from the week mandate. Do not invoke `/session-plan` here.
+
+**Scope separation:** The week mandate (`harness/session/week-mandate-*.md`) is week-scope — it covers all planned work for the week. The per-session plan (`logs/session-plan.md`, produced by `/session-plan`) is session-scope — it covers how one specific session will run. These are written in separate sessions: the mandate on Monday, the session plan at the start of each work session. `/monday-prep` must never invoke `/session-plan` inline; doing so conflates the two scopes and causes the session planner to assume the current session when it should be planning the next one.
 
 ---
 
