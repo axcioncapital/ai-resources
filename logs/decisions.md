@@ -136,3 +136,18 @@
 **Alternatives considered.**
 - *Replace with env-var references:* Rejected. Claude Code permission engine does not expand env-vars inside pattern strings; substitution would silently break the permission grant.
 - *Replace with relative paths:* Rejected. Permission patterns are evaluated against the file system at tool-call time; relative paths from the settings file's directory would not match absolute-path edits made by the session.
+
+---
+
+## 2026-05-16 — Defer SessionStart hook chain (journal-improvements #1) to dedicated design session
+
+**Context.** Wave 4 of Tier 3 friday-act execution. Plan-item #1 (journal-improvements) asked for a SessionStart hook chain that auto-runs /session-plan → /qc-pass → /scope after the mandate is captured. Plan-time `/risk-check` returned PROCEED-WITH-CAUTION with 6 required mitigations: specify qc-pass handoff schema; declare authority between session-plan.md vs /scope output (functional overlap); paired doc updates to 4 files (prime.md, session-rituals.md, weekly-session-guide.md, operator-maintenance-cadence.md); reconcile with qc-independence.md (pause-on-findings vs non-blocking exception); reconsider opt-in vs opt-out semantics; add inline rationale at new Step 8 explaining the reversal of "do not auto-invoke /qc-pass automatically." Hidden-coupling dimension rated HIGH.
+
+**Decision.** Defer the item to a dedicated design session. Commit the risk-check report (`audits/risk-checks/2026-05-16-session-start-auto-chain.md`) as the deferred-item record, but do not implement.
+
+**Rationale.** Applying 6 mitigations across 4 paired doc files mid-session would compound scope creep on the already-heavy Wave 4. The session-plan's stop point ("if a wave's target file diverges materially from what the plan-file spec assumes: pause and reassess before editing") fits exactly: the plan-item asked for a "SessionStart hook" but Claude Code hooks (shell scripts on lifecycle events) cannot directly invoke slash commands — the implementation requires command-spec edits, not hook wiring. That divergence + the hidden-coupling rating + the 4 paired doc updates means the change is large enough to deserve its own scope, plan, and operator-visible decision on chain semantics (opt-in vs opt-out, blocking vs non-blocking on QC findings, authority between session-plan and /scope).
+
+**Alternatives considered.**
+- *Implement the command-spec-only path now, defer the paired docs:* Rejected — risk-check identified the paired-doc updates as a required mitigation, not optional. Landing the chain without the doc reconciliation creates drift between runtime behavior and documented behavior.
+- *Implement the literal SessionStart hook (settings.json):* Rejected — Claude Code hooks fire on every session including ad-hoc sessions where the chain is unwanted. A blanket hook injects the chain instruction everywhere; the operator opt-out mechanism would need a separate marker file or env-var check inside the hook. Both add complexity without proportional benefit.
+- *Skip the risk-check and ship:* Rejected — plan-item explicitly required risk-check, and the verdict's HIGH hidden-coupling rating is a real signal, not bureaucratic friction.

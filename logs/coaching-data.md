@@ -427,3 +427,10 @@
 - **Decisions logged:** 1 (T2-5 audit-finding rejection)
 - **QC cycles:** 1 (session-plan REVISE → 4 fixes applied → approved)
 - **Gates:** 3 (1 changed) — content-review:changed (operator upgraded scope from Tier 1 to Tier 1+2), plan-approval:confirmed (proceed after session-plan QC), plan-approval:confirmed (T2-5 resolution approved)
+
+### 2026-05-16 — Tier 3 friday-act execution: journal-improvements (5) + friday-journal (3)
+- **Commands used:** /prime, /session-start, /session-plan, /qc-pass, /risk-check (×3), /wrap-session
+- **Iterations:** 0 (no drafting; execution session against pre-existing plan files)
+- **Decisions logged:** 1 (deferred-item rationale for SessionStart hook chain)
+- **QC cycles:** 1 (session-plan QC → REVISE → 2 fixes applied → ready)
+- **Gates:** 4 (3 changed) — plan-approval:confirmed (operator "ok proceed"), qc-disposition:changed (REVISE on session-plan triggered 2 fixes), risk-check:confirmed (Wave 3 GO), risk-check:confirmed (Wave 4 #2 GO), risk-check:changed (Wave 4 #1 PROCEED-WITH-CAUTION → deferred)

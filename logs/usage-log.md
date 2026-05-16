@@ -334,3 +334,34 @@ No additional levers — session was efficient.
 **Recommendation:** Add a pre-write checklist for plan files — confirm risk-check flag eligibility and caveat requirements before writing each artifact rather than catching gaps in the QC pass.
 
 **Estimated savings:** ~3–5k tokens/session in rework overhead avoided; ~1–2k from combining maintenance-observations reads.
+
+### 2026-05-16 | Acceptable
+
+**Task:** Tier 3 /friday-act execution — 8 plan items across 4 waves from two 2026-05-16 plan files; 7 shipped across 6 commits, 1 deferred after plan-time risk-check returned PROCEED-WITH-CAUTION on a SessionStart hook chain.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~30 |
+| Files read | ~15 unique (re-reads: 4 — session-notes.md ×2, decisions.md ×2, usage-log.md ×2, session-plan.md ×1 post-Write-failure) |
+| Files written/edited | ~13 |
+| Tool calls | ~80 (Read ×15, Edit ×18, Bash ×20, Write ×3, Agent ×4, Skill ×6, TodoWrite ×6) |
+| Subagents | 4 (qc-reviewer ×1, risk-check-reviewer ×3) |
+| Rework cycles | 3 (session-plan QC REVISE → 2 fixes; Write-before-Read failure on session-plan.md; typo in /new-project verification step) |
+
+**Findings:**
+- Re-reads — Moderate (recurring): session-notes.md ×2 (start mandate + wrap), decisions.md ×2 (prime + wrap), usage-log.md ×2 (ls/wc check then full read at wrap). Same lever flagged in every Friday-cluster session this month — no improvement observed.
+- Rework — Moderate (recurring): session-plan.md Write failed because file was not Read before Write — fourth consecutive Friday-cluster session logging this exact failure mode despite repeat recommendations in prior entries.
+- Rework — Minor: /new-project edited in 3 separate Edit calls (main addition + typo fix + report section) when the typo could have been caught by a self-check before first Edit.
+- Tool overhead — Minor: TodoWrite called ×6 across the session — incremental status ticks that could collapse to 3 checkpoints (open / mid-waves / wrap).
+- Positive: 4-wave staged execution with risk-check gating produced clean deferral on the one high-coupling item (SessionStart hook chain) — gates worked as designed; no in-class GO items were rushed.
+
+Stability vs. prior entries — improvement over the 2026-05-16 Tier 1+2 Wasteful entry (~89 calls, 5 re-read instances) but no regression-fix on the session-plan Read-before-Write pattern that has now appeared in 4 consecutive Friday-cluster sessions; rating held at Acceptable rather than climbing to Efficient because the recurring patterns persist.
+
+**Recommendation:** Wire a mechanical Read-before-Write preamble into the /session-plan skill itself — issue the Read call as the first action of the skill body, not as a model-side discipline. Four identical failures in five Friday sessions confirms this is a structural fix, not a behavioral one.
+
+**Estimated savings:** ~2–3k tokens/session from eliminating the Write-failure rework cycle (1 failed Write + 1 corrective Read + 1 retry Write → 1 Read + 1 Write). At observed ~1 recurrence per Friday-cluster session, projected ~10–20k tokens over 5–10 Friday sessions. Secondary savings from cached session-notes + decisions ledger reads at session open: ~3–4k tokens/session × 10–20 sessions = ~30–80k tokens.
+
+**Additional levers (ROI-ranked):**
+1. **Cache the log-trio (session-notes + decisions + usage-log) at /prime into a single consolidated read** (~3–4k tokens/session): three small ledger files re-read across prime → start → wrap on every Friday session; pinning content at first read eliminates 3 re-reads per session — larger than primary because it recurs across more session types than the session-plan Write failure.
+2. **Batch /new-project edits into a single Edit pass with all changes pre-planned** (~500–800 tokens/session): 3 Edit calls on one file when a single combined Edit (with the typo caught in a self-check pre-pass) would suffice — smaller than primary because per-file batching opportunities are sporadic, not deterministic.
+3. **Collapse TodoWrite status-tick calls from ~6 to 3 checkpoints** (~400–600 tokens/session): same lever flagged in prior Tier 1+2 entry today; recurs in every multi-wave execution session.

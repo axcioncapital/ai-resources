@@ -460,3 +460,34 @@ Class: execution
 - Out of scope: Other Tier 3 items (nordic-pe-macro #1/#3/#4, ai-resources-maintenance #3/#4 cleanup-worktrees); any item escalated to RECONSIDER by `/risk-check`
 - Files in scope: `ai-resources/.claude/commands/{friday-journal.md, friday-act.md, new-project.md, session-start.md, session-plan.md}`; `ai-resources/audits/repo-audit-commands-recommendation-2026-05-16.md` (new); workspace root `CLAUDE.md` (§Decision-Point Posture); `.claude/settings.json` (SessionStart hook)
 - Stop if: `/risk-check` RECONSIDER on any item → defer that item, continue rest; context exhaustion before Wave 4 → commit Waves 1–3 and defer journal-improvements #1+#2; ≥30 turns without natural break → checkpoint and wrap
+
+### Summary
+Executed 7 of 8 Tier 3 items in 4 sequenced waves; deferred 1 of 8 (Wave 4 #1) per risk-check verdict + session-plan stop point. Used inline `/risk-check` for both Wave 3 and Wave 4 in-class changes — both shipped items received plan-time GO. The deferred item (SessionStart hook chain) returned PROCEED-WITH-CAUTION with 6 required mitigations including paired doc updates to 4 other files; risk-check report committed as the deferred-item record. End-time `/risk-check` skipped per saved-memory rule ([feedback_end_time_risk_check_skip]) since both shipped in-class items had plan-time GO with no drift. Friday-journal trio (Wave 2 #1–#3) was batched in one commit since all three modify the same command file and share the pre-Step-6 gate region; pre-batching re-evaluation confirmed no risk-check class crossed.
+
+### Files Created
+- `audits/repo-audit-commands-recommendation-2026-05-16.md` — synthesis recommending keep-both-with-role-split for /audit-repo and /repo-dd (Wave 1 #5)
+- `audits/risk-checks/2026-05-16-strengthen-workspace-claude-md-decision-point-posture.md` — plan-time risk-check report (Wave 3, GO)
+- `audits/risk-checks/2026-05-16-new-project-decisions-scaffold-and-command-verification.md` — plan-time risk-check report (Wave 4 #2, GO)
+- `audits/risk-checks/2026-05-16-session-start-auto-chain.md` — plan-time risk-check report (Wave 4 #1, PROCEED-WITH-CAUTION, item deferred)
+
+### Files Modified
+- `.claude/commands/friday-act.md` — Step 1.5 + 16a expansion: project-internal logs locator, targeted SO-section reads, token-cost notes (Wave 1 #4)
+- `.claude/commands/friday-journal.md` — Step 5.5 focus-area expansion (vagueness + duplicate-merge), new Step 5.6 (drop-check), new Step 5.7 (deterministic risk-class scan); producer-side flag now authoritative, consumer-side gap documented as follow-up (Wave 2 #1+#2+#3)
+- `../CLAUDE.md` (workspace root) — §Decision-Point Posture strengthened with explicit anti-pattern wording ("do not ask 'what do you recommend'") and trust-downstream-/qc-pass-and-/refinement-pass language (Wave 3 #3)
+- `.claude/commands/new-project.md` — Post-Pipeline Enrichment additions: Step 4a (logs/decisions.md scaffold), Step 5a (canonical command verification safety-net); Report section updated (Wave 4 #2)
+
+### Decisions Made
+- **Implementation approach for SessionStart hook chain (Wave 4 #1):** identified that Claude Code hooks (shell scripts on lifecycle events) cannot directly invoke slash commands; proposed command-spec-only implementation (no settings.json hook entry) for risk-check evaluation. Risk-check returned PROCEED-WITH-CAUTION with 6 mitigations including paired doc updates to prime.md, session-rituals.md, weekly-session-guide.md, operator-maintenance-cadence.md, and reconciliation with qc-independence.md. Item deferred per session-plan stop point ("if target file diverges materially from plan-file spec: pause and reassess").
+- **friday-journal trio batching:** All three plan items (#1+#2+#3) modify the same command file (`friday-journal.md`) and share the pre-Step-6 gate region. Batched into one commit (9648278) rather than three. Pre-batch risk-check re-evaluation confirmed no class crossed (subagent focus-area expansion + deterministic checks + single-session report annotations — no hooks, settings, CLAUDE.md, symlinks, or cross-session writes).
+- **#4 risk-classification reconciliation during QC fix:** Initial session-plan listed journal-improvements #4 as "no structural class"; QC review caught the source-plan caveat ("re-evaluate at execution time"). Plan revised to restate the caveat. At execution time, re-evaluated: edit adds read-only project log paths and section-targeted parsing; no new automation, no shared-state writes. No `/risk-check` needed.
+- **Producer-consumer gap documented as known follow-up:** friday-journal Item context Risk-check bullet does not currently propagate to /friday-act plan files (consumer sub-step 15a re-derives risk-class from directive text only, not from upstream Item context). Documented in friday-journal.md Notes section; not fixed this session.
+- **End-time `/risk-check` skipped per saved memory rule:** Both shipped in-class items (Wave 3 + Wave 4 #2) had plan-time GO verdicts. Commits already shipped, drift bounded, no mitigations to track. Documented per `feedback_end_time_risk_check_skip`.
+
+### Next Steps
+- Push: 10 unpushed commits in ai-resources (6 from this session + 4 prior) + 2 unpushed in workspace. Operator approval required (Autonomy Rule #2).
+- Wave 4 #1 deferred — schedule a dedicated design session for SessionStart hook chain. Required scope: address all 6 mitigations from the risk-check report (`audits/risk-checks/2026-05-16-session-start-auto-chain.md`), draft paired doc updates to prime.md + session-rituals.md + weekly-session-guide.md + operator-maintenance-cadence.md, reconcile auto-chain with `docs/qc-independence.md`, decide opt-in vs opt-out semantics.
+- Tier 3 items still deferred from prior session: nordic-pe-macro #1 (restore vs retire context/ decision), #3 (CLAUDE.md pipeline-frontmatter note, risk-check), #4 (/improve session-plan hook overwrite); ai-resources-maintenance #3 (/cleanup-worktree ai-resources) + #4 (/cleanup-worktree workspace root).
+- Pending producer-consumer gap follow-up: extend `/friday-act` sub-step 15a to read upstream `**Risk-check required:**` bullet from journal-derived items' Item context blocks (currently re-derives from directive text only).
+
+### Open Questions
+- None.

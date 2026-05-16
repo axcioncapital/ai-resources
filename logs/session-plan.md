@@ -3,6 +3,12 @@
 ## Intent
 Execute 8 Tier 3 items from `audits/friday-plans/2026-05-16-journal-improvements.md` (5 items) and `audits/friday-plans/2026-05-16-friday-journal.md` (3 items) in 4 sequenced waves; commit each item separately; defer any item that returns RECONSIDER from `/risk-check`.
 
+**Wave breakdown:**
+- **Wave 1** (no risk-check): journal-improvements #5 (audit-repo vs repo-dd recommendation doc), journal-improvements #4 (friday-act.md Step 1.5 required-reads expansion)
+- **Wave 2** (one batched risk-check if reclassified): friday-journal #1 + #2 + #3 (all edit `friday-journal.md` — Step 5.5 extension + drop-check + risk-check step)
+- **Wave 3** (risk-check required): journal-improvements #3 (workspace `CLAUDE.md` §Decision-Point Posture wording strengthening)
+- **Wave 4** (heaviest; risk-check per item): journal-improvements #2 (`/new-project` canonical install + decisions.md scaffold), journal-improvements #1 (SessionStart hook chain)
+
 ## Class
 execution
 
@@ -40,4 +46,4 @@ Run `/risk-check` after the plan is approved (plan-time gate) on these items: jo
 
 Run `/risk-check` once at end-time (end-time gate), batched across every in-class change made this session, per the two-gate model in `docs/audit-discipline.md`. This fires regardless of individual plan-time verdicts — it is not conditional on PROCEED-WITH-CAUTION.
 
-Items with no structural class: journal-improvements #4 (friday-act.md spec edit — command-spec edit only, no shared-state automation introduced), #5 (analysis artifact only — produces a new recommendation doc, no structural change).
+Items with no structural class per literal change-class list: journal-improvements #5 (analysis artifact only — produces a new recommendation doc, no structural change). Journal-improvements #4 (friday-act.md spec edit): source plan explicitly flags this as close to the shared-state-automation boundary — the new Loop 2 reads and improvement-log reads behavior is additive but pattern-adjacent to shared-state automation. Re-evaluate the risk-check boundary for #4 at execution time before landing; if reclassified, run `/risk-check` before committing.
