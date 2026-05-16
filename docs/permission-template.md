@@ -272,6 +272,36 @@ Both hooks are invoked directly from ai-resources — do not copy `auto-sync-sha
 
 ---
 
+## PostToolUse[Write] fan-out wiring taxonomy (reference)
+
+Projects with a multi-stage pipeline can chain several `PostToolUse[Write]` hooks to fan out post-write side-effects. The pattern below was first observed in `projects/nordic-pe-macro-landscape-H1-2026/.claude/settings.json` and is documented here as a reference wiring shape — apply selectively per project need, not as a default.
+
+Canonical block (apply hooks in this order):
+
+```json
+{
+  "matcher": "Write",
+  "hooks": [
+    { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/log-write-activity.sh\"",  "timeout": 5, "statusMessage": "Logging write activity..." },
+    { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/detect-innovation.sh\"",   "timeout": 5, "statusMessage": "Checking for innovation..." },
+    { "type": "command", "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/auto-qc-nudge.sh",      "timeout": 5, "statusMessage": "Checking for significant artifact writes..." },
+    { "type": "command", "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/check-claim-ids.sh",    "timeout": 5, "statusMessage": "Checking citation tags..." }
+  ]
+}
+```
+
+**Hook roles:**
+- `log-write-activity.sh` — appends a per-write line to the project's write-activity log (timestamp, file, stage). Cheap audit trail.
+- `detect-innovation.sh` — pattern-matches the written path against the innovation-detection rules; flags new commands/agents/hooks/skills for `/innovation-sweep` review.
+- `auto-qc-nudge.sh` — if the write is a "significant artifact" (chapter prose, decision document, plan), nudges the session toward `/qc-pass`.
+- `check-claim-ids.sh` — for citation-pipeline projects, scans the written file for unresolved claim-ID tags (`[CITATION NEEDED]`, `[CLAIM-ID-?]`).
+
+**Auto-commit hook deliberately excluded.** A fifth hook observed in nordic-pe-macro auto-commits every Write event. This conflicts with the workspace **Commit Rules** (operator-approved commits, no `--no-verify`, no bypass) and is kept project-local per the loose-end verdict in `audits/innovation-sweep-2026-05-16.md` (LE3). Do **not** include the auto-commit hook in any project that follows workspace commit policy.
+
+**When to apply this wiring:** projects with a multi-stage research/synthesis pipeline, where stage transitions produce structured artifacts the operator wants tracked, QC-prompted, and citation-checked at write time. Skip for lightweight projects — the per-write overhead is non-trivial.
+
+---
+
 ## Detection rulebook (used by `/permission-sweep`)
 
 ### CRITICAL — cause live Edit/Delete prompts
