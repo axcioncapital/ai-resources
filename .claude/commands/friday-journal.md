@@ -163,8 +163,9 @@ Input: `$ARGUMENTS` (optional) — explicit path to a journal file. If omitted, 
     1. **Internal contradictions** — items that conflict with each other, or Summary claims that don't match the Items list (e.g., "X dropped" in Summary while X still appears as an item).
     2. **Currency drift** — items that conflict with current canonical state. Required reference reads: workspace `CLAUDE.md`, `ai-resources/CLAUDE.md`, latest `audits/friday-checkup-*.md`, recent entries in `logs/decisions.md`. Flag items proposing changes that are already in place.
     3. **Already-done check** — items proposing to build commands or fix issues that already exist. Use Glob (`ai-resources/.claude/commands/{NAME}.md`) and Grep to verify existence before flagging. No Bash available — do not use `ls`.
-    4. **Vagueness** — items with `Files: TBD`, "where applicable" hedges, or investigate-only directives at [high] tier.
-    5. **Risk-class flagging** — items that match `audit-discipline.md` "Risk-check change classes" (hook edits, permission changes, cross-cutting CLAUDE.md edits, new commands, new symlinks, shared-state automation). Flag these for /risk-check in /friday-act.
+    4. **Vagueness** — flag items that lack concrete enough scope for `/friday-act` to disposition. Signals: `Files: TBD` in Item context, free-text markers like "TBD," "investigate," "look into," "review whether," "see if," "where applicable" / "as needed" hedges, or any [high]-tier item whose directive is investigate-only (no action verb on a concrete object). Before flagging, attempt to resolve from grounding-pass context (Step 4 reads) — if a recent decision or checkup finding already names the target, surface that reference instead of flagging. If the directive is genuinely under-specified, flag with a one-line note suggesting what the operator would need to clarify to make it actionable.
+    5. **Risk-class flagging** — items that match `audit-discipline.md` "Risk-check change classes" (hook edits, permission changes, cross-cutting CLAUDE.md edits, new commands, new symlinks, shared-state automation). Flag these for /risk-check in /friday-act. (A deterministic backstop runs at Step 5.7 — see Notes.)
+    6. **Duplicate-merge detection** — flag items whose directives substantially overlap. Examples: two items naming the same target file with related verbs ("update X to add Y" + "fix X for Y" → likely one fix); two items addressing the same upstream concern at different abstraction levels ("strengthen CLAUDE.md §Foo" + "ensure Foo applies during sessions" → may be the same change). Before flagging, check grounding-pass context — if the items target different sub-aspects that only look similar at the line-shape level, do not propose a merge. **Finding decomposition:** the existing disposition vocabulary (k/d/r/f) is per-finding, so surface each merge as paired findings — one finding proposing to revise the surviving item to the merged directive (`r`-dispositionable), plus one finding per absorbed item proposing to drop it (`d`-dispositionable). Include cross-references in each finding's text so the operator sees the pairing (e.g., "merge with finding N"). Propose a single merged directive that satisfies the schema (`^\[(high|med|low)\] .+$`) in the survivor finding; explain in one line why the merge preserves intent.
   - **Output contract:** Full findings to `{AI_RESOURCES}/audits/working/journal-qc-{TODAY}.md`. Return ≤30-line summary to main session, including the working-notes path on the last line.
   - **Verdict shape:** `GO | REVISE | FLAG FOR EXTERNAL QC` (qc-reviewer's standard verdict schema).
 
@@ -185,6 +186,71 @@ Input: `$ARGUMENTS` (optional) — explicit path to a journal file. If omitted, 
 15f. After all findings dispositioned, re-run Step 5.4 (mechanical check) on the modified report to verify no schema breakage from the dispositions. On failure, abort and surface the mismatch — operator needs to manually correct.
 
 15g. Print: `Validation complete. {N} findings dispositioned ({K} kept, {D} dropped, {R} revised, {F} flagged for /risk-check). Final item count: {items_generated}.`
+
+---
+
+### Step 5.6: Drop-Check (deterministic reconciliation)
+
+15h. Compare the original entries captured verbatim in Step 1 (sub-step 6) against the final report's `## Item context` blocks. The goal is to detect entries that silently disappeared during clarification, generation, or QC disposition — not flagged drops (`d` in Step 5.5e logs intent), but *unintended* drops.
+
+  - For each captured original entry `E`:
+    - Search the report's `## Item context` blocks for an `- **Source entry:**` line whose value matches `E` (exact-string match against the verbatim entry; whitespace-normalized — collapse runs of whitespace to single spaces before comparing).
+    - If a match is found in any block, `E` is represented. Continue.
+    - If no match is found, `E` is a drop candidate.
+  - Build `DROP_CANDIDATES` = list of original entries with no matching Source-entry line.
+
+15i. If `DROP_CANDIDATES` is empty, print `Drop-check passed — every original entry is represented in the report.` and continue to Step 6.
+
+15j. If `DROP_CANDIDATES` is non-empty, display them to the operator:
+```
+Drop-check found {N} original entries with no matching Source-entry in the report:
+
+  Entry 1: "{verbatim entry text}"
+  Entry 2: "{verbatim entry text}"
+  ...
+
+Per-entry disposition (one letter per entry, in order):
+  (i)ntentional — drop confirmed (e.g., entry was merged into another item, or
+                  dispositioned `d` in Step 5.5e). No action.
+  (r)estore     — re-create an item for this entry. Will prompt for the
+                  `[risk] {directive}` line + Item context fields.
+```
+
+15k. Wait for the per-entry disposition string. Validate length matches `len(DROP_CANDIDATES)` and characters are in `{i, r}`. Re-prompt on mismatch.
+
+15l. For each entry dispositioned `r`:
+  - Prompt: `Replacement directive for "{verbatim entry text}" (must satisfy ^\[(high|med|low)\] .+$):`
+  - Wait for input; re-prompt on regex mismatch.
+  - Prompt for Item context fields one at a time: `Files:`, `Effort: (low|medium|high)`, `Recommended approach:`. The Source-entry field is the verbatim original entry text.
+  - Insert the new directive into `## Items` (preserving high→med→low sort order) and the new block into `## Item context` (matching directive heading). Increment `items_generated` in frontmatter.
+
+15m. After all `r` dispositions, re-run Step 5.4 (mechanical check) to verify schema integrity. On failure, abort and surface the mismatch.
+
+15n. Print: `Drop-check complete. {I} intentional drops confirmed, {R} entries restored. Final item count: {items_generated}.`
+
+---
+
+### Step 5.7: Deterministic Risk-Class Scan
+
+15o. Deterministic pre-flagging of risk-class items, complementary to Step 5.5 focus area 5 (subagent judgment-based flagging). Both paths can fire on the same item; the bullet is deduped.
+
+15p. For each `## Item context` block, scan the directive text + the block's full body for keyword patterns matching `audit-discipline.md` Risk-check change classes. Patterns (case-insensitive substring match):
+
+  - **Hook edits:** `hook`, `.sh`, `SessionStart`, `PostToolUse`, `PreToolUse`, `Stop hook`, `UserPromptSubmit`
+  - **Permission changes:** `settings.json`, `permission`, `allow list`, `deny list`, `additionalDirectories`
+  - **CLAUDE.md edits (cross-cutting):** `CLAUDE.md`, `workspace CLAUDE`, `project CLAUDE`, `always-loaded`
+  - **New commands or skills:** `new command`, `new skill`, `/{NAME}` where NAME is not an existing command (skip — too noisy; rely on subagent for this)
+  - **New symlinks:** `symlink`, `ln -s`, `repoint`
+  - **Shared-state automation:** `auto-commit`, `auto-write`, `cross-repo`, `cross-project`, `hook chain`, `automation`
+
+15q. For each block with at least one match:
+  - Check whether the block already has a `- **Risk-check required:**` bullet (added by Step 5.5e `f` disposition or a prior run of this step).
+  - If absent, append: `- **Risk-check required:** Yes (deterministic match: {matched-class}). /friday-act must run /risk-check before landing this fix.`
+  - If present, do not append a duplicate. (Dedupe is intentional — subagent flagging and deterministic flagging may both fire.)
+
+15r. After scanning, print: `Risk-class scan complete. {N} items flagged ({D} deterministic, {S} from subagent, {O} overlap — pre-existing from Step 5.5e).` Where `D` counts new bullets added by this step, `S` counts bullets that existed from focus area 5 / `f` dispositions, and `O` counts items where both paths flagged the same block.
+
+15s. Re-run Step 5.4 (mechanical check) one final time to verify schema integrity after all 5.5–5.7 modifications. On failure, abort with the mismatch surfaced.
 
 ---
 
@@ -235,6 +301,8 @@ Input: `$ARGUMENTS` (optional) — explicit path to a journal file. If omitted, 
     Report:          {AI_RESOURCES}/audits/friday-journal-{TODAY}.md
     Items generated: {N} (high: {H}, med: {M}, low: {L})
     Validation:      {GO | REVISE | FLAG FOR EXTERNAL QC} — {findings count} findings ({K} kept, {D} dropped, {R} revised, {F} flagged for /risk-check)
+    Drop-check:      {I} intentional drops, {R} restored entries (of {len(DROP_CANDIDATES)} candidates)
+    Risk-class scan: {N} items flagged ({D} deterministic, {S} subagent, {O} overlap)
     Working notes:   {AI_RESOURCES}/audits/working/journal-qc-{TODAY}.md
     Journal:         {archived | unchanged}
 
@@ -252,5 +320,7 @@ Input: `$ARGUMENTS` (optional) — explicit path to a journal file. If omitted, 
 - **Skipped-Friday handling.** This command does not enforce a staleness threshold on the journal itself — entries can be days or weeks old. The 7-day filter applies at the consumer side (`/friday-act` Step 1.5 only loads journal reports ≤ 7 days old) so that a report generated this Friday is what gets executed this Friday.
 - **No audit re-run.** Step 4 is read-only grounding. If the checkup report is missing or stale, surface it in the Summary; do not invoke `/friday-checkup` from inside this command.
 - **No SO-derived overlap.** Items in this report are journal-derived only. SO-derived items (advisory, systems-review) flow through `/friday-act` Step 3.5's existing paste-prompt path. The two sources are kept independent so subtotals (`SO_COUNT`, `JOURNAL_COUNT`) are accurate.
-- **Output validation gate (Step 5.5).** Auto-runs after Step 5 writes the report. Reuses `qc-reviewer` (no new agent) — agent runs its standard 6-dimension rubric; journal-specific focus areas (contradictions, currency drift, already-done, vagueness, risk-class) are passed as scope context that steers *what* the agent looks for within those dimensions. Per-finding disposition (k/d/r/f) preserves schema integrity: drop = remove both Items line + Item context block; revise = update both halves in lockstep, regex constraint surfaced to operator. Mechanical pre-check (Step 5.4) catches schema breakage before paying for the subagent. The gate cannot be skipped from inside the command — operator can disposition all findings as `k` (keep) to override, but the loop runs.
-- **Risk-class flag downstream contract.** Items dispositioned `f` (flag-for-/risk-check) get a `**Risk-check required:**` bullet in their Item context block. /friday-act must read this bullet during disposition and run /risk-check before landing the fix. /friday-act change required separately (out of scope for this implementation; tracked as a follow-up).
+- **Output validation gate (Step 5.5).** Auto-runs after Step 5 writes the report. Reuses `qc-reviewer` (no new agent) — agent runs its standard 6-dimension rubric; journal-specific focus areas (contradictions, currency drift, already-done, vagueness, risk-class, duplicate-merge) are passed as scope context that steers *what* the agent looks for within those dimensions. Per-finding disposition (k/d/r/f) preserves schema integrity: drop = remove both Items line + Item context block; revise = update both halves in lockstep, regex constraint surfaced to operator. Mechanical pre-check (Step 5.4) catches schema breakage before paying for the subagent. The gate cannot be skipped from inside the command — operator can disposition all findings as `k` (keep) to override, but the loop runs. **Vagueness and duplicate-merge focus areas (4 and 6)** ask the agent to attempt resolution from grounding-pass context (Step 4 reads) before flagging — flagging is the fallback when context can't disambiguate, not the default.
+- **Drop-check (Step 5.6).** Deterministic reconciliation between the original verbatim entries captured in Step 1 (sub-step 6) and the final report's `## Item context` Source-entry fields. Detects entries that disappeared without an operator-confirmed `d` disposition (merges may also surface here if the absorbed entry's text isn't preserved as a Source-entry — the operator confirms with `i` for intentional or `r` to restore). Runs after Step 5.5 dispositions are applied so the comparison is against the final report state, not the initial draft.
+- **Deterministic risk-class scan (Step 5.7).** Mechanical regex/substring scan against the change-class keyword lexicon. Complementary to focus area 5 in Step 5.5 (subagent judgment-based flagging) — both can fire on the same block, the bullet is deduped. Deterministic scan exists to catch items the subagent missed (focus area 5 ranks lower than contradictions/currency for the subagent's attention budget) and to make risk-class flagging fully reproducible across runs.
+- **Risk-class flag downstream contract.** Items flagged via Step 5.5e `f` disposition, focus area 5 (subagent), or Step 5.7 (deterministic) all produce the same `**Risk-check required:**` bullet shape in their Item context block. Current `/friday-act` behavior: sub-step 15a re-derives the risk-check decision from the directive text alone, not from the friday-journal Item context block. In most cases the directive text contains the same class keyword that produced the bullet, so the two paths agree — but for items whose Item context flagged a class invisible in the directive text (e.g., directive "Update friday-act required-reads" with Item context referencing `settings.json`), the upstream bullet is silently lost during /friday-act plan-file generation. **Known gap; not fixed in this session.** Follow-up: add to /friday-act sub-step 15a a check that journal-derived items also scan their upstream Item context block for an existing `**Risk-check required:**` bullet and honor it. Tracked as a producer-consumer schema gap; the friday-journal side is now the authoritative producer of the flag, but the consumer side does not yet read it.
