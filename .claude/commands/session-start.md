@@ -29,7 +29,7 @@ If `$ARGUMENTS` is non-empty, use it verbatim as `MANDATE_TEXT`.
 
 Otherwise, ask the operator **one prompt** (wait for one answer):
 
-> "State the session mandate. Include: (1) what you're doing, (2) what's out of scope, (3) when you're done, (4) which files may be edited, (5) when to stop."
+> "State the session mandate."
 
 ### Step 2 — Parse and confirm
 
@@ -38,7 +38,7 @@ Extract from `MANDATE_TEXT`:
 - `work_scope` — what work will be done, including explicit scope boundaries
 - `out_of_scope` — what is explicitly excluded; default `"(none stated)"` if not mentioned
 - `exit_condition` — what "done" looks like; must be observable or countable
-- `files_in_scope` — which files may be edited; infer from `work_scope` if not stated
+- `files_in_scope` — which files may be edited; if not stated by the operator, infer from `work_scope` for the **echo only** so the operator can verify or correct it; flag internally as **inferred** (`files_inferred = true`). If the operator provides a correction via the confirmation step → set `files_inferred = false` and use the correction.
 - `stop_if` — conditions that should halt the session; default `"(none stated)"` if not mentioned
 
 Echo to the operator:
@@ -53,6 +53,8 @@ Files:        {files_in_scope}
 Stop if:      {stop_if}
 ---
 ```
+
+`(none stated)` fields will be recorded as omitted — only correct if actively wrong.
 
 Ask:
 
@@ -71,9 +73,15 @@ Wait for one response. Apply these parser rules:
 ```
 **Mandate:** {one-sentence summary of work_scope} — done when: {exit_condition}
 - Out of scope: {out_of_scope}
-- Files in scope: {files_in_scope}
+- Files in scope: {files_in_scope_written}
 - Stop if: {stop_if}
 ```
+
+**Parse contract:** `wrap-session.md` Step 6a depends on the exact bullet labels (`- Out of scope:`, `- Files in scope:`, `- Stop if:`), the `(inferred)` marker, and the `(none stated)` marker written here. Do not rename these labels or marker strings without updating Step 6a.
+
+Where `files_in_scope_written` is:
+- `(inferred)` — if `files_inferred = true` (operator did not state or correct this field)
+- the operator's stated/corrected value — if `files_inferred = false`
 
 Read `logs/session-notes.md` (last 10 lines) to locate today's session header.
 
@@ -83,7 +91,7 @@ Read `logs/session-notes.md` (last 10 lines) to locate today's session header.
   ## YYYY-MM-DD
   **Mandate:** {one-sentence summary of work_scope} — done when: {exit_condition}
   - Out of scope: {out_of_scope}
-  - Files in scope: {files_in_scope}
+  - Files in scope: {files_in_scope_written}
   - Stop if: {stop_if}
   ```
 
