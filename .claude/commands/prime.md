@@ -28,9 +28,10 @@ Orient the session. Read state, brief the operator, wait for direction.
 
 2. Read `/logs/innovation-registry.md`. The registry is a pipe-delimited markdown table with columns
    `| Date | Type | File | Status | Graduated To |`. Count data rows whose Status column equals
-   exactly `detected` (do NOT count `triaged:*`, `graduated`, or other statuses). Use pattern
-   `^\|[^|]*\|[^|]*\|[^|]*\| detected \|` or parse the Status column directly. Do not grep for
-   list-item / YAML / JSON patterns — they do not match this table format.
+   exactly `detected` (do NOT count `triaged:*`, `graduated`, or other statuses). Use:
+   `awk -F'|' 'NR>2 && $5~/^ detected $/{c++}END{print c+0}' "$AI_RESOURCES/logs/innovation-registry.md"`
+   Do not use grep with `\|` escapes — BSD grep on macOS treats `\|` as BRE alternation, causing
+   the pattern to match every row. Do not grep for list-item / YAML / JSON patterns — they do not match this table format.
    If the file doesn't exist, report 0.
 
 3. Check `/inbox/` for pending skill request briefs. Count files excluding `.gitkeep`.
