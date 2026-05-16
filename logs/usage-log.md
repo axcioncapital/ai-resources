@@ -679,3 +679,27 @@ Stability vs. prior entries — Significant improvement over 2026-05-11 (Wastefu
 **Additional levers (ROI-ranked):**
 1. Harden innovation-count grep to column-scoped match — eliminates false-positive correction loop each /prime run
 2. Consolidate session-notes.md tail read at prime into a shared state note so the wrap read is a confirmed append-point, not a re-read — saves one Read per session
+
+### 2026-05-16 | Efficient
+
+**Task:** Innovation triage sweep across 6 projects to identify project-local Claude Code resources worth graduating to the shared ai-resources library. Spawned 5 parallel innovation-triage-auditor subagents, classified 101 items, and appended 23 entries to the innovation registry.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | 15 |
+| Files read | 13 (re-reads: 1) |
+| Files written/edited | 9 |
+| Tool calls | ~35 total |
+| Subagents | 7 |
+| Rework cycles | 0 |
+
+**Findings:**
+- Re-read: `session-notes.md` read twice (once for append point, once during wrap) — minor, small file (5 lines each read), negligible cost. (Re-reads — Minor)
+- Stable vs. prior entries — Efficient, consistent with 2026-05-16 friday-checkup/journal session and recovering from the Wasteful 2026-05-14 session; parallel-dispatch sessions with pre-computed inventory piped to worker agents track efficient.
+
+**Recommendation:** No action needed.
+
+**Estimated savings:** N/A — no recommendation.
+
+**Additional levers (ROI-ranked):**
+No additional levers — session was efficient.

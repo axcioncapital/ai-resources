@@ -406,3 +406,10 @@
 - **Decisions logged:** 1 (skip permission-sweep H-1 and M-1 per operator deny-list policy)
 - **QC cycles:** 0
 - **Gates:** 4 (1 changed) — tier-selection:confirmed, scope-selection:confirmed, mandate-confirmation:confirmed, improve-disposition:changed (operator directive "diagnostic only" reframed all 6 findings from apply→log)
+
+### 2026-05-16 — Innovation sweep: 6 projects, 7 graduate candidates identified
+- **Commands used:** /clarify, /scope, /wrap-session
+- **Iterations:** 0 (triage/audit session, no drafting)
+- **Decisions logged:** 0
+- **QC cycles:** 0
+- **Gates:** 3 (0 changed) — project-selection:confirmed, scope-approval:confirmed, plan-approval:confirmed

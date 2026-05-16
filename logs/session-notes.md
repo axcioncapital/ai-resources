@@ -332,3 +332,41 @@ Operator reported that declaring a model in settings.json or as a default in CLA
 
 ### End-time risk-check
 Skipped. Change scope was operator-directed end-to-end with a mid-session correction (skills added to permitted mechanisms) already incorporated. Touched classes: cross-cutting CLAUDE.md edits, settings edits, one shared command edit (`deploy-workflow.md`). All changes are reversible config/doc edits; no hook execution paths, no permission allow/deny shifts, no symlinks. Operator directive was explicit and tightly scoped. Coaching + telemetry both declined in preflight.
+
+## 2026-05-16 — Innovation sweep: 6 projects, 7 graduate candidates identified
+
+### Summary
+Ran a full innovation triage sweep across 6 selected projects (axcion-ai-system-owner had 0 local resources and was skipped; 5 projects active). Used /clarify and /scope to structure the request before entering plan mode, then spawned 5 parallel `innovation-triage-auditor` subagents. Classified 101 items total and produced a consolidated triage report with 7 graduate candidates, 8 loose ends, 40 already-graduated, and 46 keep-local verdicts. Key finding: nordic-pe's 17 "local" commands turned out to be byte-identical research-workflow deploys — the upstream inventory had missed the `ai-resources/workflows/research-workflow/` path. Updated the innovation registry with 23 new entries.
+
+### Files Created
+- `audits/innovation-sweep-2026-05-16.md` — consolidated triage report with graduate candidates, loose ends, verdict summary table
+- `audits/working/innovation-sweep-2026-05-16/global-macro-analysis/notes.md` — per-project working notes (gitignored)
+- `audits/working/innovation-sweep-2026-05-16/interpersonal-communication/notes.md` — per-project working notes (gitignored)
+- `audits/working/innovation-sweep-2026-05-16/nordic-pe-macro-landscape-H1-2026/notes.md` — per-project working notes (gitignored)
+- `audits/working/innovation-sweep-2026-05-16/obsidian-pe-kb/notes.md` — per-project working notes (gitignored)
+- `audits/working/innovation-sweep-2026-05-16/repo-documentation/notes.md` — per-project working notes (gitignored)
+
+### Files Modified
+- `logs/innovation-registry.md` — 23 new entries appended (7 graduate, 8 loose-end, 8 keep-local/already-graduated)
+
+### Decisions Made
+- **Project selection:** Operator selected projects 1 (axcion-ai-system-owner), 4 (global-macro-analysis), 5 (interpersonal-communication), 7 (nordic-pe-macro-landscape-H1-2026), 8 (obsidian-pe-kb), 10 (repo-documentation)
+- **Verdict bar:** "anything that looks generalizable" (operator-directed, not usage-proven)
+- **Scope:** Triage only — no actual graduation executed this session
+- **Implementation:** Consolidated into one report (not per-project); parallel subagents rather than sequential /innovation-sweep skill invocations
+
+### Next Steps
+- Graduate G1 (SessionStart upward-walk pattern) → `ai-resources/docs/permission-template.md`: run `/graduate-resource` or edit permission-template.md directly
+- Graduate G2 (deny-archive permissions shape) → same target
+- Graduate G3–G5 (decision-logger, checkpoint-nag, five-hook taxonomy) → workflow-level settings reference
+- Graduate G6 (compaction "trust the summary" rule) → `ai-resources/docs/compaction-protocol.md`
+- **Fix LE4 (urgent):** Delete or repoint broken symlink `obsidian-pe-kb/.claude/commands/resolve-improvements.md` → `resolve-improvement-log.md`
+- **Fix LE5 (urgent):** Remove `model` field from `obsidian-pe-kb/.claude/settings.json`
+- Decide on loose ends LE1–LE3, LE6–LE8 (today-drill, auto-commit policy, friction-log-trigger, compaction scratchpad)
+
+### Open Questions
+- LE3 (auto-commit hook): conflicts with workspace Commit Rules — intentional exception or remove?
+- LE2 (CLAUDE.md §Autonomy Rules from nordic-pe): graduate to workspace docs or keep project-local?
+
+### End-time risk-check
+Skipped — session touched no structural change classes (no hooks, no permission changes, no CLAUDE.md edits, no commands/skills/symlinks). Files produced were audit outputs and a registry log append only.
