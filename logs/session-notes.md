@@ -380,3 +380,33 @@ Created `/open-items`, a new slash command that scans the current project folder
 
 ### Open Questions
 - None.
+
+## 2026-05-16 — /usage-analysis + /session-start + /session-plan (telemetry + session setup)
+Class: execution
+**Mandate:** Weekly /friday-checkup across ai-resources, workspace, interpersonal-communication, nordic-pe-macro-landscape-H1-2026, project-planning (off-schedule Saturday run) — done when: consolidated checkup report written to ai-resources/audits/friday-checkup-2026-05-16.md and all sub-reports recorded in RESULTS
+- Out of scope: (none stated)
+- Files in scope: ai-resources/audits/friday-checkup-2026-05-16.md, audit snapshot files, improvement-log.md (per scope), coaching-data.md (per scope), permission-sweep and log-sweep reports, logs/session-notes.md
+- Stop if: (none stated)
+
+## 2026-05-16 — Add git pull + unpushed-commits check to /prime
+
+### Summary
+Automated the manual "pull at session start" rule by adding Step 0 to /prime. The new step pulls the cwd repo and ai-resources (when different), reports results inline in the Prime brief, and surfaces any local unpushed commits as a visible reminder before they get forgotten. Plan was QC'd (REVISE verdict) and revised to address four findings before implementation. Replaced a legacy standalone prime.md in one project with a symlink so all 10 projects now share the canonical command.
+
+### Files Modified
+- `ai-resources/.claude/commands/prime.md` — added Step 0 (git pull with result table + unpushed-commits check) and `**Pulled:**` line in the Prime brief
+- `projects/nordic-pe-landscape-mapping-4-26/.claude/commands/prime.md` — replaced 30-line standalone copy with symlink to ai-resources/.claude/commands/prime.md
+
+### Decisions Made
+- **Attachment point:** Add to /prime (one-step session-orientation entry point) rather than a SessionStart hook. Rationale: /prime is already the deliberate orientation command; a hook would fire even on `/clear`-continuations.
+- **Pull scope:** Always pull cwd repo + ai-resources when different. Covers project sessions (project + ai-resources), workspace-root sessions (workspace + ai-resources), and ai-resources sessions (ai-resources only).
+- **Standalone prime.md handling:** Replace nordic-pe-landscape-mapping-4-26's custom prime.md with a symlink to align with the other 9 projects.
+- **Unpushed-commits visibility:** Added after operator raised concern that git pull could mask forgotten pushes. The pull itself is safe (never overwrites local commits), but the brief was misleading — now shows `up to date — N unpushed` when applicable.
+- **QC fixes (4):** workspace-root IS a git repo (verified); explicit do-not-renumber instruction; precise result table for `up to date` / `updated` / `skip (no upstream configured)` / `failed`; `GIT_TERMINAL_PROMPT=0` to prevent credential hangs.
+
+### Next Steps
+- Push 3 commits when ready: 2 in ai-resources (prime Step 0 + unpushed check), 1 in nordic-pe-landscape-mapping-4-26 (symlink swap)
+- Next session: /prime will exercise the new Step 0 — verify the brief format renders correctly
+
+### Open Questions
+- None.

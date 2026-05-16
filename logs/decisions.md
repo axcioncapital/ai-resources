@@ -85,3 +85,13 @@
 **Rationale:** Applying the change without the mitigations would introduce a worse regression than the bug it fixes (over-stripping legitimate additionalDirectories entries). The proper 5-file scope + 4 mitigations is a self-contained unit of work — better done fresh than rushed at session end.
 
 **Alternatives considered:** Apply items 5+6 anyway with partial mitigations (rejected — PROCEED-WITH-CAUTION verdict is binding until mitigations are confirmed applied).
+
+## 2026-05-16 — Automate "git pull at session start" via /prime Step 0
+
+**Context:** The "Pull the latest from GitHub at the start of each session" rule in ai-resources/CLAUDE.md was documentation, not automation. Operator was forgetting it in project sessions, risking stale code edits and stale skill definitions.
+
+**Decision:** Add a new Step 0 to /prime that pulls the cwd repo and (when different) ai-resources, reporting results in the Prime brief. Also surfaces local unpushed commits to prevent the inverse failure mode (forgetting to push at session end).
+
+**Rationale:** /prime is the canonical orientation entry point and is already run consistently — the gap was content, not adoption. A SessionStart hook would fire even on `/clear`-continuations and lack the repo-detection context /prime has. Pulling cwd + ai-resources together handles all three session contexts (project / workspace root / ai-resources) without per-project configuration. Unpushed-commits visibility addresses the operator's concern that git pull alone could let a forgotten push linger silently.
+
+**Alternatives considered:** SessionStart hook running git pull (rejected — fires too broadly, lacks context, and /prime adoption was already consistent).
