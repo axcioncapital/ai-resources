@@ -357,3 +357,35 @@ Oriented session with /prime and /open-items (ai-resources scope, harness exclud
 
 ### Open Questions
 - None.
+
+## 2026-05-16 — friday-act follow-ups: nordic-pe-macro retirement + frontmatter note + /improve + G5
+
+### Summary
+Ran friday-act 2026-05-16 follow-ups (operator-approved scope: items 1, 3, 4, 5, 6, 7, 8; item #2 skipped per operator — model frontmatter declarations forbidden). Cross-checked all 7 plan files (28 items total) against commits and filesystem before starting — discovered 3 items already done (item 7 G6 compaction rule already in compaction-protocol.md; item 8 innovation-registry 22 entries already appended; item 5 target project `nordic-pe-landscape-mapping-4-26` doesn't exist on disk and the existing project already has additionalDirectories — moot). Executed remaining items 1, 3, 4, 6 across nordic-pe-macro and ai-resources repos. Item 1 verdict was retire-not-restore: `produce-architecture` / `produce-prose-draft` / `produce-formatting` target a `parts/part-2-service/` + `context/` structure never adopted in this project (no parts/ or context/ exists; active prose work uses `report/chapters/`). Plan-time `/risk-check` for item 3 returned GO across all five dimensions. Item 4 ran /improve via the improvement-analyst subagent invoked from this session with explicit nordic-pe-macro paths — surfaced 7 findings including a key misdiagnosis: the friction-log blamed a PostToolUse write-activity hook for overwriting session-plan.md, but no hook in `.claude/hooks/` or `ai-resources/.claude/hooks/` writes to session-plan.md; actual cause is `/session-plan` re-invoked mid-session (4 invocations on 2026-05-15) with stale intent from session-notes.md Next Steps.
+
+### Files Created
+- `projects/nordic-pe-macro-landscape-H1-2026/logs/improvement-log.md` — initialized with 7 ranked findings (Finding 1 marked applied; 2–7 logged pending)
+- `ai-resources/audits/risk-checks/2026-05-16-plan-time-friday-act-followups-item-3-frontmatter-note.md` — plan-time /risk-check report for item 3 (verdict GO)
+
+### Files Modified
+- `projects/nordic-pe-macro-landscape-H1-2026/CLAUDE.md` — two adds: Retired Commands section (item 1) + Command Conventions YAML-frontmatter note (item 3)
+- `projects/nordic-pe-macro-landscape-H1-2026/logs/friction-log.md` — correction notes appended under the 2026-05-14 20:58 and 2026-05-15 entries that misdiagnosed the session-plan overwrite as a hook side effect (item 4 Finding 1 applied)
+- `ai-resources/docs/permission-template.md` — added "PostToolUse[Write] fan-out wiring taxonomy" section (G5 graduation; auto-commit hook excluded per LE3 policy tension)
+- `ai-resources/logs/session-notes.md` — this entry
+
+### Decisions Made
+- **Item 1 verdict (retire vs restore):** Picked retire (option b) and proceeded automatically per decision-point posture. Reasoning logged in chat: `parts/part-2-service/` and `context/` referenced by the three commands don't exist anywhere in the project; the active prose workflow uses `report/chapters/` with the three-report + Implications Brief structure. Files left on disk for archival; CLAUDE.md note documents the retirement.
+- **Item 5 dropped as moot:** Target project `nordic-pe-landscape-mapping-4-26` doesn't exist on disk (likely deleted/renamed since plan generation). The existing project (`interpersonal-communication`) already has `additionalDirectories`. Permission-sweep itself reports "No violations" for Rule 8. Plan item recorded as superseded.
+- **Item 2 skipped per operator directive:** Operator directed "model declarations are forbidden" — skipped item 2 (knowledge-file-producer SKILL.md frontmatter). Surfaced in chat that the workspace CLAUDE.md § Model Tier permits `model:` in SKILL.md frontmatter and offered a future-session edit to harden the prohibition; operator confirmed skip without applying the hardening.
+- **/improve cross-project invocation:** Spawned the improvement-analyst subagent directly with explicit nordic-pe-macro paths (project root, friction-log, improvement-log, archive). Bypassed the /improve skill's interactive triage flow since the operator was running this from an ai-resources session. Applied Finding 1 (logs/friction-log correction notes — not in-class) inline; logged Findings 2–7 as pending for a dedicated nordic-pe-macro session where they can be risk-checked properly. Most touch ai-resources canonical commands/hooks (session-plan.md, auto-sync-shared.sh).
+- **End-time /risk-check skipped** per `feedback_end_time_risk_check_skip` memory: plan-time gate covered all in-class changes (item 3 GO; item 1 plan-classified no-RC); both in-class edits committed during execution; drift bounded to exactly what was planned (two doc-only additions to nordic-pe-macro CLAUDE.md, no behavior changes).
+
+### Next Steps
+- Push all three repos (operator approval): ai-resources (~13 unpushed), nordic-pe-macro (3+ unpushed from this session), workspace root (any prior).
+- Pick up inbox briefs: `ai-resources/inbox/codex-second-opinion-brief.md` and `ai-resources/inbox/repo-review-brief.md` (carried over from prior session).
+- Dedicated session for nordic-pe-macro improvement-log Findings 2–7: most touch ai-resources canonical files (`.claude/commands/session-plan.md` Steps 0 + 1 + 7 freshness check + duplicate Class: guard; `.claude/hooks/auto-sync-shared.sh` drift-reconciliation mode) and require their own plan-time /risk-check.
+- `/cleanup-worktree` for ai-resources — 8 untracked files predating this session (risk-check reports from 2026-05-12 / 2026-05-14, repo-health reports from 2026-05-16) and 2 modified files (`.claude/commands/session-start.md`, `.claude/commands/wrap-session.md` — both predate this session).
+- Optional: update `/prime` Step 7 to clarify that session header should be appended at END of session-notes.md, not prepended at top — this session caught the same prepend mistake the operator's `feedback_session_notes_append_direction` memory warns about.
+
+### Open Questions
+- None.

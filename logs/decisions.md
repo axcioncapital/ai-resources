@@ -151,3 +151,45 @@
 - *Implement the command-spec-only path now, defer the paired docs:* Rejected — risk-check identified the paired-doc updates as a required mitigation, not optional. Landing the chain without the doc reconciliation creates drift between runtime behavior and documented behavior.
 - *Implement the literal SessionStart hook (settings.json):* Rejected — Claude Code hooks fire on every session including ad-hoc sessions where the chain is unwanted. A blanket hook injects the chain instruction everywhere; the operator opt-out mechanism would need a separate marker file or env-var check inside the hook. Both add complexity without proportional benefit.
 - *Skip the risk-check and ship:* Rejected — plan-item explicitly required risk-check, and the verdict's HIGH hidden-coupling rating is a real signal, not bureaucratic friction.
+
+---
+
+## 2026-05-16 — Retire nordic-pe-macro produce-* commands (option b, not restore context/)
+
+**Context.** Friday-act 2026-05-16 plan item nordic-pe-macro #1 flagged the `context/` directory as missing — three command files (`produce-prose-draft.md`, `produce-architecture.md`, `produce-formatting.md`) reference `context/prose-quality-standards.md`, `context/content-architecture.md`, and `context/project-brief.md`. The plan offered two paths: (a) restore the files if prose production is still in scope, or (b) document in CLAUDE.md that the commands are retired. Operator decision required.
+
+**Decision.** Path (b): retire the three commands by adding a "Retired Commands" section to project CLAUDE.md. Files left on disk for archival.
+
+**Rationale.** Investigation showed the three commands reference a `parts/part-2-service/` and `parts/part-3-strategy/` document structure that does not exist anywhere in the project — only the three commands themselves reference those paths. The active prose workflow uses `report/chapters/1.1/` with the three-report + Implications Brief structure documented in the project plan. Most recent prose-work session (per `logs/session-notes.md`) edited 17 chapter files under `report/chapters/1.1/` — none of the produce-* commands were invoked. Conclusion: the produce-* commands are artifacts from a project shape that was planned at some point but never adopted.
+
+**Alternatives considered.**
+- *Restore the three context files:* Rejected. The directory structure they assume (`parts/part-2-service/`) does not exist; restoring them would not make the commands operational without also creating the parts/ structure, which the project plan does not call for.
+- *Delete the three command files:* Rejected as too aggressive. Retirement-via-CLAUDE.md preserves them on disk for archival reference while clearly signaling "do not invoke."
+- *Investigate whether parts/part-2-service/ is a planned-but-not-yet-built phase:* Considered. Read the active task plan v3 and research plan v3 — neither references Part 2/Part 3 service/strategy structure. Project plan is consistent with three-report + Brief end-state.
+
+---
+
+## 2026-05-16 — Drop friday-act plan item 5 as moot (target project does not exist)
+
+**Context.** Friday-act 2026-05-16 plan item permission-sweep #2 (H-4) asked for `additionalDirectories` blocks to be added to two project settings.json files: `projects/nordic-pe-landscape-mapping-4-26/.claude/settings.json` and `projects/interpersonal-communication/.claude/settings.json`.
+
+**Decision.** Drop the item without applying. Record in plan execution as superseded.
+
+**Rationale.** On-disk verification: `projects/nordic-pe-landscape-mapping-4-26/` does not exist (likely deleted or renamed since the plan was generated). The second target (`projects/interpersonal-communication/.claude/settings.json`) already contains `additionalDirectories: ["/Users/patrik.lindeberg/Claude Code/Axcion AI Repo"]`. The current `/permission-sweep` report itself (`audits/permission-sweep-2026-05-16.md`) confirms: "Rule 8 (missing or stale additionalDirectories in project files): All Layer D files contain `additionalDirectories: [...]`. No violations." Both ends of the plan item are already resolved by other means.
+
+**Alternatives considered.**
+- *Apply the change to interpersonal-communication anyway:* Rejected — the canonical value is already present; applying it would be a no-op edit.
+- *Search for a renamed version of nordic-pe-landscape-mapping-4-26:* Considered briefly. The only matching project is `nordic-pe-macro-landscape-H1-2026`, which has its own settings.json with the canonical block already. No drift to remediate.
+
+---
+
+## 2026-05-16 — Skip end-time /risk-check per operator memory rule
+
+**Context.** Session executed two in-class structural changes (both edits to `projects/nordic-pe-macro-landscape-H1-2026/CLAUDE.md`: Retired Commands section + Command Conventions section). Per `ai-resources/docs/audit-discipline.md` § When to fire, the two-gate model nominally requires an end-time `/risk-check` batched across in-class changes.
+
+**Decision.** Skip the end-time gate. Document the skip in this entry and in the session-notes wrap.
+
+**Rationale.** Per operator memory `feedback_end_time_risk_check_skip`: skip when plan-time covered with mitigations applied AND commits already shipped AND drift bounded. All three conditions met. (a) Plan-time gate: item 3 received explicit `/risk-check` (verdict GO, all five dimensions Low, no mitigations required); item 1 was plan-classified `Risk-check required: no` by the friday-act plan author and the change was a doc-only retirement note. (b) Commits shipped: both edits committed during execution (`ed91e61`, `20fa6fc` in the nordic-pe-macro repo). (c) Drift bounded: both edits land exactly the content planned — no scope creep, no behavior changes, no new automation. The end-time gate's value is catching drift and emergent coupling; with zero of either, the gate produces no signal.
+
+**Alternatives considered.**
+- *Run the end-time gate anyway:* Rejected. The memory rule exists precisely to suppress ceremonial gate-firing on bounded doc-only changes. Running it would consume an additional subagent invocation without producing useful risk signal.
