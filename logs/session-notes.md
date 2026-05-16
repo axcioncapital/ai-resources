@@ -389,3 +389,48 @@ Ran friday-act 2026-05-16 follow-ups (operator-approved scope: items 1, 3, 4, 5,
 
 ### Open Questions
 - None.
+
+## 2026-05-16 — /cleanup-worktree: commit 7 untracked audit/report artifacts (2 topical commits)
+
+### Summary
+Ran full `/cleanup-worktree` over the ai-resources working tree. Investigation found 9 dirty paths initially (2 modified files + 7 untracked); during investigation, the 2 modified files (`logs/decisions.md`, `logs/session-notes.md`) were committed externally by the operator via terminal (commit `678067a session: friday-act 2026-05-16 follow-ups`), shrinking scope to the 7 untracked audit/report artifacts. All 7 classified as decision-1 (`commit`); zero hard gates. Full plan-mode workflow: written 8-section plan → 1st QC subagent (MINOR-ONLY, 2 nits) → triage subagent (MINOR-1 must-fix value substitution, MINOR-2 history-only) → plan revision → quick-tier 2nd-QC skip applied (zero hard gates AND zero new file-content claims in revision) → operator-invoked `/qc-pass` (verdict GO) → ExitPlanMode → 2 commits landed.
+
+### Files Created
+- `/Users/patrik.lindeberg/.claude/plans/lively-singing-cocke.md` — `/cleanup-worktree` plan (harness-managed, lives outside the repo)
+
+### Files Modified
+- `logs/session-notes.md` — this entry (wrap-session writes)
+- `logs/decisions.md` — cleanup-worktree decision entries (wrap-session writes)
+- `logs/coaching-data.md` — auto-appended coaching profile entry (wrap-session writes)
+- `logs/usage-log.md` — auto-appended telemetry entry (wrap-session writes)
+
+### Files Committed This Session
+- `audits/risk-checks/2026-05-12-the-changes-you-made-to-claude-md.md`
+- `audits/risk-checks/2026-05-14-end-time-gate-all-in-class-changes-landed-this-session.md`
+- `audits/risk-checks/2026-05-14-end-time-gate-session-2026-05-14-structural-changes.md`
+- `audits/risk-checks/2026-05-14-session-resolve-deferred-repo-dd-findings.md`
+- `audits/risk-checks/2026-05-16-strengthen-workspace-claude-md-decision-point-posture.md`
+- `reports/repo-health-report-2026-05-16-current.md`
+- `reports/repo-health-report-2026-05-16-prev.md`
+
+Commits:
+- `9f3ff26` — `audit: 5 risk-check reports — 2026-05-12 / 2026-05-14×3 / 2026-05-16 accumulated artifacts` (5 files, 471 insertions)
+- `4909dd8` — `audit: repo-health reports — 2026-05-08 prev + 2026-05-16 current snapshot pair` (2 files, 323 insertions)
+
+### Decisions Made
+- **2-commit topical split** — risk-checks bundled into one commit; repo-health snapshot pair into a second commit. Rejected single bundled commit (loses topical separation) and one-commit-per-file (over-fragmentation per skill's ambitious-commit-split trap).
+- **`find-template.sh` skipped for all 7 paths.** None of the paths are shared-library candidates (none under `.claude/commands/`, `.claude/agents/`, `.claude/hooks/`); `audits/` and `reports/` are not in `cleanup-worktree.md` Step 4's "could plausibly have a canonical template" enumeration (`skills/`, `prompts/`, `workflows/`, `scripts/`, `docs/`). Documented as Bias Counter 2 in plan Section 7 with explicit zero-list.
+- **Quick-tier 2nd-QC skip applied** per `execution-protocol.md` § 6. Both preconditions verified: Section 4 hard-gate count = 0; revision Section 8 introduced 0 new file-content claims (MINOR-1 = value substitution of an existing line-count claim; MINOR-2 had no edit). Operator notified verbatim before `ExitPlanMode`. Triage subagent explicitly confirmed eligibility was preserved.
+- **MINOR-2 phrasing: history-only (declined optional rewording).** Triage surfaced an alternative phrasing for the prev report's "1 critical" wording but recommended declining because adopting it would introduce a new characterization absent from the pre-revision plan, technically forfeiting quick-tier skip eligibility. Recommendation accepted.
+- **Working-tree-drift handling.** Commit `678067a` (authored externally by operator during investigation) committed 2 modified files mid-flow, shrinking scope. Documented in plan Section 2 with a Working-tree drift note; Section 6 added per-commit `git status --porcelain=v1 <dir>` guards immediately before each `git add` to re-verify the 7-path scope. Both guards passed at execution time.
+- **`, /session-start` invocation token treated as out-of-scope post-cleanup intent.** The cleanup skill does not invoke other slash commands; the token was recorded in plan Section 1 for visibility and held over to a separate operator action.
+- **No end-time `/risk-check` required.** Cleanup touched only audit/report artifact files in append-only working-state directories; no structural change class triggered (no hooks, permissions, CLAUDE.md, new commands or skills, new symlinks, automation with shared-state effects).
+
+### Next Steps
+- Push 17 unpushed commits to ai-resources (operator approval, Autonomy Rule #2).
+- Run `/session-start` (deferred from original `/cleanup-worktree , /session-start` invocation) when starting the next stretch of work.
+- Pick up inbox briefs `inbox/codex-second-opinion-brief.md` and `inbox/repo-review-brief.md` via `/create-skill` in a dedicated session (carried over from prior session).
+- Optional follow-up: nordic-pe-macro improvement-log Findings 2–7 (most touch ai-resources canonical files; require their own plan-time `/risk-check`).
+
+### Open Questions
+- None.

@@ -193,3 +193,32 @@
 
 **Alternatives considered.**
 - *Run the end-time gate anyway:* Rejected. The memory rule exists precisely to suppress ceremonial gate-firing on bounded doc-only changes. Running it would consume an additional subagent invocation without producing useful risk signal.
+
+---
+
+## 2026-05-16 — Apply quick-tier 2nd-QC skip on /cleanup-worktree plan
+
+**Context.** `/cleanup-worktree` over ai-resources working tree. Plan classified 7 untracked audit/report artifacts as decision-1 (`commit`); zero hard gates. 1st QC pass returned MINOR-ONLY (2 nits: line-count value error + transparent phrasing note). Triage classified MINOR-1 as must-fix value substitution and MINOR-2 as history-only no-edit. After revision applying MINOR-1, the quick-tier 2nd-QC skip rule from `ai-resources/skills/worktree-cleanup-investigator/references/execution-protocol.md` § 6 became eligible.
+
+**Decision.** Skip the 2nd QC pass per the quick-tier rule. Surface to operator verbatim per `cleanup-worktree.md` Step 9: "2nd QC skipped per quick-tier rule — zero hard gates, zero new file-content claims in revision." Then proceed to `ExitPlanMode`.
+
+**Rationale.** Both preconditions verified satisfied: (a) Section 4 hard-gate count = 0 — every dirty path is decision-1; no destructive operations exist; (b) revision Section 8 introduced 0 new file-content claims — MINOR-1 was a value substitution of an existing claim (line count for the same file already present in the pre-revision plan), MINOR-2 had no edit. The two failure surfaces the 2nd QC exists to catch (under-specified hard-gate abort scope, fabricated revision claims) are both absent. The skip is the rule's intended application — calibrated exemption, not a weakening. Triage subagent explicitly confirmed eligibility was preserved by the MINOR-1 framing.
+
+**Alternatives considered.**
+- *Run the 2nd QC anyway:* Rejected. The quick-tier rule is a load-bearing optimization; defaulting to "run anyway" defeats its purpose and adds ~30s of subagent latency on every cleanup with trivial revisions. The skip is logged and operator-notified — auditability is preserved.
+- *Adopt MINOR-2's optional rewording to "1 underlying critical issue counted across 3 areas":* Rejected. Per triage, adopting it would introduce a new characterization absent from the pre-revision plan, technically forfeiting quick-tier eligibility. The original phrasing already mirrors the prev report's own header normalization at line 25 — no fabrication, no precision loss worth the eligibility cost.
+
+---
+
+## 2026-05-16 — Skip find-template.sh for /cleanup-worktree paths in audits/ and reports/
+
+**Context.** `/cleanup-worktree` bias counter 2 (`SKILL.md` lines 128–134) mandates running `scripts/find-template.sh` for any path that could plausibly have a canonical template elsewhere in ai-resources. The command spec at `cleanup-worktree.md` Step 4 step 10 enumerates trigger categories: `.claude/commands/*.md`, `.claude/agents/*.md`, `.claude/hooks/*`, plus paths mirroring `skills/`, `prompts/`, `workflows/`, `scripts/`, `docs/`. The 7 dirty paths this session lived in `audits/risk-checks/` and `reports/` — neither in the explicit trigger list.
+
+**Decision.** Skip `find-template.sh` for all 7 paths. Document the skip as Bias Counter 2 in plan Section 7 with explicit zero-list and justification, so the audit trail is clear.
+
+**Rationale.** `audits/risk-checks/` and `reports/` are append-only working-state directories — per-instance records of changes/audits, intrinsically unique-by-timestamp, not templated content categories. Running the script on these paths would return `NO_TEMPLATE_FOUND` for all 7 files and add zero signal. The bias counter exists specifically because text-only "check both X and Y" instructions failed in the originating session for paths that DO have templated equivalents (`.claude/commands/*.md`). It is calibrated to that risk surface, not blanket "run on every dirty path." Documenting the skip in Section 7 with explicit reasoning maintains the audit-trail property the counter creates.
+
+**Alternatives considered.**
+- *Run find-template.sh on all 7 paths anyway:* Rejected. The script would return `NO_TEMPLATE_FOUND` (the script walks ai-resources subdirectories looking for files of matching basename and category; uniquely-named timestamped audit artifacts have no plausible match). Running it would be ceremonial — adds tool calls without producing signal — and would weaken the counter's selectivity over time (audits that fire on irrelevant paths get tuned out).
+- *Run it on one representative path as a sanity demonstration:* Rejected. The same logic applies: would return `NO_TEMPLATE_FOUND`, adds no signal. The plan's explicit zero-list with justification is a stronger audit artifact than a single demonstrative run.
+

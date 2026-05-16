@@ -441,3 +441,11 @@
 - **Decisions logged:** 0
 - **QC cycles:** 8 (2 on session plan: both REVISE; 6 on item edits: all GO)
 - **Gates:** 3 (1 changed) — plan-approval:changed (operator approved after 2 QC revision rounds), risk-check:changed (item #6 plan-time PROCEED-WITH-CAUTION → mitigations applied), risk-check:confirmed (item #6 end-time GO)
+
+### 2026-05-16 — /cleanup-worktree: commit 7 untracked audit/report artifacts (2 topical commits)
+- **Commands used:** /prime, /cleanup-worktree, /qc-pass, /wrap-session
+- **Iterations:** 1 (plan v1 → 1st-QC + triage → plan v2 with MINOR-1 line-count fix)
+- **Decisions logged:** 2
+- **QC cycles:** 2 (1st QC subagent inside plan flow → MINOR-ONLY → applied; operator-invoked /qc-pass on revised plan → GO)
+- **Gates:** 1 (0 changed) — plan-approval:confirmed (operator approved via ExitPlanMode without content changes; the operator did interrupt the first ExitPlanMode to insert an /qc-pass, but that was a procedural addition, not a content redirect — final plan approved as-revised)
+- **Mandate fields:** none (no /session-start this session)

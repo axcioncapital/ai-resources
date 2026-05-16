@@ -2,6 +2,35 @@
 
 <!-- entries below -->
 
+### 2026-05-16 | Wasteful
+
+**Task:** Ran /prime then full /cleanup-worktree workflow over ai-resources working tree. Investigation found 9 dirty paths (7 untracked audit/report artifacts after operator committed 2 modified files externally mid-flow); produced 8-section plan, 1st QC + triage + MINOR-1 revision, operator-inserted /qc-pass (GO), then 2 topical commits.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~10 |
+| Files read | ~20 (re-reads: 7 — session-notes.md ×3, decisions.md ×4) |
+| Files written/edited | 4 (plan + 2 logs + coaching-data) |
+| Tool calls | ~59 |
+| Subagents | 3 (qc-reviewer ×2 + triage-reviewer ×1) |
+| Rework cycles | 3 (plan v1→v2; 2 Edit-before-Read failures; mid-flow tree drift re-orient) |
+
+**Findings:**
+- Re-reads — Major (3 subagents each independently re-read all 7 dirty files ≈ ~800 lines × 3 = ~2,400 duplicate lines; the operator-inserted /qc-pass on revised plan duplicated the in-plan-mode 1st QC nearly verbatim)
+- Re-reads — Moderate (session-notes.md ×3, decisions.md ×4 — Bash tail then Read-before-Edit recurrence of 2026-05-11 pattern)
+- Rework — Moderate (Edit's read-first gate failed twice because Bash tail does not satisfy it; mid-flow working-tree drift forced plan §2 re-orientation)
+- Tool overhead — Minor (TodoWrite ×5 incremental ticks; ExitPlanMode ×2 with one rejection)
+- Trend: regression vs. last 3 entries (2 Acceptable + 1 Efficient); re-read pattern on session-notes/decisions persists for 3rd consecutive wasteful occurrence.
+
+**Recommendation:** Add a "QC re-read budget" to /cleanup-worktree — pass the already-investigated file contents (or a path-keyed digest) into the qc-reviewer + triage-reviewer + post-revision /qc-pass via the plan body itself, so subagents review the plan against the digest rather than independently re-reading all dirty files each pass.
+
+**Estimated savings:** ~2,400 lines of duplicate dirty-file reads across 3 subagents ≈ ~20-30k tokens this session. Over 10-20 cleanup-worktree sessions: ~200-600k tokens. Order-of-magnitude.
+
+**Additional levers (ROI-ranked):**
+- Skip operator-inserted /qc-pass when in-plan-mode 1st QC + triage already passed with MINOR-only verdict on a quick-tier plan — saves a full qc-reviewer subagent (~10-15k tokens/session); larger than session-log re-read fix because it eliminates an entire subagent invocation, not just file reads.
+- Cache session-notes.md + decisions.md tail at session open into a single Read call, reuse at wrap — saves ~3-5k tokens/session; smaller than primary because per-file lines are short, but this is now a 4th-recurrence structural pattern and worth a /prime-level fix.
+- Prefer Read over Bash tail when an Edit is anticipated downstream — eliminates the 2 wasted Edit-before-Read failures (~1-2k tokens/session); smallest of the three but the cheapest to fix (single rule in CLAUDE.md or skill preamble).
+
 ### 2026-05-16 | Acceptable
 
 **Task:** Proposed, QC'd, and executed a 6-item improvement-log sprint targeting recurring friction in session infrastructure (prime, session-start, session-plan, monday-prep, consult, friday-act + workspace CLAUDE.md). Each item: read → edit → pre-commit /qc-pass → commit.
