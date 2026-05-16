@@ -143,6 +143,7 @@ Canonical shape:
 **Key assertions:**
 - Must have `Bash(*)` in allow (root cause #4 — ai-resources previously had only narrow bash grants).
 - Same dotfile-path and absolute-path patterns as workspace root.
+- **Hardcoded absolute paths in `allow` are intentional and canonical.** `Edit(/Users/patrik.lindeberg/...)` and `Write(/Users/patrik.lindeberg/...)` cannot be replaced with env-var references or relative paths — Claude Code permission pattern matching is literal (no env-var expansion). Audit tools that flag these as "stale hardcoded paths" are producing a false positive against this layer. Document such findings as resolved without action. (See `logs/decisions.md` 2026-05-16.)
 - `Bash(rm *)` in allow.
 - `Bash(git push*)` in deny — force explicit operator step for push.
 - Read-denies on archival paths (preserves token-audit discipline).

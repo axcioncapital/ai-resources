@@ -122,3 +122,17 @@
 - *Delete project CLAUDE.md `Model Selection` sections entirely.* Rejected — operator directed removal of the *default*, not removal of guidance. Recommended-posture text is useful onboarding signal for project-tier judgment.
 - *Restrict prohibition to settings.json only.* Rejected — operator directive explicitly named CLAUDE.md as a second affected layer.
 - *Strip model frontmatter from commands/agents/skills as well.* Rejected — frontmatter is the operator's preferred declaration mechanism. Operator confirmed mid-session: "commands can have frontmatter… Yes, and its also allowed for skills."
+
+---
+
+## 2026-05-16 — Reject audit finding: hardcoded absolute paths in ai-resources Layer C settings.json
+
+**Context.** Two `/audit-repo` runs flagged `Edit(/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/**)` and `Write(/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/**)` in `ai-resources/.claude/settings.json` as "hardcoded absolute paths — will break if workspace moves." The 2026-05-16 friday-act plan (ai-resources-maintenance #5) carried this as a Tier 2 fix item.
+
+**Decision.** Reject the audit finding without action. The paths are intentional and canonical: they ARE the Layer C pattern documented in `ai-resources/docs/permission-template.md`. Do not change them.
+
+**Rationale.** Claude Code permission pattern matching is literal — no env-var expansion, no relative-path resolution. The `Edit(/Users/.../...)` form is the only mechanism that covers sessions making absolute-path edits to cross-project files. Replacing with env-vars would silently break permission matching. Future audit runs that re-flag these paths should be dismissed using this entry as precedent. Note added to `permission-template.md` Layer C key assertions to suppress future re-flagging.
+
+**Alternatives considered.**
+- *Replace with env-var references:* Rejected. Claude Code permission engine does not expand env-vars inside pattern strings; substitution would silently break the permission grant.
+- *Replace with relative paths:* Rejected. Permission patterns are evaluated against the file system at tool-call time; relative paths from the settings file's directory would not match absolute-path edits made by the session.
