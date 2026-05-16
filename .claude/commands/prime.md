@@ -16,6 +16,11 @@ Orient the session. Read state, brief the operator, wait for direction.
    - Exit non-zero + "no tracking information" → `skip (no upstream configured)`
    - Exit non-zero, other → `failed: {first relevant stderr line}`
 
+   After pulling each repo, check for unpushed commits:
+   `git -C "$REPO" log @{u}..HEAD --oneline 2>/dev/null | wc -l`
+   If count > 0, append ` — {N} unpushed` to that repo's result string (e.g., `up to date — 3 unpushed`).
+   If the upstream check itself fails (detached HEAD, no upstream), omit the unpushed clause silently.
+
    Do not stop on failure — record and continue. Results appear as `**Pulled:**` in the step 5 brief.
 
 1. Read the last entry from `/logs/session-notes.md`. Extract: date, summary, next steps, open questions.
@@ -58,7 +63,7 @@ Orient the session. Read state, brief the operator, wait for direction.
 **Innovations:** {N} detected, pending triage
 **Recent decisions:** {list or "None"}
 **Working tree:** {clean | list of live-verified changes from step 4a}
-**Pulled:** {basename of CWD_REPO}: {result}[; ai-resources: {result} — omit when cwd IS ai-resources]
+**Pulled:** {basename of CWD_REPO}: {result[ — N unpushed]}[; ai-resources: {result[ — N unpushed]} — omit when cwd IS ai-resources]
 **Model:** {session model} — project default {project default} ({match | → /model {default} to align})
 
 **Next steps (from last session):**
