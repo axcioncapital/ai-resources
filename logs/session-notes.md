@@ -491,3 +491,29 @@ Executed 7 of 8 Tier 3 items in 4 sequenced waves; deferred 1 of 8 (Wave 4 #1) p
 
 ### Open Questions
 - None.
+
+## 2026-05-16 — Improvement-log execution sprint: 6 friction fixes
+Class: execution
+
+## 2026-05-16 — Harness roadmap orientation + A1 fixes
+
+### Summary
+Oriented the harness project from scratch: clarified the Phase 0–8 build structure, located the master project plan (project-plan-v2.md), and produced a Notion-ready session roadmap at `harness/prep/harness-roadmap.md` covering Track A (data collection prerequisites) and Track B (the build) in full. Executed Session A1 fixes — found 7 of 8 already applied in prior sessions, applied the remaining Fix 2b (session-mandate-template.md "not parsed" label was wrong; session-start.md already captures all 5 mandate fields). Confirmed A2–A6 data collection sessions are redundant given months of existing session data. Project is now ready for A7 Part 2 (Phase 2 re-activation) which gates Track B.
+
+### Files Created
+- `harness/prep/harness-roadmap.md` — Track A/B session roadmap; Track A detailed, Track B milestone table
+
+### Files Modified
+- `harness/prep/session-mandate-template.md` — Fix 2b: corrected "not parsed" label; all 5 fields now in one block with accurate defaults note
+- `harness/prep/harness-roadmap.md` — A1 marked complete, Decision 1 resolved, current focus updated to A2–A6 (then immediately noted as redundant)
+
+### Decisions Made
+- **A2–A6 data collection skipped:** Months of existing friction logs, improvement logs, coaching data, and session notes provide equivalent signal. The 5-session minimum was designed for a fresh install. No additional structured sessions needed before Track B.
+- **Fix 3 (wrap-session sub-bullet read) deferred:** LOW impact; wrap-session has evolved significantly since the fix plan was written; the spirit of the fix is no longer a clear improvement. Logged as a potential future enhancement only.
+
+### Next Steps
+- **A7 Part 2 — Phase 2 re-activation (~1h):** Re-enable SessionStart hook in `.claude/settings.json` (disabled at commit 178b293); clean stale crash state in `harness/session/` (startup-state.json, mandate.json, session-log.json — prep-components-fix-plan Group C3); validate Phase 2 sufficiency criteria against test workflow (simulated crash, recovery summary, mandate-history.jsonl entry).
+- After A7 Part 2: proceed to Track B, Session B1–B2 (Phase 3 — Governor skeleton).
+
+### Open Questions
+- None.
