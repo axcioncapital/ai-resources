@@ -140,6 +140,8 @@ Do not evaluate structural risk yourself. Point to `/risk-check`.
 
 Set `DATE` = today in `YYYY-MM-DD` format.
 
+**Precondition:** If `INTENT` references a separate report, spec, or drift file (e.g., "apply findings from audit-X.md", "execute the drift-fix plan"), the `## Findings / Items to Address` section below MUST inline a one-line summary of each item with a source-doc anchor. A bare link to the file is invalid — the plan must be readable without opening the referenced doc.
+
 Write to `logs/session-plan.md` (overwrite if present):
 
 ```markdown
@@ -157,6 +159,15 @@ Write to `logs/session-plan.md` (overwrite if present):
 ## Source Material
 {bulleted list of absolute paths, or "(none identified)"}
 
+## Findings / Items to Address
+{numbered list — one line per item with source-doc anchor, or "(none — intent does not reference a prior report)"}
+
+## Execution Sequence
+{numbered steps with per-item verification criteria, or "(single step — no sequencing required)"}
+
+## Scope Alternatives
+{min / recommended / max scope options, or "Single scope — no alternatives"}
+
 ## Autonomy Posture
 {Full autonomy | Gated | Operator-in-the-loop}
 
@@ -166,6 +177,8 @@ Write to `logs/session-plan.md` (overwrite if present):
 ## Risk
 {risk-check pointer, or "No structural change classes apparent — run /risk-check if scope changes."}
 ```
+
+**Self-check before writing:** If the draft plan is fewer than 25 lines, or if `## Findings / Items to Address` contains only a bare file link with no inline summaries, expand before writing. A plan that cannot be understood without opening a separate doc fails this check.
 
 After writing `session-plan.md`, locate today's `## {YYYY-MM-DD}` header in `logs/session-notes.md` (the entry `/prime` created in Step 0). Use `Edit` to insert `Class: {CLASS}` as a new line immediately below the header, before any existing content in the entry. The line should be in plain text form (not a heading, not a bullet) so downstream rules can grep for `^Class: ` reliably.
 
