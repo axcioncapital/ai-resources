@@ -406,3 +406,57 @@ Ran /friday-act against the 2026-05-16 weekly checkup report. Disposititioned 46
 
 ### Open Questions
 - None.
+
+## 2026-05-16 — /friday-act implementation: Tier 1 + Tier 2 (13 items)
+Class: execution
+**Mandate:** Execute Tier 1 + Tier 2 items from the 7 friday-plans/2026-05-16-*.md files (13 items: 7 quick wins + 6 risk-check-required mechanical fixes) — done when: all 13 items completed and committed; push completed for the unpushed-commits item.
+- Out of scope: Tier 3 heavy design items (nordic-pe-macro #1/#3/#4, both /cleanup-worktree runs, all 5 journal-improvements items, all 3 friday-journal command-spec edits)
+- Files in scope: audits/friday-plans/2026-05-16-*.md (read-only); projects/{nordic-pe-macro-landscape-H1-2026,global-macro-analysis,obsidian-pe-kb,project-planning}/.gitignore; projects/{nordic-pe-landscape-mapping-4-26,interpersonal-communication}/.claude/settings.json; projects/obsidian-pe-kb/.claude/{commands/resolve-improvements.md (symlink),settings.json}; ai-resources/.claude/settings.json; ai-resources/docs/{permission-template.md,compaction-protocol.md}; ai-resources/logs/innovation-registry.md; projects/nordic-pe-macro-landscape-H1-2026/reference/skills/knowledge-file-producer/SKILL.md; whatever /log-sweep touches; ai-resources/logs/session-notes.md (wrap)
+- Stop if: scope drift into Tier 3 without operator approval; risk-check returns RECONSIDER on any item; push fails or remote state diverges
+
+## 2026-05-16 — /friday-act implementation: Tier 1 + Tier 2 execution
+
+### Summary
+Executed Tier 1 (7 items) and Tier 2 (scope-reduced to 4 actual edits after pre-validation) from the 7 friday-plans/2026-05-16-*.md plan files. Pre-validation revealed significant stale state in the plan: several Tier 2 items were already done (additionalDirectories, model field removal, NotebookEdit normalization, upward-walk pattern) or moot (nordic-pe-landscape-mapping-4-26 no longer exists). Tier 1 similarly found G5/G6 and registry entries already applied by prior sessions. Real work completed: 12-commit push, 4 .gitignore additions, G2 Read-deny doc edit, SKILL.md frontmatter, ADV-1/ADV-7 settings normalizations, LE4 broken symlink fix, G1 auto-sync hook doc, T2-5 audit-finding rejection. End-time risk-check skipped per policy (plan-time GO, no drift).
+
+### Files Created
+- `audits/risk-checks/2026-05-16-tier-2-reduced-batch-4-mechanical-edits.md` — plan-time risk-check report for Tier 2 reduced batch (GO, all dimensions Low)
+
+### Files Modified
+- `logs/session-notes.md` — mandate header + this wrap entry
+- `logs/session-plan.md` — session plan (Tier 1 + Tier 2 execution, Gated posture)
+- `logs/decisions.md` — T2-5 rejection decision entry
+- `logs/coaching-data.md` — coaching entry for this session
+- `docs/permission-template.md` — G2 Read-deny Layer D assertion; G1 auto-sync-shared.sh canonical hook block; T2-5 Layer C hardcoded-paths canonical note
+- `.gitignore` — ADV-7: added `.claude/settings.local.json` entry
+
+In workspace root repo:
+- `.claude/settings.json` — ADV-1: `Bash(git push *)` → `Bash(git push*)` (remove space)
+
+In project repos (committed separately, each has its own repo):
+- `projects/nordic-pe-macro-landscape-H1-2026/.gitignore` — added `.claude/settings.local.json`
+- `projects/nordic-pe-macro-landscape-H1-2026/reference/skills/knowledge-file-producer/SKILL.md` — added `model: opus` + `effort: high` frontmatter
+- `projects/global-macro-analysis/.gitignore` — added `.claude/settings.local.json` (created new file)
+- `projects/obsidian-pe-kb/.gitignore` — added `.claude/settings.local.json`
+- `projects/obsidian-pe-kb/.claude/commands/resolve-improvement-log.md` — new symlink replacing broken `resolve-improvements.md`
+- `projects/project-planning/.gitignore` — new file with `.claude/settings.local.json`
+
+### Decisions Made
+- **T2-5 (hardcoded paths in Layer C settings.json):** Rejected audit finding. Paths `Edit(/Users/.../...)` and `Write(/Users/.../...)` are canonical Layer C entries from permission-template.md. Claude Code permission matching is literal; env-var replacement would break permission grants. Documented in decisions.md 2026-05-16 + inline note added to permission-template.md. Future audit runs re-flagging this should be dismissed using the decision entry as precedent.
+- **End-time risk-check skipped:** plan-time GO covered exact same 4 mechanical edits; no drift; no mitigations needed; per `feedback_end_time_risk_check_skip` policy.
+- **T1-2 usage-log.md archive deferred:** log-archiver.sh date-guard fires because the file's first header is today. Execute on next session day.
+
+### Next Steps
+- Push all repos (operator approval): ai-resources (4 new commits), workspace root (1), nordic-pe-macro (2), global-macro-analysis (1), obsidian-pe-kb (2), project-planning (1)
+- T1-2: re-run `/log-sweep` without `--dry-run` on a future day when today is no longer the first header in `logs/usage-log.md`
+- Tier 3 items still deferred: nordic-pe-macro #1 (restore vs retire context/ decision), #3 (CLAUDE.md pipeline-frontmatter note, needs risk-check), #4 (/improve session-plan hook overwrite); workspace /cleanup-worktree (21 deleted personal/* files); journal-improvements #1–5; friday-journal #1–3
+
+### Open Questions
+- None.
+
+## 2026-05-16 — Tier 3 friday-act execution: journal-improvements (5) + friday-journal (3)
+Class: execution
+**Mandate:** Execute 8 Tier 3 items from `audits/friday-plans/2026-05-16-journal-improvements.md` and `audits/friday-plans/2026-05-16-friday-journal.md` in 4 sequenced waves — done when: all 8 items committed or explicitly deferred (with reason).
+- Out of scope: Other Tier 3 items (nordic-pe-macro #1/#3/#4, ai-resources-maintenance #3/#4 cleanup-worktrees); any item escalated to RECONSIDER by `/risk-check`
+- Files in scope: `ai-resources/.claude/commands/{friday-journal.md, friday-act.md, new-project.md, session-start.md, session-plan.md}`; `ai-resources/audits/repo-audit-commands-recommendation-2026-05-16.md` (new); workspace root `CLAUDE.md` (§Decision-Point Posture); `.claude/settings.json` (SessionStart hook)
+- Stop if: `/risk-check` RECONSIDER on any item → defer that item, continue rest; context exhaustion before Wave 4 → commit Waves 1–3 and defer journal-improvements #1+#2; ≥30 turns without natural break → checkpoint and wrap

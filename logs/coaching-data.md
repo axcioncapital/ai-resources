@@ -420,3 +420,10 @@
 - **Decisions logged:** 0
 - **QC cycles:** 1 (REVISE → 3 fixes applied → commit)
 - **Gates:** 2 (changed) — content-review: changed (operator expanded scope to include innovation-sweep findings mid-presentation), qc-disposition: changed (operator directed "Fix" on REVISE verdict)
+
+### 2026-05-16 — /friday-act implementation: Tier 1 + Tier 2 execution
+- **Commands used:** /prime, /session-start, /session-plan, /qc-pass, /risk-check
+- **Iterations:** 0 (execution session — no drafting)
+- **Decisions logged:** 1 (T2-5 audit-finding rejection)
+- **QC cycles:** 1 (session-plan REVISE → 4 fixes applied → approved)
+- **Gates:** 3 (1 changed) — content-review:changed (operator upgraded scope from Tier 1 to Tier 1+2), plan-approval:confirmed (proceed after session-plan QC), plan-approval:confirmed (T2-5 resolution approved)
