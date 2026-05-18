@@ -108,6 +108,22 @@ done
 ```
 For each broken symlink found, add to `FLAGS`: `"broken symlink: {path}"`.
 
+If any broken symlinks were found, attempt inline repair — scoped to `ACTIVE_PROJECTS` only (do not call `/fix-symlinks`, which scans all projects):
+
+1. For each broken symlink, derive its basename and search `ai-resources/` for a file with that name:
+   ```bash
+   find "$AI_RESOURCES" -name "{basename}" -not -type l 2>/dev/null
+   ```
+2. If exactly one match is found, present the proposed fix:
+   ```
+   BROKEN: {link_path}
+   → Re-point to: {found_target}
+   Apply? (y/n)
+   ```
+   Wait for reply. On `y`, run `ln -sf "{found_target}" "{link_path}"`. On `n`, leave the FLAG as-is.
+3. If zero or multiple matches are found, leave the FLAG as-is and note: `"symlink repair skipped for {link_path}: {0 | N} candidates found — run /fix-symlinks manually"`.
+4. For each repaired symlink, remove its entry from `FLAGS` and record: `"symlink repaired: {link_path} → {target}"`.
+
 **B7 — CLAUDE.md audit (active projects)**
 
 For each project in `ACTIVE_PROJECTS`:
