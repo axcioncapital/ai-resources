@@ -432,3 +432,35 @@ Ran the full /token-audit protocol (Sections 0–10) against the ai-resources re
 
 ### Open Questions
 - None.
+
+## 2026-05-18 — W21 item 4: nordic-pe Findings 2–7 (wrap)
+
+### Summary
+Implemented all 6 pending improvement-log findings from the nordic-pe 2026-05-16 friction sprint. F2/F3/F6 edited `session-plan.md` (re-invocation guard, freshness timestamp, duplicate Class: fix); F5 added drift-reconciliation mode to `auto-sync-shared.sh`; F4 created a project-local `backup-session-plan.sh` PreToolUse Write hook; F7 added the chapter review presentation rule to nordic-pe `CLAUDE.md`. Both plan-time risk-checks returned PROCEED-WITH-CAUTION — all required mitigations applied before landing. End-time gate skipped per policy.
+
+### Files Created
+- `projects/nordic-pe-macro-landscape-H1-2026/.claude/hooks/backup-session-plan.sh` — PreToolUse Write hook; backs up logs/session-plan.md to logs/.session-plan-history/ before each overwrite
+- `audits/risk-checks/2026-05-18-pass-a-combined-edits-to-ai-resources-claude-commands-se.md` — plan-time risk-check for F2/F3/F6 (PROCEED-WITH-CAUTION, 4 mitigations)
+- `audits/risk-checks/2026-05-18-pass-b-combined-f5-and-f4-for-nordic-pe-improvement-log.md` — plan-time risk-check for F5/F4 (PROCEED-WITH-CAUTION, 3 mitigations)
+
+### Files Modified
+- `ai-resources/.claude/commands/session-plan.md` — F2 (Step 0 re-invocation guard), F3 (Step 1 freshness timestamp), F6 (Step 7 duplicate Class: replace-or-insert)
+- `ai-resources/.claude/commands/open-items.md` — M1: added session-plan-pass2.md row to source table
+- `ai-resources/.claude/hooks/auto-sync-shared.sh` — F5: drift-reconciliation mode + updated header comment
+- `projects/nordic-pe-macro-landscape-H1-2026/.claude/settings.json` — F4: wired backup-session-plan.sh as PreToolUse Write hook
+- `projects/nordic-pe-macro-landscape-H1-2026/CLAUDE.md` — F7: added "Review Presentation" section
+- `projects/nordic-pe-macro-landscape-H1-2026/logs/improvement-log.md` — all 6 entries marked applied 2026-05-18
+
+### Decisions Made
+- **F2 default changed to option 1 (keep):** Risk-check M4 flagged that "default to pass2 on no response" is counterintuitive — a non-responsive operator more likely wants to keep the current plan. Changed to keep as default.
+- **F3's "continue" option dropped:** Risk-check M2 identified overlap between F2's "keep" branch and F3's proposed "continue" option. Dropped F3's "continue" — F2 covers that semantic; simpler to have one guard.
+- **F4 added to risk-check pass B:** Plan initially classified F4 as not requiring /risk-check (project-local). QC surfaced conflict with audit-discipline.md bright-line (new hook + settings.json edit). Resolved by extending pass B to cover F4 alongside F5.
+- **End-time gate skipped:** Plan-time gates covered (both PROCEED-WITH-CAUTION, all mitigations applied); all commits shipped; no drift. Per `feedback_end_time_risk_check_skip` policy.
+
+### Next Steps
+- Push all repos: ai-resources (~12 unpushed commits from today), nordic-pe (~3 new commits from this session), plus other repos with unpushed work from earlier today
+- W21 remaining open: item 2 (workspace-root investigation), item 3 (inbox briefs via /create-skill)
+- Next Friday: token-audit findings in `audits/token-audit-2026-05-18.md` — start with H1 (Read deny rule), then H2/H3
+
+### Open Questions
+- None.

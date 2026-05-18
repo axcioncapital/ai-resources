@@ -246,3 +246,28 @@
 **Alternatives considered.**
 - *Apply split-log.sh to both and let it handle gracefully:* Rejected. For (a), split-log.sh has no archive-file guard — it would re-archive an archive. For (b), it would split documentation at arbitrary section boundaries, corrupting the file structure.
 - *File a bug / improvement against the auditor:* Valid. The archive-file exclusion gap and the section-vs-dated-header distinction are both worth fixing in a future /improve-skill session.
+
+## 2026-05-18 — F2 default: keep current plan (not pass2) on no response
+
+**Context.** /session-plan F2 implementation. Original improvement-log proposal specified "default on no response = option 3 (pass2)." Risk-check pass A raised M4: a non-responsive operator more likely wants to preserve the existing plan than create a silent fork file.
+
+**Decision.** Changed F2 default to option 1 (keep current plan). Operator sees the prompt; silence = keep.
+
+**Rationale.** Pass2 is the right escape hatch when the operator wants both the old and new plan, but it's an active choice, not a safe default. Silent forking on timeout would create files that persist beyond the session and might confuse future /open-items scans.
+
+**Alternatives considered.**
+- *Keep option 3 as default:* Rejected. Surprising behavior; creates persistent artifacts silently.
+- *No default (require explicit choice):* Rejected. Blocking the session on no response is worse than a safe fallback.
+
+---
+
+## 2026-05-18 — F4 added to risk-check pass B (audit-discipline conflict resolved)
+
+**Context.** Session plan initially classified F4 (new project-local hook + settings.json wiring) as not requiring /risk-check. QC pass surfaced conflict: `audit-discipline.md` bright-line lists hook edits and settings.json edits as required risk-check change classes.
+
+**Decision.** Extended pass B to cover F4 alongside F5. No operator carve-out invoked.
+
+**Rationale.** Per CLAUDE.md conflict rule: "conflicts must be surfaced, not silently resolved." The operator directive (F4 = low risk, no gate) was overridden by audit-discipline's bright-line. The correct resolution is to apply the gate. Risk-check confirmed PROCEED-WITH-CAUTION with 3 mitigations (one of which — M3 — corrected a misunderstanding about how Claude Code hook matchers work).
+
+**Alternatives considered.**
+- *Honor operator directive, skip gate:* Rejected. Bright-line rule exists precisely to catch project-local hook additions that seem low-risk but have blast-radius effects.
