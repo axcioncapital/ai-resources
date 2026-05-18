@@ -1,20 +1,21 @@
-# Section 4 Summary — research-workflow (full pipeline)
+# Section 4 Summary — research-workflow
 
-**Audit date:** 2026-05-02 (overwrites 2026-05-01 prior content).
-**Scope:** End-to-end research-workflow at `ai-resources/workflows/research-workflow/` — 28 commands, 4 agents, reference docs, two embedded skills.
-**Telemetry:** None. All findings are structural inferences from file content.
+Date: 2026-05-18 | Protocol v1.3 | Scope: workflows/research-workflow/
 
-**Findings:** 15 total — HIGH: 5 (F1, F2, F3, F7, F8); MEDIUM: 7 (F4, F5, F6, F9, F11, F13, F15); LOW: 3 (F10, F12, F14).
+**Total findings:** 18
+- HIGH: 6
+- MEDIUM: 9
+- LOW: 3
 
 **Top 3 findings:**
-1. **F1 (HIGH)** — Subagent return contract enforced at only 6/50 launch sites (~12%); ~44 sites use unbounded "Return: ..." instructions. `run-report.md` Step 4.2a literally returns "chapter draft content" to main session.
-2. **F2 (HIGH)** — `run-report.md` Step 4.0 pre-loads ~30,000+ tokens (all extracts, memos, directives, recommendations) into main session; held resident for ~30+ subsequent dispatches per Stage 4.
-3. **F3 (HIGH)** — CLAUDE.md `@`-imports four reference files (~6,197 tokens) on every turn despite a "load when working" instruction the `@` mechanism cannot honor; per-turn fixed cost ~7,679 tokens.
+1. HIGH — `/run-report` Step 4.0 loads 6 large input categories (chapter drafts, scarcity register, section directives, cluster memos, research extracts, editorial recommendations) into main session and passes content (not paths) to downstream subagents; "context isolation" rationale stated.
+2. HIGH — `/run-report` Step 4.2a per-chapter writer subagent returns "chapter draft content" to main session (>200 line returns plausible, ~20 such subagent calls for a 5-chapter section).
+3. HIGH — `/run-execution` Step 2.3 main session reads ALL raw research reports before delegating to per-session extract subagents (large delegable load).
 
-**Other HIGH:** F7 (review/verify-chapter load 7+ inputs in main session before delegating), F8 (chapter prose returned to main).
+Additional HIGH: `/run-analysis` Step 1 reads all refined cluster memos into main; `/run-execution` Step 2.1b QC redundantly reads all prompts + specs + plan in main; `/run-report` Step 4.1b re-reads Step 4.0's six categories (boundary).
 
-**Notable boundary/spec finding:** F15 (MEDIUM) — `run-cluster.md` command file still implements content-pass sequential pattern; updated `stage-instructions.md` Step 3.2 specifies path-pass parallel pattern. Command-vs-spec divergence.
+Key MEDIUMs: `/run-cluster` has 0 `/compact` instructions; `/run-report` has only 3 compacts for 13 delegate calls; repeated re-reads of cluster memos / section directives / extracts across stages; refinement multiplier of 8–12 subagent sessions per typical section.
 
-**Boundary findings (±15% of threshold):** F3, F5, F13 — main-session protocol confidence ratings.
+`/produce-prose-draft` is the best-engineered token pattern in the workflow (abs-path subagent reads, output-to-disk, ≤20-line return cap) — not yet adopted across `/run-*` commands.
 
 Full evidence in `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/working/audit-working-notes-workflow-research-workflow.md`. Main session should read the full notes only if a specific finding needs deeper review.

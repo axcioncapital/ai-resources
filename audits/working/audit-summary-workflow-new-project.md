@@ -1,15 +1,22 @@
 # Summary — Workflow /new-project (Section 4)
 
-**Total findings:** 8 (1 PASS + 5 MEDIUM + 2 LOW)
-**By severity:** HIGH 0 | MEDIUM 5 (3 boundary-tagged) | LOW 2 | PASS 1
+**Total findings:** 7 (1 HIGH, 3 MEDIUM, 1 LOW, 2 PASS)
+**Severity counts:** HIGH 1 | MEDIUM 3 | LOW 1 (boundary) | PASS 2
 
-**Workflow surface:** orchestrator `.claude/commands/new-project.md` (527 lines / ~6863 tokens) + 6 spawned agents (`pipeline-stage-3a/3b/3c/4/5`, `session-guide-generator`). Total agents 387 lines / ~1955 tokens. Estimated main-session start-of-workflow context: ~12,261 tokens (workspace CLAUDE.md + ai-resources CLAUDE.md + orchestrator body).
+**Workflow surface:**
+- Command file: `.claude/commands/new-project.md` — 608 lines / 6,083 words / ~7,908 tokens
+- 6 subagent definitions: 407 lines / 2,368 words / ~3,078 tokens (subagent context only)
+- Orchestrator persists across 6 NEXT-gated stage spawns
 
 **Top 3 findings:**
-1. [MEDIUM] Five pipeline-stage agents (3a/3b/3c/4/5) lack an explicit return-size cap; only `session-guide-generator` declares "under 30 lines."
-2. [MEDIUM, boundary] Orchestrator file is 527 lines / ~6863 tokens with canonical blocks duplicated ~3× across reference text + heredoc + printf fallback (~60–90 redundant lines).
-3. [MEDIUM] No `/compact` breakpoint declared between pipeline stages; full 6-subagent run accumulates returns + gate exchanges without structural compaction prompt.
+1. HIGH — Command file is 608 lines (~7,908 tokens); ~65% (~392 lines) is Post-Pipeline Enrichment.
+2. MEDIUM — Verbatim duplication of 4 canonical CLAUDE.md sections (Input File Handling, Commit Rules, Compaction, Session Boundaries) inlined twice each in the command body (~140–150 lines, ~30% of file).
+3. MEDIUM — Step 11a does a main-session full `Read` of `projects/buy-side-service-plan/CLAUDE.md` for model-ID precedent; delegable to subagent or replaceable with grep / inline constant.
 
-**Other findings:** Stage 3a inventory output structurally enables large-table echo if operator prompts (MEDIUM, boundary). Stages 3b and 3c both Read `repo-snapshot.md` — subagent-side duplication on opus tier (LOW). No QC/refinement subagents wired into pipeline; operator gates substitute (LOW). Model tiering correct: orchestrator + 3a/4/5/6 sonnet, 3b/3c opus (PASS).
+**Other findings:**
+- MEDIUM — No enforced `/compact` breakpoints between stages (L184 is advisory "suggest" only).
+- LOW (boundary) — ~50 lines of verbatim jq glue embedded inline.
+- PASS — All 6 subagents enforce ≤30-line return contracts with disk-persisted artifacts.
+- PASS — Refinement multiplier ≤1.5 typical, well under the >3 MEDIUM threshold.
 
 Full evidence in `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/working/audit-working-notes-workflow-new-project.md`. Main session should read the full notes only if a specific finding needs deeper review.

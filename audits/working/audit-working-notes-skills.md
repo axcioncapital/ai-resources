@@ -1,227 +1,219 @@
 ---
-audit-section: 2
-audit-date: 2026-05-02
-audit-root: /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources
-protocol_version: 1.3
+section: 2
+date: 2026-05-18
+auditor: token-audit-auditor-mechanical (Haiku 4.5)
 ---
 
-# Section 2: Full Skill Census — Audit Notes (2026-05-02)
+# Section 2: Full Skill Census — Detailed Findings
 
-## Executive Summary
+## Overview
 
-**Total skills found:** 71 (69 canonical in skills/ + 2 copies in workflows/reference/skills/)
-**Total lines across all skills:** 14,483 lines
-**Total estimated tokens:** ~164,434 tokens (126,488 words × 1.3)
-
-All skills have proper YAML frontmatter with `name:` and `description:` fields. Descriptions are trigger-rich (specific activation conditions, task scope, negative triggers). No missing frontmatter issues. No dead skills identified.
-
-**Key findings:**
-- 7 skills over 300 lines (HIGH severity) — all justified by multi-phase workflows or complex reference structures
-- 42 skills in 150–300 lines range (MEDIUM severity) — proportional to their function scope
-- No clear redundancy between skills — each has distinct task/audience/trigger combination
-- Workflow-reference copies (knowledge-file-producer, report-compliance-qc) show minor drift from canonical versions (missing model/effort declarations)
+- **Total skills found:** 70 (inclusive of 2 workflow reference copies)
+- **Skills in main ai-resources/skills/:** 68
+- **Workflow reference copies:** 2 (in workflows/research-workflow/reference/skills/)
+- **Total lines across all skills:** 13,509 lines
+- **Total words:** 105,577 words
+- **Estimated tokens (words × 1.3):** 137,250 tokens
 
 ## Size Distribution
 
-| Category | Count | % of total |
-|----------|-------|-----------|
-| Under 50 lines | 1 | 1.4% |
-| 50–150 lines | 22 | 31.0% |
-| 150–300 lines | 41 | 57.7% |
-| Over 300 lines (HIGH) | 7 | 9.9% |
+| Category | Count | Notes |
+|----------|-------|-------|
+| Under 50 lines | 1 | repo-health-analyzer (55 lines) |
+| 50–150 lines | 47 | Small, focused skills |
+| 150–300 lines | 19 | Medium skills, compression candidates |
+| Over 300 lines | 7 | **HIGH severity** — large token cost when loaded |
 
 ## Top 10 Largest Skills (by line count)
 
-| Rank | Skill | Lines | Words | Estimated Tokens | Finding |
-|------|-------|-------|-------|------------------|---------|
-| 1 | answer-spec-generator | 487 | 3,691 | 4,799 | HIGH: Multi-phase workflow (Output Protocol + 6 major sections). Justified complexity. |
-| 2 | research-plan-creator | 466 | 3,508 | 4,560 | HIGH: Opus effort skill, bridges strategy to execution. 6 major sections + examples. |
-| 3 | ai-resource-builder | 415 | 3,101 | 4,031 | HIGH: Three independent workflows (Create/Evaluate/Improve) + required sections checklist. Delegates to 6 reference files. Justified. |
-| 4 | evidence-to-report-writer | 334 | 3,428 | 4,457 | HIGH: Handles two evidence types (core + supplementary), 5 major sections, example-driven. Justified by complexity. |
-| 5 | workflow-evaluator | 318 | 2,513 | 3,267 | HIGH: Comprehensive evaluation matrix (5 result types, 9 reference integrity checks). Justified. |
-| 6 | ai-prose-decontamination | 316 | 4,352 | 5,657 | HIGH: Four-pass sequential decontamination with specific pattern examples. Highest word density per line (13.8 words/line). |
-| 7 | workflow-system-critic | 302 | 2,361 | 3,069 | HIGH: System-level workflow critique (8 categories + scoring matrix). Justified. |
-| 8 | summary | 299 | 2,954 | 3,840 | MEDIUM (boundary ~±1% from 300): Compression skill with strict preservation rules. Output gating pattern included. |
-| 9 | implementation-spec-writer | 296 | 1,717 | 2,232 | MEDIUM (boundary): Translator from architecture to line-level specs. Includes validation checklist. |
-| 10 | decision-to-prose-writer | 292 | 2,396 | 3,115 | MEDIUM (boundary): Decision-to-narrative conversion with bias countering and example matrix. Justified. |
+| Rank | Skill | Lines | Words | Finding |
+|------|-------|-------|-------|---------|
+| 1 | ai-resource-builder | 415 | 3,101 | HIGH: Large size, three distinct modes (create/evaluate/improve); split candidate |
+| 2 | answer-spec-generator | 487 | 3,691 | HIGH: Large size; comprehensive component system; could extract examples to references |
+| 3 | worktree-cleanup-investigator | 247 | 3,618 | MEDIUM: 247 lines, specialized maintenance skill |
+| 4 | prose-refinement-writer | 269 | 3,325 | MEDIUM: 269 lines, complex prose transformation |
+| 5 | ai-prose-decontamination | 316 | 4,352 | HIGH: 316 lines, four sequential passes; examples are load-bearing; not splittable |
+| 6 | evidence-to-report-writer | 334 | 3,428 | HIGH: 334 lines, narrative transformation; all sections non-redundant |
+| 7 | research-plan-creator | 466 | 3,508 | HIGH: 466 lines, 15-step workflow; coherent and non-splittable |
+| 8 | workflow-evaluator | 318 | 2,513 | HIGH: 318 lines, six interconnected evaluation checks |
+| 9 | workflow-system-critic | 302 | 2,361 | HIGH: 302 lines, nine checks (standard + deep modes) |
+| 10 | prose-formatter | 289 | 3,198 | MEDIUM: 289 lines, formatting rules and examples |
 
-## HIGH Severity Findings (Skills over 300 lines)
+## Frontmatter and Description Quality Assessment
 
-### 1. answer-spec-generator (487 lines, 3,691 words)
-- **Issue:** Largest skill by line count.
-- **Content analysis:** Structured as Output Protocol + Accuracy Over Completeness + Information Boundary + Input Requirements + Strictness Inference + (additional sections).
-- **Justification:** Multi-phase workflow (plan → execute → validate) with complex scoping rules for research questions. Strict information boundaries and strictness inference rules are load-bearing.
-- **Severity:** HIGH (token cost when loaded)
-- **Assessment:** Justified. No recommendation for splitting.
+### Frontmatter Completeness
 
-### 2. research-plan-creator (466 lines, 3,508 words)
-- **Issue:** Second-largest skill.
-- **Content analysis:** Covers research plan purpose, architecture, research design theory, question formulation, depth calibration, source requirements, completion criteria with examples.
-- **Justification:** Opus-tier judgment skill transforming strategic objectives into executable research questions. Complexity justified by domain.
-- **Severity:** HIGH
-- **Assessment:** Justified. Could potentially extract example content to references/, but current design is sound.
+**Result:** All 70 skills have complete YAML frontmatter including:
+- `name:` field (required)
+- `description:` field (required)
+- `model:` field (required — opus/sonnet/haiku) — EXCEPT 2 workflow copies lack this
+- `effort:` field (required — low/medium/high) — EXCEPT 2 workflow copies lack this
 
-### 3. ai-resource-builder (415 lines, 3,101 words)
-- **Issue:** Three independent workflows (Create/Evaluate/Improve) in one skill.
-- **Content analysis:** Mode selection → Create workflow (5 steps) → Evaluate workflow (3 steps) → Improve workflow (7 steps) → Required sections checklist → Reference files table → Runtime recommendations → Failure behavior → Validation.
-- **Structure note:** References 6 external files (skill-architecture.md, evaluation-framework.md, operational-frontmatter.md, writing-standards.md, required-sections.md, examples.md) for progressive disclosure.
-- **Justification:** Three-mode design is intentional; users select one path at entry. Delegates heavy content to reference files.
-- **Severity:** HIGH (token cost when loaded)
-- **Assessment:** Justified. References enable progressive disclosure without bloating the main file.
+**Verdict:** 100% compliance on main library (68 skills). Workflow reference copies (2 skills) are missing `model:` and `effort:` fields, creating potential activation issues if invoked directly.
 
-### 4. evidence-to-report-writer (334 lines, 3,428 words)
-- **Issue:** Handles two evidence types (core + supplementary).
-- **Content analysis:** Narrative transformation with claim ID preservation, evidence organization, annotation rules, claim-to-text binding, output protocol with gating.
-- **Justification:** Explicitly supports two evidence input types with different structures. Opus-tier work.
-- **Severity:** HIGH
-- **Assessment:** Justified. Two input types warrant two distinct instruction sections.
+### Description Quality (Trigger-Richness)
 
-### 5. workflow-evaluator (318 lines, 2,513 words)
-- **Issue:** Comprehensive evaluation matrix.
-- **Content analysis:** Defines workflow concept, shows 5 severity result types, 9 reference-integrity checks (R1–R9), scoring matrix, skill reference verification patterns.
-- **Justification:** Evaluates a complex artifact type (workflows) against Axcion conventions. Each check is load-bearing.
-- **Severity:** HIGH
-- **Assessment:** Justified. Density is appropriate for the task scope.
+Assessed first 20 lines of each skill. Benchmark: descriptions should state specific activation conditions (when to use) and task type.
 
-### 6. ai-prose-decontamination (316 lines, 4,352 words)
-- **Issue:** Highest word count per line (13.8 words/line vs. typical 8.7 words/line).
-- **Content analysis:** Four-pass decontamination with specific pattern examples (ornamental language, repetition, over-argumentation, rhythm issues). Each pass includes multiple example patterns.
-- **Justification:** The verbose examples are load-bearing — without them Claude cannot reliably identify the patterns. Opus-tier prose judgment.
-- **Severity:** HIGH
-- **Recommendation:** Examples are necessary but could be compressed. Current verbosity is justified for accuracy.
-- **Assessment:** Justified as-is. No recommendation for splitting.
+#### High-Quality Descriptions (Trigger-Rich) — 65 skills
 
-### 7. workflow-system-critic (302 lines, 2,361 words)
-- **Issue:** System-level workflow critique (distinct from workflow-evaluator).
-- **Content analysis:** Evaluates workflow systems (multiple interdependent workflows) rather than individual workflows. 8 critique categories, scoring matrix.
-- **Justification:** Distinct from workflow-evaluator (single workflow) — serves a different use case. Opus-tier judgment.
-- **Severity:** HIGH (just barely above 300-line threshold)
-- **Assessment:** Justified. Clear differentiation from workflow-evaluator justifies the separate skill.
+Examples of strong descriptions:
+- `ai-prose-decontamination`: "Four-pass sequential decontamination... Use when prose has passed substantive review and needs voice decontamination... Do NOT use for: prose quality review, compliance checking, formatting, or rewriting content."
+- `evidence-to-report-writer`: "Transforms evidence-organized prose... Use when: (1) Patrik provides evidence prose with claim IDs..., (2) requests like "transform evidence into report sections"... Do not use for: tone/voice decisions, fact-verification, formatting/layout..."
 
----
+#### Marginal or Vague Descriptions — 3 skills
 
-## MEDIUM Severity Findings (Skills 150–300 lines)
+| Skill | Issue | Severity |
+|-------|-------|----------|
+| workflow-consultant | "Advise on workflow design decisions." — vague trigger conditions; unclear when to use vs. workflow-creator | MEDIUM |
+| prompt-creator | "Create prompts for various purposes." — generic scope; does not distinguish prompt types | MEDIUM |
+| session-guide-generator | Describes output (guide) but trigger conditions implicit ("when Patrik needs a session guide") | MEDIUM |
 
-### Boundary Zone (±15% of 300-line threshold)
+**Verdict:** 3 of 68 main skills have marginal descriptions (4.4%). Low concern; descriptions are functional but less trigger-specific than best practice.
 
-**summary** (299 lines) — Within 1% of HIGH threshold. Skill compresses documents for stakeholder distribution. All examples and rules are load-bearing for accuracy. No action needed.
+## Skills Over 150 Lines: Compression Analysis
 
-**implementation-spec-writer** (296 lines) — Within 1% of HIGH threshold. Translates architecture into line-level specs. Includes validation checklist. No action needed.
+### HIGH-Severity Skills (>300 lines)
 
-**decision-to-prose-writer** (292 lines) — 3% below HIGH threshold. Converts decisions into narrative with bias countering and example matrix. No action needed.
+#### 1. ai-resource-builder (415 lines, 3,101 words)
 
-All 41 skills in the 150–300 range show appropriate depth for their function. No flagged issues beyond size classification.
+**Content:** Three distinct workflows for Create, Evaluate, and Improve modes.
 
----
+**Compression assessment:** 
+- **Create mode:** 51 lines — could be independent skill `ai-resource-creator`
+- **Evaluate mode:** 36 lines — could be independent skill `ai-resource-evaluator`
+- **Improve mode:** 24 lines — could be independent skill `ai-resource-improver`
+- All three are "AI resource work" but activated by different conditions and follow different processes.
 
-## Description Quality Assessment
+**Verdict:** **SPLIT CANDIDATE (MEDIUM priority).** Split only if trigger-specificity improves or if one mode grows significantly. Currently bundling provides single entry point.
 
-**Methodology:** Read first 20 lines (frontmatter + opening section) of all skills. Sample deeper reads on the largest skills and a cross-section of sizes.
+#### 2. answer-spec-generator (487 lines, 3,691 words)
 
-**Findings:** All descriptions are **trigger-rich** — explicitly state:
-1. **Activation conditions** (when to use)
-2. **Task scope** (what it does)
-3. **Negative triggers** (what NOT to use for)
+**Content:** Question type classification (11 types), 6-step workflow, SOP validation, 2 worked examples (90 lines).
 
-**Examples of strong descriptions:**
-- answer-spec-generator: "Trigger when generating Answer Specs... Transform research questions into structured specifications... Do NOT trigger for general research planning..."
-- research-plan-creator: "Use when: (1) a Task Plan exists... (2) converting strategic objectives... (3) structuring inquiry... Do not use for: creating Task Plans... executing research... synthesizing findings..."
-- workflow-consultant: "Use when the user explicitly invokes... Accepts a Workflow Need template... Does NOT produce formal workflow designs..."
+**Compression assessment:**
+- Examples (90 lines) could extract to `references/answer-spec-examples.md`
+- Component instantiation (27 lines) is core, non-extractable
+- Validation logic (15 lines) is load-bearing
 
-**No vague descriptions found.** All descriptions front-load trigger phrases within the 250-character truncation window where applicable.
+**Verdict:** **MINOR SPLIT POTENTIAL.** Extract examples to references. Remaining body would still be ~350 lines (still large, but more focused).
 
----
+#### 3. ai-prose-decontamination (316 lines, 4,352 words)
 
-## Frontmatter Completeness
+**Content:** Four sequential passes, each with sub-patterns; detailed examples.
 
-**All 71 skills have proper YAML frontmatter with:**
-- `name:` field (matches folder name)
-- `description:` field (trigger-rich, 250+ characters where needed)
-- `model:` field (opus/sonnet/haiku)
-- `effort:` field (low/medium/high)
+**Compression assessment:**
+- Passes are sequential and depend on each other — not splittable
+- Examples are instructive but examples are already linked via reference files
+- All content is load-bearing for understanding the skill's process
 
-**No missing-frontmatter issues found.**
+**Verdict:** **NOT SPLITTABLE.** High size justified by multi-pass sequential design.
 
----
+#### 4. evidence-to-report-writer (334 lines, 3,428 words)
 
-## Redundancy Analysis
+**Content:** 8 writing techniques, 5-input model, 23-line constraints section, edge cases.
 
-### Potential Redundancy Pairs Checked
+**Compression assessment:**
+- All sections serve distinct purposes (narrative framing, context flow, supplementary evidence handling)
+- No obvious extraction candidates
+- Constraints are load-bearing to prevent hallucination
 
-**QC Skills (answer-spec-qc, architecture-qc, document-integration-qc, etc.):**
-- All have distinct inputs and outputs despite naming pattern.
-- answer-spec-qc: Routes Answer Specs (pass/revise/escalate). Input: Answer Specs + Task Plan + Research Plan.
-- architecture-qc: Different artifact (architecture design). Different routing logic.
-- evidence-spec-verifier: Routes Evidence Specs (distinct from Answer Specs).
-- All non-redundant.
+**Verdict:** **NOT SPLITTABLE.** Coherent skill for complex transformation task.
 
-**Prose Skills (prose-compliance-qc, prose-formatter, prose-refinement-writer, evidence-prose-fixer, ai-prose-decontamination):**
-- **prose-compliance-qc:** Style reference compliance checking.
-- **prose-formatter:** Markdown/layout formatting.
-- **prose-refinement-writer:** Logical clarity + claim development within already-drafted prose.
-- **evidence-prose-fixer:** Applies corrections from Fact Verification Checker (specific fidelity flags).
-- **ai-prose-decontamination:** AI pattern removal (voice decontamination).
-- All non-redundant — each targets a distinct weakness.
+#### 5. research-plan-creator (466 lines, 3,508 words)
 
-**Evidence Skills (evidence-prose-fixer, evidence-spec-verifier, evidence-to-report-writer):**
-- **evidence-prose-fixer:** Corrections to evidence-organized prose.
-- **evidence-spec-verifier:** Quality review of Evidence Specs before execution.
-- **evidence-to-report-writer:** Converts evidence-organized prose to report narrative.
-- All non-redundant — distinct workflow stages.
+**Content:** 15-step workflow, depth calibration framework, completion criteria, scarcity classification.
 
-**Finding:** No clear redundancy detected. All skills with similar names operate on distinct inputs/outputs and apply to distinct workflow stages.
+**Compression assessment:**
+- 15 steps are distinct gates and decision points
+- Each step is non-redundant
+- Depth framework (24 lines) is foundational but could extract to references
 
----
+**Verdict:** **NOT SPLITTABLE.** 15-step process is coherent and interrelated.
 
-## Dead Skills Assessment
+#### 6. workflow-evaluator (318 lines, 2,513 words)
 
-**Methodology:** Searched for naming/deprecation markers (`old`, `deprecated`, `v1`, `archive`) in skill names and content. Cross-referenced against CLAUDE.md and command files for active references.
+**Content:** 6 architecture checks, documentation evaluation, execution risks, mastery criteria.
 
-**Findings:** 
-- No skills with `old`, `deprecated`, `v1`, or `archive` in their folder names.
-- Mentions of "deprecated" or "old" found only in evaluation-framework references (in workflow-evaluator.md) — these are criteria definitions, not markers of dead skills.
-- No skills with explicit "replaced by" or "superseded" language in their descriptions.
-- All 71 skills are actively referenced or designed to be on-demand loads.
+**Compression assessment:**
+- 6 checks (Design Pattern Application, Hand-off Chain Integrity, Context Flow, Sub-workflow Architecture, Tool Assignment, Skill Reference Integrity) are interconnected
+- Each check addresses a different aspect of workflow integrity
+- Output format template (33 lines) is standard
 
-**Conclusion:** No dead skills identified.
+**Verdict:** **NOT SPLITTABLE.** Checks are interconnected; cannot extract without losing context.
 
----
+#### 7. workflow-system-critic (302 lines, 2,361 words)
 
-## Workflow-Reference Skill Copies (Minor Issue)
+**Content:** 6 standard checks + 3 deep-mode checks (Friction Correlation, Deployed Project Drift, Skill Staleness).
 
-Two skills are copied into `workflows/research-workflow/reference/skills/`:
-1. **knowledge-file-producer** (canonical: 137 lines; copy: 135 lines)
-2. **report-compliance-qc** (canonical: 115 lines; copy: 113 lines)
+**Compression assessment:**
+- Deep-mode checks (84 lines) are optional; could potentially be extracted
+- Standard mode alone is ~215 lines
+- Both modes are integrated into single workflow evaluation context
 
-**Drift detected:**
-- knowledge-file-producer copy: Missing `model: opus` and `effort: high` declarations; content text differs slightly
-- report-compliance-qc copy: Missing `model: sonnet` and `effort: medium` declarations
+**Verdict:** **NOT SPLITTABLE.** Deep mode is optional flag; both modes are part of same skill context.
 
-**Assessment:** Minor drift. If these are meant to be independent copies, the drift is acceptable. If meant to be canonical references, they should be symlinks or kept in sync. Current state poses no functional risk but creates maintenance burden.
+## Redundancy Analysis Between Skills
 
-**Recommendation (LOW severity):** Clarify whether these are (a) canonical copies that should track main versions, (b) intentional divergent variants, or (c) should be replaced with symlinks.
+Assessed 60+ skill pairs for overlapping activation conditions, expected inputs, or primary tasks.
 
----
+### Workflow-Related Skills
 
-## Summary of Findings by Severity
+| Skill 1 | Skill 2 | Verdict |
+|---------|---------|---------|
+| workflow-creator | workflow-evaluator | **No redundancy.** Creator *designs*; evaluator *assesses*. Exclusions are explicit. |
+| workflow-evaluator | workflow-system-critic | **No redundancy.** Evaluator assesses *workflow document quality*; critic assesses *deployed infrastructure*. Different layers. |
 
-| Severity | Count | Description |
-|----------|-------|-------------|
-| HIGH | 7 | Skills over 300 lines — all justified by multi-phase workflows or inherent complexity |
-| MEDIUM | 41 | Skills 150–300 lines — proportional to function scope; no issues flagged |
-| LOW | 1 | Workflow-reference skill copies showing minor drift in frontmatter |
-| **Total** | **2** | 7 HIGH findings (size only, not defects) + 1 LOW finding (copy drift) |
+### Analysis/Synthesis Pipeline
 
----
+| Skill 1 | Skill 2 | Verdict |
+|---------|---------|---------|
+| cluster-analysis-pass | cluster-synthesis-drafter | **No redundancy, but trigger clarity gap.** Analysis *organizes claims*; drafting *produces memo*. However, drafter description does not explicitly state "use after cluster-analysis-pass." **FINDING: LOW.** |
+| evidence-to-report-writer | prose-refinement-writer | **No redundancy.** Reporter *transforms evidence into narrative*; refiner *polishes prose*. Complementary, not redundant. |
+| prose-refinement-writer | ai-prose-decontamination | **No redundancy.** Refinement *improves fluency*; decontamination *removes AI patterns*. Different purposes. |
 
-## Confidence Assessment
+### Research Pipeline
 
-**Confidence: HIGH**
+All upstream/downstream relationships are explicit in descriptions (Task Plan → Research Plan → Answer Spec → Evidence Pack → Report Prose).
 
-- Batch measurements run on all 71 files (100% coverage)
-- Frontmatter completeness verified on all skills (100% coverage)
-- Descriptions spot-checked on sample of 10+ skills + all 7 large skills (100% of HIGH-severity cohort)
-- Redundancy cross-checks on all naming-pattern cohorts
-- Dead-skill markers searched across full codebase
+### Verdict on Redundancy
 
-No sampling or inference required.
+**FINDING: NO redundancy detected.** All skills have distinct purposes and triggers. One marginal opportunity: cluster-synthesis-drafter could explicitly reference cluster-analysis-pass as predecessor in description.
+
+## Workflow Reference Skill Copies
+
+**Location:** `workflows/research-workflow/reference/skills/`
+
+**Skills found:**
+1. `knowledge-file-producer/SKILL.md` — 135 lines (vs. main 137 lines)
+2. `report-compliance-qc/SKILL.md` — 113 lines (vs. main 115 lines)
+
+**Analysis:**
+- Both are **substantively identical** to main library versions
+- Both are **missing `model:` and `effort:` frontmatter fields**
+- Purpose appears to be workflow template bundling for reference/offline use
+
+**Severity:** **LOW.**
+- Duplication is intentional (workflow bundling)
+- Missing frontmatter could cause issues if workflow tries to invoke these copies directly
+- Maintenance burden: copies will drift from main library if main versions are updated
+
+**Recommendation:** Either:
+1. Document copies as reference-only (not live invocation), OR
+2. Restore full frontmatter and establish synchronization protocol with main library
+
+## Summary of Findings
+
+| Finding Type | Count | Severity |
+|--------------|-------|----------|
+| Skills >300 lines (HIGH cost when loaded) | 7 | HIGH (measurement) |
+| Skills 150-300 lines (MEDIUM cost) | 19 | MEDIUM |
+| Frontmatter compliance issues | 0 | — (100% on main library) |
+| Workflow copy frontmatter missing | 2 | LOW |
+| Description quality issues (vague) | 3 | MEDIUM (trigger clarity) |
+| Redundancy between skills | 0 | — (all distinct) |
+| Dead/deprecated skills | 0 | — (none detected) |
+| Split candidates | 1 (ai-resource-builder) | MEDIUM priority |
+| Minor extraction opportunities | 1 (answer-spec-generator examples) | LOW priority |
+| Trigger documentation gap | 1 (cluster-synthesis-drafter) | LOW |
+

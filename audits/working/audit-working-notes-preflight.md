@@ -1,44 +1,43 @@
-# Pre-Flight Working Notes — 2026-05-02
+# Pre-Flight Working Notes — Token Audit 2026-05-18
 
-## 0.1 — Baseline session metrics
+## 0.1 — Session Metrics
+`/cost` and `/context` not available in this execution environment.
 
-`/cost` and `/context`: not invokable from within agent execution context (interactive slash commands only, no programmatic equivalent in tool surface). Recorded as "not available in this execution environment."
+## 0.2 — Session-Usage-Analyzer Data
+Skill found at: `skills/session-usage-analyzer/SKILL.md`
+Historical output: `logs/usage-log.md` (422 lines, entries through 2026-05-16).
+In-scope log file count: 1. Triggers Section 5 inline execution (not workspace-scope threshold).
 
-## 0.2 — Session telemetry
+## 0.3 — Read(pattern) Deny-Rule Coverage
 
-- `session-usage-analyzer` skill found at: `ai-resources/skills/session-usage-analyzer/SKILL.md`
-- Historical data: `ai-resources/logs/usage-log.md` (376 lines, entries through 2026-05-01)
-- Other telemetry locations (out-of-scope but noted): per-project `usage-log.md` under `projects/buy-side-service-plan/`, `projects/project-planning/`, `projects/obsidian-pe-kb/`, `projects/repo-documentation/`.
+### Settings files in scope:
+1. `ai-resources/.claude/settings.json` (primary ai-resources config)
+2. `ai-resources/.claude/settings.local.json` (one-off allow entries; no deny section)
 
-In-scope log file count: 1. Triggers Section 5 inline execution.
-
-## 0.3 — Read(pattern) deny-rule check
-
-**Settings files in scope:**
-1. `ai-resources/.claude/settings.json`
-2. `ai-resources/.claude/settings.local.json` (no permissions block — only sets model)
-3. `ai-resources/workflows/research-workflow/.claude/settings.json` (deploy-time template, applies to deployed projects)
-
-**Read(...) deny rules in `ai-resources/.claude/settings.json`:**
+### Read() deny entries in ai-resources settings.json:
 - `Read(archive/**)`
 - `Read(logs/*-archive-*.md)`
 - `Read(inbox/archive/**)`
 - `Read(**/deprecated/**)`
 - `Read(**/old/**)`
 
-**Read(...) deny rules in `workflows/research-workflow/.claude/settings.json` (template):**
-- `Read(archive/**)`, `Read(**/*.archive.*)`, `Read(logs/*-archive-*.md)`, `Read(**/deprecated/**)`, `Read(**/old/**)`.
+### Expected-coverage comparison:
+| Expected dir | Covered? | Note |
+|---|---|---|
+| `audits/` | NO | Intentional carve-out per 2026-05-01 decision: "right fix is Read(audits/working/**) only" — partially addressed by noting `audits/` needs sub-dir coverage |
+| `audits/working/` | NO | The specific fix recommended in 2026-05-01 decisions — still not implemented |
+| `logs/` | PARTIAL | Only archived log files (`*-archive-*.md`) covered; live logs (usage-log.md, decisions.md, session-notes.md) intentionally readable |
+| `reports/` | NO | Intentional carve-out (same reason as audits/) |
+| `inbox/` | PARTIAL | Only `inbox/archive/**` covered; active inbox intentionally readable |
+| `archive/` | YES | `Read(archive/**)` |
+| `output/` | N/A | Not present in ai-resources scope |
+| `drafts/` | N/A | Not present |
+| `deprecated` dirs | YES | `Read(**/deprecated/**)` |
+| `old` dirs | YES | `Read(**/old/**)` |
 
-**Expected-coverage list:** `audits/`, `logs/`, `reports/`, `inbox/`, `archive/`, `output/`, `drafts/`, deprecated/old.
+### Verdict: MEDIUM
+Rules exist but coverage missing for >2 expected directories. Key actionable gap:
+- `Read(audits/working/**)` — recommended since 2026-05-01, not yet implemented. Working directory contains 90+ files from prior audit runs (per-workflow notes, per-audit summaries, coaching reports, diff files). These load as stale context if Claude Code explores the audits/ directory.
+- `Read(reports/**)` — reports directory coverage absent.
 
-**Currently covered:** `archive/`, `**/deprecated/**`, `**/old/**`, `inbox/archive/**`, `logs/*-archive-*.md`.
-
-**Missing expected coverage (with intent qualifier):**
-- `audits/` — INTENTIONAL CARVE-OUT (2026-05-01 decisions log: "Read(audits/**) deferred — would break /friday-act, /risk-check, /token-audit; right fix is Read(audits/working/**) only").
-- `reports/` — INTENTIONAL CARVE-OUT (same reason).
-- `output/` — no carve-out documented; not present in ai-resources scope (project-level only).
-- `drafts/` — no carve-out documented; not present.
-- `logs/` — only archive variant covered; live `usage-log.md`, `decisions.md`, `session-notes.md` are intentionally readable.
-- `inbox/` — only `inbox/archive/**` covered; live briefs intentionally readable.
-
-**Verdict: MEDIUM** — Read(...) deny rules exist but coverage missing for >2 expected directories. The bulk of the gap is intentional. The forward-pointer fix is *narrower* coverage (e.g., `Read(audits/working/**)`) rather than blanket directory denies.
+Full `audits/**` or `reports/**` deny would break active audit workflows that read reports. The targeted fix is `Read(audits/working/**)` only.
