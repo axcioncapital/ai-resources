@@ -12,6 +12,15 @@
 #
 # Result: when you add a new command to ai-resources, every project picks it
 # up automatically on next session start. No manifest edits required.
+#
+# Drift reconciliation: also detects targets that exist as regular files
+# (not symlinks) but differ from the canonical source. Emits an
+# additionalContext warning — does NOT auto-replace. Operator approves
+# replacement via /sync-workflow.
+# Note: check-template-drift.sh covers workflow-template drift (checking
+# against ai-resources/workflows/<template>/.claude/); this script covers
+# ai-resources shared-file drift (checking against ai-resources/.claude/).
+# Messages use distinct prefixes so both can fire without ambiguity.
 
 PROJECT_DIR="$CLAUDE_PROJECT_DIR"
 MANIFEST="$PROJECT_DIR/.claude/shared-manifest.json"
@@ -83,7 +92,41 @@ for src in "$AI_RESOURCES"/.claude/agents/*.md; do
   synced="$synced ${name}.md"
 done
 
-if [ -n "$synced" ]; then
-  count=$(echo $synced | wc -w | tr -d ' ')
-  echo "{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"Auto-synced $count new shared file(s) from ai-resources (symlinked):$synced\"}}"
+# Drift detection: targets that exist as regular files (not symlinks) but differ
+# from the canonical source. Uses "AI-RESOURCES DRIFT:" prefix to distinguish from
+# check-template-drift.sh ("Template drift detected:") — both may fire independently.
+drifted=""
+
+for src in "$AI_RESOURCES"/.claude/commands/*.md; do
+  [ -f "$src" ] || continue
+  name=$(basename "$src" .md)
+  in_list "$name" "$EXCLUDE_COMMANDS" && continue
+  in_list "$name" "$LOCAL_COMMANDS" && continue
+  target="$PROJECT_DIR/.claude/commands/${name}.md"
+  [ -f "$target" ] && [ ! -L "$target" ] || continue
+  diff -q "$src" "$target" >/dev/null 2>&1 || drifted="$drifted ${name}.md"
+done
+
+for src in "$AI_RESOURCES"/.claude/agents/*.md; do
+  [ -f "$src" ] || continue
+  name=$(basename "$src" .md)
+  matches_glob "$name" "$EXCLUDE_AGENT_GLOBS" && continue
+  in_list "$name" "$LOCAL_AGENTS" && continue
+  target="$PROJECT_DIR/.claude/agents/${name}.md"
+  [ -f "$target" ] && [ ! -L "$target" ] || continue
+  diff -q "$src" "$target" >/dev/null 2>&1 || drifted="$drifted ${name}.md"
+done
+
+if [ -n "$synced" ] || [ -n "$drifted" ]; then
+  msg=""
+  if [ -n "$synced" ]; then
+    count=$(echo $synced | wc -w | tr -d ' ')
+    msg="Auto-synced $count new shared file(s) from ai-resources (symlinked):$synced"
+  fi
+  if [ -n "$drifted" ]; then
+    drift_count=$(echo $drifted | wc -w | tr -d ' ')
+    drift_msg="AI-RESOURCES DRIFT: $drift_count file(s) differ from canonical (regular files, not symlinks):$drifted. Run /sync-workflow or replace with symlink."
+    [ -n "$msg" ] && msg="$msg | $drift_msg" || msg="$drift_msg"
+  fi
+  echo "{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"$msg\"}}"
 fi
