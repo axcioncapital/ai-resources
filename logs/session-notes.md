@@ -434,3 +434,51 @@ Commits:
 
 ### Open Questions
 - None.
+
+## 2026-05-18 — Monday prep: 2026-W21
+
+### Flags
+
+*A1–A3 (workspace state):*
+- Workspace root: 22 deleted files (`projects/personal/*` + `projects/meeting-prep/bird-and-bird-lunch-brief.md`), 86+ untracked entries (entire `.claude/agents/`, `.claude/commands/`, `.claude/hooks/`, plus untracked `ai-resources/`, `harness/`, `projects/*`, `reports/`, `artifacts/`). Same workspace-root cleanup deferred from friday-checkup-2026-05-16 → "investigate before bulk action."
+- ai-resources working tree: clean
+- 1 locked worktree at `.claude/worktrees/agent-ae71af0edf6777a53` (intentional, not flagged)
+
+*A5 (autonomy targets last week):* all axes held — no shift directed.
+
+*B6 (symlinks):* 1 broken — `projects/project-planning/.claude/commands/resolve-improvements.md` (recurrence from W20).
+
+*B7 (CLAUDE.md):* Per-project audits skipped for all 5 active projects — all files ≤80 lines (max global-macro-analysis 80, repo-documentation 36), far below audit's calibrated threshold. Inline advisory in chat; no audits invoked (avoids 5-subagent [COST] spike on small files).
+
+*B8 (logs over 200 lines, manual archive):*
+- `global-macro-analysis/logs/session-notes.md` (447)
+- `nordic-pe-macro-landscape-H1-2026/logs/session-notes.md` (411)
+- `nordic-pe-macro-landscape-H1-2026/logs/friction-log.md` (612)
+- `project-planning/logs/session-notes.md` (263)
+- `repo-documentation/logs/session-notes.md` (419)
+- `ai-resources/logs/maintenance-observations.md` (232)
+
+*B9 (permissions):* All active projects + ai-resources have `bypassPermissions` ✓
+
+*B10 (inbox):* 2 pending — `codex-second-opinion-brief.md`, `repo-review-brief.md` (4+ weeks old)
+
+*B11 (harness):* Phase 0/1 scaffolding only; `harness/session/` holds W20 mandate + state files; no in-progress session.
+
+*C12 (open follow-ups from friday-checkup-2026-05-16):* Workspace-root cleanup investigation, 14 skills trigger language, 2 hardcoded paths in `ai-resources/.claude/settings.json`, content extraction for answer-spec-generator + research-plan-creator, 2 orphaned skills, project-planning coaching-data backfill, permission-sweep ADV-1/2 (allow-list form-normalisation only — NOT the H-1 deny-list conflict), usage-log archive (652 lines), nordic-pe /improve Findings 2–7.
+
+*C13 (improvement-log pending):* 2 entries — `2026-04-25 /wrap-session leaner`; `2026-04-28 permission-sweep-auditor template-source classification`.
+
+### Mandate
+
+`/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/harness/session/week-mandate-2026-W21.md` (revised per `/qc-pass` REVISE verdict — added `/resolve-improvement-log` work item; added explicit "Superseded by prior sessions" dispositions for 6 friday-checkup items; clarified ADV-1 is allow-list normalisation not H-1 deny-list)
+
+### Harness state
+
+Phase 0/1 scaffolding only. CHANGELOG flagged "unreleased." `harness/session/` holds W20 mandate, mandate.json, session-log.json, startup-state.json. No in-progress session/feature work.
+
+### Next Steps
+
+- Item 1 (broken symlink) is loaded into `logs/session-plan-next.md` as intent for the next session
+- W21 mandate dependencies (none blocking — all items can start in any order)
+- Workspace-root dirty state investigation is a prerequisite before any `/cleanup-worktree` on workspace root
+
