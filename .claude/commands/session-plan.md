@@ -12,8 +12,21 @@ Session orchestrator. Run after `/prime` to plan HOW the session will run before
 
 Read `logs/session-notes.md`. Look for a `## {YYYY-MM-DD}` header matching today's date (the entry `/prime` appends when the operator names the work).
 
-- If found: proceed to Step 1.
 - If not found: tell the operator "Run `/prime` first to orient the session, then return to `/session-plan`." Stop. Do not proceed.
+- If found: check whether `logs/session-plan.md` exists AND was last modified within the past 6 hours (use `stat -f %m` on macOS, `stat -c %Y` on Linux, or `date -r`). If yes, read the plan's `## Intent` line and emit:
+
+  > `session-plan.md` already exists from this session (modified {HH:MM}, intent: '{Intent value}'). Options:
+  > 1. Keep current plan — stop here, no changes made
+  > 2. Overwrite with new intent — continue to Step 1
+  > 3. Write new plan to `logs/session-plan-pass2.md` instead — continue to Step 1, output to pass2
+  >
+  > Note: `logs/session-plan-next.md` is a separate file written by `/monday-prep` for cross-session handoffs and is not the same as `session-plan-pass2.md`.
+  >
+  > Default (no response within the turn): **option 1 — keep current plan**.
+
+  Apply the chosen option: Option 1 → stop, no changes. Option 2 → continue to Step 1 (output target = `logs/session-plan.md`). Option 3 → continue to Step 1 (output target = `logs/session-plan-pass2.md`).
+
+- Otherwise (plan file absent or older than 6 hours): proceed to Step 1.
 
 ---
 
@@ -31,9 +44,9 @@ If `$ARGUMENTS` is empty:
    - Subsection is empty or contains only "None" → set `INTENT` = `(none derived — next steps blank)`
    - If `INTENT` resolves to `(none derived)`: ask the operator "What are we working on today?" and wait. Do not proceed to Step 2 with the sentinel.
 
-2. Display the inferred intent:
+2. Read the last-modified timestamp of `logs/session-notes.md` (use `stat` or equivalent). Display the inferred intent with its source freshness:
 
-   > **Inferred intent:** {INTENT}
+   > **Inferred intent** (from `logs/session-notes.md`, last updated {YYYY-MM-DD HH:MM}): {INTENT}
 
 3. Ask the operator one question and **wait**:
 
@@ -180,7 +193,7 @@ Write to `logs/session-plan.md` (overwrite if present):
 
 **Self-check before writing:** If the draft plan is fewer than 25 lines, or if `## Findings / Items to Address` contains only a bare file link with no inline summaries, expand before writing. A plan that cannot be understood without opening a separate doc fails this check.
 
-After writing `session-plan.md`, locate today's `## {YYYY-MM-DD}` header in `logs/session-notes.md` (the entry `/prime` created in Step 0). Use `Edit` to insert `Class: {CLASS}` as a new line immediately below the header, before any existing content in the entry. The line should be in plain text form (not a heading, not a bullet) so downstream rules can grep for `^Class: ` reliably.
+After writing `session-plan.md`, locate today's `## {YYYY-MM-DD}` header in `logs/session-notes.md` (the entry `/prime` created in Step 0). Check whether a `Class: ` line already exists immediately below that header. If it does, replace its value with `Class: {CLASS}` using `Edit`. If it does not exist, insert `Class: {CLASS}` as a new line immediately below the header, before any existing content. The line should be in plain text form (not a heading, not a bullet) so downstream rules can grep for `^Class: ` reliably.
 
 Step 0 has already verified today's entry exists; if for any reason the header is missing at this point, skip the append and emit a one-line warning to the operator.
 

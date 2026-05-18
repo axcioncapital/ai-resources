@@ -39,6 +39,7 @@ Use `Read` (and `Grep` where helpful) — do not write or edit any source file.
 | `logs/decisions.md` | T2 | Entries containing `Defer` or `Deferred` (case-insensitive) AND having a `Trigger for action:` field. Capture entry date, title, and trigger text |
 | `logs/session-notes.md` | T2 (recent) / T3 (stale) | **Open Questions** sections where content is NOT `None`, `None.`, `None blocking`, or `None blocking.` (case-insensitive, trimmed). Recent = entry dated within 14 days of today |
 | `logs/session-plan.md` | T1 (recent) / T3 (stale) | `- [ ]` checkbox lines. Recent = file modified within 14 days; otherwise stale |
+| `logs/session-plan-pass2.md` | T1 (recent) / T3 (stale) | Same as session-plan.md. Present when `/session-plan` option 3 was chosen (re-invocation pass2 fork). |
 
 ### Step 2 — Apply priority override
 
