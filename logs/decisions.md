@@ -222,3 +222,27 @@
 - *Run find-template.sh on all 7 paths anyway:* Rejected. The script would return `NO_TEMPLATE_FOUND` (the script walks ai-resources subdirectories looking for files of matching basename and category; uniquely-named timestamped audit artifacts have no plausible match). Running it would be ceremonial — adds tool calls without producing signal — and would weaken the counter's selectivity over time (audits that fire on irrelevant paths get tuned out).
 - *Run it on one representative path as a sanity demonstration:* Rejected. The same logic applies: would return `NO_TEMPLATE_FOUND`, adds no signal. The plan's explicit zero-list with justification is a stronger audit artifact than a single demonstrative run.
 
+
+## 2026-05-18 — B8 line-count threshold produces false positives; split-log.sh uses entry count
+
+**Context.** Monday-prep B8 check flagged 6 files as over-threshold (>200 lines): `global-macro-analysis/logs/session-notes.md` (447), `nordic-pe-macro/logs/session-notes.md` (411), `nordic-pe-macro/logs/friction-log.md` (612), `project-planning/logs/session-notes.md` (263), `repo-documentation/logs/session-notes.md` (419), `ai-resources/logs/maintenance-observations.md` (232). All were listed as W21 item 5 "manual archive batch." During /log-sweep, none were archived.
+
+**Decision.** Treat B8 flags as informational rather than actionable when files are under the split-log.sh entry-count threshold. No archival applied.
+
+**Rationale.** `split-log.sh` counts `## ` header entry blocks (not total lines) and exits 0 if total entries ≤ KEEP (10). The flagged files have ≤10 dated `## ` entries — long because individual entries are detailed prose, not because there are many of them. Archiving would remove substantive recent content, not trim stale old entries. The B8 >200-line threshold in monday-prep is a useful rough signal but is not the same as the tool's actual trigger condition.
+
+**Alternatives considered.**
+- *Manually trim prose within entries:* Valid for files that feel unwieldy; leave to operator judgment rather than automated archival.
+- *Update B8 to count `## ` entries instead of lines:* Preferred direction. Open question logged in session-notes.
+
+## 2026-05-18 — Log-sweep auditor misclassifies 2 file types as Cat A2
+
+**Context.** /log-sweep run 2026-05-18 across 10 scopes. Auditor returned 3 Cat A2 over-threshold files. Two were false positives.
+
+**Decision.** Skip both false positives. Apply split-log.sh only to the 1 genuine over-threshold file (`global-macro-analysis/macro-kb/_meta/changelog.md`).
+
+**Rationale.** (a) `nordic-pe-macro/logs/session-notes-archive-2026-05.md`: an archive file matching the `*-archive-*.md` exclusion pattern in the /log-sweep Step 16 `find` prune. The auditor subagent's internal discovery did not respect this exclusion — applying split-log.sh to an archive would create a nested archive. (b) `global-macro-analysis/pipeline/source-docs/operations-manual-v1.3.md`: a documentation file with section headers (`## 1. Three Input Lanes`), not a dated log with `## YYYY-MM-DD` entries. The auditor's Cat A2 classification heuristic does not distinguish section headers from date headers.
+
+**Alternatives considered.**
+- *Apply split-log.sh to both and let it handle gracefully:* Rejected. For (a), split-log.sh has no archive-file guard — it would re-archive an archive. For (b), it would split documentation at arbitrary section boundaries, corrupting the file structure.
+- *File a bug / improvement against the auditor:* Valid. The archive-file exclusion gap and the section-vs-dated-header distinction are both worth fixing in a future /improve-skill session.

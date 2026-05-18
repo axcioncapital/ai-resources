@@ -1529,3 +1529,187 @@ Ran /friday-journal on a freshly populated ai-journal.md. Active section was ini
 
 ### Open Questions
 - None.
+## 2026-05-16 — fix /prime Step 2 innovation-count grep (BSD grep BRE false positive)
+
+### Summary
+Single targeted fix to /prime Step 2. The innovation-count grep used `\|` escapes which BSD grep on macOS treats as BRE alternation, causing the pattern to match every pipe-starting table row (returning 98 instead of 0). Replaced with a column-scoped awk command that correctly checks the Status column value.
+
+### Files Created
+- None.
+
+### Files Modified
+- `.claude/commands/prime.md` — Step 2 innovation-count: replaced broken grep pattern with `awk -F'|' 'NR>2 && $5~/^ detected $/{c++}END{print c+0}'`
+
+### Decisions Made
+- None beyond the bug fix itself.
+
+### Next Steps
+- Push: 2 commits pending (`9ff8b05` session wrap, `d3c27ff` prime fix)
+- Run `/friday-act` — friday-journal report is ready to consume
+
+### Open Questions
+- None.
+
+## 2026-05-16 — /friday-checkup (weekly tier, off-schedule Saturday)
+
+### Summary
+Off-schedule Saturday run of `/friday-checkup` weekly tier across 5 scopes (ai-resources, workspace, interpersonal-communication, nordic-pe-macro-landscape-H1-2026, project-planning). Diagnostic-only per operator directive — no fixes applied. Top critical: nordic-pe-macro-landscape-H1-2026 references a missing `context/` directory in `produce-prose-draft.md` and `produce-architecture.md`. Permission-sweep returned 0 critical / 4 high / 1 medium; log-sweep flagged a single archive candidate (`usage-log.md` 652 lines). Coach run produced 3 fresh coaching-log entries (1 appended, 2 created from baseline). 22 tactical follow-ups consolidated for `/friday-act`.
+
+### Files Created
+- `audits/friday-checkup-2026-05-16.md` — consolidated weekly checkup report
+- `audits/permission-sweep-2026-05-16.md` — dry-run report
+- `audits/log-sweep-2026-05-16.md` — dry-run report
+- `audits/repo-health-ai-resources-2026-05-16.md` — cadence snapshot
+- `audits/repo-health-project-nordic-pe-macro-landscape-H1-2026-2026-05-16.md` — cadence snapshot
+- `audits/working/permission-sweep-2026-05-16.md` + `.summary.md` — full notes + ≤30-line summary
+- `audits/working/log-sweep-ai-resources-2026-05-16.md`
+- `audits/working/log-sweep-project-interpersonal-communication-2026-05-16.md`
+- `audits/working/log-sweep-project-nordic-pe-macro-landscape-H1-2026-2026-05-16.md`
+- `audits/working/log-sweep-project-project-planning-2026-05-16.md`
+- `projects/nordic-pe-macro-landscape-H1-2026/logs/coaching-log.md` — baseline coach entry
+- `projects/project-planning/logs/coaching-log.md` — baseline coach entry
+
+### Files Modified
+- `ai-resources/logs/session-notes.md` — mandate line for this session + this wrap entry
+- `ai-resources/logs/session-plan.md` — overwritten with friday-checkup plan
+- `ai-resources/logs/coaching-log.md` — appended 2026-05-16 entry
+- `ai-resources/reports/repo-health-report.md` — refreshed by `/audit-repo` (prior archived as `repo-health-report-2026-05-16.md`)
+- `projects/nordic-pe-macro-landscape-H1-2026/reports/repo-health-report.md` — refreshed by `/audit-repo`
+
+### Decisions Made
+- **Diagnostic-only run.** No improvement-log findings applied; all 6 analyst findings were already logged from a prior session today (de-dup hit). Continued through Steps C–G without remediation. Rationale: operator stated "diagnostic only" early in the run.
+- **Skip H-1 and M-1 permission-sweep findings.** Both recommend adding to deny list; conflicts with stored operator policy (`feedback_zero_permission_prompts`: never add to deny list; bypassPermissions floor is the agreed setup).
+- **/coach run across 3 eligible scopes in parallel.** ai-resources, nordic-pe-macro, project-planning all met ≥5 sessions threshold; interpersonal-communication (4) and workspace (no session-notes) skipped.
+- **Off-schedule Saturday run accepted as weekly tier.** /friday-checkup last ran 2026-05-08 (8 days ago, within the 10-day recovery window); operator overrode the off-schedule prompt with `weekly`.
+
+### Next Steps
+- Run `/friday-act` to triage the 22 tactical follow-ups in `audits/friday-checkup-2026-05-16.md` (1 critical, 6 high, 13 medium/low, 2 deferred-by-policy)
+- Top-priority items for /friday-act: (1) resolve nordic-pe-macro missing `context/` directory; (2) push 6 unpushed ai-resources commits; (3) apply 4 HIGH permission-sweep fixes (gitignore + additionalDirectories); (4) run `/improve` against nordic-pe-macro session-plan hook overwrite (3 deferred occurrences); (5) run `/resolve-improvement-log` session against ai-resources logged-pending entries
+- Optional: cleanup-worktree on workspace root (21 deletions of `projects/personal/*` accumulating)
+
+### Open Questions
+- None.
+
+## 2026-05-16 — Prohibit model defaults workspace-wide (settings.json AND CLAUDE.md)
+
+### Summary
+Operator reported that declaring a model in settings.json or as a default in CLAUDE.md prevents in-session `/model` switches from taking effect. Extended the existing "no model in settings.json" rule (originally 2026-05-08) to also cover CLAUDE.md — model defaults are now prohibited at every config layer workspace-wide. The only permitted mechanism for declaring a tier outside the live session is per-command, per-agent, and per-skill `model:` YAML frontmatter. Removed all model defaults from settings + CLAUDE.md, updated repo documentation, rewrote the related memory note.
+
+### Files Created
+- None.
+
+### Files Modified
+- `.claude/settings.json` — removed `"model": "sonnet[1m]"` (workspace root)
+- `projects/buy-side-service-plan/.claude/settings.local.json` — emptied to `{}`
+- `projects/project-planning/.claude/settings.local.json` — emptied to `{}`
+- `projects/obsidian-pe-kb/.claude/settings.local.json` — emptied to `{}`
+- `projects/obsidian-pe-kb/.claude/settings.json` — removed `"model"` field
+- `projects/interpersonal-communication/vault/.claude/settings.json` — removed `"model"` field
+- `ai-resources/workflows/research-workflow/.claude/settings.json` — removed `"model"` field
+- `ai-resources/skills/obsidian-kb-builder/templates/scaffold/settings.json` — removed `"model"` field (template; propagates to new vaults)
+- `CLAUDE.md` — workspace-level § Model Tier rewritten with explicit prohibition + rationale; per-skill frontmatter added to permitted mechanisms
+- `ai-resources/CLAUDE.md` — § Model Selection rewritten with prohibition pointer
+- `projects/buy-side-service-plan/CLAUDE.md` — Model Selection rewritten as recommended-posture only
+- `projects/project-planning/CLAUDE.md` — Model Selection rewritten as recommended-posture only
+- `projects/obsidian-pe-kb/CLAUDE.md` — Model Selection rewritten as recommended-posture only
+- `projects/interpersonal-communication/CLAUDE.md` — Model Selection rewritten as recommended-posture only
+- `projects/global-macro-analysis/CLAUDE.md` — Model Selection rewritten as recommended-posture only
+- `projects/personal/travel-os/CLAUDE.md` — Model Selection rewritten as recommended-posture only
+- `ai-resources/docs/permission-template.md` — removed `"model": "sonnet"` from canonical Layer C template; key-assertion flipped to "no `model` field" with rationale
+- `ai-resources/docs/audit-discipline.md` — model-default audit recommendations must be rejected outright, not run through the discipline
+- `ai-resources/docs/autonomy-rules.md` — Autonomy Rule #8 no longer lists model-default changes (prohibited outright, not gateable)
+- `ai-resources/docs/onboarding-daniel.md` — "Set up your model tier" rewritten as "Select your session model" (per-session via `/model`)
+- `ai-resources/docs/repo-architecture.md` — project directory map annotated "no default model — prohibited"
+- `ai-resources/.claude/commands/deploy-workflow.md` — canonical-merge no longer adds `model: sonnet[1m]`; uses `del(.model)` to strip pre-existing model fields on deploy
+- `~/.claude/projects/.../memory/feedback_no_model_in_settings_json.md` — rewritten to cover settings.json AND CLAUDE.md, clarifies per-command/agent/skill frontmatter remains permitted
+
+### Decisions Made
+- **Scope of prohibition.** Extended from settings.json-only (prior rule, 2026-05-08) to also cover CLAUDE.md, per operator directive. Rationale: same downstream effect — both layers block in-session `/model` switches.
+- **Recommended-posture preserved in project CLAUDE.md.** Operator did not direct removal of the per-project Model Selection sections; rewrote them as recommendation-only ("lean Opus for plan drafting; Sonnet for routine edits") rather than deleting. This preserves project-specific tier guidance without asserting a default.
+- **Skills added to permitted mechanisms** (operator correction mid-session: "Yes, and its also allowed for skills"). Initial draft only mentioned commands + agents; expanded to commands + agents + skills across workspace CLAUDE.md, ai-resources CLAUDE.md, and the memory note.
+- **deploy-workflow merge procedure now strips a pre-existing `model` field** via `del(.model)` rather than just not setting one. Catches drift from older deploys that ran the previous merge logic.
+
+### Next Steps
+- Push the upcoming commit (operator approval required).
+- Verify `/model` switches work as expected in the next session start.
+- Optional `/friday-act` candidate: scan archived/historical audit files for stale "add canonical model baseline" recommendations and tag them as superseded.
+
+### Open Questions
+- None.
+
+### End-time risk-check
+Skipped. Change scope was operator-directed end-to-end with a mid-session correction (skills added to permitted mechanisms) already incorporated. Touched classes: cross-cutting CLAUDE.md edits, settings edits, one shared command edit (`deploy-workflow.md`). All changes are reversible config/doc edits; no hook execution paths, no permission allow/deny shifts, no symlinks. Operator directive was explicit and tightly scoped. Coaching + telemetry both declined in preflight.
+
+## 2026-05-16 — Innovation sweep: 6 projects, 7 graduate candidates identified
+
+### Summary
+Ran a full innovation triage sweep across 6 selected projects (axcion-ai-system-owner had 0 local resources and was skipped; 5 projects active). Used /clarify and /scope to structure the request before entering plan mode, then spawned 5 parallel `innovation-triage-auditor` subagents. Classified 101 items total and produced a consolidated triage report with 7 graduate candidates, 8 loose ends, 40 already-graduated, and 46 keep-local verdicts. Key finding: nordic-pe's 17 "local" commands turned out to be byte-identical research-workflow deploys — the upstream inventory had missed the `ai-resources/workflows/research-workflow/` path. Updated the innovation registry with 23 new entries.
+
+### Files Created
+- `audits/innovation-sweep-2026-05-16.md` — consolidated triage report with graduate candidates, loose ends, verdict summary table
+- `audits/working/innovation-sweep-2026-05-16/global-macro-analysis/notes.md` — per-project working notes (gitignored)
+- `audits/working/innovation-sweep-2026-05-16/interpersonal-communication/notes.md` — per-project working notes (gitignored)
+- `audits/working/innovation-sweep-2026-05-16/nordic-pe-macro-landscape-H1-2026/notes.md` — per-project working notes (gitignored)
+- `audits/working/innovation-sweep-2026-05-16/obsidian-pe-kb/notes.md` — per-project working notes (gitignored)
+- `audits/working/innovation-sweep-2026-05-16/repo-documentation/notes.md` — per-project working notes (gitignored)
+
+### Files Modified
+- `logs/innovation-registry.md` — 23 new entries appended (7 graduate, 8 loose-end, 8 keep-local/already-graduated)
+
+### Decisions Made
+- **Project selection:** Operator selected projects 1 (axcion-ai-system-owner), 4 (global-macro-analysis), 5 (interpersonal-communication), 7 (nordic-pe-macro-landscape-H1-2026), 8 (obsidian-pe-kb), 10 (repo-documentation)
+- **Verdict bar:** "anything that looks generalizable" (operator-directed, not usage-proven)
+- **Scope:** Triage only — no actual graduation executed this session
+- **Implementation:** Consolidated into one report (not per-project); parallel subagents rather than sequential /innovation-sweep skill invocations
+
+### Next Steps
+- Graduate G1 (SessionStart upward-walk pattern) → `ai-resources/docs/permission-template.md`: run `/graduate-resource` or edit permission-template.md directly
+- Graduate G2 (deny-archive permissions shape) → same target
+- Graduate G3–G5 (decision-logger, checkpoint-nag, five-hook taxonomy) → workflow-level settings reference
+- Graduate G6 (compaction "trust the summary" rule) → `ai-resources/docs/compaction-protocol.md`
+- **Fix LE4 (urgent):** Delete or repoint broken symlink `obsidian-pe-kb/.claude/commands/resolve-improvements.md` → `resolve-improvement-log.md`
+- **Fix LE5 (urgent):** Remove `model` field from `obsidian-pe-kb/.claude/settings.json`
+- Decide on loose ends LE1–LE3, LE6–LE8 (today-drill, auto-commit policy, friction-log-trigger, compaction scratchpad)
+
+### Open Questions
+- LE3 (auto-commit hook): conflicts with workspace Commit Rules — intentional exception or remove?
+- LE2 (CLAUDE.md §Autonomy Rules from nordic-pe): graduate to workspace docs or keep project-local?
+
+### End-time risk-check
+Skipped — session touched no structural change classes (no hooks, no permission changes, no CLAUDE.md edits, no commands/skills/symlinks). Files produced were audit outputs and a registry log append only.
+
+## 2026-05-16 — /friday-act: weekly checkup triage, 7 plan files (28 fix-now items)
+Class: execution
+
+### Summary
+Ran /friday-act against the 2026-05-16 weekly checkup report. Disposititioned 46 items across three sources (17 checkup, 14 innovation-sweep, 15 friday-journal) into 28 fix-now and 18 deferred. Used /recommend to self-determine all dispositions after operator expanded scope to include the innovation-sweep report. Generated 7 plan files grouped by area. QC pass (qc-reviewer) returned REVISE verdict; 3 fixes applied before commit.
+
+### Files Created
+- `audits/friday-plans/2026-05-16-nordic-pe-macro.md` — 4 items: context/ restore decision, SKILL.md frontmatter, CLAUDE.md pipeline-frontmatter note, /improve run
+- `audits/friday-plans/2026-05-16-permission-sweep.md` — 3 items: gitignore fixes (H-2/H-3), additionalDirectories (H-4), form-normalization advisories
+- `audits/friday-plans/2026-05-16-ai-resources-maintenance.md` — 6 items: git push, /resolve-improvement-log, cleanup-worktree ×2, hardcoded path fix, usage-log archive
+- `audits/friday-plans/2026-05-16-permission-template.md` — 3 items: G1 SessionStart upward-walk, G2 deny-archive pattern, G5 PostToolUse taxonomy doc
+- `audits/friday-plans/2026-05-16-innovation.md` — 4 items: G6 compaction cost-test rule, LE4 broken symlink fix, LE5 model field removal, registry update
+- `audits/friday-plans/2026-05-16-journal-improvements.md` — 5 items: SessionStart hook chain, /new-project canonical commands, CLAUDE.md decision-point posture, /friday-act required-reads expansion, /audit-repo vs /repo-dd investigation
+- `audits/friday-plans/2026-05-16-friday-journal.md` — 3 items: QC sub-agent (vague/duplicate detection), drop-check step, risk-check auto-flagging step
+
+### Files Modified
+- `logs/maintenance-observations.md` — 2026-05-16 Friday Act session block appended (28 fix-now, 18 defer, 7 plan files, all-hold autonomy axes)
+
+### Decisions Made
+- **Disposition strategy (/recommend):** Self-dispositioned all 46 items; 28 fix-now across 7 plan files, 18 deferred, 0 skipped. Autonomy-axis all hold; operator observations defaulted to (none).
+- **Innovation-sweep scope expansion:** Operator requested inclusion of `audits/innovation-sweep-2026-05-16.md` findings alongside checkup and journal sources. Items labeled as source: innovation-sweep in maintenance-observations; plan files use `journal-derived` tag per /friday-act spec (only three allowed source values).
+- **Journal items retroactively dispositioned:** 15 friday-journal items were inadvertently dropped when the innovation-sweep was merged into the disposition prompt. Self-added dispositions via /recommend; 2 extra plan files written (journal-improvements, friday-journal).
+- **QC fixes applied (REVISE verdict):** (1) permission-template.md Item 1 — risk-check flag corrected from "no" to "yes — change class: settings.json/hooks" (cross-project hook updates are in-class even though the doc edit is not); (2) journal-improvements.md Item 4 — added execution-note caveat re shared-state-automation boundary; (3) friday-journal.md Items 1–3 — same caveat added.
+
+### Next Steps
+- Push: `git push` — 9 unpushed commits in ai-resources (8 prior sessions + this wrap commit)
+- Execute plan files in follow-up sessions — priority order:
+  1. `nordic-pe-macro` (CRITICAL: missing context/ directory)
+  2. `permission-sweep` (HIGH: gitignore + additionalDirectories)
+  3. `ai-resources-maintenance` (git push + resolve-improvement-log + cleanup)
+  4. `permission-template`, `innovation`, `journal-improvements`, `friday-journal` (in any order)
+- Each plan file is one follow-up session; run /risk-check for items flagged "yes" before executing those items
+
+### Open Questions
+- None.
