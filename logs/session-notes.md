@@ -336,3 +336,41 @@ Ran the full Monday infrastructure cadence (/monday-prep, /session-start, /sessi
 
 ### Open Questions
 - Item 5: is the B8 >200-line threshold useful given it produces false positives every cycle? The actual tool threshold (entry count) is what matters. Consider updating B8 to use grep-count of `^## ` entries instead of wc -l.
+
+## 2026-05-18 — W21 items 1 + 5: log archive batch + broken symlink fix
+Class: execution
+
+### Summary
+Executed W21 items 1 and 5. Item 5: manually archived 6 over-threshold log files across 5 project repos (all trimmed from 232–612 lines to 114–190 lines). Item 1: investigated and fixed 3 broken `resolve-improvements.md` symlinks (project-planning, corporate-identity, buy-side-service-plan) — root cause was the 2026-04-30 rename of `resolve-improvements.md` → `resolve-improvement-log.md` in ai-resources, which left project symlinks pointing at the old name. Also explained W21 item 4 (nordic-pe Findings 2–7) to operator; deferred to next session.
+
+### Files Created
+- `logs/maintenance-observations-archive.md` — archived 2026-05-01 block from maintenance-observations
+- `projects/project-planning/logs/session-notes-archive.md` — new archive (first 3 entries: 2026-04-12 to 2026-04-14)
+- `projects/nordic-pe-macro-landscape-H1-2026/logs/friction-log-archive.md` — archived first 3 session blocks (2026-05-14 × 2, 2026-05-15 × 1)
+
+### Files Modified
+- `logs/maintenance-observations.md` — trimmed to 190 lines; 2026-05-01 block archived
+- `logs/friction-log.md` — new 2026-05-18 session block + one friction entry ("note this.")
+- `projects/global-macro-analysis/logs/session-notes.md` — trimmed to 173 lines; 6 × 2026-05-07 entries archived
+- `projects/global-macro-analysis/logs/session-notes-archive-2026-05.md` — 6 entries appended
+- `projects/nordic-pe-macro-landscape-H1-2026/logs/session-notes.md` — trimmed to 114 lines; entries before R3 citation block archived
+- `projects/nordic-pe-macro-landscape-H1-2026/logs/session-notes-archive-2026-05.md` — entries appended
+- `projects/nordic-pe-macro-landscape-H1-2026/logs/friction-log.md` — trimmed to 181 lines
+- `projects/project-planning/logs/session-notes.md` — trimmed to 153 lines; 3 entries archived
+- `projects/project-planning/.claude/commands/resolve-improvements.md` — relinked → resolve-improvement-log.md
+- `projects/corporate-identity/.claude/commands/resolve-improvements.md` — relinked → resolve-improvement-log.md
+- `projects/buy-side-service-plan/.claude/commands/resolve-improvements.md` — relinked → resolve-improvement-log.md
+- `projects/repo-documentation/logs/session-notes.md` — trimmed to 156 lines; 7 entries archived
+- `projects/repo-documentation/logs/session-notes-archive-2026-04.md` — 7 entries appended
+
+### Decisions Made
+- **Manual archive despite prior session's false-positive finding.** Monday prep session determined item 5 was a false positive for split-log.sh (entry count ≤10). This session proceeded with manual archival anyway — files were 232–612 lines and operator explicitly requested item 5. Archived via line-based cut, not split-log.sh.
+- **Fixed 3 broken symlinks, not just project-planning.** W21 item 1 scoped only project-planning; investigation revealed corporate-identity and buy-side-service-plan had the same broken symlink. All three fixed in one pass.
+
+### Next Steps
+- **Next session: tackle nordic-pe Findings 2–7** — /session-plan re-invocation guard (Finding 2), stale intent warning (Finding 3), auto-sync drift detection (Finding 5), duplicate Class: fix (Finding 6), chapter review rule (Finding 7), session-plan history backup hook (Finding 4). Plan-time /risk-check required for Findings 2, 3, 5, 6 (touch ai-resources canonical files).
+- Push all repos: ai-resources (unpushed commits), project-planning, corporate-identity, buy-side-service-plan, global-macro-analysis, nordic-pe, repo-documentation.
+- W21 remaining open: item 2 (workspace-root investigation), item 3 (inbox briefs via /create-skill), item 4 (nordic-pe Findings 2–7).
+
+### Open Questions
+- None.

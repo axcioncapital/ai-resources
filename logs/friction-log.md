@@ -31,3 +31,11 @@
 - **/prime "Next Steps" goes stale when same-day parallel sessions wrap out of order.** Today had four parallel session wraps on 2026-05-11 (Bundle 1+2, Bundle 3, Bundle 4, Bundle 5). Bundle 4 wrapped last and ended up as the bottom entry in session-notes.md. /prime Step 1 reads "the last entry" and copies its Next Steps verbatim — but Bundle 4's Next Steps list was authored mid-execution, before the parallel Bundle 1+2 and Bundle 5 sessions wrapped. Result: /prime reported Bundles 1, 2, 5 as "deferred / remaining" when commits `f44684b`, `851a15d`, `62bf33f` had already shipped them. Operator caught it immediately ("I already did bundle 1,2,5 didn't I?"). Cost: low this time (one operator correction), but the failure mode is generalizable to any day with parallel sessions. Fix options: (a) /prime reads all entries from the current calendar day and filters Next Steps against subsequent same-day entries, or (b) /prime cross-checks each Next Steps item against `git log --oneline` since the entry's timestamp and flags items mentioned in later commits as DONE. Option (b) is more robust because parallel sessions can wrap in any order. Same family as the Apr-18 entry above (Prime git-status snapshot staleness) — /prime trusts one snapshot of state when truth may be elsewhere.
 
 #### Write Activity
+
+## Session — 2026-05-18 10:00
+
+### Friction Events
+
+- **10:00** — note this.
+
+#### Write Activity
