@@ -464,3 +464,26 @@ Implemented all 6 pending improvement-log findings from the nordic-pe 2026-05-16
 
 ### Open Questions
 - None.
+
+## 2026-05-18 — monday-prep: add symlink repair to B6
+
+### Summary
+Investigated which commands should be linked into the `/monday-prep` workflow. Produced a six-item suggestion list, then trimmed to three genuine gaps after confirming that `/log-sweep`, `/permission-sweep`, and `/coach` are already run every week in `/friday-checkup`. Added inline symlink repair logic to B6 of `monday-prep` — scoped to `ACTIVE_PROJECTS` only (not a delegation to `/fix-symlinks`, which scans all projects).
+
+### Files Created
+- None.
+
+### Files Modified
+- `ai-resources/.claude/commands/monday-prep.md` — B6 extended with inline repair: basename search in ai-resources/, fix plan, operator confirmation, `ln -sf`, FLAG removal on success.
+
+### Decisions Made
+- **Dropped from suggestions:** `/log-sweep`, `/permission-sweep --dry-run`, `/coach` — all already covered by friday-checkup weekly tier; adding to monday-prep would be redundant.
+- **Did not delegate to `/fix-symlinks`:** scope mismatch — that command scans all `projects/*/`, but monday-prep B6 only checks `ACTIVE_PROJECTS`. Inlined equivalent repair logic scoped to active projects instead.
+- **Not acted on this session:** `/open-items` and `/sync-workflow` remain as lower-priority candidates for a future improvement.
+
+### Next Steps
+- Push when ready (`git push`).
+- `/open-items` and `/sync-workflow` as monday-prep additions remain open for a future session if desired.
+
+### Open Questions
+- None.

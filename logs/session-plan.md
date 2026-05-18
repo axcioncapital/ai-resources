@@ -1,97 +1,67 @@
 # Session Plan — 2026-05-18
 
 ## Intent
-Execute W21 items 5, 6, 8, 9 — over-threshold log archive batch (7 files), hardcoded-path fixes in ai-resources `.claude/settings.json` (2 lines), usage-log archive via `/log-sweep`, and `/resolve-improvement-log` for 2 pending ai-resources entries.
+Implement nordic-pe Findings 2–7 — skill/command-level fixes to ai-resources canonical files and one project-local addition; F2/F3/F5/F6 require plan-time `/risk-check` before edits.
 
 ## Class
 execution
 
 ## Model
-sonnet — → /model sonnet (currently on opus 4.7[1m]; this session is mostly mechanical/light-judgment with no design work)
+sonnet — match
 
 ## Source Material
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/harness/session/week-mandate-2026-W21.md` — the source mandate for items 5, 6, 8, 9
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/log-sweep.md` — Item 8 procedure
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/resolve-improvement-log.md` — Item 9 procedure
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/settings.json` — Item 6 target (lines 20–21 confirmed as the 2 hardcoded paths)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/logs/improvement-log.md` — Item 9 source (2 pending entries: 2026-04-25 /wrap-session leaner; 2026-04-28 permission-sweep-auditor template-source classification)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/logs/usage-log.md` — Item 8 target (652 lines, Cat B over 500-line threshold)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/logs/maintenance-observations.md` — Item 5 target (232 lines)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/global-macro-analysis/logs/session-notes.md` — Item 5 target (447 lines)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/nordic-pe-macro-landscape-H1-2026/logs/session-notes.md` — Item 5 target (411 lines)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/nordic-pe-macro-landscape-H1-2026/logs/friction-log.md` — Item 5 target (612 lines)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/project-planning/logs/session-notes.md` — Item 5 target (263 lines)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/repo-documentation/logs/session-notes.md` — Item 5 target (419 lines)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/audit-discipline.md` — risk-check guidance for Item 6 (settings.json edit is a structural change class)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/permission-template.md` — canonical portable-path pattern for Item 6
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/session-plan.md` (target of F2, F3, F6)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/hooks/auto-sync-shared.sh` (target of F5)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/nordic-pe-macro-landscape-H1-2026/.claude/hooks/` (new hook location for F4)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/nordic-pe-macro-landscape-H1-2026/CLAUDE.md` (target of F7)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/nordic-pe-macro-landscape-H1-2026/logs/improvement-log.md` (source of findings)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/audit-discipline.md` (structural change classes)
 
 ## Findings / Items to Address
 
-1. **Item 5 — Manual log archive batch (6 files over 200-line threshold).** Per W21 mandate Item 5. For each file: determine archive policy (keep recent N, move older entries to `<name>-archive.md`), apply edits, verify counts after. Files and current line counts:
-   - `ai-resources/logs/maintenance-observations.md` (232) → archive
-   - `projects/global-macro-analysis/logs/session-notes.md` (447) → archive
-   - `projects/nordic-pe-macro-landscape-H1-2026/logs/session-notes.md` (411) → archive
-   - `projects/nordic-pe-macro-landscape-H1-2026/logs/friction-log.md` (612) → archive
-   - `projects/project-planning/logs/session-notes.md` (263) → archive
-   - `projects/repo-documentation/logs/session-notes.md` (419) → archive
+Source doc: `projects/nordic-pe-macro-landscape-H1-2026/logs/improvement-log.md` (entries dated 2026-05-16)
 
-2. **Item 6 — Fix 2 hardcoded absolute paths in ai-resources/.claude/settings.json.** Per W21 mandate Item 6. Lines 20–21 currently read:
-   - Line 20: `"Edit(/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/**)"`
-   - Line 21: `"Write(/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/**)"`
-
-   Replace with workspace-portable forms. Check `ai-resources/docs/permission-template.md` for the canonical pattern (likely `${HOME}` substitution or a relative form). This edit is a **structural change class** (settings.json permission edit) — requires `/risk-check` plan-time and end-time.
-
-3. **Item 8 — Archive ai-resources/logs/usage-log.md via /log-sweep.** Per W21 mandate Item 8. 652 lines exceeds Cat B 500-line threshold. Last `/log-sweep` was 2026-05-16 in `--dry-run` mode flagging this exact file. Run `/log-sweep` without `--dry-run` to apply.
-
-4. **Item 9 — /resolve-improvement-log for 2 pending ai-resources entries.** Per W21 mandate Item 9.
-   - `2026-04-25 — Make /wrap-session leaner` (5 sub-proposals; one already obsolete per inline note)
-   - `2026-04-28 — permission-sweep-auditor: classify template sources, skip Rule 8` (auditor refinement)
-
-   For each: read entry, decide implement-now or defer-with-rationale. If defer, add `Status: deferred YYYY-MM-DD` and reason. If implement, ship the change and add `Status: applied YYYY-MM-DD` + `Verified:` line. Then run `/resolve-improvement-log` to archive resolved entries.
+1. **F2 — /session-plan Step 0 mid-session re-invocation guard.** Edit Step 0 in `ai-resources/.claude/commands/session-plan.md`: after the date-header check, also check whether `logs/session-plan.md` exists AND was modified within the last 6 hours. If yes, emit a prompt listing the existing plan's intent and three options (keep / overwrite / write to pass2). Default on no response: option 3.
+2. **F3 — /session-plan Step 1 stale Next Steps freshness check.** Edit Step 1 in `ai-resources/.claude/commands/session-plan.md`: replace `"Inferred intent: {INTENT}"` with a variant that includes the source-file last-modified timestamp and offers `"continue"` to keep the existing plan.
+3. **F4 — Project-local session-plan backup hook.** Create `projects/nordic-pe-macro-landscape-H1-2026/.claude/hooks/backup-session-plan.sh` (PreToolUse Write) that copies prior `logs/session-plan.md` to `logs/.session-plan-history/YYYY-MM-DD-HHMM.md` before each new write. Wire into project's `.claude/settings.json` PreToolUse Write matcher.
+4. **F5 — auto-sync-shared.sh drift-reconciliation mode.** Edit `ai-resources/.claude/hooks/auto-sync-shared.sh`: for each command/agent target that already exists AND is a regular file (not a symlink), compute `diff` against the source. If different, emit SessionStart `additionalContext` warning. Do NOT auto-replace.
+5. **F6 — /session-plan Step 7 duplicate Class: fix.** Edit Step 7 in `ai-resources/.claude/commands/session-plan.md`: before inserting `Class: {CLASS}`, check whether a `Class: ` line already exists under today's header — replace value instead of inserting a duplicate.
+6. **F7 — Chapter review presentation rule.** Add one-line rule to `projects/nordic-pe-macro-landscape-H1-2026/CLAUDE.md` under a "Review Presentation" section: "Chapter and section reviews surface only QC verdict, score, and file path — never paste full prose inline."
 
 ## Execution Sequence
 
-1. **Switch model to sonnet** (`/model claude-sonnet-4-6[1m]`).
-2. **Item 6 first** (highest-risk; structural change class — settings.json):
-   - Read `docs/permission-template.md` for canonical portable-path pattern.
-   - Run `/risk-check` plan-time on the proposed 2-line edit.
-   - If GO: apply edit; verify settings.json still parses (jq or manual check).
-   - Commit in ai-resources.
-   - Verification: lines 20–21 contain no `/Users/...` literal; settings.json still valid JSON.
-3. **Item 8** (`/log-sweep` for usage-log.md):
-   - Invoke `/log-sweep` (not dry-run) against ai-resources scope.
-   - Verify usage-log.md now ≤500 lines; archive file created.
-   - Commit any resulting changes in ai-resources.
-4. **Item 9** (resolve 2 improvement-log entries):
-   - Read both entries.
-   - Decide implement-or-defer per entry (sonnet judgment).
-   - Apply Status updates + rationale.
-   - Run `/resolve-improvement-log` to archive.
-   - Commit in ai-resources.
-   - Verification: improvement-log.md no longer contains either entry as `logged (pending)`; archive file updated.
-5. **Item 5** (manual archive batch — last because mechanical and 6 files):
-   - For each file: determine archive cut (keep recent ~10 entries / ~150 lines, archive the rest).
-   - Apply edits per file; verify line counts after.
-   - Commit per-repo (ai-resources commit for the 1 ai-resources file; workspace-root or per-project commits for the 5 project files — determine actual git tracking before staging).
-   - Verification: each file ≤200 lines post-archive.
-6. **End-time `/risk-check`** for Item 6 (settings.json edit). Run after all commits, before wrap.
+1. **/risk-check pass A — combined session-plan.md edits (F2 + F3 + F6).** All three findings touch the same canonical command file. Single combined risk-check covers all three. Wait for verdict GO before proceeding. Verification: GO verdict file written under `audits/risk-checks/`.
+2. **Implement F2 + F3 + F6 in one edit pass on `session-plan.md`.** Verification: file passes a self-read showing all three changes in expected sections (Step 0, Step 1, Step 7).
+3. **Commit F2+F3+F6** with message `update: session-plan command — re-invocation guard + stale intent freshness check + duplicate Class fix (nordic-pe F2/F3/F6)`.
+4. **/risk-check pass B — F5 + F4 combined.** F5 edits `auto-sync-shared.sh` (canonical shared hook); F4 creates a new project-local hook and wires `settings.json` PreToolUse Write. Both are risk-check change classes per `audit-discipline.md`. Single combined risk-check covers both. Wait for verdict before proceeding. Verification: GO/PROCEED-WITH-CAUTION verdict file written under `audits/risk-checks/`.
+5. **Implement F5 in auto-sync-shared.sh.** Verification: shellcheck-clean; manual sanity test on one project — SessionStart `additionalContext` emits on drift, no auto-replace.
+6. **Commit F5** with message `update: auto-sync-shared hook — drift-reconciliation warning mode (nordic-pe F5)`.
+7. **Implement F4 — new backup-session-plan.sh hook in nordic-pe project.** Create hook script, make executable, wire into project's `.claude/settings.json` PreToolUse Write matcher scoped to `logs/session-plan.md` path only. Verification: script exists, executable bit set, settings.json validates as JSON, matcher pattern restricts to `logs/session-plan.md` (not a blanket Write catcher).
+8. **Commit F4** with message `new: backup-session-plan hook (nordic-pe F4)`.
+9. **Implement F7 — one-line rule in nordic-pe CLAUDE.md.** Verification: rule present under named section.
+10. **Commit F7** with message `update: nordic-pe CLAUDE.md — chapter review presentation rule (nordic-pe F7)`.
+11. **Update improvement-log.md** — mark all six entries `applied 2026-05-18` with brief change-applied notes; commit.
+12. **End-time /risk-check skip evaluation.** Apply skip rule (plan-time covered + commits shipped + drift bounded) per memory `feedback_end_time_risk_check_skip`. Document skip or run gate.
 
 ## Scope Alternatives
 
-- **Min:** Item 6 only (smallest unit; structural-class so highest risk-density per item). Skip 5, 8, 9 to a later session.
-- **Recommended:** All 4 (Items 5, 6, 8, 9). Operator-confirmed scope. ~1.5–2 hours.
-- **Max:** Add Item 7 (ADV-1/ADV-2 permission glob normalisation). Also LOW-risk mechanical; same file as Item 6 so could be bundled. Operator explicitly excluded — do not expand.
+- **Min:** F2 + F3 + F6 only (one file, one risk-check, one commit). Defers F4, F5, F7 to next session. Use if /risk-check pass A reveals unexpected complexity.
+- **Recommended:** All six findings (F2–F7) in two risk-check passes and four commits.
+- **Max:** Recommended + push all unpushed repos at end (requires operator approval per Autonomy Rule #2).
 
 ## Autonomy Posture
 
-Full autonomy.
+Gated.
 
 **Stop points:**
-- Item 6 `/risk-check` plan-time returns NO-GO or NEEDS-MITIGATION
-- `/log-sweep` surfaces unexpected archive scope (>100 entries to archive, or scope reaches files not flagged)
-- Item 9 entries can't be cleanly classified as implement-or-defer (e.g., entry depends on operator-only judgment)
-- Item 5 archive cut policy ambiguous for any file (operator clarification needed)
+- After /risk-check pass A verdict — pause if RECONSIDER; apply mitigations listed in report if PROCEED-WITH-CAUTION
+- After /risk-check pass B verdict — pause if RECONSIDER; apply mitigations if PROCEED-WITH-CAUTION
+- End-of-session — pause for push approval (Autonomy Rule #2)
 
 ## Risk
 
-Run `/risk-check` after this plan is approved (plan-time gate) — specifically scoped to Item 6 (ai-resources/.claude/settings.json edit, lines 20–21). Run `/risk-check` again before commit (end-time gate). Items 5, 8, 9 are append-only working-state edits — not in structural change classes per `audit-discipline.md`.
+Run `/risk-check` after this plan is approved — two plan-time gates (pass A: combined F2+F3+F6 on session-plan.md; pass B: combined F5 on auto-sync-shared.sh + F4 new hook/settings.json). End-time gate evaluated per skip rule.
+
+**F7:** No /risk-check required — single-line additive CLAUDE.md rule, project-local scope.
+
+**F4 — [CONFLICT]:** Operator directive (session mandate) says F4 does not require plan-time /risk-check. However, F4 creates a new hook script and wires a PreToolUse Write entry into `.claude/settings.json` — both are risk-check change classes per `audit-discipline.md` (hook edits + settings.json edits). Resolution options: (a) extend pass B to cover F4 alongside F5 (recommended — one additional risk-check, minimal overhead), or (b) operator confirms the F4 carve-out explicitly and the plan proceeds as written. Proceeding with option (a) as the safer default; operator can correct before execution starts.
