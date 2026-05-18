@@ -42,6 +42,7 @@ Suggested three-session sequence:
 ### 2026-04-25 — Make /wrap-session leaner
 
 - **Status:** logged (pending)
+- **Review-cycle:** reviewed 2026-05-18, deferred — structural command edit needs dedicated /improve session scoped to wrap-session.md; sub-5 already obsolete; sub-1 through sub-4 still valid but touch command flow ordering
 - **Category:** command/skill
 - **Source:** Mid-wrap conversation 2026-04-25 — operator asked why /wrap-session was taking so long. Audit of the wrap's actual tool-call count surfaced ~3-4 round-trips of avoidable cost.
 - **Friction observation:** A typical /wrap-session reads 3 full log files (innovation-registry, improvement-log, friction-log) when single greps would do, and runs the archive AFTER appending today's entry, which forces a freshness-failure re-read of session-notes.md when the archive trims it.
@@ -57,6 +58,7 @@ Suggested three-session sequence:
 ### 2026-04-28 — permission-sweep-auditor: classify template sources, skip Rule 8
 
 - **Status:** logged (pending)
+- **Review-cycle:** reviewed 2026-05-18, deferred — agent-definition edit requires /risk-check per Autonomy Rule #9; needs dedicated risk-gate session; no active false-positive harm beyond noise in friday-checkup reports
 - **Category:** Audit-recurrence prevention
 - **Source:** `/permission-sweep` run 2026-04-27 / 2026-04-28 (report at `ai-resources/audits/permission-sweep-2026-04-27.md`). Auditor flagged `ai-resources/workflows/research-workflow/.claude/settings.json` line 35 (`"additionalDirectories": ["{{WORKSPACE_ROOT}}"]`) as a HIGH Rule 8 violation ("stale `additionalDirectories`") because the value is an unfilled placeholder. The placeholder is intentional — the most recent commit on that file (`81cb6c2 update: research-workflow template — additionalDirectories placeholder + SETUP step`) explicitly added it as a deploy-time fill-in consumed by `/deploy-workflow` / `/new-project`. Replacing it with a resolved path would corrupt new deployments. Auditor cannot currently distinguish template source from deployed instance.
 - **Friction observation:** Held finding will re-fire on every future `/permission-sweep` run (including weekly `/friday-checkup --dry-run`) until the auditor learns to skip it. Each re-fire wastes operator attention on a non-issue and risks accidental "fix" by a future agent.
