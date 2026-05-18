@@ -371,6 +371,7 @@ Executed W21 items 1 and 5. Item 5: manually archived 6 over-threshold log files
 - **Next session: tackle nordic-pe Findings 2–7** — /session-plan re-invocation guard (Finding 2), stale intent warning (Finding 3), auto-sync drift detection (Finding 5), duplicate Class: fix (Finding 6), chapter review rule (Finding 7), session-plan history backup hook (Finding 4). Plan-time /risk-check required for Findings 2, 3, 5, 6 (touch ai-resources canonical files).
 - Push all repos: ai-resources (unpushed commits), project-planning, corporate-identity, buy-side-service-plan, global-macro-analysis, nordic-pe, repo-documentation.
 - W21 remaining open: item 2 (workspace-root investigation), item 3 (inbox briefs via /create-skill), item 4 (nordic-pe Findings 2–7).
+- **Next Friday: fix findings in `audits/token-audit-2026-05-18.md`** — start with H1 (add `Read(audits/working/**)` to deny rules, one-line settings.json edit), then H2–H5 and MEDIUM items. Research workflow tracked separately, no Friday action needed.
 
 ### Open Questions
 - None.
