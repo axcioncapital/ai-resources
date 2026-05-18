@@ -28,15 +28,17 @@ MANIFEST="$PROJECT_DIR/.claude/shared-manifest.json"
 # Bail if no manifest — project opts out of managed symlinks entirely.
 [ -f "$MANIFEST" ] || exit 0
 
-# Walk up to find ai-resources.
+# Find ai-resources — check current dir first, then walk up.
+# At the workspace root, ai-resources/ is a child; under projects/<name>/, an ancestor's child.
 d="$PROJECT_DIR"
 AI_RESOURCES=""
-while [ "$d" != "/" ]; do
-  d=$(dirname "$d")
+while :; do
   if [ -d "$d/ai-resources/.claude/commands" ]; then
     AI_RESOURCES="$d/ai-resources"
     break
   fi
+  [ "$d" = "/" ] && break
+  d=$(dirname "$d")
 done
 [ -z "$AI_RESOURCES" ] && exit 0
 
