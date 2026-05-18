@@ -377,6 +377,7 @@ Executed W21 items 1 and 5. Item 5: manually archived 6 over-threshold log files
 - None.
 
 ## 2026-05-18 — W21 item 4: nordic-pe Findings 2–7
+Class: execution
 **Mandate:** Implement nordic-pe Findings 2–7 — skill/command-level fixes to ai-resources canonical files (F2: session-plan re-invocation guard, F3: stale intent warning, F4: session-plan history backup hook, F5: auto-sync drift detection, F6: duplicate Class: fix, F7: chapter review rule) — done when: all 6 findings implemented or explicitly deferred with documented reasoning
 - Out of scope: (none stated)
 - Files in scope: (inferred)
@@ -407,3 +408,27 @@ Built the gate calibration system: a structured log (`gate-calibration.md`) for 
 
 ### Open Questions
 None
+
+## 2026-05-18 — token-audit: full run + research-workflow extraction
+
+### Summary
+Ran the full /token-audit protocol (Sections 0–10) against the ai-resources repo. Deployed 7 subagents: 2 mechanical (skill census, file handling) and 5 Opus workflow audits (Friday Cadence, /new-project, /repo-dd, /cleanup-worktree, research-workflow). Main report produced ~80 findings. Operator then directed extracting all research-workflow findings to a separate report and removing them from the main report. Added a next-Friday reminder note to session-notes.md to action the main report findings.
+
+### Files Created
+- `audits/token-audit-2026-05-18.md` — main token audit report (Sections 0–10, 4 workflows: Friday Cadence, /new-project, /repo-dd, /cleanup-worktree)
+- `audits/token-audit-2026-05-18-research-workflow.md` — separate research workflow findings (18 findings: 6 HIGH, 9 MEDIUM, 3 LOW)
+
+### Files Modified
+- `logs/session-notes.md` — next-Friday fix reminder added + this entry
+
+### Decisions Made
+- **Research workflow extracted to separate report** (operator-directed): All 18 research-workflow Section 4 findings, H5/H6 recommendations, M4 research portion, L4, safeguard #4, and related §9.4/§9.5 content moved to `token-audit-2026-05-18-research-workflow.md`. Main report now covers 4 workflows only. Cross-references added at all former touch points.
+- **Research workflow fix timing**: No note added for research workflow — operator will tackle it during next research workflow rework session, not as a Friday action item.
+
+### Next Steps
+- **Next Friday: fix findings in `audits/token-audit-2026-05-18.md`** — start with H1 (`Read(audits/working/**)` deny rule, one-line settings.json edit), then H2 (`Read(reports/**)`) and H3 (improvement-analyst return cap). H4–H5 and MEDIUM items after. Research workflow findings tracked separately in `token-audit-2026-05-18-research-workflow.md`.
+- Push ai-resources (now 5+ unpushed commits from this session).
+- W21 still open: item 2 (workspace-root investigation), item 3 (inbox briefs via /create-skill), item 4 (nordic-pe Findings 2–7).
+
+### Open Questions
+- None.

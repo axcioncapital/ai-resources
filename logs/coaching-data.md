@@ -449,3 +449,10 @@
 - **QC cycles:** 2 (1st QC subagent inside plan flow → MINOR-ONLY → applied; operator-invoked /qc-pass on revised plan → GO)
 - **Gates:** 1 (0 changed) — plan-approval:confirmed (operator approved via ExitPlanMode without content changes; the operator did interrupt the first ExitPlanMode to insert an /qc-pass, but that was a procedural addition, not a content redirect — final plan approved as-revised)
 - **Mandate fields:** none (no /session-start this session)
+
+### 2026-05-18 — token-audit: full run + research-workflow extraction
+- **Commands used:** /prime, /token-audit, /explain, /wrap-session
+- **Iterations:** 0
+- **Decisions logged:** 0
+- **QC cycles:** 0
+- **Mandate fields:** none (no /session-start this session)

@@ -420,3 +420,31 @@ Stability vs. prior entries — improvement over the 2026-05-16 Tier 1+2 Wastefu
 1. **Cache the log-trio (session-notes + decisions + usage-log) at /prime into a single consolidated read** (~3–4k tokens/session): three small ledger files re-read across prime → start → wrap on every Friday session; pinning content at first read eliminates 3 re-reads per session — larger than primary because it recurs across more session types than the session-plan Write failure.
 2. **Batch /new-project edits into a single Edit pass with all changes pre-planned** (~500–800 tokens/session): 3 Edit calls on one file when a single combined Edit (with the typo caught in a self-check pre-pass) would suffice — smaller than primary because per-file batching opportunities are sporadic, not deterministic.
 3. **Collapse TodoWrite status-tick calls from ~6 to 3 checkpoints** (~400–600 tokens/session): same lever flagged in prior Tier 1+2 entry today; recurs in every multi-wave execution session.
+
+### 2026-05-18 | Acceptable
+
+**Task:** Ran full /token-audit protocol (Sections 0–10) against ai-resources repo, deploying 7 background subagents, then extracted all research-workflow findings to a separate report via ~15 targeted Edit calls.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~25 |
+| Files read | `audits/token-audit-protocol.md` (~641 lines, ×1); `CLAUDE.md` (90 lines, ×1); `.claude/settings.json` (~60 lines, ×1); `logs/usage-log.md` (422 lines, tail ×1 + full ×1 — **re-read**); `logs/session-notes.md` (5 lines tail ×2 — **minor re-read**); `audits/working/audit-working-notes-preflight.md` (×1); 7 subagent summary files (~20 lines avg, ×1 each); `skills/session-usage-analyzer/SKILL.md` (partial 40 lines, ×1); `logs/improvement-log.md` (partial, ×1); `logs/coaching-data.md` (tail, ×1); `logs/decisions.md` (tail, ×1); `logs/innovation-registry.md` (grep only, ×1) |
+| Files written/edited | `audits/token-audit-2026-05-18.md` — Write ×1 + Edit ×33 (~530 lines final); `audits/token-audit-2026-05-18-research-workflow.md` — Write ×1 (~110 lines); `audits/working/audit-working-notes-preflight.md` — Write ×1; `logs/session-notes.md` — Edit ×1 + bash append ×1; `logs/coaching-data.md` — bash append ×1 |
+| Tool calls | Bash ~30, Read ~20, Write ~5, Edit ~33, Agent 7 |
+| Subagents | 7 (all background; 2 mechanical for skill census + file handling; 5 Opus for workflow audits: Friday Cadence, /new-project, /repo-dd, /cleanup-worktree, research-workflow; all returned summary files only per Subagent Contracts) |
+| Rework cycles | 0 failures; research-workflow extraction (~15 Edits) was clean operator-directed work, not failure recovery |
+
+**Findings:**
+- Re-read — `logs/usage-log.md` read twice (tail + full): tail read at prime was insufficient; full read required during log-append; consolidate to a single tail read at prime when the write target is confirmed early.
+- Minor re-read — `logs/session-notes.md` tail read twice (prime + wrap append point): low cost but avoidable; a single read at prime with path cached is sufficient for the append.
+- Edit volume — 33 Edit calls on a single report file: driven by incremental section writing pattern (18 calls) plus operator-directed extraction (15 calls); no failures, but the extraction pass could be batched more aggressively (fewer, larger Edit calls per section block).
+
+Stability vs. prior entries: This session is cleaner than the 2026-05-16 cleanup-worktree session (59 tool calls, 3 subagent re-read redundancies, Write-before-Read failure) and roughly comparable to the friday-act Tier 3 session (~80 tool calls, 4 subagents). Subagent delegation was fully disciplined — all 7 agents returned only summary files, no inline content. The two re-reads are minor and follow the same usage-log pattern seen in prior sessions; no new failure modes introduced.
+
+**Recommendation:** Cache the `logs/usage-log.md` read result at prime (single tail, ~20 lines) and reuse for the write-append; eliminate the second full read by confirming the write target path before the first read.
+
+**Estimated savings:** ~200–400 tokens per session (usage-log double-read elimination).
+
+**Additional levers (ROI-ranked):**
+1. Batch large-report Edit calls more aggressively — when an extraction pass is known upfront to span N sections, write larger replacement blocks rather than one Edit call per section; target ≤8 calls for a 15-section extraction.
+2. Confirm operator-directed extraction scope before starting — a single clarifying exchange at the start of the extraction pass would reduce Edit count if scope is ambiguous.
