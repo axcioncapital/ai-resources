@@ -375,3 +375,35 @@ Executed W21 items 1 and 5. Item 5: manually archived 6 over-threshold log files
 
 ### Open Questions
 - None.
+
+## 2026-05-18 — W21 item 4: nordic-pe Findings 2–7
+**Mandate:** Implement nordic-pe Findings 2–7 — skill/command-level fixes to ai-resources canonical files (F2: session-plan re-invocation guard, F3: stale intent warning, F4: session-plan history backup hook, F5: auto-sync drift detection, F6: duplicate Class: fix, F7: chapter review rule) — done when: all 6 findings implemented or explicitly deferred with documented reasoning
+- Out of scope: (none stated)
+- Files in scope: (inferred)
+- Stop if: (none stated)
+
+## 2026-05-18 — Gate calibration system
+
+### Summary
+Built the gate calibration system: a structured log (`gate-calibration.md`) for recording calibration decisions on fading workflow gates, and a suppression check in `/friday-checkup`'s fading-gate detection clause so already-actioned gates don't re-flag every month. Two QC passes (both REVISE) were run during plan mode; both resolved before approval. Three clarifying questions from the operator refined the plan — confirmed wrap-session already captures gate data, no priming needed, calibration cadence is monthly friday-checkup. A follow-up edit added the reminder to record decisions in gate-calibration.md directly in the `[FADING-GATE]` follow-up text. Fulfils the deferred design item from 2026-05-08.
+
+### Files Created
+- `logs/gate-calibration.md` — structured decision log for fading gate calibration; schema in HTML comment, fenced example entry, prepend-ordered
+
+### Files Modified
+- `.claude/commands/friday-checkup.md` — fading-gate detection section: added suppression check with full data contract (path resolution, EM DASH note, fenced-block/HTML exclusion, most-recent-entry rule, three-case suppression logic); both [FADING-GATE] follow-up strings updated to include "then record decision in logs/gate-calibration.md"
+
+### Decisions Made
+- Use `recalibrate` (not `recalibrate-trigger`) in schema — matched existing friday-checkup vocabulary
+- Prepend order for gate-calibration.md — decision-record style, matches decisions.md; not session-append style
+- No priming needed — coaching-data.md already has months of gate history; known global-macro fading gate surfaces automatically at next monthly checkup
+- No friday-act changes for V1 — [FADING-GATE] follow-up in report is sufficient prompt
+- EM DASH (U+2014) separator documented explicitly in schema to prevent silent mismatch on hand-edited entries
+- QC fixes (both REVISE passes): parser spec gap, em-dash fragility, path resolution, fenced-block exclusion spec, placeholder safety, section-name anchoring
+
+### Next Steps
+- Push commits (fa0dc6d, b062cd8)
+- Global-macro content-review gate (93%) will surface automatically at next monthly `/friday-checkup` — decide retire/lower-frequency/recalibrate and record in gate-calibration.md at that point
+
+### Open Questions
+None
