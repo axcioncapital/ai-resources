@@ -42,7 +42,7 @@ Full notes: `audits/working/audit-working-notes-preflight.md`
 | 3 | No aspirational filler detected. All behavioral sections are imperative. | — | — | PASS |
 | 4 | Compaction instructions present (lines 79–86). | — | — | PASS |
 | 5 | No clearly skill-eligible content blocks — sections are pointer-style (3–5 lines each), not inline methodology. | — | — | PASS |
-| 6 | `workflows/research-workflow/CLAUDE.md` exists as subdirectory CLAUDE.md. This file loads when working in the research-workflow directory — not a main-session concern but worth measuring separately if that workflow is audited. | LOW | n/a | No action for ai-resources root audit. Flag for research-workflow audit (Section 4). |
+| 6 | `workflows/research-workflow/CLAUDE.md` exists as subdirectory CLAUDE.md. This file loads when working in the research-workflow directory — not a main-session concern. | LOW | n/a | No action for ai-resources root audit. See `token-audit-2026-05-18-research-workflow.md` for research-workflow-specific findings. |
 
 **Overall assessment:** CLAUDE.md is well-managed at 90 lines. The only material savings opportunity is the 18-line descriptive header (Finding 1, ~200 tokens/session). No HIGH or MEDIUM findings.
 
@@ -86,7 +86,7 @@ Full notes: `audits/working/audit-working-notes-preflight.md`
 
 **Dead skills:** None detected.
 
-**Workflow reference copies:** `workflows/research-workflow/reference/skills/` holds copies of `knowledge-file-producer` and `report-compliance-qc` with no frontmatter (0% frontmatter). These are intentional reference copies for the deployed workflow, but missing `model:` and `effort:` fields. Document as reference-only or restore frontmatter.
+**Workflow reference copies:** `workflows/research-workflow/reference/skills/` holds copies of `knowledge-file-producer` and `report-compliance-qc` with no frontmatter (0% frontmatter). Recommendations tracked in `token-audit-2026-05-18-research-workflow.md`.
 
 **Findings summary:** 13 total (7 HIGH, 4 MEDIUM, 2 LOW). All HIGH findings are oversized skills; their size is justified by content complexity. `ai-resource-builder` (3 modes combined) is the only medium-priority split candidate.
 
@@ -248,7 +248,8 @@ Full notes: `audits/working/audit-working-notes-file-handling.md`
 
 ## 4. Workflow Token Efficiency
 
-**Workflows identified:** Friday Cadence, /new-project, /repo-dd, research-workflow, /cleanup-worktree
+**Workflows identified:** Friday Cadence, /new-project, /repo-dd, /cleanup-worktree
+*Research workflow findings extracted to: `audits/token-audit-2026-05-18-research-workflow.md`*
 
 ---
 
@@ -390,43 +391,17 @@ Full notes: `audits/working/audit-working-notes-workflow-friday-cadence.md`
 
 ---
 
-#### Workflow: Research Workflow
-
-**Scope:** Multi-stage pipeline — `/run-preparation`, `/run-execution`, `/run-analysis`, `/run-synthesis`, `/run-report` (plus per-chapter produce commands)
-
-**Key structural finding:** The research workflow has the highest token load of any workflow in the repo — not from command file size, but from data-handling patterns that pass content (not paths) through the main session.
-
-**Top findings (18 total — 6 HIGH, 9 MEDIUM, 3 LOW):**
-
-| # | Finding | Severity | Waste mechanism | Recommendation |
-|---|---------|----------|----------------|----------------|
-| 1 | `/run-report` Step 4.0 loads 6 large input categories (chapter drafts, scarcity register, section directives, cluster memos, research extracts, editorial recommendations) into main session, then passes content to downstream subagents | HIGH | Content passed in memory rather than by path; subagents could read files directly | Refactor Step 4.0 to pass file paths to subagents, not file content; let subagents read directly (as `/produce-prose-draft` already does) |
-| 2 | `/run-report` Step 4.2a per-chapter writer subagents return "chapter draft content" to main session — plausibly >200 lines, ~20 such calls per section | HIGH | Subagent return contract violation; chapter drafts are large text blocks | Per-chapter writers should write draft to disk and return path only (same pattern as `/produce-prose-draft`) |
-| 3 | `/run-execution` Step 2.3 reads ALL raw research reports into main session before delegating to per-session extract subagents | HIGH | Large delegable read; main session bears the full load of all raw reports | Delegate raw report reads to extract subagents directly; pass file paths only |
-| 4 | `/run-analysis` Step 1 reads all refined cluster memos into main session | HIGH | Delegable batch read in main context | Pass paths to analysis subagents; they read what they need |
-| 5 | `/run-execution` Step 2.1b QC redundantly reads all prompts + specs + plan in main session | HIGH | Reads that are available to subagents already | Consolidate QC reads into a subagent or skip the redundant pass |
-| 6 | `/run-report` Step 4.1b re-reads all 6 categories from Step 4.0 | HIGH (boundary) | Double-load of same content within the same command invocation | Cache Step 4.0 reads; do not re-read |
-| 7 | `/run-cluster` has 0 `/compact` instructions despite iterating over multiple clusters | MEDIUM | Context accumulates across cluster iterations with no reset | Add `/compact` after each cluster or batch |
-| 8 | `/run-report` has only 3 compacts for 13 delegate calls | MEDIUM | Insufficient compaction for a 13-subagent orchestration pass | Add compact breakpoints every 3–4 delegate calls |
-| 9–18 | Additional MEDIUMs: repeated re-reads of cluster memos/extracts across stages; refinement multiplier 8–12 per section; command file verbosity | MEDIUM/LOW | See full notes | |
-
-PASS: `/produce-prose-draft` implements the best token pattern in the repo — absolute-path subagent reads, output-to-disk, ≤20-line return caps. This pattern should be adopted across all `/run-*` commands.
-
-Full notes: `audits/working/audit-working-notes-workflow-research-workflow.md`
-
----
-
 ## 9. Optimization Plan
 
 ### 9.1 Executive Summary
 
-This audit found 47 total findings across all sections — concentrated in two areas: (1) file-protection gaps (audits/working/ not covered by deny rules, 89 working-notes files exposed) and (2) workflow data-handling patterns that pass content rather than paths through main session contexts. The CLAUDE.md and skill library are well-managed; the primary inefficiencies are structural to the Friday Cadence and Research Workflow designs.
+This audit found findings across all sections — concentrated in two areas: (1) file-protection gaps (audits/working/ not covered by deny rules, 89 working-notes files exposed) and (2) workflow data-handling inefficiencies in the Friday Cadence and /new-project pipeline. The CLAUDE.md and skill library are well-managed. Research workflow findings are tracked separately in `token-audit-2026-05-18-research-workflow.md`.
 
 The highest-priority action is also the quickest: adding `"Read(audits/working/**)"` to the deny rules in settings.json. This was recommended in the 2026-05-01 decisions log and has been deferred for two audit cycles. With 89 working-notes files now accumulated, the context-leak risk is material.
 
-The largest structural token drain is in the Research Workflow — the `/run-*` commands load large content batches into main session context and pass content (not file paths) to subagents. The `/produce-prose-draft` command already implements the correct pattern; extending it to the other `/run-*` commands would be the highest-ROI structural change in the repo.
+The largest structural inefficiency within this audit's scope is in the Friday Cadence — three commands independently load the full checkup report (300–500 lines each) into their sessions. Creating a short checkup extract at the end of `/friday-checkup` and having downstream commands read that instead would eliminate ~900–1,500 lines of redundant reads per Friday run.
 
-Implementing all HIGH recommendations is estimated to reduce per-session token consumption by 30–60% for research and Friday cadence sessions.
+Implementing all HIGH recommendations in this report is estimated to reduce per-session token consumption by 20–40% for Friday cadence sessions.
 
 ### 9.2 Prioritized Recommendations
 
@@ -484,33 +459,7 @@ Implementing all HIGH recommendations is estimated to reduce per-session token c
 | Dependencies | None; checkup-extract is additive |
 | Category | Structural change |
 
-**H5 — Refactor `/run-report` and `/run-execution` to pass file paths, not content** *(Structural change)*
-
-| Field | Content |
-|-------|---------|
-| Issue | Research workflow `/run-report` Step 4.0 loads 6 large input categories into main session and passes content to subagents; Step 4.2a per-chapter subagents return full drafts to main |
-| Evidence | Section 4 Research Workflow findings #1, #2; `/produce-prose-draft` already implements the correct pattern |
-| Waste mechanism | Main session acts as a content relay — loads large batches only to forward them to subagents that could read directly |
-| Estimated savings | HIGH — each research section run may save 10,000–50,000 tokens |
-| Implementation | Refactor Steps 4.0/4.2a: pass absolute file paths to subagents; subagents read directly per `/produce-prose-draft` pattern; per-chapter writers write draft to disk + return path |
-| Risk | MEDIUM — path-passing requires subagents to have reliable absolute paths (already established in produce-prose-draft) |
-| Dependencies | None — model for correct implementation already exists |
-| Category | Structural change |
-
-**H6 — Refactor `/run-execution` to delegate raw report reads** *(Structural change)*
-
-| Field | Content |
-|-------|---------|
-| Issue | `/run-execution` Step 2.3 reads ALL raw research reports into main session before delegating |
-| Evidence | Section 4 Research Workflow finding #3 |
-| Waste mechanism | All raw reports loaded in main context when subagents could read only the ones they need |
-| Estimated savings | HIGH — raw report batch can be 5,000–20,000+ tokens |
-| Implementation | Delegate report reads to extract subagents directly; pass file paths only from main |
-| Risk | MEDIUM |
-| Dependencies | H5 (same pattern change) |
-| Category | Structural change |
-
-**H7 — Split `/new-project.md` to remove post-pipeline enrichment** *(Structural change)*
+**H5 — Split `/new-project.md` to remove post-pipeline enrichment** *(Structural change)*
 
 | Field | Content |
 |-------|---------|
@@ -564,15 +513,15 @@ Implementing all HIGH recommendations is estimated to reduce per-session token c
 | Dependencies | None |
 | Category | Quick win |
 
-**M4 — Add `/compact` breakpoints to Friday Cadence and Research Workflow** *(Structural change)*
+**M4 — Add `/compact` breakpoints to Friday Cadence** *(Structural change)*
 
 | Field | Content |
 |-------|---------|
-| Issue | Only 1 /compact across the entire 4-command Friday cadence; /run-cluster has 0; /run-report has 3 for 13 delegate calls |
-| Evidence | Section 4 Friday Cadence finding #6; Research Workflow finding #8 |
-| Waste mechanism | Context accumulates across multi-hour sessions without reset; auto-compaction fires at 80%+ creating non-deterministic truncation |
-| Estimated savings | MEDIUM — prevents runaway context accumulation in long sessions |
-| Implementation | Add explicit `/compact` trigger after /friday-checkup completion; add compact after each /run-cluster iteration |
+| Issue | Only 1 `/compact` checkpoint across the entire 4-command Friday cadence |
+| Evidence | Section 4 Friday Cadence finding #6 |
+| Waste mechanism | A full Friday cadence run with 8+ subagents accumulates substantial context; single compact may be insufficient; auto-compaction fires at 80%+ creating non-deterministic truncation |
+| Estimated savings | MEDIUM — prevents runaway context accumulation in long Friday sessions |
+| Implementation | Add explicit `/compact` trigger after `/friday-checkup` completion and after `/friday-journal` completion |
 | Risk | LOW — compaction is safe; custom CLAUDE.md compaction instructions preserve critical context |
 | Dependencies | None |
 | Category | Structural change |
@@ -601,9 +550,6 @@ Convert 18-line directory listing to a pointer (`See docs/repo-layout.md`). Save
 **L3 — Add context monitoring guidance**
 Add brief note to CLAUDE.md or session-plan skill: "Run `/context` at workflow midpoints in heavy sessions."
 
-**L4 — Restore frontmatter to workflow reference skill copies**
-`workflows/research-workflow/reference/skills/` — add `name:` and `description:` frontmatter to knowledge-file-producer and report-compliance-qc copies.
-
 ### 9.3 Safeguard Proposals
 
 1. **`Read(audits/working/**)` deny rule** — Add immediately to `.claude/settings.json` `permissions.deny`. Prevents 89-file stale context leak. (Implements H1.)
@@ -612,19 +558,16 @@ Add brief note to CLAUDE.md or session-plan skill: "Run `/context` at workflow m
 
 3. **Return-cap enforcement for improvement-analyst** — Add the same return-cap language to the improvement-analyst agent that token-audit-auditor, repo-dd-auditor, and log-sweep-auditor already have. Low effort, high safeguard value. (Implements H3.)
 
-4. **Path-passing protocol in research workflow** — Document as a standing instruction in `workflows/research-workflow/CLAUDE.md`: "Subagents receive file paths, not content. Content loading in main session is prohibited." Reference `/produce-prose-draft` as the canonical implementation. (Supports H5/H6.)
-
 ### 9.4 Implications for Opus 4.7 Upgrade
 
-- H7 (split /new-project) is a prerequisite for efficient Opus 4.7 use — at 608 lines, the command is expensive on any model tier; split before upgrading.
-- H5/H6 (research workflow path-passing) should be implemented before upgrading research sessions to Opus 4.7 — the content-passing pattern costs proportionally more on Opus.
+- H5 (split /new-project) is a prerequisite for efficient Opus 4.7 use — at 608 lines, the command is expensive on any model tier; split before upgrading.
 - MAX_THINKING_TOKENS=10000 (already set) may need re-tuning — Opus 4.7 extended-thinking budget may differ from prior Opus versions.
 - `improvement-analyst` return cap (H3) is critical on Opus 4.7 — uncapped Opus outputs are substantially more expensive than uncapped Sonnet outputs.
 - Friday Cadence compact breakpoints (M4) are a prerequisite for Opus 4.7 Friday runs — longer Opus outputs accumulate context faster.
+- Research workflow Opus 4.7 implications: see `token-audit-2026-05-18-research-workflow.md`.
 
 ### 9.5 Assumptions and Gaps
 
-- **Research workflow execution telemetry absent:** All research workflow estimates are structural inferences from command file inspection, not observed session data. Actual token costs per research section run are unknown. A single instrumented research session would produce far more accurate estimates.
 - **Friday Cadence timing not measured:** The cadence estimate of 30,000–50,000+ tokens per full run is structural; actual measured sessions may be lower if /compact fires appropriately mid-session.
 - **Subagent return sizes estimated, not measured:** Claims about subagent return volumes (e.g., per-chapter writers returning >200 lines) are structural inferences from the command design. The improvement-analyst and system-owner cases are confirmed via design inspection.
 - **`audits/working/` file sizes not individually measured:** Section 6 reports ~89 files and ~11k lines total; individual file sizes vary. The exposure is real but token cost per exploration varies.
@@ -649,16 +592,15 @@ Add brief note to CLAUDE.md or session-plan skill: "Run `/context` at workflow m
 | 1. CLAUDE.md | HIGH | Direct file read + word count measurements |
 | 2. Skill Census | HIGH | Batch measurements + subagent full-content reads of oversized skills |
 | 3. Command Census | HIGH | Batch measurements + targeted grep for external loads |
-| 4. Workflow Efficiency | MEDIUM–HIGH | Subagent reads of all relevant command/agent files; research workflow estimates are structural inferences (see 9.5) |
+| 4. Workflow Efficiency | HIGH | Subagent reads of all relevant command/agent files for the 4 audited workflows |
 | 5. Session Patterns | HIGH | Direct usage-log read (2 substantive entries); configuration confirmed from settings.json |
 | 6. File Handling | HIGH | Subagent scan + deny-rule cross-reference |
 | 7. Missing Safeguards | HIGH | Direct inspection; reuses Step 0.3 finding |
 | 8. Best Practices | HIGH | All items directly verifiable from audit evidence |
-| 9. Optimization Plan | MEDIUM | Savings estimates are structural inferences; research workflow estimates have no telemetry baseline |
+| 9. Optimization Plan | MEDIUM | Savings estimates are structural inferences; no live session telemetry for Friday cadence or /new-project runs |
 
 **Threshold-boundary findings (within ±15% of severity boundary):**
 - Section 4 /cleanup-worktree: `execution-protocol.md` at 337 lines — 12.3% above the 300-line HIGH threshold. Classified HIGH (boundary).
 - Section 4 /repo-dd: command at 318 lines — within 6% of 300-line HIGH threshold for Section 3. Classified MEDIUM for command census (not a skill).
-- Section 4 research workflow: `/run-report` Step 4.1b re-reads — classified HIGH (boundary) due to pattern similarity with confirmed HIGH cases.
 - Section 2: `summary/SKILL.md` at 299 lines — 1 line below HIGH threshold. MEDIUM finding.
 
