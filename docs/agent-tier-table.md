@@ -42,6 +42,14 @@ Every agent must declare `model:` explicitly in frontmatter — no implicit inhe
 | workflow-analysis-agent | opus | Architectural analysis. Correct. |
 | workflow-critique-agent | opus | Critique judgment. Correct. |
 
+## Project-local agent copies (ai-development-lab)
+
+These agents exist as regular-file copies (not symlinks) in `projects/ai-development-lab/.claude/agents/`. Project-local scope — AI idea triage pipeline only.
+
+| Agent | Tier | Notes |
+|---|---|---|
+| ai-engineer | opus | Judgment (AI engineering feasibility and best-practices evaluation). Project-local to ai-development-lab. Added 2026-05-19. |
+
 ## Project-local agent copies (nordic-pe-macro-landscape-H1-2026)
 
 These agents exist as regular-file copies (not symlinks) in `projects/nordic-pe-macro-landscape-H1-2026/.claude/agents/`. They mirror the canonical ai-resources versions above. Tracked here to satisfy F-9 of the 2026-05-12 repo-dd audit.
