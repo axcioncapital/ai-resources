@@ -594,9 +594,81 @@ EOF
    Report in the step output:
    - canonical commands status: all present / N missing (named) + remediation hint emitted
 
+5b. **Git repository setup** — initialize a standalone git repo for the project, untrack it from the workspace root, and wire the remote. This enforces the workspace convention: each project has its own repo; the workspace root tracks only cross-project supporting files (CLAUDE.md, settings, harness, etc.).
+
+   Read the GitHub URL from the pipeline-state file:
+
+   ```bash
+   GITHUB_URL=$(grep -m1 '^\- \*\*GitHub:\*\*' "projects/{name}/pipeline/pipeline-state.md" | sed 's/.*\*\* *//' | tr -d '\r')
+   [ -n "$GITHUB_URL" ] || { echo "WARN: GitHub URL not found in pipeline-state.md — set remote manually after init"; }
+   ```
+
+   Remove from workspace root index if tracked, update `.gitignore`, commit:
+
+   ```bash
+   # $WORKSPACE is the workspace root path already computed in step 3
+   GITIGNORE="$WORKSPACE/.gitignore"
+
+   # Remove from workspace root index (if Stage 4 committed files there)
+   if git -C "$WORKSPACE" ls-files --error-unmatch "projects/{name}/" >/dev/null 2>&1; then
+     git -C "$WORKSPACE" rm --cached -r "projects/{name}/"
+     echo "Removed projects/{name}/ from workspace root index."
+   else
+     echo "projects/{name}/ was not tracked in workspace root — no index cleanup needed."
+   fi
+
+   # Add to .gitignore if not already present
+   if ! grep -qF "projects/{name}/" "$GITIGNORE" 2>/dev/null; then
+     LAST_LINE=$(grep -n "^projects/" "$GITIGNORE" 2>/dev/null | tail -1 | cut -d: -f1)
+     if [ -n "$LAST_LINE" ]; then
+       awk -v n="$LAST_LINE" -v entry="projects/{name}/" \
+         'NR==n{print; print entry; next}1' "$GITIGNORE" > "$GITIGNORE.tmp" && mv "$GITIGNORE.tmp" "$GITIGNORE"
+     else
+       echo "projects/{name}/" >> "$GITIGNORE"
+     fi
+     echo "Added projects/{name}/ to workspace root .gitignore."
+   else
+     echo "projects/{name}/ already in .gitignore — skipped."
+   fi
+
+   # Commit workspace root changes
+   git -C "$WORKSPACE" add .gitignore
+   git -C "$WORKSPACE" diff --cached --quiet || git -C "$WORKSPACE" commit -m "$(cat <<'EOF'
+chore: add projects/{name}/ to workspace root .gitignore
+
+Project now has its own standalone repo per workspace convention.
+
+Co-Authored-By: Claude Sonnet 4.6 (1M context) <noreply@anthropic.com>
+EOF
+)"
+   ```
+
+   Initialize the project's own git repo and make the initial commit:
+
+   ```bash
+   git -C "projects/{name}" init
+   [ -n "$GITHUB_URL" ] && git -C "projects/{name}" remote add origin "$GITHUB_URL"
+   git -C "projects/{name}" add .
+   git -C "projects/{name}" commit -m "$(cat <<'EOF'
+init: initial commit — {name} project
+
+Establishes standalone repo via /new-project pipeline.
+
+Co-Authored-By: Claude Sonnet 4.6 (1M context) <noreply@anthropic.com>
+EOF
+)"
+   ```
+
+   Report in the step output:
+   - GitHub remote: set to `{url}` / WARN (not found in pipeline-state — set manually)
+   - Workspace root index: cleaned up N files / already untracked
+   - `.gitignore`: updated / already present
+   - Project repo: initialized, initial commit with N files
+   - **Push reminder:** "Create the GitHub repo at `{github-url}` (if not done yet), then push: `git -C projects/{name} push -u origin main`"
+
 ### Report
 
-Report what was created: manifest path, settings.json modifications (permissions block, SessionStart hook, `additionalDirectories` grant), CLAUDE.md state (created / appended / already present), `logs/decisions.md` scaffold (created / already present), the list of files the initial sync symlinked, and the canonical command verification result (all 10 present / N missing). Do not commit — the operator reviews the enrichment alongside the pipeline output. From this point on, any new command added to `ai-resources/.claude/commands/` will be available in this project on the next session start automatically, and skills under `ai-resources/skills/` are reachable via the filesystem grant.
+Report what was created: manifest path, settings.json modifications (permissions block, SessionStart hook, `additionalDirectories` grant), CLAUDE.md state (created / appended / already present), `logs/decisions.md` scaffold (created / already present), the list of files the initial sync symlinked, the canonical command verification result (all 10 present / N missing), and the git setup result (remote, initial commit, workspace root `.gitignore`). Do not push — that is the operator's manual step after creating the GitHub repo. From this point on, any new command added to `ai-resources/.claude/commands/` will be available in this project on the next session start automatically, and skills under `ai-resources/skills/` are reachable via the filesystem grant.
 
 ## Key Rules
 
