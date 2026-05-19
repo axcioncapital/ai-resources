@@ -4,7 +4,7 @@ model: opus
 ---
 Produce prose draft for: $ARGUMENTS
 
-Convert one Part 2 (or Part 3) decision document into reviewed, decontaminated prose. Chains four skills: decision-to-prose-writing (decision-to-prose-writer), merged review and fix (chapter-prose-reviewer + prose-compliance-qc), cross-section integration check (conditional), and AI prose decontamination (ai-prose-decontamination). Requires architecture to exist (`/produce-architecture` runs first). Output is prose ready for `/produce-formatting`.
+Convert one Part 2 (or Part 3) decision document into reviewed, decontaminated, jargon-glossed prose. Chains five skills: decision-to-prose-writing (decision-to-prose-writer), merged review and fix (chapter-prose-reviewer + prose-compliance-qc), cross-section integration check (conditional), AI prose decontamination (ai-prose-decontamination), and jargon-gloss (jargon-gloss). Requires architecture to exist (`/produce-architecture` runs first). Output is prose ready for `/produce-formatting`.
 
 Per-section run: 4–5 subagent launches, target ~12–16 min wall time.
 
@@ -188,7 +188,7 @@ Removes AI writing patterns (ornamental language, repetition, over-argumentation
    - Task: **First, read the style reference and prose quality standards files at the provided absolute paths.** Then execute all four decontamination passes per the skill logic, including the five named sub-patterns (1a contrast-template overuse, 1b abstract-noun stacking, 1c Flagged-Word Registry application, 2a pivot closings, 4a pseudo-maxim budget) the skill carries natively. Write the corrected prose file. Write the change log to the log output path. Return: change counts per pass and per sub-pattern, any bright-line flags, and any passages where decontamination was constrained by style reference or evidence calibration preservation.
    - **Bright-line rule override for Phase 5:** The decontamination pass is exempt from the multi-paragraph scope check (bright-line check 1) because it operates across the entire document by design. Checks 2 and 3 still apply: if any change alters an analytical claim or modifies a sourced statement, the sub-agent must flag it in the bright-line-flags section of the change log and must NOT apply that change. If bright-line flags are populated, the main agent PAUSEs for operator approval before proceeding.
 5. Route on result:
-   - **Zero bright-line flags:** Proceed to Phase 6 (handoff) automatically.
+   - **Zero bright-line flags:** Proceed to Phase 6 (jargon gloss) automatically.
    - **Bright-line flags present:** PAUSE — present flags to the operator. Apply or discard per operator decision, then proceed to Phase 6.
    - **Zero changes across all passes:** Note "Prose already clean — no decontamination needed." Proceed to Phase 6.
 6. Write Phase 5 handoff note: total changes, per-pass breakdown, any bright-line flags and their disposition, any constrained passages.
@@ -196,17 +196,44 @@ Removes AI writing patterns (ornamental language, repetition, over-argumentation
 
 ---
 
-## Phase 6 — Handoff (main session)
+## Phase 6 — Jargon Gloss [delegate, sonnet]
 
-1. Read the post-decontamination prose file
+Detects undefined domain-specific terms (named regulations, frameworks, agency programs, niche acronyms) on first mention and inserts short parenthetical glosses (5–15 words) in place. Standard PE/finance vocabulary is whitelisted and left bare. Voice and rhythm established by Phase 5 are preserved.
+
+> **Condition:** Always runs. Skip only if the operator explicitly opts out during Phase 1 planning.
+
+1. Read the prose file (post-Phase 5 decontamination output).
+2. Read `/ai-resources/skills/jargon-gloss/SKILL.md`.
+3. Launch a general-purpose sub-agent with `model: "sonnet"` (pattern-based detection against an explicit whitelist + category list; analytical judgment not required — this overrides the skill's declared opus tier; command-layer authority per workspace CLAUDE.md). Pass it:
+   - The skill content
+   - The prose file content
+   - The style reference absolute path: `{prose_output_dir_abs}/style-reference.md` — subagent reads this file before applying the skill (used for voice alignment of gloss phrasing).
+   - Output path: same file (explicit overwrite — this command owns the file-versioning contract; the skill's standalone default does not apply here)
+   - Change log output path: `{prose_output_dir_abs}/gloss-additions-log.md`
+   - Task: **First, read the style reference at the provided absolute path.** Then execute the jargon-gloss pass per the skill logic: detect first-mention occurrences of undefined domain-specific terms across the document, check each against the PE Vocabulary Whitelist in the skill, apply the standard gloss format `Term (5–15 word definition)` on the first mention only, apply the sentence-split rule when a glossed sentence would exceed 35 words, preserve idempotency where the source prose already contains a definition. Write the glossed prose file. Write the change log to the log output path. Return: terms-glossed count, idempotent-skip count, sentence-split count, bright-line flags count, and a brief summary of any constrained passages.
+   - **Bright-line rule override for Phase 6:** The gloss pass is exempt from the multi-paragraph scope check (bright-line check 1) because first-mention detection requires document-wide scanning by design. Checks 2 and 3 still apply: if applying a gloss would alter an analytical claim or modify a sourced statement (e.g., inside a quote), the sub-agent must flag it in the bright-line-flags section of the change log and must NOT apply that change. If bright-line flags are populated, the main agent PAUSEs for operator approval before proceeding.
+
+4. Route on result:
+   - **Zero bright-line flags:** Proceed to Phase 7 (handoff) automatically.
+   - **Bright-line flags present:** PAUSE — present flags to the operator. Apply or discard per operator decision, then proceed to Phase 7.
+   - **Zero terms glossed:** Note "Prose already accessible — no gloss insertions needed." Proceed to Phase 7.
+5. Write Phase 6 handoff note: terms-glossed count, idempotent-skip count, sentence-split count, any bright-line flags and their disposition.
+6. ▸ /compact — skill content no longer needed.
+
+---
+
+## Phase 7 — Handoff (main session)
+
+1. Read the post-gloss prose file
 2. Read `{prose_output_dir}/working/phase-3-qc-{section}.md` to retrieve the full Phase 3 findings list for operator surfacing.
 3. Present to the operator:
    - **Source file path used** + draft number + final word count
    - **Phase 3 review score (1–5)** + critical findings (HIGH severity, pulled from the working file just read)
    - **Cross-section integration check summary** (from Phase 4, if it ran): transitions added, redundancy/contradiction findings and their disposition
    - **Decontamination log path** + per-pass change summary (from Phase 5). Full log available at `{prose_output_dir}/decontamination-log.md`.
+   - **Jargon-gloss log path** + summary (from Phase 6): terms-glossed count, idempotent-skip count, sentence-split count. Full log available at `{prose_output_dir}/gloss-additions-log.md`.
    - **Architecture compliance notes** (if architecture was used): depth allocation honored, must-land content implemented, seam notes implemented
-   - **Bright-line items deferred for operator decision** (any unresolved items from Phases 3, 4, or 5)
+   - **Bright-line items deferred for operator decision** (any unresolved items from Phases 3, 4, 5, or 6)
 4. Suggest next step:
    - **Standard path:** "Run `/produce-formatting {section}` to apply formatting, H3 placement, and document-level integration QC."
    - **If unresolved bright-line items:** "Resolve flagged items first (apply or discard per your decision), then run `/produce-formatting {section}`."
