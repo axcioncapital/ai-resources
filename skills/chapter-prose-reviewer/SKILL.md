@@ -84,6 +84,15 @@ This section evaluates the chapter's argument flow and structural logic — whet
 - **Transition gaps:** Flag any point where the text jumps between topics without connecting them. The reader should never wonder "why are we talking about this now?" Watch for over-reliance on additive-only connectors ("Additionally," "Furthermore," "Moreover," "Also") that add without relating, and missing causal or contrastive links between claims that naturally contrast or build on each other.
 - **Emphasis mismatch:** Flag any place where a key finding is buried mid-paragraph while a secondary point gets prominent treatment (opening sentence, standalone paragraph, etc.).
 - **Catalogue structure:** Flag any passage that lists items in sequence (type A does X, type B does Y, type C does Z) without an analytical frame that tells the reader what pattern to see across the items.
+
+- **Paragraph topical coherence:** Flag any paragraph where the opener subject, middle subject, and closer subject name three different underlying objects (e.g., data-gap → deal-type-mix → sector-concentration). The reader should be able to identify a single subject the paragraph is about; three-subject paragraphs need splitting at topic boundaries.
+
+- **Paragraph circular structure:** Flag any paragraph whose closing sentence is a functional restatement of the opening sentence at the same level of generality. The middle may develop the claim; the closer must advance it (new context, implication, tension named) or be deleted.
+
+- **Paragraph length:** Flag any body paragraph exceeding 180 words OR containing 3+ distinct topical units. Italic openers and section-leading claim sentences exceeding 80 words. **Exception:** D-11 claim+leadin sentences introducing a bulleted enumeration (a single-sentence opener followed immediately by a bulleted list) are exempt from this check — they are intentionally brief and structurally correct; applying a length flag would falsely penalize the D-11 reference pattern. D-11 originates as a project convention in the Nordic PE Macro Landscape `reference/style-guide.md`; non-Nordic callers should treat this exemption as project-conditional and check whether their project's style guide defines an equivalent pattern.
+
+- **Caveat density at section level:** Flag any section containing >2 evidence-quality caveats per 200 words. Route flagged caveats per `reference/quality-standards.md` Uncertainty Disclosure rule (load-bearing → inline; non-load-bearing → back-matter).
+
 - **Flat conclusion:** Ends by restating findings rather than drawing an implication or bridging to the next section.
 
 ### §3. Style Spec Compliance
@@ -95,6 +104,8 @@ Evaluate the draft against every constraint in the provided style spec. Flag eac
 - **Audience calibration:** Assumed knowledge level, jargon tolerance, explanation depth. Flag passages that over-explain for expert audiences or under-explain for generalist audiences relative to the spec.
 - **Formatting conventions:** Heading styles, list usage, paragraph length constraints, citation formatting. Flag any deviation from stated formatting rules.
 - **Prohibited patterns:** Words, phrases, or structures the spec explicitly bans (e.g., "avoid passive voice," "no rhetorical questions"). Flag each instance.
+- **Register check:** Flag passages whose register departs from the style spec's declared target (e.g., spec calls for "advisory" register but prose reads as "academic-essay"). Specific patterns: convergence framings ("Three independent series converge..."); abstract analytical claims with abstract subjects ("The co-equal aggregate masks where each buyer type actually shows up."); institutional-voice openers ("One caveat applies to all..."); indirect attributions ("X is best read as Y"). When a register check fires, route the passage to `ai-prose-decontamination` Sub-pattern 1d for treatment.
+- **Section-title-accessibility check:** Flag H3 titles that exhibit abstract noun stacks ("The Aggregate-Value Evidence Problem"), analytical-essay register ("Strategic Buyers as Volumetric Co-Equals"), or opaque shorthand ("PE-Strategic Sector Segregation"). Per `reference/style-guide.md` Section Heading Length section, titles must state the section's finding or topic plainly.
 
 If the spec addresses dimensions not listed here, evaluate those too. The anchors above are starting points, not a ceiling.
 
@@ -108,6 +119,8 @@ If the spec addresses dimensions not listed here, evaluate those too. The anchor
 - **Rhetorical filler:** Flag sentences that announce what the section is about to do rather than doing it. "The next question is whether..." is filler. Stating the answer is content.
 - **Concept stacking:** Flag any sentence that introduces two or more new terms or technical concepts without adequate explanation between them.
 - **Undefined terms:** Flag any term or concept that a reader matching the audience description in the style spec would not understand without prior knowledge. Note whether the term is defined later in the text (ordering problem) or never defined (missing definition).
+- **Italic-opener phrasing check:** Flag italic openers (sentences in italic at section opening) that contain (a) cross-references to other sections appended ("confirming sector taxonomy from §2"); (b) abstract-noun stacks ("consolidation-amenable sectors"); or (c) two claims combined into one sentence. Per `reference/style-guide.md` Italic-Opener Form rule.
+- **AI-register markers:** Flag specific AI-tone patterns: "X is best read as Y" / "X is best understood as Y" / meta-frame + because-justification sentence pairs ("The consistency holds across X disclosures..." + "Because Y..."). Per `ai-prose-decontamination` Sub-pattern 1d.
 
 ### §5. Completeness and Fidelity
 

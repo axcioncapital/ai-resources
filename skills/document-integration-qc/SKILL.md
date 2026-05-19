@@ -64,7 +64,12 @@ Run in this order.
 
 ### 4. Completeness
 
-- Undefined terms or acronyms (check against glossary if provided; flag candidates if not).
+- **First-use definitions (deterministic):** Per `reference/quality-standards.md` First-Use Definition Posture (when the project defines this rule), every acronym and domain-specific term must carry an inline parenthetical gloss at first use within the report. Scan the report for acronyms and unglossed domain terms. Flag every instance lacking an inline gloss with finding ID `COMP-FIRSTUSE-{N}`. Output recommended fix as: "Insert gloss at first use, e.g., `**TMT** (technology, media, and telecommunications)`". This finding is deterministic (PASS/FAIL per term) — no "Step 5.8 OR Step 5.2 operator choice" branching. When the project quality-standards does NOT define a First-Use Definition Posture rule, fall back to flagging candidates without enforcement (legacy behavior).
+
+- **Definition placement (per D-06 placement rule):** When a glossed term has its first use mid-paragraph between two data assertions, flag with finding ID `COMP-PLACEMENT-{N}`. Recommended fix: restructure so the definition appears at paragraph opening (if the paragraph is built around the term) OR at the first use within an analytical claim (if the term is incidental). Do NOT auto-fix — placement decisions affect prose flow and may need writer judgment.
+
+- **Orphan caveat-route markers (per M6 risk-check mitigation):** Scan the final compiled prose for any remaining `[CAVEAT-ROUTE: back-matter]` markers in body prose, OR an empty/absent "Evidence Limitations & Open Questions" back-matter section when one or more `[CAVEAT-ROUTE]` tags were extracted during drafting. Flag with finding ID `COMP-CAVEAT-{N}`. Recommended fix: extract tagged caveats to the back-matter section per `reference/stage-instructions.md` Step 5.8 assembly rule, OR populate the back-matter section if missing. Severity: SUBSTANTIVE — orphan markers signal failed extraction at Step 5.8.
+
 - Scanability opportunities (headers, callouts, list conversion).
 - Numbering, date format, and abbreviation consistency.
 

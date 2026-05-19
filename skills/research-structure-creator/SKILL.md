@@ -104,8 +104,9 @@ When a single architectural choice is clearly superior, commit to it with ration
 Produce the architecture specification containing:
 
 **1. Section hierarchy**
-- Full outline (H1/H2/H3) with proposed section titles
+- Full outline (H1/H2/H3) with proposed section titles. **Title constraint:** plain language; state the section's finding or topic; avoid abstract-noun stacks (e.g., "The Aggregate-Value Evidence Problem" → "Why Aggregate-Value Series Disagree") and analytical-essay register (e.g., "Strategic Buyers as Volumetric Co-Equals" → "PE and Strategic Buyers Take Similar Deal Counts").
 - One-sentence thesis per section
+- **H3 length-feasibility check:** for every proposed H3 subsection, estimate the body word count from the mapped content. If estimate is <150 words, either (a) merge with an adjacent H3 covering related material, or (b) promote to H2 if the topic warrants standalone treatment at higher hierarchy level. H3 subsections at <150 words at architecture time will produce undersized sections at write time.
 
 **2. Reader-Question Ownership table**
 
@@ -140,6 +141,7 @@ Rules:
 - Executive summary: scope and coverage
 - Appendix strategy: what moves there and why
 - Drafter's notes: become footnotes, get cut, or move to appendix
+- **Evidence Limitations & Open Questions:** Provision a dedicated back-matter section (typically the final numbered section before the bibliography/glossary). Required when the document declares uncertainty disclosure as a quality posture (per `analytical-output-principles.md`). Hosts: (a) non-load-bearing source divergences relocated from main prose, (b) consolidated per-paragraph evidence-quality caveats, (c) explicit knowledge-gap statements. The section is not optional when the document is research-grade analytical output.
 - Any other structural elements needed (glossary, methodology note, etc.)
 
 **6. Traceability table**

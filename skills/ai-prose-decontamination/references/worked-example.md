@@ -1,6 +1,6 @@
-# Worked Example: All Four Passes Applied
+# Worked Example: Passes 1–4 Applied
 
-The following shows a full section transformed through all four passes. Study the changes — the patterns here repeat throughout any AI-produced prose.
+The following shows a full section transformed through Passes 1–4 (Pass 5 paragraph-shape check is a separate worked example — to be populated during Phase B with R1 §3.1 / §2.5 examples per the SKILL.md Pass 5 reference). Study the changes — the patterns here repeat throughout any AI-produced prose.
 
 ## Original (AI pipeline output)
 

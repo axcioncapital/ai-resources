@@ -1,7 +1,7 @@
 ---
 name: ai-prose-decontamination
 description: >
-  Four-pass sequential decontamination of AI writing patterns from prose.
+  Five-pass sequential decontamination of AI writing patterns from prose.
   Removes ornamental language (including contrast-template overuse and
   abstract-noun stacking), repetition (including pivot-closings),
   over-argumentation, and uniform rhythm (including pseudo-maxim habit).
@@ -29,7 +29,7 @@ effort: high
 
 AI-generated prose optimises for the appearance of rigour rather than the efficiency of communication. It reaches for the elevated word, restates points for completeness, builds logical scaffolds around claims the reader would accept directly, and delivers every sentence at the same pace and weight. The result is prose that is substantively correct but exhausting to read — it sounds like a document performing intelligence rather than a person conveying it.
 
-Four failure modes produce this effect. This skill corrects them in sequence.
+Five failure modes produce this effect. This skill corrects them in sequence.
 
 ---
 
@@ -49,7 +49,7 @@ The style specification governing tone, voice, audience, and editorial standards
 
 ### 3. Prose Quality Standards (recommended — not blocking)
 
-The prose quality standards document for this project. When provided, aligns the decontamination passes with existing standards — particularly Standard 1 (no self-annotation), Standard 3 (sentence rhythm), and Standard 5 (no preambles). When absent, the four passes use their own internal logic. Note the absence in the change log header. **Passed as an absolute file path when provided.** Read the file at the provided path before running the passes; if no path is provided, proceed with the four passes' internal logic and note the absence.
+The prose quality standards document for this project. When provided, aligns the decontamination passes with existing standards — particularly Standard 1 (no self-annotation), Standard 3 (sentence rhythm), and Standard 5 (no preambles). When absent, the five passes use their own internal logic. Note the absence in the change log header. **Passed as an absolute file path when provided.** Read the file at the provided path before running the passes; if no path is provided, proceed with the five passes' internal logic and note the absence.
 
 ### 4. Source Document (optional)
 
@@ -63,7 +63,7 @@ The original document that was converted to prose (decision document, evidence p
 
 **Priority rule.** When passes conflict — when simplifying language would reduce analytical precision, or when removing argumentation would lose a distinction the reader needs — clarity and precision win over compression and style. Specifically: do not simplify a phrase if the simpler version loses a meaningful distinction. Do not compress an argument if the compression drops reasoning the reader needs to make a decision. Passes 1 and 2 take priority over Passes 3 and 4 when trade-offs arise.
 
-**Run all four passes in order.** Later passes assume earlier ones are complete. Each pass runs against every paragraph, but changes are made only where the detection pattern triggers. Running a pass is not the same as making changes — a pass that finds nothing wrong in a paragraph produces no edits for that paragraph.
+**Run all five passes in order.** Later passes assume earlier ones are complete. Each pass runs against every paragraph, but changes are made only where the detection pattern triggers. Running a pass is not the same as making changes — a pass that finds nothing wrong in a paragraph produces no edits for that paragraph.
 
 **Sequential execution.** Each pass operates on the output of the previous pass. Complete each pass fully before starting the next. Do not plan ahead across passes.
 
@@ -153,6 +153,26 @@ The registry expresses the document's reader-specific voice calibration. A reade
 
 **Grammar-break failure mode.** When a registry-listed plain alternative does not fit the sentence grammar (e.g., "coherence" → "fits together" cannot substitute directly in "the coherence of the design"), do not force the swap. Instead, recast the surrounding phrase to absorb the alternative ("the design fits together" instead of "the coherence of the design"), or, if recasting would distort the claim, choose a different plain alternative from the registry that grammatically fits. If none of the registry's alternatives work, flag the instance in the change log as "registry grammar-break: preserved original" and leave it unchanged. Do not invent a plain-English alternative that is not in the registry.
 
+### Sub-pattern 1d: Academic analytical constructions
+
+AI-generated analytical prose reaches for academic-essay constructions — multi-source convergence framings, "best read as" indirect attributions, institutional-voice openers — where a direct subject-verb sentence with the actor named would carry the same meaning. These constructions sound rigorous but distance the reader from the claim.
+
+**Detection patterns:**
+
+1. **Convergence framings** — sentences whose subject is a multi-source aggregate stated as if it were a phenomenon: "Three independent series converge for 2023 through H1 2025"; "The data points cluster around 8% per annum"; "Multiple sources align on the finding that...". Replace with direct attribution: "KPMG, Argentum, and Clearwater all report stable volumes in 2023–H1 2025: KPMG averaged 355 quarterly deals in 2023..." or compress to the headline statistic with citations stacked: "Nordic deal volume held near 370 per quarter through 2023–2024 [Q1] [Q2] [Q3]."
+
+2. **Indirect attribution constructions** — "X is best read as Y," "X is best understood as Y," "X should be read as Y." Reduce to direct framings: "X reflects Y" or "X means Y" or "Y is what X is showing us."
+
+3. **Institutional-voice openers** — paragraphs opening with "One caveat applies to all..." / "Several considerations bear on..." / "Note that..." / "It is worth observing that...". Replace with the caveat or observation stated directly: "All GP playbook descriptions in this section come from GP self-disclosure, not independent verification." Or fold the caveat into the closing of the prior paragraph if it modifies that paragraph's claim.
+
+4. **Abstract analytical claims** — sentences whose subject is an abstract noun and whose verb is an analytical verb without naming an actor: "The co-equal aggregate masks where each buyer type actually shows up." / "The conditions under which each buyer type wins a process are less well characterized." / "This is a plausible inference from outcome illustrations, not an observed competitive dynamic." Rewrite with concrete subjects and verbs: "PE and strategic buyers each take ~50% of Nordic mid-market deal count, but the sector distribution differs sharply between the two." / "What evidence shows: [concrete observation]. What it doesn't show: [concrete absence]."
+
+5. **"X, not Y" pattern in analytical position** (overlaps Sub-pattern 1a contrast-template detection but specifically catches the academic-essay form): "The result is a structural shift, not a temporary recalibration." Rewrite as "The shift is structural — the evidence is X, Y, Z" with the supporting evidence inline.
+
+**Coverage:** Apply detection to all body prose AND to italic-opener sentences (the italic-opener form is preserved per locked decision D-08, but the phrasing inside italic openers is subject to this sub-pattern). Italic-opener constraint: claim only, plain language, no abstract-noun stacks. Examples flagged: "Capital concentrates in consolidation-amenable sectors" → "Capital concentrates in sectors with recurring revenue and fragmented operators" (replace "consolidation-amenable" abstraction with the concrete operating features). "Six named platforms cluster in fragmented services with recurring revenue — confirming sector taxonomy from §2" → "Six named platforms cluster in fragmented services with recurring revenue" (delete the cross-reference tail per Sub-pattern 2a italic-opener tail extension, per R-09).
+
+**Logging:** Each detected instance logs the original sentence, rewritten sentence, and the sub-pattern number (1d-1 through 1d-5).
+
 ---
 
 ## Pass 2: Remove Repetition
@@ -183,7 +203,30 @@ Sections often end on sentences that gesture toward the next section's subject (
 
 **Rule.** Sections end on their own conclusion. Cross-references to adjacent sections belong in the body prose (inside the section, where a transition can carry real information), not as the final sentence. The final sentence should be the strongest delivery of the section's finding.
 
+**Italic-opener tail extension:** The same anti-cross-reference rule applies to italic openers (sentences in italic at section opening). When an italic opener ends with a cross-reference appendage gesturing to other sections (e.g., "*Six named platforms cluster in fragmented services with recurring revenue — confirming sector taxonomy from §2.*"), delete the cross-reference tail. The italic opener should land the section's claim, not announce its relation to other sections. Example: keep "*Six named platforms cluster in fragmented services with recurring revenue.*" Delete "— confirming sector taxonomy from §2." If the cross-reference is information-bearing (rather than ornamental), relocate it into the body of the section.
+
 *Before/after example, plus the distinction from summary-closings and what to do with cross-reference content:* See [`references/sub-pattern-examples.md`](references/sub-pattern-examples.md) (Sub-pattern 2a).
+
+### Sub-pattern 2b: Summary-restatement closers
+
+Pass 2's main rule (delete repeated points) covers within-paragraph repetition. Sub-pattern 2a covers pivot closings (sentences that gesture to the next section). Sub-pattern 2b covers a third pattern: paragraph-closing sentences whose only content is a restatement of what the paragraph just demonstrated.
+
+**Distinguishing 2b from 2a:** A pivot closing (2a) refers OUTWARD (to the next section, to a future analysis, to a parallel finding elsewhere). A summary-restatement closer (2b) refers INWARD (it summarizes the same paragraph the reader just finished). Both are deletable-without-loss but for different reasons.
+
+**Detection.** Read the last sentence of each paragraph. Ask: does it state anything the reader did not already learn from the preceding sentences? If no, it is summary restatement.
+
+**Common shapes:**
+- "The net result is..." / "The practical consequence is..." / "Taken together, these factors..."
+- "X, then, is the dominant pattern." (after the paragraph has already established X)
+- "Dedicated operating teams, named frameworks, and quantified project pipelines make operational capability part of GP positioning, although the evidence remains disclosure-based rather than performance-tested." (after the paragraph has already named the teams, frameworks, and pipelines, and the disclosure caveat appears in §4.1's opening caveat paragraph)
+
+**Action:** Delete the closing sentence. If the paragraph genuinely needs a closer for rhythm, the closer should DEVELOP the implication (where does this finding apply, what does it predict, what does it rule out) — not restate the finding.
+
+**Bias:** More aggressive than Pass 2's general rule. The operator preference signal (D-17) is for tighter prose; default to deletion unless the closer carries genuine new information.
+
+**Distinction from intentional restatement:** A paragraph that opens on a claim, develops it through evidence, and closes on a tightened restatement of the same claim AT A DIFFERENT LEVEL OF GENERALITY (e.g., opens with the specific finding, closes with the structural implication) is NOT restatement — it is structural closing. The test: does the closer add structural meaning (lift to a higher abstraction, apply to a new context, draw a non-obvious implication) or merely re-word the body? Only the latter is 2b.
+
+**Logging:** For each deletion, log the deleted sentence and a one-line rationale ("summary-restatement; no new content").
 
 ---
 
@@ -207,11 +250,22 @@ When a finding is well-evidenced and the reader has no reason to resist it, stat
 
 *Before/after example:* See [`references/sub-pattern-examples.md`](references/sub-pattern-examples.md) (Sub-pattern 3a).
 
-### Sub-pattern 3b: Stacking qualifications
+### Sub-pattern 3b: Stacking qualifications + section-level caveat density
 
-When every claim gets a caveat, a boundary condition, and an evidence-quality note in the same sentence or paragraph. Spread these across the text. Not every claim needs all three simultaneously.
+This sub-pattern operates at two scales: sentence-level (stacked qualifications within one sentence) and section-level (caveat density across a section's paragraphs).
 
-*Before/after example:* See [`references/sub-pattern-examples.md`](references/sub-pattern-examples.md) (Sub-pattern 3b).
+**Sentence-level (existing rule):** When every claim gets a caveat, a boundary condition, and an evidence-quality note in the same sentence or paragraph. Spread these across the text. Not every claim needs all three simultaneously.
+
+**Section-level (new):** Count per-paragraph evidence-quality caveats per section. Caveat = a sentence or sentence-fragment whose function is to qualify the reliability, completeness, or scope of evidence supporting a claim made in that paragraph (not a load-bearing caveat that changes claim meaning — see `reference/quality-standards.md` for the load-bearing test).
+
+- **Density target:** ≤1 evidence-quality caveat per 200 words of body prose per section.
+- **Density flag:** Sections exceeding 2 evidence-quality caveats per 200 words are flagged for caveat-routing decision. Per R-01's caveat-routing rule, the routing options are (a) delete redundant caveat if upstream section already covered the same evidence quality; (b) tag caveat with `[CAVEAT-ROUTE: back-matter]` for assembly at Step 5.8; (c) keep inline if load-bearing.
+- **Counting note:** Inline parenthetical hedges (`(public sources are thin here)`) count as caveats. Caveat-density sentences that consolidate multiple caveats into one closing summary count as 1 caveat, not N.
+
+**Apply order:** Run sentence-level detection first (existing rule). Run section-level density check after, working on the paragraph stream post-sentence-level fixes.
+
+*Before/after example (sentence-level):* See [`references/sub-pattern-examples.md`](references/sub-pattern-examples.md) (Sub-pattern 3b).
+*Section-level density: no example file yet; populate during Phase B with R1 §2.2 / §3 / §5 as worked examples.*
 
 ### Sub-pattern 3c: Defending against phantom objections
 
@@ -257,7 +311,48 @@ AI prose generates short, hard-edged declarative sentences that sound like princ
 
 ---
 
-## After All Four Passes
+## Pass 5: Paragraph Shape Check
+
+Passes 1–4 work at the sentence and section level. Pass 5 operates on paragraph shape — the structural relationship between a paragraph's opening, middle, and closing.
+
+**Two failure modes:**
+
+### Sub-pattern 5a: Circular paragraph structure
+
+Paragraphs whose opening and closing sentences make the same claim, with the middle hedging or supporting without extending. The reader experiences a paragraph that loops back to its starting point.
+
+**Detection.** Read the first and last sentence of each paragraph. Ask: are they functionally equivalent restatements of the same proposition? "Functionally equivalent" includes near-paraphrases — if the closer says the same thing as the opener at the same level of generality, it is circular.
+
+**Example (R1 §3.1):**
+- Opener: "Nordic mid-market M&A remains a mixed buyer market: PE is not the dominant buyer type by count."
+- Closer: "By deal count, PE is a minority buyer type."
+The middle hedges with data; the closer re-asserts the opener. Circular.
+
+**Action:** Either (a) rewrite the closer to ADVANCE the opener's claim (apply it to a new context, draw an implication, name a tension), or (b) delete the closer entirely if the paragraph's middle has already established the claim. Bias: prefer (b) for simplicity.
+
+### Sub-pattern 5b: Topic-discontinuity (paragraph traverses three subjects without integration)
+
+Paragraphs where the opening sentence, middle, and closing sentence are about DIFFERENT subjects, and the prose does not integrate them into a single proposition. The reader cannot identify a unifying argument because there isn't one.
+
+**Detection.** For each paragraph, identify the subject of the opener, the subject of the middle (the dominant topical thread, often spanning 2–3 sentences), and the subject of the closer. Check: do all three name the same underlying object (e.g., all about PE buyer share)? If they name three different objects (e.g., data gap → deal-type-mix → sector concentration), the paragraph has topic discontinuity.
+
+**Example (R1 §2.5):**
+- Opener: "Public sources do not quantify primary buyouts as a discrete category." (subject: data gap)
+- Middle: "KPMG aggregate trends show [details about deal-type composition across bolt-ons, take-privates, secondaries, carve-outs]." (subject: deal-type mix)
+- Closer: "Sector concentration tells us where PE is deploying capital; it does not tell us whether PE is the dominant buyer in those processes." (subject: sector concentration as a different dimension than buyer-type composition)
+Three subjects; no integrating frame.
+
+**Action:** Split into 2–3 paragraphs at the topic boundaries. Each resulting paragraph carries one subject. If the split would produce paragraphs under 50 words, flag for Stage 5.4 `produce-formatting` MTC paragraph-split trigger (per R-03 extension) rather than auto-applying — the formatting layer is the better place to handle short-paragraph emission, and the MTC paragraph-split trigger needs the boundary information from Pass 5.
+
+**Distinction between 5a and 5b:** 5a = same subject, opener=closer (loops). 5b = different subjects, opener≠middle≠closer (drifts). They require different fixes.
+
+**Coordination with Pass 2:** Pass 2 (repetition) covers sentence-level same-content removal. Pass 5a covers paragraph-shape same-content (where the opener and closer are different sentences but functionally identical claims). They do not overlap operationally — run both.
+
+**Logging:** Per-paragraph entry: paragraph reference (section + first 5 words), defect type (5a or 5b), action taken (delete closer, rewrite closer, split paragraph, flag for Stage 5.4).
+
+---
+
+## After All Five Passes
 
 ### Fidelity Spot-Check (conditional)
 
@@ -288,7 +383,7 @@ Write the decontaminated prose to the output path supplied by the calling agent.
 - Do not add new content, new claims, or new analysis.
 - Do not remove cross-references to other sections or modules. Sub-pattern 2a (pivot closings) relocates cross-references into the section body rather than deleting them; the information stays, only the scaffolding sentence moves.
 - Preserve all footnotes and citations in their original positions.
-- Every change must be traceable to one of the four passes (and, where applicable, to a named sub-pattern — 1a, 1b, 1c, 2a, 4a). No opportunistic improvements.
+- Every change must be traceable to one of the five passes (and, where applicable, to a named sub-pattern — 1a, 1b, 1c, 1d, 2a, 2b, 3a, 3b, 3c, 4a, 5a, 5b). No opportunistic improvements.
 - If a paragraph is already clean — direct, rhythmically varied, free of ornament — leave it unchanged.
 
 ---
@@ -304,8 +399,8 @@ Produce a structured change log as output. When invoked within a pipeline, the c
 - **Invocation:** Expected to be invoked explicitly (by an operator or a pipeline command such as `produce-prose-draft` Phase 5). Not auto-invoked on file writes. No `disable-model-invocation` setting needed because the skill is never a hook target.
 - **Tools:** Requires Read, Write (or Edit) against the prose file and the change-log path. No `allowed-tools` restriction applied — the skill is tool-agnostic beyond this. A calling command may pass the file contents rather than a path; the skill logic is identical either way.
 - **Paths:** No `paths` frontmatter restriction. The prose file path is supplied per invocation and varies by project.
-- **Model:** Prefer Claude Opus 4.6 (`claude-opus-4-6`) or later for the main analytical work. A faster model (e.g., Sonnet) is acceptable when the calling command explicitly directs — `produce-prose-draft` Phase 5 currently delegates this skill to Sonnet because the four passes are pattern-based and analytical judgment is already established by prior phases.
-- **Context budget:** Plan for the full prose file + style reference + prose-quality standards + source document (if provided) to be in context simultaneously, plus the skill body. For long prose files (15k+ words), consider running the four passes across separate turns to preserve rhythm judgment in Pass 4.
+- **Model:** Prefer Claude Opus 4.6 (`claude-opus-4-6`) or later for the main analytical work. A faster model (e.g., Sonnet) is acceptable when the calling command explicitly directs — `produce-prose-draft` Phase 5 currently delegates this skill to Sonnet because the five passes are pattern-based and analytical judgment is already established by prior phases.
+- **Context budget:** Plan for the full prose file + style reference + prose-quality standards + source document (if provided) to be in context simultaneously, plus the skill body. For long prose files (15k+ words), consider running the five passes across separate turns to preserve rhythm judgment in Pass 4.
 - **Execution pattern:** Runs cleanly as a subagent delegated by a pipeline command. Also runs standalone in the main thread. Either pattern is supported; subagent invocation gives cleaner context isolation when the calling session has other work in flight.
 - **Sequencing within a pipeline:** This skill is the final voice-level authority before formatting. If the calling pipeline has earlier voice-adjustment phases (style sweep, chapter-prose-reviewer), decontamination takes precedence when its outputs conflict with earlier phases — formatting (which runs after) treats decontamination's output as the canonical prose.
 
@@ -313,4 +408,4 @@ Produce a structured change log as output. When invoked within a pipeline, the c
 
 ## Worked Example
 
-For an end-to-end transformation showing all four passes applied to a single section, see [`references/worked-example.md`](references/worked-example.md).
+For an end-to-end transformation showing all five passes applied to a single section, see [`references/worked-example.md`](references/worked-example.md).

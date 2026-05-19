@@ -257,6 +257,27 @@ When a supplementary item arrives with `Status: No usable result`, acknowledge a
 
 Keep acknowledgments to one sentence. Do not editorialize about why data is missing or speculate about what it might show.
 
+### Caveat Routing
+
+See `reference/quality-standards.md` "Uncertainty Disclosure and Caveat Routing" for the canonical load-bearing test and back-matter section structure. This subsection operationalizes that rule at the drafting step.
+
+When a paragraph contains a per-paragraph evidence-quality caveat or methodology hedge, decide whether it is load-bearing for the immediate claim:
+
+**Inline (keep at point of claim):**
+- The caveat changes how the immediate claim should be read or applied.
+- Removing it would mislead the reader about the claim's meaning or applicable scope.
+
+**Back-matter (route to "Evidence Limitations & Open Questions" section):**
+- Per-paragraph evidence-quality hedges (e.g., "this finding rests on named transactions, not aggregate deal-count data").
+- Methodology divergences between sources where one is load-bearing and the alternative is non-load-bearing.
+- Knowledge-gap statements that explain why something is uncertain without altering the immediate claim.
+
+**Routing technique:** Tag the caveat candidate with `[CAVEAT-ROUTE: back-matter]` inline during drafting. After completing the section, batch-extract tagged caveats to the section directive for back-matter assembly (or to a sidecar caveat-routing file consumed by the report-assembly step). Do NOT delete caveats — every caveat moved must reappear in the back-matter section.
+
+**Boundary case:** When uncertain, default to inline. Erring inline preserves reader signal; erring back-matter loses it. The `chapter-prose-reviewer` checklist (extended per R-08) flags excessive inline caveat density, surfacing borderline cases for review.
+
+See `reference/quality-standards.md` for the load-bearing test.
+
 ## Output Structure
 
 Produce report-quality narrative prose with claim IDs preserved inline (e.g., `[Q3-C04]`). Claim IDs remain in the output for downstream processing by `citation-converter`.

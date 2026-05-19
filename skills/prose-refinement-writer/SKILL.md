@@ -96,6 +96,12 @@ The pattern to avoid is sentence-initial discourse management — words that sig
 
 If you find yourself reaching for one of these (or a close equivalent), the underlying sentences need to be rewritten, not decorated.
 
+### Fix 1 additional constraints
+
+**Sentence-length cap:** If a Fix 1 edit produces a revised sentence exceeding **50 words**, split it into two sentences or restructure to a shorter form. The cap applies to the post-edit sentence, not the original. Rationale: conventional analytical prose is comfortable at 40–50 words per sentence; sentences exceeding 60 words actively obstruct comprehension; the D-02b regression example was ~65 words. Apply the cap as a post-edit check on each Fix 1 revision — not as a wholesale length-audit of untouched input sentences. Phase B may tune the threshold if calibration data from R2/R3 Stage 5.3 Phase 2 runs warrants adjustment.
+
+**Definition-interruption sub-case:** When a first-use parenthetical definition is wedged mid-paragraph between two data assertions — e.g., "PE recorded 71 exits. A secondary buyout is a sale from one PE owner to another. In 2023, secondary buyouts were the leading exit type." — treat this as a Fix 1 logical-linkage failure (actor/level shift interrupting a data run). Relocate the definition to: (a) paragraph opening if the paragraph is built around the defined term, or (b) first analytical-claim use if the term is incidental to the paragraph's argument. Do NOT route to back-matter glossary — per `reference/quality-standards.md` First-Use Definition Posture, the back-matter glossary alternative is deliberately omitted (locked Session 2 decision #5). Log as Fix 1 (definition-placement sub-case) in the change log.
+
 ## Fix 2 — Underdeveloped Hardest Claim in a Paragraph
 
 In many drafts, the densest claim in a paragraph gets the shortest treatment because the writer has already moved on. Identify the **target sentence** — the one whose meaning, mechanism, or downstream implication a reader would most likely pause on — and, if appropriate, add one follow-up sentence.
@@ -122,6 +128,13 @@ A valid follow-up adds exactly one of:
 ### Invalid follow-up: restatement
 
 If the second sentence doesn't add new information, do not add it. A claim that can't be developed with one of the four valid follow-up types doesn't need a follow-up — it needs to stand alone.
+
+**Closing-sentence check:** In addition to deciding whether to add a follow-up sentence, check whether the paragraph's existing closing sentence is itself a restatement of the opening claim at the same level of generality — i.e., it satisfies none of the four valid follow-up types (mechanism, consequence, instance, boundary). If so:
+- Do NOT add a new follow-up sentence to a paragraph whose existing closer is restatement.
+- Flag the existing closing sentence for deletion in the change log: "Paragraph closing sentence is a restatement of opener at the same level of generality; satisfies none of the four valid follow-up types — flagged for deletion per Fix 2 closing-sentence check."
+- The actual deletion is within `ai-prose-decontamination` Pass 2b scope (summary-restatement closer; landed in R-02 Edit 2-B this session). Flag it; do not delete it here unless the operator's scope note explicitly authorizes deletion.
+
+**Exception:** If the closer restates the opener at a HIGHER level of generality (structural implication, broader application, named tension not present in the opener), it is not restatement — it is structural closing. Keep it.
 
 ### Banned openers for follow-up sentences
 
@@ -181,7 +194,7 @@ These are AI-register tells that creep in under the banner of readability. Watch
 
 **Rewriting labeled blocks into flowing prose.** Enumerated items exist as discrete units on purpose. Do not turn them into paragraphs.
 
-**Parenthetical qualifier stacks.** Sentences with multiple parentheticals in series read as hedging and feel AI-generated. If a sentence needs three qualifiers, break it into two sentences.
+**Parenthetical qualifier stacks.** Sentences with multiple parentheticals in series read as hedging and feel AI-generated. If a sentence needs three qualifiers, break it into two sentences. Note: the Fix 1 additional constraints sentence-length cap (50 words post-edit) provides a complementary backstop — parenthetical qualifier stacks frequently exceed 50 words; the cap catches them even when the qualifier count is below three.
 
 ## The Paired Quotability Test
 
