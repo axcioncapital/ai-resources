@@ -7,7 +7,7 @@ Capture a lightweight session mandate for Phase 3 harness-style sessions. The op
 ---
 
 **Boundary note — three session-start mechanisms exist:**
-- `session-start.sh` hook — fires automatically at session init; writes `harness/session/startup-state.json`; detects crashes. Not operator-invoked.
+- `session-start.sh` script — run by the `mandate-parser` skill at harness entry (its Step 1); writes `harness/session/startup-state.json`; detects crashes. Not a `SessionStart` hook, not operator-invoked.
 - `/session-start` (this command) — operator-invoked; captures a Phase 3 lightweight mandate; writes a single `**Mandate:**` line to `logs/session-notes.md`. Run after `/prime`.
 - `mandate-parser` skill — full harness mandate capture; produces `harness/session/mandate.json`; used in Phase 5+ harness sessions. Not for Phase 3.
 
