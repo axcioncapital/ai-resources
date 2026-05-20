@@ -105,3 +105,19 @@ Coaching feedback captured via `/coach`. Newest entries at the bottom.
 **The One Thing:** Run one dedicated `/resolve-improvement-log` execution session against the three 2026-05-16 entries (session-start confirmation token, /prime single-snapshot RECURRING, /session-plan sparse template). All three have execution-ready Proposal blocks. The `/prime` issue is now its third occurrence — promoted to RECURRING. A fourth occurrence would be a coaching failure, not a system failure.
 **Prior recommendation status:** 2026-05-16 prior recommendation "name the load-bearing claim before synthesis/orientation commands" — partially acted on (operator caught /prime Next-Steps staleness mid-session, but structural fix remains logged-pending; same root cause repeated).
 **Promotion candidates:** 3 — (1) Mandate + class + scope discipline (constraint-set first; ready to graduate from habit to template field); (2) decisions.md alternatives-considered rigor (held 86–100% across 4 cycles); (3) interruption-impulse as deliberate review gate (editorial-disagreement gate 100% change-rate). Bright-line-review gate flagged as rubber-stamp (78% confirm) — recommend naming the specific bright-line before invoking. Full output retained in agent run context.
+
+### 2026-05-20
+**Coverage:** 51 sessions (2026-04-11 → 2026-05-20), 44 coaching-data entries, ~110 gate outcomes — doubled as the harness A7 verification pass
+
+| Dimension | Rating | Trend |
+|-----------|--------|-------|
+| Iteration Efficiency | Healthy | → |
+| Decision Patterns | Watch | → |
+| QC Disposition | Healthy | → |
+| Delegation Effectiveness | Healthy | → |
+| Workflow Evolution | Watch | mixed |
+
+**The One Thing:** When invoking a bright-line gate (`/risk-check`, or any pause framed as a structural-review beat), state the specific bright-line being checked in one sentence first; if you cannot name it, say "proceed" immediately. `bright-line-review` is the only rubber-stamp gate in the corpus (83% confirm, up from 78% on 2026-05-16) and the one prior recommendation that did not land. Every other gate is well-calibrated (`plan-approval`/`qc-disposition` ~53–55% change rates; `editorial-disagreement` 5/5).
+**Prior recommendation status:** 2026-05-16 (friday-checkup) "run a dedicated `/resolve-improvement-log` session" — acted on (6-entry improvement-sprint + archive cleared the backlog stall). 2026-05-16 "name the load-bearing claim before synthesis commands" — not measurably acted on; the bright-line rubber-stamp persists and is now The One Thing.
+**Promotion candidates:** 3 — (1) decisions.md alternatives-considered rigor (held 86–100% across 5 cycles; graduate to a template field via `/improve`); (2) interruption-impulse as review gate (editorial-disagreement 5/5; encode in Decision-Point Posture); (3) mandate + class + scope discipline — already routed to harness A7 Constraint 1; the Governor build (Track B) will graduate it.
+**A7 verification:** Constraints 1–3 in `harness/prep/a7-scope-note.md` tested against the corpus — Constraint 1 CONFIRMED, Constraints 2–3 CONFIRMED-WITH-REFINEMENT. Scope note updated v1→v2.
