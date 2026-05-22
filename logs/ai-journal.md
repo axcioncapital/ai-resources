@@ -112,3 +112,22 @@ Fix /friday-act input scope — the spec's minimum read is insufficient on heavy
 Add coaching logs to Friday cadences — check whether coaching logs are already linked to /friday-checkup. If not, wire them in.
 
 Link /resolve-improvement-log to /friday-act — currently not connected. Connect them so /friday-act triggers or references /resolve-improvement-log as part of its execution flow.
+
+## Archive — 2026-05-22
+
+#. Update risk check command
+- Make sure risk check command is up to date. Can we link it to system owner agent?
+
+#. "resolve-repo-problem" command
+- If claude stumbles upon an repo related error or problem which needs to be resolved, develop a command that can spawn a subagent that investigates the issue, develops a plan and a fix suggestion. The goal is to save me time from having to investigate and come up with a fix.
+
+#. Add reporting steps between complex implementations and plans.
+- When developing complex specs, plans etc, have Claude generate executive summaries between steps where it generates reports for you to read that explains what has been done, what will be done between gates so you (the human) you stay in the loop in terms of what the AI is planning to do → so that you have a change to fix if its drifting from what you need.
+- Create a command pipeline for this? (reads files → qc's → generates report etc)
+- Add this instruction to Claude.md?
+
+#. Drift check command
+- When developing complex implementations and projects, develop a drift check command that ensures that the solution has not driften from the original intent.
+
+#. technical spec qc with ai system agent.
+- Make sure technical specs are qc'd with SYSTEM OWNER AGENT! Add to command pipeline or instructions, claude should do this automatically so I don't have to remember to do it manually.

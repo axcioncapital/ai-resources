@@ -412,3 +412,28 @@ Resumed from `logs/scratchpads/2026-05-22-11-53-scratchpad.md` and implemented t
 
 ### Open Questions
 - None.
+
+## 2026-05-22 — /friday-journal resumed: completed Steps 5.6–7, journal archived
+
+### Summary
+Resumed the interrupted `/friday-journal` pipeline from scratchpad `2026-05-22-14-00-scratchpad.md` (via `/prime`). Re-verified the deterministic checks (Step 5.4 mechanical, 5.6 drop-check, 5.7 risk-class scan) directly against the files rather than trusting the scratchpad's "effectively complete" claims — all passed. Confirmed-then-archived the 5 journal entries to `## Archive — 2026-05-22` after the operator questioned the archive four times; clarified that archiving is a reversible within-file move and that none of the 5 report items are implemented yet. Pipeline complete; report awaits `/friday-act`.
+
+### Files Created
+- `logs/scratchpads/2026-05-22-16-30-scratchpad.md` — continuity scratchpad (wrap-session Step 0.5)
+
+### Files Modified
+- `logs/ai-journal.md` — Step 6 archive: 5 active entries moved to a new `## Archive — 2026-05-22` block; active section cleared
+- `logs/session-notes.md` — this entry
+- `audits/friday-journal-2026-05-22.md` — report finalized (pipeline completed this session; file authored in the prior interrupted session, never committed)
+- `audits/working/journal-qc-2026-05-22.md` — QC working notes (authored in prior session; committed now as friday-journal output)
+
+### Decisions Made
+- **Archived the journal (operator confirmed `y`).** Operator questioned the archive four times before confirming. Clarified: archiving is a within-file move (active → archive section), reversible via `git checkout`, and touches none of the 5 implementation-target files. None of the 5 report items are implemented — they are tracked in the report, awaiting `/friday-act`.
+- **Did not commit inside `/friday-journal` (followed Step 7 sub-step 20 over the scratchpad).** The `2026-05-22-14-00` scratchpad's "Resume With" step 7 said to commit; the command spec says "Do NOT commit." Command spec is authoritative — output folds into a later commit boundary. This wrap-session commits the pipeline output.
+
+### Next Steps
+- Run `/friday-act` by **2026-05-29** — `audits/friday-journal-2026-05-22.md` has a 7-day freshness window (`/friday-act` Step 1.5 only auto-loads journal reports ≤ 7 days old). Past that date, re-run `/friday-journal` (raw notes safe in the journal archive) to regenerate an in-window report.
+- All 5 report items are flagged `Risk-check required` — `/friday-act` must run `/risk-check` on each before landing.
+
+### Open Questions
+- None.
