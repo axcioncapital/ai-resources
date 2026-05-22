@@ -338,3 +338,51 @@ Operator invoked `/clarify` on a request to place five proposed governance rules
 
 ### Open Questions
 None.
+
+
+## 2026-05-22 — Continue the remaining 2026-05-22 friday-act plans
+
+**Mandate:** Execute as many of the not-yet-started 2026-05-22 friday-act plans as the session allows — `repo-documentation`, `permissions`, `check-concurrent-session`. Scope boundary stated by operator: worktree cleanup (`general` item 1, `/cleanup-worktree`) stays deferred.
+
+Class: execution
+
+### Summary
+Continued the three not-yet-started 2026-05-22 friday-act plans in three waves — all 8 weekly-checkup plan files are now executed. Wave 1 (`repo-documentation`): re-authored `vault/components/projects.md` to the §4.4 10-field schema, applied two registry rename-updates, triaged the 8 W2.3 actions into `decisions.md` (#41–#49); QC GO. Wave 2 (`permissions`): `/permission-sweep` (26 files → 2 HIGH + 3 advisory) + `/risk-check` GO, applied `Bash(rm *)` + `NotebookEdit` to two project settings.json. Wave 3 (`check-concurrent-session`): built a HEAD-SHA-marker concurrent-commit detection hook for `global-macro-analysis` — design diverged from the plan's redundant `git status`+mtime mechanism; `/risk-check` PROCEED-WITH-CAUTION + system-owner second opinion concurred; all 5 mitigations + 3 contract constraints applied; 9 hook tests pass; QC GO. Four commits across four project repos, all unpushed.
+
+### Files Created
+- `projects/global-macro-analysis/.claude/hooks/check-concurrent-session.sh` — new concurrent-commit detection hook (committed `4edbf0d`)
+- `audits/risk-checks/2026-05-22-add-bash-rm-and-notebookedit-to-two-project-settings-json.md` — Wave 2 `/risk-check` report (uncommitted — deferred-cleanup pile)
+- `audits/risk-checks/2026-05-22-concurrent-session-detection-hook-global-macro-analysis.md` — Wave 3 `/risk-check` report + system-owner commentary (uncommitted)
+- `logs/scratchpads/2026-05-22-18-00-scratchpad.md` — continuity scratchpad
+
+### Files Modified
+- `projects/repo-documentation/vault/components/commands.md` — `resolve-improvements` → `resolve-improvement-log` rename-update (gitignored vault content — not committed)
+- `projects/repo-documentation/vault/components/projects.md` — re-authored to §4.4 schema; `nordic-pe` rename folded in (gitignored vault content — not committed)
+- `projects/repo-documentation/logs/decisions.md` — 9 W2.3 triage rows #41–#49 (committed `81f4bf4`)
+- `projects/ai-development-lab/.claude/settings.json` — `Bash(rm *)` + `NotebookEdit` added to allow (committed `ad83d5b`)
+- `projects/axcion-brand-book/.claude/settings.json` — `Bash(rm *)` + `NotebookEdit` added to allow (committed `41e29d0`)
+- `projects/global-macro-analysis/.claude/settings.json` — SessionStart `--init` + PreToolUse hook registration (committed `4edbf0d`)
+- `projects/global-macro-analysis/.gitignore` — `.claude/.session-head-marker` (committed `4edbf0d`)
+- `projects/global-macro-analysis/CLAUDE.md` — Operational Notes hook pointer (committed `4edbf0d`)
+- `audits/permission-sweep-2026-05-22.md` — dry-run report replaced by the remediation report (uncommitted — deferred-cleanup pile)
+- `logs/session-notes.md`, `logs/decisions.md`, `logs/innovation-registry.md` — this wrap
+
+### Decisions Made
+- **Wave 3 design divergence** — built a HEAD-SHA session-marker hook instead of the plan's literal `git status --porcelain`+mtime mechanism. The plan's mechanism duplicated `/kb-synthesize` Step 0 and shared its blind spot (committed concurrent changes). Surfaced as phase-spec staleness per the Assumptions Gate; proceeded with the improved design; `/risk-check` PROCEED-WITH-CAUTION + system-owner concurred and endorsed the divergence. Logged to `decisions.md`.
+- **Permissions item 3 — no-op.** No `model` field in `~/.claude/settings.json`; the friday-checkup dry-run confirmed it was present at 11:58, so an intervening session removed it. No change made.
+- **Permissions item 4 — `.claude/**` globs dropped.** `/permission-sweep` Rules 3 & 4 did not fire (bare `Edit`/`Write` cover all paths); only `NotebookEdit` applied.
+- **`resolve-improvement-log` Status set to `active`** in the rename-update — the renamed command is live; the rename-update preserves the entry's prior approved status.
+- **End-time `/risk-check` skipped** — plan-time gates covered the exact in-class change sets (Wave 2 settings.json, Wave 3 hook), all mitigations applied + QC-confirmed GO, commits shipped, zero drift between risk-checked design and built artifact. Skip per the documented end-time skip rule.
+- **ai-resources audit artifacts left uncommitted** — the 2 risk-check reports + permission-sweep report stay in the working tree for the operator-deferred `/cleanup-worktree`, consistent with the "defer worktree cleanup" instruction.
+
+### Next Steps
+- **`/cleanup-worktree`** — operator-deferred; ai-resources working tree holds this session's 3 audit artifacts plus the pre-existing untracked pile.
+- **Push** — 4 commits (`81f4bf4`, `ad83d5b`, `41e29d0`, `4edbf0d`), one per project repo; operator-gated.
+- **`/kb-update` follow-up (repo-documentation)** — applies the 3 ACCEPT-disposition W2.3 actions (register `save-session` deprecated; paste 18 canonical commands + 13 ref docs; fix `repo-health-analyzer` Location/Source).
+- **3 operator decisions deferred** (repo-documentation W2.3 triage): W2.3 action 2 (`Deprecated` extra-field schema decision), action 5 (`system-owner` duplicate name), action 6 (registration grain for 6 project workspaces).
+- **W2.1 sweep** — 6 vault files still carry the old `nordic-pe` name.
+- **Confirm D-34 supersession** — repo-documentation `decisions.md` row #49.
+- **New finding** — `/permission-sweep` Rule 14: 8 projects have `Read(archive/**)` deny without `archive/` in `.gitignore`; `buy-side-service-plan` highest priority.
+
+### Open Questions
+None.

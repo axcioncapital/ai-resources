@@ -119,3 +119,5 @@
 | 2026-05-16 | agent | projects/repo-documentation/.claude/agents/system-developer-agent.md | triaged:project-specific | W2.4 pipeline-bound; writes to project output/phase-2/ |
 | 2026-05-16 | command | projects/repo-documentation/.claude/commands/resolve-improvements.md | triaged:already-graduated | byte-identical to canonical resolve-improvement-log.md; just renamed locally |
 | 2026-05-18 | hook | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/nordic-pe-macro-landscape-H1-2026/.claude/hooks/backup-session-plan.sh | triaged:project-specific | bound to project-local logs/.session-plan-history/; address project-specific re-invocation friction |
+| 2026-05-22 | command | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/nordic-pe-macro-landscape-H1-2026/.claude/commands/session-plan.md | triaged:project-specific | — |
+| 2026-05-22 | hook | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/global-macro-analysis/.claude/hooks/check-concurrent-session.sh | triaged:project-specific | — |

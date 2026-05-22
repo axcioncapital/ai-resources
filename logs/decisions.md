@@ -340,3 +340,16 @@ Hooks are shell scripts — cannot generate AI-produced scratchpad content. The 
 - *Create the three new sections as the operator named them:* Rejected — duplicates existing QC / plan-mode / session sections and adds always-loaded token weight.
 - *Apply item 2 globally:* Rejected — contradicts the Autonomy Rules ("full autonomy") and Decision-Point Posture ("pick and proceed").
 - *Keep literal `~30%` threshold:* Rejected by operator — not reliably self-measurable; kept as a heuristic instead.
+
+## 2026-05-22 — check-concurrent-session hook: HEAD-SHA marker, diverging from the plan's mechanism
+
+**Context.** The 2026-05-22 friday-act `check-concurrent-session` plan specified a `PreToolUse` hook for `global-macro-analysis` using `git status --porcelain` + file-mtime comparison against a session-start marker. On reading the project, the existing concurrent-session infrastructure surfaced: `/kb-synthesize` Step 0 already runs `git status --short macro-kb/{theme}/`, Step 5 does a SHA-256 before/after abort, CLAUDE.md already has a recovery note, and two PreToolUse hooks already guard `macro-kb` writes for staging-discipline.
+
+**Decision.** Built the hook with a **HEAD-SHA session-marker** mechanism, not the plan's `git status`+mtime mechanism. A SessionStart `--init` mode records `git rev-parse HEAD` to `.claude/.session-head-marker`; check mode warns (`ask`) when HEAD has moved with commits touching the target theme since the marker. Surfaced as phase-spec staleness per the Assumptions Gate and proceeded with the improved design rather than asking. `/risk-check` returned PROCEED-WITH-CAUTION; the system-owner second opinion concurred with the verdict and explicitly endorsed the divergence. All 5 risk-check mitigations + 3 system-owner contract constraints applied; 9 execution tests pass; QC GO. Committed `4edbf0d`.
+
+**Rationale.** The plan's `git status` check duplicates `/kb-synthesize` Step 0 and inherits its blind spot — a parallel session that has *committed* leaves a clean working tree, so `git status` sees nothing. The plan's own recorded failure mode ("stale `/prime` read + a wrap commit landing mid-session", leaked 3×) is exactly a concurrent *commit*. The HEAD-SHA marker detects commits; the git-status mechanism cannot. A documented duplication that shares a known weakness is worse than a single mechanism that closes it.
+
+**Alternatives considered.**
+- *Build the plan's literal `git status`+mtime mechanism:* Rejected — duplicates `/kb-synthesize` Step 0 and shares its committed-change blind spot.
+- *Defer the whole plan as redundant:* Rejected — the existing infra has a real gap (concurrent commits); the 3×-recurring friction is unaddressed without a new mechanism.
+- *Emit `{"decision":"deny"}` instead of `ask`:* Rejected — `deny` would cross `global-macro-analysis` Hard Rule 6 (no automation that removes the operator from the judgment loop). The hook surfaces, it does not enforce; any future change to `deny` must re-trigger `/risk-check`.
