@@ -391,6 +391,35 @@ None.
 ## 2026-05-22 — Plan and tackle the /open-items backlog
 Class: mixed (design-dominant)
 
+### Summary
+Ran `/prime` → `/open-items` → `/session-plan`. The `/open-items` scan surfaced 3 inbox briefs, 11 friction entries, 6 improvement-log items, 1 trigger-bound decision. `/session-plan` produced a 3-tier plan (Min / Recommended / Max); operator chose **Min**. Shipped 5 backlog fixes across 4 existing command files: A1 (`/prime` scratchpad selection by mtime), A2 (`/friday-act` auto plan-file QC step), B1–B3 (`note.md` + `friction-log.md` header unification, stub detection, context capture). `/qc-pass` returned REVISE (one wording inaccuracy); fixed. A concurrent "prime improvement" session ran in parallel — its commit `853d4a4` absorbed the A1 edit.
+
+### Files Created
+- `logs/scratchpads/2026-05-22-19-33-scratchpad.md` — continuity scratchpad (wrap Step 0.5; gitignored)
+
+### Files Modified
+- `.claude/commands/prime.md` — A1: Step 1b scratchpad selection by filesystem mtime, not skewed filename (committed in concurrent session's `853d4a4`)
+- `.claude/commands/friday-act.md` — A2: new Step 3.6 substep `16k` auto-runs `/qc-pass` on plan files, old `16k`→`16l`, Notes precision fix + new bullet (committed `5356689`)
+- `.claude/commands/note.md` — B1/B2/B3: canonical session-header block, stub detection, context suffix (committed `3a7ad4c`)
+- `.claude/commands/friction-log.md` — B2/B3: stub detection + context suffix (committed `3a7ad4c`)
+- `logs/session-plan.md` — Min-scope plan (overwrote the stale 2026-05-22 friday-act plan)
+- `logs/session-notes.md` — this entry
+
+### Decisions Made
+- **Min scope** chosen by operator of the three `/session-plan` tiers — clears 5 backlog items (2 friction + 3 improvement-log), no new resources.
+- **A1 fix-approach: mtime sort.** The `/prime` Step 1b spec explicitly forbade mtime; the friction entry's option (a) wanted it. Conflict resolved by fact — `logs/scratchpads/` is gitignored, so the spec's anti-mtime rationale (pulled-file checkout-time mtime) cannot occur; mtime is reliable. Resolved without an operator stop. Logged to `decisions.md`.
+- **A2:** new substep `16k` auto-runs `/qc-pass` on plan files; QC findings corrected in place via the QC→Triage auto-loop.
+- **QC fix:** `note.md` wording corrected — it claimed byte-identity with the `friction-log-auto.sh` hook, but the hook adds a `**Trigger:**` line; reworded to "detection-compatible".
+- **End-time `/risk-check` skipped** — all 5 edits are to existing command files; per `decisions.md` 2026-05-22 "Risk-check change-class scope", editing an existing command file is not a change class. No hooks, settings, CLAUDE.md, new commands/skills, or symlinks touched.
+
+### Next Steps
+- **Push** — 5 unpushed `ai-resources` commits: `4bde005`, `853d4a4`, `dc12e76`, `5356689`, `3a7ad4c`. Operator gate.
+- **Backlog remainder** — Recommended/Max tiers not done: build `/codex-dd`, build the `workflow-diagnosis` skill (`/create-skill`), build `/repo-review`. Improvement-log items #4/#5 booked for 2026-05-26.
+- **Advisory (out of Min scope, qc-reviewer-flagged)** — `friday-act.md` Notes has a stale "Step 1.8" reference (should be "Step 1 item 8"); `note.md`/`friction-log.md` read only the last 30 lines to find the session block (latent risk on entry-heavy sessions).
+
+### Open Questions
+None.
+
 ## 2026-05-22 — Improved the /prime command — slim brief + numbered task menu
 
 ### Summary

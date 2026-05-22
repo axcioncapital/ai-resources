@@ -374,3 +374,18 @@ Hooks are shell scripts — cannot generate AI-produced scratchpad content. The 
 - *Compressed all-fields brief:* Rejected by operator — chose exception-based over keeping every field.
 - *Subagent-ranked task menu:* Rejected — adds cost and latency to every session start; last-session + next-up is sufficient.
 - *Wide-scan task source (merge open-items, improvement-log, decisions and rank all):* Rejected — heavier read each session start; the lightweight source was chosen.
+
+---
+
+## 2026-05-22 — /prime scratchpad selection: sort by mtime, overriding the spec's anti-mtime rule
+
+**Context.** A logged friction entry (2026-05-22 14:54) reported `/prime` Step 1b surfacing a stale "resumable scratchpad" as the resume point. Root cause: scratchpad filenames carry AI-typed `HH-MM` timestamps skewed 2–3 hours ahead of real write time (observed: a `16-30` filename written at 13:04, a `14-00` filename written at 11:25), and Step 1b selected the "most recent" by lexical filename sort. The friction entry's fix option (a) — "sort by mtime" — directly contradicted the `/prime` Step 1b spec, which explicitly forbade mtime sort ("a scratchpad's mtime can disagree with its filename ... an mtime sort can surface the wrong file").
+
+**Decision.** Change `/prime` Step 1b to select the most-recent scratchpad by **filesystem mtime**, and rewrite the rationale. The downstream date-comparison bullet was also switched to the mtime date for internal consistency.
+
+**Rationale.** The conflict resolves on a fact rather than a judgment call. The spec's anti-mtime rationale is the "pulled file carries checkout-time mtime, not write-time mtime" failure mode — but `logs/scratchpads/` is gitignored (`.gitignore` line 28, confirmed via `git check-ignore`). Git never writes gitignored files, so that failure mode cannot occur for this directory; mtime always reflects the actual local write time. The filename timestamp, by contrast, is typed by the AI session and is the unreliable signal here. The spec's rule is correct in general but wrong for this specific (gitignored) directory. Because the conflict was settled by fact, it was resolved without an operator stop (the `/session-plan` stop point only fires if the fix-approach cannot be resolved from the friction entry + spec).
+
+**Alternatives considered.**
+- *Keep lexical filename sort:* Rejected — it is the bug; filename times are skewed 2–3 h.
+- *Monotonic filename time source (friction option b):* Rejected for this fix — it would edit `/handoff` and `/wrap-session` filename generators, outside the Min scope, and would not repair already-skewed filenames.
+- *Prune stale scratchpads (friction option c):* Rejected — file deletion (Autonomy Rule #3 gate) and a `/wrap-session` change, not a `/prime` change; mtime sort solves the misrouting without deleting anything.
