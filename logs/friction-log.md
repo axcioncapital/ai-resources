@@ -39,3 +39,11 @@
 - **10:00** — note this.
 
 #### Write Activity
+
+## Session — 2026-05-22 14:14
+
+### Friction Events
+
+- **14:14** — QC pass should happen automatically. In this session, /friday-act produced 8 implementation plan files (~350 lines of structured content with risk-check annotations) and committed them with no QC step — the /friday-act command spec has no /qc-pass stage. The operator had to manually ask "did you run /qc-pass?" An independent qc-reviewer then found a real defect: 4 of the items carried incorrect "Risk-check required: yes" annotations for change classes not on the canonical audit-discipline.md list. An automatic QC step in /friday-act Step 3.6 (after plan files are written, before the maintenance-observations commit) would have caught this before commit, instead of requiring an operator catch + a follow-up correction commit. Friction: multi-artifact command outputs (plan files, reports) ship without QC unless the operator remembers to ask. Trigger: /friday-act Step 3.6 plan generation.
+
+#### Write Activity

@@ -437,3 +437,13 @@ Resumed the interrupted `/friday-journal` pipeline from scratchpad `2026-05-22-1
 
 ### Open Questions
 - None.
+
+## 2026-05-22 — /friday-act planning — implementation plans for weekly checkup
+
+**Mandate:** Disposition 2026-05-22 weekly checkup findings + journal items + innovation sweep; produce 8 implementation plan files for follow-up sessions — done when: 8 plan files written and committed; maintenance-observations.md session block appended
+- Out of scope: Implementation of plan items (deferred to next session)
+- Files in scope: (inferred)
+- Stop if: (none stated)
+
+Class: planning
+Mandate: Run /friday-act to disposition the 2026-05-22 weekly checkup findings and produce implementation plan files; implementation itself deferred to follow-up sessions. Include innovation sweep in plans.
