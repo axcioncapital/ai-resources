@@ -1,67 +1,62 @@
-# Session Plan — 2026-05-18
+# Session Plan — 2026-05-22
 
 ## Intent
-Implement nordic-pe Findings 2–7 — skill/command-level fixes to ai-resources canonical files and one project-local addition; F2/F3/F5/F6 require plan-time `/risk-check` before edits.
+Execute the 3 ungated friday-act plans from 2026-05-22 (session-plan, log-sweep, improvement-log) plus general items #3 and #4, committing each fix separately.
 
 ## Class
 execution
 
 ## Model
-sonnet — match
+opus — match (session is execution-dominant, but improvement-log #1 triage and #2 gate-calibration are genuine judgment work; log-sweep #1 edits an agent that shapes all future audits — Opus is warranted)
 
 ## Source Material
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/session-plan.md` (target of F2, F3, F6)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/hooks/auto-sync-shared.sh` (target of F5)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/nordic-pe-macro-landscape-H1-2026/.claude/hooks/` (new hook location for F4)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/nordic-pe-macro-landscape-H1-2026/CLAUDE.md` (target of F7)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/nordic-pe-macro-landscape-H1-2026/logs/improvement-log.md` (source of findings)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/audit-discipline.md` (structural change classes)
+- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/friday-plans/2026-05-22-session-plan.md
+- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/friday-plans/2026-05-22-log-sweep.md
+- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/friday-plans/2026-05-22-improvement-log.md
+- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/friday-plans/2026-05-22-general.md
+- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/agents/log-sweep-auditor.md
+- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/logs/gate-calibration.md
+- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/logs/improvement-log.md
+- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/audit-discipline.md (confirm change classes)
+- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/nordic-pe-macro-landscape-H1-2026/.claude/commands/session-plan.md
+- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/nordic-pe-macro-landscape-H1-2026/logs/improvement-log.md
+- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/nordic-pe-macro-landscape-H1-2026/.claude/shared-manifest.json
+- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/global-macro-analysis/logs/improvement-log.md
 
 ## Findings / Items to Address
-
-Source doc: `projects/nordic-pe-macro-landscape-H1-2026/logs/improvement-log.md` (entries dated 2026-05-16)
-
-1. **F2 — /session-plan Step 0 mid-session re-invocation guard.** Edit Step 0 in `ai-resources/.claude/commands/session-plan.md`: after the date-header check, also check whether `logs/session-plan.md` exists AND was modified within the last 6 hours. If yes, emit a prompt listing the existing plan's intent and three options (keep / overwrite / write to pass2). Default on no response: option 3.
-2. **F3 — /session-plan Step 1 stale Next Steps freshness check.** Edit Step 1 in `ai-resources/.claude/commands/session-plan.md`: replace `"Inferred intent: {INTENT}"` with a variant that includes the source-file last-modified timestamp and offers `"continue"` to keep the existing plan.
-3. **F4 — Project-local session-plan backup hook.** Create `projects/nordic-pe-macro-landscape-H1-2026/.claude/hooks/backup-session-plan.sh` (PreToolUse Write) that copies prior `logs/session-plan.md` to `logs/.session-plan-history/YYYY-MM-DD-HHMM.md` before each new write. Wire into project's `.claude/settings.json` PreToolUse Write matcher.
-4. **F5 — auto-sync-shared.sh drift-reconciliation mode.** Edit `ai-resources/.claude/hooks/auto-sync-shared.sh`: for each command/agent target that already exists AND is a regular file (not a symlink), compute `diff` against the source. If different, emit SessionStart `additionalContext` warning. Do NOT auto-replace.
-5. **F6 — /session-plan Step 7 duplicate Class: fix.** Edit Step 7 in `ai-resources/.claude/commands/session-plan.md`: before inserting `Class: {CLASS}`, check whether a `Class: ` line already exists under today's header — replace value instead of inserting a duplicate.
-6. **F7 — Chapter review presentation rule.** Add one-line rule to `projects/nordic-pe-macro-landscape-H1-2026/CLAUDE.md` under a "Review Presentation" section: "Chapter and section reviews surface only QC verdict, score, and file path — never paste full prose inline."
+1. **session-plan #1** — port 3 verified `/session-plan` edits (Step 0 freshness check, Step 1 timestamp display, Step 7 `Class:`-replace dedup) into the nordic-pe project-LOCAL `.claude/commands/session-plan.md`; add a "local commands verify per-copy" standing rule to nordic-pe improvement-log. [src: 2026-05-22-session-plan.md #1, HIGH]
+2. **log-sweep #1** — fix `log-sweep-auditor` Cat A2 heuristic so it stops misclassifying `operations-manual-v1.3.md` as a dated log (exclude `source-docs/` + `docs/` dirs and `manual`/`guide`/`overview`-named `.md` files). [src: 2026-05-22-log-sweep.md #1]
+3. **log-sweep #2** — verify entry counts of the 2 flagged `decisions.md` files first, then run `/log-sweep` (no `--dry-run`) only if confirmed over-threshold. [src: 2026-05-22-log-sweep.md #2]
+4. **improvement-log #2** — read `gate-calibration.md`, make and log a `bright-line-review` calibration decision (retire / recalibrate / narrow scope) — 4th-cycle rubber-stamp flag. [src: 2026-05-22-improvement-log.md #2]
+5. **improvement-log #3** — log a `review-cycle` entry that BOOKS a dedicated session (with target date) for the 2 re-deferred entries (/wrap-session leaner + permission-sweep-auditor); does NOT execute those 2 fixes. [src: 2026-05-22-improvement-log.md #3]
+6. **improvement-log #1** — triage 11 `/improve` findings across the ai-resources / global-macro / nordic-pe improvement-logs; read-only assess + annotate + queue, no fixes executed. [src: 2026-05-22-improvement-log.md #1]
+7. **general #4** — resync `nordic-pe/.claude/shared-manifest.json` (stale renamed command + 2 missing: `project-status`, `produce-jargon-gloss`). [src: 2026-05-22-general.md #4]
+8. **general #3** — investigate the 2 apparently-orphaned skills (`fund-triage-scanner`, `prose-refinement-writer`); INVESTIGATE + RECOMMEND only. [src: 2026-05-22-general.md #3]
 
 ## Execution Sequence
-
-1. **/risk-check pass A — combined session-plan.md edits (F2 + F3 + F6).** All three findings touch the same canonical command file. Single combined risk-check covers all three. Wait for verdict GO before proceeding. Verification: GO verdict file written under `audits/risk-checks/`.
-2. **Implement F2 + F3 + F6 in one edit pass on `session-plan.md`.** Verification: file passes a self-read showing all three changes in expected sections (Step 0, Step 1, Step 7).
-3. **Commit F2+F3+F6** with message `update: session-plan command — re-invocation guard + stale intent freshness check + duplicate Class fix (nordic-pe F2/F3/F6)`.
-4. **/risk-check pass B — F5 + F4 combined.** F5 edits `auto-sync-shared.sh` (canonical shared hook); F4 creates a new project-local hook and wires `settings.json` PreToolUse Write. Both are risk-check change classes per `audit-discipline.md`. Single combined risk-check covers both. Wait for verdict before proceeding. Verification: GO/PROCEED-WITH-CAUTION verdict file written under `audits/risk-checks/`.
-5. **Implement F5 in auto-sync-shared.sh.** Verification: shellcheck-clean; manual sanity test on one project — SessionStart `additionalContext` emits on drift, no auto-replace.
-6. **Commit F5** with message `update: auto-sync-shared hook — drift-reconciliation warning mode (nordic-pe F5)`.
-7. **Implement F4 — new backup-session-plan.sh hook in nordic-pe project.** Create hook script, make executable, wire into project's `.claude/settings.json` PreToolUse Write matcher scoped to `logs/session-plan.md` path only. Verification: script exists, executable bit set, settings.json validates as JSON, matcher pattern restricts to `logs/session-plan.md` (not a blanket Write catcher).
-8. **Commit F4** with message `new: backup-session-plan hook (nordic-pe F4)`.
-9. **Implement F7 — one-line rule in nordic-pe CLAUDE.md.** Verification: rule present under named section.
-10. **Commit F7** with message `update: nordic-pe CLAUDE.md — chapter review presentation rule (nordic-pe F7)`.
-11. **Update improvement-log.md** — mark all six entries `applied 2026-05-18` with brief change-applied notes; commit.
-12. **End-time /risk-check skip evaluation.** Apply skip rule (plan-time covered + commits shipped + drift bounded) per memory `feedback_end_time_risk_check_skip`. Document skip or run gate.
+1. **session-plan #1** — port the 3 edits → verify each present in the nordic-pe local file → commit (command file). Add the improvement-log rule → commit (rule). *Verify: local copy structure matched canonical pre-patch; 2 commits.*
+2. **general #4** — resync manifest → verify JSON parses and the 3 entries are corrected → commit.
+3. **log-sweep #1** — edit the Cat A2 heuristic → verify the rule now excludes `source-docs/`/`docs/` + manual-named files → commit.
+4. **log-sweep #2** — verify entry counts of the flagged `decisions.md` files → run `/log-sweep` only if over-threshold → commit archive output (or record a no-op). *Verify: archival applied only to confirmed over-threshold files.*
+5. **improvement-log #2** — read `gate-calibration.md`, log the decision → commit. *Verify: decision is one of retire/recalibrate/narrow with rationale.*
+6. **improvement-log #3** — log the `review-cycle` booking entry with a target date → commit. *Verify: entry books a session, does not mark the 2 fixes done.*
+7. **improvement-log #1** — triage 11 findings, annotate the 3 improvement-logs → commit. *Verify: read-only annotations only; no fix applied.*
+8. **general #3** — investigate both skills, produce a recommendation. *STOP if conclusion is "archive" (Autonomy Rule #3 — file deletion outside session output scope).*
+9. **Session end** — offer the push (operator approval; re-verify `git log @{u}..HEAD` against the grown commit set, which now includes the concurrent session's commits) → `/wrap-session` → `/usage-analysis`.
 
 ## Scope Alternatives
-
-- **Min:** F2 + F3 + F6 only (one file, one risk-check, one commit). Defers F4, F5, F7 to next session. Use if /risk-check pass A reveals unexpected complexity.
-- **Recommended:** All six findings (F2–F7) in two risk-check passes and four commits.
-- **Max:** Recommended + push all unpushed repos at end (requires operator approval per Autonomy Rule #2).
+- **Min:** session-plan #1 + log-sweep #1/#2 only (HIGH-priority nordic-pe port + the recurring auditor false-positive fix) — ~5 commits.
+- **Recommended:** all 8 items above — ~9–10 commits, 1 subagent spawn (`/log-sweep`). Confirmed mandate.
+- **Max:** fold in the permissions plan via one `/permission-sweep` run — REJECTED: Autonomy Rule #8 gated, outside the confirmed scope.
 
 ## Autonomy Posture
-
-Gated.
+Gated
 
 **Stop points:**
-- After /risk-check pass A verdict — pause if RECONSIDER; apply mitigations listed in report if PROCEED-WITH-CAUTION
-- After /risk-check pass B verdict — pause if RECONSIDER; apply mitigations if PROCEED-WITH-CAUTION
-- End-of-session — pause for push approval (Autonomy Rule #2)
+- general #3 — if the investigation concludes a skill should be archived (Autonomy Rule #3 — file deletion).
+- Session-end push — operator approval required (Autonomy Rule #2).
+- log-sweep #2 — if entry-count verification surfaces unexpected archive scope.
+- Any deferred-plan gate hit.
 
 ## Risk
-
-Run `/risk-check` after this plan is approved — two plan-time gates (pass A: combined F2+F3+F6 on session-plan.md; pass B: combined F5 on auto-sync-shared.sh + F4 new hook/settings.json). End-time gate evaluated per skip rule.
-
-**F7:** No /risk-check required — single-line additive CLAUDE.md rule, project-local scope.
-
-**F4 — [CONFLICT]:** Operator directive (session mandate) says F4 does not require plan-time /risk-check. However, F4 creates a new hook script and wires a PreToolUse Write entry into `.claude/settings.json` — both are risk-check change classes per `audit-discipline.md` (hook edits + settings.json edits). Resolution options: (a) extend pass B to cover F4 alongside F5 (recommended — one additional risk-check, minimal overhead), or (b) operator confirms the F4 carve-out explicitly and the plan proceeds as written. Proceeding with option (a) as the safer default; operator can correct before execution starts.
+No canonical structural change classes apparent — session-plan #1 edits an existing command file and log-sweep #1 edits an existing agent definition; neither is a canonical `/risk-check` change class per `docs/audit-discipline.md` (the class is "new commands or skills"). general #4 edits a JSON manifest; improvement-log items append to logs. Run `/risk-check` if scope changes. **Concurrent-session note:** a separate `/friday-act journal-commands` session is committing to `ai-resources` — stage specific paths on every commit, never `git add -A`; defer or scope the session-end push so it does not push that session's in-flight work.

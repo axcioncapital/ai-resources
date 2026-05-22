@@ -238,6 +238,41 @@ Class: execution
 - Files in scope: nordic-pe .claude/commands/session-plan.md + logs/improvement-log.md + shared-manifest.json; ai-resources .claude/agents/log-sweep-auditor.md + logs/gate-calibration.md + logs/improvement-log.md; /log-sweep archive files (inferred)
 - Stop if: a deferred-plan gate is hit; general #3 concludes 'archive' (Autonomy Rule #3 pause); operator declines push.
 
+### Summary
+Executed the 4 ungated friday-act plan files from the 2026-05-22 weekly checkup — `session-plan`, `log-sweep`, and `improvement-log` fully, plus `general` items 3 and 4. Ran `/qc-pass` on the proposed session-scoping triage before locking the mandate (REVISE → all 4 fixes applied). 13 commits across 4 repos. A concurrent `/friday-act journal-commands` session ran in parallel with no target-file overlap and appears to have wrapped (commit `9d5c01c`).
+
+### Files Created
+- `logs/scratchpads/2026-05-22-14-57-scratchpad.md` — continuity scratchpad
+- `projects/buy-side-service-plan/logs/decisions-archive-2026-04.md` — 17 archived decisions entries (log-sweep)
+- `projects/nordic-pe-macro-landscape-H1-2026/logs/decisions-archive-2026-05.md` — 17 archived decisions entries appended (log-sweep)
+
+### Files Modified
+- `logs/session-plan.md` — this session's plan (overwrote the stale 2026-05-18 plan)
+- `logs/session-notes.md` — mandate + this wrap entry
+- ai-resources: `.claude/agents/log-sweep-auditor.md` (Cat A2 doc-file exclusion), `logs/gate-calibration.md` (first entry), `logs/improvement-log.md` (booking + triage block), `audits/log-sweep-2026-05-22.md` (apply report)
+- nordic-pe: `.claude/commands/session-plan.md` (3-edit port), `.claude/shared-manifest.json` (resync), `logs/improvement-log.md` (standing rule + triage block), `logs/decisions.md` (archived 606→97 lines)
+- buy-side: `logs/decisions.md` (archived 405→57 lines)
+- global-macro: `logs/improvement-log.md` (triage block)
+
+### Decisions Made
+- **Session scoping** — 4 ungated plans executed; 4 deferred (permissions, check-concurrent-session = Autonomy Rule #8; journal-commands = heavy build, done by the concurrent session; repo-documentation = separate project + heavy). `/qc-pass` REVISE → 4 fixes applied before the mandate was locked.
+- **general #4** — included `fix-symlinks` in the manifest resync: a genuine 3rd discrepancy beyond the plan's named 2 (`project-status`, `produce-jargon-gloss`).
+- **improvement-log #2** — recalibrate (not retire) the `bright-line-review` gate; logged to `gate-calibration.md` (first entry there).
+- **general #3** — `prose-refinement-writer`: keep (recent, unwired). `fund-triage-scanner`: archive-candidate — **paused per Autonomy Rule #3**, surfaced for operator decision, not archived.
+- **End-time `/risk-check` skipped** — no canonical structural change class touched: edits to existing command/agent files + log appends; no hooks, settings.json, CLAUDE.md, new commands/skills, or symlinks.
+
+### Next Steps
+- **Push all 4 repos** — operator approved (this wrap commits first).
+- Decide `fund-triage-scanner`: archive, or keep if a PE-fund-screening project is planned.
+- Wire `prose-refinement-writer` into the research-workflow prose stage (R1 remediation Phase B follow-up).
+- Durable enforcement of the `bright-line-review` recalibration needs an always-loaded CLAUDE.md rule — a separate gated item.
+- Other projects with a `local` `session-plan` command may need the same 3-edit port — the new "Local commands verify per-copy" rule (nordic-pe improvement-log) covers the principle.
+- Remaining friday-act plans: permissions (Rule #8), check-concurrent-session (Rule #8 + `/risk-check`), repo-documentation; journal-commands appears done by the concurrent session — verify.
+- Booked: 2026-05-26 dedicated session for the 2 re-deferred improvement-log entries.
+
+### Open Questions
+- None.
+
 ## 2026-05-22 — /friday-act journal-commands plan execution
 
 **Mandate:** Execute the 5-item journal-commands /friday-act plan (`audits/friday-plans/2026-05-22-journal-commands.md`): item 1 (between-gate executive-summary rule → workspace CLAUDE.md), item 2 (wire system-owner gate into /new-project Stage 3b→3c), item 3 (system-owner second-opinion step in /risk-check), items 4-5 (new /drift-check and /resolve-repo-problem commands).
