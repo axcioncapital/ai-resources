@@ -52,13 +52,18 @@ Apply these rules **in order** to every discovered file. Stop at the first match
 1. Filename matches `*-archive-*.md` → **Cat E** (skip — already archived; should be filtered out by discovery, but defense-in-depth)
 2. Filename is exactly `improvement-log.md` → **Cat C** (skip — managed by `/resolve-improvement-log`)
 3. File path is under `*/audits/working/` (anywhere in the path) → **Cat D** (age-based whole-file move candidate)
-4. Count dated `## YYYY-MM-DD` headers in the file:
+4. File is a documentation file, not a dated log → **Cat C** (inventory only). A file is documentation if EITHER:
+   - its path contains `/source-docs/` or `/docs/` (anywhere in the path), OR
+   - its filename, lowercased, contains `manual`, `guide`, or `overview`.
+
+   This rule fires **before** the dated-header rules below: documentation files often carry `## YYYY-MM-DD` version-history or example section headers that otherwise misclassify them as Cat A2 (known false positive: `pipeline/source-docs/operations-manual-v1.3.md`, which has section headers, not log entries). Logs live under `logs/`, never under `docs/` or `source-docs/`, so this exclusion does not suppress real dated logs.
+5. Count dated `## YYYY-MM-DD` headers in the file:
    - `grep -cE "^## [0-9]{4}-[0-9]{2}-[0-9]{2}" "$FILE"` → if count ≥ 1:
      - If `SCOPE_PATH == AI_RESOURCES_PATH` AND filename is `session-notes.md` OR `decisions.md` → **Cat A1**
      - Otherwise → **Cat A2**
-5. Count dated `### YYYY-MM-DD` headers: `grep -cE "^### [0-9]{4}-[0-9]{2}-[0-9]{2}" "$FILE"` → if count ≥ 1 (and rule 4 did not match) → **Cat B**
-6. Extension is `.log`, `.jsonl`, or `.ndjson` → **Cat F** (inventory only, format-specific)
-7. Otherwise → **Cat C** (topic-organized or freeform, inventory only)
+6. Count dated `### YYYY-MM-DD` headers: `grep -cE "^### [0-9]{4}-[0-9]{2}-[0-9]{2}" "$FILE"` → if count ≥ 1 (and rule 5 did not match) → **Cat B**
+7. Extension is `.log`, `.jsonl`, or `.ndjson` → **Cat F** (inventory only, format-specific)
+8. Otherwise → **Cat C** (topic-organized or freeform, inventory only)
 
 ## Threshold evaluation
 
