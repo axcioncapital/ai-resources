@@ -479,3 +479,11 @@
 - **Decisions logged:** 0 (plan-execution judgment calls recorded in the session note, not decisions.md)
 - **QC cycles:** 1 (REVISE → 1 finding fixed → GO)
 - **Mandate fields:** specified: work_scope, exit_condition, stop_if | omitted: out_of_scope, files_in_scope
+
+### 2026-05-22 — Session-issue investigation: extend /resolve-repo-problem + /friday-checkup pickup
+- **Commands used:** /clarify, /qc-pass (×2), /risk-check, /consult, /wrap-session
+- **Iterations:** 3 (plan v1 → QC-fix revision → manual-only descope revision)
+- **Decisions logged:** 1
+- **QC cycles:** 2 (#1 REVISE → 5 findings fixed → #2 GO)
+- **Gates:** 4 (1 changed) — plan-approval:confirmed, qc-disposition:confirmed, qc-disposition:confirmed, plan-approval:changed
+- **Mandate fields:** none (no /session-start this session)

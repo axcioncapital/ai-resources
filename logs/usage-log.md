@@ -2,6 +2,36 @@
 
 <!-- entries below -->
 
+### 2026-05-22 | Wasteful
+
+**Task:** Designed and built a manual session-issue investigation capability — extended `/resolve-repo-problem` with a new inline AUTO mode and `/friday-checkup` Step 6. Routed through /clarify → plan mode → QC ×2 → /risk-check → /consult, then descoped from 6 files to 2, implemented, committed, and wrapped.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~17 |
+| Files read | ~17 (re-reads: 4 — friday-checkup.md ×3, plan file ×2) |
+| Files written/edited | ~11 |
+| Tool calls | ~74 total |
+| Subagents | 9 |
+| Rework cycles | 2 major (descope, wrap-stage tail-read failures) |
+
+**Findings:**
+- Rework — Major: The full 6-file design was QC'd twice, risk-checked, and consulted, then 67% cut by operator decision. All evaluation effort on the 4 dropped files (new hook, settings.json, CLAUDE.md, session-guardrails.md) was wasted — approximately 2 QC subagents + 1 risk-check subagent + 1 consult subagent evaluated a design that did not ship.
+- Rework — Major: Wrap-stage log files (session-notes.md ~453 lines, decisions.md ~392 lines, coaching-data.md ~482 lines) were first read via Bash `tail`, which does not satisfy Edit's read-first gate, forcing 3 full Read-tool re-reads (~1327 lines total) before the Edit calls could proceed. This is the same pattern flagged in the majority of prior log entries; it has not been resolved.
+- Re-reads — Moderate: friday-checkup.md read 3× at different offsets (grep scan + two partial ranges). Could have been resolved in a single targeted read.
+- Context bloat — Moderate: Three large wrap-stage log files read in full (session-notes.md, decisions.md, coaching-data.md — ~1327 lines combined) when only append-point location was needed; targeted offset reads at the file END would suffice.
+
+**Regression vs prior 3 entries:** This session is a clear regression — the prior 3 entries are all Acceptable; this session hits two Major findings, both from patterns that have been flagged repeatedly across the full log without resolution.
+
+**Recommendation:** Fix the wrap-stage tail-read anti-pattern at the source: the wrap-session skill or command must explicitly instruct the agent to use the Read tool (not Bash tail) on log files before editing them, and to use `offset` to read only the last ~50 lines rather than full files. This single fix eliminates the 3-full-read forced-retry cycle (~1327 lines wasted per session) and is the same recommendation that has appeared in multiple prior entries without being actioned.
+
+**Estimated savings:** ~1,300–1,400 tokens per session avoided by replacing 3 full re-reads with 3 offset reads. Over 10–20 sessions: ~13,000–28,000 tokens. Estimate is conservative — it covers only the forced re-reads, not the original tail calls themselves.
+
+**Additional levers (ROI-ranked):**
+- **Scope-gate before full QC pipeline** — When a design spans many files, run a lightweight feasibility or scope check (operator confirm or single-question clarify) before committing to QC ×2 + risk-check + consult. In this session, ~4 subagent invocations evaluated files that were ultimately dropped; blocking that work upstream saves the largest variable cost per session. Rough saving: 4 subagent round-trips ≈ 2,000–5,000 tokens per occurrence; higher ROI than the wrap-fix when scope reversals occur.
+- **friday-checkup.md multi-read consolidation** — Read once with a sufficient window rather than three separate scans. Saving: ~200–400 tokens per occurrence; smaller than wrap-fix but zero-effort to implement via a single read call.
+- **Subagent advisory de-duplication** — The /consult advisory (~60 lines) was returned in the tool result AND re-written verbatim into the risk-check report file. If the spec mandates the write, pass only a file-path reference back to the main session rather than re-emitting the full text. Saving: ~60 lines × ~1.5 tokens ≈ ~90 tokens per occurrence; informational, lowest ROI of the four levers.
+
 ### 2026-05-22 | Acceptable
 
 **Task:** Rewrote the `/prime` command into a slim, scannable brief ending in a 1–3 task menu with number-invoke chaining and a plan-mode guard. Scoped via `/clarify`, planned in plan mode, QC'd twice (plan + implementation).

@@ -451,3 +451,28 @@ The operator (a non-developer) reported `/prime`'s start-of-session brief was to
 
 ### Open Questions
 None.
+
+## 2026-05-22 — Session-issue investigation: extend /resolve-repo-problem + /friday-checkup pickup
+
+### Summary
+Designed and built a manual session-issue investigation capability. `/resolve-repo-problem` gained an operator-invoked AUTO mode (no argument — auto-detects the fault from the recent conversation, investigates inline) alongside the existing MANUAL mode; both modes now log a `Status: logged (pending)` entry to `improvement-log.md`. `/friday-checkup` Step 6 gained session-issue detection so those entries surface on the next Friday. The plan was originally scoped with an `[ISSUE]` flag + a blocking `Stop`-hook auto-trigger; after `/qc-pass` and `/risk-check` the operator descoped to manual-only.
+
+### Files Created
+- `logs/scratchpads/2026-05-22-19-53-scratchpad.md` — continuity scratchpad
+- `audits/risk-checks/2026-05-22-implementation-plan-session-issue-auto-investigation-at.md` — risk-check report (untracked; left for the operator's own commit cadence)
+
+### Files Modified
+- `.claude/commands/resolve-repo-problem.md` — added Step 0 mode router, AUTO-mode inline investigation, improvement-log writer for both modes; broadened scope to session/workflow faults
+- `.claude/commands/friday-checkup.md` — Step 6: added Session-issue detection bullet; amended the Stale-improvement rule to skip `Category: session-issue`
+
+### Decisions Made
+- Descoped from 6 files to 2 — dropped the `[ISSUE]` flag/rule and the blocking `Stop`-hook backstop; ship manual-only. Logged to decisions.md. (operator decision)
+- Extend `/resolve-repo-problem` rather than create a new command; output to `improvement-log.md` as `logged (pending)` so `/friday-checkup` picks it up. (operator decisions via `/clarify`)
+
+### Next Steps
+- Push commit `848bb35` (`ai-resources`) — needs operator approval; not yet pushed.
+- Optional: commit the untracked risk-check report on your own cadence.
+- First real use of `/resolve-repo-problem` MANUAL/AUTO will exercise the modes live (deferred deliberately — no junk test entries written this session).
+
+### Open Questions
+None.
