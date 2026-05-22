@@ -289,3 +289,29 @@ Hooks are shell scripts — cannot generate AI-produced scratchpad content. The 
 - *SessionStop hook (Option B):* Not buildable for full scratchpad — hooks are shell scripts, no Claude reasoning. A minimal marker file is possible but lower-value; deferred.
 - *`/clear` interception (Option C):* Dead — `/clear` is a slash command, PreToolUse hooks don't fire on slash commands.
 - *PostToolUse compaction hook (Option D):* Redundant — `[COST]` flag already covers this. A hook would add noise mid-work.
+
+## 2026-05-22 — grill-me scope: single skill, no docs-layer variant
+
+**Context.** Evaluating whether to build `grill-me` (plain interview) or `grill-with-docs` (interview + shared vocabulary layer via context.md + ADRs).
+
+**Decision.** Build `grill-me` only. Defer `grill-with-docs` until the plain version is validated in practice.
+
+**Rationale.** The docs layer requires maintaining a `context.md` glossary across sessions — infrastructure that doesn't exist yet. Running plain grilling first surfaces whether vocabulary gaps are actually painful before investing in the maintenance overhead. Don't build infrastructure for a problem not yet confirmed.
+
+**Alternatives considered.**
+- *Build both as sibling skills:* Rejected — doubles the surface area before either has been validated.
+- *Build one skill with auto-detection (docs-layer if context.md exists):* Rejected — adds complexity to a skill whose value is its simplicity.
+
+---
+
+## 2026-05-22 — grill-me integration: command level, not SKILL.md bodies
+
+**Context.** Deciding where to add the /grill-me pointer in the project planning and skill creation workflows.
+
+**Decision.** Add pointer to the command pipeline files (`/context-builder`, `/create-skill` Step 1), not to the SKILL.md bodies.
+
+**Rationale.** SKILL.md bodies define skill behavior; command files define invocation flow. A pointer to a prior step belongs in the command, not the skill — it's orchestration logic, not skill logic. Adding it to SKILL.md would blur the separation and load the pointer into every context where the skill is referenced, not just the invocation context.
+
+**Alternatives considered.**
+- *Pointer in SKILL.md:* Rejected — wrong layer; skill methodology vs. command orchestration.
+- *Pointer in CLAUDE.md:* Rejected — CLAUDE.md is for cross-session rules, not workflow reminders.
