@@ -192,7 +192,7 @@ The transition from Stage 3b (Architecture Design) to Stage 3c (Implementation S
 When the operator says `NEXT` after Stage 3b is marked `completed`:
 
 1. **Read the Stage 3b artifact path** from `pipeline-state.md` (the `3b — Architecture Design` row's Artifact column — normally `projects/{name}/pipeline/architecture.md`).
-2. **Run implementation triage.** Invoke the `/implementation-triage` skill (Skill tool) with this `$ARGUMENTS`:
+2. **Run implementation triage.** Invoke `/implementation-triage` via the Skill tool — in this workspace slash commands are dispatched as skills, so the Skill tool resolves `.claude/commands/*.md` command files — with this `$ARGUMENTS`:
    > `Triage the Stage 3b architecture for project {name} before Stage 3c (implementation-spec) writing begins. Read the architecture document at {absolute path to architecture.md} and judge whether the architecture as designed is worth proceeding to implementation. Assess ROI, perfectionism / scope-creep risk, and downstream impact on the project's Claude Code setup.`
 3. **Parse the first line of the verdict** — one of `WORTH-DOING`, `MARGINAL`, `NOT-WORTH-DOING`, or `DECLINE — {reason}`.
 4. **Act on the verdict:**

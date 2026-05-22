@@ -111,7 +111,7 @@ Invocation semantics: operator-typed, or inline-prompted by other commands (e.g.
 
 17a. If `VERDICT` is `GO`, skip this step entirely and proceed to Step 5. The second opinion fires only when the risk-check surfaced real risk — a non-GO verdict.
 
-17b. If `VERDICT` is `PROCEED-WITH-CAUTION` or `RECONSIDER`, obtain a system-owner second opinion. Invoke the `/consult` skill (Skill tool) with this `$ARGUMENTS`:
+17b. If `VERDICT` is `PROCEED-WITH-CAUTION` or `RECONSIDER`, obtain a system-owner second opinion. Invoke `/consult` via the Skill tool — in this workspace slash commands are dispatched as skills, so the Skill tool resolves `.claude/commands/*.md` command files — with this `$ARGUMENTS`:
 
    > `Risk-check second opinion. A proposed structural change received a {VERDICT} verdict from the risk-check-reviewer. Change: {CHANGE_DESCRIPTION}. Dimension risks flagged — {one line per dimension: "Dimension N ({name}): {Low|Medium|High}"}. Verdict summary from the report: {the **Summary:** line under ## Verdict}. As a pre-change advisory (Function B), give an architectural second opinion: do you concur with the {VERDICT} verdict, and is the recommended path — {mitigations, for PROCEED-WITH-CAUTION | recommended redesign, for RECONSIDER} — the right one? Name any risk the dimension review missed.`
 
