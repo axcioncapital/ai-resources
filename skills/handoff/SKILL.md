@@ -7,7 +7,8 @@ description: >
   for a child session to pick up while the parent continues. Triggers: /handoff,
   "save session", "hand this off", "fork this task", [SCOPE] flag resolution.
   Do NOT trigger on unrelated mentions of "hand off" in prose. Do NOT trigger
-  for end-of-session wrap with telemetry (use /wrap-session instead).
+  for an end-of-session wrap — /wrap-session runs continuity mode itself as
+  its Step 0.5.
 model: sonnet
 effort: medium
 disable-model-invocation: true
@@ -23,7 +24,10 @@ operator provides a purpose argument.
 **Continuity mode (no args):** Captures the current session's full state so
 a clean session can resume the exact same work after `/clear` or `/compact`.
 Replaces `/save-session`. Output lives in `logs/scratchpads/` (persistent,
-project-relative) so it survives reboots and is readable by `/prime`.
+project-relative) so it survives reboots and is readable by `/prime`, which
+detects the newest scratchpad at session start and offers it as a resume
+point. `/wrap-session` runs this mode as its Step 0.5, so every planned wrap
+leaves a scratchpad behind automatically.
 
 **Fork mode (with args):** Compresses a specific task slice into a file a
 separate child session can read to execute that task independently, while the
@@ -42,7 +46,11 @@ not a documentation artifact.
 | `[SCOPE]` flag fires — drifted work needs a clean outlet | Fork |
 
 **Do NOT use for:**
-- End-of-session wrap with telemetry → use `/wrap-session`
+- End-of-session wrap → use `/wrap-session`. It runs continuity mode itself
+  as its Step 0.5, then additionally handles telemetry, log appends,
+  innovation triage, and the commit. Invoke `/handoff` directly only for
+  *mid-session* continuity — saving state before `/clear` when you intend to
+  keep working the same thread — not as a substitute for a full wrap.
 - Returning child-session results to the parent → run `/handoff` (no args) in
   the child session to save state, then tell the parent the scratchpad path
 

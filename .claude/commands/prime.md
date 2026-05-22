@@ -37,6 +37,16 @@ Orient the session. Read state, brief the operator, wait for direction.
    *Sibling-entry sweep:* Scan `logs/session-notes.md` for additional `## <source-entry-date>` headers that appear **after** the source entry (same calendar date, later position in file). If any exist, emit this warning before the Next Steps list:
    > WARNING: Multiple same-day entries exist (parallel wraps possible). Next Steps inherited from `{source entry title}`; also review: `{list of sibling entry titles}`.
 
+1b. **Detect a resumable continuity scratchpad.** `/handoff` continuity mode and `/wrap-session` Step 0.5 both write session-state scratchpads to `logs/scratchpads/`. Surface the most recent one so the operator can choose to resume it.
+
+   - List `logs/scratchpads/` for files matching the glob `*-scratchpad.md` **exactly** — this excludes other files that may share the directory (e.g., `*-implementation-plan.md`).
+   - Select the most recent by **lexical filename sort**, NOT by filesystem mtime. The filename convention is `YYYY-MM-DD-HH-MM-scratchpad.md`, so lexical filename order equals chronological order. Do not sort by mtime — a scratchpad's mtime can disagree with its filename (a later-named file can carry an earlier mtime), so an mtime sort can surface the wrong file.
+   - Compare the selected scratchpad's filename date (`YYYY-MM-DD`) to the date of the last `session-notes.md` entry from Step 1:
+     - Scratchpad date **≥** last entry date → surface it. Read its `## Resume With` section and take the first content line.
+     - Scratchpad date **<** last entry date → a later wrap superseded it; skip silently.
+   - If `logs/scratchpads/` is absent or has no `*-scratchpad.md` file, skip silently.
+   - This step only *surfaces* the scratchpad in the Step 5 brief (`**Resumable scratchpad:**` field); it does NOT auto-resume. The operator decides whether to resume at the Step 6 direction prompt.
+
 2. Read `/logs/innovation-registry.md`. The registry is a pipe-delimited markdown table with columns
    `| Date | Type | File | Status | Graduated To |`. Count data rows whose Status column equals
    exactly `detected` (do NOT count `triaged:*`, `graduated`, or other statuses). Use:
@@ -70,6 +80,7 @@ Orient the session. Read state, brief the operator, wait for direction.
 ## Prime — {date}
 
 **Last session:** {date} — {one-line summary}
+**Resumable scratchpad:** {path — `Resume With: {first content line}` | None}
 
 **Inbox:** {N} skill request(s) pending
 **Innovations:** {N} detected, pending triage
