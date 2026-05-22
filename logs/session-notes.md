@@ -476,3 +476,29 @@ Designed and built a manual session-issue investigation capability. `/resolve-re
 
 ### Open Questions
 None.
+
+## 2026-05-22 — Archived resolved improvement-log entries (/resolve-improvement-log)
+
+### Summary
+Ran `/prime` to orient, then `/resolve-improvement-log`. The active `improvement-log.md` had 0 entries in the strict Resolved state (`Status: applied` + `Verified:`). Operator confirmed updating 4 entries to that state — the 2026-04-28 Bulk backfill (previously the non-schema `Status: completed`) and the three 2026-05-22 friction-logging entries (B1/B2/B3, all shipped in commit `3a7ad4c`) — then archived them. A fifth entry was recovered: an orphaned resolved-entry body (`Status: applied 2026-04-18`, the "Canonical project settings.json template") that had lost its `### ` header; the header was restored and the entry archived. 5 entries archived in total.
+
+### Files Created
+None.
+
+### Files Modified
+- `logs/improvement-log.md` — updated 4 entries to `applied` + `Verified:`; restored a missing `### ` header on a 5th; removed all 5 archived entries. Active log now holds 4 pending entries.
+- `logs/improvement-log-archive.md` — added 5 entries in chronological position; archive now holds 24 entries.
+
+### Decisions Made
+- Routine log-maintenance only — operator-directed status updates and archival. No analytical or scoping decisions; `decisions.md` not appended.
+- The 2026-04-28 Bulk backfill entry carried `Status: completed` (not schema-conformant); normalized to `Status: applied 2026-04-28` + `Verified:` so it could be classified and archived.
+- The recovered orphan's proposal includes a now-prohibited "Sonnet default in `settings.local.json`" line; archived verbatim as a historical record (flagged in chat so it is not mistaken for current guidance).
+
+### Next Steps
+- **Push** — 6 unpushed `ai-resources` commits at session start; this wrap commit makes 7. Operator gate.
+- **Booked 2026-05-26** — the two paired improvement-log items: `/wrap-session` leaner + `permission-sweep-auditor` template-class fix (~1.5–2 h combined).
+- **Deferred backlog** — build `/codex-dd`, the `workflow-diagnosis` skill, and `/repo-review` (the `/open-items` Recommended/Max tiers).
+- **Housekeeping** — the "Sequencing note" entry in `improvement-log.md` references two now-archived entries; trim it next time the log is touched.
+
+### Open Questions
+None.
