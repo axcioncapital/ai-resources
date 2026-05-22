@@ -271,3 +271,21 @@
 
 **Alternatives considered.**
 - *Honor operator directive, skip gate:* Rejected. Bright-line rule exists precisely to catch project-local hook additions that seem low-risk but have blast-radius effects.
+
+## 2026-05-22 — /handoff architecture and automation path
+
+**Context.** Designing the `/handoff` skill — unified session-state command replacing `/save-session` — and deciding on automation strategy.
+
+**Decision 1: Command → skill, no subagent.**
+Subagent-based architecture was proposed (Plan agent) but rejected. A subagent starts with no session context, making it incapable of compressing the current session's conversation into a scratchpad. The skill must run in the main session. System Owner ruled: command shape per `repo-architecture.md` Q2/Q3.
+
+**Decision 2: Unified two-mode design (no-args continuity, with-args fork).**
+Rather than two separate commands (`/save-session` for continuity, new `/handoff` for forking), one unified command with mode driven by args presence. Simplifies operator mental model: one command for all "compress context for another session" needs. Output location follows from mode: no-args → `logs/scratchpads/` (persistent); with-args → `/tmp/` (ephemeral).
+
+**Decision 3: Automation via /wrap-session + /prime integration, SessionStop hook deferred.**
+Hooks are shell scripts — cannot generate AI-produced scratchpad content. The right automation is: (a) add `/handoff` (no args) as Step 0.5 in `/wrap-session` (planned exits), (b) add scratchpad detection to `/prime` to close the loop at session start. SessionStop hook for unplanned exits deferred until observed as recurring friction. System Owner ruling: unplanned-exit gap is deliberately left open, not an oversight.
+
+**Alternatives considered.**
+- *SessionStop hook (Option B):* Not buildable for full scratchpad — hooks are shell scripts, no Claude reasoning. A minimal marker file is possible but lower-value; deferred.
+- *`/clear` interception (Option C):* Dead — `/clear` is a slash command, PreToolUse hooks don't fire on slash commands.
+- *PostToolUse compaction hook (Option D):* Redundant — `[COST]` flag already covers this. A hook would add noise mid-work.

@@ -281,3 +281,62 @@ Wrap of the graduate-resource workspace sweep session. Candidates report saved t
 
 ### Open Questions
 - None.
+
+## 2026-05-22 — Created grill-me skill — pre-planning interview with mandate brief output
+
+### Summary
+Evaluated a "grill skill" concept from a source brief, scoped and planned the implementation via /clarify + /scope, then built and shipped the `grill-me` skill in the same session. The skill forces relentless interviewing before any plan is written, walks the design tree top-down, and produces a structured mandate brief as its output. Two integration points were added: a pointer in `/context-builder` (project-planning entry point) and in `/create-skill` Step 1 decision point.
+
+### Files Created
+- `skills/grill-me/SKILL.md` — full skill: 13 sections including bias countering, bike-shedding stop, artifact scan, worked example
+- `.claude/commands/grill-me.md` — command stub invoking the skill
+
+### Files Modified
+- `.claude/commands/create-skill.md` — Step 1 decision point: recommend /grill-me for thin briefs
+- `projects/project-planning/.claude/commands/context-builder.md` — top-of-file pointer: run /grill-me when scope is fuzzy (separate repo, committed separately)
+
+### Decisions Made
+- **Single skill only:** `grill-me` (plain interview), no `grill-with-docs` variant — docs layer deferred until plain version is validated in practice
+- **Not wired into harness session start or /new-project pipeline** — user-initiated only (`disable-model-invocation: true`)
+- **Target use cases:** (1) before project plan / context pack creation, (2) before complex /create-skill or /improve-skill brief
+- **Handoff artifact:** structured mandate brief (one page max), written to `output/{project}/grill-mandate.md`
+- **Integration point:** command-level pointer (not SKILL.md) — per operator direction, pointer lives in the command pipeline
+- **Bike-shedding stop:** ~3 rounds per concept, then offer to lock and move on
+- **QC findings fixed (4 total):** `disable-model-invocation` added; slash-command contradiction resolved (command file added); missing SKILL.md sections added (Runtime Recommendations, Bias Countering, Examples); Fit Assessment added to plan
+
+### Next Steps
+- Push all three repos (ai-resources × 2 commits, project-planning × 1 commit)
+- First real use: run `/grill-me` before next project plan or complex skill creation to validate the interview flow and mandate brief output
+
+### Open Questions
+- None.
+
+## 2026-05-22 — Built /handoff unified session-state skill
+
+### Summary
+Built the `/handoff` command + skill: a unified two-mode session handoff that replaces `/save-session`. Continuity mode (no args) saves full session state to `logs/scratchpads/` for same-session resume after `/clear`; fork mode (with args) compresses a scoped task to `/tmp/` for pickup by a child session. Consulted the System Owner twice — once on architecture (command → skill, no subagent), once on the automation path (next session: wire into `/wrap-session` + `/prime`). Two QC passes and two plan iterations before execution.
+
+### Files Created
+- `skills/handoff/SKILL.md` — unified skill, both modes
+- `.claude/commands/handoff.md` — thin dispatcher command
+- `logs/scratchpads/2026-05-22-11-53-scratchpad.md` — session scratchpad (continuity handoff)
+- `audits/risk-checks/2026-05-22-new-skill-skills-handoff-skill-md-and-new-command-claude.md` — plan-time risk-check (PROCEED-WITH-CAUTION, mitigations applied)
+
+### Files Modified
+- `.claude/commands/save-session.md` — replaced with self-documenting compatibility redirect
+- `skills/ai-resource-builder/references/operational-frontmatter.md` — tier table: `save-session` → `handoff`
+
+### Decisions Made
+- **Architecture:** Command → skill, no subagent. Subagents start with no session context; skill runs in main session where conversation context is available.
+- **Unified two-mode design:** Args presence drives mode — no flags. No-args = continuity (`logs/scratchpads/`); with-args = fork (`/tmp/`).
+- **save-session deprecated, not deleted:** 11 project symlinks kept live pointing at the redirect stub; clean up via `/fix-symlinks` when convenient.
+- **Onboarding docs skipped** per operator instruction.
+- **`shared-manifest.json` step dropped:** File doesn't exist in `ai-resources/`; auto-sync hook discovers commands automatically.
+- **Automation: Option A + /prime half, SessionStop hook deferred.** Hooks can't generate AI scratchpad content. Right path: add `/handoff` as Step 0.5 in `/wrap-session`, add scratchpad detection to `/prime`. Unplanned-exit gap deliberately left open.
+- **End-time risk-check skipped:** Plan-time gate ran (PROCEED-WITH-CAUTION, all mitigations applied), commits shipped (75f2e53), no drift from plan. Skip per skip rule, documented here.
+
+### Next Steps
+Implement `/wrap-session` + `/prime` auto-handoff integration (System Owner advisory). Full 4-step plan in `logs/scratchpads/2026-05-22-11-53-scratchpad.md`. Start with `/prime` in a new session — it will surface the scratchpad's Resume With section.
+
+### Open Questions
+- None.
