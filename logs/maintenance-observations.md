@@ -188,3 +188,55 @@ Operator caught a second under-read: I had not opened the actual improvement-log
 - Reliability: hold
 - Observability: hold
 - Operator load: hold
+
+---
+
+## 2026-05-22 — Friday Act (weekly tier, source: friday-checkup-2026-05-22.md)
+
+### System Owner inputs (this session)
+- Friday Advisory: (none within 7 days)
+- Systems Review: (none within 7 days)
+
+### Journal Report (this session)
+- Journal Report: audits/friday-journal-2026-05-22.md
+
+### Disposition summary
+- Tactical: 18 queued for plans, 3 defer, 1 skip (of 22 checkup items; of which 0 System Owner-derived, 0 journal-derived in this count)
+- Journal-derived: 5 queued for plans, 0 defer, 0 skip (of 5 journal items)
+- Total fix-now: 23 items across 8 plan files
+
+### Deferred items (from this session)
+- Rule 14 advisory: 7 project settings files carry Read(archive/**) deny with no archive/ in .gitignore — low, source: checkup
+- obsidian-pe-kb, project-planning, ai-development-lab have no logs/improvement-log.md — low, source: checkup
+- Run /kb-update to align vault with registry (depends on repo-documentation triage landing first) — low, source: checkup
+
+### Skipped items (from this session)
+- global-macro: optionally extract 2 inline PreToolUse hooks into versioned .claude/hooks/ script files — low, "optionally" in item text, no active harm
+
+### Plans written (this session)
+- audits/friday-plans/2026-05-22-permissions.md — 4 items (high×2, med×1, low×1)
+- audits/friday-plans/2026-05-22-session-plan.md — 1 item (high×1)
+- audits/friday-plans/2026-05-22-check-concurrent-session.md — 1 item (high×1, Autonomy Rule #8 gate)
+- audits/friday-plans/2026-05-22-improvement-log.md — 3 items (med×3)
+- audits/friday-plans/2026-05-22-log-sweep.md — 2 items (med×1, low×1)
+- audits/friday-plans/2026-05-22-repo-documentation.md — 3 items (med×1, low×2)
+- audits/friday-plans/2026-05-22-general.md — 4 items (med×2, low×2) + innovation sweep appendix
+- audits/friday-plans/2026-05-22-journal-commands.md — 5 items (high×2, med×3)
+
+### Innovation Sweep (this session)
+- Verdicts: 0 graduate, 0 backport, 4 accept-fork, 4 keep-local, 5 already-graduated, 4 loose-end
+- All recent canonical work (handoff, grill-me, jargon-gloss) already in ai-resources — no graduation needed
+- 3 inbox briefs pending build-queue decision: workflow-diagnosis.md (strong candidate), repo-review-brief.md, codex-second-opinion-brief.md
+- Full notes: audits/working/innovation-sweep-2026-05-22.md
+
+### Operator observations
+(none)
+
+### Autonomy-axis posture targets (week ahead)
+- Guardrails: tighten — bright-line-review gate has been a rubber-stamp for 4 consecutive coaching cycles; name the specific bright-line before each gate check this week; recalibrate or retire the gate via gate-calibration.md if it continues to add no signal
+- Optimization: hold
+- Autonomy: hold
+- Capability: hold
+- Reliability: tighten — concurrent-session collision has recurred 3× (once per week for 3 weeks); until the check-concurrent-session.sh hook lands (plan file: friday-plans/2026-05-22-check-concurrent-session.md), apply manual concurrent-session discipline before any KB write session
+- Observability: hold
+- Operator load: hold
