@@ -386,4 +386,29 @@ Ran the weekly-tier `/friday-checkup` cadence across 9 scopes (ai-resources, wor
 
 ## 2026-05-22 — Implement /wrap-session + /prime auto-handoff integration
 
-Resumed from `logs/scratchpads/2026-05-22-11-53-scratchpad.md`. Wiring `/handoff` continuity mode into `/wrap-session` (new Step 0.5) and `/prime` (scratchpad detection step), and updating the `handoff` skill's end-of-session-wrap boundary so it reflects that `/wrap-session` now runs continuity mode internally.
+### Summary
+Resumed from `logs/scratchpads/2026-05-22-11-53-scratchpad.md` and implemented the System Owner advisory (decisions.md 2026-05-22 Decision 3): wiring `/handoff` continuity mode into the session lifecycle. `/wrap-session` now writes a continuity scratchpad as a new Step 0.5; `/prime` detects the newest scratchpad and surfaces it as a `**Resumable scratchpad:**` brief field; the `handoff` skill's end-of-session-wrap boundary was reworded so it no longer contradicts `/wrap-session` calling it internally. Plan-time `/risk-check` ran (PROCEED-WITH-CAUTION); all 3 mitigations were applied.
+
+### Files Created
+- `audits/risk-checks/2026-05-22-wire-handoff-continuity-mode-into-the-session-lifecycle-per.md` — plan-time risk-check report
+- `logs/scratchpads/2026-05-22-12-39-scratchpad.md` — continuity scratchpad (first run of the new Step 0.5)
+
+### Files Modified
+- `.claude/commands/wrap-session.md` — new Step 0.5: inline `/handoff` continuity-mode write
+- `.claude/commands/prime.md` — new Step 1b: scratchpad detection (lexical filename sort) + `**Resumable scratchpad:**` brief field
+- `skills/handoff/SKILL.md` — end-of-session-wrap boundary reworded (frontmatter description, Purpose, "Do NOT use for")
+- `.claude/commands/handoff.md` — clarifying note matching the boundary rewording
+
+### Decisions Made
+- **Risk-check mitigations (all 3 applied):** M1 — `handoff` boundary wording made consistent across all four edits; M2 — `/prime` Step 1b specified to sort scratchpads lexically by filename, not mtime; M3 — `logs/scratchpads/` retention gap flagged in the commit message and follow-ups.
+- **End-time `/risk-check` skipped.** Plan-time gate ran (PROCEED-WITH-CAUTION), all 3 mitigations applied, zero drift between planned and executed change set, integration commit `24feef1` shipped. Skip per the documented end-time skip rule.
+- **`session-notes.md` excluded from commit `24feef1`.** A concurrent `/friday-checkup` session left an uncommitted entry in `session-notes.md`; staging the file would have swept that entry into the integration commit. Left for this wrap.
+
+### Next Steps
+- **Push** — multiple commits unpushed in `ai-resources` (integration `24feef1` + this wrap commit + prior).
+- **`logs/scratchpads/` retention** (risk-check M3) — extend `check-archive.sh` or `/log-sweep` to prune old scratchpads. Also rename or remove `2026-05-22-14-00-scratchpad.md`, whose filename time is ~2.5h ahead of its real mtime — it currently out-sorts newer scratchpads in `/prime` Step 1b.
+- **Orphaned `/friday-checkup` work** — a concurrent session left an uncommitted `session-notes.md` entry plus untracked `audits/friday-checkup-2026-05-22.md` and sibling audit files; decide whether to commit them.
+- **Deferred graduation work** from `reports/graduate-resource-candidates-2026-05-22.md` — `check-claim-ids`, `friction-log-trigger`, the ai-development-lab bundle.
+
+### Open Questions
+- None.
