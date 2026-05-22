@@ -9,7 +9,7 @@
 
 ### 1. [high] nordic-pe HIGH — port 3 verified /session-plan edits (Step 0/1/7) into project-LOCAL .claude/commands/session-plan.md; add "local commands verify per-copy" rule to improvement-log
 - **Source:** checkup
-- **Risk-check required:** yes — change class: project-local command file edit
+- **Risk-check required:** no — editing an existing command file is not a canonical /risk-check change class (the class is "new commands or skills"); /risk-check is operator-discretionary here
 - **W2.4 auto-draft:** no
 - **Context:** Improvement-log entries #2/#3/#6 were marked `applied`+`Verified` against the canonical `ai-resources` copy, but `session-plan` is a `local` command in `shared-manifest.json` — auto-sync skips it. The project copy at `.claude/commands/session-plan.md` was never patched. Three edits to port: (a) Step 0 freshness check, (b) Step 1 timestamp display, (c) Step 7 `Class:`-replace dedup. Confirmed by both `/improve` and `/coach` independent runs.
 - **Target files:**

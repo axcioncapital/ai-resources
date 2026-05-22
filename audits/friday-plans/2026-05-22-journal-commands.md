@@ -19,7 +19,7 @@ All 5 items are journal-derived — authored by the operator in the AI journal, 
 
 ### 2. [high] Wire system-owner QC step into /new-project Stage 3b→3c gate to review architecture before spec-writing begins
 - **Source:** journal-derived
-- **Risk-check required:** yes — change class: canonical pipeline command edit
+- **Risk-check required:** no — editing an existing command is not a canonical /risk-check change class (the class is "new commands or skills"); /risk-check is operator-discretionary here
 - **W2.4 auto-draft:** no
 - **Recommended approach (from journal):** Locate the Stage 3b → Stage 3c transition in `/new-project`. After Stage 3b (architecture design) produces its output artifact and before Stage 3c (line-level implementation spec) is delegated, add a gate step that invokes `/implementation-triage` (Function D of the system-owner agent) with the Stage 3b architecture document path as input. If verdict is `NOT-WORTH-DOING` or `MARGINAL`, surface rationale and pause. If `WORTH-DOING`, proceed automatically.
 - **Design note from journal:** This item interprets "technical spec qc" as gating the architecture (3b output) before spec-writing begins, not QC'ing the spec after it's written. If intent is to QC Stage 3c output instead, revise before executing.
@@ -28,7 +28,7 @@ All 5 items are journal-derived — authored by the operator in the AI journal, 
 
 ### 3. [med] Update /risk-check to add system-owner second-opinion step on PROCEED-WITH-CAUTION and RECONSIDER verdicts
 - **Source:** journal-derived
-- **Risk-check required:** yes — change class: canonical command edit
+- **Risk-check required:** no — editing an existing command is not a canonical /risk-check change class; /risk-check is operator-discretionary here
 - **W2.4 auto-draft:** no
 - **Recommended approach (from journal):** After Step 4 (Structural Validation) and verdict is determined, add a new Step 4a: if VERDICT is `PROCEED-WITH-CAUTION` or `RECONSIDER`, invoke `/consult` (Function B of the system-owner agent — pre-change advisory) with the change description and the risk-check report's Dimensions section as context. Append the system-owner commentary as a new `## Architectural Commentary` section in the report file and chat output. Skip for GO verdicts.
 - **Target files:**
@@ -53,6 +53,6 @@ All 5 items are journal-derived — authored by the operator in the AI journal, 
 
 ## Execution notes
 - Execute in order: item 1 (CLAUDE.md rule) → item 2 (new-project gate) → item 3 (risk-check update) → items 4+5 (new commands). Items 4 and 5 may be parallelized.
-- For any item marked "Risk-check required: yes", run `/risk-check` before executing that item. All 5 items require a /risk-check gate.
+- Items 1, 4, and 5 require a `/risk-check` gate (workspace CLAUDE.md edit + 2 new command paths). Items 2 and 3 edit existing commands — not a canonical change class; `/risk-check` is operator-discretionary there.
 - Commit each fix separately (workspace commit-behavior rules).
 - Run `/wrap-session` when all items in this plan are done.
