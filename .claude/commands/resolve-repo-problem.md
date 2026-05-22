@@ -1,50 +1,54 @@
 ---
-description: Investigate an unexpected repo error, broken state, or structural inconsistency. Spawns an investigator subagent that diagnoses the root cause and writes a ranked three-option fix plan (quick patch / structural fix / defer) to audits/working/. Triage only — applies no fix.
+description: Investigate a repo error, broken state, or structural inconsistency — OR a session/workflow fault (a command misbehaving, a gate firing at the wrong time, conflicting instructions, a hook nudging wrongly). Two operator-invoked modes — MANUAL (a problem description; subagent investigation; ranked three-option fix plan to audits/working/) and AUTO (no argument; inline investigation auto-detected from the conversation). Both log a pending entry to improvement-log.md for the Friday cadence. Triage only — applies no fix.
 model: opus
 ---
 
-Diagnose a repo problem and produce a fix plan. `/resolve-repo-problem` takes a problem description, delegates investigation to a fresh-context subagent that locates the relevant files, reads the governing rules, and diagnoses the root cause, then writes a ranked three-option fix plan. **Triage only — it applies no fix.** The operator (or a follow-up session) decides which option to execute.
+Diagnose a problem and produce a fix plan. `/resolve-repo-problem` covers two kinds of problem — a repo error or structural inconsistency, and a session/workflow fault that surfaced mid-session (a command misbehaved, a gate fired at the wrong time, two loaded instructions conflicted, a hook nudged wrongly). It runs in one of two operator-invoked modes and **applies no fix in either — triage only.**
 
-Input: `$ARGUMENTS` — a short description of the problem: the error seen, the broken state, or the inconsistency noticed.
+- **MANUAL mode** — invoked with a problem description. A fresh-context subagent locates the relevant files, diagnoses the root cause, and writes a ranked three-option fix plan to `audits/working/`. The operator (or a follow-up session) decides which option to execute.
+- **AUTO mode** — invoked with no argument, typically right after Claude reports a fault in chat. The issue is auto-detected from the recent conversation and the investigation runs **inline in the main session** (the live conversation already holds the evidence — no subagent).
 
----
+Both modes append a `Status: logged (pending)` entry to `improvement-log.md`, which `/friday-checkup` surfaces for the Friday fix cadence.
 
-### Step 1 — Input validation
-
-1. If `$ARGUMENTS` is empty, abort with:
-   ```
-   /resolve-repo-problem requires a problem description.
-   Example: /resolve-repo-problem the auto-sync hook symlinks commands the manifest lists as local
-   ```
-   Set `PROBLEM` = `$ARGUMENTS` verbatim.
+Input: `$ARGUMENTS` — optional. A short description of the problem (the error seen, the broken state, the inconsistency or fault noticed). Empty `$ARGUMENTS` routes to AUTO mode.
 
 ---
 
-### Step 2 — Path setup
+### Step 0 — Mode and issue resolution
 
-2. Set `DATE` = today, `YYYY-MM-DD`.
-3. Set `REPO_ROOT` = `git -C "$(pwd)" rev-parse --show-toplevel` (fall back to cwd if not a git repo).
-4. Set `WORKING_DIR` = `{REPO_ROOT}/audits/working/`. Create it if missing (`mkdir -p`).
-5. Compute `SLUG` from `PROBLEM`: lowercase, replace non-alphanumeric runs with a single `-`, strip leading/trailing `-`, truncate to 50 characters at a `-` boundary. If empty, fall back to `problem-{HHMMSS}`.
-6. Set `NOTES_PATH` = `{WORKING_DIR}/{DATE}-resolve-{SLUG}.md`. If it already exists, append `-2`, `-3`, … until unique.
+1. **Select the mode:**
+   - `$ARGUMENTS` non-empty → **MANUAL mode**. Set `ISSUE` = `$ARGUMENTS` verbatim. Go to MANUAL Step 1.
+   - `$ARGUMENTS` empty → **AUTO mode**. Resolve the issue via Step 0a, then go to the AUTO routine.
+
+2. **Step 0a — auto-detect the issue (AUTO mode only).** Scan the recent conversation for the surfaced problem: the most recent operator message or Claude observation describing a command misbehaving, a gate or guardrail flag firing at the wrong time, two loaded instructions conflicting, or a hook nudging/blocking wrongly. Write a 1–2 sentence `ISSUE` statement — what was expected, what happened, and which command / hook / rule was involved. If no concrete issue can be identified, abort AUTO mode with one chat line — `No session issue found to investigate` — and do **not** write an `improvement-log.md` entry.
 
 ---
 
-### Step 3 — Delegate the investigation
+## MANUAL mode
 
-7. Spawn one general-purpose investigator subagent (fresh context) with this brief:
+### MANUAL Step 1 — Path setup
+
+3. Set `DATE` = today, `YYYY-MM-DD`.
+4. Set `REPO_ROOT` = `git -C "$(pwd)" rev-parse --show-toplevel` (fall back to cwd if not a git repo).
+5. Set `WORKING_DIR` = `{REPO_ROOT}/audits/working/`. Create it if missing (`mkdir -p`).
+6. Compute `SLUG` from `ISSUE`: lowercase, replace non-alphanumeric runs with a single `-`, strip leading/trailing `-`, truncate to 50 characters at a `-` boundary. If empty, fall back to `problem-{HHMMSS}`.
+7. Set `NOTES_PATH` = `{WORKING_DIR}/{DATE}-resolve-{SLUG}.md`. If it already exists, append `-2`, `-3`, … until unique.
+
+### MANUAL Step 2 — Delegate the investigation
+
+8. Spawn one general-purpose investigator subagent (fresh context) with this brief:
 
    ```
    You are a repo-problem investigator. Diagnose a reported problem and produce a fix plan. You do NOT apply any fix — this is triage only.
 
    PROBLEM (operator's description):
-   {PROBLEM verbatim}
+   {ISSUE verbatim}
 
    REPO_ROOT: {REPO_ROOT}
 
    Procedure:
    1. Locate the relevant files. Use Glob and Grep from REPO_ROOT to find the files, commands, agents, hooks, or config the problem touches.
-   2. Read the governing context: the nearest CLAUDE.md (project and workspace), and the most recent ~10 entries of logs/decisions.md if it exists — a past decision may explain the current state.
+   2. Read the governing context: the nearest CLAUDE.md (project and workspace), and the most recent ~10 entries of logs/decisions.md if it exists — a past decision may explain the current state. If the problem is a session/workflow fault (a command, gate, hook, or instruction misbehaving), also read the most recent block of logs/friction-log.md and logs/session-notes.md.
    3. Diagnose the root cause. Distinguish the symptom from the cause. If the evidence does not support a single root cause, say so and list the candidate causes rather than forcing one.
    4. Produce a ranked three-option fix plan:
       - Quick patch — the smallest change that resolves the symptom. Note what it leaves unaddressed.
@@ -63,12 +67,54 @@ Input: `$ARGUMENTS` — a short description of the problem: the error seen, the 
    Do not apply any fix. Do not edit, create, or delete any file other than {NOTES_PATH}.
    ```
 
+### MANUAL Step 3 — Present the result
+
+9. If the returned summary lacks the `NOTES: {NOTES_PATH}` last line, re-invoke the subagent once with the same brief. If it still lacks the marker, report the malformed summary and the expected notes path to the operator.
+
+10. Display the subagent's summary to the operator, prefixed with `Repo-problem triage — {DATE}`, and state the full notes path.
+
+### MANUAL Step 4 — Log a pending improvement-log entry
+
+11. Append a `logged (pending)` entry to `{REPO_ROOT}/logs/improvement-log.md` using the **Improvement-log entry schema** below. The `Proposal` field summarises the subagent's **recommended option** in 2–4 sentences; the `Notes` field cites `{NOTES_PATH}`. This puts the triage on the `/friday-checkup` queue. If `{REPO_ROOT}/logs/improvement-log.md` does not exist, create it first — see the schema section.
+
 ---
 
-### Step 4 — Present the result
+## AUTO mode — inline investigation
 
-8. If the returned summary lacks the `NOTES: {NOTES_PATH}` last line, re-invoke the subagent once with the same brief. If it still lacks the marker, report the malformed summary and the expected notes path to the operator.
+Runs entirely in the main session. **No subagent** — the operator invokes AUTO mode right after the fault was reported, so the live conversation is the evidence. The issue is `ISSUE` from Step 0a.
 
-9. Display the subagent's summary to the operator, prefixed with `Repo-problem triage — {DATE}`, and state the full notes path.
+**A. Gather evidence.** Use the recent conversation already in context. Supplement it with scoped greps — only if the files exist — of `logs/friction-log.md` (recent session block), `logs/decisions.md` (last ~10 entries), and `logs/session-notes.md` (current exit condition / open threads).
 
-10. `/resolve-repo-problem` applies no fix and commits nothing. The diagnosis and fix plan are advisory. The operator chooses an option; executing it is separate work — and if the chosen option is a structural fix flagged for `/risk-check`, run that gate before landing it.
+**B. Diagnose.** Distinguish symptom from root cause. If the evidence supports more than one cause, list the candidates rather than forcing one.
+
+**C. Propose a fix.** Name ONE recommended fix (not a three-option ranked plan), naming the target files. If the fix is itself a `/risk-check` change class (hook, settings.json, CLAUDE.md, new command, symlink), say so in the proposal.
+
+**D. Write the entry.** Append one self-contained `logged (pending)` entry to `{scope}/logs/improvement-log.md` using the schema below. `{scope}` = `git rev-parse --show-toplevel` of the cwd (fall back to cwd). No `audits/working/` notes file in AUTO mode — the entry is the write-up.
+
+**E. Report.** Display in chat: `Session-issue triage — {DATE}`, the root-cause diagnosis (1–3 sentences), the recommended fix (one line), and `Logged to {scope}/logs/improvement-log.md`.
+
+---
+
+### Improvement-log entry schema
+
+Both modes append entries in this shape. It conforms to the `## Schema` block of `improvement-log.md`; `Status` uses the compound `logged (pending)` form that `/friday-checkup` Step 6 matches.
+
+```
+### YYYY-MM-DD — {short issue title}
+
+- **Status:** logged (pending)
+- **Category:** session-issue
+- **Source:** {AUTO: "/resolve-repo-problem AUTO mode YYYY-MM-DD" | MANUAL: "/resolve-repo-problem YYYY-MM-DD"}
+- **Friction source:** {1-2 sentences — what was expected, what happened, which command/hook/rule was involved}
+- **Proposal:** {AUTO: the single recommended fix, 2-4 sentences, naming target files, flagging if the fix is itself a /risk-check change class | MANUAL: a 2-4 sentence summary of the subagent's recommended option}
+- **Target files:** {files to edit when the fix is executed}
+- **Notes:** {MANUAL only — the audits/working/ notes path; omit this field entirely in AUTO mode}
+```
+
+`Category: session-issue` is a recognised value under the schema's free-text "broad classification" definition. If `{scope}/logs/improvement-log.md` does not exist, create it first with the `# Improvement Log` header followed by the `## Schema` block copied from the canonical `ai-resources/logs/improvement-log.md`, then append the entry.
+
+---
+
+### Triage only — no fix, no commit
+
+`/resolve-repo-problem` applies no fix and commits nothing in either mode. The diagnosis and fix plan are advisory. In MANUAL mode the operator chooses an option; executing it is separate work — and if the chosen option is a structural fix flagged for `/risk-check`, run that gate before landing it. The `logged (pending)` entry — written by either mode — is resolved through `/friday-checkup` → `/friday-act`, not in the session that logged it.
