@@ -1,51 +1,37 @@
-# Permission Sweep Report — 2026-05-22 (dry-run)
+# Permission Sweep Report — 2026-05-22
 
 ## Summary
 
-Scanned **26 settings files** across 5 layers (user, workspace, ai-resources, projects, workflow-dev).
+- Scanned 26 settings files across 5 layers (user, workspace, ai-resources, projects, workflow-dev).
+- Findings: 0 CRITICAL, 2 HIGH, 0 MEDIUM, 3 ADVISORY, 0 INTENTIONAL-NARROW.
+- Applied: 4 (2 HIGH + 2 advisory). Deferred: 1 advisory (A1). Skipped INTENTIONAL-NARROW: 0.
+- Run as the execution mechanism for the 2026-05-22 friday-act `permissions` plan. Risk-checked GO (`audits/risk-checks/2026-05-22-add-bash-rm-and-notebookedit-to-two-project-settings-json.md`).
+- Supersedes the earlier same-day dry-run report (friday-checkup weekly rotation).
 
-Findings:
-- **0 CRITICAL** — no live permission-prompt failures right now.
-- **2 HIGH** — gaps that will cause future Delete prompts.
-- **1 MEDIUM** — Model Tier policy violation.
-- **6 ADVISORY** — hardening / hygiene.
-- **0 INTENTIONAL-NARROW**.
+## Findings applied
 
-## What's causing prompts right now
+| # | File | Rule | Severity | Change |
+|---|------|------|----------|--------|
+| 1 | projects/axcion-brand-book/.claude/settings.json | Rule 6 | HIGH | Added `Bash(rm *)` to `permissions.allow` |
+| 2 | projects/ai-development-lab/.claude/settings.json | Rule 6 | HIGH | Added `Bash(rm *)` to `permissions.allow` |
+| 3 | projects/axcion-brand-book/.claude/settings.json | Rule 13 | ADVISORY | Added `NotebookEdit` to `permissions.allow` |
+| 4 | projects/ai-development-lab/.claude/settings.json | Rule 13 | ADVISORY | Added `NotebookEdit` to `permissions.allow` |
 
-None. No CRITICAL findings — `defaultMode: bypassPermissions` is present across the active layers.
+The two advisory `NotebookEdit` additions are normally excluded from `apply all`; they were applied here because they are plan item 4 of the approved friday-act `permissions` plan. The two `Edit(**/.claude/**)` / `Write(**/.claude/**)` globs also named in plan item 4 were **not** applied — this run's Rules 3 and 4 did not fire (bare `Edit`/`Write` already cover all paths), so the globs are redundant. (Note: the earlier dry-run flagged these globs as advisory under Rule 3; the two runs disagree on Rule 3. The fresh run's reasoned disposition — bare `Edit`/`Write` cover all paths — is taken as authoritative; the globs are at worst a redundant hardening entry.)
 
-## Other gaps (won't prompt today, but will eventually)
+## Findings deferred (not approved this run)
 
-**HIGH — Rule 6 (`Bash(rm *)` missing → Delete operations will prompt):**
+| File | Rule | Severity | Reason |
+|------|------|----------|--------|
+| 8 project settings.json files (`Read(archive/**)` deny without `archive/` in `.gitignore`) | Rule 14 | ADVISORY | Out of scope for the friday-act `permissions` plan — a `.gitignore` change, not a permission change. Surfaced to the operator for a separate decision. `buy-side-service-plan` is highest priority (its `archive/` directory exists on disk). The other 7: `corporate-identity`, `nordic-pe-macro-landscape-H1-2026`, `project-planning`, `obsidian-pe-kb`, `repo-documentation`, `interpersonal-communication`, `axcion-ai-system-owner`. `global-macro-analysis` is already compliant. |
 
-1. `projects/ai-development-lab/.claude/settings.json`
-   — allow list has no narrow `rm` entry. Delete/Remove operations will prompt.
-   Fix: add `"Bash(rm *)"` to `permissions.allow`.
+## Plan items with no corresponding finding
 
-2. `projects/axcion-brand-book/.claude/settings.json`
-   — same: no narrow `rm` entry. Delete/Remove operations will prompt.
-   Fix: add `"Bash(rm *)"` to `permissions.allow`.
+- **friday-act `permissions` plan item 3** — "Remove the `model` field from `~/.claude/settings.json`." The earlier same-day dry-run (friday-checkup) confirmed `"model": "sonnet"` was present at checkup time (a Rule 11 MEDIUM). This fresh run finds **no `model` field** in `~/.claude/settings.json` (and no `~/.claude/settings.local.json` exists) — the field was removed by an intervening session between the checkup and this run. Item 3 is resolved; no change made.
 
-## Model Tier policy violation
+## Intentional-narrow files (excluded)
 
-**MEDIUM — Rule 11:**
-
-- `~/.claude/settings.json` (user level) carries `"model": "sonnet"`. No other layer has this field. This violates the workspace **Model Tier** rule — model defaults are prohibited in any `settings.json` because a declared default contests in-session `/model` switches.
-  Fix: remove the `"model"` field from `~/.claude/settings.json`. (Removing a model field is policy-compliant; the prohibition is on *adding* one.)
-
-## Coverage improvements
-
-**ADVISORY:**
-
-- **A1/A2 — Rule 3:** `ai-development-lab` and `axcion-brand-book` settings.json missing `Edit(**/.claude/**)` + `Write(**/.claude/**)`. Bare `Edit`/`Write` are present, so no live prompt failure — hardening gap only.
-- **A3/A4 — Rule 13:** same two files missing `"NotebookEdit"` in allow.
-- **A5 — Rule 13:** `model` field hygiene in `~/.claude/settings.json` (paired with the MEDIUM above).
-- **A6 — Rule 14:** 7 project settings files carry a `Read(archive/**)` deny but have no `archive/` entry in their project `.gitignore` — projects: `project-planning`, `obsidian-pe-kb`, `repo-documentation`, `interpersonal-communication`, `axcion-ai-system-owner`, `corporate-identity`, `nordic-pe-macro-landscape-H1-2026`.
-
-## Intentionally narrow — not touching
-
-None.
+- None. The documented exception (`projects/obsidian-pe-kb/vault/.claude/settings.json`) does not exist on disk.
 
 ## Full diagnostic notes
 
@@ -56,7 +42,3 @@ None.
 - SessionStart hook `check-permission-sanity.sh` flags the primary root cause on session start.
 - `/new-project` pipeline emits the canonical template for every new project.
 - `/friday-checkup` weekly rotation runs `/permission-sweep --dry-run` to catch drift.
-
----
-
-*Dry-run complete. Run `/permission-sweep` without `--dry-run` to remediate.*
