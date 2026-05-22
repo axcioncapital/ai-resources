@@ -17,6 +17,19 @@ Resolved entries (Status: applied + Verified) are archived to `improvement-log-a
 
 ---
 
+## Triage — 2026-05-22 (friday-act improvement-log plan, item 1)
+
+Read-only triage of the 4 entries logged this friday-checkup cycle. No fixes executed.
+
+- **Friction logging stub entry ("note this")** — MED. Bundle with the 2 entries below — all 3 touch `note.md` / `friction-log.md`; one ~1 h session.
+- **/note + /friction-log incompatible session-header formats** — MED-HIGH. Load-bearing fix of the trio: the format mismatch makes `/note friction:` append duplicate blocks and silently drop write-activity capture. Do first in the bundled session.
+- **No trigger/context on manual friction entries** — MED. Bundle with the 2 above.
+- **workflow-diagnosis / improvement-analyst boundary doc** — MED, dependent. Do inside the `/create-skill` run that fulfills `inbox/workflow-diagnosis.md` — not standalone.
+
+Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logging entries; the boundary-doc entry rides with the workflow-diagnosis skill build.
+
+---
+
 - **Status:** applied 2026-04-18 (Prevention Session 2)
 - **Verified:** 2026-04-18 — confirmed by operator
 - **Category:** Audit-recurrence prevention
