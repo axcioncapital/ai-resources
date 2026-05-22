@@ -42,7 +42,7 @@ Suggested three-session sequence:
 ### 2026-04-25 — Make /wrap-session leaner
 
 - **Status:** logged (pending)
-- **Review-cycle:** reviewed 2026-05-18, deferred — structural command edit needs dedicated /improve session scoped to wrap-session.md; sub-5 already obsolete; sub-1 through sub-4 still valid but touch command flow ordering
+- **Review-cycle:** BOOKED 2026-05-22 — dedicated session targeted for **2026-05-26** (W22), paired with the 2026-04-28 permission-sweep-auditor entry below (~1.5–2 h combined). Not deferred again: two review cycles (2026-05-18, 2026-05-22) have now passed without execution; a third deferral is exactly the cycle-waste this booking exists to break. Scope when executed: port sub-1 through sub-4 (sub-5 is obsolete); sub-2 (reorder archive before session-note append) is the highest-leverage change.
 - **Category:** command/skill
 - **Source:** Mid-wrap conversation 2026-04-25 — operator asked why /wrap-session was taking so long. Audit of the wrap's actual tool-call count surfaced ~3-4 round-trips of avoidable cost.
 - **Friction observation:** A typical /wrap-session reads 3 full log files (innovation-registry, improvement-log, friction-log) when single greps would do, and runs the archive AFTER appending today's entry, which forces a freshness-failure re-read of session-notes.md when the archive trims it.
@@ -58,7 +58,7 @@ Suggested three-session sequence:
 ### 2026-04-28 — permission-sweep-auditor: classify template sources, skip Rule 8
 
 - **Status:** logged (pending)
-- **Review-cycle:** reviewed 2026-05-18, deferred — agent-definition edit requires /risk-check per Autonomy Rule #9; needs dedicated risk-gate session; no active false-positive harm beyond noise in friday-checkup reports
+- **Review-cycle:** BOOKED 2026-05-22 — dedicated session targeted for **2026-05-26** (W22), paired with the 2026-04-25 /wrap-session-leaner entry above. Not deferred again (two cycles passed: 2026-05-18, 2026-05-22). Scope when executed: edit `permission-sweep-auditor.md` to add template-class classification. Note: whether an existing-agent-definition edit is a canonical `/risk-check` change class is itself an open question (`/friday-act` QC 2026-05-22 read it as discretionary, not mandatory — see `decisions.md`); resolve that first in the booked session, then gate accordingly.
 - **Category:** Audit-recurrence prevention
 - **Source:** `/permission-sweep` run 2026-04-27 / 2026-04-28 (report at `ai-resources/audits/permission-sweep-2026-04-27.md`). Auditor flagged `ai-resources/workflows/research-workflow/.claude/settings.json` line 35 (`"additionalDirectories": ["{{WORKSPACE_ROOT}}"]`) as a HIGH Rule 8 violation ("stale `additionalDirectories`") because the value is an unfilled placeholder. The placeholder is intentional — the most recent commit on that file (`81cb6c2 update: research-workflow template — additionalDirectories placeholder + SETUP step`) explicitly added it as a deploy-time fill-in consumed by `/deploy-workflow` / `/new-project`. Replacing it with a resolved path would corrupt new deployments. Auditor cannot currently distinguish template source from deployed instance.
 - **Friction observation:** Held finding will re-fire on every future `/permission-sweep` run (including weekly `/friday-checkup --dry-run`) until the auditor learns to skip it. Each re-fire wastes operator attention on a non-issue and risks accidental "fix" by a future agent.
