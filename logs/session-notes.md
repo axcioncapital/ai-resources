@@ -247,6 +247,38 @@ Class: execution
 
 Class: implementation
 
+### Summary
+Executed the 5-item journal-commands `/friday-act` plan (`audits/friday-plans/2026-05-22-journal-commands.md`) to completion. Plan-time `/risk-check` returned PROCEED-WITH-CAUTION; all 4 mitigations were applied and QC-confirmed PASS. `/qc-pass` returned REVISE on one finding (command-vs-skill invocation wording), which was resolved. End-time `/risk-check` was skipped per the documented skip rule. One commit per item, six commits total across two repos.
+
+### Files Created
+- `.claude/commands/drift-check.md` — new advisory command: mid-session trajectory drift check (item 4)
+- `.claude/commands/resolve-repo-problem.md` — new advisory command: repo-error diagnosis + 3-option fix plan (item 5)
+- `audits/risk-checks/2026-05-22-three-structural-additions-from-the-journal-commands-friday.md` — plan-time risk-check report
+- `logs/scratchpads/2026-05-22-14-44-scratchpad.md` — session continuity scratchpad
+
+### Files Modified
+- `Axcion AI Repo/CLAUDE.md` (workspace-level — separate repo from `ai-resources`) — "Between-gate summaries" bullet added under `## Working Principles` (item 1); commit `e258bb8`
+- `.claude/commands/new-project.md` — `## Stage 3b → 3c Architecture Gate` section added (item 2); Skill-tool dispatch wording clarified (QC fix)
+- `.claude/commands/risk-check.md` — `### Step 4a: System-Owner Second Opinion` added (item 3); Skill-tool dispatch wording clarified (QC fix)
+- `logs/session-notes.md` — this entry
+
+### Decisions Made
+- **Plan-time `/risk-check` run once for the whole plan** — per `risk-check.md`'s "plan-time fires once" rule, items 1/4/5 were covered in a single gate, not three separate runs.
+- **Item 1 (M1 mitigation):** rule condensed to 52 words inline (~80 tokens), no separate docs file — the ≤55-word / ≤90-token budget is met by tightening alone; a docs-offload for a 52-word rule would be over-engineering.
+- **Item 2:** added defensive handling beyond the plan's literal verdict cases — `DECLINE`/unparseable verdict and `/implementation-triage`'s own failure both fall through to "proceed" so an advisory gate cannot block the pipeline.
+- **Items 4–5 built as commands, not skills** — the plan's primary target; the "consider a full skill" fallback did not apply to single-purpose advisory commands.
+- **Model tier:** both new commands declare `model: opus`, joining the advisory-command family (`/risk-check`, `/implementation-triage`, `/consult` — all opus). QC flagged `/resolve-repo-problem` as borderline (pure-dispatch leans sonnet by the workspace rule); kept opus for family consistency — operator may reconsider.
+- **End-time `/risk-check` skipped** — plan-time gate covered the exact in-class change set (workspace CLAUDE.md + 2 new commands), all 4 mitigations applied and QC-confirmed, commits shipped, zero drift between planned and executed change set. Skip per the documented end-time skip rule.
+- *QC fix (separate from plan items):* `/qc-pass` REVISE — the "skill (Skill tool)" wording for invoking command files (`/implementation-triage`, `/consult`) read as a command-vs-skill mismatch. Skill-tool dispatch of `.claude/commands/*.md` confirmed working empirically (`/risk-check` and `/qc-pass` invoked via Skill tool this session). Wording tightened in both files; commit `0a3beba`.
+
+### Next Steps
+- **Push** — workspace `Axcion AI Repo` repo: 2 unpushed (`5b03877` concurrent governance-rules session, `e258bb8` this session). `ai-resources`: 5 this session (`c43d386`, `4494e96`, `249aee2`, `1529adf`, `0a3beba`) on top of 3 prior — 8 total unpushed. Operator-gated.
+- **Scratchpad clock-skew bug (now misrouting `/prime`)** — `logs/scratchpads/` filenames `14-00` and `16-30` are skewed ahead of real time; `/prime` Step 1b sorts lexically, so it will surface the stale `16-30` scratchpad instead of this session's true-latest `2026-05-22-14-44-scratchpad.md`. This is the deferred scratchpad-retention work (risk-check M3 from the handoff-integration session) — now actively biting; worth prioritizing.
+- **Remaining `/friday-act` plans** — a concurrent `/friday-act execution` session cleared the 4 ungated plans; `check-concurrent-session` and `repo-documentation` plans remain deferred.
+
+### Open Questions
+None.
+
 
 ## 2026-05-22 — Add four governance rules to workspace CLAUDE.md
 

@@ -4,6 +4,33 @@
 
 ### 2026-05-22 | Acceptable
 
+**Task:** Executed the 5-item journal-commands `/friday-act` plan — added a "Between-gate summaries" rule to the workspace CLAUDE.md, a Stage 3b→3c Architecture Gate to `/new-project`, a Step 4a system-owner second-opinion to `/risk-check`, and created two advisory commands (`/drift-check`, `/resolve-repo-problem`); ran plan-time `/risk-check` and `/qc-pass`, then wrapped.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~5 |
+| Files read | ~9 (re-reads: 0) |
+| Files written/edited | ~9 (3 edited, 4 created, 2 appended) |
+| Tool calls | ~43 total |
+| Subagents | 2 |
+| Rework cycles | 1 |
+
+**Findings:**
+- **Rework — Moderate:** `/qc-pass` returned REVISE on the "skill (Skill tool)" invocation wording, forcing a re-edit of 2 command files and a follow-up commit (0a3beba). One cycle on a wording-class issue; the QC ran after the affected files were committed, so the fix landed as a separate correction commit rather than inline. Catchable upstream — "Run a wording self-check on tool-invocation phrasing before committing command files, or move `/qc-pass` ahead of the commit."
+- **Context bloat — Minor:** `new-project.md` read at ~681 lines for an edit that touched one section and one wording region. The full read was justified by the Architecture Gate insertion needing surrounding-stage context, but it dominated the read budget; partial section-scoped reads suffice when the insertion point is already known.
+- **Tool overhead — Minor:** ~13 Bash calls on a 5-item edit-and-commit session — driven by EOF-safe `cat >>` appends and a mid-file header search forced by 3+ concurrent sessions writing `session-notes.md`. Concurrent-session-induced, not a design fault.
+- Trend: stable vs. the last 3 entries (Acceptable / Efficient / Acceptable) — same recurring class as the prior `/friday-act` entry today (a QC pass running after commit rather than inline, producing a correction commit). The session-notes re-read pattern flagged repeatedly this month did NOT recur here — reads were disciplined, no file read in full twice.
+
+**Recommendation:** Run a wording-class self-check on tool-invocation phrasing (Skill / Agent / command references) before committing new or edited command files — the single REVISE this session was a phrasing issue a pre-commit self-check would have caught, converting a separate correction commit into a clean first commit.
+
+**Estimated savings:** A post-commit wording correction costs the QC re-read of the 2 affected command files (~110 + ~107 lines ≈ ~3k tokens), the re-edits (~1k), and a second commit's overhead (~1k) — roughly 5k tokens per occurrence. If wording REVISEs recur on even 1-in-3 command-authoring sessions, that is ~1.5k/session amortized, or ~15–30k over a 10–20 session horizon — plus the avoided risk of imprecise invocation wording shipping in a new command.
+
+**Additional levers (ROI-ranked):**
+- Section-scope the `new-project.md` read when the insertion point is pre-identified — the ~681-line file was read in full for a 2-region edit; reading only the Stage 3b–3c neighborhood plus the target wording region saves ~500+ lines (~6–8k tokens) on every `/new-project` edit session. Larger than the primary because it is a deterministic per-edit-session saving, not a probabilistic rework avoidance.
+- Pre-identify the `session-notes.md` append header once at `/prime` and pin it, so the wrap append does not require a mid-file header search under concurrent-session contention — ~1–2k/session. Smaller than the primary; concurrent-write contention is the real driver and pinning only partly mitigates it.
+
+### 2026-05-22 | Acceptable
+
 **Task:** Ran /prime then the full weekly-tier /friday-checkup across 9 scopes (ai-resources, workspace, 7 projects) — /audit-repo ×3, /improve ×3, /coach ×7, permission-sweep + log-sweep dry-runs, doc-scan, maintenance consolidation + /kb-integrity — then /wrap-session.
 
 | Metric | Value |

@@ -472,3 +472,10 @@
 - **QC cycles:** 1 (REVISE → 4 risk-check annotations corrected → committed)
 - **Gates:** 1 (1 changed) — qc-disposition:changed. QC was operator-prompted ("did you run /qc-pass?"); verdict REVISE, fixes applied.
 - **Mandate fields:** specified: work_scope, exit_condition, out_of_scope | inferred: files_in_scope | omitted: stop_if
+
+### 2026-05-22 — /friday-act journal-commands plan execution
+- **Commands used:** /prime, /risk-check, /qc-pass, /wrap-session
+- **Iterations:** 0 (direct implementation of an approved plan — no draft-iteration cycle)
+- **Decisions logged:** 0 (plan-execution judgment calls recorded in the session note, not decisions.md)
+- **QC cycles:** 1 (REVISE → 1 finding fixed → GO)
+- **Mandate fields:** specified: work_scope, exit_condition, stop_if | omitted: out_of_scope, files_in_scope
