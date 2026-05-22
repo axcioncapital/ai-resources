@@ -4,6 +4,34 @@
 
 ### 2026-05-22 | Acceptable
 
+**Task:** Rewrote the `/prime` command into a slim, scannable brief ending in a 1–3 task menu with number-invoke chaining and a plan-mode guard. Scoped via `/clarify`, planned in plan mode, QC'd twice (plan + implementation).
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~8 |
+| Files read | 11 (re-reads: 1 file ×3) |
+| Files written/edited | 6 |
+| Tool calls | ~45 |
+| Subagents | 4 |
+| Rework cycles | 2 |
+
+**Findings:**
+- Re-reads (Moderate): `session-notes.md` (~392 lines) read 3×. The first read used offset 1 / limit 5, which hit the file START — but the wrap append point is at the END. That forced a full ~392-line re-read, then a ~120-line tail re-read after a concurrent-session edit. ~512 lines of content streamed across the 3 reads. This is the dominant historical pattern in the log (tail-then-full / repeated offset scans on `session-notes.md`).
+- Tool overhead (Minor): 1 wasted Edit on `session-notes.md` from a concurrent `/open-items` session modifying the file mid-wrap, plus 1 recovery re-read — collision cost, not a process flaw.
+- Rework: 2 QC→fix cycles (plan REVISE → 4 fixes; implementation REVISE → 1 fix). Both expected QC discipline, not waste.
+- Trend: stable vs the last 3 entries — two Acceptable, one Efficient; the `session-notes.md` re-read recurs again here, consistent with the broader log's dominant pattern rather than an improvement or regression.
+
+**Recommendation:** Fix the wrap-step `session-notes.md` read to target the file END directly — use a negative-offset / tail read (or a length probe then offset = total − N) instead of offset 1. This eliminates the START-miss that forces the full ~392-line re-read every wrap.
+
+**Estimated savings:** ~390 lines (~5K tokens) per wrap session by replacing the full re-read with a single ~120-line tail read. Across 10–20 sessions: ~50K–100K tokens. Derivation: full 392-line read avoided; ~120-line tail read retained.
+
+**Additional levers (ROI-ranked):**
+- Read `session-notes.md` once at session start with a correct tail-targeted read and cache the append point — avoids both the wrap re-read and any mid-session re-scan. ~5–8K tokens/session; bigger than primary because it also covers non-wrap re-scans, but requires the append point to stay valid across the session.
+- Concurrency guard on the wrap edit: detect `session-notes.md` mtime change before the Edit and re-read only the tail delta, not the whole file. ~1–2K tokens/collision; smaller than primary because collisions are intermittent, not every session.
+- Bound the largest pure inputs: `usage-log.md` (~558 lines) and `decisions.md` (~356 lines) are read in full but only appended-to / scanned — tail or section reads would trim ~3–4K tokens/session; smaller than primary because they are single reads, not repeated ones.
+
+### 2026-05-22 | Acceptable
+
 **Task:** Executed the 5-item journal-commands `/friday-act` plan — added a "Between-gate summaries" rule to the workspace CLAUDE.md, a Stage 3b→3c Architecture Gate to `/new-project`, a Step 4a system-owner second-opinion to `/risk-check`, and created two advisory commands (`/drift-check`, `/resolve-repo-problem`); ran plan-time `/risk-check` and `/qc-pass`, then wrapped.
 
 | Metric | Value |

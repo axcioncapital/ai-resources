@@ -46,8 +46,8 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 1b. **Detect a resumable continuity scratchpad.** `/handoff` continuity mode and `/wrap-session` Step 0.5 both write session-state scratchpads to `logs/scratchpads/`. Surface the most recent one so the operator can choose to resume it.
 
    - List `logs/scratchpads/` for files matching the glob `*-scratchpad.md` **exactly** — this excludes other files that may share the directory (e.g., `*-implementation-plan.md`).
-   - Select the most recent by **lexical filename sort**, NOT by filesystem mtime. The filename convention is `YYYY-MM-DD-HH-MM-scratchpad.md`, so lexical filename order equals chronological order. Do not sort by mtime — a scratchpad's mtime can disagree with its filename (a later-named file can carry an earlier mtime), so an mtime sort can surface the wrong file.
-   - Compare the selected scratchpad's filename date (`YYYY-MM-DD`) to the date of the last `session-notes.md` entry from Step 1:
+   - Select the most recent by **filesystem mtime** — the most-recently-modified `*-scratchpad.md` file wins (e.g. `ls -t` over the matches). Do NOT sort by the `YYYY-MM-DD-HH-MM` timestamp in the filename: that timestamp is typed by the AI session that produced the scratchpad and its time-of-day component is unreliable (observed skew of 2–3 hours ahead of real write time), so lexical filename order does NOT track chronological order. `logs/scratchpads/` is gitignored — it is never populated by `git checkout` or `git pull` — so mtime always reflects the actual local write time and is the reliable chronological signal here.
+   - Compare the selected scratchpad's date — the `YYYY-MM-DD` date portion of its mtime — to the date of the last `session-notes.md` entry from Step 1:
      - Scratchpad date **≥** last entry date → surface it. Read its `## Resume With` section and take the first content line.
      - Scratchpad date **<** last entry date → a later wrap superseded it; skip silently.
    - If `logs/scratchpads/` is absent or has no `*-scratchpad.md` file, skip silently.

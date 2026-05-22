@@ -386,3 +386,39 @@ Continued the three not-yet-started 2026-05-22 friday-act plans in three waves �
 
 ### Open Questions
 None.
+
+
+## 2026-05-22 — Plan and tackle the /open-items backlog
+Class: mixed (design-dominant)
+
+## 2026-05-22 — Improved the /prime command — slim brief + numbered task menu
+
+### Summary
+The operator (a non-developer) reported `/prime`'s start-of-session brief was too dense and hard to scan. Scoped the rework via `/clarify` (4 questions) and an approved plan, then rewrote `prime.md`: the brief is now short, plain-English, and exception-based, ending in a numbered 1–3 task menu. Typing a number chains into `/session-start` then `/session-plan` and pauses for plan review; a plan-mode guard defers that chain until plan mode is exited. QC ran twice (plan + implementation) — each returned REVISE, all findings fixed. Committed `853d4a4`.
+
+### Files Created
+- `~/.claude/plans/let-s-improve-the-prime-graceful-pinwheel.md` — approved implementation plan (harness plan file, not in the repo)
+- `logs/scratchpads/2026-05-22-19-06-scratchpad.md` — continuity scratchpad (wrap-session Step 0.5)
+
+### Files Modified
+- `.claude/commands/prime.md` — full rewrite: exception-based slim brief, numbered 1–3 task menu, number-invoke chaining into `/session-start` + `/session-plan` with a plan-mode guard, plain-English conversion of log shorthand. Verification logic (git cross-check, scratchpad detection) preserved. Committed `853d4a4`.
+- `logs/session-notes.md` — this entry
+- `logs/decisions.md` — `/prime` redesign decision entry
+- `logs/usage-log.md` — session telemetry entry
+
+### Decisions Made
+- **Number flow:** type 1–3 → run `/session-start` + `/session-plan` → pause for plan review (not auto-start work).
+- **Brief content:** exception-based — last-session line + numbered menu always; carryover / HIGH-urgent / model-mismatch / dirty-tree / pull-failure lines only when real. Inbox / innovation / decisions fields dropped from the default view.
+- **Task source:** last-session Next Steps + `next-up.md`; HIGH-urgent problems promoted into the menu. No subagent — inline plain-English conversion.
+- **Project scoping:** none added — `/prime` already reads only the current project's logs.
+- **Plan-mode guard:** operator instruction mid-session — number-invoke defers the `/session-start` chain until plan mode is exited.
+- **QC fixes:** plan QC REVISE (4 findings — wrong file paths, Step 1a likely-DONE handling, `/session-plan` Step 0 prompt, `next-up.md` not universal) all fixed; implementation QC REVISE (duplicate same-day header) fixed in both write paths.
+- **End-time `/risk-check` skipped** — modifying an existing command file is not a canonical change class (per `decisions.md` 2026-05-22 "Risk-check change-class scope"); no hooks, settings, CLAUDE.md, new commands, or symlinks touched.
+
+### Next Steps
+- **Push** — `ai-resources` commit `853d4a4` is unpushed (operator gate); earlier wrap entries also flag prior unpushed commits.
+- **Live-test `/prime`** next session — run it and confirm the slim brief + numbered menu; exercise number-invoke and the plan-mode guard (plan verification steps 2–6).
+- **Optional follow-up:** the 8b free-text path has no plan-mode guard (QC out-of-scope note) — small symmetry edit if wanted.
+
+### Open Questions
+None.
