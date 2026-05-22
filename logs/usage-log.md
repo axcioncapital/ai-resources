@@ -2,6 +2,57 @@
 
 <!-- entries below -->
 
+### 2026-05-22 | Acceptable
+
+**Task:** Ran /prime then the full weekly-tier /friday-checkup across 9 scopes (ai-resources, workspace, 7 projects) — /audit-repo ×3, /improve ×3, /coach ×7, permission-sweep + log-sweep dry-runs, doc-scan, maintenance consolidation + /kb-integrity — then /wrap-session.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | not reported |
+| Files read | ~9 (re-reads: not reported) |
+| Files written/edited | ~30+ |
+| Tool calls | ~90 |
+| Subagents | ~31 |
+| Rework cycles | 3 |
+
+**Findings:**
+- **Rework — Major:** 3 rework instances on a multi-scope checkup — 2 collaboration-coach subagents failed on first invocation (path mis-resolution) and required re-runs (~62K + ~26K tokens spent on the failed attempts ≈ ~88K wasted), and findings-extractor over-escalated a MEDIUM finding to CRITICAL, forcing a main-session correction. The coach path failures are the dominant cost: "/coach subagent path mis-resolution required 2 re-runs — pin the resolved scope path in the coach dispatch brief so the worker does not re-resolve it."
+- **Tool overhead — Moderate:** /audit-repo lead agents reported the Agent/Task tool unavailable in their environment and ran all 7 auditor checklists inline instead of via sub-auditors — a deviation from the designed sequential-subagent flow. Not waste in tokens directly, but it collapses the intended isolation boundary and concentrates context in the lead agents.
+- **Context bloat — Minor:** ~31 subagents and ~30+ artifacts on a single session; scale is structural to a 9-scope weekly checkup, not a design fault, but it sits at the [COST] threshold and is the natural ceiling for this command.
+- Trend: regression vs. the last 3 entries (Efficient / Wasteful / Acceptable) on the rework axis — the coach path mis-resolution is a new failure class not seen in the prior /friday-checkup entries this month, distinct from the recurring session-notes re-read pattern.
+
+**Recommendation:** Pass the already-resolved absolute scope path into each collaboration-coach subagent's dispatch brief, so the worker consumes a verified path rather than re-resolving it — this eliminates the path mis-resolution class that cost 2 wasted subagent runs (~88K tokens) this session.
+
+**Estimated savings:** 2 failed coach subagents ≈ ~62K + ~26K = ~88K tokens this session. At ~1 weekly /friday-checkup with a 7-scope coach fan-out, even a 1-in-3 recurrence rate projects ~290K–590K tokens over 10–20 checkup sessions. Order-of-magnitude — the failed-attempt token figures are operator-reported, the recurrence rate is estimated.
+
+**Additional levers (ROI-ranked):**
+- Add a registered-subagent / tool-availability precheck before /audit-repo lead agents dispatch sub-auditors — if the Agent tool is unavailable the lead should know upfront rather than discovering it mid-run; saves the wasted dispatch attempts and makes the inline fallback a deliberate path (~5–10K tokens/checkup). Smaller than primary because the inline fallback still completed the work; it is a correctness/isolation fix more than a token fix.
+- Tighten the findings-extractor severity rubric so MEDIUM findings cannot escalate to CRITICAL without an explicit trigger condition — eliminates the main-session correction round-trip (~2–4K tokens/checkup). Smaller than primary because it is a single sporadic misclassification, not a deterministic per-scope failure.
+- Cache the log-trio (session-notes + decisions + usage-log) at /prime into one consolidated read and reuse at /wrap-session — recurring lever across all Friday-cluster sessions (~3–4K tokens/session). Lower ROI here because this checkup's re-read count was not reported, but the pattern is structural.
+
+### 2026-05-22 | Efficient
+
+**Task:** Ran /prime to orient the session (pulled repos, read session notes, decisions log, innovation registry, inbox, and working tree state), then ran /usage-analysis. No substantive edits or writes performed.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | 2 |
+| Files read | 4 (re-reads: 0) |
+| Files written/edited | 0 |
+| Tool calls | 9 |
+| Subagents | 1 |
+| Rework cycles | 0 |
+
+**Findings:**
+None — session was efficient. The heaviest read (usage-log.md, ~451 lines) was required by the skill spec and cannot be avoided. All other reads were proportionate to the orientation task. Compared to the last 3 entries (all Acceptable), this session represents an improvement — the minimal scope of a prime-only session naturally eliminates the waste categories that recurred in heavier sessions.
+
+**Recommendation:** No action needed.
+
+**Estimated savings:** N/A — no recommendation.
+
+**Additional levers (ROI-ranked):**
+No additional levers — session was efficient.
+
 ### 2026-05-16 | Wasteful
 
 **Task:** Ran /prime then full /cleanup-worktree workflow over ai-resources working tree. Investigation found 9 dirty paths (7 untracked audit/report artifacts after operator committed 2 modified files externally mid-flow); produced 8-section plan, 1st QC + triage + MINOR-1 revision, operator-inserted /qc-pass (GO), then 2 topical commits.

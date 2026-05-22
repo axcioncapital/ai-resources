@@ -82,3 +82,35 @@ Suggested three-session sequence:
   - `grep -rh "^effort:" skills/*/SKILL.md | grep -vE ":(low|medium|high)$"` → 0 lines
 - **Commits:** `a533595` (Phase A pipeline foundation), `a4f32e8` (Phase C bulk sweep)
 - **Exception justification:** 69 per-file pipeline runs would produce identical fix passes with no QC signal. One-time mechanical frontmatter insert only; no body changes. Documented in `docs/ai-resource-creation.md` before execution.
+
+### 2026-05-22 — Friction logging produced an unusable stub entry ("note this")
+
+- **Status:** logged (pending)
+- **Category:** process
+- **Friction source:** friction-log.md session 2026-05-18 10:00 — the only friction event is the literal text `note this.` (logged via `/note friction:` or `/friction-log`)
+- **Proposal:** Add a post-capture stub-detection step to `.claude/commands/note.md` Step A (friction routing) and `.claude/commands/friction-log.md` Step 3. After appending the entry, if the logged text is under ~15 characters or matches a placeholder pattern (`^(note this|todo|tbd|fixme|xxx|\.\.\.)\.?$` case-insensitive), append a bracketed reminder on the same line — `[STUB — expand before next /improve]` — and print one chat line: `Logged as a stub. Add detail with another /note friction: ... when you have a moment.` Keeps capture frictionless (still logs immediately, no blocking question) but flags the entry so the operator and the next `/improve` run both see it is incomplete. Effort trivial; impact medium; first occurrence. Batch with the next entry — both touch `note.md`.
+- **Target files:** `ai-resources/.claude/commands/note.md`, `ai-resources/.claude/commands/friction-log.md`
+
+### 2026-05-22 — /note friction: and /friction-log write incompatible session-header formats
+
+- **Status:** logged (pending)
+- **Category:** command
+- **Friction source:** structural pattern — cross-referencing `note.md`, `friction-log.md`, and `friction-log-auto.sh` against the actual `friction-log.md` file
+- **Proposal:** `friction-log.md` and `friction-log-auto.sh` write `## Session — {date}` + `### Friction Events` + `#### Write Activity`; `note.md` Step A writes `### Session: {date} — Manual entry` + `#### Friction Events` (colon, heading-level shift, wrong hash count). Consequence: `/note friction:` never detects an auto-created session block (auto writes `### Friction Events`, note.md looks for `#### Friction Events`), always appends a second differently-formatted block; and `log-write-activity.sh` keys on `#### Write Activity`, which `note.md` never writes — so `/note`-initiated sessions capture no write activity. Fix: make `note.md` Step A emit the exact same block as the other two writers (`## Session — {YYYY-MM-DD HH:MM}` / `### Friction Events` / `#### Write Activity`); change Step A step 2 to detect `### Friction Events` (three hashes), step 3 to append before `#### Write Activity`. Effort trivial; impact medium; first occurrence. Pairs with the entry above.
+- **Target files:** `ai-resources/.claude/commands/note.md`
+
+### 2026-05-22 — No mechanism ties a friction entry to the session/command that produced it
+
+- **Status:** logged (pending)
+- **Category:** process
+- **Friction source:** friction-log.md session 2026-05-18 10:00 — manual entry has no `**Trigger:**` line, unlike auto-created sessions which `friction-log-auto.sh` stamps with `**Trigger:** /skill-name`
+- **Proposal:** Manually-started friction sessions (`/note friction:`, `/friction-log`) record no context for what command/workflow stage was running. Add lightweight context capture to `note.md` Step A and `friction-log.md` Step 3: before appending, run `git log -1 --pretty=%H` and grep for the most recent `## <today>` header in `logs/session-notes.md`; append a `(context: <last-commit-short-hash>, <session-note-title-if-any>)` suffix. If neither available, append `(context: none captured)`. One grep + one `git log -1` — cheap, stays non-blocking. Gives every future analysis a Location anchor even for one-line operator notes. Effort small; impact medium; first occurrence.
+- **Target files:** `ai-resources/.claude/commands/note.md`, `ai-resources/.claude/commands/friction-log.md`
+
+### 2026-05-22 — workflow-diagnosis skill brief overlaps improvement-analyst — document the boundary before building
+
+- **Status:** logged (pending)
+- **Category:** process
+- **Friction source:** resource brief `inbox/workflow-diagnosis.md` (requested 2026-05-19), Exclusions section — explicitly lists "Analyze session-level friction or process issues (that's `improvement-analyst` agent)" as a non-goal
+- **Proposal:** The boundary between the planned `workflow-diagnosis` skill (artifact-defect-driven workflow fixes) and the `improvement-analyst` agent (session-friction-driven workflow fixes) currently lives only in the inbox brief's prose, which is archived to `inbox/archive/` once fulfilled. When `/create-skill` processes `inbox/workflow-diagnosis.md`, add a one-paragraph routing note to `ai-resources/docs/ai-resource-creation.md` (or a short `## Workflow-improvement surfaces` section) stating the split: `improvement-analyst` agent = session-friction-driven; `workflow-diagnosis` skill / `/diagnose-workflow` = artifact-defect-driven; with trigger phrasing for each. Documentation only, no new tooling. Sequence with the `/create-skill` run that fulfills the brief. Effort small; impact medium; first occurrence.
+- **Target files:** `ai-resources/docs/ai-resource-creation.md`

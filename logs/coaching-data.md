@@ -456,3 +456,11 @@
 - **Decisions logged:** 0
 - **QC cycles:** 0
 - **Mandate fields:** none (no /session-start this session)
+
+### 2026-05-22 — /friday-checkup weekly tier (9 scopes)
+- **Commands used:** /prime, /friday-checkup, /audit-repo, /improve, /coach, /permission-sweep, /log-sweep, /kb-integrity, /wrap-session
+- **Iterations:** 0 (cadence run — no drafting)
+- **Decisions logged:** 0
+- **QC cycles:** 0
+- **Gates:** 3 (0 changed) — plan-approval:confirmed (weekly tier), plan-approval:confirmed (scope selection), plan-approval:confirmed (proceed with long run). All operator-confirmed without changes.
+- **Mandate fields:** none (no /session-start this session)

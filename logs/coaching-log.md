@@ -121,3 +121,18 @@ Coaching feedback captured via `/coach`. Newest entries at the bottom.
 **Prior recommendation status:** 2026-05-16 (friday-checkup) "run a dedicated `/resolve-improvement-log` session" — acted on (6-entry improvement-sprint + archive cleared the backlog stall). 2026-05-16 "name the load-bearing claim before synthesis commands" — not measurably acted on; the bright-line rubber-stamp persists and is now The One Thing.
 **Promotion candidates:** 3 — (1) decisions.md alternatives-considered rigor (held 86–100% across 5 cycles; graduate to a template field via `/improve`); (2) interruption-impulse as review gate (editorial-disagreement 5/5; encode in Decision-Point Posture); (3) mandate + class + scope discipline — already routed to harness A7 Constraint 1; the Governor build (Track B) will graduate it.
 **A7 verification:** Constraints 1–3 in `harness/prep/a7-scope-note.md` tested against the corpus — Constraint 1 CONFIRMED, Constraints 2–3 CONFIRMED-WITH-REFINEMENT. Scope note updated v1→v2.
+
+### 2026-05-22
+**Coverage:** 10 session-notes entries (2026-05-11 → 2026-05-22), 44 coaching-data entries
+
+| Dimension | Rating | Trend |
+|-----------|--------|-------|
+| Iteration Efficiency | Healthy | → |
+| Decision Patterns | Watch | → |
+| QC Disposition | Healthy | → |
+| Delegation Effectiveness | Healthy | → |
+| Workflow Evolution | Watch | mixed |
+
+**The One Thing:** Name the bright-line before you review it. When `/risk-check` or any structural-review pause fires, state the specific bright-line in one sentence first; if you cannot name one, say "proceed" and reclaim the time. `bright-line-review` is the only gate that does not earn its review cost (~79–83% confirm across 4 cycles) and is the recommendation that has survived three coaching cycles unactioned.
+**Prior recommendation status:** 2026-05-20 One Thing (name the bright-line) — not measurably acted on; carried forward again. decisions.md alternatives-rigor held (14/14). 2026-05-16 backlog-sprint held (no new stall), but 2 pre-sprint improvement-log entries remain unresolved and 4 new ones were added 2026-05-22 — Workflow Evolution stays Watch.
+**Promotion candidates:** 2 — (1) decisions.md alternatives-considered rigor (held 6 consecutive cycles; graduate to a decisions.md template field via `/improve`); (2) interruption-impulse as deliberate review gate (editorial-disagreement + challenge-disposition 7/7 changed; encode in Decision-Point Posture).

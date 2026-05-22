@@ -340,3 +340,50 @@ Implement `/wrap-session` + `/prime` auto-handoff integration (System Owner advi
 
 ### Open Questions
 - None.
+
+## 2026-05-22 — /friday-checkup weekly tier (9 scopes)
+
+### Summary
+Ran the weekly-tier `/friday-checkup` cadence across 9 scopes (ai-resources, workspace, 7 projects). Operator confirmed weekly tier and approved a long run (~178 min formula ceiling). Executed all weekly auto-run checks: `/audit-repo` ×3, `/improve` ×3, `/coach` ×7, `/permission-sweep --dry-run`, `/log-sweep --dry-run`, plus W2.1 doc-scanner and W2.3 maintenance consolidator (incl. `/kb-integrity`) for repo-documentation. All 3 deployed `/audit-repo` scopes returned GREEN with 0 Critical / 0 Important. 5 HIGH-priority findings surfaced — none CRITICAL. Consolidated review-only report written; no fixes auto-applied.
+
+### Files Created
+- `audits/friday-checkup-2026-05-22.md` — consolidated weekly checkup report
+- `audits/repo-health-ai-resources-2026-05-22.md` — dated repo-health snapshot
+- `audits/repo-health-project-global-macro-analysis-2026-05-22.md` — dated snapshot
+- `audits/repo-health-project-nordic-pe-macro-landscape-H1-2026-2026-05-22.md` — dated snapshot
+- `audits/permission-sweep-2026-05-22.md` — dry-run permission report (0 CRITICAL, 2 HIGH, 1 MEDIUM, 6 advisory)
+- `audits/log-sweep-2026-05-22.md` — dry-run log-sweep report (12 scopes, 3 over threshold)
+- `audits/working/permission-sweep-2026-05-22.md` + `.summary.md` — auditor working notes
+- `audits/working/log-sweep-*-2026-05-22.md` (12 per-scope working notes) + `log-sweep-manifest-2026-05-22.md`
+- `projects/ai-development-lab/logs/coaching-log.md` — created (first coaching run, baseline)
+- `projects/repo-documentation/output/phase-2/w2-1-doc-scan-2026-05-22.md` — W2.1 component-drift scan
+- `projects/repo-documentation/output/phase-2/w2-3-maintenance-2026-05-22.md` — W2.3 consolidated maintenance summary
+- `projects/repo-documentation/vault/_integrity-report-2026-05-22.md` — `/kb-integrity` vault scan
+
+### Files Modified
+- `reports/repo-health-report.md` (ai-resources; prior archived to `repo-health-report-2026-05-16.md`)
+- `projects/global-macro-analysis/reports/repo-health-report.md` (prior archived `repo-health-report-2026-04-11.md`)
+- `projects/nordic-pe-macro-landscape-H1-2026/reports/repo-health-report.md` (prior archived `repo-health-report-2026-05-16.md`)
+- `logs/improvement-log.md` (ai-resources — 4 entries logged)
+- `projects/global-macro-analysis/logs/improvement-log.md` (4 entries + 1 RECURRING escalation note)
+- `projects/nordic-pe-macro-landscape-H1-2026/logs/improvement-log.md` (5 entries logged, incl. 1 HIGH)
+- `logs/coaching-log.md` (ai-resources) + coaching-log appends for axcion-ai-system-owner, global-macro-analysis, nordic-pe-macro-landscape-H1-2026, obsidian-pe-kb, project-planning
+
+### Decisions Made
+- Tier: weekly (auto-detected, operator-confirmed). Scopes: ai-resources, workspace + 7 projects (operator-selected).
+- `/log-sweep --dry-run` scope pick: chose "All scopes" without re-prompting — read-only dry-run inside an already-approved cadence; re-prompting would be redundant friction (decision-point posture).
+- `/improve` findings logged, not applied — `/friday-checkup` is review-only; findings direct next week's work.
+- findings-extractor over-escalated the `model`-field permission finding to CRITICAL; the consolidated report uses the authoritative source severity (MEDIUM per the permission-sweep report).
+- Two `/coach` runs (ai-development-lab, axcion-ai-system-owner) mis-resolved project paths on first invocation and were re-run with explicit absolute-path directives.
+
+### Next Steps
+- Review `audits/friday-checkup-2026-05-22.md`. Run `/friday-so` (System Owner advisory on the checkup), then `/friday-act` (operator-driven fixes) — the next two Friday-cadence sessions.
+- Top two follow-ups: (1) port the 3 verified `/session-plan` edits into nordic-pe's project-LOCAL `.claude/commands/session-plan.md` (verified against canonical only — project still runs un-fixed code); (2) approve + build the global-macro concurrent-session detection hook (improvement-log #3, RECURRING, leaked 3×, Autonomy Rule #8).
+- 22 tactical follow-ups total — see the report's Tactical follow-ups section.
+
+### Open Questions
+- `/prime` reported 0 unpushed commits in ai-resources at session start; the Step 6 git check found 5 unpushed. No commits were made by this checkup (review-only) — likely concurrent-session commits. Verify before pushing.
+
+## 2026-05-22 — Implement /wrap-session + /prime auto-handoff integration
+
+Resumed from `logs/scratchpads/2026-05-22-11-53-scratchpad.md`. Wiring `/handoff` continuity mode into `/wrap-session` (new Step 0.5) and `/prime` (scratchpad detection step), and updating the `handoff` skill's end-of-session-wrap boundary so it reflects that `/wrap-session` now runs continuity mode internally.
