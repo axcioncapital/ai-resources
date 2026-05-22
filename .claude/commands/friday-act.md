@@ -259,11 +259,20 @@ where risk ∈ {high, med, low}. Empty line to finish, or `(none)` to skip.
 - Run `/wrap-session` when all items in this plan are done.
 ```
 
-16k. Print to operator:
+16k. **Plan-file QC (automatic).** Before announcing the plans, QC the files written in 16j — plan files are substantive artifacts and fall under the workspace QC rule ("run `/qc-pass` after producing any substantive artifact or plan, before commit").
+   - Invoke `/qc-pass`. The QC target is the set of `{TODAY}-{slug}.md` files written in 16j; the evaluation criteria are the Step 3.6 plan-file schema and the risk-check change-class list in `ai-resources/docs/audit-discipline.md` § Risk-check change classes. Flag in particular any incorrect `Risk-check required:` annotation — a change class asserted for a change not on the canonical list, or a real change class missed.
+   - **GO / no findings:** proceed to 16l.
+   - **Findings returned:** the QC → Triage auto-loop applies (`ai-resources/docs/qc-independence.md`). Apply the corrections to the affected plan file(s) in place. Editorial DISAGREE verdicts that cannot be self-resolved from the change-class list are surfaced to the operator per Autonomy Rule #4.
+   - This QC reviews plan-file content only — it does not re-open the operator's `f/d/s` dispositions from Steps 3 and 3.5.
+   - Carry the QC outcome (`GO` or `{N} finding(s) fixed`) to the 16l summary.
+
+16l. Print to operator:
 ```
 Plan(s) written ({TOTAL_FIX} fix-now items across {P} plan(s)):
   {ordinal}. {absolute_path}  — {N} items
   ...
+
+Plan QC: {GO — no findings | {N} finding(s) found and corrected in place}
 
 Open each plan in a follow-up session to execute. Implement all plans before next Friday.
 ```
@@ -418,7 +427,8 @@ Open each plan in a follow-up session to execute. Implement all plans before nex
 - **Project-internal logs (Steps 1.5 + 16a).** `/friday-act` enumerates scoped projects from the checkup report's `## Scopes audited` block and reads each scoped project's `improvement-log.md` (active entries), `session-notes.md` (last 3 entries), and `friction-log.md` (last 5 entries, if present) at Step 16a. These reads surface project-internal context the checkup roll-up may have compressed — recurring friction, in-flight improvement work, recent decisions. Items derived from these reads feed into the same paste-prompt as SO-derived items (16b–16e) and are labeled `so-derived` in `RESULTS` for subtotal purposes (the source label distinguishes paste-input from journal-derived; project-derived items are paste-input mechanically).
 - **Token cost of expanded reads (Step 16a).** Targeted section reads for SO Advisory + Systems Review typically yield 50–200 lines of additional context per file (vs the prior 30-line peek). Project-internal log displays add 100–400 lines per scoped project depending on log activity (improvement-log active entries + 3 session-notes entries + 5 friction-log entries). For a typical weekly checkup with 2–3 scoped projects and both SO files present, expect ~500–1500 lines of additional context in Step 16a alone. If running near context limits, prefer to split the disposition session: run Step 3 (checkup tactical follow-ups) in one session and Step 3.5 (supplementary inputs) in a follow-up after `/compact`. Step 3 and the checkup report itself are unaffected by this cost.
 - **7-day vs. 10-day filter rationale.** Supplementary inputs (Friday Advisory, Systems Review, Journal Report) all use a **7-day** filename-date filter — these are session-window-scoped artifacts produced for a specific Friday and stale beyond that week. The checkup report itself uses a **10-day** abort threshold (Step 1.7) because it pairs with the `friday-checkup-reminder.sh` hook's recovery-Friday window; a 10-day grace allows skipped-Friday recovery without re-running the audit. The two thresholds are intentionally distinct: 7-day = "fresh for this Friday's session"; 10-day = "fresh enough to still be the basis for action."
-- **`/risk-check` gate (Step 3.6).** The change-class check runs at plan-write time (Step 3.6) to annotate plan files — it does NOT prompt the operator or invoke the Skill tool during `/friday-act`. The gate runs in the follow-up session, immediately before executing the flagged item.
+- **`/risk-check` gate (Step 3.6).** The change-class check runs at plan-write time (Step 3.6) to annotate plan files — it does NOT prompt the operator or invoke `/risk-check` during `/friday-act`. The gate runs in the follow-up session, immediately before executing the flagged item.
+- **Plan-file QC (Step 3.6, sub-step 16k).** After plan files are written, `/friday-act` runs an automatic `/qc-pass` on them before announcing them — plan files are substantive artifacts subject to the workspace QC rule. The failure mode this guards is an incorrect `Risk-check required:` annotation; added 2026-05-22 after a cycle shipped 4 wrong annotations caught only by later operator review. Findings are corrected in place via the QC → Triage auto-loop; the QC outcome is reported in the 16l summary.
 - **No auto-edit of CLAUDE.md or audit-discipline.md.** Policy proposals (Step 4) capture intent; the rule edits themselves go through their own plan + `/risk-check` cycle.
 - **Coaching-log untouched.** The seven autonomy axes are forward-looking weekly posture targets; coaching-log's five session-pattern dimensions are backward-looking session ratings. Different orientation, kept separate (per workspace decision 2026-04-24).
 - **Skipped-Friday recovery.** If `DAYS > 10` (Step 1.7), the command refuses. Recovery flow: run `/friday-checkup` first; that command's Step 0 will offer recovery-Friday vs. fold-into-next-Friday options; then re-invoke `/friday-act` against the fresh report.
