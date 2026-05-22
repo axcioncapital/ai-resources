@@ -327,3 +327,16 @@ Hooks are shell scripts — cannot generate AI-produced scratchpad content. The 
 **Alternatives considered.**
 - *Keep all 4 as `yes` (extra gate is harmless):* Rejected. The annotation should reflect the canonical spec; over-gating trains operators to ignore the gate.
 - *Flip the 3 command edits but silently keep the agent-def edit `yes`:* Rejected — that silently resolves the conflict. Surfaced it to the operator instead.
+
+## 2026-05-22 — Placement of four governance rules in workspace CLAUDE.md
+
+**Context.** Operator proposed five governance rules (item 4 was a session directive, not a rule) and asked where each should live — project-specific CLAUDE.md or workspace-wide. Three proposed new section headers (`## Quality Control`, `## Workflow / Approval Gates`, `## Session Management`) overlapped existing sections, and two rules conflicted with existing content. Resolved via `/clarify` → `/recommend`.
+
+**Decision.** All four rules go to the workspace-level CLAUDE.md, each folded into the closest existing section rather than added as new parallel sections: QC trigger → `## QC Independence Rule`; post-plan approval gate → `## Plan Mode Discipline`; context-constraint deferral → `## Working Principles`; repo-status verification → new `### Repo-status reporting` subsection under `## File verification and git commits`. Item 2 scoped to plan-mode only. Item 3 reframed as a heuristic (literal `~30%` / `ExitPlanMode` dropped per operator).
+
+**Rationale.** The rules are cross-project governance, so workspace-level per the CLAUDE.md Scoping rule. Folding into existing sections avoids token bloat in an already-large always-loaded file and removes the contradiction surface that parallel sections would create. Item 2 scoped narrowly because a global "wait for explicit approval" rule would contradict the Autonomy Rules and Decision-Point Posture; the plan-mode scoping reinforces existing behavior without overriding autonomy. `/qc-pass` confirmed GO with no conflicts.
+
+**Alternatives considered.**
+- *Create the three new sections as the operator named them:* Rejected — duplicates existing QC / plan-mode / session sections and adds always-loaded token weight.
+- *Apply item 2 globally:* Rejected — contradicts the Autonomy Rules ("full autonomy") and Decision-Point Posture ("pick and proceed").
+- *Keep literal `~30%` threshold:* Rejected by operator — not reliably self-measurable; kept as a heuristic instead.
