@@ -315,3 +315,15 @@ Hooks are shell scripts — cannot generate AI-produced scratchpad content. The 
 **Alternatives considered.**
 - *Pointer in SKILL.md:* Rejected — wrong layer; skill methodology vs. command orchestration.
 - *Pointer in CLAUDE.md:* Rejected — CLAUDE.md is for cross-session rules, not workflow reminders.
+
+## 2026-05-22 — Risk-check change-class scope: command-file edits and agent-definition edits
+
+**Context.** `/friday-act` Step 15a annotates each fix-now plan item with whether it touches a `/risk-check` change class. The initial annotations marked 4 items `yes`: editing the project-local `session-plan.md`, editing the `log-sweep-auditor` agent definition, and editing `new-project.md` and `risk-check.md`. The `/friday-journal` report itself had asserted "deterministic match: command edit" for the two command edits. An independent `/qc-pass` flagged all 4 as incorrect.
+
+**Decision.** Corrected all 4 to `no`. The canonical change-class list in `audit-discipline.md` § Risk-check change classes is: hook edits, `settings.json` permission changes, cross-cutting CLAUDE.md edits, **new** commands or skills, new symlinks, shared-state automation. Editing an **existing** command file is not "new commands or skills." Agent-definition edits are not on the list at all.
+
+**Rationale.** The canonical list is the bright-line authority; `/friday-act` Step 15a re-derives the change class rather than inheriting upstream claims — the journal report's "command edit" assertion was not backed by the list, and propagating it was the error. Per the CLAUDE.md conflict rule, the agent-definition case was surfaced rather than silently resolved: the canonical list omits agent definitions, but improvement-log entry 2026-04-28 (status `logged (pending)`, unratified) argues agent-definition edits are Autonomy Rule #9 changes. `log-sweep.md` #1 was left `no` per the current canonical text, with the question surfaced to the operator as an open question.
+
+**Alternatives considered.**
+- *Keep all 4 as `yes` (extra gate is harmless):* Rejected. The annotation should reflect the canonical spec; over-gating trains operators to ignore the gate.
+- *Flip the 3 command edits but silently keep the agent-def edit `yes`:* Rejected — that silently resolves the conflict. Surfaced it to the operator instead.

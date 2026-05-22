@@ -499,3 +499,32 @@ Stability vs. prior entries: This session is cleaner than the 2026-05-16 cleanup
 **Additional levers (ROI-ranked):**
 1. Batch large-report Edit calls more aggressively — when an extraction pass is known upfront to span N sections, write larger replacement blocks rather than one Edit call per section; target ≤8 calls for a 15-section extraction.
 2. Confirm operator-directed extraction scope before starting — a single clarifying exchange at the start of the extraction pass would reduce Edit count if scope is ambiguous.
+
+### 2026-05-22 | Acceptable
+
+**Task:** Ran `/friday-act` for the 2026-05-22 weekly checkup — dispositioned 27 items into 8 grouped plan files, ran an innovation sweep and an independent QC pass that found and fixed 4 incorrect risk-check annotations.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~7 |
+| Files read | ~13 (re-reads: 2 — `session-notes.md` full re-read after concurrent modification; `audit-discipline.md` change-class section read twice) |
+| Files written/edited | 14 (8 plan files, 6 log files) |
+| Tool calls | ~55 (Bash ~26, Edit ~10, Write ~9, Read ~6, Agent ×2, Skill ×2) |
+| Subagents | 2 (`innovation-triage-auditor`, `qc-reviewer`) |
+| Rework cycles | 3 (1 major, 2 minor) |
+
+**Findings:**
+- QC ran post-commit rather than inline — independent `/qc-pass` found 4 incorrect risk-check annotations after the 8 plan files were already committed, forcing a follow-up correction commit. `/friday-act` has no QC step. (Rework, Major — output corrected after commit; root cause is a missing inline gate, not the QC pass itself.)
+- `session-notes.md` required a full re-read mid-wrap after a concurrent `/friday-act execution` session modified the file, plus an Edit redo. (Re-reads, Moderate — 1 full re-read; concurrent-session-induced, not avoidable by pinning alone.)
+- `audit-discipline.md` "Risk-check change classes" section read twice — first `sed` read truncated, re-read with `awk`. (Re-reads, Minor — wrong read range on first attempt.)
+- First git commit attempt failed because a gitignored `audits/working/` path was staged — 1 retry. (Tool overhead, Minor — 1 wasted call.)
+- Rating is stable vs the last 3 entries — `Acceptable` for the third consecutive Friday-cadence/audit session, with the same recurring friction class (process gap surfaced in a Friday session, recommendation = wire a mechanical step into the command).
+
+**Recommendation:** Add an inline QC step to `/friday-act` — run the QC pass on the disposition plan files before the commit, not after. This eliminates the post-commit correction-commit rework cycle that is the central friction of the session.
+
+**Estimated savings:** A post-commit correction cycle costs the QC re-read of 8 plan files (~150 lines each ≈ 1.2k), 5 corrective Edits (~2k), plus a second commit's overhead (~1k) — roughly 4k tokens per occurrence. Friday-act runs weekly; if annotation errors recur even half the time, that is ~2k/session amortized, or ~20–40k over a 10–20 session horizon — plus the avoided risk of a wrong annotation shipping unnoticed.
+
+**Additional levers (ROI-ranked):**
+- Cache the log-trio (`session-notes.md`, `decisions.md`, `coaching-data.md` tails) at `/prime` so `/friday-act` and `/wrap-session` reuse the primed read instead of re-tailing — `session-notes.md` alone was touched ~5 times; ~3–5k/session. Larger than a single re-read fix because it spans the whole session, but smaller than the primary because it is reads, not a rework cycle. (Recurs as a recommendation in the 2026-05-16 and 2026-05-18 entries — worth wiring once.)
+- Use a precise read range for `audit-discipline.md`'s change-class section (or pin the section path) to avoid the truncated-first-read pattern — ~1–2k/session. Small and isolated.
+- Stage commits with explicit file paths rather than directory globs to avoid catching gitignored `audits/working/` content — saves the failed-commit retry, ~0.5–1k/occurrence. Smallest lever; a one-line habit change.

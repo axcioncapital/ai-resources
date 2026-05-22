@@ -447,3 +447,55 @@ Resumed the interrupted `/friday-journal` pipeline from scratchpad `2026-05-22-1
 
 Class: planning
 Mandate: Run /friday-act to disposition the 2026-05-22 weekly checkup findings and produce implementation plan files; implementation itself deferred to follow-up sessions. Include innovation sweep in plans.
+
+### Summary
+Ran `/friday-act` for the 2026-05-22 weekly `/friday-checkup`. Dispositioned 27 items (22 checkup tactical follow-ups + 5 journal-derived items) into 23 fix-now, 3 defer, 1 skip — applied via `/recommend` after the operator delegated disposition judgment. Produced 8 grouped implementation plan files in `audits/friday-plans/`; implementation deferred to follow-up sessions. Ran an innovation sweep (0 graduate, 0 backport) and an independent `/qc-pass` after the operator asked — QC returned REVISE with one defect (4 incorrect risk-check annotations), fixed and committed.
+
+### Files Created
+- `audits/friday-plans/2026-05-22-permissions.md` — 4 items (settings.json permission fixes)
+- `audits/friday-plans/2026-05-22-session-plan.md` — 1 item (nordic-pe local session-plan port, HIGH)
+- `audits/friday-plans/2026-05-22-check-concurrent-session.md` — 1 item (global-macro hook, HIGH RECURRING, Rule #8 gate)
+- `audits/friday-plans/2026-05-22-improvement-log.md` — 3 items (11-entry triage, gate calibration, deferred entries)
+- `audits/friday-plans/2026-05-22-log-sweep.md` — 2 items (auditor heuristic fix, archival run)
+- `audits/friday-plans/2026-05-22-repo-documentation.md` — 3 items (vault schema re-author, W2.3 triage, renames)
+- `audits/friday-plans/2026-05-22-general.md` — 4 items + innovation sweep appendix
+- `audits/friday-plans/2026-05-22-journal-commands.md` — 5 items (CLAUDE.md rule + 4 command improvements)
+- `audits/working/innovation-sweep-2026-05-22.md` — innovation sweep working notes (gitignored)
+- `logs/scratchpads/2026-05-22-14-18-scratchpad.md` — continuity scratchpad
+
+### Files Modified
+- `logs/maintenance-observations.md` — 2026-05-22 Friday Act session block
+- `logs/friction-log.md` — new 2026-05-22 14:14 session block + 1 entry (qc-pass-should-be-automatic)
+- `logs/session-notes.md` — session header, mandate, this wrap entry
+- `logs/decisions.md` — risk-check change-class interpretation decision
+- `logs/coaching-data.md` — session profile entry
+- `logs/usage-log.md` — session telemetry entry
+
+### Decisions Made
+- **Disposition** (23 fix-now / 3 defer / 1 skip) — applied via `/recommend`; the 23 fix-now items grouped into 8 plan files by area.
+- **Autonomy axes for the week ahead:** Guardrails → tighten (rubber-stamp gate, 4th cycle), Reliability → tighten (concurrent-session collision 3×); all others hold.
+- **QC fix:** 4 plan items corrected from `Risk-check yes` → `no` — command-file edits and agent-definition edits are not canonical `/risk-check` change classes per `audit-discipline.md`. Logged to `decisions.md`.
+
+### Next Steps
+- **Push** — multiple unpushed commits in `ai-resources` (operator gate).
+- **Execute the 8 plan files** in follow-up sessions. Suggested order: `session-plan` (HIGH) → `permissions` (HIGH) → `check-concurrent-session` (HIGH RECURRING — Autonomy Rule #8 approval required first) → `journal-commands` (2 HIGH operator-requested items) → remaining. *(Note: a concurrent `/friday-act execution` session began executing the ungated plans during this wrap.)*
+- Consider `/improve` — a friction event was logged this session.
+
+### Open Questions
+- Should agent-definition edits be added to the canonical `/risk-check` change-class list in `audit-discipline.md`? `log-sweep.md` #1 is currently set to `no` per the canonical text; improvement-log 2026-04-28 (unratified) argues they should count.
+
+## 2026-05-22 — /friday-act execution — clear the ungated plan files
+
+**Mandate:** Execute the 4 ungated friday-act plan files from 2026-05-22 (session-plan, log-sweep, improvement-log, general) — as much as practical without overrunning. Commit each item separately.
+- In scope: session-plan (1 item), log-sweep (2 items), improvement-log (3 items), general items 1/3/4 (cleanup-worktree, orphaned-skill check, manifest resync); general item 2 (push) at session end with operator approval.
+- Out of scope (deferred): permissions plan (Autonomy Rule #8 — settings.json), check-concurrent-session plan (Autonomy Rule #8 + risk-check, hook build), journal-commands plan (workspace CLAUDE.md edit + 2 new command builds), repo-documentation plan (separate project scope + heavy schema re-author).
+- Stop if: a deferred-plan gate is hit; operator declines push.
+
+## 2026-05-22 — /friday-act journal-commands plan execution
+
+**Mandate:** Execute the 5-item journal-commands /friday-act plan (`audits/friday-plans/2026-05-22-journal-commands.md`): item 1 (between-gate executive-summary rule → workspace CLAUDE.md), item 2 (wire system-owner gate into /new-project Stage 3b→3c), item 3 (system-owner second-opinion step in /risk-check), items 4-5 (new /drift-check and /resolve-repo-problem commands).
+- In scope: the 5 plan items; /risk-check gates on items 1, 4, 5; one commit per item.
+- Concurrent session: a separate `/friday-act execution` session is clearing the ungated plans and explicitly deferred journal-commands — no target-file overlap; both sessions append to session-notes.md.
+- Stop if: a risk-check verdict returns RECONSIDER.
+
+Class: implementation

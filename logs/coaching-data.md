@@ -464,3 +464,11 @@
 - **QC cycles:** 0
 - **Gates:** 3 (0 changed) — plan-approval:confirmed (weekly tier), plan-approval:confirmed (scope selection), plan-approval:confirmed (proceed with long run). All operator-confirmed without changes.
 - **Mandate fields:** none (no /session-start this session)
+
+### 2026-05-22 — /friday-act planning — 8 implementation plans for the weekly checkup
+- **Commands used:** /prime, /friday-act, /recommend, /innovation-sweep, /session-start, /qc-pass, /friction-log, /wrap-session
+- **Iterations:** 0 (planning session — no drafting)
+- **Decisions logged:** 1
+- **QC cycles:** 1 (REVISE → 4 risk-check annotations corrected → committed)
+- **Gates:** 1 (1 changed) — qc-disposition:changed. QC was operator-prompted ("did you run /qc-pass?"); verdict REVISE, fixes applied.
+- **Mandate fields:** specified: work_scope, exit_condition, out_of_scope | inferred: files_in_scope | omitted: stop_if
