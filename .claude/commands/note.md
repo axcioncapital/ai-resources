@@ -12,19 +12,26 @@ Parse $ARGUMENTS for a prefix:
 
 ## Step A: Friction routing
 
-1. Read `/logs/friction-log.md` (last 30 lines). If the file doesn't exist, create it with:
+1. Read `/logs/friction-log.md` (last 30 lines). If the file doesn't exist, create it with `# Friction Log` as the first line.
+2. If no `### Friction Events` section exists in the last 30 lines, append a new session block — the **canonical block** below. It is byte-identical to what `/friction-log` writes, and shares the `## Session —` / `### Friction Events` / `#### Write Activity` headings that the `friction-log-auto.sh` hook also writes (the hook additionally inserts a `**Trigger:**` line — the three writers stay mutually detection-compatible because detection keys on `### Friction Events`). Do not invent a `/note`-specific header:
    ```
-   # Friction Log
-   
-   ### Session: {YYYY-MM-DD HH:MM} — Manual entry
-   #### Friction Events
+   ## Session — {YYYY-MM-DD HH:MM}
+
+   ### Friction Events
+
+   #### Write Activity
    ```
-2. If no `#### Friction Events` section exists in the last 30 lines, append a new session block with the header above.
-3. Append the friction entry under the most recent `#### Friction Events` heading:
-   ```
-   - **{HH:MM}** — {text after "friction:" prefix}
-   ```
-4. Confirm: "Friction event logged."
+3. **Capture context, then append the entry.**
+   - Capture two cheap context signals: the latest commit short-hash (`git log -1 --pretty=%h`) and the title of the most recent `## {today}` header in `logs/session-notes.md` (the text after the date). Either may be unavailable.
+   - Append the friction entry under the most recent `### Friction Events` heading, before the `#### Write Activity` line, with a `(context: …)` suffix:
+     ```
+     - **{HH:MM}** — {text after "friction:" prefix} (context: {short-hash}, {session-note title})
+     ```
+     Include whichever signals are available; if only one, list just that one; if neither, use `(context: none captured)`.
+3a. **Stub check.** Evaluate the operator's friction text only (the text after the `friction:` prefix — not the `(context: …)` suffix). If it is under ~15 characters OR matches the placeholder pattern `^(note this|todo|tbd|fixme|xxx|\.\.\.)\.?$` (case-insensitive), append ` [STUB — expand before next /improve]` to the end of that entry line, after the `(context: …)` suffix. This is non-blocking — the entry is still logged immediately; the marker just flags it as incomplete for the operator and the next `/improve` run.
+4. Confirm:
+   - Normal entry: "Friction event logged."
+   - Stub entry: "Logged as a stub. Add detail with another `/note friction: ...` when you have a moment."
 
 ## Step B: Workflow observation routing
 
