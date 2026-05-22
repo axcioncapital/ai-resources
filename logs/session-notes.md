@@ -502,3 +502,29 @@ None.
 
 ### Open Questions
 None.
+
+## 2026-05-22 — Worktree cleanup: /cleanup-worktree — 14 dirty paths committed in 3 commits
+
+### Summary
+Ran `/prime`, then a full `/cleanup-worktree` pass on the `ai-resources` working tree. 14 dirty paths (1 modified-tracked, 13 untracked) were investigated — every file read in full — planned, QC'd twice, triaged, and committed. All 14 classified `commit`: zero hard gates, no deletions, no symlink conversions, no migrations. The 13 untracked files were 12 accumulated risk-check reports (2026-05-19 → 05-22) plus the `workflow-diagnosis` resource brief; the 1 modified file was `permission-sweep-2026-05-22.md`, rewritten from a dry-run report into an apply-run record. Three commits landed (`a8d9a43`, `bc37559`, `74ca3d2`); working tree fully clean after the run.
+
+### Files Created
+- `logs/scratchpads/2026-05-22-20-35-scratchpad.md` — continuity scratchpad (gitignored; wrap Step 0.5)
+- `~/.claude/plans/humming-bouncing-rose.md` — `/cleanup-worktree` plan file (harness plan dir, not in repo); first-QC report `humming-bouncing-rose.md.qc-pass-1.md` alongside
+- 13 files committed this session (authored in prior sessions, untracked until now): 12 `audits/risk-checks/*.md` reports + `inbox/workflow-diagnosis.md` — committed in `a8d9a43` and `74ca3d2`
+
+### Files Modified
+- `audits/permission-sweep-2026-05-22.md` — committed in `bc37559` (pre-existing dry-run → apply-run rewrite, committed by the cleanup)
+- `logs/session-notes.md`, `logs/coaching-data.md`, `logs/usage-log.md` — this wrap
+
+### Decisions Made
+- All 14 dirty paths classified `commit` — mechanical classification per the `/cleanup-worktree` decision taxonomy; no analytical or scoping judgment, so no decision-journal entry.
+- QC pass 1 raised one MINOR finding (risk-check sibling count "76" vs QC's "78"); disputed and defended — verified `git ls-files audits/risk-checks/` = 76 (QC's 78 rested on a miscount of the on-disk total). Triage classified it history-only; QC pass 2 confirmed the dispute. No plan-body change.
+- End-time `/risk-check` skipped — committing pre-existing audit artifacts and a resource brief touches no structural change class (no hooks, settings, CLAUDE.md, new commands/skills, or symlinks).
+
+### Next Steps
+- **Push** — `ai-resources` has 11 unpushed commits (3 cleanup + 8 earlier); the workspace repo has 1. Operator approval required.
+- Run `/prime` next session. Standing carryovers: live-test the new `/prime`; the permission-sweep-auditor fix session booked for 2026-05-26.
+
+### Open Questions
+None.

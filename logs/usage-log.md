@@ -613,3 +613,31 @@ Stability vs. prior entries: This session is cleaner than the 2026-05-16 cleanup
 - Cache the log-trio (`session-notes.md`, `decisions.md`, `coaching-data.md` tails) at `/prime` so `/friday-act` and `/wrap-session` reuse the primed read instead of re-tailing — `session-notes.md` alone was touched ~5 times; ~3–5k/session. Larger than a single re-read fix because it spans the whole session, but smaller than the primary because it is reads, not a rework cycle. (Recurs as a recommendation in the 2026-05-16 and 2026-05-18 entries — worth wiring once.)
 - Use a precise read range for `audit-discipline.md`'s change-class section (or pin the section path) to avoid the truncated-first-read pattern — ~1–2k/session. Small and isolated.
 - Stage commits with explicit file paths rather than directory globs to avoid catching gitignored `audits/working/` content — saves the failed-commit retry, ~0.5–1k/occurrence. Smallest lever; a one-line habit change.
+
+### 2026-05-22 | Acceptable
+
+**Task:** Ran `/prime` to orient, then a full `/cleanup-worktree` pass on the `ai-resources` working tree — investigated 14 dirty paths, wrote an 8-section cleanup plan with two QC passes plus a triage pass, and committed all 14 paths in 3 topical commits.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~7 |
+| Files read | ~21 (re-reads: 0 full — `session-notes.md` read across different ranges only) |
+| Files written/edited | 5 |
+| Tool calls | ~45 |
+| Subagents | 3 |
+| Rework cycles | 1 (minor — 1 wasted call) |
+
+**Findings:**
+- `logs/coaching-data.md` (~489 lines) read in FULL for a single append-only edit — a tail read of the closing section would have sufficed. (Context bloat, Moderate — single large file, near the >500-line Major threshold)
+- Edit on `session-notes.md` failed because the file was not Read in-session first → one corrective Read → retry. One wasted call. This reproduces the recurring Read-before-Write failure flagged in the last 3 entries. (Rework, Moderate — 1 cycle)
+- 3 subagents (`qc-reviewer` → `triage-reviewer` → `qc-reviewer`) ran sequentially. Dependency chain is genuine — QC2 reviews the triage-revised plan — so no parallelization was possible. (Missed parallelization, Minor — informational, not actionable)
+- Trend vs. last 3 entries: stable at Acceptable — the Read-before-Write failure recurs for a second consecutive session, but the `/cleanup-worktree` protocol ran clean with QC inline (no post-commit rework, unlike the 2026-05-22 `/friday-act` entry).
+
+**Recommendation:** Wire Read-before-Write into the wrap step that touches `session-notes.md` — pre-fetch `session-notes.md` (with `decisions.md` and `usage-log.md`) at `/prime` so the file is already in context when the wrap edit runs. This is the same lever recommended in the last 3 entries and the failure recurred here.
+
+**Estimated savings:** The failed Edit plus corrective Read costs ~1 wasted tool round-trip — roughly ~1.5k tokens per occurrence (failed-call overhead + redundant Read of a ~500-line file). It recurs in ~3 of the last 4 sessions, so ~1k–1.5k/session amortized; over a 10–20 session horizon, ~10k–30k tokens, plus removal of a recurring friction point.
+
+**Additional levers (ROI-ranked):**
+- Tail-read `logs/coaching-data.md` instead of full read — the file is append-only and only the closing section is needed before an append. Reading ~80 closing lines instead of ~489 saves ~400 lines (~5k–6k tokens) per session that appends coaching data. Bigger single-shot saving than the primary, but fires less often (only coaching-append sessions).
+- Cache the log-trio (`session-notes` + `decisions` + `usage-log`) at `/prime` — this session re-touched `session-notes.md` and `usage-log.md` at wrap. ~2k–3k tokens/session of avoided re-fetch. Smaller than the coaching-data lever and overlaps with the primary Recommendation's pre-fetch.
+- Confirm the 12-file risk-check batch read stays parallel as that directory grows — it was efficient here (one parallel batch, ~1,200 lines). No saving now; a guard against future regression if the batch is ever split into sequential reads.

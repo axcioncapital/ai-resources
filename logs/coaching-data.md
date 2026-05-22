@@ -487,3 +487,11 @@
 - **QC cycles:** 2 (#1 REVISE → 5 findings fixed → #2 GO)
 - **Gates:** 4 (1 changed) — plan-approval:confirmed, qc-disposition:confirmed, qc-disposition:confirmed, plan-approval:changed
 - **Mandate fields:** none (no /session-start this session)
+
+### 2026-05-22 — Worktree cleanup: /cleanup-worktree — 14 dirty paths committed in 3 commits
+- **Commands used:** /prime, /cleanup-worktree, /wrap-session
+- **Iterations:** 1 (cleanup plan — initial → post-triage Section 8 revision)
+- **Decisions logged:** 0
+- **QC cycles:** 2 (#1 GO with 1 MINOR disputed → triage history-only → revision → #2 GO clean)
+- **Gates:** 1 (0 changed) — plan-approval:confirmed (operator approved via ExitPlanMode without content changes)
+- **Mandate fields:** none (no /session-start this session)
