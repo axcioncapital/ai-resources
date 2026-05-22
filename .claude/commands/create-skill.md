@@ -17,7 +17,7 @@ Before doing anything else, present:
 3. **Clarifying questions** — anything ambiguous or missing from the brief that would materially change the skill. Only ask questions where the answer changes the output.
 4. **Potential problems** — conflicts with existing skills, scope concerns, anything that could go wrong
 
-**Decision point:** If clarifying questions reveal the brief needs significant rework (e.g., scope points at two different skills, an existing skill already covers this need, or the brief is too vague to proceed), stop the pipeline and say so. Do not force a skill out of an unclear brief.
+**Decision point:** If clarifying questions reveal the brief needs significant rework (e.g., scope points at two different skills, an existing skill already covers this need, or the brief is too vague to proceed), stop the pipeline and say so. Do not force a skill out of an unclear brief. If the brief is thin (under ~100 words, no clear trigger conditions or failure modes), recommend running `/grill-me [skill topic]` first — the mandate brief it produces is the right input for this pipeline.
 
 **Stop here and wait for Patrik's response.** Do not proceed until he confirms or adjusts.
 
