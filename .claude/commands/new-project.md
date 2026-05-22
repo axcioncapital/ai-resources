@@ -181,9 +181,27 @@ After each stage subagent completes:
 
 1. Update `pipeline-state.md`: set the current stage to `completed` and record the artifact path.
 2. Wait for the user's command:
-   - **`NEXT`** → Set the next stage to `in_progress` in `pipeline-state.md`. If context has grown from the prior stage, suggest `▸ /compact` before spawning. Spawn the next stage subagent.
+   - **`NEXT`** → Set the next stage to `in_progress` in `pipeline-state.md`. If context has grown from the prior stage, suggest `▸ /compact` before spawning. Spawn the next stage subagent. **Exception — the 3b→3c transition:** run the Architecture Gate (below) before spawning `pipeline-stage-3c`.
    - **`SKIP`** → Valid after Stage 5 only (skips Stage 6 — marks it `skipped`, announces pipeline complete). Not valid at other stages.
    - **`ABORT`** → Mark all remaining `pending` stages as `cancelled` in `pipeline-state.md`. Announce abort. Do not delete project artifacts.
+
+## Stage 3b → 3c Architecture Gate
+
+The transition from Stage 3b (Architecture Design) to Stage 3c (Implementation Spec) carries a system-owner review of the architecture *before* any line-level spec is written. This is the only stage transition with an extra gate; all others use the generic Gate Protocol above.
+
+When the operator says `NEXT` after Stage 3b is marked `completed`:
+
+1. **Read the Stage 3b artifact path** from `pipeline-state.md` (the `3b — Architecture Design` row's Artifact column — normally `projects/{name}/pipeline/architecture.md`).
+2. **Run implementation triage.** Invoke the `/implementation-triage` skill (Skill tool) with this `$ARGUMENTS`:
+   > `Triage the Stage 3b architecture for project {name} before Stage 3c (implementation-spec) writing begins. Read the architecture document at {absolute path to architecture.md} and judge whether the architecture as designed is worth proceeding to implementation. Assess ROI, perfectionism / scope-creep risk, and downstream impact on the project's Claude Code setup.`
+3. **Parse the first line of the verdict** — one of `WORTH-DOING`, `MARGINAL`, `NOT-WORTH-DOING`, or `DECLINE — {reason}`.
+4. **Act on the verdict:**
+   - **`WORTH-DOING`** → Proceed automatically. Set Stage 3c to `in_progress`, suggest `▸ /compact` if context has grown, spawn `pipeline-stage-3c`.
+   - **`MARGINAL` or `NOT-WORTH-DOING`** → Do NOT spawn Stage 3c. Surface the full triage rationale in chat and pause. State the operator's options: (a) revise the architecture and re-run Stage 3b (`NEXT` re-enters this gate), (b) override and proceed to Stage 3c anyway, (c) `ABORT` the pipeline. Wait for the operator's decision.
+   - **`DECLINE`** (or any unparseable first line) → The system owner could not ground a judgment. Surface the decline reason, treat as non-blocking, and proceed to Stage 3c as for `WORTH-DOING`.
+5. **If `/implementation-triage` itself errors or cannot run** (e.g., the `system-owner` agent's references are unreachable from the current working directory) — surface the error, note that the Architecture Gate was skipped, and proceed to Stage 3c. The gate is an advisory safeguard; its own failure must not block the pipeline.
+
+The gate runs once per pipeline. The 3c→4 and 4→5 transitions use the generic Gate Protocol unchanged.
 
 ## Post-Stage 5 Behavior
 
