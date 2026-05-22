@@ -487,3 +487,20 @@ Investigated which commands should be linked into the `/monday-prep` workflow. P
 
 ### Open Questions
 - None.
+
+## 2026-05-22 — /friday-journal: process 5 AI-journal entries (operator-pasted in chat)
+
+## 2026-05-22 — graduate-resource: workspace sweep for ungraduated candidates
+
+### Summary
+Swept all project `.claude/` directories across the workspace for commands, agents, and hooks not already in ai-resources. Produced a tiered candidates report.
+
+### Next Steps
+- Graduation candidates at `reports/graduate-resource-candidates-2026-05-22.md` — pick up here:
+  - **Tier 1 (clean case):** graduate `check-claim-ids.sh` → `ai-resources/workflows/research-workflow/.claude/hooks/`
+  - **Tier 2 (loose-end):** decide on `friction-log-trigger.sh` → `ai-resources/.claude/hooks/`
+  - **Tier 3 (bundle):** graduate ai-development-lab pipeline commands → new `ai-resources/workflows/ai-development-lab/` template
+  - **Registry cleanup:** update `resolve-improvement-log.md` registry entry status → `graduated`
+
+### Open Questions
+- None.
