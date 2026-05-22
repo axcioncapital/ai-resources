@@ -107,6 +107,32 @@ Invocation semantics: operator-typed, or inline-prompted by other commands (e.g.
 
 ---
 
+### Step 4a: System-Owner Second Opinion (non-GO verdicts only)
+
+17a. If `VERDICT` is `GO`, skip this step entirely and proceed to Step 5. The second opinion fires only when the risk-check surfaced real risk — a non-GO verdict.
+
+17b. If `VERDICT` is `PROCEED-WITH-CAUTION` or `RECONSIDER`, obtain a system-owner second opinion. Invoke the `/consult` skill (Skill tool) with this `$ARGUMENTS`:
+
+   > `Risk-check second opinion. A proposed structural change received a {VERDICT} verdict from the risk-check-reviewer. Change: {CHANGE_DESCRIPTION}. Dimension risks flagged — {one line per dimension: "Dimension N ({name}): {Low|Medium|High}"}. Verdict summary from the report: {the **Summary:** line under ## Verdict}. As a pre-change advisory (Function B), give an architectural second opinion: do you concur with the {VERDICT} verdict, and is the recommended path — {mitigations, for PROCEED-WITH-CAUTION | recommended redesign, for RECONSIDER} — the right one? Name any risk the dimension review missed.`
+
+   The non-GO verdict is itself the justification for consulting — it satisfies `/consult`'s "genuinely contested or load-bearing" threshold. Do not re-litigate whether to consult; invoke it.
+
+17c. Capture the `/consult` output verbatim. Append a new trailing section to `REPORT_PATH`:
+
+   ```
+   ## Architectural Commentary
+
+   _System-owner second opinion (`/consult`, Function B — pre-change advisory), invoked automatically because the verdict is {VERDICT}._
+
+   {/consult output verbatim}
+   ```
+
+17d. If `/consult` errors, cannot run, or returns a `DECLINE — {reason}` output: append the `## Architectural Commentary` section anyway, recording the error or decline text in place of the commentary, and note that the second opinion was unavailable. A failed or declined second opinion does NOT change the verdict and does NOT block — the risk-check-reviewer's Step 4 verdict stands as the gate result.
+
+17e. The second opinion is advisory; it does not override the verdict. If the system owner disagrees with the verdict, surface that disagreement in the Step 5 chat summary so the operator can weigh both — `/risk-check` does not auto-resolve the conflict.
+
+---
+
 ### Step 5: Present Summary to Operator
 
 18. Display in chat:
@@ -123,6 +149,7 @@ Invocation semantics: operator-typed, or inline-prompted by other commands (e.g.
       ```
     - If verdict is `PROCEED-WITH-CAUTION`: list the paired mitigations under `Required mitigations:`.
     - If verdict is `RECONSIDER`: include the recommended-redesign one-liner.
+    - If Step 4a ran (verdict was non-GO): display the `## Architectural Commentary` content under a `System-owner second opinion:` heading. If the system owner disagreed with the verdict, call that out explicitly.
     - `Full report: {REPORT_PATH}`
 
 19. Append guidance based on verdict:
