@@ -135,6 +135,8 @@ Based on `INTENT` and the source material in Step 3, recommend one posture:
 
 Name specific stop points (or state "None").
 
+**Compaction discipline:** for long-running sessions, see `ai-resources/docs/compaction-protocol.md` § Named checkpoints for the four state-saving points (post-inspection, post-implementation, post-QC, pre-closeout) and what to write to disk at each.
+
 ---
 
 ## Step 6 — Risk pointer
