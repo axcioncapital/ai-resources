@@ -873,3 +873,34 @@ Stability vs. prior entries: This session is cleaner than the 2026-05-16 cleanup
 - **Bundle confirmation-of-negative Explore queries into the original query** — Explore #2 was "confirm Explore #1 found nothing standalone elsewhere." If Explore #1's brief had said "if you don't find X at expected path, search broadly," the second dispatch would be unneeded. Saves ~1k–2k tokens/occurrence; recurs whenever an Explore returns an ambiguous negative. Bigger than the primary because subagent dispatches cost more than Edit round-trips.
 - **Pre-emptively name common divergences in the verification-render step** — Before posting the rendered sample for confirmation, scan the new template against the user's target spec and call out divergences inline rather than letting the operator catch them via a second `/recommend`. Saves one round of operator gate (~500–800 tokens). Smaller than the primary because it only fires when a render-vs-spec gap exists.
 - **Use Explore's "very thorough" breadth flag on first dispatch when scope is genuinely uncertain** — Initial Explore used default breadth; the gap discovery suggested "very thorough" would have surfaced the negative finding in one call. Saves ~600–1k tokens/occurrence; recurs only on ambiguous-scope queries. Smallest lever — narrow trigger condition.
+
+### 2026-05-25 | Acceptable
+
+**Task:** Friction-driven cleanup session targeting three verified-open fixes; only Wave 2 landed (unified `deploy-workflow.md:209` to read canonical permissions from `templates/project-settings.json.template`). Waves 0 and 1 deferred due to uncertain orphan-artifact ownership and active concurrent-session interference.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~16 |
+| Files read | ~22 (re-reads: 3 — `session-notes.md` ×3 at tail, `session-plan.md` ×2 at QC + consumer check, `audits/risk-checks/2026-05-25-wave-2-...md` ×2 full reads) |
+| Files written/edited | 8 |
+| Tool calls | ~54 (Bash ~30, Read ~12, Edit ~6, Write 1, Agent 5) |
+| Subagents | 5 (qc-reviewer ×2, risk-check-reviewer ×1, system-owner ×1, session-usage-analyzer ×1) |
+| Rework cycles | 2 (session-plan pass-01 → pass-02 → pass-03, both substantive QC REVISE) |
+
+**Findings:**
+- **Rework — Major:** Session-plan proposal required TWO substantive QC REVISE cycles before execution. Pass-01 listed 2 friction items already shipped; pass-02 listed 4 different items already shipped. Root cause: friction-log not marked `Resolved:` after fixes shipped, so the friction-log was a stale outstanding-work signal. The verify-against-source sweep between pass-02 and pass-03 was the right move (would have shipped redundant work otherwise) but ~5-6 small verification reads were spent proving items already done.
+- **Re-reads — Moderate:** `audits/risk-checks/2026-05-25-wave-2-...md` full-read happened twice — once grep-style for QC validation, once full-read pre-`/consult` dispatch. The full-read pre-dispatch was arguably redundant since the risk-check-reviewer subagent's return summary contained the verdict.
+- **Re-reads — Minor:** `session-notes.md` accessed 3× via tail probes (5/10/3 line tails). Standing recurring pattern — flagged in 4+ of the last 6 entries; mid-reads here were load-bearing concurrent-collision detection, not waste.
+- **Tool overhead — Minor:** `system-owner` ~80-line advisory appended verbatim to risk-check report via Bash heredoc — load-bearing for report self-containment, but the same flag has recurred in 3 of the last 6 entries.
+- **Context bloat — Minor:** `docs/repo-architecture.md` (255 lines) full-read for `/consult` routing context; deterministic per-`/consult` cost, not session-specific.
+- **Trend:** Stable vs last 3 entries (all Acceptable). The friction-log freshness gap is a NEW class of rework driver not previously logged — distinct from the session-notes / session-plan recurrences. Concurrent-session interference (4 incidents this session) continues to escalate (compare: 2 incidents in 2026-05-25 Item 8 Sequencing entry).
+
+**Recommendation:** Add a verify-against-source pass to `/session-plan` before the first QC dispatch — when plan items reference friction-log entries, the planner reads the target file(s) and confirms the fix is genuinely outstanding before listing the item. Two QC REVISE cycles this session BOTH flagged already-shipped friction items; a 60-second pre-QC verify pass would have collapsed both into one clean proposal.
+
+**Estimated savings:** ~6,000-9,000 tokens per multi-item friction-driven session. Derivation: 1 avoided qc-reviewer subagent invocation (~3-4k brief + ~3k return) + 1 avoided plan rewrite cycle (~5-6 verification reads × ~30 lines + revised proposal ~1.5k) ≈ 7-8k tokens. Friction-driven sessions occur ~2-3×/week → ~14-24k/week, ~60-100k over 10-20 session horizon.
+
+**Additional levers (ROI-ranked):**
+- **Mark friction-log entries `Resolved:` at ship time (Highest ROI).** Estimate: ~2-3k tokens/session × ~2-3 friction-driven sessions/week ≈ ~5-10k/week. Bigger than primary in horizon terms because it fixes the root cause (stale signal) rather than the symptom (planner trusting it). One-line discipline; structural fix would be a wrap-session hook that prompts for friction-log disposition on items touched this session.
+- **Trust risk-check-reviewer return summary; skip the full-read of the on-disk report pre-`/consult`.** Estimate: ~1,500-2,500 tokens/session when `/risk-check` → `/consult` chain fires (~100-line full re-read avoided). Smaller than primary because the chain fires only on PROCEED-WITH-CAUTION verdicts (~1 in 3 risk-checks); horizon ~5-10k over 10-20 sessions.
+- **Pin friction-log + improvement-log + decisions.md tails at `/prime` into a single consolidated read; reuse at `/session-plan` and `/wrap-session`.** Estimate: ~800-1,500 tokens/session. Smaller than primary per-session but extremely frequent (every session). Recurring lever — flagged in 5+ prior entries; not yet shipped.
+- **Concurrent-session detection moved to a deterministic preflight signal instead of accidental tail-discovery during reads.** Estimate: ~200-400 tokens/session, but structural value (deterministic collision flag) exceeds the token figure. Lowest ROI in pure tokens; highest in cognitive-load reduction. Flagged in 3+ recent entries with escalating frequency.

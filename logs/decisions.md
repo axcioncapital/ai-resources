@@ -243,3 +243,33 @@ Mid-session, a concurrent session began overwriting `logs/session-plan.md` to ru
 
 **Alternatives considered.**
 1. **Remove `Class:` per SO mitigation 1a literally** — **Rejected:** would break drift-check's ability to capture the session classification (execution/design/mixed) when comparing trajectory against intent.
+
+## 2026-05-25 — Off-spec `/session-plan` no-file path during multi-session collision
+
+**Context.** During a friction-cleanup session, `/session-plan` reported `logs/session-plan.md` had been modified 17 minutes earlier by an active concurrent Sonnet 200k session (intent: "Implement Tasks 1+2+3 — compaction checkpoints, qc-reviewer cap, session-start optional fields"). Spec's 3-option prompt for this case: (1) keep current plan, (2) overwrite with new intent, (3) write to `session-plan-pass2.md`. Option 1 left my session without a plan file. Option 2 was destructive — would clobber the active session's plan. Option 3 (pass2) was also problematic: `session-plan-pass2.md` already existed and was committed from an earlier session; writing to it would overwrite committed content. The filename-proliferation problem the unattempted Wave 1 aims to fix was the very thing blocking the spec's option 3 path.
+
+**Decision.** Take an off-spec option 4: proceed WITHOUT writing a session-plan file. The two-QC-passed proposal in chat IS the plan; execute against it directly. Operator confirmed ("ok proceed off spec").
+
+**Rationale.** All three in-spec options were destructive, blocking, or pointed at the recurring filename-collision pattern that today's intended Wave 1 fix exists to eliminate. The proposal had already passed two `/qc-pass` cycles (the second of which substantively reshaped scope after catching shipped-not-marked friction items), so the execution surface was QC-validated without needing a separate written plan. The `/session-plan` skill's value here was the structured field capture; the operator had that already from the QC-validated proposal.
+
+**Alternatives considered.**
+1. **Option 1 (keep current plan)** — Rejected: my session would have no plan reference, and the spec's default "no response = keep" was not appropriate when the operator wanted me to proceed.
+2. **Option 2 (overwrite)** — Rejected: actively destructive to the concurrent session's plan file.
+3. **Option 3 (write to pass2.md)** — Rejected: pass2.md was already committed content; writing would overwrite (recoverable via git, but still poor hygiene).
+4. **Wrap immediately, queue everything for next session** — Rejected: Wave 2 had no concurrent-collision risk (single-file edit on `deploy-workflow.md`), so partial execution was viable.
+
+**Spec implication.** This is empirical evidence the `/session-plan` Step 0 freshness logic does not handle multi-concurrent-session repos well. Wave 1 (filename rename to date-time stamps) would have prevented this — the next session should still execute it. The off-spec path is a one-time workaround until Wave 1 lands; not a precedent for routine use.
+
+---
+
+## 2026-05-25 — End-time `/risk-check` skipped on Wave 2 (deploy-workflow template-permissions unification)
+
+**Decision.** Skipped the end-time `/risk-check` on the Wave 2 unification commit (`fce4ca6`).
+
+**Rationale.** All four documented skip criteria (memory `feedback_end_time_risk_check_skip.md`) were met:
+1. Plan-time gate ran with PROCEED-WITH-CAUTION verdict (audits/risk-checks/2026-05-25-wave-2-deploy-workflow-template-permissions-unification.md).
+2. All three required mitigations applied in the same commit: (a) in-context acknowledgement of widened entries with Layer D link, (b) templates/README.md Consumer contract updated, (c) commit message struck the incorrect `/sync-workflow` claim.
+3. System-owner second opinion via `/consult` (Function B) concurred and added Risks A and D as pre-commit verifications — both verified clean before commit.
+4. Drift bounded: the executed change set matched the plan-time scope exactly (no expansion to additional files; no scope creep beyond the named mitigations).
+
+**Alternatives considered.** Run the end-time gate anyway for thoroughness — Rejected: would duplicate the plan-time + system-owner work without surfacing new signal; the skip criteria exist precisely to avoid this waste.

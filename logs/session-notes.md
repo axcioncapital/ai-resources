@@ -528,3 +528,45 @@ Executed `plans/sonnet-200k-efficiency-implementation.md` end-to-end: Task 1 (co
 ### Open Questions
 
 - **Concurrent friction-cleanup session collision.** That session's mandate landed in `logs/session-notes.md` below mine at session-start time. Its Wave 1 (`/session-plan` HHMM filename rename across 7 consumers) may touch `session-plan.md` (the command) which I also edited in Task 1. Worth checking for merge conflicts when both sessions wrap. Both `bypassPermissions` sessions running in parallel = recurring W22 pattern (operator has it under control per prior wrap notes).
+
+## 2026-05-25 — Friction-cleanup session: Wave 2 deploy-workflow template-permissions unification
+
+Class: mixed (execution-dominant)
+
+### Summary
+
+Friction-cleanup session targeting three verified-open fixes (Waves 0, 1, 2) plus an optional stretch (Wave 3). Only Wave 2 landed (commit `fce4ca6`): unified `deploy-workflow.md:209` to read canonical permissions from `templates/project-settings.json.template` instead of an inline JSON literal, mirroring the `/new-project` rewire from earlier today (`39b27b5`). Wave 0 (housekeeping) and Wave 1 (`/session-plan` filename rename across 7 consumers) deferred to a fresh session — Wave 0 due to uncertain ownership of orphan files held by 2 concurrent sessions; Wave 1 due to direct collision with the active Sonnet 200k session which was modifying `compaction-protocol.md` (one of the 7 consumers). Wave 1 is now unblocked (Sonnet 200k wrapped at `a7e80a2`, 4 min before this wrap) but 4 consumer files just shifted under me, so it needs fresh reads.
+
+Two `/qc-pass` cycles before execution caught a substantive issue: most friction-log entries from Apr–May 2026 referenced in the original `/open-items` report were ALREADY SHIPPED but never had a `Resolved:` field added. The first proposal listed `/friday-act` auto-QC + `/session-start` confirmation-token as priority items, both already implemented. The second proposal then proposed several May-11 friction items also already shipped (`/session-plan` template enrichment, `/monday-prep` C15 conflate-semantics, pre-commit skill-size hook). The third proposal reduced scope to truly outstanding work (Waves 0/1/2 + stretch).
+
+Plan-time `/risk-check` on Wave 2: PROCEED-WITH-CAUTION (3 Mediums: permissions surface, blast radius, hidden coupling). System-owner second opinion via `/consult` concurred and flagged Risks A (deploy-workflow write predicate) and D (permission-template Layer D content) as pre-commit verifications — both verified clean. All 3 required mitigations applied in the same commit.
+
+### Files Created
+
+- `audits/risk-checks/2026-05-25-wave-2-deploy-workflow-template-permissions-unification.md` — plan-time risk-check report with `/consult` Function B architectural commentary appended (commit `fce4ca6`)
+- `logs/scratchpads/2026-05-25-19-19-scratchpad.md` — continuity scratchpad for next `/prime` (gitignored)
+
+### Files Modified
+
+- `.claude/commands/deploy-workflow.md` — replaced inline `CANONICAL_PERMS` JSON literal at line 209 with walk-up resolver + `jq -c '.permissions'` template read; replaced inline JSON-literal documentation block with a pointer paragraph linking to `docs/permission-template.md` § Layer D rationale (commit `fce4ca6`)
+- `templates/README.md` — Consumer contract updated to add `/deploy-workflow` as a second consumer; notes this as the 2026-05-25 KEEP-verdict's first concrete extension (commit `fce4ca6`)
+
+### Decisions Made
+
+- **Off-spec `/session-plan` path taken (no session-plan file written).** `logs/session-plan.md` was held by the active Sonnet 200k session at /session-plan time (modified 17 min before by them). Spec's 3 options were (1) keep their plan, (2) overwrite (destructive), (3) write to pass2.md (also committed from earlier). Off-spec option 4: execute against the two-QC-passed proposal directly. Operator confirmed.
+- **Wave 0 deferred — uncertain orphan ownership.** Two of the 7 untracked files belonged to the active Sonnet 200k session (input files for its Tasks 1+2+3); 4 risk-check files belonged to an unidentified Phase 5/6/7 harness session that was actively adding to the working tree. Per-file ownership triage needed in a clean session.
+- **Wave 1 deferred — concurrent collision then context-discipline.** Initially deferred due to active concurrent session modifying `compaction-protocol.md`. After that session wrapped, deferred again per the workspace "context constraint deferral" rule — 4 consumer files had shifted in the last 36 minutes and Wave 1 (~75 min + `/risk-check`) on degrading context was the wrong call.
+- **End-time `/risk-check` skipped per documented skip rule.** Wave 2 had plan-time gate with PROCEED-WITH-CAUTION verdict + all 3 mitigations applied + system-owner second opinion + commits already shipped + drift bounded to a single file pair. Per memory `feedback_end_time_risk_check_skip.md`, all four skip criteria met.
+
+### Next Steps
+
+- **Push** — Wave 2 commit `fce4ca6` is unpushed. Operator gate.
+- **Wave 1 next session** — `/session-plan` filename rename to HHMM scheme across 7 consumers + plan-time `/risk-check`. Fresh reads needed for the 4 consumers that just changed: `compaction-protocol.md` (commit `038fca9`, named-checkpoints added), `drift-check.md` (commit `5eb584c`, Task 3 edits — heaviest consumer), `session-start.md`, `wrap-session.md`. Plus the other 3: `prime.md`, `open-items.md`, `monday-prep.md`, `repo-architecture.md`, `weekly-cadence.md`.
+- **Wave 0 orphan triage** — 7+ uncommitted artifacts with per-file ownership triage needed. Some now likely committed by their owning sessions; the 4 risk-check files from the Phase 5/6/7 harness session probably remain.
+- **`/improve` on friction-log freshness** — separate cleanup pass to mark shipped fixes as `Resolved:` across the friction-log. The freshness problem caused two QC catches in this session and is the kind of systematic drift `/improve` should surface.
+- **Workflow-diagnosis inbox brief** — Wave 3 stretch not attempted; still a viable next-session candidate.
+- **Standing carryovers (from prior wraps):** R9 reframe; orphaned-skill decision (`fund-triage-scanner`, `prose-refinement-writer`); project CLAUDE.md backfill.
+
+### Open Questions
+
+None.

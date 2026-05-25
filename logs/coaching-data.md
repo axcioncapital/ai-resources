@@ -99,3 +99,11 @@
 - **QC cycles:** 2 (session-plan: REVISE → 3 fixes via /recommend → GO; WU1: mechanical-mode GO with 1 advisory → inline fix → committed)
 - **Gates:** 4 (2 changed) — plan-approval:confirmed (mandate confirm + plan "go"), qc-disposition:changed (REVISE → fixes applied directly via /recommend), qc-disposition:confirmed (mechanical-mode GO), content-review:changed (WU2 stop-point deferred per operator option 2; spec file requested)
 - **Mandate fields:** specified: work_scope, exit_condition | inferred: files_in_scope | omitted: out_of_scope, stop_if
+
+### 2026-05-25 — Friction-cleanup session: Wave 2 deploy-workflow template-permissions unification
+- **Commands used:** /prime, /open-items, /qc-pass (×2), /session-start, /session-plan, /recommend, /risk-check, /consult, /wrap-session
+- **Iterations:** 3 (session-plan proposal pass-01 → pass-02 → pass-03 after two QC REVISE cycles)
+- **Decisions logged:** 2 (off-spec /session-plan no-file path; end-time /risk-check skip per documented rule)
+- **QC cycles:** 2 (both REVISE — pass-01 caught 2 already-shipped items; pass-02 caught 4 more already-shipped items + 6 substantive corrections; pass-03 verified clean by manual source-check before commit)
+- **Gates:** 10 (5 changed) — plan-approval:confirmed, content-review:changed, qc-disposition:changed, content-review:changed, qc-disposition:changed, plan-approval:confirmed, plan-approval:changed (off-spec deviation), plan-approval:confirmed (mandate), challenge-disposition:changed (/recommend invoked), plan-approval:confirmed (wrap option A)
+- **Mandate fields:** specified: work_scope, exit_condition, stop_if | inferred: files_in_scope | omitted: out_of_scope, allowed_inputs, required_outputs
