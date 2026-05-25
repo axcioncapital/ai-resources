@@ -4,6 +4,36 @@
 
 ### 2026-05-25 | Acceptable
 
+**Task:** Item 8 Sequencing Session 2 — extracted canonical project settings + CLAUDE.md sections from inline `/new-project` literals into shared `ai-resources/templates/`, rewired `/new-project` to consume them, aligned research-workflow CLAUDE.md, and updated architecture map. 5 commits shipped after plan-time PROCEED-WITH-CAUTION → end-time GO.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~15 |
+| Files read | ~15 (re-reads: 4 files re-read; session-notes.md ×4, improvement-log.md ×3, new-project.md ×5+ overlapping sections, decisions.md ×2, usage-log.md ×2) |
+| Files written/edited | 7 created + 5 modified + logs/reports = ~15 write targets |
+| Tool calls | ~80-90 |
+| Subagents | 4 (risk-check-reviewer ×2, system-owner, qc-reviewer) |
+| Rework cycles | 3 (1 substantive QC-driven revision; 2 concurrent-modification re-read cycles) |
+
+**Findings:**
+- `.claude/commands/new-project.md` read 5+ times across overlapping sections with shifting line numbers after edits (Re-reads — Major). File is 698 lines; section reads accumulated to ~250-300 lines with substantial overlap.
+- `logs/session-notes.md` read 4 times (prime tail, section locate, append-point tail, recheck tail) — R4 log-trio pre-fetch did not suppress the wrap-time append-point re-read (Re-reads — Moderate). Recurring pattern across multiple sessions.
+- 3 rework cycles total: 1 substantive (bash substitution → python3 + mustache swap, including header.md rewrite) + 2 concurrent-session Edit/Write-after-modification cycles on session-plan.md and improvement-log.md (Rework — Moderate). Write-before-Read failure on session-plan.md now flagged in 5 of 6 recent sessions.
+- `system-owner` advisory (~80 lines) returned in tool result AND appended verbatim to plan-time risk-check report via heredoc — load-bearing duplication, but architecturally justified (report needs to be self-contained on disk) (Tool overhead — Minor).
+- Trend vs last 7 entries (6 Acceptable, 1 Efficient): stable Acceptable rating; concurrent-session interference is escalating (2 incidents this session vs typical 0-1) and session-plan.md Write-before-Read remains unresolved.
+
+**Recommendation:** Pin `.claude/commands/new-project.md` content on first section read during multi-edit sessions, OR read the full file once upfront when planned edits span ≥3 sections — avoids the line-number-shift re-read cascade that drove this session's largest re-read cost.
+
+**Estimated savings:** ~3,000-5,000 tokens per multi-edit command-file session. Derivation: 5+ overlapping section reads at avg ~80 lines each ≈ 400 lines re-read; collapsing to one upfront 698-line read + edits saves ~3 redundant section fetches (~240 lines × ~15 tokens/line ≈ 3,600 tokens). Multi-edit command-file sessions occur ~4-6×/month → ~15-30k tokens/month savings.
+
+**Additional levers (ROI-ranked):**
+- **Resolve session-plan.md Write-before-Read recurring failure (Highest ROI).** Estimate: ~1,500-2,500 tokens/session × 4-5 sessions/week = ~6-12k tokens/week. Bigger than primary because it fires nearly every session and the fix is structural (skill-level Read-before-Write enforcement in /session-plan), not behavioural.
+- **Concurrent-session interference mitigation.** Estimate: ~1,000-2,000 tokens per incident × 1-2 incidents/session this week. Comparable to primary in single-session impact but harder to fix without harness-level locking; surface as friction-log entry rather than per-session lever.
+- **session-notes.md wrap-time append-point re-read.** Estimate: ~200-400 tokens/session × every session = ~1-2k tokens/week. Smaller per-session than primary but extremely frequent; fix is teaching wrap-session to append via heredoc without re-reading append point (file is append-only by design).
+- **subagent verbatim re-output of system-owner advisory.** Estimate: ~1,200 tokens this session, but architecturally justified (report-on-disk needs self-containment). Lower ROI — would need a different report structure (link instead of inline) and that trades convenience for tokens.
+
+### 2026-05-25 | Acceptable
+
 **Task:** Diagnostic backlog bundle session — stopped at R1 plan-time gate per operator (option 1) due to concurrent session collision; Wave 1.2 workspace innovation-registry committed (`5fc5da9`); Wave 1.1 + 1.3 found already-resolved [FADING-GATE]; R1 plan-time `/risk-check` + `/consult` second opinion produced PROCEED-WITH-CAUTION report committed (`724c27a`), R1 execution deferred.
 
 | Metric | Value |

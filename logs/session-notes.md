@@ -354,3 +354,50 @@ Replaced the static "MANDATE CONFIRMATION" plain-text echo block in `session-sta
 
 ### Open Questions
 None.
+
+
+## 2026-05-25 — Item 8 Sequencing Session 2 templates wrap
+
+### Summary
+Executed Sequencing Session 2 from the improvement-log Sequencing note: extracted the canonical project `.claude/settings.json` shape and the four canonical project `CLAUDE.md` sections from inline `/new-project` literals into shared template files under `ai-resources/templates/`; rewired `/new-project` to consume them via walk-up to `ai-resources/`; aligned `workflows/research-workflow/CLAUDE.md` against the canonical fragments while preserving workflow-local content. Plan-time `/risk-check` returned PROCEED-WITH-CAUTION; system-owner second opinion concurred and added a 4th mitigation (architecture-map update). QC caught a real substitution bug in the bash-native approach; swapped to python3 + mustache placeholders, dry-run-tested. End-time `/risk-check` returned GO with all 5 dimensions Low. 5 commits, all mitigations verified.
+
+### Files Created
+- `templates/README.md` — consumer contract + 2026-04-13 KEEP verdict with re-check evidence
+- `templates/project-settings.json.template` — canonical permissions + 2 SessionStart hooks; valid JSON
+- `templates/project-claude-md/header.md` — `{{NAME}}` / `{{PROJECT_DESCRIPTION}}` mustache placeholders (fresh-creation only)
+- `templates/project-claude-md/input-file-handling.md` — canonical fragment
+- `templates/project-claude-md/commit-rules.md` — canonical fragment
+- `templates/project-claude-md/compaction.md` — canonical fragment
+- `templates/project-claude-md/session-boundaries.md` — canonical fragment
+- `audits/risk-checks/2026-05-25-extract-canonical-project-settings-claude-md-into-templates.md` — plan-time PROCEED-WITH-CAUTION + system-owner concurrence + 4 mitigations
+- `audits/risk-checks/2026-05-25-end-time-gate-on-templates-extraction-change-set.md` — end-time GO; all dimensions Low
+- `logs/scratchpads/2026-05-25-15-41-scratchpad.md` — continuity scratchpad
+
+### Files Modified
+- `.claude/commands/new-project.md` — step 2 settings merge: replaced inline CANONICAL_PERMS / AUTO_SYNC_HOOK / SANITY_HOOK with walk-up template read + `jq -c` extraction (predicate + hook-append idempotency preserved). Step 4 CLAUDE.md sections: removed the 4 inline canonical block displays AND the inline printf heredocs; new procedure reads 5 fragments via walk-up; fresh-creation uses python3 + mustache placeholders; append path uses for-loop with grep-q per-section idempotency. Policy block heredoc reference also updated. (Commit `39b27b5`)
+- `docs/permission-template.md` — lines 157 + 349 redirected from `CANONICAL_PERMS` literal to `templates/project-settings.json.template` (mitigation #1; commit `8b44015`)
+- `docs/repo-architecture.md` — 3 line-anchored edits: tree row, canonical-homes table row for "Deployable canonical fragment", Q8 sub-bullet distinguishing deployable fragment from doc-that-describes-a-shape (mitigation #4 from system-owner; commit `8b44015`)
+- `workflows/research-workflow/CLAUDE.md` — added "Operator-pasted content" bullet (Input File Handling); added "Post-compact resumption" paragraph (Compaction); `## File Verification and Git Commits` preserved verbatim per mitigation #3 (commit `c692864`)
+- `CLAUDE.md` (ai-resources) — one-line pointer to `templates/` added under "Other directories" enumeration (commit `8b44015`)
+- `logs/improvement-log.md` — Session 2 of Sequencing note marked VERIFIED-DONE with full execution context; Session 3 dependency now satisfied (commit `acc68fe`)
+
+### Files NOT Modified (intentional narrowing)
+- `workflows/research-workflow/.claude/settings.json` — workflow-specific hooks (PreToolUse Skill/Edit, PostToolUse Write/Edit auto-commit, extra SessionStart hooks) + intentional `{{WORKSPACE_ROOT}}` placeholder in `additionalDirectories`. No canonical drift to fix; alignment means "match canonical baseline where it applies," not "enhance with new hooks from the template." End-time `/risk-check` validated this as correctly bounded.
+
+### Decisions Made
+- **2026-04-13 decision re-checked → KEEP.** Project CLAUDE.md mirroring of workspace rules remains needed. Evidence: 5 projects checked, all missing `## Input File Handling` canonical section — confirms `/new-project` only writes at scaffold time, never backfills. The architectural decision is correct; the propagation gap is a separate concern flagged in `templates/README.md`.
+- **Template location: `ai-resources/templates/`** (sibling to `docs/`, `skills/`, `workflows/`). New top-level dir + new artifact type both triggered `repo-architecture.md` update rule (system-owner-caught mitigation #4).
+- **Mustache `{{NAME}}` / `{{PROJECT_DESCRIPTION}}` placeholders** in `header.md`, not single-brace `{name}` / `{project-description}`. Distinct from agent's tokens to prevent global-substitution collision; same convention research-workflow uses for `{{WORKSPACE_ROOT}}`.
+- **Python3 substitution** instead of bash native `${VAR//pattern/repl}`. QC found bash-native unsafe under (a) apostrophe in description = bash syntax error; (b) agent global substitution would corrupt bash search pattern. Python3 + argv passing handles all edge cases. Dry-run-tested with torture input (apostrophe / ampersand / backslash). Adds python3 as an implicit dependency (already available on macOS; consistent with existing jq dependency).
+- **Research-workflow alignment scope: within-section drift only.** Added missing canonical bullets/paragraphs to existing canonical sections. Did NOT promote `## File Verification and Git Commits` to canonical (mitigation #3); did NOT touch `.claude/settings.json`. Settings has intentional workflow-specific content.
+- **QC fix (separate from mitigations):** stale "heredoc" comment in Policy block at `new-project.md:402` updated to reflect actual post-rewire mechanism (template-fragment read + python3 substitution).
+
+### Next Steps
+- **Push** — 13 unpushed in `ai-resources` (this session's 5: `8b44015`, `39b27b5`, `c692864`, `54bf85b`, `acc68fe` on top of 8 concurrent earlier today). 1 unpushed in workspace (`Phase 5 Verification Layer` from earlier). Operator gate.
+- **Sequencing Session 3 (~45 min)** — both dependencies now satisfied. Source entries: "Add three questionnaire items to `/repo-dd`" + "Pre-commit skill-size warning hook." Natural next link in the sequence; chain it.
+- **`deploy-workflow.md:209` unification** — second consumer with an inline `CANONICAL_PERMS` literal. Small targeted refactor (~30 min) that would close the same contract-drift surface this session was designed to fix. Flagged in end-time risk-check + improvement-log entry.
+- **Project CLAUDE.md backfill** — separate concern: `/new-project` only writes canonical sections at scaffold time; existing projects miss newly-canonized sections. Possible future: backfill command or `/friday-checkup` rule.
+- **Standing carryovers:** R9 reframe; SF1 broad (still blocked on Sonnet 200k Task 1); workflow-diagnosis skill build; orphaned-skill decision.
+
+### Open Questions
+None.

@@ -168,3 +168,50 @@ Mid-session, a concurrent session began overwriting `logs/session-plan.md` to ru
 **Alternatives considered:**
 - No guard comments; trust future review. **Rejected:** risk-topology § 5 explicitly warns against unprotected two-end contracts.
 - Refactor Step 3 to use the same Markdown rendering. **Rejected:** would break `/wrap-session` Step 7a; the contract exists for a reason.
+
+---
+
+## 2026-05-25 — Templates extraction design decisions
+
+**Context.** Sequencing Session 2 extracted canonical project scaffolding from inline `/new-project` literals into shared `ai-resources/templates/`. Several design decisions made during execution have downstream implications for future template additions and the `/new-project` rewire pattern.
+
+### Decision 1: 2026-04-13 "Commit Rules propagate by explicit copy" — KEEP
+
+**Decision.** Retain the per-project canonical-section mirroring workaround. `/new-project` continues to write the four canonical sections (`## Input File Handling`, `## Commit Rules`, `## Compaction`, `## Session Boundaries`) into every new project CLAUDE.md.
+
+**Rationale.** Re-check found no evidence Claude Code's CLAUDE.md inheritance behavior has changed since 2026-04-13. Empirical confirmation: 5 projects checked, `## Input File Handling` missing from all of them — `/new-project` writes only at scaffold time and never backfills, so older projects miss newer canonical sections. The architectural decision is correct (inheritance unreliable → explicit copy needed); the propagation gap is a separate concern documented in `templates/README.md`.
+
+**Alternatives considered.**
+1. **RETIRE** — drop the workaround, rely on inheritance. **Rejected:** no evidence inheritance now works; would silently lose load-bearing rules in project sessions.
+2. **UPDATE** — change the workaround mechanism. **Rejected:** the existing short-form mirror approach satisfies workspace `## CLAUDE.md Scoping` rule and works; only the propagation completeness needs addressing.
+
+### Decision 2: Mustache `{{NAME}}` / `{{PROJECT_DESCRIPTION}}` placeholders in `header.md`
+
+**Decision.** Template fragment `templates/project-claude-md/header.md` uses double-brace `{{NAME}}` and `{{PROJECT_DESCRIPTION}}` for runtime substitution by the consumer (python3). The calling agent's single-brace `{name}` / `{project-description}` tokens are used elsewhere in the `/new-project` bash source and are NOT used inside the template fragment.
+
+**Rationale.** `risk-topology.md § 5` two-end contract risk: if the template fragment used `{name}` / `{project-description}`, the agent's global text-substitution pass over the `/new-project` bash source could ALSO substitute those tokens in the python search-string arguments, silently breaking runtime substitution. Mustache `{{...}}` is the same convention `research-workflow` uses for `{{WORKSPACE_ROOT}}` deploy-time placeholders — namespace separation by syntax.
+
+**Alternatives considered.**
+1. **Single-brace `{name}` in template** — **Rejected:** namespace collision with agent's substitution pass (would silently render literal `{name}` in project CLAUDE.md).
+2. **Other distinct prefix** (`__PROJECT_NAME__`, `<<<name>>>`) — **Rejected:** mustache is already in use elsewhere in the repo; consistency wins.
+
+### Decision 3: Python3 substitution over bash-native parameter expansion
+
+**Decision.** `/new-project` step 4 fresh-creation path uses `python3 -c "...replace(...)..."` to substitute mustache placeholders, with argv passing.
+
+**Rationale.** QC review found bash-native `${HEADER//\{name\}/$PROJECT_NAME}` unsafe in two ways: (a) apostrophe in `{project-description}` produces single-quote-string bash syntax errors; (b) the `\{name\}` pattern would be hit by the agent's global substitution of `{name}`, corrupting the search pattern. Python3 with literal `str.replace` + argv passing eliminates both failure modes (no shell parsing of replacement strings; no double substitution). Adds python3 as an implicit dependency (already on macOS by default; consistent with existing jq dependency throughout the command). Dry-run-tested with torture input (apostrophe + ampersand + backslash all preserved correctly).
+
+**Alternatives considered.**
+1. **`sed -e "s|...|...|g"`** — **Rejected:** `&` in `PROJECT_DESCRIPTION` expands to the match; `\` does backslash interpretation.
+2. **`awk -v`** — **Rejected:** functional but more verbose; python3 reads cleaner for the same edge-case coverage.
+3. **Document the constraint** (no apostrophes in description) and keep bash-native — **Rejected:** silent failure mode if the convention is violated; better to make the bash bullet-proof than to add a fragile rule.
+
+### Decision 4: Research-workflow alignment narrowed — settings.json intentionally untouched
+
+**Decision.** `workflows/research-workflow/CLAUDE.md` aligned (2 within-section drift fixes). `workflows/research-workflow/.claude/settings.json` NOT modified.
+
+**Rationale.** The CLAUDE.md drift was real (missing canonical bullets in existing canonical sections — fix-in-place). The settings.json has workflow-specific hooks (PreToolUse Skill/Edit, PostToolUse Write/Edit auto-commit, extra SessionStart hooks) and an intentional `{{WORKSPACE_ROOT}}` placeholder defended by the 2026-04-28 permission-sweep-auditor entry. Aligning settings.json would mean either (a) adding the canonical permission-sanity hook (scope creep — enhancement, not alignment) or (b) reordering allow-array entries (cosmetic). End-time `/risk-check` validated this scope-bounding as correct per `permission-template.md:248` template-class exception.
+
+**Alternatives considered.**
+1. **Align settings.json fully** — **Rejected:** would constitute scope expansion; the system-owner's follow-on watch item explicitly said "if alignment surfaces a third divergent section beyond `## File Verification and Git Commits`, the canonical fragment set is under-specified" — i.e., flag don't enhance.
+2. **Add only the missing permission-sanity hook** — **Rejected:** still scope expansion; deferred as a candidate for the `deploy-workflow.md:209` unification session.

@@ -543,3 +543,11 @@
 - **QC cycles:** 1 (REVISE on plan — 3 findings: Status field convention, output-shape framing, append-location — all applied; no re-run before /consult)
 - **Gates:** 4 (1 changed) — plan-approval:confirmed (ExitPlanMode approved after System Owner additions incorporated), content-review:confirmed (System Owner Function B advisory adopted in full via "proceed"), qc-disposition:changed (REVISE → operator directed "fix, then consult"), service-design-disposition:confirmed (two template divergences resolved via second /recommend, applied without further dispute)
 - **Mandate fields:** none (no /session-start this session)
+
+### 2026-05-25 — Item 8 Sequencing Session 2 templates
+- **Commands used:** /prime, /session-start, /session-plan, /risk-check (plan-time + end-time), /consult (system-owner second opinion), /qc-pass, /wrap-session
+- **Iterations:** 1 (`new-project.md` step 4: draft-01 bash-native substitution → draft-02 python3 + mustache placeholders after QC found apostrophe/global-substitution unsafety)
+- **Decisions logged:** 1 (combined entry covering 4 sub-decisions: 2026-04-13 KEEP, mustache placeholders, python3 substitution choice, research-workflow narrowing)
+- **QC cycles:** 1 (REVISE → 3 findings auto-triaged + fixed → end-time /risk-check GO confirms acceptance)
+- **Gates:** 2 (0 changed) — plan-approval:confirmed, risk-check-approval:confirmed
+- **Mandate fields:** specified: work_scope, exit_condition | inferred: files_in_scope | omitted: out_of_scope, stop_if
