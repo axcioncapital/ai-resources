@@ -38,7 +38,8 @@
     "defaultMode": "bypassPermissions"
   },
   "env": {
-    "MAX_THINKING_TOKENS": "10000"
+    "MAX_THINKING_TOKENS": "10000",
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "80"
   },
   "hooks": {
     "PreToolUse": [
