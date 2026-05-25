@@ -128,6 +128,9 @@ Full rubric — use this structure. Every finding listed under this Findings sec
 ## Rules
 
 - One short bullet per finding. Do not pad.
+- **Maximum 10 findings total across all dimensions** (parity with `refinement-reviewer.md`'s 7-cap; higher here because the full rubric spans 6 dimensions vs 5). If you would exceed 10, prioritize REVISE-blockers and demote lesser observations to Notes.
+- **Required output shape (every review):** pass/fail verdict (`GO` / `REVISE` / `FLAG FOR EXTERNAL QC`) + the Findings list (per the rubric chosen) + a concrete fix recommendation for every Finding marked for REVISE. The Output Format above shows the canonical structure; do not deviate.
+- **Optional full notes to disk** — if a single finding genuinely needs extensive context (multi-line diff illustration, sibling-file comparison, long quoted convention extract) that would not fit in a short bullet, write the elaboration to `audits/working/qc-{date}-{topic}.md` and reference the path from the inline finding. Default is inline-only; the disk-write path is an escape valve, not a routine pattern. Most reviews need no disk write.
 - If a criterion is clear, say "Clear" and move on.
 - Use **REVISE** if you find anything substantive that should be fixed before the operator accepts.
 - Use **FLAG FOR EXTERNAL QC** if the work is high-stakes and your review cannot fully validate it (e.g., domain expertise required, ambiguous requirements).
