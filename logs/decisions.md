@@ -48,3 +48,44 @@
 - *Keep the hook (full 6-file plan):* Rejected — QC-clean and risk-checked, but preemptive and low-value relative to its novelty risk.
 - *Rule without hook (4 files):* Rejected by operator — preferred to avoid even the always-loaded rule for now; manual is simpler and the auto-trigger can be added later as a separate change.
 - *Manual-only (chosen):* `/resolve-repo-problem` operator-invoked; revisit the auto-trigger later only if manual invocation proves easy to forget.
+
+
+## 2026-05-25 — permission-sweep-auditor template-class detection: silence-not-downgrade
+
+**Context.** The 2026-04-28 improvement-log entry booked a fix for `permission-sweep-auditor` to teach it to recognize workflow template settings files (e.g., `workflows/research-workflow/.claude/settings.json` with `{{WORKSPACE_ROOT}}`) and not flag the intentional `{{...}}` placeholders as Rule 8 violations. The existing Step 4a heuristic already detected the placeholder pattern and downgraded findings to ADVISORY — yet on 2026-05-11 a downstream `permission-sweep Bundle 1` session (commit `0514590`) treated the ADVISORY-tagged finding as actionable and replaced `{{WORKSPACE_ROOT}}` with a literal absolute path, breaking the template. The improvement-log entry's stated risk ("accidental 'fix' by a future agent") materialized as a real regression incident between booking and execution. Risk-check verdict on the planned fix was PROCEED-WITH-CAUTION; system-owner second opinion concurred and added a structural recommendation.
+
+**Decisions.**
+
+1. **Replace ADVISORY downgrade with full SILENCE for placeholder-bearing template files.** When BOTH the path-class signal (`**/workflows/*/.claude/settings.json`) AND the value-class signal (`{{[A-Z_]+}}` placeholder) fire, the auditor emits NO finding at any severity, not even ADVISORY. This removes the surface area for a future remediation pass to misread the finding as actionable.
+
+2. **Add active regression detection — HIGH `Template integrity` finding when only the path-class signal fires.** A file matching `**/workflows/*/.claude/settings.json` whose placeholders have been replaced by literal paths triggers a HIGH finding with explicit remediation hint: "Restore the placeholder; do not 'fix' the literal path. `/deploy-workflow` fills placeholders at deploy time." This converts the regression mode into a true-positive detection.
+
+3. **Restore the broken template file in the same bundle.** Line 34 of `workflows/research-workflow/.claude/settings.json` restored from the literal hardcoded path back to `{{WORKSPACE_ROOT}}` as part of Item A's commit.
+
+**Rationale.** The 2026-05-11 incident demonstrated empirically that ADVISORY findings are insufficient protection — a downstream remediation pass can and did treat an ADVISORY as actionable. Two structural fixes are needed: (a) make the placeholder case unobservable to the remediation pass (silence, not downgrade), and (b) detect the regression mode actively so the system surfaces the failure if it recurs. Silencing alone would leave the system blind to the placeholder-replaced state; active detection alone would still leave the placeholder case as an attractive ADVISORY target. Both together are belt-and-suspenders without the cost of two parallel heuristics — the unified two-signal state machine handles all cases.
+
+**Alternatives considered.**
+- *Keep downgrade-to-ADVISORY, change nothing else:* Rejected — proven insufficient on 2026-05-11.
+- *Path-based heuristic ALONGSIDE the placeholder heuristic (two parallel rules):* Rejected per system-owner advice — two heuristics targeting the same false-positive class create a silent conflict surface (which heuristic wins when they disagree?). Better to unify into one detection step with three outcomes.
+- *Move the template file out of the workflow-templates directory:* Rejected — the directory contains other intact templates (CLAUDE.md still has `{{PROJECT_TITLE}}` etc.). The right fix is restoring the file's template state, not relocating it.
+- *Add the parallel fix to `repo-health-analyzer/SKILL.md` in the same bundle:* Rejected per system-owner advice — each canonical agent/skill edit is its own change class; bundling expands blast radius without expanding the risk-check coverage. Deferred to its own session (also: grep confirms the skill has zero references to `additionalDirectories`, `{{`, `Rule 8`, or `template-class`, so there is currently nothing to mirror).
+
+
+## 2026-05-25 — [FADING-GATE] generalization: verify-before-edit posture for booked items
+
+**Context.** Two of three planned items in the 2026-05-25 session-plan (E: /note + /friction-log session-header format fix; F: Sequencing note Session 1 — Model Tier + subagent-summary cap) were caught as already-done by drift during execution. Item E's underlying work had shipped on 2026-05-22 (commit `3a7ad4c`); Item F's three rule components had been codified into workspace and ai-resources CLAUDE.md sections at some point after the source entries were logged. The session-plan was booked from stale historical references — the 2026-05-22 Triage block for E, and the older Sequencing note for F. The system-owner advisory on Item A explicitly named the "fading-gate" pattern as a missed risk in the original risk-check report and recommended verifying the trigger state before editing.
+
+**Decisions.**
+
+1. **Apply verify-before-edit as a posture for all booked-from-stale-references items**, not just the one item that surfaced it. After verifying Item A's premise (which turned out to also be partially stale — the template file had been regressed), generalized the same posture to Items E and F before any command-file edits were attempted. Both verifications caught the booking as a [FADING-GATE].
+
+2. **Log annotation-only commits for already-done items.** Rather than skipping silently or marking the booking as "obsolete," wrote explicit annotation commits to the improvement-log preserving the audit trail: Item E's commit (`766c0ae`) annotated the 2026-05-22 Triage block with "SHIPPED 2026-05-22 commit 3a7ad4c"; Item F's commit (`d5ae398`) annotated the Sequencing note with "VERIFIED-DONE 2026-05-25" plus the codification evidence. This is cheaper than re-doing the work and keeps the historical record honest.
+
+3. **Surface for monthly gate-calibration.** [FADING-GATE] fired twice in one session — recording in the next monthly `/friday-checkup` per the gate-calibration system memory.
+
+**Rationale.** Bookings made in one session can become stale during the interval before execution. Trusting the booking's stated trigger without re-verifying the current state of the world risks two failure modes: (a) doing work that has already been done (wasted effort), or (b) doing the wrong work if the original problem has evolved (incorrect output). The verify-first posture protects against both. The cost is one Read per item before editing — much cheaper than the edit + QC + commit cycle for work that didn't need to happen.
+
+**Alternatives considered.**
+- *Skip silently when already done:* Rejected — leaves no record that the booking was checked. A future audit would re-discover the same situation.
+- *Mark the booking obsolete and remove the entry:* Rejected — destroys the audit trail that tracks why the entry existed in the first place.
+- *Annotate with verification evidence (chosen):* Preserves the improvement-log entry as historical context AND records that this session checked and found the work already shipped. Future sessions can read the annotation and understand the lifecycle.

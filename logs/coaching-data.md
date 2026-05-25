@@ -502,3 +502,11 @@
 - **Decisions logged:** 0
 - **QC cycles:** 0 (audits are diagnostic-only; no end-of-audit /qc-pass invoked)
 - **Mandate fields:** none (no /session-start this session)
+
+### 2026-05-25 — A/E/F improvement-log fixes (permission-sweep-auditor + 2 [FADING-GATE] verifications)
+- **Commands used:** /prime, /session-start, /session-plan, /risk-check, /consult, /qc-pass, /usage-analysis, /wrap-session
+- **Iterations:** 0 (no drafting)
+- **Decisions logged:** 2 (silence-not-downgrade for template-class detection; [FADING-GATE] verify-before-edit posture)
+- **QC cycles:** 1 (REVISE on Item A bundle — 1 finding, missing orchestrator mapping row, self-resolved)
+- **Gates:** 3 (1 changed) — plan-approval:changed (scope: a/e/f selected from 3 alternatives, b deferred), content-review:confirmed (session-start mandate), qc-disposition:confirmed (REVISE finding self-resolved without operator dispute)
+- **Mandate fields:** specified: work_scope, exit_condition, out_of_scope | inferred: files_in_scope | omitted: stop_if

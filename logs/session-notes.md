@@ -377,3 +377,67 @@ Class: design
 - Out of scope: Other SF1 items (SF2, SF3) and other commands
 - Files in scope: (inferred)
 - Stop if: (none stated)
+
+## 2026-05-25 — Diagnostic backlog wave 1: SF3 + R4 + R6 + R10 + R9 (+ R7 stretch)
+
+Class: mixed (implementation-dominant)
+
+**Mandate:** Pack the highest-priority isolated diagnostic-backlog items from the 2026-05-25 token-audit reports into one session, in order: (1) SF3/R3 `/create-skill` Step 3 output-to-disk fix [single-file edit covering both (a) removing main-session read of `evaluation-framework.md` and (b) updating inline evaluator subagent brief at lines 33–46 to write findings to `audits/working/evaluation-{name}.md` and return path + 1-line verdict], (2) R4 `/prime` pre-fetch log-trio [add tail-reads of `decisions.md` last 10 lines + `usage-log.md` last 30 lines to Step 1], (3) R6 `/wrap-session` `coaching-data.md` tail-read [replace full Read with `Bash(tail -n 80 logs/coaching-data.md)`; preserve fall-back to full Read if structural lookup needed], (4) R10 `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=80` in settings.json env block only, (5) R9 reference-skill symlinks in `workflows/research-workflow/reference/skills/` [verify `/deploy-workflow` and `/new-project` copy semantics before flipping], stretch (6) R7 fading-gate-scan subagent for `/friday-checkup` Step 6 monthly tier [requires `/risk-check` plan-time + end-time] — done when: items 1–5 committed; item 6 either committed or explicitly deferred
+- Out of scope: SF1 broad (6-workflow main↔subagent dedup), SF2/R5 (`/compact` breakpoints across 7 commands), permission-sweep-auditor fix, Phase 5 harness verification, Sonnet 200k Tasks 1–3 (all in concurrent sessions); any model-related changes to settings.json (per `feedback_no_model_in_settings_json.md`)
+- Files in scope: `.claude/commands/create-skill.md`, `.claude/commands/prime.md`, `.claude/commands/wrap-session.md`, `.claude/settings.json`, `workflows/research-workflow/reference/skills/` (2 copies), `.claude/commands/friday-checkup.md` + new subagent file under `.claude/agents/` (stretch only)
+- Stop if: any item's edit triggers `/risk-check` returning NO-GO or BLOCKED; or context approaches 70%; or a concurrent session's push lands a conflicting change on a file in scope (fetch + diff against `origin/main` between items, not blind `git pull`)
+
+### Execution notes
+
+- **R9 deferred.** Pre-flip verify revealed the 2 reference copies (`knowledge-file-producer`, `report-compliance-qc`) are NOT stale duplicates — they are the **generic** workflow-deploy versions, while canonical `skills/<name>/` has acquired (a) `model:`/`effort:` frontmatter convention added after the workflow's Phase 0 lock and (b) project-specific scoping (e.g., `knowledge-file-producer` mentions "Buy-Side Service Model" in canonical, generic in reference). Symlinking would force all future workflow deployments to inherit Buy-Side-specific content. R9 needs to be reframed: either (1) accept the drift as intentional and remove R9 from the audit backlog, or (2) restructure to have a `reference-generic/` skills location distinct from canonical. Decision deferred to a dedicated session.
+
+
+## 2026-05-25 — A/E/F improvement-log fixes (permission-sweep-auditor template-class + 2 [FADING-GATE] verifications)
+
+Class: execution
+
+**Mandate:** Fix permission-sweep-auditor template-class classification (A), fix /note + /friction-log incompatible session-header formats — 3 bundled entries (E), implement Sequencing note Session 1 — extend Model Tier rule to agents + codify subagent-summary cap (F) — done when: all 3 items committed
+- Out of scope: SF1 structural fix wave (main↔subagent file-read duplication) — deferred to next session
+- Files in scope: (inferred)
+- Stop if: (none stated)
+
+### Summary
+
+All three planned items landed. Item A shipped real edits — rewrote `permission-sweep-auditor` Step 4a with a two-signal (path-class + value-class) template-class detection state machine that SILENCES Rule 8/9 findings instead of downgrading to ADVISORY, plus actively detects the failure mode of template files whose placeholders have been replaced. The system-owner second opinion on the PROCEED-WITH-CAUTION risk-check verdict discovered an active regression — commit `0514590` (2026-05-11) had broken the `workflows/research-workflow/.claude/settings.json` template by "fixing" the `{{WORKSPACE_ROOT}}` placeholder to a literal path. Restored the placeholder as part of Item A's bundle. Items E and F were both [FADING-GATE] — caught as already-done by drift before any command-file edits were attempted, saving 1-2 hours; only annotation commits were needed. Three concurrent sessions ran today (mine + SF1 fix + diagnostic backlog wave); no file-scope overlap.
+
+### Files Created
+
+- `audits/risk-checks/2026-05-25-edit-ai-resources-claude-agents-permission-sweep-auditor-md.md` — plan-time risk-check report (PROCEED-WITH-CAUTION) with appended `## Architectural Commentary` section from system-owner advisory
+- `logs/scratchpads/2026-05-25-13-30-scratchpad.md` — session continuity scratchpad (this wrap, Step 0.5)
+
+### Files Modified
+
+- `.claude/agents/permission-sweep-auditor.md` — Step 4a rewritten with two-signal template-class detection state machine; SILENCE replaces ADVISORY downgrade (Item A; commit `d2601cb`)
+- `.claude/commands/permission-sweep.md` — added `Template integrity` row to the Step 5 rule-mapping table (QC fix on Item A; commit `d2601cb`)
+- `docs/permission-template.md` — § Intentional-template exceptions rewritten to mirror the agent logic + document the 2026-05-11 regression rationale (Item A; commit `d2601cb`)
+- `workflows/research-workflow/.claude/settings.json` — line 34 restored from literal hardcoded path to `{{WORKSPACE_ROOT}}` placeholder (Item A; commit `d2601cb`)
+- `logs/improvement-log.md` — three edits across three commits: 2026-04-28 entry marked `applied 2026-05-25` + `Verified` + Regression-incident subsection (Item A; commit `d2601cb`); 2026-05-22 Triage block annotated (Item E; commit `766c0ae`); Sequencing note Session 1 annotated as VERIFIED-DONE (Item F; commit `d5ae398`)
+- `logs/usage-log.md` — 2026-05-25 Acceptable entry written
+- `logs/session-notes.md` — this entry
+- `logs/session-plan.md` — overwritten for A/E/F scope at session start
+
+### Decisions Made
+
+- **Run `/risk-check` discretionarily for an agent-definition edit.** Agent-definition edits are NOT in the canonical `/risk-check` change-class list per `docs/audit-discipline.md` lines 19-24, but the change has audit-cycle effects (every future `/permission-sweep` and `/friday-checkup --dry-run` uses the new logic), so the discretionary `/risk-check` invocation was justified. Outcome: PROCEED-WITH-CAUTION; the structural finding (active regression on 2026-05-11) would have been missed without the gate.
+- **Silence rather than downgrade.** System-owner second opinion recommended replacing the previous ADVISORY-downgrade behavior with full silencing (no finding emitted at any severity) because ADVISORY proved insufficient on 2026-05-11 — a downstream remediation pass treated the ADVISORY as actionable. Adopted as the structural fix; the new path-class signal actively detects the regression mode if it recurs.
+- **Restore the placeholder, not the broken file shape.** The system-owner outlined three outcomes for the file-state investigation; outcome (b) — "placeholders are gone, file deployed in place" — was the actual state. Chose to restore the placeholder (keeping the file as a template) rather than move it out of the template directory, because the rest of the directory remains a template (CLAUDE.md still contains `{{PROJECT_TITLE}}`, etc.).
+- **Skip end-time `/risk-check` per documented skip rule.** Plan-time gate covered the change set with all 4 mitigations applied + 1 system-owner addition (silencing) adopted; drift bounded (every Item A addition traces to a mitigation or QC finding); deferred parallel SKILL edit explicitly unbundled per system-owner advice. Skip documented in the commit message.
+- **Defer SF1 (Item B) explicitly.** Operator's framing of the session: A + E + F this session, B deferred to its own dedicated session due to context-bloat risk on a structural 6-file edit (rationale: 6 workflow edits + own session-plan + own risk-check is too much to bundle on top of A + E + F).
+- **Treat Items E and F as [FADING-GATE].** Pre-edit verification (per system-owner posture from Item A) revealed both were already shipped/codified by drift. Skipped the actual command edits; logged annotation commits to preserve the audit trail. Same `[FADING-GATE]` pattern as Item A's source entry. Worth flagging at next monthly checkup per the gate-calibration system memory.
+
+### Next Steps
+
+- **Push** — `ai-resources` has 15 unpushed commits at session start; this session adds 3 (`d2601cb`, `766c0ae`, `d5ae398`) plus the wrap commit. Operator-gated.
+- **Two concurrent sessions** also running today (SF1 fix in `/session-start`; diagnostic backlog wave — SF3, R4, R6, R10, R9 deferred, R7 stretch). Their commits and wrap notes will be separate; coordinate the push order with the operator.
+- **Item B (SF1 broad — main↔subagent file-read duplication across 6 workflows)** still pending as a dedicated session. The concurrent SF1 session is scoped to `/session-start` ONLY, not the broader 6-workflow fix.
+- **Standing carryovers:** SF2 (`/compact` breakpoints in 7 commands), `workflow-diagnosis` skill build from inbox brief, Sequencing note Session 2 (canonical project templates), Sequencing note Session 3 (`/repo-dd` items + pre-commit skill-size hook — Session 1 dependency satisfied this session), orphaned skill decision (`fund-triage-scanner`, `prose-refinement-writer`), 5 active-project session-notes.md files over threshold, workspace `logs/innovation-registry.md` uncommitted.
+- **Monthly checkup item:** [FADING-GATE] fired twice this session (Items E and F) — record at next monthly `/friday-checkup` per the gate-calibration system.
+
+### Open Questions
+
+None.

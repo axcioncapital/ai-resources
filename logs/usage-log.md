@@ -2,6 +2,35 @@
 
 <!-- entries below -->
 
+### 2026-05-25 | Acceptable
+
+**Task:** Three-item improvement-log fix session (Items A/E/F) per session-plan. Item A rewrote `permission-sweep-auditor` Step 4a with two-signal template-class detection and restored a regressed template file; Items E and F were caught as already-done by drift ([FADING-GATE]).
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~20 |
+| Files read | ~17 (re-reads: 2 — `session-notes.md` 3-4×, `improvement-log.md` 3×) |
+| Files written/edited | 9 |
+| Tool calls | ~50 (Read ~15, Edit ~10, Write 1, Bash ~12, Skill ~6, Agent 3, TodoWrite 4) |
+| Subagents | 3 (risk-check-reviewer, system-owner, qc-reviewer) |
+| Rework cycles | 2 small (Write-without-Read on session-plan; unscoped Rule 14 add + revert) |
+
+**Findings:**
+- **Re-reads (Moderate):** `logs/improvement-log.md` read 3× across 3 sequential Edit calls (one per item annotation). A single Read + batched Edits would have saved 2 reads of ~135 lines each (~270 lines redundant).
+- **Re-reads (Moderate):** `logs/session-notes.md` accessed 3-4× during /prime + session-start via tail/offset/line-count probes (~400 lines total accessed on a ~530-line file). Recurring pattern — flagged in 3 of the last 5 entries.
+- **Tool overhead (Minor):** 3-4 separate `git log` calls investigating commit `0514590`; could have been one consolidated call with combined flags. Three permission-denied attempts on `improvement-log-archive.md` confirm QW1 deny rule is working but cost ~3 wasted Bash calls.
+- **Rework (Minor):** Write-without-Read on `session-plan.md` (1 extra Read); unscoped Rule 14 row added then reverted (1 extra Edit). Both small, self-caught.
+- **Trend:** Stable-to-improving vs last 3 entries — same `session-notes.md` re-read pattern persists (flagged 2026-05-22 Acceptable entry), but no major rework, no failed subagents, and the verify-first posture caught 2 of 3 items as [FADING-GATE] before edits were attempted — saving 1-2 hours of unnecessary work.
+
+**Recommendation:** Batch `improvement-log.md` edits — Read once, perform all 3 Edits in sequence, then commit. The session-notes tail-read anti-pattern is already a standing recommendation across 3 prior entries; this session's contribution is the multi-Edit batching gap.
+
+**Estimated savings:** ~2 redundant reads of `improvement-log.md` at ~135 lines each ≈ 270 lines ≈ ~1.5-2k tokens this session. The session-notes re-read pattern adds another ~3-4k (already counted in prior entries). Per-session: ~1.5-2k from the new batching lever. 10-20 session projection: 15-40k over the next month given improvement-log annotation work continues at current cadence.
+
+**Additional levers (ROI-ranked):**
+- **Session-notes tail-read fix** (~5k/session, 50-100k over 10-20 sessions) — bigger than primary because it fires every /prime + /wrap-session, not just multi-item edit days. Standing recommendation since 2026-05-22; not yet shipped.
+- **Consolidated git-log investigation calls** (~500-800 tokens/session when commit forensics fires) — smaller than primary because forensics sessions are rare (1-in-5), but trivially fixable by passing `--all --oneline` + grep filters in one call.
+- **[FADING-GATE] verify-before-edit posture** (negative-cost — saves entire item executions) — already applied this session for Items E and F. Generalize to: before any improvement-log item, read the actual target file first; if already-done, annotate-only. This session demonstrated the value; codifying it into session-plan stage instructions would compound across all future improvement-log sessions.
+
 ### 2026-05-22 | Wasteful
 
 **Task:** Designed and built a manual session-issue investigation capability — extended `/resolve-repo-problem` with a new inline AUTO mode and `/friday-checkup` Step 6. Routed through /clarify → plan mode → QC ×2 → /risk-check → /consult, then descoped from 6 files to 2, implemented, committed, and wrapped.
