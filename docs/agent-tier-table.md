@@ -61,6 +61,14 @@ These agents exist as regular-file copies (not symlinks) in `projects/nordic-pe-
 | qc-gate | sonnet | Local copy of canonical. Same tier. Added 2026-05-14. |
 | verification-agent | sonnet | Local copy of canonical. Same tier. Added 2026-05-14. |
 
+## Project-local agent copies (axcion-brand-book)
+
+These agents exist as regular-file copies (not symlinks) in `projects/axcion-brand-book/.claude/agents/`. Project-local scope — modular brand book production only.
+
+| Agent | Tier | Notes |
+|---|---|---|
+| brand-strategist | opus | Judgment (PE/M&A brand strategy consultation; produces 8-field scoping notes per `references/scoping-note-rubric.md`). Project-local to axcion-brand-book. Added 2026-05-25. |
+
 ## Maintenance
 
 When adding a new agent, place it in the table. When changing an agent's tier, update the table in the same commit.
