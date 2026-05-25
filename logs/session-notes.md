@@ -570,3 +570,39 @@ Plan-time `/risk-check` on Wave 2: PROCEED-WITH-CAUTION (3 Mediums: permissions 
 ### Open Questions
 
 None.
+
+## 2026-05-25 — Project CLAUDE.md backfill + third [FADING-GATE] of the day
+
+### Summary
+Session started with `/prime` + `/open-items`, walked through plan iteration (`/qc-pass` REVISE → revised plan → second collision-safety check → operator selected Wave 4 → pre-execution verify caught Wave 4 fully shipped 2026-04-18 = third [FADING-GATE] of the day after Waves 1c and 2). Operator invoked `/recommend`; defaulted to "annotate Sequencing Session 3 as VERIFIED-DONE + backfill canonical sections across projects." Executed without `/session-start` ceremony per `/recommend` direct-execute directive. 9 commits total — 1 ai-resources annotation + 8 separate project repo backfill commits closing the canonical-section propagation gap flagged by Sequencing Session 2 Decision 1.
+
+### Files Created
+- `logs/scratchpads/2026-05-25-19-45-scratchpad.md` — continuity scratchpad (gitignored)
+
+### Files Modified
+- `logs/improvement-log.md` — Sequencing note Session 3 annotated VERIFIED-DONE (commit `f017757`)
+- `projects/ai-development-lab/CLAUDE.md` — +IFH +CR +CP +SB (commit `0557a12`)
+- `projects/axcion-ai-system-owner/CLAUDE.md` — +IFH (commit `fb4f8a4`)
+- `projects/buy-side-service-plan/CLAUDE.md` — +IFH +CR +CP +SB (commit `bf193bb`)
+- `projects/global-macro-analysis/CLAUDE.md` — +IFH +CP +SB (commit `8463634`)
+- `projects/nordic-pe-macro-landscape-H1-2026/CLAUDE.md` — +IFH +CR (commit `85450b6`)
+- `projects/obsidian-pe-kb/CLAUDE.md` — +IFH +CP +SB (commit `e2be656`)
+- `projects/project-planning/CLAUDE.md` — +IFH +CP +SB (commit `64b2e34`)
+- `projects/repo-documentation/CLAUDE.md` — +IFH (commit `95df89c`)
+
+### Decisions Made
+- **Wave 4 (Sequencing Session 3) closed as VERIFIED-DONE — third [FADING-GATE] of the day.** Source entries shipped 2026-04-18 (commits `0962c0c` + `bbd2261` + `e3f6dfe`). Annotation-only commit mirrors today's pattern from `766c0ae` (Session 1) + `d5ae398` (Session 2).
+- **Project CLAUDE.md backfill scope = 8 projects.** Pre-flight audit found 8 of 11 projects missing one or more canonical sections (3 fully canonical: axcion-brand-book, corporate-identity, interpersonal-communication; `personal/` has no CLAUDE.md). Sequencing Session 2 had checked only 5 projects for one section (Input File Handling); this session covered all 4 canonical sections across all 11 projects.
+- **Drift cases respected, not overwritten.** Two projects had a canonical heading present but with pointer/customized content (global-macro-analysis `## Commit Rules` = workspace pointer; repo-documentation `## Compaction` = pointer + project addition). Per-section idempotency check (`grep -q '^## <heading>'`) skipped these — drift cleanup is a separate decision class and was not in this session's scope.
+- **Skipped `/session-start` + `/session-plan` for the backfill work** per `/recommend` direct-execute directive — mechanical-edit work without design questions; `/risk-check` not required (project CLAUDE.md edits not on canonical change-class list).
+- **End-time `/risk-check` skipped.** Project CLAUDE.md edits sourcing approved templates with idempotency-checked append — not on canonical structural change-class list per `docs/audit-discipline.md`.
+
+### Next Steps
+- **Push** — 1 unpushed in `ai-resources` (`f017757` + this wrap) + 8 unpushed in 8 separate project repos (each its first unpushed). Plus prior workspace `7b1a790`, plus the friction-cleanup `fce4ca6` (Wave 2 deploy-workflow unification) and any Phase 7 harness commits. Operator gate.
+- **Friction-cleanup session wrapped during this session.** Their Wave 1 (`/session-plan` HHMM rename across 7 consumers) was deferred per context-constraint rule — they noted 4 consumer files had just shifted (compaction-protocol, drift-check, session-start, wrap-session) and the rename + `/risk-check` on degrading context was the wrong call. Wave 1 is a viable candidate for the next planning session.
+- **Three [FADING-GATE] firings in one day is the highest single-day count observed.** Worth a structural fix at next `/friday-checkup` monthly gate-calibration review — possibly: when a Sequencing note references work that the active improvement-log already tracks as resolved, auto-cross-check; or: when `/resolve-improvement-log` archives an entry, scan all Sequencing notes for references and annotate them.
+- **Drift-cleanup decision** for the two pointer-pattern canonical sections (global-macro-analysis CR; repo-documentation CP) — keep workspace-pointer pattern or replace with full canonical? Out of scope this session; either route is defensible.
+- **Standing carryovers:** R9 reframe; orphaned-skill decision (`fund-triage-scanner`, `prose-refinement-writer`); `/session-start` confirmation token rewording (now unblocked); SF1 broad + SF2 (unblocked).
+
+### Open Questions
+None.
