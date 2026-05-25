@@ -401,3 +401,66 @@ Executed Sequencing Session 2 from the improvement-log Sequencing note: extracte
 
 ### Open Questions
 None.
+
+**Mandate:** Verify and complete partial R1 — add fallback-passthrough rule to existing `friday-act-16a-summarizer.md` agent and update stale Notes lines 418–419 in `friday-act.md` — done when: agent has explicit verbatim-passthrough instruction on both fallback paths; friday-act.md Notes lines 418–419 updated to reflect subagent delegation; two-cycle paste-decision validation completed; both file edits committed.
+- Out of scope: agent file creation (already exists); Step 16a dispatch wiring (lines 158–167, already shipped)
+- Files in scope: `.claude/agents/friday-act-16a-summarizer.md`, `.claude/commands/friday-act.md`
+- Stop if: (none stated)
+
+
+## 2026-05-25 — /log-sweep ai-resources scope wrap
+
+### Summary
+Brief orientation + maintenance session. `/prime` ran cleanly: pulled both repos up to date, surfaced 21 unpushed commits in `ai-resources` + 4 in workspace, flagged uncommitted residue files from earlier-today sessions, and surfaced the prior continuity scratchpad as resumable. Operator then ran `/log-sweep ai resources` selecting the `ai-resources` scope only. The `log-sweep-auditor` subagent inventoried 687 markdown files and flagged one Cat B file over threshold: `logs/coaching-data.md` (553 lines, 77 dated `###` headers). `log-archiver.sh --mode header3` with KEEP=10 rotated it to 78 lines, archiving 67 entries to a new monthly archive file. One commit (`dbaa68b`).
+
+### Files Created
+- `logs/coaching-data-archive-2026-05.md` — 67 archived entries from `coaching-data.md` (Cat B rotation)
+- `audits/log-sweep-2026-05-25.md` — /log-sweep final report (summary, applied table, inventory-only, recovery commands)
+- `audits/working/log-sweep-ai-resources-2026-05-25.md` — log-sweep-auditor working notes (full per-category inventory; gitignored)
+- `audits/working/log-sweep-manifest-2026-05-25.md` — pre-apply + post-apply manifest (gitignored)
+- `logs/scratchpads/2026-05-25-15-56-scratchpad.md` — continuity scratchpad for next /prime (gitignored)
+
+### Files Modified
+- `logs/coaching-data.md` — Cat B header3 rotation, 553 → 78 lines, 67 entries moved to archive (commit `dbaa68b`)
+
+### Decisions Made
+None analytical. The only operator-gated decision was `/log-sweep` scope selection via AskUserQuestion — chose `ai-resources` only (excluded the 11 project scopes). Routine, not logged to decisions.md.
+
+### Next Steps
+- **Push** — 22 unpushed in `ai-resources` (this session's 1 + the 21 already-unpushed at /prime time); 4 unpushed in workspace. Operator gate.
+- **Sequencing Session 3 (~45 min)** — both dependencies now satisfied (carried over). Source: improvement-log Sequencing note. Adds three questionnaire items to `/repo-dd` + the pre-commit skill-size warning hook.
+- **`deploy-workflow.md:209` unification (~30 min)** — second consumer with an inline `CANONICAL_PERMS` literal (carried over). Mirrors the Sequencing Session 2 refactor for `/new-project`; closes the same contract-drift surface.
+- **Reconcile uncommitted working-tree residue** — 2 modified + 6 untracked files from earlier-today sessions (Phase 5 Verification Layer risk-checks, Sonnet 200k diagnostic + plan, session-plan-pass3). Decide per file: commit, park into a new session, or discard.
+- **Standing carryovers:** R9 reframe; SF1 broad (blocked on Sonnet 200k Task 1); workflow-diagnosis skill build; orphaned-skill decision; project CLAUDE.md backfill.
+
+### Open Questions
+- **Orphan Mandate at session-notes.md bottom** — a `**Mandate:**` block (R1 partial completion / `friday-act-16a-summarizer`) sits above this wrap entry without a corresponding `## YYYY-MM-DD` header or wrap section. The R1 work itself appears completed and committed earlier today (`0142036`). The orphan is a wrap that was skipped, not work in flight. Worth a follow-up to either back-fill a wrap entry or trim the orphan block; this wrap did not touch it.
+
+## 2026-05-25 — R1 completion: friday-act-16a-summarizer fallback-passthrough + Notes update
+
+### Summary
+Completed the remaining two gaps in the R1 implementation (token-audit finding — /friday-act Step 16a subagent extraction). The agent file and dispatch wiring had already shipped in a prior session; this session added the third required mitigation (explicit verbatim-passthrough rule on both section-match fallback paths) and replaced the stale pre-delegation token-cost note in friday-act.md's Notes section. Both edits committed in a single commit. Two-cycle paste-decision validation deferred to next live /friday-act run — no prior-cycle SO Advisory or Systems Review files are stored in the repo for offline validation.
+
+### Files Created
+- `logs/session-plan-pass5.md` — session execution plan for R1 completion (pass5 to avoid clobbering concurrent session's plan)
+- `logs/scratchpads/2026-05-25-16-03-scratchpad.md` — continuity scratchpad
+
+### Files Modified
+- `.claude/agents/friday-act-16a-summarizer.md` — added explicit verbatim-passthrough rule to both section-match fallback paths (SO Advisory line 29, Systems Review line 34): "Return this fallback note verbatim in the summary — do not paraphrase it, do not infer what the missing section probably contained." (commit `dad0301`)
+- `.claude/commands/friday-act.md` — replaced pre-delegation token-cost Note (line 419) describing 500–1500 lines raw section volume with subagent-delegation description noting ≤30-line summary cap. (commit `dad0301`)
+
+### Decisions Made
+- **Line 39 (friction-log fallback) excluded from passthrough rule.** Agent line 39 is a structural fallback (separator-not-found → read last 100 lines), not a section-match-failed fallback note. The verbatim-passthrough rule applies only to the two section-match fallback paths (lines 29 and 34). Consistent with risk-check Architectural Commentary scope.
+- **End-time /risk-check skipped.** Plan-time gate ran (PROCEED-WITH-CAUTION verdict, all 3 mitigations now applied); commits bounded; no drift from approved design. Skip rule applied per documented criteria.
+- **Two-cycle validation deferred.** No prior-cycle SO Advisory or Systems Review output files are stored in the repo. Validation happens naturally at next live /friday-act run.
+
+### Next Steps
+- **Push** — 12+ unpushed commits in `ai-resources`. Operator gate.
+- **Two-cycle paste-decision validation** — happens automatically at next live `/friday-act` run; no action needed before then. If summary loses load-bearing signal vs. old inline display, expand the agent schema.
+- **Sequencing Session 3** — both Session 2 dependencies now satisfied (Item 8 session landed today). Natural next link: "Add three questionnaire items to `/repo-dd`" + "Pre-commit skill-size warning hook."
+- **`deploy-workflow.md:209` unification** — second inline `CANONICAL_PERMS` literal flagged by Item 8 session's end-time risk-check. ~30 min targeted refactor.
+- **SF1 broad + SF2** — still deferred behind Sonnet 200k Task 1.
+- **Standing carryovers:** R9 reframe; `/improve` on concurrent-session friction; workflow-diagnosis skill build; orphaned-skill decision (`fund-triage-scanner`, `prose-refinement-writer`).
+
+### Open Questions
+None.

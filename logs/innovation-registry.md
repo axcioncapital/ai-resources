@@ -121,3 +121,7 @@
 | 2026-05-18 | hook | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/nordic-pe-macro-landscape-H1-2026/.claude/hooks/backup-session-plan.sh | triaged:project-specific | bound to project-local logs/.session-plan-history/; address project-specific re-invocation friction |
 | 2026-05-22 | command | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/nordic-pe-macro-landscape-H1-2026/.claude/commands/session-plan.md | triaged:project-specific | — |
 | 2026-05-22 | hook | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/global-macro-analysis/.claude/hooks/check-concurrent-session.sh | triaged:project-specific | — |
+| 2026-05-25 | command | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/.claude/commands/systems-review.md | triaged:project-specific | — |
+| 2026-05-25 | command | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/.claude/commands/consult.md | triaged:project-specific | — |
+| 2026-05-25 | command | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/.claude/commands/architecture-review.md | triaged:project-specific | — |
+| 2026-05-25 | command | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/ai-development-lab/.claude/commands/analyze-transcript.md | triaged:project-specific | — |
