@@ -29,7 +29,11 @@
       "Read(logs/*-archive-*.md)",
       "Read(inbox/archive/**)",
       "Read(**/deprecated/**)",
-      "Read(**/old/**)"
+      "Read(**/old/**)",
+      "Read(audits/token-audit-2026-04-*.md)",
+      "Read(audits/friday-checkup-2026-04-*.md)",
+      "Read(reports/repo-health-report-2026-04-*.md)",
+      "Read(logs/*archive*.md)"
     ],
     "defaultMode": "bypassPermissions"
   },

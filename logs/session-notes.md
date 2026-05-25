@@ -313,6 +313,13 @@ v1 unreleased (Phase 0–1 scaffolding only); `harness/session/` holds `week-man
 
 ## 2026-05-25 — 4-scope token-audit sweep (ai-resources + 3 projects)
 
+Class: execution
+
+**Mandate:** Apply quick-win batch QW1–QW5 from the 2026-05-25 token-audit sweep (4 settings.json + 1 CLAUDE.md edits), then run /improve on this morning's logged friction — done when: all 5 QW edits committed AND /improve run completed with the friction-log entry actioned or marked resolved.
+- Out of scope: Structural fix wave (SF1/SF2/SF3 — deferred to dedicated next session with its own session-plan and risk-check); pushes (operator approval gate per autonomy rules).
+- Files in scope: ai-resources/.claude/settings.json (QW1, QW2); projects/ai-development-lab/.claude/settings.json (QW1, QW4); projects/axcion-ai-system-owner/.claude/settings.json (QW1, QW4); projects/obsidian-pe-kb/.claude/settings.json (QW1, QW2, QW4, QW5); projects/axcion-ai-system-owner/CLAUDE.md (QW3); ai-resources/logs/improvement-log.md and possibly friction-log.md (/improve outputs).
+- Stop if: A QW edit triggers /permission-sweep failure; or QW2 archive-pattern syntax differs across the two scopes in a way needing a separate design call; or a settings.json edit conflicts with an in-flight sibling session.
+
 ### Summary
 
 Ran `/token-audit` across four scopes in sequence with `/handoff` between each: `ai-resources`, `projects/ai-development-lab`, `projects/axcion-ai-system-owner`, `projects/obsidian-pe-kb`. Total ~140 findings (18 HIGH) across the 4 reports; ~17 subagent dispatches (mix of `token-audit-auditor` Opus for Section 4 workflow audits and `token-audit-auditor-mechanical` Haiku for Sections 2/6). The session closed with a consolidated cross-audit summary delivered inline (not as a separate report file) that identified 5 cross-cutting patterns — most importantly **main↔subagent file-read duplication** (fires in 6 workflows across 3 audits) and **`Read()` deny gaps with the same infix-vs-suffix pattern bug** in 2 different scopes.
@@ -350,3 +357,7 @@ Ran `/token-audit` across four scopes in sequence with `/handoff` between each: 
 ### Open Questions
 
 None.
+
+### Resumed — implementation planning for token-audit findings
+
+Operator request: propose a plan for implementing findings from the 4 token-audit reports landed this morning. Scratchpad recommendation: start with quick-win batch (QW1–QW5, ~1 hour of settings.json edits) before structural fix wave (SF1/SF2/SF3).
