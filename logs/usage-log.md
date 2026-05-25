@@ -700,3 +700,30 @@ Stability vs. prior entries: This session is cleaner than the 2026-05-16 cleanup
 - **Fix `/token-audit` scope-selection UX** — Replace the 3-round AskUserQuestion sequence with a single list-projects-with-numbers prompt that accepts a comma-separated number reply. Saves 2 round-trips per multi-scope invocation (~500–1,000 tokens/session) plus operator friction. Smaller than the primary in tokens but eliminates the friction class logged in this session and likely recurring on every multi-scope `/token-audit`.
 - **Bundle the per-audit pre-flight working notes into a single cross-audit context object** — Each of the 4 audits independently checked archives for existing pre-flight notes; a single index read at sweep start (rather than per audit) would consolidate 4 archive checks into 1. Saves ~300–500 tokens/sweep; structurally smaller than the primary because the pre-flight check is already cheap.
 - **Cache the token-audit-protocol read across the sweep** — Read once at sweep start, pin in the main session's context for all 4 audits rather than letting each audit re-reference it implicitly. Saves ~200–400 tokens/sweep; lowest ROI of the three because the protocol is short and only one explicit re-read occurred — but zero-effort to implement at the sweep orchestrator level.
+
+### 2026-05-25 | Efficient
+
+**Task:** Executed diagnostic-backlog wave 1 from the 2026-05-25 token-audit sweep — shipped R3 (`/create-skill` output-to-disk), R4 (`/prime` log-trio pre-fetch), R6 (`/wrap-session` coaching-data tail-read), R10 (`CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=80`), and R7 (`fading-gate-scanner` subagent + `/friday-checkup` delegation) across 3 commits; R9 deferred after pre-flip verify.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~12 |
+| Files read | ~14 (re-reads: 1 — `logs/session-notes.md` tail re-read at wrap point after initial /prime tail) |
+| Files written/edited | 13 (5 created, 8 modified) |
+| Tool calls | ~50–60 main-session total (Read, Edit, Write, Bash for verify + commit, plus 5 subagent dispatches) |
+| Subagents | 5 (`qc-reviewer` ×1; `risk-check-reviewer` ×3 — Phase 3 bundle + R7 plan-time + R7 end-time; `session-usage-analyzer` ×1) |
+| Rework cycles | 1 (QC REVISE on proposed mandate → 3 findings fixed in a single revision pass, no second QC cycle) |
+
+**Findings:**
+- **Pre-execution QC caught 3 spec errors before any file write** — the mandate-stage `/qc-pass` flagged a wrong target path for R6, a phantom evaluator-agent file for R3, and a negative-offset Read assumption; all 3 corrected in a single revision. This is the inline-QC posture the prior `/friday-act` (2026-05-22) entry recommended, now operating correctly. (Rework, Minor — 1 cycle, caught before execution; no waste downstream.)
+- **Minor re-read** — `logs/session-notes.md` tail read at `/prime` and again at wrap append point. Same recurring pattern flagged in the last 4 entries; R4 (log-trio pre-fetch at `/prime`) just shipped this session and should suppress it from the next entry forward. (Re-reads, Minor — 1 tail re-read.)
+- **Concurrent-session naming friction** — both `session-plan.md` and `session-plan-pass2.md` were held by concurrent sessions, forcing `session-plan-pass3.md`. No token cost (one filename probe), logged to friction-log for `/improve` next session.
+- **Subagent discipline held** — 5 dispatches, all returned ≤30-line summaries per the Subagent Contract; main-session context stayed bounded despite high dispatch count. No subagent output was re-read for context expansion.
+- **Trend vs. last 3 entries** (Acceptable / Acceptable / Acceptable): improvement to Efficient. Two factors: (a) inline QC caught spec errors before execution rather than post-commit, eliminating the recurring rework-cycle class; (b) R4 + R6 + R10 directly target re-read and context-bloat patterns the prior 4 entries kept flagging — so this session both runs cleaner and ships the suppression for the recurring waste.
+
+**Recommendation:** No action needed.
+
+**Estimated savings:** N/A — no recommendation.
+
+**Additional levers (ROI-ranked):**
+- No additional levers — session was efficient. (Worth noting: the 3 shipped fixes — R4 log-trio pre-fetch, R6 coaching-data tail-read, R10 autocompact override — should produce measurable savings starting next session; track in subsequent entries to confirm the recurring re-read pattern collapses.)

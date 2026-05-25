@@ -441,3 +441,93 @@ All three planned items landed. Item A shipped real edits — rewrote `permissio
 ### Open Questions
 
 None.
+
+## 2026-05-25 — Sonnet 200k efficiency diagnostic + implementation plan
+
+### Summary
+Full diagnostic and implementation planning session covering three rounds of ChatGPT advisories on Sonnet 200k efficiency. Three parallel Explore agents audited session lifecycle, subagent contracts, and work-unit/discovery/disk-as-memory patterns. System-owner consulted three times (Function B pre-change). Two deliverables produced — diagnostic report and a 3-task implementation plan — put through two QC cycles and all findings resolved. No execution this session.
+
+### Files Created
+- `audits/sonnet-200k-efficiency-diagnostic-2026-05-25.md` — diagnostic mapping 10 ChatGPT recs against current infrastructure
+- `plans/sonnet-200k-efficiency-implementation.md` — sequenced implementation plan (Tasks 1–3 required, Task 4 deferred, Task 5 optional)
+- `logs/scratchpads/2026-05-25-wrap-scratchpad.md` — continuity scratchpad
+
+### Files Modified
+- `plans/sonnet-200k-efficiency-implementation.md` — multiple QC-driven revisions (file path corrections, risk-check authority fixes, parse contract spec, sequencing reframe, system-owner adjustments)
+- `audits/sonnet-200k-efficiency-diagnostic-2026-05-25.md` — file reference corrections from QC pass
+
+### Decisions Made
+**Plan scope:**
+- ChatGPT rec #9 (90/10 Sonnet/Opus doctrine) rejected — direct conflict with workspace CLAUDE.md § Model Tier
+- ChatGPT rec #3 "do-not-load list" rejected — AP-7 speculative, OP-2 conflict
+- Permission deny rules for archive directories rejected — AP-7, OP-2, blast radius on /log-sweep, /wrap-session, /repo-dd, /friday-checkup
+- `read_budget` mandate field rejected — duplicates [HEAVY] guardrail, parse contract cost, OP-2 binding-at-mandate conflict
+- `.claude/rules/` path-scoping not acted on — feature unverified per AP-2
+- `/context-trim` command excluded from plan — DR-7, route via /request-skill if pursued
+
+**QC fixes:**
+- Corrected skill/command routing throughout (session-start, wrap-session, session-plan are commands not skills)
+- Fixed risk-check authority citations (risk-topology.md → docs/audit-discipline.md)
+- Specified Task 3 parse contract bullet format and Step 7b coaching-data downstream effect
+- Sequencing reframed as risk-ordered not dependency-ordered
+- Task 2 cap stated as standalone choice; verification step added for refinement-reviewer parity
+
+### Next Steps
+Run execution session:
+```
+/prime → /session-start → /scope (read plans/sonnet-200k-efficiency-implementation.md) → /session-plan
+```
+Task 1 → commit → Task 2 → commit → Task 3 (with /qc-pass) → commit → /wrap-session
+
+Optional: add Task 5 (`heavy-read-discipline.md`) to same session or a later one.
+
+Verify separately: whether `.claude/rules/` path-scoped rules is a real Claude Code feature (/claude-code-guide).
+
+### Open Questions
+None.
+
+
+## 2026-05-25 — Diagnostic backlog wave 1 wrap (R3 + R4 + R6 + R10 + R7; R9 deferred)
+
+### Summary
+
+Executed the 5-item priority pack from `audits/token-audit-2026-05-25-ai-resources.md` §9.2 plus the R7 stretch goal. 4 items committed (R10 + R3+R4+R6 bundle + R7); R9 explicitly deferred after pre-flip verify revealed the reference copies are intentional generic-vs-canonical variants, not stale duplicates. Two `/risk-check` cycles ran (Phase 3 bundled + R7 plan+end); all five dimensions Low across both, both verdicts GO. Session mandate at line 381 above; this entry is the close-out.
+
+### Files Created
+
+- `.claude/agents/fading-gate-scanner.md` — new haiku-tier subagent (76 lines, tools: Read+Glob+Write) implementing the fading-gate detection contract migrated from `friday-checkup.md` inline
+- `audits/risk-checks/2026-05-25-bundle-of-3-canonical-command-edits-r3-r4-r6-from-token.md` — Phase 3 plan-time GO report
+- `audits/risk-checks/2026-05-25-r7-from-token-audit-2026-05-25-ai-resources-md-9-2-create.md` — R7 plan-time GO
+- `audits/risk-checks/2026-05-25-end-time-gate-on-r7-executed-change-set-new-agent-class.md` — R7 end-time GO
+- `logs/session-plan-pass3.md` — session plan (pass3 because two concurrent sessions held `session-plan.md` and `session-plan-pass2.md`)
+- `logs/scratchpads/2026-05-25-14-50-scratchpad.md` — wrap continuity scratchpad
+
+### Files Modified
+
+- `.claude/settings.json` — R10: added `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=80` to env block (commit `5879370`)
+- `.claude/commands/create-skill.md` — R3 / SF3: Step 3 evaluator subagent now reads `evaluation-framework.md` directly + writes to `audits/working/evaluation-{name}.md` + returns ≤30-line path+verdict shape (commit `4b2e6a9`)
+- `.claude/commands/prime.md` — R4: Step 1 pre-fetches `decisions.md` (last 10) + `usage-log.md` (last 30) (commit `4b2e6a9`)
+- `.claude/commands/wrap-session.md` — R6: Step 7b coaching-data.md append now uses `Bash(tail -n 80)` + Bash heredoc; fall-back documented (commit `4b2e6a9`)
+- `.claude/commands/friday-checkup.md` — Step 6 fading-gate inline paragraph shrunk from ~400 words to ~120-word delegation pointer (commit `944d0e0`)
+- `logs/session-notes.md` — mandate block at line 381 + execution notes + this wrap entry
+
+### Decisions Made
+
+- **R9 deferral.** Pre-flip verify revealed `knowledge-file-producer` and `report-compliance-qc` reference copies are NOT stale duplicates — they're the **generic** workflow-deploy versions, while canonical `skills/<name>/` has acquired `model:`/`effort:` frontmatter convention and project-specific scoping (e.g., "Buy-Side Service Model"). Symlinking would force all future workflow deployments to inherit Buy-Side content. Deferred to a dedicated session that decides between accepting the divergence or restructuring with a `reference-generic/` location.
+- **Phase 3 end-time `/risk-check` skipped** per skip rule (plan-time GO covered, all-Low, no mitigations to verify, bundled commit, zero drift).
+- **R7 end-time `/risk-check` ran** — new-agent class explicitly requires both gates; skip rule does NOT apply for single-item new-agent plans.
+- **Wrote session-plan to `session-plan-pass3.md`** — `session-plan.md` (14:07) and `session-plan-pass2.md` (14:15) were both already held by concurrent sessions; pass3 preserves both. Pattern flagged as a recurring friction (logged 14:10).
+- **Phase 4 (R7 stretch) executed in-session** — operator directed "run it here" after the Phase 3 boundary summary recommended deferring R7.
+
+### Next Steps
+
+- **Push** — 8 unpushed in `ai-resources` (this session's 3: `5879370`, `4b2e6a9`, `944d0e0` plus 5 from concurrent sessions today: `2965a21` SF1, `d2601cb` permission-sweep-auditor, `766c0ae`/`d5ae398` A/E/F items E+F, `69f183e` A/E/F wrap). Workspace: 1 unpushed (`da977fe` Phase 5 Verification Layer). Operator gate.
+- **R9 reframe session** — decide: accept generic-vs-canonical divergence as intentional (close R9), or restructure with `reference-generic/` location.
+- **SF1 broad + SF2 / R5** — wait until Sonnet 200k Task 1 has landed (collision concern on `compaction-protocol.md` cross-references). Then bundle remaining 5 workflows for SF1 dedup; tackle SF2 compact-breakpoint inserts.
+- **`/note` + `/friction-log` session-header format incompatibility** (improvement-log MED-HIGH) — verify status against today's commits before starting; may be already addressed by A/E/F session.
+- **`/session-plan` concurrent-session friction** logged at 14:10 — eligible for `/improve` analysis next session (per-date filename slug is the obvious fix).
+- **Standing carryovers:** `workflow-diagnosis` skill build; orphaned-skill decision (`fund-triage-scanner`, `prose-refinement-writer`); 5 active-project session-notes.md files over 200-line threshold.
+
+### Open Questions
+
+None.

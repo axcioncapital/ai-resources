@@ -510,3 +510,19 @@
 - **QC cycles:** 1 (REVISE on Item A bundle — 1 finding, missing orchestrator mapping row, self-resolved)
 - **Gates:** 3 (1 changed) — plan-approval:changed (scope: a/e/f selected from 3 alternatives, b deferred), content-review:confirmed (session-start mandate), qc-disposition:confirmed (REVISE finding self-resolved without operator dispute)
 - **Mandate fields:** specified: work_scope, exit_condition, out_of_scope | inferred: files_in_scope | omitted: stop_if
+
+### 2026-05-25 — Sonnet 200k efficiency diagnostic + implementation plan
+- **Commands used:** /clarify, /consult (×3), /qc-pass (×2), /wrap-session
+- **Iterations:** 0 (no skill/artifact drafting — planning session only)
+- **Decisions logged:** 5
+- **QC cycles:** 2 (first: REVISE → fixes applied; second: PROCEED with 3 adjustments applied)
+- **Gates:** 4 (3 changed) — content-review:changed, qc-disposition:changed, qc-disposition:changed, content-review:confirmed
+- **Mandate fields:** none (no /session-start this session)
+
+### 2026-05-25 — Diagnostic backlog wave 1 (R3 + R4 + R6 + R10 + R7; R9 deferred)
+- **Commands used:** /prime, /session-start, /qc-pass, /session-plan, /risk-check (×3), /wrap-session
+- **Iterations:** 0 (no drafting — direct edits with single-pass writes)
+- **Decisions logged:** 1 (R9 deferral — generic-vs-canonical divergence reframe required)
+- **QC cycles:** 1 (REVISE on mandate — 3 findings: wrong target file path, phantom agent file, negative-offset Read tool assumption — all applied in single revision)
+- **Gates:** 3 (2 changed) — qc-disposition:changed (REVISE verdict → operator directed "fix"), plan-approval:confirmed ("go" on session plan), content-review:changed (operator directed "run it here" overriding my Phase 4 defer recommendation)
+- **Mandate fields:** specified: work_scope, exit_condition, out_of_scope, files_in_scope, stop_if (all five specified — fully populated mandate)

@@ -89,3 +89,44 @@
 - *Skip silently when already done:* Rejected — leaves no record that the booking was checked. A future audit would re-discover the same situation.
 - *Mark the booking obsolete and remove the entry:* Rejected — destroys the audit trail that tracks why the entry existed in the first place.
 - *Annotate with verification evidence (chosen):* Preserves the improvement-log entry as historical context AND records that this session checked and found the work already shipped. Future sessions can read the annotation and understand the lifecycle.
+
+---
+
+### 2026-05-25 — Sonnet 200k efficiency plan: scope and rejection decisions
+
+**Context:** Three rounds of ChatGPT advisories on Sonnet 200k session efficiency reviewed and triaged. System-owner consulted three times. The following decisions are load-bearing for the resulting implementation plan.
+
+**Decision 1: ChatGPT rec #9 (90/10 Sonnet/Opus ratio doctrine) — Rejected**
+The advisory recommended a 90/10 Sonnet/Opus ratio as a workspace posture. Rejected as a direct conflict with workspace CLAUDE.md § Model Tier, which prohibits model-default declarations anywhere. Per-task tier judgment (QS-5: "Is the hard part deciding what to do → Opus, or executing what is decided → Sonnet?") already covers the same concern correctly.
+**Alternatives considered:** Accept as an operator-facing guideline doc (not a setting) — rejected as redundant with QS-5.
+
+**Decision 2: Permission deny rules for archive directories — Rejected**
+The second advisory recommended deny rules in `settings.json` for `archive/**`, `old-reports/**` etc. Rejected on three grounds: AP-7 (speculative scaffolding, no evidence of harm), OP-2 conflict (autonomy default), and blast radius on /log-sweep, /wrap-session, /repo-dd, /friday-checkup which all do legitimate archive reads.
+**Alternatives considered:** Scope narrowly to workspace-level only — rejected, same blast radius on archival operations.
+**Routed to:** `ai-resources/docs/heavy-read-discipline.md` (docs-only, Task 5 optional) instead.
+
+**Decision 3: `read_budget` mandate field — Rejected**
+Proposed adding a numeric read budget to session-start.md. Rejected: duplicates [HEAVY] guardrail, OP-2 binding-at-mandate conflict, and expands the parse contract against an uncalibrated number.
+**Alternatives considered:** Separate `read_budget:` field vs. folding into `allowed_inputs` — both rejected.
+
+**Decision 4: Task 4 (discovery-first pattern doc) — Deferred with strengthened bar**
+System-owner strengthened the DR-7 trigger: the bar is that a command body must cite the pattern doc and would degrade without it — not merely that four commands "would benefit." Trigger: add inline instruction to one heavy command first; write pattern doc only when a second command needs the same instruction.
+
+**Decision 5: Task 3 sequencing reframe**
+Tasks 1, 2, and 3 are technically independent (disjoint files). Sequencing is risk-ordered not dependency-ordered. Execution session may proceed to Task 3 if Tasks 1 or 2 hit a blocker.
+
+
+## 2026-05-25 — R9 (reference-skill symlinks) deferred — generic-vs-canonical divergence is intentional, not drift
+
+**Context.** Token-audit R9 (2026-05-25 §9.2) recommended converting the 2 reference-copy skills under `workflows/research-workflow/reference/skills/` (`knowledge-file-producer`, `report-compliance-qc`) to symlinks pointing at canonical `skills/<name>/`, framed as a "drift-elimination quick win." Diagnostic backlog wave 1 session executed pre-flip verify before flipping.
+
+**Decision.** Defer R9. Reframe before reattempting.
+
+**Rationale.** Pre-flip verify ran `diff` between canonical and reference copies. Result: reference copies are NOT stale — they're substantively different. Canonical has acquired (a) `model:`/`effort:` frontmatter convention added after the workflow's Phase 0 lock, and (b) project-specific scoping ("serves the Claude Chat project for the Buy-Side Service Model" in canonical vs. generic "serves the Claude Chat project" in reference). Symlinking would propagate Buy-Side-specific content into every future `/deploy-workflow` instantiation of `research-workflow` — incorrect for any project that isn't Buy-Side.
+
+**Alternatives considered.**
+1. **Flip anyway** — rejected; breaks workflow deploy semantics.
+2. **Restructure with a `reference-generic/skills/` location** — viable; preserves intentional divergence by namespace. Defers the decision on whether canonical should be Buy-Side-specific or whether Buy-Side scoping should move to a project-local override.
+3. **Accept the divergence as intentional, close R9 in the audit backlog** — also viable; documents that drift between generic and canonical IS the design intent for these two skills, not a bug.
+
+**Owner action.** A dedicated session with the research-workflow project owner to pick between (2) and (3). Until then, R9 is closed-as-deferred in this session's backlog, not closed-as-applied.
