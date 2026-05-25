@@ -49,7 +49,9 @@ Accept shorthand: "yy" / "yes both" / "both" = both yes; "nn" / "skip both" = bo
    - If found: extract the three sub-bullets (`- Out of scope:`, `- Files in scope:`, `- Stop if:`) and classify each value: `(none stated)` → **omitted**; `(inferred)` → **inferred**; any other content → **specified**. `work_scope` and `exit_condition` (on the main `**Mandate:**` line) always count as **specified**.
    - If not found: `mandate_present = false`.
 
-   **7b — Write coaching entry.** Auto-append a session profile entry to `/logs/coaching-data.md`. Derive all fields from the session note you just wrote — no extra operator input needed:
+   **7b — Write coaching entry.** Auto-append a session profile entry to `/logs/coaching-data.md`. Derive all fields from the session note you just wrote — no extra operator input needed.
+
+   **Append mechanism (token-audit R6, 2026-05-25):** Do NOT full-`Read` `coaching-data.md` (489+ lines, ~5–6k tokens). For context, use `Bash(tail -n 80 logs/coaching-data.md)`. For the write, append via `Bash` heredoc: `cat >> logs/coaching-data.md <<'EOF' … EOF`. The Bash-only path avoids the Edit tool's Read-before-Write requirement that would otherwise force the full-file load. **Fall back to full `Read` + `Edit` only when a structural lookup is actually required** (schema check across all entries, dedupe against a similar-class earlier entry, mid-file insertion); pure append never needs the full file.
    ```
    ### {YYYY-MM-DD} — {session title}
    - **Commands used:** {slash commands triggered this session, from conversation context}

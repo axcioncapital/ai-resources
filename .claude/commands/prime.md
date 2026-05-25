@@ -30,6 +30,13 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 1. Read the last entry from `/logs/session-notes.md`. Extract: date, summary, next steps, open questions.
    If the file doesn't exist or is empty, this is the first session — note that and skip to step 2.
 
+   **Pre-fetch the log-trio** (token-audit R4, 2026-05-25). After reading `session-notes.md`, also tail-read the last 10 lines of `logs/decisions.md` and the last 30 lines of `logs/usage-log.md` — these files are touched by `/wrap-session` at session-end and a recurring Edit-before-Read failure on `session-notes.md` (3 of last 4 sessions per usage-log telemetry) is eliminated when the log-trio is already in `/prime`'s context. Use:
+   ```
+   Bash(tail -n 10 logs/decisions.md)
+   Bash(tail -n 30 logs/usage-log.md)
+   ```
+   Skip silently if either file does not exist. The pre-fetch is bounded read scope; no main-session reasoning happens over these lines at /prime time — they live in context for the eventual wrap.
+
 1a. **Cross-check Next Steps against git log and sibling entries.** Detection logic only — this command has no brief-level Next Steps list; see steps 5–6.
 
    *Git cross-check:* Parse the `## YYYY-MM-DD` header date from the source entry. Run:

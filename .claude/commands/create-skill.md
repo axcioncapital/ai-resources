@@ -32,18 +32,24 @@ After Patrik approves the plan:
 
 ## Step 3: Evaluate (Subagent)
 
-**The main agent** reads `skills/ai-resource-builder/references/evaluation-framework.md` from the repo. Then spawn a subagent, passing it ONLY:
+Spawn a subagent for evaluation. Pass it ONLY:
 
-- The evaluation framework contents (that you just read)
-- The newly created SKILL.md (and any bundled resources)
+- The **path** to the evaluation framework: `skills/ai-resource-builder/references/evaluation-framework.md` — the subagent reads it directly. **Do not read this file in the main session** (token-audit R3, 2026-05-25: 307 lines never reasoned over in main; main was a pure pass-through to the subagent).
+- The newly created SKILL.md path (and any bundled resource paths)
+- A target write path: `audits/working/evaluation-{skill-name}.md`
 
-The subagent's task: "Apply the evaluation framework (behavioral analysis + convention gate). Return the full evaluation report."
+The subagent's task: "Read the evaluation framework at the provided path. Apply it to the SKILL.md at the provided path (behavioral analysis + convention gate). **Write the full evaluation report to `audits/working/evaluation-{skill-name}.md`. Return ONLY the file path and a 1-line verdict in this exact shape:**
+```
+EVALUATION: {path}
+Verdict: {PASS | REVISE | BLOCKED} — {≤15-word summary}
+```
+**Do NOT return the full report inline** (Subagent Contracts, `ai-resources/CLAUDE.md` § Subagent Contracts: ≤30-line cap, notes to disk)."
 
 The subagent must NOT receive the resource brief, the creation conversation, or any other context. It evaluates the skill cold, as a fresh Claude would encounter it.
 
-Capture the subagent's evaluation report.
+**Capture the subagent's path + verdict line.** Read the evaluation report from disk only when Step 4 triage actually needs the findings (most sessions: read it in 4a, not here).
 
-**Evaluation quality gate:** If the evaluation report contains no issues across both phases (behavioral analysis and convention gate), or provides only surface-level assessments without specific findings, flag this as a potentially shallow evaluation and note it in the Step 6 results.
+**Evaluation quality gate:** After reading the report in Step 4a, if it contains no issues across both phases (behavioral analysis and convention gate), or provides only surface-level assessments without specific findings, flag this as a potentially shallow evaluation and note it in the Step 6 results.
 
 ## Step 4: Auto-Fix (Severity-Calibrated Iteration)
 
