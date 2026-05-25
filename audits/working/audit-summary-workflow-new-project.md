@@ -1,22 +1,23 @@
 # Summary — Workflow /new-project (Section 4)
 
-**Total findings:** 7 (1 HIGH, 3 MEDIUM, 1 LOW, 2 PASS)
-**Severity counts:** HIGH 1 | MEDIUM 3 | LOW 1 (boundary) | PASS 2
+**Total findings:** 7 (1 HIGH, 4 MEDIUM, 2 LOW). 1 affirmative observation.
+**Severity counts:** HIGH 1 | MEDIUM 4 | LOW 2 (1 boundary)
 
 **Workflow surface:**
-- Command file: `.claude/commands/new-project.md` — 608 lines / 6,083 words / ~7,908 tokens
-- 6 subagent definitions: 407 lines / 2,368 words / ~3,078 tokens (subagent context only)
-- Orchestrator persists across 6 NEXT-gated stage spawns
+- Orchestrator: `.claude/commands/new-project.md` — 698 lines / 6,883 words / ~8,948 tokens (largest command in repo).
+- 6 stage subagents (3a–5 + optional Stage 6) + 1 gate-spawn (`/implementation-triage`) = 5–7 spawns per typical run.
+- Orchestrator-session start cost: ~11,747 tokens (workspace CLAUDE.md + ai-resources CLAUDE.md + command file).
 
 **Top 3 findings:**
-1. HIGH — Command file is 608 lines (~7,908 tokens); ~65% (~392 lines) is Post-Pipeline Enrichment.
-2. MEDIUM — Verbatim duplication of 4 canonical CLAUDE.md sections (Input File Handling, Commit Rules, Compaction, Session Boundaries) inlined twice each in the command body (~140–150 lines, ~30% of file).
-3. MEDIUM — Step 11a does a main-session full `Read` of `projects/buy-side-service-plan/CLAUDE.md` for model-ID precedent; delegable to subagent or replaceable with grep / inline constant.
+1. HIGH — Orchestrator file is 698 lines / ~8,948 tokens; loads in full at every turn including continuation invocations that only need the Gate Protocol.
+2. MEDIUM — Canonical Commit Rules / Input File Handling / Compaction / Session Boundaries blocks duplicated twice inside the orchestrator (lines 452–492 heredoc vs lines 497–523 printf-fallbacks) — ~100 lines of duplicated canonical content.
+3. MEDIUM — Step 11a (line 153) does a main-session full `Read` of `projects/buy-side-service-plan/CLAUDE.md` to verify one model-ID string; delegable to grep / subagent / inline constant.
 
 **Other findings:**
-- MEDIUM — No enforced `/compact` breakpoints between stages (L184 is advisory "suggest" only).
-- LOW (boundary) — ~50 lines of verbatim jq glue embedded inline.
-- PASS — All 6 subagents enforce ≤30-line return contracts with disk-persisted artifacts.
-- PASS — Refinement multiplier ≤1.5 typical, well under the >3 MEDIUM threshold.
+- MEDIUM — No quantitative `/compact` breakpoints; only 2 operator-discretion suggestions (line 184, 199); no compact prelude before the ~460-line Post-Pipeline Enrichment block.
+- MEDIUM — Continuation mode loads ~1,300 tokens of First-Run-only setup logic on every resume.
+- LOW — Stage 3c reads 5 input files (subagent context bloat, blast-radius bounded by ≤30-line return cap).
+- LOW (boundary) — Workflow exceeds [COST] threshold (≥4 subagents) by design with 5–7 spawns/run.
+- Affirmative — All 6 stage agents enforce ≤30-line return contracts with disk-persisted artifacts (no return-volume waste).
 
 Full evidence in `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/working/audit-working-notes-workflow-new-project.md`. Main session should read the full notes only if a specific finding needs deeper review.

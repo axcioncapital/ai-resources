@@ -1,230 +1,187 @@
-# Workflow Token-Efficiency Audit — /new-project
+# Workflow Token Efficiency — /new-project Pipeline
 
-**Workflow:** `/new-project` — Project Pipeline Orchestrator
-**Scope:** `.claude/commands/new-project.md` + 6 delegated pipeline agents
-**Protocol section:** 4
-**Date:** 2026-05-18
-
----
-
-## Workflow Identification
-
-`/new-project` is a multi-stage pipeline orchestrator that consumes approved planning artifacts (context pack, project plan, optional technical spec) from `projects/project-planning/output/{name}/` and drives a 6-stage build through gated subagent delegation. References from CLAUDE.md / commands / docs: high — invoked by every new project bootstrap; referenced in workspace and ai-resources CLAUDE.md.
-
-## File measurements
-
-| File | Lines | Words | Est. tokens (×1.3) |
-|---|---|---|---|
-| `.claude/commands/new-project.md` | 608 | 6,083 | ~7,908 |
-| `.claude/agents/pipeline-stage-3a.md` | 139 | 775 | ~1,008 |
-| `.claude/agents/pipeline-stage-3b.md` | 50 | 260 | ~338 |
-| `.claude/agents/pipeline-stage-3c.md` | 48 | 261 | ~339 |
-| `.claude/agents/pipeline-stage-4.md` | 68 | 417 | ~542 |
-| `.claude/agents/pipeline-stage-5.md` | 45 | 255 | ~332 |
-| `.claude/agents/session-guide-generator.md` | 57 | 400 | ~520 |
-| **Total agent files** | **407** | **2,368** | **~3,078** |
-| **Workflow total (cmd + agents)** | **1,015** | **8,451** | **~10,986** |
-
-The command file at 608 lines is well past any 300-line HIGH threshold and is the single largest command file in the repo.
+**Workflow entry point:** `.claude/commands/new-project.md` (698 lines, 6,883 words ≈ 8,948 tokens)
+**Workflow shape:** 5-stage subagent pipeline (3a → 3b → 3c → 4 → 5), optional Stage 6, plus 3b→3c Architecture Gate.
+**Telemetry note:** No session telemetry observed for `/new-project` runs in the operator-supplied inputs. All "typical" estimates below are **structural inferences** derived from workflow instructions and file-loading patterns, not observed data.
 
 ---
 
-## 4.2.1 — What gets loaded at workflow start?
+## Context Loading Chain
 
-When operator invokes `/new-project`:
+### Workflow start (orchestrator session)
 
-1. **CLAUDE.md** (workspace + ai-resources project-level) loads per session — not unique to this workflow but is always-on baseline.
-2. **`.claude/commands/new-project.md`** — full 608 lines (~7,908 tokens) loaded into main session context the moment the slash command is invoked. This is the orchestrator body and remains resident across all stage spawns since the orchestrator must persist to gate between stages.
-3. **No skills are loaded automatically by the orchestrator itself.** Skill loading happens inside the delegated agents (`architecture-designer`, `implementation-spec-writer`, `project-implementer`, `project-tester`, `session-guide-generator` — declared via `skills:` frontmatter in agent files, loaded in subagent context, not main).
+1. Workspace `CLAUDE.md` — 174 lines, ~1,431 words → ~1,860 tokens (loaded every session).
+2. `ai-resources/CLAUDE.md` — 90 lines, ~722 words → ~939 tokens (loaded every session when CWD is ai-resources or workspace root).
+3. Slash dispatch `/new-project` loads `.claude/commands/new-project.md` — **698 lines, 6,883 words → ~8,948 tokens** into the orchestrator turn.
 
-**Total estimated start-of-workflow context (delta beyond baseline CLAUDE.md):** ~7,908 tokens (the command file). Agent files are NOT loaded into main session — they are spawned as subagents and their definitions live in subagent context.
+**Orchestrator-session start subtotal:** ~11,747 tokens before any user input or subagent spawn (CLAUDE.md ×2 + orchestrator command file). The command file alone is the largest single contributor.
 
-## 4.2.2 — Subagent calls
+### Per-stage subagent context (each stage spawns fresh)
 
-Six subagent delegations across one full pipeline run (one per stage):
+Each stage agent loads its own definition + the skill(s) declared in `skills:` frontmatter + workspace-level CLAUDE.md.
 
-| # | Subagent | Spawned by | Model | Skills loaded inside | Worktree isolated? |
-|---|---|---|---|---|---|
-| 1 | `pipeline-stage-3a` | Orchestrator step 12 (first-run) | sonnet | (none — mechanical scan) | no |
-| 2 | `pipeline-stage-3b` | Continuation after NEXT | opus | architecture-designer | no |
-| 3 | `pipeline-stage-3c` | Continuation after NEXT | opus | implementation-spec-writer | no |
-| 4 | `pipeline-stage-4` | Continuation after NEXT | sonnet | project-implementer | YES |
-| 5 | `pipeline-stage-5` | Continuation after NEXT | sonnet | project-tester | no |
-| 6 | `session-guide-generator` | Continuation after NEXT (optional) | sonnet | session-guide-generator | no |
+| Stage | Agent file | Agent lines/words | Bound skill(s) | Skill lines/words | Per-spawn ~tokens (agent + skill + workspace CLAUDE.md) |
+|-------|-----------|-------------------|----------------|--------------------|---------------------------------------------------------|
+| 3a Repo Snapshot | `pipeline-stage-3a.md` 139 / 775 | — (no skill) | n/a | ~1,007 + 1,860 = **~2,867** |
+| 3b Architecture | `pipeline-stage-3b.md` 50 / 260 | `architecture-designer` | 241 / 2,104 | 338 + 2,735 + 1,860 = **~4,933** |
+| 3c Impl Spec | `pipeline-stage-3c.md` 48 / 261 | `implementation-spec-writer` | 296 / 1,717 | 339 + 2,232 + 1,860 = **~4,431** |
+| 4 Implementation | `pipeline-stage-4.md` 68 / 417 | `project-implementer` | 187 / 1,096 | 542 + 1,425 + 1,860 = **~3,827** |
+| 5 Testing | `pipeline-stage-5.md` 45 / 255 | `project-tester` | 222 / 1,358 | 332 + 1,765 + 1,860 = **~3,957** |
+| 6 Session Guide | `session-guide-generator.md` 57 / 400 | `session-guide-generator` | 247 / 2,022 | 520 + 2,629 + 1,860 = **~5,009** |
 
-Each subagent spawn happens between operator `NEXT` gates — orchestrator does NOT keep state across spawns in conversation memory; it relies on `pipeline-state.md` on disk.
+Architecture Gate (3b→3c) additionally invokes `/implementation-triage` (65 lines / ~110 line context cost) which uses the `system-owner` agent (151 lines, ~250 line context cost) — an extra short-lived spawn inserted between Stage 3b and Stage 3c.
 
-## 4.2.3 — Output volume returned to main session
+### Inputs read by subagents (from pipeline directory)
 
-Per-stage Return Contracts (read from agent files):
-
-| Subagent | Return cap | Disk artifact | Compliant with subagent contract |
-|---|---|---|---|
-| 3a | ≤30 lines | `pipeline/repo-snapshot.md` | yes — full snapshot to disk, ≤30 line summary returned |
-| 3b | ≤30 lines | `pipeline/architecture.md` | yes |
-| 3c | ≤30 lines | `pipeline/implementation-spec.md` | yes |
-| 4 | ≤30 lines | `pipeline/implementation-log.md` | yes |
-| 5 | ≤30 lines | `pipeline/test-results.md` | yes |
-| 6 | ≤30 lines | `pipeline/session-guide.md` | yes |
-
-**Assessment:** All six agents declare and enforce a ≤30-line return contract with disk persistence. **No subagent returns >200 lines to main session — none breach the HIGH threshold defined in Section 4 of the protocol.**
-
-## 4.2.4 — QC / refinement cycles designed for
-
-The orchestrator does NOT chain a `/qc-pass` or `/refinement-pass` invocation between stages. Quality gating is **operator-driven** at each stage:
-
-- Stage 3b: ad-hoc user review at "When the architecture is approved by the user…"
-- Stage 3c: "Architecture Gap Handling" allows returning to Stage 3b for revision
-- Stage 4: "Error Recovery" allows returning to Stage 3b or 3c on fundamental failure
-- Stage 5: "Handling Failures" allows fix-manually / re-run-stage-4-op / accept-as-is
-
-Estimated total sessions per typical run: **6 subagent spawns** baseline. Typical refinement loops add 0–2 reruns (e.g., 3b revision after gap surfaced at 3c). **Refinement multiplier ≤ 1 typical, ≤ 1.5 at worst.** Does not breach the protocol's "consistently >3" MEDIUM threshold.
-
-## 4.2.5 — File reads — main session vs delegable
-
-### Main-session reads (executed by orchestrator body)
-
-| Step | File(s) read in main session | Necessary or delegable? | Size flag |
-|---|---|---|---|
-| First Run §3 verification | `$SRC/context-pack.md` existence check (`-f`, no content read) | Necessary | — |
-| First Run §4 discovery | `ls "$SRC"/project-plan-v*.md` (filename listing, no content read) | Necessary | — |
-| First Run §4 QC verdicts | `grep -qE ... $SRC/plan-qc-verdict.md` (single-line match, no full read) | Necessary | — |
-| First Run §11a model-ID precedent | **`projects/buy-side-service-plan/CLAUDE.md`** — **full Read** to verify Opus 4.7 identifier string | **DELEGABLE** — see Finding 3 | unknown line count; project-level CLAUDE.md typically 100–300 lines |
-| Continuation §1 | `pipeline-state.md` (single small file, <50 lines) | Necessary | — |
-| Post-pipeline enrichment §2 | `projects/{name}/.claude/settings.json` (via jq, no full Read into context) | Necessary | — |
-| Post-pipeline enrichment §4 | `projects/{name}/CLAUDE.md` (idempotent grep + append; full Read may happen for grep) | Necessary (operates on the file) | unknown |
-
-### Subagent-delegated reads (handled inside spawned context)
-
-| Stage | Files read | In main session? |
-|---|---|---|
-| 3a | Full repo scan: CLAUDE.md + all SKILL.md + all `.claude/**` + workflows + top-level dirs + file tree | No — delegated to 3a |
-| 3b | `project-plan.md`, `repo-snapshot.md`, `technical-spec.md` (opt), `decisions.md` | No — delegated to 3b |
-| 3c | `architecture.md`, `repo-snapshot.md`, `technical-spec.md` (opt), `decisions.md`, `project-plan.md` | No — delegated to 3c |
-| 4 | `implementation-spec.md`, `decisions.md` | No — delegated to 4 |
-| 5 | `implementation-spec.md`, `implementation-log.md` | No — delegated to 5 |
-| 6 | `project-plan.md`, `pipeline-state.md`, plan sub-sections | No — delegated to 6 |
-
-**Verdict:** The pipeline's heavy reading IS properly delegated to subagents. The only main-session content-Read of any size is the model-ID precedent check at §11a.
-
-## 4.2.6 — File writes
-
-All large output artifacts written by subagents to disk under `projects/{name}/pipeline/`:
-- `repo-snapshot.md` (3a)
-- `architecture.md` (3b)
-- `implementation-spec.md` (3c)
-- `implementation-log.md` (4)
-- `test-results.md` (5)
-- `session-guide.md` (6)
-
-Plus orchestrator writes (small, structural):
-- `pipeline/sources.md`, `pipeline/decisions.md`, `pipeline/pipeline-state.md`
-- `projects/{name}/.claude/shared-manifest.json`, `.claude/settings.json`
-- `projects/{name}/CLAUDE.md` (4 canonical sections via heredoc append)
-- `projects/{name}/logs/decisions.md`
-
-No large outputs are written to context rather than disk. PASS.
+| Read by | File | Source | Notes |
+|---------|------|--------|-------|
+| 3a | repo content (all skills + .claude/ + workflows + tree) | live repo | Mechanical scan, files are summarized — not loaded full into context (per agent rule "full file contents are NOT included") |
+| 3b | `project-plan.md`, `repo-snapshot.md`, `technical-spec.md` (optional), `decisions.md` | pipeline dir | All four files read full into subagent context |
+| 3c | `architecture.md`, `repo-snapshot.md`, `technical-spec.md` (optional), `decisions.md`, `project-plan.md` | pipeline dir | **5 files** read full into subagent context |
+| 4 | `implementation-spec.md`, `decisions.md` | pipeline dir | Plus repeated filesystem verification reads per operation (per `project-implementer` skill: "verify each operation by reading the filesystem") |
+| 5 | `implementation-spec.md`, `implementation-log.md` | pipeline dir | Both full reads |
+| 6 | `project-plan.md`, `pipeline-state.md` (plus state-detection cascade) | pipeline dir | Lean by skill design |
 
 ---
 
-## Findings
+## Subagent Pattern (Return Volumes)
 
-### Finding 1 — HIGH — Command file size (608 lines / ~7,908 tokens)
+All 6 stage agents declare an explicit **Return Contract** capping main-session return at **≤30 lines** and writing the full artifact to disk. The return contract pattern is consistently applied across the pipeline.
 
-**Issue.** `.claude/commands/new-project.md` is 608 lines / 6,083 words / ~7,908 estimated tokens. Protocol §3 thresholds (re-used here per §4.2.1 "what gets loaded at workflow start") would mark this HIGH (>300 lines). It is the single largest command file in the repo.
+| Subagent | Disk artifact | Return cap | Compliance with subagent-contract rule |
+|----------|--------------|------------|----------------------------------------|
+| pipeline-stage-3a | `repo-snapshot.md` | ≤30 lines | Compliant; explicit "Do not return the full snapshot content" |
+| pipeline-stage-3b | `architecture.md` | ≤30 lines | Compliant; "Do not return architecture content" |
+| pipeline-stage-3c | `implementation-spec.md` | ≤30 lines | Compliant; "Do not return spec content" |
+| pipeline-stage-4 | `implementation-log.md` | ≤30 lines | Compliant; "Do not return file contents or per-operation details" |
+| pipeline-stage-5 | `test-results.md` | ≤30 lines | Compliant; "Do not return full test details" |
+| session-guide-generator | `session-guide.md` | <30 lines | Compliant; "Do not echo the full guide in your summary" |
 
-**Evidence.** `wc -l .claude/commands/new-project.md` → 608. `wc -w` → 6,083.
-
-**Loading semantics.** This file loads into main-session context on every `/new-project` invocation and remains in context for the duration of the orchestration session (across all 6 stage spawns, since the orchestrator must persist to gate between stages).
-
-**Composition (descriptive, no recommendations).** Body breakdown by approximate region:
-- L1–142: First-Run scaffolding (planning workspace walk, artifact discovery, version pinning, model-ID precedent check, scaffolding sub-step 11a)
-- L143–177: Continuation logic + Gate Protocol + Post-Stage-5 + Error Handling (~35 lines)
-- **L207–599: Post-Pipeline Enrichment — ~392 lines / ~65% of the file.** Includes:
-  - L217–225: shared-manifest template (9 lines)
-  - L227–334: settings.json canonical block + jq merge procedure (108 lines; verbatim canonical JSON inline)
-  - L336–365: additionalDirectories grant (30 lines, verbatim jq snippet)
-  - L367–510: 4 canonical CLAUDE.md blocks (**verbatim section bodies appear twice — once in the new-file heredoc, once in idempotent-append printf strings**). Input File Handling, Commit Rules, Compaction, Session Boundaries. ~143 lines.
-  - L512–549: logs/decisions.md scaffold (38 lines, heredoc template)
-  - L551–595: initial sync + canonical command verification (45 lines)
-- L601–609: Key Rules tail (9 lines)
-
-**Severity:** HIGH (per protocol thresholds applied to command body; >300 lines).
-
-### Finding 2 — MEDIUM — Verbatim duplication of canonical CLAUDE.md sections inside the command body
-
-**Issue.** The Post-Pipeline Enrichment step (§4) inlines the same 4 canonical CLAUDE.md sections (Input File Handling, Commit Rules, Compaction, Session Boundaries) **twice in the file**: once in the new-file heredoc (L434–473) and once each in the idempotent append branches as `printf` argument strings (L483, L490, L497, L504). Effective duplication ≈ 140–150 lines of verbatim policy text inside the command file itself. Additionally, the canonical blocks are first declared in commentary form at L376–426 before being executed at L434–506, so each rule body is in the file at least twice.
-
-**Evidence.** L376–426 declares the four canonical blocks. L434–506 then repeats them inline (heredoc + four printf statements) as the actual implementation.
-
-**Waste mechanism.** Every `/new-project` invocation loads this duplication into main-session context — the rule bodies live separately in workspace `CLAUDE.md` and would normally be referenced by pointer. Rough share: 1,800–2,200 of the command's 6,083 words (~30%) are this enrichment-block duplication.
-
-**Severity:** MEDIUM.
-
-### Finding 3 — MEDIUM — Stage 11a model-ID precedent Read happens inline in main session
-
-**Issue.** Step 11a (L153) instructs the main-session orchestrator to `Read projects/buy-side-service-plan/CLAUDE.md` to verify the canonical Opus 4.7 model identifier string before writing it into the new project's CLAUDE.md. This Read happens in the main session, not in a subagent.
-
-**Evidence.** L153: "read `projects/buy-side-service-plan/CLAUDE.md` for the Opus 4.7 form, and the system-prompt model context for the Sonnet 4.6 1M form."
-
-**Delegability assessment per protocol §4.2.5.** The check is mechanical: grep a single-line identifier string against a known precedent file. The target file is a project-level CLAUDE.md whose size is unknown to this audit but typically falls in the 100–300 line range. Protocol §4 flags "files over 100 lines being read in the main session when they are delegable" — this read qualifies.
-
-**Severity:** MEDIUM (delegable read in main session; target file likely exceeds 100 lines).
-
-### Finding 4 — MEDIUM — No enforced `/compact` breakpoints between stages
-
-**Issue.** Six subagent spawns are gated by operator `NEXT`. The orchestrator body says (L184): "If context has grown from the prior stage, suggest `▸ /compact` before spawning." This is **conditional and advisory** ("if context has grown" / "suggest"), not an enforced breakpoint.
-
-**Natural breakpoints that exist but are unenforced:**
-- Between 3a (mechanical scan; 30-line return cap but the orchestrator still accumulated decision-recording chat from earlier setup) and 3b
-- Between 3b (architecture design — opus, decision-recording chat) and 3c
-- Between 4 (multi-file implementation, log accumulation) and 5
-- Between 5 and 6 (or pipeline complete)
-
-**Evidence.** L184 (Gate Protocol §NEXT): conditional suggestion only. No mandatory `/compact` step.
-
-**Severity:** MEDIUM per protocol §4 ("No compaction instructions or breakpoints defined" → MEDIUM).
-
-### Finding 5 — LOW — Inline jq canonical blocks (~50+ lines of verbatim glue)
-
-**Issue.** L304–328 (settings.json merge) and L342–360 (additionalDirectories grant) embed full jq command bodies inline. Each is correct and idempotent, but loaded into the command's context-cost envelope on every invocation.
-
-**Evidence.** L310: `CANONICAL_PERMS='{"defaultMode":"bypassPermissions",...}'` — full canonical JSON inline. L312, L314: hook command literals as escaped JSON strings inline.
-
-**Severity:** LOW (boundary) — correctness-critical glue that is hard to externalize without breaking the "single command file" contract.
-
-### Finding 6 — PASS / informational — Subagent return contracts compliant
-
-**Issue.** All six pipeline agents declare ≤30-line return contracts and write full artifacts to disk. Protocol §4 HIGH threshold ("Subagent returning >200 lines") is not met by design.
-
-**Evidence.** See §4.2.3 table — each agent file's "Return Contract" section caps at ≤30 lines.
-
-**Severity:** PASS.
-
-### Finding 7 — PASS / informational — Refinement multiplier within bounds
-
-**Issue.** Protocol §4 MEDIUM threshold ("Consistent need for >3 refinement cycles") is not met. Typical runs do 6 stage spawns with 0–1 revision cycles in normal operation.
-
-**Severity:** PASS.
+**Finding:** Subagent return volume across the pipeline is **disciplined** — no agent returns full artifact content to the orchestrator. No HIGH-severity finding under §4 rule "Subagent returning >200 lines to main session."
 
 ---
 
-## Severity rollup
+## File-Read Mapping (Main Session vs. Subagent)
 
-| Severity | Count | Findings |
-|---|---|---|
-| HIGH | 1 | Finding 1 (command size 608 lines) |
-| MEDIUM | 3 | Finding 2 (canonical-block duplication), Finding 3 (inline CLAUDE.md Read at 11a), Finding 4 (no enforced /compact breakpoints) |
-| LOW | 1 | Finding 5 (inline jq) — boundary |
-| PASS | 2 | Finding 6 (return contracts), Finding 7 (refinement multiplier) |
+| File | Approx size | Read in main session (orchestrator)? | Read in subagent? | Necessary / Delegable |
+|------|-------------|--------------------------------------|-------------------|----------------------|
+| `pipeline-state.md` | small (~30 lines) | Yes — every operator-gate transition (read before NEXT/SKIP/ABORT decision) | Yes (some stages) | Necessary in main session (state machine) |
+| `context-pack.md` | varies (typically 200–600 lines) | No — copied via `cp`, not read | No (passed forward) | n/a |
+| `project-plan-v*.md` | varies (typically 200–800 lines) | No — copied via `cp` | Yes (3b, 3c) | Delegable |
+| `tech-spec-v*.md` | varies (typically 200–600 lines) | No — copied via `cp` | Yes (3b, 3c) | Delegable |
+| `repo-snapshot.md` | typically 300–700 lines | No (orchestrator only consumes return summary) | Yes (3b, 3c) | Delegable |
+| `architecture.md` | typically 300–500 lines | Only path is read at Architecture Gate (line 194); content passed by reference to `/implementation-triage` | Yes (3c) | Path-only main-session reference is correct |
+| `implementation-spec.md` | typically 400–800 lines | No | Yes (4, 5) | Delegable |
+| `implementation-log.md` | typically 100–400 lines | No | Yes (5) | Delegable |
+| `projects/buy-side-service-plan/CLAUDE.md` | small (~100 lines, precedent reference) | Yes — Step 11a (line 153) does precedent verification read for Opus 4.7 model-ID string | n/a | Delegable to subagent OR replaceable with `grep` for the exact string OR with an inline constant in the command file |
+| Agent files (`pipeline-stage-*.md`) | 45–139 lines each | No (loaded by subagent at spawn) | Yes (spawn) | Necessary |
+| Pipeline-invoked skill files | 187–296 lines each | No (loaded by subagent skill resolver) | Yes | Necessary |
+
+**Main-session file reads are minimal by design.** The orchestrator primarily reads `pipeline-state.md` (small, necessary) and writes state updates. Heavy reads happen inside subagents. The Step 11a precedent read (line 153) is the one main-session read of a non-state file.
+
+---
+
+## File-Write Mapping (Main Session)
+
+The orchestrator (main session) performs these direct writes during First Run:
+
+| Operation | Lines | Notes |
+|-----------|-------|-------|
+| `cp` of context-pack, project-plan, tech-spec | n/a | Filesystem copy, no content loads into orchestrator context |
+| Write `pipeline/sources.md` | ~10 lines | Small |
+| Write `pipeline/decisions.md` | ~3 lines template | Small |
+| Write `pipeline/pipeline-state.md` | ~12 lines | Small |
+| Append "Model Selection" block to project CLAUDE.md | ~3 lines | Small |
+| Write/append project `CLAUDE.md` (Input File Handling, Commit Rules, Compaction, Session Boundaries) | ~70 lines total | Verbatim heredoc — content not loaded into orchestrator context beyond the command file itself |
+| `jq` merge into `.claude/settings.json` (permissions, hooks, additionalDirectories) | embedded JSON | Mechanical jq calls |
+| Write `logs/decisions.md` scaffold | ~25 lines | Small |
+| Various `git` commits | n/a | Mechanical |
+
+**No large outputs are written into orchestrator-session context.** All large content is either copied via `cp` or written via heredoc inside bash blocks (filesystem only).
+
+---
+
+## Subagent-Call Count
+
+- **First Run minimum (Stages 3a–5):** 5 subagent spawns.
+- **First Run with Stage 6:** 6 subagent spawns.
+- **First Run with 3b→3c Architecture Gate:** +1 spawn for `/implementation-triage` (which itself wraps `system-owner` agent) = up to **7 subagent spawns** across a single end-to-end run.
+- **Each spawn is sequenced** (gated by operator `NEXT`), not parallel — so the orchestrator context grows linearly across the run.
+
+The `[COST]` guardrail threshold is "≥4 subagents." A complete /new-project run **exceeds the [COST] threshold by design** (5–7 subagent spawns).
+
+---
+
+## /compact Opportunities
+
+Compact suggestions present in the orchestrator (line 184, 199):
+
+> "If context has grown from the prior stage, suggest `▸ /compact` before spawning."
+
+This is wired at two transitions: NEXT after any stage (line 184) and inside the Architecture Gate WORTH-DOING branch (line 199).
+
+**Coverage:** 2 explicit compact-suggestion points, but conditional on subjective "context has grown" judgment by the orchestrator — no quantitative threshold (e.g., "after Stage 3a always," or "if context > 50%").
+
+**Gaps (no enforced breakpoint):**
+- The line 184 suggestion is generic across all NEXT transitions but qualified by "if context has grown" — operator-discretion-dependent at every stage transition.
+- No explicit /compact suggestion at the Stage 5 → Stage 6 transition (post-Stage 5 prompt at line 210 does not mention /compact).
+- No suggestion of `/clear + restart from pipeline-state.md` as an alternative for long runs (which would be a stronger reset than /compact).
+- Post-Pipeline Enrichment block (lines 226–689 ≈ 460 lines) executes **inside the same orchestrator session** as Stage 5 (or Stage 6) completion. By the time enrichment runs, the orchestrator has accumulated context from every prior stage's return summary + the full 698-line command file + every state-machine read. No /compact breakpoint is inserted before the enrichment block executes.
+
+**Severity per protocol §4:** "No compaction instructions or breakpoints defined → MEDIUM." Two soft suggestions exist; quantitative breakpoints do not. Classify as **MEDIUM-PARTIAL** — compact is mentioned but operator-discretion-only, no enforced cut points at the highest-cost transitions.
+
+---
+
+## Refinement Multiplier
+
+Per §4 assessment question 4: "How many total sessions (main + QC + refinement subagents) a typical run requires."
+
+The /new-project pipeline does not invoke `/qc-pass` or refinement loops automatically. Quality gates are:
+
+- Operator `NEXT`/`SKIP`/`ABORT` between stages (operator-driven, not subagent).
+- Architecture Gate at 3b→3c (one extra subagent call: `/implementation-triage`).
+- Stage 4 partial-failure / fundamental-failure branches (re-run logic, may loop back to 3b or 3c — but operator-gated).
+
+**Typical-run subagent count for a successful first-pass:** 5 (Stages 3a–5) + 1 (Architecture Gate) = **6 subagents**, optionally +1 for Stage 6.
+
+**If Stage 3b architecture is rejected (MARGINAL/NOT-WORTH-DOING verdict):** add a full Stage 3b re-run = 7+ subagent invocations.
+**If Stage 4 fundamental failure:** add a return to Stage 3b or 3c re-spawn = 7+ subagents.
+
+**Worst-case (one round of rework at architecture + one operation-level fix):** ~9 subagent spawns across the workflow. Still bounded by operator gating.
+
+**Severity per protocol §4:** "Consistent need for >3 refinement cycles → MEDIUM." Even worst-case scenarios stay within ≤2 rework loops. No MEDIUM finding here from refinement-multiplier; the pipeline is gate-driven, not refinement-loop-driven.
+
+---
+
+## Findings Table
+
+| # | Finding | Severity | Waste mechanism | Evidence |
+|---|---------|----------|-----------------|----------|
+| 1 | Orchestrator command file is 698 lines / 6,883 words (~8,948 tokens), the largest command in the repo. Loads in full at every `/new-project` turn, including continuation runs that only need the Gate Protocol or a single stage spawn. | HIGH | Every-turn full load of an orchestrator file that contains large embedded heredocs (canonical Commit Rules block, Input File Handling block, Compaction block, Session Boundaries block, bash-quoted printf chains lines 501–522) duplicated from workspace CLAUDE.md and from in-file `cat > $CLAUDE_MD <<EOF` block at lines 452–492. The 4 canonical blocks appear **twice** inside the orchestrator (once in heredoc, once in idempotent `printf` append fallbacks). | `.claude/commands/new-project.md` lines 396–525 (canonical block heredocs); line counts: 698 lines / 6,883 words verified by `wc -l/-w` |
+| 2 | No quantitative /compact breakpoint enforcement — compaction suggestion is operator-discretion-only at 2 transition points (line 184, 199); no suggestion at 5→6 or before the ~460-line Post-Pipeline Enrichment block executes. | MEDIUM | Operator may decline to /compact between Stage 4 (which can run long inside a worktree with per-operation filesystem verification) and Stage 5, then proceed into Enrichment block in the same session, accumulating subagent return summaries across 5+ stages before reset. | `.claude/commands/new-project.md` lines 184, 199 (only compact mentions inside Gate Protocol); lines 207–215 (post-Stage 5 prompt has no /compact suggestion); lines 226–689 (enrichment block, no compact prelude) |
+| 3 | Canonical Commit Rules / Input File Handling / Compaction / Session Boundaries blocks are embedded **twice** in the orchestrator: once in the `cat > $CLAUDE_MD <<'EOF'` block (lines 452–492) and once in the four `if grep -q ... else printf` fallbacks (lines 497–523). Roughly 100 lines of duplicated canonical content inside one command file. | MEDIUM | Inflates the per-turn orchestrator load; the duplication has no execution-path benefit (only one path runs per invocation). Refactor candidate: emit canonical blocks from external template files. | `.claude/commands/new-project.md` lines 452–492 vs lines 497–523 |
+| 4 | Orchestrator-session start cost ~11,747 tokens (workspace CLAUDE.md + ai-resources CLAUDE.md + 698-line command file) before any subagent spawn. Compared to lighter dispatch commands, this is a high baseline for a command whose runtime job is mostly orchestration (operator-gated state transitions). | MEDIUM | Continuation-mode invocations (resuming an existing pipeline) load the full 8,948-token command file just to read pipeline-state.md and spawn one subagent. The First Run setup logic (lines 42–172, ~130 lines / ~1,300 tokens) is dead weight on every continuation. | `.claude/commands/new-project.md` First Run vs Continuation branches (lines 42–177); see also Finding #1 |
+| 5 | Step 11a (line 153) performs a main-session `Read` of `projects/buy-side-service-plan/CLAUDE.md` for Opus 4.7 model-ID precedent verification. Pulls an external project file into the orchestrator context just to confirm a literal string. | MEDIUM | Delegable to a subagent OR replaceable with a single `grep -c "claude-opus-4-7"` bash check OR by hardcoding the canonical identifier as an inline constant in the command file (with a comment pointing to the precedent). The full-file `Read` is unnecessary for the verification job (looking up one string). | `.claude/commands/new-project.md` line 153 |
+| 6 | Stage 3c reads 5 input files from pipeline directory (`architecture.md`, `repo-snapshot.md`, `technical-spec.md`, `decisions.md`, `project-plan.md`) — exceeds the "more than 3–4 large files" threshold from Execution Notes (Section 8 best practice #4). All reads happen inside the subagent (correct), but multiple of these inputs are likely 200+ lines each. | LOW | Subagent context bloat (not main-session). Since the agent is dedicated and its return is capped at 30 lines, blast radius is contained — but the per-spawn token cost of Stage 3c is the highest of the stage agents on input size. | `.claude/agents/pipeline-stage-3c.md` lines 17–22 |
+| 7 | Workflow exceeds `[COST]` guardrail threshold (≥4 subagents) by design — typical successful run is 5–7 spawns, worst-case rework run ~9. Per workspace session-guardrails doc, `[COST]` is advisory ("emit and continue"), not blocking. | LOW (boundary) | None — this is a structural property of a 5-stage pipeline, not a waste mechanism. Flag is informational so the operator knows /new-project is always a "heavy" command. | Stage spawn count derived from command-file flow (5 mandatory stages + optional Stage 6 + Architecture Gate spawn of /implementation-triage) |
+| 8 | All 6 stage agents follow the subagent-return contract (≤30 lines, write-to-disk). Pattern is consistently applied — no return-volume waste. | (affirmative observation — no finding) | n/a | `.claude/agents/pipeline-stage-3a.md` line 137; pipeline-stage-3b.md line 49; pipeline-stage-3c.md line 47; pipeline-stage-4.md line 66; pipeline-stage-5.md line 43; session-guide-generator.md line 48 |
+
+---
+
+## Severity Summary
+
+- HIGH: 1 (Finding #1 — orchestrator file size)
+- MEDIUM: 4 (Findings #2, #3, #4, #5)
+- LOW: 2 (Findings #6, #7 — #7 boundary)
+- Affirmative (no finding): 1 (Finding #8 — subagent return discipline)
+
+---
 
 ## Protocol gaps
 
-- Protocol §4 does not define an explicit severity threshold for **command file size itself** within a workflow audit; §3 has command line-count assessment but doesn't tier by line count. I applied §1 / §2 thresholds (>300 lines = HIGH) by analogy since the protocol's general "every line loads every turn" rationale applies. Noted under §4.2.1 above.
-- Protocol §4 "missing `/compact` opportunities" criterion does not specify whether an *advisory* suggestion (current L184 behavior) counts as "defined" or "absent." Interpreted as Partial → MEDIUM finding.
-
-## Boundary findings (within ±15% of threshold)
-
-- Finding 5 (inline jq) tagged LOW with boundary marker — sits at the edge of whether "verbatim implementation snippet inside a command file" counts as waste vs. necessary glue.
-- Finding 1 (608 lines) is **not** boundary — it is 2× the >300-line HIGH threshold.
-- Finding 3 (model-ID Read) has unknown target file size; if `projects/buy-side-service-plan/CLAUDE.md` is under ~115 lines, the finding flips below the 100-line "delegable" threshold and becomes boundary. Main session may verify if needed.
+- §4 measurement step "What gets loaded at workflow start?" does not specify whether to include parent-workspace CLAUDE.md, ai-resources CLAUDE.md, or both. Interpreted as: include every CLAUDE.md that loads when the orchestrator session opens. If the orchestrator session is opened from workspace root (as documented in the CWD guard), both workspace and ai-resources CLAUDE.md may load — counted both above.
+- §4 does not define how to count token cost for embedded skill loads (the `skills:` frontmatter in agent files). Interpreted as: each subagent spawn loads its agent file + each listed skill file's full SKILL.md.
+- §4 boundary-confidence handling for the "Subagent returning >200 lines" threshold — all stage agents are well below threshold (≤30 line cap), so no boundary calls required for return volume.
+- Finding #1 (orchestrator file at 698 lines / 6,883 words → ~8,948 tokens) is squarely above any reasonable command-file threshold and not within ±15% of an ambiguous boundary; classified HIGH with confidence. (not boundary)
+- Finding #7 ([COST] guardrail) is classified LOW because it is a structural workflow property, not a waste mechanism — flagged with (boundary) because severity classification rules in §4 are silent on "by-design heavy workflows" and a different reading could justify MEDIUM.
+- The §4 "necessary vs. delegable" classification for main-session reads — only `pipeline-state.md` (state machine, necessary) and `projects/buy-side-service-plan/CLAUDE.md` (Step 11a precedent verification, delegable) are read in main session. Findings #5 covers the delegable one.
