@@ -495,3 +495,10 @@
 - **QC cycles:** 2 (#1 GO with 1 MINOR disputed → triage history-only → revision → #2 GO clean)
 - **Gates:** 1 (0 changed) — plan-approval:confirmed (operator approved via ExitPlanMode without content changes)
 - **Mandate fields:** none (no /session-start this session)
+
+### 2026-05-25 — 4-scope token-audit sweep (ai-resources + 3 projects)
+- **Commands used:** /prime, /token-audit (×4), /friction-log, /handoff (×4), /wrap-session
+- **Iterations:** 0 (no drafting; 4 audit reports written linearly per protocol)
+- **Decisions logged:** 0
+- **QC cycles:** 0 (audits are diagnostic-only; no end-of-audit /qc-pass invoked)
+- **Mandate fields:** none (no /session-start this session)

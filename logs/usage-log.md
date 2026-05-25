@@ -641,3 +641,33 @@ Stability vs. prior entries: This session is cleaner than the 2026-05-16 cleanup
 - Tail-read `logs/coaching-data.md` instead of full read — the file is append-only and only the closing section is needed before an append. Reading ~80 closing lines instead of ~489 saves ~400 lines (~5k–6k tokens) per session that appends coaching data. Bigger single-shot saving than the primary, but fires less often (only coaching-append sessions).
 - Cache the log-trio (`session-notes` + `decisions` + `usage-log`) at `/prime` — this session re-touched `session-notes.md` and `usage-log.md` at wrap. ~2k–3k tokens/session of avoided re-fetch. Smaller than the coaching-data lever and overlaps with the primary Recommendation's pre-fetch.
 - Confirm the 12-file risk-check batch read stays parallel as that directory grows — it was efficient here (one parallel batch, ~1,200 lines). No saving now; a guard against future regression if the batch is ever split into sequential reads.
+
+### 2026-05-25 | Acceptable
+
+**Task:** Ran a 4-scope `/token-audit` sweep across `ai-resources`, `projects/ai-development-lab`, `projects/axcion-ai-system-owner`, and `projects/obsidian-pe-kb`, with `/handoff` between each audit and a consolidated cross-audit summary delivered inline.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~22 |
+| Files read | ~30 (re-reads: 1 — session-notes.md after concurrent-modification collision) |
+| Files written/edited | ~14 (4 audit reports totaling 1,669 lines, 5 scratchpads, 4 pre-flight working notes, 1 friction-log entry, 1 session-notes entry, 1 coaching-data entry) |
+| Tool calls | ~70–80 main-session total |
+| Subagents | 13 (Section 2 skill census ×1; Section 4 workflow audits ×8 across the 4 scopes; Section 6 file-handling ×4) |
+| Rework cycles | 0 (one Edit retry on session-notes.md from concurrent-write collision — collision cost, not rework on substantive work) |
+
+**Findings:**
+- **Tool overhead — Moderate:** Audit #4 (obsidian-pe-kb) ran the full 4-scope template despite having 0 local skills, 0 local commands, 0 local workflows — only Section 6 needed a real dispatch. The other sections still consumed read budget (settings.json + CLAUDE.md + usage-log + command listings + protocol re-read context) before resolving to "nothing local." A pre-scope dry-probe (count of local resources per section) would have collapsed audit #4 to a single Section 6 subagent + minimal preamble, saving roughly 40–50% of that audit's read overhead.
+- **Context bloat — Minor:** The token-audit-protocol was read once but referenced implicitly across 4 audits; pre-flight working notes for each project were re-checked against existing prior reports (3 archive checks). Proportionate to a multi-scope sweep but at the upper end of justifiable per-audit context.
+- **Missed parallelization — Informational:** Subagents within each audit were dispatched in parallel (3–4 at a time, as designed), but the 4 audits themselves ran sequentially with `/handoff` between each. The handoff between scopes is by design (state isolation, prevent cross-audit context bleed) — not a fix candidate, called out only because it dominates wall-clock without dominating tokens.
+- **Friction-driven cost:** `/token-audit` scope-selection required 3 rounds of AskUserQuestion (logged at 09:07) before scope was named. Each round consumed an exchange and an operator turn; the desired UX (list-all-projects-with-numbers, reply-with-numbers) would have collapsed scope selection to one exchange.
+- **Convergent findings as analytical value:** The 4 audits surfaced the same waste patterns (main↔subagent file duplication, Read() deny gaps, missing /compact breakpoints) in most scopes. The consolidated cross-audit summary captured this convergence — the cross-scope read is what produced novel signal, not any individual audit. Worth noting because it argues for the multi-scope sweep as a structural pattern even when per-audit findings repeat.
+- **Trend:** improvement vs. the last 3 entries (Wasteful / Acceptable / Acceptable) — no Major findings, 0 rework cycles on substantive work, disciplined re-read count (1 forced re-read from a known concurrent-write class, not the session-notes tail-read pattern that recurred across most of the recent log).
+
+**Recommendation:** Add a pre-scope dry-probe to `/token-audit` — before dispatching the full per-section subagent fan-out, count the local resources each section targets (skills/, commands/, workflows/, agents/) and skip sections with zero local resources. In this session, audit #4 (obsidian-pe-kb) would have collapsed from 4 sections to 1, eliminating ~3 sections worth of preamble reading + section structuring across an audit that had no substantive findings to surface.
+
+**Estimated savings:** Per audit on a sparse scope (0 local resources in 3 of 4 sections), avoiding 3 sections' preamble reads + protocol re-reference ≈ 800–1,200 tokens/scope. For a 4-scope sweep with one sparse scope, ~1k tokens this session; for sweeps over the full project portfolio where ~2–3 scopes may be sparse (utility / KB / inactive projects), ~2–4k per sweep. Over 10–20 sweep sessions: ~20–80k tokens. Order-of-magnitude — actual savings depend on how often sparse scopes are included in the audit set.
+
+**Additional levers (ROI-ranked):**
+- **Fix `/token-audit` scope-selection UX** — Replace the 3-round AskUserQuestion sequence with a single list-projects-with-numbers prompt that accepts a comma-separated number reply. Saves 2 round-trips per multi-scope invocation (~500–1,000 tokens/session) plus operator friction. Smaller than the primary in tokens but eliminates the friction class logged in this session and likely recurring on every multi-scope `/token-audit`.
+- **Bundle the per-audit pre-flight working notes into a single cross-audit context object** — Each of the 4 audits independently checked archives for existing pre-flight notes; a single index read at sweep start (rather than per audit) would consolidate 4 archive checks into 1. Saves ~300–500 tokens/sweep; structurally smaller than the primary because the pre-flight check is already cheap.
+- **Cache the token-audit-protocol read across the sweep** — Read once at sweep start, pin in the main session's context for all 4 audits rather than letting each audit re-reference it implicitly. Saves ~200–400 tokens/sweep; lowest ROI of the three because the protocol is short and only one explicit re-read occurred — but zero-effort to implement at the sweep orchestrator level.
