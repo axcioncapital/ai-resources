@@ -77,7 +77,7 @@ Wait for one response. Apply these parser rules:
 - Stop if: {stop_if}
 ```
 
-**Parse contract:** `wrap-session.md` Step 6a depends on the exact bullet labels (`- Out of scope:`, `- Files in scope:`, `- Stop if:`), the `(inferred)` marker, and the `(none stated)` marker written here. Do not rename these labels or marker strings without updating Step 6a.
+**Parse contract:** `wrap-session.md` Step 7a depends on the exact bullet labels (`- Out of scope:`, `- Files in scope:`, `- Stop if:`), the `(inferred)` marker, and the `(none stated)` marker written here. Do not rename these labels or marker strings without updating Step 7a.
 
 Where `files_in_scope_written` is:
 - `(inferred)` — if `files_inferred = true` (operator did not state or correct this field)

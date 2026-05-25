@@ -6,7 +6,7 @@ Project-end innovation triage. Scans a completed project for Claude Code infrast
 
 **What this complements:**
 - `detect-innovation.sh` (PostToolUse hook) — captures new commands, agents, and hooks during work.
-- `/wrap-session` Step 7 — triages detected entries at session end.
+- `/wrap-session` Step 8 — triages detected entries at session end.
 - `/graduate-resource` — moves an individual item from project to canonical location.
 
 **The gap this fills:** a project-end audit that finds innovations the per-write hook cannot detect (CLAUDE.md sections, settings hook taxonomies, prompts and spec docs under `context/` or `reference/`, scripts, style references) and divergent shared artifacts where the project has improvements worth backporting. Read-only against the registry; the operator may add registry rows manually after reviewing the report.
