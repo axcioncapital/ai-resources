@@ -163,37 +163,7 @@ fi
 
 **Predicate — "already has a permissions allowlist":** parsed JSON has `.permissions.allow` *and* that array is non-empty. If true, leave `permissions` alone. Otherwise merge the canonical block below.
 
-**Canonical permissions block** (mirrors `allow` / `deny` from the operator's user-level `~/.claude/settings.json`, plus a narrow archival `Read(...)` deny set; `additionalDirectories` is intentionally omitted as a user-level absolute-path concern). The `Read(...)` denies target archival-only paths that no active command routinely reads. Per the workspace `## Applying Audit Recommendations` rule, these four entries are the safe universal set. Project-shape-specific denies (e.g., `Read(output/**)`, `Read(reports/**)`) are **not** included — add per-project after validating no active command reads from them.
-
-```json
-{
-  "allow": [
-    "Bash(*)",
-    "Read",
-    "Edit",
-    "Write",
-    "MultiEdit",
-    "Agent",
-    "Skill",
-    "TodoWrite",
-    "Glob",
-    "Grep",
-    "WebFetch",
-    "WebSearch",
-    "NotebookEdit",
-    "ToolSearch"
-  ],
-  "deny": [
-    "Bash(git push*)",
-    "Bash(rm -rf *)",
-    "Bash(sudo *)",
-    "Read(archive/**)",
-    "Read(**/*.archive.*)",
-    "Read(**/deprecated/**)",
-    "Read(**/old/**)"
-  ]
-}
-```
+**Canonical permissions block.** Sourced from `ai-resources/templates/project-settings.json.template` — the single source of truth for canonical project scaffolding (see `ai-resources/templates/README.md` Consumer contract). The template carries `defaultMode: "bypassPermissions"`, an `allow` set including baseline tools plus dotfile-path globs (`Edit(**/.claude/**)`, `Write(**/.claude/**)`) and `Bash(rm *)`, and a `deny` set covering destructive ops (`Bash(git push*)`, `Bash(rm -rf *)`, `Bash(sudo *)`) plus archival `Read(...)` patterns. **Layer D widening rationale** — the four entries that differ from a minimal allowlist (`defaultMode: bypassPermissions`, the two dotfile-path globs, and `Bash(rm *)`) — is documented at `ai-resources/docs/permission-template.md` § Layer D (lines 153–193, citing root causes #1–#3 from the same doc). These are the canonical project-layer shape, not project-specific options. To inspect or modify the canonical set, edit the template; this command reads from it at deploy time.
 
 **No model default is set.** Model defaults in `settings.json` are prohibited workspace-wide (workspace `CLAUDE.md` § Model Tier — a declared model blocks in-session `/model` switches). The operator selects the model per session via `/model`. If a pre-existing `settings.json` contains a `model` field, the merge procedure below strips it.
 
@@ -206,7 +176,21 @@ SETTINGS="{PROJECT_DIR}/.claude/settings.json"
 mkdir -p "$(dirname "$SETTINGS")"
 [ -f "$SETTINGS" ] || echo '{}' > "$SETTINGS"
 
-CANONICAL_PERMS='{"allow":["Bash(*)","Read","Edit","Write","MultiEdit","Agent","Skill","TodoWrite","Glob","Grep","WebFetch","WebSearch","NotebookEdit","ToolSearch"],"deny":["Bash(git push*)","Bash(rm -rf *)","Bash(sudo *)","Read(archive/**)","Read(**/*.archive.*)","Read(**/deprecated/**)","Read(**/old/**)"]}'
+# Locate canonical templates via walk-up to ai-resources/ (mirrors new-project.md:330–337).
+# The same walk-up is repeated at the next sub-step (`additionalDirectories` grant) so each
+# code block stays self-contained — they cannot share state across separate bash blocks.
+d="$(cd {PROJECT_DIR} && pwd)"
+AI_RES=""
+while [ "$d" != "/" ]; do
+  d=$(dirname "$d")
+  [ -d "$d/ai-resources" ] && AI_RES="$d/ai-resources" && break
+done
+[ -n "$AI_RES" ] || { echo "ERROR: ai-resources not found in any ancestor — cannot locate canonical settings template"; exit 1; }
+
+TEMPLATE="$AI_RES/templates/project-settings.json.template"
+[ -f "$TEMPLATE" ] || { echo "ERROR: canonical settings template missing at $TEMPLATE"; exit 1; }
+
+CANONICAL_PERMS=$(jq -c '.permissions' "$TEMPLATE")
 
 jq --argjson perms "$CANONICAL_PERMS" '
   (if (.permissions.allow // []) | length > 0 then . else .permissions = $perms end)

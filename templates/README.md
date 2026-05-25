@@ -15,11 +15,18 @@ The four CLAUDE.md section fragments contain NO substitution tokens — they are
 
 ## Consumer contract
 
-`/new-project` (step 2 + step 4) is the primary consumer. The consumer:
+Two consumers, both reading the templates at scaffold/deploy time:
 
-1. Reads the relevant template file(s).
-2. Applies the merge logic locally — for `settings.json`, the predicate "already has a non-empty `permissions.allow` array" still gates the merge; for CLAUDE.md, the per-section idempotency check (`grep -q '^## <heading>'`) still gates the append.
-3. Does not mutate the template files in place. Templates are read-only.
+1. **`/new-project`** (step 2 + step 4) — the original consumer; writes both `settings.json` and the CLAUDE.md canonical sections when scaffolding a new project.
+2. **`/deploy-workflow`** (step 4, sub-step `### Ensure permissions baseline in deployed settings.json`) — added 2026-05-25, the first concrete extension of the 2026-05-25 KEEP verdict below. Consumes `project-settings.json.template` only (not the CLAUDE.md fragments), and only writes when the deployed project's `.permissions.allow` is empty.
+
+Both consumers:
+
+1. Read the relevant template file(s).
+2. Apply the merge logic locally — for `settings.json`, the predicate "already has a non-empty `permissions.allow` array" still gates the merge; for CLAUDE.md, the per-section idempotency check (`grep -q '^## <heading>'`) still gates the append.
+3. Do not mutate the template files in place. Templates are read-only.
+
+When adding a third consumer, update this contract list and the `## What's here` description for the affected template file.
 
 ## 2026-04-13 decision — verdict 2026-05-25: **KEEP**
 
