@@ -318,6 +318,8 @@ Otherwise, install the three pieces:
 
    **Merge procedure:**
 
+   The canonical permissions block and both hooks are read from `ai-resources/templates/project-settings.json.template` — single source of truth across `/new-project`, `/permission-sweep`, and any future consumer. The template is located via walk-up to the nearest ancestor containing `ai-resources/` (same idiom used by `auto-sync-shared.sh` and by step 3 below); this is load-bearing — a relative path would hard-fail on any invocation from outside `ai-resources/` because the CWD guard at the top of this command rules out running inside `ai-resources/`.
+
    ```bash
    command -v jq >/dev/null || { echo "ERROR: jq required for permissions merge"; exit 1; }
 
@@ -325,11 +327,21 @@ Otherwise, install the three pieces:
    mkdir -p "$(dirname "$SETTINGS")"
    [ -f "$SETTINGS" ] || echo '{}' > "$SETTINGS"
 
-   CANONICAL_PERMS='{"defaultMode":"bypassPermissions","allow":["Bash(*)","Read","Edit","Write","MultiEdit","Agent","Skill","TodoWrite","Glob","Grep","WebFetch","WebSearch","NotebookEdit","ToolSearch","Edit(**/.claude/**)","Write(**/.claude/**)","Bash(rm *)"],"deny":["Bash(git push*)","Bash(rm -rf *)","Bash(sudo *)","Read(archive/**)","Read(**/*.archive.*)","Read(**/deprecated/**)","Read(**/old/**)"]}'
+   # Locate canonical templates via walk-up to ai-resources/ (load-bearing per /risk-check 2026-05-25 mitigation #2)
+   d="$(cd projects/{name} && pwd)"
+   AI_RES=""
+   while [ "$d" != "/" ]; do
+     d=$(dirname "$d")
+     [ -d "$d/ai-resources" ] && AI_RES="$d/ai-resources" && break
+   done
+   [ -n "$AI_RES" ] || { echo "ERROR: ai-resources not found in any ancestor — cannot locate canonical templates"; exit 1; }
 
-   AUTO_SYNC_HOOK='{"type":"command","command":"d=\"$CLAUDE_PROJECT_DIR\"; while [ \"$d\" != '"'"'/'"'"' ]; do d=$(dirname \"$d\"); [ -x \"$d/ai-resources/.claude/hooks/auto-sync-shared.sh\" ] && { \"$d/ai-resources/.claude/hooks/auto-sync-shared.sh\"; exit; }; done","timeout":10,"statusMessage":"Syncing shared commands from ai-resources..."}'
+   TEMPLATE="$AI_RES/templates/project-settings.json.template"
+   [ -f "$TEMPLATE" ] || { echo "ERROR: canonical settings template missing at $TEMPLATE"; exit 1; }
 
-   SANITY_HOOK='{"type":"command","command":"d=\"$CLAUDE_PROJECT_DIR\"; while [ \"$d\" != '"'"'/'"'"' ]; do d=$(dirname \"$d\"); [ -x \"$d/ai-resources/.claude/hooks/check-permission-sanity.sh\" ] && { \"$d/ai-resources/.claude/hooks/check-permission-sanity.sh\"; exit; }; done","timeout":5,"statusMessage":"Permission sanity check..."}'
+   CANONICAL_PERMS=$(jq -c '.permissions' "$TEMPLATE")
+   AUTO_SYNC_HOOK=$(jq -c '.hooks.SessionStart[0].hooks[0]' "$TEMPLATE")
+   SANITY_HOOK=$(jq -c '.hooks.SessionStart[1].hooks[0]' "$TEMPLATE")
 
    jq --argjson perms "$CANONICAL_PERMS" --argjson sync "$AUTO_SYNC_HOOK" --argjson sanity "$SANITY_HOOK" '
      (if (.permissions.allow // []) | length > 0 then . else .permissions = $perms end)
@@ -387,140 +399,82 @@ Otherwise, install the three pieces:
    Each section is a short-form mirror — not a verbatim copy of the workspace-level text — so it satisfies the workspace `## CLAUDE.md Scoping` rule ("short pointer acceptable; verbatim duplication is not") while preserving the 2026-04-13 "Commit Rules propagate by explicit copy" decision (inheritance alone proved unreliable in practice, so the rule must appear in-context).
 
    **Policy (per section, applied independently):**
-   - If `projects/{name}/CLAUDE.md` does not exist → create a minimal one with a project title (use the project name) and all four canonical blocks below. Substitute `{name}` (project name) and `{project-description}` (one-line description from the pipeline's context pack, or a generic placeholder if absent) before executing the bash block — the heredoc uses quoted `<<'EOF'`, so no shell expansion happens at runtime.
+   - If `projects/{name}/CLAUDE.md` does not exist → render `templates/project-claude-md/header.md` (with `{name}` and `{project-description}` substituted) followed by the four canonical fragments. `{name}` and `{project-description}` are passed into the bash block as `PROJECT_NAME` / `PROJECT_DESCRIPTION` env vars by the calling agent (substituted into the assignment lines below); the python3 step at runtime does the literal-string replace inside `header.md` content, so apostrophes / ampersands / backslashes in `{project-description}` are safe.
    - If `projects/{name}/CLAUDE.md` exists and already contains a given heading → leave that section alone. Report "{section} already present, skipping."
-   - If `projects/{name}/CLAUDE.md` exists but has no given heading → append that canonical block to the end of the file (preserving the existing content verbatim, preceded by a blank line).
+   - If `projects/{name}/CLAUDE.md` exists but has no given heading → append that canonical fragment to the end of the file (preceded by a blank line).
 
-   **Canonical Commit Rules block** (copy verbatim):
-
-   ```markdown
-   ## Commit Rules
-
-   **Commit directly. Do not ask for permission.** After completing approved work, stage the relevant files and commit in a single step using a heredoc commit message. Do not run `git status`, `git diff`, or `git status --short` as pre-commit checks or post-commit verification — the filesystem is the source of truth for what you just changed.
-
-   Do not push. Pushing is a manual operator step. After committing, remind the operator to push and to run `/wrap-session` if the work is complete. Never commit files that may contain secrets (`.env`, credentials, tokens).
-
-   This rule mirrors the canonical `Commit behavior` section in the workspace-level `CLAUDE.md`. It is repeated here because projects are sometimes opened without the parent workspace context loaded.
-   ```
-
-   **Canonical Input File Handling block** (copy verbatim):
-
-   ```markdown
-   ## Input File Handling
-
-   Input files — context packs, reference documents, source data, prior artifacts the operator drops into the working directory — are read-only references. Use them by path, do not copy or rewrite them.
-
-   - **Default to `Read`.** When the operator points you at an input file (whether it lives in the project folder, an `inputs/` sibling, or an absolute path elsewhere on the filesystem), use the `Read` tool against that path. Never invoke `Write`, `Edit`, `MultiEdit`, or shell file-creation commands (`cp`, `cat >`, `tee`, redirection, `install`, etc.) against a file whose content originated outside the current session.
-   - **Do not materialize chat content.** If an input's content enters the conversation (pasted, quoted, or summarized), that does not make the chat copy canonical. The file on disk remains the source of truth.
-   - **Do not co-locate inputs with outputs for "provenance."** If provenance matters, record the absolute path of the input in the artifact's frontmatter or a `sources.md` file — do not duplicate the bytes.
-   - **Outputs are different.** Artifacts your command is *designed to produce* (plans, specs, drafts, reports) are written normally via `Write` into `output/{project}/`. This rule governs inputs only.
-   - **Operator-pasted content — save verbatim.** When the operator pastes file content and asks you to save it, use `Write` to save exactly as provided. No reformatting, no truncation, no restructuring. If no target path is given, ask before writing. Flag before writing if: target path exists and would be overwritten; content appears incomplete; content conflicts with an approved artifact. Confirm the write by stating target path and line count — do not describe the content.
-   - **Exception: legitimate copying.** Copy an input only when (a) the operator explicitly asks for an archival snapshot or reproducibility freeze, or (b) a downstream tool requires the file at a specific path and no symlink or path argument will satisfy it. In both cases, record the absolute source path in the copy's frontmatter or in a sibling `SOURCE.md`, and state in your turn-summary that you copied rather than referenced.
-
-   This rule mirrors the canonical `Input File Handling` section in the workspace-level `CLAUDE.md`. It is repeated here because projects are sometimes opened without the parent workspace context loaded.
-   ```
-
-   **Canonical Compaction block** (copy verbatim):
-
-   ```markdown
-   ## Compaction
-
-   When `/compact` fires, preserve:
-   - The current pipeline/stage identifier and active working directory (which section, which stage, which command is mid-run).
-   - Paths to any subagent-output files the main session has not yet read.
-   - Any pending operator gate the session is holding at.
-
-   Auto-compact drops these by priority; name them explicitly so they survive. Before `/compact`, prefer writing a short session-state scratchpad (current step, decisions, partial findings, artifact paths) and `/clear` + restart from the scratchpad over lossy auto-summarization.
-
-   **Post-compact resumption — trust the summary.** When resuming after compaction, treat the summary's "commits made" / "files modified" / "decisions" lists as authoritative. Do NOT re-derive them via `git log`, `git show`, or repeated Reads of `session-notes.md`/`decisions.md`. Verify only when the next action requires a specific detail the summary didn't capture (e.g., line numbers for an Edit). Cost test: if your verification doesn't change the next tool call, skip it.
-   ```
-
-   **Canonical Session Boundaries block** (copy verbatim):
-
-   ```markdown
-   ## Session Boundaries
-
-   When switching between unrelated tasks in the same terminal, prefer `/clear` over continuing in dirty context. Stale context from a prior task compounds and contaminates the next one.
-   ```
+   **Canonical content source.** The four canonical sections (and the `# {name}` / `{project-description}` header used only on fresh creation) live as individual fragment files under `ai-resources/templates/project-claude-md/` — `header.md`, `input-file-handling.md`, `commit-rules.md`, `compaction.md`, `session-boundaries.md`. These files are the **single source of truth** for the canonical wording. To update what gets written into project CLAUDE.md files, edit the template fragments — not this command. The procedure below reads them at runtime via walk-up to `ai-resources/` (same idiom as the settings merge in step 2). See `ai-resources/templates/README.md` for the consumer contract and the 2026-04-13 KEEP verdict on the workspace-inheritance workaround.
 
    **Procedure:**
 
    ```bash
    CLAUDE_MD="projects/{name}/CLAUDE.md"
 
+   # Locate canonical templates via walk-up to ai-resources/ (same idiom as step 2)
+   d="$(cd projects/{name} && pwd)"
+   AI_RES=""
+   while [ "$d" != "/" ]; do
+     d=$(dirname "$d")
+     [ -d "$d/ai-resources" ] && AI_RES="$d/ai-resources" && break
+   done
+   [ -n "$AI_RES" ] || { echo "ERROR: ai-resources not found in any ancestor — cannot locate canonical CLAUDE.md templates"; exit 1; }
+
+   FRAG_DIR="$AI_RES/templates/project-claude-md"
+   for f in header.md input-file-handling.md commit-rules.md compaction.md session-boundaries.md; do
+     [ -f "$FRAG_DIR/$f" ] || { echo "ERROR: canonical CLAUDE.md fragment missing at $FRAG_DIR/$f"; exit 1; }
+   done
+
    if [ ! -f "$CLAUDE_MD" ]; then
-     cat > "$CLAUDE_MD" <<'EOF'
-# {name}
-
-{project-description}
-
-## Input File Handling
-
-Input files — context packs, reference documents, source data, prior artifacts the operator drops into the working directory — are read-only references. Use them by path, do not copy or rewrite them.
-
-- **Default to `Read`.** When the operator points you at an input file (whether it lives in the project folder, an `inputs/` sibling, or an absolute path elsewhere on the filesystem), use the `Read` tool against that path. Never invoke `Write`, `Edit`, `MultiEdit`, or shell file-creation commands (`cp`, `cat >`, `tee`, redirection, `install`, etc.) against a file whose content originated outside the current session.
-- **Do not materialize chat content.** If an input's content enters the conversation (pasted, quoted, or summarized), that does not make the chat copy canonical. The file on disk remains the source of truth.
-- **Do not co-locate inputs with outputs for "provenance."** If provenance matters, record the absolute path of the input in the artifact's frontmatter or a `sources.md` file — do not duplicate the bytes.
-- **Outputs are different.** Artifacts your command is *designed to produce* (plans, specs, drafts, reports) are written normally via `Write` into `output/{project}/`. This rule governs inputs only.
-- **Operator-pasted content — save verbatim.** When the operator pastes file content and asks you to save it, use `Write` to save exactly as provided. No reformatting, no truncation, no restructuring. If no target path is given, ask before writing. Flag before writing if: target path exists and would be overwritten; content appears incomplete; content conflicts with an approved artifact. Confirm the write by stating target path and line count — do not describe the content.
-- **Exception: legitimate copying.** Copy an input only when (a) the operator explicitly asks for an archival snapshot or reproducibility freeze, or (b) a downstream tool requires the file at a specific path and no symlink or path argument will satisfy it. In both cases, record the absolute source path in the copy's frontmatter or in a sibling `SOURCE.md`, and state in your turn-summary that you copied rather than referenced.
-
-This rule mirrors the canonical `Input File Handling` section in the workspace-level `CLAUDE.md`. It is repeated here because projects are sometimes opened without the parent workspace context loaded.
-
-## Commit Rules
-
-**Commit directly. Do not ask for permission.** After completing approved work, stage the relevant files and commit in a single step using a heredoc commit message. Do not run `git status`, `git diff`, or `git status --short` as pre-commit checks or post-commit verification — the filesystem is the source of truth for what you just changed.
-
-Do not push. Pushing is a manual operator step. After committing, remind the operator to push and to run `/wrap-session` if the work is complete. Never commit files that may contain secrets (`.env`, credentials, tokens).
-
-This rule mirrors the canonical `Commit behavior` section in the workspace-level `CLAUDE.md`. It is repeated here because projects are sometimes opened without the parent workspace context loaded.
-
-## Compaction
-
-When `/compact` fires, preserve:
-- The current pipeline/stage identifier and active working directory (which section, which stage, which command is mid-run).
-- Paths to any subagent-output files the main session has not yet read.
-- Any pending operator gate the session is holding at.
-
-Auto-compact drops these by priority; name them explicitly so they survive. Before `/compact`, prefer writing a short session-state scratchpad (current step, decisions, partial findings, artifact paths) and `/clear` + restart from the scratchpad over lossy auto-summarization.
-
-**Post-compact resumption — trust the summary.** When resuming after compaction, treat the summary's "commits made" / "files modified" / "decisions" lists as authoritative. Do NOT re-derive them via `git log`, `git show`, or repeated Reads of `session-notes.md`/`decisions.md`. Verify only when the next action requires a specific detail the summary didn't capture (e.g., line numbers for an Edit). Cost test: if your verification doesn't change the next tool call, skip it.
-
-## Session Boundaries
-
-When switching between unrelated tasks in the same terminal, prefer `/clear` over continuing in dirty context. Stale context from a prior task compounds and contaminates the next one.
-EOF
-     # Note: `{name}` and `{project-description}` are substituted by the
-     # calling agent before this bash block executes — same convention as
-     # all other `{name}` references in this command file.
+     # Fresh creation: render header.md with {name} / {project-description} substituted, then concat the four canonical sections.
+     #
+     # Substitution mechanics — read this before editing:
+     # The calling agent processes this bash source as text and replaces {name} + {project-description} GLOBALLY
+     # before the Bash tool runs. To survive that, the substitution targets must appear EXACTLY ONCE each — on the
+     # PROJECT_NAME= / PROJECT_DESCRIPTION= lines below. The python3 step then does a literal string-replace on
+     # header.md content using PROJECT_NAME / PROJECT_DESCRIPTION as values; argv-passing avoids all shell-quoting
+     # hazards (apostrophes, ampersands, backslashes, dollar signs in the project description are safe).
+     #
+     # python3 is on macOS by default and is already an implicit dependency of other ai-resources tooling. If the
+     # python3 dependency becomes a concern, awk with `-v` (which also passes vars without shell interpretation)
+     # is the closest alternative; sed is NOT safe here because `&` in PROJECT_DESCRIPTION expands to the match.
+     # header.md uses mustache-style placeholders {{NAME}} and {{PROJECT_DESCRIPTION}} — distinct from the agent's
+     # single-brace {name} / {project-description} tokens, so the agent's global text-substitution pass over this
+     # bash source never touches the python search strings or the template content.
+     PROJECT_NAME="{name}"
+     PROJECT_DESCRIPTION="{project-description}"
+     python3 -c "
+import sys
+with open(sys.argv[1]) as f: content = f.read()
+sys.stdout.write(content.replace('{{NAME}}', sys.argv[2]).replace('{{PROJECT_DESCRIPTION}}', sys.argv[3]))
+" "$FRAG_DIR/header.md" "$PROJECT_NAME" "$PROJECT_DESCRIPTION" > "$CLAUDE_MD" \
+       || { echo "ERROR: python3 substitution failed"; exit 1; }
+     {
+       echo
+       cat "$FRAG_DIR/input-file-handling.md"
+       echo
+       cat "$FRAG_DIR/commit-rules.md"
+       echo
+       cat "$FRAG_DIR/compaction.md"
+       echo
+       cat "$FRAG_DIR/session-boundaries.md"
+     } >> "$CLAUDE_MD"
    else
-     # Ensure Input File Handling section (idempotent append)
-     if grep -q '^## Input File Handling' "$CLAUDE_MD"; then
-       echo "Input File Handling already present in $CLAUDE_MD — skipping"
-     else
-       printf '\n## Input File Handling\n\nInput files — context packs, reference documents, source data, prior artifacts the operator drops into the working directory — are read-only references. Use them by path, do not copy or rewrite them.\n\n- **Default to `Read`.** When the operator points you at an input file (whether it lives in the project folder, an `inputs/` sibling, or an absolute path elsewhere on the filesystem), use the `Read` tool against that path. Never invoke `Write`, `Edit`, `MultiEdit`, or shell file-creation commands (`cp`, `cat >`, `tee`, redirection, `install`, etc.) against a file whose content originated outside the current session.\n- **Do not materialize chat content.** If an input'"'"'s content enters the conversation (pasted, quoted, or summarized), that does not make the chat copy canonical. The file on disk remains the source of truth.\n- **Do not co-locate inputs with outputs for "provenance."** If provenance matters, record the absolute path of the input in the artifact'"'"'s frontmatter or a `sources.md` file — do not duplicate the bytes.\n- **Outputs are different.** Artifacts your command is *designed to produce* (plans, specs, drafts, reports) are written normally via `Write` into `output/{project}/`. This rule governs inputs only.\n- **Operator-pasted content — save verbatim.** When the operator pastes file content and asks you to save it, use `Write` to save exactly as provided. No reformatting, no truncation, no restructuring. If no target path is given, ask before writing. Flag before writing if: target path exists and would be overwritten; content appears incomplete; content conflicts with an approved artifact. Confirm the write by stating target path and line count — do not describe the content.\n- **Exception: legitimate copying.** Copy an input only when (a) the operator explicitly asks for an archival snapshot or reproducibility freeze, or (b) a downstream tool requires the file at a specific path and no symlink or path argument will satisfy it. In both cases, record the absolute source path in the copy'"'"'s frontmatter or in a sibling `SOURCE.md`, and state in your turn-summary that you copied rather than referenced.\n\nThis rule mirrors the canonical `Input File Handling` section in the workspace-level `CLAUDE.md`. It is repeated here because projects are sometimes opened without the parent workspace context loaded.\n' >> "$CLAUDE_MD"
-     fi
-
-     # Ensure Commit Rules section (idempotent append)
-     if grep -q '^## Commit Rules' "$CLAUDE_MD"; then
-       echo "Commit Rules already present in $CLAUDE_MD — skipping"
-     else
-       printf '\n## Commit Rules\n\n**Commit directly. Do not ask for permission.** After completing approved work, stage the relevant files and commit in a single step using a heredoc commit message. Do not run `git status`, `git diff`, or `git status --short` as pre-commit checks or post-commit verification — the filesystem is the source of truth for what you just changed.\n\nDo not push. Pushing is a manual operator step. After committing, remind the operator to push and to run `/wrap-session` if the work is complete. Never commit files that may contain secrets (`.env`, credentials, tokens).\n\nThis rule mirrors the canonical `Commit behavior` section in the workspace-level `CLAUDE.md`. It is repeated here because projects are sometimes opened without the parent workspace context loaded.\n' >> "$CLAUDE_MD"
-     fi
-
-     # Ensure Compaction section (idempotent append)
-     if grep -q '^## Compaction' "$CLAUDE_MD"; then
-       echo "Compaction already present in $CLAUDE_MD — skipping"
-     else
-       printf '\n## Compaction\n\nWhen `/compact` fires, preserve:\n- The current pipeline/stage identifier and active working directory (which section, which stage, which command is mid-run).\n- Paths to any subagent-output files the main session has not yet read.\n- Any pending operator gate the session is holding at.\n\nAuto-compact drops these by priority; name them explicitly so they survive. Before `/compact`, prefer writing a short session-state scratchpad (current step, decisions, partial findings, artifact paths) and `/clear` + restart from the scratchpad over lossy auto-summarization.\n\n**Post-compact resumption — trust the summary.** When resuming after compaction, treat the summary'"'"'s "commits made" / "files modified" / "decisions" lists as authoritative. Do NOT re-derive them via `git log`, `git show`, or repeated Reads of `session-notes.md`/`decisions.md`. Verify only when the next action requires a specific detail the summary didn'"'"'t capture (e.g., line numbers for an Edit). Cost test: if your verification doesn'"'"'t change the next tool call, skip it.\n' >> "$CLAUDE_MD"
-     fi
-
-     # Ensure Session Boundaries section (idempotent append)
-     if grep -q '^## Session Boundaries' "$CLAUDE_MD"; then
-       echo "Session Boundaries already present in $CLAUDE_MD — skipping"
-     else
-       printf '\n## Session Boundaries\n\nWhen switching between unrelated tasks in the same terminal, prefer `/clear` over continuing in dirty context. Stale context from a prior task compounds and contaminates the next one.\n' >> "$CLAUDE_MD"
-     fi
+     # Idempotent per-section append: each section appended only if its heading is absent.
+     for pair in \
+       "## Input File Handling|input-file-handling.md" \
+       "## Commit Rules|commit-rules.md" \
+       "## Compaction|compaction.md" \
+       "## Session Boundaries|session-boundaries.md"; do
+       HEADING="${pair%|*}"
+       FRAG="${pair#*|}"
+       SECTION_NAME="${HEADING#\#\# }"
+       if grep -q "^${HEADING}" "$CLAUDE_MD"; then
+         echo "${SECTION_NAME} already present in $CLAUDE_MD — skipping"
+       else
+         echo "" >> "$CLAUDE_MD"
+         cat "$FRAG_DIR/$FRAG" >> "$CLAUDE_MD"
+       fi
+     done
    fi
    ```
 
