@@ -18,29 +18,38 @@ Wrap the current session. The operator's wrap-up context follows this prompt: $A
 > 1. Session telemetry (usage-analysis) — y/n
 > 2. Coaching data capture — y/n
 
-Accept shorthand: "yy" / "yes both" / "both" = both yes; "nn" / "skip both" = both no; "y/n" or "1y 2n" = per-item. Record the two answers and use them to gate Step 6 (coaching) and Step 13 (telemetry). Do not assume defaults — if the operator's reply is ambiguous, re-ask before proceeding. Note skipped passes in chat as "Skipped per preflight" when you reach the corresponding step.
+Accept shorthand: "yy" / "yes both" / "both" = both yes; "nn" / "skip both" = both no; "y/n" or "1y 2n" = per-item. Record the two answers and use them to gate Step 7 (coaching) and Step 12 (telemetry). Do not assume defaults — if the operator's reply is ambiguous, re-ask before proceeding. Note skipped passes in chat as "Skipped per preflight" when you reach the corresponding step.
 
 0.5. **Save a continuity scratchpad.** Run the `skills/handoff/SKILL.md` continuity workflow (no-args mode, Steps C1–C2) inline: write a full session-state scratchpad to `logs/scratchpads/{YYYY-MM-DD}-{HH-MM}-scratchpad.md` from conversation context. This is a single `Write` call — it counts toward the cost budget above but adds only one call. `/prime` Step 1b detects this scratchpad at the next session start and offers it as a resume point, giving the next session a richer entry than the terse `### Next Steps` list alone. Skip this step only if the session was trivial (single-file edit, one-question read, aborted session) with nothing worth resuming — note "Continuity scratchpad skipped — trivial session" in chat if so. This is your judgment call, same standard as the Step 12 telemetry skip; do not ask the operator.
 
-1. Read `/logs/session-notes.md` (last 5 lines only — to find the append point). If the file doesn't exist, create it with `# Session Notes` as the header. **Format guard:** If the file exists but has no `# Session Notes` header, prepend it. If the last non-empty line is a partial block (unclosed heading, unterminated list), append a blank line before the new entry.
-2. Read `/logs/decisions.md` (last 5 lines only — to find the append point). If the file doesn't exist, create it with `# Decision Journal` as the header.
-3. Append a session note at the **END** of `/logs/session-notes.md` (newest entry is the LAST entry; do NOT prepend at the top — `check-archive.sh` interprets top entries as oldest and will archive them). Use conversation context and the operator's summary to populate:
+1. Run `tail -5 logs/session-notes.md` via Bash to find the append point. If the file doesn't exist, create it with `# Session Notes` as the header. **Format guard:** If the file exists but has no `# Session Notes` header, prepend it. If the last non-empty line is a partial block (unclosed heading, unterminated list), append a blank line before the new entry.
+2. Run `tail -5 logs/decisions.md` via Bash to find the append point. If the file doesn't exist, create it with `# Decision Journal` as the header.
+3. **Log archive check.** Run `bash logs/scripts/check-archive.sh`. The script iterates append-only logs (session-notes.md, decisions.md) and archives any file exceeding its threshold by invoking `logs/scripts/split-log.sh` internally. Behavior:
+   - Below threshold: silent exit, nothing to do.
+   - Archive triggered: script prints `Auto-archived <file> → <archive-file> (archived N entries, kept M)`. Note the printed archive filename — include it in Step 4's `### Files Modified` list.
+   - Failure: script prints `ARCHIVE FAILED for <file>` and exits non-zero. Surface the failure to the operator, do NOT attempt to rerun, proceed with the rest of the wrap.
+
+   **Why here:** archive runs before the session note is appended (Step 4) so that a threshold-triggered rewrite of session-notes.md does not invalidate the Step 4 Edit. Archive operates only on existing entries — today's note has not yet been written and is unaffected.
+
+   **Idempotency with `/log-sweep`:** `/wrap-session` and `/log-sweep` are safe to run on the same day in any order. Both commands call `split-log.sh` internally, but `split-log.sh`'s "already at threshold" guard and `log-archiver.sh`'s date-guard pattern prevent double-archival. Running both same-day produces the same result as running either once. No special ordering is required.
+
+4. Append a session note at the **END** of `/logs/session-notes.md` (newest entry is the LAST entry; do NOT prepend at the top — `check-archive.sh` interprets top entries as oldest and will archive them). Use conversation context and the operator's summary to populate:
    - `## {date} — {one-line title}` (e.g., "Created supplementary-query-brief-drafter skill")
    - `### Summary` — 2-4 sentences: what was accomplished, what was the focus
    - `### Files Created` — list from conversation context (path + short description)
-   - `### Files Modified` — list from conversation context
+   - `### Files Modified` — list from conversation context (include any archive file printed in Step 3)
    - `### Decisions Made` — operator-directed decisions grouped by artifact; QC fixes listed separately
    - `### Next Steps` — what command to run next, any recommended groupings or sequencing. **At stage boundaries:** verify the next command against `reference/stage-instructions.md` Stage Entry Commands table before writing — use the exact command name, do not infer from memory.
    - `### Open Questions` — blockers or unresolved items; write "None" if clean
-4. If operator decisions with analytical or scoping judgment were made, append to `/logs/decisions.md` with: date, context, decision, rationale, alternatives considered. Skip this if all decisions were routine (operator-directed text edits, QC auto-fixes).
-5. If the operator didn't mention decisions but significant ones occurred in the session, list them and ask: "Should I log any of these to the decision journal?"
-6. **Coaching data capture.** If the operator declined coaching in the preflight, skip this step and note "Coaching capture skipped per preflight" in chat. Otherwise:
+5. If operator decisions with analytical or scoping judgment were made, append to `/logs/decisions.md` with: date, context, decision, rationale, alternatives considered. Skip this if all decisions were routine (operator-directed text edits, QC auto-fixes).
+6. If the operator didn't mention decisions but significant ones occurred in the session, list them and ask: "Should I log any of these to the decision journal?"
+7. **Coaching data capture.** If the operator declined coaching in the preflight, skip this step and note "Coaching capture skipped per preflight" in chat. Otherwise:
 
-   **6a — Read today's mandate block.** Before writing the coaching entry, scan `logs/session-notes.md` from today's `## YYYY-MM-DD` header to the next `##` header (or EOF). Check whether a `**Mandate:**` line appears in that range. *(Format produced by `session-start.md` Step 3 — keep bullet label strings and marker tokens in sync.)*
+   **7a — Read today's mandate block.** Before writing the coaching entry, scan `logs/session-notes.md` from today's `## YYYY-MM-DD` header to the next `##` header (or EOF). Check whether a `**Mandate:**` line appears in that range. *(Format produced by `session-start.md` Step 3 — keep bullet label strings and marker tokens in sync.)*
    - If found: extract the three sub-bullets (`- Out of scope:`, `- Files in scope:`, `- Stop if:`) and classify each value: `(none stated)` → **omitted**; `(inferred)` → **inferred**; any other content → **specified**. `work_scope` and `exit_condition` (on the main `**Mandate:**` line) always count as **specified**.
    - If not found: `mandate_present = false`.
 
-   **6b — Write coaching entry.** Auto-append a session profile entry to `/logs/coaching-data.md`. Derive all fields from the session note you just wrote — no extra operator input needed:
+   **7b — Write coaching entry.** Auto-append a session profile entry to `/logs/coaching-data.md`. Derive all fields from the session note you just wrote — no extra operator input needed:
    ```
    ### {YYYY-MM-DD} — {session title}
    - **Commands used:** {slash commands triggered this session, from conversation context}
@@ -50,26 +59,18 @@ Accept shorthand: "yy" / "yes both" / "both" = both yes; "nn" / "skip both" = bo
    - **Gates:** {count of operator approval/review points this session} ({N} changed) — {comma-separated type:outcome pairs}. Types: plan-approval, content-review, qc-disposition, challenge-disposition, service-design-disposition, bright-line-review, editorial-disagreement, supplementary-research. Outcomes: confirmed (operator approved without changes) or changed (operator directed modification). Derive from conversation: "looks good"/"approved" with no changes = confirmed; operator gave feedback or directed revisions = changed. Omit this line entirely for 0-gate sessions (infrastructure work).
    - **Mandate fields:** {if mandate_present: "specified: {list} | inferred: {list} | omitted: {list}" — omit any category that is empty; if not mandate_present: "none (no /session-start this session)"}
    ```
-7. **Innovation triage.** Read `/logs/innovation-registry.md`. For any entries with status `detected`:
+8. **Innovation triage.** Check for detected entries: `grep '| detected |' logs/innovation-registry.md 2>/dev/null`. If no output (file absent or no detected entries), skip this step silently. If entries found, read those matching lines to identify the affected items, then:
    - Present the list: "Innovations detected this session: [list with type and filename]"
    - For each, recommend: `graduate` (useful beyond this project) or `project-specific` (stays local). One line per item.
    - Ask the operator to confirm or override. Accept "looks good" as blanket confirmation.
    - For items marked `graduate`: update registry status to `triaged:graduate` and remind: "Run `/graduate-resource {name}` to move it to ai-resources."
    - For items marked project-specific: update registry status to `triaged:project-specific`.
-   - If no `detected` entries exist, skip silently.
    - Also surface any new CLAUDE.md rules added this session (from conversation context) and ask if they should graduate to root CLAUDE.md.
-8. **Shared command drift check.** If any `.claude/commands/` files were modified this session, ask: "These shared commands were modified: [list]. Should any changes be synced back to ai-resources or to other projects?" If yes, note the sync action in Next Steps.
-9. **Improvement verification and resolved-count check.** Read `/logs/improvement-log.md` (if it exists). Find entries with status "applied" that have no "Verified:" line. If any exist, present: "Unverified improvements: [list with date and title]." Ask: "Verify any, or skip?" If confirmed, append `- **Verified:** {date} — confirmed by operator` to each entry. If skipped, proceed.
+9. **Shared command drift check.** If any `.claude/commands/` files were modified this session, ask: "These shared commands were modified: [list]. Should any changes be synced back to ai-resources or to other projects?" If yes, note the sync action in Next Steps.
+10. **Improvement verification and resolved-count check.** Scan for unverified applied entries: `awk '/^### /{if(a&&!v)print h; h=$0;a=0;v=0} /Status:.*applied/{a=1} /Verified:/{v=1} END{if(a&&!v)print h}' logs/improvement-log.md 2>/dev/null`. If no output (file absent or no unverified applied entries), skip. If entries found, present: "Unverified improvements: [list with date and title]." Ask: "Verify any, or skip?" If confirmed, append `- **Verified:** {date} — confirmed by operator` to each entry. If skipped, proceed.
 
-    **After verification**, count entries that now have both `**Status:** applied` AND `**Verified:**` lines. If count ≥ 5, append to the wrap summary: "N resolved entries in improvement-log — consider running `/resolve-improvement-log` to archive them." Below 5: do not mention.
-10. **Remind about /improve.** If the session had friction events logged (check `/logs/friction-log.md` for today's entries), suggest: "Friction events were logged this session. Consider running `/improve` to analyze them."
-11. **Log archive check.** Run `bash logs/scripts/check-archive.sh`. The script iterates append-only logs (session-notes.md, decisions.md) and archives any file exceeding its threshold by invoking `logs/scripts/split-log.sh` internally. Behavior:
-    - Below threshold: silent exit, nothing to do.
-    - Archive triggered: script prints `Auto-archived <file> → <archive-file> (archived N entries, kept M)`. Read the printed archive filename and add it to the session note's `### Files Modified` list so it gets staged explicitly in the commit step below.
-    - Failure: script prints `ARCHIVE FAILED for <file>` and exits non-zero. Surface the failure to the operator, do NOT attempt to rerun, proceed with the rest of the wrap.
-
-    **Idempotency with `/log-sweep`:** `/wrap-session` and `/log-sweep` are safe to run on the same day in any order. Both commands call `split-log.sh` internally, but `split-log.sh`'s "already at threshold" guard and `log-archiver.sh`'s date-guard pattern prevent double-archival. Running both same-day produces the same result as running either once. No special ordering is required.
-
+    **After verification**, count resolved entries: `grep -c '^\- \*\*Verified:\*\*' logs/improvement-log.md 2>/dev/null || echo 0`. If count ≥ 5, append to the wrap summary: "N resolved entries in improvement-log — consider running `/resolve-improvement-log` to archive them." Below 5: do not mention.
+11. **Remind about /improve.** Check for today's friction entries: `grep "$(date +%Y-%m-%d)" logs/friction-log.md 2>/dev/null`. If output found, suggest: "Friction events were logged this session. Consider running `/improve` to analyze them."
 12. **Session telemetry.** If the operator declined telemetry in the preflight, skip this step with a one-line note in chat ("Telemetry skipped per preflight") and proceed to the commit step. Otherwise, run the usage analysis inline before committing. Execute the full `/usage-analysis` flow (build session summary, read existing `logs/usage-log.md` if it exists, delegate to the `session-usage-analyzer` subagent per `ai-resources/skills/session-usage-analyzer/SKILL.md`, write the returned entry to the log). For trivial sessions (single-file edit, one-question read, aborted session), skip with a one-line note in chat ("Telemetry skipped — trivial session") and proceed. Rationale: R14 telemetry baseline depends on consistent capture; inlining the analysis prevents the common failure mode where the operator forgets to invoke it post-wrap and the session drops out of the record.
 
 12b. **End-time `/risk-check` gate.** If the session touched any structural change class (hook edits, permission changes, cross-cutting CLAUDE.md edits, new commands or skills, new symlinks, automation with shared-state effects — full list: `ai-resources/docs/audit-discipline.md` § Risk-check change classes), run `/risk-check` once now with `$ARGUMENTS` describing the executed change set across all touched files. Apply paired mitigations before commit if the verdict is PROCEED-WITH-CAUTION; redesign before commit if RECONSIDER. Skip silently if the session touched no class. Rationale: tactile prompt for the end-time gate at the natural session boundary, so the two-gate model doesn't rely solely on operator memory.
