@@ -26,12 +26,12 @@ You receive:
 **SO Advisory** (if `SO_ADVISORY_PATH` is not `MISSING`):
 - Read the file.
 - Extract every `## ` section whose heading contains `Recommendation` OR `Observation` (case-insensitive). For each match, capture the full section content (heading through line before next `## ` or EOF).
-- If no matching section found, capture the first 30 lines with a fallback note.
+- If no matching section found, capture the first 30 lines with a fallback note. Return this fallback note verbatim in the summary — do not paraphrase it, do not infer what the missing section probably contained.
 
 **Systems Review** (if `SO_REVIEW_PATH` is not `MISSING`):
 - Read the file.
 - Extract every `## ` section whose heading contains `Leverage Point` (case-insensitive). Capture full section content.
-- If no matching section found, capture the first 30 lines with a fallback note.
+- If no matching section found, capture the first 30 lines with a fallback note. Return this fallback note verbatim in the summary — do not paraphrase it, do not infer what the missing section probably contained.
 
 **Per-project logs** (for each record in `PROJECT_LOG_BUNDLES`):
 - If `improvement_path` is set: Read the file. Extract every entry whose `**Status:**` line contains `logged` or `pending` (active entries). If no active entries, note `(no active entries)`.
