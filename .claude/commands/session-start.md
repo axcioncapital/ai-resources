@@ -29,7 +29,7 @@ If `$ARGUMENTS` is non-empty, use it verbatim as `MANDATE_TEXT`.
 
 Otherwise, ask the operator **one prompt** (wait for one answer):
 
-> "State the session mandate."
+> "State the session mandate. Optionally include `allowed_inputs:` (files/paths the session may read) and `required_outputs:` (files/artifacts the session must produce) to scope reads and writes explicitly."
 
 ### Step 2 — Parse and confirm
 
@@ -40,6 +40,8 @@ Extract from `MANDATE_TEXT`:
 - `exit_condition` — what "done" looks like; must be observable or countable
 - `files_in_scope` — which files may be edited; if not stated by the operator, infer from `work_scope` for the **echo only** so the operator can verify or correct it; flag internally as **inferred** (`files_inferred = true`). If the operator provides a correction via the confirmation step → set `files_inferred = false` and use the correction.
 - `stop_if` — conditions that should halt the session; default `"(none stated)"` if not mentioned
+- `allowed_inputs` — OPTIONAL. Explicit list of files/directories the session is authorized to read. No default — **absent means absent** (no `(none stated)` placeholder; the bullet does not appear in the echo or disk-write). Extract from `MANDATE_TEXT` if present via an `allowed_inputs:` prefix line, or via the correction syntax `a:` letter in Step 2's confirmation step.
+- `required_outputs` — OPTIONAL. Explicit list of files/artifacts the session is expected to produce. No default — **absent means absent**. Extract from `MANDATE_TEXT` if present via a `required_outputs:` prefix line, or via the correction syntax `r:` letter in Step 2's confirmation step.
 
 Echo the following confirmation block to the operator. Render it as Markdown — do NOT emit a raw pre-formatted code block, and do NOT emit the ``` fences shown below; those fences only delimit the template structure for this instruction. Follow these rendering rules exactly:
 
@@ -92,6 +94,16 @@ Echo the following confirmation block to the operator. Render it as Markdown —
 - `{file}` — {what changes}
 {if files_inferred = true, append "(inferred — correct with f: <paths> if wrong)" after the table/list}
 
+**Allowed inputs**
+{if allowed_inputs is set:}
+- → {allowed_inputs — one bullet per path if multiple, comma-separated if single value}
+{else: omit this section entirely}
+
+**Required outputs**
+{if required_outputs is set:}
+- → {required_outputs — one bullet per path if multiple, comma-separated if single value}
+{else: omit this section entirely}
+
 **Out of scope**
 {if out_of_scope is not "(none stated)":}
 - · {out_of_scope — one bullet per item if multiple}
@@ -120,7 +132,7 @@ Wait for one response. Apply these parser rules:
 - **Confirmation:** response is exactly `confirm`, `y`, or `yes` (case-insensitive, trimmed) → proceed to Step 3.
 - **Ambiguous single letter:** response matches `^[a-z]\.?(\s|$)` and is NOT exactly `y` → re-ask once:
   `"Reply 'confirm' or 'y' to accept, or use 'b: new text' syntax for corrections. Single letters other than 'y' are ambiguous."` Accept the re-response and proceed regardless.
-- **Correction:** correction syntax is `<letter>: <replacement text>` (colon required, not period). Multiple corrections may appear on separate lines. Parse and apply each; unrecognised syntax is treated as free-text amendment to `work_scope`.
+- **Correction:** correction syntax is `<letter>: <replacement text>` (colon required, not period). Multiple corrections may appear on separate lines. Parse and apply each; unrecognised syntax is treated as free-text amendment to `work_scope`. **Reserved correction letters:** `a:` → `allowed_inputs`; `r:` → `required_outputs`; `f:` → `files_in_scope`. Other letters fall through to free-text amendment.
 
 ### Step 3 — Write the mandate line
 
@@ -133,9 +145,16 @@ Wait for one response. Apply these parser rules:
 - Out of scope: {out_of_scope}
 - Files in scope: {files_in_scope_written}
 - Stop if: {stop_if}
+- Allowed inputs: {allowed_inputs}      ← write only if allowed_inputs is set; omit the bullet entirely if absent (no placeholder)
+- Required outputs: {required_outputs}  ← write only if required_outputs is set; omit the bullet entirely if absent (no placeholder)
 ```
 
-**Parse contract:** `wrap-session.md` Step 7a depends on the exact bullet labels (`- Out of scope:`, `- Files in scope:`, `- Stop if:`), the `(inferred)` marker, and the `(none stated)` marker written here. Do not rename these labels or marker strings without updating Step 7a.
+**Parse contract:** Three readers depend on the exact bullet labels (`- Out of scope:`, `- Files in scope:`, `- Stop if:`, `- Allowed inputs:`, `- Required outputs:`), the `(inferred)` marker, and the `(none stated)` marker written here:
+1. Canonical `wrap-session.md` Step 7a (coaching-data classification).
+2. Workspace-root `wrap-session.md` Step 2b (Phase 3 session report).
+3. `drift-check.md` Step 5 (mandate auto-detection for drift judgment).
+
+Do not rename these labels or marker strings without updating all three readers. The `Allowed inputs` and `Required outputs` bullets are optional — when absent, the bullets do not appear (no `(none stated)` placeholder).
 
 Where `files_in_scope_written` is:
 - `(inferred)` — if `files_inferred = true` (operator did not state or correct this field)
@@ -151,6 +170,8 @@ Using the `logs/session-notes.md` content already read in Step 0, locate today's
   - Out of scope: {out_of_scope}
   - Files in scope: {files_in_scope_written}
   - Stop if: {stop_if}
+  - Allowed inputs: {allowed_inputs}      ← write only if set; omit if absent
+  - Required outputs: {required_outputs}  ← write only if set; omit if absent
   ```
 
 ### Step 4 — Confirm
