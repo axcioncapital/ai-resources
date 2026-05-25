@@ -145,6 +145,8 @@ Emit: "Run `/risk-check` after the plan is approved (plan-time gate). Run it aga
 
 If no structural class appears likely: state "No structural change classes apparent — run `/risk-check` if scope changes."
 
+**Tripwire:** any edit that *reorders* operations against shared state (logs, session files, cross-session artifacts) qualifies as automation-with-shared-state-effects — even when the command being edited already exists. The "existing-command refactor" framing does NOT exempt the change from `/risk-check`.
+
 Do not evaluate structural risk yourself. Point to `/risk-check`.
 
 ---

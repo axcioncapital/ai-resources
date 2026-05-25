@@ -16,10 +16,33 @@ Input: $ARGUMENTS (optional) — scope selector:
 
 1. Set `WORKSPACE` to the Axcíon AI workspace root (parent of `ai-resources/`).
 2. Parse $ARGUMENTS:
-   - empty → set `AUDIT_ROOT` to the current working directory; `SCOPE_SLUG` = empty; `SCOPE_LABEL` = "current working directory"
-   - `ai-resources` → `AUDIT_ROOT` = `{WORKSPACE}/ai-resources`; `SCOPE_SLUG` = `ai-resources`; `SCOPE_LABEL` = "ai-resources repo"
-   - `workspace` → `AUDIT_ROOT` = `{WORKSPACE}`; `SCOPE_SLUG` = empty; `SCOPE_LABEL` = "Axcíon AI Workspace (full)"
-   - `project <name>` → `AUDIT_ROOT` = `{WORKSPACE}/projects/<name>`; `SCOPE_SLUG` = `project-<name>`; `SCOPE_LABEL` = "projects/<name>"
+   - `ai-resources` → (keyword shortcut) `AUDIT_ROOT` = `{WORKSPACE}/ai-resources`; `SCOPE_SLUG` = `ai-resources`; `SCOPE_LABEL` = "ai-resources repo"
+   - `workspace` → (keyword shortcut) `AUDIT_ROOT` = `{WORKSPACE}`; `SCOPE_SLUG` = `workspace`; `SCOPE_LABEL` = "Axcíon AI Workspace (full)"
+   - `project <name>` → (keyword shortcut) `AUDIT_ROOT` = `{WORKSPACE}/projects/<name>`; `SCOPE_SLUG` = `project-<name>`; `SCOPE_LABEL` = "projects/<name>"
+   - **empty or unrecognized** → enumerate scopes and present a numbered menu (see below). Wait for one reply. Resolve to `(AUDIT_ROOT, SCOPE_SLUG, SCOPE_LABEL)`.
+
+   **Scope menu (fires only when $ARGUMENTS is empty or unrecognized):**
+
+   Enumerate project directories:
+   ```bash
+   ls -1d {WORKSPACE}/projects/*/ 2>/dev/null | xargs -I{} basename {}
+   ```
+   Present:
+   ```
+   Select audit scope:
+     1. ai-resources
+     2. workspace
+     3a. {first-project-name}
+     3b. {second-project-name}
+     ...
+   ```
+   Ask: "Enter scope (one only — number or letter):"
+
+   Parse reply and resolve to `(AUDIT_ROOT, SCOPE_SLUG, SCOPE_LABEL)`:
+   - `1` → ai-resources scope (same as keyword `ai-resources`)
+   - `2` → workspace scope (same as keyword `workspace`)
+   - `3a`, `3b`, etc. → `project <name>` scope for the corresponding project
+
 3. If the parsed scope resolves to a non-existent directory, abort with: "AUDIT_ROOT does not exist: {path}. Aborting."
 
 ---

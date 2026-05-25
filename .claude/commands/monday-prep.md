@@ -124,7 +124,17 @@ If any broken symlinks were found, attempt inline repair — scoped to `ACTIVE_P
 3. If zero or multiple matches are found, leave the FLAG as-is and note: `"symlink repair skipped for {link_path}: {0 | N} candidates found — run /fix-symlinks manually"`.
 4. For each repaired symlink, remove its entry from `FLAGS` and record: `"symlink repaired: {link_path} → {target}"`.
 
-**B7 — CLAUDE.md audit (active projects)**
+**B7 — CLAUDE.md audit (always-loaded layer first, then active projects)**
+
+Always audit the two always-loaded CLAUDE.md files before the project loop — they load into every session in this workspace and have higher per-session impact than any project CLAUDE.md. No skip exemption applies to this layer (the "unmodified and small" skip rule below is for projects only).
+
+1. `{WORKSPACE}/CLAUDE.md` — workspace layer:
+   - Get days since last edit: `git -C "$WORKSPACE" log -1 --format="%ct" -- "CLAUDE.md"`; get line count.
+   - Invoke `/audit-claude-md workspace`. Record the produced audit report path in `FLAGS` as an advisory.
+
+2. `{WORKSPACE}/ai-resources/CLAUDE.md` — ai-resources layer:
+   - Get days since last edit: `git -C "$WORKSPACE/ai-resources" log -1 --format="%ct" -- "CLAUDE.md"`; get line count.
+   - Invoke `/audit-claude-md ai-resources`. Record the produced audit report path in `FLAGS` as an advisory.
 
 For each project in `ACTIVE_PROJECTS`:
 

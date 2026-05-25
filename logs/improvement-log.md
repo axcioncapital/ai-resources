@@ -75,3 +75,35 @@ Suggested three-session sequence:
 - **Friction source:** resource brief `inbox/workflow-diagnosis.md` (requested 2026-05-19), Exclusions section — explicitly lists "Analyze session-level friction or process issues (that's `improvement-analyst` agent)" as a non-goal
 - **Proposal:** The boundary between the planned `workflow-diagnosis` skill (artifact-defect-driven workflow fixes) and the `improvement-analyst` agent (session-friction-driven workflow fixes) currently lives only in the inbox brief's prose, which is archived to `inbox/archive/` once fulfilled. When `/create-skill` processes `inbox/workflow-diagnosis.md`, add a one-paragraph routing note to `ai-resources/docs/ai-resource-creation.md` (or a short `## Workflow-improvement surfaces` section) stating the split: `improvement-analyst` agent = session-friction-driven; `workflow-diagnosis` skill / `/diagnose-workflow` = artifact-defect-driven; with trigger phrasing for each. Documentation only, no new tooling. Sequence with the `/create-skill` run that fulfills the brief. Effort small; impact medium; first occurrence.
 - **Target files:** `ai-resources/docs/ai-resource-creation.md`
+
+### 2026-05-25 — /token-audit numbered project menu
+- **Status:** applied
+- **Category:** command
+- **Friction source:** friction-log 09:07 — /token-audit scope-selection required 3 rounds of AskUserQuestion; desired UX: list all projects numbered upfront
+- **What changed:** Replaced the empty-args branch in `/token-audit` Step 1 with a numbered scope menu (1=ai-resources, 2=workspace, 3a/3b/…=projects). Keyword args (`ai-resources`, `workspace`, `project <name>`) retained as power-user shortcuts. Menu pattern mirrors `/friday-checkup` Step 3.
+
+### 2026-05-25 — /monday-prep B7 seeds always-loaded CLAUDE.md layer
+- **Status:** applied
+- **Category:** command
+- **Friction source:** friction-log 09:13 — monday-prep B7 skips workspace CLAUDE.md and ai-resources/CLAUDE.md; operator caught during W22 monday-prep diagnostics
+- **What changed:** Prepended a two-step always-loaded layer audit (workspace CLAUDE.md + ai-resources/CLAUDE.md) to the B7 block before the ACTIVE_PROJECTS loop. No skip exemption for the always-loaded layer (skip rule is projects-only). Invokes `/audit-claude-md workspace` and `/audit-claude-md ai-resources` respectively.
+
+### 2026-05-25 — Risk-check rule clarified to cover reorders of existing shared-state ops
+- **Status:** applied
+- **Category:** rule
+- **Friction source:** friction-log 09:53 — /wrap-session leaner refactor reordered archive-vs-append (shared-state ops); risk-check was skipped under "existing-command refactor" framing
+- **What changed:** (a) Added clarifying clause to `docs/audit-discipline.md` line 24: reordering existing shared-state ops qualifies, not only new automation. (b) Added tripwire note to `session-plan.md` Step 6: "existing-command refactor" framing does NOT exempt from /risk-check when shared-state ops are reordered.
+
+### 2026-05-25 — Canonical scope-selection pattern doc (parked)
+- **Status:** logged (pending)
+- **Category:** process
+- **Friction source:** cross-reference of friction 09:07 against existing /monday-prep and /friday-checkup scope-selection idioms — three different encodings across sibling commands
+- **Proposal:** Create `docs/scope-selection-pattern.md` (reference the `/friday-checkup` Step 3 lines 82–95 as canonical pattern) and add a one-line pointer in `ai-resources/CLAUDE.md` under a "Command Conventions" section. Prevents the next audit-class command from inventing a fourth encoding. Triage verdict: park — N=2 pattern occurrences, premature to formalize; Finding 1 covers the concrete friction. Revisit when a third command needs the pattern.
+- **Target files:** `docs/scope-selection-pattern.md` (new), `ai-resources/CLAUDE.md`
+
+### 2026-05-25 — Pattern to watch: operator-caught review-class gaps (2 occurrences)
+- **Status:** logged (pending)
+- **Category:** process
+- **Friction source:** friction-log 09:13 (B7 always-loaded skip) and 09:53 (risk-check existing-command exemption) — both caught by operator post-execution, not by /qc-pass or the plan
+- **Proposal:** If the pattern recurs in the next 1–2 sessions (3+ total instances), add either (a) a review principle to `skills/ai-resource-builder/references/review-principles.md` ("When a command audits layer N, verify the candidate list includes the always-loaded layer above N") or (b) a /qc-pass checklist item for plan-time risk-class enumeration. Current count: 2 in one session — at watch threshold, below escalation threshold. No action this round.
+- **Target files:** `skills/ai-resource-builder/references/review-principles.md` or qc-pass protocol (if escalated)
