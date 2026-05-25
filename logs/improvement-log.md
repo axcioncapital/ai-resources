@@ -36,9 +36,9 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 
 Suggested three-session sequence:
 
-- **Session 1 (rules, ~45 min):** Entry "Extend Model Tier rule to agents" + Entry "Codify subagent-summary cap + /usage-analysis discipline". Purely CLAUDE.md + one `/wrap-session` edit. Lowest risk, highest per-turn leverage.
+- **Session 1 (rules, ~45 min):** Entry "Extend Model Tier rule to agents" + Entry "Codify subagent-summary cap + /usage-analysis discipline". Purely CLAUDE.md + one `/wrap-session` edit. Lowest risk, highest per-turn leverage. — **VERIFIED-DONE 2026-05-25:** Both source entries already codified by drift. Workspace `CLAUDE.md` § Model Tier names agents explicitly and references `docs/agent-tier-table.md` ("Extend Model Tier rule to agents" — done). `ai-resources/CLAUDE.md` § Subagent Contracts states the 30/20-line cap + notes-to-disk + summary-only rule and names existing implementations ("Codify subagent-summary cap" — done). `ai-resources/CLAUDE.md` § Session Telemetry codifies the `/usage-analysis`-every-substantive-session rule and `/wrap-session` prompt integration ("/usage-analysis discipline" — done). [FADING-GATE] pattern — booking was carried forward from when these rules did not yet exist; no edits required.
 - **Session 2 (templates, ~1–2 hrs):** Existing entries — canonical project settings template + canonical project CLAUDE.md template. Touches `/new-project` pipeline + research-workflow templates. Before implementing, re-read the 2026-04-13 decision ("Commit Rules propagate by explicit copy") to confirm whether the inheritance workaround is still needed.
-- **Session 3 (detection + automation, ~45 min):** Entry "Add three questionnaire items to /repo-dd" + Entry "Pre-commit skill-size warning hook". Depends on Session 1 (Agent Tier Table) and Session 2 (canonical templates) landing first so the new questionnaire items have stable references.
+- **Session 3 (detection + automation, ~45 min):** Entry "Add three questionnaire items to /repo-dd" + Entry "Pre-commit skill-size warning hook". Depends on Session 1 (Agent Tier Table) and Session 2 (canonical templates) landing first so the new questionnaire items have stable references. — Session 1 dependency satisfied (verified-done 2026-05-25); Session 2 still pending.
 
 ### 2026-04-25 — Make /wrap-session leaner
 
