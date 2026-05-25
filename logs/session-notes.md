@@ -325,3 +325,32 @@ Executed Wave 1 (3 quick wins — 2 found already-resolved [FADING-GATE]; 1 real
 
 ### Open Questions
 None.
+
+R1 resumption — build friday-act-step16a-summarizer agent + edit friday-act.md Step 16a (lines 158–178); design fully captured in committed risk-check report.
+
+## 2026-05-25 — Fixed /mandate (session-start Step 2) confirmation rendering
+
+### Summary
+Replaced the static "MANDATE CONFIRMATION" plain-text echo block in `session-start.md` Step 2 with Markdown rendering instructions: bold inline section labels, semantic icon set (⚠ ↩ → ✓ ✗ ·), Markdown bullets/tables for file mappings, `---` separators, synthesized Summary field, and a context-adaptive section label (Quick wins / Steps / Tasks). Added two HTML guard comments protecting the Step 2↔Step 3 parse-contract boundary (`/wrap-session` Step 7a depends on plain bullet labels in Step 3; those must not be stylized). Logged a `logged (pending)` improvement-log entry for extracting the rendering convention to a shared doc when a second consumer appears.
+
+### Files Created
+- `logs/scratchpads/2026-05-25-session-end-scratchpad.md` — session continuity scratchpad
+
+### Files Modified
+- `ai-resources/.claude/commands/session-start.md` — Step 2 echo block + Step 3 LOAD-BEARING guard comment
+- `ai-resources/logs/improvement-log.md` — appended `logged (pending)` entry for shared rendering-conventions doc
+
+### Decisions Made
+- **Target file:** `session-start.md` Step 2 echo block (no standalone `/mandate.md` exists; operator confirmed via AskUserQuestion). Saved a `reference_mandate_command.md` memory.
+- **Inline-and-flag vs extract-now:** inline-and-flag — System Owner Function B advisory cited DR-7 (one consumer today). Extraction deferred via parked improvement-log entry.
+- **Two-end parse-contract guard:** added HTML comments at Step 2 and Step 3 boundary per System Owner Q2 finding (risk-topology § 5 "Change modifies a string literal matched by another component").
+- **Synthesized field constraints:** Summary = structural shape (counts, file types, deferred-scope clause), Tasks/Steps/Quick wins = context-adaptive label, enumerated verbatim from work_scope. Both fields marked `<!-- chat-echo only — NOT a parse field -->` to pre-empt harmonization with Step 3.
+- **QC fixes (3):** Status field → `logged (pending)`, output-shape framing clarified, append-location specified.
+- **Template tweaks (2):** section label made context-adaptive (not fixed `**Tasks**`), Summary content style changed from "restate work_scope" to "structural shape."
+
+### Next Steps
+- Push `5b59abc` to origin when ready.
+- Track the shared rendering-conventions doc parked entry in improvement-log.md; revisit when a second consumer emerges (e.g., another confirmation-output command or `/prime` rendering harmonization request).
+
+### Open Questions
+None.

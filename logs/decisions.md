@@ -148,3 +148,23 @@ Risk-check returned PROCEED-WITH-CAUTION with 2 mitigations. /consult system-own
 Mid-session, a concurrent session began overwriting `logs/session-plan.md` to run Item 8 (canonical templates). Operator chose option 1 (stop) over option 2 (continue R1 implementation in parallel).
 **Rationale:** Parallel command-file edits across two sessions in the same repo are the documented concurrent-session collision class. R1's planned edits (new agent file + friday-act.md) and Item 8's planned edits (new templates + new-project.md) don't directly overlap, but the friction-log 14:10 entry confirms the pattern has bitten the workspace multiple times. The R1 risk-check report is a fully-specified resumable artifact — design captured on disk, picked up cleanly in a future session.
 **Alternatives considered:** Continue R1 in parallel (option 2) — rejected per collision-avoidance precedent.
+
+## 2026-05-25 — /mandate rendering fix: inline-and-flag + two-end contract guards
+
+**Context:** Plan to fix the "MANDATE CONFIRMATION" rendering in `/session-start` Step 2. Two architectural calls surfaced via `/consult` System Owner Function B advisory.
+
+**Decision 1: Inline the rendering rules in `session-start.md` Step 2 with a TODO marker; do NOT extract to a shared rendering-conventions doc now.**
+
+**Rationale:** DR-7 ("Generalize only when a second confirmed consumer exists") and AP-7 (speculative-abstraction pattern). Current rendering rules have exactly one consumer (`session-start.md` Step 2). Extracting now would be speculative abstraction. OP-11 documents the TODO + improvement-log mechanism as the canonical pattern for parking a generalization candidate.
+
+**Alternatives considered:**
+- Create `ai-resources/docs/rendering-conventions.md` now and reference from `session-start.md`. **Rejected:** premature per DR-7; no second consumer.
+- Inline without TODO/log entry. **Rejected:** loses the generalization signal for future-when-it-matters.
+
+**Decision 2: Add two HTML guard comments protecting the Step 2↔Step 3 parse-contract boundary.**
+
+**Rationale:** `risk-topology.md § 5` explicitly flags this configuration ("Change modifies a string literal matched by another component (two-end contract)"). Step 3's plain bullet labels (`- Out of scope:`, `- Files in scope:`, `- Stop if:`) are a verbatim contract with `/wrap-session` Step 7a. Step 2's new bold-label rendering doesn't break the contract today, but creates a "harmonize" trap for future maintenance — a maintainer or W2.3 agent could "fix the inconsistency" and silently break the wrap parser. OP-3 (loud failure over silent continuation) → inline `<!-- LOAD-BEARING: ... -->` comments at both ends of the contract.
+
+**Alternatives considered:**
+- No guard comments; trust future review. **Rejected:** risk-topology § 5 explicitly warns against unprotected two-end contracts.
+- Refactor Step 3 to use the same Markdown rendering. **Rejected:** would break `/wrap-session` Step 7a; the contract exists for a reason.

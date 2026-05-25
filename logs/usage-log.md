@@ -754,3 +754,32 @@ Stability vs. prior entries: This session is cleaner than the 2026-05-16 cleanup
 
 **Additional levers (ROI-ranked):**
 - No additional levers — session was efficient. (Worth noting: the 3 shipped fixes — R4 log-trio pre-fetch, R6 coaching-data tail-read, R10 autocompact override — should produce measurable savings starting next session; track in subsequent entries to confirm the recurring re-read pattern collapses.)
+
+### 2026-05-25 | Acceptable
+
+**Task:** Fixed the `/mandate` (informal name for `session-start.md` Step 2) confirmation rendering — replaced the static plain-text echo block with Markdown rendering instructions (bold labels, semantic icons, tables for ≥3 files, synthesized Summary, context-adaptive section label) plus two HTML guard comments protecting the Step 2↔Step 3 parse-contract boundary. Workflow: `/clarify` → `/recommend` ×2 → `/qc-pass` → `/consult` (System Owner Function B) → ExitPlanMode → execute → commit `5b59abc`.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~14 |
+| Files read | ~10 (re-reads: 0 substantive — tail reads only at wrap) |
+| Files written/edited | 9 (1 command file, 1 improvement-log, 1 plan, 3 wrap logs, 1 scratchpad, 2 memory files) |
+| Tool calls | ~45 main-session total |
+| Subagents | 4 (Explore ×2, qc-reviewer ×1, system-owner ×1) |
+| Rework cycles | 1 (QC REVISE → 3 fixes applied in one pass; no second QC) |
+
+**Findings:**
+- **Tool overhead — Moderate:** Plan-mode iteration produced 5+ Edits on the plan file (Status field fix, output-shape framing, append-location, System Owner additions wave 1, System Owner additions wave 2, template tweaks from /recommend round 2) when 2 batched Edits could have covered the same surface. (Tool overhead, Moderate — ~3 wasted round-trips against a ~200-line plan file.)
+- **Missed parallelization — Moderate:** Two Explore agents ran serially. Explore #1 surfaced the load-bearing gap (no `/mandate.md`); Explore #2 was confirmation of a negative. Either could have been one Explore with broader initial scope, or two parallel Explores covering different breadths. (Missed parallelization, Moderate — 1 unnecessary serial subagent dispatch.)
+- **Rework — Minor:** 1 QC REVISE cycle, all 3 findings fixed in a single revision pass; one ExitPlanMode rejected by operator (routed to /qc-pass) — process branch, not waste. (Rework, Minor — well-contained.)
+- **Operator-injected gates added structural quality:** `/qc-pass` + `/consult` between plan and execute added two review layers that caught Status-field schema mismatch, framing ambiguity, two-end parse-contract risk, and derivation-reliability concerns — all before any production file was touched. Net positive, but contributes to the iteration count.
+- **Trend vs last 3 entries (Acceptable / Acceptable / Efficient):** regression from Efficient. The prior Efficient session was a low-iteration shipping session; this one was a plan-iteration-heavy rendering-spec session with two operator gates. The regression is iteration-pattern-driven, not new waste classes.
+
+**Recommendation:** Batch plan-mode edits — when iterating on a plan during the plan workflow, consolidate related changes into one Edit per coherent wave rather than per-finding micro-edits. The 5+ plan-file Edits this session covered ~3 logically coherent waves (QC fixes / System Owner additions / template tweaks); batching into 3 Edits eliminates ~2 round-trips.
+
+**Estimated savings:** Each plan-file Edit ≈ ~200–400 token round-trip on a ~200-line plan. Going from 5 Edits → 3 Edits saves ~400–800 tokens per plan-iteration-heavy session. Plan-iteration-heavy sessions occur perhaps ~1 in 3 → ~150–300 tokens/session amortized → ~1.5k–6k over a 10–20 session horizon. Order-of-magnitude; smaller than recent primary recommendations because plan-iteration sessions are episodic.
+
+**Additional levers (ROI-ranked):**
+- **Bundle confirmation-of-negative Explore queries into the original query** — Explore #2 was "confirm Explore #1 found nothing standalone elsewhere." If Explore #1's brief had said "if you don't find X at expected path, search broadly," the second dispatch would be unneeded. Saves ~1k–2k tokens/occurrence; recurs whenever an Explore returns an ambiguous negative. Bigger than the primary because subagent dispatches cost more than Edit round-trips.
+- **Pre-emptively name common divergences in the verification-render step** — Before posting the rendered sample for confirmation, scan the new template against the user's target spec and call out divergences inline rather than letting the operator catch them via a second `/recommend`. Saves one round of operator gate (~500–800 tokens). Smaller than the primary because it only fires when a render-vs-spec gap exists.
+- **Use Explore's "very thorough" breadth flag on first dispatch when scope is genuinely uncertain** — Initial Explore used default breadth; the gap discovery suggested "very thorough" would have surfaced the negative finding in one call. Saves ~600–1k tokens/occurrence; recurs only on ambiguous-scope queries. Smallest lever — narrow trigger condition.

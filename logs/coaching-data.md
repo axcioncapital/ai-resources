@@ -535,3 +535,11 @@
 - **QC cycles:** 0
 - **Gates:** 4 (3 confirmed, 1 changed) — plan-approval:confirmed, qc-disposition:confirmed (mandate echo), challenge-disposition:changed (operator picked option 1 stop over option 2 continue), supplementary-research:confirmed (system-owner advisory adopted in full)
 - **Mandate fields:** specified: work_scope, exit_condition, out_of_scope, stop_if | inferred: files_in_scope | omitted: (none)
+
+### 2026-05-25 — /mandate (session-start Step 2) confirmation rendering fix
+- **Commands used:** /clarify, /recommend (×2), /qc-pass, /consult, /wrap-session
+- **Iterations:** 0 (no drafting — direct command-file edits)
+- **Decisions logged:** 1 (inline-and-flag + two-end contract guard comments, both System-Owner-grounded)
+- **QC cycles:** 1 (REVISE on plan — 3 findings: Status field convention, output-shape framing, append-location — all applied; no re-run before /consult)
+- **Gates:** 4 (1 changed) — plan-approval:confirmed (ExitPlanMode approved after System Owner additions incorporated), content-review:confirmed (System Owner Function B advisory adopted in full via "proceed"), qc-disposition:changed (REVISE → operator directed "fix, then consult"), service-design-disposition:confirmed (two template divergences resolved via second /recommend, applied without further dispute)
+- **Mandate fields:** none (no /session-start this session)
