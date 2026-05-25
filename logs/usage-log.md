@@ -4,6 +4,33 @@
 
 ### 2026-05-25 | Acceptable
 
+**Task:** Diagnostic backlog bundle session — stopped at R1 plan-time gate per operator (option 1) due to concurrent session collision; Wave 1.2 workspace innovation-registry committed (`5fc5da9`); Wave 1.1 + 1.3 found already-resolved [FADING-GATE]; R1 plan-time `/risk-check` + `/consult` second opinion produced PROCEED-WITH-CAUTION report committed (`724c27a`), R1 execution deferred.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~8-10 |
+| Files read | ~18 (re-reads: 0 — same-file reads were distinct ranges) |
+| Files written/edited | 8 (1 wasted Write — session-plan.md superseded by concurrent session) |
+| Tool calls | ~45-50 |
+| Subagents | 2 (risk-check-reviewer + system-owner) |
+| Rework cycles | 1 minor (concurrent-modification Edit retry) |
+
+**Findings:**
+- Concurrent-session write collision on `logs/session-plan.md` — file written by this session was immediately overwritten by the parallel Item 8 session, and an Edit on `logs/session-notes.md` failed mid-flight requiring re-Read + retry (Rework, Moderate). This is the same recurring pattern logged at friction-log 14:10 today; structural fix needed, not a per-session efficiency lever.
+- Full-file Read on `skills/session-usage-analyzer/SKILL.md` (161 lines) consumed for this analysis is structurally required by the /usage-analysis spec (Context bloat, Minor — informational only).
+- Trend vs last 3 entries: stability — Acceptable rating matches the prior 2 entries; R4 + R6 + R10 suppression of the historical re-read pattern continues to hold (re-reads = 0 again this session, matching the 2026-05-25 Efficient entry's pattern).
+
+**Recommendation:** Resolve the `logs/session-plan.md` concurrent-write collision structurally — either per-session-ID plan filename (e.g., `session-plan-{timestamp}.md`) or a lock-file convention. This is the second consecutive session day where the single-file shared plan path caused wasted writes + Edit-retry rework, and it's already logged in friction-log. Per-session pathing eliminates the entire failure mode.
+
+**Estimated savings:** ~800-1,500 tokens per affected session (1 wasted Write + 1 Edit retry round-trip + concurrent-modification recovery Read). Affects ~1-2 of every 10 sessions where parallel work runs — 10-20 session horizon: ~2,000-4,500 tokens saved, plus elimination of the cognitive overhead of detecting + recovering from the collision mid-mandate-write.
+
+**Additional levers (ROI-ranked):**
+- Plan-write deferral until after Assumptions-Gate passes — would have avoided the wasted `session-plan.md` Write here since the gate fired pre-mandate and the plan was already on disk. Saves ~1 Write per gated session (~300-500 tokens). Smaller than primary because it only addresses the symptom, not the underlying single-path collision.
+- `docs/repo-architecture.md` full-Read (252 lines) for /consult routing — consider extracting a routing-only digest (first ~50 lines or a dedicated `repo-routing.md`) for /consult preflight. Saves ~150-200 lines per /consult invocation (~1,500-2,000 tokens). Smaller than primary in horizon terms because /consult fires less frequently than concurrent-session collisions.
+- `.claude/agents/log-sweep-auditor.md` full-Read (184 lines) to verify FADING-GATE resolution — gate-verification could grep for the specific heuristic signature instead of reading the full agent. Saves ~150 lines per verification (~1,200-1,800 tokens). Smaller than primary because FADING-GATE checks are bounded by friday-checkup cadence (~1-2 per week).
+
+### 2026-05-25 | Acceptable
+
 **Task:** Three-item improvement-log fix session (Items A/E/F) per session-plan. Item A rewrote `permission-sweep-auditor` Step 4a with two-signal template-class detection and restored a regressed template file; Items E and F were caught as already-done by drift ([FADING-GATE]).
 
 | Metric | Value |

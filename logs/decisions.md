@@ -130,3 +130,21 @@ Tasks 1, 2, and 3 are technically independent (disjoint files). Sequencing is ri
 3. **Accept the divergence as intentional, close R9 in the audit backlog** — also viable; documents that drift between generic and canonical IS the design intent for these two skills, not a bug.
 
 **Owner action.** A dedicated session with the research-workflow project owner to pick between (2) and (3). Until then, R9 is closed-as-deferred in this session's backlog, not closed-as-applied.
+
+
+## 2026-05-25 — Diagnostic backlog bundle session
+
+**Decision 1: SF2 dropped from this session per assumptions-gate**
+The session mandate originally bundled SF2 (/compact checkpoints in 7 commands) into Wave 2 alongside R1. Pre-write assumptions check caught the most recent session-notes entry: "SF1 broad + SF2 / R5 — wait until Sonnet 200k Task 1 has landed (collision concern on compaction-protocol.md cross-references)." Reduced Wave 2 to R1 only; mandate rewritten before /session-start completed.
+**Rationale:** SF2's checkpoint declarations in 7 command files would reference names not yet defined (Sonnet 200k Task 1 adds the named-checkpoint vocabulary). Either invent ad-hoc names that Task 1 may rename, or land collision-prone edits on overlapping infrastructure.
+**Alternatives considered:** (a) Run SF2 anyway with ad-hoc names — rejected, creates cleanup work and potential rename collisions. (b) Cancel the whole session — rejected, R1 is independent. (c) Drop SF2, keep R1 — chosen.
+
+**Decision 2: System-owner refinements to R1 design adopted in full**
+Risk-check returned PROCEED-WITH-CAUTION with 2 mitigations. /consult system-owner second opinion (mandatory non-GO path) concurred and added: (a) 3rd mitigation — explicit fallback-passthrough rule in the subagent body and schema doc (no paraphrasing of `(section-target match failed — falling back to 30-line peek …)` notes); (b) agent tier sonnet not haiku (triage of which Recommendation lines materially differ from checkup tactical items is load-bearing judgment); (c) two-cycle validation not single-cycle (single cycle may not exercise section-name-variation fallback path).
+**Rationale:** The system-owner identified a hidden-coupling risk that the dimension review missed — a summarizer in the middle could silently re-characterize a degraded SO advisory rather than surfacing the raw fallback. This couples four artifacts (friday-so, systems-review, friday-act, summarizer) through a behavioral contract that only fails downstream at the paste-disposition step.
+**Alternatives considered:** Adopt only the 2 reviewer-mitigations — rejected, the silent re-summarization failure mode is plausible and the operator can't easily catch it.
+
+**Decision 3: Session stopped at R1 plan-time gate per operator**
+Mid-session, a concurrent session began overwriting `logs/session-plan.md` to run Item 8 (canonical templates). Operator chose option 1 (stop) over option 2 (continue R1 implementation in parallel).
+**Rationale:** Parallel command-file edits across two sessions in the same repo are the documented concurrent-session collision class. R1's planned edits (new agent file + friday-act.md) and Item 8's planned edits (new templates + new-project.md) don't directly overlap, but the friction-log 14:10 entry confirms the pattern has bitten the workspace multiple times. The R1 risk-check report is a fully-specified resumable artifact — design captured on disk, picked up cleanly in a future session.
+**Alternatives considered:** Continue R1 in parallel (option 2) — rejected per collision-avoidance precedent.
