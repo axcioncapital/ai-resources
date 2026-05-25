@@ -4,6 +4,36 @@
 
 ### 2026-05-25 | Acceptable
 
+**Task:** Implemented Sonnet 200k plan Tasks 1+2+3+5 (compaction-protocol checkpoints, qc-reviewer output cap, optional mandate fields with 3-reader parse contract, heavy-read-discipline doc). Task 3 ran full risk-check → consult → qc-pass chain that materially expanded scope from 2 to 4 files.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~10 |
+| Files read | 17 (re-reads: 2 — `session-notes.md` 3x, `usage-log.md` 2x) |
+| Files written/edited | 13 |
+| Tool calls | ~70 |
+| Subagents | 4 (risk-check, system-owner, qc-reviewer, session-usage-analyzer) |
+| Rework cycles | 1 (session-plan.md Write-before-Read) |
+
+**Findings:**
+- **Rework — Moderate (recurring):** `session-plan.md` Write rejected for missing prior Read, recovered with Read+Write. Flagged in 5 of 6 recent log entries — pattern is now chronic, not incidental. Trend: stable Acceptable across last 3 sessions, but unshipped recurring fixes are accumulating.
+- **Re-reads — Minor (load-bearing):** `session-notes.md` 3x is the recurring flag (≥3 prior sessions), but mid-read this session was load-bearing concurrent-collision detection, not waste. Only the wrap tail-5 was routine.
+- **Tool overhead — Minor:** `system-owner` ~80-line verbatim output appended into the risk-check report via Bash heredoc (~1.2k tokens). Load-bearing for report self-containment but flagged repeatedly across recent sessions as a candidate for path-reference instead of inline duplication.
+- **Context bloat — None:** All large reads (`repo-architecture.md` 255L, plan 217L, `session-plan.md` 213L) were referenced in downstream output. Subagent contract held — no main-agent re-derivation of risk-check or qc-reviewer notes.
+- **Missed parallelization — None:** Task 3 chain (risk-check → consult → qc-pass) was strictly sequential by design; each verdict gated the next.
+
+**Recommendation:** Ship the `session-plan.md` Write-before-Read structural fix. The recurrence count (5 of 6) and the deterministic nature of the failure (overwrite path always requires prior Read) make it the highest-ROI lever still unshipped. Likely fix: either a `session-plan` command preflight that touches `Read` before any `Write`, or convert the file to append-only so the Write-without-Read constraint disappears.
+
+**Estimated savings:** ~400–600 tokens per session (1 rejected Write call + 1 recovery Read of 5 lines + the retry Write payload + the failed-tool-call system reminder). Over 10–20 sessions at ~80% recurrence: **~3.2k–9.6k tokens saved**. Small per-session, but a chronic recurring waste pattern carries a credibility cost that the raw token number understates.
+
+**Additional levers (ROI-ranked):**
+- **SO commentary by path-reference instead of inline heredoc append** — ~1.0–1.5k tokens per `/consult`-following session. Bigger than the primary on sessions where it fires, but fires less often (~1 in 3 sessions). Net horizon: ~3–5k over 10–20 sessions. Tradeoff: report loses self-containment; mitigation is a "see: {path}" line plus a 5-line summary in the report.
+- **`session-notes.md` wrap-time tail-N standardization** — ~150–300 tokens per session if the wrap-time tail-5 is replaced with a single committed-default Bash invocation that doesn't re-trigger the orientation read. Smaller than the primary because the mid-read this session was load-bearing; only the routine wrap-tail is the recoverable portion. Horizon: ~1.5–6k tokens.
+- **Concurrent-session collision detection moved out of `session-notes.md` mid-read** — ~100–200 tokens per session, but the structural value (deterministic collision flag instead of accidental tail-discovery) exceeds the token figure. Flagged in 2 prior sessions; escalating frequency means the structural fix's value is rising independent of per-session tokens.
+- **`usage-log.md` head-200 read at wrap** — ~200–400 tokens per session. The session-usage-analyzer spec requires recent-entries context, but a tail-N instead of head-200 would deliver the same trend-comparison signal at ~25% the cost. Lowest ROI of the four because the read is bounded and infrequent.
+
+### 2026-05-25 | Acceptable
+
 **Task:** /prime orientation + /log-sweep on ai-resources scope (1 Cat B rotation: coaching-data.md 553→78 lines) + /wrap-session with innovation/improvement-log triage.
 
 | Metric | Value |

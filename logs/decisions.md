@@ -215,3 +215,31 @@ Mid-session, a concurrent session began overwriting `logs/session-plan.md` to ru
 **Alternatives considered.**
 1. **Align settings.json fully** — **Rejected:** would constitute scope expansion; the system-owner's follow-on watch item explicitly said "if alignment surfaces a third divergent section beyond `## File Verification and Git Commits`, the canonical fragment set is under-specified" — i.e., flag don't enhance.
 2. **Add only the missing permission-sanity hook** — **Rejected:** still scope expansion; deferred as a candidate for the `deploy-workflow.md:209` unification session.
+
+### Decision: Sonnet 200k Task 3 — SO-expanded scope + drift fix (2026-05-25)
+
+**Context.** Task 3 of `plans/sonnet-200k-efficiency-implementation.md` proposed adding two optional mandate fields (`allowed_inputs:`, `required_outputs:`) to `/session-start` and updating `/wrap-session` Step 7a to recognise them — framed as a 2-file edit. Plan-time `/risk-check` returned PROCEED-WITH-CAUTION with 4 mitigations covering a 3-file edit (adding `drift-check.md:26` as a third reader). `/consult` Function B (auto-fired on non-GO verdict) found TWO additional issues the risk-check missed.
+
+**Decision.** Execute as a 4-file edit with the SO-recommended corrected mitigation set (1a/1b/1c/2/3); drop SO mitigations 4 and 5 per minimal-infra-subset preference. Specifically:
+- Fix pre-existing `drift-check.md:26` drift (`In scope` → `Files in scope` — what `/session-start` actually writes), preserving `Class:` (legitimately written by `/session-plan` Step 7).
+- Then add `Allowed inputs` / `Required outputs` to `drift-check.md:26`.
+- Extend workspace-root `wrap-session.md` Step 2b (a 4th reader the dimension review missed) to recognise new bullets.
+- Update `session-start.md` Step 1 prompt to mention the new fields (mitigation 2).
+- Assign correction-syntax letters `a:` / `r:` (mitigation 3).
+
+**Rationale.** The SO surfaced two genuine silent-consumer gaps (4th reader: workspace-root `wrap-session.md` Step 2b; pre-existing drift: `drift-check.md` enumerated wrong labels at baseline). Landing the additive extension without those fixes would have repeated `principles.md § OP-11` (tacit drift continuing forward unfixed) and `OP-3` (loud failure over silent continuation) — the parse contract was already silently inconsistent with two consumers. The corrected 4-file edit closes both gaps; mitigations 4 (revert notes + resilient "three sub-bullets" rewording) and 5 (coaching-data schema acknowledgement) were dropped because they are low marginal value for an additive non-breaking change.
+
+**Alternatives considered.**
+1. **Risk-check minimum — 3-file edit** (`session-start.md` + canonical `wrap-session.md` + `drift-check.md`, no fixes) — **Rejected:** leaves workspace-root `wrap-session.md` silently dropping new bullets and lands the pre-existing drift-check label drift forward.
+2. **SO full set — 4 files + drift fix + mitigations 4 + 5** — **Rejected by operator** as low marginal value at this stage; revert notes and coaching-data schema acknowledgement deferred per minimal-infra-subset preference.
+
+### Decision: Preserve `Class:` in drift-check.md label list (2026-05-25)
+
+**Context.** SO mitigation 1a recommended replacing both `In scope` and `Class:` in `drift-check.md:26`'s mandate-block label list with the labels `/session-start` actually writes (`Out of scope`, `Files in scope`, `Stop if`). The framing implied `Class:` was part of the drift bug.
+
+**Decision.** Fix only `In scope` → `Files in scope`; preserve `Class:`.
+
+**Rationale.** `Class:` is legitimately written by `/session-plan` Step 7 to `logs/session-notes.md` immediately below today's `## YYYY-MM-DD` header (separate from `/session-start`'s mandate-line block but part of the same mandate context that drift-check captures). `drift-check.md:26` captures "the `**Mandate:**` line plus any [...] lines that follow it" — `Class:` is correctly included in that capture. The SO's framing focused only on `/session-start`'s outputs, missing that `Class:` is a `/session-plan` output. Corrected the framing in execution; surfaced as a logged decision so the next reviewer sees the reasoning.
+
+**Alternatives considered.**
+1. **Remove `Class:` per SO mitigation 1a literally** — **Rejected:** would break drift-check's ability to capture the session classification (execution/design/mixed) when comparing trajectory against intent.

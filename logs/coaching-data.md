@@ -83,3 +83,11 @@
 - **Decisions logged:** 0
 - **QC cycles:** 0
 - **Mandate fields:** none (no /session-start this session)
+
+### 2026-05-25 — Sonnet 200k plan Tasks 1+2+3+5 (all four shipped)
+- **Commands used:** /prime, /session-start, /session-plan, /risk-check, /consult, /qc-pass, /wrap-session
+- **Iterations:** 0 (no drafting — direct edits per spec'd plan)
+- **Decisions logged:** 2 (SO-expanded Task 3 scope; `Class:` preservation in drift-check.md)
+- **QC cycles:** 1 (GO clean — full rubric, all 6 dimensions clear, 3 out-of-scope Notes)
+- **Gates:** 5 (1 changed) — plan-approval:confirmed (initial Tasks 1+2+3+5 scope), content-review:confirmed (session-start mandate echo), plan-approval:confirmed (session plan "go"), content-review:confirmed ("proceed" after plan), challenge-disposition:changed (Task 3 scope: operator selected SO-recommended 4-file + drift fix from 3 options, expanding the original 2-file framing)
+- **Mandate fields:** specified: work_scope, exit_condition, stop_if | inferred: files_in_scope | omitted: out_of_scope, allowed_inputs, required_outputs

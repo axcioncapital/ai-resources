@@ -464,3 +464,67 @@ Completed the remaining two gaps in the R1 implementation (token-audit finding �
 
 ### Open Questions
 None.
+
+## 2026-05-25 — Sonnet 200k plan Tasks 1+2+3
+Class: execution
+
+**Mandate:** Implement Tasks 1+2+3 from `plans/sonnet-200k-efficiency-implementation.md` sequenced with a commit after each (Task 5 optional stretch) — done when: Tasks 1, 2, 3 committed with their plan-specified acceptance criteria met.
+- Out of scope: (none stated)
+- Files in scope: (inferred)
+- Stop if: context running lean by end of Task 2 — Tasks 1+2 is a clean stopping point
+
+## 2026-05-25 — Friction-cleanup session
+
+**Mandate:** Land three verified-open friction fixes — Wave 0 batch-commit orphan artifacts (per-file triage at commit), Wave 1 `/session-plan` HHMM filename rename across 7 consumers + plan-time `/risk-check`, Wave 2 `deploy-workflow.md:209` template unification — done when: Waves 0, 1, 2 committed; Wave 3 stretch (`/create-skill workflow-diagnosis`) optional.
+- Out of scope: (none stated)
+- Files in scope: (inferred)
+- Stop if: A concurrent session re-touches a Wave-1 consumer file mid-edit; or plan-time `/risk-check` on Wave 1 returns NO-GO
+
+## 2026-05-25 — Sonnet 200k plan Tasks 1+2+3+5 (all four shipped)
+
+### Summary
+
+Executed `plans/sonnet-200k-efficiency-implementation.md` end-to-end: Task 1 (compaction-protocol named checkpoints), Task 2 (qc-reviewer output cap), Task 3 (optional mandate fields with 3-reader parse contract), and the optional Task 5 (heavy-read-discipline doc). Task 3 ran plan-time `/risk-check` (PROCEED-WITH-CAUTION) → `/consult` Function B second opinion (surfaced 2 missed readers + 1 pre-existing drift bug) → operator chose the SO-recommended scope (4 files + drift fix; dropped mitigations 4+5) → `/qc-pass` GO. Task 3 end-time `/risk-check` skipped per skip rule (all conditions met). 5 commits this session (4 in ai-resources + 1 in workspace).
+
+### Files Created
+
+- `audits/risk-checks/2026-05-25-plan-time-gate-on-sonnet-200k-plan-task-3-add-two-optional.md` — risk-check report + appended `## Architectural Commentary` from `/consult` Function B (commit `5eb584c`)
+- `docs/heavy-read-discipline.md` — Task 5 stretch doc (commit `d685d74`)
+- `logs/scratchpads/2026-05-25-19-30-scratchpad.md` — continuity scratchpad (gitignored)
+
+### Files Modified
+
+- `docs/compaction-protocol.md` — Task 1, appended Named checkpoints section (commit `038fca9`)
+- `.claude/commands/wrap-session.md` (canonical) — Task 1 Step 0.5 pointer + Task 3 Step 7a bullet-recognition extension (commits `038fca9` + `5eb584c`)
+- `.claude/commands/session-plan.md` — Task 1 Step 5 pointer (commit `038fca9`)
+- `.claude/agents/qc-reviewer.md` — Task 2 output cap + shape spec + optional disk-write path (commit `67db5c3`)
+- `.claude/commands/session-start.md` — Task 3 7 edits across Step 1/2/3 (commit `5eb584c`)
+- `.claude/commands/drift-check.md` — Task 3 SO mitigations 1a/1b: fix pre-existing `In scope` → `Files in scope` drift, add new labels, preserve `Class:` (commit `5eb584c`)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/.claude/commands/wrap-session.md` (workspace-root) — Task 3 SO mitigation 1c: Step 2b auto-derive list (commit `f80af28` in workspace repo)
+- `logs/session-plan.md` — overwritten at session-start with Sonnet 200k plan intent (uncommitted; will be committed with this wrap)
+- `logs/session-notes.md` — mandate line at session-start + this wrap entry
+
+### Decisions Made
+
+- **Task 3 SO second opinion produced scope expansion + pre-existing drift fix.** `/risk-check` returned PROCEED-WITH-CAUTION with 4 mitigations covering a 3-file edit. `/consult` Function B (auto-fired on non-GO) surfaced TWO additional readers the risk-check missed: workspace-root `wrap-session.md` Step 2b (Phase 3 session report) and a pre-existing drift in `drift-check.md:26` where `In scope` was wrong (`/session-start` actually writes `Files in scope`). Operator selected "SO recommended — 4 files + drift fix" (mitigations 1a/1b/1c/2/3) and explicitly dropped mitigations 4 (revert notes + resilient "three sub-bullets" rewording) and 5 (coaching-data schema acknowledgement) per minimal-infra-subset preference. Logged to `decisions.md`.
+- **`drift-check.md` `Class:` preserved.** SO mitigation 1a recommended removing `Class:` from drift-check's label list, but `Class:` is legitimately written by `/session-plan` Step 7 (separate from `/session-start`'s mandate block). Only the `In scope` → `Files in scope` drift was fixed; `Class:` retained. Corrected the SO's slight over-reach. Logged to `decisions.md`.
+- **End-time `/risk-check` skipped for Task 3.** Skip rule conditions all met: plan-time gate ran with SO-expanded mitigations applied, commits about to ship reflecting bounded scope, `/qc-pass` GO confirmed scope match, no drift from approved design.
+- **End-time `/risk-check` skipped for Task 2.** Change is purely additive (output cap + opt-in disk-write); no caller behavior altered; auto-symlink blast radius does not translate to risk for non-breaking additive changes.
+- **Task 5 stretch executed.** Context sufficient after Task 3; bounded scope (docs-only, no risk-check, isolated new file with no concurrent-session collision risk).
+- **`wrap-session.md` Step 7a "three sub-bullets" → "five sub-bullets".** Forced consequence of extending the parenthetical bullet list to 5; NOT the resilient rewording dropped as part of mitigation 4. Minimum-consistency change.
+
+### Next Steps
+
+- **Push** — 5 ai-resources commits this session (`038fca9`, `67db5c3`, `5eb584c`, `d685d74`, plus this wrap commit) + 1 workspace commit (`f80af28`). Carryover unpushed counts from prior sessions also pending. Operator gate.
+- **SF1 broad + SF2 — NOW UNBLOCKED.** Sonnet 200k Task 1 (compaction checkpoints) was the named dependency. Standing carryover from prior sessions can now move.
+- **Permission-sweep-auditor improvement session** — booked for 2026-05-26 (not deferred again).
+- **Sequencing Session 3** — adds 3 questionnaire items to `/repo-dd` + pre-commit skill-size warning hook (~45 min).
+- **Plan-doc reconciliation** — `plans/sonnet-200k-efficiency-implementation.md:99-100` describes old "defaults to inferring" semantics; implementation uses "absent means absent" per SO advisory. Flagged by `/qc-pass` as out-of-scope Note. ~5 min targeted edit, deferred.
+- **Stale "four sub-bullets" reference** — `harness/prep/phase3-command-fixes-plan.md:56` says "four sub-bullets" (now 5). Flagged for next harness-prep sweep.
+- **Reconcile working-tree residue** — the 4 risk-check files + 2 Sonnet 200k diagnostic/plan files + 1 session-plan-pass3 + 1 modified session-plan.md remain uncommitted (from earlier today). Some now superseded by this session's commits; needs per-file triage.
+- **`deploy-workflow.md:209` unification** — likely being handled by concurrent Friction-cleanup session (Wave 2). Confirm at next `/prime` whether still needed.
+- **Standing carryovers:** R9 reframe; workflow-diagnosis skill build; orphaned-skill decision (`fund-triage-scanner`, `prose-refinement-writer`); project CLAUDE.md backfill.
+
+### Open Questions
+
+- **Concurrent friction-cleanup session collision.** That session's mandate landed in `logs/session-notes.md` below mine at session-start time. Its Wave 1 (`/session-plan` HHMM filename rename across 7 consumers) may touch `session-plan.md` (the command) which I also edited in Task 1. Worth checking for merge conflicts when both sessions wrap. Both `bypassPermissions` sessions running in parallel = recurring W22 pattern (operator has it under control per prior wrap notes).
