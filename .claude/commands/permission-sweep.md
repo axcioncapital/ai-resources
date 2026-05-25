@@ -115,6 +115,7 @@ Examples:
     | 12 | "`settings.local.json` is tracked in git — it should be gitignored." |
     | 13 | "Typo / duplicate entry / inconsistent syntax form." |
     | INTENTIONAL-TEMPLATE | "Settings file contains an unfilled `{{PLACEHOLDER}}` value in a path-type field (e.g., `additionalDirectories`). This is a template file — the placeholder is intentional, not a stale or broken path." |
+    | Template integrity | "A workflow template settings file has had its `{{PLACEHOLDER}}` replaced by a literal path. The placeholder must be restored — `/deploy-workflow` fills it at deploy time. Do NOT 'fix' the literal path." |
 
 22. Render the chat report:
 

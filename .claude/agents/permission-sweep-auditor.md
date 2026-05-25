@@ -97,13 +97,24 @@ For INTENTIONAL-NARROW files:
 
 ### Step 4a: Apply the intentional-template override
 
-Per `{TEMPLATE_PATH} § Intentional-template exceptions`: a finding is an INTENTIONAL-TEMPLATE false-positive if the triggering value matches the pattern `{{[A-Z_]+}}` in any path-type field (`additionalDirectories`, or a path argument inside `allow`/`deny`). This most commonly fires as a Rule 8 false-positive (missing/stale `additionalDirectories`) on workflow template settings files.
+Per `{TEMPLATE_PATH} § Intentional-template exceptions`: settings files that are workflow templates (not deployed project settings) are exempt from Rule 8 and Rule 9 checks on path-type fields. Detect template-class files using BOTH signals:
 
-For INTENTIONAL-TEMPLATE findings:
+1. **Path-class signal:** the file path matches `**/workflows/*/.claude/settings.json` (template source under the workflow library).
+2. **Value-class signal:** the triggering value matches `{{[A-Z_]+}}` in any path-type field (`additionalDirectories`, or a path argument inside `allow`/`deny`).
+
+A file is **template-class** if EITHER signal fires. Resolve the finding based on which signals are present:
+
+- **Both signals fire (path-class file with placeholders intact)** — the canonical, intended template state. **SKIP Rule 8 and Rule 9 entirely** for this file; do NOT emit any finding for those rules. Do not emit an ADVISORY note — silence the finding completely so it cannot be misread as actionable by a future remediation pass.
+
+- **Only path-class signal fires (template file with placeholders REPLACED by literal paths)** — this is the failure mode the override exists to prevent (a prior remediation pass "fixed" the placeholder back to a hardcoded path, breaking the template). **Emit a HIGH `Template integrity` finding** with evidence quoting the literal path and the field name. Remediation hint: `Restore the {{PLACEHOLDER}} value in this template's path-type field; do not fix the literal path. /deploy-workflow fills placeholders at deploy time.`
+
+- **Only value-class signal fires (placeholder appears in a non-template file)** — unusual placement. **Emit an ADVISORY** noting the unexpected placeholder location. Tag `[INTENTIONAL-TEMPLATE]` and record: `Placeholder found in non-template settings file — verify intent.`
+
+Common operating principles for all template-class findings:
+
 - Tag the finding with `[INTENTIONAL-TEMPLATE]` prefix.
-- Downgrade severity to ADVISORY.
-- Record: `Remediation hint: Template placeholder — intentional, not a stale or broken path.`
-- Do NOT treat as a Rule 8 or Rule 9 violation.
+- Do NOT auto-remediate. The template doc is the source of truth for placeholder lifecycle; only `/deploy-workflow` should fill placeholders.
+- Treat Rule 8 and Rule 9 as **silenced** for the "both signals" case — not downgraded. Downgrading to ADVISORY has been observed to be insufficient: a 2026-05-11 remediation pass (`permission-sweep Bundle 1`, commit `0514590`) treated an ADVISORY-tagged placeholder as actionable and replaced it with a literal path, breaking the template. Silence prevents this regression.
 
 ### Step 5: Write the full notes file
 

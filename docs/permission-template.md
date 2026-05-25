@@ -234,11 +234,20 @@ When `/permission-sweep` encounters a file matching this heuristic, it tags find
 
 Settings files that are **workflow templates** (not deployed project settings) may contain `{{PLACEHOLDER}}` values in path-type fields such as `additionalDirectories`. These are intentional — they are filled in at deploy time by `/deploy-workflow`. They are **not Rule 8 violations** (missing or stale `additionalDirectories`) and must not be flagged as stale or broken paths.
 
-**Detection heuristic:** a finding is an INTENTIONAL-TEMPLATE false-positive if the triggering value matches the pattern `{{[A-Z_]+}}` in any path-type field (`additionalDirectories`, or a path argument inside `allow`/`deny`).
+**Detection heuristics (two signals — file is template-class if EITHER fires):**
+
+1. **Path-class signal:** the file path matches `**/workflows/*/.claude/settings.json` (template source under the workflow library).
+2. **Value-class signal:** the triggering value matches `{{[A-Z_]+}}` in any path-type field (`additionalDirectories`, or a path argument inside `allow`/`deny`).
+
+**Outcome by signal combination:**
+
+- **Both signals fire (path-class file with placeholders intact)** — canonical template state. `/permission-sweep` **silences** Rule 8 and Rule 9 entirely for this file (no finding emitted at any severity, including ADVISORY).
+- **Only path-class signal fires (template file with placeholders REPLACED by literal paths)** — `/permission-sweep` emits a **HIGH `Template integrity`** finding. Remediation: restore the placeholder; do not "fix" the literal path. `/deploy-workflow` fills placeholders at deploy time.
+- **Only value-class signal fires (placeholder appears in a non-template file)** — `/permission-sweep` emits an **ADVISORY** noting the unexpected location. Operator verifies intent.
 
 **Current known template file:** `ai-resources/workflows/research-workflow/.claude/settings.json`
 
-When `/permission-sweep` encounters this pattern, it tags the affected finding as `[INTENTIONAL-TEMPLATE]`, downgrades it to ADVISORY, and **skips remediation** for that entry. The tag is rendered in the chat report as: *"Template placeholder — intentional, not a stale or broken path."*
+**Why silence instead of downgrade?** A 2026-05-11 remediation pass (`permission-sweep Bundle 1`, commit `0514590`) treated an ADVISORY-tagged placeholder as actionable and replaced `{{WORKSPACE_ROOT}}` with a literal absolute path, breaking the research-workflow template. ADVISORY findings are insufficient protection against this regression mode; the placeholder case is now silenced entirely while the path-class signal actively detects the failure mode (template file whose placeholders have been replaced).
 
 ---
 
