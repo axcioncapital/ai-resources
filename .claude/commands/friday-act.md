@@ -153,29 +153,20 @@ If active count ≤ 7, proceed silently.
 
 > **Schema contract.** Sub-step 16f below extracts items from the `## Items` section of the `/friday-journal` report. Each line MUST match the regex `^\[(high|med|low)\] .+$` — the same regex 16c uses for paste-validated SO-derived items. The producer side is `.claude/commands/friday-journal.md` Step 5 (report-shape spec). Do not change the prefix syntax in either command without updating both ends.
 
-Skip this step if `SO_ADVISORY_PATH`, `SO_REVIEW_PATH`, AND `JOURNAL_PATH` are all `MISSING`. Otherwise:
+Skip this step if `SO_ADVISORY_PATH`, `SO_REVIEW_PATH`, AND `JOURNAL_PATH` are all `MISSING` AND `PROJECT_LOG_BUNDLES` is empty. Otherwise:
 
-16a. Display targeted section reads for each available supplementary input — not a 30-line peek (the actionable content typically lives past line 30; see Notes for token-cost rationale). The section-target spec below is a minimum read floor: if you intend to assert what an advisory contains (e.g., "the priority filter mirrors all 12 checkup items"), you must read the relevant sections in full before asserting — spec-literal compliance does not substitute for judgment about how much context a claim requires.
+16a. Delegate supplementary-input reads to the `friday-act-16a-summarizer` subagent (Step 16a now delegates to friday-act-16a-summarizer). The subagent reads SO Advisory, Systems Review, and per-project logs per the section-target spec; writes full extraction to `audits/working/friday-act-step16a-{TODAY}.md`; returns a ≤30-line paste-ready summary.
 
-**SO Advisory** — if `SO_ADVISORY_PATH` is not `MISSING`:
-- Display the file path as a header.
-- Extract every `## ` section whose heading contains the substring `Recommendation` (case-insensitive) OR `Observation` (case-insensitive). The substring match handles section-name variations across SO versions (e.g., `## Incremental Recommendations`, `## Systems-Thinking Observations`, or `## Recommendations` / `## Observations` in older formats).
-- For each matched section, display the full section content (from the `## ` heading line through the line before the next `## ` heading or EOF).
-- If no matching sections are found, fall back to printing the first 30 lines with the note `(section-target match failed — falling back to 30-line peek; report may use unfamiliar section names)`.
+Invoke the `friday-act-16a-summarizer` agent with:
+- `TODAY` = today's date in `YYYY-MM-DD`
+- `SO_ADVISORY_PATH` = `SO_ADVISORY_PATH` (path or `MISSING`)
+- `SO_REVIEW_PATH` = `SO_REVIEW_PATH` (path or `MISSING`)
+- `PROJECT_LOG_BUNDLES` = `PROJECT_LOG_BUNDLES`
+- `WORKING_DIR` = absolute path to `ai-resources/audits/working/`
 
-**Systems Review** — if `SO_REVIEW_PATH` is not `MISSING`:
-- Display the file path as a header.
-- Extract every `## ` section whose heading contains the substring `Leverage Point` (case-insensitive — matches both `## Leverage Point Assessment` and `## Leverage Points`).
-- For each matched section, display the full section content (heading through line before next `## ` or EOF).
-- If no matching section is found, fall back to the 30-line peek with the same fallback note.
+Display the returned summary to the operator. The full extraction is at the NOTES path in the last line of the summary.
 
-**Project-internal logs** — for each entry in `PROJECT_LOG_BUNDLES`:
-- Display a header: `Project: {project}`
-- If `improvement_path` is set: read the file and display every entry whose `**Status:**` line contains `logged` or `pending` (active set; same parser as Step 1.7). If no active entries, print `(no active improvement-log entries)`.
-- If `session_notes_path` is set: read the file and display the last 3 entries (most-recent `## ` headers and their bodies, in reverse chronological order). If fewer than 3 entries exist, display whatever's available.
-- If `friction_log_path` is set: read the file and display the last 5 entries (most-recent friction-log entries — friction-log entry separators vary across projects; if no clear `## ` or `---` separator is detectable, fall back to displaying the last 100 lines with a note).
-
-The operator uses these expanded reads to identify items not in the checkup tactical list (e.g., an SO recommendation that didn't surface as a finding, a recurring friction entry that suggests a new tactical item) and pastes them via the 16b prompt below.
+The operator uses this summary to identify items not in the checkup tactical list (e.g., an SO recommendation that didn't surface as a finding, a recurring friction entry that suggests a new tactical item) and pastes them via the 16b prompt below.
 
 16b. Prompt the operator:
 ```
