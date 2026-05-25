@@ -91,3 +91,11 @@
 - **QC cycles:** 1 (GO clean — full rubric, all 6 dimensions clear, 3 out-of-scope Notes)
 - **Gates:** 5 (1 changed) — plan-approval:confirmed (initial Tasks 1+2+3+5 scope), content-review:confirmed (session-start mandate echo), plan-approval:confirmed (session plan "go"), content-review:confirmed ("proceed" after plan), challenge-disposition:changed (Task 3 scope: operator selected SO-recommended 4-file + drift fix from 3 options, expanding the original 2-file framing)
 - **Mandate fields:** specified: work_scope, exit_condition, stop_if | inferred: files_in_scope | omitted: out_of_scope, allowed_inputs, required_outputs
+
+### 2026-05-25 — Phase 7 WU1 + WU3: Cross-Session Hardening Loop code-complete (WU2 deferred)
+- **Commands used:** /prime, /session-start, /session-plan, /qc-pass (×3), /recommend (×2), /risk-check (×2), /consult, /wrap-session
+- **Iterations:** 1 (session-plan.md — initial → post-QC-REVISE revised)
+- **Decisions logged:** 2 (M5 system-owner schema-taxonomy escalation; WU2 deferral with operator-facing spec)
+- **QC cycles:** 2 (session-plan: REVISE → 3 fixes via /recommend → GO; WU1: mechanical-mode GO with 1 advisory → inline fix → committed)
+- **Gates:** 4 (2 changed) — plan-approval:confirmed (mandate confirm + plan "go"), qc-disposition:changed (REVISE → fixes applied directly via /recommend), qc-disposition:confirmed (mechanical-mode GO), content-review:changed (WU2 stop-point deferred per operator option 2; spec file requested)
+- **Mandate fields:** specified: work_scope, exit_condition | inferred: files_in_scope | omitted: out_of_scope, stop_if
