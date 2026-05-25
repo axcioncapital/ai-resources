@@ -4,6 +4,36 @@
 
 ### 2026-05-25 | Acceptable
 
+**Task:** /prime orientation + /log-sweep on ai-resources scope (1 Cat B rotation: coaching-data.md 553→78 lines) + /wrap-session with innovation/improvement-log triage.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~5 |
+| Files read | 12 (re-reads: 3) |
+| Files written/edited | 7 |
+| Tool calls | ~30 |
+| Subagents | 1 |
+| Rework cycles | 2 |
+
+**Findings:**
+- session-notes.md accessed 4× via tail/Read across /prime + wrap (~125 cumulative lines on a 408-line file) (Re-reads, Moderate) — recurring pattern: 3rd consecutive session flagging session-notes.md multi-access.
+- usage-log.md tail-30 at /prime then full 493-line Read for analysis (Re-reads, Moderate) — structurally required by analyzer skill, but the /prime tail was discardable context.
+- log-archiver.sh read twice (head-50 + grep-30) to re-derive archive-filename convention that was already implicit in the auditor's working notes (Context bloat, Minor).
+- Edit-after-modified false positive on session-notes.md cost 1 wasted Edit + 30-line verification Read + retry (Rework, Moderate).
+- AskUserQuestion 5-option call rejected (max 4) requiring re-call (Tool overhead, Minor).
+- Rating stable vs last 3 entries (all Acceptable); session-notes.md re-read pattern persists across 3 of last 4 sessions despite prior /prime rewrite targeting it.
+
+**Recommendation:** Fix the session-notes.md multi-access pattern at the /wrap-session structural level — wrap should perform exactly one targeted Read (offset = filesize - 200 lines, or `wc -l` then Read at offset) and pin that content for the wrap-entry Edit, rather than the current tail-60 → tail-5 → tail-30 → Read-with-offset sequence.
+
+**Estimated savings:** ~3-4K tokens/session (eliminating 3 redundant partial reads averaging ~30 lines each + 1 verification Read on the false-positive retry path = ~125 lines × ~25 tokens/line + tool-call overhead). Over 10-20 sessions: ~30-80K tokens. Compounds with the prior recurring flag — third repeat suggests prior /prime fix did not propagate to /wrap-session.
+
+**Additional levers (ROI-ranked):**
+- Avoid the discardable /prime tail-30 on usage-log.md when the same session will run /usage-analysis at wrap (analyzer re-reads the full file anyway). Savings: ~750 tokens/session (~30 lines × 25), ~8-15K over 10-20 sessions. Smaller than primary because it fires only on sessions that wrap with analysis.
+- Trust subagent working-notes for derivable facts (archive-filename convention) instead of re-deriving from script source. Savings: ~2K tokens/session when applicable (80 cumulative script lines avoided). Smaller than primary because it only fires when a script is in scope.
+- Pre-flight AskUserQuestion option count against the 4-max limit before the call. Savings: ~200 tokens per occurrence — informational only; not recurring enough to dominate.
+
+### 2026-05-25 | Acceptable
+
 **Task:** Item 8 Sequencing Session 2 — extracted canonical project settings + CLAUDE.md sections from inline `/new-project` literals into shared `ai-resources/templates/`, rewired `/new-project` to consume them, aligned research-workflow CLAUDE.md, and updated architecture map. 5 commits shipped after plan-time PROCEED-WITH-CAUTION → end-time GO.
 
 | Metric | Value |

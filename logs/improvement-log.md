@@ -86,18 +86,21 @@ Suggested three-session sequence:
 - **Category:** command
 - **Friction source:** friction-log 09:07 — /token-audit scope-selection required 3 rounds of AskUserQuestion; desired UX: list all projects numbered upfront
 - **What changed:** Replaced the empty-args branch in `/token-audit` Step 1 with a numbered scope menu (1=ai-resources, 2=workspace, 3a/3b/…=projects). Keyword args (`ai-resources`, `workspace`, `project <name>`) retained as power-user shortcuts. Menu pattern mirrors `/friday-checkup` Step 3.
+- **Verified:** 2026-05-25 — confirmed by operator
 
 ### 2026-05-25 — /monday-prep B7 seeds always-loaded CLAUDE.md layer
 - **Status:** applied
 - **Category:** command
 - **Friction source:** friction-log 09:13 — monday-prep B7 skips workspace CLAUDE.md and ai-resources/CLAUDE.md; operator caught during W22 monday-prep diagnostics
 - **What changed:** Prepended a two-step always-loaded layer audit (workspace CLAUDE.md + ai-resources/CLAUDE.md) to the B7 block before the ACTIVE_PROJECTS loop. No skip exemption for the always-loaded layer (skip rule is projects-only). Invokes `/audit-claude-md workspace` and `/audit-claude-md ai-resources` respectively.
+- **Verified:** 2026-05-25 — confirmed by operator
 
 ### 2026-05-25 — Risk-check rule clarified to cover reorders of existing shared-state ops
 - **Status:** applied
 - **Category:** rule
 - **Friction source:** friction-log 09:53 — /wrap-session leaner refactor reordered archive-vs-append (shared-state ops); risk-check was skipped under "existing-command refactor" framing
 - **What changed:** (a) Added clarifying clause to `docs/audit-discipline.md` line 24: reordering existing shared-state ops qualifies, not only new automation. (b) Added tripwire note to `session-plan.md` Step 6: "existing-command refactor" framing does NOT exempt from /risk-check when shared-state ops are reordered.
+- **Verified:** 2026-05-25 — confirmed by operator
 
 ### 2026-05-25 — Canonical scope-selection pattern doc (parked)
 - **Status:** logged (pending)

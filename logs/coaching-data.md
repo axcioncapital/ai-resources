@@ -76,3 +76,10 @@
 - **QC cycles:** 1 (REVISE → 3 findings auto-triaged + fixed → end-time /risk-check GO confirms acceptance)
 - **Gates:** 2 (0 changed) — plan-approval:confirmed, risk-check-approval:confirmed
 - **Mandate fields:** specified: work_scope, exit_condition | inferred: files_in_scope | omitted: out_of_scope, stop_if
+
+### 2026-05-25 — /log-sweep ai-resources scope
+- **Commands used:** /prime, /log-sweep, /wrap-session
+- **Iterations:** 0 (no drafting — single subagent dispatch + one archive script invocation)
+- **Decisions logged:** 0
+- **QC cycles:** 0
+- **Mandate fields:** none (no /session-start this session)
