@@ -12,6 +12,7 @@ Other directories:
 - `docs/` — Process documentation (session rituals, etc.)
 - `scripts/` — Utility scripts for repo maintenance
 - `style-references/` — Style reference materials consumed by formatting and prose-compliance skills
+- `templates/` — Canonical deployable fragments consumed at scaffold time (project settings + project CLAUDE.md sections); edit the fragment, not the consuming command. See `templates/README.md` for the consumer contract.
 
 Session telemetry (`usage-log.md`) is written by `/usage-analysis` into each consuming project's `logs/` directory (alongside `decisions.md`, `friction-log.md`, etc.) — this repo itself does not host a canonical usage log.
 

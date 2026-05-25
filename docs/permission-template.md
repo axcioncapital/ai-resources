@@ -154,7 +154,7 @@ Canonical shape:
 
 Applies: sessions opened inside a project directory.
 
-**Emitted by `/new-project` Post-Pipeline Enrichment step 2.** When updating this template, also update the `CANONICAL_PERMS` jq merge in `ai-resources/.claude/commands/new-project.md`.
+**Emitted by `/new-project` Post-Pipeline Enrichment step 2 — read from `ai-resources/templates/project-settings.json.template`.** That template is the single source of truth; `/new-project` extracts the `permissions` block and the two `hooks.SessionStart` entries from it at deploy time. When updating this template, also update `ai-resources/templates/project-settings.json.template` (and vice-versa) — the two files express the same canonical shape and must agree.
 
 Canonical shape:
 
@@ -346,7 +346,7 @@ Canonical block (apply hooks in this order):
 When these templates change:
 
 1. Update this file.
-2. Update the `CANONICAL_PERMS` and `AUTO_SYNC_HOOK` / `SANITY_HOOK` literals in `ai-resources/.claude/commands/new-project.md` (Post-Pipeline Enrichment step 2).
+2. Update `ai-resources/templates/project-settings.json.template` — `/new-project` reads its `permissions` block and `hooks.SessionStart` entries from there (Post-Pipeline Enrichment step 2). The literals no longer live inline in `new-project.md`; they are extracted via `jq -c` at deploy time.
 3. Run `/permission-sweep --dry-run` across all scopes to surface which existing files drift from the new template.
 4. Apply corrections via `/permission-sweep` with approval.
 5. Commit as one change per step (template → pipeline → sweep run → remediation) so each can be reviewed independently.

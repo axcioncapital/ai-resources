@@ -65,6 +65,7 @@
 ├── skills/                                      # canonical skill library (each in own folder)
 │   └── <skill-name>/SKILL.md
 ├── style-references/                            # style materials for prose/formatting skills
+├── templates/                                   # canonical deployable fragments consumed at scaffold time (project-settings + project CLAUDE.md sections)
 ├── usage/                                       # usage analytics scratch
 └── workflows/                                   # graduated workflow templates
 ```
@@ -106,6 +107,7 @@
 | **ai-resources project rule** | `ai-resources/CLAUDE.md` | Always loaded in ai-resources sessions. |
 | **Project-specific rule** | `projects/<project>/CLAUDE.md` | Always loaded in that project's sessions. |
 | **Permission shape (canonical)** | `ai-resources/docs/permission-template.md` | Source of truth referenced by `/permission-sweep` and `/new-project`. |
+| **Deployable canonical fragment** (consumed at scaffold time, not at runtime) | `ai-resources/templates/<name>` | Read by `/new-project` via walk-up to `ai-resources/`; never auto-distributed. Edit the fragment, not the consuming command. Examples: `templates/project-settings.json.template`, `templates/project-claude-md/*.md`. |
 
 **Project-local exceptions** (live in project's own `.claude/`, never in ai-resources):
 - Pipeline-stage commands tightly coupled to one project's workflow (e.g., `pipeline-stage-3a.md` for `/new-project`).
@@ -221,6 +223,7 @@ Change classes (per `audit-discipline.md`):
 - **Permission template** → `docs/permission-template.md`.
 - **Project shared-manifest** → `projects/<project>/.claude/shared-manifest.json`.
 - **Settings layers** → see `docs/permission-template.md` for canonical shapes.
+- **Deployable canonical fragment** (a file's contents are read at scaffold time by a consumer command and written into a target project) → `templates/<name>` under `ai-resources/`. Distinct from `docs/permission-template.md` (a doc that describes a shape) — these are the canonical bytes themselves, consumed verbatim. Read by walking up to `ai-resources/` (same idiom as `auto-sync-shared.sh`); never auto-distributed.
 
 ---
 
