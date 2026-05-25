@@ -83,7 +83,7 @@ Where `files_in_scope_written` is:
 - `(inferred)` — if `files_inferred = true` (operator did not state or correct this field)
 - the operator's stated/corrected value — if `files_inferred = false`
 
-Read `logs/session-notes.md` (last 10 lines) to locate today's session header.
+Using the `logs/session-notes.md` content already read in Step 0, locate today's session header. If Step 2 took longer than ~30s or a concurrent session may have written to `logs/session-notes.md` during Step 1/Step 2, re-read the last 10 lines before locating the header.
 
 - If today's header (`## YYYY-MM-DD`) exists: append the mandate line immediately after the header, before any existing body content.
 - If today's header is absent: append to the file:

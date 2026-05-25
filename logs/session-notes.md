@@ -361,3 +361,19 @@ None.
 ### Resumed — implementation planning for token-audit findings
 
 Operator request: propose a plan for implementing findings from the 4 token-audit reports landed this morning. Scratchpad recommendation: start with quick-win batch (QW1–QW5, ~1 hour of settings.json edits) before structural fix wave (SF1/SF2/SF3).
+
+### Session — A/E/F improvement-log fixes
+
+**Mandate:** Fix permission-sweep-auditor template-class classification, /note + /friction-log session-header format incompatibility (3 bundled entries), and Sequencing note Session 1 (Model Tier agent rule + subagent-summary cap) — done when: all 3 items committed
+- Out of scope: SF1 structural fix wave (main↔subagent file-read duplication) — deferred to next session
+- Files in scope: (inferred)
+- Stop if: (none stated)
+
+## 2026-05-25 — SF1 main↔subagent file-read duplication fix: /session-start
+
+Class: design
+
+**Mandate:** Fix the main↔subagent file-read duplication pattern in the `/session-start` command (SF1 structural fix wave, scoped to `/session-start` only) — done when: the duplication pattern in `/session-start` is eliminated and the fix is committed
+- Out of scope: Other SF1 items (SF2, SF3) and other commands
+- Files in scope: (inferred)
+- Stop if: (none stated)
