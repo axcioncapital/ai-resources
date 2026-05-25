@@ -67,6 +67,16 @@ matches_glob() {
 }
 
 synced=""
+failed=""
+
+# Emit symlinks with RELATIVE targets — repo-architecture.md § Symlink topology
+# rule 5 declares "Symlinks are relative", and /fix-symlinks (fix-symlinks.md
+# Step 3, os.path.relpath) repairs to the same shape. Both new emission and
+# corrective repair must agree. Guard the python3 call: if python3 is missing
+# from the SessionStart PATH or os.path.relpath fails, skip the iteration and
+# record the failure (loud failure) rather than emit `ln -s "" "$target"`
+# (which succeeds at the syscall level and produces a broken empty-target
+# symlink that the [ -e ] || [ -L ] idempotency guard would permanently skip).
 
 # Sync commands.
 for src in "$AI_RESOURCES"/.claude/commands/*.md; do
@@ -77,7 +87,11 @@ for src in "$AI_RESOURCES"/.claude/commands/*.md; do
   target="$PROJECT_DIR/.claude/commands/${name}.md"
   [ -e "$target" ] || [ -L "$target" ] && continue
   mkdir -p "$PROJECT_DIR/.claude/commands"
-  ln -s "$src" "$target"
+  if ! rel_src=$(python3 -c 'import os, sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))' "$src" "$(dirname "$target")" 2>/dev/null) || [ -z "$rel_src" ]; then
+    failed="$failed ${name}.md"
+    continue
+  fi
+  ln -s "$rel_src" "$target"  # relative target — see header comment above
   synced="$synced ${name}.md"
 done
 
@@ -90,7 +104,11 @@ for src in "$AI_RESOURCES"/.claude/agents/*.md; do
   target="$PROJECT_DIR/.claude/agents/${name}.md"
   [ -e "$target" ] || [ -L "$target" ] && continue
   mkdir -p "$PROJECT_DIR/.claude/agents"
-  ln -s "$src" "$target"
+  if ! rel_src=$(python3 -c 'import os, sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))' "$src" "$(dirname "$target")" 2>/dev/null) || [ -z "$rel_src" ]; then
+    failed="$failed ${name}.md"
+    continue
+  fi
+  ln -s "$rel_src" "$target"  # relative target — see header comment above
   synced="$synced ${name}.md"
 done
 
@@ -119,7 +137,7 @@ for src in "$AI_RESOURCES"/.claude/agents/*.md; do
   diff -q "$src" "$target" >/dev/null 2>&1 || drifted="$drifted ${name}.md"
 done
 
-if [ -n "$synced" ] || [ -n "$drifted" ]; then
+if [ -n "$synced" ] || [ -n "$drifted" ] || [ -n "$failed" ]; then
   msg=""
   if [ -n "$synced" ]; then
     count=$(echo $synced | wc -w | tr -d ' ')
@@ -129,6 +147,11 @@ if [ -n "$synced" ] || [ -n "$drifted" ]; then
     drift_count=$(echo $drifted | wc -w | tr -d ' ')
     drift_msg="AI-RESOURCES DRIFT: $drift_count file(s) differ from canonical (regular files, not symlinks):$drifted. Run /sync-workflow or replace with symlink."
     [ -n "$msg" ] && msg="$msg | $drift_msg" || msg="$drift_msg"
+  fi
+  if [ -n "$failed" ]; then
+    fail_count=$(echo $failed | wc -w | tr -d ' ')
+    fail_msg="AUTO-SYNC FAILED: $fail_count file(s) skipped because python3 was unavailable or os.path.relpath failed; ensure python3 is on the SessionStart PATH so relative-path symlinks can be emitted:$failed"
+    [ -n "$msg" ] && msg="$msg | $fail_msg" || msg="$fail_msg"
   fi
   echo "{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"$msg\"}}"
 fi
