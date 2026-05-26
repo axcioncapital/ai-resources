@@ -229,7 +229,14 @@ Write to `OUTPUT_TARGET` (overwrite if present):
 {risk-check pointer, or "No structural change classes apparent — run /risk-check if scope changes."}
 ```
 
-**Self-check before writing:** If the draft plan is fewer than 25 lines, or if `## Findings / Items to Address` contains only a bare file link with no inline summaries, expand before writing. A plan that cannot be understood without opening a separate doc fails this check.
+**Self-check before writing.** A plan is a self-contained execution brief, not a pointer to other docs. The draft must pass ALL of the following before write — if any fails, expand the relevant section first:
+
+1. **Length floor:** at least 25 lines of substantive content (excluding the schema headers).
+2. **Findings/Items concreteness:** `## Findings / Items to Address` must contain a numbered list with one inline summary per item AND a source-doc anchor where applicable. Reject placeholders that read as "see audit-X.md" or "apply findings from Y" — those are bare links, not summaries. The placeholder `(none — intent does not reference a prior report)` is acceptable ONLY for sessions whose `INTENT` does not reference any prior artifact.
+3. **Execution Sequence concreteness:** `## Execution Sequence` must contain numbered steps with per-step verification criteria when the work has discrete stages. The placeholder `(single step — no sequencing required)` is acceptable ONLY for genuinely single-step work (e.g., one targeted edit). Multi-wave or multi-file sessions MUST enumerate steps.
+4. **Scope Alternatives realism:** `## Scope Alternatives` declares min / recommended / max only when multiple execution depths are genuinely on the table (e.g., context-gated stretch waves, optional stages). `Single scope — no alternatives` is acceptable when the intent has no degrees of freedom. Do not invent alternatives for a fixed-scope session.
+
+A plan that cannot be understood without opening a separate doc fails this check. A plan that uses `(single step)` or `(single scope)` for non-trivial multi-step work also fails.
 
 After writing `OUTPUT_TARGET`, locate today's `## {YYYY-MM-DD}` header in `logs/session-notes.md` (the entry `/prime` created in Step 0). Check whether a `Class: ` line already exists immediately below that header. If it does, replace its value with `Class: {CLASS}` using `Edit`. If it does not exist, insert `Class: {CLASS}` as a new line immediately below the header, before any existing content. The line should be in plain text form (not a heading, not a bullet) so downstream rules can grep for `^Class: ` reliably.
 
