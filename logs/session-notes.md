@@ -606,3 +606,9 @@ Session started with `/prime` + `/open-items`, walked through plan iteration (`/
 
 ### Open Questions
 None.
+
+## 2026-05-26
+**Mandate:** Land HIGH-to-MED friction + carryover work — 6 live items across 4 waves with one stretch wave — done when: Waves 0 + A + B + C committed; Wave D optional.
+- Out of scope: Full date-slug rename of `session-plan.md` (Wave C option a); orphan-skills triage; drift-cleanup decision; `/session-plan` C15 semantics; behavioral friction items.
+- Files in scope: (inferred)
+- Stop if: `/risk-check` NO-GO on Wave B or C; `/qc-pass` REVISE that can't be self-resolved; context lean by end of Wave C.
