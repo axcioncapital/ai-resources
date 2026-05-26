@@ -254,3 +254,24 @@ Operator caught a second under-read: I had not opened the actual improvement-log
 **Why deferred:** A `/drift-check` edit would warrant its own `/risk-check` and would bloat the Wave C commit beyond its single-file scope. Per minimal-infra-subset preference, deferred as known debt. Pickup point: next session that touches `/drift-check` for any reason, OR if observed false-ALIGNED occurs in a concurrent-session scenario.
 
 **Related v1 acknowledgment:** Wave C's auto-pass2 fix is a v1 — if pass2 frequency exceeds ~2 per week (observed via `/open-items` Tier 3 stale-session-plan count or git log on `session-plan-pass2.md` writes), the date+intent slug approach (friction-log 2026-05-25 14:10 fix direction (a)) becomes the correct evolution. Re-evaluate at next monthly `/friday-checkup`.
+
+---
+
+## 2026-05-26 — Forward-flagged: canonical-vs-project two-producer collision risk (Bundle 2b)
+
+**Context:** Bundle 2b (source-pipeline remediation S-02, S-03, S-04, S-06, S-07, S-13, S-19) landed 2026-05-26. Identified by `/risk-check` end-time gate's system-owner second opinion (`ai-resources/audits/risk-checks/2026-05-26-end-time-gate-for-bundle-2b-execution.md` § Residual coupling).
+
+**The collision:** The project's `cluster-memo-refiner` Check 9 emits per-cluster permission tables to `analysis/claim-permission/{section}/{section}-cluster-NN-permission-table.md`. The canonical `claim-permission-gate` sub-agent (Bundle 1, reached via `/run-sufficiency`) also writes to the same canonical path. As long as the project is **pinned to pre-Bundle-1 shape** (the "sync permanently removed from v6 plan" decision — see `projects/nordic-pe-macro-landscape-H1-2026/logs/decisions.md` 2026-05-26), only the project's `cluster-memo-refiner` Check 9 path fires for this project. No collision today.
+
+**The future-state risk:** If the project is ever "un-pinned" (operator decides to re-sync to canonical, OR a future project deploys canonical Bundle 1 + Bundle 2b together), both producers would write to the same path. Outcomes: (a) one overwrites the other (silent producer collision); (b) divergent schemas if one's schema drifts from the other.
+
+**Why deferred:** This is operator-pinning-discipline at present, not a system bug. Fixing it pre-emptively would require either:
+- Path namespacing (`analysis/claim-permission/{section}/{producer}/...`) — invasive across multiple already-landed file-conventions rows and consumer paths.
+- Producer-name field in the per-cluster table — schema change requiring re-emission.
+- Mutual-exclusion logic in `/run-synthesis` Step 0 — additional fail-safe complexity (related to Tightening A's asymmetric blocking-semantics gap).
+
+None of these are warranted for a today-non-existent collision.
+
+**Surfacing at quarterly cadence:** This entry exists so the next quarterly `/friday-checkup` cycle sees the risk without re-discovering it from the buried end-time `/risk-check` report. If by then the project is still pinned and no other project has activated Bundle 1 + Bundle 2b together, defer again. If either condition has changed, the resolution path becomes operator-required.
+
+**Pickup point:** Quarterly `/friday-checkup` (next quarterly window) OR before a `/sync-workflow` on this project OR before deploying Bundle 1 + Bundle 2b to a second project — whichever comes first.

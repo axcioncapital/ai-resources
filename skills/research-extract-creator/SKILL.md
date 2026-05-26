@@ -76,6 +76,25 @@ Apply the freshness classification using the table below. The class is canonical
 
 **Mismatch flag.** When a claim attempts to support a current-state assertion from `BASELINE` or `STRUCTURAL` evidence, attach a `[FRESHNESS-MISMATCH]` tag inline with the claim. Downstream consumers (`cluster-memo-refiner`, the deferred claim-permission gate) use this tag to downgrade or filter. This skill emits the flag; it does NOT downgrade — downgrade is the consumer's job.
 
+### Evidence Lens (per claim — S-02 No-Source-Substitution Rule)
+
+Every extracted claim carries an evidence-lens tag indicating whether the claim is supported by direct in-lens evidence, by proxy evidence with downgrade, or by no evidence at all. Tags are canonical (exact-string match required by downstream consumers per `reference/quality-standards.md § No-Source-Substitution Rule`):
+
+| Tag | Conditions |
+|---|---|
+| `IN-LENS` | Claim is supported by evidence matching the research question's exact lens (geography + deal-size band + sponsor tier + time frame as applicable). |
+| `PROXY-DOWNGRADE` | Claim is supported only by proxy evidence (above-lens deal, pan-Nordic aggregate for country-specific claim, adjacent-country example, etc.). The proxy nature MUST be named explicitly in the claim's Notes field (e.g., "above-lens — €120M deal cited as illustration of pattern"). |
+| `NO-EVIDENCE` | No direct or proxy evidence found at any source class. The component's coverage verdict for this claim is MISSING. |
+
+**No-substitution rule (the load-bearing constraint).** This skill MUST NOT absorb proxy evidence into IN-LENS-tagged claims. If the research report's claim about Finnish €2–25M PE deals is actually supported only by a Nordic-wide aggregate or a Swedish example, the claim is tagged `PROXY-DOWNGRADE` (or `NO-EVIDENCE` if no proxy is named), not `IN-LENS`. The proxy nature is the load-bearing fact; silent substitution is the precise anti-pattern this tag exists to prevent.
+
+**Operating rule.** If the report broadens the claim's scope to match available evidence (e.g., a question about Finland answered with "Nordic PE activity has grown"), the extract MUST:
+- (a) preserve the claim's original lens (the Finland scope), and
+- (b) tag the claim `PROXY-DOWNGRADE` (or `NO-EVIDENCE` if even the Nordic aggregate doesn't address the original claim), and
+- (c) name the substitution in the claim's Notes (e.g., "answered with Nordic aggregate; Finland-specific evidence not found").
+
+The extract does not "fix" the report's scope drift by re-narrowing the claim to fit the evidence. It documents the gap, tags accordingly, and routes downstream.
+
 ### Independence Counting
 
 - Count editorially independent sources supporting each claim.
@@ -104,9 +123,30 @@ Start from the report's Known Gaps section — these are components the executor
 
 Note whether the gap matters for downstream narrative.
 
-### Conflicts
+### Conflicts (S-19 Source-Conflict Mitigation Procedure)
 
 Start from the report's Conflicts section — these are disagreements the executor documented. Ingest each, then assess which position has stronger support based on source credibility and independence, and recommend handling (resolve, present both, flag as open). If additional conflicts emerge during claim extraction that the report did not flag, document those as well.
+
+**No-silent-selection rule (the load-bearing constraint).** When an extract claim's evidence base includes two sources reporting different values or classifications for the same fact, the extract MUST record BOTH values AND trigger a conflict-log entry. The extract MUST NOT silently pick one value, average them, or omit the conflict. Examples:
+
+- EY reports €14.2B total Nordic PE deal value (H1 2025); KPMG reports €11.8B for the same period → record both in the claim's Notes, emit a conflict-log entry.
+- Source A classifies a deal as "platform"; Source B classifies the same deal as "add-on" → record both classifications, emit a conflict-log entry.
+
+**Conflict-log emission.** For every conflict identified (whether pre-flagged by the report or newly surfaced during extraction), emit an entry to `analysis/source-conflicts/{section}/{section}-source-conflict-log.md` per the canonical file-conventions row. Required fields per entry:
+
+| Field | Content |
+|---|---|
+| Conflict ID | Auto-incrementing within the section |
+| Claim | The specific claim text being conflicted |
+| Source A | Name |
+| Source A value | Value/finding |
+| Source B | Name |
+| Source B value | Value/finding |
+| Conflict type | `numeric` / `categorical` / `interpretive` |
+| Triggering extract | Section + Q[n] + Claim ID (e.g., `1.1-Q3-C04`) |
+| Initial status | `OPEN` (resolution status is set downstream by the cluster-memo-refiner Check 10 routing or the Source-Conflict Resolution Procedure in `quality-standards.md`) |
+
+This skill emits the conflict-log entry with `status: OPEN`. Resolution (triangulation per Step 2, or adjudication per Step 3 of the procedure) happens in `cluster-memo-refiner` Check 10 or operator review — NOT in this skill. The downstream consumer updates the entry's status to `RESOLVED-METHODOLOGY` / `RESOLVED-GRANULARITY` / `RESOLVED-TRIANGULATION` / `UNRESOLVED`.
 
 ## Failure Behavior
 

@@ -84,6 +84,27 @@ Classify every inter-question relationship before grouping. Each pair of questio
 
 **Classification test:** If a steering note would reference another session's findings (e.g., "should be consistent with Session A's coverage gap findings"), that is at minimum a soft dependency. If the reference would say "requires" or "depends on," it is a hard dependency. Do not classify a relationship as "None" and then add a cross-session flag in the prompt — that is a contradiction.
 
+## Country-Specific Language-Block Routing (S-04)
+
+When a research question targets country-specific evidence (Sweden, Norway, or Finland individually — not a Nordic-wide aggregate question), the manifest must route a dedicated local-language search block alongside the English-language pass. The block can land as either (a) a sub-block within the same Research GPT session as the English pass, or (b) a dedicated session for the local-language pass when the country's evidence load is large enough to warrant separation.
+
+**Language-block assignments:**
+
+| Country in question | Required local-language pass |
+|---|---|
+| Sweden-specific | Swedish |
+| Norway-specific | Norwegian |
+| Finland-specific | Finnish |
+| Two-country (e.g., Sweden + Finland) | Both relevant languages, separate blocks |
+| Three-country (Sweden + Norway + Finland) | All three languages, separate blocks |
+| Pan-Nordic aggregate (no country breakdown required) | English-only is acceptable |
+
+**Block-or-session decision rule.** If the country-specific question is paired with an English pass that already targets ≥3 directives, route the local-language pass as a separate session to preserve session-depth budgets (per the 2-questions-per-session target rule above). If the English pass is single-directive or two-directive, the local-language pass lands as a sub-block within the same session.
+
+**Manifest column.** The manifest must include a `Language passes` column for every Research GPT session, listing which language passes (English + which local languages) the session contains. CustomGPT-routed questions do not require this column (CustomGPT lacks the search-language steerability for native-language passes).
+
+**Rationale.** Stage 2 English-only searches over-represent large-cap deals because the international press picks up large transactions; native-language press picks up lower-mid-market deals that don't reach the English wires. The dedicated local-language block is the primary remediation for the "Norway / Finland evidence thin because English-only" failure mode that R1 exposed. This is a Bundle 2b enforcement coupled to `research-prompt-creator`'s native-language search-term blocks.
+
 ## CustomGPT Batching Logic
 
 Group CustomGPT questions into batches of 2–3 questions per run:
@@ -129,3 +150,4 @@ Before delivering, verify:
 - Routing rationale is specific to each question (not generic)
 - The routing summary table matches the detailed session/queue sections
 - CustomGPT batches are 2–3 questions each
+- Every Research GPT session has a `Language passes` column populated (English + local languages as applicable per country-specific question routing per § Country-Specific Language-Block Routing); pan-Nordic aggregate sessions may list English only (S-04)

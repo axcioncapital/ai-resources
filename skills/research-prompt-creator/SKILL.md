@@ -134,6 +134,37 @@ Rules are grouped by priority. Structural decisions shape the prompt architectur
 - **Per-component source quality floors:** Aggregate source targets (e.g., "≥10 sources per session") let the execution tool meet the target by stacking good sources on easy components while using a single low-quality source for critical ones. Set a per-component minimum in the prompt: no component's findings may rest on fewer than 2 independent sources. If a component has only 1 source after dedicated searching, the execution tool must classify it as thin and document the gap. When the Answer Spec sets `min_high_sources` ≥ 3, add a source authority emphasis to the prompt: "Prioritize authoritative primary sources (industry associations, regulatory bodies, large-sample surveys, peer-reviewed research) over secondary commentary." This prevents the execution tool from meeting count thresholds entirely with medium-quality secondary sources. See `references/prompt-construction-guide.md` for embedding templates.
 - **Search seed tiering:** Seeds must match the difficulty of the question, not just the topic. Easy questions (well-documented topics, established frameworks) need broad topical seeds. Hard questions — those probing practitioner behavior, tacit knowledge, or operational detail — need narrow, high-specificity seeds targeting the source types where that evidence actually lives (practitioner surveys, GP letters, operational benchmarks). Include two tiers of seeds: broad seeds for topic coverage, and a second tier of narrow seeds explicitly labeled for the harder components. When the scope includes a geographic region, seeds must cover all constituent countries or markets, not just the most prominent ones. Use concrete source paths ("search for 'ILPA due diligence guidelines'"), not just institution names ("ILPA"). See `references/prompt-construction-guide.md` for seed tiering templates.
 - **Proxy hierarchies for known data gaps:** When the scope includes specificity constraints likely to produce data gaps (niche geography, narrow market segment, recent phenomenon), include a prioritized proxy fallback chain in the prompt. The chain tells the execution tool what approximation to use and in what order when exact-match data is unavailable, and requires it to state which proxy level was used. Without explicit fallback instructions, the execution tool either returns nothing or silently approximates without flagging the substitution. Derive proxy hierarchies from the Research Plan's scope parameters and source preferences. See `references/prompt-construction-guide.md` for proxy chain templates.
+- **In-lens / proxy-source declaration (S-02 — No-Source-Substitution Rule):** Every directive must explicitly declare its in-lens evidence target (the exact geography + deal-size band + sponsor tier the question is about) AND its proxy-source fallback path. The directive's wording must require the execution tool to return one of three outcomes per `reference/quality-standards.md § No-Source-Substitution Rule`:
+  - (a) direct evidence found (claim tagged `IN-LENS`);
+  - (b) proxy evidence found, clearly downgraded (claim tagged `PROXY-DOWNGRADE` and the proxy nature named explicitly — e.g., "above-lens deal used as illustration," "pan-Nordic aggregate cited for country-specific claim");
+  - (c) no evidence found (claim tagged `NO-EVIDENCE`).
+  The prompt must instruct the tool: *if no in-lens evidence is found, do not broaden the claim — broaden the source only and downgrade the conclusion.* When a substitution is made, the prompt must require the tool to name the substitution explicitly in its output (e.g., "evidence for Finland not found; substituted Nordic aggregate"). This is a hard requirement and directly couples to `research-extract-creator`'s tag-emission rule and `cluster-memo-refiner`'s Check 9.
+- **Per-country search ordering (S-03 — Country-Parity Enforcement Gate):** For country-relevant directives (those targeting evidence about Sweden, Norway, and/or Finland specifically), the prompt must specify per-country search ordering: **Sweden block → Norway block → Finland block → pan-Nordic synthesis last, NOT first.** Pan-Nordic-first ordering biases the claim toward three-country framing before per-country evidence is known. The directive must list per-country source-class targets separately (e.g., "Sweden: SVCA + Bolagsverket; Norway: NVCA + Brønnøysund; Finland: FVCA + PRH; pan-Nordic synthesis: Invest Europe/EDC only AFTER per-country pass") so the execution tool surfaces per-country evidence before any pan-Nordic claim is constructed.
+- **Local-language search blocks (S-04 — Mandatory Local-Language Search Pass):** For country-specific directives, the prompt must include a local-language search block alongside (not as fallback to) the English-language block. Required language-search-term sets (operator verbatim from v4 § S-04):
+
+  **Swedish:**
+  - `"förvärvar" "riskkapital" "2025"`
+  - `"köper" "portföljbolag" "private equity"`
+  - `"avyttrar" "Altor" "Nordic Capital"`
+  - `"tilläggsförvärv" "2025" "riskkapital"`
+  - Native-language site searches: `site:svca.se`, `site:di.se`, `site:dagensindustri.se`
+
+  **Finnish:**
+  - `"pääomasijoittaja" "osti" "2025"`
+  - `"yrityskauppa" "pääomasijoitus" "buyout"`
+  - `"irtautuminen" "pääomasijoittaja"`
+  - `"lisäyritysosto" "2025"`
+  - Native-language site searches: `site:paaomasijoittajat.fi`, `site:kauppalehti.fi`, `site:talouselama.fi`
+
+  **Norwegian:**
+  - `"oppkjøp" "private equity" "2025"`
+  - `"kjøper" "Norvestor" "porteføljeselskap"`
+  - `"selger" "FSN Capital"`
+  - `"tilleggsoppkjøp" "2025"`
+  - Native-language site searches: `site:nvca.no`, `site:dn.no`, `site:finansavisen.no`, `site:menon.no`
+
+  The local-language block runs in parallel with the English block, not as a fallback. English-only sessions over-represent large-cap deals; local-language coverage is the primary remediation for "Norway / Finland evidence thin because English-only."
+- **Target stop condition declaration (S-13 — Research Stop Conditions):** Each session-level prompt declares which of the 4 stop conditions per `reference/quality-standards.md § Research Stop Conditions` is the target completion criterion for the session — e.g., "this session targets condition 1 (two high-quality direct sources answer the question)." This anchors the execution tool's sufficiency judgment. Sessions that exit before any of the 4 conditions is met are flagged by `research-extract-verifier` as incomplete and the affected claims auto-downgrade to NOT-SUPPORTED per the reciprocal rule. The 4 conditions are: (1) two high-quality direct sources answer the question; (2) one high-quality direct source plus three named examples support the pattern; (3) three source classes have been checked and no direct evidence exists; (4) local-language, primary-source, and advisory-source searches all fail. The prompt's stop-condition declaration is a session-level note (not per-directive) and goes in the Steering Notes section.
 
 *Writing craft (clarity and concision):*
 - Translate Answer Spec components into research directives — never use Answer Spec terminology ("evidence component," "completion gate") in the prompt
@@ -226,6 +257,10 @@ Before delivering, verify:
 - Session-specific context (hypotheses, prior findings, category framing) appears in the session intro paragraph, not in the context pack
 - Each session has specific steering notes (not generic)
 - If scope parameters include known data gap risks, a proxy fallback chain is included in the prompt
+- Every directive declares an explicit in-lens evidence target AND a proxy-source fallback path; the prompt requires the execution tool to return one of `IN-LENS` / `PROXY-DOWNGRADE` / `NO-EVIDENCE` per directive (S-02)
+- For country-relevant directives: per-country search ordering is specified (Sweden → Norway → Finland → pan-Nordic synthesis last) with per-country source-class targets listed separately (S-03)
+- For country-specific directives: local-language search blocks (Swedish + Finnish + Norwegian as relevant) are included alongside the English-language block, not as fallback (S-04)
+- Every session-level prompt declares a target stop condition (one of the 4 per `reference/quality-standards.md § Research Stop Conditions`) in the Steering Notes section (S-13)
 - Site restriction guidance is included for every session (even if "Default")
 - Post-execution notes section is present
 

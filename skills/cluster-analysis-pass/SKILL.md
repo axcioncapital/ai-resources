@@ -66,6 +66,21 @@ Classify findings using this mapping:
 
 When a finding draws from multiple questions with mixed grades, state the range (e.g., "Supported by High-grade evidence on structure but only Low-grade evidence on performance impact").
 
+**Country Coverage Table (S-03 — emit for every country-relevant finding).** For each finding that makes a country-relevant claim (sector heat, sponsor behavior, deal flow, financing conditions, etc.), emit a row in a Country Coverage Table appended to this section. The table uses the canonical per-country status vocabulary defined in `reference/quality-standards.md § Country Coverage Table`:
+
+| Finding label | Sweden status | Norway status | Finland status | Note |
+|---|---|---|---|---|
+| (finding label or claim ID) | `observed` / `proxied` / `not evidenced` | same | same | (proxy source or evidence gap note) |
+
+Where:
+- `observed` — direct evidence available for this country (e.g., a Swedish-source-tagged claim in the extracts)
+- `proxied` — only pan-Nordic or adjacent-country proxy available
+- `not evidenced` — no evidence at any source class
+
+If a finding is not country-relevant (e.g., a project-level methodology observation), it does not appear in the table. Country-relevant findings WITHOUT per-country status entries in the underlying extracts MUST still be entered in the table — the missing entries are recorded as `not evidenced` and flagged for downstream attention by `cluster-memo-refiner` Check 8. Do not omit the row.
+
+Pan-Nordic aggregate sources (KPMG, EY, PwC pan-Nordic series) count as `proxied` for all three countries, not `observed` for any one country.
+
 ### 4. Cross-Question Tensions
 Identify contradictions, disagreements, or incompatible framings across questions within this cluster.
 

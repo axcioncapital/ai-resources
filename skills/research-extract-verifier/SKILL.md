@@ -52,7 +52,7 @@ Before proceeding:
 
 ## Verification Checks
 
-Run five checks per extract, in order.
+Run six checks per extract, in order.
 
 ### Check 1 — Missed Claims
 
@@ -106,6 +106,36 @@ For each Component Synthesis paragraph, verify it reflects the listed claims:
 - Does it omit a key finding the claims support?
 - Is it consistent with the coverage verdict?
 
+### Check 6 — Stop Condition Verification (S-13)
+
+Per `reference/quality-standards.md § Research Stop Conditions`, every research subtask must close on one of 4 conditions. The Stage 2 execution prompt declares the target stop condition; this check verifies the closure.
+
+**Procedure:**
+
+1. **Identify the target stop condition.** Read the session's research prompt (the document `research-prompt-creator` produced) and locate the session-level Steering Note declaring the target condition. The 4 canonical conditions:
+   - Condition 1: Two high-quality direct sources answer the question.
+   - Condition 2: One high-quality direct source plus three named examples support the pattern.
+   - Condition 3: Three source classes (per `reference/source-class-hierarchy.md`) have been checked and no direct evidence exists.
+   - Condition 4: Local-language, primary-source, and advisory-source searches all fail.
+
+2. **Determine which condition actually closed the subtask** by inspecting the extract's source landscape:
+   - Count high-quality direct sources cited → if ≥2, candidate Condition 1
+   - Count high-quality direct sources + named examples → if 1+3, candidate Condition 2
+   - Count distinct source classes searched per the report's Source Log → if ≥3 classes and no direct evidence, candidate Condition 3
+   - Check whether local-language sources, primary sources, AND advisory sources were all attempted and all returned nothing → Condition 4
+
+3. **Record the closing condition** in the per-extract output (see Output Format below) under a new field `Stop condition closed`.
+
+4. **Mark `EVIDENCE-CEILING-REACHED`** when the closing condition is 3 or 4 (the subtask reached the available evidence ceiling). Affected claims are pre-classified PROXY-SUPPORTED or NOT-SUPPORTED for downstream `cluster-memo-refiner` Check 9 consumption. This pre-classification is informational; Check 9 makes the final determination.
+
+5. **Reciprocal-rule check:** if the subtask appears to have stopped before ANY of the 4 conditions is met (e.g., extract has 1 source and no claim that all source classes were exhausted), flag as `INCOMPLETE-RESEARCH`. Affected claims auto-downgrade to NOT-SUPPORTED per `reference/quality-standards.md § Research Stop Conditions` reciprocal rule. This is a FLAG-triggering condition (see Verdict Logic below).
+
+**Output (per extract):**
+- `Stop condition closed: 1 / 2 / 3 / 4 / INCOMPLETE-RESEARCH`
+- `EVIDENCE-CEILING-REACHED: yes / no` (yes when closing condition is 3 or 4)
+- `Target condition (from prompt): 1 / 2 / 3 / 4 / (not declared)`
+- `Match between target and actual: yes / no / unverifiable`
+
 ## Verdict Logic
 
 **APPROVED** — No issues, or only trivial issues not affecting downstream quality (e.g., minor synthesis wording that doesn't change meaning).
@@ -116,6 +146,7 @@ For each Component Synthesis paragraph, verify it reflects the listed claims:
 - Any strength assignment off by more than one level (e.g., L when H is justified)
 - Any coverage verdict not meeting the threshold rubric
 - >=2 minor issues on the same extract (individually non-blocking but collectively indicating systematic quality problems)
+- **Check 6 returns `INCOMPLETE-RESEARCH`** (S-13 reciprocal-rule violation — the subtask stopped before any of the 4 canonical stop conditions was met). Re-extraction may be a no-op if the underlying research is the issue; in that case, the FLAG routes back to Step 2.2 / Step 2.3 for supplementary research rather than re-extraction.
 
 ### Borderline Cases
 
@@ -146,14 +177,18 @@ Per Research Extract:
 
 **Verdict: APPROVED / FLAG — RE-EXTRACT**
 
+**Stop condition closed:** [1 / 2 / 3 / 4 / INCOMPLETE-RESEARCH]
+**EVIDENCE-CEILING-REACHED:** [yes / no]
+**Target condition (from prompt):** [1 / 2 / 3 / 4 / (not declared)]
+
 ### Issues found (if any):
 
 | Check | Issue | Location | Impact | Re-extraction instruction |
 |-------|-------|----------|--------|--------------------------|
-| [1-5] | [Description] | [Component + Claim ID or report section] | [What it affects downstream] | [Specific instruction for re-extraction] |
+| [1-6] | [Description] | [Component + Claim ID or report section] | [What it affects downstream] | [Specific instruction for re-extraction] |
 
 ### Checks passed:
-[List which of the 5 checks passed clean]
+[List which of the 6 checks passed clean]
 ```
 
 After all extracts:

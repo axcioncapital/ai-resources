@@ -1,12 +1,14 @@
 ---
 name: cluster-memo-refiner
 description: >
-  Refines cluster analytical memos produced by cluster-analysis-pass. Runs seven
+  Refines cluster analytical memos produced by cluster-analysis-pass. Runs ten
   structured checks targeting common first-pass weaknesses — shallow
   cross-question synthesis, missed escalation patterns, strength map
   inaccuracies, generic takeaways, under-developed tensions, missing
-  dependency chains, and unverified named-transaction claims. Also defines and
-  emits the canonical claim-ID format consumed downstream by
+  dependency chains, unverified named-transaction claims, missing per-country
+  coverage status (Sweden / Norway / Finland), absent permission-class labels
+  (with per-cluster permission-table emission), and unlogged source conflicts.
+  Also defines and emits the canonical claim-ID format consumed downstream by
   transaction-table-builder and the claim-permission gate. Use when initial
   cluster memos are produced and need quality refinement before editorial
   review. Triggers on requests like "refine these memos," "run refinement
@@ -24,7 +26,7 @@ effort: high
 
 # Cluster Memo Refiner
 
-Run six structured refinement checks against cluster analytical memos. Report findings per check, then produce revised memos with changes marked. This is a quality pass between initial memo generation and operator editorial review.
+Run ten structured refinement checks against cluster analytical memos. Report findings per check, then produce revised memos with changes marked. This is a quality pass between initial memo generation and operator editorial review.
 
 ## Input Requirements
 
@@ -39,7 +41,7 @@ Run six structured refinement checks against cluster analytical memos. Report fi
 - If compressed briefs are absent, note that Check 3 runs at reduced confidence (memo-internal references only)
 - If the transaction table is absent, note that Check 7 runs in degraded mode
 - If a memo is missing a required section, flag which checks cannot run against that memo and proceed with remaining checks. Do not invent content for missing sections.
-- If any Key Finding tagged `[SOURCE-GROUNDED]` cannot be traced to Claim IDs from the underlying briefs, flag as incomplete traceability. Severity: non-blocking (the refiner can still run its seven checks), but the flag must appear in the output for operator awareness.
+- If any Key Finding tagged `[SOURCE-GROUNDED]` cannot be traced to Claim IDs from the underlying briefs, flag as incomplete traceability. Severity: non-blocking (the refiner can still run its ten checks), but the flag must appear in the output for operator awareness.
 
 ## Claim-ID Format
 
@@ -63,7 +65,7 @@ Example: `1.1-cluster-04-claim-12` means section 1.1, cluster 4, claim 12.
 
 ## Refinement Checks
 
-Run all seven checks against every memo. Report findings per check per memo before producing revisions.
+Run all ten checks against every memo. Report findings per check per memo before producing revisions.
 
 ### Check 1 — Cross-Question Synthesis Depth
 
@@ -186,6 +188,80 @@ Run all seven checks against every memo. Report findings per check per memo befo
 
 **Degraded mode (transaction table absent):** Only sub-check 2 runs (the same-pattern threshold) — sub-check 1 emits a one-line `transaction-table absent — row-ID verification skipped` note in the output and proceeds.
 
+### Check 8 — Country-Parity
+
+**Target:** Country-relevant findings (sector heat, sponsor behavior, deal flow, financing conditions, etc.) presented as three-country claims when evidence does not equally support all three target countries, or lacking per-country coverage status entries entirely.
+
+**Procedure — three sub-checks:**
+
+1. **Per-country status entry presence.** For each Key Finding making a country-relevant claim, check the Evidence Strength Map for per-country coverage status entries using the vocabulary defined in `reference/quality-standards.md § Country Coverage Table`:
+   - `observed` — direct evidence for this country
+   - `proxied` — only pan-Nordic or adjacent-country proxy available
+   - `not evidenced` — no evidence at any source class
+
+2. **Per-country gate rule.** A claim's permitted scope is bounded by its weakest-country status:
+   - All three at `observed` or `proxied` → may be stated as three-country (with proxy caveat where applicable)
+   - One country at `not evidenced` → must reframe as two-country or country-specific (with caveat for the missing country)
+   - Two or more countries at `not evidenced` → ILLUSTRATIVE-ONLY at best (routed to Check 9)
+
+3. **Pan-Nordic leakage check.** Findings sourced primarily from pan-Nordic aggregate data (KPMG, EY, PwC) presented as three-country claims must be flagged unless the aggregate explicitly disaggregates by country, OR the per-country status entries demonstrate equal coverage. Pan-Nordic figures imply equal confidence across all three markets when Norway is structurally thinner (per `reference/known-limits.md` limit #2).
+
+**Actions:**
+- Findings missing per-country status entries: add status entries to the Evidence Strength Map where derivable from the extracts; flag remaining unfillable entries for operator attention.
+- Findings failing the gate rule: propose reframe options (country-specific / two-country / downgrade) and route to Check 9 for permission-class determination.
+- Pan-Nordic-leakage findings: append a `[PAN-NORDIC-LEAKAGE]` annotation; route to Check 9 for downgrade evaluation.
+
+**Output:** Per country-relevant finding: Sweden status / Norway status / Finland status, gate-rule verdict (three-country permitted / reframe required / downgrade required), pan-Nordic-leakage flag (yes/no), action taken.
+
+### Check 9 — Permission-Class Emission
+
+**Target:** Surviving findings without a permission-class label; per-cluster permission table not emitted.
+
+**Procedure — three sub-checks:**
+
+1. **Permission-class assignment.** For each surviving Key Finding (post Checks 1–8), assign one of four classes per `reference/quality-standards.md § Claim-Permission Classes`:
+   - `SUPPORTED` — direct evidence, ≥2 source channels, in-lens or directly-applicable proxy with no downgrade
+   - `PROXY-SUPPORTED` — proxy evidence with downgrade (above-lens or pan-Nordic for country-specific claim)
+   - `ILLUSTRATIVE-ONLY` — <3 same-pattern transactions, OR single-source named-example, OR two-or-more-countries `not evidenced` from Check 8
+   - `NOT-SUPPORTED` — no direct or proxy evidence at any source class
+
+   Apply the minimum evidence thresholds per claim type and the Source-Diversity Matrix from `reference/quality-standards.md` (same § Claim-Permission Classes). Triangulation-packets rule: three independent KPMG quarterly reports count as ONE evidentiary role, not three.
+
+2. **No-orphan-citation enforcement.** Each citation must answer the question "What exact sentence does this source support?" If the answer is vague or the source supports only a general topical area, remove the citation OR downgrade the dependent claim by one permission class. Record the downgrade rationale inline.
+
+3. **Per-cluster permission table emission.** Emit a per-cluster permission table to `analysis/claim-permission/{section}/{section}-cluster-NN-permission-table.md` per the canonical file-conventions row. Columns: Claim ID, Claim text (short), Permission class, Source channels count, Source-diversity matrix verdict (per claim type), Country-parity status (from Check 8), Notes (orphan-citation downgrades, pan-Nordic-leakage flags, etc.).
+
+**Blocking-gate semantics (per `reference/quality-standards.md § Claim-Permission Classes — Blocking-Gate`):** if >30% of a cluster's claims are NOT-SUPPORTED at this check's completion, the cluster is flagged `CLUSTER-INSUFFICIENT`. Refinement output is marked blocked for that cluster; the gate-clearance artifact emitted by Pass 3 (separate from this skill — produced upstream of `/run-analysis` / `/run-synthesis`) consumes this flag. This skill flags the cluster; it does NOT emit the gate-clearance file directly. Section-level rollup (>40% across the section → `SECTION-INSUFFICIENT`) is also a Pass 3 concern; this skill operates only at cluster scope.
+
+**Actions:**
+- Assign permission class to every surviving claim
+- Apply downgrade for orphan citations (record rationale)
+- Emit per-cluster permission table to canonical path
+- Flag `CLUSTER-INSUFFICIENT` clusters in the refinement output
+
+**Output:** Per cluster: claim count, permission-class distribution, NOT-SUPPORTED ratio, blocking-gate verdict (CLEARED / CLEARED-WITH-CAVEATS / CLUSTER-INSUFFICIENT), path to emitted permission table.
+
+### Check 10 — Source-Conflict Validation
+
+**Target:** Source conflicts noted in research extracts that lack a corresponding entry in the source-conflict log; cluster claims dependent on unresolved conflicts that have not been downgraded.
+
+**Procedure — three sub-checks:**
+
+1. **Extract-to-conflict-log coverage.** For each cluster, read the research extracts feeding the cluster's findings and identify any conflict entries (sources reporting different values or classifications for the same fact, per `research-extract-creator`'s no-silent-selection rule). For each conflict found in extracts, verify a corresponding entry exists in `analysis/source-conflicts/{section}/{section}-source-conflict-log.md` per the canonical file-conventions row.
+
+2. **Resolution-status verification.** For each conflict-log entry covering this cluster's claims, verify `status:` is one of `RESOLVED-METHODOLOGY` (methodology-preference rule applied), `RESOLVED-GRANULARITY` (granularity-preference rule applied), `RESOLVED-TRIANGULATION` (Step 2 triangulation source found), or `UNRESOLVED` (downgrade fallback per `reference/quality-standards.md § Source-Conflict Resolution Procedure`).
+
+3. **Unresolved-conflict downgrade verification.** For each conflict-log entry with `status: UNRESOLVED`, verify the affected claim was downgraded one permission class in Check 9. If not, flag the inconsistency and re-route to Check 9 for correction.
+
+**Actions:**
+- Cross-check extract conflicts against conflict-log entries; flag missing entries
+- Flag clusters with missing conflict-log entries as refinement-blocked until log is updated
+- Verify UNRESOLVED conflicts trigger downgrade in Check 9; re-route inconsistencies
+
+**Blocking rule:** clusters with one or more unlogged extract conflicts cannot pass refinement until the conflict-log is updated. Refinement output is marked blocked for those clusters.
+
+**Output:** Per cluster: extract-conflicts count, conflict-log-coverage status (all conflicts logged / missing entries listed), unresolved-conflict downgrade-verification status, refinement-blocked flag (yes/no).
+
 ## Revision Protocol
 
 After reporting all check findings:
@@ -193,13 +269,15 @@ After reporting all check findings:
 1. Produce revised memos incorporating all refinements
 2. Mark every change with `[REFINED]` inline (e.g., "[REFINED] Merged into theme: Core Mechanics")
 3. Preserve all original content not flagged by any check
-4. Do not make changes beyond what the six checks identify — no general editorial improvements, rewording for style, or additions from external knowledge
+4. Do not make changes beyond what the ten checks identify — no general editorial improvements, rewording for style, or additions from external knowledge
 
 The `[REFINED]` markers serve as a diff mechanism for operator review. Remove after review is complete.
 
 If check recommendations conflict (e.g., Check 1 wants to merge a finding but Check 6 identifies it as a dependency anchor), flag the conflict with both check numbers and reasoning. Present both options to the user rather than resolving silently.
 
 ## Completion Criteria
+
+**Applicability note:** These criteria apply forward only. Cluster memos produced under any pre-Bundle-2b revision of `cluster-memo-refiner` (which had 7 checks and 8 completion criteria) are grandfathered and not retroactively re-refined under the 10-check / 11-criterion standard. R2 onward is the first production cycle under the new contract.
 
 A memo passes refinement when all of the following hold:
 
@@ -211,6 +289,9 @@ A memo passes refinement when all of the following hold:
 6. **Check 6 — Dependencies:** All identified dependency pairs listed with direction and classification
 7. **Check 7 — Named transactions:** All findings citing named transactions reference transaction-table row IDs (or carry a missing-from-table flag); all pattern claims either meet the 3-deal / 5-deal-across-2-countries thresholds or carry the `illustrative` or `directional` label
 8. **Claim-ID emission:** Every surviving Key Finding has an emitted claim ID in the canonical format (`{section}-cluster-NN-claim-NN`); merged findings carry `[merged-from: ...]` annotations on the survivor
+9. **Check 8 — Country-Parity:** All country-relevant findings have per-country status entries (Sweden / Norway / Finland) using the `observed` / `proxied` / `not evidenced` vocabulary; the gate rule has been applied to every finding (three-country permitted / reframe required / downgrade required); pan-Nordic-leakage flags set where applicable
+10. **Check 9 — Permission-Class Emission:** Every surviving Key Finding carries a permission-class label (`SUPPORTED` / `PROXY-SUPPORTED` / `ILLUSTRATIVE-ONLY` / `NOT-SUPPORTED`); per-cluster permission table emitted to `analysis/claim-permission/{section}/{section}-cluster-NN-permission-table.md`; orphan-citation downgrades recorded with rationale; `CLUSTER-INSUFFICIENT` clusters flagged where >30% NOT-SUPPORTED
+11. **Check 10 — Source-Conflict Validation:** All extract-level conflicts have corresponding entries in `analysis/source-conflicts/{section}/{section}-source-conflict-log.md`; all `UNRESOLVED` conflicts have triggered downgrade in Check 9; clusters with one or more unlogged extract conflicts are marked refinement-blocked
 
 If any criterion is not met, the memo requires another refinement pass on the failing check(s) before proceeding to editorial review.
 
@@ -235,7 +316,7 @@ When the user says `RELEASE ARTIFACT`, write the revised memos to files rather t
 
 **Process integrity:**
 - If provided materials don't match expected cluster memo format, flag the mismatch and ask for clarification rather than attempting to adapt the checks
-- Run all six checks against every memo; report "no issues found" for clean checks
+- Run all ten checks against every memo; report "no issues found" for clean checks
 - Report findings before producing revisions
 - Mark all changes with [REFINED]; tag new findings as [ANALYTICAL]
 - Preserve original content not flagged by checks

@@ -40,6 +40,8 @@ Three inputs, two required:
 
 3. **Gap Assessment Report** (optional, recommended) — from `gap-assessment-gate`. Used to identify Accepted Gaps each section must acknowledge and residual Weakening gaps requiring hedging.
 
+4. **Per-cluster permission tables (S-06)** (recommended when produced) — from `cluster-memo-refiner` Check 9, located at `analysis/claim-permission/{section}/{section}-cluster-NN-permission-table.md` (one per cluster). Used to enforce the NOT-SUPPORTED refusal rule (see Procedure Step 3) and to set per-class prose constraints (see Directive Components → Permission-Class Constraints). If the project's memos pre-date Bundle 2b (no permission tables produced), the skill operates in a degraded mode — operator judgment fills the permission-class assignment, and the directive flags the absence so downstream `evidence-to-report-writer` knows to apply conservative defaults.
+
 ### Validation
 
 Before proceeding, verify:
@@ -54,6 +56,7 @@ Before proceeding, verify:
 - Unresolved Blocking gap detected → Refuse. Direct user to `gap-assessment-gate`.
 - No section list provided → Refuse. Request section list. Do not improvise a section structure.
 - Memos appear unrefined (no editorial tags, raw cluster-analysis-pass output with unresolved tensions flagged for review) → Flag concern, ask user to confirm memos are final.
+- **CLUSTER-INSUFFICIENT cluster present in permission tables (S-06 blocking-gate)** → If any per-cluster permission table flags `CLUSTER-INSUFFICIENT` (>30% NOT-SUPPORTED claims) and the operator has not invoked `OPERATOR-OVERRIDE`, refuse. Direct the operator to either supplement evidence for the blocked cluster via gap-filling research OR accept scope reduction (remove the affected cluster from the synthesis mandate, with its claims noted as gaps in the evidence-limitations back-matter).
 
 If findings across memos use inconsistent labeling (some use claim IDs, some use prose-only descriptions), flag the inconsistency and request standardization before proceeding.
 
@@ -189,6 +192,21 @@ Explicit setup/payoff relationships:
 - "Assumes reader has encountered [concept] from [Section Y]"
 - "Resolves tension introduced in [Section Z]"
 
+### Permission-Class Constraints (S-06)
+
+Per-section enforcement of `reference/quality-standards.md § Claim-Permission Classes`. The directive references the per-cluster permission tables (where available) and translates them into per-finding prose constraints. Each finding allocated to the section carries one of four permission classes from its source cluster's permission table:
+
+| Permission class | Prose constraint |
+|---|---|
+| `SUPPORTED` | Plain assertion permitted. Use verbs from the permitted list: shows / confirms / establishes / demonstrates / records. No hedging required. |
+| `PROXY-SUPPORTED` | Hedged framing required. Use verbs: suggests / is consistent with / points to / indicates. Must include proxy nature inline (e.g., "evidence above the project's deal-size lens suggests…") or in a load-bearing caveat. |
+| `ILLUSTRATIVE-ONLY` | Illustrative framing required. Use verbs: illustrates / shows in one named case / appears in. MUST NOT support a market-pattern claim — the directive explicitly prohibits writing the finding as if it generalized. |
+| `NOT-SUPPORTED` | **Directive MUST NOT instruct synthesis to make this claim.** If the finding is thematically required by the section's narrative, the directive instructs `evidence-to-report-writer` to frame it as a "monitoring hypothesis" (S-15 routing deferred to post-R2 review per v6; until S-15 lands, operator judgment fills the framing). |
+
+**Verb-list enforcement (handed off to `chapter-prose-reviewer` Stage 4.3):** the directive flags any allocated finding whose intended verb pairing would violate the permission class — e.g., `establishes` paired with a PROXY-SUPPORTED finding. The flag is informational at directive time; the enforcement gate is at Stage 4.3.
+
+**Degraded mode (no permission tables available):** if Input 4 was not provided (memos pre-date Bundle 2b), the directive falls back to Hedging Requirements (existing component) and flags every finding lacking a permission class for operator review before synthesis. The directive's Permission-Class Constraints section is populated with "[NO PERMISSION TABLE — operator review required]" placeholders.
+
 ## Output Structure
 
 ```markdown
@@ -227,6 +245,7 @@ Before presenting directives (even in refinement mode), verify all of the follow
 4. **No circular dependencies** — The Dependency Map contains no cycles (Section A → B → A).
 5. **Balance acknowledged** — If the longest section exceeds the shortest by >3x, the imbalance is flagged and user has acknowledged or overridden.
 6. **Hedging mapped** — Every Suggests, Preliminary signal, and Analytical finding has an explicit hedging requirement in its section directive matching the Hedging Requirements table.
+7. **Permission classes enforced (S-06)** — When permission tables are provided (Input 4), every allocated finding in every section has a Permission-Class Constraints entry matching its class from the source cluster's permission table. No NOT-SUPPORTED finding is allocated for synthesis development; any thematically-required NOT-SUPPORTED claim is flagged for monitoring-hypothesis framing. If permission tables are absent, every finding carries a "[NO PERMISSION TABLE — operator review required]" placeholder in the section's Permission-Class Constraints.
 
 ## Evidence Integrity Rules
 
