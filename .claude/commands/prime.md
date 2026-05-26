@@ -147,6 +147,15 @@ Full backlog & inbox: /open-items
       Then stop.
    3. If plan mode is **not** active:
       a. Ensure today's session entry exists in `/logs/session-notes.md`. Read the last ~10 lines: if a `## YYYY-MM-DD` header for today is already present, reuse it — append `TASK_TEXT` as a work-description line beneath it. If today's header is absent, append a new `## YYYY-MM-DD` header with `TASK_TEXT` as the work description. Do NOT create a second same-day header (this is the duplicate-header hazard the step 1a sibling-entry sweep exists to catch). This must happen before step c — `/session-plan` Step 0 requires today's header to exist. If the operator stated a scope boundary, capture it too.
+
+         **After the append succeeds**, write `session-notes.md`'s mtime to `logs/.prime-mtime` so `/session-start` Step 0.5 can distinguish this session's own write from a foreign session's:
+
+         ```bash
+         stat -f %m logs/session-notes.md 2>/dev/null > logs/.prime-mtime \
+           || stat -c %Y logs/session-notes.md 2>/dev/null > logs/.prime-mtime
+         ```
+
+         Order matters: marker after append, never before — a forward-dated marker produces false negatives in Step 0.5. See `/session-start` Step 0.5 for the consumer-side check.
       b. Invoke the `/session-start` command with `TASK_TEXT` as its arguments (becomes the mandate). It runs its own mandate-confirmation prompt — that is expected; do not suppress it.
       c. After `/session-start` finishes, invoke the `/session-plan` command with `TASK_TEXT` as its arguments (becomes the intent). It runs its own design/execution/mixed question and writes `logs/session-plan.md`. If a same-day `session-plan.md` already exists, `/session-plan` may also surface a 3-option keep/overwrite/pass-2 prompt — that is expected mid-chain; the operator answers it normally.
       d. **Pause.** After `/session-plan` finishes, output:
@@ -156,6 +165,15 @@ Full backlog & inbox: /open-items
 
 8b. **Free-text intent.** The operator named the work directly instead of picking a number — original prime behavior:
    1. Ensure today's session entry exists in `/logs/session-notes.md`. Read the last ~10 lines: if a `## YYYY-MM-DD` header for today is already present, reuse it — append the work description beneath it. If today's header is absent, append a new `## YYYY-MM-DD` header with the work description. Do NOT create a second same-day header. If the operator stated a scope boundary inline (e.g., "just the refactor, not the follow-up PRs"), capture it too; otherwise omit.
+
+      **After the append succeeds**, write `session-notes.md`'s mtime to `logs/.prime-mtime` so `/session-start` Step 0.5 can distinguish this session's own write from a foreign session's (same marker contract as Step 8a.3.a — extending coverage to the free-text-intent path so neither path falls through to Step 0.5's heuristic fallback as its primary operating mode):
+
+      ```bash
+      stat -f %m logs/session-notes.md 2>/dev/null > logs/.prime-mtime \
+        || stat -c %Y logs/session-notes.md 2>/dev/null > logs/.prime-mtime
+      ```
+
+      Order matters: marker after append, never before. See `/session-start` Step 0.5 for the consumer-side check.
    2. Begin execution immediately under full autonomy (per workspace CLAUDE.md Autonomy Rules). No second "go/proceed" confirmation required.
 
    **Next:** Run `/session-start` to capture the session mandate, then `/session-plan` to plan model tier, autonomy posture, and structural risk.

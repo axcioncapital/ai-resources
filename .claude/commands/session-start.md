@@ -23,6 +23,53 @@ Read `logs/session-notes.md` (last 10 lines). Check for a today-dated header mat
 
 If no today-dated header is found: emit one warning line — `Note: /prime may not have run yet today. Proceeding.` — then continue. Do NOT block.
 
+### Step 0.5 — Concurrent-session mtime guard
+
+After Step 0's `session-notes.md` read, run a foreign-write check before reading the mandate. Catches the case where another active session wrote to `logs/session-notes.md` between this session's `/prime` and this `/session-start` invocation.
+
+**Path assumption:** all paths in Step 0.5 are cwd-relative — the check assumes the cwd has not changed since `/prime` ran. The marker file (`logs/.prime-mtime`) is co-located with `logs/session-notes.md` in the cwd's git-root.
+
+**Capture file state:**
+
+```bash
+SESSION_NOTES_MTIME=$(stat -f %m logs/session-notes.md 2>/dev/null \
+                     || stat -c %Y logs/session-notes.md 2>/dev/null)
+```
+
+**Absent-file guard:** if `SESSION_NOTES_MTIME` is empty (the file truly does not exist — fresh repo, or `/session-start` invoked at a path with no `logs/` tree), there is nothing to detect a foreign write against. Skip Step 0.5 entirely and proceed to Step 1. Do NOT run the heuristic fallback (it would misclassify on empty input).
+
+Otherwise, continue:
+
+```bash
+NOW=$(date +%s)
+TODAY_EPOCH=$(date -j -f "%Y-%m-%d %H:%M:%S" "$(date '+%Y-%m-%d') 00:00:00" "+%s" 2>/dev/null \
+              || date -d "$(date '+%Y-%m-%d') 00:00:00" "+%s")
+```
+
+(macOS `date -j -f` and Linux `date -d` both need an explicit `00:00:00` time component — without it, BSD `date` fills in the current hour/min/sec instead of midnight, breaking the freshness check.)
+
+**Primary check (marker file).** If `logs/.prime-mtime` exists, read it (the mtime `/prime` wrote after its today's-header append in Step 8a.3.a or 8b.1):
+
+- **Freshness window:** if the marker mtime is older than today's start-of-day (`PRIME_MTIME < TODAY_EPOCH`), treat the marker as absent and fall through to the heuristic. Emit one loud line: `[Step 0.5] Note: logs/.prime-mtime is stale (older than today) — using 120s heuristic fallback.` Protects against stale markers from abandoned `/prime` chains.
+- **Fresh marker:** compute `DELTA = SESSION_NOTES_MTIME - PRIME_MTIME`. If `DELTA > 0`, a foreign session wrote to `session-notes.md` after this session's `/prime` finished → set `FOREIGN_WRITE=1`. If `DELTA = 0`, the file mtime matches `/prime`'s marker → no foreign write → proceed silently to Step 1.
+
+**Fallback (marker absent).** If `logs/.prime-mtime` is missing entirely, the operator may have invoked `/session-start` without `/prime`. Emit one loud line: `[Step 0.5] Note: logs/.prime-mtime absent — using 120s heuristic fallback.` Then compute `DELTA = NOW - SESSION_NOTES_MTIME`. If `DELTA < 120`, set `FOREIGN_WRITE=1`. Otherwise proceed silently.
+
+**Warning shape (emit when `FOREIGN_WRITE=1`):**
+
+> ⚠ Concurrent session likely. `logs/session-notes.md` was modified {DELTA}s ago — possibly by another active session writing a mandate. Re-read the file and confirm before proceeding.
+>
+> Options:
+> 1. Proceed with the new mandate anyway (your mandate will stack below the other session's)
+> 2. Stop and resolve manually (recommended)
+>
+> Default (no response within the turn): option 2 — stop.
+
+**Tuning notes:**
+- The 120s threshold matches the typical `/prime` → operator-response → `/session-start` window. Tune if false positives accumulate.
+- The loud-fallback `[Step 0.5] Note:` lines make heuristic-fallback paths visible — silent degradation becomes loud.
+- The freshness window is conservative (older-than-today) and accepts a small false-positive risk at midnight-rollover in exchange for blocking stale-marker false negatives from abandoned chains.
+
 ### Step 1 — Read the mandate
 
 If `$ARGUMENTS` is non-empty, use it verbatim as `MANDATE_TEXT`.
