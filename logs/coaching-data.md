@@ -123,3 +123,11 @@
 - **QC cycles:** 4 (session-plan GO; Wave 3 mechanical GO; Wave 1 mechanical GO; Wave 2 REVISE → 2 self-resolved fixes per QC → Triage Auto-Loop discipline)
 - **Gates:** 2 (1 changed) — plan-approval:confirmed, content-review:changed
 - **Mandate fields:** specified: work_scope, exit_condition, out_of_scope, stop_if | inferred: files_in_scope | omitted: allowed_inputs, required_outputs
+
+### 2026-05-26 — Bundle 2b (Rules + skill behavior) execution
+- **Commands used:** /prime, /session-start, /session-plan, /qc-pass (×2), /recommend, /risk-check (×2), /consult (×2), /wrap-session
+- **Iterations:** 2 (mandate: provisional → post-QC-REVISE revised; session-plan: initial → post-QC-REVISE revised with 3 missing schema sections added)
+- **Decisions logged:** 1 (Bundle 2b 3 load-bearing scoping decisions: R2 gate-check premise dropped, cluster-memo-refiner 3-stack consolidated, Asymmetric Blocking-Semantics Gap as known-limit)
+- **QC cycles:** 2 (mandate: REVISE with 2 BLOCKERs → fixes applied inline → ready; session-plan: REVISE with 1 BLOCKER + 5 IMPORTANTs → 3 missing schema sections added + 4 other revisions → ready)
+- **Gates:** 8 (6 changed) — plan-approval:changed (prime menu ambiguity required AskUserQuestion clarification), plan-approval:changed (mandate confirm → operator chose /qc-pass), qc-disposition:changed (mandate REVISE → "Proceed" with fixes), plan-approval:changed (session-plan post-write → operator chose /qc-pass), qc-disposition:changed (session-plan REVISE → "Fix"), qc-disposition:confirmed (plan-time risk-check PWC → mitigations as proposed), challenge-disposition:changed (cluster-memo-refiner pre-draft → /recommend delegated judgment), qc-disposition:confirmed (end-time risk-check PWC → mitigations as proposed)
+- **Mandate fields:** specified: work_scope, exit_condition, out_of_scope, stop_if | inferred: files_in_scope | omitted: allowed_inputs, required_outputs
