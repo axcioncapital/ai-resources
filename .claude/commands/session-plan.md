@@ -8,29 +8,58 @@ Session orchestrator. Run after `/prime` to plan HOW the session will run before
 
 ---
 
-## Step 0 — Confirm `/prime` ran this session
+## Step 0 — Confirm `/prime` ran this session, and detect concurrent-session collisions
 
 Read `logs/session-notes.md`. Look for a `## {YYYY-MM-DD}` header matching today's date (the entry `/prime` appends when the operator names the work).
 
 - If not found: tell the operator "Run `/prime` first to orient the session, then return to `/session-plan`." Stop. Do not proceed.
-- If found: check whether `logs/session-plan.md` exists AND was last modified within the past 6 hours (use `stat -f %m` on macOS, `stat -c %Y` on Linux, or `date -r`). If yes, read the plan's `## Intent` line and emit:
 
-  > `session-plan.md` already exists from this session (modified {HH:MM}, intent: '{Intent value}'). Options:
-  > 1. Keep current plan — stop here, no changes made
-  > 2. Overwrite with new intent — continue to Step 1
-  > 3. Write new plan to `logs/session-plan-pass2.md` instead — continue to Step 1, output to pass2
-  >
-  > Note: `logs/session-plan-next.md` is a separate file written by `/monday-prep` for cross-session handoffs and is not the same as `session-plan-pass2.md`.
-  >
-  > Default (no response within the turn): **option 1 — keep current plan**.
+- If found: check whether `logs/session-plan.md` exists AND was last modified within the past 6 hours (use `stat -f %m` on macOS, `stat -c %Y` on Linux, or `date -r`). If no: proceed to Step 1.
 
-  Apply the chosen option: Option 1 → stop, no changes. Option 2 → continue to Step 1 (output target = `logs/session-plan.md`). Option 3 → continue to Step 1 (output target = `logs/session-plan-pass2.md`).
+  If yes, perform intent-comparison conflict detection:
 
-- Otherwise (plan file absent or older than 6 hours): proceed to Step 1.
+  1. **Determine `UPCOMING_INTENT`** for this invocation (preview of Step 1; cache and reuse there):
+     - If `$ARGUMENTS` is non-empty → `UPCOMING_INTENT` = `$ARGUMENTS` verbatim.
+     - Else → read `logs/session-notes.md`, locate the last `## ` entry, scan forward for `### Next Steps`. Use the first bullet → `UPCOMING_INTENT`.
+     - If neither resolves (file missing, no Next Steps subsection, blank) → set `UPCOMING_INTENT` = sentinel `(none derived)`.
+  2. **Read `EXISTING_INTENT`** from the existing `logs/session-plan.md`'s `## Intent` line. If no `## Intent` line is present (malformed plan), set `EXISTING_INTENT` = sentinel `(none derived — existing plan malformed)` — the sentinel guard in sub-step 4 will fall through to the MATCH branch.
+  3. **Normalization contract** (pinned inline — do not infer from behavior): lowercase both strings, trim leading/trailing whitespace, strip trailing punctuation `.,;:!?`. Nothing else (no stop-word removal, no token-overlap heuristics).
+  4. **Sentinel guard:** if either normalized string starts with `(none derived` → SKIP comparison, fall through to the MATCH branch (3-option prompt). Sentinels are too ambiguous to auto-route to pass2; loud-failure-over-silent-continuation applies.
+  5. **Match contract:** case-insensitive substring containment in either direction. `EXISTING_INTENT` contains `UPCOMING_INTENT`, OR `UPCOMING_INTENT` contains `EXISTING_INTENT` → MATCH. (Asymmetry note: a scope-expanded second invocation — e.g., "fix X" vs "fix X and add Y" — counts as MATCH by design; the operator's mental model is "same work, broader scope.")
+  6. **Apply the result:**
+
+     **MATCH → same-session re-invocation.** Emit the existing 3-option prompt:
+
+     > `session-plan.md` already exists from this session (modified {HH:MM}, intent: '{Intent value}'). Options:
+     > 1. Keep current plan — stop here, no changes made
+     > 2. Overwrite with new intent — continue to Step 1
+     > 3. Write new plan to `logs/session-plan-pass2.md` instead — continue to Step 1, output to pass2
+     >
+     > Note: `logs/session-plan-next.md` is a separate file written by `/monday-prep` for cross-session handoffs and is not the same as `session-plan-pass2.md`.
+     >
+     > Default (no response within the turn): **option 1 — keep current plan**.
+
+     Apply the chosen option: Option 1 → stop, no changes. Option 2 → continue to Step 1 (output target = `logs/session-plan.md`). Option 3 → continue to Step 1 (output target = `logs/session-plan-pass2.md`).
+
+     **MISMATCH → concurrent-session collision detected.** Auto-default to pass2 without prompting. Emit one notification line:
+
+     > Concurrent session detected. Existing intent: '{EXISTING_INTENT_truncated_60}'. This session's intent: '{UPCOMING_INTENT_truncated_60}'. Writing new plan to `logs/session-plan-pass2.md` to avoid collision (preserves both). To overwrite `session-plan.md` instead, re-run `/session-plan` after the other session wraps.
+
+     Set output target = `logs/session-plan-pass2.md` and continue to Step 1.
+
+  In every path that continues to Step 1, pass `UPCOMING_INTENT` forward — Step 1 reuses it instead of re-deriving.
+
+  Known-debt note: `/drift-check` currently reads `logs/session-plan.md`, not pass2. When the auto-pass2 branch fires, `/drift-check` will use the prior session's plan as mandate baseline — possible false ALIGNED verdict. Tracked in `logs/maintenance-observations.md` for a future `/drift-check` Step 3 enhancement.
 
 ---
 
 ## Step 1 — Determine session intent
+
+**Cache shortcut:** if Step 0 already set `UPCOMING_INTENT` (intent-comparison conflict detection ran), reuse it: set `INTENT` = `UPCOMING_INTENT` and skip the sub-step 1 derivation logic below. Then:
+- If `$ARGUMENTS` was non-empty → proceed directly to Step 2.
+- If `$ARGUMENTS` was empty → run sub-steps 2 and 3 (display the inferred intent with source freshness, then ask the operator to confirm or restate). Do not skip the display — the operator must see what they're confirming.
+
+Otherwise (Step 0 did not cache — e.g., no prior plan within 6 hours):
 
 If `$ARGUMENTS` is non-empty, set `INTENT` = `$ARGUMENTS` verbatim. Proceed to Step 2.
 
@@ -157,9 +186,14 @@ Do not evaluate structural risk yourself. Point to `/risk-check`.
 
 Set `DATE` = today in `YYYY-MM-DD` format.
 
+**Resolve `OUTPUT_TARGET`** (set by Step 0):
+- Default → `logs/session-plan.md`.
+- If Step 0's MATCH branch fired with Option 3 selected (operator picked pass2) → `logs/session-plan-pass2.md`.
+- If Step 0's MISMATCH branch fired (auto-pass2 on concurrent-session collision) → `logs/session-plan-pass2.md`.
+
 **Precondition:** If `INTENT` references a separate report, spec, or drift file (e.g., "apply findings from audit-X.md", "execute the drift-fix plan"), the `## Findings / Items to Address` section below MUST inline a one-line summary of each item with a source-doc anchor. A bare link to the file is invalid — the plan must be readable without opening the referenced doc.
 
-Write to `logs/session-plan.md` (overwrite if present):
+Write to `OUTPUT_TARGET` (overwrite if present):
 
 ```markdown
 # Session Plan — {DATE}
@@ -197,7 +231,7 @@ Write to `logs/session-plan.md` (overwrite if present):
 
 **Self-check before writing:** If the draft plan is fewer than 25 lines, or if `## Findings / Items to Address` contains only a bare file link with no inline summaries, expand before writing. A plan that cannot be understood without opening a separate doc fails this check.
 
-After writing `session-plan.md`, locate today's `## {YYYY-MM-DD}` header in `logs/session-notes.md` (the entry `/prime` created in Step 0). Check whether a `Class: ` line already exists immediately below that header. If it does, replace its value with `Class: {CLASS}` using `Edit`. If it does not exist, insert `Class: {CLASS}` as a new line immediately below the header, before any existing content. The line should be in plain text form (not a heading, not a bullet) so downstream rules can grep for `^Class: ` reliably.
+After writing `OUTPUT_TARGET`, locate today's `## {YYYY-MM-DD}` header in `logs/session-notes.md` (the entry `/prime` created in Step 0). Check whether a `Class: ` line already exists immediately below that header. If it does, replace its value with `Class: {CLASS}` using `Edit`. If it does not exist, insert `Class: {CLASS}` as a new line immediately below the header, before any existing content. The line should be in plain text form (not a heading, not a bullet) so downstream rules can grep for `^Class: ` reliably.
 
 Step 0 has already verified today's entry exists; if for any reason the header is missing at this point, skip the append and emit a one-line warning to the operator.
 

@@ -240,3 +240,17 @@ Operator caught a second under-read: I had not opened the actual improvement-log
 - Reliability: tighten — concurrent-session collision has recurred 3× (once per week for 3 weeks); until the check-concurrent-session.sh hook lands (plan file: friday-plans/2026-05-22-check-concurrent-session.md), apply manual concurrent-session discipline before any KB write session
 - Observability: hold
 - Operator load: hold
+
+---
+
+## 2026-05-26 — Known debt: /drift-check pass2 awareness gap
+
+**Context:** Wave C of 2026-05-26 friction-cleanup session enhanced `/session-plan` Step 0 to auto-write `logs/session-plan-pass2.md` when a concurrent-session collision is detected (intent mismatch with an existing recent plan file). Risk-check + system-owner second opinion both flagged that `/drift-check` reads `logs/session-plan.md`, not pass2.
+
+**Effect:** When the auto-pass2 branch fires, the current session's mandate is captured in `session-plan-pass2.md`, but `/drift-check` continues to read `session-plan.md` (the prior session's plan) and uses it as the mandate baseline. Result: possible false ALIGNED verdicts in concurrent-session scenarios — the drift-check would compare actual work trajectory against the wrong plan.
+
+**Tracked for future fix:** add a one-line check to `/drift-check` Step 3 — if `logs/session-plan-pass2.md` exists in the same repo and is newer than `logs/session-plan.md`, prefer pass2 as the mandate source. Alternative: prefer the plan whose `## Intent` line matches the current session's `**Mandate:**` line in session-notes.md.
+
+**Why deferred:** A `/drift-check` edit would warrant its own `/risk-check` and would bloat the Wave C commit beyond its single-file scope. Per minimal-infra-subset preference, deferred as known debt. Pickup point: next session that touches `/drift-check` for any reason, OR if observed false-ALIGNED occurs in a concurrent-session scenario.
+
+**Related v1 acknowledgment:** Wave C's auto-pass2 fix is a v1 — if pass2 frequency exceeds ~2 per week (observed via `/open-items` Tier 3 stale-session-plan count or git log on `session-plan-pass2.md` writes), the date+intent slug approach (friction-log 2026-05-25 14:10 fix direction (a)) becomes the correct evolution. Re-evaluate at next monthly `/friday-checkup`.

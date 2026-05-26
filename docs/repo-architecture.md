@@ -211,6 +211,7 @@ Change classes (per `audit-discipline.md`):
 | `logs/usage-log.md` | Per-session usage telemetry | `/usage-analysis` |
 | `logs/workflow-observations.md` | Workflow-pipeline observations | Workflow commands |
 | `logs/session-plan.md` | Session orchestration plan (intent, model, source material, autonomy posture, risk) | `/session-plan` |
+| `logs/session-plan-pass2.md` | Companion plan file written by `/session-plan` when a concurrent-session collision is detected (Step 0 intent mismatch) OR when the operator picks option 3 from the same-session 3-option prompt. Preserves both sessions' plans without overwriting. Not auto-cleaned. Known consumers: `/open-items` Step 1 source table (treated as a session-plan source for backlog scanning). | `/session-plan` Step 0 |
 
 ### Q7: Is the artifact a dated audit output? Use `audits/`.
 
