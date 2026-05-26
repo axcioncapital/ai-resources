@@ -32,7 +32,7 @@ Use `Read` (and `Grep` where helpful) — do not write or edit any source file.
 
 | Source | Tier | Extract |
 |---|---|---|
-| `logs/friction-log.md` | T1 | Entries without a `Resolved:` field, or where `Resolved:` is empty / `no` / `pending` |
+| `logs/friction-log.md` | T1 | An entry is a top-level `-` bullet under a `### Friction Events` heading; annotations and timestamps inside that bullet's body bind to it. Skip an entry if any of three signals match: (1) explicit `Resolved:` field with non-empty value (not `no`/`pending`); (2) inline `[FADING-GATE] verified` annotation on the entry text; (3) cross-match with an improvement-log entry having `Status: applied` + non-empty `Verified:` whose body references the friction entry's `HH:MM` timestamp via `**Friction source:** friction-log <HH:MM>` or `friction-log <HH:MM>`, AND the improvement-log entry's `### YYYY-MM-DD` header date is on or after the friction entry's `## Session — YYYY-MM-DD` date (date-bounded cross-match — prevents same-`HH:MM`-different-date collisions). |
 | `inbox/*.md` (top level only) | T1 | Every file (skip `archive/`). Pull filename + first heading or first non-empty line |
 | `logs/next-up.md` | T1 | Every `- [ ]` checkbox line under any heading |
 | `logs/improvement-log.md` | T1 (applied-unverified) / T3 (logged/pending) | **T1:** entries with `Status: applied` but no non-empty `Verified:` line. **T3:** entries whose `Status:` matches `logged`, `proposed`, `pending`, or `logged (pending)` |
