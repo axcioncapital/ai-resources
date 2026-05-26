@@ -76,15 +76,19 @@ Planning artifacts (context pack, project plan, optional technical spec) are pro
 
    # QC verdicts — advisory. Match both double-bold (**PASS**) and single-bold (PASS-WITH-FINDINGS) forms.
    #
-   # Two-end contract with /plan-evaluate (project-planning pipeline):
-   # - This grep reads the first-line `**Verdict:** {TOKEN}` from plan-qc-verdict.md.
+   # Two-end contract with /plan-evaluate AND /spec-evaluate (project-planning pipeline):
+   # - This grep block reads the first-line `**Verdict:** {TOKEN}` from plan-qc-verdict.md
+   #   and spec-qc-verdict.md.
    # - Token set (closed): PASS | PASS-WITH-WAIVER | BLOCK-DRIFT | FAIL.
    # - The regex `^\*\*Verdict:\*\*\s+\**PASS` matches PASS and PASS-WITH-WAIVER (PASS-prefix);
    #   BLOCK-DRIFT and FAIL correctly fall through to the WARN branch below.
-   # - The four-section schema below the verdict line (Structural QC, Drift QC, Combined verdict,
-   #   Operator waiver) is parsed by /spec-draft, NOT by this command.
-   # - Do not extend or modify this regex without coordinating with /plan-evaluate's verdict-write
-   #   step in projects/project-planning/.claude/commands/plan-evaluate.md (Step 6).
+   # - The four-section schema below the verdict line in plan-qc-verdict.md (Structural QC,
+   #   Drift QC, Combined verdict, Operator waiver) is parsed by /spec-draft, NOT by this
+   #   command. The same four-section schema appears in spec-qc-verdict.md for architectural
+   #   consistency but has no current downstream consumer.
+   # - Do not extend or modify this regex without coordinating with the verdict-write step in
+   #   BOTH producers: projects/project-planning/.claude/commands/plan-evaluate.md (Step 6)
+   #   AND projects/project-planning/.claude/commands/spec-evaluate.md (Step 6).
    if [ -f "$SRC/plan-qc-verdict.md" ]; then
      grep -qE "^\*\*Verdict:\*\*\s+\**PASS" "$SRC/plan-qc-verdict.md" || echo "WARN: plan-qc-verdict.md does not show PASS — proceeding anyway; confirm v{n} is the approved version."
    else
