@@ -322,3 +322,45 @@ Land HIGH-to-MED friction + carryover work across 4 planned waves + 1 stretch. R
 
 ### Open Questions
 None.
+
+## 2026-05-26
+Class: mixed (execution dominant)
+**Mandate:** Implement three pre-drafted plans — (1) mechanical sibling-sweep in `/prime` Step 1a (`plans/prime-step-1a-sibling-sweep.md`), (2) live mtime guard in `/session-start` Step 0.5 (`plans/concurrent-session-live-detection.md`), and (3) `repo-architecture.md` docs update for `knowledge-bases/` (`plans/repo-architecture-knowledge-bases-update.md`), with `/risk-check` at plan-time on plans 1 + 2 (docs-only plan 3 exempt per `audit-discipline.md`) — done when: all three plans' edits land; `/risk-check` returns GO or PROCEED-WITH-CAUTION-with-mitigations on each of plans 1 + 2; `/qc-pass` returns no REVISE (or self-resolved) per plan; brand-book + ai-resources improvement-log source entries annotated applied + Verified.
+- Out of scope: Any change to `/session-plan` Step 0 (Wave C handles `session-plan.md` collisions); changes to `session-notes.md` schema or format; cross-repo concurrent-session detection; adding `artifacts/` to top-level layout (Plan 3 secondary observation — separate decision); any propagation of the new `knowledge-bases/` principle to project CLAUDE.md or `/deploy-kb` prompt.
+- Files in scope: (inferred) `ai-resources/.claude/commands/prime.md`, `ai-resources/.claude/commands/session-start.md`, `ai-resources/docs/repo-architecture.md`, `projects/axcion-brand-book/logs/improvement-log.md`, `ai-resources/logs/improvement-log.md`.
+- Stop if: `/risk-check` NO-GO on plan 1 or plan 2; `/qc-pass` REVISE that cannot be self-resolved on any plan; false-positive mitigation for Plan 2 (own-session vs foreign-session write distinction) cannot be designed cleanly at plan-time.
+
+## 2026-05-26 — Plan-draft session (6 plans for priority log items; no code edits)
+
+### Summary
+Diagnosed unresolved priority items from friction-log and improvement-log across 4 repos (project-planning, nordic-pe-macro, axcion-brand-book, ai-resources) with special priority on concurrent-session conflicts in mandates + session-plan notes. Produced 6 implementation-plan drafts and 0 code edits per operator directive — implementation is next session. Scope was set via `/clarify` → `/scope` chain; QC pass returned REVISE with 7 findings, all addressed before /scope approval. An Assumptions Gate fired mid-execution when item 2 was found already shipped via Wave C (2026-05-26 commit `8ab5685`); item 2 was revised to address the deeper structural gap the brand-book improvement-log flagged (live `/prime` → `/session-start` mtime guard).
+
+### Files Created
+- `ai-resources/plans/prime-step-1a-sibling-sweep.md` — Plan 1: make `/prime` Step 1a sibling-entry sweep a mechanical bash check (source: brand-book improvement-log 2026-05-26).
+- `ai-resources/plans/concurrent-session-live-detection.md` — Plan 2 (revised mid-session): add `/session-start` Step 0.5 mtime guard for live concurrent-session detection between `/prime` and `/session-start`.
+- `ai-resources/plans/repo-architecture-knowledge-bases-update.md` — Plan 6: document `knowledge-bases/` top-level directory + add Obsidian KB vault row to canonical-homes table (source: ai-resources improvement-log 2026-05-26).
+- `projects/nordic-pe-macro-landscape-H1-2026/plans/friction-logging-discipline-rule.md` — Plan 3: add attribution-discipline paragraph to nordic CLAUDE.md § Friction Logging (source: nordic improvement-log 2026-05-22 MED-HIGH).
+- `projects/nordic-pe-macro-landscape-H1-2026/plans/backup-session-plan-pass2-regex.md` — Plan 5: broaden backup hook regex + fix SRC + encode source basename in backup filename (source: nordic improvement-log 2026-05-22; load-bearing safety net now that Wave C routes to pass2).
+- `projects/project-planning/plans/plan-evaluate-drift-check.md` — Plan 4: add drift-check step to `/plan-evaluate` (plan vs context pack, three-lens brief, merged verdict; source: project-planning friction-log 2026-05-26).
+- `ai-resources/logs/scratchpads/2026-05-26-15-30-scratchpad.md` — Continuity scratchpad for next-session resume.
+- Two new `plans/` directories: `projects/nordic-pe-macro-landscape-H1-2026/plans/`, `projects/project-planning/plans/`.
+
+### Files Modified
+None (no code edits this session per scope; only plan files created and committed).
+
+### Decisions Made
+- **Scope threshold = MED-HIGH only** (operator answer to /clarify Q1). Items below MED-HIGH deferred; LOW items excluded.
+- **No code implementation this session** (operator directive after Q2/Q3/Q4) — implementation is next session. All 6 plans carry pre-filled risk-check briefs + required "Run /risk-check at plan-time" gate lines so the deferral survives.
+- **`/session-plan` Step 0 Option (b) (Mandate-line compare → auto-route to pass2)** chosen for item 2's original scope. Subsequent Assumptions Gate finding revealed this is already shipped via Wave C; item 2 was revised to the deeper concurrent-session gap (live mtime guard between `/prime` and `/session-start`).
+- **`/plan-evaluate` drift check target = existing command** (not a new `/plan-drift-check`) per Decision-Point Posture; advisory note about the alternative is inside the plan.
+- **One commit per repo, 5 total** (ai-resources ×2, nordic ×2, project-planning ×1). Brand-book gets no commit because its source improvement-log entry's fix targets ai-resources.
+- **Follow-up batch (plans 5 + 6) added** after operator asked which deferred items would be highest priority. Both qualify as load-bearing despite being MED: backup-session-plan.sh protects work the concurrent-session fixes generate; repo-architecture.md is a load-bearing routing reference.
+
+### Next Steps
+- **Push gate** — 5 commits unpushed this session (`8ef38df`, `1bde328`, `6411b64`, `67b1b3c`, `ffac1e8`) plus 7 stacked unpushed commits on ai-resources from yesterday's friction-cleanup. Operator approval required.
+- **Suggested execution order for next session(s):** (1) `backup-session-plan-pass2-regex` (nordic, short, hardens safety net); (2) `prime-step-1a-sibling-sweep` (ai-resources, small bash edit); (3) `concurrent-session-live-detection` (ai-resources, larger; false-positive design risk); (4) `repo-architecture-knowledge-bases-update` (ai-resources, docs); (5) `friction-logging-discipline-rule` (nordic, quick CLAUDE.md); (6) `plan-evaluate-drift-check` (project-planning, separate session given merged-verdict format change).
+- **Concurrent-session note** — at wrap time, `session-notes.md` already carried a second `## 2026-05-26` header from a parallel session whose mandate is to implement three of these plans (1, 2, 6). The sibling-entry warning will fire at next `/prime`. No file conflict at the wrap layer; the parallel session is working on a different file set.
+- **[FADING-GATE] cleanup candidates** for next `/friday-checkup`: scratchpad clock-skew (2026-05-22 14:54) + `/session-plan` template sparse plans (2026-05-11) — both verified-resolved in code; need only annotation.
+
+### Open Questions
+None.
