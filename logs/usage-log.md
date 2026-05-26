@@ -935,3 +935,34 @@ Stability vs. prior entries: This session is cleaner than the 2026-05-16 cleanup
 - **Trust risk-check-reviewer return summary; skip the full-read of the on-disk report pre-`/consult`.** Estimate: ~1,500-2,500 tokens/session when `/risk-check` → `/consult` chain fires (~100-line full re-read avoided). Smaller than primary because the chain fires only on PROCEED-WITH-CAUTION verdicts (~1 in 3 risk-checks); horizon ~5-10k over 10-20 sessions.
 - **Pin friction-log + improvement-log + decisions.md tails at `/prime` into a single consolidated read; reuse at `/session-plan` and `/wrap-session`.** Estimate: ~800-1,500 tokens/session. Smaller than primary per-session but extremely frequent (every session). Recurring lever — flagged in 5+ prior entries; not yet shipped.
 - **Concurrent-session detection moved to a deterministic preflight signal instead of accidental tail-discovery during reads.** Estimate: ~200-400 tokens/session, but structural value (deterministic collision flag) exceeds the token figure. Lowest ROI in pure tokens; highest in cognitive-load reduction. Flagged in 3+ recent entries with escalating frequency.
+
+### 2026-05-26 | Acceptable
+
+**Task:** Implementation of 3 pre-drafted concurrent-session-detection plans across 3 waves (Plan 3 docs update → Plan 1 mechanical sibling-entry sweep in /prime Step 1a → Plan 2 live mtime guard in /session-start Step 0.5 + /prime marker writes). 3 commits shipped after operator-caught mid-session mandate expansion.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~30 |
+| Files read | ~14 (re-reads: prime.md ×3 different sections, session-start.md ×3 different sections, session-notes.md ×4 tail) |
+| Files written/edited | 11 |
+| Tool calls | ~70 (Bash ~35, Read ~12, Edit ~13, Write ~4, Agent 7) |
+| Subagents | 7 (qc-reviewer ×4, risk-check-reviewer ×2, system-owner ×1 via /consult) |
+| Rework cycles | 1 (Wave 2 QC REVISE — 2 small fixes self-resolved per QC → Triage Auto-Loop) |
+
+**Findings:**
+- **Re-reads — Moderate.** `prime.md` and `session-start.md` each read 3× at different offsets across Wave 1 + Wave 2 edits (line numbers shifted after intermediate edits, forcing re-Reads). Same pattern flagged on 2026-05-25 new-project.md (Major there at 5+ reads on a 698-line file); this session is a smaller magnitude — prime.md ~155 lines, section-bounded — but the failure mode is identical: multi-section edits on a single command file produce overlapping section reads.
+- **Rework — Minor (self-caught, load-bearing).** Wave 2 mitigation-4 live bash test caught the TODAY_EPOCH bug (BSD `date` filled current HH:MM:SS without explicit time component) BEFORE QC. Cost: 1 fix-Edit. This is the mitigation working as designed — flagged as Minor because the test ran but the initial draft was wrong; the structural lesson is "always test bash date logic with explicit `00:00:00`".
+- **Rework — Minor (operator-caught, content-review-gate working).** Operator caught a missing plan (Plan 3) right before session-plan.md write. Required backfilling mandate + replanning. Cost: 1 mandate edit + 1 plan regeneration. Not waste — the content-review gate worked, changed outcome. Structural lesson: pre-plan mandate verification could be tighter when implementing pre-drafted plans (count plans against handoff explicitly).
+- **Concurrent-session interference — handled correctly, no waste this session.** Brand-book improvement-log.md was untracked from a parallel session — annotation Edit recognized as cross-session interference, commit deferred, file left in working tree. Wave 2 staging used file-by-file (not `git add .`) to avoid sweeping in a concurrent risk-check report. Plan 2 is the structural fix for exactly this class of failure — and a second concurrent session wrapped to session-notes.md DURING this implementation, validating the work in real time.
+- **Prior-flagged patterns absent this session:** No verbatim SO output duplication into risk-check report (used subagent return summary directly, per 2026-05-25 recommendation). No usage-log.md head-200 read at /prime. Both confirm prior recommendations propagated.
+- **Trend vs last 3 entries (all Acceptable):** Stability with mild improvement — same rating, but two prior-flagged levers (SO inline duplication, usage-log full-Read at prime) did not fire this session. session-notes.md tail re-reads persist but were all load-bearing concurrent-collision checks, not routine waste. Net direction: improving within the Acceptable band.
+
+**Recommendation:** Pin `prime.md` and `session-start.md` content on first section read when a session has ≥2 planned edits on the same command file. Same fix as 2026-05-25 new-project.md recommendation, generalized: for any multi-edit command-file session, read the full file once upfront (or pin first-read content) and edit against the pinned view to avoid the line-number-shift re-read cascade.
+
+**Estimated savings:** ~2,000-3,500 tokens per multi-edit command-file session. Derivation: 6 redundant section reads (prime.md ×3 + session-start.md ×3) at avg ~50 lines each ≈ 300 lines re-read at ~10-12 tokens/line ≈ 3,000-3,600 tokens; collapsing to one upfront full Read of each (~155 lines × 2 = 310 lines) is net-equivalent to one section-read each, saving ~4 redundant section fetches per session. Multi-edit command-file sessions occur ~3-5×/month → ~6-18k tokens/month savings. Smaller per-session than 2026-05-25 (file is half the size) but the pattern is recurring.
+
+**Additional levers (ROI-ranked):**
+- **Bash date arithmetic — explicit `00:00:00` time component as standing rule (~500-1,500 tokens when bug fires).** Smaller per-session than primary but a one-shot fix: add "always pass explicit time component to BSD `date -j -f`" to a relevant doc or comment in the new /session-start Step 0.5 code. Prevents the entire class of bug; mitigation 4 catches it post-hoc but a pre-write check is cheaper.
+- **Mandate verification against handoff when implementing pre-drafted plans (~800-1,500 tokens when miss fires).** This session's content-review gate caught the missing Plan 3, but the structural fix is /session-plan reading the handoff's plan inventory at Step 0 and cross-checking against the proposed mandate. Smaller than primary because pre-drafted-plan sessions are infrequent, but the catch was operator-caught this time — automating it would close the loop.
+- **session-notes.md tail-N standardization (~150-300 tokens/session, every session).** Smallest per-session lever but most frequent. Standing recommendation across multiple prior entries; Plan 2's mtime guard is adjacent to this work but does not solve it directly. Lowest ROI per session but highest cumulative across the 10-20 horizon.
+- **Subagent return-summary use vs report full-Read (already shipped this session).** Negative-cost — already applied. Calling out as the pattern of the prior session's recommendation propagating. No further action.

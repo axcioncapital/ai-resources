@@ -302,3 +302,31 @@ Mid-session, a concurrent session began overwriting `logs/session-plan.md` to ru
 4. Drift bounded: the executed change set matched the plan-time scope including SO additions exactly. QC pass caught the OUTPUT_TARGET wiring defect (would have been INERT without the fix) — exactly the kind of implementation defect end-time `/risk-check` is designed to catch, so the QC pass substituted for it.
 
 **Alternatives considered.** Run the end-time gate anyway for thoroughness — Rejected: would duplicate plan-time + SO + QC work without surfacing new signal; the skip criteria exist precisely to avoid this waste. The pattern from 2026-05-25 Wave 2 (deploy-workflow unification) — same skip criteria, same documented rationale — is now the canonical shape for end-time skips on PROCEED-WITH-CAUTION-with-mitigations-applied changes.
+
+---
+
+## 2026-05-26 — Plan 2 implementation: marker file design + minimal-infra-subset scope + SO fact correction
+
+**Context.** Implementing `plans/concurrent-session-live-detection.md` (live mtime guard for `/session-start` Step 0.5). The plan deferred the own-vs-foreign-write distinction (a/b/c) to the implementation session. `/risk-check` returned PROCEED-WITH-CAUTION; system-owner `/consult` Function B added 3 risks beyond the 4 required mitigations.
+
+**Decision 1: Own-vs-foreign-write distinction = option (b) marker file.**
+
+**Rationale.** Selected over (a) read-back content match (no cross-process state-passing mechanism between `/prime` and `/session-start` — they run as separate processes) and (c) tail-content authorship check (needs session-id machinery, more moving parts). Marker file is deterministic: `/prime` writes `session-notes.md`'s mtime to `logs/.prime-mtime` after a successful today's-header append; `/session-start` Step 0.5 reads and compares. Any positive delta = foreign write since `/prime` ran.
+
+**Alternatives considered.**
+- Read-back content match — Rejected: requires `/prime`'s in-memory state to persist to `/session-start`, which it cannot without disk-based mechanism (defeating the "no cross-process state passing" requirement that the plan itself stated).
+- Tail-content authorship check — Rejected: requires session-id (UUID/PID) tagging in headers. More invasive (changes session-notes.md schema) and more complex than needed.
+
+**Decision 2: Mitigation 3 corrected to "extend marker write to Step 8b.1" (not either/or).**
+
+**Rationale.** System-owner advisory firmed mitigation 3. Reason: `/prime` Step 8b.1 contains identical today's-header append logic to Step 8a.3.a; if marker is written only in 8a, every free-text-intent (8b) session falls through to the 120s heuristic fallback as its primary operating mode — silently making 8b a permanent second-class citizen relative to 8a. Contradicts the design's determinism rationale (the very reason marker file won over the alternatives). Both `/prime` exit paths now write the marker.
+
+**Decision 3: SO-recommended additional risks — accept 2, defer 2 (minimal-infra-subset).**
+
+**Rationale.** SO surfaced R1 (freshness window), R2 (session-id in marker), R3a (risk-topology.md entry), R3b (loud-fallback logging). Accepted R1 (small `if marker mtime < today: ignore` check; real failure mode for abandoned `/prime` chains) and R3b (small `[Step 0.5] Note:` echoes; signal hygiene, makes silent degradation loud). Deferred R2 (session-id machinery: SO described cross-project race; fact-corrected to narrower intra-project race only; 120s heuristic partial coverage; complexity-vs-marginal-value tradeoff favors deferral until it fires in practice) and R3a (risk-topology.md entry: docs-only update; can land at next `/friday-checkup`). Per `feedback_minimal_infra_subset` memory.
+
+**Decision 4: Fact correction to SO risk #2 — race is intra-project, not cross-project.**
+
+**Rationale.** SO claimed: "Marker file is workspace-level, but `/prime` and `/session-start` run from project sessions" and "two concurrent sessions in different projects hitting `/prime` near-simultaneously will each write the marker." Verified directly via grep of `prime.md` bash commands — they use relative `logs/session-notes.md` paths (Step 0 resolves cwd's git root via `git rev-parse --show-toplevel`). Marker is therefore per-cwd (per-project), not workspace-global. The race the SO described is real but narrower: two sessions in the SAME project running `/prime` concurrently. Annotated in the risk-check report so future readers see both the SO claim and the correction.
+
+**Alternatives considered for Decision 3.** Apply all 4 SO additions (R1+R2+R3a+R3b) for thoroughness — Rejected: violates minimal-infra-subset; R2 complexity (session-id machinery) is non-trivial and adds a parsable structured marker file rather than a simple mtime stamp. Defer to actual failure occurrence.

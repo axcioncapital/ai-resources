@@ -364,3 +364,44 @@ None (no code edits this session per scope; only plan files created and committe
 
 ### Open Questions
 None.
+
+## 2026-05-26 — Implementation of 3 pre-drafted concurrent-session-detection plans (Plans 1, 2, 3)
+
+### Summary
+Implemented three pre-drafted plans from the parallel plan-draft session: Plan 3 (`repo-architecture.md` docs update documenting `knowledge-bases/`), Plan 1 (mechanical sibling-entry sweep in `/prime` Step 1a — bash replaces prose), and Plan 2 (live mtime guard in `/session-start` Step 0.5 + marker writes in `/prime` Step 8a.3.a and 8b.1). Wave ordering: lowest-risk first (Plan 3, then Plan 1, then Plan 2). Each wave: `/risk-check` at plan-time where applicable + edit + `/qc-pass` + commit. Plan 2 received PROCEED-WITH-CAUTION + system-owner second opinion via `/consult`; SO's mitigation 3 correction (extend marker write to Step 8b.1) and risks R1 (freshness window) and R3b (loud-fallback logging) were accepted into the same commit; R2 (session-id machinery) and R3a (risk-topology entry) were deferred per minimal-infra-subset preference. SO risk #2 was fact-corrected during implementation — `/prime` is cwd-relative so the marker is per-project, not workspace-global (race is narrower intra-project, not cross-project). Live witnessing of the very class of concurrent-session race this work targets: the plan-draft session wrapped its own entry into `session-notes.md` between my mandate and this wrap.
+
+### Files Created
+- `logs/scratchpads/2026-05-26-11-56-scratchpad.md` — continuity scratchpad (gitignored)
+- `audits/risk-checks/2026-05-26-plan-1-prime-step-1a-mechanical-sibling-sweep.md` — Plan 1 plan-time risk-check (GO)
+- `audits/risk-checks/2026-05-26-plan-2-session-start-live-mtime-guard.md` — Plan 2 plan-time risk-check (PROCEED-WITH-CAUTION) + system-owner architectural commentary + implementation-time annotation
+- `logs/session-plan.md` — overwrote prior pass3 plan from yesterday's session; wrote this session's plan (3 waves, gated autonomy)
+
+### Files Modified
+- `docs/repo-architecture.md` — Plan 3: workspace-root tree gained `├── knowledge-bases/` entry (alphabetical, between `harness/` and `logs/`); canonical-homes table gained `**Obsidian KB vault** (cross-project reuse)` row (commit `89fdd96`)
+- `.claude/commands/prime.md` — Plan 1: Step 1a prose sibling-sweep paragraph replaced with mechanical bash `SIBLING_COUNT=$(grep -c "^## ${TODAY}" ...)` block (commit `789f3b3`); Plan 2: marker write added to Step 8a.3.a AND Step 8b.1 after the today's-header append (commit `0d8d011`)
+- `.claude/commands/session-start.md` — Plan 2: new Step 0.5 inserted between Step 0 and Step 1 with marker primary check, freshness window, loud-fallback logging, 120s heuristic fallback, absent-file guard, cwd-relative path assumption note, 2-option pause prompt (commit `0d8d011`)
+- `.gitignore` — Plan 2: `logs/.prime-mtime` marker file gitignored (commit `0d8d011`)
+- `logs/session-notes.md` — this session's mandate at line 326 + Class line + this wrap (forthcoming commit)
+- `logs/improvement-log.md` — Plan 3 source entry annotated `applied 2026-05-26` + `Verified: 2026-05-26` (commit `89fdd96`)
+
+### Decisions Made
+- **Plan 2 design choice — option (b) marker file.** Selected over (a) read-back content match (no cross-process state-passing mechanism between `/prime` and `/session-start`) and (c) tail-content authorship check (needs session-id machinery). Per CLAUDE.md decision-point posture: picked inline with rationale, proceeded.
+- **Plan 2 mitigation 3 corrected.** System-owner's advisory firmed mitigation 3 from "either extend to 8b.1 OR document fallback" to "extend marker write to Step 8b.1." Reason: the documented-fallback alternative silently makes Step 8b a permanent second-class citizen — contradicting the design's determinism rationale (`principles.md § OP-3` loud-failure-over-silent-continuation). Both Step 8a.3.a AND Step 8b.1 now write the marker.
+- **Plan 2 minimal-infra-subset decision.** SO surfaced 3 additional risks beyond the 4 required mitigations. Accepted R1 (freshness window — 24h marker validity) and R3b (loud-fallback logging) — small additions, real failure modes. Deferred R2 (session-id machinery — narrow intra-project race only; 120s heuristic provides partial coverage; complexity outweighs marginal value until it fires) and R3a (risk-topology.md doc entry — docs-only, lands separately). Per `feedback_minimal_infra_subset` memory.
+- **Plan 2 fact correction to SO risk #2.** SO described "cross-project race on workspace-global marker." Verified via grep of prime.md — bash uses relative `logs/session-notes.md` paths (Step 0 resolves cwd's git root). Marker is per-project, not workspace-global. The race is narrower (intra-project concurrent `/prime`), not cross-project. Annotated in the risk-check report.
+- **Brand-book improvement-log annotation deferred.** Acceptance criterion required annotating `projects/axcion-brand-book/logs/improvement-log.md` for Plans 1+2. Discovered the file was untracked (created by a concurrent brand-book session). Committing only that file from my session would have split the brand-book session's commit boundary planning. Unstaged the change; left annotation in working tree for brand-book session's wrap. Cross-session annotation discipline.
+- **End-time `/risk-check` skipped on Wave 2** per documented skip criteria (memory `feedback_end_time_risk_check_skip`): plan-time gate ran with PROCEED-WITH-CAUTION verdict; all 4 mitigations applied (M1 byte-identical verified, M2 sequence-after-append encoded, M3 corrected extended to 8b.1, M4 single-session live test passed all 3 cases); system-owner second opinion ran and was incorporated; drift bounded; QC pass caught the TODAY_EPOCH bug (would have been broken without the fix — exactly the kind of implementation defect end-time risk-check is designed to catch, so QC substituted for it).
+- **TODAY_EPOCH bash bug fix.** The first draft of Step 0.5 used `date -j -f "%Y-%m-%d" "$(date '+%Y-%m-%d')" "+%s"` — but BSD `date` fills in current HH:MM:SS instead of midnight when no time component is provided. Caught in mitigation 4 live test (TODAY_EPOCH=NOW instead of midnight). Fixed by adding explicit `00:00:00` time component to both macOS and Linux variants. Verified all 3 cases (own-write, foreign-write, stale-marker) pass after the fix.
+- **QC REVISE on Wave 2 self-resolved (2 fixes).** QC reviewer caught: (1) cwd-relative path assumption not documented; (2) missing-file edge case where SESSION_NOTES_MTIME empty would cause heuristic misclassification. Both small prose additions: added Path assumption paragraph at Step 0.5 top + Absent-file guard immediately after SESSION_NOTES_MTIME capture. Per QC → Triage Auto-Loop discipline, simple prose additions are self-resolved without re-QC.
+
+### Next Steps
+- **Push gate.** 10 unpushed commits on `ai-resources`: 7 carryover (from prior sessions including the friction-cleanup wrap) + 3 from this session (`89fdd96`, `789f3b3`, `0d8d011`) + the wrap commit forthcoming. Operator gate (Autonomy Rule #2).
+- **Live verification of Plan 2 at next session entry.** The next `/prime` → `/session-start` chain (in a fresh session) will be the first live test of the mtime guard. Watch for: (a) own-write distinction works (no false-positive warning); (b) marker absent fallback emits the `[Step 0.5] Note:` line; (c) foreign-write detection fires when a concurrent session writes `session-notes.md` between `/prime` and `/session-start`. Plan-draft session that wrapped concurrently with this session is exactly the test case.
+- **Brand-book improvement-log annotation** sits in the brand-book working tree, waiting for that session's wrap. No action required from this session.
+- **R2 session-id machinery** — deferred but logged. Surface at next `/friday-checkup` if intra-project concurrent-`/prime` race fires in practice. The current marker contract is single-cell — two same-project `/prime` invocations clobber each other's markers (partially covered by 120s heuristic for short-window cases).
+- **R3a `risk-topology.md` § 1 entry for `logs/.prime-mtime`** — docs-only update, deferred to next `/friday-checkup` cadence. The marker is now load-bearing in cross-session conflict detection; it should be documented.
+- **[FADING-GATE] structural fix carryover** — still pending. Last session had 4 firings in one day; this session had zero (mandate didn't reference improvement-log entries that might have been resolved). Surface at next monthly `/friday-checkup` gate-calibration review.
+- **Standing carryovers** (preserved): `/drift-check` pass2 awareness (M-2), pass2 frequency review at monthly checkup (M-3), orphan-skills triage, drift-cleanup decision, `/session-plan` C15 semantics, R9 reframe, SF1 broad + SF2.
+
+### Open Questions
+None.

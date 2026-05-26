@@ -115,3 +115,11 @@
 - **QC cycles:** 4 (session-plan v1 REVISE→fix; Wave B REVISE→self-resolved; Wave C REVISE→self-resolved on OUTPUT_TARGET wiring; Wave D GO)
 - **Gates:** 2 (1 changed) — plan-approval:changed, plan-approval:confirmed
 - **Mandate fields:** specified: work_scope, exit_condition, Out of scope, Stop if | inferred: Files in scope | omitted: Allowed inputs, Required outputs
+
+### 2026-05-26 — Implementation of 3 pre-drafted concurrent-session-detection plans
+- **Commands used:** /prime, /session-start, /session-plan, /qc-pass (4x), /risk-check (2x), /consult (Function B), /wrap-session
+- **Iterations:** 0 (no drafting; all execution from pre-drafted plan files)
+- **Decisions logged:** 1 (Plan 2 multi-decision block — 4 sub-decisions: option-b marker file, mitigation 3 correction, minimal-infra-subset for SO additions, fact correction to SO risk #2)
+- **QC cycles:** 4 (session-plan GO; Wave 3 mechanical GO; Wave 1 mechanical GO; Wave 2 REVISE → 2 self-resolved fixes per QC → Triage Auto-Loop discipline)
+- **Gates:** 2 (1 changed) — plan-approval:confirmed, content-review:changed
+- **Mandate fields:** specified: work_scope, exit_condition, out_of_scope, stop_if | inferred: files_in_scope | omitted: allowed_inputs, required_outputs
