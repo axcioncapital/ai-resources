@@ -2,7 +2,9 @@
 friction-log: true
 model: sonnet
 ---
-Analyze all clusters for the current section in parallel. Runs cluster analysis and memo refinement for every cluster simultaneously, then presents all refined memos for a single operator review gate.
+Analyze all clusters for the current section in parallel (entry into Pass 3 — Evidence Sufficiency Check). Runs cluster analysis and memo refinement for every cluster simultaneously, then presents all refined memos for a single operator review gate.
+
+After operator approval of refined memos, the next command in the sequence is `/run-sufficiency` (Pass 3 sufficiency adjudication via claim-permission gate, country-parity check, stop-conditions, source-conflict resolution, gate-clearance emission). Only after `/run-sufficiency` emits a gate-clearance file may `/run-analysis` and `/run-synthesis` proceed — those commands fail-safe-exit if the gate-clearance file is absent. See `reference/stage-instructions.md` § Pass 3 for the contract.
 
 Prerequisite check: Read the step-2.4-checkpoint. Verify that research extracts for this section exist in `/execution/research-extracts/{section}/` with APPROVED verdicts. If any are missing or flagged, abort and report.
 

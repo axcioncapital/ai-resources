@@ -1,6 +1,14 @@
 # Quality Control Standards — {{PROJECT_TITLE}}
 
+> **Planned additions (deferred — read on first edit).** This file is currently in a slimmed state. The following rule sections are designed to land but not yet present: source-class-substitution rules, country-parity enforcement, claim-permission classes, source-diversity matrix, stop-conditions for research subtasks, source-conflict resolution. Projects that have run the source-pipeline workflow fix may reference these by the identifiers S-02 / S-03 / S-06 / S-07 / S-13 / S-19 from that fix's per-remediation spec. Any future edit to this file must read the current state first — do not author against a pre-existing baseline assumed to be canonical.
+
 > **When to read this file:** When running QC checks, applying fixes to prose, or handling evidence gaps. Not needed for every turn.
+
+## Evidence-First Principle (Project Operating Rule)
+
+Do not optimize for answering the research question. Optimize for finding the strongest available evidence class. If only weak or proxy evidence is available, preserve the weakness in the output. Do not compensate for weak evidence with stronger prose.
+
+This principle takes precedence over all other Stage 2 and Stage 3 behavior rules. When in conflict with any other rule, this principle wins.
 
 ## Core QC Principles
 

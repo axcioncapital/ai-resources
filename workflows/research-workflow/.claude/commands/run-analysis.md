@@ -2,11 +2,28 @@
 friction-log: true
 model: sonnet
 ---
-Execute the cross-cluster Stage 3 pipeline.
+Execute the cross-cluster Stage 3 pipeline (Pass 4 — Synthesis).
 
 Prerequisite check: Verify refined cluster memos exist in `/analysis/cluster-memos/` for all clusters. Verify all have been reviewed (check QC log).
 
 Skill loading: For each skill step below, read the skill file from `/ai-resources/skills/[skill-name]/SKILL.md` and follow its instructions.
+
+---
+
+### Step 0: Pre-flight — Gate-Clearance Check (FAIL-SAFE)
+
+This command is Pass 4 of the four-pass research model. It requires the gate-clearance file produced by `/run-sufficiency` (Pass 3 Phase F). Without that file, this command will NOT proceed — fail-safe behavior is the locked default; there is no warn-and-proceed mode.
+
+1. Read `/analysis/gate-clearance/{section}/{section}-gate-clearance.md`.
+2. **If the file is absent:** exit. Emit:
+   > `/run-analysis` requires `/analysis/gate-clearance/{section}/{section}-gate-clearance.md`, produced by `/run-sufficiency` (Pass 3 Phase F). The file is absent. Run `/run-sufficiency {section}` first, then re-invoke `/run-analysis {section}`.
+3. **If the verdict is `BLOCKED`:** exit. Emit:
+   > Gate-clearance verdict is BLOCKED for section {section}. The per-cluster or section-level NOT-SUPPORTED ratio exceeds project thresholds (see `per_cluster_ratios` in the gate-clearance file). Address the failing clusters, re-run `/run-sufficiency {section}`, then re-invoke. Operator override possible via `verdict: OPERATOR-OVERRIDE` with signed `override_rationale:` — see `/run-sufficiency` § Operator-override on `BLOCKED` verdict.
+4. **If the verdict is `CLEARED-WITH-CAVEATS`:** proceed. Capture the `caveats:` list and attach it to the synthesis brief passed to downstream skills (Step 3.5 directive drafter, Step 3.7 cluster synthesis drafter).
+5. **If the verdict is `OPERATOR-OVERRIDE`:** treat as `CLEARED-WITH-CAVEATS`. Capture the `override_rationale:` field, attach to the synthesis brief, AND auto-append a one-line entry to `/logs/decisions.md` recording the override and rationale.
+6. **If the verdict is `CLEARED`:** proceed without caveats.
+
+The gate-clearance verdict is the load-bearing contract between Pass 3 and Pass 4. Do not skip this step; do not attempt to bypass with a sentinel file or environment variable.
 
 ---
 

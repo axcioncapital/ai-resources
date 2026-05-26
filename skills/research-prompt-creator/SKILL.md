@@ -88,14 +88,19 @@ For each session, produce:
 The prompt must be self-contained. It includes the following elements, in order:
 
 **Always present:**
-1. **Scope block** — a clearly labeled standalone block with all scope parameters as literal values (geography, deal size, fund size, time frame, industry focus). Placed at the top of the prompt so the model references it throughout.
-2. **Context pack block** — a compact, section-level orientation block, delimited by `--- CONTEXT PACK ---` / `--- END CONTEXT PACK ---` markers. Placed after the scope block, before the session intro. **Identical across all sessions in the section.** Contains four lines only: (1) project background, (2) one-line section objective (what the section maps, not what individual sessions investigate), (3) analytical framework, (4) scope reference. Do not include hypotheses, content map areas, prior findings from other sections, or session-specific framing — those belong in the **session intro paragraph** (free text between the context pack and the first directive). Do not duplicate scope parameters — include a one-line reference to the standalone scope block. The scope block is authoritative for all scope values.
-3. **Per-question research directives** — translated from Answer Spec components into plain-language directives. Each directive header must include the Answer Spec component ID so downstream tools (research-extract-creator) can match outputs to specs. Format: `Directive 1 (Q1-A01) — [Short title]`. Load `references/prompt-construction-guide.md` for translation patterns, output format templates, and depth signal language. If this file is unavailable, use the translation principles and format templates described in the prompt construction rules below.
+1. **Evidence-First preamble** — a short verbatim preamble citing the project's Evidence-First Principle (from `reference/quality-standards.md` § Evidence-First Principle). Use this exact text:
+
+   > Per the Evidence-First Principle: find the strongest available evidence class. Do not synthesize a plausible answer if direct evidence is unavailable; return a labeled gap instead. Do not compensate for weak evidence with stronger prose.
+
+   This preamble is project-level boilerplate, not per-question custom text. It sits at the very top of the prompt — above the Scope block and above all directives — so the model encounters the precedence rule before any question framing.
+2. **Scope block** — a clearly labeled standalone block with all scope parameters as literal values (geography, deal size, fund size, time frame, industry focus). Placed below the Evidence-First preamble so the model references it throughout.
+3. **Context pack block** — a compact, section-level orientation block, delimited by `--- CONTEXT PACK ---` / `--- END CONTEXT PACK ---` markers. Placed after the scope block, before the session intro. **Identical across all sessions in the section.** Contains four lines only: (1) project background, (2) one-line section objective (what the section maps, not what individual sessions investigate), (3) analytical framework, (4) scope reference. Do not include hypotheses, content map areas, prior findings from other sections, or session-specific framing — those belong in the **session intro paragraph** (free text between the context pack and the first directive). Do not duplicate scope parameters — include a one-line reference to the standalone scope block. The scope block is authoritative for all scope values.
+4. **Per-question research directives** — translated from Answer Spec components into plain-language directives. Each directive header must include the Answer Spec component ID so downstream tools (research-extract-creator) can match outputs to specs. Format: `Directive 1 (Q1-A01) — [Short title]`. Load `references/prompt-construction-guide.md` for translation patterns, output format templates, and depth signal language. If this file is unavailable, use the translation principles and format templates described in the prompt construction rules below.
 
 **Conditional:**
-4. **Epistemic frame** — include when multiple directives share a research stance (e.g., "Focus on how this works in practice, not idealized models"). Set once as a session-level framing sentence; do not restate per directive. Omit when directives have no shared epistemic orientation.
-5. **Output format instructions** — include for structured/quantitative directives (prescribe tables, columns). Omit for analytical/qualitative directives — state the deliverable and let the model choose format.
-6. **Depth/priority signals** — include when questions within a session have unequal importance. Use operative effort signals (directive ordering, minimum search allocations) and sufficiency thresholds. Omit when all directives in a session have equal weight.
+5. **Epistemic frame** — include when multiple directives share a research stance (e.g., "Focus on how this works in practice, not idealized models"). Set once as a session-level framing sentence; do not restate per directive. Omit when directives have no shared epistemic orientation.
+6. **Output format instructions** — include for structured/quantitative directives (prescribe tables, columns). Omit for analytical/qualitative directives — state the deliverable and let the model choose format.
+7. **Depth/priority signals** — include when questions within a session have unequal importance. Use operative effort signals (directive ordering, minimum search allocations) and sufficiency thresholds. Omit when all directives in a session have equal weight.
 
 **Prompt construction rules:**
 
@@ -196,6 +201,7 @@ If provided information is insufficient to make a confident decision, say so. It
 
 Before delivering, verify:
 
+- Every session prompt begins with the Evidence-First preamble (verbatim text per Step 2b element 1), above the Scope block
 - Every research question from the Execution Manifest appears in exactly one session prompt
 - Session plan table matches the Execution Manifest's groupings and dependencies
 - Parallel execution opportunities from the manifest are reflected in the document
