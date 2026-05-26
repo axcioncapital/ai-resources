@@ -23,6 +23,7 @@
 ├── ai-resources/                                # shared resource library (sub-repo, --add-dir)
 ├── harness/                                     # harness dev project (separate concern)
 │   └── prep/                                    # Phase 3 harness preparation material (templates, checklists, hardening log)
+├── knowledge-bases/                             # standalone Obsidian KB vaults for cross-project reuse, deployed via /deploy-kb
 ├── logs/                                        # workspace-level logs (decisions, innovation, sessions)
 ├── projects/                                    # research/advisory projects (each = sub-repo; current set varies)
 ├── reports/                                     # workspace-level audit reports
@@ -100,6 +101,7 @@
 | **Audit artifact** (dated audit/checkup output) | `ai-resources/audits/<name-or-subdir>/<YYYY-MM-DD>-<slug>.md` | Audit-specific subdirs (e.g., `audits/risk-checks/`) keep the root tidy. |
 | **Standalone prompt** (consumed by non-Claude tools) | `ai-resources/prompts/<name>.md` | Read directly by GPT-5/Perplexity flows. |
 | **Workflow template** (graduated from `workflows/active/`) | `ai-resources/workflows/<name>/` | Graduated via `/graduate-resource`. |
+| **Obsidian KB vault** (cross-project reuse) | `knowledge-bases/<name>/` | Deployed via `/deploy-kb` standalone option. Project-scoped vaults instead live under `projects/<project>/vault/`. |
 | **Style reference** (style/formatting source) | `ai-resources/style-references/<name>.md` | Loaded by prose/formatting skills. |
 | **Skill request brief** (intake) | `ai-resources/inbox/<slug>-brief.md` | Moved to `inbox/archive/` once `/create-skill` fulfills it. |
 | **Plan artifact** (retained from a session) | `ai-resources/plans/<name>.md` (in-repo) **or** `~/.claude/plans/<auto-slug>.md` (Claude Code plan-mode default; outside repo) | Retain in-repo when load-bearing; otherwise let plan-mode default location apply. |

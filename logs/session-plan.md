@@ -1,60 +1,57 @@
-# Session Plan — 2026-05-25
+# Session Plan — 2026-05-26
 
 ## Intent
-Implement Sonnet 200k plan Tasks 1+2+3 (compaction checkpoints, qc-reviewer cap, session-start optional fields) sequenced with a commit after each; Task 5 stretch if context permits.
+Implement three pre-drafted plans — (1) mechanical sibling-entry sweep bash check in `/prime` Step 1a, (2) live concurrent-session mtime guard in `/session-start` Step 0.5, and (3) `repo-architecture.md` docs update for `knowledge-bases/`. `/risk-check` at plan-time required on plans 1 + 2 per their own briefs; plan 3 is a docs-only edit exempt per `docs/audit-discipline.md`.
 
 ## Class
-execution
+mixed (execution dominant) — plans 1 + 3 are mechanical; plan 2 carries one judgment call (own-session vs foreign-session write distinction).
 
 ## Model
-sonnet — → /model sonnet (currently on opus; tasks are spec-following doc/agent/command edits)
+opus — match (active session is `claude-opus-4-7[1m]`). Judgment work is plan 2's mitigation choice + synthesizing two `/risk-check` and three `/qc-pass` returns.
 
 ## Source Material
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/plans/sonnet-200k-efficiency-implementation.md` (the plan being executed)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/sonnet-200k-efficiency-diagnostic-2026-05-25.md` (diagnostic context per plan's pre-execution gate)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/compaction-protocol.md` (Task 1 target)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/wrap-session.md` (Task 1 + Task 3 target)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/session-plan.md` (Task 1 target)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/agents/qc-reviewer.md` (Task 2 target)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/agents/refinement-reviewer.md` (Task 2 parity-check reference)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/session-start.md` (Task 3 target)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/audit-discipline.md` (risk-check change-class reference for Tasks 2 and 3)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/plans/prime-step-1a-sibling-sweep.md`
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/plans/concurrent-session-live-detection.md`
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/plans/repo-architecture-knowledge-bases-update.md`
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/prime.md` (target for Plans 1 + 2)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/session-start.md` (target for Plan 2)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/repo-architecture.md` (target for Plan 3)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/audit-discipline.md` (risk-class reference for /risk-check)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-brand-book/logs/improvement-log.md` (annotate source entries for Plans 1 + 2)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/logs/improvement-log.md` (annotate source entry for Plan 3)
 
 ## Findings / Items to Address
-1. **Task 1** — `sonnet-200k-efficiency-implementation.md` §32–59. Append "Named checkpoints" section to `compaction-protocol.md` with 4 checkpoints (post-inspection, post-implementation, post-QC, pre-closeout); each names required on-disk state, recommended target file, and `/clear` vs `/compact` preference. Add one-line pointers in `wrap-session.md` Step 0.5 (after the existing scratchpad body) and in `session-plan.md` (identify correct section before inserting). Preserve the two existing compaction-protocol rules verbatim.
-2. **Task 2** — `sonnet-200k-efficiency-implementation.md` §63–84. Add explicit output cap (max 10 findings) to `qc-reviewer.md` agent body. Required output shape: pass/fail verdict + findings list + per-finding fix recommendation; optional full notes to `audits/working/`. Read `refinement-reviewer.md` first to confirm parity or divergence with its cap before committing. Sanity-check by reviewing last 3 `/qc-pass` invocations to confirm no legitimate run exceeded 10 findings.
-3. **Task 3** — `sonnet-200k-efficiency-implementation.md` §88–124. Add two new optional mandate fields to `session-start.md`: `allowed_inputs:` (authorized read paths) and `required_outputs:` (expected artifacts). Both optional (preserves OP-2 autonomy default). Extend Step 3 bullet-format with two new optional bullets (`- Allowed inputs:` / `- Required outputs:`) written only when populated; update Step 3 parse-contract note to name the new labels. Update `wrap-session.md` Step 7a coaching classification to recognise the new bullet labels. `/qc-pass` after edit.
-4. **Task 5 (stretch)** — `sonnet-200k-efficiency-implementation.md` §137–148. New file `docs/heavy-read-discipline.md` covering: which commands legitimately read archive/historical directories (`/log-sweep`, `/wrap-session`, `/repo-dd`, `/friday-checkup`) and why; default read floor for normal sessions (tied to `[HEAVY]` guardrail, not a mandate field); what NOT to read by default in normal sessions. Documentation-only; no risk-check class.
+
+1. **Plan 1 — `/prime` Step 1a sibling-entry sweep (mechanical enforcement).** [`plans/prime-step-1a-sibling-sweep.md`] Current sub-step is prose; the executing model can silently skip the scan (the 2026-05-26 brand-book session was live evidence). Replace prose with a discrete `SIBLING_COUNT=$(grep -c "^## ${TODAY}" logs/session-notes.md)` bash block in Step 1a. Existing Step 6 emission contract preserved verbatim. Source: brand-book improvement-log § 2026-05-26.
+2. **Plan 2 — `/session-start` Step 0.5 mtime-delta guard (live concurrent-session detection).** [`plans/concurrent-session-live-detection.md`] Current `/prime` → `/session-start` chain has no live signal — the sibling-entry sweep is retrospective only. Add a new Step 0.5 to `session-start.md` that captures `session-notes.md` mtime, computes delta against `NOW`, and pauses with a 2-option prompt when DELTA < 120s. **Open design choice (judgment call):** distinguish own-session write from foreign-session write via (a) read-back content match, (b) marker file in `logs/`, or (c) tail-content authorship check. Plan defers the choice to the implementation session; this session will pick and document. Also: one-line advisory note added to `/prime` Step 8a. Source: brand-book improvement-log § 2026-05-26 deeper structural gap.
+3. **Plan 3 — `repo-architecture.md` `knowledge-bases/` documentation update.** [`plans/repo-architecture-knowledge-bases-update.md`] Workspace-root tree omits the `knowledge-bases/` top-level directory; canonical-homes table has no row for cross-project Obsidian KB vaults. Add one tree entry (alphabetical between `harness/` and `logs/`) + one canonical-homes table row capturing the implicit "cross-project reuse → `knowledge-bases/{name}/`; project-scoped → `projects/{name}/vault/`" principle. Verification: confirm `pe-kb-vault/` is the current sole vault before writing the framing. Source: ai-resources improvement-log § 2026-05-26.
 
 ## Execution Sequence
-Per plan §168–180 — risk-ordered (foundational → dependent), but Tasks 1–3 are technically independent so any may be skipped on blocker without halting downstream:
 
-1. **Task 1** (docs-only, zero risk, highest leverage). Read `compaction-protocol.md`, `wrap-session.md`, `session-plan.md` to locate insertion points. Apply edits. Verify: 4 checkpoints named, pointers landed in both consuming commands, two existing rules preserved. Commit.
-2. **Task 2** (canonical-agent edit, optional risk-check). Read `refinement-reviewer.md` for parity check. Plan-time `/risk-check` (operator may skip per plan §68 — invoke given auto-symlink blast radius across every project). Apply edit. Verify: cap present in agent body, output shape spec matches plan. End-time `/risk-check`. Commit.
-3. **Task 3** (command edit with two-end parse-contract update). Plan-time `/risk-check` recommended (parse-contract tripwire — see Risk section). Read `session-start.md` Step 3 + `wrap-session.md` Step 7a to confirm insertion points. Apply edits to both files. `/qc-pass` on the changes. Verify: two new optional bullet labels in Step 3, parse-contract note updated, Step 7a recognises new labels, legacy behavior unchanged when fields omitted. End-time `/risk-check`. Commit.
-4. **Task 5 (stretch — context-gated)** — execute only if ≥40% context remaining after Task 3 commit. Otherwise defer to fresh session. Create new file; no edits to existing commands needed. Commit.
+Plans are independent — no inter-dependency. Recommended order: lowest-risk first to bank a clean commit before tackling the more complex plan 2.
 
-Between-gate summary (per workspace CLAUDE.md): one-line summary in chat after each commit naming what shipped and what's next.
+1. **Wave 3 — Plan 3 (docs-only, no `/risk-check`).** Read current `repo-architecture.md`; verify `knowledge-bases/` contents via `ls`; apply Edits 1 + 2 (tree entry + canonical-homes row) in one `Edit` pass; annotate ai-resources improvement-log entry as applied + Verified; commit. **Verify:** the two additions appear in the file; no existing content changed. **`/qc-pass`** after edit; commit on no REVISE.
+2. **Wave 1 — Plan 1 (mechanical edit + `/risk-check`).** Run `/risk-check` at plan-time using Plan 1's pre-filled brief; expected GO or PROCEED-WITH-CAUTION. Edit `/prime` Step 1a: inject the `SIBLING_COUNT=$(grep -c …)` bash sub-step at end of the *Git cross-check* block; collapse the existing prose sibling-sweep paragraph to a single explanatory line. Annotate brand-book improvement-log entry as applied + Verified. **Verify:** new bash sub-step present; prose paragraph collapsed; Step 6 emission contract unchanged. **`/qc-pass`** after edit; commit on no REVISE.
+3. **Wave 2 — Plan 2 (design choice + structural edits + `/risk-check`).** Pick the own-vs-foreign-write distinction (a/b/c) — inline decision, surface the choice with rationale before editing. Run `/risk-check` at plan-time using Plan 2's pre-filled brief (false-positive mitigation must be designed in); expected PROCEED-WITH-CAUTION with mitigation list. Add Step 0.5 to `/session-start` (mtime check + own-write distinction + 2-option pause prompt); add one-line advisory to `/prime` Step 8a. Annotate brand-book improvement-log entry as applied + Verified (single annotation covering both plans). **Verify:** Step 0.5 present with correct mtime/distinction logic; advisory note present in `/prime` Step 8a. **`/qc-pass`** after edit; commit on no REVISE.
+4. **Wrap.** After Waves 3 + 1 + 2 each committed, decide whether to `/usage-analysis` inline or defer to `/wrap-session`. Remind operator to push (push gate from prior session is still open — 7 unpushed commits will be 10+ by end of this session).
 
 ## Scope Alternatives
-- **Min:** Task 1 only (~15–30 min, zero risk, docs-only). Use if context unexpectedly constrained at session-start.
-- **Recommended:** Tasks 1 + 2 + 3 (~65–130 min, full required set per plan).
-- **Max:** Tasks 1 + 2 + 3 + 5 (~85–160 min, includes stretch doc).
+
+- **Min scope:** Plan 3 only (docs-only, zero risk, ~5 min). Banks documentation accuracy; leaves Plans 1 + 2 for a follow-up session.
+- **Recommended scope:** All three plans, in the order above. Total expected: 2 `/risk-check` invocations + 3 `/qc-pass` invocations + 3 commits + improvement-log annotations.
+- **Max scope:** All three plans + immediate `/usage-analysis` + push. Stretches into push approval territory and conflates the implementation session with the deferred push gate; recommended only if scope holds and context is unfrayed at the end of Wave 2.
 
 ## Autonomy Posture
-**Full autonomy** — per workspace CLAUDE.md default. Plan is well-specified; per-task acceptance criteria are observable; between-gate summaries provide visibility without blocking.
+Gated.
 
 **Stop points:**
-- Plan-time `/risk-check` verdict for Tasks 2 and 3 (PROCEED-WITH-CAUTION mitigations must be applied before edit; STOP verdict pauses).
-- `/qc-pass` REVISE verdict on Task 3 (after the parse-contract edit).
-- Context check before Task 5 (stretch decision — defer to fresh session if context lean).
-- Otherwise per workspace autonomy rules (no session-specific additions).
+- After Plan 1 `/risk-check` plan-time → NO-GO halts Wave 1; PROCEED-WITH-CAUTION applies mitigations inline.
+- Before Plan 2 implementation → present the (a) / (b) / (c) mitigation choice with rationale; pick the recommended one and proceed (per CLAUDE.md decision-point posture — no opinion-seeking ask).
+- After Plan 2 `/risk-check` plan-time → NO-GO halts Wave 2; PROCEED-WITH-CAUTION applies mitigations inline.
+- After any plan's `/qc-pass` REVISE that cannot be self-resolved.
+- Context-lean check at end of Wave 1 — if context is fraying, defer Wave 2 to a follow-up session per the workspace context-constraint deferral rule.
 
 ## Risk
-**Run `/risk-check` after this plan is approved (plan-time gate) for Tasks 2 and 3; run again before commit (end-time gate) per `docs/audit-discipline.md` two-gate model.**
+Run `/risk-check` at plan-time before each of Wave 1 (Plan 1) and Wave 2 (Plan 2). Run again at end-time before commit on each — unless documented end-time skip criteria are met (see `feedback_end_time_risk_check_skip` memory: plan-time gate ran, mitigations applied, QC clean, drift bounded). Plan 3 is docs-only and not on the canonical change-class list per `docs/audit-discipline.md` — no `/risk-check` required.
 
-- **Task 1** — docs-only edit; not in any structural change class. No `/risk-check` required.
-- **Task 2** — edit to existing canonical agent (`qc-reviewer.md`). Not strictly in enumerated change classes, but blast radius extends to every project running `/qc-pass` via auto-symlink. Plan §68 calls `/risk-check` "optional — invoke given the auto-symlink blast radius." Treating as a soft yes.
-- **Task 3** — command edit touching two files with a coupled parse-contract (`session-start.md` Step 3 writes labels, `wrap-session.md` Step 7a reads them). Per the Step 6 tripwire ("edits that reorder operations against shared state"), this is an additive change rather than a reorder — but the two-end coupling and the cross-session-artifact effect (mandate fields land in `logs/session-notes.md` and are read by a downstream command) make `/risk-check` prudent.
-
-Task 5 (stretch, if executed) — new docs file, no structural change class. No `/risk-check` required.
+**Tripwire check (Plan 2):** Step 0.5 reorders operations against `session-notes.md` shared state at `/session-start` entry — qualifies as automation-with-shared-state-effects per the Step 6 tripwire. `/risk-check` is required regardless of any "existing-command refactor" framing.
