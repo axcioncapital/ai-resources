@@ -4,7 +4,7 @@ model: sonnet
 ---
 Execute the Stage 2 research pipeline for the current section (Pass 1 — Source Discovery + Pass 2 — Evidence Extraction).
 
-Research execution happens in the Research Execution GPT (primary) and Perplexity (secondary), both operated manually by the operator. This command handles manifest creation (Step 2.0), source-class mapping (Step 2.0b — invocable when project provides `reference/source-class-hierarchy.md`), prompt creation (Step 2.1), extract creation (Step 2.3), and extract verification (Step 2.4). Step 2.2 (research execution itself) is manual. Pass 2's transaction-table-builder step (Step 2.3b) is deferred — it lands in a later bundle of the source-pipeline workflow fix.
+Research execution happens in the Research Execution GPT (primary) and Perplexity (secondary), both operated manually by the operator. This command handles manifest creation (Step 2.0), source-class mapping (Step 2.0b — invocable when project provides `reference/source-class-hierarchy.md`), prompt creation (Step 2.1), extract creation (Step 2.3), transaction-table build (Step 2.3b — conditionally invocable when the project has named-transaction content in scope), and extract verification (Step 2.4). Step 2.2 (research execution itself) is manual.
 
 **Four-pass model anchor.** This command produces facts-only extracts. No synthesis or claim-permission verdicts in Stages 2; those happen in Pass 3 (`/run-cluster` + `/run-sufficiency`) and Pass 4 (`/run-analysis` + `/run-synthesis`). See `reference/stage-instructions.md` § Stage 2 + § Stage 3 for the principle and pass sequence.
 

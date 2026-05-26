@@ -54,7 +54,39 @@ Any other change — rewording, tightening, reordering, smoothing, compressing �
 
 Process sequentially. Do not skip steps.
 
-### Step 0 — Semantic Matching (Mode 2 only)
+### Step 0a — Operator-Approval Pre-flight (always runs)
+
+Before any conversion work, verify that an operator-approval marker exists at:
+
+```
+report/chapters/{section}/{section}-chapter-NN-OPERATOR-APPROVED.md
+```
+
+The marker is a single-line sidecar file written by `/run-report` when the operator's reply to the Step 4.1b chapter-draft gate contains the literal token `approved` (case-insensitive whole-word match, or as the first word of the reply). Operators may also create the file manually if they prefer to write a note before replying.
+
+**Marker file format (exactly one line):**
+
+```
+APPROVED: YYYY-MM-DD-HH-MM | <optional operator note>
+```
+
+The marker's **content** is logged but not parsed for control flow — file presence alone clears the gate. The content is preserved verbatim into the conversion's run log for audit.
+
+**Behavior:**
+- **Marker present** → proceed to Step 0b (or Step 1 in Mode 1).
+- **Marker absent** → refuse to run. Emit the exact message:
+
+  > Operator approval not confirmed. Run `/run-report` or re-invoke after operator `approved` response.
+
+  Do not produce a partial conversion. Do not fall back to "ask the operator inline" — the file-based marker is the canonical, deterministic signal. (The token-in-turn alternative was dropped in v4 — sub-agent skills cannot reliably read prior-turn content from the invoking session.)
+
+**Lifecycle (not this skill's responsibility, documented for clarity):** `/run-report` writes the marker on operator `approved`; `/run-report` archives the marker to `report/chapters/{section}/.archive/{section}-chapter-NN-OPERATOR-APPROVED-{timestamp}.md` when citation conversion completes successfully. This skill does NOT move or delete the marker; it only reads.
+
+**Marker .gitignore policy.** Projects may choose to gitignore the `report/chapters/{section}/.archive/` subtree to keep archived markers out of source control (recommended for projects that produce many chapters). The active (non-archived) marker file at `report/chapters/{section}/{section}-chapter-NN-OPERATOR-APPROVED.md` SHOULD remain visible in the working tree during the gate. Per-project choice; this skill does not enforce.
+
+**Two-end string-literal contract.** The literal token `approved` (the operator's reply trigger) and the marker filename suffix `-OPERATOR-APPROVED.md` are both load-bearing strings shared between `/run-report` (writer) and this skill (reader). Changing either string requires editing both files in the same commit — they are an atomic contract.
+
+### Step 0b — Semantic Matching (Mode 2 only)
 
 Run only when prose lacks claim IDs.
 

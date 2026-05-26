@@ -284,6 +284,26 @@ Produce report-quality narrative prose with claim IDs preserved inline (e.g., `[
 
 If supplementary items were used, include a brief appendix listing which supplementary items were integrated and where, so `citation-converter` can handle them appropriately.
 
+**Draft file path.** Chapter drafts are written to `report/chapters/{section}/{section}-chapter-NN-draft.md` — a working path the operator can edit directly between chapter-prose-reviewer output and citation conversion. The `-draft.md` suffix is canonical (separate from the canonical chapter file at `{section}-chapter-NN.md`, which `citation-converter` produces downstream). See the project's `reference/file-conventions.md` for the full chapter-file lifecycle (`-draft.md` → operator edits + `-OPERATOR-APPROVED.md` marker → `chapter-revision-applier` produces `-revised.md` → `citation-converter` produces canonical `{section}-chapter-NN.md`).
+
+**Reviewer-Findings footer block.** The chapter draft includes a footer block, titled `§ Reviewer Findings Summary`, summarizing the **top 3 priority flags** from the `chapter-prose-reviewer`'s independent review report. The footer is for operator-review benefit only — it aids the inline-edit pass by surfacing the reviewer's most load-bearing findings inside the same file the operator is editing. Format:
+
+```markdown
+---
+
+## § Reviewer Findings Summary
+
+> _Reviewer-only footer. Stripped automatically by `chapter-revision-applier` before citation conversion. Operator may delete during inline edit if no longer useful._
+
+1. **[priority-N tag]** — short finding summary (one sentence)
+2. **[priority-N tag]** — short finding summary (one sentence)
+3. **[priority-N tag]** — short finding summary (one sentence)
+
+Full review report: `report/chapters/{section}/{section}-chapter-NN-review.md`.
+```
+
+If `chapter-prose-reviewer` produces fewer than 3 priority flags, list what exists. If the reviewer report is absent at chapter-write time, omit the footer block entirely (the chapter is still write-complete; the operator's inline-edit pass has no reviewer-aided shortcut but the gate still fires per S-16 sequence).
+
 ## Constraints
 
 ### Claim ID Completeness
@@ -306,6 +326,21 @@ Every sentence in the output prose must trace to one or more claim IDs from the 
 **Exception:** Sentences stating the research question or section objective derive from the architecture, not from evidence claims — these are not orphans.
 
 **Supplementary evidence and orphan testing:** Sentences sourced from SUPPLEMENTARY items are not orphans — they trace to a supplementary item. Sentences acknowledging known absences (from `Status: No usable result` items) also derive from the enrichment brief's gap identification and are not orphans.
+
+### Named-Transaction Size-Lens Verification
+
+When the chapter draft cites a named transaction (target/buyer named explicitly), verify the transaction against the project's transaction table at `execution/transaction-table/{section}/{section}-transaction-table.md`:
+
+1. **Existence check.** The named transaction must appear as a row in the table (matched by Target + Buyer + Date, or by row ID if the cluster-memo claim cites one).
+   - If absent: flag the citation — `[TRANSACTION NOT IN TABLE: <target> / <buyer> / <date>]` — and halt that paragraph until the row exists. Do not silently allow the citation. The operator can re-run `transaction-table-builder` if the deal is genuinely in scope.
+2. **Size-lens consistency.** The claim's size-lens framing (the prose's implicit or explicit size band — "lower-mid-market," "above-lens," "in-band," etc.) must match the row's `Size-lens` column value.
+   - `CONFIRMED_IN_LENS` and `LIKELY_IN_LENS` rows may support lower-mid-market / in-band claims.
+   - `ABOVE_LENS` rows may NOT support lower-mid-market claims — flag the claim and either reframe the prose (the deal is illustrative of a different pattern) or drop the citation.
+   - `POSSIBLY_IN_LENS` and `UNKNOWN` rows may support in-band claims only with explicit hedging in the prose ("subject to undisclosed EV").
+
+This check is the chapter-write-time half of S-05's size-lens governance. The cluster-memo-refiner's Check 7 is the upstream half (same-pattern threshold). Together they prevent above-lens deals from supporting lower-mid-market conclusions — the documented root cause of named-deal drift.
+
+**Degraded mode (transaction table absent):** Emit a one-line warning at chapter-write start (`transaction-table absent — named-transaction size-lens checks skipped`) and proceed without the existence + consistency checks. Operator is responsible for the size-lens check by inspection in the operator-gate (S-16).
 
 ### Length Discipline
 
@@ -335,6 +370,9 @@ Before delivering, verify:
 - [ ] No `[CITATION NEEDED]` tags for claims with known sources — if a claim has a traceable source but no Claim ID in the input, halt and flag for upstream ID assignment (per Claim ID Invariant in quality-standards.md)
 - [ ] Supplementary tier discipline: no SUPPLEMENTARY item used to support, prove, or substantiate a core analytical claim
 - [ ] Known absences addressed: every `Status: No usable result` item reviewed; decision (acknowledged or skipped) recorded
+- [ ] Named-transaction citations verified against the transaction table (existence + size-lens consistency); above-lens rows not used to support lower-mid-market claims
+- [ ] Draft written to `report/chapters/{section}/{section}-chapter-NN-draft.md` (not the canonical `{section}-chapter-NN.md` path — that is the citation-converter's output)
+- [ ] Reviewer-Findings footer block present at end of draft (top 3 priority flags from `chapter-prose-reviewer`), or footer omitted if reviewer report absent at chapter-write time
 
 ## Edge Cases
 

@@ -59,6 +59,23 @@ Write output to the project's working directory using the naming convention: `re
 | **M** | Single credible source, or multiple sources with shared editorial origin; indirect but reasonable evidence |
 | **L** | Single source of uncertain quality; inferential; tangential relevance; vendor/advocacy source without corroboration |
 
+### Evidence Freshness (per claim)
+
+Every extracted claim carries an `evidence_date` field — the date of the evidence supporting the claim (publication / event / disclosure date, not the access date). Use the format `YYYY-MM` (or `YYYY-MM-DD` if available). Where a claim is supported by multiple sources of different ages, record the date of the **most recent** load-bearing source.
+
+Apply the freshness classification using the table below. The class is canonical (exact-string match required by downstream consumers):
+
+| Class | Period | Permitted use |
+|---|---|---|
+| `CURRENT` | 2025–2026 | Current-state claims |
+| `RECENT` | 2023–2024 | Recent-trend claims |
+| `BASELINE` | 2020–2022 | Baseline or pre/post comparison only |
+| `STRUCTURAL` | Pre-2020 | Structural background only |
+
+(Periods are project-agnostic relative to the "current" rolling 2-year window declared in the project's `reference/known-limits.md` or equivalent reference doc. If the project does not declare a window, default to a current-window-equals-rolling-2-years posture and emit a one-line warning naming the absent declaration.)
+
+**Mismatch flag.** When a claim attempts to support a current-state assertion from `BASELINE` or `STRUCTURAL` evidence, attach a `[FRESHNESS-MISMATCH]` tag inline with the claim. Downstream consumers (`cluster-memo-refiner`, the deferred claim-permission gate) use this tag to downgrade or filter. This skill emits the flag; it does NOT downgrade — downgrade is the consumer's job.
+
 ### Independence Counting
 
 - Count editorially independent sources supporting each claim.

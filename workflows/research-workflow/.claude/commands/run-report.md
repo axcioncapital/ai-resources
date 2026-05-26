@@ -61,21 +61,48 @@ For each chapter:
 **c. Compliance QC [delegate-qc]**
    Read `/ai-resources/skills/report-compliance-qc/SKILL.md`. Launch a qc-gate sub-agent. Pass it: the skill content, the chapter draft, review findings from step (b), the architecture (`/report/architecture/{section}/{section}-architecture.md`), the style reference from `/report/style-reference/{section}/{section}-style-reference.md`, the scarcity register (`/execution/scarcity-register/{section}/{section}-scarcity-register.md`), and the chapter's section directive from `/analysis/section-directives/{section}/`. Task: run all four compliance check categories per the skill criteria. Return: QC verdict (PASS/FAIL), per-item findings.
 
-**d. Write chapter and checkpoint**
-   Write to `/report/chapters/{section}/{section}-chapter-NN.md`.
-   Write checkpoint to `/report/checkpoints/{section}/{section}-chapter-NN-checkpoint.md` Include: output file path, QC verdict, reviewer findings summary, scarcity items addressed.
+**d. Write chapter draft and checkpoint**
+   Write the chapter draft to `/report/chapters/{section}/{section}-chapter-NN-draft.md` (the `-draft.md` suffix is the canonical S-16 working path — the draft is operator-editable; the canonical citation-converted file is produced downstream at step (i)).
+   Write the review report (from step b) to `/report/chapters/{section}/{section}-chapter-NN-review.md` so the operator can reference it during inline edit.
+   Write checkpoint to `/report/checkpoints/{section}/{section}-chapter-NN-checkpoint.md`. Include: draft file path, review report path, QC verdict, reviewer findings summary, scarcity items addressed.
 
-**e. PAUSE** — Present chapter to the operator for review.
+**e. PAUSE — Operator review of chapter draft (Step 4.1b, blocking).** Emit verbatim, then HALT:
 
-**f. Bright-line check on any revisions:** Before applying revision feedback, check each proposed change against the three bright-line triggers (multi-paragraph scope, analytical claim alteration, sourced statement modification). Flag any that trigger. Apply only non-flagged changes automatically; flagged changes require explicit approval. Log flagged items to `/logs/decisions.md`.
+> Chapter draft and review report ready. Files:
+> - Draft: `/report/chapters/{section}/{section}-chapter-NN-draft.md`
+> - Review report: `/report/chapters/{section}/{section}-chapter-NN-review.md`
+>
+> **Operator review required before citation conversion begins.** Edit the draft directly at the path above. Use these inline HTML-comment markers:
+> - `<!-- improve: [idea] -->` — describes a change for `chapter-revision-applier` to apply to the surrounding paragraph
+> - `<!-- KEEP -->` — protects the surrounding paragraph from any change
+>
+> Reply with:
+> - `approved` — proceed to chapter-revision-applier and citation conversion as-is
+> - Deletion list / improvement directions — applied inline, then awaits final `approved`
 
-**g. Style reference verification (first chapter only):** After first chapter is approved, verify that the prose conforms to the operator-provided style reference at `/report/style-reference/{section}/{section}-style-reference.md`. The style reference is pre-locked — do not overwrite it. All chapters receive it as input in steps (a), (b), and (c).
+The halt is unconditional — no timeout, no auto-approve. When the operator's reply contains the literal token `approved` (case-insensitive whole-word match, or as the first word of the reply), `/run-report` writes the operator-approval marker file at `/report/chapters/{section}/{section}-chapter-NN-OPERATOR-APPROVED.md` with exactly one line of content:
 
-**h. H3 title generation.**
+```
+APPROVED: YYYY-MM-DD-HH-MM | <optional operator note (extracted from the reply after the approved token, or empty if the reply is just "approved")>
+```
 
-**i. Citation conversion [delegate]**
-   Read `/ai-resources/skills/citation-converter/SKILL.md`. Launch a general-purpose sub-agent. Pass it: the skill content and the approved chapter prose. Task: execute citation conversion. Write cited version to `/report/chapters/{section}/{section}-chapter-NN-cited.md` and Citation Traceability Layer to `/report/chapters/{section}/{section}-chapter-NN-ctl.md`. Return: citation count, CTL summary.
+**Two-end string-literal contract.** The literal token `approved` (this command's trigger) and the marker filename suffix `-OPERATOR-APPROVED.md` are both load-bearing strings shared with `citation-converter` (which reads them at Step 0a). Changing either string requires editing both files in the same commit — they are an atomic contract.
+
+**f. Apply chapter revisions [delegate].** After the operator-approval marker is written (Step 4.1c per S-16), invoke `chapter-revision-applier` before citation conversion:
+   Read `/ai-resources/skills/chapter-revision-applier/SKILL.md`. Launch a general-purpose sub-agent. Pass it: the skill content and the chapter draft path `/report/chapters/{section}/{section}-chapter-NN-draft.md`. Task: apply inline `<!-- improve: -->` markers to their surrounding paragraphs, preserve `<!-- KEEP -->`-marked paragraphs, strip all markers + the reviewer-findings footer, write revised draft. Return: revised file path, list of markers applied, list of markers skipped (ambiguous scope or KEEP conflict), any warnings logged.
+   Verify the revised file exists at `/report/chapters/{section}/{section}-chapter-NN-revised.md` before proceeding.
+
+**g. Bright-line check on any revisions:** Before applying revision feedback, check each proposed change against the three bright-line triggers (multi-paragraph scope, analytical claim alteration, sourced statement modification). Flag any that trigger. Apply only non-flagged changes automatically; flagged changes require explicit approval. Log flagged items to `/logs/decisions.md`.
+
+**h. Style reference verification (first chapter only):** After first chapter is approved, verify that the prose conforms to the operator-provided style reference at `/report/style-reference/{section}/{section}-style-reference.md`. The style reference is pre-locked — do not overwrite it. All chapters receive it as input in steps (a), (b), and (c).
+
+**i. H3 title generation.**
+
+**j. Citation conversion [delegate]**
+   Read `/ai-resources/skills/citation-converter/SKILL.md`. Launch a general-purpose sub-agent. Pass it: the skill content and the **revised** chapter prose at `/report/chapters/{section}/{section}-chapter-NN-revised.md` (NOT the original draft — the revised file is what citation-converter consumes, per S-16 Step 4.2). Task: execute citation conversion. The skill's Step 0a pre-flight check verifies the operator-approval marker exists; if absent, the skill refuses to run and `/run-report` halts. Write cited version to `/report/chapters/{section}/{section}-chapter-NN-cited.md` and Citation Traceability Layer to `/report/chapters/{section}/{section}-chapter-NN-ctl.md`. Return: citation count, CTL summary.
    Write checkpoint to `/report/checkpoints/{section}/{section}-chapter-NN-cited-checkpoint.md`. Include: cited file path, CTL file path, citation count.
+
+**k. Archive operator-approval marker.** After citation conversion completes successfully, move the marker file from `/report/chapters/{section}/{section}-chapter-NN-OPERATOR-APPROVED.md` to `/report/chapters/{section}/.archive/{section}-chapter-NN-OPERATOR-APPROVED-{YYYY-MM-DD-HH-MM}.md`. This prevents a stale marker from triggering bypass on a re-run of the same chapter. If `.archive/` does not exist, create it. If the move fails for any reason, log the failure to `/logs/decisions.md` and continue — the move is bookkeeping, not load-bearing for the conversion itself.
    ▸ /compact — chapter-specific skill and input content no longer needed; moving to next chapter.
 
 ---
