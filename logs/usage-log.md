@@ -2,6 +2,37 @@
 
 <!-- entries below -->
 
+### 2026-05-26 | Acceptable
+
+**Task:** Friction-cleanup session — 5-wave execution landing HIGH-to-MED friction + carryover work; 4 [FADING-GATE]s confirmed (single-day record); /open-items filter, /session-plan Step 0 collision detection, and self-check rubric shipped across 5 commits.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~14 |
+| Files read | ~14 (re-reads: 0 full; partial tail-reads on session-notes.md ×4-5 non-overlapping) |
+| Files written/edited | ~12 |
+| Tool calls | ~72 |
+| Subagents | 7 |
+| Rework cycles | 3 |
+
+**Findings:**
+- **Rework — Moderate.** Initial session plan included 2 items targeting dead code (/prime Step 2 grep, /friday-act auto-QC already shipped). QC caught it but a pre-flight verify step in /session-plan plan-mode would have prevented the REVISE cycle. Estimated cost: 1 QC subagent + plan regeneration (~8-12k tokens).
+- **Rework — Moderate.** Wave C /session-plan Step 0 shipped with critical OUTPUT_TARGET wiring missing (change would have been INERT) plus 2 secondary defects. QC catch was load-bearing — saved a commit revert + redo, but 3 fixes in one wave indicates the initial draft skipped Step 7 cross-wiring. Pre-edit "verify the change actually lands" checklist for multi-step command edits would catch this earlier.
+- **Tool overhead — Moderate.** /consult system-owner output duplicated: appears in subagent tool result AND appended verbatim to Wave C risk-check report via Bash heredoc. ~3-5k tokens redundant. Flagged repeatedly across recent log entries (5+ sessions) — now a structural pattern, not a one-off.
+- **Context bloat — Minor.** logs/improvement-log.md read in full (~300 lines via Bash cat) when grep for specific patterns would suffice for /open-items cross-match. ~2-3k tokens.
+
+**Recommendation:** Add a pre-flight "target exists and is current" verification step to /session-plan plan-mode — for each proposed item, grep/Read the target before generating the plan. Would have eliminated 2 of 3 rework cycles this session and matches the verify-first posture that saved 1-2 hours on 2026-05-25 morning.
+
+**Estimated savings:** ~10-15k tokens per session (1 avoided QC REVISE cycle + 1 avoided plan regeneration). Over 10-20 sessions: 100-300k tokens, plus operator time saved on unnecessary REVISE wait-cycles. Larger gain is qualitative — verify-first prevents shipped-but-INERT defects.
+
+**Additional levers (ROI-ranked):**
+- **Path-reference SO output instead of inline duplication (~3-5k/session × ~every session it fires).** Higher cumulative savings than primary because it fires on every /risk-check → /consult chain; smaller per-session but structural. Flagged in 5+ prior entries — promotion to action overdue.
+- **grep-first discipline for improvement-log.md and similar 200+ line logs (~2-3k/session).** Lower per-session than primary; applies whenever /open-items or similar cross-match commands run.
+- **Codify end-time /risk-check skip criteria into /wrap-session preflight (~8-12k saved when skip applies).** Already memory-feedback'd; one-shot lever — formalize once, save every applicable session. Smaller than primary because it only fires when skip criteria match (~30-40% of sessions).
+- **Batch session-notes.md tail-reads in /prime to a single read with wider range (~1k/session).** Smallest per-session; mostly mitigated by R4 log-trio already — diminishing returns.
+
+Trend vs last 3 entries: **stability** — Acceptable rating consistent with the 2026-05-25 ×5 run; rework cycles slightly elevated (3 vs typical 1-2) but offset by zero re-reads and load-bearing QC catches. /session-plan Write-before-Read pattern recurred for the 6th consecutive session — escalating from "flagged" to "structural".
+
 ### 2026-05-25 | Acceptable
 
 **Task:** Implemented Sonnet 200k plan Tasks 1+2+3+5 (compaction-protocol checkpoints, qc-reviewer output cap, optional mandate fields with 3-reader parse contract, heavy-read-discipline doc). Task 3 ran full risk-check → consult → qc-pass chain that materially expanded scope from 2 to 4 files.

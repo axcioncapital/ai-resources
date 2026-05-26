@@ -107,3 +107,11 @@
 - **QC cycles:** 2 (both REVISE — pass-01 caught 2 already-shipped items; pass-02 caught 4 more already-shipped items + 6 substantive corrections; pass-03 verified clean by manual source-check before commit)
 - **Gates:** 10 (5 changed) — plan-approval:confirmed, content-review:changed, qc-disposition:changed, content-review:changed, qc-disposition:changed, plan-approval:confirmed, plan-approval:changed (off-spec deviation), plan-approval:confirmed (mandate), challenge-disposition:changed (/recommend invoked), plan-approval:confirmed (wrap option A)
 - **Mandate fields:** specified: work_scope, exit_condition, stop_if | inferred: files_in_scope | omitted: out_of_scope, allowed_inputs, required_outputs
+
+### 2026-05-26 — Friction-cleanup session (5 waves, 4 [FADING-GATE]s)
+- **Commands used:** /prime, /open-items, /qc-pass (×4), /session-start, /risk-check (×2), /consult, /wrap-session
+- **Iterations:** 1 (session-plan draft-v1 QC REVISE → draft-v2 operator-approved)
+- **Decisions logged:** 2 (Wave C scope-bounded mitigation + M-2 deferral; end-time /risk-check skip on Wave C)
+- **QC cycles:** 4 (session-plan v1 REVISE→fix; Wave B REVISE→self-resolved; Wave C REVISE→self-resolved on OUTPUT_TARGET wiring; Wave D GO)
+- **Gates:** 2 (1 changed) — plan-approval:changed, plan-approval:confirmed
+- **Mandate fields:** specified: work_scope, exit_condition, Out of scope, Stop if | inferred: Files in scope | omitted: Allowed inputs, Required outputs

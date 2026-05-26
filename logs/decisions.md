@@ -273,3 +273,32 @@ Mid-session, a concurrent session began overwriting `logs/session-plan.md` to ru
 4. Drift bounded: the executed change set matched the plan-time scope exactly (no expansion to additional files; no scope creep beyond the named mitigations).
 
 **Alternatives considered.** Run the end-time gate anyway for thoroughness — Rejected: would duplicate the plan-time + system-owner work without surfacing new signal; the skip criteria exist precisely to avoid this waste.
+
+---
+
+## 2026-05-26 — Wave C `/session-plan` Step 0 fix: scope-bounded mitigation set with M-2 deferral
+
+**Context.** Wave C of 2026-05-26 friction-cleanup session enhanced `/session-plan` Step 0 with concurrent-session collision auto-detection. Plan-time `/risk-check` returned PROCEED-WITH-CAUTION with 4 mitigations. System-owner second opinion via `/consult` (Function B) concurred with the verdict and identified 3 additional risks the dimension review missed: M-1 (insufficient mitigation #4 — needs same-commit doc update), M-2 (`/drift-check` reads `session-plan.md` not pass2, false ALIGNED verdicts possible), M-3 (pass2 filename normalization v1 risk).
+
+**Decision.** Apply 4 risk-check mitigations + M-1 (upgraded #4) + M-3 (commit-message acknowledgment) in-commit. **Defer M-2 as known debt** logged in `maintenance-observations.md` rather than fixed inline.
+
+**Rationale.** Per minimal-infra-subset memory: when a plan has a risky/novel component, surface the risk-vs-value tradeoff and offer the lower-risk subset. M-2's fix would require a `/drift-check` Step 3 edit — a separate command-file change that would warrant its own `/risk-check` (touches automation flow). Bundling it into Wave C would bloat the commit scope beyond its single-file intent and require a second risk-check inside the same wave. The known-debt log entry in `maintenance-observations.md` captures the gap explicitly with concrete pickup criteria ("next session that touches /drift-check, OR if observed false-ALIGNED occurs"). System-owner explicitly named this as a defensible path: "defer this fix and accept the gap as known debt with an explicit note."
+
+**Alternatives considered.**
+1. **Apply M-2 inline in Wave C** — Rejected: scope creep + nested `/risk-check` would consume session budget without proportionate signal. The false-ALIGNED scenario requires both concurrent sessions AND a `/drift-check` invocation in the second session — low-probability composite event.
+2. **Skip the M-2 record entirely** — Rejected: OP-11 (surfacing tacit drift) prohibits silent gaps. A known-debt log entry with explicit pickup criteria is the load-bearing alternative.
+3. **Apply M-2 as a one-line conditional in `/drift-check`** — Considered: a `if pass2 exists and is newer than session-plan.md, prefer pass2` check is small. Rejected on the basis that the `/risk-check` cycle for the `/drift-check` edit would dominate the work; deferring to a future session that touches `/drift-check` anyway is more efficient.
+
+---
+
+## 2026-05-26 — End-time `/risk-check` skipped on Wave C (`/session-plan` Step 0 collision detection)
+
+**Decision.** Skipped the end-time `/risk-check` on the Wave C commit (`8ab5685`).
+
+**Rationale.** All four documented skip criteria (memory `feedback_end_time_risk_check_skip`) were met:
+1. Plan-time gate ran with PROCEED-WITH-CAUTION verdict (`audits/risk-checks/2026-05-26-plan-time-risk-check-on-wave-c-of-2026-05-26-friction.md`).
+2. All applicable mitigations applied in the same commit: 4 risk-check mitigations (pin normalization, cache UPCOMING_INTENT, sentinel guard, doc update) + M-1 (upgraded #4 — `repo-architecture.md` Q6 row). M-2 deferred-with-record per separate decision above; M-3 acknowledged in commit message.
+3. System-owner second opinion via `/consult` (Function B) concurred with the verdict and added M-1/M-2/M-3 — all three handled in plan-time gate cycle.
+4. Drift bounded: the executed change set matched the plan-time scope including SO additions exactly. QC pass caught the OUTPUT_TARGET wiring defect (would have been INERT without the fix) — exactly the kind of implementation defect end-time `/risk-check` is designed to catch, so the QC pass substituted for it.
+
+**Alternatives considered.** Run the end-time gate anyway for thoroughness — Rejected: would duplicate plan-time + SO + QC work without surfacing new signal; the skip criteria exist precisely to avoid this waste. The pattern from 2026-05-25 Wave 2 (deploy-workflow unification) — same skip criteria, same documented rationale — is now the canonical shape for end-time skips on PROCEED-WITH-CAUTION-with-mitigations-applied changes.
