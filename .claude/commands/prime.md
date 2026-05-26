@@ -47,8 +47,20 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 
    `/prime` never edits `session-notes.md`, so every Next Step bullet stays untouched in the source file — the operator can verify there directly if a likely-DONE call looks wrong. If the git command fails or returns nothing, treat all bullets as still-open and continue.
 
-   *Sibling-entry sweep:* Scan `logs/session-notes.md` for additional `## <source-entry-date>` headers that appear **after** the source entry (same calendar date, later position in file). If any exist, set a flag so step 6 can emit this exception line:
-   > ⚠ Multiple same-day entries exist (parallel wraps possible). Next steps taken from `{source entry title}`; also review: `{list of sibling entry titles}`.
+   *Sibling-entry sweep — mechanical check:* Run the following bash to count today-dated headers in `logs/session-notes.md`:
+
+   ```bash
+   TODAY=$(date '+%Y-%m-%d')
+   SIBLING_COUNT=$(grep -c "^## ${TODAY}" logs/session-notes.md 2>/dev/null || echo 0)
+   ```
+
+   If `SIBLING_COUNT > 1`, set the Step 6 sibling-entry flag and capture the list of same-day header titles for the brief's exception line:
+
+   ```bash
+   grep -n "^## ${TODAY}" logs/session-notes.md
+   ```
+
+   If the flag is set, Step 6 emits: "⚠ Multiple same-day entries exist (parallel wraps possible). Next steps taken from `{source entry title}`; also review: `{list of sibling entry titles}`."
 
 1b. **Detect a resumable continuity scratchpad.** `/handoff` continuity mode and `/wrap-session` Step 0.5 both write session-state scratchpads to `logs/scratchpads/`. Surface the most recent one so the operator can choose to resume it.
 
