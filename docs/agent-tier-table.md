@@ -72,6 +72,16 @@ These agents exist as regular-file copies (not symlinks) in `projects/axcion-bra
 |---|---|---|
 | brand-strategist | opus | Judgment (PE/M&A brand strategy consultation; produces 8-field scoping notes per `references/scoping-note-rubric.md`). Project-local to axcion-brand-book. Added 2026-05-25. |
 
+## Project-local agent copies (strategic-os)
+
+These agents exist as regular-file copies (not symlinks) in `projects/strategic-os/.claude/agents/`. Project-local scope — Strategic OS state retrieval, conflict detection, and OS self-review.
+
+| Agent | Tier | Notes |
+|---|---|---|
+| conflict-detector-agent | sonnet | Structured factual comparison (derived state vs. source artifacts; flags contradictions). Project-local to strategic-os. Added 2026-05-27. |
+| self-review-agent | opus | Judgment (periodic OS self-review; checks staleness, contradictions, unowned risks). Project-local to strategic-os. Added 2026-05-27. |
+| state-retrieval-agent | sonnet | Structured cross-project read of strategic-signal files; returns snapshot for state view and decision queries. Project-local to strategic-os. Added 2026-05-27. |
+
 ## Maintenance
 
 When adding a new agent, place it in the table. When changing an agent's tier, update the table in the same commit.
