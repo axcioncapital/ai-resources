@@ -33,7 +33,7 @@ Condenser, not editor. The approved content represents final research output. Pr
 
 ## Consumer Context
 
-The knowledge file serves the Claude Chat project for the Buy-Side Service Model. Chat sessions use knowledge files for:
+The knowledge file serves the Claude Chat project. Chat sessions use knowledge files for:
 - **Part 2 strategic design sessions** — all Part 2 sections need Part 1 findings as context for design decisions
 - **Part 1 scoping sessions** — downstream sections may need upstream findings (e.g., 1.2 scoping needs 1.1's chain structure)
 - **Part 1 / Part 2 checkpoint gate** — all Part 1 knowledge files reviewed against Working Hypotheses before Part 2 begins
