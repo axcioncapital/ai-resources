@@ -38,13 +38,12 @@ Session started with `/prime` + `/open-items`, walked through plan iteration (`/
 ### Open Questions
 None.
 
-## 2026-05-26
+## 2026-05-26 — Friction-cleanup session (5 waves, 4 [FADING-GATE]s — new single-day record)
+
 **Mandate:** Land HIGH-to-MED friction + carryover work — 6 live items across 4 waves with one stretch wave — done when: Waves 0 + A + B + C committed; Wave D optional.
 - Out of scope: Full date-slug rename of `session-plan.md` (Wave C option a); orphan-skills triage; drift-cleanup decision; `/session-plan` C15 semantics; behavioral friction items.
 - Files in scope: (inferred)
 - Stop if: `/risk-check` NO-GO on Wave B or C; `/qc-pass` REVISE that can't be self-resolved; context lean by end of Wave C.
-
-## 2026-05-26 — Friction-cleanup session (5 waves, 4 [FADING-GATE]s — new single-day record)
 
 ### Summary
 Land HIGH-to-MED friction + carryover work across 4 planned waves + 1 stretch. Resulted in 5 commits, of which 4 were [FADING-GATE] annotation work (items had already shipped or were codified elsewhere) and 4 were live work: friction-log annotations + 9 untracked audit/plan-file backfill (Wave 0), `/open-items` 3-signal friction-log filter cross-check (Wave B; risk-check GO + QC REVISE applied), `/session-plan` Step 0 concurrent-session collision auto-detection (Wave C; risk-check PROCEED-WITH-CAUTION + system-owner /consult + QC REVISE on OUTPUT_TARGET wiring), `/session-plan` template self-check 4-point rubric (Wave D; QC GO). End-time `/risk-check` on Wave C skipped per documented criteria.
@@ -79,13 +78,6 @@ Land HIGH-to-MED friction + carryover work across 4 planned waves + 1 stretch. R
 
 ### Open Questions
 None.
-
-## 2026-05-26
-Class: mixed (execution dominant)
-**Mandate:** Implement three pre-drafted plans — (1) mechanical sibling-sweep in `/prime` Step 1a (`plans/prime-step-1a-sibling-sweep.md`), (2) live mtime guard in `/session-start` Step 0.5 (`plans/concurrent-session-live-detection.md`), and (3) `repo-architecture.md` docs update for `knowledge-bases/` (`plans/repo-architecture-knowledge-bases-update.md`), with `/risk-check` at plan-time on plans 1 + 2 (docs-only plan 3 exempt per `audit-discipline.md`) — done when: all three plans' edits land; `/risk-check` returns GO or PROCEED-WITH-CAUTION-with-mitigations on each of plans 1 + 2; `/qc-pass` returns no REVISE (or self-resolved) per plan; brand-book + ai-resources improvement-log source entries annotated applied + Verified.
-- Out of scope: Any change to `/session-plan` Step 0 (Wave C handles `session-plan.md` collisions); changes to `session-notes.md` schema or format; cross-repo concurrent-session detection; adding `artifacts/` to top-level layout (Plan 3 secondary observation — separate decision); any propagation of the new `knowledge-bases/` principle to project CLAUDE.md or `/deploy-kb` prompt.
-- Files in scope: (inferred) `ai-resources/.claude/commands/prime.md`, `ai-resources/.claude/commands/session-start.md`, `ai-resources/docs/repo-architecture.md`, `projects/axcion-brand-book/logs/improvement-log.md`, `ai-resources/logs/improvement-log.md`.
-- Stop if: `/risk-check` NO-GO on plan 1 or plan 2; `/qc-pass` REVISE that cannot be self-resolved on any plan; false-positive mitigation for Plan 2 (own-session vs foreign-session write distinction) cannot be designed cleanly at plan-time.
 
 ## 2026-05-26 — Plan-draft session (6 plans for priority log items; no code edits)
 
@@ -123,6 +115,12 @@ None (no code edits this session per scope; only plan files created and committe
 None.
 
 ## 2026-05-26 — Implementation of 3 pre-drafted concurrent-session-detection plans (Plans 1, 2, 3)
+Class: mixed (execution dominant)
+
+**Mandate:** Implement three pre-drafted plans — (1) mechanical sibling-sweep in `/prime` Step 1a (`plans/prime-step-1a-sibling-sweep.md`), (2) live mtime guard in `/session-start` Step 0.5 (`plans/concurrent-session-live-detection.md`), and (3) `repo-architecture.md` docs update for `knowledge-bases/` (`plans/repo-architecture-knowledge-bases-update.md`), with `/risk-check` at plan-time on plans 1 + 2 (docs-only plan 3 exempt per `audit-discipline.md`) — done when: all three plans' edits land; `/risk-check` returns GO or PROCEED-WITH-CAUTION-with-mitigations on each of plans 1 + 2; `/qc-pass` returns no REVISE (or self-resolved) per plan; brand-book + ai-resources improvement-log source entries annotated applied + Verified.
+- Out of scope: Any change to `/session-plan` Step 0 (Wave C handles `session-plan.md` collisions); changes to `session-notes.md` schema or format; cross-repo concurrent-session detection; adding `artifacts/` to top-level layout (Plan 3 secondary observation — separate decision); any propagation of the new `knowledge-bases/` principle to project CLAUDE.md or `/deploy-kb` prompt.
+- Files in scope: (inferred) `ai-resources/.claude/commands/prime.md`, `ai-resources/.claude/commands/session-start.md`, `ai-resources/docs/repo-architecture.md`, `projects/axcion-brand-book/logs/improvement-log.md`, `ai-resources/logs/improvement-log.md`.
+- Stop if: `/risk-check` NO-GO on plan 1 or plan 2; `/qc-pass` REVISE that cannot be self-resolved on any plan; false-positive mitigation for Plan 2 (own-session vs foreign-session write distinction) cannot be designed cleanly at plan-time.
 
 ### Summary
 Implemented three pre-drafted plans from the parallel plan-draft session: Plan 3 (`repo-architecture.md` docs update documenting `knowledge-bases/`), Plan 1 (mechanical sibling-entry sweep in `/prime` Step 1a — bash replaces prose), and Plan 2 (live mtime guard in `/session-start` Step 0.5 + marker writes in `/prime` Step 8a.3.a and 8b.1). Wave ordering: lowest-risk first (Plan 3, then Plan 1, then Plan 2). Each wave: `/risk-check` at plan-time where applicable + edit + `/qc-pass` + commit. Plan 2 received PROCEED-WITH-CAUTION + system-owner second opinion via `/consult`; SO's mitigation 3 correction (extend marker write to Step 8b.1) and risks R1 (freshness window) and R3b (loud-fallback logging) were accepted into the same commit; R2 (session-id machinery) and R3a (risk-topology entry) were deferred per minimal-infra-subset preference. SO risk #2 was fact-corrected during implementation — `/prime` is cwd-relative so the marker is per-project, not workspace-global (race is narrower intra-project, not cross-project). Live witnessing of the very class of concurrent-session race this work targets: the plan-draft session wrapped its own entry into `session-notes.md` between my mandate and this wrap.
