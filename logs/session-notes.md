@@ -317,3 +317,32 @@ High-priority sweep across friction-log.md, improvement-log.md, decisions.md def
 
 ### Open Questions
 None.
+
+## 2026-05-27 — Executed fix-plan fix-repo-issues-2026-05-27-1316.md (3 items)
+
+**Mandate:** Execute the fix plan at `audits/fix-plans/fix-repo-issues-2026-05-27-1316.md`.
+
+### Summary
+
+Applied the three items from the 13:16 fix-plan as a continuous execution session. id-07 (orphan Mandate headers in `session-notes.md`) — two bare `## 2026-05-26` headers, each paired with a descriptive-title wrap below, were merged into their wraps; chose merge over the fix-plan's stated "back-fill or trim" because both wraps already existed and merge preserves Mandate metadata. id-13 (Verified line) — single-line substitution under the concurrent-session-wrap-clobber entry's Status line. id-14 (symlink-check-first rule) — appended a "Foreign-files diagnostic shortcut" subsection to `docs/commit-discipline.md`, then flipped the source improvement-log entry to applied + Verified + Implementation note referencing the doc commit's SHA. Two commits shipped (doc edit first to capture SHA for the implementation note, then a log-hygiene batch for the remaining edits).
+
+### Files Created
+- `ai-resources/logs/scratchpads/2026-05-27-14-30-scratchpad.md` — continuity scratchpad (gitignored)
+
+### Files Modified
+- `ai-resources/docs/commit-discipline.md` — appended "Foreign-files diagnostic shortcut" subsection (id-14, commit `94e0cf2`)
+- `ai-resources/logs/session-notes.md` — merged 2× orphan Mandate headers into paired wraps + this wrap section (id-07, commit `335747c`)
+- `ai-resources/logs/improvement-log.md` — added `Verified: 2026-05-27` line to concurrent-session-wrap-clobber entry (id-13); flipped Foreign-files-alarm entry to applied + Verified + Implementation note (id-14, commit `335747c`)
+
+### Decisions Made
+- **id-07 disposition = merge (not back-fill, not trim).** Fix-plan offered two paths; observation showed each orphan Mandate header had a paired descriptive-title wrap below — back-fill was redundant and trim would have lost the Mandate metadata. Merge preserves content AND aligns with the canonical pattern used by all 2026-05-27 entries (Mandate inline inside the descriptive-title header). Per Decision-Point Posture, picked and proceeded.
+- **Skipped ceremonial `/session-start` + `/session-plan`.** Operator's free-text intent ("Execute the fix plan at X") was the mandate. Work was substitution-shaped (3 small edits); the ceremony would have been pure overhead. Per `feedback_decision_point_posture` + `feedback_autonomy_during_execution`.
+- **Two commits, not three.** Doc edit committed first (`94e0cf2`) so the id-14 status-flip entry could reference its SHA in the Implementation note. Remaining log-hygiene edits batched into one commit (`335747c`). Per fix-plan "Commit per item or per logical batch (operator preference)."
+
+### Next Steps
+- **Push gate.** `ai-resources` has 10 unpushed commits (8 carryover + `94e0cf2` + `335747c` + the forthcoming wrap commit). Workspace-root has 2 unpushed (`5157a5d`, `2e479a6` — carryover). Operator approval required (Autonomy Rule #2).
+- **Untracked artifacts.** `audits/fix-plans/fix-repo-issues-2026-05-27-1316.md` (this just-executed plan) and `audits/working/fix-repo-issues-2026-05-27-1316.md` (scanner notes) remain untracked. The fix-plan itself is useful traceability — operator may want to commit it.
+- **Standing carryovers** (preserved): `backup-session-plan-pass2-regex` (nordic), `friction-logging-discipline-rule` (nordic), `plan-evaluate-drift-check` (project-planning); abandoned `harness-start.md` at workspace-root `.claude/commands/` (candidate for `/cleanup-worktree`).
+
+### Open Questions
+None.
