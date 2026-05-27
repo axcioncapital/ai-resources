@@ -16,6 +16,27 @@
 
 {{OPERATOR_NAME}} is the sole operator. They review outputs at defined gates, make editorial decisions requiring domain judgment, and approve stage transitions. Claude Code executes; the operator reviews and directs.
 
+## Project Config
+
+> **Forward contract — no live consumer reads this block yet (as of canonical landing 2026-05-27).** The 12 fields below are the declarative project values that ~6 downstream consumers (Stage 5 commands, three Stage-2 skills, `country-parity-checker`, Bundle-2 reference docs) are *intended* to read at runtime. As of this landing, zero of those consumers parse the block. The schema is landed one work-unit ahead of the first confirmed consumer-builder (Stage 5 parameterization in the parent fix-phase plan). When you read this section, assume no automated reader sees it unless you've separately verified a consumer parser exists. Full schema documentation, per-consumer field-fan-out, single-source-of-truth rules, canonical parse format, and migration-trigger conditions live at `docs/project-config-schema.md`.
+
+```markdown
+**Report set:** [{{REPORT_SET}}]  # parameterizes Stage 5 commands; report-count derived from list length
+**Section IDs:** [{{SECTION_IDS}}]  # parameterizes per-section paths
+**Country set:** [{{COUNTRY_SET}}]  # CANONICAL; reference/source-class-hierarchy.md § Project Country Set is the derived mirror
+**Country superset:** [{{COUNTRY_SUPERSET}}]  # for "pan-region" leakage detection; always a superset of Country set
+**Languages:** [{{LANGUAGES}}]  # ISO 639-1 codes; parameterizes research-prompt-creator language blocks; empty = English-only
+**Deal-size lens:** "{{DEAL_SIZE_LENS}}"  # operator-facing only; cited in size-class tags
+**Domain:** "{{DOMAIN}}"  # parameterizes jargon-gloss whitelist activation
+**Verification posture:** "{{VERIFICATION_POSTURE}}"  # per-claim-cited | lighter-than-formal | interpretive-only
+**Source-availability:** "{{SOURCE_AVAILABILITY}}"  # public-only | mixed | paid-databases-allowed
+**Research-area-phrase:** "{{RESEARCH_AREA_PHRASE}}"  # parameterizes Perplexity-prefix in run-execution.md and stage-instructions.md
+**Current period:** "{{CURRENT_PERIOD}}"  # parameterizes freshness classes (CURRENT, RECENT, BASELINE)
+**Delivery vault:** "{{DELIVERY_VAULT}}"  # optional; consumed by produce-knowledge-file; default no-op
+```
+
+For full field documentation (types, examples, canonical parse format, consumer fan-out, GR-2 migration triggers), read `docs/project-config-schema.md`.
+
 ## Confidentiality Boundaries
 
 <!-- REQUIRED SETUP: Replace this section before running /verify-chapter. -->
