@@ -38,13 +38,14 @@ Skill loading: For each skill step below, read the skill file from the ai-resour
 1. Read the approved Execution Manifest from `/execution/manifest/{section}/{section}-execution-manifest.md`.
 2. Read the Research Plan from `/preparation/research-plans/`.
 3. Read all approved Answer Specs from `/preparation/answer-specs/{section}/`.
-4. Read the `research-prompt-creator` skill (`/ai-resources/skills/research-prompt-creator/SKILL.md`).
-5. Launch a general-purpose sub-agent. Pass it: the skill content, the Research Plan content, the Answer Spec content, and the Execution Manifest content. Task: execute the skill logic to create session prompts for all routed questions, following the manifest's session groupings. Research Execution GPT sessions: target 2 questions per session (1 or 3 acceptable with justification), no hard session cap. Each prompt must include an inline context pack (compact summary of the Research Plan — project background, section objective, scope boundaries — NOT individual question listings). Write output to `/execution/research-prompts/{section}/` as individual files:
+4. Read the project reference docs the skill consumes: `reference/source-class-hierarchy.md` (required — `research-prompt-creator` halts if absent per its Input Requirements #4) and `reference/quality-standards.md` (Evidence-First preamble source, Country Coverage Table, No-Source-Substitution Rule, Research Stop Conditions).
+5. Read the `research-prompt-creator` skill (`/ai-resources/skills/research-prompt-creator/SKILL.md`).
+6. Launch a general-purpose sub-agent. Pass it: the skill content, the Research Plan content, the Answer Spec content, the Execution Manifest content, and the two project reference docs (`reference/source-class-hierarchy.md` and `reference/quality-standards.md`). Task: execute the skill logic to create session prompts for all routed questions, following the manifest's session groupings. Research Execution GPT sessions: target 2 questions per session (1 or 3 acceptable with justification), no hard session cap. Each prompt must include an inline context pack (compact summary of the Research Plan — project background, section objective, scope boundaries — NOT individual question listings). Write output to `/execution/research-prompts/{section}/` as individual files:
    - `session-plan.md` — How to Use, Session Plan table (including tool assignment per session), Dependency Map, Recommended Execution Order, Post-Execution Notes.
    - One `session-{letter}.md` per session — each self-contained with: session title, questions covered, **execution tool** (Research Execution GPT or Perplexity), Settings (site restrictions, recency), Execution Prompt (code-fenced), and Steering Notes.
    Return: the session plan table (session letters, question assignments, tool assignment, rationale).
-6. Write checkpoint to `/execution/checkpoints/{section}/{section}-step-2.1-checkpoint.md` from the sub-agent's returned summary. Include: session count by tool, question-to-session mapping, output folder path.
-7. ▸ /compact — skill content and raw inputs no longer needed; checkpoint carries forward.
+7. Write checkpoint to `/execution/checkpoints/{section}/{section}-step-2.1-checkpoint.md` from the sub-agent's returned summary. Include: session count by tool, question-to-session mapping, output folder path.
+8. ▸ /compact — skill content and raw inputs no longer needed; checkpoint carries forward.
 
 ### Step 2.1b: QC Execution Prompts [delegate-qc]
 
@@ -103,11 +104,12 @@ Skill loading: For each skill step below, read the skill file from the ai-resour
 1. Read all raw reports from `/execution/raw-reports/`.
 2. Read the checkpoint from `/execution/checkpoints/{section}/{section}-step-2.1-checkpoint.md` to recover the question-to-session mapping.
 3. Read the corresponding Answer Specs from `/preparation/answer-specs/{section}/`.
-4. Read the `research-extract-creator` skill (`/ai-resources/skills/research-extract-creator/SKILL.md`).
-5. For each session report, launch a general-purpose sub-agent. Pass it: the skill content, the raw report content, the Answer Specs for the questions in that session, and the question-to-session mapping. Task: produce one Research Extract per question covered. Write each to `/execution/research-extracts/{section}/{section}-Q[N]-extract.md`. Return: list of extracts produced (question ID, file path, brief quality note).
+4. Read the project reference docs the skill consumes: `reference/quality-standards.md` (No-Source-Substitution Rule for evidence-lens tags consumed by `research-extract-creator`) and `reference/known-limits.md` (current rolling-2-year window declaration).
+5. Read the `research-extract-creator` skill (`/ai-resources/skills/research-extract-creator/SKILL.md`).
+6. For each session report, launch a general-purpose sub-agent. Pass it: the skill content, the raw report content, the Answer Specs for the questions in that session, the question-to-session mapping, and the two project reference docs (`reference/quality-standards.md` and `reference/known-limits.md`). Task: produce one Research Extract per question covered. Write each to `/execution/research-extracts/{section}/{section}-Q[N]-extract.md`. Return: list of extracts produced (question ID, file path, brief quality note).
    - If multiple session reports are independent, launch sub-agents in parallel.
-6. Write checkpoint to `/execution/checkpoints/{section}/{section}-step-2.3-checkpoint.md`. Include: full extract inventory (question ID → file path → session letter), any quality flags from sub-agents.
-7. ▸ /compact — skill content and raw report content no longer needed; checkpoint and extract files carry forward.
+7. Write checkpoint to `/execution/checkpoints/{section}/{section}-step-2.3-checkpoint.md`. Include: full extract inventory (question ID → file path → session letter), any quality flags from sub-agents.
+8. ▸ /compact — skill content and raw report content no longer needed; checkpoint and extract files carry forward.
 
 ---
 

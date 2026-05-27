@@ -20,7 +20,7 @@ Checks whether a chapter follows the rules for how report prose should be writte
 
 ## Inputs
 
-All required unless noted. Content is passed directly (not file paths).
+All required unless noted. Content is passed directly for inputs 1–6 (not file paths). Input 7 is passed by path — the subagent reads it at runtime per per-chapter token economy (FX-C1).
 
 1. **Chapter draft** — the prose content produced at Step 4.2a
 2. **Review findings** — the chapter-prose-reviewer output from Step 4.2b
@@ -28,6 +28,7 @@ All required unless noted. Content is passed directly (not file paths).
 4. **Style reference** — from `/report/style-reference/{section}/{section}-style-reference.md`
 5. **Scarcity register** — from `/execution/scarcity-register/{section}/{section}-scarcity-register.md` (if it exists)
 6. **Section directive** — the directive for this chapter from `/analysis/section-directives/{section}/`
+7. **Project reference doc PATH** — `reference/quality-standards.md` (claim-permission classes, evidence-calibration rules, no-source-substitution rule). Passed by PATH, not content; subagent reads at runtime. Halt if the file is absent at the named path.
 
 **Missing input protocol:** If the section directive is not available, note that directive compliance was not checked and flag this as an issue — the directive should exist before report prose is produced. If the scarcity register doesn't exist, note that scarcity compliance was not applicable. All other inputs are required; if missing, halt and report which input is absent.
 

@@ -24,16 +24,18 @@ Skill loading: For each skill step below, read the skill file from `/ai-resource
 ### Step 2: Parallel Cluster Analysis and Refinement [delegate]
 
 1. Read `/ai-resources/skills/cluster-analysis-pass/SKILL.md` and `/ai-resources/skills/cluster-memo-refiner/SKILL.md`.
-2. For each cluster, launch one general-purpose sub-agent. **Launch all cluster sub-agents in parallel.** Pass each sub-agent as content:
+2. Read the project reference docs the two skills consume: `reference/source-class-hierarchy.md` (Project Country Set, Hierarchy Table, Source-Exhaustion Ladders — drives B-02 country-status columns and ladder-depth thresholds), `reference/quality-standards.md` (Country Coverage Table, Minimum Evidence Thresholds, Source-Diversity Matrix, Claim-Permission Classes, Source-Conflict Resolution Procedure — drives B-18 same-pattern thresholds and Check 9 ladder-depth), `reference/known-limits.md` (limit #2 Norway structural thinness — drives pan-Nordic-leakage check).
+3. For each cluster, launch one general-purpose sub-agent. **Launch all cluster sub-agents in parallel.** Pass each sub-agent as content:
    - The `cluster-analysis-pass` skill content
    - The `cluster-memo-refiner` skill content
+   - The three project reference docs from Step 2 above (`reference/source-class-hierarchy.md`, `reference/quality-standards.md`, `reference/known-limits.md`)
    - The extract file **paths** for this cluster (not the file content — the sub-agent reads its own extracts)
    - Scarcity register entries relevant to this cluster (pass as content)
    - Output paths: analysis memo at `/analysis/cluster-memos/{section}/{section}-cluster-{NN}-memo.md`, refined memo at `/analysis/cluster-memos/{section}/{section}-cluster-{NN}-memo-refined.md`
    - Task: (1) read the extracts at the provided paths; (2) execute `cluster-analysis-pass` logic and write the analysis memo; (3) execute `cluster-memo-refiner` six-check refinement and write the refined memo. Return: output file paths, key analytical themes, refinement check outcomes, evidence gaps flagged.
-3. After all sub-agents complete, collect their summaries.
-4. Write one checkpoint per cluster to `/analysis/checkpoints/{section}/{section}-cluster-{NN}-step-2-checkpoint.md` from each sub-agent's returned summary.
-5. Log cluster completion to `/logs/qc-log.md`.
+4. After all sub-agents complete, collect their summaries.
+5. Write one checkpoint per cluster to `/analysis/checkpoints/{section}/{section}-cluster-{NN}-step-2-checkpoint.md` from each sub-agent's returned summary.
+6. Log cluster completion to `/logs/qc-log.md`.
 
 ---
 
