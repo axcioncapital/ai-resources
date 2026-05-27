@@ -405,3 +405,12 @@ Implemented three pre-drafted plans from the parallel plan-draft session: Plan 3
 
 ### Open Questions
 None.
+
+## 2026-05-27 — Fix friction log recording /session-plan re-invocations as hook events
+Class: execution
+
+**Mandate:** Fix the friction-log misclassification rule so `/session-plan` re-invocations stop being recorded as hook events — done when: the rule fix is applied in `ai-resources/CLAUDE.md` so future `/session-plan` re-invocations no longer surface as hook events in `logs/friction-log.md`.
+- Out of scope: (none stated)
+- Files in scope: (inferred)
+- Stop if: (none stated)
+

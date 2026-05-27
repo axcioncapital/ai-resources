@@ -1,57 +1,43 @@
-# Session Plan — 2026-05-26
+# Session Plan — 2026-05-27
 
 ## Intent
-Implement three pre-drafted plans — (1) mechanical sibling-entry sweep bash check in `/prime` Step 1a, (2) live concurrent-session mtime guard in `/session-start` Step 0.5, and (3) `repo-architecture.md` docs update for `knowledge-bases/`. `/risk-check` at plan-time required on plans 1 + 2 per their own briefs; plan 3 is a docs-only edit exempt per `docs/audit-discipline.md`.
+Fix the friction-log misclassification rule in `ai-resources/CLAUDE.md` so `/session-plan` re-invocations stop being recorded as hook events in `logs/friction-log.md`.
 
 ## Class
-mixed (execution dominant) — plans 1 + 3 are mechanical; plan 2 carries one judgment call (own-session vs foreign-session write distinction).
+execution
 
 ## Model
-opus — match (active session is `claude-opus-4-7[1m]`). Judgment work is plan 2's mitigation choice + synthesizing two `/risk-check` and three `/qc-pass` returns.
+sonnet — → /model sonnet  (active session is `claude-opus-4-7[1m]`; recommended tier for this work is sonnet — mechanical CLAUDE.md edit after a bounded investigation)
 
 ## Source Material
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/plans/prime-step-1a-sibling-sweep.md`
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/plans/concurrent-session-live-detection.md`
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/plans/repo-architecture-knowledge-bases-update.md`
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/prime.md` (target for Plans 1 + 2)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/session-start.md` (target for Plan 2)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/repo-architecture.md` (target for Plan 3)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/audit-discipline.md` (risk-class reference for /risk-check)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-brand-book/logs/improvement-log.md` (annotate source entries for Plans 1 + 2)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/logs/improvement-log.md` (annotate source entry for Plan 3)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/CLAUDE.md` — fix target (always-loaded; locate the misclassification rule)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/logs/friction-log.md` — evidence of the 3 misclassification incidents (read recent entries to identify the misfiring pattern)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/friction-log.md` — the `/friction-log` slash command (defines what gets recorded)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/hooks/friction-log-auto.sh` — the auto-capture hook (likely source of the "hook event" recording)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/audit-discipline.md` — structural-change-class reference (CLAUDE.md edit is an always-loaded change → `/risk-check` may apply)
 
 ## Findings / Items to Address
-
-1. **Plan 1 — `/prime` Step 1a sibling-entry sweep (mechanical enforcement).** [`plans/prime-step-1a-sibling-sweep.md`] Current sub-step is prose; the executing model can silently skip the scan (the 2026-05-26 brand-book session was live evidence). Replace prose with a discrete `SIBLING_COUNT=$(grep -c "^## ${TODAY}" logs/session-notes.md)` bash block in Step 1a. Existing Step 6 emission contract preserved verbatim. Source: brand-book improvement-log § 2026-05-26.
-2. **Plan 2 — `/session-start` Step 0.5 mtime-delta guard (live concurrent-session detection).** [`plans/concurrent-session-live-detection.md`] Current `/prime` → `/session-start` chain has no live signal — the sibling-entry sweep is retrospective only. Add a new Step 0.5 to `session-start.md` that captures `session-notes.md` mtime, computes delta against `NOW`, and pauses with a 2-option prompt when DELTA < 120s. **Open design choice (judgment call):** distinguish own-session write from foreign-session write via (a) read-back content match, (b) marker file in `logs/`, or (c) tail-content authorship check. Plan defers the choice to the implementation session; this session will pick and document. Also: one-line advisory note added to `/prime` Step 8a. Source: brand-book improvement-log § 2026-05-26 deeper structural gap.
-3. **Plan 3 — `repo-architecture.md` `knowledge-bases/` documentation update.** [`plans/repo-architecture-knowledge-bases-update.md`] Workspace-root tree omits the `knowledge-bases/` top-level directory; canonical-homes table has no row for cross-project Obsidian KB vaults. Add one tree entry (alphabetical between `harness/` and `logs/`) + one canonical-homes table row capturing the implicit "cross-project reuse → `knowledge-bases/{name}/`; project-scoped → `projects/{name}/vault/`" principle. Verification: confirm `pe-kb-vault/` is the current sole vault before writing the framing. Source: ai-resources improvement-log § 2026-05-26.
+(none — intent does not reference a prior report; the 3 incidents are documented in `logs/friction-log.md` itself, to be read in Step 1 below)
 
 ## Execution Sequence
-
-Plans are independent — no inter-dependency. Recommended order: lowest-risk first to bank a clean commit before tackling the more complex plan 2.
-
-1. **Wave 3 — Plan 3 (docs-only, no `/risk-check`).** Read current `repo-architecture.md`; verify `knowledge-bases/` contents via `ls`; apply Edits 1 + 2 (tree entry + canonical-homes row) in one `Edit` pass; annotate ai-resources improvement-log entry as applied + Verified; commit. **Verify:** the two additions appear in the file; no existing content changed. **`/qc-pass`** after edit; commit on no REVISE.
-2. **Wave 1 — Plan 1 (mechanical edit + `/risk-check`).** Run `/risk-check` at plan-time using Plan 1's pre-filled brief; expected GO or PROCEED-WITH-CAUTION. Edit `/prime` Step 1a: inject the `SIBLING_COUNT=$(grep -c …)` bash sub-step at end of the *Git cross-check* block; collapse the existing prose sibling-sweep paragraph to a single explanatory line. Annotate brand-book improvement-log entry as applied + Verified. **Verify:** new bash sub-step present; prose paragraph collapsed; Step 6 emission contract unchanged. **`/qc-pass`** after edit; commit on no REVISE.
-3. **Wave 2 — Plan 2 (design choice + structural edits + `/risk-check`).** Pick the own-vs-foreign-write distinction (a/b/c) — inline decision, surface the choice with rationale before editing. Run `/risk-check` at plan-time using Plan 2's pre-filled brief (false-positive mitigation must be designed in); expected PROCEED-WITH-CAUTION with mitigation list. Add Step 0.5 to `/session-start` (mtime check + own-write distinction + 2-option pause prompt); add one-line advisory to `/prime` Step 8a. Annotate brand-book improvement-log entry as applied + Verified (single annotation covering both plans). **Verify:** Step 0.5 present with correct mtime/distinction logic; advisory note present in `/prime` Step 8a. **`/qc-pass`** after edit; commit on no REVISE.
-4. **Wrap.** After Waves 3 + 1 + 2 each committed, decide whether to `/usage-analysis` inline or defer to `/wrap-session`. Remind operator to push (push gate from prior session is still open — 7 unpushed commits will be 10+ by end of this session).
+1. **Diagnose the misclassification.** Read recent entries in `logs/friction-log.md` to identify the 3 incidents where `/session-plan` re-invocations were recorded as hook events. Capture the exact entry pattern (header form, classification label) so the fix targets the right rule. Verify: at least one concrete entry pattern documented before proceeding.
+2. **Locate the governing rule.** Read `ai-resources/CLAUDE.md` and `.claude/commands/friction-log.md` and `.claude/hooks/friction-log-auto.sh` to identify which rule produces the "hook event" classification for `/session-plan` re-invocations. Verify: the misclassifying rule is named (line number / section) before proceeding.
+3. **Run `/risk-check` (plan-time gate).** CLAUDE.md is always-loaded; even a small rule edit qualifies under the audit-discipline change-class list. Run the gate, capture the verdict + any mitigations, only proceed if `GO` or `PROCEED-WITH-CAUTION`.
+4. **Apply the fix.** Edit `ai-resources/CLAUDE.md` (or the secondary surface identified in Step 2, if the governing rule lives in the command/hook). Edit must be the minimum change that excludes `/session-plan` re-invocations from the "hook event" classification without breaking the broader friction-log capture. Verify: edit is byte-minimal, single-rule scope.
+5. **Run `/qc-pass` on the edit.** Verify: the edited rule no longer matches `/session-plan` re-invocations; the rule still correctly catches the cases it was originally written for.
+6. **Wrap.** Commit, annotate the source improvement-log entry if one exists, prompt operator for `/wrap-session`.
 
 ## Scope Alternatives
-
-- **Min scope:** Plan 3 only (docs-only, zero risk, ~5 min). Banks documentation accuracy; leaves Plans 1 + 2 for a follow-up session.
-- **Recommended scope:** All three plans, in the order above. Total expected: 2 `/risk-check` invocations + 3 `/qc-pass` invocations + 3 commits + improvement-log annotations.
-- **Max scope:** All three plans + immediate `/usage-analysis` + push. Stretches into push approval territory and conflates the implementation session with the deferred push gate; recommended only if scope holds and context is unfrayed at the end of Wave 2.
+Single scope — no alternatives. The operator framed this as a small fix; the four sequence steps are mandatory and there is no "stretch" or "minimal" variant. If Step 2 reveals the fix surface is NOT `CLAUDE.md` but a command or hook, that is a fact-correction within the same scope (not a scope expansion).
 
 ## Autonomy Posture
-Gated.
+Full autonomy.
 
 **Stop points:**
-- After Plan 1 `/risk-check` plan-time → NO-GO halts Wave 1; PROCEED-WITH-CAUTION applies mitigations inline.
-- Before Plan 2 implementation → present the (a) / (b) / (c) mitigation choice with rationale; pick the recommended one and proceed (per CLAUDE.md decision-point posture — no opinion-seeking ask).
-- After Plan 2 `/risk-check` plan-time → NO-GO halts Wave 2; PROCEED-WITH-CAUTION applies mitigations inline.
-- After any plan's `/qc-pass` REVISE that cannot be self-resolved.
-- Context-lean check at end of Wave 1 — if context is fraying, defer Wave 2 to a follow-up session per the workspace context-constraint deferral rule.
+- After Step 2 diagnosis if the fix surface turns out to be something other than `CLAUDE.md` (operator stated the fix is in `CLAUDE.md`; a fact-correction here is a load-bearing assumption-gate issue) — surface the finding, recommend the corrected surface, proceed unless operator overrides.
+- After Step 3 `/risk-check` if verdict is `STOP` or `REVISIT-SCOPE`.
 
 ## Risk
-Run `/risk-check` at plan-time before each of Wave 1 (Plan 1) and Wave 2 (Plan 2). Run again at end-time before commit on each — unless documented end-time skip criteria are met (see `feedback_end_time_risk_check_skip` memory: plan-time gate ran, mitigations applied, QC clean, drift bounded). Plan 3 is docs-only and not on the canonical change-class list per `docs/audit-discipline.md` — no `/risk-check` required.
+The edit touches `ai-resources/CLAUDE.md`, which is always-loaded into every session in this repo. Per `docs/audit-discipline.md`, cross-cutting CLAUDE.md edits are a structural change class.
 
-**Tripwire check (Plan 2):** Step 0.5 reorders operations against `session-notes.md` shared state at `/session-start` entry — qualifies as automation-with-shared-state-effects per the Step 6 tripwire. `/risk-check` is required regardless of any "existing-command refactor" framing.
+Run `/risk-check` after the plan is approved (plan-time gate). Run it again before commit (end-time gate) — unless the skip criteria in memory `feedback_end_time_risk_check_skip` apply (plan-time gate covered with mitigations applied AND drift bounded AND QC-clean), in which case document the skip in the wrap note.
