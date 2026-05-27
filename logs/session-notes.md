@@ -442,3 +442,42 @@ Fixed a documented misclassification pattern by adding a "Hook attribution rule"
 
 ### Open Questions
 None.
+
+## 2026-05-27 — Build the `decide` command (from `decision-resolver` inbox brief, renamed)
+Class: design
+
+**Mandate:** Build the `/decide` command via the canonical `/create-skill` pipeline (renamed from `decision-resolver` in the inbox brief) — done when: `/decide` exists and is invokable per the pipeline contract, and the source brief is moved from `inbox/` to `inbox/archive/`.
+- Out of scope: (none stated)
+- Files in scope: (inferred)
+- Stop if: (none stated)
+
+## 2026-05-27 — Build `/contract-check` command and CLAUDE.md reminder
+
+### Summary
+Surveyed user-space "pre-harness" components across skills/commands/agents/hooks/CLAUDE.md and identified five gaps. Operator named contract drift across multiple QC iterations as load-bearing. System Owner consult (Function A) confirmed it is a real architectural gap, not a discipline gap — scope-bounded `/qc-pass` cannot see the original contract two passes later. Built `/contract-check` end-to-end: slash command + fresh-context general-purpose subagent that returns CONTRACT-ALIGNED / MINOR-DRIFT / MAJOR-DRIFT against the original contract. Added a Contract-Conformance Check section to workspace `CLAUDE.md` so the operator does not forget to invoke it during long sessions.
+
+### Files Created
+- `ai-resources/.claude/commands/contract-check.md` — new slash command (advisory contract-conformance check)
+- `ai-resources/audits/risk-checks/2026-05-27-new-slash-command-contract-check.md` — risk-check report for the new command (verdict GO)
+- `ai-resources/audits/risk-checks/2026-05-27-claude-md-contract-check-reminder.md` — risk-check report for the CLAUDE.md edit (verdict GO)
+- `ai-resources/logs/scratchpads/2026-05-27-10-08-scratchpad.md` — pre-closeout continuity scratchpad
+
+### Files Modified
+- `CLAUDE.md` (workspace root) — added `## Contract-Conformance Check` section between QC Independence Rule and Assumptions Gate
+
+### Decisions Made
+- Build `/contract-check` as a slash command + fresh-context general-purpose subagent following the canonical `/drift-check` pattern (no dedicated agent file). See `logs/decisions.md` for full rationale.
+- Tighten v1 scope: ship the slash command only; defer the `/scope` freeze-baseline extension and auto-invocation at the QS-2 two-pass cap to a follow-up session.
+- Command works for all project types (architectural, research, skill creation, workflow, KB, advisory) — not just architectural changes, per operator clarification mid-session.
+- Place the reminder in workspace `CLAUDE.md` (not `ai-resources/CLAUDE.md`) so it loads across every project.
+- QC findings resolved inline (description trimmed, QS-2 refs replaced with direct pointers to `docs/qc-independence.md`, confirmation prompt dropped per Decision-Point Posture, dual-argument branch removed, `.claude/*` exclusion conditional removed, trailing `$ARGUMENTS` removed).
+
+### Next Steps
+- Push three commits when ready: `2e479a6` (workspace root), `11d079a` + `270c0ee` (ai-resources). Both repos need explicit operator approval.
+- Try `/contract-check` on a real artifact at the next QC iteration boundary (next time two rounds of `/qc-pass` → `/resolve` → re-QC complete on something substantive) to validate the verdict shape and hard/soft contract calibration.
+- Deferred: `/scope` freeze-baseline extension to write contract to `logs/contracts/{date}-{slug}.md` at scope-lock time.
+- Deferred: auto-invoke `/contract-check` at the QS-2 two-pass cap.
+- Deferred: add "Original contract → post-iteration artifact conformance" entry to `projects/repo-documentation/vault/architecture/system-doc.md` § 4.5 (open feedback loops).
+
+### Open Questions
+None.
