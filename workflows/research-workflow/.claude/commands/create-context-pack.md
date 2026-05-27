@@ -3,6 +3,8 @@ model: sonnet
 ---
 Build a research context pack. The section identifier follows this prompt (e.g., "1.1").
 
+**Standalone command — external consumer.** This command's output (`/execution/context-packs/{section}-context-pack.md`) is consumed externally by Research Execution GPT (CustomGPT) or Perplexity research sessions — not by an in-pipeline Claude Code command. The operator manually loads or pastes the context pack into the external research session. There is no internal `/intake-context-pack` or downstream pipeline command that reads this output.
+
 ## Instructions
 
 1. Read `/ai-resources/skills/context-pack-builder/SKILL.md` and follow its principles.

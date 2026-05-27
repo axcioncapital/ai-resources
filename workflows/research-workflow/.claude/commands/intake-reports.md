@@ -1,5 +1,5 @@
 ---
-model: sonnet
+model: opus
 ---
 Intake raw research reports from Research Execution GPT or Perplexity sessions. Files and names them, checks dependencies, then hands off to `/run-execution` for extract creation and verification.
 
