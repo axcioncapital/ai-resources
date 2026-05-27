@@ -35,6 +35,99 @@ Accept shorthand: "yy" / "yes both" / "both" = both yes; "nn" / "skip both" = bo
 
    **Idempotency with `/log-sweep`:** `/wrap-session` and `/log-sweep` are safe to run on the same day in any order. Both commands call `split-log.sh` internally, but `split-log.sh`'s "already at threshold" guard and `log-archiver.sh`'s date-guard pattern prevent double-archival. Running both same-day produces the same result as running either once. No special ordering is required.
 
+3.5. **Foreign-session pre-write guard on `logs/session-notes.md`.**
+
+   <!--
+   PAIRED CONTRACT — keep in sync.
+     Sibling: workspace-root /.claude/commands/wrap-session.md (Phase 3 copy, NOT a symlink — operates on workspace-level logs/session-notes.md).
+     Symmetric counterpart: /session-start Step 0.5 mtime guard (Plan 2, shipped 2026-05-26) — that guard covers the /prime → /session-start window; this guard covers the post-/session-start → wrap window. Both may fire on different sides of the same concurrent-session incident.
+     Detection signals: (1) count of `^## YYYY-MM-DD` today-headers, (2) count of `^**Mandate:**` lines. Both depend on the conventions set by Step 4 below (header), `session-start.md` Step 3 (mandate line), and `check-archive.sh` (archive). If a future writer emits a non-conforming today-header or non-conforming mandate line, the corresponding signal returns a FALSE NEGATIVE — foreign content is silently clobbered (the exact bug this guard exists to prevent recurs silently). Keep both formats in sync with their writers.
+   -->
+
+   Background: concurrent sessions can both write to `logs/session-notes.md` between this session's `/prime`+`/session-start` and its `/wrap-session`. If a foreign session's content is in the working tree when this session's wrap stages `logs/session-notes.md`, its content ships under this session's wrap commit (the failure mode logged 2026-05-27, commit `14d2a04`). This guard fires **before** Step 4 writes — symmetric to `/session-start` Step 0.5 mtime guard (pre-write posture).
+
+   Detection uses two independent signals to catch both incident shapes:
+   - **Today-header delta** — catches the case where the foreign session created its own `## YYYY-MM-DD` header (different header from this session's).
+   - **Mandate-line delta** — catches the case where the foreign session ran `/prime` first and reused this session's already-existing today-header (per `/prime` Step 8a.3.a / 8b.1 header-reuse rule), then appended its mandate UNDER the shared header. Header count stays flat (1); mandate-line count rises.
+
+   Run the following Bash detector:
+
+   ```bash
+   # Foreign-session detector for logs/session-notes.md.
+   # Signals: today-header count + mandate-line count. See PAIRED CONTRACT block above for format dependencies.
+   TODAY=$(date '+%Y-%m-%d')
+
+   # Assignment-only capture: grep -c exits 1 on zero matches but assignments ignore exit codes.
+   # Then ${VAR:-0} defaults to 0 if grep produced empty output (e.g., missing file).
+   WT_HEADERS=$(grep -c "^## ${TODAY}" logs/session-notes.md 2>/dev/null)
+   WT_HEADERS=${WT_HEADERS:-0}
+   HEAD_HEADERS=$(git show HEAD:logs/session-notes.md 2>/dev/null | grep -c "^## ${TODAY}")
+   HEAD_HEADERS=${HEAD_HEADERS:-0}
+
+   WT_MANDATES=$(grep -c "^\*\*Mandate:\*\*" logs/session-notes.md 2>/dev/null)
+   WT_MANDATES=${WT_MANDATES:-0}
+   HEAD_MANDATES=$(git show HEAD:logs/session-notes.md 2>/dev/null | grep -c "^\*\*Mandate:\*\*")
+   HEAD_MANDATES=${HEAD_MANDATES:-0}
+
+   ADDED_HEADERS=$((WT_HEADERS - HEAD_HEADERS))
+   ADDED_MANDATES=$((WT_MANDATES - HEAD_MANDATES))
+
+   # Determine whether this session ran /prime + /session-start (and thus contributed at most 1 own today-header AND 1 own mandate-line pre-wrap).
+   # Uses the `logs/.prime-mtime` marker that /prime Step 8a/8b writes after appending today's header.
+   PRIME_RAN=0
+   if [ -f logs/.prime-mtime ]; then
+     MARKER=$(cat logs/.prime-mtime 2>/dev/null | tr -dc '0-9')
+     MARKER=${MARKER:-0}
+     TODAY_EPOCH=$(date -j -f "%Y-%m-%d %H:%M:%S" "${TODAY} 00:00:00" "+%s" 2>/dev/null \
+       || date -d "${TODAY} 00:00:00" "+%s" 2>/dev/null \
+       || echo 0)
+     # Marker mtime ≥ today-midnight → /prime ran this session today.
+     if [ -n "${MARKER}" ] && [ "${MARKER}" -ge "${TODAY_EPOCH}" ] 2>/dev/null; then
+       PRIME_RAN=1
+     fi
+   fi
+
+   # Expected own contribution: up to 1 today-header (may be 0 if /prime reused an existing today-header from a parallel session) and up to 1 mandate-line.
+   # FOREIGN_HEADERS allows the header-count delta to exceed PRIME_RAN; FOREIGN_MANDATES allows the mandate-count delta to exceed PRIME_RAN.
+   # If EITHER signal indicates foreign content, STOP.
+   FOREIGN_HEADERS=$((ADDED_HEADERS - PRIME_RAN))
+   FOREIGN_MANDATES=$((ADDED_MANDATES - PRIME_RAN))
+   FOREIGN=${FOREIGN_HEADERS}
+   if [ "${FOREIGN_MANDATES}" -gt "${FOREIGN}" ]; then
+     FOREIGN=${FOREIGN_MANDATES}
+   fi
+   echo "GUARD: headers WT=${WT_HEADERS} HEAD=${HEAD_HEADERS} added=${ADDED_HEADERS} | mandates WT=${WT_MANDATES} HEAD=${HEAD_MANDATES} added=${ADDED_MANDATES} | PRIME_RAN=${PRIME_RAN} FOREIGN=${FOREIGN}"
+   if [ "${FOREIGN}" -ge 1 ]; then
+     echo "--- Today-headers in working tree ---"
+     grep -n "^## ${TODAY}" logs/session-notes.md 2>/dev/null
+     echo "--- Mandate lines in working tree ---"
+     grep -n "^\*\*Mandate:\*\*" logs/session-notes.md 2>/dev/null
+   fi
+   ```
+
+   Interpret the output:
+
+   - **`FOREIGN == 0`** — no foreign content detected. Proceed silently to Step 4.
+   - **`FOREIGN ≥ 1`** — **STOP**. Foreign session content is in the working tree. Staging `logs/session-notes.md` now would ship that content under this session's wrap commit. Output the following to the operator, then halt the wrap (do NOT proceed to Step 4):
+
+     > ⚠ Pre-write guard fired: detected {FOREIGN} foreign-session entries in `logs/session-notes.md` working tree (`headers added=K1, mandates added=K2, PRIME_RAN=P` — see Bash output above).
+     >
+     > Today-headers currently in working tree:
+     > {grep -n output for `^## TODAY`}
+     >
+     > Mandate lines currently in working tree:
+     > {grep -n output for `^**Mandate:**`}
+     >
+     > A concurrent session has written content this session did not author. If I stage `logs/session-notes.md` now, that foreign content will ship under my wrap commit.
+     >
+     > **To resolve:** switch to the other terminal and run `/wrap-session` there first (commits its own work cleanly). Once that wraps, return here and re-invoke `/wrap-session` — the foreign content will then be in HEAD and the guard will pass.
+     >
+     > I will NOT proceed automatically. Re-invoke `/wrap-session` after resolving.
+
+     Do not offer a "commit the union" override. Auto-merging session notes is a silent-conflict-resolution anti-pattern — the operator resolves manually by switching terminals.
+
+   - **Edge case (`FOREIGN < 0`)** — this means `PRIME_RAN > ADDED` for one or both signals, i.e., `.prime-mtime` marker claims `/prime` ran but no today-header or mandate-line was added. Most likely `/prime` Step 8a/8b ran in plan-mode (no write), the operator manually pruned an entry, or `/session-start` was skipped after `/prime`. Proceed silently to Step 4 — no concurrent-session risk, but log the discrepancy in chat as `Note: prime-mtime marker present but expected own-content absent in WT — proceeding`.
+
 4. Append a session note at the **END** of `/logs/session-notes.md` (newest entry is the LAST entry; do NOT prepend at the top — `check-archive.sh` interprets top entries as oldest and will archive them). Use conversation context and the operator's summary to populate:
    - `## {date} — {one-line title}` (e.g., "Created supplementary-query-brief-drafter skill")
    - `### Summary` — 2-4 sentences: what was accomplished, what was the focus
