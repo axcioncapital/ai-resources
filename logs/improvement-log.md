@@ -144,3 +144,13 @@ Suggested three-session sequence:
 - **Proposal:** Add a wrap-time pre-commit guard to `wrap-session.md` (the canonical `ai-resources/.claude/commands/wrap-session.md` plus the workspace-root Phase 3 copy). Before staging `logs/session-notes.md`, compare on-disk content to the session's own writes: detect any `## YYYY-MM-DD` headers or `**Mandate:**` lines authored by another session and stop with a chat prompt asking the operator to resolve (commit only own work, or commit the union). Symmetric counterpart to Plan 2 — closes the post-`/session-start` window the same way Plan 2 closed the pre-`/session-start` window. **/risk-check change class:** YES (canonical-command edit) — run `/risk-check` before landing.
 - **Target files:** `ai-resources/.claude/commands/wrap-session.md`, `~/Claude Code/Axcion AI Repo/.claude/commands/wrap-session.md` (Phase 3 wrap copy)
 - **Notes:** `ai-resources/audits/working/2026-05-27-resolve-concurrent-session-overwrite-session-notes.md`
+
+### 2026-05-27 — Foreign-files-in-working-tree alarm — diagnostic refinement (symlink-check-first)
+
+- **Status:** logged (pending)
+- **Category:** session-issue
+- **Source:** /resolve-repo-problem 2026-05-27
+- **Friction source:** During this session's Cluster 1 commit, `git status` returned 12+ "untracked" `.claude/commands/*.md` files under workspace-root that appeared to be new command additions from a runaway session. Investigation revealed 12 of 13 are SYMLINKS to ai-resources canonical command bodies (already committed); only 1 (`harness-start.md`) is a real abandoned file from May 25. Separately, 4 ai-resources file modifications + 2 fx-c1 risk-checks appeared in working tree mid-session and committed 1 second after the Cluster 1 commit — a parallel session's commit-in-progress, not a concurrent-session contention. Net: false alarm, but the operator/Claude spent a /resolve-repo-problem cycle (~5 min + investigator subagent) to triage it.
+- **Proposal:** Add a one-line diagnostic-shortcut to `docs/commit-discipline.md` (or workspace CLAUDE.md § Working Principles): when `git status` flags many `?? .claude/commands/*.md` files under workspace-root, run `find .claude/commands -type l -newer /dev/null | wc -l` (or equivalent) BEFORE escalating to /resolve-repo-problem — most will be symlinks to ai-resources canonical bodies. Separately, log the abandoned `harness-start.md` and the 2-day-old harness/* leftovers as candidates for `/cleanup-worktree` at next Friday cadence.
+- **Target files:** `docs/commit-discipline.md` OR workspace `CLAUDE.md` (add 1–2 sentence diagnostic-shortcut rule); `harness-start.md` abandoned file separately surfaced.
+- **Notes:** `audits/working/2026-05-27-resolve-concurrent-session-foreign-files-cluster-1-investigation.md`
