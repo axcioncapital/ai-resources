@@ -3073,3 +3073,245 @@ Executed Wave 1 (3 quick wins — 2 found already-resolved [FADING-GATE]; 1 real
 None.
 
 R1 resumption — build friday-act-step16a-summarizer agent + edit friday-act.md Step 16a (lines 158–178); design fully captured in committed risk-check report.
+## 2026-05-25 — Fixed /mandate (session-start Step 2) confirmation rendering
+
+### Summary
+Replaced the static "MANDATE CONFIRMATION" plain-text echo block in `session-start.md` Step 2 with Markdown rendering instructions: bold inline section labels, semantic icon set (⚠ ↩ → ✓ ✗ ·), Markdown bullets/tables for file mappings, `---` separators, synthesized Summary field, and a context-adaptive section label (Quick wins / Steps / Tasks). Added two HTML guard comments protecting the Step 2↔Step 3 parse-contract boundary (`/wrap-session` Step 7a depends on plain bullet labels in Step 3; those must not be stylized). Logged a `logged (pending)` improvement-log entry for extracting the rendering convention to a shared doc when a second consumer appears.
+
+### Files Created
+- `logs/scratchpads/2026-05-25-session-end-scratchpad.md` — session continuity scratchpad
+
+### Files Modified
+- `ai-resources/.claude/commands/session-start.md` — Step 2 echo block + Step 3 LOAD-BEARING guard comment
+- `ai-resources/logs/improvement-log.md` — appended `logged (pending)` entry for shared rendering-conventions doc
+
+### Decisions Made
+- **Target file:** `session-start.md` Step 2 echo block (no standalone `/mandate.md` exists; operator confirmed via AskUserQuestion). Saved a `reference_mandate_command.md` memory.
+- **Inline-and-flag vs extract-now:** inline-and-flag — System Owner Function B advisory cited DR-7 (one consumer today). Extraction deferred via parked improvement-log entry.
+- **Two-end parse-contract guard:** added HTML comments at Step 2 and Step 3 boundary per System Owner Q2 finding (risk-topology § 5 "Change modifies a string literal matched by another component").
+- **Synthesized field constraints:** Summary = structural shape (counts, file types, deferred-scope clause), Tasks/Steps/Quick wins = context-adaptive label, enumerated verbatim from work_scope. Both fields marked `<!-- chat-echo only — NOT a parse field -->` to pre-empt harmonization with Step 3.
+- **QC fixes (3):** Status field → `logged (pending)`, output-shape framing clarified, append-location specified.
+- **Template tweaks (2):** section label made context-adaptive (not fixed `**Tasks**`), Summary content style changed from "restate work_scope" to "structural shape."
+
+### Next Steps
+- Push `5b59abc` to origin when ready.
+- Track the shared rendering-conventions doc parked entry in improvement-log.md; revisit when a second consumer emerges (e.g., another confirmation-output command or `/prime` rendering harmonization request).
+
+### Open Questions
+None.
+
+
+## 2026-05-25 — Item 8 Sequencing Session 2 templates wrap
+
+### Summary
+Executed Sequencing Session 2 from the improvement-log Sequencing note: extracted the canonical project `.claude/settings.json` shape and the four canonical project `CLAUDE.md` sections from inline `/new-project` literals into shared template files under `ai-resources/templates/`; rewired `/new-project` to consume them via walk-up to `ai-resources/`; aligned `workflows/research-workflow/CLAUDE.md` against the canonical fragments while preserving workflow-local content. Plan-time `/risk-check` returned PROCEED-WITH-CAUTION; system-owner second opinion concurred and added a 4th mitigation (architecture-map update). QC caught a real substitution bug in the bash-native approach; swapped to python3 + mustache placeholders, dry-run-tested. End-time `/risk-check` returned GO with all 5 dimensions Low. 5 commits, all mitigations verified.
+
+### Files Created
+- `templates/README.md` — consumer contract + 2026-04-13 KEEP verdict with re-check evidence
+- `templates/project-settings.json.template` — canonical permissions + 2 SessionStart hooks; valid JSON
+- `templates/project-claude-md/header.md` — `{{NAME}}` / `{{PROJECT_DESCRIPTION}}` mustache placeholders (fresh-creation only)
+- `templates/project-claude-md/input-file-handling.md` — canonical fragment
+- `templates/project-claude-md/commit-rules.md` — canonical fragment
+- `templates/project-claude-md/compaction.md` — canonical fragment
+- `templates/project-claude-md/session-boundaries.md` — canonical fragment
+- `audits/risk-checks/2026-05-25-extract-canonical-project-settings-claude-md-into-templates.md` — plan-time PROCEED-WITH-CAUTION + system-owner concurrence + 4 mitigations
+- `audits/risk-checks/2026-05-25-end-time-gate-on-templates-extraction-change-set.md` — end-time GO; all dimensions Low
+- `logs/scratchpads/2026-05-25-15-41-scratchpad.md` — continuity scratchpad
+
+### Files Modified
+- `.claude/commands/new-project.md` — step 2 settings merge: replaced inline CANONICAL_PERMS / AUTO_SYNC_HOOK / SANITY_HOOK with walk-up template read + `jq -c` extraction (predicate + hook-append idempotency preserved). Step 4 CLAUDE.md sections: removed the 4 inline canonical block displays AND the inline printf heredocs; new procedure reads 5 fragments via walk-up; fresh-creation uses python3 + mustache placeholders; append path uses for-loop with grep-q per-section idempotency. Policy block heredoc reference also updated. (Commit `39b27b5`)
+- `docs/permission-template.md` — lines 157 + 349 redirected from `CANONICAL_PERMS` literal to `templates/project-settings.json.template` (mitigation #1; commit `8b44015`)
+- `docs/repo-architecture.md` — 3 line-anchored edits: tree row, canonical-homes table row for "Deployable canonical fragment", Q8 sub-bullet distinguishing deployable fragment from doc-that-describes-a-shape (mitigation #4 from system-owner; commit `8b44015`)
+- `workflows/research-workflow/CLAUDE.md` — added "Operator-pasted content" bullet (Input File Handling); added "Post-compact resumption" paragraph (Compaction); `## File Verification and Git Commits` preserved verbatim per mitigation #3 (commit `c692864`)
+- `CLAUDE.md` (ai-resources) — one-line pointer to `templates/` added under "Other directories" enumeration (commit `8b44015`)
+- `logs/improvement-log.md` — Session 2 of Sequencing note marked VERIFIED-DONE with full execution context; Session 3 dependency now satisfied (commit `acc68fe`)
+
+### Files NOT Modified (intentional narrowing)
+- `workflows/research-workflow/.claude/settings.json` — workflow-specific hooks (PreToolUse Skill/Edit, PostToolUse Write/Edit auto-commit, extra SessionStart hooks) + intentional `{{WORKSPACE_ROOT}}` placeholder in `additionalDirectories`. No canonical drift to fix; alignment means "match canonical baseline where it applies," not "enhance with new hooks from the template." End-time `/risk-check` validated this as correctly bounded.
+
+### Decisions Made
+- **2026-04-13 decision re-checked → KEEP.** Project CLAUDE.md mirroring of workspace rules remains needed. Evidence: 5 projects checked, all missing `## Input File Handling` canonical section — confirms `/new-project` only writes at scaffold time, never backfills. The architectural decision is correct; the propagation gap is a separate concern flagged in `templates/README.md`.
+- **Template location: `ai-resources/templates/`** (sibling to `docs/`, `skills/`, `workflows/`). New top-level dir + new artifact type both triggered `repo-architecture.md` update rule (system-owner-caught mitigation #4).
+- **Mustache `{{NAME}}` / `{{PROJECT_DESCRIPTION}}` placeholders** in `header.md`, not single-brace `{name}` / `{project-description}`. Distinct from agent's tokens to prevent global-substitution collision; same convention research-workflow uses for `{{WORKSPACE_ROOT}}`.
+- **Python3 substitution** instead of bash native `${VAR//pattern/repl}`. QC found bash-native unsafe under (a) apostrophe in description = bash syntax error; (b) agent global substitution would corrupt bash search pattern. Python3 + argv passing handles all edge cases. Dry-run-tested with torture input (apostrophe / ampersand / backslash). Adds python3 as an implicit dependency (already available on macOS; consistent with existing jq dependency).
+- **Research-workflow alignment scope: within-section drift only.** Added missing canonical bullets/paragraphs to existing canonical sections. Did NOT promote `## File Verification and Git Commits` to canonical (mitigation #3); did NOT touch `.claude/settings.json`. Settings has intentional workflow-specific content.
+- **QC fix (separate from mitigations):** stale "heredoc" comment in Policy block at `new-project.md:402` updated to reflect actual post-rewire mechanism (template-fragment read + python3 substitution).
+
+### Next Steps
+- **Push** — 13 unpushed in `ai-resources` (this session's 5: `8b44015`, `39b27b5`, `c692864`, `54bf85b`, `acc68fe` on top of 8 concurrent earlier today). 1 unpushed in workspace (`Phase 5 Verification Layer` from earlier). Operator gate.
+- **Sequencing Session 3 (~45 min)** — both dependencies now satisfied. Source entries: "Add three questionnaire items to `/repo-dd`" + "Pre-commit skill-size warning hook." Natural next link in the sequence; chain it.
+- **`deploy-workflow.md:209` unification** — second consumer with an inline `CANONICAL_PERMS` literal. Small targeted refactor (~30 min) that would close the same contract-drift surface this session was designed to fix. Flagged in end-time risk-check + improvement-log entry.
+- **Project CLAUDE.md backfill** — separate concern: `/new-project` only writes canonical sections at scaffold time; existing projects miss newly-canonized sections. Possible future: backfill command or `/friday-checkup` rule.
+- **Standing carryovers:** R9 reframe; SF1 broad (still blocked on Sonnet 200k Task 1); workflow-diagnosis skill build; orphaned-skill decision.
+
+### Open Questions
+None.
+
+**Mandate:** Verify and complete partial R1 — add fallback-passthrough rule to existing `friday-act-16a-summarizer.md` agent and update stale Notes lines 418–419 in `friday-act.md` — done when: agent has explicit verbatim-passthrough instruction on both fallback paths; friday-act.md Notes lines 418–419 updated to reflect subagent delegation; two-cycle paste-decision validation completed; both file edits committed.
+- Out of scope: agent file creation (already exists); Step 16a dispatch wiring (lines 158–167, already shipped)
+- Files in scope: `.claude/agents/friday-act-16a-summarizer.md`, `.claude/commands/friday-act.md`
+- Stop if: (none stated)
+
+
+## 2026-05-25 — /log-sweep ai-resources scope wrap
+
+### Summary
+Brief orientation + maintenance session. `/prime` ran cleanly: pulled both repos up to date, surfaced 21 unpushed commits in `ai-resources` + 4 in workspace, flagged uncommitted residue files from earlier-today sessions, and surfaced the prior continuity scratchpad as resumable. Operator then ran `/log-sweep ai resources` selecting the `ai-resources` scope only. The `log-sweep-auditor` subagent inventoried 687 markdown files and flagged one Cat B file over threshold: `logs/coaching-data.md` (553 lines, 77 dated `###` headers). `log-archiver.sh --mode header3` with KEEP=10 rotated it to 78 lines, archiving 67 entries to a new monthly archive file. One commit (`dbaa68b`).
+
+### Files Created
+- `logs/coaching-data-archive-2026-05.md` — 67 archived entries from `coaching-data.md` (Cat B rotation)
+- `audits/log-sweep-2026-05-25.md` — /log-sweep final report (summary, applied table, inventory-only, recovery commands)
+- `audits/working/log-sweep-ai-resources-2026-05-25.md` — log-sweep-auditor working notes (full per-category inventory; gitignored)
+- `audits/working/log-sweep-manifest-2026-05-25.md` — pre-apply + post-apply manifest (gitignored)
+- `logs/scratchpads/2026-05-25-15-56-scratchpad.md` — continuity scratchpad for next /prime (gitignored)
+
+### Files Modified
+- `logs/coaching-data.md` — Cat B header3 rotation, 553 → 78 lines, 67 entries moved to archive (commit `dbaa68b`)
+
+### Decisions Made
+None analytical. The only operator-gated decision was `/log-sweep` scope selection via AskUserQuestion — chose `ai-resources` only (excluded the 11 project scopes). Routine, not logged to decisions.md.
+
+### Next Steps
+- **Push** — 22 unpushed in `ai-resources` (this session's 1 + the 21 already-unpushed at /prime time); 4 unpushed in workspace. Operator gate.
+- **Sequencing Session 3 (~45 min)** — both dependencies now satisfied (carried over). Source: improvement-log Sequencing note. Adds three questionnaire items to `/repo-dd` + the pre-commit skill-size warning hook.
+- **`deploy-workflow.md:209` unification (~30 min)** — second consumer with an inline `CANONICAL_PERMS` literal (carried over). Mirrors the Sequencing Session 2 refactor for `/new-project`; closes the same contract-drift surface.
+- **Reconcile uncommitted working-tree residue** — 2 modified + 6 untracked files from earlier-today sessions (Phase 5 Verification Layer risk-checks, Sonnet 200k diagnostic + plan, session-plan-pass3). Decide per file: commit, park into a new session, or discard.
+- **Standing carryovers:** R9 reframe; SF1 broad (blocked on Sonnet 200k Task 1); workflow-diagnosis skill build; orphaned-skill decision; project CLAUDE.md backfill.
+
+### Open Questions
+- **Orphan Mandate at session-notes.md bottom** — a `**Mandate:**` block (R1 partial completion / `friday-act-16a-summarizer`) sits above this wrap entry without a corresponding `## YYYY-MM-DD` header or wrap section. The R1 work itself appears completed and committed earlier today (`0142036`). The orphan is a wrap that was skipped, not work in flight. Worth a follow-up to either back-fill a wrap entry or trim the orphan block; this wrap did not touch it.
+
+## 2026-05-25 — R1 completion: friday-act-16a-summarizer fallback-passthrough + Notes update
+
+### Summary
+Completed the remaining two gaps in the R1 implementation (token-audit finding — /friday-act Step 16a subagent extraction). The agent file and dispatch wiring had already shipped in a prior session; this session added the third required mitigation (explicit verbatim-passthrough rule on both section-match fallback paths) and replaced the stale pre-delegation token-cost note in friday-act.md's Notes section. Both edits committed in a single commit. Two-cycle paste-decision validation deferred to next live /friday-act run — no prior-cycle SO Advisory or Systems Review files are stored in the repo for offline validation.
+
+### Files Created
+- `logs/session-plan-pass5.md` — session execution plan for R1 completion (pass5 to avoid clobbering concurrent session's plan)
+- `logs/scratchpads/2026-05-25-16-03-scratchpad.md` — continuity scratchpad
+
+### Files Modified
+- `.claude/agents/friday-act-16a-summarizer.md` — added explicit verbatim-passthrough rule to both section-match fallback paths (SO Advisory line 29, Systems Review line 34): "Return this fallback note verbatim in the summary — do not paraphrase it, do not infer what the missing section probably contained." (commit `dad0301`)
+- `.claude/commands/friday-act.md` — replaced pre-delegation token-cost Note (line 419) describing 500–1500 lines raw section volume with subagent-delegation description noting ≤30-line summary cap. (commit `dad0301`)
+
+### Decisions Made
+- **Line 39 (friction-log fallback) excluded from passthrough rule.** Agent line 39 is a structural fallback (separator-not-found → read last 100 lines), not a section-match-failed fallback note. The verbatim-passthrough rule applies only to the two section-match fallback paths (lines 29 and 34). Consistent with risk-check Architectural Commentary scope.
+- **End-time /risk-check skipped.** Plan-time gate ran (PROCEED-WITH-CAUTION verdict, all 3 mitigations now applied); commits bounded; no drift from approved design. Skip rule applied per documented criteria.
+- **Two-cycle validation deferred.** No prior-cycle SO Advisory or Systems Review output files are stored in the repo. Validation happens naturally at next live /friday-act run.
+
+### Next Steps
+- **Push** — 12+ unpushed commits in `ai-resources`. Operator gate.
+- **Two-cycle paste-decision validation** — happens automatically at next live `/friday-act` run; no action needed before then. If summary loses load-bearing signal vs. old inline display, expand the agent schema.
+- **Sequencing Session 3** — both Session 2 dependencies now satisfied (Item 8 session landed today). Natural next link: "Add three questionnaire items to `/repo-dd`" + "Pre-commit skill-size warning hook."
+- **`deploy-workflow.md:209` unification** — second inline `CANONICAL_PERMS` literal flagged by Item 8 session's end-time risk-check. ~30 min targeted refactor.
+- **SF1 broad + SF2** — still deferred behind Sonnet 200k Task 1.
+- **Standing carryovers:** R9 reframe; `/improve` on concurrent-session friction; workflow-diagnosis skill build; orphaned-skill decision (`fund-triage-scanner`, `prose-refinement-writer`).
+
+### Open Questions
+None.
+
+## 2026-05-25 — Sonnet 200k plan Tasks 1+2+3
+Class: execution
+
+**Mandate:** Implement Tasks 1+2+3 from `plans/sonnet-200k-efficiency-implementation.md` sequenced with a commit after each (Task 5 optional stretch) — done when: Tasks 1, 2, 3 committed with their plan-specified acceptance criteria met.
+- Out of scope: (none stated)
+- Files in scope: (inferred)
+- Stop if: context running lean by end of Task 2 — Tasks 1+2 is a clean stopping point
+
+## 2026-05-25 — Friction-cleanup session
+
+**Mandate:** Land three verified-open friction fixes — Wave 0 batch-commit orphan artifacts (per-file triage at commit), Wave 1 `/session-plan` HHMM filename rename across 7 consumers + plan-time `/risk-check`, Wave 2 `deploy-workflow.md:209` template unification — done when: Waves 0, 1, 2 committed; Wave 3 stretch (`/create-skill workflow-diagnosis`) optional.
+- Out of scope: (none stated)
+- Files in scope: (inferred)
+- Stop if: A concurrent session re-touches a Wave-1 consumer file mid-edit; or plan-time `/risk-check` on Wave 1 returns NO-GO
+
+## 2026-05-25 — Sonnet 200k plan Tasks 1+2+3+5 (all four shipped)
+
+### Summary
+
+Executed `plans/sonnet-200k-efficiency-implementation.md` end-to-end: Task 1 (compaction-protocol named checkpoints), Task 2 (qc-reviewer output cap), Task 3 (optional mandate fields with 3-reader parse contract), and the optional Task 5 (heavy-read-discipline doc). Task 3 ran plan-time `/risk-check` (PROCEED-WITH-CAUTION) → `/consult` Function B second opinion (surfaced 2 missed readers + 1 pre-existing drift bug) → operator chose the SO-recommended scope (4 files + drift fix; dropped mitigations 4+5) → `/qc-pass` GO. Task 3 end-time `/risk-check` skipped per skip rule (all conditions met). 5 commits this session (4 in ai-resources + 1 in workspace).
+
+### Files Created
+
+- `audits/risk-checks/2026-05-25-plan-time-gate-on-sonnet-200k-plan-task-3-add-two-optional.md` — risk-check report + appended `## Architectural Commentary` from `/consult` Function B (commit `5eb584c`)
+- `docs/heavy-read-discipline.md` — Task 5 stretch doc (commit `d685d74`)
+- `logs/scratchpads/2026-05-25-19-30-scratchpad.md` — continuity scratchpad (gitignored)
+
+### Files Modified
+
+- `docs/compaction-protocol.md` — Task 1, appended Named checkpoints section (commit `038fca9`)
+- `.claude/commands/wrap-session.md` (canonical) — Task 1 Step 0.5 pointer + Task 3 Step 7a bullet-recognition extension (commits `038fca9` + `5eb584c`)
+- `.claude/commands/session-plan.md` — Task 1 Step 5 pointer (commit `038fca9`)
+- `.claude/agents/qc-reviewer.md` — Task 2 output cap + shape spec + optional disk-write path (commit `67db5c3`)
+- `.claude/commands/session-start.md` — Task 3 7 edits across Step 1/2/3 (commit `5eb584c`)
+- `.claude/commands/drift-check.md` — Task 3 SO mitigations 1a/1b: fix pre-existing `In scope` → `Files in scope` drift, add new labels, preserve `Class:` (commit `5eb584c`)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/.claude/commands/wrap-session.md` (workspace-root) — Task 3 SO mitigation 1c: Step 2b auto-derive list (commit `f80af28` in workspace repo)
+- `logs/session-plan.md` — overwritten at session-start with Sonnet 200k plan intent (uncommitted; will be committed with this wrap)
+- `logs/session-notes.md` — mandate line at session-start + this wrap entry
+
+### Decisions Made
+
+- **Task 3 SO second opinion produced scope expansion + pre-existing drift fix.** `/risk-check` returned PROCEED-WITH-CAUTION with 4 mitigations covering a 3-file edit. `/consult` Function B (auto-fired on non-GO) surfaced TWO additional readers the risk-check missed: workspace-root `wrap-session.md` Step 2b (Phase 3 session report) and a pre-existing drift in `drift-check.md:26` where `In scope` was wrong (`/session-start` actually writes `Files in scope`). Operator selected "SO recommended — 4 files + drift fix" (mitigations 1a/1b/1c/2/3) and explicitly dropped mitigations 4 (revert notes + resilient "three sub-bullets" rewording) and 5 (coaching-data schema acknowledgement) per minimal-infra-subset preference. Logged to `decisions.md`.
+- **`drift-check.md` `Class:` preserved.** SO mitigation 1a recommended removing `Class:` from drift-check's label list, but `Class:` is legitimately written by `/session-plan` Step 7 (separate from `/session-start`'s mandate block). Only the `In scope` → `Files in scope` drift was fixed; `Class:` retained. Corrected the SO's slight over-reach. Logged to `decisions.md`.
+- **End-time `/risk-check` skipped for Task 3.** Skip rule conditions all met: plan-time gate ran with SO-expanded mitigations applied, commits about to ship reflecting bounded scope, `/qc-pass` GO confirmed scope match, no drift from approved design.
+- **End-time `/risk-check` skipped for Task 2.** Change is purely additive (output cap + opt-in disk-write); no caller behavior altered; auto-symlink blast radius does not translate to risk for non-breaking additive changes.
+- **Task 5 stretch executed.** Context sufficient after Task 3; bounded scope (docs-only, no risk-check, isolated new file with no concurrent-session collision risk).
+- **`wrap-session.md` Step 7a "three sub-bullets" → "five sub-bullets".** Forced consequence of extending the parenthetical bullet list to 5; NOT the resilient rewording dropped as part of mitigation 4. Minimum-consistency change.
+
+### Next Steps
+
+- **Push** — 5 ai-resources commits this session (`038fca9`, `67db5c3`, `5eb584c`, `d685d74`, plus this wrap commit) + 1 workspace commit (`f80af28`). Carryover unpushed counts from prior sessions also pending. Operator gate.
+- **SF1 broad + SF2 — NOW UNBLOCKED.** Sonnet 200k Task 1 (compaction checkpoints) was the named dependency. Standing carryover from prior sessions can now move.
+- **Permission-sweep-auditor improvement session** — booked for 2026-05-26 (not deferred again).
+- **Sequencing Session 3** — adds 3 questionnaire items to `/repo-dd` + pre-commit skill-size warning hook (~45 min).
+- **Plan-doc reconciliation** — `plans/sonnet-200k-efficiency-implementation.md:99-100` describes old "defaults to inferring" semantics; implementation uses "absent means absent" per SO advisory. Flagged by `/qc-pass` as out-of-scope Note. ~5 min targeted edit, deferred.
+- **Stale "four sub-bullets" reference** — `harness/prep/phase3-command-fixes-plan.md:56` says "four sub-bullets" (now 5). Flagged for next harness-prep sweep.
+- **Reconcile working-tree residue** — the 4 risk-check files + 2 Sonnet 200k diagnostic/plan files + 1 session-plan-pass3 + 1 modified session-plan.md remain uncommitted (from earlier today). Some now superseded by this session's commits; needs per-file triage.
+- **`deploy-workflow.md:209` unification** — likely being handled by concurrent Friction-cleanup session (Wave 2). Confirm at next `/prime` whether still needed.
+- **Standing carryovers:** R9 reframe; workflow-diagnosis skill build; orphaned-skill decision (`fund-triage-scanner`, `prose-refinement-writer`); project CLAUDE.md backfill.
+
+### Open Questions
+
+- **Concurrent friction-cleanup session collision.** That session's mandate landed in `logs/session-notes.md` below mine at session-start time. Its Wave 1 (`/session-plan` HHMM filename rename across 7 consumers) may touch `session-plan.md` (the command) which I also edited in Task 1. Worth checking for merge conflicts when both sessions wrap. Both `bypassPermissions` sessions running in parallel = recurring W22 pattern (operator has it under control per prior wrap notes).
+
+## 2026-05-25 — Friction-cleanup session: Wave 2 deploy-workflow template-permissions unification
+
+Class: mixed (execution-dominant)
+
+### Summary
+
+Friction-cleanup session targeting three verified-open fixes (Waves 0, 1, 2) plus an optional stretch (Wave 3). Only Wave 2 landed (commit `fce4ca6`): unified `deploy-workflow.md:209` to read canonical permissions from `templates/project-settings.json.template` instead of an inline JSON literal, mirroring the `/new-project` rewire from earlier today (`39b27b5`). Wave 0 (housekeeping) and Wave 1 (`/session-plan` filename rename across 7 consumers) deferred to a fresh session — Wave 0 due to uncertain ownership of orphan files held by 2 concurrent sessions; Wave 1 due to direct collision with the active Sonnet 200k session which was modifying `compaction-protocol.md` (one of the 7 consumers). Wave 1 is now unblocked (Sonnet 200k wrapped at `a7e80a2`, 4 min before this wrap) but 4 consumer files just shifted under me, so it needs fresh reads.
+
+Two `/qc-pass` cycles before execution caught a substantive issue: most friction-log entries from Apr–May 2026 referenced in the original `/open-items` report were ALREADY SHIPPED but never had a `Resolved:` field added. The first proposal listed `/friday-act` auto-QC + `/session-start` confirmation-token as priority items, both already implemented. The second proposal then proposed several May-11 friction items also already shipped (`/session-plan` template enrichment, `/monday-prep` C15 conflate-semantics, pre-commit skill-size hook). The third proposal reduced scope to truly outstanding work (Waves 0/1/2 + stretch).
+
+Plan-time `/risk-check` on Wave 2: PROCEED-WITH-CAUTION (3 Mediums: permissions surface, blast radius, hidden coupling). System-owner second opinion via `/consult` concurred and flagged Risks A (deploy-workflow write predicate) and D (permission-template Layer D content) as pre-commit verifications — both verified clean. All 3 required mitigations applied in the same commit.
+
+### Files Created
+
+- `audits/risk-checks/2026-05-25-wave-2-deploy-workflow-template-permissions-unification.md` — plan-time risk-check report with `/consult` Function B architectural commentary appended (commit `fce4ca6`)
+- `logs/scratchpads/2026-05-25-19-19-scratchpad.md` — continuity scratchpad for next `/prime` (gitignored)
+
+### Files Modified
+
+- `.claude/commands/deploy-workflow.md` — replaced inline `CANONICAL_PERMS` JSON literal at line 209 with walk-up resolver + `jq -c '.permissions'` template read; replaced inline JSON-literal documentation block with a pointer paragraph linking to `docs/permission-template.md` § Layer D rationale (commit `fce4ca6`)
+- `templates/README.md` — Consumer contract updated to add `/deploy-workflow` as a second consumer; notes this as the 2026-05-25 KEEP-verdict's first concrete extension (commit `fce4ca6`)
+
+### Decisions Made
+
+- **Off-spec `/session-plan` path taken (no session-plan file written).** `logs/session-plan.md` was held by the active Sonnet 200k session at /session-plan time (modified 17 min before by them). Spec's 3 options were (1) keep their plan, (2) overwrite (destructive), (3) write to pass2.md (also committed from earlier). Off-spec option 4: execute against the two-QC-passed proposal directly. Operator confirmed.
+- **Wave 0 deferred — uncertain orphan ownership.** Two of the 7 untracked files belonged to the active Sonnet 200k session (input files for its Tasks 1+2+3); 4 risk-check files belonged to an unidentified Phase 5/6/7 harness session that was actively adding to the working tree. Per-file ownership triage needed in a clean session.
+- **Wave 1 deferred — concurrent collision then context-discipline.** Initially deferred due to active concurrent session modifying `compaction-protocol.md`. After that session wrapped, deferred again per the workspace "context constraint deferral" rule — 4 consumer files had shifted in the last 36 minutes and Wave 1 (~75 min + `/risk-check`) on degrading context was the wrong call.
+- **End-time `/risk-check` skipped per documented skip rule.** Wave 2 had plan-time gate with PROCEED-WITH-CAUTION verdict + all 3 mitigations applied + system-owner second opinion + commits already shipped + drift bounded to a single file pair. Per memory `feedback_end_time_risk_check_skip.md`, all four skip criteria met.
+
+### Next Steps
+
+- **Push** — Wave 2 commit `fce4ca6` is unpushed. Operator gate.
+- **Wave 1 next session** — `/session-plan` filename rename to HHMM scheme across 7 consumers + plan-time `/risk-check`. Fresh reads needed for the 4 consumers that just changed: `compaction-protocol.md` (commit `038fca9`, named-checkpoints added), `drift-check.md` (commit `5eb584c`, Task 3 edits — heaviest consumer), `session-start.md`, `wrap-session.md`. Plus the other 3: `prime.md`, `open-items.md`, `monday-prep.md`, `repo-architecture.md`, `weekly-cadence.md`.
+- **Wave 0 orphan triage** — 7+ uncommitted artifacts with per-file ownership triage needed. Some now likely committed by their owning sessions; the 4 risk-check files from the Phase 5/6/7 harness session probably remain.
+- **`/improve` on friction-log freshness** — separate cleanup pass to mark shipped fixes as `Resolved:` across the friction-log. The freshness problem caused two QC catches in this session and is the kind of systematic drift `/improve` should surface.
+- **Workflow-diagnosis inbox brief** — Wave 3 stretch not attempted; still a viable next-session candidate.
+- **Standing carryovers (from prior wraps):** R9 reframe; orphaned-skill decision (`fund-triage-scanner`, `prose-refinement-writer`); project CLAUDE.md backfill.
+
+### Open Questions
+
+None.

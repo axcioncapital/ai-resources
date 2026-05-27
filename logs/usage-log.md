@@ -966,3 +966,32 @@ Stability vs. prior entries: This session is cleaner than the 2026-05-16 cleanup
 - **Mandate verification against handoff when implementing pre-drafted plans (~800-1,500 tokens when miss fires).** This session's content-review gate caught the missing Plan 3, but the structural fix is /session-plan reading the handoff's plan inventory at Step 0 and cross-checking against the proposed mandate. Smaller than primary because pre-drafted-plan sessions are infrequent, but the catch was operator-caught this time — automating it would close the loop.
 - **session-notes.md tail-N standardization (~150-300 tokens/session, every session).** Smallest per-session lever but most frequent. Standing recommendation across multiple prior entries; Plan 2's mtime guard is adjacent to this work but does not solve it directly. Lowest ROI per session but highest cumulative across the 10-20 horizon.
 - **Subagent return-summary use vs report full-Read (already shipped this session).** Negative-cost — already applied. Calling out as the pattern of the prior session's recommendation propagating. No further action.
+
+### 2026-05-27 | Acceptable
+
+**Task:** High-priority sweep from friction-log + improvement-log — 3 clusters shipped (wrap-session foreign-session guard with risk-check + QC fixes, 3 verified-done friction items annotated, 2 small docs entries resolving R3a + contract-check deferrals) plus a /resolve-repo-problem side investigation that returned benign (symlinks, not new commits).
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~25 |
+| Files read | ~12 (re-reads: vault/ vs output/phase-1/ for risk-topology.md + system-doc.md after gitignore discovery) |
+| Files written/edited | ~8 |
+| Tool calls | ~70-80 (Bash ~40, Read ~12, Edit ~15, Write ~3, Agent 5) |
+| Subagents | 5 (risk-check-reviewer, system-owner via /consult, qc-reviewer, /resolve-repo-problem investigator, session-usage-analyzer) |
+| Rework cycles | 1 (Cluster 1 QC REVISE — 2 findings fixed inline) |
+
+**Findings:**
+- **Rework — Moderate.** Cluster 3 docs edits initially landed in `vault/` then required re-application to `output/phase-1/` after discovering vault/ is gitignored downstream. Cost: ~4 redundant Edits + ~2 verify Reads ≈ ~1.5-2k tokens. Root cause: vault-vs-output canonical-source ambiguity not checked before first edit. Structural fix: a one-line "which path is the canonical source?" verify before editing any file under a `vault/` or mirror-shaped directory.
+- **Rework — Minor (load-bearing).** Cluster 1 QC REVISE caught 2 critical findings (bash `grep -c` zero-match arithmetic bug; header-reuse blind spot). Cost: ~2 inline Edits. Not waste — QC working as designed; the bash-grep-zero-match bug is the same class as the 2026-05-26 BSD `date` arithmetic catch, suggesting bash-edge-case live-test discipline is still drifting.
+- **Tool overhead — Minor.** /resolve-repo-problem side investigation was triggered by a self-raised "concurrent-session activity" alarm before Cluster 1 commit; the alarm turned out benign (12 of 13 "new commands" were symlinks). The investigation itself produced a useful improvement-log entry (symlink-check-first diagnostic), but the trigger was a false positive — a `ls -la` check on the suspect paths upfront would have resolved it without spawning a subagent. ~3-4k tokens spent on investigation overhead.
+- **Trend:** Stable vs last 3 entries (all Acceptable). The vault-vs-output rework is a NEW class not previously logged. The bash-edge-case live-test pattern (BSD date 2026-05-26; grep -c zero-match here) is now recurring — promote from session-specific lesson to standing discipline.
+
+**Recommendation:** Add a canonical-source verify step before editing any file under a mirror-shaped path (`vault/`, `output/phase-N/`, deployed `.claude/` symlinks). One-line check: "is this path gitignored, a symlink, or a mirror copy?" before the first Edit. Would have prevented Cluster 3's full edit-then-redo cycle.
+
+**Estimated savings:** ~1,500-2,500 tokens per docs-edit session that touches mirror-shaped paths. Derivation: ~4 redundant Edits avoided (~400-500 tokens each in tool overhead + ~50-100 lines diff context) ≈ 2k tokens; plus 1-2 verify Reads avoided (~500 tokens). Mirror-path edits occur ~1-2×/week → ~3-5k/week, ~30-50k over 10-20 session horizon.
+
+**Additional levers (ROI-ranked):**
+- **Bash-edge-case live-test discipline as standing rule (~1,500-3k tokens when bug fires).** BSD date arithmetic (2026-05-26) and `grep -c` zero-match (this session) are both shell-quirk classes that escape paper review. Add a "any new bash logic in a command body is live-tested with edge-case inputs before commit" line to a relevant doc. Bigger than primary in horizon terms because shell quirks recur and each missed bug costs a QC REVISE cycle.
+- **Symlink-check-first preflight in /resolve-repo-problem investigator (~2-4k tokens when triggered).** Already logged this session as a Quick Patch in improvement-log; horizon savings ~5-10k if the same false-positive class recurs 2-3×. Smaller than primary because /resolve-repo-problem fires less frequently than docs edits.
+- **Trust /consult subagent return summary; skip full-read of system-owner advisory (~1-2k tokens/session when chain fires).** Same recurring lever flagged in 2026-05-25 and 2026-05-26 entries. Not yet structurally addressed. Smaller per-session but cumulative across the chain.
+- **Pin friction-log + improvement-log + decisions.md tails into a consolidated /prime read (~800-1.5k tokens/session, every session).** Recurring lever — flagged in 6+ prior entries. Lowest per-session but highest frequency; structural fix would close a standing pattern.

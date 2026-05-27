@@ -131,3 +131,12 @@
 - **QC cycles:** 2 (mandate: REVISE with 2 BLOCKERs → fixes applied inline → ready; session-plan: REVISE with 1 BLOCKER + 5 IMPORTANTs → 3 missing schema sections added + 4 other revisions → ready)
 - **Gates:** 8 (6 changed) — plan-approval:changed (prime menu ambiguity required AskUserQuestion clarification), plan-approval:changed (mandate confirm → operator chose /qc-pass), qc-disposition:changed (mandate REVISE → "Proceed" with fixes), plan-approval:changed (session-plan post-write → operator chose /qc-pass), qc-disposition:changed (session-plan REVISE → "Fix"), qc-disposition:confirmed (plan-time risk-check PWC → mitigations as proposed), challenge-disposition:changed (cluster-memo-refiner pre-draft → /recommend delegated judgment), qc-disposition:confirmed (end-time risk-check PWC → mitigations as proposed)
 - **Mandate fields:** specified: work_scope, exit_condition, out_of_scope, stop_if | inferred: files_in_scope | omitted: allowed_inputs, required_outputs
+
+### 2026-05-27 — High-priority sweep from friction-log + improvement-log
+
+- **Commands used:** /prime, /clarify, /recommend, /risk-check, /consult, /qc-pass, /resolve-repo-problem, /wrap-session
+- **Iterations:** 1 (Cluster 1 wrap-session guard — initial draft → QC REVISE → strengthened with bash bug fix + mandate-line signal)
+- **Decisions logged:** 0 (all session decisions captured in session-notes.md; mitigation choices within risk-check/qc cycle treated as routine per wrap-session.md Step 5 skip rule)
+- **QC cycles:** 1 (REVISE → 2 critical findings fixed inline → re-tested live → approved by self-check)
+- **Gates:** 5 (4 confirmed, 1 changed) — plan-approval:confirmed, content-review:confirmed, qc-disposition:changed (REVISE→fixes applied), challenge-disposition:confirmed (SO concur with PROCEED-WITH-CAUTION), service-design-disposition:confirmed (M4 strengthening from LLM to mechanical)
+- **Mandate fields:** specified: work_scope, exit_condition, out_of_scope | omitted: files_in_scope, stop_if, allowed_inputs, required_outputs
