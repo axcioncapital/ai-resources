@@ -25,9 +25,15 @@ Flag format: `[HEAVY] About to {action}. Signal: {which trigger}. Estimated cost
 ## `[SCOPE]` — scope-creep against the exit condition
 
 Fire when work is drifting past the exit condition set at `/prime`. Triggers:
+
+*Operator-initiated extension:*
 - Operator introduces a new task mid-session ("also do X", "while you're at it")
 - You propose work outside the exit condition's scope
 - A mid-session scope extension has already happened once (second extension = flag harder)
+
+*Claude-initiated drift (no operator ask):*
+- You are about to write or edit a file in a project or directory not covered by the exit condition, and no operator turn in the current session named it
+- The session mandate is advisory or read-only in character (audit, review, analysis, consultation) but you are about to execute a write, edit, or commit
 
 `[SCOPE]` only fires when an exit condition is logged in `ai-resources/logs/session-notes.md` for the current session. If `/prime` was not run (ad-hoc work), `[SCOPE]` is inactive — do not invent an exit condition to flag against.
 
