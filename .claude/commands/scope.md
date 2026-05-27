@@ -10,4 +10,4 @@ Based on the conversation so far, produce a scope summary:
 4. **Decisions the user has made** — List any choices they have explicitly stated.
 5. **Decisions you are making** — List any choices you will make on their behalf and what you will default to.
 
-Keep it short. Wait for the user to reply with approved / adjust, then execute.
+Keep it short. Wait for the user to reply with approved / adjust, then execute. Operator may invoke `/decide` on the §5 list to evidence-ground each decision against project files before approving.

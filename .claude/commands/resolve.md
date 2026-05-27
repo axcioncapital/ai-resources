@@ -36,6 +36,6 @@ After a `/qc-pass`, run this command to get an importance verdict and concrete f
 
 8. **If all items are Low-signal or Skip:** announce "All findings are low-signal — nothing to fix." Done.
 
-9. **If any items need operator judgment:** surface those rows first and wait for guidance before proceeding.
+9. **If any items need operator judgment:** surface those rows first and wait for guidance before proceeding. Operator may invoke `/decide` to evidence-ground those rows against project files before answering.
 
 10. **If any Real items with concrete fixes:** wait for operator approval row-by-row (or blanket approval). Before executing fixes, set: `touch /tmp/claude-resolve-executing-$PPID` — this tells the auto-QC nudge hook to suppress re-nudging during fix execution. Execute each approved fix. After all fixes complete (or if interrupted), remove the marker: `rm -f /tmp/claude-resolve-executing-$PPID`. Report completion per fix.

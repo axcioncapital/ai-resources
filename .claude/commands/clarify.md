@@ -11,3 +11,5 @@ Instead, do the following:
 3. **Clarifying questions** — Ask the questions that would most change your approach depending on the answer. Maximum 5 questions, ranked by impact.
 
 Do not proceed until the user responds. After they answer, restate the updated understanding. Then remind the user to run `/scope` to lock the deliverables before execution — do not start work until `/scope` has been approved.
+
+If the user wants Claude to pre-research each clarifying question against project files before answering, they may invoke `/decide` on the §3 list.
