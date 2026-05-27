@@ -414,3 +414,31 @@ Class: execution
 - Files in scope: (inferred)
 - Stop if: (none stated)
 
+
+### Summary
+Fixed a documented misclassification pattern by adding a "Hook attribution rule" paragraph to `projects/nordic-pe-macro-landscape-H1-2026/CLAUDE.md` § Friction Logging. The rule instructs friction-log authors to identify the writer before attributing, and explicitly forbids classifying `/session-plan` self-overwrites as "PostToolUse write-activity hook overwrites" — the misdiagnosis that had recurred 3× per the project's improvement-log. Plan-time `/risk-check` ran GO (all 5 dims Low); post-edit `/qc-pass` ran GO. Also: first live verification of Plan 2 (the mtime guard shipped 2026-05-26) — own-write distinction worked correctly with no false-positive concurrent-session warning.
+
+### Files Created
+- `projects/nordic-pe-macro-landscape-H1-2026/.claude/...` — none
+- `ai-resources/audits/risk-checks/2026-05-27-proposed-change-add-a-hook-attribution-rule-paragraph-to-the.md` — plan-time `/risk-check` report (GO, all 5 dims Low)
+- `ai-resources/logs/scratchpads/2026-05-27-09-21-scratchpad.md` — continuity scratchpad
+- `ai-resources/logs/session-plan.md` — this session's plan (6-step sequence, full autonomy, plan-time `/risk-check` gated)
+
+### Files Modified
+- `projects/nordic-pe-macro-landscape-H1-2026/CLAUDE.md` — added "Hook attribution rule" paragraph to § Friction Logging (commit `751a78e`)
+- `projects/nordic-pe-macro-landscape-H1-2026/logs/improvement-log.md` — 2 annotations: top-level triage bullet (2026-05-22 friday-act list) marked APPLIED 2026-05-27; formal pending entry Status changed from `logged (pending)` to `applied 2026-05-27 — Verified: 2026-05-27` (commit `751a78e`)
+- `ai-resources/logs/session-notes.md` — this session's mandate + Class line + this wrap (forthcoming commit)
+
+### Decisions Made
+- **Fix surface = project CLAUDE.md, not ai-resources/CLAUDE.md** (operator's original mandate said "small fix in CLAUDE.md" without qualifier; operator clarified mid-session "It was in nordic pe macro landscape folder"). Picked narrower surface per minimal-infra-subset memory; the pattern is only documented in this project so far. If it appears elsewhere, the rule can be promoted to `ai-resources/CLAUDE.md` later.
+- **Skip end-time `/risk-check`** per `feedback_end_time_risk_check_skip`: plan-time gate ran GO with no mitigations, drift bounded to the single planned edit, QC clean. End-time gate would have been pure overhead on a 5-sentence prose addition.
+- **Stay on Opus** (operator-skipped the recommended `→ /model sonnet` switch by replying "proceed" inline). No converging difficulty; Opus completed the work without escalation.
+- **QC advisory note not actioned** (the "do NOT write plan or report content" phrasing could overclaim if read maximally). Reviewer marked it non-blocking; the next clause clarifies. Per minimal-infra-subset, no edit cycle for advisory-only.
+
+### Next Steps
+- **Push gate.** `ai-resources` has 9 unpushed (8 carryover from prior sessions + 1 from this session); `projects/nordic-pe-macro-landscape-H1-2026` has 1 unpushed (this session). Operator gate (Autonomy Rule #2). Operator was asked at session end — pending response at wrap time.
+- **Standing carryovers** (preserved): `backup-session-plan-pass2-regex` for nordic project (last week's plan-draft item 1 — still pending); `friction-logging-discipline-rule` (nordic, small CLAUDE.md); `plan-evaluate-drift-check` (project-planning, separate session). MED-HIGH `permission-sweep-auditor` review-cycle was booked for 2026-05-26 and is overdue — still pending.
+- **Live-witness data for Plan 2 (carryover from 2026-05-26 wrap):** first fresh `/prime` → `/session-start` chain passed with own-write distinction working as designed. Marker file `logs/.prime-mtime` correctly carried PRIME_MTIME=SESSION_NOTES_MTIME → DELTA=0 → silent proceed. No false-positive concurrent-session warning. R2 session-id machinery and R3a `risk-topology.md` entry remain deferred (no failure observed this session).
+
+### Open Questions
+None.
