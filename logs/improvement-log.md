@@ -137,13 +137,14 @@ Suggested three-session sequence:
 
 ### 2026-05-27 — Concurrent-session wrap clobbers in-progress session's session-notes.md additions
 
-- **Status:** logged (pending)
+- **Status:** applied 2026-05-27
 - **Category:** session-issue
 - **Source:** `/resolve-repo-problem 2026-05-27`
 - **Friction source:** Expected: this session's `/prime`-appended task header + `/session-start`-written mandate to remain in `logs/session-notes.md` through wrap. Actual: a concurrent `/contract-check` session's `/wrap-session` ran `git add logs/session-notes.md` (which stages the entire working-tree content, not just its own additions), shipping my uncommitted mandate lines under commit `14d2a04` — the contract-check session's wrap commit. My session subsequently saw no `session-notes.md` modifications and committed its work without a wrap entry. Plan 2's mtime guard (`/session-start` Step 0.5, shipped 2026-05-26) only covers the `/prime` → `/session-start` upstream window; the failure here is post-`/session-start`, in the concurrent-wrap window — Plan 2's symmetric blind spot.
 - **Proposal:** Add a wrap-time pre-commit guard to `wrap-session.md` (the canonical `ai-resources/.claude/commands/wrap-session.md` plus the workspace-root Phase 3 copy). Before staging `logs/session-notes.md`, compare on-disk content to the session's own writes: detect any `## YYYY-MM-DD` headers or `**Mandate:**` lines authored by another session and stop with a chat prompt asking the operator to resolve (commit only own work, or commit the union). Symmetric counterpart to Plan 2 — closes the post-`/session-start` window the same way Plan 2 closed the pre-`/session-start` window. **/risk-check change class:** YES (canonical-command edit) — run `/risk-check` before landing.
+- **Implementation 2026-05-27:** Shipped commits `6b1b018` (ai-resources canonical Step 3.5 + risk-check report) + `5157a5d` (workspace-root Phase 3 copy Step 1.5). Detection uses TWO independent signals — today-header count AND mandate-line count — so the guard catches both the separate-header incident shape (original 2026-05-27 commit `14d2a04` failure) AND the shared-header incident shape (when /prime's header-reuse rule means both concurrent sessions share one today-header but each writes a mandate line under it). Mechanical disambiguator via `.prime-mtime` marker existence + today-midnight epoch check; default-to-stop on FOREIGN >= 1; no union-reply branch. Risk-check verdict PROCEED-WITH-CAUTION with 5+2 mitigations applied (SO second opinion). QC verdict REVISE → 2 findings addressed (bash `grep -c` zero-match arithmetic bug + header-reuse blind spot via mandate-line signal); 1 finding deferred (marker semantics simplification — optional, non-blocking).
 - **Target files:** `ai-resources/.claude/commands/wrap-session.md`, `~/Claude Code/Axcion AI Repo/.claude/commands/wrap-session.md` (Phase 3 wrap copy)
-- **Notes:** `ai-resources/audits/working/2026-05-27-resolve-concurrent-session-overwrite-session-notes.md`
+- **Notes:** `ai-resources/audits/working/2026-05-27-resolve-concurrent-session-overwrite-session-notes.md`; risk-check report `ai-resources/audits/risk-checks/2026-05-27-wrap-session-foreign-session-detection-guard.md`
 
 ### 2026-05-27 — Foreign-files-in-working-tree alarm — diagnostic refinement (symlink-check-first)
 
