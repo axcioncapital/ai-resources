@@ -39,6 +39,8 @@ Fire when work is drifting past the exit condition set at `/prime`. Triggers:
 
 Flag format: `[SCOPE] Exit condition was "{X from session notes}". New request: "{Y}". Update exit condition, defer to new session, or accept drift?`
 
+**Escalation to `/drift-check`:** `[SCOPE]` is a single-signal nudge. When it fires repeatedly in the same session, or when the deviation feels structural (actual work shape no longer matches the mandate) rather than incidental (one extra ask), escalate to `/drift-check` for a full mandate-vs-trajectory comparison with ALIGNED / MINOR-DRIFT / MAJOR-DRIFT verdict.
+
 ## `[AMBIGUOUS]` — missing load-bearing specifics at task-naming
 
 Fire at `/prime` step 6 or any task-naming moment if the brief is missing:
