@@ -18,7 +18,10 @@ Every agent must declare `model:` explicitly in frontmatter — no implicit inhe
 | dd-extract-agent | haiku | Mechanical extraction for repo-dd. Correct. |
 | dd-log-sweep-agent | haiku | Mechanical log scan for repo-dd. Correct. |
 | execution-agent | sonnet | API-call dispatcher. Correct. |
+| fading-gate-scanner | haiku | Mechanical scan for fading high-confirmation gates in coaching-data.md. Delegated by /friday-checkup. Added 2026-05-27. |
 | findings-extractor | haiku | Mechanical extraction of HIGH/CRITICAL findings from audit sub-reports. Added 2026-05-08. |
+| fix-repo-issues-scanner | sonnet | Structured backlog scan for /fix-repo-issues; returns normalized prioritized issue list. Added 2026-05-27. |
+| friday-act-16a-summarizer | sonnet | Structured extraction of /friday-act Step 16a supplementary inputs (SO Advisory, Systems Review, per-project logs). Added 2026-05-27. |
 | improvement-analyst | opus | Judgment (friction-pattern analysis). Correct. |
 | innovation-triage-auditor | opus | Judgment (per-item verdict for innovation triage). Added 2026-05-08. |
 | log-sweep-auditor | haiku | Mechanical log inventory and classification for /log-sweep. Added 2026-05-12. |
