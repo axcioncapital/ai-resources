@@ -49,11 +49,13 @@ Operator-invoked only. Do NOT auto-fire.
    - Supporting evidence (file paths + excerpts).
    - The specific gap that prevents full confidence — i.e., what would have to be true for this to move to Self-resolved.
    - **The operator's verbatim original framing of the question.** This is a HARD requirement — emit either the operator's exact phrasing OR an explicit `[narrowing-check] {what was reworded}` note where the recommendation may have constrained or reframed the original question. No skip path. If both are unavailable, the item belongs in `Operator-only`, not here.
+   - **Decision needed from operator.** One short line explaining plainly what the operator is being asked to decide, followed by the explicit options (typically: accept the recommendation as-is, or take the named alternative shape). Phrase it as a choice the operator can pick from, not a prompt to think harder. "Confirm project → canonical, OR pick selective merge (keep project format, port canonical's structural fixes)" — not "what direction do you want?" with no options given.
 
    **(c) Operator-only.** Genuinely requires operator taste, strategic direction, or knowledge not in any file. Output:
    - The question (verbatim from the source).
    - Relevant project context (one or two short lines).
    - A brief note on why this cannot be evidence-grounded — e.g., "preference call," "strategic choice with no prior precedent in repo," "would require operator-only knowledge."
+   - **Decision needed from operator.** One short line explaining plainly what the operator is being asked to decide, followed by the explicit options. If the question has no natural option set (open-ended preference), say so and give 2–3 illustrative shapes the operator can pick from or override. Never present a bare question with no options.
 
 5. **Output format.** Present buckets in this order: Self-resolved → Recommendable → Operator-only → Already decided. Within each bucket, preserve the original question order from the source list.
 
@@ -71,6 +73,44 @@ Operator-invoked only. Do NOT auto-fire.
    ```
    **Totals:** {n} self-resolved / {n} recommendable / {n} operator-only / {n} already decided.
    ```
+
+   If any items landed in Recommendable or Operator-only, follow the Totals line with a short **Open items for operator** recap — one line per item, restating only the decision needed + options (not the evidence). This is the operator's pick-list. Format:
+
+   ```
+   **Open items for operator:**
+   - [N]: {one-line decision + options}. Recommendation: {pick}.
+   - [M]: {one-line decision + options}. {No default — operator-only.}
+   ```
+
+   If all items are Self-resolved or Already decided, omit the Open items block entirely.
+
+## Verbosity discipline
+
+`/decide` output is for operator scan, not for reproducing the agent's reasoning trail. Apply these caps:
+
+- **No step narration in the chat output.** Do not write "Step 1 — acquiring the decision list...", "Step 2 — prior-decision check...", "Step 3 — gathering evidence via per-file diffs." Do the work silently; report only the results (the bucketed items + Totals + Open items). The CLI already shows tool calls — narrating them in prose duplicates the rendering.
+- **Don't restate tool output verbatim in chat prose.** The CLI renders bash/diff/read calls inline; the operator can see them. Chat prose summarizes what the output proved in one line ("project copy is ~16 days newer; header levels incompatible") — it does not re-quote the diff.
+- **Bucket body ≤6 short lines or bullets per item** as a target. Reasoning is one or two sentences, not a paragraph. Evidence is the minimum a curious operator would need to audit — typically a file path + one short excerpt, not an exhaustive proof.
+- **Cross-reference, don't restate.** When two items share evidence (e.g., paired files, same diff), the second item says "Evidence: paired with Decision [N] — same mtime relationship, same coupling" rather than repeating the bullets.
+- **Decision-needed line is one line.** Don't expand it into a sub-section. The Open items recap at the end is the secondary surface — that one is even tighter (one line per item, no evidence).
+
+## Clarity discipline
+
+`/decide` output overrides the workspace CLAUDE.md "structured skill outputs are exempted from CEFR B2" carve-out. The operator-facing surfaces — bucket bodies, decision-needed lines, and the Open items recap — must read like `/explain`: short sentences, common words, no idioms, and **gloss every piece of technical jargon on first use in the response** with one short clause.
+
+Examples of first-use glosses:
+- "mtime (the file's last-modified time)"
+- "skip-guard (a check that makes the hook do nothing when the input doesn't match)"
+- "frontmatter (the YAML block at the top of a markdown file)"
+- "stdin (text piped into the script's input)"
+- "backport (copy a fix from the newer version into the older one)"
+- "selective merge (keep one side's overall shape, copy specific pieces from the other side)"
+
+Structured tags stay verbatim — `[narrowing-check]`, `[AMBIGUOUS]`, `[SCOPE]`, etc.
+
+File paths, command names, and field names stay as-is. The gloss rule applies to the *concept* words around them, not the identifier itself.
+
+This applies only to chat-surface prose. Embedded file excerpts quoted as evidence (a code line, a diff fragment) are not rewritten.
 
 ## Composition
 
