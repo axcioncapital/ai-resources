@@ -351,3 +351,32 @@ Mid-session, a concurrent session began overwriting `logs/session-plan.md` to ru
 - `/scope` freeze-baseline extension (writes contract to `logs/contracts/{date}-{slug}.md` at scope-lock time).
 - Auto-invocation of `/contract-check` at the QS-2 two-pass cap.
 - `system-doc.md § 4.5` entry naming "Original contract → post-iteration artifact conformance" as a previously-undocumented open feedback loop now closed by this command.
+
+## 2026-05-27 — `/decide` slash command: shape and design decisions
+
+**Context.** Built the `/decide` command via the `/create-skill` pipeline. The inbox brief (`decision-resolver`, operator-renamed to `decide`) described an operator-invoked tool to pre-research mixed-shape decision lists Claude surfaces mid-session. Several material design decisions surfaced during Step 1, plan-time `/risk-check`, and system-owner second opinion.
+
+**Decision 1: Output target = slash command at `.claude/commands/decide.md`, NOT SKILL.md at `skills/decide/SKILL.md`.**
+
+**Rationale.** The session plan's first cut targeted `skills/decide/SKILL.md` because `/create-skill` Step 2 literally says "Create the skill directory at `skills/{skill-name}/`." Plan-time `/risk-check` flagged this as a direct contradiction against the proposed CHANGE_DESCRIPTION (which targeted slash command). System-owner second opinion firmly endorsed the slash-command shape on architectural grounds: (a) the brief's behavior — operator-invoked, on-demand, producing specific output — maps to slash command per `repo-architecture.md` § Q2; (b) all named composition partners (`/resolve`, `/scope`, `/clarify`, `/recommend`) are slash commands at `.claude/commands/`, not SKILL.md skills — putting `/decide` in `skills/` would create asymmetry in a tightly coupled set; (c) `/contract-check` shipped same day as a slash command for behavior of comparable complexity (precedent). The plan's rationale conflated "which pipeline created the artifact" with "which canonical home it belongs in" — `/create-skill` is the right pipeline but its Step 2 output target does not apply when the artifact's correct canonical home is `.claude/commands/`. Recorded in `logs/session-plan-pass2.md` § Output artifact decision.
+
+**Decision 2: Auto-detect upstream decision lists, with hard ambiguity-guard.**
+
+**Rationale.** The brief described auto-detection from common upstream sources (`/qc-pass` REVISE, `/scope` §5, `/clarify` clarifying-questions, mid-stream numbered lists). Operator confirmed Q2=auto-detect. The risk: misfire when multiple candidate lists are in context. Mitigation: STOP and ask the operator which list to pick — never silently default to most-recent. Anti-narrowing principle applied at the entry point.
+
+**Decision 3: Soft per-question evidence-gathering guidance, not hard cap.**
+
+**Rationale.** The brief suggested a hard cap (e.g., "max 3 files, max 200 lines"). Operator chose soft guidance (Q3). Reasoning: hard caps are brittle (the right budget depends on the question), but the escalation contract is firm — when a question would need many reads or whole-file scans, the item moves to the `Operator-only` bucket with a note on what couldn't be confirmed within sensible budget. Critical anti-pattern excluded: the command does NOT recurse into broader searches.
+
+**Decision 4: End-time `/risk-check` skipped.**
+
+**Rationale.** Per `feedback_end_time_risk_check_skip` memory: skip when plan-time gate covered with mitigations applied AND drift bounded AND QC clean. All three held. Plan-time `/risk-check` returned PROCEED-WITH-CAUTION with 5 mitigations applied (4 reviewer-named + 1 system-owner gating); drift between plan-time CHANGE_DESCRIPTION and final shipped batch was bounded to the planned scope (the 4 cross-reference edits in upstream commands were explicitly named in Mitigation 4); post-edit `/qc-pass` returned GO. End-time gate would have been confirmatory only. System-owner's advisory had recommended end-time on the batch, but on review the skip-criteria cleanly applied. Documented in commit message.
+
+**Decision 5: Skipped QC Finding 4 caveat** (low-severity `/clarify` output-shape note).
+
+**Rationale.** Per `feedback_minimal_infra_subset`: skip QC-clean components of low marginal value. QC verdict was GO; Finding 4 was advisory ("`/clarify` emits prose, not block delimiter — caveat the numbered-list assumption"). The matched bold-string marker (`**Clarifying questions**`) is correct; items after may be bullets or paragraphs but the heading-based detection holds regardless. Adding the caveat would tighten prose without changing behavior.
+
+**Alternatives considered for Decision 1.** Three were on the table:
+- (a) SKILL.md at `skills/decide/SKILL.md` — follows pipeline literally but creates structural asymmetry with composition partners. Rejected by system-owner architectural commentary.
+- (b) Slash command at `.claude/commands/decide.md` — chosen.
+- (c) Both — over-engineering. Rejected immediately.

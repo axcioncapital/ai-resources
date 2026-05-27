@@ -451,6 +451,42 @@ Class: design
 - Files in scope: (inferred)
 - Stop if: (none stated)
 
+### Summary
+Built the `/decide` slash command end-to-end via the `/create-skill` pipeline. The command takes a list of operator-decision questions Claude has just surfaced (after `/qc-pass`, `/scope`, `/clarify`, or mid-stream Claude turn), auto-detects the most recent decision list from context, and per-question evidence-grounds against project files before escalating — outputting a 3-bucket result (Self-resolved / Recommendable / Operator-only) plus an "Already decided" filter for prior decisions. Load-bearing feature: anti-narrowing protection — every Recommendable item must emit the operator's verbatim original framing or an explicit `[narrowing-check]` note (no skip path). The pipeline produced an architectural reconfirm at Step 1 that resolved a slash-command-vs-SKILL.md tension surfaced by plan-time `/risk-check` (system-owner-gated). Composition cross-references added in `/resolve`, `/scope`, `/clarify`, and `/recommend`. Brief archived. Concurrent-session incident triaged separately.
+
+### Files Created
+- `ai-resources/.claude/commands/decide.md` — new slash command (3-bucket pre-research with anti-narrowing enforcement)
+- `ai-resources/audits/risk-checks/2026-05-27-create-new-slash-command-decide-md.md` — plan-time `/risk-check` report (PROCEED-WITH-CAUTION, 5 mitigations applied, system-owner architectural commentary appended)
+- `ai-resources/audits/working/2026-05-27-resolve-concurrent-session-overwrite-session-notes.md` — `/resolve-repo-problem` investigator notes (concurrent-wrap clobber root-cause + 3-option fix plan)
+- `ai-resources/logs/scratchpads/2026-05-27-10-45-scratchpad.md` — continuity scratchpad
+
+### Files Modified
+- `ai-resources/.claude/commands/resolve.md` — added Step 9 cross-reference: operator may invoke `/decide` on rows flagged "Needs operator judgment"
+- `ai-resources/.claude/commands/scope.md` — added cross-reference after §5: operator may invoke `/decide` on the "Decisions you are making" list
+- `ai-resources/.claude/commands/clarify.md` — added cross-reference after §3: operator may invoke `/decide` on the clarifying-questions list
+- `ai-resources/.claude/commands/recommend.md` — added Guardrails bullet: `/decide` is the opposite-posture alternative
+- `ai-resources/logs/session-plan-pass2.md` — revised § Output artifact decision to record slash-command resolution (was SKILL.md); updated Steps 1, 3, 6, Finding 7 to match
+- `ai-resources/inbox/decision-resolver.md` → `ai-resources/inbox/archive/decision-resolver.md` — brief moved (commit `c9abcc7`)
+- `ai-resources/logs/improvement-log.md` — `Status: logged (pending)` entry appended for the concurrent-session wrap-clobber issue
+- `ai-resources/logs/session-notes.md` — this wrap (forthcoming commit)
+
+### Decisions Made
+- **Slash command at `.claude/commands/decide.md`, not SKILL.md at `skills/decide/SKILL.md`** (architectural reconfirm at `/create-skill` Step 1, operator-confirmed Q1=A). Rationale: composition partners are all slash commands; `/contract-check` precedent same day; `/create-skill` is the right pipeline but its literal Step 2 output target does not apply when the artifact's correct canonical home is `.claude/commands/`. Recorded in session-plan-pass2.md § Output artifact decision. See `logs/decisions.md` for full rationale.
+- **Auto-detect upstream decision lists with ambiguity-guard** (Q2=auto-detect). Picks up `## QC Review` blocks, `/scope` §5, `/clarify` clarifying-questions list, or mid-stream numbered lists. When multiple candidates present, STOP and ask — never silently pick.
+- **Soft per-question token guidance, not hard cap** (Q3=soft). When a question's evidence would need many reads or whole-file scans, the command escalates the item to Operator-only with a note on what couldn't be confirmed within sensible budget — does not recurse into broader searches.
+- **End-time `/risk-check` skipped** per `feedback_end_time_risk_check_skip`: plan-time PROCEED-WITH-CAUTION fired with all 5 mitigations applied (system-owner-gated record), drift bounded to planned batch, post-edit `/qc-pass` returned GO. Documented in commit message.
+- **Skipped QC Finding 4 caveat** (low-severity `/clarify` output-shape note) per minimal-infra-subset. The matched bold-string marker is correct; items after may be bullets or paragraphs but that doesn't break detection.
+
+### Next Steps
+- **Push gate.** `ai-resources` ahead by 5+ unpushed commits (contract-check session's 3 + this session's 2 — `c9abcc7` rename + `d6086eb` body + cross-refs + plan + risk-check report + this wrap forthcoming). Workspace root has 1 unpushed (`update: session-guardrails`). Operator gate (Autonomy Rule #2).
+- **Try `/decide` on a real decision list** at the next mid-stream decision-friction moment — particularly after `/qc-pass` returns REVISE with mixed items, or after `/scope` produces a §5 list. First live invocation will validate the prior-decision check and the ambiguity-guard.
+- **Friday-cadence pickup of concurrent-wrap fix.** `logs/improvement-log.md` has a fresh `Status: logged (pending)` entry for the wrap-time pre-commit guard (symmetric counterpart to Plan 2's `/session-start` mtime guard). Friday-act session can pick it up — it's a `/risk-check` change class (canonical-command edit).
+- **Concurrent-session uncommitted files** still in the working tree from the parallel session: `docs/session-guardrails.md` (modified), `audits/risk-checks/2026-05-26-proposed-change-item-c-of-session-2026-05-26-extend-spec.md` (untracked). Not this session's to commit — belong to the contract-check session's pending push or follow-up.
+- **Standing carryovers** (preserved): `backup-session-plan-pass2-regex` for nordic project (last week's plan-draft item 1, still pending); `friction-logging-discipline-rule` (nordic); `plan-evaluate-drift-check` (project-planning, separate session).
+
+### Open Questions
+None.
+
 ## 2026-05-27 — Build `/contract-check` command and CLAUDE.md reminder
 
 ### Summary
