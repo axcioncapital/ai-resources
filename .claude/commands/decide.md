@@ -57,7 +57,7 @@ Operator-invoked only. Do NOT auto-fire.
    - A brief note on why this cannot be evidence-grounded — e.g., "preference call," "strategic choice with no prior precedent in repo," "would require operator-only knowledge."
    - **Decision needed from operator.** One short line explaining plainly what the operator is being asked to decide, followed by the explicit options. If the question has no natural option set (open-ended preference), say so and give 2–3 illustrative shapes the operator can pick from or override. Never present a bare question with no options.
 
-5. **Output format.** Present buckets in this order: Self-resolved → Recommendable → Operator-only → Already decided. Within each bucket, preserve the original question order from the source list.
+5. **Compose draft output.** Build the bucketed output described below. This is an internal draft — do not emit it to chat yet. Step 6 either QCs it (when the scope gate fires) or passes it through directly. Present buckets in this order: Self-resolved → Recommendable → Operator-only → Already decided. Within each bucket, preserve the original question order from the source list.
 
    For each item, use this shape:
 
@@ -83,6 +83,24 @@ Operator-invoked only. Do NOT auto-fire.
    ```
 
    If all items are Self-resolved or Already decided, omit the Open items block entirely.
+
+6. **Self-QC and final emit.** Before showing Step 5's draft to the operator, run a `/decide`-tailored QC pass via a fresh-context subagent. Only the post-QC version is emitted to chat.
+
+   **Scope gate.** Skip QC entirely when the draft contains zero `Self-resolved` and zero `Recommendable` items (output is entirely `Operator-only` and/or `Already decided`). In that case, emit Step 5's draft directly — `/decide` made no evidence-grounded claims worth auditing. Otherwise proceed.
+
+   **Subagent invocation.** Spawn a `general-purpose` subagent (`Agent` tool) with no prior context. The prompt is self-contained: pass the full Step 5 draft, the operator's original source list (verbatim framing for each question), and the four tailored checks below. The subagent reads cited files directly to verify claims — it does not rely on the main agent's prior reads.
+
+   **Tailored checks (the subagent's mandate):**
+   - **(a) Anti-narrowing.** Every `Recommendable` item carries the operator's verbatim original framing OR an explicit `[narrowing-check] {what was reworded}` note. No silent rephrasing.
+   - **(b) Bucket-assignment correctness.** `Self-resolved` items are genuinely derivable from the cited files (no budget-overflow items mislabeled as resolved). Nothing in `Recommendable` is a preference call masquerading as evidence-grounded. Nothing in `Operator-only` was actually evidence-resolvable within budget.
+   - **(c) Evidence accuracy.** Quoted excerpts and paths exist at the cited locations. The subagent spot-reads the cited file for each item to confirm — no hallucinated content.
+   - **(d) Decision-needed completeness.** Every `Recommendable` and `Operator-only` item has an explicit `Decision needed from operator` line with options — not a bare "what direction?" prompt.
+
+   The subagent returns a structured list of corrections — per item, which check failed and the fix needed. If all checks pass, returns "no corrections required." Subagent summary cap: 30 lines per the Subagent Contracts rule in `ai-resources/CLAUDE.md`.
+
+   **Apply corrections in place.** Main agent re-renders affected items with the corrections applied, then emits the corrected output as if it were the primary output. Do NOT quote the subagent's correction list verbatim. Do NOT emit Step 5's draft alongside the corrected version. Do NOT append a "QC adjustments" footer. The operator sees only the final post-QC output.
+
+   **Correction-failure path.** If a correction cannot be applied within the original per-question budget (e.g., evidence accuracy check shows a cited path doesn't exist and re-grounding would require broader scans), demote the affected item to `Operator-only` with a one-line gap note explaining what couldn't be verified. Do not silently re-fabricate evidence.
 
 ## Verbosity discipline
 
@@ -121,6 +139,8 @@ This applies only to chat-surface prose. Embedded file excerpts quoted as eviden
 
 `/decide` is the inverse-posture alternative to `/recommend`: `/recommend` says "use your own judgment on all questions and proceed"; `/decide` says "for each question, show evidence and let the operator pick."
 
+**Built-in QC.** `/decide` runs a tailored self-QC pass (Step 6) before emitting output, fired by an independent fresh-context subagent. Operators do not need to manually chain `/decide` → `/qc-pass` — the QC is mandatory when at least one item is `Self-resolved` or `Recommendable`.
+
 ## Exclusions
 
 - Does NOT auto-fire. Operator-invoked only.
@@ -129,6 +149,7 @@ This applies only to chat-surface prose. Embedded file excerpts quoted as eviden
 - Does NOT re-escalate items already decided earlier in the session — Step 2's prior-decision check filters those into the `Already decided` bucket.
 - Does NOT sweep the whole session for open decisions unprompted. The command operates only on the named or detected target list.
 - Does NOT recurse into broader file scans when the per-question soft budget is exceeded — escalate to `Operator-only` instead.
+- Does NOT emit Step 5's pre-QC draft to chat — Step 6's QC pass is mandatory when at least one item is `Self-resolved` or `Recommendable`. The scope gate only skips QC; it never skips emission.
 
 ## Failure behavior
 
@@ -138,5 +159,6 @@ This applies only to chat-surface prose. Embedded file excerpts quoted as eviden
 - **Project files referenced in a question don't resolve:** mark the gap in the bucket's `evidence` field; do not invent path content.
 - **Per-question budget exceeded:** move item to `Operator-only` with a note on what couldn't be confirmed within budget.
 - **Source command body has changed and a marker string no longer matches:** Step 1b's auto-detection will return no matches. Surface the absence and ask the operator to paste the list rather than guessing.
+- **QC subagent flags an item that cannot be fixed within budget:** demote to `Operator-only` per Step 6's correction-failure path. Do not silently re-fabricate evidence or expand the per-question budget to chase the fix.
 
 If the provided information is insufficient to answer a question confidently, say so — Operator-only is the right bucket, not a low-confidence guess. It is acceptable, and expected, to leave gaps rather than invent plausible-sounding evidence. If the question's premise contains an error or questionable assumption, flag it constructively in the bucket body. Accuracy over comprehensiveness.
