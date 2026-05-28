@@ -196,8 +196,9 @@ See the Required Sections Checklist below. Ensure each applicable section is pre
 1. Run the Evaluate Workflow on the draft
 2. Fix any Critical or Major issues before proceeding
 3. If the body exceeds 500 lines, identify content to split into reference files before continuing
-4. Test the skill on real tasks
-5. Iterate: notice struggles, update SKILL.md or resources, test again
+4. Run the Misinterpretation Check (see below) — close the top 2-3 plausible misreadings before declaring done
+5. Test the skill on real tasks
+6. Iterate: notice struggles, update SKILL.md or resources, test again
 
 ## Evaluate Workflow
 
@@ -341,6 +342,8 @@ Scan the modified resource for:
 | **Regression** | Existing functionality still works? Each step has clear output? |
 | **Scope bloat** | Resource exceeding its stated purpose? |
 
+Then run the Misinterpretation Check (see below) on the changed sections.
+
 If issues found: flag specifically, propose alternative, prompt user before finalizing.
 
 ### Step 7: Deliver
@@ -355,6 +358,20 @@ Flag as "too complex for improvement" when implementing requires:
 - Combining unrelated behaviors
 
 If changes span 3+ sections significantly but don't require new sections, flag as "substantial refactor" and confirm modification is the right approach vs. creating a new skill.
+
+## Misinterpretation Check
+
+Before declaring a new or modified resource done, simulate a fresh-context executor reading it for the first time. The executor cannot ask clarifying questions — wording that ships is wording that fires.
+
+For the resource (Create mode) or the changed sections (Improve mode), list the top 2-3 plausible misreadings:
+
+- **Quote** the exact phrasing that produces each misreading.
+- **Describe** what the executor would do under that misreading.
+- **Propose** the minimum rewrite that closes the interpretation gap.
+
+Apply the rewrites that close real failure modes; skip cosmetic ones. Skip the whole check for trivial artifacts (single-rule fix, one-line correction).
+
+This catches authoring-time ambiguity before `/qc-pass` (post-edit) or `[AMBIGUOUS]` (consumption-time) — both downstream of the cheap fix point.
 
 ## Required Sections Checklist
 
