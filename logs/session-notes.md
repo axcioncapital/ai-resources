@@ -486,3 +486,44 @@ Designed, planned, QC'd, /consult'd, /risk-check'd twice, and shipped the **proj
 
 ### Open Questions
 - None.
+
+## 2026-05-28 — Wired /route-change into workspace CLAUDE.md as Placement Discipline rule
+
+### Summary
+
+Added a new always-loaded **Placement Discipline** section to workspace `CLAUDE.md` instructing the model to invoke `/route-change` before creating genuinely new files in new or uncertain locations. Soft model-side rule (not a hook). Four triggers, three structural skip conditions, feedback-loop to `friction-log.md` for missed catches. Single-sentence cross-reference folded into the existing "When to read this file" blockquote in `ai-resources/docs/ai-resource-creation.md`. Three-pass review trail (QC GO / Consult PROCEED with three adjustments / Risk-check GO) all green; two commits landed.
+
+### Files Created
+
+- `ai-resources/audits/risk-checks/2026-05-28-placement-discipline-workspace-claude-md.md` — plan-time risk-check report (GO; Usage Medium, all others Low).
+- `ai-resources/logs/scratchpads/2026-05-28-12-27-scratchpad.md` — continuity scratchpad.
+- `~/.claude/plans/would-it-be-possible-binary-swan.md` — final approved plan (retained outside repo per plan-mode default).
+- `~/.claude/plans/would-it-be-possible-binary-swan-agent-a0adf359f49b45559.md` — System Owner advisory output.
+
+### Files Modified
+
+- `CLAUDE.md` (workspace root) — added `## Placement Discipline` section (~15 lines) between `## AI Resource Creation` and `## Design Judgment Principles`. Commit `dbe848d`.
+- `ai-resources/docs/ai-resource-creation.md` — folded `/route-change` cross-reference into the existing "When to read this file" callout. Commit `936e87f`.
+- `ai-resources/logs/decisions-archive-2026-05.md` — auto-archive triggered during wrap (14 entries archived from `decisions.md`, 3 kept).
+
+### Decisions Made
+
+**Operator-directed (via `/clarify`):**
+- Enforcement strength: **soft CLAUDE.md rule** (not a PreToolUse hook). Hybrid hook explicitly deferred until the friction-log signal sizes the need.
+- Trigger scope: **only genuinely new files in new/uncertain locations** (not every Write; not edits).
+- Repo scope: **workspace-wide** (applies to `ai-resources/`, `workflows/`, and `projects/*`).
+
+**System Owner-directed (via `/consult` Function B):**
+- Locked the phrase **"use the recommendation as the default"** verbatim — softening would slide the rule toward rubber-stamping (`principles.md § AP-4`).
+- Tightened the third skip condition to **"target home is one this session has already written to in a prior turn"** — structural and checkable, not judgment-dependent.
+- Added closing feedback-loop sentence directing misses to `friction-log.md` (`system-doc.md § 4.5`).
+
+### Next Steps
+
+- **Operator action:** push both unpushed commits when ready (workspace `dbe848d`, ai-resources `936e87f`). Push requires explicit approval per Autonomy Rule #2.
+- **Behavioral monitoring:** next sessions watch for missed `/route-change` invocations. Log misses in `friction-log.md`. Accumulated misses → ship the Hybrid PreToolUse hook upgrade.
+- **No further infra action required this session.**
+
+### Open Questions
+
+- None.
