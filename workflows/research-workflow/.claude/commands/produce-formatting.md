@@ -4,9 +4,32 @@ model: sonnet
 ---
 Format prose for: $ARGUMENTS
 
+> **Path A parameterized.** This canonical command reads project paths from `reference/stage-5-paths.md` (instantiated per project from `ai-resources/workflows/research-workflow/reference/stage-5-paths.template.md`) and dispatches on `Document model:` declared in the project's `## Project Config`. See `plans/fx-b1-path-a-design-v3.md` and `docs/project-config-schema.md § Default-value semantics for Document model`.
+
 Apply formatting, H3 placement/refinement, and document-level integration QC to one section's reviewed and decontaminated prose. Chains four skills across two delegated phases: prose formatting + H3 pass (prose-formatter + h3-title-pass, merged) and two-stage formatting + editorial integration QC (formatting-qc + document-integration-qc). Operates on prose that has already passed `/produce-prose-draft` (review + decontamination).
 
 Per-section run: 2 subagent launches, target ~6–10 min wall time.
+
+---
+
+## Phase 0 — Mode detection + arg validation + path-config load (main session)
+
+**Required precondition gate. No fallback. Halt loudly on any missing/mismatched input** (per `principles.md § OP-3` and `docs/project-config-schema.md § Default-value semantics for Document model`).
+
+1. **Read project `## Project Config`.** Locate `Document model:` line in the project's `CLAUDE.md`.
+   - If line absent: halt — `Project Config missing required field 'Document model'. Add the field per ai-resources/workflows/research-workflow/docs/project-config-schema.md row 13.`
+   - If value not `"report"` or `"section"`: halt — `Document model must be 'report' or 'section'. See ai-resources/workflows/research-workflow/docs/project-config-schema.md row 13.`
+   - If line malformed: halt — `Document model field is malformed; see project-config-schema.md § Field naming + value convention.`
+
+2. **Validate `$ARGUMENTS` against declared mode.**
+   - `Document model: "report"` → arg must match `^[rR][0-9]+$`. Mismatch: halt — `Arg "<X>" does not match the project's declared mode 'report' (expected pattern: rN).` Parse: arg `r1` → `report=r1`, `N=1`, `RN=R1`.
+   - `Document model: "section"` → arg must match `^[0-9]+\.[0-9]+$`. Mismatch: halt — `Arg "<X>" does not match the project's declared mode 'section' (expected pattern: N.M).` Parse: arg `2.4` → `section=2.4`, `part=2`.
+
+3. **Read project `reference/stage-5-paths.md`.** Verify it exists; if missing: halt — `reference/stage-5-paths.md is missing. Stage 5 commands require explicit path-config; create from canonical template at ai-resources/workflows/research-workflow/reference/stage-5-paths.template.md.`
+
+4. **Verify mode match.** Locate the `Mode:` line. If absent or mismatched: halt with the documented error message (see `stage-5-paths.template.md § Mode-mismatch halting`).
+
+5. **Parse path-config.** Read the `## Stage 5 Path Roots` block. Cache resolved values for Phases 1–4.
 
 ---
 
@@ -14,16 +37,22 @@ Per-section run: 2 subagent launches, target ~6–10 min wall time.
 
 Keep this phase lightweight. Do NOT read source files yet.
 
-1. Parse $ARGUMENTS to identify the target section (e.g., "2.4", "2.8", "3.1")
-2. Determine paths:
-   - Set `prose_output_dir`: Part 2 → `output/part-2-prose/`, Part 3 → `output/part-3-prose/`
-3. Locate the prose file at `{prose_output_dir}/{section}-*.md` (most recent if multiple match)
-   - If no matching prose file exists: PAUSE — "No prose file found for {section}. Run `/produce-prose-draft {section}` first."
-4. **Decontamination check:** Verify `{prose_output_dir}/decontamination-log.md` exists and contains an entry for this section.
-   - **If yes:** Proceed.
-   - **If no:** WARN — "Decontamination log shows no entry for {section}. The prose may not have passed Phase 5 of `/produce-prose-draft`. Options: proceed anyway (formatting will still run), or cancel and run `/produce-prose-draft {section}` first to ensure decontamination has been applied."
+1. **Locate the prose file** at `prose_file_path`, resolved from the path-config + parsed arg.
+   - report-mode: `<prose_output_root>/<prose_output_filename>` (e.g., `report/produced/{section}/R{N}/R{N}-prosed.md`).
+   - section-mode: glob `<prose_output_root>/<prose_output_filename_glob>` (e.g., `output/part-{part}-prose/{section}-*.md`). Multi-match resolution per the path-config's `Source filename multi-match selector`.
+   - If no matching prose file exists: PAUSE — `No prose file found for {arg}. Run /produce-prose-draft {arg} first.`
 
-Present the plan: prose file path, decontamination status, output overwrites the prose file in place. Wait for operator approval before proceeding.
+2. **`prose_output_dir`** — directory containing `prose_file_path`. Used as base for log and working-dir paths.
+
+3. **Decontamination check.** Verify the decontamination log exists at `<prose_output_dir>/<decon-log-filename>`.
+   - **If present** (either as a per-section entry or a per-report log, depending on mode): proceed.
+   - **If absent:** WARN — `Decontamination log not found at <path>. The prose may not have passed the decontamination phase of /produce-prose-draft. Options: proceed anyway (formatting will still run), or cancel and run /produce-prose-draft {arg} first.`
+
+4. **Formatted-output path resolution.**
+   - report-mode: `<prose_output_dir>/<formatted-output-filename>` (typically a fresh file, non-overwriting — e.g., `R{N}-formatted.md`).
+   - section-mode: same file as `prose_file_path` (overwrites in place; the prose-formatter skill's versioning default is overridden by this command).
+
+Present the plan: prose file path, decontamination status, output path (overwrite-in-place for section-mode; fresh file for report-mode). Wait for operator approval before proceeding.
 
 ---
 
@@ -31,39 +60,38 @@ Present the plan: prose file path, decontamination status, output overwrites the
 
 Merged formatting, H3 placement, and H3 refinement in a single sonnet agent. KEEP/RENAME/REMOVE verdicts auto-apply mid-pipeline; all REMOVE verdicts are reported in Phase 4 (handoff) with rationale and reversal instructions so the operator can catch structural deletions at the end.
 
-1. Read the prose file located in Phase 1
-2. Read `/ai-resources/skills/prose-formatter/SKILL.md`
-3. Read `/ai-resources/skills/h3-title-pass/SKILL.md`
-4. Resolve the absolute path to the style reference: `{prose_output_dir_abs}/style-reference.md` (do NOT read it into main-agent context — subagents read reference files directly per the research-workflow CLAUDE.md "Context Isolation Rules" exception for large read-only references). Also cache `{prose_output_dir_abs}` (derive from Phase 1 paths and `pwd` if not already resolved).
-5. Create the working directory for subagent findings files: `mkdir -p "{prose_output_dir_abs}/working"` (idempotent; needed for Phase 2 and Phase 3 subagent-to-disk pattern).
+1. Read the prose file located in Phase 1.
+2. Read `/ai-resources/skills/prose-formatter/SKILL.md`.
+3. Read `/ai-resources/skills/h3-title-pass/SKILL.md`.
+4. Resolve the absolute path to the style reference: `{project_root_abs}/<style-reference-path>` (interpolated from the path-config — report-mode uses the explicit `Style-reference path` value; section-mode joins `<prose_output_dir>/<style-reference-filename>`). Do NOT read it into main-agent context — the subagent reads reference files directly per the workflow's "Context Isolation Rules" exception for large read-only references. Cache `{prose_output_dir_abs}` (derive from Phase 1 paths and `pwd` if not already resolved).
+5. Create the working directory for subagent findings files: `mkdir -p "{prose_output_dir_abs}/<working-dir-name>"` (idempotent; needed for Phase 2 and Phase 3 subagent-to-disk pattern).
 6. Launch a general-purpose sub-agent with `model: "sonnet"`. Pass it:
    - The prose-formatter skill content
    - The h3-title-pass skill content
    - The prose file content
-   - The absolute path to the style reference: `{prose_output_dir_abs}/style-reference.md` — the subagent reads it directly before applying the skills
-   - Output path: same file (overwrite — override the prose-formatter skill's versioning default; intermediate files are not needed)
+   - The absolute path to the style reference — the subagent reads it directly before applying the skills
+   - Output path: the Phase 1-resolved formatted-output path (section-mode = same file; report-mode = fresh `<formatted-output-filename>` next to the prosed input)
    - Task: Execute in this order as a single continuous pass:
      0. **Run the Mechanical Triggers pre-scan per the prose-formatter skill.** Scan the full document for the five mandatory triggers (5+ parallel items in prose; category comparison across repeated dimensions; subsection with multiple internal blocks; bold on labels but not on named frameworks; paragraph carrying framework + exceptions + implications). Record which triggers fire and at which locations. Produce the trigger-hit list — it feeds Steps 1–3 and is returned to the main agent. Trigger hits are MANDATORY decisions, not interpretive calls; when a trigger fires, the mapped operation applies and the "when uncertain, defer" fallback does NOT override it.
      1. Run all formatting operations per the prose-formatter skill (bold/italic, lists, tables, paragraph length, horizontal rules, spacing). Record a formatting change log. Operation 1 may detect additional pseudo-heading bold labels that belong on the trigger #3 hit list — add them, do NOT bold them.
      2. Run H3 title pass Step 1 (placement) per the h3-title-pass skill, consuming the trigger #3 hit list as candidate SPLIT verdicts. Record a verdict per heading: KEEP / RENAME / REMOVE / SPLIT with rationale.
      3. Run H3 title pass Step 2 (refinement) per the skill. Apply KEEP/RENAME/REMOVE verdicts. For RENAME, apply the refined wording. For REMOVE, delete the heading. **Do NOT auto-apply SPLIT verdicts** — they are operator-gated and surfaced at Phase 4 for approval.
      4. Write the final formatted file.
-   - **Output-to-disk pattern (required — subagent-contract compliance):** Write the full structured output below to `{prose_output_dir_abs}/working/formatting-phase-2-{section}.md`. The main session has already created the `working/` directory in Phase 2 step 5. Sections of the working file (all required, do not omit):
+   - **Output-to-disk pattern (required — subagent-contract compliance):** Write the full structured output below to `{prose_output_dir_abs}/<working-dir-name>/formatting-phase-2-{arg}.md`. Sections of the working file (all required, do not omit):
      - Mechanical Trigger pre-scan results: which triggers fired, document locations, brief description of each hit
      - Formatting change log (per-operation summary)
-     - H3 decisions table: every heading processed, with verdict (KEPT / RENAMED / REMOVED / SPLIT), original text, final text (for RENAMED), rationale, and for REMOVED a one-line reversal instruction ("to restore, add `### {original text}` before paragraph starting '{first few words}'")
-     - SPLIT verdicts (if any): for each, (a) subsection being split, (b) proposed insertion line reference, (c) proposed new H3 title, (d) block-boundary rationale naming the two resulting blocks.
+     - H3 decisions table: every heading processed, with verdict (KEPT / RENAMED / REMOVED / SPLIT), original text, final text (for RENAMED), rationale, and for REMOVED a one-line reversal instruction
+     - SPLIT verdicts (if any): for each, (a) subsection being split, (b) proposed insertion line reference, (c) proposed new H3 title, (d) block-boundary rationale naming the two resulting blocks
      - Final H3 count
      - Any flagged items
-   - **Return to main session (no more than 20 lines — CLAUDE.md Subagent Contracts tighter cap for per-chapter invocation; exactly these fields):**
+   - **Return to main session (no more than 20 lines):**
      - `working_file`: absolute path to the file just written
      - `final_h3_count`: integer
      - `h3_verdicts`: counts by category — `kept`, `renamed`, `removed`, `split`
-     - `removed_highlights`: up to 3 one-line summaries of REMOVED verdicts (for operator-surfacing emphasis in Phase 4; full list lives in the working file)
+     - `removed_highlights`: up to 3 one-line summaries of REMOVED verdicts
      - `mtc_triggers_fired`: count
      - `flagged_items_count`: integer
      - `verdict`: one line
-     Do not repeat the change log, H3 decisions table, or full flagged-item details in the return — those live in the working file and Phase 3/4 read them from disk.
 7. ▸ /compact — skill content no longer needed.
 
 ---
@@ -72,59 +100,48 @@ Merged formatting, H3 placement, and H3 refinement in a single sonnet agent. KEE
 
 Merged two-stage QC. One qc-reviewer subagent runs both checks in explicit sequence: formatting-qc first (including any mechanical fixes), then document-integration-qc on the post-fix prose. The merge preserves the editorial pass's dependency on the formatting pass — the editorial pass explicitly receives the formatting pass's output as "already addressed" context.
 
-1. Read the prose file (post-Phase 2 — final formatted version with H3 applied)
-2. Read `/ai-resources/skills/formatting-qc/SKILL.md`
-3. Read `/ai-resources/skills/document-integration-qc/SKILL.md`
-4. Read the architecture at `{prose_output_dir}/architecture.md` (if exists) — provides document structure context for completeness checks
-5. Resolve the absolute path to the style reference: `{prose_output_dir_abs}/style-reference.md` (do NOT read it into main-agent context — the qc-reviewer subagent reads it directly)
-6. Collect from Phase 2: the formatting change log and any deferred/flagged items
-7. Gather any cross-section integration findings carried forward from `/produce-prose-draft` Phase 4 (if available in the session context)
+1. Read the prose file (post-Phase 2 — final formatted version with H3 applied).
+2. Read `/ai-resources/skills/formatting-qc/SKILL.md`.
+3. Read `/ai-resources/skills/document-integration-qc/SKILL.md`.
+4. Read the architecture (section-mode only) at `<prose_output_dir>/<architecture-filename>` if exists — provides document structure context for completeness checks. (Report-mode skips this; report-mode projects do not use architecture.md.)
+5. Resolve the absolute path to the style reference (per Phase 2 step 4).
+6. Collect from Phase 2: the formatting change log and any deferred/flagged items.
+7. Gather any cross-section integration findings carried forward from `/produce-prose-draft` (section-mode Phase 4, if available in the session context).
 8. Launch a qc-reviewer sub-agent. Pass it:
    - The formatting-qc skill content (labeled: "STAGE 1 SKILL — formatting mechanics")
    - The document-integration-qc skill content (labeled: "STAGE 2 SKILL — editorial quality")
    - The prose file content
-   - Absolute path to the Phase 2 working file: `{prose_output_dir_abs}/working/formatting-phase-2-{section}.md` — subagent reads this file to retrieve the formatting change log and deferred/flagged items list before running Stage 1, so it does not re-flag items Phase 2 already addressed or deferred.
-   - Cross-section integration findings from `/produce-prose-draft` Phase 4 (if available)
-   - Module identifier: "{section ID} — {section title}" and position in the document (e.g., "Section 2.4 of 9 in Part 2"). Derive position from the architecture's processing order if available, otherwise from section numbering.
-   - The architecture content (if exists)
-   - The absolute path to the style reference: `{prose_output_dir_abs}/style-reference.md` — the subagent reads it directly before running formatting-qc
+   - Absolute path to the Phase 2 working file: `{prose_output_dir_abs}/<working-dir-name>/formatting-phase-2-{arg}.md`
+   - Cross-section integration findings from `/produce-prose-draft` (if available)
+   - Module identifier: `{arg}` + section/report title; position in the document derived from the architecture's processing order if available, otherwise from arg numbering
+   - The architecture content (section-mode only, if exists)
+   - The absolute path to the style reference — the subagent reads it directly before running formatting-qc
    - **Two-stage execution instructions (critical — execute strictly in this order):**
-     - **STAGE 1 — Formatting QC:** Run all five checks per the formatting-qc skill (Formatting Integrity, Visual Rhythm, Standalone Coherence, Footnote Integrity, Mechanical Trigger Compliance). Produce a Stage 1 findings list with severity ratings. For mechanical formatting fixes (broken list structure, missing table caption, orphaned sentence fragment, spacing errors): apply them directly to the prose file and record in a "Stage 1 fixes applied" log. For fixes that affect standalone coherence (missing orientation, vague cross-references) or Mechanical Trigger Compliance findings (named framework in prose, category comparison without table, bold class inconsistency, multi-block subsection, multi-job paragraph): flag them as bright-line candidates and do NOT apply — these are substantive formatting decisions that should surface to the operator rather than auto-apply. Write the post-fix prose to the output path.
+     - **STAGE 1 — Formatting QC:** Run all five checks per the formatting-qc skill (Formatting Integrity, Visual Rhythm, Standalone Coherence, Footnote Integrity, Mechanical Trigger Compliance). Produce a Stage 1 findings list with severity ratings. For mechanical formatting fixes (broken list structure, missing table caption, orphaned sentence fragment, spacing errors): apply them directly to the prose file and record in a "Stage 1 fixes applied" log. For fixes that affect standalone coherence (missing orientation, vague cross-references) or Mechanical Trigger Compliance findings: flag them as bright-line candidates and do NOT apply — these are substantive formatting decisions that should surface to the operator. Write the post-fix prose to the output path.
      - **STAGE 2 — Editorial Integration QC:** Only begin after Stage 1 is complete and the post-fix prose is written. Read the post-fix prose. Run all four check categories per the document-integration-qc skill (Narrative Structure, Consistency, Redundancy & Contradiction, Completeness). Draft transition passages where transitions are weak. **Do NOT re-flag any item from the Stage 1 findings, Stage 1 fixes applied log, the Phase 2 deferred items list, or the cross-section integration findings.** Focus redundancy/contradiction checks on issues internal to this module only. The `RELEASE ARTIFACT` protocol in the document-integration-qc skill is overridden — produce the full QC report directly.
    - Adaptation notes:
      - "This module has already passed prose quality review and AI prose decontamination via `/produce-prose-draft`, plus formatting + H3 (Phase 2 of this command). Decontamination removed AI-pattern prose (ornamental language, repetition, over-argumentation, flat rhythm) without changing analytical content. If you find an abrupt section ending or a transition that feels missing, check whether it may be a decontamination artifact rather than a pre-existing issue."
-   - Task summary: Execute Stage 1 then Stage 2 as described above. **Output-to-disk pattern (required — subagent-contract compliance):** Write the full structured QC report to `{prose_output_dir_abs}/working/formatting-phase-3-qc-{section}.md`. The working directory was created by main session in Phase 2 step 5. Sections of the working file (all required): Stage 1 findings (formatting) with severity, Stage 1 fixes-applied log, Stage 1 bright-line candidates, Stage 2 findings grouped by check category (Narrative Structure / Consistency / Redundancy & Contradiction / Completeness), transition drafts (if any), and overall verdict.
-   - **Return to main session (no more than 20 lines — CLAUDE.md Subagent Contracts tighter cap for per-chapter invocation; exactly these fields):**
+   - Task summary: Execute Stage 1 then Stage 2 as described. **Output-to-disk pattern:** Write the full structured QC report to `{prose_output_dir_abs}/<working-dir-name>/formatting-phase-3-qc-{arg}.md`. Sections of the working file (all required): Stage 1 findings (formatting) with severity, Stage 1 fixes-applied log, Stage 1 bright-line candidates, Stage 2 findings grouped by check category (Narrative Structure / Consistency / Redundancy & Contradiction / Completeness), transition drafts (if any), and overall verdict.
+   - **Return to main session (no more than 20 lines):**
      - `working_file`: absolute path to the file just written
      - `stage_1_substantive_count`, `stage_1_bright_line_count`, `stage_1_auto_fixed_count`
      - `stage_2_substantive_count` (total), plus per-category: `narrative`, `consistency`, `redundancy`, `completeness`
      - `transition_drafts_count`
      - `verdict`: one line
-     Do not repeat findings, transition drafts, or the fixes-applied log in the return — main session routes on the counts and reads the working file when surfacing to the operator at Phase 4.
 9. Route on findings:
    - **No SUBSTANTIVE findings in either stage:** Note results and any NON-SUBSTANTIVE items. Proceed to Phase 4 (handoff).
    - **Stage 1 bright-line candidates:** Present to the operator before applying. These are formatting fixes that cross into prose changes.
    - **Stage 2 SUBSTANTIVE findings without transition drafts:** Present findings to the operator. Apply bright-line rule — SUBSTANTIVE narrative or consistency issues likely require prose changes. Proceed to Phase 4 after the operator reviews.
    - **Stage 2 transition drafts produced:** Present transition drafts to the operator. The operator decides which to incorporate. Approved transitions are inserted into the prose file. (Transition passages of 1–3 sentences are not bright-line items. If a transition draft exceeds one paragraph, apply the bright-line rule check before inserting.) Proceed to Phase 4.
-   - **Findings that suggest issues in other sections:** Log to `logs/decisions.md` as cross-section revision notes per the existing cross-section rule. Do not modify other sections' prose.
+   - **Findings that suggest issues in other sections:** Log to `logs/decisions.md` as cross-section revision notes. Do not modify other sections' prose.
 10. ▸ /compact — skill content no longer needed.
 
 ---
 
-## Phase 4 — Handoff (main session)
+## Phase 4 — Handoff
 
-1. Read the final formatted prose file
-2. Read the Phase 2 working file at `{prose_output_dir}/working/formatting-phase-2-{section}.md` to retrieve the full Mechanical Trigger pre-scan, formatting change log, H3 decisions table, and SPLIT verdicts for operator surfacing.
-3. Read the Phase 3 working file at `{prose_output_dir}/working/formatting-phase-3-qc-{section}.md` to retrieve the full Stage 1 and Stage 2 findings and transition drafts for operator surfacing.
-4. Present to the operator:
-   - **Final prose file path** + final word count
-   - **Mechanical Trigger pre-scan results** (from Phase 2 Step 0): which triggers fired, document locations, brief description of each hit. So the operator sees which categories of format were caught and which were judged non-applicable.
-   - **Formatting change log** (from Phase 2)
-   - **H3 decisions table** (from Phase 2): present the full verdict table. **Highlight every REMOVED heading explicitly at the top** with its original text, rationale, and the reversal instruction from Phase 2. This is the operator's opportunity to reverse any structural deletion; REMOVED verdicts were auto-applied mid-pipeline to eliminate the mechanical pause, so they must surface here for review.
-   - **SPLIT verdicts** (from Phase 2, if any): list each with (a) the subsection being split, (b) proposed insertion line reference, (c) proposed new H3 title, (d) block-boundary rationale. SPLIT verdicts are NOT auto-applied; they are surfaced here for operator decision. **Application path:** if the operator approves a SPLIT, the main agent applies it directly as a post-handoff edit — insert the approved H3 at the specified line, read the file back to confirm, log the change to `logs/decisions.md`. The operator's Phase 4 approval of the specific SPLIT constitutes the required operator approval for the project bright-line rule; no additional bright-line pause is needed for the insertion. If the operator declines a SPLIT, leave the subsection unchanged and record the declined verdict for traceability.
-   - **Phase 3 Stage 1 (formatting-qc) findings** + auto-fixes applied. Note: formatting-qc now runs five checks (Formatting Integrity, Visual Rhythm, Standalone Coherence, Footnote Integrity, Mechanical Trigger Compliance). MTC findings flag miss patterns the Mechanical Triggers were designed to prevent — if present, the pre-scan did not fire on the corresponding pattern.
-   - **Phase 3 Stage 2 (document-integration-qc) findings** + transition drafts produced (and disposition)
-   - **Bright-line items deferred for operator decision** (any unresolved items from Phase 2 or Phase 3)
-5. Suggest next step: prose is formatted and integration QC has passed. The operator decides whether to accept or route to further review per project rules.
+See `reference/stage-5-common-phases.md` anchor `phase-handoff-formatting` for the full handoff definition.
 
-   > **Mandatory reminder for Part 2 sections:** Per project rules, Part 2 and Working Hypotheses content requires three review layers before moving to `parts/part-2-service/approved/`: `/review` (QC), `/challenge` (strategic), and `/service-design-review` (experiential). `/review` runs first; `/challenge` and `/service-design-review` can run in either order after `/review` passes. If these have not yet run for this section, surface this requirement explicitly in the handoff.
+**Mode-vars for this invocation:**
+- `{arg}`: the validated arg from Phase 0.
+- `{PART2_REVIEW_LAYER_REMINDER}`: section-mode only — surface if `{arg}` matches a Part 2 section. Report-mode: omit.

@@ -43,7 +43,7 @@ All consumers MUST parse the schema using ONE pattern so the contract surface is
 | # | Field | Type | Example | Description | Reads (future consumers) |
 |---|---|---|---|---|---|
 | 1 | `Report set` | list of strings | `[r1, r2, r3]` | Identifiers of the reports the project produces. Stage 5 commands derive `report-count` from `len(Report set)` and iterate per-report. | `produce-prose-draft` (per-report); `produce-formatting` (per-report); `produce-jargon-gloss` (per-report) |
-| 2 | `Section IDs` | list of strings | `[1.1, 1.2]` | Identifiers of the active sections within the project. Parameterizes per-section path conventions (`preparation/task-plans/X.X-…`). | `produce-prose-draft` (per-section iteration); `execution-manifest-creator` (manifest filename slugs); `transaction-table-builder` (per-section transaction tables) |
+| 2 | `Section IDs` | list of strings | `[1.1, 1.2]` | Identifiers of the active sections within the project. Parameterizes per-section path conventions (`preparation/task-plans/X.X-…`). | `produce-prose-draft` / `produce-formatting` / `produce-jargon-gloss` (arg-membership validation in section-mode); `execution-manifest-creator` (manifest filename slugs); `transaction-table-builder` (per-section transaction tables) |
 | 3 | `Country set` | list of country codes | `[SE, NO, FI]` | Primary geographic scope. **Canonical** — `reference/source-class-hierarchy.md § Project Country Set` is the derived mirror. | `country-parity-checker` (parity test set); `source-class-hierarchy.md` (mirror, updated same-commit); `research-prompt-creator` (regional-source preamble) |
 | 4 | `Country superset` | list of country codes | `[SE, NO, FI, DK]` | Wider geographic scope used for "pan-region leakage" detection. Always a superset of `Country set`. | `country-parity-checker` (leakage allowlist); `research-prompt-creator` (boundary disambiguation) |
 | 5 | `Languages` | list of ISO 639-1 codes | `[sv, fi, no]` | Project's research-source languages. Parameterizes the language-search blocks in research prompts. Omit or empty list = English-only single-language project. | `research-prompt-creator` (language-search block iteration); `reference/language-search-blocks.md` (block-template instantiation) |
@@ -54,6 +54,7 @@ All consumers MUST parse the schema using ONE pattern so the contract surface is
 | 10 | `Research-area-phrase` | string | `"Nordic mid-market private equity"` | Plain-English research-domain label. Parameterizes the Perplexity-prefix in run-execution.md (forms the leading clause of every Perplexity query) and the framing line in stage-instructions.md. | `run-execution.md` (Perplexity-prefix); `reference/stage-instructions.md` (intro framing) |
 | 11 | `Current period` | string | `"2025-2026"` | Project's "current" time band. Parameterizes the freshness classes (CURRENT / RECENT / BASELINE) used by source-class-hierarchy.md and verify-chapter. | `reference/source-class-hierarchy.md` (freshness-class formula); `verify-chapter` (date-range gates); `reference/known-limits.md` (freshness-date calibration) |
 | 12 | `Delivery vault` | string (optional) | `"pe-kb"` | Optional. Name of the Obsidian knowledge-base vault the project's chapter outputs should be deployed into. Default: no-op (skip vault deploy step). | `produce-knowledge-file` (vault target); `/deploy-kb` (target vault resolution) |
+| 13 | `Document model` | enum | `"report"` | One of: `report` / `section`. Declares the project's document architecture for Stage 5 consumers. Canonical Stage 5 commands read this first; arg-shape is validated against the declared mode (`report` → `r[N]`; `section` → `N.M`). No default — halt loudly when missing or malformed (see § Default-value semantics for `Document model:` below). | `produce-prose-draft` (mode validation + Phase 0 dispatch); `produce-formatting` (mode validation + Phase 0 dispatch); `produce-jargon-gloss` (mode validation + Phase 0 dispatch) |
 
 ---
 
@@ -61,9 +62,9 @@ All consumers MUST parse the schema using ONE pattern so the contract surface is
 
 | Consumer | Reads field(s) |
 |---|---|
-| `produce-prose-draft` | `Report set`, `Section IDs` |
-| `produce-formatting` | `Report set` |
-| `produce-jargon-gloss` | `Report set`, `Domain` |
+| `produce-prose-draft` | `Document model`, `Report set`, `Section IDs`, `Verification posture` |
+| `produce-formatting` | `Document model`, `Report set`, `Section IDs` |
+| `produce-jargon-gloss` | `Document model`, `Report set`, `Section IDs`, `Domain` |
 | `research-prompt-creator` skill | `Country set`, `Country superset`, `Languages`, `Source-availability` |
 | `execution-manifest-creator` skill | `Section IDs` |
 | `transaction-table-builder` skill | `Section IDs` |
@@ -90,6 +91,25 @@ This table is the per-field-fan-out view; the "Reads" column in the field table 
 - Enum values are double-quoted strings matching one of the documented enumeration members exactly. Case-sensitive.
 - The trailing `  # ` comment is operator-facing only — consumers must strip and discard.
 - Omitting an optional field (e.g., `Delivery vault`) is allowed; consumers default to no-op behavior.
+
+---
+
+## Default-value semantics for `Document model`
+
+`Document model` (field #13) has **no default — halt loudly when missing or malformed.** This is the only schema field with required-by-rule semantics. Stage 5 consumers must observe these halt rules verbatim (see `principles.md § OP-3` — loud failure over silent continuation; `principles.md § AP-1` — silent conflict resolution is the failure mode this rule prevents):
+
+| Field state | Behavior |
+|---|---|
+| `Document model:` line present with value `"report"` or `"section"` | Proceed per Phase 0 dispatch. |
+| `Document model:` line present with any other value | Halt: `Document model must be 'report' or 'section'. See ai-resources/workflows/research-workflow/docs/project-config-schema.md row 13.` |
+| `Document model:` line missing | Halt: `Project Config missing required field 'Document model'. Add the field per ai-resources/workflows/research-workflow/docs/project-config-schema.md row 13.` |
+| `Document model:` line present, malformed (e.g., missing quotes, wrong label punctuation) | Halt: `Document model field is malformed; see project-config-schema.md § Field naming + value convention.` |
+
+Arg-shape is then validated against the declared mode at Phase 0; it is not a discriminator:
+- `Document model: "report"` → arg must match `^[rR][0-9]+$`. Mismatch halts.
+- `Document model: "section"` → arg must match `^[0-9]+\.[0-9]+$`. Mismatch halts.
+
+Enum values `report` / `section` are reserved at v1 landing of this field. Adding a new mode requires a Path A v4-style design + `/risk-check`.
 
 ---
 

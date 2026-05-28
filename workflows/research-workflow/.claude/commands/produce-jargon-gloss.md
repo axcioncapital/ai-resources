@@ -4,7 +4,7 @@ model: opus
 ---
 Apply jargon-gloss pass to an existing prose draft: $ARGUMENTS
 
-> **Dual-copy sync contract.** This file is one of two near-identical wrappers (canonical + project copy, not symlinked). When editing, diff against the companion at `projects/{project}/.claude/commands/produce-jargon-gloss.md` (or `ai-resources/workflows/research-workflow/.claude/commands/produce-jargon-gloss.md` if editing a project copy) and propagate changes to the other. Same convention as `/produce-prose-draft` and `/produce-formatting` per project CLAUDE.md.
+> **Path A parameterized.** This canonical command reads project paths from `reference/stage-5-paths.md` (instantiated per project from `ai-resources/workflows/research-workflow/reference/stage-5-paths.template.md`) and dispatches on `Document model:` declared in the project's `## Project Config`. See `plans/fx-b1-path-a-design-v3.md` and `docs/project-config-schema.md § Default-value semantics for Document model`.
 
 Runs only the jargon-gloss phase against an existing prose-draft file on disk. Standalone wrapper around the `jargon-gloss` skill. Use when a prose draft has already been produced (via `/produce-prose-draft` or otherwise) and needs first-mention gloss insertion for undefined domain-specific terms — without re-running the full prose-draft pipeline.
 
@@ -17,7 +17,30 @@ Per-section run: 1 subagent launch, target ~3–5 min wall time.
 - A new term or regulation has been introduced into existing prose and a fresh gloss pass is needed.
 - The gloss pass needs to be re-run after manual edits to the whitelist or skill.
 
-**Stage 5 placement:** sits alongside `/produce-prose-draft` Phase 6 (or Phase 4 in adapted pipelines). Identical behavior, isolated invocation. After this command runs, the standard next step is `/produce-formatting` if not already run.
+**Stage 5 placement:** sits alongside `/produce-prose-draft`'s jargon-gloss phase. Identical behavior, isolated invocation. After this command runs, the standard next step is `/produce-formatting` if not already run.
+
+---
+
+## Phase 0 — Mode detection + arg validation + path-config load (main session)
+
+**Required precondition gate. No fallback. Halt loudly on any missing/mismatched input** (per `principles.md § OP-3` and `docs/project-config-schema.md § Default-value semantics for Document model`).
+
+1. **Read project `## Project Config`.** Locate `Document model:` line in the project's `CLAUDE.md`.
+   - If line absent: halt — `Project Config missing required field 'Document model'. Add the field per ai-resources/workflows/research-workflow/docs/project-config-schema.md row 13.`
+   - If value not `"report"` or `"section"`: halt — `Document model must be 'report' or 'section'. See ai-resources/workflows/research-workflow/docs/project-config-schema.md row 13.`
+   - If line malformed: halt — `Document model field is malformed; see project-config-schema.md § Field naming + value convention.`
+
+2. **Validate `$ARGUMENTS` against declared mode.**
+   - `Document model: "report"` → arg must match `^[rR][0-9]+$`. Mismatch: halt — `Arg "<X>" does not match the project's declared mode 'report' (expected pattern: rN).` Parse: arg `r1` → `report=r1`, `N=1`, `RN=R1`.
+   - `Document model: "section"` → arg must match `^[0-9]+\.[0-9]+$`. Mismatch: halt — `Arg "<X>" does not match the project's declared mode 'section' (expected pattern: N.M).` Parse: arg `2.4` → `section=2.4`, `part=2`.
+
+3. **Read project `reference/stage-5-paths.md`.** Verify it exists; if missing: halt — `reference/stage-5-paths.md is missing. Stage 5 commands require explicit path-config; create from canonical template at ai-resources/workflows/research-workflow/reference/stage-5-paths.template.md.`
+
+4. **Verify mode match.** Locate the `Mode:` line in `reference/stage-5-paths.md`.
+   - If absent: halt — `reference/stage-5-paths.md is missing the Mode: line. See ai-resources/workflows/research-workflow/reference/stage-5-paths.template.md.`
+   - If value does not match `Document model`: halt — `Mode mismatch: Project Config declares '<X>', reference/stage-5-paths.md declares '<Y>'. Resolve before invoking.`
+
+5. **Parse path-config.** Read the `## Stage 5 Path Roots` block. Cache the resolved path values (per-mode schema in `stage-5-paths.template.md`) for use in Phase 1. Interpolate placeholders: `{section}`, `{report}`, `{N}` (report-mode) or `{section}`, `{part}` (section-mode).
 
 ---
 
@@ -25,68 +48,36 @@ Per-section run: 1 subagent launch, target ~3–5 min wall time.
 
 Keep this phase lightweight. Do NOT read source files yet.
 
-1. Parse $ARGUMENTS as a section or report identifier matching the convention of the calling project. Two common forms:
-   - **Generic section identifier** (e.g., `2.4`, `3.1`): used in document-section pipelines.
-   - **Report identifier** (e.g., `r1`, `r2`, `r3`): used in report-based pipelines. Case-insensitive; map to `R{N}`.
-   Reject any other value with a one-line error.
+1. **`prose_file_path`** — resolved from the path-config + parsed arg.
+   - report-mode: `<prose_output_root>/<prose_output_filename>` (e.g., `report/produced/{section}/R{N}/R{N}-prosed.md`).
+   - section-mode: glob `<prose_output_root>/<prose_output_filename_glob>` (e.g., `output/part-{part}-prose/{section}-*.md`). Multi-match resolution per the path-config's `Source filename multi-match selector` (e.g., `highest-numeric-suffix` or `most-recent-mtime`). If multi-match looks ambiguous, PAUSE and ask the operator to confirm the target file.
 
-2. Locate the existing prose file. Detection order:
-   - Look first under the prose output directory for the calling project. Common patterns: `output/part-{N}-prose/{section}-*.md`, `report/produced/{section}/R{N}/R{N}-prosed.md`, or `{prose_output_dir}/{section}-prosed.md`.
-   - **Multi-match resolution.** If the detection glob returns more than one prose file (e.g., multiple iterations of the same section), select by this order: (a) the file with the highest version suffix if a `-v{N}` convention is in use, otherwise (b) the file with the most recent modification time (`mtime`). Report the file selected and the count of files considered to the operator in Phase 1's plan summary. If the multi-match resolution looks ambiguous or two files have the same mtime, PAUSE and ask the operator to confirm the target file.
-   - If no prose file is found at the expected location, PAUSE: "No prose draft found for {arg}. Run `/produce-prose-draft {arg}` first, or pass an explicit path."
+2. **`prose_output_dir`** — the directory containing `prose_file_path`. Used as the base for log paths.
 
-3. Determine paths:
-   - `prose_file_path` = the located prose file
-   - `prose_output_dir` = directory containing the prose file
-   - Style reference: detect at the project-standard location (e.g., `{prose_output_dir}/style-reference.md` or `report/style-reference/{section}/{section}-style-reference.md`). If absent, note in the change log header — the skill is non-blocking on style reference.
+3. **Style reference** — resolved from the path-config's `Style-reference path` (report-mode) or `Style-reference filename` relative to `prose_output_dir` (section-mode). If absent, note in the change log header — the skill is non-blocking on style reference.
 
-4. Check whether a previous `gloss-additions-log.md` exists at `{prose_output_dir}/gloss-additions-log.md`. If so, note it — the new pass produces a fresh log, overwriting the previous one. The previous log is logged by name in the new run's header so the operator can recover it from git if needed.
+4. **Check whether a previous `gloss-additions-log.md` exists** at `<prose_output_dir>/<gloss-log-filename>`. If so, note it — the new pass produces a fresh log, overwriting the previous one. The previous log is recoverable from git if needed.
+
+5. If `prose_file_path` does not exist: PAUSE — `No prose draft found for {arg}. Run /produce-prose-draft {arg} first, or pass an explicit path.`
 
 Present the plan: prose file path, style reference path (or note absent), change-log path, expected overwrite behavior. Wait for operator approval before proceeding.
 
 ---
 
-## Phase 2 — Jargon Gloss [delegate, sonnet]
+## Phase 2 — Jargon Gloss
 
-Detects undefined domain-specific terms on first mention and inserts short parenthetical glosses (5–15 words) in place. Standard PE/finance vocabulary is whitelisted. Voice and rhythm of the input prose are preserved.
+See `reference/stage-5-common-phases.md` anchor `phase-jargon-gloss` for the full phase definition.
 
-0. **Path setup.** Determine the absolute project-root path (the CWD at invocation) and cache it as `project_root_abs`. Resolve `prose_file_path_abs = {project_root_abs}/{prose_file_path}` and `prose_output_dir_abs = {project_root_abs}/{prose_output_dir}`. If unsure of the absolute root, run `pwd` once and cache the result.
-
-1. Read the prose file identified in Phase 1.
-
-2. Read `/ai-resources/skills/jargon-gloss/SKILL.md`.
-
-3. Launch a general-purpose sub-agent with `model: "sonnet"` (pattern-based detection against an explicit whitelist + category list; analytical judgment not required — this overrides the skill's declared opus tier; command-layer authority per workspace CLAUDE.md). Pass it:
-   - The skill content
-   - The prose file content
-   - The style reference absolute path (if found in Phase 1) — subagent reads this file before applying the skill (used for voice alignment of gloss phrasing). If no style reference is available, the subagent proceeds with neutral analytical phrasing per the skill's default.
-   - Output path: `prose_file_path_abs` — same file (explicit overwrite; this command owns the file-versioning contract; the skill's standalone default does not apply here).
-   - Change log output path: `{prose_output_dir_abs}/gloss-additions-log.md`
-   - Task: **First, read the style reference at the provided absolute path if available.** Then execute the jargon-gloss pass per the skill logic. Detect first-mention occurrences of undefined domain-specific terms across the document; check each against the PE Vocabulary Whitelist; apply the standard gloss format `Term (5–15 word definition)` on the first mention only; apply the sentence-split rule when a glossed sentence would exceed 35 words; preserve idempotency where the source prose already contains a definition. Write the glossed prose file (overwriting the input). Write the change log to the log output path. Return: terms-glossed count, idempotent-skip count, sentence-split count, bright-line flags count, and a brief summary of any constrained passages.
-   - **Bright-line rule override:** The gloss pass is exempt from the multi-paragraph scope check (bright-line check 1) because first-mention detection requires document-wide scanning by design. Checks 2 and 3 still apply: if applying a gloss would alter an analytical claim or modify a sourced statement (e.g., inside a quote), the sub-agent must flag it in the bright-line-flags section of the change log and must NOT apply that change. If bright-line flags are populated, the main agent PAUSEs for operator approval before proceeding.
-
-4. Route on result:
-   - **Zero bright-line flags:** Proceed to Phase 3 (handoff) automatically.
-   - **Bright-line flags present:** PAUSE — present flags to the operator. Apply or discard per operator decision, then proceed to Phase 3.
-   - **Zero terms glossed:** Note "Prose already accessible — no gloss insertions needed." Proceed to Phase 3.
-
-5. Write Phase 2 handoff note: terms-glossed count, idempotent-skip count, sentence-split count, any bright-line flags and their disposition.
-
-6. ▸ /compact — skill content no longer needed.
+**Mode-vars for this invocation:**
+- `{PHASE_NUMBER}`: 2
+- `{NEXT_PHASE}`: Phase 3 (handoff)
+- `{prose_output_dir}`: resolved in Phase 0 + Phase 1
 
 ---
 
 ## Phase 3 — Handoff (main session)
 
-1. Read the post-gloss prose file at `prose_file_path`.
+See `reference/stage-5-common-phases.md` anchor `phase-handoff-jargon-gloss` for the full handoff definition.
 
-2. Present to the operator:
-   - **Input file path used:** `prose_file_path`
-   - **Output file path:** `prose_file_path` (overwritten in place) + final word count
-   - **Jargon-gloss log path:** `{prose_output_dir}/gloss-additions-log.md` + summary (terms-glossed count, idempotent-skip count, sentence-split count)
-   - **Bright-line items deferred for operator decision** (any unresolved items from Phase 2)
-
-3. Suggest next step:
-   - **If the prose has not yet been through `/produce-formatting`:** "Run `/produce-formatting {arg}` to apply formatting polish."
-   - **If formatting was already applied:** "Review the glossed output. Re-run `/produce-formatting {arg}` only if the gloss insertions disturbed formatting structure (rare)."
-   - **If unresolved bright-line items:** "Resolve flagged items first (apply or discard per your decision), then proceed."
+**Mode-vars for this invocation:**
+- `{arg}`: the validated arg from Phase 0 (`r1`/`r2`/`r3` for report-mode; `2.4`/`3.1` etc. for section-mode).

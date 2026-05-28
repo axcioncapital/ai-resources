@@ -4,165 +4,189 @@ model: opus
 ---
 Produce prose draft for: $ARGUMENTS
 
-Convert one Part 2 (or Part 3) decision document into reviewed, decontaminated, jargon-glossed prose. Chains five skills: decision-to-prose-writing (decision-to-prose-writer), merged review and fix (chapter-prose-reviewer + prose-compliance-qc), cross-section integration check (conditional), AI prose decontamination (ai-prose-decontamination), and jargon-gloss (jargon-gloss). Requires architecture to exist (`/produce-architecture` runs first). Output is prose ready for `/produce-formatting`.
+> **Path A parameterized — supports both document models.** This canonical command reads project paths from `reference/stage-5-paths.md` and dispatches on `Document model:` declared in the project's `## Project Config`. Two pipeline shapes coexist: section-mode (Part 2 / Part 3 / etc. — 7 phases) and report-mode (R1/R2/R3 — 5 phases). Phases 3 and 4 are section-mode-only and explicitly skipped in report-mode. See `plans/fx-b1-path-a-design-v3.md` and `docs/project-config-schema.md § Default-value semantics for Document model`.
 
-Per-section run: 4–5 subagent launches, target ~12–16 min wall time.
+Convert one source document into reviewed, decontaminated, jargon-glossed prose. Chains skills across phases that vary by mode. Output is prose ready for `/produce-formatting`.
 
-Uses `context/prose-quality-standards.md` v3 (13 standards: Standards 10–13 added post-ship — Contrast Discipline, Concrete-Verb Default, Maxim Budget, End on the Point) and the document's `style-reference.md` v2.3+ where available (Governing Voice Test + Plain-Language Register for Non-Native Professional Readers applied). The command passes both files to the Phase 2 writer, the Phase 3 reviewer, and the Phase 5 decontamination agent.
+**Mode-specific overview:**
+- **section-mode:** 7 phases. Chains decision-to-prose-writing (`decision-to-prose-writer`), merged review + fix (`chapter-prose-reviewer` + `prose-compliance-qc`), cross-section integration check (conditional), AI prose decontamination (`ai-prose-decontamination`), and jargon-gloss (`jargon-gloss`). Requires architecture to exist (`/produce-architecture` runs first). Per-section run: 4–5 subagent launches, target ~12–16 min wall time.
+- **report-mode:** 5 phases. Chains prose-refinement (`prose-refinement-writer`), AI prose decontamination, jargon-gloss. No architecture requirement (the post-bright-line-fix source carries its own structure). Per-report run: 3 subagent launches, target ~14–18 min wall time.
+
+Uses `context/prose-quality-standards.md` (section-mode; project-specific) and the document's `style-reference.md` where available. The command passes both files to the relevant subagents.
 
 ---
 
-## Phase 1 — Plan + style-reference gate (main session)
+## Phase 0 — Mode detection + arg validation + path-config load (main session)
+
+**Required precondition gate. No fallback. Halt loudly on any missing/mismatched input** (per `principles.md § OP-3` and `docs/project-config-schema.md § Default-value semantics for Document model`).
+
+1. **Read project `## Project Config`.** Locate `Document model:` line in the project's `CLAUDE.md`.
+   - If line absent: halt — `Project Config missing required field 'Document model'. Add the field per ai-resources/workflows/research-workflow/docs/project-config-schema.md row 13.`
+   - If value not `"report"` or `"section"`: halt — `Document model must be 'report' or 'section'. See ai-resources/workflows/research-workflow/docs/project-config-schema.md row 13.`
+   - If line malformed: halt — `Document model field is malformed; see project-config-schema.md § Field naming + value convention.`
+
+2. **Validate `$ARGUMENTS` against declared mode.**
+   - `Document model: "report"` → arg must match `^[rR][0-9]+$`. Mismatch: halt — `Arg "<X>" does not match the project's declared mode 'report' (expected pattern: rN).` Parse: arg `r1` → `report=r1`, `N=1`, `RN=R1`.
+   - `Document model: "section"` → arg must match `^[0-9]+\.[0-9]+$`. Mismatch: halt — `Arg "<X>" does not match the project's declared mode 'section' (expected pattern: N.M).` Parse: arg `2.4` → `section=2.4`, `part=2`.
+
+3. **Read project `reference/stage-5-paths.md`.** Verify it exists; if missing: halt — `reference/stage-5-paths.md is missing. Stage 5 commands require explicit path-config; create from canonical template at ai-resources/workflows/research-workflow/reference/stage-5-paths.template.md.`
+
+4. **Verify mode match.** Locate the `Mode:` line. If absent or mismatched: halt per `stage-5-paths.template.md § Mode-mismatch halting`.
+
+5. **Parse path-config.** Read the `## Stage 5 Path Roots` block. Cache resolved values for Phases 1–7.
+
+---
+
+## Phase 1 — Plan (main session)
 
 Keep this phase lightweight. Do NOT read source files yet.
 
-1. Parse $ARGUMENTS to identify the target section (e.g., "2.4", "2.8", "3.1")
-2. Locate the source document:
-   a. Glob `parts/part-2-service/drafts/{section}*` (or `parts/part-3-strategy/drafts/{section}*` for Part 3 sections)
-   b. If matches found: list them, extract the numeric suffix from each filename (e.g., `draft-07` → 7), and select the file with the highest number
-   c. If no drafts found: fall back to `parts/part-2-service/approved/{section}*` (or `parts/part-3-strategy/approved/{section}*`)
-   d. If neither exists: PAUSE — no source document available
-3. Determine paths:
-   - Set `part_dir`: Part 2 → `parts/part-2-service/`, Part 3 → `parts/part-3-strategy/`
-   - Set `prose_output_dir`: Part 2 → `output/part-2-prose/`, Part 3 → `output/part-3-prose/`
-4. **Architecture requirement:** Check that `{prose_output_dir}/architecture.md` exists.
-   - **If exists:** read first 50 lines to verify the target section ($ARGUMENTS) appears in the section hierarchy. If covered → proceed. If not covered → PAUSE: "Architecture exists but doesn't cover {section}. Options: regenerate architecture (`/produce-architecture {part}` after deleting current architecture files), or proceed with `architecture-missing` override for this section."
-   - **If does not exist:** PAUSE: "Architecture required. Run `/produce-architecture {part}` first to generate it. Or proceed with `architecture-missing` override (downstream prose will be written without depth/seam guidance — not recommended for documents with 2+ sections)."
-5. **Style reference gate:** Check if `{prose_output_dir}/style-reference.md` exists.
+**Common steps (both modes):**
+
+1. **Determine source-document path.**
+   - **report-mode:** `<compiled-source-root>/<compiled-source-filename>` (e.g., `report/compiled/{section}/{section}-R{N}-compiled-v2.md`). If missing: PAUSE — `No post-fix file found for R{N} at <path>. Run Stage 5.2 (apply bright-line fixes from document-integration-qc) first.`
+   - **section-mode:** glob `<source-draft-root>/<source-filename-glob>` (e.g., `parts/part-{part}-{partname}/drafts/{section}-*.md`). Multi-match resolution per the path-config's `Source filename multi-match selector`. Fall back to `<source-approved-root>/<source-filename-glob>` if no draft found. If neither resolves: PAUSE — no source document available.
+
+2. **`prose_output_dir`** — `<prose_output_root>` interpolated with parsed arg.
+
+3. **Check existing prose versions** at the resolved `prose_file_path` to understand iteration state. If present, note it.
+
+**Mode-specific steps:**
+
+**section-mode only:**
+
+4. **Architecture requirement:** check that `<prose_output_dir>/<architecture-filename>` exists.
+   - **If exists:** read first 50 lines to verify the target section ($ARGUMENTS) appears in the section hierarchy. If covered → proceed. If not covered → PAUSE: `Architecture exists but doesn't cover {section}. Options: regenerate architecture (/produce-architecture {part} after deleting current architecture files), or proceed with architecture-missing override for this section.`
+   - **If does not exist:** PAUSE: `Architecture required. Run /produce-architecture {part} first to generate it. Or proceed with architecture-missing override (downstream prose will be written without depth/seam guidance — not recommended for documents with 2+ sections).`
+
+5. **Style reference gate:** check if `<prose_output_dir>/<style-reference-filename>` exists.
    - **If exists:** note it — this is the locked style reference. Proceed to Phase 2.
-   - **If does not exist:** Run the **first-run style-reference selection sub-flow** below. After operator approves the style reference, **auto-continue to Phase 2 within the same invocation** (no re-call required).
-6. Check for existing prose versions in `{prose_output_dir}/{section}-*.md` to understand iteration state. If a previous prose version exists, note it — the new version will be a fresh production, not an edit.
+   - **If does not exist:** Run the **first-run style-reference selection sub-flow** below. After operator approves the style reference, auto-continue to Phase 2 within the same invocation.
 
-Present the plan: source document path, architecture status (used or missing), style reference status (existing or to-be-generated), output file path. Wait for operator approval before proceeding.
+**report-mode only:**
 
-### First-run style-reference selection sub-flow (only on first section)
+6. **Style reference is project-locked.** Resolve from the path-config's `Style-reference path` value (e.g., `report/style-reference/{section}/{section}-style-reference.md`). The report-mode pipeline does NOT do a first-run selection — the project-level style reference is the authority across all reports.
 
-> Triggered when `{prose_output_dir}/style-reference.md` does not exist.
+Present the plan: source document path, mode, architecture status (section-mode only), style reference status, output file path. Wait for operator approval before proceeding.
+
+### First-run style-reference selection sub-flow (section-mode only, first section)
+
+> Triggered when `<prose_output_dir>/<style-reference-filename>` does not exist in section-mode.
 
 1. List available style reference templates by globbing `/ai-resources/style-references/*.md`. Present each template with its name, document type description (from the file's header), and typical audience. Ask the operator which template to use, or whether to generate a style reference from scratch.
-2. Read the selected template
-3. Read the source document identified in step 2 above (for customization context)
+2. Read the selected template.
+3. Read the source document identified in step 1 above (for customization context).
 4. Customize the template for this document part. Apply the template's Customization Notes section. Adjustments may include: audience specificity, evidence calibration level, domain terminology, or document-specific constraints. Note which template was used and what was changed.
-5. Write the customized style reference to `{prose_output_dir}/style-reference.md`
-6. PAUSE — present the style reference to the operator for approval. Show the template used and customizations applied. Do not proceed until approved.
-7. **Once approved, the style reference is locked. Auto-continue to Phase 2 within the same invocation.** It applies to all subsequent prose production for this document part.
+5. Write the customized style reference to `<prose_output_dir>/<style-reference-filename>`.
+6. PAUSE — present the style reference to the operator for approval. Do not proceed until approved.
+7. **Once approved, the style reference is locked. Auto-continue to Phase 2 within the same invocation.**
 
 ---
 
-## Phase 2 — Decision-to-Prose Conversion [delegate]
+## Phase 2 — Initial Prose Production [delegate]
 
-0. **Path setup (first phase that launches a subagent, reused across phases).** Determine the absolute project-root path (the CWD at invocation) and cache it as `project_root_abs`. Also resolve `prose_output_dir_abs = {project_root_abs}/{prose_output_dir}`. These absolute paths are passed to every subagent brief in Phases 2, 3, 4, 5 so subagents can read reference files directly rather than receiving inlined content. If unsure of the absolute root, run `pwd` once and cache the result. Then create the working directory for subagent findings files: `mkdir -p "{prose_output_dir_abs}/working"` (idempotent; needed for Phase 3 subagent-to-disk pattern).
-1. Read the source document identified in Phase 1
-2. Read `/ai-resources/skills/decision-to-prose-writer/SKILL.md`
+Mode-specific. Two skills, two delegation patterns; final output is the same `prose_file_path`.
+
+0. **Path setup (first phase that launches a subagent, reused across phases).** Determine the absolute project-root path (the CWD at invocation) and cache it as `project_root_abs`. Resolve `prose_output_dir_abs = {project_root_abs}/{prose_output_dir}`. If unsure of the absolute root, run `pwd` once and cache the result. Then create the working directory: `mkdir -p "{prose_output_dir_abs}/<working-dir-name>"` (idempotent; needed for section-mode Phase 3 subagent-to-disk pattern; report-mode tolerates the no-op create).
+
+**section-mode (Decision-to-Prose Conversion):**
+
+1. Read the source document identified in Phase 1.
+2. Read `/ai-resources/skills/decision-to-prose-writer/SKILL.md`.
 3. Launch a general-purpose sub-agent. Pass it:
    - The skill content
    - The source document content
-   - The style reference absolute path: `{prose_output_dir_abs}/style-reference.md` — subagent reads this file before applying the skill.
-   - The prose quality standards absolute path: `{project_root_abs}/context/prose-quality-standards.md` — subagent reads this file before applying the skill. This is a project-specific file resolved from the project root (NOT from ai-resources). These are writing principles to apply during conversion, not a post-hoc checklist. The agent should internalize the standards and write accordingly, not mechanically verify each one.
-   - Output path: if section begins with "2", write to `output/part-2-prose/{section}-{slug}.md`; if section begins with "3", write to `output/part-3-prose/{section}-{slug}.md` (create directory if needed). Derive slug from the document title, kebab-case.
-   - **Architecture specification** (if exists): Read `{prose_output_dir}/architecture.md` and extract the sections relevant to $ARGUMENTS:
-     - This section's entry from the section hierarchy (H1/H2/H3 outline, thesis)
-     - This section's depth allocation (word count range, priority tier, must-land content)
-     - Cross-references involving this section (dependencies, what other sections reference this one)
-     - This section's entries from the traceability table (including seam notes)
-     - Any structural overrides affecting this section
-   - Task:
-     1. **Read the style reference and prose quality standards files at the provided absolute paths before applying the skill.** Both files are the authority for voice, tone, editorial standards, and writing principles applied during conversion.
-     2. Execute the decision-to-prose transformation per the skill logic.
-     3. Apply the style reference for voice, tone, and editorial standards.
-     4. Apply the prose quality standards throughout. **Tier 1 (check first, highest-impact):** Standard 3 (sentence rhythm — short-long pattern; named patterns: triadic cadence, medium-sentence monotony, rhythmic templating), Standard 10 (contrast discipline — "not X, but Y" not as default rhythm), Standard 1 (no self-annotation — including reference-back sentences that label what prior content "does"), Standard 2 (point-first paragraphs). **Tier 2 (check second):** Standard 5 (no preambles), Standard 11 (concrete-verb default — no abstract-noun stacking unless the compound is load-bearing vocabulary), Standard 13 (end on the point, not the pivot — section-final sentences land this section's conclusion, not a gesture to the next section), Standard 7 (land on conclusions — paragraph-level), Standard 8 (formatting discipline). **Tier 3 (check third):** Standard 6 (transitions carry information), Standard 4 (complexity sequencing), Standard 9 (uncertainty handling — including hedge-phrase frequency discipline and the calibration-volume re-frame), Standard 12 (maxim budget — maximum one aphoristic sentence per section). Apply the style-reference Governing Voice Test as a passage-level filter: would an experienced PE operator say this aloud in a strategy meeting? If the phrasing reads as analytical performance rather than analytical work, cut it back. If the document's style-reference includes a Plain-Language Register section (Flagged-Word Registry), apply it during writing — prefer plain alternatives for flagged vocabulary unless the instance matches a named load-bearing carve-out.
-     5. If architecture is provided: honor the depth allocation, implement must-land content, respect seam notes from the traceability table, and write transitions consistent with the cross-reference map. The architecture defines this section's role in the whole document — prose should reflect its assigned position and emphasis.
-     6. Write the prose file and return: file path, word count, section count, any flags.
+   - The style reference absolute path: `{prose_output_dir_abs}/<style-reference-filename>` — subagent reads this file before applying the skill.
+   - The prose quality standards absolute path: `{project_root_abs}/context/prose-quality-standards.md` — subagent reads this file before applying the skill. Project-specific (NOT from ai-resources). Internalize the standards and write accordingly, not mechanically verify each one.
+   - Output path: the Phase 1-resolved `prose_file_path` (interpolated from path-config — e.g., `output/part-{part}-prose/{section}-{slug}.md`; derive slug from the document title, kebab-case).
+   - **Architecture specification** (if exists): read the architecture from `<prose_output_dir>/<architecture-filename>` and extract sections relevant to $ARGUMENTS — section hierarchy entry, depth allocation, cross-references, traceability table entries, structural overrides.
+   - Task: Execute the decision-to-prose transformation per the skill logic. Apply the style reference and prose quality standards throughout (Tier 1 / 2 / 3 priority per the standards file's violation guide). Apply the style-reference Governing Voice Test as a passage-level filter. If a Plain-Language Register section is present in the style reference, apply it during writing. If architecture is provided: honor the depth allocation, implement must-land content, respect seam notes. Write the prose file and return: file path, word count, section count, any flags.
 4. Write a brief status note (file path, word count) — do not read the full output yet.
-5. ▸ /compact — skill content and source document no longer needed in main session.
+5. ▸ /compact — skill content and source document no longer needed.
+
+**report-mode (Prose Refinement):**
+
+1. Read the source document identified in Phase 1.
+2. Read `/ai-resources/skills/prose-refinement-writer/SKILL.md`.
+3. Launch a general-purpose sub-agent. Pass it:
+   - The skill content
+   - The source document content (the post-fix R{N} prose)
+   - The style reference absolute path (project-locked, resolved from path-config) — subagent reads this file before applying the skill.
+   - Output path: the Phase 1-resolved `prose_file_path` (e.g., `report/produced/{section}/R{N}/R{N}-prosed.md`).
+   - Task:
+     1. **Read the style reference at the absolute path.** It is the authority for voice and tone.
+     2. Execute the prose-refinement-writer skill's targeted intervention logic. Address only: unclear logical relationships between adjacent sentences; underdeveloped hardest claims in paragraphs.
+     3. **This is a targeted intervention, not a rewrite.** Most sentences in any paragraph remain untouched (typically 1–2 changes per paragraph, sometimes none, occasionally 3). If you find yourself rewriting most sentences in a paragraph, stop and re-read this instruction.
+     4. Preserve voice. Avoid AI-register smoothing — treat AI-register patterns (tricolons, pseudo-maxims, pivot closings, banned-word instances) as **constraints on your own fixes**, not as the primary target (those are addressed in Phase 5 by `ai-prose-decontamination`).
+     5. Write the refined prose file and return: file path, word count, change count by category (logical-linkage fixes, hardest-claim development), any flags.
+4. Write a brief status note — do not read the full output yet.
+5. ▸ /compact — skill content and source document no longer needed.
 
 ---
 
-## Phase 3 — Review and Fix [delegate]
+## Phase 3 — Review and Fix [SECTION-MODE ONLY] [delegate-qc]
 
-Merged diagnostic review (chapter-prose-reviewer) and compliance gate (prose-compliance-qc) in a single pass, followed by conditional fix application.
+**Report-mode skips this phase entirely.** Proceed directly to Phase 5.
 
-1. Read the prose file produced in Phase 2
-2. Read the source document (for transformation comparison and Degraded mode)
-3. Read `/ai-resources/skills/chapter-prose-reviewer/SKILL.md`
-4. Read `/ai-resources/skills/prose-compliance-qc/SKILL.md`
+Merged diagnostic review (`chapter-prose-reviewer`) and compliance gate (`prose-compliance-qc`) in a single pass, followed by conditional fix application.
+
+1. Read the prose file produced in Phase 2.
+2. Read the source document (for transformation comparison and Degraded mode).
+3. Read `/ai-resources/skills/chapter-prose-reviewer/SKILL.md`.
+4. Read `/ai-resources/skills/prose-compliance-qc/SKILL.md`.
 5. Launch a qc-reviewer sub-agent. Pass it:
-   - The chapter-prose-reviewer skill content (diagnostic framework)
-   - The prose-compliance-qc skill content (compliance framework)
-   - The prose file content (artifact under review)
-   - The source document content (transformation comparison input + Degraded mode input for Scan 3)
-   - The style reference absolute path: `{prose_output_dir_abs}/style-reference.md` — subagent reads this file before evaluating.
-   - The prose quality standards absolute path: `{project_root_abs}/context/prose-quality-standards.md` — subagent reads this file before evaluating. Project-specific file resolved from the project root (NOT from ai-resources).
-   - Adaptation notes (conditional on architecture):
-     - **If architecture exists:** "The document architecture spec is available. The chapter-prose-reviewer's §1 (architecture compliance) applies fully. Evaluate the prose against the architecture's depth allocation, must-land content, and structural decisions for this section. For compliance QC: Input 4 is present — Scan 3 runs in Standard mode." Pass the architecture content (extracted sections relevant to $ARGUMENTS, same as Phase 2).
-     - **If architecture does not exist:** "The document architecture spec is intentionally absent for this prose pipeline. Override the chapter-prose-reviewer's blocking requirement for this input. Proceed with §2–§5 only; treat §1 as not applicable. Do not halt or request the architecture spec. The 'evidence prose' is a decision document, not claim-ID-organized evidence — use it for transformation quality comparison per §2. §3 Style, §4 Prose Quality, and §5 Completeness apply fully. No architecture spec provided for compliance QC (Input 4 absent — Scan 3 runs in Degraded mode)."
-     - The chapter-prose-reviewer skill content serves as anti-pattern reference for compliance QC Scan 1.
-     - **Sequencing note:** The diagnostic review (chapter-prose-reviewer) and compliance scans (prose-compliance-qc) run against the same unmodified prose in this merged pass. When running compliance scans, treat findings from the diagnostic review as "pending fixes" — only flag as compliance violations items that would survive after the diagnostic review's recommended fixes are applied. Do not double-count issues the diagnostic already caught.
-   - **Anti-scaffolding instruction:** "Do NOT restore cross-reference codes (WH, OQ, DP, section numbers as references), chain-activity anchors, value-chain stage labels used as structural markers, or any scaffolding from the source document. These were intentionally removed during prose conversion. Do NOT flag their absence as a gap or recommend their restoration."
-   - **Prose quality checks:** Apply the detection tests from all 13 standards as additional review criteria alongside the skill frameworks, checking in the priority order defined in the violation guide (Tier 1 first: flat rhythm, contrast-template overuse, self-annotation, no paragraph progression; then Tier 2: preambles, abstract-noun stacking, pivot-closings, trailing off, bold in running prose; then Tier 3: transitions, complexity sequencing, uncertainty handling, maxim budget).
-   - **Expanded detection tests for Standards 10, 11, 12, 13 (apply explicitly):** (a) **Contrast constructions** — count per section ("not X, but Y", "X is Y, not Z", "not a preference but a constraint" and structural variants); flag if ≥4 in a 1,500-word section. (b) **Abstract-noun compounds** — for any three-noun compound, test whether an actor/verb rewrite would preserve meaning; if yes and the compound is not load-bearing document vocabulary, flag. (c) **Pseudo-maxim sentences** — short (<12 word) aphoristic sentences that function as standalone generalizations; count per section; flag if >1. (d) **Pivot closings** — read the last sentence of each section; if it describes what the next section will do rather than what this section established, flag. (e) **Flagged-vocabulary instances** — if the document's style-reference contains a Plain-Language Register / Flagged-Word Registry, scan the prose against it; flag any instance that is not a load-bearing PE term per the carve-outs named in the registry.
-   - The style reference is the file at `{prose_output_dir_abs}/style-reference.md` (the generated/locked reference from Phase 1), not the context file at `context/style-guide.md`.
-   - Task: **First, read the style reference and prose quality standards files at the provided absolute paths.** Then run the diagnostic review per chapter-prose-reviewer and produce a score (1-5) and flag report. Then run all four compliance scans per prose-compliance-qc (treating diagnostic findings as pending fixes per the sequencing note). Then apply the 13 prose quality checks — including Standard 6 at paragraph-to-paragraph granularity (not only at section boundaries), and the expanded Standards 10–13 detection tests above. Produce a unified findings list combining all passes, with severity ratings (HIGH/MEDIUM/LOW) and per-spec verdicts.
-   - **Output-to-disk pattern (required — subagent-contract compliance):** Write the full unified findings list to `{prose_output_dir_abs}/working/phase-3-qc-{section}.md`. The main session has already created the `working/` directory in Phase 2 step 0. Return to the main session a summary of **no more than 20 lines** (CLAUDE.md Subagent Contracts tighter cap for per-chapter invocation) with exactly these fields:
-     - `working_file`: absolute path to the file just written
-     - `score`: 1–5 (diagnostic review score)
-     - `high_count`, `medium_count`, `low_count`: finding counts by severity
-     - `bright_line_items_count`: number of items requiring operator approval under the bright-line rule
-     - `verdict`: one line — `auto-proceed` / `fix-agent-needed` / `pause-for-operator`
-     Do not repeat the findings inline in the return. Main session routes on the counts; reads the working file only when surfacing to the operator at Phase 6.
+   - Both skill contents
+   - The prose file content
+   - The source document content
+   - The style reference absolute path — subagent reads this file before evaluating.
+   - The prose quality standards absolute path: `{project_root_abs}/context/prose-quality-standards.md` — subagent reads before evaluating.
+   - Adaptation notes conditional on architecture: pass architecture content if `<prose_output_dir>/<architecture-filename>` exists (extract sections relevant to $ARGUMENTS, same as Phase 2). The reviewer's §1 (architecture compliance) applies; compliance QC Scan 3 runs in Standard mode. If absent: override the chapter-prose-reviewer's blocking requirement; reviewer proceeds with §2–§5 only; compliance QC Scan 3 runs in Degraded mode.
+   - The chapter-prose-reviewer skill content serves as anti-pattern reference for compliance QC Scan 1.
+   - **Sequencing note:** Diagnostic review and compliance scans run against the same unmodified prose. When running compliance scans, treat findings from the diagnostic review as "pending fixes" — only flag as compliance violations items that would survive after the diagnostic review's recommended fixes are applied. Do not double-count.
+   - **Anti-scaffolding instruction:** Do NOT restore cross-reference codes (WH, OQ, DP, section numbers as references), chain-activity anchors, value-chain stage labels used as structural markers, or any scaffolding from the source document. These were intentionally removed during prose conversion. Do NOT flag their absence as a gap.
+   - **Prose quality checks:** Apply the detection tests from all 13 standards as additional review criteria alongside the skill frameworks, checking in the priority order from the violation guide. Apply expanded detection tests for Standards 10–13 explicitly (contrast-construction count per section; abstract-noun-compound rewrite test; pseudo-maxim sentence count per section; pivot-closing detection; flagged-vocabulary scan against any Plain-Language Register in the style reference).
+   - Task: Read the style reference and prose quality standards at the provided absolute paths. Run the diagnostic review and produce a score (1–5) and flag report. Run all four compliance scans (treating diagnostic findings as pending fixes per the sequencing note). Apply the 13 prose quality checks. Produce a unified findings list combining all passes, with severity ratings (HIGH/MEDIUM/LOW) and per-spec verdicts.
+   - **Output-to-disk pattern:** Write the full unified findings list to `{prose_output_dir_abs}/<working-dir-name>/phase-3-qc-{section}.md`. Return to the main session a summary of no more than 20 lines with exactly these fields: `working_file`, `score`, `high_count`, `medium_count`, `low_count`, `bright_line_items_count`, `verdict` (one line — `auto-proceed` / `fix-agent-needed` / `pause-for-operator`).
 
 6. Route on score and findings:
-   - **Score 4-5 with only LOW findings:** Note findings. Proceed to Phase 4. No fix agent needed.
-   - **Score 4-5 with MEDIUM+ findings:** Launch a general-purpose sub-agent with: the prose file content, the path to the Phase 3 findings file (`{prose_output_dir_abs}/working/phase-3-qc-{section}.md` — subagent reads findings from this file before applying fixes), the style reference absolute path (`{prose_output_dir_abs}/style-reference.md` — subagent reads before applying fixes), the source document, and the anti-scaffolding instruction from the review pass above. Task: apply all non-bright-line fixes and write the corrected file. For bright-line items (multi-paragraph changes, analytical claim alterations, sourced statement modifications): log them and present to the operator. After fixes, proceed to Phase 4.
+   - **Score 4-5 with only LOW findings:** Note findings. Proceed to Phase 4 (or Phase 5 if Phase 4 skipped). No fix agent needed.
+   - **Score 4-5 with MEDIUM+ findings:** Launch a general-purpose sub-agent with the prose file, the path to the Phase 3 findings file, the style reference absolute path, the source document, and the anti-scaffolding instruction. Task: apply all non-bright-line fixes and write the corrected file. For bright-line items (multi-paragraph changes, analytical claim alterations, sourced statement modifications): log and present to the operator. After fixes, proceed to Phase 4.
    - **Score 3 with fewer than 3 HIGH findings:** Same as above — launch fix sub-agent. Present bright-line items and any HIGH findings to the operator before proceeding.
-   - **Score 3 with 3+ HIGH findings:** PAUSE — present findings to the operator. Options: re-run Phase 2 with editorial annotations addressing the failures, or proceed with fix sub-agent.
-   - **Score 1-2:** PAUSE — present findings to the operator. The prose conversion has failed. Options: re-run Phase 2 with editorial annotations addressing the failures, or override and proceed.
+   - **Score 3 with 3+ HIGH findings:** PAUSE — present findings to the operator. Options: re-run Phase 2 with editorial annotations, or proceed with fix sub-agent.
+   - **Score 1-2:** PAUSE — present findings to the operator. The prose conversion has failed. Options: re-run Phase 2 with editorial annotations, or override and proceed.
 
-7. Write a brief Phase 3 handoff note for the main session: the working-file path (`{prose_output_dir_abs}/working/phase-3-qc-{section}.md` — absolute form, matching the subagent-write site for consistency), the score, severity counts (HIGH/MEDIUM/LOW), count of findings auto-fixed, and count of bright-line items deferred for operator review. This note feeds Phase 6 (handoff). (Write this note to main session context before compacting — it must survive the compact. The full findings list stays on disk at the working-file path; Phase 6 reads it when presenting to the operator.)
-
+7. Write a brief Phase 3 handoff note for the main session: working-file path, score, severity counts, count of findings auto-fixed, count of bright-line items deferred for operator review. This note feeds Phase 7 (handoff).
 8. ▸ /compact — skill content and source document no longer needed.
 
 ---
 
-## Phase 4 — Integration Check [delegate] (conditional)
+## Phase 4 — Integration Check [SECTION-MODE ONLY, CONDITIONAL] [delegate]
 
-> **Condition:** Only runs if other completed prose sections exist in `{prose_output_dir}` (i.e., this is not the first section being converted). If this is the first section, skip to Phase 5.
+**Report-mode skips this phase entirely.** Proceed directly to Phase 5.
+
+**Condition (section-mode):** Only runs if other completed prose sections exist in `<prose_output_dir>` (i.e., this is not the first section being converted). If this is the first section, skip to Phase 5.
 
 This phase catches cross-section issues that single-section review cannot detect: transition quality at section boundaries and redundancy/contradiction between independently written sections.
 
-1. Glob `{prose_output_dir}/*.md` to find all completed prose sections. Exclude non-prose files by name: `architecture.md`, `architecture-qc.md`, `style-reference.md`, `decontamination-log.md`. The remaining files are prose sections.
-2. If no other prose sections exist: skip this phase entirely, proceed to Phase 5
-3. Read the current section's prose file (post-Phase 3 fixes)
-4. Read the architecture at `{prose_output_dir}/architecture.md` (if exists) — specifically the cross-reference map and processing order, to identify which sections are adjacent to and dependent on the current section
+1. Glob `<prose_output_dir>/*.md` to find all completed prose sections. Exclude non-prose files by name: `<architecture-filename>`, `architecture-qc.md`, `<style-reference-filename>`, `<decon-log-filename>`. Remaining files are prose sections.
+2. If no other prose sections exist: skip this phase entirely, proceed to Phase 5.
+3. Read the current section's prose file (post-Phase 3 fixes).
+4. Read the architecture (if exists) — specifically the cross-reference map and processing order, to identify which sections are adjacent to and dependent on the current section.
 5. Read adjacent sections' prose files — "adjacent" means the sections immediately before and after this section in the architecture's processing order. If no architecture exists, use section numbering order.
 6. Read all other completed prose sections (non-adjacent) — for redundancy/contradiction checking. For large document parts (6+ completed sections), read only the opening and closing paragraphs of non-adjacent sections to manage context size.
-7. Launch a general-purpose sub-agent. Pass it:
-   - The current section's prose content (labeled with section ID)
-   - Adjacent sections' prose content (labeled with section IDs and position: "preceding" / "following")
-   - Non-adjacent sections' prose content (labeled, full or excerpted per step 6)
-   - Architecture cross-reference map and seam notes for this section (if architecture exists)
-   - The style reference absolute path: `{prose_output_dir_abs}/style-reference.md` — subagent reads this file before running the two checks.
-   - Task: **First, read the style reference at the provided absolute path.** Then run two focused checks:
+7. Launch a general-purpose sub-agent. Pass it the current section's prose, adjacent sections' prose, non-adjacent sections' prose (excerpted per step 6), architecture cross-reference map + seam notes (if architecture exists), style reference absolute path. Task: read the style reference at the provided path, then run two focused checks:
 
-     **A. Transitions** — Examine the boundary between this section and each adjacent section:
-     - Does this section's opening connect to the preceding section's conclusion?
-     - Does this section's conclusion set up the following section's opening?
-     - If architecture seam notes exist for these boundaries, are they implemented?
-     - For each weak or missing transition: draft a transition passage (1–3 sentences), labeled `[TRANSITION DRAFT — Section X.X to Y.Y]`. Indicate whether the draft belongs at the end of the preceding section or the start of the current section.
+   **A. Transitions** — Examine the boundary between this section and each adjacent section: does this section's opening connect to the preceding section's conclusion? Does this section's conclusion set up the following section's opening? If architecture seam notes exist for these boundaries, are they implemented? For each weak or missing transition: draft a transition passage (1–3 sentences), labeled `[TRANSITION DRAFT — Section X.X to Y.Y]`. Indicate placement (end of preceding section / start of current section).
 
-     **B. Redundancy & Contradiction** — Compare this section against all other completed prose:
-     - Same conclusion or argument restated across sections without cross-reference
-     - Same statistic, data point, or claim stated with different figures or framing
-     - Same concept explained in multiple sections without acknowledgment
-     - For each finding: location in both sections, description, severity (SUBSTANTIVE if it affects credibility or creates confusion, NON-SUBSTANTIVE if minor repetition)
+   **B. Redundancy & Contradiction** — Compare this section against all other completed prose: same conclusion or argument restated across sections without cross-reference; same statistic, data point, or claim stated with different figures or framing; same concept explained in multiple sections without acknowledgment. For each finding: location in both sections, description, severity (SUBSTANTIVE if it affects credibility or creates confusion, NON-SUBSTANTIVE if minor repetition).
 
-     Return: transition drafts (if any), redundancy/contradiction findings (if any), and a clean-pass note if no issues found.
+   Return: transition drafts (if any), redundancy/contradiction findings (if any), clean-pass note if no issues.
 
 8. Route on findings:
    - **No findings:** Note clean pass. Proceed to Phase 5.
-   - **Transition drafts only:** Present drafts to the operator. The operator decides which to incorporate. Apply approved transitions to the prose file. (Transition passages of 1–3 sentences are not bright-line items. If a transition draft exceeds one paragraph, apply the bright-line rule check before inserting.) Proceed to Phase 5.
+   - **Transition drafts only:** Present drafts to the operator. The operator decides which to incorporate. Apply approved transitions. (Transition passages of 1–3 sentences are not bright-line items. If a draft exceeds one paragraph, apply the bright-line rule check before inserting.) Proceed to Phase 5.
    - **Redundancy/contradiction findings:** Present all findings to the operator. SUBSTANTIVE findings require a decision before proceeding — the operator chooses which section to adjust, or accepts the repetition. NON-SUBSTANTIVE findings are noted for future reference. Proceed to Phase 5 after the operator reviews.
-   - **Note:** Redundancy/contradiction fixes that require changes to *other* sections (not the current one) are logged to `logs/decisions.md` as cross-section revision notes, not applied directly. Only the current section's prose is modified in this phase.
+   - Redundancy/contradiction fixes that require changes to *other* sections are logged to `logs/decisions.md` as cross-section revision notes, not applied directly.
 
 9. ▸ /compact — adjacent section content no longer needed.
 
@@ -170,70 +194,47 @@ This phase catches cross-section issues that single-section review cannot detect
 
 ## Phase 5 — AI Prose Decontamination [delegate, sonnet]
 
-Removes AI writing patterns (ornamental language, repetition, over-argumentation, flat rhythm) from substantively correct prose. Runs four sequential passes that progressively clean the voice without changing analytical content.
+See `reference/stage-5-common-phases.md` anchor `phase-decontamination` for the full phase definition.
 
-> **Condition:** Always runs. Skip only if the operator explicitly opts out during Phase 1 planning or Phase 3 review.
-
-1. Read the prose file (post-Phase 3 fixes, or post-Phase 4 if 4 ran)
-2. Read the source document identified in Phase 1 (if available after compaction — if not, proceed without and note in the handoff)
-3. Read `/ai-resources/skills/ai-prose-decontamination/SKILL.md`
-4. Launch a general-purpose sub-agent with `model: "sonnet"` (pattern-based task, analytical judgment not required). Pass it:
-   - The skill content
-   - The prose file content
-   - The style reference absolute path: `{prose_output_dir_abs}/style-reference.md` — subagent reads this file before applying the skill.
-   - The prose quality standards absolute path: `{project_root_abs}/context/prose-quality-standards.md` — subagent reads this file before applying the skill. Project-specific file resolved from the project root (NOT from ai-resources).
-   - The source document content (if available)
-   - Output path: same file (explicit overwrite — this command owns the file-versioning contract; the skill's standalone default of writing to a new path does not apply here)
-   - Change log output path: `{prose_output_dir}/decontamination-log.md`
-   - Task: **First, read the style reference and prose quality standards files at the provided absolute paths.** Then execute all four decontamination passes per the skill logic, including the five named sub-patterns (1a contrast-template overuse, 1b abstract-noun stacking, 1c Flagged-Word Registry application, 2a pivot closings, 4a pseudo-maxim budget) the skill carries natively. Write the corrected prose file. Write the change log to the log output path. Return: change counts per pass and per sub-pattern, any bright-line flags, and any passages where decontamination was constrained by style reference or evidence calibration preservation.
-   - **Bright-line rule override for Phase 5:** The decontamination pass is exempt from the multi-paragraph scope check (bright-line check 1) because it operates across the entire document by design. Checks 2 and 3 still apply: if any change alters an analytical claim or modifies a sourced statement, the sub-agent must flag it in the bright-line-flags section of the change log and must NOT apply that change. If bright-line flags are populated, the main agent PAUSEs for operator approval before proceeding.
-5. Route on result:
-   - **Zero bright-line flags:** Proceed to Phase 6 (jargon gloss) automatically.
-   - **Bright-line flags present:** PAUSE — present flags to the operator. Apply or discard per operator decision, then proceed to Phase 6.
-   - **Zero changes across all passes:** Note "Prose already clean — no decontamination needed." Proceed to Phase 6.
-6. Write Phase 5 handoff note: total changes, per-pass breakdown, any bright-line flags and their disposition, any constrained passages.
-7. ▸ /compact — skill content and source document no longer needed.
+**Mode-vars for this invocation:**
+- `{PHASE_NUMBER}`: 5
+- `{NEXT_PHASE}`: Phase 6 (jargon gloss)
+- `{SOURCE_DOC_AVAILABILITY}`:
+  - section-mode: `"available"` (source document was identified in Phase 1 and may be passed if still in context)
+  - report-mode: `"skipped"` (source already consumed in Phase 2's prose refinement)
+- `{PROSE_QUALITY_STANDARDS_PATH}`:
+  - section-mode: `{project_root_abs}/context/prose-quality-standards.md`
+  - report-mode: empty (report-mode does not pass a project-level prose-quality-standards file)
+- `{prose_output_dir}`: resolved in Phase 0 + Phase 1
 
 ---
 
 ## Phase 6 — Jargon Gloss [delegate, sonnet]
 
-Detects undefined domain-specific terms (named regulations, frameworks, agency programs, niche acronyms) on first mention and inserts short parenthetical glosses (5–15 words) in place. Standard PE/finance vocabulary is whitelisted and left bare. Voice and rhythm established by Phase 5 are preserved.
+See `reference/stage-5-common-phases.md` anchor `phase-jargon-gloss` for the full phase definition.
 
-> **Condition:** Always runs. Skip only if the operator explicitly opts out during Phase 1 planning.
-
-1. Read the prose file (post-Phase 5 decontamination output).
-2. Read `/ai-resources/skills/jargon-gloss/SKILL.md`.
-3. Launch a general-purpose sub-agent with `model: "sonnet"` (pattern-based detection against an explicit whitelist + category list; analytical judgment not required — this overrides the skill's declared opus tier; command-layer authority per workspace CLAUDE.md). Pass it:
-   - The skill content
-   - The prose file content
-   - The style reference absolute path: `{prose_output_dir_abs}/style-reference.md` — subagent reads this file before applying the skill (used for voice alignment of gloss phrasing).
-   - Output path: same file (explicit overwrite — this command owns the file-versioning contract; the skill's standalone default does not apply here)
-   - Change log output path: `{prose_output_dir_abs}/gloss-additions-log.md`
-   - Task: **First, read the style reference at the provided absolute path.** Then execute the jargon-gloss pass per the skill logic: detect first-mention occurrences of undefined domain-specific terms across the document, check each against the PE Vocabulary Whitelist in the skill, apply the standard gloss format `Term (5–15 word definition)` on the first mention only, apply the sentence-split rule when a glossed sentence would exceed 35 words, preserve idempotency where the source prose already contains a definition. Write the glossed prose file. Write the change log to the log output path. Return: terms-glossed count, idempotent-skip count, sentence-split count, bright-line flags count, and a brief summary of any constrained passages.
-   - **Bright-line rule override for Phase 6:** The gloss pass is exempt from the multi-paragraph scope check (bright-line check 1) because first-mention detection requires document-wide scanning by design. Checks 2 and 3 still apply: if applying a gloss would alter an analytical claim or modify a sourced statement (e.g., inside a quote), the sub-agent must flag it in the bright-line-flags section of the change log and must NOT apply that change. If bright-line flags are populated, the main agent PAUSEs for operator approval before proceeding.
-
-4. Route on result:
-   - **Zero bright-line flags:** Proceed to Phase 7 (handoff) automatically.
-   - **Bright-line flags present:** PAUSE — present flags to the operator. Apply or discard per operator decision, then proceed to Phase 7.
-   - **Zero terms glossed:** Note "Prose already accessible — no gloss insertions needed." Proceed to Phase 7.
-5. Write Phase 6 handoff note: terms-glossed count, idempotent-skip count, sentence-split count, any bright-line flags and their disposition.
-6. ▸ /compact — skill content no longer needed.
+**Mode-vars for this invocation:**
+- `{PHASE_NUMBER}`: 6
+- `{NEXT_PHASE}`: Phase 7 (handoff)
+- `{prose_output_dir}`: resolved in Phase 0 + Phase 1
 
 ---
 
 ## Phase 7 — Handoff (main session)
 
-1. Read the post-gloss prose file
-2. Read `{prose_output_dir}/working/phase-3-qc-{section}.md` to retrieve the full Phase 3 findings list for operator surfacing.
-3. Present to the operator:
-   - **Source file path used** + draft number + final word count
-   - **Phase 3 review score (1–5)** + critical findings (HIGH severity, pulled from the working file just read)
-   - **Cross-section integration check summary** (from Phase 4, if it ran): transitions added, redundancy/contradiction findings and their disposition
-   - **Decontamination log path** + per-pass change summary (from Phase 5). Full log available at `{prose_output_dir}/decontamination-log.md`.
-   - **Jargon-gloss log path** + summary (from Phase 6): terms-glossed count, idempotent-skip count, sentence-split count. Full log available at `{prose_output_dir}/gloss-additions-log.md`.
-   - **Architecture compliance notes** (if architecture was used): depth allocation honored, must-land content implemented, seam notes implemented
-   - **Bright-line items deferred for operator decision** (any unresolved items from Phases 3, 4, 5, or 6)
-4. Suggest next step:
-   - **Standard path:** "Run `/produce-formatting {section}` to apply formatting, H3 placement, and document-level integration QC."
-   - **If unresolved bright-line items:** "Resolve flagged items first (apply or discard per your decision), then run `/produce-formatting {section}`."
+See `reference/stage-5-common-phases.md` anchor `phase-handoff-prose-draft` for the full handoff definition.
+
+**Mode-vars for this invocation:**
+- `{arg}`: the validated arg from Phase 0.
+- `{SECTION_MODE_QC_WORKING_FILE}`:
+  - section-mode: `{prose_output_dir_abs}/<working-dir-name>/phase-3-qc-{section}.md`
+  - report-mode: empty (no QC working file in report-mode; report-mode skips Phase 3)
+- `{PHASE_2_OR_3_SUMMARY}`:
+  - section-mode: Phase 3 review score (1–5) + critical findings (HIGH severity, from the QC working file)
+  - report-mode: Phase 2 refinement summary (change count by category — logical-linkage fixes, hardest-claim development)
+- `{CROSS_SECTION_INTEGRATION_SUMMARY}`:
+  - section-mode (only when Phase 4 ran): transitions added, redundancy/contradiction findings + disposition
+  - report-mode: empty
+- `{ARCHITECTURE_COMPLIANCE_NOTES}`:
+  - section-mode (only when architecture exists): depth allocation honored, must-land content implemented, seam notes implemented
+  - report-mode: empty

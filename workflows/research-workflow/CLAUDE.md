@@ -18,7 +18,7 @@
 
 ## Project Config
 
-> **Forward contract — no live consumer reads this block yet (as of canonical landing 2026-05-27).** The 12 fields below are the declarative project values that ~6 downstream consumers (Stage 5 commands, three Stage-2 skills, `country-parity-checker`, Bundle-2 reference docs) are *intended* to read at runtime. As of this landing, zero of those consumers parse the block. The schema is landed one work-unit ahead of the first confirmed consumer-builder (Stage 5 parameterization in the parent fix-phase plan). When you read this section, assume no automated reader sees it unless you've separately verified a consumer parser exists. Full schema documentation, per-consumer field-fan-out, single-source-of-truth rules, canonical parse format, and migration-trigger conditions live at `docs/project-config-schema.md`.
+> **Forward contract — Stage 5 commands are the first live consumers (as of canonical landing 2026-05-28).** The 13 fields below are the declarative project values that ~6 downstream consumers (Stage 5 commands, three Stage-2 skills, `country-parity-checker`, Bundle-2 reference docs) are *intended* to read at runtime. The Stage 5 commands (`produce-prose-draft`, `produce-formatting`, `produce-jargon-gloss`) are wired to read this block as part of the FX-B1 Path A landing — they parse `Document model:` (field #13) first for mode dispatch, then read the mode-relevant fields. Other consumers remain forward-contract until separately wired. When you read this section, assume only the wired consumers parse the block unless you've separately verified additional consumer parsers exist. Full schema documentation, per-consumer field-fan-out, single-source-of-truth rules, canonical parse format, default-value semantics for `Document model`, and migration-trigger conditions live at `docs/project-config-schema.md`.
 
 ```markdown
 **Report set:** [{{REPORT_SET}}]  # parameterizes Stage 5 commands; report-count derived from list length
@@ -33,6 +33,7 @@
 **Research-area-phrase:** "{{RESEARCH_AREA_PHRASE}}"  # parameterizes Perplexity-prefix in run-execution.md and stage-instructions.md
 **Current period:** "{{CURRENT_PERIOD}}"  # parameterizes freshness classes (CURRENT, RECENT, BASELINE)
 **Delivery vault:** "{{DELIVERY_VAULT}}"  # optional; consumed by produce-knowledge-file; default no-op
+**Document model:** "{{DOCUMENT_MODEL}}"  # enum: "report" | "section"; required (halt on missing); discriminates Stage 5 dispatch
 ```
 
 For full field documentation (types, examples, canonical parse format, consumer fan-out, GR-2 migration triggers), read `docs/project-config-schema.md`.

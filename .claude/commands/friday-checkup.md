@@ -273,6 +273,16 @@ This step refreshes the work-layer documentation vault narrative notes: `vault/p
    - For `vault/architecture/repo-state.md`: update §1 Active projects (Phase, last session date, in-flight work, open threads per project), §2 Pending manual steps (append new, mark resolved), §4 Push state.
 4. Record paths of modified files in `RESULTS` under scope label `repo-documentation:projects-refresh`.
 
+**M. Stage 5 anchor consistency check — all tiers, once per checkup run**
+
+Skip if the canonical `research-workflow` directory does not exist (i.e., the workflow is not deployed in this workspace). Otherwise runs unconditionally — it's a cheap two-grep bidirectional check, no agent spawn.
+
+Verifies the Mitigation 3 (strengthened) contract from FX-B1 Path A: every `<!-- anchor: phase-X -->` declared in `ai-resources/workflows/research-workflow/reference/stage-5-common-phases.md` has at least one matching `anchor \`phase-X\`` reference in the canonical Stage 5 commands, and vice versa. Mismatch surfaces as a Friday-checkup finding (loud failure over silent drift, per `principles.md § OP-3`).
+
+1. **Declared anchors:** `grep -oE 'anchor: phase-[a-z-]+' ai-resources/workflows/research-workflow/reference/stage-5-common-phases.md | sort -u`. Capture as `DECLARED`.
+2. **Referenced anchors:** `grep -hoE 'anchor \`phase-[a-z-]+\`' ai-resources/workflows/research-workflow/.claude/commands/produce-*.md | sed -E 's/anchor \`(phase-[a-z-]+)\`/anchor: \1/' | sort -u`. Capture as `REFERENCED`.
+3. **Diff:** `comm -3 <(echo "$DECLARED") <(echo "$REFERENCED")`. Empty output → PASS. Non-empty output → record as `repo-documentation:stage-5-anchor-drift` finding with the diff content (left side = declared-but-not-referenced; right side = referenced-but-not-declared).
+
 ---
 
 ### Step 6: Compile Follow-Ups
