@@ -35,7 +35,7 @@ Operator-invoked only. Do NOT auto-fire.
 
    - Identify what kind of evidence would resolve it (file content, prior decision, command behavior, etc.).
    - Read project files relevant to the question. **Soft guidance:** stay within a sensible per-question budget — typically a handful of targeted reads, not exhaustive scans. If a question would require many reads or whole-file scans across multiple files, that is itself a signal: escalate it to the `Operator-only` bucket with a note explaining what couldn't be confirmed within the budget. Do NOT recurse into broader and broader searches.
-   - Capture the operator's verbatim original framing of the question (from the source list — find the exact wording in context). This is load-bearing for Step 4's anti-narrowing check.
+   - Capture the operator's verbatim original framing of the question (from the source list — find the exact wording in context) **for the Step 6 QC subagent only**. Do NOT emit it in operator-facing output. Pass the full original source list (with verbatim framings) as a separate input block in the Step 6 subagent prompt — not embedded in the rendered items.
 
 4. **Three-bucket classification with anti-narrowing.** Each question lands in exactly one bucket:
 
@@ -44,20 +44,19 @@ Operator-invoked only. Do NOT auto-fire.
    - One- or two-sentence reasoning.
    - File references (path + relevant excerpt) the operator can audit.
 
-   **(b) Recommendable.** Partial evidence supports a recommendation, but operator should confirm. Output:
-   - The recommendation.
-   - Supporting evidence (file paths + excerpts).
-   - The specific gap that prevents full confidence — i.e., what would have to be true for this to move to Self-resolved.
-   - **The operator's verbatim original framing of the question.** This is a HARD requirement — emit either the operator's exact phrasing OR an explicit `[narrowing-check] {what was reworded}` note where the recommendation may have constrained or reframed the original question. No skip path. If both are unavailable, the item belongs in `Operator-only`, not here.
+   **(b) Recommendable.** Partial evidence supports a recommendation, but operator should confirm. Output (≤3 short lines total):
+   - The recommendation (one line).
+   - Evidence reference (one short line: one file path + one short excerpt, or none if obvious).
    - **Decision needed from operator.** One short line explaining plainly what the operator is being asked to decide, followed by the explicit options (typically: accept the recommendation as-is, or take the named alternative shape). Phrase it as a choice the operator can pick from, not a prompt to think harder. "Confirm project → canonical, OR pick selective merge (keep project format, port canonical's structural fixes)" — not "what direction do you want?" with no options given.
 
-   **(c) Operator-only.** Genuinely requires operator taste, strategic direction, or knowledge not in any file. Output:
-   - The question (verbatim from the source).
-   - Relevant project context (one or two short lines).
-   - A brief note on why this cannot be evidence-grounded — e.g., "preference call," "strategic choice with no prior precedent in repo," "would require operator-only knowledge."
+   Anti-narrowing is enforced by the Step 6 QC subagent against the verbatim framing passed in the input block — NOT emitted on the operator-facing surface. No `[narrowing-check]` tag, no verbatim quote, no separate "gap" line.
+
+   **(c) Operator-only.** Genuinely requires operator taste, strategic direction, or knowledge not in any file. Output (≤3 short lines total):
+   - A short paraphrased question (≤15 words) + one line of relevant project context.
+   - One short note on why this cannot be evidence-grounded — e.g., "preference call," "strategic choice with no prior precedent in repo," "would require operator-only knowledge."
    - **Decision needed from operator.** One short line explaining plainly what the operator is being asked to decide, followed by the explicit options. If the question has no natural option set (open-ended preference), say so and give 2–3 illustrative shapes the operator can pick from or override. Never present a bare question with no options.
 
-5. **Compose draft output.** Build the bucketed output described below. This is an internal draft — do not emit it to chat yet. Step 6 either QCs it (when the scope gate fires) or passes it through directly. Present buckets in this order: Self-resolved → Recommendable → Operator-only → Already decided. Within each bucket, preserve the original question order from the source list.
+5. **Compose draft output.** Build the bucketed output described below. This is an internal draft — do not emit it to chat yet. Step 6 either QCs it (when the scope gate fires) or passes it through directly. Present buckets in this order: Self-resolved → Recommendable → Operator-only → Already decided. Within each bucket, preserve the original question order from the source list. **No preamble line.** **No bottom recap.** Output starts at the first item heading and ends at the Totals line.
 
    For each item, use this shape:
 
@@ -68,30 +67,22 @@ Operator-invoked only. Do NOT auto-fire.
    {bucket-specific body — see Step 4}
    ```
 
-   After all items, append a one-line summary:
+   The heading line (`### [N]. ...`) is a navigation label — it may use the first ~80 chars of the question. The verbatim-framing no-emit rule applies to the body, not the heading.
+
+   After all items, append a one-line summary (and nothing else after it):
 
    ```
    **Totals:** {n} self-resolved / {n} recommendable / {n} operator-only / {n} already decided.
    ```
 
-   If any items landed in Recommendable or Operator-only, follow the Totals line with a short **Open items for operator** recap — one line per item, restating only the decision needed + options (not the evidence). This is the operator's pick-list. Format:
-
-   ```
-   **Open items for operator:**
-   - [N]: {one-line decision + options}. Recommendation: {pick}.
-   - [M]: {one-line decision + options}. {No default — operator-only.}
-   ```
-
-   If all items are Self-resolved or Already decided, omit the Open items block entirely.
-
 6. **Self-QC and final emit.** Before showing Step 5's draft to the operator, run a `/decide`-tailored QC pass via a fresh-context subagent. Only the post-QC version is emitted to chat.
 
    **Scope gate.** Skip QC entirely when the draft contains zero `Self-resolved` and zero `Recommendable` items (output is entirely `Operator-only` and/or `Already decided`). In that case, emit Step 5's draft directly — `/decide` made no evidence-grounded claims worth auditing. Otherwise proceed.
 
-   **Subagent invocation.** Spawn a `general-purpose` subagent (`Agent` tool) with no prior context. The prompt is self-contained: pass the full Step 5 draft, the operator's original source list (verbatim framing for each question), and the four tailored checks below. The subagent reads cited files directly to verify claims — it does not rely on the main agent's prior reads.
+   **Subagent invocation.** Spawn a `general-purpose` subagent (`Agent` tool) with no prior context. The prompt is self-contained and structured as **two separate input blocks**: (i) the full Step 5 draft (rendered output, no verbatim framings embedded), and (ii) the operator's original source list with verbatim framing for each question. Plus the four tailored checks below. The subagent reads cited files directly to verify claims — it does not rely on the main agent's prior reads.
 
    **Tailored checks (the subagent's mandate):**
-   - **(a) Anti-narrowing.** Every `Recommendable` item carries the operator's verbatim original framing OR an explicit `[narrowing-check] {what was reworded}` note. No silent rephrasing.
+   - **(a) Anti-narrowing.** For every `Recommendable` item, compare the rendered body against the corresponding verbatim framing in input block (ii). Flag any item where the rendered recommendation silently constrains or reframes the original question. This check is QC-internal — the `[narrowing-check]` tag never appears in the operator-facing output.
    - **(b) Bucket-assignment correctness.** `Self-resolved` items are genuinely derivable from the cited files (no budget-overflow items mislabeled as resolved). Nothing in `Recommendable` is a preference call masquerading as evidence-grounded. Nothing in `Operator-only` was actually evidence-resolvable within budget.
    - **(c) Evidence accuracy.** Quoted excerpts and paths exist at the cited locations. The subagent spot-reads the cited file for each item to confirm — no hallucinated content.
    - **(d) Decision-needed completeness.** Every `Recommendable` and `Operator-only` item has an explicit `Decision needed from operator` line with options — not a bare "what direction?" prompt.
@@ -106,15 +97,17 @@ Operator-invoked only. Do NOT auto-fire.
 
 `/decide` output is for operator scan, not for reproducing the agent's reasoning trail. Apply these caps:
 
-- **No step narration in the chat output.** Do not write "Step 1 — acquiring the decision list...", "Step 2 — prior-decision check...", "Step 3 — gathering evidence via per-file diffs." Do the work silently; report only the results (the bucketed items + Totals + Open items). The CLI already shows tool calls — narrating them in prose duplicates the rendering.
+- **No preamble.** Output starts at the first item heading (`### 1. ...`). No intro line, no "decide — pre-research of N questions" header, no scene-setting.
+- **No step narration in the chat output.** Do not write "Step 1 — acquiring the decision list...", "Step 2 — prior-decision check...", "Step 3 — gathering evidence via per-file diffs." Do the work silently; report only the results (the bucketed items + Totals). The CLI already shows tool calls — narrating them in prose duplicates the rendering.
 - **Don't restate tool output verbatim in chat prose.** The CLI renders bash/diff/read calls inline; the operator can see them. Chat prose summarizes what the output proved in one line ("project copy is ~16 days newer; header levels incompatible") — it does not re-quote the diff.
-- **Bucket body ≤6 short lines or bullets per item** as a target. Reasoning is one or two sentences, not a paragraph. Evidence is the minimum a curious operator would need to audit — typically a file path + one short excerpt, not an exhaustive proof.
+- **Bucket body ≤3 short lines** as a soft target. Recommendation + evidence reference + Decision-needed line. No multi-bullet evidence sections; cite one path + one short excerpt or none.
+- **No bottom recap.** The per-item `Decision needed from operator` line is the only pick surface. Output ends at the Totals line.
 - **Cross-reference, don't restate.** When two items share evidence (e.g., paired files, same diff), the second item says "Evidence: paired with Decision [N] — same mtime relationship, same coupling" rather than repeating the bullets.
-- **Decision-needed line is one line.** Don't expand it into a sub-section. The Open items recap at the end is the secondary surface — that one is even tighter (one line per item, no evidence).
+- **Decision-needed line is one line.** Don't expand it into a sub-section.
 
 ## Clarity discipline
 
-`/decide` output overrides the workspace CLAUDE.md "structured skill outputs are exempted from CEFR B2" carve-out. The operator-facing surfaces — bucket bodies, decision-needed lines, and the Open items recap — must read like `/explain`: short sentences, common words, no idioms, and **gloss every piece of technical jargon on first use in the response** with one short clause.
+`/decide` output overrides the workspace CLAUDE.md "structured skill outputs are exempted from CEFR B2" carve-out. The operator-facing surfaces — bucket bodies and decision-needed lines — must read like `/explain`: short sentences, common words, no idioms, and **gloss every piece of technical jargon on first use in the response** with one short clause.
 
 Examples of first-use glosses:
 - "mtime (the file's last-modified time)"
@@ -155,7 +148,7 @@ This applies only to chat-surface prose. Embedded file excerpts quoted as eviden
 
 - **No list found and no `$ARGUMENTS`:** stop and prompt operator (Step 1d).
 - **Multiple candidate lists, no operator disambiguation:** stop and ask which one (Step 1c). Never silently pick.
-- **Operator's verbatim framing cannot be located in context** (e.g., context was compacted): demote the item from `Recommendable` to `Operator-only`. Recommendable requires either verbatim framing or an explicit `[narrowing-check]` note — never silently rephrase.
+- **Operator's verbatim framing cannot be located in context** (e.g., context was compacted): demote the item from `Recommendable` to `Operator-only`. Recommendable items must not silently narrow the original question — the QC subagent checks this against the verbatim framing passed in the Step 6 input block. If narrowing cannot be corrected within the ≤3 line budget, demote to `Operator-only`.
 - **Project files referenced in a question don't resolve:** mark the gap in the bucket's `evidence` field; do not invent path content.
 - **Per-question budget exceeded:** move item to `Operator-only` with a note on what couldn't be confirmed within budget.
 - **Source command body has changed and a marker string no longer matches:** Step 1b's auto-detection will return no matches. Surface the absence and ask the operator to paste the list rather than guessing.
