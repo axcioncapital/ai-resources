@@ -140,30 +140,10 @@ Rules are grouped by priority. Structural decisions shape the prompt architectur
   - (c) no evidence found (claim tagged `NO-EVIDENCE`).
   The prompt must instruct the tool: *if no in-lens evidence is found, do not broaden the claim — broaden the source only and downgrade the conclusion.* When a substitution is made, the prompt must require the tool to name the substitution explicitly in its output (e.g., "evidence for Finland not found; substituted Nordic aggregate"). This is a hard requirement and directly couples to `research-extract-creator`'s tag-emission rule and `cluster-memo-refiner`'s Check 9.
 - **Per-country search ordering (S-03 — Country-Parity Enforcement Gate):** For country-relevant directives (those targeting evidence about Sweden, Norway, and/or Finland specifically), the prompt must specify per-country search ordering: **Sweden block → Norway block → Finland block → pan-Nordic synthesis last, NOT first.** Pan-Nordic-first ordering biases the claim toward three-country framing before per-country evidence is known. The directive must list per-country source-class targets separately (e.g., "Sweden: SVCA + Bolagsverket; Norway: NVCA + Brønnøysund; Finland: FVCA + PRH; pan-Nordic synthesis: Invest Europe/EDC only AFTER per-country pass") so the execution tool surfaces per-country evidence before any pan-Nordic claim is constructed.
-- **Local-language search blocks (S-04 — Mandatory Local-Language Search Pass):** For country-specific directives, the prompt must include a local-language search block alongside (not as fallback to) the English-language block. Required language-search-term sets (operator verbatim from v4 § S-04):
-
-  **Swedish:**
-  - `"förvärvar" "riskkapital" "2025"`
-  - `"köper" "portföljbolag" "private equity"`
-  - `"avyttrar" "Altor" "Nordic Capital"`
-  - `"tilläggsförvärv" "2025" "riskkapital"`
-  - Native-language site searches: `site:svca.se`, `site:di.se`, `site:dagensindustri.se`
-
-  **Finnish:**
-  - `"pääomasijoittaja" "osti" "2025"`
-  - `"yrityskauppa" "pääomasijoitus" "buyout"`
-  - `"irtautuminen" "pääomasijoittaja"`
-  - `"lisäyritysosto" "2025"`
-  - Native-language site searches: `site:paaomasijoittajat.fi`, `site:kauppalehti.fi`, `site:talouselama.fi`
-
-  **Norwegian:**
-  - `"oppkjøp" "private equity" "2025"`
-  - `"kjøper" "Norvestor" "porteføljeselskap"`
-  - `"selger" "FSN Capital"`
-  - `"tilleggsoppkjøp" "2025"`
-  - Native-language site searches: `site:nvca.no`, `site:dn.no`, `site:finansavisen.no`, `site:menon.no`
-
-  The local-language block runs in parallel with the English block, not as a fallback. English-only sessions over-represent large-cap deals; local-language coverage is the primary remediation for "Norway / Finland evidence thin because English-only."
+- **Local-language search blocks (S-04 — Mandatory Local-Language Search Pass):** For country-specific directives, the prompt must include a local-language search block alongside (not as fallback to) the English-language block. The local-language block runs in parallel with the English block, not as a fallback — English-only sessions over-represent large-cap deals; local-language coverage is the primary remediation for "non-English-market evidence thin because English-only." Per-language search-term sets are loaded from `reference/language-search-blocks.md` (project-fillable, instantiated from `ai-resources/workflows/research-workflow/reference/language-search-blocks.template.md`); per-language iteration is driven by the Project Config `Languages:` field (see `docs/project-config-schema.md` field 5). The loader applies a **3-case absent-file contract** — do not collapse the cases into a single fallback:
+  - (1) `Languages:` absent or `[]` → emit English-only directives, no warning. Correct posture for monolingual projects.
+  - (2) `Languages:` populated AND `reference/language-search-blocks.md` absent → **HALT with a clear error** naming the declared `Languages:` codes. Do NOT fall back to English-only — silent fallback for a project that explicitly declared multi-language coverage degrades evidence integrity.
+  - (3) `Languages:` populated AND `reference/language-search-blocks.md` present → iterate over every code in `Languages:`; emit the matching `## {{LANG_CODE}}` block from the file. HALT if `Languages:` declares a code with no matching block; emit a one-line warning and skip blocks present in the file but not declared in `Languages:` (Project Config wins).
 - **Target stop condition declaration (S-13 — Research Stop Conditions):** Each session-level prompt declares which of the 4 stop conditions per `reference/quality-standards.md § Research Stop Conditions` is the target completion criterion for the session — e.g., "this session targets condition 1 (two high-quality direct sources answer the question)." This anchors the execution tool's sufficiency judgment. Sessions that exit before any of the 4 conditions is met are flagged by `research-extract-verifier` as incomplete and the affected claims auto-downgrade to NOT-SUPPORTED per the reciprocal rule. The 4 conditions are: (1) two high-quality direct sources answer the question; (2) one high-quality direct source plus three named examples support the pattern; (3) three source classes have been checked and no direct evidence exists; (4) local-language, primary-source, and advisory-source searches all fail. The prompt's stop-condition declaration is a session-level note (not per-directive) and goes in the Steering Notes section.
 
 *Writing craft (clarity and concision):*
@@ -259,7 +239,7 @@ Before delivering, verify:
 - If scope parameters include known data gap risks, a proxy fallback chain is included in the prompt
 - Every directive declares an explicit in-lens evidence target AND a proxy-source fallback path; the prompt requires the execution tool to return one of `IN-LENS` / `PROXY-DOWNGRADE` / `NO-EVIDENCE` per directive (S-02)
 - For country-relevant directives: per-country search ordering is specified (Sweden → Norway → Finland → pan-Nordic synthesis last) with per-country source-class targets listed separately (S-03)
-- For country-specific directives: local-language search blocks (Swedish + Finnish + Norwegian as relevant) are included alongside the English-language block, not as fallback (S-04)
+- For country-specific directives: local-language search blocks are included alongside the English-language block (not as fallback), iterated over the Project Config `Languages:` field with per-language term content loaded from `reference/language-search-blocks.md` per the 3-case absent-file contract (S-04). Self-check is N/A when `Languages:` is absent or `[]` (monolingual project); otherwise enforces a present block for every code in `Languages:`.
 - Every session-level prompt declares a target stop condition (one of the 4 per `reference/quality-standards.md § Research Stop Conditions`) in the Steering Notes section (S-13)
 - Site restriction guidance is included for every session (even if "Default")
 - Post-execution notes section is present
