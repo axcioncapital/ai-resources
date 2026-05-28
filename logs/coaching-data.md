@@ -164,3 +164,11 @@
 - **QC cycles:** 1 (plan QC REVISE → 4 self-resolve + 3 operator-judgment fixes applied inline → no re-QC per minimal-infra-subset)
 - **Gates:** 7 (3 changed) — plan-approval:confirmed (operator approved /scope as proposed), plan-approval:confirmed (operator approved post-QC plan via ExitPlanMode), qc-disposition:changed (plan QC REVISE → fixes applied inline), content-review:changed (F8 simpler-alternative — operator chose template+log over audits/working/ schema-in-body), challenge-disposition:confirmed (F3 improvement-log coupling approved as proposed), challenge-disposition:changed (F5 verification rubric — operator delegated via "help me decide", inline rubric chosen), challenge-disposition:confirmed (end-time risk-check PROCEED-WITH-CAUTION + SO concur accepted; all 4 mitigations applied)
 - **Mandate fields:** none (no /session-start this session — operator entered mid-session straight into evaluating the spec bundle and invoking /clarify)
+
+### 2026-05-28 — Wave 2 fix plan execution (8 items across 3 repos)
+- **Commands used:** /prime, /session-start, /session-plan, /qc-pass (×6), /wrap-session
+- **Iterations:** 0 (pure execution, no drafting iterations on the fix-plan output)
+- **Decisions logged:** 2 (Wave 2 commit cadence; id-12 path drift)
+- **QC cycles:** 6 (4× REVISE→fixes-applied→continued; 2× GO; 1 QC skipped per operator `proceed` on id-12)
+- **Gates:** 1 (1 changed) — plan-approval:confirmed. Operator typed `go` after /session-plan; no plan revisions requested. id-12 QC `proceed` is a per-item skip, not a gate change.
+- **Mandate fields:** specified: work_scope, exit_condition, out_of_scope, stop_if | inferred: files_in_scope | omitted: allowed_inputs, required_outputs

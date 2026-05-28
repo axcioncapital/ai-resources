@@ -4,6 +4,39 @@
 
 ### 2026-05-28 | Acceptable
 
+**Task:** Wave 2 fix plan execution — 8 single-file edits across `/prime`, hooks, and docs spanning 3 git repos. 6 qc-pass cycles, 4 REVISE→fix cycles, 3 explicit commits plus 1 absorbed by parallel Wave 3 session.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~22 |
+| Files read | ~22 (re-reads: 7 — prime.md ×6 via qc-reviewer + session-notes.md ×3-4 across commands) |
+| Files written/edited | ~22 |
+| Tool calls | ~110 |
+| Subagents | 7 (6 qc-reviewer + 1 session-usage-analyzer) |
+| Rework cycles | 4 (REVISE→fix, no re-QC per minimal-infra posture) |
+
+**Findings:**
+- prime.md re-read 6× by qc-reviewer subagents within one session (~286 lines × 6 = ~1.7K lines of redundant context load); each QC pass re-ingested the full file even though only the targeted edit hunk was load-bearing (Re-reads, Major).
+- session-notes.md read 3-4× across /prime, /session-start, /session-plan, /wrap-session — recurring multi-session pattern; same tail range fetched repeatedly within one session (Re-reads, Moderate; recurring lever).
+- 4 REVISE→fix cycles on 8 edits = 50% rework rate; root cause was stale sibling-file refs and false-positive verification claims not caught at draft time (Rework, Moderate).
+- Concurrent-session collision: Wave 3 parallel session absorbed Wave 2'''s in-flight prime.md edits under `ea93d62`, causing FOREIGN=-1 guard-fire and attribution noise — not waste but a coordination friction signal (Tool overhead, Minor).
+- improvement-log.md read across 4 small ranges (2 per repo) — could have been one offset Read each (Tool overhead, Minor).
+
+**Recommendation:** Pass qc-reviewer the edit hunk + ~50-line surrounding context window instead of the full file. For ~286-line prime.md × 6 QC passes, this cuts ~1.5K redundant lines without losing the verdict surface (qc-reviewer judges the edit, not the whole file).
+
+**Estimated savings:** ~12-15K tokens this session (1.5K redundant prime.md lines × ~8 tokens/line for QC context). Over 10-20 sessions with similar multi-edit fix plans: ~150-300K tokens. Derivation: typical Wave session does 3-6 QC passes on 100-300 line targets.
+
+**Additional levers (ROI-ranked):**
+1. Consolidate session-notes.md tail Reads — one shared tail-pin at /prime that downstream commands reuse from context (~8-10K tokens/session; recurring across 5+ entries now; bigger than primary in cumulative terms but each instance smaller).
+2. Pre-edit lint pass for sibling-file refs and verification claims before sending to QC — would cut REVISE cycles from 4 to ~1-2 (~6-8K tokens/session in saved REVISE Reads + fix Edits; smaller than primary because rework already inline-fixed without re-QC).
+3. Batched offset Reads on improvement-log.md (single Read covering both status-flip ranges per repo) — ~1-2K tokens/session; small lever but trivially cheap to apply.
+4. Multi-repo commit batching audit — 3 separate `git commit` invocations were inherent (different repos), but pre-commit `git status` probing was sometimes redundant given filesystem-truth rule; ~1-2K tokens/session.
+
+Trend: 4th consecutive Acceptable rating. Same recurring levers (session-notes.md tail re-reads, consolidated /prime tail-pin) surfaced in 5 entries now without remediation — graduating to a Friday-checkup item is overdue.
+
+
+### 2026-05-28 | Acceptable
+
 **Task:** Designed, planned, QC'd, /consult'd (×3), /risk-check'd (×2), and shipped a new `project-manager` agent + `/pm` slash command in `ai-resources/.claude/`. Heavy plan-mode workflow with mid-implementation scope extension and a runtime-limitation finding (Task-dispatch unavailable to subagents).
 
 | Metric | Value |

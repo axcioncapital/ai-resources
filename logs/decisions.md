@@ -142,3 +142,27 @@ Plan retained: `/Users/patrik.lindeberg/.claude/plans/i-want-to-build-tidy-lake.
 **Alternatives considered.** (a) Run `/qc-pass` anyway as a verification ritual — rejected; the QC subagent's check would be against a non-existent edit, producing no actionable output. (b) Treat the plan instruction as binding regardless of file state and add a no-op edit + QC — rejected; ceremony without purpose. (c) Skip the annotation entirely — rejected; the annotation closes the loop on the source session-notes-line-362 flag, so a future audit pass doesn't re-flag the same already-resolved issue.
 
 **Review trail.** Plan instructions read → file state verified (count-consistent) → git log confirmed fix in `fd8b5e7` → annotation applied → commit `8776651`.
+
+## 2026-05-28 — Wave 2 commit cadence: per-repo batching over per-item
+
+**Context.** Wave 2 fix plan execution touched 3 separate git repos (ai-resources, nordic-pe-macro-landscape-H1-2026, repo-documentation). The plan instructed "Commit per logical batch — the 3 `prime.md` edits + their log flips as one commit; each remaining item + its log flip as its own commit." Following this literally would have required splitting both `improvement-log.md` files across multiple commits.
+
+**Decision.** One commit per repo (3 total). ai-resources `e45334e` (8 files), nordic-pe `5028c3b` (4 files), repo-documentation `5adbaa9` (1 file).
+
+**Rationale.** Cross-repo log files cannot be split atomically — each `improvement-log.md` modification needs to be in a single commit OR the log files need to be temporarily split into per-item state. The latter adds churn without information value (the audit trail is already in the commit message + the source plan file). Per-repo batching preserves: (a) the atomic-staging rule from `commit-discipline.md`, (b) per-repo commit-message specificity (each commit names exactly the items it carries), (c) the bisect-ability of each item via the commit + the plan file index.
+
+**Alternatives considered.** (a) Per-item commits with `improvement-log.md` split across commits — rejected (artificial state churn). (b) Single workspace-wide commit — impossible (3 separate repos). (c) Per-item commits with log-flip deferred to a final cleanup commit — rejected (split-stamp pattern is harder to audit than the natural per-repo grouping).
+
+**Review trail.** Decided inline during Wave 2 execution after observing the cross-repo log-file constraint; no /risk-check needed (commit-cadence is not a /risk-check change class).
+
+## 2026-05-28 — Path drift on Wave 2 id-12 (risk-topology.md)
+
+**Context.** Wave 2 plan named the target file as `projects/axcion-ai-system-owner/references/risk-topology.md` for item id-12. Glob found the actual file at `projects/repo-documentation/output/phase-1/risk-topology.md` (plus a gitignored vault/ copy at `projects/repo-documentation/vault/architecture/risk-topology.md`).
+
+**Decision.** Edited the actual canonical path (`projects/repo-documentation/output/phase-1/risk-topology.md`). Recorded the path drift in the QC handoff and the wrap entry.
+
+**Rationale.** The plan's target path was a guess from the source improvement-log entry (line 172 of the nordic-pe improvement-log, which explicitly said "path to be confirmed by Friday cadence — likely under `projects/axcion-ai-system-owner/references/`"). The actual canonical location is in repo-documentation per the prior session-notes decision (2026-05-27 wrap): "Cluster 3 routing — edited `output/phase-1/` canonical source (not `vault/`, which is gitignored downstream Obsidian copy)."
+
+**Alternatives considered.** (a) Defer the edit and ask the operator — rejected; the actual path was unambiguously discoverable via Glob + the prior session-notes precedent. (b) Edit both the output/phase-1/ and vault/ copies — rejected; vault/ is downstream of output/phase-1/ and gitignored.
+
+**Review trail.** Path verified via Glob → prior session-notes decision (2026-05-27) confirmed output/phase-1/ as canonical → edit applied → committed in `5adbaa9`.
