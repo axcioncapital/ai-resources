@@ -22,7 +22,7 @@ The main agent passes you:
 
 ## Your Task
 
-Scan seven backlog sources, classify each item by tier, age, and priority signal, then return a ≤30-line summary plus a working-notes file path.
+Scan seven backlog sources, classify each item by tier, age, priority signal, and item-type, then return a ≤40-line summary plus a working-notes file path.
 
 ### Step 1 — Resolve and read sources
 
@@ -69,6 +69,40 @@ If no date can be parsed, set `age_days = (unknown)`.
 
 Sort items by (priority_signal rank: BLOCKING > CRITICAL > URGENT > HIGH > none) then by (tier: T1 > T2 > T3) then by (age_days descending). Assign `id-NN` in sorted order starting at `id-01`.
 
+### Step 5.5 — Classify item-type
+
+For each item, set `item_type` to one of `fix` / `build` / `watch` using its source:
+
+- `fix` — actionable now in a fix-plan batch:
+  - `logs/friction-log.md` unresolved entries
+  - `logs/improvement-log.md` T1 (applied without Verified)
+  - `logs/next-up.md` checkboxes
+  - `logs/session-plan.md` checkboxes (T1, recent)
+  - `logs/session-notes.md` Open Questions (T2, recent)
+  - `logs/decisions.md` T2 (Defer + Trigger fired)
+- `build` — separate `/create-skill` (or equivalent build) session, not a fix-plan item:
+  - Any `inbox/*.md` brief
+- `watch` — parked / threshold / stale, no current action:
+  - `logs/improvement-log.md` T3 (logged / pending / proposed)
+  - `logs/session-notes.md` Open Questions (T3, stale)
+  - `logs/session-plan.md` checkboxes (T3, stale file)
+
+Priority signals override the source default upward only: an inbox brief tagged `[BLOCKING]` or `[CRITICAL]` is `fix`, not `build`. Watch items are NEVER lifted by priority signal — if the body itself says "park" / "watch" / "deferred until", the item is `watch` regardless of tag.
+
+### Step 5.6 — Audit-trail counters
+
+While scanning, maintain these counters (used by the Coverage report block in Step 6 + Step 7):
+
+- `SOURCES_READ` — list of source paths that existed and were actually opened.
+- `SOURCES_MISSING` — list of source paths that did not exist (skipped silently).
+- `EXCL_FADING_GATE` — count of friction-log entries skipped for `[FADING-GATE] verified` annotation.
+- `EXCL_STUB` — count of friction-log entries skipped for `[STUB ...]` annotation.
+- `EXCL_APPLIED_VERIFIED` — count of improvement-log entries skipped for `Status: applied` + non-empty `Verified:`.
+- `EXCL_PARKED_REASON` — count of improvement-log T3 entries explicitly skipped because the entry body documents a park reason (e.g., "deferred until second consumer", "premature to formalize", "watch threshold").
+- `EXCL_ARCHIVE_OR_LOW` — count of items skipped via Step 2 hard exclusions (`*archive*`, `inbox/archive/`, `[LOW]`, `someday`, `nice-to-have`, `deferred indefinitely`).
+- `DEFER_OBSERVED` / `DEFER_TRIGGERED` — counts on `logs/decisions.md`: observed = entries containing `Defer`/`Deferred`; triggered = subset where `Trigger for action:` condition has fired.
+- `OUT_OF_CONTRACT_SOURCES` — fixed list (this scanner does NOT scan these): `logs/session-notes.md` Next Steps blocks (only Open Questions are scanned), audit reports under `audits/repo-due-diligence-*.md` / `audits/repo-dd-deep-*.md` / `audits/repo-health-*.md` / `audits/token-audit-*.md`, `audits/working/` pending notes from prior runs.
+
 ### Step 6 — Write working-notes file
 
 Compute `WORKING_NOTES_PATH = {AUDITS_WORKING_DIR}/fix-repo-issues-{TODAY}-{TIMESTAMP}.md`. Ensure the directory exists (`mkdir -p` via the Write tool's path-creation behavior — if `Write` fails because the directory is missing, fall back to a single Bash-equivalent `mkdir -p` via the tools available; if none, return an error in the summary instead of crashing).
@@ -83,10 +117,10 @@ Sources read: {N} of 7 (missing: {comma-separated list, or "none"})
 
 ## All items
 
-| id | source | tier | priority_signal | age_days | description |
-|---|---|---|---|---|---|
-| id-01 | {source-path}:{line if applicable} | T1 | BLOCKING | 12 | {one-line description, max 100 chars} |
-| id-02 | ... | ... | ... | ... | ... |
+| id | source | tier | type | priority_signal | age_days | description |
+|---|---|---|---|---|---|---|
+| id-01 | {source-path}:{line if applicable} | T1 | fix | BLOCKING | 12 | {one-line description, max 100 chars} |
+| id-02 | ... | ... | ... | ... | ... | ... |
 
 ## Counts
 
@@ -95,6 +129,15 @@ Sources read: {N} of 7 (missing: {comma-separated list, or "none"})
 - T3: {N}
 - With priority tag: {N}
 - Stale (>42 days): {N}
+- By type: fix={N}, build={N}, watch={N}
+
+## Coverage report
+
+- Sources scanned: {SOURCES_READ, comma-separated}
+- Sources missing: {SOURCES_MISSING, comma-separated, or "none"}
+- Out-of-contract source classes (NOT scanned): {OUT_OF_CONTRACT_SOURCES, comma-separated}
+- Exclusion counts: FADING-GATE verified={EXCL_FADING_GATE}, STUB discarded={EXCL_STUB}, applied+Verified={EXCL_APPLIED_VERIFIED}, parked-with-reason={EXCL_PARKED_REASON}, archive/LOW/someday={EXCL_ARCHIVE_OR_LOW}
+- decisions.md Defer counterweight: {DEFER_OBSERVED} observed, {DEFER_TRIGGERED} currently triggered
 
 ## Skipped (hard-exclusion matches)
 
@@ -103,24 +146,40 @@ Sources read: {N} of 7 (missing: {comma-separated list, or "none"})
 
 ### Step 7 — Return summary to main session
 
-Return to the main session a summary in this exact shape (≤30 lines total):
+Return to the main session a summary in this exact shape (≤40 lines total):
 
 ```
 fix-repo-issues scanner — {TODAY}
 
-Total items: {N} (T1: {a}, T2: {b}, T3: {c})
+Total items: {N} (T1: {a}, T2: {b}, T3: {c}) | By type: fix={f}, build={b}, watch={w}
 With priority tag: {N}
 Stale (>42 days): {N}
 
-Top candidates (up to 10, by priority then age):
-  id-01 | {tier} | {priority_signal or -} | {age_days}d | {source-shortname} | {one-line desc, max 80 chars}
-  id-02 | ...
-  ...
+Coverage:
+  Sources scanned: {SOURCES_READ}
+  Sources missing: {SOURCES_MISSING, or "none"}
+  Out-of-contract (NOT scanned): {OUT_OF_CONTRACT_SOURCES}
+  Exclusions: FADING-GATE={EXCL_FADING_GATE}, STUB={EXCL_STUB}, applied+Verified={EXCL_APPLIED_VERIFIED}, parked-with-reason={EXCL_PARKED_REASON}, archive/LOW={EXCL_ARCHIVE_OR_LOW}
+  Defer counterweight: {DEFER_OBSERVED} observed, {DEFER_TRIGGERED} triggered
+
+Top candidates by type (up to 10 total, by priority then age within each type):
+
+  Fix-shaped (actionable now):
+    id-NN | {tier} | {priority_signal or -} | {age_days}d | {source-shortname} | {one-line desc, max 80 chars}
+    ...
+
+  Build-shaped (separate /create-skill or build session):
+    id-NN | {tier} | {priority_signal or -} | {age_days}d | {source-shortname} | {one-line desc}
+    ...
+
+  Watch-shaped (parked / threshold / stale — no current action):
+    id-NN | {tier} | {priority_signal or -} | {age_days}d | {source-shortname} | {one-line desc}
+    ...
 
 NOTES: {WORKING_NOTES_PATH}
 ```
 
-The `NOTES:` line MUST be the last line of the summary so the main session can extract the path reliably.
+Within each type section, list at most 5 candidates; if a type has zero items, render the section header followed by `  (none)` rather than omitting the section — the main session uses the explicit zero to confirm the type was considered. The `NOTES:` line MUST be the last line of the summary so the main session can extract the path reliably.
 
 ## Rules
 
@@ -130,7 +189,7 @@ The `NOTES:` line MUST be the last line of the summary so the main session can e
 - If a source file is missing, skip it silently — do not fail the run.
 - If the same item appears in multiple sources (e.g., a friction entry that has an improvement-log entry pointing at it), surface only the most recent representation and note the duplication in the working-notes "Skipped" section.
 - Truncate descriptions to ≤100 chars in the working-notes table and ≤80 chars in the summary. Use `…` to indicate truncation.
-- Stay within the 30-line summary cap. If 10 top candidates push past 30 lines, trim to fewer candidates rather than wrapping.
+- Stay within the 40-line summary cap. If the Coverage block plus per-type candidates push past 40 lines, trim candidates within each type (down to 3 per type, then 1 per type) before sacrificing the Coverage block or type-segmentation structure — the audit trail is load-bearing.
 
 ## Failure behavior
 
