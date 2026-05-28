@@ -41,11 +41,17 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 
    *Git cross-check:* Parse the `## YYYY-MM-DD` header date from the source entry. Run:
    `git -C "$CWD_REPO" log --since="<entry-date>T00:00:00" --pretty="%h %s" --all 2>/dev/null`
-   For each Next Steps bullet, check if any commit subject contains keywords from that bullet. Classify the bullet:
+
+   If `$CWD_REPO` differs from `$AI_RESOURCES` (the variable established in Step 0), ALSO run the same command against `$AI_RESOURCES` and merge the two result sets before the keyword-match pass below:
+   `git -C "$AI_RESOURCES" log --since="<entry-date>T00:00:00" --pretty="%h %s" --all 2>/dev/null`
+
+   Rationale: dual-repo Cluster A blindspot — Next Steps written in a project session may have been resolved by commits that landed in the ai-resources repo (canonical command edits, doc edits, log-status flips), and vice versa. Checking only the cwd-repo's git log misses those cross-repo resolutions and surfaces likely-DONE items as still-open in the menu.
+
+   For each Next Steps bullet, check if any commit subject across the merged result set contains keywords from that bullet. Classify the bullet:
    - **Match found → likely-DONE.** Do NOT promote it into the numbered menu (step 5) — a 3-slot menu must not spend a slot on probably-finished work.
    - **No match → still open.** It becomes a carryover/menu candidate for step 5.
 
-   `/prime` never edits `session-notes.md`, so every Next Step bullet stays untouched in the source file — the operator can verify there directly if a likely-DONE call looks wrong. If the git command fails or returns nothing, treat all bullets as still-open and continue.
+   `/prime` never edits `session-notes.md`, so every Next Step bullet stays untouched in the source file — the operator can verify there directly if a likely-DONE call looks wrong. If either git command fails or returns nothing, fall through to whichever result set succeeded; if both fail, treat all bullets as still-open and continue.
 
    *Sibling-entry sweep — mechanical check:* Run the following bash to count today-dated headers in `logs/session-notes.md`:
 
@@ -87,6 +93,7 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
    - **Working tree:** if the environment's git-status snapshot is non-empty, run `git status --short` and `git diff --stat HEAD` once to confirm it is still current. The env snapshot is point-in-time from session start and can be stale vs actual HEAD (e.g., files already committed in the prior session). Carry forward only if the live result shows unexpected uncommitted changes. This is a Prime-time orientation check, distinct from the commit-time "no pre-commit git status" rule.
    - **Model alignment:** read the active session model identifier from the system-prompt context (e.g., `claude-opus-4-7[1m]` or `claude-sonnet-4-6[1m]`) — do not run any external command, the identifier is already in context. Identify the cwd-nearest project `CLAUDE.md` and read its `Model Selection` section for the project's recommended model. If the session is opened at the workspace root with no project `CLAUDE.md` loaded, the fallback is Sonnet 1M (`claude-sonnet-4-6[1m]`). Carry forward a `→ /model {recommended}` hint only on mismatch.
    - **Pull result:** carry forward the step 0 result only on failure or when there are unpushed commits.
+   - **Phase READMEs.** If the cwd-rooted project has a `work/` directory, scan it (one level deep) for files matching `W*-*-README.md` (or `Wn-*-README.md`). Capture the matching file paths only — do not read file bodies. Skip silently if `work/` is absent or contains no matches. Bounded scan: one `ls`/`find -maxdepth 2`-equivalent; do not recurse deeper.
 
 5. **Build the numbered task menu.** Merge candidates from:
    - Step 1a — still-open Next Steps from the last session → tag `[carryover]`.
@@ -118,6 +125,7 @@ Last session ({date}): {one-line plain-English summary}.
 {⚠ Working tree: {short summary} — only if unexpectedly dirty}
 {⚠ Pull: {result} — only on failure or unpushed commits}
 {⚠ Multiple same-day session entries — sibling-entry warning from step 1a, only if triggered}
+{⚠ Phase READMEs detected: {paths}; read before opening the relevant work unit — only if step 4 surfaced any}
 {↩ Resumable scratchpad: {path} — only if step 1b surfaced one}
 
 Next tasks:
@@ -157,6 +165,22 @@ Full backlog & inbox: /open-items
          ```
 
          Order matters: marker after append, never before — a forward-dated marker produces false negatives in Step 0.5. See `/session-start` Step 0.5 for the consumer-side check.
+
+         **Then write the per-session identity marker** to `logs/.session-marker` (Phase 1 of the TOCTOU-mitigation rollout per `logs/improvement-log.md` § "Concurrent sessions cause TOCTOU races on shared log files"). Phase 1 is write-only — no consumer reads this file yet:
+
+         ```bash
+         TODAY=$(date '+%Y-%m-%d')
+         N=1
+         if [ -f logs/.session-marker ]; then
+           PREV=$(cat logs/.session-marker)
+           case "$PREV" in
+             "${TODAY} S"*) N=$((${PREV##*S} + 1));;
+           esac
+         fi
+         echo "${TODAY} S${N}" > logs/.session-marker
+         ```
+
+         Same-day re-invocations increment within the day (`S1` → `S2` → …); a new day resets to `S1`. The file format is one line `{YYYY-MM-DD} S{N}` so the date prefix lets the increment logic detect same-day vs day-rollover without a separate `stat` call. Phase 2+ consumers (`/session-start`, `/session-plan`, `/wrap-session`, etc.) are deferred.
       b. Invoke the `/session-start` command with `TASK_TEXT` as its arguments (becomes the mandate). It runs its own mandate-confirmation prompt — that is expected; do not suppress it.
       c. After `/session-start` finishes, invoke the `/session-plan` command with `TASK_TEXT` as its arguments (becomes the intent). It runs its own design/execution/mixed question and writes `logs/session-plan.md`. If a same-day `session-plan.md` already exists, `/session-plan` may also surface a 3-option keep/overwrite/pass-2 prompt — that is expected mid-chain; the operator answers it normally.
       d. **Pause.** After `/session-plan` finishes, output:
@@ -164,20 +188,40 @@ Full backlog & inbox: /open-items
 
          Wait for the operator. Do NOT begin execution on your own.
 
-8b. **Free-text intent.** The operator named the work directly instead of picking a number — original prime behavior:
-   1. Ensure today's session entry exists in `/logs/session-notes.md`. Read the last ~10 lines: if a `## YYYY-MM-DD` header for today is already present, reuse it — append the work description beneath it. If today's header is absent, append a new `## YYYY-MM-DD` header with the work description. Do NOT create a second same-day header. If the operator stated a scope boundary inline (e.g., "just the refactor, not the follow-up PRs"), capture it too; otherwise omit.
+8b. **Free-text intent.** The operator named the work directly instead of picking a number.
+   1. Resolve the operator's stated work → `TASK_TEXT` (the work description, including any inline scope boundary like "just the refactor, not the follow-up PRs").
+   2. **Plan-mode guard.** If a plan-mode system reminder is present in context (plan mode is active), do NOT run `/session-start` or `/session-plan`, and do NOT write anything. Output:
+      > Free-text task noted: {TASK_TEXT}. You're in plan mode — I won't run `/session-start` yet. Exit plan mode when you're ready to execute, then re-send the task (or say `go`) and I'll run `/session-start` and `/session-plan` for it.
 
-      **After the append succeeds**, write `session-notes.md`'s mtime to `logs/.prime-mtime` so `/session-start` Step 0.5 can distinguish this session's own write from a foreign session's (same marker contract as Step 8a.3.a — extending coverage to the free-text-intent path so neither path falls through to Step 0.5's heuristic fallback as its primary operating mode):
+      Then stop.
+   3. If plan mode is **not** active:
+      a. Ensure today's session entry exists in `/logs/session-notes.md`. Read the last ~10 lines: if a `## YYYY-MM-DD` header for today is already present, reuse it — append `TASK_TEXT` as a work-description line beneath it. If today's header is absent, append a new `## YYYY-MM-DD` header with `TASK_TEXT` as the work description. Do NOT create a second same-day header (same duplicate-header hazard step 1a's sibling-entry sweep catches).
 
-      ```bash
-      stat -f %m logs/session-notes.md 2>/dev/null > logs/.prime-mtime \
-        || stat -c %Y logs/session-notes.md 2>/dev/null > logs/.prime-mtime
-      ```
+         **After the append succeeds**, write `session-notes.md`'s mtime to `logs/.prime-mtime` so `/session-start` Step 0.5 can distinguish this session's own write from a foreign session's (same marker contract as Step 8a.3.a — extending coverage to the free-text-intent path so neither path falls through to Step 0.5's heuristic fallback as its primary operating mode):
 
-      Order matters: marker after append, never before. See `/session-start` Step 0.5 for the consumer-side check.
-   2. Begin execution immediately under full autonomy (per workspace CLAUDE.md Autonomy Rules). No second "go/proceed" confirmation required.
+         ```bash
+         stat -f %m logs/session-notes.md 2>/dev/null > logs/.prime-mtime \
+           || stat -c %Y logs/session-notes.md 2>/dev/null > logs/.prime-mtime
+         ```
 
-   **Next:** Run `/session-start` to capture the session mandate, then `/session-plan` to plan model tier, autonomy posture, and structural risk.
+         Order matters: marker after append, never before — a forward-dated marker produces false negatives in Step 0.5. See `/session-start` Step 0.5 for the consumer-side check.
+
+         **Then write the per-session identity marker** to `logs/.session-marker` (same contract as Step 8a.3.a; Phase 1 of TOCTOU-mitigation rollout — write-only, no consumers yet):
+
+         ```bash
+         TODAY=$(date '+%Y-%m-%d')
+         N=1
+         if [ -f logs/.session-marker ]; then
+           PREV=$(cat logs/.session-marker)
+           case "$PREV" in
+             "${TODAY} S"*) N=$((${PREV##*S} + 1));;
+           esac
+         fi
+         echo "${TODAY} S${N}" > logs/.session-marker
+         ```
+      b. Invoke the `/session-start` command with `TASK_TEXT` as its arguments (becomes the mandate). It runs its own mandate-confirmation prompt — that is expected; do not suppress it.
+      c. After `/session-start` finishes, invoke the `/session-plan` command with `TASK_TEXT` as its arguments (becomes the intent). It runs its own design/execution/mixed question and writes `logs/session-plan.md`. If a same-day `session-plan.md` already exists, `/session-plan` may also surface a 3-option keep/overwrite/pass-2 prompt — that is expected mid-chain; the operator answers it normally.
+      d. **Begin execution immediately** under full autonomy (per workspace CLAUDE.md Autonomy Rules). No second `go`/`proceed` confirmation required — the operator stating the work directly IS the go signal. This is 8b's structural delta vs 8a, which pauses for explicit `go` after `/session-plan`.
 
 8c. **Auto mode.** The operator typed `auto` — run the top menu item end-to-end with a single approval gate and no per-stage prompts.
 
@@ -190,6 +234,20 @@ Full backlog & inbox: /open-items
       ```bash
       stat -f %m logs/session-notes.md 2>/dev/null > logs/.prime-mtime \
         || stat -c %Y logs/session-notes.md 2>/dev/null > logs/.prime-mtime
+      ```
+
+      **Then write the per-session identity marker** to `logs/.session-marker` (same contract as Step 8a.3.a; Phase 1 of TOCTOU-mitigation rollout — write-only, no consumers yet):
+
+      ```bash
+      TODAY=$(date '+%Y-%m-%d')
+      N=1
+      if [ -f logs/.session-marker ]; then
+        PREV=$(cat logs/.session-marker)
+        case "$PREV" in
+          "${TODAY} S"*) N=$((${PREV##*S} + 1));;
+        esac
+      fi
+      echo "${TODAY} S${N}" > logs/.session-marker
       ```
 
    4. **Derive mandate fields** inline (matches `/session-start` Step 2 logic without the confirmation prompt):

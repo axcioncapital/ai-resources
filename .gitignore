@@ -30,6 +30,9 @@ logs/scratchpads/
 # Concurrent-session detection marker written by /prime, read by /session-start Step 0.5
 logs/.prime-mtime
 
+# Per-session identity marker written by /prime (Phase 1 of TOCTOU-mitigation rollout per logs/improvement-log.md TOCTOU entry)
+logs/.session-marker
+
 # Archived inbox briefs (Layer C settings.json also denies Read on this path)
 inbox/archive/
 
