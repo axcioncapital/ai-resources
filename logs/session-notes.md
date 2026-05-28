@@ -380,3 +380,36 @@ Designed and shipped an autonomous session-bootstrap feature. Started as a propo
 ### Open Questions
 - None.
 
+## 2026-05-28 — /fix-repo-issues multi-scope sweep → 8-item fix plan written
+
+### Summary
+/prime opened the session and surfaced 21 unpushed commits, uncommitted edits on `logs/friction-log.md` + `logs/improvement-log.md`, and yesterday's resumable scratchpad. Operator skipped the menu and went directly to `/fix-repo-issues`. Scopes selected: ai-resources, project axcion-brand-book, project nordic-pe-macro-landscape-H1-2026, project nordic-pe-screening-project. Four scanner subagents fired in parallel; aggregate haul was 73 items (T1=15, T2=34, T3=24). Triaged to a 6-item Plan-into-batch; operator added 2 more from the Park list (both brand-book multi-file-refactor class) for a final plan of 8 items. Plan written to `audits/fix-plans/fix-repo-issues-2026-05-28-1121.md`. No structural changes this session — plan file plus 4 scanner-notes files only.
+
+### Files Created
+- `ai-resources/audits/fix-plans/fix-repo-issues-2026-05-28-1121.md` — 8-item fix plan
+- `ai-resources/audits/working/fix-repo-issues-2026-05-28-1121-ai-resources.md` — scanner notes (44 items)
+- `ai-resources/audits/working/fix-repo-issues-2026-05-28-1121-project-axcion-brand-book.md` — scanner notes (6 items)
+- `ai-resources/audits/working/fix-repo-issues-2026-05-28-1121-project-nordic-pe-macro-landscape-H1-2026.md` — scanner notes (21 items)
+- `ai-resources/audits/working/fix-repo-issues-2026-05-28-1121-project-nordic-pe-screening-project.md` — scanner notes (2 items)
+- `ai-resources/logs/scratchpads/2026-05-28-12-00-scratchpad.md` — continuity scratchpad (gitignored)
+
+### Files Modified
+- `ai-resources/logs/session-notes.md` — this wrap entry
+
+### Decisions Made
+- **Plan expanded from 6 → 8 items at operator request.** Added `[project-axcion-brand-book/id-02]` (`/session-plan` MISMATCH false-positive, 4th recurrence) and `[project-axcion-brand-book/id-06]` (settings.json deny blocks `/draft-module`) from the Park list. Both are multi-file-refactor class. The plan body preserves the multi-file-refactor framing honestly so the execution session sees these as larger than items 1–6.
+- **/risk-check end-time gate skipped** — this session produced a plan file only. No hook edits, no permission changes, no command edits, no new symlinks, no automation with shared-state effects. Out of scope per `ai-resources/docs/audit-discipline.md` § Risk-check change classes.
+- **Telemetry + coaching both skipped per preflight** ("nn").
+
+### Next Steps
+- **Execute the fix plan in a fresh session.** Per the /fix-repo-issues two-session contract — open fresh, say: "Execute the fix plan at `ai-resources/audits/fix-plans/fix-repo-issues-2026-05-28-1121.md`". Cadence: items 1–6 are small (log hygiene + symlink + git remote), items 7 and 8 are real edits with `/qc-pass` requirements.
+- **Push gate.** 22 unpushed ai-resources commits (21 carryover + this session's wrap commit). Operator approval required (Autonomy Rule #2).
+- **Standing carryovers** (preserved): `backup-session-plan-pass2-regex` (nordic), `friction-logging-discipline-rule` (nordic), `plan-evaluate-drift-check` (project-planning); abandoned `harness-start.md` at workspace-root `.claude/commands/` (candidate for `/cleanup-worktree`).
+
+### Open Questions
+- None.
+
+
+---
+
+**New session intent:** Execute the 8-item fix plan at `audits/fix-plans/fix-repo-issues-2026-05-28-1121.md`.
