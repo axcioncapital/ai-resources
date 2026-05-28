@@ -351,3 +351,32 @@ None.
 
 **Mandate:** Run a 3-phase housekeeping + triage pass. Phase 1: resolve uncommitted `docs/session-guardrails.md` modification + 3 untracked audits artifacts; push 3 ai-resources + 2 workspace-root commits (operator-gated). Phase 2: friction-log hygiene — add `[FADING-GATE]` annotations to 3 stale entries (2026-05-25 09:13, 2026-05-18 10:00, 2026-05-08 18:26). Phase 3: inbox triage — read 4 inbox briefs, output a ranked build queue (no skill build this session).
 
+## 2026-05-28 — /auto-start design → landed as /prime Step 8c auto branch
+
+### Summary
+Designed and shipped an autonomous session-bootstrap feature. Started as a proposed standalone `/auto-start` command; redirected by System Owner consultation to a branch inside the existing `/prime` command (DR-7 + AP-7 + risk-topology §1). Built Step 8c with twelve sub-steps: pick top menu item, derive mandate + plan inline, single approval gate with risk-check disclosure, write to canonical formats, optional /risk-check at plan-time, execute. Two QC passes ran (draft and final); one parse-contract blocker caught and fixed (the "complete fully within this session" clause was breaking the two-segment mandate parse). Also surfaced a real /wrap-session guard misfire (Step 3.5 cannot distinguish prior-day remnants from live concurrent sessions); triaged via /resolve-repo-problem.
+
+### Files Created
+- `logs/scratchpads/2026-05-28-auto-start-scratchpad.md` — continuity scratchpad for /prime Step 1b next-session resume
+- `audits/working/2026-05-28-resolve-wrap-session-foreign-guard-prior-day-remnant.md` — full triage notes for the wrap-session guard misfire
+
+### Files Modified
+- `ai-resources/.claude/commands/prime.md` — Step 6 brief (advertise `auto`), Step 7 classifier (route `auto` → 8c), new Step 8c auto branch (12 sub-steps; ~108 insertions). Shipped as commit `1063772`.
+- `ai-resources/logs/improvement-log.md` — appended pending entry for wrap-session Step 3.5 guard date-discrimination patch
+- `ai-resources/logs/session-notes.md` — recovered W22 orphan mandate (commit `535a666`); appended today's wrap note (this entry)
+- `ai-resources/logs/inbox-triage-2026-05-27.md` — recovered as part of W22 wrap recovery (commit `535a666`)
+
+### Decisions Made
+- **Shape: /prime branch, not a standalone /auto-start command.** Driven by System Owner advisory citing DR-7 (no second consumer), AP-7 (speculative abstraction), risk-topology §1 (don't add a fourth concurrent-session detection surface). Implementation rides on /prime's existing detection surfaces.
+- **Recommendable #1 (risk-check second gate): option (a) — surface in Step 5 preview when structural class is detected.** Grounding: OP-3 (loud failure), DR-8 (binding risk-check gate), AP-1 (no silent conflict resolution). Honest single-gate disclosure.
+- **Recommendable #3 (free-text reply path): option (a) — require explicit `edit`; re-ask on ambiguous reply.** Grounding: OP-3, AP-1, OP-6 (operator's mental model). Matches `/session-start` Step 2 parser discipline.
+- **QC fix:** dropped the "complete fully within this session" clause from the disk-written `**Mandate:**` line; preserved the posture in execution prose (Step 8c.11). Reason: the inserted clause broke the two-segment parse contract (`head — done when: tail`) that `/wrap-session` Step 7a, `/drift-check` Step 5, and workspace-root `wrap-session.md` Step 2b depend on.
+- **End-time /risk-check skipped per workspace skip rule** (`feedback_end_time_risk_check_skip.md`): System Owner advisory covered plan-time concerns; mitigations applied (both Recommendable options, parse-contract preservation, abort path documented); commits already shipped (`1063772`); drift bounded to a single command edit.
+
+### Next Steps
+- Push `1063772` (today's /prime Step 8c edit) and `535a666` (W22 wrap recovery) to remote — operator approval required.
+- Future Friday cadence will surface the improvement-log entry for the wrap-session Step 3.5 date-discrimination patch.
+
+### Open Questions
+- None.
+

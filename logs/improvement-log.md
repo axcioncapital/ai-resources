@@ -170,3 +170,87 @@ Suggested three-session sequence:
 - **Implementation 2026-05-28:** Shipped commit `0c4544f` — single-file edit to `.claude/agents/fix-repo-issues-scanner.md`: new Step 5.5 (item-type classification: fix/build/watch by source, with priority-signal lift rule), new Step 5.6 (audit-trail counters), Step 6 working-notes schema gains `type` column + "By type" count + "## Coverage report" block, Step 7 return-summary gains Coverage block + per-type segmented Top candidates (Fix-shaped / Build-shaped / Watch-shaped), line cap bumped 30→40 consistently across 3 references. Risk-check verdict GO (all 5 dimensions Low; report `audits/risk-checks/2026-05-28-proposed-change-extend-the-return-summary-template-in-claude.md`); single-consumer agent; LLM-driven downstream consumption tolerates added blocks; `NOTES:` parse anchor preserved.
 - **Target files:** `ai-resources/.claude/agents/fix-repo-issues-scanner.md` (Option A); optionally `ai-resources/.claude/commands/fix-repo-issues.md` Step 3 if Option B is chosen instead.
 - **Notes:** `audits/working/2026-05-28-resolve-fix-repo-issues-scanner-coverage-confidence-gap.md`; risk-check report `audits/risk-checks/2026-05-28-proposed-change-extend-the-return-summary-template-in-claude.md`
+
+### 2026-05-28 — /session-start Step 0.5 mtime guard misses foreign writes that arrive DURING the Mandate Confirmation wait
+
+- **Status:** logged — superseded by the broader 2026-05-28 entry below ("Concurrent sessions cause TOCTOU races on shared log files"). The narrow Step 2.5 patch proposed here is no longer the recommended fix; the structural per-session-marker approach replaces it. Retained for trace-history of how the problem was first observed.
+- **Category:** session-issue
+- **Source:** Surfaced live during axcion-brand-book session 2026-05-28 — operator explicitly attributed the trigger to "I start concurrent sessions."
+- **Friction source:** /session-start Step 0.5 runs the concurrent-session mtime guard exactly once, immediately after Step 0's session-notes.md read and before Step 1 reads the mandate. It compares `SESSION_NOTES_MTIME` against `PRIME_MTIME` (or against `NOW - 120s` fallback) at that single instant. Today the guard returned `DELTA=0` (clean) at Step 0.5; Step 1 used the supplied mandate verbatim; Step 2 echoed the Mandate Confirmation block and waited for the operator's `y`. During that wait, the operator started a second /prime session, selected a different menu task (task 3 — backfill `_appendix/rejected_directions.md`), and that concurrent /prime wrote a `**Work (redirected via /prime task selection):**` line to logs/session-notes.md. The operator's `y` then arrived in the original session against the original (specimen) mandate echo — but session-notes.md by then contained the redirect line for the backfill task. The original session would have proceeded to Step 3 and written the specimen mandate alongside the foreign redirect line if the operator had not corrected the path via AskUserQuestion. Reproduction is reliable whenever a foreign session writes to session-notes.md between Step 0.5 (clean) and Step 3 (write).
+- **Proposal:** Add a second mtime check at Step 3 immediately before locating today's header for the mandate-line write — call it "Step 2.5 — Re-check mtime guard at write time." Capture `WRITE_TIME_MTIME = stat session-notes.md` and compare to the `SESSION_NOTES_MTIME` value already captured in Step 0.5 (must persist that value into Step 3's scope). If `WRITE_TIME_MTIME > SESSION_NOTES_MTIME`, a foreign write happened during the Mandate Confirmation wait → surface a conflict block before applying the operator's confirmation: re-read the last ~20 lines of session-notes.md, show the diff to the operator, offer (1) proceed with the originally-confirmed mandate, (2) re-echo a new Mandate Confirmation reflecting whatever the foreign write redirected to, (3) stop. Default on no-response = (3) stop. Edits confined to `ai-resources/.claude/commands/session-start.md` (new Step 2.5 between Step 2 and Step 3). **/risk-check change class:** YES (canonical-command body edit; /session-start runs at every session start) — run /risk-check as advisory gate before landing. Secondary consideration: today's Step 0.5 tuning notes call out the 120s threshold and freshness window but do not anticipate the during-Step-2 window. Update the tuning-notes block in Step 0.5 to forward-reference the new Step 2.5 so operators reading Step 0.5 understand its coverage limit.
+- **Target files:** `ai-resources/.claude/commands/session-start.md` (insert Step 2.5 between Step 2 and Step 3; update Step 0.5 tuning notes to forward-reference Step 2.5). Also worth considering: a one-line companion note in `ai-resources/.claude/commands/prime.md` Step 8a.3 reminding that the marker-write at Step 8a.3.a does not protect /session-start's Step 2 confirmation window.
+
+### 2026-05-28 — Concurrent sessions cause TOCTOU races on shared log files (broader entry — supersedes the narrow `/session-start` Step 0.5 entry above)
+
+- **Status:** logged (pending)
+- **Category:** session-issue / cross-cutting architecture
+- **Source:** Live recurrence during axcion-brand-book session 2026-05-28; operator explicitly attributed cause to deliberate concurrent-session use. Friction-log entry 2026-05-28 10:05 records the live event. This entry is broader than the earlier same-day `/session-start` Step 0.5 entry (which only proposed a Step 2.5 patch); supersede that proposal with the structural fix below.
+- **Supersedes:** the same-day "2026-05-28 — /session-start Step 0.5 mtime guard misses foreign writes that arrive DURING the Mandate Confirmation wait" entry above. Mark that entry's Status as "logged — superseded by broader 2026-05-28 entry below" when applying this one. The narrow Step 2.5 patch from the prior entry is no longer the recommended fix; the structural per-session-marker approach replaces it.
+
+#### Problem class
+
+Three commands (`/prime`, `/session-start`, `/session-plan`) read shared log files (`logs/session-notes.md`, `logs/session-plan.md`) at command entry, make decisions based on the read, and later write back to those same files. Between the read and the write, an arbitrary number of conversation turns elapse (mandate confirmation echoes, class/intent confirmation prompts, AskUserQuestion blocks, Read calls for source material). When a second session is active in the same project, ANY write the second session makes to a shared log during the first session's read-to-write window is invisible to the first session's point-in-time mtime guard. This is a classic TOCTOU (time-of-check-to-time-of-use) race.
+
+Today's session demonstrated the race three times in one startup sequence:
+
+1. **`/session-start` Step 0.5 → Step 2 wait → Step 3 write.** Step 0.5 mtime check returned clean. Foreign write arrived during the Mandate Confirmation echo wait. Operator's `y` was applied against an echoed mandate that no longer matched on-disk content.
+2. **`/session-plan` Step 0 → Step 7 write.** Step 0 mtime check found `session-plan.md` 25 hours old (clean). Foreign session's `/session-plan` rewrote the file during Step 1.5 / Step 2 / Step 3 confirmations. Step 7 Write tool errored with "File has been modified since read"; the only reason this race was visible was because Claude Code's Write tool happens to enforce read-before-write integrity at the tool level.
+3. **`/session-notes.md` mandate-block overwrite.** Foreign session's `/session-start` Step 3 wrote its own mandate block under the same `## 2026-05-28` header that I had just written my mandate to. My mandate block was fully replaced.
+
+The prior fix for `/session-plan` Step 0 (commit `8ab5685`, MISMATCH auto-route to pass2) was a one-off patch to one command. The race class survives in every other shared-log read-write site.
+
+#### Proposed structural fix — per-session markers on all shared writes
+
+Each session at `/prime` time generates a 4-character session marker (e.g., `S1`, `S2`, `a3f7`) and persists it to `logs/.session-marker` (single file, last writer wins — but this file is only read by the SAME session's later commands, so the race surface is small).
+
+All subsequent shared-log writes scope themselves with this marker:
+
+- **`logs/session-notes.md`** — `/prime` writes `## YYYY-MM-DD — Session {marker}` instead of bare `## YYYY-MM-DD`. Each concurrent session gets its own header. Existing readers that grep `^## ${DATE}` still match (and the `/prime` Step 1a sibling-entry sweep already handles multiple same-day headers as a known pattern). `/session-start` Step 3 appends its Mandate block under THIS session's marker-bearing header (located by reading `.session-marker`, not by date-only match).
+- **`logs/session-plan.md`** — replaced by `logs/session-plan-{marker}.md`. The collision detection in `/session-plan` Step 0 simplifies dramatically: there is no shared file to collide on. Each session writes to its own scoped file. `pass2` becomes unnecessary (and the existing pass2 mechanism graduates from "race-condition safety valve" to "explicit operator-initiated re-plan within one session").
+- **Downstream readers** (`/drift-check`, `/wrap-session`, `/qc-pass`, etc.) read `.session-marker` first, then read the marker-scoped files. A symlink or alias from `logs/session-plan.md` to the current session's plan can preserve backward compatibility for readers that don't know about markers yet.
+
+The marker is short and deterministic per session — the first existing `.session-marker` value on disk plus a deterministic increment (`S1` → `S2` → `S3`), wrapping at `S9` → `Sa` → `Sz`. `/prime` Step 0 reads the existing value (if present and same-day) to increment; otherwise resets to `S1` and writes `YYYY-MM-DD` + value. A same-day re-read of `.session-marker` returning a different value than the session's own cached marker is itself a concurrent-session signal that `/prime` can surface.
+
+This eliminates the TOCTOU race at its root: there is no longer a shared mutable file for concurrent sessions to collide on. The remaining synchronization concern is `.session-marker` itself, but the file is small, atomic-write-friendly (single short token), and is read ONLY by the same session that wrote it — not cross-session — except during `/prime` increment.
+
+#### Alternatives considered
+
+- **(a) Atomic re-read at each write site.** Every shared-log write site re-reads mtime immediately before write and abort/restart if changed. Lower-magnitude change, but requires patching ~6 write sites across 4 commands and only narrows the race window (does not eliminate it). Rejected.
+- **(b) Per-session subdirectory.** Each session writes to `logs/sessions/{marker}/{file}.md`. Cleaner separation than markers in filenames, but requires every consumer command to know about the subdirectory convention. Higher-friction migration. Rejected for now; can be a later step.
+- **(c) Advisory file locks (`flock`).** Standard Unix pattern. Adds shell-state complexity, doesn't survive across tool boundaries (Claude Code Write tool doesn't acquire flocks), and would require wrapping every Write/Edit in a Bash flock dance. Rejected.
+- **(d) Refuse concurrent sessions.** `/prime` detects an active session via marker file and refuses to start a second one. Operator preference is to RUN concurrent sessions (today's evidence), so refusing would block a workflow they actively use. Rejected.
+- **(e) Status quo + Step 2.5 patches.** Each command gets a TOCTOU-narrowing patch like the one in the prior 2026-05-28 entry. The race class survives across the ~6 write sites and recurs whenever a new write site is added. This is the trajectory we've been on (the 2026-05-25 14:10 friction entry was the third recurrence). Rejected in favor of structural fix.
+
+#### Migration plan
+
+Phased, low-risk:
+
+1. **Phase 1 — `/prime` writes the marker.** `/prime` Step 8a.3 / 8b.1 generates and persists the marker; existing today's-header behavior unchanged. No other command reads the marker yet. Risk: zero (additive).
+2. **Phase 2 — `/session-start` and `/session-plan` consume the marker for header location and file naming.** Commands prefer marker-scoped files; fall back to legacy paths if marker absent (interop with sessions that started before Phase 2 rollout). Risk: low (each command's behavior gracefully degrades).
+3. **Phase 3 — downstream consumers (`/drift-check`, `/wrap-session`, `/contract-check`, `/qc-pass` plan-reading) update to read marker first.** Risk: medium — many touchpoints.
+4. **Phase 4 — deprecate legacy code paths.** Once Phase 3 is verified, remove the fallback paths in `/session-start` / `/session-plan`. Risk: low (Phase 3 has verified the new path).
+
+**/risk-check change class:** YES (this is a cross-cutting protocol change across 5+ commands and 2+ shared log files; explicit shared-state coordination redesign). Run `/risk-check` before EACH phase, not as a one-shot.
+
+#### Target files (by phase)
+
+- Phase 1: `ai-resources/.claude/commands/prime.md` (Step 8a.3.a / 8b.1 — generate and persist `.session-marker`); new `ai-resources/.gitignore` line for `logs/.session-marker` (it's per-machine session state, not committed).
+- Phase 2: `ai-resources/.claude/commands/session-start.md` (Step 3 — locate header by marker, not by date); `ai-resources/.claude/commands/session-plan.md` (Step 0 simplification — drop the 6-hour-window pass2 routing, write directly to `session-plan-{marker}.md`; Step 7 OUTPUT_TARGET changes).
+- Phase 3: `ai-resources/.claude/commands/drift-check.md`, `ai-resources/.claude/commands/wrap-session.md`, `ai-resources/.claude/commands/contract-check.md`, `ai-resources/.claude/commands/qc-pass.md` (plan-reading branch), `ai-resources/skills/friday-checkup/SKILL.md` (any references to `session-plan.md`).
+- Phase 4: cleanup of legacy fallback branches across Phase 2 commands.
+
+#### Notes
+
+- The friction-log 2026-05-28 10:05 entry is the live-event record; this is the proposal record. `/fix-repo-issues` will surface both.
+- The narrow same-day `/session-start` Step 0.5 entry written earlier in this session is superseded — apply the supersede marker (`Status: logged — superseded by broader 2026-05-28 entry`) when this proposal is taken to plan.
+- This is not a hotfix-able item; it requires a phased rollout. Suggested cadence: a dedicated `/friday-act` wave dedicated to Phase 1 (marker introduction) with `/risk-check` as advisory gate.
+
+### 2026-05-28 — wrap-session foreign-guard misfires on prior-day uncommitted remnant
+
+- **Status:** logged (pending)
+- **Category:** session-issue
+- **Source:** /resolve-repo-problem 2026-05-28
+- **Friction source:** /wrap-session Step 3.5 foreign-session pre-write guard fired today (FOREIGN=1, mandate count 7 in WT vs 6 in HEAD). Working tree contains an orphan mandate from yesterday's W22 housekeeping session — that session ran /prime + /session-start but never invoked /wrap-session, leaving the mandate line unstaged. Today's guard treated the prior-day remnant as live foreign-session content and steered the operator toward the wrong remediation ("switch to the other terminal").
+- **Proposal:** Patch Step 3.5 to parse the enclosing `## YYYY-MM-DD` header of each extra mandate and classify the delta as CONCURRENT (today-dated), REMNANT (prior-day), or MIXED. Branch the remediation text per class: CONCURRENT stays as-is; REMNANT offers a "commit the orphan as a standalone wrap-recovery commit" path; MIXED warns about both and asks the operator to pick. Update both `ai-resources/.claude/commands/wrap-session.md` Step 3.5 and the paired workspace-root copy. This is a /risk-check change class (cross-cutting workflow guard with shared-state semantics) — plan-time gate required.
+- **Target files:** ai-resources/.claude/commands/wrap-session.md, ~/Claude Code/Axcion AI Repo/.claude/commands/wrap-session.md (paired copy per existing PAIRED CONTRACT comment block)
+- **Notes:** audits/working/2026-05-28-resolve-wrap-session-foreign-guard-prior-day-remnant.md
