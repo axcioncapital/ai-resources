@@ -53,6 +53,23 @@ Same three habits apply. End with `/wrap-session` — Claude auto-detects the Ph
 
 ---
 
+## Weekly — Pipeline review
+
+Run `/pipeline-review` once per week (any day; operator-invoked). The command surfaces a ranked shortlist of 5 critical pipelines (oldest-reviewed first; friction-flagged rows promoted). Pick 1–3. The `pipeline-review-auditor` produces a System-Owner-grounded design memo per pipeline — innovations, leanness fixes, brokenness, cross-resource interactions, recommended next session. No auto-fix.
+
+**Cadence shape:**
+- Skipped-cycle warning fires at `>10 days` since the last bump (one missed weekly cycle + slack). The command emits a `[CADENCE-LATE]` marker before showing the shortlist.
+- Memos land in `audits/pipeline-reviews/{pipeline-slug}-{date}.md`.
+- Registry: `audits/pipeline-review-registry.md`. Bumped once per cycle, batched after all subagents return.
+
+**Fix session is separate.** The memo says what to do; a follow-up session does it — `/improve-skill` for skill-shaped memos, manual edit + `/qc-pass` for command-shaped memos.
+
+Distinct from `/audit-critical-resources` (drift detection) and `/friday-checkup` (housekeeping). This cadence answers *what could be better?*, not *what is broken?*.
+
+**Known design risk.** Two operator-invoked cadences with independent skipped-cycle gates (`/friday-checkup` weekly + `/pipeline-review` weekly) can stall together. The `[CADENCE-LATE]` marker is the mitigation. If skipped more than twice per quarter, revisit folding into `/friday-checkup` as a new tier.
+
+---
+
 ## Friday — Session 1: Review + Checkup + Advisory
 
 Start with `/prime`. Declare exit condition and autonomy level.
