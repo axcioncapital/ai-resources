@@ -4,7 +4,7 @@ model: opus
 
 # /fix-repo-issues — Backlog Fix-Plan Composer
 
-Scan accumulated friction-log, improvement-log, and similar sources; triage by priority; write a self-contained fix plan to disk. Execution happens in a separate fresh session — this command does NOT apply fixes.
+Scan accumulated friction-log, improvement-log, innovation-registry, and similar sources across the workspace; triage by priority; write a self-contained fix plan to disk. Execution happens in a separate fresh session — this command does NOT apply fixes.
 
 **Two-session contract.** Logs accumulate during work sessions. Fixing them inside the same session that produced them muddles cause and effect and risks compaction dropping the plan mid-execution. The natural cadence:
 
@@ -16,82 +16,147 @@ Sessions B and C may be the same calendar moment but are separate Claude Code se
 
 **Boundary vs `/resolve-repo-problem`.** `/resolve-repo-problem` is reactive single-fault triage (something broke right now → investigate one fault → three ranked options). `/fix-repo-issues` is proactive batch-planning from the persistent backlog (drain accumulated items → ordered multi-item plan). No overlap in trigger, scope, or input source.
 
-Input: `$ARGUMENTS` (optional) — free-form scope hint (e.g., "improvement-log only", "skip inbox"). If empty, scan all seven sources.
+**Multi-scope.** The command scans across operator-selected workspace scopes: `ai-resources` (always on), `workspace` root, and any active project under `projects/`. The plan aggregates findings across all selected scopes, with per-item scope attribution so the execution session knows where to apply each fix.
+
+Input: `$ARGUMENTS` (optional) — free-form triage hint (e.g., "improvement-log only", "skip inbox"). Applies to triage (Step 3), not scope selection (Step 1). If empty, no hint applied.
 
 ---
 
-## Step 1 — Initialize and invoke scanner subagent
+## Step 1 — Initialize and select scopes
 
-1. Set `WORKING_DIR` = absolute path to the current working directory (typically the `ai-resources/` repo root).
-2. Set `TODAY` = today's date in `YYYY-MM-DD`.
-3. Set `TIMESTAMP` = current time in `HHMM` (24-hour, no separator).
-4. Set `AUDITS_WORKING_DIR` = `{WORKING_DIR}/audits/working/`.
-5. Set `PLANS_DIR` = `{WORKING_DIR}/audits/fix-plans/`.
+1. Set `AI_RESOURCES = "/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources"`.
+2. Set `WORKSPACE_ROOT = "/Users/patrik.lindeberg/Claude Code/Axcion AI Repo"`.
+3. Set `TODAY` = today's date in `YYYY-MM-DD`.
+4. Set `TIMESTAMP` = current time in `HHMM` (24-hour, no separator).
+5. Set `AUDITS_WORKING_DIR = "{AI_RESOURCES}/audits/working/"`.
+6. Set `PLANS_DIR = "{AI_RESOURCES}/audits/fix-plans/"`.
 
-Invoke the `fix-repo-issues-scanner` agent with:
-- `WORKING_DIR` = `WORKING_DIR`
+**Enumerate active projects** under `{WORKSPACE_ROOT}/projects/`:
+
+```bash
+ls -1d /Users/patrik.lindeberg/Claude\ Code/Axcion\ AI\ Repo/projects/*/ 2>/dev/null
+```
+
+For each enumerated project directory, derive:
+- `project_name` = basename (e.g., `nordic-pe-macro-landscape-H1-2026`)
+- `project_path` = absolute path to the project directory
+- `project_slug` = `project-{project_name}` (used in file names and id prefixes)
+
+**Build the scope menu.** Present a numbered menu mirroring `/friday-checkup` Step 3:
+
+```
+## /fix-repo-issues — select scopes
+
+   1. ai-resources           (always on — cannot be deselected)
+   2. workspace              (workspace-root logs/)
+   3a. project {name-1}
+   3b. project {name-2}
+   3c. project {name-3}
+   ...
+
+Reply with a comma-separated list of scope numbers to include, or `all`.
+Examples:
+  1                      (ai-resources only — equivalent to old single-scope behavior)
+  1,2                    (ai-resources + workspace)
+  1,3a,3c                (ai-resources + 2 selected projects)
+  all                    (every scope)
+```
+
+**Parse the operator's reply:**
+- `all` (case-insensitive, trimmed) → select every scope shown.
+- `none` (case-insensitive, trimmed) → ai-resources only (mirrors `/friday-checkup` Step 3 parity — `none` means "no extra scopes beyond the always-on one").
+- Comma-separated number/letter list → select matching scopes; `1` is implicit and always selected even if omitted.
+- Empty reply or bare `1` → ai-resources only.
+- Unparseable → re-ask once with the same menu; on second unparseable, default to `1` only and proceed.
+
+**Build the `SCOPES` list** as ordered `[(scope_label, scope_slug, scope_path), ...]`:
+1. ai-resources first (always): `("ai-resources", "ai-resources", "{AI_RESOURCES}")`.
+2. workspace second (if selected): `("workspace", "workspace", "{WORKSPACE_ROOT}")`.
+3. Each selected project, alphabetical by `project_name`: `("project {name}", "project-{name}", "{project_path}")`.
+
+Print the selected scope list back to the operator in one line for confirmation:
+```
+Scanning {N} scope(s): {comma-separated labels}
+```
+
+---
+
+## Step 2 — Invoke scanner subagent per scope
+
+For each `(scope_label, scope_slug, scope_path)` in `SCOPES`, invoke `fix-repo-issues-scanner` once. Inputs to each invocation:
+
+- `WORKING_DIR` = `scope_path`
+- `SCOPE_SLUG` = `scope_slug`
 - `TODAY` = `TODAY`
 - `TIMESTAMP` = `TIMESTAMP`
-- `AUDITS_WORKING_DIR` = `AUDITS_WORKING_DIR`
+- `AUDITS_WORKING_DIR` = `AUDITS_WORKING_DIR` (always the ai-resources audits/working/ path, regardless of scope — all scanner notes co-locate there)
 
-Capture the returned summary. The last line of the summary has shape `NOTES: {WORKING_NOTES_PATH}` — extract `WORKING_NOTES_PATH` from it.
+The scanner writes its working-notes file to `{AUDITS_WORKING_DIR}/fix-repo-issues-{TODAY}-{TIMESTAMP}-{scope_slug}.md` and returns a ≤30-line summary. Each summary ends with `NOTES: {working_notes_path}`.
 
-If the summary starts with `ERROR:`, surface it to the operator verbatim and stop.
+Capture all summaries in main context — one per scope. If a summary starts with `ERROR:`, surface it verbatim, note the scope as failed, and skip it (continue with the remaining scopes).
 
-If the summary reports `Total items: 0`, print:
+**Multi-scope efficiency.** Invocations are independent — fire all scanner subagents in parallel via a single message with N Agent tool calls. Wait for all summaries before proceeding to Step 3.
+
+If every scope returns `Total items: 0` (after all scanners complete), print:
 ```
-/fix-repo-issues — no backlog items found in {WORKING_DIR}.
+/fix-repo-issues — no backlog items found across {N} scopes.
 Nothing to plan.
 ```
 and stop.
 
 ---
 
-## Step 2 — Prioritize and shortlist
+## Step 3 — Aggregate, prioritize, and shortlist
 
-Read the scanner summary in main context. Re-read `WORKING_NOTES_PATH` only if the summary's top-candidate list is insufficient to make a triage decision (default: rely on summary).
+Read all scanner summaries in main context. Re-read individual working-notes paths only if a summary's top-candidate list is insufficient (default: rely on summaries).
 
-Rank items in this order:
+**Item ids are scope-prefixed**: `[ai-resources/id-NN]`, `[workspace/id-NN]`, `[project-{name}/id-NN]`. The scope prefix is the `scope_slug` from Step 1. Within each scope, ids match that scanner's own numbering — no global renumbering.
+
+Aggregate all items across scopes into a unified ranking, applying:
 
 1. **Explicit priority tags** — `[BLOCKING]` > `[CRITICAL]` > `[URGENT]` > `[HIGH]` (mirrors "Step 2 — Apply priority override" in `open-items.md`).
 2. **Age** — improvement-log entries with `age_days > 42` (stale) get bumped one rank.
-3. **Source weight** — active friction > applied-unverified improvement-log > inbox brief > deferred decision > stale checkbox.
+3. **Source weight** — active friction > applied-unverified improvement-log > inbox brief > deferred decision > stale checkbox > innovation-registry pending-triage > innovation-registry triaged-stale > coaching-log carry-forward > gate-calibration follow-up.
 4. **Estimated effort** — small + clear fixes (single-file edit, log-status flip, copy edit) preferred over open-ended investigations.
 
 Group items into:
 
 - **Plan-into-batch** (P1) — clear scope, well-defined fix, target 3–6 items. Items the execution session can apply without further research.
-- **Park** — out of scope for this plan. Reason: needs dedicated session, blocked on decision, multi-file refactor, or scope ambiguity.
+- **Park** — out of scope for this plan. Reason: `needs-dedicated-session`, `decision-needed`, `multi-file-refactor`, `needs-/innovation-sweep`, `needs-/create-skill`, `risk-check-class`.
 - **Skip** — already resolved (cross-matched against improvement-log applied + verified), or low-signal (`[LOW]` already filtered by scanner, but catch operator-flagged trivia here).
 
-Honor any operator scope hint in `$ARGUMENTS` — e.g., "improvement-log only" restricts Plan-into-batch to items whose source is `logs/improvement-log.md`.
+Honor any free-form hint in `$ARGUMENTS` — e.g., "improvement-log only" restricts Plan-into-batch to items whose source is `logs/improvement-log.md` across all selected scopes.
 
 ---
 
-## Step 3 — Plan preview + inline clarify gate
+## Step 4 — Plan preview + inline clarify gate
 
 Print the plan preview in chat (NOT yet written to disk):
 
 ```
-## /fix-repo-issues plan preview — {N} items proposed
+## /fix-repo-issues plan preview — {N} items proposed across {M} scope(s)
+
+Scopes scanned: {comma-separated labels}
 
 ### Plan-into-batch
-1. [id-NN] {one-line description} — source: {path} — fix: {one-line approach}
-2. [id-NN] ...
+1. [{scope_slug}/id-NN] {one-line description} — source: {path} — fix: {one-line approach}
+2. [{scope_slug}/id-NN] ...
 ...
 
 ### Park (not this plan)
-- [id-NN] {description} — reason: {scope|needs-dedicated-session|decision-needed|multi-file-refactor}
+- [{scope_slug}/id-NN] {description} — reason: {reason-tag}
 
 ### Skip
-- [id-NN] {description} — reason: {already-resolved|low-signal}
+- [{scope_slug}/id-NN] {description} — reason: {already-resolved|low-signal}
 
-Scanner notes: {WORKING_NOTES_PATH}
+Scanner notes per scope:
+  - {scope_label}: {working_notes_path}
+  - ...
 ```
 
-Then run an inline clarify-style gate (operator-confirmed shape, mirrors `/clarify`):
+Then run the inline clarify-style gate (mirrors `/clarify`):
 
-1. **Restate** — one short paragraph in plain English: what we're fixing and why these picks.
+1. **Restate** — one short paragraph in plain English: what we're fixing, which scopes, why these picks.
 2. **Assumptions** — bullet list of load-bearing assumptions (e.g., "this improvement-log entry is still relevant," "fix scope = update file X only").
 3. **Questions** — ask **≤5** questions, but ONLY if a question would change which items go into the plan or how a fix is scoped. Per repo decision-point posture, default to no questions when no genuine ambiguity remains.
 
@@ -99,23 +164,23 @@ End the gate with:
 ```
 Approve this plan? (y / edit / abort)
   y     — write plan file to {PLANS_DIR}
-  edit  — describe the edit (which items to add/remove/re-scope); re-run Step 2 and 3
+  edit  — describe the edit (which items to add/remove/re-scope); re-run Step 3 and 4
   abort — no plan written, exit
 ```
 
 Wait for the operator's reply. Plan-mode discipline applies — do not write the plan file until approved.
 
-On `edit`: capture the operator's instructions, return to Step 2 with the adjustments. Loop up to 3 times; on the 4th edit, ask the operator whether to abort or accept current state.
+On `edit`: capture the operator's instructions, return to Step 3 with the adjustments. Loop up to 3 times; on the 4th edit, ask the operator whether to abort or accept current state.
 
 On `abort`: print `/fix-repo-issues — aborted, no plan written.` and stop.
 
-On `y`: proceed to Step 4.
+On `y`: proceed to Step 5.
 
 ---
 
-## Step 4 — Write the plan file
+## Step 5 — Write the plan file
 
-1. Ensure `PLANS_DIR` exists. The directory `audits/fix-plans/` does not exist in the repo yet — create it on first run:
+1. Ensure `PLANS_DIR` exists. The directory `audits/fix-plans/` may not exist yet — create on first run:
    ```bash
    mkdir -p "{PLANS_DIR}"
    ```
@@ -126,64 +191,67 @@ On `y`: proceed to Step 4.
 # Fix plan — {TODAY} {HH:MM from TIMESTAMP}
 
 **Source command:** `/fix-repo-issues`
-**Scanner notes:** [audits/working/fix-repo-issues-{TODAY}-{TIMESTAMP}.md]({WORKING_NOTES_PATH})
-**Working directory:** {WORKING_DIR}
+**Scopes scanned:** {comma-separated scope labels}
+**Scanner notes (per scope):**
+- {scope_label}: [audits/working/fix-repo-issues-{TODAY}-{TIMESTAMP}-{scope_slug}.md]({absolute path})
+- ...
+**Plans directory:** {PLANS_DIR}
 **Items:** {N}
 
 ## How to execute
 
-Open a fresh Claude Code session in `{WORKING_DIR}`. Reference this file by path and instruct Claude:
+Open a fresh Claude Code session. Each item's `**Scope:**` field names the working directory it applies in — `cd` into that directory before applying its fix.
+
+Instruct fresh-session Claude:
 
 > Execute the fix plan at `{PLAN_PATH}`.
 
-Each item below is self-contained — apply in order. Commit per item or per logical batch (operator preference). For improvement-log status updates, read `ai-resources/.claude/commands/resolve-improvement-log.md` first to confirm the canonical `**Status:** applied YYYY-MM-DD` + `**Verified:**` schema before editing.
+Each item below is self-contained — apply in order, in the scope its `**Scope:**` field names. Commit per item or per logical batch (operator preference). For improvement-log status updates, read `ai-resources/.claude/commands/resolve-improvement-log.md` first to confirm the canonical `**Status:** applied YYYY-MM-DD` + `**Verified:**` schema before editing.
 
 Do NOT execute fixes in the planning session that produced this file.
 
 ## Items
 
-### [id-01] {one-line description}
-- **Source:** [{source-path}]({source-path}){:line N if applicable}
+### [{scope_slug}/id-01] {one-line description}
+- **Scope:** {scope_label} — path: `{scope_path}`
+- **Source:** [{absolute_source_path}]({absolute_source_path}){:line N if applicable}  *(always render the absolute path — the plan file lives in `ai-resources/audits/fix-plans/` but item sources span scopes; absolute paths keep links resolvable regardless of where the execution session is `cd`'d)*
 - **Fix:** {concrete instruction — file to edit, edit shape, expected outcome}
-- **Post-fix log update:** {improvement-log status flip / friction-log `[FADING-GATE] verified` annotation / none}
+- **Post-fix log update:** {improvement-log status flip / friction-log `[FADING-GATE] verified` annotation / innovation-registry status update / none}
 - **QC needed:** {yes — run /qc-pass after applying | no — log-hygiene-only edit}
 
-### [id-02] {one-line description}
-- **Source:** ...
+### [{scope_slug}/id-02] {one-line description}
 - ...
 
-(repeat for each Plan-into-batch item, ordered by priority then source weight)
+(repeat for each Plan-into-batch item; ordered by priority then source weight, with ai-resources items first, then workspace, then projects alphabetically)
 
 ## Parked items (not this plan)
 
-- [id-NN] {description} — reason: {scope|needs-dedicated-session|decision-needed|multi-file-refactor}
+- [{scope_slug}/id-NN] {description} — reason: {reason-tag}
 - ...
 
 ## Skipped items
 
-- [id-NN] {description} — reason: {already-resolved|low-signal}
+- [{scope_slug}/id-NN] {description} — reason: {already-resolved|low-signal}
 - ...
-
-## Scanner working-notes path (traceability)
-
-{WORKING_NOTES_PATH}
 ```
 
 4. Verify the file was written by reading it back. If any required section is empty or malformed, regenerate.
 
 ---
 
-## Step 5 — Handoff
+## Step 6 — Handoff
 
 Print to the operator:
 
 ```
-## /fix-repo-issues plan written — {N items}
+## /fix-repo-issues plan written — {N items across {M} scope(s)}
 
-Plan: [{relative path from WORKING_DIR}]({PLAN_PATH})
-Scanner notes: [{relative path}]({WORKING_NOTES_PATH})
+Plan: [{relative path}]({PLAN_PATH})
+Scanner notes:
+  - {scope_label}: {relative_notes_path}
+  - ...
 
-To execute: open a fresh session in {WORKING_DIR}, then say:
+To execute: open a fresh session, then say:
   "Execute the fix plan at {relative plan path}"
 
 Suggested cadence:
@@ -199,15 +267,18 @@ Do NOT execute any fixes in this session. Do NOT auto-spawn the execution sessio
 ## Notes
 
 - **No execution in this command.** The command writes a plan only. Any inline fix-application here would defeat the two-session split that motivates this command.
-- **Subagent contract.** The scanner writes full normalized notes to `audits/working/` and returns a ≤30-line summary, per the subagent-contract rule in `ai-resources/CLAUDE.md`.
-- **Scope hint.** `$ARGUMENTS` is a free-form filter, not a structured flag. Honor it in Step 2 prioritization. If unparseable, ignore and note in Step 3 assumptions.
-- **Plan-file QC.** Plan files are substantive artifacts. After Step 4, an operator running `/qc-pass` on the written plan is appropriate but not auto-triggered — the inline clarify gate at Step 3 already provided one round of operator review.
+- **Subagent contract.** The scanner writes full normalized notes to `audits/working/` per scope and returns a ≤30-line summary per invocation, per the subagent-contract rule in `ai-resources/CLAUDE.md`.
+- **Scope-prefixed ids.** Each scanner has its own `id-01..id-NN` numbering scoped to its working directory. The main session aggregates across scopes using scope-slug prefixes (`[ai-resources/id-01]`, `[workspace/id-01]`, `[project-{name}/id-01]`) — no global renumbering. Notes files always co-locate under `ai-resources/audits/working/` regardless of source scope (single audit-trail directory).
+- **Triage hint.** `$ARGUMENTS` is a free-form filter applied to triage (Step 3), not to scope selection (Step 1). If unparseable, ignore and note in Step 4 assumptions.
+- **Plan-file QC.** Plan files are substantive artifacts. After Step 5, an operator running `/qc-pass` on the written plan is appropriate but not auto-triggered — the inline clarify gate at Step 4 already provided one round of operator review.
 - **Boundary recap.** Sibling commands and their distinct triggers:
   - `/open-items` — read-only inline backlog report (no plan file).
   - `/fix-repo-issues` — proactive batch-plan from the persistent backlog (this command).
   - `/resolve-repo-problem` — reactive single-fault triage (something broke).
   - `/friday-act` — Friday-cadence orchestrator (audit-driven, tier-aware).
   - `/resolve` — post-QC triage (QC-finding-sourced fixes only).
+  - `/innovation-sweep` — innovation-registry triage (untriaged detected entries).
+  - `/create-skill` — inbox brief fulfillment (build-shaped items).
 - **No companion execute command.** The plan file is self-explanatory enough that fresh-session Claude can pick it up via natural language. If execution sessions repeatedly need scaffolding, revisit and consider a `/execute-fix-plan` sibling.
 
 $ARGUMENTS
