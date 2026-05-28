@@ -48,7 +48,7 @@ Accept shorthand: "yy" / "yes both" / "both" = both yes; "nn" / "skip both" = bo
 
    Detection uses two independent signals to catch both incident shapes:
    - **Today-header delta** — catches the case where the foreign session created its own `## YYYY-MM-DD` header (different header from this session's).
-   - **Mandate-line delta** — catches the case where the foreign session ran `/prime` first and reused this session's already-existing today-header (per `/prime` Step 8a.3.a / 8b.1 header-reuse rule), then appended its mandate UNDER the shared header. Header count stays flat (1); mandate-line count rises.
+   - **Mandate-line delta** — catches the case where the foreign session ran `/prime` first and reused this session's already-existing today-header (per `/prime` Step 8a.3.a / 8b.3.a header-reuse rule), then appended its mandate UNDER the shared header. Header count stays flat (1); mandate-line count rises.
 
    Run the following Bash detector:
 

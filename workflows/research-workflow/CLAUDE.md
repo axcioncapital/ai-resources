@@ -57,6 +57,8 @@ Artifact chain: Task Plan → Research Plan → Answer Specs → Deep Research R
 
 **IMPORTANT:** For detailed stage instructions, read `reference/stage-instructions.md`. For file naming rules, read `reference/file-conventions.md`. For QC standards and evidence handling, read `reference/quality-standards.md`. For writing voice and style, read `reference/style-guide.md`. Only load these when actively working on the relevant stage or task.
 
+**Deployment contract:** For the list of reference files this workflow requires every consuming project to provide (path, role, consuming-command map), read `docs/required-reference-files.md`. Consult before deploying this workflow template to a new project.
+
 ## Skill Dependency Chain
 
 Research workflow skills form a pipeline. When modifying any skill in this chain, check downstream skills for impact:

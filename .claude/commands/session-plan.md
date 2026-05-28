@@ -18,7 +18,7 @@ Read `logs/session-notes.md`. Look for a `## {YYYY-MM-DD}` header matching today
 
   If yes, perform intent-comparison conflict detection:
 
-  0. **Same-session short-circuit (own-session marker check).** Run BEFORE the intent comparison. The marker `logs/.prime-mtime` is written by `/prime` Step 8a.3.a / 8b.1 / 8c.3 after `/prime` appends today's header to `session-notes.md` — its contents are `session-notes.md`'s mtime at that moment, serving as a "this session's `/prime` ran at T" timestamp.
+  0. **Same-session short-circuit (own-session marker check).** Run BEFORE the intent comparison. The marker `logs/.prime-mtime` is written by `/prime` Step 8a.3.a / 8b.3.a / 8c.3 after `/prime` appends today's header to `session-notes.md` — its contents are `session-notes.md`'s mtime at that moment, serving as a "this session's `/prime` ran at T" timestamp.
 
      - If `logs/.prime-mtime` is absent → set `SAME_SESSION = false` (no marker, no determination possible). Proceed to sub-step 1.
      - If `logs/.prime-mtime` exists → read its value as `PRIME_MTIME` and capture `PLAN_MTIME` = `session-plan.md` mtime (`stat -f %m` macOS / `stat -c %Y` Linux).

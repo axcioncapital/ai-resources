@@ -48,7 +48,7 @@ TODAY_EPOCH=$(date -j -f "%Y-%m-%d %H:%M:%S" "$(date '+%Y-%m-%d') 00:00:00" "+%s
 
 (macOS `date -j -f` and Linux `date -d` both need an explicit `00:00:00` time component — without it, BSD `date` fills in the current hour/min/sec instead of midnight, breaking the freshness check.)
 
-**Primary check (marker file).** If `logs/.prime-mtime` exists, read it (the mtime `/prime` wrote after its today's-header append in Step 8a.3.a or 8b.1):
+**Primary check (marker file).** If `logs/.prime-mtime` exists, read it (the mtime `/prime` wrote after its today's-header append in Step 8a.3.a, 8b.3.a, or 8c.3):
 
 - **Freshness window:** if the marker mtime is older than today's start-of-day (`PRIME_MTIME < TODAY_EPOCH`), treat the marker as absent and fall through to the heuristic. Emit one loud line: `[Step 0.5] Note: logs/.prime-mtime is stale (older than today) — using 120s heuristic fallback.` Protects against stale markers from abandoned `/prime` chains.
 - **Fresh marker:** compute `DELTA = SESSION_NOTES_MTIME - PRIME_MTIME`. If `DELTA > 0`, a foreign session wrote to `session-notes.md` after this session's `/prime` finished → set `FOREIGN_WRITE=1`. If `DELTA = 0`, the file mtime matches `/prime`'s marker → no foreign write → proceed silently to Step 1.

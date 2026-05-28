@@ -75,7 +75,8 @@ Suggested three-session sequence:
 
 ### 2026-05-22 — workflow-diagnosis skill brief overlaps improvement-analyst — document the boundary before building
 
-- **Status:** logged (pending)
+- **Status:** applied 2026-05-28
+- **Verified:** 2026-05-28 — new `## Workflow-improvement surfaces` section added to `ai-resources/docs/ai-resource-creation.md` covering both surfaces: `improvement-analyst` (session-friction-driven, invoked via `/improve` + `/friday-checkup` Step K monthly/quarterly) and `workflow-diagnosis` skill / `/diagnose-workflow` command (artifact-defect-driven, not yet built — inbox brief at `inbox/workflow-diagnosis.md`). Includes trigger phrasing, input/surface differentiation, routing rule with anti-routing language, complementary-not-redundant clarification, and status note marking the command name `/diagnose-workflow` as provisional until `/create-skill` runs. /qc-pass verdict REVISE → fixes applied (provisional-name softening). Source: Wave 2 fix-plan item id-29.
 - **Category:** process
 - **Friction source:** resource brief `inbox/workflow-diagnosis.md` (requested 2026-05-19), Exclusions section — explicitly lists "Analyze session-level friction or process issues (that's `improvement-analyst` agent)" as a non-goal
 - **Proposal:** The boundary between the planned `workflow-diagnosis` skill (artifact-defect-driven workflow fixes) and the `improvement-analyst` agent (session-friction-driven workflow fixes) currently lives only in the inbox brief's prose, which is archived to `inbox/archive/` once fulfilled. When `/create-skill` processes `inbox/workflow-diagnosis.md`, add a one-paragraph routing note to `ai-resources/docs/ai-resource-creation.md` (or a short `## Workflow-improvement surfaces` section) stating the split: `improvement-analyst` agent = session-friction-driven; `workflow-diagnosis` skill / `/diagnose-workflow` = artifact-defect-driven; with trigger phrasing for each. Documentation only, no new tooling. Sequence with the `/create-skill` run that fulfills the brief. Effort small; impact medium; first occurrence.
@@ -258,7 +259,8 @@ Phased, low-risk:
 
 ### 2026-05-28 — /prime does not surface per-unit `work/{Wn}-{NAME}-README.md` files
 
-- **Status:** logged (pending)
+- **Status:** applied 2026-05-28
+- **Verified:** 2026-05-28 — new "Phase READMEs" bullet added to `/prime` Step 4 (Exception checks) scanning `work/` (one level deep) for files matching `W*-*-README.md`; captures paths only (not body). Surfaces in Step 6 brief output template as a new `⚠ Phase READMEs detected: {paths}` exception line. Bounded scan; skips silently if `work/` is absent. /qc-pass verdict REVISE → fixes applied (title-capture dropped to align with template). Optional paired warning in `/wrap-session` deferred — single-end fix lands first. Source: Wave 2 fix-plan item id-33.
 - **Category:** command/skill
 - **Source:** nordic-pe-screening-project W0 kick-off session 2026-05-28 — System Owner advisory (verdict accepted, see `projects/nordic-pe-screening-project/logs/decisions.md` row #3 and `logs/session-notes.md` 2026-05-28 wrap entry).
 - **Friction source:** `/prime` reads `logs/session-notes.md` and carries forward its Next Steps verbatim, but does not scan `work/*.md` for phase-scoped README files that may overrule the general program rubric. In 2026-05-28's W0 kick-off, a 29-line `work/W0-SETUP-README.md` ("Layer 2 child cycle: No") was missed; `/prime` carried forward yesterday's "Open the W0 child cycle…" Next Step under the general "each phase opens a child cycle" rubric. Outcome: ~190k subagent tokens + ~3 h operator time spent producing a Layer 2 context pack that the README would have prevented at turn 1. AP-1 silent-conflict-resolution failure mode.

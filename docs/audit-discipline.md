@@ -18,7 +18,7 @@ If a session touches a structural change in any of the following classes, run `/
 
 - Hook edits (`.claude/hooks/*.sh`)
 - Permission changes (`settings.json` `allow` / `ask` / `deny` edits)
-- CLAUDE.md edits that are cross-cutting (workspace-level or project-level always-loaded content that shapes every turn)
+- CLAUDE.md edits that are cross-cutting (workspace-level, project-level, or workflow-template always-loaded content that shapes every turn — workflow-template variant carries lower mitigation calibration than workspace-level; see `risk-topology.md § 1.2 — Deployable-template always-loaded`)
 - New commands or skills
 - New symlinks
 - Automation with shared-state effects (scripts that auto-write to logs, cross-repo writes, auto-commit patterns) — INCLUDES reordering or restructuring of existing shared-state ops (e.g., changing when an archive step runs relative to a log append), not only new automation

@@ -27,3 +27,27 @@ When invoking the exception:
 Recorded invocations:
 
 - **2026-04-28** — Bulk backfill of `model:` and `effort:` to all 69 existing skills (single mechanical 2-line insert per file). Verified via single-batch grep against required field presence and allowed values.
+
+## Workflow-improvement surfaces
+
+When a session identifies that a workflow (skill, command, pipeline) needs improvement, two distinct surfaces handle this — they have different inputs and different exit criteria, and must not be confused.
+
+**`improvement-analyst` agent — session-friction-driven.**
+Reads session friction events captured by the friction logger (`logs/friction-log.md`). Diagnoses recurring failure patterns observable across sessions — repeated rework cycles, misclassifications, hook misfires, navigation friction. Output proposes workflow fixes tied to friction signal frequency, ordered by ROI. Invoked via `/improve` at session-end and by `/friday-checkup` monthly catch-up.
+
+- **Trigger:** "Sessions are producing recurring friction X — what workflow change would prevent it?"
+- **Input:** session friction logs.
+- **Surface:** session-level workflow weaknesses observable only across multiple runs.
+
+**`workflow-diagnosis` skill / `/diagnose-workflow` command — artifact-defect-driven.**
+Reads a delivered artifact (a chapter, a report, a section directive) and a defect description. Traces the defect back through the workflow chain to identify which workflow step produced the gap. Output proposes workflow fixes tied to the specific defect class. Invoked when an artifact has a concrete defect whose root cause is upstream in the workflow.
+
+- **Trigger:** "This delivered artifact has defect X — which workflow step is the gap?"
+- **Input:** the artifact + a defect description.
+- **Surface:** artifact-level workflow gaps traceable to a single upstream step.
+
+**Routing rule.** A session that produces friction events suggesting a workflow weakness → route to `improvement-analyst` via `/improve`. A delivered artifact with a defect whose cause traces back to a workflow step → route to `workflow-diagnosis` / `/diagnose-workflow`. Friction signals are inputs to the analyst; artifact defects are inputs to the diagnosis skill. Do not run the analyst against an artifact defect, and do not run the diagnosis skill against session-friction telemetry — the inputs do not generalize and the outputs would be misdirected.
+
+The two surfaces are complementary, not redundant: the analyst sees patterns across sessions; the diagnosis skill sees a single concrete failure with a backwards trace. A workflow weakness may surface through both paths independently — that's expected, not double-counting.
+
+Status note: the `workflow-diagnosis` skill is in the resource pipeline (`inbox/workflow-diagnosis.md`) as of 2026-05-19 and is not yet built. The command name `/diagnose-workflow` used above is the leading candidate per the inbox brief's "Likely implementation surface" line — the final name is set when `/create-skill` runs and may change. Until the skill ships, all workflow-improvement work routes through `improvement-analyst`. This boundary doc lands first to prevent the planned skill from being conflated with the analyst once it is built; the command-name reference should be reconciled with the actual name at skill-creation time.
