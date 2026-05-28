@@ -412,4 +412,45 @@ Designed and shipped an autonomous session-bootstrap feature. Started as a propo
 
 ---
 
-**New session intent:** Execute the 8-item fix plan at `audits/fix-plans/fix-repo-issues-2026-05-28-1121.md`.
+## 2026-05-28 — Execute /fix-repo-issues 8-item fix plan
+
+Class: execution
+
+**Mandate:** Execute the 8-item fix plan at `audits/fix-plans/fix-repo-issues-2026-05-28-1121.md` — done when: all 8 items applied with their post-fix log updates in place, QC recorded for id-02 (and id-06 path a if taken), and commits landed per item or per logical batch.
+- Out of scope: Parked items listed in the plan (50+ pending-triage / multi-file-refactor / not-yet-actionable / needs-/innovation-sweep / needs-/create-skill / needs-dedicated-session entries).
+- Files in scope: (inferred)
+- Stop if: A registry row's canonical path is wrong on spot-check (id-11+ / id-05+) — surface instead of flipping silently; id-03 verification finds `output/_appendix/rejected_directions.md` missing or empty; id-02 step 5 fires (no reliable own-session marker exists) — surface before picking define-one vs document-limitation; id-06 deny pattern is structurally protecting something else — surface before applying path a.
+
+### Summary
+
+Executed 7 of 8 items from `audits/fix-plans/fix-repo-issues-2026-05-28-1121.md`. Three commits batched the log-hygiene work (Batch A: symlink + 9 ai-resources + 6 nordic innovation-registry status flips; Batch B: 2 brand-book improvement-log updates; item 6: nordic /session-plan parity verify). Two QC-gated items (id-02 same-session short-circuit in ai-resources `/session-plan` Step 0; id-06 brand-book settings.json deny) were handled separately — id-02 shipped with plan-time `/risk-check` GO + `/qc-pass` REVISE→fix; id-06 deferred at operator decision because the deny pattern is structurally protective and the entry's own Proposal (pre-flight check in `/draft-module`) is the better fix.
+
+### Files Created
+- `ai-resources/audits/risk-checks/2026-05-28-session-plan-same-session-short-circuit.md` — plan-time risk-check report for id-02 (verdict GO)
+- `ai-resources/logs/session-plan.md` — overwrote prior 2026-05-27 plan with today's plan
+- `ai-resources/logs/scratchpads/2026-05-28-21-00-scratchpad.md` — continuity scratchpad (gitignored)
+
+### Files Modified
+- `ai-resources/.claude/commands/session-plan.md` — Step 0 same-session short-circuit (new sub-step 0 marker check + sub-step 6 override; stale-marker freshness window added per QC REVISE fix)
+- `ai-resources/logs/innovation-registry.md` — id-01 row → `removed`; 9 rows flipped `triaged:graduate` → `graduated`
+- `ai-resources/logs/improvement-log.md` — new 2026-05-28 entry for /session-plan short-circuit
+- `ai-resources/logs/session-notes.md` — this wrap
+- `projects/nordic-pe-macro-landscape-H1-2026/logs/innovation-registry.md` — 6 rows flipped → `graduated`
+- `projects/nordic-pe-macro-landscape-H1-2026/logs/improvement-log.md` — Verified line on 2026-05-22 HIGH /session-plan port entry
+- `projects/axcion-brand-book/logs/improvement-log.md` — Verified line on backfill entry (id-03); new 2026-05-28 git-remote-verified entry (id-04); deferral note on 2026-05-27 settings.json entry (id-06)
+- `projects/axcion-brand-book/logs/friction-log.md` — `[FADING-GATE] verified 2026-05-28` annotation on 2026-05-26 19:56 entry (id-02)
+
+### Decisions Made
+- **id-04 (brand-book git remote): bypassed plan default.** Plan said default to `git remote remove origin`; actual URL `axcioncapital/brand-book.git` is reachable (`git ls-remote` exit 0). Removing would have lost a working remote. Logged as Verified-only — fix-plan's stated 404 was either stale at audit time or a misread. Recurring open-question across 2026-05-25..28 wraps closed.
+- **id-02 (ai-resources /session-plan short-circuit): shape decision.** Used the `logs/.prime-mtime` marker (introduced May 2026 for `/session-start` Step 0.5) as the own-session marker rather than the heuristic from brand-book usage-log 2026-05-26 ("detect wrap-format entry: `### Summary` + `### Next Steps` within today's `## ` block"). The marker is cleaner — no narrative-format parsing, single source of truth, established consumer pattern in `/session-start`. Sub-step 0 + sub-step 6 override structure preserves the existing MISMATCH branch for genuine foreign-session collisions.
+- **id-02: end-time /risk-check skipped per `feedback_end_time_risk_check_skip`.** Plan-time gate covered (verdict GO across all 5 dimensions); /qc-pass clean after the one REVISE fix; drift bounded to a single command edit. Documented in commit `150f145`.
+- **id-02 QC fix applied inline without re-QC.** Single mechanical addition (stale-marker freshness window) mirroring an established pattern from `/session-start` Step 0.5 verbatim — regression risk minimal. Per `feedback_minimal_infra_subset`.
+- **id-06 (brand-book settings.json): deferred (operator decision).** Surfaced as stop point because the `Write(./brand-book/0[1-8]_*.md)` deny pattern is structurally protective (lock-and-protect for all 8 module files, paired with per-module allow overrides). Plan's path (a) would break the design; path (b) is doc-only and friction recurs. Operator chose to defer; a follow-up session should adopt the improvement-log entry's own Proposal (Write-permission pre-flight check in `/draft-module` Step 1).
+
+### Next Steps
+- **Push gate.** 14 unpushed commits: 1 in ai-resources (`150f145`), 2 in brand-book (`aa3abf1` + `e053131`), 11 in nordic-pe-macro (`838a128` + `97e962d` from this session + 9 carryover from parallel-terminal FX-B1 work). Operator approval required (Autonomy Rule #2). Concurrent session pushed earlier carryover during this session — at `/prime` time `ai-resources` had 22 unpushed; at wrap-time only 1.
+- **id-06 follow-up session.** Deferred. Adopt the improvement-log entry's own Proposal: add Write-permission pre-flight check to `projects/axcion-brand-book/.claude/commands/draft-module.md` Step 1 — parse `.claude/settings.json` allow array for matching pattern; halt early with clear remediation message. Counts as command edit (structural change class) — needs `/risk-check` + `/qc-pass`.
+- **Concurrent-session foreign edits in ai-resources working tree.** Untouched this session, left for the parallel terminal to commit: `.claude/commands/consult.md`, `.claude/commands/friday-checkup.md`, `docs/agent-tier-table.md`, `docs/ai-resource-creation.md`, `skills/prose-formatter/SKILL.md`, 2 workflow command files, 2 workflow reference files, plus untracked `.claude/agents/project-manager.md` + `.claude/commands/pm.md` (the PM agent + command).
+
+### Open Questions
+- None.

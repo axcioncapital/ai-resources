@@ -140,3 +140,11 @@
 - **QC cycles:** 1 (REVISE → 2 critical findings fixed inline → re-tested live → approved by self-check)
 - **Gates:** 5 (4 confirmed, 1 changed) — plan-approval:confirmed, content-review:confirmed, qc-disposition:changed (REVISE→fixes applied), challenge-disposition:confirmed (SO concur with PROCEED-WITH-CAUTION), service-design-disposition:confirmed (M4 strengthening from LLM to mechanical)
 - **Mandate fields:** specified: work_scope, exit_condition, out_of_scope | omitted: files_in_scope, stop_if, allowed_inputs, required_outputs
+
+### 2026-05-28 — Execute /fix-repo-issues 8-item fix plan (7 applied, id-06 deferred)
+- **Commands used:** /prime, /session-start, /session-plan, /risk-check, /qc-pass, /wrap-session
+- **Iterations:** 1 (id-02 short-circuit draft → REVISE → stale-marker freshness window added → no re-QC per minimal-infra-subset)
+- **Decisions logged:** 0 (operator-directed defaults + binary judgments; captured in session-notes only)
+- **QC cycles:** 1 (REVISE → 1 finding applied inline → no re-QC)
+- **Gates:** 2 (1 changed) — plan-approval:confirmed (operator `go` without changes), qc-disposition:changed (REVISE finding required code fix)
+- **Mandate fields:** specified: work_scope, out_of_scope, stop_if, exit_condition | inferred: files_in_scope | omitted: allowed_inputs, required_outputs

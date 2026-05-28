@@ -995,3 +995,34 @@ Stability vs. prior entries: This session is cleaner than the 2026-05-16 cleanup
 - **Symlink-check-first preflight in /resolve-repo-problem investigator (~2-4k tokens when triggered).** Already logged this session as a Quick Patch in improvement-log; horizon savings ~5-10k if the same false-positive class recurs 2-3×. Smaller than primary because /resolve-repo-problem fires less frequently than docs edits.
 - **Trust /consult subagent return summary; skip full-read of system-owner advisory (~1-2k tokens/session when chain fires).** Same recurring lever flagged in 2026-05-25 and 2026-05-26 entries. Not yet structurally addressed. Smaller per-session but cumulative across the chain.
 - **Pin friction-log + improvement-log + decisions.md tails into a consolidated /prime read (~800-1.5k tokens/session, every session).** Recurring lever — flagged in 6+ prior entries. Lowest per-session but highest frequency; structural fix would close a standing pattern.
+
+### 2026-05-28 | Acceptable
+
+**Task:** Executed 7 of 8 items in the `/fix-repo-issues` plan (`audits/fix-plans/fix-repo-issues-2026-05-28-1121.md`) — judgment-heavy on items 7 (same-session MISMATCH short-circuit with plan-time /risk-check + /qc-pass) and 8 (id-06 deferred by operator); 7 commits shipped across 3 repos (ai-resources, axcion-brand-book, nordic-pe-macro-landscape-H1-2026).
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | not reported |
+| Files read | ~10 |
+| Files written/edited | ~15 (7 commits across 3 repos) |
+| Tool calls | ~70 (Bash ~35, Read ~10, Edit ~12, Write ~3, Agent 2, Skill 5, TodoWrite 6, AskUserQuestion 1) |
+| Subagents | 2 (risk-check-reviewer, qc-reviewer) |
+| Rework cycles | 1 (item 7 QC REVISE — 1 finding fixed inline without re-QC per `feedback_minimal_infra_subset`) |
+
+**Findings:**
+- **Tool overhead — Minor.** Bash ~35 is high for a 7-item execution session — driven by multi-repo git ops (status/fetch/commit chains across 3 repos × ~3-4 ops each). Cross-repo execution is inherently bash-heavy; per-repo state probing dominated. Not addressable without restructuring the plan into repo-batched waves.
+- **Rework — Minor (load-bearing).** Item 7 QC REVISE caught a real freshness-window gap in the stale-marker logic (1 finding). Fix applied inline without re-QC per established memory rule for minimal-infra deltas. Working as designed — not waste.
+- **Decision-point posture held.** 5 inline operator decisions made (id-04 plan default override, id-02 marker shape choice, id-02 end-time /risk-check skip, id-02 inline QC fix, id-06 deferral signaled to operator) — no opinion-seeking asks; consistent with `feedback_decision_point_posture`.
+- **Concurrent session detected.** At /prime time `ai-resources` had 22 unpushed commits; at wrap time only 1 (parallel terminal pushed mid-session). Working tree carries foreign edits (consult.md, friday-checkup.md, agent-tier-table.md) untouched by this session — structural pattern, not waste. Today's shipped same-session short-circuit (item 7) directly addresses the recurring MISMATCH false-positive that prompted this fix plan (4× recurrence in brand-book project).
+- **Re-reads — None flagged.** No repeat reads of the same file at the same offset reported.
+- **Trend vs last 3 entries:** Stable Acceptable. Single-cycle rework with a load-bearing QC catch matches the 2026-05-27 pattern; subagent count (2) is leaner than recent multi-item sessions (5+); 7 commits across 3 repos demonstrates high per-call leverage.
+
+**Recommendation:** When executing a multi-item plan that spans ≥3 repos, batch the per-repo state-probe sequence (fetch + status + push-check) into a single bash invocation per repo at session start, and cache the result for the wrap-time verify pass — avoids the ~3-4 separate bash calls per repo × 3 repos that drove this session's bash-heavy count.
+
+**Estimated savings:** ~1,200-2,000 tokens per multi-repo execution session. Derivation: 3 repos × (3-4 redundant bash status probes - 1 consolidated probe) ≈ 6-9 calls avoided × ~150-200 tokens each ≈ 1.2-1.8k tokens. Multi-repo execution sessions occur ~1-2×/week → 5-15k tokens over 10-20 sessions. Smaller than recent recommendations because cross-repo state probing is inherently bash-heavy; consolidation only trims, not eliminates.
+
+**Additional levers (ROI-ranked):**
+- **Trust /consult subagent return summary; skip full-read of system-owner advisory (~1-2k tokens/session when chain fires).** Same recurring lever flagged in 2026-05-25, 2026-05-26, and 2026-05-27 entries — now 4-session recurrence without structural fix. Bigger than primary in horizon terms because the /risk-check → /consult chain fires more often than multi-repo execution sessions.
+- **Same-session short-circuit shipped this session itself (~3-5k tokens/session when MISMATCH false-positive fires).** Item 7 directly closes the recurring brand-book pattern (4× recurrence). Not a future lever — already shipped; counts as resolved structural waste.
+- **Codify the inline-QC-fix-without-re-QC rule into wrap-session preflight (~5-8k tokens when applicable).** Already memory-feedback'd; per `feedback_minimal_infra_subset` Patrik will drop low-value QC re-cycles. Formalizing once saves every applicable session — smaller per-session than primary but one-shot.
+- **Pin friction-log + improvement-log + decisions.md tails into a consolidated /prime read (~800-1.5k tokens/session, every session).** Recurring lever — flagged in 7+ prior entries now. Lowest per-session but highest frequency; structural fix would close a standing pattern.
