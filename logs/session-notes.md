@@ -553,3 +553,33 @@ Operator asked why every project session was hitting a permission block on `git 
 ### Open Questions
 
 - None.
+
+## 2026-05-28 — /resolve-improvement-log archival sweep
+
+### Summary
+
+Ran `/resolve-improvement-log` to archive resolved improvement-log entries. Archived 14 entries (13 with `Status: applied + Verified:` confirmed-resolved + 1 with "not urgent" no-active-friction signal) to `logs/improvement-log-archive.md`. Active log now holds 15 pending entries (was 29). No warm-pending (>21d) or stale-pending (>42d) entries — all pending entries are 0-3 days old. `/prime` brief surfaced 3 next-tasks (push pending commits, finish Wave 3, `/improve` analysis); operator went directly to `/resolve-improvement-log` instead of picking a menu task.
+
+### Files Created
+
+- None.
+
+### Files Modified
+
+- `ai-resources/logs/improvement-log.md` — removed 14 archived entries; 15 pending entries remain.
+- `ai-resources/logs/improvement-log-archive.md` — appended 14 archived entries verbatim in chronological order (oldest first).
+
+### Decisions Made
+
+- **Bash heredoc append workaround for archive file** — `Read(logs/*archive*.md)` is denied in `.claude/settings.json` (intentional: archives are write-only from Claude's perspective). The spec's "read archive, merge, sort, rewrite" path is blocked. Used `cat >> archive.md <<'EOF' … EOF` instead — append-only, doesn't require reading. Tradeoff: strict chronological ordering across the full archive may not hold if older entries already exist below the appended block; mitigated by the fact that newly-archived entries are themselves chronological among themselves.
+- **`y` interpreted as confirming both prompts in one go** — displayed the Step 3c "no active friction" prompt and the Step 4 "13 resolved" prompt in a single message; operator's `y` was taken as `y` to both batches (14 total). Could have re-asked separately but the disposition is the same (archive) and both batches are clearly archive-shape.
+
+### Next Steps
+
+1. **Push pending commits** (carryover, still load-bearing) — 19 unpushed commits in `ai-resources` as of session start; this `/wrap-session` push step will exercise the new autonomous-push posture (Autonomy Rule #2 was relaxed earlier today, per the `## 2026-05-28 — Removed git-push approval gate workspace-wide` entry above).
+2. **Re-evaluate Wave 3 fix-plan items 2-4** — `id-09`, `id-32`, `nordic-pe-macro/id-13` against post-id-31 state. `id-31 Phase 1` (`ea93d62`) and `id-32` (`2836dfa`) already shipped by parallel sessions. Dedicated ~2-3h session.
+3. **Run `/improve`** to analyze today's session streak — concurrent-session attribution patterns are the freshest friction signal.
+
+### Open Questions
+
+- **Archive ordering across the full file** — if strict chronological ordering across the full archive matters (older entries below newly-archived ones), the deny rule for `Read(logs/*archive*.md)` would need to be lifted for a one-time read-and-rewrite. No action this round; flagging only.
