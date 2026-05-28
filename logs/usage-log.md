@@ -2,6 +2,36 @@
 
 <!-- entries below -->
 
+### 2026-05-28 | Acceptable
+
+**Task:** Designed, planned, QC'd, /consult'd (×3), /risk-check'd (×2), and shipped a new `project-manager` agent + `/pm` slash command in `ai-resources/.claude/`. Heavy plan-mode workflow with mid-implementation scope extension and a runtime-limitation finding (Task-dispatch unavailable to subagents).
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~25 |
+| Files read | 10 (re-reads: 0 full; 3 partial-different-section accesses on improvement-log.md + session-notes.md) |
+| Files written/edited | 11 |
+| Tool calls | ~70 |
+| Subagents | 14 (2 Explore parallel, 1 Plan, 3 qc-reviewer, 3 system-owner via /consult, 2 risk-check-reviewer, 3 project-manager gate-test invocations) |
+| Rework cycles | 3 (plan revised 4×; BLOCKING gate test re-run 3×; /pm rewritten mid-implementation for QC step) |
+
+**Findings:**
+- **System-owner spawn chain — Moderate (tool overhead).** /consult ×3 + /risk-check ×2 chained another /consult on each non-GO second-opinion, producing ~5-6 system-owner invocations in one session. Each spawn re-reads ~150 lines of agent references. Highest-leverage waste in this session.
+- **Plan-file edit churn — Moderate (rework).** ~10 Edit operations on `i-want-to-build-tidy-lake.md` across 4 plan revisions (QC1 REVISE → fix → scope-extension → SO findings fold-in). Each cycle is structurally necessary (QC gates fired correctly) but the surface area is large.
+- **BLOCKING gate test thrash — Moderate (rework).** 3 project-manager invocations to verify Task-dispatch availability: 2× API 529 overload + 1 mis-shaped question requiring retry. Two of three were external (API), but the mis-shaped retry was avoidable with sharper test design upfront.
+- **Partial multi-access on log files — Minor (context bloat).** improvement-log.md and session-notes.md each accessed 3× via Bash tail/grep + targeted Read slices — different sections, not true re-reads, but pattern recurs across sessions.
+- **Heredoc-append discipline — positive signal.** decisions.md + coaching-data.md appended via Bash heredoc (R6 pattern), avoiding full Reads on 489+ line files. Subagent contracts honored (risk-check-reviewer wrote to disk, returned ≤20-line summary; /consult outputs not re-derived).
+- **Trend vs last 3 entries:** consistent Acceptable rating; the system-owner spawn-chain pattern is new at this magnitude (prior sessions flagged single SO inline-duplication; this session escalates to multi-spawn chaining via /risk-check second-opinion contract).
+
+**Recommendation:** Audit the `/risk-check` → /consult chaining contract. When risk-check-reviewer returns non-GO, the automatic second-opinion /consult spawn fires a fresh system-owner agent — consider whether the risk-check-reviewer's own output is sufficient, or whether the second-opinion can read from a cached SO context rather than a fresh spawn. Same lever applies to /consult ×3 in a single session: if two /consult calls in close succession target overlapping scope, the second could receive a "prior /consult output" pointer instead of a clean-context spawn.
+
+**Estimated savings:** ~8-12k tokens per heavy-design session (cutting 2-3 redundant system-owner spawns at ~3-4k each including reference reads). Over 10-20 session horizon: ~80-240k tokens — meaningful given system-owner is one of the heaviest agents in the repo. Derivation: each system-owner spawn reads ~150 lines of agent reference + ~260 lines of repo-architecture.md when invoked, ≈3-4k input tokens before analysis.
+
+**Additional levers (ROI-ranked):**
+- **Plan-file iteration consolidation — ~5-8k/session.** Approved-plan documents accumulate ~10 Edit operations across QC cycles. A "batch-revise" pattern (collect all QC findings + SO advisories, apply in one consolidated Edit pass per cycle rather than per-finding) would cut Edit overhead. Smaller than primary because each Edit is small, but recurs in every plan-mode session.
+- **Gate-test design discipline — ~2-3k/session when it fires.** BLOCKING gate test wasted one invocation on a mis-shaped question. Pre-flighting the test prompt against the agent's frontmatter contract before invocation would catch shape mismatches. Smaller than primary because it's situational (only fires during agent verification), but compounds with API 529 retries.
+- **Log-file access pattern — ~1-2k/session.** improvement-log.md + session-notes.md repeatedly accessed via 2-3 separate tail/grep/Read calls per session. A single combined `tail -N | grep -A` pipeline could replace 2-3 calls. Smaller than primary because each call is cheap, but the pattern is chronic (flagged in prior 3 entries).
+
 ### 2026-05-26 | Acceptable
 
 **Task:** Friction-cleanup session — 5-wave execution landing HIGH-to-MED friction + carryover work; 4 [FADING-GATE]s confirmed (single-day record); /open-items filter, /session-plan Step 0 collision detection, and self-check rubric shipped across 5 commits.

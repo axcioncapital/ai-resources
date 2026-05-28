@@ -380,3 +380,35 @@ Mid-session, a concurrent session began overwriting `logs/session-plan.md` to ru
 - (a) SKILL.md at `skills/decide/SKILL.md` — follows pipeline literally but creates structural asymmetry with composition partners. Rejected by system-owner architectural commentary.
 - (b) Slash command at `.claude/commands/decide.md` — chosen.
 - (c) Both — over-engineering. Rejected immediately.
+
+---
+
+## 2026-05-28 — Project Manager agent + /pm command — three load-bearing scoping decisions
+
+**Context.** Designed and shipped the project-manager agent + `/pm` slash command in `ai-resources/.claude/`. PM is a project-scoped advisor that grounds rulings in the active project's constitution docs (CLAUDE.md, plan, decisions, context-pack, architecture) and produces a 3-part ruling (Verdict + citation-grounded Reasoning + Recommended action). First deployment target: `nordic-pe-screening-project`. Commit `587558f`. Three decisions emerged during the build that warrant the decision journal — distinct from routine plan-execution choices.
+
+**Decisions.**
+
+1. **Internal QC step added to /pm (divergence from approved plan).** The approved plan said NO internal QC pass, mirroring `/consult`'s chat-only-return precedent. The operator added the QC step mid-implementation because PM "will be solving quite important issues" — PM rulings will be cited as load-bearing project-content decisions AND will feed forward-looking artifacts (mandate text, session-plan outlines) into `/session-start` / `/session-plan`. The QC step uses `qc-reviewer` with pass cap of 2.
+
+2. **Function-A-only escalation from PM to system-owner.** PM escalates only general-structure questions (Function A) to `system-owner` via the `Task` tool. Change-shaped structure questions (operator proposes a specific repo modification) emit Fallback 5d (REDIRECT TO `/consult`) instead of forwarding through PM. PM does NOT plumb `ROUTING_CONTEXT` from `repo-architecture.md`.
+
+3. **Ship in degraded mode for structure escalation (Option 1).** BLOCKING gate trace test confirmed Claude Code does not grant the `Task` tool to subagents at runtime, despite frontmatter declaration. PM is the first agent in the repo to actively use Task to spawn another named agent. Phase 4 fallback fires loudly (DISPATCH FAILED — operator runs `/consult` directly) per `principles.md § OP-3`. Operator chose ship-in-degraded-mode + v1.1 investigation entry over (b) hold the commit until investigation completes, or (c) rip out Phase 4 entirely (always emit "/consult redirect" deterministically).
+
+**Rationale.**
+- *Decision 1:* PM's domain (project-content advisory grounded in constitution docs) is more load-bearing than `/consult`'s general structural advisory — rulings will be cited downstream and feed mandate/plan artifacts. The QC step's cost (up to 4 Opus calls per `/pm` invocation worst case) earns its place by reducing the chance of an ungrounded ruling propagating. Data-gated v1.1 review trigger added (review qc-reviewer pass-rate after 3 invocations).
+- *Decision 2:* `principles.md § DR-7` (no speculative generalization). PM doesn't have a confirmed second consumer for ROUTING_CONTEXT replication, and Function B is genuinely operator-explicit-territory. Cleaner boundary: redirect to `/consult` for change-shaped questions.
+- *Decision 3:* `principles.md § OP-3` (loud failure over silent continuation). The DISPATCH FAILED fallback handles the runtime gap correctly. PM's primary value (project-content advisory) is unaffected. v1.1 investigation will resolve the architectural question.
+
+**Alternatives considered.**
+- *Decision 1 alternatives:* (a) no QC step, mirror `/consult` precedent — initial plan default, rejected by operator; (b) lighter "self-check" instruction inside PM Phase 5 instead of full QC spawn — not pursued (operator wanted independent QC pass).
+- *Decision 2 alternatives:* (a) PM mirrors `/consult` Step 3 and reads `repo-architecture.md` when shape=change, passing ROUTING_CONTEXT to system-owner — rejected per DR-7; (b) PM never attempts structure escalation at all (Phase 4 removed) — rejected because Function-A escalation IS useful when it works.
+- *Decision 3 alternatives:* (b) hold the commit until runtime investigation completes — rejected (delays 80% benefit on a runtime quirk); (c) restructure PM to never attempt escalation — rejected (premature de-abstraction; AP-7 in reverse).
+
+**Risk-check verdicts.**
+- Plan-time: PROCEED-WITH-CAUTION (Low / Low / Medium / Medium / Medium)
+- End-time: PROCEED-WITH-CAUTION (Medium / Low / Medium / Medium / Medium — D1 promoted)
+- System-owner Function-B advisory concurred at both gates; recommended commit.
+- 4 mitigations applied: BLOCKING dispatch trace test (fired); two-end-contract framing (both files); revert command dry-run verified; spot-check deferred to operator.
+
+Plan retained: `/Users/patrik.lindeberg/.claude/plans/i-want-to-build-tidy-lake.md`.

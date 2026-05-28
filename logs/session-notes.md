@@ -454,3 +454,35 @@ Executed 7 of 8 items from `audits/fix-plans/fix-repo-issues-2026-05-28-1121.md`
 
 ### Open Questions
 - None.
+
+## 2026-05-28 — Project Manager agent + /pm command landing
+
+### Summary
+Designed, planned, QC'd, /consult'd, /risk-check'd twice, and shipped the **project-manager agent + `/pm` slash command** in `ai-resources/.claude/`. PM is a project-content advisor that grounds mid-session rulings in the active project's constitution docs (CLAUDE.md, plan, decisions, context-pack, architecture) and produces a 3-part ruling (Verdict + citation-grounded Reasoning + Recommended action). Pairs with `/consult` (workspace-structure) via cross-references in both intros. First deployment target: `nordic-pe-screening-project` (auto-symlinks materialized). Commit `587558f` — 6 files, 529 insertions.
+
+### Files Created
+- `ai-resources/.claude/agents/project-manager.md` (237 lines, Opus, Read/Grep/Glob/Task tools, 5-phase procedure, 4 fallbacks)
+- `ai-resources/.claude/commands/pm.md` (167 lines, Opus, dispatcher with internal QC step via qc-reviewer)
+- `ai-resources/audits/risk-checks/2026-05-28-end-time-pm-agent-and-pm-command.md` (end-time risk-check report)
+- `ai-resources/logs/scratchpads/2026-05-28-12-08-scratchpad.md` (continuity scratchpad)
+
+### Files Modified
+- `ai-resources/.claude/commands/consult.md` — cross-ref line in intro + two-end-contract comment near Step 2 (lines 42-58)
+- `ai-resources/docs/agent-tier-table.md` — one row added (project-manager / opus / Judgment)
+- `ai-resources/logs/improvement-log.md` — 4 pending v1.1 entries appended (forward-looking review trigger after 3 paste cycles; classifier extraction to shared reference; Task-dispatch investigation; QC-step pass-rate review after 3 invocations)
+- `ai-resources/logs/session-notes.md` — this wrap
+
+### Decisions Made
+- **QC step added to /pm (plan divergence, operator-directed).** Approved plan said no internal QC (mirroring `/consult` precedent). Operator added the QC step mid-implementation because "PM will be solving quite important issues." Internal QC via `qc-reviewer` with pass cap of 2. Trade-off: up to 4 Opus calls per `/pm` invocation worst case. End-time risk-check promoted D1 Usage cost Low → Medium accordingly. Data-gated v1.1 review trigger logged (review qc-reviewer pass-rate after 3 invocations; decision matrix: ≥90% → remove; 60–90% → relax pass cap; <60% → keep). Divergence documented in `/pm` executor notes for audit trail.
+- **Ship in degraded mode for structure escalation (Option 1).** BLOCKING gate trace test confirmed Claude Code does not grant the `Task` tool to subagents at runtime, regardless of frontmatter declaration. PM was designed to spawn `system-owner` via Task for general-structure escalation; Phase 4 fallback fires loudly (DISPATCH FAILED → operator runs `/consult` directly) per `principles.md § OP-3`. Operator chose ship-with-loud-fallback + v1.1 investigation entry over the alternatives (hold for fix, or rip out the escalation path entirely). Investigation logged for next Friday-act wave.
+- **Function-A-only escalation (no Function B from PM).** PM escalates only general-structure questions (Function A); change-shaped structure questions emit Fallback 5d (REDIRECT TO `/consult`). Rationale: Function B requires `ROUTING_CONTEXT` from `repo-architecture.md` which `/consult` itself reads; replicating that read inside PM duplicates plumbing and silently couples PM to the architecture-map file. Cleaner boundary.
+- **Two-end-contract framing for the change-shape classifier duplication.** The classifier list at `consult.md:42-58` is now duplicated verbatim in `project-manager.md` Phase 3 per the design. Per system-owner Function-B advisory + risk-check second opinion, the duplication is named explicitly as a two-end contract per `risk-topology.md § 5` in BOTH files. v1.1 extraction to a shared reference doc logged in improvement-log.
+
+### Next Steps
+- **Push gate.** New commit `587558f` in `ai-resources/` is unpushed. Push requires explicit operator approval (Autonomy Rule #2).
+- **Spot-check `/pm` from a non-Nordic-PE project** (deferred from end-time risk-check mitigations). Run `/pm "test"` from `projects/axcion-ai-system-owner/` or similar to confirm bounded behavior across the auto-sync fan-out.
+- **Friday-act backlog grew by 4 v1.1 entries.** Forward-looking-in-PM review (after 3 paste cycles), classifier extraction to shared reference, Task-dispatch investigation, QC-step pass-rate review.
+- **Pre-existing uncommitted changes from prior parallel terminal** remain in working tree, untouched by this session: workspace-root `.claude/commands/friday-checkup.md`, workspace-root `logs/{friction-log,improvement-log,session-notes}.md`, several `workflows/research-workflow/` files. Future session should triage.
+
+### Open Questions
+- None.

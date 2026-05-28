@@ -148,3 +148,11 @@
 - **QC cycles:** 1 (REVISE → 1 finding applied inline → no re-QC)
 - **Gates:** 2 (1 changed) — plan-approval:confirmed (operator `go` without changes), qc-disposition:changed (REVISE finding required code fix)
 - **Mandate fields:** specified: work_scope, out_of_scope, stop_if, exit_condition | inferred: files_in_scope | omitted: allowed_inputs, required_outputs
+
+### 2026-05-28 — Project Manager agent + /pm command landing
+- **Commands used:** /clarify, /scope, plan-mode (Explore ×2 + Plan ×1 subagents), /qc-pass (×3), /consult (×3), /risk-check (×2 plan-time + end-time), /wrap-session
+- **Iterations:** 4 (plan: initial → QC REVISE → GO post-fix → scope extension → GO; implementation: 1 run with runtime-limitation finding; QC-step addition mid-implementation by operator)
+- **Decisions logged:** 1 (combined entry covering 3 sub-decisions: internal QC step plan divergence, Function-A-only escalation, ship in degraded mode for structure escalation)
+- **QC cycles:** 3 (plan QC1 REVISE → 3 required fixes applied; plan QC2 GO post-fix; plan QC3 GO post-scope-extension)
+- **Gates:** 8 (3 changed) — plan-approval:confirmed (operator approved /scope), plan-approval:confirmed (operator approved revised plan post-system-owner-shaping), challenge-disposition:confirmed (system-owner Function-B broader-plan advisory accepted), challenge-disposition:confirmed (plan-time risk-check PROCEED-WITH-CAUTION + SO concur accepted), content-review:changed (operator added QC step to /pm mid-implementation — directed modification, divergence from approved plan), challenge-disposition:changed (operator chose Option 1 ship-in-degraded-mode for BLOCKING gate finding), challenge-disposition:confirmed (end-time risk-check verdict + SO concur accepted), qc-disposition:changed (plan QC REVISE → 3 fixes applied inline)
+- **Mandate fields:** none (no /session-start this session — /prime ran in plan-mode at session start; operator immediately invoked /clarify and the session entered plan-mode workflow without a separate /session-start)
