@@ -1056,3 +1056,32 @@ Stability vs. prior entries: This session is cleaner than the 2026-05-16 cleanup
 - **Same-session short-circuit shipped this session itself (~3-5k tokens/session when MISMATCH false-positive fires).** Item 7 directly closes the recurring brand-book pattern (4× recurrence). Not a future lever — already shipped; counts as resolved structural waste.
 - **Codify the inline-QC-fix-without-re-QC rule into wrap-session preflight (~5-8k tokens when applicable).** Already memory-feedback'd; per `feedback_minimal_infra_subset` Patrik will drop low-value QC re-cycles. Formalizing once saves every applicable session — smaller per-session than primary but one-shot.
 - **Pin friction-log + improvement-log + decisions.md tails into a consolidated /prime read (~800-1.5k tokens/session, every session).** Recurring lever — flagged in 7+ prior entries now. Lowest per-session but highest frequency; structural fix would close a standing pattern.
+
+### 2026-05-28 | Acceptable
+
+**Task:** Evaluated a 7-file spec bundle for a 5-phase Incident-Resolution & Change-Safety System and shipped the MVP — 1 new slash command (`/resolve-incident`), 2 governance docs, 1 operational log, 1 audit subdir, and a deprecation note on `/resolve-repo-problem`. Single commit, 520 insertions across 8 files.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~14 |
+| Files read | 16 (re-reads: 1 — session-notes.md tail read twice, different regions) |
+| Files written/edited | ~13 (5 new + 8 edited; plus 3 log appends via heredoc) |
+| Tool calls | ~58 (Bash ~22, Read ~10, Write ~7, Edit ~15, Skill ×2, Agent ×5, AskUserQuestion ×4, ExitPlanMode ×1) |
+| Subagents | 5 |
+| Rework cycles | 2 |
+
+**Findings:**
+- **Rework — Major:** Two rework cycles on the same workstream — plan file required 7 QC fixes (4 self-resolve + 3 operator-judgment via AskUserQuestion), then command body required 4 mitigations + 2 system-owner additions after PROCEED-WITH-CAUTION risk-check. Both cycles applied inline without re-QC, which contained cost, but the underlying signal is that the spec's scope ambiguity ("evaluate and write MVP plan") was carried into planning rather than resolved upfront. Tighter pre-clarify scope-fixing would have collapsed one cycle.
+- **Missed parallelization — Minor:** Four early planning reads (risk-check.md, resolve-repo-problem.md, repo-architecture.md, templates/README.md) ran sequentially with no dependency; same pattern in /decide repo-discovery reads. Informational only.
+- **Context bloat — Minor:** /consult invocation pulled the full system-owner advisory text into main-session context — same recurring lever flagged in 2026-05-25, 2026-05-26, 2026-05-27, 2026-05-28 telemetry. Sub-30-line return is the subagent contract; advisory output exceeds it by design.
+- **Tool overhead — Minor:** Bash count (~22) inflated by /wrap-session protocol (foreign-session guard + archive check + heredoc appends to three logs). Inherent to wrap; not addressable per-session.
+- **Trend:** Stable — fourth consecutive Acceptable rating (2026-05-25 ×2, 2026-05-26, 2026-05-28), with rework remaining the dominant pattern across the streak.
+
+**Recommendation:** When operator hands a multi-file spec bundle with ambiguous build scope ("evaluate and write plan"), front-load a hard MVP-cut decision in /clarify Step 1 — not in /decide — so the plan file enters /qc-pass with scope already bounded. Rework on planning artifacts is the largest recurring loss across the last 4 sessions; resolving scope before plan-drafting collapses the QC-fix cycle.
+
+**Estimated savings:** ~6–10k tokens/session in avoided plan-file QC rework (7 Edits × ~500 tokens each + 1 triage subagent ~3k + AskUserQuestion overhead ~1–2k). Over a 10–20 session horizon at the current ~1-in-3 multi-file-spec rate: ~20–60k tokens, plus collapse of one risk-check mitigation round on the downstream artifact when scope is tighter.
+
+**Additional levers (ROI-ranked):**
+- **Parallelize planning-phase reads (~3–5k/session):** The four planning reads + four /decide discovery reads are dependency-free. Batching all 8 into 2 parallel Read calls saves the inter-call overhead. Smaller than the primary because token cost per sequential Read is modest; the lever is wall-clock and orchestration cleanliness more than token volume.
+- **Cap /consult advisory return (~2–4k/session):** The system-owner subagent's full advisory text gets surfaced into main session — apply the standard sub-30-line summary contract from `ai-resources/CLAUDE.md` § Subagent Contracts. Smaller than the primary because /consult fires less often than planning rework, but it's the recurring lever across 4 of the last 5 telemetry entries — fixing it once collapses a chronic drip.
+- **Pre-Edit batching for repo-architecture.md updates (~1–2k/session):** Three sequential Edits applied to the same file (subdir + tree row + table row). A single multi-line Edit covering all three would halve the tool-call overhead. Smallest lever — narrow scope and only triggers when adding a new resource type — but a clean win when it applies.
