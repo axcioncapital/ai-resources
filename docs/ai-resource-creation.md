@@ -1,6 +1,6 @@
 # AI Resource Creation Rules
 
-> **When to read this file:** When a session identifies the need for a new or modified AI resource (skill, command, agent definition, workflow template), or when routing a skill request.
+> **When to read this file:** When a session identifies the need for a new or modified AI resource (skill, command, agent definition, workflow template), or when routing a skill request. Before invoking a creation pipeline below, if placement is non-obvious, run `/route-change` first — see workspace `CLAUDE.md` § Placement Discipline.
 
 When a session identifies the need for a new or modified AI resource:
 
