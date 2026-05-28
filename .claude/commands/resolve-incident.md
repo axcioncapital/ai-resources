@@ -234,7 +234,7 @@ Three writes, in this order:
     Next action: {what would need to happen to close it}
     ```
 
-33. **No commit.** The fix is applied but not committed. Committing is operator-discretionary. After the operator confirms the fix looks good, remind them to commit and (separately) push per workspace commit rules.
+33. **No commit.** The fix is applied but not committed. Committing is operator-discretionary. After the operator confirms the fix looks good, remind them to commit per workspace commit rules (push happens automatically after commit).
 
 ---
 

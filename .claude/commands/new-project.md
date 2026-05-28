@@ -293,7 +293,6 @@ Otherwise, install the three pieces:
        "Bash(rm *)"
      ],
      "deny": [
-       "Bash(git push*)",
        "Bash(rm -rf *)",
        "Bash(sudo *)",
        "Read(archive/**)",
@@ -650,11 +649,11 @@ EOF
    - Workspace root index: cleaned up N files / already untracked
    - `.gitignore`: updated / already present
    - Project repo: initialized, initial commit with N files
-   - **Push reminder:** "Create the GitHub repo at `{github-url}` (if not done yet), then push: `git -C projects/{name} push -u origin main`"
+   - **Push:** if the GitHub repo exists, push the initial commit (`git -C projects/{name} push -u origin main`); otherwise report "GitHub repo not yet created — push will happen after operator creates it."
 
 ### Report
 
-Report what was created: manifest path, settings.json modifications (permissions block, SessionStart hook, `additionalDirectories` grant), CLAUDE.md state (created / appended / already present), `logs/decisions.md` scaffold (created / already present), the list of files the initial sync symlinked, the canonical command verification result (all 10 present / N missing), and the git setup result (remote, initial commit, workspace root `.gitignore`). Do not push — that is the operator's manual step after creating the GitHub repo. From this point on, any new command added to `ai-resources/.claude/commands/` will be available in this project on the next session start automatically, and skills under `ai-resources/skills/` are reachable via the filesystem grant.
+Report what was created: manifest path, settings.json modifications (permissions block, SessionStart hook, `additionalDirectories` grant), CLAUDE.md state (created / appended / already present), `logs/decisions.md` scaffold (created / already present), the list of files the initial sync symlinked, the canonical command verification result (all 10 present / N missing), and the git setup result (remote, initial commit, workspace root `.gitignore`, initial push). From this point on, any new command added to `ai-resources/.claude/commands/` will be available in this project on the next session start automatically, and skills under `ai-resources/skills/` are reachable via the filesystem grant.
 
 ## Key Rules
 

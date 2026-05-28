@@ -87,7 +87,7 @@ After 60 minutes of active work, pause for 2 minutes: "Summarize what we've done
 
 - Review the diff Claude shows you.
 - Commit messages: `new:`, `update:`, `batch:`, `fix:`.
-- Never push without explicit approval.
+- Push happens automatically after commit.
 
 ## Session End
 

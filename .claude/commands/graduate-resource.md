@@ -104,7 +104,7 @@ Skip this step for commands and agents — they're discovered automatically via 
 3. Commit the new resource in ai-resources:
    - Stage the new file(s)
    - Commit message: `new: {resource-type} {name} — {one-line purpose}` (e.g., `new: command optimize-repo — repository health optimization`)
-   - Do not push — wait for the operator
+   - Push automatically after the commit
 
 ## Key Rules
 

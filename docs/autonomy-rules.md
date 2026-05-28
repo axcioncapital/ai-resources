@@ -9,7 +9,7 @@ Default posture: **full autonomy**. Claude proceeds through work — including m
 Pause only for these:
 
 1. **Destructive git ops on shared state** — force push, `reset --hard` on pushed commits, branch deletion, `git clean -f`.
-2. **External/shared-state writes** — `git push`, PR create, issue comment, Slack/email send, uploads to third-party renderers.
+2. **External/shared-state writes** — PR create, issue comment, Slack/email send, uploads to third-party renderers. (`git push` proceeds autonomously after commit.)
 3. **File deletion outside the current session's output scope** — removing files the current session did not create.
 4. **QC DISAGREE verdicts on editorial decisions** (e.g., Stage 3 Step 3.6d).
 5. **Operator-denied tool permission.**

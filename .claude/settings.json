@@ -24,7 +24,6 @@
     "deny": [
       "Bash(rm -rf *)",
       "Bash(sudo *)",
-      "Bash(git push*)",
       "Read(archive/**)",
       "Read(logs/*-archive-*.md)",
       "Read(inbox/archive/**)",

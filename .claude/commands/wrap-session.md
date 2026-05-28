@@ -232,6 +232,7 @@ After updating logs and writing the telemetry entry, stage and commit changes. *
 - Always-staged (if modified this session): `logs/session-notes.md`, `logs/decisions.md`, `logs/coaching-data.md`, `logs/improvement-log.md`, `logs/improvement-log-archive.md`, `logs/innovation-registry.md`, `logs/usage-log.md`
 - Session-specific: every path listed in Files Created / Files Modified for this session, staged by explicit name
 
-Run as two separate commands, not chained:
+Run as three separate commands, not chained:
 - `git add <explicit paths>` (enumerate; no trailing `/` wildcards)
 - `git commit -m "session: [brief description of session work]"`
+- `git push` (push proceeds autonomously; if the push fails — auth, network, non-fast-forward — surface the failure in chat, do not retry silently)
