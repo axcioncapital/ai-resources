@@ -198,7 +198,7 @@ Process each over-threshold file. For each file, apply the action that matches i
     ```bash
     bash "{SCRIPTS_DIR}/split-log.sh" "{ABS_FILE_PATH}" {KEEP} bottom
     ```
-    KEEP values: 10 for session-notes / friction-log / qc-log / maintenance-observations / workflow-observations; 3 for decisions. Capture output. Record archive filename in `APPLIED_LIST` or `FAILED`.
+    KEEP values: 10 for session-notes / friction-log / qc-log / maintenance-observations / workflow-observations / tweak-log; 3 for decisions. Capture output. Record archive filename in `APPLIED_LIST` or `FAILED`.
 
 **Cat B — `log-archiver.sh --mode header3`**
 

@@ -59,6 +59,7 @@
 │   ├── incident-log.md                          # `/resolve-incident` per-incident index (append-only)
 │   ├── innovation-registry.md
 │   ├── maintenance-observations.md
+│   ├── tweak-log.md                             # `/tweak` per-invocation audit record
 │   ├── usage-log.md
 │   └── workflow-observations.md
 ├── plans/                                       # plan artifacts retained from sessions
@@ -213,6 +214,7 @@ Change classes (per `audit-discipline.md`):
 | `logs/incident-log.md` | Per-incident one-line index (resolved/escalated/deferred); full records in `audits/incidents/` | `/resolve-incident` |
 | `logs/innovation-registry.md` | Auto-detected new resources / patterns | `detect-innovation.sh` hook |
 | `logs/maintenance-observations.md` | Repo-health observations from `/friday-act` | `/friday-act` |
+| `logs/tweak-log.md` | Per-invocation audit record of cosmetic edits applied via `/tweak` | `/tweak` |
 | `logs/usage-log.md` | Per-session usage telemetry | `/usage-analysis` |
 | `logs/workflow-observations.md` | Workflow-pipeline observations | Workflow commands |
 | `logs/session-plan.md` | Session orchestration plan (intent, model, source material, autonomy posture, risk) | `/session-plan` |
