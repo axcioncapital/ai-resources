@@ -346,3 +346,8 @@ Applied the three items from the 13:16 fix-plan as a continuous execution sessio
 
 ### Open Questions
 None.
+
+## 2026-05-27 — Housekeeping + triage pass (W22 cleanup)
+
+**Mandate:** Run a 3-phase housekeeping + triage pass. Phase 1: resolve uncommitted `docs/session-guardrails.md` modification + 3 untracked audits artifacts; push 3 ai-resources + 2 workspace-root commits (operator-gated). Phase 2: friction-log hygiene — add `[FADING-GATE]` annotations to 3 stale entries (2026-05-25 09:13, 2026-05-18 10:00, 2026-05-08 18:26). Phase 3: inbox triage — read 4 inbox briefs, output a ranked build queue (no skill build this session).
+
