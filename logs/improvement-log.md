@@ -249,7 +249,8 @@ Phased, low-risk:
 
 ### 2026-05-28 — wrap-session foreign-guard misfires on prior-day uncommitted remnant
 
-- **Status:** logged (pending)
+- **Status:** applied 2026-05-28
+- **Verified:** 2026-05-28 — `/wrap-session` Step 3.5 (canonical) + Step 1.5 (workspace-root paired copy) now classify FOREIGN content as CONCURRENT / REMNANT / MIXED / UNKNOWN via an awk classifier that walks `^## YYYY-MM-DD` headers and tags each `**Mandate:**` line with its enclosing date. STOP message branches per class — REMNANT offers a wrap-recovery commit path; MIXED orders resolution (orphan first, then concurrent); CONCURRENT keeps prior switch-terminal guidance; UNKNOWN safely defaults to CONCURRENT-shape. Risk-check verdict PROCEED-WITH-CAUTION (Blast radius + Hidden coupling Medium; D3 paired-files + D5 awk-regex / live-rehearsal / PRIME_RAN-assumption mitigations all applied inline; report `audits/risk-checks/2026-05-28-wrap-session-step-3-5-concurrent-remnant-mixed-classifier.md`). `/qc-pass` verdict GO. Classifier rehearsed against current `session-notes.md` (UNKNOWN, EXTRA=-1) and synthetic CONCURRENT/REMNANT/MIXED cases (all 3 classes verified).
 - **Category:** session-issue
 - **Source:** /resolve-repo-problem 2026-05-28
 - **Friction source:** /wrap-session Step 3.5 foreign-session pre-write guard fired today (FOREIGN=1, mandate count 7 in WT vs 6 in HEAD). Working tree contains an orphan mandate from yesterday's W22 housekeeping session — that session ran /prime + /session-start but never invoked /wrap-session, leaving the mandate line unstaged. Today's guard treated the prior-day remnant as live foreign-session content and steered the operator toward the wrong remediation ("switch to the other terminal").

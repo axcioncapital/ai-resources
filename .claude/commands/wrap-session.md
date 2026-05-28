@@ -42,6 +42,7 @@ Accept shorthand: "yy" / "yes both" / "both" = both yes; "nn" / "skip both" = bo
      Sibling: workspace-root /.claude/commands/wrap-session.md (Phase 3 copy, NOT a symlink — operates on workspace-level logs/session-notes.md).
      Symmetric counterpart: /session-start Step 0.5 mtime guard (Plan 2, shipped 2026-05-26) — that guard covers the /prime → /session-start window; this guard covers the post-/session-start → wrap window. Both may fire on different sides of the same concurrent-session incident.
      Detection signals: (1) count of `^## YYYY-MM-DD` today-headers, (2) count of `^**Mandate:**` lines. Both depend on the conventions set by Step 4 below (header), `session-start.md` Step 3 (mandate line), and `check-archive.sh` (archive). If a future writer emits a non-conforming today-header or non-conforming mandate line, the corresponding signal returns a FALSE NEGATIVE — foreign content is silently clobbered (the exact bug this guard exists to prevent recurs silently). Keep both formats in sync with their writers.
+     Classifier (id-32, 2026-05-28): when FOREIGN >= 1, the classifier walks `^## YYYY-MM-DD` headers in BOTH WT and HEAD, tracks each mandate's enclosing-date, and emits FOREIGN_CLASS = CONCURRENT (today-extras only) / REMNANT (prior-day-extras only) / MIXED (both) / UNKNOWN (FOREIGN by header-count only — rare; defaults to CONCURRENT-shape STOP message). The classifier assumes PRIME_RAN represents a TODAY-dated mandate appended by this session — if a future /prime change appends prior-day content, EXTRA_TODAY_MANDATES math will need to subtract differently.
    -->
 
    Background: concurrent sessions can both write to `logs/session-notes.md` between this session's `/prime`+`/session-start` and its `/wrap-session`. If a foreign session's content is in the working tree when this session's wrap stages `logs/session-notes.md`, its content ships under this session's wrap commit (the failure mode logged 2026-05-27, commit `14d2a04`). This guard fires **before** Step 4 writes — symmetric to `/session-start` Step 0.5 mtime guard (pre-write posture).
@@ -96,7 +97,32 @@ Accept shorthand: "yy" / "yes both" / "both" = both yes; "nn" / "skip both" = bo
    if [ "${FOREIGN_MANDATES}" -gt "${FOREIGN}" ]; then
      FOREIGN=${FOREIGN_MANDATES}
    fi
-   echo "GUARD: headers WT=${WT_HEADERS} HEAD=${HEAD_HEADERS} added=${ADDED_HEADERS} | mandates WT=${WT_MANDATES} HEAD=${HEAD_MANDATES} added=${ADDED_MANDATES} | PRIME_RAN=${PRIME_RAN} FOREIGN=${FOREIGN}"
+
+   # Classify FOREIGN by enclosure-date of mandates (id-32, 2026-05-28).
+   # Walks awk over WT + HEAD, tracks each mandate's enclosing `^## YYYY-MM-DD` header, counts by today vs prior-day.
+   # CONCURRENT = today-extras only (parallel terminal); REMNANT = prior-day-extras only (orphan from a prior session that ran /prime + /session-start but never /wrap-session); MIXED = both; UNKNOWN = neither (FOREIGN by header-count only — safe default → CONCURRENT-shape STOP message).
+   FOREIGN_CLASS="UNKNOWN"
+   if [ "${FOREIGN}" -ge 1 ]; then
+     WT_TODAY_MANDATES=$(awk -v today="${TODAY}" '/^## [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/{match($0,/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/);d=substr($0,RSTART,RLENGTH)} /^\*\*Mandate:\*\*/ && d==today {c++} END{print c+0}' logs/session-notes.md 2>/dev/null)
+     WT_TODAY_MANDATES=${WT_TODAY_MANDATES:-0}
+     WT_PRIOR_MANDATES=$(awk -v today="${TODAY}" '/^## [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/{match($0,/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/);d=substr($0,RSTART,RLENGTH)} /^\*\*Mandate:\*\*/ && d!=today && d!="" {c++} END{print c+0}' logs/session-notes.md 2>/dev/null)
+     WT_PRIOR_MANDATES=${WT_PRIOR_MANDATES:-0}
+     HEAD_TODAY_MANDATES=$(git show HEAD:logs/session-notes.md 2>/dev/null | awk -v today="${TODAY}" '/^## [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/{match($0,/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/);d=substr($0,RSTART,RLENGTH)} /^\*\*Mandate:\*\*/ && d==today {c++} END{print c+0}')
+     HEAD_TODAY_MANDATES=${HEAD_TODAY_MANDATES:-0}
+     HEAD_PRIOR_MANDATES=$(git show HEAD:logs/session-notes.md 2>/dev/null | awk -v today="${TODAY}" '/^## [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/{match($0,/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/);d=substr($0,RSTART,RLENGTH)} /^\*\*Mandate:\*\*/ && d!=today && d!="" {c++} END{print c+0}')
+     HEAD_PRIOR_MANDATES=${HEAD_PRIOR_MANDATES:-0}
+     EXTRA_TODAY_MANDATES=$((WT_TODAY_MANDATES - HEAD_TODAY_MANDATES - PRIME_RAN))
+     EXTRA_PRIOR_MANDATES=$((WT_PRIOR_MANDATES - HEAD_PRIOR_MANDATES))
+     if [ "${EXTRA_TODAY_MANDATES}" -ge 1 ] && [ "${EXTRA_PRIOR_MANDATES}" -ge 1 ]; then
+       FOREIGN_CLASS="MIXED"
+     elif [ "${EXTRA_TODAY_MANDATES}" -ge 1 ]; then
+       FOREIGN_CLASS="CONCURRENT"
+     elif [ "${EXTRA_PRIOR_MANDATES}" -ge 1 ]; then
+       FOREIGN_CLASS="REMNANT"
+     fi
+   fi
+
+   echo "GUARD: headers WT=${WT_HEADERS} HEAD=${HEAD_HEADERS} added=${ADDED_HEADERS} | mandates WT=${WT_MANDATES} HEAD=${HEAD_MANDATES} added=${ADDED_MANDATES} | PRIME_RAN=${PRIME_RAN} FOREIGN=${FOREIGN} FOREIGN_CLASS=${FOREIGN_CLASS}"
    if [ "${FOREIGN}" -ge 1 ]; then
      echo "--- Today-headers in working tree ---"
      grep -n "^## ${TODAY}" logs/session-notes.md 2>/dev/null
@@ -108,23 +134,53 @@ Accept shorthand: "yy" / "yes both" / "both" = both yes; "nn" / "skip both" = bo
    Interpret the output:
 
    - **`FOREIGN == 0`** — no foreign content detected. Proceed silently to Step 4.
-   - **`FOREIGN ≥ 1`** — **STOP**. Foreign session content is in the working tree. Staging `logs/session-notes.md` now would ship that content under this session's wrap commit. Output the following to the operator, then halt the wrap (do NOT proceed to Step 4):
+   - **`FOREIGN ≥ 1`** — **STOP**. Foreign session content is in the working tree. Staging `logs/session-notes.md` now would ship that content under this session's wrap commit. **Branch by `FOREIGN_CLASS`**:
 
-     > ⚠ Pre-write guard fired: detected {FOREIGN} foreign-session entries in `logs/session-notes.md` working tree (`headers added=K1, mandates added=K2, PRIME_RAN=P` — see Bash output above).
-     >
-     > Today-headers currently in working tree:
-     > {grep -n output for `^## TODAY`}
-     >
-     > Mandate lines currently in working tree:
-     > {grep -n output for `^**Mandate:**`}
-     >
-     > A concurrent session has written content this session did not author. If I stage `logs/session-notes.md` now, that foreign content will ship under my wrap commit.
-     >
-     > **To resolve:** switch to the other terminal and run `/wrap-session` there first (commits its own work cleanly). Once that wraps, return here and re-invoke `/wrap-session` — the foreign content will then be in HEAD and the guard will pass.
-     >
-     > I will NOT proceed automatically. Re-invoke `/wrap-session` after resolving.
+     - **`FOREIGN_CLASS == CONCURRENT`** (or `UNKNOWN` — default to CONCURRENT-shape) — today-dated extras detected. A concurrent session is the live cause:
 
-     Do not offer a "commit the union" override. Auto-merging session notes is a silent-conflict-resolution anti-pattern — the operator resolves manually by switching terminals.
+       > ⚠ Pre-write guard fired (CONCURRENT): detected {FOREIGN} foreign-session entries in `logs/session-notes.md` working tree (`headers added=K1, mandates added=K2, PRIME_RAN=P, FOREIGN_CLASS=CONCURRENT` — see Bash output above).
+       >
+       > Today-headers currently in working tree:
+       > {grep -n output for `^## TODAY`}
+       >
+       > Mandate lines currently in working tree:
+       > {grep -n output for `^**Mandate:**`}
+       >
+       > A concurrent session has written content this session did not author. If I stage `logs/session-notes.md` now, that foreign content will ship under my wrap commit.
+       >
+       > **To resolve:** switch to the other terminal and run `/wrap-session` there first (commits its own work cleanly). Once that wraps, return here and re-invoke `/wrap-session` — the foreign content will then be in HEAD and the guard will pass.
+       >
+       > I will NOT proceed automatically. Re-invoke `/wrap-session` after resolving.
+
+     - **`FOREIGN_CLASS == REMNANT`** — prior-day extras detected. Likely an orphan mandate from a prior session that ran `/prime` + `/session-start` but never invoked `/wrap-session`:
+
+       > ⚠ Pre-write guard fired (REMNANT): {EXTRA_PRIOR_MANDATES} prior-day orphan mandate(s) detected in `logs/session-notes.md` working tree (`FOREIGN_CLASS=REMNANT, EXTRA_PRIOR_MANDATES=N` — see Bash output above).
+       >
+       > Mandate lines currently in working tree:
+       > {grep -n output for `^**Mandate:**`}
+       >
+       > A prior session ran `/prime` + `/session-start` but never invoked `/wrap-session`, leaving an orphan mandate from a prior day unstaged. The current wrap would ship this orphan under THIS session's wrap commit.
+       >
+       > **To resolve, pick one:**
+       > 1. **Commit the orphan as a standalone wrap-recovery commit** — stage `logs/session-notes.md` containing only the orphan mandate, commit with `session: {prior-date} wrap-recovery — orphan from {prior-day} session`, then re-invoke `/wrap-session` here.
+       > 2. **Abandon the orphan** — manually remove the orphan mandate line(s) from `logs/session-notes.md`, then re-invoke `/wrap-session` here.
+       >
+       > I will NOT proceed automatically.
+
+     - **`FOREIGN_CLASS == MIXED`** — both today-dated AND prior-day extras detected:
+
+       > ⚠ Pre-write guard fired (MIXED): both today-dated extras AND prior-day orphan(s) detected in `logs/session-notes.md` working tree (`FOREIGN_CLASS=MIXED, EXTRA_TODAY_MANDATES=N1, EXTRA_PRIOR_MANDATES=N2` — see Bash output above).
+       >
+       > Today-headers + mandate lines currently in working tree:
+       > {grep -n outputs}
+       >
+       > **Resolve in order:**
+       > 1. **First the prior-day orphan** — commit as wrap-recovery OR abandon (see REMNANT remediation above).
+       > 2. **Then the concurrent-session conflict** — switch to the other terminal and run `/wrap-session` there first (see CONCURRENT remediation above).
+       >
+       > I will NOT proceed automatically.
+
+     Do not offer a "commit the union" override in ANY branch. Auto-merging session notes is a silent-conflict-resolution anti-pattern — the operator resolves manually.
 
    - **Edge case (`FOREIGN < 0`)** — this means `PRIME_RAN > ADDED` for one or both signals, i.e., `.prime-mtime` marker claims `/prime` ran but no today-header or mandate-line was added. Most likely `/prime` Step 8a/8b ran in plan-mode (no write), the operator manually pruned an entry, or `/session-start` was skipped after `/prime`. Proceed silently to Step 4 — no concurrent-session risk, but log the discrepancy in chat as `Note: prime-mtime marker present but expected own-content absent in WT — proceeding`.
 
