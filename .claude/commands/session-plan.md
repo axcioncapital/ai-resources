@@ -18,6 +18,16 @@ Read `logs/session-notes.md`. Look for a `## {YYYY-MM-DD}` header matching today
 
   If yes, perform intent-comparison conflict detection:
 
+  0. **Same-session short-circuit (own-session marker check).** Run BEFORE the intent comparison. The marker `logs/.prime-mtime` is written by `/prime` Step 8a.3.a / 8b.1 / 8c.3 after `/prime` appends today's header to `session-notes.md` — its contents are `session-notes.md`'s mtime at that moment, serving as a "this session's `/prime` ran at T" timestamp.
+
+     - If `logs/.prime-mtime` is absent → set `SAME_SESSION = false` (no marker, no determination possible). Proceed to sub-step 1.
+     - If `logs/.prime-mtime` exists → read its value as `PRIME_MTIME` and capture `PLAN_MTIME` = `session-plan.md` mtime (`stat -f %m` macOS / `stat -c %Y` Linux).
+       - **Freshness window:** if `PRIME_MTIME` is older than today's start-of-day (`PRIME_MTIME < TODAY_EPOCH`, computed as in `/session-start` Step 0.5 — explicit `00:00:00` time component), treat the marker as stale → set `SAME_SESSION = false`. Emit one line: `[Step 0 sub-step 0] Note: logs/.prime-mtime is stale (older than today) — falling through to intent comparison.` Proceed to sub-step 1. (Mirrors `/session-start` Step 0.5's freshness check; protects against the case where today's `session-notes.md` header exists but this session's `/prime` did not actually run — e.g., manual edit that added the header without invoking `/prime`.)
+       - If `PLAN_MTIME > PRIME_MTIME` → set `SAME_SESSION = true`. The existing `session-plan.md` was written by THIS session's `/session-plan` AFTER this session's `/prime` ran. The intent comparison is irrelevant — the operator's mental model is "this is my session's prior plan, even if I've changed direction." Sub-step 6 will override to MATCH.
+       - If `PLAN_MTIME <= PRIME_MTIME` → set `SAME_SESSION = false`. The plan was written before this session's `/prime` (i.e., a foreign session wrote it). Proceed to sub-step 1 for normal intent comparison.
+
+     Continue to sub-step 1 either way. `SAME_SESSION` is consumed in sub-step 6.
+
   1. **Determine `UPCOMING_INTENT`** for this invocation (preview of Step 1; cache and reuse there):
      - If `$ARGUMENTS` is non-empty → `UPCOMING_INTENT` = `$ARGUMENTS` verbatim.
      - Else → read `logs/session-notes.md`, locate the last `## ` entry, scan forward for `### Next Steps`. Use the first bullet → `UPCOMING_INTENT`.
@@ -27,6 +37,8 @@ Read `logs/session-notes.md`. Look for a `## {YYYY-MM-DD}` header matching today
   4. **Sentinel guard:** if either normalized string starts with `(none derived` → SKIP comparison, fall through to the MATCH branch (3-option prompt). Sentinels are too ambiguous to auto-route to pass2; loud-failure-over-silent-continuation applies.
   5. **Match contract:** case-insensitive substring containment in either direction. `EXISTING_INTENT` contains `UPCOMING_INTENT`, OR `UPCOMING_INTENT` contains `EXISTING_INTENT` → MATCH. (Asymmetry note: a scope-expanded second invocation — e.g., "fix X" vs "fix X and add Y" — counts as MATCH by design; the operator's mental model is "same work, broader scope.")
   6. **Apply the result:**
+
+     **Override:** if `SAME_SESSION = true` (set by sub-step 0), force the result to MATCH regardless of sub-step 5's outcome — the own-session marker is authoritative; intent-string comparison is only used when the marker is absent or indicates a foreign session. Without this override, a same-session re-invocation with a genuinely-different intent (e.g., operator pivoted mid-session) would silently auto-route to pass2 — masking the prior plan instead of asking. The override surfaces the 3-option prompt so the operator chooses keep / overwrite / pass2 explicitly.
 
      **MATCH → same-session re-invocation.** Emit the existing 3-option prompt:
 
