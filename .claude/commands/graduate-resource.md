@@ -45,6 +45,15 @@ Present to the operator:
 
 **Stop and wait for the operator to confirm placement and approve the changes list.**
 
+### Step 3a: Plan-time placement verification
+
+After the operator confirms the placement and before any `Write` in Step 4, run the placement verifier (`ai-resources/docs/placement-verifier.md`) with:
+- `PLANNED_PATH` = the target location decided in Step 3
+- `ARTIFACT_TYPE` = the resource type from Step 1 (command / agent / hook / workflow-template / etc.)
+- `GATE` = `plan-time`
+
+On `MATCH` or `MATCH-WITH-EXCEPTION`, proceed to Step 4. On `MISMATCH`, halt and emit the verifier's loud-failure chat block; resume only after the operator selects redirect, override, or log + override.
+
 ## Step 4: Generalize
 
 Apply the approved changes:
@@ -68,6 +77,15 @@ Read the generalized file back and check:
 4. **Functional** — for hooks, verify the script is executable and the logic is sound
 
 If issues found, fix them. If unfixable without operator input, flag and stop.
+
+### Step 5a: End-time placement verification
+
+After Step 5's checks pass and before Step 6 / Step 7, run the placement verifier (`ai-resources/docs/placement-verifier.md`) with:
+- `PLANNED_PATH` = the actual path written in Step 4
+- `ARTIFACT_TYPE` = same as Step 3a
+- `GATE` = `end-time`
+
+On `MATCH` or `MATCH-WITH-EXCEPTION`, proceed. On `MISMATCH`, halt — the actual write drifted from the plan; emit the verifier's loud-failure chat block and resume only after operator resolution.
 
 ## Step 6: Register in Settings (Hooks Only)
 

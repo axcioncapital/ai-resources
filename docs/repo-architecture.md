@@ -1,6 +1,6 @@
 # Repo Architecture (Stage 1)
 
-> **When to read this file:** Whenever you propose adding, moving, or restructuring an AI resource (skill, command, agent, hook, doc, log, prompt, workflow, audit artifact). Consulted by `/route-change` to recommend placement; consulted by operators making architectural decisions.
+> **When to read this file:** Whenever you propose adding, moving, or restructuring an AI resource (skill, command, agent, hook, doc, log, prompt, workflow, audit artifact). Consulted by `/placement` to recommend placement; consulted by operators making architectural decisions.
 >
 > **Maintenance:** Hand-maintained. Review at quarterly `/friday-checkup` tier. If repo layout shifts, this file must be updated in the same commit.
 
@@ -174,7 +174,7 @@ The workspace's auto-sync hook (`ai-resources/.claude/hooks/auto-sync-shared.sh`
 
 - **Operator-invoked routing/diagnostic that doesn't need full context** → command + subagent (subagent contract: ≤30-line summary, full notes to disk).
 - **Operator-invoked transformation that mutates files** → command runs in main session.
-- **Operator-invoked advisory that produces a recommendation only** → command runs in main session, no subagent (e.g., `/recommend`, `/route-change`).
+- **Operator-invoked advisory that produces a recommendation only** → command runs in main session, no subagent (e.g., `/recommend`, `/placement`).
 
 ### Q4: Is the artifact rule-shaped or prose-shaped?
 

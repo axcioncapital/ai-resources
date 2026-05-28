@@ -67,7 +67,7 @@ If `QUESTION` matches the change-shaped definition, set `SHAPE = change-shape`. 
 
 If `SHAPE = change-shape`:
 
-1. Read `ai-resources/docs/repo-architecture.md` from disk. (This is the same source `/route-change` reads. Per locked Decision 3 + Architecture Decision 4, the System Owner reads it in-line; the operator does not need to run `/route-change` separately.)
+1. Read `ai-resources/docs/repo-architecture.md` from disk. (This is the same source `/placement` reads. Per locked Decision 3 + Architecture Decision 4, the System Owner reads it in-line; the operator does not need to run `/placement` separately.)
 2. Capture the routing baseline as `ROUTING_CONTEXT` — pass it through to the agent in Step 4.
 
 If `SHAPE = general`, set `ROUTING_CONTEXT` = empty.
@@ -105,6 +105,6 @@ Output the agent's response verbatim to the operator. Do NOT add a preamble, do 
 
 ### Notes for the executor
 
-- Per locked Decision 3, this command does NOT invoke `/route-change` as a slash command. The architecture-map read in Step 3 reproduces the routing baseline.
+- Per locked Decision 3, this command does NOT invoke `/placement` as a slash command. The architecture-map read in Step 3 reproduces the routing baseline.
 - Per locked Decision 1, `/consult` writes nothing to disk at v1. Output is chat-only.
 - The change-shape detection rule in Step 2 is the operator-facing threshold. If the operator wants stricter or looser detection, the rule is updated here in v1.1, not in the agent body.

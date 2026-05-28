@@ -7,10 +7,10 @@ Routing advisor. Takes a proposed change description; reads the repo architectur
 Input: `$ARGUMENTS` — free-text description of the proposed change. May reference file paths, artifact types, or just describe intent.
 
 Examples:
-- `/route-change I want to add a skill that summarizes long PDFs into one-page briefs`
-- `/route-change new hook to warn when a session opens with uncommitted changes from another session`
-- `/route-change move the citation-fidelity audit logic from the research workflow into a shared agent`
-- `/route-change add a permission for Bash(rg:*) so ripgrep stops prompting`
+- `/placement I want to add a skill that summarizes long PDFs into one-page briefs`
+- `/placement new hook to warn when a session opens with uncommitted changes from another session`
+- `/placement move the citation-fidelity audit logic from the research workflow into a shared agent`
+- `/placement add a permission for Bash(rg:*) so ripgrep stops prompting`
 
 Use this command **before** invoking a creation pipeline (`/create-skill`, `/improve-skill`, `/migrate-skill`, `/new-project`) when placement is non-obvious — e.g., when the artifact could plausibly live at multiple layers, or when you're unsure whether it's a skill vs. command vs. agent vs. doc. Skip when the home is already obvious from prior work.
 
@@ -22,8 +22,8 @@ This command is **not** auto-wired into `/create-skill` or any other pipeline. O
 
 1. If `$ARGUMENTS` is empty, abort with:
    ```
-   /route-change requires a description of the proposed change.
-   Example: /route-change I want to add a skill that does X
+   /placement requires a description of the proposed change.
+   Example: /placement I want to add a skill that does X
    ```
 
 2. Set `CHANGE` = `$ARGUMENTS` verbatim.
@@ -117,6 +117,6 @@ This command is **not** auto-wired into `/create-skill` or any other pipeline. O
 
 ### Step 5: No Commit, No Execution
 
-15. `/route-change` is advisory only. It does not create files, edit settings, or invoke any pipeline. The operator reads the recommendation and decides whether to proceed (and via which pipeline).
+15. `/placement` is advisory only. It does not create files, edit settings, or invoke any pipeline. The operator reads the recommendation and decides whether to proceed (and via which pipeline).
 
 16. If the operator approves the recommendation and proceeds with the named pipeline, that pipeline runs under its own rules (including its own `/risk-check` requirements and QC).

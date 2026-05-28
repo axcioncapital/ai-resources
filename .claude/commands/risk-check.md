@@ -8,7 +8,7 @@ Input: `$ARGUMENTS` — free-text description of the proposed change, optionally
 
 Examples:
 - `/risk-check edit .claude/hooks/friday-checkup-reminder.sh to add stale-state detection derived from audits/friday-checkup-*.md listing`
-- `/risk-check add new slash command /route-change and docs/repo-architecture.md`
+- `/risk-check add new slash command /placement and docs/repo-architecture.md`
 - `/risk-check allow Bash(rg:*) in workspace settings.json`
 
 Required-when-mandatory change classes (per `ai-resources/docs/audit-discipline.md` § Risk-check change classes):
