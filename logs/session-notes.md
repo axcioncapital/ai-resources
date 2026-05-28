@@ -498,3 +498,58 @@ A parallel Wave 3 session ran during my Wave 2 execution and committed `prime.md
 ### Open Questions
 
 - None.
+
+## 2026-05-28 — Removed git-push approval gate workspace-wide
+
+### Summary
+
+Operator asked why every project session was hitting a permission block on `git push`, with branches sitting ahead of remote at session end (ai-resources had 10 commits unpushed; project-planning had 9). Investigation found the gate lived in three layers — `Bash(git push*)` deny in 21 of 36 settings.json files; Autonomy Rule #2 + "Push requires operator approval" restated in 15 CLAUDE.md / docs / commands files; and 4 commands that behaviorally assumed push was gated. Removed all three layers. Push is now autonomous after commit, like any other bash command. Force-push, `reset --hard`, and branch deletion remain gated (Autonomy #1); PR create / Slack / email / third-party uploads remain Autonomy #2.
+
+### Files Created
+
+- `logs/scratchpads/2026-05-28-20-19-scratchpad.md` — continuity scratchpad for next session
+- `~/.claude/plans/why-do-i-have-cozy-wand.md` — plan file (workspace-external, in user plans dir)
+- `~/.claude/projects/.../memory/feedback_push_autonomous.md` — new feedback memory linked in MEMORY.md
+
+### Files Modified
+
+**Permission layer (Layer A) — 22 files:**
+- `.claude/settings.json` (workspace root, ai-resources)
+- `templates/project-settings.json.template`
+- `docs/permission-template.md` (4 references)
+- 18 existing project/vault/workflow `.claude/settings.json` files via sed (projects/* + research-workflow)
+
+**Rules layer (Layer B) — 15 files:**
+- Workspace `CLAUDE.md` (Autonomy #2 + Commit behavior)
+- `ai-resources/CLAUDE.md` (3 places)
+- `ai-resources/docs/autonomy-rules.md` (#2)
+- `ai-resources/docs/session-rituals.md`
+- 11 project `CLAUDE.md` files
+
+**Command layer (Layer C) — 5 files:**
+- `.claude/commands/wrap-session.md` — adds `git push` as third step after commit
+- `.claude/commands/new-project.md` — drops `Bash(git push*)` from scaffolded deny, replaces push reminder with autonomous push
+- `.claude/commands/resolve-incident.md`, `deploy-workflow.md`, `graduate-resource.md`
+
+**Memory:**
+- `MEMORY.md` — added pointer to new `feedback_push_autonomous.md`
+
+### Decisions Made
+
+- **Remove push from Autonomy Rule #2** (operator-directed) — push moved out of "external writes requiring approval" into autonomous-after-commit posture. Force-push remains gated.
+- **Scope of file updates** (operator-directed) — all projects + workspace + ai-resources, not just the projects flagged in the original error message.
+- **Out of scope** (operator-directed and plan-stated) — pipeline snapshots and tech-spec files retain old push language; they're point-in-time references and will refresh naturally when those pipelines regenerate.
+- **End-time risk-check skip** — plan-time covered the risk inline; commits already shipped; drift bounded; per `feedback_end_time_risk_check_skip.md`.
+
+### Next Steps
+
+1. **Three remote-config issues to fix separately** (out of scope for the push-gate task, not push-related):
+   - `projects/personal/travel-os` — remote URL `patriklindeberg75-boop/traveling` doesn't exist on GitHub
+   - `projects/nordic-pe-screening-project` — remote URL `axcion-ai/...` doesn't exist (likely needs move to `axcioncapital/`)
+   - `projects/interpersonal-communication` — local commit in place but remote has 47 commits we don't have, plus an unrelated `D .claude/commands/route-change.md` deletion blocks a clean rebase
+2. **First real test of the new wrap-session push flow** — THIS wrap will exercise it.
+3. **Carryover (unchanged):** workspace-root uncommitted-files triage (3+ sessions old).
+
+### Open Questions
+
+- None.

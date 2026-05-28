@@ -166,3 +166,17 @@ Plan retained: `/Users/patrik.lindeberg/.claude/plans/i-want-to-build-tidy-lake.
 **Alternatives considered.** (a) Defer the edit and ask the operator — rejected; the actual path was unambiguously discoverable via Glob + the prior session-notes precedent. (b) Edit both the output/phase-1/ and vault/ copies — rejected; vault/ is downstream of output/phase-1/ and gitignored.
 
 **Review trail.** Path verified via Glob → prior session-notes decision (2026-05-27) confirmed output/phase-1/ as canonical → edit applied → committed in `5adbaa9`.
+
+---
+
+## 2026-05-28 — Removed git-push approval gate workspace-wide
+
+**Context.** Across nearly every session, `git push` was blocked at the permission layer and branches sat ahead of remote at session end (ai-resources accumulated 10 unpushed commits; project-planning 9). The gate was reinforced by Autonomy Rule #2 ("External writes — `git push`, …") and restated in 15 CLAUDE.md / docs / commands files. The friction was structural — every project session inherited it.
+
+**Decision.** Removed the push gate at all three layers: (a) `Bash(git push*)` stripped from the deny list in 21 settings.json files plus the canonical template, (b) "Push requires operator approval" language replaced with "push automatically after commit" in workspace `CLAUDE.md`, `ai-resources/CLAUDE.md`, `autonomy-rules.md`, `session-rituals.md`, and 11 project CLAUDE.md files, (c) `wrap-session.md` updated to run `git push` as a third step after commit; `new-project.md` updated to push the initial commit automatically; related commands (`resolve-incident.md`, `deploy-workflow.md`, `graduate-resource.md`) updated accordingly. Force-push, `reset --hard`, and branch deletion remain gated under Autonomy Rule #1. PR create, issue comment, Slack/email send, and third-party uploads remain gated under Autonomy Rule #2.
+
+**Rationale.** Operator stated the friction directly and asked for both layers removed. Push is no different from any other bash command in this single-operator workspace: the operator already runs the session, owns the repos, and pays the cost of every commit they direct. The compensating controls (Autonomy #1 for destructive ops, force-push still gated) cover the residual risk. Memory `feedback_zero_permission_prompts.md` and `feedback_autonomy_during_execution.md` were already pointing this direction; this codifies them at the rule level.
+
+**Alternatives considered.** (a) Keep the gate but auto-approve at wrap-session — rejected; the gate still consumes a permission-prompt cycle on every wrap, and the rule still gets restated everywhere it leaks. (b) Remove only the permission layer (settings.json) and keep the rule — rejected; the rule would re-add the deny on every audit and create false-positive `/permission-sweep` findings. (c) Add `Bash(git push*)` to ASK rather than removing it from DENY — rejected; ASK still surfaces a prompt, contradicting `feedback_zero_permission_prompts.md`.
+
+**Review trail.** /clarify → 3 Explore agents (settings inventory, rules-doc inventory, command inventory) → plan written → ExitPlanMode approved by operator → all three layers edited → 16 batch commits across 16 git repos → 12 of 16 pushed successfully (3 remote-config issues unrelated to the gate, 1 with prior-session foreign dirty state blocking rebase) → memory `feedback_push_autonomous.md` written and linked in MEMORY.md.
