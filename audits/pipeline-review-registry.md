@@ -8,6 +8,7 @@
 - **Date-key, not path-key.** The `Last memo` column carries a date that the consumer resolves to a path via the convention above — per System Owner's `risk-topology.md § 1` warning about brittle two-end contracts.
 - **Tiebreak rule:** When two or more rows share the same `Last reviewed` value (including the cold-start case where all are `never`), sort by `Pipeline` column alphabetically. Friction-flagged rows are promoted to the top regardless of date, and tiebreak alphabetically among themselves.
 - **Audit-trail-grade writes.** This file is updated by `/pipeline-review` once per cycle after subagents return. The bumped row preserves the prior `Last reviewed` only via git history — manual reverts are not clean.
+- **`Friction flag` is operator-manual at v1.** When a friction-log entry names a pipeline tracked here, set its `Friction flag` to `Y` manually. The flag remains `Y` until the next `/pipeline-review` cycle reviews that pipeline (the command resets it to `N` on bump). Friday-cadence reminder: scan recent friction-log additions during `/friday-checkup` and set flags for any newly-named pipelines. Automating this via a friction-log hook is deferred — re-evaluate if manual-set proves to drift silently.
 
 ## Pipelines
 

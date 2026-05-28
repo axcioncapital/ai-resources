@@ -74,7 +74,8 @@ The `[CADENCE-LATE]` top-line marker is a required mitigation from the `/risk-ch
 ### Step 4: Shortlist Build
 
 17. Parse `REGISTRY_PATH` into a list of rows. For each row, extract: `pipeline_path`, `type`, `last_reviewed`, `friction_flag`.
-18. Sort rows by these keys in order:
+17.5. **Registry-drift check.** For each parsed row, resolve `pipeline_path` against `AI_RESOURCES` (relative paths) and `test -f` the result. If the file is missing, emit one line to the operator: `[REGISTRY-DRIFT] {pipeline_path} (row dropped — file does not resolve; rename, move, or stale registry entry)`. Drop the row from the working set. Do NOT abort the cycle. After all rows are checked, if any rows were dropped, also print: `Resolve drift before next cycle — edit {REGISTRY_PATH} to update or remove the stale entries.` Catches pipeline rename and tier-promotion failure modes — without this, the auditor would hard-fail at its first read and the next cycle would re-surface the same broken row.
+18. Sort surviving rows by these keys in order:
     a. `friction_flag = Y` first (Y before N).
     b. `last_reviewed` ascending — `never` sorts as the oldest (treat as date `0000-00-00` for comparison).
     c. `pipeline_path` alphabetically — the cold-start tiebreak.

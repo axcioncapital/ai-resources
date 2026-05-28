@@ -44,7 +44,7 @@ done
 
 # Baked-in exclusions: ai-resources-meta files that never belong in projects.
 EXCLUDE_COMMANDS="new-project deploy-workflow run-sufficiency pipeline-review"
-EXCLUDE_AGENT_GLOBS="pipeline-stage-* session-guide-generator"
+EXCLUDE_AGENT_GLOBS="pipeline-stage-* session-guide-generator pipeline-review-*"
 
 # Read project-local exclusions from manifest.
 LOCAL_COMMANDS=$(jq -r '.commands.local[]?' "$MANIFEST" 2>/dev/null)
