@@ -137,3 +137,18 @@ Coaching feedback captured via `/coach`. Newest entries at the bottom.
 → Codified 2026-05-28 in skills/ai-resource-builder/references/review-principles.md (fix-plan wave-1).
 **Prior recommendation status:** 2026-05-20 One Thing (name the bright-line) — not measurably acted on; carried forward again. decisions.md alternatives-rigor held (14/14). 2026-05-16 backlog-sprint held (no new stall), but 2 pre-sprint improvement-log entries remain unresolved and 4 new ones were added 2026-05-22 — Workflow Evolution stays Watch.
 **Promotion candidates:** 2 — (1) decisions.md alternatives-considered rigor (held 6 consecutive cycles; graduate to a decisions.md template field via `/improve`); (2) interruption-impulse as deliberate review gate (editorial-disagreement + challenge-disposition 7/7 changed; encode in Decision-Point Posture).
+
+### 2026-05-29
+**Coverage:** 15 sessions (2026-05-27 → 2026-05-28)
+
+| Dimension | Rating | Trend |
+|-----------|--------|-------|
+| Iteration Efficiency | Solid | → |
+| Decision Patterns | Strong | ↑ |
+| QC Disposition | Strong | ↑ |
+| Delegation Effectiveness | Solid | → |
+| Workflow Evolution | Mixed | → |
+
+**The One Thing:** Stage push-gate-class structural removals earlier in the day, not late. Today's push-gate removal (commit `50977b3`) and parallel Wave 2/3 executions produced the `ea93d62` commit-attribution swap where a parallel Wave 3 session absorbed your Wave 2 prime.md edits — the friction class you're still working to eliminate (TOCTOU on shared files) was actively biting your own concurrent sessions while you fixed it. Serialize structural-class changes that touch shared infra (push rules, marker writes, session-notes headers) ahead of execution sweeps.
+**Prior recommendation status:** Acted on — 2026-05-22 "name the bright-line" codified 2026-05-28 in `review-principles.md § All Reviews` (wave-1 id-20, commit `f598ee1`), closing a 3-cycle carryover. decisions.md alternatives-rigor held (10/10 in window, each with 3+ alternatives enumerated). id-31 Phase 1 structural fix shipped against the TOCTOU class flagged in prior cycles.
+**Promotion candidates:** 2 — (1) decisions.md alternatives-considered rigor (held 7 consecutive cycles, 10/10 this window — graduate to a decisions.md template field via `/improve`); (2) bright-line-naming principle (codified 2026-05-28 — graduate from coaching habit to structural rule check via `/improve`).

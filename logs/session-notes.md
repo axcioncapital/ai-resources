@@ -453,3 +453,59 @@ Operator surfaced a workflow idea — a "rapid feedback loop" for editing slash 
 ### Open Questions
 
 - None.
+
+## 2026-05-29 — /friday-checkup weekly (11 scopes; monthly-scope, weekly-depth)
+
+### Summary
+
+Ran `/friday-checkup` weekly tier across 11 scopes (ai-resources + workspace + 9 projects). Operator initially picked monthly tier; runtime estimate (~664 min ≈ 11h dominated by /token-audit + /audit-claude-md × 11 scopes) led to scope-down to weekly. Weekly tier estimated ~194 min — operator authorized "proceed with long run". All 9 weekly-tier steps completed: A audit-repo (2 scopes deployed, both YELLOW), B improve (14 findings appended across 3 projects), C coach (10 scopes, 2 first-runs), F permission-sweep (2 HIGH workspace-wide), G log-sweep (1,661 files inventoried), H W2.1 doc-scanner (219 added / 17 removed against vault registry), J W2.3 consolidator, M Stage 5 anchor check (PASS).
+
+### Files Created
+
+- `ai-resources/audits/friday-checkup-2026-05-29.md` — consolidated checkup report
+- `ai-resources/audits/repo-health-ai-resources-2026-05-29.md` — YELLOW snapshot
+- `ai-resources/audits/repo-health-project-nordic-pe-macro-landscape-H1-2026-2026-05-29.md` — YELLOW snapshot
+- `ai-resources/audits/permission-sweep-2026-05-29.md` — 0 critical / 2 HIGH / 1 med / 12 advisory / 1 intentional-narrow
+- `ai-resources/audits/log-sweep-2026-05-29.md` — consolidated dry-run summary across 11 scopes
+- `projects/repo-documentation/output/phase-2/w2-1-doc-scan-2026-05-29.md` — vault drift report
+- `projects/repo-documentation/output/phase-2/w2-3-maintenance-2026-05-29.md` — W2.3 maintenance consolidator
+- `ai-resources/audits/working/friday-checkup-2026-05-29-results.md` — scratch tracker
+- `ai-resources/audits/working/permission-sweep-2026-05-29.md` (+ `.summary.md`) — permission auditor full notes
+- 11 × `ai-resources/audits/working/log-sweep-{scope}-2026-05-29.md` — per-scope log inventory notes
+- `ai-resources/logs/scratchpads/2026-05-29-02-30-scratchpad.md` — pre-closeout continuity scratchpad
+- `projects/axcion-brand-book/logs/coaching-log.md` (initialized — first coaching run)
+- `projects/interpersonal-communication/logs/coaching-log.md` (initialized — first coaching run)
+
+### Files Modified
+
+- `ai-resources/reports/repo-health-report.md` — overwritten by current audit; prior archived as `repo-health-report-2026-05-22.md`
+- `projects/nordic-pe-macro-landscape-H1-2026/reports/repo-health-report.md` — overwritten; prior archived as `repo-health-report-2026-05-22.md`
+- `ai-resources/logs/coaching-log.md` — coaching entry appended
+- `logs/coaching-log.md` (workspace) — coaching entry appended
+- 7 other `coaching-log.md` files across project scopes — entries appended
+- `projects/ai-development-lab/logs/improvement-log.md` — 5 `logged (pending)` entries appended
+- `projects/axcion-brand-book/logs/improvement-log.md` — 3 entries appended
+- `projects/nordic-pe-macro-landscape-H1-2026/logs/improvement-log.md` — 6 entries appended (incl. 2 RECURRING)
+- `ai-resources/logs/session-notes.md` — this wrap entry
+
+### Decisions Made
+
+- **Tier downgrade monthly → weekly.** Monthly tier across 11 scopes estimated ~664 min (~11 h) dominated by /token-audit (330 min) and /audit-claude-md (100 min). Operator chose weekly to keep the cadence runnable in one session. Surfaced as a [COST] flag with three options (narrow scope / authorize long run / weekly downgrade); operator picked weekly.
+- **Authorize ~194-min weekly long run.** After downgrading, the weekly estimate still exceeded the 45-min ceiling. Operator typed the exact phrase `proceed with long run`.
+- **Skip /kb-integrity sub-step in W2.3.** Protocol step J says invoke `/kb-integrity` from vault/. The command is project-local (not Skill-invocable from main session) and runs operator-on-demand. Used the most recent 2026-05-22 integrity report as the carryover baseline, with explicit recommendation to re-run /kb-integrity in a dedicated repo-documentation session.
+- **Findings-extractor for prioritized findings section.** Per protocol Step 7.16 — haiku subagent reads the dated audit/sweep reports from disk and returns ≤30-line structured list; avoids re-reading full sub-reports into main context.
+
+### Next Steps
+
+- **Run `/friday-so`** for the System Owner advisory on the consolidated report.
+- **Then `/friday-act`** to triage the 14 improvement-log appends + 2 HIGH permission-sweep items + 2 HIGH nordic-pe-macro audit-repo items. The 6 nordic-pe-macro improvement-log entries include 2 RECURRING infrastructure items compounded over 4+ days (check-archive.sh `CLAUDE_PROJECT_DIR` + wrap-session today-header inflation) — prioritize.
+- **Apply log rotations.** `/log-sweep` (without `--dry-run`) when ready — candidates surface in ai-resources, workspace, nordic-pe-macro, obsidian-pe-kb, and 4 small project scopes.
+- **Resolve 2 HIGH nordic-pe-macro audit-repo items.** Reconcile shared-manifest.json (1 phantom `route-change` entry + 14 disk-vs-manifest drift).
+- **Resolve 2 HIGH permission-sweep items.** Add `Bash(rm *)` to nordic-pe-macro settings; remove stale `/Users/danielniklander/...` from interpersonal-communication settings.
+- **Address ai-resources audit-repo MEDIUM** — retire 3 stale April-2026 dated deny entries in settings.json.
+- **/improve still pending** across multiple prior wraps and this one (operator declined preflight coaching pass; /improve was not run for the wrap session itself).
+- **Defer `/resolve-improvement-log`** — 0 entries reached `applied + Verified` this cycle.
+
+### Open Questions
+
+- None.
