@@ -53,11 +53,53 @@ Read `logs/session-notes.md`. Look for a `## {YYYY-MM-DD}` header matching today
 
      Apply the chosen option: Option 1 → stop, no changes. Option 2 → continue to Step 1 (output target = `logs/session-plan.md`). Option 3 → continue to Step 1 (output target = `logs/session-plan-pass2.md`).
 
-     **MISMATCH → concurrent-session collision detected.** Auto-default to pass2 without prompting. Emit one notification line:
+     **MISMATCH → run wrap-state check before defaulting to pass2 (id-13, 2026-05-28).** The 6-hour mtime window + intent-mismatch combination can fire for a PRIOR session that has already wrapped (its `session-plan.md` is still on disk but the session is dead). Auto-routing those cases to `pass2.md` is wrong — the prior plan is harmless to overwrite. The wrap-state check probes whether the prior session has wrapped:
 
-     > Concurrent session detected. Existing intent: '{EXISTING_INTENT_truncated_60}'. This session's intent: '{UPCOMING_INTENT_truncated_60}'. Writing new plan to `logs/session-plan-pass2.md` to avoid collision (preserves both). To overwrite `session-plan.md` instead, re-run `/session-plan` after the other session wraps.
+     ```bash
+     # Extract plan_date from existing session-plan.md's "# Session Plan — {DATE}" header.
+     PLAN_DATE=$(grep -m1 "^# Session Plan" logs/session-plan.md 2>/dev/null | sed -E 's/^# Session Plan — ([0-9]{4}-[0-9]{2}-[0-9]{2}).*/\1/')
 
-     Set output target = `logs/session-plan-pass2.md` and continue to Step 1.
+     # Signal A — session-notes.md has a wrapped entry for plan_date (## {date} block containing both ### Summary AND ### Next Steps).
+     SIGNAL_A=0
+     if [ -n "${PLAN_DATE}" ] && [ -f logs/session-notes.md ]; then
+       SIGNAL_A=$(awk -v d="${PLAN_DATE}" '
+         /^## /{
+           if (inblock && sum && nxt) { found=1 }
+           inblock = (index($0, d) > 0)
+           sum=0; nxt=0
+         }
+         inblock && /^### Summary/{ sum=1 }
+         inblock && /^### Next Steps/{ nxt=1 }
+         END{
+           if (inblock && sum && nxt) { found=1 }
+           print found+0
+         }
+       ' logs/session-notes.md 2>/dev/null)
+       SIGNAL_A=${SIGNAL_A:-0}
+     fi
+
+     # Signal B — git log shows a session-wrap commit for plan_date.
+     SIGNAL_B=0
+     if [ -n "${PLAN_DATE}" ]; then
+       if git log --grep="^session: ${PLAN_DATE}" --oneline 2>/dev/null | grep -q .; then
+         SIGNAL_B=1
+       fi
+     fi
+     ```
+
+     - **EITHER signal positive** → prior session for `{PLAN_DATE}` has wrapped → MISMATCH override. Treat as MATCH-Option-2 (plain overwrite). Emit one-line note:
+
+       > Prior session for {PLAN_DATE} has wrapped (wrap-signal: A={SIGNAL_A}, B={SIGNAL_B}). Overwriting `logs/session-plan.md` instead of routing to pass2.
+
+       Set output target = `logs/session-plan.md` and continue to Step 1.
+
+     - **NEITHER signal positive** → preserve current MISMATCH semantics. Auto-default to pass2 without prompting. Emit one notification line:
+
+       > Concurrent session detected. Existing intent: '{EXISTING_INTENT_truncated_60}'. This session's intent: '{UPCOMING_INTENT_truncated_60}'. Writing new plan to `logs/session-plan-pass2.md` to avoid collision (preserves both). To overwrite `session-plan.md` instead, re-run `/session-plan` after the other session wraps.
+
+       Set output target = `logs/session-plan-pass2.md` and continue to Step 1.
+
+     **Why dual signal:** false-positive requires BOTH A and B to fire on a non-wrapped session (implausible — wrap writes both signals together). False-negative (signal misses a real wrap) preserves current behavior (pass2 routing) — no regression.
 
   In every path that continues to Step 1, pass `UPCOMING_INTENT` forward — Step 1 reuses it instead of re-deriving.
 
@@ -201,7 +243,8 @@ Set `DATE` = today in `YYYY-MM-DD` format.
 **Resolve `OUTPUT_TARGET`** (set by Step 0):
 - Default → `logs/session-plan.md`.
 - If Step 0's MATCH branch fired with Option 3 selected (operator picked pass2) → `logs/session-plan-pass2.md`.
-- If Step 0's MISMATCH branch fired (auto-pass2 on concurrent-session collision) → `logs/session-plan-pass2.md`.
+- If Step 0's MISMATCH branch fired with wrap-state override (prior session wrapped — id-13, 2026-05-28) → `logs/session-plan.md` (plain overwrite of dead plan).
+- If Step 0's MISMATCH branch fired without wrap-state override (auto-pass2 on concurrent-session collision) → `logs/session-plan-pass2.md`.
 
 **Precondition:** If `INTENT` references a separate report, spec, or drift file (e.g., "apply findings from audit-X.md", "execute the drift-fix plan"), the `## Findings / Items to Address` section below MUST inline a one-line summary of each item with a source-doc anchor. A bare link to the file is invalid — the plan must be readable without opening the referenced doc.
 
