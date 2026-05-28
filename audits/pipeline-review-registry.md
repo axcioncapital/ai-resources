@@ -1,6 +1,6 @@
 # Pipeline Review Registry
 
-> **Purpose:** Tracks the critical command pipelines reviewed by `/pipeline-review` and when each was last given the deep design treatment. Distinct from `critical-resources-manifest.md` (which feeds `/audit-critical-resources` for drift detection). Two parallel registries, two different jobs.
+> **Purpose:** Tracks the critical resources reviewed by `/pipeline-review` and when each was last given the deep design treatment. Single source of truth for `/pipeline-review` after the deprecation of `/audit-critical-resources` and its `critical-resources-manifest.md` on 2026-05-29 (drift-detection currency-check was folded into the pipeline-review-auditor's Brokenness section). The registry now covers both multi-step orchestrator pipelines and a few simpler critical commands (e.g., `friction-log`, `cleanup-worktree`) — scope broadened to preserve coverage of resources that lived in the deleted manifest.
 
 ## Registry contract
 
@@ -14,7 +14,9 @@
 
 | Pipeline | Type | Last reviewed | Last memo | Friction flag |
 |---|---|---|---|---|
+| `.claude/commands/cleanup-worktree.md` | command | never | — | N |
 | `.claude/commands/create-skill.md` | command | never | — | N |
+| `.claude/commands/friction-log.md` | command | never | — | N |
 | `.claude/commands/friday-checkup.md` | command | never | — | N |
 | `.claude/commands/improve-skill.md` | command | never | — | N |
 | `.claude/commands/new-project.md` | command | never | — | N |
@@ -24,6 +26,7 @@
 | `.claude/commands/risk-check.md` | command | never | — | N |
 | `.claude/commands/session-plan.md` | command | never | — | N |
 | `.claude/commands/session-start.md` | command | never | — | N |
+| `.claude/commands/token-audit.md` | command | never | — | N |
 | `.claude/commands/wrap-session.md` | command | never | — | N |
 | `skills/context-pack-builder/SKILL.md` | skill | never | — | N |
 | `skills/implementation-project-planner/SKILL.md` | skill | never | — | N |

@@ -46,7 +46,7 @@ This command does NOT:
 - **Implement fixes** — that's the separate fix-phase session that ingests `00-findings-summary.md` Section 5. The command is triage only.
 - **Graduate the workflow** — that's the separate graduation-phase session (Phase 3). Pass 5 only recommends what graduation would look like.
 - **Diagnose artifact defects** — `workflow-diagnosis` already covers the "operator notes on a pipeline output → workflow-improvement spec" path. This pipeline audits the workflow INFRASTRUCTURE (commands, skills, refs); `workflow-diagnosis` works from artifact-level defects backward to workflow loci. Different direction.
-- **Critique a single skill** — that's `audit-critical-resources` (single resource, 7 dimensions). This pipeline operates on a workflow-as-a-system.
+- **Critique a single skill** — that's `pipeline-review` (single resource, 7 dimensions). This pipeline operates on a workflow-as-a-system.
 - **Re-implement existing canonical audits** — Pass 3 INVOKES `/analyze-workflow`, `/audit-repo`, `/token-audit`, `/repo-dd`, `/innovation-sweep`. The pipeline composes; it does not duplicate.
 - **Author a graduated template** — Pass 5 sketches the target shape; the actual graduation work lives in `/graduate-resource` + a graduation-phase session.
 - **Manage sessions** — `/prime`, `/session-start`, `/session-plan`, `/wrap-session` remain operator-invoked.
@@ -60,7 +60,7 @@ This command does NOT:
 | `workflow-evaluator` (skill) | Building block of Pass 5 (architectural soundness vs `workflow-creator`/`workflow-documenter` patterns). This pipeline INVOKES it. |
 | `workflow-diagnosis` (planned skill, brief at `ai-resources/inbox/workflow-diagnosis.md`) | Artifact-defects → workflow-locus direction. This pipeline runs the OPPOSITE direction — workflow infrastructure → graduation/fix readiness. Complementary, not overlapping. |
 | `/analyze-workflow` (existing command) | A subset of Pass 3 (one of 5 audits). This pipeline INVOKES it. |
-| `audit-critical-resources` (existing skill) | Single-resource, 7-dimension audit. This pipeline is workflow-system-wide. Different scope. |
+| `pipeline-review` (existing skill) | Single-resource, 7-dimension audit. This pipeline is workflow-system-wide. Different scope. |
 | `audit-repo` (existing skill) | Workspace-wide health audit. This pipeline scopes to one workflow's surface. |
 | `repo-dd` (existing skill) | Repo-as-deliverable due diligence. Pass 3d INVOKES it scoped to the workflow surface. |
 
@@ -69,7 +69,7 @@ This command does NOT:
 ## Naming
 
 Collision check against `ai-resources/.claude/commands/` (all four are FREE at audit time):
-- `/audit-workflow` — **recommended.** Matches the operator's phrasing ("audit this workflow"). Symmetric with `/audit-repo`, `/audit-critical-resources`, `/audit-claude-md`, `/audit-structure`.
+- `/audit-workflow` — **recommended.** Matches the operator's phrasing ("audit this workflow"). Symmetric with `/audit-repo`, `/pipeline-review`, `/audit-claude-md`, `/audit-structure`.
 - `/workflow-audit` — naming-pattern alternative; slightly less idiomatic (verb-first convention is the norm in the workspace).
 - `/audit-workflow-stack` — clearer scope cue ("stack" = the orchestrator, not the underlying audits) but verbose.
 - `/workflow-graduation-audit` — most descriptive but locks the command into one of its three use cases (graduation, fix-phase prep, project-end review).
@@ -325,7 +325,7 @@ Canonical audits invoked by Pass 3 (read methodology):
 
 Sibling resources to distinguish from:
 - `ai-resources/inbox/workflow-diagnosis.md` — artifact-defects → workflow-locus direction (opposite of this pipeline)
-- `ai-resources/.claude/commands/audit-critical-resources.md` — single-resource 7-dimension audit (different scope)
+- `ai-resources/.claude/commands/pipeline-review.md` — per-pipeline System-Owner-grounded design review + currency-check (different scope)
 - `ai-resources/.claude/commands/architecture-review.md` — synthesizes findings into a prioritized architecture-health report (different output)
 
 Convention references:
@@ -345,7 +345,7 @@ A future `/create-skill` session is done with this brief when:
 4. All 6 stop points fire correctly (verified by dry-run or test invocation).
 5. The master `00-findings-summary.md` has all 5 sections populated with Blocking/Flagging-classified findings and a structured Section 5 fix-phase candidate list.
 6. The 3 net-new skills (`workflow-remediation-verifier`, `workflow-generalization-fitness`, `workflow-template-fitness`) pass `/qc-pass` on their SKILL.md against the canonical skill conventions.
-7. The command's docs explicitly distinguish it from `/analyze-workflow`, `workflow-diagnosis`, `audit-critical-resources`, and `architecture-review`.
+7. The command's docs explicitly distinguish it from `/analyze-workflow`, `workflow-diagnosis`, `pipeline-review`, and `architecture-review`.
 8. The reference execution at `projects/nordic-pe-macro-landscape-H1-2026/audits/workflow-audit/` is preserved as the canonical reference example.
 
 ---

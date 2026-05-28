@@ -140,8 +140,8 @@ Do NOT execute fixes in the planning session that produced this file.
 - [ai-resources/id-08] inbox: Codex second-opinion auditor brief — reason: `needs-/create-skill`
 - [ai-resources/id-09] inbox: workflow-diagnosis skill brief — reason: `needs-/create-skill`
 - [ai-resources/id-10] inbox: audit-workflow-pipeline command + skill triplet brief — reason: `needs-/create-skill`
-- [ai-resources/id-16] T2 watch: .claude/commands/audit-critical-resources.md (graduate pending) — reason: `needs-/graduate-resource`
-- [ai-resources/id-17] T2 watch: .claude/agents/critical-resource-auditor.md (graduate pending) — reason: `needs-/graduate-resource`
+- [ai-resources/id-16] T2 watch: .claude/commands/audit-critical-resources.md (graduate pending) — reason: `needs-/graduate-resource` — **DROPPED 2026-05-29**: command deleted (subsumed by `/pipeline-review`); graduation moot.
+- [ai-resources/id-17] T2 watch: .claude/agents/critical-resource-auditor.md (graduate pending) — reason: `needs-/graduate-resource` — **DROPPED 2026-05-29**: agent deleted (replaced by `pipeline-review-auditor`); graduation moot.
 - [ai-resources/id-22] T2 hygiene: nordic settings.json#SessionStart-upward-walk → permission-template — reason: `needs-dedicated-session`
 - [ai-resources/id-23] T2 hygiene: repo-doc settings.json#SessionStart-upward-walk → permission-template — reason: `needs-dedicated-session`
 - [ai-resources/id-24] T2 hygiene: interpersonal-comm settings.json#deny-archive → permission-template — reason: `needs-dedicated-session`

@@ -6,7 +6,7 @@ model: sonnet
 
 Run a deep System-Owner-grounded design review of 1–3 critical command pipelines per cycle. Operator-invoked weekly. Reads a registry, presents a ranked shortlist, the operator picks 1–3, the `pipeline-review-auditor` subagent produces a memo per pipeline, the registry is bumped, and the memos are written to disk. No auto-fix. No commit.
 
-Distinct from `/audit-critical-resources` (which detects drift) — this command answers *what could be better?* not *what is broken?*.
+Subsumed `/audit-critical-resources` on 2026-05-29 — its drift-detection currency-check (against pinned Anthropic doc URLs) was folded into the pipeline-review-auditor's Brokenness section. This command now answers both *what could be better?* and *what is broken?* for the critical-resource population.
 
 Input: `$ARGUMENTS` (optional) — a pipeline path. If provided, skip the shortlist step and review that pipeline directly. Empty input runs the shortlist flow.
 

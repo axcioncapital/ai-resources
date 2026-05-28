@@ -64,7 +64,7 @@ Run `/pipeline-review` once per week (any day; operator-invoked). The command su
 
 **Fix session is separate.** The memo says what to do; a follow-up session does it — `/improve-skill` for skill-shaped memos, manual edit + `/qc-pass` for command-shaped memos.
 
-Distinct from `/audit-critical-resources` (drift detection) and `/friday-checkup` (housekeeping). This cadence answers *what could be better?*, not *what is broken?*.
+Subsumed `/audit-critical-resources` on 2026-05-29 — its currency-check against pinned Anthropic doc URLs is now part of the auditor's Brokenness section. Distinct from `/friday-checkup` (housekeeping). This cadence answers both *what could be better?* and *what is broken?* for the critical-resource population.
 
 **Known design risk.** Two operator-invoked cadences with independent skipped-cycle gates (`/friday-checkup` weekly + `/pipeline-review` weekly) can stall together. The `[CADENCE-LATE]` marker is the mitigation. If skipped more than twice per quarter, revisit folding into `/friday-checkup` as a new tier.
 

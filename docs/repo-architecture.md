@@ -41,7 +41,7 @@
 ├── audits/                                      # audit artifacts
 │   ├── risk-checks/                             # `/risk-check` reports
 │   ├── incidents/                               # `/resolve-incident` per-incident full records
-│   ├── critical-resources-manifest.md           # manifest for `/audit-critical-resources`
+│   ├── pipeline-review-registry.md              # registry for `/pipeline-review` (subsumed `/audit-critical-resources` on 2026-05-29)
 │   ├── friday-checkup-YYYY-MM-DD.md             # weekly/monthly/quarterly checkup reports
 │   ├── permission-sweep-YYYY-MM-DD.md
 │   ├── repo-due-diligence-YYYY-MM-DD.md
@@ -227,7 +227,7 @@ Change classes (per `audit-discipline.md`):
 
 ### Q8: Is the artifact a manifest, configuration, or template?
 
-- **Critical-resources manifest** → `audits/critical-resources-manifest.md`.
+- **Pipeline-review registry** → `audits/pipeline-review-registry.md`. (Replaced `critical-resources-manifest.md` on 2026-05-29 when `/pipeline-review` subsumed `/audit-critical-resources`.)
 - **Permission template** → `docs/permission-template.md`.
 - **Project shared-manifest** → `projects/<project>/.claude/shared-manifest.json`.
 - **Settings layers** → see `docs/permission-template.md` for canonical shapes.
