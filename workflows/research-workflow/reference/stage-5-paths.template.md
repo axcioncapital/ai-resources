@@ -34,6 +34,7 @@ Choose this block if the project's `Document model:` is `"report"`. Arg pattern:
 **Decontamination-log filename:** "{{DECON_LOG_FILENAME}}"    # e.g., "decontamination-log.md" (relative to prose-output root)
 **Gloss-log filename:** "{{GLOSS_LOG_FILENAME}}"              # e.g., "gloss-additions-log.md" (relative to prose-output root)
 **Working-dir name:** "{{WORKING_DIR_NAME}}"                  # e.g., "working" (relative to prose-output root; subagent-findings files)
+**Mechanical trigger threshold:** "{{MECHANICAL_TRIGGER_THRESHOLD}}"  # OPTIONAL — e.g., "3+" to lower the parallel-items threshold for produce-formatting's Mechanical Trigger #1; omit to use the canonical default "5+". Consumed by produce-formatting.md Phase 0 only.
 ```
 
 **Per-placeholder rules (report-mode):**
@@ -68,6 +69,7 @@ Section-mode commonly uses multi-part documents (Part 2, Part 3, etc.). The `Sec
 **Decontamination-log filename:** "{{DECON_LOG_FILENAME}}"        # e.g., "decontamination-log.md" (relative to prose-output root)
 **Gloss-log filename:** "{{GLOSS_LOG_FILENAME}}"                  # e.g., "gloss-additions-log.md" (relative to prose-output root)
 **Working-dir name:** "{{WORKING_DIR_NAME}}"                      # e.g., "working" (relative to prose-output root; subagent-findings files)
+**Mechanical trigger threshold:** "{{MECHANICAL_TRIGGER_THRESHOLD}}"  # OPTIONAL — e.g., "3+" to lower the parallel-items threshold for produce-formatting's Mechanical Trigger #1; omit to use the canonical default "5+". Consumed by produce-formatting.md Phase 0 only.
 ```
 
 **Per-placeholder rules (section-mode):**
@@ -77,6 +79,21 @@ Section-mode commonly uses multi-part documents (Part 2, Part 3, etc.). The `Sec
 | `{section}` | Parsed from arg verbatim (e.g., `2.4` → `section=2.4`) | Used in source filename glob and prose-output filename glob. |
 | `{part}` | First numeric component of arg (e.g., `2.4` → `part=2`) | Used to select the matching `Section sets` row at Phase 0. |
 | `{slug}` | Derived from source document title at write time (kebab-case) | Used in prose-output filename pattern. |
+
+---
+
+## Default-value semantics for `Mechanical trigger threshold:`
+
+Unlike `Mode:` (which halts on missing), `Mechanical trigger threshold:` is a **graceful-default** field. Behavior at Phase 0:
+
+| Project instance state | Behavior |
+|---|---|
+| Field absent from `stage-5-paths.md` | Use canonical default `"5+"`. Do NOT halt. |
+| Field present with empty value (e.g., `**Mechanical trigger threshold:** ""`) | Treat as absent → canonical default `"5+"`. Do NOT halt. |
+| Field present with value matching `^[0-9]+\+?$` (e.g., `"3+"`, `"5"`, `"7+"`) | Use the provided value verbatim. Canonical command passes the value to the prose-formatter subagent as a `Mechanical trigger threshold` parameter in the task brief; the subagent overrides the SKILL.md default for that invocation. |
+| Field present with malformed value (e.g., `"three"`, `"3 or more"`) | Halt: `Mechanical trigger threshold value '<X>' is malformed. Expected pattern: ^[0-9]+\+?$ (e.g., '3+', '5+', '7+'). See stage-5-paths.template.md.` |
+
+This is a single-consumer field (`produce-formatting.md` Phase 0 only). `produce-prose-draft.md` and `produce-jargon-gloss.md` do NOT read it. Section-mode and report-mode projects both support the field with identical semantics.
 
 ---
 

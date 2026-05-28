@@ -12,6 +12,8 @@ When a session identifies the need for a new or modified AI resource:
 
 4. **Always use the canonical pipelines:** `/create-skill` for new skills, `/improve-skill` for modifications, `/migrate-skill` for converting existing prompts. These pipelines include QC gates — skipping them means skipping quality assurance.
 
+5. **Graduation requires confirmation from every existing canonical consumer.** Before graduating a project fork to canonical (i.e., extending the canonical contract with content that originated in one project), enumerate every existing canonical consumer (other projects that consume the resource via symlink or import) and confirm with the operator that each consumer is OK absorbing the change. Record the confirmation in the commit message. **Reason:** `principles.md § DR-7 — Generalize only when a second confirmed consumer exists`. The "one confirmed consumer + one non-consenting consumer about to absorb the result" pattern is the failure mode this rule prevents — project IP silently spreading into canonical and propagating to other projects without their review. Parameterizing the project-specific value through a project-config knob (so each consumer chooses its own value) is structurally cleaner than graduating the value itself; prefer that path when the value is the project-specific part.
+
 ## Bulk-backfill Exception
 
 Rule #4 (canonical pipeline mandate) admits a narrow exception for one-time bulk frontmatter backfill operations: mechanical edits to many skills that change only frontmatter (no body changes), where running the full pipeline per skill would produce 50+ identical fix passes with no QC signal.

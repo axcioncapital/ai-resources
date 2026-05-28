@@ -31,6 +31,12 @@ Per-section run: 2 subagent launches, target ~6–10 min wall time.
 
 5. **Parse path-config.** Read the `## Stage 5 Path Roots` block. Cache resolved values for Phases 1–4.
 
+6. **Resolve `Mechanical trigger threshold`.** This is a graceful-default field — absence does NOT halt. Behavior:
+   - If `Mechanical trigger threshold:` line is absent from `stage-5-paths.md`, OR present with empty value: set `threshold = "5+"` (canonical default).
+   - If present with value matching `^[0-9]+\+?$` (e.g., `"3+"`, `"5"`, `"7+"`): set `threshold` = the provided value verbatim.
+   - If present with malformed value: halt — `Mechanical trigger threshold value '<X>' is malformed. Expected pattern: ^[0-9]+\+?$ (e.g., '3+', '5+', '7+'). See ai-resources/workflows/research-workflow/reference/stage-5-paths.template.md § Default-value semantics for Mechanical trigger threshold:.`
+   - The resolved `threshold` value is passed explicitly to the prose-formatter subagent in Phase 2 step 6 (overrides the SKILL.md default for this invocation).
+
 ---
 
 ## Phase 1 — Plan (main session)
@@ -71,8 +77,9 @@ Merged formatting, H3 placement, and H3 refinement in a single sonnet agent. KEE
    - The prose file content
    - The absolute path to the style reference — the subagent reads it directly before applying the skills
    - Output path: the Phase 1-resolved formatted-output path (section-mode = same file; report-mode = fresh `<formatted-output-filename>` next to the prosed input)
+   - **`Mechanical trigger threshold: {threshold}`** (verbatim, interpolated from Phase 0 step 6 — typically `"5+"` canonical default, or a project override like `"3+"`). The subagent MUST honor this passed threshold for Mechanical Trigger #1 (parallel-items detection), overriding the SKILL.md `5+` default for this invocation. If this parameter is not passed, the subagent falls back to the SKILL.md default — but this command always passes it, so the fallback is a defensive position only.
    - Task: Execute in this order as a single continuous pass:
-     0. **Run the Mechanical Triggers pre-scan per the prose-formatter skill.** Scan the full document for the five mandatory triggers (5+ parallel items in prose; category comparison across repeated dimensions; subsection with multiple internal blocks; bold on labels but not on named frameworks; paragraph carrying framework + exceptions + implications). Record which triggers fire and at which locations. Produce the trigger-hit list — it feeds Steps 1–3 and is returned to the main agent. Trigger hits are MANDATORY decisions, not interpretive calls; when a trigger fires, the mapped operation applies and the "when uncertain, defer" fallback does NOT override it.
+     0. **Run the Mechanical Triggers pre-scan per the prose-formatter skill.** Scan the full document for the eight mandatory triggers: (1) `{threshold}` parallel items in prose — use the passed threshold value, NOT the SKILL.md default; (2) category comparison across repeated dimensions; (3) subsection with multiple internal blocks; (4) bold on labels but not on named frameworks; (5) paragraph carrying framework + exceptions + implications; (6) trend-trajectory paragraph with 3+ data points; (7) 2+ named geographies OR 2+ named sectors compared across 2+ named dimensions; (8) paragraph-split coordination with `ai-prose-decontamination` Pass 5b. Record which triggers fire and at which locations. Produce the trigger-hit list — it feeds Steps 1–3 and is returned to the main agent. Trigger hits are MANDATORY decisions, not interpretive calls; when a trigger fires, the mapped operation applies and the "when uncertain, defer" fallback does NOT override it.
      1. Run all formatting operations per the prose-formatter skill (bold/italic, lists, tables, paragraph length, horizontal rules, spacing). Record a formatting change log. Operation 1 may detect additional pseudo-heading bold labels that belong on the trigger #3 hit list — add them, do NOT bold them.
      2. Run H3 title pass Step 1 (placement) per the h3-title-pass skill, consuming the trigger #3 hit list as candidate SPLIT verdicts. Record a verdict per heading: KEEP / RENAME / REMOVE / SPLIT with rationale.
      3. Run H3 title pass Step 2 (refinement) per the skill. Apply KEEP/RENAME/REMOVE verdicts. For RENAME, apply the refined wording. For REMOVE, delete the heading. **Do NOT auto-apply SPLIT verdicts** — they are operator-gated and surfaced at Phase 4 for approval.

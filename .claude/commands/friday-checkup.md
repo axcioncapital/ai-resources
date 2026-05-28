@@ -283,6 +283,8 @@ Verifies the Mitigation 3 (strengthened) contract from FX-B1 Path A: every `<!--
 2. **Referenced anchors:** `grep -hoE 'anchor \`phase-[a-z-]+\`' ai-resources/workflows/research-workflow/.claude/commands/produce-*.md | sed -E 's/anchor \`(phase-[a-z-]+)\`/anchor: \1/' | sort -u`. Capture as `REFERENCED`.
 3. **Diff:** `comm -3 <(echo "$DECLARED") <(echo "$REFERENCED")`. Empty output → PASS. Non-empty output → record as `repo-documentation:stage-5-anchor-drift` finding with the diff content (left side = declared-but-not-referenced; right side = referenced-but-not-declared).
 
+> **c1/c2 apply-by-removal note (from FX-D1 2026-05-28 risk-check, second pass).** Two related cross-project grep extensions were proposed and deferred by removal: (c1) walk `projects/*/.claude/commands/produce-*.md` to catch fork divergence against canonical; (c2) placeholder-set divergence grep (Mitigation 3.5 — `{section}`, `{report}`, `{N}`, `{part}`, `{slug}`) between template, canonical commands, and project instances. As of FX-D1 landing, all 3 Stage 5 commands in nordic-pe (the only project that had forks) became symlinks to canonical, and buy-side already had symlinks — so no project maintains a Stage 5 command fork. Symlinks can't drift, so c1/c2 detection is structurally unnecessary. **If a future change re-creates a project-local fork of any Stage 5 command, c1/c2 should be re-evaluated** — the drift-detection requirement returns under that condition. Verify the no-fork state before re-deferring.
+
 ---
 
 ### Step 6: Compile Follow-Ups

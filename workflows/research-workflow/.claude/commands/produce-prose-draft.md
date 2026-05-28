@@ -8,6 +8,8 @@ Produce prose draft for: $ARGUMENTS
 
 Convert one source document into reviewed, decontaminated, jargon-glossed prose. Chains skills across phases that vary by mode. Output is prose ready for `/produce-formatting`.
 
+> **Scope: light polish only.** This command does NOT re-architect, re-prose, or revise substantive content. Structural changes belong upstream (e.g., a Stage 5.2 bright-line fix application for report-mode projects, or `/produce-architecture` for section-mode projects); `document-integration-qc` validates narrative structure separately. If the source document needs structural rework, do it upstream before invoking this command.
+
 **Mode-specific overview:**
 - **section-mode:** 7 phases. Chains decision-to-prose-writing (`decision-to-prose-writer`), merged review + fix (`chapter-prose-reviewer` + `prose-compliance-qc`), cross-section integration check (conditional), AI prose decontamination (`ai-prose-decontamination`), and jargon-gloss (`jargon-gloss`). Requires architecture to exist (`/produce-architecture` runs first). Per-section run: 4–5 subagent launches, target ~12–16 min wall time.
 - **report-mode:** 5 phases. Chains prose-refinement (`prose-refinement-writer`), AI prose decontamination, jargon-gloss. No architecture requirement (the post-bright-line-fix source carries its own structure). Per-report run: 3 subagent launches, target ~14–18 min wall time.

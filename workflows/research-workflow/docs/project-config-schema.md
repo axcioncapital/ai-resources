@@ -1,6 +1,6 @@
 # Project Config Schema — Research Workflow Canonical
 
-> **Status — forward contract (no live consumer as of 2026-05-27).** This schema declares 12 declarative project values that downstream skills, commands, and reference docs are *intended* to read at runtime. Today, zero of those consumers parse the block. The schema is being landed one work-unit ahead of FX-B1 (Stage 5 parameterization), which is the first confirmed consumer-builder. Until FX-B1 lands, this file describes a contract that will be honored, not a contract that is in force.
+> **Status — partially live (FX-B1 landed 2026-05-28; FX-D1 landing 2026-05-28).** This schema declares 13 declarative project values consumed by canonical Stage 5 commands and other workflow consumers. Field #13 (`Document model`) is live via FX-B1; the threshold-class field documented in `reference/stage-5-paths.md § Default-value semantics for Mechanical trigger threshold:` lives in the stage-5 path-config file rather than this schema (path-config is the canonical site for per-project Stage 5 tunables — see § Where Stage 5 tunables live below).
 >
 > **Rollback rule:** if FX-B1 does not land within the current fix-phase plan window (`plans/fix-phase-plan-v1.md` Work Unit 4), the schema either gets a live consumer or gets reverted — it does not sit idle indefinitely (`principles.md § DR-7` — no speculative generalization without a downstream consumer).
 >
@@ -110,6 +110,22 @@ Arg-shape is then validated against the declared mode at Phase 0; it is not a di
 - `Document model: "section"` → arg must match `^[0-9]+\.[0-9]+$`. Mismatch halts.
 
 Enum values `report` / `section` are reserved at v1 landing of this field. Adding a new mode requires a Path A v4-style design + `/risk-check`.
+
+---
+
+## Where Stage 5 tunables live
+
+The `## Project Config` block in CLAUDE.md is **not** the home for every project-tunable value. Project-tunable values that are scoped to one consumer (single-command tunables) live in the consumer's own config file, not here.
+
+Canonical pattern, introduced FX-B1 and extended FX-D1:
+
+| Tunable scope | Lives in | Example |
+|---|---|---|
+| Cross-consumer project value (read by ≥2 distinct consumers, OR drives mode dispatch) | `CLAUDE.md` `## Project Config` block | `Document model` (read by all 3 Stage 5 commands + parameterizes mode dispatch); `Country set` (read by `country-parity-checker`, `source-class-hierarchy.md`, `research-prompt-creator`). |
+| Single-consumer Stage 5 tunable (read by exactly one Stage 5 command, governs that command's behavior only) | `reference/stage-5-paths.md` (path-config file; canonical template at `workflows/research-workflow/reference/stage-5-paths.template.md`) | `Mechanical trigger threshold` (read by `produce-formatting.md` Phase 0 only — see template § Default-value semantics for `Mechanical trigger threshold:`). |
+| Project-wide skill default | The skill's own config doc (e.g., `jargon-gloss-config.md`) | PE Vocabulary Whitelist additions. |
+
+The promotion rule: if a Stage 5 tunable in `stage-5-paths.md` later acquires a second canonical consumer (e.g., `Mechanical trigger threshold` becomes read by `produce-prose-draft.md` too), promote it to the CLAUDE.md `## Project Config` block + add a schema row here. Until then, keeping it in path-config keeps the always-loaded CLAUDE.md block scannable.
 
 ---
 
