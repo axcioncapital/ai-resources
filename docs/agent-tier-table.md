@@ -31,6 +31,7 @@ Every agent must declare `model:` explicitly in frontmatter — no implicit inhe
 | pipeline-stage-3c | opus | Analytical (implementation spec). Retrofitted from inherit. |
 | pipeline-stage-4 | sonnet | Spec-following implementation. Retrofitted from inherit. |
 | pipeline-stage-5 | sonnet | Verification checks. Correct. |
+| project-manager | opus | Judgment (project-content adjudication grounded in active project's constitution docs; escalates to system-owner via Function A for general structure questions; redirects change-shaped structure questions to /consult). Added 2026-05-28. |
 | qc-gate | sonnet | QC reviewer for stage transitions. Added 2026-05-14. |
 | qc-reviewer | opus | QC judgment. Correct. |
 | refinement-reviewer | opus | Refinement judgment. Correct. |

@@ -5,6 +5,8 @@ model: opus
 
 Consult the Axcíon AI System Owner on a structural question or a proposed repo change. Delegates to the `system-owner` agent (Opus); the agent reads the project's persona / grounding / toolkit-relationship references plus selected vault architectural reference docs and returns a grounded judgment in System Owner voice.
 
+**For project-content questions grounded in a specific project's plan/decisions, use `/pm` instead — `/consult` is repo/workspace structure scoped.**
+
 Input: `$ARGUMENTS` — free-text question or situation. Examples:
 
 - `/consult I want to add a new /analyze-logs command — where should it live and what does it break?`
@@ -40,6 +42,8 @@ Set `QUESTION` = `$ARGUMENTS` verbatim.
 ---
 
 ### Step 2 — Apply the change-shape detection rule
+
+> **Two-end contract** — if you edit the change-shape classifier list below, also update the verbatim copy in `ai-resources/.claude/agents/project-manager.md` Phase 3 (under `structure (change-shaped)`). The two definitions are a two-end contract per `risk-topology.md § 5`; silent drift causes routing inconsistency between `/consult` and `/pm`.
 
 A question is **change-shaped** when the operator describes an intended, proposed, pending, or evaluated repo modification affecting any of:
 
