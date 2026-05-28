@@ -40,6 +40,7 @@
 │   └── hooks/                                   # ai-resources hooks
 ├── audits/                                      # audit artifacts
 │   ├── risk-checks/                             # `/risk-check` reports
+│   ├── incidents/                               # `/resolve-incident` per-incident full records
 │   ├── critical-resources-manifest.md           # manifest for `/audit-critical-resources`
 │   ├── friday-checkup-YYYY-MM-DD.md             # weekly/monthly/quarterly checkup reports
 │   ├── permission-sweep-YYYY-MM-DD.md
@@ -55,6 +56,7 @@
 │   ├── coaching-log.md
 │   ├── coaching-data.md
 │   ├── improvement-log.md
+│   ├── incident-log.md                          # `/resolve-incident` per-incident index (append-only)
 │   ├── innovation-registry.md
 │   ├── maintenance-observations.md
 │   ├── usage-log.md
@@ -208,6 +210,7 @@ Change classes (per `audit-discipline.md`):
 | `logs/friction-log.md` | Operator-observed friction events | `/friction-log` |
 | `logs/coaching-log.md` | Backward-looking session pattern ratings (5 dims) | `/coach` |
 | `logs/improvement-log.md` | Proposed improvements (Pending → Applied/Resolved) | `/improve`, `/resolve-improvement-log` |
+| `logs/incident-log.md` | Per-incident one-line index (resolved/escalated/deferred); full records in `audits/incidents/` | `/resolve-incident` |
 | `logs/innovation-registry.md` | Auto-detected new resources / patterns | `detect-innovation.sh` hook |
 | `logs/maintenance-observations.md` | Repo-health observations from `/friday-act` | `/friday-act` |
 | `logs/usage-log.md` | Per-session usage telemetry | `/usage-analysis` |

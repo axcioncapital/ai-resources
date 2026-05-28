@@ -10,23 +10,26 @@ Single source of truth for the canonical shape of a new Axcíon AI project's `.c
 - `project-claude-md/commit-rules.md` — `## Commit Rules` canonical section.
 - `project-claude-md/compaction.md` — `## Compaction` canonical section.
 - `project-claude-md/session-boundaries.md` — `## Session Boundaries` canonical section.
+- `incident-log-template.md` — canonical fillable shape for a `/resolve-incident` per-incident record. Consumed by `/resolve-incident` (Step 5 — reads and fills pre-edit; Step 8 — writes filled record to `audits/incidents/`). Contains `{FIELD}` placeholders replaced at runtime by the command, not at scaffold time.
 
-The four CLAUDE.md section fragments contain NO substitution tokens — they are constants. Only `header.md` contains `{name}` / `{project-description}`.
+The four CLAUDE.md section fragments contain NO substitution tokens — they are constants. Only `header.md` contains `{name}` / `{project-description}`. `incident-log-template.md` uses `{FIELD}` placeholders resolved at runtime.
 
 ## Consumer contract
 
-Two consumers, both reading the templates at scaffold/deploy time:
+Three consumers:
 
 1. **`/new-project`** (step 2 + step 4) — the original consumer; writes both `settings.json` and the CLAUDE.md canonical sections when scaffolding a new project.
-2. **`/deploy-workflow`** (step 4, sub-step `### Ensure permissions baseline in deployed settings.json`) — added 2026-05-25, the first concrete extension of the 2026-05-25 KEEP verdict below. Consumes `project-settings.json.template` only (not the CLAUDE.md fragments), and only writes when the deployed project's `.permissions.allow` is empty.
+2. **`/deploy-workflow`** (step 4, sub-step `### Ensure permissions baseline in deployed settings.json`) — added 2026-05-25. Consumes `project-settings.json.template` only (not the CLAUDE.md fragments), and only writes when the deployed project's `.permissions.allow` is empty.
+3. **`/resolve-incident`** (Step 5 + Step 8) — added 2026-05-28. Consumes `incident-log-template.md` only. Step 5 reads the template and fills all pre-edit fields; Step 8 writes the filled record as a new file under `audits/incidents/{DATE}-{SLUG}.md`. Does not write to any project CLAUDE.md or settings.json.
 
-Both consumers:
+All consumers:
 
 1. Read the relevant template file(s).
-2. Apply the merge logic locally — for `settings.json`, the predicate "already has a non-empty `permissions.allow` array" still gates the merge; for CLAUDE.md, the per-section idempotency check (`grep -q '^## <heading>'`) still gates the append.
-3. Do not mutate the template files in place. Templates are read-only.
+2. Apply the merge/fill logic locally. Templates are read-only — do not mutate them in place.
+3. For `settings.json`: the predicate "already has a non-empty `permissions.allow` array" still gates the merge (consumers 1 and 2 only).
+4. For CLAUDE.md: the per-section idempotency check (`grep -q '^## <heading>'`) still gates the append (consumer 1 only).
 
-When adding a third consumer, update this contract list and the `## What's here` description for the affected template file.
+When adding a fourth consumer, update this contract list and the `## What's here` description for the affected template file.
 
 ## 2026-04-13 decision — verdict 2026-05-25: **KEEP**
 

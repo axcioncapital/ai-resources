@@ -3,6 +3,8 @@ description: Investigate a repo error, broken state, or structural inconsistency
 model: opus
 ---
 
+> **Note (2026-05-28):** For mid-session faults where you want a fix applied in-session — not just a plan — use `/resolve-incident` (classify → bounded fix → verify → log). `/resolve-repo-problem` remains the right tool for **triage-only** investigations: when you want a ranked three-option plan to study and execute separately, or when the fix is out of scope for the current session.
+
 Diagnose a problem and produce a fix plan. `/resolve-repo-problem` covers two kinds of problem — a repo error or structural inconsistency, and a session/workflow fault that surfaced mid-session (a command misbehaved, a gate fired at the wrong time, two loaded instructions conflicted, a hook nudged wrongly). It runs in one of two operator-invoked modes and **applies no fix in either — triage only.**
 
 - **MANUAL mode** — invoked with a problem description. A fresh-context subagent locates the relevant files, diagnoses the root cause, and writes a ranked three-option fix plan to `audits/working/`. The operator (or a follow-up session) decides which option to execute.
