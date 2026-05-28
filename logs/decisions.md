@@ -114,3 +114,31 @@ Plan retained: `/Users/patrik.lindeberg/.claude/plans/i-want-to-build-tidy-lake.
 **Sub-decisions made within the MVP.** (1) `/resolve-repo-problem` deprecate-and-absorb (option i) rather than keep as sibling (option ii) — only 1 deprecation note added; full deprecation deferred to v1.1 once usage data exists. (2) Keep canonical template + dedicated log (option B from the QC simpler-alternative finding) over writing per-incident records to `audits/working/` with schema in command body — operator chose explicit canonical shape over surface-area minimization. (3) Approve the auto-coupling to `improvement-log.md` Step 8c — same pattern `/resolve-repo-problem` already uses; disclosed inline. (4) Inline a 4-field verification rubric in the command body instead of deferring verification-receipt format to v1.1 — operator delegated decision via "help me decide"; chose immediately-actionable over file-dependency.
 
 **Review trail.** `/clarify` → `/decide` (5 questions pre-researched against repo state; 1 self-resolved, 3 recommendable with operator confirmation, 1 operator-only) → `/scope` approved → `/qc-pass` REVISE → `/triage` (4 self-resolve + 3 operator-judgment + 1 low-signal) → 7 findings resolved → `ExitPlanMode` approved → build executed → end-time `/risk-check` PROCEED-WITH-CAUTION → 4 mitigations applied inline (heading-anchor citations + rollback note + 3× verbatim-shape contracts + routing-defect verification via symlink check) → System Owner second opinion concurred and added [PHASE-2-FILL] marker + 4th implicit contract identified → effective GO → commit `bc1db87`.
+
+---
+
+## 2026-05-28 — id-20 review-principle placement: new `## All Reviews` section
+
+**Context.** Wave 1 fix-plan item id-20 added a "Name the bright-line before reviewing it" principle to `skills/ai-resource-builder/references/review-principles.md`. The file is organized into per-resource-type sections (`## Skills`, `## Workflows`, `## Pipeline Output`, `## Project Instructions`) plus a `## Candidates` queue for operator-pending drafts. Three placements were viable.
+
+**Decision.** Created a new top-level `## All Reviews` section between `## How This File Works` and `## Skills`. Placed the bright-line bullet there.
+
+**Rationale.** The principle applies across every review class — it's about how a reviewer anchors their judgment, not what they're reviewing. Duplicating into each per-resource section would create maintenance debt; parking in `## Candidates` is for drafts pending operator approval, but this principle has been operator-coached for 3 cycles (2026-05-16, 2026-05-20, 2026-05-22) and is past the candidate stage. The new section sits at file top, above per-resource sections, which mirrors the existing reading-order pattern (general → specific). QC reviewer verdict GO — confirmed placement is correct, wording fidelity high, downstream `evaluation-framework.md` reference path unchanged.
+
+**Alternatives considered.** (a) Duplicate the bullet into every per-resource section — rejected; maintenance debt and visual noise. (b) Park in `## Candidates` — rejected; principle has cleared the candidate threshold (3 coaching cycles, codification explicitly directed by Wave 1 plan). (c) Extend the `## Project Instructions` section — rejected; bright-line-naming is about reviewer discipline, not the reviewed artifact's testability (the existing "Rule testability" bullet there is about *the rule being reviewed*, not *how the reviewer anchors judgment*).
+
+**Review trail.** `/clarify` → `/scope` ("approved") → execution → `/qc-pass` GO (no revisions) → commit `f598ee1`.
+
+---
+
+## 2026-05-28 — Skip `/qc-pass` on Wave 1 id-04 because no edit was applied
+
+**Context.** Wave 1 fix-plan item id-04 instructed: "Fix 4-vs-5-vs-6 count-drift in `ref-implementation-starter.md` Synthesis rules (line 60)" with `QC needed: yes` because the correct count is a judgment call. On reading the file at execution time, I found the file already consistent at "seven" (lines 39, 63, plus a 7-field table); the count-drift had been fixed by commit `fd8b5e7` on 2026-05-27 (the Stage 8.5 retirement session).
+
+**Decision.** No edit to `ref-implementation-starter.md`. Annotated the source `session-notes.md` line 362 with `Resolved: applied 2026-05-28 via wave-1 hygiene plan — file currently consistent at "seven"; count-drift already fixed by commit fd8b5e7 (2026-05-27)`. Skipped `/qc-pass` because no judgment-bearing edit was applied.
+
+**Rationale.** The plan's `QC needed: yes` was conditional on the fix being applied (the judgment is *which count is correct*, not *whether the file is consistent*). With no edit, the QC trigger does not fire. Skipping QC on a no-op preserves the operator's `feedback_minimal_infra_subset` preference for not running QC on QC-clean components of low marginal value.
+
+**Alternatives considered.** (a) Run `/qc-pass` anyway as a verification ritual — rejected; the QC subagent's check would be against a non-existent edit, producing no actionable output. (b) Treat the plan instruction as binding regardless of file state and add a no-op edit + QC — rejected; ceremony without purpose. (c) Skip the annotation entirely — rejected; the annotation closes the loop on the source session-notes-line-362 flag, so a future audit pass doesn't re-flag the same already-resolved issue.
+
+**Review trail.** Plan instructions read → file state verified (count-consistent) → git log confirmed fix in `fd8b5e7` → annotation applied → commit `8776651`.

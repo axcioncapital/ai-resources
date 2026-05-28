@@ -2,145 +2,6 @@
 
 > Archive: [session-notes-archive-2026-05.md](session-notes-archive-2026-05.md)
 
-## 2026-05-27 — High-priority sweep from friction-log + improvement-log
-
-**Mandate:** Scan friction-log.md, improvement-log.md, decisions.md deferrals, and last-2 session-notes Next Steps. Fix as many open HIGH/MED-HIGH items as the session allows. Stop at [COST] guardrail.
-- In scope: Cluster 1 (wrap-session concurrent-wrap guard), Cluster 2 (session-plan fixes — sparse template + concurrent conflict default + monday-prep semantics), Cluster 3 (small docs — risk-topology.md row + system-doc.md feedback loop entry).
-- Out of scope: push workspace root (operator gate); parallel-session uncommitted files.
-
-### Summary
-
-High-priority sweep across friction-log.md, improvement-log.md, decisions.md deferrals, and last-2 session-notes Next Steps. Three clusters identified and shipped. Cluster 1 (wrap-session foreign-session pre-write guard) was the biggest piece — went through full risk-check (PROCEED-WITH-CAUTION, 5+2 mitigations) + system-owner second opinion + qc-pass REVISE (2 critical findings: bash zero-match arithmetic bug + header-reuse blind spot, both fixed by adding mandate-line counting alongside header counting). Cluster 2 (3 session-plan friction items) were all verified-done in prior commits — added [FADING-GATE] markers so they stop re-firing. Cluster 3 (2 small docs entries — risk-topology.md `.prime-mtime` row + system-doc.md `/contract-check` feedback-loop row) closed deferred items from 2026-05-26 Plan 2 SO advisory and 2026-05-27 contract-check landing. Side investigation via /resolve-repo-problem on a concurrent-session-activity alarm came back benign (12 of 13 "new" workspace commands are symlinks, not new work).
-
-### Files Created
-- `ai-resources/audits/risk-checks/2026-05-27-wrap-session-foreign-session-detection-guard.md` — risk-check report for Cluster 1 (verdict PROCEED-WITH-CAUTION with appended SO commentary)
-- `ai-resources/audits/working/2026-05-27-resolve-concurrent-session-foreign-files-cluster-1-investigation.md` — /resolve-repo-problem investigator notes (gitignored, not committed)
-- `ai-resources/logs/scratchpads/2026-05-27-13-24-scratchpad.md` — pre-closeout continuity scratchpad
-- `ai-resources/logs/session-notes-archive-2026-05.md` — auto-archived by `check-archive.sh` (8 entries archived, 10 kept)
-
-### Files Modified
-- `ai-resources/.claude/commands/wrap-session.md` — new Step 3.5 foreign-session pre-write guard (~65 lines)
-- `~/Claude Code/Axcion AI Repo/.claude/commands/wrap-session.md` — new Step 1.5 (Phase 3 workspace-root copy guard, mirrors canonical, ~57 lines)
-- `ai-resources/logs/friction-log.md` — [FADING-GATE] markers added to 3 entries (lines 27, 29, 69) for monday-prep semantics, sparse-plan template, concurrent-session conflict
-- `ai-resources/logs/improvement-log.md` — 2 entries touched: (a) new "Foreign-files-in-working-tree alarm" Status: logged (pending) from /resolve-repo-problem; (b) existing "Concurrent-session wrap clobbers" Status: logged → applied 2026-05-27
-- `projects/repo-documentation/output/phase-1/risk-topology.md` — § 1.2 new row for `logs/.prime-mtime` as load-bearing two-end contract
-- `projects/repo-documentation/output/phase-1/system-doc.md` — § 4.5 new row for "/contract-check feedback loop"
-- `ai-resources/logs/session-notes.md` — this wrap (forthcoming commit)
-
-### Decisions Made
-- **Cluster 1 mitigation 4 strengthened to fully mechanical** — replaced the original "LLM-judgment branch for ADDED==1" with `.prime-mtime` marker recency check. Default-to-stop on uncertainty. Avoids the gate-fade failure mode (rubber-stamp approval risk per `AP-4`).
-- **Cluster 1 mitigation 5: dropped `union` reply branch entirely.** Operator resolves manually by switching terminals. Auto-merge of session notes is a silent-conflict-resolution anti-pattern (`AP-1`).
-- **Cluster 1 dual-signal detection** — added mandate-line counting alongside header counting to close the shared-header blind spot per QC Finding 3 option (b). Both signals checked independently; STOP if EITHER shows FOREIGN >= 1.
-- **Cluster 2 disposition** — verified-done annotation in friction-log rather than touching the already-correct source files (avoids redundant work + protects working code).
-- **Cluster 3 routing** — edited `output/phase-1/` canonical source (not `vault/`, which is gitignored downstream Obsidian copy). Initial vault/ edits would not have been preserved.
-- **QC Finding 5 deferred** — marker-semantics simplification (read `.prime-mtime` mtime via stat vs read content) — optional, non-blocking, no behavioral change. Per `feedback_minimal_infra_subset`.
-
-### Next Steps
-- **Push gate.** Three repos have unpushed commits awaiting operator approval (Autonomy Rule #2):
-  - ai-resources: 4 new this session (`6b1b018`, `f3dfabe`, `66f18a9`, plus the forthcoming wrap commit) + 5 pre-existing
-  - workspace-root: 1 new (`5157a5d`) + 1 pre-existing (`2e479a6`)
-  - projects/repo-documentation: 1 new (`5440dd7`) + pre-existing not checked
-- **Verify the wrap guard fires in production.** Step 3.5 + Step 1.5 are shipped but only the FOREIGN=0 own-write path (proceed-silently) has been live-tested. The FOREIGN >= 1 STOP path is unverified — next real concurrent-session incident will exercise it.
-- **Standing carryovers** (preserved from prior sessions, not addressed this session): `backup-session-plan-pass2-regex` (nordic project), `friction-logging-discipline-rule` (nordic), `plan-evaluate-drift-check` (project-planning).
-- **Cleanup candidate** for next `/cleanup-worktree` (per investigation): abandoned `harness-start.md` file at workspace-root `.claude/commands/` from May 25.
-
-### Open Questions
-None.
-
-## 2026-05-27 — Executed fix-plan fix-repo-issues-2026-05-27-1316.md (3 items)
-
-**Mandate:** Execute the fix plan at `audits/fix-plans/fix-repo-issues-2026-05-27-1316.md`.
-
-### Summary
-
-Applied the three items from the 13:16 fix-plan as a continuous execution session. id-07 (orphan Mandate headers in `session-notes.md`) — two bare `## 2026-05-26` headers, each paired with a descriptive-title wrap below, were merged into their wraps; chose merge over the fix-plan's stated "back-fill or trim" because both wraps already existed and merge preserves Mandate metadata. id-13 (Verified line) — single-line substitution under the concurrent-session-wrap-clobber entry's Status line. id-14 (symlink-check-first rule) — appended a "Foreign-files diagnostic shortcut" subsection to `docs/commit-discipline.md`, then flipped the source improvement-log entry to applied + Verified + Implementation note referencing the doc commit's SHA. Two commits shipped (doc edit first to capture SHA for the implementation note, then a log-hygiene batch for the remaining edits).
-
-### Files Created
-- `ai-resources/logs/scratchpads/2026-05-27-14-30-scratchpad.md` — continuity scratchpad (gitignored)
-
-### Files Modified
-- `ai-resources/docs/commit-discipline.md` — appended "Foreign-files diagnostic shortcut" subsection (id-14, commit `94e0cf2`)
-- `ai-resources/logs/session-notes.md` — merged 2× orphan Mandate headers into paired wraps + this wrap section (id-07, commit `335747c`)
-- `ai-resources/logs/improvement-log.md` — added `Verified: 2026-05-27` line to concurrent-session-wrap-clobber entry (id-13); flipped Foreign-files-alarm entry to applied + Verified + Implementation note (id-14, commit `335747c`)
-
-### Decisions Made
-- **id-07 disposition = merge (not back-fill, not trim).** Fix-plan offered two paths; observation showed each orphan Mandate header had a paired descriptive-title wrap below — back-fill was redundant and trim would have lost the Mandate metadata. Merge preserves content AND aligns with the canonical pattern used by all 2026-05-27 entries (Mandate inline inside the descriptive-title header). Per Decision-Point Posture, picked and proceeded.
-- **Skipped ceremonial `/session-start` + `/session-plan`.** Operator's free-text intent ("Execute the fix plan at X") was the mandate. Work was substitution-shaped (3 small edits); the ceremony would have been pure overhead. Per `feedback_decision_point_posture` + `feedback_autonomy_during_execution`.
-- **Two commits, not three.** Doc edit committed first (`94e0cf2`) so the id-14 status-flip entry could reference its SHA in the Implementation note. Remaining log-hygiene edits batched into one commit (`335747c`). Per fix-plan "Commit per item or per logical batch (operator preference)."
-
-### Next Steps
-- **Push gate.** `ai-resources` has 10 unpushed commits (8 carryover + `94e0cf2` + `335747c` + the forthcoming wrap commit). Workspace-root has 2 unpushed (`5157a5d`, `2e479a6` — carryover). Operator approval required (Autonomy Rule #2).
-- **Untracked artifacts.** `audits/fix-plans/fix-repo-issues-2026-05-27-1316.md` (this just-executed plan) and `audits/working/fix-repo-issues-2026-05-27-1316.md` (scanner notes) remain untracked. The fix-plan itself is useful traceability — operator may want to commit it.
-- **Standing carryovers** (preserved): `backup-session-plan-pass2-regex` (nordic), `friction-logging-discipline-rule` (nordic), `plan-evaluate-drift-check` (project-planning); abandoned `harness-start.md` at workspace-root `.claude/commands/` (candidate for `/cleanup-worktree`).
-
-### Open Questions
-None.
-
-## 2026-05-27 — Housekeeping + triage pass (W22 cleanup)
-
-**Mandate:** Run a 3-phase housekeeping + triage pass. Phase 1: resolve uncommitted `docs/session-guardrails.md` modification + 3 untracked audits artifacts; push 3 ai-resources + 2 workspace-root commits (operator-gated). Phase 2: friction-log hygiene — add `[FADING-GATE]` annotations to 3 stale entries (2026-05-25 09:13, 2026-05-18 10:00, 2026-05-08 18:26). Phase 3: inbox triage — read 4 inbox briefs, output a ranked build queue (no skill build this session).
-
-## 2026-05-28 — /auto-start design → landed as /prime Step 8c auto branch
-
-### Summary
-Designed and shipped an autonomous session-bootstrap feature. Started as a proposed standalone `/auto-start` command; redirected by System Owner consultation to a branch inside the existing `/prime` command (DR-7 + AP-7 + risk-topology §1). Built Step 8c with twelve sub-steps: pick top menu item, derive mandate + plan inline, single approval gate with risk-check disclosure, write to canonical formats, optional /risk-check at plan-time, execute. Two QC passes ran (draft and final); one parse-contract blocker caught and fixed (the "complete fully within this session" clause was breaking the two-segment mandate parse). Also surfaced a real /wrap-session guard misfire (Step 3.5 cannot distinguish prior-day remnants from live concurrent sessions); triaged via /resolve-repo-problem.
-
-### Files Created
-- `logs/scratchpads/2026-05-28-auto-start-scratchpad.md` — continuity scratchpad for /prime Step 1b next-session resume
-- `audits/working/2026-05-28-resolve-wrap-session-foreign-guard-prior-day-remnant.md` — full triage notes for the wrap-session guard misfire
-
-### Files Modified
-- `ai-resources/.claude/commands/prime.md` — Step 6 brief (advertise `auto`), Step 7 classifier (route `auto` → 8c), new Step 8c auto branch (12 sub-steps; ~108 insertions). Shipped as commit `1063772`.
-- `ai-resources/logs/improvement-log.md` — appended pending entry for wrap-session Step 3.5 guard date-discrimination patch
-- `ai-resources/logs/session-notes.md` — recovered W22 orphan mandate (commit `535a666`); appended today's wrap note (this entry)
-- `ai-resources/logs/inbox-triage-2026-05-27.md` — recovered as part of W22 wrap recovery (commit `535a666`)
-
-### Decisions Made
-- **Shape: /prime branch, not a standalone /auto-start command.** Driven by System Owner advisory citing DR-7 (no second consumer), AP-7 (speculative abstraction), risk-topology §1 (don't add a fourth concurrent-session detection surface). Implementation rides on /prime's existing detection surfaces.
-- **Recommendable #1 (risk-check second gate): option (a) — surface in Step 5 preview when structural class is detected.** Grounding: OP-3 (loud failure), DR-8 (binding risk-check gate), AP-1 (no silent conflict resolution). Honest single-gate disclosure.
-- **Recommendable #3 (free-text reply path): option (a) — require explicit `edit`; re-ask on ambiguous reply.** Grounding: OP-3, AP-1, OP-6 (operator's mental model). Matches `/session-start` Step 2 parser discipline.
-- **QC fix:** dropped the "complete fully within this session" clause from the disk-written `**Mandate:**` line; preserved the posture in execution prose (Step 8c.11). Reason: the inserted clause broke the two-segment parse contract (`head — done when: tail`) that `/wrap-session` Step 7a, `/drift-check` Step 5, and workspace-root `wrap-session.md` Step 2b depend on.
-- **End-time /risk-check skipped per workspace skip rule** (`feedback_end_time_risk_check_skip.md`): System Owner advisory covered plan-time concerns; mitigations applied (both Recommendable options, parse-contract preservation, abort path documented); commits already shipped (`1063772`); drift bounded to a single command edit.
-
-### Next Steps
-- Push `1063772` (today's /prime Step 8c edit) and `535a666` (W22 wrap recovery) to remote — operator approval required.
-- Future Friday cadence will surface the improvement-log entry for the wrap-session Step 3.5 date-discrimination patch.
-
-### Open Questions
-- None.
-
-## 2026-05-28 — /fix-repo-issues multi-scope sweep → 8-item fix plan written
-
-### Summary
-/prime opened the session and surfaced 21 unpushed commits, uncommitted edits on `logs/friction-log.md` + `logs/improvement-log.md`, and yesterday's resumable scratchpad. Operator skipped the menu and went directly to `/fix-repo-issues`. Scopes selected: ai-resources, project axcion-brand-book, project nordic-pe-macro-landscape-H1-2026, project nordic-pe-screening-project. Four scanner subagents fired in parallel; aggregate haul was 73 items (T1=15, T2=34, T3=24). Triaged to a 6-item Plan-into-batch; operator added 2 more from the Park list (both brand-book multi-file-refactor class) for a final plan of 8 items. Plan written to `audits/fix-plans/fix-repo-issues-2026-05-28-1121.md`. No structural changes this session — plan file plus 4 scanner-notes files only.
-
-### Files Created
-- `ai-resources/audits/fix-plans/fix-repo-issues-2026-05-28-1121.md` — 8-item fix plan
-- `ai-resources/audits/working/fix-repo-issues-2026-05-28-1121-ai-resources.md` — scanner notes (44 items)
-- `ai-resources/audits/working/fix-repo-issues-2026-05-28-1121-project-axcion-brand-book.md` — scanner notes (6 items)
-- `ai-resources/audits/working/fix-repo-issues-2026-05-28-1121-project-nordic-pe-macro-landscape-H1-2026.md` — scanner notes (21 items)
-- `ai-resources/audits/working/fix-repo-issues-2026-05-28-1121-project-nordic-pe-screening-project.md` — scanner notes (2 items)
-- `ai-resources/logs/scratchpads/2026-05-28-12-00-scratchpad.md` — continuity scratchpad (gitignored)
-
-### Files Modified
-- `ai-resources/logs/session-notes.md` — this wrap entry
-
-### Decisions Made
-- **Plan expanded from 6 → 8 items at operator request.** Added `[project-axcion-brand-book/id-02]` (`/session-plan` MISMATCH false-positive, 4th recurrence) and `[project-axcion-brand-book/id-06]` (settings.json deny blocks `/draft-module`) from the Park list. Both are multi-file-refactor class. The plan body preserves the multi-file-refactor framing honestly so the execution session sees these as larger than items 1–6.
-- **/risk-check end-time gate skipped** — this session produced a plan file only. No hook edits, no permission changes, no command edits, no new symlinks, no automation with shared-state effects. Out of scope per `ai-resources/docs/audit-discipline.md` § Risk-check change classes.
-- **Telemetry + coaching both skipped per preflight** ("nn").
-
-### Next Steps
-- **Execute the fix plan in a fresh session.** Per the /fix-repo-issues two-session contract — open fresh, say: "Execute the fix plan at `ai-resources/audits/fix-plans/fix-repo-issues-2026-05-28-1121.md`". Cadence: items 1–6 are small (log hygiene + symlink + git remote), items 7 and 8 are real edits with `/qc-pass` requirements.
-- **Push gate.** 22 unpushed ai-resources commits (21 carryover + this session's wrap commit). Operator approval required (Autonomy Rule #2).
-- **Standing carryovers** (preserved): `backup-session-plan-pass2-regex` (nordic), `friction-logging-discipline-rule` (nordic), `plan-evaluate-drift-check` (project-planning); abandoned `harness-start.md` at workspace-root `.claude/commands/` (candidate for `/cleanup-worktree`).
-
-### Open Questions
-- None.
-
-
----
-
 ## 2026-05-28 — Execute /fix-repo-issues 8-item fix plan
 
 Class: execution
@@ -500,6 +361,75 @@ Ran `/fix-repo-issues` across 5 operator-selected scopes (ai-resources + ai-deve
 - **Push pending — multiple unpushed commits accrued today across ai-resources and workspace root.** ai-resources had 9 unpushed at `/prime` time + this wrap commit = 10. Workspace root had 2 unpushed. Push requires explicit approval (Autonomy Rule #2).
 - **Workspace-root uncommitted-files triage carries forward** — 2-session-old carryover. ai-resources also has 4 untracked (incl. new `resolve-incident.md`) that warrant their own commit decision.
 - **`/improve` not yet run** despite the Step 3.5 guard friction-log entry from earlier today's wrap.
+
+### Open Questions
+
+- None.
+
+## 2026-05-28 — Execute Wave 3 fix plan (4 structural items, each `/risk-check`-gated)
+Class: execution
+
+**Mandate:** Execute Wave 3 fix plan — 4 structural items (id-31 Phase 1, id-09, id-32, nordic-pe-macro/id-13), each `/risk-check`-gated, id-31 lands first, no batching — done when: all 4 items applied with improvement-log entries status-flipped + Verified lines + risk-check report refs.
+- Out of scope: id-31 Phases 2–4; Group G refactors (id-35/36/37); Group H research (id-34)
+- Files in scope: (inferred)
+- Stop if: `/risk-check` returns NO-GO or RECONSIDER without viable inline mitigation; OR id-31 Phase 1 fails QC/smoke-test
+
+Execute `audits/fix-plans/fix-repo-issues-2026-05-28-1902-wave3-structural.md`. Land `id-31` Phase 1 marker FIRST, then re-evaluate items 2-4 (`id-09`, `id-32`, `nordic-pe-macro/id-13`) against the new state before applying. Each item gets its own `/risk-check`. Do NOT batch.
+
+## 2026-05-28 — Execute Wave 2 fix plan (8 single-file `/prime` + hook + doc edits)
+Class: execution
+
+**Mandate:** Execute the Wave 2 fix plan — apply all 8 single-file edits (3 `/prime` rewrites coordinated as one pass, 1 hook regex, 1 new doc, 1 chapter-review rule across 2 files, 1 boundary note, 1 risk-topology row), run `/qc-pass` per item, and flip each source improvement-log entry to `applied 2026-05-28` — done when: all 8 items applied, each QC-passed, and commits landed per logical batch.
+- Out of scope: Wave 1 (hygiene) and Wave 3 (structural); no `/risk-check` items per the source improvement-log entries.
+- Files in scope: (inferred)
+- Stop if: `/qc-pass` returns REVISE twice on the same item without convergence, or a structural concern surfaces that warrants `/risk-check` despite the source plan declaring none.
+
+Execute `audits/fix-plans/fix-repo-issues-2026-05-28-1902-wave2-commands.md`. ~60–90 min, 8 items. Items 1–3 all edit `prime.md` — coordinate as one edit pass. No `/risk-check` required.
+
+## 2026-05-28 — Wave 1 (Hygiene) execution — 9 items applied across 3 repos
+
+### Summary
+
+Executed Wave 1 of the 2026-05-28 19:02 three-wave fix plan. All 9 hygiene items applied; 3 commits landed (per-scope cadence). `/qc-pass` ran on id-20 review-principle wording with GO verdict, no revisions. id-04 needed no edit — `ref-implementation-starter.md` is already consistent at "seven" (count-drift fixed by commit `fd8b5e7` 2026-05-27); session-notes line 362 annotated with Resolved marker instead. Plan source: `audits/fix-plans/fix-repo-issues-2026-05-28-1902-wave1-hygiene.md`.
+
+### Files Created
+
+- `ai-resources/logs/scratchpads/2026-05-28-19-35-scratchpad.md` — pre-closeout continuity scratchpad.
+- `ai-resources/logs/session-notes-archive-2026-05.md` — auto-archived by `check-archive.sh` (5 entries archived, 10 kept).
+
+### Files Modified
+
+- `projects/ai-development-lab/logs/friction-log.md` (id-02 Resolved line).
+- `projects/ai-development-lab/logs/session-notes.md` (id-04 Resolved annotation).
+- `projects/nordic-pe-macro-landscape-H1-2026/.claude/settings.json` (id-07 `Bash(rm *)` removed).
+- `projects/nordic-pe-macro-landscape-H1-2026/logs/improvement-log.md` (id-07 + id-09 status flips + id-09 cross-link bullet).
+- `ai-resources/logs/innovation-registry.md` (id-13-19 — 7 row status flips).
+- `ai-resources/logs/friction-log.md` (id-08 Cross-ref).
+- `ai-resources/skills/ai-resource-builder/references/review-principles.md` (id-20 — new `## All Reviews` section + bright-line bullet).
+- `ai-resources/logs/coaching-log.md` (id-20 codification footnote).
+- `ai-resources/logs/gate-calibration.md` (id-21 — prepended 2026-05-28 bright-line-review row).
+- `ai-resources/logs/improvement-log.md` (nordic-id-04 — appended Mandate-alignment recovery entry).
+- `ai-resources/logs/session-notes.md` (this entry).
+
+### Decisions Made
+
+- **Per-scope commit cadence (3 commits across 3 repos).** Operator approved at `/scope` ("approved"). Cleaner than per-item (9 commits) or single-bundle (1 commit); each project gets one Wave 1 commit attributable to the fix plan.
+- **id-04 skip `/qc-pass`.** No judgment-bearing edit was applied — `ref-implementation-starter.md` was verified already consistent at "seven" (lines 39, 63, 7-field table; count-drift fixed by `fd8b5e7`). The plan's `QC needed: yes` was conditional on the fix being applied; with no edit, the QC trigger does not fire.
+- **id-20 review-principle placement: new `## All Reviews` top-level section.** Chosen over (a) duplicating into per-resource sections (Skills/Workflows/Pipeline Output/Project Instructions) or (b) parking in `## Candidates` for operator review. Rationale: the bright-line-naming principle applies across all review classes, not just one resource type; the `## Candidates` queue is for drafts pending approval, but this principle has already been operator-coached for 3 cycles. QC reviewer confirmed placement is correct.
+- **id-13-19 stale-target classification.** Lines 102-103 (`ai-resources workflows level; logs GATE/PAUSE decisions to decisions.md` / `... fires if no checkpoint written in 120min`) → `triaged:graduate-stale` because no specific target file was named after 12 days. Lines 99-101, 104-105 (named `permission-template.md` / `compaction-protocol.md` — both verified to exist) → `graduated`.
+
+### Commits Landed
+
+- `8776651` (ai-development-lab): batch: wave-1 hygiene — friction-log Resolved marker + session-notes count-drift annotation
+- `869c585` (nordic-pe-macro-landscape-H1-2026): batch: wave-1 hygiene — settings.json rm-redundancy + improvement-log status flips
+- `f598ee1` (ai-resources): batch: wave-1 hygiene — bright-line review principle codified + log hygiene sweep
+
+### Next Steps
+
+- **Push pending commits across all 4 repos** (Autonomy Rule #2 — requires operator approval). Counts at wrap time: ai-resources ~11 unpushed (10 carryover + 1 wave-1), workspace root 2 unpushed (unchanged), ai-development-lab 1 wave-1 + any prior, nordic-pe-macro-landscape-H1-2026 1 wave-1 + any prior.
+- **Wave 2 of the fix plan** — `audits/fix-plans/fix-repo-issues-2026-05-28-1902-wave2-commands.md` (8 items, ~60–90 min). Items 1–3 all edit `prime.md` — coordinate as one edit pass. No `/risk-check` required per the plan.
+- **Wave 3 of the fix plan** — `audits/fix-plans/fix-repo-issues-2026-05-28-1902-wave3-structural.md` (4 `/risk-check`-gated TOCTOU patches). Each item gets its own `/risk-check`; do NOT batch.
+- **Carryover (unchanged from prior wrap):** triage workspace-root uncommitted accumulation; run `/improve` on today's Step 3.5 guard false-positive.
 
 ### Open Questions
 
