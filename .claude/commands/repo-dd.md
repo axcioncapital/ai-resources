@@ -290,7 +290,7 @@ Steps 8-14 run only when $ARGUMENTS contains "deep" or "full". They produce a se
 62. **Test 1: Symlink resolution.** Check every symlink recorded in EXTRACT_PATH §1.7. For each: does the target exist? Is it readable? Is the content non-empty? Record pass/fail per symlink.
 63. **Test 2: Template sync.** For each file that exists as both a canonical version (in ai-resources/skills/ or ai-resources/workflows/) and a deployed copy (in projects/), compare content. Record: identical, diverged (with line diff count), or missing copy.
 64. **Test 3: /deploy-workflow preconditions.** Verify without executing:
-    - Template directory exists at workflows/research-workflow/
+    - Template directory exists at ai-resources/workflows/research-workflow/
     - SETUP.md exists and contains placeholder definitions
     - Placeholder patterns (search for `{{`) are present in template files
     - Skill symlink source directory (ai-resources/skills/) exists and is non-empty
@@ -301,7 +301,7 @@ Steps 8-14 run only when $ARGUMENTS contains "deep" or "full". They produce a se
     Record: all preconditions met / list failures.
 66. **Test 5: /sync-workflow preconditions.** Verify without executing:
     - At least one deployed project exists under projects/
-    - Template directory at workflows/research-workflow/.claude/ contains commands, agents, or hooks directories
+    - Template directory at ai-resources/workflows/research-workflow/.claude/ contains commands, agents, or hooks directories
     Record: all preconditions met / list failures.
 67. Read the deep report at DEEP_REPORT_PATH. Replace the Section 4 placeholder with the pipeline testing results. Update the Summary finding counts to include any pipeline test failures. Save.
 
