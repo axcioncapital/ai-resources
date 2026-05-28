@@ -73,8 +73,8 @@
 | 2026-04-22 | hook | .claude/hooks/friday-checkup-reminder.sh | graduated | already canonical in ai-resources — paired with /friday-checkup |
 | 2026-04-22 | command | .claude/commands/session-guide.md | graduated | already canonical in ai-resources — fully rewritten 2026-04-23 |
 | 2026-04-23 | command | .claude/commands/summary.md | graduated | already canonical in ai-resources — created directly via /create-skill |
-| 2026-04-24 | command | .claude/commands/audit-critical-resources.md | triaged:graduate | — (run `/graduate-resource audit-critical-resources` to move to ai-resources) |
-| 2026-04-24 | agent | .claude/agents/critical-resource-auditor.md | triaged:graduate | — (paired with audit-critical-resources command; graduates together) |
+| 2026-04-24 | command | .claude/commands/audit-critical-resources.md | graduated | ai-resources/.claude/commands/audit-critical-resources.md (already canonical — file identical in workspace + ai-resources; registry was stale) |
+| 2026-04-24 | agent | .claude/agents/critical-resource-auditor.md | graduated | ai-resources/.claude/agents/critical-resource-auditor.md (already canonical — paired with audit-critical-resources command) |
 | 2026-04-24 | agent | .claude/agents/permission-sweep-auditor.md | graduated | ai-resources/.claude/agents/permission-sweep-auditor.md (already canonical — workspace copy is a symlink) |
 | 2026-04-24 | command | .claude/commands/permission-sweep.md | graduated | ai-resources/.claude/commands/permission-sweep.md (already canonical — workspace copy is a symlink) |
 | 2026-04-24 | hook | .claude/hooks/check-permission-sanity.sh | triaged:project-specific | — (workspace-root infrastructure) |
