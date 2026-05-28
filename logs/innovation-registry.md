@@ -68,11 +68,11 @@
 | 2026-04-21 | agent | .claude/agents/improvement-analyst.md | graduated | ai-resources/.claude/agents/improvement-analyst.md (already canonical) |
 | 2026-04-22 | command | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/.claude/commands/wrap-session.md | triaged:project-specific | — (workspace-level harness file, not shared resource) |
 | 2026-04-22 | agent | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/.claude/agents/qc-reviewer.md | triaged:project-specific | — (symlink to ai-resources canonical; workspace entry covers symlink metadata) |
-| 2026-04-22 | agent | .claude/agents/pipeline-stage-3b.md | triaged:graduate | already canonical in ai-resources |
-| 2026-04-22 | command | .claude/commands/friday-checkup.md | triaged:graduate | already canonical in ai-resources |
-| 2026-04-22 | hook | .claude/hooks/friday-checkup-reminder.sh | triaged:graduate | already canonical in ai-resources — paired with /friday-checkup |
-| 2026-04-22 | command | .claude/commands/session-guide.md | triaged:graduate | already canonical in ai-resources — fully rewritten 2026-04-23 |
-| 2026-04-23 | command | .claude/commands/summary.md | triaged:graduate | already canonical in ai-resources — created directly via /create-skill |
+| 2026-04-22 | agent | .claude/agents/pipeline-stage-3b.md | graduated | already canonical in ai-resources |
+| 2026-04-22 | command | .claude/commands/friday-checkup.md | graduated | already canonical in ai-resources |
+| 2026-04-22 | hook | .claude/hooks/friday-checkup-reminder.sh | graduated | already canonical in ai-resources — paired with /friday-checkup |
+| 2026-04-22 | command | .claude/commands/session-guide.md | graduated | already canonical in ai-resources — fully rewritten 2026-04-23 |
+| 2026-04-23 | command | .claude/commands/summary.md | graduated | already canonical in ai-resources — created directly via /create-skill |
 | 2026-04-24 | command | .claude/commands/audit-critical-resources.md | triaged:graduate | — (run `/graduate-resource audit-critical-resources` to move to ai-resources) |
 | 2026-04-24 | agent | .claude/agents/critical-resource-auditor.md | triaged:graduate | — (paired with audit-critical-resources command; graduates together) |
 | 2026-04-24 | agent | .claude/agents/permission-sweep-auditor.md | graduated | ai-resources/.claude/agents/permission-sweep-auditor.md (already canonical — workspace copy is a symlink) |
@@ -85,10 +85,10 @@
 | 2026-04-25 | agent | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/project-planning/.claude/agents/plan-evaluator.md | triaged:project-specific | — (paired with project-planning's own pipeline) |
 | 2026-04-25 | agent | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/project-planning/.claude/agents/spec-evaluator.md | triaged:project-specific | — (paired with project-planning's own pipeline) |
 | 2026-04-25 | command | .claude/commands/route-change.md | triaged:project-specific | — (already in ai-resources canonical location; no graduation needed) |
-| 2026-04-27 | command | workflows/research-workflow/.claude/commands/produce-knowledge-file.md | triaged:graduate | — (already canonical in ai-resources/workflows/research-workflow/) |
-| 2026-04-27 | command | workflows/research-workflow/.claude/commands/run-cluster.md | triaged:graduate | — (already canonical in ai-resources/workflows/research-workflow/) |
-| 2026-04-27 | command | .claude/commands/innovation-sweep.md | triaged:graduate | ai-resources/.claude/commands/innovation-sweep.md (already canonical — created directly in ai-resources) |
-| 2026-04-27 | agent | .claude/agents/innovation-triage-auditor.md | triaged:graduate | ai-resources/.claude/agents/innovation-triage-auditor.md (already canonical — created directly in ai-resources, paired with /innovation-sweep) |
+| 2026-04-27 | command | workflows/research-workflow/.claude/commands/produce-knowledge-file.md | graduated | — (already canonical in ai-resources/workflows/research-workflow/) |
+| 2026-04-27 | command | workflows/research-workflow/.claude/commands/run-cluster.md | graduated | — (already canonical in ai-resources/workflows/research-workflow/) |
+| 2026-04-27 | command | .claude/commands/innovation-sweep.md | graduated | ai-resources/.claude/commands/innovation-sweep.md (already canonical — created directly in ai-resources) |
+| 2026-04-27 | agent | .claude/agents/innovation-triage-auditor.md | graduated | ai-resources/.claude/agents/innovation-triage-auditor.md (already canonical — created directly in ai-resources, paired with /innovation-sweep) |
 | 2026-04-28 | agent | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/buy-side-service-plan/.claude/agents/qc-reviewer-buy-side.md | triaged:project-specific | — (buy-side-only QC reviewer; rename of local fork) |
 | 2026-04-28 | command | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/buy-side-service-plan/.claude/commands/compile-wiki.md | triaged:project-specific | — (buy-side wiki/SCHEMA.md only) |
 | 2026-04-28 | command | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/buy-side-service-plan/.claude/commands/content-review.md | triaged:project-specific | — (paired with qc-reviewer-buy-side) |
@@ -106,7 +106,7 @@
 | 2026-05-16 | command | projects/interpersonal-communication/.claude/commands/today-drill.md | triaged:loose-end | rotation mechanic generalizable, drill content project-specific — operator decides |
 | 2026-05-16 | claude-md | projects/nordic-pe-macro-landscape-H1-2026/CLAUDE.md#Autonomy-Rules | triaged:loose-end | workflow-execution autonomy schema (Operator/Operator+CC tags) — operator decides |
 | 2026-05-16 | hook | projects/nordic-pe-macro-landscape-H1-2026/.claude/settings.json#auto-commit-hook | triaged:loose-end | conflicts with workspace Commit Rules; auto-commit-on-Write — operator adjudicates |
-| 2026-05-16 | command | projects/obsidian-pe-kb/.claude/commands/resolve-improvements.md | triaged:broken-symlink | broken symlink — target missing post-rename; delete or repoint to resolve-improvement-log.md |
+| 2026-05-16 | command | projects/obsidian-pe-kb/.claude/commands/resolve-improvements.md | removed | symlink already deleted by 2026-05-28; canonical `resolve-improvement-log.md` symlink in same dir handles the use case (id-01 sweep, fix-plan 2026-05-28-1121) |
 | 2026-05-16 | settings | projects/obsidian-pe-kb/.claude/settings.json#model-field | triaged:loose-end | violates feedback_no_model_in_settings_json memory rule — operator confirms or removes |
 | 2026-05-16 | hook | projects/repo-documentation/.claude/hooks/friction-log-trigger.sh | triaged:loose-end | generalizable friction-log nudge pattern; not yet graduated — operator decides |
 | 2026-05-16 | claude-md | projects/repo-documentation/CLAUDE.md#Compaction | triaged:loose-end | scratchpad-before-/compact pattern may generalize to compaction-protocol.md — operator decides |
