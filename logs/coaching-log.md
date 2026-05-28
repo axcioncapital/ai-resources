@@ -134,5 +134,6 @@ Coaching feedback captured via `/coach`. Newest entries at the bottom.
 | Workflow Evolution | Watch | mixed |
 
 **The One Thing:** Name the bright-line before you review it. When `/risk-check` or any structural-review pause fires, state the specific bright-line in one sentence first; if you cannot name one, say "proceed" and reclaim the time. `bright-line-review` is the only gate that does not earn its review cost (~79–83% confirm across 4 cycles) and is the recommendation that has survived three coaching cycles unactioned.
+→ Codified 2026-05-28 in skills/ai-resource-builder/references/review-principles.md (fix-plan wave-1).
 **Prior recommendation status:** 2026-05-20 One Thing (name the bright-line) — not measurably acted on; carried forward again. decisions.md alternatives-rigor held (14/14). 2026-05-16 backlog-sprint held (no new stall), but 2 pre-sprint improvement-log entries remain unresolved and 4 new ones were added 2026-05-22 — Workflow Evolution stays Watch.
 **Promotion candidates:** 2 — (1) decisions.md alternatives-considered rigor (held 6 consecutive cycles; graduate to a decisions.md template field via `/improve`); (2) interruption-impulse as deliberate review gate (editorial-disagreement + challenge-disposition 7/7 changed; encode in Decision-Point Posture).

@@ -10,6 +10,10 @@ Each principle states **what to check** and **why it matters**. Evaluators apply
 
 ---
 
+## All Reviews
+
+- **Name the bright-line before reviewing it.** When reviewing a draft or artifact, first state the explicit pass/fail criterion in one sentence ("A passing version of this artifact does X / does NOT do Y"). Review against the stated bright-line. Without a named bright-line, reviews drift into subjective preference. (Coaching One Thing 2026-05-16, 2026-05-20, 2026-05-22 — carried 3 cycles before codification 2026-05-28.)
+
 ## Skills
 
 - **Trigger front-loading:** Description must include trigger conditions in the first 250 characters — truncation in tool listings makes later triggers invisible to the model selecting skills.

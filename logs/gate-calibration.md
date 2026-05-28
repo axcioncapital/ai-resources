@@ -37,6 +37,17 @@ Example entry (not a real record — for reference only):
 
 ---
 
+## 2026-05-28 — ai-resources/bright-line-review
+
+- **Scope:** ai-resources
+- **Gate:** bright-line-review
+- **Trigger:** Durable-enforcement landing of the 2026-05-22 entry below — that entry's Note flagged coaching-note recalibration as insufficient (failed across 3 prior coaching cycles); codification into `skills/ai-resource-builder/references/review-principles.md` ("All Reviews" section) ships the structural fix.
+- **Action:** recalibrate
+- **Detail:** Skip-detection criterion now formalised: review-class work produced without an explicit bright-line statement in the same turn qualifies as a skip. Bright-line-naming principle codified in `skills/ai-resource-builder/references/review-principles.md` § "All Reviews" — loaded by `qc-reviewer` and any review-class agent that consumes review-principles. Cross-link: fix-plan wave-1 item id-20 (commit lands same session).
+- **Review-cycle:** 2026-08-28
+
+---
+
 ## 2026-05-22 — ai-resources/bright-line-review
 
 - **Scope:** ai-resources

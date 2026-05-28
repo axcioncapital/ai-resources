@@ -390,3 +390,13 @@ Phased, low-risk:
 - **Risk if left undone:** low — cosmetic vs. structural. Current prose is functional and operator already invokes `/placement` consistently. SO classified this as item #5 (lowest in the ranked list) for that reason.
 - **Target files (when executed):** `~/Claude Code/Axcion AI Repo/CLAUDE.md` § Placement Discipline only.
 - **Triage cadence:** opportunistic — bundle with the next workspace CLAUDE.md edit pass; do not schedule standalone.
+
+### 2026-05-28 — Mandate-alignment recovery: should `/session-start` be re-invoked when a session pivots immediately after `/prime`?
+
+- **Status:** logged (pending)
+- **Category:** session-issue / command-design
+- **Source:** nordic-pe-macro-landscape-H1-2026 session 2026-05-28 — session opened with mandate "FX-B1+B2 implementation"; pivoted immediately to drafting `templating-plan-v2-resolution-plan.md` per operator direction. Recorded mandate diverged from actual work for the session's full duration.
+- **Friction source:** Decision-point-posture pivots (operator-driven, non-drift) currently leave the recorded mandate stale. `/wrap-session` then journals work against a mandate that does not describe what happened. Downstream `/drift-check` and `/contract-check` would mis-classify the pivot as drift.
+- **Proposal:** Consider adding a `/session-start --re-mandate` re-invocation path that the operator can fire mid-session when a pivot happens. Alternatively, document a "Pivot Acknowledged" annotation pattern in the session-notes body so `/wrap-session` can detect and journal the pivot explicitly.
+- **Target files (when executed):** `ai-resources/.claude/commands/session-start.md` (optional re-mandate flag), `ai-resources/.claude/commands/wrap-session.md` (pivot-detection in Step 7a).
+- **Triage cadence:** `/improve` consideration; not urgent.
