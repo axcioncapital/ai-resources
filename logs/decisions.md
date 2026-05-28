@@ -180,3 +180,28 @@ Plan retained: `/Users/patrik.lindeberg/.claude/plans/i-want-to-build-tidy-lake.
 **Alternatives considered.** (a) Keep the gate but auto-approve at wrap-session — rejected; the gate still consumes a permission-prompt cycle on every wrap, and the rule still gets restated everywhere it leaks. (b) Remove only the permission layer (settings.json) and keep the rule — rejected; the rule would re-add the deny on every audit and create false-positive `/permission-sweep` findings. (c) Add `Bash(git push*)` to ASK rather than removing it from DENY — rejected; ASK still surfaces a prompt, contradicting `feedback_zero_permission_prompts.md`.
 
 **Review trail.** /clarify → 3 Explore agents (settings inventory, rules-doc inventory, command inventory) → plan written → ExitPlanMode approved by operator → all three layers edited → 16 batch commits across 16 git repos → 12 of 16 pushed successfully (3 remote-config issues unrelated to the gate, 1 with prior-session foreign dirty state blocking rebase) → memory `feedback_push_autonomous.md` written and linked in MEMORY.md.
+
+## 2026-05-28 — Wave 3 deferral of id-09 (marker-as-counter security regression)
+
+**Context.** Executing the Wave 3 fix plan's item 2 — id-09 (`/wrap-session` Step 3.5 PRIME_TASKS counter to handle chained auto-mode false-positives). The plan called for reading `logs/.session-marker` (written by id-31 Phase 1, just landed) as the `PRIME_TASKS` subtractor. At the re-evaluation gate after id-31 landed, I traced the failure mode end-to-end and surfaced a hidden security regression.
+
+**Decision.** Defer id-09 to id-31 Phase 2 rather than apply the unsafe fix or a diagnostic-only fix. Friction-log:85 annotated with the deferral rationale. The fix re-opens alongside Phase 2's marker-scoped session-notes headers.
+
+**Rationale.** `logs/.session-marker` is a SHARED file — both this session and a parallel session bump it. Concrete failure scenario: session A runs 1 `/prime` (writes `S1`), session B runs 1 `/prime` (overwrites to `S2`). A's `/wrap-session` reads the marker, computes `PRIME_TASKS=2`, subtracts from `ADDED_HEADERS=2`, gets `FOREIGN=0` → silently SHIPS B's content under A's wrap commit. This is the exact failure mode the foreign-guard exists to prevent. The current `PRIME_RAN=1` binary correctly STOPS in this case because it can't distinguish 1 vs 2 of my own — but applying id-09 with marker-counter math breaks that protection. Counting "this session's tasks" cleanly requires session-scoped state — which lands with Phase 2 (marker-scoped headers `## YYYY-MM-DD — Session {marker}` allow exact per-session counts via grep for THIS session's marker).
+
+**Alternatives considered.** (a) Apply the marker-as-counter fix anyway, accept the regression, document the limitation — rejected; the regression is the exact failure the guard exists to prevent. (b) Diagnostic-only fix: keep PRIME_RAN=1, when FOREIGN ≥ 1 ADD a diagnostic showing "if chained-auto, expected task count = {marker N}" to help operator verify — operator-considered, rejected; reduces friction but doesn't auto-resolve, and the operator already verifies manually today. (c) Separate `.prime-task-count` file written ONLY by this session's /prime — rejected; same shared-file problem (any session writing to the file overwrites others). The only safe path requires session-scoped state.
+
+**Review trail.** Plan-time re-evaluation gate after id-31 landed → analysis of marker-as-counter design → surfaced security regression → AskUserQuestion with three options → operator picked "defer to id-31 Phase 2 (Recommended)" → friction-log:85 annotated with deferral note + rationale → no /risk-check needed (no fix applied) → bundled into commit `2836dfa` alongside id-32.
+
+## 2026-05-28 — Wave 3 id-31 Phase 1 source-spec deviation (footer drop)
+
+**Context.** Executing the Wave 3 fix plan's item 1 — id-31 Phase 1 (`/prime` writes per-session marker `logs/.session-marker`). The QC'd plan called for surfacing the marker value in the `/prime` brief footer (Step 6) as a one-line `Session marker: {value}`.
+
+**Decision.** Drop the brief-footer display from Phase 1. The marker-write at Step 8 (per source spec) lands; the footer display defers to Phase 2 alongside the first consumer.
+
+**Rationale.** Step 6 brief renders BEFORE Step 8's marker write fires — the footer can't display a value that hasn't been written yet. Source spec (`logs/improvement-log.md` § "Concurrent sessions cause TOCTOU races on shared log files" / Migration plan / Phase 1) explicitly classifies Phase 1 as "Risk: zero (additive)" with NO consumers — the footer would cross into consumer territory. Dropping it keeps Phase 1 truly additive and pushes the footer naturally into Phase 2 where `/session-start` and `/session-plan` start reading the marker.
+
+**Alternatives considered.** (a) Compute marker in a new early step (e.g., Step 4.5), display in Step 6, write at Step 8 — over-engineered for Phase 1; introduces dual-state. (b) Write marker at Step 4.5 (early), drop Step 8 writes, display at Step 6 — deviates further from source spec which specifies write at Step 8. (c) Show "PROJECTED" value in footer (peek without write) — workable but adds bash duplication and is misleading if /prime aborts.
+
+**Review trail.** Plan QC'd to GO with footer requirement; deeper inspection during drafting surfaced timing conflict; picked source-spec-faithful subset per `feedback_minimal_infra_subset` → stated deviation inline before /risk-check → risk-check GO → applied → QC GO.
+

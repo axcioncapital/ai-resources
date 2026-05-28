@@ -4,7 +4,36 @@
 
 ### 2026-05-28 | Acceptable
 
-**Task:** Wave 2 fix plan execution — 8 single-file edits across `/prime`, hooks, and docs spanning 3 git repos. 6 qc-pass cycles, 4 REVISE→fix cycles, 3 explicit commits plus 1 absorbed by parallel Wave 3 session.
+**Task:** Executed Wave 3 of the `/fix-repo-issues` plan (`audits/fix-plans/fix-repo-issues-2026-05-28-1902-wave3-structural.md`) — 3 of 4 structural-class items shipped with per-item `/risk-check` + `/qc-pass`; id-09 deferred at the re-evaluation gate after surfacing a hidden security regression. 5 commits across 3 repos (ai-resources, workspace-root, nordic-pe-macro).
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~22-25 |
+| Files read | ~14 (re-reads: prime.md 3× different offsets; wrap-session.md canonical 2× different offsets; improvement-log.md 5× different source-entry offsets + post-edit line-shift verification — all load-bearing) |
+| Files written/edited | ~14 (5 commits + 3 risk-check reports + 1 scratchpad + 3 log appends + heredoc updates) |
+| Tool calls | ~85 (Read ~16, Edit ~17, Write ~3, Bash ~30-35, Agent ×7, Skill ×6, TodoWrite ×5, AskUserQuestion ×1, ToolSearch ×1) |
+| Subagents | 8 (qc-reviewer ×4, risk-check-reviewer ×3, session-usage-analyzer ×1) |
+| Rework cycles | 1 executed (session-plan QC REVISE → 2 wording fixes inline) + 1 minor inline doc fix (id-13 Step 7 OUTPUT_TARGET) + 1 PREVENTED (id-09 re-eval gate caught hidden security regression before design/risk-check/qc spend) |
+
+**Findings:**
+- **Rework — Minor (load-bearing).** Session-plan-pass2 REVISE caught 2 real wording issues; id-13 QC caught 1 doc-completeness gap in Step 7 OUTPUT_TARGET; both fixed inline without re-QC per `feedback_minimal_infra_subset`. Working as designed.
+- **Prevented rework — Major positive signal.** id-09 re-evaluation gate after id-31 landed surfaced a hidden security regression in the QC'd plan (marker-as-counter reads shared file → silently ships parallel-session content under wrap commit). Operator confirmed deferral via AskUserQuestion before any drafting/risk-check fired — saved an estimated full design + risk-check + qc-pass cycle (~4-7k tokens conservatively).
+- **Context bloat — None.** Offset-targeted section reads on prime.md / wrap-session.md / improvement-log.md (largest files this session) avoided full-file pulls. Estimated ~380 lines loaded from sources totaling ~1000+ lines.
+- **Tool overhead — Minor (inherent floor).** Bash ~30-35 driven by inherent cross-repo git ops × 3 repos + live-rehearsal harnesses (id-31 marker smoke test, id-32 classifier with 3 synthetic CONCURRENT/REMNANT/MIXED cases, id-13 wrap-state check with 3 test cases) + heredoc appends to session-notes/decisions/coaching. Live-rehearsal discipline is a standing pattern across the streak — not a lever to compress.
+- **Subagent discipline — Clean.** risk-check reports written by subagent to `audits/risk-checks/` and referenced by path only in wrap entry — no main-session re-output. qc-reviewer findings acted on inline; no verdict duplication. Step 4a `/consult` skipped on id-32 PROCEED-WITH-CAUTION (operational mitigations, no architectural alternative) per `feedback_minimal_infra_subset` — saved ~1 system-owner subagent call.
+- **Concurrent-session validation-by-use.** Wave 2 sibling session wrote `session-plan.md` between my Step 0 check and Step 7 Write. The current MISMATCH auto-pass2 mechanism (the very fix being extended in this wave for nordic id-13) routed my plan to `-pass2.md` correctly. Zero overhead beyond the intended one extra Read.
+- **Trend vs last 3 entries:** Stable Acceptable — 5th consecutive (2026-05-25, 2026-05-27, 2026-05-28 ×3). Subagent count (8) is higher than recent sessions due to per-item /risk-check + /qc-pass cadence on 4 items, but discipline kept output file-resident with no main-session duplication. PREVENTED-rework is a new positive signal — re-eval gate between items proved to be a higher-leverage compression mechanism than read-pattern optimization on executed items.
+
+**Recommendation:** Codify the **re-evaluation gate between items** as a standing pattern for multi-item structural waves — after each item lands and is QC-clean, explicitly re-check remaining items against the new state for GO/MODIFY/SKIP/DEFER classification BEFORE entering the per-item design + risk-check + qc loop. This session's id-09 catch saved a full sub-cycle that would otherwise have shipped a regression. The pattern is already named in the Wave 3 plan's "Re-evaluation gate" step — promote from plan-local instruction to a standing rule in `docs/audit-discipline.md` or a relevant SKILL.md so it fires on every multi-item wave by default.
+
+**Estimated savings:** ~4-7k tokens per multi-item wave where a re-eval catch fires. Derivation: prevented sub-cycle = 1 risk-check subagent (~3-4k incl. report) + 1 qc-reviewer pass (~1-2k) + 1-2 design Edits + 0-1 mitigation rounds ≈ 4-7k tokens. Re-eval catches fire infrequently (~1 in 5-10 multi-item waves) but the savings per catch are substantial. Over a 10-20 session horizon at 1-2 multi-item waves/week: ~5-15k tokens, plus the more valuable compounding effect of NOT shipping a regression that costs even more to revert.
+
+**Additional levers (ROI-ranked):**
+- **Pin friction-log + improvement-log + decisions.md tails into a consolidated `/prime` read (~800-1.5k tokens/session, every session).** Now flagged 8+ sessions consecutively without structural fix. This session would have collapsed ~5 improvement-log offset-reads into 1 pinned tail. Lowest per-session but highest frequency — promotion-threshold approaching.
+- **Standing `/consult` skip rule for operational-only mitigations (~1-2k tokens/session when fires).** This session applied the `feedback_minimal_infra_subset` judgment to skip Step 4a on id-32 manually. Codifying the skip criteria (operational mitigations + no architectural alternative being weighed) into the risk-check skill body would automate the call without case-by-case operator judgment. Smaller per-session than primary but more deterministic.
+- **Standing live-rehearsal-discipline rule for bash logic in command bodies (~1.5-3k tokens when bug fires).** id-32's awk classifier rehearsal caught no bugs but mitigation D5 explicitly required it. Bash-edge-case patterns (BSD `date` 2026-05-26, `grep -c` zero-match 2026-05-27, awk regex shapes 2026-05-28) are now a 3-session recurrence. Promote from per-fix mitigation to standing rule in a relevant doc. Smaller per-session than primary because rehearsal cost is paid on every command-body edit, not just when a bug fires — net savings come from compressed rework when bugs are caught early.
+
+ — 8 single-file edits across `/prime`, hooks, and docs spanning 3 git repos. 6 qc-pass cycles, 4 REVISE→fix cycles, 3 explicit commits plus 1 absorbed by parallel Wave 3 session.
 
 | Metric | Value |
 |--------|-------|

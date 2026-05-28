@@ -172,3 +172,12 @@
 - **QC cycles:** 6 (4× REVISE→fixes-applied→continued; 2× GO; 1 QC skipped per operator `proceed` on id-12)
 - **Gates:** 1 (1 changed) — plan-approval:confirmed. Operator typed `go` after /session-plan; no plan revisions requested. id-12 QC `proceed` is a per-item skip, not a gate change.
 - **Mandate fields:** specified: work_scope, exit_condition, out_of_scope, stop_if | inferred: files_in_scope | omitted: allowed_inputs, required_outputs
+
+### 2026-05-28 — Wave 3 structural fix-plan execution (3 of 4 items shipped, 1 deferred)
+- **Commands used:** /prime, /session-start, /session-plan, /qc-pass (4x), /risk-check (3x), /wrap-session
+- **Iterations:** 1 (session-plan-pass2.md draft → 2 wording fixes from initial QC → final draft)
+- **Decisions logged:** 2 (id-09 deferral; id-31 Phase 1 footer-drop scope cut)
+- **QC cycles:** 4 (session-plan REVISE → 2 inline fixes → GO; id-31 GO; id-32 GO; nordic id-13 GO with one Step 7 doc fix inline)
+- **Gates:** 9 (8 confirmed, 1 changed) — plan-approval:confirmed, risk-check-id-31:confirmed, qc-pass-id-31:confirmed, risk-check-id-32:confirmed (PROCEED-WITH-CAUTION mitigations applied inline), qc-pass-id-32:confirmed, risk-check-id-13:confirmed, qc-pass-id-13:confirmed (one Step 7 doc fix inline counts as confirmed since it was a Notes-level finding not a blocking REVISE), id-09-deferral-disposition:changed (operator chose defer over apply/diagnostic via AskUserQuestion), plan-approval:confirmed
+- **Mandate fields:** specified: work_scope, exit_condition, Out of scope, Stop if | inferred: Files in scope | omitted: Allowed inputs, Required outputs
+
