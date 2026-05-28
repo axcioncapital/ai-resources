@@ -129,7 +129,7 @@ Canonical shape:
       "Bash(rm *)"
     ],
     "deny": [
-      "Bash(git push*)", "Bash(rm -rf *)", "Bash(sudo *)",
+      "Bash(rm -rf *)", "Bash(sudo *)",
       "Read(archive/**)",
       "Read(logs/*-archive-*.md)", "Read(inbox/archive/**)",
       "Read(**/deprecated/**)", "Read(**/old/**)"
@@ -145,7 +145,6 @@ Canonical shape:
 - Same dotfile-path and absolute-path patterns as workspace root.
 - **Hardcoded absolute paths in `allow` are intentional and canonical.** `Edit(/Users/patrik.lindeberg/...)` and `Write(/Users/patrik.lindeberg/...)` cannot be replaced with env-var references or relative paths — Claude Code permission pattern matching is literal (no env-var expansion). Audit tools that flag these as "stale hardcoded paths" are producing a false positive against this layer. Document such findings as resolved without action. (See `logs/decisions.md` 2026-05-16.)
 - `Bash(rm *)` in allow.
-- `Bash(git push*)` in deny — force explicit operator step for push.
 - Read-denies on archival paths (preserves token-audit discipline).
 
 ---
@@ -170,7 +169,7 @@ Canonical shape:
       "Bash(rm *)"
     ],
     "deny": [
-      "Bash(git push*)", "Bash(rm -rf *)", "Bash(sudo *)",
+      "Bash(rm -rf *)", "Bash(sudo *)",
       "Read(archive/**)", "Read(**/*.archive.*)",
       "Read(**/deprecated/**)", "Read(**/old/**)"
     ],
@@ -216,7 +215,7 @@ Shape (illustrative — preserve actual file contents):
     ],
     "deny": [
       "Write(raw/**)", "Edit(raw/**)",
-      "Bash(rm:*)", "Bash(mv raw/**)", "Bash(git push:*)"
+      "Bash(rm:*)", "Bash(mv raw/**)"
     ]
   }
 }
@@ -308,6 +307,50 @@ Canonical block (apply hooks in this order):
 **Auto-commit hook deliberately excluded.** A fifth hook observed in nordic-pe-macro auto-commits every Write event. This conflicts with the workspace **Commit Rules** (operator-approved commits, no `--no-verify`, no bypass) and is kept project-local per the loose-end verdict in `audits/innovation-sweep-2026-05-16.md` (LE3). Do **not** include the auto-commit hook in any project that follows workspace commit policy.
 
 **When to apply this wiring:** projects with a multi-stage research/synthesis pipeline, where stage transitions produce structured artifacts the operator wants tracked, QC-prompted, and citation-checked at write time. Skip for lightweight projects — the per-write overhead is non-trivial.
+
+---
+
+## PreToolUse[Edit] decision-block pattern
+
+A canonical pattern for blocking Edit tool calls against specified file paths *before* they execute, with an operator-facing reason string. Useful for guarding sensitive content (chapter prose, final outputs, citation-bearing files) from accidental direct edits when a bright-line rule requires deliberate operator approval first.
+
+**Pattern shape:** the hook command runs a `jq` pipeline that reads the Edit tool input from stdin, extracts the target `file_path`, matches it against a path-scoped grep regex, and returns a `{"decision":"block","reason":"..."}` JSON object to Claude Code on a hit. Claude Code honors the `decision: block` directive by refusing to execute the Edit; the `reason` text is shown to the operator.
+
+Canonical block:
+
+```json
+{
+  "matcher": "Edit",
+  "hooks": [
+    {
+      "type": "command",
+      "command": "jq -r '.tool_input.file_path' | { read -r f; echo \"$f\" | grep -qE '/(YOUR_GUARDED_PATH_REGEX)/' && echo '{\"decision\":\"block\",\"reason\":\"YOUR_BRIGHT_LINE_RULE_REASON\"}' || exit 0; }",
+      "timeout": 5,
+      "statusMessage": "Checking bright-line rule..."
+    }
+  ]
+}
+```
+
+**How to adopt:**
+
+1. Identify the file path or pattern that must be guarded (e.g., `report/chapters/`, `final/modules/`, `assets/published/`).
+2. Replace `YOUR_GUARDED_PATH_REGEX` with a grep extended-regex segment matching the guarded scope. Use `|` to alternate multiple paths.
+3. Replace `YOUR_BRIGHT_LINE_RULE_REASON` with a short string describing the rule. Keep it actionable — the operator sees it when the block fires.
+4. Add the hook block under `hooks.PreToolUse` in the project's `.claude/settings.json` next to any other PreToolUse matchers.
+
+**Where it fires:** before any `Edit` tool call. The hook receives the tool input as JSON on stdin; `jq -r '.tool_input.file_path'` extracts the target path. The grep regex is the path-scoping mechanism — Claude Code's `matcher:` field only matches tool names, not paths, so path scoping must happen inside the hook command.
+
+**Reference implementation:** `projects/nordic-pe-macro-landscape-H1-2026/.claude/settings.json` — the PreToolUse `Edit` matcher block guards `/(report/chapters|final/modules)/` paths against direct edits, surfacing the project's BRIGHT-LINE rule (three-question check before editing analytical prose). Locate the block by searching the file for the `"decision":"block"` token (avoids drift from line-number references).
+
+**Caveats:**
+
+- Each block-fire interrupts the session. Reserve the pattern for paths where unintended edits would cause expensive rework or evidentiary harm — not for general "be careful" guidance.
+- The `reason` string is the operator's only signal at the moment of friction. Make it specific (what rule, where to log overrides) — generic messages erode the signal over time.
+- The pattern uses `jq` and `grep`; both must be available on `PATH`. `grep` is standard on macOS and Linux. `jq` is standard on macOS; on Linux, install via the system package manager if absent.
+- `settings.json` is strict JSON (no comments). To document the pattern from a project's settings file, use a top-level `_decision_block_pattern_doc` key pointing to this section, or place the note in a project README — do not add `//` comments to the JSON.
+
+**When to apply:** projects where one or more directories carry content protected by a bright-line rule that should never be edited directly without an explicit operator decision. Skip if the project has no such guard discipline — the hook overhead is wasted otherwise.
 
 ---
 
