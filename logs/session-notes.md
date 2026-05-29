@@ -2,65 +2,6 @@
 
 > Archive: [session-notes-archive-2026-05.md](session-notes-archive-2026-05.md)
 
-## 2026-05-28 — /fix-repo-issues 5-scope sweep → 3-wave fix-plan split (25 items)
-
-### Summary
-
-Ran `/fix-repo-issues` across 5 operator-selected scopes (ai-resources + ai-development-lab + axcion-ai-system-owner + nordic-pe-macro-landscape-H1-2026 + nordic-pe-screening-project). Scanner subagents fired in parallel and returned 60 items across 4 scopes (axcion-ai-system-owner clean). After preview, operator expanded the plan-into-batch from the initial 4-item set to 25 items by adding 22 parked items back in, then asked whether to split — chose 3-wave split. Wrote 3 self-contained plan files in `audits/fix-plans/`. No fixes applied — handoff to fresh execution sessions.
-
-### Files Created
-
-- `ai-resources/audits/working/fix-repo-issues-2026-05-28-1902-ai-resources.md` — scanner notes (37 items)
-- `ai-resources/audits/working/fix-repo-issues-2026-05-28-1902-project-ai-development-lab.md` — scanner notes (6 items)
-- `ai-resources/audits/working/fix-repo-issues-2026-05-28-1902-project-axcion-ai-system-owner.md` — scanner notes (0 items)
-- `ai-resources/audits/working/fix-repo-issues-2026-05-28-1902-project-nordic-pe-macro-landscape-H1-2026.md` — scanner notes (13 items)
-- `ai-resources/audits/working/fix-repo-issues-2026-05-28-1902-project-nordic-pe-screening-project.md` — scanner notes (4 items)
-- `ai-resources/audits/fix-plans/fix-repo-issues-2026-05-28-1902-wave1-hygiene.md` — Wave 1 plan: 9 items, ~30–45 min, no `/risk-check`
-- `ai-resources/audits/fix-plans/fix-repo-issues-2026-05-28-1902-wave2-commands.md` — Wave 2 plan: 8 items, ~60–90 min, no `/risk-check`
-- `ai-resources/audits/fix-plans/fix-repo-issues-2026-05-28-1902-wave3-structural.md` — Wave 3 plan: 4 items, ~2–3 hours, every item is `/risk-check` class
-- `ai-resources/logs/scratchpads/2026-05-28-19-19-scratchpad.md` — pre-closeout continuity scratchpad
-
-### Files Modified
-
-- `ai-resources/logs/session-notes.md` — this entry.
-
-### Decisions Made
-
-**Operator-directed:**
-- **3-wave split over single combined plan.** Operator picked `split to 3 files` when offered options (split / split all / y / edit / abort). Rationale: 25 items in one execution session means ~4–6 hours, 2–3 likely compactions, and 4 `/risk-check` dispatches in one context window. A regression in any Group F item could poison the cleaner wins in Group A.
-- **Expand plan-into-batch from 4 → 25 items.** Operator instructed `Also fix:` followed by 22 additional parked items (Groups F + G + H + nordic-pe-macro project items). Honored per operator autonomy; flagged structural concerns inline before re-emitting the preview.
-- **Defer Group G (3 multi-file refactors) and Group H (1 research task).** Operator did not include these in the 3-wave split; left parked.
-
-**Claude-derived (under decision-point posture):**
-- **Wave 3 sequencing rule embedded in the plan file.** `id-31` Phase 1 (`.session-marker` write) lands FIRST; items 2-4 re-evaluated against the new state before applying. Each item needs its own `/risk-check` pass (do not batch).
-- **`id-31` scoped to Phase 1 ONLY.** Source improvement-log entry described 4 phases; chose Phase 1 (additive marker write in `/prime`) for this plan-set. Phases 2-4 deferred to subsequent waves per the entry's own migration plan.
-- **`id-34` (sub-subagent dispatch) classified as research, not fix.** Acceptable execution-session output = research note + decision document.
-- **`id-20`/`id-21` paired** as one principle (review-principles.md entry) + one gate-calibration row.
-- **`nordic-pe-macro/id-04` (mandate-alignment open Q) logged as new improvement-log entry** in ai-resources rather than applied directly — it's a question, not a fix.
-
-### Next Steps
-
-- **Execute wave 1** in a fresh session. Instruct fresh-session Claude: `Execute the fix plan at audits/fix-plans/fix-repo-issues-2026-05-28-1902-wave1-hygiene.md`. Lowest risk, ~30–45 min, 9 log/config hygiene fixes + new log entries. No `/risk-check`.
-- **Then execute wave 2** in a separate fresh session. ~60–90 min, 8 single-file `/prime` + hook + doc edits. Items 1-3 of wave 2 all edit `prime.md` — do as one coordinated edit pass.
-- **Book a dedicated session for wave 3.** ~2–3 hours, 4 `/risk-check` dispatches. Land `id-31` Phase 1 marker first; re-evaluate items 2-4 against the new state before applying. Do NOT batch.
-- **Push pending — multiple unpushed commits accrued today across ai-resources and workspace root.** ai-resources had 9 unpushed at `/prime` time + this wrap commit = 10. Workspace root had 2 unpushed. Push requires explicit approval (Autonomy Rule #2).
-- **Workspace-root uncommitted-files triage carries forward** — 2-session-old carryover. ai-resources also has 4 untracked (incl. new `resolve-incident.md`) that warrant their own commit decision.
-- **`/improve` not yet run** despite the Step 3.5 guard friction-log entry from earlier today's wrap.
-
-### Open Questions
-
-- None.
-
-## 2026-05-28 — Execute Wave 3 fix plan (4 structural items, each `/risk-check`-gated)
-Class: execution
-
-**Mandate:** Execute Wave 3 fix plan — 4 structural items (id-31 Phase 1, id-09, id-32, nordic-pe-macro/id-13), each `/risk-check`-gated, id-31 lands first, no batching — done when: all 4 items applied with improvement-log entries status-flipped + Verified lines + risk-check report refs.
-- Out of scope: id-31 Phases 2–4; Group G refactors (id-35/36/37); Group H research (id-34)
-- Files in scope: (inferred)
-- Stop if: `/risk-check` returns NO-GO or RECONSIDER without viable inline mitigation; OR id-31 Phase 1 fails QC/smoke-test
-
-Execute `audits/fix-plans/fix-repo-issues-2026-05-28-1902-wave3-structural.md`. Land `id-31` Phase 1 marker FIRST, then re-evaluate items 2-4 (`id-09`, `id-32`, `nordic-pe-macro/id-13`) against the new state before applying. Each item gets its own `/risk-check`. Do NOT batch.
-
 ## 2026-05-28 — Execute Wave 2 fix plan (8 single-file `/prime` + hook + doc edits)
 Class: execution
 
@@ -508,6 +449,41 @@ Question-driven session that started as "what counts as critical in /pipeline-re
 1. **Next `/pipeline-review` cycle** (~2026-06-05 Friday): cold-start shortlist will surface `pipeline-review.md` at top (friction-flagged). Operator picks normally (1+ entries; no cap). Validates tiered shape in production.
 2. **First quarterly cycle:** first Friday of July 2026 (~2026-07-03). On that date `QUARTERLY_ACTIVE` becomes true; quarterly rows enter the eligible pool. Validate Python boundary logic at that point.
 3. **Parked watch:** new tiered registry adds 30 entries — monitor whether any rows are genuinely never-needed and should be removed (vs. the current 47-row population).
+
+### Open Questions
+
+- None.
+
+## 2026-05-29 — /pipeline-review cold-start run (3 memos) + 3-pick cap relaxed
+
+### Summary
+
+First `/pipeline-review` cold-start cycle against the newly-expanded 47-row registry. Operator picked `prime`, `session-start`, `wrap-session` (rows 7/12/14 of the full registry). Three `pipeline-review-auditor` subagents ran in parallel (opus, ~85–110k tokens each), wrote memos to `audits/pipeline-reviews/`, registry bumped in one batched write. Operator then pushed back on the 3-pick cap — relaxed in-session: shortlist top-5 → top-10, hard cap removed, `[HEAVY-WIDE]` advisory added above N=3 for cost visibility.
+
+### Files Created
+
+- `audits/pipeline-reviews/prime-2026-05-29.md` — pipeline-review-auditor memo for `/prime` (10kb, 3 innovations / 3 leanness / Sub 2 + Min 1 brokenness / 4 cross-resource)
+- `audits/pipeline-reviews/session-start-2026-05-29.md` — pipeline-review-auditor memo for `/session-start` (11kb, 3 / 3 / Sub 1 + Min 3 / 5)
+- `audits/pipeline-reviews/wrap-session-2026-05-29.md` — pipeline-review-auditor memo for `/wrap-session` (12kb, 3 / 3 / Sub 2 + Min 2 / 6)
+- `logs/scratchpads/2026-05-29-09-38-scratchpad.md` — continuity scratchpad
+
+### Files Modified
+
+- `audits/pipeline-review-registry.md` — `prime`, `session-start`, `wrap-session` rows bumped to `Last reviewed = 2026-05-29`, `Last memo = 2026-05-29`
+- `.claude/commands/pipeline-review.md` — header description "1–3" → "1 or more" + relaxation rationale paragraph; Step 19 shortlist top-5 → top-10; Step 20 prompt text + example expanded; Step 21 rejection-on-more-than-3 branch removed; Step 23 `[HEAVY-WIDE]` advisory added above N=3
+- `logs/session-notes-archive-2026-05.md` — auto-archived 2 entries from session-notes.md
+
+### Decisions Made
+
+- **Picked 3 pipelines from full-registry numbering** (7/12/14 = `prime` / `session-start` / `wrap-session`) over top-5 shortlist — operator's pick of `7,6,8,11,12,14` was initially 6 (exceeded cap), trimmed to 3 by operator after rejection.
+- **Relaxed 3-pick cap in-session.** Triggered by operator question on why only 3. Rationale: registry grew 17 → 47, operator confirmed usage cost not a constraint, fix-session-queue throughput is the actual gate (cost-visibility marker preserves the signal). Cap removed, shortlist widened.
+- **Deferred currency-check scope widening.** Operator surfaced that auditor reads one pinned URL (unified skills/commands) and doesn't sweep MCP/hooks/agent-tools/model-cards. Two variants discussed (dynamic per-pipeline URL set vs. separate quarterly platform-drift command). Deferred — trigger to implement = future cycle surfaces a real miss.
+
+### Next Steps
+
+1. **Apply `/prime` fix** — fresh session, edit `prime.md` Step 0 to hoist `AI_RESOURCES` definition above the not-a-git-repo branch (Substantive Step 1a undefined-variable bug), then `/qc-pass`. Fold in leanness collapses + frontmatter `description`/`argument-hint` additions. Smallest of the three pipeline fixes; has a real bug.
+2. **OR bundle the cross-cutting contract triangle fix** — all three memos independently flagged that `prime` ↔ `session-start` ↔ `wrap-session` share load-bearing two-end contracts (Step 2 confirmation labels, marker-write conventions, session-notes.md mtime guards). Extracting these to shared docs resolves leanness items across all three at once.
+3. **Defer `wrap-session` Step 3.5 externalization** — structural change, `/risk-check` fires plan-time + end-time per audit-discipline.md. Don't bundle with the smaller fixes.
 
 ### Open Questions
 

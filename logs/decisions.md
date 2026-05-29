@@ -262,3 +262,33 @@ Plan retained: `/Users/patrik.lindeberg/.claude/plans/i-want-to-build-tidy-lake.
 **Review trail.** Operator question → `system-owner` agent (Function A consult, ~93k tokens) → advisory at `projects/axcion-ai-system-owner/output/advisories/2026-05-29-pipeline-review-registry-scope.md` → operator adopt-with-overrides → registry + command shipped commit `c83e994` → operator post-write tweaks to remove 3-pick cap + expand shortlist top-10.
 
 **Risk-check skipped at end-time** per `feedback_end_time_risk_check_skip` precedent: the registry edit is a content change against an existing contract (not a structural class), the file count is bounded (2 + 1 advisory), and the auditor body is unchanged. No mitigations to apply.
+
+---
+
+## 2026-05-29 — Relax /pipeline-review 3-pick cap; defer currency-check scope widening
+
+### Decision 1 — Remove the 3-pipeline-per-cycle cap on /pipeline-review
+
+**Context.** `/pipeline-review` shipped with a hardcoded cap at 3 picks per cycle (Step 21 rejection branch). Cycle 1 (cold start, 2026-05-29) ran against the freshly-expanded 47-row registry; operator's initial pick was 6 pipelines (rejected), trimmed to 3. After the run, operator asked why only 3 — confirming usage cost was not a constraint.
+
+**Decision.** Removed the hard cap from Step 21. Shortlist expanded top-5 → top-10. New `[HEAVY-WIDE]` advisory line in Step 23 fires above N=3 with a token estimate (`N × ~100k`) — preserves cost visibility without gating.
+
+**Rationale.** The original cap rested on three forces: opus cost per subagent (~85–110k tokens), operator throughput on the "Recommended next session" output queue, failure blast radius if N subagents partially fail. With the registry at 47 entries and usage not a constraint, the actual ceiling is fix-session-queue throughput — which is operator-side and can self-regulate. Cost signal preserved via `[HEAVY]` + `[HEAVY-WIDE]` chat markers.
+
+**Alternatives considered.**
+- **Keep cap at 3** — rejected: operator pushback; rotation too slow against 47 entries (weekly tier ~11 weeks rotation OK; quarterly tier ~5 quarters for 15 entries — too slow).
+- **Raise cap to 4 on quarterly tier only** — rejected: half-measure; operator wanted the option to pick more whenever, not just on quarterly weeks.
+- **Soft cap with confirmation above N=3** — rejected: adds a prompt; operator's decision-point posture is "no opinion-seeking asks"; `[HEAVY-WIDE]` advisory is the chosen middle ground (visible, not gating).
+
+### Decision 2 — Defer widening the auditor's currency-check URL set
+
+**Context.** Operator noticed `pipeline-review-auditor` reads only one pinned URL per memo (unified skills/commands docs) and doesn't sweep MCP, hooks, agent-tool conventions, or model-card updates. Asked whether to fix.
+
+**Decision.** Defer. Neither variant is urgent; trigger to implement = a future `/pipeline-review` cycle surfaces a real miss tied to MCP/hooks/agent-tool drift that the single-URL check missed.
+
+**Rationale.** Today's three reviews didn't miss anything a wider check would have caught (currency findings were all in the frontmatter-shape category, which the current URL covers). Widening proactively adds cost without proven signal. Two design variants exist if/when the trigger fires.
+
+**Alternatives considered.**
+- **Dynamic per-pipeline URL set** — auditor adds the hooks doc only when the pipeline reads/writes hooks, MCP doc only when it invokes MCP tools. Keeps signal density high; deferred as the "implement first" variant when trigger fires.
+- **Separate quarterly platform-drift sweep command** — fetches the broader Anthropic doc surface once, writes a workspace-wide drift memo. Cleaner separation; deferred as the alternative shape.
+- **Blanket widen now** — rejected: 3–5× WebFetch cost per memo with most pipelines not touching MCP/hooks meaningfully; dilutes signal density.

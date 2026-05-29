@@ -4036,3 +4036,61 @@ End-time `/risk-check` PROCEED-WITH-CAUTION → all 4 mitigations applied:
 ### Open Questions
 
 - None.
+## 2026-05-28 — /fix-repo-issues 5-scope sweep → 3-wave fix-plan split (25 items)
+
+### Summary
+
+Ran `/fix-repo-issues` across 5 operator-selected scopes (ai-resources + ai-development-lab + axcion-ai-system-owner + nordic-pe-macro-landscape-H1-2026 + nordic-pe-screening-project). Scanner subagents fired in parallel and returned 60 items across 4 scopes (axcion-ai-system-owner clean). After preview, operator expanded the plan-into-batch from the initial 4-item set to 25 items by adding 22 parked items back in, then asked whether to split — chose 3-wave split. Wrote 3 self-contained plan files in `audits/fix-plans/`. No fixes applied — handoff to fresh execution sessions.
+
+### Files Created
+
+- `ai-resources/audits/working/fix-repo-issues-2026-05-28-1902-ai-resources.md` — scanner notes (37 items)
+- `ai-resources/audits/working/fix-repo-issues-2026-05-28-1902-project-ai-development-lab.md` — scanner notes (6 items)
+- `ai-resources/audits/working/fix-repo-issues-2026-05-28-1902-project-axcion-ai-system-owner.md` — scanner notes (0 items)
+- `ai-resources/audits/working/fix-repo-issues-2026-05-28-1902-project-nordic-pe-macro-landscape-H1-2026.md` — scanner notes (13 items)
+- `ai-resources/audits/working/fix-repo-issues-2026-05-28-1902-project-nordic-pe-screening-project.md` — scanner notes (4 items)
+- `ai-resources/audits/fix-plans/fix-repo-issues-2026-05-28-1902-wave1-hygiene.md` — Wave 1 plan: 9 items, ~30–45 min, no `/risk-check`
+- `ai-resources/audits/fix-plans/fix-repo-issues-2026-05-28-1902-wave2-commands.md` — Wave 2 plan: 8 items, ~60–90 min, no `/risk-check`
+- `ai-resources/audits/fix-plans/fix-repo-issues-2026-05-28-1902-wave3-structural.md` — Wave 3 plan: 4 items, ~2–3 hours, every item is `/risk-check` class
+- `ai-resources/logs/scratchpads/2026-05-28-19-19-scratchpad.md` — pre-closeout continuity scratchpad
+
+### Files Modified
+
+- `ai-resources/logs/session-notes.md` — this entry.
+
+### Decisions Made
+
+**Operator-directed:**
+- **3-wave split over single combined plan.** Operator picked `split to 3 files` when offered options (split / split all / y / edit / abort). Rationale: 25 items in one execution session means ~4–6 hours, 2–3 likely compactions, and 4 `/risk-check` dispatches in one context window. A regression in any Group F item could poison the cleaner wins in Group A.
+- **Expand plan-into-batch from 4 → 25 items.** Operator instructed `Also fix:` followed by 22 additional parked items (Groups F + G + H + nordic-pe-macro project items). Honored per operator autonomy; flagged structural concerns inline before re-emitting the preview.
+- **Defer Group G (3 multi-file refactors) and Group H (1 research task).** Operator did not include these in the 3-wave split; left parked.
+
+**Claude-derived (under decision-point posture):**
+- **Wave 3 sequencing rule embedded in the plan file.** `id-31` Phase 1 (`.session-marker` write) lands FIRST; items 2-4 re-evaluated against the new state before applying. Each item needs its own `/risk-check` pass (do not batch).
+- **`id-31` scoped to Phase 1 ONLY.** Source improvement-log entry described 4 phases; chose Phase 1 (additive marker write in `/prime`) for this plan-set. Phases 2-4 deferred to subsequent waves per the entry's own migration plan.
+- **`id-34` (sub-subagent dispatch) classified as research, not fix.** Acceptable execution-session output = research note + decision document.
+- **`id-20`/`id-21` paired** as one principle (review-principles.md entry) + one gate-calibration row.
+- **`nordic-pe-macro/id-04` (mandate-alignment open Q) logged as new improvement-log entry** in ai-resources rather than applied directly — it's a question, not a fix.
+
+### Next Steps
+
+- **Execute wave 1** in a fresh session. Instruct fresh-session Claude: `Execute the fix plan at audits/fix-plans/fix-repo-issues-2026-05-28-1902-wave1-hygiene.md`. Lowest risk, ~30–45 min, 9 log/config hygiene fixes + new log entries. No `/risk-check`.
+- **Then execute wave 2** in a separate fresh session. ~60–90 min, 8 single-file `/prime` + hook + doc edits. Items 1-3 of wave 2 all edit `prime.md` — do as one coordinated edit pass.
+- **Book a dedicated session for wave 3.** ~2–3 hours, 4 `/risk-check` dispatches. Land `id-31` Phase 1 marker first; re-evaluate items 2-4 against the new state before applying. Do NOT batch.
+- **Push pending — multiple unpushed commits accrued today across ai-resources and workspace root.** ai-resources had 9 unpushed at `/prime` time + this wrap commit = 10. Workspace root had 2 unpushed. Push requires explicit approval (Autonomy Rule #2).
+- **Workspace-root uncommitted-files triage carries forward** — 2-session-old carryover. ai-resources also has 4 untracked (incl. new `resolve-incident.md`) that warrant their own commit decision.
+- **`/improve` not yet run** despite the Step 3.5 guard friction-log entry from earlier today's wrap.
+
+### Open Questions
+
+- None.
+
+## 2026-05-28 — Execute Wave 3 fix plan (4 structural items, each `/risk-check`-gated)
+Class: execution
+
+**Mandate:** Execute Wave 3 fix plan — 4 structural items (id-31 Phase 1, id-09, id-32, nordic-pe-macro/id-13), each `/risk-check`-gated, id-31 lands first, no batching — done when: all 4 items applied with improvement-log entries status-flipped + Verified lines + risk-check report refs.
+- Out of scope: id-31 Phases 2–4; Group G refactors (id-35/36/37); Group H research (id-34)
+- Files in scope: (inferred)
+- Stop if: `/risk-check` returns NO-GO or RECONSIDER without viable inline mitigation; OR id-31 Phase 1 fails QC/smoke-test
+
+Execute `audits/fix-plans/fix-repo-issues-2026-05-28-1902-wave3-structural.md`. Land `id-31` Phase 1 marker FIRST, then re-evaluate items 2-4 (`id-09`, `id-32`, `nordic-pe-macro/id-13`) against the new state before applying. Each item gets its own `/risk-check`. Do NOT batch.
