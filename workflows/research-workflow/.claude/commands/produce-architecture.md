@@ -19,8 +19,8 @@ Keep this phase lightweight. Do NOT read source files yet.
    - "part-3", "3" → Part 3
    - If $ARGUMENTS is empty: inventory both Part 2 and Part 3 directories and ask the operator which to architect
 2. Determine paths:
-   - Set `part_dir`: Part 2 → `parts/part-2-service/`, Part 3 → `parts/part-3-strategy/`
-   - Set `prose_output_dir`: Part 2 → `output/part-2-prose/`, Part 3 → `output/part-3-prose/`
+   - Set `part_dir`: Part 2 → `parts/{{PART_TWO_DIR}}/`, Part 3 → `parts/{{PART_THREE_DIR}}/`
+   - Set `prose_output_dir`: Part 2 → `output/{{PART_TWO_PROSE_DIR}}/`, Part 3 → `output/{{PART_THREE_PROSE_DIR}}/`
 3. **Skip condition check (mirrors the monolith's two-file PASS check exactly):**
    - Check if `{prose_output_dir}/architecture.md` exists AND `{prose_output_dir}/architecture-qc.md` exists AND the QC file contains a PASS verdict.
    - **If all three conditions hold:** Note "Architecture exists and passed QC — skipping Phases 2 and 3. Nothing to do." Present the existing architecture summary (file path, section count from architecture.md hierarchy) and exit. Suggest `/produce-prose-draft {first_section}` to begin prose conversion.

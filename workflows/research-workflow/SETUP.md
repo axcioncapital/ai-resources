@@ -175,3 +175,7 @@ All placeholders used in template files:
 | `{{OPERATOR_NAME}}` | CLAUDE.md | Operator's name |
 | `{{SECTION_SEQUENCE}}` | reference/stage-instructions.md | Section ordering constraints |
 | `{{WORKSPACE_ROOT}}` | .claude/settings.json | Absolute path to workspace root containing ai-resources/ (set at step 1.5, before any session loads) |
+| `{{PART_TWO_DIR}}` | .claude/commands/produce-architecture.md | Part-2 source directory slug under `parts/` (e.g., `part-2-service`). Only needed if the project uses `/produce-architecture` (parts-based document model) |
+| `{{PART_THREE_DIR}}` | .claude/commands/produce-architecture.md | Part-3 source directory slug under `parts/` (e.g., `part-3-strategy`). Only needed if using `/produce-architecture` |
+| `{{PART_TWO_PROSE_DIR}}` | .claude/commands/produce-architecture.md | Part-2 prose-output directory slug under `output/` (e.g., `part-2-prose`). Only needed if using `/produce-architecture` |
+| `{{PART_THREE_PROSE_DIR}}` | .claude/commands/produce-architecture.md | Part-3 prose-output directory slug under `output/` (e.g., `part-3-prose`). Only needed if using `/produce-architecture` |
