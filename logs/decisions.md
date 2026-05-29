@@ -261,3 +261,67 @@ Plan 6 dispatch: 2 APPLIED (items 2, 6), 1 PENDING (item 5), 1 SCHEDULED (item 7
 
 **Trigger to revisit.** Phase 2 consumer behaviors (pre-edit check enforcement) will repurpose the outcome class. If those land, the surface-only posture upgrades to surface + enforce.
 
+
+## 2026-05-29 — S5: Drop conditional-write threshold in C-1 (/consult Function A/B output contract)
+
+**Context.** The source memo (`audits/pipeline-reviews/consult-2026-05-29.md`) proposed extending /consult Functions A and B to write the full advisory to disk and return a ≤30-line summary, with a conditional carve-out: if the advisory naturally converges below the 30-line cap, skip the disk write. Plan-time /risk-check returned PROCEED-WITH-CAUTION but did not flag the conditional. System Owner second opinion (Function B advisory) caught the principle conflict.
+
+**Decision.** Drop the conditional-write threshold. All Function A and Function B outputs write to disk unconditionally — same shape across all output sizes.
+
+**Rationale.** Three vault principles converge on always-write: (1) OP-3 (loud failure over silent continuation) — conditional writes create operator-perception ambiguity over whether a given consult is archived; (2) DR-6 (outputs go to `output/{project}/`) — unconditional rule, no carve-out for small outputs; (3) AP-7 (speculative abstraction) — the token-saving benefit of skipping short writes is hypothetical and marginal. The on-disk archive also keeps a future Function F/G consumption path open without partial-archive degradation.
+
+**Alternatives considered.** (a) Keep the conditional per the source memo — rejected on principle conflict. (b) Add a tag in the returned summary indicating "no disk write this time" — rejected as solving the perception ambiguity by adding ceremony where unconditional is simpler.
+
+## 2026-05-29 — S5: Path-back line as a leading line in the agent's returned summary, not a /consult Step 5 transformation
+
+**Context.** C-1 needs to make the on-disk advisory discoverable to the operator (without it, the file is silently hidden because /consult Step 5 returns the agent's response unmodified). Two shapes were considered: (a) the agent emits a `**Full advisory on disk:** {path}` line at the top of the returned summary; (b) /consult Step 5 detects the on-disk write and displays the path.
+
+**Decision.** Shape (a) — leading line in the agent's returned summary. /consult Step 5's "return unmodified" pass-through stays unchanged.
+
+**Rationale.** Five sibling consumer commands (`/architecture-review`, `/implementation-triage`, `/systems-review`, `/friday-so`, `/so-monthly`) use the same identical pass-through posture. Introducing a detect-and-display special-case in /consult only would create sibling inconsistency — exactly the silent special-casing AP-1 (silent conflict resolution) prohibits. The agent owns the format; the command stays a thin wrapper. Leading position beats trailing because the operator scans top-down — a path-back line buried at the bottom of a 30-line block is easy to miss.
+
+**Alternatives considered.** (a) Trailing line — rejected on scanability. (b) /consult Step 5 transformation — rejected on sibling consistency.
+
+## 2026-05-29 — S5: Split C-1 and C-2 into two commits with C-1 first
+
+**Context.** C-1 (canonical agent edit + /consult brief) and C-2 (project-local agent symlink swap) were originally planned as one combined Item 3 commit. System Owner advisory flagged that they are distinct change classes with different reversibility profiles.
+
+**Decision.** Two commits, C-1 first. C-2 follows after C-1 verification.
+
+**Rationale.** C-1 is a canonical-agent edit (six-consumer shared agent per `risk-topology.md § 3`); C-2 is a new symlink (distinct class). Different change classes mean different reversibility profiles — one-commit coupling sacrifices independent rollback. Order matters: C-1 first ensures the canonical content is post-edit before the symlink points at it; if C-2 ships first, there is a brief window where the project session would load the pre-edit canonical via the new symlink. (C-2 ended up invisible to git per the project-local gitignore — verified via swap + diff + grep, no commit was needed.)
+
+**Alternatives considered.** (a) Combined commit — rejected on reversibility separation. (b) C-2 first — rejected on transient pre-edit-canonical exposure.
+
+## 2026-05-29 — S5: Item 5 (context-engine MVP intake) deferred per Context constraint deferral
+
+**Context.** Item 5 was the fourth picked item in the /prime auto-mode multi-item gate. By the time it was reached, the session had spent 6 subagents (2 risk-check-reviewer + 2 qc-reviewer + 2 system-owner advisory) / >20 turns / 8 artifacts — past the [COST] threshold. Brief 1 (MVP) describes a substantial discovery engine; Brief 2 explicitly says "do not build until MVP is proven."
+
+**Decision.** Defer Item 5 to a dedicated session. Brief 2 stays in inbox per its own phase-2 instructions. Brief 1 (MVP) requires a fresh-context session.
+
+**Rationale.** Workspace `Context constraint deferral` rule: when context is clearly constrained, defer remaining work, flag the deferral, log it — do not push to close the task or rush a plan. Brief 1 is non-trivial enough that running `/create-skill` end-to-end in a context-constrained session would compete with wrap quality and degrade the design. The briefs stay in `inbox/` — not perishable.
+
+**Alternatives considered.** (a) Run /create-skill end-to-end on Brief 1 — rejected on rush risk. (b) Defer both briefs to a follow-up Friday-act item — rejected on lower visibility than leaving in inbox.
+
+**Subsequent observation.** Moot — a concurrent S6 session in another terminal built both phases of the context-engine MVP independently and wrapped first (commits `7dc5e6e`, `e774eb5`, `7daac4e`). Decision still stands as the correct discipline call for the S5 session at the time it was made.
+
+## 2026-05-29 — S6: Schedule dedicated session for /wrap-session leaner refactor + permission-sweep-auditor follow-ups (Friday-checkup general #7)
+
+**Context.** Both items have been deferred twice in prior Friday-act waves. The plan classified another defer as "operator-driven silent drift" — a third pass without commitment would normalize the deferral. The /wrap-session command body has grown organically (Step 3.5 marker-aware counter + Step 7a coaching-data classification + multiple guards), and the permission-sweep-auditor accumulated follow-ups during the 2026-05-22 + 2026-05-29 cycles without being addressed.
+
+**Decision.** Block out one dedicated session within the next two weekly cadences (target: 2026-06-05 or 2026-06-12 /friday-act wave, or a Monday session if /monday-prep surfaces capacity). Session shape: open with /prime, pick both items as the multi-item auto bundle, /risk-check both at plan time, single mandate, single wrap. Estimated duration: 2–3 turns of design + edit + commit per item.
+
+**Rationale.** Both items are structurally similar (existing-resource refactor, no new path creation, /risk-check NO per plan classifications) — bundling them in one session amortizes the /prime → /session-plan setup cost. Their blast radii are bounded (one command + one agent), so a combined session does not compound risk. Splitting them across two sessions doubles setup cost for no risk reduction. Alternatives: bundle into next /friday-act wave indirectly (rejected — Friday-act sessions are already crowded with that week's findings); add to /improve-skill / /create-skill backlog (rejected — these are refactors of existing resources, not new builds).
+
+**Trigger to revisit.** If neither 2026-06-05 nor 2026-06-12 /friday-act surfaces capacity, escalate to a dedicated weekday session (treat as do-now). A third defer past 2026-06-12 will be logged as silent drift and re-triaged via /improve-skill against /wrap-session itself.
+
+## 2026-05-29 — S6: /pm sub-subagent dispatch — investigation only (pending)
+
+**Context.** Friday-checkup general plan item #5 surfaced the `/pm` Phase 4 escalation limitation: Claude Code does not grant the Task tool to subagents at runtime, so the project-manager → system-owner dispatch fails deterministically and the DISPATCH FAILED redirect fires. Plan classification: investigation only, marked pending in decisions.md (not applied).
+
+**Decision.** Investigation completed; notes file at `audits/working/2026-05-29-pm-sub-subagent-investigation.md`. Four workaround candidates documented (A: move dispatch to /pm command; B: pre-fetch SO read every invocation; C: drop the escalation; D: wait for SDK update). Status: **pending** — operator decides between defer (recommended default) and approve Option A in a dedicated session.
+
+**Rationale.** Current degraded mode is bounded: hybrid-question frequency is low (~1-2×/month per usage-log telemetry); operator-facing experience is clear (redirect to /consult); no fabrication risk. Implementing Option A is a real improvement but is a cross-resource refactor (3 files, plan-time /risk-check required) — better as a dedicated session than absorbed into Friday-cadence. Surfaces the investigation now, defers the build to operator decision.
+
+**Alternatives considered.** (a) Build Option A inline in S6 — rejected on session budget (would compete with Wave 2-4 leverage). (b) Open a /create-skill / /improve-skill loop now — rejected as premature without operator approval of the refactor.
+
+**Trigger to revisit.** If hybrid-question frequency rises above ~1×/week, fast-track Option A. Otherwise, re-surface at next monthly /friday-checkup tier.
