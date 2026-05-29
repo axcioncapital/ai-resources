@@ -473,3 +473,42 @@ Designed, gated, shipped, post-ship-reviewed, hardened, and then consolidated th
 ### Open Questions
 
 - None.
+
+## 2026-05-29 — /pipeline-review registry expanded to tiered shape (32 weekly + 15 quarterly)
+
+### Summary
+
+Question-driven session that started as "what counts as critical in /pipeline-review?" and converged on a registry contract change. System Owner consulted on whether other commands should be added; SO recommended a tiered registry (weekly/quarterly) over flat expansion, grounded in `system-doc.md § 4.5` closed-loop latency and `principles.md § DR-7` second-confirmed-consumer test. Operator adopted the tiered shape with two overrides (`friction-log` kept weekly, `recommend` added weekly), and post-write tweaked the command to remove the 3-pick cap and expand the shortlist to top 10. Registry grew from 17 entries to 47 (32 weekly + 15 quarterly). Self-review row friction-flagged so `/pipeline-review` itself surfaces at top of next cycle.
+
+### Files Created
+
+- `ai-resources/logs/scratchpads/2026-05-29-09-28-scratchpad.md` — continuity scratchpad for next /prime resume
+- `projects/axcion-ai-system-owner/output/advisories/2026-05-29-pipeline-review-registry-scope.md` — SO advisory (gitignored; local-only)
+
+### Files Modified
+
+- `ai-resources/audits/pipeline-review-registry.md` — rewrote with 6 columns (`Tier` added), 47 entries (32 weekly + 15 quarterly), tier rationale block, origin paragraph
+- `ai-resources/.claude/commands/pipeline-review.md` — Registry contract block (5→6 cols, two-tier behavior described); Step 4 added `QUARTERLY_ACTIVE` date-check filter (first Friday of Jan/Apr/Jul/Oct), `[type/tier]` in shortlist display, override path bypasses tier filter. Post-write operator tweaks: removed 3-pick cap, expanded shortlist top-5 → top-10, added cost advisory above 3 picks.
+
+### Decisions Made
+
+**Registry shape (operator-directed):**
+- Adopted SO advisory's tiered shape (weekly + quarterly) over flat expansion.
+- Override 1: `friction-log` kept weekly (SO recommended TIER-LATER to quarterly).
+- Override 2: `recommend` added to weekly (SO recommended SKIP).
+- Self-review row (`pipeline-review.md`) friction-flagged — this session generated design issues against the command, so it earns top-of-shortlist next cycle.
+
+**Command tweaks (operator-directed post-write):**
+- Removed 3-pick cap per cycle; replaced with `[HEAVY]` advisory above 3 picks.
+- Expanded shortlist from top-5 to top-10 to surface row 6–10 without forcing path override.
+- Rationale (operator): with 32 weekly entries the 3-pick cap forced a ~12-week rotation; relaxing it lets the operator pick more when bandwidth allows.
+
+### Next Steps
+
+1. **Next `/pipeline-review` cycle** (~2026-06-05 Friday): cold-start shortlist will surface `pipeline-review.md` at top (friction-flagged). Operator picks normally (1+ entries; no cap). Validates tiered shape in production.
+2. **First quarterly cycle:** first Friday of July 2026 (~2026-07-03). On that date `QUARTERLY_ACTIVE` becomes true; quarterly rows enter the eligible pool. Validate Python boundary logic at that point.
+3. **Parked watch:** new tiered registry adds 30 entries — monitor whether any rows are genuinely never-needed and should be removed (vs. the current 47-row population).
+
+### Open Questions
+
+- None.

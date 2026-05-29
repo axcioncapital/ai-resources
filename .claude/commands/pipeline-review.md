@@ -4,7 +4,9 @@ model: sonnet
 
 # /pipeline-review — Weekly Pipeline Design Review
 
-Run a deep System-Owner-grounded design review of 1–3 critical command pipelines per cycle. Operator-invoked weekly. Reads a registry, presents a ranked shortlist, the operator picks 1–3, the `pipeline-review-auditor` subagent produces a memo per pipeline, the registry is bumped, and the memos are written to disk. No auto-fix. No commit.
+Run a deep System-Owner-grounded design review of 1 or more critical command pipelines per cycle. Operator-invoked weekly. Reads a registry, presents a ranked shortlist, the operator picks 1 or more, the `pipeline-review-auditor` subagent produces a memo per pipeline, the registry is bumped, and the memos are written to disk. No auto-fix. No commit.
+
+No hard upper limit on per-cycle picks — the `[HEAVY]` chat marker at Step 5 announces the spawn count, and an extra advisory line fires above 3 to make the cost visible. The original 3-pick cap was relaxed on 2026-05-29 after the registry grew from 17 to 47 entries; operator throughput on the "Recommended next session" outputs is the real constraint, not the auditor cost.
 
 Subsumed `/audit-critical-resources` on 2026-05-29 — its drift-detection currency-check (against pinned Anthropic doc URLs) was folded into the pipeline-review-auditor's Brokenness section. This command now answers both *what could be better?* and *what is broken?* for the critical-resource population.
 
@@ -81,38 +83,39 @@ The `[CADENCE-LATE]` top-line marker is a required mitigation from the `/risk-ch
     a. `friction_flag = Y` first (Y before N).
     b. `last_reviewed` ascending — `never` sorts as the oldest (treat as date `0000-00-00` for comparison).
     c. `pipeline_path` alphabetically — the cold-start tiebreak.
-19. Take the top 5 rows as the shortlist.
+19. Take the top 10 rows as the shortlist. (Operator can still reach rows 11+ via path override in Step 21.)
 20. Print the shortlist to the operator:
 
     ```
     /pipeline-review — {DATE}
 
-    Shortlist (top 5, oldest first; friction-flagged promoted):
+    Shortlist (top 10, oldest first; friction-flagged promoted):
 
       1. {pipeline_path}  [{type}/{tier}]  last-reviewed: {last_reviewed}  friction: {Y|N}
       2. ...
       ...
-      5. ...
+      10. ...
 
     {If every row is `never`, append:}
     Cold start — all rows are `never`. Tiebreak applied: alphabetical by pipeline path.
 
-    Pick 1–3 by number (e.g., `1` or `1,3,5`), OR type a pipeline path not in the shortlist to override.
+    Pick 1 or more by number (e.g., `1` or `1,3,5,7`), OR type a pipeline path not in the shortlist to override.
+    No upper limit on count — `[HEAVY]` fires at spawn time; above 3 picks an extra advisory line names the parallel-token cost.
     Empty reply aborts.
     ```
 
 21. Wait for operator reply. Parse:
-    - Comma-separated numbers in `1..5` → pick those rows from the shortlist.
+    - Comma-separated numbers in `1..10` → pick those rows from the shortlist.
     - A path-shaped token → resolve as in Step 3 (override allowed; bypasses tier filter — operator can pick a quarterly row on a non-trigger date). Validate existence; abort on bad path.
     - Empty reply → exit cleanly with `(aborted — no pipelines picked)`.
-    - Reject more than 3 picks: `(rejected — limit is 3 pipelines per cycle. Trim and re-submit.)` and re-prompt once.
+    - No upper cap on pick count. Cost is surfaced at Step 23, not gated here.
 22. Set `PICKED_PIPELINES` = the resolved list of absolute pipeline paths.
 
 ---
 
 ### Step 5: Per-Pipeline Review
 
-23. Emit `[HEAVY]` to chat with one line: `spawning {N} pipeline-review-auditor subagents in parallel ({N} pipelines picked)`.
+23. Emit `[HEAVY]` to chat with one line: `spawning {N} pipeline-review-auditor subagents in parallel ({N} pipelines picked)`. If `N > 3`, emit one additional advisory line: `[HEAVY-WIDE] N={N} exceeds the original 3-pick design baseline — each subagent runs ~85–110k opus tokens; total fan-out ≈ {N × 100}k tokens. No gate — proceeding.`
 24. For each pipeline in `PICKED_PIPELINES`, compute:
     - `PIPELINE_TYPE` = `skill` if path matches `**/skills/*/SKILL.md`; else `command`.
     - `PIPELINE_SLUG` per type:

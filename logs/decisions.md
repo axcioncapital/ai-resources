@@ -235,3 +235,30 @@ Plan retained: `/Users/patrik.lindeberg/.claude/plans/i-want-to-build-tidy-lake.
 **Review trail.** `/clarify` → `/decide` (5 Recommendable items) → `/consult` 1 (System Owner pushed back on stand-alone cadence; operator override) → plan QC'd, triaged, fixed → `/risk-check` (PROCEED-WITH-CAUTION, 6 mitigations applied) → shipped commit `e557915` → `/consult` 2 post-ship Function B (7 follow-ups; 4 cleared by triage including the highest-risk EXCLUDE_AGENT_GLOBS leak) → fixes shipped commit `0b2a3f0` → operator asked whether subsumption was possible → `/risk-check` 2 (PROCEED-WITH-CAUTION, 3 mitigations applied including the WebFetch frontmatter addition and the 32-symlink dry-run manifest) → shipped commits `bc17fdc` (ai-resources canonical), `6bd3d8c` (workspace), `e2f7eb5` (axcion-ai-system-owner).
 
 **Both Step 4a `/consult` second opinions skipped** per `feedback_minimal_infra_subset` precedent (mitigations were operational, architectural choices were already operator-confirmed). Both end-time `/risk-check` calls skipped per `feedback_end_time_risk_check_skip` (drift bounded inside the plan-time envelope; corrective fixes only). All four skips surfaced explicitly in commit messages.
+
+---
+
+## 2026-05-29 — /pipeline-review registry expanded to tiered shape
+
+**Context.** Operator asked what `/pipeline-review` considers as "critical." The registry at `audits/pipeline-review-registry.md` held 17 entries — the cold-start population from when `/pipeline-review` shipped earlier today plus 4 entries inherited from the deleted `critical-resources-manifest.md`. Operator triggered a System Owner consultation on whether other commands should be added.
+
+**Decision.** Adopt System Owner's recommended tiered registry shape (weekly + quarterly) over flat expansion. Registry grew from 17 → 47 entries (32 weekly + 15 quarterly). Selection criterion made explicit in registry contract: weekly tier requires (i) `risk-topology.md § 1` Critical/High OR closed-loop choke point per `system-doc.md § 4.5`, AND (ii) multi-step / orchestration-shaped OR Anthropic-currency-dependent. Single-step utilities that are critical but stable → quarterly.
+
+**Operator overrides applied.** Two SO recommendations overridden:
+1. `friction-log` kept weekly (SO recommended TIER-LATER to quarterly). Operator judgment: the logging-pipeline contract is load-bearing for the friction → improvement → Friday loop; weekly depth is worth the rotation cost.
+2. `recommend` added to weekly (SO had recommended SKIP as a simple posture-switch command). Operator judgment: the command is invoked often enough to warrant deep design review.
+
+**Post-write tweaks (operator-directed).** After commit, operator tweaked the command directly:
+- Removed 3-pick cap per cycle. Replaced with `[HEAVY]` cost advisory above 3 picks. Rationale: with 32 weekly entries, the 3-pick cap forced a ~12-week rotation; relaxing it lets the operator pick more when bandwidth allows.
+- Expanded shortlist from top-5 to top-10 — surfaces row 6–10 without forcing path override.
+
+**Rationale.** SO's tiered argument grounded in `system-doc.md § 4.5` (closed-loop bounded-latency) and `principles.md § DR-7` (second-confirmed-consumer test). Flat expansion past ~20 entries would push average per-pipeline rotation past the useful-memo half-life. Tiering routes deep-design work to the cadence that fits its cost profile — weekly for fast-evolving load-bearing infrastructure, quarterly for slow-changing single-step utilities.
+
+**Alternatives considered.**
+- Option a — keep registry tight (~17 entries) for fast rotation. Rejected: Friday cadence partners (`friday-act`, `friday-so`, etc.), the entire QC loop, and critical advisors stay invisible. Major coverage gap.
+- Option b — flat expansion to ~25 entries. Rejected: rotation period dilutes past memo half-life for actively-changing pipelines.
+- Option c — tiered (adopted). Routes each work type to the right cadence.
+
+**Review trail.** Operator question → `system-owner` agent (Function A consult, ~93k tokens) → advisory at `projects/axcion-ai-system-owner/output/advisories/2026-05-29-pipeline-review-registry-scope.md` → operator adopt-with-overrides → registry + command shipped commit `c83e994` → operator post-write tweaks to remove 3-pick cap + expand shortlist top-10.
+
+**Risk-check skipped at end-time** per `feedback_end_time_risk_check_skip` precedent: the registry edit is a content change against an existing contract (not a structural class), the file count is bounded (2 + 1 advisory), and the auditor body is unchanged. No mitigations to apply.
