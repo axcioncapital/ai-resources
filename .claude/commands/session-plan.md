@@ -139,20 +139,6 @@ If `$ARGUMENTS` is empty:
 
 ---
 
-## Step 1.5 — Classify session
-
-Ask the operator one question and **wait**:
-
-> Is this session **design** (creating or drafting something new — a skill, command, plan, brief, agent definition), **execution** (running or applying something that already exists — an audit, triage, research stage, edits from a clear plan), or **mixed**?
->
-> Default if unsure: **design**.
-
-Set `CLASS` = the operator's answer (`design`, `execution`, or `mixed`). If mixed, note which class dominates in parentheses.
-
-If the response does not match one of the three canonical values exactly (case-insensitive), normalize by mapping to the closest canonical value (e.g., "Design" → `design`, "design session" → `design`, "exec" → `execution`). If no clear match, re-ask once with the three options listed explicitly. Do not loop.
-
----
-
 ## Step 2 — Model selection
 
 Apply the three-tier heuristic from `ai-resources/skills/ai-resource-builder/references/operational-frontmatter.md`:
@@ -256,9 +242,6 @@ Write to `OUTPUT_TARGET` (overwrite if present):
 ## Intent
 {INTENT — one sentence}
 
-## Class
-{design | execution | mixed}
-
 ## Model
 {recommended tier} — {match | → /model {shortname}}
 
@@ -293,18 +276,18 @@ Write to `OUTPUT_TARGET` (overwrite if present):
 
 A plan that cannot be understood without opening a separate doc fails this check. A plan that uses `(single step)` or `(single scope)` for non-trivial multi-step work also fails.
 
-After writing `OUTPUT_TARGET`, locate today's `## {YYYY-MM-DD}` header in `logs/session-notes.md` (the entry `/prime` created in Step 0). Check whether a `Class: ` line already exists immediately below that header. If it does, replace its value with `Class: {CLASS}` using `Edit`. If it does not exist, insert `Class: {CLASS}` as a new line immediately below the header, before any existing content. The line should be in plain text form (not a heading, not a bullet) so downstream rules can grep for `^Class: ` reliably.
-
-Step 0 has already verified today's entry exists; if for any reason the header is missing at this point, skip the append and emit a one-line warning to the operator.
+No `Class:` line is written to `logs/session-notes.md` — the field was removed when the design/execution/mixed gate was eliminated.
 
 ---
 
-## Step 8 — QC trigger
+## Step 8 — Confirm and auto-proceed
 
-After writing, notify the operator:
+After writing, emit one line:
 
-> Plan written to `logs/session-plan.md`. Run `/qc-pass` to review it, then proceed.
+> Plan written to `{OUTPUT_TARGET}` ({autonomy posture}). Begin execution.
 
-Do not invoke `/qc-pass` automatically.
+Do NOT emit a `/qc-pass` handoff and do NOT pause for operator confirmation. The session begins under the declared autonomy posture immediately. The operator can run `/qc-pass`, `/contract-check`, or `/drift-check` at any time on their own initiative — and `/session-plan` Step 0's collision-detection prompts plus Step 1's `(none derived)` sentinels remain the only gates that legitimately pause this command. Everything else flows through.
+
+**Manual-QC opt-in:** if the operator wants a plan-time QC sweep before execution, they invoke `/qc-pass` directly. The chained-from-`/session-start` default skips this — judgment errors are caught downstream by `/drift-check` mid-session and `/contract-check` near wrap, per workspace `Decision-Point Posture`.
 
 $ARGUMENTS

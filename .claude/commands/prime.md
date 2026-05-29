@@ -258,9 +258,8 @@ Full backlog & inbox: /open-items
       - `stop_if` — `(none stated)` unless `PICKED_ITEM` carries a `[BLOCKING]`-style halt condition.
       - `allowed_inputs`, `required_outputs` — leave absent (no `(none stated)` placeholder).
 
-   5. **Derive plan fields** inline (matches `/session-plan` Step 1.5 + 2 + 5–7 logic without the per-stage prompts):
+   5. **Derive plan fields** inline (matches `/session-plan` Step 2 + 5–7 logic without the per-stage prompts):
       - `INTENT` — one-sentence summary of `PICKED_ITEM`.
-      - `CLASS` — `design` (drafting a new artifact), `execution` (running an existing process), or `mixed` (default if ambiguous).
       - `RECOMMENDED_MODEL` — apply `/session-plan` Step 2 three-tier heuristic (deciding → opus; doing → sonnet; mechanical → haiku). Compare to `ACTIVE_MODEL` from the system-prompt context. Emit `→ /model {shortname}` on mismatch.
       - `AUTONOMY_POSTURE` — `Full autonomy` default; downgrade to `Gated` if `PICKED_ITEM` touches structural change classes (hook edits, permission changes, cross-cutting CLAUDE.md edits, new commands/skills, new symlinks, new always-loaded content, automation with shared-state effects — full list: `ai-resources/docs/audit-discipline.md`).
       - `STRUCTURAL_RISK` — boolean: true if any structural class is likely.
@@ -282,7 +281,6 @@ Full backlog & inbox: /open-items
 
       **Plan**
       → Intent: {INTENT}
-      → Class: {CLASS}
       → Model: {RECOMMENDED_MODEL} — {match | → /model {shortname}}
       → Autonomy: {AUTONOMY_POSTURE}
 
@@ -316,23 +314,21 @@ Full backlog & inbox: /open-items
       - Required outputs: {required_outputs}  ← write only if set; omit if absent
       ```
 
-      **Parse contract:** the `**Mandate:**` line shape, the bullet labels (`- Out of scope:`, `- Files in scope:`, `- Stop if:`, `- Allowed inputs:`, `- Required outputs:`), and the `(inferred)` / `(none stated)` markers are load-bearing. Three downstream readers depend on them: canonical `/wrap-session` Step 7a, workspace-root `wrap-session.md` Step 2b, and `/drift-check` Step 5. Do not insert extra prose into the `**Mandate:**` line itself or rename labels. The "complete fully within this session where context allows" posture lives in Step 8c.11's execution behavior, not in the mandate line — keeping it out of the disk-write preserves the two-segment parse contract (head ` — done when: ` tail).
+      **Parse contract:** the `**Mandate:**` line shape, the bullet labels (`- Out of scope:`, `- Files in scope:`, `- Stop if:`, `- Allowed inputs:`, `- Required outputs:`), and the `(inferred)` / `(none stated)` markers are load-bearing. Three downstream readers depend on them: canonical `/wrap-session` Step 7a, workspace-root `wrap-session.md` Step 2b, and `/drift-check` Step 5. Do not insert extra prose into the `**Mandate:**` line itself or rename labels. The "complete fully within this session where context allows" posture lives in Step 8c.10's execution behavior, not in the mandate line — keeping it out of the disk-write preserves the two-segment parse contract (head ` — done when: ` tail).
 
-   8. **Write plan.** Write to `logs/session-plan.md` using `/session-plan` Step 7 schema (`## Intent`, `## Class`, `## Model`, `## Source Material`, `## Findings / Items to Address`, `## Execution Sequence`, `## Scope Alternatives`, `## Autonomy Posture`, `## Risk`). Apply `/session-plan` Step 7 self-check (length floor ≥25 substantive lines, concrete Findings, concrete Execution Sequence, realistic Scope Alternatives).
+   8. **Write plan.** Write to `logs/session-plan.md` using `/session-plan` Step 7 schema (`## Intent`, `## Model`, `## Source Material`, `## Findings / Items to Address`, `## Execution Sequence`, `## Scope Alternatives`, `## Autonomy Posture`, `## Risk`). Apply `/session-plan` Step 7 self-check (length floor ≥25 substantive lines, concrete Findings, concrete Execution Sequence, realistic Scope Alternatives).
 
       **Concurrent-session collision check** (matches `/session-plan` Step 0 logic): if `logs/session-plan.md` already exists and was modified within the past 6 hours, read its `## Intent` line as `EXISTING_INTENT`. Normalize both (lowercase, trim, strip trailing punctuation) and compare via case-insensitive substring containment in either direction.
       - **MATCH** → overwrite `logs/session-plan.md`.
       - **MISMATCH** → write to `logs/session-plan-pass2.md` instead, and emit one line: `Concurrent session detected. Existing intent: '{EXISTING_INTENT_truncated_60}'. This session's intent: '{INTENT_truncated_60}'. Writing plan to logs/session-plan-pass2.md to avoid collision (preserves both).`
 
-   9. **Insert Class line.** Per `/session-plan` Step 7: locate today's header in `logs/session-notes.md`, check whether a `Class: ` line already exists immediately below the header. If it does, replace its value with `Class: {CLASS}`. If it does not, insert `Class: {CLASS}` as a new line immediately below the header, before any existing content. **This pushes the just-written mandate down one slot.** Final on-disk order: `[header, Class line, mandate line, mandate bullets, work-description body]` — matches the canonical `/session-start` + `/session-plan` composed output.
-
-   10. **Run `/risk-check` if STRUCTURAL_RISK is true.** This is the plan-time gate per workspace Autonomy Rules #9. The single approval gate at step 8c.6 disclosed this in advance, so the operator is not surprised. Verdict handling:
-       - **GO** → proceed to 8c.11.
+   9. **Run `/risk-check` if STRUCTURAL_RISK is true.** This is the plan-time gate per workspace Autonomy Rules #9. The single approval gate at step 8c.6 disclosed this in advance, so the operator is not surprised. Verdict handling:
+       - **GO** → proceed to 8c.10.
        - **RECONSIDER / NO-GO** → output `Risk-check verdict: {verdict}. Mandate and plan retained on disk. Auto mode paused — review {risk-check report path} before resuming.` Stop. The plan and mandate stay on disk for the operator to revise.
 
        If STRUCTURAL_RISK is false, skip this step silently.
 
-   11. **Begin execution under {AUTONOMY_POSTURE}.** No further confirmation gate — the Step 8c.6 approval covered execution. Run the plan to completion. Complete the mandate fully within this session where context allows; if context is clearly constrained (extended session, approaching compaction), follow the workspace `Context constraint deferral` rule — flag the deferral and log it, do not rush.
+   10. **Begin execution under {AUTONOMY_POSTURE}.** No further confirmation gate — the Step 8c.6 approval covered execution. Run the plan to completion. Complete the mandate fully within this session where context allows; if context is clearly constrained (extended session, approaching compaction), follow the workspace `Context constraint deferral` rule — flag the deferral and log it, do not rush.
 
        **During execution:**
        - Run `/qc-pass` on substantive artifacts before declaring them complete.
@@ -340,4 +336,4 @@ Full backlog & inbox: /open-items
        - Surface `[SCOPE]`, `[HEAVY]`, `[AMBIGUOUS]`, `[COST]` guardrail flags per workspace rules.
        - Commit directly per workspace `Commit behavior` rule (no pre-commit checks, no permission asks).
 
-   12. **On mandate completion.** Output: `Mandate complete. Run /wrap-session to capture telemetry and journal the session. Push pending — let me know when to push.` Do not auto-invoke `/wrap-session` — the operator decides when to wrap.
+   11. **On mandate completion.** Output: `Mandate complete. Run /wrap-session to capture telemetry and journal the session. Push pending — let me know when to push.` Do not auto-invoke `/wrap-session` — the operator decides when to wrap.

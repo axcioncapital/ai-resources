@@ -232,13 +232,19 @@ Using the `logs/session-notes.md` content already read in Step 0, locate today's
   - Required outputs: {required_outputs}  ← write only if set; omit if absent
   ```
 
-### Step 4 — Confirm
+### Step 4 — Confirm and chain to `/session-plan`
 
 Output exactly:
 
 ```
 Mandate written → logs/session-notes.md
-Ready. Commit after each work unit.
+Proceeding to /session-plan.
 ```
 
-**Next:** Run `/session-plan` to plan model tier, source material, autonomy posture, and structural risk for the session.
+Then **chain-invoke `/session-plan`** immediately, passing `work_scope` verbatim as `$ARGUMENTS`. Use the Skill tool: `skill = "session-plan"`, `args = "{work_scope}"` (the exact `work_scope` string parsed in Step 2). Do not pause for operator confirmation before invoking — the chain is the default path.
+
+**Chained-mode contract:** `/session-plan` Step 0 retains all of its existing pause points (same-session 3-option prompt; concurrent-session collision; missing `/prime` header; `(none derived)` sentinels). Those are the only legitimate gates. Everything else runs through to the plan write and the session begins under the declared autonomy posture without further confirmation.
+
+**If Step 2.5 self-check auto-fixed a field silently:** still chain — the self-check's one-line note already surfaced the fix. Do not add a second confirmation prompt.
+
+**Skip the chain only if:** Step 0 emitted the concurrent-session warning AND the operator chose option 2 (stop and resolve manually); or Step 2's confirmation parser returned an ambiguous response after the one re-ask. In either skip case, emit the original handoff line `**Next:** Run \`/session-plan\` to plan model tier, source material, autonomy posture, and structural risk for the session.` and stop.
