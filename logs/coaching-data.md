@@ -181,3 +181,12 @@
 - **Gates:** 9 (8 confirmed, 1 changed) — plan-approval:confirmed, risk-check-id-31:confirmed, qc-pass-id-31:confirmed, risk-check-id-32:confirmed (PROCEED-WITH-CAUTION mitigations applied inline), qc-pass-id-32:confirmed, risk-check-id-13:confirmed, qc-pass-id-13:confirmed (one Step 7 doc fix inline counts as confirmed since it was a Notes-level finding not a blocking REVISE), id-09-deferral-disposition:changed (operator chose defer over apply/diagnostic via AskUserQuestion), plan-approval:confirmed
 - **Mandate fields:** specified: work_scope, exit_condition, Out of scope, Stop if | inferred: Files in scope | omitted: Allowed inputs, Required outputs
 
+
+### 2026-05-29 — /pipeline-review cycle 2 (4 memos) + /tweak triage
+
+- **Commands used:** /prime, /pipeline-review (×2 — shortlist build + 4-auditor fan-out), /triage (aborted — no slate), /tweak, /wrap-session
+- **Iterations:** 0 (no drafting this session)
+- **Decisions logged:** 0
+- **QC cycles:** 0
+- **Gates:** 1 (1 confirmed, 0 changed) — tweak-confirm:confirmed (operator approved /tweak diff via AskUserQuestion)
+- **Mandate fields:** none (no /session-start this session)

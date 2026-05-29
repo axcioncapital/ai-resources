@@ -20,10 +20,10 @@
 | `.claude/commands/architecture-review.md` | command | weekly | never | — | N |
 | `.claude/commands/audit-claude-md.md` | command | weekly | never | — | N |
 | `.claude/commands/audit-repo.md` | command | weekly | never | — | N |
-| `.claude/commands/consult.md` | command | weekly | never | — | N |
-| `.claude/commands/contract-check.md` | command | weekly | never | — | N |
+| `.claude/commands/consult.md` | command | weekly | 2026-05-29 | 2026-05-29 | N |
+| `.claude/commands/contract-check.md` | command | weekly | 2026-05-29 | 2026-05-29 | N |
 | `.claude/commands/create-skill.md` | command | weekly | never | — | N |
-| `.claude/commands/friction-log.md` | command | weekly | never | — | N |
+| `.claude/commands/friction-log.md` | command | weekly | 2026-05-29 | 2026-05-29 | N |
 | `.claude/commands/friday-act.md` | command | weekly | never | — | N |
 | `.claude/commands/friday-checkup.md` | command | weekly | never | — | N |
 | `.claude/commands/friday-journal.md` | command | weekly | never | — | N |
@@ -32,7 +32,7 @@
 | `.claude/commands/monday-prep.md` | command | weekly | never | — | N |
 | `.claude/commands/new-project.md` | command | weekly | never | — | N |
 | `.claude/commands/permission-sweep.md` | command | weekly | never | — | N |
-| `.claude/commands/pipeline-review.md` | command | weekly | never | — | Y |
+| `.claude/commands/pipeline-review.md` | command | weekly | 2026-05-29 | 2026-05-29 | N |
 | `.claude/commands/prime.md` | command | weekly | 2026-05-29 | 2026-05-29 | N |
 | `.claude/commands/qc-pass.md` | command | weekly | never | — | N |
 | `.claude/commands/recommend.md` | command | weekly | never | — | N |

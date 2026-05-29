@@ -1,74 +1,69 @@
 # Session Plan — 2026-05-28
 
 ## Intent
-Execute the 8-item fix plan at `audits/fix-plans/fix-repo-issues-2026-05-28-1121.md`.
+Execute the Wave 2 fix plan at `audits/fix-plans/fix-repo-issues-2026-05-28-1902-wave2-commands.md` — 8 single-file edits across `/prime`, hooks, and docs (~60–90 min, no `/risk-check`). Items 1–3 all edit `prime.md`; coordinate as one edit pass.
 
 ## Class
-execution (judgment-heavy on items 7 + 8)
+execution
 
 ## Model
-opus — match
+sonnet — → /model sonnet
 
 ## Source Material
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/fix-plans/fix-repo-issues-2026-05-28-1121.md` (the plan itself, with per-item Scope / Source / Fix / QC fields)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/resolve-improvement-log.md` (canonical `**Status:** applied YYYY-MM-DD` + `**Verified:**` schema)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/logs/innovation-registry.md` (id-01 + id-11+ scope)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/nordic-pe-macro-landscape-H1-2026/logs/innovation-registry.md` (id-05+ scope)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-brand-book/logs/improvement-log.md` (id-03, id-04, id-06)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-brand-book/logs/friction-log.md` (id-02 `[FADING-GATE] verified` annotation)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-brand-book/.claude/settings.json` (id-06)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/nordic-pe-macro-landscape-H1-2026/.claude/commands/session-plan.md` (id-01 diff target)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/session-plan.md` (id-02 edit target + id-01 diff canonical)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/permission-template.md` (id-06 path a fit check)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/qc-independence.md` (`/qc-pass` reference for id-02 + id-06 path a)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/audit-discipline.md` (risk-check change-class reference for id-02 + id-06)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/fix-plans/fix-repo-issues-2026-05-28-1902-wave2-commands.md` — the plan itself
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/prime.md` — target for items 1, 2, 3
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/resolve-improvement-log.md` — read before status-flip edits
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/nordic-pe-macro-landscape-H1-2026/.claude/hooks/backup-session-plan.sh` — target for item 4
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/workflows/research-workflow/CLAUDE.md` — read for item 5 cross-link decision
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/nordic-pe-macro-landscape-H1-2026/.claude/commands/review-chapter.md` — target for item 6 (presentation rule)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/nordic-pe-macro-landscape-H1-2026/.claude/commands/run-report.md` — target for item 6 (mirror rule in chapter-review step)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/ai-resource-creation.md` — target for item 7
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/references/risk-topology.md` — target for item 8 (verify path via Glob first)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/audit-discipline.md` — read for item 8 cross-link decision + structural-change tripwire reference
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/logs/improvement-log.md` — status flips for `id-33`, `id-29`
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/nordic-pe-macro-landscape-H1-2026/logs/improvement-log.md` — status flips for `id-08`, `id-10`, `id-06`, `id-11`, `id-01/id-05`, `id-12`
 
 ## Findings / Items to Address
-
-1. **[ai-resources/id-01]** Broken symlink at `projects/obsidian-pe-kb/.claude/commands/resolve-improvements.md`. Determine if it should repoint to canonical `resolve-improvement-log.md` or be deleted; update innovation-registry row accordingly. Source: `audits/fix-plans/fix-repo-issues-2026-05-28-1121.md#ai-resources/id-01`.
-2. **[ai-resources/id-11+12+13+14+15+18+19+20+21]** Innovation-registry status flip — 9 already-canonical rows: `triaged:graduate` → `graduated`. Spot-check each canonical path with `ls` before flipping. Source: `audits/fix-plans/fix-repo-issues-2026-05-28-1121.md#ai-resources/id-11`.
-3. **[project-nordic-pe-macro/id-05+06+07+08+09+10]** Innovation-registry status flip — 6 rows in nordic project, `Graduated To` populated. Spot-check `Graduated To` is non-empty before flipping (id-03/id-04 are parked, must not flip). Source: `audits/fix-plans/fix-repo-issues-2026-05-28-1121.md#project-nordic-pe-macro-landscape-H1-2026/id-05`.
-4. **[project-brand-book/id-03]** Backfill `**Verified:** 2026-05-28` line in brand-book improvement-log entry "Backfill _appendix/rejected_directions.md...". Verify `output/_appendix/rejected_directions.md` actually contains the 9+10 rejections before adding the Verified line. Source: `audits/fix-plans/fix-repo-issues-2026-05-28-1121.md#project-axcion-brand-book/id-03`.
-5. **[project-brand-book/id-04]** Brand-book git remote is broken (returns 404). Default to `git remote remove origin` (local-only); ask operator inline if a correct remote URL is available. Add new improvement-log entry capturing the choice. Source: `audits/fix-plans/fix-repo-issues-2026-05-28-1121.md#project-axcion-brand-book/id-04`.
-6. **[project-nordic-pe-macro/id-01]** Verify 2026-05-22 HIGH `/session-plan` fix reached project-local copy. Diff `projects/nordic-pe-macro-landscape-H1-2026/.claude/commands/session-plan.md` vs canonical. If stale, swap; then add Verified line to the 2026-05-22 improvement-log entry. Source: `audits/fix-plans/fix-repo-issues-2026-05-28-1121.md#project-nordic-pe-macro-landscape-H1-2026/id-01`.
-7. **[project-brand-book/id-02]** [QC] Add same-session short-circuit to `ai-resources/.claude/commands/session-plan.md` Step 0 MISMATCH branch — use a reliable own-session marker (candidate: `logs/.prime-mtime`) to bypass silent-pass2 auto-routing when intent strings differ but session is the same. Verify by replay. Flip friction-log entry to verified + new improvement-log entry. Source: `audits/fix-plans/fix-repo-issues-2026-05-28-1121.md#project-axcion-brand-book/id-02`.
-8. **[project-brand-book/id-06]** [QC if path a] `settings.json` deny pattern blocks `/draft-module`. Default to path (a) — relax the specific deny pattern, cross-check against `docs/permission-template.md`. Fallback to path (b) — document workaround in CLAUDE.md — only if (a) risks breaking other guardrails. Status-flip the improvement-log entry. Source: `audits/fix-plans/fix-repo-issues-2026-05-28-1121.md#project-axcion-brand-book/id-06`.
+1. **id-08** — Rewrite `/prime` Step 8b to mirror Step 8a's lettered sub-step structure (a–d: header append + marker, `/session-start`, `/session-plan`, autonomous execution); remove the free-floating `**Next:**` footer that conflicts with the "begin execution immediately" directive. Source: `projects/nordic-pe-macro-landscape-H1-2026/logs/improvement-log.md:109`. Target: `prime.md` lines 166–179. Bundle into the coordinated `prime.md` edit pass.
+2. **id-10** — Extend `/prime` Step 1a git-log cross-check to traverse both repos when `$CWD_REPO != $AI_RESOURCES` (the variable already exists in Step 0). Merge results before keyword-match. Source: `projects/nordic-pe-macro-landscape-H1-2026/logs/improvement-log.md:128`. Target: `prime.md` Step 1a (~line 43). Bundle into the coordinated `prime.md` edit pass.
+3. **id-33** — Add a `work/Wn-*-README.md` scan to `/prime`; surface detected files as a step-6 exception line: `⚠ Phase READMEs detected: {paths}; read before opening the relevant work unit.` Skip silently if `work/` absent. Source: `ai-resources/logs/improvement-log.md:258`. Target: `prime.md` (new step or extension to existing exception-check step). Bundle into the coordinated `prime.md` edit pass.
+4. **id-06** — Broaden the path-filter regex in `backup-session-plan.sh:14` from `(^|/)logs/session-plan\.md$` to `(^|/)logs/session-plan(-[a-zA-Z0-9]+)?\.md$`; derive `SRC` and `BACKUP` names from the matched file path. Source: `projects/nordic-pe-macro-landscape-H1-2026/logs/improvement-log.md:95`. Target: `projects/nordic-pe-macro-landscape-H1-2026/.claude/hooks/backup-session-plan.sh`.
+5. **id-11** — Create `ai-resources/workflows/research-workflow/docs/required-reference-files.md` listing the 4 expected reference files: `source-class-hierarchy.md`, `quality-standards.md`, `known-limits.md`, `style-guide.md` — each with filename, expected path, one-line role, and which canonical command(s) read it. Cross-link from workflow template's `CLAUDE.md` if a natural insertion point exists. Source: `projects/nordic-pe-macro-landscape-H1-2026/logs/improvement-log.md:147`.
+6. **id-01 + id-05** (bundle) — Add the operator-presentation rule (verdict + path only, no inline chapter prose) to both `review-chapter.md` and the chapter-review step of `run-report.md` in nordic-pe-macro. Wording must be identical or cross-referenced to avoid drift. Source: `projects/nordic-pe-macro-landscape-H1-2026/logs/improvement-log.md:88` (recurring entry id-05 + friction-log id-01).
+7. **id-29** — Add a workflow-diagnosis boundary section (or one-paragraph note) to `ai-resources/docs/ai-resource-creation.md` distinguishing the `improvement-analyst` agent (session-friction-driven) from the planned `workflow-diagnosis` skill (artifact-defect-driven). Include explicit trigger phrasing for each. Source: `ai-resources/logs/improvement-log.md:76`.
+8. **id-12** — Add a new "Deployable-template always-loaded" row to `risk-topology.md` § 1 (load-bearing classes table) for the workflow-template `CLAUDE.md` class. Blast-radius bounded by `/deploy-workflow` consumption count; gate maps to "cross-cutting CLAUDE.md edits" with lower mitigation calibration. Cross-link from `ai-resources/docs/audit-discipline.md § Risk-check change classes` if a one-line addition fits. Source: `projects/nordic-pe-macro-landscape-H1-2026/logs/improvement-log.md:160`.
 
 ## Execution Sequence
-
-1. **Batch A — ai-resources log-hygiene + symlink (items 1-2) + nordic registry flip (item 3).** `cd` into ai-resources, apply id-01 (symlink) and id-11+ (9 registry flips with per-row `ls` spot-check). Then `cd` into nordic-pe-macro project, apply id-05+ (6 registry flips with `Graduated To` non-empty spot-check). Verify by reading the two modified registry files. Commit as one logical batch ("batch: innovation-registry status flips + symlink"). Verification: registry rows show `graduated` status; symlink resolved (either repointed or removed).
-2. **Batch B — brand-book log-hygiene + git remote (items 4-5).** `cd` into brand-book. id-03: verify `output/_appendix/rejected_directions.md` content before adding Verified line. id-04: run `git remote -v`, default to `remote remove origin` (per `feedback_autonomy_during_execution` — proceed with default), append improvement-log entry. Commit ("batch: brand-book log-hygiene + remote cleanup"). Verification: improvement-log shows Verified line on id-03 entry; `git remote -v` returns empty; new improvement-log entry for id-04 with applied+Verified.
-3. **Item 6 — nordic session-plan parity verify.** `cd` into nordic-pe-macro project. Diff project-local `session-plan.md` vs ai-resources canonical. If symlink — Verified line immediately. If divergent — swap to canonical (or repoint as symlink) then add Verified line. Commit ("update: nordic-pe-macro session-plan parity + verified line"). Verification: diff is empty; improvement-log shows Verified line.
-4. **Item 7 — id-02 same-session short-circuit (QC-required).** Read `ai-resources/.claude/commands/session-plan.md` Step 0 in full. Identify the MISMATCH branch and the `logs/.prime-mtime` marker semantics in `/prime` Step 8a/8b/8c. Design the short-circuit: if `logs/.prime-mtime` exists AND correlates with the existing `session-plan.md` mtime (own-session correlation), route to the 3-option keep/overwrite/pass2 prompt instead of silent-auto-pass2. Apply edit. Run `/risk-check` (Tripwire applies — reorders against shared-state). Run `/qc-pass`. Verify by reasoning through four canonical scenarios: (a) same-session same-intent, (b) same-session different-intent, (c) different-session same-intent, (d) different-session different-intent. Flip friction-log entry + new improvement-log entry. Commit.
-5. **Item 8 — id-06 settings.json deny (QC if path a).** Read brand-book `settings.json` deny list. Cross-reference improvement-log narrative for the blocking pattern. Read `/draft-module` write paths. Pick path (a) unless deny pattern is structurally protective. If path (a): edit settings.json minimally, cross-check `docs/permission-template.md`. Run `/risk-check` (permission change). Run `/qc-pass`. If path (b): one-paragraph note in brand-book CLAUDE.md, no `/qc-pass` needed. Status-flip the improvement-log entry. Commit.
-6. **Wrap (no commit).** Confirm 5 commits landed (Batch A, Batch B, item 6, item 7, item 8 — or 4 if item 8 takes path b). Surface push gate: 22 unpushed before this session + this session's commits. Operator approval required before push (Autonomy Rule #2). Remind operator to run `/wrap-session`.
+1. **Read all source files in one parallel batch** — the 8 target files + the 2 improvement-log files + `resolve-improvement-log.md` + the audit-discipline + workflow CLAUDE.md cross-reference reads. Verify path for `risk-topology.md` via Glob first. Verify: all reads succeed; no path drift since plan was written.
+2. **Apply the coordinated `prime.md` edit pass** — items id-08, id-10, id-33 as one logical edit set (multiple `Edit` calls on the same file are fine; just keep them as one batch). Verify: re-read the edited regions; structural integrity intact; no orphaned syntax.
+3. **Run `/qc-pass` on the `prime.md` edit pass** — one QC pass covers all three items (same file, same edit session). Verify: GO verdict, OR REVISE with applicable findings resolved before moving on.
+4. **Apply item id-06** — broaden `backup-session-plan.sh` regex; update SRC/BACKUP. Verify: regex matches `session-plan.md` AND `session-plan-pass2.md`; does NOT match unrelated names.
+5. **Run `/qc-pass` on the shell edit.**
+6. **Apply item id-11** — create `required-reference-files.md`. Verify: file written; cross-link decision logged.
+7. **Run `/qc-pass` on the new doc** (judgment on completeness — are the 4 files the actual complete set?).
+8. **Apply item id-01/id-05 bundle** — identical (or cross-referenced) presentation-rule wording added to both nordic-pe-macro files. Verify: both files updated; wording consistent.
+9. **Run `/qc-pass` on the rule wording.**
+10. **Apply item id-29** — boundary note added to `ai-resource-creation.md`. Verify: trigger phrasing unambiguous for each surface.
+11. **Run `/qc-pass` on the boundary description.**
+12. **Apply item id-12** — new row in `risk-topology.md` § 1; optional cross-link in `audit-discipline.md`. Verify: row label + blast-radius wording follow existing table style.
+13. **Run `/qc-pass` on the new row.**
+14. **Flip improvement-log entries** — per the plan, each item gets `**Status:** applied 2026-05-28` + `**Verified:** 2026-05-28 — ...` line at its source path. Apply across both `improvement-log.md` files. Verify: each flipped entry references the matching commit SHA where applicable.
+15. **Commit per logical batch** — the 3 `prime.md` edits + their log flips as one commit; each remaining item + its log flip as its own commit. Per workspace `Commit behavior` rule: stage and commit in one step, no pre-commit checks.
+16. **Notify operator** of completion and push gate per Autonomy Rule #2.
 
 ## Scope Alternatives
-
-- **Min scope (items 1-6 only).** Skip the two QC-required edits (id-02, id-06). Defer to a follow-up session. Cost: ~30-50% of full plan; defers the highest-judgment items. Useful only if context is constrained mid-session.
-- **Recommended (all 8 items).** As planned. Items 1-6 are mechanical and ship fast; items 7-8 are the load-bearing work and benefit from a fresh-context Opus session.
-- **Max scope** is not applicable — the plan is fixed-scope by the /fix-repo-issues two-session contract. Adding items mid-session would violate the plan's own boundary.
+Single scope — no alternatives. The fix plan defines the full 8-item set; the operator pre-approved the wave split. Items have natural per-item or coordinated-batch boundaries but no min/max degrees of freedom within the wave.
 
 ## Autonomy Posture
-
-**Full autonomy** with stop points reserved for genuinely important issues only (per workspace `feedback_autonomy_during_execution`: resolve operator-decision flags with recommended defaults; only pause for important issues).
+Full autonomy — Wave 2 is an approved fix plan with concrete per-item targets, no `/risk-check` items per source, and operator memory `feedback_autonomy_during_execution` directs running approved plans to completion.
 
 **Stop points:**
-- **id-02 step 5** — if no reliable own-session marker exists at all. `logs/.prime-mtime` is the documented candidate; if it does not exist or is unreliable, surface to operator before picking (a) define-one vs (b) document-limitation.
-- **id-06 step 3** — if the deny pattern blocking `/draft-module` is structurally protecting something else (not just a stale entry), surface before applying path (a). Otherwise default to (a).
-- **Registry spot-checks** — if any row's canonical path is wrong (id-11+ or id-05+), surface that row instead of flipping silently.
-- **id-03 verification** — if `output/_appendix/rejected_directions.md` is missing or empty, do NOT add Verified line; surface to operator.
-
-All other operator-decision flags resolve to their stated defaults (id-04 default = `remote remove origin`).
+- `/qc-pass` returns REVISE twice on the same item without convergence → escalate (model escalation rule from workspace CLAUDE.md).
+- A finding during item id-08 surfaces ordering-of-shared-state concerns that hit the Step-6 tripwire → pause and run `/risk-check` before continuing.
+- Compaction threshold approached → write a continuity scratchpad per `compaction-protocol.md` and pause.
+- Operator interrupts.
 
 ## Risk
+Source plan declares no `/risk-check` items, and 7 of 8 items are clearly bounded (single-file edits, new doc, new table row). **Tripwire watch on item id-08:** the Step 8b rewrite touches `/prime`'s session-state automation; if the rewrite incidentally reorders `session-notes.md` writes vs `.prime-mtime` marker writes or vs `/session-start` invocation, that crosses the audit-discipline tripwire on "automation with shared-state effects" and requires `/risk-check` despite the source plan declaring none. Treat the rewrite's order-of-writes preservation as a hard requirement. If maintained, no risk-check; if altered, run `/risk-check` before commit.
 
-**Run `/risk-check` after this plan is approved (plan-time gate). Run it again before commit on items 7 and 8 (end-time gate).**
-
-Structural change classes involved:
-- **Item 7 (id-02)** — Edits `ai-resources/.claude/commands/session-plan.md` Step 0, which reorders operations against shared-state (concurrent-session collision detection across multiple terminals/sessions). Step 6 Tripwire applies — the "existing-command refactor" framing does NOT exempt.
-- **Item 8 path a (id-06)** — Edits a project's `.claude/settings.json` permission deny list. Permission change → structural class per `docs/audit-discipline.md`.
-
-Items 1-6 are log-hygiene / single-file symlink / git-remote config — no structural change classes.
-
-End-time `/risk-check` may be skipped per operator memory `feedback_end_time_risk_check_skip` if plan-time gate covered the concerns AND drift is bounded AND `/qc-pass` is clean — document the skip in the commit message if so.
+No structural change classes apparent across the remaining 7 items — run `/risk-check` if scope changes.

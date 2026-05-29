@@ -1,73 +1,90 @@
-# Session Plan — 2026-05-27
+# Session Plan (pass2) — 2026-05-28
+
+> **Concurrent-session note:** This pass2 file holds the Wave 3 session plan. The canonical `logs/session-plan.md` is held by a concurrent Wave 2 session (intent: "Execute the Wave 2 fix plan ... 8 single-file edits across /prime, hooks, and docs"). Both plans touch `/prime` — see the Concurrent-session warning under Autonomy Posture below for the read-from-disk protocol that protects against in-context staleness.
 
 ## Intent
-Build the `/decide` skill via the canonical `/create-skill` pipeline (renamed from `decision-resolver` in the inbox brief at `inbox/decision-resolver.md`).
+Execute the Wave 3 fix plan at `audits/fix-plans/fix-repo-issues-2026-05-28-1902-wave3-structural.md` — 4 structural items, each requires its own `/risk-check`. Land `id-31` Phase 1 (`.session-marker` write) first; re-evaluate items 2–4 (`id-09`, `id-32`, `nordic-pe-macro/id-13`) against the new state before applying. Do NOT batch.
 
 ## Class
-design
+execution
 
 ## Model
-opus — match (active: `claude-opus-4-7[1m]`)
-
-## Output artifact decision (revised 2026-05-27 post-Step-1, post-/risk-check)
-
-`/decide` will be a **slash command at `.claude/commands/decide.md`**, NOT a SKILL.md at `skills/decide/SKILL.md`.
-
-**Architectural reconfirm record** (resolves Finding 8 + risk-check Dimension 5 gating mitigation):
-- **Routing baseline:** `docs/repo-architecture.md` § Canonical homes (Slash command row) and § Q2 — "Operator-invoked on-demand with specific input → produces specific output" maps to slash command at `.claude/commands/<name>.md`.
-- **Composition graph homogeneity:** all named composition partners — `/resolve`, `/scope`, `/clarify`, `/recommend` — are slash commands at `.claude/commands/`, not SKILL.md skills. Putting `/decide` in `skills/` would create asymmetry in a tightly coupled set.
-- **Precedent:** `/contract-check` shipped the same day as a slash command for behavior of comparable complexity.
-- **Source from operator:** Step 1 Q1 confirmed Option A (slash command at `.claude/commands/decide.md`).
-- **Why the original choice was wrong:** the prior rationale conflated which *pipeline* created the artifact with which *canonical home* the artifact belongs in. `/create-skill` is the right pipeline; the literal output target it names in its Step 2 ("Create the skill directory at `skills/{skill-name}/`") does not apply when the artifact's correct home is `.claude/commands/`. The pipeline's surrounding gates (evaluate, auto-fix, verify, present, commit) all still apply to the slash-command output.
-- **Frontmatter implication:** slash commands at `.claude/commands/` use minimal frontmatter (`model:` only) — they do NOT require the full SKILL.md frontmatter set (`name:`, `description:`, `model:`, `effort:`). Pipeline Step 5's "frontmatter completeness gate" relaxes accordingly for this run.
+opus — match (active: `claude-opus-4-7[1m]`). Judgment-heavy: 4 `/risk-check` verdicts, mitigation acceptance per item, post-`id-31` re-evaluation of items 2–4, per-item `/qc-pass`. Doing-with-deciding-at-every-gate, not pure mechanical execution.
 
 ## Source Material
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/inbox/decision-resolver.md` — source brief (pipeline reads in full at Step 1)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/create-skill.md` — pipeline definition
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/skills/ai-resource-builder/SKILL.md` — canonical skill-creation methodology (loaded by `/create-skill` Step 1)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/skills/ai-resource-builder/references/operational-frontmatter.md` — model-tier + effort guidance for SKILL.md frontmatter
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/resolve.md` — composition partner; gap analysis (QC-scoped only → cross-context evidence research)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/recommend.md` — anti-pattern reference (blanket judgment vs explicit per-item)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/clarify.md` — composition partner (pre-work clarifying questions)
-- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/audit-discipline.md` — new skill = structural change class
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/fix-plans/fix-repo-issues-2026-05-28-1902-wave3-structural.md` — the plan being executed
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/prime.md` — id-31 edit target (Steps 8a.3.a, 8b.1, 8c.3 marker-write sites; brief footer)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/wrap-session.md` — id-09 + id-32 edit target (canonical; Step 3.5)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/.claude/commands/wrap-session.md` — id-09 + id-32 paired workspace-root copy (PAIRED CONTRACT)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/session-plan.md` — id-13 edit target (Step 0 MISMATCH branch wrap-state check)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/risk-check.md` — gate command
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/resolve-improvement-log.md` — status-flip schema
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/logs/improvement-log.md` — source entries (id-31 at :183, id-32 at :248) + new entry for id-09
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/nordic-pe-macro-landscape-H1-2026/logs/improvement-log.md` — source entry (id-13 at :172)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/logs/friction-log.md` — entry :85 (`Resolved:` annotation for id-09)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/audit-discipline.md` — structural change classes + risk-check rules
 
 ## Findings / Items to Address
-1. **Core capability — 3-bucket output.** For each open decision question, `/decide` outputs one of: (a) Self-resolved (resolution + reasoning + file refs); (b) Recommendable (recommendation + evidence + gap + operator's verbatim original framing); (c) Operator-only (question + project context + why it cannot be evidence-grounded). Source: brief §Capability, lines 8–14.
-2. **Trigger contract — operator-invoked only.** Not auto-fire. Picks up decision lists after `/qc-pass` REVISE, `/scope` "decisions I am making on your behalf", `/clarify` operator-decision questions, or mid-stream Claude turns that surfaced a decision list. Source: brief §Trigger Conditions, lines 16–25.
-3. **Anti-narrowing protection — must-have, not optional.** Each recommendation shows (a) supporting file paths + excerpts, (b) operator's verbatim original framing where it exists in the conversation, (c) `[narrowing-check]` note where the recommendation may have constrained or reframed the original question. Origin: real friction incident (audience-phrasing rewrite caught by QC). Source: brief §Context, lines 37–41.
-4. **Exclusions — four non-replacement contracts.** Does NOT auto-apply silently; does NOT replace `/recommend`, `/resolve`, or `/clarify`; does NOT re-escalate items already decided earlier in the session (must check `logs/session-notes.md`, `logs/session-plan.md`, and conversation history before treating an item as open); does NOT sweep the whole session unprompted. Source: brief §Exclusions, lines 27–33.
-5. **Composition contract — three named upstream integrations.** `/resolve` → `/decide` (picks up "Needs operator judgment" Real items); `/scope` → `/decide` (grounds "decisions I am making on your behalf"); `/clarify` → `/decide` (pre-researches operator-decision questions). Source: brief §Composition with existing tools, lines 43–47.
-6. **Token-efficiency cap — explicit, designed.** Per-question read-scope cap (max files / max bytes per question). Escalation-with-partial-evidence path when a question exceeds the cap — does NOT recurse. Source: brief §Token efficiency consideration, lines 55–57.
-7. **Naming — operator-renamed throughout.** Command name = `decide`, not `decision-resolver`. Must be consistent in the slash-command filename (`.claude/commands/decide.md`) and all internal references. Source: operator mandate.
-8. **Architectural reconfirm at Step 1.** Brief explicitly flags that the design pass may reveal tighter overlap with `/resolve` than expected, and an extension may be better than a new skill. Step 1 stop point must surface this verdict explicitly. Source: brief §Why a new command, line 53.
+
+1. **id-31 Phase 1 — `/prime` writes `logs/.session-marker`** ([source: ai-resources improvement-log.md:183]). `/prime` Steps 8a.3.a / 8b.1 / 8c.3 currently capture only `.prime-mtime`. Add a 4-char session marker (`S1`/`S2`/…) written alongside: increment if same-day file exists, reset to `S1` otherwise. Add `logs/.session-marker` to `.gitignore`. Surface value in brief footer (`Session marker: {value}`). Phase 1 only — Phases 2–4 (consumer reads, file-naming switch, legacy cleanup) explicitly deferred per source entry's migration plan. Update supersession note on improvement-log.md:174.
+2. **id-09 — `/wrap-session` Step 3.5 guard reads per-session task count** ([source: ai-resources friction-log.md:85 — 2026-05-28 14:20 Step 3.5 false-positive on chained auto-mode]). Current guard math: `FOREIGN_HEADERS = ADDED_HEADERS - 1`. New math: `FOREIGN_HEADERS = ADDED_HEADERS - PRIME_TASKS` where `PRIME_TASKS` defaults to 1 if marker absent. `/prime` Step 8c (auto-mode) writes incremented count to `.prime-mtime` payload OR sibling `.prime-task-count`. Edit BOTH canonical (`ai-resources/.claude/commands/wrap-session.md`) AND workspace-root paired copy (`~/Claude Code/Axcion AI Repo/.claude/commands/wrap-session.md`) per PAIRED CONTRACT. New improvement-log entry; annotate friction-log:85 with `Resolved:` line. **Re-evaluation gate after id-31 lands:** check whether `.session-marker` payload can subsume the per-session task-count signal, possibly merging this into id-31's marker schema.
+3. **id-32 — `/wrap-session` Step 3.5 CONCURRENT / REMNANT / MIXED classifier** ([source: ai-resources improvement-log.md:248]). Patch Step 3.5 to parse the enclosing `## YYYY-MM-DD` header of each extra mandate detected by the foreign-guard: today-dated → CONCURRENT (current warn); prior-day-dated → REMNANT (offer "commit orphan as standalone wrap-recovery commit" path); both → MIXED (warn both, ask operator). Update canonical + paired workspace-root copy. Flip improvement-log.md:248 to `applied {date}` + `Verified:` + risk-check ref. **Re-evaluation gate after id-31 lands:** classifier reads dates from header text independent of marker identity — confirm still needed (likely yes).
+4. **nordic-pe-macro/id-13 — `/session-plan` Step 0 wrap-state check** ([source: projects/nordic-pe-macro-landscape-H1-2026/logs/improvement-log.md:172]). Extend `/session-plan` Step 0 MISMATCH branch (`ai-resources/.claude/commands/session-plan.md`, ~Step 0 sub-step 5–6 region) to check whether the existing plan's session has wrapped. Wrap-signal candidates: grep `logs/session-notes.md` for matching `## {plan_date}` header that ALSO contains `### Summary` + `### Next Steps`, OR `git log --grep='^session: {date} wrap'`. If wrapped → allow plain overwrite of `session-plan.md`; if not wrapped → preserve current MISMATCH → `pass2.md` routing. Flip improvement-log.md:172 to `applied {date}` + `Verified:` + risk-check ref. **Re-evaluation gate after id-31 lands:** marker presence alone does not indicate wrap status — confirm classifier still independent of marker (likely yes).
 
 ## Execution Sequence
-1. **Invoke `/create-skill`** with the brief at `inbox/decision-resolver.md`. Pipeline Step 1: presents understanding, proposed structure, clarifying questions (including Finding 8 architectural reconfirm: new tool vs extend `/resolve`), and potential problems. **[STOP POINT: review Step 1 proposal before proceeding.]** Verification: proposal names the output target as `.claude/commands/decide.md` (slash command, not SKILL.md — see § Output artifact decision) and explicitly addresses Finding 8. ✅ Confirmed 2026-05-27 — operator picked Option A.
-2. **Plan-time `/risk-check`** (workspace gate, inserted between Step 1 confirmation and Step 2 write). New skill = structural class per `audit-discipline.md`. **Verification:** verdict is `GO` or `PROCEED-WITH-CAUTION`; if `PROCEED-WITH-CAUTION`, mitigations are documented before Step 2 begins.
-3. **Pipeline Step 2**: write `.claude/commands/decide.md` (slash command body; no bundled resources needed for this command). Must address Findings 1–7 plus the 4 risk-check mitigations (target-path resolved; auto-detection marker strings verified against live `/scope.md`, `/resolve.md`, `/clarify.md`; prior-decision check extended to `session-plan-pass{N}.md` siblings; cross-references added in upstream commands at end-time risk-check). **Verification:** rename to `decide` applied throughout; Findings 1–7 each traceable to a section in the command body.
-4. **Pipeline Step 3**: evaluation subagent → report at `audits/working/evaluation-decide.md`. Returns verdict (PASS / REVISE / BLOCKED) + 1-line summary. **Verification:** report is written to disk; main session reads only the path + verdict line.
-5. **Pipeline Steps 4a–4c**: triage evaluation findings → fix BLOCKING/IMPORTANT issues → regression check. Step 4d stall detection applies if same issue persists after 2 attempts. **Verification:** all BLOCKING/IMPORTANT findings resolved; fix log written.
-6. **Pipeline Step 5**: verify the command file against its own embedded spec (trigger claims, exclusion claims, output format, frontmatter — `model:` required; `effort:` not applicable for slash commands per § Output artifact decision). **Verification:** no mismatches; frontmatter complete.
-7. **Pipeline Step 6**: pipeline presents final SKILL.md + evaluation report + fixes applied + remaining minor issues. **[STOP POINT: review before additional /qc-pass.]** Verification: Patrik confirms no rework.
-8. **Additional `/qc-pass`** (workspace gate, layered on top of pipeline's own Steps 3–4). This runs AFTER the pipeline's internal evaluate-auto-fix cycle, as an independent review of the final artifact. **Verification:** `GO` verdict. If `REVISE`, run `/resolve` to triage findings, apply fixes, then continue.
-9. **End-time `/risk-check`** (workspace gate, before commit). **Verification:** `GO` verdict with documented delta from Step 2 draft to final.
-10. **Pipeline Step 7**: commit after explicit approval (`new: decide — evidence-grounded pre-research of open decision questions`). Archive brief (`inbox/decision-resolver.md` → `inbox/archive/decision-resolver.md`). **Verification:** commit lands, brief is in `inbox/archive/`.
-11. **Wrap**: log session decisions in `logs/session-notes.md`, flag push gate to operator.
+
+1. **Pre-flight read.** Read source improvement-log entries for id-31 (:183), id-32 (:248), nordic id-13 (:172), and friction-log :85 in full. Read `docs/audit-discipline.md § Risk-check change classes`. Read `.claude/commands/resolve-improvement-log.md` for status-flip schema. **Verification:** confirm source entries are at the cited line numbers (they may have shifted since the plan was written).
+2. **Item 1 — id-31 Phase 1.**
+   a. **Re-read `prime.md` from disk** (Wave 2 may have edited it; in-context state stale). Draft `/prime` edits (3 marker-write sites + brief footer) inline; draft `.gitignore` line addition.
+   b. Run `/risk-check` on the drafted change. **Verification:** verdict captured to `audits/risk-checks/2026-05-28-prime-session-marker-write.md`.
+   c. On GO → apply edits. On RECONSIDER → apply named mitigations inline, then re-verify. On NO-GO → STOP, surface to operator.
+   d. Apply `/qc-pass` on the edits. **Verification:** REVISE findings either resolved inline or surfaced.
+   e. Smoke test: walk the edited steps against the actual file write logic to verify marker generation round-trips. (Cannot execute `/prime` from within `/prime` — manual trace only.)
+   f. Flip improvement-log.md:183 status to `Phase 1 applied 2026-05-28` + `Verified:` line + annotate Phases 2–4 `pending`. Update supersession note on :174.
+   g. Commit.
+3. **Re-evaluation gate.** Re-read items 2, 3, 4 plan text against the post-id-31 state. For each, decide: still-needed (proceed as planned), modified (note the change inline before risk-check), or obsoleted (skip + log). **Verification:** explicit GO/MODIFY/SKIP decision recorded inline for each before moving on.
+4. **Item 2 — id-09.**
+   a. **Re-read `wrap-session.md` (canonical + paired) from disk** before drafting. Draft Step 3.5 guard math change for BOTH copies; draft `/prime` Step 8c (auto-mode) increment logic.
+   b. `/risk-check`. **Verification:** report at `audits/risk-checks/2026-05-28-wrap-session-prime-tasks-counter.md`.
+   c. Apply per verdict (GO / RECONSIDER+mitigate / NO-GO+stop).
+   d. `/qc-pass`. **Verification:** canonical and paired copy in sync.
+   e. Add new improvement-log entry; annotate friction-log:85 with `Resolved:` line.
+   f. Commit.
+5. **Item 3 — id-32.**
+   a. Draft Step 3.5 classifier (today / prior-day / both) for canonical + workspace-root paired copy.
+   b. `/risk-check`. **Verification:** report at `audits/risk-checks/2026-05-28-wrap-session-concurrent-remnant-mixed-classifier.md`.
+   c. Apply per verdict.
+   d. `/qc-pass`. **Verification:** canonical and paired copy in sync.
+   e. Flip improvement-log.md:248 to `applied 2026-05-28` + `Verified:` + risk-check ref.
+   f. Commit.
+6. **Item 4 — nordic id-13.**
+   a. Draft `/session-plan` Step 0 MISMATCH-branch wrap-state check (lines 56–60 region in current `session-plan.md`).
+   b. `/risk-check`. **Verification:** report at `audits/risk-checks/2026-05-28-session-plan-wrap-state-check.md`.
+   c. Apply per verdict.
+   d. `/qc-pass`.
+   e. Flip nordic improvement-log.md:172 to `applied 2026-05-28` + `Verified:` + risk-check ref.
+   f. Commit.
+7. **Post-wave wrap.** Confirm 4 risk-check reports + 4 status flips + 1 new improvement-log entry (id-09) + 1 friction-log annotation. Recommend operator run `/wrap-session` (do not auto-invoke).
 
 ## Scope Alternatives
-- **Min** — Ship core 3-bucket capability (Finding 1) + anti-narrowing markers (Finding 3) + token cap stub (Finding 6). Operator pastes the decision list manually; no auto-detection of upstream command output. Naming and exclusions enforced (Findings 4, 7).
-- **Recommended** — Min + explicit composition contract for `/resolve`, `/scope`, `/clarify` auto-detection (Finding 5) + prior-decision check against `session-notes.md`/`session-plan.md` (part of Finding 4) + full token cap with escalation path (Finding 6) + Step 1 architectural reconfirm surfaced (Finding 8).
-- **Max** — Recommended + structured machine-readable output schema for downstream consumption + telemetry hook logging every `/decide` invocation to `logs/decide-usage.md` for friction-pattern analysis.
 
-Default for this session: **Recommended.** Min loses too many named contracts; Max adds telemetry with no consumer yet.
+- **Min (id-31 only):** ~30 min. Land Phase 1 marker, status-flip its entry, commit. Stop. Allows next session to re-evaluate items 2–4 with fresh context. Pick if context budget is tight or `/risk-check` returns RECONSIDER with non-trivial mitigations on item 1.
+- **Recommended (id-31 + items 2–4 in sequence):** ~2–3 hours. Full plan as written. Per-item risk-check + re-eval gate after item 1 preserved.
+- **Max (recommended + Phase 2 of id-31 starter):** ~3–4 hours. After items 1–4 land, draft (not apply) the Phase 2 marker-consumer reads in `/session-start` and `/session-plan` as the next-wave plan file. **Reject by default** — Phases 2–4 are explicitly out of scope per the source entry's migration plan; doing them now defeats the staged-rollout protection.
 
 ## Autonomy Posture
 Gated
 
 **Stop points:**
-- After `/create-skill` Step 1 proposal — review architectural-reconfirm finding (Finding 8) and Step 1 scope before plan-time `/risk-check`.
-- After `/create-skill` Step 6 presentation — review final SKILL.md before the additional `/qc-pass`.
-- After `/qc-pass` if REVISE — run `/resolve` and apply fixes; confirm before end-time `/risk-check`.
+- After each `/risk-check` verdict: NO-GO → halt and surface; RECONSIDER → apply named mitigations inline, then proceed without re-verify (per workspace `feedback_end_time_risk_check_skip`-style judgment — only halt if mitigations are non-trivial or unclear).
+- After id-31 Phase 1 lands and is QC-clean: **mandatory re-evaluation gate** for items 2, 3, 4. Decide GO/MODIFY/SKIP for each before continuing.
+- After each `/qc-pass` REVISE verdict: resolve inline if findings are scoped (single-file, single-edit); surface to operator if findings touch architectural assumptions.
+- **Concurrent-session warning (Wave 2):** Wave 2 is concurrently editing `/prime` (its items 1–3 all edit `prime.md`) and may touch `wrap-session.md`. Before EVERY edit in items 1, 2, 3 of this plan, **re-read the target file from disk**; do not assume in-context state matches HEAD. If Wave 2 commits between this session's draft and apply, abandon the in-context draft, re-read, re-draft. Surface immediately if Wave 2 has touched my edit region.
+- `[COST]` guardrail: 4 `/risk-check` dispatches + 4 `/qc-pass` calls + likely 1–2 `/triage` if QC verdicts are non-trivial. Expected high subagent count; if exceeded, surface and ask whether to defer remaining items.
 
 ## Risk
-Run `/risk-check` at plan-time (between Step 1 confirmation and Step 2 write) and again at end-time (Step 9, before commit). New skill falls under structural change classes listed in `ai-resources/docs/audit-discipline.md`.
+Run `/risk-check` per item (4 total). The fix plan itself states every item is a structural change class — cross-cutting protocol changes (id-31), shared-state automation (id-09, id-32), and load-bearing collision-detection logic (id-13). Per workspace Autonomy Rules #9 and `docs/audit-discipline.md § Risk-check change classes`, plan-time `/risk-check` is REQUIRED before each item's edit. End-time `/risk-check` may be skipped per `feedback_end_time_risk_check_skip` if plan-time covered with mitigations applied AND `/qc-pass` clean AND drift bounded — document any skip in the wrap.
+
+**Tripwire fires:** id-09 and id-32 both *reorder operations against shared state* (`logs/session-notes.md` mandate counting; date-header classification). Cannot exempt under "existing-command refactor" framing.
+
+**Concurrent-session amplifier:** Wave 2 edits to `prime.md` may interact with this session's id-31 marker-write additions. Read-from-disk-before-every-edit is the mitigation; if Wave 2 and this session both modify `prime.md` Step 8a.3.a / 8b.1 / 8c.3 region, the second commit will need a rebase or merge resolution.

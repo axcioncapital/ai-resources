@@ -131,3 +131,21 @@ Link /resolve-improvement-log to /friday-act — currently not connected. Connec
 
 #. technical spec qc with ai system agent.
 - Make sure technical specs are qc'd with SYSTEM OWNER AGENT! Add to command pipeline or instructions, claude should do this automatically so I don't have to remember to do it manually.
+
+## Archive — 2026-05-29
+
+#. Create a "clean folder" command
+- After a project has grown, create a command for "cleaning" or "restructuring" the folder so its more clean and logical. Example: Buy-side service plan.
+    - Include a step which asks what to keep, what to remove
+    - Create a plan for restructuring, renaming things etc.
+
+#. fix in graduate resource command
+- When graduating the resource from a local project, make sure that the resource is written in a way it can be used "uniformally" across the repo and is not project specific.
+    - Problem: Many current project specific resources are written for the project itself. We need to come up with a process to "clean" the resources so they can work IN ANY PROJECT!
+
+#. QC pass on mandate creation (and session plan)
+- Add a dedicated qc pass to mandate creation. Make it a command/skill/agent pipeline so it returns with a "qc'd" mandate before presenting it to you.
+- Do the same thing for the session plan?
+
+#. How can I automate qc pass fixes?
+- Why can't Claude autonomously decide here? Example from nordic landscape project: QC verdict REVISE with 3 minor findings (typo at §4 line 207, B-MASTER-05 closure mapping under-counts at §3 line 193, optional clarification at Work Unit 4 line 140). All wording-level — none invalidate the plan's executability. Claude asked operator to pick fix / fix 1 2 / approve, with recommendation "fix all three." Why didn't Claude just apply the recommendation autonomously per decision-point posture?

@@ -4094,3 +4094,61 @@ Class: execution
 - Stop if: `/risk-check` returns NO-GO or RECONSIDER without viable inline mitigation; OR id-31 Phase 1 fails QC/smoke-test
 
 Execute `audits/fix-plans/fix-repo-issues-2026-05-28-1902-wave3-structural.md`. Land `id-31` Phase 1 marker FIRST, then re-evaluate items 2-4 (`id-09`, `id-32`, `nordic-pe-macro/id-13`) against the new state before applying. Each item gets its own `/risk-check`. Do NOT batch.
+## 2026-05-28 — Execute Wave 2 fix plan (8 single-file `/prime` + hook + doc edits)
+Class: execution
+
+**Mandate:** Execute the Wave 2 fix plan — apply all 8 single-file edits (3 `/prime` rewrites coordinated as one pass, 1 hook regex, 1 new doc, 1 chapter-review rule across 2 files, 1 boundary note, 1 risk-topology row), run `/qc-pass` per item, and flip each source improvement-log entry to `applied 2026-05-28` — done when: all 8 items applied, each QC-passed, and commits landed per logical batch.
+- Out of scope: Wave 1 (hygiene) and Wave 3 (structural); no `/risk-check` items per the source improvement-log entries.
+- Files in scope: (inferred)
+- Stop if: `/qc-pass` returns REVISE twice on the same item without convergence, or a structural concern surfaces that warrants `/risk-check` despite the source plan declaring none.
+
+Execute `audits/fix-plans/fix-repo-issues-2026-05-28-1902-wave2-commands.md`. ~60–90 min, 8 items. Items 1–3 all edit `prime.md` — coordinate as one edit pass. No `/risk-check` required.
+
+## 2026-05-28 — Wave 1 (Hygiene) execution — 9 items applied across 3 repos
+
+### Summary
+
+Executed Wave 1 of the 2026-05-28 19:02 three-wave fix plan. All 9 hygiene items applied; 3 commits landed (per-scope cadence). `/qc-pass` ran on id-20 review-principle wording with GO verdict, no revisions. id-04 needed no edit — `ref-implementation-starter.md` is already consistent at "seven" (count-drift fixed by commit `fd8b5e7` 2026-05-27); session-notes line 362 annotated with Resolved marker instead. Plan source: `audits/fix-plans/fix-repo-issues-2026-05-28-1902-wave1-hygiene.md`.
+
+### Files Created
+
+- `ai-resources/logs/scratchpads/2026-05-28-19-35-scratchpad.md` — pre-closeout continuity scratchpad.
+- `ai-resources/logs/session-notes-archive-2026-05.md` — auto-archived by `check-archive.sh` (5 entries archived, 10 kept).
+
+### Files Modified
+
+- `projects/ai-development-lab/logs/friction-log.md` (id-02 Resolved line).
+- `projects/ai-development-lab/logs/session-notes.md` (id-04 Resolved annotation).
+- `projects/nordic-pe-macro-landscape-H1-2026/.claude/settings.json` (id-07 `Bash(rm *)` removed).
+- `projects/nordic-pe-macro-landscape-H1-2026/logs/improvement-log.md` (id-07 + id-09 status flips + id-09 cross-link bullet).
+- `ai-resources/logs/innovation-registry.md` (id-13-19 — 7 row status flips).
+- `ai-resources/logs/friction-log.md` (id-08 Cross-ref).
+- `ai-resources/skills/ai-resource-builder/references/review-principles.md` (id-20 — new `## All Reviews` section + bright-line bullet).
+- `ai-resources/logs/coaching-log.md` (id-20 codification footnote).
+- `ai-resources/logs/gate-calibration.md` (id-21 — prepended 2026-05-28 bright-line-review row).
+- `ai-resources/logs/improvement-log.md` (nordic-id-04 — appended Mandate-alignment recovery entry).
+- `ai-resources/logs/session-notes.md` (this entry).
+
+### Decisions Made
+
+- **Per-scope commit cadence (3 commits across 3 repos).** Operator approved at `/scope` ("approved"). Cleaner than per-item (9 commits) or single-bundle (1 commit); each project gets one Wave 1 commit attributable to the fix plan.
+- **id-04 skip `/qc-pass`.** No judgment-bearing edit was applied — `ref-implementation-starter.md` was verified already consistent at "seven" (lines 39, 63, 7-field table; count-drift fixed by `fd8b5e7`). The plan's `QC needed: yes` was conditional on the fix being applied; with no edit, the QC trigger does not fire.
+- **id-20 review-principle placement: new `## All Reviews` top-level section.** Chosen over (a) duplicating into per-resource sections (Skills/Workflows/Pipeline Output/Project Instructions) or (b) parking in `## Candidates` for operator review. Rationale: the bright-line-naming principle applies across all review classes, not just one resource type; the `## Candidates` queue is for drafts pending approval, but this principle has already been operator-coached for 3 cycles. QC reviewer confirmed placement is correct.
+- **id-13-19 stale-target classification.** Lines 102-103 (`ai-resources workflows level; logs GATE/PAUSE decisions to decisions.md` / `... fires if no checkpoint written in 120min`) → `triaged:graduate-stale` because no specific target file was named after 12 days. Lines 99-101, 104-105 (named `permission-template.md` / `compaction-protocol.md` — both verified to exist) → `graduated`.
+
+### Commits Landed
+
+- `8776651` (ai-development-lab): batch: wave-1 hygiene — friction-log Resolved marker + session-notes count-drift annotation
+- `869c585` (nordic-pe-macro-landscape-H1-2026): batch: wave-1 hygiene — settings.json rm-redundancy + improvement-log status flips
+- `f598ee1` (ai-resources): batch: wave-1 hygiene — bright-line review principle codified + log hygiene sweep
+
+### Next Steps
+
+- **Push pending commits across all 4 repos** (Autonomy Rule #2 — requires operator approval). Counts at wrap time: ai-resources ~11 unpushed (10 carryover + 1 wave-1), workspace root 2 unpushed (unchanged), ai-development-lab 1 wave-1 + any prior, nordic-pe-macro-landscape-H1-2026 1 wave-1 + any prior.
+- **Wave 2 of the fix plan** — `audits/fix-plans/fix-repo-issues-2026-05-28-1902-wave2-commands.md` (8 items, ~60–90 min). Items 1–3 all edit `prime.md` — coordinate as one edit pass. No `/risk-check` required per the plan.
+- **Wave 3 of the fix plan** — `audits/fix-plans/fix-repo-issues-2026-05-28-1902-wave3-structural.md` (4 `/risk-check`-gated TOCTOU patches). Each item gets its own `/risk-check`; do NOT batch.
+- **Carryover (unchanged from prior wrap):** triage workspace-root uncommitted accumulation; run `/improve` on today's Step 3.5 guard false-positive.
+
+### Open Questions
+
+- None.
