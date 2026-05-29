@@ -666,3 +666,12 @@ Three session-level decisions logged to `logs/decisions.md`:
 ### Open Questions
 
 None blocking. /qc-pass GO on both substantive items (Items 1 and 2) with informational notes only. End-time /risk-check skipped per session-plan classification: all four items in no-/risk-check change class per `audit-discipline.md` § Risk-check change classes.
+
+## 2026-05-29 — Session S5
+
+**Mandate:** Complete picked menu items: (1) unify the two friction-log hooks FL-1 + FL-6 into one consolidated hook with /risk-check verdict GO before edit; (2) apply C-1 + C-2 consult/system-owner agent-definition edits, sequenced after item 1 per writer-stability rule; (3) archive resolved entries from `logs/improvement-log.md` to bring active count back below soft-cap of 7; (4) intake the two new inbox briefs (`context-engine-brief.md`, `context-engine-session-pairing.md`) via /create-skill, producing one or two new skill directories — done when: all picked items closed in their respective source files — hooks unified + committed; agent definitions edited + committed; improvement-log active count back under 7; both inbox briefs moved to `inbox/archive/` with corresponding skill directories landed.
+- Out of scope: KB-paste session for repo documentation; /graduate-resource Steps 4+5 strengthening; /cleanup-worktree dedicated session (item 2 from the prime menu); FL-1+FL-6 mid-session re-design beyond memo-recommended consolidation.
+- Files in scope: `.claude/hooks/` (FL-1+FL-6 hook scripts), `.claude/agents/system-owner.md`, `.claude/agents/project-manager.md` (or equivalent C-1+C-2 targets), `logs/improvement-log.md`, `logs/improvement-log-archive.md`, `inbox/context-engine-brief.md`, `inbox/context-engine-session-pairing.md`, new skill directories under `skills/` (inferred)
+- Stop if: /risk-check on Item 1 returns NO-GO (FL-1+FL-6 mandate-revision required); /qc-pass DISAGREE on a substantive item with no clear recommended-default; either inbox brief reveals an unresolvable contract gap requiring operator clarification.
+
+**Plan source:** /prime auto-mode multi-item gate (items 1, 3, 4, 5 from the prime menu); marker-scoped plan at `logs/session-plan-S5.md`.

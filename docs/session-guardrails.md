@@ -64,6 +64,26 @@ Fire when the session has already consumed significant budget and more work is b
 
 Flag format: `[COST] Session has spent {subagent count} subagents / {turn count} turns / {artifact count} artifacts. Checkpoint + /clear + restart, or continue?`
 
+## `friction-log: true` — per-command auto-log opt-in
+
+This is a **command frontmatter flag**, not one of the four advisory flags above. The opening paragraph's "Four advisory flags" count is unchanged — this is a separate mechanism documented here because it is structurally adjacent (a session-side behavioral hook).
+
+When a command file (`.claude/commands/<name>.md`) declares `friction-log: true` in its frontmatter, the `PreToolUse` hook `.claude/hooks/friction-log-auto.sh` auto-creates a `## Session —` block in `logs/friction-log.md` the first time that command fires in any 30-minute window. The hook fast-exits silently for any command without the flag, so adding new opt-ins is zero-cost on the per-turn path.
+
+Block shape written by the hook is the canonical:
+
+```
+## Session — {YYYY-MM-DD HH:MM}
+
+### Friction Events
+
+#### Write Activity
+```
+
+— byte-identical to what `/friction-log` and `/note friction:` emit. The 30-minute dedup window (constant `DEDUP_MINUTES=30` in the hook) prevents double-blocks within the same session window and is a private heuristic, not a load-bearing contract.
+
+**Current opt-in commands:** `cleanup-worktree.md`. **To opt in another command:** add `friction-log: true` to that command's frontmatter — no hook edit required.
+
 ## Tuning
 
 Log false positives and missed fires to `ai-resources/logs/improvement-log.md`. After 5–10 sessions, review and tighten or loosen thresholds, or extend the exemption list. If `[HEAVY]` proves unreliable as a self-enforcement rule, promote it to a `PreToolUse` hook in a dedicated session — do not add hooks preemptively.

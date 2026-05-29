@@ -18,7 +18,7 @@ grep -q 'friction-log: true' "$CMD_FILE" || exit 0
 
 # Dedup: skip if a session block was created recently
 if [ -f "$FRICTION_LOG" ]; then
-  LAST_SESSION=$(grep -n "^### Session:" "$FRICTION_LOG" | tail -1 | cut -d: -f1)
+  LAST_SESSION=$(grep -n "^## Session —" "$FRICTION_LOG" | tail -1 | cut -d: -f1)
   if [ -n "$LAST_SESSION" ]; then
     LAST_TIME=$(sed -n "${LAST_SESSION}p" "$FRICTION_LOG" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}')
     if [ -n "$LAST_TIME" ]; then
@@ -40,9 +40,9 @@ fi
 NOW=$(date "+%Y-%m-%d %H:%M")
 {
   echo ""
-  echo "### Session: $NOW — Trigger: /$SKILL_NAME"
+  echo "## Session — $NOW"
   echo ""
-  echo "#### Friction Events"
+  echo "### Friction Events"
   echo ""
   echo "#### Write Activity"
   echo ""

@@ -13,7 +13,7 @@ Parse $ARGUMENTS for a prefix:
 ## Step A: Friction routing
 
 1. Read `/logs/friction-log.md` (last 30 lines). If the file doesn't exist, create it with `# Friction Log` as the first line.
-2. If no `### Friction Events` section exists in the last 30 lines, append a new session block — the **canonical block** below. It is byte-identical to what `/friction-log` writes, and shares the `## Session —` / `### Friction Events` / `#### Write Activity` headings that the `friction-log-auto.sh` hook also writes (the hook additionally inserts a `**Trigger:**` line — the three writers stay mutually detection-compatible because detection keys on `### Friction Events`). Do not invent a `/note`-specific header:
+2. If no `### Friction Events` section exists in the last 30 lines, append a new session block — the **canonical block** below. It is byte-identical to what `/friction-log` writes and what the `friction-log-auto.sh` hook writes; the three writers emit the same `## Session —` / `### Friction Events` / `#### Write Activity` block, and detection keys reliably on every header. Do not invent a `/note`-specific header:
    ```
    ## Session — {YYYY-MM-DD HH:MM}
 
