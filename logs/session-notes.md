@@ -736,7 +736,61 @@ Also two procedural decisions:
 - Files in scope: (inferred)
 - Stop if: (none stated)
 
-**Plan source:** /prime free-text-intent path after open-friday-checkup status check; marker-scoped plan at `logs/session-plan-S6.md` (pending).
+**Plan source:** /prime free-text-intent path after open-friday-checkup status check; marker-scoped plan at `logs/session-plan-S6.md`.
+
+### Summary
+
+Executed the Recommended scope of session-plan-S6.md (Waves 1+2+3+4) against the Friday-checkup-2026-05-29 open backlog. Wave 1 closed 6 dispositions (1 NO-OP, 2 vault pastes, 2 decision rows, 1 scheduling commitment, 1 /pm investigation notes file). Wave 2's cluster /risk-check returned RECONSIDER: 3 of 4 planned settings.json edits had stale premises (already-shipped by concurrent same-day commits) — cluster dropped, M1 git-guards applied as the only real fix (stand-alone to ~/.claude/settings.json). Wave 3 extracted the change-shape classifier to a shared reference doc, closing the two-end verbatim-copy contract between /consult and project-manager. Wave 4 ITEM A (auto-apply /qc-pass on REVISE+wording-only) deferred via /decide after evidence-grounded check confirmed qc-reviewer.md does not currently emit a DISAGREE annotation — upstream contract sub-task needed first. Wave 4 ITEM B (/graduate-resource Step 5.5 + ai-resource-creation rule #6) shipped with all 4 risk-check mitigations applied + post-edit /qc-pass REVISE → 3 wording-level fixes inline. 5 commits shipped across 2 repos.
+
+### Files Created
+
+- `ai-resources/audits/risk-checks/2026-05-29-wave-2-settings-json-cluster-friday-checkup-permissions.md` — RECONSIDER report; documents stale-audit hidden coupling
+- `ai-resources/audits/risk-checks/2026-05-29-wave-4-qc-auto-apply-graduate-resource-strengthening.md` — PROCEED-WITH-CAUTION report; 9 mitigations across ITEM A + ITEM B
+- `ai-resources/docs/change-shape-classifier.md` — canonical change-shape definition; consumed by /consult Step 2 + project-manager Phase 3
+- `ai-resources/audits/working/2026-05-29-pm-sub-subagent-investigation.md` — /pm Task-from-agent limitation notes; 4 workaround options; pending operator decision
+- `ai-resources/logs/session-plan-S6.md` — marker-scoped plan (operator-edited mid-session per system-reminder)
+- `ai-resources/logs/scratchpads/2026-05-29-15-30-scratchpad.md` — pre-closeout continuity scratchpad
+- `projects/repo-documentation/vault/components/*` — 7 net-new entries pasted (1 cmd + 4 agents + 2 projects); vault is gitignored
+
+### Files Modified
+
+- `ai-resources/.claude/commands/consult.md` — Step 2 classifier list replaced with one-line pointer to docs/change-shape-classifier.md
+- `ai-resources/.claude/agents/project-manager.md` — Phase 3 verbatim copy replaced with same pointer
+- `ai-resources/.claude/commands/graduate-resource.md` — new Step 5.5 (subagent residue-scan + 2-pass fail-and-revise loop + operator-pause block)
+- `ai-resources/docs/ai-resource-creation.md` — new rule #6 encoding Step-5.5 verification as a canonical graduation rule
+- `ai-resources/logs/decisions.md` — S6 Wave 1.5 (scheduling) + S6 Wave 1.6 (/pm investigation) entries
+- `ai-resources/logs/maintenance-observations.md` — audit-to-plan staleness observation for Friday-cadence triage
+- `~/.claude/settings.json` (user-level, not in repo) — M1 git-guards added to deny: Bash(git reset --hard *), Bash(git checkout *)
+- `projects/repo-documentation/logs/decisions.md` — #51 (212-entry carry-forward) + #52 (deprecation-row policy)
+
+### Decisions Made
+
+**Logged to disk:**
+- S6 Wave 1.5 (ai-resources decisions.md): Schedule dedicated session for /wrap-session leaner refactor + permission-sweep-auditor follow-ups; target 2026-06-05 or 2026-06-12 /friday-act wave.
+- S6 Wave 1.6 (ai-resources decisions.md): /pm sub-subagent dispatch — investigation only (pending); notes file at audits/working/ documents 4 workaround candidates.
+- #51 (repo-documentation decisions.md): 212-entry carry-forward — selective paste-now (7 canonical net-new); bulk batch deferred to dedicated registration session.
+- #52 (repo-documentation decisions.md): deprecation-row policy — use existing Status field (`deprecated YYYY-MM-DD`) + prose-body rationale; no §4.1 schema change.
+
+**Session-flow decisions (not logged, captured in scratchpad):**
+- Cluster /risk-check pattern for Wave 2 + Wave 4 (efficiency over plan's per-item guidance; risk profiles converged)
+- Skip /consult Step 4a on both non-GO /risk-checks (factual + concrete-mitigation findings; SO Function B has no architectural surface)
+- Skip /decide Step 6 QC subagent (single-question recommendation; anti-narrowing self-checkable)
+- Skip second post-edit /qc-pass on ITEM B fixes (mechanical 1:1 to findings)
+- Skip end-time /risk-check per `feedback_end_time_risk_check_skip` (plan-time covered, mitigations applied, drift bounded)
+- Wave 4 split — ITEM B inline, ITEM A deferred (operator confirmed via /decide → `b`)
+
+### Next Steps
+
+1. **Push 5 commits** across ai-resources + repo-documentation. Push gate handled inline at this wrap.
+2. **DR-8 gate decision (general #1):** concurrent-session detection hook awaits explicit operator GO. Surface at next session.
+3. **ITEM A (auto-apply /qc-pass) — dedicated session.** First sub-task: add DISAGREE annotation emission to qc-reviewer.md. Then closed-enumeration of mechanical-mode-applicable findings, /resolve Step 10 conditional skip, decisions.md log schema, triage-reviewer interaction spec. Risk-check report at audits/risk-checks/2026-05-29-wave-4-qc-auto-apply-graduate-resource-strengthening.md is the spec.
+4. **/wrap-session leaner refactor + permission-sweep-auditor follow-ups** — scheduled per S6 Wave 1.5 decision; target 2026-06-05 or 2026-06-12.
+5. **Carryovers (deferred to dedicated sessions):** placement-classification skill (general #4), /clean-folder command (general #8), /improve-skill friday-act auto-triage (general #10), project-triages sub-fixes (#1, #2), repo-documentation deeper work (#1, #2, #6), /cleanup-worktree sweep (#9).
+
+### Open Questions
+
+- **Concurrent-session marker overwrite.** Session marker file was overwritten by a later S9 session mid-S6, causing the wrap pre-write guard's marker-aware OWN attribution to mis-fire. S9's header (line 811 of session-notes.md) is in WT but not HEAD; staging session-notes.md from this wrap will include S9's header line under this commit (S9 will not re-ship its own header). Content not contaminated, attribution muddled. Not blocking. Surface as a Friday-cadence observation if it recurs.
+- Linter modifications to vault/components/projects.md + agents.md after my paste — likely Obsidian auto-formatter. Did not revert per system-reminder instructions. Re-surface if recurring.
 
 ## 2026-05-29 — Context Engine MVP shipped end-to-end (Phase 1 + Phase 2, 2 commits)
 

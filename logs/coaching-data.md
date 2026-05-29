@@ -237,3 +237,11 @@
 - **QC cycles:** 2 (Item 1 GO; Item 3 C-1 GO)
 - **Gates:** 4 (0 changed) — plan-approval:confirmed (single /prime auto-mode gate covered 4 items), qc-disposition:confirmed (×2), challenge-disposition:confirmed (System Owner advisory on Item 3 tightened C-1 design — accepted in full, not contested), push-gate:pending
 - **Mandate fields:** specified: work_scope, exit_condition, out_of_scope, stop_if | inferred: files_in_scope | omitted: allowed_inputs, required_outputs
+
+### 2026-05-29 — Session S6: Friday-checkup bundle execution (Waves 1+2+3+4 Recommended scope)
+- **Commands used:** /prime, /session-start, /session-plan, /risk-check (×2 — Wave 2 + Wave 4 clusters), /qc-pass (×1 — Wave 4 ITEM B), /decide (×1 — Wave 4 split), /wrap-session
+- **Iterations:** 0 (no drafting)
+- **Decisions logged:** 4 (2 to ai-resources decisions.md: S6 Wave 1.5 scheduling + S6 Wave 1.6 /pm investigation; 2 to repo-documentation decisions.md: #51 carry-forward + #52 deprecation-row)
+- **QC cycles:** 1 (REVISE → 3 wording-level findings → fixes applied inline per Decision-Point Posture; no re-QC per `feedback_minimal_infra_subset`)
+- **Gates:** 5 (5 confirmed, 0 changed) — plan-approval:confirmed, plan-approval:confirmed, qc-disposition:confirmed, qc-disposition:confirmed, content-review:confirmed. /session-start mandate "y", /session-plan plan "go", Wave 2 RECONSIDER → "Fix", Wave 4 PROCEED-WITH-CAUTION → /decide → "b", wrap preflight "yy".
+- **Mandate fields:** specified: work_scope, exit_condition | inferred: files_in_scope | omitted: out_of_scope, stop_if, allowed_inputs, required_outputs
