@@ -462,3 +462,17 @@ SCHEDULE-DEDICATED [med]. /improve-skill runs its own internal /risk-check at st
 
 ### Closure note
 Plan 6 dispatch: 2 APPLIED (items 2, 6), 1 PENDING (item 5), 1 SCHEDULED (item 7), 5 SCHEDULE-DEDICATED (items 1, 3, 4, 8, 10), 1 RUNS-LAST (item 9, this session).
+
+---
+
+## 2026-05-29 — Friday-act general item 9 (/cleanup-worktree) deferred to dedicated session
+
+**Context.** Plan general item 9 specified running /cleanup-worktree against ai-resources after the other items landed. End-of-session reality: 12 commits shipped across 5 repos; concurrent session activity confirmed earlier (8 commits rebased over on interpersonal-communication during Plan 1 item 3); /cleanup-worktree itself is a substantial protocol (plan mode + 2 QC + triage + hard gates).
+
+**Decision.** Defer to dedicated /cleanup-worktree session.
+
+**Rationale.** (1) /cleanup-worktree is explicitly designed as its own focused session by the skill itself ("not a sidebar"); (2) running a heavy QC/triage protocol after a long mandate execution adds error risk; (3) the 6 currently-modified files in ai-resources are mostly hook-auto-mods (coaching-data, innovation-registry, session-notes-archive) plus the session's own session-notes/session-plan + a CLAUDE.md change that warrants investigation in fresh context — none are blocking.
+
+**Trigger to revisit.** Operator invokes /cleanup-worktree directly when next sitting down to a maintenance window. Suggested ≤1 week so the dirty files don't accumulate.
+
+**Item closure.** Friday-act plan general item 9 closed as DEFERRED-TO-DEDICATED-SESSION.
