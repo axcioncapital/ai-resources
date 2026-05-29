@@ -39,3 +39,15 @@
 ## Recommended next session
 
 - **For command-shaped pipelines:** open a fresh session, edit `friction-log-auto.sh` to emit the canonical `## Session — {date}` block (drop the `### Session: … — Trigger: /name` shape; preserve the trigger info as a body line if it earns its keep), then run `/qc-pass` against the hook + both commands to verify the three-writer contract is unified. The session should also drop the leading slash in `friction-log.md:19,32` (one-line cosmetic), add `description` and `argument-hint` to `friction-log.md` frontmatter, and update the false claim in `note.md:16` to reflect what is actually true after the unification. Run `/risk-check` plan-time and end-time per `risk-topology.md § 3` (hook edit class). The re-tier decision (`weekly → quarterly` in `audits/pipeline-review-registry.md` line 26) is a separate one-line edit and does not need its own session.
+
+## Applied / Deferred — 2026-05-29 session
+
+**Applied this session (commit `51b69dc` Wave 1):**
+- FL-2: dropped leading slash on `/logs/friction-log.md` in `friction-log.md` lines 19 and 32
+- FL-3: frontmatter (`description`, `argument-hint`, `disable-model-invocation`)
+- FL-5: re-tier `friction-log.md` row in `audits/pipeline-review-registry.md` from weekly to quarterly; tier counts updated (32→31 weekly, 15→16 quarterly); origin paragraph reverts the operator override with the rationale from this memo's § Cross-resource #5
+
+**Deferred to dedicated session:**
+- **FL-1** (Innovation Substantive structural — unify session-header shape across all three writers): touches `.claude/hooks/friction-log-auto.sh` (hook edit) + downstream `friction-log.md` Step 2 + `note.md` Step A.2 (cross-cutting two-end contract repair). Structural change class per `risk-topology.md § 3` (hook edit) — `/risk-check` plan-time AND end-time required per memo. This is the most consequential fix in the four cycle-2 memos; the moment any consumer (`/friday-checkup` Step 313, `/open-items` line 35) keys on the session-header pattern, hook-written entries become invisible. Schedule a dedicated session.
+- **FL-4** (Brokenness Minor — stub-check rule duplication with `/note`): per the memo's own DR-7 counter-argument, defer until a second drift signal actually appears.
+- **FL-6** (Innovation Minor — promote `friction-log: true` frontmatter to documented convention): docs-only; couples with FL-1's hook-context work. Defer to land alongside FL-1.

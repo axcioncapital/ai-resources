@@ -38,3 +38,20 @@
 ## Recommended next session
 
 - **For command-shaped pipelines:** open a fresh session, edit `.claude/commands/pipeline-review.md` to add the three frontmatter fields (`description:`, `disable-model-invocation: true`, `argument-hint: [pipeline-path]`) and collapse the duplicate Registry-contract block (Leanness fix #2). Then `/qc-pass` to validate before commit. The QC-pass-on-memo cross-resource gap (Substantive) is the right second item to land in the same session if context allows — either add a Step 6 gate or document the accepted gap inline.
+
+## Applied / Deferred — 2026-05-29 session
+
+**Applied this session (commits `51b69dc` Wave 1 + `7ec05e6` Wave 2):**
+- PR-1: frontmatter (`description`, `disable-model-invocation`, `argument-hint`)
+- PR-2: collapsed duplicate "Registry contract" block to pointer
+- PR-4: renumbered Step 4.17/17.1/17.5 → 17a/17b/17c
+- PR-5: dropped duplicate `[CADENCE-LATE]` risk-check citation (merged into one inline sentence)
+- PR-6: dropped Notes-tail bullets 1–3 (already specified in Steps 5–7)
+- PR-7: rephrased kept Notes bullet 4 to explicit advisory wording (no false enforcement claim)
+
+**Deferred to dedicated session:**
+- **PR-3** (Cross-resource Substantive — post-memo `/qc-pass` gate in Step 6): structural change class per `audit-discipline.md` tripwire ("any edit that reorders operations against shared state"). The registry-bump is shared-state write; adding a /qc-pass gate before it reorders WHEN the bump happens. Requires `/risk-check` plan-time. Pair with the consult Innovation #1 (`/consult` return-size cap) in a dedicated structural session, since both touch the QC-vs-subagent contract.
+- **PR-8** (Innovation — quarterly self-reflection row): registry row addition; low marginal value this cycle. Defer until the next quarterly active window or until a self-issue surfaces that the friction-flag mechanism missed.
+- **PR-9** (Innovation — throughput-queue surfaced in shortlist prompt): requires new cross-memo aggregation logic to count unresolved Recommended-next-session items. Out of scope for an in-place edit session; defer until a separate UX-improvement session.
+- **PR-10** (Innovation — per-pipeline tier-eligibility column in shortlist): low-leverage prompt-only change. Defer indefinitely; revisit if operator surfaces friction picking from the shortlist.
+- **PR-11** (Innovation — currency-check URL set reference-table extraction): couples with the deferred MCP/hooks scope extension (third 2026-05-29 entry in session-notes). Defer until the scope-widening trigger fires.

@@ -479,3 +479,52 @@ Executed all 8 items in the fix-plan in order. Items id-01 and id-02 (innovation
 ### Open Questions
 
 - None blocking. The concurrent foreign session's commit `b1df69f` shipped my improvement-log edits cleanly (verified by content check); the wrap message attribution mismatch is the only side-effect, and it is bounded.
+
+## 2026-05-29 — Apply pipeline-review cycle 2 memos (pipeline-review, consult, contract-check, friction-log)
+
+**Mandate:** Apply findings from the 4 cycle-2 pipeline-review memos (pipeline-review, consult, contract-check, friction-log) to their respective command targets — leanness, brokenness, and in-scope recommended-next-session items. — done when: each memo's findings either applied (with `/qc-pass` on substantive edits) or surfaced with a reasoned skip, all changes committed.
+- Out of scope: (none stated)
+- Files in scope: (inferred)
+- Stop if: (none stated)
+
+### Summary
+
+Applied 17 of 32 findings across the 4 memos in two waves (`51b69dc` Wave 1 frontmatter + cosmetic + registry re-tier; `7ec05e6` Wave 2 leanness + memo-recommended innovations). Wave 1 landed surface-conformance fixes — Anthropic unified skills/commands frontmatter alignment across all 4 commands, the Step 4.17 numbering scar in pipeline-review.md, the leading-slash cosmetic on friction-log.md, and the friction-log row re-tier weekly→quarterly per the memo's Cross-resource #5 finding. Wave 2 landed leanness in-place trims (Registry-contract block collapse, duplicate citation merge, Notes-tail bullet drops, "skipped >2× per quarter" advisory rephrase, consult.md tail drop) plus three small contract-check innovations the memo named as Recommended-next-session items (contract-type echo, truncation [HEAVY] notice, zero-candidates explanatory abort). Mid-Wave-2 operator denied 2 consult.md leanness edits (C-5, C-6); 2 contract-check.md extra leanness items (CC-6, CC-7) were proactively deferred as not named in the memo's own Recommended-next-session line.
+
+Each memo now carries an `## Applied / Deferred — 2026-05-29 session` block summarizing what landed and what was deferred with rationale, so subsequent reviewers see the per-finding disposition without re-deriving it from session-notes.
+
+Wave 2 `/qc-pass` returned REVISE on one defect (CC-5 abort suggested an impossible re-invocation that conflicted with Step 3 item 7's reservation of `$ARGUMENTS` for the contract). Fixed in-place by dropping the impossible suggestion; kept only the recoverable "commit/modify and re-invoke" line.
+
+### Files Modified
+
+- `ai-resources/.claude/commands/pipeline-review.md` (PR-1 frontmatter + PR-4 renumber + PR-2 contract-collapse + PR-5 citation merge + PR-6 Notes-tail drop + PR-7 advisory rephrase)
+- `ai-resources/.claude/commands/consult.md` (C-3 frontmatter + C-4 Notes-tail drop)
+- `ai-resources/.claude/commands/contract-check.md` (CC-1 + CC-2 frontmatter + CC-3 contract-type echo + CC-4 truncation notice + CC-5 explanatory abort)
+- `ai-resources/.claude/commands/friction-log.md` (FL-2 leading-slash drop + FL-3 frontmatter)
+- `ai-resources/audits/pipeline-review-registry.md` (FL-5 re-tier weekly→quarterly + tier counts + origin paragraph)
+- `ai-resources/audits/pipeline-reviews/pipeline-review-2026-05-29.md` (Applied / Deferred block appended)
+- `ai-resources/audits/pipeline-reviews/consult-2026-05-29.md` (Applied / Deferred block appended)
+- `ai-resources/audits/pipeline-reviews/contract-check-2026-05-29.md` (Applied / Deferred block appended)
+- `ai-resources/audits/pipeline-reviews/friction-log-2026-05-29.md` (Applied / Deferred block appended)
+- `ai-resources/logs/session-plan.md` (this session's plan)
+- `ai-resources/logs/session-notes.md` (this entry)
+
+### Decisions Made
+
+- **Scope strategy: apply non-structural findings; defer structural items per each memo's Recommended-next-session line.** The 4 memos contained ~40 findings total. Each memo's own auditor classified its highest-leverage items into a curated "Recommended next session" line; structural items (C-1 canonical-agent edit, FL-1 hook edit, PR-3 shared-state reordering, CC-8 subagent-brief externalization) were authored as "defer to a dedicated session with `/risk-check` plan-time." Following the memos' own framing avoided a session that tried to land 4 structural changes simultaneously and the corresponding `/risk-check` ceremony for each.
+- **Phase 3 documentation pattern: per-memo `## Applied / Deferred` blocks rather than a single session-notes summary.** Each memo is the audit-trail-grade source for its pipeline; appending the apply/defer split inline keeps the disposition close to the finding. The session-notes Summary then references the per-memo blocks rather than restating each item.
+- **CC-5 post-QC revision: drop the impossible re-invocation suggestion, keep only the recoverable path.** QC reviewer correctly caught that "this command will ask separately for the artifact" promised a follow-up prompt that does not exist (Step 3 item 7 reserves `$ARGUMENTS` for the contract). Applied option (a) per the reviewer's recommendation rather than option (b).
+- **PR-2 in-place pointer rather than block-delete.** Memo proposed "Replace with a 2-line pointer + the critical drift-guard sentence." Implemented as a 1-paragraph pointer that names the canonical source and preserves both the drift-guard sentence and the `/risk-check` Dimension-5 citation; slightly more conservative than the memo's bullet-list version, but the same content density.
+- **Operator directive absorbed mid-session: end-of-session `/risk-check` + System Owner evaluation.** Operator surfaced this during Wave 2; the plan was updated to add Phases 5-6 covering both gates. The /risk-check at end is the end-time gate for the cumulative session changes; the System Owner consult is an advisory architectural sanity check on the breadth of the edits.
+
+### Next Steps
+
+1. **Run /risk-check end-time gate on the cumulative session changes** (Phase 5, operator directive). Surfaces any structural risk that the per-finding plan-time analysis missed.
+2. **Consult System Owner on the cumulative session changes** (Phase 6, operator directive). Architectural sanity check on the apply/defer split and the four cycle-2 memo dispositions.
+3. **Dedicated session: apply C-1 + C-2 (`/consult` return-size cap + project-local agent symlink fix).** Highest-leverage deferred item — friction-log signal has now recurred 5+ consecutive sessions. Touches canonical `system-owner.md`; `/risk-check` plan-time required. The memo's own Recommended-next-session line pairs these two cleanly.
+4. **Dedicated session: apply FL-1 + FL-6 + `note.md` repair (hook unification across all three friction-log writers).** Substantial structural fix; `/risk-check` plan-time AND end-time required per `risk-topology.md § 3`.
+5. **Carryover, unchanged from prior session:** `/cleanup-worktree` against ai-resources still parked; TOCTOU Phases 2-4 still parked; `split-log.sh` fix-plan-template improvement still parked.
+
+### Open Questions
+
+- None blocking pending Phase 5-6 verdicts.

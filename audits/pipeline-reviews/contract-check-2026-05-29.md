@@ -43,3 +43,17 @@
 ## Recommended next session
 
 - **For this command-shaped pipeline:** open a fresh session, edit `.claude/commands/contract-check.md` to (i) add `argument-hint: "[contract-path-or-inline-text]"` and `allowed-tools: Bash(git *) Read Task` to frontmatter, (ii) add the contract-type echo on the verdict header line per Innovations bullet 2, (iii) surface the 800-line truncation when it fires per Innovations bullet 3, then `/qc-pass` to validate before commit. Leanness bullet 3 (subagent-brief externalization) is a structural change — defer to a separate session with plan-time `/risk-check` per DR-8.
+
+## Applied / Deferred — 2026-05-29 session
+
+**Applied this session (commits `51b69dc` Wave 1 + `7ec05e6` Wave 2):**
+- CC-1: frontmatter `argument-hint: "[contract-path-or-inline-text]"`
+- CC-2: frontmatter `allowed-tools: Bash(git *), Read, Task`
+- CC-3: contract-type echo on Step 5 verdict header (parsed from subagent line 2)
+- CC-4: `[HEAVY]` truncation notice when artifact exceeds 800-line read window
+- CC-5: aligned Step 3 item 7 "Zero candidates" abort to explanatory shape (revised post-QC to drop an impossible re-invocation suggestion — `$ARGUMENTS` reserved for the contract; the kept "commit/modify and re-invoke" line is the actual recoverable path)
+
+**Deferred to dedicated session:**
+- **CC-6** (Leanness Minor — compress Step 2 item 4 path heuristic enumeration to 3 items): not named in the memo's Recommended-next-session line. Defer to a follow-up leanness pass.
+- **CC-7** (Leanness Minor-Moderate — tighten Step 2 item 5 cascade prose into 6-row table): not named in the memo's Recommended-next-session line. Defer; couples conceptually with CC-6.
+- **CC-8** (Leanness structural — subagent-brief externalization to `docs/contract-check-subagent-brief.md`): structural change class per `/risk-check` DR-8 (new doc file + revised command body). Defer per memo's own Recommended-next-session framing.
