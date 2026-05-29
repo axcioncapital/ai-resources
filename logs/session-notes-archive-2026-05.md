@@ -3945,3 +3945,94 @@ Per the mandate's out-of-scope clause, the following uncommitted state was obser
 ### Open Questions
 
 - None.
+## 2026-05-28 — Wrap: 2,3 auto closer + Step 3.5 guard false-positive on chained auto-mode
+
+### Summary
+
+Wrap session for the `2,3 auto` closer above. Telemetry + coaching capture both skipped per operator preflight. Continuity scratchpad written to `logs/scratchpads/2026-05-28-14-16-scratchpad.md`. Archive triggered (7 entries → `session-notes-archive-2026-05.md`, 10 kept). Step 3.5 foreign-session pre-write guard fired with `FOREIGN=1` — investigated inline and verified as a false positive driven by auto-mode chaining (`/prime` Step 8c.3 ran twice in `2,3 auto` and legitimately added 2 today-headers, but the guard's `PRIME_RAN=1` model expects only 1 own-header). HEAD + mtime + ps audit confirmed no foreign writes against `ai-resources/logs/session-notes.md` (concurrent terminals are active but operating in `projects/nordic-pe-screening-project/` and `projects/nordic-pe-macro-landscape-H1-2026/`). Operator approved override + friction-log entry; wrap resumed at Step 4.
+
+### Files Created
+
+- `ai-resources/logs/scratchpads/2026-05-28-14-16-scratchpad.md` — pre-closeout continuity scratchpad.
+- `ai-resources/logs/session-notes-archive-2026-05.md` — auto-archived by `check-archive.sh` (7 entries archived, 10 kept).
+
+### Files Modified
+
+- `ai-resources/logs/session-notes.md` — this wrap entry (plus the two task entries from the auto-mode chain above).
+- `ai-resources/logs/friction-log.md` — new "Session — 2026-05-28 14:20" entry on the guard false-positive (workflow lever for `/improve`).
+
+### Decisions Made
+
+- **Step 3.5 guard override after inline investigation.** Operator-approved after I produced a full accounting of all 7 today-headers in WT (5 from morning commits already in HEAD, 2 from this session's auto-mode chain — none foreign) plus a mtime + ps audit of concurrent terminal activity (active sessions confirmed in nordic-pe-screening + nordic-pe-macro projects, but NOT touching ai-resources). Override is bounded: applies only to this session; the friction-log entry surfaces the structural gap to `/improve`.
+- **Friction-log entry added for `/improve` lever.** Guard's `PRIME_RAN` model is single-task; auto-mode N-task chaining (`N,M auto`) is not modeled. Fix direction logged: track auto-mode task count in `.prime-mtime` payload (or a sibling marker) and use it as the per-signal subtractor (`FOREIGN_HEADERS = ADDED_HEADERS - PRIME_TASKS`). Not implemented this session — surfaced as a `/improve` candidate.
+- **Telemetry + coaching skipped per preflight (`nn`).** Operator chose not to run them. Skipped per spec.
+
+### Next Steps
+
+- **Run `/improve`** to surface the Step 3.5 guard false-positive lever (single-session friction entry filed today) and decide whether to ship the chain-aware fix now or batch with other improvements.
+- **Operator action:** push pending. ai-resources has 4+ unpushed (today's session: `5b55f36` Placement Discipline, `936e87f` PD support batch, `b8e0c72` friction-log carryover, plus this wrap commit). Workspace root has 1+ unpushed (`dbe848d` Placement Discipline). Push requires explicit approval (Autonomy Rule #2).
+- **Workspace-root uncommitted accumulation triage** carries forward (deferred from this session's task-3 out-of-scope notes): 3 modified files, 12 untracked `.claude/commands/*.md`, scratchpads/reports/reviews. Warrants its own session.
+- **When a real `/pm` opportunity arises in a non-Nordic-PE project:** invoke `/pm` from inside that project's directory to exercise wrapper Step 4 (`qc-reviewer` pass). The spot-check earlier did not cover that path.
+
+### Open Questions
+
+- None.
+
+## 2026-05-28 — Built /resolve-incident MVP from 7-file spec bundle
+
+### Summary
+
+Operator presented a 7-file spec bundle for a 5-phase "Incident-Resolution & Change-Safety System" (10 governance assets, 6 commands, 3 review agents, learning layer) and asked for an MVP plan. Through `/clarify` → `/decide` → `/scope` → `/qc-pass` (REVISE → 7 fixes applied) → plan approval, the spec collapsed to a thin shell that reuses existing infra (`/risk-check`, `/consult`, `system-owner`, `improvement-log.md`) and adds 4 net-new artifacts plus 1 deprecation note. Built and committed in single batch `bc1db87`. End-time `/risk-check` ran PROCEED-WITH-CAUTION → all 4 mitigations applied inline (content-anchor citations, rollback note, 3× verbatim-shape contracts) → effective GO.
+
+### Files Created
+
+- `ai-resources/.claude/commands/resolve-incident.md` — 8-step incident-resolution pipeline (classify → diagnose → fix → verify → log); model: opus; no subagents. Routes to `/risk-check` on High-risk; to `/consult` Function B for second opinion; appends conditionally to `improvement-log.md`.
+- `ai-resources/docs/protected-zones.md` — canonical 11-zone lookup table read by `/resolve-incident` Step 2.
+- `ai-resources/templates/incident-log-template.md` — canonical fillable incident-record shape; registered as 3rd consumer in `templates/README.md`.
+- `ai-resources/logs/incident-log.md` — append-only one-line-per-incident index with rollback-procedure note + [PHASE-2-FILL] marker.
+- `ai-resources/audits/risk-checks/2026-05-28-add-new-command-resolve-incident-mvp.md` — end-time risk-check report (PROCEED-WITH-CAUTION + mitigations + System Owner Architectural Commentary).
+- `ai-resources/logs/scratchpads/2026-05-28-19-06-scratchpad.md` — continuity scratchpad written by `/wrap-session` Step 0.5.
+- `/Users/patrik.lindeberg/.claude/plans/i-have-quite-an-crispy-pillow.md` — approved MVP implementation plan (plan-mode file).
+
+### Files Modified
+
+- `ai-resources/.claude/commands/resolve-repo-problem.md` — added deprecation note pointing to `/resolve-incident` for fix-applying use cases; no logic change.
+- `ai-resources/templates/README.md` — consumer contract updated to 3 consumers (added `/resolve-incident`).
+- `ai-resources/docs/repo-architecture.md` — added `audits/incidents/` subdir entry and `logs/incident-log.md` log row per the file's own maintenance rule (new structural surfaces require same-commit update).
+
+### Decisions Made
+
+- **MVP shape: (a) thin shell** — single `/resolve-incident` command + 2 governance docs + 1 log + 1 directory + 1 deprecation note. Spec's 5 phases / 6 commands / 3 agents / 10 governance files mostly deferred. Rationale: existing infra (`/risk-check`, `/qc-pass`, `/refinement-pass`, `/route-change`, `/contract-check`, `/drift-check`, `/resolve-repo-problem`, `system-owner`, `improvement-log`, `friction-log`) already covers Phases 1, 2, 4. The spec's genuinely new value is the fix-applying loop missing from `/resolve-repo-problem`.
+- **`/resolve-repo-problem` path: deprecate-and-absorb (option i)** — added deprecation note pointing to `/resolve-incident` for fix-applying use; `/resolve-repo-problem` retained for triage-only investigations (operator wants three-option plan to study, not applied).
+- **Keep template + dedicated log** (option B from QC F8 alternative) — operator chose canonical `templates/incident-log-template.md` + dedicated `logs/incident-log.md` over the simpler "write to `audits/working/` with schema in command body" alternative. Tradeoff accepted: more surface area now in exchange for explicit canonical shape.
+- **Approved improvement-log auto-coupling (QC F3)** — `/resolve-incident` Step 8c auto-appends `logged (pending)` to `improvement-log.md` on structural follow-ups, same pattern as `/resolve-repo-problem`. Coupling disclosed inline.
+- **Inline verification rubric (QC F5)** — operator delegated decision via "help me decide"; chose 4-field receipt embedded in command body over deferring to v1.1 playbook. Rationale: no file dependency, immediately actionable.
+
+### QC fixes applied (separate from operator decisions)
+
+Plan-mode `/qc-pass` REVISE verdict → 7 findings → resolved:
+- F1+F8 (asset table disclosure): added `audits/incidents/` row to MVP table
+- F2: renamed template to `incident-log-template.md` to match approved scope
+- F3: disclosed improvement-log write-coupling inline
+- F4: added `/consult` Step 0 read-first gate to Step 4
+- F5: inlined 4-field verification rubric
+- F6: corrected risk-check trigger over-classification
+- F7: reworded "mirror /risk-check" to skeleton-only (no subagent delegation)
+
+End-time `/risk-check` PROCEED-WITH-CAUTION → all 4 mitigations applied:
+- D3 (Blast radius): heading-anchor citations replace approximate-line refs
+- D4 (Reversibility): rollback-procedure note + [PHASE-2-FILL] marker on `incident-log.md`
+- D5 (Hidden coupling): verbatim-shape contracts for `/risk-check` verdict tokens, `/consult` Function B selector, improvement-log append schema
+- System Owner's 4th item (routing concern): verified workspace-root `.claude/commands/resolve-repo-problem.md` is a symlink to canonical → edit was to canonical source; no defect.
+
+### Next Steps
+
+- **Operator: push pending.** Two commits unpushed today on `ai-resources`: `bc1db87` (`/resolve-incident` MVP batch) + the imminent wrap commit. Push requires explicit approval (Autonomy Rule #2).
+- **Run the verification smoke tests** from the plan when an appropriate fault arises: (a) trivial-input abort; (b) a real low-risk typo fix to exercise the full 8-step run.
+- **After ≥3 real incident runs:** re-evaluate the deferred list (three-mode routing, supporting commands, review agents, learning layer, AUTO mode). Specifically check whether the inline verification rubric proves insufficient — that's the bellwether for promoting `docs/verification-playbook.md`.
+- **Phase 2 design surface:** [PHASE-2-FILL] marker in `logs/incident-log.md` header — W2.2 enforcement automation scope-or-skip decision for the incident log.
+- **Carryover from earlier today's session:** workspace-root uncommitted accumulation triage (3 modified files + 12 untracked `.claude/commands/*.md` + scratchpads/reports/reviews) still warrants its own session.
+
+### Open Questions
+
+- None.
