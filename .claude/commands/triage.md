@@ -10,11 +10,11 @@ You generated these suggestions — you're biased toward your own recommendation
 
 ## Steps
 
-1. **Verify trigger condition.** Scan recent turns for a slate of actionable suggestions or proposals — multiple distinct items you offered. If the last relevant turn was instead a clarifying question, an assumption list, or an open decision fork, stop and ask the operator:
+1. **Verify trigger condition.** Scan recent turns for a slate of actionable suggestions or proposals — multiple distinct items you offered. If a slate is found, proceed automatically to Step 2. If the last relevant turn was instead a clarifying question, an assumption list, or an open decision fork, stop and tell the operator:
 
    > *"I don't see a slate of proposals to triage. Did you mean `/recommend` (have me resolve open questions and proceed)? Or should I draft suggestions first, then run triage?"*
 
-   Wait for direction. Do not invent suggestions to triage.
+   Do not invent suggestions to triage.
 
 2. **Collect the suggestions.** Gather all changes or recommendations you just proposed into a numbered list. Suggestions may appear as:
    - **Inline in conversation** — scan your recent messages for proposed changes, recommendations, improvements, or action items. Extract each distinct suggestion as a numbered item.
