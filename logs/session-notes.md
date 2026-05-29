@@ -675,3 +675,60 @@ None blocking. /qc-pass GO on both substantive items (Items 1 and 2) with inform
 - Stop if: /risk-check on Item 1 returns NO-GO (FL-1+FL-6 mandate-revision required); /qc-pass DISAGREE on a substantive item with no clear recommended-default; either inbox brief reveals an unresolvable contract gap requiring operator clarification.
 
 **Plan source:** /prime auto-mode multi-item gate (items 1, 3, 4, 5 from the prime menu); marker-scoped plan at `logs/session-plan-S5.md`.
+
+## 2026-05-29 — Session S6
+
+**Mandate:** Bundle and execute as many open Friday-checkup items (friday-checkup-2026-05-29) as fit responsibly in one session — done when: a marker-scoped session-plan-S6.md exists listing every open item with a per-item disposition (execute-this-session / defer-with-reason / scope-alternative), prioritized and waved by risk class, ready for operator review.
+- Out of scope: (none stated)
+- Files in scope: (inferred)
+- Stop if: (none stated)
+
+**Plan source:** /prime free-text-intent path after open-friday-checkup status check; marker-scoped plan at `logs/session-plan-S6.md` (pending).
+
+## 2026-05-29 — Context Engine MVP shipped end-to-end (Phase 1 + Phase 2, 2 commits)
+
+### Summary
+Built the Context Engine MVP across both phases in a single session. Phase 1 (manual path): canonical pack schema doc + Opus-tier `context-discovery` sub-agent + thin `/build-context` wrapper command. Phase 2 (auto-fire wiring): new Step 2.4 in `/session-start` and parity Step 8c.4.5 / 8c.6 / 8c.7 in `/prime` auto-mode, both pre-populating mandate fields from engine-discovered files. Architecture drove from the operator-shared briefs (`context-engine-brief.md` + `context-engine-session-pairing.md`), reconciled against the prior system-owner memo's caution, with QC at every major boundary and `/risk-check` PROCEED-WITH-CAUTION verdict driving 6 mitigations baked into the Phase 2 commit.
+
+### Files Created
+- `ai-resources/docs/context-pack-schema.md` — canonical pack format (frontmatter, 6 body sections, 8-tier authority hierarchy, agent→caller parse contract in §5b)
+- `ai-resources/.claude/agents/context-discovery.md` — Opus sub-agent; 9-step pipeline; 30-file read budget; 4-outcome return shape
+- `ai-resources/.claude/commands/build-context.md` — Sonnet thin wrapper; 5-step dispatch
+- `ai-resources/audits/risk-checks/2026-05-29-context-engine-phase-2-session-init-edits.md` — risk-check report
+- `ai-resources/inbox/context-engine-brief.md` — operator brief (Phase 1 MVP), persisted for system-owner consult
+- `ai-resources/inbox/context-engine-session-pairing.md` — operator brief (Phase 2 extension), persisted
+- `projects/ai-development-lab/output/advisories/2026-05-29-context-engine-phase2-scope.md` — system-owner Phase 2 scope advisory
+- `projects/ai-development-lab/output/advisories/2026-05-29-context-engine-phase2-risk-check-second-opinion.md` — system-owner second opinion on risk verdict
+- `ai-resources/logs/scratchpads/2026-05-29-18-30-scratchpad.md` — session continuity scratchpad
+- `~/.claude/plans/starry-pondering-gem.md` — approved plan file
+
+### Files Modified
+- `ai-resources/.claude/commands/session-start.md` — new Step 2.4 engine pre-step; Step 3 mandate-line extended with `- Context pack:` bullet; parse-contract note updated to 5 readers
+- `ai-resources/.claude/commands/prime.md` — new Step 8c.4.5 parity for auto-mode; Step 8c.6 approval gate shows Context pack section; Step 8c.7 mandate-write appends bullet
+- `ai-resources/docs/context-pack-schema.md` — amended post-risk-check with §5b parse contract, §7 workspace-root note (originally Phase 1 deliverable; amended in Phase 2)
+- `ai-resources/.claude/agents/context-discovery.md` — amended with outcome distinction (4 classes), tracked-status emission, dropped 60s timeout claim
+
+### Decisions Made
+- **Treat prior system-owner memo as superseded by explicit operator briefs.** The 2026-05-29 memo argued "may not be worth building at single-operator scale" and recommended an eval-first approach. Operator chose to build the briefs as written. Memo caution archived as outdated context; build proceeded per briefs.
+- **Drop SessionStart hook from MVP scope.** Originally in scope v3.1; QC + drift-check flagged that Claude Code hooks cannot invoke slash commands (can only emit `systemMessage` reminders). Per minimal-infra-subset rule, hook dropped. Engine auto-fires inside `/session-start` Step 2.4 and `/prime` Step 8c.4.5 — those are the load-bearing entry points; the hook would only nudge to a command operator already runs.
+- **Markdown summary parse contract for agent → caller.** System-owner advised against JSON return (DR-7 — no second consumer requires JSON; AP-7 — speculative abstraction). Callers extract `pack_path` from summary line 1, then Read the pack's YAML frontmatter for structured fields. Contract documented in schema §5b.
+- **Outcome distinction over silent absorption.** Agent returns 4 outcome classes (success-enriched / success-insufficient / engine-skipped / engine-error) and both `/session-start` Step 2.4 and `/prime` Step 8c.4.5/8c.6 surface the outcome to the operator. Insufficient packs do NOT silently flow through.
+- **Engine insertion at Step 2.4, NOT Step 2.5.** Existing Step 2.5 (self-check) already occupies that slot. Engine inserts at NEW Step 2.4 so engine-replaced `files_in_scope` is what self-check validates.
+- **Parity in `/prime` auto-mode.** Auto-mode bypasses `/session-start` entirely (inlines mandate write at Step 8c.7). Without Step 8c.4.5 parity edit, operators using `auto` would skip the engine. New Step 8c.4.5 invokes the same agent with `INVOCATION_MODE=auto-prime`.
+- **Pre-flight extended to 5 readers (vs. plan's 3).** Risk-check flagged that monday-prep.md and contract-check.md were not enumerated. Verification showed monday-prep writes a separate week-mandate (bold-header, not bullet) — not a reader. contract-check.md uses fixed-list extraction like the other 3 — silently ignores `- Context pack:`. Net: 5 mandate-related files surveyed; all resilient; zero downstream edits required.
+
+#### QC fixes (separate from operator decisions)
+- v1 scope DISAGREE (10 findings) → architecture corrected: engine moved from `/session-start` body into Step 2.4 insertion; `next-task.md` per-project files dropped; per-project rollout dropped; `/create-context-pack` exclusion tightened.
+- v2 scope REVISE + drift MAJOR-DRIFT → mechanism corrected (hook cannot invoke commands); Step 1.5 collision resolved by renaming to Step 2.4 (existing 2.5 self-check unchanged); pre-edit check moved out of MVP scope; schema fields surfaced as operator-approvable defaults.
+- Plan REVISE (5 fixes) → Step 2.4 numbering locked; 30-line subagent cap (vs. tightened 20-line); pre-flight verification step added; per-project gitignore status surfaced; hook drop confirmed.
+
+### Next Steps
+1. **Push 3 commits to remote.** Two from the build (7dc5e6e Phase 1, e774eb5 Phase 2) plus the wrap commit landing now. Operator gates push at /wrap-session per workspace push rules.
+2. **Phase 1 evaluation against Brief 1 rubric (operator-driven).** Run `/build-context` on 3–5 real tasks and score on 6 criteria. Pass threshold: ≥3 of 5 tasks score ≥4-of-6. Below threshold → reassess. Suggested tasks in the scratchpad.
+3. **Auto-fire smoke test.** Open a new session in a project with CLAUDE.md (e.g., `projects/ai-development-lab/`); run `/prime`; pick a task; verify Step 2.4 invokes the engine. Also test `/prime` → `auto` to verify Step 8c.4.5 parity.
+4. **Advisory R3 — Friday-checkup hygiene.** At next `/friday-checkup`, verify `detect-innovation.sh` registered the new agent + command from commit 7dc5e6e.
+
+### Open Questions
+- Phase 1 evaluation deferred per operator "proceed" mid-session. Engine has NOT been empirically tested on a real task in this session. The build is structurally complete but unverified.
+- Workspace-root sessions silently skip the engine (no project CLAUDE.md = no routing map). If operator commonly works at workspace root for cross-project tasks, the auto-path under-delivers. Acceptable for MVP; revisit if friction surfaces.
+- Heterogeneous `output/` git-tracking across projects — pack persistence varies. Pack-tracked status surfaced at invocation; no policy enforced.

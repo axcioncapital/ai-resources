@@ -204,3 +204,60 @@ Plan 6 dispatch: 2 APPLIED (items 2, 6), 1 PENDING (item 5), 1 SCHEDULED (item 7
 **Alternatives considered.** (a) Wait for quarterly sweep — rejected; high-confidence observation doesn't need re-triage. (b) Promote ALL maintenance-observations to improvement-log — rejected; the triage filter exists for a reason (low-confidence observations would clutter the Friday queue). (c) Add a per-entry confidence field to maintenance-observations — rejected as over-engineering for a small-volume log.
 
 **Trigger to revisit.** If `/friday-checkup` ever surfaces a low-quality entry from a short-circuited promotion, tighten the three-criteria filter. The risk is minor — improvement-log entries can be re-classified at any cadence.
+
+---
+
+### 2026-05-29 — Treat prior system-owner "do-not-build" memo as superseded by explicit operator briefs
+
+**Context.** A 2026-05-29 system-owner memo (`projects/ai-development-lab/output/memos/2026-05-29-context-engine/memo.md`) recommended NOT building a context engine as a standalone subsystem, arguing the defensible Axcíon version was a smaller "command + sub-agent doing agentic retrieval" and that at single-operator / 7-project scale, better-curated static context packs may be the correct stopping point. Memo also recommended an eval-first approach before any build.
+
+**Decision.** Operator chose to build the Context Engine MVP per two new explicit briefs (`context-engine-brief.md` + `context-engine-session-pairing.md`), treating the prior memo's "may not be worth building" caution as outdated context.
+
+**Rationale.** (1) The new briefs are sharper than the original transcript the memo was based on — they specify the use case (pre-change context packs for repo modifications) and the architecture posture (command-first, read-only, narrow before broad, evidence-led routing). (2) The memo's scale concern is real but the operator's explicit choice signals they value the design surface for future Phase 2 work even if Phase 1 evaluation is inconclusive. (3) The memo's design hook (`consumer:` frontmatter field + stable convention path) was preserved; the scale marker (4-of-5 unused → reassess) was preserved as an in-build checkpoint.
+
+**Alternatives considered.** (a) Honor the memo and build only a smaller subset — rejected; operator explicitly chose the briefs as written. (b) Run an eval against static-pack baseline first — rejected; operator deferred Phase 1 evaluation entirely with "proceed". (c) Stop and reconsider — rejected; operator override is decisive.
+
+**Trigger to revisit.** If Phase 1 evaluation (when operator runs it) shows the engine produces packs the consuming agent doesn't use ≥4-of-5 times, the memo's scale concern materializes and the engine should be wound back to a static-pack-only baseline.
+
+---
+
+### 2026-05-29 — Drop SessionStart hook from Context Engine MVP scope
+
+**Context.** Scope v3.1 (operator-approved post-/clarify) included a SessionStart hook in `ai-resources/.claude/settings.json` to auto-fire the context engine at every session open. Plan QC + drift-check verified that Claude Code SessionStart hooks emit `systemMessage` JSON only — they cannot invoke slash commands. The hook would degrade to "emit reminder to run `/prime`," not actually fire the engine.
+
+**Decision.** Drop the SessionStart hook deliverable. Engine still auto-fires inside `/session-start` Step 2.4 and `/prime` Step 8c.4.5 — those are the load-bearing entry points. The hook would only nudge the operator to run a command they already run by convention.
+
+**Rationale.** (1) Mechanism mismatch: hooks can't execute commands; the "automatic" framing operator selected in /clarify was unimplementable as designed. (2) Per `feedback_minimal_infra_subset.md` memory rule, the lower-risk subset should be offered proactively when value is marginal. (3) Hook drop avoids: settings.json edit, new bash script, an additional `/risk-check` change class. (4) System-owner second opinion on the related risk-check concurred PROCEED-WITH-CAUTION, not RECONSIDER — accepting the hook drop did not weaken the architecture.
+
+**Alternatives considered.** (a) Keep hook as `systemMessage` reminder — rejected; marginal benefit (operator already runs `/prime` by convention); /risk-check trigger cost; second SessionStart hook stacking alongside `friday-checkup-reminder.sh`. (b) Restructure hook to write a marker that `/prime` checks — rejected as over-engineering for a nudge.
+
+**Trigger to revisit.** Only if operator workflow proves to skip `/prime` in cases where the engine would have helped — surface in `/friday-checkup` improvement-log.
+
+---
+
+### 2026-05-29 — Markdown summary parse contract for `context-discovery` agent (not JSON)
+
+**Context.** Phase 2 commands (`/session-start` Step 2.4, `/prime` Step 8c.4.5) need to extract structured fields (`pack_path`, `files_in_scope`, `allowed_inputs`, `required_outputs`, `sufficient_to_plan`, `sufficient_to_implement`) from the `context-discovery` agent's return. Risk-check verdict surfaced ambiguity about whether the agent should return JSON or markdown.
+
+**Decision.** Markdown summary, fixed template per schema §5b. Callers extract `pack_path` from summary line 1, then Read the pack file's YAML frontmatter for structured fields.
+
+**Rationale.** Per system-owner second opinion: (1) DR-7 — second-consumer rule: no current second consumer requires JSON; switching pre-emptively is speculative abstraction. (2) AP-7 — the agent already returns a parseable fixed-template markdown summary; the ambiguity was a documentation defect, not a shape problem. (3) YAML frontmatter is the structured contract for downstream consumers; markdown summary is just for chat display. (4) Parse contract is concrete (YAML schema) rather than fuzzy (markdown extraction).
+
+**Alternatives considered.** (a) Return JSON — rejected per DR-7 / AP-7. (b) Markdown summary AS the structured contract — rejected; markdown extraction is fragile; YAML frontmatter is the right home.
+
+**Trigger to revisit.** If a Phase 2 consumer beyond the two named callers needs the structured fields without reading the pack file, evaluate JSON return then.
+
+---
+
+### 2026-05-29 — Engine outcome distinction: 4 classes surface to operator, no silent absorption
+
+**Context.** Risk-check + system-owner second opinion flagged that an engine returning `sufficient_to_plan: false` could be silently absorbed into the Step 2 confirmation block — operator would confirm an enriched mandate without seeing the engine's readiness gaps.
+
+**Decision.** `context-discovery` agent returns one of 4 outcome classes (`success-enriched` / `success-insufficient` / `engine-skipped` / `engine-error`). Both `/session-start` Step 2.4 and `/prime` Step 8c.4.5 / 8c.6 surface the outcome class explicitly in the operator-facing re-emit or approval gate.
+
+**Rationale.** Per OP-3 (Conflicts must be surfaced) and OP-5 (advisory MVPs should fail loud, not silent). Silent absorption of an insufficient pack defeats the engine's purpose — the readiness booleans exist precisely to flag incomplete coverage to the next stage.
+
+**Alternatives considered.** (a) Trust the readiness booleans implicitly without surfacing — rejected per OP-3. (b) Block on `sufficient_to_implement: false` — rejected; MVP enforcement is Phase 2-deferred (schema-field-only carriage).
+
+**Trigger to revisit.** Phase 2 consumer behaviors (pre-edit check enforcement) will repurpose the outcome class. If those land, the surface-only posture upgrades to surface + enforce.
+

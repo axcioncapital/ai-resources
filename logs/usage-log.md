@@ -1,3 +1,33 @@
+### 2026-05-29 | Acceptable
+
+**Task:** Designed and built Context Engine MVP end-to-end across two phases (schema doc + Opus context-discovery agent + /build-context manual command in Phase 1; auto-fire wiring in /session-start and /prime with PROCEED-WITH-CAUTION mitigations in Phase 2). Heavy iterative design cycle: /clarify×2 → /scope×4 → plan + plan-QC → Phase 1 build → /risk-check → Phase 1 amendments → Phase 2 build → wrap.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~25 |
+| Files read | ~15 (re-reads: 2 — prime.md ×2, session-start.md ×2 at different offsets) |
+| Files written/edited | ~18 (8 new files, 10+ edits/appends) |
+| Tool calls | ~95 |
+| Subagents | ~8 (system-owner ×3, qc-reviewer ×3, Explorer ×2, collaboration-coach ×1, risk-check-reviewer ×1) |
+| Rework cycles | 4 (scope v1→v2→v3→v3.1, plan REVISE — all on planning artifacts, none on code) |
+
+**Findings:**
+- Rework on planning artifacts: 4 cycles before code written (Major by count, but mitigated — caught structural errors pre-build, no code thrown away). (Rework — Major)
+- Re-reads of prime.md and session-start.md at different offsets, ~1200 lines total context spent on two files (Moderate — could have read full file once each given multi-step edits planned in both). (Re-reads — Moderate)
+- Tool overhead acceptable: ~95 calls supporting 4 scope versions + 4 QC passes + 2 phases of edits + risk-check + system-owner second opinion (Minor — high call count but each call load-bearing). (Tool overhead — Minor)
+- Strong parallelization: 4 distinct parallel-agent launches (qc+drift, Explorer ×2, system-owner background). Pre-flight verification dropped 3 deliverables from scope v3.1 → final, preventing downstream waste. (Parallelization — informational, positive)
+- Trend: improvement vs same-day Entry 1 (Wasteful, TOCTOU session); on par with same-day Entry 2 (Acceptable); rework volume similar to Entry 1 but contained to planning surface, not code.
+
+**Recommendation:** When a planned edit sequence on a single command file already exceeds 2 steps at scope-finalization time, read the file once in full (or in one wide offset window covering all target steps) rather than narrowing offsets per-edit. prime.md and session-start.md were each read twice at non-overlapping offsets — a single ~400-line read would have covered both edit sites with no waste.
+
+**Estimated savings:** ~3-5k tokens per session on multi-edit-target sessions (prime.md ~375 lines × ~5 tokens/line × 1 avoided re-read ≈ 2k; session-start.md ~250 lines ≈ 1.3k; overhead ≈ 1k). Over 10-20 sessions where multi-step edits on a single command/skill file recur (every 2-3 sessions per pipeline-edit pattern), ≈ 15-50k tokens saved.
+
+**Additional levers (ROI-ranked):**
+- Collapse scope iteration via earlier architecture-check: 4 scope versions cost ~15-20k tokens in QC + agent output. A pre-scope architecture sanity check (Explorer agent surveying host commands + mechanism constraints before scope v1) could compress to 2 versions. ~10-15k saved per design-heavy session — biggest lever but only fires on novel-infrastructure sessions (~1/week).
+- Defer Phase 1 amendments until after risk-check completes: schema doc + agent were each amended post-Phase-2-risk-check. Folding all mitigations into a single Phase 1 → risk-check → Phase 1-final → Phase 2 sequence would save 1-2 edit roundtrips (~1-2k tokens). Smaller than primary but recurs on every multi-phase build.
+- session-notes.md tail-read pattern (carried from Entry 2): 2 tail reads + 1 offset read in this session ≈ 600 tokens. Cumulative across sessions still warrants the structural fix flagged 4+ entries running. Smaller per-session than primary but compounds across every session.
+- Plan-file incremental edits (~6 edits applied inline to apply QC fixes): batching all 5 plan-QC findings into a single edit would save 4-5 edit-call overhead (~1k tokens). Smallest lever; minor habit shift.
+
 ### 2026-05-29 | Wasteful
 
 **Task:** Implemented TOCTOU mitigation atomic Phase 2+3 across the ai-resources repo — wired marker-scoped `.session-marker` consumer logic into 3 writers and 5 readers plus 5 orphan-consumer narrative updates, traversing 4 verdict gates and 2 SO advisories before a 22-file atomic commit.

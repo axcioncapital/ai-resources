@@ -221,3 +221,11 @@
 - **QC cycles:** 1 (REVISE → 4 fixes applied inline → no re-QC per decision-point posture)
 - **Gates:** 4 (3 changed, 1 confirmed) — working-tree-handling:changed (operator chose /cleanup-worktree first; then pivoted back after verification), design-path:changed (operator chose Option A over current chained plan), round2-path:changed (operator chose extend-to-16 over revert-to-Phase-2-only or pause), qc-disposition:confirmed (REVISE auto-applied per decision-point posture, no re-QC needed)
 - **Mandate fields:** specified: work_scope, exit_condition, Files in scope, Stop if | omitted: out_of_scope (none stated), allowed_inputs, required_outputs
+
+### 2026-05-29 — Context Engine MVP shipped end-to-end (Phase 1 + Phase 2)
+- **Commands used:** /clarify, /scope (×3), /qc-pass (×4), /drift-check, /risk-check, /wrap-session, /build-context (new this session)
+- **Iterations:** 5 (scope-v1 → scope-v2 → scope-v3 → scope-v3.1 → plan; plus 6-deliverable → 5-deliverable post-pre-flight)
+- **Decisions logged:** 4
+- **QC cycles:** 4 (scope-v1 DISAGREE → corrected; scope-v2 DISAGREE → corrected; scope-v3 REVISE + drift MAJOR-DRIFT → mechanism corrected; plan REVISE → 5 fixes applied)
+- **Gates:** 9 (4 changed) — clarify-1:changed, clarify-2:changed (architecture pivot to session-init), scope-v1:changed, scope-v2:changed, scope-v3:changed (hook drop), plan-approval:confirmed, hook-drop-decision:changed (revised from v3.1), risk-check-second-opinion:confirmed (PROCEED-WITH-CAUTION concur), push-gate:pending
+- **Mandate fields:** none (no /session-start this session — work began with operator-shared briefs, not /prime → /session-start chain)
