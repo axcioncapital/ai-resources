@@ -309,3 +309,51 @@ Plan retained: `/Users/patrik.lindeberg/.claude/plans/i-want-to-build-tidy-lake.
 - **No-op.** Selected.
 
 **Item closure.** Friday-act plan permissions-settings item 7 closed as "decision-only, no file edit, no risk-check needed".
+
+---
+
+## 2026-05-29 — Friday-act log-sweep item 2 deferred: workspace excluded from /log-sweep scope
+
+**Context.** Friday-act log-sweep plan item 2 specified running /log-sweep against workspace root logs/session-notes.md (518 lines) and logs/session-notes-archive-2026-04.md (821 lines, gap-file rotation). This morning's apply-mode /log-sweep across 14 scopes excluded workspace root by spec design (only ai-resources + projects/* are valid /log-sweep scopes).
+
+**Decision.** Defer item 2. Two paths exist; neither is a same-day fix.
+
+**Rationale + alternatives.**
+- **Manual archive of workspace session-notes.md (~518 lines):** doable but requires careful coordination with the workspace's own `check-archive.sh` cadence (referenced by the SessionStart hook). Not a fast win in a fix session.
+- **Gap-file rotation of session-notes-archive-2026-04.md (821 lines):** even less urgent — this is an old archive (April); 821 lines is not blocking anything operationally. Splitting it into gap files would add file-count churn without clear benefit until a token-budget gate fires on workspace reads.
+- **Extend /log-sweep spec to include workspace root scope:** structural change, /risk-check required. Out of scope for this item.
+
+**Trigger to revisit.** A token-audit signal that workspace session-notes.md or its archive is showing up as a meaningful read-budget consumer; OR an operator request.
+
+**Item closure.** Friday-act plan log-sweep item 2 closed as DEFERRED-WITH-REASON.
+
+---
+
+## 2026-05-29 — Friday-act project-triages: triage + dispatch decisions
+
+**Scope.** Plan project-triages had 3 items (one per project) covering 14 total improvement-log entries (5 + 3 + 6). Decisions recorded below per entry-batch.
+
+### Item 3 — nordic-pe-macro (6 entries)
+
+1. **RECURRING check-archive.sh CLAUDE_PROJECT_DIR-unset:** ✓ APPLIED this session. Canonical `ai-resources/.claude/commands/wrap-session.md` Step 3 wrapped with explicit `CLAUDE_PROJECT_DIR="$(pwd)"`. Workspace-root wrap-session.md does not invoke the script — no port needed. Smoke-test on next wrap.
+2. **RECURRING wrap-session today-header inflation:** SCHEDULE-DEDICATED. Fix requires new `.session-header-line` marker file + symmetric writes in `/session-start` Step 3 mandate-append + read in `/wrap-session` Step 4. Multi-file shared-state protocol — wants /risk-check (PROCEED-WITH-CAUTION likely) and a focused session. Block out time within next 2 weeks. Recurring 4 days running; do not defer further.
+3. **settings.json _comment schema rejection — fallback pattern undocumented:** DEFER. One-paragraph doc add to `docs/permission-template.md` § Caveats + cross-link from `docs/audit-discipline.md`. Trivial but only first occurrence; batch with the next docs-edit session (Plan 4's repo-documentation overlap is a candidate).
+4. **/innovation-sweep triage cadence:** DEFER. Add a decision-cadence rule to `innovation-sweep.md` (or sibling). First occurrence; pattern not yet established. Revisit at next `/innovation-sweep` invocation that produces >0 unplanned candidates.
+5. **Verify /session-plan Step 0 MISMATCH fix actually suppressed firing:** DEFER. Verification-only; not a defect yet. Sample 2-3 next /session-plan invocations from this project to see whether the MISMATCH branch fires or not before deciding fix vs boilerplate update.
+6. **Innovation-sweep auditor cross-repo write:** DEFER. One-line clarification to auditor SKILL.md or calling command. Trivial but low-impact; bundle with next innovation-sweep-related touch.
+
+### Item 1 — ai-development-lab (5 entries)
+
+Themes per plan: ambiguous-referent self-check, concurrent-session staging detection, mid-session staleness of clean-tree snapshot, friction-log Write Activity capture gap, pipeline write-deny rationale doc.
+
+**Triage outcome — all DEFER.** None are RECURRING; none flagged HIGH in the plan. Themes are mature-system tuning, not bug-fixes. Schedule as a dedicated ai-development-lab maintenance session within next 2 weeks. The "concurrent-session staging detection" entry overlaps with workspace TOCTOU mitigation (Plan 5 item 1) — do not double-fix; defer until TOCTOU rollout phases 2-4 land.
+
+### Item 2 — axcion-brand-book (3 entries)
+
+Themes per plan: `/draft-module` heredoc routing for cached-deny modules, brand-strategist subagent contract (notes-to-disk), per-module allow-override CLAUDE.md pointer.
+
+**Triage outcome — all DEFER.** First-occurrence design improvements for a system in active build. Schedule as a dedicated axcion-brand-book session when the operator next touches that project. The "subagent contract notes-to-disk" entry should reference `ai-resources/CLAUDE.md` § Subagent Contracts when implemented.
+
+### Closure note
+
+This dispatch converts 14 pending improvement-log entries into 1 APPLIED, 12 DEFER, 1 SCHEDULE-DEDICATED. The deferrals are logged decisions, not silent drops — each entry stays in its project's improvement-log with this decision-anchor pointing back here.

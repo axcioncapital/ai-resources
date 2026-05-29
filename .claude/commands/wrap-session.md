@@ -26,7 +26,7 @@ Accept shorthand: "yy" / "yes both" / "both" = both yes; "nn" / "skip both" = bo
 
 1. Run `tail -5 logs/session-notes.md` via Bash to find the append point. If the file doesn't exist, create it with `# Session Notes` as the header. **Format guard:** If the file exists but has no `# Session Notes` header, prepend it. If the last non-empty line is a partial block (unclosed heading, unterminated list), append a blank line before the new entry.
 2. Run `tail -5 logs/decisions.md` via Bash to find the append point. If the file doesn't exist, create it with `# Decision Journal` as the header.
-3. **Log archive check.** Run `bash logs/scripts/check-archive.sh`. The script iterates append-only logs (session-notes.md, decisions.md) and archives any file exceeding its threshold by invoking `logs/scripts/split-log.sh` internally. Behavior:
+3. **Log archive check.** Run `CLAUDE_PROJECT_DIR="$(pwd)" bash logs/scripts/check-archive.sh` — the explicit env prefix is required; some session shells strip the inherited `CLAUDE_PROJECT_DIR` mid-chain, which has caused "CLAUDE_PROJECT_DIR unset" failures across 10+ wraps. The script iterates append-only logs (session-notes.md, decisions.md) and archives any file exceeding its threshold by invoking `logs/scripts/split-log.sh` internally. Behavior:
    - Below threshold: silent exit, nothing to do.
    - Archive triggered: script prints `Auto-archived <file> → <archive-file> (archived N entries, kept M)`. Note the printed archive filename — include it in Step 4's `### Files Modified` list.
    - Failure: script prints `ARCHIVE FAILED for <file>` and exits non-zero. Surface the failure to the operator, do NOT attempt to rerun, proceed with the rest of the wrap.
@@ -232,7 +232,16 @@ After updating logs and writing the telemetry entry, stage and commit changes. *
 - Always-staged (if modified this session): `logs/session-notes.md`, `logs/decisions.md`, `logs/coaching-data.md`, `logs/improvement-log.md`, `logs/improvement-log-archive.md`, `logs/innovation-registry.md`, `logs/usage-log.md`
 - Session-specific: every path listed in Files Created / Files Modified for this session, staged by explicit name
 
-Run as three separate commands, not chained:
+Run as two separate commands, not chained:
 - `git add <explicit paths>` (enumerate; no trailing `/` wildcards)
 - `git commit -m "session: [brief description of session work]"`
-- `git push` (push proceeds autonomously; if the push fails — auth, network, non-fast-forward — surface the failure in chat, do not retry silently)
+
+**Push gate (replaces autonomous push).** After the wrap commit lands, count unpushed commits across this repo and any other repos this session touched (Bash: `git log @{u}..HEAD --oneline | wc -l` per repo, or `git status -sb` to see ahead-count). Present a single confirmation prompt in chat:
+
+> Ready to push N commits across M repos: [list of repos and ahead-counts]. Push now? y/n
+
+- On `y`: run `git push` per repo in turn. If a push fails (auth, network, non-fast-forward) surface the failure in chat and stop — do not retry silently.
+- On `n`: leave commits unpushed and note it in chat ("Push skipped per operator; N commits remain local").
+- Ambiguous reply: re-ask, do not assume.
+
+Do NOT push mid-session at any earlier step, even for "critical" fixes — surface the situation and ask the operator instead.
