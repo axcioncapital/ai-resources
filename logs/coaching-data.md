@@ -213,3 +213,11 @@
 - **QC cycles:** 2 (Wave 1 mechanical-mode GO; Wave 2 full-rubric REVISE → fixed CC-5 abort wording → re-implicit GO via decision-point posture, committed without re-QC)
 - **Gates:** 4 (1 changed) — plan-approval:confirmed, content-review:changed (operator denied C-5 and C-6 mid-Wave-2 leanness edits), qc-disposition:confirmed (mid-session directive: add /risk-check + System Owner at end), challenge-disposition:confirmed (System Owner advisory accepted as advisory; 3 follow-ups absorbed into Next Steps)
 - **Mandate fields:** specified: work_scope, exit_condition | inferred: files_in_scope | omitted: out_of_scope, stop_if, allowed_inputs, required_outputs
+
+### 2026-05-29 — TOCTOU mitigation atomic Phase 2+3 (Option A, 22-file commit)
+- **Commands used:** /prime, /session-start, /session-plan, /risk-check (×3 — Round 1 + Round 2 + end-time), /qc-pass, /usage-analysis, /wrap-session
+- **Iterations:** 2 (Phase-2-only spec draft → atomic Option A spec → atomic spec addendum for Round 2 + SO orphan findings)
+- **Decisions logged:** 3 (Option A over Phase-2-only-with-symlink; extend-to-16 over revert; asymmetric writer/reader marker-handling discipline)
+- **QC cycles:** 1 (REVISE → 4 fixes applied inline → no re-QC per decision-point posture)
+- **Gates:** 4 (3 changed, 1 confirmed) — working-tree-handling:changed (operator chose /cleanup-worktree first; then pivoted back after verification), design-path:changed (operator chose Option A over current chained plan), round2-path:changed (operator chose extend-to-16 over revert-to-Phase-2-only or pause), qc-disposition:confirmed (REVISE auto-applied per decision-point posture, no re-QC needed)
+- **Mandate fields:** specified: work_scope, exit_condition, Files in scope, Stop if | omitted: out_of_scope (none stated), allowed_inputs, required_outputs

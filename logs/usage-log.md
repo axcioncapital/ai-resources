@@ -1,3 +1,34 @@
+### 2026-05-29 | Wasteful
+
+**Task:** Implemented TOCTOU mitigation atomic Phase 2+3 across the ai-resources repo — wired marker-scoped `.session-marker` consumer logic into 3 writers and 5 readers plus 5 orphan-consumer narrative updates, traversing 4 verdict gates and 2 SO advisories before a 22-file atomic commit.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~30 |
+| Files read | ~22 (re-reads: 3 — prime.md 2x, session-plan.md 3x, open-items.md 2x, risk-check report 2x) |
+| Files written/edited | 22 (commit) + 8 wrap-time |
+| Tool calls | ~95 |
+| Subagents | 7 invocations (5 distinct kinds) |
+| Rework cycles | 5 |
+
+**Findings:**
+- **Rework — Major.** 5 distinct rework cycles (task pivot 1→2→1→2, spec redesign, spec inventory addendum, subagent timeout retry, QC REVISE cycle). Three of the five are Major-class on their own (>1 cycle on same artifact class: spec body iterated twice on the same defect — incomplete inventory).
+- **Tool overhead — Major.** ~25 Bash calls (~10-15 inherent to wrap/Mitigation 4 verification, the rest greps + status checks). Compounds with 2 ToolSearch invocations (~2k tokens each) for deferred tools repeatedly hit across sessions.
+- **Rework — Major (subagent waste).** Risk-check-reviewer Round 2 socket timeout: 18 min wall-clock + ~10-20k tokens of subagent context with zero output. Retry needed.
+- **Context bloat — Moderate.** prime.md (~339 lines) read 2x and session-plan.md (~293 lines) read 3x for different sections — sectional re-reads on large command files. Targeted offset reads could have avoided ~600+ lines of duplicate context.
+- **Rework — Moderate (recursive defect class).** Same inventory-completeness defect fired in Round 1 AND Round 2 risk-checks — spec author understated affected files by 4 both times. Already logged to maintenance-observations.md as a separate recommendation.
+- Trend vs last 3 entries: **regression** — breaks a 4-session Acceptable streak; rework dominant pattern (previously flagged) now escalated to Major.
+
+**Recommendation:** Add a pre-spec inventory grep checklist to the `/risk-check` plan-time protocol when the change class is "consumer rewire across multiple files." Before submitting the spec for risk-check, the spec author must run a documented grep sweep for (a) all consumers of the renamed/removed paths, (b) all narrative references in docs/, (c) all references in agent definitions — and paste the grep output into the spec's Inventory section. This would have caught both Round 1 and Round 2 inventory misses without consuming a risk-check subagent cycle.
+
+**Estimated savings:** ~30-50k tokens per recurrence. Derivation: one full risk-check-reviewer cycle (~10-15k tokens main + ~10-20k subagent context) + SO advisory (~5-10k) + spec addendum drafting (~3k) + extra edit cycles (~5-10k). Over a 10-20 session horizon — if this consumer-rewire pattern recurs even 3-4 times (likely given the TOCTOU/permission-template/architectural-rewire backlog) — savings of **~90-200k tokens**.
+
+**Additional levers (ROI-ranked):**
+- **Targeted offset reads on large command files (~5-10k tokens/session).** Smaller than primary but recurs every session that touches multiple sections of prime.md / session-plan.md / session-start.md. A simple discipline rule ("re-reading a >250-line command file for a different section = use `offset`+`limit`") would have saved ~600 lines of re-read context this session alone.
+- **Subagent timeout circuit-breaker (~10-20k tokens/recurrence).** Add a 5-min wall-clock soft cap to risk-check-reviewer with an explicit "if you've made >15 tool calls without writing the report, write a partial report and exit" instruction in the agent body. Smaller than primary because timeouts are rare, but a single occurrence wastes 18 min + ~20k tokens.
+- **Pin friction-log + improvement-log + decisions.md tails into /prime read (~800-1.5k tokens/session).** Recurring lever flagged 8+ times across telemetry — would have surfaced the dirty-working-tree state and the prior TOCTOU spec context at /prime time, possibly avoiding the task 1→2→1→2 pivot (~5 min of mandate-writing waste). Smaller per-session but compounds across every session.
+- **Pre-prime git-status freshness check (~2-5k tokens/recurrence).** Stale env-snapshot at /prime caused the task-pivot rework. A 1-line `git fetch && git status` refresh at /prime Step 1a before presenting the task menu would have shown the dirty state was already committed. Smaller than primary but addresses a discrete recurring failure mode.
+
 ### 2026-05-29 | Acceptable
 
 **Task:** Applied 17 of 32 non-structural findings from 4 cycle-2 pipeline-review memos (pipeline-review, consult, contract-check, friction-log) across 3 commits; 13 deferred per each memo's Recommended-next-session line. End-time `/risk-check` returned GO; System Owner Phase 6 advisory surfaced 3 follow-up actions.

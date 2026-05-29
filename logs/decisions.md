@@ -124,3 +124,47 @@ Plan 6 dispatch: 2 APPLIED (items 2, 6), 1 PENDING (item 5), 1 SCHEDULED (item 7
 **Alternatives considered.** (a) Reverse order (C-1 + C-2 first) — rejected because the friction-log signal that motivated C-1 has been logged FROM the consult-leak observation; fixing the writer first stabilizes the input to the agent's read. (b) Bundle into a single session — rejected as it would re-create the context-contamination problem this session's apply/defer split was designed to avoid.
 
 **Item closure.** Both pairs remain deferred. The next session that picks up either should pick FL-1 + FL-6 first. Recorded as Next Step #1 / #2 in today's session-notes entry.
+
+---
+
+## 2026-05-29 — TOCTOU Phase 2+3: Option A (atomic) over Phase-2-only-with-symlink
+
+**Context.** Plan-time Round 1 risk-check on Phase 2-only spec returned PROCEED-WITH-CAUTION (Hidden Coupling: High — symlink-as-bridge between Phase 2 writers and unreached Phase 3 readers; cross-session last-writer-wins on `logs/session-plan.md` is a NEW form of the race the spec claimed to eliminate). System-owner Function-B advisory recommended Option A (atomic Phase 2+3 in one commit, no symlink) as the cleaner design. Operator chose Option A.
+
+**Decision.** Atomic single-commit landing — both writers (prime, session-start, session-plan) AND readers (contract-check, drift-check, open-items, fix-repo-issues-scanner, decide) become marker-aware in the SAME commit. No symlink, no legacy fallback paths, no Phase 4 deferred cleanup.
+
+**Rationale.** (1) Eliminates the symlink-relocation TOCTOU race at its root rather than time-bounding it. (2) Drops Hidden Coupling from High → Low in dimension scoring. (3) Removes the asymmetric phase-coupling material miss the SO advisory flagged (Phase 2 ships infrastructure that REQUIRES Phase 3 to be safe). (4) Per `principles.md § OP-3` loud-failure-over-silent-continuation: hard-failing writers on absent marker is correct; silently bridging via symlink is not. (5) Total work is unchanged vs original chained-Wave-1+Wave-2 plan — only the commit boundary moves (chained → atomic).
+
+**Alternatives considered.** (a) Phase 2-only with all 6 Round-1 mitigations applied — rejected as architecturally inferior to Option A. (b) Option B (Phase 3 readers first, then Phase 2 writers) — rejected as it pushes the actual TOCTOU mitigation further into the future. (c) Option C (skip symlink + loud-fail readers during the rollout window) — rejected because Option A is cleaner still.
+
+**Trigger to revisit.** Next session's `/prime` is the first real test of marker-scoped end-to-end flow. If marker resolution misfires anywhere, fall back to git revert + reseed (recipe in commit `9f91b2f` message).
+
+---
+
+## 2026-05-29 — TOCTOU Phase 2+3: extend commit to 16 files (Round 2 mitigation)
+
+**Context.** Plan-time Round 2 risk-check on atomic spec returned PROCEED-WITH-CAUTION (Blast Radius: High — 4 orphan consumers missed in spec inventory + 2 narrative-drift items found by SO follow-up grep). System-owner Function-B advisory concurred with verdict AND recommended extend-to-16, not revert-to-Phase-2-only.
+
+**Decision.** Extend the atomic commit to all 16 consumers (originally 10) — covers prime auto-mode chat strings (185/187/223), new-project.md scaffolding (548), repo-architecture.md canonical table (220-221), compaction-protocol.md operator-facing note (21), backup-session-plan.sh comments (4 + 13-15), heavy-read-discipline.md narrative (45), weekly-cadence.md Phase D narrative (78). Plus broaden backup-session-plan.sh regex from `(-[a-zA-Z0-9]+)?` to `(-[a-zA-Z0-9]+){0,2}` (QC fix — closes BREAK risk where `session-plan-S1-pass2.md` would be silently un-backed-up).
+
+**Rationale (per SO Function-B Round 2 advisory).** Two PROCEED-WITH-CAUTIONs in a row are NOT the same signal: Round 1 was structural (symlink coupling), Round 2 is execution-completeness (orphan-consumer inventory miss). Different risk classes. Treating them as "stop sign" would conflate two distinct findings and re-open Round 1's structural flaw. "Do less per commit" (revert) trades known-mitigable Blast Radius High for known-unmitigable Hidden Coupling High — fails `OP-3` (silent symlink coupling) and `AP-10` (the symlink-coupling-by-design failure mode).
+
+**Alternatives considered.** (a) Extend to 14 files only (skip SO's 2 narrative-drift items) — rejected as defer-the-cleanup-debt anti-pattern; 2-line touches with clean-tree benefit. (b) Revert to Phase 2-only with all Round 1 mitigations — rejected per SO analysis. (c) Pause and revise spec independently — rejected; risk-checks did their job, fixes are concrete and apply inline.
+
+**Trigger to revisit.** No follow-up expected. The recursive-PROCEED-WITH-CAUTION pattern itself logged as process observation to `logs/maintenance-observations.md` for Friday cadence: pre-spec grep checklist for renamed/removed paths would have closed both Round-N inventory gaps before reaching /risk-check.
+
+---
+
+## 2026-05-29 — TOCTOU Phase 2+3: asymmetric writer/reader marker-handling discipline
+
+**Context.** Marker-aware consumers fall into two roles with structurally different correctness requirements: writers PRODUCE session state, readers CONSUME it. Treating them uniformly would either over-constrain readers (post-session use is legitimate and should not hard-fail) or under-constrain writers (silently writing to an ambiguous location on marker-absent is the silent-degradation pattern OP-3 prohibits).
+
+**Decision.** Asymmetric discipline codified in `docs/session-marker.md` § Two-end contract registry:
+- **Writers** (prime, session-start, session-plan): HARD-FAIL loud on marker absent/stale per `principles.md § OP-3` with the standard message `[/{command} Step {N}] HARD-FAIL: logs/.session-marker absent or stale. Run /prime to populate the marker for this session, then retry.`
+- **Read-only auxiliary consumers** (contract-check, drift-check, open-items, fix-repo-issues-scanner, decide): TOLERATE marker absence by falling through to alternate sources (mandate line, `$ARGUMENTS`, glob scan).
+
+**Rationale.** (1) Writers produce session-identity-scoped state; operating without identity = ambiguous corruption. (2) Read-only auxiliary consumers may be invoked post-session (no active marker) — hard-fail there would break legitimate workflows like post-session contract-check. (3) The asymmetry is documented in the canonical contract doc (`docs/session-marker.md`) so future writers and readers know their assigned discipline.
+
+**Alternatives considered.** (a) Uniform hard-fail across all consumers — rejected; breaks post-session workflows. (b) Uniform tolerate across all consumers — rejected; writers operating without marker is silent corruption. (c) Per-consumer judgment call without canonical docs — rejected; introduces drift surface.
+
+**Trigger to revisit.** If a new consumer is added that doesn't cleanly fit either role, update `docs/session-marker.md` Two-end contract registry to classify it explicitly.

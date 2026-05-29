@@ -542,3 +542,75 @@ Wave 2 `/qc-pass` returned REVISE on one defect (CC-5 abort suggested an impossi
 - Stop if: /risk-check returns NO-GO at plan-time
 
 **Mandate revision note:** This mandate replaces a stale `/cleanup-worktree` mandate written ~5 minutes earlier. The cleanup mandate became moot when verification showed the dirty state I had flagged at `/prime` time was already resolved by concurrent commit `3f6937b` (chain-invoke restructure + Class field retirement) that landed at 11:26:46 today. The original task 1→2 pivot at session start was based on stale env-snapshot data; corrected back to task 2 (TOCTOU) per operator decision.
+
+---
+
+## 2026-05-29 — TOCTOU mitigation atomic Phase 2+3 wrap (Option A, 22-file commit, 3 risk-checks, QC REVISE + GO)
+
+### Summary
+
+Shipped TOCTOU mitigation atomic Phase 2+3 in commit `9f91b2f` (22 files: 14 modified + 1 new `docs/session-marker.md` + 1 git rm `logs/session-plan.md` + 1 git add `logs/session-plan-S3.md` + 3 risk-check reports + 2 log updates). Replaces shared `logs/session-plan.md` + bare `## YYYY-MM-DD` session-notes headers with per-session marker-scoped naming (`logs/session-plan-{marker}.md` + `## YYYY-MM-DD — Session {marker}`). Closes the cross-session TOCTOU race class at its structural root. Writers (prime/session-start/session-plan) hard-fail on marker absent per OP-3; read-only auxiliary readers (contract-check/drift-check/open-items/fix-repo-issues-scanner/decide) tolerate absence. Phase 4 (legacy fallback cleanup) is N/A under Option A — no fallback paths were introduced.
+
+Session traversed 4 verdict-gates: Round 1 plan-time PROCEED-WITH-CAUTION (Phase 2-only spec, Hidden Coupling: High — symlink bridge) → SO advisory recommended Option A → operator chose Option A → Round 2 plan-time PROCEED-WITH-CAUTION (atomic spec, Blast Radius: High — 4 orphan consumers + 2 narrative-drift items missed) → SO concurred + recommended extend-to-16 → operator chose extend → /qc-pass REVISE (4 findings: 1 BREAK risk in backup-session-plan.sh regex, 3 narrative drifts) → 4 fixes applied inline → end-time GO (all 5 dimensions Low) → commit.
+
+### Files Created
+
+- `ai-resources/docs/session-marker.md` — canonical marker protocol contract (resolution helper + file naming + asymmetric writer/reader registry + doc-references subsection)
+- `ai-resources/logs/session-plan-S3.md` — this session's plan content preserved at the new marker-scoped path
+- `ai-resources/audits/risk-checks/2026-05-29-plan-time-gate-for-toctou-mitigation-phase-2-full-spec.md` — Round 1 plan-time PROCEED-WITH-CAUTION (Hidden Coupling: High — symlink) + SO commentary
+- `ai-resources/audits/risk-checks/2026-05-29-plan-time-gate-for-toctou-mitigation-atomic-phase-2-3.md` — Round 2 plan-time PROCEED-WITH-CAUTION (Blast Radius: High — 4 orphans) + SO commentary recommending extend-to-16
+- `ai-resources/audits/risk-checks/2026-05-29-end-time-gate-for-toctou-mitigation-atomic-phase-2-3-option.md` — end-time GO (all 5 dimensions Low)
+- `ai-resources/logs/scratchpads/2026-05-29-14-45-scratchpad.md` — pre-closeout continuity scratchpad
+- `ai-resources/audits/working/toctou-phase-2-spec.md` — original Phase 2-only spec (gitignored, on disk as audit trail of design pivot)
+- `ai-resources/audits/working/toctou-phase-2-and-3-atomic-spec.md` — atomic Option A spec with Items 5+6 addendum for Round 2 mitigations (gitignored)
+
+### Files Modified
+
+Writers (hard-fail on marker absent per OP-3):
+- `ai-resources/.claude/commands/prime.md` — Step 1a sibling-sweep silenced per AP-10; Steps 8a.3.a / 8b.3.a / 8c.3 marker-bearing header + reorder (marker BEFORE append); 8c.8 auto-mode writes to marker-scoped plan; 8c.9 collision check removed
+- `ai-resources/.claude/commands/session-start.md` — Step 3 locates today's header by marker
+- `ai-resources/.claude/commands/session-plan.md` — Step 0 simplification (drops intent-comparison + wrap-state + auto-pass2); Step 7 marker-scoped OUTPUT_TARGET; Step 1 narrative cleanup (QC fix); line 7 description updated
+
+Readers (tolerate marker absent):
+- `ai-resources/.claude/commands/contract-check.md` — Step 2b marker-aware plan read
+- `ai-resources/.claude/commands/drift-check.md` — Steps 3/6/7/8 marker disambiguation + marker-scoped plan
+- `ai-resources/.claude/commands/open-items.md` — table glob + checkbox attribution + Tier-3 output template narrative (QC fix)
+- `ai-resources/.claude/commands/decide.md` — Step 2 prior-decision glob
+- `ai-resources/.claude/agents/fix-repo-issues-scanner.md` — table glob + scope lists + read-only list
+
+Orphan-consumer narrative (Round 2 + SO findings):
+- `ai-resources/.claude/commands/new-project.md` — scaffolding command reference
+- `ai-resources/docs/repo-architecture.md` — canonical file table marker-scoped row
+- `ai-resources/docs/compaction-protocol.md` — operator-facing target-file note
+- `ai-resources/docs/weekly-cadence.md` — Phase D scope-separation narrative (QC fix)
+- `ai-resources/docs/heavy-read-discipline.md` — stale-draft narrative reference
+- `ai-resources/.claude/hooks/backup-session-plan.sh` — regex broadened from `(-[a-zA-Z0-9]+)?` to `(-[a-zA-Z0-9]+){0,2}` (QC fix — closes BREAK risk where `session-plan-S1-pass2.md` was silently un-backed-up); comments updated
+
+Wrap-time / session-state:
+- `ai-resources/logs/session-notes.md` — mandate + revision note + this wrap entry
+- `ai-resources/logs/maintenance-observations.md` — SO process observation (pre-spec grep checklist for renamed paths)
+
+State change:
+- `ai-resources/logs/session-plan.md` — git rm (regular file replaced by marker-scoped variants)
+
+### Decisions Made
+
+Already logged in `ai-resources/logs/decisions.md` (existing entries from earlier today) plus new entries from this session:
+
+- **Pivot 1: task 1 → task 2 → task 1 → task 2.** Operator picked task 2 (TOCTOU) at /prime; pivoted to task 1 (/cleanup-worktree) due to dirty target files; pivoted back to task 2 after verification showed dirty state was already committed by concurrent commit `3f6937b`. Mandate revision note in session-notes documents the pivot chain.
+- **Option A over Phase 2-only.** Plan-time Round 1 returned PROCEED-WITH-CAUTION on Hidden Coupling: High (symlink bridge between Phase 2 writers and unreached Phase 3 readers). SO advisory recommended Option A (atomic Phase 2+3, no symlink). Operator chose Option A; chained Wave 1+Wave 2 into one atomic commit.
+- **Extend-to-16 over revert-to-Phase-2-only.** Plan-time Round 2 returned PROCEED-WITH-CAUTION on Blast Radius: High (4 orphan consumers missed by spec + 2 narrative-drift items found by SO). SO concurred with verdict + recommended extend-to-16, not revert. Rationale: "do less per commit" would re-open Round 1's structural flaw (Hidden Coupling High). Different risk classes — Round 1 structural, Round 2 execution-completeness. Operator chose extend.
+- **Asymmetric writer/reader marker-handling discipline.** Writers (prime, session-start, session-plan) hard-fail on marker absent per OP-3. Read-only auxiliary readers (contract-check, drift-check, open-items, fix-repo-issues-scanner, decide) tolerate absence by falling through to alternate sources or scanning glob. Codified in `docs/session-marker.md` § Two-end contract registry.
+- **`logs/session-plan-S*.md` tracked in git** (not gitignored) — per-session plan history mirrors `logs/session-notes.md` treatment; preserves drift-check/contract-check archaeology. Default chosen + documented in commit message.
+- **QC REVISE auto-applied inline.** All 4 QC findings (1 BREAK risk + 3 narrative drifts) were concrete actionable fixes with no DISAGREE candidates; applied inline without re-QC. Per workspace Decision-Point Posture + Round-2 mitigation discipline.
+
+### Next Steps
+
+1. **Push 1 commit `9f91b2f` to ai-resources origin/main** — operator confirms via push gate at wrap (already invoked `/wrap-session`).
+2. **Verify TOCTOU mitigation in the NEXT session's `/prime`.** Next `/prime` should: write `logs/.session-marker` with `S1` (or increment if same-day), write `## YYYY-MM-DD — Session S1` header in session-notes, and `/session-plan` should write `logs/session-plan-S1.md` (not bare path). If anything misfires, the legacy `session-plan.md` regular file is gone — recovery is /prime re-run. **First-test session is high-signal; surface any anomaly to `logs/maintenance-observations.md`.**
+3. **Friday `/friday-checkup` triage candidate** — pre-spec grep checklist for renamed/removed paths, logged to `logs/maintenance-observations.md`. SO non-blocking recommendation; consider whether to surface to improvement-log.
+4. **Carryover from prior sessions (unchanged):** auto-apply `/qc-pass` rule (Plan 5 item 2 from friday-act, workspace CLAUDE.md cross-cutting); /graduate-resource Step 4+5 strengthening (Plan 5 item 4); KB-paste session for repo-documentation; pipeline-review cycle-2 follow-up items (FL-1 + FL-6 hook unification → then C-1 + C-2 system-owner agent).
+
+### Open Questions
+
+- None blocking. End-time `/risk-check` returned GO (all 5 dimensions Low; report committed in `9f91b2f`). System-owner advisory's process observation (recursive PROCEED-WITH-CAUTION on inventory misses) logged to maintenance-observations for Friday triage.
