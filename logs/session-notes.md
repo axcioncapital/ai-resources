@@ -614,3 +614,12 @@ Already logged in `ai-resources/logs/decisions.md` (existing entries from earlie
 ### Open Questions
 
 - None blocking. End-time `/risk-check` returned GO (all 5 dimensions Low; report committed in `9f91b2f`). System-owner advisory's process observation (recursive PROCEED-WITH-CAUTION on inventory misses) logged to maintenance-observations for Friday triage.
+
+## 2026-05-29 — Session S4
+
+**Mandate:** Apply 2 same-command logic fixes + 1 improvement-log entry + 1 verification smoke-test, all in the no-/risk-check class — done when: Items 1+2 committed with /qc-pass GO each, Item 3 appended to improvement-log, Item 4 smoke-test result recorded.
+- Out of scope: FL-1+FL-6 (friction-log hook unification), C-1+C-2 (consult/system-owner agent edits), KB-paste session, /graduate-resource Steps 4+5 strengthening, /cleanup-worktree stale-file cleanup
+- Files in scope: ai-resources/.claude/commands/wrap-session.md (Item 1), ai-resources/.claude/commands/open-items.md (Item 2), ai-resources/logs/improvement-log.md (Item 3 append only), ai-resources/.claude/hooks/backup-session-plan.sh (Item 4 read-only smoke-test, no edits)
+- Stop if: /qc-pass returns REVISE with operator-disagreement on Items 1 or 2, or Item 4 smoke-test surfaces a material regex defect requiring escalation
+
+**Plan source:** Plan agreed in chat after /open-items + /resolve-repo-problem triage (free-text-intent path per 2026-05-29 usage-log pattern: "skip planning-chain when input IS the plan"). Marker-scoped plan at `logs/session-plan-S4.md` captures the same content for downstream readers (/drift-check, /contract-check, /wrap-session).

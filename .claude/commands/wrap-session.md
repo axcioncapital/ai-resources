@@ -42,7 +42,8 @@ Accept shorthand: "yy" / "yes both" / "both" = both yes; "nn" / "skip both" = bo
      Sibling: workspace-root /.claude/commands/wrap-session.md (Phase 3 copy, NOT a symlink — operates on workspace-level logs/session-notes.md).
      Symmetric counterpart: /session-start Step 0.5 mtime guard (Plan 2, shipped 2026-05-26) — that guard covers the /prime → /session-start window; this guard covers the post-/session-start → wrap window. Both may fire on different sides of the same concurrent-session incident.
      Detection signals: (1) count of `^## YYYY-MM-DD` today-headers, (2) count of `^**Mandate:**` lines. Both depend on the conventions set by Step 4 below (header), `session-start.md` Step 3 (mandate line), and `check-archive.sh` (archive). If a future writer emits a non-conforming today-header or non-conforming mandate line, the corresponding signal returns a FALSE NEGATIVE — foreign content is silently clobbered (the exact bug this guard exists to prevent recurs silently). Keep both formats in sync with their writers.
-     Classifier (id-32, 2026-05-28): when FOREIGN >= 1, the classifier walks `^## YYYY-MM-DD` headers in BOTH WT and HEAD, tracks each mandate's enclosing-date, and emits FOREIGN_CLASS = CONCURRENT (today-extras only) / REMNANT (prior-day-extras only) / MIXED (both) / UNKNOWN (FOREIGN by header-count only — rare; defaults to CONCURRENT-shape STOP message). The classifier assumes PRIME_RAN represents a TODAY-dated mandate appended by this session — if a future /prime change appends prior-day content, EXTRA_TODAY_MANDATES math will need to subtract differently.
+     Own-contribution attribution (id-32 follow-up, friction 14:20 2026-05-28 — marker-aware, shipped 2026-05-29): when `logs/.session-marker` is present and dated today, the detector counts THIS session's actual marker-bearing today-headers (`^## TODAY — Session ${MARKER}`) and the mandate lines beneath them in both WT and HEAD. The delta is exact own-contribution — handles auto-mode N-task chains where `/prime` Step 8c.3 fires N times per session and appends N marker-bearing headers. When marker is absent (workspace-root, pre-Phase-2 session), falls back to `PRIME_RAN` binary subtraction (legacy behavior). Both paths feed `OWN_HEADERS_SUBTRACT` and `OWN_MANDATES_SUBTRACT`, which downstream consumers (FOREIGN_HEADERS, FOREIGN_MANDATES, EXTRA_TODAY_MANDATES) use as the own-subtractor.
+     Classifier (id-32, 2026-05-28): when FOREIGN >= 1, the classifier walks `^## YYYY-MM-DD` headers in BOTH WT and HEAD, tracks each mandate's enclosing-date, and emits FOREIGN_CLASS = CONCURRENT (today-extras only) / REMNANT (prior-day-extras only) / MIXED (both) / UNKNOWN (FOREIGN by header-count only — rare; defaults to CONCURRENT-shape STOP message). EXTRA_TODAY_MANDATES uses `OWN_MANDATES_SUBTRACT` (marker-aware or PRIME_RAN fallback) as the subtractor.
    -->
 
    Background: concurrent sessions can both write to `logs/session-notes.md` between this session's `/prime`+`/session-start` and its `/wrap-session`. If a foreign session's content is in the working tree when this session's wrap stages `logs/session-notes.md`, its content ships under this session's wrap commit (the failure mode logged 2026-05-27, commit `14d2a04`). This guard fires **before** Step 4 writes — symmetric to `/session-start` Step 0.5 mtime guard (pre-write posture).
@@ -73,26 +74,68 @@ Accept shorthand: "yy" / "yes both" / "both" = both yes; "nn" / "skip both" = bo
    ADDED_HEADERS=$((WT_HEADERS - HEAD_HEADERS))
    ADDED_MANDATES=$((WT_MANDATES - HEAD_MANDATES))
 
-   # Determine whether this session ran /prime + /session-start (and thus contributed at most 1 own today-header AND 1 own mandate-line pre-wrap).
-   # Uses the `logs/.prime-mtime` marker that /prime Step 8a/8b writes after appending today's header.
-   PRIME_RAN=0
-   if [ -f logs/.prime-mtime ]; then
-     MARKER=$(cat logs/.prime-mtime 2>/dev/null | tr -dc '0-9')
-     MARKER=${MARKER:-0}
-     TODAY_EPOCH=$(date -j -f "%Y-%m-%d %H:%M:%S" "${TODAY} 00:00:00" "+%s" 2>/dev/null \
-       || date -d "${TODAY} 00:00:00" "+%s" 2>/dev/null \
-       || echo 0)
-     # Marker mtime ≥ today-midnight → /prime ran this session today.
-     if [ -n "${MARKER}" ] && [ "${MARKER}" -ge "${TODAY_EPOCH}" ] 2>/dev/null; then
-       PRIME_RAN=1
-     fi
+   # Determine this session's own contribution to today-headers and today-mandate-lines.
+   # Two paths: marker-aware (preferred, post-Phase-2+3) and PRIME_RAN binary (legacy fallback).
+   # See PAIRED CONTRACT block above for the attribution rationale.
+   MARKER=""
+   if [ -f logs/.session-marker ]; then
+     MARKER_LINE=$(cat logs/.session-marker 2>/dev/null)
+     case "${MARKER_LINE}" in
+       "${TODAY} "*) MARKER=$(echo "${MARKER_LINE}" | awk '{print $2}');;
+     esac
    fi
 
-   # Expected own contribution: up to 1 today-header (may be 0 if /prime reused an existing today-header from a parallel session) and up to 1 mandate-line.
-   # FOREIGN_HEADERS allows the header-count delta to exceed PRIME_RAN; FOREIGN_MANDATES allows the mandate-count delta to exceed PRIME_RAN.
-   # If EITHER signal indicates foreign content, STOP.
-   FOREIGN_HEADERS=$((ADDED_HEADERS - PRIME_RAN))
-   FOREIGN_MANDATES=$((ADDED_MANDATES - PRIME_RAN))
+   if [ -n "${MARKER}" ]; then
+     # Marker-aware path: count own marker-bearing headers + mandates under those headers in WT and HEAD.
+     OWN_WT_HEADERS=$(grep -c "^## ${TODAY} — Session ${MARKER}" logs/session-notes.md 2>/dev/null)
+     OWN_WT_HEADERS=${OWN_WT_HEADERS:-0}
+     OWN_HEAD_HEADERS=$(git show HEAD:logs/session-notes.md 2>/dev/null | grep -c "^## ${TODAY} — Session ${MARKER}")
+     OWN_HEAD_HEADERS=${OWN_HEAD_HEADERS:-0}
+     OWN_ADDED_HEADERS=$((OWN_WT_HEADERS - OWN_HEAD_HEADERS))
+
+     OWN_WT_MANDATES=$(awk -v marker="${MARKER}" -v today="${TODAY}" '
+       /^## [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/ {
+         in_own = ($0 ~ ("^## " today " — Session " marker "$"))
+       }
+       /^\*\*Mandate:\*\*/ && in_own { c++ }
+       END { print c+0 }
+     ' logs/session-notes.md 2>/dev/null)
+     OWN_WT_MANDATES=${OWN_WT_MANDATES:-0}
+     OWN_HEAD_MANDATES=$(git show HEAD:logs/session-notes.md 2>/dev/null | awk -v marker="${MARKER}" -v today="${TODAY}" '
+       /^## [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/ {
+         in_own = ($0 ~ ("^## " today " — Session " marker "$"))
+       }
+       /^\*\*Mandate:\*\*/ && in_own { c++ }
+       END { print c+0 }
+     ')
+     OWN_HEAD_MANDATES=${OWN_HEAD_MANDATES:-0}
+     OWN_ADDED_MANDATES=$((OWN_WT_MANDATES - OWN_HEAD_MANDATES))
+
+     OWN_HEADERS_SUBTRACT=${OWN_ADDED_HEADERS}
+     OWN_MANDATES_SUBTRACT=${OWN_ADDED_MANDATES}
+     PRIME_RAN=0  # legacy field; not used on marker-aware path; logged as 0 for trace continuity
+   else
+     # Legacy PRIME_RAN binary path: marker absent (workspace-root, pre-Phase-2 session).
+     # Uses the `logs/.prime-mtime` marker that /prime Step 8a/8b/8c writes after appending today's header.
+     PRIME_RAN=0
+     if [ -f logs/.prime-mtime ]; then
+       MTIME_MARKER=$(cat logs/.prime-mtime 2>/dev/null | tr -dc '0-9')
+       MTIME_MARKER=${MTIME_MARKER:-0}
+       TODAY_EPOCH=$(date -j -f "%Y-%m-%d %H:%M:%S" "${TODAY} 00:00:00" "+%s" 2>/dev/null \
+         || date -d "${TODAY} 00:00:00" "+%s" 2>/dev/null \
+         || echo 0)
+       # Marker mtime ≥ today-midnight → /prime ran this session today.
+       if [ -n "${MTIME_MARKER}" ] && [ "${MTIME_MARKER}" -ge "${TODAY_EPOCH}" ] 2>/dev/null; then
+         PRIME_RAN=1
+       fi
+     fi
+     OWN_HEADERS_SUBTRACT=${PRIME_RAN}
+     OWN_MANDATES_SUBTRACT=${PRIME_RAN}
+   fi
+
+   # If EITHER signal indicates content beyond OWN_*_SUBTRACT, STOP.
+   FOREIGN_HEADERS=$((ADDED_HEADERS - OWN_HEADERS_SUBTRACT))
+   FOREIGN_MANDATES=$((ADDED_MANDATES - OWN_MANDATES_SUBTRACT))
    FOREIGN=${FOREIGN_HEADERS}
    if [ "${FOREIGN_MANDATES}" -gt "${FOREIGN}" ]; then
      FOREIGN=${FOREIGN_MANDATES}
@@ -120,7 +163,7 @@ Accept shorthand: "yy" / "yes both" / "both" = both yes; "nn" / "skip both" = bo
      HEAD_TODAY_MANDATES=${HEAD_TODAY_MANDATES:-0}
      HEAD_PRIOR_MANDATES=$(git show HEAD:logs/session-notes.md 2>/dev/null | awk -v today="${TODAY}" '/^## [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/{match($0,/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/);d=substr($0,RSTART,RLENGTH)} /^\*\*Mandate:\*\*/ && d!=today && d!="" {c++} END{print c+0}')
      HEAD_PRIOR_MANDATES=${HEAD_PRIOR_MANDATES:-0}
-     EXTRA_TODAY_MANDATES=$((WT_TODAY_MANDATES - HEAD_TODAY_MANDATES - PRIME_RAN))
+     EXTRA_TODAY_MANDATES=$((WT_TODAY_MANDATES - HEAD_TODAY_MANDATES - OWN_MANDATES_SUBTRACT))
      EXTRA_PRIOR_MANDATES=$((WT_PRIOR_MANDATES - HEAD_PRIOR_MANDATES))
      if [ "${EXTRA_TODAY_MANDATES}" -ge 1 ] && [ "${EXTRA_PRIOR_MANDATES}" -ge 1 ]; then
        FOREIGN_CLASS="MIXED"
@@ -131,7 +174,7 @@ Accept shorthand: "yy" / "yes both" / "both" = both yes; "nn" / "skip both" = bo
      fi
    fi
 
-   echo "GUARD: headers WT=${WT_HEADERS} HEAD=${HEAD_HEADERS} added=${ADDED_HEADERS} | mandates WT=${WT_MANDATES} HEAD=${HEAD_MANDATES} added=${ADDED_MANDATES} | PRIME_RAN=${PRIME_RAN} FOREIGN=${FOREIGN} FOREIGN_CLASS=${FOREIGN_CLASS} OWN_CONTENT_IN_HEAD=${OWN_CONTENT_IN_HEAD}"
+   echo "GUARD: headers WT=${WT_HEADERS} HEAD=${HEAD_HEADERS} added=${ADDED_HEADERS} | mandates WT=${WT_MANDATES} HEAD=${HEAD_MANDATES} added=${ADDED_MANDATES} | MARKER=${MARKER:-none} OWN_HEADERS_SUBTRACT=${OWN_HEADERS_SUBTRACT} OWN_MANDATES_SUBTRACT=${OWN_MANDATES_SUBTRACT} PRIME_RAN=${PRIME_RAN} FOREIGN=${FOREIGN} FOREIGN_CLASS=${FOREIGN_CLASS} OWN_CONTENT_IN_HEAD=${OWN_CONTENT_IN_HEAD}"
    if [ "${FOREIGN}" -ge 1 ]; then
      echo "--- Today-headers in working tree ---"
      grep -n "^## ${TODAY}" logs/session-notes.md 2>/dev/null
@@ -191,11 +234,11 @@ Accept shorthand: "yy" / "yes both" / "both" = both yes; "nn" / "skip both" = bo
 
      Do not offer a "commit the union" override in ANY branch. Auto-merging session notes is a silent-conflict-resolution anti-pattern — the operator resolves manually.
 
-   - **Edge case (`FOREIGN < 0`)** — `PRIME_RAN > ADDED` for one or both signals, i.e., the `.prime-mtime` marker says `/prime` ran but the working tree shows no expected own-content delta vs HEAD. There are two distinct sub-cases, distinguished by `OWN_CONTENT_IN_HEAD`. **No concurrent-session risk in either case** — proceed to Step 4. Branch by `OWN_CONTENT_IN_HEAD`:
+   - **Edge case (`FOREIGN < 0`)** — `OWN_HEADERS_SUBTRACT > ADDED_HEADERS` (or `OWN_MANDATES_SUBTRACT > ADDED_MANDATES`) for one or both signals, i.e., the session-state markers say `/prime` ran AND own-contribution is positive but the working tree shows a smaller delta vs HEAD. There are two distinct sub-cases, distinguished by `OWN_CONTENT_IN_HEAD`. **No concurrent-session risk in either case** — proceed to Step 4. Branch by `OWN_CONTENT_IN_HEAD`:
 
-     - **`OWN_CONTENT_IN_HEAD=1`** — HEAD already contains today's header + mandate. This session's content was shipped to HEAD by a **mid-session commit** of `logs/session-notes.md` (or by a prior session's wrap landing today). This is the common path in active development — `/prime` writes the today-header + mandate, an intermediate commit ships them to HEAD, and at wrap time WT == HEAD so `ADDED_*` is 0 while `PRIME_RAN` is 1. **Proceed silently to Step 4 — no chat note.**
+     - **`OWN_CONTENT_IN_HEAD=1`** — HEAD already contains today's header + mandate. This session's content was shipped to HEAD by a **mid-session commit** of `logs/session-notes.md` (or by a prior session's wrap landing today). This is the common path in active development — `/prime` writes the today-header + mandate, an intermediate commit ships them to HEAD, and at wrap time WT == HEAD so `ADDED_*` is 0 while the own-subtractor (marker-aware count or `PRIME_RAN`) is positive. **Proceed silently to Step 4 — no chat note.**
 
-     - **`OWN_CONTENT_IN_HEAD=0`** — HEAD lacks today's header or mandate too, yet `PRIME_RAN=1`. Genuinely odd state. Most likely causes: (a) `/prime` Step 8a/8b/8c ran in plan-mode and the marker was written without the header append, (b) the operator manually pruned the entry after `/prime` ran, or (c) `/session-start` was skipped after `/prime`. Proceed to Step 4 with one-line chat note: `Note: prime-mtime marker present but expected own-content absent in WT AND HEAD — proceeding`.
+     - **`OWN_CONTENT_IN_HEAD=0`** — HEAD lacks today's header or mandate too, yet the own-subtractor is positive (marker-aware: `OWN_ADDED_HEADERS > 0` is impossible under this branch since OWN_WT_HEADERS would be 0; PRIME_RAN-path: `PRIME_RAN=1`). Genuinely odd state. Most likely causes: (a) `/prime` Step 8a/8b/8c ran in plan-mode and the markers were written without the header append, (b) the operator manually pruned the entry after `/prime` ran, or (c) `/session-start` was skipped after `/prime`. Proceed to Step 4 with one-line chat note: `Note: session-state markers present but expected own-content absent in WT AND HEAD — proceeding`.
 
 4. Append a session note at the **END** of `/logs/session-notes.md` (newest entry is the LAST entry; do NOT prepend at the top — `check-archive.sh` interprets top entries as oldest and will archive them). Use conversation context and the operator's summary to populate:
    - `## {date} — {one-line title}` (e.g., "Created supplementary-query-brief-drafter skill")
