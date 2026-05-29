@@ -48,7 +48,7 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
    Rationale: dual-repo Cluster A blindspot — Next Steps written in a project session may have been resolved by commits that landed in the ai-resources repo (canonical command edits, doc edits, log-status flips), and vice versa. Checking only the cwd-repo's git log misses those cross-repo resolutions and surfaces likely-DONE items as still-open in the menu.
 
    For each Next Steps bullet, check if any commit subject across the merged result set contains keywords from that bullet. Classify the bullet:
-   - **Match found → likely-DONE.** Do NOT promote it into the numbered menu (step 5) — a 3-slot menu must not spend a slot on probably-finished work.
+   - **Match found → likely-DONE.** Do NOT promote it into the numbered menu (step 5) — the menu must not spend slots on probably-finished work.
    - **No match → still open.** It becomes a carryover/menu candidate for step 5.
 
    `/prime` never edits `session-notes.md`, so every Next Step bullet stays untouched in the source file — the operator can verify there directly if a likely-DONE call looks wrong. If either git command fails or returns nothing, fall through to whichever result set succeeded; if both fail, treat all bullets as still-open and continue.
@@ -97,7 +97,7 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
    - Step 2 — unchecked `next-up.md` items → tag `[next-up]`.
    - Step 3 — unresolved HIGH/urgent problems → tag `[urgent]`.
 
-   Rank: **urgent → carryover → next-up.** Cap the menu at **3 items.** If fewer than 3 candidates exist, show fewer. If zero candidates exist, show no menu (step 6 handles this).
+   Rank: **urgent → carryover → next-up.** Cap the menu at **6 items.** If fewer than 6 candidates exist, show fewer. If zero candidates exist, show no menu (step 6 handles this).
 
    Convert each menu item to **one plain-English sentence** (short sentences, common words — the operator is a non-developer):
    - Keep command names and file names literal (`/kb-review`, `next-up.md`).
@@ -128,21 +128,26 @@ Next tasks:
   1. {plain-English task}   [{tag}]
   2. {plain-English task}   [{tag}]
   3. {plain-English task}   [{tag}]
+  4. {plain-English task}   [{tag}]
+  5. {plain-English task}   [{tag}]
+  6. {plain-English task}   [{tag}]
 
-Type 1–3 to start that task, type `auto` to run the #1 item end-to-end with a single approval gate (no per-stage prompts), or tell me something else.
+Type 1–6 to start that task. Type `auto` to run the #1 item end-to-end with a single approval gate, or `auto 1,3` (or `auto 1 3`) to run several items back-to-back under one combined approval gate. Or tell me something else.
 
 Full backlog & inbox: /open-items
 ```
 
-   If step 5 produced no menu items, replace the `Next tasks:` block and the `Type 1–3 …` line with the single line: `No tracked next steps — tell me what to work on.`
+   Render only as many numbered lines as step 5 produced (1 to 6). If step 5 produced no menu items, replace the `Next tasks:` block and the `Type 1–6 …` line with the single line: `No tracked next steps — tell me what to work on.`
 
    First session ever (no `session-notes.md` from step 1): replace the `Last session` line with `First session — no prior notes.`
 
 7. **Wait for the operator's response.** Classify the reply:
-   - A bare number `1`, `2`, or `3` — or `do 2` / `task 2` / `option 2` — → **task selection.** Go to step 8a.
-   - `auto` / `a` (case-insensitive, trimmed) — or `do auto` / `run auto` → **auto mode.** Go to step 8c.
+   - A bare number `1` through `6` (within the rendered menu range) — or `do 2` / `task 2` / `option 2` — → **task selection.** Go to step 8a.
+   - `auto` / `a` (case-insensitive, trimmed) — or `do auto` / `run auto` → **auto mode**, picked item = #1. Go to step 8c.
+   - `auto N` (single number within menu range) → **auto mode**, picked item = #N. Go to step 8c.
+   - `auto N,M,...` or `auto N M ...` (multiple numbers within menu range, separated by commas or spaces) → **auto mode (multi-item)**, picked items = those numbers in the order given. Go to step 8c.
    - Anything else (a sentence, a different task, a question) → **free-text intent.** Go to step 8b.
-   - If the reply is ambiguous (a number outside 1–3, or "2 but first do X"), ask once for a plain number, the word `auto`, or a sentence, then classify the re-response.
+   - If the reply is ambiguous (a number outside the rendered menu range, an `auto N` where N is outside range, or "2 but first do X"), ask once for a plain number, the word `auto` (optionally followed by one or more item numbers), or a sentence, then classify the re-response.
 
 8a. **Task selected by number.**
    1. Resolve the number to its menu item → `TASK_TEXT` (the plain-English task text).
@@ -223,11 +228,18 @@ Full backlog & inbox: /open-items
       c. After `/session-start` finishes, invoke the `/session-plan` command with `TASK_TEXT` as its arguments (becomes the intent). It writes `logs/session-plan-${MARKER}.md` (marker-scoped per `docs/session-marker.md`). If THIS session's marker-scoped plan already exists, `/session-plan` Step 0 surfaces a 3-option keep/overwrite/pass2 prompt — that is expected mid-chain; the operator answers it normally.
       d. **Begin execution immediately** under full autonomy (per workspace CLAUDE.md Autonomy Rules). No second `go`/`proceed` confirmation required — the operator stating the work directly IS the go signal. This is 8b's structural delta vs 8a, which pauses for explicit `go` after `/session-plan`.
 
-8c. **Auto mode.** The operator typed `auto` — run the top menu item end-to-end with a single approval gate and no per-stage prompts.
+8c. **Auto mode.** The operator typed `auto` (optionally with item numbers) — run the picked menu item(s) end-to-end with a single combined approval gate and no per-stage prompts.
 
-   1. **Resolve PICKED_ITEM.** Set `PICKED_ITEM` = the #1 item from the menu built in Step 5 (rank order: urgent → carryover → next-up). If the menu has zero items, output `No tracked next steps — auto mode needs a task. Tell me what to work on.` and stop.
+   1. **Resolve PICKED_ITEMS.** Parse the operator's reply:
+      - `auto` / `a` (no number) → `PICKED_ITEMS` = [item #1 from the menu built in Step 5].
+      - `auto N` → `PICKED_ITEMS` = [item #N].
+      - `auto N,M,...` or `auto N M ...` → `PICKED_ITEMS` = [item #N, item #M, ...] in the order the operator gave them. Deduplicate while preserving first-seen order.
 
-   2. **Plan-mode guard.** If a plan-mode system reminder is present in context, output: `Auto mode noted: {PICKED_ITEM}. You're in plan mode — I won't write anything yet. Exit plan mode and re-send 'auto' (or 'go') to proceed.` Then stop.
+      Validate that every requested number is within the rendered menu range. If any number is out of range, ask once for a valid `auto` reply and re-classify (per Step 7 ambiguity rule). If the menu has zero items, output `No tracked next steps — auto mode needs a task. Tell me what to work on.` and stop.
+
+      `PICKED_ITEMS_TEXT` is a short comma-joined preview of the picked items' plain-English text (used in operator-facing messages below). `SINGLE_ITEM` is true when `PICKED_ITEMS` has exactly one entry.
+
+   2. **Plan-mode guard.** If a plan-mode system reminder is present in context, output: `Auto mode noted: {PICKED_ITEMS_TEXT}. You're in plan mode — I won't write anything yet. Exit plan mode and re-send 'auto' (or 'go') to proceed.` Then stop.
 
    3. **Marker resolution + marker-bearing header + mtime marker** (same contract as Step 8a.3.a — see `docs/session-marker.md`):
 
@@ -244,7 +256,11 @@ Full backlog & inbox: /open-items
       echo "${TODAY} ${MARKER}" > logs/.session-marker
       ```
 
-      Read last ~10 lines of `logs/session-notes.md`: if `## YYYY-MM-DD — Session ${MARKER}` is present, reuse and append `PICKED_ITEM` text as a work-description line. Else create new `## YYYY-MM-DD — Session ${MARKER}` header with `PICKED_ITEM`.
+      Read last ~10 lines of `logs/session-notes.md`: if `## YYYY-MM-DD — Session ${MARKER}` is present, reuse and append the work-description line. Else create new `## YYYY-MM-DD — Session ${MARKER}` header.
+
+      Work-description line text:
+      - If `SINGLE_ITEM`: the picked item's plain-English text.
+      - If multi-item: `Auto multi-item: {item-N text}; {item-M text}; ...` listing every picked item separated by `;` in operator order.
 
       Then write `logs/.prime-mtime` (after the header append, never before):
 
@@ -253,27 +269,40 @@ Full backlog & inbox: /open-items
         || stat -c %Y logs/session-notes.md 2>/dev/null > logs/.prime-mtime
       ```
 
-   4. **Derive mandate fields** inline (matches `/session-start` Step 2 logic without the confirmation prompt):
-      - `work_scope` — one sentence from `PICKED_ITEM` naming the work and its concrete deliverable.
-      - `exit_condition` — an observable condition (file written, item checked off, finding addressed, commit landed). If not derivable, default to `task closed in source file`.
-      - `out_of_scope` — `(none stated)` unless `PICKED_ITEM` explicitly bounds itself.
-      - `files_in_scope` — infer from `PICKED_ITEM` source path and any file references in its body. Flag as `(inferred)` per `/session-start` Step 3 convention.
-      - `stop_if` — `(none stated)` unless `PICKED_ITEM` carries a `[BLOCKING]`-style halt condition.
+   4. **Derive mandate fields** inline (matches `/session-start` Step 2 logic without the confirmation prompt). Apply to each picked item, then compose:
+      - `work_scope` — one sentence naming the work and its concrete deliverable. For `SINGLE_ITEM`, derived from the picked item. For multi-item, compose as `Complete picked menu items: (1) {item-N work + deliverable}; (2) {item-M work + deliverable}; ...` listing every picked item.
+      - `exit_condition` — an observable condition (file written, item checked off, finding addressed, commit landed). For `SINGLE_ITEM`, the item's exit. For multi-item, `all picked items closed in their respective source files` unless every item shares a single concrete exit, in which case use that.
+      - `out_of_scope` — `(none stated)` unless any picked item explicitly bounds itself; in multi-item mode, combine any bounds with `;`.
+      - `files_in_scope` — union of inferred source paths across all picked items. Flag as `(inferred)` per `/session-start` Step 3 convention.
+      - `stop_if` — `(none stated)` unless any picked item carries a `[BLOCKING]`-style halt condition; if multiple do, combine with `;`.
       - `allowed_inputs`, `required_outputs` — leave absent (no `(none stated)` placeholder).
 
    5. **Derive plan fields** inline (matches `/session-plan` Step 2 + 5–7 logic without the per-stage prompts):
-      - `INTENT` — one-sentence summary of `PICKED_ITEM`.
-      - `RECOMMENDED_MODEL` — apply `/session-plan` Step 2 three-tier heuristic (deciding → opus; doing → sonnet; mechanical → haiku). Compare to `ACTIVE_MODEL` from the system-prompt context. Emit `→ /model {shortname}` on mismatch.
-      - `AUTONOMY_POSTURE` — `Full autonomy` default; downgrade to `Gated` if `PICKED_ITEM` touches structural change classes (hook edits, permission changes, cross-cutting CLAUDE.md edits, new commands/skills, new symlinks, new always-loaded content, automation with shared-state effects — full list: `ai-resources/docs/audit-discipline.md`).
-      - `STRUCTURAL_RISK` — boolean: true if any structural class is likely.
+      - `INTENT` — one-sentence summary. For `SINGLE_ITEM`, the item's summary. For multi-item, e.g. `Run {N} picked menu items in order: {short label-1}; {short label-2}; ...`.
+      - `RECOMMENDED_MODEL` — apply `/session-plan` Step 2 three-tier heuristic (deciding → opus; doing → sonnet; mechanical → haiku) to the picked items as a whole. For multi-item, pick the higher-cognitive-load tier across the set (e.g., one deciding item + four doing items → opus). Compare to `ACTIVE_MODEL` from the system-prompt context. Emit `→ /model {shortname}` on mismatch.
+      - `AUTONOMY_POSTURE` — `Full autonomy` default; downgrade to `Gated` if any picked item touches structural change classes (hook edits, permission changes, cross-cutting CLAUDE.md edits, new commands/skills, new symlinks, new always-loaded content, automation with shared-state effects — full list: `ai-resources/docs/audit-discipline.md`).
+      - `STRUCTURAL_RISK` — boolean: true if any picked item triggers any structural class.
 
-   6. **Single approval gate.** Emit one block — this is the only operator-facing pause in auto mode. The block below uses chat-echo styling (icons `→` / `·`, multi-bullet layout); the disk-write at Step 8c.7 follows the load-bearing parse contract instead. Do not propagate the gate-block styling to the disk write.
+   6. **Single approval gate.** Emit one block — this is the only operator-facing pause in auto mode, regardless of how many items were picked. The block below uses chat-echo styling (icons `→` / `·`, multi-bullet layout); the disk-write at Step 8c.7 follows the load-bearing parse contract instead. Do not propagate the gate-block styling to the disk write.
+
+      For `SINGLE_ITEM`, render the **Picked item** line as `**Picked item:** {item text}` with a single **Source** line.
+
+      For multi-item, replace the single **Picked item** / **Source** pair with a `**Picked items:**` numbered list — one line per picked item with its menu number, plain-English text, and source path link. Example:
+
+      ```
+      **Picked items:**
+        1. {item-1 text}  ·  [{source-1 path}]({source-1 path})
+        3. {item-3 text}  ·  [{source-3 path}]({source-3 path})
+        5. {item-5 text}  ·  [{source-5 path}]({source-5 path})
+      ```
+
+      Full gate block:
 
       ```
       ## Auto Mode — {YYYY-MM-DD}
 
-      **Picked item:** {PICKED_ITEM}
-      **Source:** [{source path}]({source path})
+      {single-item: **Picked item:** {item text}  /  **Source:** [{source path}]({source path})}
+      {multi-item: **Picked items:** block as shown above}
 
       **Mandate**
       → Work: {work_scope} — complete fully within this session where context allows.
@@ -321,6 +350,11 @@ Full backlog & inbox: /open-items
 
    8. **Write plan.** Write to `logs/session-plan-${MARKER}.md` (marker resolved in step 3; canonical contract `docs/session-marker.md`) using `/session-plan` Step 7 schema (`## Intent`, `## Model`, `## Source Material`, `## Findings / Items to Address`, `## Execution Sequence`, `## Scope Alternatives`, `## Autonomy Posture`, `## Risk`). Apply `/session-plan` Step 7 self-check (length floor ≥25 substantive lines, concrete Findings, concrete Execution Sequence, realistic Scope Alternatives).
 
+      For multi-item auto, structure the plan so each picked item is visible:
+      - `## Source Material` lists every picked item's source path (one bullet per item).
+      - `## Findings / Items to Address` has one subsection (`### Item N — {short label}`) per picked item, capturing the concrete findings for that item.
+      - `## Execution Sequence` groups stages by picked item in the operator-given order (e.g., `### Stage 1 — Item 1: {label}`, `### Stage 2 — Item 3: {label}`, …). No per-item operator pause between stages — the single approval gate at Step 8c.6 covers them all.
+
       Under TOCTOU Phase 2+3 atomic, no concurrent-session collision check is needed — each session writes its own marker-scoped plan, so foreign-session collisions are structurally impossible.
 
    9. **Run `/risk-check` if STRUCTURAL_RISK is true.** This is the plan-time gate per workspace Autonomy Rules #9. The single approval gate at step 8c.6 disclosed this in advance, so the operator is not surprised. Verdict handling:
@@ -329,7 +363,7 @@ Full backlog & inbox: /open-items
 
        If STRUCTURAL_RISK is false, skip this step silently.
 
-   10. **Begin execution under {AUTONOMY_POSTURE}.** No further confirmation gate — the Step 8c.6 approval covered execution. Run the plan to completion. Complete the mandate fully within this session where context allows; if context is clearly constrained (extended session, approaching compaction), follow the workspace `Context constraint deferral` rule — flag the deferral and log it, do not rush.
+   10. **Begin execution under {AUTONOMY_POSTURE}.** No further confirmation gate — the Step 8c.6 approval covered execution for every picked item. For multi-item auto, run the items in the operator-given order; do NOT pause between items. Complete the mandate fully within this session where context allows; if context is clearly constrained (extended session, approaching compaction), follow the workspace `Context constraint deferral` rule — flag the deferral and log it, do not rush. Between items, emit a brief between-gate summary per workspace `Between-gate summaries` rule (one short line: what just finished, what's next).
 
        **During execution:**
        - Run `/qc-pass` on substantive artifacts before declaring them complete.
