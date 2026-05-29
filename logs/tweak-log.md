@@ -12,3 +12,7 @@ Distinct from `maintenance-observations.md` (per-Friday-Act repo-health observat
 Append-only. Do not hand-edit prior blocks. Schema is whatever `/tweak` writes — see `.claude/commands/tweak.md` Step 5a for the canonical block shape.
 
 ---
+
+## 2026-05-29 — /tweak invocations
+
+- `/tweak triage` — automatically or create a prioritized list automatically — commit 9d9221b
