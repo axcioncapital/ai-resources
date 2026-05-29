@@ -98,6 +98,15 @@ Accept shorthand: "yy" / "yes both" / "both" = both yes; "nn" / "skip both" = bo
      FOREIGN=${FOREIGN_MANDATES}
    fi
 
+   # FOREIGN<0 discriminator: distinguishes the common mid-session-commit case (this session's
+   # today-header + mandate were shipped to HEAD by an intermediate commit) from genuinely odd
+   # FOREIGN<0 states (plan-mode /prime, manual prune, skipped /session-start). Used by the
+   # Step 3 edge-case interpretation below to silence the common case.
+   OWN_CONTENT_IN_HEAD=0
+   if [ "${HEAD_HEADERS}" -ge 1 ] && [ "${HEAD_MANDATES}" -ge 1 ]; then
+     OWN_CONTENT_IN_HEAD=1
+   fi
+
    # Classify FOREIGN by enclosure-date of mandates (id-32, 2026-05-28).
    # Walks awk over WT + HEAD, tracks each mandate's enclosing `^## YYYY-MM-DD` header, counts by today vs prior-day.
    # CONCURRENT = today-extras only (parallel terminal); REMNANT = prior-day-extras only (orphan from a prior session that ran /prime + /session-start but never /wrap-session); MIXED = both; UNKNOWN = neither (FOREIGN by header-count only — safe default → CONCURRENT-shape STOP message).
@@ -122,7 +131,7 @@ Accept shorthand: "yy" / "yes both" / "both" = both yes; "nn" / "skip both" = bo
      fi
    fi
 
-   echo "GUARD: headers WT=${WT_HEADERS} HEAD=${HEAD_HEADERS} added=${ADDED_HEADERS} | mandates WT=${WT_MANDATES} HEAD=${HEAD_MANDATES} added=${ADDED_MANDATES} | PRIME_RAN=${PRIME_RAN} FOREIGN=${FOREIGN} FOREIGN_CLASS=${FOREIGN_CLASS}"
+   echo "GUARD: headers WT=${WT_HEADERS} HEAD=${HEAD_HEADERS} added=${ADDED_HEADERS} | mandates WT=${WT_MANDATES} HEAD=${HEAD_MANDATES} added=${ADDED_MANDATES} | PRIME_RAN=${PRIME_RAN} FOREIGN=${FOREIGN} FOREIGN_CLASS=${FOREIGN_CLASS} OWN_CONTENT_IN_HEAD=${OWN_CONTENT_IN_HEAD}"
    if [ "${FOREIGN}" -ge 1 ]; then
      echo "--- Today-headers in working tree ---"
      grep -n "^## ${TODAY}" logs/session-notes.md 2>/dev/null
@@ -182,7 +191,11 @@ Accept shorthand: "yy" / "yes both" / "both" = both yes; "nn" / "skip both" = bo
 
      Do not offer a "commit the union" override in ANY branch. Auto-merging session notes is a silent-conflict-resolution anti-pattern — the operator resolves manually.
 
-   - **Edge case (`FOREIGN < 0`)** — this means `PRIME_RAN > ADDED` for one or both signals, i.e., `.prime-mtime` marker claims `/prime` ran but no today-header or mandate-line was added. Most likely `/prime` Step 8a/8b ran in plan-mode (no write), the operator manually pruned an entry, or `/session-start` was skipped after `/prime`. Proceed silently to Step 4 — no concurrent-session risk, but log the discrepancy in chat as `Note: prime-mtime marker present but expected own-content absent in WT — proceeding`.
+   - **Edge case (`FOREIGN < 0`)** — `PRIME_RAN > ADDED` for one or both signals, i.e., the `.prime-mtime` marker says `/prime` ran but the working tree shows no expected own-content delta vs HEAD. There are two distinct sub-cases, distinguished by `OWN_CONTENT_IN_HEAD`. **No concurrent-session risk in either case** — proceed to Step 4. Branch by `OWN_CONTENT_IN_HEAD`:
+
+     - **`OWN_CONTENT_IN_HEAD=1`** — HEAD already contains today's header + mandate. This session's content was shipped to HEAD by a **mid-session commit** of `logs/session-notes.md` (or by a prior session's wrap landing today). This is the common path in active development — `/prime` writes the today-header + mandate, an intermediate commit ships them to HEAD, and at wrap time WT == HEAD so `ADDED_*` is 0 while `PRIME_RAN` is 1. **Proceed silently to Step 4 — no chat note.**
+
+     - **`OWN_CONTENT_IN_HEAD=0`** — HEAD lacks today's header or mandate too, yet `PRIME_RAN=1`. Genuinely odd state. Most likely causes: (a) `/prime` Step 8a/8b/8c ran in plan-mode and the marker was written without the header append, (b) the operator manually pruned the entry after `/prime` ran, or (c) `/session-start` was skipped after `/prime`. Proceed to Step 4 with one-line chat note: `Note: prime-mtime marker present but expected own-content absent in WT AND HEAD — proceeding`.
 
 4. Append a session note at the **END** of `/logs/session-notes.md` (newest entry is the LAST entry; do NOT prepend at the top — `check-archive.sh` interprets top entries as oldest and will archive them). Use conversation context and the operator's summary to populate:
    - `## {date} — {one-line title}` (e.g., "Created supplementary-query-brief-drafter skill")
