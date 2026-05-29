@@ -291,3 +291,32 @@
 - **Parallelize planning-phase reads (~3–5k/session):** The four planning reads + four /decide discovery reads are dependency-free. Batching all 8 into 2 parallel Read calls saves the inter-call overhead. Smaller than the primary because token cost per sequential Read is modest; the lever is wall-clock and orchestration cleanliness more than token volume.
 - **Cap /consult advisory return (~2–4k/session):** The system-owner subagent's full advisory text gets surfaced into main session — apply the standard sub-30-line summary contract from `ai-resources/CLAUDE.md` § Subagent Contracts. Smaller than the primary because /consult fires less often than planning rework, but it's the recurring lever across 4 of the last 5 telemetry entries — fixing it once collapses a chronic drip.
 - **Pre-Edit batching for repo-architecture.md updates (~1–2k/session):** Three sequential Edits applied to the same file (subdir + tree row + table row). A single multi-line Edit covering all three would halve the tool-call overhead. Smallest lever — narrow scope and only triggers when adding a new resource type — but a clean win when it applies.
+
+### 2026-05-29 | Acceptable
+
+**Task:** Executed the 8-item fix plan at `audits/fix-plans/fix-repo-issues-2026-05-29-1108.md` end-to-end across 4 repos (ai-resources + 3 projects) — all 8 items applied, 4 commits shipped this session; deliberately skipped `/session-start` + `/session-plan` because the fix-plan was the approved plan.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~3 |
+| Files read | ~6 (re-reads: 0 substantive) |
+| Files written/edited | 14 (8 modified across 4 repos + 6 new — scratchpad + 2 scripts × 2 projects + W1 plan/context; fix-plan source newly tracked) |
+| Tool calls | ~38 (Bash ~20, Edit ~9, Read ~6, Write ×1, AskUserQuestion ×1, Agent ×1) |
+| Subagents | 1 (qc-reviewer on id-08 → GO) |
+| Rework cycles | 0 |
+
+**Findings:**
+- **Tool overhead — Moderate.** Fix-plan id-04 / id-07 specified provisioning only `check-archive.sh`, but the smoke-test exits non-zero without its sibling `split-log.sh`. Cost: ~5 calls (re-run after missing-file error, then provision + re-test). Same waste class as the 2026-05-26 BSD `date` / 2026-05-27 `grep -c` bash-edge-case discoveries — but here the gap is in the FIX-PLAN spec, not in command body. Structural fix: fix-plan templates that provision scripts must enumerate sibling dependencies the smoke-test invokes.
+- **Concurrent foreign-session collision — recurring, not preventable mid-session.** Foreign commit `b1df69f` absorbed this session's nordic-pe-macro improvement-log edits, costing ~3 diagnostic calls when `git add` produced nothing to commit. Third recurrence in 3 days. The shipped same-session short-circuit (2026-05-28) does not cover this class; the durable fix remains TOCTOU Phases 2–4 (parked).
+- **Spec deviation handled cleanly — no waste.** Id-08 fix-plan said "append a Caveats section" but line 351 actively sanctioned the rejected pattern; inverted line 351 in place instead. Discovered during normal read (no extra cost); `/qc-pass` GO confirmed.
+- **Planning-chain skip — net positive.** Free-text-intent path (no `/session-start` + `/session-plan`) on a paste-ready fix-plan saved ~6–8 calls and ~3–5k tokens vs. the auto-chain. Comparison vs. 2026-05-28 fix-repo-issues entry (same shape, same source command): ~3 exchanges + ~38 calls here vs. ~14 exchanges + ~58 calls there. Validates the pattern: when the input artifact IS a complete plan, the planning chain is overhead.
+- **Trend vs last 3 entries (Acceptable / Acceptable / Acceptable):** stable Acceptable. 1 Moderate finding (split-log.sh spec gap) holds the rating at Acceptable per strict framework, despite the leading indicators (0 rework, lean call count, single subagent with GO) that would otherwise push to Efficient. Net direction: positive — the planning-chain skip removed the dominant rework class of the prior streak, but a new structural gap class (fix-plan spec incompleteness) emerged in its place.
+
+**Recommendation:** Update fix-plan templates that provision multi-script log infrastructure to enumerate sibling script dependencies the smoke-test invokes. This is the highest-leverage fix because it converts the "Moderate" finding here into a "0 findings" rating next time the pattern fires, and the same class shows up across other plan templates.
+
+**Estimated savings:** ~2–4k tokens/session when the smoke-test gap fires (avoided re-run + dependency-discovery diagnostic), ~10–20k over a 10–20 session horizon at the current rate (~1-in-5 sessions touch new-project script provisioning).
+
+**Additional levers (ROI-ranked):**
+- **Codify the "skip planning-chain when input IS the plan" pattern (~3–5k tokens/session when applicable).** This session demonstrated the saving; the pattern is currently undocumented. A one-line addition to fix-plan / session-start guidance ("if the operator hands a paste-ready, /qc-pass'd plan, the free-text-intent path is preferred over the planning chain") would propagate. Fires ~1–2×/week on fix-plan execution sessions → ~5–10k/week, ~50–100k over 10–20 sessions.
+- **TOCTOU Phases 2–4 — durable fix for the foreign-session-absorption class (~3–5k tokens/incident).** Third recurrence in 3 days; parked because it requires structural staging discipline. Per-incident cost is modest but recurrence rate is accelerating; horizon ~30–60k over 10–20 sessions if recurrence stays at current pace.
+- **Pin friction-log + improvement-log + decisions.md tails into a consolidated /prime read (~800–1.5k tokens/session, every session).** Recurring lever — flagged in 8+ prior entries now. Lowest per-session, highest frequency, still not structurally addressed.

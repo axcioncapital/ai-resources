@@ -198,3 +198,10 @@
 - **QC cycles:** 0
 - **Gates:** 1 (0 changed) — plan-approval:confirmed
 - **Mandate fields:** none (no /session-start this session)
+
+### 2026-05-29 — Execute fix-plan 2026-05-29-1108 (8 items across 4 repos)
+- **Commands used:** /prime, /qc-pass, /wrap-session
+- **Iterations:** 0 (pure execution; no drafting on the fix-plan output)
+- **Decisions logged:** 2 (split-log.sh paired dependency; id-08 contradiction inversion vs. fix-plan letter)
+- **QC cycles:** 1 (id-08 — GO verdict from qc-reviewer; no rework)
+- **Mandate fields:** specified: work_scope, exit_condition, Out of scope, Files in scope, Stop if | omitted: Allowed inputs, Required outputs

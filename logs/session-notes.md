@@ -2,87 +2,6 @@
 
 > Archive: [session-notes-archive-2026-05.md](session-notes-archive-2026-05.md)
 
-## 2026-05-28 — /resolve-improvement-log archival sweep
-
-### Summary
-
-Ran `/resolve-improvement-log` to archive resolved improvement-log entries. Archived 14 entries (13 with `Status: applied + Verified:` confirmed-resolved + 1 with "not urgent" no-active-friction signal) to `logs/improvement-log-archive.md`. Active log now holds 15 pending entries (was 29). No warm-pending (>21d) or stale-pending (>42d) entries — all pending entries are 0-3 days old. `/prime` brief surfaced 3 next-tasks (push pending commits, finish Wave 3, `/improve` analysis); operator went directly to `/resolve-improvement-log` instead of picking a menu task.
-
-### Files Created
-
-- None.
-
-### Files Modified
-
-- `ai-resources/logs/improvement-log.md` — removed 14 archived entries; 15 pending entries remain.
-- `ai-resources/logs/improvement-log-archive.md` — appended 14 archived entries verbatim in chronological order (oldest first).
-
-### Decisions Made
-
-- **Bash heredoc append workaround for archive file** — `Read(logs/*archive*.md)` is denied in `.claude/settings.json` (intentional: archives are write-only from Claude's perspective). The spec's "read archive, merge, sort, rewrite" path is blocked. Used `cat >> archive.md <<'EOF' … EOF` instead — append-only, doesn't require reading. Tradeoff: strict chronological ordering across the full archive may not hold if older entries already exist below the appended block; mitigated by the fact that newly-archived entries are themselves chronological among themselves.
-- **`y` interpreted as confirming both prompts in one go** — displayed the Step 3c "no active friction" prompt and the Step 4 "13 resolved" prompt in a single message; operator's `y` was taken as `y` to both batches (14 total). Could have re-asked separately but the disposition is the same (archive) and both batches are clearly archive-shape.
-
-### Next Steps
-
-1. **Push pending commits** (carryover, still load-bearing) — 19 unpushed commits in `ai-resources` as of session start; this `/wrap-session` push step will exercise the new autonomous-push posture (Autonomy Rule #2 was relaxed earlier today, per the `## 2026-05-28 — Removed git-push approval gate workspace-wide` entry above).
-2. **Re-evaluate Wave 3 fix-plan items 2-4** — `id-09`, `id-32`, `nordic-pe-macro/id-13` against post-id-31 state. `id-31 Phase 1` (`ea93d62`) and `id-32` (`2836dfa`) already shipped by parallel sessions. Dedicated ~2-3h session.
-3. **Run `/improve`** to analyze today's session streak — concurrent-session attribution patterns are the freshest friction signal.
-
-### Open Questions
-
-- **Archive ordering across the full file** — if strict chronological ordering across the full archive matters (older entries below newly-archived ones), the deny rule for `Read(logs/*archive*.md)` would need to be lifted for a one-time read-and-rewrite. No action this round; flagging only.
-
-## 2026-05-28 — Wave 3 structural fix-plan execution (3 of 4 items shipped, 1 deferred)
-
-### Summary
-
-Executed the Wave 3 fix plan (`audits/fix-plans/fix-repo-issues-2026-05-28-1902-wave3-structural.md`) under Gated autonomy with per-item `/risk-check` + `/qc-pass`. Three of four items applied; one deferred at the re-evaluation gate after id-31 landed.
-
-- **id-31 Phase 1** (commit `ea93d62`): `/prime` writes per-session identity marker `logs/.session-marker` at all three task-confirmation branches (Step 8a.3.a / 8b.3.a / 8c.3) with same-day increment and day-rollover reset. `.gitignore` updated. Risk-check GO, QC GO. Source-spec deviation logged: brief-footer display dropped because Step 6 brief renders BEFORE Step 8's write — structurally timing-impossible and unnecessary in Phase 1.
-- **id-09** (DEFERRED, friction-log:85 annotated in commit `2836dfa`): re-evaluation gate after id-31 surfaced a hidden security regression — `.session-marker` is shared across parallel sessions, so reading it as `PRIME_TASKS` would let foreign content silently ship under this session's wrap commit (exact failure mode the guard exists to prevent). Operator confirmed deferral to id-31 Phase 2 via AskUserQuestion. Phase 2's marker-scoped session-notes headers will allow exact per-session counts via grep.
-- **id-32** (commits `2836dfa` ai-resources + `84297aa` workspace-root): `/wrap-session` Step 3.5 gained CONCURRENT / REMNANT / MIXED / UNKNOWN classifier via awk walking `^## YYYY-MM-DD` headers. Per-class STOP messages: REMNANT offers wrap-recovery commit path; MIXED orders resolution (orphan first, then concurrent); UNKNOWN defaults to CONCURRENT-shape. Both paired files in sync per PAIRED CONTRACT. Risk-check PROCEED-WITH-CAUTION (D3 paired-files + D5 awk-regex/live-rehearsal/PRIME_RAN-assumption mitigations applied inline). QC GO. Classifier rehearsed against current `session-notes.md` + 3 synthetic test cases.
-- **nordic id-13** (commits `b4f2107` ai-resources canonical + `e392e09` nordic improvement-log): `/session-plan` Step 0 MISMATCH branch gained dual-signal wrap-state check (Signal A: awk single-pass over `session-notes.md` for `## {PLAN_DATE}` block with Summary + Next Steps; Signal B: `git log --grep="^session: {PLAN_DATE}"`). EITHER positive → plain overwrite; NEITHER → preserves pass2 routing. Dual-signal tolerates archive rotation. Step 7 OUTPUT_TARGET enumeration updated. Risk-check GO. QC GO with one minor doc fix inline.
-
-### Files Created
-- `ai-resources/audits/risk-checks/2026-05-28-prime-session-marker-phase-1-write-only.md` — id-31 risk-check report (GO)
-- `ai-resources/audits/risk-checks/2026-05-28-wrap-session-step-3-5-concurrent-remnant-mixed-classifier.md` — id-32 risk-check report (PROCEED-WITH-CAUTION)
-- `ai-resources/audits/risk-checks/2026-05-28-session-plan-step-0-wrap-state-check.md` — nordic id-13 risk-check report (GO)
-- `ai-resources/logs/session-plan-pass2.md` — Wave 3 plan (canonical `session-plan.md` was held by Wave 2)
-- `ai-resources/logs/scratchpads/2026-05-28-20-23-scratchpad.md` — pre-closeout continuity scratchpad
-
-### Files Modified
-- `ai-resources/.claude/commands/prime.md` — 3 marker-write blocks added (Step 8a.3.a / 8b.3.a / 8c.3)
-- `ai-resources/.gitignore` — `logs/.session-marker` added
-- `ai-resources/.claude/commands/wrap-session.md` — Step 3.5 classifier + PAIRED CONTRACT update + branched STOP messages
-- `~/Claude Code/Axcion AI Repo/.claude/commands/wrap-session.md` — workspace-root paired copy with same classifier
-- `ai-resources/.claude/commands/session-plan.md` — Step 0 MISMATCH wrap-state check + Step 7 OUTPUT_TARGET doc fix
-- `ai-resources/logs/improvement-log.md` — id-31 broader entry → Phase 1 applied + Verified; narrow predecessor :176 note updated; id-32 → applied + Verified
-- `ai-resources/logs/friction-log.md` — `:85` annotated with id-09 deferral rationale
-- `projects/nordic-pe-macro-landscape-H1-2026/logs/improvement-log.md` — id-13 → applied + Verified
-- `ai-resources/logs/session-notes.md` — this wrap entry
-
-### Decisions Made
-
-- **id-31 Phase 1 source-spec deviation (footer drop).** The QC'd plan called for a brief-footer "Session marker: {value}" line in Step 6. Dropped because Step 6 brief renders BEFORE Step 8's marker write — structurally timing-impossible. Source spec doesn't require it ("Risk: zero (additive)" Phase 1 means no consumers). Footer naturally lands in Phase 2 alongside the first reader. Picked per `feedback_minimal_infra_subset`.
-- **id-09 deferred to id-31 Phase 2 (operator-confirmed via AskUserQuestion).** Marker-as-counter design has hidden security regression: shared `.session-marker` is bumped by parallel sessions; reading it as `PRIME_TASKS` would let foreign content ship under this session's commit. Operator picked "defer to Phase 2" over "diagnostic-only fix" or "apply the unsafe fix anyway". Phase 2's marker-scoped headers will give exact per-session counts.
-- **id-32 Step 4a /consult skip (operational mitigations, cost discipline).** PROCEED-WITH-CAUTION verdict had concrete actionable mitigations (paired edits + test all branches + document PRIME_RAN assumption) with no architectural alternative being weighed. Skipped the system-owner second opinion per `feedback_minimal_infra_subset`. Stated explicitly.
-- **id-32 paired-copy split commits (cross-repo necessity).** ai-resources canonical and workspace-root paired copy committed separately because they live in different git repos. PAIRED CONTRACT comment was updated in both.
-
-### Next Steps
-
-- **Push pending — 5 Wave 3 commits across 3 repos** (autonomous push per new rule landed today by parallel session):
-  - ai-resources: `ea93d62` (id-31), `2836dfa` (id-32), `b4f2107` (nordic id-13)
-  - workspace-root: `84297aa` (wrap-session paired copy)
-  - nordic: `e392e09` (improvement-log flip)
-- **Follow-on improvement-log entry to log:** `/prime` Step 8c.8 duplicates the MISMATCH-routes-to-pass2 algorithm that just changed in `/session-plan` Step 0. The two paths now silently diverge. Mirror or delegate the wrap-state check into `/prime` Step 8c.8. Risk-check change class. ~30 min dedicated session.
-- **id-09 unblocks when id-31 Phase 2 lands.** When marker-scoped session-notes headers ship (Phase 2 of the TOCTOU rollout), id-09 can finally be applied via grep for THIS session's marker. Re-open id-09 alongside the Phase 2 wave.
-- **/improve still pending** across several wraps today (this one included).
-- **id-31 Phases 2–4 remain `pending`** per source migration plan: Phase 2 (consumer reads in `/session-start` + `/session-plan`), Phase 3 (downstream consumers `/drift-check` / `/wrap-session` / `/contract-check` / `/qc-pass`), Phase 4 (legacy fallback cleanup).
-
-### Open Questions
-
-- None.
-
 ## 2026-05-29 — /tweak rapid-fix command shipped (clarify → decide → consult → plan → consult → risk-check → consult → qc → ship)
 
 ### Summary
@@ -507,3 +426,56 @@ Already logged in `ai-resources/logs/decisions.md` (most archived by check-archi
 ### Open Questions
 
 - None blocking. The workspace-root CLAUDE.md change (push-protocol reversal) is committed independently; the auto-memory swap (`feedback_push_autonomous` → `feedback_push_gated`) is in `~/.claude/projects/.../memory/` and out-of-tree, no action needed.
+
+## 2026-05-29 — Executed fix-plan 2026-05-29-1108 (8 items, 4 repos)
+
+**Mandate:** Execute `audits/fix-plans/fix-repo-issues-2026-05-29-1108.md` end-to-end. Free-text-intent path; the fix plan was the approved plan — `/session-start` + `/session-plan` deliberately skipped to avoid ceremony without value. Done when: all 8 items applied (or surfaced with reasoned skip) and committed.
+- Out of scope: parked items (`## Parked items (not this plan)` section of the plan — none touched this session).
+- Files in scope: as enumerated per-item in the fix-plan.
+- Stop if: any item's bounded investigation surfaces an unexpected diff or contradiction requiring operator adjudication (none did).
+
+### Summary
+
+Executed all 8 items in the fix-plan in order. Items id-01 and id-02 (innovation-registry rows for `UserPromptSubmit-decision-log` and `Stop-checkpoint-nag`) flipped to `re-parked needs-/graduate-resource` — neither pattern is present in canonical `ai-resources/.claude/settings.json` or `~/.claude/settings.json`; both are project-bound to nordic-pe paths and need generalization before landing. id-03 smoke-tested the check-archive.sh CLAUDE_PROJECT_DIR fix in nordic-pe-macro: exit 0, verified. id-04 and id-07 provisioned `check-archive.sh` + `split-log.sh` in nordic-pe-screening and ai-development-lab respectively — note that `split-log.sh` is an undocumented dependency the fix-plan did not name; without it the smoke-test fails. id-05 committed `pipeline/children/w1/` in nordic-pe-screening (`839f153`) — 1207 insertions across 2 files, Open Q resolved. id-06 verified the `/session-plan` Step 0 MISMATCH wrap-state-override fix actually landed in the project path (symlink intact, dual-signal check at canonical lines 56-96 confirmed); no wrap-session boilerplate update needed — grep returned no stale text. id-08 inverted line 351 of `permission-template.md` (which had previously sanctioned the exact `_decision_block_pattern_doc` JSON pattern that the FX-E2 incident proved is rejected schema-side) and added a cross-link from `audit-discipline.md § Risk-check change classes`. `/qc-pass` returned GO.
+
+### Files Created
+
+- `projects/nordic-pe-screening-project/logs/scripts/check-archive.sh` (id-04)
+- `projects/nordic-pe-screening-project/logs/scripts/split-log.sh` (id-04 — undocumented dependency)
+- `projects/nordic-pe-screening-project/pipeline/children/w1/context-pack.md` (id-05; committed `839f153`)
+- `projects/nordic-pe-screening-project/pipeline/children/w1/project-plan.md` (id-05; committed `839f153`)
+- `projects/ai-development-lab/logs/scripts/check-archive.sh` (id-07)
+- `projects/ai-development-lab/logs/scripts/split-log.sh` (id-07 — undocumented dependency)
+- `ai-resources/logs/scratchpads/2026-05-29-23-00-scratchpad.md` (pre-closeout continuity scratchpad)
+
+### Files Modified
+
+- `ai-resources/docs/permission-template.md` (id-08; line 351 sanction inverted)
+- `ai-resources/docs/audit-discipline.md` (id-08; cross-link added under § Risk-check change classes)
+- `ai-resources/logs/innovation-registry.md` (id-01, id-02; both rows flipped to re-parked)
+- `ai-resources/audits/fix-plans/fix-repo-issues-2026-05-29-1108.md` (now tracked alongside execution)
+- `ai-resources/logs/session-notes.md` (this entry)
+- `ai-resources/logs/session-notes-archive-2026-05.md` (auto-archive at this wrap's Step 3 — 2 entries archived, 10 kept)
+- `projects/nordic-pe-macro-landscape-H1-2026/logs/improvement-log.md` (id-03 + id-06 + id-08 status flips; absorbed by concurrent foreign session's commit `b1df69f`)
+- `projects/ai-development-lab/logs/improvement-log.md` (id-07 multi-project rollout entry update)
+- `projects/ai-development-lab/logs/session-notes.md` + `logs/session-notes-archive-2026-05.md` (check-archive.sh first-run side-effect: 3 stale entries auto-archived)
+- `projects/nordic-pe-screening-project/logs/session-notes.md` (Process Notes append for id-04 + id-05)
+
+### Decisions Made
+
+- **Skipped `/session-start` + `/session-plan`** at session start. Decision-point posture: pick and proceed. Reason: the fix-plan was a paste-ready bounded plan produced by `/fix-repo-issues`; wrapping it in another planning command would add ceremony without value. Logged inline at execution start.
+- **Provisioned `split-log.sh` alongside `check-archive.sh`** (id-04, id-07). Fix-plan spec named only check-archive.sh, but the script's first-run failure on missing `split-log.sh` made the spec's "exit 0" criterion unreachable without it. Pragmatic resolution: provision both. Noted in Next Steps as a fix-plan template improvement.
+- **Inverted line 351 of `permission-template.md`** instead of appending a new Caveats section (id-08). The existing bullet at line 351 actively sanctioned the rejected `_decision_block_pattern_doc` pattern; appending a contrary Caveats section would have left the contradiction in place. Per design principle "Conflicts must be surfaced, not silently resolved" — but this conflict resolved cleanly (the new evidence wins over the speculative sanction). `/qc-pass` reviewer flagged the deviation from spec as a tactical improvement.
+- **Closed id-06 as `applied + verified`** without updating wrap-session boilerplate. The fix-plan's branch logic said "if the fix landed, update wrap-session boilerplate to stop re-emitting 'no infrastructure fix landed'". But grep of `ai-resources/.claude/commands/wrap-session.md` returned no such boilerplate — the "Third day"/"Fourth day in a row" complaints in `session-notes.md` lines 864/931 were wrap-time-authored prose, not boilerplate emission. So no boilerplate edit was needed.
+
+### Next Steps
+
+1. **Run `/cleanup-worktree` against ai-resources** — still parked (Plan 6 item 9, carryover from the prior session and still carryover today). Dirty tree now includes the prior session's modifications PLUS this session's `audits/fix-plans/...md` (now tracked + committed). ≤1 week to avoid drift accumulation.
+2. **TOCTOU mitigation Phases 2-4** (Plan 5 item 1) — `.session-marker` consumer wiring across `session-start`, `session-plan`, `wrap-session`, `handoff`. Still parked.
+3. **Update the fix-plan template (or canonical wrap-session provisioning rule) to name `split-log.sh` as a check-archive.sh dependency.** Surfaced this session as a paste-ready improvement to `/fix-repo-issues` or to `ai-resources/.claude/commands/wrap-session.md` Step 3 documentation. Effort trivial; impact low (only fires when provisioning a new project); first time observed in two consecutive provisioning ops (id-04, id-07).
+4. **Continue multi-project `check-archive.sh` provisioning sweep** — 2 of ~6 projects done today; remaining ~4 will be addressed as each surfaces the gap at wrap, or at a dedicated maintenance window.
+5. **Investigate the concurrent-session entanglement pattern.** Third recurrence in 3 days (`17de7ca` morning, `b1df69f` afternoon today). The improvement-log entry in nordic-pe-macro § "wrap-session Step 4 header-locate logic creates today-header inflation under parallel sessions" (line 199) is the partial fix; the broader Phase 2-4 TOCTOU rollout is the durable cure.
+
+### Open Questions
+
+- None blocking. The concurrent foreign session's commit `b1df69f` shipped my improvement-log edits cleanly (verified by content check); the wrap message attribution mismatch is the only side-effect, and it is bounded.

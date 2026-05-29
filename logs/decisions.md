@@ -76,3 +76,27 @@ Plan 6 dispatch: 2 APPLIED (items 2, 6), 1 PENDING (item 5), 1 SCHEDULED (item 7
 **Trigger to revisit.** Operator invokes /cleanup-worktree directly when next sitting down to a maintenance window. Suggested ≤1 week so the dirty files don't accumulate.
 
 **Item closure.** Friday-act plan general item 9 closed as DEFERRED-TO-DEDICATED-SESSION.
+
+## 2026-05-29 — Provisioning fix-plans should name split-log.sh alongside check-archive.sh
+
+**Context.** Fix-plan 2026-05-29-1108 items id-04 and id-07 specified copying `check-archive.sh` into nordic-pe-screening and ai-development-lab from canonical `ai-resources/logs/scripts/`. Spec acceptance: `CLAUDE_PROJECT_DIR="$(pwd)" bash logs/scripts/check-archive.sh` exit 0. In practice the smoke-test failed in both projects with `split-log.sh: No such file or directory` (check-archive.sh sources split-log.sh internally). Provisioning split-log.sh too brought both projects to exit 0.
+
+**Decision.** When provisioning `check-archive.sh` into a project's `logs/scripts/`, also provision `split-log.sh`. They are a paired dependency; the fix-plan template and the canonical `/wrap-session` Step 3 documentation should name both.
+
+**Rationale.** (1) Spec acceptance ("exit 0") is unreachable with `check-archive.sh` alone; the dependency is real. (2) Both fix-plan items had the same omission, so it is not a one-off — the spec template needs the update. (3) Workspace convention (per nordic-pe-macro's `logs/scripts/` layout) already pairs both files; provisioning ops should mirror that convention.
+
+**Alternatives considered.** Stop at the spec letter (provision only check-archive.sh and surface the failure to operator) — rejected as obstinate; the fix-plan's clear intent was "make `/wrap-session` Step 3 work in this project," and the dependency is structural.
+
+**Item closure.** Fix-plan 2026-05-29-1108 items id-04 and id-07 closed APPLIED with the documented spec deviation; both projects now pass smoke-test.
+
+## 2026-05-29 — id-08 contradiction inversion vs. fix-plan letter
+
+**Context.** Fix-plan 2026-05-29-1108 item id-08 specified "append a `## Caveats` section" to `ai-resources/docs/permission-template.md`. On inspection, the existing `**Caveats:**` sub-block at line 346 (under `## PreToolUse[Edit] decision-block pattern`) contained a bullet at line 351 that **actively sanctioned** the exact `_decision_block_pattern_doc` JSON top-level key pattern that the FX-E2 incident proved is rejected schema-side at session load. Appending a new Caveats section while leaving line 351 intact would have left the contradiction in place — risk-checks would still find the sanctioning bullet first and continue citing it.
+
+**Decision.** Inverted the existing bullet at line 351 in place (replacing the sanction with the corrected guidance per the proposal text from `projects/nordic-pe-macro-landscape-H1-2026/logs/improvement-log.md` line 205). Added the audit-discipline.md cross-link as the fix-plan also specified.
+
+**Rationale.** (1) Workspace design principle "Conflicts must be surfaced, not silently resolved" — but the conflict here resolves cleanly (FX-E2 evidence wins over the original speculative sanction). (2) Leaving the sanction in place would have produced a self-contradicting document, defeating the fix-plan's intent. (3) `/qc-pass` reviewer GO-verdict explicitly cited the deviation as "a tactical improvement... substantively the corrected guidance lands."
+
+**Alternatives considered.** (a) Append a `## Caveats` top-level section per the literal spec and leave line 351 intact — rejected (self-contradiction, defeats intent). (b) Delete line 351 and append the new Caveats section — rejected (line-351 location is the precise place a risk-check report would land when investigating PreToolUse[Edit] patterns; the contextual locality matters).
+
+**Item closure.** Fix-plan 2026-05-29-1108 item id-08 closed APPLIED + VERIFIED with documented spec deviation; nordic-pe-macro improvement-log line 205 entry flipped to applied+verified.
