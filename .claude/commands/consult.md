@@ -1,6 +1,8 @@
 ---
 description: Consult the Axcíon AI System Owner — architectural judgment on systems-thinking questions or proposed repo changes.
 model: opus
+disable-model-invocation: true
+argument-hint: "<question or situation>"
 ---
 
 Consult the Axcíon AI System Owner on a structural question or a proposed repo change. Delegates to the `system-owner` agent (Opus); the agent reads the project's persona / grounding / toolkit-relationship references plus selected vault architectural reference docs and returns a grounded judgment in System Owner voice.

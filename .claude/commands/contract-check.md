@@ -1,6 +1,8 @@
 ---
 description: Contract-conformance check — compares the current artifact against its original frozen contract (mandate, brief, spec, plan). Catches cumulative drift introduced across multiple rounds of QC fixes. Returns CONTRACT-ALIGNED / MINOR-DRIFT / MAJOR-DRIFT. Advisory only.
 model: opus
+argument-hint: "[contract-path-or-inline-text]"
+allowed-tools: Bash(git *), Read, Task
 ---
 
 Check whether an artifact still matches what was originally agreed at the start of work. `/contract-check` resolves the original contract, identifies the current artifact, then delegates an **independent** comparison to a fresh-context subagent. The subagent receives only the contract text and the artifact text — no QC history, no session conversation, no creation context. Advisory only — it modifies no files and does not correct course; it tells the operator whether a correction is needed.

@@ -23,7 +23,6 @@
 | `.claude/commands/consult.md` | command | weekly | 2026-05-29 | 2026-05-29 | N |
 | `.claude/commands/contract-check.md` | command | weekly | 2026-05-29 | 2026-05-29 | N |
 | `.claude/commands/create-skill.md` | command | weekly | never | — | N |
-| `.claude/commands/friction-log.md` | command | weekly | 2026-05-29 | 2026-05-29 | N |
 | `.claude/commands/friday-act.md` | command | weekly | never | — | N |
 | `.claude/commands/friday-checkup.md` | command | weekly | never | — | N |
 | `.claude/commands/friday-journal.md` | command | weekly | never | — | N |
@@ -55,6 +54,7 @@
 | `.claude/commands/deploy-workflow.md` | command | quarterly | never | — | N |
 | `.claude/commands/drift-check.md` | command | quarterly | never | — | N |
 | `.claude/commands/fix-repo-issues.md` | command | quarterly | never | — | N |
+| `.claude/commands/friction-log.md` | command | quarterly | 2026-05-29 | 2026-05-29 | N |
 | `.claude/commands/graduate-resource.md` | command | quarterly | never | — | N |
 | `.claude/commands/implementation-triage.md` | command | quarterly | never | — | N |
 | `.claude/commands/migrate-skill.md` | command | quarterly | never | — | N |
@@ -67,10 +67,10 @@
 
 ## Tier rationale
 
-**Weekly (32 entries):** Friday cadence partners (7), QC loop (4), audit pipelines (4), orchestrators (7), creation pipeline (2), advisors (2), other critical (3 — includes `friction-log` and `recommend` per operator decision), skills (3). All meet both halves of the selection criterion: load-bearing per `risk-topology.md § 1` OR closed-loop choke point per `system-doc.md § 4.5`, AND multi-step OR Anthropic-currency-dependent.
+**Weekly (31 entries):** Friday cadence partners (7), QC loop (4), audit pipelines (4), orchestrators (7), creation pipeline (2), advisors (2), other critical (2 — includes `recommend` per operator decision), skills (3). All meet both halves of the selection criterion: load-bearing per `risk-topology.md § 1` OR closed-loop choke point per `system-doc.md § 4.5`, AND multi-step OR Anthropic-currency-dependent.
 
-**Quarterly (15 entries):** Single-step utilities, slow-changing infrastructure, and rarely-invoked but high-cost-of-decay pipelines. Weekly review yields little per cycle; the auditor's Brokenness (currency-check) section does most of the per-row work.
+**Quarterly (16 entries):** Single-step utilities, slow-changing infrastructure, and rarely-invoked but high-cost-of-decay pipelines. Weekly review yields little per cycle; the auditor's Brokenness (currency-check) section does most of the per-row work.
 
 **Selection criterion (made explicit):** A pipeline earns weekly tier when **both** of: (i) `risk-topology.md § 1` classifies it Critical/High OR it sits at a closed feedback loop's choke point (`system-doc.md § 4.5`), AND (ii) it is multi-step / orchestration-shaped OR Anthropic-currency-dependent. Single-step utilities that are critical but stable go to quarterly.
 
-**Origin:** Tiered shape adopted from System Owner advisory `projects/axcion-ai-system-owner/output/advisories/2026-05-29-pipeline-review-registry-scope.md`. Operator overrides applied: `friction-log` kept weekly (SO had recommended TIER-LATER to quarterly); `recommend` added to weekly (SO had recommended SKIP).
+**Origin:** Tiered shape adopted from System Owner advisory `projects/axcion-ai-system-owner/output/advisories/2026-05-29-pipeline-review-registry-scope.md`. Operator overrides applied: `recommend` added to weekly (SO had recommended SKIP). The `friction-log` weekly-tier override was reverted to quarterly on 2026-05-29 after the cycle-2 pipeline-review memo confirmed the SO's original quarterly recommendation was right (the contract-risk that justifies weekly attention lives in the hook + sibling-command, not in the command body itself).

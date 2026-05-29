@@ -1,5 +1,8 @@
 ---
+description: Weekly System-Owner-grounded design review of 1+ critical command pipelines (innovations, leanness, brokenness, currency-check) — operator-invoked; no auto-fix, no commit
 model: sonnet
+disable-model-invocation: true
+argument-hint: "[pipeline-path]"
 ---
 
 # /pipeline-review — Weekly Pipeline Design Review
@@ -76,9 +79,9 @@ The `[CADENCE-LATE]` top-line marker is a required mitigation from the `/risk-ch
 
 ### Step 4: Shortlist Build
 
-17. Parse `REGISTRY_PATH` into a list of rows. For each row, extract: `pipeline_path`, `type`, `tier`, `last_reviewed`, `friction_flag`.
-17.1. **Tier-eligibility filter.** Compute `QUARTERLY_ACTIVE` = true if today is the first Friday of January, April, July, or October; else false. Python: `from datetime import date; t = date.today(); is_first_friday = (t.weekday() == 4 and t.day <= 7); QUARTERLY_ACTIVE = is_first_friday and t.month in (1, 4, 7, 10)`. If `QUARTERLY_ACTIVE` is true, the eligible pool includes rows where `tier in ('weekly', 'quarterly')`. Otherwise the eligible pool is rows where `tier == 'weekly'` only. Quarterly rows on non-trigger dates are dropped from the shortlist (operator can still pick a quarterly pipeline by path via Step 3 override). On a quarterly-active date, emit one line to the operator: `[QUARTERLY-CYCLE] Quarterly tier is eligible this cycle (first Friday of {Jan|Apr|Jul|Oct}).`
-17.5. **Registry-drift check.** For each row in the eligible pool, resolve `pipeline_path` against `AI_RESOURCES` (relative paths) and `test -f` the result. If the file is missing, emit one line to the operator: `[REGISTRY-DRIFT] {pipeline_path} (row dropped — file does not resolve; rename, move, or stale registry entry)`. Drop the row from the working set. Do NOT abort the cycle. After all rows are checked, if any rows were dropped, also print: `Resolve drift before next cycle — edit {REGISTRY_PATH} to update or remove the stale entries.` Catches pipeline rename and tier-promotion failure modes — without this, the auditor would hard-fail at its first read and the next cycle would re-surface the same broken row.
+17a. Parse `REGISTRY_PATH` into a list of rows. For each row, extract: `pipeline_path`, `type`, `tier`, `last_reviewed`, `friction_flag`.
+17b. **Tier-eligibility filter.** Compute `QUARTERLY_ACTIVE` = true if today is the first Friday of January, April, July, or October; else false. Python: `from datetime import date; t = date.today(); is_first_friday = (t.weekday() == 4 and t.day <= 7); QUARTERLY_ACTIVE = is_first_friday and t.month in (1, 4, 7, 10)`. If `QUARTERLY_ACTIVE` is true, the eligible pool includes rows where `tier in ('weekly', 'quarterly')`. Otherwise the eligible pool is rows where `tier == 'weekly'` only. Quarterly rows on non-trigger dates are dropped from the shortlist (operator can still pick a quarterly pipeline by path via Step 3 override). On a quarterly-active date, emit one line to the operator: `[QUARTERLY-CYCLE] Quarterly tier is eligible this cycle (first Friday of {Jan|Apr|Jul|Oct}).`
+17c. **Registry-drift check.** For each row in the eligible pool, resolve `pipeline_path` against `AI_RESOURCES` (relative paths) and `test -f` the result. If the file is missing, emit one line to the operator: `[REGISTRY-DRIFT] {pipeline_path} (row dropped — file does not resolve; rename, move, or stale registry entry)`. Drop the row from the working set. Do NOT abort the cycle. After all rows are checked, if any rows were dropped, also print: `Resolve drift before next cycle — edit {REGISTRY_PATH} to update or remove the stale entries.` Catches pipeline rename and tier-promotion failure modes — without this, the auditor would hard-fail at its first read and the next cycle would re-surface the same broken row.
 18. Sort surviving rows by these keys in order:
     a. `friction_flag = Y` first (Y before N).
     b. `last_reviewed` ascending — `never` sorts as the oldest (treat as date `0000-00-00` for comparison).
