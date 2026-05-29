@@ -357,3 +357,45 @@ Themes per plan: `/draft-module` heredoc routing for cached-deny modules, brand-
 ### Closure note
 
 This dispatch converts 14 pending improvement-log entries into 1 APPLIED, 12 DEFER, 1 SCHEDULE-DEDICATED. The deferrals are logged decisions, not silent drops — each entry stays in its project's improvement-log with this decision-anchor pointing back here.
+
+## 2026-05-29 — Reversed push protocol: autonomous → gated and batched
+
+**Context.** On 2026-05-28 the operator removed the "ask before pushing" gate and the rule layer, making `git push` autonomous after every commit. Rationale at the time: branches were piling up unpushed (e.g., ai-resources at 10+ commits) and the gate had become structurally blocking. One session later (2026-05-29), the operator reversed the decision.
+
+**Decision.** Push is gated and batched. No `git push` mid-session. Commits accumulate locally until session end (`/wrap-session` or explicit "we're done" / "ship it"). At that point, a single confirmation prompt — `Ready to push N commits across M repos: [list]. Push now? y/n` — gates the actual push. Push proceeds per repo on `y`, skips on `n`. No mid-session exceptions, even for "critical" fixes.
+
+**Rationale.** Operator wants control over when remote state changes, including the ability to inspect commits before they ship and to keep work local while iterating. The autonomous rule had the practical effect of making every commit a remote write, which removed an inspection point the operator values. The VS Code extension push path was a secondary concern — gating the push at one well-defined moment (session end) makes the extension's push behavior testable and predictable instead of firing at every commit.
+
+**Alternatives considered.**
+- **Operator runs `git push` manually** (Claude never pushes) — rejected. Adds operator burden without solving the inspection-point problem any better than a single confirmation prompt.
+- **Per-commit confirmation prompt** — rejected. Restores the high-friction shape that originally drove the 2026-05-28 removal.
+- **Hook-based enforcement** (pre-push hook blocks mid-session pushes) — rejected for this round. Rule-level change is sufficient and reversible; hook-level enforcement adds blast radius without proportional benefit.
+
+**Trade-offs accepted.** Branches will again accumulate commits between session ends. The operator accepts this in exchange for the inspection point. If accumulation becomes a problem again, the resolution is *not* a return to autonomous push but a faster wrap cadence.
+
+---
+
+## 2026-05-29 — Friday-act repo-documentation: item-by-item decisions
+
+**Scope.** Plan repo-documentation had 6 items spanning W2.1 doc-scanner fixes (item 1), projects.md §4.4 re-author (item 2), 7-entry vault paste (item 3), 212-entry backlog (item 4), deprecation-row policy (item 5), /kb-integrity re-run (item 6).
+
+### Item 1 — W2.1 doc-scanner coverage gaps
+✓ APPLIED. Added 2 walk rows (skill-internal subagents `ai-resources/skills/*/agents/*.md` → agents; workspace-root `.claude/references/*.md` → references) and a basename-collision detection rule for project-local files sharing canonical basenames. Edit at `projects/repo-documentation/.claude/agents/doc-scanner-agent.md`.
+
+### Item 2 — Re-author projects.md against §4.4 schema
+ALREADY DONE — confirmed by reading current `vault/components/projects.md` (last_updated: 2026-05-22): all 7 entries have the 10-field §4.4 schema (Type, Location, Source, Purpose, Model, Status, Phase, Key Outputs, Infra Dependencies, Risk Class); the 6 unexpected §4.1 fields (Triggers, Scope, Used By, Depends On, State Writes, Governed By) are gone. The 2026-05-22 re-author session closed this; the friday-act plan was stale on this item.
+
+### Item 3 — Paste 7 net-new entries since 2026-05-22
+DEFER to dedicated KB-paste session. The 7 specific entries (1 command `pipeline-review`, 4 canonical agents — likely `fading-gate-scanner`, `fix-repo-issues-scanner`, `friday-act-16a-summarizer`, `project-manager`; 2 projects) must be hand-picked from the 1771-line `w2-1-doc-scan-2026-05-29.md` drift report, with each Added entry's `Status: draft` promoted to `Status: active` after review. Mechanical-but-careful work; batch with item 4.
+
+### Item 4 — 212-entry carry-forward backlog
+DEFER + recommended approach: dedicated KB-paste session within next 2 weeks. The 212 entries are accumulated drift since 2026-05-22. Doing them piecemeal across sessions is wasteful; one focused session with the drift report open is the right shape. Per decision-point posture, the operator's recommended option = scheduled dedicated session (not silent further-defer).
+
+### Item 5 — Deprecation-row policy (prose body vs §4.1 schema addition)
+DECISION: §4.1 schema addition. Treats deprecation as a first-class lifecycle state rather than prose narrative. Cleaner long-term; consistent with the existing Status enum (`draft | active | deprecated`). The schema addition itself = adding the `Status: deprecated` enum semantics + a brief one-paragraph rule to `documentation-structure.md` §4.1 stating how deprecated entries should be marked. APPLICATION DEFERRED — bundle with item 3/4's KB-paste session so the new policy lands together with the entries it governs.
+
+### Item 6 — Re-run /kb-integrity after items 2, 4, 5
+DEFER — depends on items 4 and 5 landing first. Run at end of the dedicated KB-paste session.
+
+### Closure note
+This dispatch converts 6 plan items into 1 APPLIED (item 1), 1 ALREADY-DONE (item 2), 4 DEFER-WITH-DECISION (items 3-6). All deferrals are scheduled into a single dedicated KB-maintenance session within next 2 weeks.
