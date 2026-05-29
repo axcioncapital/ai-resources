@@ -676,6 +676,59 @@ None blocking. /qc-pass GO on both substantive items (Items 1 and 2) with inform
 
 **Plan source:** /prime auto-mode multi-item gate (items 1, 3, 4, 5 from the prime menu); marker-scoped plan at `logs/session-plan-S5.md`.
 
+### Wrap — Session S5
+
+### Summary
+
+Auto-mode multi-item session (operator typed `auto 1,3,4,5` at /prime). Closed three structural items end-to-end with full plan-time /risk-check + System Owner second opinion + /qc-pass + commit per item. Item 5 (context-engine intake) was deferred per workspace `Context constraint deferral` rule mid-session; a concurrent S6 session in another terminal actually built the context-engine MVP independently and wrapped first (commits `7dc5e6e`, `e774eb5`, `7daac4e`). Net: S5 shipped FL-1+FL-6 friction-log hook unification, C-1+C-2 /consult return-size contract, and one improvement-log entry on the System Owner observation about /risk-check's principle-drift blindspot.
+
+### Files Created
+
+- `audits/risk-checks/2026-05-29-fl-1-fl-6-friction-log-hook-unification.md` — Item 1 plan-time /risk-check + System Owner second opinion (PROCEED-WITH-CAUTION; mitigated)
+- `audits/risk-checks/2026-05-29-c-1-c-2-consult-return-size-cap-project-local-symlink.md` — Item 3 plan-time /risk-check + System Owner second opinion (PROCEED-WITH-CAUTION; design revision applied)
+- `logs/session-plan-S5.md` — marker-scoped session plan
+- `logs/scratchpads/2026-05-29-19-50-scratchpad.md` — pre-closeout continuity scratchpad
+- (C-2 created a symlink at `projects/axcion-ai-system-owner/.claude/agents/system-owner.md` — invisible to git per the project-local gitignore)
+
+### Files Modified
+
+- `.claude/hooks/friction-log-auto.sh` — Item 1: line 21 dedup grep + lines 41-48 emission block unified to canonical `## Session —` shape (commit `d4ff712`)
+- `.claude/commands/note.md` — Item 1: line 16 false byte-identical claim corrected to post-change truth (commit `d4ff712`)
+- `docs/session-guardrails.md` — Item 1 / FL-6: new `friction-log: true` per-command auto-log opt-in section between [COST] flag and Tuning section (commit `d4ff712`)
+- `.claude/agents/system-owner.md` — Item 3 C-1: Phase 5 Function A + Function B output contract rewritten (always-write-to-disk + leading path-back line + ≤30-line return summary + inline slug algorithm); Write-tool-scope sentence at line 21 updated to name all five consuming commands (commit `2f467cc`)
+- `.claude/commands/consult.md` — Item 3 C-1: Step 4 agent brief expanded with output-contract mandate (commit `2f467cc`)
+- `logs/improvement-log.md` — new entry: /risk-check 5-dimension shape misses design-internal principle drift (commit `fb0aba6`)
+- `logs/session-notes.md` — S5 mandate block (commit `d4ff712`) + this wrap entry
+- `logs/.session-marker` — `2026-05-29 S5` (later overwritten by concurrent S6 session to `2026-05-29 S6`)
+- `logs/.prime-mtime` — S5 session-notes append mtime (later overwritten by S6)
+
+### Decisions Made
+
+Three session-level decisions worth logging to `logs/decisions.md`:
+
+1. **Drop conditional-write threshold in C-1; always write to disk.** System Owner second opinion identified that the conditional-write threshold proposed in the source memo (only write if >30 lines) conflicts with three vault principles (OP-3 loud-failure, DR-6 outputs-to-output/, AP-7 speculative-abstraction). Always-write matches the Function C/E/F/G pattern already in use and avoids operator-perception ambiguity over whether a given consult is archived.
+2. **Path-back is a leading line in the agent's returned summary, not a `consult.md` Step 5 transformation.** Step 5's "return unmodified" pass-through is identical across five sibling consumer commands. Introducing a detect-and-display special-case in `/consult` only would violate AP-1 sibling consistency. The agent body owns the format; the command stays a thin wrapper.
+3. **Split C-1 and C-2 into two commits, C-1 first.** Different change classes (canonical-agent edit vs new-symlink) with different reversibility profiles. C-1 first ensures the canonical content is post-edit before the symlink points at it.
+
+Also two procedural decisions:
+
+4. **Item 4 closed as no-op archive.** Strict /resolve-improvement-log rules require `Status: applied + Verified` — zero entries match. S4 wrap's assumption that "some are applied + Verified" was incorrect. Manual disposition deferred to next /friday-act.
+5. **Item 5 (context-engine MVP) deferred per Context constraint deferral.** Session had already spent 6 subagents / >20 turns / 8 artifacts when Item 5 was reached. Brief 2 explicitly phase-2 (do not build until MVP is proven); Brief 1 substantial enough to warrant a fresh-context session. (Note: the deferral turned out to be moot — a concurrent S6 session built both phases in parallel.)
+
+### Next Steps
+
+1. **Push 3 commits (`d4ff712`, `2f467cc`, `fb0aba6`) to ai-resources origin/main** — operator confirms via push gate at wrap. S6's separate commits (`7dc5e6e`, `e774eb5`, `7daac4e`) likely also pending push from the concurrent session.
+2. **FL-1 end-time /risk-check** — required per FL-1 source memo (hook-edit class). This wrap is the natural batched end-time gate per audit-discipline.md — Step 12b covers it.
+3. **Workflow-sibling sync (FL-1 follow-on)** — `workflows/research-workflow/.claude/hooks/friction-log-auto.sh` + `.claude/commands/note.md` still carry the old `### Session:` shape. Handled by `/sync-workflow`; out of scope for this session.
+4. **Friday-cadence triage** — three items surfaced this session for next /friday-act: (a) /risk-check 5-dim shape misses principle drift (improvement-log entry just committed); (b) 16 improvement-log entries still pending (soft cap exceeded by 9 — manual disposition needed); (c) any new items from the concurrent S6's context-engine work.
+5. **Coordination check with S6 session** — concurrent session ran the same Friday-checkup item space. Operator should briefly review whether anything overlapped or got duplicated.
+6. **Carryover (unchanged from S4):** /cleanup-worktree dedicated session; KB-paste session for repo documentation; /graduate-resource Steps 4+5 strengthening.
+
+### Open Questions
+
+- **Concurrent S6 session overlap.** Did S6's Friday-checkup-item bundle touch any of the same areas S5 modified? S5 touched: friction-log hook + commands, system-owner agent body, /consult, session-guardrails docs, improvement-log. If S6 touched any of these, there may be reconciliation work in a future session — but git history shows clean linear ordering with no merge conflict.
+- **None blocking.** End-time /risk-check on FL-1+FL-6 hook edit pending (covered by Step 12b of this wrap).
+
 ## 2026-05-29 — Session S6
 
 **Mandate:** Bundle and execute as many open Friday-checkup items (friday-checkup-2026-05-29) as fit responsibly in one session — done when: a marker-scoped session-plan-S6.md exists listing every open item with a per-item disposition (execute-this-session / defer-with-reason / scope-alternative), prioritized and waved by risk class, ready for operator review.

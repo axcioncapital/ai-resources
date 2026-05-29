@@ -229,3 +229,11 @@
 - **QC cycles:** 4 (scope-v1 DISAGREE → corrected; scope-v2 DISAGREE → corrected; scope-v3 REVISE + drift MAJOR-DRIFT → mechanism corrected; plan REVISE → 5 fixes applied)
 - **Gates:** 9 (4 changed) — clarify-1:changed, clarify-2:changed (architecture pivot to session-init), scope-v1:changed, scope-v2:changed, scope-v3:changed (hook drop), plan-approval:confirmed, hook-drop-decision:changed (revised from v3.1), risk-check-second-opinion:confirmed (PROCEED-WITH-CAUTION concur), push-gate:pending
 - **Mandate fields:** none (no /session-start this session — work began with operator-shared briefs, not /prime → /session-start chain)
+
+### 2026-05-29 — Session S5: FL-1+FL-6 + C-1+C-2 + improvement-log archive triage + context-engine deferral
+- **Commands used:** /prime (auto 1,3,4,5), /risk-check (×2 — Item 1 + Item 3), /qc-pass (×2 — Item 1 + Item 3 C-1), /resolve-improvement-log, /wrap-session. Spawned `system-owner` agent twice via Agent tool for /risk-check Step 4a second opinion (slash command /consult not surfaced as a Skill this session — directly invoking the agent was the fallback).
+- **Iterations:** 0 (each item shipped first-pass; no drafting cycles)
+- **Decisions logged:** 4 (drop conditional-write threshold; leading path-back line; split C-1/C-2 commits; Item 5 deferral per Context constraint)
+- **QC cycles:** 2 (Item 1 GO; Item 3 C-1 GO)
+- **Gates:** 4 (0 changed) — plan-approval:confirmed (single /prime auto-mode gate covered 4 items), qc-disposition:confirmed (×2), challenge-disposition:confirmed (System Owner advisory on Item 3 tightened C-1 design — accepted in full, not contested), push-gate:pending
+- **Mandate fields:** specified: work_scope, exit_condition, out_of_scope, stop_if | inferred: files_in_scope | omitted: allowed_inputs, required_outputs

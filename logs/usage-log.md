@@ -1,3 +1,32 @@
+### 2026-05-29 | Efficient
+
+**Task:** /prime auto-mode multi-item session (operator typed `auto 1,3,4,5`): shipped FL-1+FL-6 friction-log hook unification + C-1+C-2 /consult Function A/B return-size contract + project-local agent symlink swap + improvement-log entry on the System Owner observation. Item 4 closed as no-op (0 eligible entries); Item 5 deferred per Context constraint rule (a concurrent S6 session built it in parallel).
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~14 |
+| Files read | ~16 (re-reads: 2 — session-notes.md ×3 across wrap sequence; improvement-log.md offset re-read after full) |
+| Files written/edited | 16 (8 source files + 8 logs/notes/scratchpads/risk-checks) |
+| Tool calls | ~58 (Bash ~22, Edit ~14, Read ~10, Write ~3, Agent ~6, AskUserQuestion ~2, Skill ~3, TodoWrite ~5) |
+| Subagents | 7 (risk-check-reviewer ×2, system-owner ×2 direct via Agent, qc-reviewer ×2, project-consultant ×1 abandoned, plus this analyzer) |
+| Rework cycles | 0 |
+
+**Findings:**
+- **Verbose passthrough — Moderate (~6–8k tokens).** Both SO advisories returned full text (~3–4k each) into main session. Recurring drip flagged in 5+ prior entries. This session's C-1 fix (≤30-line return + full-to-disk) addresses the pattern — takes effect on the NEXT /consult invocation, so this telemetry's drip is the terminal instance.
+- **Subagent overhead — Minor.** One abandoned project-consultant spawn when `Skill("consult")` mis-resolved (/consult not surfaced as a Skill this session). Architectural, not session-level. Fallback to direct Agent(system-owner) worked cleanly.
+- **Redundant reads — Minor.** logs/session-notes.md tail re-read 3× across wrap sequence at different offsets (Step 1 tail, Step 3.5 guard grep, Step 4 positioning Edit). Both load-bearing — wrap requires post-write positioning checks. logs/improvement-log.md re-read at offset after full read for Verified-line edit.
+- **Rework — None.** Each item shipped first-pass: risk-check → SO advisory → mitigations applied → QC GO → commit. The C-1 design revision (drop conditional-write threshold per OP-3/DR-6/AP-7) happened pre-execution — design-time, not artifact rework.
+- **Trend vs last 3 entries (Acceptable / Acceptable / Acceptable):** First Efficient in the window. Heavy ≠ wasteful when each subagent is structurally earned (2 risk-checks for risk-gated changes + 2 QCs + 2 SO advisories + 1 analyzer). The SO advisory drip — flagged in 5+ consecutive prior entries — terminates here because the C-1 fix shipped this session caps return size at the source.
+
+**Recommendation:** No action needed. Validate at next /consult invocation that the ≤30-line return contract holds and main-session pass-through is bounded.
+
+**Estimated savings:** N/A for this session — no primary recommendation. Forward-looking: the C-1 fix shipping this session removes ~3–4k tokens per future /consult Function A/B invocation (~6–12k/week at current frequency, ~30–60k over the next 10–20 sessions). That saving accrues to future sessions, not this one.
+
+**Additional levers (ROI-ranked):**
+- **Surface /consult as a harness Skill (~2–3k tokens/session when SO second opinion fires).** /risk-check Step 4a invokes /consult automatically on non-GO verdicts. With /consult not in the skill list this session, fallback to direct Agent(system-owner) works but cost one abandoned project-consultant spawn the first time. Architectural fix at the harness layer; recurring on any non-GO /risk-check.
+- **Consolidate logs/session-notes.md tail reads during /wrap-session (~500–800 tokens/wrap).** Steps 1, 3.5, and 4 all tail-read the same file at different offsets. A single read at wrap-start with in-memory positioning would collapse three reads to one. Wrap-only lever; modest per-session but every-session.
+- **/wrap-session Step 3.5 verbosity (~1–2k tokens/wrap).** ~80-line inline Bash for the foreign-session guard is rendered into the prompt every wrap. Could be a helper script invocation (`bash logs/scripts/foreign-session-guard.sh`) returning just the GUARD output line. Per-wrap saving, accumulates across all wraps.
+
 ### 2026-05-29 | Acceptable
 
 **Task:** Designed and built Context Engine MVP end-to-end across two phases (schema doc + Opus context-discovery agent + /build-context manual command in Phase 1; auto-fire wiring in /session-start and /prime with PROCEED-WITH-CAUTION mitigations in Phase 2). Heavy iterative design cycle: /clarify×2 → /scope×4 → plan + plan-QC → Phase 1 build → /risk-check → Phase 1 amendments → Phase 2 build → wrap.
