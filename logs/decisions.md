@@ -292,3 +292,20 @@ Plan retained: `/Users/patrik.lindeberg/.claude/plans/i-want-to-build-tidy-lake.
 - **Dynamic per-pipeline URL set** — auditor adds the hooks doc only when the pipeline reads/writes hooks, MCP doc only when it invokes MCP tools. Keeps signal density high; deferred as the "implement first" variant when trigger fires.
 - **Separate quarterly platform-drift sweep command** — fetches the broader Anthropic doc surface once, writes a workspace-wide drift memo. Cleaner separation; deferred as the alternative shape.
 - **Blanket widen now** — rejected: 3–5× WebFetch cost per memo with most pipelines not touching MCP/hooks meaningfully; dilutes signal density.
+
+---
+
+## 2026-05-29 — Friday-act permissions-settings item 7: M1 Layer-divergence accepted as intentional
+
+**Context.** Permission-sweep 2026-05-29 surfaced 1 MEDIUM finding (M1, Rule 11): Layer A (`~/.claude/settings.json`) lacks `Bash(git reset --hard *)` and `Bash(git checkout *)` denies that Layer B (workspace root `.claude/settings.json`) carries. Layer A also has broader `Edit(**)` / `Write(**)` allows absent from Layer B.
+
+**Decision.** Accept divergence; no edit to either layer.
+
+**Rationale.** The audit's own remediation hint reads "Operator review. Layer A is intentionally more permissive (personal machine); divergence is by design. No mechanical fix unless operator wants uniform git guards at user level." Operator memory `feedback_zero_permission_prompts` ("never add to deny list") forbids adding the missing guards to Layer A. Removing the existing guards from Layer B would reduce protection on the workspace where shared/sensitive state lives. Neither move improves the safety/ergonomics trade.
+
+**Alternatives considered.**
+- **Add `Bash(git reset --hard *)` + `Bash(git checkout *)` to Layer A.** Rejected per `feedback_zero_permission_prompts` memory.
+- **Remove the two git guards from Layer B.** Rejected — Layer B is the workspace-wide guard layer and the denies are operator-accepted.
+- **No-op.** Selected.
+
+**Item closure.** Friday-act plan permissions-settings item 7 closed as "decision-only, no file edit, no risk-check needed".
