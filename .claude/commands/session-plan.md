@@ -4,116 +4,45 @@ effort: high
 argument-hint: "[session intent — or leave blank to use next steps from last session]"
 ---
 
-Session orchestrator. Run after `/prime` to plan HOW the session will run before execution starts. Produces a written plan at `logs/session-plan.md` (overwrite each session). Not to be confused with the research-workflow's per-section `session-plan.md` under `workflows/research-workflow/`.
+Session orchestrator. Run after `/prime` to plan HOW the session will run before execution starts. Produces a written plan at `logs/session-plan-${MARKER}.md` (marker-scoped per `docs/session-marker.md`; overwrite each same-session re-invocation). Not to be confused with the research-workflow's per-section `session-plan.md` under `workflows/research-workflow/`.
 
 ---
 
-## Step 0 — Confirm `/prime` ran this session, and detect concurrent-session collisions
+## Step 0 — Confirm `/prime` ran this session, resolve marker, check for same-session re-invocation
 
-Read `logs/session-notes.md`. Look for a `## {YYYY-MM-DD}` header matching today's date (the entry `/prime` appends when the operator names the work).
+Read `logs/session-notes.md`. Resolve this session's marker via `docs/session-marker.md` § Marker resolution. If `MARKER` is empty (absent or stale), hard-fail per the uniform writer contract: `[/session-plan Step 0] HARD-FAIL: logs/.session-marker absent or stale. Run /prime to populate the marker for this session, then retry.`
 
-- If not found: tell the operator "Run `/prime` first to orient the session, then return to `/session-plan`." Stop. Do not proceed.
+Locate the marker-bearing header `## YYYY-MM-DD — Session ${MARKER}` in `session-notes.md`. If absent, hard-fail: `[/session-plan Step 0] HARD-FAIL: this session's marker-bearing header missing from logs/session-notes.md. Run /prime to seed the header.`
 
-- If found: check whether `logs/session-plan.md` exists AND was last modified within the past 6 hours (use `stat -f %m` on macOS, `stat -c %Y` on Linux, or `date -r`). If no: proceed to Step 1.
+**Same-session re-invocation check.** Check whether `logs/session-plan-${MARKER}.md` exists. If yes, this is THIS session's prior plan (no other session writes to this path under TOCTOU Phase 2+3 atomic — each session writes its own marker-scoped plan). Emit the 3-option prompt:
 
-  If yes, perform intent-comparison conflict detection:
+> `session-plan-${MARKER}.md` already exists from this session (modified {HH:MM}, intent: '{Intent value}'). Options:
+> 1. Keep current plan — stop here, no changes made
+> 2. Overwrite with new intent — continue to Step 1
+> 3. Write new plan to `logs/session-plan-${MARKER}-pass2.md` instead — continue to Step 1, output to pass2
+>
+> Default (no response within the turn): **option 1 — keep current plan**.
 
-  0. **Same-session short-circuit (own-session marker check).** Run BEFORE the intent comparison. The marker `logs/.prime-mtime` is written by `/prime` Step 8a.3.a / 8b.3.a / 8c.3 after `/prime` appends today's header to `session-notes.md` — its contents are `session-notes.md`'s mtime at that moment, serving as a "this session's `/prime` ran at T" timestamp.
+Apply the chosen option: Option 1 → stop, no changes. Option 2 → continue to Step 1 (OUTPUT_TARGET = `logs/session-plan-${MARKER}.md`). Option 3 → continue to Step 1 (OUTPUT_TARGET = `logs/session-plan-${MARKER}-pass2.md`).
 
-     - If `logs/.prime-mtime` is absent → set `SAME_SESSION = false` (no marker, no determination possible). Proceed to sub-step 1.
-     - If `logs/.prime-mtime` exists → read its value as `PRIME_MTIME` and capture `PLAN_MTIME` = `session-plan.md` mtime (`stat -f %m` macOS / `stat -c %Y` Linux).
-       - **Freshness window:** if `PRIME_MTIME` is older than today's start-of-day (`PRIME_MTIME < TODAY_EPOCH`, computed as in `/session-start` Step 0.5 — explicit `00:00:00` time component), treat the marker as stale → set `SAME_SESSION = false`. Emit one line: `[Step 0 sub-step 0] Note: logs/.prime-mtime is stale (older than today) — falling through to intent comparison.` Proceed to sub-step 1. (Mirrors `/session-start` Step 0.5's freshness check; protects against the case where today's `session-notes.md` header exists but this session's `/prime` did not actually run — e.g., manual edit that added the header without invoking `/prime`.)
-       - If `PLAN_MTIME > PRIME_MTIME` → set `SAME_SESSION = true`. The existing `session-plan.md` was written by THIS session's `/session-plan` AFTER this session's `/prime` ran. The intent comparison is irrelevant — the operator's mental model is "this is my session's prior plan, even if I've changed direction." Sub-step 6 will override to MATCH.
-       - If `PLAN_MTIME <= PRIME_MTIME` → set `SAME_SESSION = false`. The plan was written before this session's `/prime` (i.e., a foreign session wrote it). Proceed to sub-step 1 for normal intent comparison.
+**Determine `UPCOMING_INTENT`** for Step 1 caching:
+- If `$ARGUMENTS` is non-empty → `UPCOMING_INTENT` = `$ARGUMENTS` verbatim.
+- Else → within this session's marker-bearing header in `session-notes.md`, scan forward for `### Next Steps`. Use the first bullet → `UPCOMING_INTENT`.
+- If neither resolves → set `UPCOMING_INTENT` = sentinel `(none derived)`. Step 1 handles the sentinel via re-ask.
 
-     Continue to sub-step 1 either way. `SAME_SESSION` is consumed in sub-step 6.
+Pass `UPCOMING_INTENT` and `OUTPUT_TARGET` forward to Step 1.
 
-  1. **Determine `UPCOMING_INTENT`** for this invocation (preview of Step 1; cache and reuse there):
-     - If `$ARGUMENTS` is non-empty → `UPCOMING_INTENT` = `$ARGUMENTS` verbatim.
-     - Else → read `logs/session-notes.md`, locate the last `## ` entry, scan forward for `### Next Steps`. Use the first bullet → `UPCOMING_INTENT`.
-     - If neither resolves (file missing, no Next Steps subsection, blank) → set `UPCOMING_INTENT` = sentinel `(none derived)`.
-  2. **Read `EXISTING_INTENT`** from the existing `logs/session-plan.md`'s `## Intent` line. If no `## Intent` line is present (malformed plan), set `EXISTING_INTENT` = sentinel `(none derived — existing plan malformed)` — the sentinel guard in sub-step 4 will fall through to the MATCH branch.
-  3. **Normalization contract** (pinned inline — do not infer from behavior): lowercase both strings, trim leading/trailing whitespace, strip trailing punctuation `.,;:!?`. Nothing else (no stop-word removal, no token-overlap heuristics).
-  4. **Sentinel guard:** if either normalized string starts with `(none derived` → SKIP comparison, fall through to the MATCH branch (3-option prompt). Sentinels are too ambiguous to auto-route to pass2; loud-failure-over-silent-continuation applies.
-  5. **Match contract:** case-insensitive substring containment in either direction. `EXISTING_INTENT` contains `UPCOMING_INTENT`, OR `UPCOMING_INTENT` contains `EXISTING_INTENT` → MATCH. (Asymmetry note: a scope-expanded second invocation — e.g., "fix X" vs "fix X and add Y" — counts as MATCH by design; the operator's mental model is "same work, broader scope.")
-  6. **Apply the result:**
-
-     **Override:** if `SAME_SESSION = true` (set by sub-step 0), force the result to MATCH regardless of sub-step 5's outcome — the own-session marker is authoritative; intent-string comparison is only used when the marker is absent or indicates a foreign session. Without this override, a same-session re-invocation with a genuinely-different intent (e.g., operator pivoted mid-session) would silently auto-route to pass2 — masking the prior plan instead of asking. The override surfaces the 3-option prompt so the operator chooses keep / overwrite / pass2 explicitly.
-
-     **MATCH → same-session re-invocation.** Emit the existing 3-option prompt:
-
-     > `session-plan.md` already exists from this session (modified {HH:MM}, intent: '{Intent value}'). Options:
-     > 1. Keep current plan — stop here, no changes made
-     > 2. Overwrite with new intent — continue to Step 1
-     > 3. Write new plan to `logs/session-plan-pass2.md` instead — continue to Step 1, output to pass2
-     >
-     > Note: `logs/session-plan-next.md` is a separate file written by `/monday-prep` for cross-session handoffs and is not the same as `session-plan-pass2.md`.
-     >
-     > Default (no response within the turn): **option 1 — keep current plan**.
-
-     Apply the chosen option: Option 1 → stop, no changes. Option 2 → continue to Step 1 (output target = `logs/session-plan.md`). Option 3 → continue to Step 1 (output target = `logs/session-plan-pass2.md`).
-
-     **MISMATCH → run wrap-state check before defaulting to pass2 (id-13, 2026-05-28).** The 6-hour mtime window + intent-mismatch combination can fire for a PRIOR session that has already wrapped (its `session-plan.md` is still on disk but the session is dead). Auto-routing those cases to `pass2.md` is wrong — the prior plan is harmless to overwrite. The wrap-state check probes whether the prior session has wrapped:
-
-     ```bash
-     # Extract plan_date from existing session-plan.md's "# Session Plan — {DATE}" header.
-     PLAN_DATE=$(grep -m1 "^# Session Plan" logs/session-plan.md 2>/dev/null | sed -E 's/^# Session Plan — ([0-9]{4}-[0-9]{2}-[0-9]{2}).*/\1/')
-
-     # Signal A — session-notes.md has a wrapped entry for plan_date (## {date} block containing both ### Summary AND ### Next Steps).
-     SIGNAL_A=0
-     if [ -n "${PLAN_DATE}" ] && [ -f logs/session-notes.md ]; then
-       SIGNAL_A=$(awk -v d="${PLAN_DATE}" '
-         /^## /{
-           if (inblock && sum && nxt) { found=1 }
-           inblock = (index($0, d) > 0)
-           sum=0; nxt=0
-         }
-         inblock && /^### Summary/{ sum=1 }
-         inblock && /^### Next Steps/{ nxt=1 }
-         END{
-           if (inblock && sum && nxt) { found=1 }
-           print found+0
-         }
-       ' logs/session-notes.md 2>/dev/null)
-       SIGNAL_A=${SIGNAL_A:-0}
-     fi
-
-     # Signal B — git log shows a session-wrap commit for plan_date.
-     SIGNAL_B=0
-     if [ -n "${PLAN_DATE}" ]; then
-       if git log --grep="^session: ${PLAN_DATE}" --oneline 2>/dev/null | grep -q .; then
-         SIGNAL_B=1
-       fi
-     fi
-     ```
-
-     - **EITHER signal positive** → prior session for `{PLAN_DATE}` has wrapped → MISMATCH override. Treat as MATCH-Option-2 (plain overwrite). Emit one-line note:
-
-       > Prior session for {PLAN_DATE} has wrapped (wrap-signal: A={SIGNAL_A}, B={SIGNAL_B}). Overwriting `logs/session-plan.md` instead of routing to pass2.
-
-       Set output target = `logs/session-plan.md` and continue to Step 1.
-
-     - **NEITHER signal positive** → preserve current MISMATCH semantics. Auto-default to pass2 without prompting. Emit one notification line:
-
-       > Concurrent session detected. Existing intent: '{EXISTING_INTENT_truncated_60}'. This session's intent: '{UPCOMING_INTENT_truncated_60}'. Writing new plan to `logs/session-plan-pass2.md` to avoid collision (preserves both). To overwrite `session-plan.md` instead, re-run `/session-plan` after the other session wraps.
-
-       Set output target = `logs/session-plan-pass2.md` and continue to Step 1.
-
-     **Why dual signal:** false-positive requires BOTH A and B to fire on a non-wrapped session (implausible — wrap writes both signals together). False-negative (signal misses a real wrap) preserves current behavior (pass2 routing) — no regression.
-
-  In every path that continues to Step 1, pass `UPCOMING_INTENT` forward — Step 1 reuses it instead of re-deriving.
-
-  Known-debt note: `/drift-check` currently reads `logs/session-plan.md`, not pass2. When the auto-pass2 branch fires, `/drift-check` will use the prior session's plan as mandate baseline — possible false ALIGNED verdict. Tracked in `logs/maintenance-observations.md` for a future `/drift-check` Step 3 enhancement.
+Removed in atomic Phase 2+3 (Option A): the intent-comparison, sentinel guard, normalization contract, MATCH/MISMATCH branches, wrap-state check, auto-pass2 routing, and the 6-hour mtime window. Per-session marker scoping eliminates the shared-file race that those mechanisms detected.
 
 ---
 
 ## Step 1 — Determine session intent
 
-**Cache shortcut:** if Step 0 already set `UPCOMING_INTENT` (intent-comparison conflict detection ran), reuse it: set `INTENT` = `UPCOMING_INTENT` and skip the sub-step 1 derivation logic below. Then:
+**Cache shortcut:** Step 0 always sets `UPCOMING_INTENT` as a forward-pass to Step 1 (TOCTOU Phase 2+3 atomic — same-session re-invocation check completes; UPCOMING_INTENT is computed regardless of branch). If `UPCOMING_INTENT` is a non-sentinel value, reuse it: set `INTENT` = `UPCOMING_INTENT` and skip the sub-step 1 derivation logic below. Then:
 - If `$ARGUMENTS` was non-empty → proceed directly to Step 2.
 - If `$ARGUMENTS` was empty → run sub-steps 2 and 3 (display the inferred intent with source freshness, then ask the operator to confirm or restate). Do not skip the display — the operator must see what they're confirming.
 
-Otherwise (Step 0 did not cache — e.g., no prior plan within 6 hours):
+**If `UPCOMING_INTENT` is the sentinel `(none derived)`** (e.g., `$ARGUMENTS` empty AND no `### Next Steps` in this session's marker-bearing block), fall through to the manual-derivation block below:
 
 If `$ARGUMENTS` is non-empty, set `INTENT` = `$ARGUMENTS` verbatim. Proceed to Step 2.
 
@@ -227,10 +156,10 @@ Do not evaluate structural risk yourself. Point to `/risk-check`.
 Set `DATE` = today in `YYYY-MM-DD` format.
 
 **Resolve `OUTPUT_TARGET`** (set by Step 0):
-- Default → `logs/session-plan.md`.
-- If Step 0's MATCH branch fired with Option 3 selected (operator picked pass2) → `logs/session-plan-pass2.md`.
-- If Step 0's MISMATCH branch fired with wrap-state override (prior session wrapped — id-13, 2026-05-28) → `logs/session-plan.md` (plain overwrite of dead plan).
-- If Step 0's MISMATCH branch fired without wrap-state override (auto-pass2 on concurrent-session collision) → `logs/session-plan-pass2.md`.
+- Default → `logs/session-plan-${MARKER}.md`.
+- If Step 0's same-session 3-option prompt resolved to Option 3 → `logs/session-plan-${MARKER}-pass2.md`.
+
+No legacy or bare-path fallback. The marker is mandatory under TOCTOU Phase 2+3 atomic (Option A); Step 0's hard-fail closes the absent-marker path before this step is reached. See `docs/session-marker.md` for the marker contract.
 
 **Precondition:** If `INTENT` references a separate report, spec, or drift file (e.g., "apply findings from audit-X.md", "execute the drift-fix plan"), the `## Findings / Items to Address` section below MUST inline a one-line summary of each item with a source-doc anchor. A bare link to the file is invalid — the plan must be readable without opening the referenced doc.
 

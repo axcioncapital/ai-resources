@@ -38,8 +38,7 @@ Use `Read` (and `Grep` where helpful) — do not write or edit any source file.
 | `logs/improvement-log.md` | T1 (applied-unverified) / T3 (logged/pending) | **T1:** entries with `Status: applied` but no non-empty `Verified:` line. **T3:** entries whose `Status:` matches `logged`, `proposed`, `pending`, or `logged (pending)` |
 | `logs/decisions.md` | T2 | Entries containing `Defer` or `Deferred` (case-insensitive) AND having a `Trigger for action:` field. Capture entry date, title, and trigger text |
 | `logs/session-notes.md` | T2 (recent) / T3 (stale) | **Open Questions** sections where content is NOT `None`, `None.`, `None blocking`, or `None blocking.` (case-insensitive, trimmed). Recent = entry dated within 14 days of today |
-| `logs/session-plan.md` | T1 (recent) / T3 (stale) | `- [ ]` checkbox lines. Recent = file modified within 14 days; otherwise stale |
-| `logs/session-plan-pass2.md` | T1 (recent) / T3 (stale) | Same as session-plan.md. Present when `/session-plan` option 3 was chosen (re-invocation pass2 fork). |
+| `logs/session-plan-*.md` (glob) | T1 (recent) / T3 (stale) | `- [ ]` checkbox lines across all marker-scoped session plans. Recent = file modified within 14 days; otherwise stale. Each scanned independently; the attribution line in the output includes the source filename so the operator sees which session's plan a checkbox belongs to. The glob covers both `session-plan-S{N}.md` (canonical) and `session-plan-S{N}-pass2.md` (re-invocation forks); both are first-class sources of unfinished work. See `docs/session-marker.md` for the marker-scoping contract. |
 
 ### Step 2 — Apply priority override
 
@@ -65,8 +64,8 @@ Always print every heading. For empty sections, print `None.` underneath. Use ma
 ### Active next-up queue
 - <checkbox text> — [logs/next-up.md](logs/next-up.md)
 
-### Recent session-plan steps
-- <checkbox text> — [logs/session-plan.md](logs/session-plan.md)
+### Recent marker-scoped session-plan steps
+- <checkbox text> — [logs/session-plan-{marker}.md](logs/session-plan-{marker}.md) (across all marker-scoped session plans; see `docs/session-marker.md`)
 
 ### Applied improvements awaiting verification
 - <entry title> — [logs/improvement-log.md](logs/improvement-log.md)
@@ -81,7 +80,7 @@ Always print every heading. For empty sections, print `None.` underneath. Use ma
 
 ## Tier 3 — Backlog (counts only)
 - Improvement-log logged/pending: <N> items
-- Stale session-plan checkboxes (>14 days): <N> items
+- Stale marker-scoped session-plan checkboxes (>14 days, glob `logs/session-plan-*.md`): <N> items
 - Stale open questions (>14 days): <N> items
 
 (Run `/open-items full` to expand Tier 3.)

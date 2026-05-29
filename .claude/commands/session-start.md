@@ -218,12 +218,14 @@ Where `files_in_scope_written` is:
 - `(inferred)` — if `files_inferred = true` (operator did not state or correct this field)
 - the operator's stated/corrected value — if `files_inferred = false`
 
-Using the `logs/session-notes.md` content already read in Step 0, locate today's session header. If Step 2 took longer than ~30s or a concurrent session may have written to `logs/session-notes.md` during Step 1/Step 2, re-read the last 10 lines before locating the header.
+Resolve this session's marker (see `docs/session-marker.md` § Marker resolution). If `MARKER` is empty, hard-fail per the uniform writer contract: `[/session-start Step 3] HARD-FAIL: logs/.session-marker absent or stale. Run /prime to populate the marker for this session, then retry.`
 
-- If today's header (`## YYYY-MM-DD`) exists: append the mandate line immediately after the header, before any existing body content.
-- If today's header is absent: append to the file:
+Using the `logs/session-notes.md` content already read in Step 0 (re-read the last 10 lines if Step 2 took >30s — the marker-scoped header still requires a fresh read since Step 0's snapshot may be stale), locate this session's marker-bearing header.
+
+- If a header matching `^## YYYY-MM-DD — Session ${MARKER}` exists: append the mandate line immediately after that header, before any existing body content.
+- If the marker-bearing header is absent: append to the file:
   ```
-  ## YYYY-MM-DD
+  ## YYYY-MM-DD — Session ${MARKER}
   **Mandate:** {one-sentence summary of work_scope} — done when: {exit_condition}
   - Out of scope: {out_of_scope}
   - Files in scope: {files_in_scope_written}

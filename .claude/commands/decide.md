@@ -26,7 +26,7 @@ Operator-invoked only. Do NOT auto-fire.
 2. **Prior-decision check.** Before treating any item as open, verify that the question hasn't already been decided. Read (tail only, not whole file):
 
    - `logs/session-notes.md` — last today-dated `## YYYY-MM-DD` entry (tail-read pattern, same idiom as `/prime`).
-   - `logs/session-plan.md` (and `logs/session-plan-pass2.md` / `session-plan-pass{N}.md` siblings if present — these are written by `/session-plan` Step 0 on concurrent-session collision; per `docs/repo-architecture.md` § Q6).
+   - `logs/session-plan-*.md` (glob — covers all marker-scoped session plans including any same-session pass2 forks; under TOCTOU Phase 2+3 atomic each session writes its own marker-scoped plan, so the glob covers cross-session prior-decision context too; see `docs/session-marker.md` for the marker contract; per `docs/repo-architecture.md` § Q6).
    - Recent conversation history within this session.
 
    For any item that matches a prior decision (same wording, same scope, or close paraphrase), mark it `Already decided — see {source}` and do not re-research it. The item still appears in the output, with the prior decision quoted, so the operator can see what was filtered and override if the prior decision was wrong.

@@ -49,7 +49,7 @@ Input: `$ARGUMENTS` — optional. Interpreted as:
 
    a. **Frozen contracts directory.** If `REPO_ROOT/logs/contracts/` exists, list `*.md` files in it sorted by mtime descending. If a file dated today (`YYYY-MM-DD-*.md` with today's date) exists, set `CONTRACT_SOURCE` = that path. If only older contracts exist, surface them as candidates (do not auto-pick — ask).
 
-   b. **Session plan.** If `REPO_ROOT/logs/session-plan.md` exists AND was last modified today, set `CONTRACT_SOURCE` = `logs/session-plan.md`. The plan's `## Intent`, `## Findings / Items to Address`, and `## Execution Sequence` sections form the contract body.
+   b. **Session plan.** Resolve this session's marker via `docs/session-marker.md` § Marker resolution. If `MARKER` resolves AND `REPO_ROOT/logs/session-plan-${MARKER}.md` exists AND was last modified today, set `CONTRACT_SOURCE` = `logs/session-plan-${MARKER}.md`. The plan's `## Intent`, `## Findings / Items to Address`, and `## Execution Sequence` sections form the contract body. If marker is absent/stale, skip this candidate (read-only auxiliary consumer: tolerate marker absence by falling through to candidate (c) — `/contract-check` may be invoked post-session when no active marker exists). Do NOT hard-fail.
 
    c. **Session-notes mandate block.** If `REPO_ROOT/logs/session-notes.md` exists, read the last (bottom-most) `## {DATE}` entry block. If it contains a `**Mandate:**` line, set `CONTRACT_SOURCE` = `logs/session-notes.md (mandate block from {DATE})`. The mandate line plus the `Out of scope`, `Files in scope`, `Stop if`, `Allowed inputs`, `Required outputs` bullets form the contract body.
 

@@ -53,20 +53,16 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 
    `/prime` never edits `session-notes.md`, so every Next Step bullet stays untouched in the source file — the operator can verify there directly if a likely-DONE call looks wrong. If either git command fails or returns nothing, fall through to whichever result set succeeded; if both fail, treat all bullets as still-open and continue.
 
-   *Sibling-entry sweep — mechanical check:* Run the following bash to count today-dated headers in `logs/session-notes.md`:
+   *Sibling-entry informational note (TOCTOU Phase 2+3 atomic shape):* Under marker-scoped session writes (see `docs/session-marker.md`), each session writes its own marker-bearing header `## YYYY-MM-DD — Session ${MARKER}`. Multiple same-day headers is the EXPECTED shape, not a hazard — do NOT emit a `⚠` warning (per `principles.md § AP-10`: no error handling for impossible-or-normal scenarios).
+
+   If brief visibility into concurrent same-day sessions is wanted, count distinct marker-bearing headers and emit one informational line at Step 6:
 
    ```bash
    TODAY=$(date '+%Y-%m-%d')
    SIBLING_COUNT=$(grep -c "^## ${TODAY}" logs/session-notes.md 2>/dev/null || echo 0)
    ```
 
-   If `SIBLING_COUNT > 1`, set the Step 6 sibling-entry flag and capture the list of same-day header titles for the brief's exception line:
-
-   ```bash
-   grep -n "^## ${TODAY}" logs/session-notes.md
-   ```
-
-   If the flag is set, Step 6 emits: "⚠ Multiple same-day entries exist (parallel wraps possible). Next steps taken from `{source entry title}`; also review: `{list of sibling entry titles}`."
+   If `SIBLING_COUNT > 1`, Step 6 emits (no warning icon): `Today's session count: {N} marker-bearing entries ({list of markers, e.g., 'S1, S2, S3'}). This session is {MARKER}.`
 
 1b. **Detect a resumable continuity scratchpad.** `/handoff` continuity mode and `/wrap-session` Step 0.5 both write session-state scratchpads to `logs/scratchpads/`. Surface the most recent one so the operator can choose to resume it.
 
@@ -124,7 +120,7 @@ Last session ({date}): {one-line plain-English summary}.
 {⚠ Model: you are on {session model}; this project recommends {recommended} → /model {recommended} — only on mismatch}
 {⚠ Working tree: {short summary} — only if unexpectedly dirty}
 {⚠ Pull: {result} — only on failure or unpushed commits}
-{⚠ Multiple same-day session entries — sibling-entry warning from step 1a, only if triggered}
+{Today's session count: {N} marker-bearing entries ({list of markers}). This session is {MARKER}. — informational only, no `⚠` icon; only when SIBLING_COUNT > 1}
 {⚠ Phase READMEs detected: {paths}; read before opening the relevant work unit — only if step 4 surfaced any}
 {↩ Resumable scratchpad: {path} — only if step 1b surfaced one}
 
@@ -155,18 +151,7 @@ Full backlog & inbox: /open-items
 
       Then stop.
    3. If plan mode is **not** active:
-      a. Ensure today's session entry exists in `/logs/session-notes.md`. Read the last ~10 lines: if a `## YYYY-MM-DD` header for today is already present, reuse it — append `TASK_TEXT` as a work-description line beneath it. If today's header is absent, append a new `## YYYY-MM-DD` header with `TASK_TEXT` as the work description. Do NOT create a second same-day header (this is the duplicate-header hazard the step 1a sibling-entry sweep exists to catch). This must happen before step c — `/session-plan` Step 0 requires today's header to exist. If the operator stated a scope boundary, capture it too.
-
-         **After the append succeeds**, write `session-notes.md`'s mtime to `logs/.prime-mtime` so `/session-start` Step 0.5 can distinguish this session's own write from a foreign session's:
-
-         ```bash
-         stat -f %m logs/session-notes.md 2>/dev/null > logs/.prime-mtime \
-           || stat -c %Y logs/session-notes.md 2>/dev/null > logs/.prime-mtime
-         ```
-
-         Order matters: marker after append, never before — a forward-dated marker produces false negatives in Step 0.5. See `/session-start` Step 0.5 for the consumer-side check.
-
-         **Then write the per-session identity marker** to `logs/.session-marker` (Phase 1 of the TOCTOU-mitigation rollout per `logs/improvement-log.md` § "Concurrent sessions cause TOCTOU races on shared log files"). Phase 1 is write-only — no consumer reads this file yet:
+      a. **Determine this session's marker** (TOCTOU Phase 2+3 atomic — see `docs/session-marker.md` for the canonical contract):
 
          ```bash
          TODAY=$(date '+%Y-%m-%d')
@@ -177,14 +162,28 @@ Full backlog & inbox: /open-items
              "${TODAY} S"*) N=$((${PREV##*S} + 1));;
            esac
          fi
-         echo "${TODAY} S${N}" > logs/.session-marker
+         MARKER="S${N}"
+         echo "${TODAY} ${MARKER}" > logs/.session-marker
          ```
 
-         Same-day re-invocations increment within the day (`S1` → `S2` → …); a new day resets to `S1`. The file format is one line `{YYYY-MM-DD} S{N}` so the date prefix lets the increment logic detect same-day vs day-rollover without a separate `stat` call. Phase 2+ consumers (`/session-start`, `/session-plan`, `/wrap-session`, etc.) are deferred.
+         Same-day re-invocations increment within the day (`S1` → `S2` → …); a new day resets to `S1`.
+
+         **Ensure this session's marker-bearing entry exists** in `/logs/session-notes.md`. Read the last ~10 lines: if a `## YYYY-MM-DD — Session ${MARKER}` header for THIS session's marker is already present (rare — same-marker re-invocation), reuse it — append `TASK_TEXT` as a work-description line beneath it. If THIS session's marker-bearing header is absent (the common case at `/prime` time), append a new `## YYYY-MM-DD — Session ${MARKER}` header with `TASK_TEXT` as the work description.
+
+         Foreign concurrent sessions write under their own marker-bearing headers (e.g., `## YYYY-MM-DD — Session S2`); those do NOT count as "this session's header." The marker is the disambiguator. The pre-Phase-2 "no duplicate same-day header" rule is replaced by "this session writes only under its own marker-bearing header." This must happen before step c — `/session-start` Step 3 and `/session-plan` Step 0 require THIS session's marker-bearing header to exist.
+
+         **After the append succeeds**, write `session-notes.md`'s mtime to `logs/.prime-mtime` (for `/session-start` Step 0.5's foreign-write check):
+
+         ```bash
+         stat -f %m logs/session-notes.md 2>/dev/null > logs/.prime-mtime \
+           || stat -c %Y logs/session-notes.md 2>/dev/null > logs/.prime-mtime
+         ```
+
+         Order: marker first (top of step a), header append (middle), mtime last. Marker before append so the header can embed `${MARKER}`; mtime after append so `/session-start` Step 0.5's check sees this session's own write.
       b. Invoke the `/session-start` command with `TASK_TEXT` as its arguments (becomes the mandate). It runs its own mandate-confirmation prompt — that is expected; do not suppress it.
-      c. After `/session-start` finishes, invoke the `/session-plan` command with `TASK_TEXT` as its arguments (becomes the intent). It runs its own design/execution/mixed question and writes `logs/session-plan.md`. If a same-day `session-plan.md` already exists, `/session-plan` may also surface a 3-option keep/overwrite/pass-2 prompt — that is expected mid-chain; the operator answers it normally.
+      c. After `/session-start` finishes, invoke the `/session-plan` command with `TASK_TEXT` as its arguments (becomes the intent). It writes `logs/session-plan-${MARKER}.md` (marker-scoped per `docs/session-marker.md`). If THIS session's marker-scoped plan already exists, `/session-plan` Step 0 surfaces a 3-option keep/overwrite/pass2 prompt — that is expected mid-chain; the operator answers it normally.
       d. **Pause.** After `/session-plan` finishes, output:
-         > Plan ready — review `logs/session-plan.md`. Reply `go` to start execution, or run `/qc-pass` on the plan first.
+         > Plan ready — review `logs/session-plan-${MARKER}.md`. Reply `go` to start execution, or run `/qc-pass` on the plan first.
 
          Wait for the operator. Do NOT begin execution on your own.
 
@@ -195,18 +194,7 @@ Full backlog & inbox: /open-items
 
       Then stop.
    3. If plan mode is **not** active:
-      a. Ensure today's session entry exists in `/logs/session-notes.md`. Read the last ~10 lines: if a `## YYYY-MM-DD` header for today is already present, reuse it — append `TASK_TEXT` as a work-description line beneath it. If today's header is absent, append a new `## YYYY-MM-DD` header with `TASK_TEXT` as the work description. Do NOT create a second same-day header (same duplicate-header hazard step 1a's sibling-entry sweep catches).
-
-         **After the append succeeds**, write `session-notes.md`'s mtime to `logs/.prime-mtime` so `/session-start` Step 0.5 can distinguish this session's own write from a foreign session's (same marker contract as Step 8a.3.a — extending coverage to the free-text-intent path so neither path falls through to Step 0.5's heuristic fallback as its primary operating mode):
-
-         ```bash
-         stat -f %m logs/session-notes.md 2>/dev/null > logs/.prime-mtime \
-           || stat -c %Y logs/session-notes.md 2>/dev/null > logs/.prime-mtime
-         ```
-
-         Order matters: marker after append, never before — a forward-dated marker produces false negatives in Step 0.5. See `/session-start` Step 0.5 for the consumer-side check.
-
-         **Then write the per-session identity marker** to `logs/.session-marker` (same contract as Step 8a.3.a; Phase 1 of TOCTOU-mitigation rollout — write-only, no consumers yet):
+      a. **Determine this session's marker** and ensure this session's marker-bearing entry exists (same contract as Step 8a.3.a — see `docs/session-marker.md`):
 
          ```bash
          TODAY=$(date '+%Y-%m-%d')
@@ -217,10 +205,22 @@ Full backlog & inbox: /open-items
              "${TODAY} S"*) N=$((${PREV##*S} + 1));;
            esac
          fi
-         echo "${TODAY} S${N}" > logs/.session-marker
+         MARKER="S${N}"
+         echo "${TODAY} ${MARKER}" > logs/.session-marker
          ```
+
+         Read the last ~10 lines of `logs/session-notes.md`: if `## YYYY-MM-DD — Session ${MARKER}` is already present, reuse and append `TASK_TEXT`. Else create new `## YYYY-MM-DD — Session ${MARKER}` header with `TASK_TEXT`.
+
+         **After the append succeeds**, write `session-notes.md`'s mtime to `logs/.prime-mtime`:
+
+         ```bash
+         stat -f %m logs/session-notes.md 2>/dev/null > logs/.prime-mtime \
+           || stat -c %Y logs/session-notes.md 2>/dev/null > logs/.prime-mtime
+         ```
+
+         Order: marker → header append → mtime (same contract as Step 8a.3.a).
       b. Invoke the `/session-start` command with `TASK_TEXT` as its arguments (becomes the mandate). It runs its own mandate-confirmation prompt — that is expected; do not suppress it.
-      c. After `/session-start` finishes, invoke the `/session-plan` command with `TASK_TEXT` as its arguments (becomes the intent). It runs its own design/execution/mixed question and writes `logs/session-plan.md`. If a same-day `session-plan.md` already exists, `/session-plan` may also surface a 3-option keep/overwrite/pass-2 prompt — that is expected mid-chain; the operator answers it normally.
+      c. After `/session-start` finishes, invoke the `/session-plan` command with `TASK_TEXT` as its arguments (becomes the intent). It writes `logs/session-plan-${MARKER}.md` (marker-scoped per `docs/session-marker.md`). If THIS session's marker-scoped plan already exists, `/session-plan` Step 0 surfaces a 3-option keep/overwrite/pass2 prompt — that is expected mid-chain; the operator answers it normally.
       d. **Begin execution immediately** under full autonomy (per workspace CLAUDE.md Autonomy Rules). No second `go`/`proceed` confirmation required — the operator stating the work directly IS the go signal. This is 8b's structural delta vs 8a, which pauses for explicit `go` after `/session-plan`.
 
 8c. **Auto mode.** The operator typed `auto` — run the top menu item end-to-end with a single approval gate and no per-stage prompts.
@@ -229,14 +229,7 @@ Full backlog & inbox: /open-items
 
    2. **Plan-mode guard.** If a plan-mode system reminder is present in context, output: `Auto mode noted: {PICKED_ITEM}. You're in plan mode — I won't write anything yet. Exit plan mode and re-send 'auto' (or 'go') to proceed.` Then stop.
 
-   3. **Today's-header check + marker.** Same as Step 8a.3.a — ensure today's `## YYYY-MM-DD` header exists in `logs/session-notes.md`, append `PICKED_ITEM` text under it as a work-description line. Then write `logs/.prime-mtime` (mtime marker after the append, never before — order matters for `/session-start` Step 0.5 consumer-side check):
-
-      ```bash
-      stat -f %m logs/session-notes.md 2>/dev/null > logs/.prime-mtime \
-        || stat -c %Y logs/session-notes.md 2>/dev/null > logs/.prime-mtime
-      ```
-
-      **Then write the per-session identity marker** to `logs/.session-marker` (same contract as Step 8a.3.a; Phase 1 of TOCTOU-mitigation rollout — write-only, no consumers yet):
+   3. **Marker resolution + marker-bearing header + mtime marker** (same contract as Step 8a.3.a — see `docs/session-marker.md`):
 
       ```bash
       TODAY=$(date '+%Y-%m-%d')
@@ -247,7 +240,17 @@ Full backlog & inbox: /open-items
           "${TODAY} S"*) N=$((${PREV##*S} + 1));;
         esac
       fi
-      echo "${TODAY} S${N}" > logs/.session-marker
+      MARKER="S${N}"
+      echo "${TODAY} ${MARKER}" > logs/.session-marker
+      ```
+
+      Read last ~10 lines of `logs/session-notes.md`: if `## YYYY-MM-DD — Session ${MARKER}` is present, reuse and append `PICKED_ITEM` text as a work-description line. Else create new `## YYYY-MM-DD — Session ${MARKER}` header with `PICKED_ITEM`.
+
+      Then write `logs/.prime-mtime` (after the header append, never before):
+
+      ```bash
+      stat -f %m logs/session-notes.md 2>/dev/null > logs/.prime-mtime \
+        || stat -c %Y logs/session-notes.md 2>/dev/null > logs/.prime-mtime
       ```
 
    4. **Derive mandate fields** inline (matches `/session-start` Step 2 logic without the confirmation prompt):
@@ -316,11 +319,9 @@ Full backlog & inbox: /open-items
 
       **Parse contract:** the `**Mandate:**` line shape, the bullet labels (`- Out of scope:`, `- Files in scope:`, `- Stop if:`, `- Allowed inputs:`, `- Required outputs:`), and the `(inferred)` / `(none stated)` markers are load-bearing. Three downstream readers depend on them: canonical `/wrap-session` Step 7a, workspace-root `wrap-session.md` Step 2b, and `/drift-check` Step 5. Do not insert extra prose into the `**Mandate:**` line itself or rename labels. The "complete fully within this session where context allows" posture lives in Step 8c.10's execution behavior, not in the mandate line — keeping it out of the disk-write preserves the two-segment parse contract (head ` — done when: ` tail).
 
-   8. **Write plan.** Write to `logs/session-plan.md` using `/session-plan` Step 7 schema (`## Intent`, `## Model`, `## Source Material`, `## Findings / Items to Address`, `## Execution Sequence`, `## Scope Alternatives`, `## Autonomy Posture`, `## Risk`). Apply `/session-plan` Step 7 self-check (length floor ≥25 substantive lines, concrete Findings, concrete Execution Sequence, realistic Scope Alternatives).
+   8. **Write plan.** Write to `logs/session-plan-${MARKER}.md` (marker resolved in step 3; canonical contract `docs/session-marker.md`) using `/session-plan` Step 7 schema (`## Intent`, `## Model`, `## Source Material`, `## Findings / Items to Address`, `## Execution Sequence`, `## Scope Alternatives`, `## Autonomy Posture`, `## Risk`). Apply `/session-plan` Step 7 self-check (length floor ≥25 substantive lines, concrete Findings, concrete Execution Sequence, realistic Scope Alternatives).
 
-      **Concurrent-session collision check** (matches `/session-plan` Step 0 logic): if `logs/session-plan.md` already exists and was modified within the past 6 hours, read its `## Intent` line as `EXISTING_INTENT`. Normalize both (lowercase, trim, strip trailing punctuation) and compare via case-insensitive substring containment in either direction.
-      - **MATCH** → overwrite `logs/session-plan.md`.
-      - **MISMATCH** → write to `logs/session-plan-pass2.md` instead, and emit one line: `Concurrent session detected. Existing intent: '{EXISTING_INTENT_truncated_60}'. This session's intent: '{INTENT_truncated_60}'. Writing plan to logs/session-plan-pass2.md to avoid collision (preserves both).`
+      Under TOCTOU Phase 2+3 atomic, no concurrent-session collision check is needed — each session writes its own marker-scoped plan, so foreign-session collisions are structurally impossible.
 
    9. **Run `/risk-check` if STRUCTURAL_RISK is true.** This is the plan-time gate per workspace Autonomy Rules #9. The single approval gate at step 8c.6 disclosed this in advance, so the operator is not surprised. Verdict handling:
        - **GO** → proceed to 8c.10.

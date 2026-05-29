@@ -322,3 +322,19 @@ Session-shape signals worth noting for the next checkup:
 - Observability: hold
 - Operator load: loosen — auto-triage default shifts disposition load off operator; tracks with Autonomy direction
 
+
+---
+
+## 2026-05-29 — Pre-spec consumer-inventory checklist (TOCTOU Phase 2+3 rollout)
+
+**Source:** System-owner Function-B advisory on Round 2 risk-check (`audits/risk-checks/2026-05-29-plan-time-gate-for-toctou-mitigation-atomic-phase-2-3.md` § Architectural Commentary § Position § Process observation).
+
+**Observation.** In TOCTOU Phase 2+3 atomic spec drafting, the spec author understated the affected-file inventory by 4 files in Round 1 (Phase 2-only spec), then by 4 more files in Round 2 (atomic spec). Same defect class — under-counted consumers of a renamed/removed path — repeated across rounds. Reviewer correctly caught both rounds' misses; verdicts were PROCEED-WITH-CAUTION both times.
+
+**Pattern.** When a spec proposes renaming or removing a path (e.g., `logs/session-plan.md` → `logs/session-plan-${MARKER}.md`), the spec author's mental inventory tends to enumerate the obvious consumers (commands explicitly named in the source-authority proposal) and miss orphan consumers (documentation tables, scaffolding lists, narrative references in unrelated docs, operator-facing chat strings inside command bodies that aren't the touched-command's own logic).
+
+**Improvement candidate (Friday cadence).** Add a pre-spec grep checklist to skill docs (e.g., `ai-resource-builder/SKILL.md` or a new section in `ai-resources/docs/`) instructing: "Before writing a structural-change spec that renames/removes a path, run `grep -rn '<path>' .claude/ docs/ skills/ workflows/ templates/ CLAUDE.md` and enumerate every consumer in the spec's affected-file list. The grep is mechanical; the inventory miss is consistent across spec authors."
+
+**Why this matters.** Recursive PROCEED-WITH-CAUTION verdicts are an inefficient signal — each round costs a full risk-check invocation + SO advisory + operator decision-loop turn. A pre-spec grep would close the inventory loop before the spec hits risk-check, preserving the verdict for genuinely structural concerns.
+
+**Not blocking.** Logged here for next `/friday-checkup` cadence to triage into improvement-log if confirmed worthwhile.

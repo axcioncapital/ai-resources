@@ -18,7 +18,7 @@ Four points in a typical session where pre-compact discipline matters most. At e
 
 2. **Post-implementation.** After the main edit/draft phase, before QC.
    - On disk before compact: files written or modified (path + one-line change summary); decisions made during implementation; remaining acceptance criteria not yet checked.
-   - Target file: append to the active `logs/session-plan.md` or write a `logs/scratchpads/` file.
+   - Target file: append to the active `logs/session-plan-${MARKER}.md` (resolve marker per `docs/session-marker.md`) or write a `logs/scratchpads/` file.
    - Preferred next step: `/clear` + restart, loading the implementation summary into a fresh `/qc-pass`. QC benefits from a clean reading.
 
 3. **Post-QC.** After QC findings recorded, before fix application.

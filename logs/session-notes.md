@@ -533,3 +533,12 @@ Wave 2 `/qc-pass` returned REVISE on one defect (CC-5 abort suggested an impossi
 
 - **`/risk-check` end-time gate (Phase 5):** GO verdict. Usage cost, Permissions, Blast radius, Reversibility, Hidden coupling all Low. Subagent surfaced no concern on any of the five operator-named focus areas (registry row move, Registry-contract pointer, `disable-model-invocation` adds, contract-check Step 5 verdict-header parse contract, friction-log re-tier).
 - **System Owner advisory (Phase 6):** Batch sound. Three concrete follow-up actions surfaced (above, Next Steps #1-#4). One discovered side effect: the consult.md `disable-model-invocation: true` add in Wave 1 then blocked the editing session from invoking `/consult` via the Skill tool — worked around by spawning `system-owner` agent directly via Task tool. System Owner's Q4 response classifies this as a two-end contract risk per `risk-topology.md § 5` and recommends documenting the side effect in `principles.md` rather than reverting (the Task workaround is sufficient recovery).
+
+## 2026-05-29 — TOCTOU mitigation Phases 2-4 (.session-marker consumers)
+
+**Mandate:** Implement TOCTOU mitigation Phases 2-4 — wire `.session-marker` consumer logic into `/session-start`, `/session-plan`, `/wrap-session`, and `/handoff` to replace heuristic-based concurrent-session detection with the per-session identity marker that `/prime` Phase 1 already writes — done when: all four command files updated with consumer logic, /risk-check run (plan-time + end-time), QC passed, commits landed.
+- Out of scope: (none stated)
+- Files in scope: `.claude/commands/session-start.md`, `.claude/commands/session-plan.md`, `.claude/commands/wrap-session.md`, `.claude/commands/handoff.md`, possibly related docs
+- Stop if: /risk-check returns NO-GO at plan-time
+
+**Mandate revision note:** This mandate replaces a stale `/cleanup-worktree` mandate written ~5 minutes earlier. The cleanup mandate became moot when verification showed the dirty state I had flagged at `/prime` time was already resolved by concurrent commit `3f6937b` (chain-invoke restructure + Class field retirement) that landed at 11:26:46 today. The original task 1→2 pivot at session start was based on stale env-snapshot data; corrected back to task 2 (TOCTOU) per operator decision.

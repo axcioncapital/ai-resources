@@ -37,7 +37,7 @@ Read each source if it exists. Skip silently if missing.
 | `logs/improvement-log.md` | T1 (applied-unverified) / T3 (logged/pending) | **T1:** entries with `**Status:** applied` but no non-empty `**Verified:**` line. **T3:** entries with `**Status:**` matching `logged`, `proposed`, `pending`, or `logged (pending)`. |
 | `logs/decisions.md` | T2 | Entries containing `Defer`/`Deferred` AND a `Trigger for action:` field. Capture entry date, title, trigger text. |
 | `logs/session-notes.md` | T2 (recent) / T3 (stale) | `Open Questions` sections where content ≠ `None`/`None.`/`None blocking`/`None blocking.` (case-insensitive, trimmed). Recent = entry dated within 14 days of `TODAY`. |
-| `logs/session-plan.md` | T1 (recent) / T3 (stale) | `- [ ]` checkbox lines. Recent = file modified within 14 days of `TODAY`. |
+| `logs/session-plan-*.md` (glob) | T1 (recent) / T3 (stale) | `- [ ]` checkbox lines across all marker-scoped session plans (canonical + pass2 variants). Recent = file modified within 14 days of `TODAY`. See `docs/session-marker.md` for the marker contract. |
 | `logs/innovation-registry.md` | T1 / T2 / T3 (by row Status) | Parse the markdown table (columns: Date \| Type \| File \| Status \| Graduated To). Per row, classify by Status: **T1 fix-shaped:** `pending-triage` (untriaged, ≤7 days → suggest `/innovation-sweep`); `triaged:broken-symlink` (clear fix — repoint or delete + status flip). **T2 fix-shaped:** `triaged:graduate` rows where the "Graduated To" column is empty/`—`/`-` OR contains an instruction like `(run \`/graduate-resource ...\`)` (graduation pending). **T2 hygiene:** `triaged:graduate` rows where "Graduated To" populated with `already canonical` or a real ai-resources path BUT the source row's Status is not yet `graduated` (stale status — flip needed). **T3 watch-shaped:** `triaged:loose-end`, `triaged:graduate-candidate`, `pending-triage` older than 14 days (operator-decision pending). **Skip (exclude):** `triaged:project-specific`, `triaged:already-graduated`, `graduated`, `superseded:*`, `merged into *`, `created`. |
 | `logs/coaching-log.md` | T2 (watch-shaped, carry-forward) | Locate the most recent `### YYYY-MM-DD` entry. If its `**Prior recommendation status:**` line contains a phrase indicating the prior cycle's One Thing was not acted on (e.g., "not measurably acted on", "third occurrence", "carried forward again", "survived three coaching cycles unactioned"), surface the entry's `**The One Thing:**` line as a watch-shaped item. One item maximum per scope. |
 | `logs/gate-calibration.md` | T2 (watch-shaped, follow-up) | Locate each `## YYYY-MM-DD — {scope}/{gate}` entry. If its body contains a `**Note:**` line mentioning a follow-up that is "flagged for a separate gated item", "out of scope for this ungated calibration entry", or similar deferral language, surface as a watch-shaped follow-up item. |
@@ -81,7 +81,7 @@ For each item, set `item_type` to one of `fix` / `build` / `watch` using its sou
   - `logs/friction-log.md` unresolved entries
   - `logs/improvement-log.md` T1 (applied without Verified)
   - `logs/next-up.md` checkboxes
-  - `logs/session-plan.md` checkboxes (T1, recent)
+  - `logs/session-plan-*.md` (glob) checkboxes (T1, recent)
   - `logs/session-notes.md` Open Questions (T2, recent)
   - `logs/decisions.md` T2 (Defer + Trigger fired)
   - `logs/innovation-registry.md` rows classified T1 fix-shaped (`triaged:broken-symlink`, fresh `pending-triage` ≤7d) or T2 hygiene (stale-status flip)
@@ -90,7 +90,7 @@ For each item, set `item_type` to one of `fix` / `build` / `watch` using its sou
 - `watch` — parked / threshold / stale, no current action:
   - `logs/improvement-log.md` T3 (logged / pending / proposed)
   - `logs/session-notes.md` Open Questions (T3, stale)
-  - `logs/session-plan.md` checkboxes (T3, stale file)
+  - `logs/session-plan-*.md` (glob) checkboxes (T3, stale file)
   - `logs/innovation-registry.md` rows classified T3 (`triaged:loose-end`, `triaged:graduate-candidate`, stale `pending-triage` >14d) or T2 fix-shaped where the fix is `/graduate-resource` invocation (route to a dedicated build/admin session)
   - `logs/coaching-log.md` carry-forward One Thing
   - `logs/gate-calibration.md` follow-up Note
@@ -192,7 +192,7 @@ Within each type section, list at most 2 candidates by default — the 30-line c
 
 ## Rules
 
-- Read-only on source files. Never edit `friction-log.md`, `improvement-log.md`, `decisions.md`, `next-up.md`, `session-plan.md`, `session-notes.md`, `innovation-registry.md`, `coaching-log.md`, `gate-calibration.md`, or any inbox brief.
+- Read-only on source files. Never edit `friction-log.md`, `improvement-log.md`, `decisions.md`, `next-up.md`, `session-plan-*.md` (glob), `session-notes.md`, `innovation-registry.md`, `coaching-log.md`, `gate-calibration.md`, or any inbox brief.
 - Do NOT propose fixes. Do NOT score effort. Your job is to enumerate and rank; the main session triages.
 - Do NOT read conversation history. You see only the five inputs above.
 - If a source file is missing, skip it silently — do not fail the run.
