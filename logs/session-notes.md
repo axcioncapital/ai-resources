@@ -807,3 +807,54 @@ Built the Context Engine MVP across both phases in a single session. Phase 1 (ma
 - Context pack: /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/output/context-packs/command-20260529-7b2a4/pack.md
 
 Work: Improve /friday-act to make the "follows" auto-triage step run automatically (high-value operator request, deferred from S6 Wave 6) via /improve-skill.
+
+## 2026-05-29 — Session S9 — /cleanup-worktree wrap
+
+/cleanup-worktree — investigate and clean dirty paths in the git working tree.
+
+### Summary
+
+Ran `/cleanup-worktree` end-to-end on the ai-resources working tree. Six dirty paths investigated and classified; QC1 returned GO; independent triage returned 0 must-fix / 0 should-fix / 2 history-only, plus three first-class operator-policy alternatives that the cleanup encoded with main-session picks and reversibility notes. Step-9 quick-tier skip applied (zero hard gates AND zero new file-content claims in revision). Two commits + two non-git `mv` operations executed under pre-flight guards; all post-execution filesystem checks passed.
+
+### Files Created
+
+- `/Users/patrik.lindeberg/.claude/plans/quizzical-wiggling-robin.md` — full cleanup plan (Sections 1–8) including the QC verdict, triage outcome, three alternatives with picks, and the quick-tier skip justification.
+- `/Users/patrik.lindeberg/.claude/plans/quizzical-wiggling-robin.md.qc-pass-1.md` — independent QC report (GO with 2 MINOR history-only findings).
+- `ai-resources/logs/scratchpads/2026-05-29-21-02-scratchpad.md` — continuity scratchpad for the next session's `/prime` Step 1b detection.
+- `ai-resources/logs/session-plan-S6.md` — committed in `9463f33` (newly tracked; previously untracked since S6 wrap).
+- `ai-resources/logs/session-plan-S8.md` — committed in `9463f33` (newly tracked; previously untracked since S8 wrap).
+
+### Files Modified
+
+- `ai-resources/.gitignore` — `output/` pattern + comment appended (commit `f1edccc`).
+- `ai-resources/logs/session-notes.md` — S9 header appended by `/prime`, body added by this wrap (committed by this wrap step).
+- `ai-resources/inbox/context-engine-brief.md` → `inbox/archive/` (mv only; no git change since target dir is gitignored).
+- `ai-resources/inbox/context-engine-session-pairing.md` → `inbox/archive/` (same).
+- `ai-resources/logs/.session-marker` — updated to `2026-05-29 S9` by `/prime`.
+- `ai-resources/logs/.prime-mtime` — updated by `/prime` (gitignored).
+
+### Decisions Made
+
+Three first-class operator-policy alternatives surfaced by triage. The cleanup picked the following for each; all picks are reversible without git reflog (line removal, `mv` back, separate commit):
+
+- **Alt A — `output/` policy: gitignore.** Rationale: S7+S8 mandates already labeled pack paths "(untracked)" — de facto policy exists; without gitignore every future engine run re-dirties git status; the `.gitignore` line is one-line reversible. Was an S6 Open Question (no policy enforced); cleanup encodes one.
+- **Alt B — inbox briefs: `mv`-only (no commit before move).** Rationale: `.gitignore` line 36–37 explicitly labels archive pattern "Archived inbox briefs"; established convention is briefs do NOT enter git history; brief content was already absorbed into the produced artifacts (context-engine command, agent, schema docs — committed under `7dc5e6e` and `e774eb5`).
+- **Alt C — `logs/session-notes.md`: defer-to-wrap.** Rationale: matches the established S3–S8 wrap-commit pattern where one commit covers both the `/prime` header and the wrap body; committing during cleanup would force a second wrap commit. Triage agreed with the plan.
+
+#### Procedural decisions (not policy)
+
+- **Quick-tier 2nd QC skip applied.** Per `references/execution-protocol.md` § 6: zero hard gates AND zero new file-content claims in revision → 2nd QC may be skipped with explicit Section-8 log entry and operator-visible chat notification before `ExitPlanMode`. Both preconditions held; skip logged in plan Section 8 and surfaced in chat.
+- **Custom decision labels (`defer-to-wrap`, `archive-move`).** Documented in plan Section 3's Custom-decision note. QC1 confirmed they do not hide irreversibility.
+
+### Next Steps
+
+1. **Push 6 commits (ai-resources) + 1 commit (workspace-root) to GitHub.** Wrap commit lands now → 6 unpushed total in ai-resources. Workspace-root carries 1 pre-existing unpushed commit. Gate at this wrap.
+2. **Phase 1 evaluation of the context engine (carryover from S6).** Pick 3–5 representative real tasks, let the engine pre-fire at `/session-start` Step 2.4 (or `/prime` Step 8c.4.5 in auto mode), score each on the 6 Brief-1 criteria. Pass threshold: ≥3 of 5 tasks ≥4-of-6. Below threshold → reassess.
+3. **Auto-fire smoke test (carryover from S6).** Open a project session with a project CLAUDE.md (e.g., `projects/ai-development-lab/`); run `/prime`; pick a task; verify the engine invokes inline.
+4. **Friday-checkup verification (carryover from S6).** At next `/friday-checkup`, verify `detect-innovation.sh` registered the new context-engine agent + command from `7dc5e6e`.
+
+### Open Questions
+
+- None new this session. S6 Open Questions remain:
+  - Phase 1 empirical evaluation still pending (build structurally complete, untested on real task).
+  - Workspace-root sessions silently skip the engine (no project CLAUDE.md = no routing map). Acceptable for MVP; revisit if friction surfaces.
