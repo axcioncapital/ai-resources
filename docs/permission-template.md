@@ -348,7 +348,7 @@ Canonical block:
 - Each block-fire interrupts the session. Reserve the pattern for paths where unintended edits would cause expensive rework or evidentiary harm — not for general "be careful" guidance.
 - The `reason` string is the operator's only signal at the moment of friction. Make it specific (what rule, where to log overrides) — generic messages erode the signal over time.
 - The pattern uses `jq` and `grep`; both must be available on `PATH`. `grep` is standard on macOS and Linux. `jq` is standard on macOS; on Linux, install via the system package manager if absent.
-- `settings.json` is strict JSON (no comments). To document the pattern from a project's settings file, use a top-level `_decision_block_pattern_doc` key pointing to this section, or place the note in a project README — do not add `//` comments to the JSON.
+- `settings.json` is strict JSON (no comments) — AND its schema is strict: top-level `_*` comment keys (e.g. `_decision_block_pattern_doc`) are rejected at session load (verified 2026-05-29 FX-E2 incident, surfaced in `projects/nordic-pe-macro-landscape-H1-2026/logs/improvement-log.md` entry "Settings.json schema rejection of inline _comment keys"). Cross-reference notes belong in a sibling `.claude/PERMISSIONS-NOTES.md` external file alongside `settings.json`, not inline. The reference shape lives at `projects/nordic-pe-macro-landscape-H1-2026/.claude/PERMISSIONS-NOTES.md`. Do not add `//` comments, and do not add top-level `_*` keys.
 
 **When to apply:** projects where one or more directories carry content protected by a bright-line rule that should never be edited directly without an explicit operator decision. Skip if the project has no such guard discipline — the hook overhead is wasted otherwise.
 

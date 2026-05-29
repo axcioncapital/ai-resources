@@ -23,6 +23,8 @@ If a session touches a structural change in any of the following classes, run `/
 - New symlinks
 - Automation with shared-state effects (scripts that auto-write to logs, cross-repo writes, auto-commit patterns) — INCLUDES reordering or restructuring of existing shared-state ops (e.g., changing when an archive step runs relative to a log append), not only new automation
 
+Inline `_*` comment keys in `settings.json` are rejected schema-side at session load — do not sanction them in risk-check reports. See `permission-template.md` § PreToolUse[Edit] decision-block pattern → Caveats for the canonical fallback (`.claude/PERMISSIONS-NOTES.md` sibling file).
+
 For change classes outside this list, `/risk-check` is optional — operators can still invoke it when a change feels risky.
 
 ### When to fire (two-gate model)
