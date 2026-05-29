@@ -16,9 +16,10 @@ Input: `$ARGUMENTS` (optional) — a pipeline path. If provided, skip the shortl
 
 The registry at `ai-resources/audits/pipeline-review-registry.md` is the source of truth. Its shape is fixed:
 
-- **5 columns:** `Pipeline` (path) · `Type` (command / skill) · `Last reviewed` (`YYYY-MM-DD` or `never`) · `Last memo` (`YYYY-MM-DD` or `—`) · `Friction flag` (Y / N).
+- **6 columns:** `Pipeline` (path) · `Type` (command / skill) · `Tier` (weekly / quarterly) · `Last reviewed` (`YYYY-MM-DD` or `never`) · `Last memo` (`YYYY-MM-DD` or `—`) · `Friction flag` (Y / N).
+- **Two tiers, one auditor.** The `pipeline-review-auditor` body is unchanged across tiers. Weekly rows are shortlisted every cycle; quarterly rows are shortlisted only on the first Friday of January, April, July, and October. Outside those windows quarterly rows are invisible to the shortlist (operator can still override via `$ARGUMENTS`).
 - **`Last memo` is date-keyed, not path-keyed.** Resolve to a path with the convention `audits/pipeline-reviews/{pipeline-slug}-{YYYY-MM-DD}.md`.
-- **Tiebreak:** rows sharing a `Last reviewed` value (including cold start where all are `never`) sort alphabetically by `Pipeline` column. Friction-flagged rows are promoted to the top regardless of date and tiebreak alphabetically among themselves.
+- **Tiebreak:** within the eligible-tier pool, rows sharing a `Last reviewed` value (including cold start where all are `never`) sort alphabetically by `Pipeline` column. Friction-flagged rows are promoted to the top regardless of date and tiebreak alphabetically among themselves.
 - **Writes are audit-trail-grade.** Registry and memo writes are not cleanly `git revert`-able. The bumped row preserves history only via git log.
 
 Per the `/risk-check` plan-time review of this command (Dimension 5: Hidden coupling, Medium): this block exists so the contract does not silently drift on later runs. Do not delete it.
@@ -73,8 +74,9 @@ The `[CADENCE-LATE]` top-line marker is a required mitigation from the `/risk-ch
 
 ### Step 4: Shortlist Build
 
-17. Parse `REGISTRY_PATH` into a list of rows. For each row, extract: `pipeline_path`, `type`, `last_reviewed`, `friction_flag`.
-17.5. **Registry-drift check.** For each parsed row, resolve `pipeline_path` against `AI_RESOURCES` (relative paths) and `test -f` the result. If the file is missing, emit one line to the operator: `[REGISTRY-DRIFT] {pipeline_path} (row dropped — file does not resolve; rename, move, or stale registry entry)`. Drop the row from the working set. Do NOT abort the cycle. After all rows are checked, if any rows were dropped, also print: `Resolve drift before next cycle — edit {REGISTRY_PATH} to update or remove the stale entries.` Catches pipeline rename and tier-promotion failure modes — without this, the auditor would hard-fail at its first read and the next cycle would re-surface the same broken row.
+17. Parse `REGISTRY_PATH` into a list of rows. For each row, extract: `pipeline_path`, `type`, `tier`, `last_reviewed`, `friction_flag`.
+17.1. **Tier-eligibility filter.** Compute `QUARTERLY_ACTIVE` = true if today is the first Friday of January, April, July, or October; else false. Python: `from datetime import date; t = date.today(); is_first_friday = (t.weekday() == 4 and t.day <= 7); QUARTERLY_ACTIVE = is_first_friday and t.month in (1, 4, 7, 10)`. If `QUARTERLY_ACTIVE` is true, the eligible pool includes rows where `tier in ('weekly', 'quarterly')`. Otherwise the eligible pool is rows where `tier == 'weekly'` only. Quarterly rows on non-trigger dates are dropped from the shortlist (operator can still pick a quarterly pipeline by path via Step 3 override). On a quarterly-active date, emit one line to the operator: `[QUARTERLY-CYCLE] Quarterly tier is eligible this cycle (first Friday of {Jan|Apr|Jul|Oct}).`
+17.5. **Registry-drift check.** For each row in the eligible pool, resolve `pipeline_path` against `AI_RESOURCES` (relative paths) and `test -f` the result. If the file is missing, emit one line to the operator: `[REGISTRY-DRIFT] {pipeline_path} (row dropped — file does not resolve; rename, move, or stale registry entry)`. Drop the row from the working set. Do NOT abort the cycle. After all rows are checked, if any rows were dropped, also print: `Resolve drift before next cycle — edit {REGISTRY_PATH} to update or remove the stale entries.` Catches pipeline rename and tier-promotion failure modes — without this, the auditor would hard-fail at its first read and the next cycle would re-surface the same broken row.
 18. Sort surviving rows by these keys in order:
     a. `friction_flag = Y` first (Y before N).
     b. `last_reviewed` ascending — `never` sorts as the oldest (treat as date `0000-00-00` for comparison).
@@ -87,7 +89,7 @@ The `[CADENCE-LATE]` top-line marker is a required mitigation from the `/risk-ch
 
     Shortlist (top 5, oldest first; friction-flagged promoted):
 
-      1. {pipeline_path}  [{type}]  last-reviewed: {last_reviewed}  friction: {Y|N}
+      1. {pipeline_path}  [{type}/{tier}]  last-reviewed: {last_reviewed}  friction: {Y|N}
       2. ...
       ...
       5. ...
@@ -101,7 +103,7 @@ The `[CADENCE-LATE]` top-line marker is a required mitigation from the `/risk-ch
 
 21. Wait for operator reply. Parse:
     - Comma-separated numbers in `1..5` → pick those rows from the shortlist.
-    - A path-shaped token → resolve as in Step 3 (override allowed). Validate existence; abort on bad path.
+    - A path-shaped token → resolve as in Step 3 (override allowed; bypasses tier filter — operator can pick a quarterly row on a non-trigger date). Validate existence; abort on bad path.
     - Empty reply → exit cleanly with `(aborted — no pipelines picked)`.
     - Reject more than 3 picks: `(rejected — limit is 3 pipelines per cycle. Trim and re-submit.)` and re-prompt once.
 22. Set `PICKED_PIPELINES` = the resolved list of absolute pipeline paths.
