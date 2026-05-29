@@ -275,3 +275,50 @@ None of these are warranted for a today-non-existent collision.
 **Surfacing at quarterly cadence:** This entry exists so the next quarterly `/friday-checkup` cycle sees the risk without re-discovering it from the buried end-time `/risk-check` report. If by then the project is still pinned and no other project has activated Bundle 1 + Bundle 2b together, defer again. If either condition has changed, the resolution path becomes operator-required.
 
 **Pickup point:** Quarterly `/friday-checkup` (next quarterly window) OR before a `/sync-workflow` on this project OR before deploying Bundle 1 + Bundle 2b to a second project — whichever comes first.
+
+---
+
+## 2026-05-29 — Friday Act (weekly tier, source: friday-checkup-2026-05-29.md)
+
+### System Owner inputs (this session)
+- Friday Advisory: projects/axcion-ai-system-owner/output/friday-advisories/friday-advisory-2026-05-29.md
+- Systems Review:  (none within 7 days — most recent is 2026-05-08, 21 days old)
+
+### Journal Report (this session)
+- Journal Report: ai-resources/audits/friday-journal-2026-05-29.md
+
+### Disposition summary
+- Tactical: 32 queued for plans, 3 defer, 0 skip (of 35 items total — of which 9 SO-derived, 4 journal-derived)
+- Policy review: n/a (weekly tier)
+
+### Deferred items (from this session)
+- `/log-sweep` obsidian-pe-kb 4 pipeline spec files (580–960 lines) — med, checkup. Reason: spec files, not session logs — rotation likely doesn't apply.
+- Triage 12 advisory permission-sweep items at next checkup — low, checkup. Reason: bullet explicitly says "at next checkup".
+- `/log-sweep` 4 small project scopes each with 1 Cat A2 over threshold — low, checkup. Reason: very low value this cycle.
+
+### Plans written (this session)
+- ai-resources/audits/friday-plans/2026-05-29-permissions-settings.md — 7 items
+- ai-resources/audits/friday-plans/2026-05-29-log-sweep.md — 3 items
+- ai-resources/audits/friday-plans/2026-05-29-repo-documentation.md — 6 items
+- ai-resources/audits/friday-plans/2026-05-29-project-triages.md — 3 items
+- ai-resources/audits/friday-plans/2026-05-29-session-qc-pipeline.md — 4 items
+- ai-resources/audits/friday-plans/2026-05-29-general.md — 9 items
+
+### Operator observations
+(auto-generated — operator delegated triage to Claude via "you triage for me" and tweaked /friday-act to default-autonomous going forward)
+
+Session-shape signals worth noting for the next checkup:
+- Improvement-log was at 16 active entries (soft cap: 7) at session start. Operator chose to continue without running `/resolve-improvement-log` first — many of the active entries are likely SHIPPED-but-unresolved (e.g., TOCTOU Phase 1 shipped, follow-on phases still booked as `pending`).
+- Systems Review window (7 days) missed by 14 days — only one Systems Review exists (2026-05-08). Either schedule one to land before next Friday or accept that systems-review is a longer cadence than 7 days and adjust the filter.
+- Plan-file QC caught 1 high-risk annotation miss (session-qc-pipeline.md item 1: shared-state automation class not flagged as needing risk-check). Confirms the 2026-05-22 addition of automatic plan-QC is paying its keep.
+- Three settings.json items flagged "yes" on risk-check class — all in plan #1. The next session will land 4 risk-check passes in one block; consider whether plan-1 execution should batch the risk-check across all settings.json edits rather than 4 separate runs.
+
+### Autonomy-axis posture targets (week ahead)
+- Guardrails: hold
+- Optimization: hold
+- Autonomy: loosen — operator's `/tweak` directive ("next time triage the follows AUTOMATICALLY for me!!") is an explicit signal to default to autonomous triage in /friday-act and adjacent disposition flows
+- Capability: hold
+- Reliability: hold
+- Observability: hold
+- Operator load: loosen — auto-triage default shifts disposition load off operator; tracks with Autonomy direction
+
