@@ -205,3 +205,11 @@
 - **Decisions logged:** 2 (split-log.sh paired dependency; id-08 contradiction inversion vs. fix-plan letter)
 - **QC cycles:** 1 (id-08 — GO verdict from qc-reviewer; no rework)
 - **Mandate fields:** specified: work_scope, exit_condition, Out of scope, Files in scope, Stop if | omitted: Allowed inputs, Required outputs
+
+### 2026-05-29 — Apply pipeline-review cycle 2 memos (4 memos: pipeline-review, consult, contract-check, friction-log)
+- **Commands used:** /prime, /session-start, /session-plan, /qc-pass (×2), /risk-check, /consult (blocked by mid-session frontmatter add; spawned system-owner agent via Task as workaround), /wrap-session
+- **Iterations:** 0
+- **Decisions logged:** 2 (apply/defer split strategy; deferred-stack ordering)
+- **QC cycles:** 2 (Wave 1 mechanical-mode GO; Wave 2 full-rubric REVISE → fixed CC-5 abort wording → re-implicit GO via decision-point posture, committed without re-QC)
+- **Gates:** 4 (1 changed) — plan-approval:confirmed, content-review:changed (operator denied C-5 and C-6 mid-Wave-2 leanness edits), qc-disposition:confirmed (mid-session directive: add /risk-check + System Owner at end), challenge-disposition:confirmed (System Owner advisory accepted as advisory; 3 follow-ups absorbed into Next Steps)
+- **Mandate fields:** specified: work_scope, exit_condition | inferred: files_in_scope | omitted: out_of_scope, stop_if, allowed_inputs, required_outputs

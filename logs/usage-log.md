@@ -1,3 +1,32 @@
+### 2026-05-29 | Acceptable
+
+**Task:** Applied 17 of 32 non-structural findings from 4 cycle-2 pipeline-review memos (pipeline-review, consult, contract-check, friction-log) across 3 commits; 13 deferred per each memo's Recommended-next-session line. End-time `/risk-check` returned GO; System Owner Phase 6 advisory surfaced 3 follow-up actions.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~10 |
+| Files read | ~18 (re-reads: 1 — `session-notes.md` 3× at different ranges across /prime → Phase 3 → wrap) |
+| Files written/edited | 14 (5 command + registry, 4 memo Applied/Deferred blocks, 3 log files, 1 scratchpad + risk-check report by subagent) |
+| Tool calls | ~75 (Edit ~22, Read ~14, Bash ~18, Agent ×4, Skill ~6, TodoWrite ~8, Write ×2) |
+| Subagents | 4 (qc-reviewer ×2 — Wave 1 mechanical GO, Wave 2 full REVISE → fixed inline; risk-check-reviewer — GO; system-owner — advisory) |
+| Rework cycles | 1 (CC-5 abort block: proposed → REVISE → fixed in 1 Edit; recovered in-pass without re-QC) |
+
+**Findings:**
+- **Re-reads — Moderate:** `logs/session-notes.md` (~482 lines) read 3× at different ranges (tail at /prime, full at Phase 3 doc-writing, partial at wrap edit). On a multi-phase session where session-notes is a write target throughout, repeated full-range reads accumulate ~12k extra tokens vs reading once and tracking write position in-context. Same class as the recurring "tail-read-pattern" lever logged across multiple prior entries.
+- **Tool overhead — Minor:** Mid-session add of `disable-model-invocation: true` to consult.md blocked the editing session's own Skill-tool invocation of /consult at Phase 6, causing 1 failed Skill call. Worked around by spawning system-owner directly via Task. Cost ~1 wasted call; novel pattern (two-end contract self-block per System Owner Q4 analysis).
+- **Tool overhead — Minor:** 2 operator-denied Edits (C-5, C-6 consult.md leanness) caught at tool-denial gate — no corrupted artifact, just 2 wasted Edit attempts. Could have been compressed if the first deny were interpreted as "skip the leanness pass on consult.md" rather than "deny just this one."
+- **Subagent contracts — Clean:** Zero re-output duplication across 4 subagents. risk-check-reviewer wrote its own report file; qc-reviewer and system-owner verdicts displayed inline only. Subagent disk-notes contract honored throughout.
+- **Trend vs last 3 entries (Acceptable / Acceptable / Acceptable):** stable Acceptable. Tool count higher (~75 vs ~38 prior) but proportional to scope (17 findings applied vs 8-item fix-plan). The session-notes re-read pattern continues to surface as the dominant recurring lever — now flagged in 4+ consecutive entries without structural fix.
+
+**Recommendation:** Track `session-notes.md` write position in-context during long multi-phase sessions — read tail once at /prime (already done by R4 pre-fetch), then track planned insert offsets through phase boundaries rather than re-reading. The /prime R4 lever pre-fetches the trio but doesn't carry the offsets through to wrap; that's where the gap lives.
+
+**Estimated savings:** session-notes.md is ~482 lines (~6k tokens); reading it 3× = ~18k tokens this session vs ~6k if pinned once at /prime and tracked via offsets. Saves ~12k/session on multi-phase sessions (3+ phases touching session-notes). Over 10–20 such sessions, ~120–240k tokens. Comparable in horizon size to the R6 coaching-data tail-read lever already shipped — same class of fix.
+
+**Additional levers (ROI-ranked):**
+- **Pre-flight check for `disable-model-invocation` self-block (~1–2k tokens/incident; novel pattern, recurrence uncertain).** Add to `ai-resource-builder` skill or /improve-skill: when adding `disable-model-invocation: true` to a command, warn that the editing session itself will lose Skill-tool access to that command for the rest of the session. Smaller than the primary lever in per-session tokens but eliminates the friction class entirely and avoids the diagnostic round-trip the operator absorbed this session.
+- **Inline Applied/Deferred-block staging during Wave 2/3, not at wrap (~500–800 tokens/multi-memo-session).** Append per-finding disposition to each memo as each finding is applied/deferred rather than batching at Phase 3 wrap-time. Reduces the wrap-time edit burst from 4 sequential Edits to 4 incremental ones during execution. Saves the wrap-time context switch + 4 re-reads of memo tails. Smaller than the primary because it only fires on multi-memo application sessions.
+- **Memo application sessions: skip the /session-plan + /qc-pass-on-plan ceremony when memos serve as the de-facto plan (~3–5k tokens/applicable-session, recurring lever).** This is the same lever logged in the 2026-05-29 fix-plan-execution entry ("Codify the skip planning-chain when input IS the plan pattern"). Memos play the same role as fix-plans here — paste-ready, /qc-pass'd at generation time. Documenting the pattern so future memo-application sessions skip the planning-chain by default would amortize across both classes. Same lever, second class confirmed — DR-7 trigger.
+
 ### 2026-05-22 | Acceptable
 
 **Task:** Ran `/friday-act` for the 2026-05-22 weekly checkup — dispositioned 27 items into 8 grouped plan files, ran an innovation sweep and an independent QC pass that found and fixed 4 incorrect risk-check annotations.

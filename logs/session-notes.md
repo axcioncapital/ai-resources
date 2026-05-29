@@ -519,12 +519,17 @@ Wave 2 `/qc-pass` returned REVISE on one defect (CC-5 abort suggested an impossi
 
 ### Next Steps
 
-1. **Run /risk-check end-time gate on the cumulative session changes** (Phase 5, operator directive). Surfaces any structural risk that the per-finding plan-time analysis missed.
-2. **Consult System Owner on the cumulative session changes** (Phase 6, operator directive). Architectural sanity check on the apply/defer split and the four cycle-2 memo dispositions.
-3. **Dedicated session: apply C-1 + C-2 (`/consult` return-size cap + project-local agent symlink fix).** Highest-leverage deferred item — friction-log signal has now recurred 5+ consecutive sessions. Touches canonical `system-owner.md`; `/risk-check` plan-time required. The memo's own Recommended-next-session line pairs these two cleanly.
-4. **Dedicated session: apply FL-1 + FL-6 + `note.md` repair (hook unification across all three friction-log writers).** Substantial structural fix; `/risk-check` plan-time AND end-time required per `risk-topology.md § 3`.
+1. **Dedicated session: apply FL-1 + FL-6 + `note.md` repair (hook unification across all three friction-log writers).** System Owner's Q2 sequencing recommendation: this goes FIRST in the deferred stack (before C-1 + C-2) because the friction-log writer surface intersects with the consult/system-owner agent's brief surface. Substantial structural fix; `/risk-check` plan-time AND end-time required per `risk-topology.md § 3` (hook edit class).
+2. **Dedicated session (after #1): apply C-1 + C-2 (`/consult` return-size cap + project-local agent symlink fix).** Highest-leverage deferred item after the friction-log work — the consult-return-size friction-log signal has now recurred 5+ consecutive sessions. Touches canonical `system-owner.md`; `/risk-check` plan-time required. The memo's own Recommended-next-session line pairs these two cleanly.
+3. **Discipline addition — log a one-line override-rationale to `logs/decisions.md` at the time of any future operator override of a pipeline-review-registry tier.** System Owner's Q3 compensating control for the documented `system-doc.md § 4.5` Documentation→accuracy open loop. Pre-W2.1 only.
+4. **Principle candidates for next `principles.md` revision** (System Owner Q4): (a) `disable-model-invocation` criterion as a documented test for which commands should disable model invocation; (b) mid-session frontmatter side-effect rule (frontmatter changes that alter command invocation surface take effect for the editing session itself; assume they are end-of-session changes).
 5. **Carryover, unchanged from prior session:** `/cleanup-worktree` against ai-resources still parked; TOCTOU Phases 2-4 still parked; `split-log.sh` fix-plan-template improvement still parked.
 
 ### Open Questions
 
-- None blocking pending Phase 5-6 verdicts.
+- None blocking. Phase 5 `/risk-check` returned GO (all 5 dimensions Low; report at `audits/risk-checks/2026-05-29-end-time-pipeline-review-cycle-2-wave-3-cumulative-changes.md`). Phase 6 System Owner advisory confirmed batch is sound; three follow-up actions captured in Next Steps above.
+
+### Phase 5 / Phase 6 outcomes
+
+- **`/risk-check` end-time gate (Phase 5):** GO verdict. Usage cost, Permissions, Blast radius, Reversibility, Hidden coupling all Low. Subagent surfaced no concern on any of the five operator-named focus areas (registry row move, Registry-contract pointer, `disable-model-invocation` adds, contract-check Step 5 verdict-header parse contract, friction-log re-tier).
+- **System Owner advisory (Phase 6):** Batch sound. Three concrete follow-up actions surfaced (above, Next Steps #1-#4). One discovered side effect: the consult.md `disable-model-invocation: true` add in Wave 1 then blocked the editing session from invoking `/consult` via the Skill tool — worked around by spawning `system-owner` agent directly via Task tool. System Owner's Q4 response classifies this as a two-end contract risk per `risk-topology.md § 5` and recommends documenting the side effect in `principles.md` rather than reverting (the Task workaround is sufficient recovery).

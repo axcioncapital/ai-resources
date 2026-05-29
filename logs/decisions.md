@@ -100,3 +100,27 @@ Plan 6 dispatch: 2 APPLIED (items 2, 6), 1 PENDING (item 5), 1 SCHEDULED (item 7
 **Alternatives considered.** (a) Append a `## Caveats` top-level section per the literal spec and leave line 351 intact — rejected (self-contradiction, defeats intent). (b) Delete line 351 and append the new Caveats section — rejected (line-351 location is the precise place a risk-check report would land when investigating PreToolUse[Edit] patterns; the contextual locality matters).
 
 **Item closure.** Fix-plan 2026-05-29-1108 item id-08 closed APPLIED + VERIFIED with documented spec deviation; nordic-pe-macro improvement-log line 205 entry flipped to applied+verified.
+
+## 2026-05-29 — Pipeline-review cycle-2 memo application strategy
+
+**Context.** This session faced 4 cycle-2 pipeline-review memos containing ~40 findings total spanning Innovations / Leanness fixes / Brokenness / Cross-resource interactions / Recommended next-session items. The mandate ("apply findings... or surface with reasoned skip") could be interpreted as: (A) apply everything in scope including structural items with per-finding `/risk-check`, or (B) follow each memo's own "Recommended next session" curated subset and defer structural items to dedicated sessions.
+
+**Decision.** Adopted Approach B — applied non-structural findings (frontmatter, cosmetic, in-place leanness, three small contract-check innovations) and deferred all 5 structural items (PR-3 post-memo /qc-pass gate; C-1 + C-2 consult/agent edits; FL-1 + FL-6 friction-log hook unification; CC-8 subagent-brief externalization) to dedicated sessions with their own plan-time `/risk-check`.
+
+**Rationale.** (1) Each memo's auditor had already curated the "Recommended next session" line into a structural session focus — following that framing honors the auditor's own scoping judgment. (2) Bundling structural changes with cosmetic + leanness fixes compounds context contamination per `principles.md § AP-8` (System Owner's Q1 cited this). (3) The 5 structural items collectively touch hook edits, canonical-agent edits, and shared-state reordering — each requires its own `/risk-check` plan-time scope per `audit-discipline.md`; collapsing them would have produced 5 sequential risk-check gates in one session and exceeded reasonable context. (4) End-time `/risk-check` returned GO confirming Waves 1+2 stayed non-structural as planned. (5) System Owner advisory (Phase 6) confirmed the cut is right at the seam level; PR-2's Registry-contract collapse makes deferred PR-3 *easier* to land later, not harder.
+
+**Alternatives considered.** (a) Approach A (apply everything including structural with per-finding /risk-check) — rejected on context-cost grounds and per the memos' own framing. (b) Apply only Wave 1 (frontmatter conformance) — rejected as too narrow given the operator's "cycle 2 batch" scope choice. (c) Apply everything except hook edits — rejected because the canonical-agent and shared-state reordering items also warrant dedicated sessions.
+
+**Item closure.** Wave 1 commit `51b69dc`, Wave 2 commit `7ec05e6`, Wave 3 docs commit `4c4e980`. Each memo carries an `## Applied / Deferred — 2026-05-29 session` block naming the per-item disposition. Phase 5 risk-check GO; Phase 6 System Owner sanity-check confirmed.
+
+## 2026-05-29 — Deferred-stack ordering: friction-log hook before consult/system-owner agent
+
+**Context.** Five structural items now sit on the deferred-stack from this session. Two pairs cluster: (a) FL-1 + FL-6 (friction-log hook unification + docs convention), (b) C-1 + C-2 (consult return-size cap + project-local agent symlink fix). Question surfaced to System Owner: are these independent, or does one need to ship first?
+
+**Decision.** Sequence FL-1 + FL-6 BEFORE C-1 + C-2 in the deferred stack.
+
+**Rationale (per System Owner Phase 6 Q2).** Not independent. (1) FL-1 touches `friction-log-auto.sh` — a hook with three writers to a shared-state log file (`principles.md § DR-10` shared-state writer discipline applies; hook edits are `risk-topology.md § 3` plan+end-time gated). (2) The system-owner agent (C-1 + C-2) reads friction-log content into its Function-A/B briefs per `consult.md` Step 3 and the agent's Phase-1 references. (3) Landing C-1 + C-2 while the friction-log writer surface is also moving is the `principles.md § AP-6` failure pattern (audit-derived changes applied without impact analysis on what else is in flight). (4) Doing the hook work first means the consult-side session lands with a stable friction-log writer story and doesn't have to model two moving surfaces at once.
+
+**Alternatives considered.** (a) Reverse order (C-1 + C-2 first) — rejected because the friction-log signal that motivated C-1 has been logged FROM the consult-leak observation; fixing the writer first stabilizes the input to the agent's read. (b) Bundle into a single session — rejected as it would re-create the context-contamination problem this session's apply/defer split was designed to avoid.
+
+**Item closure.** Both pairs remain deferred. The next session that picks up either should pick FL-1 + FL-6 first. Recorded as Next Step #1 / #2 in today's session-notes entry.
