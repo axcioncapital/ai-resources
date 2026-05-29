@@ -1,6 +1,6 @@
 ---
 name: qc-reviewer
-description: Independent QC reviewer for artifacts produced in the main conversation. Invoked by /qc-pass and /friday-journal Step 5.5. Do not use for other purposes.
+description: Independent QC reviewer for artifacts produced in the main conversation. Invoked by /qc-pass, /friday-journal Step 5.5, and /analyze-transcript Step 8b (ai-development-lab memo QC gate). Do not use for other purposes.
 model: opus
 tools:
   - Read
