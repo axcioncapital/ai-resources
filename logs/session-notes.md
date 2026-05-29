@@ -785,3 +785,25 @@ Built the Context Engine MVP across both phases in a single session. Phase 1 (ma
 - Phase 1 evaluation deferred per operator "proceed" mid-session. Engine has NOT been empirically tested on a real task in this session. The build is structurally complete but unverified.
 - Workspace-root sessions silently skip the engine (no project CLAUDE.md = no routing map). If operator commonly works at workspace root for cross-project tasks, the auto-path under-delivers. Acceptable for MVP; revisit if friction surfaces.
 - Heterogeneous `output/` git-tracking across projects — pack persistence varies. Pack-tracked status surfaced at invocation; no policy enforced.
+
+## 2026-05-29 — Session S7
+
+**Mandate:** Execute reframed Wave 1 + Wave 2 items from `logs/session-plan-S6.md` per engine pack — Wave 1 #1 verify-and-close, #2 paste 7 repo-doc entries, #3–#6 decision-line appends, Wave 2 #7–#9 drop per existing RECONSIDER verdict, #10 surface as operator yes/no at wrap — done when: Wave 1 #1 closed as already-done in decisions.md; #2 vault components updated; #3–#6 decision lines appended; Wave 2 #7–#9 dropped with audit-stale entry; #10 surfaced as yes/no at session end.
+- Out of scope: (none stated)
+- Files in scope: `projects/obsidian-pe-kb/logs/improvement-log.md`, `projects/project-planning/logs/improvement-log.md`, `projects/repo-documentation/vault/components/commands.md`, `projects/repo-documentation/vault/components/agents.md`, `projects/repo-documentation/vault/components/projects.md`, `projects/repo-documentation/logs/decisions.md`, `ai-resources/logs/decisions.md`
+- Stop if: (none stated)
+- Allowed inputs: `ai-resources/CLAUDE.md`, `CLAUDE.md`, `audits/friday-checkup-2026-05-29.md`, `audits/friday-plans/2026-05-29-repo-documentation.md`, `audits/friday-plans/2026-05-29-permissions-settings.md`, `audits/permission-sweep-2026-05-29.md`, `docs/permission-template.md`, `docs/audit-discipline.md`
+- Required outputs: 3 repo-doc vault components updated (#2); 2 decision lines in `projects/repo-documentation/logs/decisions.md` (#3, #4); 4+ decision lines in `ai-resources/logs/decisions.md` (#1 verify-close, #5, #6, #7-9 drop, #10 record)
+- Context pack: `output/context-packs/project-20260529-s6w12/pack.md` (untracked)
+
+## 2026-05-29 — Session S8
+
+**Mandate:** Make /friday-act's three per-item disposition prompts (Step 3 tactical follow-ups, Step 3.5d SO-derived, Step 3.5f journal-derived) auto-triage by default — apply default dispositions (HIGH→f, MED→d, LOW→s), then show the predicted string and let the operator press Enter to accept or paste a corrected string. Apply via /improve-skill (per S6 brief); fall back to a direct edit of friday-act.md if /improve-skill rejects a non-skill target. — done when: friday-act.md updated; /qc-pass GO; the auto-triage default string is shown to the operator before items lock in; commit landed.
+- Out of scope: changes to /friday-checkup or /friday-journal; plan-file schema changes; Wave 2 (policy) or Wave 3 (architectural) Friday steps.
+- Files in scope: .claude/commands/friday-act.md
+- Stop if: /improve-skill explicitly rejects /friday-act AND inline /risk-check on the direct-edit fallback returns RECONSIDER or NO-GO.
+- Allowed inputs: friday-act.md, improve-skill.md, ai-resource-builder/SKILL.md, friday-act-16a-summarizer.md, decisions.md, session-plan-S6.md, audit-discipline.md, ai-resources/CLAUDE.md
+- Required outputs: .claude/commands/friday-act.md
+- Context pack: /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/output/context-packs/command-20260529-7b2a4/pack.md
+
+Work: Improve /friday-act to make the "follows" auto-triage step run automatically (high-value operator request, deferred from S6 Wave 6) via /improve-skill.

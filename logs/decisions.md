@@ -325,3 +325,37 @@ Plan 6 dispatch: 2 APPLIED (items 2, 6), 1 PENDING (item 5), 1 SCHEDULED (item 7
 **Alternatives considered.** (a) Build Option A inline in S6 — rejected on session budget (would compete with Wave 2-4 leverage). (b) Open a /create-skill / /improve-skill loop now — rejected as premature without operator approval of the refactor.
 
 **Trigger to revisit.** If hybrid-question frequency rises above ~1×/week, fast-track Option A. Otherwise, re-surface at next monthly /friday-checkup tier.
+
+## 2026-05-29 — S7: Friday-checkup S6-plan Wave 1+2 closure (engine-reframed mandate)
+
+**Context.** S7 picked the open Friday-checkup items from `logs/session-plan-S6.md` (Wave 1 + Wave 2). At /session-start, the context-discovery engine surfaced that **5 of the 10 picked items were already done or blocked**: Wave 1 #1 already shipped (both target improvement-log files exist with canonical headers); Wave 1 #3 + #4 already recorded in `projects/repo-documentation/logs/decisions.md` D-51 + D-52 (S6 Wave 1.3 + 1.4); Wave 1 #5 + #6 already recorded above in this file (S6 closures); Wave 2 #7–#9 returned **RECONSIDER** at `audits/risk-checks/2026-05-29-wave-2-settings-json-cluster-friday-checkup-permissions.md` because all three planned edits are NO-OPS against current file state.
+
+**Decision.** **Reframe mandate.** Only Wave 1 #2 (paste 7 net-new vault entries) and Wave 1 #1 verify-close are net-new S7 work; the rest are either pre-closed by S6 or blocked by the existing RECONSIDER verdict.
+
+**S7 actually shipped:**
+- **Wave 1 #1 — verify-and-close.** Both `projects/obsidian-pe-kb/logs/improvement-log.md` (line 20: `(no entries yet — log seeded 2026-05-29 by Friday-act general plan item 6)`) and `projects/project-planning/logs/improvement-log.md` (15 historical entries from 2026-05-26 onward) verified present with canonical headers. Closed.
+- **Wave 1 #2 — paste 6 entries across 2 vault components.** Pasted 4 missing canonical agents (`context-discovery`, `fix-repo-issues-scanner`, `log-sweep-auditor`, `project-manager`) into `vault/components/agents.md` in alphabetical order; pasted 2 missing projects (`ai-development-lab`, `axcion-brand-book`) into `vault/components/projects.md` at the end (insertion-order convention). Closed. **Audit-vs-disk drift noted:** the source plan said "7 entries (1 command + 4 agents + 2 projects)"; current vault state shows `pipeline-review` already present in `commands.md` (likely pasted between audit generation and S7) — so 6 entries pasted in S7, not 7. The 1-command line was already done.
+
+**S7 already-done (no S7 write needed — referenced for audit trail):**
+- Wave 1 #3 — `projects/repo-documentation/logs/decisions.md` D-51 (S6 Wave 1.3: selective paste-now; 212-entry bulk deferred to dedicated session).
+- Wave 1 #4 — D-52 (S6 Wave 1.4: Status field + prose body for deprecation; no §4.1 schema change).
+- Wave 1 #5 — "S6: Schedule dedicated session for /wrap-session leaner refactor + permission-sweep-auditor follow-ups" entry above in this file.
+- Wave 1 #6 — "S6: /pm sub-subagent dispatch — investigation only (pending)" entry above; investigation notes at `audits/working/2026-05-29-pm-sub-subagent-investigation.md`.
+
+**S7 dropped (Wave 2 #7–#9 — audit-stale, RECONSIDER verdict honored):**
+- **#7 nordic-pe `Bash(rm *)` add — DROP.** Current file state already contains `"Bash(rm *)"` at line 6 of `projects/nordic-pe-macro-landscape-H1-2026/.claude/settings.json` per risk-check § Dimension 2. Planned edit is a no-op.
+- **#8 interpersonal-communication stale `danielniklander` path remove — DROP.** Current file state shows no `danielniklander` entry in `additionalDirectories` per risk-check § Dimension 2. Planned edit is a no-op.
+- **#9 user-level `"model": "sonnet"` remove — DROP.** Current `~/.claude/settings.json` contains no `"model"` field per risk-check § Dimension 2. Planned edit is a no-op.
+
+Per `docs/audit-discipline.md` line 43: "RECONSIDER — redesign before proceeding. Do NOT downgrade the verdict to push the change through." Plan-time gate already satisfied; end-time gate moot (no edits to gate). The risk-check report at `audits/risk-checks/2026-05-29-wave-2-settings-json-cluster-friday-checkup-permissions.md` stays on disk as the audit trail.
+
+**S7 surfaced to operator (Wave 2 #10):**
+- **#10 user-level uniform git guards (MEDIUM M1).** The audit at `audits/permission-sweep-2026-05-29.md` § M1 lines 42–43 explicitly forbids mechanical execution: "Operator review. Layer A is intentionally more permissive (personal machine); divergence is by design. No mechanical fix unless operator wants uniform git guards at user level." Surfaced as yes/no at S7 wrap. Operator decision will be recorded in a follow-up entry.
+
+**Rationale for the reframe.** Two governing principles: (1) workspace `Design Judgment Principles` — "Conflicts must be surfaced, not silently resolved" — the engine flagged 3 source-plan-vs-disk conflicts and 1 unknown-scope; ignoring would have produced no-op edits + an audit-discipline violation (downgrading RECONSIDER); (2) workspace `Decision-Point Posture` — "pick the recommended option and proceed" — the recommended option was the engine-derived reframe. Operator confirmed reframe at /session-start Step 2.4 with `y`.
+
+**Maintenance observation (candidate for improvement-log):** Stale-audit-to-plan coupling. Friday-checkup audit ran ~07:00; S6 plan was generated ~midday based on audit; by the time S7 picked items up in evening, 5 of 10 items had already shipped via other sessions or were no-ops against current file state. The plan did not auto-refresh against current state — every consumer would have to do their own pre-flight check. Pattern: when a wave plan ages past one same-day session boundary, recommend re-running the source audit OR add a "stale check" pre-step to plan-execution commands. Dimension 5 of the wave-2 risk-check report makes the same observation.
+
+**Alternatives considered.** (a) Execute the original 10-item plan literally (would produce 3 no-op settings.json edits + a stack of "already-done" duplicate decisions.md entries; violates `audit-discipline.md` line 43) — rejected. (b) Defer the entire S7 mandate to a fresh-context session after re-running the source audit — rejected, the engine had already done the equivalent of a re-audit; deferring would be ceremony.
+
+**Trigger to revisit.** Next /friday-act tier — apply the stale-audit observation as a structural improvement (either re-audit pre-step or session-plan TTL).
