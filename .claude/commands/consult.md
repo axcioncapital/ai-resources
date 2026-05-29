@@ -93,6 +93,8 @@ Routing context (read from ai-resources/docs/repo-architecture.md by /consult be
 {ROUTING_CONTEXT verbatim}
 
 Apply the procedure in your agent definition: read the three references + systems-building-principles.md, apply the per-function read map, and produce a response in System Owner voice. Cite specific principles / blueprint sections / risk-topology entries for each load-bearing recommendation. Apply the decline-when-ungrounded rule if grounding is insufficient.
+
+Output contract: write the full advisory to projects/axcion-ai-system-owner/output/consultations/consult-{DATE}-{SLUG}.md per your agent definition's Phase 5 output contract, then return a ≤30-line structured summary. First line of the summary must be the verbatim path-back line `**Full advisory on disk:** {path}`, followed by a blank line, then the summary body.
 ```
 
 Wait for the agent's response.
