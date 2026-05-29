@@ -178,18 +178,6 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Target files (when executed):** `~/Claude Code/Axcion AI Repo/CLAUDE.md` § Placement Discipline only.
 - **Triage cadence:** opportunistic — bundle with the next workspace CLAUDE.md edit pass; do not schedule standalone.
 
-
-### 2026-05-29 — /open-items friction-log cross-match too literal — false-positive Tier 1 surface
-
-- **Status:** applied 2026-05-29
-- **Verified:** (pending operator confirmation at /wrap-session) — applied by commit `e72bca7` (`/open-items` Step 1 four-condition tolerance match, Item 2 of session-plan-S4); `/qc-pass` GO with two minor non-blocking phrasing observations under conditions (b)/(c).
-- **Category:** session-issue
-- **Source:** /resolve-repo-problem MANUAL mode 2026-05-29
-- **Friction source:** /open-items reported 2026-05-28 friction-log entry at 10:05 as unresolved Tier 1 friction. The entry had been structurally resolved + verified the same day by commit `9f91b2f` (improvement-log "2026-05-28 — Concurrent sessions cause TOCTOU races" carries `Status: Phases 1+2+3 applied` + two `Verified:` lines + an explicit reference to "Friction-log entry 2026-05-28 10:05 records the live event" in its Source field). The /open-items Step 1 cross-match contract (logs/friction-log.md row, T1 column) recognizes only two literal patterns — `**Friction source:** friction-log <HH:MM>` and `friction-log <HH:MM>` — both requiring strict adjacency between the `friction-log` token and the `HH:MM` token. The improvement-log's actual phrasing inserts the word `entry` between `Friction-log` and the timestamp, breaking adjacency; the cross-match misses; the resolved entry surfaces as Tier 1. Operator caught the staleness during /prime → /open-items sequence.
-- **Proposal:** Apply Option B (structural fix per the audits/working/ triage notes). Replace the two literal patterns in `open-items.md` Step 1 friction-log T1 row with a four-condition tolerance match: (1) HH:MM token present in improvement-log entry body, (2) friction entry's YYYY-MM-DD date present in improvement-log entry body OR `Verified:` date within ±1 day of friction-entry session date, (3) `friction-log` (case-insensitive) appears within the same sentence/bullet as the HH:MM token (arbitrary intervening words allowed), (4) `Status: applied` + non-empty `Verified:` (already in contract). Keeps the `### YYYY-MM-DD` header-date guard for same-`HH:MM`-different-date collision prevention. No /risk-check gate — same-command logic edit, no shared-state reorder, no hook/settings/agent surface; /qc-pass at edit time covers it. Recurrence is structurally guaranteed otherwise — line 136 of the same improvement-log already shows a second non-matching variant.
-- **Target files:** `ai-resources/.claude/commands/open-items.md` Step 1 (the friction-log T1 cross-match contract bullet).
-- **Notes:** /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/working/2026-05-29-resolve-open-items-cross-match-too-literal.md
-
 ### 2026-05-29 — Pre-spec consumer-inventory grep checklist (SO advisory, TOCTOU Phase 2+3 rollout)
 
 - **Status:** logged (pending)
@@ -200,3 +188,13 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Risk if left undone:** Recursive PROCEED-WITH-CAUTION verdicts continue as an inefficient signal class — every rename/removal spec re-spawns the inventory-miss cost. Two rounds observed this session is a clear pattern.
 - **Target files:** `ai-resources/skills/ai-resource-builder/SKILL.md` (add pre-spec checklist subsection) OR `ai-resources/docs/spec-authoring-checklist.md` (new, referenced from `audit-discipline.md`) — placement decision deferred to the implementation session.
 - **Triage cadence:** Friday weekly cadence — small implementation footprint, high recurrence frequency on structural-change sessions.
+
+### 2026-05-29 — /resolve-improvement-log Step 7b conflicts with archive read-deny
+
+- **Status:** logged (pending)
+- **Category:** session-issue
+- **Source:** /resolve-repo-problem 2026-05-29
+- **Friction source:** `/resolve-improvement-log` Step 7b prescribes a merge-and-sort archive path that reads existing archive entries and rewrites the archive in chronological order. `ai-resources/.claude/settings.json` line 32 denies `Read(logs/*archive*.md)`, blocking that read. Today's invocation worked by accident — the newest entry naturally appended to the end — but the skill silently breaks the moment an earlier-dated entry needs archiving. The same deny affects `improve.md` + `improvement-analyst` archive de-dup scans.
+- **Proposal:** Apply Option 1 (recommended by /resolve-repo-problem subagent). Rework Step 7b in `.claude/commands/resolve-improvement-log.md` to chronological-append-only — drop the "read archive + merge + sort + rewrite" simpler-implementation language; specify append-to-end as the canonical path. The active log's outgoing order IS the canonical chronological order; archive-time IS the entry order. No settings change, no /risk-check gate (same-command logic edit). The `improvement-analyst` archive de-dup scan remains broken and should be logged as a separate follow-up.
+- **Target files:** `ai-resources/.claude/commands/resolve-improvement-log.md` Step 7b (rewrite the archive procedure).
+- **Notes:** /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/working/2026-05-29-resolve-the-resolve-improvement-log-skill-cannot-complete.md
