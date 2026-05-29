@@ -190,3 +190,11 @@
 - **QC cycles:** 0
 - **Gates:** 1 (1 confirmed, 0 changed) — tweak-confirm:confirmed (operator approved /tweak diff via AskUserQuestion)
 - **Mandate fields:** none (no /session-start this session)
+
+### 2026-05-29 — Reversed push protocol: autonomous → gated and batched
+- **Commands used:** /clarify, /scope, /wrap-session
+- **Iterations:** 0
+- **Decisions logged:** 1
+- **QC cycles:** 0
+- **Gates:** 1 (0 changed) — plan-approval:confirmed
+- **Mandate fields:** none (no /session-start this session)

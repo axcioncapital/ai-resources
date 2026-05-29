@@ -20,7 +20,7 @@ These resources operate across a multi-tool ecosystem — not just Claude. Skill
 
 ## How I Work
 
-I am Patrik, a non-developer. Explain technical details in plain language. Commits and pushes proceed directly per `## Commit Rules` below.
+I am Patrik, a non-developer. Explain technical details in plain language. Commits proceed directly per `## Commit Rules` below. Pushes are gated — batched until session end, with a single operator confirmation prompt before pushing.
 
 ## Skill Creation and Improvement
 
@@ -67,16 +67,22 @@ Claude Code permission prompts (Edit / Write / Delete) are managed structurally,
 - Use descriptive commit messages: `new: skill-name — purpose` or `update: skill-name — what changed`
 - Multi-file changes: `batch: description`
 - Never force-push
-- After committing, push automatically and remind Patrik to wrap the session (`/wrap-session`) if the work is complete
+- After committing, do NOT push. Pushes are batched until session end and gated by a single operator confirmation prompt (see `## Commit Rules` below). Remind Patrik to wrap the session (`/wrap-session`) if the work is complete.
 - Default branch: main
 
 ## Commit Rules
 
 **Commit directly. Do not ask for permission.** After completing approved work, stage the relevant files and commit in a single step using a heredoc commit message. Do not run `git status`, `git diff`, or `git status --short` as pre-commit checks or post-commit verification — the filesystem is the source of truth for what you just changed.
 
-After committing, push automatically. Remind the operator to run `/wrap-session` if the work is complete. Never commit files that may contain secrets (`.env`, credentials, tokens).
+**Do NOT push after committing.** Pushes are batched until session end. At wrap (`/wrap-session`, or an explicit operator signal like "we're done" / "ship it"), ask the operator with a single confirmation:
 
-This rule mirrors the canonical `Commit behavior` section in the workspace-level `CLAUDE.md`. It is repeated here because projects are sometimes opened without the parent workspace context loaded.
+> Ready to push N commits across M repos: [list]. Push now? y/n
+
+On `y`: run `git push` per repo; surface any failure (auth, network, non-fast-forward) and stop. On `n`: leave commits unpushed and note it in chat. No mid-session pushes, even for "critical" fixes — surface the situation and ask the operator instead.
+
+Remind the operator to run `/wrap-session` if the work is complete. Never commit files that may contain secrets (`.env`, credentials, tokens).
+
+This rule mirrors the canonical `Commit behavior` and `Push behavior` sections in the workspace-level `CLAUDE.md`. It is repeated here because projects are sometimes opened without the parent workspace context loaded.
 
 ## Compaction
 

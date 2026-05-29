@@ -2,125 +2,6 @@
 
 > Archive: [session-notes-archive-2026-05.md](session-notes-archive-2026-05.md)
 
-## 2026-05-28 — Wave 2 (Commands/Hooks) execution — 8 items applied across 3 repos
-
-### Summary
-
-Executed Wave 2 of the 2026-05-28 19:02 three-wave fix plan. All 8 items applied; 3 explicit commits landed (`e45334e` ai-resources, `5028c3b` nordic-pe-macro, `5adbaa9` repo-documentation). A 4th commit (`ea93d62` ai-resources) by a parallel Wave 3 id-31 Phase 1 session absorbed my Wave 2 prime.md edits (id-08, id-10, id-33) under its own commit attribution while my edits sat uncommitted on disk — content intact, attribution mislabeled. `/qc-pass` ran on 6 of 7 substantive items; verdicts: 4× REVISE→fixes-applied, 2× GO. Operator said `proceed` on id-12 QC, skipped. Plan source: `audits/fix-plans/fix-repo-issues-2026-05-28-1902-wave2-commands.md`.
-
-### Files Created
-
-- `ai-resources/workflows/research-workflow/docs/required-reference-files.md` — deployment-time contract listing the 4 reference files every research-workflow project must provide (source-class-hierarchy, quality-standards, known-limits, style-guide); includes role / template-vs-canonical / consumer fan-out / runtime path-resolution explainer.
-- `ai-resources/logs/scratchpads/2026-05-28-20-30-scratchpad.md` — pre-closeout continuity scratchpad.
-
-### Files Modified
-
-**ai-resources (committed in `e45334e` + `ea93d62`):**
-- `.claude/commands/prime.md` (id-08 Step 8b rewrite, id-10 Step 1a dual-repo, id-33 Step 4 phase-README scan + Step 6 brief line) — absorbed into `ea93d62`.
-- `.claude/commands/session-start.md` (8b.1 → 8b.3.a reference fix from prime.md QC).
-- `.claude/commands/wrap-session.md` (8b.1 → 8b.3.a reference fix).
-- `.claude/commands/session-plan.md` (8b.1 → 8b.3.a reference fix).
-- `workflows/research-workflow/CLAUDE.md` (id-11 — "Deployment contract" cross-link paragraph).
-- `docs/ai-resource-creation.md` (id-29 — new `## Workflow-improvement surfaces` section).
-- `docs/audit-discipline.md` (id-12 cross-link — extended cross-cutting CLAUDE.md bullet).
-- `logs/improvement-log.md` (id-29 + id-33 status flips → applied 2026-05-28 with Verified lines).
-- `logs/session-notes.md` (this entry).
-
-**nordic-pe-macro-landscape-H1-2026 (committed in `5028c3b`):**
-- `.claude/hooks/backup-session-plan.sh` (id-06 — regex broadened, SRC retargeted, BACKUP filename suffixed with variant basename).
-- `.claude/commands/review-chapter.md` (id-01/05 — Operator presentation rule in Step 11).
-- `.claude/commands/run-report.md` (id-01/05 — same rule in Step 4.2e with cross-ref tail).
-- `logs/improvement-log.md` (6 status flips: id-01/05, id-06, id-08, id-10, id-11, id-12 → applied 2026-05-28).
-
-**repo-documentation (committed in `5adbaa9`):**
-- `output/phase-1/risk-topology.md` (id-12 — new "Deployable-template always-loaded" row in § 1.2 + `.prime-mtime` row 8b.1 → 8b.3.a reference fix).
-
-### Decisions Made
-
-- **Per-repo commit cadence (3 commits across 3 repos)** — natural batching given separate-repo boundaries. Plan said "per logical batch" expecting per-item; the per-item split was impractical because both `improvement-log.md` files would have needed to be split across multiple commits. Per-repo batching keeps each repo's commit atomic and explicit-file-staged.
-- **id-12 QC skipped per operator `proceed`.** Operator typed `proceed` after I invoked `/qc-pass` for id-12 (additive row + cross-link); I interpreted as "skip the QC, move on" per `feedback_minimal_infra_subset` (low marginal value for QC on additive structural-class doc edits). Continued to log flips and commits.
-- **id-11 doc REVISE-fix dropped `review-chapter` parenthetical** — QC reviewer flagged the project-local `review-chapter` reference as inaccurate (review-chapter.md lives in workflow template, doesn't grep style-guide.md). Replaced with the verifiable `evidence-to-report-writer` + `chapter-prose-reviewer` skill names (Step 4.2 a/b delegation surface).
-- **id-29 doc REVISE-fix softened the `/diagnose-workflow` command name to provisional** — QC reviewer flagged the doc as committing to a command name that the inbox brief lists as "likely" not "decided". Status note extended to mark it provisional until `/create-skill` runs.
-- **id-33 Step 4 dropped the first-line title capture** — QC noted Step 4 captured the title but the Step 6 template only renders paths. Aligned: paths only, no title.
-- **Path drift on id-12 source plan** — plan said `axcion-ai-system-owner/references/risk-topology.md`; actual canonical is `projects/repo-documentation/output/phase-1/risk-topology.md`. Edited the actual path; vault/ copy is gitignored downstream.
-
-### Commits Landed
-
-- `e45334e` (ai-resources): batch: wave-2 (commands/hooks) — ai-resources scope (8 files including 3 sibling-ref fixes from prime.md QC)
-- `5028c3b` (nordic-pe-macro-landscape-H1-2026): batch: wave-2 (commands/hooks) — nordic-pe scope (4 files)
-- `5adbaa9` (repo-documentation): update: risk-topology.md — workflow-template CLAUDE.md row (id-12) (1 file)
-- `ea93d62` (ai-resources, NOT my commit): Wave 3 id-31 Phase 1 by a parallel session — absorbed my Wave 2 prime.md edits under its commit attribution.
-
-### Concurrent-Session Note
-
-A parallel Wave 3 session ran during my Wave 2 execution and committed `prime.md` while my Wave 2 edits to that file were uncommitted on disk. The Wave 3 commit (`ea93d62`) absorbed my Wave 2 changes because the file on disk had both. My content is intact and each Wave 2 prime.md sub-item is QC-verified; the commit attribution is mislabeled. This is the same TOCTOU-shape failure mode that Wave 3 id-31 was designed to address (write-only marker = Phase 1; Phase 2-4 add the reader side). Worth a friction-log entry for /improve to analyze the attribution-noise pattern.
-
-### Next Steps
-
-- **Push pending across 3 repos** — `e45334e`, `5028c3b`, `5adbaa9` plus all prior unpushed commits (ai-resources had 13 + Wave 2 commits; workspace root 2 unpushed unchanged; nordic-pe + repo-documentation now also carry Wave 2 commits). Push requires explicit operator approval (Autonomy Rule #2).
-- **Wave 3 of the fix plan** — `audits/fix-plans/fix-repo-issues-2026-05-28-1902-wave3-structural.md` (4 `/risk-check`-gated items). id-31 Phase 1 already done via `ea93d62` (verified — bash logic smoke-tested per its commit message); re-evaluate items 2-4 (`id-09`, `id-32`, `nordic-pe-macro/id-13`) against the new state before applying. Dedicated session recommended (~2–3 hours).
-- **Run `/improve`** to analyze friction patterns across today's streak — 3 wrap-class sessions today (Wave 1, Wave 2, parallel Wave 3 id-31). The concurrent-session absorption pattern is the freshest signal.
-- **Carryover (unchanged):** workspace-root uncommitted-files triage (3+ sessions old).
-
-### Open Questions
-
-- None.
-
-## 2026-05-28 — Removed git-push approval gate workspace-wide
-
-### Summary
-
-Operator asked why every project session was hitting a permission block on `git push`, with branches sitting ahead of remote at session end (ai-resources had 10 commits unpushed; project-planning had 9). Investigation found the gate lived in three layers — `Bash(git push*)` deny in 21 of 36 settings.json files; Autonomy Rule #2 + "Push requires operator approval" restated in 15 CLAUDE.md / docs / commands files; and 4 commands that behaviorally assumed push was gated. Removed all three layers. Push is now autonomous after commit, like any other bash command. Force-push, `reset --hard`, and branch deletion remain gated (Autonomy #1); PR create / Slack / email / third-party uploads remain Autonomy #2.
-
-### Files Created
-
-- `logs/scratchpads/2026-05-28-20-19-scratchpad.md` — continuity scratchpad for next session
-- `~/.claude/plans/why-do-i-have-cozy-wand.md` — plan file (workspace-external, in user plans dir)
-- `~/.claude/projects/.../memory/feedback_push_autonomous.md` — new feedback memory linked in MEMORY.md
-
-### Files Modified
-
-**Permission layer (Layer A) — 22 files:**
-- `.claude/settings.json` (workspace root, ai-resources)
-- `templates/project-settings.json.template`
-- `docs/permission-template.md` (4 references)
-- 18 existing project/vault/workflow `.claude/settings.json` files via sed (projects/* + research-workflow)
-
-**Rules layer (Layer B) — 15 files:**
-- Workspace `CLAUDE.md` (Autonomy #2 + Commit behavior)
-- `ai-resources/CLAUDE.md` (3 places)
-- `ai-resources/docs/autonomy-rules.md` (#2)
-- `ai-resources/docs/session-rituals.md`
-- 11 project `CLAUDE.md` files
-
-**Command layer (Layer C) — 5 files:**
-- `.claude/commands/wrap-session.md` — adds `git push` as third step after commit
-- `.claude/commands/new-project.md` — drops `Bash(git push*)` from scaffolded deny, replaces push reminder with autonomous push
-- `.claude/commands/resolve-incident.md`, `deploy-workflow.md`, `graduate-resource.md`
-
-**Memory:**
-- `MEMORY.md` — added pointer to new `feedback_push_autonomous.md`
-
-### Decisions Made
-
-- **Remove push from Autonomy Rule #2** (operator-directed) — push moved out of "external writes requiring approval" into autonomous-after-commit posture. Force-push remains gated.
-- **Scope of file updates** (operator-directed) — all projects + workspace + ai-resources, not just the projects flagged in the original error message.
-- **Out of scope** (operator-directed and plan-stated) — pipeline snapshots and tech-spec files retain old push language; they're point-in-time references and will refresh naturally when those pipelines regenerate.
-- **End-time risk-check skip** — plan-time covered the risk inline; commits already shipped; drift bounded; per `feedback_end_time_risk_check_skip.md`.
-
-### Next Steps
-
-1. **Three remote-config issues to fix separately** (out of scope for the push-gate task, not push-related):
-   - `projects/personal/travel-os` — remote URL `patriklindeberg75-boop/traveling` doesn't exist on GitHub
-   - `projects/nordic-pe-screening-project` — remote URL `axcion-ai/...` doesn't exist (likely needs move to `axcioncapital/`)
-   - `projects/interpersonal-communication` — local commit in place but remote has 47 commits we don't have, plus an unrelated `D .claude/commands/route-change.md` deletion blocks a clean rebase
-2. **First real test of the new wrap-session push flow** — THIS wrap will exercise it.
-3. **Carryover (unchanged):** workspace-root uncommitted-files triage (3+ sessions old).
-
-### Open Questions
-
-- None.
-
 ## 2026-05-28 — /resolve-improvement-log archival sweep
 
 ### Summary
@@ -508,3 +389,121 @@ Ran `/log-sweep` apply-mode across all 14 candidate scopes (ai-resources + 13 pr
 ### Open Questions
 
 - None.
+
+## 2026-05-29 — execute /friday-act fix plans (permissions-settings first, then items 2-7 with /risk-check)
+
+Class: execution
+
+**Mandate:** Execute the six 2026-05-29 /friday-act fix plans in order — permissions-settings first (item 1, then items 2-7 each gated by /risk-check), middle plans by risk/dependency, general last — done when: all 6 plans worked through (each item applied, skipped with logged reason, or escalated) and /cleanup-worktree (last item of general) has run.
+- Out of scope: (none stated)
+- Files in scope: (inferred)
+- Stop if: any /risk-check returns NO-GO on a structural item — pause and surface to operator before continuing
+
+## 2026-05-29 — Reversed push protocol: autonomous → gated and batched
+
+### Summary
+
+Operator-directed reversal of the 2026-05-28 autonomous-push rule. New protocol: commits remain autonomous mid-session, pushes batch locally until session end, and a single operator confirmation prompt at `/wrap-session` gates the actual push. No mid-session push exceptions. Rule applies uniformly across all repos (workspace root, ai-resources, projects, vaults). VS Code extension push path verified clean (remote configured, fast-forward path healthy).
+
+### Files Created
+
+- `~/.claude/projects/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/memory/feedback_push_gated.md` — new auto-memory entry; replaces deleted `feedback_push_autonomous.md`. Documents inverted rule with 2026-05-29 reversal rationale and linkbacks to `[[feedback-commit-directly]]`, `[[feedback-autonomy-during-execution]]`, `[[feedback-zero-permission-prompts]]`.
+- `logs/scratchpads/2026-05-29-10-49-scratchpad.md` — pre-closeout scratchpad.
+
+### Files Modified
+
+- `CLAUDE.md` (workspace root) — `Commit behavior` section flipped; new `Push behavior` section added with confirmation-prompt shape; Autonomy Rule #2 parenthetical updated to gated push.
+- `ai-resources/CLAUDE.md` — `How I Work`, `Git Rules`, `Commit Rules` updated to match.
+- `ai-resources/.claude/commands/wrap-session.md` — replaced final autonomous `git push` step with confirmation gate (`Ready to push N commits across M repos: [list]. Push now? y/n`). Operator/linter also intentionally added `CLAUDE_PROJECT_DIR="$(pwd)"` prefix to Step 3 mid-session — preserved.
+- `.claude/commands/wrap-session.md` (workspace root, Phase 3 copy) — added Step 6 push gate with same confirmation shape.
+- `~/.claude/projects/.../memory/MEMORY.md` — index line updated from "Push is autonomous after commit" to "Push is gated and batched".
+- `~/.claude/projects/.../memory/feedback_push_autonomous.md` — deleted (replaced by `feedback_push_gated.md`).
+- `logs/session-notes.md` — this entry.
+- `logs/session-notes-archive-2026-05.md` — auto-archive trigger by `check-archive.sh` (2 entries archived, 10 kept).
+- `logs/session-plan.md`, `logs/coaching-data.md`, `logs/usage-log.md` — wrap-step writes.
+
+### Decisions Made
+
+- **Confirmation shape** — single confirmation prompt at session end, then I run `git push` per repo on `y`. Not "operator runs push manually" — Claude still executes the push, but only after explicit consent.
+- **"Session done" trigger** — `/wrap-session` plus explicit operator signals ("we're done" / "ship it"). No other triggers.
+- **Repo scope** — uniform across all repos (workspace root, ai-resources, projects, vaults).
+- **No mid-session push exceptions** — even "critical" fixes must surface and ask. Absolute rule.
+- **VS Code extension** — lightweight read-only verification only (remote check + clean status). No test push.
+- **Memory file renamed, not just inverted** — old slug `feedback-push-autonomous` was actively misleading; renamed to `feedback-push-gated`. Backlink check showed only MEMORY.md and self-reference touched the old slug, so rename is safe.
+
+### Next Steps
+
+1. **Validate the gate in real use** — at next `/wrap-session`, the new confirmation prompt fires for the first time. Watch for any prompt-shape ambiguity or VS Code extension interaction issues.
+2. **Watch for stale "push automatically" references** — the canonical sources are fixed, but other commands or skills may carry the old phrasing in passing. If any surface, fold the fix into their next edit cycle rather than a sweep.
+3. Three carryover items from this morning's `/prime` brief remain open (per the friday-act entry above): `/prime` Step 0 undefined-variable bug, contract-triangle bundle fix, `/session-start` cleanup. None touched this session.
+
+### Open Questions
+
+- None.
+
+## 2026-05-29 — Friday-act execution wrap — all 6 fix plans worked through (13 commits, 4 risk-checks GO, /cleanup-worktree deferred)
+
+### Summary
+
+Executed all six 2026-05-29 /friday-act fix plans in order (permissions-settings → log-sweep → project-triages → repo-documentation → session-qc-pipeline → general). 33 plan items dispatched: 12 APPLIED, 3 ALREADY-DONE / NO-OP, 8 SCHEDULE-DEDICATED (target within 2 weeks), 12 DEFER-WITH-DECISION, 1 PENDING (investigation only), 1 DEFERRED (/cleanup-worktree → dedicated session). 13 commits landed across 4 repos (ai-resources, nordic-pe-macro, interpersonal-communication, obsidian-pe-kb, repo-documentation). 4 /risk-check subagent runs, all GO verdicts. Concurrent-session friction: 8 commits rebased over on interpersonal-communication during Plan 1 item 3; foreign-session wrap content carried over into this wrap (push-protocol reversal — see Files Modified + Decisions).
+
+### Files Created
+
+- `ai-resources/audits/risk-checks/2026-05-29-add-bash-rm-to-allow-list-nordic-pe-macro.md` — GO
+- `ai-resources/audits/risk-checks/2026-05-29-replace-stale-danielniklander-path-interpersonal-comms.md` — GO
+- `ai-resources/audits/risk-checks/2026-05-29-retire-stale-april-deny-entries-ai-resources-settings.md` — GO
+- `ai-resources/audits/risk-checks/2026-05-29-remove-git-push-deny-obsidian-kb-builder-scaffold.md` — GO
+- `projects/obsidian-pe-kb/logs/improvement-log.md` — canonical header seeded (Plan 6 item 6)
+- `ai-resources/logs/scratchpads/2026-05-29-22-00-scratchpad.md` — pre-closeout continuity scratchpad
+- `ai-resources/logs/decisions-archive-2026-05.md` — auto-archive (20 entries archived, 3 kept; triggered during this wrap's Step 3)
+
+### Files Modified
+
+**Per-plan edits applied this session:**
+- `projects/nordic-pe-macro-landscape-H1-2026/.claude/shared-manifest.json` (Plan 1 item 1; 22 actual fixes vs 17 in plan)
+- `projects/nordic-pe-macro-landscape-H1-2026/.claude/settings.json` (Plan 1 item 2)
+- `projects/interpersonal-communication/.claude/settings.json` (Plan 1 item 3)
+- `ai-resources/.claude/settings.json` (Plan 1 item 5)
+- `ai-resources/skills/obsidian-kb-builder/templates/scaffold/settings.json` (Plan 1 item 6)
+- `ai-resources/.claude/commands/wrap-session.md` (Plan 3 nordic RECURRING #1; CLAUDE_PROJECT_DIR prefix at Step 3 — commit `17de7ca` also unintentionally absorbed concurrent foreign session's push-gate edit at Step 6 onwards, see decisions below)
+- `projects/nordic-pe-macro-landscape-H1-2026/logs/improvement-log.md` (Plan 3 nordic #1 marked APPLIED)
+- `projects/repo-documentation/.claude/agents/doc-scanner-agent.md` (Plan 4 item 1; 3 coverage gaps closed)
+- `ai-resources/.claude/commands/session-start.md` (Plan 5 item 3; Step 2.5 self-check inserted)
+- `ai-resources/.claude/agents/log-sweep-auditor.md` (Plan 6 item 2; entry-count gate added)
+
+**Foreign-session carry (concurrent session "Reversed push protocol"):**
+- `Axcion AI Repo/CLAUDE.md` (workspace root, separate repo) — Commit + Push behavior sections inverted
+- `ai-resources/CLAUDE.md` — How I Work / Git Rules / Commit Rules updated to gated-batched push
+- (Auto-memory at `~/.claude/projects/.../memory/`: `feedback_push_autonomous.md` deleted, `feedback_push_gated.md` created, `MEMORY.md` index line flipped — out-of-tree, no git commit needed)
+- `ai-resources/logs/session-notes.md` — foreign session's wrap entry (lines 402-442) carried into this commit alongside this session's own mandate + wrap entries
+- `ai-resources/logs/coaching-data.md` — foreign wrap's coaching entry (this session's wrap declined coaching per preflight)
+
+**This session's wrap-time touches:**
+- `ai-resources/logs/decisions.md` — 6 dispatch-decision blocks appended across plans 1-6 (most archived by check-archive.sh fire at Step 3 of this wrap; 3 kept-block entries remain)
+- `ai-resources/logs/session-notes.md` — this entry
+- `ai-resources/logs/session-plan.md` — Friday-act session plan (written at Step 8a of /prime)
+- `ai-resources/logs/innovation-registry.md` — hook-side updates during session
+- `ai-resources/logs/session-notes-archive-2026-05.md` — archive received during session
+
+### Decisions Made
+
+Already logged in `ai-resources/logs/decisions.md` (most archived by check-archive.sh during this wrap; full chain visible in `decisions-archive-2026-05.md`):
+- **Plan 1 item 7** — M1 Layer A vs B git-guard divergence accepted as intentional (per audit's own action + `feedback_zero_permission_prompts` memory)
+- **Plan 2 item 2** — workspace /log-sweep scope gap deferred (excluded by spec design)
+- **Plan 3 (project-triages)** — 1 APPLIED, 12 DEFER, 1 SCHEDULE-DEDICATED across 14 entries (3 projects)
+- **Plan 4 (repo-documentation)** — 1 APPLIED, 1 ALREADY-DONE, 4 DEFER → dedicated KB-paste session; item 5 deprecation-row policy decision = §4.1 schema addition (treat as first-class lifecycle state)
+- **Plan 5 (session-qc-pipeline)** — 1 APPLIED, 3 SCHEDULE-DEDICATED (TOCTOU phases 2-4, auto-apply /qc-pass rule, graduate-resource Step 4+5 strengthen)
+- **Plan 6 (general)** — 2 APPLIED, 5 SCHEDULE-DEDICATED, 1 PENDING (/pm sub-subagent investigation), 1 DEFERRED (/cleanup-worktree)
+- **Concurrent foreign-session wrap-recovery** — at this wrap's Step 3.5 the pre-write guard fired (FOREIGN=1, CONCURRENT-class). Operator picked option "Wrap-recovery: commit foreign content as standalone commit, then my wrap" — but in practice the foreign content was already entangled with mine in commit `17de7ca` (their `wrap-session.md` push-gate edit shipped under my CLAUDE_PROJECT_DIR commit, my Edit tool absorbed both). Pragmatic resolution: single combined wrap commit attributing both; workspace-root `CLAUDE.md` as separate wrap-recovery commit (other workspace-root drift left for the deferred /cleanup-worktree).
+
+### Next Steps
+
+1. **Run `/cleanup-worktree` against ai-resources** (Plan 6 item 9, deferred this session) — 6 modified files including a `CLAUDE.md` change that came from the foreign session; investigate the full diff in fresh context. ≤1 week to avoid drift accumulation.
+2. **TOCTOU mitigation Phases 2-4** (Plan 5 item 1) — high-impact structural rollout; needs its own session within 2 weeks.
+3. **Auto-apply /qc-pass rule** (Plan 5 item 2) — workspace CLAUDE.md cross-cutting; high leverage.
+4. **KB-paste session** (Plan 4 items 3-6 + item 5 schema decision application) — single focused session with the 1771-line w2-1-doc-scan report open.
+5. **Validate new push gate at next wrap** — per the foreign session's Next Steps #1, the next `/wrap-session` (after this one) will be the first real test of the push-confirmation prompt shape. This wrap is the first test; verdict still being observed.
+
+### Open Questions
+
+- None blocking. The workspace-root CLAUDE.md change (push-protocol reversal) is committed independently; the auto-memory swap (`feedback_push_autonomous` → `feedback_push_gated`) is in `~/.claude/projects/.../memory/` and out-of-tree, no action needed.
