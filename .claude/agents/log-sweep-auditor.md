@@ -69,15 +69,16 @@ Apply these rules **in order** to every discovered file. Stop at the first match
 
 For each file classified in Cat A1, A2, B, or D, evaluate whether it meets the archive threshold:
 
-**Cat A1/A2 — line count:**
+**Cat A1/A2 — line count AND entry count:**
 - `session-notes.md`: threshold 500 lines, KEEP = 10 entries
 - `decisions.md`: threshold 400 lines, KEEP = 3 entries
 - All others: threshold 500 lines, KEEP = 10 entries
-- Check: `wc -l < "$FILE"` → over threshold if line count ≥ threshold value
+- Check: `wc -l < "$FILE"` for line count → AND count dated entries: `grep -cE "^## [0-9]{4}-[0-9]{2}-[0-9]{2}" "$FILE"` (Cat A1/A2) or `grep -cE "^### [0-9]{4}-[0-9]{2}-[0-9]{2}" "$FILE"` (Cat B).
+- Over threshold ONLY when `line_count ≥ threshold AND entry_count > KEEP`. Both conditions must hold. Otherwise the file is `not over threshold` even if line count alone qualifies — `split-log.sh` refuses archival when `entry_count ≤ KEEP` (no entries to spare), so flagging line-count-only candidates produces spurious no-op runs. Fixing this here eliminates the long-line / few-entry false-positive pattern (e.g., the `nordic-pe-macro session-notes.md` 935-line / 10-entry case that surfaced 2026-05-29).
 
-**Cat B — line count:**
+**Cat B — line count AND entry count:**
 - Threshold 500 lines, KEEP = 10 entries
-- Same `wc -l` check
+- Same combined check: `line_count ≥ 500 AND entry_count > 10` via `wc -l` and `grep -cE "^### [0-9]{4}-[0-9]{2}-[0-9]{2}" "$FILE"`.
 
 **Cat D — age:**
 - Get mtime in seconds: `python3 -c "import os,sys; print(int(os.stat(sys.argv[1]).st_mtime))" "$FILE"`

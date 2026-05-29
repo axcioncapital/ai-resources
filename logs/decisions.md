@@ -420,3 +420,45 @@ SCHEDULE-DEDICATED [med]. Requires a verify-the-gap-is-real pre-step (run subage
 
 ### Closure note
 This dispatch converts 4 plan items into 1 APPLIED (item 3), 3 SCHEDULE-DEDICATED (items 1, 2, 4). All 3 deferred items target 2-week horizon; none are silent drops — each will get its own /session-start mandate when picked.
+
+---
+
+## 2026-05-29 — Friday-act general: 2 APPLIED, 5 SCHEDULE-DEDICATED, 2 PENDING, 1 LAST
+
+**Scope.** Plan general had 10 items, 2 [high]. Item 1 hard-stops without operator GO (DR-8). Item 9 is /cleanup-worktree (runs last per plan ordering).
+
+### Item 1 — Concurrent-session detection hook (DR-8 gate)
+SCHEDULE-DEDICATED [high]. DR-8 gate waiting for explicit operator GO before build. Not actioned this session because the hard-stop pre-build approval has not fired. Operator-driven: when ready, invoke a dedicated build session.
+
+### Item 2 — Fix log-sweep-auditor Cat A2 heuristic
+✓ APPLIED. Cat A1/A2 and Cat B threshold logic updated: over-threshold now requires `line_count ≥ threshold AND entry_count > KEEP`. Eliminates the long-line / few-entry false-positive pattern. Edit at ai-resources/.claude/agents/log-sweep-auditor.md.
+
+### Item 3 — Extract change-shape classifier to shared reference doc
+SCHEDULE-DEDICATED [med]. Two-end contract (`/consult` + `/pm` share the classifier). Dedicated session needed to: (a) extract the logic to a new docs/ reference file, (b) update both consumer commands to point at the doc, (c) verify both readers still resolve. Not a /risk-check class but the cross-resource consistency check (Step 6 Tripwire reminder in the session plan) means careful work.
+
+### Item 4 — Extract Q1-Q8 placement logic into skills/placement-classification/SKILL.md
+SCHEDULE-DEDICATED [med]. New skill path → /risk-check required. Two confirmed consumers. Dedicated session: create skill, /risk-check, /qc-pass, update consumers.
+
+### Item 5 — Investigate sub-subagent dispatch limitation in /pm
+PENDING [med]. Investigation-only at this stage. Recorded here as `Status: pending` (NOT applied). Findings:
+- `/pm` (project-manager) ships in degraded mode for structure escalation because Task tool is not available agent-to-agent.
+- Workaround paths: (a) operator-mediated escalation (have main session re-invoke /consult); (b) main-session pre-dispatch (caller decides escalation before invoking /pm); (c) extend Task tool agent-to-agent (Claude Code platform feature, not actionable here).
+- No fix this session. Schedule a tighter investigation if escalation rate grows.
+
+### Item 6 — Create improvement-log.md in obsidian-pe-kb + project-planning
+✓ PARTIALLY APPLIED. obsidian-pe-kb log seeded with canonical header (no entries). project-planning already has an existing improvement-log.md — no creation needed; verified in pass.
+
+### Item 7 — Schedule dedicated session for /wrap-session refactor + permission-sweep-auditor follow-ups
+SCHEDULED [med]. Target: dedicated session within next 2 weeks. Both deferred twice; third defer would be silent drift. /wrap-session refactor is leaner-rewrite (token-audit lever); permission-sweep-auditor follow-ups are the deferred auditor enhancements. Block out 1 hour.
+
+### Item 8 — Build /clean-folder workspace-level command
+SCHEDULE-DEDICATED [med]. New command path → /risk-check required. Plan-only output (restructure plan to audits/restructure-plans/). Dedicated session: design + /placement at build time + /risk-check + /qc-pass.
+
+### Item 9 — /cleanup-worktree ai-resources
+RUNS AS FINAL ITEM this session — after all preceding Plan 6 items dispatched.
+
+### Item 10 — /improve-skill friday-act
+SCHEDULE-DEDICATED [med]. /improve-skill runs its own internal /risk-check at structural-change gate. Auto-triage Step 3 + 3.5 disposition loops (HIGH=f, MED=f unless duplicate/low-value, LOW=d unless decision/chain-blocking, then f). Operator directive 2026-05-29 explicit ("triage the follows AUTOMATICALLY"). Dedicated session within 2 weeks.
+
+### Closure note
+Plan 6 dispatch: 2 APPLIED (items 2, 6), 1 PENDING (item 5), 1 SCHEDULED (item 7), 5 SCHEDULE-DEDICATED (items 1, 3, 4, 8, 10), 1 RUNS-LAST (item 9, this session).
