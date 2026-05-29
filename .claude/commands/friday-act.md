@@ -139,11 +139,35 @@ If active count ≤ 7, proceed silently.
       (s)kip       — drop without logging
     ```
     If `SO_ADVISORY_PATH`, `SO_REVIEW_PATH`, AND `JOURNAL_PATH` are all `MISSING`, omit the "System Owner inputs available" block entirely (do not print a stub).
-14. Wait for the operator's per-item disposition string. Validate length matches item count and characters are in `{f,d,s}`. Re-prompt on mismatch.
+13a. **Auto-triage default.** If the item count is 0, skip to sub-step 14 with no display and no prompt (do not print an empty `Auto-triage default:` block). Otherwise, compute the default disposition string by mapping each item's risk label in display order:
+
+    - HIGH → `f` (fix-now)
+    - MED  → `f` (fix-now)
+    - LOW  → `d` (defer)
+
+    These defaults reflect the operator's typical disposition pattern (`logs/decisions.md` Item 10 — Friday-act #10 default sketch). MED defaults to `f` because most MED items are actionable — override to `d`/`s` if duplicate or low-value. LOW defaults to `d` because most LOW items are tracked-but-not-blocking — override to `f` if decision-blocking or chain-blocking. The override path is what handles those "unless" cases; the auto-default is intentionally a base-rate guess.
+
+    Display before waiting:
+    ```
+    Auto-triage default (HIGH→f, MED→f, LOW→d):
+      {default_string}
+
+    Per-item review:
+      1. [high] {item}  →  f
+      2. [med]  {item}  →  f
+      3. [low]  {item}  →  d
+      ...
+
+    Press Enter to accept the default, or paste a corrected `{f,d,s}+` string
+    matching the item count to override.
+    ```
+14. Wait for the operator's response. If sub-step 13a skipped (item count 0), this sub-step is a no-op — there is no prompt waiting and no default string to accept; continue to the next step.
+    - **Empty response (Enter):** accept the default disposition string from 13a. Set `triage_source = auto-default` for every item in the batch.
+    - **Non-empty response:** validate against `^[fds]+$` and that length matches item count. Re-prompt on mismatch. On valid override, set `triage_source = operator-override` for every item in the batch.
 15. For each item dispositioned `f`:
     a. Check whether the fix touches a `/risk-check` change class (per `ai-resources/docs/audit-discipline.md` § Risk-check change classes — hook file (`.sh`), `settings.json`, workspace `CLAUDE.md`, project `CLAUDE.md`, a new command/skill path, a new symlink, or auto-write/cross-repo automation). If yes, record `risk_check_required: true`; otherwise `false`. Do not prompt the operator — the gate runs at execution time in the follow-up session.
     b. If the item's source label starts with `repo-documentation:w2-4-improvements`, record `w2_4_source: true`; otherwise `false`. No agent is spawned here — the auto-draft sub-disposition runs in the follow-up session when the operator executes the plan.
-    c. Append the item to `FIX_NOW_ITEMS` with fields: `{source: checkup, risk, text, risk_check_required, w2_4_source}`.
+    c. Append the item to `FIX_NOW_ITEMS` with fields: `{source: checkup, risk, text, risk_check_required, w2_4_source, triage_source}`.
 
 16. Items dispositioned `d` are accumulated for Step 5 logging.
 
@@ -182,7 +206,7 @@ where risk ∈ {high, med, low}. Empty line to finish, or `(none)` to skip.
 
 16c. Validate each pasted line against `^\[(high|med|low)\] .+$`. Re-prompt on malformed input. Capture accepted items as a parallel list to the Step 3 tactical follow-ups (preserve `risk` and `text`).
 
-16d. For each accepted SO-derived item, run the same disposition loop as Step 3 (items 14–15c logic). For each `f` item: apply the risk-check-class check (15a) and W2.4 check (15b); append to `FIX_NOW_ITEMS` with `source: so-derived`.
+16d. For each batch of accepted SO-derived items, run the same disposition loop as Step 3 (items 13a–15c logic — auto-triage default with operator override). For each `f` item: apply the risk-check-class check (15a) and W2.4 check (15b); append to `FIX_NOW_ITEMS` with `source: so-derived` and the resolved `triage_source` per 14.
 
 16e. Append accepted SO-derived dispositions into the same `RESULTS` structure used by Step 3, tagged with `source: so-derived` so Step 5 can subtotal them and the deferred-items list can label them.
 
@@ -200,7 +224,7 @@ where risk ∈ {high, med, low}. Empty line to finish, or `(none)` to skip.
 
   Per-item disposition (one letter per item, in order; same f/d/s vocabulary):
   ```
-- Feed them into the same disposition loop as items 14–15c. For each `f` item: apply the risk-check-class check (15a) and W2.4 check (15b); append to `FIX_NOW_ITEMS` with `source: journal-derived`.
+- Feed them into the same disposition loop as items 13a–15c (auto-triage default with operator override). For each `f` item: apply the risk-check-class check (15a) and W2.4 check (15b); append to `FIX_NOW_ITEMS` with `source: journal-derived` and the resolved `triage_source` per 14.
 - Tag accepted dispositions in `RESULTS` with `source: journal-derived` so Step 5 subtotals them separately.
 
 ---
@@ -308,6 +332,7 @@ Open each plan in a follow-up session to execute. Implement all plans before nex
 
     ### Disposition summary
     - Tactical: {F} queued for plans, {D} defer, {S} skip (of {TOTAL} items; of which {SO_COUNT} System Owner-derived, {JOURNAL_COUNT} journal-derived)
+    - Triage source: {AUTO_DEFAULT} auto-default, {OPERATOR_OVERRIDE} operator-override (of {TOTAL} items)
     - Policy review: {R} rule-change proposed, {N} no-change, {D} defer (monthly+ only; omit for weekly)
     - Architectural retrospective: {captured | skipped} (quarterly only; omit otherwise)
 
