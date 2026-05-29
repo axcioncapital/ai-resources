@@ -468,3 +468,43 @@ Second /pipeline-review cycle of the day against the expanded 47-row registry. O
 ### Open Questions
 
 - None.
+
+## 2026-05-29 — /log-sweep 14-scope archival sweep (6 rotated, 2 no-op, 5 commits across 5 repos)
+
+### Summary
+
+Ran `/log-sweep` apply-mode across all 14 candidate scopes (ai-resources + 13 project repos). 14 `log-sweep-auditor` subagents fanned in parallel and inventoried ~2,374 markdown files. 8 over-threshold candidates surfaced; 6 rotated cleanly, 2 `session-notes.md` files were correct no-ops because their entry count equalled `KEEP=10` (the script's threshold-guard refused archival — files were long-bodied but not entry-rich). Two auditor-quality signals captured for the next maintenance pass. Five separate commits landed across five independent git repos.
+
+### Files Created
+
+- `audits/log-sweep-2026-05-29.md` — final apply-mode report (overwrote earlier same-day `/friday-checkup` dry-run; dry-run vs apply discrepancies documented inside)
+- `audits/working/log-sweep-manifest-2026-05-29.md` — pre-apply manifest with line-count + status (gitignored scratch)
+- `audits/working/log-sweep-*-2026-05-29.md` — 14 per-scope working notes (gitignored scratch)
+- `logs/scratchpads/2026-05-29-09-59-scratchpad.md` — continuity scratchpad
+- `logs/usage-log-archive-2026-05.md` — new archive file from ai-resources rotation
+- 5 new project-side `*-archive-2026-05.md` files (session-notes / decisions / usage-log in 4 project repos)
+
+### Files Modified
+
+- `logs/usage-log.md` — 1149 → 293 lines (29 entries archived)
+- `logs/session-notes.md` — wrap entry appended (this file); 2 oldest entries archived earlier in this wrap by `check-archive.sh` (archived 2, kept 10 → `logs/session-notes-archive-2026-05.md`)
+- `logs/session-notes-archive-2026-05.md` — received the 2 archived entries
+- Across 4 project repos: `session-notes.md`, `decisions.md`, `usage-log.md` rotations (see ai-resources commit `a54681a` body for the cross-repo summary)
+
+### Decisions Made
+
+- **Scope: all 14 candidates** (operator picked "All scopes (Recommended)" at the single AskUserQuestion gate). One parallel fan-out, no per-stage prompts after that.
+- **Treated 2 zero-effect runs as `skipped (no-op by design)`, not `FAILED`**, because `split-log.sh` correctly refused archival when entries ≤ KEEP. The line-count heuristic in the auditor over-triggered, not the archive script.
+- **Routed nordic-pe-macro's mis-classified Cat A1 files through Cat A2 (`split-log.sh`)**. Per spec, Cat A1 is `check-archive.sh` scope and ai-resources-only. The auditor's mis-classification surfaces a routing-rule gap to fix.
+- **Per-repo commits, not one combined commit.** Each project is its own independent git repo (verified at the wrap-recovery step); commits and pushes happened per-repo.
+- **Wrap-recovery first, then wrap.** Foreign-session pre-write guard fired on the wrap (a parallel session today had left a `/pipeline-review cycle 2` orphan in WT). Per spec option 1, committed the orphan + 11 paired files as `f1f3963` before resuming this wrap.
+
+### Next Steps
+
+1. **Fold the two `log-sweep-auditor` quality fixes into the agent definition** — add an entry-count check before declaring over-threshold (eliminates spurious 500+ line candidates that have only 10 entries) and gate Cat A1 routing on `SCOPE_PATH == AI_RESOURCES_PATH`. Smallest unit of follow-up that closes the open loops from this session.
+2. **Reconcile the `/friday-checkup` dry-run vs `/log-sweep` apply-mode classification drift** — same-day comparison surfaced two differences (workspace-root scope inclusion + obsidian-pe-kb `pipeline/*.md` mis-classification as Cat A2). Possibly the dry-run path uses a coarser classifier. Worth a one-session reconcile.
+3. **Three carryover items from this morning's `/prime` brief still open** — `/prime` Step 0 undefined-variable bug, the contract-triangle bundle fix, and the `/session-start` cleanup. None touched this session.
+
+### Open Questions
+
+- None.
