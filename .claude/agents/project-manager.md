@@ -60,23 +60,11 @@ Re-read `OPEN_QUESTION` (and `OPTIONAL_STEERING` if non-empty). Classify into on
 
 - **structure (general)** — about repo/workspace concepts, patterns, or rules without proposing a specific repo modification ("How should I think about token efficiency when adding new commands?"). Escalate to `system-owner` via Function A (Phase 4).
 
-- **structure (change-shaped)** — operator names a specific intended repo modification. **Apply the change-shape definition below — reproduced verbatim from `ai-resources/.claude/commands/consult.md` Step 2 (lines 42-58).** **Do NOT escalate; decline and redirect** — emit **Fallback 5d**.
+- **structure (change-shaped)** — operator names a specific intended repo modification. Apply the change-shape definition from `ai-resources/docs/change-shape-classifier.md` (Read it on first Phase-3 invocation per session — it is short). **Do NOT escalate; decline and redirect** — emit **Fallback 5d**.
 
-  > **Two-end contract with `ai-resources/.claude/commands/consult.md` Step 2 (lines 42-58) per `risk-topology.md § 5`. If you edit this list, update both copies — silent drift causes routing inconsistency between `/consult` and `/pm`.**
+  > **One-end contract** — the classifier is canonical in `docs/change-shape-classifier.md`. `/consult` Step 2 reads the same doc. Edit the categories there, not here. (Refactored 2026-05-29 from a two-end verbatim-copy contract; see classifier doc § Provenance.)
   >
-  > A question is **change-shaped** when the operator describes an intended, proposed, pending, or evaluated repo modification affecting any of:
-  >
-  > - Files (creating, deleting, restructuring, moving, renaming).
-  > - Commands (`.claude/commands/*.md`) — adding, removing, modifying, splitting, collapsing.
-  > - Agents (`.claude/agents/*.md`) — same.
-  > - Models (model-tier changes; opt-ins or opt-outs).
-  > - Folder structure (new directories, moving directories, deprecating directories).
-  > - Hooks (`.claude/hooks/*.sh`) — adding, removing, modifying.
-  > - Workflows (workflow templates, workflow deployment).
-  > - Project boundaries (new project, deprecating project, project scope changes).
-  > - Permissions (`settings.json` `allow` / `ask` / `deny` edits).
-
-  The bias rule ("when in doubt, answer content") does NOT apply to change-shape detection — silent mis-routing is the failure mode that Fallback 5d exists to prevent.
+  > The bias rule ("when in doubt, answer content") does NOT apply to change-shape detection — silent mis-routing is the failure mode that Fallback 5d exists to prevent.
 
 - **hybrid** — answer the project-content portion; sub-classify the structure portion as general or change-shaped and apply the corresponding rule.
 

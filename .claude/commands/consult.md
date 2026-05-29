@@ -45,23 +45,11 @@ Set `QUESTION` = `$ARGUMENTS` verbatim.
 
 ### Step 2 — Apply the change-shape detection rule
 
-> **Two-end contract** — if you edit the change-shape classifier list below, also update the verbatim copy in `ai-resources/.claude/agents/project-manager.md` Phase 3 (under `structure (change-shaped)`). The two definitions are a two-end contract per `risk-topology.md § 5`; silent drift causes routing inconsistency between `/consult` and `/pm`.
+Read `ai-resources/docs/change-shape-classifier.md` for the canonical definition (categories + bias rules). Apply the routing rule below at this consumer:
 
-A question is **change-shaped** when the operator describes an intended, proposed, pending, or evaluated repo modification affecting any of:
+If `QUESTION` matches the change-shaped definition in the classifier doc, set `SHAPE = change-shape` and proceed to Step 3 (read routing context). Otherwise, set `SHAPE = general` and skip to Step 4.
 
-- Files (creating, deleting, restructuring, moving, renaming).
-- Commands (`.claude/commands/*.md`) — adding, removing, modifying, splitting, collapsing.
-- Agents (`.claude/agents/*.md`) — same.
-- Models (model-tier changes; opt-ins or opt-outs).
-- Folder structure (new directories, moving directories, deprecating directories).
-- Hooks (`.claude/hooks/*.sh`) — adding, removing, modifying.
-- Workflows (workflow templates, workflow deployment).
-- Project boundaries (new project, deprecating project, project scope changes).
-- Permissions (`settings.json` `allow` / `ask` / `deny` edits).
-
-A question is **general** when it is purely conceptual ("how should I think about X" / "what is the right pattern for Y") AND does not name a specific repo modification — UNLESS the operator explicitly asks about implementation impact, in which case treat as change-shaped.
-
-If `QUESTION` matches the change-shaped definition, set `SHAPE = change-shape`. Otherwise, set `SHAPE = general`.
+> **One-end contract** — the classifier is canonical in `docs/change-shape-classifier.md`. The `project-manager` agent reads the same doc at its Phase 3. Edit the categories there, not here. (Refactored 2026-05-29 from a two-end verbatim-copy contract; see classifier doc § Provenance.)
 
 ---
 

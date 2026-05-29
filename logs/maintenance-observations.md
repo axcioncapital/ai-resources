@@ -338,3 +338,17 @@ Session-shape signals worth noting for the next checkup:
 **Why this matters.** Recursive PROCEED-WITH-CAUTION verdicts are an inefficient signal — each round costs a full risk-check invocation + SO advisory + operator decision-loop turn. A pre-spec grep would close the inventory loop before the spec hits risk-check, preserving the verdict for genuinely structural concerns.
 
 **Not blocking.** Logged here for next `/friday-checkup` cadence to triage into improvement-log if confirmed worthwhile.
+
+### 2026-05-29 — Friday-checkup audit-to-plan staleness (S6 Wave 2 RECONSIDER)
+
+**Observation.** Wave 2 of session-plan-S6.md (the four settings.json edits from friday-checkup-2026-05-29 / permissions-settings plan items 2, 3, 4, 7) hit a `/risk-check` RECONSIDER verdict driven by Dimension 5 Hidden Coupling: High. Three of the four planned edits (items 7, 8, 9 of the plan; items 2, 3, 4 of the friday-act plan) had stated premises that did not match current file state — `Bash(rm *)` already present in nordic-pe-macro settings line 6; no `danielniklander` path in interpersonal-communication settings; no `"model"` field in `~/.claude/settings.json`. Concurrent same-day commits (`49bd826`, `c40256e`, `80e9ccf`, and others) closed the gaps before the Wave 2 cluster reached execution.
+
+**Root cause.** The audit-to-plan generation step in `/friday-act` (Step 3 → friday-plans/*.md) does NOT re-read the target files before emitting fix-instructions. It propagates audit findings as-of audit-time, even when same-session concurrent work has shipped fixes. Result: phantom items in friday-plans/*.md that pass the plan into `/risk-check`, which is the first stage that re-grounds against current file state — too late.
+
+**Durable fix candidate.** Add a pre-emit re-read step to `/friday-act` Step 3 (or the plan-generator subagent) that diffs each fix-instruction against current target-file state before writing the friday-plans/*.md file. Fix-instructions whose premise is closed get dropped from the plan with a "(closed by {commit-hash})" annotation. Fix-instructions where the file state changed in an unrelated way get flagged for operator review.
+
+**Affected commands/agents.** `/friday-act` Step 3 (the friday-plans/*.md generation step); possibly the `friday-act-16a-summarizer` subagent if it shares the same pattern.
+
+**Why this matters.** Stale audit-to-plan pipeline costs ~1 cluster-/risk-check per Friday-act session (RECONSIDER on phantom items). Operator decision-loop turns get spent on items that no longer exist. The cost compounds with the friday-checkup cadence (weekly + monthly + quarterly tiers all emit fix-instructions).
+
+**Not blocking.** Logged here for next `/friday-checkup` cadence to triage into improvement-log if confirmed worthwhile (or for the operator to disposition directly in the S6 wrap). Wave 2 of S6 was dropped; M1 git-guards (the only real fix in the cluster) was applied as a stand-alone edit to `~/.claude/settings.json`.
