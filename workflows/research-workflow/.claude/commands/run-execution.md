@@ -154,7 +154,7 @@ Parse all approved Research Extracts from `/execution/research-extracts/{section
 6. GATE: Operator reviews query brief before execution.
 
 **Step 2.S2 — Execute Queries in Perplexity [Operator]**
-Present the query brief's Section B (Execution Sheet) to the operator. He runs queries manually in Perplexity Pro Search. Prefix each query with: `I'm researching Nordic mid-market private equity for a professional advisory report.` The operator pastes raw Perplexity output back into Claude Code. Write raw output to `/execution/supplementary/{section}/{section}-perplexity-raw-pass-[1/2].md`.
+Present the query brief's Section B (Execution Sheet) to the operator. He runs queries manually in Perplexity Pro Search. Prefix each query with: `I'm researching {{RESEARCH_AREA_PHRASE}} for a professional advisory report.` The operator pastes raw Perplexity output back into Claude Code. Write raw output to `/execution/supplementary/{section}/{section}-perplexity-raw-pass-[1/2].md`.
 
 **Step 2.S3 — QC Perplexity Results [delegate-qc]**
 1. Read the raw Perplexity output from Step 2.S2.
