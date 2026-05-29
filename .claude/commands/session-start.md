@@ -181,6 +181,17 @@ Wait for one response. Apply these parser rules:
   `"Reply 'confirm' or 'y' to accept, or use 'b: new text' syntax for corrections. Single letters other than 'y' are ambiguous."` Accept the re-response and proceed regardless.
 - **Correction:** correction syntax is `<letter>: <replacement text>` (colon required, not period). Multiple corrections may appear on separate lines. Parse and apply each; unrecognised syntax is treated as free-text amendment to `work_scope`. **Reserved correction letters:** `a:` → `allowed_inputs`; `r:` → `required_outputs`; `f:` → `files_in_scope`. Other letters fall through to free-text amendment.
 
+### Step 2.5 — Self-check before writing
+
+Before proceeding to Step 3's disk write, validate the parsed mandate against the following floor — if any check fails, fix the field in place (silently if straightforwardly derivable, or by re-asking the operator with one targeted question if not). Mirrors `/session-plan` Step 7 self-check pattern. Inline check; no subagent.
+
+1. **`work_scope` is one substantive sentence**, not a bare topic word and not multiple sentences. A topic word (e.g., "permissions") fails because it doesn't name what the session will produce; re-derive a single sentence from `MANDATE_TEXT` or re-ask the operator with: `work_scope reads as a topic, not a deliverable — restate it as "{action} {subject} {scope/exit}".`
+2. **`exit_condition` is observable or countable.** Phrases like "done", "complete", "finished" without an observable signal fail. Acceptable shapes: file written, item checked off, finding addressed, commit landed, count reached. Re-derive from `MANDATE_TEXT` context if not stated; if still ambiguous, re-ask: `exit_condition is not observable — state what "done" looks like on disk or in git.`
+3. **`files_in_scope` either lists ≥1 concrete path OR is explicitly `(inferred)`.** Empty / bare placeholder fails. If `files_inferred = true`, the `(inferred)` marker carries forward to Step 3; this is the only acceptable non-listed shape.
+4. **`stop_if` is either `(none stated)` OR names a concrete halt condition** (a verdict, a counter, a state). Vague stops like "if things go wrong" fail; re-derive or strip to `(none stated)`.
+
+Re-asks happen at most once per failed field. If a re-ask response is still non-conformant, accept it and proceed — `/qc-pass` and `/drift-check` are the downstream catchers per workspace `Decision-Point Posture`. Self-check failures that auto-fixed silently must be logged in a one-line note appended to the Step 4 "Mandate written" confirmation: `Self-check auto-fixed: {field}: {old} → {new}`. Re-ask-resolved failures get no log.
+
 ### Step 3 — Write the mandate line
 
 <!-- LOAD-BEARING: bullet labels below are parsed verbatim by /wrap-session Step 7a. Do not stylize. If Step 2 echo styling changes, do NOT propagate here. -->
