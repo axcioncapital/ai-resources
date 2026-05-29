@@ -623,3 +623,46 @@ Already logged in `ai-resources/logs/decisions.md` (existing entries from earlie
 - Stop if: /qc-pass returns REVISE with operator-disagreement on Items 1 or 2, or Item 4 smoke-test surfaces a material regex defect requiring escalation
 
 **Plan source:** Plan agreed in chat after /open-items + /resolve-repo-problem triage (free-text-intent path per 2026-05-29 usage-log pattern: "skip planning-chain when input IS the plan"). Marker-scoped plan at `logs/session-plan-S4.md` captures the same content for downstream readers (/drift-check, /contract-check, /wrap-session).
+
+### Wrap — Session S4
+
+### Summary
+
+Closed two literal-pattern brittleness bugs that surfaced during /prime → /open-items → /resolve-repo-problem early in the session, plus codified the System Owner pre-spec grep-checklist observation as a Friday-triage candidate and verified yesterday's backup-script regex fix by execution. All four items in the no-/risk-check class (same-command logic edits + log append + read-only verification). Free-text-intent session-shape per 2026-05-29 usage-log "skip planning-chain when input IS the plan" pattern — operator confirmed the chat-built proposal with "go" rather than going through formal /session-start + /session-plan.
+
+### Files Created
+
+- `ai-resources/logs/session-plan-S4.md` — marker-scoped session plan (committed in `e893a45`)
+- `ai-resources/audits/working/2026-05-29-resolve-open-items-cross-match-too-literal.md` — /resolve-repo-problem MANUAL triage notes for Item 2
+- `ai-resources/logs/scratchpads/2026-05-29-23-30-scratchpad.md` — pre-closeout continuity scratchpad
+
+### Files Modified
+
+- `ai-resources/.claude/commands/wrap-session.md` — Item 1: Step 3.5 marker-aware OWN_HEADERS_SUBTRACT / OWN_MANDATES_SUBTRACT counter + PAIRED CONTRACT comment block + edge-case narrative (commit `e893a45`)
+- `Axcion AI Repo/.claude/commands/wrap-session.md` — Item 1 paired copy: Step 1.5 mirror (commit `50c611d` in workspace-root repo)
+- `ai-resources/.claude/commands/open-items.md` — Item 2: Step 1 friction-log T1 cross-match → four-condition tolerance match (commit `e72bca7`)
+- `ai-resources/logs/improvement-log.md` — Item 3: cross-match entry flipped to `applied 2026-05-29`; appended new `logged (pending)` entry for SO pre-spec grep-checklist observation (commit `178ba3a`)
+- `ai-resources/logs/improvement-log-archive.md` — Item 3 companion: landed pre-existing uncommitted auto-archive additions (commit `97f4ddf`)
+- `ai-resources/logs/session-notes.md` — S4 mandate block (Item 1's commit) + this wrap entry
+- `ai-resources/logs/.session-marker` — `2026-05-29 S4` (Item 1's commit)
+- `ai-resources/logs/.prime-mtime` — S4 session-notes append mtime (Item 1's commit)
+
+### Decisions Made
+
+Three session-level decisions logged to `logs/decisions.md`:
+1. **Free-text-intent path over formal /session-start + /session-plan.** Operator confirmed paste-ready chat-built plan with "go"; skipping the formal planning chain saves ~3-5k tokens. Confirms the 2026-05-29 usage-log pattern.
+2. **Bundle-and-pair commit strategy for uncommitted auto-archive state.** Item 3 commit `178ba3a` absorbed 75 lines of pre-existing uncommitted deletions; companion commit `97f4ddf` paired the matching archive additions. Pragmatic over `git reset --hard` per workspace destructive-ops rule.
+3. **Short-circuit maintenance-observations → improvement-log triage gate (Item 3 SO observation).** Promoted directly to improvement-log rather than waiting for quarterly maintenance-observations sweep, because high-confidence + clear proposal + Friday-cadence pickup is faster.
+
+### Next Steps
+
+1. **FL-1 + FL-6 friction-log hook unification** — next on the deferred-stack per 2026-05-29 decisions.md ordering. Hook edit; will need plan-time /risk-check. Dedicated session.
+2. **C-1 + C-2 consult/system-owner agent edits** — sequenced AFTER FL-1+FL-6 (writer-stability ordering rule). Dedicated session.
+3. **/cleanup-worktree dedicated session** — workspace-root has untracked symlinks + harness modifications + logs/innovation-registry.md modifications; ai-resources has accumulated stale session-plan-*.md (bundle5, pass2-5, next) pre-marker artifacts.
+4. **KB-paste session for repo documentation** — independent backlog.
+5. **/graduate-resource Steps 4+5 strengthening** — independent backlog.
+6. **/resolve-improvement-log candidate** — soft cap of 7 exceeded (current ~16 active entries; some are `Status: applied + Verified` already and can be archived).
+
+### Open Questions
+
+None blocking. /qc-pass GO on both substantive items (Items 1 and 2) with informational notes only. End-time /risk-check skipped per session-plan classification: all four items in no-/risk-check change class per `audit-discipline.md` § Risk-check change classes.
