@@ -78,6 +78,53 @@ Read the generalized file back and check:
 
 If issues found, fix them. If unfixable without operator input, flag and stop.
 
+### Step 5.5: Generalization-residue verification (fail-and-revise loop)
+
+After Step 5's self-checks pass, run an independent residue scan via a fresh-context subagent. This catches what main-agent self-check misses — project-specific terminology, identifiers, or framing patterns that read as generic to the author but are obvious project-specific residue to a fresh reader. Boundary: this step verifies **generalization**, not **placement** — placement is owned by Step 3a (plan-time) and Step 5a (end-time) via `docs/placement-verifier.md`. If both fire, placement-verifier wins on placement-related findings; this residue check defers.
+
+**Subagent contract (per `ai-resources/CLAUDE.md § Subagent Contracts`):**
+
+- **Type:** `general-purpose` agent, fresh context.
+- **Input (passed in the agent prompt):**
+  - `GENERALIZED_PATH` — absolute path of the file written in Step 4
+  - `SOURCE_PROJECT_CLAUDE_MD_PATH` — absolute path of the source project's `CLAUDE.md` (the project the resource was forked from). Derive from the source file's path captured in Step 1 (`projects/<source-project>/.../<resource>.md` → `projects/<source-project>/CLAUDE.md`); if absent, fall through with a one-line note in the agent prompt.
+  - `WORKING_NOTES_PATH` — `audits/working/graduate-residue-{slug}-{YYYY-MM-DD}.md`, where `{slug}` is the generalized resource's filename stem (without extension). Pass-2 writes to `...-{YYYY-MM-DD}-pass2.md` to preserve Pass-1's evidence trail.
+- **Procedure (the subagent's mandate):**
+  1. Read `SOURCE_PROJECT_CLAUDE_MD_PATH`. Extract: project name(s), hardcoded paths (`projects/<name>/...`), domain-specific terminology (deal types, asset classes, jurisdiction terms, etc.).
+  2. Read `GENERALIZED_PATH`. Grep-scan for each extracted token. Capture every match with line number.
+  3. Write full findings to `WORKING_NOTES_PATH` (one section per residue class: project names; paths; domain terms; framing).
+  4. Return a ≤20-line summary to the main session with: total residue count, residue-class breakdown, top-3 highest-priority residues (one line each: `{line N}: "{snippet}" → suggest replacement`).
+- **Output verdict** (last line of summary): exactly one of `RESIDUE: clean` (no findings) or `RESIDUE: {N}` (N residues found, see notes file).
+
+**Fail-and-revise loop (cap: 2 passes — mirrors `docs/qc-independence.md` § QC → Triage Auto-Loop):**
+
+- **Pass 1.** If verdict is `RESIDUE: clean`, proceed to Step 5a.
+- If verdict is `RESIDUE: {N>0}`, re-run Step 4 with the residue findings as explicit revision targets. Main agent: read the working-notes file, apply the suggested replacements, write the revised file. Then spawn a second residue-check subagent pass with `WORKING_NOTES_PATH` suffixed `-pass2` (preserves Pass-1 evidence).
+- **Pass 2.** If verdict is now `RESIDUE: clean`, proceed to Step 5a. If verdict is still `RESIDUE: {N>0}`, halt the auto-loop and emit the operator-pause block below.
+
+**Operator-pause block (cap-hit shape — mirrors `docs/placement-verifier.md` MISMATCH block):**
+
+```
+### Generalization Residue — Cap-Hit Halt
+
+`{GENERALIZED_PATH}` still has {N} residues after 2 auto-revise passes. Residue evidence:
+
+- Pass-1 notes: `{WORKING_NOTES_PATH}` (initial residues)
+- Pass-2 notes: `{WORKING_NOTES_PATH}-pass2` (surviving residues after auto-revise)
+
+Top 3 surviving residues:
+1. `{line N}`: "{snippet}" — class: {project-name | hardcoded-path | domain-term | framing}
+2. `{line N}`: "{snippet}" — class: {...}
+3. `{line N}`: "{snippet}" — class: {...}
+
+Pick one:
+(a) **Accept as intentional** — the residues are load-bearing for the resource; proceed to Step 5a despite them. Record the reason in the commit message.
+(b) **Revise manually** — edit `{GENERALIZED_PATH}` directly to resolve; re-run Step 5.5 manually (single residue-check subagent pass, no further auto-revise).
+(c) **Abort the graduation** — the residues indicate the resource is not generalizable in its current shape; revert Step 4 and either redesign or keep the resource project-local.
+```
+
+The 2-pass cap is the same discipline as the QC → Triage Auto-Loop — repeated machine fixes hitting the same residues are a structural signal, not a fix-able fault.
+
 ### Step 5a: End-time placement verification
 
 After Step 5's checks pass and before Step 6 / Step 7, run the placement verifier (`ai-resources/docs/placement-verifier.md`) with:
