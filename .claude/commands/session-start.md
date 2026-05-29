@@ -181,6 +181,65 @@ Wait for one response. Apply these parser rules:
   `"Reply 'confirm' or 'y' to accept, or use 'b: new text' syntax for corrections. Single letters other than 'y' are ambiguous."` Accept the re-response and proceed regardless.
 - **Correction:** correction syntax is `<letter>: <replacement text>` (colon required, not period). Multiple corrections may appear on separate lines. Parse and apply each; unrecognised syntax is treated as free-text amendment to `work_scope`. **Reserved correction letters:** `a:` → `allowed_inputs`; `r:` → `required_outputs`; `f:` → `files_in_scope`. Other letters fall through to free-text amendment.
 
+### Step 2.4 — Context discovery (engine pre-step)
+
+After Step 2's parse and operator confirmation, BEFORE Step 2.5's self-check, optionally invoke the **`context-discovery` agent** to pre-populate `files_in_scope` / `allowed_inputs` / `required_outputs` from the active project's CLAUDE.md routing map. This step is the auto-fire entry point for the Context Engine; the manual entry is `/build-context`.
+
+**Skip silently if any of these conditions hold** — no warning, no agent invocation, proceed directly to Step 2.5:
+
+1. `work_scope` is fewer than 5 whitespace-separated tokens — too short to classify meaningfully.
+2. `work_scope` matches a known meta-command literal: `/prime`, `/open-items`, `/wrap-session`, `/handoff`, `/clear` — these are session-management, not task work.
+3. No `CLAUDE.md` exists at the project root: `! [ -f "$(git rev-parse --show-toplevel 2>/dev/null)/CLAUDE.md" ]`. Workspace-root sessions and fresh repos without project CLAUDE.md are not engine targets — the engine has no routing map without one.
+
+**Otherwise, invoke the agent** via the Agent tool with `subagent_type: context-discovery` and pass three fields:
+
+- `TASK_DESCRIPTION = {work_scope}` (the parsed sentence from Step 2, verbatim)
+- `CWD_PROJECT = $(git rev-parse --show-toplevel)`
+- `INVOCATION_MODE = auto-session-start`
+
+The agent returns a fixed-template summary per `ai-resources/docs/context-pack-schema.md § 5b`. Parse its first line for outcome class:
+
+| First line shape | Outcome class | Action |
+|---|---|---|
+| `**Pack:** {abs path} \| tracked` or `\| untracked` | `success-enriched` or `success-insufficient` (distinguish by reading the readiness booleans in lines 5–6 of the summary) | Read pack frontmatter (below) |
+| `**Pack:** (skipped — {reason})` | `engine-skipped` | No pack; proceed to Step 2.5 with the original parsed mandate, no re-emit |
+| `**Pack:** (none — engine failed){...optional cause...}` | `engine-error` | Log one chat line: `Note: context engine failed — {cause from summary, or "no cause given"}. Proceeding with parsed mandate.` Then proceed to Step 2.5 with the original parsed mandate |
+
+**No timeout enforcement.** The Agent tool runs to completion; the engine is best-effort and may take 30–90 seconds for substantive tasks. If the engine never returns, the calling chain stalls — the operator can interrupt and re-invoke without the engine pre-step.
+
+**For `success-enriched` and `success-insufficient` outcomes**, Read the pack file at the path from line 1 of the summary. Parse its YAML frontmatter for the structured fields the summary's parse contract (schema § 5b) defers to disk:
+
+- `files_in_scope` (array)
+- `allowed_inputs` (array, may be absent)
+- `required_outputs` (array, may be absent)
+- `sufficient_to_plan` (boolean)
+- `sufficient_to_implement` (boolean)
+
+Apply to the parsed mandate state:
+
+1. **`files_in_scope`** — if `files_inferred = true` (operator did not explicitly state or correct this field in Step 2), REPLACE the `(inferred)` marker with the engine's concrete list and set `files_inferred = false`. If the operator stated or corrected `files_in_scope` in Step 2, keep the operator's value and leave the engine's list unused — operator intent wins.
+2. **`allowed_inputs`** — if currently unset, SET to the engine's value. If the operator already set it in Step 2, keep the operator's value.
+3. **`required_outputs`** — same precedence rule as `allowed_inputs`.
+4. **`pack_path`** — capture as `PACK_PATH` for Step 3's mandate-line write.
+5. **`pack_tracked`** — capture the `tracked|untracked` token from line 1 as `PACK_TRACKED`; carry to the re-emit block.
+
+**Re-emit the Step 2 confirmation block** with outcome class visible. Use one of three header lines depending on outcome — operator must SEE the readiness state, not have it silently absorbed:
+
+- `success-enriched`: `## Mandate Confirmation — Engine pack: enriched ({pack_tracked})`
+- `success-insufficient`: `## Mandate Confirmation — Engine pack: insufficient — {readiness gap, e.g., "sufficient_to_implement=false (3 missing-context items)"} ({pack_tracked})`
+- For `engine-skipped` / `engine-error`: do NOT re-emit; the original Step 2 confirmation already showed.
+
+Add a `**Context pack**` section between `**Required outputs**` and `**Out of scope**` in the re-emit:
+
+```
+**Context pack**
+- → `{PACK_PATH}` ({PACK_TRACKED}) — {N} files in scope, {N} allowed inputs, {N} required outputs, {N} missing-context items
+```
+
+Apply the original Step 2 echo rendering rules (sections only when populated, etc.) and the original correction syntax — the operator can still override engine-derived fields via `b:` / `a:` / `r:` / `f:`. Wait for one response per Step 2's parser rules, then proceed to Step 2.5.
+
+If the operator's response is a free-text amendment that contradicts the engine's discovery (e.g., they add a file the engine missed), trust the operator. The engine is advisory.
+
 ### Step 2.5 — Self-check before writing
 
 Before proceeding to Step 3's disk write, validate the parsed mandate against the following floor — if any check fails, fix the field in place (silently if straightforwardly derivable, or by re-asking the operator with one targeted question if not). Mirrors `/session-plan` Step 7 self-check pattern. Inline check; no subagent.
@@ -205,14 +264,19 @@ Re-asks happen at most once per failed field. If a re-ask response is still non-
 - Stop if: {stop_if}
 - Allowed inputs: {allowed_inputs}      ← write only if allowed_inputs is set; omit the bullet entirely if absent (no placeholder)
 - Required outputs: {required_outputs}  ← write only if required_outputs is set; omit the bullet entirely if absent (no placeholder)
+- Context pack: {pack_path}             ← write only if Step 2.4 produced a pack (PACK_PATH is set); omit entirely if Step 2.4 was skipped, errored, or never invoked. Informational bullet — see parse-contract note below.
 ```
 
-**Parse contract:** Three readers depend on the exact bullet labels (`- Out of scope:`, `- Files in scope:`, `- Stop if:`, `- Allowed inputs:`, `- Required outputs:`), the `(inferred)` marker, and the `(none stated)` marker written here:
+**Parse contract:** Five readers (verified pre-flight, 2026-05-29) depend on the exact bullet labels (`- Out of scope:`, `- Files in scope:`, `- Stop if:`, `- Allowed inputs:`, `- Required outputs:`), the `(inferred)` marker, and the `(none stated)` marker written here:
 1. Canonical `wrap-session.md` Step 7a (coaching-data classification).
 2. Workspace-root `wrap-session.md` Step 2b (Phase 3 session report).
 3. `drift-check.md` Step 5 (mandate auto-detection for drift judgment).
+4. `contract-check.md` Step 2.5c (session-notes mandate-block contract-source detection).
+5. `monday-prep.md` writes a separate week-mandate (bold-header format, not bullet) — does not consume this bullet schema.
 
-Do not rename these labels or marker strings without updating all three readers. The `Allowed inputs` and `Required outputs` bullets are optional — when absent, the bullets do not appear (no `(none stated)` placeholder).
+Do not rename these labels or marker strings without updating all readers. The `Allowed inputs` and `Required outputs` bullets are optional — when absent, the bullets do not appear (no `(none stated)` placeholder).
+
+The `- Context pack:` bullet (added 2026-05-29 for the Context Engine Phase 2) is **informational, not part of the parse contract.** All five readers above use fixed-list extraction or labeled-bullet pass-through; they silently ignore `- Context pack:`. The bullet exists for the operator to see which pack contributed to the mandate when reviewing session-notes later, and for future Phase 2 consumers (pre-edit check, drift-relative-to-pack) to locate the pack.
 
 Where `files_in_scope_written` is:
 - `(inferred)` — if `files_inferred = true` (operator did not state or correct this field)
@@ -232,6 +296,7 @@ Using the `logs/session-notes.md` content already read in Step 0 (re-read the la
   - Stop if: {stop_if}
   - Allowed inputs: {allowed_inputs}      ← write only if set; omit if absent
   - Required outputs: {required_outputs}  ← write only if set; omit if absent
+  - Context pack: {pack_path}             ← write only if Step 2.4 produced a pack; omit if absent
   ```
 
 ### Step 4 — Confirm and chain to `/session-plan`

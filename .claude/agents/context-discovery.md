@@ -150,39 +150,71 @@ Write `pack.md` with:
 
 Verify the pack conforms to the schema before returning. Specifically: frontmatter is valid YAML; all six body sections present (use `*(none)*` for empty); `cited_paths` is a superset of `files_in_scope` ∪ `allowed_inputs`; if `sufficient_to_implement: false`, `missing_context` is non-empty.
 
+After writing, determine git-tracking status of the pack: run `git -C {CWD_PROJECT} check-ignore output/context-packs/{slug}/pack.md` (exit 0 = ignored → `untracked`; exit 1 = tracked path → `tracked`; any other state → `tracked` default). Carry the result into Step 9.
+
 ### Step 9 — Return summary to caller
 
-Return a 30-line max text summary with this structure:
+The summary follows the fixed parse contract in `ai-resources/docs/context-pack-schema.md § 5b` (Agent → caller summary parse contract). Callers extract `pack_path` and outcome class from this summary; everything else they read from the pack's YAML frontmatter on disk.
+
+Emit one of four shapes based on the outcome:
+
+**(a) `success-enriched`** — pack written, both readiness booleans `true`:
 
 ```
-**Pack:** {absolute pack_path}
+**Pack:** {absolute pack_path} | {tracked|untracked}
 **Task type:** {task_type}
 **Slug:** {slug}
 **Consumer:** {consumer}
 
-**Sufficient to plan:** {true/false}
-**Sufficient to implement:** {true/false}
+**Sufficient to plan:** true
+**Sufficient to implement:** true
 
 **files_in_scope** ({count}):
 - {path}
 - ...
 
-**allowed_inputs** ({count or "absent"}):
+**allowed_inputs** ({count|absent}):
 - {path}
 
-**required_outputs** ({count or "absent"}):
+**required_outputs** ({count|absent}):
 - {path}
 
-**Conflicts surfaced:** {count, or "none"}
-**Missing context:** {count, or "none"}
-{If missing_context > 0:}
+**Conflicts surfaced:** {count|none}
+**Missing context:** none
+```
+
+**(b) `success-insufficient`** — pack written, at least one readiness boolean `false`. Same structure as (a), but the readiness booleans reflect actual values AND the `Missing context:` block is non-empty, listing each gap:
+
+```
+**Pack:** {absolute pack_path} | {tracked|untracked}
+... {same fields as (a)} ...
+**Sufficient to plan:** {true|false}
+**Sufficient to implement:** {true|false}
+... {same field block as (a)} ...
+**Conflicts surfaced:** {count|none}
+**Missing context:** {count}
 - {kind}: {description}
 - ...
 ```
 
-Strict 30-line ceiling per `ai-resources/CLAUDE.md` § Subagent Contracts default (this agent fires once per session-init, not per-unit — the 20-line per-unit tightening does not apply).
+The operator and downstream callers must SEE the readiness gaps — silent absorption of an insufficient pack defeats the engine's purpose.
 
-The caller reads only this summary. Full provenance lives in the pack on disk.
+**(c) `engine-skipped`** — engine could not run because of a skip condition (no project CLAUDE.md, etc.). Single line:
+
+```
+**Pack:** (skipped — {reason, e.g., "no CLAUDE.md at CWD_PROJECT", "TASK_DESCRIPTION too short"})
+```
+
+**(d) `engine-error`** — agent attempted to run but failed (read budget exhausted, unexpected error, pack-write failure). Single line plus optional one-line cause:
+
+```
+**Pack:** (none — engine failed)
+{one-line cause, e.g., "Read budget of 30 files exhausted before authoritative sources surfaced."}
+```
+
+**Ceiling:** 30 lines maximum. Per `ai-resources/CLAUDE.md` § Subagent Contracts default — this agent fires once per session-init, not per-unit, so the 20-line per-unit tightening does not apply.
+
+**No timeout enforcement.** The Claude Code Agent tool does not enforce per-invocation timeouts. The engine is best-effort and may take 30–90 seconds for substantive tasks. Callers that want bounded session-init latency should handle the duration in their own flow (e.g., display a "running engine…" status while waiting). If the engine never returns, the calling chain stalls — the operator can interrupt and re-invoke without the engine pre-step.
 
 ---
 

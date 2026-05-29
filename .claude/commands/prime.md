@@ -277,6 +277,40 @@ Full backlog & inbox: /open-items
       - `stop_if` — `(none stated)` unless any picked item carries a `[BLOCKING]`-style halt condition; if multiple do, combine with `;`.
       - `allowed_inputs`, `required_outputs` — leave absent (no `(none stated)` placeholder).
 
+   4.5. **Context discovery (engine pre-step).** Optionally invoke the **`context-discovery` agent** to pre-populate `files_in_scope` / `allowed_inputs` / `required_outputs` from the active project's CLAUDE.md routing map. Mirrors `/session-start` Step 2.4 but runs inline without re-emit (the Step 8c.6 approval gate is the operator's first sight of the mandate).
+
+      **Skip silently if any of these conditions hold** — no warning, no agent invocation, proceed to Step 8c.5:
+
+      a. `work_scope` is fewer than 5 whitespace-separated tokens.
+      b. `work_scope` matches a known meta-command literal: `/prime`, `/open-items`, `/wrap-session`, `/handoff`, `/clear`.
+      c. No `CLAUDE.md` exists at the project root: `! [ -f "$(git rev-parse --show-toplevel 2>/dev/null)/CLAUDE.md" ]`.
+
+      **Otherwise, invoke the agent** via the Agent tool with `subagent_type: context-discovery` and three fields:
+
+      - `TASK_DESCRIPTION = {work_scope}` (from Step 8c.4)
+      - `CWD_PROJECT = $(git rev-parse --show-toplevel)`
+      - `INVOCATION_MODE = auto-prime`
+
+      Parse the agent's first line for outcome class per `ai-resources/docs/context-pack-schema.md § 5b`:
+
+      | First line shape | Outcome | Action |
+      |---|---|---|
+      | `**Pack:** {abs path} \| tracked` or `\| untracked` | `success-enriched` or `success-insufficient` (read readiness booleans in summary lines 5–6 to distinguish) | Read pack frontmatter; apply fields below |
+      | `**Pack:** (skipped — {reason})` | `engine-skipped` | Carry no pack; proceed to 8c.5 |
+      | `**Pack:** (none — engine failed){...}` | `engine-error` | Log one chat line: `Note: context engine failed — {cause from summary, or "no cause given"}. Proceeding with derived mandate.` Carry no pack |
+
+      **No timeout enforcement.** The Agent tool runs to completion; the engine is best-effort. If it never returns, the chain stalls — operator can interrupt and re-invoke without the engine pre-step.
+
+      **For `success-enriched` and `success-insufficient`:** Read the pack file at the path from line 1. Parse YAML frontmatter for `files_in_scope`, `allowed_inputs`, `required_outputs`, `sufficient_to_plan`, `sufficient_to_implement`.
+
+      Apply to derived mandate state:
+      1. `files_in_scope` — REPLACE the `(inferred)` value from Step 8c.4 with the engine's concrete list.
+      2. `allowed_inputs` — SET to engine value if absent in Step 8c.4.
+      3. `required_outputs` — SET to engine value if absent in Step 8c.4.
+      4. Capture `PACK_PATH` (line 1), `PACK_TRACKED` (`tracked` or `untracked` token from line 1), `PACK_OUTCOME` (`success-enriched` or `success-insufficient`), and `PACK_INSUFFICIENT_NOTE` if `success-insufficient` (one short sentence: `"sufficient_to_implement=false, {N} missing-context items"`).
+
+      Carry `PACK_PATH`, `PACK_TRACKED`, `PACK_OUTCOME`, `PACK_INSUFFICIENT_NOTE` forward to Step 8c.6 (approval gate) and Step 8c.7 (mandate write).
+
    5. **Derive plan fields** inline (matches `/session-plan` Step 2 + 5–7 logic without the per-stage prompts):
       - `INTENT` — one-sentence summary. For `SINGLE_ITEM`, the item's summary. For multi-item, e.g. `Run {N} picked menu items in order: {short label-1}; {short label-2}; ...`.
       - `RECOMMENDED_MODEL` — apply `/session-plan` Step 2 three-tier heuristic (deciding → opus; doing → sonnet; mechanical → haiku) to the picked items as a whole. For multi-item, pick the higher-cognitive-load tier across the set (e.g., one deciding item + four doing items → opus). Compare to `ACTIVE_MODEL` from the system-prompt context. Emit `→ /model {shortname}` on mismatch.
@@ -311,6 +345,12 @@ Full backlog & inbox: /open-items
       · Done when: {exit_condition}
       · Stop if: {stop_if}
 
+      {if PACK_PATH is set (Step 8c.4.5 produced a pack):}
+      **Context pack** — {PACK_OUTCOME} ({PACK_TRACKED})
+      → `{PACK_PATH}`
+      {if PACK_OUTCOME == success-insufficient:}
+      ⚠ {PACK_INSUFFICIENT_NOTE} — review missing-context items in the pack before execution.
+
       **Plan**
       → Intent: {INTENT}
       → Model: {RECOMMENDED_MODEL} — {match | → /model {shortname}}
@@ -344,9 +384,12 @@ Full backlog & inbox: /open-items
       - Stop if: {stop_if}
       - Allowed inputs: {allowed_inputs}      ← write only if set; omit the bullet entirely if absent
       - Required outputs: {required_outputs}  ← write only if set; omit if absent
+      - Context pack: {PACK_PATH}             ← write only if Step 8c.4.5 produced a pack; omit if absent
       ```
 
-      **Parse contract:** the `**Mandate:**` line shape, the bullet labels (`- Out of scope:`, `- Files in scope:`, `- Stop if:`, `- Allowed inputs:`, `- Required outputs:`), and the `(inferred)` / `(none stated)` markers are load-bearing. Three downstream readers depend on them: canonical `/wrap-session` Step 7a, workspace-root `wrap-session.md` Step 2b, and `/drift-check` Step 5. Do not insert extra prose into the `**Mandate:**` line itself or rename labels. The "complete fully within this session where context allows" posture lives in Step 8c.10's execution behavior, not in the mandate line — keeping it out of the disk-write preserves the two-segment parse contract (head ` — done when: ` tail).
+      **Parse contract:** the `**Mandate:**` line shape, the bullet labels (`- Out of scope:`, `- Files in scope:`, `- Stop if:`, `- Allowed inputs:`, `- Required outputs:`), and the `(inferred)` / `(none stated)` markers are load-bearing. Four downstream readers depend on them (verified pre-flight, 2026-05-29): canonical `/wrap-session` Step 7a, workspace-root `wrap-session.md` Step 2b, `/drift-check` Step 5, and `/contract-check` Step 2.5c. Do not insert extra prose into the `**Mandate:**` line itself or rename labels. The "complete fully within this session where context allows" posture lives in Step 8c.10's execution behavior, not in the mandate line — keeping it out of the disk-write preserves the two-segment parse contract (head ` — done when: ` tail).
+
+      The `- Context pack:` bullet (added 2026-05-29 for the Context Engine Phase 2) is **informational, not part of the parse contract.** All four readers above use fixed-list extraction or labeled-bullet pass-through; they silently ignore `- Context pack:`. The bullet exists for operator visibility and for future Phase 2 consumers (pre-edit check, drift-relative-to-pack) to locate the pack.
 
    8. **Write plan.** Write to `logs/session-plan-${MARKER}.md` (marker resolved in step 3; canonical contract `docs/session-marker.md`) using `/session-plan` Step 7 schema (`## Intent`, `## Model`, `## Source Material`, `## Findings / Items to Address`, `## Execution Sequence`, `## Scope Alternatives`, `## Autonomy Posture`, `## Risk`). Apply `/session-plan` Step 7 self-check (length floor ≥25 substantive lines, concrete Findings, concrete Execution Sequence, realistic Scope Alternatives).
 

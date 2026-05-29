@@ -169,6 +169,52 @@ If a claim cannot be cited, it goes in **Missing context** as kind `rule` or `de
 
 ---
 
+## 5b. Agent → caller summary parse contract
+
+The `context-discovery` agent returns a fixed-template markdown summary to its caller (`/build-context`, `/session-start` Step 2.4, `/prime` Step 8c.4.5). The summary's role is operator-visible chat display; the **pack file on disk is the source of truth** for structured fields.
+
+Callers extract two things from the summary:
+
+1. **`pack_path`** — from the first line: `**Pack:** {absolute pack_path}`. Regex-extractable.
+2. **Outcome class** — one of:
+   - `success-enriched` — `Pack:` present + both readiness booleans `true`
+   - `success-insufficient` — `Pack:` present + at least one readiness boolean `false`
+   - `engine-skipped` — first line is `**Pack:** (skipped — {reason})`
+   - `engine-error` — first line is `**Pack:** (none — engine failed)`
+
+Callers that need structured fields beyond outcome (e.g., `files_in_scope`, `allowed_inputs`, `required_outputs`) **Read the pack file** and parse its YAML frontmatter — they do NOT parse the markdown summary list items. This keeps the parse contract concrete (YAML schema) rather than fuzzy (markdown extraction).
+
+The exact summary template the agent emits:
+
+```
+**Pack:** {absolute pack_path} | {tracked | untracked}
+**Task type:** {task_type}
+**Slug:** {slug}
+**Consumer:** {consumer}
+
+**Sufficient to plan:** {true|false}
+**Sufficient to implement:** {true|false}
+
+**files_in_scope** ({count}):
+- {path}
+- ...
+
+**allowed_inputs** ({count | absent}):
+- {path}
+
+**required_outputs** ({count | absent}):
+- {path}
+
+**Conflicts surfaced:** {count | none}
+**Missing context:** {count | none}
+{when count > 0:}
+- {kind}: {description}
+```
+
+The `tracked | untracked` token after `pack_path` declares whether the pack's path is git-tracked in the current project (informational for the operator — see §1 on heterogeneous persistence).
+
+Lines beyond this template are not part of the contract; callers ignore them. The 30-line ceiling applies to total output.
+
 ## 6. Handoff prompt block
 
 The pack closes with a ready-to-act prompt. Template:
@@ -202,6 +248,7 @@ The prompt is the consumer-facing surface — it states the task in the consumer
 
 For clarity, the following are out of scope for this schema:
 
+- **Workspace-root invocations.** The engine requires a project `CLAUDE.md` as routing input. When the session is opened at the workspace root (no project CLAUDE.md) or in a fresh repo without one, the engine silently skips — auto-invoking callers see `**Pack:** (skipped — no CLAUDE.md at cwd)` and proceed without a pack. This is intentional, not a defect; cross-project work conducted at workspace root is outside MVP scope.
 - **Sufficiency enforcement.** `sufficient_to_implement: false` is informational in MVP. Phase 2 will introduce a pre-edit check that blocks Edit/Write tools when a session's active pack has `sufficient_to_implement: false`. The schema field is the hook; the enforcement is later.
 - **Drift detection.** Comparing actual session reads/writes against `files_in_scope` and `allowed_inputs` is `/drift-check`'s job, not the pack's.
 - **Closeout validation.** Comparing session output against `required_outputs` is `/contract-check`'s job, not the pack's.
