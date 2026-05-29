@@ -94,7 +94,12 @@ Input: `$ARGUMENTS` — optional. Interpreted as:
    - Combine the two lists; deduplicate; exclude obvious infrastructure paths: `logs/*`, `audits/working/*`. Include `.claude/*` candidates — when the work IS on a command/agent file, those are the artifact; the multi-candidate prompt lets the operator pick.
 
    **Resolution rules:**
-   - **Zero candidates** → ask the operator: `Which file should I check? Provide the path.` Wait for one response. Use it.
+   - **Zero candidates** → emit an explanatory abort matching the Step 2 5g shape:
+     ```
+     /contract-check could not auto-detect the artifact under check — no uncommitted changes and no files touched today.
+
+     Commit or modify the artifact first so it appears in today's git log, then re-invoke.
+     ```
    - **Exactly one candidate** → use it. Emit: `Artifact: '{path}' (auto-detected from uncommitted/today's changes).`
    - **Multiple candidates** → list up to 5, numbered. Ask: `Which is the artifact? Reply with a number or a different path.` Wait. Use the selected. (Artifact identity has higher stakes than contract source, so this ask is retained; cf. Step 2 item 6 which is notice-only.)
 
@@ -178,7 +183,12 @@ Input: `$ARGUMENTS` — optional. Interpreted as:
     Contract-conformance check — {DATE}
     Contract: {CONTRACT_SOURCE}
     Artifact: {ARTIFACT_PATH}
+    Contract type: {hard | soft}  (parsed from the subagent's verdict line 2)
+    {if ARTIFACT was truncated at 800 lines, append:}
+    [HEAVY] Artifact exceeded 800-line read window — first 800 lines passed to subagent; verdict is bounded. Re-invoke against a narrower contract slice if drift surfaces in the unread tail.
     ```
+
+    The contract-type echo makes the rubric calibration visible at verdict time — the first thing to re-check when a verdict looks miscalibrated. The truncation notice makes a silent bound loud per workspace `principles.md § OP-3`.
 
 11. Append guidance by verdict:
     - `CONTRACT-ALIGNED` → "On contract. Continue."

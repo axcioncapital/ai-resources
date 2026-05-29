@@ -105,8 +105,3 @@ Output the agent's response verbatim to the operator. Do NOT add a preamble, do 
 
 ---
 
-### Notes for the executor
-
-- Per locked Decision 3, this command does NOT invoke `/placement` as a slash command. The architecture-map read in Step 3 reproduces the routing baseline.
-- Per locked Decision 1, `/consult` writes nothing to disk at v1. Output is chat-only.
-- The change-shape detection rule in Step 2 is the operator-facing threshold. If the operator wants stricter or looser detection, the rule is updated here in v1.1, not in the agent body.

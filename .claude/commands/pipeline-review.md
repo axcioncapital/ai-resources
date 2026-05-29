@@ -19,15 +19,7 @@ Input: `$ARGUMENTS` (optional) — a pipeline path. If provided, skip the shortl
 
 ## Registry contract (do not silently drift)
 
-The registry at `ai-resources/audits/pipeline-review-registry.md` is the source of truth. Its shape is fixed:
-
-- **6 columns:** `Pipeline` (path) · `Type` (command / skill) · `Tier` (weekly / quarterly) · `Last reviewed` (`YYYY-MM-DD` or `never`) · `Last memo` (`YYYY-MM-DD` or `—`) · `Friction flag` (Y / N).
-- **Two tiers, one auditor.** The `pipeline-review-auditor` body is unchanged across tiers. Weekly rows are shortlisted every cycle; quarterly rows are shortlisted only on the first Friday of January, April, July, and October. Outside those windows quarterly rows are invisible to the shortlist (operator can still override via `$ARGUMENTS`).
-- **`Last memo` is date-keyed, not path-keyed.** Resolve to a path with the convention `audits/pipeline-reviews/{pipeline-slug}-{YYYY-MM-DD}.md`.
-- **Tiebreak:** within the eligible-tier pool, rows sharing a `Last reviewed` value (including cold start where all are `never`) sort alphabetically by `Pipeline` column. Friction-flagged rows are promoted to the top regardless of date and tiebreak alphabetically among themselves.
-- **Writes are audit-trail-grade.** Registry and memo writes are not cleanly `git revert`-able. The bumped row preserves history only via git log.
-
-Per the `/risk-check` plan-time review of this command (Dimension 5: Hidden coupling, Medium): this block exists so the contract does not silently drift on later runs. Do not delete it.
+Contract lives at `ai-resources/audits/pipeline-review-registry.md § Registry contract` — do not paraphrase here. Drift-guard: registry and memo writes are audit-trail-grade (not cleanly `git revert`-able; the bumped row preserves history only via git log). Per the `/risk-check` plan-time review of this command (Dimension 5: Hidden coupling, Medium): this pointer exists so the contract does not silently drift on later runs.
 
 ---
 
@@ -60,9 +52,7 @@ Per the `/risk-check` plan-time review of this command (Dimension 5: Hidden coup
     Wait for `y` (proceed as recovery), `d` (defer — exit with note), or any other input (abort cleanly).
 14. If `DAYS_ELAPSED ≤ 10`, do not emit the marker. Continue silently.
 
-The `>10` threshold matches `/friday-checkup` Step 0 — one missed weekly cycle plus slack. Documented here so future tightening to 7 has to be a deliberate decision, not a drive-by edit.
-
-The `[CADENCE-LATE]` top-line marker is a required mitigation from the `/risk-check` plan-time review of this command (Dimension 5: Hidden coupling, Medium).
+The `>10` threshold matches `/friday-checkup` Step 0 — one missed weekly cycle plus slack. Documented here so future tightening to 7 has to be a deliberate decision, not a drive-by edit. The `[CADENCE-LATE]` marker is itself the `/risk-check` Dimension-5 mitigation for this step.
 
 ---
 
@@ -180,7 +170,4 @@ This batched-write rule is a required mitigation from the `/risk-check` plan-tim
 
 ### Notes
 
-- **Audit-trail-grade writes.** Registry and memo writes leave a record that is not cleanly `git revert`-able. Manual undo requires editing the row back to its prior date — git history is the only complete record. This is intentional; the cadence's value depends on knowing when each pipeline was last given attention.
-- **No subagent orchestration beyond the per-pipeline fan-out.** Each subagent runs end-to-end on its single pipeline; the main session only sequences spawning and registry-bump.
-- **Failure handling.** If a subagent errors mid-run, its pipeline's registry row stays unchanged. The brief surfaces the failure; the next cycle re-surfaces the pipeline at the top of the shortlist.
-- **System Owner pushback acknowledged in the plan.** This command was approved over the System Owner's recommendation to fold it into `/friday-checkup` as a new tier. The `[CADENCE-LATE]` marker is the mitigation. If skipped more than twice per quarter, revisit fold-into-checkup.
+- **System Owner pushback acknowledged in the plan.** This command was approved over the System Owner's recommendation to fold it into `/friday-checkup` as a new tier. The `[CADENCE-LATE]` marker is the mitigation. Advisory trigger (operator-discretionary; no enforcement path): if `[CADENCE-LATE]` fires more than twice per quarter, revisit the fold-into-checkup decision.
