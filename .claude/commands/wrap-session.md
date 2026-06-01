@@ -10,7 +10,7 @@ Wrap the current session. The operator's wrap-up context follows this prompt: $A
 
 0. As your first action, run `touch /tmp/claude-wrap-session-done` via Bash. This suppresses the session-end hook's "Session ended without /wrap-session" auto-append while this command runs, preventing a file-modification race on `logs/session-notes.md`. The hook deletes the lockfile after reading it, so no cleanup is needed.
 
-**Cost budget.** A typical wrap is ~10–15 tool calls (add ~2–4 when Step 6.5 feedback collection runs — the subagent absorbs the reading). If you're past 25 tool calls with the wrap not yet committed, stop and ask the operator whether to abort the rest. This catches investigation rabbit-holes, redundant Reads, and ceremony-without-purpose firings before they compound. Self-check your running tool-call count at each step boundary; do not run a separate counter — just notice when you've crossed the threshold.
+**Cost budget.** A typical wrap is ~10–15 tool calls (add ~2–4 each when Step 6.4 outcome check and/or Step 6.5 feedback collection run — ~4–8 combined; each subagent absorbs its own reading). If you're past 25 tool calls with the wrap not yet committed, stop and ask the operator whether to abort the rest. This catches investigation rabbit-holes, redundant Reads, and ceremony-without-purpose firings before they compound. Self-check your running tool-call count at each step boundary; do not run a separate counter — just notice when you've crossed the threshold.
 
 **Preflight — operator preferences.** Before doing anything else, ask the operator in a single prompt and **wait for the answer**:
 
@@ -18,8 +18,9 @@ Wrap the current session. The operator's wrap-up context follows this prompt: $A
 > 1. Session telemetry (usage-analysis) — y/n
 > 2. Coaching data capture — y/n
 > 3. Session feedback collection — y/n
+> 4. Session outcome check (did Claude do the job, and do it well?) — y/n
 
-Accept shorthand: "yyy" / "yes all" / "all" = all yes; "nnn" / "skip all" = all no; "yy"/"nn" still accepted for items 1–2 (treat the unspecified third as a re-ask, not a default); per-item forms like "1y 2n 3y". Record the three answers and use them to gate Step 6.5 (feedback collection), Step 7 (coaching), and Step 12 (telemetry). Do not assume defaults — if the operator's reply is ambiguous or covers fewer than three items, re-ask before proceeding. Note skipped passes in chat as "Skipped per preflight" when you reach the corresponding step.
+Accept shorthand: "yyyy" / "yes all" / "all" = all yes; "nnnn" / "skip all" = all no; per-item forms like "1y 2n 3y 4y". **Legacy partial forms:** "yyy"/"nnn" cover items 1–3 and re-ask item 4; "yy"/"nn" cover items 1–2 and re-ask items 3 and 4 — never silently default an uncovered toggle. Record the four answers and use them to gate Step 6.4 (outcome check), Step 6.5 (feedback collection), Step 7 (coaching), and Step 12 (telemetry). Do not assume defaults — if the operator's reply is ambiguous or covers fewer than four items, re-ask the uncovered ones before proceeding. Note skipped passes in chat as "Skipped per preflight" when you reach the corresponding step.
 
 0.5. **Save a continuity scratchpad.** Run the `skills/handoff/SKILL.md` continuity workflow (no-args mode, Steps C1–C2) inline: write a full session-state scratchpad to `logs/scratchpads/{YYYY-MM-DD}-{HH-MM}-scratchpad.md` from conversation context. This is a single `Write` call — it counts toward the cost budget above but adds only one call. `/prime` Step 1b detects this scratchpad at the next session start and offers it as a resume point, giving the next session a richer entry than the terse `### Next Steps` list alone. Skip this step only if the session was trivial (single-file edit, one-question read, aborted session) with nothing worth resuming — note "Continuity scratchpad skipped — trivial session" in chat if so. This is your judgment call, same standard as the Step 12 telemetry skip; do not ask the operator.
 
@@ -247,11 +248,41 @@ Accept shorthand: "yyy" / "yes all" / "all" = all yes; "nnn" / "skip all" = all 
    - `### Files Created` — list from conversation context (path + short description)
    - `### Files Modified` — list from conversation context (include any archive file printed in Step 3)
    - `### Decisions Made` — operator-directed decisions grouped by artifact; QC fixes listed separately
+   - `### Outcome` — written by Step 6.4 (not by you here) when the outcome check runs: the `COMPLETION:` and `EXECUTION:` verdict lines + notes. Listed here so the documented schema and the live note stay in sync; if Step 6.4 is skipped, this block is simply absent.
    - `### Risky actions` — one line: any irreversible/destructive/external/shared-state-clobber action **taken or nearly taken** this session, a gate that should have fired but didn't, or a prompt-injection encountered — else write "None". This is warm-sourced danger input for the Step 6.5 feedback collector (which runs fresh-context and otherwise cannot see the live session). "None" is the common case; do not pad.
    - `### Next Steps` — what command to run next, any recommended groupings or sequencing. **At stage boundaries:** verify the next command against `reference/stage-instructions.md` Stage Entry Commands table before writing — use the exact command name, do not infer from memory.
    - `### Open Questions` — blockers or unresolved items; write "None" if clean
 5. If operator decisions with analytical or scoping judgment were made, append to `/logs/decisions.md` with: date, context, decision, rationale, alternatives considered. Skip this if all decisions were routine (operator-directed text edits, QC auto-fixes).
 6. If the operator didn't mention decisions but significant ones occurred in the session, list them and ask: "Should I log any of these to the decision journal?"
+
+6.4. **Session outcome check — "did Claude do the job, and do it well?"** Produces an independent two-dimension verdict on this session: did it deliver its mandate (completion), and did it deliver by a good path (execution quality). Advisory only — nothing here blocks the commit or push.
+
+   <!--
+   MIRROR NOTE — keep in sync when the workspace-root Phase-3 copy gains this step (see the deferred-mirror entry in improvement-log.md, which now covers BOTH Step 6.4 and Step 6.5). The workspace-root copy has a lighter self-authored `### Session Report` (its Step 2b) that this independent check supersedes once mirrored.
+   -->
+
+   - **Gate.** If the operator declined the outcome check in the preflight, skip and note "Outcome check skipped per preflight" in chat. If the session was trivial (single-file edit, one-question read, aborted session), skip with "Outcome check skipped — trivial session" — your judgment call, same standard as the Step 0.5 / Step 12 skips; do not ask the operator.
+   - **Resolve the mandate** ("what Claude was supposed to do this session") using `/contract-check`'s priority chain — see `contract-check.md` Step 2; do not duplicate the logic, just follow that order and stop at the first that resolves:
+     1. frozen contract `logs/contracts/{today}-*.md` (if present);
+     2. `logs/session-plan-{MARKER}.md` for this session's marker, if modified today;
+     3. today's `**Mandate:**` block in `logs/session-notes.md` (the mandate line + its `Out of scope` / `Files in scope` / `Stop if` / `Required outputs` bullets);
+     4. **fallback** — none of the above: judge against the session's stated task as written in today's `### Summary`, and mark the verdict `Confidence: low (no formal mandate)`. Never invent a standard to grade against.
+   - **Launch a fresh-context `general-purpose` subagent** with an inline brief (mirror `contract-check.md` Step 4 — NO named agent file, NO disk-notes file; the verdict is short by construction). The brief passes:
+     - the resolved **mandate text + its source label**;
+     - today's **session-note block** (the claimed outcome: Files Created/Modified, Decisions, Next Steps, Open Questions);
+     - explicit permission to **inspect the actual changed files and today's `git log`** to verify the note's claims rather than trusting the self-authored note (this is what keeps the judgment independent — QS-1).
+
+     The brief instructs the subagent to judge **two dimensions** and return **≤20 lines**:
+     - **`COMPLETION: DELIVERED | PARTIAL | MISSED`** — DELIVERED = did what the mandate asked, in usable form; PARTIAL = core delivered but a named part is missing/unfinished/unverified; MISSED = did not deliver, or delivered something materially different.
+     - **`EXECUTION: OPTIMAL | ACCEPTABLE | SUBOPTIMAL`** — was the *path* good? Judge three sub-axes: **efficiency** (wasted steps, redundant reads, rework loops, unnecessary subagents/detours), **approach** (was a clearly better method/design/tool available?), **process** (required gates followed — QC, risk-check — or skipped, or over-engineered past the task).
+     - **Evidence guard (load-bearing):** a `SUBOPTIMAL` (or any "could be better") call MUST cite a concrete observation — a visible rework loop, a named detour, a skipped gate, an over-built artifact. No vague "could be tighter." With no evidence of waste, default to `ACCEPTABLE`/`OPTIMAL`.
+     - `What was asked but not done:` — bulleted; "none" if DELIVERED.
+     - `Better path:` — for ACCEPTABLE/SUBOPTIMAL, the concrete better route, each tied to its evidence; "none" if OPTIMAL.
+     - `Confidence:` — high | low (low when the mandate came from the fallback).
+     - **Scope boundary (state in the brief):** judge *this task's* execution against *this mandate* only. Do NOT do general token telemetry (that is `/usage-analysis`), cross-session iteration patterns (that is `/coach`), or propose/log system fixes (that is Step 6.5 + `/improve`). This step **grades**; it does not file improvements.
+   - **Write the returned verdict** as an `### Outcome` block (the `COMPLETION:` and `EXECUTION:` lines + the notes) into today's session-note entry, placed **after `### Decisions Made`, before `### Risky actions`**.
+   - **Surface in chat:** show both verdict lines. If `COMPLETION: MISSED`, or `EXECUTION: SUBOPTIMAL` with a load-bearing better-path, surface it prominently — but **advisory only; it does NOT block** the commit or push.
+   - **Ordering note:** this runs before Step 6.5. The feedback collector may read this `### Outcome` block as one more input — a loose one-directional handoff (outcome → collector), not a dependency.
 
 6.5. **Session feedback collection.** Closes a feedback loop back into the system: a fresh-context subagent extracts per-session signals against the goal-state dimensions and routes them to existing stores the Friday cadence consumes. Advisory only — nothing here blocks the commit or push.
 
