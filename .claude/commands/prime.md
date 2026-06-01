@@ -6,7 +6,7 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 
 **Principle:** Prime never asserts state from a single source. Each surfaced next-step or status claim must be cross-checked against git log since the claim's source timestamp before being reported as current.
 
-**Output discipline:** The operator (Patrik) is a non-developer. The brief must be short and scannable — convert terse log shorthand into plain English (short sentences, common words). Show only what the operator needs to choose the next task; everything else stays silent unless it needs attention.
+**Output discipline:** The operator is a non-developer. The brief must be short and scannable — convert terse log shorthand into plain English (short sentences, common words). Show only what the operator needs to choose the next task; everything else stays silent unless it needs attention.
 
 0. **Pull latest.** Determine the cwd's git root: `CWD_REPO=$(git -C "$(pwd)" rev-parse --show-toplevel 2>/dev/null)`.
    If this fails, note `Pulled: n/a (not a git repo)` and skip to step 1.
