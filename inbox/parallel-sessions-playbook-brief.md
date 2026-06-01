@@ -73,6 +73,14 @@ Implications for this build:
 - **The finished playbook becomes a system-owner-owned artifact.** The "when/how/why to implement parallel sessions" decision is a system-owner advisory call, not a per-session improvisation. The doc should be written so the system-owner can cite it when advising on whether a given project's work should be parallelized.
 - Consider whether the playbook needs a short **system-owner-facing decision hook** (a one-paragraph "how the System Owner decides to recommend parallel vs sequential for a project") distinct from the operator-facing procedure.
 
+## Concrete Follow-Up Surfaced During the Origin Run (workspace-wide gitignore fix)
+
+A specific, do-able item that came out of landing the origin run's branches — distinct from authoring the playbook, but the playbook should reference it as a worked example of the "state-file leakage" pitfall:
+
+- **Problem:** `logs/.prime-mtime` and `logs/.session-marker` are per-session transient state (written fresh each session by `/prime`; read within-session by the foreign-write / mtime guards). They are **not** meant to be shared through git, but in `interpersonal-communication` they were **tracked** (`.prime-mtime`) or got committed (`.session-marker`) — neither was gitignored. Result: every session that stages them re-commits them, they cause a dirty-tree block before merges, and the "how do I keep these out of main" question recurs on every parallel merge.
+- **Local fix applied (or to apply) during the origin merge:** `git rm --cached logs/.prime-mtime logs/.session-marker` + add both to that project's `.gitignore` + one cleanup commit. `--cached` keeps the local files so the harness still works; gitignore does not affect local creation/reads.
+- **Workspace-wide follow-up:** the session harness writes these markers in **every** project, so the same `.gitignore` lines almost certainly belong in **every project's `.gitignore`**, not just `interpersonal-communication`. Sweep all project repos: untrack `logs/.prime-mtime` / `logs/.session-marker` where tracked, and add the ignore lines everywhere. Low-risk, reversible repo hygiene — but verify no consumer depends on these markers being *committed* (none known; they are per-machine session-local by design). Consider whether this belongs as a one-time `/permission-sweep`-style hygiene pass or folded into the harness/marker contract (`docs/session-marker.md`) as a standing rule that these files are gitignored by default in new projects.
+
 ## Process Notes
 
 - Run through the canonical doc/resource-creation path; do not improvise a doc into place.
