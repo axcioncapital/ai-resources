@@ -10,15 +10,16 @@ Wrap the current session. The operator's wrap-up context follows this prompt: $A
 
 0. As your first action, run `touch /tmp/claude-wrap-session-done` via Bash. This suppresses the session-end hook's "Session ended without /wrap-session" auto-append while this command runs, preventing a file-modification race on `logs/session-notes.md`. The hook deletes the lockfile after reading it, so no cleanup is needed.
 
-**Cost budget.** A typical wrap is ~10–15 tool calls. If you're past 25 tool calls with the wrap not yet committed, stop and ask the operator whether to abort the rest. This catches investigation rabbit-holes, redundant Reads, and ceremony-without-purpose firings before they compound. Self-check your running tool-call count at each step boundary; do not run a separate counter — just notice when you've crossed the threshold.
+**Cost budget.** A typical wrap is ~10–15 tool calls (add ~2–4 when Step 6.5 feedback collection runs — the subagent absorbs the reading). If you're past 25 tool calls with the wrap not yet committed, stop and ask the operator whether to abort the rest. This catches investigation rabbit-holes, redundant Reads, and ceremony-without-purpose firings before they compound. Self-check your running tool-call count at each step boundary; do not run a separate counter — just notice when you've crossed the threshold.
 
 **Preflight — operator preferences.** Before doing anything else, ask the operator in a single prompt and **wait for the answer**:
 
 > Wrap-session preflight — run these optional passes?
 > 1. Session telemetry (usage-analysis) — y/n
 > 2. Coaching data capture — y/n
+> 3. Session feedback collection — y/n
 
-Accept shorthand: "yy" / "yes both" / "both" = both yes; "nn" / "skip both" = both no; "y/n" or "1y 2n" = per-item. Record the two answers and use them to gate Step 7 (coaching) and Step 12 (telemetry). Do not assume defaults — if the operator's reply is ambiguous, re-ask before proceeding. Note skipped passes in chat as "Skipped per preflight" when you reach the corresponding step.
+Accept shorthand: "yyy" / "yes all" / "all" = all yes; "nnn" / "skip all" = all no; "yy"/"nn" still accepted for items 1–2 (treat the unspecified third as a re-ask, not a default); per-item forms like "1y 2n 3y". Record the three answers and use them to gate Step 6.5 (feedback collection), Step 7 (coaching), and Step 12 (telemetry). Do not assume defaults — if the operator's reply is ambiguous or covers fewer than three items, re-ask before proceeding. Note skipped passes in chat as "Skipped per preflight" when you reach the corresponding step.
 
 0.5. **Save a continuity scratchpad.** Run the `skills/handoff/SKILL.md` continuity workflow (no-args mode, Steps C1–C2) inline: write a full session-state scratchpad to `logs/scratchpads/{YYYY-MM-DD}-{HH-MM}-scratchpad.md` from conversation context. This is a single `Write` call — it counts toward the cost budget above but adds only one call. `/prime` Step 1b detects this scratchpad at the next session start and offers it as a resume point, giving the next session a richer entry than the terse `### Next Steps` list alone. Skip this step only if the session was trivial (single-file edit, one-question read, aborted session) with nothing worth resuming — note "Continuity scratchpad skipped — trivial session" in chat if so. This is your judgment call, same standard as the Step 12 telemetry skip; do not ask the operator.
 
@@ -246,10 +247,30 @@ Accept shorthand: "yy" / "yes both" / "both" = both yes; "nn" / "skip both" = bo
    - `### Files Created` — list from conversation context (path + short description)
    - `### Files Modified` — list from conversation context (include any archive file printed in Step 3)
    - `### Decisions Made` — operator-directed decisions grouped by artifact; QC fixes listed separately
+   - `### Risky actions` — one line: any irreversible/destructive/external/shared-state-clobber action **taken or nearly taken** this session, a gate that should have fired but didn't, or a prompt-injection encountered — else write "None". This is warm-sourced danger input for the Step 6.5 feedback collector (which runs fresh-context and otherwise cannot see the live session). "None" is the common case; do not pad.
    - `### Next Steps` — what command to run next, any recommended groupings or sequencing. **At stage boundaries:** verify the next command against `reference/stage-instructions.md` Stage Entry Commands table before writing — use the exact command name, do not infer from memory.
    - `### Open Questions` — blockers or unresolved items; write "None" if clean
 5. If operator decisions with analytical or scoping judgment were made, append to `/logs/decisions.md` with: date, context, decision, rationale, alternatives considered. Skip this if all decisions were routine (operator-directed text edits, QC auto-fixes).
 6. If the operator didn't mention decisions but significant ones occurred in the session, list them and ask: "Should I log any of these to the decision journal?"
+
+6.5. **Session feedback collection.** Closes a feedback loop back into the system: a fresh-context subagent extracts per-session signals against the goal-state dimensions and routes them to existing stores the Friday cadence consumes. Advisory only — nothing here blocks the commit or push.
+
+   <!--
+   MIRROR NOTE — keep in sync when the workspace-root Phase-3 copy gains this step.
+     The workspace-root /.claude/commands/wrap-session.md is an independent non-symlink copy and does NOT yet carry this step (deferred — structural divergence: no preflight, different session-note schema). When it is added there, the preflight toggle + this Step 6.5 + the `### Risky actions` line form a two-end contract — keep them in sync across both copies. Until then, this feature is canonical-only (auto-propagates to the ~16 project symlinks).
+   -->
+
+   - **Gate.** If the operator declined feedback collection in the preflight, skip and note "Feedback collection skipped per preflight" in chat. If the session was trivial (single-file edit, one-question read, aborted session), skip with "Feedback collection skipped — trivial session" — your judgment call, same standard as the Step 0.5 / Step 12 skips; do not ask the operator.
+   - **Launch the `session-feedback-collector` subagent** (launch idiom per `improve.md` / `coach.md`). Pass it **paths only** — do NOT paste contents or conversation history:
+     - today's session-note path (`logs/session-notes.md`) + today's date
+     - the rubric path (`ai-resources/docs/session-feedback-dimensions.md`)
+     - the target store paths: `logs/friction-log.md`, `logs/improvement-log.md`, and `logs/improvement-log-archive.md` if it exists
+     - the project root
+     The subagent reads independently, enforces its own per-session append cap, tags every entry with `wrap-collector` provenance, dedups against the existing log + archive, and returns a ≤20-line summary. It writes ONLY `friction-log.md` and `improvement-log.md`.
+   - **Append the returned summary** as a `### Session Assessment` block to today's note in `logs/session-notes.md` — placed **after `### Risky actions`, before `### Next Steps`**.
+   - **Surface high-severity safety signals in chat.** If the summary's Safety line reports any `high` signal, surface it prominently: "⚠ Safety signal logged as guardrail-candidate (high): {one line}". This is advisory — it does NOT block the commit or push.
+   - **Route, don't run.** If the summary indicates friction was routed, or a reusable component warrants `/innovation-sweep`, emit a one-line nudge ("Friction routed — consider `/improve`"). Do NOT auto-fire any downstream command.
+   - **Staging note:** if the collector wrote to `friction-log.md` or `improvement-log.md`, those paths must be staged in the commit step below (they are in the always-staged list).
 7. **Coaching data capture.** If the operator declined coaching in the preflight, skip this step and note "Coaching capture skipped per preflight" in chat. Otherwise:
 
    **7a — Read today's mandate block.** Before writing the coaching entry, scan `logs/session-notes.md` from today's `## YYYY-MM-DD` header to the next `##` header (or EOF). Check whether a `**Mandate:**` line appears in that range. *(Format produced by `session-start.md` Step 3 — keep bullet label strings and marker tokens in sync.)*
@@ -285,7 +306,7 @@ Accept shorthand: "yy" / "yes both" / "both" = both yes; "nn" / "skip both" = bo
 12b. **End-time `/risk-check` gate.** If the session touched any structural change class (hook edits, permission changes, cross-cutting CLAUDE.md edits, new commands or skills, new symlinks, automation with shared-state effects — full list: `ai-resources/docs/audit-discipline.md` § Risk-check change classes), run `/risk-check` once now with `$ARGUMENTS` describing the executed change set across all touched files. Apply paired mitigations before commit if the verdict is PROCEED-WITH-CAUTION; redesign before commit if RECONSIDER. Skip silently if the session touched no class. Rationale: tactile prompt for the end-time gate at the natural session boundary, so the two-gate model doesn't rely solely on operator memory.
 
 After updating logs and writing the telemetry entry, stage and commit changes. **Stage by explicit file paths**, not directory wildcards — directory-level `git add` silently sweeps uncommitted files from concurrent sessions. Enumerate from the Files Created / Files Modified sections just written to the session note, plus always-present wrap-touched files:
-- Always-staged (if modified this session): `logs/session-notes.md`, `logs/decisions.md`, `logs/coaching-data.md`, `logs/improvement-log.md`, `logs/improvement-log-archive.md`, `logs/innovation-registry.md`, `logs/usage-log.md`
+- Always-staged (if modified this session): `logs/session-notes.md`, `logs/decisions.md`, `logs/coaching-data.md`, `logs/friction-log.md`, `logs/improvement-log.md`, `logs/improvement-log-archive.md`, `logs/innovation-registry.md`, `logs/usage-log.md` (the `friction-log.md` / `improvement-log.md` pair covers Step 6.5 feedback-collector writes)
 - Session-specific: every path listed in Files Created / Files Modified for this session, staged by explicit name
 
 Run as two separate commands, not chained:

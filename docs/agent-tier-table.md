@@ -37,6 +37,7 @@ Every agent must declare `model:` explicitly in frontmatter — no implicit inhe
 | refinement-reviewer | opus | Refinement judgment. Correct. |
 | repo-dd-auditor | sonnet | Questionnaire-driven factual audit. Correct. |
 | risk-check-reviewer | opus | Judgment (risk evaluation across five dimensions). Added 2026-04-27. |
+| session-feedback-collector | opus | Judgment (per-session feedback + safety extraction against goal-state dimensions, routing to friction-log/improvement-log). Invoked by /wrap-session Step 6.5. Added 2026-06-01. |
 | session-guide-generator | sonnet | Structured generation. Retrofitted from inherit. |
 | system-owner | opus | Judgment (architectural advisory and synthesis). Added 2026-05-08. |
 | token-audit-auditor | opus | Judgment sections (4). Correct. |
