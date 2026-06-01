@@ -5013,3 +5013,175 @@ Three session-level decisions logged to `logs/decisions.md`:
 ### Open Questions
 
 None blocking. /qc-pass GO on both substantive items (Items 1 and 2) with informational notes only. End-time /risk-check skipped per session-plan classification: all four items in no-/risk-check change class per `audit-discipline.md` § Risk-check change classes.
+## 2026-05-29 — Session S5
+
+**Mandate:** Complete picked menu items: (1) unify the two friction-log hooks FL-1 + FL-6 into one consolidated hook with /risk-check verdict GO before edit; (2) apply C-1 + C-2 consult/system-owner agent-definition edits, sequenced after item 1 per writer-stability rule; (3) archive resolved entries from `logs/improvement-log.md` to bring active count back below soft-cap of 7; (4) intake the two new inbox briefs (`context-engine-brief.md`, `context-engine-session-pairing.md`) via /create-skill, producing one or two new skill directories — done when: all picked items closed in their respective source files — hooks unified + committed; agent definitions edited + committed; improvement-log active count back under 7; both inbox briefs moved to `inbox/archive/` with corresponding skill directories landed.
+- Out of scope: KB-paste session for repo documentation; /graduate-resource Steps 4+5 strengthening; /cleanup-worktree dedicated session (item 2 from the prime menu); FL-1+FL-6 mid-session re-design beyond memo-recommended consolidation.
+- Files in scope: `.claude/hooks/` (FL-1+FL-6 hook scripts), `.claude/agents/system-owner.md`, `.claude/agents/project-manager.md` (or equivalent C-1+C-2 targets), `logs/improvement-log.md`, `logs/improvement-log-archive.md`, `inbox/context-engine-brief.md`, `inbox/context-engine-session-pairing.md`, new skill directories under `skills/` (inferred)
+- Stop if: /risk-check on Item 1 returns NO-GO (FL-1+FL-6 mandate-revision required); /qc-pass DISAGREE on a substantive item with no clear recommended-default; either inbox brief reveals an unresolvable contract gap requiring operator clarification.
+
+**Plan source:** /prime auto-mode multi-item gate (items 1, 3, 4, 5 from the prime menu); marker-scoped plan at `logs/session-plan-S5.md`.
+
+### Wrap — Session S5
+
+### Summary
+
+Auto-mode multi-item session (operator typed `auto 1,3,4,5` at /prime). Closed three structural items end-to-end with full plan-time /risk-check + System Owner second opinion + /qc-pass + commit per item. Item 5 (context-engine intake) was deferred per workspace `Context constraint deferral` rule mid-session; a concurrent S6 session in another terminal actually built the context-engine MVP independently and wrapped first (commits `7dc5e6e`, `e774eb5`, `7daac4e`). Net: S5 shipped FL-1+FL-6 friction-log hook unification, C-1+C-2 /consult return-size contract, and one improvement-log entry on the System Owner observation about /risk-check's principle-drift blindspot.
+
+### Files Created
+
+- `audits/risk-checks/2026-05-29-fl-1-fl-6-friction-log-hook-unification.md` — Item 1 plan-time /risk-check + System Owner second opinion (PROCEED-WITH-CAUTION; mitigated)
+- `audits/risk-checks/2026-05-29-c-1-c-2-consult-return-size-cap-project-local-symlink.md` — Item 3 plan-time /risk-check + System Owner second opinion (PROCEED-WITH-CAUTION; design revision applied)
+- `logs/session-plan-S5.md` — marker-scoped session plan
+- `logs/scratchpads/2026-05-29-19-50-scratchpad.md` — pre-closeout continuity scratchpad
+- (C-2 created a symlink at `projects/axcion-ai-system-owner/.claude/agents/system-owner.md` — invisible to git per the project-local gitignore)
+
+### Files Modified
+
+- `.claude/hooks/friction-log-auto.sh` — Item 1: line 21 dedup grep + lines 41-48 emission block unified to canonical `## Session —` shape (commit `d4ff712`)
+- `.claude/commands/note.md` — Item 1: line 16 false byte-identical claim corrected to post-change truth (commit `d4ff712`)
+- `docs/session-guardrails.md` — Item 1 / FL-6: new `friction-log: true` per-command auto-log opt-in section between [COST] flag and Tuning section (commit `d4ff712`)
+- `.claude/agents/system-owner.md` — Item 3 C-1: Phase 5 Function A + Function B output contract rewritten (always-write-to-disk + leading path-back line + ≤30-line return summary + inline slug algorithm); Write-tool-scope sentence at line 21 updated to name all five consuming commands (commit `2f467cc`)
+- `.claude/commands/consult.md` — Item 3 C-1: Step 4 agent brief expanded with output-contract mandate (commit `2f467cc`)
+- `logs/improvement-log.md` — new entry: /risk-check 5-dimension shape misses design-internal principle drift (commit `fb0aba6`)
+- `logs/session-notes.md` — S5 mandate block (commit `d4ff712`) + this wrap entry
+- `logs/.session-marker` — `2026-05-29 S5` (later overwritten by concurrent S6 session to `2026-05-29 S6`)
+- `logs/.prime-mtime` — S5 session-notes append mtime (later overwritten by S6)
+
+### Decisions Made
+
+Three session-level decisions worth logging to `logs/decisions.md`:
+
+1. **Drop conditional-write threshold in C-1; always write to disk.** System Owner second opinion identified that the conditional-write threshold proposed in the source memo (only write if >30 lines) conflicts with three vault principles (OP-3 loud-failure, DR-6 outputs-to-output/, AP-7 speculative-abstraction). Always-write matches the Function C/E/F/G pattern already in use and avoids operator-perception ambiguity over whether a given consult is archived.
+2. **Path-back is a leading line in the agent's returned summary, not a `consult.md` Step 5 transformation.** Step 5's "return unmodified" pass-through is identical across five sibling consumer commands. Introducing a detect-and-display special-case in `/consult` only would violate AP-1 sibling consistency. The agent body owns the format; the command stays a thin wrapper.
+3. **Split C-1 and C-2 into two commits, C-1 first.** Different change classes (canonical-agent edit vs new-symlink) with different reversibility profiles. C-1 first ensures the canonical content is post-edit before the symlink points at it.
+
+Also two procedural decisions:
+
+4. **Item 4 closed as no-op archive.** Strict /resolve-improvement-log rules require `Status: applied + Verified` — zero entries match. S4 wrap's assumption that "some are applied + Verified" was incorrect. Manual disposition deferred to next /friday-act.
+5. **Item 5 (context-engine MVP) deferred per Context constraint deferral.** Session had already spent 6 subagents / >20 turns / 8 artifacts when Item 5 was reached. Brief 2 explicitly phase-2 (do not build until MVP is proven); Brief 1 substantial enough to warrant a fresh-context session. (Note: the deferral turned out to be moot — a concurrent S6 session built both phases in parallel.)
+
+### Next Steps
+
+1. **Push 3 commits (`d4ff712`, `2f467cc`, `fb0aba6`) to ai-resources origin/main** — operator confirms via push gate at wrap. S6's separate commits (`7dc5e6e`, `e774eb5`, `7daac4e`) likely also pending push from the concurrent session.
+2. **FL-1 end-time /risk-check** — required per FL-1 source memo (hook-edit class). This wrap is the natural batched end-time gate per audit-discipline.md — Step 12b covers it.
+3. **Workflow-sibling sync (FL-1 follow-on)** — `workflows/research-workflow/.claude/hooks/friction-log-auto.sh` + `.claude/commands/note.md` still carry the old `### Session:` shape. Handled by `/sync-workflow`; out of scope for this session.
+4. **Friday-cadence triage** — three items surfaced this session for next /friday-act: (a) /risk-check 5-dim shape misses principle drift (improvement-log entry just committed); (b) 16 improvement-log entries still pending (soft cap exceeded by 9 — manual disposition needed); (c) any new items from the concurrent S6's context-engine work.
+5. **Coordination check with S6 session** — concurrent session ran the same Friday-checkup item space. Operator should briefly review whether anything overlapped or got duplicated.
+6. **Carryover (unchanged from S4):** /cleanup-worktree dedicated session; KB-paste session for repo documentation; /graduate-resource Steps 4+5 strengthening.
+
+### Open Questions
+
+- **Concurrent S6 session overlap.** Did S6's Friday-checkup-item bundle touch any of the same areas S5 modified? S5 touched: friction-log hook + commands, system-owner agent body, /consult, session-guardrails docs, improvement-log. If S6 touched any of these, there may be reconciliation work in a future session — but git history shows clean linear ordering with no merge conflict.
+- **None blocking.** End-time /risk-check on FL-1+FL-6 hook edit pending (covered by Step 12b of this wrap).
+
+## 2026-05-29 — Session S6
+
+**Mandate:** Bundle and execute as many open Friday-checkup items (friday-checkup-2026-05-29) as fit responsibly in one session — done when: a marker-scoped session-plan-S6.md exists listing every open item with a per-item disposition (execute-this-session / defer-with-reason / scope-alternative), prioritized and waved by risk class, ready for operator review.
+- Out of scope: (none stated)
+- Files in scope: (inferred)
+- Stop if: (none stated)
+
+**Plan source:** /prime free-text-intent path after open-friday-checkup status check; marker-scoped plan at `logs/session-plan-S6.md`.
+
+### Summary
+
+Executed the Recommended scope of session-plan-S6.md (Waves 1+2+3+4) against the Friday-checkup-2026-05-29 open backlog. Wave 1 closed 6 dispositions (1 NO-OP, 2 vault pastes, 2 decision rows, 1 scheduling commitment, 1 /pm investigation notes file). Wave 2's cluster /risk-check returned RECONSIDER: 3 of 4 planned settings.json edits had stale premises (already-shipped by concurrent same-day commits) — cluster dropped, M1 git-guards applied as the only real fix (stand-alone to ~/.claude/settings.json). Wave 3 extracted the change-shape classifier to a shared reference doc, closing the two-end verbatim-copy contract between /consult and project-manager. Wave 4 ITEM A (auto-apply /qc-pass on REVISE+wording-only) deferred via /decide after evidence-grounded check confirmed qc-reviewer.md does not currently emit a DISAGREE annotation — upstream contract sub-task needed first. Wave 4 ITEM B (/graduate-resource Step 5.5 + ai-resource-creation rule #6) shipped with all 4 risk-check mitigations applied + post-edit /qc-pass REVISE → 3 wording-level fixes inline. 5 commits shipped across 2 repos.
+
+### Files Created
+
+- `ai-resources/audits/risk-checks/2026-05-29-wave-2-settings-json-cluster-friday-checkup-permissions.md` — RECONSIDER report; documents stale-audit hidden coupling
+- `ai-resources/audits/risk-checks/2026-05-29-wave-4-qc-auto-apply-graduate-resource-strengthening.md` — PROCEED-WITH-CAUTION report; 9 mitigations across ITEM A + ITEM B
+- `ai-resources/docs/change-shape-classifier.md` — canonical change-shape definition; consumed by /consult Step 2 + project-manager Phase 3
+- `ai-resources/audits/working/2026-05-29-pm-sub-subagent-investigation.md` — /pm Task-from-agent limitation notes; 4 workaround options; pending operator decision
+- `ai-resources/logs/session-plan-S6.md` — marker-scoped plan (operator-edited mid-session per system-reminder)
+- `ai-resources/logs/scratchpads/2026-05-29-15-30-scratchpad.md` — pre-closeout continuity scratchpad
+- `projects/repo-documentation/vault/components/*` — 7 net-new entries pasted (1 cmd + 4 agents + 2 projects); vault is gitignored
+
+### Files Modified
+
+- `ai-resources/.claude/commands/consult.md` — Step 2 classifier list replaced with one-line pointer to docs/change-shape-classifier.md
+- `ai-resources/.claude/agents/project-manager.md` — Phase 3 verbatim copy replaced with same pointer
+- `ai-resources/.claude/commands/graduate-resource.md` — new Step 5.5 (subagent residue-scan + 2-pass fail-and-revise loop + operator-pause block)
+- `ai-resources/docs/ai-resource-creation.md` — new rule #6 encoding Step-5.5 verification as a canonical graduation rule
+- `ai-resources/logs/decisions.md` — S6 Wave 1.5 (scheduling) + S6 Wave 1.6 (/pm investigation) entries
+- `ai-resources/logs/maintenance-observations.md` — audit-to-plan staleness observation for Friday-cadence triage
+- `~/.claude/settings.json` (user-level, not in repo) — M1 git-guards added to deny: Bash(git reset --hard *), Bash(git checkout *)
+- `projects/repo-documentation/logs/decisions.md` — #51 (212-entry carry-forward) + #52 (deprecation-row policy)
+
+### Decisions Made
+
+**Logged to disk:**
+- S6 Wave 1.5 (ai-resources decisions.md): Schedule dedicated session for /wrap-session leaner refactor + permission-sweep-auditor follow-ups; target 2026-06-05 or 2026-06-12 /friday-act wave.
+- S6 Wave 1.6 (ai-resources decisions.md): /pm sub-subagent dispatch — investigation only (pending); notes file at audits/working/ documents 4 workaround candidates.
+- #51 (repo-documentation decisions.md): 212-entry carry-forward — selective paste-now (7 canonical net-new); bulk batch deferred to dedicated registration session.
+- #52 (repo-documentation decisions.md): deprecation-row policy — use existing Status field (`deprecated YYYY-MM-DD`) + prose-body rationale; no §4.1 schema change.
+
+**Session-flow decisions (not logged, captured in scratchpad):**
+- Cluster /risk-check pattern for Wave 2 + Wave 4 (efficiency over plan's per-item guidance; risk profiles converged)
+- Skip /consult Step 4a on both non-GO /risk-checks (factual + concrete-mitigation findings; SO Function B has no architectural surface)
+- Skip /decide Step 6 QC subagent (single-question recommendation; anti-narrowing self-checkable)
+- Skip second post-edit /qc-pass on ITEM B fixes (mechanical 1:1 to findings)
+- Skip end-time /risk-check per `feedback_end_time_risk_check_skip` (plan-time covered, mitigations applied, drift bounded)
+- Wave 4 split — ITEM B inline, ITEM A deferred (operator confirmed via /decide → `b`)
+
+### Next Steps
+
+1. **Push 5 commits** across ai-resources + repo-documentation. Push gate handled inline at this wrap.
+2. **DR-8 gate decision (general #1):** concurrent-session detection hook awaits explicit operator GO. Surface at next session.
+3. **ITEM A (auto-apply /qc-pass) — dedicated session.** First sub-task: add DISAGREE annotation emission to qc-reviewer.md. Then closed-enumeration of mechanical-mode-applicable findings, /resolve Step 10 conditional skip, decisions.md log schema, triage-reviewer interaction spec. Risk-check report at audits/risk-checks/2026-05-29-wave-4-qc-auto-apply-graduate-resource-strengthening.md is the spec.
+4. **/wrap-session leaner refactor + permission-sweep-auditor follow-ups** — scheduled per S6 Wave 1.5 decision; target 2026-06-05 or 2026-06-12.
+5. **Carryovers (deferred to dedicated sessions):** placement-classification skill (general #4), /clean-folder command (general #8), /improve-skill friday-act auto-triage (general #10), project-triages sub-fixes (#1, #2), repo-documentation deeper work (#1, #2, #6), /cleanup-worktree sweep (#9).
+
+### Open Questions
+
+- **Concurrent-session marker overwrite.** Session marker file was overwritten by a later S9 session mid-S6, causing the wrap pre-write guard's marker-aware OWN attribution to mis-fire. S9's header (line 811 of session-notes.md) is in WT but not HEAD; staging session-notes.md from this wrap will include S9's header line under this commit (S9 will not re-ship its own header). Content not contaminated, attribution muddled. Not blocking. Surface as a Friday-cadence observation if it recurs.
+- Linter modifications to vault/components/projects.md + agents.md after my paste — likely Obsidian auto-formatter. Did not revert per system-reminder instructions. Re-surface if recurring.
+
+## 2026-05-29 — Context Engine MVP shipped end-to-end (Phase 1 + Phase 2, 2 commits)
+
+### Summary
+Built the Context Engine MVP across both phases in a single session. Phase 1 (manual path): canonical pack schema doc + Opus-tier `context-discovery` sub-agent + thin `/build-context` wrapper command. Phase 2 (auto-fire wiring): new Step 2.4 in `/session-start` and parity Step 8c.4.5 / 8c.6 / 8c.7 in `/prime` auto-mode, both pre-populating mandate fields from engine-discovered files. Architecture drove from the operator-shared briefs (`context-engine-brief.md` + `context-engine-session-pairing.md`), reconciled against the prior system-owner memo's caution, with QC at every major boundary and `/risk-check` PROCEED-WITH-CAUTION verdict driving 6 mitigations baked into the Phase 2 commit.
+
+### Files Created
+- `ai-resources/docs/context-pack-schema.md` — canonical pack format (frontmatter, 6 body sections, 8-tier authority hierarchy, agent→caller parse contract in §5b)
+- `ai-resources/.claude/agents/context-discovery.md` — Opus sub-agent; 9-step pipeline; 30-file read budget; 4-outcome return shape
+- `ai-resources/.claude/commands/build-context.md` — Sonnet thin wrapper; 5-step dispatch
+- `ai-resources/audits/risk-checks/2026-05-29-context-engine-phase-2-session-init-edits.md` — risk-check report
+- `ai-resources/inbox/context-engine-brief.md` — operator brief (Phase 1 MVP), persisted for system-owner consult
+- `ai-resources/inbox/context-engine-session-pairing.md` — operator brief (Phase 2 extension), persisted
+- `projects/ai-development-lab/output/advisories/2026-05-29-context-engine-phase2-scope.md` — system-owner Phase 2 scope advisory
+- `projects/ai-development-lab/output/advisories/2026-05-29-context-engine-phase2-risk-check-second-opinion.md` — system-owner second opinion on risk verdict
+- `ai-resources/logs/scratchpads/2026-05-29-18-30-scratchpad.md` — session continuity scratchpad
+- `~/.claude/plans/starry-pondering-gem.md` — approved plan file
+
+### Files Modified
+- `ai-resources/.claude/commands/session-start.md` — new Step 2.4 engine pre-step; Step 3 mandate-line extended with `- Context pack:` bullet; parse-contract note updated to 5 readers
+- `ai-resources/.claude/commands/prime.md` — new Step 8c.4.5 parity for auto-mode; Step 8c.6 approval gate shows Context pack section; Step 8c.7 mandate-write appends bullet
+- `ai-resources/docs/context-pack-schema.md` — amended post-risk-check with §5b parse contract, §7 workspace-root note (originally Phase 1 deliverable; amended in Phase 2)
+- `ai-resources/.claude/agents/context-discovery.md` — amended with outcome distinction (4 classes), tracked-status emission, dropped 60s timeout claim
+
+### Decisions Made
+- **Treat prior system-owner memo as superseded by explicit operator briefs.** The 2026-05-29 memo argued "may not be worth building at single-operator scale" and recommended an eval-first approach. Operator chose to build the briefs as written. Memo caution archived as outdated context; build proceeded per briefs.
+- **Drop SessionStart hook from MVP scope.** Originally in scope v3.1; QC + drift-check flagged that Claude Code hooks cannot invoke slash commands (can only emit `systemMessage` reminders). Per minimal-infra-subset rule, hook dropped. Engine auto-fires inside `/session-start` Step 2.4 and `/prime` Step 8c.4.5 — those are the load-bearing entry points; the hook would only nudge to a command operator already runs.
+- **Markdown summary parse contract for agent → caller.** System-owner advised against JSON return (DR-7 — no second consumer requires JSON; AP-7 — speculative abstraction). Callers extract `pack_path` from summary line 1, then Read the pack's YAML frontmatter for structured fields. Contract documented in schema §5b.
+- **Outcome distinction over silent absorption.** Agent returns 4 outcome classes (success-enriched / success-insufficient / engine-skipped / engine-error) and both `/session-start` Step 2.4 and `/prime` Step 8c.4.5/8c.6 surface the outcome to the operator. Insufficient packs do NOT silently flow through.
+- **Engine insertion at Step 2.4, NOT Step 2.5.** Existing Step 2.5 (self-check) already occupies that slot. Engine inserts at NEW Step 2.4 so engine-replaced `files_in_scope` is what self-check validates.
+- **Parity in `/prime` auto-mode.** Auto-mode bypasses `/session-start` entirely (inlines mandate write at Step 8c.7). Without Step 8c.4.5 parity edit, operators using `auto` would skip the engine. New Step 8c.4.5 invokes the same agent with `INVOCATION_MODE=auto-prime`.
+- **Pre-flight extended to 5 readers (vs. plan's 3).** Risk-check flagged that monday-prep.md and contract-check.md were not enumerated. Verification showed monday-prep writes a separate week-mandate (bold-header, not bullet) — not a reader. contract-check.md uses fixed-list extraction like the other 3 — silently ignores `- Context pack:`. Net: 5 mandate-related files surveyed; all resilient; zero downstream edits required.
+
+#### QC fixes (separate from operator decisions)
+- v1 scope DISAGREE (10 findings) → architecture corrected: engine moved from `/session-start` body into Step 2.4 insertion; `next-task.md` per-project files dropped; per-project rollout dropped; `/create-context-pack` exclusion tightened.
+- v2 scope REVISE + drift MAJOR-DRIFT → mechanism corrected (hook cannot invoke commands); Step 1.5 collision resolved by renaming to Step 2.4 (existing 2.5 self-check unchanged); pre-edit check moved out of MVP scope; schema fields surfaced as operator-approvable defaults.
+- Plan REVISE (5 fixes) → Step 2.4 numbering locked; 30-line subagent cap (vs. tightened 20-line); pre-flight verification step added; per-project gitignore status surfaced; hook drop confirmed.
+
+### Next Steps
+1. **Push 3 commits to remote.** Two from the build (7dc5e6e Phase 1, e774eb5 Phase 2) plus the wrap commit landing now. Operator gates push at /wrap-session per workspace push rules.
+2. **Phase 1 evaluation against Brief 1 rubric (operator-driven).** Run `/build-context` on 3–5 real tasks and score on 6 criteria. Pass threshold: ≥3 of 5 tasks score ≥4-of-6. Below threshold → reassess. Suggested tasks in the scratchpad.
+3. **Auto-fire smoke test.** Open a new session in a project with CLAUDE.md (e.g., `projects/ai-development-lab/`); run `/prime`; pick a task; verify Step 2.4 invokes the engine. Also test `/prime` → `auto` to verify Step 8c.4.5 parity.
+4. **Advisory R3 — Friday-checkup hygiene.** At next `/friday-checkup`, verify `detect-innovation.sh` registered the new agent + command from commit 7dc5e6e.
+
+### Open Questions
+- Phase 1 evaluation deferred per operator "proceed" mid-session. Engine has NOT been empirically tested on a real task in this session. The build is structurally complete but unverified.
+- Workspace-root sessions silently skip the engine (no project CLAUDE.md = no routing map). If operator commonly works at workspace root for cross-project tasks, the auto-path under-delivers. Acceptable for MVP; revisit if friction surfaces.
+- Heterogeneous `output/` git-tracking across projects — pack persistence varies. Pack-tracked status surfaced at invocation; no policy enforced.

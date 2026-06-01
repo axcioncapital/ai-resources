@@ -92,3 +92,15 @@
 **Rationale.** Both align with the workspace rule "conflicts must be surfaced, not silently resolved" and the Assumptions Gate (surface a structural concern + recommended resolution, proceed with it). Each applied item passed an independent qc-reviewer GO; the deferral and the reshape were the load-bearing judgment calls.
 
 **Alternatives considered.** id-03: force the edit per the literal plan (rejected — unsafe against just-finalized live criteria, no correctness gain). id-04: execute the migrate-then-retire as planned (rejected — destroys an intentional split). Decided by: Claude judgment; operator authorized the in-session execution.
+
+## 2026-06-01 (S5) — Implement Option 2′ in a context-loaded session vs a fresh one
+
+**Context.** The Option 2′ marker-fix spec carried an explicit instruction from BOTH reviewers (plan-time /risk-check + system-owner second opinion): implement in a fresh dedicated session, NOT bundled with other work — the atomic 7-file commit makes a half-landed state the worst outcome. At /prime the operator said "fix these" (#1 git divergence + #3 Option 2′). The fresh-session concern was surfaced via AskUserQuestion with a recommendation to /clear and run #3 clean.
+
+**Decision.** Operator chose "proceed now in this session." Implemented #3 in the already-loaded session (post-/prime + two explanations + the git fix).
+
+**Rationale.** Operator authority over the reviewers' advisory preference. Mitigated by keeping the spec's hard safety rails: edit-manifest-first, live re-probe of CLAUDE_CODE_SESSION_ID before building, bash validated by execution, independent qc-reviewer GO, single atomic commit per repo with the paired sibling in lockstep. Context never became constrained, so the spec's "hard-stop-and-revert on mid-edit context pressure" rule was available but unused.
+
+**Alternatives considered.** Fresh session after /clear (the reviewers' and Claude's recommendation — rejected by operator for throughput). Defer #3 again (rejected — spec was GO-eligible and ready, no reason to re-defer).
+
+**Decided by:** operator directive, concern surfaced first. Logged as a conscious principle-deviation (reviewer "fresh session" guidance overridden) per "watch only" — outcome was clean.
