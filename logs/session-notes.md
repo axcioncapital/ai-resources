@@ -912,3 +912,51 @@ Three first-class operator-policy alternatives surfaced by triage. The cleanup p
 - None new this session. S6 Open Questions remain:
   - Phase 1 empirical evaluation still pending (build structurally complete, untested on real task).
   - Workspace-root sessions silently skip the engine (no project CLAUDE.md = no routing map). Acceptable for MVP; revisit if friction surfaces.
+
+## 2026-06-01 — Session S1
+
+**Mandate:** Design and build a concurrent-session detection hook that detects when another Claude Code session is concurrently writing to the shared session-state files (logs/.session-marker, logs/.prime-mtime, logs/session-notes.md) and surfaces a loud warning, closing the recurring TOCTOU race class. Deliverable: a hook script under .claude/hooks/, its settings.json wiring, and a two-end contract doc entry. — done when: hook script written + wired in settings.json; /risk-check GO; /qc-pass GO; detection fires correctly in a reproduced concurrent-write scenario; commit landed.
+- Out of scope: the full TOCTOU Phase 4 structural rework (env-var session marker, per-marker files, append-only .session-marker history); the /wrap-session Step 3.5 clobber-suspicion patch (separate menu item).
+- Files in scope: .claude/hooks/ (new script), .claude/settings.json, docs/session-marker.md (inferred)
+- Stop if: /risk-check returns NO-GO on the hook design.
+- Allowed inputs: docs/audit-discipline.md, logs/improvement-log.md, .claude/hooks/log-write-activity.sh, .claude/hooks/friday-checkup-reminder.sh, audits/risk-checks/2026-05-29-wrap-session-foreign-write-guard-head-content-discriminator.md, audits/risk-checks/2026-05-29-end-time-gate-for-toctou-mitigation-atomic-phase-2-3-option.md, .gitignore
+- Required outputs: .claude/hooks/detect-concurrent-session.sh
+- Context pack: output/context-packs/hook-20260601-c4e7a/pack.md
+
+DR-8 gate (auto mode): design + build concurrent-session detection hook. Operator GO via auto-mode approval gate 2026-06-01.
+
+## 2026-06-01 — Monday prep: 2026-W23
+
+### Flags
+
+- **Push-policy contradiction (HIGH, confirmed).** All 3 active project CLAUDE.md files (ai-development-lab, axcion-brand-book, nordic-pe-screening) carry "After committing, push automatically" — contradicts canonical gated/batched push (inverted 2026-05-29). Likely present in all 14 project files. Diagnostic only; fix is a separate operator-directed turn (mandate item 1).
+- **CLAUDE.md mirror-block bloat (MEDIUM, leanness-optional).** Input File Handling / Compaction / Session Boundaries blocks duplicated verbatim across project files (~430–720 tok/turn each). Tied to the deliberate "opened without parent context" strategy → decision, not auto-fix (mandate item 4).
+- **Log thresholds.** 5 project session-notes.md over 200 lines (348/234/527/523/597); maintenance-observations.md 354; improvement-log.md 221.
+- **improvement-log.md pre-existing uncommitted change (10 lines).** Predates this session; NOT bundled into Monday-prep commit per D17. `/resolve-improvement-log` deferred to avoid conflating with it.
+- **Workspace-root working tree dirty.** 12 untracked `.claude/commands/*.md`; modified `logs/innovation-registry.md`, `harness/logs/innovation-registry.md`, `harness/logs/session-plan.md`; untracked `harness/reviews/`, 3 harness scratchpads, `reports/child-cycle-landing-diagnostic-2026-05-28.md`. Deferred to `/cleanup-worktree`.
+- **Inbox: 4 pending briefs** — audit-workflow-pipeline.md, codex-second-opinion-brief.md, repo-review-brief.md, workflow-diagnosis.md.
+- **Contract mismatch (advisory).** monday-prep B7 calls `/audit-claude-md ai-resources`; that command has no `ai-resources` scope. Audited via claude-md-auditor agent directly this Monday. Logged in mandate for maintainer fix.
+- **Clean:** all active-project symlinks intact; all settings on bypassPermissions; 0 unpushed commits in ai-resources + workspace.
+
+### Audit reports produced (5)
+
+- `audits/claude-md-audit-2026-06-01-workspace-only.md` (2 HIGH / 9 MED / 5 LOW)
+- `audits/claude-md-audit-2026-06-01-ai-resources.md` (3 HIGH / 4 MED / 2 LOW)
+- `audits/claude-md-audit-2026-06-01-project-ai-development-lab.md` (2 HIGH / 4 MED / 2 LOW)
+- `audits/claude-md-audit-2026-06-01-project-axcion-brand-book.md` (2 HIGH / 3 MED / 2 LOW)
+- `audits/claude-md-audit-2026-06-01-project-nordic-pe-screening-project.md` (2 HIGH / 4 MED / 2 LOW)
+
+### Mandate
+
+`harness/session/week-mandate-2026-W23.md`
+
+### Harness state
+
+v1 unreleased (Phase 0–1 scaffolding). `harness/session/` holds week mandates W20–W22 (now + W23). No in-progress session report; CHANGELOG still at scaffolding stub.
+
+### Next Steps
+
+1. Fix push-policy contradiction across all project CLAUDE.md files (mandate item 1).
+2. Context-engine Phase 1 evaluation + auto-fire smoke test + detect-innovation verification (carryover S6/S9).
+3. `/log-sweep` on over-threshold scopes; resolve improvement-log pre-existing change first.
+4. Decide CLAUDE.md mirror-block leanness; record to decisions.md.
