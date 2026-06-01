@@ -15,12 +15,12 @@ Wrap the current session. The operator's wrap-up context follows this prompt: $A
 **Preflight — operator preferences.** Before doing anything else, ask the operator in a single prompt and **wait for the answer**:
 
 > Wrap-session preflight — run these optional passes?
-> 1. Session telemetry (usage-analysis) — y/n
-> 2. Coaching data capture — y/n
-> 3. Session feedback collection — y/n
-> 4. Session outcome check (did Claude do the job, and do it well?) — y/n
+> 1. Telemetry + coaching (usage-analysis + coaching data capture) — y/n
+> 2. Feedback + outcome (session feedback collection + outcome check) — y/n
 
-Accept shorthand: "yyyy" / "yes all" / "all" = all yes; "nnnn" / "skip all" = all no; per-item forms like "1y 2n 3y 4y". **Legacy partial forms:** "yyy"/"nnn" cover items 1–3 and re-ask item 4; "yy"/"nn" cover items 1–2 and re-ask items 3 and 4 — never silently default an uncovered toggle. Record the four answers and use them to gate Step 6.4 (outcome check), Step 6.5 (feedback collection), Step 7 (coaching), and Step 12 (telemetry). Do not assume defaults — if the operator's reply is ambiguous or covers fewer than four items, re-ask the uncovered ones before proceeding. Note skipped passes in chat as "Skipped per preflight" when you reach the corresponding step.
+Each answer toggles a **bundle of two passes**: answer 1 gates Step 7 (coaching) **and** Step 12 (telemetry); answer 2 gates Step 6.4 (outcome check) **and** Step 6.5 (feedback collection). Both passes in a bundle run when its answer is `y` and are skipped when its answer is `n` — the bundle is all-or-nothing.
+
+Accept shorthand: "yy" / "yes all" / "all" = both yes; "nn" / "skip all" = both no; per-item forms like "1y 2n". Record the two answers. Do not assume defaults — if the operator's reply is ambiguous or covers fewer than two items, re-ask the uncovered one before proceeding. Note skipped passes in chat as "Skipped per preflight" when you reach the corresponding step.
 
 0.5. **Save a continuity scratchpad.** Run the `skills/handoff/SKILL.md` continuity workflow (no-args mode, Steps C1–C2) inline: write a full session-state scratchpad to `logs/scratchpads/{YYYY-MM-DD}-{HH-MM}-scratchpad.md` from conversation context. This is a single `Write` call — it counts toward the cost budget above but adds only one call. `/prime` Step 1b detects this scratchpad at the next session start and offers it as a resume point, giving the next session a richer entry than the terse `### Next Steps` list alone. Skip this step only if the session was trivial (single-file edit, one-question read, aborted session) with nothing worth resuming — note "Continuity scratchpad skipped — trivial session" in chat if so. This is your judgment call, same standard as the Step 12 telemetry skip; do not ask the operator.
 
