@@ -1,87 +1,48 @@
-# Session Plan — 2026-05-29
+# Session Plan — 2026-06-01
 
 ## Intent
-Implement TOCTOU mitigation Phases 2+3 as a single atomic commit — wire `.session-marker` consumer logic into all writers (`/session-start`, `/prime`, `/session-plan`) AND all readers (`/contract-check`, `/drift-check`, `/open-items`, `fix-repo-issues-scanner`, `/decide`) of `session-plan.md`, with a canonical session-marker contract doc, eliminating the symlink bridge entirely (Option A per system-owner advisory 2026-05-29).
-
-**Plan revision note:** Original plan staged Wave 1 (Phase 2) + Wave 2 (narrow Phase 3 — wrap-session + handoff). Plan-time `/risk-check` on the Phase 2 spec returned PROCEED-WITH-CAUTION (Hidden Coupling: High) due to symlink-as-bridge between writer-side Phase 2 and unreached reader-side Phase 3. System-owner Function-B advisory recommended Option A (atomic Phase 2+3 in one commit, no symlink). Operator chose Option A. Real reader inventory differs from dispatch decision's named scope (`/wrap-session` + `/handoff` do NOT actually read `session-plan.md`); the real readers are `/contract-check`, `/drift-check`, `/open-items`, `fix-repo-issues-scanner`, `/decide`. Plan scope widened from the narrow Phase 3 to all actual readers; Phase 4 (legacy fallback cleanup) becomes irrelevant since no fallback paths are introduced in atomic Option A.
+Fix all tracked open items except inbox briefs: (1) flip decisions.md Item 10 → friday-act auto-triage APPLIED; (2) run /log-sweep on over-threshold logs; (3) decide CLAUDE.md mirror-block leanness and record to decisions.md; (4) Option 2 structural marker fix — session-scoped `CLAUDE_SESSION_MARKER` env var, as a /risk-check-gated wave — which closes both open friction items (TOCTOU concurrent-session races + wrap-session Step 3.5 guard false-positive).
 
 ## Model
-opus — match (active: `claude-opus-4-7[1m]`). Multi-file structural refactor across shared-state coordination protocol; heavy design judgment under cross-cutting constraints.
+opus — match (active: claude-opus-4-8[1m]). The hard part is deciding/designing: the mirror-block keep-trim judgment and the Option 2 read/write contract across 9 consumers are synthesis-under-ambiguity work. The lighter items (Item 10 flip, /log-sweep) ride along.
 
 ## Source Material
-- `ai-resources/.claude/commands/prime.md` (Phase 1 reference implementation — Steps 8a.3.a / 8b.3.a / 8c.3 marker write)
-- `ai-resources/.claude/commands/session-start.md` (Phase 2 consumer — Step 3 header location)
-- `ai-resources/.claude/commands/session-plan.md` (Phase 2 consumer — Step 0 collision logic + Step 7 OUTPUT_TARGET)
-- `ai-resources/.claude/commands/wrap-session.md` (Phase 3 downstream — marker-scoped plan + session-notes header reads)
-- `ai-resources/.claude/commands/handoff.md` (Phase 3 downstream — marker-scoped reads at handoff time)
-- `ai-resources/logs/improvement-log.md` lines 73-138 (canonical proposal with phased migration plan and target-files-by-phase enumeration)
-- `ai-resources/audits/risk-checks/2026-05-28-prime-session-marker-phase-1-write-only.md` (Phase 1 risk-check precedent — verdict GO, all 5 dimensions Low)
-- `ai-resources/docs/audit-discipline.md` (structural change class definitions — shared-state automation)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/logs/decisions.md` — Item 10 flip target + mirror-block decision record
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/logs/improvement-log.md` — the 2026-05-29 marker-clobber entry (Option 2 spec, blast radius, Option-1 rejection result)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/log-sweep.md` — /log-sweep procedure
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/CLAUDE.md` + workspace `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/CLAUDE.md` — mirror-block leanness target
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/prime.md` — marker writer (Steps 8a/8b/8c.3) — Option 2
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/wrap-session.md` — Step 3.5 marker detector — Option 2
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/commands/session-start.md` — Step 0.5 mtime guard — Option 2
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/session-marker.md` — canonical marker contract (9 consumers) — Option 2
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/audit-discipline.md` — structural change classes (Option 2 risk-check)
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/risk-checks/2026-06-01-wrap-session-step35-clobber-suspicion-sanity-check.md` — Option-1 gating report + rejection outcome
 
 ## Findings / Items to Address
+1. **Item 10 flip** (decisions.md) — friday-act auto-triage fix shipped `11dfd92` but decisions.md Item 10 still reads "deferred." QC surfaced this in S2. 1-line disposition flip to APPLIED. *(Verify exact entry first — engine flagged decisions.md has multiple Item-10-like entries; confirm the friday-act general-plan #10 target.)*
+2. **/log-sweep** — Monday-prep 2026-W23 flagged 5 project `session-notes.md` over the 200-line threshold (348/234/527/523/597) + ai-resources `improvement-log.md` at 221. Run /log-sweep across over-threshold scopes; archive per its procedure.
+3. **Mirror-block leanness** (CLAUDE.md) — Monday-prep flagged Input File Handling / Compaction / Session Boundaries / Commit-Push blocks duplicated verbatim across project CLAUDE.md files (~430–720 tok/turn each). No rule governs keep-vs-trim. Decide with rationale; record to decisions.md. Deliverable = the recorded decision (trim *execution* across 11 files is a separate task unless the decision is trivially quick).
+4. **Option 2 marker fix** (structural) — root-cause fix for the marker-clobber class. Replace the shared-mutable `.session-marker` file-as-identity-oracle with a per-process `CLAUDE_SESSION_MARKER` env var set at /prime, immune to file clobber. Closes friction-log entries: (a) TOCTOU concurrent-session races (#1 chronic problem, "3–4× in 5 days"); (b) wrap-session Step 3.5 guard false-positive. improvement-log Option-1 was VALIDATED-REJECTED 2026-06-01 (no clean file-only signal exists); Option 2 is the escalation. Blast radius = 9 marker-contract consumers per docs/session-marker.md. **Design is proposal-level only — the read/write contract must be designed at the plan-time /risk-check before touching consumers.**
 
-Source anchor: improvement-log entry "2026-05-28 — Concurrent sessions cause TOCTOU races on shared log files" (lines 73-138), specifically § Migration plan (lines 117-122) and § Target files (lines 126-131). Session mandate narrows to Phases 2-3-narrow + Phase 4; broader Phase 3 (`/drift-check`, `/contract-check`, `/qc-pass`, friday-checkup) is explicitly out of scope per the friday-act dispatch decision (item 1) which named only `/session-start` + `/session-plan` + `/wrap-session` + `/handoff` + legacy-fallback cleanup.
-
-1. **Phase 2a — `/session-start` Step 3 locate header by marker.** Current: appends mandate under bare `## YYYY-MM-DD` header. Target: read `.session-marker`, locate `## YYYY-MM-DD — Session {marker}` header. Fallback path if marker absent (interop with pre-Phase-2 sessions).
-2. **Phase 2b — `/prime` writes marker-bearing today's header.** Current: writes `## YYYY-MM-DD` (or appends under existing). Target: writes `## YYYY-MM-DD — Session {marker}` after generating marker. Required so Phase 2a has a marker-scoped header to find. Adjacent to Phase 1 write site; minimal additional surface.
-3. **Phase 2c — `/session-plan` Step 0 simplification.** Current: 6-hour-window mtime check → MATCH 3-option prompt or MISMATCH wrap-state check / pass2 route. Target: drop pass2 routing entirely; collision impossible because each session writes to its own `session-plan-{marker}.md`. Keep same-session 3-option prompt for legitimate re-invocations.
-4. **Phase 2d — `/session-plan` Step 7 OUTPUT_TARGET change.** Current: `logs/session-plan.md` (or pass2). Target: `logs/session-plan-{marker}.md`. Create symlink `logs/session-plan.md` → current session's plan for downstream-reader backward compat during Phase 3 rollout.
-5. **Phase 3a — `/wrap-session` marker-aware reads.** Locate this session's plan via marker (not bare `session-plan.md`); locate this session's header in `session-notes.md` via marker. Coaching-data classification at Step 7a must still match the parse contract; verify the marker-bearing header `## YYYY-MM-DD — Session {marker}` still satisfies any `^## ` regex consumers.
-6. **Phase 3b — `/handoff` marker-aware reads.** Same pattern as `/wrap-session` — read marker, locate marker-scoped plan and session-notes header. Verify scratchpad write paths (already per-session-timestamped) don't need marker awareness.
-7. **Phase 4 — legacy fallback removal.** After Phase 2-3 verified, remove the "if marker absent" fallback branches added in Phase 2a / 2c / 2d / 3a / 3b. Hard-fail with a clear error if marker is absent — `/prime` is now a hard prerequisite. Keep one short note in each command body pointing to `/prime` as the canonical marker source.
-8. **Documentation update.** Add a short § "Session marker protocol" to `ai-resources/docs/audit-discipline.md` (or a new `docs/session-marker.md` if more natural) — single canonical reference that the four consumer commands and the `/prime` writer all point to, so future edits maintain the contract.
+**Side finding (this session):** the marker-scoped plan filename `session-plan-SN.md` is day-relative-N but NOT date-scoped — today's S3 collided with the stale 2026-05-29 S3 plan. Same root class as Item 4 (marker is `DATE SN` but derived artifacts drop the date). Fold into Item 4's design consideration if cheap; otherwise log.
 
 ## Execution Sequence
-
-Single atomic wave — Phase 2 + Phase 3 land in one commit. Per the improvement-log § Migration plan: "Run /risk-check before EACH phase, not as a one-shot" — under Option A there is exactly one phase to gate (atomic), so one plan-time + one end-time /risk-check covers it. Per SO advisory's Mitigation 5: rollback recipe must appear in commit message.
-
-### Atomic Wave — Phase 2+3 implementation (10 files)
-
-1. **Pre-spec inspection** (completed). Inventoried real downstream `session-plan.md` readers via grep. Result: `/contract-check`, `/drift-check`, `/open-items`, `fix-repo-issues-scanner` agent, `/decide`. Plus writer-side files: `/session-start`, `/session-plan`, `/prime`. Plus canonical doc stub. Total: 10 files (or 9 if doc extension is in-place to `docs/audit-discipline.md` rather than a new file).
-2. **Draft atomic spec** → `audits/working/toctou-phase-2-and-3-atomic-spec.md` (supersedes `toctou-phase-2-spec.md`; the Phase 2 spec stays on disk as audit trail of the design pivot). Spec covers all 10 files with per-item current state → target state → exact edit shape → verification check. No symlink, no legacy-fallback paths (Option A bypasses both).
-3. **Stop point.** Operator reviews atomic spec.
-4. **Run `/risk-check` plan-time gate** on atomic spec. Expect dimension scoring to differ from Phase 2-only gate: Hidden Coupling should drop from High to Low (no symlink); Blast Radius may rise from Medium to Medium-High (10 files vs 3); Reversibility stays Medium (atomic git revert is clean; file-to-symlink state change disappears). Iterate if RECONSIDER, abort if NO-GO.
-5. Apply spec to all 10 files. Per SO Mitigation 3: include canonical session-marker contract doc in the same commit. Per SO Mitigation 6: track `logs/session-plan-S*.md` variants (default; do NOT gitignore). Per SO Recommendation 2 (sibling sweep): silence or repurpose `/prime` Step 1a sibling-entry sweep in this commit per `principles.md § AP-10`.
-6. **Mitigation 4 — read-tests.** Before commit, run one read-test per downstream consumer category: spawn a subagent to read each marker-aware consumer's body and confirm it correctly references `logs/session-plan-${MARKER}.md` (no orphan bare-path reads). Cheap mechanical verification.
-7. **Run `/qc-pass`** on the cumulative implementation (independent context).
-8. Resolve QC findings inline if REVISE; iterate if DISAGREE.
-9. **Run `/risk-check` end-time gate** on the cumulative commit. Expect GO (atomic landing closes the Phase 2 coupling concern). Commit only after.
-10. **Mark improvement-log entry** "2026-05-28 — Concurrent sessions cause TOCTOU races on shared log files" as Phases 2+3 APPLIED + Verified. Phase 4 (legacy fallback cleanup) becomes N/A since Option A introduces no fallback paths. Note the design pivot from staged-with-symlink to atomic-no-symlink in the entry update.
-
-**Verification:**
-- New session: `/prime` → marker file written → marker-bearing header `## 2026-05-30 — Session S1` in session-notes → `/session-plan` → `logs/session-plan-S1.md` written → consumers (`/contract-check`, `/drift-check`, `/open-items`, `/decide`, `fix-repo-issues-scanner`) all read `session-plan-S1.md` directly via marker resolution.
-- Two concurrent sessions: each writes to its own marker-scoped plan; no collision, no symlink race, no shared file to clobber.
-- Read-test subagent confirms no bare `logs/session-plan.md` reads remain in any consumer body.
-
-**Commit message includes Mitigation 5 rollback recipe:**
-> Rollback: `git revert <this-hash>; rm -f logs/.session-marker logs/session-plan-S*.md` then re-run `/prime` to reseed pre-Phase-2 state.
+1. **Wave 1 — Item 10 flip.** Grep decisions.md for the friday-act auto-triage Item 10; confirm target; flip disposition → APPLIED with `11dfd92` reference. *Verify:* decisions.md Item 10 reads APPLIED; no other Item-10 entry mis-edited.
+2. **Wave 2 — /log-sweep.** Invoke /log-sweep on over-threshold scopes. *Verify:* archived logs back under threshold; archive files written; no active-log content lost.
+3. **Wave 3 — Mirror-block decision.** Read the duplicated blocks across project CLAUDE.md files; weigh keep (opened-without-parent-context strategy) vs trim (token cost). Decide; record a dated decision entry in decisions.md. *Verify:* decisions.md carries the new decision with rationale + alternatives considered.
+4. **Wave 4 — Option 2 marker fix (GATED).** (a) Design the `CLAUDE_SESSION_MARKER` read/write contract + per-marker file / append-only history; (b) run plan-time `/risk-check` — **on RECONSIDER/NO-GO, pause and surface**; (c) on GO, implement across the 9 consumers (prime.md writers, wrap-session.md detector, session-start.md guard, session-marker.md contract, + remaining readers); (d) `/qc-pass` on the edits; (e) end-time `/risk-check` before commit. *Verify:* env-var path immune to file clobber; both friction entries marked closed; /risk-check GO; /qc-pass GO.
 
 ## Scope Alternatives
-
-Under Option A, scope is fixed at the atomic-wave shape — no narrower variant is meaningfully different (Min would defer too few consumers to drop coupling; Max would add Phase 4 cleanup but Phase 4 is N/A since no fallbacks are introduced).
-
-**Single scope (Option A — atomic Phase 2+3):** All 10 files (3 writers + 5 readers + /prime auto-mode internal write + 1 doc stub) in one commit. Two `/risk-check` invocations (plan-time + end-time). Estimated session length: 2-3 hours of focused work.
-
-**Discarded alternatives** (preserved for audit trail):
-- ~~Original Wave 1 (Phase 2 only) + Wave 2 (narrow Phase 3) + Wave 3 (Phase 4 cleanup)~~ — superseded by Option A. The original Phase 2-only sub-scope received PROCEED-WITH-CAUTION on Hidden Coupling: High due to symlink-as-bridge. The original narrow Phase 3 scope (`/wrap-session` + `/handoff`) was empirically wrong (those files don't read `session-plan.md`).
+- **Min:** Waves 1–3 only (the safe/maintenance items); defer Option 2 to its specced dedicated session. *(This was the recommended split; operator chose "do everything now.")*
+- **Recommended (operator-chosen):** All four waves this session, Option 2 staged last as a gated structural wave with its own plan-time /risk-check.
+- **Max:** Recommended + execute the mirror-block *trim* across all 11 project files if Wave 3 decides "trim" and context allows; else log the trim as a follow-up.
 
 ## Autonomy Posture
-Gated.
+Gated — Waves 1–3 run under full autonomy (additive/maintenance/decision-record). Wave 4 is structural and pauses at the plan-time /risk-check verdict.
 
 **Stop points:**
-- After atomic spec drafted (operator reviews before plan-time /risk-check)
-- After implementation, before /qc-pass (read-test verification window)
-- After /qc-pass, before end-time /risk-check (if /qc-pass returns DISAGREE)
-- On any /risk-check NO-GO verdict — abort, escalate
-- On /qc-pass DISAGREE that cannot be resolved inline — escalate to operator
+- Wave 4 plan-time `/risk-check` verdict: on RECONSIDER or NO-GO, pause and surface; retain design on disk for revision.
+- If /log-sweep (Wave 2) surfaces anything it cannot safely archive, pause rather than force.
 
 ## Risk
-Two `/risk-check` invocations total: plan-time gate on atomic spec, end-time gate on cumulative commit. Down from the original plan's 4-6 invocations because Option A collapses three phases into one atomic wave.
-
-Structural change classes touched (per `ai-resources/docs/audit-discipline.md` § Risk-check change classes):
-- Shared-state automation across 8 command/agent files (4-6 became 8 in Option A's wider scope)
-- Cross-resource interaction pattern redesign (writer ↔ reader contract change)
-- New always-loaded behavior (every `/prime` produces a marker file every consumer reads)
-- Atomic landing closes the asymmetric-phase-coupling material miss the SO advisory flagged
-
-The dimension scoring is expected to differ vs the Phase 2-only gate: Hidden Coupling drops from High to Low (no symlink), Blast Radius rises from Medium to Medium-High (10 files vs 3), Reversibility stays Medium with a cleaner revert path (no file-to-symlink state change). Net verdict expected: GO with NOTE on Blast Radius.
+Run `/risk-check` after the Wave 4 design is drafted (plan-time gate) — Option 2 touches structural change classes: cross-cutting canonical-command edits (prime/wrap-session/session-start), a new env-var-based automation with shared-state effects, and a 9-consumer blast radius per docs/session-marker.md. Run `/risk-check` again before the Wave 4 commit (end-time gate). Waves 1–3 are below the structural threshold (single-file decision-record appends + a maintenance command run) — no risk-check needed for those.
