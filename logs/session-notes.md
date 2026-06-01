@@ -419,3 +419,57 @@ None executed. `git pull --rebase` rewrote local commit IDs, but only on unpushe
 
 ### Open Questions
 None blocking.
+
+## 2026-06-01 — Session S6 — Author universal parallel-multi-session playbook (from inbox brief)
+**Mandate:** Author docs/parallel-sessions-playbook.md from the inbox brief via the canonical doc-creation path, stress-testing the contested framing and resolving the brief's Known Weaknesses, with system-owner review — done when: the doc is written covering all six required sections, independent /qc-pass run, system-owner review incorporated, and the brief moved to inbox/archive/.
+- Out of scope: Harness changes (e.g., per-session log namespacing) and the workspace-wide .gitignore sweep — separate structural items, each gated by its own /risk-check.
+- Files in scope: (inferred) docs/parallel-sessions-playbook.md (new); inbox/parallel-sessions-playbook-brief.md (read → move to inbox/archive/)
+- Stop if: system-owner review finds the playbook contradicts a canonical doc (session-marker contract or autonomy rules) in a way that can't be reconciled — pause and surface.
+- Allowed inputs: inbox/parallel-sessions-playbook-brief.md, docs/session-marker.md, .claude/commands/wrap-session.md (foreign-write guard), .claude/hooks/detect-concurrent-session*, workspace CLAUDE.md autonomy rules, projects/interpersonal-communication/logs/session-notes.md
+- Required outputs: docs/parallel-sessions-playbook.md
+
+### Summary
+Authored `docs/parallel-sessions-playbook.md` — a universal, scope-agnostic playbook for running multiple Claude Code sessions in parallel — from the inbox brief via the canonical doc path. Stress-tested the brief's contested n=1 framing with a pre-draft `system-owner` consult: framing judged SOUND with one qualification, now built into § 0 — autonomy is a *co-dominant* lever alongside decomposition, not a footnote. Delivered all six required sections (go/no-go test, decomposition + file-ownership, shared-state coordination, landing/merge, when-NOT-to-parallelize incl. Branch B for non-partitionable work, cost-target disambiguation) plus a System-Owner decision hook. All seven of the brief's "Known Weaknesses" resolved in-text; invented speedup numbers stripped as unmeasured. Independent qc-reviewer: GO. Committed `5d5e02b`, pushed to `origin/main`.
+
+### Files Created
+- `docs/parallel-sessions-playbook.md` — the deliverable; 9 sections + quick-reference + related-docs. Points at `session-marker.md` / `autonomy-rules.md` rather than restating them.
+- `logs/session-plan-S6.md` — session plan (overwrote a stale 2026-05-29 plan that had reused marker S6 via the shared-marker reset).
+- `logs/scratchpads/2026-06-02-00-00-scratchpad.md` — pre-closeout continuity scratchpad.
+
+### Files Modified
+- `inbox/parallel-sessions-playbook-brief.md` → `inbox/archive/parallel-sessions-playbook-brief.md` (git rename, 100%; brief retired to archive on completion).
+- `logs/session-notes.md` — S6 mandate (session start) + this wrap entry.
+
+### Decisions Made
+- **Skipped the context-discovery engine pre-step** — the brief already enumerated its grounding sources precisely, so engine routing-discovery would be redundant. Treated those sources as explicit `allowed_inputs`.
+- **Autonomy elevated to a co-dominant lever in § 0** (system-owner-directed qualification) — the brief framed decomposition as dominant; the artifacts say gates reconverge on the operator at merge/push regardless of partition cleanliness.
+- **Per-session log namespacing flagged as a `/risk-check`-gated harness change, not a free win** (system-owner Q1) — kept out of scope; doc presents it as a tradeoff.
+- **§ 8 decision hook marked provisional `[CITATION NEEDED]`** — system-owner persona/principles grounding files absent from disk at consult time; content is artifact-grounded, standing to be confirmed when the base is restored.
+- **Overwrote the stale `session-plan-S6.md`** — it was a 2026-05-29 Friday-checkup plan from a wrapped session that reused marker S6 (shared-marker reset collision); session-plan files are transient, not deliverables. Surfaced before overwriting.
+- QC fix (folded, cosmetic): un-nested the § 8 blockquote-within-blockquote the reviewer flagged.
+
+### Outcome
+(outcome check, 2026-06-02 — independent general-purpose subagent, verified against filesystem + git log)
+COMPLETION: DELIVERED — all six required sections present; all seven Known Weaknesses map to resolved in-text content (W1→§6 Branch B; W2→§0 co-dominant autonomy; W3→§0.3 numbers stripped; W4→§3 gated tradeoff; W5→§1 gate-3 escape hatch; W6→§6 alternatives table; W7→§7); invented speedup numbers stripped; brief git-renamed 100% to inbox/archive/; commit 5d5e02b pushed (origin/main == HEAD, 0 ahead).
+EXECUTION: ACCEPTABLE — system-owner consult ran against an ungrounded agent (persona/principles files absent at consult time), so §8's authority is provisional [CITATION NEEDED]; disclosed in-file + commit, not concealed.
+Better path: the §8 grounding gap was knowable at consult time — a cheap pre-consult existence check on the system-owner grounding files, surfacing "grounding missing — proceed degraded or pause?" before drafting §8, would have made it an explicit operator decision rather than a self-resolution.
+Confidence: high.
+
+### Risky actions
+None. The git `mv` into a gitignored `inbox/archive/` was recorded by git as a clean 100% rename (brief preserved in version control, not lost). Push was operator-gated (`go`), single repo, fast-forward. No destructive ops, no deletions outside session scope.
+
+### Session Assessment
+(wrap-collector, 2026-06-02)
+- Autonomy-compounding: no signal — playbook is a requested doc with a confirmed consumer (the inbox brief); not speculative.
+- Leanness/cost: no signal — context-engine pre-step appropriately skipped; no rework loop; docs/ file adds no always-loaded weight.
+- Principle-drift: 1 logged — §8 grounding-absence was knowable pre-consult yet self-resolved to proceed-degraded `[CITATION NEEDED]` rather than escalated; brushes the Assumptions Gate. Routed to improvement-log, bundled with System-Owner-degraded restore.
+- Friction: no signal — no operator correction; stale session-plan-S6 overwrite surfaced first.
+- Safety: low — wrap Step 3.5 REMNANT false-positive from date rollover (own marker stayed 2026-06-01 across midnight → own S6 mandate misread as prior-day orphan). No content lost, operator confirmed. Guardrail-accuracy gap, not a safety breach.
+- Routed: 2→improvement-log (1 guardrail-candidate low, 1 principle-drift), 0→friction-log.
+
+### Next Steps
+- **System Owner agent is running degraded** — its grounding files (`persona.md`, `principles.md`, `grounding.md`, `risk-topology.md`, `blueprint.md` in `projects/axcion-ai-system-owner/`) are absent from disk. Worth a dedicated session to restore them; until then, the § 8 hook's standing as settled doctrine is unconfirmed.
+- Carryovers (unchanged by this session): nordic-pe-screening GitHub remote decision; `improve.md`/`improvement-analyst` archive-scan bug backlog entry; id-03 G4 naming; Option 2′ shared-marker removal (soak deferral).
+
+### Open Questions
+None blocking.

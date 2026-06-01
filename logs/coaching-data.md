@@ -253,3 +253,11 @@
 - **QC cycles:** 2 (push-policy fix GO; context-engine eval REVISE → 3 corrections applied → resolved)
 - **Gates:** 4 (3 changed) — direction-choice:changed (act-on-findings), implementation-triage:confirmed (do #3 full ceremony), risk-disposition:changed (Option 1 rejected at dry-run), preflight:confirmed
 - **Mandate fields:** specified: work_scope, exit_condition, out_of_scope, files_in_scope | omitted: stop_if, allowed_inputs, required_outputs
+
+### 2026-06-01 (S6) — Author universal parallel-multi-session playbook
+- **Commands used:** /prime, /session-start, /session-plan, /qc-pass, /wrap-session
+- **Iterations:** 1 (parallel-sessions-playbook draft-01 → GO on first QC)
+- **Decisions logged:** 1 (autonomy as co-dominant lever)
+- **QC cycles:** 1 (independent qc-reviewer → GO, one cosmetic fix folded)
+- **Gates:** 2 (1 changed) — plan-approval:confirmed (mandate `y`), content-review:confirmed (Gated stop-point framing resolution → `go`); 1 mid-wrap guard-disposition:changed (Step 3.5 REMNANT false-positive, operator confirmed proceed)
+- **Mandate fields:** specified: work_scope, exit_condition, out_of_scope, allowed_inputs, required_outputs, stop_if | inferred: files_in_scope | omitted: (none)

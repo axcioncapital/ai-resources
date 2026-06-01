@@ -238,3 +238,20 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Friction source:** wrap-collector 2026-06-01 — leanness/process (latent defect surfaced in S4 /fix-repo-issues id-02, explicitly flagged NOT fixed and Next-Steps item 3 asks for a separate backlog entry)
 - **Proposal:** Rewrite the `improvement-analyst` archive de-dup scan (and any `improve.md` step that reads the archive) to avoid `Read(logs/*archive*.md)`, mirroring the append-only Option 1 fix landed for `/resolve-improvement-log` Step 7 in id-02. The same `ai-resources/.claude/settings.json` archive read-deny blocks this scan; it silently degrades de-dup when archive lookup is needed. Decide whether to drop the archive read entirely or route it through a permitted mechanism.
 - **Target files:** `ai-resources/.claude/agents/improvement-analyst.md` (archive de-dup scan), `ai-resources/.claude/commands/improve.md` (if it reads the archive)
+
+### 2026-06-02 — wrap-session Step 3.5 foreign-write guard REMNANT false-positive on date rollover (own marker goes stale across midnight)
+- **Status:** logged (pending)
+- **Category:** guardrail-candidate
+- **Severity:** low
+- **Provenance:** wrap-collector (machine-authored) 2026-06-02
+- **Friction source:** wrap-collector 2026-06-02 — safety / guardrail-accuracy (S6 wrap, no content lost; operator confirmed ownership and proceeded)
+- **Proposal:** Harden the wrap-session Step 3.5 marker-aware own-contribution subtractor against the date-rollover edge case. The S6 session started 2026-06-01 and wrapped after midnight (2026-06-02); the session marker stayed dated 2026-06-01, so the today-dated own-contribution resolution returned "none" and this session's own S6 mandate header was misclassified as a prior-day orphan (REMNANT false-positive). Distinct root cause from the Option 2′ clobber fix (that addressed concurrent-clobber, not date-boundary staleness). Direction: resolve own-contribution against the marker's own date rather than `today`, OR widen the own-header match window to include the marker's date when it differs from the current date by one day. Confirm the fix does not re-open the concurrent-foreign-write detection it must still catch.
+- **Target files:** `ai-resources/.claude/commands/wrap-session.md` Step 3.5 (marker-aware subtractor); `/.claude/commands/wrap-session.md` (workspace-root paired sibling per PAIRED CONTRACT); possibly `docs/session-marker.md` (note the date-boundary behavior).
+
+### 2026-06-02 — §8 grounding-absence self-resolved (proceed-degraded) instead of escalated; System Owner agent running ungrounded
+- **Status:** logged (pending)
+- **Category:** principle-drift
+- **Provenance:** wrap-collector (machine-authored) 2026-06-02
+- **Friction source:** wrap-collector 2026-06-02 — principle-drift (Assumptions-Gate-adjacent; from S6 § Decisions + § Outcome + § Next Steps)
+- **Proposal:** Two coupled items. (1) Restore the absent System Owner grounding files (`persona.md`, `principles.md`, `grounding.md`, `risk-topology.md`, `blueprint.md` under `projects/axcion-ai-system-owner/`) — the agent is running degraded, so any consult-derived doctrine (e.g. S6's §8 decision hook) ships provisional `[CITATION NEEDED]` until the base is restored. (2) Add a cheap pre-consult existence check on the system-owner grounding files: when grounding is missing, surface "grounding missing — proceed degraded or pause?" as an explicit operator decision per the workspace Assumptions Gate (default to escalation on a structural concern, not self-resolution) rather than self-resolving to proceed-degraded. The S6 § Outcome itself names this as the "better path" — the grounding gap was knowable at consult time.
+- **Target files:** `projects/axcion-ai-system-owner/` grounding files (restore); `ai-resources/.claude/commands/consult.md` and/or `ai-resources/.claude/agents/system-owner.md` (pre-consult grounding existence check + escalation prompt).

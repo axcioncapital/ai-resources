@@ -104,3 +104,15 @@
 **Alternatives considered.** Fresh session after /clear (the reviewers' and Claude's recommendation — rejected by operator for throughput). Defer #3 again (rejected — spec was GO-eligible and ready, no reason to re-defer).
 
 **Decided by:** operator directive, concern surfaced first. Logged as a conscious principle-deviation (reviewer "fresh session" guidance overridden) per "watch only" — outcome was clean.
+
+## 2026-06-01 (S6) — Parallel-sessions playbook: autonomy as a co-dominant lever
+
+**Context.** Authoring `docs/parallel-sessions-playbook.md` from a brief whose core framing was "parallelism is a selective optimization on top of good decomposition" — treating decomposition as the dominant lever.
+
+**Decision.** Elevated **autonomy** to a co-dominant lever alongside decomposition in § 0, rather than leaving it as the brief's weakness #2 footnote. The playbook now states both must be present: clean partition AND high per-session autonomy.
+
+**Rationale.** The pre-draft system-owner consult judged the framing sound but flagged that the workspace artifacts (autonomy pause-triggers, the marker hard-fails, the detection hook, the origin run's landing lessons) show gates reconverge on the operator at merge/push *regardless* of how cleanly the work was split. Decomposition without autonomy yields low-autonomy parallel = operator thrash = no real speedup. The two are not sequential prerequisites; they are co-equal gates.
+
+**Alternatives considered.** (a) Keep the brief's decomposition-dominant framing and leave autonomy as a noted weakness — rejected: under-delivers on the brief's explicit "resolve the weaknesses" instruction. (b) Make autonomy the *primary* lever — rejected: overcorrects; without a clean partition there is nothing to parallelize regardless of autonomy.
+
+**Decided by:** Claude judgment grounded in the system-owner consult; no operator override. Surfaced at the Gated stop point; operator approved the resolution implicitly by directing the QC pass.

@@ -493,3 +493,32 @@
 - **Decision-Point Posture saved asks** — picked recommended options at multiple junctures (engine-skip rationale, end-time risk-check skip) with inline rationale rather than operator prompts.
 
 **Recommendation:** Add a triage heuristic to `/resolve-repo-problem` / improvement-log intake: when a proposed fix is a *reactive detector* over a *shared-mutable-state oracle* bug, tag it "validate-before-invest — structural fix may be the only viable path" so a future session dry-runs the signal before a full implement cycle. Would have saved ~3 subagents + an implement/revert here.
+
+## 2026-06-01 (S6) — parallel-sessions-playbook.md authored via canonical doc path
+
+**Task:** Authored `ai-resources/docs/parallel-sessions-playbook.md` — a universal scope-agnostic playbook for parallel multi-session Claude Code work — from an inbox brief via the canonical doc path. Stress-tested the contested n=1 framing via a system-owner consult, resolved all 7 of the brief's Known Weaknesses, ran independent QC (GO, one cosmetic fix), committed and pushed.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~9 |
+| Files read | ~11 (parallel-sessions-playbook-brief.md, session-marker.md, autonomy-rules.md, ai-resource-creation.md, detect-concurrent-session.sh, session-notes.md windows ×2, decisions.md tail, usage-log.md tail, coaching-data.md tail) |
+| Files written/edited | ~8 (parallel-sessions-playbook.md new ~224 lines, session-plan-S6.md overwrite, session-notes.md ×3 appends, decisions.md ×1, coaching-data.md ×1, scratchpad new, inbox brief archived via git rename) |
+| Tool calls | ~30 (Bash ~16, Edit ~6, Read ~5, Write ~3) |
+| Subagents | 4 (system-owner framing consult, qc-reviewer GO, general-purpose outcome check, session-feedback-collector) |
+| Rework cycles | 0 (one cosmetic QC fix; one git-add retry on gitignored path — trivial) |
+
+**Findings:**
+- **Clean single-pass authoring — positive.** First-draft QC returned GO. Zero substantive rework. System-owner consult resolved the contested n=1 framing pre-draft, preventing a likely REVISE cycle post-QC. The front-loaded consult earned its cost.
+- **Context-discovery engine deliberately skipped — positive.** The brief pre-enumerated all source files; skipping the engine was correct and saved ~2–3k tokens vs auto-firing it. First confirmed example of a session where the brief made the engine redundant.
+- **session-notes.md tail re-read pattern recurs (R4 lever)** — tail read at /prime, re-read at wrap for positioning. Standing pattern flagged 8+ entries across the log. No structural fix yet.
+- **Wrap Step 3.5 date-rollover false-positive — Minor.** Own marker stayed on prior day across midnight; the guard fired a REMNANT false-alarm. Resolved via operator confirmation in one exchange, no content loss. Architectural (clock-boundary race in the marker-write step), not session-level waste.
+- **Trend vs last 3 entries (Efficient / Acceptable / Acceptable):** Efficient — lowest rework count in recent window, lowest exchange count for a doc-authoring session. Subagent count (4) proportional and load-bearing.
+
+**Recommendation:** No action needed for this session. The standing R4 lever (session-notes.md tail re-read across /prime → wrap) continues to accumulate across 8+ entries without a structural fix. If a `/wrap-session` edit that reads the file in Step 1 and carries the position in-context is not shipped within the next 2 sessions, escalate as a standing debt item.
+
+**Estimated savings:** N/A for this session — no primary rework. Forward-looking: the date-rollover false-positive in Step 3.5 is architectural; if the marker timestamp is written at /prime (before midnight) and wrap fires the next calendar day, the guard will misfire on every overnight session. A one-line fix (compare marker content against git log or use a grace window) would eliminate the class. Low frequency but zero-cost to fix.
+
+**Additional levers (ROI-ranked):**
+- **Ship the R4 structural fix (session-notes.md tail in-context tracking, ~800–1.5k tokens/wrap).** Now flagged 8+ consecutive entries. The per-session saving is modest but it compounds across every session and the fix is a single /wrap-session edit. Highest-ROI unshipped lever in the log.
+- **Wrap Step 3.5 date-rollover guard: add a grace window or compare against git log rather than calendar date (~0 tokens/fix, prevents per-overnight false-positive).** Operator confirm absorbed the false-positive this session, but overnight sessions will hit it every time until fixed.
+- **Brief-as-source-enumeration skip-signal for context-discovery engine (~2–3k tokens/applicable session).** This session confirmed the pattern: when a brief pre-enumerates all source files, the engine is redundant. Consider adding a `sources-complete: true` flag to the brief schema so /session-start can skip the engine auto-fire without a judgment call.
