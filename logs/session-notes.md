@@ -428,3 +428,38 @@ Fix all open items except inbox briefs (operator: "fix all except inbox briefs",
 ### Open Questions
 
 None blocking. The two open friction items (TOCTOU races + wrap-session guard false-positive) remain open by design — they close when Option 2′ is implemented (Next Step 1).
+
+## 2026-06-01 — wrap-session feedback loop: collector (Step 6.5) + outcome check (Step 6.4)
+
+### Summary
+Turned `/wrap-session` into a feedback loop back into the system by adding two new optional, advisory passes — each built through the full clarify → plan → risk-check → build → QC pipeline with a system-owner consult. (1) A **session feedback collector** (Step 6.5, 3rd preflight toggle): a fresh-context agent extracts per-session signals across five goal-state dimensions — including a **safety/guardrail-gap** dimension that records dangerous/near-dangerous events as `guardrail-candidate` entries for later guardrail design — and routes them to existing consumer-backed stores. (2) A **session outcome check** (Step 6.4, 4th toggle): "did Claude do the job, and do it well?" — a fresh subagent grades COMPLETION (DELIVERED/PARTIAL/MISSED) and EXECUTION quality (OPTIMAL/ACCEPTABLE/SUBOPTIMAL, evidence-guarded). Both advisory, opt-in, never block. Design stance throughout: collector/grader, not a second analyzer.
+
+### Files Created
+- `docs/session-feedback-dimensions.md` — the collector's five-dimension goal-state rubric (cites vault sources, no duplication)
+- `.claude/agents/session-feedback-collector.md` — fresh-context collector agent (opus; enforced per-session append cap + provenance tags)
+- `audits/risk-checks/2026-06-01-wrap-session-feedback-collector.md` — risk-check report (PROCEED-WITH-CAUTION + 6 mitigations + system-owner commentary)
+- `audits/risk-checks/2026-06-01-wrap-session-outcome-check.md` — risk-check report (GO)
+- `logs/scratchpads/2026-06-01-17-55-scratchpad.md` — continuity scratchpad
+
+### Files Modified
+- `.claude/commands/wrap-session.md` — 3rd + 4th preflight toggles, Step 4 `### Risky actions` line + `### Outcome` schema line, new Steps 6.4 and 6.5, cost-budget + staging-list updates
+- `docs/agent-tier-table.md` — session-feedback-collector entry (opus)
+- `logs/improvement-log.md` — deferred workspace-root mirror entry (now covers both Step 6.4 and 6.5)
+
+### Decisions Made
+- **Collector, not analyzer** (system-owner-driven): wrap-session captures + routes per-session signals; `/improve`, `/friday-so`, `/contract-check` keep all analysis. Avoids AP-7 duplication + write-only open loop.
+- **Feed existing stores, no new data store**; collector writes only friction-log + improvement-log (reusable-component signals → `/innovation-sweep` nudge, not a registry write — registry has no provenance column).
+- **Soft-cap starvation defense** (system-owner catch): enforced ≤2 improvement-log appends/session with safety-priority ordering + provenance tags, so machine entries don't crowd out operator-authored Friday signal.
+- **Outcome check expanded to two dimensions** (operator refinement): completion + execution quality, with an evidence guard on SUBOPTIMAL to prevent shallow nitpicking.
+- **Workspace-root mirror deferred** for both features (structural divergence) — tracked in improvement-log, not silently dropped.
+- **End-time `/risk-check` skipped** on both features — plan-time covered with mitigations applied + commits shipped + zero execution drift; documented in each commit.
+
+### Risky actions
+None. Work was confined to ai-resources; only local commits (no push, no deletions, no external writes, no destructive git ops).
+
+### Next Steps
+1. **Workspace-root mirror** — port Step 6.4 + 6.5 into the non-symlink workspace-root `/.claude/commands/wrap-session.md` (tracked in improvement-log).
+2. **First live run** — both features have static/structural verification only; runtime path exercises on the next wrap where the operator opts into toggles 3/4.
+
+### Open Questions
+None blocking.
