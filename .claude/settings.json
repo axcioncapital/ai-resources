@@ -127,6 +127,12 @@
             "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/friday-checkup-reminder.sh",
             "timeout": 5,
             "statusMessage": "Checking Friday cadence..."
+          },
+          {
+            "type": "command",
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/detect-concurrent-session.sh",
+            "timeout": 5,
+            "statusMessage": "Checking for concurrent sessions..."
           }
         ]
       }

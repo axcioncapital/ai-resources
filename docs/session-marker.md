@@ -122,6 +122,20 @@ The Phase 2-only spec attempted a staged rollout with a `logs/session-plan.md` s
 
 ---
 
+## Concurrent-session detection (proactive early-warning layer)
+
+The marker protocol above makes per-session writes safe **structurally**. Two reactive guards detect a foreign write *after* it lands: `session-start.md` Step 0.5 (mtime guard at mandate-read) and `wrap-session.md` Step 3.5 (foreign-write guard at notes-write). Both trust the shared-mutable marker files and so can be clobbered (improvement-log TOCTOU race class).
+
+`.claude/hooks/detect-concurrent-session.sh` (SessionStart hook, shipped 2026-06-01, DR-8 gate) adds a **proactive** layer: at session start it warns the operator if another Claude Code session is already running, *before* any write can collide. It supplements — does not duplicate — the two reactive guards (different trigger timing: session-open vs. per-command-write; different mechanism: OS process signal vs. file mtime).
+
+**Read-only by design.** The hook maintains NO state file of its own. A registry built to detect races would itself be a shared-mutable file that races (`principles.md § AP-10`). It reads an OS signal instead: `pgrep -f 'native-binary/claude'` counts running Claude Code CLI sessions (the current session is always in the count, so `>= 2` means `>= 1` other). It reads `logs/.session-marker` only as read-only enrichment context (to note whether THIS project has a `/prime` marker today) — never as the detection signal, so it cannot inherit the clobber bug.
+
+**Contract:** non-blocking, every path `exit 0`; loud one-line skip notice if `pgrep` is unavailable (`principles.md § OP-3`, no silent rot). Wired in `.claude/settings.json` SessionStart array alongside `friday-checkup-reminder.sh`.
+
+**Known limitation:** the process count is machine-wide, not project-scoped — a session running in an unrelated project also counts toward the warning. Accepted best-effort tradeoff for a non-blocking warning. Future enhancement: scope by cwd via `lsof`.
+
+**If you change the detection signal** (`pgrep` pattern, the process-name discriminator `native-binary/claude`, or the marker-read enrichment), update the hook header comment AND this section. The `native-binary/claude` discriminator was verified against the live process table on 2026-06-01; it excludes the Claude.app desktop helper.
+
 ## When to update this doc
 
 - A new consumer command starts reading marker-scoped files → add to the registry (writer or read-only auxiliary).
