@@ -8,18 +8,20 @@ Close out ONE finished project: run a blocking pre-archive checklist, remove its
 
 **Scope:** a single completed project under `projects/{name}`. This is NOT a portfolio tracker and NOT a log-tier archiver (see `/log-sweep` for logs, `/wrap-session` for sessions). There is no `/unarchive-project` — the manifest IS the restore recipe (Step 9).
 
-Input: `$ARGUMENTS` — the project directory name under `projects/` (e.g. `nordic-pe-macro-landscape-H1-2026`). Required.
+Input: `$ARGUMENTS` — the project directory name under `projects/` (e.g. `nordic-pe-macro-landscape-H1-2026`). **Optional** — omit it to get a numbered list of active projects and pick one by number (Step 1b).
 
 Flags:
 - `--dry-run` — run the checklist + build the plan, print it, but make NO changes (no symlink removal, no move, no index write).
 
 Examples:
-- `/archive-project nordic-pe-macro-landscape-H1-2026 --dry-run` — preview the plan and gate results, change nothing.
-- `/archive-project nordic-pe-macro-landscape-H1-2026` — full archive flow with the destructive confirmation gate.
+- `/archive-project` — list active projects, pick one by number, then run the full flow.
+- `/archive-project --dry-run` — list and pick, then preview only (no changes).
+- `/archive-project nordic-pe-macro-landscape-H1-2026 --dry-run` — name given directly; preview the plan and gate results, change nothing.
+- `/archive-project nordic-pe-macro-landscape-H1-2026` — name given directly; full archive flow with the destructive confirmation gate.
 
 ---
 
-### Step 1: Path setup and target validation
+### Step 1a: Path setup
 
 ```bash
 d="$(pwd)"
@@ -31,17 +33,58 @@ done
 [ -n "$WORKSPACE" ] || { echo "ERROR: ai-resources/ not found in any ancestor of $(pwd)"; exit 1; }
 
 AI_RESOURCES="${WORKSPACE}/ai-resources"
-NAME="$1"   # first token of $ARGUMENTS, excluding flags
-[ -n "$NAME" ] || { echo "ERROR: no project name given. Usage: /archive-project <project-name> [--dry-run]"; exit 1; }
-
-PROJ="${WORKSPACE}/projects/${NAME}"
-ARCHIVE_ROOT="$(dirname "$WORKSPACE")/Axcion AI Archive"
-DEST="${ARCHIVE_ROOT}/${NAME}"
+PROJECTS_DIR="${WORKSPACE}/projects"
 INDEX="${AI_RESOURCES}/logs/archived-projects.md"
 WORKING_DIR="${AI_RESOURCES}/audits/working"
 DATE="$(date +%Y-%m-%d)"
-MANIFEST="${WORKING_DIR}/archive-${NAME}-${DATE}.md"
 mkdir -p "$WORKING_DIR"
+
+NAME="$1"   # first non-flag token of $ARGUMENTS, if any
+```
+
+Parse `--dry-run` from `$ARGUMENTS` into `DRY_RUN` (true/false).
+
+---
+
+### Step 1b: Resolve target project (numbered picker when no name given)
+
+If `NAME` is non-empty (operator passed a name directly), skip the picker and go to Step 1c.
+
+If `NAME` is empty, build a numbered list of archivable projects and let the operator pick one by number. "Archivable" = a directory under `projects/` that is an independent git repo (`.git/` present). Already-archived projects don't appear (they've been moved out).
+
+```bash
+CANDIDATES="/tmp/archive-project-candidates.txt"
+> "$CANDIDATES"
+i=0
+for p in "$PROJECTS_DIR"/*/; do
+  [ -d "$p/.git" ] || continue
+  pname="$(basename "$p")"
+  # Quick status hint: dirty marker + ahead count + last commit date
+  dirty=$([ -n "$(git -C "$p" status --porcelain 2>/dev/null)" ] && echo "dirty" || echo "clean")
+  ahead="$(git -C "$p" rev-list --count '@{u}..HEAD' 2>/dev/null || echo '?')"
+  last="$(git -C "$p" log -1 --format=%cd --date=short 2>/dev/null || echo '?')"
+  i=$((i+1))
+  printf '%s\t%s\t%s\t%s\t%s\n' "$i" "$pname" "$dirty" "$ahead" "$last" >> "$CANDIDATES"
+done
+COUNT=$i
+echo "Found $COUNT archivable project(s)."
+```
+
+- If `COUNT` is 0: print `No archivable projects found under projects/.` and stop.
+- Otherwise present the numbered list to the operator, one line each:
+  `{N}. {project name}  [{clean|dirty}, {ahead} ahead, last commit {date}]`
+  Then ask: **"Which project do you want to archive? Reply with a number (1–{COUNT})."** Wait for the operator's reply.
+- Read the operator's number, look it up in `$CANDIDATES`, and set `NAME` to that row's project name. If the number is out of range or non-numeric, re-print the list and ask again. Do not guess.
+
+---
+
+### Step 1c: Derive target paths and validate
+
+```bash
+PROJ="${WORKSPACE}/projects/${NAME}"
+ARCHIVE_ROOT="$(dirname "$WORKSPACE")/Axcion AI Archive"
+DEST="${ARCHIVE_ROOT}/${NAME}"
+MANIFEST="${WORKING_DIR}/archive-${NAME}-${DATE}.md"
 
 # Target must exist and be an independent git repo
 if [ ! -d "$PROJ" ]; then
@@ -61,8 +104,6 @@ if git -C "$WORKSPACE" ls-files --error-unmatch "projects/${NAME}" >/dev/null 2>
   exit 1
 fi
 ```
-
-Parse `--dry-run` from `$ARGUMENTS` into `DRY_RUN` (true/false).
 
 ---
 
