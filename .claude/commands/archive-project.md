@@ -4,7 +4,7 @@ model: sonnet
 
 # /archive-project — Project Archiving Capstone
 
-Close out ONE finished project: run a blocking pre-archive checklist, remove its skill symlinks, move the whole project folder (with its own `.git`) outside the active workspace, and write a permanent archive index + a per-project restore manifest. Operator-invoked, one project per run.
+Close out ONE finished project: run a blocking pre-archive checklist, remove its skill symlinks, move the whole project folder (with its own `.git`) out of `projects/` into the workspace `archive/` tier, and write a permanent archive index + a per-project restore manifest. Operator-invoked, one project per run.
 
 **Scope:** a single completed project under `projects/{name}`. This is NOT a portfolio tracker and NOT a log-tier archiver (see `/log-sweep` for logs, `/wrap-session` for sessions). There is no `/unarchive-project` — the manifest IS the restore recipe (Step 9).
 
@@ -82,7 +82,7 @@ echo "Found $COUNT archivable project(s)."
 
 ```bash
 PROJ="${WORKSPACE}/projects/${NAME}"
-ARCHIVE_ROOT="$(dirname "$WORKSPACE")/Axcion AI Archive"
+ARCHIVE_ROOT="${WORKSPACE}/archive"   # in-workspace, OUTSIDE projects/ so project scans never re-enumerate it
 DEST="${ARCHIVE_ROOT}/${NAME}"
 MANIFEST="${WORKING_DIR}/archive-${NAME}-${DATE}.md"
 
@@ -122,7 +122,7 @@ BLOCKS=()
 # (b) No unpushed commits — requires an upstream (no-remote = BLOCK, push-first; see Notes)
 UPSTREAM="$(git -C "$PROJ" rev-parse --abbrev-ref '@{u}' 2>/dev/null)"
 if [ -z "$UPSTREAM" ]; then
-  BLOCKS+=("No upstream/remote tracking branch — push to a remote first (the move leaves no in-workspace copy).")
+  BLOCKS+=("No upstream/remote tracking branch — push to a remote first (defense-in-depth backup before relocating out of projects/).")
 else
   AHEAD="$(git -C "$PROJ" rev-list --count '@{u}..HEAD' 2>/dev/null)"
   [ "$AHEAD" = "0" ] || BLOCKS+=("$AHEAD unpushed commit(s) — push first.")
@@ -215,7 +215,7 @@ Write `$MANIFEST` (recovery map — exists before anything is removed or moved):
 
 ### Step 4: Confirmation gate (operator — mandatory)
 
-Emit `[HEAVY]` note: "about to remove {LINK_COUNT} symlinks and move {NAME} outside the workspace."
+Emit `[HEAVY]` note: "about to remove {LINK_COUNT} symlinks and relocate {NAME} out of `projects/` into the workspace `archive/` tier."
 
 Print the full plan, then gate:
 
@@ -261,8 +261,19 @@ Removing a symlink never touches its target in `ai-resources/skills/`.
 
 ```bash
 mkdir -p "$ARCHIVE_ROOT"
+
+# Ensure the workspace repo ignores archive/ (each archived project keeps its own .git;
+# without this the workspace repo would flag the relocated nested repo as untracked).
+# Idempotent — appended once, matches how knowledge-bases/ and per-project repos are handled.
+WS_IGNORE="${WORKSPACE}/.gitignore"
+if [ -f "$WS_IGNORE" ] && ! grep -qxF '/archive/' "$WS_IGNORE"; then
+  printf '\n# Archived project repos (relocated by /archive-project; each keeps its own .git)\n/archive/\n' >> "$WS_IGNORE"
+  echo "Added /archive/ to workspace .gitignore (stage + commit in the workspace repo)."
+fi
+
 [ ! -e "$DEST" ] || { echo "ERROR: destination already exists: $DEST. Aborting."; exit 1; }
-mv "$PROJ" "$DEST" || { echo "ERROR: mv failed (cross-device?). Aborting — original left in place, no copy+delete fallback."; exit 1; }
+# Same-filesystem move (archive/ is inside the workspace) → mv is an atomic rename.
+mv "$PROJ" "$DEST" || { echo "ERROR: mv failed. Aborting — original left in place, no copy+delete fallback."; exit 1; }
 ```
 
 Never fall back to `cp -r && rm -rf`.
@@ -298,7 +309,7 @@ if [ ! -f "$INDEX" ]; then
   cat > "$INDEX" <<'EOF'
 # Archived Projects
 
-Permanent index of projects moved out of the active workspace via `/archive-project`. Append-to-end; never rolled.
+Permanent index of projects relocated out of `projects/` into the workspace `archive/` tier via `/archive-project`. Append-to-end; never rolled.
 
 | Date | Project | Destination | Final SHA | Remote | Symlinks Removed | Manifest |
 |------|---------|-------------|-----------|--------|------------------|----------|
@@ -329,7 +340,7 @@ Un-archive recipe (also in {DEST}/.archive-manifest.md):
 
 **Staging note (append to chat):**
 
-> Stage `{INDEX}` explicitly — `/wrap-session`'s enumerated stage list does not cover it. The moved project's own git repo is now outside the workspace and is committed independently from `{DEST}` if needed. The working manifest at `{MANIFEST}` can be staged in ai-resources or left as a working note.
+> Stage `{INDEX}` explicitly — `/wrap-session`'s enumerated stage list does not cover it. If the command appended `/archive/` to the workspace `.gitignore`, stage + commit that change in the **workspace** repo too. The relocated project keeps its own git repo under `archive/{NAME}/` (gitignored by the workspace repo) and is committed independently if needed. The working manifest at `{MANIFEST}` can be staged in ai-resources or left as a working note.
 >
 > **Stale-reference note:** live-enumerating commands (`/fix-symlinks`, `/log-sweep`, `/friday-checkup`) re-scan `projects/*/` and self-heal. But two canonical grounding docs hard-list active projects by name and will now be stale — they still assert `{NAME}` is active: `projects/repo-documentation/vault/risk-topology.md` (§ dependency chains / reverse map) and `projects/repo-documentation/vault/repo-state.md` (§ active projects). These refresh only at the monthly Friday cadence. If accuracy matters before then, update both by hand.
 
@@ -337,8 +348,9 @@ Un-archive recipe (also in {DEST}/.archive-manifest.md):
 
 ### Notes
 
-- **No-remote = BLOCK (deliberate).** A project with no upstream cannot clear Step 2(b). Rationale: the move leaves no copy inside the active workspace, so a remote backup is the safety net. All current projects have a remote, so this never spuriously blocks; if a genuinely local-only project must be archived, push it to a remote (or create one) first.
+- **No-remote = BLOCK (deliberate).** A project with no upstream cannot clear Step 2(b). Rationale: although the relocated repo stays on local disk under `archive/`, a remote backup is the defense-in-depth safety net (disk loss, accidental `archive/` deletion). All current projects have a remote, so this never spuriously blocks; if a genuinely local-only project must be archived, push it to a remote (or create one) first.
 - **Hard blocks vs. attestations.** (a) clean tree, (b) pushed, (f) no pending graduations are mechanical hard blocks — the command stops and the operator fixes them. (c) usage-analysis, (d) innovation-sweep, (e) Notion deliverables are operator-attested at the Step 4 gate; filesystem hints are shown but never substitute for confirmation.
 - **Stray symlinks outside `reference/skills/`** are counted and reported, never auto-deleted — they move with the folder.
 - **Destination collision** (`$DEST` already exists) aborts before the move — re-running after a successful archive gives a clean "not found / already archived" message at Step 1.
-- **Design-time gates (not runtime):** landing this command is a new-command structural change — run `/risk-check` once when adding it (autonomy rule #9). `/placement` was resolved at design time (index → `ai-resources/logs/archived-projects.md`; archive tier → `~/Claude Code/Axcion AI Archive/`). The command calls neither at runtime.
+- **In-workspace archive tier.** Archives land at `<workspace>/archive/{NAME}` — under the workspace (so they stay with the AI Repo), but OUTSIDE `projects/` so the `projects/*/` scans (`/fix-symlinks`, `/log-sweep`, `/friday-checkup`, this command's own picker) never re-enumerate them. The workspace repo is told to ignore `archive/` (Step 6), matching how `knowledge-bases/` and each nested project repo are already handled.
+- **Design-time gates (not runtime):** landing this command is a new-command structural change — run `/risk-check` once when adding it (autonomy rule #9). `/placement` was resolved at design time (index → `ai-resources/logs/archived-projects.md`; archive tier → `<workspace>/archive/`). The command calls neither at runtime.
