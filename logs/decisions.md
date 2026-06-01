@@ -385,3 +385,23 @@ Per `docs/audit-discipline.md` line 43: "RECONSIDER — redesign before proceedi
 **Alternatives considered.** (1) Option A registry — rejected per AP-10. (2) Marker-recency-only check — rejected: trusts the clobbered `.session-marker` oracle and false-positives on same-session `/prime` re-runs (the marker is used in Option B only as read-only enrichment, never as the detection signal). (3) PreToolUse write-to-session-notes guard — rejected: high firing frequency, overlaps the existing Step 0.5 / wrap Step 3.5 reactive guards, no proactive early warning. (4) TOCTOU Phase 4 structural rework — explicitly out of scope per the mandate (separate scheduled item).
 
 **Known limitation (accepted).** The process count is machine-wide, not project-scoped — a session in an unrelated project also triggers the warning. Best-effort tradeoff for a non-blocking warning; a future `lsof` cwd-scoping enhancement is documented in `docs/session-marker.md`.
+
+## 2026-06-01 (S2) — Context-Engine Phase 1: PASS, promote
+
+**Context.** Deferred S6/S9 evaluation of the context engine MVP. Scored 5 real engine packs (3 from prior dev work, 2 fresh) against the 6 Brief-1 criteria. Pass threshold: ≥3 of 5 tasks ≥4-of-6.
+
+**Decision.** PASS (5/5 tasks ≥4-of-6) → keep the engine and promote it past Phase 1.
+
+**Rationale.** Citations precise and verified-accurate on every spot-check (first-hand on 2 packs I executed this session). Criteria 1–5 met on all 5 packs. The only criterion-6 misses are inherently operator-gated tasks (`sufficient_to_implement: false` by honest design) — the engine's caution is a feature. QC REVISE applied (Pack 3 staleness settled via git; criterion-6 framing softened to a rubric recommendation, scores kept at 5/6).
+
+**Alternatives considered.** Run all 5 fresh (rejected — real-task packs are stronger evidence than synthetic test runs; used 3 real + 2 fresh). Defer again (rejected — multi-session carryover, operator chose to act).
+
+## 2026-06-01 (S2) — Marker-clobber guard: Option 1 rejected, escalate to Option 2
+
+**Context.** /wrap-session Step 3.5 marker-aware guard false-negatives when a concurrent /prime clobbers logs/.session-marker (incident 2026-05-29). Improvement-log specced Option 1 (a file-only clobber-suspicion sanity check).
+
+**Decision.** Option 1 REJECTED at the dry-run (after implementation + risk-check + system-owner concur); reverted clean. Escalate to Option 2 (per-process `CLAUDE_SESSION_MARKER` env var).
+
+**Rationale.** A temp-git fixture replaying the exact incident returned CLOBBER=0 FOREIGN=0 — the silent false-negative persisted. There is no clean file-only signal: in the real incident `.session-marker` reads the FOREIGN marker, so the foreign content matches MARKER while this session's own (committed) header is the "other." The uncommitted-only restriction (needed to avoid false-positives) therefore never fires on the incident; the broader signal false-positives on every second-or-later same-day session (rubber-stamp, AP-4). The clobber and benign-sequential cases are structurally identical in the files because the marker — the identity oracle — is the very thing clobbered. pgrep-at-wrap also unreliable (foreign session may have exited).
+
+**Alternatives considered.** Ship the broader any-other-marker signal (rejected — constant false-positives). pgrep-at-wrap (rejected — foreign session may have exited by wrap). Keep marker-as-oracle (rejected — root cause; Option 2 replaces it).

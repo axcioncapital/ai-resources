@@ -245,3 +245,11 @@
 - **QC cycles:** 1 (REVISE → 3 wording-level findings → fixes applied inline per Decision-Point Posture; no re-QC per `feedback_minimal_infra_subset`)
 - **Gates:** 5 (5 confirmed, 0 changed) — plan-approval:confirmed, plan-approval:confirmed, qc-disposition:confirmed, qc-disposition:confirmed, content-review:confirmed. /session-start mandate "y", /session-plan plan "go", Wave 2 RECONSIDER → "Fix", Wave 4 PROCEED-WITH-CAUTION → /decide → "b", wrap preflight "yy".
 - **Mandate fields:** specified: work_scope, exit_condition | inferred: files_in_scope | omitted: out_of_scope, stop_if, allowed_inputs, required_outputs
+
+### 2026-06-01 — Session S2: Monday-prep follow-up (push-policy fix + context-engine eval + marker-clobber rejection)
+- **Commands used:** /prime, /session-start, /session-plan, /risk-check ×2, /qc-pass ×2, /wrap-session; agents: context-discovery ×2, Explore ×1, risk-check-reviewer ×2, qc-reviewer ×2, system-owner ×1
+- **Iterations:** 1 (context-engine-phase1-eval draft → QC REVISE → corrected)
+- **Decisions logged:** 2 (context-engine PASS/promote; marker-clobber Option 1 rejected → Option 2)
+- **QC cycles:** 2 (push-policy fix GO; context-engine eval REVISE → 3 corrections applied → resolved)
+- **Gates:** 4 (3 changed) — direction-choice:changed (act-on-findings), implementation-triage:confirmed (do #3 full ceremony), risk-disposition:changed (Option 1 rejected at dry-run), preflight:confirmed
+- **Mandate fields:** specified: work_scope, exit_condition, out_of_scope, files_in_scope | omitted: stop_if, allowed_inputs, required_outputs

@@ -471,3 +471,25 @@
 - **/risk-check stale-premise pre-flight check (~10-20k tokens/recurrence).** Wave 2 RECONSIDER caught 3 of 4 settings.json edits already shipped by concurrent same-day commits. Adding a "git log since plan-write timestamp" check at /risk-check Step 1 — surfacing recent commits that may have invalidated the plan's premises — would catch this class deterministically rather than relying on subagent judgment. Smaller frequency than primary but huge per-occurrence saving.
 - **Evidence-grounding before spec drafting in /decide (~10-15k tokens/applicable-session).** This session's /decide call on Wave 4 ITEM A discovered the mechanical-mode rubric already existed via grep. Making "grep target docs for the concept the spec proposes to introduce" a Step 0 in /decide (and adjacent spec-drafting workflows) would amortize across novel-spec sessions. Smaller frequency than primary; high per-occurrence.
 - **Concurrent-session marker OWN/FOREIGN attribution fix (~1-2k tokens/wrap when collision fires; structural cleanliness > tokens).** Marker collision misfired this wrap; attribution muddled but content preserved. Lowest per-occurrence in tokens but standing pattern flagged in 4+ prior entries. Structural fix at the wrap-guard layer would close the recurring class.
+
+## 2026-06-01 (S2) — Monday-prep follow-up: push-policy fix + context-engine eval + marker-clobber rejection
+
+**Task:** Acted on 3 Monday-prep 2026-W23 items. (#1) 11-file project CLAUDE.md push-policy fix (11 repo commits). (#2) Context-Engine Phase 1 eval — PASS, promote. (#3) Marker-clobber guard Option 1 — implemented, risk-checked, dry-run-REJECTED, reverted, escalated to Option 2.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~9 |
+| Files read | ~22 (5 context packs, 2 wrap-session.md, build-context.md, settings.json, permission-template.md, friday-act.md, session-notes/improvement-log tails, 11 project CLAUDE.md windows) |
+| Files written/edited | ~28 (11 project CLAUDE.md, eval report, 2 risk-check reports + 2 appends, session-plan-S2, improvement-log ×2, session-notes ×2, decisions, coaching, usage-log, scratchpad, 4 wrap-session.md edits+reverts) |
+| Tool calls | ~62 (Bash ~22, Edit ~22, Read ~9, Write ~3, Skill ×6, Agent ×8, AskUserQuestion ×3) |
+| Subagents | 8 (risk-check-reviewer ×2, qc-reviewer ×2, Explore ×1, context-discovery ×2, system-owner ×1) |
+| Commits | 14 (11 project repos + 65b1f70 + 9ba4bef + wrap) |
+| Rework cycles | 2 (context-eval QC REVISE → 3 fixes; marker-clobber implement → dry-run reject → revert) |
+
+**Findings:**
+- **High subagent count (8) — mostly load-bearing.** 2 risk-checks gated genuine structural changes; 2 QC passes each caught a real defect (eval-report overclaim on "verified every spot-check"; and the marker-clobber dry-run rejection). The marker-clobber dry-run was the single highest-ROI event: it prevented shipping a guard that looked fixed but reproduced the original silent false-negative. Not ceremony — the validation layer working.
+- **Marker-clobber: ~3 subagents + a full implement/revert cycle spent to reach a REJECT.** Net output was a finding + escalation, not a shipped patch. This is correct (better than shipping broken), but signals the improvement-log's "Option 1, no risk-check needed, ~15 lines" framing under-scoped the problem by a wide margin — the reactive patch is undeliverable. Lever: when an improvement-log entry proposes a reactive patch over a known shared-mutable-oracle bug, flag at triage that the structural fix may be the only viable path before a session invests an implement cycle.
+- **session-notes.md tail re-read pattern recurs** (R4 lever) — read at /prime, re-read at wrap guard. Same standing pattern flagged 7+ entries.
+- **Decision-Point Posture saved asks** — picked recommended options at multiple junctures (engine-skip rationale, end-time risk-check skip) with inline rationale rather than operator prompts.
+
+**Recommendation:** Add a triage heuristic to `/resolve-repo-problem` / improvement-log intake: when a proposed fix is a *reactive detector* over a *shared-mutable-state oracle* bug, tag it "validate-before-invest — structural fix may be the only viable path" so a future session dry-runs the signal before a full implement cycle. Would have saved ~3 subagents + an implement/revert here.

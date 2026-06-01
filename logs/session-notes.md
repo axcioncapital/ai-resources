@@ -456,3 +456,47 @@ v1 unreleased (Phase 0–1 scaffolding). `harness/session/` holds week mandates 
 2. Context-engine Phase 1 evaluation + auto-fire smoke test + detect-innovation verification (carryover S6/S9).
 3. `/log-sweep` on over-threshold scopes; resolve improvement-log pre-existing change first.
 4. Decide CLAUDE.md mirror-block leanness; record to decisions.md.
+
+## 2026-06-01 — Session S2
+**Mandate:** Replace the contradicting "After committing, push automatically" line with the canonical gated/batched push wording across all 11 project CLAUDE.md files that carry it — done when: zero `push automatically` occurrences remain in any project CLAUDE.md and the commit has landed.
+- Out of scope: CLAUDE.md mirror-block leanness decision (separate Monday item #5); workspace-root + ai-resources canonical CLAUDE.md (already correct); axcion-ai-system-owner / global-macro-analysis / repo-documentation project files (no contradicting line)
+- Files in scope: projects/{ai-development-lab, axcion-brand-book, buy-side-service-plan, corporate-identity, interpersonal-communication, nordic-pe-macro-landscape-H1-2026, nordic-pe-screening-project, obsidian-pe-kb, personal/travel-os, project-planning, strategic-os}/CLAUDE.md
+- Stop if: (none stated)
+
+Fix the push-policy contradiction across all project CLAUDE.md files — every active project CLAUDE.md says "push automatically after commit", which contradicts the canonical gated/batched push rule (inverted 2026-05-29). Carryover from Monday-prep 2026-W23 mandate item 1.
+
+### Summary
+
+Session S2 acted on the Monday-prep 2026-W23 findings, closing three items. (#1) Fixed the push-policy contradiction: 11 project CLAUDE.md files said "After committing, push automatically" — replaced with the canonical gated/batched push wording; committed one per project repo (11 independent repos). (#2) Ran the deferred Context-Engine Phase 1 evaluation — scored 5 real engine packs against the 6 Brief-1 criteria, verdict PASS (5/5 tasks ≥4-of-6), recommend promote; QC returned REVISE and the fixes were applied. (#3) Implemented the marker-clobber guard Option 1 quick-patch, then REJECTED it at the mandatory dry-run before commit (it reproduced the original silent false-negative) and reverted both wrap-session.md files clean; escalated to the Option 2 structural fix.
+
+### Files Created
+
+- `audits/context-engine-phase1-eval-2026-06-01.md` — Phase 1 evaluation report (PASS, promote recommendation; QC-corrected).
+- `audits/risk-checks/2026-06-01-align-project-claude-md-push-policy-gated-batched.md` — GO risk-check gating the 11-file push-policy fix.
+- `audits/risk-checks/2026-06-01-wrap-session-step35-clobber-suspicion-sanity-check.md` — PROCEED-WITH-CAUTION risk-check; post-gate rejection outcome appended.
+- `logs/session-plan-S2.md` — session plan (push-policy fix).
+- `output/context-packs/architecture-20260601-a1c4f/pack.md`, `output/context-packs/command-20260601-c4e1a/pack.md` — 2 fresh engine packs for the eval (gitignored).
+- `projects/axcion-ai-system-owner/output/consultations/consult-2026-06-01-risk-check-second-opinion-wrap-session-clobber-guard.md` — system-owner second opinion.
+
+### Files Modified
+
+- 11 project CLAUDE.md files (push-policy wording) — committed one per project repo.
+- `logs/improvement-log.md` — 2026-05-29 marker-clobber entry status → Option-1-VALIDATED-REJECTED + full result.
+- `logs/session-notes.md`, `logs/decisions.md`, `logs/coaching-data.md`, `logs/usage-log.md` — wrap.
+
+### Decisions Made
+
+- **Context engine: PASS → promote past Phase 1.** Clears the Brief-1 bar with margin on real tasks; `sufficient_to_implement` honesty is the wanted safety property. Two low-priority tuning candidates (criterion-6 rubric, task-type classification).
+- **Marker-clobber Option 1: REJECTED → escalate to Option 2.** No clean file-only signal exists — the clobber and benign same-day-sequential cases are structurally identical because the marker (identity oracle) is the very thing clobbered. The structural fix (per-process `CLAUDE_SESSION_MARKER` env var) is the real solution.
+- **End-time `/risk-check` (Step 12b) skipped** per the documented skip rule: #1's plan-time risk-check was GO and committed; #3 was risk-checked and reverted (no net change shipped); drift bounded.
+
+### Next Steps
+
+1. `/log-sweep` on over-threshold logs (#4, deferred) — 5 project session-notes + improvement-log over threshold.
+2. Decide CLAUDE.md mirror-block leanness (#5, deferred); record to `decisions.md`.
+3. Flip `logs/decisions.md` Item 10 → friday-act auto-triage APPLIED (shipped `11dfd92`; surfaced by QC this session).
+4. Option 2 structural fix — session-scoped `CLAUDE_SESSION_MARKER` env var — dedicated `/risk-check`-gated session (closes the marker-clobber root cause + the S7-absorbed-S8-mandate TOCTOU class).
+
+### Open Questions
+
+None.
