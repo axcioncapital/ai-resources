@@ -282,7 +282,7 @@ Where `files_in_scope_written` is:
 - `(inferred)` — if `files_inferred = true` (operator did not state or correct this field)
 - the operator's stated/corrected value — if `files_inferred = false`
 
-Resolve this session's marker (see `docs/session-marker.md` § Marker resolution). If `MARKER` is empty, hard-fail per the uniform writer contract: `[/session-start Step 3] HARD-FAIL: logs/.session-marker absent or stale. Run /prime to populate the marker for this session, then retry.`
+Resolve this session's marker (see `docs/session-marker.md` § Marker resolution — per-session-id oracle first, loud fallback to the shared file). If `MARKER` is empty, hard-fail per the uniform writer contract: `[/session-start Step 3] HARD-FAIL: session marker unresolved (logs/.session-marker-${CLAUDE_CODE_SESSION_ID} and shared logs/.session-marker both absent or stale). Run /prime to populate the marker for this session, then retry.`
 
 Using the `logs/session-notes.md` content already read in Step 0 (re-read the last 10 lines if Step 2 took >30s — the marker-scoped header still requires a fresh read since Step 0's snapshot may be stale), locate this session's marker-bearing header.
 

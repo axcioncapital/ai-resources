@@ -10,7 +10,7 @@ Session orchestrator. Run after `/prime` to plan HOW the session will run before
 
 ## Step 0 — Confirm `/prime` ran this session, resolve marker, check for same-session re-invocation
 
-Read `logs/session-notes.md`. Resolve this session's marker via `docs/session-marker.md` § Marker resolution. If `MARKER` is empty (absent or stale), hard-fail per the uniform writer contract: `[/session-plan Step 0] HARD-FAIL: logs/.session-marker absent or stale. Run /prime to populate the marker for this session, then retry.`
+Read `logs/session-notes.md`. Resolve this session's marker via `docs/session-marker.md` § Marker resolution (per-session-id oracle first, loud fallback to the shared file). If `MARKER` is empty (absent or stale), hard-fail per the uniform writer contract: `[/session-plan Step 0] HARD-FAIL: session marker unresolved (logs/.session-marker-${CLAUDE_CODE_SESSION_ID} and shared logs/.session-marker both absent or stale). Run /prime to populate the marker for this session, then retry.`
 
 Locate the marker-bearing header `## YYYY-MM-DD — Session ${MARKER}` in `session-notes.md`. If absent, hard-fail: `[/session-plan Step 0] HARD-FAIL: this session's marker-bearing header missing from logs/session-notes.md. Run /prime to seed the header.`
 

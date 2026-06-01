@@ -32,6 +32,8 @@ logs/.prime-mtime
 
 # Per-session identity marker written by /prime (Phase 1 of TOCTOU-mitigation rollout per logs/improvement-log.md TOCTOU entry)
 logs/.session-marker
+# Per-session-id identity oracle (Option 2′, keyed by CLAUDE_CODE_SESSION_ID — un-clobberable by a concurrent /prime; see docs/session-marker.md)
+logs/.session-marker-*
 
 # Archived inbox briefs (Layer C settings.json also denies Read on this path)
 inbox/archive/

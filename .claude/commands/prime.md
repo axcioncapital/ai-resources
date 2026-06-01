@@ -169,6 +169,13 @@ Full backlog & inbox: /open-items
          fi
          MARKER="S${N}"
          echo "${TODAY} ${MARKER}" > logs/.session-marker
+         # Identity oracle (Option 2′): also write a per-session-id marker file no concurrent /prime can clobber.
+         [ -n "${CLAUDE_CODE_SESSION_ID}" ] && echo "${TODAY} ${MARKER}" > "logs/.session-marker-${CLAUDE_CODE_SESSION_ID}"
+         # Orphan cleanup: prune per-id marker files not dated today.
+         for f in logs/.session-marker-*; do
+           [ -f "$f" ] || continue
+           case "$(cat "$f" 2>/dev/null)" in "${TODAY} "*) ;; *) rm -f "$f";; esac
+         done
          ```
 
          Same-day re-invocations increment within the day (`S1` → `S2` → …); a new day resets to `S1`.
@@ -212,6 +219,13 @@ Full backlog & inbox: /open-items
          fi
          MARKER="S${N}"
          echo "${TODAY} ${MARKER}" > logs/.session-marker
+         # Identity oracle (Option 2′): also write a per-session-id marker file no concurrent /prime can clobber.
+         [ -n "${CLAUDE_CODE_SESSION_ID}" ] && echo "${TODAY} ${MARKER}" > "logs/.session-marker-${CLAUDE_CODE_SESSION_ID}"
+         # Orphan cleanup: prune per-id marker files not dated today.
+         for f in logs/.session-marker-*; do
+           [ -f "$f" ] || continue
+           case "$(cat "$f" 2>/dev/null)" in "${TODAY} "*) ;; *) rm -f "$f";; esac
+         done
          ```
 
          Read the last ~10 lines of `logs/session-notes.md`: if `## YYYY-MM-DD — Session ${MARKER}` is already present, reuse and append `TASK_TEXT`. Else create new `## YYYY-MM-DD — Session ${MARKER}` header with `TASK_TEXT`.
@@ -254,6 +268,13 @@ Full backlog & inbox: /open-items
       fi
       MARKER="S${N}"
       echo "${TODAY} ${MARKER}" > logs/.session-marker
+      # Identity oracle (Option 2′): also write a per-session-id marker file no concurrent /prime can clobber.
+      [ -n "${CLAUDE_CODE_SESSION_ID}" ] && echo "${TODAY} ${MARKER}" > "logs/.session-marker-${CLAUDE_CODE_SESSION_ID}"
+      # Orphan cleanup: prune per-id marker files not dated today.
+      for f in logs/.session-marker-*; do
+        [ -f "$f" ] || continue
+        case "$(cat "$f" 2>/dev/null)" in "${TODAY} "*) ;; *) rm -f "$f";; esac
+      done
       ```
 
       Read last ~10 lines of `logs/session-notes.md`: if `## YYYY-MM-DD — Session ${MARKER}` is present, reuse and append the work-description line. Else create new `## YYYY-MM-DD — Session ${MARKER}` header.

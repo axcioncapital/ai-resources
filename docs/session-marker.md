@@ -8,36 +8,74 @@ Source proposal: `ai-resources/logs/improvement-log.md` lines 73-138 ("Concurren
 
 ---
 
-## Marker file
+## Marker files
+
+Two files, written together by `/prime`. The per-session-id file is the **identity oracle**; the shared file is the **same-day `S{N}` counter** plus back-compat (Option 2′, shipped 2026-06-01).
+
+### Identity oracle — `logs/.session-marker-${CLAUDE_CODE_SESSION_ID}` (PRIMARY)
+
+**Path:** `logs/.session-marker-${CLAUDE_CODE_SESSION_ID}` (cwd-relative). `CLAUDE_CODE_SESSION_ID` is injected into every Bash tool call by the harness.
+
+**Format:** one line: `{YYYY-MM-DD} S{N}` — e.g., `2026-06-01 S5`.
+
+**Gitignore:** YES — `logs/.session-marker-*`. Per-machine, per-session state, not committed.
+
+**Why it exists:** the shared `logs/.session-marker` is a single mutable file — a concurrent `/prime` in another session **overwrites** it, and any reader (the wrap guard especially) then resolves the *wrong* marker silently. Keying the marker by the session id removes the shared-mutable oracle: a concurrent session writes a *different* file (different id), so it cannot clobber this session's marker. The silent false-negative the wrap guard exists to catch can no longer occur, because the oracle is no longer the thing being clobbered. See `logs/improvement-log.md` "Option 2′" entry and `audits/option2-marker-redesign-2026-06-01.md`.
+
+**Lifetime:** written by `/prime` at session start, alongside the shared file. Pruned by `/prime` (orphan cleanup) when not dated today.
+
+### Same-day counter — `logs/.session-marker` (RETAINED, back-compat + S{N} lookup)
 
 **Path:** `logs/.session-marker` (cwd-relative, in the git root of the active project / ai-resources).
 
 **Format:** one line: `{YYYY-MM-DD} S{N}` — e.g., `2026-05-30 S1`.
 
-**Gitignore:** YES. Per-machine session state, not committed. Already present in `.gitignore` (from Phase 1 commit `ea93d62`).
+**Gitignore:** YES. Per-machine session state, not committed. Present in `.gitignore` from Phase 1 commit `ea93d62`.
 
 **Lifetime:** written by `/prime` at session start. Overwritten by `/prime` on same-day re-invocation (`S1` → `S2` → ...). A new day resets to `S1`.
+
+**Role at v1:** still serves the same-day `S{N}` increment lookup and back-compat / loud-fallback. It is **no longer the identity oracle** — removing it entirely is a separable later change (DR-7/AP-7), deliberately deferred. Concurrent same-day `/prime`s can still race on the *number* here (both compute S2), but that is a benign cosmetic collision — identity comes from the per-id file, so attribution is never corrupted.
 
 ---
 
 ## Marker resolution (canonical pattern — every consumer uses this shape)
 
+Resolve the **per-session-id identity oracle first**; fall back **loudly** to the shared file only if the oracle is unavailable (older CLI without the harness var, or per-id file missing/stale).
+
 ```bash
 TODAY=$(date '+%Y-%m-%d')
-if [ -f logs/.session-marker ]; then
-  CONTENT=$(cat logs/.session-marker)
-  FILE_DATE="${CONTENT%% *}"
-  if [ "$FILE_DATE" = "$TODAY" ]; then
-    MARKER="${CONTENT##* }"
-  else
-    MARKER=""  # stale (different day)
-  fi
-else
-  MARKER=""  # absent
+MARKER=""
+# PRIMARY — per-session-id identity oracle (un-clobberable by a concurrent /prime).
+if [ -n "${CLAUDE_CODE_SESSION_ID}" ] && [ -f "logs/.session-marker-${CLAUDE_CODE_SESSION_ID}" ]; then
+  CONTENT=$(cat "logs/.session-marker-${CLAUDE_CODE_SESSION_ID}" 2>/dev/null)
+  [ "${CONTENT%% *}" = "$TODAY" ] && MARKER="${CONTENT##* }"
+fi
+# LOUD FALLBACK (principles.md § OP-3) — var absent (old CLI) OR per-id file missing/stale, but shared file present.
+if [ -z "${MARKER}" ] && [ -f logs/.session-marker ]; then
+  echo "[marker] Note: CLAUDE_CODE_SESSION_ID-keyed marker unavailable — falling back to shared logs/.session-marker (clobber-vulnerable)."
+  CONTENT=$(cat logs/.session-marker 2>/dev/null)
+  [ "${CONTENT%% *}" = "$TODAY" ] && MARKER="${CONTENT##* }"
 fi
 ```
 
-If `MARKER` is empty after this block, the consumer chooses handling per role (see asymmetric contract below).
+If `MARKER` is empty after this block (both oracles absent/stale), the consumer chooses handling per role (see asymmetric contract below). The loud-fallback line makes the degraded path visible — silent regression to the clobberable shared file cannot happen quietly.
+
+---
+
+## Harness-var dependency — `CLAUDE_CODE_SESSION_ID`
+
+The identity oracle depends on a harness-injected environment variable. This crosses the deliberately-held `OP-10` harness boundary, so it is governed explicitly here (`OP-11`: treat a CLI upgrade as a re-verify event).
+
+**Two assumed properties** (both probed live in the running CLI on 2026-06-01):
+
+1. **Stable within a session** — the same value is returned across separate Bash tool calls in one session (each tool call is a fresh shell, yet the var persists because the harness re-injects it). Verified: two separate Bash calls returned `bd44a70e-a522-4d0c-879d-ab4db87284f6` identically.
+2. **Distinct across sessions** — each session gets a unique id, so a concurrent session writes a different per-id file and cannot clobber this one.
+
+**The loud fallback bounds *absence*, not *changed meaning*.** If a future/older CLI lacks the var, resolution falls loudly to the shared file (current behavior restored, visibly). But the fallback does NOT protect against the var's *meaning* changing — e.g., a `/compact` resume that re-keys the session to a new id. In that case the earlier per-id file is orphaned and resolution falls through to the loud fallback. **This is an expected loud-fallback path, not a bug** — document any new resume-rekeying behavior here if observed.
+
+**Re-verify trigger:** on any Claude Code CLI upgrade, re-probe that `CLAUDE_CODE_SESSION_ID` is still present and stable-within / distinct-across. The var is treated as contractual based on the live probe, not on a published guarantee.
+
+**Orphan accumulation:** per-id files accumulate (one per session). `/prime` prunes `logs/.session-marker-*` not dated today at session start. Files are small and gitignored, so worst-case harm is negligible.
 
 ---
 
@@ -51,7 +89,7 @@ If `MARKER` is empty after this block, the consumer chooses handling per role (s
 
 Hard-fail shape (single loud line per `principles.md § OP-3`):
 
-> `[/{command} Step {N}] HARD-FAIL: logs/.session-marker absent or stale. Run /prime to populate the marker for this session, then retry.`
+> `[/{command} Step {N}] HARD-FAIL: session marker unresolved (logs/.session-marker-${CLAUDE_CODE_SESSION_ID} and shared logs/.session-marker both absent or stale). Run /prime to populate the marker for this session, then retry.`
 
 **Read-only auxiliary consumers** (tolerate marker absent/stale by falling through to alternate sources):
 
@@ -86,8 +124,8 @@ Every place the marker contract is consumed must point back to this doc. Adding 
 
 **Writers** (hard-fail on marker absent/stale):
 
-- `ai-resources/.claude/commands/prime.md` — Steps 8a.3.a / 8b.3.a / 8c.3 (marker write + header) and Step 8c.8 (auto-mode plan write).
-- `ai-resources/.claude/commands/session-start.md` — Step 3 (header location).
+- `ai-resources/.claude/commands/prime.md` — Steps 8a.3.a / 8b.3.a / 8c.3 (writes BOTH the shared file and the per-session-id identity oracle `logs/.session-marker-${CLAUDE_CODE_SESSION_ID}`, plus orphan-prune of stale per-id files) and Step 8c.8 (auto-mode plan write).
+- `ai-resources/.claude/commands/session-start.md` — Step 3 (header location; resolves marker per-id-first).
 - `ai-resources/.claude/commands/session-plan.md` — Step 0 (header gate) and Step 7 (plan write).
 
 **Read-only auxiliary consumers** (tolerate marker absent/stale):
@@ -124,7 +162,7 @@ The Phase 2-only spec attempted a staged rollout with a `logs/session-plan.md` s
 
 ## Concurrent-session detection (proactive early-warning layer)
 
-The marker protocol above makes per-session writes safe **structurally**. Two reactive guards detect a foreign write *after* it lands: `session-start.md` Step 0.5 (mtime guard at mandate-read) and `wrap-session.md` Step 3.5 (foreign-write guard at notes-write). Both trust the shared-mutable marker files and so can be clobbered (improvement-log TOCTOU race class).
+The marker protocol above makes per-session writes safe **structurally**. Two reactive guards detect a foreign write *after* it lands: `session-start.md` Step 0.5 (mtime guard at mandate-read) and `wrap-session.md` Step 3.5 (foreign-write guard at notes-write). As of Option 2′ (2026-06-01), `wrap-session.md` Step 3.5 resolves its marker from the **per-session-id identity oracle** (`logs/.session-marker-${CLAUDE_CODE_SESSION_ID}`), which a concurrent `/prime` cannot clobber — so the guard's own-contribution attribution is no longer vulnerable to the original clobber race. (`session-start.md` Step 0.5 reads `logs/.prime-mtime`, a different marker, and is outside the Option 2′ oracle.)
 
 `.claude/hooks/detect-concurrent-session.sh` (SessionStart hook, shipped 2026-06-01, DR-8 gate) adds a **proactive** layer: at session start it warns the operator if another Claude Code session is already running, *before* any write can collide. It supplements — does not duplicate — the two reactive guards (different trigger timing: session-open vs. per-command-write; different mechanism: OS process signal vs. file mtime).
 

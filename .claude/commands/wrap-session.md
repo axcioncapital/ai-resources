@@ -80,7 +80,17 @@ Accept shorthand: "yy" / "yes all" / "all" = both yes; "nn" / "skip all" = both 
    # Two paths: marker-aware (preferred, post-Phase-2+3) and PRIME_RAN binary (legacy fallback).
    # See PAIRED CONTRACT block above for the attribution rationale.
    MARKER=""
-   if [ -f logs/.session-marker ]; then
+   # Identity oracle (Option 2′): this session's per-session-id marker file, un-clobberable by a foreign /prime.
+   # See docs/session-marker.md § Marker resolution. This is the payoff: the oracle is no longer the thing being clobbered.
+   if [ -n "${CLAUDE_CODE_SESSION_ID}" ] && [ -f "logs/.session-marker-${CLAUDE_CODE_SESSION_ID}" ]; then
+     MARKER_LINE=$(cat "logs/.session-marker-${CLAUDE_CODE_SESSION_ID}" 2>/dev/null)
+     case "${MARKER_LINE}" in
+       "${TODAY} "*) MARKER=$(echo "${MARKER_LINE}" | awk '{print $2}');;
+     esac
+   fi
+   # LOUD FALLBACK (OP-3): var absent (old CLI) or per-id file missing/stale, but shared file present (clobber-vulnerable).
+   if [ -z "${MARKER}" ] && [ -f logs/.session-marker ]; then
+     echo "[wrap Step 3.5] Note: CLAUDE_CODE_SESSION_ID-keyed marker unavailable — falling back to shared logs/.session-marker (clobber-vulnerable)."
      MARKER_LINE=$(cat logs/.session-marker 2>/dev/null)
      case "${MARKER_LINE}" in
        "${TODAY} "*) MARKER=$(echo "${MARKER_LINE}" | awk '{print $2}');;
