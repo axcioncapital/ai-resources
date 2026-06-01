@@ -490,3 +490,53 @@ None. The command designs destructive ops (symlink delete, folder move) but noth
 
 ### Open Questions
 None blocking.
+
+## 2026-06-01 — Session S4 — /fix-repo-issues plan + in-session execution
+
+### Summary
+Ran `/fix-repo-issues` (scopes: ai-resources + nordic-pe-screening-project), then executed the resulting plan **in the same session** at operator direction ("Execute here") — a deliberate override of the command's two-session contract. Four backlog items processed: three applied (each QC GO), one deferred with a structural concern surfaced. Two of the plan's own assumptions proved wrong on contact with the files and were corrected rather than executed blind (id-03 deferred, id-04 reshaped from migrate→reciprocal-pointer).
+
+### Files Created
+- `audits/fix-plans/fix-repo-issues-2026-06-01-1917.md` — the fix plan (4 items, 2 scopes)
+- `audits/working/fix-repo-issues-2026-06-01-1917-ai-resources.md` — scanner notes (gitignored)
+- `audits/working/fix-repo-issues-2026-06-01-1917-project-nordic-pe-screening-project.md` — scanner notes (gitignored)
+- `logs/scratchpads/2026-06-01-20-15-scratchpad.md` — continuity scratchpad
+
+### Files Modified
+- `.claude/commands/wrap-session.md` (canonical) — both MIRROR NOTEs (6.4/6.5) updated to record the workspace-root port
+- `.claude/commands/resolve-improvement-log.md` — Step 7a/7b rewritten to append-only (id-02)
+- `logs/improvement-log.md` — id-40 + id-37 entries flipped to applied + verified
+- `/.claude/commands/wrap-session.md` (workspace-root repo) — id-01 port: Step 0.4 preflight, Step 2 schema (`### Outcome` + `### Risky actions`), Steps 4.4 / 4.5, Step 5 staging
+- `projects/nordic-pe-screening-project/pipeline/decisions.md` (nordic repo) — id-04 reciprocal pointer
+
+### Decisions Made
+- **id-01 (applied):** Port wrap-session 6.4/6.5 → workspace-root 4.4/4.5; added single-toggle preflight (telemetry/coaching bundle N/A at workspace root). QC GO.
+- **id-02 (applied):** Option 1 append-only rewrite of resolve-improvement-log Step 7; command adapted to the deny rule, not the rule loosened. QC GO.
+- **id-03 (deferred — Claude judgment, not operator-directed):** Did NOT edit live v4.4 screening criteria — finalized today mid-S5, qc-reviewed, scope deliberately excluded the G4 change; no live correctness gap (GreenGold already excluded via out-of-scope route). Belongs in a deliberate v4.5 / W2 pass.
+- **id-04 (corrected — Claude judgment):** Plan assumed redundancy + migration; the two decisions files are a deliberate documented split. Did NOT merge (would destroy the separation); added only the missing reciprocal pointer. QC GO.
+
+### Outcome
+COMPLETION: DELIVERED — 3 items applied (verified in files, not just claimed: resolve-improvement-log Step 7 is genuinely append-only with no archive Read; workspace-root wrap-session carries Step 0.4 / 4.4 / 4.5 + schema + staging; nordic reciprocal pointer present both ways; both improvement-log entries flipped). id-03 deferral is in-mandate per the Assumptions Gate (operator twice declined the G4 naming as out-of-scope, decisions #23/#24; live v4.4 finalized mid-run; GreenGold already excluded → no correctness gap).
+EXECUTION: OPTIMAL — independent qc-reviewer GO on each applied item; clean commits across 3 repos; the session self-corrected two wrong plan assumptions (id-03 defer, id-04 reshape) rather than executing blind; no rework or wasted scans observed.
+Confidence: high. Source: the /fix-repo-issues plan (de-facto mandate; no /session-start ran).
+
+### Risky actions
+None executed. Notably AVERTED a risky action: declined to edit just-finalized live screening criteria (id-03) mid-S5-run; surfaced the structural concern instead per the Assumptions Gate. No destructive git ops, no pushes, no external writes, no deletions.
+
+### Session Assessment
+(wrap-collector, 2026-06-01)
+- Autonomy-compounding: no signal — id-03/id-04 self-corrected wrong plan assumptions (healthy, not a signal).
+- Leanness/cost: 1 signal — known archive-read-deny defect in improve.md/improvement-analyst left untracked; logged to improvement-log for Friday triage.
+- Principle-drift: no logged entry — /fix-repo-issues two-session contract overridden, but operator-directed and conscious; watch only.
+- Friction: no signal — no operator correction, no repeated feedback.
+- Safety: none observed — the risky live-criteria edit (id-03) was correctly AVERTED via the Assumptions Gate (the gate working, not a gap).
+- Routed: 1→improvement-log, 0→friction-log.
+
+### Next Steps
+- Resolve ai-resources divergence (11 ahead / 1 behind — remote `4d72509` not local) via rebase/merge before any push.
+- id-03: handle the G4 timberland/natural-resource naming in a deliberate nordic criteria-revision session (v4.5) or via W2 absorption.
+- Log a separate backlog entry for the `improve.md` / `improvement-analyst` archive de-dup scan, which hits the same `Read(logs/*archive*.md)` deny (flagged in id-02's entry, NOT fixed).
+- Decide on a nordic-pe-screening GitHub remote (blocks pushing `372af26` and blocks archiving nordic).
+
+### Open Questions
+None blocking.

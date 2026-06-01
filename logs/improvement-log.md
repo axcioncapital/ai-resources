@@ -230,3 +230,11 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Friction source:** session-feedback-collector + outcome-check builds 2026-06-01 — deferred workspace-root mirror (structural divergence: no preflight, `### Files Changed` schema vs split Created/Modified, different step numbers)
 - **Proposal:** Port BOTH new optional passes into the independent non-symlink workspace-root `/.claude/commands/wrap-session.md`: (a) the preflight feedback toggle + `### Risky actions` line + Step 6.5 feedback collection; (b) the preflight outcome-check toggle + Step 6.4 outcome check (which would supersede the workspace-root's lighter self-authored `### Session Report` in its Step 2b). Adapt to the copy's leaner structure (no preflight block today; `### Files Changed` schema). Keep the toggles + steps + risky-actions/outcome blocks in sync with canonical as a two-end contract (a `PAIRED CONTRACT` marker already governs the foreign-session guard between the two copies). Until done, both features are canonical-only — they auto-propagate to the ~16 project symlinks but not to workspace-level wraps.
 - **Target files:** `/.claude/commands/wrap-session.md` (workspace root), `ai-resources/.claude/commands/wrap-session.md` (sync source)
+
+### 2026-06-01 — improve.md / improvement-analyst archive de-dup scan hits Read(logs/*archive*.md) deny
+- **Status:** logged (pending)
+- **Category:** session-feedback
+- **Provenance:** wrap-collector (machine-authored) 2026-06-01
+- **Friction source:** wrap-collector 2026-06-01 — leanness/process (latent defect surfaced in S4 /fix-repo-issues id-02, explicitly flagged NOT fixed and Next-Steps item 3 asks for a separate backlog entry)
+- **Proposal:** Rewrite the `improvement-analyst` archive de-dup scan (and any `improve.md` step that reads the archive) to avoid `Read(logs/*archive*.md)`, mirroring the append-only Option 1 fix landed for `/resolve-improvement-log` Step 7 in id-02. The same `ai-resources/.claude/settings.json` archive read-deny blocks this scan; it silently degrades de-dup when archive lookup is needed. Decide whether to drop the archive read entirely or route it through a permitted mechanism.
+- **Target files:** `ai-resources/.claude/agents/improvement-analyst.md` (archive de-dup scan), `ai-resources/.claude/commands/improve.md` (if it reads the archive)
