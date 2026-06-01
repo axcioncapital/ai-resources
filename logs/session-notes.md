@@ -463,3 +463,30 @@ None. Work was confined to ai-resources; only local commits (no push, no deletio
 
 ### Open Questions
 None blocking.
+
+## 2026-06-01 — Created /archive-project capstone command
+
+### Summary
+Designed and shipped a new capstone command `/archive-project` after the operator asked what system the System Owner would propose for archiving a finished project (trigger: completed `nordic-pe-macro-landscape-H1-2026`). Scoped via `/clarify` to a single lean command: blocking pre-archive checklist → symlink removal → whole-folder move (with `.git`) outside the workspace to `~/Claude Code/Axcion AI Archive/{name}/` → permanent index + restore manifest. Added an interactive numbered project picker (choose by number when no name is passed). Verified with QC (GO) and plan-time `/risk-check` (PROCEED-WITH-CAUTION, all mitigations satisfied) plus a System Owner second opinion.
+
+### Files Created
+- `.claude/commands/archive-project.md` — the capstone command (`model: sonnet`)
+- `audits/risk-checks/2026-06-01-archive-project-command.md` — risk-check report + architectural commentary
+- `logs/scratchpads/2026-06-01-18-25-scratchpad.md` — continuity scratchpad
+- `projects/axcion-ai-system-owner/output/consultations/consult-2026-06-01-risk-check-second-opinion-archive-project.md` — System Owner advisory (separate project repo; not staged in this commit)
+
+### Files Modified
+None (the command file was created and refined within this session).
+
+### Decisions Made
+Operator-directed (via `/clarify`): scope = single capstone command; destination = move outside workspace; symlinks = remove; checklist = guided + blocking. Follow-up: project name optional → numbered picker. QC hardening folded in: self-contained-repo guard + documented no-remote = hard block. System Owner second opinion fix: Step 9 staging note flags `risk-topology.md` + `repo-state.md` as going stale on archive.
+
+### Risky actions
+None. The command designs destructive ops (symlink delete, folder move) but nothing destructive was executed this session — only the command file + reports were written.
+
+### Next Steps
+- First real use: `/archive-project nordic-pe-macro-landscape-H1-2026 --dry-run`. Nordic is currently dirty + 1 commit ahead, so it will correctly trip the hard gates until committed + pushed.
+- Index `logs/archived-projects.md` and the `~/Claude Code/Axcion AI Archive/` tier are created on first real run (not pre-created).
+
+### Open Questions
+None blocking.
