@@ -388,3 +388,43 @@ None.
 - Context pack: output/context-packs/architecture-20260601-b4f2a/pack.md
 
 Fix all open items except inbox briefs (operator: "fix all except inbox briefs", scope confirmed "do everything now"): (1) flip decisions.md Item 10 → friday-act auto-triage APPLIED; (2) run /log-sweep on over-threshold logs; (3) decide CLAUDE.md mirror-block leanness + record to decisions.md; (4) Option 2 structural marker fix (session-scoped CLAUDE_SESSION_MARKER env var) as a /risk-check-gated wave — closes both open friction items (TOCTOU concurrent-session races + wrap-session Step 3.5 guard false-positive).
+
+### Summary
+
+4-wave Gated session. Waves 1–3 (maintenance + decision) executed; Wave 4 (the structural marker fix) landed as a GO-eligible design spec rather than being implemented — operator's call after a mid-session finding reframed the work. **Wave 1:** decisions.md Item 10 (friday-act auto-triage) flipped deferred → APPLIED (shipped `11dfd92`). **Wave 2:** /log-sweep across 11 scopes archived 5 active over-threshold logs (reconciled 3 auditor classification errors first). **Wave 3:** CLAUDE.md mirror-block leanness decided (risk-tiered trim) and recorded; 13-file execution deferred to a gated session. **Wave 4:** the improvement-log's Option 2 ("env var set at /prime") was **proven infeasible** (exported env vars don't persist across Bash tool calls); redesigned as Option 2′ keyed by the harness-injected `CLAUDE_CODE_SESSION_ID`; plan-time /risk-check PROCEED-WITH-CAUTION + system-owner concur; operator chose land-design-implement-fresh.
+
+### Files Created
+
+- `audits/log-sweep-2026-06-01.md` — /log-sweep report (11 scopes, 5 archived).
+- `audits/working/log-sweep-manifest-2026-06-01.md` + 11 per-scope working notes — gitignored, kept local.
+- `audits/option2-marker-redesign-2026-06-01.md` — Option 2′ GO-eligible design spec + completion criteria.
+- `audits/risk-checks/2026-06-01-option2-marker-redesign-claude-session-id-keyed.md` — plan-time /risk-check report + system-owner second opinion.
+- `logs/session-plan-S3.md` — session plan (overwrote a stale 2026-05-29 S3 plan — cross-day marker collision, noted as a side finding).
+- `logs/scratchpads/2026-06-01-12-44-scratchpad.md` — continuity scratchpad.
+- `projects/axcion-ai-system-owner/output/consultations/consult-2026-06-01-option2-marker-redesign-risk-check-second-opinion.md` — SO Function-B advisory.
+
+### Files Modified
+
+- `logs/decisions.md` — Wave 1 Item 10 flip (relocated to archive) + Wave 3 mirror-block decision; then /log-sweep-archived (409→35).
+- `logs/decisions-archive-2026-05.md` — +20 entries (incl. the Item 10 APPLIED flip).
+- `logs/session-notes.md` — S3 mandate + this wrap; /log-sweep-archived (512→390).
+- `logs/session-notes-archive-2026-05.md` — +2 ai-resources entries.
+- `logs/improvement-log.md` — marker-clobber entry: Option-2-infeasible finding + Option 2′ GO-eligible status.
+- interpersonal-communication repo: `logs/session-notes.md` (523→479) + `logs/usage-log.md` (541→276) + their `-archive-2026-05.md` files.
+- nordic-pe-macro-landscape-H1-2026 repo: `logs/session-notes.md` (520→411) + `logs/session-notes-archive-2026-05.md`.
+
+### Decisions Made
+
+- **Item 10 → APPLIED** (bookkeeping; shipped `11dfd92` via direct-edit not /improve-skill).
+- **CLAUDE.md mirror-block: risk-tiered trim** — trim Compaction + Session Boundaries to pointers, keep Input-File + Commit safety blocks verbatim, amend § CLAUDE.md Scoping (logged to decisions.md; execution deferred).
+- **Option 2 infeasible → Option 2′** (CLAUDE_CODE_SESSION_ID-keyed marker); GO-eligible spec, implementation deferred to a fresh session (logged to improvement-log + risk-check report).
+- **Wave 4 sequencing: land design, implement fresh** — operator AskUserQuestion choice, consciously revising the mandate's literal Wave-4 exit.
+
+### Next Steps
+
+1. **Implement Option 2′ marker fix** in a dedicated session — GO-eligible spec at `audits/option2-marker-redesign-2026-06-01.md`; atomic 9-consumer commit, per-consumer manifest first. Closes both open friction items.
+2. **Execute the CLAUDE.md mirror-block trim** in a gated session (cross-cutting CLAUDE.md edit → own /risk-check).
+
+### Open Questions
+
+None blocking. The two open friction items (TOCTOU races + wrap-session guard false-positive) remain open by design — they close when Option 2′ is implemented (Next Step 1).
