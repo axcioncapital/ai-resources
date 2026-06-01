@@ -98,13 +98,14 @@ Wait for the operator's reply. Accept the same shapes as Step 6 (`y`, `n`, `sele
 
 7. **Archive procedure:**
 
-   a. **Open or create** `ai-resources/logs/improvement-log-archive.md`. If missing, create with exactly these first two lines:
-      ```
-      # Improvement Log — Archive
+   **Append-only — do NOT read the archive.** `ai-resources/.claude/settings.json` denies `Read(logs/*archive*.md)` (line 32), which matches `improvement-log-archive.md`. Any "read archive → merge → sort → rewrite" path is blocked by that deny and silently breaks the moment an earlier-dated entry needs archiving. This procedure therefore appends only, and never reads the archive file. The active log's outgoing order IS the canonical chronological order (entries accumulate oldest→newest top-to-bottom), so archive-time append order preserves chronology without a re-sort. **Do not "optimize" this back to a read-merge-sort path — it will hit the deny rule.**
 
+   a. **Create the archive if missing — without reading it.** Run via Bash (a test-then-create guard; never `Read`/`Write` against the archive path, since both would trip the deny or its Read-before-Write requirement):
+      ```bash
+      test -f ai-resources/logs/improvement-log-archive.md || printf '# Improvement Log — Archive\n\n' > ai-resources/logs/improvement-log-archive.md
       ```
 
-   b. **Append** each selected entry verbatim (full content, preserving all markdown) to the archive file, in chronological order (oldest first). If the archive already has entries, insert new ones in chronological position — do not just append if it breaks ordering. Simpler implementation: read archive entries, merge with new ones, sort by the date in the `### YYYY-MM-DD — ...` header, rewrite archive file.
+   b. **Append** each selected entry verbatim (full content, preserving all markdown) to the **end** of the archive file, in the order the entries appear in the active log (oldest first, i.e. top-to-bottom). Use a Bash heredoc append (`cat >> ai-resources/logs/improvement-log-archive.md <<'EOF' … EOF`) — the entry text is already in context from the Step 1 read of the active log, so no archive read is needed. Do NOT merge, sort, or rewrite the archive; append-to-end only.
 
    c. **Remove** the selected entries from active `improvement-log.md`. Use `Edit` with the exact entry text (from start of `### ` line through the line before the next `### ` or EOF). Verify by reading the modified file — the removed entries must no longer appear and no formatting fragments should remain.
 

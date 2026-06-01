@@ -258,7 +258,7 @@ Accept shorthand: "yy" / "yes all" / "all" = both yes; "nn" / "skip all" = both 
 6.4. **Session outcome check — "did Claude do the job, and do it well?"** Produces an independent two-dimension verdict on this session: did it deliver its mandate (completion), and did it deliver by a good path (execution quality). Advisory only — nothing here blocks the commit or push.
 
    <!--
-   MIRROR NOTE — keep in sync when the workspace-root Phase-3 copy gains this step (see the deferred-mirror entry in improvement-log.md, which now covers BOTH Step 6.4 and Step 6.5). The workspace-root copy has a lighter self-authored `### Session Report` (its Step 2b) that this independent check supersedes once mirrored.
+   MIRROR NOTE — PORTED 2026-06-01 to the workspace-root copy as its Step 4.4 (positioned before that copy's Step 5 commit). Keep the two in sync on future edits. The workspace-root copy retains a lighter self-authored `### Session Report` (its Step 2b) whose `**Completed:**` line this independent check supersedes; Step 2b's operator questions remain unique to it.
    -->
 
    - **Gate.** If the operator declined the outcome check in the preflight, skip and note "Outcome check skipped per preflight" in chat. If the session was trivial (single-file edit, one-question read, aborted session), skip with "Outcome check skipped — trivial session" — your judgment call, same standard as the Step 0.5 / Step 12 skips; do not ask the operator.
@@ -287,8 +287,8 @@ Accept shorthand: "yy" / "yes all" / "all" = both yes; "nn" / "skip all" = both 
 6.5. **Session feedback collection.** Closes a feedback loop back into the system: a fresh-context subagent extracts per-session signals against the goal-state dimensions and routes them to existing stores the Friday cadence consumes. Advisory only — nothing here blocks the commit or push.
 
    <!--
-   MIRROR NOTE — keep in sync when the workspace-root Phase-3 copy gains this step.
-     The workspace-root /.claude/commands/wrap-session.md is an independent non-symlink copy and does NOT yet carry this step (deferred — structural divergence: no preflight, different session-note schema). When it is added there, the preflight toggle + this Step 6.5 + the `### Risky actions` line form a two-end contract — keep them in sync across both copies. Until then, this feature is canonical-only (auto-propagates to the ~16 project symlinks).
+   MIRROR NOTE — PORTED 2026-06-01 to the workspace-root copy as its Step 4.5 (positioned before that copy's Step 5 commit).
+     The workspace-root /.claude/commands/wrap-session.md is an independent non-symlink copy. The two-end contract is now live across both copies: the Step 0.4 preflight toggle (workspace-root) / preflight bundle 2 (canonical) + this step + the `### Risky actions` line in the session-note schema. Keep all three in sync on future edits. Workspace-root divergences handled at port time: (a) the `session-feedback-collector` agent resolves there via the --add-dir'd ai-resources library; (b) `logs/improvement-log.md` is created on the collector's first write (absent at workspace root until then). This feature also auto-propagates to the ~16 project symlinks via this canonical copy.
    -->
 
    - **Gate.** If the operator declined feedback collection in the preflight, skip and note "Feedback collection skipped per preflight" in chat. If the session was trivial (single-file edit, one-question read, aborted session), skip with "Feedback collection skipped — trivial session" — your judgment call, same standard as the Step 0.5 / Step 12 skips; do not ask the operator.
