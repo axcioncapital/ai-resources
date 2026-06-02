@@ -194,7 +194,7 @@ Write `$MANIFEST` (recovery map — exists before anything is removed or moved):
 
 - Source: {PROJ}
 - Destination: {DEST}
-- Final commit: {SHA} (branch {BRANCH})
+- Pre-archive commit (pushed recovery base): {SHA} (branch {BRANCH})
 - Remote: {REMOTE}
 - Symlinks removed: {LINK_COUNT} (under reference/skills/)
 - Stray symlinks elsewhere (NOT removed): {STRAY_OUTSIDE}
@@ -253,11 +253,11 @@ REMAINING="$(find "$SYMLINK_DIR" -maxdepth 1 -type l 2>/dev/null | wc -l | tr -d
 echo "Removed $LINK_COUNT symlink(s)."
 ```
 
-Removing a symlink never touches its target in `ai-resources/skills/`.
+Removing a symlink never touches its target in `ai-resources/skills/`. **These symlinks are normally git-tracked by the project repo**, so deleting them leaves the tree dirty (N staged deletions) — that removal is committed inside the archived repo in Step 6, NOT left uncommitted. The pre-removal state is the pushed base SHA (Step 2 guaranteed it is on the remote), so recovery is always possible.
 
 ---
 
-### Step 6: Move
+### Step 6: Move and finalize the archived repo
 
 ```bash
 mkdir -p "$ARCHIVE_ROOT"
@@ -274,9 +274,26 @@ fi
 [ ! -e "$DEST" ] || { echo "ERROR: destination already exists: $DEST. Aborting."; exit 1; }
 # Same-filesystem move (archive/ is inside the workspace) → mv is an atomic rename.
 mv "$PROJ" "$DEST" || { echo "ERROR: mv failed. Aborting — original left in place, no copy+delete fallback."; exit 1; }
+
+# Copy the manifest in so it travels with the archived project, then commit the
+# symlink removal + manifest INSIDE the archived repo so its tree ends clean.
+# The symlinks are tracked (Step 5), so this commit is what makes the tree consistent.
+cp "$MANIFEST" "$DEST/.archive-manifest.md"
+PUSHED_SHA="$SHA"   # pre-archive HEAD — guaranteed on the remote by Step 2(b)
+# The manifest copy alone dirties the tree, so this commit always fires (the guard is
+# just defensive). It captures both the manifest and any tracked-symlink deletions.
+if [ -n "$(git -C "$DEST" status --porcelain)" ]; then
+  git -C "$DEST" add -A
+  git -C "$DEST" commit -q -m "archive: remove ${LINK_COUNT} skill symlinks; add .archive-manifest.md
+
+Project relocated out of projects/ into the workspace archive/ tier via
+/archive-project. Tracked reference/skills/ symlinks removed here; pre-removal
+pushed state preserved on origin at ${PUSHED_SHA}. Restore map in .archive-manifest.md."
+fi
+ARCHIVE_SHA="$(git -C "$DEST" rev-parse HEAD)"   # one archive commit ahead of PUSHED_SHA
 ```
 
-Never fall back to `cp -r && rm -rf`.
+Never fall back to `cp -r && rm -rf`. The archive commit is local-only (not pushed) — that is intentional: the remote holds the pre-removal state as the recovery anchor, and an archived project does not need its symlink-removal pushed.
 
 ---
 
@@ -285,24 +302,20 @@ Never fall back to `cp -r && rm -rf`.
 ```bash
 FAIL=0
 [ -d "$DEST/.git" ] || { echo "VERIFY FAIL: destination .git missing"; FAIL=1; }
-[ "$(git -C "$DEST" rev-parse HEAD 2>/dev/null)" = "$SHA" ] || { echo "VERIFY FAIL: commit SHA mismatch"; FAIL=1; }
 [ ! -e "$PROJ" ] || { echo "VERIFY FAIL: original still exists at $PROJ"; FAIL=1; }
-[ -z "$(git -C "$DEST" status --porcelain 2>/dev/null)" ] || { echo "VERIFY FAIL: destination tree not clean"; FAIL=1; }
+[ -z "$(git -C "$DEST" status --porcelain 2>/dev/null)" ] || { echo "VERIFY FAIL: destination tree not clean (archive commit failed?)"; FAIL=1; }
+# Archived HEAD is exactly 1 ahead of the pushed base (the single archive commit).
+DELTA="$(git -C "$DEST" rev-list --count "${PUSHED_SHA}..HEAD" 2>/dev/null)"
+[ "$DELTA" = "1" ] || { echo "VERIFY FAIL: unexpected commit delta ($DELTA) from pushed base $PUSHED_SHA"; FAIL=1; }
 [ "$FAIL" = "0" ] || { echo "Move verification FAILED. Recover using manifest: $MANIFEST"; exit 1; }
-echo "Move verified: $DEST @ $SHA, original gone, tree clean."
+echo "Move verified: $DEST @ $ARCHIVE_SHA (pushed base $PUSHED_SHA, +$DELTA), original gone, tree clean."
 ```
 
 ---
 
-### Step 8: Write manifest copy and append the archive index
+### Step 8: Append the archive index
 
-Copy the manifest into the moved project so it travels with it:
-
-```bash
-cp "$MANIFEST" "$DEST/.archive-manifest.md"
-```
-
-Append one row to `$INDEX` (create with header if absent). Append-to-END. The index is permanent — never rolled by `check-archive.sh`.
+The manifest was already copied into `$DEST/.archive-manifest.md` and committed in Step 6. Append one row to `$INDEX` (create with header if absent). Append-to-END. The index is permanent — never rolled by `check-archive.sh`.
 
 ```bash
 if [ ! -f "$INDEX" ]; then
@@ -315,8 +328,9 @@ Permanent index of projects relocated out of `projects/` into the workspace `arc
 |------|---------|-------------|-----------|--------|------------------|----------|
 EOF
 fi
+# Final SHA records the archived HEAD plus the pushed recovery anchor.
 printf '| %s | %s | %s | %s | %s | %s | %s |\n' \
-  "$DATE" "$NAME" "$DEST" "$SHA" "$REMOTE" "$LINK_COUNT" "$DEST/.archive-manifest.md" >> "$INDEX"
+  "$DATE" "$NAME" "$DEST" "${ARCHIVE_SHA:0:7} (pushed base ${PUSHED_SHA:0:7})" "$REMOTE" "$LINK_COUNT" "$DEST/.archive-manifest.md" >> "$INDEX"
 ```
 
 ---
@@ -329,8 +343,8 @@ Print to chat:
 /archive-project — complete
 
   {NAME} archived to: {DEST}
-  Commit {SHA} preserved; original removed from projects/.
-  {LINK_COUNT} symlink(s) removed. Index row appended to {INDEX}.
+  Archived HEAD {ARCHIVE_SHA} (pushed recovery base {PUSHED_SHA} on origin); original removed from projects/.
+  {LINK_COUNT} symlink(s) removed and the removal committed in the archived repo. Index row appended to {INDEX}.
 
 Un-archive recipe (also in {DEST}/.archive-manifest.md):
   1. mv "{DEST}" "{PROJ}"
