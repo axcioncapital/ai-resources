@@ -172,9 +172,6 @@ Canonical shape:
       "Bash(rm -rf *)", "Bash(sudo *)",
       "Read(archive/**)", "Read(**/*.archive.*)",
       "Read(**/deprecated/**)", "Read(**/old/**)"
-    ],
-    "additionalDirectories": [
-      "/Users/patrik.lindeberg/Claude Code/Axcion AI Repo"
     ]
   }
 }
@@ -185,14 +182,42 @@ Canonical shape:
 - `defaultMode: "bypassPermissions"` (root causes #1, #3).
 - Dotfile-path glob `Edit(**/.claude/**)` (root cause #2).
 - `Bash(rm *)` in allow — fixes Delete/Remove prompts.
-- `additionalDirectories` granting workspace root — required for ai-resources symlinks to resolve.
+- **No `additionalDirectories` in the tracked `settings.json`.** The workspace-root grant is **machine-specific** (an absolute path that differs per operator machine) and therefore belongs in the gitignored `settings.local.json` (Layer D′), not in git-tracked config. A tracked path is correct on the machine that deployed it but breaks on every other machine that pulls the repo. See Layer D′ for the canonical home and the migration note. (Changed 2026-06-03 — previously this shape carried a hardcoded `additionalDirectories` path; that produced cross-machine breakage when two operators shared the same git-tracked project.)
 - The `deny` list includes Read-deny patterns for archival and deprecated paths (`archive/**`, `**/*.archive.*`, `**/deprecated/**`, `**/old/**`). These suppress permission prompts on stale content directories. Apply to any project that has an `archive/` or `deprecated/` structure; omit for projects that do not.
 
 ---
 
 ## Layer D′ — Project `settings.local.json`
 
-Same rule as Layer B′: if present and declares `permissions`, must include `defaultMode: "bypassPermissions"`. Otherwise omit `permissions` entirely.
+Same `defaultMode` rule as Layer B′: if present and declares `permissions`, it must include `defaultMode: "bypassPermissions"` (otherwise it shadows the parent's bypass — root cause #1). Beyond that, Layer D′ is the **canonical home for the machine-specific workspace-root grant**.
+
+**`additionalDirectories` lives here, not in the tracked `settings.json` (Layer D).** Claude Code sandboxes each project to its own directory; shared skills under `ai-resources/skills/` and the symlinks into `ai-resources/.claude/{commands,agents}/` are unreachable until the workspace root is added to `permissions.additionalDirectories` with an **absolute** path. That absolute path differs per operator machine, so it must not be committed — it belongs in the gitignored local file.
+
+Canonical shape (this machine's workspace-root path):
+
+```json
+{
+  "permissions": {
+    "defaultMode": "bypassPermissions",
+    "additionalDirectories": [
+      "/Users/<you>/Claude Code/Axcion AI Repo"
+    ]
+  }
+}
+```
+
+**Key assertions:**
+- `defaultMode: "bypassPermissions"` is **mandatory** whenever this file declares a `permissions` block — including the `additionalDirectories`-only form above. Omitting it shadows the parent's bypass.
+- The path is the **absolute** workspace root on *this* machine. Each operator maintains their own local file; the two never collide because the file is gitignored.
+- If no local-only override is needed beyond the workspace grant, the `additionalDirectories` + `defaultMode` pair above is the whole file.
+
+**Migration note (per-machine recovery).** When a project that previously carried `additionalDirectories` in its tracked `settings.json` is cleaned up (the tracked grant removed), every operator who pulls the repo must add their own machine's path to their local file once, or ai-resources symlinks stop resolving for them. Ready-to-paste snippet — replace the path with your machine's workspace root:
+
+```json
+{ "permissions": { "defaultMode": "bypassPermissions", "additionalDirectories": ["/Users/<you>/Claude Code/Axcion AI Repo"] } }
+```
+
+**Known pending-alignment item (2026-06-03).** `/new-project` Post-Pipeline Enrichment step 3 currently writes the computed `additionalDirectories` grant into the **tracked** `settings.json`, not the local file — the same source pattern that produced the cross-machine breakage this layer now prevents. Aligning `/new-project` to write the grant into `settings.local.json` is a separate, tracked follow-up (it edits a canonical command and warrants its own risk-check). Until then, freshly deployed projects will carry a tracked `additionalDirectories` for the deploying machine; treat it per Detection Rule 8 (ADVISORY — relocate to local), not as a HIGH stale-path finding.
 
 ---
 
@@ -368,7 +393,7 @@ Canonical block:
 
 6. No `Bash(rm *)` in allow (Delete/Remove failure mode, separate from Edit).
 7. Deny-shadows-allow (same tool-path pattern on both lists). Flag but don't auto-fix — sometimes intentional.
-8. Missing or stale `additionalDirectories` in project files (should include workspace root absolute path).
+8. `additionalDirectories` workspace-root grant absent from BOTH the project's tracked `settings.json` and its gitignored `settings.local.json` (Layer D′) — with no other mechanism granting the workspace root, ai-resources symlinks will not resolve. The canonical home for the grant is `settings.local.json` (machine-specific absolute path; see Layer D′). Presence in the local file fully satisfies this rule; absence of `additionalDirectories` from the tracked `settings.json` is **expected and not a finding**. A tracked `settings.json` that still carries `additionalDirectories` with a foreign-machine absolute path is an **ADVISORY** (relocate to `settings.local.json`), not a HIGH stale-path finding — the path is correct on the machine that deployed it.
 9. Absolute-path allow entries with stale workspace paths (path no longer exists on disk).
 
 ### MEDIUM — coverage gaps
