@@ -14,6 +14,7 @@ Every agent must declare `model:` explicitly in frontmatter — no implicit inhe
 |---|---|---|
 | claude-md-auditor | opus | Judgment (CLAUDE.md quality audit). Added 2026-04-27. |
 | collaboration-coach | opus | Judgment (cross-session pattern analysis). Correct. |
+| context-discovery | opus | Judgment (context discovery, selection, and cited context-pack assembly). Tier matches declared frontmatter and work type. Added 2026-06-03 (repo-dd F-1, projects/marketing-positioning). |
 | pipeline-review-auditor | opus | Judgment (per-pipeline System-Owner-grounded design review + currency-check against Anthropic doc URLs). Added 2026-05-29. Replaces critical-resource-auditor (deleted 2026-05-29 when `/pipeline-review` subsumed `/audit-critical-resources`). |
 | dd-extract-agent | haiku | Mechanical extraction for repo-dd. Correct. |
 | dd-log-sweep-agent | haiku | Mechanical log scan for repo-dd. Correct. |
