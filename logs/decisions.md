@@ -116,3 +116,15 @@
 **Alternatives considered.** (a) Keep the brief's decomposition-dominant framing and leave autonomy as a noted weakness — rejected: under-delivers on the brief's explicit "resolve the weaknesses" instruction. (b) Make autonomy the *primary* lever — rejected: overcorrects; without a clean partition there is nothing to parallelize regardless of autonomy.
 
 **Decided by:** Claude judgment grounded in the system-owner consult; no operator override. Surfaced at the Gated stop point; operator approved the resolution implicitly by directing the QC pass.
+
+## 2026-06-03 — Split the System Owner grounding restore: recover now, re-author later
+
+**Context.** Asked to consult the System Owner about `docs/parallel-sessions-playbook.md`. The SO grounding base was absent from disk (prior-session standing advisory), so a grounded consult was impossible. Investigation found the grounding splits cleanly into two halves: (a) the vault docs (`principles.md`, `risk-topology.md`, `blueprint.md`, `repo-state.md` + components) sitting committed on the `repo-documentation-2` remote but not checked out locally, and (b) the 4 SO `references/` files (persona, grounding, toolkit-relationship, systems-building-principles) present in NO git repo or remote — never committed, existed only on the prior machine.
+
+**Decision.** Recover half (a) immediately via `git reset --hard origin/main` on the empty local `repo-documentation` repo; defer half (b) to a dedicated session. Did not run the consult degraded.
+
+**Rationale.** Half (a) is a faithful, zero-risk mechanical recovery (local repo had no commits — nothing to lose). Half (b) can only be re-authored from scratch — reconstructing the SO's voice rules and per-function read-map from the agent definition + surviving principle codes. The agent is explicitly forbidden from inventing principles; reconstructing its constitution and then immediately consulting against it in the same flow would be rubber-stamping an invention. That re-authoring needs deliberate operator review, so it belongs in its own session. Running the consult on the partial base would only reproduce the prior session's `[CITATION NEEDED]` outcome — low value.
+
+**Alternatives considered.** (a) Full rebuild this session — rejected: re-authoring the persona/read-map mid-flow and trusting it immediately defeats the review gate. (b) Recover half + consult degraded now — rejected: reproduces the known degraded outcome. (c) Stop at investigation, recover nothing — rejected: leaves zero-risk recoverable value on the table.
+
+**Decided by:** Claude recommendation, operator-endorsed (operator asked "what's your recommendation?" and accepted the recommended path).

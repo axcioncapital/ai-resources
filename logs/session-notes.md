@@ -473,3 +473,31 @@ None. The git `mv` into a gitignored `inbox/archive/` was recorded by git as a c
 
 ### Open Questions
 None blocking.
+
+## 2026-06-03 — Recovered the System Owner vault grounding base; references rebuild deferred
+
+### Summary
+Session opened to consult the System Owner about the new `parallel-sessions-playbook.md`, but the consult could not run grounded — the SO grounding base was absent from disk (the prior session's standing advisory). Investigated what was recoverable, then recovered the recoverable half. The vault grounding docs (`principles.md`, `risk-topology.md`, `blueprint.md`, `repo-state.md` + 12 component files) were restored from the `repo-documentation-2` GitHub remote via `git reset --hard origin/main` on the empty-but-tracked local `repo-documentation` repo. The 4 SO `references/` files (persona, grounding, toolkit-relationship, systems-building-principles) were confirmed permanently gone — in no git repo or remote, never committed; they existed only on the prior machine (`patrik.lindeberg`). Re-authoring those four is deferred to a dedicated next session, after which the playbook consult chains on.
+
+### Files Created
+- `logs/scratchpads/2026-06-03-16-50-scratchpad.md` — continuity scratchpad for the next session's references-rebuild kickoff.
+
+### Files Modified
+- `projects/repo-documentation/` (separate git repo) — restored to committed `origin/main` state via `git reset --hard`; local HEAD moved from no-commits to `1ef215c`. Working tree now matches HEAD (no new commit needed there). Recovered `output/phase-1/{principles,risk-topology,blueprint,repo-state}.md` + `output/phase-1/components/*` (12 files) + the `vault/` tree.
+- `logs/session-notes.md` — this wrap entry.
+
+### Decisions Made
+- **Recover the recoverable half now, defer the references rebuild** (operator asked for my recommendation; I recommended this and the operator endorsed it). Splitting the restore: the vault/principles half is a faithful mechanical git recovery; the 4 `references/` files can only be re-authored from scratch and need deliberate operator review, so they belong in their own session — not a mid-flow rebuild.
+- **`git reset --hard origin/main` on `repo-documentation`** chosen as the recovery mechanism — safe because the local repo had no commits and a clean tree (nothing to lose); non-destructive on shared state (no force-push, local-only history move).
+
+### Risky actions
+`git reset --hard origin/main` on the `repo-documentation` repo — a hard reset, but on a local repo with zero commits and a clean working tree, so nothing was overwritten or lost. Not destructive on shared state (no pushed commits rewritten, no force-push). Verified the recovered `principles.md` contains the exact principle codes (OP-3, AP-10, DR-8, OP-10, OP-11) that live workspace artifacts cite, confirming the recovery is the genuine base, not a lookalike.
+
+### Next Steps
+- **Re-author the 4 missing SO `references/` files** (persona, grounding, toolkit-relationship, systems-building-principles) in a dedicated session — reconstruct from the agent definition (`ai-resources/.claude/agents/system-owner.md`) + the surviving principle codes in the recovered vault docs. Authoring project, not a restore; operator reviews the reconstructed persona + read-map. Kickoff: `/session-start` + `/session-plan`. See `logs/scratchpads/2026-06-03-16-50-scratchpad.md`.
+- **Settle the vault path-wiring** in that same session: agent def reads vault docs from `projects/repo-documentation/vault/`, but recovered docs live under `output/phase-1/`; the missing `grounding.md` is what defines those paths.
+- **Then chain the original request:** run the grounded SO consult on `docs/parallel-sessions-playbook.md` and retire its §8 `[CITATION NEEDED]` flag.
+- Carryovers (unchanged): nordic-pe-screening GitHub remote decision; `improve.md`/`improvement-analyst` archive-scan bug backlog entry; id-03 G4 naming; Option 2′ shared-marker removal (soak deferral).
+
+### Open Questions
+None blocking.
