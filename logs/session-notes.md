@@ -2,130 +2,6 @@
 
 > Archive: [session-notes-archive-2026-05.md](session-notes-archive-2026-05.md)
 
-## 2026-05-29 — Session S7
-
-**Mandate:** Execute reframed Wave 1 + Wave 2 items from `logs/session-plan-S6.md` per engine pack — Wave 1 #1 verify-and-close, #2 paste 7 repo-doc entries, #3–#6 decision-line appends, Wave 2 #7–#9 drop per existing RECONSIDER verdict, #10 surface as operator yes/no at wrap — done when: Wave 1 #1 closed as already-done in decisions.md; #2 vault components updated; #3–#6 decision lines appended; Wave 2 #7–#9 dropped with audit-stale entry; #10 surfaced as yes/no at session end.
-- Out of scope: (none stated)
-- Files in scope: `projects/obsidian-pe-kb/logs/improvement-log.md`, `projects/project-planning/logs/improvement-log.md`, `projects/repo-documentation/vault/components/commands.md`, `projects/repo-documentation/vault/components/agents.md`, `projects/repo-documentation/vault/components/projects.md`, `projects/repo-documentation/logs/decisions.md`, `ai-resources/logs/decisions.md`
-- Stop if: (none stated)
-- Allowed inputs: `ai-resources/CLAUDE.md`, `CLAUDE.md`, `audits/friday-checkup-2026-05-29.md`, `audits/friday-plans/2026-05-29-repo-documentation.md`, `audits/friday-plans/2026-05-29-permissions-settings.md`, `audits/permission-sweep-2026-05-29.md`, `docs/permission-template.md`, `docs/audit-discipline.md`
-- Required outputs: 3 repo-doc vault components updated (#2); 2 decision lines in `projects/repo-documentation/logs/decisions.md` (#3, #4); 4+ decision lines in `ai-resources/logs/decisions.md` (#1 verify-close, #5, #6, #7-9 drop, #10 record)
-- Context pack: `output/context-packs/project-20260529-s6w12/pack.md` (untracked)
-
-## 2026-05-29 — Session S8
-
-**Mandate:** Make /friday-act's three per-item disposition prompts (Step 3 tactical follow-ups, Step 3.5d SO-derived, Step 3.5f journal-derived) auto-triage by default — apply default dispositions (HIGH→f, MED→d, LOW→s), then show the predicted string and let the operator press Enter to accept or paste a corrected string. Apply via /improve-skill (per S6 brief); fall back to a direct edit of friday-act.md if /improve-skill rejects a non-skill target. — done when: friday-act.md updated; /qc-pass GO; the auto-triage default string is shown to the operator before items lock in; commit landed.
-- Out of scope: changes to /friday-checkup or /friday-journal; plan-file schema changes; Wave 2 (policy) or Wave 3 (architectural) Friday steps.
-- Files in scope: .claude/commands/friday-act.md
-- Stop if: /improve-skill explicitly rejects /friday-act AND inline /risk-check on the direct-edit fallback returns RECONSIDER or NO-GO.
-- Allowed inputs: friday-act.md, improve-skill.md, ai-resource-builder/SKILL.md, friday-act-16a-summarizer.md, decisions.md, session-plan-S6.md, audit-discipline.md, ai-resources/CLAUDE.md
-- Required outputs: .claude/commands/friday-act.md
-- Context pack: /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/output/context-packs/command-20260529-7b2a4/pack.md
-
-Work: Improve /friday-act to make the "follows" auto-triage step run automatically (high-value operator request, deferred from S6 Wave 6) via /improve-skill.
-
-## 2026-05-29 — Session S9 — /cleanup-worktree wrap
-
-/cleanup-worktree — investigate and clean dirty paths in the git working tree.
-
-### Summary
-
-Ran `/cleanup-worktree` end-to-end on the ai-resources working tree. Six dirty paths investigated and classified; QC1 returned GO; independent triage returned 0 must-fix / 0 should-fix / 2 history-only, plus three first-class operator-policy alternatives that the cleanup encoded with main-session picks and reversibility notes. Step-9 quick-tier skip applied (zero hard gates AND zero new file-content claims in revision). Two commits + two non-git `mv` operations executed under pre-flight guards; all post-execution filesystem checks passed.
-
-### Files Created
-
-- `/Users/patrik.lindeberg/.claude/plans/quizzical-wiggling-robin.md` — full cleanup plan (Sections 1–8) including the QC verdict, triage outcome, three alternatives with picks, and the quick-tier skip justification.
-- `/Users/patrik.lindeberg/.claude/plans/quizzical-wiggling-robin.md.qc-pass-1.md` — independent QC report (GO with 2 MINOR history-only findings).
-- `ai-resources/logs/scratchpads/2026-05-29-21-02-scratchpad.md` — continuity scratchpad for the next session's `/prime` Step 1b detection.
-- `ai-resources/logs/session-plan-S6.md` — committed in `9463f33` (newly tracked; previously untracked since S6 wrap).
-- `ai-resources/logs/session-plan-S8.md` — committed in `9463f33` (newly tracked; previously untracked since S8 wrap).
-
-### Files Modified
-
-- `ai-resources/.gitignore` — `output/` pattern + comment appended (commit `f1edccc`).
-- `ai-resources/logs/session-notes.md` — S9 header appended by `/prime`, body added by this wrap (committed by this wrap step).
-- `ai-resources/inbox/context-engine-brief.md` → `inbox/archive/` (mv only; no git change since target dir is gitignored).
-- `ai-resources/inbox/context-engine-session-pairing.md` → `inbox/archive/` (same).
-- `ai-resources/logs/.session-marker` — updated to `2026-05-29 S9` by `/prime`.
-- `ai-resources/logs/.prime-mtime` — updated by `/prime` (gitignored).
-
-### Decisions Made
-
-Three first-class operator-policy alternatives surfaced by triage. The cleanup picked the following for each; all picks are reversible without git reflog (line removal, `mv` back, separate commit):
-
-- **Alt A — `output/` policy: gitignore.** Rationale: S7+S8 mandates already labeled pack paths "(untracked)" — de facto policy exists; without gitignore every future engine run re-dirties git status; the `.gitignore` line is one-line reversible. Was an S6 Open Question (no policy enforced); cleanup encodes one.
-- **Alt B — inbox briefs: `mv`-only (no commit before move).** Rationale: `.gitignore` line 36–37 explicitly labels archive pattern "Archived inbox briefs"; established convention is briefs do NOT enter git history; brief content was already absorbed into the produced artifacts (context-engine command, agent, schema docs — committed under `7dc5e6e` and `e774eb5`).
-- **Alt C — `logs/session-notes.md`: defer-to-wrap.** Rationale: matches the established S3–S8 wrap-commit pattern where one commit covers both the `/prime` header and the wrap body; committing during cleanup would force a second wrap commit. Triage agreed with the plan.
-
-#### Procedural decisions (not policy)
-
-- **Quick-tier 2nd QC skip applied.** Per `references/execution-protocol.md` § 6: zero hard gates AND zero new file-content claims in revision → 2nd QC may be skipped with explicit Section-8 log entry and operator-visible chat notification before `ExitPlanMode`. Both preconditions held; skip logged in plan Section 8 and surfaced in chat.
-- **Custom decision labels (`defer-to-wrap`, `archive-move`).** Documented in plan Section 3's Custom-decision note. QC1 confirmed they do not hide irreversibility.
-
-### Next Steps
-
-1. **Push 6 commits (ai-resources) + 1 commit (workspace-root) to GitHub.** Wrap commit lands now → 6 unpushed total in ai-resources. Workspace-root carries 1 pre-existing unpushed commit. Gate at this wrap.
-2. **Phase 1 evaluation of the context engine (carryover from S6).** Pick 3–5 representative real tasks, let the engine pre-fire at `/session-start` Step 2.4 (or `/prime` Step 8c.4.5 in auto mode), score each on the 6 Brief-1 criteria. Pass threshold: ≥3 of 5 tasks ≥4-of-6. Below threshold → reassess.
-3. **Auto-fire smoke test (carryover from S6).** Open a project session with a project CLAUDE.md (e.g., `projects/ai-development-lab/`); run `/prime`; pick a task; verify the engine invokes inline.
-4. **Friday-checkup verification (carryover from S6).** At next `/friday-checkup`, verify `detect-innovation.sh` registered the new context-engine agent + command from `7dc5e6e`.
-
-### Open Questions
-
-- None new this session. S6 Open Questions remain:
-  - Phase 1 empirical evaluation still pending (build structurally complete, untested on real task).
-  - Workspace-root sessions silently skip the engine (no project CLAUDE.md = no routing map). Acceptable for MVP; revisit if friction surfaces.
-
-## 2026-06-01 — Session S1
-
-**Mandate:** Design and build a concurrent-session detection hook that detects when another Claude Code session is concurrently writing to the shared session-state files (logs/.session-marker, logs/.prime-mtime, logs/session-notes.md) and surfaces a loud warning, closing the recurring TOCTOU race class. Deliverable: a hook script under .claude/hooks/, its settings.json wiring, and a two-end contract doc entry. — done when: hook script written + wired in settings.json; /risk-check GO; /qc-pass GO; detection fires correctly in a reproduced concurrent-write scenario; commit landed.
-- Out of scope: the full TOCTOU Phase 4 structural rework (env-var session marker, per-marker files, append-only .session-marker history); the /wrap-session Step 3.5 clobber-suspicion patch (separate menu item).
-- Files in scope: .claude/hooks/ (new script), .claude/settings.json, docs/session-marker.md (inferred)
-- Stop if: /risk-check returns NO-GO on the hook design.
-- Allowed inputs: docs/audit-discipline.md, logs/improvement-log.md, .claude/hooks/log-write-activity.sh, .claude/hooks/friday-checkup-reminder.sh, audits/risk-checks/2026-05-29-wrap-session-foreign-write-guard-head-content-discriminator.md, audits/risk-checks/2026-05-29-end-time-gate-for-toctou-mitigation-atomic-phase-2-3-option.md, .gitignore
-- Required outputs: .claude/hooks/detect-concurrent-session.sh
-- Context pack: output/context-packs/hook-20260601-c4e7a/pack.md
-
-DR-8 gate (auto mode): design + build concurrent-session detection hook. Operator GO via auto-mode approval gate 2026-06-01.
-
-### Summary
-
-Built the DR-8 concurrent-session detection hook end-to-end via `/prime` auto mode (menu item #4, operator GO at the approval gate). The design pivoted mid-build: the plan's Option A (a `logs/.active-sessions` registry file) drew a PROCEED-WITH-CAUTION at `/risk-check` (Hidden coupling Medium — a registry built to detect races would itself race, AP-10). The system-owner advisory recommended **Option B (read-only detector)**: count running Claude Code CLI processes via `pgrep -f 'native-binary/claude'` instead of writing any state. Option B was adopted — no new shared-mutable state, no `session_id` dependency, no `.gitignore` change. Strict risk reduction vs the gated Option A, so no re-gate. All 5 behavioral paths tested live (including live concurrent detection — 3 sessions were genuinely running); `/qc-pass` GO after recording the 1:1 process:session baseline. Committed as `b9b2c30`.
-
-### Files Created
-
-- `.claude/hooks/detect-concurrent-session.sh` — SessionStart hook; warns (non-blocking, `exit 0` on every path) when ≥2 Claude Code CLI sessions run. OP-3 loud skip notice if `pgrep` absent; python3-absent JSON fallback.
-- `logs/session-plan-S1.md` — session plan (Option A→B pivot recorded in Scope Alternatives).
-- `audits/risk-checks/2026-06-01-add-concurrent-session-detection-hook-sessionstart-registry.md` — the gating risk-check report (PROCEED-WITH-CAUTION + system-owner second opinion appended via the architectural-commentary path).
-- `logs/scratchpads/2026-06-01-13-00-scratchpad.md` — continuity scratchpad.
-
-### Files Modified
-
-- `.claude/settings.json` — wired the hook into the SessionStart hooks array alongside `friday-checkup-reminder.sh` (JSON-validated).
-- `docs/session-marker.md` — new "Concurrent-session detection" section (two-end contract registration + design rationale + machine-wide-scope known limitation).
-- `logs/improvement-log.md` — committed the pre-existing S9 marker-clobber entry (same TOCTOU domain) alongside the hook.
-- `logs/session-notes-archive-2026-05.md` — auto-archive (13 entries archived, 10 kept) triggered by `check-archive.sh` this wrap.
-
-### Decisions Made
-
-- **Option B (read-only detector) over Option A (registry).** Per `/risk-check` PROCEED-WITH-CAUTION + system-owner advisory. Rationale: a race-detection registry that itself races reproduces the bug one layer up (AP-10); reading an OS process-count signal achieves the same proactive warning with zero new shared-mutable state and no `session_id` dependency. Logged to `decisions.md`.
-- **Supplement, not duplicate.** The hook is a proactive session-start early-warning; it does not duplicate the reactive per-write guards (`session-start.md` Step 0.5, `wrap-session.md` Step 3.5) — different trigger timing and mechanism. Boundary documented in `docs/session-marker.md`.
-- **End-time `/risk-check` (Step 12b) skipped** per the documented skip rule: plan-time risk-check covered the exact change set with mitigations applied (Option B), the commit already shipped, and drift is bounded (Option B is a strict subset of the evaluated surface).
-
-### Live Concurrent-Session Event
-
-While building the hook, a concurrent `/monday-prep` session committed `61ce269` and **swept this session's S1 mandate line into its own commit** (no data loss — the mandate is preserved in git history under that commit). This is the exact entanglement class the hook warns about — a live validation. This session's deliverables were committed separately by explicit path (`b9b2c30`), avoiding entanglement. The foreign-session pre-write guard at this wrap returned FOREIGN=0 (the concurrent content was already in HEAD).
-
-### Next Steps
-
-1. **Context-engine Phase 1 evaluation** (carryover S6/S9) — score engine packs on 3–5 real tasks against the 6 Brief-1 criteria. One informal data point this session: the engine produced a useful success-insufficient pack for the hook task (on-target files_in_scope + the 3 missing-context flags genuinely helped).
-2. **`/wrap-session` Step 3.5 marker-clobber quick patch** (improvement-log entry, ~15 lines) — same TOCTOU domain; complementary to today's hook (proactive detection + reactive-guard hardening).
-3. **Known-minor:** the hook's python3-absent printf fallback doesn't JSON-escape (harmless — only date/marker interpolated). Revisit only if it ever matters.
-4. **Future enhancement (documented):** scope the hook's process count per-project via `lsof` cwd lookup — currently machine-wide.
-
-### Open Questions
-
-None.
-
 ## 2026-06-01 — Monday prep: 2026-W23
 
 ### Flags
@@ -500,4 +376,56 @@ Session opened to consult the System Owner about the new `parallel-sessions-play
 - Carryovers (unchanged): nordic-pe-screening GitHub remote decision; `improve.md`/`improvement-analyst` archive-scan bug backlog entry; id-03 G4 naming; Option 2′ shared-marker removal (soak deferral).
 
 ### Open Questions
+None blocking.
+
+## 2026-06-03 — Session S1
+
+**Mandate:** Re-author the 4 missing System Owner references files (persona, grounding, toolkit-relationship, systems-building-principles) in projects/axcion-ai-system-owner/references/, reconstructed from the agent definition + recovered vault grounding docs, and reconcile grounding.md's vault paths with the actual recovered-doc locations — done when: all 4 references files exist, grounding.md's vault path map matches actual doc locations, and independent QC returns GO (or fixes folded)
+- Out of scope: running the grounded SO consult on parallel-sessions-playbook.md (chains as item 2); re-recovering or re-authoring the vault docs (already recovered last session)
+- Files in scope: projects/axcion-ai-system-owner/references/{persona,grounding,toolkit-relationship,systems-building-principles}.md (new)
+- Stop if: (none stated)
+- Allowed inputs: .claude/agents/system-owner.md; projects/repo-documentation/output/phase-1/{principles,risk-topology,blueprint,repo-state}.md; projects/repo-documentation/vault/
+- Required outputs: the 4 references files under projects/axcion-ai-system-owner/references/
+
+Re-author the 4 missing System Owner references files (persona, grounding, toolkit-relationship, systems-building-principles) and reconcile vault path-wiring.
+
+### Summary
+
+Session S1 reconstructed the 4 missing System Owner agent grounding files — persona.md, grounding.md, toolkit-relationship.md, systems-building-principles.md — under projects/axcion-ai-system-owner/references/. The originals were permanently lost (never committed). Reconstruction used the surviving agent definition, the 2026-05-04 DD audit's structural inventory, risk-check fragments quoting specific sections, the recovered vault docs, and a surviving consult output. Vault path-wiring was reconciled: grounding.md §1 now points at the real recovered location (output/phase-1/), not the empty vault/ path. The project was git-init'd so this class of loss cannot recur. Independent QC (after operator model switch) returned REVISE → one fix folded (provenance path qualified). Commit 9c50e18 on axcion-ai-system-owner, no push yet (remote decision deferred).
+
+### Files Created
+
+- `projects/axcion-ai-system-owner/references/persona.md` — SO identity, authority, deference scope, 7 voice rules, decline-when-ungrounded shape (reconstructed)
+- `projects/axcion-ai-system-owner/references/grounding.md` — §1 reconciled vault path map, §2 per-function read map A–G, §3 triage rule, §4 caching note (reconstructed; flags function-letter off-by-one in friday-so/so-monthly as follow-up)
+- `projects/axcion-ai-system-owner/references/toolkit-relationship.md` — invocation boundaries, in-line reads for change-shaped questions, sync mechanisms, sibling-tool relationships (reconstructed)
+- `projects/axcion-ai-system-owner/references/systems-building-principles.md` — faithful placeholder, status: TBD (reconstructed)
+- `projects/axcion-ai-system-owner/.gitignore` — OS artifact exclusions (first commit of new repo)
+- `logs/session-plan-S1.md` — session plan (overwrote stale 2026-06-01 S1 plan from the day-reset shared-marker collision)
+- `logs/scratchpads/2026-06-03-21-30-scratchpad.md` — continuity scratchpad
+
+### Files Modified
+
+- `logs/session-notes.md` — mandate appended (session-start), this wrap entry
+- `projects/axcion-ai-system-owner/` — git init'd + initial commit 9c50e18 on branch main (local only)
+
+### Decisions Made
+
+- **Vault path-wiring: grounding.md §1 points at `output/phase-1/` (real location)** — the agent def Phase 3 prose still says `vault/`; grounding.md §1 is authoritative (it is the file the agent reads for paths). Follow-up: reconcile the agent-def line and optionally relocate docs into `vault/`. Decided by Claude, accepted at operator review gate.
+- **git init on axcion-ai-system-owner (local only, no remote yet)** — operator chose this over "leave uncommitted" or "init + set up remote." Closes the root-cause of the original references-file loss (no git backing). Remote + push decided as follow-up.
+- **QC path: switch model first** — independent qc-reviewer subagent was blocked by a 1M-context credit gate; operator chose to switch model (not commit-now or self-review). QC ran after switch and returned REVISE → one fix folded.
+
+### Risky actions
+
+None. The git init on axcion-ai-system-owner is safe (empty project dir, local only, no existing history to overwrite). All file writes were new files in an empty directory.
+
+### Next Steps
+
+- **Operator review checkpoint (before item 2):** skim [persona.md §5](projects/axcion-ai-system-owner/references/persona.md) + [grounding.md §1–2](projects/axcion-ai-system-owner/references/grounding.md) — reconstructed from indirect evidence; your review before relying on the SO.
+- **Set up a GitHub remote + push** for axcion-ai-system-owner (local commit 9c50e18 is durable but not remote-backed; same follow-up as nordic-pe-screening).
+- **Run grounded SO consult** on `docs/parallel-sessions-playbook.md` (item 2 — retire §8 `[CITATION NEEDED]`). Now unblocked.
+- **Follow-up wiring items** (small, can batch): reconcile agent-def Phase 3 vault/ prose (one-line edit); reconcile friday-so/so-monthly function-letter off-by-one (two-line doc edit).
+- Carryovers unchanged: nordic-pe-screening GitHub remote; improve.md archive-scan bug backlog entry; id-03 G4 naming; Option 2′ shared-marker removal soak deferral.
+
+### Open Questions
+
 None blocking.

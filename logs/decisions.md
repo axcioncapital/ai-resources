@@ -128,3 +128,27 @@
 **Alternatives considered.** (a) Full rebuild this session — rejected: re-authoring the persona/read-map mid-flow and trusting it immediately defeats the review gate. (b) Recover half + consult degraded now — rejected: reproduces the known degraded outcome. (c) Stop at investigation, recover nothing — rejected: leaves zero-risk recoverable value on the table.
 
 **Decided by:** Claude recommendation, operator-endorsed (operator asked "what's your recommendation?" and accepted the recommended path).
+
+### 2026-06-03 — git init on axcion-ai-system-owner project (local, no remote yet)
+
+**Context.** The axcion-ai-system-owner project had no git backing — this was the root cause of the SO references files being permanently unrecoverable when lost. All other active projects have their own git repos; this project was the exception.
+
+**Decision.** Run `git init` on `projects/axcion-ai-system-owner/`, stage all existing files (the 4 reconstructed references, the surviving consult output, a .gitignore), and commit as the initial commit (9c50e18, branch main, local only). Remote setup and first push are deferred — treated as a follow-up paired with the nordic-pe-screening remote decision.
+
+**Rationale.** The local commit brings the project in line with every other project and makes the references files recoverable against accidental deletion. Deferring the remote means no external-write gate fires this session; the operator can set up the remote and push in a dedicated step.
+
+**Alternatives considered.** (a) Leave uncommitted — rejected: exposes the reconstruction to the same re-loss risk. (b) git init + remote + push this session — rejected: external write (Autonomy Rule #2) + remote-naming decision; deferred per operator choice.
+
+**Decided by:** operator-selected from a three-option prompt.
+
+### 2026-06-03 — grounding.md §1 vault path map points at output/phase-1/ (not vault/)
+
+**Context.** The agent definition's Phase 3 prose says the SO should read vault docs from `projects/repo-documentation/vault/`. The recovered docs actually live under `projects/repo-documentation/output/phase-1/`. `vault/references/` does not exist. The grounding.md §1 path map is what the agent actually reads for paths (Phase 3 instructs the agent to defer to §1).
+
+**Decision.** Point grounding.md §1 at the real location (`output/phase-1/`), document the mismatch in-file as a follow-up, and leave the agent-def Phase 3 prose as a deferred one-line reconciliation. The agent reads §1 for paths, so it will route correctly to the real docs.
+
+**Rationale.** Pointing at the actual on-disk location is the safe, working choice. The alternative — moving/wiring the docs into a `vault/` location — is a larger structural change that should be its own session + risk-check. Keeping the in-file note transparent rather than silently resolving.
+
+**Alternatives considered.** (a) Move docs into vault/ now — rejected: restructuring a git-committed repo (repo-documentation) mid-session is out of mandate. (b) Update agent-def Phase 3 to match grounding.md §1 — will be done as a follow-up one-liner, not this session.
+
+**Decided by:** Claude recommendation, accepted at operator review gate (implicitly — operator did not override at the between-gate summary).
