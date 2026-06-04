@@ -204,3 +204,19 @@
 **Alternatives considered.** (1a) Commit all 16 repos' conversions — rejected: out of mandate scope, entangled with heavy foreign drift. (2a) Run /graduate-resource on E4 as picked — rejected: no-op on an already-canonical resource.
 
 **Decided by:** Claude recommendation under auto-mode autonomy; operator `go` at the reshaped gate.
+
+## 2026-06-04 (S6) — E1 graduation reversed to KEEP-LOCAL; research-pe CLAUDE.md deferred
+
+**Context.** Auto-mode session picked items 1,2,3,5. A Stage-0 `/risk-check` on the structural pieces (item 1's tracking-model decision + item 2's E1 graduation) returned RECONSIDER, corroborated by a system-owner second opinion.
+
+**Decision 1 — reverse E1's GRADUATE verdict to KEEP-LOCAL.** Did NOT run `/graduate-resource doc-scanner-agent`. Corrected slot-1-decisions.md + implementation-tracker.md to KEEP-LOCAL (original GRADUATE struck through, not overwritten, per OP-11).
+
+**Rationale.** doc-scanner-agent is genuinely project-local: its sole caller (`friday-checkup.md:202`) is scope-locked to repo-documentation, and `auto-sync-shared.sh` (no exclude glob) would fan it out as symlinks into ~10 unrelated projects on graduation — speculative abstraction with N=1 real consumer (OP-9/AP-7/DR-7). The S5-wrap GRADUATE verdict was stale; it skipped the second-consumer test.
+
+**Decision 2 — defer research-pe-regime-shift CLAUDE.md entirely.** Its Session-Boundaries conversion (legit F6 work) is entangled with an unrelated 2026-06-01 project re-aim (advisory-gap → positioning). Left the whole file untouched rather than sweep foreign drift into an SB-labeled commit. Committed only the 12 cleanly-isolated repos.
+
+**Decision 3 — defer the `.claude/` commit-vs-symlink tracking-model decision** to its own risk-checked session, with `auto-sync-shared.sh` as a binding constraint. It is an architecture question, not an auto-mode task.
+
+**Alternatives considered.** (1a) Run E1 graduation as picked — rejected: speculative fan-out, pipeline would strip the project-specific lens. (2a) Patch-stage only research-pe's SB hunk — rejected: fragile non-interactive partial-stage; cleaner to defer the file to its owning session. (3a) Decide the tracking model inline under auto-mode autonomy — rejected: high blast radius, S5 reserved it for a reviewed pass.
+
+**Decided by:** risk-check RECONSIDER + system-owner concurrence; operator directive "Don't graduate it. Proceed."

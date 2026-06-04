@@ -2,108 +2,6 @@
 
 > Archive: [session-notes-archive-2026-06.md](session-notes-archive-2026-06.md)
 
-## 2026-06-01 — Session S4 — /fix-repo-issues plan + in-session execution
-
-### Summary
-Ran `/fix-repo-issues` (scopes: ai-resources + nordic-pe-screening-project), then executed the resulting plan **in the same session** at operator direction ("Execute here") — a deliberate override of the command's two-session contract. Four backlog items processed: three applied (each QC GO), one deferred with a structural concern surfaced. Two of the plan's own assumptions proved wrong on contact with the files and were corrected rather than executed blind (id-03 deferred, id-04 reshaped from migrate→reciprocal-pointer).
-
-### Files Created
-- `audits/fix-plans/fix-repo-issues-2026-06-01-1917.md` — the fix plan (4 items, 2 scopes)
-- `audits/working/fix-repo-issues-2026-06-01-1917-ai-resources.md` — scanner notes (gitignored)
-- `audits/working/fix-repo-issues-2026-06-01-1917-project-nordic-pe-screening-project.md` — scanner notes (gitignored)
-- `logs/scratchpads/2026-06-01-20-15-scratchpad.md` — continuity scratchpad
-
-### Files Modified
-- `.claude/commands/wrap-session.md` (canonical) — both MIRROR NOTEs (6.4/6.5) updated to record the workspace-root port
-- `.claude/commands/resolve-improvement-log.md` — Step 7a/7b rewritten to append-only (id-02)
-- `logs/improvement-log.md` — id-40 + id-37 entries flipped to applied + verified
-- `/.claude/commands/wrap-session.md` (workspace-root repo) — id-01 port: Step 0.4 preflight, Step 2 schema (`### Outcome` + `### Risky actions`), Steps 4.4 / 4.5, Step 5 staging
-- `projects/nordic-pe-screening-project/pipeline/decisions.md` (nordic repo) — id-04 reciprocal pointer
-
-### Decisions Made
-- **id-01 (applied):** Port wrap-session 6.4/6.5 → workspace-root 4.4/4.5; added single-toggle preflight (telemetry/coaching bundle N/A at workspace root). QC GO.
-- **id-02 (applied):** Option 1 append-only rewrite of resolve-improvement-log Step 7; command adapted to the deny rule, not the rule loosened. QC GO.
-- **id-03 (deferred — Claude judgment, not operator-directed):** Did NOT edit live v4.4 screening criteria — finalized today mid-S5, qc-reviewed, scope deliberately excluded the G4 change; no live correctness gap (GreenGold already excluded via out-of-scope route). Belongs in a deliberate v4.5 / W2 pass.
-- **id-04 (corrected — Claude judgment):** Plan assumed redundancy + migration; the two decisions files are a deliberate documented split. Did NOT merge (would destroy the separation); added only the missing reciprocal pointer. QC GO.
-
-### Outcome
-COMPLETION: DELIVERED — 3 items applied (verified in files, not just claimed: resolve-improvement-log Step 7 is genuinely append-only with no archive Read; workspace-root wrap-session carries Step 0.4 / 4.4 / 4.5 + schema + staging; nordic reciprocal pointer present both ways; both improvement-log entries flipped). id-03 deferral is in-mandate per the Assumptions Gate (operator twice declined the G4 naming as out-of-scope, decisions #23/#24; live v4.4 finalized mid-run; GreenGold already excluded → no correctness gap).
-EXECUTION: OPTIMAL — independent qc-reviewer GO on each applied item; clean commits across 3 repos; the session self-corrected two wrong plan assumptions (id-03 defer, id-04 reshape) rather than executing blind; no rework or wasted scans observed.
-Confidence: high. Source: the /fix-repo-issues plan (de-facto mandate; no /session-start ran).
-
-### Risky actions
-None executed. Notably AVERTED a risky action: declined to edit just-finalized live screening criteria (id-03) mid-S5-run; surfaced the structural concern instead per the Assumptions Gate. No destructive git ops, no pushes, no external writes, no deletions.
-
-### Session Assessment
-(wrap-collector, 2026-06-01)
-- Autonomy-compounding: no signal — id-03/id-04 self-corrected wrong plan assumptions (healthy, not a signal).
-- Leanness/cost: 1 signal — known archive-read-deny defect in improve.md/improvement-analyst left untracked; logged to improvement-log for Friday triage.
-- Principle-drift: no logged entry — /fix-repo-issues two-session contract overridden, but operator-directed and conscious; watch only.
-- Friction: no signal — no operator correction, no repeated feedback.
-- Safety: none observed — the risky live-criteria edit (id-03) was correctly AVERTED via the Assumptions Gate (the gate working, not a gap).
-- Routed: 1→improvement-log, 0→friction-log.
-
-### Next Steps
-- Resolve ai-resources divergence (11 ahead / 1 behind — remote `4d72509` not local) via rebase/merge before any push.
-- id-03: handle the G4 timberland/natural-resource naming in a deliberate nordic criteria-revision session (v4.5) or via W2 absorption.
-- Log a separate backlog entry for the `improve.md` / `improvement-analyst` archive de-dup scan, which hits the same `Read(logs/*archive*.md)` deny (flagged in id-02's entry, NOT fixed).
-- Decide on a nordic-pe-screening GitHub remote (blocks pushing `372af26` and blocks archiving nordic).
-
-### Open Questions
-None blocking.
-
-## 2026-06-01 — Session S5 — Option 2′ marker fix shipped + ai-resources git divergence repaired
-
-### Summary
-Two carryover items from the prior /prime menu, run via free-text "fix these" (direct execution, no /session-start). (1) Repaired the ai-resources git divergence (ahead 13 / behind 1) by rebasing local commits onto Daniel Niklander's remote prime.md fix `4d72509` — no file conflict, linear history restored. (2) Shipped the deferred Option 2′ session-marker fix: a per-session-id identity oracle keyed by the harness-injected `CLAUDE_CODE_SESSION_ID`, closing the concurrent-session marker clobber race that the prior Options 1 and 2 failed to fix. 7-file atomic implementation, edit-manifest-first, bash validated by execution, independent qc-reviewer GO.
-
-### Files Created
-- `audits/working/option2-marker-edit-manifest-2026-06-01.md` — per-consumer edit manifest (13 sites / 7 files), written before the first edit per spec completion criterion #1 (gitignored working note)
-- `logs/scratchpads/2026-06-01-20-33-scratchpad.md` — continuity scratchpad
-
-### Files Modified
-- `.claude/commands/prime.md` — Steps 8a.3.a / 8b.3.a / 8c.3: write per-id oracle alongside shared file + orphan-prune stale per-id files
-- `.claude/commands/wrap-session.md` (canonical) — Step 3.5 guard: per-id-first resolution + loud fallback
-- `/.claude/commands/wrap-session.md` (workspace-root repo) — Step 3.5 paired sibling, lockstep
-- `.claude/commands/session-start.md` — Step 3 hard-fail message reworded (names both oracles)
-- `.claude/commands/session-plan.md` — Step 0 hard-fail message reworded
-- `docs/session-marker.md` — two-file design, new § Harness-var dependency (OP-11 re-verify), corrected stale "wrap guard trusts shared-mutable marker" claim
-- `.gitignore` — added `logs/.session-marker-*`
-- `logs/improvement-log.md` — Option 2′ entry flipped to SHIPPED
-- `logs/session-notes-archive-2026-05.md` — auto-archive (3 entries moved, 10 kept)
-
-### Decisions Made
-- **Ran #3 in this session rather than a fresh one** (operator override of both reviewers' "fresh dedicated session" guidance, after surfacing the concern). Worked cleanly — context never constrained, hard-stop-and-revert net unused.
-- **Rebase over merge** for the git divergence — unpushed commits, no file conflict → linear history is safe and tidier.
-- **Shared file retained, not replaced** (Option 2′ completion criterion #3) — shared file still serves the same-day S{N} counter; per-id file is the identity oracle. Removal deferred (DR-7/AP-7).
-
-### Outcome
-(outcome check, 2026-06-01 — independent general-purpose subagent, verified against filesystem + git log)
-COMPLETION: DELIVERED — both mandate items verified. #1: 13 local commits sit linearly above Daniel's `4d72509` (woven in, not duplicated); no conflict. #2: all 3 prime.md writer blocks write the per-id oracle + orphan-prune; both wrap-session.md files carry per-id-first resolution with loud fallback; `logs/.session-marker-*` gitignored; improvement-log flipped to SHIPPED (6 criteria itemized). Commits `5e2afdc`, `2e95f7f`, `07e97d2` present; edit manifest written first.
-EXECUTION: OPTIMAL — manifest-first, edit, execution-validated bash across 5 scenarios, independent qc GO, paired lockstep commits. No rework loop, detour, or over-build observed.
-Confidence: high (fallback standard — no /session-start — but the GO-eligible spec graded against is concrete enough that confidence is not degraded).
-
-### Risky actions
-None executed. `git pull --rebase` rewrote local commit IDs, but only on unpushed commits with no file conflict (safe, non-destructive on shared state). No force-push, no deletions outside session scope, no external writes pre-push. The Option 2′ orphan-prune `rm -f` loop was validated by execution to never delete the shared file or a live concurrent session's today-dated file before shipping.
-
-### Session Assessment
-(wrap-collector, 2026-06-01)
-- Autonomy-compounding: healthy — Option 2′ structurally closed a recurring TOCTOU race class (confirmed consumer, not speculative). No signal.
-- Leanness/cost: no signal — shared-file removal is design-intended DR-7/AP-7 soak deferral, already in Next Steps with its trigger; no rework loop.
-- Principle-drift: no logged entry — "run #3 here, not a fresh session" overrode both reviewers' guidance, but operator-directed + surfaced first + ran cleanly. Watch only.
-- Friction: no signal — no operator correction, no repeated feedback.
-- Safety: none observed — rebase rewrote IDs only on unpushed commits with no conflict; orphan-prune `rm -f` execution-validated before shipping. No gate gap.
-- Routed: 0→improvement-log, 0→friction-log.
-
-### Next Steps
-- Decide a GitHub remote for nordic-pe-screening — blocks pushing `372af26` and blocks archiving nordic. [carryover]
-- Log a backlog entry for the `improve.md` / `improvement-analyst` archive de-dup scan bug (same `Read(logs/*archive*.md)` deny as id-02; never filed). [carryover]
-- id-03 G4 timberland/natural-resource naming → deliberate nordic criteria v4.5 / W2 pass. [carryover]
-- Optional: Option 2′ shared-file REMOVAL (DR-7/AP-7), deferred by design until the per-id oracle has soaked.
-
-### Open Questions
-None blocking.
-
 ## 2026-06-01 — Session S6 — Author universal parallel-multi-session playbook (from inbox brief)
 **Mandate:** Author docs/parallel-sessions-playbook.md from the inbox brief via the canonical doc-creation path, stress-testing the contested framing and resolving the brief's Known Weaknesses, with system-owner review — done when: the doc is written covering all six required sections, independent /qc-pass run, system-owner review incorporated, and the brief moved to inbox/archive/.
 - Out of scope: Harness changes (e.g., per-session log namespacing) and the workspace-wide .gitignore sweep — separate structural items, each gated by its own /risk-check.
@@ -452,6 +350,59 @@ None. All git operations were explicit-path commits (never `git add -A`) in two 
 - **Dedicated git-hygiene session (new, highest-value carryover):** (a) commit the remaining 14 project-repo CLAUDE.md Session-Boundaries conversions (explicit paths, leave foreign drift); (b) decide the systemic question — should per-project `.claude/` command/agent dirs be committed at all, or gitignored/symlinked from canonical? The mass deletions + untracked library files across all repos point to a sync/tracking-model problem, not per-file cleanup. Logged to improvement-log (S5 follow-up).
 - **E1 graduation** — `doc-scanner-agent` queued for its own dedicated graduate session (heavy pipeline).
 - Carryovers unchanged: SO reference-file review; GitHub remotes for axcion-ai-system-owner + nordic-pe-screening; E10 fold-status minor inconsistency (tracker says folded, slot-1-decisions L27 still "queued").
+
+### Open Questions
+None blocking.
+
+## 2026-06-04 — Session S6
+**Mandate:** Complete picked menu items: (1) commit the remaining 14 project-repo Session-Boundaries CLAUDE.md conversions (explicit paths) and decide the per-project .claude/ commit-vs-symlink tracking model; (2) graduate E1 (doc-scanner-agent) from repo-documentation to canonical via /graduate-resource; (3) review the System Owner reference files; (5) reconcile the E10 fold-status between strategic-os tracker and slot-1-decisions — done when: all picked items closed in their respective source files
+- Out of scope: foreign-repo drift beyond the 14 named CLAUDE.md conversions; any work in repos outside the four picked items (inferred)
+- Files in scope: 14 project CLAUDE.md files; projects/repo-documentation/.claude/agents/doc-scanner-agent.md + canonical .claude/agents/; projects/axcion-ai-system-owner/references/*; projects/strategic-os/ai-strategy/slot-1-decisions.md + implementation-tracker.md (inferred)
+- Stop if: an item-1 commit surfaces a genuine content conflict unresolvable from context; the .claude/ tracking-model decision cannot be made without operator input
+Auto multi-item: (1) git-hygiene — commit remaining 14 project-repo Session-Boundaries CLAUDE.md changes + decide whether per-project .claude/ dirs are committed or symlinked from canonical; (2) graduate E1 (doc-scanner-agent from repo-documentation); (3) review SO reference files; (5) fix E10 fold-status inconsistency (tracker "folded" vs slot-1-decisions "queued").
+
+### Summary
+Auto-mode session (items 1,2,3,5). At the gate I flagged the bundle as heterogeneous + partly-structural and recommended a reshape; operator chose the full bundle. Stage-0 `/risk-check` returned **RECONSIDER** — risk-check-reviewer + system-owner independently agreed to ship only the CLAUDE.md commit, DROP the E1 graduation, and defer the `.claude/` tracking-model decision. Operator then directed "Don't graduate it. Proceed." Executed the safe path: reconciled E10 (item 5), reversed E1's stale GRADUATE to KEEP-LOCAL (item 2), and committed 12 of 13 project-repo Session-Boundaries conversions (item 1 commit part). Two conflict-catches prevented wrong/mislabeled work — E1's stale verdict and research-pe's tangled foreign drift.
+
+### Files Created
+- `logs/scratchpads/2026-06-04-18-35-scratchpad.md` — continuity scratchpad (git-hygiene + tracking-model carryover)
+- `audits/risk-checks/2026-06-04-s6-git-hygiene-14-claude-md-commits-claude-dir-tracking-e1-graduation.md` — RECONSIDER risk report + system-owner second opinion (committed `e37e42f`)
+- `logs/session-plan-S6.md` — session plan (overwrote a stale 2026-06-01 plan from a shared-marker reset)
+
+### Files Modified
+- `projects/strategic-os/ai-strategy/slot-1-decisions.md` — E1 GRADUATE→KEEP-LOCAL (struck through, not overwritten); E10 CONVERT→CONFIRMED-DONE; Summary "Queued" → none remain (committed strategic-os `26a3dc8`)
+- `projects/strategic-os/ai-strategy/implementation-tracker.md` — Next-action + Slot-1 row updated; S6 changelog entry appended (per QC) (committed `26a3dc8`)
+- 12 project-repo `CLAUDE.md` Session-Boundaries conversions committed: ai-development-lab `37b3332`, axcion-ai-system-owner `76b054d`, axcion-brand-book `332fb67`, buy-side-service-plan `51b875d`, corporate-identity `30513bc`, global-macro-analysis `9f7fa1c`, interpersonal-communication `cd37e28`, marketing-positioning `b3a155c`, nordic-pe-screening-project `3960d26`, obsidian-pe-kb `b8e10f7`, project-planning `67a8805`, repo-documentation `6336df7` (SB + E10 fold)
+- `logs/session-notes.md` — S6 mandate + this wrap entry
+
+### Decisions Made
+- **E1 GRADUATE reversed to KEEP-LOCAL (risk-check + SO + operator):** doc-scanner-agent is genuinely project-local (N=1 consumer; `auto-sync-shared.sh` would fan it out as symlinks into ~10 unrelated projects). The S5-wrap GRADUATE skipped the second-consumer test. Verdict reversed transparently in the records.
+- **research-pe-regime-shift CLAUDE.md deferred (conflict-surfaced):** its Session-Boundaries hunk is entangled with an unrelated 2026-06-01 positioning re-aim; left the whole file untouched rather than sweep foreign drift into an SB commit. Belongs to that project's own session.
+- **Count discrepancy (13 vs 14) resolved:** F6 covered 14 project CLAUDE.md; strategic-os was committed in S5 → 13 remained; the carryover's "14" double-counted strategic-os. `personal` is tracked by the workspace-root repo and had no diff.
+- **`.claude/` tracking-model decision deferred** to its own risk-checked design session, with `auto-sync-shared.sh` named as a binding constraint (per SO).
+
+### Outcome
+(outcome check, 2026-06-04 — independent general-purpose subagent, verified against git state + filesystem)
+COMPLETION: DELIVERED — items 5 (E10 reconcile) and 1-commit-part (12 SB conversions + strategic-os) fully delivered and verified in the named commits. Items 2-graduation, 1-decision, and research-pe were sanctioned deferrals (RECONSIDER risk-check + SO + explicit operator directive; matched the mandate's own stop-if conditions). E1 reversed to KEEP-LOCAL (struck-through, not overwritten) verified in `26a3dc8`. research-pe CLAUDE.md confirmed uncommitted (deliberate). The 13-vs-14 count reconciliation is accurate.
+EXECUTION: OPTIMAL — no rework loops, no detours; real gate (RECONSIDER) + QC (REVISE→fixed) both honored. The reshape was the correct mandate handling. The one non-sanctioned shortfall (item 3 SO review — no deliverable defined) was folded into the reshape context and flagged transparently to Next Steps. Better path: none. Confidence: high.
+
+### Risky actions
+None taken. The session executed explicit-path commits (`git commit -- CLAUDE.md` pathspec per repo, never `git add -A`) across 12 foreign project repos + strategic-os + ai-resources — each diff verified clean before commit. The one high-risk move the bundle invited (graduating a project-local agent into ~10 repos via symlink) was caught by the Stage-0 risk-check and NOT taken. research-pe's tangled foreign drift was detected and left untouched. No deletions, no pushes (gated to wrap), no external writes, no prompt injection. The `.claude/` tracking-model decision (high-blast-radius) was correctly deferred rather than auto-resolved.
+
+### Session Assessment
+(wrap-collector, 2026-06-04)
+- Autonomy-compounding: no signal — two conflict-catches (E1 stale verdict, research-pe tangled drift) prevented wrong work; no reusable component produced.
+- Leanness/cost: no signal — command/record edits + 12 explicit-path commits, no rework; `.claude/` tracking-model debt already logged (S5 accumulation entry).
+- Principle-drift: 1 logged — E1 GRADUATE verdict (recorded S5-wrap) skipped the DR-7/AP-7 second-consumer test, caught + reversed to KEEP-LOCAL by S6 risk-check + SO; 2nd same-day instance (E4 in S5) makes it a pattern. Routed to improvement-log.
+- Friction: 1 logged — auto-bundle item 3 (SO reference review) entered the executable bundle with no concrete deliverable (process type); consumed gate + risk-check attention before being recognized as unscoped. Routed to friction-log.
+- Safety: none observed — the one high-risk move (graduating a project-local agent into ~10 repos via symlink) was caught by Stage-0 `/risk-check` and NOT taken; the gate working, not a gap. No guardrail-candidate.
+- Routed: 1→improvement-log (principle-drift), 1→friction-log (process).
+
+### Next Steps
+- **Dedicated git-hygiene / `.claude/` tracking-model design session (highest-value carryover):** decide whether per-project `.claude/` command/agent dirs are committed as-is or gitignored+symlinked from canonical. Must run its own `/risk-check` and treat `auto-sync-shared.sh`'s symlink-emission + drift-detection as a binding constraint.
+- **research-pe-regime-shift CLAUDE.md:** commit its Session-Boundaries conversion cleanly in that project's own session (currently tangled with an uncommitted positioning re-aim).
+- **Item 3 (SO reference review):** define a concrete deliverable (staleness check / quality pass / consistency-against-live-SO) before running.
+- **E1 (doc-scanner-agent):** now closed KEEP-LOCAL — revisit only if a genuine 2nd consumer appears.
 
 ### Open Questions
 None blocking.

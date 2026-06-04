@@ -1,70 +1,62 @@
-# Session Plan — 2026-06-01
+# Session Plan — S6 (2026-06-04)
 
 ## Intent
-Author `ai-resources/docs/parallel-sessions-playbook.md` from the inbox brief via the canonical doc-creation path — stress-testing the contested n=1 framing, resolving the brief's "Known Weaknesses," looping the system-owner in as reviewer, and delivering the six required sections.
+Run 4 picked carryover items in operator order: (1) git-hygiene commit of the remaining 14 project-repo Session-Boundaries CLAUDE.md conversions + a decision on the per-project `.claude/` commit-vs-symlink tracking model; (2) graduate E1 (`doc-scanner-agent`) to canonical; (3) review the System Owner reference files; (5) reconcile the E10 fold-status inconsistency between the strategic-os tracker and slot-1-decisions.
 
 ## Model
-opus — match (active session is opus; this is synthesis + design + judgment over a contested framing → deciding-tier work).
+Recommended: **opus** (item 1 carries a genuine architecture decision; item 2 is a graduation-pipeline judgment). Active: claude-opus-4-8[1m] — **match**, no `/model` switch.
 
 ## Source Material
-- `/Users/danielniklander/Axcion Claude Code/Axcion AI Repo/ai-resources/inbox/parallel-sessions-playbook-brief.md` — the build brief (primary input)
-- `/Users/danielniklander/Axcion Claude Code/Axcion AI Repo/ai-resources/docs/session-marker.md` — marker contract (check for conflict/overlap)
-- `/Users/danielniklander/Axcion Claude Code/Axcion AI Repo/ai-resources/.claude/commands/wrap-session.md` — foreign-write guard (the retrofit the brief critiques)
-- `/Users/danielniklander/Axcion Claude Code/Axcion AI Repo/ai-resources/.claude/hooks/detect-concurrent-session.sh` — concurrency-detection hook
-- `/Users/danielniklander/Axcion Claude Code/Axcion AI Repo/CLAUDE.md` — workspace autonomy rules + design-judgment principles
-- `/Users/danielniklander/Axcion Claude Code/Axcion AI Repo/ai-resources/docs/ai-resource-creation.md` — canonical doc-creation discipline
-- `/Users/danielniklander/Axcion Claude Code/Axcion AI Repo/ai-resources/docs/repo-architecture.md` — placement (confirm docs/ is correct home)
-- `/Users/danielniklander/Axcion Claude Code/Axcion AI Repo/projects/interpersonal-communication/logs/session-notes.md` — the origin 3-worktree run (2026-06-01 wraps)
-- system-owner agent (`projects/axcion-ai-system-owner/`) — reviewer/consultant, per brief § System-Owner Ownership
+- Item 1: S5 Next Steps (session-notes.md), `logs/improvement-log.md` (S5 16-repo drift follow-up); the 14 project CLAUDE.md files across the workspace; the systemic `.claude/` tracking question.
+- Item 2: `projects/strategic-os/ai-strategy/slot-1-decisions.md` L20 (E1 GRADUATE verdict); `projects/repo-documentation/.claude/agents/doc-scanner-agent.md` (the resource to graduate); `/graduate-resource` pipeline.
+- Item 3: `projects/axcion-ai-system-owner/references/` — 6 files (grounding, persona, project-layout, systems-building-principles, toolkit-relationship, craft-iteration-article-2026-06-01).
+- Item 5: `projects/strategic-os/ai-strategy/slot-1-decisions.md` (L27, L57 — E10 still "queued"); `projects/strategic-os/ai-strategy/implementation-tracker.md` (L23, L29, L59 — E10 "folded").
 
 ## Findings / Items to Address
-The brief specifies the deliverable contents and an explicit attack surface. Items to resolve in the doc:
 
-**Required sections (brief § Deliverable):**
-1. Go/no-go decision test — brief Part 1 four-gate test (Independence/Granularity/No-dependency/Attention).
-2. Decomposition + file-ownership discipline — brief Part 2.1 file-ownership map; "no two units share a path."
-3. Shared-state coordination protocol — brief Part 2.2 bookkeeping quarantine; the log-shaped vs content-shaped file split (Landing Lesson 4).
-4. Landing/merge procedure — brief Landing-Phase Lessons 1–8 (clean target, serialize merges, clean branch first, forecast by shape, gate content conflicts only, both-sides-present QC, git-status hygiene, teardown ordering) + Shared-Remote Lessons 1–3.
-5. When NOT to parallelize — brief Known Weakness 1 (non-cleanly-partitionable work — the biggest risk) + Weakness 6 (worktrees not the only model).
-6. Cost / efficiency-target disambiguation — brief Weakness 7 (wall-clock vs total effort vs cost = three targets, three playbooks).
+### Item 1 — Git-hygiene (commit + decision)
+- **Commit part:** the F6 blanket Session-Boundaries consolidation (S2) converted 14 project CLAUDE.md files to a pointer; per S5, only ai-resources + strategic-os were committed. The 14 remaining project-repo conversions are uncommitted across foreign repos.
+- **Decision part (BLOCKED on operator input):** "should per-project `.claude/` command/agent dirs be committed at all, or gitignored/symlinked from canonical?" S5 flagged this as needing a deliberate reviewed pass. This is an architecture decision, not a mechanical task — it will be surfaced to the operator before any change, and a `/risk-check` gates it.
+- Discipline: explicit-path commits per repo, never `git add -A`, foreign drift untouched (S5 pattern).
 
-**Known Weaknesses to resolve explicitly (brief § Known Weaknesses — keep all open, do not paper over):**
-7. Built on n=1 clean-partition case → add a second branch for non-partitionable work (refactors, single-doc multi-angle edits). Biggest risk.
-8. Autonomy may be the dominant lever, not worktree hygiene → test/state whether raising per-session autonomy outranks coordination mechanics.
-9. Invented numbers ("2.5× ceiling", "attention 2–3") → remove false precision or give a real estimation method; the origin run produced no measured serial fraction.
-10. Per-session-logs fix has a hidden cost (history fragmentation + reconciliation) → present as a tradeoff, not a free win.
-11. Go/no-go may be too rigid ("all four must pass") → smarter rule: extract shared prerequisite into a serial pre-step, then fork the remainder.
-12. Worktrees assumed as only model → compare sequential-with-batching, single-session-checkpoints, branches-without-worktrees, separate clones; say when parallel LOSES.
-13. Cost axis ignored → N sessions ≈ N× tokens + merge session; parallelism trades money for wall-clock.
+### Item 2 — E1 graduation
+- `doc-scanner-agent.md` confirmed genuinely project-local (exists only in `repo-documentation/.claude/agents/`, not canonical). GRADUATE verdict valid.
+- slot-1-decisions explicitly tags this "heavy pipeline — not run inside a closure sweep." Will run `/graduate-resource`, gated by `/risk-check` (new canonical resource + symlink distribution = structural).
 
-**Framing claims to stress-test (brief § Framing To Stress-Test) — do not accept as settled:**
-14. "Parallelism is a selective optimization on top of good decomposition, not the organizing principle" — Amdahl ceiling, operator-as-serial-resource, deferred-not-avoided merge cost. Test each; present as reasoned position with its limits, not dogma.
+### Item 3 — SO reference review (AMBIGUOUS — scope to be defined mid-run)
+- 6 reference files exist. "Review" has no stated deliverable. Will ask the operator to pin the intent (staleness/currency check vs content-quality pass vs consistency-against-live-SO) before executing; default proposal = a short currency/staleness findings note.
 
-**System-owner-specific (brief § System-Owner Ownership):**
-15. Validate framing against existing ai-resources inventory (session-marker contract, autonomy rules, harness retrofits) — surface any conflict per workspace Design-Judgment "surface, don't silently resolve."
-16. Add a short system-owner-facing decision hook (one paragraph: how the System Owner decides parallel vs sequential for a project) distinct from operator-facing procedure.
-
-**Cross-reference (not in scope to fix, but the doc references as worked example):**
-17. The workspace-wide `.gitignore` sweep for `logs/.prime-mtime` / `logs/.session-marker` — cited as the worked example of the "state-file leakage" pitfall (brief § Concrete Follow-Up). Doc references it; the sweep itself is out of scope.
+### Item 5 — E10 fold-status reconciliation
+- Real inconsistency confirmed: tracker (L23/L29/L59) says E10 folded into `compaction-protocol.md`; slot-1-decisions (L27 "Queued small edit", L57 "Queued — execution pending") says it is still open.
+- Resolution: verify whether the fold actually landed in `compaction-protocol.md` + the repo-documentation CLAUDE.md pointer; if yes, update slot-1-decisions L27/L57 to CONFIRMED-DONE; if no, the tracker is wrong — surface and correct the authoritative one.
 
 ## Execution Sequence
-1. **Deep-read grounding inputs.** Brief (done), `session-marker.md`, autonomy rules, wrap foreign-write guard, `detect-concurrent-session.sh`, and the origin-run session notes. Verify the harness-retrofit claims the brief makes against the actual files. ✓ when each claimed retrofit is confirmed or corrected against source.
-2. **System-owner consult (pre-draft).** Invoke the `system-owner` agent with the brief framing + the inventory question (conflict with marker contract / autonomy rules / existing session docs?). ✓ when the agent returns a framing validation + any conflicts + a recommendation on the decision-hook.
-3. **Draft the doc.** All six required sections + the second branch for non-partitionable work + the when-parallel-loses comparison + cost-target disambiguation + the system-owner decision hook. Stress-test claim 14 in-text (state position + limits). Strip invented numbers (item 9). ✓ when a complete draft exists at `docs/parallel-sessions-playbook.md` covering items 1–16.
-4. **Self-review against the Known-Weaknesses checklist.** Confirm each of items 7–13 is explicitly addressed (not silently dropped). ✓ when every weakness maps to a doc passage.
-5. **Independent `/qc-pass`.** Fresh-context QC of the draft against the brief's six deliverables + attack surface. ✓ when verdict is GO or fixes applied.
-6. **Land.** Apply QC fixes; move brief to `inbox/archive/`; commit (`new: parallel-sessions-playbook — ...`). ✓ when doc + archived brief committed; push deferred to wrap.
+
+### Stage 0 — Risk-check (gate, structural items 1+2)
+Run `/risk-check` covering item-1 cross-repo commits + `.claude/` tracking-model change + item-2 E1 graduation. GO → proceed; RECONSIDER/NO-GO → pause, retain mandate+plan.
+
+### Stage 1 — Item 5 (E10 reconcile)
+Lowest-risk, contained. Verify the fold, reconcile the authoritative record. `/qc-pass` the doc edits.
+
+### Stage 2 — Item 1 commit part
+Commit the 14 project-repo CLAUDE.md conversions, explicit paths per repo, foreign drift untouched. Then surface the `.claude/` tracking-model decision to the operator (cannot auto-resolve).
+
+### Stage 3 — Item 2 (E1 graduation)
+Run `/graduate-resource doc-scanner-agent` per the heavy pipeline. `/qc-pass` the result.
+
+### Stage 4 — Item 3 (SO review)
+Pin the deliverable with the operator, then produce the agreed review note.
+
+Between-item summaries emitted at each stage boundary (visibility only).
 
 ## Scope Alternatives
-- **Min:** the six required sections, weaknesses noted as open caveats rather than resolved. Faster, but the brief explicitly says "resolve" the weaknesses — under-delivers.
-- **Recommended:** six sections + all seven weaknesses resolved in-text + system-owner review + decision hook. Matches the brief's Deliverable + Ownership requirements.
-- **Max:** recommended + a worked-example appendix walking the origin 3-worktree run end-to-end as an illustration. Deferred unless the draft reads thin without it.
+- **Recommended-at-gate subset (operator chose full instead):** item 5 + item-1 commit part only this session; defer item-1 decision, item-2 graduation, item-3 to dedicated sessions. Operator replied `go` for the full bundle.
+- **Minimum viable:** item 5 alone (fast reconcile) if context runs short.
 
 ## Autonomy Posture
-Gated — additive new-file work, but the framing is contested and the operator may want to weigh in on how the stress-test resolves.
-
-**Stop points:**
-- After the system-owner consult + first complete draft: surface the framing resolution (esp. the stress-test verdict on claim 14 and the second branch for non-partitionable work) and any system-owner-flagged conflict, before running QC and archiving the brief.
+**Gated** — items 1 (cross-repo shared-state commits + tracking-model change) and 2 (new canonical resource + symlink distribution) trigger structural change classes. `/risk-check` runs before execution (Stage 0). The item-1 architecture decision and item-3 scope are explicit operator-input points, not auto-resolved.
 
 ## Risk
-No structural change classes apparent — a doc in `docs/` is not always-loaded content, a new command/skill, a hook, a permission, or a symlink. The brief's harness-change idea (per-session log namespacing) and the `.gitignore` sweep ARE structural and are explicitly out of scope, each gated by its own `/risk-check`. Run `/risk-check` only if scope expands to touch those.
+- STRUCTURAL_RISK = true. Cross-repo git operations on 14 foreign repos = high blast radius; explicit-path discipline mandatory.
+- E1 graduation creates always-distributed canonical content (symlinks) — reversibility is moderate.
+- Context budget: 4 heterogeneous items spanning 3+ projects in one session risks compaction; apply context-constraint deferral if it tightens — defer later stages rather than rush.
