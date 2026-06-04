@@ -293,7 +293,8 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Target files:** (to be determined at disposition) — likely `ai-resources/.claude/commands/graduate-resource.md` (verify/strengthen the plan-time second-consumer gate); possibly the AI-strategy slot-closure convention doc under `projects/strategic-os/ai-strategy/` that governs how GRADUATE verdicts are recorded.
 
 ### 2026-06-04 — wrap-session Step 3.5 guard clobber false-negative for sessions that wrap without /session-start
-- **Status:** applied + Verified (2026-06-04, S8)
+- **Status:** applied
+- **Verified:** 2026-06-04 — confirmed this session (S8): plan-time /risk-check GO (all 6 dims Low), independent qc-reviewer GO, bash validated by execution across 5 scenarios. Both wrap-session copies edited in lockstep + committed.
 - **Resolution:** NO_OWN_MARKER guard added to Step 3.5 in BOTH copies (canonical `ai-resources/.claude/commands/wrap-session.md` + workspace-root `/.claude/commands/wrap-session.md`, lockstep PAIRED CONTRACT). When `CLAUDE_CODE_SESSION_ID` is SET but the per-id file is absent: force `OWN_HEADERS_SUBTRACT=0` / `OWN_MANDATES_SUBTRACT=0`, skip both the shared-marker loud fallback and the PRIME_RAN/.prime-mtime path; loud fallback restricted to var-unset old-CLI. One-line rule documented in `docs/session-marker.md` § Marker resolution. Plan-time `/risk-check` GO (all 6 dims Low) — `audits/risk-checks/2026-06-04-wrap-session-clobber-guard-defect-capture-wiring.md`. Bash validated by execution across 5 scenarios (clobber-incident → claim-zero; normal per-id; old-CLI fallback; id-14 rollover; no-marker legacy) — all pass. Folded with id-14 (same Step 3.5 region) as recommended.
 - **Category:** session-issue
 - **Source:** /resolve-repo-problem AUTO mode 2026-06-04

@@ -476,3 +476,61 @@ Held the wrap at the Step 3.5 foreign-session guard rather than staging `logs/se
 
 ### Open Questions
 None blocking.
+
+## 2026-06-04 — Session S8
+**Mandate:** Complete picked menu items: (1) fix the /wrap-session Step 3.5 clobber false-negative (no-/session-start session has no per-id marker → guard trusts a clobbered shared marker → false FOREIGN=0), folding with the id-14 grace-window edit, in both wrap-session copies; (2) build the /log-defect capture command + wire a 2nd-occurrence scan step into /wrap-session or /friday-checkup; (3) decide whether per-project .claude/ command/agent dirs are committed as-is or gitignored+symlinked from canonical, and record the decision — done when: item 1 both wrap-session copies fixed + committed, item 2 /log-defect created + scan step wired + committed, item 3 decision recorded in decisions.md (plus implementation if the decision calls for it)
+- Out of scope: item-2 "route the first real recurring defect class into a rule/eval/example" (depends on a real recurring defect existing — defer if none present); backfilling past defects
+- Files in scope: .claude/commands/wrap-session.md (ai-resources + workspace-root); .claude/commands/log-defect.md (new); .claude/commands/friday-checkup.md; logs/defect-log.md; docs/defect-to-fix-loop.md; logs/decisions.md; auto-sync-shared.sh / .gitignore (item 4, outcome-dependent) (inferred)
+- Stop if: any picked item's /risk-check returns NO-GO — pause that item, retain mandate + plan on disk
+Auto multi-item: Fix the /wrap-session Step 3.5 clobber false-negative guard bug (both copies); Build defect-capture wiring session 2 (/log-defect command + scan step into /wrap-session or /friday-checkup); Decide the .claude/ directory git-hygiene / tracking model and record the decision.
+
+### Summary
+`/prime` auto multi-item run (items 1, 2, 4). (1) Fixed the `/wrap-session` Step 3.5 clobber false-negative — added a NO_OWN_MARKER guard to both wrap-session copies so a session with `CLAUDE_CODE_SESSION_ID` set but no per-id marker file claims zero own-contribution and skips both clobber-vulnerable fallbacks, making the guard correctly STOP instead of silently sweeping a concurrent session's notes into the wrap commit. (2) Built the deferred defect-capture wiring (session 2): a new `/log-defect` capture command plus an all-tiers recurrence-scan step in `/friday-checkup` Step 6. (3) Made the `.claude/` shared-resource git-hygiene decision (Option B — gitignore synced shared files + regenerate via `auto-sync-shared.sh`), recorded with the implementation gated to a dedicated session. Plan-time `/risk-check` GO (items 1+2); independent QC on each item (GO; REVISE→fixed).
+
+### Files Created
+- `.claude/commands/log-defect.md` — new per-session defect capture command (`model: sonnet`); classify → set occurrence → prepend to defect-log.md; Action always `captured`; loud recurrence flag on 2nd+.
+- `audits/risk-checks/2026-06-04-wrap-session-clobber-guard-defect-capture-wiring.md` — plan-time risk-check report (GO, all 6 dims Low).
+- `logs/scratchpads/2026-06-04-21-30-scratchpad.md` — continuity scratchpad.
+
+### Files Modified
+- `.claude/commands/wrap-session.md` (ai-resources canonical) — Step 3.5 NO_OWN_MARKER guard (item 1, committed).
+- `/.claude/commands/wrap-session.md` (workspace-root paired sibling) — identical guard, lockstep (item 1, committed separately in workspace-root repo).
+- `docs/session-marker.md` — § Marker resolution: added the no-own-marker → own-subtract=0 rule note (item 1).
+- `.claude/commands/friday-checkup.md` — Step 6: new all-tiers "Defect-log recurrence scan" tactical follow-up (item 2).
+- `docs/defect-to-fix-loop.md` — loop steps 1–2, Firing model, deferred-wiring → wiring-status (item 2).
+- `logs/defect-log.md` — header clause updated (deferred/manual → shipped) per QC finding (item 2).
+- `logs/improvement-log.md` — clobber entry → applied+Verified (item 1); new gated `.claude/` git-hygiene implementation follow-up (item 4).
+- `logs/decisions.md` — `.claude/` git-hygiene decision, Option B (item 4).
+- `logs/session-notes.md` — S8 mandate (at /prime) + this wrap entry.
+
+### Decisions Made
+- **Item 4 — `.claude/` shared-resource git-hygiene: Option B (gitignore + regenerate).** Evidence-grounded across 14 repos; `auto-sync-shared.sh` regenerates symlinks at SessionStart so gitignoring loses nothing while eliminating the symlink-vs-copy drift and the 14-repo history churn. Decision-only; implementation gated. Full record in decisions.md 2026-06-04 (S8).
+- **Item 2 — recurrence scan fires on every `/friday-checkup` tier (not gated to monthly+).** The scan is a trivial single-file grep (unlike the subagent-based fading-gate scan), so weekly coverage satisfies the loop doc's "fortnightly-or-better" intent without letting recurrences sit unflagged. Routing stays gated judgment for `/friday-act`.
+- **Item 2 — `/log-defect` captures only, never routes.** Routing stays gated per the loop's firing model; a 2nd-occurrence entry is left `captured` (the signal the Friday scan keys on) with a loud recurrence notice.
+- **QC fix (item 2, REVISE→applied):** updated the stale `defect-log.md` header clause that still claimed the scan/routing wiring was "deferred to session 2 / manual."
+
+### Outcome
+- **COMPLETION: DELIVERED** — all 3 mandate items delivered in usable form, verified against files + commits. Item 1 guard present in both wrap-session copies (folded with id-14); item 2 `/log-defect` + `/friday-checkup` scan wired (first-real-close correctly deferred); item 3 Option B recorded in decisions.md, implementation correctly gated rather than force-built.
+- **EXECUTION: OPTIMAL** — no wasted steps, no rework loops; gates followed (plan-time risk-check GO, per-item QC, bash-by-execution validation). Better path: none.
+- **Confidence:** high. (Independent fresh-context outcome check, Step 6.4.)
+
+### Risky actions
+None taken. All four commits used explicit-path staging (never `git add -A`); pre-existing working-tree drift (`audits/backbone-manifest.md`, `logs/session-plan-S1/S2/S3.md`, untracked repo-dd audit) left untouched. The one always-loaded-adjacent change class (command edits across two repos + a new command + a cadence-pipeline edit) was plan-time `/risk-check` GO before landing per autonomy rule #9. Item 1 (highest blast radius) was bash-validated by execution across 5 scenarios before commit. No deletions, no pushes, no prompt injection.
+
+### Session Assessment
+_(wrap-collector, 2026-06-04 — S8)_
+- **Autonomy-compounding:** reusable infra produced — `/log-defect` + `/friday-checkup` Step 6 recurrence scan, closing the S7-scaffolded defect-capture loop (confirmed consumer). No OP-9 concern.
+- **Leanness/cost:** no signal — recurrence scan is a trivial single-file grep with weekly-cadence rationale; Item 4 implementation correctly deferred (decision-only).
+- **Principle-drift:** no signal — gates honored (plan-time `/risk-check` GO, per-item QC, autonomy rule #9).
+- **Friction:** no signal — auto-multi-item ran clean; no operator correction.
+- **Safety:** none observed — `Risky actions: None`; explicit-path staging; Item 1 was itself a guardrail-strengthening fix.
+- **Routed:** 0→improvement-log, 0→friction-log (clobber fix + Option B follow-up already logged this session; deduped).
+- **Reusable component → consider `/innovation-sweep`:** the `/log-defect` + per-tier recurrence-scan pattern (defect capture→flag, routing-gated).
+
+### Next Steps
+- **Implement the Item 4 decision (gated):** multi-repo `git rm --cached` of synced shared `.claude/` symlinks + `.gitignore` patterns across 14 repos + a regenerate-verify pilot; needs its own `/risk-check` + dedicated session. Full proposal in `logs/improvement-log.md` (2026-06-04 entry).
+- **Defect-loop acceptance test (still deferred):** route the first real recurring defect class into a rule/eval/example — awaits a real recurrence; no backfill.
+- **Parked:** 4 inbox build briefs (`/audit-workflow`, workflow-diagnosis, `/repo-review`, `/codex-dd`); 6+ resolved improvement-log entries → consider `/resolve-improvement-log`.
+
+### Open Questions
+None blocking.
