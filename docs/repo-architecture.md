@@ -151,6 +151,7 @@ The workspace's auto-sync hook (`ai-resources/.claude/hooks/auto-sync-shared.sh`
 
 | Audit discipline | one source of truth | `ai-resources/docs/audit-discipline.md` lists `/risk-check` change classes, two-gate firing model, and Friday-cadence tiers. |
 | Logs split | parallel | Workspace `logs/` (workspace-level decisions, innovations, sessions). ai-resources `logs/` (canonical resource-work logs). Project `logs/` (project-specific sessions). Each session writes to its own scope. |
+| Command/agent ↔ knowledge-bases | read-only, downward | `/expert-check` (via the `expert-check-reviewer` agent) reads book-summary notes from a target KB vault under `knowledge-bases/` by path, topic-matched against the step subject. Read-only; advisory output only; requires an explicit KB target (no all-KB default). First shared consumer of `knowledge-bases/` vault content as command input. |
 
 ---
 
