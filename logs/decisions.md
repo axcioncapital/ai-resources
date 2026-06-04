@@ -164,3 +164,29 @@
 **Alternatives considered.** (a) New dedicated project `projects/ai-strategy/` — rejected: fragments material. (b) Save + promote to strategic-os `state/live/strategy.md` via /promote-to-live — operator declined (heavier; engages promotion gating).
 
 **Decided by:** Claude recommendation, operator-confirmed via /clarify multiple-choice selection.
+
+## 2026-06-04 (S2) — F6 Session-Boundaries: blanket consolidation, overriding the S1 selective verdict
+
+**Context.** AI-strategy candidate F6. S1 (earlier same day) recorded F6 as "CONVERT but NOT a blanket find-replace — keep verbatim where it loads every turn; DR-5 protects deliberate cross-level CLAUDE.md duplication." The operator then directed a blanket consolidation of all carrying CLAUDE.md files into a single source doc + pointers.
+
+**Decision.** Override the S1 selective verdict: blanket-convert all 17 locations (workspace-root + ai-resources + 14 project CLAUDE.md + the /new-project template fragment) to a thin every-turn behavioural cue + a pointer to new `ai-resources/docs/session-boundaries.md` (pointer pattern "Option A"). Record the override in `slot-1-decisions.md` per OP-11.
+
+**Rationale.** (a) Serves OP-12's consolidation clause (17 verbatim copies → one source). (b) DR-5's exception did not actually protect these copies — DR-5 only sanctions *self-identifying* duplication, and these copies were silent, so the change moves toward DR-5 compliance. (c) Option A keeps the imperative cue loading every turn, preserving F6's one valid concern (the rationale sentence is what moves to the pointer target, not the directive). Gated by /risk-check (PROCEED-WITH-CAUTION, 5 mitigations applied) and /qc-pass (GO).
+
+**Alternatives considered.** (a) Honor F6 selective + own /risk-check session — operator rejected in favour of blanket. (b) Pure-pointer stubs (Option B) — rejected: drops the every-turn behavioural cue, re-opening F6's objection. (c) Defer F6 to its own session — rejected: operator wanted it done now.
+
+**Decided by:** Operator override, surfaced as a conflict (S1 verdict vs operator framing) and confirmed via /clarify multiple-choice. Recorded per OP-11 (surface, don't silently drift).
+
+## 2026-06-04 (S4) — Auto-mode scope reduction via gate-time cross-repo conflict check
+
+**Context.** Operator picked menu items 1,2,3,4,6 in auto mode. The context-discovery engine, run at the auto-mode mandate-derivation step, surfaced that items 2 (AI-strategy Slot 1) and 3 (Session Boundaries consolidation) were recorded as already executed 2026-06-04, and item 4 was unscoped.
+
+**Decision.** Reduced the batch from 5 items to 1+6 at the single approval gate. Verified the conflict against the strategic-os repo git log + implementation-tracker before recommending the drop (items 2/3 done by S1/S2; only E1/E4 graduations remain on item 2). Dropped item 4 as unscoped, item 2 also for active-collision risk with the live S3 session.
+
+**Rationale.** Executing 2/3 would have been redundant work; item 2 additionally risked colliding with a concurrent session holding the strategic-os tree dirty. Conflict surfaced explicitly to the operator per the Design Judgment "conflicts must be surfaced, not silently resolved" principle, with the reduced subset recommended.
+
+**Alternatives considered.** (a) Run all 5 as picked — rejected: redundant + collision. (b) Run 1+6 + item 2's E1/E4 remainder — deferred: collision risk until S3 wraps.
+
+**Process gap noted (routed to /resolve-repo-problem):** /prime's git cross-check scans only ai-resources + workspace-root, not sibling project repos like strategic-os — so it surfaced items 2/3 as still-open when they were done-and-committed elsewhere. The context-discovery engine caught it; /prime did not.
+
+**Decided by:** Claude recommendation, operator-approved (`go` at the reshaped gate).
