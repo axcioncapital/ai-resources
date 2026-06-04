@@ -2,7 +2,7 @@
 
 > **When to read this file:** Before deciding to run more than one Claude Code session in parallel on the same project (typically via git worktrees), and again before landing those parallel branches. Also read it when advising whether a project's upcoming work *should* be parallelized at all — that recommendation is a System Owner call, not a per-session improvisation (see § System Owner Decision Hook).
 
-This is an invariant framework, not a recipe tied to one run. It tells you **when** parallel sessions help, **how** to decompose and coordinate them, **how** to land them, and — just as important — **when not to bother**. Scope-agnostic: it governs any project.
+This is a scope-agnostic framework: it tells you **when** parallel sessions help, **how** to decompose and coordinate them, **how** to land them, and — just as important — **when not to bother**. Its *reasoning* is deductive and generalizes (the Amdahl ceiling, the single-serial-operator constraint, deferred merge cost); the *framework as a whole* is validated against one origin run and is the current best working model, not a measured law — see § 0.
 
 ---
 
@@ -34,6 +34,8 @@ These are reasoned positions, not measured laws. State them; do not dress them u
 ## 1. Go / No-Go decision test
 
 Run this **before spawning any worktree.** Parallelize only when the work clears these gates. The gates are ordered — fail early and you can stop testing.
+
+> **Evidence basis:** one origin run; the gates below are reasoned, not measured — see § 0.
 
 1. **Partitionability (the hard gate).** Can you draw a **file-ownership map** in which no two units share a path — *including* shared indexes, backlogs, and logs? Write the map first (§ 2). **If you cannot draw a non-overlapping map, that is itself the answer: this work is not cleanly partitionable → go to § 6, Branch B.** You do not need to predict conflicts; the inability to assign every file to exactly one owner *is* the conflict prediction.
 
