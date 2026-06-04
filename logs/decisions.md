@@ -220,3 +220,20 @@
 **Alternatives considered.** (1a) Run E1 graduation as picked — rejected: speculative fan-out, pipeline would strip the project-specific lens. (2a) Patch-stage only research-pe's SB hunk — rejected: fragile non-interactive partial-stage; cleaner to defer the file to its owning session. (3a) Decide the tracking model inline under auto-mode autonomy — rejected: high blast radius, S5 reserved it for a reviewed pass.
 
 **Decided by:** risk-check RECONSIDER + system-owner concurrence; operator directive "Don't graduate it. Proceed."
+
+## 2026-06-04 (S7) — Defect-capture scaffolding: 5 architecture decisions
+
+**Context.** Implementing §5.8 (Defect capture) of the AI strategy governing document — a defect log + a defect-to-fix loop. Five architecture questions surfaced via `/clarify`, pre-researched via `/decide` with a system-owner consult, accepted by operator with "proceed."
+
+**Decisions.**
+1. **Home — canonical `ai-resources`** (`logs/defect-log.md` + `docs/defect-to-fix-loop.md`). Output-quality defects appear in every project; DR-1 multi-project test passes on first pass. No symlink fan-out (logs live once); no `/placement` needed (siblings in established folders).
+2. **A separate fourth log, not an extension** of friction/improvement/coaching. The defining behaviour — count occurrences per class, act on the 2nd — needs a stable class register; improvement-log is an unordered queue that would bury the recurrence signal. Tracks "how good the output was" (unserved axis) vs the existing "how the work ran."
+3. **Eval branch routes by locality** — cross-cutting classes → qc-reviewer / `review-principles.md`; skill-local classes → that skill's quality-check section. Feeds the future slot-5 eval substrate rather than forking one. A standalone checklist doc was rejected (a doc a human re-reads is the hand-correction the loop exists to retire).
+4. **Firing — capture per-session + recurrence scan fortnightly on the Friday cadence** (gated step), not a hook and not fully manual. Precedent: gate-calibration suppression check fires monthly+ in `/friday-checkup`. Routing is judgment work → stays gated.
+5. **Scaffolding-only this session; wiring deferred to a risk-checked session 2.** Binding principle: closure-before-detection (governing-doc intro) — design the closing channel before the log collects defects. `/log-defect`, the scan step, and real routing are gated change classes anyway.
+
+**Rationale.** All five grounded in governing-doc §5.8 + the roadmap slot ordering (instrument upstream calls before the slot-5 eval substrate; the flagship build must not break the flagship closure-before-detection rule). System-owner concurred and flagged the one real risk: a log that captures but never closes — hence the acceptance test is "first defect class actually closed."
+
+**Alternatives considered.** Project-scoped home (rejected — defects are cross-project); extend improvement-log (rejected — buries recurrence); checklist-doc eval landing (rejected — re-read-by-human anti-pattern); fully-automated hook firing (rejected — routing is judgment); full wiring this session (rejected — gated classes + closure-before-detection argues design-first).
+
+**Decided by:** Claude recommendation via `/decide` + system-owner concurrence; operator accept ("proceed") then "yes add it and proceed" for the gated pointer.

@@ -413,3 +413,32 @@ None blocking.
 - Files in scope: ai-resources/logs/defect-log.md (new); ai-resources/docs/defect-to-fix-loop.md (new); ai-resources/CLAUDE.md (one-line pointer, gated by /risk-check)
 - Stop if: /risk-check on the CLAUDE.md pointer returns NO-GO — then ship the two files and hold the pointer for session 2
 - Context pack: (none — brief pre-enumerated all sources via /clarify → /decide → /scope)
+
+### Summary
+Built the §5.8 defect-capture scaffolding from the AI strategy implementation report — a defect log + a defect-to-fix loop process doc — designing the closure channel before defects accumulate (closure-before-detection). Drove the request through `/clarify` → `/decide` (with a system-owner consult grounding all 5 architecture decisions in governing-doc §5.8) → `/scope` before any writing. Scaffolding-only by design; all command/cadence/routing wiring explicitly deferred to a risk-checked session 2. The one always-loaded edit (a CLAUDE.md pointer) was gated by `/risk-check` (GO, all dims Low) before landing.
+
+### Files Created
+- `logs/defect-log.md` — output-quality defect log; HTML-commented schema, 6 §5.8 classes + `shallow-analysis` (operator addition, attributed as not-in-§5.8), 2nd-occurrence recurrence rule, reference-only example entry.
+- `docs/defect-to-fix-loop.md` — the capture→route→close loop; rule/eval/example routes; eval route-by-locality; per-session capture + fortnightly Friday scan firing model; first-close acceptance test; deferred-wiring section.
+- `audits/risk-checks/2026-06-04-claude-md-pointer-defect-log-loop-doc.md` — risk-check report (GO).
+- `logs/scratchpads/2026-06-04-19-07-scratchpad.md` — continuity scratchpad.
+
+### Files Modified
+- `CLAUDE.md` — one-line discoverability pointer added to the `logs/` description line (gated, risk-check GO).
+- `logs/session-notes.md` — S7 mandate (this session) + this wrap entry.
+
+### Decisions Made
+- **Architecture (5 decisions, via `/decide` + system-owner consult, operator accepted with "proceed"):** canonical `ai-resources` home; separate fourth log (output-quality, distinct from friction/improvement/coaching); eval route-by-locality (cross-cutting → qc-reviewer/review-principles; skill-local → per-skill check); capture per-session + fortnightly Friday scan; scaffolding-only this session with wiring deferred to session 2. Grounded in governing-doc §5.8 + roadmap slot ordering (instrument before slot-5 eval substrate; closure-before-detection).
+- **Keep the CLAUDE.md pointer this session (operator "add it"):** gated with `/risk-check` per autonomy rule #9; GO verdict, landed.
+- **QC fixes (REVISE → applied):** (1) corrected the false claim that all seven defect classes are from §5.8 — §5.8 names six; `shallow-analysis` is an operator addition. (2) Replaced the fabricated `QS-6` reference in the loop doc with the real `skills/ai-resource-builder/SKILL.md` Step 6 "Quality Check" anchor.
+
+### Risky actions
+None. One always-loaded CLAUDE.md edit, gated by /risk-check (GO) before landing per autonomy rule #9. All staging was explicit-path (never `git add -A`); pre-existing working-tree drift from earlier sessions left untouched. No deletions, no external writes, no prompt injection. End-time /risk-check gate skipped under the documented rule: the only structural-class change (the CLAUDE.md pointer) was plan-time risk-checked (GO), already committed, and drift is bounded.
+
+### Next Steps
+- **Session 2 (risk-checked) — defect-capture wiring:** (a) `/log-defect` capture command; (b) a `/wrap-session` or `/friday-checkup` scan step surfacing 2nd-occurrence classes; (c) route the first real recurring defect class into a rule/eval/example (this satisfies the loop's acceptance test). All three are gated change classes → plan-time `/risk-check` required.
+- **Loose end:** decide whether to commit the system-owner advisory (`projects/axcion-ai-system-owner/output/consultations/consult-2026-06-04-defect-log-and-defect-to-fix-loop-architecture.md`, uncommitted, separate repo).
+- **Carryovers from S6 (unchanged):** 14-repo CLAUDE.md git-hygiene + `.claude/` tracking-model decision; E1 graduation (RECONSIDER — needs scoped approach); SO reference-file review; GitHub remotes for axcion-ai-system-owner + nordic-pe-screening; E10 fold-status reconcile.
+
+### Open Questions
+None blocking.
