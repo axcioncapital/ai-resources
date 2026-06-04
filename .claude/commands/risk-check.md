@@ -2,7 +2,7 @@
 model: opus
 ---
 
-Evaluate a proposed structural change against five risk dimensions before landing. Delegates to the `risk-check-reviewer` subagent (fresh context); produces a structured report and a chat verdict: GO / PROCEED-WITH-CAUTION / RECONSIDER. Does NOT execute the change.
+Evaluate a proposed structural change against six risk dimensions before landing — usage cost, permissions, blast radius, reversibility, hidden coupling, and principle alignment. Delegates to the `risk-check-reviewer` subagent (fresh context), which first builds an explicit consumer inventory (grep-based blast radius) before scoring; produces a structured report and a chat verdict: GO / PROCEED-WITH-CAUTION / RECONSIDER. Does NOT execute the change.
 
 Input: `$ARGUMENTS` — free-text description of the proposed change, optionally referencing file paths.
 
@@ -87,7 +87,8 @@ Invocation semantics: operator-typed, or inline-prompted by other commands (e.g.
 
 15. Verify presence rules (structural):
     - `## Verdict` section present with a valid verdict token.
-    - `## Dimensions` section present with five `### Dimension N: ...` subsections (1–5, in order).
+    - `## Consumer Inventory` section present (either an inventory table, or the explicit "No consumers found — isolated change." line).
+    - `## Dimensions` section present with six `### Dimension N: ...` subsections (1–6, in order).
 
 16. Verify section-by-verdict rules (enforce the agent's Step 8 template OMIT contract so malformed reports cannot ship):
 
@@ -127,7 +128,7 @@ Invocation semantics: operator-typed, or inline-prompted by other commands (e.g.
    {/consult output verbatim}
    ```
 
-17d. If `/consult` errors, cannot run, or returns a `DECLINE — {reason}` output: append the `## Architectural Commentary` section anyway, recording the error or decline text in place of the commentary, and note that the second opinion was unavailable. A failed or declined second opinion does NOT change the verdict and does NOT block — the risk-check-reviewer's Step 4 verdict stands as the gate result.
+17d. If `/consult` errors, cannot run, or returns a `DECLINE — {reason}` output: append the `## Architectural Commentary` section anyway, recording the error or decline text in place of the commentary, and note that the second opinion was unavailable. A failed or declined second opinion does NOT change the verdict and does NOT block — the risk-check-reviewer's verdict stands as the gate result.
 
 17e. The second opinion is advisory; it does not override the verdict. If the system owner disagrees with the verdict, surface that disagreement in the Step 5 chat summary so the operator can weigh both — `/risk-check` does not auto-resolve the conflict.
 
@@ -139,13 +140,15 @@ Invocation semantics: operator-typed, or inline-prompted by other commands (e.g.
     - `Risk check — {DATE}`
     - `Change: {CHANGE_DESCRIPTION first line, truncated to ~100 chars}`
     - `Verdict: {GO | PROCEED-WITH-CAUTION | RECONSIDER}`
+    - Consumer inventory headline, from the subagent summary: `Consumers: {N found, M must-change}` (or `none — isolated change`).
     - Per-dimension risk level, one line each, from the subagent summary:
       ```
-      - Usage cost:       {Low | Medium | High}
-      - Permissions:      {Low | Medium | High}
-      - Blast radius:     {Low | Medium | High}
-      - Reversibility:    {Low | Medium | High}
-      - Hidden coupling:  {Low | Medium | High}
+      - Usage cost:          {Low | Medium | High}
+      - Permissions:         {Low | Medium | High}
+      - Blast radius:        {Low | Medium | High}
+      - Reversibility:       {Low | Medium | High}
+      - Hidden coupling:     {Low | Medium | High}
+      - Principle alignment: {Low | Medium | High}
       ```
     - If verdict is `PROCEED-WITH-CAUTION`: list the paired mitigations under `Required mitigations:`.
     - If verdict is `RECONSIDER`: include the recommended-redesign one-liner.
