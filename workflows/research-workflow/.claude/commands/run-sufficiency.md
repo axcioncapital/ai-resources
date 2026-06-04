@@ -4,7 +4,7 @@ model: opus
 ---
 Pass 3 sufficiency check — claim-permission gate, country-parity check, stop-conditions, source-conflict resolution, gate-clearance emission. Runs after `/run-cluster` and before `/run-analysis` or `/run-synthesis`. The gate-clearance file produced here is the hard pre-flight input that Pass 4 reads at Step 0; without it, `/run-analysis` and `/run-synthesis` refuse to run.
 
-**Positional argument:** Section identifier (e.g., `1.1`). Must match an existing `/analysis/{section}/cluster-memos-refined/` directory.
+**Positional argument:** Section identifier (e.g., `1.1`). Must match an existing `/analysis/cluster-memos/{section}/` directory.
 
 **Architecture.** This command orchestrates five phases (A, C, D, E, F). The labeling skips B intentionally — the position is reserved for a disconfirming-evidence search step (`counter-search-runner`) that is deferred in this slimmed pipeline. The skipped position preserves the canonical phase labels so a later bundle can land Phase B without renumbering.
 
@@ -18,8 +18,8 @@ Verify all of the following before launching any phase. If any check fails, exit
 
 **Required project artifacts (read-only inputs):**
 
-1. **Refined cluster memos** at `/analysis/{section}/cluster-memos-refined/` — must contain at least one memo. If absent:
-   > `/run-sufficiency` requires refined cluster memos at `/analysis/{section}/cluster-memos-refined/`. Run `/run-cluster {section}` first, then re-invoke `/run-sufficiency {section}`.
+1. **Refined cluster memos** at `/analysis/cluster-memos/{section}/` — must contain at least one memo. If absent:
+   > `/run-sufficiency` requires refined cluster memos at `/analysis/cluster-memos/{section}/`. Run `/run-cluster {section}` first, then re-invoke `/run-sufficiency {section}`.
 
 2. **Source-class hierarchy** at `reference/source-class-hierarchy.md` — must exist and contain a parseable `## Project Country Set` section. If absent or malformed:
    > `/run-sufficiency` requires `reference/source-class-hierarchy.md` (project-level deliverable) including a `## Project Country Set` section with target / region / region_superset / thresholds. The hierarchy is a project-side responsibility — consult the project's pipeline documentation for the unblock plan, including the expected land date for this reference doc. Without it, sub-agent skills (source-class-mapper, country-parity-checker) cannot run.
