@@ -49,7 +49,7 @@ Architecture review (supplementary):
 Output path: {OUTPUT_PATH}
 ```
 
-The agent reads its references and vault docs per grounding.md Function E read map, then writes the Friday Advisory to OUTPUT_PATH.
+The agent reads its references and vault docs per grounding.md Function F read map, then writes the Friday Advisory to OUTPUT_PATH.
 
 ## Step 7 — Echo to chat
 

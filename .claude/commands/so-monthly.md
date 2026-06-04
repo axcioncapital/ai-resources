@@ -56,7 +56,7 @@ Deferred items from last 4 Friday Act sessions:
 Output path: {OUTPUT_PATH}
 ```
 
-The agent reads its references and vault docs per grounding.md Function F read map, then writes the Monthly System Review to OUTPUT_PATH.
+The agent reads its references and vault docs per grounding.md Function G read map, then writes the Monthly System Review to OUTPUT_PATH.
 
 ## Step 6 — Echo to chat
 
