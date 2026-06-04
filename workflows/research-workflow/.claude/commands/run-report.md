@@ -8,6 +8,11 @@ Prerequisite check: Verify chapter drafts exist in `/analysis/chapters/{section}
 
 Skill loading: For each skill step below, read the skill file from `/ai-resources/skills/[skill-name]/SKILL.md` and follow its instructions.
 
+**Subagent model policy (load-bearing — prevents the 1M-context usage-credit gate).** Every sub-agent launched by this command MUST be dispatched with an **explicit `model` override** on the Agent tool call. Do NOT let a sub-agent inherit the live session model: if the session is running a 1M-context variant (e.g. `opus-4-8[1m]`), an inheriting sub-agent attempts 1M context and dispatch fails with "Usage credits required for 1M context", stalling the entire pipeline (this command is fully subagent-driven). The `model:` tier aliases (`opus` / `sonnet`) resolve to **standard 200K context**, which is sufficient for every per-chapter input here and clears the gate. Pin each dispatch to the tier the underlying skill declares:
+- `model: opus` — Step 4.1 architecture sub-agent; Step 4.2a `evidence-to-report-writer`; Step 4.2b `chapter-prose-reviewer`.
+- `model: sonnet` — Step 4.1b `architecture-qc`; Step 4.2c `report-compliance-qc`; Step 4.2f `chapter-revision-applier`; Step 4.2j `citation-converter`.
+This is an explicit-tier requirement, not a default declaration — it aligns with the workspace Model Tier rule (per-dispatch tiering is the sanctioned mechanism; the live session model is never silently inherited by these sub-agents).
+
 ---
 
 ### Step 4.0: Load Inputs

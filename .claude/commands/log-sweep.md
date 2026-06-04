@@ -1,5 +1,5 @@
 ---
-model: claude-sonnet-4-6[1m]
+model: sonnet
 ---
 
 # /log-sweep — Cross-Project Log Archival
