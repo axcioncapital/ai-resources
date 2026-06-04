@@ -95,8 +95,22 @@ Accept shorthand: "yy" / "yes all" / "all" = both yes; "nn" / "skip all" = both 
        "${YESTERDAY} "*) [ -n "${YESTERDAY}" ] && { MARKER=$(echo "${MARKER_LINE}" | awk '{print $2}'); MARKER_DATE="${YESTERDAY}"; };;
      esac
    fi
-   # LOUD FALLBACK (OP-3): var absent (old CLI) or per-id file missing/stale, but shared file present (clobber-vulnerable).
-   if [ -z "${MARKER}" ] && [ -f logs/.session-marker ]; then
+   # NO-OWN-MARKER guard (clobber false-negative fix, 2026-06-04 — folds with the id-14 region).
+   # When CLAUDE_CODE_SESSION_ID is SET but no per-id marker file exists, this session ran neither
+   # /prime task-selection nor /session-start, so it authored ZERO tracked headers/mandates. It must
+   # claim no ownership: skip BOTH the shared-marker loud fallback (below) AND the PRIME_RAN/.prime-mtime
+   # path (further down) — both read shared mutable state a concurrent /prime can clobber, and here it is
+   # foreign-owned. Without this, the loud fallback reads a clobbered shared .session-marker, counts a
+   # foreign header as own (OWN_HEADERS_SUBTRACT=1), and returns FOREIGN=0 — the silent false-negative
+   # this guard exists to prevent. Option 2′ per-id keying only protects sessions that HAVE a per-id marker.
+   NO_OWN_MARKER=0
+   if [ -n "${CLAUDE_CODE_SESSION_ID}" ] && [ ! -f "logs/.session-marker-${CLAUDE_CODE_SESSION_ID}" ]; then
+     NO_OWN_MARKER=1
+   fi
+   # LOUD FALLBACK (OP-3): genuine old-CLI case only (CLAUDE_CODE_SESSION_ID unset). A no-own-marker session
+   # (var SET, per-id file absent) must NOT fall back to the clobber-vulnerable shared marker, so the fallback
+   # is gated on NO_OWN_MARKER=0. With the var unset, NO_OWN_MARKER is 0 and the legacy fallback runs as before.
+   if [ -z "${MARKER}" ] && [ -f logs/.session-marker ] && [ "${NO_OWN_MARKER}" = "0" ]; then
      echo "[wrap Step 3.5] Note: CLAUDE_CODE_SESSION_ID-keyed marker unavailable — falling back to shared logs/.session-marker (clobber-vulnerable)."
      MARKER_LINE=$(cat logs/.session-marker 2>/dev/null)
      case "${MARKER_LINE}" in
@@ -136,8 +150,18 @@ Accept shorthand: "yy" / "yes all" / "all" = both yes; "nn" / "skip all" = both 
      OWN_HEADERS_SUBTRACT=${OWN_ADDED_HEADERS}
      OWN_MANDATES_SUBTRACT=${OWN_ADDED_MANDATES}
      PRIME_RAN=0  # legacy field; not used on marker-aware path; logged as 0 for trace continuity
+   elif [ "${NO_OWN_MARKER}" = "1" ]; then
+     # No-own-marker session (CLAUDE_CODE_SESSION_ID set, per-id file absent): ran neither /prime
+     # task-selection nor /session-start, so it authored zero tracked headers/mandates. Claim no
+     # ownership and SKIP the clobber-vulnerable shared .prime-mtime path entirely — all added
+     # today-content is foreign and the guard must STOP. (clobber false-negative fix, 2026-06-04.)
+     echo "[wrap Step 3.5] No own per-id marker (CLAUDE_CODE_SESSION_ID set, no logs/.session-marker-* file) — this session authored no tracked headers; claiming zero own-contribution."
+     PRIME_RAN=0
+     OWN_HEADERS_SUBTRACT=0
+     OWN_MANDATES_SUBTRACT=0
    else
-     # Legacy PRIME_RAN binary path: marker absent (workspace-root, pre-Phase-2 session).
+     # Legacy PRIME_RAN binary path: marker absent AND no-own-marker not in force — i.e. old CLI with
+     # CLAUDE_CODE_SESSION_ID unset (workspace-root, pre-Phase-2 session).
      # Uses the `logs/.prime-mtime` marker that /prime Step 8a/8b/8c writes after appending today's header.
      PRIME_RAN=0
      if [ -f logs/.prime-mtime ]; then

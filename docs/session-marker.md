@@ -60,6 +60,8 @@ fi
 
 If `MARKER` is empty after this block (both oracles absent/stale), the consumer chooses handling per role (see asymmetric contract below). The loud-fallback line makes the degraded path visible — silent regression to the clobberable shared file cannot happen quietly.
 
+**No-own-marker rule for own-contribution readers (clobber false-negative fix, 2026-06-04).** A reader that attributes *this session's own contribution* (the `/wrap-session` Step 3.5 pre-write guard) must NOT take the loud fallback when `CLAUDE_CODE_SESSION_ID` is SET but the per-id file is absent. That state means the session ran neither `/prime` task-selection nor `/session-start`, so it authored zero tracked headers/mandates — there is nothing of its own to subtract. Falling back to the shared `logs/.session-marker` there would read a concurrent session's clobbered marker and miscount the *foreign* session's header as own, zeroing the foreign delta (silent `FOREIGN=0` false-negative). The rule: var SET + per-id file absent → `OWN_HEADERS_SUBTRACT=0`, `OWN_MANDATES_SUBTRACT=0`, and skip BOTH the shared-marker fallback and the `PRIME_RAN`/`.prime-mtime` path. The loud fallback is restricted to the genuine old-CLI case (var unset). Pure-`MARKER`-resolution consumers (e.g. `/prime`, `/session-plan`) are unaffected — this rule is specific to own-contribution subtraction.
+
 ---
 
 ## Harness-var dependency — `CLAUDE_CODE_SESSION_ID`
