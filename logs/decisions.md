@@ -152,3 +152,15 @@
 **Alternatives considered.** (a) Move docs into vault/ now — rejected: restructuring a git-committed repo (repo-documentation) mid-session is out of mandate. (b) Update agent-def Phase 3 to match grounding.md §1 — will be done as a follow-up one-liner, not this session.
 
 **Decided by:** Claude recommendation, accepted at operator review gate (implicitly — operator did not override at the between-gate summary).
+
+## 2026-06-04 — Strategy governing document placement: complete strategic-os, not a new project
+
+**Context.** Operator pasted the consolidated Axcíon AI Strategy governing document and said "make this into a project within AI resources." Discovery found the document's three companion files already live in `projects/strategic-os/ai-strategy/`, and strategic-os is a workspace-root project purpose-built as the firm's strategy layer.
+
+**Decision.** Save the governing document + its execution companion (roadmap) + tracker into the existing `projects/strategic-os/ai-strategy/` folder — completing that project rather than spawning a new standalone project.
+
+**Rationale.** A new project would fragment the strategy material — the governing doc depends on companions that already sit in strategic-os. "Within AI resources" read as the broad Axcíon AI workspace (projects live at workspace root by convention, not literally inside the ai-resources git repo). Confirmed by operator selection in the /clarify question round.
+
+**Alternatives considered.** (a) New dedicated project `projects/ai-strategy/` — rejected: fragments material. (b) Save + promote to strategic-os `state/live/strategy.md` via /promote-to-live — operator declined (heavier; engages promotion gating).
+
+**Decided by:** Claude recommendation, operator-confirmed via /clarify multiple-choice selection.

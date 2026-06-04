@@ -429,3 +429,40 @@ None. The git init on axcion-ai-system-owner is safe (empty project dir, local o
 ### Open Questions
 
 None blocking.
+
+## 2026-06-04 — Saved AI Strategy governing document + built its execution companion (in strategic-os)
+
+### Summary
+
+Operator pasted the consolidated **Axcíon AI Strategy — Governing Document** (the standing version superseding drafts v1–v5) and asked to save it and create a multi-session implementation plan. Discovery found the document's three companion files (current-state, principles-base, candidate-backlog) already live in `projects/strategic-os/ai-strategy/`, and the named-but-missing companion `ai-operator-roadmap.md` is essentially the requested plan. Saved the governing document faithfully (copy-paste mojibake repaired, content unchanged), authored the roadmap decoding §6's 8-slot work sequence, and added a lightweight implementation tracker. Work landed in the **strategic-os** repo (this session ran from ai-resources cwd; `/prime` went into plan mode so no ai-resources mandate was written). Plan QC: REVISE→fixed→approved. Artifact QC: GO. Committed strategic-os 254e211 (local only).
+
+### Files Created
+
+- `projects/strategic-os/ai-strategy/ai-strategy-governing-document.md` — the governing document, faithful transcription with encoding repaired (mojibake `Ã­`/`â`/etc. → `í`/`—`, escaped markdown unescaped); all sections §1–§6 + Appendix, three tables, §5.2 card template intact.
+- `projects/strategic-os/ai-strategy/ai-operator-roadmap.md` — plain-English execution companion; decodes §6's 8 slots in dependency order with candidate-code mapping, critical path, closure-before-detection constraint; labelled draft.
+- `projects/strategic-os/ai-strategy/implementation-tracker.md` — status surface; 8-slot table (all Not started, Slot 1 = next), instrumentation logs flagged not-yet-created, changelog.
+- `ai-resources/logs/scratchpads/2026-06-04-10-07-scratchpad.md` — continuity scratchpad.
+
+### Files Modified
+
+- `ai-resources/logs/session-notes.md` — this wrap entry.
+
+### Decisions Made
+
+- **Placement (operator-confirmed via /clarify):** complete the existing `strategic-os/ai-strategy/` project rather than create a new standalone project — keeps the governing doc beside its three companions. Flagged for operator to confirm at leisure whether a standalone project was instead wanted.
+- **Plan form (operator-selected):** roadmap + lightweight tracker over candidate-cards-now or minimal-tracker-only.
+- **QC fixes folded** (artifact pass, GO): dropped invalid bare "BUILD" route tokens on roadmap slots 4/8 (not §5.4 tokens); corrected "~6 stuck items (A4–A8, A10, F8)" to "(A4–A8, A10) plus the F8 menu" — F8 is the menu, not one of the six.
+
+### Risky actions
+
+None. All writes were new files in an existing project dir + an append to ai-resources session-notes. `state/live/` untouched. Commit was to strategic-os repo only; no push.
+
+### Next Steps
+
+- **Begin execution:** open `projects/strategic-os/ai-strategy/implementation-tracker.md` → Slot 1 (Clear the standing decisions): graduate/retire/convert E1–E10, F1, F2, F6, E7, E8; record the new "closure before detection" principle into principles-base. Follow `ai-operator-roadmap.md` per-slot.
+- **Operator confirm (low urgency):** is "make this a project" satisfied by completing strategic-os, or is a standalone project wanted?
+- Carryovers unchanged from 2026-06-03 S1: SO reference-file review; GitHub remotes for axcion-ai-system-owner + nordic-pe-screening; grounded SO consult on parallel-sessions-playbook.md; agent-def vault/ path + friday-so function-letter wiring fixes.
+
+### Open Questions
+
+None blocking.
