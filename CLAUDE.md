@@ -95,4 +95,4 @@ Auto-compact defaults drop these by priority; name them explicitly so they survi
 
 ## Session Boundaries
 
-When switching between unrelated tasks in the same terminal, prefer `/clear` over continuing in dirty context. Stale context from a prior task compounds and contaminates the next one.
+Prefer `/clear` over dirty context when switching tasks. Full rule: `ai-resources/docs/session-boundaries.md`.
