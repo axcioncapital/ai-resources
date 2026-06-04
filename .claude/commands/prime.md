@@ -47,6 +47,20 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 
    Rationale: dual-repo Cluster A blindspot — Next Steps written in a project session may have been resolved by commits that landed in the ai-resources repo (canonical command edits, doc edits, log-status flips), and vice versa. Checking only the cwd-repo's git log misses those cross-repo resolutions and surfaces likely-DONE items as still-open in the menu.
 
+   *Sibling project-repo extension (id-01, fix-plan 2026-06-04-1823):* the dual-repo merge above still misses a third class — a Next Step resolved by a commit that landed in **another project repo** (project A's session primed while the resolving commit is in project B, or a cwd=`ai-resources` prime whose Next Step was closed by a commit in, say, `strategic-os`). Extend the merge to also scan the active sibling project repos. Derive `WORKSPACE_ROOT` as the parent of `$AI_RESOURCES`, enumerate git repos one level under `projects/`, and run the same `--since` query against each, merging all non-empty results into the same result set:
+
+   ```bash
+   WORKSPACE_ROOT="$(dirname "$AI_RESOURCES")"
+   for d in "$WORKSPACE_ROOT"/projects/*/; do
+     repo="$(git -C "$d" rev-parse --show-toplevel 2>/dev/null)" || continue   # skip non-repos
+     [ "$repo" = "$CWD_REPO" ] && continue                                     # already scanned above
+     [ "$repo" = "$AI_RESOURCES" ] && continue                                 # already scanned above
+     git -C "$repo" log --since="<entry-date>T00:00:00" --pretty="%h %s" --all 2>/dev/null
+   done
+   ```
+
+   Cost note: this scans **all** repos under `projects/*/` (one `rev-parse` + `git log` per repo) — `/prime` has no operator scope menu, so unlike `/fix-repo-issues` Step 1 there is no interactive active/selected filter; the scan is bounded by *output* (`--since` returns nothing for repos with no commits since the entry date), not by *invocation count* (every project repo still gets the two cheap git calls). A repo that is `--show-toplevel`-equal to one already scanned is skipped (no double-count). Any directory that is not a git repo, or whose `git` call errors, is skipped silently — same fall-through posture as the dual-repo check below. The merged set (cwd + ai-resources + sibling project repos) feeds the single keyword-match pass below; the match/classify logic is unchanged.
+
    For each Next Steps bullet, check if any commit subject across the merged result set contains keywords from that bullet. Classify the bullet:
    - **Match found → likely-DONE.** Do NOT promote it into the numbered menu (step 5) — the menu must not spend slots on probably-finished work.
    - **No match → still open.** It becomes a carryover/menu candidate for step 5.

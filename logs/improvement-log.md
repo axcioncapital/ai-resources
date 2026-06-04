@@ -240,7 +240,8 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Target files:** `ai-resources/.claude/agents/improvement-analyst.md` (archive de-dup scan), `ai-resources/.claude/commands/improve.md` (if it reads the archive)
 
 ### 2026-06-02 — wrap-session Step 3.5 foreign-write guard REMNANT false-positive on date rollover (own marker goes stale across midnight)
-- **Status:** logged (pending)
+- **Status:** applied 2026-06-04
+- **Verified:** Step 3.5 now computes YESTERDAY and accepts an own-marker dated either TODAY or YESTERDAY (grace window), recording MARKER_DATE. Own-header/own-mandate counts match on ${MARKER_DATE} (awk var renamed today→own_date), and the EXTRA-bucket subtractor is placed in the prior bucket when MARKER_DATE != TODAY — so an overnight session's own prior-day header+mandate yields FOREIGN=0 (clean proceed) instead of a REMNANT false-positive, while genuine concurrent-foreign detection is preserved (own subtraction only moves buckets, never disappears). Mirrored to the workspace-root paired sibling `/.claude/commands/wrap-session.md` per PAIRED CONTRACT. Fix-plan 2026-06-04-1823 item id-14; applied in-session (operator "proceed here"). QC: /qc-pass run post-edit.
 - **Category:** guardrail-candidate
 - **Severity:** low
 - **Provenance:** wrap-collector (machine-authored) 2026-06-02
@@ -266,7 +267,8 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Notes:** /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/research-pe-regime-shift-advisory-gap/audits/working/2026-06-02-resolve-fix-symlinks-blind-to-regular-file-drift-class.md
 
 ### 2026-06-04 — /prime Step 1a Next-Steps git cross-check scans only cwd + ai-resources, not sibling project repos
-- **Status:** logged (pending)
+- **Status:** applied 2026-06-04
+- **Verified:** prime.md Step 1a (L48 rationale block) now carries a "Sibling project-repo extension" paragraph + bash snippet that enumerates git repos one level under `projects/`, skips repos already scanned (cwd, ai-resources) via `--show-toplevel` equality, and merges each repo's `git log --since=<entry-date>` into the same result set feeding the keyword-match pass. Fix-plan 2026-06-04-1823 item id-01; applied in-session (operator "proceed here"). QC: /qc-pass run post-edit.
 - **Category:** session-feedback
 - **Provenance:** wrap-collector (machine-authored) 2026-06-04
 - **Friction source:** wrap-collector 2026-06-04 — friction / command (S4: `/prime` menu surfaced items 2/3 as still-open when they were done-and-committed in the strategic-os sibling repo by concurrent S1/S2; the context-discovery engine caught it at the approval gate, `/prime` did not)

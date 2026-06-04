@@ -80,12 +80,19 @@ Accept shorthand: "yy" / "yes all" / "all" = both yes; "nn" / "skip all" = both 
    # Two paths: marker-aware (preferred, post-Phase-2+3) and PRIME_RAN binary (legacy fallback).
    # See PAIRED CONTRACT block above for the attribution rationale.
    MARKER=""
+   MARKER_DATE=""   # date the own-marker carries — usually TODAY, but YESTERDAY for overnight (date-rollover) sessions (id-14)
+   # Date-rollover grace window (id-14, fix-plan 2026-06-04-1823): a session that starts before midnight
+   # and wraps after it carries an own-marker dated YESTERDAY. Accept it as own (not just TODAY) so the
+   # own-contribution subtraction below classifies this session's prior-day header+mandate correctly,
+   # instead of mis-flagging its own work as a REMNANT orphan. MARKER_DATE records which date matched.
+   YESTERDAY=$(date -v-1d "+%Y-%m-%d" 2>/dev/null || date -d "yesterday" "+%Y-%m-%d" 2>/dev/null || echo "")
    # Identity oracle (Option 2′): this session's per-session-id marker file, un-clobberable by a foreign /prime.
    # See docs/session-marker.md § Marker resolution. This is the payoff: the oracle is no longer the thing being clobbered.
    if [ -n "${CLAUDE_CODE_SESSION_ID}" ] && [ -f "logs/.session-marker-${CLAUDE_CODE_SESSION_ID}" ]; then
      MARKER_LINE=$(cat "logs/.session-marker-${CLAUDE_CODE_SESSION_ID}" 2>/dev/null)
      case "${MARKER_LINE}" in
-       "${TODAY} "*) MARKER=$(echo "${MARKER_LINE}" | awk '{print $2}');;
+       "${TODAY} "*)                                  MARKER=$(echo "${MARKER_LINE}" | awk '{print $2}'); MARKER_DATE="${TODAY}";;
+       "${YESTERDAY} "*) [ -n "${YESTERDAY}" ] && { MARKER=$(echo "${MARKER_LINE}" | awk '{print $2}'); MARKER_DATE="${YESTERDAY}"; };;
      esac
    fi
    # LOUD FALLBACK (OP-3): var absent (old CLI) or per-id file missing/stale, but shared file present (clobber-vulnerable).
@@ -93,29 +100,32 @@ Accept shorthand: "yy" / "yes all" / "all" = both yes; "nn" / "skip all" = both 
      echo "[wrap Step 3.5] Note: CLAUDE_CODE_SESSION_ID-keyed marker unavailable — falling back to shared logs/.session-marker (clobber-vulnerable)."
      MARKER_LINE=$(cat logs/.session-marker 2>/dev/null)
      case "${MARKER_LINE}" in
-       "${TODAY} "*) MARKER=$(echo "${MARKER_LINE}" | awk '{print $2}');;
+       "${TODAY} "*)                                  MARKER=$(echo "${MARKER_LINE}" | awk '{print $2}'); MARKER_DATE="${TODAY}";;
+       "${YESTERDAY} "*) [ -n "${YESTERDAY}" ] && { MARKER=$(echo "${MARKER_LINE}" | awk '{print $2}'); MARKER_DATE="${YESTERDAY}"; };;
      esac
    fi
 
    if [ -n "${MARKER}" ]; then
      # Marker-aware path: count own marker-bearing headers + mandates under those headers in WT and HEAD.
-     OWN_WT_HEADERS=$(grep -c "^## ${TODAY} — Session ${MARKER}" logs/session-notes.md 2>/dev/null)
+     # Own headers are matched on ${MARKER_DATE} (= TODAY for same-day sessions, YESTERDAY for overnight
+     # rollover sessions per the grace window above) so the own-contribution count is correct in both cases.
+     OWN_WT_HEADERS=$(grep -c "^## ${MARKER_DATE} — Session ${MARKER}" logs/session-notes.md 2>/dev/null)
      OWN_WT_HEADERS=${OWN_WT_HEADERS:-0}
-     OWN_HEAD_HEADERS=$(git show HEAD:logs/session-notes.md 2>/dev/null | grep -c "^## ${TODAY} — Session ${MARKER}")
+     OWN_HEAD_HEADERS=$(git show HEAD:logs/session-notes.md 2>/dev/null | grep -c "^## ${MARKER_DATE} — Session ${MARKER}")
      OWN_HEAD_HEADERS=${OWN_HEAD_HEADERS:-0}
      OWN_ADDED_HEADERS=$((OWN_WT_HEADERS - OWN_HEAD_HEADERS))
 
-     OWN_WT_MANDATES=$(awk -v marker="${MARKER}" -v today="${TODAY}" '
+     OWN_WT_MANDATES=$(awk -v marker="${MARKER}" -v own_date="${MARKER_DATE}" '
        /^## [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/ {
-         in_own = ($0 ~ ("^## " today " — Session " marker "$"))
+         in_own = ($0 ~ ("^## " own_date " — Session " marker "$"))
        }
        /^\*\*Mandate:\*\*/ && in_own { c++ }
        END { print c+0 }
      ' logs/session-notes.md 2>/dev/null)
      OWN_WT_MANDATES=${OWN_WT_MANDATES:-0}
-     OWN_HEAD_MANDATES=$(git show HEAD:logs/session-notes.md 2>/dev/null | awk -v marker="${MARKER}" -v today="${TODAY}" '
+     OWN_HEAD_MANDATES=$(git show HEAD:logs/session-notes.md 2>/dev/null | awk -v marker="${MARKER}" -v own_date="${MARKER_DATE}" '
        /^## [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/ {
-         in_own = ($0 ~ ("^## " today " — Session " marker "$"))
+         in_own = ($0 ~ ("^## " own_date " — Session " marker "$"))
        }
        /^\*\*Mandate:\*\*/ && in_own { c++ }
        END { print c+0 }
@@ -175,8 +185,18 @@ Accept shorthand: "yy" / "yes all" / "all" = both yes; "nn" / "skip all" = both 
      HEAD_TODAY_MANDATES=${HEAD_TODAY_MANDATES:-0}
      HEAD_PRIOR_MANDATES=$(git show HEAD:logs/session-notes.md 2>/dev/null | awk -v today="${TODAY}" '/^## [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/{match($0,/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/);d=substr($0,RSTART,RLENGTH)} /^\*\*Mandate:\*\*/ && d!=today && d!="" {c++} END{print c+0}')
      HEAD_PRIOR_MANDATES=${HEAD_PRIOR_MANDATES:-0}
-     EXTRA_TODAY_MANDATES=$((WT_TODAY_MANDATES - HEAD_TODAY_MANDATES - OWN_MANDATES_SUBTRACT))
-     EXTRA_PRIOR_MANDATES=$((WT_PRIOR_MANDATES - HEAD_PRIOR_MANDATES))
+     # The own-contribution subtractor goes in the bucket matching MARKER_DATE: the today bucket for
+     # same-day sessions, the prior bucket for overnight (date-rollover) sessions whose own header+mandate
+     # are dated YESTERDAY (id-14). Without the conditional, a rollover session running concurrently with a
+     # genuine foreign today-session would leave its own prior-day mandate in EXTRA_PRIOR and mis-add a
+     # REMNANT component to the classification.
+     if [ -n "${MARKER_DATE}" ] && [ "${MARKER_DATE}" != "${TODAY}" ]; then
+       EXTRA_TODAY_MANDATES=$((WT_TODAY_MANDATES - HEAD_TODAY_MANDATES))
+       EXTRA_PRIOR_MANDATES=$((WT_PRIOR_MANDATES - HEAD_PRIOR_MANDATES - OWN_MANDATES_SUBTRACT))
+     else
+       EXTRA_TODAY_MANDATES=$((WT_TODAY_MANDATES - HEAD_TODAY_MANDATES - OWN_MANDATES_SUBTRACT))
+       EXTRA_PRIOR_MANDATES=$((WT_PRIOR_MANDATES - HEAD_PRIOR_MANDATES))
+     fi
      if [ "${EXTRA_TODAY_MANDATES}" -ge 1 ] && [ "${EXTRA_PRIOR_MANDATES}" -ge 1 ]; then
        FOREIGN_CLASS="MIXED"
      elif [ "${EXTRA_TODAY_MANDATES}" -ge 1 ]; then
