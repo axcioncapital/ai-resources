@@ -442,3 +442,37 @@ None. One always-loaded CLAUDE.md edit, gated by /risk-check (GO) before landing
 
 ### Open Questions
 None blocking.
+
+## 2026-06-04 — /fix-repo-issues execution (3 backlog fixes) + concurrent-session guard triage
+
+### Summary
+Ran `/fix-repo-issues` across 4 operator-selected scopes (ai-resources, marketing-positioning, nordic-pe-screening, research-pe-regime-shift); aggregated ~50 backlog items into a 3-item fix plan (`audits/fix-plans/fix-repo-issues-2026-06-04-1823.md`), parking/skipping the rest. Operator said "proceed here", so executed all 3 fixes in-session under independent QC (GO): (id-01) `/prime` Step 1a git cross-check extended to sibling project repos; (id-14) `/wrap-session` Step 3.5 date-rollover grace window, mirrored to the workspace-root paired sibling; (id-29) an innovation-registry stale-row flip. At wrap, the foreign-session guard surfaced a concurrent S6 session's uncommitted notes; held the wrap, the operator wrapped S6 first, then this wrap completed cleanly. The guard's clobber false-negative (this session had no per-id marker) was triaged via `/resolve-repo-problem` AUTO into a new pending improvement-log item.
+
+### Files Created
+- `audits/fix-plans/fix-repo-issues-2026-06-04-1823.md` — the 3-item fix plan
+- `audits/working/fix-repo-issues-2026-06-04-1823-*.md` ×4 — scanner notes (gitignored)
+- `logs/scratchpads/2026-06-04-19-19-scratchpad.md` — continuity scratchpad
+
+### Files Modified
+- `ai-resources/.claude/commands/prime.md` — id-01 sibling project-repo extension + QC cost-note accuracy fix (committed `batch: fix-repo-issues …`)
+- `ai-resources/.claude/commands/wrap-session.md` — id-14 Step 3.5 date-rollover grace window (committed)
+- `/.claude/commands/wrap-session.md` (workspace-root) — id-14 paired-sibling mirror (committed separately in workspace-root repo)
+- `ai-resources/logs/innovation-registry.md` — id-29 resolve-improvement-log row → graduated (committed)
+- `ai-resources/logs/improvement-log.md` — id-01 (L268) + id-14 (L242) flipped to applied+Verified (committed); plus a NEW `/resolve-repo-problem` AUTO entry (Step 3.5 clobber false-negative — pending, this wrap)
+- `logs/session-notes-archive-2026-06.md` — auto-archived 2 entries (kept 10) during this wrap
+- `logs/session-notes.md`, `logs/decisions.md` — this wrap
+
+### Decisions Made
+- **prime.md id-01 bounding (scoping judgment):** scan all `projects/*/` repos rather than an "active/selected" subset. The plan's "active/selected" wording mirrors `/fix-repo-issues` Step 1, which uses an *interactive* operator scope menu; `/prime` has no such menu, so an unconditional `projects/*/` scan (output-bounded by `--since`) was the faithful resolution. QC confirmed the divergence is benign at current scale; cost note updated to state the real behavior.
+- **In-session execution override (operator "proceed here"):** ran the fix plan in the same session that produced it, overriding `/fix-repo-issues`'s recommended two-session split. Kept the safety the split provides by running independent `/qc-pass` before committing.
+
+### Risky actions
+Held the wrap at the Step 3.5 foreign-session guard rather than staging `logs/session-notes.md` over a concurrent S6 session's uncommitted notes — the guard's mechanical result would have been a clobber-induced FOREIGN=0 false-negative (this session had no per-id marker); overrode by ground truth (this session authored zero `## … — Session` headers), surfaced to operator, and resumed only after S6 was wrapped to HEAD. All fix commits were explicit-path (never `git add -A`); pre-existing `session-plan-S1/S2/S3.md` drift left untouched. No deletions, no pushes, no prompt injection. The clobber false-negative is now logged as a pending fix.
+
+### Next Steps
+- **Fold the NEW Step 3.5 clobber-false-negative fix with id-14** — both touch the same MARKER-resolution block in both wrap-session copies; do in a dedicated `/risk-check`-gated session. (improvement-log, logged this session.)
+- 6 resolved entries in improvement-log — consider `/resolve-improvement-log` to archive them.
+- Parked backlog remains: 4 inbox build briefs (`/audit-workflow`, workflow-diagnosis, `/repo-review`, `/codex-dd`); workspace-wide `.claude/` git-hygiene batch; marketing-positioning operator-decisions.
+
+### Open Questions
+None blocking.

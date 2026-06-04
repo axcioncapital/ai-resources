@@ -237,3 +237,15 @@
 **Alternatives considered.** Project-scoped home (rejected — defects are cross-project); extend improvement-log (rejected — buries recurrence); checklist-doc eval landing (rejected — re-read-by-human anti-pattern); fully-automated hook firing (rejected — routing is judgment); full wiring this session (rejected — gated classes + closure-before-detection argues design-first).
 
 **Decided by:** Claude recommendation via `/decide` + system-owner concurrence; operator accept ("proceed") then "yes add it and proceed" for the gated pointer.
+
+## 2026-06-04 — /fix-repo-issues in-session execution (3 fixes) + prime.md bounding choice
+
+**Context.** `/fix-repo-issues` produced a 3-item fix plan and recommends a two-session plan-then-execute split. Operator directed "proceed here" — execute in the same session.
+
+**Decision 1 — execute the plan in-session, with independent QC before commit.** Overrode the two-session split per explicit operator directive, but ran `/qc-pass` (independent qc-reviewer) on the two command-logic edits before committing, preserving the safety the split otherwise provides. QC verdict GO.
+
+**Decision 2 — prime.md id-01 scans all `projects/*/`, not an "active/selected" subset.** The plan's "bound to active/selected projects" wording mirrors `/fix-repo-issues` Step 1, whose filter is an *interactive operator scope menu*. `/prime` has no menu and cannot replicate the filter without a prompt, so the faithful resolution is an unconditional `projects/*/` scan, bounded by `--since` output (empty for quiet repos) rather than by invocation count. The cost note was corrected to state this rather than imply the plan's bounding directive was satisfied.
+
+**Alternatives considered.** (1a) Defer execution to a fresh session per the split — rejected: operator directed in-session. (2a) Add an active-project filter to `/prime` — rejected: would require a new interactive prompt in a read-and-brief command; out of scope for a backlog fix, and divergence is benign at 4-repo scale (QC-confirmed).
+
+**Decided by:** operator directive ("proceed here") + Claude scoping judgment; independent QC GO; one optional QC finding applied.
