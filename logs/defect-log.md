@@ -2,7 +2,7 @@
 
 Captures repeated weaknesses in Claude's **output quality** — distinct from process friction (`friction-log.md`) and workflow improvements (`improvement-log.md`). Those track *how the work ran*; this tracks *how good the output was*. The point is not to record every mistake; it is to make *repeated defect classes* visible, so the second occurrence of a class triggers a durable fix instead of another one-off correction.
 
-Loop that consumes this log: `../docs/defect-to-fix-loop.md`. Capture is per session (one line when a weak output is corrected); the recurrence scan runs on the Friday cadence (planned — scan/routing wiring deferred to session 2; until then the scan is manual).
+Loop that consumes this log: `../docs/defect-to-fix-loop.md`. Capture is per session via `/log-defect` (one line when a weak output is corrected); the recurrence scan runs on the `/friday-checkup` cadence (all tiers), surfacing `[DEFECT-RECURRENCE]` lines for `/friday-act` to route. Routing stays gated judgment work.
 
 Source: AI strategy governing document §5.8 (Defect capture).
 

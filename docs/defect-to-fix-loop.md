@@ -8,8 +8,8 @@ Source: AI strategy governing document §5.8 (Defect capture). Paired log: `../l
 
 ## The loop
 
-1. **Capture (per session).** When a weak output is corrected by hand, add one line to `defect-log.md`, tagged by defect class. First occurrence: `Action: captured`. No routing decision yet — capture is cheap.
-2. **Detect recurrence (Friday cadence).** A scan over the log flags any class that has appeared a **second time** while still tagged `captured`. (Scan wiring is deferred — see below; until then the scan is run by hand during the Friday cadence.)
+1. **Capture (per session).** When a weak output is corrected by hand, run `/log-defect` (or add one line to `defect-log.md` directly), tagged by defect class. First occurrence: `Action: captured`. No routing decision yet — capture is cheap. `/log-defect` also detects and loudly flags a recurrence at capture time.
+2. **Detect recurrence (Friday cadence).** The `/friday-checkup` Step 6 **Defect-log recurrence scan** (all tiers) flags any class with **2 or more** un-routed (`captured`) entries. It emits a `[DEFECT-RECURRENCE]` follow-up line per flagged class for `/friday-act` to route.
 3. **Route the second occurrence to a fix.** Pick exactly one of the three routes below and record it in the entry's `Action` + `Route detail`. From this point the defect is closure work, not new surface.
 4. **Close.** When the routed fix is live, set `Status: closed` + `Closed: {date}`.
 
@@ -32,17 +32,18 @@ Eval cases created here should **feed** the planned slot-5 eval substrate (gover
 
 ## Firing model
 
-- **Capture:** per session, one log line, by hand at correction time.
-- **Recurrence scan + routing:** fortnightly, on the Friday maintenance cadence, as a gated step. Exact precedent: the gate-calibration suppression check that fires monthly+ inside `/friday-checkup`. Routing is judgment work — it stays gated, not hooked.
+- **Capture:** per session, one log line, at correction time — via `/log-defect` (or by hand). The command captures the entry and, on a 2nd+ occurrence, loudly flags that routing is now due.
+- **Recurrence scan:** wired into `/friday-checkup` Step 6 (Tactical follow-ups) on **every tier** — a cheap single-file grep, so weekly coverage satisfies the original fortnightly-or-better intent rather than gating to monthly+. It surfaces `[DEFECT-RECURRENCE]` lines; it does not route.
+- **Routing:** judgment work, performed at `/friday-act` from the surfaced recurrence lines. It stays gated, not hooked. (Structural precedent for the cadence-step shape: the gate-calibration suppression check inside `/friday-checkup`.)
 
 ## Acceptance test
 
 The arc is not done when the log exists. It is done when the **first defect class is actually closed** into a rule, eval, or example. A log that captures but never closes is precisely the failure mode this loop exists to prevent — treat first-close as the proof the loop works.
 
-## Deferred wiring (session 2, risk-checked)
+## Wiring status
 
-This document and `defect-log.md` are scaffolding — the detection-and-closure *design*. The following are deferred to a risk-checked session, because each is a structurally gated change class:
+Session 1 (2026-06-04) built this document and `defect-log.md` — the detection-and-closure *design*. Session 2 (2026-06-04, S8, risk-checked GO) wired the capture and detection paths:
 
-- A `/log-defect` capture command (new command).
-- A `/wrap-session` or `/friday-checkup` step that runs the recurrence scan and surfaces 2nd-occurrence classes (cadence-pipeline edit).
-- The concrete routing of the first real recurring defect class into a rule / eval / example (proves the loop end-to-end and satisfies the acceptance test above).
+- ✅ **`/log-defect` capture command** — `ai-resources/.claude/commands/log-defect.md` (shipped S8). Captures one entry, classifies, detects recurrence at capture time.
+- ✅ **Recurrence-scan step** — `/friday-checkup` Step 6 Defect-log recurrence scan, all tiers (shipped S8). Surfaces `[DEFECT-RECURRENCE]` follow-up lines.
+- ⏳ **First real close (the acceptance test)** — still deferred: route the first real recurring defect class into a rule / eval / example, proving the loop end-to-end. Awaits a real recurring defect (no backfill). Routing happens at `/friday-act` from a surfaced `[DEFECT-RECURRENCE]` line.
