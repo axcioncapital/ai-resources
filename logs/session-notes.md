@@ -2,140 +2,6 @@
 
 > Archive: [session-notes-archive-2026-06.md](session-notes-archive-2026-06.md)
 
-## 2026-06-01 — Session S6 — Author universal parallel-multi-session playbook (from inbox brief)
-**Mandate:** Author docs/parallel-sessions-playbook.md from the inbox brief via the canonical doc-creation path, stress-testing the contested framing and resolving the brief's Known Weaknesses, with system-owner review — done when: the doc is written covering all six required sections, independent /qc-pass run, system-owner review incorporated, and the brief moved to inbox/archive/.
-- Out of scope: Harness changes (e.g., per-session log namespacing) and the workspace-wide .gitignore sweep — separate structural items, each gated by its own /risk-check.
-- Files in scope: (inferred) docs/parallel-sessions-playbook.md (new); inbox/parallel-sessions-playbook-brief.md (read → move to inbox/archive/)
-- Stop if: system-owner review finds the playbook contradicts a canonical doc (session-marker contract or autonomy rules) in a way that can't be reconciled — pause and surface.
-- Allowed inputs: inbox/parallel-sessions-playbook-brief.md, docs/session-marker.md, .claude/commands/wrap-session.md (foreign-write guard), .claude/hooks/detect-concurrent-session*, workspace CLAUDE.md autonomy rules, projects/interpersonal-communication/logs/session-notes.md
-- Required outputs: docs/parallel-sessions-playbook.md
-
-### Summary
-Authored `docs/parallel-sessions-playbook.md` — a universal, scope-agnostic playbook for running multiple Claude Code sessions in parallel — from the inbox brief via the canonical doc path. Stress-tested the brief's contested n=1 framing with a pre-draft `system-owner` consult: framing judged SOUND with one qualification, now built into § 0 — autonomy is a *co-dominant* lever alongside decomposition, not a footnote. Delivered all six required sections (go/no-go test, decomposition + file-ownership, shared-state coordination, landing/merge, when-NOT-to-parallelize incl. Branch B for non-partitionable work, cost-target disambiguation) plus a System-Owner decision hook. All seven of the brief's "Known Weaknesses" resolved in-text; invented speedup numbers stripped as unmeasured. Independent qc-reviewer: GO. Committed `5d5e02b`, pushed to `origin/main`.
-
-### Files Created
-- `docs/parallel-sessions-playbook.md` — the deliverable; 9 sections + quick-reference + related-docs. Points at `session-marker.md` / `autonomy-rules.md` rather than restating them.
-- `logs/session-plan-S6.md` — session plan (overwrote a stale 2026-05-29 plan that had reused marker S6 via the shared-marker reset).
-- `logs/scratchpads/2026-06-02-00-00-scratchpad.md` — pre-closeout continuity scratchpad.
-
-### Files Modified
-- `inbox/parallel-sessions-playbook-brief.md` → `inbox/archive/parallel-sessions-playbook-brief.md` (git rename, 100%; brief retired to archive on completion).
-- `logs/session-notes.md` — S6 mandate (session start) + this wrap entry.
-
-### Decisions Made
-- **Skipped the context-discovery engine pre-step** — the brief already enumerated its grounding sources precisely, so engine routing-discovery would be redundant. Treated those sources as explicit `allowed_inputs`.
-- **Autonomy elevated to a co-dominant lever in § 0** (system-owner-directed qualification) — the brief framed decomposition as dominant; the artifacts say gates reconverge on the operator at merge/push regardless of partition cleanliness.
-- **Per-session log namespacing flagged as a `/risk-check`-gated harness change, not a free win** (system-owner Q1) — kept out of scope; doc presents it as a tradeoff.
-- **§ 8 decision hook marked provisional `[CITATION NEEDED]`** — system-owner persona/principles grounding files absent from disk at consult time; content is artifact-grounded, standing to be confirmed when the base is restored.
-- **Overwrote the stale `session-plan-S6.md`** — it was a 2026-05-29 Friday-checkup plan from a wrapped session that reused marker S6 (shared-marker reset collision); session-plan files are transient, not deliverables. Surfaced before overwriting.
-- QC fix (folded, cosmetic): un-nested the § 8 blockquote-within-blockquote the reviewer flagged.
-
-### Outcome
-(outcome check, 2026-06-02 — independent general-purpose subagent, verified against filesystem + git log)
-COMPLETION: DELIVERED — all six required sections present; all seven Known Weaknesses map to resolved in-text content (W1→§6 Branch B; W2→§0 co-dominant autonomy; W3→§0.3 numbers stripped; W4→§3 gated tradeoff; W5→§1 gate-3 escape hatch; W6→§6 alternatives table; W7→§7); invented speedup numbers stripped; brief git-renamed 100% to inbox/archive/; commit 5d5e02b pushed (origin/main == HEAD, 0 ahead).
-EXECUTION: ACCEPTABLE — system-owner consult ran against an ungrounded agent (persona/principles files absent at consult time), so §8's authority is provisional [CITATION NEEDED]; disclosed in-file + commit, not concealed.
-Better path: the §8 grounding gap was knowable at consult time — a cheap pre-consult existence check on the system-owner grounding files, surfacing "grounding missing — proceed degraded or pause?" before drafting §8, would have made it an explicit operator decision rather than a self-resolution.
-Confidence: high.
-
-### Risky actions
-None. The git `mv` into a gitignored `inbox/archive/` was recorded by git as a clean 100% rename (brief preserved in version control, not lost). Push was operator-gated (`go`), single repo, fast-forward. No destructive ops, no deletions outside session scope.
-
-### Session Assessment
-(wrap-collector, 2026-06-02)
-- Autonomy-compounding: no signal — playbook is a requested doc with a confirmed consumer (the inbox brief); not speculative.
-- Leanness/cost: no signal — context-engine pre-step appropriately skipped; no rework loop; docs/ file adds no always-loaded weight.
-- Principle-drift: 1 logged — §8 grounding-absence was knowable pre-consult yet self-resolved to proceed-degraded `[CITATION NEEDED]` rather than escalated; brushes the Assumptions Gate. Routed to improvement-log, bundled with System-Owner-degraded restore.
-- Friction: no signal — no operator correction; stale session-plan-S6 overwrite surfaced first.
-- Safety: low — wrap Step 3.5 REMNANT false-positive from date rollover (own marker stayed 2026-06-01 across midnight → own S6 mandate misread as prior-day orphan). No content lost, operator confirmed. Guardrail-accuracy gap, not a safety breach.
-- Routed: 2→improvement-log (1 guardrail-candidate low, 1 principle-drift), 0→friction-log.
-
-### Next Steps
-- **System Owner agent is running degraded** — its grounding files (`persona.md`, `principles.md`, `grounding.md`, `risk-topology.md`, `blueprint.md` in `projects/axcion-ai-system-owner/`) are absent from disk. Worth a dedicated session to restore them; until then, the § 8 hook's standing as settled doctrine is unconfirmed.
-- Carryovers (unchanged by this session): nordic-pe-screening GitHub remote decision; `improve.md`/`improvement-analyst` archive-scan bug backlog entry; id-03 G4 naming; Option 2′ shared-marker removal (soak deferral).
-
-### Open Questions
-None blocking.
-
-## 2026-06-03 — Recovered the System Owner vault grounding base; references rebuild deferred
-
-### Summary
-Session opened to consult the System Owner about the new `parallel-sessions-playbook.md`, but the consult could not run grounded — the SO grounding base was absent from disk (the prior session's standing advisory). Investigated what was recoverable, then recovered the recoverable half. The vault grounding docs (`principles.md`, `risk-topology.md`, `blueprint.md`, `repo-state.md` + 12 component files) were restored from the `repo-documentation-2` GitHub remote via `git reset --hard origin/main` on the empty-but-tracked local `repo-documentation` repo. The 4 SO `references/` files (persona, grounding, toolkit-relationship, systems-building-principles) were confirmed permanently gone — in no git repo or remote, never committed; they existed only on the prior machine (`patrik.lindeberg`). Re-authoring those four is deferred to a dedicated next session, after which the playbook consult chains on.
-
-### Files Created
-- `logs/scratchpads/2026-06-03-16-50-scratchpad.md` — continuity scratchpad for the next session's references-rebuild kickoff.
-
-### Files Modified
-- `projects/repo-documentation/` (separate git repo) — restored to committed `origin/main` state via `git reset --hard`; local HEAD moved from no-commits to `1ef215c`. Working tree now matches HEAD (no new commit needed there). Recovered `output/phase-1/{principles,risk-topology,blueprint,repo-state}.md` + `output/phase-1/components/*` (12 files) + the `vault/` tree.
-- `logs/session-notes.md` — this wrap entry.
-
-### Decisions Made
-- **Recover the recoverable half now, defer the references rebuild** (operator asked for my recommendation; I recommended this and the operator endorsed it). Splitting the restore: the vault/principles half is a faithful mechanical git recovery; the 4 `references/` files can only be re-authored from scratch and need deliberate operator review, so they belong in their own session — not a mid-flow rebuild.
-- **`git reset --hard origin/main` on `repo-documentation`** chosen as the recovery mechanism — safe because the local repo had no commits and a clean tree (nothing to lose); non-destructive on shared state (no force-push, local-only history move).
-
-### Risky actions
-`git reset --hard origin/main` on the `repo-documentation` repo — a hard reset, but on a local repo with zero commits and a clean working tree, so nothing was overwritten or lost. Not destructive on shared state (no pushed commits rewritten, no force-push). Verified the recovered `principles.md` contains the exact principle codes (OP-3, AP-10, DR-8, OP-10, OP-11) that live workspace artifacts cite, confirming the recovery is the genuine base, not a lookalike.
-
-### Next Steps
-- **Re-author the 4 missing SO `references/` files** (persona, grounding, toolkit-relationship, systems-building-principles) in a dedicated session — reconstruct from the agent definition (`ai-resources/.claude/agents/system-owner.md`) + the surviving principle codes in the recovered vault docs. Authoring project, not a restore; operator reviews the reconstructed persona + read-map. Kickoff: `/session-start` + `/session-plan`. See `logs/scratchpads/2026-06-03-16-50-scratchpad.md`.
-- **Settle the vault path-wiring** in that same session: agent def reads vault docs from `projects/repo-documentation/vault/`, but recovered docs live under `output/phase-1/`; the missing `grounding.md` is what defines those paths.
-- **Then chain the original request:** run the grounded SO consult on `docs/parallel-sessions-playbook.md` and retire its §8 `[CITATION NEEDED]` flag.
-- Carryovers (unchanged): nordic-pe-screening GitHub remote decision; `improve.md`/`improvement-analyst` archive-scan bug backlog entry; id-03 G4 naming; Option 2′ shared-marker removal (soak deferral).
-
-### Open Questions
-None blocking.
-
-## 2026-06-03 — Session S1
-
-**Mandate:** Re-author the 4 missing System Owner references files (persona, grounding, toolkit-relationship, systems-building-principles) in projects/axcion-ai-system-owner/references/, reconstructed from the agent definition + recovered vault grounding docs, and reconcile grounding.md's vault paths with the actual recovered-doc locations — done when: all 4 references files exist, grounding.md's vault path map matches actual doc locations, and independent QC returns GO (or fixes folded)
-- Out of scope: running the grounded SO consult on parallel-sessions-playbook.md (chains as item 2); re-recovering or re-authoring the vault docs (already recovered last session)
-- Files in scope: projects/axcion-ai-system-owner/references/{persona,grounding,toolkit-relationship,systems-building-principles}.md (new)
-- Stop if: (none stated)
-- Allowed inputs: .claude/agents/system-owner.md; projects/repo-documentation/output/phase-1/{principles,risk-topology,blueprint,repo-state}.md; projects/repo-documentation/vault/
-- Required outputs: the 4 references files under projects/axcion-ai-system-owner/references/
-
-Re-author the 4 missing System Owner references files (persona, grounding, toolkit-relationship, systems-building-principles) and reconcile vault path-wiring.
-
-### Summary
-
-Session S1 reconstructed the 4 missing System Owner agent grounding files — persona.md, grounding.md, toolkit-relationship.md, systems-building-principles.md — under projects/axcion-ai-system-owner/references/. The originals were permanently lost (never committed). Reconstruction used the surviving agent definition, the 2026-05-04 DD audit's structural inventory, risk-check fragments quoting specific sections, the recovered vault docs, and a surviving consult output. Vault path-wiring was reconciled: grounding.md §1 now points at the real recovered location (output/phase-1/), not the empty vault/ path. The project was git-init'd so this class of loss cannot recur. Independent QC (after operator model switch) returned REVISE → one fix folded (provenance path qualified). Commit 9c50e18 on axcion-ai-system-owner, no push yet (remote decision deferred).
-
-### Files Created
-
-- `projects/axcion-ai-system-owner/references/persona.md` — SO identity, authority, deference scope, 7 voice rules, decline-when-ungrounded shape (reconstructed)
-- `projects/axcion-ai-system-owner/references/grounding.md` — §1 reconciled vault path map, §2 per-function read map A–G, §3 triage rule, §4 caching note (reconstructed; flags function-letter off-by-one in friday-so/so-monthly as follow-up)
-- `projects/axcion-ai-system-owner/references/toolkit-relationship.md` — invocation boundaries, in-line reads for change-shaped questions, sync mechanisms, sibling-tool relationships (reconstructed)
-- `projects/axcion-ai-system-owner/references/systems-building-principles.md` — faithful placeholder, status: TBD (reconstructed)
-- `projects/axcion-ai-system-owner/.gitignore` — OS artifact exclusions (first commit of new repo)
-- `logs/session-plan-S1.md` — session plan (overwrote stale 2026-06-01 S1 plan from the day-reset shared-marker collision)
-- `logs/scratchpads/2026-06-03-21-30-scratchpad.md` — continuity scratchpad
-
-### Files Modified
-
-- `logs/session-notes.md` — mandate appended (session-start), this wrap entry
-- `projects/axcion-ai-system-owner/` — git init'd + initial commit 9c50e18 on branch main (local only)
-
-### Decisions Made
-
-- **Vault path-wiring: grounding.md §1 points at `output/phase-1/` (real location)** — the agent def Phase 3 prose still says `vault/`; grounding.md §1 is authoritative (it is the file the agent reads for paths). Follow-up: reconcile the agent-def line and optionally relocate docs into `vault/`. Decided by Claude, accepted at operator review gate.
-- **git init on axcion-ai-system-owner (local only, no remote yet)** — operator chose this over "leave uncommitted" or "init + set up remote." Closes the root-cause of the original references-file loss (no git backing). Remote + push decided as follow-up.
-- **QC path: switch model first** — independent qc-reviewer subagent was blocked by a 1M-context credit gate; operator chose to switch model (not commit-now or self-review). QC ran after switch and returned REVISE → one fix folded.
-
-### Risky actions
-
-None. The git init on axcion-ai-system-owner is safe (empty project dir, local only, no existing history to overwrite). All file writes were new files in an empty directory.
-
-### Next Steps
-
-- **Operator review checkpoint (before item 2):** skim [persona.md §5](projects/axcion-ai-system-owner/references/persona.md) + [grounding.md §1–2](projects/axcion-ai-system-owner/references/grounding.md) — reconstructed from indirect evidence; your review before relying on the SO.
-- **Set up a GitHub remote + push** for axcion-ai-system-owner (local commit 9c50e18 is durable but not remote-backed; same follow-up as nordic-pe-screening).
-- **Run grounded SO consult** on `docs/parallel-sessions-playbook.md` (item 2 — retire §8 `[CITATION NEEDED]`). Now unblocked.
-- **Follow-up wiring items** (small, can batch): reconcile agent-def Phase 3 vault/ prose (one-line edit); reconcile friday-so/so-monthly function-letter off-by-one (two-line doc edit).
-- Carryovers unchanged: nordic-pe-screening GitHub remote; improve.md archive-scan bug backlog entry; id-03 G4 naming; Option 2′ shared-marker removal soak deferral.
-
-### Open Questions
-
-None blocking.
-
 ## 2026-06-04 — Saved AI Strategy governing document + built its execution companion (in strategic-os)
 
 ### Summary
@@ -531,6 +397,31 @@ _(wrap-collector, 2026-06-04 — S8)_
 - **Implement the Item 4 decision (gated):** multi-repo `git rm --cached` of synced shared `.claude/` symlinks + `.gitignore` patterns across 14 repos + a regenerate-verify pilot; needs its own `/risk-check` + dedicated session. Full proposal in `logs/improvement-log.md` (2026-06-04 entry).
 - **Defect-loop acceptance test (still deferred):** route the first real recurring defect class into a rule/eval/example — awaits a real recurrence; no backfill.
 - **Parked:** 4 inbox build briefs (`/audit-workflow`, workflow-diagnosis, `/repo-review`, `/codex-dd`); 6+ resolved improvement-log entries → consider `/resolve-improvement-log`.
+
+### Open Questions
+None blocking.
+
+## 2026-06-05 — Settled 5 stale innovation-registry verdicts via /graduate-resource → /decide
+
+### Summary
+`/prime` orient → operator invoked `/graduate-resource` (no `triaged:graduate` entries existed, so it surfaced the registry's open candidates). Operator then ran `/decide` on the surfaced list. Evidence-grounded resolution: all 5 candidates were already settled and needed only bookkeeping. The 4 `pending-triage` entries (source-class-mapper, country-parity-checker, claim-permission-gate skills + run-sufficiency workflow command) were born canonical in ai-resources via `/create-skill` — nothing to graduate. The 1 `detected` entry (project-local run-sufficiency) is a byte-identical `/sync-workflow` deployed copy, not a fork. `/decide` ran its mandatory fresh-context QC pass (all 5 Self-resolved) → no corrections. Operator approved; registry status columns flipped.
+
+### Files Created
+None.
+
+### Files Modified
+- `logs/innovation-registry.md` — 4 rows `pending-triage` → `graduated` (born-canonical note); 1 row `detected` → `deployed-copy` (byte-identical sync note). Committed `7941a49`.
+- `logs/session-notes.md` — this wrap entry.
+- `logs/session-notes-archive-2026-06.md` — auto-archive at wrap (3 entries archived, 10 kept).
+
+### Decisions Made
+- **All 5 registry candidates resolved as no-graduation-needed (bookkeeping only)** — evidence: file-existence checks (all 4 skills/command present at cited ai-resources paths) + registry notes confirming `/create-skill` origin + `diff` proving the project-local run-sufficiency is byte-identical to canonical (same mtime 2026-06-04 20:05). QC-confirmed via fresh-context subagent. Routine bookkeeping, not analytical — not separately journaled to decisions.md.
+
+### Risky actions
+None. Single explicit-path commit (`logs/innovation-registry.md` only); pre-existing working-tree drift (backbone-manifest, improvement-log, session-plans, untracked repo-dd audit) left untouched. No deletions, no pushes, no prompt injection. No `/session-start` ran this session, so no mandate to grade against.
+
+### Next Steps
+- Carryover from S8 (2026-06-04), unchanged: implement the gated `.claude/` git-hygiene decision (needs own `/risk-check` + dedicated session); defect-loop acceptance test (awaits a real recurrence); 4 parked inbox build briefs; `/resolve-improvement-log` candidate (6+ resolved entries).
 
 ### Open Questions
 None blocking.
