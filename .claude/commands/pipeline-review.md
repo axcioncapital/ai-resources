@@ -1,5 +1,5 @@
 ---
-description: Weekly System-Owner-grounded design review of 1+ critical command pipelines (innovations, leanness, brokenness, currency-check) — operator-invoked; no auto-fix, no commit
+description: Weekly System-Owner-grounded design review of 1+ critical command pipelines (innovations, leanness, brokenness, currency-check) + a workspace systems-review every cycle — operator-invoked; no auto-fix, no commit
 model: sonnet
 disable-model-invocation: true
 argument-hint: "[pipeline-path]"
@@ -8,6 +8,8 @@ argument-hint: "[pipeline-path]"
 # /pipeline-review — Weekly Pipeline Design Review
 
 Run a deep System-Owner-grounded design review of 1 or more critical command pipelines per cycle. Operator-invoked weekly. Reads a registry, presents a ranked shortlist, the operator picks 1 or more, the `pipeline-review-auditor` subagent produces a memo per pipeline, the registry is bumped, and the memos are written to disk. No auto-fix. No commit.
+
+Every cycle that reviews ≥1 pipeline also produces a workspace-scope **systems-review** (Step 5B) — a macro systems-dynamics diagnosis delegated to the Opus `system-owner` agent (Function E), the same engine `/systems-review` uses. This pairs the per-pipeline *micro* review with a workspace-level *macro* view in one cycle. Bundled per operator decision 2026-06-05.
 
 No hard upper limit on per-cycle picks — the `[HEAVY]` chat marker at Step 5 announces the spawn count, and an extra advisory line fires above 3 to make the cost visible. The original 3-pick cap was relaxed on 2026-05-29 after the registry grew from 17 to 47 entries; operator throughput on the "Recommended next session" outputs is the real constraint, not the auditor cost.
 
@@ -108,7 +110,7 @@ The `>10` threshold matches `/friday-checkup` Step 0 — one missed weekly cycle
 
 ### Step 5: Per-Pipeline Review
 
-23. Emit `[HEAVY]` to chat with one line: `spawning {N} pipeline-review-auditor subagents in parallel ({N} pipelines picked)`. If `N > 3`, emit one additional advisory line: `[HEAVY-WIDE] N={N} exceeds the original 3-pick design baseline — each subagent runs ~85–110k opus tokens; total fan-out ≈ {N × 100}k tokens. No gate — proceeding.`
+23. Emit `[HEAVY]` to chat with one line: `spawning {N} pipeline-review-auditor subagents + 1 system-owner (Opus, Function E ~30k) for the bundled workspace systems-review, in parallel ({N} pipelines picked)`. If `N > 3`, emit one additional advisory line: `[HEAVY-WIDE] N={N} exceeds the original 3-pick design baseline — each subagent runs ~85–110k opus tokens; total fan-out ≈ {N × 100}k tokens (plus the ~30k system-owner systems-review). No gate — proceeding.`
 24. For each pipeline in `PICKED_PIPELINES`, compute:
     - `PIPELINE_TYPE` = `skill` if path matches `**/skills/*/SKILL.md`; else `command`.
     - `PIPELINE_SLUG` per type:
@@ -127,6 +129,44 @@ The `>10` threshold matches `/friday-checkup` Step 0 — one missed weekly cycle
     - `WORKSPACE`
 26. Collect each subagent's ≤30-line summary. Parse the last line of each summary for the `MEMO: <absolute-path>` marker. Track per-pipeline: succeeded (marker present) vs. failed (marker absent or subagent errored).
 27. For each subagent missing the marker, re-invoke that one subagent once with the same inputs. If the re-invocation still fails, record the pipeline as failed; do NOT bump its registry row.
+
+---
+
+### Step 5B: Workspace Systems Review (bundled, every cycle)
+
+This step runs whenever `PICKED_PIPELINES` is non-empty — i.e., every cycle that actually reviews ≥1 pipeline, including the `$ARGUMENTS` single-pipeline override. If the cycle aborted earlier (Step 2 defer, Step 4 empty reply), this step never runs. It produces one workspace-scope systems-review via the same `system-owner` Function E engine `/systems-review` uses, independent of the per-pipeline auditors.
+
+27a. Set `SYS_SCOPE = "Full AI infrastructure"` and `SYS_SCOPE_SLUG = "full-ai-infrastructure"`.
+
+27b. Set `SYS_REF = {WORKSPACE}/projects/axcion-ai-system-owner/vault/research/systems-thinking-for-claude-code.md`. Verify it exists (`test -f`). **If missing, do NOT abort the cycle** — emit one advisory line and skip to Step 6:
+
+    ```
+    [SYSTEMS-REVIEW-SKIPPED] systems-thinking reference not found at {SYS_REF} — bundled systems-review skipped this cycle (pipeline memos unaffected). Restore the vault reference to re-enable.
+    ```
+
+    (Standalone `/systems-review` halts on this condition; the bundled step graceful-degrades instead, so a missing vault never blocks the pipeline-review cycle.)
+
+27c. Set `SYS_OUTPUT = {WORKSPACE}/projects/axcion-ai-system-owner/output/systems-reviews/systems-review-{DATE}-{SYS_SCOPE_SLUG}.md`. Ensure its parent exists: `mkdir -p "{WORKSPACE}/projects/axcion-ai-system-owner/output/systems-reviews"`.
+
+27d. Spawn the `system-owner` subagent via the `Task` tool with this verbatim Function E brief (identical to `/systems-review` Step 3 except for the injected `SYS_SCOPE` / `SYS_OUTPUT` / `SYS_REF` values):
+
+    ---
+
+    **Function E — Systems review**
+
+    **Scope:** {SYS_SCOPE}
+
+    **Output path:** {SYS_OUTPUT}
+
+    **Systems-thinking reference:** `{SYS_REF}`
+
+    Apply your standard Phase 1–5 procedure. This is a Function E invocation. Follow the Function E read map in `references/grounding.md` § 2 and the Function E output shape in your Phase 5 instructions. Write the full report to the output path using your `Write` tool, then echo the "Binding Constraint" and "Leverage Point Assessment" sections to chat.
+
+    ---
+
+    **Parallelism:** this `system-owner` Task call is independent of the per-pipeline tracking in Step 5. For wall-clock efficiency it MAY be issued in the same message as the Step 5 auditor spawns (single message, multiple tool calls) rather than strictly after them — the numbering here is logical, not a sequencing requirement. Track its result separately as: succeeded (report written + sections echoed), skipped (Step 27b), or failed.
+
+27e. If the `system-owner` agent errors or returns no echoed sections, re-invoke it once with the same brief. If it still fails, record the systems-review as **failed** and continue — do NOT block the registry bump (Step 6) or the operator brief (Step 7). The systems-review runs fresh every cycle, so a failed run simply re-runs next cycle; nothing is registry-tracked for it.
 
 ---
 
@@ -161,6 +201,19 @@ This batched-write rule is a required mitigation from the `/risk-check` plan-tim
       - {pipeline-name-1}: {auditor's "Recommended next session" line}
       - ...
 
+    Systems review (workspace, every cycle):
+      {On success:}
+      → {SYS_OUTPUT}
+
+      Binding Constraint:
+      {echoed "Binding Constraint" section from the system-owner agent}
+
+      Leverage Point Assessment:
+      {echoed "Leverage Point Assessment" section from the system-owner agent}
+
+      {On skip (Step 27b):}  Skipped — systems-thinking reference missing (see [SYSTEMS-REVIEW-SKIPPED] above). Restore the vault reference to re-enable.
+      {On fail (Step 27e):}  Failed after one retry — runs fresh next cycle (nothing registry-tracked).
+
     Registry: {REGISTRY_PATH}
     ```
 
@@ -171,3 +224,4 @@ This batched-write rule is a required mitigation from the `/risk-check` plan-tim
 ### Notes
 
 - **System Owner pushback acknowledged in the plan.** This command was approved over the System Owner's recommendation to fold it into `/friday-checkup` as a new tier. The `[CADENCE-LATE]` marker is the mitigation. Advisory trigger (operator-discretionary; no enforcement path): if `[CADENCE-LATE]` fires more than twice per quarter, revisit the fold-into-checkup decision.
+- **Bundled systems-review (Step 5B), every cycle — operator decision 2026-06-05.** Each cycle that reviews ≥1 pipeline also runs one workspace-scope `system-owner` Function E systems-review (the same engine as `/systems-review`). Cost accepted: one Opus Function E (~30k grounding tokens before output) per cycle, on top of the per-pipeline auditors. Graceful-skip on a missing vault reference (`[SYSTEMS-REVIEW-SKIPPED]`) — the pipeline-review cycle never aborts on it. Note: `[CADENCE-LATE]` recovery runs trigger the systems-review each time too; this is accepted under the "every cycle" decision. Standalone `/systems-review` is unchanged and still independently invocable at any scope; the registry row for `systems-review.md` (a *design-review target*) is unrelated to this *runtime* bundling.
