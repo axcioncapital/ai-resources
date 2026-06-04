@@ -190,3 +190,17 @@
 **Process gap noted (routed to /resolve-repo-problem):** /prime's git cross-check scans only ai-resources + workspace-root, not sibling project repos like strategic-os — so it surfaced items 2/3 as still-open when they were done-and-committed elsewhere. The context-discovery engine caught it; /prime did not.
 
 **Decided by:** Claude recommendation, operator-approved (`go` at the reshaped gate).
+
+## 2026-06-04 (S5) — Bounded the leftover-commit cleanup + corrected a stale graduation verdict
+
+**Context.** Auto-mode picked items 1 (commit leftover S2 work) + 3 (/prime gap) + 2 (graduate E4, E1 deferred). A full workspace git survey showed the leftovers were entangled in workspace-wide uncommitted drift across ~16 repos (mass `.claude/` library deletions, dozens of untracked command/agent files), not a tidy S2 commit.
+
+**Decision 1 — bound item 1 to the two mandate-named repos.** Committed only ai-resources + strategic-os, explicit paths, foreign drift untouched (never `git add -A`). Flagged the 14-repo CLAUDE.md remainder + the systemic `.claude/` sync/tracking question as a dedicated git-hygiene session.
+
+**Rationale.** The mandate named ai-resources + strategic-os only; the full 16-repo consolidation exceeds that scope and committing piecemeal across dirty shared repos is a hard-to-cleanly-reverse action that deserves a deliberate reviewed pass. Per the conflict-surfacing principle.
+
+**Decision 2 — corrected E4 to already-done instead of running /graduate-resource.** Filesystem + git history showed `resolve-improvement-log` already canonical in ai-resources and symlink-distributed to every project. The slot-1-decisions GRADUATE verdict was stale. Updated records to CONFIRMED-DONE; the planned structural risk-check was moot (no new canonical resource created). E1 confirmed genuinely project-local and correctly deferred.
+
+**Alternatives considered.** (1a) Commit all 16 repos' conversions — rejected: out of mandate scope, entangled with heavy foreign drift. (2a) Run /graduate-resource on E4 as picked — rejected: no-op on an already-canonical resource.
+
+**Decided by:** Claude recommendation under auto-mode autonomy; operator `go` at the reshaped gate.

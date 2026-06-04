@@ -404,3 +404,54 @@ None executed. The wrap NEARLY clobbered three foreign sessions' notes (S1/S2/S3
 
 ### Open Questions
 None blocking.
+
+## 2026-06-04 — Session S5
+**Mandate:** Clean-commit unwrapped S1–S3 leftovers across ai-resources + strategic-os, triage the /prime sibling-repo cross-check gap, and graduate E4 (resolve-improvement-log) — done when: leftovers committed in coherent labeled commits, /prime gap triaged to improvement-log, E4 graduated, E1 logged as deferred.
+- Out of scope: E1 graduation (doc-scanner-agent) deferred to a dedicated session; any fix to /prime itself (item 3 is triage-only)
+- Files in scope: leftover working-tree files in ai-resources + strategic-os; projects/strategic-os/ai-strategy/slot-1-decisions.md + implementation-tracker.md; .claude/commands/prime.md; logs/improvement-log.md (inferred)
+- Stop if: committing leftover work surfaces a genuine S2/S4 content conflict unresolvable from context
+
+Auto multi-item (reshaped at gate, E1 deferred): (1) commit leftover work; (2) graduate E4 only; (3) triage /prime sibling-repo cross-check gap.
+
+### Summary
+Auto-mode session (items 1+3+2). Surveyed the full workspace git state and found the "leftover S2 work" was the visible tip of a workspace-wide uncommitted drift across ~16 repos. Bounded item 1 to the two mandate-named repos and committed clean, explicit-path subsets only. Item 3's /prime gap was already fully triaged by S4, so recorded an S5 follow-up capturing the 16-repo finding. Item 2's E4 graduation was found already-done (canonical + symlink-distributed) — a stale verdict — so corrected the strategic-os records instead of running a redundant /graduate-resource; E1 confirmed genuinely pending and correctly deferred. Two conflict-surfacing wins prevented redundant/wrong work, same pattern as S4.
+
+### Files Created
+- `logs/scratchpads/2026-06-04-12-24-scratchpad.md` — continuity scratchpad (16-repo git-hygiene carryover)
+- `logs/session-plan-S5.md` — session plan (overwrote a stale 2026-05-29 S5 plan from a shared-marker reset)
+
+### Files Modified
+- ai-resources `CLAUDE.md`, `templates/project-claude-md/session-boundaries.md`, new `docs/session-boundaries.md`, new `audits/risk-checks/2026-06-04-consolidate-session-boundaries-rule-16-claude-md-to-single-doc.md` — committed `24eb6d8` (S2 Session-Boundaries subset)
+- ai-resources `logs/improvement-log.md` — S5 follow-up on accumulation pattern; committed `02c30dd`
+- strategic-os `CLAUDE.md`, `ai-strategy/slot-1-decisions.md`, `ai-strategy/implementation-tracker.md` — committed `2facf99` (S1/S2 Slot-1 records + Session-Boundaries conversion) then `44258aa` (E4 → CONFIRMED-DONE correction)
+- `logs/session-notes.md` — S5 mandate + this wrap entry
+
+### Decisions Made
+- **Item 1 bounded to mandate scope (Claude judgment, conflict-surfaced):** the full Session-Boundaries consolidation spans 16 repos, but the mandate named only ai-resources + strategic-os. Committed those two cleanly (explicit paths, never `git add -A`), left all foreign drift untouched, and flagged the 14-repo remainder + workspace-wide library drift as a dedicated git-hygiene session.
+- **Item 2 E4 corrected to already-done (ground-truth check):** filesystem + git history showed `resolve-improvement-log` already canonical and symlink-distributed; the GRADUATE verdict was stale. Corrected records (CONFIRMED-DONE) rather than running a no-op /graduate-resource. The planned structural risk-check was moot since no new canonical resource was created.
+- **E1 deferral confirmed correct:** `doc-scanner-agent` exists only in repo-documentation (genuinely project-local) — stays queued for a dedicated heavy graduate session per slot-1-decisions.md.
+
+### Outcome
+(outcome check, 2026-06-04 — independent general-purpose subagent, verified against git state + filesystem)
+COMPLETION: DELIVERED — all four "done when" conditions met. ai-resources `24eb6d8` contains exactly the 4 named files, strategic-os `2facf99` exactly the 3 named files (both clean-scoped, no foreign drift). E4 verified already-canonical (git-tracked + real symlink from strategic-os), so CONFIRMED-DONE satisfies the mandate's "graduated OR correctly resolved" clause and avoided a no-op duplicate. E1 verified genuinely project-local (repo-documentation only) — correctly deferred. /prime gap entries present (S4 L268–274 + friction-log L96 + S5 follow-up in `02c30dd`); triage-only, in scope.
+EXECUTION: OPTIMAL — no rework loops, no detours, no swept foreign drift; the single deviation from a literal reading (E4 resolved not graduated) is explicitly permitted and was the correct action. Better path: none. Confidence: high.
+
+### Risky actions
+None. All git operations were explicit-path commits (never `git add -A`) in two repos, each verified against diffs to contain only intended files; no foreign drift swept in, no deletions, no pushes (push gated to wrap). The workspace-wide 16-repo drift was surveyed read-only and left untouched. No destructive ops, no external writes, no prompt injection.
+
+### Session Assessment
+(wrap-collector, 2026-06-04)
+- Autonomy-compounding: no signal — two conflict-surfacing wins (item-1 scope bounded to mandate; item-2 E4 stale GRADUATE verdict caught + corrected to CONFIRMED-DONE) avoided redundant/wrong work; no reusable component produced.
+- Leanness/cost: no logged entry — the ~16-repo workspace-wide `.claude/` library git-drift is a real cost-hygiene signal but is ALREADY logged this session (improvement-log S5 follow-up, committed `02c30dd`); E4 catch avoided a no-op `/graduate-resource`. No new signal.
+- Principle-drift: no signal — no strained or violated named principle; explicit-path commits honored shared-state discipline.
+- Friction: no new signal — the /prime sibling-repo cross-check gap is already logged (S4 improvement-log + friction-log L96); S5 item-3 was triage-only and found it already triaged. Minor tracker vs slot-1-decisions E10 fold inconsistency is a one-off data note, not a friction type.
+- Safety: none observed — `### Risky actions` = None; all explicit-path commits (never `git add -A`), no foreign drift swept, no deletions/pushes/injection; 16-repo drift surveyed read-only.
+- Routed: 0→improvement-log, 0→friction-log.
+
+### Next Steps
+- **Dedicated git-hygiene session (new, highest-value carryover):** (a) commit the remaining 14 project-repo CLAUDE.md Session-Boundaries conversions (explicit paths, leave foreign drift); (b) decide the systemic question — should per-project `.claude/` command/agent dirs be committed at all, or gitignored/symlinked from canonical? The mass deletions + untracked library files across all repos point to a sync/tracking-model problem, not per-file cleanup. Logged to improvement-log (S5 follow-up).
+- **E1 graduation** — `doc-scanner-agent` queued for its own dedicated graduate session (heavy pipeline).
+- Carryovers unchanged: SO reference-file review; GitHub remotes for axcion-ai-system-owner + nordic-pe-screening; E10 fold-status minor inconsistency (tracker says folded, slot-1-decisions L27 still "queued").
+
+### Open Questions
+None blocking.
