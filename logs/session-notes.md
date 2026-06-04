@@ -406,3 +406,10 @@ None taken. The session executed explicit-path commits (`git commit -- CLAUDE.md
 
 ### Open Questions
 None blocking.
+
+## 2026-06-04 — Session S7
+**Mandate:** Build the §5.8 defect-capture scaffolding — a defect log + the defect-to-fix loop process doc, plus a gated discoverability pointer — done when: both new files written + QC-passed, and the CLAUDE.md pointer landed after a /risk-check GO (held if NO-GO).
+- Out of scope: /log-defect command, /wrap-session + /friday-checkup scan wiring, rule/eval/example routing logic (all session 2); backfilling past defects; editing qc-reviewer / review-principles / any skill's quality-check now
+- Files in scope: ai-resources/logs/defect-log.md (new); ai-resources/docs/defect-to-fix-loop.md (new); ai-resources/CLAUDE.md (one-line pointer, gated by /risk-check)
+- Stop if: /risk-check on the CLAUDE.md pointer returns NO-GO — then ship the two files and hold the pointer for session 2
+- Context pack: (none — brief pre-enumerated all sources via /clarify → /decide → /scope)

@@ -7,7 +7,7 @@ This repo stores AI resources — primarily skills (SKILL.md files), plus occasi
 Other directories:
 - `prompts/` — Standalone prompts for cross-tool workflows (e.g., supplementary research prompts consumed by GPT-5)
 - `reports/` — Generated audit and health reports
-- `logs/` — Session notes, decisions, innovation registry
+- `logs/` — Session notes, decisions, innovation registry, and the output-quality `defect-log.md` (see `docs/defect-to-fix-loop.md` for the rule/eval/example closure loop)
 - `audits/` — Due diligence and audit artifacts
 - `docs/` — Process documentation (session rituals, etc.)
 - `scripts/` — Utility scripts for repo maintenance
