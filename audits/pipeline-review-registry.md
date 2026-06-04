@@ -17,23 +17,23 @@
 
 | Pipeline | Type | Tier | Last reviewed | Last memo | Friction flag |
 |---|---|---|---|---|---|
-| `.claude/commands/architecture-review.md` | command | weekly | never | — | N |
+| `.claude/commands/architecture-review.md` | command | weekly | 2026-06-04 | 2026-06-04 | N |
 | `.claude/commands/audit-claude-md.md` | command | weekly | never | — | N |
 | `.claude/commands/audit-repo.md` | command | weekly | never | — | N |
-| `.claude/commands/consult.md` | command | weekly | 2026-05-29 | 2026-05-29 | N |
+| `.claude/commands/consult.md` | command | weekly | 2026-06-04 | 2026-06-04 | N |
 | `.claude/commands/contract-check.md` | command | weekly | 2026-05-29 | 2026-05-29 | N |
 | `.claude/commands/create-skill.md` | command | weekly | never | — | N |
 | `.claude/commands/friday-act.md` | command | weekly | never | — | N |
 | `.claude/commands/friday-checkup.md` | command | weekly | never | — | N |
 | `.claude/commands/friday-journal.md` | command | weekly | never | — | N |
-| `.claude/commands/friday-so.md` | command | weekly | never | — | N |
+| `.claude/commands/friday-so.md` | command | weekly | 2026-06-04 | 2026-06-04 | N |
 | `.claude/commands/improve-skill.md` | command | weekly | never | — | N |
 | `.claude/commands/monday-prep.md` | command | weekly | never | — | N |
 | `.claude/commands/new-project.md` | command | weekly | never | — | N |
 | `.claude/commands/permission-sweep.md` | command | weekly | never | — | N |
 | `.claude/commands/pipeline-review.md` | command | weekly | 2026-05-29 | 2026-05-29 | N |
 | `.claude/commands/prime.md` | command | weekly | 2026-05-29 | 2026-05-29 | N |
-| `.claude/commands/qc-pass.md` | command | weekly | never | — | N |
+| `.claude/commands/qc-pass.md` | command | weekly | 2026-06-04 | 2026-06-04 | N |
 | `.claude/commands/recommend.md` | command | weekly | never | — | N |
 | `.claude/commands/repo-dd.md` | command | weekly | never | — | N |
 | `.claude/commands/resolve.md` | command | weekly | never | — | N |
@@ -41,7 +41,7 @@
 | `.claude/commands/risk-check.md` | command | weekly | never | — | N |
 | `.claude/commands/session-plan.md` | command | weekly | never | — | N |
 | `.claude/commands/session-start.md` | command | weekly | 2026-05-29 | 2026-05-29 | N |
-| `.claude/commands/so-monthly.md` | command | weekly | never | — | N |
+| `.claude/commands/so-monthly.md` | command | weekly | 2026-06-04 | 2026-06-04 | N |
 | `.claude/commands/token-audit.md` | command | weekly | never | — | N |
 | `.claude/commands/triage.md` | command | weekly | never | — | N |
 | `.claude/commands/wrap-session.md` | command | weekly | 2026-05-29 | 2026-05-29 | N |
@@ -62,7 +62,7 @@
 | `.claude/commands/resolve-improvement-log.md` | command | quarterly | never | — | N |
 | `.claude/commands/resolve-incident.md` | command | quarterly | never | — | N |
 | `.claude/commands/sync-workflow.md` | command | quarterly | never | — | N |
-| `.claude/commands/systems-review.md` | command | quarterly | never | — | N |
+| `.claude/commands/systems-review.md` | command | quarterly | 2026-06-04 | 2026-06-04 | N |
 | `.claude/commands/usage-analysis.md` | command | quarterly | never | — | N |
 
 ## Tier rationale
