@@ -119,6 +119,52 @@ Accept shorthand: "yy" / "yes all" / "all" = both yes; "nn" / "skip all" = both 
      esac
    fi
 
+   # CLOBBER-SAFE OWN-MARKER RECOVERY (reader-side robustness for partial marker setup, 2026-06-05 S9 —
+   # improvement-log L300 guardrail-candidate; PAIRED CONTRACT). A session that wrote the shared
+   # logs/.session-marker but NOT its per-id logs/.session-marker-${CLAUDE_CODE_SESSION_ID} (partial setup)
+   # reaches here with MARKER empty and NO_OWN_MARKER=1, so the conservative elif below would claim zero
+   # own-contribution and false-flag its OWN header as FOREIGN. Recover the marker from the shared file — but
+   # ONLY when it is provably own, not a foreign clobber. Disambiguator (safe under the both-or-neither writer
+   # invariant in docs/session-marker.md): any COMPLIANT session that authored header SX wrote BOTH the shared
+   # marker AND its per-id file. So if the shared marker points to SX and NO per-id file (for ANY session)
+   # claims "${DATE} SX", the marker was written shared-only — the partial-setup signature of THIS session,
+   # not a foreign clobber (a clobber by a COMPLIANT session would have left a per-id file claiming SX). A
+   # matching authored header is also required, so we never recover a marker with no header behind it. On any
+   # non-match we fall through to the conservative claim UNCHANGED. SAFETY (precise — do not overstate): this
+   # recovery fires ONLY in invariant-violation space (a compliant session resolves its per-id marker above and
+   # never reaches here). It removes the own-partial-setup false-positive, and adds NO false-negative PROVIDED
+   # foreign sessions honour the both-or-neither invariant. Residual false-negative (ACCEPTED, narrower than the
+   # false-positive removed): a SINGLE non-compliant FOREIGN partial-setup session (wrote shared + header SX, no
+   # per-id) running concurrently with a genuine no-own-marker reader — the reader cannot tell that from
+   # own-partial-setup, so it recovers SX and zeroes the foreign delta. This is NOT eliminable reader-side
+   # (no per-session signal distinguishes own- from foreign-partial-setup); it is closed at the WRITER layer by
+   # enforcing the both-or-neither invariant so partial setup never occurs. The pre-recovery NO_OWN_MARKER
+   # behaviour fails safe (loud false-positive) in this same case; the recovery trades that for a fail-unsafe
+   # guess, justified only because the triggering state is itself an invariant violation.
+   if [ -z "${MARKER}" ] && [ "${NO_OWN_MARKER}" = "1" ] && [ -f logs/.session-marker ]; then
+     SHARED_LINE=$(cat logs/.session-marker 2>/dev/null)
+     CAND=""; CAND_DATE=""
+     case "${SHARED_LINE}" in
+       "${TODAY} "*)                                  CAND=$(echo "${SHARED_LINE}" | awk '{print $2}'); CAND_DATE="${TODAY}";;
+       "${YESTERDAY} "*) [ -n "${YESTERDAY}" ] && { CAND=$(echo "${SHARED_LINE}" | awk '{print $2}'); CAND_DATE="${YESTERDAY}"; };;
+     esac
+     if [ -n "${CAND}" ]; then
+       # Does any per-id marker file claim "${CAND_DATE} ${CAND}"? If yes → foreign-owned; do NOT recover.
+       CLAIMED=0
+       for mf in logs/.session-marker-*; do
+         [ -f "${mf}" ] || continue
+         if [ "$(cat "${mf}" 2>/dev/null)" = "${CAND_DATE} ${CAND}" ]; then CLAIMED=1; break; fi
+       done
+       # Does an authored header for the candidate actually exist? (do not recover a header-less marker)
+       CAND_HDR=$(grep -c "^## ${CAND_DATE} — Session ${CAND}" logs/session-notes.md 2>/dev/null)
+       CAND_HDR=${CAND_HDR:-0}
+       if [ "${CLAIMED}" = "0" ] && [ "${CAND_HDR}" -ge 1 ]; then
+         echo "[wrap Step 3.5] Recovered own marker ${CAND} (${CAND_DATE}) from shared logs/.session-marker — no per-id file claims it and an authored header exists, so it is partial-setup own (not a foreign clobber). Running marker-aware attribution."
+         MARKER="${CAND}"; MARKER_DATE="${CAND_DATE}"
+       fi
+     fi
+   fi
+
    if [ -n "${MARKER}" ]; then
      # Marker-aware path: count own marker-bearing headers + mandates under those headers in WT and HEAD.
      # Own headers are matched on ${MARKER_DATE} (= TODAY for same-day sessions, YESTERDAY for overnight

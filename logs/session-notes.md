@@ -326,3 +326,18 @@ A concurrent session pushed to origin during this session's `/prime` (unpushed 2
 
 ### Open Questions
 None blocking.
+
+## 2026-06-05 — Session S9
+**Mandate:** Harden the wrap-session.md Step 3.5 NO_OWN_MARKER branch with a clobber-safe own-marker recovery so a partial-marker-setup session (shared `.session-marker` written, per-id marker absent) is attributed to its own header instead of being false-flagged FOREIGN, without weakening the clobber-false-negative protection — done when: both paired wrap-session.md copies carry the recovery (logic byte-identical), a dry-run harness confirms correct attribution across partial-setup AND foreign-clobber scenarios, /risk-check GO, /qc-pass GO, and improvement-log L300 flipped PARTIAL→applied.
+- Out of scope: Phase 3 guard retirement; B.2 marker .gitignore quarantine; the workflows/research-workflow wrap-session variant (no guard); the separate wrap-lite remediation-ergonomics improvement-log entry
+- Files in scope: ai-resources/.claude/commands/wrap-session.md, .claude/commands/wrap-session.md (workspace-root paired copy), docs/session-marker.md (reader-side note), logs/improvement-log.md (status flip)
+- Stop if: a dry-run shows the recovery reintroduces a silent false-negative (foreign content attributed as own) under the both-or-neither writer invariant
+
+Harden the wrap-session.md Step 3.5 NO_OWN_MARKER guard so a partial-marker-setup session (shared marker written, per-id absent) is not mis-attributed as zero-own-contribution and false-flagged FOREIGN.
+
+## 2026-06-05 — Session S10
+**Mandate:** Run /improve-skill on ai-resource-builder to add a pre-spec consumer-inventory checklist gate to skills/ai-resource-builder/SKILL.md, folding id-40 + the S7 strengthening entry + the 2026-05-29 precursor (before any rename/remove spec: grep the invariant filename stem across .claude/ docs/ skills/ workflows/ templates/ CLAUDE.md, enumerate every consumer, reconcile against the relevant contract registry) — done when: the gate is written into the skill, /qc-pass GO, and the three source improvement-log entries flipped to applied with the commit reference.
+- Out of scope: wrap-session NO_OWN_MARKER hardening; /resolve-improvement-log; System Owner ungrounded-escalation fix; the S9 working-tree leftovers
+- Files in scope: skills/ai-resource-builder/SKILL.md, logs/improvement-log.md
+- Stop if: (none stated)
+Run `/improve-skill` on the `ai-resource-builder` skill to add a consumer-inventory checklist (id-40 + S7 strengthening entry) — prevents the rename-rework class.
