@@ -299,6 +299,7 @@ For vague or informal feedback, surface interpretations as hypotheses ("I think 
 - Removes or overrides a core constraint
 - Renames required sections or headings
 - Changes defaults that downstream resources depend on
+- **Renames or removes a resource path** (command, doc, hook, skill, symlink, template) → before proposing it in Step 3, run the **Consumer-Inventory Gate** (see section below).
 
 **Pushback calibration:** If a flagged suggestion is insisted upon after explanation, implement it but note the concern in the change summary.
 
@@ -358,6 +359,16 @@ Flag as "too complex for improvement" when implementing requires:
 - Combining unrelated behaviors
 
 If changes span 3+ sections significantly but don't require new sections, flag as "substantial refactor" and confirm modification is the right approach vs. creating a new skill.
+
+## Consumer-Inventory Gate (rename/remove specs)
+
+**Fires only when a spec renames or removes a resource path** (command, doc, hook, skill, symlink, template) — not on content-only edits. Complete this gate BEFORE the rename/remove spec is written. Skipping it has shipped half-finished renames (filename changed, a reader still on the old path → silent "not found"); this under-count has recurred 3+ times.
+
+1. **Grep the invariant stem, never the templated form.** Search the bare filename stem (e.g. `session-plan`), not a placeholder spelling (`session-plan-${MARKER}`, `{MARKER}`, `$MARKER`) — placeholder variance hides consumers. Run `grep -rn '<stem>' .claude/ docs/ skills/ workflows/ templates/ CLAUDE.md`.
+2. **Enumerate every match** into the spec's affected-file list, each classified: writer (emits the path) / exact-path reader (constructs the path — silent-break risk) / glob reader (matches `name-*` — safe unless the rename changes the stem the glob anchors on) / hook regex / doc reference / paired copy (lockstep edit required).
+3. **Reconcile against the contract registry, both directions.** If the path has a two-end/contract registry (e.g. `docs/session-marker.md`), diff it against the grep result: add any consumer the grep found but the registry lacks, and re-classify any load-bearing runtime parser the registry misfiled as "narrative." The registry is authoritative only after this reconciliation.
+
+The grep is mechanical; the inventory miss is consistent across authors. Close it here, before the spec is written — not at `/risk-check`, which is downstream of the cheap fix point.
 
 ## Misinterpretation Check
 
