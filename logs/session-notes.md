@@ -685,3 +685,40 @@ None. Single non-destructive commit, zero hard gates. Concurrent-session disclos
 
 ### Open Questions
 None blocking.
+
+## 2026-06-05 — Session S17
+**Mandate:** Land three triaged items in ai-resources — strengthen the id-40 rename-spec consumer-inventory rule (invariant-stem grep + docs/session-marker.md registry reconcile, landed in its consumed doc), run /resolve-improvement-log to archive newly-verified S15 entries while leaving logged/pending entries at correct status, and document a doc-only fallback posture for 1M-credit-exhaustion blocking subagent gates — done when: id-40 hardened in log + rule landed in a consumed doc; /resolve-improvement-log run with verified entries archived and logged/pending left correct; a doc-only credit-exhaustion fallback posture committed.
+- Out of scope: the four inbox briefs (#3–6); a credit-detection hook for #2 (doc-only fallback subset only); force-marking the 20 logged/pending entries as resolved
+- Files in scope: logs/improvement-log.md, docs/session-marker.md or docs/audit-discipline.md, docs/qc-independence.md or docs/autonomy-rules.md (inferred)
+- Stop if: item #2 cannot be satisfied doc-only and would require a credit-detection hook — stop and re-scope (hook variant parked)
+
+### Summary
+`/prime` → `/open-items` → `triage` → `/session-start` (S17), then executed three triage Do-items under Gated autonomy. The triage promoted #1 (id-40 consumer-inventory hardening) and #7 (log archival); the operator added #2 (1M-credit QC-gate fallback) mid-flow. Step-1 verification dissolved #1 — its rule was already fully landed in the deployed Consumer-Inventory Gate — collapsing it to a friction-log closure annotation. #2 shipped as a doc-only fallback posture. #7 archived 5 resolved entries. Independent `/qc-pass` ran cleanly (GO, zero findings) — no 1M-credit block this time, the inverse of #2's failure mode.
+
+### Files Created
+- `logs/session-plan-2026-06-05-S17.md` — marker-scoped session plan (Gated, 3 items).
+- `logs/scratchpads/2026-06-05-21-31-scratchpad.md` — continuity scratchpad (gitignored).
+
+### Files Modified
+- `docs/qc-independence.md` — new "Subagent-unavailable fallback (1M-credit exhaustion)" bullet (§ QC Independence Rule). Committed `3a2b428`.
+- `logs/improvement-log.md` — #2 entry flipped to applied+Verified; 5 resolved entries removed (archived). Committed `3a2b428`.
+- `logs/improvement-log-archive.md` — 5 resolved entries appended (append-only). Committed `3a2b428`.
+- `logs/friction-log.md` — S7 consumer-inventory entry annotated RESOLVED (Gate absorbed the proposal). Committed `3a2b428`.
+
+### Decisions Made
+- **#1 — verify-first, no edit.** The `skills/ai-resource-builder/SKILL.md` Consumer-Inventory Gate (L367 invariant-stem grep, L369 bidirectional `session-marker.md` registry reconcile, shipped `afad146`) already mandates both clauses the triage proposed. Editing would have duplicated a live rule. The referenced improvement-log entry was already archived. Mandate satisfied before the session began (reconcile-against-live-state pattern).
+- **#2 — doc-only scope; hook parked.** Landed the fallback posture in `docs/qc-independence.md` (the natural home for "what to do when the QC gate is unreachable") rather than the entry's session-start.md/agent-tier-table.md candidates (those are prevention, not fallback). The pre-dispatch credit-detection hook stays parked per the triage verdict.
+- **/risk-check reconsidered after #1 dissolved.** Remaining surface = one additive bullet on an on-demand (non-always-loaded) doc + log edits + reversible archival — below the hard-gated structural bar. Ran independent `/qc-pass` instead (GO). Reasoning stated inline at the time.
+- **Marker resolved to S17.** `.session-marker` read S15 (drifted); session-notes already had S16; /prime stamped no marker (no task picked). Wrote this session as S17 (next free) + per-id marker.
+
+### Risky actions
+None destructive. The #7 archival removed 5 entries from `improvement-log.md` via line-range `sed` — mitigated by appending to the archive FIRST (copied by line-range from the readable active log, never reading the deny-listed archive), verifying seams + the zero-resolved-remaining count before/after, and the load-bearing operator [y/n] confirmation. Concurrent-session guard (Step 3.5) returned FOREIGN=0. No mid-session push.
+
+### Next Steps
+- **Push gate at wrap:** ai-resources `3a2b428` + the wrap commit + today's standing `7b1b153`, `8a6fc66`.
+- **Research-workflow F1/F3/F5** — deferred (monthly Review-cycle); dedicated canonical-change session.
+- **`.claude/` git-hygiene (Option B, decided S8)** — standing multi-repo debt; needs its own /risk-check session.
+- **1M-credit detection hook** — parked (dedicated design session); the doc-only fallback shipped this session covers the in-session degradation path.
+
+### Open Questions
+None blocking.

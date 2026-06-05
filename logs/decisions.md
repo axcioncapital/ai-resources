@@ -91,3 +91,19 @@
 **Alternatives.** (a) Delete — rejected: loses a valid audit record for an applied change. (b) Gitignore `audits/risk-checks/` — rejected: contradicts the directory-wide tracking convention (215 committed siblings).
 
 **Decided by:** Claude recommendation (decision-point posture), validated by independent qc-reviewer (PASS) + triage-reviewer (history-only; commit confirmed correct) inside the `/cleanup-worktree` protocol.
+
+## 2026-06-05 (S17) — Triage Do-items: #1 verify-first no-op, #2 doc-only scope, /risk-check reconsidered
+
+**Context.** Triage promoted #1 (id-40 consumer-inventory hardening) + #7 (log archival); operator added #2 (1M-credit QC-gate fallback) mid-session. Executed under Gated autonomy.
+
+**Decision 1 — #1 is a verified no-op, not an edit.** The `skills/ai-resource-builder/SKILL.md` Consumer-Inventory Gate (L367 invariant-stem grep "never the templated form"; L369 bidirectional `docs/session-marker.md` registry reconcile; shipped `afad146`) already mandates both clauses the triage proposed to add. The improvement-log entry it referenced was already archived. Residual work = a friction-log S7 closure annotation only.
+- **Rationale.** Editing a live, already-correct rule would duplicate it and risk drift. This is the reconcile-against-live-state pattern the items themselves concern — the mandate was satisfied before the session opened.
+- **Alternatives.** (a) Re-author the rule per the literal mandate — rejected (duplication). (b) Mark the entry applied without verifying the Gate — rejected (would assert a fix not confirmed live).
+
+**Decision 2 — #2 doc-only, hook parked.** Landed the fallback posture in `docs/qc-independence.md` (sanctioned inline self-QC + mandatory surfacing + provisionally-cleared + `/model` prevention pointer). The pre-dispatch credit-detection hook stays parked per the triage verdict.
+- **Rationale.** qc-independence.md is the home for "what to do when the QC gate is unreachable" (the fallback); the entry's session-start.md/agent-tier-table.md candidates address prevention, a different axis. The hook is novel harness infra warranting a dedicated session.
+
+**Decision 3 — /risk-check reconsidered, not run.** With #1 dissolved, the only structural surface was a single additive bullet on an on-demand (non-always-loaded) doc + log edits + reversible archival — below the hard-gated change-class bar (no hook/permission/symlink/new-command/always-loaded/shared-state-reordering). Ran an independent `/qc-pass` instead (GO, zero findings).
+- **Rationale.** The plan declared a plan-time /risk-check assuming #1 would edit a process doc; #1's dissolution narrowed the surface below the bar. Spending a possibly-credit-exhausting subagent on a low-risk doc bullet is also the prudent application of #2's own lesson.
+
+**Decided by:** Claude recommendation (decision-point posture), validated by independent qc-reviewer (GO) on the substantive #2 edit.
