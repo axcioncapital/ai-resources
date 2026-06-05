@@ -57,6 +57,8 @@ Run the improvement analyst to review this session's friction and suggest workfl
 
    **For dismissed items:** no action.
 
+   **Append-integrity guard (read-during-rewrite).** Append with the `Edit` tool (add the block at END) — minimal append carries no truncation risk. If you instead `Read`-then-`Write` the full file content, first compare the entry count you are about to persist against the committed baseline (`git show HEAD:logs/improvement-log.md 2>/dev/null | grep -c '^### '`). You are appending, so the count can only rise; if your working count is **lower** than the `HEAD` baseline, a concurrent session's mid-rewrite truncated your read — **STOP, do not write**, and tell the operator the append was aborted to prevent a mass deletion. See `docs/commit-discipline.md` § Shared-log write-path integrity.
+
 6. **Create improvement log if needed.** If `/logs/improvement-log.md` doesn't exist and any items are being applied or logged, create it with `# Improvement Log` as the first line before appending entries.
 
 7. **Summarize.** One-line summary of what was applied, logged, and dismissed.

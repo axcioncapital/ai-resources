@@ -80,13 +80,13 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 
    If `SIBLING_COUNT > 1`, Step 6 emits (no warning icon): `Today's session count: {N} marker-bearing entries ({list of markers, e.g., 'S1, S2, S3'}). This session is {MARKER}.`
 
-   *Concurrent-detected shared-dir advisory (C.2, 2026-06-05).* When `SIBLING_COUNT > 1` — a concurrent same-day session is likely active — the marker protocol protects per-session log writes, but **foreign uncommitted edits to shared command/doc files** (`.claude/commands/`, `docs/`) are watched by no guard (see `audits/2026-06-05-concurrent-session-collision-diagnostics-fix.md` § 5). Run one **read-only** check to make that surface visible:
+   *Concurrent-detected shared-dir advisory (C.2, 2026-06-05; extended id-15, 2026-06-05).* When `SIBLING_COUNT > 1` — a concurrent same-day session is likely active — the marker protocol protects per-session log writes, but two surfaces are watched by no guard: **foreign uncommitted edits to shared command/doc files** (`.claude/commands/`, `docs/`) AND **foreign in-place edits to the non-append shared logs** under `logs/` (`improvement-log.md`, `improvement-log-archive.md`, `decisions.md`) — these logs take in-place status flips / entry archiving (not atomic appends), so a foreign mid-edit there is a genuine lost-update surface (see `audits/2026-06-05-concurrent-session-collision-diagnostics-fix.md` § 5). The append-only marker-disambiguated `logs/session-notes.md` is deliberately EXCLUDED — the marker/header model already protects it, and including it would false-positive on every concurrent session. Run one **read-only** check to make both surfaces visible:
 
    ```bash
-   FOREIGN_SHARED=$(git status --short -- .claude/commands docs 2>/dev/null)
+   FOREIGN_SHARED=$(git status --short -- .claude/commands docs logs/improvement-log.md logs/improvement-log-archive.md logs/decisions.md 2>/dev/null)
    ```
 
-   This is read-only (no `git add`, no write). If `FOREIGN_SHARED` is non-empty, carry the dirty paths to Step 6 as an exception line naming the foreign-dirty shared files — these are files a concurrent session may be mid-edit on, so editing them this session risks a lost-update collision. If `SIBLING_COUNT ≤ 1` or the check returns nothing, skip silently (no line). The advisory only *names* the surface; it does not block.
+   This is read-only (no `git add`, no write). If `FOREIGN_SHARED` is non-empty, carry the dirty paths to Step 6 as an exception line naming the foreign-dirty shared files/logs — these are files a concurrent session may be mid-edit on, so editing them this session risks a lost-update collision. If `SIBLING_COUNT ≤ 1` or the check returns nothing, skip silently (no line). The advisory only *names* the surface; it does not block.
 
 1b. **Detect a resumable continuity scratchpad.** `/handoff` continuity mode and `/wrap-session` Step 0.5 both write session-state scratchpads to `logs/scratchpads/`. Surface the most recent one so the operator can choose to resume it.
 
@@ -145,7 +145,7 @@ Last session ({date}): {one-line plain-English summary}.
 {⚠ Working tree: {short summary} — only if unexpectedly dirty}
 {⚠ Pull: {result} — only on failure or unpushed commits}
 {Today's session count: {N} marker-bearing entries ({list of markers}). This session is {MARKER}. — informational only, no `⚠` icon; only when SIBLING_COUNT > 1}
-{⚠ Concurrent session may be editing shared files: {foreign-dirty paths under .claude/commands / docs}; check before editing them — only when SIBLING_COUNT > 1 and the Step 1a read-only `git status` found foreign-dirty shared files}
+{⚠ Concurrent session may be editing shared files: {foreign-dirty paths under .claude/commands / docs / the non-append logs improvement-log.md / improvement-log-archive.md / decisions.md}; check before editing them — only when SIBLING_COUNT > 1 and the Step 1a read-only `git status` found foreign-dirty shared files/logs}
 {⚠ Phase READMEs detected: {paths}; read before opening the relevant work unit — only if step 4 surfaced any}
 {↩ Resumable scratchpad: {path} — only if step 1b surfaced one}
 
