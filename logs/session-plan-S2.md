@@ -1,49 +1,75 @@
-# Session Plan — 2026-06-04
+# Session Plan — S2 (2026-06-05)
 
 ## Intent
-Implement two AI-strategy deliverables: (1) blanket-convert duplicated "Session Boundaries" sections across all carrying CLAUDE.md files (~17) to a single source-of-truth doc plus pointer references — operator override of F6's selective verdict, /risk-check-gated before any edit; and (2) recorded housekeeping items only — E10 (fold the compaction-scratchpad note into compaction-protocol.md) and the F1 deprecated-stub tidy.
+
+Safe low-risk backlog sweep, run **concurrently** with the S1 `/friday-act` session. Clear two named monthly-checkup config-hygiene findings that touch repos and files the S1 session does **not** own — zero collision risk. (A third candidate, the vault index-count fix, was found already resolved during planning — see Findings.)
 
 ## Model
-opus — match (active: claude-opus-4-8[1m]). Deliverable 1 is high-blast-radius design+judgment work (pointer pattern, single-source placement, loss-of-every-turn-loading risk); deliverable 2 is mechanical execution. Higher tier governs.
+
+**Recommended: Sonnet 1M (`claude-sonnet-4-6[1m]`).** This is "doing" work — small, well-scoped edits to two project CLAUDE.md Model-Selection sections and two skill frontmatter blocks, with only light judgment (de-version wording; pick the right `model:`/`effort:` tier from an existing convention). Current session model is Opus 4.8 (1M).
+
+→ `/model sonnet` (mismatch — optional; the work is small enough that staying on Opus is also fine).
 
 ## Source Material
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/strategic-os/ai-strategy/slot-1-decisions.md (F6/E10/F1 verdicts; the record to update)
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/strategic-os/ai-strategy/implementation-tracker.md (status surface to update)
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/strategic-os/ai-strategy/candidate-backlog.md (F-series source detail)
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/audit-discipline.md (structural-class + risk-check change classes)
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/repo-architecture.md (placement of the new single-source doc)
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/compaction-protocol.md (E10 fold target — must confirm it covers the scratchpad-before-/compact pattern)
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/CLAUDE.md + ai-resources/CLAUDE.md + ~15 projects/*/CLAUDE.md carrying the "Session Boundaries" heading (conversion targets)
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/repo-documentation/CLAUDE.md (E10 source — Compaction scratchpad pattern)
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/output/context-packs/architecture-20260604-7c1a4/pack.md (context pack)
+
+- `audits/friday-checkup-2026-06-05.md` — findings #11 (research-pe skill frontmatter, item 117) and #12 (stale model pins, item 118). Finding #5 (item 110, vault index counts) — verified already resolved.
+- `projects/nordic-pe-screening-project/CLAUDE.md` (line 75 — `Opus 4.7 (claude-opus-4-7)` pin).
+- `projects/project-planning/CLAUDE.md` (line 64 — `Opus 4.7` pin).
+- `projects/research-pe-regime-shift-advisory-gap/reference/skills/knowledge-file-producer/SKILL.md` — no `model:`/`effort:` frontmatter.
+- `projects/research-pe-regime-shift-advisory-gap/reference/skills/report-compliance-qc/SKILL.md` — no `model:`/`effort:` frontmatter.
+- Frontmatter convention reference: sibling research-pe `reference/skills/*` (e.g. `knowledge-file-completeness-qc`, `prose-compliance-qc`, `document-integration-qc` → `model: opus, effort: high`; mechanical skills → `model: sonnet, effort: medium`).
 
 ## Findings / Items to Address
-1. **Deliverable 1 — Session Boundary consolidation (candidate F6).** ~17 CLAUDE.md files carry a near-verbatim "Session Boundaries" section. Operator has **overridden** F6's recorded verdict — slot-1-decisions.md line 39 says "CONVERT but NOT a blanket find-replace; keep verbatim where it loads every turn" — and directed a **blanket** conversion to a single source-of-truth doc + pointer references. The genuine technical risk F6 named (a `CLAUDE.md` loads every turn; a pointer does NOT auto-load, so behaviour that must run every turn could silently stop loading) is real and must be put to /risk-check before any edit. Source: slot-1-decisions.md:39.
-2. **Deliverable 2a — E10 fold.** repo-documentation `CLAUDE.md#Compaction` restates the "scratchpad-before-/compact" pattern that already lives canonically in `compaction-protocol.md`. Action: confirm the canonical doc covers it, then replace the project copy with a pointer. Source: slot-1-decisions.md:27.
-3. **Deliverable 2b — F1 stub tidy.** `/produce-handoff` is retired (superseded by `/develop-memo`); a deprecated stub was left in place. Action: tidy the stub (clear, dated deprecation note pointing to the replacement). Source: slot-1-decisions.md:28.
-4. **Record-keeping.** Update slot-1-decisions.md F6 row to mark it superseded-by-operator-override (with date + rationale), and update implementation-tracker.md status for the items closed/advanced this session.
+
+### Item 1 — De-version stale model pins (finding #12 / item 118)
+- **nordic-pe** `CLAUDE.md:75` reads: *"Recommended posture: Opus 4.7 (`claude-opus-4-7`) for nearly all program work."* The point-version is now stale (current is Opus 4.8). Line 77 also pins `claude-sonnet-4-6[1m]` (sonnet pin is fine — keep the `[1m]` suffix; only the Opus point-version is stale).
+- **project-planning** `CLAUDE.md:64` reads: *"Recommended posture: use Opus 4.7 for plan/spec drafting…"*
+- **Fix:** de-version the **Opus** reference to tier-only ("Opus"), removing the `claude-opus-4-7` point-version, so the recommendation is self-maintaining as models advance. Keep the surrounding recommendation prose and rationale intact. This is a *recommended-posture* edit (permitted per Model Tier rule) — not a default-model declaration.
+- **Consequence if unfixed:** the recommendation silently rots each model release; audit re-flags it every cycle.
+
+### Item 2 — Add missing skill frontmatter (finding #11 / item 117)
+- Both research-pe project-local skills lack `model:`/`effort:` frontmatter → audit-repo YELLOW. Adding the fields clears it to GREEN.
+- **`report-compliance-qc`** → `model: opus`, `effort: high` (matches the QC-skill convention: `prose-compliance-qc`, `document-integration-qc`, `knowledge-file-completeness-qc` are all opus/high; the skill makes BLOCKING/NON-BLOCKING severity judgments).
+- **`knowledge-file-producer`** → `model: opus`, `effort: high` (the skill description states it "handles the judgment about what to preserve and what to condense"; comparable producers `evidence-to-report-writer` / `decision-to-prose-writer` are opus/high). **Confirm at execution** — if the condensation is judged mechanical, `sonnet`/`medium` is the fallback.
+- **Placement:** insert the two fields into the existing YAML frontmatter block (after `name:`/`description:`), preserving the block structure.
+- **Consequence if unfixed:** audit-repo stays YELLOW; the skills run on the inherited session model with no declared tier.
+
+### Item 3 — Vault index counts (finding #5 / item 110) — VERIFIED ALREADY RESOLVED, NO ACTION
+- Planning check found the live `vault/components/_index.md` already reads **49 / 45 / 11** for Commands / Agents / Projects, matching the actual `####`-entry counts in `commands.md` (49), `agents.md` (45), `projects.md` (11). The fix was applied during the checkup's 03:24 vault refresh.
+- The friday-checkup report's 03:45 snapshot lists it as pending (stale). The integrity report's target values (49/45/11) are present.
+- `vault/` is gitignored (`vault/*`) — there is nothing to commit even if it were freshly edited. **No action; record as already-resolved in the wrap note.**
 
 ## Execution Sequence
-1. **Inventory & verbatim capture.** Grep every CLAUDE.md (workspace root, ai-resources, all projects/*, exclude archive/) for the "Session Boundaries" section; capture each file's exact section text and note any per-file variations. Verify: a complete file→content map exists; final count confirmed (supersedes the engine's dual-repo undercount of 2 and the doc's stated 16).
-2. **Decide single-source location + pointer template.** Choose where the canonical Session Boundaries doc lives (default candidate: `ai-resources/docs/session-boundaries.md`) and the exact one-line pointer that replaces each section. Verify: location + pointer pattern written down and surfaced to operator. **[STOP POINT — operator confirms pointer pattern before any mass edit.]**
-3. **/risk-check (plan-time gate).** Run on the blanket conversion; the "pointer does not auto-load every-turn behaviour" concern is the central risk dimension to surface. Verify: verdict captured. **[STOP POINT — RECONSIDER/NO-GO halts per mandate Stop-if.]**
-4. **Create the single-source doc** with consolidated Session Boundaries content. Verify: file written; content is the superset of all captured variations.
-5. **Convert each carrying CLAUDE.md** — replace its Session Boundaries section with the agreed pointer. Verify: every file in the step-1 map converted; count matches.
-6. **E10 fold + F1 stub tidy.** Confirm compaction-protocol.md covers the scratchpad pattern; point repo-documentation CLAUDE.md at it; tidy the F1 stub. Verify: project copy is a pointer; stub carries a clean dated deprecation note.
-7. **Record-keeping.** Update slot-1-decisions.md F6 row (override) + implementation-tracker.md status. Verify: both files reflect the override and progress.
-8. **QC.** `/qc-pass` on the new single-source doc + a sample of pointer edits + the record updates. Verify: GO (or fixes applied).
+
+### Stage 1 — Item 1: de-version model pins (~2 edits)
+1. Edit `nordic-pe/CLAUDE.md:75` — replace `Opus 4.7 (\`claude-opus-4-7\`)` with tier-only "Opus"; keep the rest of the sentence + rationale. Leave line 77's sonnet `[1m]` pin untouched.
+2. Edit `project-planning/CLAUDE.md:64` — replace `Opus 4.7` with "Opus"; keep surrounding prose.
+3. Re-read both edited regions from the filesystem to confirm the point-version is gone and prose still reads cleanly.
+
+### Stage 2 — Item 2: add skill frontmatter (~2 edits)
+4. Edit `knowledge-file-producer/SKILL.md` — add `model: opus` + `effort: high` to frontmatter (confirm tier first against the skill body's cognitive load).
+5. Edit `report-compliance-qc/SKILL.md` — add `model: opus` + `effort: high`.
+6. Re-read both frontmatter blocks to confirm valid YAML.
+
+### Stage 3 — verify + close
+7. Confirm Item 3 (vault counts) needs no action — already verified during planning.
+8. `/qc-pass` on the four edits (de-version wording preserved meaning; frontmatter tiers match convention; no scope bleed into friday-act files).
+9. Commit per workspace Commit Rules — **note: nordic-pe, project-planning, and research-pe are each their own git repo** (nested under `projects/`); commit in each touched repo separately. `_index.md` is gitignored → not committed.
+10. Update the S2 session-notes entry; leave push to `/wrap-session` (gated, batched — and **do not push while the S1 friday-act session is mid-flight**).
 
 ## Scope Alternatives
-- **Min:** Deliverable 1 only (boundary consolidation), defer E10/F1 to a later housekeeping turn.
-- **Recommended:** Both deliverables as scoped here (boundary consolidation + E10 fold + F1 stub tidy) — matches the operator's "recorded-items-only" choice.
-- **Max:** Not on the table — operator explicitly declined a fresh housekeeping scan beyond the recorded items.
+
+- **Minimal:** Item 1 only (de-version pins) — 2 edits, ~1 repo-pair, fastest, clears the recurring HIGH finding.
+- **Recommended (this plan):** Items 1 + 2 — 4 edits across 3 project repos, clears two named findings (one HIGH, one YELLOW→GREEN). Item 3 is a no-op verify.
+- **Maximal:** add the session-plan filename date-qualify (#113) — declined for this session (broader harness change, likely needs `/risk-check`; keep the concurrent session low-risk).
 
 ## Autonomy Posture
-Gated
 
-**Stop points:**
-- After Step 2: operator confirms the single-source doc location + pointer template before any CLAUDE.md is edited (cross-cutting always-loaded content).
-- After Step 3: /risk-check verdict — RECONSIDER or NO-GO halts the session (mandate Stop-if).
+**Full autonomy.** No structural change class triggered: these are project-local CLAUDE.md *recommended-posture* edits and project-local skill frontmatter additions — not canonical/workspace CLAUDE.md edits, not hook/permission/command/skill-creation changes, no symlinks, no shared-state automation. `STRUCTURAL_RISK = false` → no `/risk-check` gate. Run to completion; `/qc-pass` before commit.
 
 ## Risk
-Structural change classes present: cross-cutting CLAUDE.md edits across ~17 files + change to always-loaded content + a new always-loaded-by-pointer doc. Run `/risk-check` after this plan is approved (plan-time gate, Step 3 above) and again before commit (end-time gate). Do not edit any CLAUDE.md before the plan-time /risk-check returns GO.
+
+- **Concurrency (primary):** S1 `/friday-act` is live. This plan touches **zero** S1-scope files (S1 owns `settings.local.json`, `marketing-positioning/CLAUDE.md`, `research-pe/CLAUDE.md` push-rule, `/new-project` template, Read() deny rules). Note Item 2 edits research-pe *skill* files under `reference/skills/`, **not** `research-pe/CLAUDE.md` — different files, no overlap. **Stop-if:** any in-scope file shows a concurrent foreign edit when opened.
+- **session-notes.md shared write:** S2 already appended its own marker-bearing header (per `docs/session-marker.md`); concurrent same-day headers are the expected shape. Wrap will append under the S2 header only.
+- **Push:** gated to `/wrap-session`; explicitly hold until the S1 session has wrapped to avoid a concurrent-push race.
+- **Low blast radius:** all four edits are reversible single-line/single-block changes; no downstream consumer depends on the exact point-version string.
