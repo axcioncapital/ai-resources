@@ -764,3 +764,207 @@ Held the wrap at the Step 3.5 foreign-session guard rather than staging `logs/se
 
 ### Open Questions
 None blocking.
+## 2026-06-04 — Session S8
+**Mandate:** Complete picked menu items: (1) fix the /wrap-session Step 3.5 clobber false-negative (no-/session-start session has no per-id marker → guard trusts a clobbered shared marker → false FOREIGN=0), folding with the id-14 grace-window edit, in both wrap-session copies; (2) build the /log-defect capture command + wire a 2nd-occurrence scan step into /wrap-session or /friday-checkup; (3) decide whether per-project .claude/ command/agent dirs are committed as-is or gitignored+symlinked from canonical, and record the decision — done when: item 1 both wrap-session copies fixed + committed, item 2 /log-defect created + scan step wired + committed, item 3 decision recorded in decisions.md (plus implementation if the decision calls for it)
+- Out of scope: item-2 "route the first real recurring defect class into a rule/eval/example" (depends on a real recurring defect existing — defer if none present); backfilling past defects
+- Files in scope: .claude/commands/wrap-session.md (ai-resources + workspace-root); .claude/commands/log-defect.md (new); .claude/commands/friday-checkup.md; logs/defect-log.md; docs/defect-to-fix-loop.md; logs/decisions.md; auto-sync-shared.sh / .gitignore (item 4, outcome-dependent) (inferred)
+- Stop if: any picked item's /risk-check returns NO-GO — pause that item, retain mandate + plan on disk
+Auto multi-item: Fix the /wrap-session Step 3.5 clobber false-negative guard bug (both copies); Build defect-capture wiring session 2 (/log-defect command + scan step into /wrap-session or /friday-checkup); Decide the .claude/ directory git-hygiene / tracking model and record the decision.
+
+### Summary
+`/prime` auto multi-item run (items 1, 2, 4). (1) Fixed the `/wrap-session` Step 3.5 clobber false-negative — added a NO_OWN_MARKER guard to both wrap-session copies so a session with `CLAUDE_CODE_SESSION_ID` set but no per-id marker file claims zero own-contribution and skips both clobber-vulnerable fallbacks, making the guard correctly STOP instead of silently sweeping a concurrent session's notes into the wrap commit. (2) Built the deferred defect-capture wiring (session 2): a new `/log-defect` capture command plus an all-tiers recurrence-scan step in `/friday-checkup` Step 6. (3) Made the `.claude/` shared-resource git-hygiene decision (Option B — gitignore synced shared files + regenerate via `auto-sync-shared.sh`), recorded with the implementation gated to a dedicated session. Plan-time `/risk-check` GO (items 1+2); independent QC on each item (GO; REVISE→fixed).
+
+### Files Created
+- `.claude/commands/log-defect.md` — new per-session defect capture command (`model: sonnet`); classify → set occurrence → prepend to defect-log.md; Action always `captured`; loud recurrence flag on 2nd+.
+- `audits/risk-checks/2026-06-04-wrap-session-clobber-guard-defect-capture-wiring.md` — plan-time risk-check report (GO, all 6 dims Low).
+- `logs/scratchpads/2026-06-04-21-30-scratchpad.md` — continuity scratchpad.
+
+### Files Modified
+- `.claude/commands/wrap-session.md` (ai-resources canonical) — Step 3.5 NO_OWN_MARKER guard (item 1, committed).
+- `/.claude/commands/wrap-session.md` (workspace-root paired sibling) — identical guard, lockstep (item 1, committed separately in workspace-root repo).
+- `docs/session-marker.md` — § Marker resolution: added the no-own-marker → own-subtract=0 rule note (item 1).
+- `.claude/commands/friday-checkup.md` — Step 6: new all-tiers "Defect-log recurrence scan" tactical follow-up (item 2).
+- `docs/defect-to-fix-loop.md` — loop steps 1–2, Firing model, deferred-wiring → wiring-status (item 2).
+- `logs/defect-log.md` — header clause updated (deferred/manual → shipped) per QC finding (item 2).
+- `logs/improvement-log.md` — clobber entry → applied+Verified (item 1); new gated `.claude/` git-hygiene implementation follow-up (item 4).
+- `logs/decisions.md` — `.claude/` git-hygiene decision, Option B (item 4).
+- `logs/session-notes.md` — S8 mandate (at /prime) + this wrap entry.
+
+### Decisions Made
+- **Item 4 — `.claude/` shared-resource git-hygiene: Option B (gitignore + regenerate).** Evidence-grounded across 14 repos; `auto-sync-shared.sh` regenerates symlinks at SessionStart so gitignoring loses nothing while eliminating the symlink-vs-copy drift and the 14-repo history churn. Decision-only; implementation gated. Full record in decisions.md 2026-06-04 (S8).
+- **Item 2 — recurrence scan fires on every `/friday-checkup` tier (not gated to monthly+).** The scan is a trivial single-file grep (unlike the subagent-based fading-gate scan), so weekly coverage satisfies the loop doc's "fortnightly-or-better" intent without letting recurrences sit unflagged. Routing stays gated judgment for `/friday-act`.
+- **Item 2 — `/log-defect` captures only, never routes.** Routing stays gated per the loop's firing model; a 2nd-occurrence entry is left `captured` (the signal the Friday scan keys on) with a loud recurrence notice.
+- **QC fix (item 2, REVISE→applied):** updated the stale `defect-log.md` header clause that still claimed the scan/routing wiring was "deferred to session 2 / manual."
+
+### Outcome
+- **COMPLETION: DELIVERED** — all 3 mandate items delivered in usable form, verified against files + commits. Item 1 guard present in both wrap-session copies (folded with id-14); item 2 `/log-defect` + `/friday-checkup` scan wired (first-real-close correctly deferred); item 3 Option B recorded in decisions.md, implementation correctly gated rather than force-built.
+- **EXECUTION: OPTIMAL** — no wasted steps, no rework loops; gates followed (plan-time risk-check GO, per-item QC, bash-by-execution validation). Better path: none.
+- **Confidence:** high. (Independent fresh-context outcome check, Step 6.4.)
+
+### Risky actions
+None taken. All four commits used explicit-path staging (never `git add -A`); pre-existing working-tree drift (`audits/backbone-manifest.md`, `logs/session-plan-S1/S2/S3.md`, untracked repo-dd audit) left untouched. The one always-loaded-adjacent change class (command edits across two repos + a new command + a cadence-pipeline edit) was plan-time `/risk-check` GO before landing per autonomy rule #9. Item 1 (highest blast radius) was bash-validated by execution across 5 scenarios before commit. No deletions, no pushes, no prompt injection.
+
+### Session Assessment
+_(wrap-collector, 2026-06-04 — S8)_
+- **Autonomy-compounding:** reusable infra produced — `/log-defect` + `/friday-checkup` Step 6 recurrence scan, closing the S7-scaffolded defect-capture loop (confirmed consumer). No OP-9 concern.
+- **Leanness/cost:** no signal — recurrence scan is a trivial single-file grep with weekly-cadence rationale; Item 4 implementation correctly deferred (decision-only).
+- **Principle-drift:** no signal — gates honored (plan-time `/risk-check` GO, per-item QC, autonomy rule #9).
+- **Friction:** no signal — auto-multi-item ran clean; no operator correction.
+- **Safety:** none observed — `Risky actions: None`; explicit-path staging; Item 1 was itself a guardrail-strengthening fix.
+- **Routed:** 0→improvement-log, 0→friction-log (clobber fix + Option B follow-up already logged this session; deduped).
+- **Reusable component → consider `/innovation-sweep`:** the `/log-defect` + per-tier recurrence-scan pattern (defect capture→flag, routing-gated).
+
+### Next Steps
+- **Implement the Item 4 decision (gated):** multi-repo `git rm --cached` of synced shared `.claude/` symlinks + `.gitignore` patterns across 14 repos + a regenerate-verify pilot; needs its own `/risk-check` + dedicated session. Full proposal in `logs/improvement-log.md` (2026-06-04 entry).
+- **Defect-loop acceptance test (still deferred):** route the first real recurring defect class into a rule/eval/example — awaits a real recurrence; no backfill.
+- **Parked:** 4 inbox build briefs (`/audit-workflow`, workflow-diagnosis, `/repo-review`, `/codex-dd`); 6+ resolved improvement-log entries → consider `/resolve-improvement-log`.
+
+### Open Questions
+None blocking.
+
+## 2026-06-05 — Settled 5 stale innovation-registry verdicts via /graduate-resource → /decide
+
+### Summary
+`/prime` orient → operator invoked `/graduate-resource` (no `triaged:graduate` entries existed, so it surfaced the registry's open candidates). Operator then ran `/decide` on the surfaced list. Evidence-grounded resolution: all 5 candidates were already settled and needed only bookkeeping. The 4 `pending-triage` entries (source-class-mapper, country-parity-checker, claim-permission-gate skills + run-sufficiency workflow command) were born canonical in ai-resources via `/create-skill` — nothing to graduate. The 1 `detected` entry (project-local run-sufficiency) is a byte-identical `/sync-workflow` deployed copy, not a fork. `/decide` ran its mandatory fresh-context QC pass (all 5 Self-resolved) → no corrections. Operator approved; registry status columns flipped.
+
+### Files Created
+None.
+
+### Files Modified
+- `logs/innovation-registry.md` — 4 rows `pending-triage` → `graduated` (born-canonical note); 1 row `detected` → `deployed-copy` (byte-identical sync note). Committed `7941a49`.
+- `logs/session-notes.md` — this wrap entry.
+- `logs/session-notes-archive-2026-06.md` — auto-archive at wrap (3 entries archived, 10 kept).
+
+### Decisions Made
+- **All 5 registry candidates resolved as no-graduation-needed (bookkeeping only)** — evidence: file-existence checks (all 4 skills/command present at cited ai-resources paths) + registry notes confirming `/create-skill` origin + `diff` proving the project-local run-sufficiency is byte-identical to canonical (same mtime 2026-06-04 20:05). QC-confirmed via fresh-context subagent. Routine bookkeeping, not analytical — not separately journaled to decisions.md.
+
+### Risky actions
+None. Single explicit-path commit (`logs/innovation-registry.md` only); pre-existing working-tree drift (backbone-manifest, improvement-log, session-plans, untracked repo-dd audit) left untouched. No deletions, no pushes, no prompt injection. No `/session-start` ran this session, so no mandate to grade against.
+
+### Next Steps
+- Carryover from S8 (2026-06-04), unchanged: implement the gated `.claude/` git-hygiene decision (needs own `/risk-check` + dedicated session); defect-loop acceptance test (awaits a real recurrence); 4 parked inbox build briefs; `/resolve-improvement-log` candidate (6+ resolved entries).
+
+### Open Questions
+None blocking.
+
+## 2026-06-05 — Slot 7 context-engine decision (B1/B2): keep manual, demote auto-fire, park enforcement
+
+### Summary
+Resolved the AI-strategy Slot 7 context-engine extension via `/clarify` → plan-mode → execution (no `/prime` task-select or `/session-start` this session). Produced a decision-only verdict on whether Context Engine Phase 2 should land/revise/park/cut, judged against the strategy's three tests (reduce session-start time / reduce wrong-context loading / improve eval-case success). Three Explore agents inventoried the engine, found the strategy framing, and gathered evidence; the engine was found to exist in three layers at three maturity levels, so a single land-vs-cut call was the wrong shape. Verdict rendered per layer on current evidence (operator-confirmed scope: full-stack / decision-only / decide-on-current-evidence). No edits to `/session-start`, `/prime`, the agent, or the schema — the auto-fire severance is gated to its own `/risk-check`.
+
+### Files Created
+- `projects/strategic-os/ai-strategy/slot-7-context-engine-decision.md` — the decision record (three-layer verdict, three tests scored against cited evidence, full-stack synthesis, gated follow-up named).
+- `ai-resources/logs/scratchpads/2026-06-05-15-30-scratchpad.md` — continuity scratchpad (wrap Step 0.5).
+
+### Files Modified
+- `projects/strategic-os/ai-strategy/candidate-backlog.md` — §B.2 B1/B2 line reconciled (RESOLVED + corrected stale "not yet landed" status).
+- `projects/strategic-os/ai-strategy/implementation-tracker.md` — Slot 7 row → In progress + changelog entry.
+- `ai-resources/logs/decisions.md` — Slot 7 cross-reference entry.
+
+### Decisions Made
+- **Verdict (operator-directed, full-stack / decision-only):** Phase 1 manual `/build-context` → **LAND** (opt-in, passed own eval, zero idle cost); Phase 2 auto-fire (`session-start.md:184`, `prime.md:315`) → **REVISE → demote to opt-in** (FAILS session-start-time test; WEAK/UNPROVEN wrong-context, n=2 and one catch masked a `/prime` sibling-repo bug; UNMEASURABLE eval-success — no eval substrate yet; burden-on-landing unmet); Phase 2+ enforcement → **PARK** behind the Slot 5 eval substrate. Logged to `decisions.md` + full record in strategic-os.
+- **Stale-status conflict surfaced + reconciled:** strategy docs said Phase 2 "not landed" but it had landed and written 25 packs across 5 project areas. candidate-backlog reconciled this session; governing-doc §6 line 256 currency edit deferred.
+- QC fixes (separate from decisions): record REVISE → 2 mechanical citation corrections applied (re-pointed an already-reconciled cross-ref to the still-stale governing-doc line; `governing-document.md` → `ai-strategy-governing-document.md`).
+
+### Risky actions
+None. Decision-only: no edits to engine commands/agent/schema, no deletions, no pushes. Two explicit-path commits (strategic-os, ai-resources). Pre-existing working-tree drift (backbone-manifest, coaching-log, improvement-log, session-plans, repo-health reports, untracked audits) left untouched. No prompt injection. No gate should-have-fired-but-didn't.
+
+### Next Steps
+- **Deferred (doc-currency, non-blocking):** `ai-strategy-governing-document.md` §6 line 256 still reads "Phase 2 risk-checked, not landed" — one-line restatement edit for the next session that touches the governing doc.
+- **Gated:** execute the L2 REVISE (withdraw the auto-fire from `/session-start` Step 2.4 + `/prime` Step 8c.4.5, leaving `/build-context` opt-in) — needs its own `/risk-check`; must pre-flight `monday-prep.md` + `contract-check.md`.
+- **Carryover (unchanged):** `.claude/` git-hygiene implementation (gated); 4 parked inbox build briefs; `/resolve-improvement-log` candidate.
+
+### Open Questions
+None blocking.
+
+## 2026-06-05 — Concurrency Decision (C3 / Flag #8) ratified + full doc close-out
+
+### Summary
+Implemented the "Concurrency Decision" item from the strategic-os AI strategy plan (framed there as **DECIDE — conditional BUILD**: engineer around concurrent-session risks vs. change the working pattern). Research during `/clarify` surfaced a conflict — the technical fix was **already shipped** (Option 2′ CLAUDE_CODE_SESSION_ID-keyed marker, 2026-06-01, all 9 consumers migrated, QC GO), but the strategy docs still described C3 as an un-built env-var candidate. Surfaced the conflict per the workspace conflict-surfacing rule; operator chose (via AskUserQuestion) to **ratify the technical route + close the item**, with a **full close-out** (decision record + reconcile all stale strategy docs + tidy improvement-log). Recorded a deliberate decision and reconciled six strategy docs so no C3/concurrency clause still reads as un-decided or un-built. Flow: `/clarify` (3 Explore agents) → AskUserQuestion → plan → 2× `/qc-pass` (both REVISE→fixed) → execute → 5-check verification → 2 commits.
+
+### Files Created
+- `logs/scratchpads/2026-06-05-16-10-scratchpad.md` — continuity scratchpad.
+
+### Files Modified
+- `logs/decisions.md` — new entry `## 2026-06-05 — Concurrency (C3 / Flag #8): ratify technical route…`. (Committed in `6b1a120` by a concurrent session alongside its Context-Engine Slot-7 cross-ref; both entries in HEAD.)
+- `logs/improvement-log.md` — Status line of the 2026-05-29 marker-clobber guard entry → Option 2′ SHIPPED + strategic decision CLOSED 2026-06-05; marked archive-eligible. Date-rollover REMNANT follow-up (~line 249) left intact. (Committed `cf9c2ac`.)
+- `projects/strategic-os/ai-strategy/ai-strategy-governing-document.md` — decision-table row, slot-2, slot-6, appendix bullet → DECIDED/SHIPPED/void. (Committed `c439a74`.)
+- `projects/strategic-os/ai-strategy/ai-operator-roadmap.md` — Slot 2 + Slot 6 reconciled. (`c439a74`.)
+- `projects/strategic-os/ai-strategy/ai-infrastructure-current-state.md` — R6 finding, decision-table row 8, weak-points friction bullet → CLOSED. (`c439a74`.)
+- `projects/strategic-os/ai-strategy/working/candidate-backlog-notes.md` — C3 inventory row → SHIPPED/CLOSED. (`c439a74`.)
+- `projects/strategic-os/ai-strategy/candidate-backlog.md` + `implementation-tracker.md` — C3 changes picked up by the concurrent Slot-7 commit `1801e4a` (~14s before mine).
+
+### Decisions Made
+- **Concurrency (C3 / Flag #8): technical route ratified, item CLOSED.** Concurrent multi-session work is a real recurring pattern → the shipped Option 2′ marker stays as the standing mechanism; `parallel-sessions-playbook.md` is the operational complement (not a substitute); no further concurrency build is queued (maintenance-only). Alternatives rejected: process-primary/freeze-tech (multi-session is the actual daily pattern) and rollback (fix is QC'd, concurred, and hardened). Full record in `logs/decisions.md` 2026-06-05. Decided by operator directive grounded in shipped-state evidence.
+- QC fixes (round 1): added 2 missing strategy docs to the edit set (ai-operator-roadmap, ai-infrastructure-current-state) + `**Decided by.**`→`**Decided by:**`. QC fix (round 2): residual stale clause at current-state.md weak-points section.
+
+### Risky actions
+None. Documentation/decision task only — no structural change class, so no `/risk-check` gate (correctly skipped). All commits used explicit-path staging. Notable: this session ran concurrently with at least two others today (the decisions.md + candidate-backlog/tracker C3 edits were committed by *parallel* sessions' commits `6b1a120`/`1801e4a`, not mine) — a live instance of the exact concurrency pattern this decision ratifies; the wrap Step 3.5 guard passed cleanly (FOREIGN=0, all foreign content already in HEAD). No deletions, no pushes, no prompt injection.
+
+### Next Steps
+- **Push pending** — 2 unpushed commits this session (`cf9c2ac` ai-resources, `c439a74` strategic-os), plus prior unpushed commits in ai-resources.
+- **Archive-eligible:** the 2026-05-29 marker-clobber entry in `improvement-log.md` is now archive-eligible — `/resolve-improvement-log` candidate.
+- **Carryover (unchanged):** `.claude/` git-hygiene implementation (gated, needs own `/risk-check`); 4 parked inbox build briefs; the deferred governing-document §6 line-256 doc-currency restatement (from the parallel Slot-7 session).
+
+### Open Questions
+None blocking.
+
+## 2026-06-05 — /pipeline-review (repo-dd) + closure session (audit backlog disposition)
+
+### Summary
+Ran `/pipeline-review` on `repo-dd` via the argument-bypass path (cadence current; 1 pipeline picked), which also fired the bundled workspace systems-review. The systems-review named the binding constraint as **closure capacity, not detection** (OP-12) and recommended a closure session over a building one. On operator instruction ("do it this session"), committed the entire uncommitted 2026-06-05 friday-checkup audit backlog (18 artifacts) in ai-resources — tree now clean — and closed two named `repo-state.md §2` pending steps (#13, #14).
+
+### Files Created
+- `audits/pipeline-reviews/repo-dd-2026-06-05.md` — pipeline-review memo (design center sound; 3 innovations, 3 leanness, 2 Minor brokenness, 3 cross-resource; currency-check PASSED)
+- `projects/axcion-ai-system-owner/output/systems-reviews/systems-review-2026-06-05-full-ai-infrastructure.md` — bundled workspace systems-review (workspace-root repo; vault/untracked area, not git-tracked)
+- `logs/scratchpads/2026-06-05-03-27-scratchpad.md` — continuity scratchpad
+
+### Files Modified
+- `audits/pipeline-review-registry.md` — bumped `repo-dd` row → 2026-06-05
+- Committed (already-modified prior-session backlog): `audits/backbone-manifest.md`, `reports/repo-health-report.md`, `logs/coaching-log.md`, `logs/session-plan-S1/S2/S3/S8.md`, plus 17 untracked 2026-06-05 audit artifacts + 4 earlier-cycle pipeline-review memos
+- `projects/repo-documentation/vault/components/_index.md` — count fixes (Commands 48→49, Agents 37→45, Projects 7→11) [gitignored vault — on-disk only]
+- `projects/repo-documentation/vault/architecture/repo-state.md` — marked §2 steps #13 + #14 resolved [gitignored vault — on-disk only]
+
+### Decisions Made
+- Closure session over building session, per systems-review binding-constraint finding (operator-directed).
+- Scope held to ai-resources audit backlog + named repo-state steps; did NOT improvise the missing consolidated checkup report, did NOT apply the audit-discipline-gated settings change inline, did NOT touch the repo-documentation `.claude/` sync backlog (separate structural matter).
+
+### Risky actions
+None. (Push remains gated/batched; no mid-session push. Audit-derived settings change deliberately NOT applied inline — routed to the gate.)
+
+### Next Steps
+- `/friday-so` then `/friday-act` — route the orphaned 2026-06-05 checkup findings (incl. the 1 Important settings finding). Highest-value remaining loop.
+- Operator-manual (terminal): repo-state §2 #1 `rm -rf workflows/`, #4 Obsidian load check, #12 configure 3 GitHub remotes.
+- `/decide` or `/innovation-sweep` — settle remaining innovation-registry verdicts.
+
+### Open Questions
+None blocking. (The consolidated `friday-checkup-2026-06-05.md` was never written by the monthly run — its findings are un-routed until `/friday-act`.)
+
+## 2026-06-05 — Materiality floor for QC + backlog-feeding review agents
+
+### Summary
+Calibrated the QC apparatus so review passes surface only *material* findings (those with a named consequence of not fixing them), not cosmetic/preference observations that pile into a perceived fix backlog. Principle: "match QC to the stakes, not to the apparatus." The materiality judgment used to live downstream at triage/resolve — after the operator already saw the full wall of findings; this pushes the floor upstream to the point findings are generated. Scope was the minimal subset (3 highest-value surfaces); 4 other backlog-feeders deferred. Plan QC and post-edit QC both returned GO with no findings.
+
+### Files Created
+- `docs/materiality-bar.md` — single shared definition: the test, mapping to BLOCKING/IMPORTANT + Real/Low-signal/Skip, disposition rules, worked contrast pair, stakes clause (high-stakes work keeps the full pass + FLAG-FOR-EXTERNAL-QC)
+- `logs/scratchpads/2026-06-05-03-31-scratchpad.md` — continuity scratchpad
+
+### Files Modified
+- `.claude/agents/qc-reviewer.md` — materiality floor in Finding-tagging section + Rules (full rubric only; mechanical mode exempt)
+- `.claude/agents/refinement-reviewer.md` — materiality floor in Rules (generalizes criterion-3 across all 5 criteria)
+- `.claude/agents/improvement-analyst.md` — floor in Phase 2.5 + Rules (one-off low-impact → "pattern to watch", not logged backlog; recurrence 3+ overrides)
+- `docs/qc-independence.md` — one-line pointer from QC → Triage Auto-Loop
+- `logs/session-notes-archive-2026-06.md` — auto-archived 4 entries (kept 10) during wrap
+
+### Decisions Made
+- Scope held to minimal subset (qc-reviewer, refinement-reviewer, improvement-analyst); deferred `fix-repo-issues-scanner`, `open-items`, `findings-extractor`, `audit-repo` to a later pass pending pattern proof-out (operator-confirmed via AskUserQuestion).
+- One shared doc over inline-duplicated text (operator-confirmed).
+
+### Risky actions
+None.
+
+### Next Steps
+- If the floor proves out on the first three surfaces, extend it to the 4 deferred backlog-feeders (`fix-repo-issues-scanner`, `open-items`, `findings-extractor`, `audit-repo`).
+
+### Open Questions
+None.
