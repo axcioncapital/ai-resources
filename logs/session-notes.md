@@ -487,3 +487,34 @@ None. Documentation/decision task only — no structural change class, so no `/r
 
 ### Open Questions
 None blocking.
+
+## 2026-06-05 — /pipeline-review (repo-dd) + closure session (audit backlog disposition)
+
+### Summary
+Ran `/pipeline-review` on `repo-dd` via the argument-bypass path (cadence current; 1 pipeline picked), which also fired the bundled workspace systems-review. The systems-review named the binding constraint as **closure capacity, not detection** (OP-12) and recommended a closure session over a building one. On operator instruction ("do it this session"), committed the entire uncommitted 2026-06-05 friday-checkup audit backlog (18 artifacts) in ai-resources — tree now clean — and closed two named `repo-state.md §2` pending steps (#13, #14).
+
+### Files Created
+- `audits/pipeline-reviews/repo-dd-2026-06-05.md` — pipeline-review memo (design center sound; 3 innovations, 3 leanness, 2 Minor brokenness, 3 cross-resource; currency-check PASSED)
+- `projects/axcion-ai-system-owner/output/systems-reviews/systems-review-2026-06-05-full-ai-infrastructure.md` — bundled workspace systems-review (workspace-root repo; vault/untracked area, not git-tracked)
+- `logs/scratchpads/2026-06-05-03-27-scratchpad.md` — continuity scratchpad
+
+### Files Modified
+- `audits/pipeline-review-registry.md` — bumped `repo-dd` row → 2026-06-05
+- Committed (already-modified prior-session backlog): `audits/backbone-manifest.md`, `reports/repo-health-report.md`, `logs/coaching-log.md`, `logs/session-plan-S1/S2/S3/S8.md`, plus 17 untracked 2026-06-05 audit artifacts + 4 earlier-cycle pipeline-review memos
+- `projects/repo-documentation/vault/components/_index.md` — count fixes (Commands 48→49, Agents 37→45, Projects 7→11) [gitignored vault — on-disk only]
+- `projects/repo-documentation/vault/architecture/repo-state.md` — marked §2 steps #13 + #14 resolved [gitignored vault — on-disk only]
+
+### Decisions Made
+- Closure session over building session, per systems-review binding-constraint finding (operator-directed).
+- Scope held to ai-resources audit backlog + named repo-state steps; did NOT improvise the missing consolidated checkup report, did NOT apply the audit-discipline-gated settings change inline, did NOT touch the repo-documentation `.claude/` sync backlog (separate structural matter).
+
+### Risky actions
+None. (Push remains gated/batched; no mid-session push. Audit-derived settings change deliberately NOT applied inline — routed to the gate.)
+
+### Next Steps
+- `/friday-so` then `/friday-act` — route the orphaned 2026-06-05 checkup findings (incl. the 1 Important settings finding). Highest-value remaining loop.
+- Operator-manual (terminal): repo-state §2 #1 `rm -rf workflows/`, #4 Obsidian load check, #12 configure 3 GitHub remotes.
+- `/decide` or `/innovation-sweep` — settle remaining innovation-registry verdicts.
+
+### Open Questions
+None blocking. (The consolidated `friday-checkup-2026-06-05.md` was never written by the monthly run — its findings are un-routed until `/friday-act`.)

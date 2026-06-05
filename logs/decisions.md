@@ -291,3 +291,17 @@
 **Gated follow-up.** The L2-REVISE (sever the auto-fire from the two session-init commands) is a structural change with the blast radius mapped in `audits/risk-checks/2026-05-29-context-engine-phase-2-session-init-edits.md`; it requires its own `/risk-check` session and must pre-flight the 2 unverified mandate-readers (`monday-prep.md`, `contract-check.md`). Residual `- Context pack:` bullets in past session-notes are harmless (fixed-list parsers ignore them).
 
 **Decided by:** Claude analysis grounded in on-disk + in-git evidence (Phase 1 eval, 2026-05-29 risk-check, live command files, usage/decision logs, pack count), under operator instruction (full-stack / decision-only / decide-on-current-evidence). Independent `/qc-pass` GO on the governing plan.
+
+---
+
+## 2026-06-05 — Closure session scope (audit backlog disposition)
+
+**Context.** The `/pipeline-review` (repo-dd) bundled systems-review identified the workspace binding constraint as **closure capacity, not detection** (OP-12), with 18 uncommitted 2026-06-05 friday-checkup audit artifacts as the live evidence. Operator directed "do it this session."
+
+**Decision.** Ran a closure session bounded to: (1) commit the ai-resources audit/review backlog as durable records; (2) close the two concretely-actionable `repo-state.md §2` steps (#13 divergence, #14 index counts). Explicitly excluded: improvising the missing consolidated `friday-checkup-2026-06-05.md` (build work → `/friday-act`), applying the 1 Important settings finding inline (audit-discipline-gated, autonomy rule #8), and the repo-documentation `.claude/` sync backlog (separate-repo structural matter).
+
+**Rationale.** Committing review-only audit records IS their disposition; their findings route to `/friday-act` by design. Applying gated config changes or improvising a synthesis report would be the "more detection/building" the systems-review explicitly warned against, and would cross autonomy gates. Discovered the vault (`projects/repo-documentation/vault/`) is gitignored-by-design, so the repo-state/index edits persist on disk as canonical living state without a git commit.
+
+**Alternatives considered.** (a) Full disposition incl. applying every finding — rejected: crosses audit-discipline gates and exceeds "closure not building." (b) Commit-only, leave repo-state untouched — rejected: #13/#14 were concretely closeable now and named in the systems-review's closure target.
+
+**Decided by:** operator instruction + systems-review binding-constraint finding; scope bounds set by Claude under standing autonomy/audit-discipline rules.
