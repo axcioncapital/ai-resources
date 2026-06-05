@@ -1,56 +1,73 @@
-# Session Plan — 2026-06-04 — S5
-
 ## Intent
-Auto multi-item (reshaped at the approval gate, E1 deferred): (1) decide + execute a clean commit strategy for the unwrapped S1–S3 leftovers, bounded to ai-resources + strategic-os; (2) triage the /prime sibling-repo cross-check gap to improvement-log (no fix); (3) graduate E4 (resolve-improvement-log) via /graduate-resource. E1 (doc-scanner-agent) deferred to a dedicated graduate session per slot-1-decisions.md.
+Sweep the remaining open tactical follow-up items from the 2026-06-05 monthly friday-checkup. Apply all low/med-risk non-structural items autonomously. Gate structural items (Read() deny at workspace root) via /risk-check. Explicitly defer large-effort items with logged reason.
 
 ## Model
-opus (claude-opus-4-8[1m]) — match. Item 1 is a commit-strategy decision over entangled cross-repo state; item 2 is a graduation pipeline with gates; item 3 is an investigation. Highest-load tier across the set is deciding → opus.
+claude-sonnet-4-6 — matches task profile (doing + routine decisions).
 
 ## Source Material
-- Item 1: workspace-wide `git status` survey (16 dirty repos); ai-resources + strategic-os diffs verified clean/isolated; `logs/session-notes.md` S2/S3/S4 entries (commit-deferral history).
-- Item 2: `projects/strategic-os/ai-strategy/slot-1-decisions.md` (E4 = GRADUATE `resolve-improvement-log`; E1 = "heavy pipeline, dedicated session"); `/graduate-resource` command.
-- Item 3: `.claude/commands/prime.md` Step 1a (git cross-check scope); `logs/improvement-log.md`; S4 wrap friction signal (already partly logged).
+- `audits/friday-checkup-2026-06-05.md` — source of all follow-up items
+- `logs/improvement-log.md` — target for defer-with-logging entries
+- `logs/session-notes.md` — S5 mandate
 
 ## Findings / Items to Address
 
-### Item 1 — Commit strategy for leftovers (reshaped)
-- **Discovery:** the "leftover S2 work" is entangled in workspace-wide uncommitted drift across ~16 repos — mass deletions (`critical-resource-auditor.md`, `audit-critical-resources.md`, `route-change.md`), dozens of untracked `.claude/` command/agent library files, `.session-marker` churn. Most of this predates and exceeds the S2 Session-Boundaries consolidation.
-- **Mandate bound saves scope:** mandate names ai-resources + strategic-os only. The other 14 project-repo CLAUDE.md conversions are out of scope → flagged for a dedicated git-hygiene session, not committed here.
-- **ai-resources clean subset:** `CLAUDE.md` (Session-Boundaries one-liner, verified isolated), `templates/project-claude-md/session-boundaries.md`, `docs/session-boundaries.md` (new), `audits/risk-checks/2026-06-04-consolidate-session-boundaries-rule-16-claude-md-to-single-doc.md` (new). Leave: `audits/backbone-manifest.md` (foreign, 107/41), DD audit file (foreign), `logs/session-plan-S1/S2/S3.md` (transient).
-- **strategic-os clean subset:** `CLAUDE.md` (Session-Boundaries one-liner), `ai-strategy/slot-1-decisions.md` (F6 override), `ai-strategy/implementation-tracker.md` (Slot-1 status). Leave: two `D` deletions (subsumption, foreign), `ai-strategy/working/system-owner-strategy-review.md` (untracked scratch).
+### Already resolved by S1–S4 (skip)
+- settings.local.json bypassPermissions ✓
+- Push-rule in marketing-positioning + research-pe ✓
+- /new-project CLAUDE.md template ✓
+- Pre-push git fetch + divergence check in /wrap-session ✓
+- research-pe skill frontmatter (model:/effort:) ✓
+- Model de-versioning in nordic-pe + project-planning ✓
+- ai-resources Read() deny rules ✓
+- vault/components/_index.md atomic-index counts ✓
 
-### Item 3 — /prime sibling-repo cross-check gap
-- `/prime` Step 1a git cross-check scans only cwd-repo + ai-resources, not sibling project repos (e.g. strategic-os). Surfaces already-done-and-committed items as still-open. Caught by S4's context-discovery engine, not by /prime.
-- S4 wrap reported this was "already logged to improvement-log by the feedback collector" — verify; if absent or partial, log a clean entry. Triage-only — no fix to /prime.
+### Still open — low risk (apply autonomously)
+- `/resolve-improvement-log` — ~5–6 applied+verified entries pending archive
+- `/log-sweep` (real run) — 2 archival candidates: improvement-log-archive.md + project-planning session-notes.md
 
-### Item 2 — E4 graduation (E1 deferred)
-- E4 = `resolve-improvement-log.md` command → GRADUATE (real, in-use, reusable). Run `/graduate-resource resolve-improvement-log`.
-- E1 deferred (slot-1-decisions.md: "heavy pipeline — not run inside a closure sweep, dedicated graduate session").
-- Structural class (new canonical command) → /risk-check before the graduation per Step 8c.9 + Autonomy Rule #9.
+### Still open — med risk, non-structural (apply autonomously)
+- Date-qualify session-plan filename in session-marker.md + writers + glob consumers
+- Add `scripts/fix-mojibake.sh` to research-workflow intake
+- Reroute `improvement-analyst` to avoid `Read(logs/*archive*.md)` deny
+- Add per-item done-condition check in `/prime` Step 8c
+- SESSION-ISSUE: `/fix-symlinks` blind → decide fix/defer/close
+- SESSION-ISSUE: Step 3.5 CONCURRENT block strands session → decide fix/defer/close
+- Add collaboration-coach project-root guardrail
+
+### Still open — structural (gate via /risk-check)
+- Add Read() deny rules at workspace root + research-pe deny extension
+
+### Defer explicitly (large effort or needs dedicated session)
+- Marketing-positioning stranded worktree, W2.1 registry maintenance, DR-1 hook duplicates, /cleanup-worktree, pull.rebase policy, session-entry guard
 
 ## Execution Sequence
 
-### Stage 1 — Item 1: commit leftovers (ai-resources + strategic-os)
-1. ai-resources: `git add` the 4 explicit deliverable paths; commit `batch: session-boundaries consolidation (ai-resources) — S2 deferred deliverable`.
-2. strategic-os: `git add` the 3 explicit deliverable paths; commit `batch: ai-strategy Slot-1 records + session-boundaries conversion — S1/S2 deferred`.
-3. Leave all foreign drift untouched in both repos. Surface the 14-repo remainder + workspace-wide drift as a [SCOPE] note recommending a dedicated git-hygiene session.
+### Stage 1 — Low-risk routine
+1. Run `/resolve-improvement-log`
+2. Run `/log-sweep` (real run)
 
-### Stage 2 — Item 3: triage /prime gap
-1. Check `logs/improvement-log.md` for the existing S4-logged entry. If present, confirm + optionally enrich; if absent/partial, append a clean triage entry. No /prime edit.
+### Stage 2 — Non-structural med-risk edits
+3. Date-qualify session-plan filename in session-marker.md + command writers
+4. Add `scripts/fix-mojibake.sh` + wire into research-workflow intake
+5. Reroute `improvement-analyst` archive de-dup
+6. Add per-item done-condition check in `/prime` Step 8c
+7. Decide both SESSION-ISSUEs — log in improvement-log
+8. Add collaboration-coach project-root guardrail
 
-### Stage 3 — Item 2: graduate E4 (risk-check first)
-1. Run `/risk-check` on graduating `resolve-improvement-log` to canonical (new command class).
-2. On GO: run `/graduate-resource resolve-improvement-log`. Update strategic-os `implementation-tracker.md` + `slot-1-decisions.md` E4 status → done, commit.
-3. On RECONSIDER/NO-GO: pause, report, retain plan.
+### Stage 3 — Structural (gated)
+9. /risk-check on workspace-root Read() deny → apply on GO, defer-log on RECONSIDER/NO-GO
+
+### Stage 4 — Defer-with-logging
+10. Log explicit deferrals for large-effort items
 
 ## Scope Alternatives
-- **Leaner:** items 1 + 3 only; defer all of item 2 to a dedicated graduate session (E4 is a full pipeline). Viable if context tightens.
-- **Fuller:** also commit the 14 other project-repo CLAUDE.md conversions — rejected: out of mandate scope, entangled with heavy foreign drift, deserves its own reviewed git-hygiene session.
+- **Minimal (context constrained):** Stage 1 only + defer-log everything else.
+- **Full (current plan):** All 4 stages.
 
 ## Autonomy Posture
-Gated — item 2 E4 graduation is a structural change class (new canonical command); /risk-check runs before it per Autonomy Rule #9. Items 1 and 3 proceed under full autonomy (commit + log-append).
+Gated — structural class detected (Read() deny = harness-config). /risk-check runs before Stage 3.
 
 ## Risk
-- Item 1 commits are explicit-path, isolated, reversible (commit not push). Low risk. Main hazard avoided: never `git add -A` in these dirty repos.
-- The workspace-wide drift (16 repos) is a real systemic signal but out of scope; flagged, not actioned.
-- Item 2 risk handled by the pre-graduation /risk-check.
+- Session-plan filename date-qualify touches session-marker.md + multiple command files + glob consumers — verify globs after edit.
+- Collaboration-coach guardrail: if via hook rather than prompt, escalates to structural → /risk-check.
+- Read() deny workspace-root: explicitly gated.
