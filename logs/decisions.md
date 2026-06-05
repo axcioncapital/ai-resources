@@ -355,3 +355,17 @@
 **Alternatives considered.** (a) Revert fa2b3f2 + discard amendments to honor S6's defer — rejected: destroys completed safe work; the "dedicated session" would just redo exactly what S7 did. (b) Keep date-qualify but discard fix-symlinks — rejected: fix-symlinks is independent, Low-risk (command-text only), and closes a logged 2026-06-02 gap; operator confirmed keep.
 
 **Decided by:** Operator-confirmed ("proceed", keep fix-symlinks confirmed) after Claude surfaced the full collision + conflict. The structural root (two live sessions on one working tree) is deferred to a worktree-per-session session — S6's diagnostics report `3a7e89d`.
+
+---
+
+## 2026-06-05 (S8) — Per-session log namespacing (Option B.1) DECLINED; Mode-A fix shipped instead
+
+**Context.** Implementing the structural fix for the concurrent-session collision class (`audits/2026-06-05-concurrent-session-collision-diagnostics-fix.md`). The report's §9.2 names "the central B decision": per-session log namespacing vs. relying on the file-ownership-map discipline. The System Owner's earlier review had suggested namespacing as half the minimum fix.
+
+**Decision.** DECLINE per-session log namespacing. Build `/new-worktree-session` + a same-checkout auto-nudge (Mode-A prevention) as the structural fix; cover Mode B with the existing marker/header model + ownership-map discipline + the already-logged append-discipline fix for `improvement-log.md`.
+
+**Rationale.** A full writer/reader blast-radius map gathered in-session (via Explore agents) showed namespacing is the wrong tool: (1) **Mode B has never actually occurred** — every collision in the report's §3 recurrence table is Mode A (same-checkout), the failure namespacing does NOT address; (2) the workspace already disambiguates the shared `session-notes.md` by marker-bearing header — a simpler model than per-file namespacing — and the other append-only logs append atomically (heredoc/printf); (3) namespacing would touch ~8 shared logs + ~8 consumers that assume a single consolidated file (Friday cadence, `/prime` scan, `/open-items`, `/resolve-improvement-log`, `fix-repo-issues-scanner`…), and its required merge-back reconciliation step is itself a race-prone shared write — it reintroduces the class it aims to remove; (4) low-regret to decline — if a real Mode-B collision is ever confirmed, namespacing can be built then. The SO's suggestion predated this blast-radius map; with the map in hand, the call flips. Surfaced the SO-vs-evidence conflict to the operator, who (initially unsure) accepted the evidence-based recommendation.
+
+**Alternatives considered.** (a) Build full B.1 namespacing — rejected per the four points above (solving a problem that hasn't occurred at high, partly self-defeating cost). (b) Do nothing structural this session (visibility-only) — rejected: SO confirmed visibility ≠ prevention and the operator chose to start the structural fix. (c) Full lsof same-checkout *detection* for the nudge — deferred as brittle (process args carry no cwd); shipped the heuristic nudge (count≥2 + today-marker-in-this-checkout) instead, which degrades safe.
+
+**Decided by:** Claude recommendation on gathered evidence; operator confirmed after Claude surfaced the SO-vs-evidence conflict and the low-regret framing. Both structural changes cleared a batched `/risk-check` (GO) and `/qc-pass` (GO). Commits `93abf16` (ai-resources), `dbf34de` (research-pe hook copy).

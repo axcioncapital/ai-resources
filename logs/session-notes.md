@@ -464,3 +464,39 @@ _(wrap-collector, 2026-06-05 — S7)_
 
 ### Open Questions
 None blocking. S7 ran without /prime's marker path (no per-id marker written) — benign, but note the guard-attribution gap is already logged as a guardrail-candidate.
+
+## 2026-06-05 — Session S8 (no /prime marker): concurrent-session collision — structural fix
+
+### Summary
+Fixed the recurring concurrent-session collision class (`audits/2026-06-05-concurrent-session-collision-diagnostics-fix.md`) in two batches. Batch 1 landed the Option C+A low-risk subset (make collisions visible + reinforce worktree discipline). After a System Owner review confirmed "visibility ≠ prevention," the operator chose to start the structural fix; Batch 2 built `/new-worktree-session` (the Mode-A prevention) plus an auto-firing same-checkout nudge in the SessionStart hook (the operator's "make it automatic — I won't remember" requirement), and recorded a §9.2 decision to DECLINE per-session log namespacing on evidence. Entered via `/prime` brief → `/clarify` → `/recommend`, so this session never wrote a `/prime` marker (note written manually at wrap).
+
+### Files Created
+- `.claude/commands/new-worktree-session.md` — Sonnet command: one-step isolated git-worktree creation for a parallel session; cites `parallel-sessions-playbook.md`; reuses `/cleanup-worktree` + `/monday-prep`.
+- `audits/risk-checks/2026-06-05-hook-warning-worktree-enrichment.md` — risk-check report (GO).
+- `audits/risk-checks/2026-06-05-new-worktree-session-command-plus-hook-nudge.md` — batched risk-check report (GO).
+- `logs/scratchpads/2026-06-05-13-21-scratchpad.md` — continuity scratchpad (gitignored).
+
+### Files Modified
+- `docs/session-marker.md` — both-or-neither writer invariant (BLOCKING).
+- `.claude/commands/prime.md` + `.claude/commands/session-start.md` — read-only shared-dir advisory when a concurrent session is detected.
+- `.claude/hooks/detect-concurrent-session.sh` — Batch 1 worktree-remedy message; Batch 2 two-branch sharp/soft auto-nudge naming `/new-worktree-session`.
+- `docs/parallel-sessions-playbook.md` § 4 — ad-hoc-same-checkout anti-pattern + worktree one-liner, then pointed at the new command.
+- `logs/improvement-log.md` — status updates on two partially-closed entries + consolidated entry rewritten with the §9.2 namespacing-declined decision and shipped/synced status.
+- `projects/research-pe-regime-shift-advisory-gap/.claude/hooks/detect-concurrent-session.sh` — synced byte-identical to canonical (separate repo, commit `dbf34de`).
+
+### Decisions Made
+- **§9.2 — per-session log namespacing (Option B.1) DECLINED** (evidence-based): Mode B has never occurred (all ~5 recurrences are Mode A); shared logs already disambiguated by marker-header; namespacing's ~8-consumer blast radius + race-prone reconciliation outweigh benefit; low-regret to defer. Reopen only on a confirmed Mode-B collision.
+- **Mode-A structural fix scoped to `/new-worktree-session` + auto-nudge**; full lsof same-checkout detection deferred as brittle; guard retirement (Phase 3) and B.2 marker `.gitignore` quarantine deferred.
+- **QC false-positive handling (Batch 1):** `/qc-pass` returned REVISE on a single finding (cited risk-check report "missing") that was verified to exist on disk; proceeded rather than act on the false finding.
+
+### Risky actions
+None irreversible. Two structural-change batches each cleared `/risk-check` (GO) before commit. The wrap Step 3.5 guard ran on the NO_OWN_MARKER path (this session wrote no per-id marker) — benign here because `added=0` (this session contributed no session-notes header before wrap), but it is the same guardrail-candidate gap already logged. Cross-repo write: the research-pe hook copy was edited + committed in its own repo (explicit-path staging).
+
+### Next Steps
+- **Push pending:** ~23 commits in ai-resources + 1 in research-pe, all local.
+- Reader-side NO_OWN_MARKER hardening in `wrap-session.md` Step 3.5 (logged guardrail-candidate) — needs its own `/risk-check` (paired wrap-session.md copies).
+- Remaining deferred collision items: B.2 marker `.gitignore` quarantine, Phase 3 guard retirement, full lsof same-checkout detection — each `/risk-check`-gated; Phase 3 only after Phase-4 validation.
+- `/cleanup-worktree` once the tree is settled (still-open carryover from S6); `/resolve-improvement-log` (several resolved/decided entries accumulating).
+
+### Open Questions
+None blocking.
