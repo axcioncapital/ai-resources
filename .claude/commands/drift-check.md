@@ -15,7 +15,7 @@ Input: `$ARGUMENTS` — optional. If provided, it is treated as an explicit stat
 
 1. Set `DATE` = today, `YYYY-MM-DD`.
 2. Determine `REPO_ROOT` = `git -C "$(pwd)" rev-parse --show-toplevel`. If the cwd is not a git repo, `/drift-check` can still run — set `REPO_ROOT` = cwd and have the subagent skip the git-evidence steps in Step 3.
-3. Locate `logs/session-notes.md` under `REPO_ROOT`. Resolve this session's marker via `docs/session-marker.md` § Marker resolution. If marker resolves, also locate `logs/session-plan-${MARKER}.md` under `REPO_ROOT`. Either may be absent — `/drift-check` is advisory and tolerates absence of the plan; marker absence indicates `/prime` did not run (which `/drift-check` flags but does not hard-fail; read-only auxiliary consumer per `docs/session-marker.md`).
+3. Locate `logs/session-notes.md` under `REPO_ROOT`. Resolve this session's marker via `docs/session-marker.md` § Marker resolution. If marker resolves, locate the plan file via glob `logs/session-plan-*${MARKER}.md` under `REPO_ROOT` (matches both date-qualified `session-plan-YYYY-MM-DD-S{N}.md` and bare-marker `session-plan-S{N}.md` forms). Either may be absent — `/drift-check` is advisory and tolerates absence of the plan; marker absence indicates `/prime` did not run (which `/drift-check` flags but does not hard-fail; read-only auxiliary consumer per `docs/session-marker.md`).
 
 ---
 
@@ -25,7 +25,7 @@ Input: `$ARGUMENTS` — optional. If provided, it is treated as an explicit stat
 
 5. **If `$ARGUMENTS` is empty, auto-detect.** The current session's mandate is the **last (bottom-most) `## {DATE}` entry block** in `logs/session-notes.md` — the file uses append-to-end ordering, so the final dated block is the most recently started session. Read that block; capture its mandate content as `MANDATE` — the `**Mandate:**` line plus any `Out of scope` / `Files in scope` / `Stop if` / `Allowed inputs` / `Required outputs` lines that follow it. Those scope clauses are the standard against which drift is judged. (Note: `Allowed inputs` and `Required outputs` are optional bullets — absent from older mandate blocks. Treat absence as "no constraint specified." Older mandate blocks may also include a `Class:` line — ignore it; the field was retired and carries no drift signal.)
 
-6. **Multiple same-day entries — marker disambiguation rule.** Under TOCTOU Phase 2+3 atomic, each session writes its own marker-bearing header (`## YYYY-MM-DD — Session ${MARKER}`). If `MARKER` resolves, the current session's block is the one matching `${MARKER}` (not necessarily the bottom-most — though it usually is). If `MARKER` is absent/stale (pre-Phase-2 or post-session), fall through to the bottom-most-block heuristic from Step 5. Additionally: if `logs/session-plan-${MARKER}.md` exists and was modified today, read its mandate and cross-check it against this session's marker-bearing block. If the two **agree**, proceed. If they **conflict**, do not guess — carry both versions into the subagent brief (Step 3) and instruct the subagent to surface the ambiguity in its report.
+6. **Multiple same-day entries — marker disambiguation rule.** Under TOCTOU Phase 2+3 atomic, each session writes its own marker-bearing header (`## YYYY-MM-DD — Session ${MARKER}`). If `MARKER` resolves, the current session's block is the one matching `${MARKER}` (not necessarily the bottom-most — though it usually is). If `MARKER` is absent/stale (pre-Phase-2 or post-session), fall through to the bottom-most-block heuristic from Step 5. Additionally: if the plan file located in Step 1 (glob `logs/session-plan-*${MARKER}.md`) exists and was modified today, read its mandate and cross-check it against this session's marker-bearing block. If the two **agree**, proceed. If they **conflict**, do not guess — carry both versions into the subagent brief (Step 3) and instruct the subagent to surface the ambiguity in its report.
 
 7. **If no mandate can be resolved** (no `session-notes.md`, no dated block, marker absent and no marker-scoped plan, and no `$ARGUMENTS`): abort with:
    ```
@@ -45,7 +45,7 @@ Input: `$ARGUMENTS` — optional. If provided, it is treated as an explicit stat
 
    SESSION MANDATE (the reference standard):
    {MANDATE verbatim}
-   {If Step 6 found a conflict, append: "MANDATE CONFLICT — logs/session-notes.md (Session ${MARKER} block) and logs/session-plan-${MARKER}.md disagree. Version A (session-notes): ... Version B (session-plan): ... Surface this in your report under a `Mandate ambiguity:` line; do not silently pick one."}
+   {If Step 6 found a conflict, append: "MANDATE CONFLICT — logs/session-notes.md (Session ${MARKER} block) and {PLAN_FILE_PATH} disagree. Version A (session-notes): ... Version B (session-plan): ... Surface this in your report under a `Mandate ambiguity:` line; do not silently pick one."}
 
    Gather the actual work evidence yourself:
    - Run `git -C {REPO_ROOT} log --since="{DATE} 00:00:00" --pretty="%h %s"` for commits made today.

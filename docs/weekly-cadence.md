@@ -75,7 +75,7 @@ Both CLAUDE.md skip conditions must hold simultaneously to skip the audit.
 
 15. **Session plan scaffold** (optional) — write a stub `logs/session-plan-next.md` with the intent line from the week mandate. Do not invoke `/session-plan` here.
 
-**Scope separation:** The week mandate (`harness/session/week-mandate-*.md`) is week-scope — it covers all planned work for the week. The per-session plan (`logs/session-plan-{marker}.md`, produced by `/session-plan`; marker-scoped per `docs/session-marker.md`) is session-scope — it covers how one specific session will run. These are written in separate sessions: the mandate on Monday, the session plan at the start of each work session. `/monday-prep` must never invoke `/session-plan` inline; doing so conflates the two scopes and causes the session planner to assume the current session when it should be planning the next one.
+**Scope separation:** The week mandate (`harness/session/week-mandate-*.md`) is week-scope — it covers all planned work for the week. The per-session plan (`logs/session-plan-{YYYY-MM-DD}-{marker}.md`, produced by `/session-plan`; date + marker-scoped per `docs/session-marker.md`) is session-scope — it covers how one specific session will run. These are written in separate sessions: the mandate on Monday, the session plan at the start of each work session. `/monday-prep` must never invoke `/session-plan` inline; doing so conflates the two scopes and causes the session planner to assume the current session when it should be planning the next one.
 
 ---
 

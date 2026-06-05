@@ -4,7 +4,7 @@ effort: high
 argument-hint: "[session intent — or leave blank to use next steps from last session]"
 ---
 
-Session orchestrator. Run after `/prime` to plan HOW the session will run before execution starts. Produces a written plan at `logs/session-plan-${MARKER}.md` (marker-scoped per `docs/session-marker.md`; overwrite each same-session re-invocation). Not to be confused with the research-workflow's per-section `session-plan.md` under `workflows/research-workflow/`.
+Session orchestrator. Run after `/prime` to plan HOW the session will run before execution starts. Produces a written plan at `logs/session-plan-${YYYY-MM-DD}-${MARKER}.md` (date + marker-scoped per `docs/session-marker.md`; overwrite each same-session re-invocation). Not to be confused with the research-workflow's per-section `session-plan.md` under `workflows/research-workflow/`.
 
 ---
 
@@ -14,16 +14,18 @@ Read `logs/session-notes.md`. Resolve this session's marker via `docs/session-ma
 
 Locate the marker-bearing header `## YYYY-MM-DD — Session ${MARKER}` in `session-notes.md`. If absent, hard-fail: `[/session-plan Step 0] HARD-FAIL: this session's marker-bearing header missing from logs/session-notes.md. Run /prime to seed the header.`
 
-**Same-session re-invocation check.** Check whether `logs/session-plan-${MARKER}.md` exists. If yes, this is THIS session's prior plan (no other session writes to this path under TOCTOU Phase 2+3 atomic — each session writes its own marker-scoped plan). Emit the 3-option prompt:
+Set `TODAY` = today in `YYYY-MM-DD` format (`date '+%Y-%m-%d'` or the date prefix of the marker-bearing header). All plan file paths below use `${TODAY}-${MARKER}` as the filename stem.
 
-> `session-plan-${MARKER}.md` already exists from this session (modified {HH:MM}, intent: '{Intent value}'). Options:
+**Same-session re-invocation check.** Check whether `logs/session-plan-${TODAY}-${MARKER}.md` exists. If yes, this is THIS session's prior plan (no other session writes to this path under TOCTOU Phase 2+3 atomic — each session writes its own marker-scoped plan). Emit the 3-option prompt:
+
+> `session-plan-${TODAY}-${MARKER}.md` already exists from this session (modified {HH:MM}, intent: '{Intent value}'). Options:
 > 1. Keep current plan — stop here, no changes made
 > 2. Overwrite with new intent — continue to Step 1
-> 3. Write new plan to `logs/session-plan-${MARKER}-pass2.md` instead — continue to Step 1, output to pass2
+> 3. Write new plan to `logs/session-plan-${TODAY}-${MARKER}-pass2.md` instead — continue to Step 1, output to pass2
 >
 > Default (no response within the turn): **option 1 — keep current plan**.
 
-Apply the chosen option: Option 1 → stop, no changes. Option 2 → continue to Step 1 (OUTPUT_TARGET = `logs/session-plan-${MARKER}.md`). Option 3 → continue to Step 1 (OUTPUT_TARGET = `logs/session-plan-${MARKER}-pass2.md`).
+Apply the chosen option: Option 1 → stop, no changes. Option 2 → continue to Step 1 (OUTPUT_TARGET = `logs/session-plan-${TODAY}-${MARKER}.md`). Option 3 → continue to Step 1 (OUTPUT_TARGET = `logs/session-plan-${TODAY}-${MARKER}-pass2.md`).
 
 **Determine `UPCOMING_INTENT`** for Step 1 caching:
 - If `$ARGUMENTS` is non-empty → `UPCOMING_INTENT` = `$ARGUMENTS` verbatim.
@@ -156,8 +158,8 @@ Do not evaluate structural risk yourself. Point to `/risk-check`.
 Set `DATE` = today in `YYYY-MM-DD` format.
 
 **Resolve `OUTPUT_TARGET`** (set by Step 0):
-- Default → `logs/session-plan-${MARKER}.md`.
-- If Step 0's same-session 3-option prompt resolved to Option 3 → `logs/session-plan-${MARKER}-pass2.md`.
+- Default → `logs/session-plan-${DATE}-${MARKER}.md`.
+- If Step 0's same-session 3-option prompt resolved to Option 3 → `logs/session-plan-${DATE}-${MARKER}-pass2.md`.
 
 No legacy or bare-path fallback. The marker is mandatory under TOCTOU Phase 2+3 atomic (Option A); Step 0's hard-fail closes the absent-marker path before this step is reached. See `docs/session-marker.md` for the marker contract.
 

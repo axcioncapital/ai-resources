@@ -218,8 +218,8 @@ Change classes (per `audit-discipline.md`):
 | `logs/tweak-log.md` | Per-invocation audit record of cosmetic edits applied via `/tweak` | `/tweak` |
 | `logs/usage-log.md` | Per-session usage telemetry | `/usage-analysis` |
 | `logs/workflow-observations.md` | Workflow-pipeline observations | Workflow commands |
-| `logs/session-plan-{marker}.md` | Session orchestration plan (intent, model, source material, autonomy posture, risk). Marker-scoped per session — see `docs/session-marker.md` for the marker contract. | `/session-plan` |
-| `logs/session-plan-{marker}-pass2.md` | Companion plan file written by `/session-plan` when the operator picks option 3 from the same-session 3-option prompt (re-invocation fork). Concurrent-session collision routing was removed in atomic Phase 2+3 (Option A) — each session writes its own marker-scoped plan, so cross-session collision is structurally impossible. Known consumers: `/open-items` table (glob scan `logs/session-plan-*.md` covers both canonical and pass2). | `/session-plan` Step 0 |
+| `logs/session-plan-{YYYY-MM-DD}-{marker}.md` | Session orchestration plan (intent, model, source material, autonomy posture, risk). Date + marker-scoped per session — see `docs/session-marker.md` for the marker contract. | `/session-plan` |
+| `logs/session-plan-{YYYY-MM-DD}-{marker}-pass2.md` | Companion plan file written by `/session-plan` when the operator picks option 3 from the same-session 3-option prompt (re-invocation fork). Concurrent-session collision routing was removed in atomic Phase 2+3 (Option A) — each session writes its own marker-scoped plan, so cross-session collision is structurally impossible. Known consumers: `/open-items` table (glob scan `logs/session-plan-*.md` covers both canonical and pass2). | `/session-plan` Step 0 |
 
 ### Q7: Is the artifact a dated audit output? Use `audits/`.
 

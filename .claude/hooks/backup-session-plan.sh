@@ -11,13 +11,13 @@
 
 file_path=$(jq -r '.tool_input.file_path // empty' 2>/dev/null)
 
-# Only act on writes to logs/session-plan-<marker>.md or logs/session-plan-<marker>-<suffix>.md.
-# Under TOCTOU Phase 2+3 atomic (Option A), the bare logs/session-plan.md no longer exists —
-# every session writes its own marker-scoped plan (logs/session-plan-S1.md, S2.md, etc.) plus
-# any pass2/next fork variants (logs/session-plan-S1-pass2.md). The regex captures both shapes:
-# canonical (one segment) and fork (two segments). Without the two-segment branch, pass2 plans
-# written under marker-scoped naming would be silently un-backed-up.
-echo "$file_path" | grep -qE '(^|/)logs/session-plan(-[a-zA-Z0-9]+){0,2}\.md$' || exit 0
+# Only act on writes to logs/session-plan-<...>.md.
+# Under TOCTOU Phase 2+3 atomic + date-qualify rename (docs/session-marker.md), plan filenames
+# take the form session-plan-YYYY-MM-DD-S{N}.md (4 segments) or with a fork suffix such as
+# -pass2 (5 segments). The old bare-marker form session-plan-S{N}.md (1–2 segments) also
+# remains valid for pre-rename files. Cap set to {0,6} to cover all current forms (max 5
+# observed) with one segment of headroom; update this cap if the naming scheme gains more suffixes.
+echo "$file_path" | grep -qE '(^|/)logs/session-plan(-[a-zA-Z0-9]+){0,6}\.md$' || exit 0
 
 # Derive SRC and BACKUP from the matched file path so the backup name tracks the variant
 # (e.g., a write to session-plan-pass2.md backs up as 2026-05-28-1930-session-plan-pass2.md).

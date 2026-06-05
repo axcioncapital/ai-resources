@@ -541,7 +541,7 @@ EOF
    - `prime.md` — session orientation
    - `wrap-session.md` — session closeout
    - `session-start.md` — Phase-3 mandate capture
-   - `session-plan.md` (writes `logs/session-plan-{marker}.md` per `docs/session-marker.md`) — session-orchestration planning
+   - `session-plan.md` (writes `logs/session-plan-{YYYY-MM-DD}-{marker}.md` per `docs/session-marker.md`) — session-orchestration planning
    - `open-items.md` — backlog inventory
    - `qc-pass.md` — independent QC pass
    - `resolve.md` — QC-finding triage and resolution

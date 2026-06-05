@@ -109,14 +109,14 @@ Rationale: writers produce session state — operating without a marker means wr
 
 | Resource | Pre-Phase-2 (bare path) | Phase 2+3 atomic (marker-scoped) |
 |----------|------------------------|----------------------------------|
-| Session plan (canonical) | `logs/session-plan.md` | `logs/session-plan-${MARKER}.md` |
-| Session plan (re-invocation fork) | `logs/session-plan-pass2.md` | `logs/session-plan-${MARKER}-pass2.md` |
+| Session plan (canonical) | `logs/session-plan.md` | `logs/session-plan-${YYYY-MM-DD}-${MARKER}.md` |
+| Session plan (re-invocation fork) | `logs/session-plan-pass2.md` | `logs/session-plan-${YYYY-MM-DD}-${MARKER}-pass2.md` |
 | Session notes header | `## YYYY-MM-DD` | `## YYYY-MM-DD — Session ${MARKER}` |
 | Session notes file | `logs/session-notes.md` (shared) | `logs/session-notes.md` (shared; marker disambiguates by header) |
 
 The session notes file remains shared across sessions; the marker disambiguates by header text, not by filename. `^## YYYY-MM-DD` greps still match marker-bearing headers (unanchored at end of line); existing consumers that scan by date continue to work.
 
-**Tracking policy:** `logs/session-plan-S*.md` files are tracked in git (per-session plan history, parallel to `logs/session-notes.md`'s tracking). Not gitignored.
+**Tracking policy:** `logs/session-plan-*.md` files are tracked in git (per-session plan history, parallel to `logs/session-notes.md`'s tracking). Not gitignored. Date-qualified filenames (`session-plan-YYYY-MM-DD-S{N}.md`) are the canonical form; bare-marker files (`session-plan-S{N}.md`) from pre-date-qualify sessions are also tracked.
 
 ---
 
@@ -146,7 +146,7 @@ Documentation that references `session-plan-{marker}.md` in operator-facing or s
 - `ai-resources/.claude/commands/prime.md` (additional sites beyond writer-step entries) — operator-facing chat strings.
 - `ai-resources/docs/repo-architecture.md` — canonical file table.
 - `ai-resources/docs/compaction-protocol.md` — operator-facing target-file note.
-- `ai-resources/.claude/hooks/backup-session-plan.sh` — comment text. Behavior already marker-aware via regex.
+- `ai-resources/.claude/hooks/backup-session-plan.sh` — comment text + regex cap. Regex widened to `{0,6}` (2026-06-05) to cover date-qualified names (`session-plan-YYYY-MM-DD-S{N}.md` = 4 segments, +1 for pass2 = 5); canonical + research-pe project copies both updated.
 - `ai-resources/docs/heavy-read-discipline.md` — narrative reference.
 - `ai-resources/docs/weekly-cadence.md` — Phase D scope-separation narrative.
 
