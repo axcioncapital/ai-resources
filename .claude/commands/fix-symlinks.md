@@ -54,7 +54,47 @@ echo "Scanned $TOTAL_LINKS symlinks under projects/."
 echo "Found $BROKEN_COUNT broken."
 ```
 
-If `BROKEN_COUNT` is 0: print `No broken symlinks found under projects/. Nothing to do.` and stop.
+---
+
+### Step 2b: Diagnose — find regular-file-where-symlink-expected drift
+
+This second pass detects managed shared files (declared in each project's `.claude/shared-manifest.json`) that are regular-file copies instead of the expected relative symlinks. These are a different failure mode from broken symlinks — the file is readable, so no runtime error occurs, but it drifts from the shared canonical without anyone noticing.
+
+```bash
+REGULAR_FILE_LIST="/tmp/fix-symlinks-regular-files.txt"
+> "$REGULAR_FILE_LIST"
+
+for project_dir in "$PROJECTS_DIR"/*/; do
+  manifest="${project_dir}.claude/shared-manifest.json"
+  [ -f "$manifest" ] || continue
+
+  python3 - "$manifest" "$project_dir" "$REGULAR_FILE_LIST" <<'PYEOF'
+import json, os, sys
+
+manifest_path, project_dir, output_file = sys.argv[1], sys.argv[2], sys.argv[3]
+
+with open(manifest_path) as f:
+    manifest = json.load(f)
+
+type_map = {"commands": ("commands", ".md"), "agents": ("agents", ".md")}
+findings = []
+for section, (subdir, ext) in type_map.items():
+    for name in manifest.get(section, {}).get("shared", []):
+        path = os.path.join(project_dir, ".claude", subdir, f"{name}{ext}")
+        if os.path.exists(path) and not os.path.islink(path):
+            findings.append(path)
+
+if findings:
+    with open(output_file, "a") as f:
+        f.write("\n".join(findings) + "\n")
+PYEOF
+done
+
+REGULAR_FILE_COUNT=$(wc -l < "$REGULAR_FILE_LIST" | tr -d ' ')
+echo "Found $REGULAR_FILE_COUNT regular-file-where-symlink-expected drift entries."
+```
+
+If `BROKEN_COUNT` is 0 and `REGULAR_FILE_COUNT` is 0: print `No issues found under projects/. Nothing to do.` and stop.
 
 ---
 
@@ -180,12 +220,28 @@ done < "$PLAN_TSV"
 [ $N -eq 0 ] && echo "  (none)"
 
 echo ""
-echo "Summary: $FIXABLE_COUNT fixable / $(( ZERO_COUNT + MULTI_COUNT )) manual / $BROKEN_COUNT total broken"
+echo "REGULAR FILE WHERE SYMLINK EXPECTED — declared shared in shared-manifest.json:"
+N=0
+while IFS= read -r path; do
+  [ -z "$path" ] && continue
+  (( N++ ))
+  project_rel="${path#$PROJECTS_DIR/}"
+  name=$(basename "$path" .md)
+  echo "  $N. $path"
+  echo "     Status: regular file (should be a relative symlink to ai-resources canonical)"
+  echo "     Remedy: diff the file against the canonical, then replace with: ln -sf <rel-target> \"$path\""
+done < "$REGULAR_FILE_LIST"
+[ $N -eq 0 ] && echo "  (none)"
+
+echo ""
+echo "Summary: $FIXABLE_COUNT fixable / $(( ZERO_COUNT + MULTI_COUNT )) manual / $BROKEN_COUNT total broken | $REGULAR_FILE_COUNT regular-file drift (always manual)"
 ```
 
 - If `FIXABLE_COUNT` is 0: print `No auto-fixable symlinks found. Review manual-resolution list above.` and stop.
 - If `$ARGUMENTS` contains `--dry-run`: print `Dry run — no changes made.` and stop.
 - Otherwise: ask `Proceed with $FIXABLE_COUNT automatic fix(es)? [y/n]` and wait for operator input. Only continue on `y`.
+
+**Note:** Regular-file drift entries are always MANUAL — never auto-fixed. A regular file may have diverged from the canonical; overwriting with a symlink would destroy local changes. Always diff before replacing.
 
 ---
 
@@ -229,9 +285,10 @@ MANUAL_COUNT=$(( ZERO_COUNT + MULTI_COUNT ))
 echo ""
 echo "/fix-symlinks — complete"
 echo ""
-echo "  Fixed:                    $FIXED"
-echo "  Failed:                   $FAILED"
-echo "  Manual resolution needed: $MANUAL_COUNT"
+echo "  Fixed (broken symlinks):      $FIXED"
+echo "  Failed (broken symlinks):     $FAILED"
+echo "  Manual (broken, no match):    $MANUAL_COUNT"
+echo "  Regular-file drift (manual):  $REGULAR_FILE_COUNT"
 
 if [ "$MANUAL_COUNT" -gt 0 ]; then
   echo ""
@@ -245,5 +302,5 @@ fi
 Clean up temp files:
 
 ```bash
-rm -f /tmp/fix-symlinks-links.txt /tmp/fix-symlinks-analyze.py /tmp/fix-symlinks-plan.tsv
+rm -f /tmp/fix-symlinks-links.txt /tmp/fix-symlinks-analyze.py /tmp/fix-symlinks-plan.tsv /tmp/fix-symlinks-regular-files.txt
 ```
