@@ -467,3 +467,28 @@ Foreign-session guard fired CONCURRENT at wrap (a parallel pipeline-review/closu
 
 ### Open Questions
 None blocking.
+
+## 2026-06-05 — /friday-so advisory from monthly checkup
+
+### Summary
+Ran `/prime` then `/friday-so`. Produced the System Owner Friday Advisory from the monthly `/friday-checkup` report (`audits/friday-checkup-2026-06-05.md`). Advisory only — no fixes applied. The checkup report was fresh (today, monthly tier); no architecture review existed within 7 days, so the advisory grounded in the System Owner vault alone.
+
+### Files Created
+- `projects/axcion-ai-system-owner/output/friday-advisories/friday-advisory-2026-06-05.md` — Friday Advisory (System Owner agent). Names four systemic fixes to sequence first at `/friday-act`.
+- `logs/scratchpads/2026-06-05-03-35-scratchpad.md` — continuity scratchpad.
+
+### Files Modified
+- None by this session. (Working-tree drift — `.claude/commands/new-project.md`, `skills/context-pack-builder/SKILL.md`, `logs/value-log.md`, `audits/friday-checkup-2026-06-05.md` — is pre-existing, not produced here.)
+
+### Decisions Made
+- None. Advisory-generation session; no operator-directed analytical or scoping decisions.
+
+### Risky actions
+None. Read-only advisory generation via one `system-owner` subagent. No structural change class, no deletions, no pushes, no prompt injection. Pre-write guard fired clean (FOREIGN=0).
+
+### Next Steps
+- Run `/friday-act` to triage and apply the checkup fixes. System Owner recommends sequencing the four systemic fixes first: (1) `ai-resources/.claude/settings.local.json` restore [CRITICAL — permission floor defeated], (2) push-rule contradiction correction in `marketing-positioning` + `research-pe` CLAUDE.md, (3) `/new-project` CLAUDE.md template fix [stops per-project bloat recurrence], (4) `Read()` deny extension [highest-leverage token lever]. Items 3–4 touch harness config → will hit `/risk-check` gates per Autonomy Rule 8.
+- Carryover (unchanged): 10 unpushed commits in ai-resources; `/resolve-improvement-log` candidate (2026-05-29 marker-clobber entry archive-eligible); operator-manual terminal tasks (repo-state §2 #1/#4/#12).
+
+### Open Questions
+None blocking. (Vault grounding caveat: `systems-building-principles.md` still `status: TBD` — advisory leaned on existing vault reference docs.)
