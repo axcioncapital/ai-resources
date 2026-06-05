@@ -305,3 +305,29 @@
 **Alternatives considered.** (a) Full disposition incl. applying every finding — rejected: crosses audit-discipline gates and exceeds "closure not building." (b) Commit-only, leave repo-state untouched — rejected: #13/#14 were concretely closeable now and named in the systems-review's closure target.
 
 **Decided by:** operator instruction + systems-review binding-constraint finding; scope bounds set by Claude under standing autonomy/audit-discipline rules.
+
+## 2026-06-05 — Decision-batch cadence home: fold into the Friday cadence (monthly tier), no new command
+
+**Context.** AI-strategy Slot 2 ("Instrument and decide the upstream calls", `projects/strategic-os/ai-strategy/`) is a *decision batch* — the strategy's recurring mechanism for grouping and resolving open strategic/architectural calls (the operator's pasted "2.2 Decision Batch Process"). Slot 2's concrete artifacts are now closed (`defect-log.md` shipped 2026-06-04; `value-log.md` scaffold created 2026-06-05; the C3 concurrency call decided 2026-06-05). The remaining design question: where does the *recurring* decision batch live — fold it into the existing Friday cadence, or stand up a separate batch ritual with its own command/trigger?
+
+**Decision.** **Fold the recurring decision batch into the existing Friday cadence, at the monthly tier.** The route reuses the machinery already in place: `/friday-checkup` (detect — surfaces open items, audit findings, `[DEFECT-RECURRENCE]` flags) → `/friday-act` (route — dispositions each finding into decide / defer-with-reason / gate / park / build). No new command, no new log: open strategic/architectural calls are batched and resolved on the monthly `/friday-checkup` → `/friday-act` pass, with the verdict recorded in this `decisions.md` and any slot status in the strategy `implementation-tracker.md`.
+
+**Rationale.** (1) Closure-before-creation / OP-12 — the disposition machinery already exists (`/friday-act` is literally "operator-driven fixes / disposition"); a new command would be net surface for a job an existing pair already does. (2) Cadence match — the strategy's WIP cap runs per work-cycle (~monthly), which is exactly the monthly `/friday-checkup` tier. (3) Precedent — the defect-to-fix loop already routes through `/friday-checkup` Step 6 → `/friday-act`; the decision batch rides the same rail, keeping one weekly/monthly disposition surface instead of two. (4) The "lightweight decision log" the 2.2 deliverable asks for already exists — this file.
+
+**Scope — RECORD ONLY this session.** The actual command edit (adding a decision-batch step to `/friday-act` and/or `/friday-checkup` monthly tier) is a **structural change class** (command-body edit on a cadence pipeline) and is **gated behind `/risk-check` per autonomy rule #9 — NOT performed this session.** This entry records the *decision* (cadence home = Friday monthly tier); the *implementation* is a queued, gated follow-up.
+
+**Alternatives considered.** (a) Standalone decision-batch command with its own trigger — rejected: net-new surface duplicating `/friday-act`'s disposition role; violates closure-over-creation; adds a second disposition cadence to keep in sync. (b) Ad-hoc, no fixed home — rejected: the whole point of the 2.2 deliverable is a *recurring* mechanism so calls stop accumulating informally; no-home reproduces the problem.
+
+**Decided by:** Claude under decision-point posture (pick-and-proceed), grounded in the existing Friday-cadence machinery and the closure-before-creation principle; operator-approved via the `/scope` gate (2026-06-05). Implementation deferred + `/risk-check`-gated.
+
+## 2026-06-05 — Materiality floor scope: minimal subset + shared doc
+
+**Context.** Operator asked to calibrate the QC apparatus (and similar log-check/review commands) so review passes surface only material findings — issues with a named consequence of not fixing them — rather than cosmetic/preference observations that accumulate as a perceived fix backlog. The literal request named "other commands that do log checks" broadly.
+
+**Decision.** Implement the floor on the minimal subset — `qc-reviewer`, `refinement-reviewer`, `improvement-analyst` — with one shared definition doc (`docs/materiality-bar.md`) referenced from each. Defer the four other backlog-feeders (`fix-repo-issues-scanner`, `open-items`, `findings-extractor`, `audit-repo`) to a later pass pending proof-out on the first three.
+
+**Rationale.** `improvement-analyst` is the true backlog source (writes `improvement-log.md` as logged-pending); the two QC reviewers are where the felt noise originates. Proving the pattern on the three highest-value surfaces before spreading it bounds blast radius across the Friday cadence and honors offer-the-minimal-infra-subset. A shared doc keeps the definition DRY (hub-and-spoke) and matches how `qc-independence.md` centralizes QC rules.
+
+**Alternatives considered.** (a) Full sweep across all backlog-feeders this pass — rejected: larger blast radius, and the pattern is unproven; the principle itself warns against over-engineering the fix. (b) Inline floor text duplicated in each agent, no new file — rejected: duplicated definition drifts; the cross-cutting use (QC + log checks) justifies one canonical home.
+
+**Decided by:** Operator-confirmed via AskUserQuestion (scope + doc-home), plan QC GO, post-edit QC GO (2026-06-05). Shipped commit `3ffb220`.
