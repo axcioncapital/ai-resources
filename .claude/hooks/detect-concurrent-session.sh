@@ -80,4 +80,4 @@ if [ -f "$MARKER_FILE" ]; then
   fi
 fi
 
-emit "CONCURRENT SESSIONS — ${OTHERS} other Claude Code session(s) running on this machine (${SESSION_COUNT} total). Concurrent sessions in the SAME project race on logs/.session-marker, logs/.prime-mtime, and logs/session-notes.md. If another session is in this project, coordinate (finish or /clear one) before running /prime or /wrap-session.${MARKER_NOTE}"
+emit "CONCURRENT SESSIONS — ${OTHERS} other Claude Code session(s) running on this machine (${SESSION_COUNT} total). Concurrent sessions in the SAME project race on logs/.session-marker, logs/.prime-mtime, and logs/session-notes.md, and can silently overwrite each other's edits to shared command/doc files if they share one checkout. If another session is in this project, either coordinate (finish or /clear one) before running /prime or /wrap-session, OR — for planned parallel work — run each session in its own git worktree (the structural fix: see docs/parallel-sessions-playbook.md § 4). Do not start a second ad-hoc session in a checkout another session is already using.${MARKER_NOTE}"

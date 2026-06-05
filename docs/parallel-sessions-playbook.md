@@ -104,9 +104,19 @@ A recognized parallel-coordination device: mark in-progress backlog items in `ne
 
 ## 4. Operating procedure (once you have decided to parallelize)
 
+> **⚠ Anti-pattern — ad-hoc same-checkout parallelism (the #1 failure mode).** Do **not** start a second session by opening a new terminal in the *same working checkout* another session is already using. Two sessions sharing one working tree edit the same uncommitted files directly: one silently overwrites the other (a lost update), and the concurrent-session guards — which watch only `logs/session-notes.md` — never see it. This is exactly how the 2026-06-05 (S6) collision happened: two sessions in one checkout, the foreign session's uncommitted edits to a shared command file (`prime.md`) showed up in the other's `git status` with no guard firing (see `audits/2026-06-05-concurrent-session-collision-diagnostics-fix.md`, Mode A). **Planned parallel work starts with the serial planning session below (file-ownership map → worktree per unit), never by opening a second ad-hoc terminal.** If you only need a quick second session, run it in a *different project repo*, not a second checkout of this one.
+
 1. **One upfront planning session** (serial — the highest-leverage step): decompose into independent units and write the file-ownership map (§ 2).
 2. **Quarantine shared bookkeeping** (§ 3): serialized closing pass by default.
-3. **One worktree + branch per unit,** off a known-good base.
+3. **One worktree + branch per unit,** off a known-good base. The worktree is the path of least resistance — one command per unit creates an isolated checkout + branch so sessions physically cannot share a working tree:
+
+   ```bash
+   # from the repo root; <unit> is a short unit name, MARKER e.g. S2
+   git worktree add ../<repo>-<unit> -b session/$(date '+%Y-%m-%d')-<unit>
+   cd ../<repo>-<unit>
+   ```
+
+   Each session runs `cd` into its own worktree directory before doing any work. Tear down per the § 5 teardown checklist when the unit lands.
 4. **Stay in lane.** A session that finds it needs another unit's file **stops and flags** — it never crosses into a file it does not own. Crossing lanes is how a clean partition becomes a dirty merge.
 5. **Deliberate landing pass** (§ 5) — never an afterthought.
 

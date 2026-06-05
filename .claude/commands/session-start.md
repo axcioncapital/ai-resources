@@ -55,9 +55,19 @@ TODAY_EPOCH=$(date -j -f "%Y-%m-%d %H:%M:%S" "$(date '+%Y-%m-%d') 00:00:00" "+%s
 
 **Fallback (marker absent).** If `logs/.prime-mtime` is missing entirely, the operator may have invoked `/session-start` without `/prime`. Emit one loud line: `[Step 0.5] Note: logs/.prime-mtime absent — using 120s heuristic fallback.` Then compute `DELTA = NOW - SESSION_NOTES_MTIME`. If `DELTA < 120`, set `FOREIGN_WRITE=1`. Otherwise proceed silently.
 
+**Shared-dir advisory (C.2, 2026-06-05).** When `FOREIGN_WRITE=1`, also run one **read-only** check for foreign uncommitted edits to shared command/doc files — a surface no guard watches (see `audits/2026-06-05-concurrent-session-collision-diagnostics-fix.md` § 5):
+
+```bash
+FOREIGN_SHARED=$(git status --short -- .claude/commands docs 2>/dev/null)
+```
+
+Read-only (no `git add`, no write). If non-empty, append the dirty paths to the warning block as the `Shared files possibly mid-edit:` line below. If empty, omit that line.
+
 **Warning shape (emit when `FOREIGN_WRITE=1`):**
 
 > ⚠ Concurrent session likely. `logs/session-notes.md` was modified {DELTA}s ago — possibly by another active session writing a mandate. Re-read the file and confirm before proceeding.
+>
+> {Shared files possibly mid-edit (a concurrent session has uncommitted edits here — editing them risks a lost-update collision): {foreign-dirty paths under .claude/commands / docs} — only if FOREIGN_SHARED is non-empty}
 >
 > Options:
 > 1. Proceed with the new mandate anyway (your mandate will stack below the other session's)

@@ -78,6 +78,14 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 
    If `SIBLING_COUNT > 1`, Step 6 emits (no warning icon): `Today's session count: {N} marker-bearing entries ({list of markers, e.g., 'S1, S2, S3'}). This session is {MARKER}.`
 
+   *Concurrent-detected shared-dir advisory (C.2, 2026-06-05).* When `SIBLING_COUNT > 1` — a concurrent same-day session is likely active — the marker protocol protects per-session log writes, but **foreign uncommitted edits to shared command/doc files** (`.claude/commands/`, `docs/`) are watched by no guard (see `audits/2026-06-05-concurrent-session-collision-diagnostics-fix.md` § 5). Run one **read-only** check to make that surface visible:
+
+   ```bash
+   FOREIGN_SHARED=$(git status --short -- .claude/commands docs 2>/dev/null)
+   ```
+
+   This is read-only (no `git add`, no write). If `FOREIGN_SHARED` is non-empty, carry the dirty paths to Step 6 as an exception line naming the foreign-dirty shared files — these are files a concurrent session may be mid-edit on, so editing them this session risks a lost-update collision. If `SIBLING_COUNT ≤ 1` or the check returns nothing, skip silently (no line). The advisory only *names* the surface; it does not block.
+
 1b. **Detect a resumable continuity scratchpad.** `/handoff` continuity mode and `/wrap-session` Step 0.5 both write session-state scratchpads to `logs/scratchpads/`. Surface the most recent one so the operator can choose to resume it.
 
    - List `logs/scratchpads/` for files matching the glob `*-scratchpad.md` **exactly** — this excludes other files that may share the directory (e.g., `*-implementation-plan.md`).
@@ -135,6 +143,7 @@ Last session ({date}): {one-line plain-English summary}.
 {⚠ Working tree: {short summary} — only if unexpectedly dirty}
 {⚠ Pull: {result} — only on failure or unpushed commits}
 {Today's session count: {N} marker-bearing entries ({list of markers}). This session is {MARKER}. — informational only, no `⚠` icon; only when SIBLING_COUNT > 1}
+{⚠ Concurrent session may be editing shared files: {foreign-dirty paths under .claude/commands / docs}; check before editing them — only when SIBLING_COUNT > 1 and the Step 1a read-only `git status` found foreign-dirty shared files}
 {⚠ Phase READMEs detected: {paths}; read before opening the relevant work unit — only if step 4 surfaced any}
 {↩ Resumable scratchpad: {path} — only if step 1b surfaced one}
 

@@ -36,6 +36,16 @@ Two files, written together by `/prime`. The per-session-id file is the **identi
 
 **Role at v1:** still serves the same-day `S{N}` increment lookup and back-compat / loud-fallback. It is **no longer the identity oracle** — removing it entirely is a separable later change (DR-7/AP-7), deliberately deferred. Concurrent same-day `/prime`s can still race on the *number* here (both compute S2), but that is a benign cosmetic collision — identity comes from the per-id file, so attribution is never corrupted.
 
+### Both-or-neither writer invariant (BLOCKING)
+
+**Any marker-setup path MUST write the shared file (`logs/.session-marker`) and the per-id identity oracle (`logs/.session-marker-${CLAUDE_CODE_SESSION_ID}`) together — never one alone.** The two are a single atomic write unit: the shared file carries the `S{N}` counter, the per-id file carries un-clobberable identity. Writing only the shared file leaves the session with no identity oracle.
+
+**Why it is load-bearing:** the `no-own-marker rule` (below) reads "`CLAUDE_CODE_SESSION_ID` set + per-id file absent" as "this session authored zero tracked headers." That inference is correct for a genuine no-`/prime` session, but **wrong for a session whose marker setup was partial** — it ran `/prime`'s header append yet wrote only the shared file. The wrap guard (`/wrap-session` Step 3.5) then mis-attributes that session's *own* header as foreign, producing a `NO_OWN_MARKER` false-positive.
+
+**Observed:** 2026-06-05 (S6) — a hand-rolled marker setup wrote only `logs/.session-marker`, not the per-id file. The Step 3.5 guard would have flagged S6's own header as foreign (near-miss, caught by a manual `FOREIGN=0` verification). See `audits/2026-06-05-concurrent-session-collision-diagnostics-fix.md` § 4 (tertiary contributor).
+
+**Canonical writers already comply.** `/prime` Steps 8a.3.a / 8b.3.a / 8c.3 each write both files together (shared `echo` immediately followed by the `[ -n "${CLAUDE_CODE_SESSION_ID}" ] && echo … > "logs/.session-marker-${CLAUDE_CODE_SESSION_ID}"` line) plus the orphan-prune. This invariant exists so that any **deviation** — a hand-rolled or alternate setup that writes one file — is recognised as a contract violation, not treated as a valid degraded state. Do not author a marker-setup path that writes the shared file without the paired per-id write.
+
 ---
 
 ## Marker resolution (canonical pattern — every consumer uses this shape)
