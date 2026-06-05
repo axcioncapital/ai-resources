@@ -51,7 +51,7 @@ Archive resolved entries from `ai-resources/logs/improvement-log.md` so stale it
    Wait for the operator's per-item disposition string (characters `{r,e,c,k}`). Re-prompt on mismatch.
 
    Apply dispositions via `Edit` against the active improvement-log before proceeding to step 4:
-   - `r` → prompt `New Review-cycle text for "{title}" (e.g., "reviewed 2026-04-25, defer to Q3"):` and set/update the `**Review-cycle:**` line in the entry.
+   - `r` → prompt `New Review-cycle text for "{title}" (e.g., "reviewed 2026-04-25, defer to Q3"):` and set/update the `**Review-cycle:**` line in the entry. **Concrete-trigger enforcement (park-as-graveyard guard):** the `Review-cycle:` reset is the canonical park mechanism (see `improvement-log.md` schema + workspace `CLAUDE.md` § Working Principles), and a park with no real trigger never drains. The text MUST name a concrete deferral target — a calendar date (`YYYY-MM-DD`), a quarter (`Q1`–`Q4`, optionally with a year), a month name, or a named event/condition (e.g., `after /new-project ships`, `when the class recurs`). If the deferral target is vague — bare `later`, `someday`, `eventually`, `TBD`, `when I get to it`, or no target at all — reject it and re-prompt once: `Deferral target must be concrete (a date, quarter, or named event) so the park can drain — re-enter:`. On a second vague reply, fall back to `k` (keep, no change) for that item rather than writing an undrainable park.
    - `e` → set `**Status:** pending (escalated {TODAY})`.
    - `c` → set `**Status:** closed {TODAY}`.
    - `k` → no edit.
@@ -62,7 +62,9 @@ Archive resolved entries from `ai-resources/logs/improvement-log.md` so stale it
 
 Call this set `NO_ACTIVE_FRICTION`.
 
-If `NO_ACTIVE_FRICTION` is empty, skip silently and continue to Step 4.
+**Parked-alive exclusion (park-as-graveyard guard).** From `NO_ACTIVE_FRICTION`, remove any entry that carries a `**Review-cycle:**` deferral line. A `Review-cycle:` deferral is the canonical *park* signal (see `improvement-log.md` schema): the item is intentionally parked **alive** — it must stay in the active log so the `/friday-checkup` stale-scan and monthly park-drain can re-surface it for action or re-park. Archiving it would bury it in the deny-read archive, which is exactly the graveyard this convention prevents. So a parked item is never auto-offered for archival here, even if its body also contains a no-active-friction phrase (e.g. a `Review-cycle:` text that mentions "future session"). To retire a parked item for good, the operator closes it first via the Step 3b `c` disposition (`Status: closed`), which removes the park; a closed item with no `Review-cycle:` line is then eligible for this archive offer on a later run.
+
+If `NO_ACTIVE_FRICTION` is empty after this exclusion, skip silently and continue to Step 4.
 
 If non-empty, display:
 ```

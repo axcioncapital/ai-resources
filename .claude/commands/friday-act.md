@@ -145,11 +145,13 @@ If active count ≤ 7, proceed silently.
     - MED  → `f` (fix-now)
     - LOW  → `d` (defer)
 
+    **Named-consequence overlay (apply BEFORE the risk-label mapping above).** This is a mechanical check, not an ROI judgment: for each item, ask whether you can state a concrete consequence of leaving it unfixed — to the system's function, a downstream consumer, the operator's request, or a convention with real teeth (the `docs/materiality-bar.md` test). If the answer is **no** — the only thing you can say is "slightly cleaner / nicer / more consistent" with no named harm — the item defaults to `d` (defer/park) regardless of its risk label, routing it to the park rather than the fix queue. If the answer is **yes**, fall through to the HIGH/MED/LOW mapping above. The check is a boolean ("can you name a consequence?" yes/no), deliberately NOT a three-way WORTH-DOING/MARGINAL/NOT-WORTH-DOING verdict — a true ROI judgment is an `/implementation-triage` agent call, never an inline label here. The operator override still governs every item.
+
     These defaults reflect the operator's typical disposition pattern (`logs/decisions.md` Item 10 — Friday-act #10 default sketch). MED defaults to `f` because most MED items are actionable — override to `d`/`s` if duplicate or low-value. LOW defaults to `d` because most LOW items are tracked-but-not-blocking — override to `f` if decision-blocking or chain-blocking. The override path is what handles those "unless" cases; the auto-default is intentionally a base-rate guess.
 
     Display before waiting:
     ```
-    Auto-triage default (HIGH→f, MED→f, LOW→d):
+    Auto-triage default (HIGH→f, MED→f, LOW→d; no-named-consequence→d):
       {default_string}
 
     Per-item review:
@@ -351,6 +353,9 @@ Open each plan in a follow-up session to execute. Implement all plans before nex
 
     ### Operator observations
     {free-form text — see prompt below}
+
+    ### Autonomy & Reliability notes
+    {free-form text — see prompt below}
     ```
 
 22. Prompt the operator for free-form observations:
@@ -359,6 +364,14 @@ Open each plan in a follow-up session to execute. Implement all plans before nex
     that the findings didn't surface? (free text; "(none)" to skip):
     ```
     Capture verbatim. If the response is `(none)` or empty, write `(none)` in the `Operator observations` section.
+
+22b. Prompt the operator for autonomy & reliability notes (this is the standing weekly capture of how to make maintenance more self-running — note #7 of the maintenance-discipline plan):
+    ```
+    Autonomy & reliability — what blocked maintenance from running on its own this cycle, and
+    what one structural change would make it more self-functioning next time? (free text;
+    "(none)" to skip):
+    ```
+    Capture verbatim into the `Autonomy & Reliability notes` subsection. If the response is `(none)` or empty, write `(none)`. These notes accumulate across cycles as the raw signal for the closure-throughput / enforcement-automation work that moves the system toward autonomous maintenance — they are reviewed (not auto-actioned) at the monthly/quarterly tiers.
 
 23. If `TIER = quarterly`, also prompt for the substrate-question response:
     ```

@@ -122,7 +122,7 @@ Aggregate all items across scopes into a unified ranking, applying:
 Group items into:
 
 - **Plan-into-batch** (P1) — clear scope, well-defined fix, target 3–6 items. Items the execution session can apply without further research.
-- **Park** — out of scope for this plan. Reason: `needs-dedicated-session`, `decision-needed`, `multi-file-refactor`, `needs-/innovation-sweep`, `needs-/create-skill`, `risk-check-class`.
+- **Park** — out of scope for this plan. Reason: `needs-dedicated-session`, `decision-needed`, `multi-file-refactor`, `needs-/innovation-sweep`, `needs-/create-skill`, `risk-check-class`, `low-roi` (the item fails the named-consequence test per `docs/materiality-bar.md` — no statable consequence of leaving it unfixed; mirrors `/friday-act` Step 3.1a's named-consequence overlay). `low-roi` is a free-text Park *reason* only — never promote it to a scanned status token in the source logs.
 - **Skip** — already resolved (cross-matched against improvement-log applied + verified), or low-signal (`[LOW]` already filtered by scanner, but catch operator-flagged trivia here).
 
 Honor any free-form hint in `$ARGUMENTS` — e.g., "improvement-log only" restricts Plan-into-batch to items whose source is `logs/improvement-log.md` across all selected scopes.
