@@ -108,15 +108,15 @@ A recognized parallel-coordination device: mark in-progress backlog items in `ne
 
 1. **One upfront planning session** (serial — the highest-leverage step): decompose into independent units and write the file-ownership map (§ 2).
 2. **Quarantine shared bookkeeping** (§ 3): serialized closing pass by default.
-3. **One worktree + branch per unit,** off a known-good base. The worktree is the path of least resistance — one command per unit creates an isolated checkout + branch so sessions physically cannot share a working tree:
+3. **One worktree + branch per unit,** off a known-good base. The worktree is the path of least resistance — run **`/new-worktree-session <unit>`** to create an isolated checkout + branch (`session/<date>-<unit>`) so sessions physically cannot share a working tree. The command wraps the underlying git and surfaces the worktree gotchas:
 
    ```bash
-   # from the repo root; <unit> is a short unit name, MARKER e.g. S2
-   git worktree add ../<repo>-<unit> -b session/$(date '+%Y-%m-%d')-<unit>
+   # what /new-worktree-session runs, if you prefer to do it by hand:
+   git worktree add ../<repo>-<unit> -b session/$(date '+%Y-%m-%d')-<unit> main
    cd ../<repo>-<unit>
    ```
 
-   Each session runs `cd` into its own worktree directory before doing any work. Tear down per the § 5 teardown checklist when the unit lands.
+   Open a new session in the worktree directory before doing any work (a command cannot move your shell there for you). Tear down per the § 5 teardown checklist when the unit lands.
 4. **Stay in lane.** A session that finds it needs another unit's file **stops and flags** — it never crosses into a file it does not own. Crossing lanes is how a clean partition becomes a dirty merge.
 5. **Deliberate landing pass** (§ 5) — never an afterthought.
 

@@ -30,6 +30,21 @@
 #   best-effort limitation for a non-blocking warning (see docs/session-marker.md
 #   § Concurrent-session detection). Future enhancement: scope by cwd via lsof.
 #
+# SAME-CHECKOUT NUDGE (2026-06-05) — when the machine-wide signal (count >= 2) is
+#   combined with a today-dated marker already present in THIS checkout, that is a
+#   strong "another session already primed in this same folder today" signal — the
+#   exact Mode-A condition behind every recurrence in the collision report. In that
+#   case the hook emits a SHARP, actionable nudge pointing at /new-worktree-session
+#   (the structural remedy). When only the machine-wide signal holds (no today
+#   marker here), it keeps the SOFTER warning. HEURISTIC, not a precise detector:
+#   a prior WRAPPED session also leaves a today marker, so the sharp nudge can fire
+#   when this is in fact the only live session here. Degrades safe — an occasional
+#   unnecessary nudge, never a block, never a missed real collision. The precise
+#   same-checkout detector (lsof/cwd) is deliberately deferred as brittle.
+#   Forcing-function rationale: the operator must not have to REMEMBER to isolate;
+#   this auto-fires the remedy at the moment of risk. It cannot CREATE+enter the
+#   worktree for them (a session's cwd is fixed before any hook runs) — it prompts.
+#
 # CONTRACT — non-blocking. Every path ends in `exit 0`. If the process signal is
 #   unavailable (pgrep absent), emit a loud one-line skip notice (principles
 #   OP-3, no silent rot) rather than failing closed. Two-end contract: registered
@@ -69,15 +84,20 @@ esac
 
 OTHERS=$((SESSION_COUNT - 1))
 
-# --- Project marker context (read-only enrichment; best-effort) ---
-MARKER_NOTE=""
+# --- Project marker context (read-only): is there a today-dated marker in THIS checkout? ---
+# A today marker here + another live session = strong same-checkout signal → sharp nudge.
+TODAY_MARKER_HERE=0
+MARKER_CONTENT=""
 MARKER_FILE="$PROJECT_DIR/logs/.session-marker"
 if [ -f "$MARKER_FILE" ]; then
   MARKER_CONTENT=$(cat "$MARKER_FILE" 2>/dev/null)
-  MARKER_DATE="${MARKER_CONTENT%% *}"
-  if [ "$MARKER_DATE" = "$TODAY" ]; then
-    MARKER_NOTE=" This project already has a /prime marker today (${MARKER_CONTENT}) — shared-log contention is likely if another session is in THIS project."
-  fi
+  [ "${MARKER_CONTENT%% *}" = "$TODAY" ] && TODAY_MARKER_HERE=1
 fi
 
-emit "CONCURRENT SESSIONS — ${OTHERS} other Claude Code session(s) running on this machine (${SESSION_COUNT} total). Concurrent sessions in the SAME project race on logs/.session-marker, logs/.prime-mtime, and logs/session-notes.md, and can silently overwrite each other's edits to shared command/doc files if they share one checkout. If another session is in this project, either coordinate (finish or /clear one) before running /prime or /wrap-session, OR — for planned parallel work — run each session in its own git worktree (the structural fix: see docs/parallel-sessions-playbook.md § 4). Do not start a second ad-hoc session in a checkout another session is already using.${MARKER_NOTE}"
+if [ "$TODAY_MARKER_HERE" -eq 1 ]; then
+  # SHARP nudge — same-checkout concurrency is likely (the recurring Mode-A condition).
+  emit "CONCURRENT SESSIONS — another session is likely active in THIS checkout (${OTHERS} other session(s) running; this project already primed today: ${MARKER_CONTENT}). Two sessions in one checkout silently overwrite each other's uncommitted edits — this is the recurring collision. DO NOT start parallel work here: run /new-worktree-session to get an isolated copy and work in THAT, or coordinate (finish or /clear one of the sessions) before running /prime or /wrap-session. See docs/parallel-sessions-playbook.md § 4. (Heuristic: if the other session already wrapped, this checkout is safe — but verify before doing parallel work.)"
+fi
+
+# SOFT warning — another session exists machine-wide, but none primed in THIS checkout today.
+emit "CONCURRENT SESSIONS — ${OTHERS} other Claude Code session(s) running on this machine (${SESSION_COUNT} total). None has primed in THIS checkout today, so this folder is probably clear — but if you start parallel work in this project, isolate it: run /new-worktree-session for a separate worktree rather than a second session in this checkout. Two sessions in one checkout silently overwrite each other's uncommitted edits. See docs/parallel-sessions-playbook.md § 4."
