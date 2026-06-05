@@ -1,6 +1,6 @@
 ---
 name: diagnostics-scanner
-description: Scans the latest diagnostic reports + backlog logs for ONE scope (the project at hand) for /diagnostics-plan, returns a normalized prioritized candidate list. Writes full notes to audits/working/. Do not use for other purposes.
+description: Scans the latest diagnostic reports + backlog logs for ONE scope (the project at hand) for /fix-project-issues, returns a normalized prioritized candidate list. Writes full notes to audits/working/. Do not use for other purposes.
 model: sonnet
 tools:
   - Read

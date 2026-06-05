@@ -4,7 +4,7 @@ effort: high
 argument-hint: "[project name or path — or leave blank to use the current project]"
 ---
 
-# /diagnostics-plan — Project-Scoped Diagnostics → SO-Vetted Session Fix Plan
+# /fix-project-issues — Project-Scoped Diagnostics → SO-Vetted Session Fix Plan
 
 Pull the latest diagnostics for **one scope (the project at hand)**, have the **System Owner** vet and prioritize them, propose a "do this session / defer / skip" plan, then **auto-execute** the do-now fixes in this session under the standing autonomy posture.
 
@@ -79,7 +79,7 @@ Pass the agent's full candidate list by **path** (the agent has `Read` — keep 
 You are the Axcíon AI System Owner. Apply Function A (General consultation) per references/grounding.md.
 
 Function: A — General consultation
-Caller: /diagnostics-plan — treat this as a /consult-equivalent Function A caller (general consultation, no change-shape routing context supplied).
+Caller: /fix-project-issues — treat this as a /consult-equivalent Function A caller (general consultation, no change-shape routing context supplied).
 
 Operator's situation:
 We have a normalized, ranked list of the latest diagnostics for scope "{SCOPE_SLUG}" (the project at hand). The full candidate list is on disk — read it directly:
@@ -131,7 +131,7 @@ Standing autonomy gates still bind even under "auto-execute": pause only for the
 Print a compact summary:
 
 ```
-/diagnostics-plan — {SCOPE_SLUG} — {TODAY}
+/fix-project-issues — {SCOPE_SLUG} — {TODAY}
 Candidates: {N} (CRITICAL {a} / HIGH {b} / MEDIUM {c})
 Do-now applied: {x}  ·  Surfaced for decision: {y}  ·  Deferred: {m}  ·  Skipped: {k}
 SO advisory: {SO_ADVISORY_PATH}
