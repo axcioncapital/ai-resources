@@ -23,7 +23,7 @@
 | `.claude/commands/consult.md` | command | weekly | 2026-06-04 | 2026-06-04 | N |
 | `.claude/commands/contract-check.md` | command | weekly | 2026-05-29 | 2026-05-29 | N |
 | `.claude/commands/create-skill.md` | command | weekly | never | — | N |
-| `.claude/commands/friday-act.md` | command | weekly | never | — | N |
+| `.claude/commands/friday-act.md` | command | weekly | never | — | Y |
 | `.claude/commands/friday-checkup.md` | command | weekly | never | — | N |
 | `.claude/commands/friday-journal.md` | command | weekly | never | — | N |
 | `.claude/commands/friday-so.md` | command | weekly | 2026-06-04 | 2026-06-04 | N |
@@ -53,7 +53,7 @@
 | `.claude/commands/deploy-kb.md` | command | quarterly | never | — | N |
 | `.claude/commands/deploy-workflow.md` | command | quarterly | never | — | N |
 | `.claude/commands/drift-check.md` | command | quarterly | never | — | N |
-| `.claude/commands/fix-repo-issues.md` | command | quarterly | never | — | N |
+| `.claude/commands/fix-repo-issues.md` | command | quarterly | never | — | Y |
 | `.claude/commands/friction-log.md` | command | quarterly | 2026-05-29 | 2026-05-29 | N |
 | `.claude/commands/graduate-resource.md` | command | quarterly | never | — | N |
 | `.claude/commands/implementation-triage.md` | command | quarterly | never | — | N |
