@@ -167,6 +167,7 @@ Full backlog & inbox: /open-items
    First session ever (no `session-notes.md` from step 1): replace the `Last session` line with `First session — no prior notes.`
 
 7. **Wait for the operator's response.** Classify the reply:
+   - `N auto` (a single menu number followed by the word "auto", e.g. `2 auto` — trimmed input matching `^[1-6]\s+auto$`, N within menu range) → **auto mode**, picked item = #N. Treat identically to `auto N` and go to step 8c. (Check this branch BEFORE the bare-number rule below — otherwise `2 auto` is misread as a bare-number selection of item 2, silently skipping auto-mode and its mandate/plan ceremony.)
    - A bare number `1` through `6` (within the rendered menu range) — or `do 2` / `task 2` / `option 2` — → **task selection.** Go to step 8a.
    - `auto` / `a` (case-insensitive, trimmed) — or `do auto` / `run auto` → **auto mode**, picked item = #1. Go to step 8c.
    - `auto N` (single number within menu range) → **auto mode**, picked item = #N. Go to step 8c.
@@ -271,7 +272,7 @@ Full backlog & inbox: /open-items
 
    1. **Resolve PICKED_ITEMS.** Parse the operator's reply:
       - `auto` / `a` (no number) → `PICKED_ITEMS` = [item #1 from the menu built in Step 5].
-      - `auto N` → `PICKED_ITEMS` = [item #N].
+      - `auto N` — or the equivalent `N auto` shape (`^[1-6]\s+auto$`, normalized by Step 7) → `PICKED_ITEMS` = [item #N].
       - `auto N,M,...` or `auto N M ...` → `PICKED_ITEMS` = [item #N, item #M, ...] in the order the operator gave them. Deduplicate while preserving first-seen order.
 
       Validate that every requested number is within the rendered menu range. If any number is out of range, ask once for a valid `auto` reply and re-classify (per Step 7 ambiguity rule). If the menu has zero items, output `No tracked next steps — auto mode needs a task. Tell me what to work on.` and stop.

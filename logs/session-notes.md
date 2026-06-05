@@ -600,3 +600,12 @@ None. Plan-only session — no file edits, no command modifications, no structur
 
 ### Open Questions
 None blocking.
+
+## 2026-06-05 — Session S15
+
+**Mandate:** Execute all 4 items in the /fix-repo-issues 2026-06-05 fix plan — (1) add **Verified:** fields to 3 applied improvement-log entries [id-11/12/13], (2) fix wrap-session.md Step 3.5 chained-task false-positive [id-05], (3) fix prime.md Step 7 N-auto/auto-N parser [marketing id-02], (4) add marker-trio init to /clarify preamble [research-pe id-09] — done when: all 4 items applied, logs updated (Verified fields + FADING-GATE annotations + status flips), /qc-pass clean on the 3 command/skill edits, changes committed.
+- Out of scope: the plan's Parked + Skipped items (inbox briefs, workspace/other-project items, already-resolved entries); the workspace-root wrap-session.md mirror (confirmed missing — only the ai-resources copy is edited)
+- Files in scope: logs/improvement-log.md, .claude/commands/wrap-session.md, .claude/commands/prime.md, .claude/commands/clarify.md, logs/friction-log.md, projects/marketing-positioning/logs/friction-log.md, projects/research-pe-regime-shift-advisory-gap/logs/friction-log.md
+- Stop if: (none stated)
+
+Execute the /fix-repo-issues 4-item fix plan (audits/fix-plans/fix-repo-issues-2026-06-05-1918.md): add Verified fields to 3 improvement-log entries (id-11/12/13); fix wrap-session Step 3.5 chained-task false-positive (id-05); fix prime Step 7 N-auto/auto-N parser (marketing id-02); add marker-trio to /clarify preamble (research-pe id-09).
