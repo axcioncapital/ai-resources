@@ -484,3 +484,38 @@ Mutated two durable shared logs (`improvement-log.md` removal + `improvement-log
 
 ### Open Questions
 None blocking.
+
+## 2026-06-05 — /fix-project-issues (ai-resources, 2nd run): 23 candidates reconciled, 1 applied
+### Summary
+Operator asked to "execute last session's diagnostics plan." Surfaced a conflict first — that plan was already executed and wrapped this morning (1 applied, 6 dissolved) — then on clarification re-ran `/fix-project-issues` (the renamed `/diagnostics-plan`) fresh on the ai-resources scope. Pipeline: freshness scan → diagnostics-scanner (23 candidates: 5 HIGH / 10 MEDIUM / 8 none) → System Owner Function-A vetting → live-state reconciliation → executed the one clean Do-now item under the end-time risk-check gate. Same "collapse to the clean fix" pattern as the morning run. (Wrap ran via skill invocation, not /prime 8b — no marker ceremony, descriptive header used.)
+
+### Files Created
+- `audits/working/diagnostics-scan-2026-06-05-1603-ai-resources.md` — diagnostics-scanner notes (gitignored).
+- `audits/risk-checks/2026-06-05-fix-project-issues-id08-claude-md-stale-clause-deletion.md` — end-time risk-check report (GO, all six dimensions Low).
+- `projects/axcion-ai-system-owner/output/consultations/consult-2026-06-05-fix-project-issues-ai-resources.md` — SO Function-A advisory (separate repo, committed `a776a2c`).
+- `logs/scratchpads/2026-06-05-16-30-fix-project-issues-2nd-run-scratchpad.md` — continuity scratchpad (gitignored).
+
+### Files Modified
+- `CLAUDE.md` (ai-resources) — id-08: deleted the stale dated change-log clause "Subsumed `/audit-critical-resources` on 2026-05-29 …" from the Maintenance Cadence /pipeline-review bullet (line 53); retained the live "Distinct from `/friday-checkup`" disambiguation. Commit `5274551`.
+- `logs/improvement-log.md` — appended the /fix-project-issues per-item disposition record (1 applied, 1 deferred, 4 no-op/skip, 17 defer). Commit `5274551`.
+- `logs/friction-log.md` — logged the dated-report-vs-live-state diagnostics-lag pattern (2nd recurrence today).
+- `logs/decisions.md` — id-08-apply / id-06-defer reconciliation decision (+ archive: `decisions-archive-2026-06.md`, 27 entries archived, kept 3).
+- `logs/session-notes.md` — this entry.
+
+### Decisions Made
+- **id-08 APPLIED** — stale-clause deletion; clean DR-5 win, risk-check GO. Independent risk-check (fresh context) verified the change; skipped a separate /qc-pass as disproportionate ceremony for a one-clause deletion already GO/all-Low.
+- **id-06 DEFERRED** — directory-map relocation out of always-loaded CLAUDE.md carries a per-turn-visibility tradeoff + requires new doc infra. Mirrors the morning id-11 KEEP-on-visibility call. Parked for a deliberate dedicated decision rather than patched mid-scan.
+- **id-05/07/09/12 — no-op / skip** — already applied (f0959f7 / S11 grounding fix) or canonical conflict (`permission-template.md:141`). Confirmed against live state before dispositioning.
+- **17 Defer** — scope-mismatch (workspace/other-project/cross-repo) + in-scope-structural. SO named id-14/15/16 as genuinely worth-doing — parked, not dismissed.
+
+### Risky actions
+None. Explicit-path staging on commit `5274551` (CLAUDE.md, improvement-log.md, risk-check report); SO advisory committed separately in its own repo (`a776a2c`). Step 3.5 foreign-guard returned FOREIGN=0 (session-notes WT==HEAD). End-time risk-check ran in-session (GO). No mid-session push. The pre-existing uncommitted `logs/improvement-log-archive.md` (S10 leftover) was left untouched — not this session's file.
+
+### Next Steps
+- **Push gate at wrap:** 2 commits — `5274551` (ai-resources) + `a776a2c` (axcion-ai-system-owner) — plus the pending wrap commit.
+- **Dedicated structural session** for SO-named worth-doing items id-14/id-15 (write-path integrity) + id-16 (classifier extraction).
+- **Consider `/improve`** to route the diagnostics-lag friction (now 2nd recurrence today) — structural option: a live-state reconciliation pass in the diagnostics-scanner that culls already-resolved candidates before SO vetting.
+- **Standing carryover (unchanged):** `/resolve-improvement-log` for accumulated resolved entries; S10 leftover `logs/improvement-log-archive.md` still uncommitted.
+
+### Open Questions
+None blocking.
