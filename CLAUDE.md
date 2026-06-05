@@ -50,7 +50,7 @@ Run `/usage-analysis` at the end of every substantive session. Output goes to `l
 
 Run `/friday-checkup` each Friday before starting next week's work. Auto-detects tier (weekly / monthly / quarterly), asks which projects are active, runs the tier's audits across `ai-resources/`, workspace root, and named projects, and writes a consolidated review-only report to `ai-resources/audits/friday-checkup-YYYY-MM-DD.md`. Full mechanics: `.claude/commands/friday-checkup.md`.
 
-Run `/pipeline-review` once per week to give 1–3 critical pipelines a deep System-Owner-grounded design review (innovations, leanness, brokenness, cross-resource interactions, currency-check against pinned Anthropic doc URLs). Memo only — fixes happen in a separate session. Registry: `audits/pipeline-review-registry.md`. Subsumed `/audit-critical-resources` on 2026-05-29 (its currency-check folded into the auditor's Brokenness section); distinct from `/friday-checkup` (housekeeping).
+Run `/pipeline-review` once per week to give 1–3 critical pipelines a deep System-Owner-grounded design review (innovations, leanness, brokenness, cross-resource interactions, currency-check against pinned Anthropic doc URLs). Memo only — fixes happen in a separate session. Registry: `audits/pipeline-review-registry.md`. Distinct from `/friday-checkup` (housekeeping).
 
 ## Permission Management
 
