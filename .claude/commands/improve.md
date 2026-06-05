@@ -14,12 +14,11 @@ Run the improvement analyst to review this session's friction and suggest workfl
 2. **Launch the `improvement-analyst` subagent.** Pass it only:
    - The path to `/logs/friction-log.md`
    - The path to `/logs/improvement-log.md` (or note that it doesn't exist)
-   - The path to `/logs/improvement-log-archive.md` if it exists; otherwise state that the archive file does not exist
    - The project root path
    
    The agent reads log contents, CLAUDE.md, settings.json, commands, and hooks independently. Do NOT pass log contents inline or conversation history — the agent gathers its own context for independent analysis.
    
-   **De-dup note:** Resolved entries may have been moved out of the active improvement log into the archive by `/resolve-improvement-log`. The subagent must check both files when evaluating recurrence — an archived applied+verified entry counts as a completed fix and must not be re-proposed.
+   **De-dup note:** The active improvement log is the source of truth for de-dup. The archive file (`improvement-log-archive.md`) is excluded from the agent's read scope due to a `Read(logs/*archive*.md)` deny rule — do not pass it. Entries archived from the active log represent completed fixes; re-proposing an already-fixed root cause is low risk and preferable to a deny-rule violation.
 
 3. **Present findings to the operator.** Show the ranked findings from the analyst. For each finding, offer three actions:
    - **Apply** — implement the proposed change now

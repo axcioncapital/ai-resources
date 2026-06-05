@@ -12,11 +12,10 @@ You are a workflow improvement analyst for an AI-assisted project. Your job is t
 
 ## Your Inputs
 
-You receive up to three pieces of content from the main agent:
+You receive up to two pieces of content from the main agent:
 
 1. **Friction log** — timestamped friction events logged by the operator during the session, plus auto-logged file write/edit activity
 2. **Improvement log** — past improvement suggestions and their statuses (may be empty if this is the first run)
-3. **Improvement log archive** (optional) — resolved entries that have been moved out of the active log by `/resolve-improvement-log`. The main agent passes this path only if the archive file exists. An archived entry with `**Status:** applied` AND `**Verified:**` represents a completed, confirmed fix — treat it as authoritative when checking recurrence, and do not re-propose it.
 
 ## Your Task
 
@@ -50,10 +49,11 @@ For each friction entry in the log:
    - An existing CLAUDE.md rule already covers it (Claude didn't follow it)
    - An existing hook already checks for it (hook may need adjustment)
 
-4. **Check recurrence** against the improvement log AND its archive (if supplied):
-   - If the same root cause appears in past improvement log entries — active OR archived — (match on root cause, not exact description), count occurrences. Archived entries still count; they represent fixes that have already been applied and verified.
-   - If an archived entry already addresses this exact root cause with `**Status:** applied` AND `**Verified:**`, do not re-propose — the fix exists. Flag it as "already resolved (see archive)" in Phase 4 instead of a finding.
-   - If a root cause has appeared 3+ times (across active + archive combined): treat it as an **instruction deficiency**, not an output problem. Follow the Recurrence Escalation protocol below
+4. **Check recurrence** against the active improvement log:
+   - If the same root cause appears in past improvement log entries (match on root cause, not exact description), count occurrences.
+   - If an active entry already addresses this exact root cause with `**Status:** applied` AND `**Verified:**`, do not re-propose — the fix exists.
+   - If a root cause has appeared 3+ times in the active log: treat it as an **instruction deficiency**, not an output problem. Follow the Recurrence Escalation protocol below
+   - Note: archived entries are excluded from the agent's read scope (settings deny rule). The active log is the de-dup source of truth.
 
 ### Recurrence Escalation Protocol (3+ occurrences)
 
@@ -128,7 +128,7 @@ Before presenting findings, check whether any friction pattern matches a pre-des
 - **Maximum 7 findings.** Do not pad with low-value suggestions. If you find fewer than 7 meaningful improvements, present fewer.
 - **Materiality floor (see Phase 2.5).** Only log a finding when you can name a concrete cost of leaving it unfixed. One-off low-impact friction goes to "pattern to watch" prose, not `improvement-log.md`. Recurrence (3+) always overrides the floor.
 - **Be concrete.** "Add a command" is not actionable. "Create `.claude/commands/find-draft.md` with these contents: [exact content]" is actionable.
-- **Do not re-suggest.** Skip root causes that already have an "applied" entry in either the active improvement log or the archive (if supplied).
+- **Do not re-suggest.** Skip root causes that already have an "applied" entry in the active improvement log.
 - **Scope to workflow infrastructure only.** Do not propose changes to pipeline artifacts (preparation/, execution/, analysis/, report/ content). Only propose changes to commands, hooks, rules, settings, and process.
 - **Distinguish new tooling from better documentation.** If the fix is "the operator needs to know this command exists," the proposal is a documentation/onboarding improvement, not a new command.
 - **If no meaningful improvements exist, say so.** Return: "No actionable improvements identified from this session's friction log."
