@@ -402,7 +402,7 @@ Run as two separate commands, not chained:
 
 > Ready to push N commits across M repos: [list of repos and ahead-counts]. Push now? y/n
 
-- On `y`: run `git push` per repo in turn. If a push fails (auth, network, non-fast-forward) surface the failure in chat and stop — do not retry silently.
+- On `y`: **before pushing each repo**, run `git fetch origin` and check for remote divergence (`git rev-list HEAD..@{u} --count`). If the remote has new commits (count > 0), surface a warning: "Remote has N new commits ahead of local — rebase first to avoid non-fast-forward rejection. Rebase now (`git rebase origin/main`), or skip this repo?" Wait for the operator's choice before proceeding. If no divergence (count = 0), proceed with `git push`. If a push fails (auth, network, non-fast-forward), surface the failure in chat and stop — do not retry silently.
 - On `n`: leave commits unpushed and note it in chat ("Push skipped per operator; N commits remain local").
 - Ambiguous reply: re-ask, do not assume.
 
