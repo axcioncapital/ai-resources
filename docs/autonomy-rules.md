@@ -21,6 +21,10 @@ Pause only for these:
 
 Everything outside this list proceeds automatically. For non-critical issues (formatting, minor wording, small structural fixes), apply and note. When in doubt about severity, err toward proceeding — the compensating control is the QC → Triage auto-loop.
 
+## Unconditional gate precedence
+
+A command or skill may declare a pause point unconditional by marking it with the literal phrase **"unconditional — no timeout, no auto-approve"** in the gate instruction. An unconditional gate ranks above the default full-autonomy posture — it stops execution in auto-mode (including `/prime` auto-mode) and cannot be bypassed by the session's autonomy setting. A bare `PAUSE` line without this marker remains subject to the full-autonomy default and may be auto-approved or bypassed under full autonomy.
+
 ## Decision-Point Posture
 
 When work reaches a decision point (multiple approaches, stage gate, plan-mode option selection), pick the recommended option and proceed. State the choice in one line. Do not ask the operator to validate the recommendation. Risks go into session-plan or inline advisory notes — not blocking asks.

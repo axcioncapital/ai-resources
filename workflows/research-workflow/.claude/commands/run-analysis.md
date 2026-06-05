@@ -39,7 +39,7 @@ The gate-clearance verdict is the load-bearing contract between Pass 3 and Pass 
 2. Launch a general-purpose sub-agent. Pass it: the skill content, all refined cluster memo content, and the scarcity register from `/execution/scarcity-register/{section}/{section}-scarcity-register.md` (if it exists). Task: execute the gap assessment across all memos, accounting for items already classified as scarcity. Write to `/analysis/gap-assessment/{section}/{section}-gap-assessment.md`. Return: output file path, gap inventory (gap ID, cluster, path classification, severity).
 3. Write checkpoint to `/analysis/checkpoints/{section}/{section}-step-2-gap-assessment-checkpoint.md` from the sub-agent's returned summary. Include: gap count, per-gap path classification (A/B), affected clusters.
 4. ▸ /compact — skill content and memo content no longer needed; checkpoint carries forward.
-5. PAUSE — Present gap assessment to the operator. For each gap:
+5. PAUSE — Present gap assessment to the operator. **The halt is unconditional — no timeout, no auto-approve.** For each gap:
    - Path B (non-blocking): propose lightweight Perplexity queries
    - Path A (blocking): flag for full Stage 2 re-execution on affected questions
    - The operator approves routing.
