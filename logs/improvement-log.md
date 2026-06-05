@@ -278,3 +278,28 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Morning entry-point gap CLOSED:** the morning `/diagnostics-plan` path (flagged as possibly un-gated) was renamed to `/fix-project-issues` (commit `0c97a1b`); `diagnostics-plan.md` no longer exists. Same gated command — Step 2.5 covers it.
 - **Verified live (S14):** all three files committed & clean in `23c9143`; `diagnostics-plan.md` absent; no prior improvement-log entry on this root cause (no duplicate).
 - **Target files:** none (resolution record only). Source-of-truth: `docs/backlog-reconciliation.md`; `.claude/commands/fix-project-issues.md` Step 2.5; `.claude/commands/fix-repo-issues.md` Step 3.0.
+
+### 2026-06-05 — Research-workflow canonical fix F1: sync-on-entry / deployment-freshness discipline (DEFERRED)
+- **Status:** deferred — requires dedicated canonical-change session
+- **Category:** workflow / template-maintenance
+- **Source:** `projects/research-pe-regime-shift-advisory-gap/audits/post-project-review-canonical-fix-plan-2026-06-05.md` § F1
+- **Why deferred:** Heavy scope (spans `sync-workflow.md` freshness-report mode, `run-preparation.md` Step 0 gate, SessionStart drift nudge escalation, and a new `docs/sync-and-authority.md` authority rule doc); requires `/risk-check` + `/graduate-resource`; F3 depends on the authority doc this creates. Prerequisite: verify `/sync-workflow` can classify drift direction (canonical-ahead vs project-ahead) before encoding the authority rule.
+- **Proposal:** Open a dedicated canonical-change session. Implement: (1) `/sync-workflow` freshness-report mode; (2) `run-preparation.md` Step 0 soft gate (detect template drift → require sync-or-acknowledge once, at Stage 1 entry); (3) escalate SessionStart drift nudge to acknowledged prompt for research-pipeline sessions; (4) new `docs/sync-and-authority.md` declaring which side wins when project stage-instructions and canonical skills disagree. F3 lands after F1's authority doc.
+- **Review-cycle:** monthly
+
+### 2026-06-05 — Research-workflow canonical fix F3: cluster-memo-refiner check-count declared contract (DEFERRED)
+- **Status:** deferred — depends on F1's authority doc
+- **Category:** workflow / skill-contract
+- **Source:** `projects/research-pe-regime-shift-advisory-gap/audits/post-project-review-canonical-fix-plan-2026-06-05.md` § F3
+- **Why deferred:** Couples to F1 — the declared contract references F1's sync-and-authority.md doc. F1 must land first.
+- **Proposal:** After F1 ships: make the refiner check-count a declared contract in `cluster-memo-refiner/SKILL.md` — checks 8–10 (permission-class, country-parity, source-conflict) run only when no downstream `/run-sufficiency` phase owns them; a project declares ownership in its stage-instructions. Default: checks 1–10 (no behavior change for existing consumers).
+- **Review-cycle:** monthly
+
+### 2026-06-05 — Research-workflow canonical fix F5: confirm 1M gate mechanism + add Step 0 pre-dispatch guard (DEFERRED)
+- **Status:** deferred — empirical investigation precondition unresolved
+- **Category:** workflow / session-model-policy
+- **Source:** `projects/research-pe-regime-shift-advisory-gap/audits/post-project-review-canonical-fix-plan-2026-06-05.md` § F5
+- **Why deferred:** The operating rule is contradicted: S6 found per-dispatch `model:` override insufficient (only `/model` switch cleared the gate), but S8 and S1 both cleared the gate via per-dispatch overrides. The fix plan says not to encode a guard on top of an unconfirmed mechanism. Investigation must precede the edit.
+- **Proposal:** Dedicated investigation session: confirm empirically whether per-dispatch `model: opus/sonnet` override clears the 1M-context credit gate from a live `[1m]` session. If confirmed, the fix is: (a) correct the run-report.md policy block to reflect confirmed behavior + (b) add a Step 0 pre-dispatch check that warns if a dispatch lacks an explicit model: pin. If not confirmed, add a Step 0 hard stop ("switch to standard-context model via `/model` before continuing"). Requires `/risk-check` (model-policy / harness-adjacent change).
+- **Hint from S8+S1:** Both sessions cleared the gate via per-dispatch overrides, supporting "override works." S6 contradiction may have been a different session state — worth checking whether the S6 session had a non-standard alias configuration.
+- **Review-cycle:** monthly
