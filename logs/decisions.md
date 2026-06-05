@@ -343,3 +343,15 @@
 **Alternatives considered.** (a) Implement the full ~10-file change now on Opus — rejected: silent-failure modes + a concurrent session was in fact already implementing it (discovered later), so parallel implementation would have collided. (b) Implement a narrower variant (only the writers) — rejected: writers emitting a new format while readers expect the old IS the silent-regression failure mode.
 
 **Decided by:** Claude judgment under the approved S6 mandate ("explicitly defer or log items requiring /risk-check or large effort"); [SCOPE] flag emitted; QC GO on the companion item-6 edit. Consumer inventory in improvement-log id-41.
+
+## 2026-06-05 (S7) — Keep S7's date-qualify implementation; supersede S6's parallel defer (id-41)
+
+**Context.** S7 and a live parallel S6 session worked the same 2026-06-05 friday-act backlog in the same shared working tree and reached opposite decisions: S6 deferred date-qualify session-plan filename (id-41, commit 1d91723) and fix-symlinks; S7 implemented both (date-qualify committed fa2b3f2 + amendments, fix-symlinks e18fd29). The repo ended in an inconsistent state — id-41 marked "deferred" while the change was implemented and committed.
+
+**Decision.** Keep S7's implementations; flip id-41 logged(pending)→applied. Do not revert in favor of S6's defer.
+
+**Rationale.** S6's defer was a scheduling call, not a correctness objection — id-41's own text says the change "requires its own /risk-check + a dedicated session." That precondition was met: S7 ran /risk-check (PROCEED-WITH-CAUTION) + a system-owner /consult and applied every mitigation, including the wrap-session.md exact-path reader (both copies) that id-41's hand-built inventory flagged and that both the friday-act plan and the risk-check reviewer's 14-consumer inventory had missed. The change is backward-compatible (readers switched to globs matching both old bare-marker and new date-qualified filenames), so no plan written under either format breaks. Reverting correct, risk-checked, bug-fixing work to honor a scheduling defer whose conditions are already satisfied would be pure waste and would re-expose the latent wrap-session.md silent-break.
+
+**Alternatives considered.** (a) Revert fa2b3f2 + discard amendments to honor S6's defer — rejected: destroys completed safe work; the "dedicated session" would just redo exactly what S7 did. (b) Keep date-qualify but discard fix-symlinks — rejected: fix-symlinks is independent, Low-risk (command-text only), and closes a logged 2026-06-02 gap; operator confirmed keep.
+
+**Decided by:** Operator-confirmed ("proceed", keep fix-symlinks confirmed) after Claude surfaced the full collision + conflict. The structural root (two live sessions on one working tree) is deferred to a worktree-per-session session — S6's diagnostics report `3a7e89d`.

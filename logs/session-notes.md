@@ -416,3 +416,42 @@ _(wrap-collector, 2026-06-05 — S6)_
 
 ### Open Questions
 None blocking. (Note: this session's per-id marker `logs/.session-marker-${CLAUDE_CODE_SESSION_ID}` was never written — marker setup was partial. Benign this session; the guard-attribution consequence is logged as a guardrail-candidate.)
+
+## 2026-06-05 — Session S7: completed interrupted S6 friday-act backlog + reconciled parallel-session collision
+
+### Summary
+Continued what looked like an interrupted S6 friday-act backlog. Mid-session, discovered S6 was NOT interrupted but running LIVE in parallel on the same backlog in the same shared ai-resources working tree, and had reached OPPOSITE decisions on two items. Completed Stage 1 (agent edits), Stage 4 (date-qualify session-plan filename — risk-checked + system-owner consulted), and Stage 5 item 8 (fix-symlinks regular-file-drift detection); reconciled the inconsistent state by keeping S7's implementations and flipping id-41 to applied. Wrote the operator-requested friction-log analysis of why the consumer-inventory miss keeps recurring.
+
+### Files Created
+- `logs/scratchpads/2026-06-05-12-05-scratchpad.md` — continuity scratchpad.
+
+### Files Modified
+- `.claude/agents/improvement-analyst.md`, `.claude/commands/coach.md`, `.claude/commands/improve.md` — archive de-dup reroute + project-root anchor (`78b1a8b`).
+- `.claude/commands/prime.md`, `.claude/commands/session-plan.md`, `docs/session-marker.md`, `.claude/commands/contract-check.md`, `.claude/commands/drift-check.md` — date-qualify writers + readers (`fa2b3f2`).
+- `.claude/hooks/backup-session-plan.sh` (regex {0,2}→{0,6}), `docs/repo-architecture.md`, `docs/compaction-protocol.md`, `docs/weekly-cadence.md`, `.claude/commands/new-project.md` — date-qualify mitigations (`fa2b3f2`).
+- `.claude/commands/wrap-session.md` (both ai-resources + workspace-root copies — glob plan-reader), `docs/heavy-read-discipline.md`, `docs/session-marker.md` (registry: added wrap-session.md, reclassified backup hook) — the 3 missed consumers (`35fb409`, `b32d611`).
+- `.claude/commands/fix-symlinks.md` — Step 2b regular-file-drift detection (`e18fd29`).
+- `projects/research-pe-regime-shift-advisory-gap/.claude/hooks/backup-session-plan.sh` — paired regex fix (`6ba632a`).
+- `logs/friction-log.md`, `logs/improvement-log.md` (id-41 → applied), `audits/risk-checks/2026-06-05-stage-4-...md`, `audits/log-sweep-2026-06-05.md`, `logs/improvement-log-archive.md`, `logs/improvement-log-archive-archive-2026-04.md` (S5 cleanup) — (`fb58b95`, `0465f02`, `07b6d31`).
+
+### Decisions Made
+- **Implemented date-qualify (Stage 4) despite S6's parallel defer (id-41).** Kept because the change is committed, risk-checked (PROCEED-WITH-CAUTION, mitigations applied), backward-compatible, and fixed a real latent bug; id-41's defer precondition ("dedicated /risk-check session") was satisfied by S7. Logged to decisions.md.
+- **Kept fix-symlinks (item 8) despite S6's parallel defer** — low-risk command-text-only edit closing a logged 2026-06-02 gap; operator confirmed keep.
+- **Deferred the worktree-per-session structural fix** to a dedicated session (S6 wrote the diagnostics report, committed `3a7e89d`).
+
+### Outcome
+- **COMPLETION: DELIVERED** — Stage 1, Stage 4 (date-qualify), Stage 5 item 8, the friction-log analysis, and the collision reconciliation all landed and verify; cleanup-worktree correctly deferred per operator. (Stages 2/3 were S6's, already done.)
+- **EXECUTION: ACCEPTABLE** — /risk-check (PROCEED-WITH-CAUTION) + /consult ran before the structural change. One avoidable rework loop: the consumer inventory missed `wrap-session.md` in both the upstream friday-act plan and the S7 risk-check pass; caught reactively via an id-41 cross-read (fa2b3f2 → 35fb409) rather than proactively. A grep on the invariant stem (`session-plan`) at risk-check time, per id-40, would have caught it before fa2b3f2 shipped a half-finished change.
+- **Better path:** apply id-40's invariant-stem consumer-inventory grep at risk-check time (now reinforced in this session's friction-log + id-41 lesson note).
+- **Confidence: low** (fallback mandate — no /session-start this session).
+
+### Risky actions
+Multiple near-misses, all contained: (1) Read `logs/improvement-log.md` mid-rewrite by the concurrent session (caught a transient 17-line state); stopped and re-verified rather than appending to it — had I written to the transient state I would have destroyed ~23 entries. (2) Committed into an actively-committing concurrent session; mitigated by staging ONLY own files by explicit path and post-commit verification each time. (3) Almost shipped a half-finished date-qualify change (fa2b3f2 changed the filename but wrap-session.md still read the old path) — caught via the id-41 cross-read and fixed in 35fb409. Foreign-dirty files (innovation-registry.md, session-plan-S5.md) left untouched throughout.
+
+### Next Steps
+- **Worktree-per-session structural fix** — dedicated /risk-check session; see `audits/2026-06-05-concurrent-session-collision-diagnostics-fix.md`.
+- **Consider `/improve`** — friction logged this session (consumer-inventory miss + parallel-session collision).
+- Remaining friday-act backlog items, or `/open-items`.
+
+### Open Questions
+None blocking. S7 ran without /prime's marker path (no per-id marker written) — benign, but note the guard-attribution gap is already logged as a guardrail-candidate.
