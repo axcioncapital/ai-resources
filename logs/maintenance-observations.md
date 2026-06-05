@@ -352,3 +352,56 @@ Session-shape signals worth noting for the next checkup:
 **Why this matters.** Stale audit-to-plan pipeline costs ~1 cluster-/risk-check per Friday-act session (RECONSIDER on phantom items). Operator decision-loop turns get spent on items that no longer exist. The cost compounds with the friday-checkup cadence (weekly + monthly + quarterly tiers all emit fix-instructions).
 
 **Not blocking.** Logged here for next `/friday-checkup` cadence to triage into improvement-log if confirmed worthwhile (or for the operator to disposition directly in the S6 wrap). Wave 2 of S6 was dropped; M1 git-guards (the only real fix in the cluster) was applied as a stand-alone edit to `~/.claude/settings.json`.
+
+## 2026-06-05 — Friday Act (monthly tier, source: friday-checkup-2026-06-05.md)
+
+### System Owner inputs (this session)
+- Friday Advisory: projects/axcion-ai-system-owner/output/friday-advisories/friday-advisory-2026-06-05.md
+- Systems Review:  projects/axcion-ai-system-owner/output/systems-reviews/systems-review-2026-06-05-full-ai-infrastructure.md
+
+### Journal Report (this session)
+- Journal Report: (none within 7 days)
+
+### Disposition summary
+- Tactical: 20 queued for plans, 4 defer, 0 skip (of 24 items; of which 0 System Owner-derived, 0 journal-derived)
+- Triage source: 24 auto-default, 0 operator-override (of 24 items — operator selected "Full triage", accepting the auto-triage default HIGH→f/MED→f/LOW→d)
+- Policy review: 1 rule-change proposed, 4 no-change, 0 defer
+- Architectural retrospective: skipped (monthly tier)
+- Step 3.5 SO-derived additions: skipped — SO advisory's actionable content is checkup items 1–4 (already dispositioned); systems-review is macro-strategic (no new tactical items); journal MISSING. 16a summarizer subagent not invoked (materiality / minimal-infra).
+- Plan QC (Step 16k): independent qc-reviewer subagent BLOCKED (1M-context usage-credits error, both default + sonnet override). Ran a transparent main-session self-check against docs/audit-discipline.md § Risk-check change classes instead. 1 material finding (session-harness item 5 false-negative) fixed in place; 1 minor already-mitigated. NON-INDEPENDENT — flagged to operator.
+
+### Deferred items (from this session)
+- Add `model:`/`effort:` frontmatter to research-pe project-local skills `knowledge-file-producer` + `report-compliance-qc` — low, checkup
+- `/resolve-improvement-log` — ~5 applied+verified entries pending archive — low, checkup
+- `/log-sweep` (real run) — 2 archival candidates (improvement-log-archive.md 508 lines; project-planning session-notes.md 579 lines) — low, checkup
+- W2.1 registry maintenance (paste 192 Added drafts, resolve 10 Removed as rename/deprecate) — low, checkup
+
+### Plans written (this session)
+- audits/friday-plans/2026-06-05-settings-permissions.md — 2 items
+- audits/friday-plans/2026-06-05-claude-md-template.md — 3 items
+- audits/friday-plans/2026-06-05-session-harness.md — 5 items
+- audits/friday-plans/2026-06-05-vault-integrity.md — 2 items
+- audits/friday-plans/2026-06-05-research-workflow.md — 2 items
+- audits/friday-plans/2026-06-05-coach-agent.md — 1 item
+- audits/friday-plans/2026-06-05-repo-hygiene.md — 5 items
+
+### Policy proposals (monthly+)
+- For "The permission floor is fragile to local-settings shadowing": Extend `check-permission-sanity.sh` (SessionStart hook) to detect and warn on a `settings.local.json` `permissions` block that lacks `defaultMode` — the exact shadowing shape that defeated `bypassPermissions` this cycle (CRITICAL finding, checkup item 1). This is a preventive structural guard, distinct from the one-time fix queued in the settings-permissions plan. Hook edit → needs its own plan + `/risk-check` (change class 1) in a follow-up session.
+  - Policy observations 1 (`/new-project` template root cause), 2 (`Read()` deny thinness), 3 (stale model-version pinning) → no separate rule-change: each is already captured as a queued fix-now plan item (claude-md-template items 2/3, settings-permissions item 2). The de-versioning-in-template preventive (obs 3) is noted inside claude-md-template item 3.
+  - Policy observation 5 (deferred backlog not converting to dedicated sessions; recurring from 2026-05-29) → no rule-change: behavioral/process, action is "schedule on 3rd recurrence", no CLAUDE.md edit.
+
+### Staleness caveat (this session)
+- Plan items reflect audit-time state (2026-06-05 checkup). 7 concurrent sibling sessions ran today; per the documented 2026-05-29 known issue, `/friday-act` does NOT re-read targets before emitting plan items. Spot-checked the highest-staleness-risk item (claude-md-template item 2, `/new-project` template bloat) against current state — commit 1706d0d touched /new-project today but did NOT fix the Input File Handling bloat, so the item is REAL. Execution sessions must re-ground each item per the plan's Execution notes before fixing.
+
+### Operator observations
+(none — operator wrapped without adding)
+
+### Autonomy-axis posture targets (week ahead)
+- Guardrails: hold
+- Optimization: hold
+- Autonomy: hold
+- Capability: hold
+- Reliability: hold
+- Observability: hold
+- Operator load: hold
+(all-hold default accepted at wrap; the permission-floor CRITICAL is addressed by the queued settings-permissions plan + the check-permission-sanity.sh policy proposal rather than a posture change)
