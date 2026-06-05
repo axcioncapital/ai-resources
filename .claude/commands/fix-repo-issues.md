@@ -16,6 +16,8 @@ Sessions B and C may be the same calendar moment but are separate Claude Code se
 
 **Boundary vs `/resolve-repo-problem`.** `/resolve-repo-problem` is reactive single-fault triage (something broke right now → investigate one fault → three ranked options). `/fix-repo-issues` is proactive batch-planning from the persistent backlog (drain accumulated items → ordered multi-item plan). No overlap in trigger, scope, or input source.
 
+**Boundary vs `/fix-project-issues`.** `/fix-project-issues` operates on exactly one scope (the project at hand), reads its dated diagnostic *reports* plus its logs, and **executes** the do-now fixes in the same session. This command is multi-scope (operator-selected across the workspace), logs-only, and **plan-only** (execution happens in a separate session). Use `/fix-project-issues` to clean up one project now; use this to drain the accumulated backlog across scopes for a later fix session.
+
 **Multi-scope.** The command scans across operator-selected workspace scopes: `ai-resources` (always on), `workspace` root, and any active project under `projects/`. The plan aggregates findings across all selected scopes, with per-item scope attribution so the execution session knows where to apply each fix.
 
 Input: `$ARGUMENTS` (optional) — free-form triage hint (e.g., "improvement-log only", "skip inbox"). Applies to triage (Step 3), not scope selection (Step 1). If empty, no hint applied.
