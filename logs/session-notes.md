@@ -519,3 +519,41 @@ None. Explicit-path staging on commit `5274551` (CLAUDE.md, improvement-log.md, 
 
 ### Open Questions
 None blocking.
+
+## 2026-06-05 — Session S14
+
+**Mandate:** Run `/improve` (improvement-analyst) on the recurring diagnostics-lag friction pattern and route it into `improvement-log.md` with a concrete, worth-doing structural fix proposal (live-state reconciliation pass in the diagnostics-scanner that culls already-resolved candidates before SO vetting) — done when: `/improve` has run and the diagnostics-lag pattern is routed in `improvement-log.md` with a concrete proposed fix and an ROI / worth-doing note.
+- Out of scope: Implementing the diagnostics-scanner agent edit itself (separate structural-risk session); the id-14/15/16 structural work owned by concurrent session S13; other backlog items.
+- Files in scope: logs/improvement-log.md (routing target); friction-log.md / usage-log.md / session-notes.md (read-only analyst inputs) (inferred)
+- Stop if: (none stated)
+
+Run /improve to route the recurring diagnostics-lag friction pattern — propose a structural fix (a live-state reconciliation pass in the diagnostics-scanner that culls already-resolved candidates before System Owner vetting).
+
+### Summary
+`/prime` → `2 auto` (read as `auto 2`). Ran menu item 2: `/improve` to route the recurring diagnostics-lag friction pattern. The improvement-analyst surfaced a conflict with the mandate's premise — the structural fix I was asked to *propose* had already shipped the same day (commit `23c9143`: `docs/backlog-reconciliation.md` reconcile-at-read primitive + `fix-project-issues.md` Step 2.5 + `fix-repo-issues.md` Step 3.0). Verified every claim against live state, surfaced the conflict, and did the honest completion: logged a RESOLUTION record + annotated the friction entry so the pattern is not re-proposed. Hit a concurrent-session collision with S13 on shared logs; handled non-destructively.
+
+### Files Created
+- `logs/scratchpads/2026-06-05-19-13-scratchpad.md` — continuity scratchpad (gitignored).
+- `logs/session-plan-2026-06-05-S14.md` — marker-scoped session plan.
+
+### Files Modified
+- `logs/improvement-log.md` — appended the diagnostics-lag RESOLUTION entry (records `23c9143` as the fix; closes the friction's scanner-layer direction as superseded — scanner is read-only, no git; notes the morning entry-point "gap" was just the `/diagnostics-plan`→`/fix-project-issues` rename `0c97a1b`). **Committed under S13's commit `2bc89d9`** (concurrent-session sweep — see Risky actions).
+- `logs/friction-log.md` — annotated the 2nd-run diagnostics-lag entry with `[FADING-GATE] verified 2026-06-05 (S14)` so both backlog scanners stop re-extracting the dead finding. **Also in `2bc89d9`.**
+- `logs/session-notes.md` — this entry.
+- `logs/decisions.md` — conflict-resolution + concurrent-collision handling decision.
+
+### Decisions Made
+- **Surfaced the stale mandate premise instead of building.** The fix already existed at the command layer; building a scanner-layer pass would duplicate shipped work AND be the wrong layer (scanner has no Bash/git). Logged a resolution record + closed the direction as superseded rather than producing a redundant proposal.
+- **Skipped a full `/qc-pass` subagent** on the two log annotations as disproportionate ceremony (id-08 precedent), after verifying every factual claim live and self-correcting one inaccuracy (`tools:` list).
+- **Concurrent-collision handling.** Committed only my own content; did NOT re-attribute the deliverable that S13's commit swept up (re-attribution would mean rewriting a shared commit — a forbidden destructive git op).
+
+### Risky actions
+Concurrent-session collision with S13 on two shared non-append logs. (1) My deliverable (improvement-log entry + friction annotation) was swept into S13's commit `2bc89d9` when S13 ran `git add` + commit in the same window — verified both changes present in `2bc89d9`, working tree == HEAD for both files, no data lost; cosmetic attribution cost only. (2) The wrap Step 3.5 pre-write guard correctly fired CONCURRENT (S13's session-notes header+mandate loose in the shared working tree); resolved via operator-approved surgical own-only staging (blob-injection of the index — never touches the working tree, so S13's loose content is preserved unstaged). No destructive action; no push.
+
+### Next Steps
+- **S13 unwrapped:** S13 shipped its work in `2bc89d9` (19:00) but never ran `/wrap-session` — its `session-notes.md` header+mandate remain loose in the working tree. S13 should wrap to commit them (or handle via wrap-recovery).
+- **Morning menu item 1 likely DONE:** S13's `2bc89d9` shipped id-14 (pre-append integrity guard) + id-15 (advisory-scan extension) and dropped id-16 (RECONSIDER — already done 2026-05-29). Verify the improvement-log status flips before re-picking the "id-14/15/16 structural session."
+- **Push gate at wrap:** unpushed ai-resources commits pending.
+
+### Open Questions
+None blocking.
