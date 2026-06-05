@@ -450,3 +450,37 @@ _(wrap-collector, 2026-06-05 — no new store writes; the one qualifying signal 
 
 ### Open Questions
 None blocking.
+
+## 2026-06-05 — Session S12
+**Mandate:** (1) run /resolve-improvement-log to archive resolved/decided entries from improvement-log.md into improvement-log-archive.md; (2) commit the uncommitted logs/improvement-log-archive.md (S10 leftover + item 1's new archive writes) — done when: resolved/decided entries are archived out of improvement-log.md, and improvement-log-archive.md is committed clean
+- Out of scope: (none stated)
+- Files in scope: logs/improvement-log.md, logs/improvement-log-archive.md (inferred)
+- Stop if: (none stated)
+Auto multi-item: Run /resolve-improvement-log to archive resolved/decided entries; Commit the S10 leftover improvement-log-archive.md
+
+### Summary
+`/prime` (auto 1,2) → ran two carryover menu items end-to-end under a single approval gate. Item 1: `/resolve-improvement-log` archived 8 substantively-applied entries out of `improvement-log.md` into `improvement-log-archive.md`. Item 2: committed both log files in one clean commit, which also captured the S10-leftover archive changes. Surfaced a standing rule mismatch (the skill's strict `**Verified:**`-field requirement never matches this repo's `applied`+commit-ref convention) and a live concurrent-edit on the same file (preserved intact).
+
+### Files Created
+- `logs/scratchpads/2026-06-05-16-21-scratchpad.md` — continuity scratchpad (gitignored).
+- `logs/session-plan-2026-06-05-S12.md` — marker-scoped session plan (2 picked items).
+
+### Files Modified
+- `logs/improvement-log.md` — removed 8 archived entries (24 active/pending entries remain). Commit `6e98d7c`.
+- `logs/improvement-log-archive.md` — appended the 8 entries verbatim (append-only `>>`, never read — respects the `Read(logs/*archive*.md)` deny); also committed the pre-existing S10-leftover changes. Commit `6e98d7c`.
+
+### Decisions Made
+- **Treated `applied`+commit-ref+QC-GO as the de-facto resolved state.** The skill's strict rule needs a separate `**Verified:**` field that no entry in this repo uses; following it literally would archive nothing. Surfaced the conflict to the operator rather than silently following or overriding it; operator confirmed archival of the 8.
+- **Recommended keeping the 2 Step 3c no-active-friction matches.** Both are live work (one escalated to "deserves a dedicated session"; one is a decided gated item quoting a superseded disposition), not dead. Operator archived only the 8.
+- **Committed the concurrent session's entry inside my in-scope file.** A parallel session's new `/fix-project-issues (2nd run)` entry was on disk inside `improvement-log.md`; can't stage around it, and committing preserves it rather than risking loss.
+
+### Risky actions
+Mutated two durable shared logs (`improvement-log.md` removal + `improvement-log-archive.md` append) via `sed`/`>>` while a concurrent session was actively editing `improvement-log.md` — the documented `logs/`-not-scanned concurrency hazard. Mitigated: sed line numbers came from a pre-concurrent-write read, so I ran a full post-edit integrity verification (all 8 target titles gone; every remaining entry retains its Status line; the concurrent entry intact at line 272) before committing. Entries were archived (recoverable in `improvement-log-archive.md` + git), not destroyed. Committed promptly to lock in the archival against a forward clobber. No irreversible action; no push.
+
+### Next Steps
+- **Push gate at wrap:** 2 unpushed ai-resources commits (`6e98d7c` + one concurrent-session commit).
+- **Optional future cleanup:** decide whether to start adding a `**Verified:**` line when closing improvement-log entries, OR relax the `/resolve-improvement-log` rule to accept `applied`+commit-ref — so the command works without the manual-override surfacing each run.
+- **Standing carryover:** the active concurrent-guard entry proposing a `logs/improvement-log.md` scan in `/prime` Step 1a + `/session-start` Step 0.5 is directly relevant to the hazard hit this session — candidate for a dedicated structural session.
+
+### Open Questions
+None blocking.

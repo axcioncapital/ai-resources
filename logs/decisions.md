@@ -395,3 +395,17 @@
 **Decided by:** Claude recommendation on the risk-check + DR-9 check + SO second opinion; operator authorized the batch via "go". Cleared /risk-check (PROCEED-WITH-CAUTION) + /qc-pass (GO). Commits `f0959f7`, `b18d212`.
 
 **Process recommendation (also logged to improvement-log b18d212).** `/diagnostics-plan` candidate scans are built from dated reports; when those lag fast-moving same-day work, the scan over-reports actionable items. Reconcile candidates against live file state before treating them as Do-now — worth a standing /diagnostics-plan caveat.
+
+## 2026-06-05 (S12) — /resolve-improvement-log: treat `applied`+commit-ref as the de-facto "resolved" state
+
+**Context.** `/resolve-improvement-log` classifies an entry as resolved only if it carries BOTH `**Status:** applied` AND a separate `**Verified:**` field. A scan of `logs/improvement-log.md` found 8 substantively-applied entries (commit refs + "Independent QC GO" written inline) but ZERO entries with a `**Verified:**` field — the only occurrence is the schema description itself. Following the strict rule literally would archive nothing, which contradicts the operator's mandate to archive resolved/decided entries.
+
+**Decision.** Surfaced the conflict to the operator (per workspace "conflicts must be surfaced, not silently resolved") and treated `applied` + commit ref + inline QC-GO as the repo's de-facto resolved state. Operator confirmed (`y`); archived the 8 entries to `improvement-log-archive.md` (commit `6e98d7c`). Recommended keeping the 2 Step-3c no-active-friction matches (both live work, not dead) — operator concurred.
+
+**Rationale.** The repo's actual convention (per the schema note at improvement-log.md line 8) marks unresolved entries as `logged (pending)` and done entries as `applied YYYY-MM-DD` with a commit ref; the separate `**Verified:**` field is not used in practice. Honoring the strict rule would make the command a permanent no-op here. Each archived entry has a commit ref + QC confirmation, so it is verified-in-substance.
+
+**Alternatives considered.** (a) Follow the strict rule → archive nothing — rejected: defeats the mandate and the command's purpose in this repo. (b) Silently override the rule and archive — rejected: a conflict between skill rule and repo convention is exactly the "surface, don't silently resolve" case; presented it for an explicit operator call instead.
+
+**Follow-up (logged as a Next Step, not actioned).** Either start adding a `**Verified:**` line on entry close, or relax the skill rule to accept `applied`+commit-ref — so the manual-override surfacing does not recur every run.
+
+**Decided by:** Claude recommendation + operator confirmation (`y`). No risk-check (non-structural log maintenance).
