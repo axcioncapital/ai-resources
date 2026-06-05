@@ -318,7 +318,7 @@ Accept shorthand: "yy" / "yes all" / "all" = both yes; "nn" / "skip all" = both 
    - **Gate.** If the operator declined the outcome check in the preflight, skip and note "Outcome check skipped per preflight" in chat. If the session was trivial (single-file edit, one-question read, aborted session), skip with "Outcome check skipped — trivial session" — your judgment call, same standard as the Step 0.5 / Step 12 skips; do not ask the operator.
    - **Resolve the mandate** ("what Claude was supposed to do this session") using `/contract-check`'s priority chain — see `contract-check.md` Step 2; do not duplicate the logic, just follow that order and stop at the first that resolves:
      1. frozen contract `logs/contracts/{today}-*.md` (if present);
-     2. `logs/session-plan-{MARKER}.md` for this session's marker, if modified today;
+     2. the plan file matched by glob `logs/session-plan-*{MARKER}.md` for this session's marker (matches both date-qualified `session-plan-YYYY-MM-DD-S{N}.md` and bare-marker `session-plan-S{N}.md` forms; prefer the most-recently-modified match), if modified today;
      3. today's `**Mandate:**` block in `logs/session-notes.md` (the mandate line + its `Out of scope` / `Files in scope` / `Stop if` / `Required outputs` bullets);
      4. **fallback** — none of the above: judge against the session's stated task as written in today's `### Summary`, and mark the verdict `Confidence: low (no formal mandate)`. Never invent a standard to grade against.
    - **Launch a fresh-context `general-purpose` subagent** with an inline brief (mirror `contract-check.md` Step 4 — NO named agent file, NO disk-notes file; the verdict is short by construction). The brief passes:

@@ -132,21 +132,26 @@ Every place the marker contract is consumed must point back to this doc. Adding 
 
 **Read-only auxiliary consumers** (tolerate marker absent/stale):
 
-- `ai-resources/.claude/commands/contract-check.md` — Step 2b (plan source resolution).
-- `ai-resources/.claude/commands/drift-check.md` — Step 3 (locate plan), Step 6 (mandate disambiguation), Step 7 (no-mandate abort), Step 8 (conflict reporting).
+- `ai-resources/.claude/commands/contract-check.md` — Step 2b (plan source resolution; glob `logs/session-plan-*${MARKER}.md`).
+- `ai-resources/.claude/commands/drift-check.md` — Step 3 (locate plan; glob `logs/session-plan-*${MARKER}.md`), Step 6 (mandate disambiguation), Step 7 (no-mandate abort), Step 8 (conflict reporting).
+- `ai-resources/.claude/commands/wrap-session.md` — Step 6.4 mandate-resolution chain (plan source for the independent outcome check; glob `logs/session-plan-*${MARKER}.md`). **PAIRED CONTRACT** with the workspace-root copy below — edit both in lockstep.
+- `/.claude/commands/wrap-session.md` (workspace-root paired copy) — Step 6.4 mandate-resolution chain (same glob). Lockstep with the canonical copy above.
 - `ai-resources/.claude/commands/open-items.md` — table rows for `session-plan-*.md` glob scan.
 - `ai-resources/.claude/agents/fix-repo-issues-scanner.md` — table rows + read-only list.
 - `ai-resources/.claude/commands/decide.md` — Step 2 prior-decision read.
 
+**Runtime non-command consumers** (load-bearing parse logic — a silent non-match degrades behavior with no error):
+
+- `ai-resources/.claude/hooks/backup-session-plan.sh` (+ project-local copies, e.g. `projects/research-pe-regime-shift-advisory-gap/.claude/hooks/backup-session-plan.sh`) — PreToolUse Write hook; line-20 regex must match every plan filename form or backups silently stop. Regex cap widened to `{0,6}` (2026-06-05) to cover date-qualified names (`session-plan-YYYY-MM-DD-S{N}.md` = 4 segments, +1 for pass2 = 5). **Both the canonical and every project-local copy must be updated in lockstep on any filename-format change.**
+
 ### Doc references (narrative, not consumers)
 
-Documentation that references `session-plan-{marker}.md` in operator-facing or scaffolding text. Updates required for consistency, but no runtime behavior depends on these:
+Documentation that references the plan filename in operator-facing or scaffolding text. Updates required for consistency, but no runtime behavior depends on these:
 
 - `ai-resources/.claude/commands/new-project.md` — scaffolding command reference.
 - `ai-resources/.claude/commands/prime.md` (additional sites beyond writer-step entries) — operator-facing chat strings.
 - `ai-resources/docs/repo-architecture.md` — canonical file table.
 - `ai-resources/docs/compaction-protocol.md` — operator-facing target-file note.
-- `ai-resources/.claude/hooks/backup-session-plan.sh` — comment text + regex cap. Regex widened to `{0,6}` (2026-06-05) to cover date-qualified names (`session-plan-YYYY-MM-DD-S{N}.md` = 4 segments, +1 for pass2 = 5); canonical + research-pe project copies both updated.
 - `ai-resources/docs/heavy-read-discipline.md` — narrative reference.
 - `ai-resources/docs/weekly-cadence.md` — Phase D scope-separation narrative.
 

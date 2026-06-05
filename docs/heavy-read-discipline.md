@@ -42,7 +42,7 @@ For every other session, the default behavior is:
 
 - Read `*-archive-*.md` files (e.g., `session-notes-archive-2026-05.md`, `coaching-data-archive-2026-04.md`).
 - Read prior dated audit reports (`audits/<type>-YYYY-MM-DD.md`) from sessions that already concluded.
-- Read superseded drafts (e.g., `session-plan-${MARKER}-pass2.md`) when the active `session-plan-${MARKER}.md` (marker-scoped per `docs/session-marker.md`) is the live document.
+- Read superseded drafts (e.g., `session-plan-${YYYY-MM-DD}-${MARKER}-pass2.md`) when the active `session-plan-${YYYY-MM-DD}-${MARKER}.md` (date + marker-scoped per `docs/session-marker.md`) is the live document.
 - Read `logs/scratchpads/` files from prior sessions (the latest one is surfaced by `/prime` Step 1b as a carryover signal; reading older ones is rarely useful).
 - Walk `audits/working/` (gitignored, subagent-only working notes — main-session reads almost never warrant this).
 
