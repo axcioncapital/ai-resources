@@ -267,6 +267,21 @@ Full backlog & inbox: /open-items
 
       `PICKED_ITEMS_TEXT` is a short comma-joined preview of the picked items' plain-English text (used in operator-facing messages below). `SINGLE_ITEM` is true when `PICKED_ITEMS` has exactly one entry.
 
+   1.5. **Per-item done-condition presence-check.** Before any disk write (marker, header, mandate, plan — all at Step 8c.3 and later), verify every picked item carries a derivable done-condition. An auto-bundle that includes an unscoped item wastes the single approval gate (and any `/risk-check`) on work that cannot be graded — the item is recognized as unscoped only mid-execution, after the gate has passed (logged: vault W2.4 finding #1 + session-harness friday-act #4, 2026-06-04 S6 — "review the System Owner reference files" entered the executable set with no specifiable done-condition).
+
+      For each item in `PICKED_ITEMS`, attempt to derive a one-line done-condition — an observable deliverable, check, or target (file written, item checked off, finding addressed, commit landed, count reached). The item text plus its source (the `[urgent]` / `[carryover]` / `[next-up]` line it came from) is the evidence. An item whose text names only an activity with no observable end-state (e.g. "review X", "look into Y", "think about Z") and whose source line supplies no target fails the check.
+
+      - **All items pass** → proceed to Step 8c.2 unchanged.
+      - **One or more items fail** → hold the failing items back. Do NOT write anything yet. Emit:
+
+        > Auto mode — {K} of {N} picked items have no concrete done-condition and were held back:
+        > {for each held item: `  • {item text} — needs a concrete deliverable (file / check / target). Define it, then re-pick this item.`}
+        >
+        > {if any items passed:} I can proceed with the {M} scoped item(s): {passed-items-text}. Reply `go` to run those, or restate the held item(s) with a deliverable.
+        > {if zero items passed:} Restate the held item(s) with a deliverable (file / check / target), then re-send `auto`.
+
+        On `go` with a non-empty passed set → set `PICKED_ITEMS` to the passed subset (preserve order), recompute `PICKED_ITEMS_TEXT` / `SINGLE_ITEM`, and proceed to Step 8c.2. On a restated item → re-run this check against the restatement. If zero items passed and the operator does not restate, stop without writing.
+
    2. **Plan-mode guard.** If a plan-mode system reminder is present in context, output: `Auto mode noted: {PICKED_ITEMS_TEXT}. You're in plan mode — I won't write anything yet. Exit plan mode and re-send 'auto' (or 'go') to proceed.` Then stop.
 
    3. **Marker resolution + marker-bearing header + mtime marker** (same contract as Step 8a.3.a — see `docs/session-marker.md`):
