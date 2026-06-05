@@ -109,6 +109,8 @@ The extract does not "fix" the report's scope drift by re-narrowing the claim to
 | **THIN** | 1 claim at any strength, OR 2+ claims but all L strength, OR only sources with shared editorial origin |
 | **MISSING** | No claims extracted for this component |
 
+**Label correction discipline.** When correcting a verdict label (e.g., COVERED → THIN), update **all occurrences in a single pass** — the Coverage Verdicts table row, the Gaps section entry, and the Component Synthesis — before flagging for re-verification. Partial correction (table only, Gaps left stale) forces a second QC cycle and leaves a residual mismatch that downstream consumers may misread.
+
 ### Component Synthesis
 
 Per component, write 2–3 sentences summarizing what the evidence collectively shows. State what is established (H-grade claims), what is suggested (M), and what remains uncertain (L or gaps). This is analytical framing — what the evidence means, not a claim recap. The synthesis must be derivable from the claims listed below it. Do not introduce framing the claims don't support.
