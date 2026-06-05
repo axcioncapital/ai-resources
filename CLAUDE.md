@@ -42,7 +42,7 @@ Existing implementations: `token-audit-auditor`, `token-audit-auditor-mechanical
 
 ## Session Telemetry
 
-Run `/usage-analysis` at the end of every substantive session. Output goes to `logs/usage-log.md` and is the baseline that future token audits measure against — without the data, R14 (telemetry) can't detect whether R1–R13 optimizations moved the needle.
+Run `/usage-analysis` at the end of every substantive session. Output goes to `logs/usage-log.md` and is the baseline that future token audits measure against — without the data, a token audit can't tell whether past efficiency optimizations actually moved the needle.
 
 `/wrap-session` prompts for this automatically. If the session was trivial (single-file edit, one-question read), dismiss with one letter; don't skip by default.
 
@@ -67,7 +67,7 @@ Claude Code permission prompts (Edit / Write / Delete) are managed structurally,
 - Use descriptive commit messages: `new: skill-name — purpose` or `update: skill-name — what changed`
 - Multi-file changes: `batch: description`
 - Never force-push
-- After committing, do NOT push. Pushes are batched until session end and gated by a single operator confirmation prompt (see `## Commit Rules` below). Remind Patrik to wrap the session (`/wrap-session`) if the work is complete.
+- After committing, do NOT push — pushes are batched and gated; see `## Commit Rules` below for the full rule. Remind Patrik to wrap the session (`/wrap-session`) if the work is complete.
 - Default branch: main
 
 ## Commit Rules
