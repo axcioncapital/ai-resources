@@ -656,3 +656,32 @@ _(wrap-collector, 2026-06-05 — routed 1→improvement-log, 1→friction-log)_
 
 ### Open Questions
 None blocking.
+
+## 2026-06-05 — /cleanup-worktree: committed orphaned F4 risk-check (S16)
+
+### Summary
+`/prime` → `/cleanup-worktree` on the ai-resources repo. One dirty path: the untracked S14-orphan risk-check report authorizing change F4 (applied today in `2add1f2`). The full cleanup protocol ran — concurrent-session disclosure (none), investigation, 8-section plan, first QC (PASS) + triage (history-only), quick-tier 2nd-QC-skip — and resolved to a single non-destructive `commit`. Working tree is now clean.
+
+### Files Created
+- `logs/scratchpads/2026-06-05-20-45-scratchpad.md` — continuity scratchpad (gitignored).
+- `~/.claude/plans/witty-hopping-axolotl.md` — cleanup plan (8-section schema; harness plans dir, not in repo).
+
+### Files Modified
+- (none edited — the sole git change is the newly-tracked file below)
+
+### Newly Tracked / Committed
+- `audits/risk-checks/2026-06-05-proposed-change-f4-from-post-project-review-canonical-fix-pl.md` — 90-line GO-verdict risk-check, committed `7b1b153`. Was a never-tracked S14 orphan.
+
+### Decisions Made
+- **Decision = `commit`** (not delete, not gitignore). Grounded in repo convention: `audits/risk-checks/` is not gitignored (only `audits/working/` is); 215 tracked risk-check siblings; file matches the naming convention; not a duplicate; authorizes a change (F4) that landed today. Delete would lose a valid audit record for an applied change; gitignore would contradict the directory-wide tracking convention.
+
+### Risky actions
+None. Single non-destructive commit, zero hard gates. Concurrent-session disclosure returned none. Execution-time guard re-verified the single dirty path before staging; staged by explicit path (no `-A`). No mid-session push.
+
+### Next Steps
+- **Push gate at wrap:** this wrap commit + `7b1b153` + standing unpushed ai-resources backlog.
+- **`/resolve-improvement-log`** — 3+ newly-verified entries (from S15 item 1) qualify for archival.
+- **1M-credit block** — enable usage credits or switch to a standard-context `/model` before the next subagent-heavy session.
+
+### Open Questions
+None blocking.

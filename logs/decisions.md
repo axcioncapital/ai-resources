@@ -79,3 +79,15 @@
 - **Alternatives.** (a) Create the trio per the plan/friction request — rejected (contract violation). (b) Do nothing (downstream already hard-fails) — rejected (the nudge surfaces the gap earlier, before a markerless entry or a hard-fail).
 
 **Decided by:** Claude recommendation (decision-point posture) + risk-check + SO second opinion; conflicts surfaced per workspace "conflicts must be surfaced, not silently resolved." All premises verified live against the command files.
+
+## 2026-06-05 (S16) — Orphaned F4 risk-check: commit, not delete/gitignore
+
+**Context.** `/cleanup-worktree` found one dirty path — an untracked S14-orphan risk-check report (`audits/risk-checks/2026-06-05-proposed-change-f4-*.md`, GO verdict) that authorized change F4, which was applied today (`2add1f2`). The `/prime` carryover framed it as "commit or delete."
+
+**Decision.** Commit it (landed `7b1b153`).
+
+**Rationale.** Repo convention is decisive: `audits/risk-checks/` is NOT gitignored (only `audits/working/` is, .gitignore line 25); 215 risk-check reports are already tracked; the file matches the `YYYY-MM-DD-<desc>.md` naming exactly; it is not a duplicate (the two tracked `f4`-named risk-checks cover unrelated changes); and it is the authorizing audit record for a change that shipped. Deleting the authorizing record while keeping the applied change is the wrong asymmetry.
+
+**Alternatives.** (a) Delete — rejected: loses a valid audit record for an applied change. (b) Gitignore `audits/risk-checks/` — rejected: contradicts the directory-wide tracking convention (215 committed siblings).
+
+**Decided by:** Claude recommendation (decision-point posture), validated by independent qc-reviewer (PASS) + triage-reviewer (history-only; commit confirmed correct) inside the `/cleanup-worktree` protocol.
