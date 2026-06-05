@@ -64,9 +64,15 @@ Do not treat assumptions as facts. If output relies on an assumption, flag it ex
 - [Unknown 2] — impact if missing: [blocking / can proceed with flag]
 
 ### Inputs Available
-[Specific documents, notes, or data provided. The executing AI should reference only these.]
-- [Document 1]: [brief description]
-- Or: "No source documents provided — use general knowledge only"
+[Specific documents, notes, or data provided. The executing AI should reference only these. Tag every input with an authority level so the downstream `/plan-draft` can rank sources and the harness can apply its context-loading budget.]
+
+**Authority levels:**
+- **primary-authority** — binding source; overrides other inputs on conflict (signed contract, audited statement, operator's stated decision).
+- **reference** — consult as needed; useful but not the final word (framework doc, prior draft, published research).
+- **non-authoritative** — background only; do not cite as evidence (archived version, preliminary note, training-data general knowledge).
+
+- [Document 1]: [brief description] — [primary-authority | reference | non-authoritative]
+- Or: "No source documents provided — use general knowledge only (non-authoritative)"
 
 ### Constraints
 [Non-negotiables, limitations, rules, deadlines, sensitivities]
@@ -94,17 +100,14 @@ The Facts/Assumptions/Unknowns separation is the core discipline of this skill. 
 
 ### Probe for Missing Clarity
 
-If the user dumps information without labeling, ask:
-- "Which of these are verified facts vs. your working assumptions?"
-- "Are there things you don't know that might affect this task?"
-- "What source documents will the executing AI have access to?"
+If the user dumps information without labeling, probe its epistemic status using the facts-vs-assumptions, unknowns, and source-document questions in the Step 2 question bank below — surfaced from here because epistemic classification is the core discipline.
 
 ### Validate Before Finalizing
 
 - [ ] Every item in Facts has a source
 - [ ] Assumptions are labeled with why they need validation
 - [ ] Unknowns are assessed for blocking impact
-- [ ] Inputs Available lists exactly what the executing AI can reference
+- [ ] Inputs Available lists exactly what the executing AI can reference, each tagged with an authority level
 
 ### Evidence Table (High-Stakes Packs)
 
@@ -200,7 +203,7 @@ Tighten language. Remove ambiguity.
 - [ ] Facts have sources
 - [ ] Assumptions are labeled
 - [ ] Unknowns are assessed for blocking impact
-- [ ] Inputs Available lists what the executing AI can reference
+- [ ] Inputs Available lists what the executing AI can reference, with authority tags
 
 **Output:** Refined context pack draft.
 

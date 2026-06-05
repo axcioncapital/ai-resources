@@ -43,13 +43,14 @@ Required inputs:
 - **Repo snapshot** (`repo-snapshot.md` from Stage 3a)
 
 Optional inputs:
+- **Context pack** (`context-pack.md` — copied into `pipeline/` by `/new-project` from the project-planning workspace) — the original mandate and scope intent; cite it to trace each operation back to a stated requirement.
 - **Technical spec** (`technical-spec.md` — copied into `pipeline/` by `/new-project` from the project-planning workspace) — for component behavior details
 - **Decisions log** (`decisions.md`) — for constraints from earlier stages
 - **Project plan** (`project-plan.md` — copied into `pipeline/` by `/new-project` from the project-planning workspace) — for context on requirements
 
 The repo snapshot provides the current filesystem state. The architecture document provides the target state. The implementation spec bridges the gap.
 
-**Project baseline template:** If the architecture document references baseline components or modules from `templates/project-baseline/`, read the specific template files it references. These provide canonical patterns for common components (CLAUDE.md structure, settings.json, commands, agents, hooks). Use them as starting points — resolve `{{PLACEHOLDER}}` markers with project-specific values rather than writing from scratch.
+**Project baseline templates:** If the architecture references canonical project scaffolding, the real templates live at `templates/project-claude-md/` (the four constant CLAUDE.md section fragments — `input-file-handling.md`, `commit-rules.md`, `compaction.md`, `session-boundaries.md` — plus `header.md`) and `templates/project-settings.json.template` (the canonical permissions block + two SessionStart hooks). Read `templates/README.md` for the consumer contract. These are **constant fragments**, not a `{{PLACEHOLDER}}`-resolution system: only `header.md` carries substitution tokens (`{{NAME}}` / `{{PROJECT_DESCRIPTION}}`); the four CLAUDE.md fragments and the settings template are copied/merged as-is and must never be globally search-replaced. `/new-project`'s enrichment steps are the reference consumer — mirror their idempotent-append model (CLAUDE.md sections) and jq-merge model (settings), not a placeholder-resolution pass.
 
 ---
 
@@ -223,6 +224,7 @@ Read the architecture document, repo snapshot, and any other available artifacts
 - Current state (repo snapshot)
 - Target state (architecture document)
 - The delta between them
+- Original mandate (context pack, if present) — so each operation can be traced back to a stated requirement
 
 ### Step 2: Resolve File Paths
 
@@ -252,12 +254,10 @@ If the project's specific dependencies require deviating from this default seque
 
 For every component in the architecture, produce one operation block following the templates above. Be exhaustive — if the architecture says "create a skill called X," the operation must specify frontmatter, sections, key behaviors, and verification steps.
 
-**Baseline template integration:** For components that come from the project baseline template (`templates/project-baseline/`), read the corresponding template file and adapt it:
-- Resolve all `{{PLACEHOLDER}}` markers with project-specific values from the project plan and architecture
-- For modules with `settings-additions.json`, merge the hook entries into the base settings.json operation
-- For modules with `claude-md-additions.md`, merge the sections into the CLAUDE.md operation
-- The resolved content goes into the operation block — the implementer never sees `{{PLACEHOLDER}}` markers
-- For multi-level projects: produce a root CLAUDE.md operation using the `baseline/root-claude.md` template. This operation should come first in the sequence (before subproject operations), since it creates the project root directory.
+**Baseline template integration:** When the architecture pulls in canonical scaffolding, emit operations that follow the real template contract (locations and substitution model are in Input Expectation above and `templates/README.md`):
+- **CLAUDE.md sections:** the four fragments under `templates/project-claude-md/` are constants — emit an operation that appends each section idempotently (skip if its heading already exists), exactly as `/new-project` step 4 does. Do not "resolve placeholders"; these fragments carry none.
+- **settings.json:** `templates/project-settings.json.template` carries the canonical permissions block and two SessionStart hooks — emit a jq-merge operation (gated on an empty `.permissions.allow`), mirroring `/new-project` step 2. Do not hand-edit JSON as strings.
+- **Fresh CLAUDE.md only:** `header.md` is the one fragment with substitution tokens (`{{NAME}}` / `{{PROJECT_DESCRIPTION}}`), resolved once at file creation.
 
 **Critical rule:** If the architecture is ambiguous about a component's behavior, do NOT fill in the gap with your own interpretation. Instead, flag it:
 
@@ -267,14 +267,9 @@ For every component in the architecture, produce one operation block following t
 
 Compile verification items from every individual operation into a consolidated checklist.
 
-### Step 6: Review with User
+### Step 6: Finalize and Hand Off
 
-Present the draft spec. Ask:
-- "Does the operation order make sense?"
-- "Are there any operations that seem unnecessary or missing?"
-- "Are the architecture gaps I've flagged (if any) acceptable or do they need resolution first?"
-
-Incorporate feedback and finalize.
+Hand the completed spec back to the Stage 3c gate. Approval is owned by the `/new-project` gate protocol and the upstream Architecture Gate — not by an in-skill Q&A — so do not pose rubber-stamp review questions here (that contradicts the workspace decision-point posture). If you flagged any architecture gaps in Step 4, surface them now as the handoff's blocking items so the gate can route them to the operator and record them in `decisions.md`; otherwise hand off the finalized spec.
 
 ---
 

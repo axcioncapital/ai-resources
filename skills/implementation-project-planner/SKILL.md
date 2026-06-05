@@ -5,8 +5,10 @@ description: >
   process guidance for all project types when invoked by `/plan-draft`. Use when: (1) the user
   needs a Claude Code implementation plan (skills, agents, commands, CLAUDE.md changes), or
   (2) `/plan-draft` needs guidance on assigning autonomy tiers, authority rankings, session
-  packaging, and harness fields to any project plan. Do NOT use for research project planning
-  (use task-plan-creator) or general task planning outside the project-planning pipeline.
+  packaging, and harness fields to any project plan. Do NOT use for STANDALONE research or
+  general task planning outside the project-planning pipeline (use task-plan-creator). This
+  exclusion applies only to direct invocation — when invoked via `/plan-draft`, this skill
+  provides process guidance for project plans of any type, research included.
 model: opus
 effort: high
 ---
@@ -48,6 +50,8 @@ You may also have access to the `axcion-ai-resources` repo (via --add-dir or sym
 ---
 
 ## Implementation Project Plan Structure
+
+> **Structural authority:** `projects/project-planning/pipeline/ref-project-plan.md` owns the **generic project-plan schema** (its Required Elements 1–8) and is the single source of truth wherever the two overlap — element ordering, work-unit fields, the harness-ready fields. When `/plan-draft` runs, it reads `ref-project-plan.md` first (for structure) and this skill second (for process). The sections below add **Claude-Code-infrastructure-specific** structure the reference does not carry (Component Inventory, Build Staging, Integration Considerations, the spec-cycle Complexity indicators) — those are owned here. Where a *shared* structural concern diverges, the reference wins: fix it there, not here. Do not treat this section list as a standalone canonical schema on its own — and do not expect a matching reference element for the CC-specific sections.
 
 Every plan contains these sections in order:
 

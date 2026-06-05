@@ -82,10 +82,6 @@ Planning artifacts (context pack, project plan, optional technical spec) are pro
    # - Token set (closed): PASS | PASS-WITH-WAIVER | BLOCK-DRIFT | FAIL.
    # - The regex `^\*\*Verdict:\*\*\s+\**PASS` matches PASS and PASS-WITH-WAIVER (PASS-prefix);
    #   BLOCK-DRIFT and FAIL correctly fall through to the WARN branch below.
-   # - The four-section schema below the verdict line in plan-qc-verdict.md (Structural QC,
-   #   Drift QC, Combined verdict, Operator waiver) is parsed by /spec-draft, NOT by this
-   #   command. The same four-section schema appears in spec-qc-verdict.md for architectural
-   #   consistency but has no current downstream consumer.
    # - Do not extend or modify this regex without coordinating with the verdict-write step in
    #   BOTH producers: projects/project-planning/.claude/commands/plan-evaluate.md (Step 6)
    #   AND projects/project-planning/.claude/commands/spec-evaluate.md (Step 6).
@@ -623,7 +619,7 @@ chore: add projects/{name}/ to workspace root .gitignore
 
 Project now has its own standalone repo per workspace convention.
 
-Co-Authored-By: Claude Sonnet 4.6 (1M context) <noreply@anthropic.com>
+Co-Authored-By: Claude <noreply@anthropic.com>
 EOF
 )"
    ```
@@ -639,7 +635,7 @@ init: initial commit — {name} project
 
 Establishes standalone repo via /new-project pipeline.
 
-Co-Authored-By: Claude Sonnet 4.6 (1M context) <noreply@anthropic.com>
+Co-Authored-By: Claude <noreply@anthropic.com>
 EOF
 )"
    ```
@@ -649,11 +645,11 @@ EOF
    - Workspace root index: cleaned up N files / already untracked
    - `.gitignore`: updated / already present
    - Project repo: initialized, initial commit with N files
-   - **Push:** if the GitHub repo exists, push the initial commit (`git -C projects/{name} push -u origin main`); otherwise report "GitHub repo not yet created — push will happen after operator creates it."
+   - **Push:** do NOT push here. Per the workspace gated-push rule (inverted 2026-05-29), the initial commit stays local — pushes are batched to session end and confirmed via a single operator prompt at `/wrap-session` (or an explicit "ship it"). Report: "Initial commit created locally and left unpushed. It will be pushed at `/wrap-session` with the rest of the session's batch (the operator confirms the push then). If the GitHub repo does not exist yet, create it before wrap so the push target resolves."
 
 ### Report
 
-Report what was created: manifest path, settings.json modifications (permissions block, SessionStart hook, `additionalDirectories` grant), CLAUDE.md state (created / appended / already present), `logs/decisions.md` scaffold (created / already present), the list of files the initial sync symlinked, the canonical command verification result (all 10 present / N missing), and the git setup result (remote, initial commit, workspace root `.gitignore`, initial push). From this point on, any new command added to `ai-resources/.claude/commands/` will be available in this project on the next session start automatically, and skills under `ai-resources/skills/` are reachable via the filesystem grant.
+Report what was created: manifest path, settings.json modifications (permissions block, SessionStart hook, `additionalDirectories` grant), CLAUDE.md state (created / appended / already present), `logs/decisions.md` scaffold (created / already present), the list of files the initial sync symlinked, the canonical command verification result (all 10 present / N missing), and the git setup result (remote, initial commit, workspace root `.gitignore`, and that the initial commit was left **unpushed** — it ships at `/wrap-session` with the gated-push batch). From this point on, any new command added to `ai-resources/.claude/commands/` will be available in this project on the next session start automatically, and skills under `ai-resources/skills/` are reachable via the filesystem grant.
 
 ## Key Rules
 
