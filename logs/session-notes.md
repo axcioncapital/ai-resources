@@ -370,3 +370,40 @@ A live concurrent session (S9) was editing the same shared files mid-session (9 
 
 ### Open Questions
 None blocking.
+
+## 2026-06-05 — Session S11
+**Mandate:** Add a grounding-absence stop-and-flag branch to system-owner and sibling advisory agents that self-resolve, so a missing persona/principles grounding base halts the agent instead of being silently worked around — done when: the branch is written into system-owner.md plus every confirmed sibling agent and /qc-pass returns GO
+- Out of scope: any edit to logs/improvement-log.md, the Friday-cadence commands, fix-repo-issues.md, resolve-improvement-log.md, docs/session-marker.md (live concurrent session's lane); the improvement-log #14 status flip (deferred until the concurrent session commits)
+- Files in scope: .claude/agents/system-owner.md + sibling advisory agents that self-resolve from absent grounding (inferred)
+- Stop if: the fix would require editing any file outside .claude/agents/ (would cross into the concurrent session's lane)
+Run the System Owner ungrounded-escalation fix (#14) — make advisory agents stop and flag when grounding (persona/principles files) is absent instead of quietly self-resolving.
+
+### Summary
+Completed Task 3 from the /prime menu — the System Owner ungrounded-escalation fix (#14). Advisory agents that depend on a reference corpus now stop-and-flag when a REQUIRED grounding file is absent on disk, instead of silently producing ungrounded advice (the 2026-06-02 incident). The risk-check's system-owner second opinion sharpened the design from "required-vs-optional files" to a deeper invariant — **verify grounding state from the filesystem before acting; halt only on a verified Read-failure of a REQUIRED file**, with required-vs-optional as the partition under it. Ran strictly in the `.claude/agents/` lane, disjoint from a live concurrent maintenance-pipeline session.
+
+### Files Created
+- `audits/risk-checks/2026-06-05-advisory-agent-grounding-absent-stop-and-flag-escalate.md` — risk-check report (PROCEED-WITH-CAUTION) + architectural commentary (system-owner 2nd opinion) + documented behavioral smoke test.
+- `logs/session-plan-2026-06-05-S11.md` — session plan.
+- `logs/scratchpads/2026-06-05-15-40-scratchpad.md` — continuity scratchpad (gitignored).
+
+### Files Modified
+- `.claude/agents/system-owner.md` — new "Phase 1.5 — Verify grounding before acting" (REQUIRED Read-failure → HALT; OPTIONAL miss → proceed-degraded with note; trust the Read result, not an asserted state). Split the former "Decline-when-ungrounded — concrete shape" into Shape 1 (GROUNDING UNAVAILABLE) and Shape 2 (unchanged DECLINE).
+- `.claude/agents/expert-check-reviewer.md` — separated GROUNDING UNAVAILABLE (KB absent/unreadable/zero-candidate on disk) from NO APPLICABLE REFERENCE (topic miss, corpus present); added the outcome to the Output Format header + a parallel format note.
+
+### Decisions Made
+- **project-manager.md NO-EDIT** — audited and confirmed it already does verify-before-act (Phase 2 globs/reads; Fallback 5c halts on a verified zero-glob, separate from 5a topic-decline; steering-override verifies via Read). Adding a fourth fallback would duplicate 5c. QC independently verified the call.
+- **Deeper invariant adopted over the original framing** — accepted the system-owner second opinion: verify-before-act is the primary lever; required-vs-optional is its partition; the halt fires only on a verified Read-failure of a REQUIRED file (never on asserted state or a thin topic match).
+- **Smoke test documented, not coded** — agent halt behavior can't be unit-tested mechanically; recorded the 7 behavioral scenarios (which halt, which don't) in the risk-check report instead.
+- **Stayed in-lane on the deferred items** — did NOT edit `expert-check.md` (outside the `.claude/agents/` mandate scope) nor `improvement-log.md` (concurrent session's file); both recorded as Next Steps.
+
+### Risky actions
+A live concurrent "maintenance-pipeline discipline batch" session held uncommitted edits across `.claude/commands/` + `logs/improvement-log.md` throughout. Mitigated by: strict `.claude/agents/` lane discipline (zero file overlap), explicit-path-only staging on commit `e1a60d6` (never `git add -A`), and the Step 3.5 pre-write guard returning FOREIGN=0 (marker-aware, per-id marker `S11` resolved clean). One self-corrected near-miss: I asserted the vault grounding files were absent based on a wrong-path `ls`; the system-owner agent verified the filesystem and correctly refused the false claim — no bad output shipped. No irreversible action.
+
+### Next Steps
+- **Flip improvement-log #14 → applied** (reference commit `e1a60d6`) — HELD until the concurrent maintenance-pipeline session commits its `logs/improvement-log.md` edits, then append the status flip cleanly.
+- **Add `GROUNDING UNAVAILABLE` to `.claude/commands/expert-check.md` Step 4** token list — doc-drift cleanup, non-blocking (command presents output verbatim); was outside this session's `.claude/agents/` lane.
+- **`/resolve-improvement-log`** — accumulated resolved/decided entries (standing carryover).
+- **Commit the S10 leftover** `logs/improvement-log-archive.md` (still uncommitted from S10).
+
+### Open Questions
+None blocking.
