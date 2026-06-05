@@ -455,3 +455,35 @@ None. Decision-only: no edits to engine commands/agent/schema, no deletions, no 
 
 ### Open Questions
 None blocking.
+
+## 2026-06-05 — Concurrency Decision (C3 / Flag #8) ratified + full doc close-out
+
+### Summary
+Implemented the "Concurrency Decision" item from the strategic-os AI strategy plan (framed there as **DECIDE — conditional BUILD**: engineer around concurrent-session risks vs. change the working pattern). Research during `/clarify` surfaced a conflict — the technical fix was **already shipped** (Option 2′ CLAUDE_CODE_SESSION_ID-keyed marker, 2026-06-01, all 9 consumers migrated, QC GO), but the strategy docs still described C3 as an un-built env-var candidate. Surfaced the conflict per the workspace conflict-surfacing rule; operator chose (via AskUserQuestion) to **ratify the technical route + close the item**, with a **full close-out** (decision record + reconcile all stale strategy docs + tidy improvement-log). Recorded a deliberate decision and reconciled six strategy docs so no C3/concurrency clause still reads as un-decided or un-built. Flow: `/clarify` (3 Explore agents) → AskUserQuestion → plan → 2× `/qc-pass` (both REVISE→fixed) → execute → 5-check verification → 2 commits.
+
+### Files Created
+- `logs/scratchpads/2026-06-05-16-10-scratchpad.md` — continuity scratchpad.
+
+### Files Modified
+- `logs/decisions.md` — new entry `## 2026-06-05 — Concurrency (C3 / Flag #8): ratify technical route…`. (Committed in `6b1a120` by a concurrent session alongside its Context-Engine Slot-7 cross-ref; both entries in HEAD.)
+- `logs/improvement-log.md` — Status line of the 2026-05-29 marker-clobber guard entry → Option 2′ SHIPPED + strategic decision CLOSED 2026-06-05; marked archive-eligible. Date-rollover REMNANT follow-up (~line 249) left intact. (Committed `cf9c2ac`.)
+- `projects/strategic-os/ai-strategy/ai-strategy-governing-document.md` — decision-table row, slot-2, slot-6, appendix bullet → DECIDED/SHIPPED/void. (Committed `c439a74`.)
+- `projects/strategic-os/ai-strategy/ai-operator-roadmap.md` — Slot 2 + Slot 6 reconciled. (`c439a74`.)
+- `projects/strategic-os/ai-strategy/ai-infrastructure-current-state.md` — R6 finding, decision-table row 8, weak-points friction bullet → CLOSED. (`c439a74`.)
+- `projects/strategic-os/ai-strategy/working/candidate-backlog-notes.md` — C3 inventory row → SHIPPED/CLOSED. (`c439a74`.)
+- `projects/strategic-os/ai-strategy/candidate-backlog.md` + `implementation-tracker.md` — C3 changes picked up by the concurrent Slot-7 commit `1801e4a` (~14s before mine).
+
+### Decisions Made
+- **Concurrency (C3 / Flag #8): technical route ratified, item CLOSED.** Concurrent multi-session work is a real recurring pattern → the shipped Option 2′ marker stays as the standing mechanism; `parallel-sessions-playbook.md` is the operational complement (not a substitute); no further concurrency build is queued (maintenance-only). Alternatives rejected: process-primary/freeze-tech (multi-session is the actual daily pattern) and rollback (fix is QC'd, concurred, and hardened). Full record in `logs/decisions.md` 2026-06-05. Decided by operator directive grounded in shipped-state evidence.
+- QC fixes (round 1): added 2 missing strategy docs to the edit set (ai-operator-roadmap, ai-infrastructure-current-state) + `**Decided by.**`→`**Decided by:**`. QC fix (round 2): residual stale clause at current-state.md weak-points section.
+
+### Risky actions
+None. Documentation/decision task only — no structural change class, so no `/risk-check` gate (correctly skipped). All commits used explicit-path staging. Notable: this session ran concurrently with at least two others today (the decisions.md + candidate-backlog/tracker C3 edits were committed by *parallel* sessions' commits `6b1a120`/`1801e4a`, not mine) — a live instance of the exact concurrency pattern this decision ratifies; the wrap Step 3.5 guard passed cleanly (FOREIGN=0, all foreign content already in HEAD). No deletions, no pushes, no prompt injection.
+
+### Next Steps
+- **Push pending** — 2 unpushed commits this session (`cf9c2ac` ai-resources, `c439a74` strategic-os), plus prior unpushed commits in ai-resources.
+- **Archive-eligible:** the 2026-05-29 marker-clobber entry in `improvement-log.md` is now archive-eligible — `/resolve-improvement-log` candidate.
+- **Carryover (unchanged):** `.claude/` git-hygiene implementation (gated, needs own `/risk-check`); 4 parked inbox build briefs; the deferred governing-document §6 line-256 doc-currency restatement (from the parallel Slot-7 session).
+
+### Open Questions
+None blocking.
