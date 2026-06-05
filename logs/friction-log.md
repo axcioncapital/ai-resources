@@ -144,3 +144,11 @@
 
 #### Write Activity
 - This session staged only its own work by explicit path: `CLAUDE.md` (id-08), `logs/improvement-log.md` (dispositions), the risk-check report, and `logs/friction-log.md` (this entry). The pre-existing uncommitted `logs/improvement-log-archive.md` (S10 leftover) was left untouched — not this session's file.
+
+## Session — 2026-06-05 (S15)
+
+### Friction Events
+
+- **[wrap-collector]** wrap (S15) — **Friction type: config.** The `qc-reviewer` subagent failed on three consecutive model-override attempts (opus/sonnet/haiku) with "Usage credits required for 1M context." The harness forces 1M context onto all subagents; when a 1M-context session's credits are exhausted by earlier subagent calls (risk-check + system-owner), no further subagent can spawn for the remainder of the session regardless of per-dispatch model overrides. The QC-independence gate was silently unreachable with no pre-dispatch warning. Self-QC was used as fallback and caught a real gap (8c.1 parser); no content lost. The friction class: session-level 1M-credit exhaustion silently blocks any subagent-dependent gate (QC, outcome-check, feedback-collector) with no proactive warning before the gate is exercised. Routed to improvement-log 2026-06-05 ("QC-independence gate unreachable when 1M-context credits exhausted at session level") as a guardrail-candidate (low severity).
+
+#### Write Activity

@@ -65,3 +65,17 @@
 **Alternatives considered.** (a) Build the scanner-layer reconciliation pass as the mandate literally asked — rejected: duplicate + wrong layer. (b) Skip logging entirely since the fix exists — rejected: without a resolution record, the next `/improve`/Friday-act re-reads the same friction and re-proposes the rejected fix (the dead-candidate waste applied to the meta-process); without the friction annotation, both backlog scanners re-extract the dead finding every run. (c) On the collision, wrap S13 first (option A) — operator chose to have me commit S14 surgically (option B) since S13 was unwrapped/stalled.
 
 **Decided by:** Claude recommendation (decision-point posture) + improvement-analyst finding, all claims verified live (commits, file existence, scanner tool list, no-duplicate). Operator approved option B for the collision. Deliverable committed under `2bc89d9`; this wrap commits S14 notes only.
+
+## 2026-06-05 (S15) — /fix-repo-issues plan: two items deviated from the written plan
+
+**Context.** Auto-mode executed the 4-item `/fix-repo-issues` plan. Risk-check (PROCEED-WITH-CAUTION) + SO second opinion (split-by-item) surfaced that two items rested on premises conflicting with live canonical state.
+
+**Decision 1 — Item 2 (wrap-session Step 3.5) NOT edited.** Diagnosed the chained-task false-positive as already prevented by the marker-aware own-subtraction (wrap-session.md lines 168–197), which landed with id-31 Phase 2 — the exact resolution the 2026-05-28 14:20 friction predicted. Closed as already-resolved.
+- **Rationale.** Editing a High load-bearing detector on a stale premise risks regressing existing branches + drifting the workspace-root paired copy. The plan's premise (a live false-positive) was disproven by reading the code. SO + risk-check both endorsed diagnosis-first.
+- **Alternatives.** (a) Edit Step 3.5 per the plan — rejected (would re-anchor working logic on a resolved premise). (b) Defer pending re-diagnosis — unnecessary; the diagnosis resolved cleanly in-session.
+
+**Decision 2 — Item 4 (/clarify markerless) reshaped to nudge-only.** The plan asked `/clarify` to create the marker-trio; applied a detect-and-nudge-only check instead.
+- **Rationale.** `docs/session-marker.md` (line ~100) designates `/prime` the SINGLE marker creator; `/session-start` does not create it either (it hard-fails and points to `/prime`). A `/clarify` creator would violate the single-source contract and require unvetted changes to the `/prime`-anchored reader logic. The nudge is the canon-faithful realization of the friction's intent.
+- **Alternatives.** (a) Create the trio per the plan/friction request — rejected (contract violation). (b) Do nothing (downstream already hard-fails) — rejected (the nudge surfaces the gap earlier, before a markerless entry or a hard-fail).
+
+**Decided by:** Claude recommendation (decision-point posture) + risk-check + SO second opinion; conflicts surfaced per workspace "conflicts must be surfaced, not silently resolved." All premises verified live against the command files.

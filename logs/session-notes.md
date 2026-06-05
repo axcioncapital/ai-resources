@@ -609,3 +609,50 @@ None blocking.
 - Stop if: (none stated)
 
 Execute the /fix-repo-issues 4-item fix plan (audits/fix-plans/fix-repo-issues-2026-06-05-1918.md): add Verified fields to 3 improvement-log entries (id-11/12/13); fix wrap-session Step 3.5 chained-task false-positive (id-05); fix prime Step 7 N-auto/auto-N parser (marketing id-02); add marker-trio to /clarify preamble (research-pe id-09).
+
+### Summary
+Auto Mode (`/prime` → `2 auto` → `auto 2`) executed the `/fix-repo-issues` 2026-06-05 4-item fix plan under one approval gate. Risk-check returned PROCEED-WITH-CAUTION; the System Owner second opinion split the verdict by item. Final: item 1 applied (3 Verified fields); item 2 diagnosed already-resolved (no edit); item 3 applied (prime `N auto` parser + a companion 8c.1 fix); item 4 applied but reshaped to nudge-only. Committed across 4 repos. Independent QC was environmentally blocked (1M-context credit exhaustion); inline self-QC was used and caught a real gap.
+
+### Files Created
+- `logs/scratchpads/2026-06-05-19-50-scratchpad.md` — continuity scratchpad (gitignored).
+- `logs/session-plan-2026-06-05-S15.md` — marker-scoped session plan.
+- `audits/risk-checks/2026-06-05-execute-fix-repo-issues-2026-06-05-4-item-fix-plan-harness.md` — risk-check report (PROCEED-WITH-CAUTION) + SO architectural commentary appended.
+- `projects/axcion-ai-system-owner/output/consultations/consult-2026-06-05-risk-check-second-opinion-fix-repo-issues-4-item.md` — SO second-opinion advisory (committed `4821333`).
+
+### Files Modified
+- `.claude/commands/prime.md` — Step 7 new `N auto` classifier branch + Step 8c.1 companion recognition (item 3). Committed `b801096`.
+- `.claude/commands/clarify.md` — new Step 0 detect-and-nudge-only marker check (item 4, reshaped). Committed `b801096`.
+- `logs/improvement-log.md` — 3 `**Verified:**` fields (item 1) + new S15 applied-record entry. Committed `b801096`.
+- `logs/friction-log.md` — item 2 resolution annotation on the 2026-05-28 14:20 entry. Committed `b801096`.
+- `projects/marketing-positioning/logs/friction-log.md` — item 3 FADING-GATE annotation. Committed `26cd30d`.
+- `projects/research-pe-regime-shift-advisory-gap/logs/friction-log.md` — item 4 partial-resolution annotation. Committed `a6c612e`.
+
+### Decisions Made
+- **Item 2 — diagnosis, not edit.** Confirmed the chained-task false-positive is already prevented by the marker-aware own-subtraction (lines 168–197). Editing a High load-bearing detector on a stale premise was avoided. SO + risk-check both endorsed diagnosis-first.
+- **Item 4 — reshaped to nudge-only.** The plan's "create marker-trio" would make `/clarify` a second marker creator, violating the single-source-creator contract (`session-marker.md` line ~100). Applied a detect-and-nudge instead. Conflict surfaced per workspace "conflicts must be surfaced" rule.
+- **Item 3 — companion 8c.1 fix.** Self-QC found Step-7 routing alone left 8c.1 unable to parse the `N auto` literal; added the recognition to 8c.1.
+- **QC fallback to inline self-check.** Independent qc-reviewer blocked by 1M-credit exhaustion (3 model overrides tried); self-QC ran against the stated scope and fixed the 8c.1 gap.
+
+### Outcome
+**COMPLETION: DELIVERED** — all 4 items closed; the two intentional deviations (item 2 no-edit, item 4 reshape) met the mandate's intent. Verified live: improvement-log Verified fields (L239/267/276), prime.md L170 + L275, clarify.md L7–14 nudge-only, improvement-log S15 record L317.
+**EXECUTION: ACCEPTABLE** — inline self-QC functioned (caught the 8c.1 gap that would have stalled auto-mode), but the inability to get an independent eye on a load-bearing harness command (prime.md) is a real process gap, not a full substitute. No rework loops or over-build. Better path: none for the work itself — the QC failure was environmental, not a judgment error. Confidence: high.
+
+### Risky actions
+None destructive. One near-miss class: independent QC could not run (1M-context credit exhaustion forced an inline self-QC fallback on command-harness edits) — a process gap, not a data risk; self-QC caught the one material gap. Concurrent-session guard checked clean (FOREIGN=0; S15 content already in HEAD via `b801096`). No mid-session push. The pre-existing untracked S14 orphan `audits/risk-checks/2026-06-05-proposed-change-f4-*.md` and prior-session untracked SO consult files were left untouched (not this session's).
+
+### Session Assessment
+_(wrap-collector, 2026-06-05 — routed 1→improvement-log, 1→friction-log)_
+- **Autonomy-compounding:** the structural harness fixes (prime N-auto parser + clarify nudge) compound into every future auto-mode session; the self-QC-caught 8c.1 fix shows the value of the independence check; no speculative work.
+- **Leanness/cost:** Opus-tier subagents (risk-check + SO) exhausted 1M credits before the QC gate could run; no over-build or rework; no always-loaded weight added.
+- **Principle-drift:** item 4 reshape correctly enforced the single-source-creator contract where the plan's spec would have violated it — principle enforced, not drifted.
+- **Friction (config):** QC-independence gate silently unreachable — 1M-context credit exhaustion blocked qc-reviewer on three model-override attempts. Routed to friction-log.
+- **Safety (low):** QC-independence gate unreachable for the session's remainder once 1M credits exhausted; self-QC fallback functioned and caught one real gap; no destructive action. Routed to improvement-log as guardrail-candidate (low).
+
+### Next Steps
+- **Push gate at wrap:** ai-resources (`b801096` + wrap commit) + marketing-positioning (`26cd30d`) + research-pe (`a6c612e`) + axcion-ai-system-owner (`4821333`), plus the standing unpushed ai-resources backlog.
+- **`/resolve-improvement-log`** — now +3 newly-resolved entries (item 1) on top of the standing accumulation; archive when convenient.
+- **Direct-work-command markerless leg (id-09 candidate b)** — parked; a work-command entry skipping both `/prime` and `/clarify` still writes markerless entries. Dedicated session if it recurs.
+- **1M-credit block** — enable usage credits or switch to a standard-context `/model` before the next subagent-heavy session.
+
+### Open Questions
+None blocking.
