@@ -341,3 +341,32 @@ Harden the wrap-session.md Step 3.5 NO_OWN_MARKER guard so a partial-marker-setu
 - Files in scope: skills/ai-resource-builder/SKILL.md, logs/improvement-log.md
 - Stop if: (none stated)
 Run `/improve-skill` on the `ai-resource-builder` skill to add a consumer-inventory checklist (id-40 + S7 strengthening entry) — prevents the rename-rework class.
+
+### Summary
+Auto-mode (picked menu item #2). Shipped the **pre-spec Consumer-Inventory Gate** into `skills/ai-resource-builder/SKILL.md` via `/improve-skill`, folding three pending improvement-log entries (id-40 + the S7 strengthening + the 2026-05-29 SO-advisory precursor) into ONE gate that fires when a spec renames/removes a resource path. Independent QC GO (one MINOR fix applied). Then handled a **live concurrent-session collision** with S9 (active on `improvement-log.md` + both `wrap-session.md` copies) by explicit-path staging + deferring the 3 status-flips until S9 committed, and logged an AUTO `/resolve-repo-problem` triage on the root cause (the concurrent-detected shared-dir advisory scans `.claude/commands docs` but not `logs/`, so the non-append `improvement-log.md` lost-update surface is invisible to the session brief).
+
+### Files Created
+- `logs/scratchpads/2026-06-05-14-35-scratchpad.md` — continuity scratchpad (gitignored).
+- `logs/session-plan-2026-06-05-S10.md` — session plan (auto-mode).
+
+### Files Modified
+- `skills/ai-resource-builder/SKILL.md` — new `## Consumer-Inventory Gate (rename/remove specs)` section + a pointer bullet in the Improve Workflow Step 2 breaking-change detection (444/500 lines). Commit `afad146`.
+- `logs/improvement-log.md` — flipped 3 entries (id-40, S7-strengthening, 2026-05-29 precursor) `logged (pending)` → `applied (S10)` with commit ref `afad146` (commit `10f197f`); appended the AUTO `/resolve-repo-problem` triage entry (swept into `dd618d4`).
+
+### Decisions Made
+- **Placement:** gate goes in the SKILL.md **body** (near Step 2 breaking-change detection), not a reference file — the failure mode is the step getting *missed*, so an on-demand reference would undercut the fix. Resolves the 2026-05-29 entry's open placement question (SKILL.md vs new doc) to SKILL.md.
+- **Collision handling:** committed only the isolated `SKILL.md` deliverable mid-session; deferred the 3 improvement-log flips rather than race the live S9 session on a shared non-append log. Flipped them after S9 committed `dd618d4`.
+- **Did NOT commit S9's leftover** `logs/improvement-log-archive.md` (the archive-half of S9's de-dup) — foreign work; flagged for S9's owner instead.
+- QC MINOR fix: added a glob-reader stem-anchor caveat ("safe unless the rename changes the stem the glob anchors on").
+
+### Risky actions
+A live concurrent session (S9) was editing the same shared files mid-session (9 Claude processes); the harness modified-since-read guard fired once on the triage append — retried cleanly, no clobber. All writes were explicit-path-staged or new-content appends; no foreign content was staged or clobbered. Step 3.5 pre-write guard returned FOREIGN=0 (own S10 content already in HEAD via `dd618d4`). No irreversible action.
+
+### Next Steps
+- **Execute the AUTO triage fix** — extend the `FOREIGN_SHARED` scan in `/prime` Step 1a + `/session-start` Step 0.5 to also cover non-append shared logs under `logs/` (minimally `improvement-log.md`); keep append-only `session-notes.md` out of scope. Paired command-body edit → light `/risk-check`. (`logged (pending)` in improvement-log.)
+- **`/resolve-improvement-log`** — several resolved/applied entries now accumulating (the 3 flipped this session + S9's NO_OWN_MARKER flip).
+- **System Owner ungrounded-escalation fix (#14)** — still open from the menu.
+- **S9 loose end (not mine):** `logs/improvement-log-archive.md` left uncommitted by S9 — should be committed to keep its de-dup consistent.
+
+### Open Questions
+None blocking.
