@@ -2,116 +2,6 @@
 
 > Archive: [session-notes-archive-2026-06.md](session-notes-archive-2026-06.md)
 
-## 2026-06-04 — Saved AI Strategy governing document + built its execution companion (in strategic-os)
-
-### Summary
-
-Operator pasted the consolidated **Axcíon AI Strategy — Governing Document** (the standing version superseding drafts v1–v5) and asked to save it and create a multi-session implementation plan. Discovery found the document's three companion files (current-state, principles-base, candidate-backlog) already live in `projects/strategic-os/ai-strategy/`, and the named-but-missing companion `ai-operator-roadmap.md` is essentially the requested plan. Saved the governing document faithfully (copy-paste mojibake repaired, content unchanged), authored the roadmap decoding §6's 8-slot work sequence, and added a lightweight implementation tracker. Work landed in the **strategic-os** repo (this session ran from ai-resources cwd; `/prime` went into plan mode so no ai-resources mandate was written). Plan QC: REVISE→fixed→approved. Artifact QC: GO. Committed strategic-os 254e211 (local only).
-
-### Files Created
-
-- `projects/strategic-os/ai-strategy/ai-strategy-governing-document.md` — the governing document, faithful transcription with encoding repaired (mojibake `Ã­`/`â`/etc. → `í`/`—`, escaped markdown unescaped); all sections §1–§6 + Appendix, three tables, §5.2 card template intact.
-- `projects/strategic-os/ai-strategy/ai-operator-roadmap.md` — plain-English execution companion; decodes §6's 8 slots in dependency order with candidate-code mapping, critical path, closure-before-detection constraint; labelled draft.
-- `projects/strategic-os/ai-strategy/implementation-tracker.md` — status surface; 8-slot table (all Not started, Slot 1 = next), instrumentation logs flagged not-yet-created, changelog.
-- `ai-resources/logs/scratchpads/2026-06-04-10-07-scratchpad.md` — continuity scratchpad.
-
-### Files Modified
-
-- `ai-resources/logs/session-notes.md` — this wrap entry.
-
-### Decisions Made
-
-- **Placement (operator-confirmed via /clarify):** complete the existing `strategic-os/ai-strategy/` project rather than create a new standalone project — keeps the governing doc beside its three companions. Flagged for operator to confirm at leisure whether a standalone project was instead wanted.
-- **Plan form (operator-selected):** roadmap + lightweight tracker over candidate-cards-now or minimal-tracker-only.
-- **QC fixes folded** (artifact pass, GO): dropped invalid bare "BUILD" route tokens on roadmap slots 4/8 (not §5.4 tokens); corrected "~6 stuck items (A4–A8, A10, F8)" to "(A4–A8, A10) plus the F8 menu" — F8 is the menu, not one of the six.
-
-### Risky actions
-
-None. All writes were new files in an existing project dir + an append to ai-resources session-notes. `state/live/` untouched. Commit was to strategic-os repo only; no push.
-
-### Next Steps
-
-- **Begin execution:** open `projects/strategic-os/ai-strategy/implementation-tracker.md` → Slot 1 (Clear the standing decisions): graduate/retire/convert E1–E10, F1, F2, F6, E7, E8; record the new "closure before detection" principle into principles-base. Follow `ai-operator-roadmap.md` per-slot.
-- **Operator confirm (low urgency):** is "make this a project" satisfied by completing strategic-os, or is a standalone project wanted?
-- Carryovers unchanged from 2026-06-03 S1: SO reference-file review; GitHub remotes for axcion-ai-system-owner + nordic-pe-screening; grounded SO consult on parallel-sessions-playbook.md; agent-def vault/ path + friday-so function-letter wiring fixes.
-
-### Open Questions
-
-None blocking.
-
-## 2026-06-04 — Session S1
-**Mandate:** Execute AI-strategy Slot 1 (closure sweep / DECIDE) — card+gate+score+route each of E1–E10, F1, F2, F6, E7, E8 to a recorded graduate/retire/convert/park verdict, execute the in-scope near-zero-build closures, and record the "closure before detection" principle into the principle base — done when: every listed item has a recorded verdict (no item in limbo), the principle is written into principles-base.md, and implementation-tracker.md Slot 1 status is updated.
-- Out of scope: Slots 2–8; standing up value_log.md / defect_log.md; any build with non-trivial blast radius unless the operator approves it inline at the relevant gate.
-- Files in scope: projects/strategic-os/ai-strategy/candidate-backlog.md, projects/strategic-os/ai-strategy/principles-base.md, projects/strategic-os/ai-strategy/implementation-tracker.md, projects/strategic-os/ai-strategy/ai-strategy-governing-document.md (read-only framework) (inferred)
-- Stop if: a routed item turns out to require a structural change gated by /risk-check that the operator has not approved.
-
-Implement the AI strategy doc — begin Slot 1 (clear the standing decisions: graduate/retire/convert E1–E10, F1, F2, F6, E7, E8; record the "closure before detection" principle into principles-base). Following ai-operator-roadmap.md.
-
-## 2026-06-04 — Session S2
-**Mandate:** Implement two AI-strategy deliverables: (1) blanket-convert duplicated "Session Boundaries" sections across all carrying CLAUDE.md files (~17) to a single source-of-truth doc plus pointer references — operator override of F6's selective verdict; and (2) the recorded housekeeping items only: E10 (fold the compaction-scratchpad note into compaction-protocol.md) and the F1 deprecated-stub tidy — done when: every duplicated Session Boundaries section is replaced by a pointer to one source, E10 is folded and the F1 stub tidied, slot-1-decisions.md records the F6 override, implementation-tracker.md is updated, AND a /risk-check GO was obtained before any CLAUDE.md edit.
-- Out of scope: AI-strategy Slots 2–8; deliverable-2 fresh-scan items beyond E10 and F1; re-deciding the parked E2–E9 items; the foreign S3 /risk-check session.
-- Files in scope: workspace-root CLAUDE.md, ai-resources/CLAUDE.md, ~15 projects/*/CLAUDE.md files carrying the "Session Boundaries" heading, the new/chosen single-source session-boundaries doc, ai-resources/docs/compaction-protocol.md, projects/repo-documentation/CLAUDE.md (E10 source), projects/strategic-os/ai-strategy/slot-1-decisions.md, projects/strategic-os/ai-strategy/implementation-tracker.md
-- Stop if: /risk-check returns RECONSIDER or NO-GO on the blanket CLAUDE.md conversion.
-- Context pack: output/context-packs/architecture-20260604-7c1a4/pack.md
-
-Implement two AI-strategy deliverables: (1) Session Boundary Consolidation — replace duplicated "Session Boundaries" text across multiple CLAUDE.md files with pointer-based references to a single source of truth; (2) Header and Housekeeping Cleanup — clean up stale headers, old structural patterns, outdated references, and repo housekeeping residue (consolidate, clean, or explicitly archive).
-
-### Summary
-
-Executed AI-strategy Slot-1 items F6 + E10 + F1. **F6 (operator override of S1's "selective-only" verdict → blanket):** created single-source doc `ai-resources/docs/session-boundaries.md` and converted **17** locations (workspace-root `CLAUDE.md`, `ai-resources/CLAUDE.md`, 14 project `CLAUDE.md`, and the `/new-project` template fragment) to a thin behavioural cue + pointer (Option A). **E10:** folded the repo-documentation Compaction restatement into a pointer to canonical `compaction-protocol.md`. **F1:** verified the `/produce-handoff` deprecated stub already-tidy (no edit). `/risk-check` ran before any edit → PROCEED-WITH-CAUTION (5 mitigations applied, incl. the 17th-file catch it surfaced); `/qc-pass` → GO. All commits **deferred per operator** (16 separate repos, all carrying heavy foreign uncommitted state).
-
-### Files Created
-
-- `ai-resources/docs/session-boundaries.md` — single source of truth for the session-boundary rule (faithful superset).
-- `ai-resources/audits/risk-checks/2026-06-04-consolidate-session-boundaries-rule-16-claude-md-to-single-doc.md` — PROCEED-WITH-CAUTION risk-check (6 dimensions; second-opinion-unavailable note).
-- `logs/session-plan-S2.md` — session plan (overwrote a stale 2026-06-01 same-marker plan).
-- `logs/scratchpads/2026-06-04-14-30-scratchpad.md` — continuity scratchpad.
-
-### Files Modified
-
-- **17 Session-Boundaries conversions:** workspace-root `CLAUDE.md`, `ai-resources/CLAUDE.md`, 14 `projects/*/CLAUDE.md`, `ai-resources/templates/project-claude-md/session-boundaries.md`.
-- `projects/repo-documentation/CLAUDE.md` — E10 Compaction fold (same file also has a Session-Boundaries stub).
-- `projects/strategic-os/ai-strategy/slot-1-decisions.md` — F6 override record (OP-11).
-- `projects/strategic-os/ai-strategy/implementation-tracker.md` — Slot-1 status (F6/E10/F1 closed; E1/E4 remain).
-- `logs/session-notes.md`, `logs/decisions.md` — wrap.
-
-### Decisions Made
-
-- **F6 override (operator):** blanket pointer-conversion across all carrying CLAUDE.md, overriding the S1 "convert-only-where-reference / keep-verbatim-where-every-turn" verdict. Pattern chosen: Option A (thin every-turn cue + pointer), which preserves F6's valid every-turn concern. Override recorded in `slot-1-decisions.md` per OP-11. Logged to `decisions.md`.
-- **Deliverable 2 scoped to recorded items only (operator):** E10 + F1; no fresh housekeeping scan.
-- **All commits deferred (operator):** 16 repos each carry heavy foreign uncommitted state; nothing staged this session.
-
-### Outcome
-
-- **COMPLETION: DELIVERED** — independent check verified all claims against the filesystem (doc superset present, all 17 pointers in place, OP-11 override record retains original verdict, risk-check report predates edits).
-- **EXECUTION: OPTIMAL** — no wasted steps or skipped gates; better path: none. Confidence: high.
-
-### Risky actions
-
-Cross-cutting always-loaded-content edit across 16 repos — gated by `/risk-check` (PROCEED-WITH-CAUTION) before any edit, all mitigations applied, QC GO. **Nearly-shipped foreign content avoided:** commit deferred, so no risk of staging concurrent S3/S4 content. Concurrent-write hazard on `session-notes.md` handled by inserting under this session's own S2 marker-block, not an end-append. No prompt injection.
-
-### Session Assessment
-
-Feedback collector (wrap-collector) logged 0 entries: the Dimension-6 risk-check-reviewer omission is **already tracked** (improvement-log 2026-05-29 "add Dimension 6"); the S2/S4 concurrent-duplication signal was not yet in the written record so it declined to fabricate it. Pattern to watch: 4 same-day sessions (S1–S4) with S2/S4 overlapping on the Session-Boundaries mandate.
-
-### Next Steps
-
-1. **Resolve the S2/S4 duplicate-work overlap** — S4 (auto-mode) is independently tasked with the same Session-Boundaries consolidation S2 just completed; stop S4 on items (3)/(4) or let it detect the done-work before it re-edits the same uncommitted files.
-2. **Commit the deferred consolidation** — 16 repos, stage explicit paths only (never `git add -A`); foreign drift in each repo stays untouched. Run end-time `/risk-check` with the commits.
-3. **Slot-1 remaining:** queued graduations E1, E4.
-
-### Open Questions
-
-None blocking. (Commit strategy across the 16 dirty repos is the operator's call — deferred.)
-
-## 2026-06-04 — Session S3
-**Mandate:** Implement two AI-strategy deliverables into /risk-check — a principle-alignment dimension and a pre-spec consumer-inventory step — done when: /risk-check explicitly assesses principle alignment AND includes a reliable pre-spec consumer-inventory step before approval.
-- Out of scope: (none stated)
-- Files in scope: .claude/agents/risk-check-reviewer.md, .claude/commands/risk-check.md (inferred)
-- Stop if: (none stated)
-
-Implement two AI-strategy deliverables into /risk-check: (1) Risk-Check Principle Alignment Fix — add a principle-alignment dimension so proposed changes are assessed for fit with the system's operating principles, not only technical risk; (2) Risk-Check Consumer Inventory Fix — add a reliable pre-spec consumer-inventory step (grep-based blast-radius) so affected consumers are identified before a change is approved.
-
 ## 2026-06-04 — Session S4
 
 **Mandate:** Fix the function-letter read-map references in friday-so.md (E→F) and so-monthly.md (F→G) verified against grounding.md, QC + commit; then run a grounded System Owner consult on docs/parallel-sessions-playbook.md to confirm the n=1 framing — done when: both command files carry grounding-verified function letters with QC GO and committed, and the consult n=1 verdict is delivered in chat.
@@ -518,3 +408,62 @@ None. (Push remains gated/batched; no mid-session push. Audit-derived settings c
 
 ### Open Questions
 None blocking. (The consolidated `friday-checkup-2026-06-05.md` was never written by the monthly run — its findings are un-routed until `/friday-act`.)
+
+## 2026-06-05 — Materiality floor for QC + backlog-feeding review agents
+
+### Summary
+Calibrated the QC apparatus so review passes surface only *material* findings (those with a named consequence of not fixing them), not cosmetic/preference observations that pile into a perceived fix backlog. Principle: "match QC to the stakes, not to the apparatus." The materiality judgment used to live downstream at triage/resolve — after the operator already saw the full wall of findings; this pushes the floor upstream to the point findings are generated. Scope was the minimal subset (3 highest-value surfaces); 4 other backlog-feeders deferred. Plan QC and post-edit QC both returned GO with no findings.
+
+### Files Created
+- `docs/materiality-bar.md` — single shared definition: the test, mapping to BLOCKING/IMPORTANT + Real/Low-signal/Skip, disposition rules, worked contrast pair, stakes clause (high-stakes work keeps the full pass + FLAG-FOR-EXTERNAL-QC)
+- `logs/scratchpads/2026-06-05-03-31-scratchpad.md` — continuity scratchpad
+
+### Files Modified
+- `.claude/agents/qc-reviewer.md` — materiality floor in Finding-tagging section + Rules (full rubric only; mechanical mode exempt)
+- `.claude/agents/refinement-reviewer.md` — materiality floor in Rules (generalizes criterion-3 across all 5 criteria)
+- `.claude/agents/improvement-analyst.md` — floor in Phase 2.5 + Rules (one-off low-impact → "pattern to watch", not logged backlog; recurrence 3+ overrides)
+- `docs/qc-independence.md` — one-line pointer from QC → Triage Auto-Loop
+- `logs/session-notes-archive-2026-06.md` — auto-archived 4 entries (kept 10) during wrap
+
+### Decisions Made
+- Scope held to minimal subset (qc-reviewer, refinement-reviewer, improvement-analyst); deferred `fix-repo-issues-scanner`, `open-items`, `findings-extractor`, `audit-repo` to a later pass pending pattern proof-out (operator-confirmed via AskUserQuestion).
+- One shared doc over inline-duplicated text (operator-confirmed).
+
+### Risky actions
+None.
+
+### Next Steps
+- If the floor proves out on the first three surfaces, extend it to the 4 deferred backlog-feeders (`fix-repo-issues-scanner`, `open-items`, `findings-extractor`, `audit-repo`).
+
+### Open Questions
+None.
+
+## 2026-06-05 — Monthly /friday-checkup run (9 scopes) [no-marker session]
+### Summary
+Ran the full monthly `/friday-checkup` cadence across 9 scopes (ai-resources, workspace, + 7 projects). Diagnostic only — no fixes applied. Produced the consolidated report `audits/friday-checkup-2026-06-05.md` plus 22 sub-reports + 4 repo-documentation W2.x reports + vault refresh. Session entered via `/prime` → `/friday-checkup` directly (no task selection), so it carries no session marker/mandate; outcome check uses the fallback standard. Wrap fired the foreign-session guard (CONCURRENT) on a parallel pipeline-review/closure session — resolved by that session wrapping first; this session then committed cleanly.
+
+### Files Created
+- `audits/friday-checkup-2026-06-05.md` — consolidated monthly checkup report (prioritized findings, per-scope summary, 24 tactical + 5 policy follow-ups)
+- `audits/working/friday-checkup-2026-06-05-RESULTS.md` — running ledger (transient working note)
+- `audits/working/audit-claude-md-external-guidance-2026-06-05.md` — guidance synthesis (transient)
+- 2 repo-health snapshots, 8 claude-md-audit reports, 3 token-audit reports, permission-sweep + log-sweep reports (audits/*) — most already committed by the concurrent closure session `c12597e`
+- `projects/repo-documentation/output/phase-2/w2-1-doc-scan / w2-2-principles / w2-3-maintenance / w2-4-improvements-2026-06-05.md` + `vault/_integrity-report-2026-06-05.md`
+- `logs/scratchpads/2026-06-05-16-00-friday-checkup-scratchpad.md`
+
+### Files Modified
+- coaching-log.md appended in all 9 scopes (ai-resources committed by concurrent session; workspace + 6 project repos pending)
+- `projects/repo-documentation/vault/projects/projects.md` + `vault/architecture/repo-state.md` (narrative refresh, last_updated→2026-06-05)
+
+### Decisions Made
+- **token-audit scope: ran 3 of 9, deferred 6 content scopes (with logging).** The 6 deferred projects' per-turn token cost is CLAUDE.md-dominated and already covered by the Section-D CLAUDE.md audit; full token-audit would re-derive at ~10× cost. Operator informed inline; override offered, not taken. Not a silent cap — logged in report + ledger.
+- **coach agent misrouting handled:** 3 of 9 coach agents (workspace, nordic-pe, research-pe) abandoned their assigned project root for a richer corpus; re-ran all 3 with hard path-anchoring. Logged as a robustness finding.
+
+### Risky actions
+Foreign-session guard fired CONCURRENT at wrap (a parallel pipeline-review/closure session had an uncommitted session-notes entry). Guard worked as designed — STOPPED before staging, did not clobber, waited for the other session to wrap first. No auto-merge offered. The concurrent closure commit `c12597e` swept most of this session's audit outputs into its own commit (cross-session whole-file staging) — already on the record, attribution slightly blended but no content lost.
+
+### Next Steps
+- Run `/friday-so` for the System Owner advisory on `audits/friday-checkup-2026-06-05.md`.
+- Then `/friday-act` to triage + fix. Highest-value: (a) the permission-shadowing CRITICAL (ai-resources settings.local.json), (b) fix the `/new-project` CLAUDE.md template (stops per-project bloat recurrence), (c) the 2 push-rule contradictions (marketing-positioning, research-pe).
+
+### Open Questions
+None blocking.
