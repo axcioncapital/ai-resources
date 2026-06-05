@@ -331,3 +331,15 @@
 **Alternatives considered.** (a) Full sweep across all backlog-feeders this pass — rejected: larger blast radius, and the pattern is unproven; the principle itself warns against over-engineering the fix. (b) Inline floor text duplicated in each agent, no new file — rejected: duplicated definition drifts; the cross-cutting use (QC + log checks) justifies one canonical home.
 
 **Decided by:** Operator-confirmed via AskUserQuestion (scope + doc-home), plan QC GO, post-edit QC GO (2026-06-05). Shipped commit `3ffb220`.
+
+## 2026-06-05 (S6) — Defer date-qualify session-plan filename after consumer-inventory disclosed marker-contract blast radius
+
+**Context.** Friday-act session-harness item #3 (date-qualify `session-plan-S{N}.md` → `session-plan-{YYYY-MM-DD}-S{N}.md`) was scoped in the friday-act plan as a 3-file change (docs/session-marker.md + prime.md + session-plan.md) with the note "glob consumer open-items.md still matches; no risk-check class." The collision it fixes bit this very session (S6 plan overwrote a 2026-06-04 S6 plan).
+
+**Decision.** Defer the item to a dedicated /risk-check-gated session; log it as id-41 with a full consumer inventory rather than implement inline. Implemented item 6 (the self-contained done-condition gate) instead.
+
+**Rationale.** Applying the id-40 consumer-inventory discipline (grep `session-plan-` across .claude/ docs/ skills/ workflows/ templates/) revealed the change is marker-contract-wide, not 3-file: exact-path readers (contract-check.md, drift-check.md ×3, both wrap-session.md copies) construct `session-plan-${MARKER}.md` directly and would silently degrade to "plan not found" (they tolerate plan-absence — no error), and the backup-hook regex caps at 2 marker segments so a date-prefixed name silently stops being backed up. Materiality math: the collision's harm is low (Step 0's 3-option prompt catches it, as it did this session — no data lost), while a botched partial edit risks silent plan-resolution regression across the marker contract. Validate-before-invest: the validation (consumer inventory) is the reusable artifact; the invest belongs in a dedicated session.
+
+**Alternatives considered.** (a) Implement the full ~10-file change now on Opus — rejected: silent-failure modes + a concurrent session was in fact already implementing it (discovered later), so parallel implementation would have collided. (b) Implement a narrower variant (only the writers) — rejected: writers emitting a new format while readers expect the old IS the silent-regression failure mode.
+
+**Decided by:** Claude judgment under the approved S6 mandate ("explicitly defer or log items requiring /risk-check or large effort"); [SCOPE] flag emitted; QC GO on the companion item-6 edit. Consumer inventory in improvement-log id-41.
