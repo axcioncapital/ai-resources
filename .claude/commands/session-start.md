@@ -277,12 +277,13 @@ Re-asks happen at most once per failed field. If a re-ask response is still non-
 - Context pack: {pack_path}             ← write only if Step 2.4 produced a pack (PACK_PATH is set); omit entirely if Step 2.4 was skipped, errored, or never invoked. Informational bullet — see parse-contract note below.
 ```
 
-**Parse contract:** Five readers (verified pre-flight, 2026-05-29) depend on the exact bullet labels (`- Out of scope:`, `- Files in scope:`, `- Stop if:`, `- Allowed inputs:`, `- Required outputs:`), the `(inferred)` marker, and the `(none stated)` marker written here:
+**Parse contract:** Six readers (verified pre-flight, 2026-05-29; sixth added 2026-06-05) depend on the exact bullet labels (`- Out of scope:`, `- Files in scope:`, `- Stop if:`, `- Allowed inputs:`, `- Required outputs:`), the `(inferred)` marker, and the `(none stated)` marker written here:
 1. Canonical `wrap-session.md` Step 7a (coaching-data classification).
 2. Workspace-root `wrap-session.md` Step 2b (Phase 3 session report).
 3. `drift-check.md` Step 5 (mandate auto-detection for drift judgment).
 4. `contract-check.md` Step 2.5c (session-notes mandate-block contract-source detection).
 5. `monday-prep.md` writes a separate week-mandate (bold-header format, not bullet) — does not consume this bullet schema.
+6. `concurrent-session-check.md` Step 3 (reads `- Files in scope:` to gather each live session's declared footprint for the pre-flight collision check). Read-only consumer.
 
 Do not rename these labels or marker strings without updating all readers. The `Allowed inputs` and `Required outputs` bullets are optional — when absent, the bullets do not appear (no `(none stated)` placeholder).
 

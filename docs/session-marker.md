@@ -151,6 +151,7 @@ Every place the marker contract is consumed must point back to this doc. Adding 
 - `ai-resources/.claude/commands/open-items.md` — table rows for `session-plan-*.md` glob scan.
 - `ai-resources/.claude/agents/fix-repo-issues-scanner.md` — table rows + read-only list.
 - `ai-resources/.claude/commands/decide.md` — Step 2 prior-decision read.
+- `ai-resources/.claude/commands/concurrent-session-check.md` — Steps 2–3 (reads today-dated per-id markers `logs/.session-marker-*` to detect live sessions, and globs `logs/session-plan-${TODAY}-S{N}.md` plus the `- Files in scope:` mandate bullet to read each live session's declared footprint). Read-only; writes nothing.
 
 **Runtime non-command consumers** (load-bearing parse logic — a silent non-match degrades behavior with no error):
 
