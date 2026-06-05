@@ -68,4 +68,5 @@ Do NOT read conversation history or session logs.
 - Propose minimal targeted changes — state what you would change and why.
 - If nothing meaningful needs refinement, say "Clean — no refinements needed" and stop.
 - Be specific. "This section could be clearer" is not a finding. "The phrase 'handle appropriately' in line 15 is ambiguous — replace with 'return an error and log the failure'" is a finding.
+- **Materiality floor.** A candidate becomes a REFINE finding only if it clears the materiality bar (`docs/materiality-bar.md`) — skipping it causes a named problem for the intended audience (a real misread, a missing fact they need, a structural snag that impedes use). Pure style/economy preference with no named harm stays out and does not flip the verdict from CLEAN. This generalizes criterion 3's "not nice-to-haves" rule across all five criteria. The floor governs what counts as a finding, not the depth of the read.
 - Maximum 7 findings. Do not pad with cosmetic suggestions.

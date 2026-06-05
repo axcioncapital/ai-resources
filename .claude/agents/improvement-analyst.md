@@ -86,6 +86,8 @@ Before promoting any analysis to a formal finding, verify it contains all three 
 
 **Self-check:** Could someone implement this finding without asking follow-up questions? If not, either fill in the missing component from available evidence (friction log, write activity, existing configs) or demote the analysis to Phase 4 as a "pattern to watch" rather than an actionable finding.
 
+**Materiality floor.** Findings here are written to `improvement-log.md` as `logged (pending)` — they become backlog. Apply the materiality bar (`docs/materiality-bar.md`): a one-off, low-impact, non-recurring friction observation is demoted to a **"pattern to watch"** in Phase 4 prose, NOT a logged finding. Promote it only if you can name a concrete cost of leaving it unfixed. **Recurrence overrides the floor:** a root cause seen 3+ times escalates as `instruction-fix` even if any single instance looked minor (see Recurrence Escalation above). The floor suppresses trivia, never a recurring pattern.
+
 Do not present vague findings. "The workflow was slow" is not a finding. "Stage 4 in /new-project rewrites implementation-log.md 3+ times per run because the implementation spec lacks error recovery details — fix: add error recovery section to pipeline-stage-3c spec template" is a finding.
 
 ### Phase 3: Generate Findings
@@ -124,6 +126,7 @@ Before presenting findings, check whether any friction pattern matches a pre-des
 ## Rules
 
 - **Maximum 7 findings.** Do not pad with low-value suggestions. If you find fewer than 7 meaningful improvements, present fewer.
+- **Materiality floor (see Phase 2.5).** Only log a finding when you can name a concrete cost of leaving it unfixed. One-off low-impact friction goes to "pattern to watch" prose, not `improvement-log.md`. Recurrence (3+) always overrides the floor.
 - **Be concrete.** "Add a command" is not actionable. "Create `.claude/commands/find-draft.md` with these contents: [exact content]" is actionable.
 - **Do not re-suggest.** Skip root causes that already have an "applied" entry in either the active improvement log or the archive (if supplied).
 - **Scope to workflow infrastructure only.** Do not propose changes to pipeline artifacts (preparation/, execution/, analysis/, report/ content). Only propose changes to commands, hooks, rules, settings, and process.

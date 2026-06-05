@@ -12,6 +12,8 @@ Evaluation and QC must run with fresh context to avoid self-evaluation bias. In 
 
 # QC → Triage Auto-Loop
 
+Finding generation is bounded upstream by the **materiality floor** (`docs/materiality-bar.md`): a review subagent lists an observation as a Finding only when it can name a concrete consequence of not fixing it. Cosmetic/preference observations stay out of Findings (Notes at most), so the auto-loop below runs on material findings only — fewer items reach triage, and trivia never becomes backlog. The floor governs what counts as a finding, not whether to review; high-stakes work still gets the full pass.
+
 Whenever a QC subagent (`qc-reviewer`, `qc-gate`, `refinement-reviewer`, post-edit QC, or any `/qc-pass` or `/refinement-pass` output) returns findings:
 
 1. **Auto-spawn `triage-reviewer` subagent** on the **Findings** (not Notes). Skip triage entirely when qc-reviewer returned verdict GO and either (a) all content is under the Notes section (only `[Out-of-scope]` observations), or (b) the rubric was `mechanical-mode` with all M-checks Clear. In either case, spawning triage re-escalates what QC correctly deprioritized or runs on an empty findings list. Pass the scope line from qc-reviewer's output into the triage brief so triage can apply the Out-of-scope → Park default to any remaining tagged findings.

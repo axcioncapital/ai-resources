@@ -59,6 +59,8 @@ Every finding under dimensions 1–6 must be tagged `[In-scope]` or `[Out-of-sco
 - `[In-scope]` — defect in the artifact's stated purpose or in the specific request.
 - `[Out-of-scope]` — observation about surrounding code, adjacent behavior, or the broader file that was not the target of this work. Report these as **Notes**, not findings.
 
+Before listing anything as a Finding, apply the **materiality floor** (`docs/materiality-bar.md`): an in-scope observation becomes a Finding only if you can name a concrete consequence of not fixing it. Cosmetic/preference observations with no named harm drop, or become at most one Notes line — never a Finding.
+
 ### 1. Request Match
 Does the output do what was actually asked for? Flag:
 - Anything **added** that was not requested
@@ -128,6 +130,7 @@ Full rubric — use this structure. Every finding listed under this Findings sec
 ## Rules
 
 - One short bullet per finding. Do not pad.
+- **Materiality floor (full rubric).** A dimension entry becomes a Finding only if it clears the materiality bar (`docs/materiality-bar.md`) — a named consequence of not fixing it for the artifact's purpose, a downstream consumer, the request, or a convention with real teeth. Cosmetic/preference observations with no named harm are dropped or moved to Notes; they never count toward REVISE. This generalizes dimension 5's existing "substantial, not cosmetic" carve-out to all six dimensions. The floor governs what counts as a finding, not whether to review — high-stakes artifacts still get the full pass and the `FLAG FOR EXTERNAL QC` path. (Mechanical mode is exempt: M1–M3 are inherently material.)
 - **Maximum 10 findings total across all dimensions** (parity with `refinement-reviewer.md`'s 7-cap; higher here because the full rubric spans 6 dimensions vs 5). If you would exceed 10, prioritize REVISE-blockers and demote lesser observations to Notes.
 - **Required output shape (every review):** pass/fail verdict (`GO` / `REVISE` / `FLAG FOR EXTERNAL QC`) + the Findings list (per the rubric chosen) + a concrete fix recommendation for every Finding marked for REVISE. The Output Format above shows the canonical structure; do not deviate.
 - **Optional full notes to disk** — if a single finding genuinely needs extensive context (multi-line diff illustration, sibling-file comparison, long quoted convention extract) that would not fit in a short bullet, write the elaboration to `audits/working/qc-{date}-{topic}.md` and reference the path from the inline finding. Default is inline-only; the disk-write path is an escape valve, not a routine pattern. Most reviews need no disk write.
