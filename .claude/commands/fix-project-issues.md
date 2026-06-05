@@ -69,6 +69,25 @@ Read **only the returned summary** (per the Subagent Contract — do not re-read
 
 ---
 
+## Step 2.5 — Reconcile candidates against live state (reconcile-at-read)
+
+Before the System Owner spends a vetting pass on the candidate list, demote items that the live repo shows are already done. This is the step that would have prevented the 2026-06-05 collapse (6 of 7 SO-vetted items dissolved as already-applied / out-of-scope). Apply the canonical primitive in `ai-resources/docs/backlog-reconciliation.md` — read it for the full mechanism, tolerance posture, and contract. Summary of what to do here:
+
+1. **Read the full candidate rows** from `SCAN_NOTES_PATH` (this is the one place re-reading the scanner notes is required — the ≤30-line summary lacks per-candidate anchor dates + descriptions needed to reconcile). Each row carries an `id`, source, severity, `age_days`/date, and a one-line description.
+2. **Anchored-only.** Reconcile only candidates with a commit-resolvable anchor (dated log entries, dated report findings — derive the anchor from the row's date or `age_days`). Candidates without an anchor stay actionable, untouched.
+3. **Run the merged multi-repo `git log --since=<anchor>` scan** (cwd + `AI_RESOURCES` + sibling `projects/*/` repos) per the primitive. Collapse to one scan at the earliest anchor date and reuse the result set across rows.
+4. **Classify each anchored candidate** with the conservative keyword-match posture (commit-hash / `id-NN` token first; distinctive keywords otherwise; drop generic tokens; when in doubt → still-open).
+5. **Split the list:** `STILL_OPEN` (no match) and `LIKELY_DONE` (match → tag with the resolving commit hash).
+6. **Fall-through:** if git fails or returns nothing, treat all candidates as `STILL_OPEN` and continue.
+
+Pass **only `STILL_OPEN` to the System Owner as the actionable candidate list** in Step 3. `LIKELY_DONE` items are NOT vetted as work — carry them to Step 4 as a separate "likely-already-done — verify" appendix. If `STILL_OPEN` is empty after reconciliation, skip the SO delegation entirely (do not vet an empty list); go to Step 4, echo the `LIKELY_DONE` appendix, and proceed to the Step 6 wrap reporting "all candidates reconciled as already-done — nothing to vet."
+
+Echo one reconciliation line to chat: `Reconciled: {S} still-open · {D} likely-already-done (demoted before vetting)`.
+
+Note for Step 3: when you pass the candidate list by path, either point the SO at a `STILL_OPEN`-filtered notes file you write to `AUDITS_WORKING_DIR`, or pass the `STILL_OPEN` ids explicitly in the brief and instruct the SO to vet only those. Do not hand the SO the unfiltered `SCAN_NOTES_PATH` — that re-admits the demoted items into vetting.
+
+---
+
 ## Step 3 — Delegate to the System Owner for vetting (Function A)
 
 Spawn the `system-owner` subagent via the `Task` tool. **Use Function A (General consultation)** — the invocation model is `/consult` Step 4 (the canonical Function A delegation site, which writes to `output/consultations/`). `/friday-so` is the right *scan → delegate → echo* orchestration shape, but it passes `function: friday-advisory` (Function F) — **do not copy its function key**. Do NOT edit any System Owner reference file.
@@ -107,6 +126,7 @@ Read `SO_ADVISORY_PATH` from disk to obtain the **full** session triage table + 
 - The System Owner's Executive line(s).
 - The Do-now list in execution order (id + short desc + SO Gated? marker + rationale snippet).
 - A one-line tally: `Do-now: {n} · Defer: {m} · Skip: {k}`.
+- **Likely-already-done appendix** (from Step 2.5, if any `LIKELY_DONE`): a separate clearly-labelled block, e.g. `Likely already done — verify (not vetted): [id-NN] {desc} — commit {hash}`. These are advisory: they were demoted before vetting because a commit appears to resolve them. They are NOT executed. The operator can spot-check the named commit if a demotion looks wrong.
 
 If the System Owner returned a `DECLINE`, surface it verbatim and stop (do not execute) — note that grounding was insufficient and recommend the bounded next step the SO offered.
 
@@ -133,6 +153,7 @@ Print a compact summary:
 ```
 /fix-project-issues — {SCOPE_SLUG} — {TODAY}
 Candidates: {N} (CRITICAL {a} / HIGH {b} / MEDIUM {c})
+Reconciled: {S} still-open · {D} likely-already-done (demoted before vetting)
 Do-now applied: {x}  ·  Surfaced for decision: {y}  ·  Deferred: {m}  ·  Skipped: {k}
 SO advisory: {SO_ADVISORY_PATH}
 Scan notes:  {SCAN_NOTES_PATH}

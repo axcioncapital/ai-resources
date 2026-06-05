@@ -39,6 +39,8 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 
 1a. **Cross-check Next Steps against git log and sibling entries.** Detection logic only — this command has no brief-level Next Steps list; see steps 5–6.
 
+   *Canonical primitive.* The merged-multi-repo git cross-check below is the **reference implementation** of the reconcile-at-read primitive now documented in `docs/backlog-reconciliation.md` (shared by `/fix-project-issues`, `/fix-repo-issues`, `/open-items`). The mechanism here and the doc must stay in sync — if you change the scan/classification logic in one, update the other.
+
    *Git cross-check:* Parse the `## YYYY-MM-DD` header date from the source entry. Run:
    `git -C "$CWD_REPO" log --since="<entry-date>T00:00:00" --pretty="%h %s" --all 2>/dev/null`
 

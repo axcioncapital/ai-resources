@@ -12,6 +12,10 @@ Before applying a permission change (`permissions.allow` / `permissions.deny`) o
 
 This is a bright-line rule — do not skip even when the audit tags a recommendation as "quick win" or "low risk." The friction of checking is low; the cost of silently breaking an active command is high.
 
+## Source-of-truth: reconcile backlog candidates at read time
+
+Backlog logs and dated audit reports go stale — an item is fixed (committed) but its log entry is never status-flipped, or a dated report freezes a finding a later commit resolves. **When a backlog/log/report candidate conflicts with live repo state (git log, filesystem), live state wins; logs are advisory.** Any issue-surfacing scan must reconcile its candidate list against live state before surfacing candidates as actionable. The canonical mechanism (merged multi-repo `git log --since=<anchor>` cross-check, conservative keyword-match, advisory demote-and-tag — never edit logs) is defined once in `backlog-reconciliation.md`; its consumers are `/prime`, `/fix-project-issues`, `/fix-repo-issues`, and `/open-items`. Edit the primitive there, not in each command.
+
 ## Risk-check change classes
 
 If a session touches a structural change in any of the following classes, run `/risk-check` at two session boundaries (not per-change — see *When to fire* below):

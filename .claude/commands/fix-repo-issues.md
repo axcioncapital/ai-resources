@@ -114,6 +114,16 @@ Read all scanner summaries in main context. Re-read individual working-notes pat
 
 **Item ids are scope-prefixed**: `[ai-resources/id-NN]`, `[workspace/id-NN]`, `[project-{name}/id-NN]`. The scope prefix is the `scope_slug` from Step 1. Within each scope, ids match that scanner's own numbering — no global renumbering.
 
+### Step 3.0 — Reconcile against live state (reconcile-at-read)
+
+Before aggregating, demote items the live repo shows are already done. Apply the canonical primitive in `ai-resources/docs/backlog-reconciliation.md` (read it for the full mechanism, tolerance posture, and contract). The scanner's log-to-log friction↔improvement cross-match catches only one staleness mode; this adds git evidence for items fixed by a commit but never status-flipped.
+
+- **Anchored-only.** Reconcile only candidates carrying a commit-resolvable anchor (dated improvement-log / friction-log entries). Anchorless candidates (inbox briefs, `next-up.md` and session-plan checkboxes) pass through untouched.
+- **Merged multi-repo scan (required for this command).** `/fix-repo-issues` is multi-scope, so the git cross-check MUST run the primitive's merged scan across **cwd + `ai-resources` + sibling `projects/*/` repos**, NOT a per-scope-repo-only scan. A `project-{name}` item is frequently resolved by a commit in `ai-resources` (canonical command/doc/log edits) or another project repo; a per-scope-only scan would miss those cross-repo resolutions. Reuse one `--since=<earliest-anchor>` result set across all candidates regardless of which scope they came from.
+- **Classify** with the conservative posture (commit-hash / `id-NN` token first; distinctive keywords otherwise; when in doubt → still-open). Match candidates from every scope against the single merged result set.
+- **Route matches to Skip.** A `LIKELY_DONE` candidate folds into the **Skip** group below with reason `already-resolved (commit {hash})`. Still-open candidates flow into the normal aggregation/ranking unchanged.
+- **Fall-through:** if git fails or returns nothing, treat all candidates as still-open and continue.
+
 Aggregate all items across scopes into a unified ranking, applying:
 
 1. **Explicit priority tags** — `[BLOCKING]` > `[CRITICAL]` > `[URGENT]` > `[HIGH]` (mirrors "Step 2 — Apply priority override" in `open-items.md`).
@@ -125,7 +135,7 @@ Group items into:
 
 - **Plan-into-batch** (P1) — clear scope, well-defined fix, target 3–6 items. Items the execution session can apply without further research.
 - **Park** — out of scope for this plan. Reason: `needs-dedicated-session`, `decision-needed`, `multi-file-refactor`, `needs-/innovation-sweep`, `needs-/create-skill`, `risk-check-class`, `low-roi` (the item fails the named-consequence test per `docs/materiality-bar.md` — no statable consequence of leaving it unfixed; mirrors `/friday-act` Step 3.1a's named-consequence overlay). `low-roi` is a free-text Park *reason* only — never promote it to a scanned status token in the source logs.
-- **Skip** — already resolved (cross-matched against improvement-log applied + verified), or low-signal (`[LOW]` already filtered by scanner, but catch operator-flagged trivia here).
+- **Skip** — already resolved (cross-matched against improvement-log applied + verified, OR git-reconciled at Step 3.0 with reason `already-resolved (commit {hash})`), or low-signal (`[LOW]` already filtered by scanner, but catch operator-flagged trivia here).
 
 Honor any free-form hint in `$ARGUMENTS` — e.g., "improvement-log only" restricts Plan-into-batch to items whose source is `logs/improvement-log.md` across all selected scopes.
 
@@ -149,7 +159,7 @@ Scopes scanned: {comma-separated labels}
 - [{scope_slug}/id-NN] {description} — reason: {reason-tag}
 
 ### Skip
-- [{scope_slug}/id-NN] {description} — reason: {already-resolved|low-signal}
+- [{scope_slug}/id-NN] {description} — reason: {already-resolved|already-resolved (commit {hash})|low-signal}
 
 Scanner notes per scope:
   - {scope_label}: {working_notes_path}
@@ -233,7 +243,7 @@ Do NOT execute fixes in the planning session that produced this file.
 
 ## Skipped items
 
-- [{scope_slug}/id-NN] {description} — reason: {already-resolved|low-signal}
+- [{scope_slug}/id-NN] {description} — reason: {already-resolved|already-resolved (commit {hash})|low-signal}
 - ...
 ```
 

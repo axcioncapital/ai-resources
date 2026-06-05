@@ -40,9 +40,21 @@ Use `Read` (and `Grep` where helpful) — do not write or edit any source file.
 | `logs/session-notes.md` | T2 (recent) / T3 (stale) | **Open Questions** sections where content is NOT `None`, `None.`, `None blocking`, or `None blocking.` (case-insensitive, trimmed). Recent = entry dated within 14 days of today |
 | `logs/session-plan-*.md` (glob) | T1 (recent) / T3 (stale) | `- [ ]` checkbox lines across all marker-scoped session plans. Recent = file modified within 14 days; otherwise stale. Each scanned independently; the attribution line in the output includes the source filename so the operator sees which session's plan a checkbox belongs to. The glob covers both `session-plan-S{N}.md` (canonical) and `session-plan-S{N}-pass2.md` (re-invocation forks); both are first-class sources of unfinished work. See `docs/session-marker.md` for the marker-scoping contract. |
 
+### Step 1.5 — Reconcile against live state (reconcile-at-read)
+
+Demote items the live repo shows are already done, so the backlog report doesn't surface finished work as open. Apply the canonical primitive in `ai-resources/docs/backlog-reconciliation.md` (read it for the full mechanism, tolerance posture, and contract). This step is read-only — it runs git (`log`/`rev-parse`) but writes/edits no source file, consistent with Step 1's no-write rule.
+
+- **Anchored sources only.** Reconcile only the sources that carry a commit-resolvable date anchor: `improvement-log.md` applied-unverified entries (dated `### YYYY-MM-DD` header) and dated `friction-log.md` entries (`## Session — YYYY-MM-DD`). The remaining sources — `inbox/*.md` briefs, `next-up.md` checkboxes, and `session-plan-*.md` checkboxes — have **no commit-resolvable anchor**, so they are **not** git-queried and surface unchanged under their existing handling. Do not wire a git query against an anchorless source.
+- **Merged multi-repo scan.** Run the primitive's merged `git log --since=<anchor>` across cwd + `ai-resources` + sibling `projects/*/` repos; collapse to one scan at the earliest anchor and reuse the result set.
+- **Classify** with the conservative posture (commit-hash / `id-NN` token first; distinctive keywords otherwise; drop generic tokens; when in doubt → still-open).
+- **Route:** `LIKELY_DONE` items move to a separate "likely-already-done — verify" section (Step 3), tagged with the resolving commit hash. They leave their normal tier section. Still-open items stay where Step 1 placed them.
+- **Fall-through:** if git fails or returns nothing, treat all items as still-open and continue (report unchanged).
+
 ### Step 2 — Apply priority override
 
 Re-scan all collected items (any tier) for these markers (case-insensitive): `[BLOCKING]`, `[HIGH]`, `[CRITICAL]`, `[URGENT]`. Promote any matches to a top "PRIORITY" section. The promoted items still appear in their normal tier section as well (don't lose them).
+
+Do NOT promote a `LIKELY_DONE` item (demoted at Step 1.5) into PRIORITY even if it carries a priority marker — a reconciled-as-done item is not actionable, so the marker is moot.
 
 ### Step 3 — Print the report
 
@@ -84,10 +96,16 @@ Always print every heading. For empty sections, print `None.` underneath. Use ma
 - Stale open questions (>14 days): <N> items
 
 (Run `/open-items full` to expand Tier 3.)
+
+## Likely already done — verify (reconciled at Step 1.5)
+(only shown if any anchored items were demoted; advisory — a commit appears to resolve these, not vetted)
+- <entry title> — commit <hash> — [<source path>](<source path>)
 ```
 
 End with one summary line:
-`<X> high-signal items + <Y> trigger-bound + <Z> in backlog.`
+`<X> high-signal items + <Y> trigger-bound + <Z> in backlog (+ <D> likely-already-done, demoted).`
+
+Omit the `(+ <D> likely-already-done…)` clause when `D` is 0.
 
 ### Step 4 — `full` mode
 
