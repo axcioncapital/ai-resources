@@ -55,6 +55,17 @@ These are the anti-patterns that report prose must avoid. Defined here independe
 | **Scarcity register compliance** | If the scarcity register contains items relevant to this chapter, the prose MUST implement the specified editorial instruction (HEDGE / SCOPE CAVEAT / PROXY FRAMING). Missing implementation of a scarcity instruction is a violation. | BLOCKING |
 | **Section directive compliance** | The prose delivers what the section directive specified. Missing elements are flagged — BLOCKING if the element is a core analytical point, NON-BLOCKING if supporting detail. | BLOCKING or NON-BLOCKING (per element) |
 
+## Category 2b: Cross-Cluster Claim-ID Attribution (synthesis chapters only)
+
+This category runs only for chapters that aggregate evidence from multiple clusters (i.e., synthesis chapters as flagged in the architecture or section directive). Skip for single-cluster chapters.
+
+For a synthesis chapter to run this check, the cluster memos must be passed as an additional input alongside the chapter draft — without them, flag that the check was skipped and recommend re-running with memos attached.
+
+| Check | What to verify | Severity |
+|-------|---------------|----------|
+| **Claim-ID cluster attribution** | For each cited claim ID in the chapter prose, verify that the surrounding sentence's analytical assertion is consistent with the evidence the claim ID actually represents in its source cluster memo. A mis-attribution occurs when the prose asserts "as [Cluster X] shows [claim ID]" but the claim ID belongs to Cluster Y's evidence. Flag each instance. | BLOCKING |
+| **Back-reference opt-in** | If one mis-attribution is found, note that the operator may request a full back-reference re-audit across all synthesis chapters to catch other instances before citation conversion. Flag as NON-BLOCKING advisory. | NON-BLOCKING |
+
 ## Category 3: Style Compliance
 
 Checked against the style reference.
