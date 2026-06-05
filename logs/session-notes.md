@@ -336,6 +336,13 @@ S3 auto mode: executed the [high] items from the 2026-06-05 friday-act plans. Ri
 ### Decisions Made
 - **Item #2 (Read() deny rules) deferred.** Proposed globs (`audits/**`, `logs/scratchpads/**`) conflict with active command reads — risk-check flagged this as hidden-coupling High. Logged as id-39 in improvement-log with candidate safe-deny patterns for a future dedicated session.
 
+### Outcome
+- **COMPLETION: DELIVERED** — all 5 mandate items applied or deferred-with-logging in usable form; all six artifacts directly inspected and verified.
+- **EXECUTION: ACCEPTABLE** — risk-check ran pre-implementation, QC applied, deferred item logged with full design note. No rework, no wasted steps, no gate skips.
+- What was asked but not done: none.
+- Better path: none.
+- Confidence: high.
+
 ### Risky actions
 None. All structural changes cleared the combined /risk-check (PROCEED-WITH-CAUTION → mitigations applied). The settings.local.json fix is gitignored by design. The two project CLAUDE.md commits used explicit-path staging. Both wrap-session copies updated in lockstep per paired-contract rule.
 
@@ -347,3 +354,10 @@ None. All structural changes cleared the combined /risk-check (PROCEED-WITH-CAUT
 
 ### Open Questions
 None blocking.
+
+## 2026-06-05 — Session S5
+Work through the remaining tactical follow-up items from the 2026-06-05 monthly friday-checkup report (lines 105–129).
+**Mandate:** Apply or explicitly defer-with-logging the remaining open tactical follow-up items from `audits/friday-checkup-2026-06-05.md` — done when: every remaining open checkbox item is either actioned (committed) or logged as explicitly deferred with reason.
+- Out of scope: The 5 policy-level observations; the push gate; items already resolved by S1–S4 (settings.local.json, push-rule corrections, /new-project template, pre-push fetch gate, skill frontmatter, model de-versioning, ai-resources Read-deny, vault index counts).
+- Files in scope: audits/friday-checkup-2026-06-05.md, logs/improvement-log.md, logs/session-notes.md, plus files touched by actioned items (inferred)
+- Stop if: a /risk-check returns NO-GO on any structural item
