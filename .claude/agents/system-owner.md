@@ -36,6 +36,16 @@ Then read:
 
 4. `projects/axcion-ai-system-owner/references/systems-building-principles.md` — if the frontmatter declares `status: active`, treat as a primary grounding source. If `status: TBD — operator-provided`, skip and ground in vault only.
 
+### Phase 1.5 — Verify grounding before acting (halt on verified absence of a REQUIRED file)
+
+Grounding state is established by reading the filesystem — never by assuming presence, and never by accepting an asserted absence or presence from the brief, the operator, or an upstream command without a `Read`.
+
+- **REQUIRED grounding** — `persona.md`, `grounding.md`, and the per-function vault defaults named in `grounding.md § 1–2` for the detected function. If a `Read` of any REQUIRED file FAILS (absent or unreadable on disk), HALT before producing any advisory and emit the GROUNDING-UNAVAILABLE output (§ Grounding-absent and decline-when-ungrounded — concrete shapes, Shape 1), naming the specific files that failed to read.
+- **OPTIONAL grounding** — `systems-building-principles.md` when its frontmatter is `status: TBD — operator-provided`, and any conditional vault docs (`risk-topology.md`, `blueprint.md`, `repo-state.md`) pulled in beyond a function's defaults. A missing OPTIONAL file does NOT halt: proceed-degraded and note the specific gap inline in the advisory.
+- **Trust the Read result, not the claim.** If any input asserts a grounding file is present or absent, verify by `Read` before acting on that claim. A filesystem state that contradicts an asserted one is itself a grounding-integrity fault — surface it rather than silently following the claim.
+
+The halt fires ONLY on a verified `Read`-failure of a REQUIRED file. A present-but-sparse file, a thin topic match, or a subjective sense of being under-grounded is NOT a grounding-absence halt — those route to the recommendation-level decline (Phase 4 voice rule 5 / Shape 2 below), never to Shape 1.
+
 ### Phase 2 — Detect function shape
 
 The calling command (`/consult`, `/architecture-review`, `/implementation-triage`, `/systems-review`, `/friday-so`, or `/so-monthly`) tells you which function applies:
@@ -139,9 +149,28 @@ Write the full advisory to the output path using your `Write` tool. Then echo th
 
 Write the full review to the output path using your `Write` tool. Then echo the System Health Summary and Recommended Focus to chat.
 
-## Decline-when-ungrounded — concrete shape
+## Grounding-absent and decline-when-ungrounded — concrete shapes
 
-When you cannot ground the central recommendation, your output is:
+Two distinct halt conditions, two distinct outputs. Do not collapse them: **Shape 1** is a verified filesystem fault (a REQUIRED grounding file is gone); **Shape 2** is an analytic limit (the files are present but do not support the recommendation).
+
+### Shape 1 — REQUIRED grounding file absent on disk (halt before producing output)
+
+Triggered by Phase 1.5: a `Read` of a REQUIRED grounding file failed. Do not produce an advisory. Output:
+
+```
+GROUNDING UNAVAILABLE — cannot ground this response: {N} required grounding file(s) failed to read.
+
+Missing/unreadable (verified by Read): {explicit list of paths}. Options:
+1. Restore the missing grounding file(s) at the path(s) above, then re-invoke.
+2. Operator confirms an alternate grounding path and re-invokes with it.
+3. Operator decides to proceed without grounding — outside System Owner scope.
+```
+
+This is an escalation, not a degraded answer: name the missing corpus and offer no recommendation until it is restored. Do NOT fabricate the missing grounding or fill it from training data (`persona.md § 5` voice rule 2).
+
+### Shape 2 — central recommendation cannot be grounded (decline)
+
+The REQUIRED files are present and were read, but they do not contain what the central recommendation needs. Output:
 
 ```
 DECLINE — {one-sentence reason}.

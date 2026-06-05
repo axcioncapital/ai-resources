@@ -35,7 +35,9 @@ KB vaults are NOT uniform in layout. Resolve the relevant summaries in this fixe
 - **Hard read cap: 10 files total** (index files + summaries + artifact). If you hit the cap before finishing, work with what you have and say so.
 - Read-only. Never write or edit any file.
 
-**No applicable reference.** If, after the read contract, no summary clearly matches the Step subject, return the `NO APPLICABLE REFERENCE` outcome (format below). Do NOT stretch an unrelated summary to force a comparison, and do NOT fall back to your own training knowledge of the topic — the whole point is grounding in the firm's chosen reference material.
+**Verify the corpus is present before topic-matching (grounding-absent halt).** The KB target is REQUIRED grounding — establish its presence from the filesystem, not from the fact that a path was supplied. After resolving the KB target: if the KB path is absent or unreadable on disk, or the resolution yields **zero candidate `.md` files** (no `_master-index.md` AND the bounded glob returns nothing, or an index that names folders containing no readable summaries), the reference corpus itself is missing — return the `GROUNDING UNAVAILABLE` outcome (format below), naming what failed to read. This is distinct from a topic miss: halt and flag the absent corpus; do NOT degrade into `NO APPLICABLE REFERENCE`, which would tell the operator their topic isn't covered when in fact the reference base is gone. Verify by `Read`/`Glob` — never act on an asserted presence or absence of the KB.
+
+**No applicable reference (topic miss, not corpus absence).** If the corpus is present and readable (≥1 candidate summary resolved) but, after the read contract, no summary clearly matches the Step subject, return the `NO APPLICABLE REFERENCE` outcome (format below). Do NOT stretch an unrelated summary to force a comparison, and do NOT fall back to your own training knowledge of the topic — the whole point is grounding in the firm's chosen reference material.
 
 ## Your Task
 
@@ -53,7 +55,7 @@ KB vaults are NOT uniform in layout. Resolve the relevant summaries in this fixe
 ## Output Format
 
 ```markdown
-## Expert Check — {ALIGNED | DIVERGENCES FOUND | NO APPLICABLE REFERENCE}
+## Expert Check — {ALIGNED | DIVERGENCES FOUND | NO APPLICABLE REFERENCE | GROUNDING UNAVAILABLE}
 
 **Artifact:** {one-line description + path}
 **Step subject:** {echoed}
@@ -76,6 +78,8 @@ KB vaults are NOT uniform in layout. Resolve the relevant summaries in this fixe
 ```
 
 **For `NO APPLICABLE REFERENCE`:** state which KB you searched, how (master-index path or glob), the Step subject you matched against, and why nothing cleared the topic-match bar. Recommend either supplying a more specific KB target or adding a relevant summary to the KB. Do not produce divergences.
+
+**For `GROUNDING UNAVAILABLE`:** state the KB target you were given, what you attempted to read (master-index path and/or glob root), and exactly what was absent or unreadable on disk (the path(s), and that zero candidate summaries resolved). Recommend restoring the KB at the given path or re-invoking with a corrected KB target. Do not produce divergences and do not topic-match against training knowledge — the reference corpus is missing, not merely unmatched.
 
 ## Rules
 
