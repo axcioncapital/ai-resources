@@ -70,7 +70,7 @@ Skill loading: For each skill step below, read the skill file from the ai-resour
 1. Read the session plan from `/execution/research-prompts/{section}/session-plan.md` to recover the session letters, question assignments, and dependency map.
 2. For each pasted report, identify which session it belongs to by matching its content against the session plan's question assignments (look for the research questions addressed, topic alignment, and any session identifiers in the output).
 3. Present the proposed mapping to the operator for confirmation: list each report with its assigned session letter and the questions it covers.
-4. After confirmation, write each report to `/execution/raw-reports/{section}/{section}-session-[letter]-raw-report.md`.
+4. After confirmation, write each report to `/execution/raw-reports/{section}/{section}-session-[letter]-raw-report.md`. After writing each file, normalize UTF-8 encoding: `bash {AI_RESOURCES}/scripts/fix-mojibake.sh {written_file_path}` (requires python3 or iconv; safe to skip if unavailable — does not affect content, only encoding).
 5. Report back: which files were written, which sessions are now complete, and — per the dependency map — which downstream sessions are now unblocked.
 
 ---

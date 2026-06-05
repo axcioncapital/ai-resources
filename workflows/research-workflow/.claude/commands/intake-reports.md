@@ -18,7 +18,7 @@ Usage: `/intake-reports` — then follow the prompts.
 3. If no files found and nothing pasted, ask the operator to either paste the report content or specify the file path(s).
 4. For each report, identify which session it belongs to by matching content against the session plan's question assignments (topics addressed, question IDs, session identifiers).
 5. Present the proposed mapping to the operator: list each report with its assigned session letter and questions covered.
-6. After confirmation, write each report to `/execution/raw-reports/{section}/{section}-session-[letter]-raw-report.md` (skip if already correctly named and placed). When writing raw reports: copy the operator's pasted content verbatim. Do not summarize, truncate, or restructure. The raw report file must contain the complete output exactly as pasted.
+6. After confirmation, write each report to `/execution/raw-reports/{section}/{section}-session-[letter]-raw-report.md` (skip if already correctly named and placed). When writing raw reports: copy the operator's pasted content verbatim. Do not summarize, truncate, or restructure. The raw report file must contain the complete output exactly as pasted. After writing, normalize UTF-8 encoding: `bash {AI_RESOURCES}/scripts/fix-mojibake.sh {written_file_path}` (requires python3 or iconv; safe to skip if unavailable).
 7. Report:
    - Which files were written (with canonical names)
    - Which sessions are now complete
