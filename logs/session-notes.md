@@ -407,3 +407,46 @@ A live concurrent "maintenance-pipeline discipline batch" session held uncommitt
 
 ### Open Questions
 None blocking.
+
+## 2026-06-05 — /diagnostics-plan (ai-resources): 7-item Do-now batch reconciled, 1 applied
+### Summary
+Ran `/prime` → `/open-items` → `/diagnostics-plan` on the ai-resources scope. The diagnostics-scanner surfaced 39 candidates; the System Owner (Function A) vetted them to a tight 7-item Do-now batch, all gated. Operator authorized one batched `/risk-check` + execution of the cleared items. On pre-execution reconciliation (risk-check consumer inventory + DR-9 top-3 check + SO Function-B second opinion), **6 of the 7 dissolved** — 3 already-applied (stale-report artifacts), 1 canonical conflict, 1 load-bearing-deny defer, 1 out-of-scope. Only the one clean in-scope item was executed: the ai-resources CLAUDE.md de-dup pass (id-25 + id-26).
+
+### Files Created
+- `logs/scratchpads/2026-06-05-16-30-diagnostics-plan-scratchpad.md` — continuity scratchpad (gitignored).
+- `audits/risk-checks/2026-06-05-diagnostics-plan-7-item-do-now-batch-perms-claude-md-push-symlinks.md` — batched risk-check report (PROCEED-WITH-CAUTION).
+- `audits/working/diagnostics-scan-2026-06-05-1545-ai-resources.md` — diagnostics-scanner notes (gitignored).
+- `projects/axcion-ai-system-owner/output/consultations/consult-2026-06-05-diagnostics-plan-ai-resources.md` — SO Function-A triage advisory (workspace-root repo).
+
+### Files Modified
+- `CLAUDE.md` (ai-resources) — id-25 (Git Rules push bullet → pointer, removed within-file dup) + id-26 (token-audit codes R14/R1–R13 → plain language). Commit `f0959f7`.
+- `logs/improvement-log.md` — appended the /diagnostics-plan per-item disposition record (1 applied, 6 dissolved). Commit `b18d212`.
+
+### Decisions Made
+- **id-06 SKIP (canonical conflict):** "add Read(audits/working/**) deny" contradicts `docs/permission-template.md:141` ("retired 2026-04-28. Do not restore it" — breaks /permission-sweep + Subagent Contract read-back). Token-audit finding did not account for this.
+- **id-22 DEFER (load-bearing deny):** the archive-read deny is built into resolve-improvement-log.md's append-only design; narrowing it is a 3-canonical-file contract change with a guard-removal tradeoff, not a clean fix. Parked for a dedicated decision.
+- **id-37 DEFER (out of scope):** target is workflows/research-workflow/.claude/commands/; part of the deferred cross-repo symlink cluster.
+- **CLAUDE.md kept deliberately:** id-10 Commit Rules mirror (DR-5 self-labeled context-less-open copy), id-11 Model Selection no-model-field rule (kept verbatim/visible — divergence from SO "trim to pointer" advisory, on rule-visibility + materiality grounds). id-12 Session Boundaries left (already minimal).
+
+### Outcome
+- **COMPLETION: DELIVERED** — executed the cleared Do-now items under the gates; 6 of 7 dissolving on honest reconciliation (already-applied / conflict / out-of-scope) and applying only the clean in-scope item is correct behavior, not under-delivery. All claims verified on disk by the independent check.
+- **EXECUTION: ACCEPTABLE** (Confidence: low — fallback mandate, no formal /session-start). Process worked and caught everything. Better-path note: SO Function-A vetting passed already-applied items (id-01/02/03/04/18) into the Do-now batch; running the already-applied on-disk reconciliation *before* SO vetting (not after) would cull dead items earlier and raise batch signal-to-noise. The redundant vetting of dead items was the detour cost — no rework, no data loss.
+
+### Risky actions
+None. All writes were explicit-path staged (CLAUDE.md, risk-check report, improvement-log.md). Step 3.5 foreign-guard returned FOREIGN=0 (S11's content already in HEAD via its own wrap). No mid-session push. No irreversible action. S11's `logs/improvement-log-archive.md` left uncommitted (foreign — S10/S11 loose end, not this session's).
+
+### Session Assessment
+_(wrap-collector, 2026-06-05 — no new store writes; the one qualifying signal was deduped against b18d212.)_
+- **Autonomy-compounding:** no signal — CLAUDE.md de-dup was one-off cleanup; no reusable component, no speculative work.
+- **Leanness/cost:** signal present (SO Function-A vetted 5 already-applied items into the Do-now batch → 6 of 7 dissolved = redundant-vetting detour) — already logged this session (b18d212); deduped, not re-logged.
+- **Principle-drift:** no signal — id-11 keep-verbatim over SO trim-advisory was a deliberate materiality call.
+- **Friction:** no signal — no operator intervention or repeated feedback.
+- **Safety:** none observed — Risky actions = None; explicit-path staging, FOREIGN=0, no push, no irreversible action.
+
+### Next Steps
+- **Push gate at wrap:** 2 ai-resources commits (`f0959f7`, `b18d212`) + 2 earlier workspace-root commits.
+- **Optional dedicated sessions** (only if judged worth it): id-22 archive-deny narrowing decision; id-37 research-workflow byte-copy → symlink conversion.
+- **Standing carryover (unchanged):** `/resolve-improvement-log` for accumulated resolved entries; S10 leftover `logs/improvement-log-archive.md` still uncommitted.
+
+### Open Questions
+None blocking.
