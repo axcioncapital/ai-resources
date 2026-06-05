@@ -425,3 +425,33 @@ None. Single explicit-path commit (`logs/innovation-registry.md` only); pre-exis
 
 ### Open Questions
 None blocking.
+
+## 2026-06-05 — Slot 7 context-engine decision (B1/B2): keep manual, demote auto-fire, park enforcement
+
+### Summary
+Resolved the AI-strategy Slot 7 context-engine extension via `/clarify` → plan-mode → execution (no `/prime` task-select or `/session-start` this session). Produced a decision-only verdict on whether Context Engine Phase 2 should land/revise/park/cut, judged against the strategy's three tests (reduce session-start time / reduce wrong-context loading / improve eval-case success). Three Explore agents inventoried the engine, found the strategy framing, and gathered evidence; the engine was found to exist in three layers at three maturity levels, so a single land-vs-cut call was the wrong shape. Verdict rendered per layer on current evidence (operator-confirmed scope: full-stack / decision-only / decide-on-current-evidence). No edits to `/session-start`, `/prime`, the agent, or the schema — the auto-fire severance is gated to its own `/risk-check`.
+
+### Files Created
+- `projects/strategic-os/ai-strategy/slot-7-context-engine-decision.md` — the decision record (three-layer verdict, three tests scored against cited evidence, full-stack synthesis, gated follow-up named).
+- `ai-resources/logs/scratchpads/2026-06-05-15-30-scratchpad.md` — continuity scratchpad (wrap Step 0.5).
+
+### Files Modified
+- `projects/strategic-os/ai-strategy/candidate-backlog.md` — §B.2 B1/B2 line reconciled (RESOLVED + corrected stale "not yet landed" status).
+- `projects/strategic-os/ai-strategy/implementation-tracker.md` — Slot 7 row → In progress + changelog entry.
+- `ai-resources/logs/decisions.md` — Slot 7 cross-reference entry.
+
+### Decisions Made
+- **Verdict (operator-directed, full-stack / decision-only):** Phase 1 manual `/build-context` → **LAND** (opt-in, passed own eval, zero idle cost); Phase 2 auto-fire (`session-start.md:184`, `prime.md:315`) → **REVISE → demote to opt-in** (FAILS session-start-time test; WEAK/UNPROVEN wrong-context, n=2 and one catch masked a `/prime` sibling-repo bug; UNMEASURABLE eval-success — no eval substrate yet; burden-on-landing unmet); Phase 2+ enforcement → **PARK** behind the Slot 5 eval substrate. Logged to `decisions.md` + full record in strategic-os.
+- **Stale-status conflict surfaced + reconciled:** strategy docs said Phase 2 "not landed" but it had landed and written 25 packs across 5 project areas. candidate-backlog reconciled this session; governing-doc §6 line 256 currency edit deferred.
+- QC fixes (separate from decisions): record REVISE → 2 mechanical citation corrections applied (re-pointed an already-reconciled cross-ref to the still-stale governing-doc line; `governing-document.md` → `ai-strategy-governing-document.md`).
+
+### Risky actions
+None. Decision-only: no edits to engine commands/agent/schema, no deletions, no pushes. Two explicit-path commits (strategic-os, ai-resources). Pre-existing working-tree drift (backbone-manifest, coaching-log, improvement-log, session-plans, repo-health reports, untracked audits) left untouched. No prompt injection. No gate should-have-fired-but-didn't.
+
+### Next Steps
+- **Deferred (doc-currency, non-blocking):** `ai-strategy-governing-document.md` §6 line 256 still reads "Phase 2 risk-checked, not landed" — one-line restatement edit for the next session that touches the governing doc.
+- **Gated:** execute the L2 REVISE (withdraw the auto-fire from `/session-start` Step 2.4 + `/prime` Step 8c.4.5, leaving `/build-context` opt-in) — needs its own `/risk-check`; must pre-flight `monday-prep.md` + `contract-check.md`.
+- **Carryover (unchanged):** `.claude/` git-hygiene implementation (gated); 4 parked inbox build briefs; `/resolve-improvement-log` candidate.
+
+### Open Questions
+None blocking.
