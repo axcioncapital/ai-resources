@@ -4,6 +4,8 @@ This cadence exists to keep the four-project system compounding faster than it a
 
 Personal weekly rhythm — what to run, when, and what to watch for. Technical details in `weekly-cadence.md` and `weekly-session-guide.md`.
 
+**For a single follow-along runbook with error-prevention built in: see `friday-cadence-runbook.md`.** Use it when running the Friday cadence — it carries the full Session 1 / Session 2 sequence plus a pre-flight concurrency gate and a troubleshooting table for the collision errors that hit on heavy maintenance days.
+
 ---
 
 ## Monday
