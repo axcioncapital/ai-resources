@@ -152,3 +152,18 @@ Coaching feedback captured via `/coach`. Newest entries at the bottom.
 **The One Thing:** Stage push-gate-class structural removals earlier in the day, not late. Today's push-gate removal (commit `50977b3`) and parallel Wave 2/3 executions produced the `ea93d62` commit-attribution swap where a parallel Wave 3 session absorbed your Wave 2 prime.md edits — the friction class you're still working to eliminate (TOCTOU on shared files) was actively biting your own concurrent sessions while you fixed it. Serialize structural-class changes that touch shared infra (push rules, marker writes, session-notes headers) ahead of execution sweeps.
 **Prior recommendation status:** Acted on — 2026-05-22 "name the bright-line" codified 2026-05-28 in `review-principles.md § All Reviews` (wave-1 id-20, commit `f598ee1`), closing a 3-cycle carryover. decisions.md alternatives-rigor held (10/10 in window, each with 3+ alternatives enumerated). id-31 Phase 1 structural fix shipped against the TOCTOU class flagged in prior cycles.
 **Promotion candidates:** 2 — (1) decisions.md alternatives-considered rigor (held 7 consecutive cycles, 10/10 this window — graduate to a decisions.md template field via `/improve`); (2) bright-line-naming principle (codified 2026-05-28 — graduate from coaching habit to structural rule check via `/improve`).
+
+### 2026-06-05
+**Coverage:** 13 sessions (2026-06-01 → 2026-06-04), 17 decisions, ~10 gate entries.
+
+| Dimension | Rating | Trend |
+|-----------|--------|-------|
+| Iteration Efficiency | Healthy | → |
+| Decision Patterns | Strong | ↑ |
+| QC Disposition | Healthy | → |
+| Delegation Effectiveness | Healthy | → |
+| Workflow Evolution | Watch | mixed |
+
+**The One Thing:** Serialize same-day sessions that touch shared session-infra files (session-notes.md, .session-marker, CLAUDE.md). On 2026-06-04 S1–S8 ran concurrently; the no-own-marker clobber bug bit live during the sessions building its fix. Wrap each session (or confirm notes committed) before opening the next.
+**Prior recommendation status:** not acted on — concurrency-collision class recurred 3+ times 2026-06-04, carried forward.
+**Promotion candidates:** 2 — decisions.md alternatives-rigor (held 8 cycles); conflict-surface-then-recommend-and-proceed pattern.

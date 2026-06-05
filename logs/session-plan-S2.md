@@ -1,51 +1,49 @@
-# Session Plan — 2026-06-01
+# Session Plan — 2026-06-04
 
 ## Intent
-Replace the contradicting "After committing, push automatically" line with the canonical gated/batched push wording across all 11 project CLAUDE.md files that carry it.
+Implement two AI-strategy deliverables: (1) blanket-convert duplicated "Session Boundaries" sections across all carrying CLAUDE.md files (~17) to a single source-of-truth doc plus pointer references — operator override of F6's selective verdict, /risk-check-gated before any edit; and (2) recorded housekeeping items only — E10 (fold the compaction-scratchpad note into compaction-protocol.md) and the F1 deprecated-stub tidy.
 
 ## Model
-sonnet (mechanical uniform edit) — currently on opus-4-8[1m] → /model sonnet optional; staying on opus is harmless since the session also runs a /risk-check reasoning pass.
+opus — match (active: claude-opus-4-8[1m]). Deliverable 1 is high-blast-radius design+judgment work (pointer pattern, single-source placement, loss-of-every-turn-loading risk); deliverable 2 is mechanical execution. Higher tier governs.
 
 ## Source Material
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/CLAUDE.md (canonical Push behavior + Commit behavior — the correct wording to mirror)
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/CLAUDE.md (canonical Commit Rules block — gated/batched push wording)
-- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/audit-discipline.md (structural change classes — cross-cutting CLAUDE.md edits)
-- The 11 target files (all under /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/):
-  - ai-development-lab/CLAUDE.md
-  - axcion-brand-book/CLAUDE.md
-  - buy-side-service-plan/CLAUDE.md
-  - corporate-identity/CLAUDE.md
-  - interpersonal-communication/CLAUDE.md
-  - nordic-pe-macro-landscape-H1-2026/CLAUDE.md
-  - nordic-pe-screening-project/CLAUDE.md
-  - obsidian-pe-kb/CLAUDE.md
-  - personal/travel-os/CLAUDE.md
-  - project-planning/CLAUDE.md
-  - strategic-os/CLAUDE.md
+- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/strategic-os/ai-strategy/slot-1-decisions.md (F6/E10/F1 verdicts; the record to update)
+- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/strategic-os/ai-strategy/implementation-tracker.md (status surface to update)
+- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/strategic-os/ai-strategy/candidate-backlog.md (F-series source detail)
+- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/audit-discipline.md (structural-class + risk-check change classes)
+- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/repo-architecture.md (placement of the new single-source doc)
+- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/docs/compaction-protocol.md (E10 fold target — must confirm it covers the scratchpad-before-/compact pattern)
+- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/CLAUDE.md + ai-resources/CLAUDE.md + ~15 projects/*/CLAUDE.md carrying the "Session Boundaries" heading (conversion targets)
+- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/repo-documentation/CLAUDE.md (E10 source — Compaction scratchpad pattern)
+- /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/output/context-packs/architecture-20260604-7c1a4/pack.md (context pack)
 
 ## Findings / Items to Address
-1. All 11 files carry exactly one identical line (verified by grep -c = 1 each):
-   `After committing, push automatically. Remind the operator to run \`/wrap-session\` if the work is complete. Never commit files that may contain secrets (\`.env\`, credentials, tokens).`
-   This sits inside an identical `## Commit Rules` mirror block, between the "Commit directly" paragraph and the "This rule mirrors the canonical `Commit behavior` section" paragraph.
-2. The contradiction: "push automatically" directly contradicts the canonical Push behavior rule (workspace CLAUDE.md), which was inverted on 2026-05-29 to gated/batched — no mid-session pushes, single operator confirmation at /wrap-session. Source: Monday-prep 2026-W23 flag (session-notes.md, HIGH confirmed).
-3. Three project files do NOT need the edit and are out of scope: axcion-ai-system-owner (already says "do not push"), global-macro-analysis and repo-documentation (no matching Commit Rules line).
-4. Replacement wording (mirrors canonical): replace the "After committing, push automatically." sentence with — "After committing, do NOT push. Pushes are batched until session end and gated by a single operator confirmation at `/wrap-session` (or an explicit signal like \"we're done\" / \"ship it\")." — keeping the rest of the line (the `/wrap-session` reminder + secrets warning) intact.
+1. **Deliverable 1 — Session Boundary consolidation (candidate F6).** ~17 CLAUDE.md files carry a near-verbatim "Session Boundaries" section. Operator has **overridden** F6's recorded verdict — slot-1-decisions.md line 39 says "CONVERT but NOT a blanket find-replace; keep verbatim where it loads every turn" — and directed a **blanket** conversion to a single source-of-truth doc + pointer references. The genuine technical risk F6 named (a `CLAUDE.md` loads every turn; a pointer does NOT auto-load, so behaviour that must run every turn could silently stop loading) is real and must be put to /risk-check before any edit. Source: slot-1-decisions.md:39.
+2. **Deliverable 2a — E10 fold.** repo-documentation `CLAUDE.md#Compaction` restates the "scratchpad-before-/compact" pattern that already lives canonically in `compaction-protocol.md`. Action: confirm the canonical doc covers it, then replace the project copy with a pointer. Source: slot-1-decisions.md:27.
+3. **Deliverable 2b — F1 stub tidy.** `/produce-handoff` is retired (superseded by `/develop-memo`); a deprecated stub was left in place. Action: tidy the stub (clear, dated deprecation note pointing to the replacement). Source: slot-1-decisions.md:28.
+4. **Record-keeping.** Update slot-1-decisions.md F6 row to mark it superseded-by-operator-override (with date + rationale), and update implementation-tracker.md status for the items closed/advanced this session.
 
 ## Execution Sequence
-1. Run `/risk-check` on the proposed change (cross-cutting CLAUDE.md edit, 11 files). Verify: GO verdict before any edit. On RECONSIDER/NO-GO → stop, surface, do not edit.
-2. Apply the uniform replacement in each of the 11 files via Edit (old_string = the full contradicting line; new_string = corrected line). Verify per file: Edit succeeds (tool errors if old_string absent/non-unique).
-3. Verify zero residue: `grep -rl "push automatically" projects --include=CLAUDE.md` returns nothing. Verify the 11 files now contain the gated wording.
-4. Run `/qc-pass` on the change set (wording fidelity vs canonical; no collateral edits; all 11 covered).
-5. Commit directly with `batch:` message. Verify: commit lands (no post-commit git checks per workspace rule).
+1. **Inventory & verbatim capture.** Grep every CLAUDE.md (workspace root, ai-resources, all projects/*, exclude archive/) for the "Session Boundaries" section; capture each file's exact section text and note any per-file variations. Verify: a complete file→content map exists; final count confirmed (supersedes the engine's dual-repo undercount of 2 and the doc's stated 16).
+2. **Decide single-source location + pointer template.** Choose where the canonical Session Boundaries doc lives (default candidate: `ai-resources/docs/session-boundaries.md`) and the exact one-line pointer that replaces each section. Verify: location + pointer pattern written down and surfaced to operator. **[STOP POINT — operator confirms pointer pattern before any mass edit.]**
+3. **/risk-check (plan-time gate).** Run on the blanket conversion; the "pointer does not auto-load every-turn behaviour" concern is the central risk dimension to surface. Verify: verdict captured. **[STOP POINT — RECONSIDER/NO-GO halts per mandate Stop-if.]**
+4. **Create the single-source doc** with consolidated Session Boundaries content. Verify: file written; content is the superset of all captured variations.
+5. **Convert each carrying CLAUDE.md** — replace its Session Boundaries section with the agreed pointer. Verify: every file in the step-1 map converted; count matches.
+6. **E10 fold + F1 stub tidy.** Confirm compaction-protocol.md covers the scratchpad pattern; point repo-documentation CLAUDE.md at it; tidy the F1 stub. Verify: project copy is a pointer; stub carries a clean dated deprecation note.
+7. **Record-keeping.** Update slot-1-decisions.md F6 row (override) + implementation-tracker.md status. Verify: both files reflect the override and progress.
+8. **QC.** `/qc-pass` on the new single-source doc + a sample of pointer edits + the record updates. Verify: GO (or fixes applied).
 
 ## Scope Alternatives
-Single scope — no alternatives. The fix is a fixed-content uniform replace dictated by the already-decided canonical rule; no degrees of freedom on wording or file set.
+- **Min:** Deliverable 1 only (boundary consolidation), defer E10/F1 to a later housekeeping turn.
+- **Recommended:** Both deliverables as scoped here (boundary consolidation + E10 fold + F1 stub tidy) — matches the operator's "recorded-items-only" choice.
+- **Max:** Not on the table — operator explicitly declined a fresh housekeeping scan beyond the recorded items.
 
 ## Autonomy Posture
-Gated — one structural class touched (cross-cutting CLAUDE.md edits) but scope is bounded and content is pre-decided.
+Gated
 
 **Stop points:**
-- `/risk-check` verdict before any file edit (RECONSIDER/NO-GO halts execution).
+- After Step 2: operator confirms the single-source doc location + pointer template before any CLAUDE.md is edited (cross-cutting always-loaded content).
+- After Step 3: /risk-check verdict — RECONSIDER or NO-GO halts the session (mandate Stop-if).
 
 ## Risk
-Run `/risk-check` after the plan is approved (plan-time gate) — cross-cutting CLAUDE.md edit across 11 files. End-time gate before commit may be skipped per the documented end-time skip rule only if plan-time covered the exact change set with mitigations and drift is bounded.
+Structural change classes present: cross-cutting CLAUDE.md edits across ~17 files + change to always-loaded content + a new always-loaded-by-pointer doc. Run `/risk-check` after this plan is approved (plan-time gate, Step 3 above) and again before commit (end-time gate). Do not edit any CLAUDE.md before the plan-time /risk-check returns GO.

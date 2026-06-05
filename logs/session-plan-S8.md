@@ -1,113 +1,71 @@
-# Session Plan — S8 — 2026-05-29
+# Session Plan — S8 (2026-06-04)
 
 ## Intent
-
-Apply the structured `/improve-skill` improvement pipeline (or a direct-edit fallback) to `/friday-act` so the three per-item disposition prompts in the "follows" sub-steps auto-triage by default. Defaults: HIGH-risk → `f` (fix-now), MED → `d` (defer), LOW → `s` (skip). After the auto-triage string is computed, the operator sees it and either presses Enter to accept or pastes a corrected string. The change covers all three prompts (Step 3 tactical follow-ups, Step 3.5d SO-derived, Step 3.5f journal-derived) so override mechanics are uniform.
-
-This implements S6 Wave 6 item #16 — operator's explicit directive: *"next time triage the follows AUTOMATICALLY for me!!"*.
+Run 3 picked menu items in order: (1) fix the `/wrap-session` Step 3.5 clobber false-negative guard bug across both wrap-session copies; (2) build defect-capture wiring session 2 — a `/log-defect` capture command + a recurrence-scan step in `/friday-checkup`; (3) decide the `.claude/` directory git-hygiene / tracking model and record the decision.
 
 ## Model
-
-Recommended: **opus** — match.
-
-Why: deciding work. The plan involves designing the predicate semantics (default → disposition mapping), choosing the override UX shape, deciding how the auto-triaged string is recorded in `RESULTS` for Step 5 logging (does it look like an operator paste? does it carry a `triage_source: auto-default` tag?), and editing flow logic in a load-bearing weekly cadence command. Sonnet would handle the mechanical edits fine but would not catch the second-order effects on Step 5 logging or maintenance-observations.md formatting.
+opus (`claude-opus-4-8[1m]`) — match. Item 4 is a decision (deciding → opus); items 1–2 are command design with a load-bearing parse contract (closer to deciding than mechanical). No `/model` switch.
 
 ## Source Material
-
-- `.claude/commands/friday-act.md` — the command body to modify. Lines 118–149 (Step 3 tactical loop), 152–204 (Step 3.5 SO-derived + journal-derived). The three operator-paste prompts that auto-triage replaces: line 137 (Step 3 disposition string), line 185 (Step 3.5d invokes "items 14–15c logic"), line 203 (Step 3.5f same loop).
-- `.claude/commands/improve-skill.md` — the pipeline vehicle. Need to confirm Stage 0 accepts a command-file target vs. SKILL.md only; if it rejects, fall back.
-- `skills/ai-resource-builder/SKILL.md` — referenced by `/improve-skill` for skill format and improvement sequence. Read to understand the improvement-pipeline shape before invoking.
-- `.claude/agents/friday-act-16a-summarizer.md` — Step 3.5 delegates to this subagent; not modified, but the auto-triage edit must not break its output contract.
-- `logs/session-plan-S6.md` (line 57) — S6 Wave 6 item #16 brief; deferral rationale; operator directive verbatim.
-- `docs/audit-discipline.md` — `/risk-check` change classes (used in the fallback path).
-- `logs/decisions.md` — recent dispositions; reference for the default-predicate rationale (the HIGH→f / MED→d / LOW→s pattern claim).
-- `output/context-packs/command-20260529-7b2a4/pack.md` — context engine pack; missing-context items and conflict already triaged at the auto-mode gate.
+- **Item 1:** `logs/improvement-log.md` L295–301 (clobber false-negative entry, recommended structural fix); L242–250 (id-14 date-rollover edit just applied — same Step 3.5 block); L214–224 (Option 2′ per-id keying history); `.claude/commands/wrap-session.md` Step 3.5 MARKER-resolution block (L80–156); workspace-root `/.claude/commands/wrap-session.md` (paired sibling); `docs/session-marker.md` (canonical contract).
+- **Item 2:** `docs/defect-to-fix-loop.md` (loop, firing model, deferred-wiring §session-2 L42–47); `logs/defect-log.md` (schema, 7 classes, prepend-most-recent-at-top, recurrence rule); `.claude/commands/friday-checkup.md` (gate-calibration suppression-check precedent — where the scan lands).
+- **Item 4:** `logs/session-notes.md` S6/S7 carryover ("14-repo CLAUDE.md git-hygiene + `.claude/` tracking-model decision; highest-value carryover"); `auto-sync-shared.sh` (symlink-emission + drift-detection — binding constraint); `.gitignore` state across project repos; `docs/` any tracking-model reference.
 
 ## Findings / Items to Address
 
-### F1 — Three operator-paste prompts share one disposition vocabulary
-All three prompts use `{f,d,s}` and the same length-match-or-reprompt validation pattern. The auto-triage edit must apply uniformly to all three to preserve operator predictability — a half-auto, half-manual shape would be worse than today.
+### Item 1 — wrap-session Step 3.5 clobber false-negative
+- **Root cause (confirmed via improvement-log L295–301):** a session that runs `/prime` menu → a command → `/wrap-session` WITHOUT `/prime` task-selection or `/session-start` authors no `## … — Session ${MARKER}` header and writes no `logs/.session-marker-${CLAUDE_CODE_SESSION_ID}` per-id file. At wrap, the per-id path (L91–97) yields no MARKER, the loud fallback (L99–106) reads the *clobbered shared* `.session-marker` (pointing at a concurrent foreign session's marker), and the marker-aware path counts the foreign header as own (`OWN_HEADERS_SUBTRACT=1`) → `FOREIGN=0` false-negative. Option 2′ per-id keying only protects sessions that HAVE a per-id marker.
+- **Fix (recommended in L300):** add a `NO_OWN_MARKER` guard — when `CLAUDE_CODE_SESSION_ID` is SET but the per-id file does NOT exist, this session authored zero tracked headers; force `OWN_HEADERS_SUBTRACT=0` / `OWN_MANDATES_SUBTRACT=0` and SKIP both the shared-marker loud fallback AND the `PRIME_RAN`/`.prime-mtime` path (both shared + clobber-vulnerable). Restrict the loud fallback to the genuine old-CLI case (`CLAUDE_CODE_SESSION_ID` unset). Net: a no-own-marker session claims no ownership → all added today-content flagged foreign → guard STOPs as designed.
+- **Folds with id-14:** same Step 3.5 MARKER-resolution region in both copies. Edit both copies in lockstep (PAIRED CONTRACT).
+- **Regression guard:** must not re-break (a) genuine concurrent-foreign detection, (b) legacy old-CLI PRIME_RAN path, (c) normal per-id-present marker-aware path, (d) id-14 date-rollover grace window.
 
-### F2 — Default-predicate rationale is implicit, not codified
-Lines 137–139 list the three letters but give no guidance on *when* each is appropriate. The auto-triage default (HIGH→f, MED→d, LOW→s) embeds a judgment that should be visible in the command body itself — both for the operator (so the default is auditable) and for downstream readers (the same vocabulary is referenced in Step 3.5d, 3.5f without re-listing the meanings).
+### Item 2 — defect-capture wiring (session 2)
+- **Two deferred items (`defect-to-fix-loop.md` L42–47):** (a) `/log-defect` capture command (new); (b) a recurrence-scan step.
+- **`/log-defect`:** prepends one entry to `defect-log.md` (schema: most-recent-at-TOP — prepend, NOT append). Takes a defect description; classifies into exactly one of the 7 classes; scans the log for prior same-class entries to set Occurrence (1st / Nth) and the prior occurrence's date+location; sets Action (`captured` on 1st; on 2nd+ the entry must route — surface that the recurrence rule fires). Em-dash (U+2014) in the header. Log-append/dispatch command → `model: sonnet` frontmatter.
+- **Scan step → `/friday-checkup`, not `/wrap-session`:** the firing model says recurrence scan + routing is fortnightly on the Friday cadence, gated (judgment work). Exact precedent: the gate-calibration suppression check that fires monthly+ inside `/friday-checkup`. The scan flags any class with a 2nd+ occurrence still tagged `captured`.
+- **Out of scope:** routing the first real recurring defect class into a rule/eval/example (the loop's acceptance test) — depends on a real recurring defect existing; defer if none present. No backfill.
 
-### F3 — Override UX must preserve today's safety net
-Today's per-item paste is a hard checkpoint — the operator cannot miss it. Auto-triage with "press Enter to accept" weakens this. The override prompt must (a) show the computed string clearly with the predicate mapping inline, (b) display each item's risk label alongside its assigned letter so the operator can spot a misclassified item, and (c) accept the same `^[fds]+$`-length-matched re-paste path that exists today.
-
-### F4 — RESULTS-structure parity
-Step 3 line 146 appends `FIX_NOW_ITEMS` with `source: checkup`; Step 3.5d line 185 with `source: so-derived`; Step 3.5f line 203 with `source: journal-derived`. Adding a `triage_source: {auto-default | operator-override}` field would make Step 5 logging visible — *"this week, 6 of 8 items used the auto-default; 2 overridden"* is a useful observability signal and trivial to thread through. Recommended.
-
-### F5 — Empty/zero-item case
-If a prompt has zero items (e.g., no SO-derived items pasted in 16b), the auto-triage step should no-op silently — not display "Auto-triaged: " (empty string) and not prompt for override.
-
-### F6 — Vehicle ambiguity (engine conflict)
-`/improve-skill` targets SKILL.md per its frontmatter and Stage 0 validation. `friday-act.md` is a command. Two possible reads:
-  - **Vehicle as-named:** operator wants the `/improve-skill` *pipeline structure* applied even if Stage 0 needs a manual override. This requires either patching `/improve-skill` Stage 0 to accept commands (out of scope, larger refactor) or invoking it and accepting the rejection as a no-op.
-  - **Vehicle as-shorthand:** operator named `/improve-skill` because it was the natural command name to gesture at "structured command improvement"; the real intent is the *outcome*, not the literal pipeline.
-
-  Tactical resolution: attempt `/improve-skill friday-act` first; if Stage 0 rejects, fall back to direct edit of `friday-act.md` with an inline `/risk-check` before the edit. Both paths produce the same end-state.
+### Item 4 — `.claude/` git-hygiene / tracking-model decision
+- **The question:** are per-project `.claude/` command/agent dirs committed as-is in each project repo, OR gitignored + symlinked from the canonical `ai-resources/.claude/`?
+- **Binding constraint:** `auto-sync-shared.sh`'s symlink-emission + drift-detection behavior must be treated as a fixed input — the decision cannot contradict how that script already syncs shared resources.
+- **Deliverable:** a recorded decision in `logs/decisions.md` (+ implementation only if the chosen direction is low-risk and in-scope; a structural implementation re-gates with its own `/risk-check`).
+- **Note:** flagged repeatedly as "highest-value carryover." Decision-first; investigate current state (gitignore treatment, symlink-vs-copy, auto-sync behavior) before deciding.
 
 ## Execution Sequence
 
-### Stage 1 — Read `/improve-skill` Stage 0 to determine vehicle viability (~5 reads)
+### Stage 0 — Plan-time `/risk-check` (gate, Autonomy rule #9)
+Run `/risk-check` on the concrete structural edits landing this session (items 1 + 2: command edits + new command + `/friday-checkup` cadence edit; ~16-symlink blast radius via canonical wrap-session). On GO → proceed. On RECONSIDER/NO-GO → pause, retain plan+mandate.
 
-1. Read `.claude/commands/improve-skill.md` Stage 0 / Stage 1.
-2. Determine whether the pipeline can accept `friday-act` (a command target) without modification.
-3. Branch: if YES → Stage 2A. If NO → Stage 2B.
+### Stage 1 — Item 1: wrap-session Step 3.5 fix
+1. Add `NO_OWN_MARKER` detection (var set + per-id file absent) after the per-id block.
+2. Guard the loud fallback with `NO_OWN_MARKER=0`.
+3. Restructure the `else` branch: `NO_OWN_MARKER=1` → claim-zero (skip PRIME_RAN); else → legacy PRIME_RAN path.
+4. Mirror the identical edit to the workspace-root paired sibling.
+5. One-line note in `docs/session-marker.md` documenting the no-own-marker → own-subtract=0 rule.
+6. Validate the bash by execution across scenarios (no-own-marker clobber incident, normal per-id, old-CLI fallback, id-14 rollover) — bash-by-execution discipline.
+7. `/qc-pass` on the edit; flip improvement-log L295–301 to applied+Verified.
 
-### Stage 2A — `/improve-skill friday-act` route (preferred)
+### Stage 2 — Item 2: defect-capture wiring
+1. Write `.claude/commands/log-defect.md` (`model: sonnet`): classify → scan-for-prior → prepend entry per schema.
+2. Add a gated recurrence-scan step to `.claude/commands/friday-checkup.md` (mirror gate-calibration suppression-check shape).
+3. Update `docs/defect-to-fix-loop.md` deferred-wiring §: mark the two items shipped; note scan lands in `/friday-checkup`.
+4. `/qc-pass` on the new command + the scan step.
 
-1. Invoke `/improve-skill friday-act`.
-2. Let the pipeline's internal stages run: brief intake, current-state read, change proposal, internal `/risk-check`, edit application.
-3. Pass the F1–F5 findings to the pipeline as the change-proposal input.
-4. The pipeline produces an edited `friday-act.md`.
-5. Proceed to Stage 3 (QC).
-
-### Stage 2B — Direct-edit fallback (only if Stage 2A blocked)
-
-1. Run `/risk-check` inline with the change description: "modify behavior of /friday-act Step 3 + 3.5 disposition prompts to auto-triage by default with operator override."
-2. On RECONSIDER / NO-GO → pause auto mode, surface the verdict, retain the plan on disk per Step 8c.9 rule.
-3. On GO → proceed to edit `friday-act.md`:
-   - Insert a shared "auto-triage" sub-step before line 142 (the Step 3 wait-for-operator-paste line) that computes the default disposition string from the item list's risk labels, displays it with mapping legend + per-item risk×letter table, and waits for Enter-or-paste.
-   - Add a parallel auto-triage sub-step to Step 3.5d (before "items 14–15c logic") and Step 3.5f (before "Feed them into the same disposition loop").
-   - Add `triage_source` field to `FIX_NOW_ITEMS` per F4.
-   - Document the default predicate (HIGH→f, MED→d, LOW→s) and the override mechanic in a new ## subsection or inline at line 137.
-4. Proceed to Stage 3 (QC).
-
-### Stage 3 — `/qc-pass` on edited `friday-act.md`
-
-1. Invoke `/qc-pass` with scope: "auto-triage edit to friday-act.md Step 3 + 3.5".
-2. Verdict handling per QC → Triage Auto-Loop rules (workspace CLAUDE.md → qc-independence.md).
-3. On GO → Stage 4. On DISAGREE / fixes needed → resolve via `/resolve` then re-QC. Loop cap per workspace rules.
-
-### Stage 4 — Commit
-
-1. Stage `friday-act.md` (plus any peripheral edits the pipeline or fallback produced).
-2. Commit message: `update: friday-act — Step 3 + 3.5 auto-triage default with operator override (S6 Wave 6 #16)`.
-3. Do not push — push is gated to `/wrap-session`.
-
-### Stage 5 — Update S6 Wave 6 status
-
-1. Append a note to `logs/session-plan-S6.md` near item #16 indicating it was implemented in S8 (preserves traceability for future Friday cadences).
+### Stage 3 — Item 4: `.claude/` git-hygiene decision
+1. Inventory current state: `auto-sync-shared.sh` behavior, `.gitignore` treatment of `.claude/` across project repos, symlink-vs-copy reality.
+2. Frame the decision (commit-as-is vs gitignore+symlink) against the `auto-sync-shared.sh` constraint; weigh per `/risk-check` dimensions.
+3. Record the decision in `logs/decisions.md`. Implementation only if low-risk + in-scope; otherwise record the decision + a follow-up implementation item (re-gated).
 
 ## Scope Alternatives
-
-- **Smaller scope (only Step 3, not 3.5):** Skip the SO-derived + journal-derived prompts. Cuts work by ~40% but breaks F1's uniformity argument — half-auto, half-manual is worse than today's all-manual. Reject unless the pipeline route blocks on bandwidth.
-- **Larger scope (also patch `/improve-skill` Stage 0 to accept commands):** Would resolve F6 cleanly but expands scope to a different command and triggers a separate `/risk-check`. Reject — out of scope, but log as a friction-log entry if the fallback fires.
-- **Configurable predicates (operator settings.json overrides for HIGH/MED/LOW defaults):** Cleaner long-term but introduces a settings shape that needs design. Defer to a future improvement pass; the inline default is sufficient for now.
+- **Drop item 4 (run `auto 1,2`):** the two coupled wrap-session/defect builds only; item 4 (the large standing architectural decision) as its own focused session. Surfaced at the approval gate; operator chose all three.
+- **Item 2 scan into `/wrap-session` instead of `/friday-checkup`:** rejected — firing model says recurrence scan is fortnightly Friday-cadence, gated; per-session `/wrap-session` would over-fire the judgment step.
+- **Item 4 implement-now vs decide-now:** decide-now is the safe floor; a structural implementation re-gates.
 
 ## Autonomy Posture
-
-**Full autonomy** if Stage 2A runs (`/improve-skill` internal `/risk-check` covers the structural-change check per S6 brief).
-
-**Gated** if Stage 2B fires — the inline `/risk-check` at Stage 2B.1 is an explicit checkpoint. Auto mode pauses on RECONSIDER/NO-GO; operator decides whether to revise the change or abort.
-
-Either way, the `/qc-pass` at Stage 3 is a normal autonomy-rule pause (DISAGREE verdict requires operator review per workspace Autonomy Rules #4).
+**Gated.** All three touch structural change classes (command edits with ~16-symlink blast radius, a new command, a cadence-pipeline edit, a git-hygiene/tracking-model decision). Stage 0 `/risk-check` is the plan-time gate. Item 4's implementation, if structural, re-gates separately. Commit directly per workspace rule; push batched to wrap.
 
 ## Risk
-
-- **Behavior change in a cadence command (medium).** `/friday-act` runs weekly. A subtle bug in the auto-triage string computation could mis-disposition an item the operator would have caught with the manual paste. Mitigation: F3's display-the-string-with-per-item-risk-table makes mis-classification immediately visible; F5's empty-case handling avoids silent no-ops; QC pass catches edit-level errors.
-- **Operator habituation (low).** "Press Enter to accept" defaults invite habit. Mitigation: the per-item risk×letter table forces eyes-on-screen review before accepting. Not eliminated, just reduced.
-- **Override-string validation drift (low).** The override path must reuse today's exact `^[fds]+$`-length-matched validation; otherwise it diverges from the producer-side contract Step 3.5 line 154 documents. Mitigation: explicit reuse, not re-implementation, in the edit.
-- **Vehicle-rejection cost (low).** If Stage 2A fails fast, Stage 2B adds one inline `/risk-check` call but is otherwise the same edit. Wasted reads bounded to `/improve-skill` Stage 0 (~50 lines).
-- **Cross-resource interaction (low).** `friday-act-16a-summarizer` agent output feeds Step 3.5d; the auto-triage edit must not change the summary's consumed shape. Mitigation: the edit changes what happens *after* the summary is displayed, not the summary itself.
+- **Item 1:** highest blast radius — Step 3.5 is consumed by every `/wrap-session` + ~16 project symlinks via the canonical copy + the non-symlink workspace-root copy. Mitigation: bash-by-execution validation across all 4 scenarios before commit; lockstep both-copy edit; `/qc-pass`.
+- **Item 2:** new command is additive (low); the `/friday-checkup` scan step edits a live cadence pipeline (medium) — keep it gated + mirror the proven gate-calibration shape.
+- **Item 4:** decision-only this session bounds risk; any structural implementation re-gates.
+- **Cross-item coupling:** items 1 and 2 do NOT both edit `/wrap-session` (item 2's scan lands in `/friday-checkup`), so no edit-conflict between stages.

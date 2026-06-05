@@ -1,56 +1,54 @@
-# Session Plan — S1 (2026-06-03)
+# Session Plan — S1 (2026-06-04)
 
 ## Intent
-
-Reconstruct the System Owner agent's 4 missing `references/` grounding files — `persona.md`, `grounding.md`, `toolkit-relationship.md`, `systems-building-principles.md` — so the agent can run grounded again, and settle the vault path-wiring problem in `grounding.md`. Reconstruction is from surviving artifacts (the agent definition, the 2026-05-04 due-diligence audit's structural inventory, risk-check fragments quoting specific sections, the recovered vault docs, and a surviving consult output) — NOT invented. Anything that cannot be grounded against a surviving artifact is marked `[CITATION NEEDED]`.
+Execute AI-strategy Slot 1 (closure sweep / DECIDE) leanly — batch-decide the trivial items in one verdict table, spend real judgment only on the three items that warrant it (E7, E8, F6), execute the genuinely one-line closures, and record the "closure before detection" principle.
 
 ## Model
-
-opus — reconstruction-from-indirect-evidence judgment work. Active model `claude-opus-4-8[1m]` — match.
+opus (deciding work — conflict adjudication + principle authoring) — match (active: claude-opus-4-8[1m]).
 
 ## Source Material
-
-- `ai-resources/.claude/agents/system-owner.md` — the agent definition. Names all 4 references files, their read order, and (in Phase 4) enumerates persona.md § 5 voice rules 1–7 verbatim, plus the per-function read-map structure grounding.md must carry.
-- `ai-resources/audits/repo-due-diligence-2026-05-04-project-axcion-ai-system-owner.md` — structural inventory: exact line counts (persona 91, grounding 136, toolkit-relationship 69, systems-building-principles 17), the project CLAUDE.md section list, and the placeholder status of systems-building-principles.md.
-- `ai-resources/audits/risk-checks/*.md` — fragments quoting specific sections: grounding.md § 2 (per-function read maps, Functions F/G added 2026-05-04), grounding.md § 3 (triage steps), persona.md § 5 voice rule 7 (conflict-naming), toolkit-relationship.md § 1 (commands-not-invocable-from-agents; Task dispatch) and § 2 (`/sync-workflow`).
-- `projects/repo-documentation/output/phase-1/{principles,risk-topology,blueprint,repo-state,system-doc}.md` + `components/` — the recovered vault architectural docs the grounding read-map points to. Their actual filenames and section headers must match what grounding.md § 1/§ 2 cite.
-- `projects/repo-documentation/vault/` — the declared (CLAUDE.md line 23) vault location; needs path reconciliation against where docs actually live (`output/phase-1/`).
-- `projects/axcion-ai-system-owner/output/consultations/consult-2026-06-02-parallel-sessions-playbook-pre-draft-framing.md` — a surviving consult output; demonstrates the persona voice in practice (citation discipline, declarative co-ownership voice).
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/strategic-os/ai-strategy/ai-operator-roadmap.md` — Slot 1 spec.
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/strategic-os/ai-strategy/candidate-backlog.md` — §D pure-decisions bucket.
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/strategic-os/ai-strategy/working/candidate-backlog-notes.md` — row detail for E2–E10 (read only the E-rows).
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/strategic-os/ai-strategy/principles-base.md` — target for the principle.
+- `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/strategic-os/ai-strategy/implementation-tracker.md` — Slot 1 status surface.
 
 ## Findings / Items to Address
+**Tier 1 — trivial, batch-decide (one verdict + one-line rationale each, no formal card):**
+1. E1 — doc-scanner-agent → graduate (already decided; record + optionally run `/graduate-resource`).
+2. F1 — retire `/produce-handoff` (superseded by `/develop-memo`).
+3. F2 — superseded-header housekeeping (low blast radius).
+4. E2–E10 — for each: graduate-now / generalise-first (park with a recorded next action) / park. Quick decision; generalisation *execution* is deferred, not done here.
 
-### Scope discovery (surfaced to operator, proceeding)
-The whole `projects/axcion-ai-system-owner/` scaffold is gone, not only `references/` — the project CLAUDE.md (99 lines), `.claude/` (settings, shared-manifest, 60 symlinks), and `pipeline/` artifacts are all absent; only `output/consultations/` (one file) survives. The directory is not a git repo and is not tracked by ai-resources, so there is no local git recovery path (unlike repo-documentation, which had a remote). The scratchpad framed this session as "4 references files"; the broader scaffold gap is a SEPARATE follow-up and is NOT pulled into this session. The 4 references files remain necessary AND sufficient for the mandate's exit condition (SO runs grounded), because the agent reads `references/` + vault docs at invocation — not the project CLAUDE.md.
+**Tier 2 — warrants real judgment (the only items that get scrutiny):**
+5. E7 — nordic-pe auto-commit hook vs workspace Commit Rules → adjudicate + record the fix.
+6. E8 — obsidian-pe-kb model field in settings vs no-model rule → adjudicate + record the fix.
+7. F6 — 16 verbatim CLAUDE.md "Session Boundaries" copies → pointers. Decide CONVERT vs leave; **structural, `/risk-check` before any edit.**
 
-### Path-wiring decision (the design fork)
-Agent def Phase 3 says read vault docs from `projects/repo-documentation/vault/` per grounding.md § 1. Recovered docs actually live under `projects/repo-documentation/output/phase-1/`. `vault/references/` does NOT exist (the `resolve-incident.md` path pointing there is stale). Decision to make inside grounding.md § 1: point the path map at the real location (`output/phase-1/`) vs. wire docs into a `vault/` location. Leaning toward pointing § 1 at `output/phase-1/` (the recovered, verified location) and recording the `vault/` aspiration as a documented future move — least-surprise, matches what is actually on disk. Will confirm against the recovered docs' real layout before committing the path map.
-
-### Per-file reconstruction targets
-- **persona.md** (~91 lines): identity + authority + § 5 voice rules 1–7 (have all 7 verbatim from agent def) + scope/decline rule. Voice demonstrated in the surviving consult output.
-- **grounding.md** (~136 lines): § 1 vault path map (reconciled), § 2 per-function read map A–G (structure from agent def + risk-check fragments), § 3 triage rule (function detection + topic classifier adding risk-topology/blueprint/repo-state), § 4 caching note (deferred mitigation, project-plan D-3).
-- **toolkit-relationship.md** (~69 lines): § 1 (slash commands not invocable from agents; direct Task dispatch), § 2 (`/sync-workflow` etc.), integration-mechanism map for change-shaped questions.
-- **systems-building-principles.md** (~17 lines): placeholder, frontmatter `status: TBD — operator-provided`, heading `# Systems-Building Principles (placeholder)`, body = activation instructions only. Faithful, low-risk.
+**Tier 3 — adoption step:**
+8. Record the "closure before detection" principle into `principles-base.md`.
 
 ## Execution Sequence
-
-1. Finish gathering reconstruction sources: read the surviving consult output (voice), the recovered vault doc section headers (for accurate § 1/§ 2 citations), and the remaining RDD/token-audit detail on references structure.
-2. Settle the path-wiring decision against the real on-disk layout; record it.
-3. Author the 4 references files under `projects/axcion-ai-system-owner/references/`, grounding every load-bearing line in a named surviving artifact; mark genuine gaps `[CITATION NEEDED]`.
-4. Verify the agent def's expectations are satisfied: every file/section the agent reads (persona § 5, grounding § 1/§ 2/§ 3, toolkit § 1, systems-building status field) exists and is consistent.
-5. Run `/qc-pass` (independent reviewer) on the 4 files. Fold cosmetic fixes; surface DISAGREE/editorial items.
-6. Between-gate summary, then hand to the operator-review checkpoint: the reconstructed persona + read-map must be operator-reviewed before the SO is declared trusted and before item 2 (the grounded consult) chains.
-7. Commit directly (per workspace Commit behavior). Push batched to wrap.
+1. **Read the E-rows** in the working notes (E2–E10 detail only) + skim §D. *Verify:* enough detail to assign each E-item a verdict.
+2. **Build the Tier-1 verdict table** — one row per trivial item (E1, F1, F2, E2–E10): verdict + one-line rationale + (if any) next action. *Verify:* no Tier-1 item left undecided.
+3. **Execute the one-line closures** that are safe and in-scope (E1 record/graduate, F1 retire, F2 clean). *Verify:* done on disk or explicitly deferred with a reason.
+4. **Adjudicate E7 + E8** against their conflicting rules; record verdict + concrete fix. **Stop point** before editing the hook/settings — confirm the resolution first. *Verify:* each names the rule it resolves.
+5. **Decide F6.** Record CONVERT-vs-leave verdict; if CONVERT, **run `/risk-check`** before any edit; execute only on GO, else record routed-not-executed. *Verify:* risk-check verdict logged if conversion chosen.
+6. **Write the principle** into `principles-base.md`, ID consistent with the file's convention. *Verify:* present and well-formed.
+7. **Update the tracker** — mark Slot 1 status, append changelog line, note where verdicts live. *Verify:* tracker reflects per-item status.
+8. **`/qc-pass`** on the principle + verdict table before declaring complete.
 
 ## Scope Alternatives
-
-- **As-mandated (chosen):** 4 references files only. Restores the agent's grounding base. Leaves the broader scaffold gap (project CLAUDE.md, .claude/, pipeline/) for a follow-up.
-- **Expanded:** also reconstruct the project CLAUDE.md + .claude/ scaffold this session. Rejected — out of mandate, larger surface, and not required for the agent to run grounded. Flagged as follow-up instead.
-- **Minimal:** restore only persona.md + grounding.md (the two the agent hard-reads first). Rejected — toolkit-relationship.md is read on every invocation too (agent def Phase 1 step 3); a partial restore leaves the agent reading a missing file.
+- **Lean (recommended):** Tier-1 batch table + one-line closures, real adjudication of E7/E8, decide F6 (defer its edit behind `/risk-check`), write the principle. The honest "near-zero build" reading.
+- **Decide-only:** record verdicts for all 18 + principle, execute nothing (even E1/F1/F2 deferred). Use if you'd rather review the table before any action lands.
+- **Heavier:** also execute F6's 16-file conversion and the E2–E10 generalisations this session — not recommended for a closure sweep; defer to later slots.
 
 ## Autonomy Posture
+Gated — only at the three Tier-2 items. Tier-1 batch decisions and the principle proceed without per-item pauses.
 
-Full autonomy for drafting + independent QC. ONE operator-review checkpoint before the SO is declared trusted — reconstructing an agent's constitution from indirect evidence is the case that warrants review before reliance (per scratchpad). Not a `/risk-check` structural class (reference docs read by an existing agent — not a hook, permission, always-loaded CLAUDE.md, new command/skill, symlink, or shared-state automation).
+**Stop points:**
+- Before editing the E7 hook / E8 settings (confirm the resolution).
+- Before executing F6's conversion (`/risk-check` first; execute only on GO).
 
 ## Risk
-
-Low-to-moderate. The risk is reconstruction fidelity, not blast radius: a wrong voice rule or read-map entry would degrade SO output quality, but (a) the operator-review checkpoint catches it before reliance, (b) item 2's grounded consult is deferred behind that gate, and (c) every load-bearing line is cited to a surviving artifact or marked `[CITATION NEEDED]`, so invented content is visible rather than silent. No destructive ops; all writes are new files in an empty `references/` dir.
+Tier-1 items carry no structural risk. Structural classes live only in E7 (hook), E8 (settings), F6 (cross-cutting CLAUDE.md). Run `/risk-check` before any of those three edits; Tier-1 needs none.
