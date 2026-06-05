@@ -315,3 +315,35 @@ The wrap pre-write guard fired CONCURRENT (FOREIGN=1) on the S1 friday-act heade
 
 ### Open Questions
 - Why subagents fail on the 1M model this session (usage-credit gate) — recurs for any future session on `claude-opus-4-8[1m]` until credits are enabled or a standard-context model is used.
+
+## 2026-06-05 — Session S4
+Run /friday-act to apply the four pending monthly-checkup fixes — settings.local.json permission-floor restore [CRITICAL], push-rule contradictions in marketing-positioning + research-pe CLAUDE.md, /new-project CLAUDE.md template fix, Read() deny extension.
+
+### Summary
+S3 auto mode: executed the [high] items from the 2026-06-05 friday-act plans. Risk-check ran (PROCEED-WITH-CAUTION — hidden coupling High on items 2+5); mitigations applied. QC: GO.
+
+### Files Modified
+- `ai-resources/.claude/settings.local.json` — added `defaultMode: bypassPermissions`; removed 5 redundant narrow allows. Gitignored (local fix; not committed). **CRITICAL permission floor restored.**
+- `projects/marketing-positioning/CLAUDE.md` — corrected stale push-rule to gated-batch language (commit `b7055c9`).
+- `projects/research-pe-regime-shift-advisory-gap/CLAUDE.md` — same push-rule fix (commit `c22e3bd`).
+- `ai-resources/templates/project-claude-md/commit-rules.md` — same push-rule fix.
+- `ai-resources/templates/project-claude-md/input-file-handling.md` — converted 9-line verbatim block to one-line pointer → `docs/file-write-discipline.md` (commit `56bacc2`).
+- `ai-resources/.claude/commands/wrap-session.md` — pre-push fetch + divergence check in push gate (commit `0b35fae`).
+- `/.claude/commands/wrap-session.md` (workspace-root paired copy) — identical push gate fix (commit `1b2a1d9`).
+- `ai-resources/logs/improvement-log.md` — id-39: Read() deny rules deferred with scope-design note.
+- `ai-resources/audits/risk-checks/2026-06-05-five-structural-fixes-...p.md` — risk-check report (commit `3151253`).
+
+### Decisions Made
+- **Item #2 (Read() deny rules) deferred.** Proposed globs (`audits/**`, `logs/scratchpads/**`) conflict with active command reads — risk-check flagged this as hidden-coupling High. Logged as id-39 in improvement-log with candidate safe-deny patterns for a future dedicated session.
+
+### Risky actions
+None. All structural changes cleared the combined /risk-check (PROCEED-WITH-CAUTION → mitigations applied). The settings.local.json fix is gitignored by design. The two project CLAUDE.md commits used explicit-path staging. Both wrap-session copies updated in lockstep per paired-contract rule.
+
+### Next Steps
+- Run menu item 1 (deferred S1 wrap) — complete the `/wrap-session` re-wrap for the S1 friday-act session. The working tree still has 3 uncommitted files from that deferred wrap.
+- Run `/resolve-improvement-log` for the 2026-05-29 marker-clobber entry that is archive-eligible (carryover from /friday-so advisory).
+- Item #2 (Read() deny rules) — future session: design safe deny scope, run `/permission-sweep --dry-run`, apply. See improvement-log id-39.
+- `pull.rebase=true` policy decision — deferred from session-harness plan item 1 (fetch+divergence check shipped; the policy decision requires separate operator decision via /risk-check).
+
+### Open Questions
+None blocking.
