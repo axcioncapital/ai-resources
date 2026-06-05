@@ -124,6 +124,7 @@ Rules:
 
 **3. Depth allocation**
 - Target word count range per section — start from existing word count of mapped content, adjust up for Critical-priority sections, adjust down for Reference-tier. Express as ±20% of adjusted count.
+- **Word-band authority:** The depth allocation emitted here is **authoritative** — it supersedes any target-length band set in the upstream section directives (`section-directive-drafter`), which are advisory estimates based on evidence density at analysis time. Writers follow the architecture band; no per-chapter "Override" entry is needed when the two bands differ. If the bands diverge significantly (>30%), note the delta here so the writer understands the gap.
 - Priority tier per section: **Critical** (protect in any cut scenario) / **Supporting** (valuable but compressible) / **Reference** (can move to appendix if needed). Priority governs *cut-ability under compression*.
 - **Section Function gate** — apply asymmetrically, as a gate on non-owning sections, not a uniform descriptor. Function governs *admissibility*.
   - Sections named as Primary Owner in the Reader-Question Ownership table are implicitly **Core**. No justification text required — ownership speaks for itself.

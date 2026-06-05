@@ -156,7 +156,7 @@ The single question this section answers (e.g., "Why does fund structure matter 
 Compact list of finding labels allocated to this section with treatment level (e.g., `C1-F3 [Full], C2-F1 [Summary], C1-F7 [Brief]`). Full details (strength, tag, source cluster) live in the master Claim Allocation Summary — do not duplicate here.
 
 ### Target Length
-Word count range. State the basis (evidence density calculation or user override).
+Word count range. State the basis (evidence density calculation or user override). **Advisory when a report architecture exists:** this estimate is superseded by the depth allocation in the report architecture (`research-structure-creator` component 3), which is the authoritative band. Writers follow the architecture band; no per-chapter Override entry is needed when the two disagree.
 
 ### Narrative Positioning
 Where in the report this section sits. Specify:
