@@ -110,3 +110,22 @@
 
 #### Write Activity
 - S6 staged ONLY its own log files by explicit path (`session-notes.md`, `decisions.md`, `improvement-log.md`, `session-plan-S6.md`); all foreign-modified files left untouched.
+
+## Session — 2026-06-05 (S7)
+
+### Friction Events
+
+- **S7 (date-qualify completion)** — **Consumer-inventory under-count on a structural rename, recurrence 3rd+ of the same class.** While completing the date-qualify session-plan-filename change, THREE independent passes each missed the same runtime consumer, `wrap-session.md` (both paired copies), an exact-path plan reader at its Step 6.4 mandate-resolution chain. The misses: (1) the friday-act plan that scoped the change named only 3 files (`session-marker.md` + `prime.md` + `session-plan.md`); (2) the `/risk-check` reviewer's consumer inventory listed 14 consumers but `wrap-session.md` was not among them; (3) my own implementation grep did not surface it. The miss was caught only because I read the pre-existing `id-41` improvement-log entry, whose S6 hand-built inventory *had* flagged `wrap-session.md` L321. After my rename, that reader would have silently resolved to "plan not found" (it tolerates plan-absence with no error) — a silent degradation, not a loud break. Same root class as the 2026-05-29 pre-spec-inventory entry and id-40 (2026-06-05, "pre-spec consumer-inventory grep checklist") — structural renames keep shipping with incomplete consumer inventories.
+
+  **Why this keeps happening — two compounding root causes:**
+  - **(a) Grep on the templated form misses files that spell the placeholder differently.** A consumer-inventory grep for `session-plan-${MARKER}` does NOT match `wrap-session.md`, which writes the literal `session-plan-{MARKER}.md` (no `$`). Across the codebase the same placeholder is written at least four ways — `${MARKER}`, `{MARKER}`, `{marker}`, `$MARKER` — so any grep keyed to one spelling silently skips the others. This is the mechanical reason grep-based inventories under-count even when run carefully.
+  - **(b) The authoritative registry was itself incomplete and misclassified.** `docs/session-marker.md` § Two-end contract registry — the document whose stated job is "every place the marker contract is consumed must point back to this doc" — did NOT list `wrap-session.md` at all, and filed the runtime hook `backup-session-plan.sh` under "Doc references (narrative, not consumers)" when its line-20 regex is load-bearing (a non-match silently stops plan backups). So the one source of truth that should have caught all three passes was stale, and each actor fell back to independent greps (root cause a).
+
+  **Prevention applied this session (structural):**
+  - Added `wrap-session.md` (both paired copies) to the registry's Read-only auxiliary consumers; created a new "Runtime non-command consumers" class and moved `backup-session-plan.sh` (+ project-local copies) into it, flagged as load-bearing-parse with a lockstep-update requirement.
+  - Switched all exact-path plan readers (`contract-check.md`, `drift-check.md`, both `wrap-session.md` copies) from constructing `session-plan-${MARKER}.md` to the glob `session-plan-*${MARKER}.md`, which matches both the new date-qualified and the old bare-marker forms — so a future format change cannot silently break the read.
+
+  **Prevention proposed (routed to improvement-log, strengthens id-40):** a pre-spec consumer-inventory for any path rename must (1) grep the INVARIANT filename stem (`session-plan`), never the templated form, so placeholder-spelling variance cannot hide a consumer; and (2) reconcile the grep result against `docs/session-marker.md` § registry, adding any consumer the grep found but the registry lacked (and vice-versa) BEFORE the rename spec is written. id-40 currently routes the grep into the spec's affected-file list but does not mandate the invariant-stem rule or the grep↔registry reconciliation — both gaps let this recurrence through.
+
+#### Write Activity
+- S7 amended its own Stage-4 commit set: fixed `wrap-session.md` (both copies), `heavy-read-discipline.md`, and the `session-marker.md` registry after the id-41 cross-read exposed the missed consumers. All edits are to files S7 itself is changing this session; no foreign-modified files touched.
