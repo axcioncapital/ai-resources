@@ -520,6 +520,14 @@ None. Explicit-path staging on commit `5274551` (CLAUDE.md, improvement-log.md, 
 ### Open Questions
 None blocking.
 
+## 2026-06-05 — Session S13
+**Mandate:** Fix two System-Owner-flagged structural items (rescoped from three after risk-check RECONSIDER dropped id-16 as already-done) — id-14 (pre-append integrity check guarding shared-log writers against read-during-rewrite mass-deletion), id-15 (extend the concurrent shared-dir advisory scan in /prime Step 1a + /session-start Step 0.5 to non-append logs under logs/) — done when: both implemented, their improvement-log entries flipped to applied with commit refs, id-16 entry flipped to no-op/already-resolved, /qc-pass clean on changed files.
+- Out of scope: id-16 (classifier extraction — already done 2026-05-29, dropped per risk-check); other deferred backlog items (id-10/11/17/19/20/21 + scope-mismatch items); per-session log namespacing (declined S8); the precise lsof/cwd concurrent detector.
+- Files in scope: .claude/agents/session-feedback-collector, .claude/commands/improve.md, docs/commit-discipline.md (id-14); .claude/commands/prime.md, .claude/commands/session-start.md (id-15)
+- Stop if: (none stated)
+
+Dedicated structural session: fix the three in-scope structural items the System Owner flagged as worth-doing — id-14 (shared-log read-during-rewrite mass-deletion guard), id-15 (extend concurrent shared-dir advisory scan to non-append logs), id-16 (extract change-shape classifier to a shared reference doc).
+
 ## 2026-06-05 — Session S14
 
 **Mandate:** Run `/improve` (improvement-analyst) on the recurring diagnostics-lag friction pattern and route it into `improvement-log.md` with a concrete, worth-doing structural fix proposal (live-state reconciliation pass in the diagnostics-scanner that culls already-resolved candidates before SO vetting) — done when: `/improve` has run and the diagnostics-lag pattern is routed in `improvement-log.md` with a concrete proposed fix and an ROI / worth-doing note.
@@ -554,6 +562,41 @@ Concurrent-session collision with S13 on two shared non-append logs. (1) My deli
 - **S13 unwrapped:** S13 shipped its work in `2bc89d9` (19:00) but never ran `/wrap-session` — its `session-notes.md` header+mandate remain loose in the working tree. S13 should wrap to commit them (or handle via wrap-recovery).
 - **Morning menu item 1 likely DONE:** S13's `2bc89d9` shipped id-14 (pre-append integrity guard) + id-15 (advisory-scan extension) and dropped id-16 (RECONSIDER — already done 2026-05-29). Verify the improvement-log status flips before re-picking the "id-14/15/16 structural session."
 - **Push gate at wrap:** unpushed ai-resources commits pending.
+
+### Open Questions
+None blocking.
+
+## 2026-06-05 — /fix-repo-issues (7 scopes, 4-item plan)
+
+### Summary
+Ran `/fix-repo-issues` across 7 scopes (ai-resources, workspace, axcion-ai-system-owner, marketing-positioning, project-planning, repo-documentation, research-pe). Fired 7 parallel scanner subagents, then ran reconcile-at-read which cleared 8 items already resolved by today's git commits. Triaged the remaining candidates and wrote a 4-item fix plan to `audits/fix-plans/fix-repo-issues-2026-06-05-1918.md`. Plan committed; execution deferred to a fresh session per the two-session contract.
+
+### Files Created
+- `audits/fix-plans/fix-repo-issues-2026-06-05-1918.md` — 4-item fix plan (commit `74ceb05`)
+- `audits/working/fix-repo-issues-2026-06-05-1918-ai-resources.md` — scanner notes, ai-resources scope (gitignored)
+- `audits/working/fix-repo-issues-2026-06-05-1918-workspace.md` — scanner notes, workspace scope (gitignored)
+- `audits/working/fix-repo-issues-2026-06-05-1918-project-axcion-ai-system-owner.md` — scanner notes (gitignored)
+- `audits/working/fix-repo-issues-2026-06-05-1918-project-marketing-positioning.md` — scanner notes (gitignored)
+- `audits/working/fix-repo-issues-2026-06-05-1918-project-project-planning.md` — scanner notes (gitignored)
+- `audits/working/fix-repo-issues-2026-06-05-1918-project-repo-documentation.md` — scanner notes (gitignored)
+- `audits/working/fix-repo-issues-2026-06-05-1918-project-research-pe-regime-shift-advisory-gap.md` — scanner notes (gitignored)
+- `logs/scratchpads/2026-06-05-19-40-scratchpad.md` — continuity scratchpad (gitignored)
+
+### Files Modified
+- (none — plan file was newly created, all logs committed in prior session steps)
+
+### Decisions Made
+- **Reconcile-at-read cleared 8 items as already-resolved.** All 8 matched commits from today's heavy session activity (b6be86f, 2add1f2, fa2b3f2, 1021bfe, 93abf16, 2e52b22, 23c9143, 1d91723). Conservative posture applied throughout.
+- **4 items promoted to Plan-into-batch** from 85 raw candidates: (1) improvement-log **Verified:** fields, (2) wrap-session Step 3.5 chained-task false-positive, (3) prime Step 7 `N auto` parser gap, (4) /clarify marker-trio initialization.
+- **~60+ items parked** — build-shaped (needs /create-skill), needs-dedicated-session, decision-needed, low-roi, or needs /innovation-sweep.
+
+### Risky actions
+None. Plan-only session — no file edits, no command modifications, no structural changes. S13 mandate block (orphan from that session's uncommitted /prime header) was included in this wrap commit per known-context inclusion (same conversation, safe).
+
+### Next Steps
+- Execute the plan in a fresh session: `"Execute the fix plan at audits/fix-plans/fix-repo-issues-2026-06-05-1918.md"`.
+- After execution, run `/resolve-improvement-log` — 3 newly-verified improvement-log entries (item 1 of the plan) will qualify for archival once **Verified:** fields are added.
+- Push gate: 4+ unpushed ai-resources commits + 1 axcion-ai-system-owner commit — confirm push at session end.
 
 ### Open Questions
 None blocking.
