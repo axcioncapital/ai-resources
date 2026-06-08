@@ -416,3 +416,6 @@ Wrap Step 3.5 foreign-session guard fired (CONCURRENT) — two other sessions to
 - Edit C remains parked — schedule a dedicated session with its own `/risk-check` + execution-diff if its payoff is ever judged worth the coupling cost.
 ### Open Questions
 None.
+
+## 2026-06-08 — Session S2
+Investigation: system-owner /consult "missing references" false positive. Context-discovery engine + live agent invocation both confirmed all required grounding files present and readable. The "missing" signal came from gitignore-filtered Glob, not disk absence. /consult works. No files restored or written. Session closed without mandate.
