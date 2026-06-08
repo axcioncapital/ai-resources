@@ -476,3 +476,67 @@ None. Plan-only session — no file edits, no command modifications, no structur
 
 ### Open Questions
 None blocking.
+
+## 2026-06-08 — Session S4
+**Mandate:** Execute the 5-item fix plan at audits/fix-plans/fix-repo-issues-2026-06-08-1052.md (items 4+5 log-hygiene first, then 1, 2, 3 with /qc-pass each) — done when: all 5 items applied, 7 friction-log entries annotated, /qc-pass run on items 1/2/3.
+- Out of scope: (none stated)
+- Files in scope: (inferred) ai-resources/logs/friction-log.md, ai-resources/docs/commit-discipline.md, ai-resources/.claude/commands/qc-pass.md or docs/qc-independence.md, logs/friction-log.md (workspace), projects/research-pe-regime-shift-advisory-gap/logs/friction-log.md, projects/research-pe-regime-shift-advisory-gap/.claude/commands/run-analysis.md, projects/ai-development-lab/logs/friction-log.md
+- Stop if: (none stated)
+Execute the fix plan at audits/fix-plans/fix-repo-issues-2026-06-08-1052.md (items 4+5 log-hygiene first, then 1, 2, 3 with /qc-pass each).
+
+### Summary
+Executed the 5-item /fix-repo-issues plan (audits/fix-plans/fix-repo-issues-2026-06-08-1052.md). All 5 items applied and committed — 6 commits across 4 repos (ai-resources, workspace root, research-pe, ai-development-lab). Items 4+5 were FADING-GATE friction-log annotations (7 entries, mechanical); item 1 added the plan-mandated-additions carve-out to /qc-pass; item 2 added a mandatory mojibake-repair step to /intake-reports; item 3 added the shared-file exception to commit-discipline. (Note: this wrap note was written in the following session S5, since S4 ended without a formal /wrap-session.)
+
+### Files Created
+- (none — all edits modified existing files)
+
+### Files Modified
+- `ai-resources/.claude/commands/qc-pass.md` — Step 2 plan-mandated-additions carve-out (item 1).
+- `ai-resources/docs/commit-discipline.md` — § Concurrent-session staging shared-file exception (item 3).
+- `ai-resources/logs/friction-log.md` — 3 FADING-GATE annotations (item 4).
+- `logs/friction-log.md` (workspace root) — 1 FADING-GATE annotation (item 1).
+- `projects/research-pe-regime-shift-advisory-gap/.claude/commands/intake-reports.md` — new Step 6b mandatory mojibake-repair step (item 2).
+- `projects/research-pe-regime-shift-advisory-gap/logs/friction-log.md` — 4 FADING-GATE annotations (item 5) + 1 (item 2).
+- `projects/ai-development-lab/logs/friction-log.md` — 1 FADING-GATE annotation (item 3).
+
+### Decisions Made
+- **Item 2 plan divergence.** Plan prescribed `iconv -c` / `errors='replace'`, but the observed corruption is mojibake (valid-but-wrong UTF-8) which those cannot repair. Implemented a re-decode pass instead (ftfy preferred; guarded per-line cp1252→UTF-8 fallback). Validated the fallback by execution on authentic round-trip mojibake — byte-identical recovery, clean text untouched, idempotent. Conflict surfaced to the operator before proceeding.
+- **Self-QC fallback on items 1/2/3.** Independent `qc-reviewer` subagent failed on every attempt with the 1M-context usage-credit gate (the exact friction class annotated in items 4+5). Used self-QC per documented precedent; item 2 additionally execution-validated. Independent QC deferred to next session.
+
+### Risky actions
+None. All edits additive/bounded; 6 commits staged by explicit path; no push.
+
+### Next Steps
+- Run independent `/qc-pass` on the 3 command/doc edits (items 1/2/3) once `qc-reviewer` can spawn. — **Done in S5 (all 3 GO).**
+
+### Open Questions
+None.
+
+## 2026-06-08 — Session S5
+**Mandate:** Run independent /qc-pass (qc-reviewer subagent, now spawnable on 1M context) on the 3 S4 command/doc edits self-QC'd under the credit gate — done when: each of the 3 edits has an independent QC verdict captured.
+- Out of scope: re-editing the friction-log FADING-GATE annotations (mechanical, already verified); push
+- Files in scope: ai-resources/.claude/commands/qc-pass.md, projects/research-pe-regime-shift-advisory-gap/.claude/commands/intake-reports.md, ai-resources/docs/commit-discipline.md
+- Stop if: (none stated)
+Run independent /qc-pass on the 3 deferred S4 command/doc edits.
+
+### Summary
+Ran the deferred independent `/qc-pass` on the 3 S4 command/doc edits that were self-QC'd under the 1M-credit gate. On Opus 4.8 (1M context) the `qc-reviewer` subagent spawned cleanly; launched 3 in parallel, one per edit. All three returned **GO** with zero REVISE findings. The independent reviewer confirmed the S4 self-QC conclusions — including the two items scrutinized hardest: the `6b.`/`2.2b`/`1.6b` step-numbering (an intentional two-granularity scheme, not a defect) and the mojibake fallback's "never corrupted" safety claim (traced concretely on a mixed-line case and upheld). The deferred-QC Next Step is closed.
+
+### Files Created
+- `logs/session-plan-2026-06-08-S5.md` — (not created; S5 ran /qc-pass directly without a session-plan, per the bounded single-command task)
+
+### Files Modified
+- `logs/session-notes.md` — S5 marker-bearing header + mandate (from /prime), this wrap note, and the back-filled S4 wrap note.
+
+### Decisions Made
+- **No edits resulted from the QC.** 3/3 GO; the S4 edits stand as committed. S5 produced verdicts only.
+
+### Risky actions
+None. Read-only QC session. Note: the wrap pre-write guard (Step 3.5) fired FOREIGN=1 on the S4 orphan header — a same-day prior session that never wrapped, not a concurrent collision. Proceeded per explicit operator direction to journal S4 in this wrap.
+
+### Next Steps
+- Push gate: 4 unpushed ai-resources commits (3 standing + S4 qc-pass/commit-discipline `0a76189`) plus this S5 wrap commit, and the S4 sibling-repo commits (research-pe, ai-development-lab, workspace root) — confirm at wrap.
+- Standing carryover: fix-spec §3.3 `claim-permission.md` wiring still open; W24 item 2 `.claude/` git-hygiene parked; `/fix-symlinks` on research-pe (1 broken symlink).
+
+### Open Questions
+None.
