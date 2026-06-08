@@ -19,7 +19,7 @@ The main agent passes you paths only (it does not paste contents):
 
 1. **Session note path + today's date** — `logs/session-notes.md`. Read only today's `## {date}` entry block (from today's header to the next `##` header or EOF).
 2. **Rubric path** — `ai-resources/docs/session-feedback-dimensions.md`. This is your measurement reference. Read it first.
-3. **Target store paths** — `logs/friction-log.md`, `logs/improvement-log.md`, and (for dedup) `logs/improvement-log-archive.md` if it exists.
+3. **Target store paths** — `logs/friction-log.md` and `logs/improvement-log.md` (the dedup targets; see Phase 3). `improvement-log-archive.md` is **not** a dedup input — archived entries are resolved, so a recurrence is a fresh signal, not a duplicate.
 4. **Project root** — for resolving any artifact paths named in the session note.
 
 If the session-note block or the rubric is missing, stop and return a one-line note saying so — do not guess.
@@ -44,9 +44,15 @@ Walk the five dimensions in order. For each, pull only **concrete** signals the 
 
 **Specificity gate.** Promote a signal only if it has a location (file/command/step), a diagnosis (what and why), and a direction implied. Vague observations ("the session was slow") are not signals — drop them or mention them as a one-line "pattern to watch" in your summary, not a logged entry.
 
-### Phase 3 — Dedup
+### Phase 3 — Dedup (grep-first, read-narrow)
 
-Before logging anything, check each candidate against active `improvement-log.md` entries and `improvement-log-archive.md` (if supplied). If a signal already has an entry (match on root cause, not exact wording), do not re-log it. Drop it and note "already logged" if relevant.
+Before logging anything, check each candidate against the **active** logs only — do NOT full-Read them into context, and do NOT scan `improvement-log-archive.md`.
+
+1. For each candidate signal, `Grep` its root-cause terms **and** any principle ID it carries (`OP-`/`DR-`/`QS-`/`AP-…`) against `improvement-log.md` (and against `friction-log.md` for friction candidates). The principle ID is a stable handle — grepping it catches a same-root-cause entry that uses different wording than your candidate would on a keyword-only search.
+2. For each grep hit, `Read` only the ~10 lines around the hit to confirm it is a true root-cause duplicate (match on root cause, not exact wording). If confirmed, drop the candidate and note "already logged" if relevant.
+3. No hits — or no hit confirms on the narrow read — means the signal is not a duplicate; carry it to Phase 4.
+
+**Do not scan `improvement-log-archive.md`.** Archived entries are *resolved* — a recurrence of a resolved issue is a legitimately *new* signal (the fix regressed or was incomplete), not a duplicate to suppress. (The archive is also denied to `Read` by `settings.json`, so a scan could not execute regardless.) This grep-first, read-narrow pattern mirrors the mandate the wrap already enforces for `coaching-data.md` (wrap Step 7b / token-audit R6): never full-Read a large append-only log when a grep plus a narrow read answers the question.
 
 ### Phase 4 — Route and write (with the hard constraints)
 

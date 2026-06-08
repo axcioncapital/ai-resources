@@ -395,7 +395,7 @@ Accept shorthand: "yy" / "yes all" / "all" = both yes; "nn" / "skip all" = both 
    - **Launch the `session-feedback-collector` subagent** (launch idiom per `improve.md` / `coach.md`). Pass it **paths only** — do NOT paste contents or conversation history:
      - today's session-note path (`logs/session-notes.md`) + today's date
      - the rubric path (`ai-resources/docs/session-feedback-dimensions.md`)
-     - the target store paths: `logs/friction-log.md`, `logs/improvement-log.md`, and `logs/improvement-log-archive.md` if it exists
+     - the target store paths: `logs/friction-log.md` and `logs/improvement-log.md` (the collector greps these for dedup; it does **not** scan `logs/improvement-log-archive.md`)
      - the project root
      The subagent reads independently, enforces its own per-session append cap, tags every entry with `wrap-collector` provenance, dedups against the existing log + archive, and returns a ≤20-line summary. It writes ONLY `friction-log.md` and `improvement-log.md`.
    - **Append the returned summary** as a `### Session Assessment` block to today's note in `logs/session-notes.md` — placed **after `### Risky actions`, before `### Next Steps`**.
