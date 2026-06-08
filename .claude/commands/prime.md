@@ -8,6 +8,8 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 
 **Output discipline:** The operator is a non-developer. The brief must be short and scannable — convert terse log shorthand into plain English (short sentences, common words). Show only what the operator needs to choose the next task; everything else stays silent unless it needs attention.
 
+**Execution discipline:** The orientation steps issue many *independent* read-only git/file calls; running them one-at-a-time is the main avoidable latency. Batch independent calls into a single message with multiple tool calls rather than firing them serially. Safe to fire together: **Step 1** (session-notes + log-trio reads), **Step 1b** (scratchpad listing), **Step 2** (`next-up.md`), **Step 3** (`friction-log.md` + `improvement-log.md`); **Step 0**'s per-repo `pull` may join the same batch. **Two ordering dependencies must be preserved — do not hoist a dependent call into the batch ahead of what it needs:** (1) **Step 1a**'s git cross-check consumes both `CWD_REPO` / `AI_RESOURCES` (established in Step 0) *and* the entry date parsed in Step 1, so it runs *after* Step 0 and Step 1, never alongside them; (2) **Step 4**'s working-tree `git status` must run *after* the Step 0 pulls so it sees post-pull state. Everything else across steps 0–4 is independent and should be batched.
+
 0. **Pull latest.** Determine the cwd's git root: `CWD_REPO=$(git -C "$(pwd)" rev-parse --show-toplevel 2>/dev/null)`.
    If this fails, note `Pulled: n/a (not a git repo)` and skip to step 1.
 
@@ -102,7 +104,7 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 
    `next-up.md` is **not** a universal file — it exists in some project log directories and is absent in others. `/prime` does not create it. If the file is absent, skip silently; the menu falls back to the still-open Next Steps from step 1a plus the urgent items from step 3. An absent or empty `next-up.md` is normal, not an error.
 
-3. **Scan for urgent problems.** Read `logs/friction-log.md` and `logs/improvement-log.md` if they exist. Collect only **unresolved HIGH / urgent** items:
+3. **Scan for urgent problems.** Read `logs/friction-log.md` and `logs/improvement-log.md` if they exist. Read each file **once** and apply the HIGH/urgent filter in-context — do not issue multiple `grep` passes over the same file. Collect only **unresolved HIGH / urgent** items:
    - Include an item only if its text carries a HIGH-severity marker (`HIGH`, `urgent`, or `do-now` attached to a HIGH item).
    - Exclude anything marked `LOW` or `MED`, and exclude entries whose status is `resolved`, `applied`, or `verified`.
    - If neither file exists, skip silently.
