@@ -276,3 +276,19 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Hint from S8+S1:** Both sessions cleared the gate via per-dispatch overrides, supporting "override works." S6 contradiction may have been a different session state — worth checking whether the S6 session had a non-standard alias configuration.
 - **Review-cycle:** monthly
 
+
+### 2026-06-08 — Move feedback-collector dedup off every wrap onto the Friday cadence (DEFERRED)
+- **Status:** deferred — separate redesign session
+- **Category:** wrap-pipeline / cost-structure
+- **Source:** plan `let-s-figure-out-a-reflective-lovelace.md` Follow-ups item 1; SO consult 2026-06-08 (transcript item 3). Companion to the shipped grep-first dedup fix (commit 9f66e6f).
+- **Why deferred:** Bigger redesign than the contained grep-first fix already landed. The contained fix removes most of the per-wrap cost; this would remove the rest by structure. Touches where the dedup-and-route work lives, not just how it reads.
+- **Proposal:** Have `/wrap-session` Step 6.5 drop a cheap raw "signals" stub per session (no cross-corpus dedup), and have the weekly Friday cadence do the expensive dedup-and-route once over all the week's stubs at once. Pays the dedup tax once/week instead of once/session. Requires `/risk-check` (canonical agent + wrap-command change) and a decision on where the stub store lives.
+- **Review-cycle:** monthly
+
+### 2026-06-08 — Port grep-first dedup fix to the workspace-root wrap/collector copy (DEFERRED)
+- **Status:** deferred — after the canonical fix proves out
+- **Category:** paired-contract / sync
+- **Source:** plan `let-s-figure-out-a-reflective-lovelace.md` Follow-ups item 2. Canonical fix landed in commit 9f66e6f (ai-resources copy only).
+- **Why deferred:** The workspace-root `wrap-session.md` + its collector path are an independent non-symlink copy under a paired-contract note; the canonical fix intentionally did not touch them this session. Port once the canonical change proves out on a real wrap.
+- **Proposal:** Apply the same grep-first/read-narrow dedup + archive-drop to the workspace-root copy of the collector + wrap Step 6.5 (or whichever copy that layer uses), keeping the two in sync per the paired-contract note. Verify against the same 4-point read-back used for the canonical fix.
+- **Review-cycle:** monthly
