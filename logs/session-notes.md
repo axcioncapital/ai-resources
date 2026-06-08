@@ -419,3 +419,6 @@ None.
 
 ## 2026-06-08 — Session S2
 Investigation: system-owner /consult "missing references" false positive. Context-discovery engine + live agent invocation both confirmed all required grounding files present and readable. The "missing" signal came from gitignore-filtered Glob, not disk absence. /consult works. No files restored or written. Session closed without mandate.
+
+## 2026-06-08 — Session S3
+Investigation + park: .claude/ git-hygiene Option B (W24 mandate item 2). SO advisory + read-only investigation across 13 project repos confirmed the premise is incoherent (gitignore-alone is a no-op; hook never overwrites existing targets), churn is not material (1–7 commits/90d, all intentional), and zero broken symlinks across 12/13 projects (1 in research-pe is a /fix-symlinks job). Parked with corrected premise in improvement-log. No files edited. Session closed without mandate.
