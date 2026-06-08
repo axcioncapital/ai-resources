@@ -72,6 +72,10 @@ Written to: `logs/scratchpads/{YYYY-MM-DD}-{HH-MM}-scratchpad.md`
 # Session Scratchpad — {date} {time}
 
 **Saved at:** {ISO 8601 timestamp}
+{**QC-PENDING:** include ONLY when this handoff defers an architectural change
+whose independent QC could not run — value names the on-disk artifact path(s)
+and states "independent /qc-pass required before commit". Omit otherwise.
+See Step C1 → QC-PENDING handoffs.}
 
 ## Current Task
 {Stage, step, command, specific activity}
@@ -169,6 +173,29 @@ context — you already know what was produced this session.
 **C1 — Write scratchpad.** From conversation context, populate the scratchpad
 format above. Omit any section that has no content (e.g., no decisions → skip
 that section entirely).
+
+**QC-PENDING handoffs (architectural-change commit-block).** When this handoff
+is triggered because an architectural change could not get independent QC — the
+1M-context QC gate, see `docs/qc-independence.md` § Subagent-unavailable
+fallback — encode the commit-block explicitly so it survives `/clear` and the
+fresh session cannot miss it:
+1. Add a `**QC-PENDING:**` line right after `**Saved at:**`, naming the on-disk
+   artifact path(s) and stating "independent /qc-pass required before commit".
+2. Populate `## Resume With` so the resume action is self-contained and owns
+   its own cleanup. FIRST line (the part `/prime` promotes to menu item 1):
+   "Run independent `/qc-pass` on {artifact paths}, then commit — do NOT commit
+   before QC passes (architectural change, QC was unreachable in the prior
+   session)." Then add a FINAL line: "After the commit lands, delete this
+   scratchpad (`logs/scratchpads/{this file}`) so the QC-PENDING block drains
+   and `/prime` stops surfacing it." The deletion is owned by this resume
+   action — no other command performs it.
+3. Add a matching `## Operator Directives` entry restating the commit-block.
+
+`/prime` recognizes the `**QC-PENDING:**` marker, surfaces it as a blocking
+carryover, and exempts it from the newer-scratchpad supersession skip — so the
+block is not silently buried. Because the supersession-exemption keeps the block
+alive until removed, the resume action's final delete step (item 2) is what
+drains it; without that delete the warning would re-surface every session.
 
 **C2 — Confirm.** After writing, output the file path and remind the operator:
 - Run `/clear` to start fresh, then `/prime` to resume
