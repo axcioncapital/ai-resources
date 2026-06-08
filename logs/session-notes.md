@@ -374,3 +374,26 @@ None destructive. The ai-resources Session Boundaries block was deleted — veri
 
 ### Open Questions
 None blocking.
+
+## 2026-06-08 — Feedback-collector lean fix (grep-first dedup)
+### Summary
+Made the `/wrap-session` Step 6.5 `session-feedback-collector` lean. Its Phase 3 dedup previously full-Read the entire friction-log + improvement-log + archive into context (one run cost ~833s/86k tokens). Replaced with grep-first/read-narrow: grep each candidate's root-cause terms + principle ID against the active logs, then Read only ~10 lines around any hit. Dropped the `improvement-log-archive.md` scan entirely (it was already dead — denied by `settings.json`). Aligned all three assertion sites (agent Phase 3 + Inputs, rubric Constraint 3, wrap Step 6.5 input list). Session started with `/clarify` in plan mode (no `/session-start`, so no mandate block).
+### Files Created
+- `audits/risk-checks/2026-06-08-make-session-feedback-collector-dedup-lean-1-rewrite-phase.md` — GO risk-check report (all six dimensions Low)
+- `logs/scratchpads/2026-06-08-09-55-scratchpad.md` — pre-closeout continuity scratchpad
+### Files Modified
+- `.claude/agents/session-feedback-collector.md` — Phase 3 grep-first/read-narrow rewrite; Inputs item 3 drops archive
+- `docs/session-feedback-dimensions.md` — Constraint 3 aligned to grep-first
+- `.claude/commands/wrap-session.md` — Step 6.5 input list drops the archive path
+- `logs/improvement-log.md` — 2 deferred follow-ups logged (Friday-cadence redesign; workspace-root copy sync)
+### Decisions Made
+- Design vetted by System Owner → "proceed-with-changes": dropped the recent-window cap (reintroduces the duplicate-append failure mode for marginal gain), and grep on principle IDs as well as keywords (stable handle for same-cause/different-wording dups). Both folded in.
+- `/qc-pass` on the plan returned one REVISE — added the rationale that the archive scan was already non-functional (deny-blocked), not a sacrificed safeguard. Fixed before landing.
+- Scope held to the contained fix + ai-resources canonical copies only; the structural Friday-cadence redesign and the workspace-root copy sync were deferred (logged to improvement-log), not built.
+### Risky actions
+Step 3.5 pre-write guard fired CONCURRENT during this wrap — caught a foreign uncommitted `## 2026-06-08 — Session S1` mandate block (unrelated W24 CLAUDE.md audit) in the working tree; stopped before staging, S1 wrapped first in its own terminal (commit 52ea813), then this wrap proceeded clean. Gate worked as designed — no clobber.
+### Next Steps
+- Runtime verification of the lean fix fires on the next `/wrap-session` with Bundle 2 enabled (this wrap declined it): watch the collector drop from 3 full-file Reads to a handful of greps; capture new wall-clock in telemetry.
+- Deferred (improvement-log, Friday cadence): (1) move cross-corpus dedup off every wrap onto the weekly cadence; (2) port the grep-first change to the workspace-root wrap/collector copy.
+### Open Questions
+None.
