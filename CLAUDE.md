@@ -2,25 +2,18 @@
 
 ## What This Repo Contains
 
-This repo stores AI resources — primarily skills (SKILL.md files), plus occasional prompts and project instructions. Each skill lives in its own folder under `skills/`. Resource briefs from project workspaces land in `inbox/` — these are requests for new skills, created via `/request-skill` in project sessions and picked up by `/create-skill` here. Fulfilled briefs are moved to `inbox/archive/` (preserves the brief as a record without leaving it in the active intake queue).
+This repo stores AI resources — primarily skills (SKILL.md files under `skills/`), plus prompts, docs, templates, and audit/log artifacts. Non-obvious conventions:
 
-Other directories:
-- `prompts/` — Standalone prompts for cross-tool workflows (e.g., supplementary research prompts consumed by GPT-5)
-- `reports/` — Generated audit and health reports
-- `logs/` — Session notes, decisions, innovation registry, and the output-quality `defect-log.md` (see `docs/defect-to-fix-loop.md` for the rule/eval/example closure loop)
-- `audits/` — Due diligence and audit artifacts
-- `docs/` — Process documentation (session rituals, etc.)
-- `scripts/` — Utility scripts for repo maintenance
-- `style-references/` — Style reference materials consumed by formatting and prose-compliance skills
-- `templates/` — Canonical deployable fragments consumed at scaffold time (project settings + project CLAUDE.md sections); edit the fragment, not the consuming command. See `templates/README.md` for the consumer contract.
+- **Inbox flow:** resource briefs land in `inbox/` (created via `/request-skill` in project sessions, picked up by `/create-skill` here); fulfilled briefs move to `inbox/archive/` to clear the intake queue without losing the record.
+- **`templates/`** holds canonical deployable fragments consumed at scaffold time (project settings + project CLAUDE.md sections) — edit the fragment, not the consuming command. See `templates/README.md` for the consumer contract.
+- **`logs/`** includes the output-quality `defect-log.md` — see `docs/defect-to-fix-loop.md` for the rule/eval/example closure loop.
+- **Session telemetry (`usage-log.md`)** is written by `/usage-analysis` into each *consuming project's* `logs/` directory — this repo does not host a canonical usage log.
 
-Session telemetry (`usage-log.md`) is written by `/usage-analysis` into each consuming project's `logs/` directory (alongside `decisions.md`, `friction-log.md`, etc.) — this repo itself does not host a canonical usage log.
-
-These resources operate across a multi-tool ecosystem — not just Claude. Skills may reference or interact with GPT-5 (via API/CustomGPT), Perplexity (via API), Notion, and NotebookLM. Do not design resources that assume a single-tool environment.
+These resources operate across a multi-tool ecosystem — not just Claude. Skills may reference GPT-5 (via API/CustomGPT), Perplexity (via API), Notion, and NotebookLM. Do not design resources that assume a single-tool environment.
 
 ## How I Work
 
-I am Patrik, a non-developer. Explain technical details in plain language. Commits proceed directly per `## Commit Rules` below. Pushes are gated — batched until session end, with a single operator confirmation prompt before pushing.
+I am Patrik, a non-developer. Explain technical details in plain language. Commit/push behavior: see `## Commit Rules` below.
 
 ## Skill Creation and Improvement
 
@@ -28,7 +21,7 @@ See `skills/ai-resource-builder/SKILL.md` for skill format, creation sequence, i
 
 ## Model Selection
 
-**Model defaults are prohibited.** Never add a `"model"` field to any `.claude/settings.json` or `.claude/settings.local.json`, and never declare a default model in any `CLAUDE.md`. The operator selects the session model via `/model`; settings/CLAUDE.md defaults block in-session model switches. See workspace `CLAUDE.md` → Model Tier for the full rule. Per-command, per-agent, and per-skill `model:` frontmatter (in slash-command files, agent definitions, and `SKILL.md` files) is the only permitted way to assert a tier outside the live session — see Agent Tier Table for agents.
+**Model defaults are prohibited** — never add a `"model"` field to any settings.json or declare a default model in any `CLAUDE.md`; per-command/agent/skill `model:` frontmatter is the only permitted tiering mechanism. Full rule and rationale: workspace `CLAUDE.md` → Model Tier.
 
 ## Subagent Contracts
 
@@ -64,25 +57,15 @@ Claude Code permission prompts (Edit / Write / Delete) are managed structurally,
 
 ## Git Rules
 
-- Use descriptive commit messages: `new: skill-name — purpose` or `update: skill-name — what changed`
-- Multi-file changes: `batch: description`
-- Never force-push
-- After committing, do NOT push — pushes are batched and gated; see `## Commit Rules` below for the full rule. Remind Patrik to wrap the session (`/wrap-session`) if the work is complete.
-- Default branch: main
+- Commit messages: `new: skill-name — purpose` / `update: skill-name — what changed`; multi-file → `batch: description`
+- Never force-push; default branch `main`
+- Push is batched and gated — see `## Commit Rules` below
 
 ## Commit Rules
 
-**Commit directly. Do not ask for permission.** After completing approved work, stage the relevant files and commit in a single step using a heredoc commit message. Do not run `git status`, `git diff`, or `git status --short` as pre-commit checks or post-commit verification — the filesystem is the source of truth for what you just changed.
+**Commit directly** (no permission ask; no pre-commit `git status`/`git diff` and no post-commit verification — the filesystem is the source of truth). **Do not push** — pushes are batched and gated to session wrap. Never commit secrets (`.env`, credentials, tokens). Remind the operator to run `/wrap-session` when work is complete.
 
-**Do NOT push after committing.** Pushes are batched until session end. At wrap (`/wrap-session`, or an explicit operator signal like "we're done" / "ship it"), ask the operator with a single confirmation:
-
-> Ready to push N commits across M repos: [list]. Push now? y/n
-
-On `y`: run `git push` per repo; surface any failure (auth, network, non-fast-forward) and stop. On `n`: leave commits unpushed and note it in chat. No mid-session pushes, even for "critical" fixes — surface the situation and ask the operator instead.
-
-Remind the operator to run `/wrap-session` if the work is complete. Never commit files that may contain secrets (`.env`, credentials, tokens).
-
-This rule mirrors the canonical `Commit behavior` and `Push behavior` sections in the workspace-level `CLAUDE.md`. It is repeated here because projects are sometimes opened without the parent workspace context loaded.
+Full commit/push behavior — including the wrap-time push confirmation prompt — is canonical in workspace `CLAUDE.md` → File verification and git commits.
 
 ## Compaction
 
@@ -92,7 +75,3 @@ When `/compact` fires, preserve:
 - Any pending subagent-output file paths the main session has not yet read.
 
 Auto-compact defaults drop these by priority; name them explicitly so they survive.
-
-## Session Boundaries
-
-Prefer `/clear` over dirty context when switching tasks. Full rule: `ai-resources/docs/session-boundaries.md`.
