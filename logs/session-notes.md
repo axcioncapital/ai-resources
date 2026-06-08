@@ -397,3 +397,22 @@ Step 3.5 pre-write guard fired CONCURRENT during this wrap — caught a foreign 
 - Deferred (improvement-log, Friday cadence): (1) move cross-corpus dedup off every wrap onto the weekly cadence; (2) port the grep-first change to the workspace-root wrap/collector copy.
 ### Open Questions
 None.
+
+## 2026-06-08 — /prime speed fix (Edits A+B; Edit C deferred)
+### Summary
+Made `/prime` faster. Added an "Execution discipline" directive so the orientation reads (steps 0–4) batch into one message instead of running serially, plus a Step 3 clause to read each backlog file once rather than issuing multiple grep passes. A third edit — parallelizing the Step 1a cross-repo git-log loop — was deferred after risk-check + system-owner review judged it poor ROI. Session started via `/clarify` (no `/prime` this session → no session marker).
+### Files Created
+- audits/risk-checks/2026-06-08-edit-the-load-bearing-harness-command-claude-commands-prime.md — risk-check report (PROCEED-WITH-CAUTION) with system-owner Architectural Commentary
+- logs/scratchpads/2026-06-08-09-55-prime-speed-scratchpad.md — continuity scratchpad (gitignored)
+### Files Modified
+- .claude/commands/prime.md — Edit A (batch-reads "Execution discipline" directive) + Edit B (single-pass urgent scan in Step 3); committed in 9578f1b
+### Decisions Made
+- Deferred Edit C (parallelize Step 1a cross-repo git-log loop) per risk-check (PROCEED-WITH-CAUTION, Hidden-coupling High) + system-owner second opinion (poor ROI; the only edit touching the reference-implementation guarantee shared with docs/backlog-reconciliation.md). Parked, not dropped.
+- End-time `/risk-check` intentionally SKIPPED per the documented skip rule: plan-time gate covered it with the mitigation (defer C) applied, executed A+B is a strict subset already graded GO by the SO, and drift is bounded (shipped less than reviewed).
+### Risky actions
+Wrap Step 3.5 foreign-session guard fired (CONCURRENT) — two other sessions today (S1 W24-audit; feedback-collector lean) had uncommitted-then-committing content in shared logs. Held the wrap and did NOT stage session-notes.md while foreign content was uncommitted. Those sessions committed their work (52ea813, 633e33d); the shared log reached a clean WT==HEAD state and my note was appended normally — no foreign content shipped under this commit. Code commit 9578f1b verified intact as an ancestor of HEAD.
+### Next Steps
+- Watch the next normal `/prime` run to confirm the orientation reads batch and the brief content is unchanged.
+- Edit C remains parked — schedule a dedicated session with its own `/risk-check` + execution-diff if its payoff is ever judged worth the coupling cost.
+### Open Questions
+None.
