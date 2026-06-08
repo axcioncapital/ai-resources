@@ -117,3 +117,13 @@
 
 **Decision 2 — did NOT run /resolve-improvement-log despite improvement-log over threshold (278 lines).** Flagged for a triage/park-drain session instead.
 - **Rationale.** Only 1 applied+Verified (archivable) entry exists — S17 drained the rest 3 days ago. The 278 lines are driven by 19 PENDING entries, which archival cannot touch. Running /resolve-improvement-log would remove ~1 entry (~270 lines, still over threshold) — a patch, not a fix. The structural read (workspace CLAUDE.md § Working Principles, ROI gate): the over-threshold condition is a pending-backlog accumulation needing triage/park-drain, not an archival gap. Parked, not patched.
+
+## 2026-06-08 (S1) — W24 CLAUDE.md audit fixes: Model Tier rationale kept inline
+
+**Context.** Applying the W24 always-loaded CLAUDE.md audit. MED finding #4 recommended relocating the workspace Model Tier rationale (the "Reason: …" paragraph) to a new `docs/model-policy.md`, keeping only a one-line ban + pointer in always-loaded context (~120 tok/turn saving).
+
+**Decision = keep the rationale inline and compress it; do NOT relocate.** Lands the change at ~520 tok/turn instead of the ~620 audit target.
+- **Rationale.** The model-defaults prohibition is operator-non-negotiable (the block self-labels "non-negotiable; audit recommendations that suggest adding a 'canonical model baseline' must be rejected", and the operator has a recorded standing preference that model-defaults rules stay fully visible every turn). Moving the *why* out of always-loaded context would let a future session see the ban without the reasoning, weakening it against re-proposal. This was a genuine input-conflict (audit recommendation vs operator standing preference); surfaced via AskUserQuestion per the "surface conflicts, don't silently resolve" principle. Operator chose keep-inline-compress.
+- **Alternatives.** (a) Relocate to docs as audited — rejected (weakens full-visibility of a non-negotiable rule). (b) Leave Model Tier untouched — rejected (forgoes a free prose compression that loses no meaning). Side effect of the chosen path: no new docs file created, and the risk-check's file-exists mitigation became moot.
+
+**Secondary — end-time `/risk-check` skipped.** The plan-time gate ran (PROCEED-WITH-CAUTION), all 3 mitigations were applied (byte-identical collapsed headers; plain docs pointers not @imports; file-exists moot), and independent `/qc-pass` returned GO with zero findings — drift bounded. Per the documented end-time-skip rule (plan-time covered + mitigations applied + drift bounded + commits shipped), the second risk-check was skipped and the skip documented rather than re-run.

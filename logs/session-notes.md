@@ -339,3 +339,38 @@ v1 unreleased; infrastructure scaffolding (Phase 0 preflight + Phase 1 shared in
 - Start first work session on W24 mandate item 1 (apply CLAUDE.md audit fixes) — scaffold seeded in `logs/session-plan-next.md`.
 - Schedule a `/risk-check` session for the `.claude/` git-hygiene Option B change (mandate item 2).
 - Manual-archive sweep for the 7 over-threshold logs + a pending-entry triage/park-drain for improvement-log (19 pending) — not this week's mandate, flag for a maintenance slot.
+
+## 2026-06-08 — Session S1
+**Mandate:** Apply the W24 always-loaded CLAUDE.md audit fixes — collapse the 3 HIGH cross-file duplications (commit/push, model-defaults, Session Boundaries) to pointers and compress the MED over-long prose blocks per the 2026-06-08 audit — done when: 3 HIGH dups collapsed to pointers in ai-resources/CLAUDE.md, MED prose blocks compressed across both files with Model Tier rationale relocated to a docs pointer, and changes committed with no rule meaning lost.
+- Out of scope: project-level CLAUDE.md audits; `.claude/` git-hygiene Option B (W24 item 2, separate session); LOW-tier findings
+- Files in scope: CLAUDE.md (workspace), ai-resources/CLAUDE.md, ai-resources/docs/ (new model-policy doc)
+- Stop if: collapsing a duplicated rule to a pointer would drop a load-bearing standalone-entry-point case the audit did not account for
+
+Apply the W24 CLAUDE.md audit fixes — collapse the 3 HIGH cross-file duplications (commit/push rules, model defaults, Session Boundaries) in ai-resources and workspace CLAUDE.md to pointers; address the MED over-long prose blocks per the audit report.
+
+### Summary
+Executed W24 mandate item 1 — applied the always-loaded CLAUDE.md audit (`audits/claude-md-audit-2026-06-08-always-loaded.md`). Collapsed the 3 HIGH cross-file duplications in ai-resources/CLAUDE.md to pointers (Commit Rules, Model Selection, Git Rules push, Session Boundaries) and compressed 4 MED prose blocks across both always-loaded files. Net ~520 tok/turn saved. Ran the Gated plan with a plan-time `/risk-check` (PROCEED-WITH-CAUTION, 3 mitigations applied) and an independent `/qc-pass` (GO, zero findings, no rule meaning lost). One operator deviation: Model Tier rationale kept inline + compressed (not relocated to docs) to preserve full always-loaded visibility of a non-negotiable rule.
+
+### Files Created
+- `logs/session-plan-2026-06-08-S1.md` — marker-scoped Gated session plan.
+- `audits/risk-checks/2026-06-08-apply-the-w24-always-loaded-claude-md-audit-fixes.md` — plan-time risk-check report (PROCEED-WITH-CAUTION) + architectural-commentary section (system-owner declined — grounding tree missing). Committed `7d415fc`.
+- `logs/scratchpads/2026-06-08-09-59-scratchpad.md` — continuity scratchpad (gitignored).
+
+### Files Modified
+- `ai-resources/CLAUDE.md` — 3 HIGH dedups + 2 MED trims (98→77 lines, ~400 tok/turn). Committed `7d415fc`.
+- `CLAUDE.md` (workspace-root repo) — Model Tier rationale compressed inline + Working Principles structural-fix bullet compressed. Committed `76ef393` (staged by explicit path; Option B debt not swept in).
+
+### Decisions Made
+- **MED #4 deviation (operator-chosen).** Keep the workspace Model Tier rationale inline and compress it, rather than relocating to a new `docs/model-policy.md` as the audit recommended. Reason: the model-defaults prohibition is operator-non-negotiable and must stay fully visible every turn. Conflict (audit recommendation vs operator standing preference) surfaced via AskUserQuestion before applying. Side effect: dropped the new-file creation and the file-exists risk mitigation.
+- **End-time `/risk-check` skipped** per the documented end-time-skip rule: plan-time gate ran with mitigations applied, QC GO bounded drift, commits shipped. Documented here rather than re-run.
+
+### Risky actions
+None destructive. The ai-resources Session Boundaries block was deleted — verified via grep that no consumer reads ai-resources' copy (workspace Working Principles bullet covers it; new-project scaffolds project files from templates, not from ai-resources/CLAUDE.md). Near-miss avoided: the workspace-root repo carries the standing Option B git debt, so the workspace CLAUDE.md commit staged by explicit path (`git add CLAUDE.md`), never `-A`, to avoid sweeping foreign dirty files. No mid-session push.
+
+### Next Steps
+- **Push gate at wrap:** ai-resources `7d415fc` + standing backlog; workspace-root `76ef393`.
+- **W24 mandate item 2** — `.claude/` git-hygiene Option B, needs its own `/risk-check` session (standing debt, decided S8). Do not bundle.
+- **Fix the `system-owner` agent** — grounding tree `projects/axcion-ai-system-owner/references/` is missing on disk; every `/consult` declines until restored. Blocks the risk-check second-opinion path.
+
+### Open Questions
+None blocking.
