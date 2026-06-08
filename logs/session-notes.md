@@ -447,3 +447,32 @@ None. All sessions were read-only investigation. No files modified in project re
 
 ### Open Questions
 None.
+
+## 2026-06-08 — /fix-repo-issues: 5-item plan across 6 scopes (8 reconciled-done)
+
+### Summary
+`/prime` → operator ran `/fix-repo-issues` selecting 6 scopes (ai-resources, workspace, ai-development-lab, marketing-positioning, nordic-pe-screening-project, research-pe-regime-shift-advisory-gap). Fired 6 parallel scanner subagents (67 candidates total), ran reconcile-at-read against the merged multi-repo git log, then triaged to a 5-item fix plan written and committed. Plan-only session per the two-session contract — no fixes applied. (Markerless: invoked as a command after `/prime`, not via the task menu, so no `/session-start` mandate block.)
+
+### Files Created
+- `audits/fix-plans/fix-repo-issues-2026-06-08-1052.md` — 5-item fix plan (commit `dfa2585`).
+- `audits/working/fix-repo-issues-2026-06-08-1052-{ai-resources,workspace,project-ai-development-lab,project-marketing-positioning,project-nordic-pe-screening-project,project-research-pe-regime-shift-advisory-gap}.md` — 6 scanner notes (gitignored).
+- `logs/scratchpads/2026-06-08-11-13-scratchpad.md` — continuity scratchpad (gitignored).
+
+### Files Modified
+- (none — plan-only session; all logs untouched except this wrap note)
+
+### Decisions Made
+- **Reconcile-at-read demoted 8 T1 friction candidates to Skip as already-resolved.** Each matched a recent commit whose fix shipped but whose friction-log entry was never annotated: ai-resources guards (`2bc89d9`), done-condition gate (friday-act sweep), NO_OWN_MARKER (`dd618d4`); marketing intra-day numbering (`2bc89d9`+`93abf16`); research-pe PAUSE F4 (`2add1f2`), cross-day marker (`6be1d77`), citation F7 (`1021bfe`), concurrent-checkout (`93abf16`).
+- **5 items promoted to Plan-into-batch:** (1) workspace QC verbatim-purity false REVISE [35d]; (2) research-pe UTF-8 encoding gap in intake Step 2.2b; (3) ai-development-lab concurrent-commit-bundling → commit-discipline.md staging rule; (4) FADING-GATE cleanup of the 3 ai-resources entries; (5) FADING-GATE cleanup of the 4 research-pe entries. Items 4+5 directly close the annotation gap reconcile-at-read surfaced.
+- **~40+ items parked** — inbox briefs (needs-/create-skill), 1M-credit-exhaustion class (needs-dedicated-session ×4 across scopes), innovation-registry pending-triage (needs-/innovation-sweep), and T3 watch / decision-needed items.
+
+### Risky actions
+None. Plan-only session — no file edits, no command modifications, no structural changes. Single commit (`dfa2585`) staged by explicit path (the plan file only). Step 3.5 foreign-guard returned FOREIGN=0 (NO_OWN_MARKER path — this session authored no tracked header/mandate; all today-content already in HEAD). No mid-session push.
+
+### Next Steps
+- Execute the plan in a fresh session: `"Execute the fix plan at audits/fix-plans/fix-repo-issues-2026-06-08-1052.md"`. Suggested order: items 4+5 first (log-hygiene, no QC), then 1, 2, 3 with `/qc-pass` each.
+- Push gate: 3 standing unpushed ai-resources commits + `dfa2585` + this wrap commit — confirm at session end.
+- Standing carryover (unchanged): W24 item 2 `.claude/` git-hygiene parked; 19 pending improvement-log entries; 7 over-threshold logs; 4 inbox briefs.
+
+### Open Questions
+None blocking.
