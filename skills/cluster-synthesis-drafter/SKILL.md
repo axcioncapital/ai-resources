@@ -125,6 +125,8 @@ Do not use Drafter's Notes to offer editorial suggestions or propose changes to 
 - Do not write a section per question — merge related questions into unified prose.
 - Do not resolve contradictions the memo left open — flag in Drafter's Notes instead.
 
+**Field-exposure boundary (#15 two-field rule).** Draft prose carries only the framing the memo and directive already encode — confidence matched to evidence strength, and any permission/hedging constraint the directive specifies. Do NOT introduce or surface the upstream **risk-tier** (Tier A–D) or **evidentiary-lens / independence-basis** axes in the prose or Drafter's Notes; those are upstream control inputs that live only in Stage-2 extracts and Stage-3 sufficiency tables (per `reference/quality-standards.md § Risk-Tier Model`), and have done their work before prose is written. Do not invent a tier or lens label for any claim.
+
 If the provided information is insufficient to draft a passage confidently, flag it in Drafter's Notes rather than inferring. Gaps in the draft are acceptable and expected — do not fill them with plausible-sounding content.
 
 **Edge case handling:**

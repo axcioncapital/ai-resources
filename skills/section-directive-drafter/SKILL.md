@@ -74,6 +74,8 @@ Per finding, capture:
 - **Source cluster** — which cluster memo it comes from
 - **Contributing questions** — which research questions feed this finding
 
+**Field-exposure boundary (#15 two-field rule).** The Claim Inventory captures *contributing questions* for allocation and for the downstream cluster-memo / sufficiency-stage risk-tier lookup — but those are working inputs, not directive output. Do NOT surface the upstream **risk-tier** (Tier A–D) or **evidentiary-lens / independence-basis** axes in directive output: the directive's per-finding grading is the **claim-permission class** alone (the four-class S-06 label, applied in Permission-Class Constraints). The risk-tier and lens axes have done their control work by Stage 3 and live only in Stage-2 extracts and Stage-3 sufficiency tables (per `reference/quality-standards.md § Risk-Tier Model`). Tier/lens are control *inputs*, not editorial fields; carrying them into a directive would re-introduce a competing taxonomy the permission class already subsumes.
+
 Also extract from each memo:
 - Cross-Question Tensions (for tension-aware allocation)
 - Gaps That Matter (for gap acknowledgment mapping)
