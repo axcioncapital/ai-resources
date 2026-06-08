@@ -225,7 +225,7 @@ Run all ten checks against every memo. Report findings per check per memo before
    - `ILLUSTRATIVE-ONLY` — <3 same-pattern transactions, OR single-source named-example, OR two-or-more-countries `not evidenced` from Check 8
    - `NOT-SUPPORTED` — no direct or proxy evidence at any source class
 
-   Apply the minimum evidence thresholds per claim type and the Source-Diversity Matrix from `reference/quality-standards.md` (same § Claim-Permission Classes). Triangulation-packets rule: three independent KPMG quarterly reports count as ONE evidentiary role, not three.
+   Apply the minimum evidence thresholds per claim type and the Source-Diversity Matrix from `reference/quality-standards.md` (same § Claim-Permission Classes). Triangulation-packets rule: three independent KPMG quarterly reports count as ONE evidentiary role, not three. Where the project's `quality-standards.md` carries the cross-class collapse clause, the same applies across *different* source classes sharing one underlying origin — e.g., a trade-body summary and a specialist-press article both restating the same Bain/Preqin figure count as ONE role, not two (per the `independence basis` field).
 
 2. **No-orphan-citation enforcement.** Each citation must answer the question "What exact sentence does this source support?" If the answer is vague or the source supports only a general topical area, remove the citation OR downgrade the dependent claim by one permission class. Record the downgrade rationale inline.
 
