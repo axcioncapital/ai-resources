@@ -2,9 +2,10 @@
 name: claim-permission-gate
 description: >
   Assigns each claim a permission class (SUPPORTED / PROXY-SUPPORTED /
-  ILLUSTRATIVE-ONLY / NOT-SUPPORTED) based on evidence and source-diversity.
-  Use when /run-sufficiency enters its Phase A step. Do NOT use to find
-  evidence or write chapter prose.
+  ILLUSTRATIVE-ONLY / NOT-SUPPORTED) based on evidence and source-diversity,
+  then caps it by the claim's risk tier (a ceiling, not a re-grade; presence-
+  gated to Tier B when no tiering is present). Use when /run-sufficiency enters
+  its Phase A step. Do NOT use to find evidence or write chapter prose.
 model: opus
 effort: high
 ---
@@ -49,8 +50,10 @@ The principle: *the agent that found the evidence is not the agent that judges i
 | Claim-Permission Class section | `reference/quality-standards.md` → `## Claim-Permission Classes` section | yes |
 | Source-Diversity Matrix section | `reference/quality-standards.md` → `## Source-Diversity Matrix` section | yes |
 | Counter-search sentinel (advisory only) | `analysis/{section}/.counter-search-runner.done` | no |
+| Research plan (for the risk-tier ceiling) | from `research-plan-creator`; carries a per-question `risk-tier:` field (`A`/`B`/`C`/`D`) | no |
+| Risk-Tier Model section | `reference/quality-standards.md` → `## Risk-Tier Model` section (defines the per-tier ceiling) | no (presence-gated; absent → every claim Tier B) |
 
-The two reference sections may be in the same file or in adjacent files; the schema below states the section names this skill looks for.
+The two reference sections may be in the same file or in adjacent files; the schema below states the section names this skill looks for. The research plan is **advisory and presence-gated**: if it is absent, carries no `risk-tier:` fields, or the project's `quality-standards.md` has no `## Risk-Tier Model` section, every claim binds at **Tier B** (ceiling SUPPORTED — no constraint), i.e. current uniform behaviour. Tiering is opt-in enrichment, never a breaking change. The plan's absence must NOT trigger a pre-flight exit (see Behavior step 1).
 
 ### Claim-Permission Class section schema
 
@@ -101,7 +104,7 @@ regime_note: {one-line statement of the disconfirmation regime — see Regime di
 - **Supporting evidence** is a one-line summary listing source titles or IDs (with `→` separators for multiple).
 - **Source-diversity** records the count of independent sources and distinct source classes, with `pass` or `fail` per the project's diversity rule.
 - **Assigned class** is exactly one of the four permitted strings.
-- **Rationale** explains the assignment in one line. For NOT-SUPPORTED, the rationale must say what is missing (e.g., "single-source; no independent corroboration").
+- **Rationale** explains the assignment in one line. For NOT-SUPPORTED, the rationale must say what is missing (e.g., "single-source; no independent corroboration"). The Rationale also records the **risk-tier binding** and any ceiling cap/flag from Behavior step 3 (free-text, additive — no new column, so the schema and any positional parser are unaffected), e.g. `Binding tier: D — hard-capped to ILLUSTRATIVE-ONLY`, `Binding tier: C — [C-CEILING-EXCEEDED — operator review]`, or `Binding tier: B (presence-gate default)`.
 
 ### Regime disclosure rule
 
@@ -114,7 +117,7 @@ This carries the regime through to anyone reading the table, not just to the ope
 
 ### Example
 
-A realistic 3-row sample (cluster CL-04), for format calibration. Claim text, source titles, and rationale are illustrative.
+A realistic 4-row sample (cluster CL-04), for format calibration. Claim text, source titles, and rationale are illustrative. Row CL-04-4 shows the risk-tier ceiling capping an otherwise-SUPPORTED claim because a Tier-D question is load-bearing on it.
 
 Frontmatter:
 
@@ -134,9 +137,10 @@ Body:
 >
 > | Claim ID | Claim text | Supporting evidence (summary) | Source-diversity | Assigned class | Rationale |
 > |---|---|---|---|---|---|
-> | CL-04-1 | {full claim text — verbatim from cluster memo} | Source A → Source B → Source C | pass (3 sources / 3 classes) | SUPPORTED | Meets diversity threshold; recent CURRENT-tier evidence. |
+> | CL-04-1 | {full claim text — verbatim from cluster memo} | Source A → Source B → Source C | pass (3 sources / 3 classes) | SUPPORTED | Meets diversity threshold; recent CURRENT-tier evidence. Binding tier: B (presence-gate default). |
 > | CL-04-2 | {full claim text — verbatim} | Source D | fail (1 source / 1 class) | NOT-SUPPORTED | Single-source; no independent corroboration. |
 > | CL-04-3 | {full claim text — verbatim} | Source E | fail (1 source / 1 class) | ILLUSTRATIVE-ONLY | Single named example; explicitly framed as illustration, not generalization. |
+> | CL-04-4 | {full claim text — verbatim} | Source F → Source G → Source H | pass (3 sources / 3 classes) | ILLUSTRATIVE-ONLY | Evidence met SUPPORTED, but Binding tier: D — hard-capped to ILLUSTRATIVE-ONLY (a Tier-D question is load-bearing on this claim). |
 
 ## Behavior
 
@@ -145,12 +149,20 @@ Body:
    - Verify `reference/quality-standards.md` exists. If absent: exit with the generic remediation prompt under Failure Behavior.
    - Verify both required sections (`## Claim-Permission Classes`, `## Source-Diversity Matrix`) are present and parseable in `quality-standards.md`. If either is absent or malformed: exit with prompt naming the missing section.
    - Check `analysis/{section}/.counter-search-runner.done` presence to determine the regime (do not fail if absent — regime disclosure handles it).
+   - Check for the research plan and the `## Risk-Tier Model` section in `quality-standards.md` to determine whether the risk-tier ceiling is active. **Do NOT fail pre-flight if either is absent** — an absent plan or absent `## Risk-Tier Model` section routes every claim to Tier B (no ceiling constraint) per step 3's presence-gate. The ceiling is opt-in; only `## Claim-Permission Classes` and `## Source-Diversity Matrix` are hard pre-flight requirements.
 2. **Load the rules.** Parse the four permission classes and the diversity matrix from `quality-standards.md`. These are the only valid class names; the diversity rule is the only diversity check applied.
 3. **Per cluster:**
    - Read the refined cluster memo. Identify each claim by ID and full text.
    - For each claim: summarize supporting evidence; apply the source-diversity rule; assign one of the four permission classes; write a one-line rationale.
+   - **Apply the risk-tier permission ceiling (a cap, not a re-grade).** After the class above is assigned, cap it by the claim's risk tier per `reference/quality-standards.md § Risk-Tier Model`. The tier never *raises* a class — a Tier-A claim with thin evidence still lands NOT-SUPPORTED; the ceiling only bounds the top.
+     - **Resolve the claim's contributing questions** from the cluster memo's provenance (the research questions feeding the finding behind this claim). Read each contributing question's `risk-tier:` value from the research plan.
+     - **Binding tier = the MOST-RESTRICTIVE tier among the contributing questions** (restrictiveness order D > C > B > A). A claim load-bearing on a Tier-D question — illustrative *by construction* — must not be lifted by a co-occurring higher-tier question; that would launder illustrative evidence into a pattern claim.
+     - **Apply the ceiling:** **D → hard cap** the claim to `ILLUSTRATIVE-ONLY` (no override), regardless of the assigned class. **C → advisory:** if the assigned class is stronger than `PROXY-SUPPORTED` (i.e. `SUPPORTED`), keep the assigned class but flag it in the Rationale as `[C-CEILING-EXCEEDED — operator review]` (do not silently downgrade; the operator may override). **A / B → ceiling `SUPPORTED`** (no constraint).
+     - **Presence-gate (load-bearing backward-compat).** Resolve tiers *per question*, then bind. A single contributing question with an absent `risk-tier:` field defaults *that question* to Tier B — it still participates in the most-restrictive selection, so a claim resting on a Tier-D question and an un-tiered question still binds at **D**. Bind the *whole claim* at Tier B (ceiling SUPPORTED → no constraint) only when no tier is resolvable at all: no research plan, OR a `quality-standards.md` with no `## Risk-Tier Model` section, OR none of the claim's contributing questions can be resolved to plan question IDs. An un-tiered project therefore binds every claim at Tier B and runs exactly as before.
+     - **Record** the binding tier and any cap/flag in the Rationale column — e.g. `Binding tier: D — hard-capped to ILLUSTRATIVE-ONLY`, `Binding tier: C — [C-CEILING-EXCEEDED — operator review]`, or `Binding tier: B (presence-gate default)`. The four permission-class names, thresholds, verb lists, and gate semantics (§ Claim-Permission Classes) are unchanged — the ceiling is the single point of contact, a cap.
    - Write the per-cluster permission table file with the schema above. Both frontmatter `disconfirmation_tested:` and the inline regime disclosure must reflect the actual run-time state from step 1's sentinel check.
 4. **Emit sentinel.** Write `analysis/{section}/.claim-permission-gate.done` on successful completion. Do NOT emit the sentinel if any cluster failed to produce a permission table.
+5. **Report the tier regime.** In a brief end-of-run summary to chat, state whether the risk-tier ceiling was **active** (research plan + `## Risk-Tier Model` both present — caps applied per claim) or **inactive** (one or both absent — every claim bound at Tier B, no constraint). This mirrors the regime-disclosure principle: make the regime visible, do not let it be silent.
 
 ## Failure Behavior
 
@@ -161,6 +173,7 @@ Body:
 - **A claim has no supporting evidence at all.** Assign NOT-SUPPORTED with rationale "No evidence in cluster memo." Continue with remaining claims.
 - **A claim's supporting evidence cannot be parsed.** Do not invent. Assign NOT-SUPPORTED with rationale naming the parse failure. Continue.
 - **A cluster has zero claims.** Skip the cluster — do not write an empty table. Note the skipped cluster in a brief end-of-run summary to chat.
+- **Research plan / `## Risk-Tier Model` section absent, or a claim's contributing questions cannot be resolved.** Do NOT exit. Bind the affected claim(s) at Tier B (ceiling SUPPORTED → no constraint) and continue. The risk-tier ceiling is opt-in; its inputs being absent is the normal un-tiered case, not an error.
 - **Sentinel pre-exists.** Exit silently — `/run-sufficiency` re-entry semantics handle this.
 
 ## Bias Countering
@@ -173,6 +186,8 @@ This skill is the choke point that converts "we have evidence" into "we may stat
 - PROXY-SUPPORTED is not a softer SUPPORTED. It carries the implication that the prose must signal proxy reasoning (e.g., "GP positioning materials suggest..." rather than "Lower-mid-market PE creates value via..."). Reserve PROXY-SUPPORTED for claims that genuinely need that signaling.
 - ILLUSTRATIVE-ONLY is not a softer PROXY-SUPPORTED. It carries the implication that the claim is an example, not a generalization. Reserve for true exemplars.
 - Do NOT compensate for absent counter-search by tightening SUPPORTED thresholds. The regime disclosure does the right thing — make the regime visible, then judge against the rule as written. Tightening rules silently is the inverse failure mode.
+- The risk-tier ceiling **caps, it never raises.** Do not let a high tier (A) lift a thin-evidence claim above what the diversity rule earns — the tier sets the *ceiling*, the evidence still sets the *floor*. Assign the class on evidence first, then apply the cap.
+- For a Tier-C claim graded above the ceiling, **surface the advisory flag — do not silently downgrade.** A silent C-downgrade is the same hidden-judgment failure mode as silently tightening thresholds: record `[C-CEILING-EXCEEDED — operator review]` in the Rationale and let the operator decide. The D hard cap is the only tier that downgrades without an override, and it is recorded in the Rationale every time.
 - For the per-claim rationale, prefer specific language ("single-source; no independent corroboration") over generic ("insufficient"). Operators audit the gate by reading rationales.
 
 ## Runtime Recommendations
@@ -188,5 +203,6 @@ This skill is the choke point that converts "we have evidence" into "we may stat
 
 - The output is consumed by `/run-sufficiency` Phase F (gate-clearance emission — NOT-SUPPORTED counts feed the ratio computation) and by Pass 4 (`cluster-synthesis-drafter` reads the per-cluster tables to constrain chapter-draft claims).
 - Sibling Pass 3 skills under `/run-sufficiency`: `country-parity-checker` (Phase C, runs after this skill), `stop-conditions-check` (Phase D, inline), `source-conflict-resolver` (Phase E, inline), `gate-clearance-emitter` (Phase F, inline). When `counter-search-runner` is present, it runs as Phase B between this skill (Phase A) and country-parity-checker (Phase C).
-- The project-level reference doc that unblocks this skill is `reference/quality-standards.md` (must include `## Claim-Permission Classes` and `## Source-Diversity Matrix` sections).
+- The project-level reference doc that unblocks this skill is `reference/quality-standards.md` (must include `## Claim-Permission Classes` and `## Source-Diversity Matrix` sections; it may **optionally** include a `## Risk-Tier Model` section, which activates the per-claim risk-tier ceiling — absent it, every claim binds at Tier B).
+- Upstream: `research-plan-creator` produces the per-question `risk-tier:` field this skill reads for the ceiling. Sibling `cluster-memo-refiner` Check 9 applies the same deterministic most-restrictive ceiling in its (first-pass) refinement table; this skill's authoritative Pass-3 table supersedes it at the shared path. Both use the same chassis rule (`§ Risk-Tier Model`), so they agree by construction.
 - The disconfirmation-regime contract is the load-bearing coupling between this skill and `counter-search-runner`: when counter-search runs, downgrade recommendations apply back to this skill's output tables before Phase C; when it does not run, the regime disclosure documents the gap.

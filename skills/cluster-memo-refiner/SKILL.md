@@ -14,12 +14,11 @@ description: >
   review. Triggers on requests like "refine these memos," "run refinement
   checks," "improve the cluster analysis," or when cluster-analysis-pass output
   is provided and the user requests quality refinement before editorial review.
-  Takes cluster analytical memos (from cluster-analysis-pass), optionally
-  compressed synthesis briefs, and optionally a transaction table (from
-  transaction-table-builder) as input. Do NOT use before initial memos exist,
-  for writing report prose, for gap assessment (that's gap-assessment-gate),
-  for building the transaction table (transaction-table-builder), or as a
-  substitute for operator editorial review.
+  Inputs (cluster memos, optional briefs, optional research plan, optional
+  transaction table) are enumerated in Input Requirements. Do NOT use before
+  initial memos exist, for writing report prose, for gap assessment (that's
+  gap-assessment-gate), for building the transaction table
+  (transaction-table-builder), or as a substitute for operator editorial review.
 model: opus
 effort: high
 ---
@@ -34,11 +33,14 @@ Run ten structured refinement checks against cluster analytical memos. Report fi
 
 **Optional (recommended):** Compressed synthesis briefs — the underlying briefs that fed the cluster analysis. Needed for Check 3 to verify grade labels against source grades.
 
+**Optional (recommended, for the Check 9 risk-tier ceiling):** The research plan (from `research-plan-creator`), which carries a per-question `risk-tier:` field (`A` / `B` / `C` / `D`). Check 9 reads it to cap each finding's permission class by tier per `reference/quality-standards.md § Risk-Tier Model`. **Presence-gated:** if the plan is absent, carries no `risk-tier:` fields, or the project's `quality-standards.md` has no `§ Risk-Tier Model` section, every finding binds at **Tier B** (ceiling SUPPORTED — no constraint), i.e. current uniform behaviour. Tiering is opt-in enrichment, never a breaking change.
+
 **Optional (for Check 7):** Transaction table at `execution/transaction-table/{section}/{section}-transaction-table.md`, produced by `transaction-table-builder`. Needed for Check 7 to verify named-transaction claims against the structured table. If absent, Check 7 runs in degraded mode (transaction-row-ID references cannot be verified; only the <3-deal generalization rule applies).
 
 **Validate before proceeding:**
 - At least 1 memo provided with identifiable evidence strength indicators and findings with source tags
 - If compressed briefs are absent, note that Check 3 runs at reduced confidence (memo-internal references only)
+- If the research plan is absent or carries no `risk-tier:` fields, note that the Check 9 risk-tier ceiling is inactive (every finding binds at Tier B → no ceiling constraint) and proceed
 - If the transaction table is absent, note that Check 7 runs in degraded mode
 - If a memo is missing a required section, flag which checks cannot run against that memo and proceed with remaining checks. Do not invent content for missing sections.
 - If any Key Finding tagged `[SOURCE-GROUNDED]` cannot be traced to Claim IDs from the underlying briefs, flag as incomplete traceability. Severity: non-blocking (the refiner can still run its ten checks), but the flag must appear in the output for operator awareness.
@@ -227,9 +229,23 @@ Run all ten checks against every memo. Report findings per check per memo before
 
    Apply the minimum evidence thresholds per claim type and the Source-Diversity Matrix from `reference/quality-standards.md` (same § Claim-Permission Classes). Triangulation-packets rule: three independent KPMG quarterly reports count as ONE evidentiary role, not three. Where the project's `quality-standards.md` carries the cross-class collapse clause, the same applies across *different* source classes sharing one underlying origin — e.g., a trade-body summary and a specialist-press article both restating the same Bain/Preqin figure count as ONE role, not two (per the `independence basis` field).
 
+   **Risk-tier permission ceiling (a cap, not a re-grade).** After the evidence-graded class above is assigned, cap it by the finding's risk tier per `reference/quality-standards.md § Risk-Tier Model`. The tier never *raises* a class — a Tier-A finding with thin evidence still lands NOT-SUPPORTED; the ceiling only bounds the top.
+   - **Resolve the finding's contributing questions.** These are the research questions feeding this Key Finding — already identified by Check 1 (cross-question contribution count) and Check 2 (contributing-question notes on escalation findings). Read each contributing question's `risk-tier:` value from the research plan.
+   - **Binding tier = the MOST-RESTRICTIVE tier among the contributing questions** (restrictiveness order D > C > B > A). Rationale: a finding load-bearing on a Tier-D question — illustrative *by construction* — must not be lifted to a stronger class by a co-occurring higher-tier question; that would launder illustrative evidence into a pattern claim. This is the same weakest-link posture the gate already applies to orphan citations and unresolved conflicts. *Example:* a finding drawing on Q3 (Tier A) and Q7 (Tier D) binds at **D** → hard-capped to `ILLUSTRATIVE-ONLY`, even if its evidence-graded class was `SUPPORTED`.
+   - **Apply the ceiling for the binding tier:**
+     - **D → hard cap:** force the finding to `ILLUSTRATIVE-ONLY` (no override), regardless of the evidence-graded class.
+     - **C → advisory:** if the evidence-graded class is stronger than `PROXY-SUPPORTED` (i.e. `SUPPORTED`), do NOT silently downgrade — keep the graded class and flag it in the permission-table Notes as `[C-CEILING-EXCEEDED — operator review]`. The operator may override at the existing approval gate.
+     - **A / B → ceiling `SUPPORTED`:** no constraint beyond the normal gate.
+   - **Presence-gate (load-bearing backward-compat).** Resolve tiers *per question*, then bind. A single contributing question with an absent `risk-tier:` field defaults *that question* to Tier B — it still participates in the most-restrictive selection, so a finding resting on a Tier-D question and an un-tiered question still binds at **D**. Treat the *whole finding's* binding tier as **B** (ceiling SUPPORTED → no constraint) only when no tier is resolvable at all: no research plan provided, OR a project `quality-standards.md` with no `§ Risk-Tier Model` section, OR none of the finding's contributing questions can be resolved to plan question IDs. An un-tiered project therefore binds every finding at Tier B and runs exactly as before.
+   - **Record** the binding tier and any cap/flag in the per-cluster permission table Notes column (sub-check 3) — e.g. `Binding tier: D — hard-capped to ILLUSTRATIVE-ONLY`, `Binding tier: C — [C-CEILING-EXCEEDED — operator review]`, or `Binding tier: B (presence-gate default)`.
+
+   The four permission-class names, their verb lists, and gate semantics (§ Claim-Permission Classes) are unchanged by this ceiling — it is the single point of contact between the control-effort axis and the permission machinery.
+
+   **Composition with other downgrades.** The tier ceiling, the Check 8 country-parity downgrade (≥2 countries `not evidenced` → ILLUSTRATIVE-ONLY), and the Check 10 unresolved-conflict downgrade (one class down) all move a finding's class in the *same* (more-restrictive) direction. The finding's final class is therefore the **most-restrictive of all of them**; because they compose monotonically downward, the order in which they are applied does not change the result.
+
 2. **No-orphan-citation enforcement.** Each citation must answer the question "What exact sentence does this source support?" If the answer is vague or the source supports only a general topical area, remove the citation OR downgrade the dependent claim by one permission class. Record the downgrade rationale inline.
 
-3. **Per-cluster permission table emission.** Emit a per-cluster permission table to `analysis/claim-permission/{section}/{section}-cluster-NN-permission-table.md` per the canonical file-conventions row. Columns: Claim ID, Claim text (short), Permission class, Source channels count, Source-diversity matrix verdict (per claim type), Country-parity status (from Check 8), Notes (orphan-citation downgrades, pan-Nordic-leakage flags, etc.).
+3. **Per-cluster permission table emission.** Emit a per-cluster permission table to `analysis/claim-permission/{section}/{section}-cluster-NN-permission-table.md` per the canonical file-conventions row. Columns: Claim ID, Claim text (short), Permission class, Source channels count, Source-diversity matrix verdict (per claim type), Country-parity status (from Check 8), Notes (risk-tier binding + ceiling cap/flag, orphan-citation downgrades, pan-Nordic-leakage flags, etc.). The risk-tier binding and any cap/flag from sub-check 1 are recorded in the Notes column (free-text, additive — no new column, so existing positional parsers of this table are unaffected).
 
 **Blocking-gate semantics (per `reference/quality-standards.md § Claim-Permission Classes — Blocking-Gate`):** if >30% of a cluster's claims are NOT-SUPPORTED at this check's completion, the cluster is flagged `CLUSTER-INSUFFICIENT`. Refinement output is marked blocked for that cluster; the gate-clearance artifact emitted by Pass 3 (separate from this skill — produced upstream of `/run-analysis` / `/run-synthesis`) consumes this flag. This skill flags the cluster; it does NOT emit the gate-clearance file directly. Section-level rollup (>40% across the section → `SECTION-INSUFFICIENT`) is also a Pass 3 concern; this skill operates only at cluster scope.
 
@@ -290,7 +306,7 @@ A memo passes refinement when all of the following hold:
 7. **Check 7 — Named transactions:** All findings citing named transactions reference transaction-table row IDs (or carry a missing-from-table flag); all pattern claims either meet the 3-deal / 5-deal-across-2-countries thresholds or carry the `illustrative` or `directional` label
 8. **Claim-ID emission:** Every surviving Key Finding has an emitted claim ID in the canonical format (`{section}-cluster-NN-claim-NN`); merged findings carry `[merged-from: ...]` annotations on the survivor
 9. **Check 8 — Country-Parity:** All country-relevant findings have per-country status entries (Sweden / Norway / Finland) using the `observed` / `proxied` / `not evidenced` vocabulary; the gate rule has been applied to every finding (three-country permitted / reframe required / downgrade required); pan-Nordic-leakage flags set where applicable
-10. **Check 9 — Permission-Class Emission:** Every surviving Key Finding carries a permission-class label (`SUPPORTED` / `PROXY-SUPPORTED` / `ILLUSTRATIVE-ONLY` / `NOT-SUPPORTED`); per-cluster permission table emitted to `analysis/claim-permission/{section}/{section}-cluster-NN-permission-table.md`; orphan-citation downgrades recorded with rationale; `CLUSTER-INSUFFICIENT` clusters flagged where >30% NOT-SUPPORTED
+10. **Check 9 — Permission-Class Emission:** Every surviving Key Finding carries a permission-class label (`SUPPORTED` / `PROXY-SUPPORTED` / `ILLUSTRATIVE-ONLY` / `NOT-SUPPORTED`); the risk-tier ceiling was computed and applied for every surviving finding — binding tier = most-restrictive contributing-question tier, capped per § Risk-Tier Model (D hard-cap, C advisory flag, A/B unconstrained), or the presence-gate drove Tier B (no constraint) — with the binding tier recorded in the permission-table Notes; per-cluster permission table emitted to `analysis/claim-permission/{section}/{section}-cluster-NN-permission-table.md`; orphan-citation downgrades recorded with rationale; `CLUSTER-INSUFFICIENT` clusters flagged where >30% NOT-SUPPORTED
 11. **Check 10 — Source-Conflict Validation:** All extract-level conflicts have corresponding entries in `analysis/source-conflicts/{section}/{section}-source-conflict-log.md`; all `UNRESOLVED` conflicts have triggered downgrade in Check 9; clusters with one or more unlogged extract conflicts are marked refinement-blocked
 
 If any criterion is not met, the memo requires another refinement pass on the failing check(s) before proceeding to editorial review.
