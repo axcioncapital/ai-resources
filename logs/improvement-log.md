@@ -292,3 +292,19 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Why deferred:** The workspace-root `wrap-session.md` + its collector path are an independent non-symlink copy under a paired-contract note; the canonical fix intentionally did not touch them this session. Port once the canonical change proves out on a real wrap.
 - **Proposal:** Apply the same grep-first/read-narrow dedup + archive-drop to the workspace-root copy of the collector + wrap Step 6.5 (or whichever copy that layer uses), keeping the two in sync per the paired-contract note. Verify against the same 4-point read-back used for the canonical fix.
 - **Review-cycle:** monthly
+
+### 2026-06-08 — Document producer-end of the Check-7 / Named-Source-Appendix two-end contract (DEFERRED)
+- **Status:** deferred — small follow-up to the shipped Check 7 change
+- **Category:** research-workflow / two-end-contract
+- **Source:** Check 7 (Source-Surface Coverage) landed in `research-extract-verifier` (fix-spec #2, 2026-06-08 S1); risk-check `audits/risk-checks/2026-06-08-check7-source-surface-coverage-research-extract-verifier.md`; system-owner second opinion.
+- **Why deferred:** The skill (consumer end) now reads `reference/source-class-hierarchy.md`'s evidence-need table + ladders + Named-Source Appendix and flips a scarcity verdict on appendix contents. The producer-end template (`workflows/research-workflow/reference/source-class-hierarchy.template.md`) carries the structure but does not yet state that a verifier check consumes the appendix — so a project filler doesn't know the appendix shape is now a contract. Scoped out of the skill commit deliberately.
+- **Proposal:** Add a short note in `source-class-hierarchy.template.md` (and the project-local mirror if wanted): "Check 7 of research-extract-verifier reads the evidence-need rows, ladders, and Named-Source Appendix; keep row/ladder identities stable — renamed headings degrade Check 7 to `unverifiable`." Reference-doc edit; likely no `/risk-check` (no skill logic), but confirm.
+- **Review-cycle:** monthly
+
+### 2026-06-08 — research-extract-verifier description-frontmatter polish (5 pre-existing Minors) (DEFERRED)
+- **Status:** deferred — separate description-polish pass
+- **Category:** skill-frontmatter / convention-gate
+- **Source:** cold evaluation during the Check 7 `/improve-skill` pass (2026-06-08 S1). All 5 are pre-existing, none introduced by Check 7.
+- **Why deferred:** Orthogonal to the Check 7 change; folding them in would mix pre-existing cleanup with a scoped canonical change. Operator chose "commit Check 7, defer Minors."
+- **Proposal:** (1) C2 — front-load trigger phrases into the first 250 chars of the description (currently descriptive-first; triggers sit past the window). (2) C3 — convert "Use when Patrik provides…" to third person and tighten the block under the 1024-char guideline (now ~1,358 chars after the Check 7 description sync). (3) C7 — consider an `allowed-tools: Read, Write` fence to mechanically enforce the no-external-evidence constraint. (4) C6 — document the `disable-model-invocation` / file-write side-effect decision. (5) Failure Behavior — add a bullet for internally-conflicting inputs (Answer Spec vs report contradiction → surface, do not silently pick). Route via `/improve-skill`.
+- **Review-cycle:** monthly

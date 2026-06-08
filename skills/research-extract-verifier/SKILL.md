@@ -3,9 +3,10 @@ name: research-extract-verifier
 description: >
   Adversarial verification of Research Extracts against raw Deep Research reports.
   Identifies extraction failures — missed claims, distorted claims, wrong strength
-  assignments, unjustified coverage verdicts, and synthesis-evidence mismatches.
-  Produces per-extract verdicts (APPROVED / FLAG — RE-EXTRACT) with specific
-  re-extraction instructions routing back to Step 2.3.
+  assignments, unjustified coverage verdicts, synthesis-evidence mismatches, and
+  false-scarcity verdicts (THIN/MISSING asserted without searching the expected
+  public surfaces). Produces per-extract verdicts (APPROVED / FLAG — RE-EXTRACT)
+  with specific re-extraction instructions routing back to Step 2.3.
 
   Step 2.4 in Stage 2. Use when Patrik provides a raw Deep Research report, the Research
   Extracts produced from it, and the corresponding Answer Specs, and asks to "verify
@@ -52,7 +53,7 @@ Before proceeding:
 
 ## Verification Checks
 
-Run six checks per extract, in order.
+Run seven checks per extract, in order. Checks 1–6 always run; Check 7 fires only on a scarcity verdict (see its trigger).
 
 ### Check 1 — Missed Claims
 
@@ -136,6 +137,31 @@ Per `reference/quality-standards.md § Research Stop Conditions`, every research
 - `Target condition (from prompt): 1 / 2 / 3 / 4 / (not declared)`
 - `Match between target and actual: yes / no / unverifiable`
 
+### Check 7 — Source-Surface Coverage
+
+**Trigger — scarcity verdicts only.** Run Check 7 for a component ONLY when Check 4 returned **THIN or MISSING** for it, OR Check 6 returned **EVIDENCE-CEILING-REACHED** (closing condition 3 or 4). Skip entirely for COVERED components — this contains cost and keeps the check off the common path.
+
+**Purpose.** A scarcity verdict should mean "the evidence is not public," not "we did not look in the obvious place." This check separates *true* scarcity (the expected public surfaces were searched and nothing was found) from *false* scarcity (a top-of-ladder public surface was never searched). It directly attacks the failure mode where THIN/Gated is asserted when the real cause was an unsearched surface — most exposed on paywall-heavy evidence needs.
+
+**Procedure.**
+
+1. **Locate the evidence need.** Map the scarce component to its row in `reference/source-class-hierarchy.md § Source Class Hierarchy by Evidence Need`, to the matching source-exhaustion ladder, and to the relevant Named-Source Appendix category.
+
+2. **Graceful-degradation guard (mandatory — do not skip).** If `reference/source-class-hierarchy.md` is absent, OR no evidence-need row / ladder matches the component, OR the appendix carries no parseable named-surface entries (shape mismatch) → Check 7 **NO-OPS**. Record `not-checked` (file or ladder absent) or `unverifiable` (present but unmappable / shape mismatch). Do **NOT** invent expected surfaces, and do **NOT** FLAG on a no-op. Match on the evidence-need row / ladder *identity*, never on free-text appendix heading strings — a renamed heading must degrade to `unverifiable`, not silently mis-fire. This guard is what makes the check safe in consuming projects that have no `source-class-hierarchy.md`.
+
+3. **Compare against the report's Source Log.** For the mapped evidence need, identify the expected top-of-ladder named public surfaces (ladder steps from the top down to — but excluding — any *unavailable* anchor step). Check whether the raw report's Source Log shows those surfaces were actually searched. If the raw report carries **no Source Log** (or one too sparse to tell what was searched), Check 7 cannot confirm coverage either way → record `unverifiable` and do not FLAG (the missing Source Log is a report-quality issue surfaced elsewhere, not a false-scarcity signal).
+
+4. **Classify:**
+   - All expected top-of-ladder surfaces searched, nothing found → `confirmed-scarcity` (no flag — a genuine evidence ceiling).
+   - One or more expected top-of-ladder surfaces **not** searched → `false-scarcity-flagged` → FLAG (see Verdict Logic). The scarcity verdict is not yet earned.
+
+**Route on `false-scarcity-flagged`.** As with Check 6's `INCOMPLETE-RESEARCH`, re-extraction is a no-op when the gap is an *unsearched surface* — the FLAG routes back to Step 2.2 / Step 2.3 for a targeted **supplementary pass** against the named unsearched surface(s), not a re-extraction of existing material. Name the specific unsearched surface(s) in the instruction.
+
+**Source-Surface Coverage contract.** Check 7 reads three structures from `reference/source-class-hierarchy.md`: the evidence-need → source-class table, the source-exhaustion ladders, and the Named-Source Appendix. This is a two-end contract: the project-local file is the producer, this check is the consumer. The producer side is documented in `source-class-hierarchy.template.md`. Absence or shape-mismatch on the producer side degrades this check gracefully (step 2) — it never hard-fails and never fabricates expected surfaces.
+
+**Output (per extract, only when Check 7 ran):**
+- `Source-surface coverage: confirmed-scarcity / false-scarcity-flagged / not-checked / unverifiable`
+
 ## Verdict Logic
 
 **APPROVED** — No issues, or only trivial issues not affecting downstream quality (e.g., minor synthesis wording that doesn't change meaning).
@@ -147,6 +173,7 @@ Per `reference/quality-standards.md § Research Stop Conditions`, every research
 - Any coverage verdict not meeting the threshold rubric
 - >=2 minor issues on the same extract (individually non-blocking but collectively indicating systematic quality problems)
 - **Check 6 returns `INCOMPLETE-RESEARCH`** (S-13 reciprocal-rule violation — the subtask stopped before any of the 4 canonical stop conditions was met). Re-extraction may be a no-op if the underlying research is the issue; in that case, the FLAG routes back to Step 2.2 / Step 2.3 for supplementary research rather than re-extraction.
+- **Check 7 returns `false-scarcity-flagged`** (a top-of-ladder public surface for the scarce component was not searched — the scarcity verdict is not yet earned). Routes back to Step 2.2 / Step 2.3 for a targeted supplementary pass against the named unsearched surface(s), same handling as `INCOMPLETE-RESEARCH`. The other Check 7 outputs — `confirmed-scarcity`, `not-checked`, `unverifiable` — do **NOT** trigger FLAG.
 
 ### Borderline Cases
 
@@ -164,6 +191,8 @@ Every FLAG verdict must include instructions specific enough for `research-extra
 
 Good: "Q3-C04 distorts the source — report says 'primarily in large-cap contexts' but extract generalizes to all PE. Re-extract with scope qualifier preserved."
 
+Good (Check 7 false-scarcity): "Q2 marked THIN on dispersion, but the Source Log shows Invest Europe and the national-association performance reports (returns/dispersion ladder steps 1–2) were never searched. Not re-extraction — route to Step 2.2 supplementary pass against those two surfaces before accepting scarcity."
+
 Bad: "Check Q3 again."
 
 When multiple checks flag issues on the same component, consolidate into a single re-extraction instruction that addresses all issues together. If issues span >=3 checks on one extract, recommend full re-extraction of that extract rather than per-issue patching.
@@ -180,15 +209,16 @@ Per Research Extract:
 **Stop condition closed:** [1 / 2 / 3 / 4 / INCOMPLETE-RESEARCH]
 **EVIDENCE-CEILING-REACHED:** [yes / no]
 **Target condition (from prompt):** [1 / 2 / 3 / 4 / (not declared)]
+**Source-surface coverage:** [confirmed-scarcity / false-scarcity-flagged / not-checked / unverifiable] — *(only when Check 7 ran, i.e. a scarcity verdict; omit the line for COVERED components)*
 
 ### Issues found (if any):
 
 | Check | Issue | Location | Impact | Re-extraction instruction |
 |-------|-------|----------|--------|--------------------------|
-| [1-6] | [Description] | [Component + Claim ID or report section] | [What it affects downstream] | [Specific instruction for re-extraction] |
+| [1-7] | [Description] | [Component + Claim ID or report section] | [What it affects downstream] | [Specific instruction for re-extraction] |
 
 ### Checks passed:
-[List which of the 6 checks passed clean]
+[List which of the 7 checks passed clean — for COVERED components, Check 7 is not run; list it as "n/a (not a scarcity verdict)" rather than passed]
 ```
 
 After all extracts:
