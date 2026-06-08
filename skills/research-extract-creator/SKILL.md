@@ -187,3 +187,31 @@ This skill extracts and structures — it does not verify sources, supplement ev
 ## Output Protocol
 
 No refinement mode. Produce all Research Extracts for the session in a single file. The operator reviews extracts at Step 2.4 and requests re-extraction if needed.
+
+## Self-Check
+
+Before delivering the extract(s) for the session, verify every item below and fix any failure before handing off to the operator's Step 2.4 review. This is the producer's pre-handoff pass — it confirms the extract is internally complete, consistent, and rule-compliant. It does **not** re-judge the evidence against the raw report (that is `research-extract-verifier`'s independent job at Step 2.4); do not duplicate those checks here.
+
+**Structural completeness**
+
+- Every extracted claim carries a Claim ID in `[Question ID]-C[sequential number]` form, unique within its question.
+- Every claim carries all three canonical tags using exact-string values: evidence strength (`H` / `M` / `L`), freshness class (`CURRENT` / `RECENT` / `BASELINE` / `STRUCTURAL`), and evidence lens (`IN-LENS` / `PROXY-DOWNGRADE` / `NO-EVIDENCE`).
+- Every Answer Spec component present in the report has a coverage verdict (`COVERED` / `THIN` / `MISSING`) — none left unscored.
+- Every claim citing ≥2 source channels records an independence basis (`independently-observed` / `same-underlying-dataset` / `same-press-release` / `unclear`); single-source claims correctly omit it.
+- Any current-state claim supported only by `BASELINE` or `STRUCTURAL` evidence carries the `[FRESHNESS-MISMATCH]` tag inline (emission only — this skill flags, it does not downgrade).
+
+**Internal consistency (label discipline — all-occurrences rule)**
+
+- Each coverage-verdict label matches across all three places it appears: the Coverage Verdicts table, the Gaps section, and the Component Synthesis. No stale label survives a correction — correct all occurrences in one pass before handoff.
+- Each Component Synthesis is derivable from the claims listed beneath it; it introduces no framing the listed claims do not support.
+
+**Process-rule adherence**
+
+- No-source-substitution: no claim is tagged `IN-LENS` on proxy evidence; every `PROXY-DOWNGRADE` / `NO-EVIDENCE` claim names the substitution in its Notes and preserves its original lens.
+- No-silent-selection: every claim whose evidence base reports differing values for one fact records BOTH values in Notes AND has a matching conflict-log entry (`status: OPEN`) in the section's source-conflict log. No conflict is silently resolved, averaged, or dropped.
+- Source citations are carried over verbatim from the report (title, URL, access date) — not modified, enriched, or invented; an unclear citation carries the `[Source citation unclear in original report]` caveat rather than fabricated metadata.
+- No-fabrication: claims, syntheses, and gaps reflect only the research report — no training-data filler, no inference beyond the report. `MISSING` / `THIN` components are left as gaps, not completed with plausible content.
+
+**Optional-field carve-out (#22)**
+
+- Guard against over-reach on the optional `Disconfirming evidence found` field (per § Disconfirming Evidence): confirm none of the checks above treated its absence as a failure. A missing field is **never** flagged, gapped, or used to downgrade a verdict. The field is not subject to a Self-Check — do not add a presence or capture check for it; this bullet exists only to keep the rest of the Self-Check from mistaking its absence for a gap.
