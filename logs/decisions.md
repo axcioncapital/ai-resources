@@ -107,3 +107,13 @@
 - **Rationale.** The plan declared a plan-time /risk-check assuming #1 would edit a process doc; #1's dissolution narrowed the surface below the bar. Spending a possibly-credit-exhausting subagent on a low-risk doc bullet is also the prudent application of #2's own lesson.
 
 **Decided by:** Claude recommendation (decision-point posture), validated by independent qc-reviewer (GO) on the substantive #2 edit.
+
+## 2026-06-08 — Monday-prep 2026-W24: audit scope + log-archival judgment
+
+**Decision 1 — B7 CLAUDE.md audit: always-loaded layer only, audited as one combined pass.** Operator chose always-loaded-only scope (workspace + ai-resources) over the full 6-audit cadence. Drove the `claude-md-auditor` agent directly with both files as input rather than two `/audit-claude-md` invocations.
+- **Rationale.** Six full `/audit-claude-md` runs would re-audit the workspace file 5× redundantly and re-fetch identical external guidance 6×. Auditing the two always-loaded files together in one pass is leaner AND lets the auditor detect cross-file redundancy (priority tier 2) — which separate runs structurally cannot see. The combined pass found the dominant finding: 3 HIGH cross-file rule duplications (git commit/push, model-defaults, Session Boundaries), each paid twice every turn.
+- **Alternatives.** (a) Full 6-audit cadence — rejected on cost + redundancy. (b) Two separate workspace/ai-resources runs — rejected (blind to cross-file redundancy). (c) Skip B7 — rejected (always-loaded files load every session, highest per-turn impact).
+- **Note.** `/audit-claude-md` has no `ai-resources` scope selector (scopes: empty / workspace / project <name>); monday-prep B7's `/audit-claude-md ai-resources` call is unresolvable by the command. Worked around by driving the agent directly. Candidate friction-log item if it recurs.
+
+**Decision 2 — did NOT run /resolve-improvement-log despite improvement-log over threshold (278 lines).** Flagged for a triage/park-drain session instead.
+- **Rationale.** Only 1 applied+Verified (archivable) entry exists — S17 drained the rest 3 days ago. The 278 lines are driven by 19 PENDING entries, which archival cannot touch. Running /resolve-improvement-log would remove ~1 entry (~270 lines, still over threshold) — a patch, not a fix. The structural read (workspace CLAUDE.md § Working Principles, ROI gate): the over-threshold condition is a pending-backlog accumulation needing triage/park-drain, not an archival gap. Parked, not patched.
