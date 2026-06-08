@@ -422,3 +422,28 @@ Investigation: system-owner /consult "missing references" false positive. Contex
 
 ## 2026-06-08 — Session S3
 Investigation + park: .claude/ git-hygiene Option B (W24 mandate item 2). SO advisory + read-only investigation across 13 project repos confirmed the premise is incoherent (gitignore-alone is a no-op; hook never overwrites existing targets), churn is not material (1–7 commits/90d, all intentional), and zero broken symlinks across 12/13 projects (1 in research-pe is a /fix-symlinks job). Parked with corrected premise in improvement-log. No files edited. Session closed without mandate.
+
+## 2026-06-08 — S2+S3: two false-positive investigations resolved; W24 item 2 parked
+### Summary
+Ran two investigation-only sessions from the prime menu. S2 confirmed the system-owner `/consult` "missing references" alarm was a false positive — all grounding files present and readable, the "missing" signal came from gitignore-filtered Glob. S3 investigated W24 item 2 (.claude/ git-hygiene Option B): SO advisory + filesystem scan across 13 project repos confirmed the premise is incoherent (gitignore-alone is a no-op; hook skips existing targets), churn is not material, and there is no problem worth fixing. Both sessions closed without a mandate; W24 item 2 parked in improvement-log with the corrected premise.
+
+### Files Created
+- `projects/axcion-ai-system-owner/output/consultations/consult-2026-06-08-git-hygiene-option-b-review.md` — SO Function B advisory on git-hygiene Option B premise (workspace-root repo)
+- `logs/scratchpads/2026-06-08-wrap-scratchpad.md` — continuity scratchpad (gitignored)
+
+### Files Modified
+- `logs/session-notes.md` — S2 and S3 stub entries written mid-session; this wrap note appended
+- `logs/improvement-log.md` — W24 item 2 park decision appended with corrected premise and pilot guidance
+
+### Decisions Made
+- **W24 item 2 parked (broken premise).** "Gitignore the synced shared files so the hook regenerates them" is a no-op: `.gitignore` doesn't remove files from disk, and the sync hook never overwrites an existing target. Churn across 13 project repos is 1–7 commits/90d and entirely intentional. The only real hygiene signal is 1 broken symlink in research-pe (a `/fix-symlinks` job, not a topology change). SO advisory confirmed: park unless/until churn is a felt operational problem. Corrected premise logged for future reference.
+
+### Risky actions
+None. All sessions were read-only investigation. No files modified in project repos. No structural changes.
+
+### Next Steps
+- Run `/fix-symlinks` on `projects/research-pe-regime-shift-advisory-gap` — 1 broken symlink found during the investigation.
+- W24 is complete: item 1 (CLAUDE.md audit) done; item 2 parked.
+
+### Open Questions
+None.
