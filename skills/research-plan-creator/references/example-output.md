@@ -17,6 +17,7 @@ Research must establish: how PE funds currently source deals, what pain points e
 Q4: What patterns exist in how Nordic PE funds receive and evaluate inbound deal opportunities?
 - Scope: Focus on inbound deal flow from advisors, not proprietary sourcing
 - Depth: L1 — conversational fluency; understand the general patterns and variations
+- risk-tier: C — exploratory framing; shapes interpretation but carries no standalone market-pattern claim the recommendation rests on
 - Complete when: Identified 3+ distinct patterns with factors that explain variation
 - Intelligence path: Web search (industry reports, advisor blogs, PE fund websites)
 - Tool assignment: Perplexity (finding patterns across sources)
@@ -26,6 +27,7 @@ Q4: What patterns exist in how Nordic PE funds receive and evaluate inbound deal
 Q5: What information do PE funds look for in initial deal materials, and what is often missing? [L2]
 - Scope: Initial materials only (teasers, CIMs), not due diligence documents
 - Depth: L2 — operational fluency; must know specific content elements and typical gaps
+- risk-tier: B — materially supports a load-bearing service-design claim but is not itself the verdict (note: L2 depth, Tier B — depth and tier set independently)
 - Complete when: Can list 5+ expected elements AND 3+ commonly missing elements with specific names, each from 2+ sources
 - Intelligence path: Web search, supplemented by operator blogs/podcasts
 - Tool assignment: Perplexity (finding specific content requirements)
@@ -35,6 +37,7 @@ Q5: What information do PE funds look for in initial deal materials, and what is
 Q6: What do PE funds and M&A advisors disagree about regarding deal material quality?
 - Scope: Points of tension or misaligned expectations
 - Depth: L1 — conversational fluency; understand the key tensions, not operational detail
+- risk-tier: C — context that frames interpretation; no standalone market-pattern claim
 - Complete when: Identified 2+ specific points of disagreement with both perspectives articulated
 - Intelligence path: Likely requires expert interviews; web search for initial signal only
 - Tool assignment: N/A (alternative intelligence path)

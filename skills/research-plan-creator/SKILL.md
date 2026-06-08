@@ -2,8 +2,9 @@
 name: research-plan-creator
 description: >
   Transform Task Plans into Research Plans — structured documents of sequenced,
-  answerable research questions with depth calibration, tool assignments, source
-  requirements, and completion criteria. Use when: (1) a Task Plan exists and
+  answerable research questions with depth calibration, risk-tier control-effort
+  calibration, tool assignments, source requirements, and completion criteria.
+  Use when: (1) a Task Plan exists and
   needs to be operationalized into research questions, (2) converting strategic
   objectives into concrete queries an AI researcher can execute, (3) structuring
   inquiry across confirmatory and exploratory research postures. Do not use for:
@@ -80,6 +81,27 @@ Before finalizing, verify:
 - L3 questions rare and explicitly justified
 - If >50% of questions are elevated above default, either the default is miscalibrated or scope creep has occurred
 
+## Risk-Tier Calibration Framework
+
+Every research question also carries a **risk tier** (Tier A–D) — a *control-effort* axis set at plan time, distinct from depth. Tier determines how much control the workflow applies to the question downstream: the source ladder, counter-search, extract verification, and the Pass-3 permission ceiling. The canonical definition, control matrix, and permission ceiling live in `reference/quality-standards.md § Risk-Tier Model` (a workflow deployment-dependency reference file); this section is the plan-time assignment rule. A project lacking that file under-specifies only the downstream control semantics — the assignment rule here still stands, and consumers presence-gate an absent tier to Tier B.
+
+### Axis Orthogonality (do not collapse depth and tier)
+
+Depth (L1–L3, above) answers *how deeply must we understand this topic?* — a **knowledge-depth** axis. Risk tier answers *how much control effort does this answer deserve?* — a **control-effort** axis. The two are **orthogonal and coexist**: a question may be L1 yet Tier A (a load-bearing number that is simple to state), or L3 yet Tier C (deep understanding that frames interpretation but carries no standalone market-pattern claim). Risk tier does **not** replace, alias, or map onto L1–L3. Assign both independently — depth from the Task Plan's depth rubric, tier from the load-bearing rule below.
+
+### Tier Assignment Rule (deterministic)
+
+- **Tier A** — the answer carries the thesis verdict, OR a quantitative SUPPORTED assertion the recommendation rests on.
+- **Tier B** — materially supports a Tier-A claim but is not itself load-bearing. **This is the default.**
+- **Tier C** — provides context or framing that shapes interpretation but supports no standalone market-pattern claim.
+- **Tier D** — illustrative only (a named case, no pattern claim).
+
+Assign one tier per question and record it as the `risk-tier:` line in the Question Format. **Default:** a question with no clear load-bearing role is **Tier B** — and a plan that omits tiers entirely runs exactly as before, because downstream consumers presence-gate an absent tier to Tier B. Tiering is opt-in enrichment, not a breaking change.
+
+### Operator Review
+
+Surface the assigned tiers at the existing research-plan approval gate. The operator may re-tier any question. Introduce no new gate — tier rides the gate that already exists.
+
 ## Research Plan Structure
 
 Every Research Plan contains these sections:
@@ -88,7 +110,7 @@ Every Research Plan contains these sections:
 |---------|---------|
 | **Assumptions** | (If Task Plan incomplete) What was inferred; must be confirmed before execution |
 | **Research Context** | Task Plan objective, what research must accomplish, research posture |
-| **Research Questions** | Numbered questions organized by area, each with inline scope/depth/completion/source/recency |
+| **Research Questions** | Numbered questions organized by area, each with inline scope/depth/risk-tier/completion/source/recency |
 | **Intelligence Paths** | For each question: whether web search is viable or other sources required |
 | **Search Strategy Notes** | Terminology, query patterns, source preferences, time frames |
 | **Dependencies** | Which questions must be answered before others; note potential overlaps |
@@ -358,6 +380,7 @@ Include conditions for pausing and reassessing:
 Q[n]: [Question text] [Depth tag if elevated above default]
 - Scope: [What to include/exclude]
 - Depth: [Level] — [What this level means for this question]
+- risk-tier: [A / B / C / D] — [load-bearing role; default B if not load-bearing]
 - Complete when: [Depth-appropriate criteria]
 - Intelligence path: [Web search / Alternative: specify]
 - Execution: GPT Deep Research (web-searchable) / Alternative: [specify]
@@ -432,10 +455,11 @@ Before presenting, verify:
 11. All material actors enumerated; key relationships addressed; exclusions justified
 12. Objective modifier applied if Task Plan has a specific objective type
 13. Every question has depth level; elevated depths justified; distribution sensible (<50% elevated)
-14. Web-searchable questions default to GPT Deep Research; alternative-source questions specify the path
-15. Every question has source requirement classification with rationale; distribution sensible
-16. Time-sensitive questions flagged recency-sensitive
-17. Total question count is 12 or fewer (if exceeded, consolidation log justifies the override)
+14. Every question has a risk-tier (A/B/C/D), assigned independently of depth; tier reflects load-bearing role (A/B load-bearing, C/D not); questions with no clear load-bearing role default to Tier B
+15. Web-searchable questions default to GPT Deep Research; alternative-source questions specify the path
+16. Every question has source requirement classification with rationale; distribution sensible
+17. Time-sensitive questions flagged recency-sensitive
+18. Total question count is 12 or fewer (if exceeded, consolidation log justifies the override)
 
 If any check fails, revise before presenting.
 
@@ -464,3 +488,4 @@ If the Task Plan's premise appears factually incorrect, state the concern and pr
 - Define scope revision triggers
 - Classify scarcity when results are thin (scarcity is insight)
 - Assign and justify depth levels for all questions
+- Assign a risk-tier (A/B/C/D) to each question, independent of depth (default Tier B)
