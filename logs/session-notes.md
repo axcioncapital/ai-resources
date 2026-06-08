@@ -251,3 +251,28 @@ Concurrent-session collision: another session (S5) committed during this session
 Coordinate the push: 8 unpushed ai-resources commits + 2 workspace-root commits, a mix of this session and the concurrent S5 session.
 ### Open Questions
 None.
+
+## 2026-06-08 — Session S6: verified prime carryover staleness — 3 of 4 already done, 1 symlink fixed
+
+### Summary
+`/prime` surfaced two carryover items; operator suspected some were already done and asked to verify against the logs + live filesystem. Confirmed: of four open items (QC pass, symlink, commit loose notes, claim-permission wiring), **three were already resolved** — QC done in S5 (3/3 GO; signal was stale because S5's wrap note was written-but-uncommitted at prime time), claim-permission pointer-removal done+committed by a live concurrent S3 session, and the ai-resources loose-notes commit self-resolved (committed by another session). The only genuinely-open item was a broken symlink, which was fixed. Detected the live concurrent S3 session via mtime (a shared file changed between two of my own reads) and correctly halted the first auto attempt to avoid a lost-update collision, resuming only after that session had wrapped and committed.
+
+### Files Created
+- `logs/scratchpads/2026-06-08-18-30-scratchpad.md` — continuity scratchpad (gitignored)
+
+### Files Modified
+- Removed `projects/research-pe-regime-shift-advisory-gap/.claude/commands/diagnostics-plan.md` — orphaned broken symlink (target `ai-resources/.claude/commands/diagnostics-plan.md` does not exist anywhere; gitignored/untracked path, no commit needed)
+- `logs/.session-marker` + per-id marker → S6
+
+### Decisions Made
+- **Symlink removed, not re-pointed.** No canonical `diagnostics-plan.md` exists anywhere in ai-resources, so the link is orphaned (a command never created or since removed). Removal is the correct ZERO-match resolution, not a re-point.
+- **Halted auto run on concurrent-session detection.** When a live S3 session was detected mid-edit in the research-pe repo, stopped the auto run rather than editing/committing there — avoided a lost-update collision. Resumed once that session wrapped (12:11) and its work was in HEAD.
+
+### Risky actions
+Nearly committed/edited the research-pe repo while a live concurrent S3 session was mid-edit on `quality-standards.md` — caught it via mtime before acting and halted. No collision occurred. The symlink removal was on a gitignored, untracked path (no shared-state effect).
+
+### Next Steps
+Push gate: 12 commits across ai-resources (8), workspace-root (2), ai-development-lab (2). research-pe has no upstream — nothing to push there.
+
+### Open Questions
+None.
