@@ -101,6 +101,21 @@ The extract does not "fix" the report's scope drift by re-narrowing the claim to
 - Syndicated content, derivative reports citing the same primary data, and secondary sources restating the same original finding count as one.
 - If independence is unclear, note the uncertainty rather than guessing.
 
+**Independence basis (per claim citing ≥2 channels).** Beyond the count, record *why* the supporting channels are or are not independent, so downstream consumers can mechanically apply the source-diversity rule instead of re-deriving independence from raw sources. For any claim citing ≥2 source channels, classify the basis as exactly one of these canonical strings:
+
+| Basis | Conditions |
+|---|---|
+| `independently-observed` | The channels are genuinely independent originators observing the fact separately — different primary sources, no shared underlying dataset or release. |
+| `same-underlying-dataset` | Two or more channels trace to ONE underlying dataset/provider — e.g., two different articles both citing the same Preqin, Bain, or PitchBook figure. The canonical false-corroboration case in public PE coverage: looks like two sources, is evidentially one. |
+| `same-press-release` | The channels all derive from one announcement, press release, or company statement. |
+| `unclear` | Independence cannot be determined from the available source metadata. Record `unclear` — do not guess (consistent with the uncertainty rule above). |
+
+Single-source claims do not carry a basis — the Independence count already records single-source. The basis field applies only to claims citing ≥2 channels.
+
+**Mixed case.** When a claim's channels split — some genuinely independent, some sharing one underlying dataset or release — record the basis of the *colliding* subset (`same-underlying-dataset` or `same-press-release`), and name the split in Notes (which channels collide, which are independent). Do not flatten a mixed case to `independently-observed` (it hides the collision) or to `unclear` (it understates what is known). The conservative tag plus the Notes detail lets the downstream rule collapse only the colliding channels.
+
+**Forward-compatibility note.** This field is recorded now, but its strengthened *consumption* — collapsing `same-underlying-dataset` / `same-press-release` channels to one evidentiary role across different source classes (extending the triangulation-packets rule) — is pending the `reference/quality-standards.md § Source-Diversity Matrix` edit. Until that lands, the field is informational and forward-compatible: extractors record it; no downstream gate yet enforces the same-underlying-source collapse. **Interim values are unvalidated** — no gate checks them until consumption activates, so the activating edit MUST include a back-validation / migration pass over extracts produced before activation (re-check basis tags before the rule starts biting on them).
+
 ### Coverage Verdicts (per Answer Spec component)
 
 | Verdict | Threshold |

@@ -22,6 +22,7 @@
 - **Source locator:** [Section heading + position in Deep Research report]
 - **Strength:** H / M / L
 - **Independence:** [Count]
+- **Independence basis:** [independently-observed / same-underlying-dataset / same-press-release / unclear — for claims citing ≥2 channels; omit for single-source]
 - **Notes:** [Linkage type, caveats]
 
 [More claims...]
