@@ -165,6 +165,12 @@ Start from the report's Conflicts section — these are disagreements the execut
 
 This skill emits the conflict-log entry with `status: OPEN`. Resolution (triangulation per Step 2, or adjudication per Step 3 of the procedure) happens in `cluster-memo-refiner` Check 10 or operator review — NOT in this skill. The downstream consumer updates the entry's status to `RESOLVED-METHODOLOGY` / `RESOLVED-GRANULARITY` / `RESOLVED-TRIANGULATION` / `UNRESOLVED`.
 
+### Disconfirming Evidence (optional capture — fix-spec #22)
+
+If the research report includes a report/session-level **`Disconfirming evidence found`** field (emitted by `research-prompt-creator`'s disconfirming-evidence reporting element), capture it verbatim-or-summarized into the extract's Extraction Metadata block as a `Disconfirming evidence found:` line. This includes the empty-with-reason form ("no disconfirming evidence found after N searches") — capture the stated reason as given.
+
+This capture is **optional and additive**: if the report does not include the field, **omit the line entirely** — do NOT flag it, do NOT mark a gap, and do NOT downgrade any coverage verdict for its absence. The field has **no downstream consumer as of the 2026-06-08 landing** (its consumer, the fix-spec #4 Tier-A counter-search, is deferred; re-check when #4 lands); this skill records it for forward use only. It is not a coverage input, not a conflict input, and not subject to any Self-Check.
+
 ## Failure Behavior
 
 - **Component not covered in report** → mark MISSING in Coverage Verdicts. Component Synthesis: "No evidence found in the research report for this component." Do not synthesize from training data or infer from adjacent evidence.

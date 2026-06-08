@@ -40,5 +40,6 @@
 - **Questions in session:** [List]
 - **Extraction date:** [Date]
 - **Supplementary research:** No
+- **Disconfirming evidence found:** [Optional — fix-spec #22. Captured from the research report's report/session-level `Disconfirming evidence found` field, verbatim-or-summarized, including the empty-with-reason form ("no disconfirming evidence found after N searches"). OMIT this line entirely if the report did not include the field. No downstream consumer reads it yet; record-only.]
 - **Flags:** [Any ambiguous question mappings, unusual conditions, or caveats about this extraction — omit if none]
 ```
