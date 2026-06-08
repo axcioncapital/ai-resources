@@ -722,3 +722,26 @@ None destructive. The #7 archival removed 5 entries from `improvement-log.md` vi
 
 ### Open Questions
 None blocking.
+
+## 2026-06-08 — Monday prep: 2026-W24
+
+### Flags
+- **Workspace-root git tree dirty (standing `.claude/` Option B debt).** Modified: harness/logs/innovation-registry.md, harness/logs/session-plan.md, logs/coaching-log.md, logs/innovation-registry.md. Untracked: 13 `.claude/commands/*.md`, harness/scratchpads ×3, harness/reviews/, projects/, reports/child-cycle-landing-diagnostic-2026-05-28.md. NOT auto-committed — this is the S8 Option B debt, scheduled as Work item 2 in the W24 mandate. ai-resources tree clean.
+- **B6 symlinks:** clean (no broken links in the 5 active projects).
+- **B7 CLAUDE.md audit (always-loaded layer):** workspace + ai-resources audited together (one auditor pass, catches cross-file redundancy). 4 HIGH / 7 MED / 4 LOW, ~620 tok/turn savings. Report committed: `audits/claude-md-audit-2026-06-08-always-loaded.md`. 3 HIGH = cross-file dups (commit/push ruleset, model-defaults, Session Boundaries). Project audits deferred (operator chose always-loaded only); axcion-ai-system-owner skipped (unmodified + small). Note: `/audit-claude-md` has no `ai-resources` scope selector — drove `claude-md-auditor` directly.
+- **B8 over-threshold logs (>200 lines, manual-archive candidates):** nordic-pe session-notes 816, research-pe friction-log 610 + session-notes 547, obsidian-pe session-notes 451, marketing-positioning session-notes 430, maintenance-observations 407, axcion-ai-system-owner session-notes 279, improvement-log 278. improvement-log NOT auto-archived: only 1 applied+Verified entry exists (S17 drained the rest 3 days ago); the 19 pending entries drive size and need a triage/park-drain session, not archival.
+- **B9 permissions:** clean — bypassPermissions present in ai-resources + all 5 active projects.
+- **B10 inbox:** 4 pending briefs — audit-workflow-pipeline.md, codex-second-opinion-brief.md, repo-review-brief.md, workflow-diagnosis.md. None actioned this week.
+- **B11 harness:** v1 unreleased (Phase 0–1 scaffolding). Latest week mandate was W23; W24 written this session. No in-progress session report.
+- **C12 last checkup (2026-06-05 monthly):** most tactical items resolved by the same-day S1–S17 friday-act sweep (permission floor, push-rule corrections, model de-versioning, session-plan date-qualify, /prime Step 8c done-condition gate, /fix-symlinks drift, wrap Step 3.5 fix, log archival, push). Still open: Read-deny rules at workspace root (operator-gated), session-entry/retroactive-mandate guard, DR-1 project-local hook duplicates, W2.1 registry maintenance, `.claude/` git-hygiene (→ W24 mandate).
+
+### Mandate
+`harness/session/week-mandate-2026-W24.md` — 2 work items: (1) apply B7 CLAUDE.md audit fixes; (2) `.claude/` git-hygiene Option B (via /risk-check).
+
+### Harness state
+v1 unreleased; infrastructure scaffolding (Phase 0 preflight + Phase 1 shared infra). No active session in-progress. Week mandates W20–W23 present; W24 added.
+
+### Next Steps
+- Start first work session on W24 mandate item 1 (apply CLAUDE.md audit fixes) — scaffold seeded in `logs/session-plan-next.md`.
+- Schedule a `/risk-check` session for the `.claude/` git-hygiene Option B change (mandate item 2).
+- Manual-archive sweep for the 7 over-threshold logs + a pending-entry triage/park-drain for improvement-log (19 pending) — not this week's mandate, flag for a maintenance slot.
