@@ -111,6 +111,60 @@ For projects with a multi-country scope, every cluster memo includes a Country C
 
 **Single-country projects.** Omit this section entirely; the gate rules are inapplicable.
 
+## Risk-Tier Model
+
+> **Adjacency rule.** This section defines the control-effort axis (Tier A–D) and the single point at which tier touches the permission machinery (the permission ceiling, a cap). It is **adjacent to, and never merged with**, § Claim-Permission Classes. The four permission-class names, their verb lists, and gate semantics belong to that section and are unchanged here; this section does not restate or override them. Edits that would alter the permission-class set require `/risk-check` re-fire against that section, not this one.
+
+The workflow applies control depth per question by **risk tier**, set at plan time before evidence is gathered. Tiering keeps heavy controls where the thesis verdict rests and runs light where a question is illustrative. Tier is an **input that sets control depth**; the permission class (§ Claim-Permission Classes) is an **output that grades the result**. They are never substituted for each other.
+
+### Three orthogonal axes (do not collapse)
+
+| Axis | Question it answers | Assigned when | Assigned by | Lives where |
+|---|---|---|---|---|
+| **Risk tier** (control effort) | How much control effort does this question deserve? | Plan time (before evidence) | `research-plan-creator` (`risk-tier:` field) | research plan; carried on the question |
+| **Evidentiary lens / role** | What evidentiary role does this source play? | Extract time | `research-extract-creator` (`independence basis` field) | Stage-2 extracts |
+| **Permission class** | Given the evidence found, how strongly may the claim be stated? | Post-evidence (Pass 3) | `claim-permission-gate` / `cluster-memo-refiner` Check 9 | § Claim-Permission Classes |
+
+**Orthogonality to the Depth Calibration Framework (L1–L3).** `research-plan-creator` also carries an L1–L3 knowledge-depth scale (its Depth Calibration Framework). That scale answers *how deeply must we understand this topic?* — a **knowledge-depth** axis. Risk tier answers *how much control effort does the answer deserve?* — a **control-effort** axis. They are orthogonal and **coexist**: a question may be L1 (conversational depth) yet Tier A (load-bearing, full controls), or L3 (execution competency) yet Tier C. Tier A–D does **not** replace, alias, or map onto L1–L3; both fields are assigned independently at plan time.
+
+### Tier assignment (deterministic, at plan time)
+
+- **Tier A** — the answer carries the thesis verdict, OR a quantitative SUPPORTED assertion the positioning recommendation rests on.
+- **Tier B** — materially supports a Tier-A claim but is not itself load-bearing. **(Default — see below.)**
+- **Tier C** — provides context/framing that shapes interpretation but supports no standalone market-pattern claim.
+- **Tier D** — illustrative only (a named case, no pattern claim).
+
+Tier is assigned by `research-plan-creator`, one per research question, recorded as a `risk-tier:` field on the question. The plan-time assignment is surfaced at the existing research-plan approval gate; the operator may re-tier any question. No new gate is introduced — tier rides the gate that already exists.
+
+**Backward-compatible default (presence-gated).** A question with no `risk-tier:` field defaults to **Tier B** — normal, uniform control depth, identical to pre-tiering behaviour. Tiering is opt-in enrichment, not a breaking change: an un-tiered plan runs exactly as before. Consumers MUST presence-gate the tier read — **absent `risk-tier:` field, OR a project chassis with no § Risk-Tier Model section, → Tier B** — so a project that has not adopted this model drives every question to Tier B and runs unchanged.
+
+### Control matrix per tier
+
+| Control | Tier A | Tier B | Tier C | Tier D |
+|---|---|---|---|---|
+| Full source ladder (all source classes attempted) | required | required | lightweight (primary + one corroborant) | named source only |
+| Counter-search (disconfirming, #4) | mandatory | — | — | — |
+| Stage-2 extract verification | yes | yes | citation-check only | — |
+| Pass-3 permission gate | yes | yes | yes | auto-ILLUSTRATIVE-ONLY ceiling |
+| Sufficiency gate (blocking ratios) | yes | yes | counts toward section ratio | excluded from ratio |
+| Citation entailment (#7) | sentence-level | claim-level | claim-level | — |
+| Paywall fast-lane (#5) | full deep session if gated | fast-lane | fast-lane | not pursued if gated |
+
+The controls are the existing workflow stages; tier routes them — it does not invent new ones.
+
+### Permission ceiling (the one point of contact with § Claim-Permission Classes)
+
+Tier caps the **highest** permission class a question may reach. It never re-grades: a Tier-A question can still end NOT-SUPPORTED if the evidence is absent.
+
+| Tier | Permission ceiling | Enforcement |
+|---|---|---|
+| A | up to SUPPORTED | — |
+| B | up to SUPPORTED | — |
+| C | up to PROXY-SUPPORTED | **advisory** — `claim-permission-gate` flags a C-tier claim graded above the ceiling; the operator may override |
+| D | ILLUSTRATIVE-ONLY max | **hard cap** — a D-tier question is auto-ceilinged to ILLUSTRATIVE-ONLY by construction |
+
+The ceiling is a **cap, not a re-grade**: under the ceiling, the permission gate decides where the claim actually lands per § Claim-Permission Classes. The four permission-class names, verb lists, and gate semantics in that section are unchanged by this model. (Ceiling enforcement split — hard cap for D, advisory for C — is a project-recordable decision; record it in the adopting project's `logs/decisions.md`.)
+
 ## Claim-Permission Classes
 
 > **Canonical-ordering rule.** This chassis is the source of truth for permission-class names, the permitted-prose-verb lists, and gate semantics. Per-claim-type evidence thresholds (the project-fillable table) live in `reference/claim-permission.md` (derived from `claim-permission.template.md`). Future edits that cross this boundary in either direction require `/risk-check` re-fire.
