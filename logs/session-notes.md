@@ -310,3 +310,11 @@ None irreversible. Near-flag: extended the operator-supplied §15 amendment word
 
 ### Open Questions
 - §15 amendment-wording extension awaits operator confirmation (non-blocking for Session 1; blocking before Session 2 lands the amendment).
+
+## 2026-06-09 — Session S1
+**Mandate:** refresh-project-state Session 2 — land + wire + validate (satisfy GO-gates G1/G2/G3, scaffold vault project-state/, apply §15 amendment to 3 sites + identity sentence, extend /kb-integrity Check D, graduate 3 dev artifacts, wire OS state-retrieval-agent) — done when: all 3 GO-gates satisfied structurally, §15 landed at all 3 sites, 3 artifacts graduated + wired, end-time /risk-check GO, dry-run + full run pass §13 acceptance
+- Out of scope: operator wikilink curation of snapshot Related: fields
+- Files in scope: knowledge-bases/strategic-os/CLAUDE.md, knowledge-bases/strategic-os/.claude/commands/kb-query.md, knowledge-bases/strategic-os/.claude/commands/kb-integrity.md, knowledge-bases/strategic-os/templates/project-state-note.md (new), knowledge-bases/strategic-os/project-state/_index.md (new), each target project's .claude/settings.json, ai-resources/.claude/commands/refresh-project-state.md (new, graduated), ai-resources/.claude/agents/project-state-snapshot-agent.md (new, graduated), ai-resources/.claude/agents/project-state-scrub-verifier.md (new, graduated), projects/strategic-os/.claude/agents/state-retrieval-agent.md
+- Stop if: a GO-gate cannot be satisfied structurally
+
+refresh-project-state Session 2 — land + wire + validate. Satisfy GO-gates G1 (structural Read-deny in target projects), G2 (folder-scoped Write to vault project-state/), G3 (§13 rollback test); scaffold vault project-state/ + template + index; apply §15 governance amendment to all 3 canonical-only sites + vault-identity sentence (operator-approved 2026-06-09); extend /kb-integrity Check D; graduate 3 dev artifacts → ai-resources/.claude/{commands,agents}/; wire OS state-retrieval-agent; end-time /risk-check → dry-run one project → full run → §13 acceptance.

@@ -10,9 +10,9 @@ tools:
   - Write
 ---
 
-> **DEV ARTIFACT — not yet graduated.** Lives in `ai-resources/workflows/refresh-project-state/` during build. Graduation home: `ai-resources/.claude/agents/project-state-snapshot-agent.md`. Contract: `projects/strategic-os/docs/project-state-workflow-spec.md` §4.
-
 You produce ONE **Strategic Context Snapshot** for the single project you are pointed at. You run inside that project, so you use your full local knowledge of it — but you are strictly **read-only toward the project**. You write exactly one file, and only to the staging path the caller gives you (which is outside the project). You never modify any file inside the project.
+
+Contract: `projects/strategic-os/docs/project-state-workflow-spec.md` §4.
 
 ## Inputs (the caller passes)
 
@@ -33,12 +33,12 @@ If logs disagree with the latest work, trust the latest work and say so in §2.
 
 ### Confidentiality read-block — HARD RULE (§4.3)
 
-You MUST NOT read or quote any file matching `*deal-*`, `*client-*`, or `*confidential*`, even though you have local access. Before reading the deliverable artifacts, run a quick `Glob`/`Bash` check and exclude any such path from your read set. Treat anything under the project's own `.gitignore` as off-limits too.
+You MUST NOT read or quote any file matching `*deal-*`, `*client-*`, or `*confidential*`, even though you have local access. Before reading the deliverable artifacts, run a quick `Glob`/`Bash` check and exclude any such path from your read set. Treat anything under the project's own `.gitignore` as off-limits too. (Note: a structural Read-deny on these patterns is also enforced at the session level — but do not rely on it; exclude them yourself.)
 
 ## Step 2 — Compute provenance
 
 - `as_of` = today's date (`Bash: date +%Y-%m-%d`).
-- `source_commit` = the project's current HEAD short SHA: `Bash: git -C "{PROJECT_DIR}" rev-parse --short HEAD`. **Granularity note:** `git -C` resolves to the nearest enclosing repo — a project that is its own git repo (e.g. `strategic-os`) yields its own HEAD; a project that is a plain subdirectory of the workspace repo yields the *workspace* HEAD, so its §6.2 staleness check is workspace-level (coarser — it reads stale whenever any project commits). This is expected; the Session-2 dry-run should confirm which granularity each target gets.
+- `source_commit` = the project's current HEAD short SHA: `Bash: git -C "{PROJECT_DIR}" rev-parse --short HEAD`. **Granularity note:** `git -C` resolves to the nearest enclosing repo — a project that is its own git repo (e.g. `strategic-os`) yields its own HEAD; a project that is a plain subdirectory of the workspace repo yields the *workspace* HEAD, so its §6.2 staleness check is workspace-level (coarser — it reads stale whenever any project commits). This is expected.
 
 ## Step 3 — Write the snapshot to STAGING_PATH
 
