@@ -318,3 +318,31 @@ None irreversible. Near-flag: extended the operator-supplied §15 amendment word
 - Stop if: a GO-gate cannot be satisfied structurally
 
 refresh-project-state Session 2 — land + wire + validate. Satisfy GO-gates G1 (structural Read-deny in target projects), G2 (folder-scoped Write to vault project-state/), G3 (§13 rollback test); scaffold vault project-state/ + template + index; apply §15 governance amendment to all 3 canonical-only sites + vault-identity sentence (operator-approved 2026-06-09); extend /kb-integrity Check D; graduate 3 dev artifacts → ai-resources/.claude/{commands,agents}/; wire OS state-retrieval-agent; end-time /risk-check → dry-run one project → full run → §13 acceptance.
+
+## 2026-06-09 — refresh-project-state Session 2 resume: cleared both commit-block gates, committed (validate-later)
+
+### Summary
+Resumed the `refresh-project-state` Session 2 QC-PENDING continuity scratchpad in an ai-resources-rooted session. Ran the two pre-commit gates that were unreachable in the prior session: independent `/qc-pass` (GO, zero findings across 12 files) and end-time `/risk-check` (GO, 4 Mediums / 0 High — no system-owner second opinion required on GO). Empirically confirmed the prior session's load-bearing claim via a live G1 canary probe — wrote a `*confidential*`-named file under `audits/working/` and the Read SUCCEEDED, proving the workspace-root Read-deny does not load in an ai-resources-rooted session, so STOP 3 validation cannot run here. Operator chose "commit now, validate later" (artifacts are inert until the command is run). Committed the change set scoped per repo across 4 repos with explicit-path staging; leftover S4 file and foreign untracked files left untouched. Reframed the scratchpad from QC-PENDING commit-block to VALIDATION-PENDING.
+
+### Files Created
+- `audits/risk-checks/2026-06-09-end-time-refresh-project-state-session-2-landing-change-set.md` — end-time risk-check report (GO).
+
+### Files Modified
+- Committed (graduation, this session): `.claude/commands/refresh-project-state.md`, `.claude/agents/project-state-snapshot-agent.md`, `.claude/agents/project-state-scrub-verifier.md` (renamed from `workflows/refresh-project-state/...` dev source, which was removed).
+- `logs/scratchpads/2026-06-09-12-03-scratchpad.md` — reframed QC-PENDING → VALIDATION-PENDING; recorded both GOs + 4 commit hashes (gitignored).
+- Cross-repo commits (see Decisions): workspace-root `.claude/settings.json`; strategic-os `state-retrieval-agent.md` + `docs/project-state-workflow-spec.md`; vault `CLAUDE.md`, `kb-query.md`, `kb-integrity.md`, `_master-index.md`, `project-state/_index.md`, `templates/project-state-note.md`.
+
+### Decisions Made
+- **Commit now, validate later (operator).** Both commit-block gates (QC, risk-check) GO; STOP 3 runtime validation deferred to a workspace-root session because the G1 deny only loads there (confirmed live via canary probe). Committed code is inert until the command is run, so deferral carries no confidentiality risk.
+- **Commits scoped per repo, explicit-path staging:** ai-resources `017924e`, workspace-root `2bf25a8`, strategic-os `b9f42d7` (spec §14/§13 mechanics correction surfaced in the message per SO directive), vault `833215a`. Excluded the leftover concurrent-S4 file `audits/risk-checks/2026-06-09-promote-research-methodology-deltas-...md` and all foreign untracked files.
+- **innovation-registry.md included** in the ai-resources commit — its 3 new rows are all this change set's files (kb-query, kb-integrity, state-retrieval-agent), auto-detected by the hook.
+
+### Risky actions
+Committed across 4 repos in an ai-resources-rooted session with known concurrent-session leftovers present — mitigated by explicit-path staging (never `git add -A`/`.`); verified each repo's staged set before commit. Wrote + deleted a live `*confidential*`-named canary probe under `audits/working/` to test the G1 deny (Read succeeded → deny not active here, as predicted). No irreversible or external action; nothing pushed.
+
+### Next Steps
+- **Workspace-root session required:** start Claude Code rooted at the workspace root → run `/refresh-project-state` dry-run on one project + full run (STOP 3) → check §13 acceptance criteria 1–6 → delete the `2026-06-09-12-03` scratchpad once §13 passes. QC + risk-check + commit are all done; skip them.
+- **Push pending:** 4 repos have unpushed commits (ai-resources, workspace-root, strategic-os, vault) — push gate at this wrap.
+
+### Open Questions
+None.
