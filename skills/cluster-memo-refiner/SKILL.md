@@ -2,23 +2,19 @@
 name: cluster-memo-refiner
 description: >
   Refines cluster analytical memos produced by cluster-analysis-pass. Runs ten
-  structured checks targeting common first-pass weaknesses — shallow
-  cross-question synthesis, missed escalation patterns, strength map
-  inaccuracies, generic takeaways, under-developed tensions, missing
-  dependency chains, unverified named-transaction claims, missing per-country
-  coverage status (Sweden / Norway / Finland), absent permission-class labels
-  (with per-cluster permission-table emission), and unlogged source conflicts.
-  Also defines and emits the canonical claim-ID format consumed downstream by
-  transaction-table-builder and the claim-permission gate. Use when initial
-  cluster memos are produced and need quality refinement before editorial
-  review. Triggers on requests like "refine these memos," "run refinement
-  checks," "improve the cluster analysis," or when cluster-analysis-pass output
-  is provided and the user requests quality refinement before editorial review.
-  Inputs (cluster memos, optional briefs, optional research plan, optional
-  transaction table) are enumerated in Input Requirements. Do NOT use before
-  initial memos exist, for writing report prose, for gap assessment (that's
-  gap-assessment-gate), for building the transaction table
-  (transaction-table-builder), or as a substitute for operator editorial review.
+  checks for common first-pass weaknesses — synthesis depth, escalation
+  patterns, strength-map accuracy, takeaways, tensions, dependencies,
+  named-transaction verification, per-country coverage, permission-class
+  emission (with per-cluster permission tables), and source-conflict validation.
+  Also emits the canonical claim-ID format consumed by transaction-table-builder
+  and the claim-permission gate. Use when initial cluster memos need quality
+  refinement before editorial review. Triggers on requests like "refine these
+  memos," "run refinement checks," "improve the cluster analysis," or when
+  cluster-analysis-pass output is provided for quality refinement. Inputs are
+  enumerated in Input Requirements. Do NOT use before initial memos exist, for
+  writing report prose, for gap assessment (that is gap-assessment-gate), for
+  building the transaction table (transaction-table-builder), or as a substitute
+  for operator editorial review.
 model: opus
 effort: high
 ---
@@ -37,11 +33,17 @@ Run ten structured refinement checks against cluster analytical memos. Report fi
 
 **Optional (for Check 7):** Transaction table at `execution/transaction-table/{section}/{section}-transaction-table.md`, produced by `transaction-table-builder`. Needed for Check 7 to verify named-transaction claims against the structured table. If absent, Check 7 runs in degraded mode (transaction-row-ID references cannot be verified; only the <3-deal generalization rule applies).
 
+**Optional (recommended, for Checks 8 and 10):** The research extracts feeding the cluster's findings (from `research-extract-creator`; emitted to the project working directory as `research-extract-[session].md`, so located by content, not a fixed canonical path). Check 8 fills per-country status entries from them; Check 10 sub-check 1 reads them to find source conflicts. **Presence-gated** (mirrors the research-plan gate above — opt-in enrichment, never a breaking change): if the extracts feeding a cluster cannot be located, Check 8 fills only the per-country entries derivable from the memo itself and flags the rest for operator attention (it does not invent entries), and Check 10 sub-check 1 is skipped with a one-line `extracts not located — extract-to-conflict-log coverage not verified` note. The remaining Check 10 sub-checks (2–3) still run against the conflict log if present. *Forward note:* once the F3 declared-check-count contract lands, this input may be upgraded from Optional to conditional-Required (required only when Checks 8/10 actually run in the deployment); until then it stays Optional so the six-check deployment (Checks 8–10 deferred to `/run-sufficiency`) is unaffected.
+
+**Optional (for Check 10 sub-checks 2–3):** The source-conflict log at `analysis/source-conflicts/{section}/{section}-source-conflict-log.md`, produced by `research-extract-creator` (same canonical path it emits to). Check 10 reads each entry's `status:` to verify resolution and downgrade consistency. **Absent-file branch:** if the log is absent *and* the extracts (above) surface no conflicts for the cluster, sub-checks 2–3 pass trivially (nothing to verify). If the log is absent *but* the extracts surface one or more conflicts, that absence is itself the blocking condition — the cluster is marked refinement-blocked until the log is created (per Check 10's blocking rule). If the extracts are also unavailable, sub-checks 2–3 run against whatever conflict-log entries exist and note that extract-side coverage could not be cross-checked.
+
 **Validate before proceeding:**
 - At least 1 memo provided with identifiable evidence strength indicators and findings with source tags
 - If compressed briefs are absent, note that Check 3 runs at reduced confidence (memo-internal references only)
 - If the research plan is absent or carries no `risk-tier:` fields, note that the Check 9 risk-tier ceiling is inactive (every finding binds at Tier B → no ceiling constraint) and proceed
 - If the transaction table is absent, note that Check 7 runs in degraded mode
+- If the research extracts cannot be located, note that Check 8 fills only memo-derivable per-country entries and Check 10 sub-check 1 is skipped (per the presence-gate above)
+- If the source-conflict log is absent, apply the absent-file branch above (trivial pass when no extract conflicts exist; refinement-blocked when conflicts exist but are unlogged)
 - If a memo is missing a required section, flag which checks cannot run against that memo and proceed with remaining checks. Do not invent content for missing sections.
 - If any Key Finding tagged `[SOURCE-GROUNDED]` cannot be traced to Claim IDs from the underlying briefs, flag as incomplete traceability. Severity: non-blocking (the refiner can still run its ten checks), but the flag must appear in the output for operator awareness.
 
@@ -215,6 +217,8 @@ Run all ten checks against every memo. Report findings per check per memo before
 
 **Output:** Per country-relevant finding: Sweden status / Norway status / Finland status, gate-rule verdict (three-country permitted / reframe required / downgrade required), pan-Nordic-leakage flag (yes/no), action taken.
 
+**Degraded mode (research extracts not located):** the per-country status fill is limited to entries derivable from the memo itself; unfillable entries are flagged for operator attention rather than invented (per the extracts presence-gate in Input Requirements).
+
 ### Check 9 — Permission-Class Emission
 
 **Target:** Surviving findings without a permission-class label; per-cluster permission table not emitted.
@@ -263,7 +267,7 @@ Run all ten checks against every memo. Report findings per check per memo before
 
 **Procedure — three sub-checks:**
 
-1. **Extract-to-conflict-log coverage.** For each cluster, read the research extracts feeding the cluster's findings and identify any conflict entries (sources reporting different values or classifications for the same fact, per `research-extract-creator`'s no-silent-selection rule). For each conflict found in extracts, verify a corresponding entry exists in `analysis/source-conflicts/{section}/{section}-source-conflict-log.md` per the canonical file-conventions row.
+1. **Extract-to-conflict-log coverage.** For each cluster, read the research extracts feeding the cluster's findings (the Optional extracts input declared in Input Requirements) and identify any conflict entries (sources reporting different values or classifications for the same fact, per `research-extract-creator`'s no-silent-selection rule). For each conflict found in extracts, verify a corresponding entry exists in `analysis/source-conflicts/{section}/{section}-source-conflict-log.md` per the canonical file-conventions row. **If the extracts cannot be located,** skip this sub-check with a one-line `extracts not located — extract-to-conflict-log coverage not verified` note and proceed to sub-checks 2–3 (per the presence-gate in Input Requirements).
 
 2. **Resolution-status verification.** For each conflict-log entry covering this cluster's claims, verify `status:` is one of `RESOLVED-METHODOLOGY` (methodology-preference rule applied), `RESOLVED-GRANULARITY` (granularity-preference rule applied), `RESOLVED-TRIANGULATION` (Step 2 triangulation source found), or `UNRESOLVED` (downgrade fallback per `reference/quality-standards.md § Source-Conflict Resolution Procedure`).
 
@@ -307,7 +311,7 @@ A memo passes refinement when all of the following hold:
 8. **Claim-ID emission:** Every surviving Key Finding has an emitted claim ID in the canonical format (`{section}-cluster-NN-claim-NN`); merged findings carry `[merged-from: ...]` annotations on the survivor
 9. **Check 8 — Country-Parity:** All country-relevant findings have per-country status entries (Sweden / Norway / Finland) using the `observed` / `proxied` / `not evidenced` vocabulary; the gate rule has been applied to every finding (three-country permitted / reframe required / downgrade required); pan-Nordic-leakage flags set where applicable
 10. **Check 9 — Permission-Class Emission:** Every surviving Key Finding carries a permission-class label (`SUPPORTED` / `PROXY-SUPPORTED` / `ILLUSTRATIVE-ONLY` / `NOT-SUPPORTED`); the risk-tier ceiling was computed and applied for every surviving finding — binding tier = most-restrictive contributing-question tier, capped per § Risk-Tier Model (D hard-cap, C advisory flag, A/B unconstrained), or the presence-gate drove Tier B (no constraint) — with the binding tier recorded in the permission-table Notes; per-cluster permission table emitted to `analysis/claim-permission/{section}/{section}-cluster-NN-permission-table.md`; orphan-citation downgrades recorded with rationale; `CLUSTER-INSUFFICIENT` clusters flagged where >30% NOT-SUPPORTED
-11. **Check 10 — Source-Conflict Validation:** All extract-level conflicts have corresponding entries in `analysis/source-conflicts/{section}/{section}-source-conflict-log.md`; all `UNRESOLVED` conflicts have triggered downgrade in Check 9; clusters with one or more unlogged extract conflicts are marked refinement-blocked
+11. **Check 10 — Source-Conflict Validation:** *When the research extracts were located* — all extract-level conflicts have corresponding entries in `analysis/source-conflicts/{section}/{section}-source-conflict-log.md`, and clusters with one or more unlogged extract conflicts are marked refinement-blocked. *In all cases* — all `UNRESOLVED` conflict-log entries covering this cluster have triggered downgrade in Check 9. If the extracts could not be located, sub-check 1 is recorded as skipped (per the presence-gate) and this criterion is met by the conflict-log-side checks alone.
 
 If any criterion is not met, the memo requires another refinement pass on the failing check(s) before proceeding to editorial review.
 
@@ -320,6 +324,22 @@ Present check findings as a structured report (per check, per memo) before produ
 Do not produce revised memos until the user says `RELEASE ARTIFACT`. This lets the user override specific check results before revisions are applied.
 
 When the user says `RELEASE ARTIFACT`, write the revised memos to files rather than outputting them in chat. Use the working directory or a path the user specifies.
+
+## Example Output
+
+A worked example of one refined Key Finding plus its rendered permission-table row, showing the claim ID and a populated `Binding tier:` Notes value.
+
+**Refined Key Finding (in the revised memo):**
+
+> **[REFINED]** `1.1-cluster-04-claim-07` — Swedish lower-mid-market sponsors shifted toward buy-and-build in 2023–2024, with add-on velocity rising while platform entries slowed. *(escalation pattern from Q3 + Q7; tagged [ANALYTICAL])* Evidence Strength Map: Sweden `observed`, Norway `proxied`, Finland `not evidenced` → reframed as two-country (Sweden + Norway proxy), Finland caveated. `[merged-from: 1.1-cluster-04-claim-07, 1.1-cluster-04-claim-11]`
+
+**Corresponding permission-table row** (`analysis/claim-permission/1.1/1.1-cluster-04-permission-table.md`):
+
+| Claim ID | Claim text (short) | Permission class | Source channels | Source-diversity verdict | Country-parity | Notes |
+|---|---|---|---|---|---|---|
+| `1.1-cluster-04-claim-07` | SE sponsors → buy-and-build, 2023–24 | `ILLUSTRATIVE-ONLY` | 2 | Pass (2 independent roles) | SE observed / NO proxied / FI not evidenced | Binding tier: D — hard-capped to ILLUSTRATIVE-ONLY (contributing Q7 is Tier D; evidence-graded class was PROXY-SUPPORTED). Finland reframe applied (Check 8). |
+
+The `Binding tier:` text in Notes is free-text and additive — it adds no column, so existing positional parsers of this table are unaffected. A presence-gate default would instead read `Binding tier: B (presence-gate default)`; a C-tier exceedance would read `Binding tier: C — [C-CEILING-EXCEEDED — operator review]`.
 
 ## Guardrails
 
@@ -338,3 +358,13 @@ When the user says `RELEASE ARTIFACT`, write the revised memos to files rather t
 - Preserve original content not flagged by checks
 - Flag between-cluster dependencies for downstream use
 - Do not make editorial decisions — this refines analytical quality, not editorial direction
+
+## Runtime Recommendations
+
+- **Model / effort.** Runs at `model: opus`, `effort: high` (frontmatter). The ten checks are judgment-dense — cross-question synthesis, evidence-grade adjudication, and the risk-tier ceiling all require weighing rather than mechanical matching — so the high tier is load-bearing, not a default.
+- **Context loading.** Load the cluster memos plus whichever Optional inputs are present (briefs, research plan, transaction table, research extracts, source-conflict log). Each absent input degrades a specific check per the presence-gates in Input Requirements rather than blocking the run.
+- **Progress tracking (C19).** With ten checks across multiple memos, emit a one-line per-memo progress marker as each memo's check sweep completes (e.g., `cluster-04: checks 1–10 complete, 3 findings flagged`) so a partial failure mid-sweep is visible before the completion-criteria decision.
+- **Frontmatter decisions (recorded for audit):**
+  - **`disable-model-invocation` (C6) — not set, deliberately.** This skill is invoked by name from the Stage-3 refinement step (`/run-cluster`); it is not auto-triggered on unrelated prompts, and its description triggers are scoped to cluster-memo refinement, so a model-invocation fence is unnecessary.
+  - **`allowed-tools` (C7) — not fenced, deliberately.** The skill both reads (memos, briefs, plan, extracts, conflict log) and writes side-effect files (per-cluster permission tables under `analysis/claim-permission/`), and it locates extracts by content rather than a fixed path — so it needs read, write, and search tools. A narrow `Read, Write` fence would break extract discovery; the no-external-evidence constraint is enforced by the Guardrails ("operate only from provided memos and briefs"), not by a tool fence.
+  - **`paths` (C8) — not set.** The skill is invoked positionally from the Stage-3 step, not path-triggered; there is no file-glob that should auto-activate it.

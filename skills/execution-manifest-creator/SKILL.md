@@ -210,3 +210,12 @@ Before delivering, verify:
 - Every Research GPT session has a `Language passes` column populated (English + local languages as applicable per country-specific question routing per § Country-Specific Language-Block Routing); pan-Nordic aggregate sessions may list English only (S-04)
 - Every research question carries a paywall-risk classification — one of `public-answerable` / `public-proxyable` / `public-gated` / `not-worth-pursuing` (§ Paywall Classification & Source-Plan Table)
 - The #1-lite source-plan table is present with all five columns; every `public-gated` row's `stop condition` matches its risk tier per the #17 control matrix (Tier A → full deep session; Tier B/C → fast-lane; Tier D → not pursued). If the #24 register is absent, the loud degraded-mode note is present
+
+## Runtime Recommendations
+
+- **Model rationale.** Runs at `model: sonnet` (frontmatter). Routing is rule-application against explicit criteria (§ Routing Criteria, § Paywall Classification) rather than open-ended judgment under ambiguity, so Sonnet is the right tier — Opus is not needed and would be over-provisioned for a deterministic routing pass.
+- **Effort rationale.** `effort: medium` — per-question routing plus session grouping is moderate deliberation, not the per-claim adjudication that warrants high effort.
+- **Context footprint.** Loads the section's Answer Specs + Research Plan, and reads two project reference files when the paywall/source-plan section runs (`reference/source-class-hierarchy.md`, `reference/known-limits.md`). Single-pass output (no refinement mode), so the footprint is bounded by the section's question count.
+- **`allowed-tools` (C7) — not fenced, deliberately.** The skill reads inputs (Answer Specs, Research Plan, the two reference files) and writes one manifest file per the `references/manifest-template.md` schema — a Read + Write footprint. No shell or network is used. A narrow fence is unnecessary; the cross-model boundary (GPT gathers evidence, this skill only routes) is enforced by the When-Not-to-Use exclusions, not by a tool fence.
+- **`disable-model-invocation` (C6) — not set.** Invoked by name as the first step of Stage 2 (before `research-prompt-creator`); its description triggers are scoped to manifest creation, so a model-invocation fence is unnecessary.
+- **`paths` frontmatter (C8) — not set.** The skill is invoked positionally in the Stage-2 pipeline, not path-triggered; there is no file-glob that should auto-activate it.

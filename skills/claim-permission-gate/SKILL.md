@@ -126,8 +126,10 @@ section: {section}
 cluster: CL-04
 generated_at: 2026-MM-DD
 disconfirmation_tested: false
-regime_note: "SUPPORTED claims in this table were NOT disconfirmation-tested in this run. ..."
+regime_note: "SUPPORTED claims in this table were NOT disconfirmation-tested in this run. counter-search-runner did not execute (sentinel absent). A SUPPORTED verdict here means the positive-evidence and source-diversity thresholds were met; it does not assert that contradicting evidence was searched for and not found. Downstream synthesis should treat SUPPORTED-without-disconfirmation as one strength tier below SUPPORTED-with-disconfirmation."
 ```
+
+(The `regime_note` above is the full `disconfirmation_tested: false` string verbatim from the Regime disclosure rule — inlined, not elided, so the example is copy-safe.)
 
 Body:
 
@@ -161,6 +163,7 @@ Body:
      - **Presence-gate (load-bearing backward-compat).** Resolve tiers *per question*, then bind. A single contributing question with an absent `risk-tier:` field defaults *that question* to Tier B — it still participates in the most-restrictive selection, so a claim resting on a Tier-D question and an un-tiered question still binds at **D**. Bind the *whole claim* at Tier B (ceiling SUPPORTED → no constraint) only when no tier is resolvable at all: no research plan, OR a `quality-standards.md` with no `## Risk-Tier Model` section, OR none of the claim's contributing questions can be resolved to plan question IDs. An un-tiered project therefore binds every claim at Tier B and runs exactly as before.
      - **Record** the binding tier and any cap/flag in the Rationale column — e.g. `Binding tier: D — hard-capped to ILLUSTRATIVE-ONLY`, `Binding tier: C — [C-CEILING-EXCEEDED — operator review]`, or `Binding tier: B (presence-gate default)`. The four permission-class names, thresholds, verb lists, and gate semantics (§ Claim-Permission Classes) are unchanged — the ceiling is the single point of contact, a cap.
    - Write the per-cluster permission table file with the schema above. Both frontmatter `disconfirmation_tested:` and the inline regime disclosure must reflect the actual run-time state from step 1's sentinel check.
+   - **Progress tracking (per cluster).** After each cluster's table is written, emit a one-line progress marker to chat (e.g., `cluster-04: 12 claims classified, table written`). With N clusters processed in sequence, this makes a partial failure visible *before* the step-4 sentinel decision — the operator can see which clusters completed if the run halts mid-section.
 4. **Emit sentinel.** Write `analysis/{section}/.claim-permission-gate.done` on successful completion. Do NOT emit the sentinel if any cluster failed to produce a permission table.
 5. **Report the tier regime.** In a brief end-of-run summary to chat, state whether the risk-tier ceiling was **active** (research plan + `## Risk-Tier Model` both present — caps applied per claim) or **inactive** (one or both absent — every claim bound at Tier B, no constraint). This mirrors the regime-disclosure principle: make the regime visible, do not let it be silent.
 
@@ -196,8 +199,9 @@ This skill is the choke point that converts "we have evidence" into "we may stat
 - **Effort rationale.** High — per-claim deliberation against thresholds.
 - **Context footprint.** Loads N cluster memos + 1 reference file per section. Cluster memos may be substantial (claim text + evidence summaries). Expect highest per-section footprint of any Pass 3 sub-agent.
 - **Invocation cardinality.** One invocation per section. NOT safe to parallelize against the same section (sentinel + N output files). Safe to parallelize across different sections.
-- **Model-invocation posture.** Default (enabled). Invoked by `/run-sufficiency` in a pipeline context.
-- **Tool footprint.** Read + Write only. No shell, no network.
+- **Model-invocation posture.** Default (enabled, `disable-model-invocation` not set). Invoked by `/run-sufficiency` in a pipeline context.
+- **`paths` frontmatter — not set, deliberately.** This skill is invoked positionally by `/run-sufficiency` (Phase A) with the section identifier as its argument, not path-triggered; there is no file-glob that should auto-activate it.
+- **Tool footprint.** Read + Write only (`allowed-tools` not fenced — a narrow fence is unnecessary given the Read+Write-only footprint and the no-evidence-finding constraint enforced in When-Not-to-Use). No shell, no network.
 
 ## Cross-References
 
