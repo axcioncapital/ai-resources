@@ -20,6 +20,7 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
    `--rebase --autostash` is explicit (not left to per-machine `pull.rebase` config) so a dirty working
    tree from a prior same-day session is stashed, rebased over, and popped back in one command — the
    rebase no longer refuses to start, removing the failure-and-recovery round-trip. Capture each result:
+   - **Autostash pop conflict — detect FIRST, before the exit-code cases below.** With `--autostash`, the history rebase can succeed (exit 0) while the *pop* of the stashed dirty tree conflicts. Git prints `Applying autostash resulted in conflicts. Your changes are safe in the stash.` but still **returns exit 0**, so the exit-code cases below would mislabel it `updated`. Detect it via any of three signals (OR — robust to git wording changes): the captured pull output contains `Applying autostash resulted in conflicts`; OR `git -C "$REPO" stash list` shows a residual `autostash` entry; OR `git -C "$REPO" status --short` shows a conflicted (`UU`) path. If any fires → `autostash-conflict` (the working tree now carries conflict markers and `stash@{0}` is preserved). Classify this BEFORE the two exit-0 cases.
    - Exit 0 + "Already up to date." → `up to date`
    - Exit 0, no "Already up to date." → `updated`
    - Exit non-zero + "no tracking information" → `skip (no upstream configured)`
@@ -30,7 +31,7 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
    If count > 0, append ` — {N} unpushed` to that repo's result string (e.g., `up to date — 3 unpushed`).
    If the upstream check itself fails (detached HEAD, no upstream), omit the unpushed clause silently.
 
-   Do not stop on failure — record and continue. The result is carried to step 4 and surfaced in the step 6 brief only as an exception (pull failure or unpushed commits).
+   Do not stop on failure — record and continue. The result is carried to step 4 and surfaced in the step 6 brief only as an exception (pull failure, unpushed commits, or an `autostash-conflict`).
 
 1. Read the last entry from `/logs/session-notes.md`. Extract: date, summary, next steps, open questions.
    If the file doesn't exist or is empty, this is the first session — note that and skip to step 2.
@@ -150,7 +151,7 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 4. **Exception checks.** Compute the following, but carry each to step 6 only when it is abnormal — a normal value is never displayed.
    - **Working tree:** if the environment's git-status snapshot is non-empty, run `git status --short` and `git diff --stat HEAD` once to confirm it is still current. The env snapshot is point-in-time from session start and can be stale vs actual HEAD (e.g., files already committed in the prior session). Carry forward only if the live result shows unexpected uncommitted changes. This is a Prime-time orientation check, distinct from the commit-time "no pre-commit git status" rule.
    - **Model alignment:** read the active session model identifier from the system-prompt context (e.g., `claude-opus-4-7[1m]` or `claude-sonnet-4-6[1m]`) — do not run any external command, the identifier is already in context. Identify the cwd-nearest project `CLAUDE.md` and read its `Model Selection` section for the project's recommended model. If the session is opened at the workspace root with no project `CLAUDE.md` loaded, the fallback is Sonnet 1M (`claude-sonnet-4-6[1m]`). Carry forward a `→ /model {recommended}` hint only on mismatch.
-   - **Pull result:** carry forward the step 0 result only on failure or when there are unpushed commits.
+   - **Pull result:** carry forward the step 0 result only on failure, when there are unpushed commits, or on an `autostash-conflict` (a pop conflict that returned exit 0 — see Step 0). The `autostash-conflict` case is the highest-priority pull exception: the working tree silently holds conflict markers, so the brief must say so.
    - **Phase READMEs.** If the cwd-rooted project has a `work/` directory, scan it (one level deep) for files matching `W*-*-README.md` (or `Wn-*-README.md`). Capture the matching file paths only — do not read file bodies. Skip silently if `work/` is absent or contains no matches. Bounded scan: one `ls`/`find -maxdepth 2`-equivalent; do not recurse deeper.
 
 5. **Build the numbered task menu.** Merge candidates from:
@@ -183,6 +184,7 @@ Last session ({date}): {one-line plain-English summary}.
 {⚠ Model: you are on {session model}; this project recommends {recommended} → /model {recommended} — only on mismatch}
 {⚠ Working tree: {short summary} — only if unexpectedly dirty}
 {⚠ Pull: {result} — only on failure or unpushed commits}
+{⚠ Pull: autostash pop conflicted — working tree has conflict markers; stash@{0} preserved. Resolve the markers (or `git checkout --theirs`/`--ours`) and `git stash drop` before starting work. — only on an `autostash-conflict` result from Step 0}
 {Today's session count: {N} marker-bearing entries ({list of markers}). This session is {MARKER}. — informational only, no `⚠` icon; only when SIBLING_COUNT > 1}
 {⚠ Concurrent session may be editing shared files: {foreign-dirty paths under .claude/commands / docs / the non-append logs improvement-log.md / improvement-log-archive.md / decisions.md}; check before editing them — only when SIBLING_COUNT > 1 and the Step 1a read-only `git status` found foreign-dirty shared files/logs}
 {⚠ Phase READMEs detected: {paths}; read before opening the relevant work unit — only if step 4 surfaced any}
