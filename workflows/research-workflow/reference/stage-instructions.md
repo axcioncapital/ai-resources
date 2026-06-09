@@ -39,7 +39,7 @@
 
 > **Pass 1 principle:** AI does not answer the research question in this pass. It identifies the strongest available sources for each question and classifies them. Answering is constrained by Pass 3 permission verdicts and happens only at Pass 4.
 >
-> **Deferred Pass 1 items (later bundles of the source-pipeline workflow fix):** country-first session structure; mandatory local-language search passes; non-substitution rule between source classes. Until those land, Step 2.1's prompt-construction continues under the current rules.
+> **Deferred Pass 1 items (later bundles of the source-pipeline workflow fix):** session-level country-first session structure remains deferred. *(Previously also listed here as deferred: mandatory local-language search passes, the non-substitution rule between source classes, and directive-level per-country search ordering — these have since landed in `research-prompt-creator` as § S-04, § S-02, and § S-03 respectively.)* Until session-level country-first structure lands, Step 2.1's prompt-construction continues under the current rules.
 
 ### Pass 2 — Evidence Extraction
 

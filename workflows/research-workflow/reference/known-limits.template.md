@@ -36,6 +36,28 @@ N+3. **(project fills additional items here)**
 
 ---
 
+## Known-Unavailable-Evidence Register (optional)
+
+> **Purpose.** The actionable distillation of the limits and gaps above into a stable schema, so the workflow **stops re-paying search cost for the same confirmed non-answer.** When an evidence need matches a register row whose `Last-checked` date is recent (within the project's `{{CURRENT_PERIOD}}`), the executor records the row's non-answer + public proxy instead of opening a fresh deep search.
+>
+> **Schema (stable — do not reorder columns; consumers may parse by header).**
+>
+> - **Evidence need** — the specific fact or series the question wants.
+> - **Why unavailable** — the structural reason it is not public (paywall, non-disclosure, not-a-reporting-unit, vintage-immaturity, out-of-scope-primary).
+> - **Public proxy (if any)** — the best-available public substitute and its known bias; `(none)` if there is no usable proxy.
+> - **Limit ref** — the prose limit number(s) above this row distils.
+> - **Last-checked** — the date the non-availability was last confirmed. Refresh on re-confirmation; a stale date (older than the `{{CURRENT_PERIOD}}` window) re-licenses a search.
+>
+> **Stop rule.** A register hit does **not** by itself set a claim's permission class — that stays with `cluster-memo-refiner` Check 9. The register governs *search effort* (skip the re-search, record the non-answer), not *claim grading*.
+
+| Evidence need | Why unavailable | Public proxy (if any) | Limit ref | Last-checked |
+|---|---|---|---|---|
+| {{EVIDENCE_NEED}} | {{WHY_UNAVAILABLE}} | {{PUBLIC_PROXY_OR_NONE}} | {{LIMIT_REF}} | {{LAST_CHECKED_DATE}} |
+
+Project removes this section if not applicable, or fills the register with one row per confirmed-unavailable evidence need.
+
+---
+
 ## How to Use This List
 
 - **Stage 1 (`task-plan-creator`).** When defining research questions, mark questions that depend on closing one of these limits. Such questions are scoped to deliver "best-available evidence + acknowledged gap" rather than "comprehensive answer."
