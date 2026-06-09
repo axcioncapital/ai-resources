@@ -381,3 +381,10 @@ None. The prime.md edit is reversible; no destructive, external, or shared-state
 
 ### Open Questions
 None.
+
+## 2026-06-09 — Session S2
+**Mandate:** Reproduce a dirty-tree + remote-ahead state in an isolated temp git repo and run `git pull --rebase --autostash` (prime.md Step 0), confirming stash→rebase→pop on both a clean-pop and a conflict-pop path — done when: both paths run in the temp repo, behavior recorded, with a one-line verdict on whether Step 0's autostash path behaves as the hardening intended.
+- Out of scope: no changes to live ai-resources history or to prime.md; a revealed defect is surfaced, not silently fixed.
+- Files in scope: .claude/commands/prime.md (read-only reference); temp-dir test scratch (inferred)
+- Stop if: (none stated)
+Test the /prime autostash-over-rebase path on a dirty working tree (Change 1 from the 2026-06-09 /prime hardening) — confirm clean-pop and conflict-pop behavior in an isolated test repo.
