@@ -276,3 +276,37 @@ Push gate: 12 commits across ai-resources (8), workspace-root (2), ai-developmen
 
 ### Open Questions
 None.
+
+## 2026-06-09 — refresh-project-state build, Session 1 (design + gates + dev build)
+
+### Summary
+Session 1 of a deliberate two-session split for the `refresh-project-state` workflow (on-demand Strategic Context Snapshot of every Axcíon project → collected into the `knowledge-bases/strategic-os/` vault → read directly by the OS). This session covered design + gates + dev build only — no canonical or shared-state writes landed. Folded the gated build order and the vault governance amendment wording into the design spec, built three DEV artifacts in `workflows/` (not graduated), QC'd them, and ran the plan-time `/risk-check`. Stopped at the gate as planned. Cross-project session (cwd ai-resources; spec lives in strategic-os).
+
+### Files Created
+- `ai-resources/workflows/refresh-project-state/.claude/commands/refresh-project-state.md` — DEV orchestrator command (model: sonnet), banner-marked, not graduated/symlinked.
+- `ai-resources/workflows/refresh-project-state/.claude/agents/project-state-snapshot-agent.md` — DEV per-project snapshot agent (model: sonnet).
+- `ai-resources/workflows/refresh-project-state/.claude/agents/project-state-scrub-verifier.md` — DEV two-pass scrub-verifier (model: sonnet).
+- `ai-resources/audits/risk-checks/2026-06-09-refresh-project-state-vault-governance-amendment.md` — risk-check report (PROCEED-WITH-CAUTION) + appended system-owner commentary.
+- `projects/strategic-os/logs/scratchpads/2026-06-09-11-09-scratchpad.md` — Session-2 continuity scratchpad.
+- `projects/axcion-ai-system-owner/output/consultations/consult-2026-06-09-refresh-project-state-package-risk-check-second-opinion.md` — system-owner Function-B advisory.
+
+### Files Modified
+- `projects/strategic-os/docs/project-state-workflow-spec.md` — added §14 (gated build order + Session-2 GO-gates inline), §15 (amendment wording — 3 canonical-only sites + vault-identity sentence), §13 criterion-4 rollback scope note.
+
+### Decisions Made
+- Two-session split at the `/risk-check` gate (operator-chosen; Session 1 stops at GO/NO-GO).
+- Spec fold-in = in-place edit (git history), not a v2 file.
+- Dev home = `ai-resources/workflows/refresh-project-state/` (per `/placement`; the top-level `workflows/` workspace named in workspace CLAUDE.md does not exist on disk).
+- Scrub-verifier = ONE agent running both passes (deterministic + semantic), not two.
+- `auto` snapshots emit `Related: []` empty (operator curates links later).
+- §15 amendment wording EXTENDED beyond operator-supplied verbatim text — operator gave 1 canonical-only site (Rule 2); QC found a 2nd (Query-mode), risk-check found a 3rd (`/kb-query`); plus a vault-identity exception sentence (system-owner). Recorded inline in §15.
+
+### Risky actions
+None irreversible. Near-flag: extended the operator-supplied §15 amendment wording (recorded inline in the spec, flagged in chat for operator confirmation before Session 2 lands). No gate mis-fired; no prompt injection. End-time `/risk-check` deliberately skipped — see Next Steps (plan-time gate covered the package; nothing structural landed this session).
+
+### Next Steps
+- Operator: confirm the §15 amendment-wording extension is acceptable.
+- Session 2 (fresh context): `/prime` in `projects/strategic-os` → it detects the continuity scratchpad → re-read spec §13–§15 → satisfy the three GO-gates (G1 structural deny rules, G2 folder-scoped Write, G3 rollback test) → scaffold vault + apply amendment → graduate the 3 dev artifacts → wire OS `state-retrieval-agent` → dry-run one project → full run → §13 acceptance. Run end-time `/risk-check` before the Session-2 commit.
+
+### Open Questions
+- §15 amendment-wording extension awaits operator confirmation (non-blocking for Session 1; blocking before Session 2 lands the amendment).
