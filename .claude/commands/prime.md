@@ -15,8 +15,11 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 
    Define `AI_RESOURCES="/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources"`.
 
-   Run `GIT_TERMINAL_PROMPT=0 git -C "$CWD_REPO" pull`. If `$CWD_REPO` differs from `$AI_RESOURCES`,
-   also run `GIT_TERMINAL_PROMPT=0 git -C "$AI_RESOURCES" pull`. Capture each result:
+   Run `GIT_TERMINAL_PROMPT=0 git -C "$CWD_REPO" pull --rebase --autostash`. If `$CWD_REPO` differs
+   from `$AI_RESOURCES`, also run `GIT_TERMINAL_PROMPT=0 git -C "$AI_RESOURCES" pull --rebase --autostash`.
+   `--rebase --autostash` is explicit (not left to per-machine `pull.rebase` config) so a dirty working
+   tree from a prior same-day session is stashed, rebased over, and popped back in one command — the
+   rebase no longer refuses to start, removing the failure-and-recovery round-trip. Capture each result:
    - Exit 0 + "Already up to date." → `up to date`
    - Exit 0, no "Already up to date." → `updated`
    - Exit non-zero + "no tracking information" → `skip (no upstream configured)`
@@ -31,6 +34,18 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 
 1. Read the last entry from `/logs/session-notes.md`. Extract: date, summary, next steps, open questions.
    If the file doesn't exist or is empty, this is the first session — note that and skip to step 2.
+
+   **Read method (deterministic — do not improvise against same-day clutter).** Several same-day entries
+   (`S1`, `S2`, …) commonly stack in this file and a single entry can run 30+ lines, so any fixed
+   "last N lines" window is unreliable. Locate the last entry's date-header with one grep, then read
+   from that line to EOF in one targeted call:
+   ```
+   Bash(grep -n "^## [0-9]" logs/session-notes.md | tail -1)   # → START line of the last entry
+   Read(logs/session-notes.md, offset=START)                   # header-to-EOF, single read
+   ```
+   The grep is anchored to a date header (`^## [0-9]`) so a `## Heading` inside an entry body or fenced
+   code block cannot false-match. This captures the full last entry in two calls regardless of length
+   or how many same-day sessions stacked.
 
    **Pre-fetch the log-trio** (token-audit R4, 2026-05-25). After reading `session-notes.md`, also tail-read the last 10 lines of `logs/decisions.md` and the last 30 lines of `logs/usage-log.md` — these files are touched by `/wrap-session` at session-end and a recurring Edit-before-Read failure on `session-notes.md` (3 of last 4 sessions per usage-log telemetry) is eliminated when the log-trio is already in `/prime`'s context. Use:
    ```
@@ -239,7 +254,11 @@ Full backlog & inbox: /open-items
 
          Same-day re-invocations increment within the day (`S1` → `S2` → …); a new day resets to `S1`.
 
-         **Ensure this session's marker-bearing entry exists** in `/logs/session-notes.md`. Read the last ~10 lines: if a `## YYYY-MM-DD — Session ${MARKER}` header for THIS session's marker is already present (rare — same-marker re-invocation), reuse it — append `TASK_TEXT` as a work-description line beneath it. If THIS session's marker-bearing header is absent (the common case at `/prime` time), append a new `## YYYY-MM-DD — Session ${MARKER}` header with `TASK_TEXT` as the work description.
+         **Ensure this session's marker-bearing entry exists** in `/logs/session-notes.md`. Check for THIS session's header with a literal whole-line grep (full-file, so immune to entry length; `-Fx` matches the em-dash and `${MARKER}` verbatim with no regex risk):
+         ```
+         Bash(grep -Fxq "## ${TODAY} — Session ${MARKER}" logs/session-notes.md)
+         ```
+         **exit 0 → header already present** (rare — same-marker re-invocation): reuse it, append `TASK_TEXT` as a work-description line beneath it. **exit 1 → header absent** (the common case at `/prime` time): append a new `## ${TODAY} — Session ${MARKER}` header with `TASK_TEXT` as the work description. Treat exit 1 strictly as "not found → create", never as "command failed → skip the write" — suppressing this session's header breaks the `/session-start` / `/session-plan` precondition noted below.
 
          Foreign concurrent sessions write under their own marker-bearing headers (e.g., `## YYYY-MM-DD — Session S2`); those do NOT count as "this session's header." The marker is the disambiguator. The pre-Phase-2 "no duplicate same-day header" rule is replaced by "this session writes only under its own marker-bearing header." This must happen before step c — `/session-start` Step 3 and `/session-plan` Step 0 require THIS session's marker-bearing header to exist.
 
@@ -288,7 +307,11 @@ Full backlog & inbox: /open-items
          done
          ```
 
-         Read the last ~10 lines of `logs/session-notes.md`: if `## YYYY-MM-DD — Session ${MARKER}` is already present, reuse and append `TASK_TEXT`. Else create new `## YYYY-MM-DD — Session ${MARKER}` header with `TASK_TEXT`.
+         Check for THIS session's header with a literal whole-line grep (full-file, immune to entry length; `-Fx` matches the em-dash verbatim):
+         ```
+         Bash(grep -Fxq "## ${TODAY} — Session ${MARKER}" logs/session-notes.md)
+         ```
+         **exit 0** → reuse the existing header, append `TASK_TEXT`. **exit 1** → create a new `## ${TODAY} — Session ${MARKER}` header with `TASK_TEXT`. Exit 1 means "not found → create", never "command failed → skip".
 
          **After the append succeeds**, write `session-notes.md`'s mtime to `logs/.prime-mtime`:
 
@@ -353,7 +376,11 @@ Full backlog & inbox: /open-items
       done
       ```
 
-      Read last ~10 lines of `logs/session-notes.md`: if `## YYYY-MM-DD — Session ${MARKER}` is present, reuse and append the work-description line. Else create new `## YYYY-MM-DD — Session ${MARKER}` header.
+      Check for THIS session's header with a literal whole-line grep (full-file, immune to entry length; `-Fx` matches the em-dash verbatim):
+      ```
+      Bash(grep -Fxq "## ${TODAY} — Session ${MARKER}" logs/session-notes.md)
+      ```
+      **exit 0** → reuse the existing header, append the work-description line. **exit 1** → create a new `## ${TODAY} — Session ${MARKER}` header. Exit 1 means "not found → create", never "command failed → skip".
 
       Work-description line text:
       - If `SINGLE_ITEM`: the picked item's plain-English text.
