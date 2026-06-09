@@ -102,6 +102,25 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
    - When surfaced, the scratchpad is a **carryover** signal: its path appears as an exception line in the step 6 brief, and the first content line of its `## Resume With` section is a strong candidate for menu item 1 (step 5). This step does NOT auto-resume — the operator decides by picking that menu item or answering the direction prompt.
    - **QC-PENDING surfacing.** When the surfaced scratchpad carries a `**QC-PENDING:**` marker, flag it prominently as a **commit-block** — emit an advisory line, "⚠ Architectural artifact awaits independent QC — do NOT commit until `/qc-pass` passes (per the QC-PENDING scratchpad)", in addition to placing its `## Resume With` first line (the QC instruction) as menu item 1. Do not let the marker line itself be mistaken for the next action; the action is the `## Resume With` first line.
 
+1d. **Scan active missions (mission-contract subsystem).** A *mission* is a multi-session goal (`/mission`); a session can bind to one so `/drift-check` measures its trajectory against the mission's validation contract. This step makes active missions visible and is a **zero-cost no-op when none exist** — when no `logs/missions/` dir is present in any enumerated repo, this step adds no prompt, no menu item, and no brief line.
+
+   Reuse the Step 1a repo enumeration (`CWD_REPO`, `AI_RESOURCES`, sibling `projects/*/` repos — already de-duped there). For each enumerated repo, scan **`<repo>/logs/missions/*.md` only — never `<repo>/logs/missions/archive/`** (closed missions are archived and must not reappear here, keeping the scan bounded as missions accumulate):
+
+   ```bash
+   # ACTIVE_MISSIONS — one entry per active mission across enumerated repos.
+   WORKSPACE_ROOT="$(dirname "$AI_RESOURCES")"   # same derivation as Step 1a
+   for repo in "$CWD_REPO" "$AI_RESOURCES" "$WORKSPACE_ROOT"/projects/*/; do
+     [ -d "$repo/logs/missions" ] || continue
+     for m in "$repo"/logs/missions/*.md; do
+       [ -f "$m" ] || continue
+       grep -q '^status: active' "$m" || continue   # active only
+       # capture: mission_id (frontmatter), mission_name, repo, and the `## Open threads` unchecked `- [ ]` lines
+     done
+   done
+   ```
+
+   Build `ACTIVE_MISSIONS` = list of `{id, name, repo, open_threads[]}`. If the list is empty, set a flag and skip all mission-related additions below (the common case). Carry `ACTIVE_MISSIONS` to Step 5 (menu candidates), Step 6 (brief), and the Step 8 binding sub-step.
+
 2. **Read `next-up.md`.** Read `logs/next-up.md` if it exists. Collect every unchecked checkbox item (`- [ ]` lines). These are routine menu candidates for step 5.
 
    `next-up.md` is **not** a universal file — it exists in some project log directories and is absent in others. `/prime` does not create it. If the file is absent, skip silently; the menu falls back to the still-open Next Steps from step 1a plus the urgent items from step 3. An absent or empty `next-up.md` is normal, not an error.
@@ -122,15 +141,16 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 5. **Build the numbered task menu.** Merge candidates from:
    - Step 1a — still-open Next Steps from the last session → tag `[carryover]`.
    - Step 1b — the scratchpad `## Resume With` line, if any → tag `[carryover]`.
+   - Step 1d — each active mission's `## Open threads` unchecked items → tag `[mission:<id>]`. Only if `ACTIVE_MISSIONS` is non-empty; omit entirely otherwise.
    - Step 2 — unchecked `next-up.md` items → tag `[next-up]`.
    - Step 3 — unresolved HIGH/urgent problems → tag `[urgent]`.
 
-   Rank: **urgent → carryover → next-up.** Cap the menu at **6 items.** If fewer than 6 candidates exist, show fewer. If zero candidates exist, show no menu (step 6 handles this).
+   Rank: **urgent → mission → carryover → next-up.** Cap the menu at **6 items.** If fewer than 6 candidates exist, show fewer. If zero candidates exist, show no menu (step 6 handles this). A `[mission:<id>]`-tagged item carries its source mission id so the Step 8 binding sub-step can auto-bind without asking.
 
    Convert each menu item to **one plain-English sentence** (short sentences, common words — the operator is a non-developer):
    - Keep command names and file names literal (`/kb-review`, `next-up.md`).
    - Drop priority codes (`HIGH`/`MED`/`LOW`), status tags, and section anchors (`§3`, `WU3`) from the displayed text — keep a step number only when it aids meaning.
-   - Append one short tag: `[urgent]`, `[carryover]`, or `[next-up]`.
+   - Append one short tag: `[urgent]`, `[mission: <id>]`, `[carryover]`, or `[next-up]`.
 
    Example conversions:
    - `**/kb-review Step 7 registry-stub spec contradicts the registry convention** — MED, do-now` → `Fix the /kb-review command — its Step 7 instructions clash with the registry format.`
@@ -152,6 +172,7 @@ Last session ({date}): {one-line plain-English summary}.
 {⚠ Concurrent session may be editing shared files: {foreign-dirty paths under .claude/commands / docs / the non-append logs improvement-log.md / improvement-log-archive.md / decisions.md}; check before editing them — only when SIBLING_COUNT > 1 and the Step 1a read-only `git status` found foreign-dirty shared files/logs}
 {⚠ Phase READMEs detected: {paths}; read before opening the relevant work unit — only if step 4 surfaced any}
 {↩ Resumable scratchpad: {path} — only if step 1b surfaced one}
+{◎ Active mission(s): {for each in ACTIVE_MISSIONS: "<id> — <name>"} — only if step 1d found any; advisory, names the multi-session goal(s) this work can serve}
 
 Next tasks:
   1. {plain-English task}   [{tag}]
@@ -164,6 +185,7 @@ Next tasks:
 Type 1–6 to start that task. Type `auto` to run the #1 item end-to-end with a single approval gate, or `auto 1,3` (or `auto 1 3`) to run several items back-to-back under one combined approval gate. Or tell me something else.
 
 Full backlog & inbox: /open-items
+{Tip: this work spans sessions? Designate a multi-session goal with `/mission create` so later sessions stay on it. — STATIC nudge; show only when carryover/scratchpad candidates exist AND ACTIVE_MISSIONS is empty. No theme-detection. Omit otherwise.}
 ```
 
    Render only as many numbered lines as step 5 produced (1 to 6). If step 5 produced no menu items, replace the `Next tasks:` block and the `Type 1–6 …` line with the single line: `No tracked next steps — tell me what to work on.`
@@ -178,6 +200,13 @@ Full backlog & inbox: /open-items
    - `auto N,M,...` or `auto N M ...` (multiple numbers within menu range, separated by commas or spaces) → **auto mode (multi-item)**, picked items = those numbers in the order given. Go to step 8c.
    - Anything else (a sentence, a different task, a question) → **free-text intent.** Go to step 8b.
    - If the reply is ambiguous (a number outside the rendered menu range, an `auto N` where N is outside range, or "2 but first do X"), ask once for a plain number, the word `auto` (optionally followed by one or more item numbers), or a sentence, then classify the re-response.
+
+8m. **Mission binding (shared sub-step — referenced by 8a / 8b / 8c).** Resolves which active mission, if any, this session serves. **Skip entirely — no prompt, no output — when `ACTIVE_MISSIONS` (Step 1d) is empty** (the common case). Run only after a non-plan-mode dispatch is confirmed (i.e., past each branch's plan-mode guard), and before the branch calls `/session-start` (8a/8b) or writes the inline mandate (8c). Resolve `MISSION_ID`:
+   - If the picked/stated task came from a `[mission:<id>]` menu item → `MISSION_ID = <id>`. **Auto-bound; no prompt.** (Primary path — picking a mission's open thread IS the binding.)
+   - Else, emit exactly one line: `This session serves which active mission? {[1] <id> — <name> … [N] …} — or 'none'.` Parse the reply: a number → that mission's id; `none` / empty / anything else → no mission. One prompt only; default is `none`.
+   - Carry `MISSION_ID` forward. If unset/`none`, the session has no mission bullet and everything downstream proceeds exactly as today.
+
+   **Wiring:** 8a and 8b prepend `{mission:<id>}` to the args passed to `/session-start` (which strips and records it — see `session-start.md` Step 1). 8c writes the `- Mission: <id>` bullet inline in its Step 8c.7 mandate block. When `MISSION_ID` is unset, none of this happens.
 
 8a. **Task selected by number.**
    1. Resolve the number to its menu item → `TASK_TEXT` (the plain-English task text).
@@ -222,7 +251,8 @@ Full backlog & inbox: /open-items
          ```
 
          Order: marker first (top of step a), header append (middle), mtime last. Marker before append so the header can embed `${MARKER}`; mtime after append so `/session-start` Step 0.5's check sees this session's own write.
-      b. Invoke the `/session-start` command with `TASK_TEXT` as its arguments (becomes the mandate). It runs its own mandate-confirmation prompt — that is expected; do not suppress it.
+      a2. **Mission binding.** Run the Step 8m sub-step (skips silently if no active missions). If it resolves a `MISSION_ID`, prepend `{mission:<id>}` to the `/session-start` args in step b.
+      b. Invoke the `/session-start` command with `TASK_TEXT` as its arguments (becomes the mandate), prefixed with `{mission:<id>}` if step a2 bound one. It runs its own mandate-confirmation prompt — that is expected; do not suppress it.
       c. After `/session-start` finishes, invoke the `/session-plan` command with `TASK_TEXT` as its arguments (becomes the intent). It writes `logs/session-plan-${TODAY}-${MARKER}.md` (marker-scoped per `docs/session-marker.md`). If THIS session's marker-scoped plan already exists, `/session-plan` Step 0 surfaces a 3-option keep/overwrite/pass2 prompt — that is expected mid-chain; the operator answers it normally.
       d. **Pause.** After `/session-plan` finishes, output:
          > Plan ready — review `logs/session-plan-${TODAY}-${MARKER}.md`. Reply `go` to start execution, or run `/qc-pass` on the plan first.
@@ -268,7 +298,8 @@ Full backlog & inbox: /open-items
          ```
 
          Order: marker → header append → mtime (same contract as Step 8a.3.a).
-      b. Invoke the `/session-start` command with `TASK_TEXT` as its arguments (becomes the mandate). It runs its own mandate-confirmation prompt — that is expected; do not suppress it.
+      a2. **Mission binding.** Run the Step 8m sub-step (skips silently if no active missions). If it resolves a `MISSION_ID`, prepend `{mission:<id>}` to the `/session-start` args in step b.
+      b. Invoke the `/session-start` command with `TASK_TEXT` as its arguments (becomes the mandate), prefixed with `{mission:<id>}` if step a2 bound one. It runs its own mandate-confirmation prompt — that is expected; do not suppress it.
       c. After `/session-start` finishes, invoke the `/session-plan` command with `TASK_TEXT` as its arguments (becomes the intent). It writes `logs/session-plan-${TODAY}-${MARKER}.md` (marker-scoped per `docs/session-marker.md`). If THIS session's marker-scoped plan already exists, `/session-plan` Step 0 surfaces a 3-option keep/overwrite/pass2 prompt — that is expected mid-chain; the operator answers it normally.
       d. **Begin execution immediately** under full autonomy (per workspace CLAUDE.md Autonomy Rules). No second `go`/`proceed` confirmation required — the operator stating the work directly IS the go signal. This is 8b's structural delta vs 8a, which pauses for explicit `go` after `/session-plan`.
 
@@ -334,6 +365,8 @@ Full backlog & inbox: /open-items
       stat -f %m logs/session-notes.md 2>/dev/null > logs/.prime-mtime \
         || stat -c %Y logs/session-notes.md 2>/dev/null > logs/.prime-mtime
       ```
+
+   3.5. **Mission binding (auto-bind only).** Run the Step 8m sub-step in **auto-bind-only mode**: if any picked item is `[mission:<id>]`-sourced, set `MISSION_ID` to that mission (first such, if several). **Do NOT emit the interactive binding prompt in auto mode** — auto mode's contract is a single approval gate with no per-stage prompts. If no picked item is mission-sourced, `MISSION_ID` stays unset. The bound mission (if any) is disclosed in the Step 8c.6 approval gate and written as the `- Mission:` bullet in Step 8c.7.
 
    4. **Derive mandate fields** inline (matches `/session-start` Step 2 logic without the confirmation prompt). Apply to each picked item, then compose:
       - `work_scope` — one sentence naming the work and its concrete deliverable. For `SINGLE_ITEM`, derived from the picked item. For multi-item, compose as `Complete picked menu items: (1) {item-N work + deliverable}; (2) {item-M work + deliverable}; ...` listing every picked item.
@@ -410,6 +443,7 @@ Full backlog & inbox: /open-items
       · Files in scope: {files_in_scope_written}{ (inferred) if applicable}
       · Done when: {exit_condition}
       · Stop if: {stop_if}
+      {· Mission: {MISSION_ID} — only if Step 8c.3.5 bound one}
 
       {if PACK_PATH is set (Step 8c.4.5 produced a pack):}
       **Context pack** — {PACK_OUTCOME} ({PACK_TRACKED})
@@ -451,11 +485,12 @@ Full backlog & inbox: /open-items
       - Allowed inputs: {allowed_inputs}      ← write only if set; omit the bullet entirely if absent
       - Required outputs: {required_outputs}  ← write only if set; omit if absent
       - Context pack: {PACK_PATH}             ← write only if Step 8c.4.5 produced a pack; omit if absent
+      - Mission: {MISSION_ID}                 ← write only if Step 8c.3.5 bound a mission; omit if absent
       ```
 
       **Parse contract:** the `**Mandate:**` line shape, the bullet labels (`- Out of scope:`, `- Files in scope:`, `- Stop if:`, `- Allowed inputs:`, `- Required outputs:`), and the `(inferred)` / `(none stated)` markers are load-bearing. Four downstream readers depend on them (verified pre-flight, 2026-05-29): canonical `/wrap-session` Step 7a, workspace-root `wrap-session.md` Step 2b, `/drift-check` Step 5, and `/contract-check` Step 2.5c. Do not insert extra prose into the `**Mandate:**` line itself or rename labels. The "complete fully within this session where context allows" posture lives in Step 8c.10's execution behavior, not in the mandate line — keeping it out of the disk-write preserves the two-segment parse contract (head ` — done when: ` tail).
 
-      The `- Context pack:` bullet (added 2026-05-29 for the Context Engine Phase 2) is **informational, not part of the parse contract.** All four readers above use fixed-list extraction or labeled-bullet pass-through; they silently ignore `- Context pack:`. The bullet exists for operator visibility and for future Phase 2 consumers (pre-edit check, drift-relative-to-pack) to locate the pack.
+      The `- Context pack:` bullet (added 2026-05-29 for the Context Engine Phase 2) and the `- Mission:` bullet (added 2026-06-09 for the mission-contract subsystem) are **informational pass-through, not part of the five-label parse contract.** All four readers above use fixed-list extraction or labeled-bullet pass-through; they silently ignore both. The `- Context pack:` bullet locates the pack; the `- Mission:` bullet records which multi-session mission this session served and is read by **`/drift-check` only**, as a second reference standard (see `docs/session-marker.md` § Mandate-line bullet contract).
 
    8. **Write plan.** Write to `logs/session-plan-${TODAY}-${MARKER}.md` (marker + date resolved in step 3; canonical contract `docs/session-marker.md`) using `/session-plan` Step 7 schema (`## Intent`, `## Model`, `## Source Material`, `## Findings / Items to Address`, `## Execution Sequence`, `## Scope Alternatives`, `## Autonomy Posture`, `## Risk`). Apply `/session-plan` Step 7 self-check (length floor ≥25 substantive lines, concrete Findings, concrete Execution Sequence, realistic Scope Alternatives).
 

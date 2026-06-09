@@ -170,6 +170,18 @@ Documentation that references the plan filename in operator-facing or scaffoldin
 
 If you rename `.session-marker` or change the file-naming scheme, update each of these too.
 
+## Mandate-line bullet contract (`- Mission:` split — added 2026-06-09)
+
+The `**Mandate:**` block written under each marker-bearing header (by `session-start.md` Step 3 and `prime.md` Step 8c.7) carries a fixed set of load-bearing labelled bullets (`- Out of scope:`, `- Files in scope:`, `- Stop if:`, `- Allowed inputs:`, `- Required outputs:`) plus two **informational pass-through** bullets that most readers ignore: `- Context pack:` and `- Mission:`.
+
+The **`- Mission: <id>`** bullet (mission-contract subsystem) has a deliberately **split contract**:
+
+- **Pass-through (the fixed-label readers):** `wrap-session.md` Step 7a, workspace-root `wrap-session.md` Step 2b, `contract-check.md` Step 2.5c, and `concurrent-session-check.md` Step 3 — all use fixed-label extraction and silently ignore the bullet. (`monday-prep.md` writes a separate bold-header week-mandate and does not parse this bullet schema at all, so it is unaffected a fortiori.) Adding the bullet cannot break any of them (verified via the `- Context pack:` precedent, DR-9 reader check 2026-06-09).
+- **Load-bearing (exactly 1 reader):** **`drift-check.md` Step 7a** reads `<id>`, locates the mission file (`<repo>/logs/missions/<id>.md`, then `ai-resources/logs/missions/<id>.md`), and judges trajectory against its `## Validation contract` as a *second* reference standard. **Degrade-loud contract:** if the id names no readable mission file, `/drift-check` emits one visible notice and falls back to mandate-only — never hard-fails, never silently ignores.
+- **Writers:** `session-start.md` Step 1 (strips the `{mission:<id>}` arg prefix passed by `/prime` Step 8m) and `prime.md` Step 8c.7 (auto mode). The bullet originates only from `/prime` Step 8m binding. **No command writes the mission file from inside a session** — only `/mission` mutates `logs/missions/`; this keeps the session hot path free of any concurrent-write to the mission file (risk-check mitigation, `audits/risk-checks/2026-06-09-plan-time-gate-for-the-mission-contracts-subsystem-build.md`).
+
+Changing the `- Mission:` label or the mission-file location requires updating `drift-check.md` Step 7a, both writers, and `/mission`.
+
 ---
 
 ## Why this protocol exists

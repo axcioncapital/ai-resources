@@ -34,6 +34,10 @@ Input: `$ARGUMENTS` — optional. If provided, it is treated as an explicit stat
    Or run /session-start or /prime first to record one.
    ```
 
+7a. **Resolve the bound mission (mission-contract subsystem).** Inspect the resolved mandate block for a `- Mission: <id>` bullet (written by `/session-start` / `/prime` when the session bound a mission). **If absent, skip silently** — `MISSION_CONTRACT` is unset and drift is judged against the mandate alone, exactly as before (the common case). If present, locate the mission file: try `REPO_ROOT/logs/missions/<id>.md` first, then `{AI_RESOURCES}/logs/missions/<id>.md` (`AI_RESOURCES` = `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources`), then its `archive/` subdir.
+   - **Found and parseable** → set `MISSION_CONTRACT` = the file's `## Goal`, `## In scope / Out of scope`, and `## Validation contract` sections (acceptance assertions, non-negotiables, off-mission signals). This becomes a **second reference standard** for the subagent in Step 3.
+   - **Absent or malformed** (id names no file anywhere, or the file has no `## Validation contract` section) → **do not hard-fail and do not silently ignore.** Emit one visible notice — `Note: mandate names mission '<id>' but no readable mission contract was found (looked in REPO_ROOT and ai-resources logs/missions/). Judging drift against the mandate only.` — then proceed with `MISSION_CONTRACT` unset. This degrade-loud behavior is the mitigation registered in `docs/session-marker.md` § Mandate-line bullet contract.
+
 ---
 
 ### Step 3 — Delegate the independent drift comparison
@@ -43,9 +47,14 @@ Input: `$ARGUMENTS` — optional. If provided, it is treated as an explicit stat
    ```
    You are an independent drift reviewer for an in-progress Claude Code session. Judge whether the session's actual work trajectory still matches its mandate. You have NO view of the session's conversation — gather evidence only from the artifacts named below, so your judgment is independent of the main session's self-assessment.
 
-   SESSION MANDATE (the reference standard):
+   SESSION MANDATE (the primary reference standard — this session's local task):
    {MANDATE verbatim}
    {If Step 6 found a conflict, append: "MANDATE CONFLICT — logs/session-notes.md (Session ${MARKER} block) and {PLAN_FILE_PATH} disagree. Version A (session-notes): ... Version B (session-plan): ... Surface this in your report under a `Mandate ambiguity:` line; do not silently pick one."}
+
+   {If MISSION_CONTRACT is set (Step 7a bound a mission), append:}
+   MISSION CONTRACT (a SECOND reference standard — the multi-session goal this session serves):
+   {MISSION_CONTRACT verbatim — Goal, In/Out scope, and Validation contract}
+   This is the multi-session "north star." The session's local mandate should advance this mission and must not cross its non-negotiables or trip its off-mission signals. Judge mission-fit SEPARATELY from mandate-fit: a session can be ALIGNED with its narrow mandate yet drifting from the mission (e.g., doing in-scope work that quietly violates a mission non-negotiable), or vice versa.
 
    Gather the actual work evidence yourself:
    - Run `git -C {REPO_ROOT} log --since="{DATE} 00:00:00" --pretty="%h %s"` for commits made today.
@@ -59,10 +68,13 @@ Input: `$ARGUMENTS` — optional. If provided, it is treated as an explicit stat
    - MINOR-DRIFT — small scope additions or ordering changes the mandate did not name but that do not contradict it.
    - MAJOR-DRIFT — work has moved onto goals the mandate excludes, skipped mandated work, or contradicts a stated scope boundary / "out of scope" / "stop if" clause.
 
-   Return AT MOST 20 lines. Write no file to disk — the verdict is short by construction.
-   - Line 1: `VERDICT: ALIGNED | MINOR-DRIFT | MAJOR-DRIFT`
+   Return AT MOST 20 lines (AT MOST 24 if a MISSION CONTRACT was provided). Write no file to disk — the verdict is short by construction.
+   - Line 1: `VERDICT: ALIGNED | MINOR-DRIFT | MAJOR-DRIFT` — this is the verdict against the SESSION MANDATE.
    - `Deviations:` — bulleted; each bullet names the specific evidence (commit, file, plan step) and the mandate clause it diverges from. If ALIGNED, state "none".
-   - `Recommended correction:` — one or two lines. For ALIGNED, "continue". For drift, the smallest corrective step (re-scope, drop an item, flag to the operator).
+   {If a MISSION CONTRACT was provided, add these two lines:}
+   - `MISSION VERDICT: ON-MISSION | MISSION-MINOR-DRIFT | OFF-MISSION` — trajectory vs the mission's Goal + Validation contract. OFF-MISSION = trips a non-negotiable, matches an off-mission signal, or abandons the mission goal.
+   - `Mission deviations:` — bulleted; each names the evidence and the mission acceptance-assertion / non-negotiable / off-mission-signal it diverges from. If ON-MISSION, state "none".
+   - `Recommended correction:` — one or two lines. For ALIGNED + ON-MISSION, "continue". For drift, the smallest corrective step (re-scope, drop an item, flag to the operator).
    - If a mandate conflict was passed in, a `Mandate ambiguity:` line stating it.
    ```
 
@@ -74,9 +86,14 @@ Input: `$ARGUMENTS` — optional. If provided, it is treated as an explicit stat
 
 9. Display the subagent's verdict verbatim to the operator, prefixed with `Drift check — {DATE}`.
 
-10. Append guidance by verdict:
+10. Append guidance by verdict (mandate verdict):
     - `ALIGNED` → "On track. Continue."
     - `MINOR-DRIFT` → "Minor drift — review the deviations; decide whether to absorb them into scope or drop them."
     - `MAJOR-DRIFT` → "Major drift — stop and reconcile with the operator before continuing."
+
+    If a `MISSION VERDICT` line is present, append its guidance too (mandate and mission verdicts are independent — show both):
+    - `ON-MISSION` → "Serving the mission. Continue."
+    - `MISSION-MINOR-DRIFT` → "Mild mission drift — the local task is fine but is wandering from the mission goal; decide whether to re-aim."
+    - `OFF-MISSION` → "Off the mission — this session is advancing its local task but breaking a mission non-negotiable or abandoning the mission goal. Reconcile with the operator before continuing."
 
 11. `/drift-check` modifies no files and commits nothing. It is an advisory read-only check; the operator decides what to do with the verdict.

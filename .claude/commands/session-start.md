@@ -82,7 +82,9 @@ Read-only (no `git add`, no write). If non-empty, append the dirty paths to the 
 
 ### Step 1 — Read the mandate
 
-If `$ARGUMENTS` is non-empty, use it verbatim as `MANDATE_TEXT`.
+**Mission prefix (mission-contract subsystem).** If `$ARGUMENTS` begins with a `{mission:<id>}` token (passed by `/prime` Step 8m when the session bound a mission), strip that leading token and capture `MISSION_ID = <id>`; the remainder is the mandate text. If no such prefix is present, `MISSION_ID` is unset — this is the common case and nothing mission-related happens downstream. The token is a literal prefix, e.g. `{mission:regime-shift-canonical} Apply the W24 audit fixes` → `MISSION_ID = regime-shift-canonical`, mandate = `Apply the W24 audit fixes`.
+
+If `$ARGUMENTS` is non-empty (after stripping any mission prefix), use it verbatim as `MANDATE_TEXT`.
 
 Otherwise, ask the operator **one prompt** (wait for one answer):
 
@@ -159,6 +161,11 @@ Echo the following confirmation block to the operator. Render it as Markdown —
 **Required outputs**
 {if required_outputs is set:}
 - → {required_outputs — one bullet per path if multiple, comma-separated if single value}
+{else: omit this section entirely}
+
+**Mission**
+{if MISSION_ID is set (mission prefix was present in Step 1):}
+- → This session serves mission `{MISSION_ID}` — `/drift-check` will measure trajectory against its validation contract.
 {else: omit this section entirely}
 
 **Out of scope**
@@ -275,6 +282,7 @@ Re-asks happen at most once per failed field. If a re-ask response is still non-
 - Allowed inputs: {allowed_inputs}      ← write only if allowed_inputs is set; omit the bullet entirely if absent (no placeholder)
 - Required outputs: {required_outputs}  ← write only if required_outputs is set; omit the bullet entirely if absent (no placeholder)
 - Context pack: {pack_path}             ← write only if Step 2.4 produced a pack (PACK_PATH is set); omit entirely if Step 2.4 was skipped, errored, or never invoked. Informational bullet — see parse-contract note below.
+- Mission: {MISSION_ID}                 ← write only if Step 1 captured a mission prefix (MISSION_ID is set); omit entirely if absent. Informational pass-through for the readers below; load-bearing for /drift-check only — see parse-contract note.
 ```
 
 **Parse contract:** Six readers (verified pre-flight, 2026-05-29; sixth added 2026-06-05) depend on the exact bullet labels (`- Out of scope:`, `- Files in scope:`, `- Stop if:`, `- Allowed inputs:`, `- Required outputs:`), the `(inferred)` marker, and the `(none stated)` marker written here:
@@ -288,6 +296,8 @@ Re-asks happen at most once per failed field. If a re-ask response is still non-
 Do not rename these labels or marker strings without updating all readers. The `Allowed inputs` and `Required outputs` bullets are optional — when absent, the bullets do not appear (no `(none stated)` placeholder).
 
 The `- Context pack:` bullet (added 2026-05-29 for the Context Engine Phase 2) is **informational, not part of the parse contract.** All five readers above use fixed-list extraction or labeled-bullet pass-through; they silently ignore `- Context pack:`. The bullet exists for the operator to see which pack contributed to the mandate when reviewing session-notes later, and for future Phase 2 consumers (pre-edit check, drift-relative-to-pack) to locate the pack.
+
+The `- Mission:` bullet (added 2026-06-09 for the mission-contract subsystem) is likewise **not part of the five-label parse contract** — all five readers above pass it through untouched. It is, however, **load-bearing for exactly one reader: `/drift-check`**, which reads `MISSION_ID` to locate the bound mission file and judge trajectory against its validation contract (a second reference standard alongside the mandate). This split — pass-through for five readers, load-bearing for `/drift-check` — is registered in `docs/session-marker.md` § Mandate-line bullet contract. The bullet is written by `/session-start` Step 1's mission prefix and by `/prime` Step 8c.7 (auto mode); both originate from `/prime` Step 8m binding. `/session-start` never writes to the mission file itself.
 
 Where `files_in_scope_written` is:
 - `(inferred)` — if `files_inferred = true` (operator did not state or correct this field)
@@ -308,6 +318,7 @@ Using the `logs/session-notes.md` content already read in Step 0 (re-read the la
   - Allowed inputs: {allowed_inputs}      ← write only if set; omit if absent
   - Required outputs: {required_outputs}  ← write only if set; omit if absent
   - Context pack: {pack_path}             ← write only if Step 2.4 produced a pack; omit if absent
+  - Mission: {MISSION_ID}                 ← write only if Step 1 captured a mission prefix; omit if absent
   ```
 
 ### Step 4 — Confirm and chain to `/session-plan`
