@@ -346,3 +346,38 @@ Committed across 4 repos in an ai-resources-rooted session with known concurrent
 
 ### Open Questions
 None.
+
+## 2026-06-09 — /prime hardening: dirty-tree autostash + deterministic session-notes read
+
+### Summary
+Hardened the `/prime` command against same-day session clutter, prompted by an operator
+self-diagnosis of a slow `/prime` run (five same-day sessions left the git tree and
+`logs/session-notes.md` cluttered). Scoped the fix inside `/prime` (operator decision) to
+tolerate the mess rather than prevent it upstream in `/wrap-session`. Three edits landed,
+committed `d7f619c`. Ran concurrently with a separate refresh-project-state Session 2
+terminal; foreign-session guard confirmed FOREIGN=0 (that session's content was already in
+HEAD). This session ran no `/prime` or `/session-start`, so it carries no own marker — this
+note uses a descriptive non-marker header by design.
+
+### Files Created
+- `logs/scratchpads/2026-06-09-12-30-scratchpad.md` — continuity scratchpad (work is complete; no resume needed).
+
+### Files Modified
+- `.claude/commands/prime.md` — three changes: (1) Step 0 `git pull` → `git pull --rebase --autostash` (both repos); (2) Step 1 deterministic last-entry read (`grep -n "^## [0-9]" | tail -1` → Read offset→EOF); (3) Step 8a/8b/8c header-existence check → `grep -Fxq` with explicit exit-0→reuse / exit-1→create branching.
+
+### Decisions Made
+- Scope the fix **inside `/prime`** (harden orientation to tolerate clutter), not upstream in `/wrap-session` — operator.
+- Step 0 writes `--rebase --autostash` **explicitly** rather than relying on invisible `pull.rebase` config — system-owner safety review.
+- **Leave the batching spec (cause 4) unchanged** — system-owner verdict: execution-time adherence drift, not a spec-content gap; a louder "MUST" is instruction-bloat against a Sonnet orchestrator.
+- **Fold the Step 8 sibling-read fix into the same change** (structural-over-patch: fix the defect class once) rather than patching only the Step 1 read — system-owner cross-resource catch.
+- No per-day session-notes rotation (out of in-`/prime` scope; touches the archival contract).
+
+### Risky actions
+None. The prime.md edit is reversible; no destructive, external, or shared-state-clobber action taken. The concurrent-session collision was detected and cleared by the Step 3.5 guard (FOREIGN=0), not nearly-clobbered.
+
+### Next Steps
+- Push the two local commits (prime.md `d7f619c` + this wrap-log commit) at the push gate below.
+- **Unverified-at-merge:** Change 1's autostash-pop-conflict path is exercised only by the next `/prime` that starts with a dirty tree. No action unless a future `/prime` reports a pop conflict.
+
+### Open Questions
+None.
