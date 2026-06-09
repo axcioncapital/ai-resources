@@ -388,3 +388,29 @@ None.
 - Files in scope: .claude/commands/prime.md (read-only reference); temp-dir test scratch (inferred)
 - Stop if: (none stated)
 Test the /prime autostash-over-rebase path on a dirty working tree (Change 1 from the 2026-06-09 /prime hardening) — confirm clean-pop and conflict-pop behavior in an isolated test repo.
+
+### Summary
+Closed the "Unverified-at-merge" carryover from the 2026-06-09 `/prime` hardening by testing Change 1 (Step 0 `pull --rebase --autostash`) in two throwaway sandbox git repos — never touching live state. The **clean-pop path PASSED** exactly as intended (stash → rebase → pop, dirty edit restored). The **conflict-pop path is data-safe** (local change recoverable from both conflict markers and a retained `stash@{0}`) **but revealed a real `/prime` gap**: a conflicting autostash pop returns **exit code 0**, which Step 0 misclassifies as `updated`, so `/prime` would emit a clean-looking brief while the working tree silently carries conflict markers. Surfaced (not fixed — out of mandate scope) and logged to the improvement-log for the Friday cadence.
+
+### Files Created
+- `audits/working/2026-06-09-S2-prime-autostash-path-test.md` — full test findings, both scenarios (gitignored working note; not committed).
+- `logs/session-plan-2026-06-09-S2.md` — session plan (auto-mode).
+- `logs/scratchpads/2026-06-09-16-38-scratchpad.md` — continuity scratchpad (this wrap).
+
+### Files Modified
+- `logs/improvement-log.md` — new PENDING entry: "/prime Step 0 silently swallows an autostash pop conflict (exit 0 misclassified as `updated`)" with a one-block fix proposal.
+- `logs/session-notes.md` — this entry (S2 header + mandate + note).
+
+### Decisions Made
+- **Bumped this session to marker S2** despite the deterministic rule computing S1 — a foreign `## 2026-06-09 — Session S1` header from an earlier session already existed and the shared `.session-marker` was stale (`2026-06-03`); following the literal exit-0→reuse branch would have contaminated another session's entry.
+- **Tested in an isolated temp repo, not the live repo** — avoids manufacturing risky git state in shared history; the autostash mechanics reproduce identically in a sandbox.
+- **Surfaced the exit-0 conflict-swallow finding, did not fix it** — it is a `/prime` command-body change needing `/risk-check`; per the mandate's out-of-scope clause, revealed defects are surfaced, not silently fixed. Routed to improvement-log for the Friday cadence.
+
+### Risky actions
+None. All git operations ran in throwaway temp repos under the OS temp area; no write to live ai-resources history, no network push during execution, no `prime.md` edit. Two temp sandboxes left for macOS to auto-reclaim (an `rm -rf` was declined at the permission prompt; harmless).
+
+### Next Steps
+- Friday cadence: weigh the logged `/prime` Step 0 exit-0 conflict-swallow fix (grep output for `Applying autostash resulted in conflicts` / residual stash / `UU` status → carry a `⚠ Pull:` exception into the Step 6 brief). Run `/risk-check` before editing `prime.md`.
+
+### Open Questions
+None.
