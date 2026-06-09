@@ -425,3 +425,28 @@ Reconcile the diverged ai-resources branch — rebase the local revert commit on
 
 ## 2026-06-09 — Session S4
 Validate refresh-project-state against §13 acceptance criteria: #4 forced-failure atomic rollback, #5 OS read + stale-flag, plus the cheap /kb-integrity Check D extension to project-state/.
+
+### Summary
+Ran the deferred STOP-3 acceptance validation for `refresh-project-state` from the workspace root, closing the "validate-later" loop opened in the Session-2 resume. Verified all six §13 acceptance criteria against the already-committed full run (vault `eaa792f`, 14 snapshots). Two criteria were tested empirically rather than by-design: #4 forced-failure atomic rollback (scratch reproduction of Step 4 write-temp-then-rename — all three cases pass) and #5 OS stale-detection (live data: 13 fresh + 1 correctly STALE). Found the `/kb-integrity` Check D project-state/ extension already landed. Command is acceptance-complete.
+
+### Files Created
+- `logs/scratchpads/2026-06-09-19-45-scratchpad.md` — continuity scratchpad (validation closure record)
+
+### Files Modified
+- `logs/decisions.md` — S4 acceptance-closure entry + already-landed Check D note + parked forward items (committed `df53cb0`)
+- `logs/session-notes.md` — S4 entry (this note); also committed an orphan S3 header left uncommitted by the prior session
+
+### Decisions Made
+- All six §13 acceptance criteria validated; the "validate-later" deferral is closed. (logged to decisions.md)
+- #4 rollback proven at the mechanism level (scratch reproduction); honest caveat recorded — not fault-injection into a live LLM run; adherence is by prompt-instruction (Step 4 read and confirmed).
+- Check D extension found already landed — no action.
+- Forward items (PreToolUse write/read hook; cadence automation §11) stay parked for separate sessions.
+
+### Risky actions
+None. The #4 rollback test ran entirely in a throwaway mktemp dir; the #5 stale check was read-only; the real vault was never touched. Committed only my two log files by explicit path, leaving pre-existing foreign-dirty files (prime.md et al.) untouched.
+
+### Next Steps
+- refresh-project-state is done — no pending work. If extending it later: (1) path-aware PreToolUse write/read hook (own `/risk-check`), (2) cadence automation (§11). Each is its own session.
+
+### Open Questions
+None.
