@@ -450,3 +450,51 @@ None. The #4 rollback test ran entirely in a throwaway mktemp dir; the #5 stale 
 
 ### Open Questions
 None.
+
+## 2026-06-09 — Session S3 wrap: branch reconcile, /prime autostash fix, concurrent-session fix plan
+
+### Summary
+Primed S3 and ran the three `/prime` menu tasks plus an operator-requested fix plan. Reconciled a diverged `ai-resources` branch (rebased the local revert onto `origin/main`, resolving an `improvement-log.md` conflict so both sides survived), committed an orphaned promotion risk-check report as kept prep, implemented + risk-check-GO'd + QC-GO'd a `/prime` Step 0 autostash-pop-conflict detection fix, and wrote a plan-only design for permanently fixing concurrent-session collisions. A concurrent **S4** session ran in this SAME checkout throughout, causing real-time commit entanglement (all content preserved; deliberately not disentangled).
+
+### Files Created
+- `audits/2026-06-09-concurrent-session-isolation-fix-plan.md` — plan-only design (4 gated fixes + build order) for concurrent-session isolation. `/qc-pass` GO. (Landed in commit `ebe7301` — swept there by the concurrent S4 commit; content intact.)
+- `audits/risk-checks/2026-06-09-harden-prime-claude-commands-prime-md-step-0-pull-result.md` — `/risk-check` report (GO) for the prime.md fix. (Committed in `8691388`.)
+- `logs/scratchpads/2026-06-09-19-55-scratchpad.md` — continuity scratchpad.
+
+### Files Modified
+- `.claude/commands/prime.md` — Step 0 autostash-pop-conflict detection (detect-first multi-signal OR → `autostash-conflict` state) + Step 4 carry + Step 6 brief exception line. (`8691388`)
+- `logs/improvement-log.md` — reconciled in the rebase (`df28eda`); flipped the autostash-pop entry to RESOLVED (`8691388`).
+- `audits/risk-checks/2026-06-09-promote-research-methodology-deltas-to-canonical-workflow-template.md` — committed as kept prep. (`49c5eb3`)
+
+### Decisions Made
+- **Reconcile the diverged branch by rebase, keeping both sides** — the remote S2 autostash entry AND the local reversions; resolved the one `improvement-log.md` conflict by hand. Source: operator (task #1 auto-mode).
+- **Commit the orphaned promotion risk-check report as kept prep, not delete** — paired with the deliberately-kept manifest; risk-check reports are retained audit artifacts; commit message warns to re-run at the actual end-of-project promotion. Source: Claude judgment (decision-point posture), task #2.
+- **`/prime` autostash fix = WORTH-DOING** — silent degradation in the highest-traffic command; trigger conditions occur in this multi-session workspace; cheap additive fix. Gated by `/risk-check` (GO) + `/qc-pass` (GO). Source: task #3.
+- **Concurrent-session plan = automate/enforce the existing playbook, not rewrite it** — `parallel-sessions-playbook.md` + worktree commands already exist but are advisory/opt-in; the gap is adherence/automation. Source: operator request + sibling-redundancy check.
+- **Do NOT disentangle the mixed S3/S4 commit history** — rewriting shared history while a concurrent session commits is dangerous; all content is preserved, only attribution is mixed. Source: Claude judgment.
+
+### Outcome
+COMPLETION: DELIVERED
+EXECUTION: ACCEPTABLE
+- What was asked but not done: none — all three `/prime` tasks + the plan delivered as claimed (independently verified against git: HEAD linear 7-ahead/0-behind, `prime.md` carries the 4 edit points, both audit files exist, improvement-log entry flipped to RESOLVED, commits df28eda/49c5eb3/8691388 match).
+- Better path: the shared-checkout concurrent run caused an avoidable rework loop (a foreign commit carried this session's fix-plan + notes; recovery cost extra commits). The cleaner path was the workspace's own rule — `/clear` or a separate worktree per session (parallel-sessions-playbook) — i.e., exactly what this session's fix-plan now targets.
+- Confidence: high
+
+### Risky actions
+Two near-misses, both from the same-checkout concurrent session sharing one staging index: (1) my `git commit --amend` swept the concurrent session's staged `claim-permission.template.md` into my commit — caught via post-commit `--stat`, corrected by soft-reset + unstage + recommit, foreign change preserved in the working tree; (2) the concurrent S4 commit (`ebe7301`) swept my staged fix-plan file and S3 mandate into ITS commits — detected, content verified preserved, not disentangled. No data lost. This is the live instance of the #1 anti-pattern the new fix-plan addresses.
+
+### Session Assessment (wrap-collector, 2026-06-09)
+- Autonomy-compounding: no new signal (autostash fix already implemented + RESOLVED this session; concurrent-session fix is plan-only with a confirmed consumer).
+- Leanness/cost: no signal (autostash fix cheap-additive; mixed S3/S4 commit attribution is deliberate churn, correctly left undisentangled).
+- Principle-drift: no signal.
+- Friction: process — same-checkout concurrent S3/S4 sharing one staging index caused two commit-entanglement events; logged to friction-log.
+- Safety: HIGH — a `git commit --amend` swept a foreign staged file and a foreign commit later swept this session's staged files; shared-staging-index clobbers actually occurred (no data lost, corrected/verified). First instance where the staging index (not just shared logs) was the clobber surface. Fix is plan-only: `audits/2026-06-09-concurrent-session-isolation-fix-plan.md` (build-order step 1 = staging-index guard).
+- Routed: 0→improvement-log (both items deduped against existing entries), 1→friction-log.
+
+### Next Steps
+- Decide the promotion-vs-rollback question: S4 committed the promotion (`da72d7a`) that was rolled back earlier today as premature — keep or revert (operator's call).
+- Push the 6 unpushed commits via the gated confirmation.
+- Later (separate session): execute the concurrent-session isolation fix-plan (build order: staging-index guard → block same-checkout → wrap-owns-logs → default worktree launch → per-session log namespacing). Each fix runs its own `/risk-check`.
+
+### Open Questions
+- Was the S4 promotion (`da72d7a`) intended, or are the two sessions at cross-purposes? Unresolved — operator's call.
