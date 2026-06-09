@@ -2,7 +2,7 @@
 model: sonnet
 ---
 
-Diagnose and repair broken symlinks in project directories. Scans `projects/` for symlinks whose targets no longer resolve, searches `ai-resources/` by basename to find the correct target, presents a fix plan, and re-points with `ln -sf` after operator confirmation.
+Diagnose and repair broken symlinks in project directories. Scans `projects/` for symlinks whose targets no longer resolve, searches `ai-resources/` by basename to find the correct target, presents a fix plan, and re-points with `ln -sf` after operator confirmation. Also flags two non-broken modes (report-only, never auto-fixed): managed shared files present as regular-file copies instead of symlinks (drift), and canonical commands/agents that should be symlinked into a project but are absent entirely (missing).
 
 **Scope:** all symlinks under `projects/*/` (recursive). Does not scan `workflows/` or `ai-resources/` itself.
 
@@ -56,45 +56,113 @@ echo "Found $BROKEN_COUNT broken."
 
 ---
 
-### Step 2b: Diagnose — find regular-file-where-symlink-expected drift
+### Step 2b: Diagnose — drift and missing managed symlinks
 
-This second pass detects managed shared files (declared in each project's `.claude/shared-manifest.json`) that are regular-file copies instead of the expected relative symlinks. These are a different failure mode from broken symlinks — the file is readable, so no runtime error occurs, but it drifts from the shared canonical without anyone noticing.
+This pass detects two non-broken failure modes for the files the auto-sync hook manages. Neither raises a runtime error, so neither is visible without an explicit scan:
+
+- **Drift** — a managed shared file present as a regular-file copy instead of the expected relative symlink. It is readable, but it has silently diverged from the canonical.
+- **Missing** — a canonical command/agent that *should* be symlinked into the project (per the hook's rules) but is absent entirely.
+
+The "should be present" set is defined exactly as the auto-sync hook defines it (`ai-resources/.claude/hooks/auto-sync-shared.sh`): every canonical file under `ai-resources/.claude/{commands,agents}/`, **minus** the hook's baked-in `EXCLUDE_COMMANDS` / `EXCLUDE_AGENT_GLOBS`, **minus** each project's `shared-manifest.json` `commands.local` / `agents.local` opt-outs. The two exclude lists are read straight from the hook file (not hardcoded here) so this command cannot drift from the hook's contract. Projects without a manifest are skipped — they opt out of managed symlinks entirely, mirroring the hook's bail. A broken symlink (`islink` true) is **not** reported here — Step 2 owns that case — so the three modes never double-count.
 
 ```bash
 REGULAR_FILE_LIST="/tmp/fix-symlinks-regular-files.txt"
+MISSING_LIST="/tmp/fix-symlinks-missing.txt"
 > "$REGULAR_FILE_LIST"
+> "$MISSING_LIST"
 
-for project_dir in "$PROJECTS_DIR"/*/; do
-  manifest="${project_dir}.claude/shared-manifest.json"
-  [ -f "$manifest" ] || continue
+HOOK="$AI_RESOURCES/.claude/hooks/auto-sync-shared.sh"
+if [ ! -f "$HOOK" ]; then
+  echo "WARNING: auto-sync hook not found at $HOOK — cannot determine canonical exclusions; skipping drift+missing scan."
+  REGULAR_FILE_COUNT=0
+  MISSING_COUNT=0
+else
+  # Read the exclude lists straight from the hook (single source of truth).
+  EXCLUDE_COMMANDS=$(sed -n 's/^EXCLUDE_COMMANDS="\(.*\)"$/\1/p' "$HOOK")
+  EXCLUDE_AGENT_GLOBS=$(sed -n 's/^EXCLUDE_AGENT_GLOBS="\(.*\)"$/\1/p' "$HOOK")
+fi
 
-  python3 - "$manifest" "$project_dir" "$REGULAR_FILE_LIST" <<'PYEOF'
-import json, os, sys
+# Guard: a present-but-unparseable hook would yield empty exclude lists, which
+# would mis-flag the hook's own meta-excludes (new-project, pipeline-*, etc.) as
+# "missing". Skip the scan rather than emit false positives.
+if [ -f "$HOOK" ] && [ -z "$EXCLUDE_COMMANDS" ] && [ -z "$EXCLUDE_AGENT_GLOBS" ]; then
+  echo "WARNING: could not parse EXCLUDE_COMMANDS/EXCLUDE_AGENT_GLOBS from $HOOK (format may have changed) — skipping drift+missing scan to avoid false positives."
+  REGULAR_FILE_COUNT=0
+  MISSING_COUNT=0
+elif [ -f "$HOOK" ]; then
+  python3 - "$AI_RESOURCES" "$PROJECTS_DIR" "$EXCLUDE_COMMANDS" "$EXCLUDE_AGENT_GLOBS" "$REGULAR_FILE_LIST" "$MISSING_LIST" <<'PYEOF'
+import json, os, sys, fnmatch
 
-manifest_path, project_dir, output_file = sys.argv[1], sys.argv[2], sys.argv[3]
+ai_resources, projects_dir = sys.argv[1], sys.argv[2]
+exclude_commands   = set(sys.argv[3].split())
+exclude_agent_globs = sys.argv[4].split()
+drift_output, missing_output = sys.argv[5], sys.argv[6]
 
-with open(manifest_path) as f:
-    manifest = json.load(f)
+def canon(subdir):
+    d = os.path.join(ai_resources, ".claude", subdir)
+    if not os.path.isdir(d):
+        return []
+    return sorted(n[:-3] for n in os.listdir(d) if n.endswith(".md"))
 
-type_map = {"commands": ("commands", ".md"), "agents": ("agents", ".md")}
-findings = []
-for section, (subdir, ext) in type_map.items():
-    for name in manifest.get(section, {}).get("shared", []):
-        path = os.path.join(project_dir, ".claude", subdir, f"{name}{ext}")
-        if os.path.exists(path) and not os.path.islink(path):
-            findings.append(path)
+cmd_names, agt_names = canon("commands"), canon("agents")
 
-if findings:
-    with open(output_file, "a") as f:
-        f.write("\n".join(findings) + "\n")
+def is_excluded(name, kind, local):
+    if name in local:
+        return True
+    if kind == "command":
+        return name in exclude_commands
+    return any(fnmatch.fnmatch(name, g) for g in exclude_agent_globs)
+
+drift, missing = [], []
+for entry in sorted(os.listdir(projects_dir)):
+    proj = os.path.join(projects_dir, entry)
+    manifest_path = os.path.join(proj, ".claude", "shared-manifest.json")
+    if not os.path.isfile(manifest_path):
+        continue  # no manifest -> opts out of managed symlinks (mirrors hook bail)
+    try:
+        with open(manifest_path) as f:
+            manifest = json.load(f)
+    except (ValueError, OSError):
+        continue
+    local_cmd = set(manifest.get("commands", {}).get("local", []))
+    local_agt = set(manifest.get("agents", {}).get("local", []))
+
+    for kind, names, subdir, local in (
+        ("command", cmd_names, "commands", local_cmd),
+        ("agent",   agt_names, "agents",   local_agt),
+    ):
+        for name in names:
+            if is_excluded(name, kind, local):
+                continue
+            target = os.path.join(proj, ".claude", subdir, f"{name}.md")
+            is_link = os.path.islink(target)
+            exists  = os.path.exists(target)  # follows links; False for a broken link
+            if is_link:
+                continue                       # good or broken symlink -> not this pass
+            if exists:
+                drift.append(f"{kind}\t{target}")          # regular file where symlink expected
+            else:
+                src = os.path.join(ai_resources, ".claude", subdir, f"{name}.md")
+                rel = os.path.relpath(src, os.path.dirname(target))
+                missing.append(f"{kind}\t{target}\t{rel}")  # absent entirely
+
+with open(drift_output, "w") as f:
+    if drift:
+        f.write("\n".join(drift) + "\n")
+with open(missing_output, "w") as f:
+    if missing:
+        f.write("\n".join(missing) + "\n")
 PYEOF
-done
 
-REGULAR_FILE_COUNT=$(wc -l < "$REGULAR_FILE_LIST" | tr -d ' ')
+  REGULAR_FILE_COUNT=$(wc -l < "$REGULAR_FILE_LIST" | tr -d ' ')
+  MISSING_COUNT=$(wc -l < "$MISSING_LIST" | tr -d ' ')
+fi
+
 echo "Found $REGULAR_FILE_COUNT regular-file-where-symlink-expected drift entries."
+echo "Found $MISSING_COUNT missing-symlink entries (canonical, not excluded, absent from project)."
 ```
 
-If `BROKEN_COUNT` is 0 and `REGULAR_FILE_COUNT` is 0: print `No issues found under projects/. Nothing to do.` and stop.
+If `BROKEN_COUNT` is 0 and `REGULAR_FILE_COUNT` is 0 and `MISSING_COUNT` is 0: print `No issues found under projects/. Nothing to do.` and stop.
 
 ---
 
@@ -220,26 +288,36 @@ done < "$PLAN_TSV"
 [ $N -eq 0 ] && echo "  (none)"
 
 echo ""
-echo "REGULAR FILE WHERE SYMLINK EXPECTED — declared shared in shared-manifest.json:"
+echo "REGULAR FILE WHERE SYMLINK EXPECTED — managed shared file present as a regular-file copy:"
 N=0
-while IFS= read -r path; do
+while IFS=$'\t' read -r kind path; do
   [ -z "$path" ] && continue
   (( N++ ))
-  project_rel="${path#$PROJECTS_DIR/}"
-  name=$(basename "$path" .md)
-  echo "  $N. $path"
+  echo "  $N. [$kind] $path"
   echo "     Status: regular file (should be a relative symlink to ai-resources canonical)"
   echo "     Remedy: diff the file against the canonical, then replace with: ln -sf <rel-target> \"$path\""
 done < "$REGULAR_FILE_LIST"
 [ $N -eq 0 ] && echo "  (none)"
 
 echo ""
-echo "Summary: $FIXABLE_COUNT fixable / $(( ZERO_COUNT + MULTI_COUNT )) manual / $BROKEN_COUNT total broken | $REGULAR_FILE_COUNT regular-file drift (always manual)"
+echo "MISSING SYMLINKS — canonical in ai-resources, not excluded, but absent from the project:"
+N=0
+while IFS=$'\t' read -r kind path rel; do
+  [ -z "$path" ] && continue
+  (( N++ ))
+  echo "  $N. [$kind] $path"
+  echo "     Expected: relative symlink -> $rel"
+  echo "     Remedy: re-open a session (the auto-sync hook recreates it) or run /sync-workflow."
+done < "$MISSING_LIST"
+[ $N -eq 0 ] && echo "  (none)"
+
+echo ""
+echo "Summary: $FIXABLE_COUNT fixable / $(( ZERO_COUNT + MULTI_COUNT )) manual / $BROKEN_COUNT total broken | $REGULAR_FILE_COUNT drift | $MISSING_COUNT missing (drift + missing always manual)"
 ```
 
 - If `FIXABLE_COUNT` is 0: print `No auto-fixable symlinks found. Review manual-resolution list above.` and stop.
 - If `$ARGUMENTS` contains `--dry-run`: print `Dry run — no changes made.` and stop.
-- Otherwise: ask `Proceed with $FIXABLE_COUNT automatic fix(es)? [y/n]` and wait for operator input. Only continue on `y`.
+- Otherwise: ask `Proceed with $FIXABLE_COUNT automatic fix(es)? [y/n]` and wait for operator input. Continue only on an explicit `y`; treat empty input, EOF, or a non-interactive invocation as `n` and stop — never fix without an explicit `y`.
 
 **Note:** Regular-file drift entries are always MANUAL — never auto-fixed. A regular file may have diverged from the canonical; overwriting with a symlink would destroy local changes. Always diff before replacing.
 
@@ -289,6 +367,7 @@ echo "  Fixed (broken symlinks):      $FIXED"
 echo "  Failed (broken symlinks):     $FAILED"
 echo "  Manual (broken, no match):    $MANUAL_COUNT"
 echo "  Regular-file drift (manual):  $REGULAR_FILE_COUNT"
+echo "  Missing symlinks (manual):    $MISSING_COUNT"
 
 if [ "$MANUAL_COUNT" -gt 0 ]; then
   echo ""
@@ -297,10 +376,15 @@ if [ "$MANUAL_COUNT" -gt 0 ]; then
   echo "  To re-point:"
   echo "    ln -sf \"new-target\" \"path/to/link\""
 fi
+
+if [ "$MISSING_COUNT" -gt 0 ]; then
+  echo ""
+  echo "  Missing symlinks self-heal on next session start (auto-sync hook), or run /sync-workflow now."
+fi
 ```
 
 Clean up temp files:
 
 ```bash
-rm -f /tmp/fix-symlinks-links.txt /tmp/fix-symlinks-analyze.py /tmp/fix-symlinks-plan.tsv /tmp/fix-symlinks-regular-files.txt
+rm -f /tmp/fix-symlinks-links.txt /tmp/fix-symlinks-analyze.py /tmp/fix-symlinks-plan.tsv /tmp/fix-symlinks-regular-files.txt /tmp/fix-symlinks-missing.txt
 ```
