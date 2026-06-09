@@ -414,3 +414,14 @@ None. All git operations ran in throwaway temp repos under the OS temp area; no 
 
 ### Open Questions
 None.
+
+## 2026-06-09 — Session S3
+**Mandate:** Rebase the local unpushed revert `f2b5d6e` onto `origin/main`, resolving the one `logs/improvement-log.md` conflict so both sides survive — the remote S2 `/prime` autostash-pop entry AND `f2b5d6e`'s reversions (Option B + Milestone 4 → DEFERRED; PE-provider + P2/P4 promotion entries removed) — done when: rebase complete, working tree clean (no conflict markers), local HEAD a linear descendant of `origin/main`, and `improvement-log.md` holds both sides' content.
+- Out of scope: pushing (gated to wrap); the untracked risk-check file (task #2); the `prime.md` autostash-gap fix (task #3)
+- Files in scope: logs/improvement-log.md
+- Stop if: the correct merge becomes ambiguous (resolving would drop the remote S2 entry or the local reversion intent)
+
+Reconcile the diverged ai-resources branch — rebase the local revert commit onto origin/main's concurrent S2 commits, resolving the improvement-log.md conflict. Marker bumped to S3 (S2 belongs to the remote machine's session now rebased into HEAD).
+
+## 2026-06-09 — Session S4
+Validate refresh-project-state against §13 acceptance criteria: #4 forced-failure atomic rollback, #5 OS read + stale-flag, plus the cheap /kb-integrity Check D extension to project-state/.
