@@ -51,6 +51,17 @@
         ]
       },
       {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/check-foreign-staging.sh",
+            "timeout": 5,
+            "statusMessage": "Foreign-staging tripwire..."
+          }
+        ]
+      },
+      {
         "matcher": "Skill",
         "hooks": [
           {

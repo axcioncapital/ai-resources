@@ -498,3 +498,14 @@ Two near-misses, both from the same-checkout concurrent session sharing one stag
 
 ### Open Questions
 - Was the S4 promotion (`da72d7a`) intended, or are the two sessions at cross-purposes? Unresolved — operator's call.
+
+## 2026-06-09 — Session S5
+**Mandate:** Implement Fix 2 of the concurrent-session isolation fix-plan — a PreToolUse(Bash) guard that inspects the staging index for files outside the session's declared footprint before git commit / git commit --amend / git add -A and pauses showing the foreign files — done when: the guard hook is implemented, wired into settings.json, passes /risk-check (GO) and /qc-pass (GO), and is committed
+- Out of scope: Fixes 1/3/4 of the same plan; the concurrent S4 session's in-flight work (da72d7a, claim-permission.template.md, the untracked promotion risk-check file); the promotion-vs-rollback decision
+- Files in scope: .claude/hooks/check-foreign-staging.sh, .claude/settings.json, docs/commit-discipline.md, docs/session-marker.md
+- Stop if: /risk-check returns NO-GO or RECONSIDER, or the sanction check reveals Fix 2 was deliberately parked rather than sanctioned
+- Allowed inputs: audits/2026-06-09-concurrent-session-isolation-fix-plan.md, .claude/hooks/check-heavy-tool.sh, .claude/hooks/detect-concurrent-session.sh, .claude/commands/concurrent-session-check.md, docs/parallel-sessions-playbook.md
+- Required outputs: .claude/hooks/check-foreign-staging.sh
+- Context pack: output/context-packs/hook-20260609-7c2a1/pack.md
+
+Execute Fix 2 of the concurrent-session isolation fix-plan — the staging-index guard (a `PreToolUse(Bash)` guard that inspects the staging index for files outside the session's declared footprint before `git commit` / `git commit --amend` / `git add -A`). Source: `audits/2026-06-09-concurrent-session-isolation-fix-plan.md` build-order step 1.
