@@ -457,3 +457,13 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
   2. **Manifest-driven snapshot read-set (higher-leverage).** Have the orchestrator hand each `project-state-snapshot-agent` an explicit safe file list instead of broad Read access — shrinks the broad-Read surface structurally rather than patching it with a deny/hook. Per system-owner, the higher-leverage of the two. Connects to the scrub-verifier's already-optional "known-entity list" input (Pass A) — a manifest could feed both ends.
 - **Target files:** `ai-resources/.claude/hooks/` (new hook, item 1); `ai-resources/.claude/commands/refresh-project-state.md` + `ai-resources/.claude/agents/project-state-snapshot-agent.md` (item 2)
 - **Review-cycle:** monthly
+
+### 2026-06-09 — check-foreign-staging.sh fails open for footprint-less sessions (latent concurrency gap) (PENDING)
+- **Status:** logged (pending)
+- **Category:** guardrail-candidate
+- **Severity:** low
+- **Provenance:** wrap-collector (machine-authored, manually re-appended after a collector write incident) 2026-06-09
+- **Friction source:** wrap-collector 2026-06-09 — safety / guardrail-gap (S5)
+- **Proposal:** The new PreToolUse(Bash) staging tripwire (Fix 2, S5 — `check-foreign-staging.sh`) fails open when a session has no resolvable footprint (no marker, no `- Files in scope:` bullet, or an `(inferred)`/`(none stated)` bullet) — so a primed-but-not-planned or inferred-footprint session, the highest-risk concurrency scenario, gets no foreign-staging protection. Consider a complementary minimum guard (e.g., warn-and-pause when a gated git verb runs with no concrete footprint AND another session marker is present), or fold footprint-presence into the Fix 1 blocking SessionStart path. Same blind spot `concurrent-session-check.md` documents as its #1 failure.
+- **Target files:** `.claude/hooks/check-foreign-staging.sh`; cross-ref `.claude/hooks/detect-concurrent-session.sh` (Fix 1).
+- **Review-cycle:** monthly

@@ -164,3 +164,12 @@
 
 #### Write Activity
 - S3 staged its own work by explicit path; the two index entanglements above were corrected (event 1) or verified-preserved-and-left (event 2). Mixed S3/S4 commit attribution deliberately not disentangled — all content preserved.
+
+## Session — 2026-06-09 (S5)
+
+### Friction Events
+
+- **[wrap-collector]** wrap (S5) — **Friction type: process-safety (subagent destructive write to an append-only shared log).** During `/wrap-session` Step 6.5, the `session-feedback-collector` subagent destructively OVERWROTE `logs/improvement-log.md` with the literal text `placeholder` — a `Write` (whole-file replace) where an append-only `Edit`/heredoc was intended. The subagent itself detected the error post-write, correctly refused to reconstruct from partial context, and surfaced the exact restore command. The main session restored losslessly via `git restore --source=HEAD -- logs/improvement-log.md` (the file was provably clean == HEAD at session start — confirmed by the `/prime` Step 1a FOREIGN_SHARED check and the session-start git status — so HEAD restore lost nothing), then manually re-appended the one genuine signal the collector intended (the fail-open guardrail-candidate, now in improvement-log). Root cause: the collector's write path can emit a full-file `Write` instead of an append; `docs/commit-discipline.md § Shared-log write-path integrity` already names this hazard class for the non-append logs but the guard there targets read-during-rewrite truncation, not a bare placeholder overwrite. Improvement direction: harden `session-feedback-collector` to append-only (never `Write` the whole file) and/or add a pre-write entry-count floor check like the one commit-discipline.md prescribes for `/improve`. Routed to improvement-log? NO — logging here as the incident datapoint; the collector-hardening proposal is a candidate for `/improve` to formalize against this entry. Contained: no data lost; file fully restored + re-appended.
+
+#### Write Activity
+- `logs/improvement-log.md`: overwritten to `placeholder` by the collector, then restored from HEAD (459 lines) and appended with one guardrail-candidate entry (now 469 lines). No other shared log affected — `friction-log.md` was read-only to the collector and is intact.

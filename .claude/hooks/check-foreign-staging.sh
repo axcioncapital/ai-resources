@@ -257,6 +257,13 @@ def is_exempt(path):
             return True
         if base.endswith("-scratchpad.md"):
             return True
+        # Log-rotation byproducts (session-notes-archive-YYYY-MM.md,
+        # improvement-log-archive.md, decisions-archive-*.md, …). These are
+        # wrap-owned append/rotate artifacts — same benign cross-session class
+        # as the append-only logs, and a wrap commit legitimately stages a
+        # freshly-rotated archive alongside its source log.
+        if "archive" in base:
+            return True
     return False
 
 def in_footprint(path):
