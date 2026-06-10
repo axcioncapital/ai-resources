@@ -183,3 +183,12 @@
 
 #### Write Activity
 - `logs/friction-log.md`: overwritten to 1 line by the collector, then restored from HEAD (175 lines) and appended with these two entries. Stray `.append-marker-tmp` removed. `logs/improvement-log.md` was read-only to the collector and intact; appended by hand with two entries (workspace-root Step 13 port gap; collector-hardening recurrence).
+
+## Session — 2026-06-10 (S3)
+
+### Friction Events
+
+- **[wrap-collector]** wrap (S3) — **Friction type: process (missing pre-build environment-fit check before building operator-environment-specific tooling).** S3 built `scripts/cc-worktree.sh`, a terminal worktree launcher (Fix 3 of the concurrent-session isolation fix-plan), through the full gate chain (/risk-check PROCEED-WITH-CAUTION + SO concur + /qc-pass GO) and committed it across 3 repos. Only AFTER the build did the operator challenge the solution, surfacing the load-bearing fact that **he launches Claude via the VS Code extension, not a terminal** — so the launcher shipped inert for his actual workflow (zero functional value). The session's own outcome check (EXECUTION: ACCEPTABLE, "Better path") names the cheap miss: one pre-build fit question ("terminal or VS Code launch?") would have surfaced the mismatch before any build. The launcher was correctly left in place (rollback is its own risk; harmless building block) and the VS Code launch fact was written to auto-memory (`feedback_vscode_launch.md`) to prevent recurrence. Mitigating: option (b) was an explicit operator `go`, and the wasted-build cost is partly mandate-inherited (the fix-plan framed Fix 3 as a terminal launcher). The improvement direction (a pre-build environment-fit check upstream at /scope or /session-plan) is routed to improvement-log this session as a session-feedback entry; logged here as the friction datapoint. No data lost.
+
+#### Write Activity
+- S3 staged its own work by explicit path across 4 commits / 3 repos; no foreign files touched (`### Risky actions` = None — QC-clean, risk-check-gated, re-syncs byte-identical). The two pre-existing S4 foreign working-tree files were left untouched and unstaged.

@@ -507,3 +507,13 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Proposal:** The `NO_OWN_MARKER=1` STOP path in `wrap-session.md` Step 3.5 does not yet use the new per-id liveness signal (Fix 1, 2026-06-10) to tell a genuinely-live concurrent session apart from an already-wrapped/committed same-day sibling in the same checkout. Recommended fix: before declaring CONCURRENT for a no-own-marker session, check whether the foreign per-id marker corresponds to genuinely-uncommitted today-content (live) vs content already in HEAD (benign sequential, e.g. a restart that changed CLAUDE_CODE_SESSION_ID but kept the same `S{N}` day-slot). If all today-content is in HEAD, proceed instead of STOP. This is a /risk-check change class (canonical command edit, auto-synced to ~20 sites) — gate before landing. Lower-effort alternative: have the no-own-marker wrap append its note under a distinct `(cont.)` header rather than contesting the existing `S{N}` header, and document that /clarify-first sessions are unmarked by design (clarify.md Step 0 already nudges this).
 - **Target files:** `ai-resources/.claude/commands/wrap-session.md` (Step 3.5 NO_OWN_MARKER branch); cross-ref `ai-resources/.claude/hooks/detect-concurrent-session.sh` (Fix 1 per-id liveness signal) + `ai-resources/docs/session-marker.md`.
 - **Review-cycle:** monthly
+
+### 2026-06-10 — Pre-build environment-fit check for launch/runtime-gated tooling
+- **Status:** pending
+- **Category:** session-feedback
+- **Severity:** low
+- **Provenance:** wrap-collector (machine-authored, hand-routed by main session — collector hit Constraint E on improvement-log) 2026-06-10 S3
+- **Friction source:** S3 built `scripts/cc-worktree.sh`, a terminal launcher, which shipped inert because the operator launches via the VS Code extension (open folder/window), not a terminal. The mismatch was discoverable upfront with one question; it surfaced only after the build, risk-check, QC, and commit. Wasted-build churn partly mandate-inherited (option b was an explicit operator `go`).
+- **Proposal:** Add a lightweight pre-build environment-fit check for tooling whose value is gated on launch/runtime environment (terminal vs VS Code extension, shell, OS entrypoint). Natural homes: `/scope` or `/session-plan` — when the work product is an executable/launch artifact, prompt "what environment does the operator trigger this in?" before building. Fold in the `feedback_vscode_launch.md` auto-memory fact (Patrik = VS Code launch) so the check can self-answer for known cases.
+- **Target files:** candidates `ai-resources/.claude/commands/scope.md`, `ai-resources/.claude/commands/session-plan.md`; cross-ref auto-memory `feedback_vscode_launch.md`.
+- **Review-cycle:** monthly
