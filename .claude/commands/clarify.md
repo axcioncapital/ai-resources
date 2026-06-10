@@ -22,3 +22,5 @@ Then do the following:
 Do not proceed until the user responds. After they answer, restate the updated understanding. Then remind the user to run `/scope` to lock the deliverables before execution — do not start work until `/scope` has been approved.
 
 If the user wants Claude to pre-research each clarifying question against project files before answering, they may invoke `/decide` on the §3 list.
+
+**Infrastructure-implementation requests.** When the `/clarify` concerns a change to a Claude Code harness resource — a command (`.claude/commands/*.md`), agent (`.claude/agents/*.md`), hook (`.claude/hooks/*`), skill (`SKILL.md`), `settings.json`, or a `CLAUDE.md` rule — consider routing the §3 questions through the System Owner before answering: run `/consult` for an architectural read on the proposed change, or `/decide` to pre-research the list against project files. Both are operator-invoked and escalate only the questions that stay genuinely unclear. This is an advisory pointer, not an automatic step — `/clarify` stays advisory and spawns no subagent on its own.
