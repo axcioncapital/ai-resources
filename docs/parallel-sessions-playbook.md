@@ -64,6 +64,7 @@ Classify each file by **shape**, because shape predicts merge behavior (this is 
 | **New file** | a brand-new deliverable only this unit creates | Zero conflict — additive work parallelizes almost for free, even against a busy shared base (see § 5, remote lessons). |
 | **Append-only / log-shaped** | `logs/session-notes.md`, `coaching-data.md`, `usage-log.md`, `decisions.md` | Genuine "keep both" unions — both sides' entries survive. |
 | **Content-shaped / co-edited** | backlogs (`next-up.md`), indexes (`_master-index.md`), any file two units both edit | Can carry **semantic** conflicts where "keep both" is the *wrong* rule. These are the dangerous ones. |
+| **Append-shaped *with* in-place mutations** | the status logs `improvement-log.md`, `friction-log.md` | Append (new entries) unions safely, but **status flips and archiving** rewrite existing lines and can conflict. Resolved by confining those mutations to dedicated single-purpose sessions (maintenance cadence + fix-plan execution), so ordinary work sessions only ever append — see `docs/commit-discipline.md` § Maintenance-owned in-place mutations. |
 
 **Design rule — bias toward new files.** Wherever a unit's output can be structured as a *new* file rather than an *edit* to a shared one, do that. The conflict surface is created by edits to shared files, not by additions. This is the corollary, seen from the file side, of why additive work survives a 15-commit divergence untouched (§ 5).
 
