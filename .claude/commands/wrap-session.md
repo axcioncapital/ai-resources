@@ -457,3 +457,11 @@ Run as two separate commands, not chained:
 - Ambiguous reply: re-ask, do not assume.
 
 Do NOT push mid-session at any earlier step, even for "critical" fixes — surface the situation and ask the operator instead.
+
+13. **Per-id session-marker teardown (concurrent-session liveness signal).** As the **final** wrap action — after every marker-dependent step above (Step 3.5 attribution, Step 7a mandate read) and after the commit — remove this session's per-id marker so the per-id marker set tracks only **un-wrapped** (≈ live) sessions. This is the signal `.claude/hooks/detect-concurrent-session.sh` reads to distinguish a genuine concurrent same-checkout session from this operator's own already-wrapped one (Fix 1, 2026-06-10):
+
+    ```bash
+    [ -n "${CLAUDE_CODE_SESSION_ID}" ] && rm -f "logs/.session-marker-${CLAUDE_CODE_SESSION_ID}"
+    ```
+
+    Leave the shared `logs/.session-marker` untouched — it is `/prime`'s same-day increment oracle (date-pruned, not liveness-pruned). Run this **last**: removing the per-id marker earlier would break Step 3.5's marker-aware attribution and Step 7a. If `CLAUDE_CODE_SESSION_ID` is unset, skip silently (no per-id marker was written). A crashed or aborted session that never reaches this step leaves its marker until `/prime`'s next-day orphan prune — an acceptable degrade (an occasional stale over-nudge from the detector, never a missed live collision). Two-end contract registered in `docs/session-marker.md` § Concurrent-session detection. MIRROR NOTE: the workspace-root `/.claude/commands/wrap-session.md` is an independent non-symlink copy — port this teardown there too (as its final step) on the next sync so both wrap paths maintain the liveness signal.

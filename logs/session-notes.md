@@ -308,3 +308,11 @@ None irreversible. Two near-relevant notes: (1) the hook went live in `settings.
 
 ### Open Questions
 - Promotion-vs-rollback on `da72d7a` (S4's research-workflow canonical promotion) — keep or revert? Unresolved, operator's call.
+
+## 2026-06-10 — Session S1
+**Mandate:** RE-SCOPED (operator-approved 2026-06-10): SessionStart hooks cannot block (verified vs Claude Code docs — exit 2 shows stderr but the session continues), so Fix 1's "forceful block" premise is not buildable. Re-scoped to a soft precision-fix — keep `detect-concurrent-session.sh` non-blocking (exit 0), tighten the same-checkout SHARP nudge so it stops false-firing on the operator's own already-wrapped session by making the per-id marker set a liveness signal (`/wrap-session` removes its per-id marker at teardown; the hook counts un-wrapped foreign per-id markers in THIS checkout), re-sync the two byte-identical project copies, and update the two-end contract docs — done when: the hook's liveness-based same-checkout discriminator + legacy fallback is implemented, both project copies re-synced, `/wrap-session` per-id teardown added, `docs/session-marker.md` registry updated, `/qc-pass` GO, and committed
+- Out of scope: Fixes 2/3/4 of the same plan (Fix 2 already shipped); the two untouched S4 foreign files (`claim-permission.template.md`, the untracked promote-3 risk-check file); the da72d7a promotion-vs-rollback decision; the precise lsof/cwd discriminator (deliberately deferred by the hook author as brittle)
+- Files in scope: .claude/hooks/detect-concurrent-session.sh, projects/positioning-research/.claude/hooks/detect-concurrent-session.sh, projects/research-pe-regime-shift-advisory-gap/.claude/hooks/detect-concurrent-session.sh, .claude/commands/wrap-session.md, docs/session-marker.md, docs/parallel-sessions-playbook.md (inferred)
+- Stop if: /risk-check returns NO-GO or RECONSIDER (resolved: PROCEED-WITH-CAUTION, re-scoped per operator after the SessionStart-can't-block finding fired this very Stop-if; mitigations applied)
+
+Build Fix 1 of the concurrent-session isolation fix-plan — upgrade `detect-concurrent-session.sh` to a blocking SessionStart decision when the same checkout is already in use.

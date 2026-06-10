@@ -30,25 +30,44 @@
 #   best-effort limitation for a non-blocking warning (see docs/session-marker.md
 #   § Concurrent-session detection). Future enhancement: scope by cwd via lsof.
 #
-# SAME-CHECKOUT NUDGE (2026-06-05) — when the machine-wide signal (count >= 2) is
-#   combined with a today-dated marker already present in THIS checkout, that is a
-#   strong "another session already primed in this same folder today" signal — the
-#   exact Mode-A condition behind every recurrence in the collision report. In that
-#   case the hook emits a SHARP, actionable nudge pointing at /new-worktree-session
-#   (the structural remedy). When only the machine-wide signal holds (no today
-#   marker here), it keeps the SOFTER warning. HEURISTIC, not a precise detector:
-#   a prior WRAPPED session also leaves a today marker, so the sharp nudge can fire
-#   when this is in fact the only live session here. Degrades safe — an occasional
-#   unnecessary nudge, never a block, never a missed real collision. The precise
-#   same-checkout detector (lsof/cwd) is deliberately deferred as brittle.
-#   Forcing-function rationale: the operator must not have to REMEMBER to isolate;
-#   this auto-fires the remedy at the moment of risk. It cannot CREATE+enter the
-#   worktree for them (a session's cwd is fixed before any hook runs) — it prompts.
+# SAME-CHECKOUT NUDGE (2026-06-05; liveness-tightened 2026-06-10) — when the machine-wide
+#   signal (count >= 2) is combined with an un-wrapped foreign session in THIS checkout, the
+#   hook emits a SHARP, actionable nudge pointing at /new-worktree-session (the structural
+#   remedy). When only the machine-wide signal holds (no foreign session here), it keeps the
+#   SOFTER warning.
+#
+#   LIVENESS DISCRIMINATOR (2026-06-10, Fix 1) — the original same-checkout signal was "a
+#   today-dated shared logs/.session-marker is present." That over-fired: the shared marker is
+#   DATE-pruned (by /prime's orphan cleanup), not LIVENESS-pruned, so it stayed set after this
+#   operator's OWN earlier session wrapped — firing the sharp nudge on every solo same-day
+#   re-open. The fix makes the per-session marker set a liveness signal: /prime writes
+#   logs/.session-marker-${CLAUDE_CODE_SESSION_ID}; /wrap-session REMOVES it at teardown
+#   (wrap-session.md Step 13). So a today-dated per-id marker (excluding this session's own) =
+#   an un-wrapped ≈ live foreign session in THIS checkout, and ABSENT per-id markers means every
+#   session that primed here today has wrapped → no live foreign session → soft path (this is the
+#   false-fire fix). The shared logs/.session-marker is NOT consulted on the oracle path — reading
+#   it (date-pruned, not liveness-pruned) is exactly what caused the old false-fire. The legacy
+#   shared-marker heuristic survives ONLY as the genuine old-CLI fallback (CLAUDE_CODE_SESSION_ID
+#   unset), the same fallback boundary as the marker-resolution loud fallback in session-marker.md.
+#   STILL A HEURISTIC, degrades safe: a CRASHED session leaves a stale per-id marker until
+#   /prime's next-day prune (occasional unnecessary nudge), and the precise lsof/cwd detector
+#   remains deliberately deferred as brittle. Never a block, never a missed real collision.
+#
+# WHY ONLY A NUDGE — NOT A BLOCK (verified 2026-06-10 against the Claude Code hooks docs):
+#   a SessionStart hook CANNOT block a session. On exit code 2 stderr is shown to the user but
+#   execution continues; SessionStart is an advisory/context-injection event, not in the set of
+#   hook events that can block (PreToolUse, UserPromptSubmit, PermissionRequest, ...). The
+#   session's cwd is also already fixed before any hook runs (so it cannot redirect into a
+#   worktree). Therefore the STRONGEST this hook can do is a forceful message, which the operator
+#   can still proceed past. The actual blocking of the one dangerous move — a cross-session
+#   COMMIT that ships another session's staged files — is enforced by check-foreign-staging.sh,
+#   a PreToolUse hook (Fix 2, commit f5e013c). This hook is the best-effort early heads-up that
+#   PAIRS WITH that commit-time block; it does not and cannot replace it.
 #
 # CONTRACT — non-blocking. Every path ends in `exit 0`. If the process signal is
 #   unavailable (pgrep absent), emit a loud one-line skip notice (principles
-#   OP-3, no silent rot) rather than failing closed. Two-end contract: registered
-#   in docs/session-marker.md.
+#   OP-3, no silent rot) rather than failing closed. Two-end contract (the /wrap-session
+#   Step 13 per-id teardown this hook depends on): registered in docs/session-marker.md.
 
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
 TODAY=$(date +%Y-%m-%d)
@@ -84,20 +103,57 @@ esac
 
 OTHERS=$((SESSION_COUNT - 1))
 
-# --- Project marker context (read-only): is there a today-dated marker in THIS checkout? ---
-# A today marker here + another live session = strong same-checkout signal → sharp nudge.
-TODAY_MARKER_HERE=0
-MARKER_CONTENT=""
-MARKER_FILE="$PROJECT_DIR/logs/.session-marker"
-if [ -f "$MARKER_FILE" ]; then
-  MARKER_CONTENT=$(cat "$MARKER_FILE" 2>/dev/null)
-  [ "${MARKER_CONTENT%% *}" = "$TODAY" ] && TODAY_MARKER_HERE=1
+# --- Same-checkout liveness discriminator (per-id marker oracle) ---
+# /prime writes logs/.session-marker-${CLAUDE_CODE_SESSION_ID} per session; /wrap-session
+# REMOVES it at teardown (Step 13). So a today-dated per-id marker is a session that primed in
+# THIS checkout today and has NOT wrapped ≈ a live (or crashed) session here. THIS session's own
+# marker is excluded — and at a normal SessionStart it does not exist yet, because /prime runs
+# AFTER this hook. This is the precise same-checkout signal the legacy shared-marker heuristic
+# could not give: the shared logs/.session-marker is date-pruned, not liveness-pruned, so it
+# stayed set after this operator's OWN earlier session wrapped, false-firing the sharp nudge on
+# every solo same-day re-open. The per-id-marker + wrap-teardown pair removes that false-fire.
+if [ -z "${CLAUDE_CODE_SESSION_ID}" ]; then
+  # OLD-CLI FALLBACK — the harness does not inject CLAUDE_CODE_SESSION_ID, so /prime could not have
+  # written per-id markers and the liveness oracle is genuinely unavailable. Preserve the legacy
+  # shared-marker heuristic so the safety net is not lost on an old CLI. This is the SAME fallback
+  # boundary as the marker-resolution loud fallback (docs/session-marker.md: legacy path only when
+  # the var is unset, never when it is set-but-file-absent). HEURISTIC: a prior WRAPPED session also
+  # leaves a today shared-marker, so this path can over-fire; degrades safe (soft nudge, never a
+  # block — SessionStart cannot block; see header).
+  TODAY_MARKER_HERE=0
+  MARKER_CONTENT=""
+  MARKER_FILE="$PROJECT_DIR/logs/.session-marker"
+  if [ -f "$MARKER_FILE" ]; then
+    MARKER_CONTENT=$(cat "$MARKER_FILE" 2>/dev/null)
+    [ "${MARKER_CONTENT%% *}" = "$TODAY" ] && TODAY_MARKER_HERE=1
+  fi
+  if [ "$TODAY_MARKER_HERE" -eq 1 ]; then
+    emit "CONCURRENT SESSIONS — another session may be active in THIS checkout (${OTHERS} other session(s) running; this project primed today: ${MARKER_CONTENT}). Two sessions in one checkout silently overwrite each other's uncommitted edits. DO NOT start parallel work here: run /new-worktree-session for an isolated copy, or finish/'/clear' the other session first. (Heuristic: if the other session already wrapped, this checkout is safe — verify before parallel work.) See docs/parallel-sessions-playbook.md § 4."
+  fi
+else
+  # ORACLE PATH — decide purely on the un-wrapped foreign per-id liveness set. A today-dated per-id
+  # marker OTHER than this session's own = a session that primed in THIS checkout today and has NOT
+  # wrapped ≈ a live foreign session here. THIS session's own marker is excluded (and at a normal
+  # SessionStart it does not exist yet — /prime runs after this hook). Crucially, ABSENT per-id
+  # markers => every session that primed here today has wrapped (Step 13 teardown removed its marker)
+  # => no live foreign session here => fall through to SOFT. This is the false-fire fix: the
+  # operator's OWN already-wrapped session no longer triggers the sharp nudge on a solo same-day
+  # re-open. (The shared logs/.session-marker is deliberately NOT consulted here — it is date-pruned,
+  # not liveness-pruned, and reading it is exactly what caused the old false-fire.)
+  SELF_MARKER="$PROJECT_DIR/logs/.session-marker-${CLAUDE_CODE_SESSION_ID}"
+  LIVE_FOREIGN_HERE=0
+  for f in "$PROJECT_DIR"/logs/.session-marker-*; do
+    [ -f "$f" ] || continue                          # glob matched nothing → no per-id markers
+    [ "$f" = "$SELF_MARKER" ] && continue            # exclude this session's own
+    c=$(cat "$f" 2>/dev/null)
+    [ "${c%% *}" = "$TODAY" ] && LIVE_FOREIGN_HERE=$((LIVE_FOREIGN_HERE + 1))
+  done
+  if [ "$LIVE_FOREIGN_HERE" -ge 1 ]; then
+    # SHARP nudge — an un-wrapped foreign session primed in THIS checkout today (genuine same-checkout concurrency).
+    emit "CONCURRENT SESSIONS — another session is ACTIVE in THIS checkout (${LIVE_FOREIGN_HERE} un-wrapped session(s) primed here today; ${OTHERS} live session(s) on this machine). Two sessions in one checkout silently overwrite each other's uncommitted edits — this is the recurring collision. DO NOT start parallel work here: run /new-worktree-session to get an isolated copy and work in THAT, or finish/'/clear' the other session before running /prime or /wrap-session. The commit-time guard (check-foreign-staging.sh) blocks a cross-session COMMIT, but it cannot stop live-edit races — isolate now. See docs/parallel-sessions-playbook.md § 4."
+  fi
+  # No un-wrapped foreign session in THIS checkout → fall through to the soft machine-wide notice.
 fi
 
-if [ "$TODAY_MARKER_HERE" -eq 1 ]; then
-  # SHARP nudge — same-checkout concurrency is likely (the recurring Mode-A condition).
-  emit "CONCURRENT SESSIONS — another session is likely active in THIS checkout (${OTHERS} other session(s) running; this project already primed today: ${MARKER_CONTENT}). Two sessions in one checkout silently overwrite each other's uncommitted edits — this is the recurring collision. DO NOT start parallel work here: run /new-worktree-session to get an isolated copy and work in THAT, or coordinate (finish or /clear one of the sessions) before running /prime or /wrap-session. See docs/parallel-sessions-playbook.md § 4. (Heuristic: if the other session already wrapped, this checkout is safe — but verify before doing parallel work.)"
-fi
-
-# SOFT warning — another session exists machine-wide, but none primed in THIS checkout today.
-emit "CONCURRENT SESSIONS — ${OTHERS} other Claude Code session(s) running on this machine (${SESSION_COUNT} total). None has primed in THIS checkout today, so this folder is probably clear — but if you start parallel work in this project, isolate it: run /new-worktree-session for a separate worktree rather than a second session in this checkout. Two sessions in one checkout silently overwrite each other's uncommitted edits. See docs/parallel-sessions-playbook.md § 4."
+# SOFT warning — a live session exists machine-wide, but none is un-wrapped in THIS checkout.
+emit "CONCURRENT SESSIONS — ${OTHERS} other Claude Code session(s) running on this machine (${SESSION_COUNT} total). None is un-wrapped in THIS checkout, so this folder is probably clear — but if you start parallel work in this project, isolate it: run /new-worktree-session for a separate worktree rather than a second session in this checkout. Two sessions in one checkout silently overwrite each other's uncommitted edits. See docs/parallel-sessions-playbook.md § 4."
