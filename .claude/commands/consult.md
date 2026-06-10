@@ -1,9 +1,15 @@
 ---
 description: Consult the Axcíon AI System Owner — architectural judgment on systems-thinking questions or proposed repo changes.
 model: opus
-disable-model-invocation: true
 argument-hint: "<question or situation>"
 ---
+
+<!-- DO NOT add `disable-model-invocation: true` here. /consult is auto-invoked by name from
+     risk-check.md (Step 17b), resolve-incident.md, and pm.md (Fallback 5d) as a designed
+     second-opinion step; the flag removes /consult from the model-invocable set and silently
+     breaks all three. The spontaneous-firing concern it was meant to address is already
+     covered by Step 0's read-first gate + the preamble line below. (Regression: added
+     2026-05-29 in 51b69dc, reverted 2026-06-10.) -->
 
 Consult the Axcíon AI System Owner on a structural question or a proposed repo change. Delegates to the `system-owner` agent (Opus); the agent reads the project's persona / grounding / toolkit-relationship references plus selected vault architectural reference docs and returns a grounded judgment in System Owner voice.
 
