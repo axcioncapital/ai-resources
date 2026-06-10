@@ -420,3 +420,30 @@ None irreversible. The two S4 foreign files (`workflows/research-workflow/refere
 
 ### Open Questions
 - Promotion-vs-rollback on `da72d7a` (S4's research-workflow canonical promotion) — keep or revert? Unresolved, operator's call.
+
+## 2026-06-10 — Session S2 (cont.) — /clarify infra-request SO-routing pointer
+### Summary
+Designed and shipped an addition to `/clarify`: infrastructure-implementation requests (a /clarify whose target is a Claude Code harness resource — command, agent, hook, skill, settings.json, or CLAUDE.md rule) now get an **advisory pointer** in §3 to run `/consult` or `/decide` before answering. The operator's original ask was to **auto-spawn** the system-owner agent from /clarify; the review chain (SO pass → plan-time /risk-check RECONSIDER → SO reconciliation) talked that down to the advisory nudge, which the operator selected (Option 1). Advisory-only, no auto-spawn, clarify.md stays `model: sonnet`. (Started directly with /clarify, so this session is unmarked — no /prime; see Risky actions.)
+
+### Files Created
+- `logs/scratchpads/2026-06-10-11-35-scratchpad.md` — continuity scratchpad for this session.
+- `audits/risk-checks/2026-06-10-add-system-owner-pass-to-clarify-for-infra-requests.md` — plan-time risk-check report (RECONSIDER); committed in `0690ef5`.
+
+### Files Modified
+- `.claude/commands/clarify.md` — added the §3 advisory infra-request pointer; committed in `0690ef5`.
+- `logs/improvement-log.md` — two pending entries: (1) system-owner agent reports "Full advisory on disk" without writing the file; (2) unmarked /clarify-first session risks false-CONCURRENT wrap guard.
+- `logs/decisions.md` — the Option-1 design decision.
+- `logs/session-notes.md` — this entry.
+
+### Decisions Made
+- Chose **Option 1 (advisory nudge)** over auto-spawning the system-owner from /clarify. Driven by plan-time /risk-check RECONSIDER (auto-spawn + silent self-resolve crosses the OP-5 advisory→enforcement line on a first-touch command symlinked to ~20 sites, without a recorded OP-11 posture revision) and SO partial-concurrence. Logged to decisions.md.
+
+### Risky actions
+At wrap, detected a session-id ↔ marker mismatch: this /clarify-first session is unmarked (`NO_OWN_MARKER=1`) while an earlier same-day session-id held the `S2` marker + header. The Step 3.5 guard returned `FOREIGN=0` (prior S2 content already in HEAD), so the wrap proceeded correctly — no destructive or co-mingling action taken. The latent false-CONCURRENT risk (had that prior work been uncommitted) is logged to improvement-log.md.
+
+### Next Steps
+- Push the gated commits (operator confirmation at this wrap).
+- Friday cadence resolves the two pending improvement-log entries (SO write-failure; unmarked-/clarify wrap-guard gap).
+
+### Open Questions
+- None for this session's work.
