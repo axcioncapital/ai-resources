@@ -261,3 +261,11 @@
 - **QC cycles:** 1 (independent qc-reviewer → GO, one cosmetic fix folded)
 - **Gates:** 2 (1 changed) — plan-approval:confirmed (mandate `y`), content-review:confirmed (Gated stop-point framing resolution → `go`); 1 mid-wrap guard-disposition:changed (Step 3.5 REMNANT false-positive, operator confirmed proceed)
 - **Mandate fields:** specified: work_scope, exit_condition, out_of_scope, allowed_inputs, required_outputs, stop_if | inferred: files_in_scope | omitted: (none)
+
+### 2026-06-10 — Fix 1 (re-scoped) same-checkout false-fire fix via per-id liveness
+- **Commands used:** /prime (1 auto), /session-start + /session-plan (inline via auto-mode), /risk-check, /consult (attempted — model-invocation-disabled; fell back to system-owner agent), AskUserQuestion (re-scope), /qc-pass, /wrap-session
+- **Iterations:** 1 self-caught rework (the oracle-vs-old-CLI fallback boundary — first impl keyed on marker-absence, which re-introduced the solo-reopen false-fire; caught in dry-run testing before QC)
+- **Decisions logged:** 3
+- **QC cycles:** 1 (APPROVE, no must-fix)
+- **Gates:** 2 (1 changed) — plan-approval:confirmed (auto-mode single approval gate via `go`), service-design-disposition:changed (operator chose re-scope from forceful-block to soft precision-fix after the not-buildable finding)
+- **Mandate fields:** specified: work_scope, exit_condition, Out of scope, Stop if | inferred: Files in scope | omitted: Allowed inputs, Required outputs

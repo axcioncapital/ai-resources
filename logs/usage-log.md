@@ -522,3 +522,31 @@
 - **Ship the R4 structural fix (session-notes.md tail in-context tracking, ~800–1.5k tokens/wrap).** Now flagged 8+ consecutive entries. The per-session saving is modest but it compounds across every session and the fix is a single /wrap-session edit. Highest-ROI unshipped lever in the log.
 - **Wrap Step 3.5 date-rollover guard: add a grace window or compare against git log rather than calendar date (~0 tokens/fix, prevents per-overnight false-positive).** Operator confirm absorbed the false-positive this session, but overnight sessions will hit it every time until fixed.
 - **Brief-as-source-enumeration skip-signal for context-discovery engine (~2–3k tokens/applicable session).** This session confirmed the pattern: when a brief pre-enumerates all source files, the engine is redundant. Consider adding a `sources-complete: true` flag to the brief schema so /session-start can skip the engine auto-fire without a judgment call.
+
+## 2026-06-10 (S1) — Concurrent-session isolation Fix 1: SessionStart precision-fix (re-scoped mid-session)
+
+**Task:** Shipped Fix 1 of the concurrent-session isolation fix-plan (picked via `/prime 1 auto`). RE-SCOPED mid-session (operator-approved) from a "forceful SessionStart block" to a "soft precision-fix" after an authoritative finding that SessionStart hooks cannot block. Rewrote `detect-concurrent-session.sh` (per-id-marker liveness discriminator + old-CLI fallback, still non-blocking), added `/wrap-session` Step 13 marker teardown, updated 2 docs, re-synced 2 byte-identical project hook copies. 3 commits across 3 repos.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~10 (approx) |
+| Files read | ~12 (approx; re-reads: 0 flagged) |
+| Files written/edited | ~12 (approx; hook ×2 edits + header, 2 project copies, wrap-session.md, session-marker.md ×3, parallel-sessions-playbook.md, session-notes ×several, decisions, coaching, friction-log restore+append, improvement-log ×2, session-plan, scratchpad, risk-check report) |
+| Tool calls | ~45 (approx; Bash-heavy — pulls, marker setup, dry-run harness, syntax checks, copy syncs, log appends) |
+| Subagents | 5 (risk-check-reviewer, system-owner 2nd-opinion, claude-code-guide mechanism probe, qc-reviewer APPROVE, general-purpose outcome-check) + session-feedback-collector (hit a write incident) |
+| Rework cycles | 1 (self-caught fallback-boundary bug in dry-run, pre-QC) |
+
+**Findings:**
+- **Mid-session re-scope on a platform-capability finding — load-bearing, not waste.** The "SessionStart hooks cannot block" finding inverted the fix's whole posture (forceful block → soft precision-fix) before any code shipped. Caught early via the system-owner 2nd-opinion + claude-code-guide mechanism probe; cost ~2 subagents but prevented shipping a guard built on a false capability assumption. This is the validation layer working, same class as the 2026-06-01 marker-clobber dry-run REJECT.
+- **Subagent write incident — Moderate (Tool overhead / rework).** The session-feedback-collector subagent hit a destructive-overwrite incident at wrap; recovered by restoring the clobbered file from HEAD and re-routing the feedback signals by hand. Cost: a restore + manual re-append cycle. Recurring shared-mutable-file write-discipline class (cf. concurrent-session marker collisions flagged 4+ prior entries) — a subagent writing a whole-file overwrite to an append-only log is the same failure shape the workspace already guards against for the main session but not for spawned agents.
+- **Dry-run caught its own bug — positive.** The fallback-boundary bug in `detect-concurrent-session.sh` surfaced in the 7-scenario dry-run harness before QC, so the qc-reviewer pass saw clean code and returned APPROVE. Self-caught rework is the cheap kind; the dry-run harness paid for itself.
+- **Trend vs last 3 entries (S2 Acceptable / S6 Efficient / this):** Acceptable — held off Efficient by the collector write incident (1 Moderate). Otherwise lean: 0 flagged re-reads, single self-caught rework cycle, subagent count (5) proportional to a re-scoped structural change requiring risk-check + capability verification + QC.
+
+**Recommendation:** Apply the main-session append-only write discipline to spawned subagents that touch shared logs. The session-feedback-collector (and any subagent writing to coaching-data / friction-log / decisions) should be contracted to APPEND via heredoc, never whole-file Write — mirror the `File Write Discipline` rule into the subagent's own body. Highest-leverage because it closes a destructive-loss class (not just a token leak) and the same fix template covers every log-appending subagent.
+
+**Estimated savings:** The incident cost ~2–4k tokens this session (HEAD restore + diff inspection + manual re-append). Token saving is secondary; the real cost averted is data loss — a clobbered append-only log not caught at wrap is unrecoverable from context. At the current rate (collector fires ~1×/substantive session), a one-line contract change prevents ~1 destructive-overwrite risk per session, ~10–20 averted over the horizon.
+
+**Additional levers (ROI-ranked):**
+- **Marker-teardown discipline now in wrap Step 13 (~0 tokens/fix, prevents stale-marker false-positives).** This session added the per-id marker teardown; the adjacent lever is verifying teardown actually runs on abnormal exit (crash / compaction-kill) where wrap never fires — a stale per-id marker would then mislead the next same-checkout session's liveness discriminator. Low frequency, high cleanliness value.
+- **Capability-assumption pre-flight for hook fix-plans (~10–20k tokens/recurrence).** The re-scope cost ~2 subagents because the fix-plan assumed SessionStart could block. A one-line "verify the hook event's blocking capability against the platform doc before drafting the fix" check at fix-plan intake would catch this class deterministically. Low frequency but large per-occurrence — same shape as the 2026-06-01 "validate-before-invest" lever.
+- **Byte-identical hook-copy sync (~0.5–1k tokens/session when it fires).** Two project hook copies re-synced by hand after the canonical edit. A sync helper (or a single source-of-truth + symlink) would remove the manual copy step. Smallest lever — narrow trigger — but a clean win whenever a shared hook changes.

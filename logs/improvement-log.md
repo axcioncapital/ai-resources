@@ -467,3 +467,23 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Proposal:** The new PreToolUse(Bash) staging tripwire (Fix 2, S5 — `check-foreign-staging.sh`) fails open when a session has no resolvable footprint (no marker, no `- Files in scope:` bullet, or an `(inferred)`/`(none stated)` bullet) — so a primed-but-not-planned or inferred-footprint session, the highest-risk concurrency scenario, gets no foreign-staging protection. Consider a complementary minimum guard (e.g., warn-and-pause when a gated git verb runs with no concrete footprint AND another session marker is present), or fold footprint-presence into the Fix 1 blocking SessionStart path. Same blind spot `concurrent-session-check.md` documents as its #1 failure.
 - **Target files:** `.claude/hooks/check-foreign-staging.sh`; cross-ref `.claude/hooks/detect-concurrent-session.sh` (Fix 1).
 - **Review-cycle:** monthly
+
+### 2026-06-10 — Port /wrap-session Step 13 per-id teardown to the workspace-root wrap-session.md copy (PENDING)
+- **Status:** logged (pending)
+- **Category:** guardrail-candidate
+- **Severity:** low
+- **Provenance:** wrap-collector (machine-authored, manually re-appended after a collector write incident) 2026-06-10
+- **Friction source:** wrap-collector 2026-06-10 — safety / guardrail-gap (S1)
+- **Proposal:** Fix 1 (S1, 2026-06-10) added Step 13 to the canonical `ai-resources/.claude/commands/wrap-session.md` — a per-id session-marker teardown (`rm -f logs/.session-marker-${CLAUDE_CODE_SESSION_ID}`) that makes the per-id marker set a liveness signal for `detect-concurrent-session.sh`'s same-checkout false-fire fix. The workspace-root `/.claude/commands/wrap-session.md` is an independent non-symlink copy and does NOT yet have Step 13 (flagged in-code via MIRROR NOTE). Until ported, workspace-root sessions won't clean up their per-id markers at wrap, so the detector's same-checkout false-fire returns for workspace-root-launched sessions (a wrapped session's per-id marker persists → counts as "live" → SHARP nudge mis-fires). Port Step 13 to the workspace-root copy as its final step on the next sync. Latent degradation only (an occasional unnecessary soft nudge), no harm.
+- **Target files:** `/.claude/commands/wrap-session.md` (workspace-root); cross-ref `ai-resources/.claude/commands/wrap-session.md` Step 13 + `ai-resources/.claude/hooks/detect-concurrent-session.sh`.
+- **Review-cycle:** monthly
+
+### 2026-06-10 — Harden session-feedback-collector to append-only (destructive-Write recurrence) (PENDING)
+- **Status:** logged (pending)
+- **Category:** guardrail-candidate
+- **Severity:** medium
+- **Provenance:** main-session (escalated from friction-log on second occurrence) 2026-06-10
+- **Friction source:** wrap-collector destructive-overwrite incidents — 2026-06-09 (S5, overwrote improvement-log.md) + 2026-06-10 (S1, overwrote friction-log.md)
+- **Proposal:** The `session-feedback-collector` subagent has now destructively overwritten an append-only shared log via a whole-file `Write` in TWO consecutive substantive sessions (S5: `improvement-log.md` → `placeholder`; S1: `friction-log.md` → 1-line header), each time caught + restored from HEAD but only because the file was clean == HEAD at session start. This is a confirmed pattern, not a one-off. Harden the agent so it CANNOT whole-file-`Write` a shared log: (a) instruct the agent to append exclusively via `Bash` heredoc (`cat >> log <<'EOF'`) or `Edit` on a unique anchor, never `Write`; (b) optionally add a pre-write entry-count floor / line-count guard (mirror the `/improve` guard that `docs/commit-discipline.md § Shared-log write-path integrity` prescribes for the non-append logs) so a truncating write is refused before it lands. The agent already self-detects and refuses to reconstruct (good failure behavior) — the gap is purely that the destructive write happens at all. Also: the agent created a stray `.append-marker-tmp` scratch file (S1) — instruct it to use no on-disk scratch.
+- **Target files:** `ai-resources/.claude/agents/session-feedback-collector.md`; cross-ref `docs/commit-discipline.md § Shared-log write-path integrity`.
+- **Review-cycle:** weekly

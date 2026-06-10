@@ -316,3 +316,52 @@ None irreversible. Two near-relevant notes: (1) the hook went live in `settings.
 - Stop if: /risk-check returns NO-GO or RECONSIDER (resolved: PROCEED-WITH-CAUTION, re-scoped per operator after the SessionStart-can't-block finding fired this very Stop-if; mitigations applied)
 
 Build Fix 1 of the concurrent-session isolation fix-plan — upgrade `detect-concurrent-session.sh` to a blocking SessionStart decision when the same checkout is already in use.
+
+### Summary
+Built **Fix 1** of the concurrent-session isolation fix-plan, but RE-SCOPED mid-session (operator-approved) from the planned "forceful SessionStart block" to a **soft precision-fix**. An authoritative Claude Code hooks-docs check (claude-code-guide), confirmed by `/risk-check` (PROCEED-WITH-CAUTION) and a system-owner second opinion, established that a SessionStart hook **cannot block** a session — exit 2 only shows stderr; the session continues. The block premise was therefore not buildable (the mandate's Stop-if fired). The shipped change instead removes the same-checkout nudge's false-fire on the operator's own already-wrapped same-day session: the sharp nudge is now keyed on the count of **un-wrapped foreign per-id markers** (a liveness signal) rather than the date-pruned shared marker, completed by a new `/wrap-session` Step 13 that deletes the session's per-id marker at teardown. 7 dry-run scenarios pass; QC APPROVE. 3 commits across 3 repos.
+
+### Files Created
+- `logs/session-plan-2026-06-10-S1.md` — the session plan. (`93c6cdc`)
+- `audits/risk-checks/2026-06-10-upgrade-detect-concurrent-session-sh-fix-1-same-checkout-block.md` — `/risk-check` report (PROCEED-WITH-CAUTION) + system-owner Architectural Commentary + the two empirical resolutions (SessionStart-can't-block; 2 byte-identical project copies confirmed). (`93c6cdc`)
+- `logs/scratchpads/2026-06-10-10-30-scratchpad.md` — continuity scratchpad.
+
+### Files Modified
+- `.claude/hooks/detect-concurrent-session.sh` — same-checkout SHARP/SOFT decision rewritten to the per-id liveness discriminator (oracle path) + legacy old-CLI fallback; header rewritten with the liveness + why-only-a-nudge sections. Still non-blocking. (`93c6cdc`)
+- `.claude/commands/wrap-session.md` — new Step 13 per-id marker teardown (final wrap action). (`93c6cdc`)
+- `docs/session-marker.md` — teardown writer entry + detect-hook runtime consumer (3-copy lockstep) + rewritten §Concurrent-session detection narrative. (`93c6cdc`)
+- `docs/parallel-sessions-playbook.md` — one-line hook bullet (liveness-tightening + Fix 2 pairing). (`93c6cdc`)
+- `logs/session-notes.md` — mandate line amended to record the re-scope. (`93c6cdc`)
+- `projects/positioning-research/.claude/hooks/detect-concurrent-session.sh` — byte-identical re-sync. (`5e0e0f9`, separate repo)
+- `projects/research-pe-regime-shift-advisory-gap/.claude/hooks/detect-concurrent-session.sh` — byte-identical re-sync. (`2e738e7`, separate repo)
+
+### Decisions Made
+- **Re-scope Fix 1 from "forceful block" to "soft precision-fix"** (operator-approved via AskUserQuestion) — a SessionStart hook cannot block (verified vs docs); the block premise was not buildable. Enforcement of the dangerous move (cross-session commit) stays with Fix 2's PreToolUse tripwire. Source: operator decision after the Stop-if fired.
+- **Liveness via per-id marker + wrap-teardown, NOT a new state file or lsof/cwd** — reuses the existing per-id markers; `/wrap-session` Step 13 deletes the session's own at teardown so the per-id set means "un-wrapped ≈ live." The precise lsof/cwd detector stays deferred (the hook author's deliberate call). Source: Claude design, QC-confirmed.
+- **Oracle-vs-old-CLI fallback boundary = `CLAUDE_CODE_SESSION_ID` unset** (not "no per-id markers") — caught during dry-run testing: keying the fallback on marker-absence re-introduced the exact solo-reopen false-fire (own wrapped → 0 per-id markers → legacy SHARP). Scoped the legacy heuristic to genuine old-CLI only. Source: Claude (self-caught test failure).
+
+### Outcome
+COMPLETION: DELIVERED
+EXECUTION: OPTIMAL
+- What was asked but not done: none. Independent outcome check (general-purpose, fresh context, 2026-06-10) verified all four claims against reality: hook non-blocking (every path exit 0) with the per-id liveness discriminator + `[ -z CLAUDE_CODE_SESSION_ID ]` old-CLI fallback boundary; wrap-session Step 13 teardown final + per-id-only; three hook copies byte-identical (diff clean); all three commits (93c6cdc, 5e0e0f9, 2e738e7) present with claimed contents.
+- Better path: none. The mid-session re-scope was the correct response to the not-buildable block premise (surfaced, operator-approved), not a detour.
+- Confidence: high.
+
+### Risky actions
+None irreversible. Note: the new `/wrap-session` Step 13 teardown runs for the FIRST time on THIS wrap (dogfood) — it removes only this session's own per-id marker, after all marker-dependent steps. The two pre-existing S4 foreign files remained untouched in the working tree throughout and were never staged (explicit-path commits; the Fix 2 tripwire would have blocked a sweep). **Wrap incident:** the `session-feedback-collector` subagent (Step 6.5) destructively overwrote `logs/friction-log.md` via a whole-file `Write` (truncated to 1 line) + created a stray `.append-marker-tmp` — a SECOND occurrence of the S5 collector hazard (S5 hit improvement-log.md). Caught by the subagent itself; restored losslessly from HEAD (`git restore --source=HEAD`); stray file removed; both intended signals re-appended by hand; collector-hardening escalated to a medium improvement-log entry.
+
+### Session Assessment (wrap-collector, 2026-06-10 — reconstructed by main session after the collector's write incident)
+- Autonomy-compounding: Fix 1 is an evolution of an existing fix-plan consumer (`detect-concurrent-session.sh`), not a novel reusable component — no `/innovation-sweep` nudge.
+- Leanness/cost: no signal — clean re-scope, no churn, no always-loaded weight added.
+- Principle-drift: no signal — the re-scope respected the bypassPermissions / zero-prompt floor, OP-12 (closure before detection: Fix 2 already blocks the dangerous move), and the hook author's lsof/cwd deferral.
+- Friction: two entries hand-routed to friction-log (process-safety: collector destructive-overwrite RECURRENCE; process/spec: fix-plan baked an un-buildable SessionStart-block premise caught only at build time).
+- Safety: two guardrail-candidates routed to improvement-log — (low) workspace-root wrap-session.md lacks the Step 13 teardown port; (medium) session-feedback-collector destructive-Write recurrence → harden to append-only.
+- Routed: 2→friction-log, 2→improvement-log (all hand-appended after the collector incident; collector wrote nothing).
+
+### Next Steps
+- Build **Fix 4(a)** (wrap-owns shared-log discipline) — next in the isolation fix-plan build order (Fix 2 ✓ → Fix 1 ✓ → Fix 4(a) → Fix 3 → Fix 4(b)). Source: `audits/2026-06-09-concurrent-session-isolation-fix-plan.md`.
+- **Port the `/wrap-session` Step 13 per-id teardown to the workspace-root `.claude/commands/wrap-session.md` copy** (flagged in-code via MIRROR NOTE) — its sessions otherwise won't clean up per-id markers, degrading the new liveness signal at workspace-root.
+- Decide the **promotion-vs-rollback** question on `da72d7a` (carryover from S3/S5 — operator's call).
+- Push the unpushed commits (gated confirmation at this wrap).
+
+### Open Questions
+- Promotion-vs-rollback on `da72d7a` (S4's research-workflow canonical promotion) — keep or revert? Unresolved, operator's call.
