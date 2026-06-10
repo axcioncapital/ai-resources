@@ -365,3 +365,58 @@ None irreversible. Note: the new `/wrap-session` Step 13 teardown runs for the F
 
 ### Open Questions
 - Promotion-vs-rollback on `da72d7a` (S4's research-workflow canonical promotion) — keep or revert? Unresolved, operator's call.
+
+## 2026-06-10 — Session S2
+**Mandate:** Establish the "wrap-owns" discipline for the in-place mutations of the shared logs (improvement-log.md, decisions.md) in docs/commit-discipline.md, so concurrent sessions serialize on those logs instead of colliding — done when: the wrap-owns rule is documented in commit-discipline.md, the append-vs-in-place doc-classification conflict is reconciled, legitimate non-wrap appenders are explicitly carved out, /risk-check GO, /qc-pass clean, committed
+- Out of scope: Fix 3, Fix 4(b) per-session namespacing; the da72d7a promotion-vs-rollback decision; the two untouched S4 foreign files; carryover task #2 (porting wrap-session Step 13 to the workspace-root copy)
+- Files in scope: docs/commit-discipline.md, .claude/commands/wrap-session.md, .claude/commands/improve.md, .claude/commands/resolve-improvement-log.md, docs/parallel-sessions-playbook.md (inferred)
+- Stop if: /risk-check returns NO-GO or RECONSIDER
+- Context pack: output/context-packs/documentation-20260610-f3a9c/pack.md
+
+Build Fix 4(a) of the concurrent-session isolation fix-plan — wrap-owns shared-log discipline for the non-append logs (improvement-log.md, decisions.md).
+
+### Summary
+Built **Fix 4(a)** of the concurrent-session isolation fix-plan: added a "Maintenance-owned in-place mutations" rule to `docs/commit-discipline.md` codifying that the shared status logs (`improvement-log.md`, `friction-log.md`) may be **appended** by ordinary work sessions but only **mutated in place** (status flips, archiving) by dedicated single-purpose sessions — the Friday maintenance cadence and `/fix-repo-issues` plan execution. Reconciled an internal contradiction in `commit-discipline.md` itself (the foreign-staging exempt-list called these logs "append-only/benign" while § Shared-log write-path integrity called them "non-append/lost-update hazard" — both right about different operations). Picked via `/prime 1 auto`; risk-check GO; QC REVISE→APPROVE. 1 commit.
+
+### Files Created
+- `audits/risk-checks/2026-06-10-add-maintenance-owned-in-place-mutations-rule-fix-4a.md` — `/risk-check` report (GO, all six dimensions Low). (`9976a6b`)
+- `logs/session-plan-2026-06-10-S2.md` — the session plan.
+- `logs/scratchpads/2026-06-10-14-30-scratchpad.md` — continuity scratchpad.
+
+### Files Modified
+- `docs/commit-discipline.md` — NEW section "## Maintenance-owned in-place mutations (shared-log serialization)"; scoping clause added to the foreign-staging tripwire exempt-list paragraph (reconciles the L25/L29 contradiction). (`9976a6b`)
+- `docs/parallel-sessions-playbook.md` — one new row in the § 2 file-shape classification table (append-shaped-with-in-place-mutations), cross-referencing the new rule. No rewrite (fix-plan §5). (`9976a6b`)
+- `logs/session-notes.md` — mandate line + this wrap note.
+
+### Decisions Made
+- **Reconcile the append-vs-in-place classification as two operation classes on the same files** — the exempt-list's "append-only/benign" and the write-path-integrity section's "non-append/hazard" both hold, for the append vs in-place-mutation operations respectively. Source: Claude design, grounded in the context-engine conflict flag + the three docs.
+- **Frame the rule as "dedicated single-purpose sessions," not "maintenance-cadence only"** — QC pass 1 caught `/fix-repo-issues` plan execution as a mid-session in-place mutator outside the Friday cadence, falsifying the narrower claim. Broadened to "dedicated single-purpose sessions" (maintenance cadence + fix-execution), which keeps the invariant TRUE. Source: QC REVISE finding, resolved by Claude.
+- **No command edits** — the invariant already holds (Stage 0 investigation: all in-place mutators are already dedicated-session commands; all mid-session writers append-only with the existing integrity guard). The rule is a guardrail against future drift, not a behavior change. Source: Claude design.
+
+### Outcome
+COMPLETION: DELIVERED
+EXECUTION: OPTIMAL
+- What was asked but not done: none. Independent outcome check (general-purpose, fresh context, 2026-06-10) verified every mandate element against the actual files: wrap-owns rule present (commit-discipline.md new section), L25/L29 contradiction reconciled via the two-class table, legitimate appenders carved out, /risk-check GO file confirmed, QC REVISE→APPROVE corroborated by the /fix-repo-issues mutator now listed, single commit 9976a6b at top of log.
+- Refinement assessed sound: the mandate paired "improvement-log.md, decisions.md" but the shipped rule covers improvement-log.md + friction-log.md and carves decisions.md out as append-only (no in-place status-flip writer exists for it). The outcome check ruled this a defensible evidence-led refinement, not a miss — decisions.md is covered if ever archived.
+- Better path: none. Confidence: high.
+
+### Risky actions
+None irreversible. The two S4 foreign files (`workflows/research-workflow/reference/claim-permission.template.md` modified, `audits/risk-checks/2026-06-09-promote-3-...md` untracked) remained untouched in the working tree throughout and were never staged (explicit-path commit `9976a6b`). Foreign-session pre-write guard ran at wrap: FOREIGN=0 (no concurrent content).
+
+### Session Assessment (wrap-collector, 2026-06-10 — S2)
+- Autonomy-compounding: no signal — Fix 4(a) codifies the already-logged wrap-owns shared-log discipline (improvement-log L413), an existing backlog item, not a novel reusable component.
+- Leanness/cost: no signal — 1 commit, no churn, no always-loaded weight; doc-only change adds no hook/CLAUDE.md load.
+- Principle-drift: no signal — reconciled the commit-discipline.md L25/L29 internal contradiction (single-source spirit upheld); no strained principle.
+- Friction: no signal — no collector incident this session (contrast S5/S1), FOREIGN=0 at wrap, explicit-path commit. The QC REVISE→APPROVE was a normal in-loop QC catch, not operator intervention.
+- Safety: none observed — `### Risky actions` = none irreversible; two S4 foreign files left untouched/unstaged; pre-write guard clean.
+- Routed: 0→improvement-log, 0→friction-log. Not logged (per-session cap): none.
+- Note: S2's deliverable *resolves* the active improvement-log wrap-owns sub-point (L413); the collector did not flip that entry's status (Friday-cadence / `/improve` work, outside collector scope).
+
+### Next Steps
+- Build **Fix 3** (make worktree-launch the default for a second session) — next in the isolation fix-plan build order (Fix 2 ✓ → Fix 1 ✓ → Fix 4(a) ✓ → Fix 3 → Fix 4(b)). Source: `audits/2026-06-09-concurrent-session-isolation-fix-plan.md`.
+- **Port the `/wrap-session` Step 13 per-id teardown to the workspace-root `.claude/commands/wrap-session.md` copy** (S1 carryover, flagged in-code via MIRROR NOTE).
+- Decide the **promotion-vs-rollback** question on `da72d7a` (carryover from S3/S5/S1 — operator's call).
+- Push the unpushed commits (gated confirmation at this wrap).
+
+### Open Questions
+- Promotion-vs-rollback on `da72d7a` (S4's research-workflow canonical promotion) — keep or revert? Unresolved, operator's call.
