@@ -47,6 +47,10 @@ For an operator who prefers automation, "remember to run the right command" is i
 - **Risk-check class:** PreToolUse hook + commit-path change → `/risk-check` required. This is the highest-value fix because it is the only one of the three with *zero* existing guard.
 
 ### Fix 3 — Make worktree-launch the default for a second session  *(removes the "remember to" surface)*
+
+> **✅ ADDRESSED — 2026-06-10 (Session S3), option (b).** Shipped `ai-resources/scripts/cc-worktree.sh` — a thin shell launcher (operator installs a one-line `.zshrc` function) that creates the worktree (mirroring `/new-worktree-session` Step 1), cd's in, and execs `claude` there; plus a wording-only tightening of all three nudges in `detect-concurrent-session.sh` to name `cc-worktree <unit>` as the fast path alongside `/new-worktree-session`. Re-synced both project hook copies in the same commit (positioning-research WIRED + research-pe orphan). `/risk-check`: PROCEED-WITH-CAUTION (both mitigations applied; SO concurred) — report `audits/risk-checks/2026-06-10-build-fix-3-option-b-of-the-concurrent-session-isolation-fix.md`.
+> **Logged patch (per SO adjustment b):** the launcher *duplicates* `/new-worktree-session` Step 1 name/branch derivation, kept in sync by a header note rather than a shared helper. The structural single-source form — factor Step 1 into one helper under `scripts/` that both the command and the launcher call — is **parked as follow-up** (deferred deliberately: shipped Fixes 1+2 backstop the collision danger, so the sync-drift risk is low-frequency; revisit if the two drift in practice).
+
 - **What:** Make `/new-worktree-session` the path of least resistance instead of an opt-in. Options to weigh at build time (pick one):
   - (a) Have the same-checkout block in Fix 1 *offer to run* `/new-worktree-session` inline, so the operator's recovery is one keystroke, not a remembered command.
   - (b) A short operator-facing launch ritual (a single alias/script) that always opens a session in a fresh worktree.
@@ -67,7 +71,7 @@ For an operator who prefers automation, "remember to run the right command" is i
 1. **Fix 2 (staging-index guard)** — the only failure with *no* existing guard, and the one that did real damage today (silent contamination). Highest marginal value.
 2. **Fix 1 (block same-checkout)** — cheap, closes Failure A at the door, complements Fix 2.
 3. **Fix 4(a) (wrap-owns logs discipline)** — cheap, removes most of Failure B's surface.
-4. **Fix 3 (default worktree launch)** — the positive path; nice-to-have once 1+2 backstop the danger.
+4. **Fix 3 (default worktree launch)** — the positive path; nice-to-have once 1+2 backstop the danger. ✅ **Done 2026-06-10 (option b — `cc-worktree.sh` launcher).**
 5. **Fix 4(b) (per-session log namespacing)** — only if 4(a) proves insufficient; largest and most invasive.
 
 ## 5. What this plan does NOT change
