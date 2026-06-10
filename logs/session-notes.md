@@ -484,3 +484,28 @@ Built a new reusable skill, **technical-solution-consultant** (invoked as `/tech
 
 ### Open Questions
 - None.
+
+## 2026-06-10 — /decide flipped to autonomous-by-default
+
+### Summary
+Rewrote `/decide` (`ai-resources/.claude/commands/decide.md`) from an operator-pick posture to autonomous-by-default, per operator direction. Now it researches each open decision, picks the best-grounded answer for every item (including operator-taste calls), reports a short inline summary, and continues the underlying task — pausing only on low-confidence items and the global Autonomy Rules gates. Flow: `/clarify` → 4 answers via AskUserQuestion → rewrite → independent `/qc-pass` (GO, no findings) → committed.
+
+### Files Created
+- None (logs/scratchpads/2026-06-10-11-47-scratchpad.md is a wrap artifact).
+
+### Files Modified
+- `ai-resources/.claude/commands/decide.md` — three-outcome model (Decided / Paused-low-confidence / Already-decided) replaces the old four-bucket interactive model; new Step 7 adopt-and-continue; Autonomy floor kept as independent gate; output collapsed to inline summary; Composition reworded so `/decide` and `/recommend` are no longer framed as opposites.
+
+### Decisions Made
+- Operator (AskUserQuestion): autonomous = new default (not a flag); operator-taste items get picked too; "proceeds" = adopt picks + continue the task; single stop trigger = low confidence.
+- Claude (decision-point posture): skipped a separate `/scope` gate after operator said "go"; relied on post-edit `/qc-pass`. Routine rewrite — not journaled to decisions.md.
+
+### Risky actions
+- None. (Behavioral change to a symlinked shared command, but QC-clean and operator-directed; no destructive/external/shared-state-clobber action taken.)
+
+### Next Steps
+- None required — work complete and committed.
+- Optional: if `/decide`'s near-overlap with `/recommend` proves confusing in real use, revisit a merge — needs observed friction first.
+
+### Open Questions
+- None.
