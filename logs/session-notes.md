@@ -400,3 +400,40 @@ None. (Structural change to a SessionStart-adjacent hook + new script, but QC-cl
 
 ### Open Questions
 None.
+
+## 2026-06-10 — S3 (cont.) — Concurrent-session coverage micro-audit
+
+### Summary
+Evidence-traced micro-audit of whether the concurrent-session fix campaign is permanently complete. Traced every recorded incident (friction-log + improvement-log + the three audit docs) and inspected the live solution (two hooks, settings wiring, wrap Step 13). Verdict **PARTLY FIXED**: the guard that actually prevents the silent same-checkout clobber (`check-foreign-staging.sh`) works but is wired only in the ai-resources checkout — 0 of 15 project repos, not workspace-root, not user-level. Produced an audit memo + tiered fix plan (P1–P4) and registered an umbrella PENDING backlog entry. Operator deferred the build to a future session.
+
+### Files Created
+- `audits/2026-06-10-concurrent-session-coverage-audit.md` — coverage audit + residual-gap fix plan (verdict, incident→fix matrix, live wiring map, P1–P4).
+- `logs/scratchpads/2026-06-10-S3-concurrent-coverage-audit-scratchpad.md` — continuity scratchpad.
+
+### Files Modified
+- `logs/improvement-log.md` — umbrella PENDING entry for the coverage gap (P1/P2), cross-refs existing 467/477/501/216 for P3/P4/P5.
+
+### Decisions Made
+- Audit deliverable shape (memo + fix plan, no build this session), both collision classes in scope, tiered guardrails (hard block for silent-data-loss moments, soft nudge for nuisances) — operator-directed via /clarify AskUserQuestion.
+- QC fix (separate): grounded §4 coverage inference on the verified registration fact rather than an unverified --add-dir hook-precedence assumption; added proven-in-repo feasibility evidence for P1.
+
+### Outcome
+- **COMPLETION: DELIVERED** — all four claimed artifacts present and verified; "plan first / no infra changes" honored (settings.json unchanged); "trace the logs, don't guess" honored (every §3 incident maps to a real friction-log entry; §4 wiring map re-counted 0/15 + 1/15 independently).
+- **EXECUTION: OPTIMAL** — verdict follows from verified evidence; QC was genuinely independent (separate subagent); memo correctly hedges the one unconfirmed point (cross-`--add-dir` merge) as non-load-bearing.
+- What was asked but not done: none. Better path: none. Confidence: high.
+
+### Risky actions
+None. (Two commits, local only; no push, no destructive ops, no external writes. The Step 3.5 guard's embedded template had mangled `$0`/`$1` placeholders — ran a faithful clean reconstruction instead of the corrupted verbatim; result FOREIGN=0, benign.)
+
+### Session Assessment
+(wrap-collector, S3 cont. — collector returned signals but could not write: its toolset lacked Edit/Bash and it correctly refused whole-file Write on the append-only logs.)
+- Autonomy/leanness/principle-drift: no signal. Coverage finding already self-logged at `improvement-log.md` (umbrella PENDING entry); QC fix was evidence-led (grounded on verified registration fact).
+- Friction candidate (Step 3.5 embedded-bash template "mangled" `$0`/`$1`/awk placeholders) — **VERIFIED FALSE PREMISE, NOT LOGGED.** On-disk `wrap-session.md` field refs (`$0`/`$1`/`$2`) are intact (checked L94/180/250). The corruption was a harness context-injection display artifact (positional-param expansion against injected `$ARGUMENTS`), not a file defect; benign (FOREIGN=0). Logging it would misattribute an intact file as broken, so it was withheld per the materiality bar.
+- Safety: none. No destructive collector write this wrap.
+
+### Next Steps
+- `/prime` next session will surface the PENDING improvement-log entry. To build: fresh session, start with P1 (single `~/.claude/settings.json` edit, /risk-check gated), then P2 → P3 → P4.
+- Interim discipline (no build needed): different projects = safe concurrent; same folder twice = `/new-worktree-session`; ai-resources already fully guarded.
+
+### Open Questions
+None.

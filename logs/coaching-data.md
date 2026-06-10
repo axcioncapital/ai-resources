@@ -269,3 +269,11 @@
 - **QC cycles:** 1 (APPROVE, no must-fix)
 - **Gates:** 2 (1 changed) — plan-approval:confirmed (auto-mode single approval gate via `go`), service-design-disposition:changed (operator chose re-scope from forceful-block to soft precision-fix after the not-buildable finding)
 - **Mandate fields:** specified: work_scope, exit_condition, Out of scope, Stop if | inferred: Files in scope | omitted: Allowed inputs, Required outputs
+
+### 2026-06-10 — S3 (cont.) Concurrent-session coverage micro-audit
+- **Commands used:** /clarify, /qc-pass, /wrap-session
+- **Iterations:** 1 (audit memo v1 → QC-grounded edit of §4 + P1)
+- **Decisions logged:** 1 (decisions.md — verdict PARTLY FIXED + build deferred)
+- **QC cycles:** 1 (independent qc-reviewer → GO, one MINOR confidence-overstatement fixed)
+- **Gates:** 2 (2 changed) — supplementary-research:changed (clarify AskUserQuestion: deliverable shape / collision classes / guardrail tier), content-review:changed (QC MINOR fix applied)
+- **Mandate fields:** none (no /session-start this session — /clarify-first)

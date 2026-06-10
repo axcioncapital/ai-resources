@@ -550,3 +550,34 @@
 - **Marker-teardown discipline now in wrap Step 13 (~0 tokens/fix, prevents stale-marker false-positives).** This session added the per-id marker teardown; the adjacent lever is verifying teardown actually runs on abnormal exit (crash / compaction-kill) where wrap never fires — a stale per-id marker would then mislead the next same-checkout session's liveness discriminator. Low frequency, high cleanliness value.
 - **Capability-assumption pre-flight for hook fix-plans (~10–20k tokens/recurrence).** The re-scope cost ~2 subagents because the fix-plan assumed SessionStart could block. A one-line "verify the hook event's blocking capability against the platform doc before drafting the fix" check at fix-plan intake would catch this class deterministically. Low frequency but large per-occurrence — same shape as the 2026-06-01 "validate-before-invest" lever.
 - **Byte-identical hook-copy sync (~0.5–1k tokens/session when it fires).** Two project hook copies re-synced by hand after the canonical edit. A sync helper (or a single source-of-truth + symlink) would remove the manual copy step. Smallest lever — narrow trigger — but a clean win whenever a shared hook changes.
+
+## 2026-06-10 (S3 cont.) — Concurrent-session coverage micro-audit (verdict: PARTLY FIXED)
+
+### 2026-06-10 | Efficient
+
+**Task:** Concurrent-session coverage micro-audit — evidence-traced the full concurrent-session fix campaign against recorded incidents and inspected the live solution (2 hooks, settings wiring, wrap Step 13). Verdict PARTLY FIXED: the commit-time block (`check-foreign-staging.sh`) works but is wired only in the ai-resources checkout (0/15 project repos, not workspace-root, not user-level). Produced audit memo + tiered P1–P4 fix plan; operator deferred the build.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~6 |
+| Files read | ~10 (re-reads: 1 — `wrap-session.md` ×2 for Step 13 verification) |
+| Files written/edited | ~8 (audit memo ~201 lines new, scratchpad, improvement-log entry, decisions entry, session-notes append + 2 edits, coaching entry) |
+| Tool calls | ~30 (Bash-heavy — grep/git wiring inventory across 15 project settings, repo-list, marker checks) |
+| Subagents | 4 (qc-reviewer → GO; general-purpose outcome-check → DELIVERED/OPTIMAL; session-feedback-collector → could not write [toolset lacked Edit/Bash], returned signals inline; this usage analyzer) |
+| Rework cycles | 0 (one QC-driven MINOR fix, not a rework cycle) |
+
+**Findings:**
+- **Clean lean audit session — positive.** Advisory-only output, no destructive writes, zero rework. QC returned GO on first pass and the outcome-check rated DELIVERED/OPTIMAL. The Bash-heavy tool count (~30) was load-bearing: the verdict's core claim (0/15 project repos wired) required mechanically inventorying the wiring across all 15 project settings rather than asserting it — evidence-traced, not assumed.
+- **QC was genuinely independent and verified factual fidelity against logs — positive.** The operator's explicit ask was whether the fix is permanently complete; the qc-reviewer checked the audit's incident-trace claims against the recorded logs rather than rubber-stamping.
+- **Candidate friction signal correctly withheld — positive (discipline).** A "Step 3.5 template mangled" observation was verified to be a harness context-injection *display* artifact, not a file defect, and kept out of the friction log.
+- **session-feedback-collector could not write (toolset lacked Edit/Bash) — Minor (recurring subagent-contract class).** The collector returned its signals inline instead, so no data was lost this time. Same shared-log subagent-write fragility flagged in the S1 entry (there a destructive overwrite; here a no-write). Confirms the S1 recommendation (contract log-appending subagents explicitly for their write path) is still unshipped.
+- **Trend vs last 3 entries (S2 Acceptable / S6 Efficient / S1 Acceptable):** Efficient — lowest write footprint and zero rework in the recent window.
+
+**Recommendation:** Fix the session-feedback-collector's tool contract so it can write its own append to the shared log (Edit/Bash in its toolset, append-via-heredoc per the S1 recommendation). Highest-leverage: the collector has now failed its write step in two consecutive substantive sessions (S1 destructive overwrite, this session no-write) — the same one-line fix closes both the data-loss shape and the no-write shape.
+
+**Estimated savings:** ~1–2k tokens/session in manual signal re-routing when the collector fails its write, plus the averted data-loss risk that is the real cost. ~10–20k over a 10–20 session horizon, dominant value loss-prevention. Order-of-magnitude only.
+
+**Additional levers (ROI-ranked):**
+- **Capability/deployment-surface pre-flight for fix-plans (~10–20k tokens/recurrence).** This audit's verdict is downstream of a fix campaign that under-scoped its deployment surface. An "enumerate every settings layer the fix must touch (user / workspace / ai-resources / all N project repos) before declaring done" check at fix-plan intake would prevent the coverage-gap class. Lower frequency, large per-occurrence.
+- **Codify "verify display artifact vs file defect before logging friction" (~1–3k tokens/session when applicable).** Make the file-first check a one-line intake rule in friction-log / `/note` guidance.
+- **Pin the audit-memo path in the umbrella PENDING improvement-log entry (~0 tokens/fix).** Prevents a future build session re-running the ~15-repo grep inventory. (Already done — the entry names the audit doc as authoritative.)
