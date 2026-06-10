@@ -447,3 +447,40 @@ At wrap, detected a session-id ↔ marker mismatch: this /clarify-first session 
 
 ### Open Questions
 - None for this session's work.
+
+## 2026-06-10 — Session S2 (cont. 2) — technical-solution-consultant skill + /tech-consult command
+
+### Summary
+Built a new reusable skill, **technical-solution-consultant** (invoked as `/tech-consult`), end-to-end via the full resource pipeline: `/clarify` → System Owner `/consult` (resolved 5 design decisions) → `/scope` (approved) → `/create-skill` (cold eval REVISE → fixes → regression check) → `/risk-check` (GO) → commit. The skill is a consult-first translation layer turning broad business/project intent into a justified, build-ready technical plan (staged: consultation → options → recommendation → spec → roadmap → QA → builder prompt) before anything gets built. After the commit, an operator-relayed external triage (6 items) was resolved and refinements applied to the committed files. (Started directly with /clarify — unmarked session; shared marker held S2 from earlier same-day work.)
+
+### Files Created
+- `skills/technical-solution-consultant/SKILL.md` — staged methodology (155 lines): 5 non-negotiable behaviors, brief-QC, one decision gate after Stage 3, size-triggered two-pass, self-review, runtime
+- `skills/technical-solution-consultant/references/selection-memo-template.md` — 14-section Selection Memo structure (Stages 2–3)
+- `skills/technical-solution-consultant/references/build-spec-template.md` — fixed structures for Stages 4–Final (spec/roadmap/QA/builder prompt)
+- `skills/technical-solution-consultant/references/example-selection-memo.md` — worked "credibility website" example (real weighted matrix + red-team)
+- `skills/technical-solution-consultant/references/tool-selection-heuristics.md` — when-to-use-what judgment + dated currency marker
+- `.claude/commands/tech-consult.md` — thin `/tech-consult` invocation (model: opus)
+- `audits/risk-checks/2026-06-10-new-tech-consult-skill-command.md` — risk-check report (verdict GO)
+- `inbox/archive/technical-solution-consultant-brief.md` — fulfilled brief (local-only; inbox/archive gitignored)
+- `projects/axcion-ai-system-owner/output/consultations/consult-2026-06-10-technical-solution-consultant.md` — SO advisory (separate dir)
+- `logs/scratchpads/2026-06-10-11-42-scratchpad.md` — continuity scratchpad
+
+### Files Modified
+- (none pre-existing; all build files new this session)
+
+### Decisions Made
+- **Skill architecture (SO-approved):** one staged skill (not a family); one decision gate after Stage 3 (Stages 4–Final as one block); size-triggered two-pass on a once-defined "elevated-stakes signal"; no bespoke reviewer agent in v1 (self-review + existing /qc-pass→triage-reviewer); standalone, NOT wired into /new-project.
+- **Command name:** operator chose `/tech-consult` (over /solution-consult).
+- **Cold-eval fixes (Major):** added build-spec-template.md (late-stage output contract), example-selection-memo.md (worked example), Runtime Recommendations section.
+- **Triage refinements (operator-relayed):** verified reference files substantive (#1); decided overlap with task-plan-creator/prompt-creator/workflow-creator = produce-inline + name-the-seam, not reimplement (#2); collapsed self-dissolving Altitude Ladder + de-duplicated validation checklist (#3); softened never-downgrade absolutism (#4); corrected two-pass "doubles cost" overstatement (#5); restored role list (minor).
+
+### Risky actions
+- None. (cp from ~/Downloads was permission-denied — outside working dirs; worked around via Read+Write. No destructive/external/shared-state action.)
+
+### Next Steps
+- Push the pending commit (operator confirmation at this wrap).
+- Optional: add `/new-project` soft-pointer to `/tech-consult`; fresh evaluator pass post-refinement.
+- Deferred to next `/improve-skill`: specialist-skill negative triggers once those roles exist.
+
+### Open Questions
+- None.
