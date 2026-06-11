@@ -437,3 +437,20 @@ None. (Two commits, local only; no push, no destructive ops, no external writes.
 
 ### Open Questions
 None.
+
+## 2026-06-11 — Session S1
+**Mandate:** Build the deferred concurrent-session coverage fix P1–P4 — register check-foreign-staging.sh (P1) and detect-concurrent-session.sh (P2) at user level in ~/.claude/settings.json by absolute path; close the Fix 2 fail-open blind spot (P3); port wrap Step 13 marker teardown to workspace-root wrap-session.md (P4) — done when: P1+P2 registrations present, P3+P4 edits applied, each /risk-check-gated, commits landed.
+- Out of scope: P5 (wrap-lite) stays deferred; do not revive Fix 4(b) log namespacing or the SessionStart block
+- Files in scope: ~/.claude/settings.json; ai-resources/.claude/hooks/check-foreign-staging.sh + detect-concurrent-session.sh (read-only refs); P3 fail-open fix site; workspace-root wrap-session.md (inferred)
+- Stop if: /risk-check returns NO-GO on P1 (the critical hard-block change)
+
+Build concurrent-session hook coverage: register check-foreign-staging.sh at user level so all checkouts are protected; risk-check gated; then P2–P4.
+
+## 2026-06-11 — Session S2
+**Mandate:** Run independent /qc-pass on the P1–P4 concurrent-session coverage build (check-foreign-staging.sh P3, three settings.json P1/P2 dedup, workspace-root wrap-session.md P4), then on GO commit across the three affected repos and complete the four post-commit follow-ups — done when: /qc-pass returns GO on all five artifacts, commits landed in all three repos, four follow-up notes written, scratchpad deleted
+- Out of scope: P5 (wrap-lite) stays deferred; do not revive Fix 4(b) log namespacing or the SessionStart block
+- Files in scope: ai-resources/.claude/hooks/check-foreign-staging.sh; ~/.claude/settings.json; ai-resources/.claude/settings.json; projects/positioning-research/.claude/settings.json; workspace-root .claude/commands/wrap-session.md; ai-resources/logs/improvement-log.md; audits/2026-06-10-concurrent-session-coverage-audit.md; docs/risk-topology.md
+- Stop if: /qc-pass does not return GO → do NOT commit (QC-PENDING commit-block stands); QC subagent unreachable → defer via /handoff, do not self-QC-and-commit
+- Allowed inputs: logs/session-plan-2026-06-11-S1.md; audits/risk-checks/2026-06-11-build-deferred-concurrent-session-coverage-fix-p1-p4.md; .claude/commands/qc-pass.md; .claude/agents/qc-reviewer.md; docs/qc-independence.md; audits/2026-06-10-concurrent-session-coverage-audit.md; logs/scratchpads/2026-06-11-12-22-scratchpad.md
+- Context pack: output/context-packs/qc-20260611-a7c2e/pack.md
+Resume QC-PENDING commit-block: run independent /qc-pass on the P1-P4 concurrent-session coverage build (check-foreign-staging.sh P3, three settings.json dedup, workspace-root wrap-session.md P4), then commit across the affected repos and handle the post-commit follow-ups (Daniel handoff note, R2 orphan hook, R3 risk-topology note, flip improvement-log umbrella entry).
