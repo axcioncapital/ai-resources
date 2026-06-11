@@ -518,8 +518,8 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Target files:** candidates `ai-resources/.claude/commands/scope.md`, `ai-resources/.claude/commands/session-plan.md`; cross-ref auto-memory `feedback_vscode_launch.md`.
 - **Review-cycle:** monthly
 
-### 2026-06-10 — Concurrent-session guards wired only in ai-resources; coverage gap across all project repos (PENDING)
-- **Status:** logged (pending) — **deferred by operator to a future build session** ("implement another day", 2026-06-10 S3).
+### 2026-06-10 — Concurrent-session guards wired only in ai-resources; coverage gap across all project repos (RESOLVED 2026-06-11)
+- **Status:** resolved 2026-06-11 S2 — P1+P2 landed (user-level registration in `~/.claude/settings.json` by machine-absolute path; the three repo/project-level registrations deleted in the same change set — ai-resources dd44220, positioning-research 15220f4). P3 (fail-open split: BLOCK on live foreign marker, warn+allow otherwise) landed in dd44220. P4 (wrap Step 13 teardown port) landed workspace-root cafdb57. Independent /qc-pass GO; plan-time /risk-check PROCEED-WITH-CAUTION with SO mitigations (atomic landing) applied. **P5 stays deferred** (entry 216). **R1 residual (load-bearing): Daniel must self-register both hooks in his own `~/.claude/settings.json` — see audit Post-landing notes.** New first-firing defects logged separately (2026-06-11 date-anchor + handoff-marker entry below).
 - **Category:** concurrent-session-collision + guardrail-coverage
 - **Severity:** high
 - **Provenance:** main-session — coverage micro-audit 2026-06-10 S3.
@@ -548,3 +548,16 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
   - **Both are /risk-check change classes (PreToolUse hook edits, canonical ai-resources artifact, single wiring site `ai-resources/.claude/settings.json:58` today, slated for user-level registration per entry 521 P1) — gate before landing.** Distinct from the ABSENT-footprint fail-open (entry 521 P3) and the `/clarify`-first wrap false-CONCURRENT (entry 501): both of those concern a missing/inferred footprint; these two are (A) a present concrete glob footprint matched literally and (B) verb-detection over non-git command text. Cross-ref 501 + 521.
 - **Target files:** `ai-resources/.claude/hooks/check-foreign-staging.sh` (Fix A: `in_footprint()` L338–342 + token parse L245–251; Fix B: gated-verb detection L82–98); cross-ref `ai-resources/docs/commit-discipline.md` (two-end contract), entries 501 + 521.
 - **Review-cycle:** monthly
+
+### 2026-06-11 — check-foreign-staging.sh first live firing: undated header lookup + stale handoff markers false-fire the new P3 hard block (PENDING)
+- **Status:** logged (pending)
+- **Category:** session-issue + concurrent-session-collision
+- **Severity:** medium-high (the new P3 branch BLOCKS commits, so each false-fire is a stopped legitimate commit)
+- **Provenance:** main-session — observed live 2026-06-11 S2, on the very first firing of the just-landed P3 logic (it blocked this session's own QC-approved commit).
+- **Friction source:** Two independent defects combined into one false BLOCK:
+  - **Defect A (undated header lookup).** The hook resolves the session marker (`S2`) and then finds the mandate footprint via the header regex `^## \d{4}-\d{2}-\d{2} — Session S2\b` — ANY date matches. An older `## 2026-06-10 — Session S2` entry earlier in session-notes.md matched first, so its `(inferred)` footprint shadowed today's CONCRETE S2 footprint → Q3 no-concrete-footprint branch entered despite a valid declared footprint. Fix: anchor the header date to TODAY (the marker file already stores `YYYY-MM-DD SX` — use both fields, not just the S-number). Same root-cause family as the stale-marker contributor in the 2026-06-11 glob/heredoc entry above.
+  - **Defect B (handoff leaves a live-looking marker).** `_live_foreign_session()` treats any today-dated foreign per-id marker as a live session. But a session that ends via `/handoff` (deferral) never runs wrap Step 13 teardown, so its marker survives — S1's dead marker (same operator, deferred QC handoff) read as a live concurrent session and escalated warn→BLOCK. Fix options: (1) `/handoff` gains the same per-id marker teardown wrap Step 13 has; (2) the liveness test also checks whether the marker's session left uncommitted today-content (the wrap Step 3.5 liveness pattern, cross-ref entry 501); (3) both. Option 1 is the cheap structural close.
+  - **Workaround used in-session:** verified S1 was genuinely dead (its scratchpad = this session's resume source), deleted the stale marker by hand, commit proceeded under warn+allow (Defect A meant the footprint still didn't resolve — guard OFF rather than wrongly blocking).
+- **Both fixes are /risk-check change classes (PreToolUse hook edit; /handoff edit is a canonical command edit) — gate before landing.** Cross-ref: the 2026-06-11 glob-footprint/heredoc-verb entry above (same hook, different defects); entry 501 (/clarify-first unmarked sessions); coverage audit Post-landing notes.
+- **Target files:** `ai-resources/.claude/hooks/check-foreign-staging.sh` (Defect A: header regex date anchor; Defect B: liveness test); `ai-resources/.claude/commands/handoff.md` (Defect B option 1: marker teardown on deferral handoff).
+- **Review-cycle:** weekly
