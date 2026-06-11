@@ -162,7 +162,10 @@ This QC runs as a **subagent** (delegate-qc pattern). The main agent:
 
 - **APPROVED verdict:** Proceed automatically to Step 2.2. Log the result.
 - **REVISE verdict with only Moderate findings:** Apply fixes automatically, re-run QC. If second pass is APPROVED, proceed. If still FLAG after one fix iteration, pause for operator.
-- **REVISE verdict with any Critical findings:** Pause for operator review.
+- **REVISE verdict with Critical findings — classify each Critical before acting:**
+  - **Mechanical Critical** — the finding has exactly one correct fix and requires no editorial or scope judgment (e.g., a forbidden-terminology strip, a missing literal scope line whose content is already known from the inputs). If ALL Criticals in the verdict are mechanical: apply the fixes automatically and re-run QC, one iteration only. If the re-run is APPROVED, proceed. If still FLAG, pause for operator review — a dirty re-run does not get a fresh iteration; it routes to pause.
+  - **Judgment Critical** — the finding requires an editorial, scope, or content decision. Pause for operator review.
+  - **Conservative default:** if a finding's classification is ambiguous, treat it as judgment → pause. Any mix of mechanical and judgment Criticals → pause (the judgment finding governs).
 
 ## Stop Condition
 

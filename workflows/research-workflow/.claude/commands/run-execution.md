@@ -57,7 +57,7 @@ Skill loading: For each skill step below, read the skill file from the ai-resour
 6. Write verdict to `/execution/checkpoints/{section}/{section}-step-2.1b-prompt-qc.md`.
 7. If APPROVED: proceed to PAUSE below.
 8. If REVISE with only Moderate findings: apply fixes to the prompt files, re-run QC (one retry). If second pass APPROVED, proceed. If still FLAG, pause for operator.
-9. If REVISE with any Critical findings: pause for operator review before proceeding.
+9. If REVISE with Critical findings, follow the skill's mechanical-vs-judgment classification (`research-prompt-qc` SKILL.md § Autonomy Rules): all-mechanical Criticals (one correct fix, no editorial judgment) → apply fixes and re-run QC once, pausing if still FLAG; any judgment Critical, any ambiguous classification, or any mechanical/judgment mix → pause for operator review before proceeding.
 10. ▸ /compact — QC context no longer needed.
 11. PAUSE — Present the session plan table to the operator, organized by execution tool. **Explicitly flag any inter-session dependencies** (e.g., "Session D depends on Session A — do not run D until A completes"). List each dependency clearly so execution order is unambiguous. Note which sessions run in Research Execution GPT vs Perplexity. He will execute sessions manually (Step 2.2) and return with raw reports.
 
