@@ -520,6 +520,7 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 
 ### 2026-06-10 — Concurrent-session guards wired only in ai-resources; coverage gap across all project repos (RESOLVED 2026-06-11)
 - **Status:** resolved 2026-06-11 S2 — P1+P2 landed (user-level registration in `~/.claude/settings.json` by machine-absolute path; the three repo/project-level registrations deleted in the same change set — ai-resources dd44220, positioning-research 15220f4). P3 (fail-open split: BLOCK on live foreign marker, warn+allow otherwise) landed in dd44220. P4 (wrap Step 13 teardown port) landed workspace-root cafdb57. Independent /qc-pass GO; plan-time /risk-check PROCEED-WITH-CAUTION with SO mitigations (atomic landing) applied. **P5 stays deferred** (entry 216). **R1 residual (load-bearing): Daniel must self-register both hooks in his own `~/.claude/settings.json` — see audit Post-landing notes.** New first-firing defects logged separately (2026-06-11 date-anchor + handoff-marker entry below).
+- **Verified:** 2026-06-11 — verified in-session: commits dd44220 (ai-resources), cafdb57 (workspace-root), 15220f4 (positioning-research) landed after independent /qc-pass GO; hooks fire-tested live (P3 warn+allow and BLOCK paths both observed).
 - **Category:** concurrent-session-collision + guardrail-coverage
 - **Severity:** high
 - **Provenance:** main-session — coverage micro-audit 2026-06-10 S3.

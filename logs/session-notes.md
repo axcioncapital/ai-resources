@@ -454,3 +454,34 @@ Build concurrent-session hook coverage: register check-foreign-staging.sh at use
 - Allowed inputs: logs/session-plan-2026-06-11-S1.md; audits/risk-checks/2026-06-11-build-deferred-concurrent-session-coverage-fix-p1-p4.md; .claude/commands/qc-pass.md; .claude/agents/qc-reviewer.md; docs/qc-independence.md; audits/2026-06-10-concurrent-session-coverage-audit.md; logs/scratchpads/2026-06-11-12-22-scratchpad.md
 - Context pack: output/context-packs/qc-20260611-a7c2e/pack.md
 Resume QC-PENDING commit-block: run independent /qc-pass on the P1-P4 concurrent-session coverage build (check-foreign-staging.sh P3, three settings.json dedup, workspace-root wrap-session.md P4), then commit across the affected repos and handle the post-commit follow-ups (Daniel handoff note, R2 orphan hook, R3 risk-topology note, flip improvement-log umbrella entry).
+
+### Summary
+Resumed the S1 QC-PENDING commit-block. Independent /qc-pass returned GO on all five P1–P4 artifacts (subagent reachable this session — the S1 1M-credit gate did not fire). Landed 4 commits across 3 repos, completed all four post-commit follow-ups (R1 Daniel handoff note, R2 orphan-hook disposition, R3 risk-topology consequence note, umbrella improvement-log entry flipped to resolved), logged the deferred S1 decision, and deleted the drained scratchpad. The new P3 guard false-fired on its own first commit, exposing two defects (undated header lookup; handoff-ended sessions leave live-looking markers) — workaround applied (stale S1 marker deleted), defects logged as a new PENDING improvement-log entry for a gated fix.
+
+### Files Created
+- audits/working/qc-2026-06-11-S2-p1-p4-coverage-build.md — QC reviewer full notes (gitignored)
+- logs/session-plan-2026-06-11-S2.md — this session's plan
+
+### Files Modified
+- logs/decisions.md — S1 "user-level + dedup + handoff note" decision logged
+- logs/improvement-log.md — umbrella entry 521 → RESOLVED; new PENDING entry (P3 first-firing defects A/B)
+- audits/2026-06-10-concurrent-session-coverage-audit.md — Post-landing notes (R1/R2 + defect summary)
+- projects/repo-documentation/vault/architecture/risk-topology.md — R3 marker-row consequence note (vault is gitignored; on-disk only)
+- logs/scratchpads/2026-06-11-12-22-scratchpad.md — DELETED (QC-PENDING block drained)
+- logs/.session-marker-<S1-id> — DELETED (stale; S1 ended via handoff without teardown)
+
+### Decisions Made
+- Unblock path for the P3 false-fire: delete the verified-dead S1 marker rather than hot-edit the just-QC'd hook; defects logged for a gated fix instead.
+- R2 orphan hook: noted as deliberately-unregistered (deletion left to a session in that repo) — stays within this session's write scope.
+- End-time /risk-check: SKIPPED per the end-time-skip rule — plan-time gate (S1) covered the executed scope, mitigations applied, commits shipped, no scope expansion.
+
+### Risky actions
+None beyond design: the new PreToolUse guard hard-blocked two legitimate commit attempts (false-fire); resolved by verified stale-marker deletion, not by bypassing the guard.
+
+### Next Steps
+- Relay R1 to Daniel: he must register both hooks in his own ~/.claude/settings.json (clone-absolute paths) or he runs with zero concurrent-session coverage.
+- Gated fix session for the P3 first-firing defects (improvement-log 2026-06-11 entry: header date anchor + handoff marker teardown) — weekly review cycle.
+- Push pending: ai-resources 9 ahead, workspace-root 1 ahead, positioning-research 1 ahead (gated at wrap).
+
+### Open Questions
+None
