@@ -27,13 +27,20 @@
 #   git add -A/--all/-u/--update/.   — working-tree-wide add
 #   git add <pathspec>    — NOT gated (explicit, low-risk).
 #
-# FAIL-OPEN (Q3) — if this session has no resolvable footprint (no marker, no
-#   `- Files in scope:` bullet, or a bullet that reads `(inferred)`/`(none stated)`
-#   with no concrete paths), the guard CANNOT judge foreignness, so it allows the
-#   commit and emits a soft non-blocking warn. A guard that blocked on its own
-#   parse failure would be worse. KNOWN BLIND SPOT: a primed-but-not-planned or
-#   `(inferred)`-footprint session gets no protection (same blind spot
-#   concurrent-session-check.md documents as its #1 failure).
+# FAIL-OPEN (Q3) + P3 ESCALATION (2026-06-11) — if this session has no resolvable
+#   footprint (no marker, no `- Files in scope:` bullet, or a bullet that reads
+#   `(inferred)`/`(none stated)` with no concrete paths), the guard CANNOT judge
+#   foreignness. It then splits on concurrency:
+#     • A LIVE foreign session is active in this checkout (a today-dated per-id marker
+#       other than this session's own is present) → BLOCK (exit 2, stop-and-confirm).
+#       This was the worst remaining blind spot (improvement-log 467/501): no footprint
+#       AND a concurrent session is exactly when a blind commit sweeps the other session's
+#       staged files. P3 escalates it from warn to a hard stop.
+#     • No live foreign session → allow the commit and emit a soft non-blocking warn
+#       (the original Q3 fail-open). A guard that blocked on its own parse failure with no
+#       concurrency present would be worse. RESIDUAL BLIND SPOT: a primed-but-not-planned
+#       or `(inferred)`-footprint SOLO session still gets only the warn — but with no
+#       concurrent session there is no foreign-contamination risk to block on.
 #
 # EXEMPT (never "foreign") — append-only shared logs + this session's own process
 #   byproducts (markers, plan, scratchpad) + write-once audit artifacts. These are
@@ -56,7 +63,7 @@ command -v python3 >/dev/null 2>&1 || exit 0
 payload=$(cat)
 
 python3 - "$payload" << 'PYEOF'
-import json, sys, os, re, subprocess
+import json, sys, os, re, subprocess, datetime
 
 # ---- Parse payload ----
 try:
@@ -135,6 +142,37 @@ if not marker_raw:
 mm = re.search(r'\bS\d+\b', marker_raw)
 sess = mm.group(0) if mm else ""
 
+# ---- Live-foreign-session oracle (P3, 2026-06-11) ----
+def _live_foreign_session(logs_dir, self_session_id):
+    # A today-dated per-id marker (logs/.session-marker-<id>) OTHER than this session's
+    # own = a session that primed in THIS checkout today and has not wrapped (/wrap-session
+    # Step 13 removes the marker at teardown) ≈ a live foreign session here. This mirrors the
+    # oracle path in detect-concurrent-session.sh. Self is excluded by id, so this session's
+    # OWN per-id marker (which DOES exist by PreToolUse time — /prime wrote it) never counts.
+    # If this session has no id (old CLI), the oracle is unavailable → return False so P3
+    # degrades to the original warn+allow; never escalate to a stop we cannot ground.
+    if not self_session_id:
+        return False
+    try:
+        today = datetime.date.today().isoformat()
+    except Exception:
+        return False
+    self_name = ".session-marker-" + self_session_id
+    try:
+        names = os.listdir(logs_dir)
+    except Exception:
+        return False
+    for name in names:
+        if not name.startswith(".session-marker-") or name == self_name:
+            continue
+        try:
+            content = open(os.path.join(logs_dir, name)).read().strip()
+        except Exception:
+            continue
+        if content and content.split(" ")[0] == today:
+            return True
+    return False
+
 # ---- Read the `- Files in scope:` bullet under this session's marker header ----
 footprint_raw = ""
 notes = os.path.join(logs_dir, "session-notes.md")
@@ -154,13 +192,44 @@ if sess and os.path.isfile(notes):
             footprint_raw = ln.split(":", 1)[1].strip()
             break
 
-# ---- Q3 fail-open: no concrete footprint → warn + allow ----
+# ---- Q3 fail-open / P3 escalation: no concrete footprint ----
+# Without a concrete footprint the guard cannot judge foreignness. Two sub-cases:
+#   (a) a live foreign session is present in THIS checkout → STOP-and-confirm (exit 2).
+#       The no-footprint + concurrent-session shape is the highest-risk UNGUARDED path
+#       (improvement-log 467/501): the guard can't tell which staged files are yours, AND
+#       another live session may have staged its own work. P3 (2026-06-11) escalates this
+#       from the old warn+allow to a hard stop so a blind commit can't silently sweep a
+#       foreign session's files. This runs AFTER the L72-91 gated-verb early exit, so only
+#       genuine commit/add-wide invocations pay for it — ordinary Bash calls already exited.
+#   (b) no live foreign session → warn + allow (the original fail-open): with no concurrent
+#       session there is no foreign-contamination risk to block on.
 low = footprint_raw.lower()
-if (not footprint_raw
-        or "(inferred)" in low
-        or "(none stated)" in low
-        or "(none)" in low
-        or not re.search(r'[\w./-]+\.\w+|[\w-]+/', footprint_raw)):
+no_concrete_footprint = (
+    not footprint_raw
+    or "(inferred)" in low
+    or "(none stated)" in low
+    or "(none)" in low
+    or not re.search(r'[\w./-]+\.\w+|[\w-]+/', footprint_raw))
+
+if no_concrete_footprint:
+    if _live_foreign_session(logs_dir, session_id):
+        verb = "git add" if is_add_wide else "git commit"
+        block_msg = (
+            "[staging-tripwire] BLOCKED — this `" + verb + "` has NO concrete session "
+            "footprint to check against (Files in scope is "
+            + (footprint_raw or "absent")
+            + "), AND a live concurrent session is active in this checkout (an un-wrapped "
+            "per-id marker is present). This is the highest-risk concurrent-session shape: "
+            "the guard cannot tell which staged files are yours, and another session may "
+            "have staged its own work.\n"
+            "STOP. Do NOT commit blind. Run `git diff --cached --name-only` and confirm "
+            "with the operator that every staged file belongs to THIS session:\n"
+            "  • Foreign files — unstage them (`git restore --staged <path>`) and commit "
+            "only your own work.\n"
+            "  • All yours — declare a concrete `- Files in scope:` footprint in this "
+            "session's mandate so the guard can run normally, then retry the commit.")
+        print(block_msg, file=sys.stderr)
+        sys.exit(2)
     warn_open(
         "No concrete session footprint declared (Files in scope is "
         + (footprint_raw or "absent")
@@ -175,7 +244,7 @@ if (not footprint_raw
 # (QC finding, 2026-06-09 S5).
 footprint = []
 for tok in re.split(r'[,\s]+', footprint_raw):
-    tok = tok.strip().strip("`").strip().lstrip("./").rstrip("/")
+    tok = re.sub(r'^\./', '', tok.strip().strip("`").strip()).rstrip("/")
     if repo_name and tok.startswith(repo_name + "/"):
         tok = tok[len(repo_name) + 1:]
     if tok and not tok.startswith("("):
@@ -212,7 +281,7 @@ if is_add_wide:
     subdir = None
     mcd = re.search(r'\bcd\s+([^\s;&|]+)\s*&&.*\bgit\s+add\b[^&|;]*\s\.(\s|$)', cmd)
     if mcd:
-        subdir = mcd.group(1).strip().strip('"').strip("'").lstrip("./").rstrip("/")
+        subdir = re.sub(r'^\./', '', mcd.group(1).strip().strip('"').strip("'")).rstrip("/")
         if repo_name and subdir.startswith(repo_name + "/"):
             subdir = subdir[len(repo_name) + 1:]
     for is_untracked, path in porcelain_entries():
