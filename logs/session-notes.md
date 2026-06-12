@@ -468,3 +468,45 @@ None irreversible. The modified script is shared-state automation (mutates activ
 
 ### Open Questions
 None blocking.
+
+## 2026-06-12 — Session S7
+**Mandate:** Complete picked menu items: (1) re-sync the 10 dormant project-local logs/scripts/split-log.sh copies from the fixed canonical (commit 1ca4c1c); (2) run /log-sweep and confirm axcion-brand-book/logs/decisions.md archives cleanly; (3) verify the content-conservation tripwire entry exists in improvement-log.md, append if absent — done when: all 10 copies byte-identical to canonical and committed; /log-sweep shows the brand-book file clears; tripwire entry confirmed present
+- Out of scope: any behavior change to the canonical split-log.sh; restoring the marketing-positioning preamble lines (menu item 2, not picked)
+- Files in scope: projects/{buy-side-service-plan,obsidian-pe-kb,global-macro-analysis,project-planning,interpersonal-communication,nordic-pe-screening-project,ai-development-lab,axcion-brand-book,research-pe-regime-shift-advisory-gap,positioning-research}/logs/scripts/split-log.sh; logs/scripts/split-log.sh; logs/improvement-log.md
+- Stop if: /log-sweep produces wrong entry boundaries or any data-loss shape on a live file — stop and surface, do not tweak live
+- Context pack: output/context-packs/incident-20260612-7b2e4/pack.md
+Auto multi-item: Re-sync or delete the ~14 dormant project-local split-log.sh copies carrying pre-fix logic; Run /log-sweep to confirm the brand-book decisions file archives cleanly with the fixed script; Verify/route the content-conservation tripwire guardrail-candidate in improvement-log.md.
+
+### Summary
+Auto-mode session (items 1,3,4 from /prime menu). Propagated the S6 split-log.sh fix (fence-aware + preamble-preserving, 1ca4c1c) to 11 dormant copies — 10 project repos + the workspace-root copy the context engine missed but full enumeration caught; the frozen archive/ copy was deliberately skipped. Then ran the first LIVE confirmation of the fix: scoped /log-sweep on axcion-brand-book rotated the previously-failing decisions.md cleanly (611→66, EXACT 611=611 content conservation, preamble preserved). Item 4 verified pre-existing (tripwire entry routed at S6) — zero work.
+
+### Files Created
+- `audits/risk-checks/2026-06-12-re-sync-10-dormant-project-local-split-log-copies.md` — risk-check PROCEED-WITH-CAUTION + SO second-opinion commentary (committed).
+- `audits/log-sweep-2026-06-12-S7.md` — scoped sweep report (committed).
+- `audits/working/log-sweep-manifest-2026-06-12-S7.md` + `audits/working/log-sweep-project-axcion-brand-book-2026-06-12-S7.md` — manifest + working notes (gitignored dir, local only).
+- `logs/session-plan-2026-06-12-S7.md` — session plan (committed).
+- `projects/axcion-ai-system-owner/output/consultations/consult-2026-06-12-split-log-dormant-copy-resync.md` — SO advisory (workspace-root repo).
+- `logs/scratchpads/2026-06-12-13-26-scratchpad.md` — continuity scratchpad with QC-PENDING marker (gitignored).
+- In axcion-brand-book: `logs/decisions-archive-2026-05.md` (26 entries), `logs/usage-log-archive-2026-05.md` (1 entry) — committed there.
+
+### Files Modified
+- 11× `split-log.sh` copies (10 project repos + workspace-root `logs/scripts/`) — overwritten with canonical, cmp-verified, one commit per repo.
+- `projects/axcion-brand-book/logs/decisions.md` (611→66) and `logs/usage-log.md` (326→289) — rotated by the sweep, committed in that repo.
+- `logs/session-notes.md` — S7 header + mandate + this wrap block.
+
+### Decisions Made
+- **Re-sync over delete** for the dormant copies (delete risks breaking project-local sweep invocation; saves nothing).
+- **Target-set extension:** include the workspace-root copy (same consumer class), skip the archive/ copy (frozen) — operator approved the 11-target list per the SO's added enumeration mitigation.
+- **Inline fallback under the credit gate:** log-sweep-auditor and qc-reviewer subagents could not spawn ("Usage credits required for 1M context", 3 attempts incl. model override); sweep discovery done inline (disclosed in report), QC done as inline self-QC (5/5 deterministic checks pass) with QC-PENDING deferred to a fresh session per qc-independence soft fallback.
+- **End-time /risk-check skipped per the operator skip rule** — plan-time check covered the exact executed change set, mitigations applied (incl. SO's enumeration confirmation), commits shipped, zero drift. Documented here per the rule.
+
+### Risky actions
+None irreversible. Shared-state automation (split-log.sh) mutated in 11 repos — but byte-identical propagation of an S6-QC'd canonical, cmp-verified per copy, risk-checked plan-time with SO concurrence. Live log mutation (brand-book sweep) verified with exact multiset conservation before commit. 4 concurrent sessions live in checkout; all staging by explicit path; wrap-time foreign guard FOREIGN=0. Residual: independent QC on the propagation is QC-PENDING (credit gate) — deterministic self-QC passed; fresh-session /qc-pass queued via scratchpad.
+
+### Next Steps
+- Fresh session: `/qc-pass` on the S7 change set (QC-PENDING scratchpad has the instruction); on GO, delete the scratchpad.
+- Optional (carried from S6): restore the 2 preamble lines lost at S4's archival in `projects/marketing-positioning/logs/session-notes.md` (from `git show e1d22ca~1:logs/session-notes.md`).
+- Monthly cycle: content-conservation tripwire guardrail-candidate (improvement-log L594) — unchanged, awaiting the monthly checkup.
+
+### Open Questions
+None blocking. Watch: if the 1M-credit subagent gate persists in the next session, /model downgrade before /qc-pass.
