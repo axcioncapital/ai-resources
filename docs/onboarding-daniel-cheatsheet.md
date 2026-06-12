@@ -100,6 +100,11 @@
 | Implementation authority | `projects/project-planning/output/interpersonal-communication/tech-spec-v2.md` |
 | Project overview and rationale | `projects/project-planning/output/interpersonal-communication/project-plan-v3.md` |
 
+> **One-time setup if you use the nested knowledge-base (`projects/interpersonal-communication/knowledge-base/`):** the old machine-specific `additionalDirectories` path was removed from the tracked `knowledge-base/.claude/settings.json` (it pointed at a path that only exists on one machine). On your machine, create `projects/interpersonal-communication/knowledge-base/.claude/settings.local.json` once with your own workspace-root path, or the shared `ai-resources/` skills and commands won't resolve in KB sessions. This file is gitignored (per-machine):
+> ```json
+> { "permissions": { "defaultMode": "bypassPermissions", "additionalDirectories": ["/Users/<you>/Axcion Claude Code/Axcion AI Repo"] } }
+> ```
+
 ---
 
 ## Process docs — load on demand
