@@ -483,3 +483,60 @@ None. All edits gated (risk-check PROCEED-WITH-CAUTION + SO concur + QC GO); exp
 
 ### Open Questions
 None blocking.
+
+## 2026-06-12 — Session S10
+**Mandate:** /fix-project-issues do-now batch — 6 SO-vetted gated fixes (id-16 dead ref, id-17 false usage-log line, id-41 symlink 2 byte-identical RW command copies, id-08 CLAUDE.md mirror-block dedup, id-12 audits/working deny rule, id-31 split-log.sh conservation tripwire) — done when: /risk-check passed, fixes applied (or individually deferred with reason), /qc-pass GO, committed
+- Out of scope: KB-repo settings fixes (id-01/02); all Defer/Skip items from the SO triage; improvement-log.md status flips
+- Files in scope: CLAUDE.md (ai-resources), workspace CLAUDE.md, workflows/research-workflow/.claude/commands/ (2 copies), .claude/settings.json, .claude/hooks/split-log.sh (canonical + template copy)
+- Stop if: /risk-check returns RECONSIDER or NO-GO — pause and surface
+
+### Summary
+Executed /fix-project-issues for the ai-resources scope end-to-end. 47 candidates scanned; reconcile-at-read demoted 7 as already-done (S9's same-day batch); SO triaged the remaining 40 into 6 do-now / 19 defer / 12+ skip. All 6 do-now were gated classes → batch /risk-check (PROCEED-WITH-CAUTION + SO second opinion concur) → 3 fixes shipped, 3 caught stale or harmful at the gates. QC GO; committed 39c2ba5 (ai-resources) + 9ed58cb (system-owner advisories).
+
+### Files Created
+- audits/risk-checks/2026-06-12-batch-of-6-so-vetted-structural-fixes-for-ai-resources.md — gate record + SO commentary + execution disposition
+- audits/working/diagnostics-scan-2026-06-12-0900-ai-resources.md (+ -STILL_OPEN.md) — scanner notes (gitignored)
+- projects/axcion-ai-system-owner/output/consultations/consult-2026-06-12-fix-project-issues-ai-resources.md — SO triage advisory (committed in that repo)
+- projects/axcion-ai-system-owner/output/consultations/consult-2026-06-12-risk-check-2nd-opinion-s10-fix-batch.md — SO second opinion (committed in that repo)
+- logs/scratchpads/2026-06-12-15-45-scratchpad.md — continuity scratchpad
+
+### Files Modified
+- CLAUDE.md — L10 usage-log statement corrected (repo hosts its own ai-resources usage log)
+- workflows/research-workflow/.claude/commands/refinement-pass.md + update-claude-md.md — copies → relative symlinks to canonical
+- logs/scripts/split-log.sh + workflows/research-workflow/logs/scripts/split-log.sh — content-conservation tripwire (lockstep, cmp-identical)
+- logs/improvement-log.md — applied-entry (tripwire) + pending propagation-debt entry (11 copies, named trigger)
+
+### Decisions Made
+- Item 5 (Read deny on audits/working) DROPPED per risk-check mitigation — would break /fix-project-issues Step 2.5's mandatory re-read; contradicts the recorded .gitignore:24 design decision. SO concurred.
+- Item 1 (dead /fewer-permission-prompts ref) DROPPED at apply — premise false: it is a live built-in Claude Code skill; the 35d repo-dd audit only grepped repo files.
+- Item 4 (CLAUDE.md mirror collapse, ~430 tok/turn) DROPPED at apply — already landed 2026-06-08 (7d415fc W24 + 76ef393); the audit and its fix shipped the same day, scanner read the report without checking.
+- id-01/id-02 (KB settings defects) routed OUT of scope per SO — cross-scope settings change belongs to a KB-scoped pass.
+- End-time risk-check gate satisfied via documented execution disposition appended to the plan-time report (S9 precedent: executed set = gated set minus dropped items; all mitigations QC-verified).
+- Tripwire design: non-blank line conservation (not raw lines) — command substitution strips trailing blanks at block boundaries, so raw counts would false-fire.
+
+### Outcome
+COMPLETION: DELIVERED — all 6 mandate items disposed per the done-when clause (3 applied + 3 deferred-with-reason, all verified against repo: edits live, symlinks resolve, tripwire present, drops evidence-backed, commits real, out-of-scope respected).
+EXECUTION: OPTIMAL — gates all followed (batch risk-check PWC + SO second opinion + QC GO); harmful deny caught at the gate rather than shipped; end-time gate via documented disposition consistent with the recorded skip rule; no rework loops. Better path: none. Confidence: high.
+
+### Risky actions
+None. All edits gated (risk-check PWC + SO concur + QC GO); item 5's harmful deny rule was caught and dropped at the gate; explicit-path staging throughout; pre-existing dirty files (claim-permission.template.md, stray session plans) untouched.
+
+### Session Assessment
+**Session Assessment** (wrap-collector, 2026-06-12)
+- Autonomy-compounding: scanner staleness gap is a reusable-fix signal (recurrence-after-fix, distinct mechanism) → routed; split-log tripwire already shipped + logged as `applied`.
+- Leanness/cost: 3 of 6 SO-vetted do-now items were stale, costing SO-vetting + risk-check attention on dead candidates before drop-at-apply — root cause is reconcile-at-read keyword-blindness to opaque-subject commits.
+- Principle-drift: no signal — gates all followed (batch risk-check PWC + SO second opinion + QC GO), end-time gate via documented disposition per the recorded skip rule.
+- Friction: no signal — stale items were culled at the gate by design (reconcile + SO net working as intended), no operator intervention, no rework loop.
+- Safety: none observed — `### Risky actions` = None; item 5's harmful `audits/working` Read-deny was caught and dropped at the gate, not shipped.
+- Routed: 1→improvement-log, 0→friction-log.
+- Not logged (per-session cap): none. (Propagation-debt signal already logged this session — dropped as same-session duplicate, not capped.)
+
+### Next Steps
+- Propagate split-log.sh tripwire to the 11 deployed copies — named trigger: next /sync-workflow or Friday cadence (improvement-log entry, weekly review-cycle).
+- KB-scoped pass for id-01 (stale Daniel-machine path, interpersonal-comm KB) + id-02 (2 KBs missing bypassPermissions/additionalDirectories).
+- Improvement-log status flips now unblocked (S8+S9+S10 all committed): collector hardening, Step 17b stale-close, classification rule, S6 tripwire entry (shipped by S10) + preamble L9 tier-2 convention.
+- Carry-over: mission promote-rw-canonical A5+A6 → /mission close; stranded claim-permission.template.md disposition; 2 stale April inbox briefs (Friday).
+- Scanner staleness gap worth an /improve look: 3 of 6 SO-vetted do-now items were stale — keyword reconcile misses commits with opaque subjects ("W24"); consider checking commits touching the named target files.
+
+### Open Questions
+None blocking.

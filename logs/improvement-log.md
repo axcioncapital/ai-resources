@@ -487,6 +487,7 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Provenance:** /fix-project-issues 2026-06-12 S10 (id-31; SO advisory consult-2026-06-12-fix-project-issues-ai-resources.md)
 - **What shipped:** Pre-write conservation assertion in `split-log.sh`: non-blank line conservation (keep + archive == entry region) + fence-aware header-count conservation (keep + archive headers == TOTAL). Aborts exit 1 BEFORE any write on mismatch. Verified by isolated fixture tests: top/bottom orders, fenced preamble, idempotent re-run, injected off-by-one bug → tripwire fired, files untouched. QC GO. Canonical + template copy byte-identical. This resolves the 2026-06-12 S6 "no fail-loud content-conservation tripwire" entry above.
 - **Target files:** `ai-resources/logs/scripts/split-log.sh`; `ai-resources/workflows/research-workflow/logs/scripts/split-log.sh` (lockstep, cmp-verified)
+- **Verified:** 2026-06-12 — in-session fixture tests (success/abort paths) + independent QC GO (same session, S10)
 
 ### 2026-06-12 — split-log.sh tripwire propagation to 11 deployed copies (named trigger)
 - **Status:** logged (pending)
@@ -496,3 +497,12 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Proposal:** The 11 deployed project-local `split-log.sh` copies (re-synced 2026-06-12 S7, f84f601) do not yet carry the S10 conservation tripwire — non-uniform-guarantee window until re-synced. **Named trigger: the next `/sync-workflow` run OR the next Friday cadence session, whichever comes first.** Re-sync is mechanical (S7's 11-target list + cmp byte-identity per copy); exclude the frozen archive copy per the S7 decision.
 - **Target files:** the S7 11-copy target list (see decisions.md 2026-06-12 S7 entry); canonical source `ai-resources/logs/scripts/split-log.sh`
 - **Review-cycle:** weekly
+
+### 2026-06-12 — reconcile-at-read misses already-done items behind opaque-subject commits (3 of 6 SO-vetted do-now stale)
+- **Status:** logged (pending)
+- **Category:** session-feedback
+- **Provenance:** wrap-collector (machine-authored) 2026-06-12
+- **Friction source:** wrap-collector 2026-06-12 — leanness/cost + autonomy-compounding (S10 § Decisions L511–512, § Next Steps L529)
+- **Proposal:** The reconcile-at-read primitive (`docs/backlog-reconciliation.md` + `/fix-project-issues` Step 2.5, shipped 2026-06-05 S14 to resolve the dated-report-staleness recurrence) demotes already-done candidates by **keyword** match. In S10, 3 of 6 SO-vetted do-now items were still stale because their resolving commits carried opaque subjects (e.g. id-04 mirror-collapse shipped under "W24" 7d415fc; audit + fix landed same-day) that keyword reconcile did not catch — so dead candidates passed reconcile, reached SO vetting + batch risk-check, and were only dropped at apply. Distinct mechanism from the 2026-06-05 dated-report entry (already RESOLVED): that closed report-vs-live staleness; this is reconcile's keyword-blindness to commits that **touched the named target files** but don't name them in the subject. Direction (collector does not fix): consider augmenting reconcile-at-read to also scan `git log` for commits touching each candidate's cited target file/line since the source report's date, not subject keywords alone. Note flags it for an `/improve` look.
+- **Target files:** (to be determined at disposition) — candidates: `ai-resources/docs/backlog-reconciliation.md`; `ai-resources/.claude/commands/fix-project-issues.md` Step 2.5; `ai-resources/.claude/commands/fix-repo-issues.md` Step 3.0 (lockstep).
+- **Review-cycle:** monthly
