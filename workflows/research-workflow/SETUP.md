@@ -123,7 +123,7 @@ If the project has no confidentiality constraints, replace the placeholder list 
 
 ## 8b. Required: Populate Fact-Verification Prompt
 
-Open `reference/sops/fact-verification-prompt.md` and replace the placeholder content with the GPT-5 system prompt used for fact verification. The `/verify-chapter` command reads this file in Step 2.
+Open `reference/sops/fact-verification-prompt.md` and fill the `{{FACT_VERIFICATION_SYSTEM_PROMPT}}` placeholder with your project's domain-specific framing (the subject entity, the report's domain, and the source-availability posture). **Keep the supplied "Verification rules" and "Output format" scaffolding below the placeholder** — it is the domain-agnostic verification floor (sourced+dated, evidence≠interpretation, no category-leakage, fixed discrepancy output) and should not be deleted. The `/verify-chapter` command reads this whole file in Step 2.
 
 ## 8c. Optional: Customize SOPs
 
