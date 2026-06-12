@@ -14,12 +14,39 @@ case "$ORDER" in top|bottom) ;; *) echo "split-log: order must be top|bottom" >&
 DIR=$(dirname "$FILE")
 BASE=$(basename "$FILE" .md)
 
-# Header lines (line numbers of every `## ` block)
-mapfile -t HEADERS < <(grep -n '^## ' "$FILE" | cut -d: -f1)
+# Fence-aware header extraction: `## ` lines inside fenced code blocks (``` or ~~~)
+# are NOT entry headers — template placeholders like `## YYYY-MM-DD` inside fences
+# previously corrupted the header list (improvement-log 2026-06-12).
+# Prints header text from stdin, skipping fenced spans.
+headers_only() {
+    awk '/^(```|~~~)/ { fence = !fence; next } !fence && /^## / { print }'
+}
+
+# Header lines (line numbers of every true `## ` block, fence-aware)
+# Portable across bash 3.2 (macOS default) — no mapfile/readarray.
+HEADERS=()
+while IFS= read -r _line; do
+    HEADERS+=("$_line")
+done < <(awk '/^(```|~~~)/ { fence = !fence; next } !fence && /^## / { print NR }' "$FILE")
 TOTAL=${#HEADERS[@]}
 [ "$TOTAL" -le "$KEEP" ] && exit 0
 
 H1=$(head -1 "$FILE")
+
+# Preamble = everything before the first real entry header (H1, description,
+# fenced usage templates). Previously only H1 was kept on rewrite — preamble
+# content was silently lost (improvement-log 2026-06-12). Strip any existing
+# `> Archive: [` pointer line (the script's own emission, see the rewrite
+# block below) so re-runs keep exactly one pointer. Anchored to the exact
+# emitted format — a prose line merely mentioning "Archive:" is preserved.
+FIRST_HEADER_LINE=${HEADERS[0]}
+if [ "$FIRST_HEADER_LINE" -gt 1 ]; then
+    # Command substitution strips trailing newlines, so the preamble ends clean;
+    # the rewrite block re-adds exactly one blank-line separator.
+    PREAMBLE=$(sed -n "1,$((FIRST_HEADER_LINE - 1))p" "$FILE" | grep -v '^> Archive: \[' || true)
+else
+    PREAMBLE="$H1"
+fi
 
 if [ "$ORDER" = "top" ]; then
     # Newest at top: keep first KEEP entries, archive the rest
@@ -49,8 +76,8 @@ ARCHIVE_FILE="${DIR}/${BASE}-archive-${YYYYMM}.md"
 # Idempotency: if archive file's last `## ` matches archive block's first `## `, skip append (already done)
 SKIP_APPEND=0
 if [ -f "$ARCHIVE_FILE" ]; then
-    LAST_ARCHIVE_HEADER=$(grep '^## ' "$ARCHIVE_FILE" | tail -1 || true)
-    FIRST_BLOCK_HEADER=$(echo "$ARCHIVE_BLOCK" | grep '^## ' | head -1 || true)
+    LAST_ARCHIVE_HEADER=$(headers_only < "$ARCHIVE_FILE" | tail -1 || true)
+    FIRST_BLOCK_HEADER=$(echo "$ARCHIVE_BLOCK" | headers_only | head -1 || true)
     if [ -n "$LAST_ARCHIVE_HEADER" ] && [ "$LAST_ARCHIVE_HEADER" = "$FIRST_BLOCK_HEADER" ]; then
         SKIP_APPEND=1
     fi
@@ -65,10 +92,10 @@ if [ "$SKIP_APPEND" -eq 0 ]; then
     printf '%s\n' "$ARCHIVE_BLOCK" >> "$ARCHIVE_FILE"
 fi
 
-# Rewrite active file: H1 + blank + pointer + blank + keep block
+# Rewrite active file: full preamble + blank + pointer + blank + keep block
 TMP=$(mktemp)
 {
-    printf '%s\n\n' "$H1"
+    printf '%s\n\n' "$PREAMBLE"
     printf '> Archive: [%s](%s)\n\n' "$(basename "$ARCHIVE_FILE")" "$(basename "$ARCHIVE_FILE")"
     printf '%s\n' "$KEEP_BLOCK"
 } > "$TMP"

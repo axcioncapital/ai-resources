@@ -456,3 +456,7 @@ Session-shape signals worth noting for the next checkup:
 - Observability: hold
 - Operator load: hold
 (all-hold default — auto-mode run; operator may set non-hold targets on request)
+
+## 2026-06-12 — S6 — split-log.sh dormant deployed copies carry pre-fix logic
+
+The fence-aware header scan + preamble-preservation fixes (2026-06-12 S6) landed in the 2 live files only: canonical `logs/scripts/split-log.sh` and the research-workflow template copy. ~14 project-local `logs/scripts/split-log.sh` copies are dormant — `/log-sweep` always invokes the canonical copy (`SCRIPTS_DIR`, log-sweep.md:31), so they have no live blast radius today. But they still carry the old logic (silent preamble loss + fenced-header miscount + `mapfile` bash-3.2 incompatibility). If one is ever reactivated (a project pointing tooling at its local copy, or a stale re-deploy), the defects resurface. Flagged by the SO second opinion on risk-check 2026-06-12-split-log-preamble-preservation-both-copies. Disposition candidate for a Friday cadence: re-sync or delete the dormant copies.
