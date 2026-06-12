@@ -412,3 +412,59 @@ None. The CLAUDE.md edit is a cross-cutting change class but was fully gated (pl
 
 ### Open Questions
 None.
+
+## 2026-06-12 — Session S6
+**Mandate:** Fix split-log.sh so `## ` lines inside fenced code blocks are skipped during header scanning, in both copies (canonical logs/scripts/split-log.sh + the research-workflow template copy, which also gets the bash-3.2 portable loop); verify against an isolated copy of the failing file (axcion-brand-book/logs/decisions.md); flip the improvement-log entry to resolved; confirm item 3's per-id-marker-gap log entry already exists — done when: fixed script splits the brand-book decisions file correctly in an isolated test; improvement-log entry flipped to resolved; commit landed
+- Out of scope: re-running the full 16-scope /log-sweep; any other archival-script behavior change
+- Files in scope: logs/scripts/split-log.sh, workflows/research-workflow/logs/scripts/split-log.sh, logs/improvement-log.md
+- Stop if: the test split produces wrong entry boundaries (data-loss shape) — stop and surface rather than tweak live
+Auto multi-item: Fix the split-log.sh code-fence bug that breaks archival of the brand-book decisions log; Log the gap where sessions that start without /prime don't get a per-id marker written (verified already-logged at S4 wrap — zero work remained).
+
+### Summary
+Auto-mode session (items 2+3 from /prime menu). Fixed the `split-log.sh` code-fence bug and, mid-execution, discovered + fixed a second pre-existing silent data-loss defect: the rewrite deleted all preamble content between H1 and the first entry header. The mandate's stop-if fired on the isolated test; surfaced to operator, who ran a System Owner pass → Option A (extend scope) approved and executed under full gating. Item 3 (log the per-id-marker gap) was verified already done at S4's wrap — zero work.
+
+### Files Created
+- `audits/risk-checks/2026-06-12-split-log-preamble-preservation-both-copies.md` — risk-check report (PROCEED-WITH-CAUTION + SO second-opinion commentary). (`1ca4c1c`)
+- `logs/session-plan-2026-06-12-S6.md` — session plan. (`1ca4c1c`)
+- `projects/axcion-ai-system-owner/output/consultations/consult-2026-06-12-split-log-preamble-loss.md` — SO advisory (written by the system-owner agent; lives in the workspace root repo).
+- `logs/scratchpads/2026-06-12-13-30-scratchpad.md` — continuity scratchpad. (gitignored)
+
+### Files Modified
+- `logs/scripts/split-log.sh` — fence-aware header extraction + preamble preservation with anchored pointer strip. (`1ca4c1c`)
+- `workflows/research-workflow/logs/scripts/split-log.sh` — synced lockstep; also gained bash-3.2 portable loop (mapfile removed). (`1ca4c1c`)
+- `logs/improvement-log.md` — split-log entry flipped to resolved; both target copies listed per QC traceability note. (`1ca4c1c`)
+- `logs/maintenance-observations.md` — dormant-copy drift note (~14 project-local copies carry pre-fix logic). (`1ca4c1c`)
+- `logs/session-notes.md` — S6 header + mandate + this wrap block.
+
+### Decisions Made
+- **Option A over Option B at the stop-if pause** — extend scope to preserve the full preamble rather than land the fence-fix only. Operator routed via SO pass; SO recommended A ("not a close call"); risk-check PROCEED-WITH-CAUTION with 3 mitigations, all applied; SO second opinion concurred; independent /qc-pass GO.
+- **End-time /risk-check skipped per the operator skip rule** — plan-time check covered the exact executed change with mitigations applied, commit shipped, zero drift. Documented here per the rule.
+- **Verification by targeted isolated test instead of full /log-sweep --dry-run** — same proof, fraction of the cost (disclosed at the auto-mode gate).
+
+### Outcome
+COMPLETION: DELIVERED
+EXECUTION: OPTIMAL
+- Independent reviewer verified commit `1ca4c1c` stat, both script copies, the improvement-log flip, the maintenance-observations note, and item 3's pre-existing entry — and re-ran the fixed script on a fresh isolated copy of the real brand-book file (exit 0, 19/10 split, template preserved, 88 = 88 content lines, no loss).
+- Process: stop-if fired as mandated; scope extension fully gated (SO advisory -> risk-check -> SO second opinion -> independent QC GO); single clean commit, no rework; out-of-scope re-run correctly skipped.
+- What was asked but not done: none. Better path: none. Confidence: high.
+
+### Risky actions
+None irreversible. The modified script is shared-state automation (mutates active logs on /log-sweep), but it was never run against a live file this session — isolated copies only (19/19 tests). The marketing-positioning preamble loss predates this session (S4) and remains unrestored (git-recoverable; surfaced to operator as optional follow-up). 3 concurrent sessions live in checkout; all staging by explicit path.
+
+### Session Assessment
+(wrap-collector, 2026-06-12 — S6; collector could not write [no append primitive in its toolset], failed loud; main session appended its validated payload via Bash heredoc)
+- Autonomy-compounding: positive — fence-aware + preamble-preservation fix to canonical split-log.sh (consumed by /log-sweep across all projects); confirmed consumer, no speculation.
+- Leanness/cost: positive — single clean commit, no rework; isolated 19/19 test chosen over full /log-sweep --dry-run.
+- Principle-drift: no signal — scope extension fully gated; end-time /risk-check skip per documented operator rule, logged.
+- Friction: no signal — the stop-if pause was designed behavior; concurrency staging discipline held.
+- Safety: low — split-log.sh has no fail-loud content-conservation tripwire; both loss paths were caught by manual testing only. Routed as guardrail-candidate (low).
+- Routed: 1→improvement-log (content-conservation tripwire, appended by main session); 0→friction-log.
+
+### Next Steps
+- Optional: restore the 2 preamble lines lost at S4's archival in `projects/marketing-positioning/logs/session-notes.md` (from `git show e1d22ca~1:logs/session-notes.md`).
+- Friday cadence candidate: re-sync or delete the ~14 dormant project-local `split-log.sh` copies (maintenance-observations 2026-06-12 S6).
+- Next `/log-sweep` run will confirm the brand-book decisions.md clears live (expected — verified on isolated copy).
+- Monthly cycle: the new content-conservation tripwire guardrail-candidate (improvement-log, this session).
+
+### Open Questions
+None blocking.
