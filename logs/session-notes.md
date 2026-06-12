@@ -540,3 +540,47 @@ None. All edits gated (risk-check PWC + SO concur + QC GO); item 5's harmful den
 
 ### Open Questions
 None blocking.
+
+## 2026-06-12 — Session S11
+**Mandate:** Close mission promote-rw-canonical (Phase 4 deploy-test via SETUP.md walk, /sync-workflow on positioning-research, checkbox cleanup, /mission close) and flip the now-unblocked improvement-log status entries — done when: deploy-test passes, sync reports in-sync or intentional divergence only, mission closed and archived, log entries flipped, changes committed
+- Out of scope: executing the tripwire propagation to the 11 deployed copies (deprioritized by operator — note only); KB settings pass; claim-permission.template.md disposition; inbox briefs
+- Files in scope: logs/missions/promote-rw-canonical.md, logs/improvement-log.md, workflows/research-workflow/SETUP.md (read-only)
+- Stop if: deploy-test fails or /sync-workflow shows unintentional divergence — surface before closing the mission
+- Allowed inputs: .claude/commands/mission.md, .claude/commands/sync-workflow.md, audits/risk-checks/2026-06-12-mission-promote-rw-canonical-landing-set.md, CLAUDE.md
+- Required outputs: logs/missions/archive/promote-rw-canonical.md
+- Context pack: output/context-packs/project-20260612-c4f1a/pack.md
+- Mission: promote-rw-canonical
+Close mission promote-rw-canonical (Phase 4 deploy-test + Phase 5 sync/close) + flip the now-unblocked improvement-log status entries. Item 2 (tripwire propagation to 11 copies) deprioritized by operator this session.
+
+### Summary
+Executed prime menu items 1+3 under one mandate: closed mission promote-rw-canonical (Phase 4 deploy-test PASS, /sync-workflow verified, all 7 acceptance assertions + 6 phase threads checked with commit evidence, archived) and flipped the now-unblocked improvement-log statuses (5 flips, all verified against live files and S9/S10 commits before flipping, plus the deferred preamble L9 tier-2 lockstep edit). Committed 6c85829.
+
+### Files Created
+- logs/missions/archive/promote-rw-canonical.md — closed mission contract (force-added past unanchored archive/ gitignore)
+- logs/session-plan-2026-06-12-S11.md — session plan (uncommitted, gitignore-adjacent stray convention)
+- logs/scratchpads/2026-06-12-16-30-scratchpad.md — continuity scratchpad (gitignored)
+- output/deploy-test-scratch-2026-06-12/ — deploy-test scratch copy (gitignored; rm blocked — manual cleanup)
+
+### Files Modified
+- logs/improvement-log.md — 5 status flips + preamble L9 tier-2 edit + deprioritization note + 4-item close-findings entry
+- logs/missions/promote-rw-canonical.md — tombstone stub (rm blocked; safe to delete manually)
+- logs/session-notes.md — S11 header + mandate + this wrap entry
+
+### Decisions Made
+- Sync divergences (6) all classified intentional/explained; down-ports (C6 hook, Check 4) logged as follow-up, NOT applied — out of declared files-in-scope.
+- Mission archive force-added (`git add -f`) past the unanchored `archive/` gitignore; the pattern bug logged as finding (0) rather than editing .gitignore mid-session (structural change, needs its own gate).
+- QC subagent unreachable (1M-credit gate, model override ineffective) → mechanical self-check 8/8 PASS used; commit-block rule N/A (non-architectural change class).
+- Tripwire-propagation named trigger technically FIRED this session (/sync-workflow ran) but execution withheld per operator deprioritization — recorded in the entry.
+
+### Risky actions
+None. rm/mv denials respected (tombstone + ask-operator workarounds); explicit-path staging throughout; no structural class touched; push gated to wrap.
+
+### Next Steps
+- Manual cleanup: delete `logs/missions/promote-rw-canonical.md` (tombstone) and `output/deploy-test-scratch-2026-06-12/`.
+- Gated .gitignore fix: anchor L42 `archive/` → `/archive/` after enumerating nested archive/ dirs (close-findings item 0).
+- SETUP.md Step 1 copy-path fix (close-findings item 1, trivial doc edit).
+- positioning-research down-ports when convenient: friction-log-auto.sh C6 (+ settings PostToolUse wiring) and run-execution.md Check 4 (close-findings items 2–3).
+- Carry-over: KB-scoped pass id-02 (pe-kb-vault missing bypassPermissions); stranded claim-permission.template.md disposition; stale inbox briefs (Friday — now 4 candidates incl. audit-workflow-pipeline.md, workflow-diagnosis.md).
+
+### Open Questions
+None blocking.
