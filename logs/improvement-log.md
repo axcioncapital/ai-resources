@@ -6,7 +6,7 @@ Each entry is a `### YYYY-MM-DD — {title}` block. Fields:
 
 - **Status:** `logged` | `proposed` | `pending` | `applied YYYY-MM-DD`
   *De facto convention: all current unresolved entries use `logged (pending)` as a combined compound state. The `/friday-checkup` [STALE] detection rule (added 2026-05-06) matches this compound form — not `pending` alone. If entries are normalized to the single-token schema in future, update the [STALE] match string in `friday-checkup.md` Step 6 accordingly.*
-- **Verified:** present when Status is `applied` and the operator has confirmed the fix is live. Both `Status: applied` AND `Verified:` are required for `/resolve-improvement-log` to classify an entry as resolved.
+- **Verified:** present when Status is `applied` and the operator has confirmed the fix is live. `/resolve-improvement-log` classifies an entry as resolved via two tiers (Step 3, since 2026-06-12 S9): **tier 1 (strict)** — both `Status: applied` AND a `Verified:` line; **tier 2 (convention)** — the `**Status:**` line itself contains `resolved`/`RESOLVED` followed by a `YYYY-MM-DD` date (a `resolved` token inside proposal prose does not qualify). Both tiers archive identically; tier-2 classifications are tagged `[convention]` for operator spot-check. *(This preamble line is the lockstep pair of the command's Step 3 rule — S9 widened the command and deferred this edit while a concurrent session owned the file; applied 2026-06-12 S11.)*
 - **Age:** auto-computed from the header date by `/resolve-improvement-log`; surfaced when > 6 weeks without resolution.
 - **Review-cycle:** for items not yet resolved — records the last review date and disposition (e.g., `reviewed 2026-04-24, deferred to next quarterly`). **This is the canonical "park" mechanism for ROI-deferred low-value items** (per workspace `CLAUDE.md` § Working Principles, structural-fix rule): a low-value item is parked by stamping `Review-cycle: reviewed {date}, deferred to {concrete trigger}`, which resets the `/friday-checkup` stale-scan clock to the review date. The deferral target must be **concrete** — a date, a quarter, or a named event — never "later"/"someday" (a park with no real trigger never drains; `/resolve-improvement-log` Step 3b rejects a vague trigger). A parked item stays in the **active** log and re-surfaces (the stale-scan re-flags it ~21 days after the review date, and the monthly `/friday-checkup` park-drain force-reviews the oldest parks); parking is **not** archival. Reserve archival for genuinely dead items.
 - **Category:** broad classification (e.g., `Audit-recurrence prevention`, `command/skill`).
@@ -357,8 +357,8 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Target files:** `docs/commit-discipline.md` (optional hygiene note); cross-reference the 2026-06-09 mid-session-commit gap entry above.
 - **Notes:** `audits/working/2026-06-09-resolve-ai-resources-remote-divergence-non-fast-forward.md`
 
-### 2026-06-09 — /risk-check Step 17b mandates a /consult call that can never succeed model-side (guarded by disable-model-invocation) (PENDING)
-- **Status:** logged (pending)
+### 2026-06-09 — /risk-check Step 17b mandates a /consult call that can never succeed model-side (guarded by disable-model-invocation) (CLOSED — STALE)
+- **Status:** closed (stale) — RESOLVED 2026-06-12 (S9): premise verified false. The `disable-model-invocation` flag on `consult.md` was REVERTED 2026-06-10 (consult.md L7–12 carries an explicit do-not-re-add comment naming Step 17b as a designed caller); live /consult invocations in S9 and S10 confirmed the dispatch works. No edit to risk-check.md needed — the planned re-point was dropped at the S9 gate (see decisions.md 2026-06-12 S9).
 - **Category:** skill-internal-contradiction + workflow-gate
 - **Source:** Observed live, 2026-06-09 S3. The canonical `/risk-check` skill (Step 17b) instructs, for any non-GO verdict, "invoke `/consult` via the Skill tool" to obtain the system-owner second opinion. But `.claude/commands/consult.md` carries `disable-model-invocation`, so the Skill tool refuses it model-side (`Skill consult cannot be used with Skill tool due to disable-model-invocation`). The prescribed Step 17d fallback ("record the second opinion as unavailable and proceed; verdict stands") therefore fires on EVERY model-driven risk-check run — the mandated second opinion is structurally always unavailable. This session worked around it by invoking the underlying `system-owner` agent directly (operator-confirmed as the standing posture, 2026-06-09 S3), which produced a materially load-bearing advisory (rejected the risk-reviewer's top mitigation as a misread of an intentional contract; surfaced an F1→F3 sequencing dependency). The workaround should be the documented path, not an improvisation.
 - **Gap:** Step 17b names a dispatch route (`/consult` via Skill tool) that the guard makes impossible; the second-opinion gate is silently degraded to no-op on every automated invocation.
@@ -412,8 +412,9 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Target files:** `/.claude/commands/wrap-session.md` (workspace-root); cross-ref `ai-resources/.claude/commands/wrap-session.md` Step 13 + `ai-resources/.claude/hooks/detect-concurrent-session.sh`.
 - **Review-cycle:** monthly
 
-### 2026-06-10 — Harden session-feedback-collector to append-only (destructive-Write recurrence) (PENDING)
-- **Status:** logged (pending)
+### 2026-06-10 — Harden session-feedback-collector to append-only (destructive-Write recurrence) (RESOLVED)
+- **Status:** applied — RESOLVED 2026-06-12 (S9 batch, commit 0ee6177: `Write` removed from the agent's toolset, `Edit`+`Bash` added; Constraint E rewritten categorical append-only)
+- **Verified:** 2026-06-12 — S9 independent /qc-pass GO; status flipped 2026-06-12 S11 after confirming the edit live in `.claude/agents/session-feedback-collector.md`
 - **Category:** guardrail-candidate
 - **Severity:** medium
 - **Provenance:** main-session (escalated from friction-log on second occurrence) 2026-06-10
@@ -462,8 +463,8 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Target files:** (to be determined at disposition) — candidate: a shared session-marker-establishment primitive consumed at every session-start path; `ai-resources/.claude/hooks/check-foreign-staging.sh`; cross-ref `ai-resources/docs/session-marker.md` + the 2026-06-10 unmarked-/clarify entry + the 2026-06-09 footprint-less fail-open entry.
 - **Review-cycle:** monthly
 
-### 2026-06-12 — split-log.sh: no fail-loud content-conservation tripwire against silent data loss
-- **Status:** logged (pending)
+### 2026-06-12 — split-log.sh: no fail-loud content-conservation tripwire against silent data loss (RESOLVED)
+- **Status:** resolved 2026-06-12 (S10, commit 39c2ba5) — shipped as the conservation tripwire; see the "split-log.sh content-conservation tripwire SHIPPED (S10)" entry below, which records the fix and explicitly resolves this entry. Status flipped 2026-06-12 S11.
 - **Category:** guardrail-candidate
 - **Severity:** low
 - **Provenance:** wrap-collector (machine-authored, appended by main session — collector toolset lacked append primitive) 2026-06-12 S6
@@ -471,8 +472,9 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Target files:** `ai-resources/logs/scripts/split-log.sh`; `ai-resources/workflows/research-workflow/logs/scripts/split-log.sh` (lockstep)
 - **Review-cycle:** monthly
 
-### 2026-06-12 — /resolve-improvement-log resolved-classification rule matches zero real entries (strict `applied`+`Verified:` vs de facto `resolved` convention)
-- **Status:** logged (pending)
+### 2026-06-12 — /resolve-improvement-log resolved-classification rule matches zero real entries (strict `applied`+`Verified:` vs de facto `resolved` convention) (RESOLVED)
+- **Status:** applied — RESOLVED 2026-06-12 (S9 batch, commit 0ee6177: two-tier Resolved classification added to `resolve-improvement-log.md` Step 3 — strict tier-1 plus `resolved YYYY-MM-DD` convention tier-2, with [strict]/[convention] presentation tags). The deferred lockstep preamble edit was applied 2026-06-12 S11 (see preamble Status schema note).
+- **Verified:** 2026-06-12 — S9 independent /qc-pass GO; preamble lockstep confirmed in S11
 - **Category:** session-feedback
 - **Provenance:** wrap-collector (machine-authored) 2026-06-12
 - **Friction source:** wrap-collector 2026-06-12 — autonomy-compounding / friction (S8)
@@ -495,6 +497,7 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Severity:** medium
 - **Provenance:** risk-check 2026-06-12 S10 residual risk #1 (SO second opinion, consult-2026-06-12-risk-check-2nd-opinion-s10-fix-batch.md)
 - **Proposal:** The 11 deployed project-local `split-log.sh` copies (re-synced 2026-06-12 S7, f84f601) do not yet carry the S10 conservation tripwire — non-uniform-guarantee window until re-synced. **Named trigger: the next `/sync-workflow` run OR the next Friday cadence session, whichever comes first.** Re-sync is mechanical (S7's 11-target list + cmp byte-identity per copy); exclude the frozen archive copy per the S7 decision.
+- **Deprioritized (operator, 2026-06-12 S11):** the operator marked this item "not important anymore" during the S11 prime menu. Note: the named trigger technically fired in S11 (a `/sync-workflow` run on positioning-research happened that session) but propagation was NOT executed per the operator's deprioritization. Entry stays pending at lowered priority; treat the next Friday cadence as a soft trigger only — confirm with the operator before executing.
 - **Target files:** the S7 11-copy target list (see decisions.md 2026-06-12 S7 entry); canonical source `ai-resources/logs/scripts/split-log.sh`
 - **Review-cycle:** weekly
 
@@ -505,4 +508,13 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Friction source:** wrap-collector 2026-06-12 — leanness/cost + autonomy-compounding (S10 § Decisions L511–512, § Next Steps L529)
 - **Proposal:** The reconcile-at-read primitive (`docs/backlog-reconciliation.md` + `/fix-project-issues` Step 2.5, shipped 2026-06-05 S14 to resolve the dated-report-staleness recurrence) demotes already-done candidates by **keyword** match. In S10, 3 of 6 SO-vetted do-now items were still stale because their resolving commits carried opaque subjects (e.g. id-04 mirror-collapse shipped under "W24" 7d415fc; audit + fix landed same-day) that keyword reconcile did not catch — so dead candidates passed reconcile, reached SO vetting + batch risk-check, and were only dropped at apply. Distinct mechanism from the 2026-06-05 dated-report entry (already RESOLVED): that closed report-vs-live staleness; this is reconcile's keyword-blindness to commits that **touched the named target files** but don't name them in the subject. Direction (collector does not fix): consider augmenting reconcile-at-read to also scan `git log` for commits touching each candidate's cited target file/line since the source report's date, not subject keywords alone. Note flags it for an `/improve` look.
 - **Target files:** (to be determined at disposition) — candidates: `ai-resources/docs/backlog-reconciliation.md`; `ai-resources/.claude/commands/fix-project-issues.md` Step 2.5; `ai-resources/.claude/commands/fix-repo-issues.md` Step 3.0 (lockstep).
+- **Review-cycle:** monthly
+
+### 2026-06-12 — Mission promote-rw-canonical close findings: SETUP.md stale copy-path + 2 project down-ports + unanchored archive/ gitignore (PENDING)
+- **Status:** logged (pending)
+- **Category:** template-defect + propagation
+- **Severity:** low
+- **Provenance:** S11 mission-close deploy-test + /sync-workflow run (2026-06-12)
+- **Proposal:** Four follow-ups from the mission-close verification. (0) **`.gitignore` L42 `archive/` is unanchored** — it matches any `archive/` directory at any depth, not just the top-level one its comment names, so `logs/missions/archive/` (the mission-close destination prescribed by `/mission` Step 5) is silently gitignored; the closed-mission record had to be force-added (`git add -f`) in S11 to stay tracked. Fix candidate: anchor to `/archive/` — but first enumerate nested `archive/` dirs the unanchored pattern currently (perhaps intentionally) ignores; a gitignore edit is a structural change, gate it. (1) **SETUP.md Step 1 copy path is stale:** it reads `cp -r workflows/active/research-workflow/project-template/ ...` but neither `workflows/active/` nor a `project-template/` subdir exists — the template IS `ai-resources/workflows/research-workflow/` itself. A new deployer following Step 1 verbatim fails at the first command. Fix: correct the path and clarify that the whole directory is the template. (2) **positioning-research's `friction-log-auto.sh` lacks the C6 repair** (pre-C6 PreToolUse-only version, 1 "Friction Events" ref vs canonical's 4) — friction events from tool errors are not auto-captured in that project's sessions. Down-port from canonical (also needs the project's settings.json PostToolUse wiring — check before copying). (3) **positioning-research's `run-execution.md` lacks canonical's Check 4** (sampled scarcity-verdict independence check) — update available, project's choice when to take it.
+- **Target files:** `ai-resources/workflows/research-workflow/SETUP.md` (Step 1); `projects/positioning-research/.claude/hooks/friction-log-auto.sh` + that project's `settings.json` (item 2); `projects/positioning-research/.claude/commands/run-execution.md` (item 3)
 - **Review-cycle:** monthly
