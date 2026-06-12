@@ -27,7 +27,7 @@ A command or skill may declare a pause point unconditional by marking it with th
 
 ## Decision-Point Posture
 
-When work reaches a decision point (multiple approaches, stage gate, plan-mode option selection), pick the recommended option and proceed. State the choice in one line. Do not ask the operator to validate the recommendation. Risks go into session-plan or inline advisory notes — not blocking asks.
+When work reaches a decision point (multiple approaches, stage gate, plan-mode option selection), pick the recommended option and proceed. State the choice in one line — and, for direction-setting or structural decisions, add the main alternative rejected in one more line. Do not ask the operator to validate the recommendation. Risks go into session-plan or inline advisory notes — not blocking asks.
 
 Skill stage gates auto-advance unless a genuine risk warrants surfacing in session-plan. "Would you like to proceed to the next stage?" is not a pause trigger.
 
