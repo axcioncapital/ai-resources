@@ -201,3 +201,9 @@
 
 #### Write Activity
 - S4 cont. (/log-sweep) staged its own work by explicit path across 2 commits / 2 repos (e1d22ca marketing-positioning, bffdd95 ai-resources); no foreign files touched. Concurrent session's settings.json edits left untouched and unstaged.
+
+## Session — 2026-06-12 (S8)
+
+### Friction Events
+
+- **[wrap-collector]** wrap — `/resolve-improvement-log` classification rule forced mid-run operator adjudication. Type = command (rule/convention mismatch). The command's strict resolved test (`Status: applied` AND `Verified:`) matches zero real entries while the log's done entries use the `resolved YYYY-MM-DD` convention, so the operator had to hand-select which of the 12 candidates were genuinely resolved. Improvement face routed to improvement-log.md (same root cause, session-feedback category).

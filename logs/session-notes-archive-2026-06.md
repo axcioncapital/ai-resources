@@ -2441,3 +2441,141 @@ Rewrote `/decide` (`ai-resources/.claude/commands/decide.md`) from an operator-p
 
 ### Open Questions
 - None.
+## 2026-06-10 — Session S3
+
+**Mandate:** Make worktree-isolated launch the default low-friction path for a second session (Fix 3 of the concurrent-session isolation fix-plan) — ship a thin shell launcher (`cc-worktree <unit>`) reusing the `/new-worktree-session` worktree-creation logic, plus a hook-nudge tightening — done when: launcher + nudge edit written and QC-clean, /risk-check GO, fix-plan Fix 3 marked addressed, committed.
+- Out of scope: the da72d7a promotion-vs-rollback decision; the concurrent session's in-flight files; rewriting parallel-sessions-playbook.md; Fix 4(b) log-namespacing.
+- Files in scope: NEW launcher script (location pending /placement) (inferred); .claude/hooks/detect-concurrent-session.sh (inferred); audits/2026-06-09-concurrent-session-isolation-fix-plan.md; a new audits/risk-checks/ report.
+- Stop if: (none stated)
+
+Build Fix 3 of the concurrent-session isolation fix-plan — make worktree-launch the default path for a second session.
+
+### Summary
+Built Fix 3 (option b) of the concurrent-session isolation fix-plan: `scripts/cc-worktree.sh`, a terminal launcher that creates an isolated git worktree (mirroring `/new-worktree-session` Step 1), cds in, and execs `claude` — plus three wording-only nudge edits to `detect-concurrent-session.sh` naming it as the fast path. Shipped through /risk-check (PROCEED-WITH-CAUTION, SO concurred) and /qc-pass (GO), committed across 3 repos. Then the operator challenged whether it was the right solution; the key fact surfaced that **he launches via the VS Code extension, not a terminal**, making the launcher inert for his workflow. Decision: leave it as-is (zero functional harm; rollback is its own risk), and record that the actual working solution is Fixes 1+2 (already shipped) + the in-session `/new-worktree-session` command. Logged the VS Code launch fact to auto-memory to prevent recurrence.
+
+### Files Created
+- `scripts/cc-worktree.sh` — the terminal worktree launcher (option b; inert for VS Code launch, kept as a harmless building block).
+- `audits/risk-checks/2026-06-10-build-fix-3-option-b-of-the-concurrent-session-isolation-fix.md` — the /risk-check report (PROCEED-WITH-CAUTION + appended System Owner commentary).
+- `projects/axcion-ai-system-owner/output/consultations/consult-2026-06-10-fix3-worktree-launcher-second-opinion.md` — SO second-opinion advisory (untracked, per consultation-output convention).
+- `logs/session-plan-2026-06-10-S3.md` — the session plan.
+- `logs/scratchpads/2026-06-10-16-21-scratchpad.md` — continuity scratchpad.
+- Auto-memory `feedback_vscode_launch.md` (+ MEMORY.md index line) — Patrik launches via VS Code, not terminal.
+
+### Files Modified
+- `.claude/hooks/detect-concurrent-session.sh` — 3 wording-only nudge edits (sharp / old-CLI-fallback / soft) naming `cc-worktree <unit>` as the fast path alongside `/new-worktree-session`; detection logic unchanged.
+- `projects/positioning-research/.claude/hooks/detect-concurrent-session.sh` — re-synced from canonical (WIRED copy; same-commit mitigation, separate repo commit).
+- `projects/research-pe-regime-shift-advisory-gap/.claude/hooks/detect-concurrent-session.sh` — re-synced from canonical (orphan copy; hygiene).
+- `audits/2026-06-09-concurrent-session-isolation-fix-plan.md` — Fix 3 marked addressed + logged-patch note + post-build VS Code fit caveat.
+- `logs/session-notes.md` — this entry + mandate; auto-archived 6 older entries → `logs/session-notes-archive-2026-06.md` (Step 3).
+
+### Decisions Made
+- Operator (AskUserQuestion + challenge): autonomous build picked Fix 3 option (b) at the gate; after the build, operator challenged the solution → surfaced VS Code launch → decided to leave the launcher in place rather than roll back. Working solution recorded as Fixes 1+2 + `/new-worktree-session`.
+- Claude (decision-point posture): picked option (b) over (a) at the gate (option a largely redundant with shipped Fix 1's nudge); applied both /risk-check mitigations + the 3 SO adjustments (grep-derive WIRED set, sync-note as logged patch, single-source helper parked); skipped /placement as a separate step since repo-architecture.md resolved the `scripts/` home inline.
+
+### Outcome
+- **COMPLETION: DELIVERED** — every mandate clause delivered in usable form (launcher written + QC-clean, all 3 nudges name cc-worktree, both project copies re-synced, Fix 3 marked addressed, 4 commits/3 repos). Verified against files + git log.
+- **EXECUTION: ACCEPTABLE** — all required gates ran (risk-check + SO + QC). Better path: one pre-build fit question ("terminal or VS Code launch?") was cheap and would have surfaced the terminal-vs-VS-Code mismatch before building a launcher that shipped inert. Mitigating: option (b) was an explicit operator `go`, the inert artifact was correctly left rather than rolled back, and the wasted-build cost is partly mandate-inherited. Confidence: high.
+
+### Risky actions
+None. (Structural change to a SessionStart-adjacent hook + new script, but QC-clean, risk-check-gated PROCEED-WITH-CAUTION with mitigations applied, SO concurred; re-syncs verified byte-identical; no destructive/external/shared-state-clobber action.)
+
+### Session Assessment
+(wrap-collector, 2026-06-10 S3)
+- Autonomy-compounding (OP-9): built `cc-worktree.sh` that shipped inert for the operator's VS Code launch environment — no confirmed consumer for the actual workflow. Routed.
+- Friction (process): missing pre-build environment-fit check before building environment-specific tooling → 1 friction-log entry.
+- Improvement (session-feedback): add a pre-build environment-fit check at `/scope` or `/session-plan` for launch/runtime-gated tooling → hand-appended to improvement-log (collector hit Constraint E and stopped loud rather than risk a clobber).
+- Principle-drift: none — all gates ran (/risk-check + SO + /qc-pass); inert artifact correctly left, not rolled back.
+- Safety: none observed — Risky actions = None; no collector destructive-write incident.
+
+### Next Steps
+- Concurrent-session isolation fix-plan: Fix 2 ✓ → Fix 1 ✓ → Fix 4(a) ✓ → Fix 3 ✓ (inert for VS Code). Remaining build-order item is **Fix 4(b)** (per-session log namespacing) — only if 4(a) proves insufficient; not yet warranted.
+- Lighter carryovers (not touched): port `/wrap-session` Step 13 per-id teardown to the workspace-root `wrap-session.md` copy; resolve the `da72d7a` promotion-vs-rollback decision; S4's two foreign working-tree files.
+- Optional, evidence-gated: a VS Code-native one-click isolated-session trigger — build only if concurrent same-repo sessions prove frequent.
+
+### Open Questions
+None.
+
+## 2026-06-10 — S3 (cont.) — Concurrent-session coverage micro-audit
+
+### Summary
+Evidence-traced micro-audit of whether the concurrent-session fix campaign is permanently complete. Traced every recorded incident (friction-log + improvement-log + the three audit docs) and inspected the live solution (two hooks, settings wiring, wrap Step 13). Verdict **PARTLY FIXED**: the guard that actually prevents the silent same-checkout clobber (`check-foreign-staging.sh`) works but is wired only in the ai-resources checkout — 0 of 15 project repos, not workspace-root, not user-level. Produced an audit memo + tiered fix plan (P1–P4) and registered an umbrella PENDING backlog entry. Operator deferred the build to a future session.
+
+### Files Created
+- `audits/2026-06-10-concurrent-session-coverage-audit.md` — coverage audit + residual-gap fix plan (verdict, incident→fix matrix, live wiring map, P1–P4).
+- `logs/scratchpads/2026-06-10-S3-concurrent-coverage-audit-scratchpad.md` — continuity scratchpad.
+
+### Files Modified
+- `logs/improvement-log.md` — umbrella PENDING entry for the coverage gap (P1/P2), cross-refs existing 467/477/501/216 for P3/P4/P5.
+
+### Decisions Made
+- Audit deliverable shape (memo + fix plan, no build this session), both collision classes in scope, tiered guardrails (hard block for silent-data-loss moments, soft nudge for nuisances) — operator-directed via /clarify AskUserQuestion.
+- QC fix (separate): grounded §4 coverage inference on the verified registration fact rather than an unverified --add-dir hook-precedence assumption; added proven-in-repo feasibility evidence for P1.
+
+### Outcome
+- **COMPLETION: DELIVERED** — all four claimed artifacts present and verified; "plan first / no infra changes" honored (settings.json unchanged); "trace the logs, don't guess" honored (every §3 incident maps to a real friction-log entry; §4 wiring map re-counted 0/15 + 1/15 independently).
+- **EXECUTION: OPTIMAL** — verdict follows from verified evidence; QC was genuinely independent (separate subagent); memo correctly hedges the one unconfirmed point (cross-`--add-dir` merge) as non-load-bearing.
+- What was asked but not done: none. Better path: none. Confidence: high.
+
+### Risky actions
+None. (Two commits, local only; no push, no destructive ops, no external writes. The Step 3.5 guard's embedded template had mangled `$0`/`$1` placeholders — ran a faithful clean reconstruction instead of the corrupted verbatim; result FOREIGN=0, benign.)
+
+### Session Assessment
+(wrap-collector, S3 cont. — collector returned signals but could not write: its toolset lacked Edit/Bash and it correctly refused whole-file Write on the append-only logs.)
+- Autonomy/leanness/principle-drift: no signal. Coverage finding already self-logged at `improvement-log.md` (umbrella PENDING entry); QC fix was evidence-led (grounded on verified registration fact).
+- Friction candidate (Step 3.5 embedded-bash template "mangled" `$0`/`$1`/awk placeholders) — **VERIFIED FALSE PREMISE, NOT LOGGED.** On-disk `wrap-session.md` field refs (`$0`/`$1`/`$2`) are intact (checked L94/180/250). The corruption was a harness context-injection display artifact (positional-param expansion against injected `$ARGUMENTS`), not a file defect; benign (FOREIGN=0). Logging it would misattribute an intact file as broken, so it was withheld per the materiality bar.
+- Safety: none. No destructive collector write this wrap.
+
+### Next Steps
+- `/prime` next session will surface the PENDING improvement-log entry. To build: fresh session, start with P1 (single `~/.claude/settings.json` edit, /risk-check gated), then P2 → P3 → P4.
+- Interim discipline (no build needed): different projects = safe concurrent; same folder twice = `/new-worktree-session`; ai-resources already fully guarded.
+
+### Open Questions
+None.
+
+## 2026-06-11 — Session S1
+**Mandate:** Build the deferred concurrent-session coverage fix P1–P4 — register check-foreign-staging.sh (P1) and detect-concurrent-session.sh (P2) at user level in ~/.claude/settings.json by absolute path; close the Fix 2 fail-open blind spot (P3); port wrap Step 13 marker teardown to workspace-root wrap-session.md (P4) — done when: P1+P2 registrations present, P3+P4 edits applied, each /risk-check-gated, commits landed.
+- Out of scope: P5 (wrap-lite) stays deferred; do not revive Fix 4(b) log namespacing or the SessionStart block
+- Files in scope: ~/.claude/settings.json; ai-resources/.claude/hooks/check-foreign-staging.sh + detect-concurrent-session.sh (read-only refs); P3 fail-open fix site; workspace-root wrap-session.md (inferred)
+- Stop if: /risk-check returns NO-GO on P1 (the critical hard-block change)
+
+Build concurrent-session hook coverage: register check-foreign-staging.sh at user level so all checkouts are protected; risk-check gated; then P2–P4.
+
+## 2026-06-11 — Session S2
+**Mandate:** Run independent /qc-pass on the P1–P4 concurrent-session coverage build (check-foreign-staging.sh P3, three settings.json P1/P2 dedup, workspace-root wrap-session.md P4), then on GO commit across the three affected repos and complete the four post-commit follow-ups — done when: /qc-pass returns GO on all five artifacts, commits landed in all three repos, four follow-up notes written, scratchpad deleted
+- Out of scope: P5 (wrap-lite) stays deferred; do not revive Fix 4(b) log namespacing or the SessionStart block
+- Files in scope: ai-resources/.claude/hooks/check-foreign-staging.sh; ~/.claude/settings.json; ai-resources/.claude/settings.json; projects/positioning-research/.claude/settings.json; workspace-root .claude/commands/wrap-session.md; ai-resources/logs/improvement-log.md; audits/2026-06-10-concurrent-session-coverage-audit.md; docs/risk-topology.md
+- Stop if: /qc-pass does not return GO → do NOT commit (QC-PENDING commit-block stands); QC subagent unreachable → defer via /handoff, do not self-QC-and-commit
+- Allowed inputs: logs/session-plan-2026-06-11-S1.md; audits/risk-checks/2026-06-11-build-deferred-concurrent-session-coverage-fix-p1-p4.md; .claude/commands/qc-pass.md; .claude/agents/qc-reviewer.md; docs/qc-independence.md; audits/2026-06-10-concurrent-session-coverage-audit.md; logs/scratchpads/2026-06-11-12-22-scratchpad.md
+- Context pack: output/context-packs/qc-20260611-a7c2e/pack.md
+Resume QC-PENDING commit-block: run independent /qc-pass on the P1-P4 concurrent-session coverage build (check-foreign-staging.sh P3, three settings.json dedup, workspace-root wrap-session.md P4), then commit across the affected repos and handle the post-commit follow-ups (Daniel handoff note, R2 orphan hook, R3 risk-topology note, flip improvement-log umbrella entry).
+
+### Summary
+Resumed the S1 QC-PENDING commit-block. Independent /qc-pass returned GO on all five P1–P4 artifacts (subagent reachable this session — the S1 1M-credit gate did not fire). Landed 4 commits across 3 repos, completed all four post-commit follow-ups (R1 Daniel handoff note, R2 orphan-hook disposition, R3 risk-topology consequence note, umbrella improvement-log entry flipped to resolved), logged the deferred S1 decision, and deleted the drained scratchpad. The new P3 guard false-fired on its own first commit, exposing two defects (undated header lookup; handoff-ended sessions leave live-looking markers) — workaround applied (stale S1 marker deleted), defects logged as a new PENDING improvement-log entry for a gated fix.
+
+### Files Created
+- audits/working/qc-2026-06-11-S2-p1-p4-coverage-build.md — QC reviewer full notes (gitignored)
+- logs/session-plan-2026-06-11-S2.md — this session's plan
+
+### Files Modified
+- logs/decisions.md — S1 "user-level + dedup + handoff note" decision logged
+- logs/improvement-log.md — umbrella entry 521 → RESOLVED; new PENDING entry (P3 first-firing defects A/B)
+- audits/2026-06-10-concurrent-session-coverage-audit.md — Post-landing notes (R1/R2 + defect summary)
+- projects/repo-documentation/vault/architecture/risk-topology.md — R3 marker-row consequence note (vault is gitignored; on-disk only)
+- logs/scratchpads/2026-06-11-12-22-scratchpad.md — DELETED (QC-PENDING block drained)
+- logs/.session-marker-<S1-id> — DELETED (stale; S1 ended via handoff without teardown)
+
+### Decisions Made
+- Unblock path for the P3 false-fire: delete the verified-dead S1 marker rather than hot-edit the just-QC'd hook; defects logged for a gated fix instead.
+- R2 orphan hook: noted as deliberately-unregistered (deletion left to a session in that repo) — stays within this session's write scope.
+- End-time /risk-check: SKIPPED per the end-time-skip rule — plan-time gate (S1) covered the executed scope, mitigations applied, commits shipped, no scope expansion.
+
+### Risky actions
+None beyond design: the new PreToolUse guard hard-blocked two legitimate commit attempts (false-fire); resolved by verified stale-marker deletion, not by bypassing the guard.
+
+### Next Steps
+- Relay R1 to Daniel: he must register both hooks in his own ~/.claude/settings.json (clone-absolute paths) or he runs with zero concurrent-session coverage.
+- Gated fix session for the P3 first-firing defects (improvement-log 2026-06-11 entry: header date anchor + handoff marker teardown) — weekly review cycle.
+- Push pending: ai-resources 9 ahead, workspace-root 1 ahead, positioning-research 1 ahead (gated at wrap).
+
+### Open Questions
+None
