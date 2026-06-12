@@ -405,3 +405,54 @@ Session-shape signals worth noting for the next checkup:
 - Observability: hold
 - Operator load: hold
 (all-hold default accepted at wrap; the permission-floor CRITICAL is addressed by the queued settings-permissions plan + the check-permission-sanity.sh policy proposal rather than a posture change)
+
+## 2026-06-12 — Friday Act (weekly tier, source: friday-checkup-2026-06-12.md)
+
+### System Owner inputs (this session)
+- Friday Advisory: (none within 7 days — freshest 2026-06-05, predates checkup)
+- Systems Review:  (none within 7 days — freshest 2026-06-05, predates checkup)
+
+### Journal Report (this session)
+- Journal Report: (none within 7 days — freshest 2026-05-29)
+
+### Disposition summary
+- Tactical: 13 queued for plans, 6 defer, 4 skip (of 23 items; of which 0 System Owner-derived, 0 journal-derived)
+- Triage source: 0 auto-default, 23 operator-override (auto-mode run; HIGH/MED→f, LOW→d default applied, then corrected: 4 MED→skip [already-done / wrap-handled], 1 low/med→fix-now)
+
+### Deferred items (from this session)
+- Reconvert positioning-research `refinement-pass.md` + `update-claude-md.md` to symlinks (byte-identical drift copies) — low, source: checkup
+- Replace 2 byte-identical workflow command copies in ai-resources with symlinks — low, source: checkup
+- Add `Edit(**/.claude/**)` + `Write(**/.claude/**)` companion globs to axcion-brand-book + ai-development-lab settings — low, source: checkup
+- Migrate `additionalDirectories` out of 17 tracked project settings.json into settings.local.json (pending /new-project alignment) — low, source: checkup
+- Archive 3 oversized session-notes.md (ai-resources / marketing-positioning / positioning-research) — low, source: checkup — DEFERRED specifically because session-notes archival under today's concurrent-session activity is the exact lost-update surface the 09:30 scratchpad flagged; do in a clean single-session window with date-guard validation
+- project-planning improve bundle (pipeline-entry mandate-baseline nudge; CLAUDE.md /session-start prerequisite line) — low, source: checkup
+
+### Plans written (this session)
+- audits/friday-plans/2026-06-12-permissions.md — 3 items
+- audits/friday-plans/2026-06-12-skill-frontmatter.md — 2 items
+- audits/friday-plans/2026-06-12-improve-findings.md — 4 items
+- audits/friday-plans/2026-06-12-session-issues.md — 4 items
+
+### Skipped (already resolved or wrap-handled)
+- "check-foreign-staging.sh: two naive-matching false-fires" + "disposition the uncommitted check-foreign-staging.sh edit" — already landed in S2 commit 96151cd (file is clean, not dirty)
+- /cleanup-worktree — current dirty tree is promote-rw-canonical mission WIP, not checkup leftovers; handled at /wrap-session
+- git push (8 unpushed) — operator-gated to /wrap-session
+
+### Plan QC (Step 16k)
+- Independent qc-reviewer: GO — all 16 risk-check annotations correct (no over/under-flags), both borderline calls defensible, schema complete across all 4 plan files.
+
+### Operator observations
+(none — auto-mode run; operator did not provide free-text)
+
+### Autonomy & Reliability notes
+(auto-observed, not operator-provided) Two self-running frictions this cycle: (1) the source /friday-checkup ran as a MARKERLESS session amid 3 concurrent sibling sessions in one checkout — exactly the no-own-marker strand condition queued as session-issue fix #1; (2) ai-resources improvement-log has ~32 active entries vs. soft cap 7 — /resolve-improvement-log is overdue. One structural change that would help: a forcing function tying /resolve-improvement-log to the Friday cadence when the active count exceeds the cap, rather than a soft y/n that auto-runs continue.
+
+### Autonomy-axis posture targets (week ahead)
+- Guardrails: hold
+- Optimization: hold
+- Autonomy: hold
+- Capability: hold
+- Reliability: hold
+- Observability: hold
+- Operator load: hold
+(all-hold default — auto-mode run; operator may set non-hold targets on request)
