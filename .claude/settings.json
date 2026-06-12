@@ -79,6 +79,17 @@
             "statusMessage": "Checking for significant artifact writes..."
           }
         ]
+      },
+      {
+        "matcher": "Bash|Write|Edit|Agent|Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/friction-log-auto.sh",
+            "timeout": 5,
+            "statusMessage": "Friction-event check..."
+          }
+        ]
       }
     ],
     "Stop": [
