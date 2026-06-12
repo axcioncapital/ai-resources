@@ -106,6 +106,24 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 
    This is read-only (no `git add`, no write). If `FOREIGN_SHARED` is non-empty, carry the dirty paths to Step 6 as an exception line naming the foreign-dirty shared files/logs — these are files a concurrent session may be mid-edit on, so editing them this session risks a lost-update collision. If `SIBLING_COUNT ≤ 1` or the check returns nothing, skip silently (no line). The advisory only *names* the surface; it does not block.
 
+   *Live-foreign-session check → `/concurrent-session-check` nudge (S3, 2026-06-12).* `SIBLING_COUNT` above counts same-day *headers* — it cannot tell a live session from one that already wrapped (the marker is date-pruned, not liveness-pruned), so it is the wrong gate for a "you have a concurrent session right now" nudge. Reuse instead the precise liveness oracle that `detect-concurrent-session.sh` already uses: the per-id marker set. `/prime` writes this session's own per-id marker only at Step 8 (after orientation), so at Step 1a time **every** today-dated `logs/.session-marker-*` other than this session's own is a foreign session that primed in this checkout today and has not wrapped (≈ live). Run one **read-only** scan:
+
+   ```bash
+   # LIVE_FOREIGN_HERE — count of un-wrapped foreign sessions in THIS checkout (same signal as detect-concurrent-session.sh).
+   LIVE_FOREIGN_HERE=0
+   if [ -n "${CLAUDE_CODE_SESSION_ID}" ]; then
+     SELF_MARKER="logs/.session-marker-${CLAUDE_CODE_SESSION_ID}"
+     for f in logs/.session-marker-*; do
+       [ -f "$f" ] || continue                       # glob matched nothing → no per-id markers
+       [ "$f" = "$SELF_MARKER" ] && continue          # exclude this session's own (defensive — not yet written at orientation)
+       c=$(cat "$f" 2>/dev/null)
+       [ "${c%% *}" = "$TODAY" ] && LIVE_FOREIGN_HERE=$((LIVE_FOREIGN_HERE + 1))
+     done
+   fi
+   ```
+
+   If `CLAUDE_CODE_SESSION_ID` is unset (old CLI), the oracle is unavailable — leave `LIVE_FOREIGN_HERE=0` and skip the nudge silently (degrade safe; `detect-concurrent-session.sh` still covers the SessionStart-level alert via its own old-CLI fallback). If `LIVE_FOREIGN_HERE >= 1`, carry it to Step 6, which emits the `/concurrent-session-check` nudge line. This is the planning-time pair of the SessionStart hook: the hook says "a session is live — isolate"; this line says "a session is live — so check your next task won't collide before you pick it." Independent of `SIBLING_COUNT` (strictly more precise); never blocks.
+
 1b. **Detect a resumable continuity scratchpad.** `/handoff` continuity mode and `/wrap-session` Step 0.5 both write session-state scratchpads to `logs/scratchpads/`. Surface the most recent one so the operator can choose to resume it.
 
    - List `logs/scratchpads/` for files matching the glob `*-scratchpad.md` **exactly** — this excludes other files that may share the directory (e.g., `*-implementation-plan.md`).
@@ -187,6 +205,7 @@ Last session ({date}): {one-line plain-English summary}.
 {⚠ Pull: autostash pop conflicted — working tree has conflict markers; stash@{0} preserved. Resolve the markers (or `git checkout --theirs`/`--ours`) and `git stash drop` before starting work. — only on an `autostash-conflict` result from Step 0}
 {Today's session count: {N} marker-bearing entries ({list of markers}). This session is {MARKER}. — informational only, no `⚠` icon; only when SIBLING_COUNT > 1}
 {⚠ Concurrent session may be editing shared files: {foreign-dirty paths under .claude/commands / docs / the non-append logs improvement-log.md / improvement-log-archive.md / decisions.md}; check before editing them — only when SIBLING_COUNT > 1 and the Step 1a read-only `git status` found foreign-dirty shared files/logs}
+{⚠ Concurrent session live in this checkout — before starting a task, run `/concurrent-session-check <task>` to confirm it won't collide, or `/concurrent-session-check` (no argument) to see which menu items are safe. — only when Step 1a found LIVE_FOREIGN_HERE >= 1}
 {⚠ Phase READMEs detected: {paths}; read before opening the relevant work unit — only if step 4 surfaced any}
 {↩ Resumable scratchpad: {path} — only if step 1b surfaced one}
 {◎ Active mission(s): {for each in ACTIVE_MISSIONS: "<id> — <name>"} — only if step 1d found any; advisory, names the multi-session goal(s) this work can serve}
