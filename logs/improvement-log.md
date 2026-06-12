@@ -550,8 +550,8 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Target files:** `ai-resources/.claude/hooks/check-foreign-staging.sh` (Fix A: `in_footprint()` L338–342 + token parse L245–251; Fix B: gated-verb detection L82–98); cross-ref `ai-resources/docs/commit-discipline.md` (two-end contract), entries 501 + 521.
 - **Review-cycle:** monthly
 
-### 2026-06-11 — check-foreign-staging.sh first live firing: undated header lookup + stale handoff markers false-fire the new P3 hard block (PENDING)
-- **Status:** logged (pending)
+### 2026-06-11 — check-foreign-staging.sh first live firing: undated header lookup + stale handoff markers false-fire the new P3 hard block (RESOLVED)
+- **Status:** resolved 2026-06-12 S1 — both defects fixed. Defect A: `check-foreign-staging.sh` header lookup now anchors on the marker's own date AND S-number (gated on `sess_date` non-empty; malformed-marker degrades to the existing no-concrete-footprint path). Defect B: option 1 (the named cheap structural close) landed as continuity-mode **Step C3** in `skills/handoff/SKILL.md` — per-id marker teardown on the direct `/handoff` path, SKIPPED when `/wrap-session` Step 0.5 inlines C1–C2 (wrap owns its own Step 13 teardown after its marker-dependent steps); new teardown end registered in `docs/session-marker.md`. Note the fix landed in `skills/handoff/SKILL.md`, not `.claude/commands/handoff.md` (the command is a thin delegator). Plan-time + end-time `/risk-check` GO (all six dimensions Low); independent `/qc-pass` GO. The separate glob-footprint/heredoc-verb entry above stays PENDING (out of scope).
 - **Category:** session-issue + concurrent-session-collision
 - **Severity:** medium-high (the new P3 branch BLOCKS commits, so each false-fire is a stopped legitimate commit)
 - **Provenance:** main-session — observed live 2026-06-11 S2, on the very first firing of the just-landed P3 logic (it blocked this session's own QC-approved commit).

@@ -201,6 +201,38 @@ drains it; without that delete the warning would re-surface every session.
 - Run `/clear` to start fresh, then `/prime` to resume
 - Or run `/compact` if you prefer lossy summarization over a clean restart
 
+**C3 — Per-id session-marker teardown (direct `/handoff` only).** As the final
+continuity-mode action, remove THIS session's per-id liveness marker so a
+handoff-ended session is not mistaken for a live concurrent one:
+
+```bash
+[ -n "${CLAUDE_CODE_SESSION_ID}" ] && rm -f "logs/.session-marker-${CLAUDE_CODE_SESSION_ID}"
+```
+
+Why: `.claude/hooks/check-foreign-staging.sh` and
+`.claude/hooks/detect-concurrent-session.sh` treat a today-dated per-id marker
+(other than the reader's own) as a live foreign session in this checkout. A
+session that ends via `/handoff` — notably a QC-PENDING deferral — never runs
+`/wrap-session` Step 13, so without this its marker survives and the next
+same-checkout session's commit is false-flagged as a concurrent collision
+(observed 2026-06-11 S1→S2: S1 deferred via QC-PENDING handoff, its stale marker
+hard-blocked S2's QC-approved commit). Leave the shared `logs/.session-marker`
+untouched — it is `/prime`'s same-day increment oracle (date-pruned, not
+liveness-pruned). The teardown is safe whether the session truly ends or resumes
+after `/clear`: on resume, `/prime` rewrites the per-id marker for the resumed
+session. If `CLAUDE_CODE_SESSION_ID` is unset, the guard makes this a silent
+no-op. This is the only Bash call in continuity mode; it is a fixed cleanup, not
+file discovery (the no-bash-discovery rule at the top of continuity mode still
+holds).
+
+**SKIP C3 when this continuity workflow is run inline by `/wrap-session`
+Step 0.5.** `/wrap-session` runs its OWN Step 13 teardown as its final action —
+AFTER its marker-dependent Step 3.5 (attribution) and Step 7a (mandate read).
+Tearing the marker down here would break those steps. Wrap Step 0.5 invokes only
+Steps C1–C2 by name; C3 belongs to the direct `/handoff` invocation path only.
+Two-end teardown contract registered in `docs/session-marker.md`
+§ Concurrent-session detection.
+
 ---
 
 ### Fork mode
@@ -301,5 +333,7 @@ the child reads the updated version — this is correct behavior, not a bug.
 - **`disable-model-invocation: true`:** Set. This skill writes to the
   filesystem; must not fire as a side effect of conversational mentions of
   "hand off" in unrelated prose.
-- **Tools required:** Write (output file). Fork mode additionally needs Read
-  (collision check on target path, Step F6 only). No Bash.
+- **Tools required:** Write (output file). Continuity mode's C3 teardown needs
+  Bash for a single `rm -f` (direct-`/handoff` path only; skipped when wrap
+  inlines C1–C2). Fork mode additionally needs Read (collision check on target
+  path, Step F6 only). No Bash is used for file *discovery* in either mode.

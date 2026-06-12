@@ -141,6 +141,14 @@ if not marker_raw:
 
 mm = re.search(r'\bS\d+\b', marker_raw)
 sess = mm.group(0) if mm else ""
+# Marker date (the marker file stores "YYYY-MM-DD SX" — docs/session-marker.md).
+# Defect A fix (2026-06-12, improvement-log first-firing entry): the header lookup
+# below anchors on BOTH the date and the S-number. Matching the S-number alone let
+# an older same-S entry from a prior day (e.g. "## 2026-06-10 — Session S2") match
+# first and shadow today's CONCRETE footprint with its stale `(inferred)` one,
+# false-firing the no-concrete-footprint branch on a validly-scoped session.
+dm = re.search(r'\b\d{4}-\d{2}-\d{2}\b', marker_raw)
+sess_date = dm.group(0) if dm else ""
 
 # ---- Live-foreign-session oracle (P3, 2026-06-11) ----
 def _live_foreign_session(logs_dir, self_session_id):
@@ -176,13 +184,17 @@ def _live_foreign_session(logs_dir, self_session_id):
 # ---- Read the `- Files in scope:` bullet under this session's marker header ----
 footprint_raw = ""
 notes = os.path.join(logs_dir, "session-notes.md")
-if sess and os.path.isfile(notes):
+if sess and sess_date and os.path.isfile(notes):
     try:
         lines = open(notes, encoding="utf-8", errors="replace").read().splitlines()
     except Exception:
         lines = []
+    # Anchor on the marker's own date AND S-number (Defect A fix) so only THIS
+    # session's header matches — not a prior day's same-S entry. If sess_date is
+    # empty (malformed marker), the gate above skips the read entirely and the
+    # session falls through to the no-concrete-footprint path (safe degrade).
     header_re = re.compile(
-        r'^##\s+\d{4}-\d{2}-\d{2}\s+—\s+Session\s+' + re.escape(sess) + r'\b')
+        r'^##\s+' + re.escape(sess_date) + r'\s+—\s+Session\s+' + re.escape(sess) + r'\b')
     in_block = False
     for ln in lines:
         if ln.startswith("## "):
