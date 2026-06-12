@@ -95,9 +95,14 @@ Wait for the agent's response.
 
 ---
 
-### Step 5 — Return the agent's response unmodified
+### Step 5 — Verify the advisory file, then return the agent's response unmodified
 
-Output the agent's response verbatim to the operator. Do NOT add a preamble, do NOT summarize, do NOT add an "I hope this helps" closing. The agent's voice is the System Owner voice; wrapping it in command-shell prose dilutes it.
+**5a — Post-return existence check.** Parse the path from the agent's first line (`**Full advisory on disk:** {path}`). Check that the file actually exists at that path (e.g., `ls {path}`). The path-back line is a model claim, not a verified artifact — on 2026-06-10 the agent returned it three times in one session with no file written, silently losing the architectural audit trail.
+
+- **File exists** → proceed to 5b.
+- **File missing** → persist the agent's returned summary verbatim to that path, prefixed with a one-line provenance header: `> Recovered by /consult Step 5a — the system-owner agent returned this summary but did not write its full advisory; only the summary below was received. {DATE}`. Persist ONLY what the agent actually returned — never synthesize or expand the full advisory it didn't deliver. Note the repair in one chat line: `Note: SO advisory file was missing — returned summary persisted to {path}.`
+
+**5b — Return the response.** Output the agent's response verbatim to the operator. Do NOT add a preamble, do NOT summarize, do NOT add an "I hope this helps" closing. The agent's voice is the System Owner voice; wrapping it in command-shell prose dilutes it.
 
 ---
 

@@ -149,6 +149,8 @@ If no structural class appears likely: state "No structural change classes appar
 
 **Tripwire:** any edit that *reorders* operations against shared state (logs, session files, cross-session artifacts) qualifies as automation-with-shared-state-effects — even when the command being edited already exists. The "existing-command refactor" framing does NOT exempt the change from `/risk-check`.
 
+**Environment-fit check (launch/runtime-gated tooling only):** if the planned work product is an executable or launcher whose value depends on *how the operator triggers it* (terminal script, shell alias, `.zshrc` function, OS entrypoint), confirm the trigger environment fits before the plan is approved. Known baseline: the operator launches Claude Code via the **VS Code extension** (opens a folder/window), not a terminal — terminal-only tooling ships inert (real incident 2026-06-10 S3: `cc-worktree.sh` terminal launcher built through the full gate chain, zero functional value). If the planned artifact assumes a terminal launch, flag the mismatch in the plan's Risk section and prefer a VS Code-native or in-session slash-command shape. Skip this check entirely for non-executable work (docs, commands, skills, analyses).
+
 Do not evaluate structural risk yourself. Point to `/risk-check`.
 
 ---

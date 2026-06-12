@@ -15,8 +15,13 @@ Archive resolved entries from `ai-resources/logs/improvement-log.md` so stale it
    **Malformed-entry handling:** Content preceding the first `### ` header, or orphaned content between blocks that does not belong to a preceding block, is left untouched. Do not error, discard, or attempt to re-anchor. If orphaned content exists, count the lines and mention it in the final summary ("Skipped N orphaned lines, no header").
 
 3. **Classify each entry:**
-   - **Resolved** — the entry contains both a line starting `**Status:** applied` AND a line starting `**Verified:**`.
-   - **Pending** — anything else (missing Status, Status is "logged"/"proposed"/"pending", or "applied" without a Verified line).
+   - **Resolved (tier 1 — strict)** — the entry contains both a line starting `**Status:** applied` AND a line starting `**Verified:**`.
+   - **Resolved (tier 2 — convention)** — the entry's `**Status:**` line contains `resolved` or `RESOLVED` followed by a `YYYY-MM-DD` date (the log's de facto completion convention — most done entries use `Status: ... RESOLVED 2026-06-05 ...` or similar instead of the strict applied+Verified pair; see the 2026-06-12 S8 friction entry that motivated this tier). A `resolved` token *inside the proposal prose* does NOT qualify — only on the `**Status:**` line itself.
+   - **Pending** — anything else (missing Status, Status is "logged"/"proposed"/"pending"/"deferred"/"parked", or "applied" without a Verified line).
+
+   Both Resolved tiers are archived identically. In the step-4 presentation, tag each entry `[strict]` or `[convention]` so the operator can spot-check tier-2 classifications cheaply.
+
+   *Schema-sync note (2026-06-12 S9):* the improvement-log.md preamble (L9) still documents only the strict tier-1 rule. The lockstep preamble edit was deliberately deferred — a concurrent session (S8) owned `improvement-log.md` uncommitted when this tier-2 widening landed, so editing the preamble would have risked a lost-update collision. The two ends are intentionally divergent until a follow-up session updates the preamble: command widened, preamble lagging. Until then, this command file is authoritative for classification.
 
 3b. **Two-tier age detection.** Compute age for each Pending entry: extract the date from the `### YYYY-MM-DD —` header line (or use the most recent `**Review-cycle:**` date if present — deferral resets the clock), then `python3 -c "from datetime import date; print((date.today() - date.fromisoformat('ENTRY_DATE')).days)"`. Skip entries with no parseable date; count them as Pending only.
 
