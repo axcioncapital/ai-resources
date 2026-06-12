@@ -2,150 +2,6 @@
 
 > Archive: [session-notes-archive-2026-06.md](session-notes-archive-2026-06.md)
 
-## 2026-06-10 — Session S2
-**Mandate:** Establish the "wrap-owns" discipline for the in-place mutations of the shared logs (improvement-log.md, decisions.md) in docs/commit-discipline.md, so concurrent sessions serialize on those logs instead of colliding — done when: the wrap-owns rule is documented in commit-discipline.md, the append-vs-in-place doc-classification conflict is reconciled, legitimate non-wrap appenders are explicitly carved out, /risk-check GO, /qc-pass clean, committed
-- Out of scope: Fix 3, Fix 4(b) per-session namespacing; the da72d7a promotion-vs-rollback decision; the two untouched S4 foreign files; carryover task #2 (porting wrap-session Step 13 to the workspace-root copy)
-- Files in scope: docs/commit-discipline.md, .claude/commands/wrap-session.md, .claude/commands/improve.md, .claude/commands/resolve-improvement-log.md, docs/parallel-sessions-playbook.md (inferred)
-- Stop if: /risk-check returns NO-GO or RECONSIDER
-- Context pack: output/context-packs/documentation-20260610-f3a9c/pack.md
-
-Build Fix 4(a) of the concurrent-session isolation fix-plan — wrap-owns shared-log discipline for the non-append logs (improvement-log.md, decisions.md).
-
-### Summary
-Built **Fix 4(a)** of the concurrent-session isolation fix-plan: added a "Maintenance-owned in-place mutations" rule to `docs/commit-discipline.md` codifying that the shared status logs (`improvement-log.md`, `friction-log.md`) may be **appended** by ordinary work sessions but only **mutated in place** (status flips, archiving) by dedicated single-purpose sessions — the Friday maintenance cadence and `/fix-repo-issues` plan execution. Reconciled an internal contradiction in `commit-discipline.md` itself (the foreign-staging exempt-list called these logs "append-only/benign" while § Shared-log write-path integrity called them "non-append/lost-update hazard" — both right about different operations). Picked via `/prime 1 auto`; risk-check GO; QC REVISE→APPROVE. 1 commit.
-
-### Files Created
-- `audits/risk-checks/2026-06-10-add-maintenance-owned-in-place-mutations-rule-fix-4a.md` — `/risk-check` report (GO, all six dimensions Low). (`9976a6b`)
-- `logs/session-plan-2026-06-10-S2.md` — the session plan.
-- `logs/scratchpads/2026-06-10-14-30-scratchpad.md` — continuity scratchpad.
-
-### Files Modified
-- `docs/commit-discipline.md` — NEW section "## Maintenance-owned in-place mutations (shared-log serialization)"; scoping clause added to the foreign-staging tripwire exempt-list paragraph (reconciles the L25/L29 contradiction). (`9976a6b`)
-- `docs/parallel-sessions-playbook.md` — one new row in the § 2 file-shape classification table (append-shaped-with-in-place-mutations), cross-referencing the new rule. No rewrite (fix-plan §5). (`9976a6b`)
-- `logs/session-notes.md` — mandate line + this wrap note.
-
-### Decisions Made
-- **Reconcile the append-vs-in-place classification as two operation classes on the same files** — the exempt-list's "append-only/benign" and the write-path-integrity section's "non-append/hazard" both hold, for the append vs in-place-mutation operations respectively. Source: Claude design, grounded in the context-engine conflict flag + the three docs.
-- **Frame the rule as "dedicated single-purpose sessions," not "maintenance-cadence only"** — QC pass 1 caught `/fix-repo-issues` plan execution as a mid-session in-place mutator outside the Friday cadence, falsifying the narrower claim. Broadened to "dedicated single-purpose sessions" (maintenance cadence + fix-execution), which keeps the invariant TRUE. Source: QC REVISE finding, resolved by Claude.
-- **No command edits** — the invariant already holds (Stage 0 investigation: all in-place mutators are already dedicated-session commands; all mid-session writers append-only with the existing integrity guard). The rule is a guardrail against future drift, not a behavior change. Source: Claude design.
-
-### Outcome
-COMPLETION: DELIVERED
-EXECUTION: OPTIMAL
-- What was asked but not done: none. Independent outcome check (general-purpose, fresh context, 2026-06-10) verified every mandate element against the actual files: wrap-owns rule present (commit-discipline.md new section), L25/L29 contradiction reconciled via the two-class table, legitimate appenders carved out, /risk-check GO file confirmed, QC REVISE→APPROVE corroborated by the /fix-repo-issues mutator now listed, single commit 9976a6b at top of log.
-- Refinement assessed sound: the mandate paired "improvement-log.md, decisions.md" but the shipped rule covers improvement-log.md + friction-log.md and carves decisions.md out as append-only (no in-place status-flip writer exists for it). The outcome check ruled this a defensible evidence-led refinement, not a miss — decisions.md is covered if ever archived.
-- Better path: none. Confidence: high.
-
-### Risky actions
-None irreversible. The two S4 foreign files (`workflows/research-workflow/reference/claim-permission.template.md` modified, `audits/risk-checks/2026-06-09-promote-3-...md` untracked) remained untouched in the working tree throughout and were never staged (explicit-path commit `9976a6b`). Foreign-session pre-write guard ran at wrap: FOREIGN=0 (no concurrent content).
-
-### Session Assessment (wrap-collector, 2026-06-10 — S2)
-- Autonomy-compounding: no signal — Fix 4(a) codifies the already-logged wrap-owns shared-log discipline (improvement-log L413), an existing backlog item, not a novel reusable component.
-- Leanness/cost: no signal — 1 commit, no churn, no always-loaded weight; doc-only change adds no hook/CLAUDE.md load.
-- Principle-drift: no signal — reconciled the commit-discipline.md L25/L29 internal contradiction (single-source spirit upheld); no strained principle.
-- Friction: no signal — no collector incident this session (contrast S5/S1), FOREIGN=0 at wrap, explicit-path commit. The QC REVISE→APPROVE was a normal in-loop QC catch, not operator intervention.
-- Safety: none observed — `### Risky actions` = none irreversible; two S4 foreign files left untouched/unstaged; pre-write guard clean.
-- Routed: 0→improvement-log, 0→friction-log. Not logged (per-session cap): none.
-- Note: S2's deliverable *resolves* the active improvement-log wrap-owns sub-point (L413); the collector did not flip that entry's status (Friday-cadence / `/improve` work, outside collector scope).
-
-### Next Steps
-- Build **Fix 3** (make worktree-launch the default for a second session) — next in the isolation fix-plan build order (Fix 2 ✓ → Fix 1 ✓ → Fix 4(a) ✓ → Fix 3 → Fix 4(b)). Source: `audits/2026-06-09-concurrent-session-isolation-fix-plan.md`.
-- **Port the `/wrap-session` Step 13 per-id teardown to the workspace-root `.claude/commands/wrap-session.md` copy** (S1 carryover, flagged in-code via MIRROR NOTE).
-- Decide the **promotion-vs-rollback** question on `da72d7a` (carryover from S3/S5/S1 — operator's call).
-- Push the unpushed commits (gated confirmation at this wrap).
-
-### Open Questions
-- Promotion-vs-rollback on `da72d7a` (S4's research-workflow canonical promotion) — keep or revert? Unresolved, operator's call.
-
-## 2026-06-10 — Session S2 (cont.) — /clarify infra-request SO-routing pointer
-### Summary
-Designed and shipped an addition to `/clarify`: infrastructure-implementation requests (a /clarify whose target is a Claude Code harness resource — command, agent, hook, skill, settings.json, or CLAUDE.md rule) now get an **advisory pointer** in §3 to run `/consult` or `/decide` before answering. The operator's original ask was to **auto-spawn** the system-owner agent from /clarify; the review chain (SO pass → plan-time /risk-check RECONSIDER → SO reconciliation) talked that down to the advisory nudge, which the operator selected (Option 1). Advisory-only, no auto-spawn, clarify.md stays `model: sonnet`. (Started directly with /clarify, so this session is unmarked — no /prime; see Risky actions.)
-
-### Files Created
-- `logs/scratchpads/2026-06-10-11-35-scratchpad.md` — continuity scratchpad for this session.
-- `audits/risk-checks/2026-06-10-add-system-owner-pass-to-clarify-for-infra-requests.md` — plan-time risk-check report (RECONSIDER); committed in `0690ef5`.
-
-### Files Modified
-- `.claude/commands/clarify.md` — added the §3 advisory infra-request pointer; committed in `0690ef5`.
-- `logs/improvement-log.md` — two pending entries: (1) system-owner agent reports "Full advisory on disk" without writing the file; (2) unmarked /clarify-first session risks false-CONCURRENT wrap guard.
-- `logs/decisions.md` — the Option-1 design decision.
-- `logs/session-notes.md` — this entry.
-
-### Decisions Made
-- Chose **Option 1 (advisory nudge)** over auto-spawning the system-owner from /clarify. Driven by plan-time /risk-check RECONSIDER (auto-spawn + silent self-resolve crosses the OP-5 advisory→enforcement line on a first-touch command symlinked to ~20 sites, without a recorded OP-11 posture revision) and SO partial-concurrence. Logged to decisions.md.
-
-### Risky actions
-At wrap, detected a session-id ↔ marker mismatch: this /clarify-first session is unmarked (`NO_OWN_MARKER=1`) while an earlier same-day session-id held the `S2` marker + header. The Step 3.5 guard returned `FOREIGN=0` (prior S2 content already in HEAD), so the wrap proceeded correctly — no destructive or co-mingling action taken. The latent false-CONCURRENT risk (had that prior work been uncommitted) is logged to improvement-log.md.
-
-### Next Steps
-- Push the gated commits (operator confirmation at this wrap).
-- Friday cadence resolves the two pending improvement-log entries (SO write-failure; unmarked-/clarify wrap-guard gap).
-
-### Open Questions
-- None for this session's work.
-
-## 2026-06-10 — Session S2 (cont. 2) — technical-solution-consultant skill + /tech-consult command
-
-### Summary
-Built a new reusable skill, **technical-solution-consultant** (invoked as `/tech-consult`), end-to-end via the full resource pipeline: `/clarify` → System Owner `/consult` (resolved 5 design decisions) → `/scope` (approved) → `/create-skill` (cold eval REVISE → fixes → regression check) → `/risk-check` (GO) → commit. The skill is a consult-first translation layer turning broad business/project intent into a justified, build-ready technical plan (staged: consultation → options → recommendation → spec → roadmap → QA → builder prompt) before anything gets built. After the commit, an operator-relayed external triage (6 items) was resolved and refinements applied to the committed files. (Started directly with /clarify — unmarked session; shared marker held S2 from earlier same-day work.)
-
-### Files Created
-- `skills/technical-solution-consultant/SKILL.md` — staged methodology (155 lines): 5 non-negotiable behaviors, brief-QC, one decision gate after Stage 3, size-triggered two-pass, self-review, runtime
-- `skills/technical-solution-consultant/references/selection-memo-template.md` — 14-section Selection Memo structure (Stages 2–3)
-- `skills/technical-solution-consultant/references/build-spec-template.md` — fixed structures for Stages 4–Final (spec/roadmap/QA/builder prompt)
-- `skills/technical-solution-consultant/references/example-selection-memo.md` — worked "credibility website" example (real weighted matrix + red-team)
-- `skills/technical-solution-consultant/references/tool-selection-heuristics.md` — when-to-use-what judgment + dated currency marker
-- `.claude/commands/tech-consult.md` — thin `/tech-consult` invocation (model: opus)
-- `audits/risk-checks/2026-06-10-new-tech-consult-skill-command.md` — risk-check report (verdict GO)
-- `inbox/archive/technical-solution-consultant-brief.md` — fulfilled brief (local-only; inbox/archive gitignored)
-- `projects/axcion-ai-system-owner/output/consultations/consult-2026-06-10-technical-solution-consultant.md` — SO advisory (separate dir)
-- `logs/scratchpads/2026-06-10-11-42-scratchpad.md` — continuity scratchpad
-
-### Files Modified
-- (none pre-existing; all build files new this session)
-
-### Decisions Made
-- **Skill architecture (SO-approved):** one staged skill (not a family); one decision gate after Stage 3 (Stages 4–Final as one block); size-triggered two-pass on a once-defined "elevated-stakes signal"; no bespoke reviewer agent in v1 (self-review + existing /qc-pass→triage-reviewer); standalone, NOT wired into /new-project.
-- **Command name:** operator chose `/tech-consult` (over /solution-consult).
-- **Cold-eval fixes (Major):** added build-spec-template.md (late-stage output contract), example-selection-memo.md (worked example), Runtime Recommendations section.
-- **Triage refinements (operator-relayed):** verified reference files substantive (#1); decided overlap with task-plan-creator/prompt-creator/workflow-creator = produce-inline + name-the-seam, not reimplement (#2); collapsed self-dissolving Altitude Ladder + de-duplicated validation checklist (#3); softened never-downgrade absolutism (#4); corrected two-pass "doubles cost" overstatement (#5); restored role list (minor).
-
-### Risky actions
-- None. (cp from ~/Downloads was permission-denied — outside working dirs; worked around via Read+Write. No destructive/external/shared-state action.)
-
-### Next Steps
-- Push the pending commit (operator confirmation at this wrap).
-- Optional: add `/new-project` soft-pointer to `/tech-consult`; fresh evaluator pass post-refinement.
-- Deferred to next `/improve-skill`: specialist-skill negative triggers once those roles exist.
-
-### Open Questions
-- None.
-
-## 2026-06-10 — /decide flipped to autonomous-by-default
-
-### Summary
-Rewrote `/decide` (`ai-resources/.claude/commands/decide.md`) from an operator-pick posture to autonomous-by-default, per operator direction. Now it researches each open decision, picks the best-grounded answer for every item (including operator-taste calls), reports a short inline summary, and continues the underlying task — pausing only on low-confidence items and the global Autonomy Rules gates. Flow: `/clarify` → 4 answers via AskUserQuestion → rewrite → independent `/qc-pass` (GO, no findings) → committed.
-
-### Files Created
-- None (logs/scratchpads/2026-06-10-11-47-scratchpad.md is a wrap artifact).
-
-### Files Modified
-- `ai-resources/.claude/commands/decide.md` — three-outcome model (Decided / Paused-low-confidence / Already-decided) replaces the old four-bucket interactive model; new Step 7 adopt-and-continue; Autonomy floor kept as independent gate; output collapsed to inline summary; Composition reworded so `/decide` and `/recommend` are no longer framed as opposites.
-
-### Decisions Made
-- Operator (AskUserQuestion): autonomous = new default (not a flag); operator-taste items get picked too; "proceeds" = adopt picks + continue the task; single stop trigger = low confidence.
-- Claude (decision-point posture): skipped a separate `/scope` gate after operator said "go"; relied on post-edit `/qc-pass`. Routine rewrite — not journaled to decisions.md.
-
-### Risky actions
-- None. (Behavioral change to a symlinked shared command, but QC-clean and operator-directed; no destructive/external/shared-state-clobber action taken.)
-
-### Next Steps
-- None required — work complete and committed.
-- Optional: if `/decide`'s near-overlap with `/recommend` proves confusing in real use, revisit a merge — needs observed friction first.
-
-### Open Questions
-- None.
-
 ## 2026-06-10 — Session S3
 
 **Mandate:** Make worktree-isolated launch the default low-friction path for a second session (Fix 3 of the concurrent-session isolation fix-plan) — ship a thin shell launcher (`cc-worktree <unit>`) reusing the `/new-worktree-session` worktree-creation logic, plus a hook-nudge tightening — done when: launcher + nudge edit written and QC-clean, /risk-check GO, fix-plan Fix 3 marked addressed, committed.
@@ -514,3 +370,45 @@ None irreversible. The 3× blocked commit was the staging-guard correctly catchi
 
 ### Open Questions
 None blocking.
+
+## 2026-06-12 — Decision-Point Posture: surface rejected alternative (LAND-MINIMAL)
+
+### Summary
+Investigated an external-AI "Decision Preview Gate" proposal (stop-and-wait artifact before every meaningful decision). Surfaced the head-on conflict with Decision-Point Posture and Autonomy Rules and ruled out the blocking form. Coverage analysis + `/consult` + a System Owner pass found the only genuine gap was that rejected alternatives are surfaced nowhere inline. Landed the LAND-MINIMAL residue: a one-clause extension to the existing "state the choice" rule, mirrored across the canonical CLAUDE.md and its rationale doc. Session ran without `/prime`/`/session-start` (entered via `/clarify`).
+
+### Files Created
+- `logs/scratchpads/2026-06-12-12-14-scratchpad.md` — continuity scratchpad
+- `audits/risk-checks/2026-06-12-extend-the-decision-point-posture-rule-to-surface-the-main.md` — plan-time risk-check report (GO)
+
+### Files Modified
+- `../CLAUDE.md` (workspace root, L127) — appended rejected-alternative clause to Decision-Point Posture [committed, root repo]
+- `docs/autonomy-rules.md` (L30) — mirrored the same clause [committed, ai-resources repo]
+- `logs/session-notes.md` — this entry; archive moved 4 entries → `logs/session-notes-archive-2026-06.md`
+
+### Decisions Made
+- Adopt the visible-only, one-clause LAND-MINIMAL extension; reject the blocking gate, the standalone "Decision Preview" section, the Recommendation field, and rationale-on-every-decision (gap b). Operator chose visible-preview-then-proceed; SO concurred. (Logged to decisions.md.)
+- Ran the full plan-time `/risk-check` gate at operator request despite the tiny diff (blast radius, not diff size, governs).
+
+### Outcome
+- **COMPLETION: DELIVERED** — all claimed edits/commits/gates verified against the repo.
+- **EXECUTION: OPTIMAL** — no rework loop, detour, skipped gate, or over-build; visible-only / no-blocking-gate constraint honored.
+- Confidence: low (no formal mandate — entered via `/clarify`, no `/prime`).
+
+### Risky actions
+None. The CLAUDE.md edit is a cross-cutting change class but was fully gated (plan-time risk-check GO + independent qc-pass GO) before commit; explicit-path staging kept concurrent-session content out of the two commits.
+
+### Session Assessment
+(wrap-collector, 2026-06-12) — 0 appends to either log.
+- Autonomy-compounding: one-clause rule extension (rejected-alternative surfacing), minimal form chosen, blocking variants rejected — no speculation.
+- Leanness/cost: +1 always-loaded CLAUDE.md clause, earned (confirmed gap via coverage + /consult + SO; LAND-MINIMAL); EXECUTION OPTIMAL, no rework.
+- Principle-drift: entered via /clarify, no /prime/session-start (Confidence: low, no formal mandate) — root cause already logged (improvement-log L501/L584), no new signal.
+- Friction: none — no operator intervention; the full /risk-check on a tiny diff was operator-requested, not friction.
+- Safety: none observed — cross-cutting CLAUDE.md edit fully gated; explicit-path staging kept concurrent content out.
+- Dedup-dropped: non-/prime-entry signal (true duplicate of L501/L584; no actual harm this session).
+
+### Next Steps
+- Push the 2 commits (root repo + ai-resources repo) — pending operator confirmation at this wrap.
+- No follow-up work; the change is self-contained.
+
+### Open Questions
+None.
