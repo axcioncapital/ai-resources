@@ -617,3 +617,39 @@ None. (Round-1 memo committed on inline self-QC only — independent qc-reviewer
 
 ### Open Questions
 - NEW-1 unresolved (operator call).
+
+## 2026-06-12 — Built /blindspot-scan v1 + planning-phase auto-run gate
+
+### Summary
+Investigated an externally proposed adversarial audit command, cut its scope in half against the existing review-command family, and shipped `/blindspot-scan` v1 (3 owned checks: stale dependent artifacts, real-usage fit, prerequisite/capability validity; advisory, inline, verdict-led). Two System Owner advisories shaped the design (15-ideas triage: 4 adopted as one-liners; final pass: SOUND-WITH-FIXES, all 6 findings folded in). Integration investigation concluded: wrap-session nudge (both copies) + a workspace CLAUDE.md planning-phase auto-run gate; prime/session-start/qc-pass wiring rejected.
+
+### Files Created
+- `.claude/commands/blindspot-scan.md` — the v1 command
+- `audits/risk-checks/2026-06-12-add-new-canonical-slash-command-blindspot-scan-ai-resources.md` — plan-time gate (GO)
+- `audits/risk-checks/2026-06-12-add-new-canonical-slash-command-blindspot-scan-ai-resources-2.md` — end-time gate (GO, no drift)
+- `../projects/axcion-ai-system-owner/output/consultations/consult-2026-06-12-blindspot-scan-15-ideas.md` — SO advisory 1
+- `../projects/axcion-ai-system-owner/output/consultations/consult-2026-06-12-blindspot-scan-final-pass.md` — SO advisory 2
+- `logs/scratchpads/2026-06-12-17-45-scratchpad.md` — continuity scratchpad
+
+### Files Modified
+- `.claude/commands/wrap-session.md` — Step 12a blind-spot nudge (paired contract with workspace copy)
+- `../.claude/commands/wrap-session.md` — Step 4.6 paired nudge (workspace repo)
+- `../CLAUDE.md` — NEW "## Blind-Spot Scan Gate" section: auto-run post-plan-approval/pre-implementation (workspace repo; QC GO; committed in this wrap)
+
+### Decisions Made
+- Build at half the proposed scope: 3 gap categories only; intent-mismatch/scope-expansion/quality routed to existing commands.
+- Integration: wrap-session nudge + CLAUDE.md planning-phase auto-run; rejected prime/session-start (wrong phase), qc-pass (over-fires), modes/library/log (SO-parked v2).
+- Operator-directed: scan must fire automatically, especially at planning phase ("I won't remember manually") → CLAUDE.md gate, once per plan approval.
+- QC fixes: harness-rules.md workspace-root qualifier; Check A per-checkout grep + symlink enumeration; CLAUDE.md gate re-fire guard.
+
+### Risky actions
+Same-file commit sweep: both wrap-session commits shipped a concurrent session's uncommitted Step 6.4/4.4 Session Value Audit extension (same files as the nudge insertions; explicit-path staging cannot split same-file edits). Disclosed via amended commit messages; recurrence of the 2026-05-27 class.
+
+### Next Steps
+- RISK-CHECK-PENDING: end-time /risk-check the workspace CLAUDE.md "Blind-Spot Scan Gate" section (QC'd GO; subagent gate fired at wrap), then commit it in the workspace repo.
+- Complete v1 verification: one `/blindspot-scan` run on a real, unconstructed work package (the new gate/nudge will trigger it naturally).
+- Consider logging the same-file sweep to friction-log via `/improve` (structural gap: staging discipline cannot protect same-file concurrent edits).
+- SO-parked v2 ideas live in `consult-2026-06-12-blindspot-scan-15-ideas.md`; revisit only after v1 proves itself (1 real catch/week, else retire).
+
+### Open Questions
+None.
