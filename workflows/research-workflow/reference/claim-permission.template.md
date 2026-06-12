@@ -32,7 +32,7 @@ Project fills 5–8 rows. Each row names a project-relevant claim type and the m
 
 > **Rule shape** (canonical — see `reference/quality-standards.md § Claim-Permission Classes`). A claim that does not meet the required evidence-channel set cannot be classed SUPPORTED. It may be PROXY-SUPPORTED if some channels are met with proxies; otherwise ILLUSTRATIVE-ONLY or NOT-SUPPORTED.
 
-> **Triangulation-packets rule** (canonical). The matrix is not "find N sources" — it is "find N source-types playing different evidentiary roles." N independent reports from the same source class count as ONE evidentiary role, not N.
+> **Triangulation-packets rule** (canonical). The matrix is not "find N sources" — it is "find N source-types playing different evidentiary roles." N independent reports from the same source class count as ONE evidentiary role, not N. **The same collapse applies across source classes that share one underlying origin:** channels tracing to the same underlying source, dataset, or primary release count as ONE evidentiary role even when their source *classes* differ — operationalised by the `independence basis` field in `research-extract-creator`; ≥2 channels that collapse to one role downgrade the claim to PROXY-SUPPORTED. See `reference/quality-standards.md § Source-Diversity Matrix` for the full rule and its deployment-time back-validation obligation.
 
 Project fills one row per claim type from the Minimum Evidence Thresholds table above, naming the required evidence-channel set (3 different evidentiary roles per claim is a typical floor).
 
