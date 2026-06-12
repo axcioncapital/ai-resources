@@ -479,3 +479,20 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Proposal:** `/resolve-improvement-log`'s strict resolved-classification rule (an entry must carry BOTH `Status: applied` AND a `Verified:` line — improvement-log.md preamble L9) matches zero entries in practice; the log's de facto convention marks completion as `resolved YYYY-MM-DD` and most done entries lack the `Verified:` line. The mismatch forced operator adjudication mid-run this session (S8 archived 12: 2 tier-1 strict-match, 9 tier-2 done-marked-without-Verified, 1 superseded watch item). Reconcile the rule with the convention so future runs classify without operator intervention — either teach `/resolve-improvement-log` to also accept the `resolved YYYY-MM-DD` form, or normalize the schema and update preamble + command in lockstep.
 - **Target files:** (to be determined at disposition) — candidate: `ai-resources/.claude/commands/resolve-improvement-log.md` (classification rule); `ai-resources/logs/improvement-log.md` preamble L9 (Verified/Status schema); keep in lockstep.
 - **Review-cycle:** monthly
+
+### 2026-06-12 — split-log.sh content-conservation tripwire SHIPPED (S10)
+- **Status:** applied
+- **Resolved:** 2026-06-12 (S10, /fix-project-issues batch)
+- **Category:** guardrail
+- **Provenance:** /fix-project-issues 2026-06-12 S10 (id-31; SO advisory consult-2026-06-12-fix-project-issues-ai-resources.md)
+- **What shipped:** Pre-write conservation assertion in `split-log.sh`: non-blank line conservation (keep + archive == entry region) + fence-aware header-count conservation (keep + archive headers == TOTAL). Aborts exit 1 BEFORE any write on mismatch. Verified by isolated fixture tests: top/bottom orders, fenced preamble, idempotent re-run, injected off-by-one bug → tripwire fired, files untouched. QC GO. Canonical + template copy byte-identical. This resolves the 2026-06-12 S6 "no fail-loud content-conservation tripwire" entry above.
+- **Target files:** `ai-resources/logs/scripts/split-log.sh`; `ai-resources/workflows/research-workflow/logs/scripts/split-log.sh` (lockstep, cmp-verified)
+
+### 2026-06-12 — split-log.sh tripwire propagation to 11 deployed copies (named trigger)
+- **Status:** logged (pending)
+- **Category:** propagation
+- **Severity:** medium
+- **Provenance:** risk-check 2026-06-12 S10 residual risk #1 (SO second opinion, consult-2026-06-12-risk-check-2nd-opinion-s10-fix-batch.md)
+- **Proposal:** The 11 deployed project-local `split-log.sh` copies (re-synced 2026-06-12 S7, f84f601) do not yet carry the S10 conservation tripwire — non-uniform-guarantee window until re-synced. **Named trigger: the next `/sync-workflow` run OR the next Friday cadence session, whichever comes first.** Re-sync is mechanical (S7's 11-target list + cmp byte-identity per copy); exclude the frozen archive copy per the S7 decision.
+- **Target files:** the S7 11-copy target list (see decisions.md 2026-06-12 S7 entry); canonical source `ai-resources/logs/scripts/split-log.sh`
+- **Review-cycle:** weekly

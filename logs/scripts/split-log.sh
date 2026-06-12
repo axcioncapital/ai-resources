@@ -66,6 +66,24 @@ else
     OLDEST_HEADER_LINE=${HEADERS[0]}
 fi
 
+# Content-conservation tripwire: the keep/archive split must be an exact
+# partition of the entry region (first header → EOF). Compare non-blank line
+# counts (command substitution strips trailing blank lines at block boundaries,
+# so raw line counts would false-fire) plus fence-aware header counts. Abort
+# BEFORE any write on mismatch — data-loss paths in this script have
+# historically been closed manually after the fact (improvement-log 2026-06-12);
+# this assertion closes the class structurally.
+nonblank() { grep -c -v '^[[:space:]]*$' || true; }
+ENTRY_NB=$(sed -n "${HEADERS[0]},\$p" "$FILE" | nonblank)
+KEEP_NB=$(printf '%s\n' "$KEEP_BLOCK" | nonblank)
+ARCHIVE_NB=$(printf '%s\n' "$ARCHIVE_BLOCK" | nonblank)
+KEEP_HDRS=$(printf '%s\n' "$KEEP_BLOCK" | headers_only | grep -c . || true)
+ARCHIVE_HDRS=$(printf '%s\n' "$ARCHIVE_BLOCK" | headers_only | grep -c . || true)
+if [ $((KEEP_NB + ARCHIVE_NB)) -ne "$ENTRY_NB" ] || [ $((KEEP_HDRS + ARCHIVE_HDRS)) -ne "$TOTAL" ]; then
+    echo "split-log: conservation check FAILED for $FILE — keep ${KEEP_NB}nb/${KEEP_HDRS}h + archive ${ARCHIVE_NB}nb/${ARCHIVE_HDRS}h != entry region ${ENTRY_NB}nb/${TOTAL}h; aborting, no files modified" >&2
+    exit 1
+fi
+
 # Derive YYYY-MM from oldest archived header. Look for a YYYY-MM-DD anywhere on the line.
 OLDEST_HEADER=$(sed -n "${OLDEST_HEADER_LINE}p" "$FILE")
 YYYYMM=$(echo "$OLDEST_HEADER" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -1 | cut -d- -f1,2)
