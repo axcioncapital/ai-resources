@@ -683,3 +683,44 @@ None.
 
 ### Open Questions
 None.
+
+## 2026-06-12 — Session S12
+**Mandate:** Resume the deferred cleanup-worktree QC chain (QC pass 1 → triage → revision → QC pass 2 or quick-tier skip on the saved cleanup plan), then execute the 7 commit batches across ai-resources and workspace root — done when: QC chain complete, all 7 commits landed and filesystem-verified, QC-PENDING scratchpad deleted
+- Out of scope: root CLAUDE.md Blind-Spot Scan Gate commit (separate /risk-check follow-up); re-investigating the worktree (plan Section 6 guard G-0 re-checks git status drift at execution time)
+- Files in scope: ai-resources: .claude/commands/friday-act.md, .claude/commands/friday-checkup.md, audits/risk-checks/2026-06-12-extend-wrap-session-step-6-4-outcome-check-subagent-brief.md, workflows/research-workflow/reference/claim-permission.template.md, audits/risk-checks/2026-06-09-promote-3-research-methodology-deltas-from-project-research.md, logs/session-plan-2026-06-12-S1.md, logs/session-plan-2026-06-12-S3.md, logs/session-plan-2026-06-12-S4.md, logs/session-plan-2026-06-12-S11.md, logs/session-notes.md, logs/session-plan-2026-06-12-S12.md, logs/scratchpads/2026-06-12-18-35-scratchpad.md (delete at teardown); workspace root: the 12 .claude/commands/*.md symlinks (deploy-kb, drift-check, explain, fix-symlinks, friday-journal, grill-me, handoff, log-sweep, monday-prep, open-items, resolve-repo-problem, resolve), .claude/commands/harness-start.md, harness/logs/session-plan.md, harness/logs/innovation-registry.md, harness/logs/scratchpads/2026-05-25-15-30-scratchpad.md, harness/logs/scratchpads/2026-05-25-17-00-scratchpad.md, harness/logs/scratchpads/2026-05-25-19-15-scratchpad.md, harness/reviews/harness-review-2026-05-25.md, logs/innovation-registry.md, reports/child-cycle-landing-diagnostic-2026-05-28.md, .gitignore; plus QC/triage artifacts under ~/.claude/plans/sleepy-finding-russell.md*
+- Stop if: QC subagent launch fails on the 1M-context credit gate again — pause and ask the operator to /model switch
+
+Resume deferred cleanup-worktree QC chain: independent QC on the saved cleanup plan (sleepy-finding-russell.md), triage, revision, second QC (or quick-tier skip), then execute the 7 commit batches across ai-resources and workspace root. Root CLAUDE.md stays uncommitted (separate risk-check follow-up).
+
+### Summary
+Resumed and completed the deferred cleanup-worktree QC chain from the 2026-06-12-18-35 QC-PENDING scratchpad. QC pass 1 returned GO (1 IMPORTANT + 3 MINOR) — the 1M-credit subagent gate did NOT fire this session despite the [1m] model. Triage classified the IMPORTANT as should-fix (B1 commit-body symlink disclosure); revision applied it with zero new file-content claims, so the 2nd QC was skipped per the quick-tier rule (0 hard gates, 0 new claims). All 7 commits executed with guards (G-0, G-A1, G-B1, G-B4) passing and post-commit filesystem verification per execution-protocol § 12. QC-PENDING scratchpad deleted — commit-block drained.
+
+### Files Created
+- `logs/session-plan-2026-06-12-S12.md` — this session's plan
+- `logs/scratchpads/2026-06-12-20-15-scratchpad.md` — wrap continuity scratchpad (gitignored)
+- `~/.claude/plans/sleepy-finding-russell.md.qc-pass-1.md` — QC pass 1 report (subagent-written, outside repo)
+- `~/.claude/plans/sleepy-finding-russell.md.triage.md` — triage report (persisted by main session; agent toolset lacked Write, outside repo)
+
+### Files Modified
+- `~/.claude/plans/sleepy-finding-russell.md` — revision 1 (B1 disclosure line + Section 8 history + quick-tier skip record, outside repo)
+- `logs/session-notes.md` — S12 header, mandate, this note
+- Committed (cleanup batches): ai-resources 42af5ed / 5829cce / 264988e; workspace root 18af50e / 28bf909 / aa17de9 / ef0bf20
+- Deleted: `logs/scratchpads/2026-06-12-18-35-scratchpad.md` (QC-PENDING scratchpad, gitignored — teardown per its own resume instruction)
+
+### Decisions Made
+- Triage F1 disposition: commit-body disclosure line applied; triage's first-class alternative (durable caveat in root .gitignore comment / setup doc) NOT adopted mid-cleanup — scope discipline; surfaced as follow-up.
+- 2nd QC skipped per quick-tier rule (rule-based, not operator-requested): Section 4 hard-gate count 0, revision new file-content claims 0.
+- Foreign-staging tripwire fired on first commit (Files in scope was `(inferred)` + live concurrent marker) — resolved per the hook's own prescription by declaring the concrete footprint in the mandate, then retrying. Working as designed.
+- End-time /risk-check skipped per the recorded skip rule: plan-time gates covered the change set (full QC chain on the plan; A1/A2 carried their own committed risk-check records), commits already shipped, drift bounded to one commit-message line. Documented here per the skip rule.
+
+### Risky actions
+None — zero hard gates in the plan (no delete/untrack/convert); the only deletion was the QC-PENDING scratchpad, gitignored and deleted on its own recorded instruction.
+
+### Next Steps
+- Run `/risk-check` on root CLAUDE.md "Blind-Spot Scan Gate" section (still uncommitted, RISK-CHECK-PENDING), then commit on GO as `docs: CLAUDE.md — Blind-Spot Scan Gate (post-plan auto-run)`.
+- Build `/leverage-idea` from `plans/2026-06-12-leverage-idea-build-plan.md` (carryover from the design session).
+- Fix the triage-reviewer (and session-feedback-collector) agent toolsets so they can write their own reports — third occurrence of the subagent-write-contract class (usage-log 2026-06-10 S3 recommendation still unshipped).
+- Optional (triage suggestion): durable dangling-symlink caveat in root .gitignore comment or setup doc.
+
+### Open Questions
+None.
