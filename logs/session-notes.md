@@ -391,7 +391,7 @@ Add a concurrent-session-live nudge to /prime pointing at /concurrent-session-ch
 ## 2026-06-12 — Session S4
 **Mandate:** Run /friday-act (Friday cadence Session 2 — operator-driven fixes) to triage the 16 /improve findings, 5 session issues, and the permission-sweep + log-sweep follow-ups in audits/friday-checkup-2026-06-12.md — done when: /friday-act completes, fix plan produced and operator-selected fixes applied/triaged
 - Out of scope: (none stated)
-- Files in scope: audits/friday-plans/2026-06-12-permissions.md, audits/friday-plans/2026-06-12-skill-frontmatter.md, audits/friday-plans/2026-06-12-improve-findings.md, audits/friday-plans/2026-06-12-session-issues.md, logs/maintenance-observations.md, logs/session-notes.md, logs/session-plan-2026-06-12-S4.md
+- Files in scope: audits/friday-plans/2026-06-12-permissions.md, audits/friday-plans/2026-06-12-skill-frontmatter.md, audits/friday-plans/2026-06-12-improve-findings.md, audits/friday-plans/2026-06-12-session-issues.md, logs/maintenance-observations.md, logs/session-notes.md, logs/session-plan-2026-06-12-S4.md, audits/log-sweep-2026-06-12.md, logs/improvement-log.md
 - Stop if: (none stated)
 Run /friday-act to triage the 16 improve findings, 5 session issues, and permission/log-sweep follow-ups from the 2026-06-12 friday-checkup report.
 
@@ -423,3 +423,46 @@ Execute the 4 friday-act plans in `audits/friday-plans/` before next Friday — 
 
 ### Open Questions
 S3 session-notes orphan resolution (see Risky actions) — operator to confirm S3 is done (commit as recovery) vs. still live (wrap that terminal first).
+
+## 2026-06-12 — Session S5
+**Mandate:** Apply the 3 settings.json fixes in audits/friday-plans/2026-06-12-permissions.md (Daniel-path [high]; strategic-os + marketing-communication KB bypassPermissions/additionalDirectories [med]; brand-book deny-glob shadowing [med]), each /risk-check-gated first — done when: all 3 items applied or explicitly deferred, each committed separately in its own repo, and /permission-sweep --dry-run confirms clean
+- Out of scope: (none stated)
+- Files in scope: projects/interpersonal-communication/knowledge-base/.claude/settings.json, knowledge-bases/strategic-os/.claude/settings.json, knowledge-bases/marketing-communication/.claude/settings.json, projects/axcion-brand-book/.claude/settings.json
+- Stop if: (none stated)
+Execute the permissions friday-act plan (audits/friday-plans/2026-06-12-permissions.md) — 3 settings.json fixes, each /risk-check-gated.
+
+### Summary
+Executed the permissions friday-act plan (`audits/friday-plans/2026-06-12-permissions.md`, item 1 from /prime) under auto mode. 3 settings.json fixes landed across 4 KB/project repos (4 separate commits), each /risk-check-gated. Risk-check returned PROCEED-WITH-CAUTION; SO `/consult` second opinion concurred; all required mitigations + 3 SO-flagged risks applied. Post-fix `/permission-sweep --dry-run` confirmed all 4 files clean (Rules 7 & 8 no longer fire).
+
+### Files Created
+- `projects/interpersonal-communication/knowledge-base/.claude/settings.local.json` — Layer D′ grant (gitignored; not committed)
+- `knowledge-bases/strategic-os/.claude/settings.local.json` — Layer D′ grant (gitignored)
+- `knowledge-bases/marketing-communication/.claude/settings.local.json` — Layer D′ grant (gitignored)
+- `audits/risk-checks/2026-06-12-permissions-friday-act-3-settings-json-fixes.md` — risk-check report + SO commentary
+- `audits/permission-sweep-2026-06-12-verification.md` — post-fix dry-run verification
+- `logs/session-plan-2026-06-12-S5.md` — auto-mode session plan
+- `logs/scratchpads/2026-06-12-S5-permissions-friday-act-scratchpad.md` — continuity scratchpad
+- `projects/axcion-ai-system-owner/output/consultations/consult-2026-06-12-permissions-friday-act-risk-second-opinion.md` — SO advisory (left untracked per repo convention)
+
+### Files Modified
+- `projects/interpersonal-communication/knowledge-base/.claude/settings.json` — removed stale tracked additionalDirectories (committed in interpersonal-communication repo)
+- `knowledge-bases/strategic-os/.claude/settings.json` — added defaultMode (committed)
+- `knowledge-bases/marketing-communication/.claude/settings.json` — added defaultMode (committed)
+- `projects/axcion-brand-book/.claude/settings.json` — narrowed deny glob (committed)
+- `docs/onboarding-daniel-cheatsheet.md` — per-machine recovery note for the KB grant relocation
+- `logs/session-notes.md` — S5 mandate + this note
+
+### Decisions Made
+- Applied risk-check + SO mitigations rather than the plan-as-written: relocated items 1 & 2 `additionalDirectories` into gitignored `settings.local.json` (Layer D′) instead of writing tracked machine paths (which would re-arm the exact root cause being fixed).
+- Narrowed item 3 deny glob precisely (`01_*` + `0[4-8]_*`) rather than dropping deny lines — keeps 04–08 protected.
+- Staged explicit paths only on every commit (SO risk #2) — left all pre-existing mission WIP and the foreign S4-line amendment untouched.
+- Wrote the post-fix permission-sweep verification to a `-verification` suffixed path to avoid clobbering the earlier same-day pre-fix `permission-sweep-2026-06-12.md`.
+
+### Risky actions
+None destructive. Note: cross-repo commits (4 separate KB/project repos) staged by explicit path to avoid sweeping concurrent-session WIP. The post-fix permission-sweep surfaced one pre-existing CRITICAL in positioning-research (NOT touched — out of scope).
+
+### Next Steps
+Continue the friday-act backlog: next plan is `audits/friday-plans/2026-06-12-skill-frontmatter.md` (no gate), then `2026-06-12-improve-findings.md` / `2026-06-12-session-issues.md`. Separately: fix the pre-existing positioning-research CRITICAL (`settings.local.json` missing defaultMode — needs its own `/risk-check`). Also overdue: `/resolve-improvement-log` (~32 active entries; run in a clean single-session window).
+
+### Open Questions
+None blocking. The positioning-research CRITICAL is a tracked follow-up, not a blocker for this plan.
