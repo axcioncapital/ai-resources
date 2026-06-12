@@ -424,3 +424,62 @@ In-place rewrite of the shared `logs/improvement-log.md` while 5 foreign per-id 
 
 ### Open Questions
 None blocking.
+
+## 2026-06-12 — Session S9
+**Mandate:** Staleness-verified fix batch — 6 small structural fixes from the verified backlog: (1) harden session-feedback-collector to append-only (add Edit+Bash, forbid whole-file Write); (2) re-point /risk-check Step 17b at the system-owner agent directly; (3) add post-return advisory-file existence check to /consult Step 5; (4) reconcile /resolve-improvement-log classification rule with the de facto `resolved YYYY-MM-DD` convention; (5) document wrap-owns-session-notes discipline in commit-discipline.md; (6) add environment-fit check to /session-plan — done when: all 6 applied (or explicitly deferred with reason), /risk-check gate passed for the structural set, /qc-pass GO, committed
+- Out of scope: improvement-log.md status flips (S8 owns the file uncommitted — flips deferred until S8 commits); inbox brief builds; mission promote-rw-canonical closure; any edit to logs/improvement-log.md or logs/improvement-log-archive.md
+- Files in scope: .claude/agents/session-feedback-collector.md, .claude/commands/risk-check.md, .claude/commands/consult.md, .claude/commands/resolve-improvement-log.md, docs/commit-discipline.md, .claude/commands/session-plan.md
+- Stop if: S8 commits mid-session and the commit sweeps S9 files — stop and re-stage; any fix requires touching improvement-log.md — defer that fix
+Scope extension (operator "Proceed"): verify the promote-rw-canonical mission acceptance assertions against live state; advisory verdict on closure. Read-only toward mission file (closure itself via /mission close only).
+
+### Summary
+Staleness-verified fix batch + mission acceptance verification. Verified all 11 /open-items high-signal items against live file state before executing: 6 confirmed open, 2 friction items confirmed datapoints-only, 2 inbox briefs flagged stale (~2 months). Shipped 5 of the 6 planned fixes; the 6th (risk-check.md Step 17b re-point) was caught STALE at the risk-check gate — its bug was already fixed 2026-06-10 — and dropped instead of landed. Then (operator-approved extension) verified the promote-rw-canonical mission's 7 acceptance assertions: 5 PASS, verdict KEEP-OPEN; found and fixed the A3 gap (template friction-log-auto.sh lagged the C6 repair).
+
+### Files Created
+- audits/risk-checks/2026-06-12-fix-batch-s9-four-canonical-edits-two-doc-additions.md — plan-time + end-time gate record with SO commentary
+- audits/working/2026-06-12-s9-mission-promote-rw-canonical-closure-verification.md — mission verification notes (subagent)
+- logs/session-plan-2026-06-12-S9.md — session plan
+- logs/scratchpads/2026-06-12-14-31-scratchpad.md — continuity scratchpad
+- projects/axcion-ai-system-owner/output/consultations/consult-2026-06-12-s9-fix-batch-second-opinion.md — SO advisory (committed in that repo, 6313ff0)
+
+### Files Modified
+- .claude/agents/session-feedback-collector.md — Write→Edit+Bash toolset; categorical append-only Constraint E
+- .claude/commands/consult.md — Step 5a post-return existence check
+- .claude/commands/resolve-improvement-log.md — two-tier Resolved classification + schema-sync note
+- docs/commit-discipline.md — wrap-owns-session-notes rule
+- .claude/commands/session-plan.md — Step 6 environment-fit check
+- workflows/research-workflow/.claude/hooks/friction-log-auto.sh — C6 repair synced to template copy (byte-identical)
+
+### Decisions Made
+- Item 2 dropped at the gate (premise verified false — consult.md flag reverted 2026-06-10); the 2026-06-09 improvement-log entry is stale and should be closed, not executed.
+- Improvement-log status flips deferred — S8 owned the file uncommitted; flips listed in scratchpad Resume With.
+- Mission verdict KEEP-OPEN — A5 (deploy test) + A6 (/sync-workflow) are contract assertions and remain deferred; closing early would weaken the mission's own standard.
+- A3 template-hook sync landed under the existing mission gate 2c7ed1e (same change set, incompletely landed) rather than a fresh standalone risk-check.
+- End-time gate satisfied via documented disposition in the risk-check report (executed set = gated set minus dropped Item 2; all mitigations QC-verified) rather than a second full reviewer pass.
+
+### Outcome
+COMPLETION: DELIVERED — 5/6 fixes verified in 0ee6177; Item 2 drop qualifies under the mandate's "explicitly deferred with reason" clause (premise verified false at the gate); scope extension delivered (mission KEEP-OPEN verdict + A3 fix 198eb55, byte-identity cmp-confirmed).
+EXECUTION: OPTIMAL — gates verified on disk (12-row consumer inventory, SO concur, mitigations checked, QC GO); no rework loops or detours in the artifact trail; S8's files correctly untouched. Better path: none. Confidence: high.
+
+### Risky actions
+None. All edits gated (risk-check PROCEED-WITH-CAUTION + SO concur + QC GO); explicit-path staging throughout; S8's uncommitted improvement-log files deliberately untouched.
+
+### Session Assessment
+**Session Assessment** (wrap-collector, 2026-06-12)
+- Autonomy-compounding: positive — 5 structural fixes to canonical infra; verify-before-execute caught a stale backlog item (Item 2, already fixed 2026-06-10) before it landed.
+- Leanness/cost: no signal — no always-loaded weight added; EXECUTION OPTIMAL, no rework loops.
+- Principle-drift: no signal — OP-3/AP-7 boundaries actively respected (flips deferred, stale item dropped at gate).
+- Friction: no new signal — the /resolve-improvement-log mismatch was already logged by S8 AND fixed in S9; root-cause duplicate, not re-logged.
+- Safety: none observed.
+- Routed: 0→improvement-log, 0→friction-log.
+- Not logged (per-session cap): none.
+- Pattern to watch (not logged): A3 template-copy lag — same root class as the active "canonical-template propagation" improvement-log entry (L329); found and fixed this session.
+- Collector note: ran read-only, consistent with its newly-hardened append-only definition (first live run post-hardening).
+
+### Next Steps
+- After S8 commits: flip 3 improvement-log entries to resolved (collector hardening; Step 17b entry → close-as-stale; classification rule) + update improvement-log.md preamble L9 with the tier-2 convention (deferred lockstep edit).
+- Dedicated session: mission A5 deploy-test + A6 /sync-workflow re-sync on positioning-research → then /mission close promote-rw-canonical. Same session: disposition the stranded claim-permission.template.md 1-line edit (review-and-commit or revert).
+- Friday: archive-or-schedule the 2 stale inbox briefs (repo-review-brief Apr 7, codex-second-opinion Apr 13).
+
+### Open Questions
+None blocking.
