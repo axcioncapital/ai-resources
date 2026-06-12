@@ -3,7 +3,7 @@ description: Investigate a repo error, broken state, or structural inconsistency
 model: opus
 ---
 
-> **Note (2026-05-28):** For mid-session faults where you want a fix applied in-session — not just a plan — use `/resolve-incident` (classify → bounded fix → verify → log). `/resolve-repo-problem` remains the right tool for **triage-only** investigations: when you want a ranked three-option plan to study and execute separately, or when the fix is out of scope for the current session.
+> **Routing rule (2026-06-12, supersedes the 2026-05-28 note):** `/resolve-repo-problem` is the **triage front door**; `/resolve-incident` (classify → bounded fix → verify → log) is the **fix path it hands off to**. The handoff is the end-of-run **fix-path bridge line** — when triage ends with an actionable recommended fix, this command emits a ready-to-invoke `Fix path: /resolve-incident "..."` line carrying the diagnosis forward, so `/resolve-incident` resumes from the triage instead of re-investigating. The bridge is advisory chat output only: this command never invokes `/resolve-incident` itself, and applies no fix in either mode. Use `/resolve-incident` directly when you already know the fault and want the fix in-session without a triage pass.
 
 Diagnose a problem and produce a fix plan. `/resolve-repo-problem` covers two kinds of problem — a repo error or structural inconsistency, and a session/workflow fault that surfaced mid-session (a command misbehaved, a gate fired at the wrong time, two loaded instructions conflicted, a hook nudged wrongly). It runs in one of two operator-invoked modes and **applies no fix in either — triage only.**
 
@@ -75,6 +75,20 @@ Input: `$ARGUMENTS` — optional. A short description of the problem (the error 
 
 10. Display the subagent's summary to the operator, prefixed with `Repo-problem triage — {DATE}`, and state the full notes path.
 
+### MANUAL Step 3a — Fix-path bridge
+
+10a. Read the recommended-option marker in the subagent's returned summary (the summary lists the three options one line each, with the recommended one marked — it is free text, not a structured field).
+    - Recommended option is **Quick patch** or **Structural fix** → emit the bridge block below as the final chat output of this run.
+    - Recommended option is **Defer** → suppress the bridge; emit nothing extra.
+
+    ```
+    Fix path: /resolve-incident "{1-line diagnosis + the recommended fix} — triage notes: {NOTES_PATH}"
+    ```
+
+    The argument carries the diagnosis and cites `{NOTES_PATH}` so `/resolve-incident` Step 3 builds on the existing triage notes instead of re-investigating. If the subagent's plan flagged the recommended option as a `/risk-check` change class, append ` [risk-check class]` inside the quoted argument so the fix session enters with eyes open.
+
+    The bridge is **advisory chat output only** — do not invoke `/resolve-incident`; the operator's re-invocation is the gate-preserving turn.
+
 ### MANUAL Step 4 — Log a pending improvement-log entry
 
 11. Append a `logged (pending)` entry to `{REPO_ROOT}/logs/improvement-log.md` using the **Improvement-log entry schema** below. The `Proposal` field summarises the subagent's **recommended option** in 2–4 sentences; the `Notes` field cites `{NOTES_PATH}`. This puts the triage on the `/friday-checkup` queue. If `{REPO_ROOT}/logs/improvement-log.md` does not exist, create it first — see the schema section.
@@ -94,6 +108,14 @@ Runs entirely in the main session. **No subagent** — the operator invokes AUTO
 **D. Write the entry.** Append one self-contained `logged (pending)` entry to `{scope}/logs/improvement-log.md` using the schema below. `{scope}` = `git rev-parse --show-toplevel` of the cwd (fall back to cwd). No `audits/working/` notes file in AUTO mode — the entry is the write-up.
 
 **E. Report.** Display in chat: `Session-issue triage — {DATE}`, the root-cause diagnosis (1–3 sentences), the recommended fix (one line), and `Logged to {scope}/logs/improvement-log.md`.
+
+**F. Fix-path bridge.** If the recommended fix from step C is actionable (not a defer-shaped proposal), emit one bridge line **after** the `Logged to ...` line, as the final chat output:
+
+```
+Fix path: /resolve-incident "{1-line diagnosis + the recommended fix}"
+```
+
+The argument is the **inline diagnosis text only — never cite a notes path** (AUTO mode writes no `audits/working/` file; citing one would fabricate a reference). If step C flagged the fix as a `/risk-check` change class, append ` [risk-check class]` inside the quoted argument — step F reads that determination from step C; it makes none of its own. AUTO mode may *offer* the fix via this bridge, never perform it — the operator's re-invocation of `/resolve-incident` is the gate-preserving turn.
 
 ---
 
