@@ -544,7 +544,7 @@ None blocking.
 ## 2026-06-12 — Session S11
 **Mandate:** Close mission promote-rw-canonical (Phase 4 deploy-test via SETUP.md walk, /sync-workflow on positioning-research, checkbox cleanup, /mission close) and flip the now-unblocked improvement-log status entries — done when: deploy-test passes, sync reports in-sync or intentional divergence only, mission closed and archived, log entries flipped, changes committed
 - Out of scope: executing the tripwire propagation to the 11 deployed copies (deprioritized by operator — note only); KB settings pass; claim-permission.template.md disposition; inbox briefs
-- Files in scope: logs/missions/promote-rw-canonical.md, logs/improvement-log.md, workflows/research-workflow/SETUP.md (read-only)
+- Files in scope: logs/missions/promote-rw-canonical.md, logs/improvement-log.md, workflows/research-workflow/SETUP.md (read-only), plans/2026-06-12-leverage-idea-build-plan.md (added at wrap — leverage-idea design wrap, operator-approved footprint widening)
 - Stop if: deploy-test fails or /sync-workflow shows unintentional divergence — surface before closing the mission
 - Allowed inputs: .claude/commands/mission.md, .claude/commands/sync-workflow.md, audits/risk-checks/2026-06-12-mission-promote-rw-canonical-landing-set.md, CLAUDE.md
 - Required outputs: logs/missions/archive/promote-rw-canonical.md
@@ -650,6 +650,36 @@ Same-file commit sweep: both wrap-session commits shipped a concurrent session's
 - Complete v1 verification: one `/blindspot-scan` run on a real, unconstructed work package (the new gate/nudge will trigger it naturally).
 - Consider logging the same-file sweep to friction-log via `/improve` (structural gap: staging discipline cannot protect same-file concurrent edits).
 - SO-parked v2 ideas live in `consult-2026-06-12-blindspot-scan-15-ideas.md`; revisit only after v1 proves itself (1 real catch/week, else retire).
+
+### Open Questions
+None.
+
+## 2026-06-12 — /leverage-idea command design (plan approved, implementation deferred)
+
+### Summary
+Design session for a new `/leverage-idea` command: operator pastes a messy idea dump (multi-page ChatGPT export) → distilled Idea Brief → workspace-evidence + repo-surface investigation (one subagent) → 2–4 distinct leverage options → WORTH-DOING/MARGINAL/NOT-WORTH-DOING verdict → implementation plan or PARK. Full review chain completed: /clarify → Explore + Plan design → SO advisory via /consult (WORTH-DOING; SO-1/2/3 + SO-N1/N2 folded in) → /refinement-deep (QC GO + REFINE; 4 triage fixes applied, 3 parked) → final /qc-pass GO with no findings. Plan approved; implementation deferred to a fresh session by operator directive.
+
+### Files Created
+- `plans/2026-06-12-leverage-idea-build-plan.md` — approved build plan, retained in-repo for the deferred build session (EP-0 marked done)
+- `logs/scratchpads/2026-06-12-18-22-scratchpad.md` — continuity scratchpad with resume instructions
+- `../projects/axcion-ai-system-owner/output/consultations/consult-2026-06-12-leverage-idea-command.md` — SO advisory relocated to canonical path (EP-0; plan mode had blocked the agent's write) — outside this repo, committed separately
+- `~/.claude/plans/let-s-build-a-process-witty-sparkle.md` — plan-mode original (outside repo)
+
+### Files Modified
+- None in this repo (pre-existing dirty files from earlier sessions today were left untouched)
+
+### Decisions Made
+- Build `/leverage-idea` as a NEW canonical command rather than extending /request-skill or /implementation-triage (SO-validated: extension would invert their contracts).
+- Implementation deferred to a fresh session; plan retained in-repo; EP-0 (advisory relocation) executed at wrap.
+- Triage dispositions: applied label-scheme unification, EP-0 rename, notes-file headings, mkdir fallback; parked 25-vs-30 cap clause, Gates dedup, cosmetic asides.
+
+### Risky actions
+None.
+
+### Next Steps
+- Fresh session: /prime → execute `plans/2026-06-12-leverage-idea-build-plan.md` (EP-0 done — verify and skip).
+- Build-session gates: /blindspot-scan post-approval → write command → /risk-check (class: new command) + /qc-pass → toolkit-relationship.md § 5 row in same commit.
+- First live test: operator supplies a real example note dump.
 
 ### Open Questions
 None.
