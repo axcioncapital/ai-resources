@@ -584,3 +584,36 @@ None. rm/mv denials respected (tombstone + ask-operator workarounds); explicit-p
 
 ### Open Questions
 None blocking.
+
+## 2026-06-12 — System Owner rebuild go/no-go: STAGED-GO advisory (rounds 1+2)
+
+*(Session ran without /prime — no marker; work landed in the SO project repo.)*
+
+### Summary
+Investigated whether to proceed with the System Owner rebuild framed by the ground-truth pack (2026-06-05). Spot-checked the pack against the live repo (no drift; corpus staleness confirmed; intent doc not in repo), then produced a Function B advisory via the system-owner agent: **STAGED-GO** — Phase 0 corpus hardening before any authority expansion (OP-12). Operator then supplied ~65-idea refinement notes; persisted verbatim and reconciled in a round-2 advisory: verdict stands, four new decision points named, all ideas bucketed A–D with verified full coverage.
+
+### Files Created
+- `projects/axcion-ai-system-owner/output/consultations/consult-2026-06-12-rebuild-go-no-go-round-1.md` — STAGED-GO advisory + main-session addendum (corrections carried forward, operator open items)
+- `projects/axcion-ai-system-owner/references/rebuild-refinement-notes-2026-06-12.md` — operator refinement notes, verbatim, with provenance header
+- `projects/axcion-ai-system-owner/output/consultations/consult-2026-06-12-rebuild-go-no-go-round-2.md` — reconciliation advisory (NEW-1..4, idea buckets)
+- `logs/scratchpads/2026-06-12-17-33-scratchpad.md` — continuity scratchpad
+
+### Files Modified
+None in ai-resources (this entry + scratchpad only).
+
+### Decisions Made
+- Operator settled pack Decision 1: **AI strategy doc is senior** over the intent doc → staged owner, earned permission modes.
+- Operator scope choices via /clarify: full rebuild go/no-go; advisory memo deliverable; spot-check freshness.
+- QC fixes (separate): round-2 bucket coverage gap (15 ideas) + dropped 4.29 restored; two REVISE rounds resolved to final GO.
+
+### Risky actions
+None. (Round-1 memo committed on inline self-QC only — independent qc-reviewer was blocked by the 1M-credit gate at that point; flagged, not a gate that should have hard-fired since the artifact is non-architectural.)
+
+### Next Steps
+- **Operator decides NEW-1** (binding vs advisory owner plans — collides with locked Decision 1; the one blocker before the build session).
+- Independent `/qc-pass` on the round-1 memo in a fresh session (provisional clearance debt).
+- Build session Phase 0 when ready: corpus hardening (system-doc.md + blueprint.md via repo-documentation W2.1) + grounding.md read-map extension, under /risk-check.
+- Operator-only open items: cost envelope per owner invocation; fill-or-retire systems-building-principles.md; commit the intent doc into the SO project references/.
+
+### Open Questions
+- NEW-1 unresolved (operator call).
