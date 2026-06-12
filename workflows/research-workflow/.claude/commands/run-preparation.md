@@ -40,7 +40,44 @@ Skill loading: For each skill step below, read the skill file from `/ai-resource
 2. Launch a general-purpose sub-agent. Pass it: the skill content and the approved Task Plan content. Task: execute the skill logic against the Task Plan. Write to `/preparation/research-plans/{section}-research-plan-v1.md`. Return: output file path, research question inventory (question IDs and summaries).
 3. Write checkpoint to `/preparation/checkpoints/{section}-step-3-checkpoint.md` from the sub-agent's returned summary. Include: output file path, question count, question-to-cluster mapping.
 4. ▸ /compact — skill content no longer needed; checkpoint carries forward.
-5. GATE — Present the Research Plan to the operator for review. Summarize the research questions produced and ask the operator to confirm they are correct. Do NOT proceed to step 4 until the operator explicitly approves the research questions. If the operator requests changes, revise the Research Plan and re-present for approval.
+---
+
+### Step 3b: QC Research Plan [delegate-qc]
+
+1. Read the research plan from the path in `/preparation/checkpoints/{section}-step-3-checkpoint.md`.
+2. Launch a qc-gate sub-agent. Pass it: the research plan content. Task: evaluate the research plan on six dimensions — (A) question-set completeness: all scoped RQs from the task plan are represented; (B) question-to-cluster mapping correctness; (C) researchability: each question is answerable within the project's source-availability posture (Project Config `Source-availability:` field); (D) anti-overlap: questions do not duplicate each other or known internal pre-answers without explicit routing; (E) answer-spec readiness: each question carries enough specificity for `answer-spec-generator` to operate from; (F) contract conformance: question set does not exceed or contradict the task plan's scope. Return: verdict (APPROVED / REVISE) with per-dimension findings.
+3. If REVISE: note findings for operator.
+4. Write verdict to `/preparation/checkpoints/{section}-step-3b-checkpoint.md`.
+5. PAUSE — Present the Research Plan and QC verdict to the operator for review and approval. Do NOT proceed to Step 4 until the operator explicitly approves. If the operator requests changes, revise the Research Plan, re-QC, and re-present.
+
+---
+
+### Step 3c: Researchability Triage [inline]
+
+> **Relationship to Step 3b.** Step 3b QC-gates the research plan's quality — including whether questions are framed appropriately for their evidential feasibility (dimension C). Step 3c consumes Step 3b's APPROVED verdict as a precondition and applies the `reference/known-limits.md` register and `reference/source-map.md` pre-answers to make the routing explicit. The two steps are complementary: 3b catches mis-framed questions (QC gate); 3c routes correctly-framed questions to their channels (routing gate). They do not contradict — 3b approves the plan's framing, 3c formalises the downstream routing.
+
+1. Do NOT run Step 3c unless Step 3b returned APPROVED. Read the approved research plan from the path in `preparation/checkpoints/{section}-step-3b-checkpoint.md`.
+
+2. For each RQ in the approved plan, score it against three inputs:
+   - **`reference/known-limits.md` Known-Unavailable-Evidence Register** — register hit → `structurally-unavailable` or `proxy-only`
+   - **`reference/source-map.md` internal pre-answers** — named internal source or concurrent-sibling duplicate → `internal-import`
+   - **Project Config `Source-availability:` field** — governs whether web evidence is available at all
+
+   Assign each RQ exactly one route:
+   - `web-answerable` — public web evidence expected; proceed normally to answer-spec generation.
+   - `proxy-only` — no primary public evidence; a best-available proxy exists; proceed to answer-spec generation with mandatory "best-available proxy + acknowledged gap" pre-tagging in the spec framing.
+   - `structurally-unavailable` — a `known-limits.md` register hit confirms the evidence is structurally absent from public sources; **do NOT generate a web answer-spec**; route to the Evidence Boundary Register.
+   - `internal-import` — question already answered by a named internal source (`source-map.md`) or is a concurrent-sibling-work duplicate; **do NOT generate a web answer-spec**; route to firm-held intake.
+
+3. **Gate-reopener routing (execution-contract requirement, applies when the project's execution contract designates gate-reopener-eligible RQs).** If any gate-reopener-eligible RQ receives a `structurally-unavailable` or `proxy-only` classification, write a concrete proposed operator decision for that RQ into the triage table's Notes column and flag it for the Gate-Reopener register. Do NOT silently drop the RQ. Gate-reopener routing is a proposal for the operator, never a silent re-decision (execution contract: "gate-reopeners are proposals, never silent re-decisions").
+
+4. **Advisory posture.** The triage table is a recommendation. The operator may re-route any RQ at the existing Stage-1 gate before answer specs are written. No RQ is dropped from answer-spec generation without that operator review passing.
+
+5. **Forward-only scope.** This step applies to runs entering Stage 1 fresh. For a section already past Stage 1 (one that completed Stage 1 in an earlier session), this step is NOT retro-applied — do not generate a triage table for an in-flight section.
+
+6. Write triage table to `preparation/checkpoints/{section}-step-3c-triage.md`. Columns: `RQ ID | Route | Known-Limits Hit | Source-Map Pre-answer | Notes`.
+
+7. PAUSE — Present the triage table alongside the Research Plan at the existing Stage-1 gate. The operator reviews both together. Only `web-answerable` and `proxy-only` RQs proceed to Step 4 (answer-spec generation). `structurally-unavailable` RQs are routed to the Evidence Boundary Register; `internal-import` RQs are routed to firm-held intake.
 
 ---
 

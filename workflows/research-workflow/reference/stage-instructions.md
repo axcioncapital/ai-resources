@@ -12,6 +12,17 @@
 3. Part 1 complete before Part 2 begins
 -->
 
+## Stage-Entry Reference-File Completeness Gate
+
+> **When this fires:** at the *entry* of each stage that consumes a per-project reference file (Pass 3 → `run-sufficiency`; Stage 4–5 → `run-report` / `produce-*`). It is a present-**AND**-filled check, not present-only: a file that exists but still carries its template placeholders fails the gate. The contract list (which file, consuming stage, hard-vs-soft class) is `docs/required-reference-files.md` § Stage-entry reference files.
+
+Two failure classes, handled differently — never a silent block, never a silent default:
+
+- **Hard blocker** (e.g. `reference/stage-5-paths.md`): if absent OR unfilled (path-roots block unparsed / placeholder, or `Mode:` mismatched), **halt at stage entry** with a remediation prompt naming the file and its template. A wrong path mis-routes every downstream output, so fail loud.
+- **Soft fallback** (e.g. `reference/claim-permission.md`): if absent OR unfilled (per-claim-type threshold rows still placeholder), **proceed in an explicitly-disclosed GENERIC-BAR regime** — one generic bar for all claim types — and emit a hard log line at stage entry recording that no per-type calibration is active. Disclosed, not silent; the operator sees the regime is degraded.
+
+The check distinguishes *shape-present* (heading exists) from *values-present* (rows filled). Shape-only is treated as unfilled. Forward-only: applies at the entry of stages not yet run; does not retro-fire on completed stages.
+
 ## Stage 1: Preparation
 
 - Read task plan draft (loaded via @ reference)
@@ -19,7 +30,9 @@
 - GATE: Operator reviews Task Plan.
 - After Task Plan approval: update the Project Context section of CLAUDE.md with the approved Task Plan's objective, scope, constraints, and audience.
 - Apply `research-plan-creator` logic to produce research plan in `/preparation/research-plans/`
-- GATE: Operator reviews Research Plan before proceeding to answer specs.
+- QC Research Plan (qc-gate subagent, 6 dimensions: completeness, cluster mapping, researchability, anti-overlap, answer-spec readiness, contract conformance). Write verdict to `/preparation/checkpoints/{section}-step-3b-checkpoint.md`.
+- GATE: Operator reviews Research Plan + QC verdict and approves before proceeding to answer specs.
+- Researchability Triage (`run-preparation` Step 3c — inline, runs on the Step 3b-APPROVED plan): score each RQ against `reference/known-limits.md` register + `reference/source-map.md` pre-answers + Project Config `Source-availability:` posture; classify into four routes (web-answerable / proxy-only / structurally-unavailable / internal-import). Gate-reopener-eligible RQs classified as structurally-unavailable/proxy-only route to the Gate-Reopener register as proposals (not silently dropped). Write triage table to `preparation/checkpoints/{section}-step-3c-triage.md`. PAUSE for operator review at the Stage-1 gate; operator may re-route any RQ. Only web-answerable and proxy-only proceed to answer-spec generation. Forward-only: do not retro-apply to sections already past Stage 1.
 - Apply `answer-spec-generator` logic to produce answer specs in `/preparation/answer-specs/{section}/`
 - Run `answer-spec-qc` logic. Write verdicts to `/preparation/answer-specs/{section}/answer-specs-qc.md`
 - GATE: Do not proceed to Stage 2 until operator confirms answer specs are approved.
@@ -56,13 +69,13 @@
 
 > **Trigger:** After all extracts are APPROVED (Step 2.4 gate passed), operator reviews coverage verdicts across extracts and judges that THIN or MISSING components warrant supplementary research before entering Stage 3. Skip this subworkflow if coverage is acceptable.
 
-- **Step 2.S0 — Extract Failed Components [Claude Project]:** Parse all approved Research Extracts and extract every component with THIN or MISSING coverage verdict. Output structured list grouped by Question ID to `/execution/supplementary/{section}/{section}-failed-components.md`. Extraction only — no query drafting.
+- **Step 2.S0 — Extract Failed Components [Claude Project]:** Parse all approved Research Extracts and extract every component with THIN or MISSING coverage verdict. Output structured list grouped by Question ID to `/execution/supplementary/{section}/{section}-failed-components.md`. Extraction only — no query drafting. **Register-hit target-selection gate (C2):** each failed component is scored against the `reference/known-limits.md` Known-Unavailable-Evidence Register and tagged `register-hit-ceiling` (zero supplementary attempts — route straight to the scarcity register with the pass-1 proxy as ceiling), `register-hit-new-class` (one attempt, scoped to an untried source class per `source-class-hierarchy.md`), or `thin-but-closable` (standard two-pass allowance). Only the latter two proceed to Step 2.S1 query drafting. See `run-execution` Subworkflow 2.S Step 2.S0 for the full gate.
 - **Step 2.S1 — Draft Supplementary Query Brief [Claude Project]:** Apply `supplementary-query-brief-drafter` with failed components, Research Extracts, and Answer Specs as inputs. Produces grouped Perplexity queries (max 12) with Section A (analysis) and Section B (paste-ready execution sheet). Write to `/execution/supplementary/{section}/{section}-query-brief-pass-[1/2].md`. GATE: Operator reviews query brief before execution.
 - **Breadth-first ordering:** Pass 1 queries favor broad, high-yield source types first; Pass 2 narrows to source types Pass 1 didn't reach. See `supplementary-query-brief-drafter` SKILL.md for the pass-level breadth rule.
 - **Step 2.S2 — Execute Queries in Perplexity [Operator]:** Operator runs each query in Perplexity Pro Search using the Execution Sheet verbatim. Prefix each query with: `I'm researching {{RESEARCH_AREA_PHRASE}} for a professional advisory report.` Apply the `[recency: X]` annotation from each query line as the `search_recency_filter` setting in Perplexity (week/month/year). Save raw output to `/execution/supplementary/{section}/{section}-perplexity-raw-pass-[1/2].md`.
 - **Step 2.S3 — QC Perplexity Results [Claude Project]:** Apply `supplementary-research-qc` against raw Perplexity output, Research Extracts, and Query Brief Section A. Per-query verdicts: MERGE / SKIP / PARTIAL. Write to `/execution/supplementary/{section}/{section}-supplementary-qc-pass-[1/2].md`. GATE: Operator confirms merge summary before proceeding.
 - **Step 2.S4 — Merge Supplementary Evidence [Claude Project]:** Apply `supplementary-evidence-merger` to integrate QC-approved results into Research Extracts. Recalculate coverage verdicts, update syntheses, tag supplementary claims with `[SUPPLEMENTARY]`. Updated extracts replace originals in `/execution/research-extracts/{section}/`.
-- **Loop ceiling:** Max 2 passes per question. Pass 2 uses the pass-2 variant of Step 2.S1, which diagnoses why pass 1 didn't close gaps and uses different search strategies. Persistent gaps after 2 passes → confirmed evidence scarcity → `/execution/scarcity-register/{section}/{section}-scarcity-register.md`.
+- **Loop ceiling (calibrated against `known-limits` — C2):** the ceiling depends on the Step 2.S0 route, not a flat two passes. `thin-but-closable` → max 2 passes (pass 2 uses the pass-2 variant of Step 2.S1, which diagnoses why pass 1 didn't close gaps and uses different search strategies); `register-hit-new-class` → 1 attempt scoped to the untried source class; `register-hit-ceiling` → 0 attempts (pass-1 proxy is the recorded ceiling). Persistent gaps after the route's allowance → confirmed evidence scarcity → `/execution/scarcity-register/{section}/{section}-scarcity-register.md`.
 - Components classified as **confirmed scarcity** in pass 2 are documented in the extract's Gaps section and the scarcity register.
 
 ## Stage 3: Analysis & Gap Resolution (Four-Pass Model — Pass 3 + Pass 4)
@@ -83,7 +96,7 @@
   - **Phase E — Source-Conflict Resolution.** Inline Opus step. Applies the project's source-conflict procedure to any conflict triples flagged by Phases A or C. Output: `/analysis/source-conflicts/{section}/`. Sentinel: `.source-conflicts.done`.
   - **Phase F — Gate-Clearance Emission.** Inline Opus step. Computes NOT-SUPPORTED ratios per cluster and per section against the project's thresholds. Writes the gate-clearance file: `/analysis/gate-clearance/{section}/{section}-gate-clearance.md`. Sentinel: `.gate-clearance.done`. Verdict shape: `CLEARED` / `CLEARED-WITH-CAVEATS` / `BLOCKED`.
   - **Re-entry semantics.** Each phase is skip-on-sentinel-present. To force re-run of a specific phase, delete its sentinel; to force a clean run, delete all `.{phase}.done` files in `/analysis/{section}/`. The command does NOT auto-clean stale sentinels — operator responsibility.
-  - **Pre-flight failure modes.** Missing refined cluster memos: exit with "run `/run-cluster` first" prompt. Missing project reference docs (source-class-hierarchy, quality-standards rule sections): exit with a remediation prompt naming the missing artifact and pointing to the project's pipeline documentation. The command never silently degrades.
+  - **Pre-flight failure modes.** Missing refined cluster memos: exit with "run `/run-cluster` first" prompt. Missing project reference docs (source-class-hierarchy, quality-standards rule sections): exit with a remediation prompt naming the missing artifact and pointing to the project's pipeline documentation. The command never silently degrades. **`claim-permission.md` completeness (soft class, per the Stage-Entry Reference-File Completeness Gate):** Phase A checks `reference/claim-permission.md` is present AND its per-claim-type threshold rows are filled (not placeholder). If absent or shape-only, Phase A proceeds in a disclosed GENERIC-BAR regime — one generic bar for all claim types — and emits a hard log line at entry so the operator sees per-type calibration is off; it does not silently fall back to a generic default.
   - **Deferred Pass 3 phase (later bundle):** Phase B — Counter-Search (`counter-search-runner` sub-agent for disconfirming-evidence search). When Phase B is absent, `claim-permission-gate` emits an inline regime disclosure in each per-cluster permission table noting that SUPPORTED claims were not disconfirmation-tested in this run; downstream readers see the gap explicitly.
 - **Step 3.4b** — Run `gap-assessment-gate` with scarcity register and the Phase A permission tables as inputs. Write report to `/analysis/gap-assessment/{section}/{section}-gap-assessment.md`.
 - **Path classification:** Path A = gap requires new primary research (missing evidence categories, unasked questions, or fundamentally insufficient source material). Path B = gap can be closed with targeted factual retrieval (specific data points, statistics, or confirmatory evidence for existing analysis).
@@ -135,15 +148,17 @@
 
 ## Stage 5: Final Production
 
-- **Step 5.1** — Run `document-integration-qc` per module, write QC report.
+> **Output paths (report-mode):** read from `reference/stage-5-paths.md` at Phase 0. Compiled sources and final deliverable → `report/compiled/{section}/`. Prose-refinement and formatting outputs → `report/produced/{section}/R{N}/`. Working files → `report/produced/{section}/R{N}/working/`. Per the Stage-Entry Reference-File Completeness Gate (hard-blocker class), `stage-5-paths.md` must be present **AND filled** — if it is absent, or present but its `## Stage 5 Path Roots` block is unparsed/placeholder, or its `Mode:` line mismatches the project's `Document model`, Stage 5 commands halt at Phase 0 with a remediation prompt. Do not proceed silently.
+
+- **Step 5.1** — Run `document-integration-qc` on the compiled source. Write QC report to `report/compiled/{section}/{section}-R{N}-integration-qc.md`.
 - **Step 5.2** — Apply fixes per bright-line rule.
-- **Step 5.3** — Apply formatting.
+- **Step 5.3** — Apply prose-refinement, decontamination, jargon-gloss, and formatting passes via `produce-prose-draft` and `produce-formatting`. Write formatted output to `report/produced/{section}/R{N}/R{N}-formatted.md`; intermediate working files to `report/produced/{section}/R{N}/working/`.
 - **Step 5.4** — QC formatting against style reference.
-- GATE: Operator reviews v1.4 drafts (Step 5.4).
+- GATE: Operator reviews formatted draft (Step 5.4).
 - **Step 5.5** — Implement fixes in three phases: (1) identify all flagged items from QC reports, (2) classify each per bright-line rule (auto-fix vs. operator approval), (3) apply approved fixes and write v2.0. Bright-line rule applies to every fix.
 - **Step 5.6** — Run `citation-converter` in reconciliation mode for bibliography.
-- **Step 5.7** — Merge and compile full document.
-- **Step 5.8** — Compile glossary, add front matter.
+- **Step 5.7** — Merge and compile full document. Write compiled final to `report/compiled/{section}/{section}-R{N}-final-v{M}.md`.
+- **Step 5.8** — Compile glossary, add front matter to the compiled final at `report/compiled/{section}/{section}-R{N}-final-v{M}.md`.
 - GATE: Final operator review.
 
 ## Context Management

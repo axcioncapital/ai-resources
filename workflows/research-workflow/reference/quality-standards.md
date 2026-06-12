@@ -21,6 +21,18 @@ This principle takes precedence over all other Stage 2 and Stage 3 behavior rule
 - Every finding carries severity classification (BLOCKING / NON-BLOCKING) and a proposed fix.
 - Cross-model verification: no model reviews its own output.
 
+## Critical Finding Classification
+
+Governs REVISE-finding criticality only (e.g., `run-execution.md` Step 2.1b). It does NOT apply to QC-gate FAIL rules ("PAUSE on FAIL with critical findings" in `run-report.md` / `produce-architecture.md`) — those are a different rule class and always pause.
+
+A Critical finding in a REVISE verdict is classified before acting:
+
+- **Mechanical Critical** — exactly one correct fix, no editorial or scope judgment required (e.g., a forbidden-terminology strip, a missing literal scope line whose content is already known from the inputs). All-mechanical Criticals: auto-apply fixes and re-run QC, one iteration only. Still FLAG after the re-run → pause (no fresh iteration budget).
+- **Judgment Critical** — requires an editorial, scope, or content decision. Pause for operator review.
+- **Conservative default:** ambiguous classification → judgment → pause. Any mechanical/judgment mix → pause.
+
+The executing source of this rule is the canonical `research-prompt-qc` skill (§ Autonomy Rules) — the qc-gate subagent reads the skill, not this file. This section is the operator-facing mirror; if the two ever diverge, the skill governs and the divergence is a defect to log.
+
 ## Evidence Calibration
 
 Project's epistemic-label framework. Project may extend or recalibrate; the four-tier shape is canonical.

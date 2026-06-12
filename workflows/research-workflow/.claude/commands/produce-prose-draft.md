@@ -31,7 +31,9 @@ Uses `context/prose-quality-standards.md` (section-mode; project-specific) and t
    - `Document model: "report"` → arg must match `^[rR][0-9]+$`. Mismatch: halt — `Arg "<X>" does not match the project's declared mode 'report' (expected pattern: rN).` Parse: arg `r1` → `report=r1`, `N=1`, `RN=R1`.
    - `Document model: "section"` → arg must match `^[0-9]+\.[0-9]+$`. Mismatch: halt — `Arg "<X>" does not match the project's declared mode 'section' (expected pattern: N.M).` Parse: arg `2.4` → `section=2.4`, `part=2`.
 
-3. **Read project `reference/stage-5-paths.md`.** Verify it exists; if missing: halt — `reference/stage-5-paths.md is missing. Stage 5 commands require explicit path-config; create from canonical template at ai-resources/workflows/research-workflow/reference/stage-5-paths.template.md.`
+3. **Read project `reference/stage-5-paths.md` (present-AND-filled, hard blocker).** Per the Stage-Entry Reference-File Completeness Gate (`reference/stage-instructions.md`), this is a hard blocker: it must exist AND be filled.
+   - If missing: halt — `reference/stage-5-paths.md is missing. Stage 5 commands require explicit path-config; create from canonical template at ai-resources/workflows/research-workflow/reference/stage-5-paths.template.md.`
+   - If present but unfilled (the `## Stage 5 Path Roots` block is empty or still carries `<placeholder>`-style template tokens): halt — `reference/stage-5-paths.md is present but unfilled (path-roots block is placeholder/empty). Fill it from the template before running Stage 5 — a placeholder path would mis-route every output.` Do not fall back to a default path.
 
 4. **Verify mode match.** Locate the `Mode:` line. If absent or mismatched: halt per `stage-5-paths.template.md § Mode-mismatch halting`.
 

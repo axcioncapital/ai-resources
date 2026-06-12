@@ -58,7 +58,10 @@ Every artifact follows a predictable pattern so commands and hooks can locate fi
 | Style reference | `report/style-reference/{section}/` | `{section}-style-reference.md` | `1.1-style-reference.md` |
 | Report chapters | `report/chapters/{section}/` | `{section}-chapter-NN.md` | `1.1-chapter-01.md` |
 | Combined CTL | `report/chapters/{section}/` | `{section}-chapter-NN-NN-ctl.md` | `1.1-chapter-01-02-ctl.md` |
-| Final modules | `final/modules/{section}/` | `{section}-module-NN-[stage].md` | `1.1-module-01-qc.md` |
+| Stage-5 compiled source | `report/compiled/{section}/` | `{section}-R{N}-compiled-v[M].md` | `1.1-R1-compiled-v2.md` |
+| Stage-5 final deliverable | `report/compiled/{section}/` | `{section}-R{N}-final-v[M].md` | `1.1-R1-final-v1.0.md` |
+| Stage-5 integration QC | `report/compiled/{section}/` | `{section}-R{N}-integration-qc.md` | `1.1-R1-integration-qc.md` |
+| Stage-5 produced (prose/format) | `report/produced/{section}/R{N}/` | `R{N}-[type].md` | `R1-prosed.md`, `R1-formatted.md` |
 | Step checkpoints | `{stage}/checkpoints/{section}/` | `{section}-step-{id}[-descriptor]-checkpoint.md` | `1.1-step-2.1-checkpoint.md`, `1.1-step-2-gap-assessment-checkpoint.md` |
 | Cluster checkpoints | `{stage}/checkpoints/{section}/` | `{section}-cluster-NN-step-{N}-checkpoint.md` | `1.1-cluster-01-step-2-checkpoint.md` |
 | Chapter checkpoints | `report/checkpoints/{section}/` | `{section}-chapter-NN[-descriptor]-checkpoint.md` | `1.1-chapter-01-checkpoint.md`, `1.1-chapter-01-cited-checkpoint.md` |
@@ -117,9 +120,9 @@ report/
   chapters/{section}/
   checkpoints/{section}/
   enrichment/{section}/
-
-final/
-  modules/{section}/
+  compiled/{section}/          (Stage-5 compiled sources and final deliverable)
+  produced/{section}/R{N}/     (Stage-5 prose-refinement and formatting outputs)
+    working/                   (Stage-5 intermediate working files)
 
 reference/              (project-scoped, no section subdirs)
   skills/

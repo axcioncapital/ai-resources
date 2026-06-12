@@ -41,13 +41,13 @@ Open `CLAUDE.md` and replace all `{{PLACEHOLDER}}` values:
 
 | Placeholder | What to fill in | Example |
 |------------|----------------|---------|
-| `{{PROJECT_TITLE}}` | Human-readable project title (used in headings) | `Axcíon Research Workflow — Market Entry Analysis` |
+| `{{PROJECT_TITLE}}` | Human-readable project title (used in headings) | `Research Workflow — Market Entry Analysis` |
 | `{{PROJECT_DESCRIPTION}}` | 2-3 sentences: what the project produces, for whom | `A market entry feasibility study for...` |
 | `{{ANALYTICAL_LENS}}` | The analytical framework anchoring the research | `Porter's Five Forces adapted to...` |
 | `{{CURRENT_SECTION}}` | Initial section identifier | `1.1 — Market Overview` |
 | `{{DOCUMENT_ARCHITECTURE}}` | Document structure (parts, sections, sequence) | `Part 1 (Research, 1.1–1.3) → Part 2 (Strategy, 2.1–2.4)` |
 | `{{EVIDENCE_CALIBRATION}}` | Evidence availability and calibration note | `No primary research available. Each section must...` |
-| `{{OPERATOR_NAME}}` | Operator's name | `Patrik` |
+| `{{OPERATOR_NAME}}` | Operator's name | `Alex` |
 
 ## 4. Fill stage-instructions.md sequence constraints
 
@@ -64,6 +64,17 @@ Open `reference/quality-standards.md` and replace `{{PROJECT_TITLE}}` in the tit
 ## 5c. Customize style-guide.md
 
 Open `reference/style-guide.md` and replace `{{PROJECT_TITLE}}` in the title. Review the default document specification and voice notes — customize for your project after the first content draft establishes the voice.
+
+## 5d. Instantiate stage-entry reference files (gate-checked)
+
+The pipeline runs a **Stage-Entry Reference-File Completeness Gate** (`reference/stage-instructions.md` § Stage-Entry Reference-File Completeness Gate): at the entry of each consuming stage, certain per-project reference files must be present **AND filled** — a file that still carries its template placeholders fails the gate. The full contract (which file, consuming stage, hard-vs-soft class) is `docs/required-reference-files.md` § Stage-entry reference files.
+
+Instantiate from the `.template.md` shapes in `reference/` when the project reaches the consuming stage (or now, if known):
+
+- `reference/stage-5-paths.md` (from `stage-5-paths.template.md`) — **hard blocker** for Stage 4–5 (`run-report`, `produce-*`). If absent or unfilled at Stage 5 entry, the commands halt with a remediation prompt.
+- `reference/claim-permission.md` (from `claim-permission.template.md`) — **soft fallback** for Pass 3 (`run-sufficiency` Phase A). If absent or unfilled, the gate proceeds in an explicitly-disclosed GENERIC-BAR regime (one generic bar for all claim types) and logs the degraded regime at entry — legitimate for generic-only projects, but the disclosure line will appear every run.
+
+Also instantiate `reference/known-limits.md` (from `known-limits.template.md`) and `reference/source-class-hierarchy.md` (from `source-class-hierarchy.template.md`) before Stage 1 — `run-preparation` Step 3c (Researchability Triage) and the Stage-2 supplementary register-hit gate read them.
 
 ## 6. Create skill symlinks
 

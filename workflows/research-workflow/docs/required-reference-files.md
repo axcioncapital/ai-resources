@@ -38,14 +38,36 @@ All paths below are **relative to the project root** (the directory containing t
 - **Read by canonical commands:** `run-report` (Step 4.2 a/b/c per-chapter triplet, and per-chapter `review-chapter`).
 - **Failure mode if missing:** Stage 4 chapter prose subagents cannot enforce style; chapter prose drifts in voice/format and review-chapter cannot flag the drift.
 
+## Stage-entry reference files (present-AND-filled contract)
+
+Two further reference files are required by the **stage-entry completeness gate** (see `reference/stage-instructions.md` § Stage-Entry Reference-File Completeness Gate). Unlike the four deployment-time files above — which fail at runtime only when *absent* — these two also fail when *present but unfilled* (shape-present, values-absent). The gate distinguishes the two failure classes and handles each differently:
+
+### 5. `reference/stage-5-paths.md` — **hard blocker**
+
+- **Role:** Per-project Stage 5 path-config (output roots for compiled finals, prose-refinement, formatting, working files) + `Mode:` discriminator. Read at Phase 0 of every Stage 5 `produce-*` command and `run-report`.
+- **Template form in workflow:** `reference/stage-5-paths.template.md` — instantiated per-project.
+- **Read by canonical commands:** `produce-prose-draft`, `produce-formatting`, `produce-jargon-gloss`, `run-report` (Phase 0 / Stage 4–5 entry).
+- **Completeness requirement:** present AND the `## Stage 5 Path Roots` block parses to non-placeholder values AND the `Mode:` line matches the project's `Document model`. 
+- **Gate behaviour if missing OR unfilled:** **fail loud** — halt at stage entry with a remediation prompt naming the file and pointing to the template. No silent fallback (a wrong/placeholder path would mis-route every Stage 5 output).
+
+### 6. `reference/claim-permission.md` — **soft fallback**
+
+- **Role:** Per-claim-type minimum-evidence thresholds, Source-Diversity Matrix rows, and R1-defect fold-ins consumed by `claim-permission-gate` (Pass 3, `run-sufficiency` Phase A). `quality-standards.md` carries the *headings/shape*; this file carries the *operative per-type values*.
+- **Template form in workflow:** `reference/claim-permission.template.md` — instantiated per-project. A deployed project may run without the instantiated file (only the template exists) — the failure mode this soft-fallback contract addresses.
+- **Read by canonical commands:** `run-sufficiency` (Phase A — `claim-permission-gate`).
+- **Completeness requirement:** present AND the per-claim-type threshold table / diversity-matrix rows are filled (not placeholder).
+- **Gate behaviour if missing OR unfilled:** **run in an explicitly-disclosed GENERIC-BAR regime** — proceed with one generic bar for all claim types, but emit a hard log line at stage entry so the operator sees that no per-type calibration is active. Not a silent default (the prior failure mode), and not a hard block (which would wrongly stop a legitimately-generic project).
+
 ## Consumer fan-out (reverse map)
 
 | Reference file | Consumed by canonical commands |
 |---|---|
 | `reference/source-class-hierarchy.md` | `run-execution`, `run-cluster`, `run-sufficiency` |
 | `reference/quality-standards.md` | `run-execution`, `run-cluster`, `run-sufficiency`, `run-report` |
-| `reference/known-limits.md` | `run-execution`, `run-cluster`, `run-sufficiency` |
+| `reference/known-limits.md` | `run-execution`, `run-cluster`, `run-sufficiency`, `run-preparation` (Stage 1 — Step 3c Researchability Triage) |
 | `reference/style-guide.md` | `run-report` (via the per-chapter triplet that delegates to the `evidence-to-report-writer` and `chapter-prose-reviewer` skill subagents in Step 4.2 a/b) |
+| `reference/stage-5-paths.md` (hard) | `produce-prose-draft`, `produce-formatting`, `produce-jargon-gloss`, `run-report` (Phase 0) |
+| `reference/claim-permission.md` (soft) | `run-sufficiency` (Phase A — `claim-permission-gate`) |
 
 ## Path-passing convention (FX-C1)
 
@@ -53,7 +75,7 @@ The Stage 2–4 commands pass these reference files to subagents **by path, not 
 
 The path-passing convention means the file MUST exist at the named path at runtime — there is no fallback. The canonical command bodies hard-code the relative path `reference/{filename}`; renaming or relocating a file requires updating every consuming command (see "Consumer fan-out" above for the touch list).
 
-**Runtime path resolution — each project owns its own copies.** Path resolution is **project-root-relative**, not workflow-template-relative. Subagents resolve `reference/quality-standards.md` against the project's working directory, not against the workflow template's `reference/` directory. The workflow template's own `reference/` directory (which contains canonical `quality-standards.md` and `style-guide.md`, plus `.template.md` shapes for the per-project files) is the **source** for deployment, not a runtime fallback. A deployed project MUST hold its own regular-file copies of all four files at `{project-root}/reference/{filename}` — symlinks back to the workflow template are not the operating convention (the active nordic-pe consumer holds plain file copies). At deploy time, `quality-standards.md` and `style-guide.md` are typically copied verbatim from the workflow template; `source-class-hierarchy.md` and `known-limits.md` are instantiated from their `.template.md` shapes with project-specific content.
+**Runtime path resolution — each project owns its own copies.** Path resolution is **project-root-relative**, not workflow-template-relative. Subagents resolve `reference/quality-standards.md` against the project's working directory, not against the workflow template's `reference/` directory. The workflow template's own `reference/` directory (which contains canonical `quality-standards.md` and `style-guide.md`, plus `.template.md` shapes for the per-project files) is the **source** for deployment, not a runtime fallback. A deployed project MUST hold its own regular-file copies of all four files at `{project-root}/reference/{filename}` — symlinks back to the workflow template are not the operating convention (active consumer projects hold plain file copies). At deploy time, `quality-standards.md` and `style-guide.md` are typically copied verbatim from the workflow template; `source-class-hierarchy.md` and `known-limits.md` are instantiated from their `.template.md` shapes with project-specific content.
 
 ## Other reference files (informational)
 
@@ -61,8 +83,10 @@ The workflow template's `reference/` directory contains additional files that ar
 
 - `reference/file-conventions.md` — canonical to workflow; read by `audit-structure` only.
 - `reference/stage-instructions.md` — canonical to workflow; read by multiple commands; describes the 5-stage pipeline.
-- `reference/claim-permission.template.md`, `reference/jargon-gloss-config.template.md`, `reference/language-search-blocks.template.md`, `reference/stage-5-paths.template.md` — Stage 5 configuration templates, instantiated per-project but not in this required-files contract.
+- `reference/jargon-gloss-config.template.md`, `reference/language-search-blocks.template.md` — Stage 5 configuration templates, instantiated per-project but not in this required-files contract.
+- `reference/claim-permission.template.md`, `reference/stage-5-paths.template.md` — the `.template.md` *shapes* remain templates, but their instantiated per-project forms (`claim-permission.md`, `stage-5-paths.md`) are now part of the stage-entry present-AND-filled contract above (files 5 and 6).
 - `reference/stage-5-common-phases.md` — canonical Stage 5 phase definitions; read by Stage 5 produce-* commands.
+- `reference/source-map.md` — internal pre-answer map; read by `run-preparation` Stage 1 Step 3c (Researchability Triage) to detect internal-import RQs and concurrent-sibling duplicates. Project-specific content; not part of the four-file deployment contract but a required runtime read for any project running Step 3c.
 
 These files have their own roles and consumer maps; they are not enumerated here because they do not participate in the four-file deployment contract. For their roles see the corresponding command bodies or `reference/stage-instructions.md`.
 

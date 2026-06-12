@@ -57,7 +57,7 @@ Skill loading: For each skill step below, read the skill file from the ai-resour
 6. Write verdict to `/execution/checkpoints/{section}/{section}-step-2.1b-prompt-qc.md`.
 7. If APPROVED: proceed to PAUSE below.
 8. If REVISE with only Moderate findings: apply fixes to the prompt files, re-run QC (one retry). If second pass APPROVED, proceed. If still FLAG, pause for operator.
-9. If REVISE with Critical findings, follow the skill's mechanical-vs-judgment classification (`research-prompt-qc` SKILL.md § Autonomy Rules): all-mechanical Criticals (one correct fix, no editorial judgment) → apply fixes and re-run QC once, pausing if still FLAG; any judgment Critical, any ambiguous classification, or any mechanical/judgment mix → pause for operator review before proceeding.
+9. If REVISE with Critical findings, follow the skill's mechanical-vs-judgment classification (`research-prompt-qc` SKILL.md § Autonomy Rules; operator-facing mirror: `reference/quality-standards.md` § Critical Finding Classification): all-mechanical Criticals (one correct fix, no editorial judgment) → apply fixes and re-run QC once, pausing if still FLAG; any judgment Critical, any ambiguous classification, or any mechanical/judgment mix → pause for operator review before proceeding.
 10. ▸ /compact — QC context no longer needed.
 11. PAUSE — Present the session plan table to the operator, organized by execution tool. **Explicitly flag any inter-session dependencies** (e.g., "Session D depends on Session A — do not run D until A completes"). List each dependency clearly so execution order is unambiguous. Note which sessions run in Research Execution GPT vs Perplexity. He will execute sessions manually (Step 2.2) and return with raw reports.
 
@@ -144,6 +144,13 @@ Skill loading: For each skill step below, read the skill file from the ai-resour
 **Step 2.S0 — Extract Failed Components [Claude Code]**
 Parse all approved Research Extracts from `/execution/research-extracts/{section}/` and extract every component with THIN or MISSING coverage verdict. Output structured list grouped by Question ID to `/execution/supplementary/{section}/{section}-failed-components.md`. Extraction only — no query drafting.
 
+**Register-hit target-selection gate (C2 — calibrate against `known-limits`).** Before any component proceeds to query drafting (Step 2.S1), score each extracted THIN/MISSING component against the Known-Unavailable-Evidence Register in `reference/known-limits.md`:
+- **Register hit + no new source class** — the component matches a register row AND the first pass already tried (or the register names) every applicable source class per `reference/source-class-hierarchy.md`: route the component **straight to the scarcity register** with the existing pass-1 proxy recorded as the ceiling. It earns **zero** supplementary attempts. Do NOT draft a query for it. This is the structural-scarcity case — re-searching a known-empty gap wastes a pass.
+- **Register hit + a new source class is available** — the component matches a register row BUT a source class exists (per the hierarchy) that the first pass did not try: it qualifies for **one** supplementary attempt, scoped to that new source class only.
+- **No register hit (thin-but-closable)** — the component is not a register row: it proceeds to query drafting normally under the two-pass allowance.
+
+Tag each component's route in the failed-components output (`register-hit-ceiling` / `register-hit-new-class` / `thin-but-closable`) so Step 2.S1 only drafts queries for the latter two, and the scarcity register receives the first immediately.
+
 **Step 2.S1 — Draft Supplementary Query Brief [delegate]**
 1. Read the failed components extraction from Step 2.S0.
 2. Read all Research Extracts from `/execution/research-extracts/{section}/`.
@@ -162,8 +169,9 @@ Present the query brief's Section B (Execution Sheet) to the operator. He runs q
 3. Read the Query Brief Section A from Step 2.S1.
 4. Read the `supplementary-research-qc` skill.
 5. Launch a qc-gate sub-agent. Pass it: the skill content, raw Perplexity output, Research Extracts, and Query Brief Section A. Task: run the three checks per query and return per-query verdicts.
-6. Write QC report to `/execution/supplementary/{section}/{section}-supplementary-qc-pass-[1/2].md`.
-7. GATE: Operator confirms merge summary before proceeding.
+6. If this pass produces confirmed-scarcity outcomes, run the skill's Check 4 (sampled scarcity-verdict independence check): a fresh-context sub-agent — given only the sampled component's topic and the project lens, NOT the query brief — drafts one from-scratch verification query per sampled component (1–2 max); the operator executes it via the Step 2.S2 path. In-lens evidence found → route that component back to re-extraction instead of the scarcity register.
+7. Write QC report to `/execution/supplementary/{section}/{section}-supplementary-qc-pass-[1/2].md` (including the Scarcity Independence Check block when Check 4 ran).
+8. GATE: Operator confirms merge summary before proceeding.
 
 **Step 2.S4 — Merge Supplementary Evidence [delegate]**
 1. Read all Research Extracts from `/execution/research-extracts/{section}/`.
@@ -177,10 +185,15 @@ Present the query brief's Section B (Execution Sheet) to the operator. He runs q
 **Step 2.S5 — Re-verify and Close**
 Re-run Step 2.4 verification on affected extracts only. If still insufficient after pass 1: repeat Steps 2.S0–2.S5 as pass 2.
 
-**Two-pass maximum (hard constraint):** Before initiating a supplementary pass, check `/execution/supplementary/` for existing pass files for this section. If pass 2 files exist, do NOT initiate another pass.
+**Attempt ceiling (calibrated against `known-limits` — C2):** The cap is no longer a flat two passes for every gap; it depends on the Step 2.S0 route:
+- **`thin-but-closable` gaps** — two-pass maximum (the prior hard constraint). Before initiating a supplementary pass, check `/execution/supplementary/` for existing pass files for this section. If pass 2 files exist, do NOT initiate another pass.
+- **`register-hit-ceiling` gaps** — **zero** supplementary attempts. The gap is structurally unavailable per `known-limits`; the pass-1 proxy stands as the recorded ceiling. Never re-searched within this run.
+- **`register-hit-new-class` gaps** — exactly **one** attempt, scoped to the untried source class. If that attempt does not close the gap, it becomes confirmed scarcity (no second attempt — the register already establishes the structural limit).
 
-**Scarcity handling:** After 2 passes, any remaining gaps are classified as confirmed evidence scarcity. For each:
-- Append an entry to `/execution/scarcity-register/{section}/{section}-scarcity-register.md` with: Question ID, missing component, research attempted (both passes summarized), and editorial instruction (HEDGE / SCOPE CAVEAT / PROXY FRAMING — operator selects).
+A `Last-checked` date in the register older than the project's current period (Project Config `Current period:` value) re-licenses a register-hit gap for a fresh attempt (per `known-limits.md` Stop rule).
+
+**Scarcity handling:** Once a gap exhausts its route's attempt allowance (2 passes for `thin-but-closable`, 1 for `register-hit-new-class`, 0 for `register-hit-ceiling`), it is classified as confirmed evidence scarcity. For each:
+- Append an entry to `/execution/scarcity-register/{section}/{section}-scarcity-register.md` with: Question ID, missing component, research attempted (passes summarized; for register-hit-ceiling, note the register row + pass-1 proxy), and editorial instruction (HEDGE / SCOPE CAVEAT / PROXY FRAMING — operator selects).
 - PAUSE for operator to select the editorial instruction for each scarcity item.
 
 **Outputs:**

@@ -8,6 +8,8 @@ After operator approval of refined memos, the next command in the sequence is `/
 
 Prerequisite check: Read the step-2.4-checkpoint. Verify that research extracts for this section exist in `/execution/research-extracts/{section}/` with APPROVED verdicts. If any are missing or flagged, abort and report.
 
+Stage-entry reference-file completeness gate (per `reference/stage-instructions.md` § Stage-Entry Reference-File Completeness Gate): before launching the cluster sub-agents in Step 2, verify the three reference docs this command passes to them — `reference/source-class-hierarchy.md`, `reference/quality-standards.md`, `reference/known-limits.md` — are present **AND filled** (not shape-only template placeholders). All three are hard-class: if any is absent or unfilled, halt with a remediation prompt naming the file and its template; do not launch sub-agents against placeholder references.
+
 Skill loading: For each skill step below, read the skill file from `/ai-resources/skills/[skill-name]/SKILL.md` and follow its instructions.
 
 ---
@@ -24,7 +26,7 @@ Skill loading: For each skill step below, read the skill file from `/ai-resource
 ### Step 2: Parallel Cluster Analysis and Refinement [delegate]
 
 1. Read `/ai-resources/skills/cluster-analysis-pass/SKILL.md` and `/ai-resources/skills/cluster-memo-refiner/SKILL.md`.
-2. Read the project reference docs the two skills consume: `reference/source-class-hierarchy.md` (Project Country Set, Hierarchy Table, Source-Exhaustion Ladders — drives B-02 country-status columns and ladder-depth thresholds), `reference/quality-standards.md` (Country Coverage Table, Minimum Evidence Thresholds, Source-Diversity Matrix, Claim-Permission Classes, Source-Conflict Resolution Procedure — drives B-18 same-pattern thresholds and Check 9 ladder-depth), `reference/known-limits.md` (limit #2 Norway structural thinness — drives pan-Nordic-leakage check).
+2. Read the project reference docs the two skills consume: `reference/source-class-hierarchy.md` (Project Country Set, Hierarchy Table, Source-Exhaustion Ladders — drives B-02 country-status columns and ladder-depth thresholds), `reference/quality-standards.md` (Country Coverage Table, Minimum Evidence Thresholds, Source-Diversity Matrix, Claim-Permission Classes, Source-Conflict Resolution Procedure — drives B-18 same-pattern thresholds and Check 9 ladder-depth), `reference/known-limits.md` (Known-Unavailable-Evidence Register — drives the pan-region/superset-leakage check against any structurally-thin country in the project's country set).
 3. For each cluster, launch one general-purpose sub-agent. **Launch all cluster sub-agents in parallel.** Pass each sub-agent as content:
    - The `cluster-analysis-pass` skill content
    - The `cluster-memo-refiner` skill content
