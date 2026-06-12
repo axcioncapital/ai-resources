@@ -485,3 +485,52 @@ None beyond design: the new PreToolUse guard hard-blocked two legitimate commit 
 
 ### Open Questions
 None
+
+## 2026-06-12 — Session S1
+**Mandate:** Fix the two P3 first-firing hook defects — date-anchor the mandate-header lookup in check-foreign-staging.sh and add per-id session-marker teardown to the /handoff deferral path — done when: both fixes applied, /risk-check GO (or PROCEED-WITH-CAUTION + mitigations), /qc-pass GO, change committed
+- Out of scope: the separate glob-footprint/heredoc-verb defects in the same hook (other 2026-06-11 improvement-log entry, Symptoms A/B) stay deferred
+- Files in scope: .claude/hooks/check-foreign-staging.sh, skills/handoff/SKILL.md, docs/session-marker.md (footprint expanded from handoff.md — the /handoff logic lives in the SKILL; session-marker.md registers the new teardown end)
+- Stop if: /risk-check returns NO-GO, or QC subagent unreachable (1M-credit gate on >200k-token conversation) → defer commit via /handoff (QC-PENDING), do not self-QC-and-commit
+Fix the two P3 first-firing hook defects: (A) date-anchor the header lookup in check-foreign-staging.sh so an older same-name session entry cannot shadow today's footprint, and (B) add per-id session-marker teardown to the /handoff deferral path so a handoff-ended session does not leave a live-looking marker. Both are /risk-check change classes.
+
+### Summary
+Two /prime menu tasks, both completed. (1) Wrote `docs/daniel-concurrent-session-hooks-setup.md` — a self-contained handoff doc for Daniel to register both concurrent-session hooks in his own `~/.claude/settings.json` (closes the R1 machine-local-path residual from the S2 landing); committed 23daa8c. (2) Fixed the two P3 first-firing defects in the staging guard: Defect A (undated header lookup → date-anchored on the marker's own date + S-number) in `check-foreign-staging.sh`, and Defect B (handoff-ended session leaves a live-looking marker → new continuity-mode Step C3 marker teardown, scoped to direct `/handoff` and skipped under wrap's inlined C1–C2) in `skills/handoff/SKILL.md`, with the new teardown end registered in `docs/session-marker.md`. End-time /risk-check GO (all six dimensions Low); independent /qc-pass GO (all six rubric dimensions Clear); committed 2585300. The fix proved itself live — this session's own fix-commit passed the previously-false-firing guard cleanly.
+
+### Files Created
+- docs/daniel-concurrent-session-hooks-setup.md — Daniel hook-registration handoff doc (commit 23daa8c)
+- audits/risk-checks/2026-06-12-two-p3-first-firing-hook-defect-fixes.md — risk-check report (GO)
+- logs/session-plan-2026-06-12-S1.md — this session's plan
+
+### Files Modified
+- .claude/hooks/check-foreign-staging.sh — Defect A: marker-date extraction + date-anchored header regex + sess_date gate (commit 2585300)
+- skills/handoff/SKILL.md — Defect B: continuity Step C3 per-id marker teardown + Tools-required note (commit 2585300)
+- docs/session-marker.md — registered the /handoff C3 teardown end (registry + liveness-discriminator note) (commit 2585300)
+- logs/improvement-log.md — first-firing entry flipped PENDING → RESOLVED (commit 2585300)
+
+### Decisions Made
+- **Defect B fix location:** landed in skills/handoff/SKILL.md (Step C3), not .claude/commands/handoff.md (thin delegator). The improvement-log "Target files" named the command; the logic lives in the SKILL — corrected the footprint mid-session.
+- **C3 teardown scoping:** fires on direct /handoff only; explicitly SKIPPED when /wrap-session Step 0.5 inlines C1–C2 (wrap owns its own Step 13 teardown, which must run after its marker-dependent Steps 3.5/7a — a teardown at 0.5 would break them).
+- **Optional doc touch-up applied:** fixed the session-marker.md line-209 narrative (wrap-only teardown → both ends) that QC flagged below the materiality floor, since the file was already in scope (near-zero cost, structural-fix default).
+
+### Outcome
+- COMPLETION: DELIVERED
+- EXECUTION: OPTIMAL
+- What was asked but not done: none
+- Better path: none
+- Confidence: high
+- (Independent outcome check verified both edits on disk, both commits 2585300/23daa8c, risk-check GO + qc-pass GO, and the correct PENDING/RESOLVED split in improvement-log. No rework loops, detours, or skipped gates.)
+
+### Risky actions
+None. The end-time /risk-check + independent /qc-pass both ran and returned GO before commit; the staging guard passed cleanly on the fix-commit (no override, no bypass).
+
+### Session Assessment
+(wrap-collector, 2026-06-12) — 0 appends to either log. Autonomy-compounding: positive (hardened the load-bearing staging guard; closed the R1 residual). Leanness/cost: no signal (OPTIMAL, no rework). Principle-drift: no signal (mid-session footprint correction is the system working as intended). Friction: one candidate (improvement-log "Target files" named the thin delegator handoff.md, not skills/handoff/SKILL.md) — already captured in the resolved entry at improvement-log.md:553-554; one-off, not logged (dedup). Safety: none observed.
+
+### Next Steps
+- Send `docs/daniel-concurrent-session-hooks-setup.md` to Daniel (R1 residual — he must self-register both hooks on his machine).
+- Next candidate fix for this hook: the still-PENDING glob-footprint/heredoc-verb improvement-log entry (deliberately out of scope this session).
+- `/friday-checkup` is the weekly cadence — due.
+- Push pending: ai-resources is ahead (2 commits this session + prior); confirm at push gate.
+
+### Open Questions
+None
