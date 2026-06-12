@@ -571,3 +571,12 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Gating:** plan-time `/risk-check` GO (all six dimensions Low — report `audits/risk-checks/2026-06-12-light-enrichment-canonical-fact-verification-stub.md`); independent `/qc-pass` REVISE→resolved (stale-block contradiction removed); operator confirms Verified at wrap.
 - **Target files:** `ai-resources/workflows/research-workflow/reference/sops/fact-verification-prompt.md`; `ai-resources/workflows/research-workflow/SETUP.md` (Step 8b).
 - **Note on the related Milestone-4 entry (2026-06-09, above):** its part (2) #24 register-template promotion was satisfied by promotion-track P3 (landed prior session, umbrella commit `da72d7a`); its part (1) canonical-template propagation via `/sync-workflow` remains genuinely deferred (operator scoped it out this session). That entry's status is unchanged here.
+
+### 2026-06-12 — split-log.sh: skip ## headers inside fenced code blocks
+- **Status:** open
+- **Category:** script-defect
+- **Severity:** low (causes non-destructive exit-1 on affected files; no data loss)
+- **Provenance:** log-sweep 2026-06-12 — `projects/axcion-brand-book/logs/decisions.md` failed because the file has a template placeholder `## YYYY-MM-DD — {one-line decision title}` on line 8 inside a fenced code block (lines 7–19). `split-log.sh` uses `grep '^## '` which matches lines inside code fences; this fake entry becomes `HEADERS[0]`, and date derivation fails with "could not derive YYYY-MM from header." The file has 29 real dated entries plus 1 fake one; archival could not proceed.
+- **Fix:** In `split-log.sh`, replace the bare `grep '^## '` header scan with a loop that tracks whether the current line is inside a fenced code block (lines between `` ``` `` delimiters) and skips those lines. A Python-based pre-filter or an awk one-liner would also work. Low risk change — same script logic, more precise header extraction.
+- **Target files:** `ai-resources/logs/scripts/split-log.sh`
+- **Review-cycle:** monthly
