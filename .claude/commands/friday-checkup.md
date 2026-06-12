@@ -330,6 +330,14 @@ Verifies the Mitigation 3 (strengthened) contract from FX-B1 Path A: every `<!--
     - Quarterly follow-up references already added to Tactical (`/repo-dd deep`, `/analyze-workflow`) — repeat their paths here so the retrospective section is self-contained for `/friday-act`'s quarterly review.
     - Auto-detect substrate-drift signals: count of `audits/risk-checks/*.md` files this quarter; count of new `.claude/commands/*.md` files this quarter (`git log --since="3 months ago" --name-only -- ai-resources/.claude/commands/`). Surface counts as one-liners; the operator interprets in `/friday-act`.
 
+14.5. **Weekly Session Value Review (all tiers).** Roll up the week's per-session value audits (produced by `/wrap-session` Step 6.4 as `### Session Value Audit — 80/20 Review` blocks in each scope's `logs/session-notes.md`). Inline, no subagent — the blocks are compact labeled lines (`TYPE:` / `SCORE:` / `DECISION:` / `RULE:`).
+
+    - **Window:** sessions whose `## YYYY-MM-DD` session-note header date is after `LAST_DATE` (from Step 0), or within the last 7 days if no prior checkup report exists.
+    - **Scopes:** ai-resources plus each selected project scope (`{scope_path}/logs/session-notes.md`; skip a scope silently if the file is absent).
+    - **Extraction:** grep each file for `### Session Value Audit` blocks in the window and collect per session: date, session title (from the enclosing `## ` header), `TYPE:`, `SCORE:`, `DECISION:`, and any non-empty `RULE:` line.
+    - **Compose** the `## Weekly Session Value Review` report section (template in Step 7) with: highest-value sessions (top ~20% by `SCORE:`, minimum 1), lowest-yield sessions (bottom ~20% by `SCORE:`, minimum 1), session types to repeat (`DECISION:` Repeat / Repeat with constraints), session types to constrain or batch (`DECISION:` Repeat with constraints / Batch into maintenance), session types to stop (`DECISION:` Redesign before repeating / Stop this session pattern), and one operating rule change — pick at most ONE recommendation from the collected `RULE:` lines (add / edit / remove a rule), or `none` if no candidate earns it. With few sessions, "top/bottom 20%" means the single best and single worst.
+    - **Empty window:** if no audit blocks exist in the window (feature newly shipped, or outcome checks skipped per wrap preflight), the section body is the single line `(no session value audits this week)`.
+
 ---
 
 ### Step 7: Write Consolidated Report
@@ -360,6 +368,23 @@ Verifies the Mitigation 3 (strengthened) contract from FX-B1 Path A: every `<!--
     - /audit-claude-md (monthly): {summary} → {path OR skipped reason}
     - /token-audit (monthly): {summary} → {path}
 
+    ## Weekly Session Value Review
+
+    ### Highest-value sessions
+    - {date} — {session title} — {TYPE} / {SCORE}
+    ### Lowest-yield sessions
+    - {date} — {session title} — {TYPE} / {SCORE}
+    ### Session types to repeat
+    - {pattern, from DECISION lines — or "(none)"}
+    ### Session types to constrain or batch
+    - {pattern — or "(none)"}
+    ### Session types to stop
+    - {pattern — or "(none)"}
+    ### One operating rule change
+    - {single recommendation from collected RULE lines — or "none"}
+    (All tiers; from Step 6 item 14.5. Advisory — consumed by /friday-act Step 4.2.
+     If no audit blocks in window, the section body is "(no session value audits this week)".)
+
     ## Tactical follow-ups
     - [ ] {item} — risk: {low | med | high}
     (One bullet per Step 6 tactical item. Always present.)
@@ -389,6 +414,7 @@ Verifies the Mitigation 3 (strengthened) contract from FX-B1 Path A: every `<!--
     - `weekly` → Tactical follow-ups only (Policy-level and Architectural retrospective omitted).
     - `monthly` → Tactical + Policy-level (Architectural retrospective omitted).
     - `quarterly` → Tactical + Policy-level + Architectural retrospective.
+    - `## Weekly Session Value Review` is additionally present on ALL tiers (with the `(no session value audits this week)` placeholder when empty). Advisory — consumed by `/friday-act` Step 4.2 by exact heading match; it does not change the three tier-gated headings above.
 
     `/friday-act` parses these section headings verbatim. Do not rename them.
 

@@ -111,6 +111,9 @@ If active count ≤ 7, proceed silently.
     - `## Tactical follow-ups` → list of `[ ] {item} — risk: {low | med | high}` bullets. Always present.
     - `## Policy-level observations` → list of bullets. Present iff `TIER ∈ {monthly, quarterly}`. May contain "(none flagged this cycle)".
     - `## Architectural retrospective` → free-form section. Present iff `TIER = quarterly`.
+
+    Additionally parse one optional advisory section (absent in pre-2026-06-12 reports — skip silently if missing):
+    - `## Weekly Session Value Review` → present on all tiers; consumed by Step 4.2. May contain the placeholder "(no session value audits this week)".
 12. If a tier-required section is missing, abort with `{section_name} missing from {REPORT_PATH}; report shape does not match /friday-checkup contract.` (Schema mismatch is a structural error, not an operator-recoverable one.)
 
 ---
@@ -319,6 +322,27 @@ Open each plan in a follow-up session to execute. Implement all plans before nex
 
 ---
 
+### Step 4.2: Weekly Session Value Review (all tiers; optional section)
+
+> Producer: `/friday-checkup` Step 6 item 14.5 → report section `## Weekly Session Value Review` (exact heading). Two-end contract — do not rename the heading in either command without updating both ends. Advisory consumption path: this step gives the roll-up's "stop/constrain/rule" findings a disposition, so they do not sit unactioned in the report.
+
+20a. Skip this step silently if the report has no `## Weekly Session Value Review` section (pre-2026-06-12 report), or its body is "(no session value audits this week)".
+20b. Collect the non-empty bullets from `### Session types to constrain or batch`, `### Session types to stop`, and `### One operating rule change` (ignore "(none)" / "none" placeholders). If all three are empty, skip with one chat line: "Session value review: no constrain/stop/rule candidates this week."
+20c. Display the collected items:
+    ```
+    Session value review — triage candidates ({REPORT_DATE}):
+      1. {item} — {constrain/batch | stop | rule-change}
+      ...
+
+    For each, decide:
+      (a)dopt   — adopt the constraint / stop the session pattern; log the adopted line to the Step 5 session block
+      (n)o-change — noted, no action this cycle
+      (d)efer   — re-evaluate next cycle
+    ```
+20d. Wait for per-item disposition. For an adopted **rule-change** item, follow the same rule as Step 4's `r` disposition: capture proposed edit text, do NOT auto-edit CLAUDE.md or any command — log the proposal under the Step 5 `Policy proposals` subsection for a follow-up session with its own plan + `/risk-check`. Adopted constrain/stop items are operator working agreements — log them under `Session value review` in the Step 5 session block; no file edits from this step.
+
+---
+
 ### Step 5: Maintenance Observations Closeout
 
 21. Open (or create) `{AI_RESOURCES}/logs/maintenance-observations.md`. If creating, seed with the header per the schema in that file's intro block (see file). Append a new session block:
@@ -337,6 +361,9 @@ Open each plan in a follow-up session to execute. Implement all plans before nex
     - Triage source: {AUTO_DEFAULT} auto-default, {OPERATOR_OVERRIDE} operator-override (of {TOTAL} items)
     - Policy review: {R} rule-change proposed, {N} no-change, {D} defer (monthly+ only; omit for weekly)
     - Architectural retrospective: {captured | skipped} (quarterly only; omit otherwise)
+
+    ### Session value review (omit if Step 4.2 skipped or had no candidates)
+    - {adopted constrain/stop working agreement, one line each — rule-change adoptions go under Policy proposals instead}
 
     ### Deferred items (from this session)
     - {tactical or policy item text} — {risk if tactical}, {source: checkup | so-derived | policy}
