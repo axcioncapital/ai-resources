@@ -77,6 +77,17 @@ Is this genuinely new evidence?
 - Redundant if: same factual assertion, same primary data source (even if accessed via a different URL or secondary publication), same finding restated with different wording, **or same source type that was already searched and returned nothing useful — unless the result provides materially different content from that source type than what prior searches returned.**
 - Not redundant if: same topic but different data, different time period, different geography, different methodological approach, or an independent source arriving at the same conclusion (this adds independence, which has value).
 
+### Check 4 — Scarcity-Verdict Independence Check (sampled, end-of-pass)
+
+Runs once per QC pass — after the per-query verdicts, not per query — and only when this pass produces **confirmed scarcity** outcomes (components that exhausted their attempt allowance and are headed for the scarcity register). If no component reaches confirmed scarcity in this pass, skip this check silently.
+
+Why it exists: the supplementary flow otherwise self-certifies "scarcity" — the same agent judges both the original gap and whether its own second attempt was a genuinely different angle. A too-quick scarcity verdict closes the search and lets existing proxies stand as the de-facto answer. This check puts an independent eye on the scarcity call. Sampled, cheap, high-signal.
+
+- **Sample 1–2 confirmed-scarcity components** from this pass (prioritize load-bearing components — those feeding claims a chapter depends on).
+- **Fresh-context re-attempt:** for each sampled component, a fresh context (a subagent given only the original component topic and the project lens — NOT the prior query brief, its wording, or its exclusion lists) drafts one search attempt from scratch. The attempt executes through the pipeline's standard search path (operator-run Perplexity query, same as Step 2.S2).
+- **If the fresh attempt finds credible in-lens evidence:** the scarcity verdict was an under-search, not a ceiling. Route the component **back to re-extraction** — it re-enters the supplementary flow with the new evidence; do NOT record it in the scarcity register this pass.
+- **If the fresh attempt finds nothing:** the scarcity verdict stands, now independently confirmed. Note the confirmation in the QC report.
+
 ## Verdict Logic
 
 **MERGE** — Passes all three checks. Adds genuine new evidence to a targeted component.
@@ -95,6 +106,14 @@ Is this genuinely new evidence?
 | Query | Verdict | Rationale |
 |-------|---------|-----------|
 | [Query # from Execution Sheet] | MERGE / SKIP / PARTIAL | [1–2 sentences: what the result adds or why it doesn't] |
+
+### Scarcity Independence Check (when Check 4 ran)
+
+```
+SCARCITY INDEPENDENCE CHECK:
+- Component [ID]: sampled. Fresh attempt: [found in-lens evidence → routed back to re-extraction | found nothing → scarcity independently confirmed]
+- Components not sampled: [IDs] — scarcity recorded as self-certified (sampling budget 1–2 per pass)
+```
 
 ### Merge Summary
 
@@ -119,5 +138,5 @@ Write the QC report to `/execution/supplementary/{section}-supplementary-qc-pass
 
 - Do not merge evidence into extracts — verdicts only (merging is Step 2.S4)
 - Do not supplement evidence from training data
-- Do not re-run or modify queries — assessment only
+- Do not re-run or modify queries — assessment only (exception: Check 4's sampled independence re-attempt, which drafts its one fresh query in a fresh context — never by editing the original brief's queries)
 - Do not override operator decisions on which components warrant supplementary research
