@@ -192,3 +192,12 @@
 
 #### Write Activity
 - S3 staged its own work by explicit path across 4 commits / 3 repos; no foreign files touched (`### Risky actions` = None — QC-clean, risk-check-gated, re-syncs byte-identical). The two pre-existing S4 foreign working-tree files were left untouched and unstaged.
+
+## Session — 2026-06-12 (S4 cont.)
+
+### Friction Events
+
+- **[wrap-collector]** wrap (S4 cont., /log-sweep) — **Friction type: hook + process.** `check-foreign-staging.sh` blocked S4's ai-resources commit 3x. Root cause: S4 started via `/log-sweep` (no `/prime`), so it wrote no per-id marker `logs/.session-marker-${CLAUDE_CODE_SESSION_ID}`; the guard fell back to the shared `logs/.session-marker` that a concurrent session (settings.json edits) kept rewriting. The marker fix (writing the missing per-id marker, not a `-f` override) was correct and structural, and zero sweep rework occurred — but the missing-per-id-marker root cause was diagnosable on retry 1 (same root-cause family as S1/S2 earlier today), so retries 2-3 were avoidable thrash. Direction (collector does not propose the fix): generalize per-id marker establishment to non-/prime session-start paths — routed to improvement-log this session as a guardrail-candidate (low). No content lost; explicit-path staging held throughout.
+
+#### Write Activity
+- S4 cont. (/log-sweep) staged its own work by explicit path across 2 commits / 2 repos (e1d22ca marketing-positioning, bffdd95 ai-resources); no foreign files touched. Concurrent session's settings.json edits left untouched and unstaged.

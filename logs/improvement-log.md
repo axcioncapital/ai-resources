@@ -580,3 +580,13 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Fix:** In `split-log.sh`, replace the bare `grep '^## '` header scan with a loop that tracks whether the current line is inside a fenced code block (lines between `` ``` `` delimiters) and skips those lines. A Python-based pre-filter or an awk one-liner would also work. Low risk change — same script logic, more precise header extraction.
 - **Target files:** `ai-resources/logs/scripts/split-log.sh`
 - **Review-cycle:** monthly
+
+### 2026-06-12 — Non-/prime session start writes no per-id marker → per-id-marker guards fall back to clobberable shared marker
+- **Status:** logged (pending)
+- **Category:** guardrail-candidate
+- **Severity:** low
+- **Provenance:** wrap-collector (machine-authored) 2026-06-12
+- **Friction source:** wrap-collector 2026-06-12 — safety / guardrail-gap (S4 cont., /log-sweep cross-project archival)
+- **Proposal:** S4 launched directly via `/log-sweep` (no `/prime`/`/session-start`), so it never wrote its per-id marker `logs/.session-marker-${CLAUDE_CODE_SESSION_ID}`. `check-foreign-staging.sh` then fell back to the shared `logs/.session-marker`, which a concurrent session (editing `.claude/settings.json`) kept rewriting — blocking S4's ai-resources commit 3x until S4 hand-wrote the missing per-id marker mid-run. Per-id-marker establishment should not be `/prime`-only: any session-start path that may commit in a shared checkout (`/log-sweep`, `/clarify`, `/friday-*`) should establish the deterministic per-id marker the staging/concurrency guards consume, so they never degrade to the shared marker. Generalizes the same root cause as the 2026-06-10 "Unmarked /clarify-first session risks false-CONCURRENT wrap guard" entry — different consumer (that is `/wrap-session` Step 3.5 false-STOP at wrap; this is `check-foreign-staging.sh` block-thrash at mid-session commit). Operator-flagged candidate in S4 Next Steps.
+- **Target files:** (to be determined at disposition) — candidate: a shared session-marker-establishment primitive consumed at every session-start path; `ai-resources/.claude/hooks/check-foreign-staging.sh`; cross-ref `ai-resources/docs/session-marker.md` + the 2026-06-10 unmarked-/clarify entry + the 2026-06-09 footprint-less fail-open entry.
+- **Review-cycle:** monthly

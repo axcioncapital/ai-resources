@@ -391,7 +391,7 @@ Add a concurrent-session-live nudge to /prime pointing at /concurrent-session-ch
 ## 2026-06-12 — Session S4
 **Mandate:** Run /friday-act (Friday cadence Session 2 — operator-driven fixes) to triage the 16 /improve findings, 5 session issues, and the permission-sweep + log-sweep follow-ups in audits/friday-checkup-2026-06-12.md — done when: /friday-act completes, fix plan produced and operator-selected fixes applied/triaged
 - Out of scope: (none stated)
-- Files in scope: audits/friday-plans/2026-06-12-permissions.md, audits/friday-plans/2026-06-12-skill-frontmatter.md, audits/friday-plans/2026-06-12-improve-findings.md, audits/friday-plans/2026-06-12-session-issues.md, logs/maintenance-observations.md, logs/session-notes.md, logs/session-plan-2026-06-12-S4.md, audits/log-sweep-2026-06-12.md, logs/improvement-log.md
+- Files in scope: audits/friday-plans/2026-06-12-permissions.md, audits/friday-plans/2026-06-12-skill-frontmatter.md, audits/friday-plans/2026-06-12-improve-findings.md, audits/friday-plans/2026-06-12-session-issues.md, logs/maintenance-observations.md, logs/session-notes.md, logs/session-plan-2026-06-12-S4.md, audits/log-sweep-2026-06-12.md, logs/improvement-log.md, logs/friction-log.md
 - Stop if: (none stated)
 Run /friday-act to triage the 16 improve findings, 5 session issues, and permission/log-sweep follow-ups from the 2026-06-12 friday-checkup report.
 
@@ -466,3 +466,51 @@ Continue the friday-act backlog: next plan is `audits/friday-plans/2026-06-12-sk
 
 ### Open Questions
 None blocking. The positioning-research CRITICAL is a tracked follow-up, not a blocker for this plan.
+
+## 2026-06-12 — Session S4 (cont.) — /log-sweep cross-project archival
+
+### Summary
+Ran `/log-sweep` across **16 scopes** (ai-resources + all 15 projects; operator picked "All scopes"). Dispatched 16 `log-sweep-auditor` subagents in parallel — each wrote full notes to `audits/working/log-sweep-{scope}-2026-06-12.md` and returned a ≤20-line summary. Inventoried 3,054 markdown files; only 2 were over threshold. Archived 1 (marketing-positioning session-notes.md), 1 failed on a pre-existing `split-log.sh` code-fence bug (axcion-brand-book decisions.md). Resolved a concurrent-session staging-guard race mid-run by writing this session's missing per-id marker.
+
+### Files Created
+- `audits/log-sweep-2026-06-12.md` — final report (overwrote a stale dry-run report from an earlier auditor). (`bffdd95`)
+- `audits/working/log-sweep-manifest-2026-06-12.md` — pre-apply manifest. (gitignored)
+- 16 × `audits/working/log-sweep-{scope}-2026-06-12.md` — per-scope auditor working notes. (gitignored)
+- `projects/marketing-positioning/logs/session-notes-archive-2026-06.md` — archive of 8 rotated entries. (`e1d22ca`, marketing-positioning repo)
+- `logs/scratchpads/2026-06-12-10-45-scratchpad.md` — continuity scratchpad.
+- `logs/.session-marker-4c4c7b12-2bc6-4287-8734-28f18d8c1eee` — this session's per-id marker (written mid-run to fix the guard race). (gitignored)
+
+### Files Modified
+- `projects/marketing-positioning/logs/session-notes.md` — Cat A2 rotation: 728 → 345 lines, 8 entries archived. (`e1d22ca`, marketing-positioning repo)
+- `logs/improvement-log.md` — appended open entry for the `split-log.sh` code-fence bug. (`bffdd95`)
+- `logs/session-notes.md` — S4 footprint widened to include the 2 log-sweep output files; this cont. block.
+
+### Decisions Made
+- **Fix the staging-guard race structurally, not by override** — the ai-resources commit was blocked 3× by `check-foreign-staging.sh` because this session (S4) was missing its own per-id marker, so the guard fell back to the shared `logs/.session-marker` that a concurrent session (editing `.claude/settings.json` files) kept rewriting. Resolution: wrote the missing per-id marker (the deterministic oracle the guard is designed to use), rather than `-f`-overriding the hook. Operator confirmed "proceed" after the situation was surfaced.
+- **Selected "All scopes"** for the sweep (operator gate, the command's only operator decision).
+
+### Outcome
+COMPLETION: DELIVERED
+EXECUTION: ACCEPTABLE
+- What was asked but not done: none — all 16 scopes swept, 3,054 files inventoried, the single archivable over-threshold file rotated + committed (`e1d22ca`, 8 archived / 10 kept), report + manifest + 16 per-scope working notes written, subagent-to-disk contract honored. The 1 unarchived file (`axcion-brand-book/logs/decisions.md`) is a pre-existing `split-log.sh` code-fence bug, not a sweep-logic miss — surfaced as FAILED with a recovery path and logged open in `improvement-log.md`. DELIVERED stands.
+- Better path (the one concrete inefficiency): the 3× commit-block loop against `check-foreign-staging.sh` was avoidable — the missing-per-id-marker root cause was diagnosable on retry 1 (same root-cause family S1/S2 logged earlier today), so retries 2–3 were thrash. The marker fix itself was correct; a shared-marker guard race is a genuine concurrency surprise and zero sweep rework occurred → ACCEPTABLE, not SUBOPTIMAL.
+- Confidence: low (no formal mandate — judged against the /log-sweep command contract).
+
+### Risky actions
+None irreversible. The 3× blocked commit was the staging-guard correctly catching an unstable marker; resolved by restoring the missing per-id marker (not by bypassing the guard). Per-scope working notes are gitignored — recovery trail is local-disk only. Concurrent session active in-checkout throughout (settings.json edits); no foreign content was swept into either commit (explicit-path staging both times).
+
+### Session Assessment (wrap-collector, 2026-06-12 — S4 cont.)
+- Autonomy-compounding: no signal — `/log-sweep` ran as designed (16 scopes, subagent-to-disk contract honored); no reusable component, no speculative work.
+- Leanness/cost: minor — the 3× commit-block loop was avoidable thrash (root cause diagnosable on retry 1, same family as S1/S2 today); captured as friction.
+- Principle-drift: no signal — guard race resolved structurally (wrote the missing per-id marker, not a `-f` override).
+- Friction: 3× commit-block thrash at mid-session commit; type = hook + process.
+- Safety: low — no irreversible/destructive/external action; guard held correctly. Latent gap: command-launched (non-/prime) sessions write no per-id marker, so per-id-marker guards fall back to a clobberable shared marker.
+- Routed: 1→improvement-log (guardrail-candidate, low), 1→friction-log (hook/process). `split-log.sh` code-fence bug already logged this session — not duplicated.
+- Note: collector hit a tooling block (Edit disabled, no Bash in its context) and failed loud rather than risk a destructive full-file Write on the append-only logs; main session appended its validated payloads via Bash heredoc.
+
+### Next Steps
+- **Fix the `split-log.sh` code-fence bug** (logged open in `improvement-log.md`, monthly cycle): bare `grep '^## '` matches `##` headers inside fenced code blocks, so the template placeholder `## YYYY-MM-DD` in `axcion-brand-book/logs/decisions.md` breaks archival. Fix: skip lines inside code fences. Until then, that file keeps appearing over-threshold. Re-run `/log-sweep --dry-run` after the fix to confirm it clears.
+- Consider logging the **missing-per-id-marker-on-non-/prime-start** gap (this session started via `/log-sweep`, no `/prime`, so no marker was written) — candidate for `/improve`.
+
+### Open Questions
+None blocking.
