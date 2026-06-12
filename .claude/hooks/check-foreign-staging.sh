@@ -63,7 +63,7 @@ command -v python3 >/dev/null 2>&1 || exit 0
 payload=$(cat)
 
 python3 - "$payload" << 'PYEOF'
-import json, sys, os, re, subprocess, datetime
+import json, sys, os, re, subprocess, datetime, fnmatch
 
 # ---- Parse payload ----
 try:
@@ -79,20 +79,63 @@ cmd = (payload.get("tool_input", {}) or {}).get("command", "") or ""
 # ---- Gated-verb early exit (FIRST real check — before any file/git read) ----
 # Keep this cheap: pure regex on the command string. The expensive path (git
 # queries, footprint read) runs only for genuine commit/add-wide invocations.
-is_commit = bool(re.search(r'\bgit\s+commit\b', cmd))
+#
+# Symptom B fix (2026-06-12, improvement-log 2026-06-11 glob/heredoc entry): the
+# verb regexes must see only ACTUAL command text, not git-verb mentions inside a
+# heredoc body or a quoted string. A `cat >> log <<'EOF' … git commit … EOF`
+# append, or a quoted commit message, is not a git invocation and must not gate.
+# Two defenses combine: (1) blank heredoc bodies + quoted spans before matching,
+# and (2) anchor the verb to a command-segment boundary (start, newline, or after
+# ;/&&/||/|/( ) rather than matching anywhere in the string. (1) removes literal
+# mentions; (2) keeps newline-separated real invocations gating while still
+# rejecting a mid-line mention like `echo git commit`.
+def _command_text_only(command):
+    """Return `command` with heredoc bodies and quoted spans blanked, so the
+    gated-verb regexes match only real invocations. Heredoc bodies
+    (`cat <<'EOF' … EOF`) and quoted commit-message text are the recorded
+    false-trigger sources (Symptom B). Best-effort line scanner — a pathological
+    input (e.g. arithmetic `<< 2`) degrades toward not-seeing text, i.e. a
+    fail-open miss, never a false block."""
+    out_lines = []
+    heredoc_delim = None
+    for line in command.split("\n"):
+        if heredoc_delim is not None:
+            if line.strip() == heredoc_delim:
+                heredoc_delim = None
+            out_lines.append("")          # drop heredoc body content
+            continue
+        hm = re.search(r"<<-?\s*[\"']?(\w+)[\"']?", line)
+        if hm:
+            heredoc_delim = hm.group(1)
+            out_lines.append(line[:hm.start()])  # keep the command before `<<`
+            continue
+        out_lines.append(line)
+    text = "\n".join(out_lines)
+    # Blank quoted spans (commit messages, echoed text mentioning a git verb).
+    text = re.sub(r'"(?:\\.|[^"\\])*"', '""', text)
+    text = re.sub(r"'(?:\\.|[^'\\])*'", "''", text)
+    return text
+
+scan = _command_text_only(cmd)
+
+# Command-segment boundary: start-of-string, newline, or after a shell separator.
+_VERB_BOUNDARY = r'(?:^|[\n;&|(])\s*'
+
+is_commit = bool(re.search(_VERB_BOUNDARY + r'git\s+commit\b', scan))
 
 def _add_is_wide(command):
     # Gate `git add` only for working-tree-wide forms; explicit pathspec add is safe.
     # The `.` arm must match only a STANDALONE `.` token (whole-cwd add); a leading
     # `./` on an explicit pathspec (`git add ./docs/x.md`) is NOT wide — hence the
     # trailing group is `(\s|$)`, not `(\s|$|/)` (QC finding, 2026-06-09 S5).
-    for m in re.finditer(r'\bgit\s+add\b([^&|;]*)', command):
+    # Boundary-anchored (Symptom B) so a quoted/heredoc `git add` mention cannot gate.
+    for m in re.finditer(_VERB_BOUNDARY + r'git\s+add\b([^&|;]*)', command):
         args = m.group(1)
         if re.search(r'(^|\s)(-A|--all|-u|--update|\.)(\s|$)', args):
             return True
     return False
 
-is_add_wide = bool(re.search(r'\bgit\s+add\b', cmd)) and _add_is_wide(cmd)
+is_add_wide = bool(re.search(_VERB_BOUNDARY + r'git\s+add\b', scan)) and _add_is_wide(scan)
 
 if not is_commit and not is_add_wide:
     sys.exit(0)
@@ -286,12 +329,14 @@ if is_add_wide:
     #   -u/--update            : tracked modifications only — never untracked.
     #   `cd X && git add .`    : only paths under subdir X.
     #   -A/--all / bare `.` @root : the whole working tree (untracked included).
+    # Parse the add FORM from `scan` (heredoc/quote-blanked), not raw cmd, so a
+    # quoted/heredoc `git add` mention cannot mis-shape the candidate set (Symptom B).
     add_u_only = bool(
-        re.search(r'\bgit\s+add\b[^&|;]*\s(-u|--update)\b', cmd)
-        and not re.search(r'\bgit\s+add\b[^&|;]*\s(-A|--all)\b', cmd)
-        and not re.search(r'\bgit\s+add\b[^&|;]*\s\.(\s|$)', cmd))
+        re.search(r'\bgit\s+add\b[^&|;]*\s(-u|--update)\b', scan)
+        and not re.search(r'\bgit\s+add\b[^&|;]*\s(-A|--all)\b', scan)
+        and not re.search(r'\bgit\s+add\b[^&|;]*\s\.(\s|$)', scan))
     subdir = None
-    mcd = re.search(r'\bcd\s+([^\s;&|]+)\s*&&.*\bgit\s+add\b[^&|;]*\s\.(\s|$)', cmd)
+    mcd = re.search(r'\bcd\s+([^\s;&|]+)\s*&&.*\bgit\s+add\b[^&|;]*\s\.(\s|$)', scan)
     if mcd:
         subdir = re.sub(r'^\./', '', mcd.group(1).strip().strip('"').strip("'")).rstrip("/")
         if repo_name and subdir.startswith(repo_name + "/"):
@@ -305,7 +350,7 @@ if is_add_wide:
 else:
     out = sh(["git", "-C", repo_root, "diff", "--cached", "--name-only"])
     candidates = [l.strip() for l in out.splitlines() if l.strip()]
-    if re.search(r'\bgit\s+commit\b[^&|;]*\s(-a|--all)\b', cmd):  # commit -a sweeps tracked mods
+    if re.search(r'\bgit\s+commit\b[^&|;]*\s(-a|--all)\b', scan):  # commit -a sweeps tracked mods
         out2 = sh(["git", "-C", repo_root, "diff", "--name-only"])
         candidates += [l.strip() for l in out2.splitlines() if l.strip()]
 
@@ -348,8 +393,19 @@ def is_exempt(path):
     return False
 
 def in_footprint(path):
+    # Symptom A fix (2026-06-12, improvement-log 2026-06-11 glob/heredoc entry):
+    # footprint tokens legitimately use glob syntax (`wiki/**/*.md`, which
+    # /session-start, /prime Step 8c, and hand-written mandates all emit). A literal
+    # == / startswith comparison treats `*`/`**` as ordinary characters, so no real
+    # path ever matches a glob token → the whole session false-blocks at commit even
+    # with a current, correct footprint. For a glob token, match with fnmatch;
+    # collapse `**`→`*` first since fnmatch's `*` already crosses `/`. Keep the
+    # literal arm for non-glob tokens (exact path or directory prefix).
     for fp in footprint:
-        if path == fp or path.startswith(fp + "/"):
+        if "*" in fp:
+            if fnmatch.fnmatch(path, fp.replace("**", "*")):
+                return True
+        elif path == fp or path.startswith(fp + "/"):
             return True
     return False
 
