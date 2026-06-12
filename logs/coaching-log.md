@@ -167,3 +167,18 @@ Coaching feedback captured via `/coach`. Newest entries at the bottom.
 **The One Thing:** Serialize same-day sessions that touch shared session-infra files (session-notes.md, .session-marker, CLAUDE.md). On 2026-06-04 S1–S8 ran concurrently; the no-own-marker clobber bug bit live during the sessions building its fix. Wrap each session (or confirm notes committed) before opening the next.
 **Prior recommendation status:** not acted on — concurrency-collision class recurred 3+ times 2026-06-04, carried forward.
 **Promotion candidates:** 2 — decisions.md alternatives-rigor (held 8 cycles); conflict-surface-then-recommend-and-proceed pattern.
+
+### 2026-06-12
+**Coverage:** 13 sessions (2026-06-09 → 2026-06-12)
+
+| Dimension | Rating | Trend |
+|-----------|--------|-------|
+| Iteration Efficiency | Healthy | ↑ |
+| Decision Patterns | Strong | ↑ |
+| QC Disposition | Healthy | → |
+| Delegation Effectiveness | Watch | → |
+| Workflow Evolution | Watch | mixed |
+
+**The One Thing:** Before delegating a wrap-time append to the `session-feedback-collector`, confirm it runs append-only — it destructively overwrote a shared log twice (improvement-log S5, friction-log S1 06-10); verify the log against HEAD after each wrap until the hardening entry lands.
+**Prior recommendation status:** not behaviorally acted on (same-checkout entanglement recurred 06-09 S3/S4), but the collision class was structurally closed via the Fix 1/2 + P1–P4 campaign now wired at user level.
+**Promotion candidates:** 1 — decisions.md alternatives-considered rigor (held 9+ consecutive cycles; graduate to a decisions.md template field via /improve).
