@@ -380,3 +380,46 @@ None. Both `/risk-check` (GO, six dims Low) and independent `/qc-pass` (GO, six 
 
 ### Open Questions
 None
+
+## 2026-06-12 — Session S3
+**Mandate:** Add a concurrent-session-live nudge to /prime's brief pointing at /concurrent-session-check, gated on the per-id-marker liveness oracle; add the same pointer to detect-concurrent-session.sh's sharp nudge — done when: both edits applied, /risk-check GO, /qc-pass GO, committed
+- Out of scope: the existing SIBLING_COUNT informational line and shared-dir advisory; the hook's soft machine-wide path; any new shared-mutable state
+- Files in scope: .claude/commands/prime.md, .claude/hooks/detect-concurrent-session.sh
+- Stop if: /risk-check returns NO-GO
+Add a concurrent-session-live nudge to /prime pointing at /concurrent-session-check (gated on the per-id marker liveness oracle), and add the same pointer to detect-concurrent-session.sh's sharp nudge.
+
+## 2026-06-12 — Session S4
+**Mandate:** Run /friday-act (Friday cadence Session 2 — operator-driven fixes) to triage the 16 /improve findings, 5 session issues, and the permission-sweep + log-sweep follow-ups in audits/friday-checkup-2026-06-12.md — done when: /friday-act completes, fix plan produced and operator-selected fixes applied/triaged
+- Out of scope: (none stated)
+- Files in scope: audits/friday-plans/2026-06-12-permissions.md, audits/friday-plans/2026-06-12-skill-frontmatter.md, audits/friday-plans/2026-06-12-improve-findings.md, audits/friday-plans/2026-06-12-session-issues.md, logs/maintenance-observations.md, logs/session-notes.md, logs/session-plan-2026-06-12-S4.md
+- Stop if: (none stated)
+Run /friday-act to triage the 16 improve findings, 5 session issues, and permission/log-sweep follow-ups from the 2026-06-12 friday-checkup report.
+
+### Summary
+Ran `/friday-act` (weekly tier) via `/prime` → `1 auto` against `audits/friday-checkup-2026-06-12.md`. Triaged 23 tactical bullets into 13 fix-now / 6 defer / 4 skip, producing 4 area plan files in `audits/friday-plans/` (permissions, skill-frontmatter, improve-findings, session-issues). Independent plan-QC returned GO (all 16 risk-check annotations correct). Appended the friday-act session block to `maintenance-observations.md`.
+
+### Files Created
+- `logs/session-plan-2026-06-12-S4.md` — auto-mode session plan
+- `audits/friday-plans/2026-06-12-permissions.md` — 3 items (Daniel-path [high] + 2 KB/brand-book)
+- `audits/friday-plans/2026-06-12-skill-frontmatter.md` — 2 items (model/effort frontmatter)
+- `audits/friday-plans/2026-06-12-improve-findings.md` — 4 per-scope improve bundles
+- `audits/friday-plans/2026-06-12-session-issues.md` — 4 session-issue fixes
+- `logs/scratchpads/2026-06-12-10-15-scratchpad.md` — continuity scratchpad
+
+### Files Modified
+- `logs/session-notes.md` — S4 mandate + this note
+- `logs/maintenance-observations.md` — friday-act session block (disposition summary, 6 deferred, axis targets all-hold)
+
+### Decisions Made
+- Skipped 4 MED items as already-resolved (2 staging-guard items landed S2 `96151cd`) or wrap-handled (cleanup-worktree, push).
+- Deferred session-notes archival (log-sweep) due to concurrent-session lost-update risk; do in a clean window.
+- Applied auto-triage default with corrections; recorded as operator-override in the maintenance block.
+
+### Risky actions
+Foreign-staging guard fired at wrap Step 3.5 (CONCURRENT, FOREIGN=1): S3's orphaned session-notes header+mandate is in the working tree (its code committed at `285c645`, entry never wrapped). Did NOT stage `logs/session-notes.md` — held for operator resolution to avoid shipping S3's entry under the S4 wrap commit. No destructive actions taken.
+
+### Next Steps
+Execute the 4 friday-act plans in `audits/friday-plans/` before next Friday — start with `2026-06-12-permissions.md` (only [high] item). Run `/risk-check` before each gated item. Also overdue: `/resolve-improvement-log` (~32 active entries vs cap 7).
+
+### Open Questions
+S3 session-notes orphan resolution (see Risky actions) — operator to confirm S3 is done (commit as recovery) vs. still live (wrap that terminal first).
