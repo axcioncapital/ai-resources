@@ -17,6 +17,15 @@ Resolved entries (Status: applied + Verified) are archived to `improvement-log-a
 
 ---
 
+### 2026-06-16 — /new-project: register command/agent symlinks for standalone-openable projects
+- **Status:** logged (pending)
+- **Category:** command/skill (pipeline spec-coverage gap)
+- **Friction source:** axcion-website Stage 4 build (S1, 2026-06-16) set up the project harness (`.claude/hooks/` + `.claude/settings.json`) but created no `.claude/commands/` or `.claude/agents/`. Because the project has its own `settings.json`/`CLAUDE.md`, it is meant to be opened as its own session root — and Claude Code resolves slash-commands only from the opened folder's `.claude/commands/` (it does not climb to a parent's `.claude/`). Result: every `/command` returned "Unknown command" when the project was opened directly. A second session diagnosed it and hand-replicated the workspace-root symlink pattern. Build itself was spec-correct — the 31-op spec simply never included symlink registration; the `/new-project` pipeline runs from workspace root (where commands resolve), so the gap was invisible at build time and only surfaced on a standalone open.
+- **Proposal:** Add a harness-scaffold operation to `/new-project` that registers the shared command/agent symlinks into `<project>/.claude/commands/` and `<project>/.claude/agents/`, mirroring the committed workspace-root pattern — relative symlinks into `ai-resources/.claude/{commands,agents}/`, depth-adjusted for the project's nesting (e.g. `../../../../ai-resources/...` for a `projects/<name>/` project). Gate on "project gets its own settings.json" (i.e., intended to be opened as its own session root). Verify links resolve (0 broken) as part of the step.
+- **Target files:** `ai-resources/.claude/commands/new-project.md` (add the symlink-registration op to the harness-scaffold stage); optionally a reusable registration fragment under `ai-resources/templates/` if warranted.
+
+---
+
 ## Triage — 2026-05-22 (friday-act improvement-log plan, item 1)
 
 Read-only triage of the 4 entries logged this friday-checkup cycle. No fixes executed.
