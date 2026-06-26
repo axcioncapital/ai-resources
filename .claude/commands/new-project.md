@@ -262,7 +262,7 @@ Otherwise, install the three pieces:
    - `Edit(**/.claude/**)` and `Write(**/.claude/**)` — `**` globs do not match dotfile path components by default, so broad `Edit(X/**)` rules leave nested `.claude/` paths uncovered.
    - `Bash(rm *)` — narrow `rm` in allow (destructive `rm -rf` stays on deny). Fixes Delete/Remove prompts.
 
-   Note: `additionalDirectories` is **not** included in this canonical block because each project's entry is computed dynamically at enrichment time — see step 3 below, which adds the ai-resources workspace root via a separate jq merge so projects with existing `permissions.allow` arrays (which skip this canonical merge) still receive the grant.
+   Note: `additionalDirectories` is **not** included in this canonical block and is **never written to the tracked `settings.json`** — it is a machine-specific absolute path and belongs only in the gitignored, per-machine `settings.local.json`. Step 3 below writes it there (a separate jq merge against the local file), keeping committed settings portable-by-construction.
 
    The `Read(...)` denies target archival-only paths that no active command routinely reads. Per the workspace `## Applying Audit Recommendations` rule, these four entries are the safe universal set. Project-shape-specific denies (e.g., `Read(output/**)`, `Read(reports/**)`) are **not** included in the canonical block — they should be added per-project after confirming no active command reads from them.
 
@@ -372,17 +372,17 @@ Otherwise, install the three pieces:
    - whether the auto-sync SessionStart hook was added or already present
    - whether the permission-sanity SessionStart hook was added or already present
 
-3. **Grant ai-resources filesystem visibility** — Claude Code sandboxes each project to its own directory by default. Shared skills under `ai-resources/skills/` and symlinks into `ai-resources/.claude/{commands,agents}/` are unreachable until the workspace root is added to `permissions.additionalDirectories` in the project's `.claude/settings.json`. This step performs that grant.
+3. **Grant ai-resources filesystem visibility (per-machine, in gitignored `settings.local.json`)** — Claude Code sandboxes each project to its own directory by default. Shared skills under `ai-resources/skills/` and symlinks into `ai-resources/.claude/{commands,agents}/` are unreachable until the workspace root is added to `permissions.additionalDirectories`. **This grant must NOT be written to the tracked `settings.json`** — per `ai-resources/docs/permission-template.md`, committed settings must never carry a machine-specific absolute path (a recurring portability defect; see the `settings-path-portability` mission, 2026-06-26). It belongs in the gitignored, per-machine `.claude/settings.local.json` — the same home as the model default (task 2). This step writes it there.
 
-   The walk to locate the workspace root mirrors the idiom in `ai-resources/.claude/hooks/auto-sync-shared.sh` (walk upward until an ancestor contains `ai-resources/`). Use an absolute path, not a relative one — Claude Code resolves `additionalDirectories` relative to session CWD, which varies by how the project is opened.
+   The walk to locate the workspace root mirrors the idiom in `ai-resources/.claude/hooks/auto-sync-shared.sh` (walk upward until an ancestor contains `ai-resources/`). Use an **absolute** path, not a relative one — Claude Code resolves `additionalDirectories` relative to session CWD, which varies by how the project is opened, so a relative form is unsafe. An absolute path is safe to write here precisely because `settings.local.json` is gitignored and never leaves this machine.
 
-   **Load-bearing jq semantics:** for projects where step 2 skipped the permissions merge (because `.permissions.allow` was already non-empty) OR for projects where step 2 added the canonical block without `additionalDirectories`, jq's `=` operator on the leaf path `.permissions.additionalDirectories` synthesizes any missing parent objects automatically. This is the only reason a single idempotent jq call is sufficient here — if jq is ever replaced with another tool (Python, Node, yq), that tool must do the same parent-object auto-creation.
+   **Load-bearing jq semantics:** `settings.local.json` may not exist yet, or may already hold the operator's model default. jq's `=` operator on the leaf path `.permissions.additionalDirectories` synthesizes any missing parent objects automatically and preserves every other top-level key, so a single idempotent jq call is sufficient — if jq is ever replaced (Python, Node, yq), that tool must do the same parent-object auto-creation and key preservation.
 
    ```bash
    command -v jq >/dev/null || { echo "ERROR: jq required for additionalDirectories merge"; exit 1; }
 
-   SETTINGS="projects/{name}/.claude/settings.json"
-   [ -f "$SETTINGS" ] || echo '{}' > "$SETTINGS"
+   LOCAL="projects/{name}/.claude/settings.local.json"   # gitignored, per-machine — NOT the tracked settings.json
+   [ -f "$LOCAL" ] || echo '{}' > "$LOCAL"
 
    d="$(cd projects/{name} && pwd)"
    WORKSPACE=""
@@ -395,12 +395,14 @@ Otherwise, install the three pieces:
    if [ -n "$WORKSPACE" ]; then
      jq --arg dir "$WORKSPACE" \
        '.permissions.additionalDirectories = ((.permissions.additionalDirectories // [] | map(select(startswith("{{") | not))) + [$dir] | unique)' \
-       "$SETTINGS" > "$SETTINGS.tmp" && mv "$SETTINGS.tmp" "$SETTINGS"
+       "$LOCAL" > "$LOCAL.tmp" && mv "$LOCAL.tmp" "$LOCAL"
    fi
    ```
 
+   `settings.local.json` is gitignored (workspace + project `.gitignore`), so this machine-specific path is never committed. On any **other** machine the operator re-runs this same grant (or applies the snippet in `ai-resources/docs/settings-local-recovery.md`) — it is a per-machine step, exactly like the model default.
+
    Report in the step output:
-   - whether `additionalDirectories` was added, already present, or skipped (walk failed)
+   - whether `additionalDirectories` was added to `settings.local.json`, already present, or skipped (walk failed)
    - the absolute workspace path that was added
 
 4. **`projects/{name}/CLAUDE.md`** — ensure the project CLAUDE.md contains four canonical sections: `## Input File Handling`, `## Commit Rules`, `## Compaction`, and `## Session Boundaries`. These guarantee that projects opened without the parent workspace CLAUDE.md loaded still see the load-bearing behavioral rules.
@@ -649,7 +651,7 @@ EOF
 
 ### Report
 
-Report what was created: manifest path, settings.json modifications (permissions block, SessionStart hook, `additionalDirectories` grant), CLAUDE.md state (created / appended / already present), `logs/decisions.md` scaffold (created / already present), the list of files the initial sync symlinked, the canonical command verification result (all 10 present / N missing), and the git setup result (remote, initial commit, workspace root `.gitignore`, and that the initial commit was left **unpushed** — it ships at `/wrap-session` with the gated-push batch). From this point on, any new command added to `ai-resources/.claude/commands/` will be available in this project on the next session start automatically, and skills under `ai-resources/skills/` are reachable via the filesystem grant.
+Report what was created: manifest path, settings.json modifications (permissions block, SessionStart hook), the `additionalDirectories` grant written to the gitignored `settings.local.json`, CLAUDE.md state (created / appended / already present), `logs/decisions.md` scaffold (created / already present), the list of files the initial sync symlinked, the canonical command verification result (all 10 present / N missing), and the git setup result (remote, initial commit, workspace root `.gitignore`, and that the initial commit was left **unpushed** — it ships at `/wrap-session` with the gated-push batch). From this point on, any new command added to `ai-resources/.claude/commands/` will be available in this project on the next session start automatically, and skills under `ai-resources/skills/` are reachable via the filesystem grant.
 
 ## Key Rules
 
