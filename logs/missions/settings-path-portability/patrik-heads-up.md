@@ -18,7 +18,11 @@
 
 Patrik — when I cloned strategic-os and market-positioning to my machine, I found that a bunch of our committed `.claude/settings.json` files had a full machine path baked in, like `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo`. That path only exists on your machine, so on mine those entries pointed at nothing — and a couple had the reverse (my path, dead for you). Two problems: the setting does nothing on the other person's machine, and if either of us "fixed" it in the shared file we'd overwrite each other on every pull.
 
+The setting in question was `additionalDirectories` — it grants Claude Code access to folders *outside* the project repo. With a wrong machine path baked in, that grant was just dead weight.
+
 I've fixed it, and the changes are already committed and pushed — you'll see them on your next pull. **Config only — nothing touches project content.** Here's what changed and the one thing you may need to do.
+
+**Why this matters (what we get out of it):** once you've handled your one item below, cloning any of our projects to a new machine just works — no broken paths to chase (that's the snag I hit at the start). One shared settings file behaves identically on both our machines; each person's machine-specific access lives only in their own gitignored `settings.local.json`, so we stop overwriting each other's settings on every pull. New projects can't reintroduce the problem (the project-setup commands and template are fixed), and a written rule keeps it from creeping back. Net effect: no silent mis-config, no sync tug-of-war, a cleaner and portable repo — for a small one-time cost on your side (pull, and *maybe* paste one snippet).
 
 **What changed:**
 - Removed the hardcoded `additionalDirectories` entries from 11 committed `settings.json` files (project + vault + KB). The shared files no longer carry anyone's machine path.
