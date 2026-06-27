@@ -204,7 +204,9 @@ Report in the enrichment output whether `permissions` was added or already prese
 
 ### Grant ai-resources filesystem visibility
 
-**Scope note.** This sub-step only touches `.permissions.additionalDirectories` in `{PROJECT_DIR}/.claude/settings.json`. It runs **unconditionally** — not gated by the allowlist predicate — so projects whose templates ship a narrower `permissions.allow` still receive the workspace-root grant they need to read from `ai-resources/` siblings at runtime.
+**Scope note.** This sub-step writes `.permissions.additionalDirectories` to the deployed project's **gitignored `{PROJECT_DIR}/.claude/settings.local.json`** — never the tracked `settings.json`. It runs **unconditionally** — not gated by the allowlist predicate — so projects whose templates ship a narrower `permissions.allow` still receive the workspace-root grant they need to read from `ai-resources/` siblings at runtime.
+
+**Why the local file, not the tracked one.** The grant is a **machine-specific absolute path** (it differs per operator machine); a committed path is correct on the deploying machine but breaks on every other machine that pulls the repo. Per canonical Rule 8 / Layer D′ in `ai-resources/docs/permission-template.md`, the grant's only home is the gitignored `settings.local.json`. (Aligned 2026-06-27 with the `/new-project` Step 3 fix; previously this sub-step wrote to the tracked `settings.json`, re-introducing the machine-specific-path defect.)
 
 **Why this is separate from the permissions merge above.** `additionalDirectories` grants *read access to paths outside the current project*, which is a different concern from tool permissions inside the project. Every deployed project needs to read from `ai-resources/` regardless of how narrow its tool allowlist is, so this grant is universal.
 
@@ -213,8 +215,9 @@ Report in the enrichment output whether `permissions` was added or already prese
 ```bash
 command -v jq >/dev/null || { echo "ERROR: jq required for additionalDirectories merge"; exit 1; }
 
-SETTINGS="{PROJECT_DIR}/.claude/settings.json"
-[ -f "$SETTINGS" ] || echo '{}' > "$SETTINGS"
+LOCAL="{PROJECT_DIR}/.claude/settings.local.json"
+[ -f "$LOCAL" ] || echo '{}' > "$LOCAL"
+TRACKED="{PROJECT_DIR}/.claude/settings.json"
 
 d="$(cd {PROJECT_DIR} && pwd)"
 WORKSPACE=""
@@ -225,13 +228,22 @@ done
 [ -n "$WORKSPACE" ] || { echo "WARN: ai-resources not found in any ancestor — skipping additionalDirectories grant"; }
 
 if [ -n "$WORKSPACE" ]; then
-  jq --arg dir "$WORKSPACE" \
-    '.permissions.additionalDirectories = ((.permissions.additionalDirectories // [] | map(select(startswith("{{") | not))) + [$dir] | unique)' \
-    "$SETTINGS" > "$SETTINGS.tmp" && mv "$SETTINGS.tmp" "$SETTINGS"
+  # Grant goes to the gitignored local file. defaultMode is mandatory whenever the local
+  # file declares a permissions block (omitting it shadows the parent's bypass — root cause #1).
+  jq --arg dir "$WORKSPACE" '
+    .permissions.defaultMode = (.permissions.defaultMode // "bypassPermissions")
+    | .permissions.additionalDirectories = ((.permissions.additionalDirectories // [] | map(select(startswith("{{") | not))) + [$dir] | unique)
+  ' "$LOCAL" > "$LOCAL.tmp" && mv "$LOCAL.tmp" "$LOCAL"
+
+  # Defensive: strip additionalDirectories from the tracked file if an older template copy still carries it.
+  if [ -f "$TRACKED" ]; then
+    jq 'if .permissions.additionalDirectories then .permissions |= del(.additionalDirectories) else . end' \
+      "$TRACKED" > "$TRACKED.tmp" && mv "$TRACKED.tmp" "$TRACKED"
+  fi
 fi
 ```
 
-`unique` makes this idempotent. The `map(select(...))` strip removes any `{{PLACEHOLDER}}` entries from the template before appending the real workspace path. Report whether the workspace root was added or already present.
+Ensure `{PROJECT_DIR}/.claude/settings.local.json` is gitignored (Claude Code convention — `/permission-sweep` rule 12 flags it if tracked). `unique` makes the merge idempotent; the `map(select(...))` strip removes any `{{PLACEHOLDER}}` entry before appending the real workspace path. Report whether the workspace root was added to the local file or already present.
 
 ## Step 5: Discover placeholders
 

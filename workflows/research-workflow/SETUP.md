@@ -15,19 +15,21 @@ cd projects/[project-name]/
 
 Replace `[project-name]` with a kebab-case identifier (e.g., `market-entry-analysis`).
 
-## 1.5 Update settings.json workspace path
+## 1.5 Grant ai-resources visibility (per-machine, gitignored)
 
-Open `.claude/settings.json` and replace the `{{WORKSPACE_ROOT}}` placeholder in `additionalDirectories` with the absolute path to your workspace root — the directory that contains `ai-resources/`.
+Claude Code sandboxes each project to its own directory, so `ai-resources/` files (skills, commands, agents) are unreachable until you grant the workspace root as an additional readable directory. This grant is a **machine-specific absolute path**, so it must live in the **gitignored** `.claude/settings.local.json` — never the tracked `.claude/settings.json`. A committed absolute path is correct on the machine that deployed it but breaks on every other machine that pulls the repo.
+
+Create (or edit) `.claude/settings.local.json` and add the absolute path to your workspace root — the directory that contains `ai-resources/`:
 
 ```json
-"additionalDirectories": [
-  "/absolute/path/to/your/workspace-root"
-]
+{ "permissions": { "defaultMode": "bypassPermissions", "additionalDirectories": ["/absolute/path/to/your/workspace-root"] } }
 ```
 
-This grants Claude Code read access to `ai-resources/` files (skills, commands, agents) from inside the project. If left as `{{WORKSPACE_ROOT}}` or pointed at the wrong directory, every skill symlink resolves to a path Claude cannot read and pipeline commands silently fail.
+`defaultMode: "bypassPermissions"` is required whenever `settings.local.json` declares a `permissions` block — omitting it shadows the parent's bypass and permission prompts resume.
 
-**Verify:** after starting Claude Code in the project, `Read /your/workspace-root/ai-resources/CLAUDE.md` succeeds.
+Confirm `.claude/settings.local.json` is gitignored (Claude Code convention) so the machine-specific path is never committed.
+
+**Verify:** after starting Claude Code in the project, `Read /your/workspace-root/ai-resources/CLAUDE.md` succeeds. If the grant is missing or points at the wrong directory, every skill symlink resolves to a path Claude cannot read and pipeline commands silently fail.
 
 ## 2. Initialize git
 
@@ -185,7 +187,7 @@ All placeholders used in template files:
 | `{{EVIDENCE_CALIBRATION}}` | CLAUDE.md | Evidence availability note |
 | `{{OPERATOR_NAME}}` | CLAUDE.md | Operator's name |
 | `{{SECTION_SEQUENCE}}` | reference/stage-instructions.md | Section ordering constraints |
-| `{{WORKSPACE_ROOT}}` | .claude/settings.json | Absolute path to workspace root containing ai-resources/ (set at step 1.5, before any session loads) |
+| _(workspace-root grant)_ | .claude/settings.local.json (gitignored, not a `{{PLACEHOLDER}}`) | Absolute path to workspace root containing ai-resources/, set by hand at step 1.5 in the gitignored local file — never the tracked settings.json |
 | `{{PART_TWO_DIR}}` | .claude/commands/produce-architecture.md | Part-2 source directory slug under `parts/` (e.g., `part-2-service`). Only needed if the project uses `/produce-architecture` (parts-based document model) |
 | `{{PART_THREE_DIR}}` | .claude/commands/produce-architecture.md | Part-3 source directory slug under `parts/` (e.g., `part-3-strategy`). Only needed if using `/produce-architecture` |
 | `{{PART_TWO_PROSE_DIR}}` | .claude/commands/produce-architecture.md | Part-2 prose-output directory slug under `output/` (e.g., `part-2-prose`). Only needed if using `/produce-architecture` |

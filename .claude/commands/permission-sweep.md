@@ -108,7 +108,7 @@ Examples:
     | 5 | "Narrow bash allowlist (only specific commands). Any new bash command will prompt." |
     | 6 | "No allow for narrow `rm`. Delete/Remove operations prompt." |
     | 7 | "A deny rule overlaps with an allow rule — may be intentional, flagging for your review." |
-    | 8 | "Missing or stale `additionalDirectories`. ai-resources symlinks may not resolve." |
+    | 8 | "Workspace-root grant (`additionalDirectories`) is missing from both this project's tracked `settings.json` and its gitignored `settings.local.json` — ai-resources symlinks may not resolve. Fix: add it to `settings.local.json` (its machine-specific canonical home). If a tracked `settings.json` still carries the grant, relocate it to `settings.local.json` (the tracked absolute path breaks on other machines)." |
     | 9 | "Absolute-path allow entry points to a path that no longer exists." |
     | 10 | "MCP tools (e.g., Google Drive) are not in any allowlist." |
     | 11 | "User-level settings differ from workspace settings on a critical rule." |
@@ -208,11 +208,23 @@ Examples:
     ```
     Pass only the entries the rules actually fired on — don't blanket-add.
 
-    **Add `additionalDirectories`** (rule 8):
+    **Add `additionalDirectories`** (rule 8) — write the grant to the sibling **`settings.local.json`**, never the tracked `settings.json`. The grant is a machine-specific absolute path (canonical Rule 8 / Layer D′ in `permission-template.md`); a tracked path breaks on every other machine that pulls the repo. `$FILE` for a Rule 8 finding is the tracked file, so target its local sibling:
     ```bash
+    LOCAL="$(dirname "$FILE")/settings.local.json"
+    [ -f "$LOCAL" ] || echo '{}' > "$LOCAL"
+    # defaultMode is mandatory whenever the local file declares a permissions block
+    # (omitting it shadows the parent's bypass — root cause #1, Layer D′).
     jq --arg dir "$WORKSPACE" '
-      .permissions.additionalDirectories = ((.permissions.additionalDirectories // [] | map(select(startswith("{{") | not))) + [$dir] | unique)
-    ' "$FILE" > "$FILE.tmp" && mv "$FILE.tmp" "$FILE"
+      .permissions.defaultMode = (.permissions.defaultMode // "bypassPermissions")
+      | .permissions.additionalDirectories = ((.permissions.additionalDirectories // [] | map(select(startswith("{{") | not))) + [$dir] | unique)
+    ' "$LOCAL" > "$LOCAL.tmp" && mv "$LOCAL.tmp" "$LOCAL"
+    ```
+    Confirm `settings.local.json` is gitignored at this level before writing (Claude Code convention; rule 12 flags it if tracked).
+
+    **Relocate `additionalDirectories` out of a tracked `settings.json`** (rule 8 ADVISORY — the tracked file still carries the machine-specific grant). Run the **Add** idiom above first (places the grant in `settings.local.json`), then strip it from the tracked file:
+    ```bash
+    jq 'if .permissions.additionalDirectories then .permissions |= del(.additionalDirectories) else . end' \
+      "$FILE" > "$FILE.tmp" && mv "$FILE.tmp" "$FILE"
     ```
 
     **Strip permissions from `settings.local.json`** (rule 1 alternative) — only if operator approved the "omit" remediation path specifically:

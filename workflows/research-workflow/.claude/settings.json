@@ -28,10 +28,7 @@
       "Read(**/deprecated/**)",
       "Read(**/old/**)"
     ],
-    "defaultMode": "bypassPermissions",
-    "additionalDirectories": [
-      "{{WORKSPACE_ROOT}}"
-    ]
+    "defaultMode": "bypassPermissions"
   },
   "hooks": {
     "PreToolUse": [
