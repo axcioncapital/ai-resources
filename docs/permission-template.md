@@ -65,8 +65,6 @@ Canonical shape:
       "Agent", "Skill", "TodoWrite", "Glob", "Grep",
       "WebFetch", "WebSearch", "NotebookEdit", "ToolSearch",
       "Edit(**/.claude/**)", "Write(**/.claude/**)",
-      "Edit(/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/**)",
-      "Write(/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/**)",
       "Bash(rm *)"
     ],
     "deny": [
@@ -80,7 +78,7 @@ Canonical shape:
 **Key assertions:**
 - `defaultMode: "bypassPermissions"` — primary gate.
 - Dotfile-path glob: `Edit(**/.claude/**)` and `Write(**/.claude/**)` — covers nested `.claude/` directories across all projects (root cause #2).
-- Absolute-path fallback: `Edit(/Users/.../**)` — covers edits via absolute paths regardless of session CWD.
+- **No absolute-path `Edit(/Users/...)` / `Write(/Users/...)` globs** — RETIRED 2026-06-27 as portability defects (mission `settings-path-portability`, Group 3). They were never functional fallbacks: a single-leading-slash glob is project-root-relative (resolves to `<project-root>/Users/...`, matching nothing), and under `defaultMode: bypassPermissions` all allow-rules are ignored anyway. Machine-specific config, where genuinely needed, lives only in gitignored `settings.local.json`. See `docs/settings-portability-invariant.md`.
 - `Bash(rm *)` in allow — fixes Delete/Remove prompts. `rm -rf` still denied.
 - Additional denies for destructive git ops (workspace-root-specific safeguards).
 
@@ -124,8 +122,6 @@ Canonical shape:
       "Agent", "Skill", "TodoWrite", "Glob", "Grep",
       "WebFetch", "WebSearch", "NotebookEdit", "ToolSearch",
       "Edit(**/.claude/**)", "Write(**/.claude/**)",
-      "Edit(/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/**)",
-      "Write(/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/**)",
       "Bash(rm *)"
     ],
     "deny": [
@@ -142,8 +138,8 @@ Canonical shape:
 
 **Key assertions:**
 - Must have `Bash(*)` in allow (root cause #4 — ai-resources previously had only narrow bash grants).
-- Same dotfile-path and absolute-path patterns as workspace root.
-- **Hardcoded absolute paths in `allow` are intentional and canonical.** `Edit(/Users/patrik.lindeberg/...)` and `Write(/Users/patrik.lindeberg/...)` cannot be replaced with env-var references or relative paths — Claude Code permission pattern matching is literal (no env-var expansion). Audit tools that flag these as "stale hardcoded paths" are producing a false positive against this layer. Document such findings as resolved without action. (See `logs/decisions.md` 2026-05-16.)
+- Same dotfile-path pattern as workspace root.
+- **No hardcoded absolute `Edit(/Users/...)` / `Write(/Users/...)` paths in `allow`.** RETIRED 2026-06-27 as portability defects (mission `settings-path-portability`, Group 3), **overturning** the prior 2026-05-16 decision that declared them "intentional and canonical" (now archived at `logs/decisions-archive-2026-05.md`, "Reject audit finding: hardcoded absolute paths…"). That decision rested on a premise now **verified false against the official Claude Code permission docs**: it assumed a single-leading-slash glob matches absolute paths via "literal matching." It does not — per [code.claude.com/docs/en/permissions](https://code.claude.com/docs/en/permissions.md), single-leading-slash is **project-root-relative** (`/Users/...` → `<project-root>/Users/...`, matching nothing); absolute paths require a **double** leading slash (`//Users/...`). So the lines were always inert, not functional fallbacks. Under `defaultMode: bypassPermissions` they were redundant on top of inert. An audit tool that flags a hardcoded `/Users/...` path in a tracked `settings.json` is reporting a **real** defect, not a false positive — relocate the grant to gitignored `settings.local.json`. See `docs/settings-portability-invariant.md` and the superseding `logs/decisions.md` 2026-06-27 entry.
 - `Bash(rm *)` in allow.
 - Read-denies on archival paths (preserves token-audit discipline).
 

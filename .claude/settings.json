@@ -17,8 +17,6 @@
       "ToolSearch",
       "Edit(**/.claude/**)",
       "Write(**/.claude/**)",
-      "Edit(/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/**)",
-      "Write(/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/**)",
       "Bash(rm *)"
     ],
     "deny": [
