@@ -1,6 +1,6 @@
 # Patrik heads-up — settings-path-portability mission
 
-- **Status:** READY TO SEND — reviewed 2026-06-27. Delivered via repo (Option B): Patrik pulls `ai-resources` and his Claude Code reads this file. (Was DRAFT 2026-06-25; rewritten to past tense after the fixes landed and were pushed.)
+- **Status:** SENT 2026-06-27 — Daniel pinged Patrik; delivered via repo (Option B): Patrik pulls `ai-resources` and his Claude Code reads this file. Awaiting Patrik's reply on the two inert lines. (Was DRAFT 2026-06-25; rewritten to past tense after the fixes landed and were pushed.)
 - **Mission:** settings-path-portability
 - **Drafted:** 2026-06-25 (by Daniel's session); rewritten 2026-06-27.
 - **Purpose:** Tell Patrik the shared committed settings files have already changed (he'll see them on his next pull), what he may need to do on his machine, and get his read on two inert permission lines (Group 3).
