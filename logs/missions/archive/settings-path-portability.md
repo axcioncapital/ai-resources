@@ -1,8 +1,9 @@
 ---
 mission_id: settings-path-portability
 mission_name: Make committed Claude Code settings machine-portable and close the root cause
-status: active
+status: completed
 started: 2026-06-25
+completed: 2026-06-29
 ---
 
 <!--
@@ -74,4 +75,14 @@ Every tracked (committed) Claude Code `settings.json` across the Axcíon workspa
 - [x] **Retrofit already-deployed projects (NEW open thread, 2026-06-27). DONE 2026-06-29 (S2).** Workspace-wide sweep of all tracked `settings.json` found **3** projects still carrying the hardcoded `additionalDirectories` abs path — `marketing-positioning`, `corporate-identity`, `axcion-brand-book` (deployed before the generator fix; missed by the original 11-file enumeration). Removed the key from all three (canonical REMOVE; sibling keys incl. `corporate-identity`'s `defaultMode` preserved; all three re-validated as valid JSON, zero `/Users/` hits). **This makes acceptance assertion #1 genuinely PASS** — the 2026-06-27 (S3) note that declared it passing was premature (these 3 were still dirty). Committed per-repo (`55e873a`, `105f7dc`, `73d86d8`); `axcion-brand-book` also pinned `.claude/settings.local.json` in its repo-local `.gitignore` (was ignored only via machine-global `~/.config/git/ignore`) — folded into the same commit per SO advisory. Also fixed a load-bearing currency defect in `docs/settings-local-recovery.md` (it stated the retrofit "across existing projects" already happened 2026-06-26; corrected to name the 2026-06-29 wave). Gating: plan-time `/risk-check` PROCEED-WITH-CAUTION (`audits/risk-checks/2026-06-29-retrofit-deployed-projects-remove-tracked-additionaldirectories-abs-path.md`) + SO `/consult` concur (`projects/axcion-ai-system-owner/output/consultations/consult-2026-06-29-risk-check-2nd-opinion-settings-retrofit-remove-additionaldirectories.md`). **Residual (SO § OP-3, named as a gate not a courtesy):** on any machine that relied on the now-removed grant, those 3 project sessions silently lose `ai-resources/` visibility until the per-machine recovery snippet is run — operator must confirm per-machine snippet application before the mission is declared fully closed.
 - [x] **Draft the Patrik heads-up.** DONE 2026-06-25 — saved to `ai-resources/logs/missions/settings-path-portability/patrik-heads-up.md` (status DRAFT).
 - [x] **Send the Patrik heads-up.** DONE 2026-06-27 — SENT via Option B (repo-delivered: Patrik pulls `ai-resources` and his Claude reads `patrik-heads-up.md`, which now carries the why/outcomes/benefits). Awaiting his read on the two inert lines (feeds the Group 3 thread above).
-- [ ] Obtain operator approval for each shared-remote push (per the non-negotiables).
+- [x] Obtain operator approval for each shared-remote push (per the non-negotiables). **Satisfied at the /wrap-session push gate** — the 2026-06-29 (S2) retrofit commits across 5 repos (marketing-positioning, corporate-identity, axcion-brand-book, ai-resources, axcion-ai-system-owner) are batched local and pushed only on the operator's single wrap-time confirmation; all prior mission pushes were operator-gated likewise.
+
+---
+
+## Closing summary (2026-06-29, S2)
+
+**All 5 acceptance assertions met:** (#1) workspace-wide grep for `/Users/` in tracked `settings.json` returns zero hits — verified after the S2 retrofit closed the last 3 dirty files; (#2) all fixed paths use the canonical REMOVE form (grant lives only in gitignored `settings.local.json`); (#3) Group 3 approach verified before edit (2026-06-27); (#4) invariant doc `docs/settings-portability-invariant.md` written (2026-06-27); (#5) all three scaffolding emitters fixed (`/new-project`, `/permission-sweep` Rule 8, `/deploy-workflow` + research-workflow template) (2026-06-26/27).
+
+**Sole operational follow-up (NOT an acceptance gate, mission complete without it):** other machines (e.g. Daniel's) must each run the per-machine recovery snippet (`docs/settings-local-recovery.md`) once per cloned project to restore `ai-resources/` visibility. This machine's recovery was applied 2026-06-29 (S2) for the 3 retrofitted projects. Per assertion #2's own wording, portability is established by path-form (here: path absent from tracked files), not by per-machine testing — so this does not gate completion.
+
+**Out-of-scope defect surfaced for separate cleanup:** `projects/corporate-identity/.claude/settings.local.json` carries a prohibited `"model"` field (workspace Model-Tier rule) — left untouched (mission non-negotiable forbids editing gitignored locals; also out of config-path-hygiene scope).
