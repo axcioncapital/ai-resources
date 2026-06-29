@@ -207,3 +207,9 @@
 ### Friction Events
 
 - **[wrap-collector]** wrap — `/resolve-improvement-log` classification rule forced mid-run operator adjudication. Type = command (rule/convention mismatch). The command's strict resolved test (`Status: applied` AND `Verified:`) matches zero real entries while the log's done entries use the `resolved YYYY-MM-DD` convention, so the operator had to hand-select which of the 12 candidates were genuinely resolved. Improvement face routed to improvement-log.md (same root cause, session-feedback category).
+
+## Session — 2026-06-29
+
+### Friction Events
+
+- **[wrap-collector]** wrap — **Friction type: command (`/consult` input-corpus resolution).** The second `/consult` on the `/requirements-pack` build plan returned two BLOCKING findings (B1/B2) grounded in the wrong directory: the `system-owner` read `knowledge-bases/strategic-os/` (Obsidian KB vault) instead of the plan's named corpus `projects/strategic-os/` — two existing dirs sharing the `strategic-os` name. The false blockers were caught only by manual filesystem verification of the SO's input-contract claims, not by any gate; B1/B2 were then overridden on verified evidence and the two valid minor fixes (I1/I2) applied. Guardrail face routed to improvement-log.md 2026-06-29 (same root cause, guardrail-candidate, severity low) — consult-time corpus-name-collision disambiguation.
