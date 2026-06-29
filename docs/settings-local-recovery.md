@@ -16,9 +16,11 @@
 
 - A freshly cloned/scaffolded project on a new machine, where `settings.local.json`
   does not yet carry the grant.
-- After the `settings-path-portability` removal (2026-06-26), which deleted the
-  grant from tracked `settings.json` across existing projects — each machine that
-  relied on it re-adds it locally with the snippet below.
+- After the `settings-path-portability` removal, which deletes the grant from
+  tracked `settings.json` as each project is reached — the first wave (11 files)
+  landed 2026-06-26; a later retrofit wave (2026-06-29) caught projects deployed
+  before the generator fix. Each machine that relied on the grant re-adds it
+  locally with the snippet below, once per project it has cloned.
 - Symptom: shared skills under `ai-resources/skills/` or symlinked
   commands/agents fail to resolve from inside a project session.
 
