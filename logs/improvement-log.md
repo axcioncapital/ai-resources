@@ -17,6 +17,20 @@ Resolved entries (Status: applied + Verified) are archived to `improvement-log-a
 
 ---
 
+### 2026-06-29 — Build the 3 deferred `/new-project` functions (#5, #4, #14) when the first operational system build starts
+- **Status:** logged (pending)
+- **Category:** command/skill (deferred pipeline/business-systems builds — parked on a trigger, not a date)
+- **Review-cycle:** reviewed 2026-06-29, deferred to → **the first Axcíon operational system (CRM / email machinery / buyer-mandate DB / LinkedIn machinery / website infra / Management OS) entering a `/new-project` build.** This is the relevance trigger for all three. (Named-event park per the schema rule; surfaces at every Friday checkup until that event fires.)
+- **Friction source:** none — this is a deliberate ROI/timing park, not a defect. The build was evaluated and approved (decisions.md 2026-06-29 ×2; SO advisory `consult-2026-06-29-newproject-layer-placement.md`); only the *timing* is deferred. Operator asked to be reminded ("I will forget").
+- **Proposal:** When the trigger fires, re-open the decision and build in order:
+  1. **#5 Data Model Steward** (foundation) — canonical entity dictionary; home is a dedicated business-systems project *vault* via `/deploy-kb`, NOT `ai-resources/` (OP-10 / DR-1). Standing up the project fires `/placement` (new top-level dir). ~1 session.
+  2. **#4 Interface Contract Generator** — needs #5's vocabulary; home is `projects/project-planning/` as a conditional output consumed by `/new-project` Stage 3b. Build only when a real project needs a cross-system contract (second-consumer gate). ~1 session.
+  3. **#14 Operating Loop Designer** — independent quick-win; extend Stage 6 / `session-guide-generator`. Edits the `/new-project` critical command (Critical-tier, 3 consumers) → **`/risk-check` at both gates**. ~half a session.
+- **Target files (at build time):** `ai-resources/.claude/commands/new-project.md` (#14 Stage 6 extension); `ai-resources/.claude/agents/session-guide-generator.md` (#14); `projects/project-planning/` (#4); new business-systems vault via `/deploy-kb` (#5). Confirm exact locations via `/placement` at build time.
+- **Note:** plan memo lives outside the repo at `~/.claude/plans/frolicking-tinkering-manatee.md` — re-read it (or this entry + the two decisions.md 2026-06-29 entries) when resuming.
+
+---
+
 ### 2026-06-18 — Purge `[1m]` / 1M-context model declarations causing subagent failures
 - **Status:** logged (pending)
 - **Category:** infrastructure (harness config / model declarations)

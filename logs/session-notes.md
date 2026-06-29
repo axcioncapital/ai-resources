@@ -508,3 +508,25 @@ None.
 
 ### Open Questions
 None blocking.
+
+## 2026-06-29 — Session S1
+**Mandate:** Decide which of the three SO-vetted /new-project builds (#5 Data Model Steward, #4 Interface Contract Generator, #14 Operating Loop Designer) to start, or defer the build — done when: a recorded decision exists naming the chosen build (or an explicit defer) with rationale.
+- Out of scope: building any of the three commands this session (deferred)
+- Files in scope: (inferred)
+- Stop if: (none stated)
+Decide which of the three SO-vetted /new-project builds to start (from the 7-function plan at ~/.claude/plans/frolicking-tinkering-manatee.md).
+
+## 2026-06-29 — Session S2
+**Mandate:** Retrofit tracked settings.json across already-deployed project repos to remove hardcoded /Users/<name>/ absolute paths, closing the settings-path-portability mission's open retrofit thread — done when: a workspace-wide grep for /Users/<name>/ in tracked settings.json returns zero hits (excluding gitignored settings.local.json) and the mission's retrofit thread is checked off with any residual acceptance gaps surfaced.
+- Out of scope: (none stated)
+- Files in scope: (inferred)
+- Stop if: a project repo's portable form cannot be verified to resolve on the deploying machine — surface rather than guess
+- Mission: settings-path-portability
+Finish the settings-path-portability mission's open retrofit thread: retrofit already-deployed project repos so their tracked settings.json files no longer carry hardcoded absolute paths. Goal is to close this task.
+
+## 2026-06-29 — Session S3
+**Mandate:** Build /requirements-pack — a project-local command in projects/project-planning/ that reads the strategic-os corpus and emits context-pack.md + requirements-ledger.md, plus a template playbook and a project CLAUDE.md registration — done when: new command + template + CLAUDE.md paragraph created, smoke-tested, and committed in the project-planning repo.
+- Out of scope: (none stated)
+- Files in scope: projects/project-planning/.claude/commands/requirements-pack.md, projects/project-planning/requirements-playbooks/_template.md, projects/project-planning/CLAUDE.md
+- Stop if: (none stated)
+Build /requirements-pack — new project-local command in projects/project-planning/ (reads strategic-os corpus → context-pack.md + requirements-ledger.md, plus a template playbook and a project CLAUDE.md paragraph). Approved plan: ~/.claude/plans/toasty-twirling-map.md.
