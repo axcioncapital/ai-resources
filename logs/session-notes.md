@@ -340,6 +340,43 @@ None.
 - Mission: settings-path-portability
 Finish the settings-path-portability mission's open retrofit thread: retrofit already-deployed project repos so their tracked settings.json files no longer carry hardcoded absolute paths. Goal is to close this task.
 
+### Summary
+Closed the `settings-path-portability` mission. Retrofitted the 3 already-deployed project repos that still carried the hardcoded absolute workspace-root path (`additionalDirectories: ["/Users/patrik.lindeberg/..."]`) in their tracked `settings.json` — applying the canonical REMOVE approach (delete the key; per-machine recovery via gitignored `settings.local.json`). Ran the plan-time `/risk-check` (PROCEED-WITH-CAUTION) + SO second opinion (concur, 2 additions, 1 residual gate) before the first edit. Workspace-wide re-scan confirms zero `/Users/` hits in tracked settings.json. Mission archived; both remaining open threads (#74 retrofit, #77 push-gate) checked off. Per-machine recovery snippet run for all 3 repos on this machine.
+
+### Files Created
+- `ai-resources/audits/risk-checks/2026-06-29-retrofit-deployed-projects-remove-tracked-additionaldirectories-abs-path.md` — risk-check report (PROCEED-WITH-CAUTION) + SO Architectural Commentary
+- `projects/axcion-ai-system-owner/output/consultations/consult-2026-06-29-risk-check-2nd-opinion-settings-retrofit-remove-additionaldirectories.md` — SO advisory (concur)
+- `ai-resources/logs/session-plan-2026-06-29-S2.md` — session plan
+- `ai-resources/logs/scratchpads/2026-06-29-15-14-scratchpad.md` — pre-closeout continuity scratchpad
+- Per-machine (gitignored, NOT committed): `settings.local.json` in marketing-positioning, corporate-identity, axcion-brand-book
+
+### Files Modified
+- `projects/marketing-positioning/.claude/settings.json` — removed `additionalDirectories` abs-path block (commit `55e873a`)
+- `projects/corporate-identity/.claude/settings.json` — removed abs-path block; preserved `"defaultMode": "bypassPermissions"` (commit `105f7dc`)
+- `projects/axcion-brand-book/.claude/settings.json` — removed abs-path block (commit `73d86d8`)
+- `projects/axcion-brand-book/.gitignore` — pinned `.claude/settings.local.json` (SO addition 1; same commit `73d86d8`)
+- `ai-resources/docs/settings-local-recovery.md` — currency-defect fix: names 2026-06-26 first wave (11 files) + 2026-06-29 retrofit wave (commit `6cf23b5`)
+- `ai-resources/logs/missions/settings-path-portability.md` → `ai-resources/logs/missions/archive/settings-path-portability.md` — status→completed, threads #74/#77 checked off, closing summary, archived (commit `f3baee7`)
+
+### Decisions Made
+- **Canonical REMOVE (not relative-path, not auto-populate settings.local.json)** — already the mission's accepted approach; applied unchanged.
+- **SO addition 1 — fold the axcion-brand-book `.gitignore` pin into the SAME commit as the key removal** — avoids a window where the recovery file is unprotected on a fresh clone.
+- **SO addition 2 — fix the settings-local-recovery.md currency defect** (it falsely claimed the cross-project retrofit finished 2026-06-26; corrected to name the 2026-06-29 wave). Load-bearing per SO § OP-11.
+- **Premature-assertion #1 correction** — the 2026-06-27 S3 note declaring assertion #1 already PASSED was false (3 files still dirty); recorded the correction in thread #74's check-off.
+- **Residual per-machine recovery surfaced as a gate (§ OP-3), not a courtesy** — other machines must run the snippet; this is operational follow-up, not an acceptance gap (portability is established by the path being absent).
+
+### Risky actions
+None destructive. Explicit-path staging used throughout because concurrent session S3 was active (DR-10) — no `git add -A`. Mission file moved via `git mv` under the unanchored `archive/` gitignore pattern (anticipated; rename tracked cleanly). Mid-session commits of `logs/session-notes.md` shipped the S2 header to HEAD, so the wrap guard read FOREIGN=0 correctly.
+
+### Next Steps
+- Push the 6 batched commits (this wrap's push gate).
+- On other machines: run `docs/settings-local-recovery.md` snippet once per cloned project for the 3 retrofitted repos.
+- Separate cleanup: remove prohibited `"model"` field from corporate-identity's gitignored `settings.local.json`.
+- Resume deferred /prime menu tasks (3, 4, 5) in a fresh session — see scratchpad.
+
+### Open Questions
+None.
+
 ## 2026-06-29 — Session S3
 **Mandate:** Build /requirements-pack — a project-local command in projects/project-planning/ that reads the strategic-os corpus and emits context-pack.md + requirements-ledger.md, plus a template playbook and a project CLAUDE.md registration — done when: new command + template + CLAUDE.md paragraph created, smoke-tested, and committed in the project-planning repo.
 - Out of scope: (none stated)
