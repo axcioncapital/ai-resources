@@ -2,62 +2,6 @@
 
 > Archive: [session-notes-archive-2026-06.md](session-notes-archive-2026-06.md)
 
-## 2026-06-12 — Session S6
-**Mandate:** Fix split-log.sh so `## ` lines inside fenced code blocks are skipped during header scanning, in both copies (canonical logs/scripts/split-log.sh + the research-workflow template copy, which also gets the bash-3.2 portable loop); verify against an isolated copy of the failing file (axcion-brand-book/logs/decisions.md); flip the improvement-log entry to resolved; confirm item 3's per-id-marker-gap log entry already exists — done when: fixed script splits the brand-book decisions file correctly in an isolated test; improvement-log entry flipped to resolved; commit landed
-- Out of scope: re-running the full 16-scope /log-sweep; any other archival-script behavior change
-- Files in scope: logs/scripts/split-log.sh, workflows/research-workflow/logs/scripts/split-log.sh, logs/improvement-log.md
-- Stop if: the test split produces wrong entry boundaries (data-loss shape) — stop and surface rather than tweak live
-Auto multi-item: Fix the split-log.sh code-fence bug that breaks archival of the brand-book decisions log; Log the gap where sessions that start without /prime don't get a per-id marker written (verified already-logged at S4 wrap — zero work remained).
-
-### Summary
-Auto-mode session (items 2+3 from /prime menu). Fixed the `split-log.sh` code-fence bug and, mid-execution, discovered + fixed a second pre-existing silent data-loss defect: the rewrite deleted all preamble content between H1 and the first entry header. The mandate's stop-if fired on the isolated test; surfaced to operator, who ran a System Owner pass → Option A (extend scope) approved and executed under full gating. Item 3 (log the per-id-marker gap) was verified already done at S4's wrap — zero work.
-
-### Files Created
-- `audits/risk-checks/2026-06-12-split-log-preamble-preservation-both-copies.md` — risk-check report (PROCEED-WITH-CAUTION + SO second-opinion commentary). (`1ca4c1c`)
-- `logs/session-plan-2026-06-12-S6.md` — session plan. (`1ca4c1c`)
-- `projects/axcion-ai-system-owner/output/consultations/consult-2026-06-12-split-log-preamble-loss.md` — SO advisory (written by the system-owner agent; lives in the workspace root repo).
-- `logs/scratchpads/2026-06-12-13-30-scratchpad.md` — continuity scratchpad. (gitignored)
-
-### Files Modified
-- `logs/scripts/split-log.sh` — fence-aware header extraction + preamble preservation with anchored pointer strip. (`1ca4c1c`)
-- `workflows/research-workflow/logs/scripts/split-log.sh` — synced lockstep; also gained bash-3.2 portable loop (mapfile removed). (`1ca4c1c`)
-- `logs/improvement-log.md` — split-log entry flipped to resolved; both target copies listed per QC traceability note. (`1ca4c1c`)
-- `logs/maintenance-observations.md` — dormant-copy drift note (~14 project-local copies carry pre-fix logic). (`1ca4c1c`)
-- `logs/session-notes.md` — S6 header + mandate + this wrap block.
-
-### Decisions Made
-- **Option A over Option B at the stop-if pause** — extend scope to preserve the full preamble rather than land the fence-fix only. Operator routed via SO pass; SO recommended A ("not a close call"); risk-check PROCEED-WITH-CAUTION with 3 mitigations, all applied; SO second opinion concurred; independent /qc-pass GO.
-- **End-time /risk-check skipped per the operator skip rule** — plan-time check covered the exact executed change with mitigations applied, commit shipped, zero drift. Documented here per the rule.
-- **Verification by targeted isolated test instead of full /log-sweep --dry-run** — same proof, fraction of the cost (disclosed at the auto-mode gate).
-
-### Outcome
-COMPLETION: DELIVERED
-EXECUTION: OPTIMAL
-- Independent reviewer verified commit `1ca4c1c` stat, both script copies, the improvement-log flip, the maintenance-observations note, and item 3's pre-existing entry — and re-ran the fixed script on a fresh isolated copy of the real brand-book file (exit 0, 19/10 split, template preserved, 88 = 88 content lines, no loss).
-- Process: stop-if fired as mandated; scope extension fully gated (SO advisory -> risk-check -> SO second opinion -> independent QC GO); single clean commit, no rework; out-of-scope re-run correctly skipped.
-- What was asked but not done: none. Better path: none. Confidence: high.
-
-### Risky actions
-None irreversible. The modified script is shared-state automation (mutates active logs on /log-sweep), but it was never run against a live file this session — isolated copies only (19/19 tests). The marketing-positioning preamble loss predates this session (S4) and remains unrestored (git-recoverable; surfaced to operator as optional follow-up). 3 concurrent sessions live in checkout; all staging by explicit path.
-
-### Session Assessment
-(wrap-collector, 2026-06-12 — S6; collector could not write [no append primitive in its toolset], failed loud; main session appended its validated payload via Bash heredoc)
-- Autonomy-compounding: positive — fence-aware + preamble-preservation fix to canonical split-log.sh (consumed by /log-sweep across all projects); confirmed consumer, no speculation.
-- Leanness/cost: positive — single clean commit, no rework; isolated 19/19 test chosen over full /log-sweep --dry-run.
-- Principle-drift: no signal — scope extension fully gated; end-time /risk-check skip per documented operator rule, logged.
-- Friction: no signal — the stop-if pause was designed behavior; concurrency staging discipline held.
-- Safety: low — split-log.sh has no fail-loud content-conservation tripwire; both loss paths were caught by manual testing only. Routed as guardrail-candidate (low).
-- Routed: 1→improvement-log (content-conservation tripwire, appended by main session); 0→friction-log.
-
-### Next Steps
-- Optional: restore the 2 preamble lines lost at S4's archival in `projects/marketing-positioning/logs/session-notes.md` (from `git show e1d22ca~1:logs/session-notes.md`).
-- Friday cadence candidate: re-sync or delete the ~14 dormant project-local `split-log.sh` copies (maintenance-observations 2026-06-12 S6).
-- Next `/log-sweep` run will confirm the brand-book decisions.md clears live (expected — verified on isolated copy).
-- Monthly cycle: the new content-conservation tripwire guardrail-candidate (improvement-log, this session).
-
-### Open Questions
-None blocking.
-
 ## 2026-06-12 — Session S7
 **Mandate:** Complete picked menu items: (1) re-sync the 10 dormant project-local logs/scripts/split-log.sh copies from the fixed canonical (commit 1ca4c1c); (2) run /log-sweep and confirm axcion-brand-book/logs/decisions.md archives cleanly; (3) verify the content-conservation tripwire entry exists in improvement-log.md, append if absent — done when: all 10 copies byte-identical to canonical and committed; /log-sweep shows the brand-book file clears; tripwire entry confirmed present
 - Out of scope: any behavior change to the canonical split-log.sh; restoring the marketing-positioning preamble lines (menu item 2, not picked)
@@ -508,3 +452,59 @@ None — planning-only session; no in-repo files written except wrap logs; no de
 
 ### Open Questions
 None blocking. Optional reconsideration: whether `knowledge-bases/strategic-os/` should be a v1 secondary corpus (current call: v1 = project only).
+
+## 2026-06-29 — Evaluated 7 proposed `/new-project` functions → build recommendation, SO-vetted (build deferred)
+
+### Summary
+Evaluated 7 proposed "functions" (items 3, 4, 5, 9, 10, 11, 14 from a larger list) for fit in the
+`/new-project` pipeline. Produced a per-function build recommendation: 3 worth building (#5 Data
+Model Steward, #4 Interface Contract Generator, #14 Operating Loop Designer), 2 small enhancements
+to existing resources (#3, #11), 2 not worth building (#9, #10). The load-bearing reframe: `/new-project`
+builds Claude Code projects, but #5/#4 design business systems — a different layer. Vetted the
+planning-layer-vs-build-layer split with the System Owner via `/consult`; the SO confirmed the split
+and corrected two homes. Folded the corrections into the approved plan. No build started — building
+deferred to next session.
+
+### Files Created
+- `~/.claude/plans/frolicking-tinkering-manatee.md` — the build-recommendation memo (NOT a repo file; lives under `~/.claude/plans/`). [created pre-compaction; SO corrections folded in this session]
+- `projects/axcion-ai-system-owner/output/consultations/consult-2026-06-29-newproject-layer-placement.md` — SO advisory on the layer-placement decision. [created pre-compaction via `/consult`]
+- `logs/scratchpads/2026-06-29-09-51-scratchpad.md` — continuity scratchpad for next-session resume.
+
+### Files Modified
+- `~/.claude/plans/frolicking-tinkering-manatee.md` — 5 edits folding in SO corrections: added an SO-vetting note under the verdict table; corrected #5's home (business-systems project vault, not `ai-resources/`); sharpened #4's home (`projects/project-planning/`); added the #14 `/risk-check`-both-gates build note; marked the "Open decision before building" section RESOLVED.
+- `logs/session-notes-archive-2026-06.md` — auto-archive at wrap (archived 1 entry, kept 10).
+
+### Decisions Made
+- Operator confirmed the build recommendation (per-function verdicts) and approved the plan after a `/qc-pass` (GO + one fix: removed a non-existent `/schedule` reference from #14's "already covered by" cell).
+- Operator chose to fold the SO's three corrections into the approved plan file rather than leave it as-is.
+- Operator decided building happens next session (no build started this session).
+
+### Outcome
+COMPLETION: DELIVERED — build recommendation (7 per-item verdicts, overlap flagged, build order + scope), SO vetting, and the 5 plan corrections are all present and usable.
+EXECUTION: OPTIMAL — the load-bearing layer-split judgment was vetted via `/consult` before committing to any build shape; the SO advisory overturned 2 of 3 named homes (#5 → business-systems vault not `ai-resources/`; #4 → `projects/project-planning/`) and those corrections were folded back in with the open decision marked RESOLVED. `/qc-pass` ran (GO + one fix removing a non-existent `/schedule` reference). Building correctly deferred; plan lives in `~/.claude/plans/`, not committed as a repo file.
+What was asked but not done: none.
+Better path: none.
+Confidence: low (mandate from fallback — no formal mandate).
+
+### Session Value Audit — 80/20 Review
+TYPE: C — Useful Diagnosis. A decision-grade build recommendation that reframed "add 7 stages" into a correct layer-split, SO-vetted, with 3 builds scoped and 2 rejected with rationale.
+VALUE: exec=N decision=H risk=M compound=M optime=M
+SCORE: 8/10 — strong decision improvement (verdict + corrected homes), reusable plan asset, and risk reduction (OP-10 boundary preserved, #4 held to second-consumer gate); no executable output by design (build deferred).
+GATE: N/A — not primarily maintenance/cleanup.
+OPPORTUNITY: Correct session — deciding placement first prevented a category-error build inside `/new-project`.
+DECISION: Repeat — the consult-before-shape pattern on a load-bearing judgment is the right default for structural proposals.
+LESSON: Vetting the load-bearing placement claim with the System Owner before scoping builds caught two wrong homes that would have re-crossed the OP-10 boundary.
+RULE: No rule candidate.
+
+### Risky actions
+None.
+
+### Session Assessment
+(wrap-collector, 2026-06-29) Clean advisory/evaluation session — no friction, no drift, no safety issue, no reusable component, no leanness cost. Routed: 0→improvement-log, 0→friction-log (nothing met the specificity gate; no signal manufactured). One `/qc-pass` catch (removed a non-existent `/schedule` reference) — caught by the gate as designed. Pattern to watch (not logged): the build plan lives at `~/.claude/plans/frolicking-tinkering-manatee.md`, outside the repo, so `/prime` won't auto-surface it next session — already mitigated via the continuity scratchpad + explicit resume-anchor note in Next Steps; pre-existing property, not a new defect.
+
+### Next Steps
+- Next session: decide which of the three builds to start (if any). Recommended first: #5 Data Model Steward (#4 depends on its vocabulary; #14 independent). Quick-win alternative: #14 (smallest, no deps, but needs `/risk-check` at both gates). Resume anchor: `~/.claude/plans/frolicking-tinkering-manatee.md` — mention "the 7-function build plan" at session start, since the plan file lives outside the repo and `/prime` won't auto-surface it.
+- Carryover (from `/prime`, not this session's work): push gate on 2 unpushed `settings-path-portability` commits; `/risk-check` on root CLAUDE.md "Blind-Spot Scan Gate" + commit; build `/leverage-idea`; fix triage-reviewer + session-feedback-collector toolsets; retrofit already-deployed project repos for `settings-path-portability`.
+
+### Open Questions
+None blocking.
