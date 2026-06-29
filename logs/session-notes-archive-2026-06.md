@@ -2905,3 +2905,213 @@ None irreversible. The modified script is shared-state automation (mutates activ
 
 ### Open Questions
 None blocking.
+## 2026-06-12 — Session S7
+**Mandate:** Complete picked menu items: (1) re-sync the 10 dormant project-local logs/scripts/split-log.sh copies from the fixed canonical (commit 1ca4c1c); (2) run /log-sweep and confirm axcion-brand-book/logs/decisions.md archives cleanly; (3) verify the content-conservation tripwire entry exists in improvement-log.md, append if absent — done when: all 10 copies byte-identical to canonical and committed; /log-sweep shows the brand-book file clears; tripwire entry confirmed present
+- Out of scope: any behavior change to the canonical split-log.sh; restoring the marketing-positioning preamble lines (menu item 2, not picked)
+- Files in scope: projects/{buy-side-service-plan,obsidian-pe-kb,global-macro-analysis,project-planning,interpersonal-communication,nordic-pe-screening-project,ai-development-lab,axcion-brand-book,research-pe-regime-shift-advisory-gap,positioning-research}/logs/scripts/split-log.sh; logs/scripts/split-log.sh; logs/improvement-log.md
+- Stop if: /log-sweep produces wrong entry boundaries or any data-loss shape on a live file — stop and surface, do not tweak live
+- Context pack: output/context-packs/incident-20260612-7b2e4/pack.md
+Auto multi-item: Re-sync or delete the ~14 dormant project-local split-log.sh copies carrying pre-fix logic; Run /log-sweep to confirm the brand-book decisions file archives cleanly with the fixed script; Verify/route the content-conservation tripwire guardrail-candidate in improvement-log.md.
+
+### Summary
+Auto-mode session (items 1,3,4 from /prime menu). Propagated the S6 split-log.sh fix (fence-aware + preamble-preserving, 1ca4c1c) to 11 dormant copies — 10 project repos + the workspace-root copy the context engine missed but full enumeration caught; the frozen archive/ copy was deliberately skipped. Then ran the first LIVE confirmation of the fix: scoped /log-sweep on axcion-brand-book rotated the previously-failing decisions.md cleanly (611→66, EXACT 611=611 content conservation, preamble preserved). Item 4 verified pre-existing (tripwire entry routed at S6) — zero work.
+
+### Files Created
+- `audits/risk-checks/2026-06-12-re-sync-10-dormant-project-local-split-log-copies.md` — risk-check PROCEED-WITH-CAUTION + SO second-opinion commentary (committed).
+- `audits/log-sweep-2026-06-12-S7.md` — scoped sweep report (committed).
+- `audits/working/log-sweep-manifest-2026-06-12-S7.md` + `audits/working/log-sweep-project-axcion-brand-book-2026-06-12-S7.md` — manifest + working notes (gitignored dir, local only).
+- `logs/session-plan-2026-06-12-S7.md` — session plan (committed).
+- `projects/axcion-ai-system-owner/output/consultations/consult-2026-06-12-split-log-dormant-copy-resync.md` — SO advisory (workspace-root repo).
+- `logs/scratchpads/2026-06-12-13-26-scratchpad.md` — continuity scratchpad with QC-PENDING marker (gitignored).
+- In axcion-brand-book: `logs/decisions-archive-2026-05.md` (26 entries), `logs/usage-log-archive-2026-05.md` (1 entry) — committed there.
+
+### Files Modified
+- 11× `split-log.sh` copies (10 project repos + workspace-root `logs/scripts/`) — overwritten with canonical, cmp-verified, one commit per repo.
+- `projects/axcion-brand-book/logs/decisions.md` (611→66) and `logs/usage-log.md` (326→289) — rotated by the sweep, committed in that repo.
+- `logs/session-notes.md` — S7 header + mandate + this wrap block.
+
+### Decisions Made
+- **Re-sync over delete** for the dormant copies (delete risks breaking project-local sweep invocation; saves nothing).
+- **Target-set extension:** include the workspace-root copy (same consumer class), skip the archive/ copy (frozen) — operator approved the 11-target list per the SO's added enumeration mitigation.
+- **Inline fallback under the credit gate:** log-sweep-auditor and qc-reviewer subagents could not spawn ("Usage credits required for 1M context", 3 attempts incl. model override); sweep discovery done inline (disclosed in report), QC done as inline self-QC (5/5 deterministic checks pass) with QC-PENDING deferred to a fresh session per qc-independence soft fallback.
+- **End-time /risk-check skipped per the operator skip rule** — plan-time check covered the exact executed change set, mitigations applied (incl. SO's enumeration confirmation), commits shipped, zero drift. Documented here per the rule.
+
+### Risky actions
+None irreversible. Shared-state automation (split-log.sh) mutated in 11 repos — but byte-identical propagation of an S6-QC'd canonical, cmp-verified per copy, risk-checked plan-time with SO concurrence. Live log mutation (brand-book sweep) verified with exact multiset conservation before commit. 4 concurrent sessions live in checkout; all staging by explicit path; wrap-time foreign guard FOREIGN=0. Residual: independent QC on the propagation is QC-PENDING (credit gate) — deterministic self-QC passed; fresh-session /qc-pass queued via scratchpad.
+
+### Next Steps
+- Fresh session: `/qc-pass` on the S7 change set (QC-PENDING scratchpad has the instruction); on GO, delete the scratchpad.
+- Optional (carried from S6): restore the 2 preamble lines lost at S4's archival in `projects/marketing-positioning/logs/session-notes.md` (from `git show e1d22ca~1:logs/session-notes.md`).
+- Monthly cycle: content-conservation tripwire guardrail-candidate (improvement-log L594) — unchanged, awaiting the monthly checkup.
+
+### Open Questions
+None blocking. Watch: if the 1M-credit subagent gate persists in the next session, /model downgrade before /qc-pass.
+
+## 2026-06-12 — Session S8
+**Mandate:** Run /resolve-improvement-log — archive resolved/applied/verified entries from logs/improvement-log.md to the archive so stale items stop re-entering the backlog — done when: resolved entries live in logs/improvement-log-archive.md, open entries remain in logs/improvement-log.md, commit landed
+- Out of scope: (none stated)
+- Files in scope: logs/improvement-log.md, logs/improvement-log-archive.md, logs/friction-log.md (widened at wrap — wrap-collector friction append, operator-confirmed)
+- Stop if: logs/improvement-log.md changes underneath mid-archival (foreign session editing it) — stop and surface rather than merge blind
+- Context pack: output/context-packs/command-20260612-7b3e1/pack.md
+Run /resolve-improvement-log — archive resolved entries from logs/improvement-log.md (concurrent-session-check verdict COLLIDES overridden by operator: S2/S6 wrapped, S7 idle).
+
+### Summary
+Ran /resolve-improvement-log (preceded by /concurrent-session-check at operator request). The collision check returned COLLIDES (S2/S6 had declared improvement-log.md; S7 undeclared) — operator accepted the risk after evidence showed all three sessions had wrapped. Archived 12 done-marked entries from the active improvement log to the archive; 43 pending entries remain. A classification conflict (strict `applied`+`Verified:` rule vs the log's de facto `resolved` convention) was surfaced and resolved by operator selection.
+
+### Files Created
+- `logs/session-plan-2026-06-12-S8.md` — session plan.
+- `logs/scratchpads/2026-06-12-15-30-scratchpad.md` — continuity scratchpad (gitignored).
+- `output/context-packs/command-20260612-7b3e1/` — context pack (gitignored).
+
+### Files Modified
+- `logs/improvement-log.md` — 12 entries removed (archived); 43 pending remain; preamble + id-39 block untouched. Line conservation asserted (603 = 473 + 130).
+- `logs/improvement-log-archive.md` — 12 entries appended under a dated S8 banner (append-only; archive never read — deny-listed).
+- `logs/session-notes.md` — S8 header + mandate + this wrap block; rotated at wrap by check-archive.sh (4 entries → `logs/session-notes-archive-2026-06.md`, 10 kept) — live clean run of the S6-fixed split-log.sh.
+
+### Decisions Made
+- **Proceed despite COLLIDES verdict** — operator override, grounded in evidence that S2/S6/S7 were wrapped (wrap commits in HEAD); mtime stop-if guard armed and held throughout.
+- **Archive all 12 candidates** — operator chose `y` over the tiered selection: 2 tier-1 (resolved + Verified line), 9 tier-2 (done-marked, no Verified line), 1 no-active-friction watch item whose open question was superseded.
+- **No mid-session commit** — /resolve-improvement-log's "wrap owns the commit" rule overrode the derived mandate's "commit landed" done-when; deviation surfaced in chat.
+
+### Outcome
+COMPLETION: DELIVERED
+EXECUTION: ACCEPTABLE
+- Independent reviewer verified: 43 entries remain, archived titles gone, preamble + id-39 intact, no-commit is command-compliant, all three process gates followed (load-bearing y/n/select, stop-if guard, conflict surfacing).
+- Off-OPTIMAL note: the conservation claim "603 = 473 + 130" uses Python split-element counts (trailing-newline element included); `wc -l` reads 472. Partition was exact in the measured basis; the stated basis should have been named. No integrity impact.
+- What was asked but not done: none. Confidence: high.
+
+### Risky actions
+In-place rewrite of the shared `logs/improvement-log.md` while 5 foreign per-id markers were present in the checkout — mitigated by the pre-task /concurrent-session-check, evidence all sibling sessions had wrapped, an mtime stop-if guard (held), and an exact-partition line-conservation assert. No data lost; archive was append-only.
+
+### Session Assessment
+(wrap-collector, 2026-06-12 — S8; collector had no append primitive, failed loud per hard rule; main session appended its validated payloads via Bash heredoc)
+- Autonomy-compounding: positive — surfaced a reusable command-correctness fix (/resolve-improvement-log classification rule vs convention); confirmed consumer.
+- Leanness/cost: no signal — single archival pass, no rework (EXECUTION ACCEPTABLE).
+- Principle-drift: no logged signal — the conservation-basis note is one-off, below materiality bar.
+- Friction: classification rule forced operator adjudication; type = command. Routed to friction-log.
+- Safety: low, NOT logged — shared-log rewrite under COLLIDES override fully mitigated; true dedup of the active PENDING rewrite-vs-append entry (live instance, no new entry).
+- Routed: 1→improvement-log (classification-rule fix), 1→friction-log (appended by main session).
+
+### Next Steps
+- Consider a one-line fix to /resolve-improvement-log's resolved-classification rule (strict `applied`+`Verified:` matches zero real entries; de facto convention is `resolved YYYY-MM-DD`) so future runs don't need operator adjudication.
+- Carry-over (S7): /qc-pass on the S7 change set if its QC-PENDING scratchpad still surfaces at next /prime.
+- Carry-over (S6): optional restore of 2 preamble lines in marketing-positioning session-notes.md (`git show e1d22ca~1:logs/session-notes.md`).
+
+### Open Questions
+None blocking.
+
+## 2026-06-12 — Session S9
+**Mandate:** Staleness-verified fix batch — 6 small structural fixes from the verified backlog: (1) harden session-feedback-collector to append-only (add Edit+Bash, forbid whole-file Write); (2) re-point /risk-check Step 17b at the system-owner agent directly; (3) add post-return advisory-file existence check to /consult Step 5; (4) reconcile /resolve-improvement-log classification rule with the de facto `resolved YYYY-MM-DD` convention; (5) document wrap-owns-session-notes discipline in commit-discipline.md; (6) add environment-fit check to /session-plan — done when: all 6 applied (or explicitly deferred with reason), /risk-check gate passed for the structural set, /qc-pass GO, committed
+- Out of scope: improvement-log.md status flips (S8 owns the file uncommitted — flips deferred until S8 commits); inbox brief builds; mission promote-rw-canonical closure; any edit to logs/improvement-log.md or logs/improvement-log-archive.md
+- Files in scope: .claude/agents/session-feedback-collector.md, .claude/commands/risk-check.md, .claude/commands/consult.md, .claude/commands/resolve-improvement-log.md, docs/commit-discipline.md, .claude/commands/session-plan.md
+- Stop if: S8 commits mid-session and the commit sweeps S9 files — stop and re-stage; any fix requires touching improvement-log.md — defer that fix
+Scope extension (operator "Proceed"): verify the promote-rw-canonical mission acceptance assertions against live state; advisory verdict on closure. Read-only toward mission file (closure itself via /mission close only).
+
+### Summary
+Staleness-verified fix batch + mission acceptance verification. Verified all 11 /open-items high-signal items against live file state before executing: 6 confirmed open, 2 friction items confirmed datapoints-only, 2 inbox briefs flagged stale (~2 months). Shipped 5 of the 6 planned fixes; the 6th (risk-check.md Step 17b re-point) was caught STALE at the risk-check gate — its bug was already fixed 2026-06-10 — and dropped instead of landed. Then (operator-approved extension) verified the promote-rw-canonical mission's 7 acceptance assertions: 5 PASS, verdict KEEP-OPEN; found and fixed the A3 gap (template friction-log-auto.sh lagged the C6 repair).
+
+### Files Created
+- audits/risk-checks/2026-06-12-fix-batch-s9-four-canonical-edits-two-doc-additions.md — plan-time + end-time gate record with SO commentary
+- audits/working/2026-06-12-s9-mission-promote-rw-canonical-closure-verification.md — mission verification notes (subagent)
+- logs/session-plan-2026-06-12-S9.md — session plan
+- logs/scratchpads/2026-06-12-14-31-scratchpad.md — continuity scratchpad
+- projects/axcion-ai-system-owner/output/consultations/consult-2026-06-12-s9-fix-batch-second-opinion.md — SO advisory (committed in that repo, 6313ff0)
+
+### Files Modified
+- .claude/agents/session-feedback-collector.md — Write→Edit+Bash toolset; categorical append-only Constraint E
+- .claude/commands/consult.md — Step 5a post-return existence check
+- .claude/commands/resolve-improvement-log.md — two-tier Resolved classification + schema-sync note
+- docs/commit-discipline.md — wrap-owns-session-notes rule
+- .claude/commands/session-plan.md — Step 6 environment-fit check
+- workflows/research-workflow/.claude/hooks/friction-log-auto.sh — C6 repair synced to template copy (byte-identical)
+
+### Decisions Made
+- Item 2 dropped at the gate (premise verified false — consult.md flag reverted 2026-06-10); the 2026-06-09 improvement-log entry is stale and should be closed, not executed.
+- Improvement-log status flips deferred — S8 owned the file uncommitted; flips listed in scratchpad Resume With.
+- Mission verdict KEEP-OPEN — A5 (deploy test) + A6 (/sync-workflow) are contract assertions and remain deferred; closing early would weaken the mission's own standard.
+- A3 template-hook sync landed under the existing mission gate 2c7ed1e (same change set, incompletely landed) rather than a fresh standalone risk-check.
+- End-time gate satisfied via documented disposition in the risk-check report (executed set = gated set minus dropped Item 2; all mitigations QC-verified) rather than a second full reviewer pass.
+
+### Outcome
+COMPLETION: DELIVERED — 5/6 fixes verified in 0ee6177; Item 2 drop qualifies under the mandate's "explicitly deferred with reason" clause (premise verified false at the gate); scope extension delivered (mission KEEP-OPEN verdict + A3 fix 198eb55, byte-identity cmp-confirmed).
+EXECUTION: OPTIMAL — gates verified on disk (12-row consumer inventory, SO concur, mitigations checked, QC GO); no rework loops or detours in the artifact trail; S8's files correctly untouched. Better path: none. Confidence: high.
+
+### Risky actions
+None. All edits gated (risk-check PROCEED-WITH-CAUTION + SO concur + QC GO); explicit-path staging throughout; S8's uncommitted improvement-log files deliberately untouched.
+
+### Session Assessment
+**Session Assessment** (wrap-collector, 2026-06-12)
+- Autonomy-compounding: positive — 5 structural fixes to canonical infra; verify-before-execute caught a stale backlog item (Item 2, already fixed 2026-06-10) before it landed.
+- Leanness/cost: no signal — no always-loaded weight added; EXECUTION OPTIMAL, no rework loops.
+- Principle-drift: no signal — OP-3/AP-7 boundaries actively respected (flips deferred, stale item dropped at gate).
+- Friction: no new signal — the /resolve-improvement-log mismatch was already logged by S8 AND fixed in S9; root-cause duplicate, not re-logged.
+- Safety: none observed.
+- Routed: 0→improvement-log, 0→friction-log.
+- Not logged (per-session cap): none.
+- Pattern to watch (not logged): A3 template-copy lag — same root class as the active "canonical-template propagation" improvement-log entry (L329); found and fixed this session.
+- Collector note: ran read-only, consistent with its newly-hardened append-only definition (first live run post-hardening).
+
+### Next Steps
+- After S8 commits: flip 3 improvement-log entries to resolved (collector hardening; Step 17b entry → close-as-stale; classification rule) + update improvement-log.md preamble L9 with the tier-2 convention (deferred lockstep edit).
+- Dedicated session: mission A5 deploy-test + A6 /sync-workflow re-sync on positioning-research → then /mission close promote-rw-canonical. Same session: disposition the stranded claim-permission.template.md 1-line edit (review-and-commit or revert).
+- Friday: archive-or-schedule the 2 stale inbox briefs (repo-review-brief Apr 7, codex-second-opinion Apr 13).
+
+### Open Questions
+None blocking.
+
+## 2026-06-12 — Session S10
+**Mandate:** /fix-project-issues do-now batch — 6 SO-vetted gated fixes (id-16 dead ref, id-17 false usage-log line, id-41 symlink 2 byte-identical RW command copies, id-08 CLAUDE.md mirror-block dedup, id-12 audits/working deny rule, id-31 split-log.sh conservation tripwire) — done when: /risk-check passed, fixes applied (or individually deferred with reason), /qc-pass GO, committed
+- Out of scope: KB-repo settings fixes (id-01/02); all Defer/Skip items from the SO triage; improvement-log.md status flips
+- Files in scope: CLAUDE.md (ai-resources), workspace CLAUDE.md, workflows/research-workflow/.claude/commands/ (2 copies), .claude/settings.json, .claude/hooks/split-log.sh (canonical + template copy)
+- Stop if: /risk-check returns RECONSIDER or NO-GO — pause and surface
+
+### Summary
+Executed /fix-project-issues for the ai-resources scope end-to-end. 47 candidates scanned; reconcile-at-read demoted 7 as already-done (S9's same-day batch); SO triaged the remaining 40 into 6 do-now / 19 defer / 12+ skip. All 6 do-now were gated classes → batch /risk-check (PROCEED-WITH-CAUTION + SO second opinion concur) → 3 fixes shipped, 3 caught stale or harmful at the gates. QC GO; committed 39c2ba5 (ai-resources) + 9ed58cb (system-owner advisories).
+
+### Files Created
+- audits/risk-checks/2026-06-12-batch-of-6-so-vetted-structural-fixes-for-ai-resources.md — gate record + SO commentary + execution disposition
+- audits/working/diagnostics-scan-2026-06-12-0900-ai-resources.md (+ -STILL_OPEN.md) — scanner notes (gitignored)
+- projects/axcion-ai-system-owner/output/consultations/consult-2026-06-12-fix-project-issues-ai-resources.md — SO triage advisory (committed in that repo)
+- projects/axcion-ai-system-owner/output/consultations/consult-2026-06-12-risk-check-2nd-opinion-s10-fix-batch.md — SO second opinion (committed in that repo)
+- logs/scratchpads/2026-06-12-15-45-scratchpad.md — continuity scratchpad
+
+### Files Modified
+- CLAUDE.md — L10 usage-log statement corrected (repo hosts its own ai-resources usage log)
+- workflows/research-workflow/.claude/commands/refinement-pass.md + update-claude-md.md — copies → relative symlinks to canonical
+- logs/scripts/split-log.sh + workflows/research-workflow/logs/scripts/split-log.sh — content-conservation tripwire (lockstep, cmp-identical)
+- logs/improvement-log.md — applied-entry (tripwire) + pending propagation-debt entry (11 copies, named trigger)
+
+### Decisions Made
+- Item 5 (Read deny on audits/working) DROPPED per risk-check mitigation — would break /fix-project-issues Step 2.5's mandatory re-read; contradicts the recorded .gitignore:24 design decision. SO concurred.
+- Item 1 (dead /fewer-permission-prompts ref) DROPPED at apply — premise false: it is a live built-in Claude Code skill; the 35d repo-dd audit only grepped repo files.
+- Item 4 (CLAUDE.md mirror collapse, ~430 tok/turn) DROPPED at apply — already landed 2026-06-08 (7d415fc W24 + 76ef393); the audit and its fix shipped the same day, scanner read the report without checking.
+- id-01/id-02 (KB settings defects) routed OUT of scope per SO — cross-scope settings change belongs to a KB-scoped pass.
+- End-time risk-check gate satisfied via documented execution disposition appended to the plan-time report (S9 precedent: executed set = gated set minus dropped items; all mitigations QC-verified).
+- Tripwire design: non-blank line conservation (not raw lines) — command substitution strips trailing blanks at block boundaries, so raw counts would false-fire.
+
+### Outcome
+COMPLETION: DELIVERED — all 6 mandate items disposed per the done-when clause (3 applied + 3 deferred-with-reason, all verified against repo: edits live, symlinks resolve, tripwire present, drops evidence-backed, commits real, out-of-scope respected).
+EXECUTION: OPTIMAL — gates all followed (batch risk-check PWC + SO second opinion + QC GO); harmful deny caught at the gate rather than shipped; end-time gate via documented disposition consistent with the recorded skip rule; no rework loops. Better path: none. Confidence: high.
+
+### Risky actions
+None. All edits gated (risk-check PWC + SO concur + QC GO); item 5's harmful deny rule was caught and dropped at the gate; explicit-path staging throughout; pre-existing dirty files (claim-permission.template.md, stray session plans) untouched.
+
+### Session Assessment
+**Session Assessment** (wrap-collector, 2026-06-12)
+- Autonomy-compounding: scanner staleness gap is a reusable-fix signal (recurrence-after-fix, distinct mechanism) → routed; split-log tripwire already shipped + logged as `applied`.
+- Leanness/cost: 3 of 6 SO-vetted do-now items were stale, costing SO-vetting + risk-check attention on dead candidates before drop-at-apply — root cause is reconcile-at-read keyword-blindness to opaque-subject commits.
+- Principle-drift: no signal — gates all followed (batch risk-check PWC + SO second opinion + QC GO), end-time gate via documented disposition per the recorded skip rule.
+- Friction: no signal — stale items were culled at the gate by design (reconcile + SO net working as intended), no operator intervention, no rework loop.
+- Safety: none observed — `### Risky actions` = None; item 5's harmful `audits/working` Read-deny was caught and dropped at the gate, not shipped.
+- Routed: 1→improvement-log, 0→friction-log.
+- Not logged (per-session cap): none. (Propagation-debt signal already logged this session — dropped as same-session duplicate, not capped.)
+
+### Next Steps
+- Propagate split-log.sh tripwire to the 11 deployed copies — named trigger: next /sync-workflow or Friday cadence (improvement-log entry, weekly review-cycle).
+- KB-scoped pass for id-01 (stale Daniel-machine path, interpersonal-comm KB) + id-02 (2 KBs missing bypassPermissions/additionalDirectories).
+- Improvement-log status flips now unblocked (S8+S9+S10 all committed): collector hardening, Step 17b stale-close, classification rule, S6 tripwire entry (shipped by S10) + preamble L9 tier-2 convention.
+- Carry-over: mission promote-rw-canonical A5+A6 → /mission close; stranded claim-permission.template.md disposition; 2 stale April inbox briefs (Friday).
+- Scanner staleness gap worth an /improve look: 3 of 6 SO-vetted do-now items were stale — keyword reconcile misses commits with opaque subjects ("W24"); consider checking commits touching the named target files.
+
+### Open Questions
+None blocking.
