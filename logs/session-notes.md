@@ -416,3 +416,10 @@ Implementation session (fresh): `/prime` → open `~/.claude/plans/i-want-to-dev
 
 ### Open Questions
 None — all design forks resolved this session.
+
+## 2026-07-01 — Session S2
+**Mandate:** Build the `/scope-project` complex-build scoping tool from the approved plan — run `/risk-check` and `/blindspot-scan` first, then create the skill, command, three agents, and reference doc, plus the two-lanes pointer note — done when: risk-check + blind-spot scan have run and all 6 artifacts + the pointer note exist
+- Out of scope: (none stated)
+- Files in scope: skills/project-scoping/SKILL.md, .claude/commands/scope-project.md, .claude/agents/scope-synthesis-agent.md, .claude/agents/scope-architecture-agent.md, .claude/agents/scope-qc-evaluator.md, docs/control-pack-schema.md, projects/project-planning/CLAUDE.md (inferred)
+- Stop if: risk-check returns RECONSIDER/NO-GO or blind-spot scan returns PAUSE-AND-FIX
+Build the new `/scope-project` tool — open the approved plan, run a risk check and a blind-spot scan, then build it.
