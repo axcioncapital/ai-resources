@@ -383,3 +383,36 @@ None.
 - Files in scope: projects/project-planning/.claude/commands/requirements-pack.md, projects/project-planning/requirements-playbooks/_template.md, projects/project-planning/CLAUDE.md
 - Stop if: (none stated)
 Build /requirements-pack — new project-local command in projects/project-planning/ (reads strategic-os corpus → context-pack.md + requirements-ledger.md, plus a template playbook and a project CLAUDE.md paragraph). Approved plan: ~/.claude/plans/toasty-twirling-map.md.
+
+## 2026-07-01 — Session S1
+Build /requirements-pack — new project-local command in projects/project-planning/ (reads strategic-os corpus → context-pack.md + requirements-ledger.md, plus a template playbook and a project CLAUDE.md paragraph). Picks up the interrupted 2026-06-29 S3 mandate. Approved plan: ~/.claude/plans/toasty-twirling-map.md.
+
+## 2026-07-01 — Build plan for `/scope-project` (complex-build scoping workflow) — plan only, implementation deferred
+
+### Summary
+Session pivoted from the /prime-loaded `/requirements-pack` mandate to a broader operator ask: develop an "Axcíon Project Scoping Workflow" into the repo. Ran `/clarify` (plan mode) — mapped the existing planning pipeline, resolved four design forks with the operator, folded in eight GPT-proposed lean additions and five adjunct-command integrations, passed an independent `qc-reviewer` (REVISE → both findings fixed), and got the build plan approved. **No repo artifacts were built** — this session produced the build plan only; implementation is a fresh next session. The `/requirements-pack` idea is superseded by this workflow.
+
+### Files Created
+- `logs/scratchpads/2026-07-01-16-11-scratchpad.md` — continuity scratchpad (resume pointer for the implementation session).
+- `~/.claude/plans/i-want-to-develop-cached-blum.md` — the approved build plan (outside repo; plan-mode canonical location).
+- `~/.claude/.../memory/feedback_gpt_external_reviewer.md` — auto-memory: triage GPT reviews, don't rubber-stamp (outside repo).
+
+### Files Modified
+- `logs/session-notes.md` — this note.
+- `logs/decisions.md` — two-lane scoping-workflow design + canonical-placement decision.
+- `~/.claude/.../memory/MEMORY.md` — index line for the new memory (outside repo).
+
+### Decisions Made
+- **Two-lane scoping design:** simple builds keep `/context-builder`; complex builds use new `/scope-project`; both converge at `/plan-draft`. Control pack feeds planning directly (no re-compression); final stage emits an 11-element `context-pack.md` planning brief so `/plan-draft` is untouched.
+- **One orchestrator command + methodology skill + 3 stage agents + reference doc**, placed canonically in `ai-resources/` (operator override of the "wait for 2nd consumer" norm).
+- **Stage-5 value seam (QC fix):** orchestrator owns reconciliation; `/implementation-triage` is one input to the five-way verdict, does not override the evaluator.
+- **8 lean additions + 5 optional gate-placed adjuncts** folded in; GPT review triaged (8 in, 1 declined — declined softening the mandatory risk-check/blindspot gates).
+
+### Risky actions
+Step 3.5 pre-write guard fired (NO_OWN_MARKER false-positive — `/prime` never dispatched a task this session, so no per-id marker was written; the flagged `S1` header was this operator's own earlier sequential orientation). Operator confirmed solo (no concurrent session); proceeded. No actual clobber risk.
+
+### Next Steps
+Implementation session (fresh): `/prime` → open `~/.claude/plans/i-want-to-develop-cached-blum.md` → `/risk-check` (new command + 3 agents + new skill + CLAUDE.md edit) → `/blindspot-scan` → build. Build the skill via `/create-skill`. Confirm both `ai-resources/` and `projects/project-planning/` are mounted before the verification dry-run. Record the 4-point canonical-placement rationale in decisions.md during that build.
+
+### Open Questions
+None — all design forks resolved this session.
