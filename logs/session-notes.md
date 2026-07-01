@@ -423,3 +423,57 @@ None — all design forks resolved this session.
 - Files in scope: skills/project-scoping/SKILL.md, .claude/commands/scope-project.md, .claude/agents/scope-synthesis-agent.md, .claude/agents/scope-architecture-agent.md, .claude/agents/scope-qc-evaluator.md, docs/control-pack-schema.md, projects/project-planning/CLAUDE.md (inferred)
 - Stop if: risk-check returns RECONSIDER/NO-GO or blind-spot scan returns PAUSE-AND-FIX
 Build the new `/scope-project` tool — open the approved plan, run a risk check and a blind-spot scan, then build it.
+
+### Summary
+Built the `/scope-project` complex-build scoping workflow end-to-end (the build deferred from the S1 plan session). Ran both structural gates first — `/risk-check` (PROCEED-WITH-CAUTION, SO second opinion concurred) and `/blindspot-scan` (PROCEED-WITH-CONSTRAINTS) — then built all six artifacts, registered the agents, wired the auto-sync exclusion, and committed across three repos. The tool is QC-clean but has not yet been run on a real project; the live end-to-end dry-run is the deferred next step.
+
+### Files Created
+- `docs/control-pack-schema.md` — the control-pack artifact contract; §7 pins the single canonical handoff contract (content-shape not filename; explicit-path `/plan-draft`).
+- `skills/project-scoping/SKILL.md` — methodology skill (opus/high), built via `/create-skill` (REVISE→PASS).
+- `.claude/commands/scope-project.md` — opus orchestrator, Stages 0–5.
+- `.claude/agents/scope-synthesis-agent.md` (sonnet), `.claude/agents/scope-architecture-agent.md` (opus), `.claude/agents/scope-qc-evaluator.md` (opus).
+- `audits/risk-checks/2026-07-01-build-scope-project-complex-build-scoping-workflow.md` — risk-check report + SO commentary.
+- `logs/session-plan-2026-07-01-S2.md` — session plan.
+- `projects/axcion-ai-system-owner/output/consultations/consult-2026-07-01-scope-project-riskcheck-2nd-opinion.md` — SO advisory (separate repo).
+
+### Files Modified
+- `docs/agent-tier-table.md` — 3 rows for the new agents.
+- `.claude/hooks/auto-sync-shared.sh` — EXCLUDE `scope-project` + `scope-*` (SO 4th gate).
+- `projects/project-planning/CLAUDE.md` — complex-lane pointer note (separate repo).
+- `logs/decisions.md` — S2 build entry (4-point DR-7 placement rationale + revert path).
+- `logs/session-notes.md`, `logs/session-plan-2026-07-01-S2.md` (mandate + plan).
+
+### Decisions Made
+Logged to `logs/decisions.md` (S2 build entry): the 4-point canonical-placement rationale + revert path; the auto-sync exclusion (operator-confirmed via AskUserQuestion); the `/requirements-pack` conflict resolution (exists, not superseded); the opus command-tier choice. Design decisions were already recorded in the S1 entry.
+
+### Outcome
+COMPLETION: DELIVERED — mandate done-condition (both gates run + 6 artifacts + pointer note) all present; live dry-run was the plan's Max lane / explicit deferred next-step, not a done-condition.
+EXECUTION: OPTIMAL — front-loading both structural gates before any file write kept the build single-pass with zero rework. Confidence: high (all claims verified against filesystem + git log).
+
+### Session Value Audit — 80/20 Review
+TYPE: A — High-Leverage Build. Net-new reusable scoping pipeline (command + skill + 3 agents + schema doc) filling the complex-build intake gap upstream of /plan-draft.
+VALUE: exec=H decision=H risk=M compound=H optime=H
+SCORE: 9/10 — Real output shipped, improves complex-project intake decisions, saves repeated manual scoping, moderate risk reduction, high reusability; not 10 only because value is unproven until the live dry-run runs.
+GATE: N/A (primarily a build, not maintenance)
+OPPORTUNITY: Correct session — approved plan executed in one focused pass; deferring the heavy live dry-run under context constraint was the right call, not a shortcut.
+DECISION: Repeat — plan-then-build-with-front-loaded-gates worked cleanly; carry the same shape to the deferred dry-run session.
+LESSON: Front-loading both structural gates before any file write kept the build single-pass with zero rework.
+RULE: No rule candidate.
+
+### Risky actions
+Edited a hook (`auto-sync-shared.sh`, EXCLUDE-list addition) and a cross-project CLAUDE.md — both structural classes, both covered by the plan-time `/risk-check` (PROCEED-WITH-CAUTION, mitigations applied) and operator-confirmed. No destructive or external actions. No gate that should have fired was missed. No prompt injection.
+
+### Session Assessment
+_wrap-collector, 2026-07-01 — no entries met the specificity gate; nothing appended to friction-log or improvement-log._
+- Autonomy-compounding: strong — reusable `/scope-project` workflow with a confirmed consumer (`/plan-draft` handoff); OP-9 respected (`/requirements-pack` conflict checked, not speculative).
+- Leanness / principle-drift / friction: no signal — proportionate, QC-clean, DR-7 rationale + revert path logged, both structural gates ran pre-build; AskUserQuestion was a legitimate confirmation gate.
+- Safety: none observed — hook + cross-project CLAUDE.md edits both covered by plan-time risk-check + operator-confirmed; no destructive/external action, no missed gate, no injection.
+- Reusable component produced — consider `/innovation-sweep`: `/scope-project` + `control-pack-schema.md` handoff contract.
+
+### Next Steps
+Run the deferred **live end-to-end dry-run** in a fresh session: `/scope-project` on real `projects/strategic-os/` material (e.g. a CRM scoping) → `/plan-draft {emitted context-pack.md}` → confirm zero-touch handoff. If it fails, route the fix to `control-pack-schema.md` §7 / the skill. Substantial session on its own. (Push of the 3 commits confirmed at this wrap.)
+
+**New feature idea (operator, 2026-07-01 wrap) — cross-project context-discovery pass for `/scope-project`.** An agent that, given the project being scoped, scans the OTHER projects in `projects/*` and surfaces which sibling projects are relevant AND which specific files inside them (e.g. scoping a LinkedIn strategy → pull in `positioning` + `axcion-brand-book`, naming the actual tone/positioning files). Distinct from the existing `context-discovery` agent, which is WITHIN-project (reads the cwd project's CLAUDE.md routing map only) — this is the cross-project sibling and does not exist today. Proposed shape: a new `scope-cross-project-scan` agent as a Stage-1 adjunct returning a ranked `{project → relevant files → why}` list that feeds the synthesis. New agent = structural class → own `/risk-check` + `/blindspot-scan` + a small design pass; do NOT bolt on ad hoc. Best done in a dedicated design/build session (natural to pair with the live dry-run, where the absence of this pass would be felt).
+
+### Open Questions
+None — build complete and QC-clean; only the live proof-run remains.
