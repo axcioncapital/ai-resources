@@ -477,3 +477,13 @@ Run the deferred **live end-to-end dry-run** in a fresh session: `/scope-project
 
 ### Open Questions
 None — build complete and QC-clean; only the live proof-run remains.
+
+## 2026-07-01 — Session S3
+**Mandate:** Design a scope-cross-project-scan agent for /scope-project that scans sibling projects/* and returns a ranked {project → relevant files → why} list feeding the synthesis, and run /risk-check + /blindspot-scan on the design — done when: a design doc exists on disk and both structural gates have run with verdicts recorded
+- Out of scope: Building, wiring, or registering the agent — design and gates only
+- Files in scope: (inferred) — design doc under audits/working/
+- Stop if: /risk-check NO-GO or /blindspot-scan PAUSE-AND-FIX
+- Allowed inputs: scope-project.md, scope-synthesis-agent.md, scope-architecture-agent.md, scope-qc-evaluator.md, project-scoping/SKILL.md, control-pack-schema.md, agent-tier-table.md, risk-check.md, blindspot-scan.md
+- Required outputs: design doc for scope-cross-project-scan agent
+- Context pack: output/context-packs/agent-20260701-b7e2a/pack.md
+Design the cross-project context-discovery pass for /scope-project — a new agent that scans sibling projects and surfaces which projects, and which specific files inside them, are relevant to the project being scoped.
