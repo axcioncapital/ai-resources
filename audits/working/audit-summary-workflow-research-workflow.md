@@ -1,21 +1,17 @@
 # Section 4 Summary — research-workflow
 
-Date: 2026-05-18 | Protocol v1.3 | Scope: workflows/research-workflow/
+Executed 2026-07-03 | Protocol v1.3 | Scope: workflows/research-workflow/ | Telemetry: NONE (all estimates = structural inferences)
 
-**Total findings:** 18
-- HIGH: 6
-- MEDIUM: 9
-- LOW: 3
+**Total findings: 11** — HIGH 4, MEDIUM 5, LOW 2
 
-**Top 3 findings:**
-1. HIGH — `/run-report` Step 4.0 loads 6 large input categories (chapter drafts, scarcity register, section directives, cluster memos, research extracts, editorial recommendations) into main session and passes content (not paths) to downstream subagents; "context isolation" rationale stated.
-2. HIGH — `/run-report` Step 4.2a per-chapter writer subagent returns "chapter draft content" to main session (>200 line returns plausible, ~20 such subagent calls for a 5-chapter section).
-3. HIGH — `/run-execution` Step 2.3 main session reads ALL raw research reports before delegating to per-session extract subagents (large delegable load).
+**Top 3 (severity-labelled):**
+1. HIGH — run-report St4.2a: `evidence-to-report-writer` returns FULL chapter draft content to main (>200L est.); sibling run-synthesis St2 writes to disk + returns only a path/summary for the same artifact class.
+2. HIGH — `execution-agent` (wired via /verify-chapter St4) returns the full GPT-5/Perplexity response VERBATIM to main (>200L est.) AND writes it to disk — the return duplicates the disk write.
+3. HIGH — large delegable OPERAND reads relayed through main: run-report St4.0 (six categories) + St4.1b re-read; run-analysis St1 (all memos); run-synthesis St1; run-execution St2.3 (all raw reports); produce-architecture Ph2+Ph3 (drafts double-read).
 
-Additional HIGH: `/run-analysis` Step 1 reads all refined cluster memos into main; `/run-execution` Step 2.1b QC redundantly reads all prompts + specs + plan in main; `/run-report` Step 4.1b re-reads Step 4.0's six categories (boundary).
+Other HIGH: H4 — large reference docs (quality-standards 260L, source-class-hierarchy 106L(boundary), known-limits 105L(boundary)) content-passed ×N in run-cluster St2.2 / run-execution St2.1+2.3, where the workflow's own carve-out permits path-passing (run-report/produce-* already do).
+Key MEDIUMs: run-cluster (0 /compact) and run-sufficiency (0 /compact across 5 phases); refinement multiplier >3 + ~7–8 sessions/section BY-DESIGN; skill-content-into-main pervasive; qc-gate Read-only forces all verdicts through main.
+Note: H3/H4 apply the protocol's literal "delegable→HIGH" rule; the isolation-rule rationale is the mechanism, not a severity reducer — flagged for Section 10.
+PASS: strong disk-write discipline; produce-prose-draft/produce-formatting are capped-summary exemplars.
 
-Key MEDIUMs: `/run-cluster` has 0 `/compact` instructions; `/run-report` has only 3 compacts for 13 delegate calls; repeated re-reads of cluster memos / section directives / extracts across stages; refinement multiplier of 8–12 subagent sessions per typical section.
-
-`/produce-prose-draft` is the best-engineered token pattern in the workflow (abs-path subagent reads, output-to-disk, ≤20-line return cap) — not yet adopted across `/run-*` commands.
-
-Full evidence in `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/working/audit-working-notes-workflow-research-workflow.md`. Main session should read the full notes only if a specific finding needs deeper review.
+Full evidence in /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/working/audit-working-notes-workflow-research-workflow.md. Main session should read the full notes only if a specific finding needs deeper review.

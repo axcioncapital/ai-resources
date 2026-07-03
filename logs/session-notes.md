@@ -2,190 +2,6 @@
 
 > Archive: [session-notes-archive-2026-06.md](session-notes-archive-2026-06.md)
 
-## 2026-06-12 — Session S11
-**Mandate:** Close mission promote-rw-canonical (Phase 4 deploy-test via SETUP.md walk, /sync-workflow on positioning-research, checkbox cleanup, /mission close) and flip the now-unblocked improvement-log status entries — done when: deploy-test passes, sync reports in-sync or intentional divergence only, mission closed and archived, log entries flipped, changes committed
-- Out of scope: executing the tripwire propagation to the 11 deployed copies (deprioritized by operator — note only); KB settings pass; claim-permission.template.md disposition; inbox briefs
-- Files in scope: logs/missions/promote-rw-canonical.md, logs/improvement-log.md, workflows/research-workflow/SETUP.md (read-only), plans/2026-06-12-leverage-idea-build-plan.md (added at wrap — leverage-idea design wrap, operator-approved footprint widening)
-- Stop if: deploy-test fails or /sync-workflow shows unintentional divergence — surface before closing the mission
-- Allowed inputs: .claude/commands/mission.md, .claude/commands/sync-workflow.md, audits/risk-checks/2026-06-12-mission-promote-rw-canonical-landing-set.md, CLAUDE.md
-- Required outputs: logs/missions/archive/promote-rw-canonical.md
-- Context pack: output/context-packs/project-20260612-c4f1a/pack.md
-- Mission: promote-rw-canonical
-Close mission promote-rw-canonical (Phase 4 deploy-test + Phase 5 sync/close) + flip the now-unblocked improvement-log status entries. Item 2 (tripwire propagation to 11 copies) deprioritized by operator this session.
-
-### Summary
-Executed prime menu items 1+3 under one mandate: closed mission promote-rw-canonical (Phase 4 deploy-test PASS, /sync-workflow verified, all 7 acceptance assertions + 6 phase threads checked with commit evidence, archived) and flipped the now-unblocked improvement-log statuses (5 flips, all verified against live files and S9/S10 commits before flipping, plus the deferred preamble L9 tier-2 lockstep edit). Committed 6c85829.
-
-### Files Created
-- logs/missions/archive/promote-rw-canonical.md — closed mission contract (force-added past unanchored archive/ gitignore)
-- logs/session-plan-2026-06-12-S11.md — session plan (uncommitted, gitignore-adjacent stray convention)
-- logs/scratchpads/2026-06-12-16-30-scratchpad.md — continuity scratchpad (gitignored)
-- output/deploy-test-scratch-2026-06-12/ — deploy-test scratch copy (gitignored; rm blocked — manual cleanup)
-
-### Files Modified
-- logs/improvement-log.md — 5 status flips + preamble L9 tier-2 edit + deprioritization note + 4-item close-findings entry
-- logs/missions/promote-rw-canonical.md — tombstone stub (rm blocked; safe to delete manually)
-- logs/session-notes.md — S11 header + mandate + this wrap entry
-
-### Decisions Made
-- Sync divergences (6) all classified intentional/explained; down-ports (C6 hook, Check 4) logged as follow-up, NOT applied — out of declared files-in-scope.
-- Mission archive force-added (`git add -f`) past the unanchored `archive/` gitignore; the pattern bug logged as finding (0) rather than editing .gitignore mid-session (structural change, needs its own gate).
-- QC subagent unreachable (1M-credit gate, model override ineffective) → mechanical self-check 8/8 PASS used; commit-block rule N/A (non-architectural change class).
-- Tripwire-propagation named trigger technically FIRED this session (/sync-workflow ran) but execution withheld per operator deprioritization — recorded in the entry.
-
-### Risky actions
-None. rm/mv denials respected (tombstone + ask-operator workarounds); explicit-path staging throughout; no structural class touched; push gated to wrap.
-
-### Next Steps
-- Manual cleanup: delete `logs/missions/promote-rw-canonical.md` (tombstone) and `output/deploy-test-scratch-2026-06-12/`.
-- Gated .gitignore fix: anchor L42 `archive/` → `/archive/` after enumerating nested archive/ dirs (close-findings item 0).
-- SETUP.md Step 1 copy-path fix (close-findings item 1, trivial doc edit).
-- positioning-research down-ports when convenient: friction-log-auto.sh C6 (+ settings PostToolUse wiring) and run-execution.md Check 4 (close-findings items 2–3).
-- Carry-over: KB-scoped pass id-02 (pe-kb-vault missing bypassPermissions); stranded claim-permission.template.md disposition; stale inbox briefs (Friday — now 4 candidates incl. audit-workflow-pipeline.md, workflow-diagnosis.md).
-
-### Open Questions
-None blocking.
-
-## 2026-06-12 — System Owner rebuild go/no-go: STAGED-GO advisory (rounds 1+2)
-
-*(Session ran without /prime — no marker; work landed in the SO project repo.)*
-
-### Summary
-Investigated whether to proceed with the System Owner rebuild framed by the ground-truth pack (2026-06-05). Spot-checked the pack against the live repo (no drift; corpus staleness confirmed; intent doc not in repo), then produced a Function B advisory via the system-owner agent: **STAGED-GO** — Phase 0 corpus hardening before any authority expansion (OP-12). Operator then supplied ~65-idea refinement notes; persisted verbatim and reconciled in a round-2 advisory: verdict stands, four new decision points named, all ideas bucketed A–D with verified full coverage.
-
-### Files Created
-- `projects/axcion-ai-system-owner/output/consultations/consult-2026-06-12-rebuild-go-no-go-round-1.md` — STAGED-GO advisory + main-session addendum (corrections carried forward, operator open items)
-- `projects/axcion-ai-system-owner/references/rebuild-refinement-notes-2026-06-12.md` — operator refinement notes, verbatim, with provenance header
-- `projects/axcion-ai-system-owner/output/consultations/consult-2026-06-12-rebuild-go-no-go-round-2.md` — reconciliation advisory (NEW-1..4, idea buckets)
-- `logs/scratchpads/2026-06-12-17-33-scratchpad.md` — continuity scratchpad
-
-### Files Modified
-None in ai-resources (this entry + scratchpad only).
-
-### Decisions Made
-- Operator settled pack Decision 1: **AI strategy doc is senior** over the intent doc → staged owner, earned permission modes.
-- Operator scope choices via /clarify: full rebuild go/no-go; advisory memo deliverable; spot-check freshness.
-- QC fixes (separate): round-2 bucket coverage gap (15 ideas) + dropped 4.29 restored; two REVISE rounds resolved to final GO.
-
-### Risky actions
-None. (Round-1 memo committed on inline self-QC only — independent qc-reviewer was blocked by the 1M-credit gate at that point; flagged, not a gate that should have hard-fired since the artifact is non-architectural.)
-
-### Next Steps
-- **Operator decides NEW-1** (binding vs advisory owner plans — collides with locked Decision 1; the one blocker before the build session).
-- Independent `/qc-pass` on the round-1 memo in a fresh session (provisional clearance debt).
-- Build session Phase 0 when ready: corpus hardening (system-doc.md + blueprint.md via repo-documentation W2.1) + grounding.md read-map extension, under /risk-check.
-- Operator-only open items: cost envelope per owner invocation; fill-or-retire systems-building-principles.md; commit the intent doc into the SO project references/.
-
-### Open Questions
-- NEW-1 unresolved (operator call).
-
-## 2026-06-12 — Built /blindspot-scan v1 + planning-phase auto-run gate
-
-### Summary
-Investigated an externally proposed adversarial audit command, cut its scope in half against the existing review-command family, and shipped `/blindspot-scan` v1 (3 owned checks: stale dependent artifacts, real-usage fit, prerequisite/capability validity; advisory, inline, verdict-led). Two System Owner advisories shaped the design (15-ideas triage: 4 adopted as one-liners; final pass: SOUND-WITH-FIXES, all 6 findings folded in). Integration investigation concluded: wrap-session nudge (both copies) + a workspace CLAUDE.md planning-phase auto-run gate; prime/session-start/qc-pass wiring rejected.
-
-### Files Created
-- `.claude/commands/blindspot-scan.md` — the v1 command
-- `audits/risk-checks/2026-06-12-add-new-canonical-slash-command-blindspot-scan-ai-resources.md` — plan-time gate (GO)
-- `audits/risk-checks/2026-06-12-add-new-canonical-slash-command-blindspot-scan-ai-resources-2.md` — end-time gate (GO, no drift)
-- `../projects/axcion-ai-system-owner/output/consultations/consult-2026-06-12-blindspot-scan-15-ideas.md` — SO advisory 1
-- `../projects/axcion-ai-system-owner/output/consultations/consult-2026-06-12-blindspot-scan-final-pass.md` — SO advisory 2
-- `logs/scratchpads/2026-06-12-17-45-scratchpad.md` — continuity scratchpad
-
-### Files Modified
-- `.claude/commands/wrap-session.md` — Step 12a blind-spot nudge (paired contract with workspace copy)
-- `../.claude/commands/wrap-session.md` — Step 4.6 paired nudge (workspace repo)
-- `../CLAUDE.md` — NEW "## Blind-Spot Scan Gate" section: auto-run post-plan-approval/pre-implementation (workspace repo; QC GO; committed in this wrap)
-
-### Decisions Made
-- Build at half the proposed scope: 3 gap categories only; intent-mismatch/scope-expansion/quality routed to existing commands.
-- Integration: wrap-session nudge + CLAUDE.md planning-phase auto-run; rejected prime/session-start (wrong phase), qc-pass (over-fires), modes/library/log (SO-parked v2).
-- Operator-directed: scan must fire automatically, especially at planning phase ("I won't remember manually") → CLAUDE.md gate, once per plan approval.
-- QC fixes: harness-rules.md workspace-root qualifier; Check A per-checkout grep + symlink enumeration; CLAUDE.md gate re-fire guard.
-
-### Risky actions
-Same-file commit sweep: both wrap-session commits shipped a concurrent session's uncommitted Step 6.4/4.4 Session Value Audit extension (same files as the nudge insertions; explicit-path staging cannot split same-file edits). Disclosed via amended commit messages; recurrence of the 2026-05-27 class.
-
-### Next Steps
-- RISK-CHECK-PENDING: end-time /risk-check the workspace CLAUDE.md "Blind-Spot Scan Gate" section (QC'd GO; subagent gate fired at wrap), then commit it in the workspace repo.
-- Complete v1 verification: one `/blindspot-scan` run on a real, unconstructed work package (the new gate/nudge will trigger it naturally).
-- Consider logging the same-file sweep to friction-log via `/improve` (structural gap: staging discipline cannot protect same-file concurrent edits).
-- SO-parked v2 ideas live in `consult-2026-06-12-blindspot-scan-15-ideas.md`; revisit only after v1 proves itself (1 real catch/week, else retire).
-
-### Open Questions
-None.
-
-## 2026-06-12 — /leverage-idea command design (plan approved, implementation deferred)
-
-### Summary
-Design session for a new `/leverage-idea` command: operator pastes a messy idea dump (multi-page ChatGPT export) → distilled Idea Brief → workspace-evidence + repo-surface investigation (one subagent) → 2–4 distinct leverage options → WORTH-DOING/MARGINAL/NOT-WORTH-DOING verdict → implementation plan or PARK. Full review chain completed: /clarify → Explore + Plan design → SO advisory via /consult (WORTH-DOING; SO-1/2/3 + SO-N1/N2 folded in) → /refinement-deep (QC GO + REFINE; 4 triage fixes applied, 3 parked) → final /qc-pass GO with no findings. Plan approved; implementation deferred to a fresh session by operator directive.
-
-### Files Created
-- `plans/2026-06-12-leverage-idea-build-plan.md` — approved build plan, retained in-repo for the deferred build session (EP-0 marked done)
-- `logs/scratchpads/2026-06-12-18-22-scratchpad.md` — continuity scratchpad with resume instructions
-- `../projects/axcion-ai-system-owner/output/consultations/consult-2026-06-12-leverage-idea-command.md` — SO advisory relocated to canonical path (EP-0; plan mode had blocked the agent's write) — outside this repo, committed separately
-- `~/.claude/plans/let-s-build-a-process-witty-sparkle.md` — plan-mode original (outside repo)
-
-### Files Modified
-- None in this repo (pre-existing dirty files from earlier sessions today were left untouched)
-
-### Decisions Made
-- Build `/leverage-idea` as a NEW canonical command rather than extending /request-skill or /implementation-triage (SO-validated: extension would invert their contracts).
-- Implementation deferred to a fresh session; plan retained in-repo; EP-0 (advisory relocation) executed at wrap.
-- Triage dispositions: applied label-scheme unification, EP-0 rename, notes-file headings, mkdir fallback; parked 25-vs-30 cap clause, Gates dedup, cosmetic asides.
-
-### Risky actions
-None.
-
-### Next Steps
-- Fresh session: /prime → execute `plans/2026-06-12-leverage-idea-build-plan.md` (EP-0 done — verify and skip).
-- Build-session gates: /blindspot-scan post-approval → write command → /risk-check (class: new command) + /qc-pass → toolkit-relationship.md § 5 row in same commit.
-- First live test: operator supplies a real example note dump.
-
-### Open Questions
-None.
-
-## 2026-06-12 — Session S12
-**Mandate:** Resume the deferred cleanup-worktree QC chain (QC pass 1 → triage → revision → QC pass 2 or quick-tier skip on the saved cleanup plan), then execute the 7 commit batches across ai-resources and workspace root — done when: QC chain complete, all 7 commits landed and filesystem-verified, QC-PENDING scratchpad deleted
-- Out of scope: root CLAUDE.md Blind-Spot Scan Gate commit (separate /risk-check follow-up); re-investigating the worktree (plan Section 6 guard G-0 re-checks git status drift at execution time)
-- Files in scope: ai-resources: .claude/commands/friday-act.md, .claude/commands/friday-checkup.md, audits/risk-checks/2026-06-12-extend-wrap-session-step-6-4-outcome-check-subagent-brief.md, workflows/research-workflow/reference/claim-permission.template.md, audits/risk-checks/2026-06-09-promote-3-research-methodology-deltas-from-project-research.md, logs/session-plan-2026-06-12-S1.md, logs/session-plan-2026-06-12-S3.md, logs/session-plan-2026-06-12-S4.md, logs/session-plan-2026-06-12-S11.md, logs/session-notes.md, logs/session-plan-2026-06-12-S12.md, logs/scratchpads/2026-06-12-18-35-scratchpad.md (delete at teardown); workspace root: the 12 .claude/commands/*.md symlinks (deploy-kb, drift-check, explain, fix-symlinks, friday-journal, grill-me, handoff, log-sweep, monday-prep, open-items, resolve-repo-problem, resolve), .claude/commands/harness-start.md, harness/logs/session-plan.md, harness/logs/innovation-registry.md, harness/logs/scratchpads/2026-05-25-15-30-scratchpad.md, harness/logs/scratchpads/2026-05-25-17-00-scratchpad.md, harness/logs/scratchpads/2026-05-25-19-15-scratchpad.md, harness/reviews/harness-review-2026-05-25.md, logs/innovation-registry.md, reports/child-cycle-landing-diagnostic-2026-05-28.md, .gitignore; plus QC/triage artifacts under ~/.claude/plans/sleepy-finding-russell.md*
-- Stop if: QC subagent launch fails on the 1M-context credit gate again — pause and ask the operator to /model switch
-
-Resume deferred cleanup-worktree QC chain: independent QC on the saved cleanup plan (sleepy-finding-russell.md), triage, revision, second QC (or quick-tier skip), then execute the 7 commit batches across ai-resources and workspace root. Root CLAUDE.md stays uncommitted (separate risk-check follow-up).
-
-### Summary
-Resumed and completed the deferred cleanup-worktree QC chain from the 2026-06-12-18-35 QC-PENDING scratchpad. QC pass 1 returned GO (1 IMPORTANT + 3 MINOR) — the 1M-credit subagent gate did NOT fire this session despite the [1m] model. Triage classified the IMPORTANT as should-fix (B1 commit-body symlink disclosure); revision applied it with zero new file-content claims, so the 2nd QC was skipped per the quick-tier rule (0 hard gates, 0 new claims). All 7 commits executed with guards (G-0, G-A1, G-B1, G-B4) passing and post-commit filesystem verification per execution-protocol § 12. QC-PENDING scratchpad deleted — commit-block drained.
-
-### Files Created
-- `logs/session-plan-2026-06-12-S12.md` — this session's plan
-- `logs/scratchpads/2026-06-12-20-15-scratchpad.md` — wrap continuity scratchpad (gitignored)
-- `~/.claude/plans/sleepy-finding-russell.md.qc-pass-1.md` — QC pass 1 report (subagent-written, outside repo)
-- `~/.claude/plans/sleepy-finding-russell.md.triage.md` — triage report (persisted by main session; agent toolset lacked Write, outside repo)
-
-### Files Modified
-- `~/.claude/plans/sleepy-finding-russell.md` — revision 1 (B1 disclosure line + Section 8 history + quick-tier skip record, outside repo)
-- `logs/session-notes.md` — S12 header, mandate, this note
-- Committed (cleanup batches): ai-resources 42af5ed / 5829cce / 264988e; workspace root 18af50e / 28bf909 / aa17de9 / ef0bf20
-- Deleted: `logs/scratchpads/2026-06-12-18-35-scratchpad.md` (QC-PENDING scratchpad, gitignored — teardown per its own resume instruction)
-
-### Decisions Made
-- Triage F1 disposition: commit-body disclosure line applied; triage's first-class alternative (durable caveat in root .gitignore comment / setup doc) NOT adopted mid-cleanup — scope discipline; surfaced as follow-up.
-- 2nd QC skipped per quick-tier rule (rule-based, not operator-requested): Section 4 hard-gate count 0, revision new file-content claims 0.
-- Foreign-staging tripwire fired on first commit (Files in scope was `(inferred)` + live concurrent marker) — resolved per the hook's own prescription by declaring the concrete footprint in the mandate, then retrying. Working as designed.
-- End-time /risk-check skipped per the recorded skip rule: plan-time gates covered the change set (full QC chain on the plan; A1/A2 carried their own committed risk-check records), commits already shipped, drift bounded to one commit-message line. Documented here per the skip rule.
-
-### Risky actions
-None — zero hard gates in the plan (no delete/untrack/convert); the only deletion was the QC-PENDING scratchpad, gitignored and deleted on its own recorded instruction.
-
-### Next Steps
-- Run `/risk-check` on root CLAUDE.md "Blind-Spot Scan Gate" section (still uncommitted, RISK-CHECK-PENDING), then commit on GO as `docs: CLAUDE.md — Blind-Spot Scan Gate (post-plan auto-run)`.
-- Build `/leverage-idea` from `plans/2026-06-12-leverage-idea-build-plan.md` (carryover from the design session).
-- Fix the triage-reviewer (and session-feedback-collector) agent toolsets so they can write their own reports — third occurrence of the subagent-write-contract class (usage-log 2026-06-10 S3 recommendation still unshipped).
-- Optional (triage suggestion): durable dangling-symlink caveat in root .gitignore comment or setup doc.
-
-### Open Questions
-None.
-
 ## 2026-06-29 — Evaluated "Requirements Gathering Consultant" idea → approved /requirements-pack build plan (build deferred)
 
 ### Summary
@@ -519,3 +335,63 @@ Near-miss: the `project-planning/output/` symlink caused a first `git add` to fa
 ### Open Questions
 - Per-invocation cost ceiling — deferred watch item (unblocked S3 after the B9 cut); set before B9 is built post-v2.
 - `systems-building-principles.md` slot still empty (`status: TBD`) — shipping v2 vault-grounded.
+
+## 2026-07-03 — Quarterly /friday-checkup (concurrent-collision recovery; ai-resources sole owner)
+### Summary
+Ran the quarterly `/friday-checkup` across ai-resources + workspace + 6 selected projects. Mid-run, detected a **live concurrent `/friday-checkup`** in the same checkout that had already committed two audit artifacts; the operator stopped it and this session resumed as sole owner, folding those two committed artifacts (claude-md-audit for axcion-ai-system-redesign + the workspace-wide permission-sweep) into the consolidated report rather than redoing them. Completed audit-repo (ai-resources GREEN), improve (11 new findings logged across 4 scopes), coach (2 hub scopes; 6 project coaches deferred per operator trim), 6 project claude-md audits (systemic template-duplication pattern found), token-audit (ai-resources only; workspace deferred per operator trim; 4 HIGH research-workflow content-relays), log-sweep (inline inventory), W2.4 report, and the Stage-5 anchor check (PASS). Consolidated report written; no fixes applied (diagnostic cadence).
+
+### Files Created
+- `audits/friday-checkup-2026-07-03.md` (consolidated report — the deliverable)
+- `audits/repo-health-ai-resources-2026-07-03.md` (audit-repo snapshot)
+- `audits/token-audit-2026-07-03-ai-resources.md` (Sections 0–10; 4 HIGH research-workflow relays)
+- `audits/claude-md-audit-2026-07-03-project-{axcion-copy-factory,interpersonal-communication,marketing-positioning,nordic-pe-screening-project,obsidian-pe-kb,project-planning}.md` (6 project CLAUDE.md audits)
+- `projects/repo-documentation/output/phase-2/w2-4-improvements-2026-07-03.md` (W2.4)
+- Working notes under `audits/working/` (token-audit sections 2/4/6 summaries + notes)
+
+### Files Modified
+- `logs/improvement-log.md` (+4 findings); workspace `../logs/improvement-log.md` (+3); `projects/marketing-positioning/logs/improvement-log.md` (+2); `projects/project-planning/logs/improvement-log.md` (+2)
+- `logs/coaching-log.md` (+1 entry); workspace `../logs/coaching-log.md` (+1)
+- `logs/session-notes.md` (this note); `logs/session-notes-archive-2026-06.md` (archive rotation: 5 entries archived, 10 kept)
+- `reports/repo-health-report.md` (+ archived prior to `reports/repo-health-report-2026-06-12.md`)
+- `logs/decisions.md` (this wrap)
+
+### Decisions Made
+- **Operator trims (efficiency / credit budget):** token-audit limited to ai-resources + workspace, then workspace further deferred after ai-resources token-audit strained (budget evidence); `/coach` limited to the 2 hub scopes, 6 project coaches deferred. Both logged as follow-ups.
+- **Concurrent-collision handling:** surfaced the live second `/friday-checkup`, operator stopped it, resumed as sole owner; folded its 2 committed artifacts into the report; reconciled Check F (permission-sweep) as satisfied by the concurrent commit rather than re-running.
+- **Check substitutions (budget):** log-sweep run as an inline line-count inventory (not per-scope auditor fan-out); findings-extractor skipped (findings already in main-session context); `/compact` context-checkpoint noted-not-run (no `/compact` tool in this harness).
+- **Token-audit Section 4 recovery:** a slow async Section-4 subagent (~12 min) was briefly misjudged as stalled and TaskStop'd; it then completed with real findings, which were used — the premature-stall interim conclusion is documented in the report's Section 10.
+
+### Outcome
+COMPLETION: DELIVERED
+EXECUTION: ACCEPTABLE — premature TaskStop of a merely-slow (~12 min) Section-4 subagent, self-caught with no data lost, documented in Section 10 + risky-actions; near-commit of foreign concurrent-session content, contained by explicit-path staging.
+What was asked but not done: token-audit workspace + 6 project coaches (operator-trimmed → follow-ups); quarterly repo-dd deep + analyze-workflow (deferred to dedicated sessions).
+Better path: verify an async subagent against its completion signal before declaring it stalled; pre-scope in-vs-deferred heavy checks at run start rather than mid-run.
+Confidence: low (no formal mandate; graded against fallback + verified artifacts).
+
+### Session Value Audit — 80/20 Review
+TYPE: C — Useful Diagnosis: scheduled review-only cadence; findings direct next week's work, no fixes applied.
+VALUE: exec=L decision=H risk=H compound=M optime=M
+SCORE: 8/10 — clean high-value diagnostic: strong risk finds + a prioritized 18-item backlog; docked for the async-stall friction and scoped-down (non-full-quarterly) coverage.
+GATE: PASSED — material-findings: 4 CRITICAL live permission-prompt gaps + broken workspace-root remote + a systemic project-CLAUDE.md template root-cause; well above a no-op audit.
+OPPORTUNITY: Correct session — the higher-value adjacent use (/friday-act applying the CRITICAL fixes) is correctly downstream of this diagnostic run.
+DECISION: Repeat with constraints — sound cadence; pre-scope heavy checks up front and carry the async-stall + concurrent-collision-detection lessons forward.
+LESSON: A slow async subagent is not a stalled one — verify its completion signal before TaskStop.
+RULE: No rule candidate. (The async-stall lesson is being filed to friction-log this wrap; dedupe rather than double-file.)
+
+### Risky actions
+Nearly committed foreign concurrent-session content — contained: (1) the live concurrent `/friday-checkup` had uncommitted shared-log writes intermixed with mine; verified my appends survived and staged only my own files by explicit path; (2) the working tree still holds a THIRD workstream's uncommitted `reconcile-*` command files (docs/reconcile-*.md ×4, agent-tier-table.md, innovation-registry.md, a reconcile risk-check) — deliberately excluded from this commit. Also TaskStop'd a slow subagent later found to be merely slow, not stalled (no data lost).
+
+### Session Assessment
+_Feedback collection run manually (not via `session-feedback-collector`) to avoid the collector's documented destructive-overwrite hazard against this session's uncommitted improvement-log appends — surfaced deviation._
+- **2 friction events routed to `friction-log.md`:** (1) concurrent-session detection blind to non-/prime session-start paths (recurrence of the 2026-06-12 per-id-marker root class → dedupe, don't double-file); (2) slow async subagent misjudged as stalled → premature TaskStop.
+- **Safety signal (guardrail-relevant, med):** a live concurrent session committing to shared ai-resources went undetected by both automated guards — the collision was caught only by manual observation. The per-id-marker-on-non-/prime-paths fix is the structural close.
+- No new improvement-log entry filed by this step (the 11 checkup findings are already logged; the concurrent-detection fix is an existing improvement-log item).
+
+### Next Steps
+- Run `/friday-act` to triage the 18 tactical follow-ups (start with the 4 CRITICAL permission-prompt fixes + the systemic project-CLAUDE.md template fix).
+- Run `/resolve-improvement-log` to archive resolved entries.
+- Deferred (dedicated sessions): `/token-audit workspace`; `/coach` for the 6 project scopes; research-workflow content-relay optimization (4 HIGH); re-run token-audit Section 4 synchronously if a multi-workflow result is wanted.
+- The `reconcile-*` command work in the tree belongs to a separate session — commit it from there, not from a checkup commit.
+
+### Open Questions
+None material. (Two friction items to be logged this wrap: the concurrent-collision detection gap and the async-stall misread.)

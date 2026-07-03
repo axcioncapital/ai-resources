@@ -182,3 +182,18 @@ Coaching feedback captured via `/coach`. Newest entries at the bottom.
 **The One Thing:** Before delegating a wrap-time append to the `session-feedback-collector`, confirm it runs append-only — it destructively overwrote a shared log twice (improvement-log S5, friction-log S1 06-10); verify the log against HEAD after each wrap until the hardening entry lands.
 **Prior recommendation status:** not behaviorally acted on (same-checkout entanglement recurred 06-09 S3/S4), but the collision class was structurally closed via the Fix 1/2 + P1–P4 campaign now wired at user level.
 **Promotion candidates:** 1 — decisions.md alternatives-considered rigor (held 9+ consecutive cycles; graduate to a decisions.md template field via /improve).
+
+### 2026-07-03
+**Coverage:** 14 sessions (2026-06-12 → 2026-07-01)
+
+| Dimension | Rating | Trend |
+|-----------|--------|-------|
+| Iteration Efficiency | Healthy | → |
+| Decision Patterns | Strong | ↑ |
+| QC Disposition | Healthy | → |
+| Delegation Effectiveness | Watch | → |
+| Workflow Evolution | Watch | ↔ |
+
+**The One Thing:** Shipping capabilities faster than adopting them — before greenlighting any new-command build, make its invocation path a plan done-condition (name the registered pipeline intake that will call it). If the only way it runs is you remembering it, wire it or defer it; don't ship a memory-dependent orphan (e.g. /tech-consult).
+**Prior recommendation status:** Partially acted on (06-12 feedback-collector append-only held behaviorally; collector/triage-reviewer toolset hardening still unshipped).
+**Promotion candidates:** none this cycle

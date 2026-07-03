@@ -277,3 +277,11 @@
 - **QC cycles:** 1 (independent qc-reviewer → GO, one MINOR confidence-overstatement fixed)
 - **Gates:** 2 (2 changed) — supplementary-research:changed (clarify AskUserQuestion: deliverable shape / collision classes / guardrail tier), content-review:changed (QC MINOR fix applied)
 - **Mandate fields:** none (no /session-start this session — /clarify-first)
+
+### 2026-07-03 — Quarterly /friday-checkup (concurrent-collision recovery)
+- **Commands used:** /prime, /friday-checkup, /wrap-session (internal cadence: /audit-repo, /improve, /coach, /audit-claude-md, /token-audit, /log-sweep, W2.4, anchor-check)
+- **Iterations:** 0 (no drafting)
+- **Decisions logged:** 1 (decisions.md — collision recovery + scope trims)
+- **QC cycles:** 0 (diagnostic cadence; independent outcome-check ran at wrap → DELIVERED/ACCEPTABLE 8/10)
+- **Gates:** 7 (5 changed) — recovery-choice:changed, tier:confirmed, scope-select:changed, long-run-trim:changed, coach-scope:changed, collision-resolution:changed, wrap-preflight:confirmed
+- **Mandate fields:** none (no /session-start this session — ran /friday-checkup directly)

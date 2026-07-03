@@ -1,37 +1,29 @@
-# Section 6: File Handling Patterns — Summary
+# Section 6 Summary: File Handling Patterns
 
-**Audit date:** 2026-05-25  
-**Scope:** ai-resources/
+**Scope:** ai-resources  
+**Date:** 2026-07-03
 
-## Findings Summary
+## Total Findings: 27
 
-**Total findings:** 3 (all MEDIUM severity)
+- **HIGH:** 5 findings
+- **MEDIUM:** 22 findings
+- **LOW:** 0 findings
 
-**Breakdown:**
-- MEDIUM: 3
-- LOW: 0
-- HIGH: 0
+## Deny-Rule Coverage Status: MEDIUM
+
+- **Covered directories:** archive/, inbox/archive/, **/deprecated/, **/old/, logs/*-archive-*.md patterns
+- **Uncovered expected directories:** 4 (audits/, reports/, output/, logs active files)
 
 ## Top 3 Findings
 
-1. **audits/ directory — missing deny coverage for ~30 historical reports** (MEDIUM)
-   - Files like token-audit-2026-04-18-ai-resources.md (10381 words) unprotected
-   - Risk: accidental reads waste 5–12K tokens/session
-   - Recommendation: Add granular date-stamped deny rules (e.g., `Read(audits/token-audit-202604-*.md)`)
+1. **HIGH — audits/working/ subagent scratch notes not protected** (3 files, 19.6 KB): `log-sweep-ai-resources-2026-06-12.md` (7767 words), `toctou-phase-2-and-3-atomic-spec.md` (6108 words), others. Temporary working files from prior audit runs should not be readable by subsequent sessions.
 
-2. **reports/ directory — missing deny coverage for ~8 historical reports** (MEDIUM)
-   - Risk: 5–10K tokens/session if historical reports accidentally read
-   - Recommendation: Add date-stamped deny rules for historical variants
+2. **HIGH — output/ directory (114 files, 760 KB) with no deny-rule protection**: Contains 18 context pack directories and full test project scaffold. No protection for growing generated outputs.
 
-3. **logs/usage-log-archive.md — NOT covered by deny rule** (MEDIUM)
-   - 6472 words unprotected; should be denied but pattern `Read(logs/*-archive-*.md)` doesn't match
-   - Risk: 8K tokens wasted if read during exploration
-   - Recommendation: Expand logs pattern to `Read(logs/*archive*.md)` or add explicit `Read(logs/usage-log-archive.md)`
-
-## Full Evidence
-
-Full evidence in `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/working/audit-working-notes-file-handling.md`. Main session should read the full notes only if a specific finding needs deeper review.
+3. **MEDIUM — Active logs in logs/ directory not covered by deny rules** (56,725 words across 5 files): improvement-log.md (15137 words), decisions.md (13754 words), usage-log.md (12869 words), friction-log.md (8185 words), session-notes.md (6780 words). Asymmetric coverage — archive variants denied but active versions accumulate unprotected.
 
 ---
 
-**Section 6 complete.** 3 MEDIUM findings. Re-used deny-rule finding from preflight (MEDIUM). Scanned top 20+ large files; identified 3 actionable gaps in deny coverage.
+**Full evidence in:** `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/working/audit-working-notes-file-handling.md`
+
+Main session should read the full notes only if a specific finding needs deeper review.

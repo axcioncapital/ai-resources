@@ -581,3 +581,35 @@
 - **Capability/deployment-surface pre-flight for fix-plans (~10–20k tokens/recurrence).** This audit's verdict is downstream of a fix campaign that under-scoped its deployment surface. An "enumerate every settings layer the fix must touch (user / workspace / ai-resources / all N project repos) before declaring done" check at fix-plan intake would prevent the coverage-gap class. Lower frequency, large per-occurrence.
 - **Codify "verify display artifact vs file defect before logging friction" (~1–3k tokens/session when applicable).** Make the file-first check a one-line intake rule in friction-log / `/note` guidance.
 - **Pin the audit-memo path in the umbrella PENDING improvement-log entry (~0 tokens/fix).** Prevents a future build session re-running the ~15-repo grep inventory. (Already done — the entry names the audit doc as authoritative.)
+
+## 2026-07-03 — Quarterly /friday-checkup (ai-resources + workspace + 6 projects) with mid-run concurrent-session collision recovery
+
+### 2026-07-03 | Acceptable
+
+**Task:** Quarterly `/friday-checkup` across ai-resources + workspace + 6 projects (audit-repo GREEN, `/improve` 11 findings, `/coach` 2 hubs, 6 project CLAUDE.md audits, token-audit ai-resources-only, inline log-sweep, W2.4 report, Stage-5 anchor PASS), with a live concurrent-`/friday-checkup` collision folded in mid-run. Diagnostic-only — no fixes applied. Independent outcome-check: DELIVERED / EXECUTION ACCEPTABLE (8/10).
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | not reported (≥7 AskUserQuestion gates listed: recovery/tier/scope/trim/coach-scope/collision/preflight) |
+| Files read | not reported — heavy (6 project CLAUDE.mds, logs, prior reports, one shared claude-md guidance file); re-reads: 0 flagged |
+| Files written/edited | ~10+ (approx; consolidated checkup report, improvement-log ×11 findings, session-notes, usage-log, subagent working-notes; diagnostic-only — no fixes) |
+| Tool calls | not reported — heavy (many Bash git cross-checks / log inventories / guards, Reads, Edits, ≥7 AskUserQuestion) |
+| Subagents | ~16 (1 repo-health lead → 7 auditors, 7 improvement-analysts, 2 collaboration-coaches, 6 claude-md-auditors, 1 token-audit orchestrator + sub-auditors, 1 outcome-check, 1 telemetry) |
+| Rework cycles | 1 substantive (premature subagent TaskStop, self-corrected) + 2 minor (concurrent-collision fold, Edit-before-Read retry); 0 data-loss |
+
+**Findings:**
+- **Premature TaskStop of a slow-but-healthy subagent — Moderate (Tool overhead).** A token-audit Section-4 auditor ran ~12 min, was misjudged as stalled and TaskStop'd, then completed with real findings. No data lost, but the intervention was wasted and risked killing a healthy subagent mid-write — the same shared-write / subagent-contract data-loss class flagged in the S1/S3 entries. Lever: document expected runtime for known-slow auditors so a long-runner isn't misread as stalled.
+- **Concurrent-session collision handled by folding, not redoing — positive (efficiency).** The operator stopped the other `/friday-checkup`; this session resumed as sole owner and folded in its 2 committed artifacts (permission-sweep + a claude-md-audit) rather than re-running them. Correct recovery; avoided ~2 duplicated audit reruns. Recovery cost was contained (1 AskUserQuestion + git cross-checks).
+- **Fan-out well-parallelized and context-disciplined — positive.** ~16 subagents mostly ran as parallel same-type batches (7 auditors, 7 analysts, 6 claude-md-auditors, 2 coaches), each writing notes to disk and returning summaries per the subagent contract — so context stayed bounded despite the scale.
+- **Operator scope trims actively managed cost — positive.** Deferred 6 project coaches and the workspace token-audit, and skipped the findings-extractor (data already in context), to hold the documented 1M-credit exhaustion risk. Reused one shared claude-md guidance file across all 6 project audits instead of reloading it per-agent.
+- **Edit-before-Read retry on session-notes after a bash append — Minor (Tool overhead).** One trivial tool-order retry; no cost beyond the retry.
+- **Trend vs last 3 entries (S6 Efficient / S1 Acceptable / S3-cont Efficient):** slight regression to Acceptable, but proportional to scale — a quarterly fan-out of ~16 subagents plus an external collision, not a discipline slip; the two Moderate findings are contained and self-corrected.
+
+**Recommendation:** Document an expected-runtime band for known-slow fan-out subagents (token-audit Section-4 is the recurring example, ~12 min) — e.g., a one-line "do not TaskStop a Section-4 / mechanical auditor before ~15 min absent a hard error" note in the token-audit / fan-out orchestration guidance. Highest-leverage because it prevents both the wasted intervention and the real risk (killing a healthy subagent mid-write, an unrecoverable data-loss class the log already tracks in S1/S3).
+
+**Estimated savings:** A premature-TaskStop event costs ~2–4k tokens (monitoring turns + the TaskStop call + re-verifying the subagent actually finished). Frequency ~1 per 3–4 substantive fan-out sessions with a known-slow auditor → ~6–12k over a 10–20 session horizon. Token saving is modest; the dominant value is loss-prevention — a TaskStop that lands mid-write on an append-only notes file is unrecoverable from context. Order-of-magnitude only.
+
+**Additional levers (ROI-ranked):**
+- **Codify the concurrent-collision "fold, don't redo" recovery step (~20–40k tokens/collision).** This session avoided re-running 2 committed audit artifacts by folding the stopped session's commits. Making "on collision recovery, inventory the other session's committed artifacts and fold rather than re-run" an explicit `/friday-checkup` (and parallel-sessions-playbook) recovery step would repeat this saving deterministically. Largest per-occurrence, but low frequency — collisions are rare.
+- **Shared-guidance-file reuse across parallel same-type auditors (~3–6k tokens/fan-out).** One claude-md guidance file was reused across 6 auditors instead of each reloading it. Codifying "hand parallel same-type agents a single shared reference path, not per-agent inline copies" as a fan-out orchestration default generalizes to every multi-auditor command. Moderate frequency, moderate per-occurrence.
+- **Operator scope-trim as a first-class cost lever (~10–30k tokens/large session).** The deferrals (6 project coaches, workspace token-audit, findings-extractor skip) held a real 1M-credit exhaustion risk. Surfacing a "trimmable scope" menu at fan-out planning time (before spawning) rather than mid-run would let the operator trim before the tokens are spent. Broad applicability; savings scale with session size.
