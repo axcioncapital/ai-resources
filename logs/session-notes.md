@@ -443,3 +443,55 @@ Feedback collection skipped per preflight.
 
 ### Open Questions
 None blocking.
+
+## 2026-07-03 — Session S4
+**Mandate:** Fix 4 backlog items from /open-items + /reconcile-backlog — (1) documented subagent-spawn fallback for /risk-check, /qc-pass, /refinement-pass when the named agent type is unresolved from a project session; (2) self-waived-/risk-check carve-out (or confirm-before-skip rule) in docs/audit-discipline.md § Risk-check change classes; (3) /reconcile pointer line in the new-project CLAUDE.md template fragment; (4) fix the stale copy path in workflows/research-workflow/SETUP.md — done when: all 4 fixes are applied to their target files, the structural edits clear /risk-check + independent /qc-pass, and the changes are committed.
+- Out of scope: the ~58 other still-open backlog items; the LIKELY-DONE system-owner grounding-corpus item (needs operator verification, not a fix)
+- Files in scope: .claude/commands/risk-check.md, .claude/commands/qc-pass.md, .claude/commands/refinement-pass.md, docs/audit-discipline.md, templates/project-claude-md/ (fragment), workflows/research-workflow/SETUP.md
+- Stop if: any structural item's /risk-check returns NO-GO or RECONSIDER — pause and surface before landing that item
+
+Fix 4 backlog items surfaced by /open-items + /reconcile-backlog: (1) canonical-command subagent-spawn fallback (/risk-check, /qc-pass, /refinement-pass); (2) self-waived-/risk-check carve-out in docs/audit-discipline.md; (3) /reconcile pointer in the new-project CLAUDE.md template fragment; (4) research-workflow SETUP.md stale copy path.
+
+## 2026-07-03 — Session S5
+**Mandate:** System Owner v2 build kickoff — resolve the 12-piece control pack into a per-unit plan, complete build stage S0 (B14 vault refresh + baseline capture), wire the R1 mitigation, and verify/close the 2026-06-02 grounding-corpus backlog entry — done when: per-unit plan on disk; both vault docs refreshed and baseline captured with structural edits cleared /risk-check + independent /qc-pass and committed (pathspec-scoped); 2026-06-02 entry verified, part-2 check landed, status flipped
+- Out of scope: build stages S1–S4 (S3 gated on the B4 write-scope grant); pieces B9/B11/B12 (cut by Reduce Scope); the parallel axcion-ai-system-redesign design work
+- Files in scope: projects/repo-documentation/vault/architecture/system-doc.md, projects/repo-documentation/vault/architecture/blueprint.md, .claude/commands/consult.md, .claude/agents/system-owner.md, logs/improvement-log.md, projects/axcion-ai-system-redesign/inputs/ (+ baseline-capture artifact resolved at plan time)
+- Stop if: any /risk-check returns NO-GO or RECONSIDER on a structural edit; anything requires the B4 write-scope grant this session
+- Allowed inputs: projects/project-planning/output/system-owner-v2/ (control pack + QC verdict + synthesis + doc-architecture-map), projects/axcion-ai-system-owner/CLAUDE.md, projects/axcion-ai-system-owner/references/, projects/axcion-ai-system-owner/output/system-owner-rebuild-ground-truth-2026-06-05.md, projects/strategic-os/ai-strategy/ai-strategy-governing-document.md, /Users/patrik.lindeberg/.claude/plans/make-a-plan-for-sequential-squirrel.md, ai-resources/CLAUDE.md, CLAUDE.md, ai-resources/logs/improvement-log.md
+- Context pack: output/context-packs/project-20260703-8a3f1/pack.md
+
+System Owner v2 build — begin executing the 2026-07-03 control pack (Reduce Scope, 12 pieces): per-unit plan + build stage S0 (B14 vault refresh + baseline capture), plus bundled SO-related backlog item: verify/close the 2026-06-02 grounding-corpus entry (restore-verification + pre-consult grounding existence check).
+
+## 2026-07-03 — Session S6
+
+**Mandate:** Small-fix batch session (operator: "as much as possible, high-to-medium small fixes, ~10-15, triage first" + mid-session directive: Friday cadence surfaces open items). Ran /open-items full, triaged to 17 fixes in 3 groups, blindspot-scan PROCEED-WITH-CONSTRAINTS, reused morning risk-check PWC (subagent-fallback/carveout/reconcile-pointer envelope) with all 6 mitigations + SO points applied, consolidated /qc-pass GO. Registered late (session started via /open-items, no /prime) — this block + per-id marker written at commit time per staging-guard remediation.
+
+- Files in scope: logs/friction-log.md; logs/improvement-log.md; logs/session-notes.md; .claude/commands/friday-checkup.md; .claude/commands/friday-journal.md; .claude/commands/graduate-resource.md; .claude/commands/qc-pass.md; .claude/commands/refinement-deep.md; .claude/commands/refinement-pass.md; .claude/commands/resolve-improvement-log.md; .claude/commands/risk-check.md; .claude/commands/wrap-session.md; docs/audit-discipline.md; templates/project-claude-md/header.md; workflows/research-workflow/SETUP.md; workflows/research-workflow/reference/source-class-hierarchy.template.md; logs/decisions.md
+
+### Summary
+Small-fix batch session against the /open-items backlog. Triaged the report (58 STILL-OPEN improvement-log entries + 24 open friction + 5 inbox briefs), verified candidates against live files first, then shipped 18 fixes in 3 groups: verify-and-close (8 friction Resolved stamps + 2 already-done improvement-log closures), 9 small direct fixes, and 4 gated guardrail fixes (reusing the morning S4-planned risk-check PWC envelope with all 6 mitigations + SO advisory points applied). Consolidated qc-reviewer pass: GO. Operator directive fulfilled: /friday-checkup Step 6 now emits [OPEN-ITEM] follow-ups feeding /friday-act.
+
+### Files Created
+- None tracked (continuity scratchpad + per-id marker are gitignored working files).
+
+### Files Modified
+- ai-resources: logs/friction-log.md, logs/improvement-log.md (commit 525bc5a); .claude/commands/{risk-check,qc-pass,refinement-pass,refinement-deep,friday-journal,graduate-resource,resolve-improvement-log,wrap-session,friday-checkup}.md, docs/audit-discipline.md, templates/project-claude-md/header.md, workflows/research-workflow/SETUP.md, workflows/research-workflow/reference/source-class-hierarchy.template.md + morning risk-check report committed alongside (commit e0a821d); logs/session-notes.md + logs/decisions.md (this wrap commit).
+- workspace root: .claude/commands/wrap-session.md (lockstep mirror sync, commit 36d3693).
+- project-planning (own repo): CLAUDE.md + 5 evaluator agents model: opus (commit 0535bde).
+
+### Decisions Made
+- Reused the morning S4 risk-check report (PWC) instead of re-running the gate; #55 + friday-checkup additions judged non-listed-class (text-only). Spawn fallback extended to all 5 confirmed sites per SO; model: opus re-asserted as a hard sub-gate; carve-out shaped as a bounded class-boundary clarification + no-self-waiver rule (SO option) rather than a discretionary carve-out.
+- End-time /risk-check skipped per the standing skip rule: plan-time gate covered the envelope with mitigations applied, commits already shipped, drift bounded (only in-class item outside the envelope = the 2-line project-planning CLAUDE.md pointer, additive, QC GO). Documented here per the rule.
+- Union wrap staging: operator directed "just wrap" after the CONCURRENT guard fired — S4 (abandoned planner session, its mandate fully executed by this session) and S5 (SO v2 kickoff) session-note blocks ship under this wrap commit. Mixed attribution accepted, loudly recorded here; no content lost.
+
+### Risky actions
+Union commit of two foreign session-note blocks (S4, S5) under this session's wrap commit — operator-directed after the Step 3.5 CONCURRENT guard fired and remediation options were presented; S5 may still be live in another window (its own wrap will hit the FOREIGN<0 mid-session-commit edge case and proceed silently). Late session registration (started via /open-items without /prime; marker + mandate written at commit time per the staging-guard's own remediation).
+
+### Next Steps
+- Push pending: 5 commits across 3 repos (operator confirmation at the push gate below).
+- Run /resolve-improvement-log soon — this session moved ~12 entries to resolved-status; they are archive-eligible.
+- SO session follow-up: sync SO-vault risk-topology.md §3/§4 with the new audit-discipline class boundary.
+- Deferred not-small items (all logged): #52 root-only command migration, #41 items 0/2/3, #47 item 3 (1M rewrite), #51 option (a).
+
+### Open Questions
+None blocking. S5's wrap (if still live) should be run in its own window; its blocks are now in HEAD.
