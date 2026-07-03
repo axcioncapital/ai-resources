@@ -184,7 +184,7 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
    Convert each menu item to **one plain-English sentence** (short sentences, common words — the operator is a non-developer):
    - Keep command names and file names literal (`/kb-review`, `next-up.md`).
    - Drop priority codes (`HIGH`/`MED`/`LOW`), status tags, and section anchors (`§3`, `WU3`) from the displayed text — keep a step number only when it aids meaning.
-   - Append one short tag: `[urgent]`, `[mission: <id>]`, `[carryover]`, or `[next-up]`.
+   - Append one short tag: `[urgent]`, `[mission: <id>]`, `[carryover]`, or `[next-up]`. For a `[mission: <id>]` item whose mission repo (from `ACTIVE_MISSIONS`, Step 1d) ≠ `CWD_REPO` (Step 0), render it as `[mission: <id> — in <repo-basename>]` so its cross-repo nature is visible at pick time — it cannot be worked on from the current repo (the Step 8a/8c cross-repo guard enforces this).
 
    Example conversions:
    - `**/kb-review Step 7 registry-stub spec contradicts the registry convention** — MED, do-now` → `Fix the /kb-review command — its Step 7 instructions clash with the registry format.`
@@ -244,6 +244,8 @@ Full backlog & inbox: /open-items
 
    **Wiring:** 8a and 8b prepend `{mission:<id>}` to the args passed to `/session-start` (which strips and records it — see `session-start.md` Step 1). 8c writes the `- Mission: <id>` bullet inline in its Step 8c.7 mandate block. When `MISSION_ID` is unset, none of this happens.
 
+   **Cross-repo note:** the pre-write cross-repo mission guard (Steps 8a sub-step a0, 8c sub-step 2.5) fires *before* this binding, deriving the picked mission's repo from `ACTIVE_MISSIONS` (Step 1d), not from `MISSION_ID` here — so a wrong-repo pick is caught before any marker/header write. Do not move Step 8m earlier to "cover" that case; the guard already does, and 8m must stay after the write per the marker contract. (8b/free-text needs no guard — there is no `[mission:<id>]` menu item to mis-pick.)
+
 8a. **Task selected by number.**
    1. Resolve the number to its menu item → `TASK_TEXT` (the plain-English task text).
    2. **Plan-mode guard.** If a plan-mode system reminder is present in context (plan mode is active), do NOT run `/session-start` or `/session-plan`, and do NOT write anything. Output:
@@ -251,6 +253,10 @@ Full backlog & inbox: /open-items
 
       Then stop.
    3. If plan mode is **not** active:
+      a0. **Cross-repo mission guard.** If the picked item is `[mission:<id>]`-sourced AND that mission's repo (from `ACTIVE_MISSIONS`, Step 1d) ≠ `CWD_REPO` (Step 0), STOP before any write and emit:
+         > ⚠ This task belongs to mission `{id}`, which lives in `{repo}` — but you're priming in `{CWD_REPO}`. Setting it up here would write the marker/header and run `/session-start` in the *wrong* repo. Open `{repo}` as your session folder and re-run `/prime` there to work on this mission. (Reply `here` to override and set it up in the current repo anyway.)
+
+         Wait for the operator. On `here` → proceed to sub-step a. On anything else → stop, write nothing. A same-repo pick (mission repo == `CWD_REPO`) skips this guard silently. Derive the repo from `ACTIVE_MISSIONS` here, not from Step 8m's later `MISSION_ID` — this guard must fire before the sub-step-a marker/header write.
       a. **Determine this session's marker** (TOCTOU Phase 2+3 atomic — see `docs/session-marker.md` for the canonical contract):
 
          ```bash
@@ -261,6 +267,12 @@ Full backlog & inbox: /open-items
            case "$PREV" in
              "${TODAY} S"*) N=$((${PREV##*S} + 1));;
            esac
+         else
+           # Marker file absent (fresh clone, or a prior cleanup removed it): resume N from the
+           # highest today-dated `## <today> — Session S{N}` header in session-notes.md (numeric
+           # max, em-dash literal) so a same-day session that already wrapped is not collided with.
+           HIGH=$(grep -oE "^## ${TODAY} — Session S[0-9]+" logs/session-notes.md 2>/dev/null | grep -oE '[0-9]+$' | sort -n | tail -1)
+           [ -n "$HIGH" ] && N=$((HIGH + 1))
          fi
          MARKER="S${N}"
          echo "${TODAY} ${MARKER}" > logs/.session-marker
@@ -316,6 +328,12 @@ Full backlog & inbox: /open-items
            case "$PREV" in
              "${TODAY} S"*) N=$((${PREV##*S} + 1));;
            esac
+         else
+           # Marker file absent (fresh clone, or a prior cleanup removed it): resume N from the
+           # highest today-dated `## <today> — Session S{N}` header in session-notes.md (numeric
+           # max, em-dash literal) so a same-day session that already wrapped is not collided with.
+           HIGH=$(grep -oE "^## ${TODAY} — Session S[0-9]+" logs/session-notes.md 2>/dev/null | grep -oE '[0-9]+$' | sort -n | tail -1)
+           [ -n "$HIGH" ] && N=$((HIGH + 1))
          fi
          MARKER="S${N}"
          echo "${TODAY} ${MARKER}" > logs/.session-marker
@@ -375,6 +393,8 @@ Full backlog & inbox: /open-items
 
    2. **Plan-mode guard.** If a plan-mode system reminder is present in context, output: `Auto mode noted: {PICKED_ITEMS_TEXT}. You're in plan mode — I won't write anything yet. Exit plan mode and re-send 'auto' (or 'go') to proceed.` Then stop.
 
+   2.5. **Cross-repo mission guard (deliberate auto-mode exception).** Before the Step 8c.3 marker/header write: if any picked item is `[mission:<id>]`-sourced AND that mission's repo (from `ACTIVE_MISSIONS`, Step 1d) ≠ `CWD_REPO` (Step 0), STOP and emit the same wrong-repo warning as Step 8a's cross-repo guard, listing each offending picked item and its repo. Wait; on `here` → proceed to 8c.3; on anything else → stop, write nothing. This is a **deliberate single-condition exception** to auto mode's "single approval gate, no per-stage prompts" contract (fires ONLY when a picked mission's repo ≠ `CWD_REPO`) — do not remove it as a stray prompt. It is load-bearing here because the 8c.3 header write precedes the 8c.6 approval gate, so this is the only point that stops a wrong-repo header before disk. Derive the repo from `ACTIVE_MISSIONS`, not from the Step 8c.3.5 auto-bind (which runs after the write). Same-repo picks skip it silently.
+
    3. **Marker resolution + marker-bearing header + mtime marker** (same contract as Step 8a.3.a — see `docs/session-marker.md`):
 
       ```bash
@@ -385,6 +405,12 @@ Full backlog & inbox: /open-items
         case "$PREV" in
           "${TODAY} S"*) N=$((${PREV##*S} + 1));;
         esac
+      else
+        # Marker file absent (fresh clone, or a prior cleanup removed it): resume N from the
+        # highest today-dated `## <today> — Session S{N}` header in session-notes.md (numeric
+        # max, em-dash literal) so a same-day session that already wrapped is not collided with.
+        HIGH=$(grep -oE "^## ${TODAY} — Session S[0-9]+" logs/session-notes.md 2>/dev/null | grep -oE '[0-9]+$' | sort -n | tail -1)
+        [ -n "$HIGH" ] && N=$((HIGH + 1))
       fi
       MARKER="S${N}"
       echo "${TODAY} ${MARKER}" > logs/.session-marker

@@ -293,3 +293,11 @@
 - **QC cycles:** 1 (plan-file QC → GO with 1 minor finding → fixed in place)
 - **Gates:** 11 (1 changed) — auto-mode-approval:confirmed, improvement-log-softcap:confirmed, no-active-friction-candidate:confirmed, archive-5-entries:confirmed, continue-despite-backlog:confirmed, tactical-triage-default:confirmed, project-derived-items:changed (selected beyond the two recommended defaults), policy-disposition:confirmed, axis-targets:confirmed, orphan-recovery-choice:confirmed, wrap-preflight:confirmed
 - **Mandate fields:** specified: work_scope, exit_condition, Out of scope | inferred: Files in scope | omitted: Stop if, Allowed inputs, Required outputs
+
+### 2026-07-03 — Session S2: executed today+this-week /friday-act fix plans (permission-sweep + /prime marker/mission fixes)
+- **Commands used:** /friday-act (diverted after AskUserQuestion — triage already done, pivoted to execution), /risk-check, /wrap-session; agents: risk-check-reviewer, qc-reviewer, general-purpose (outcome check), session-feedback-collector
+- **Iterations:** 0 (no drafting — direct implementation against pre-dispositioned plan files)
+- **Decisions logged:** 5 (decisions.md — permission-sweep verify-before-act narrowing, risk-check materiality skip, SO-second-opinion deferral, concurrent-session set-aside/restore)
+- **QC cycles:** 1 (independent qc-reviewer on the /prime fix → GO, zero findings)
+- **Gates:** 2 (2 changed) — plan-approval:changed (operator picked "push into /prime bugs" over the other two depth options offered), challenge-disposition:changed (concurrent-session S3 collision — operator relayed S3's "wrap here first" coordination, reshaping the resolution approach)
+- **Mandate fields:** specified: work_scope, exit_condition, Out of scope, Files in scope, Stop if | omitted: Allowed inputs, Required outputs

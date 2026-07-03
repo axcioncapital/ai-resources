@@ -138,7 +138,7 @@ Every place the marker contract is consumed must point back to this doc. Adding 
 
 **Writers** (hard-fail on marker absent/stale):
 
-- `ai-resources/.claude/commands/prime.md` — Steps 8a.3.a / 8b.3.a / 8c.3 (writes BOTH the shared file and the per-session-id identity oracle `logs/.session-marker-${CLAUDE_CODE_SESSION_ID}`, plus orphan-prune of stale per-id files) and Step 8c.8 (auto-mode plan write).
+- `ai-resources/.claude/commands/prime.md` — Steps 8a.3.a / 8b.3.a / 8c.3 (writes BOTH the shared file and the per-session-id identity oracle `logs/.session-marker-${CLAUDE_CODE_SESSION_ID}`, plus orphan-prune of stale per-id files) and Step 8c.8 (auto-mode plan write). **Lockstep triplet:** the marker-resolution logic that computes `S{N}` (the `if [ -f logs/.session-marker ] … else … fi` block, including the 2026-07-03 absent-marker fallback that resumes `N` from the highest today-dated `## <today> — Session S{N}` header via `grep -oE "^## ${TODAY} — Session S[0-9]+" … | grep -oE '[0-9]+$' | sort -n | tail -1`) is **triplicated byte-identical across these three steps**. Any change to it must land in all three in the same edit and be diff-verified byte-identical — a divergence would make the numbered-pick (8a), free-text (8b), and auto-mode (8c) paths resolve `N` differently. The absent-marker fallback matches the em-dash `—` **literally** (an ASCII hyphen silently matches nothing and regresses to `N=1`) and takes the **numeric** max (so `S10 > S9`); verify by execution, not review.
 - `ai-resources/.claude/commands/session-start.md` — Step 3 (header location; resolves marker per-id-first).
 - `ai-resources/.claude/commands/session-plan.md` — Step 0 (header gate) and Step 7 (plan write).
 
