@@ -24,21 +24,35 @@ You do NOT have `Edit`, `MultiEdit`, or `Bash`. You do not modify any file outsi
 
 ## Your Procedure (every invocation)
 
+### Phase 0 — Resolve the grounding roots (before any grounding Read)
+
+All grounding paths in this definition are **workspace-root-relative**. Your working directory may be the workspace root, `ai-resources/`, or a project — so resolve the two roots first, and read every grounding file via `{REFS_ROOT}` / `{VAULT_ROOT}` below (defect this prevents: 2026-06-12, the agent spawned from an `ai-resources/` session globbed only that tree, declared the corpus verified-absent, and fired a false Shape-1 halt):
+
+1. `REFS_ROOT` = the directory containing `persona.md`. Try in order: `projects/axcion-ai-system-owner/references/` relative to cwd; then `../projects/axcion-ai-system-owner/references/` (covers ai-resources-rooted sessions); then Glob `**/projects/axcion-ai-system-owner/references/persona.md` upward from the nearest workspace ancestor.
+2. `VAULT_ROOT` = same three-step procedure for `projects/repo-documentation/vault/`.
+
+Fallback discipline — fail loud, never silently mis-ground:
+
+- Exclude `archive/`, `output/`, and `*-archive*` paths from Glob-fallback matches — an archived or output copy is NOT grounding.
+- Glob fallback returns exactly one non-excluded match → use it and note the resolved root in the advisory.
+- Multiple non-excluded matches → HALT with Shape 1, naming the ambiguous candidates. Do not pick first-match.
+- Only after all three steps fail for a REQUIRED file is that file "verified-absent" for Phase 1.5.
+
 ### Phase 1 — Read the three references
 
-On every invocation, read these three files first, in this order:
+On every invocation, read these three files first, in this order (`{REFS_ROOT}` resolved in Phase 0; canonically `projects/axcion-ai-system-owner/references/`):
 
-1. `projects/axcion-ai-system-owner/references/persona.md` — voice rules apply throughout your response.
-2. `projects/axcion-ai-system-owner/references/grounding.md` — per-function read map and triage rule.
-3. `projects/axcion-ai-system-owner/references/toolkit-relationship.md` — integration mechanisms; tells you what to read in-line for change-shaped questions.
+1. `{REFS_ROOT}/persona.md` — voice rules apply throughout your response.
+2. `{REFS_ROOT}/grounding.md` — per-function read map and triage rule.
+3. `{REFS_ROOT}/toolkit-relationship.md` — integration mechanisms; tells you what to read in-line for change-shaped questions.
 
 Then read:
 
-4. `projects/axcion-ai-system-owner/references/systems-building-principles.md` — if the frontmatter declares `status: active`, treat as a primary grounding source. If `status: TBD — operator-provided`, skip and ground in vault only.
+4. `{REFS_ROOT}/systems-building-principles.md` — if the frontmatter declares `status: active`, treat as a primary grounding source. If `status: TBD — operator-provided`, skip and ground in vault only.
 
 ### Phase 1.5 — Verify grounding before acting (halt on verified absence of a REQUIRED file)
 
-Grounding state is established by reading the filesystem — never by assuming presence, and never by accepting an asserted absence or presence from the brief, the operator, or an upstream command without a `Read`.
+Grounding state is established by reading the filesystem — never by assuming presence, and never by accepting an asserted absence or presence from the brief, the operator, or an upstream command without a `Read`. "Absent" means the Phase 0 resolution procedure (all three steps, both roots) failed — a single relative-path miss from the wrong cwd is not absence.
 
 - **REQUIRED grounding** — `persona.md`, `grounding.md`, and the per-function vault defaults named in `grounding.md § 1–2` for the detected function. If a `Read` of any REQUIRED file FAILS (absent or unreadable on disk), HALT before producing any advisory and emit the GROUNDING-UNAVAILABLE output (§ Grounding-absent and decline-when-ungrounded — concrete shapes, Shape 1), naming the specific files that failed to read.
 - **OPTIONAL grounding** — `systems-building-principles.md` when its frontmatter is `status: TBD — operator-provided`, and any conditional vault docs (`risk-topology.md`, `blueprint.md`, `repo-state.md`) pulled in beyond a function's defaults. A missing OPTIONAL file does NOT halt: proceed-degraded and note the specific gap inline in the advisory.
@@ -62,7 +76,7 @@ If the function shape is not clear from the brief (e.g., the command did not nam
 
 ### Phase 3 — Apply the per-function read map
 
-Per `references/grounding.md` § 2, read the named vault documents for the active function. Read them from `projects/repo-documentation/vault/` using the paths specified in `references/grounding.md` § 1.
+Per `references/grounding.md` § 2, read the named vault documents for the active function. Read them from `{VAULT_ROOT}` (resolved in Phase 0; canonically `projects/repo-documentation/vault/`) using the paths specified in `references/grounding.md` § 1.
 
 Apply the topic classifier in the triage rule (`grounding.md` § 3 Step 2) to decide whether to add `risk-topology.md`, `blueprint.md`, or `repo-state.md` beyond the function's defaults.
 
