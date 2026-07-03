@@ -384,3 +384,17 @@
 **Alternatives considered.** Re-running a fresh risk-check for the widened envelope — rejected as duplicate gating for marginal signal (the additions were non-listed-class text edits; the command itself warns against mid-session gate multiplication). Parking the whole fallback item (SO's stated alternative if 5-site coverage was too large) — rejected; the coverage WAS affordable this session. Confirm-before-skip-only shape for the carve-out — folded in: it remains the rule for everything outside the bounded class-boundary shape.
 
 **Decided by.** Claude recommendation under decision-point posture for 1–3 (SO advisory + risk-check mitigations as the deciding inputs; QC GO post-hoc); operator explicit direction for 4.
+
+## 2026-07-03 — Session S5: System Owner v2 build stage S0
+
+**Context.** Kicked off the multi-session SO v2 build (12-piece control pack, Reduce Scope). Stage S0 = per-unit plan + B14 vault refresh + B15 baseline + R1 mitigation wiring + bundled grounding-corpus backlog item.
+
+**Decision 1 — improvement-log status flip deferred, not landed.** The plan-time /risk-check (PROCEED-WITH-CAUTION, Hidden coupling High) plus the mandatory SO second opinion both flagged the 2026-06-02 grounding-corpus entry status flip as the one elevated risk: it is an in-place mutation of a shared non-append log, landing on a documented lost-update surface while a foreign session marker was live and two earlier abandoned-session flips already sat in the same file. The SO's decisive point: the flip cannot be hunk-split from those two earlier flips, so the risk-check's "land it now under five guards" mitigation was internally contradictory (guard 2 explicit-pathspec + guard 4 own-commit-boundary are mutually unsatisfiable). Routed the flip to a dedicated /resolve-improvement-log session; recorded the verification evidence (the entry is already substantively resolved) in the session plan's Gate-outcomes section instead.
+
+**Decision 2 — backlog part 2 closed as already-implemented, not built.** The proposed "pre-consult grounding existence check" was found already live agent-side (system-owner.md Phase 1.5 REQUIRED-halt + consult.md Step 5a post-return existence check, June rebuild) — stronger than the original proposal. Verified by direct read; no new code written.
+
+**Decision 3 — inputs/ as the R1 mitigation home in the redesign repo.** The redesign project's CLAUDE.md convention is window-outputs/ for unit inputs, but the approved SO v2 control pack (risk register R1) explicitly names inputs/. Surfaced the conflict (not silently resolved) and followed R1 — the purpose-built, operator-approved directive — while documenting the exception in the redesign's CLAUDE.md + a write-once-lifecycle inputs/README.md so convention and practice do not drift.
+
+**Alternatives considered.** (Decision 1) Land the flip this session under the five guards — rejected as internally contradictory per the SO. (Decision 2) Build the check anyway — rejected as duplicate of a live implementation. (Decision 3) Use window-outputs/ per local convention — rejected; R1 is the senior, operator-approved directive, and the exception is cheaper than contradicting the control pack.
+
+**Decided by.** Claude recommendation under decision-point posture, with the plan-time /risk-check + mandatory SO second opinion as the deciding inputs for Decision 1; independent /qc-pass GO post-hoc. Wrap completed as an operator-directed union wrap after the CONCURRENT guard fired on a live S7 session.

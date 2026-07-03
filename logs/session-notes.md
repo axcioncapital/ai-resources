@@ -1,110 +1,6 @@
 # Session Notes
 
-> Archive: [session-notes-archive-2026-06.md](session-notes-archive-2026-06.md)
-
-## 2026-07-01 — Session S1
-Build /requirements-pack — new project-local command in projects/project-planning/ (reads strategic-os corpus → context-pack.md + requirements-ledger.md, plus a template playbook and a project CLAUDE.md paragraph). Picks up the interrupted 2026-06-29 S3 mandate. Approved plan: ~/.claude/plans/toasty-twirling-map.md.
-
-## 2026-07-01 — Build plan for `/scope-project` (complex-build scoping workflow) — plan only, implementation deferred
-
-### Summary
-Session pivoted from the /prime-loaded `/requirements-pack` mandate to a broader operator ask: develop an "Axcíon Project Scoping Workflow" into the repo. Ran `/clarify` (plan mode) — mapped the existing planning pipeline, resolved four design forks with the operator, folded in eight GPT-proposed lean additions and five adjunct-command integrations, passed an independent `qc-reviewer` (REVISE → both findings fixed), and got the build plan approved. **No repo artifacts were built** — this session produced the build plan only; implementation is a fresh next session. The `/requirements-pack` idea is superseded by this workflow.
-
-### Files Created
-- `logs/scratchpads/2026-07-01-16-11-scratchpad.md` — continuity scratchpad (resume pointer for the implementation session).
-- `~/.claude/plans/i-want-to-develop-cached-blum.md` — the approved build plan (outside repo; plan-mode canonical location).
-- `~/.claude/.../memory/feedback_gpt_external_reviewer.md` — auto-memory: triage GPT reviews, don't rubber-stamp (outside repo).
-
-### Files Modified
-- `logs/session-notes.md` — this note.
-- `logs/decisions.md` — two-lane scoping-workflow design + canonical-placement decision.
-- `~/.claude/.../memory/MEMORY.md` — index line for the new memory (outside repo).
-
-### Decisions Made
-- **Two-lane scoping design:** simple builds keep `/context-builder`; complex builds use new `/scope-project`; both converge at `/plan-draft`. Control pack feeds planning directly (no re-compression); final stage emits an 11-element `context-pack.md` planning brief so `/plan-draft` is untouched.
-- **One orchestrator command + methodology skill + 3 stage agents + reference doc**, placed canonically in `ai-resources/` (operator override of the "wait for 2nd consumer" norm).
-- **Stage-5 value seam (QC fix):** orchestrator owns reconciliation; `/implementation-triage` is one input to the five-way verdict, does not override the evaluator.
-- **8 lean additions + 5 optional gate-placed adjuncts** folded in; GPT review triaged (8 in, 1 declined — declined softening the mandatory risk-check/blindspot gates).
-
-### Risky actions
-Step 3.5 pre-write guard fired (NO_OWN_MARKER false-positive — `/prime` never dispatched a task this session, so no per-id marker was written; the flagged `S1` header was this operator's own earlier sequential orientation). Operator confirmed solo (no concurrent session); proceeded. No actual clobber risk.
-
-### Next Steps
-Implementation session (fresh): `/prime` → open `~/.claude/plans/i-want-to-develop-cached-blum.md` → `/risk-check` (new command + 3 agents + new skill + CLAUDE.md edit) → `/blindspot-scan` → build. Build the skill via `/create-skill`. Confirm both `ai-resources/` and `projects/project-planning/` are mounted before the verification dry-run. Record the 4-point canonical-placement rationale in decisions.md during that build.
-
-### Open Questions
-None — all design forks resolved this session.
-
-## 2026-07-01 — Session S2
-**Mandate:** Build the `/scope-project` complex-build scoping tool from the approved plan — run `/risk-check` and `/blindspot-scan` first, then create the skill, command, three agents, and reference doc, plus the two-lanes pointer note — done when: risk-check + blind-spot scan have run and all 6 artifacts + the pointer note exist
-- Out of scope: (none stated)
-- Files in scope: skills/project-scoping/SKILL.md, .claude/commands/scope-project.md, .claude/agents/scope-synthesis-agent.md, .claude/agents/scope-architecture-agent.md, .claude/agents/scope-qc-evaluator.md, docs/control-pack-schema.md, projects/project-planning/CLAUDE.md (inferred)
-- Stop if: risk-check returns RECONSIDER/NO-GO or blind-spot scan returns PAUSE-AND-FIX
-Build the new `/scope-project` tool — open the approved plan, run a risk check and a blind-spot scan, then build it.
-
-### Summary
-Built the `/scope-project` complex-build scoping workflow end-to-end (the build deferred from the S1 plan session). Ran both structural gates first — `/risk-check` (PROCEED-WITH-CAUTION, SO second opinion concurred) and `/blindspot-scan` (PROCEED-WITH-CONSTRAINTS) — then built all six artifacts, registered the agents, wired the auto-sync exclusion, and committed across three repos. The tool is QC-clean but has not yet been run on a real project; the live end-to-end dry-run is the deferred next step.
-
-### Files Created
-- `docs/control-pack-schema.md` — the control-pack artifact contract; §7 pins the single canonical handoff contract (content-shape not filename; explicit-path `/plan-draft`).
-- `skills/project-scoping/SKILL.md` — methodology skill (opus/high), built via `/create-skill` (REVISE→PASS).
-- `.claude/commands/scope-project.md` — opus orchestrator, Stages 0–5.
-- `.claude/agents/scope-synthesis-agent.md` (sonnet), `.claude/agents/scope-architecture-agent.md` (opus), `.claude/agents/scope-qc-evaluator.md` (opus).
-- `audits/risk-checks/2026-07-01-build-scope-project-complex-build-scoping-workflow.md` — risk-check report + SO commentary.
-- `logs/session-plan-2026-07-01-S2.md` — session plan.
-- `projects/axcion-ai-system-owner/output/consultations/consult-2026-07-01-scope-project-riskcheck-2nd-opinion.md` — SO advisory (separate repo).
-
-### Files Modified
-- `docs/agent-tier-table.md` — 3 rows for the new agents.
-- `.claude/hooks/auto-sync-shared.sh` — EXCLUDE `scope-project` + `scope-*` (SO 4th gate).
-- `projects/project-planning/CLAUDE.md` — complex-lane pointer note (separate repo).
-- `logs/decisions.md` — S2 build entry (4-point DR-7 placement rationale + revert path).
-- `logs/session-notes.md`, `logs/session-plan-2026-07-01-S2.md` (mandate + plan).
-
-### Decisions Made
-Logged to `logs/decisions.md` (S2 build entry): the 4-point canonical-placement rationale + revert path; the auto-sync exclusion (operator-confirmed via AskUserQuestion); the `/requirements-pack` conflict resolution (exists, not superseded); the opus command-tier choice. Design decisions were already recorded in the S1 entry.
-
-### Outcome
-COMPLETION: DELIVERED — mandate done-condition (both gates run + 6 artifacts + pointer note) all present; live dry-run was the plan's Max lane / explicit deferred next-step, not a done-condition.
-EXECUTION: OPTIMAL — front-loading both structural gates before any file write kept the build single-pass with zero rework. Confidence: high (all claims verified against filesystem + git log).
-
-### Session Value Audit — 80/20 Review
-TYPE: A — High-Leverage Build. Net-new reusable scoping pipeline (command + skill + 3 agents + schema doc) filling the complex-build intake gap upstream of /plan-draft.
-VALUE: exec=H decision=H risk=M compound=H optime=H
-SCORE: 9/10 — Real output shipped, improves complex-project intake decisions, saves repeated manual scoping, moderate risk reduction, high reusability; not 10 only because value is unproven until the live dry-run runs.
-GATE: N/A (primarily a build, not maintenance)
-OPPORTUNITY: Correct session — approved plan executed in one focused pass; deferring the heavy live dry-run under context constraint was the right call, not a shortcut.
-DECISION: Repeat — plan-then-build-with-front-loaded-gates worked cleanly; carry the same shape to the deferred dry-run session.
-LESSON: Front-loading both structural gates before any file write kept the build single-pass with zero rework.
-RULE: No rule candidate.
-
-### Risky actions
-Edited a hook (`auto-sync-shared.sh`, EXCLUDE-list addition) and a cross-project CLAUDE.md — both structural classes, both covered by the plan-time `/risk-check` (PROCEED-WITH-CAUTION, mitigations applied) and operator-confirmed. No destructive or external actions. No gate that should have fired was missed. No prompt injection.
-
-### Session Assessment
-_wrap-collector, 2026-07-01 — no entries met the specificity gate; nothing appended to friction-log or improvement-log._
-- Autonomy-compounding: strong — reusable `/scope-project` workflow with a confirmed consumer (`/plan-draft` handoff); OP-9 respected (`/requirements-pack` conflict checked, not speculative).
-- Leanness / principle-drift / friction: no signal — proportionate, QC-clean, DR-7 rationale + revert path logged, both structural gates ran pre-build; AskUserQuestion was a legitimate confirmation gate.
-- Safety: none observed — hook + cross-project CLAUDE.md edits both covered by plan-time risk-check + operator-confirmed; no destructive/external action, no missed gate, no injection.
-- Reusable component produced — consider `/innovation-sweep`: `/scope-project` + `control-pack-schema.md` handoff contract.
-
-### Next Steps
-Run the deferred **live end-to-end dry-run** in a fresh session: `/scope-project` on real `projects/strategic-os/` material (e.g. a CRM scoping) → `/plan-draft {emitted context-pack.md}` → confirm zero-touch handoff. If it fails, route the fix to `control-pack-schema.md` §7 / the skill. Substantial session on its own. (Push of the 3 commits confirmed at this wrap.)
-
-**New feature idea (operator, 2026-07-01 wrap) — cross-project context-discovery pass for `/scope-project`.** An agent that, given the project being scoped, scans the OTHER projects in `projects/*` and surfaces which sibling projects are relevant AND which specific files inside them (e.g. scoping a LinkedIn strategy → pull in `positioning` + `axcion-brand-book`, naming the actual tone/positioning files). Distinct from the existing `context-discovery` agent, which is WITHIN-project (reads the cwd project's CLAUDE.md routing map only) — this is the cross-project sibling and does not exist today. Proposed shape: a new `scope-cross-project-scan` agent as a Stage-1 adjunct returning a ranked `{project → relevant files → why}` list that feeds the synthesis. New agent = structural class → own `/risk-check` + `/blindspot-scan` + a small design pass; do NOT bolt on ad hoc. Best done in a dedicated design/build session (natural to pair with the live dry-run, where the absence of this pass would be felt).
-
-### Open Questions
-None — build complete and QC-clean; only the live proof-run remains.
-
-## 2026-07-01 — Session S3
-**Mandate:** Design a scope-cross-project-scan agent for /scope-project that scans sibling projects/* and returns a ranked {project → relevant files → why} list feeding the synthesis, and run /risk-check + /blindspot-scan on the design — done when: a design doc exists on disk and both structural gates have run with verdicts recorded
-- Out of scope: Building, wiring, or registering the agent — design and gates only
-- Files in scope: (inferred) — design doc under audits/working/
-- Stop if: /risk-check NO-GO or /blindspot-scan PAUSE-AND-FIX
-- Allowed inputs: scope-project.md, scope-synthesis-agent.md, scope-architecture-agent.md, scope-qc-evaluator.md, project-scoping/SKILL.md, control-pack-schema.md, agent-tier-table.md, risk-check.md, blindspot-scan.md
-- Required outputs: design doc for scope-cross-project-scan agent
-- Context pack: output/context-packs/agent-20260701-b7e2a/pack.md
-Design the cross-project context-discovery pass for /scope-project — a new agent that scans sibling projects and surfaces which projects, and which specific files inside them, are relevant to the project being scoped.
+> Archive: [session-notes-archive-2026-07.md](session-notes-archive-2026-07.md)
 
 ## 2026-07-03 — Scoped System Owner v2 build (/scope-project → control pack + brief)
 
@@ -462,6 +358,43 @@ Fix 4 backlog items surfaced by /open-items + /reconcile-backlog: (1) canonical-
 
 System Owner v2 build — begin executing the 2026-07-03 control pack (Reduce Scope, 12 pieces): per-unit plan + build stage S0 (B14 vault refresh + baseline capture), plus bundled SO-related backlog item: verify/close the 2026-06-02 grounding-corpus entry (restore-verification + pre-consult grounding existence check).
 
+### Summary
+Kicked off the multi-session System Owner v2 build. Resolved the 12-piece control pack (Reduce Scope, 2026-07-03) into a per-unit plan across build stages S0–S4, then executed stage S0: B14 input hardening (refreshed both stale vault grounding docs against a live repo walk), the B15 metrics baseline, the grounding.md line-count co-edit, and the R1 redesign-collision mitigation wiring. The bundled 2026-06-02 grounding-corpus backlog item was verified as already-resolved (the proposed pre-consult check is already implemented agent-side). Fully gated: plan-time /risk-check PWC + SO second opinion, /blindspot-scan PROCEED-WITH-CONSTRAINTS, independent /qc-pass GO.
+
+### Files Created
+- `projects/project-planning/output/system-owner-v2/per-unit-plan.md` — the 12 pieces mapped to build stages S0–S4 (units/targets/repos/gates; deferred B9/B11/B12 absent; carried open items) [commit 462d7ad + correction a68607e]
+- `projects/axcion-ai-system-owner/output/v2-baseline-2026-07-03.md` — B15 baseline (7 collision incidents, 2 risk-check skips, ~17% infra changes lacking plan evidence) [7c6183b]
+- `projects/axcion-ai-system-owner/output/consultations/consult-2026-07-03-risk-check-second-opinion-...md` — SO second opinion on the S0 risk-check [7c6183b]
+- `projects/axcion-ai-system-redesign/inputs/README.md` + `so-v2-context-pack-2026-07-03.md` — R1 mitigation (write-once inputs + Session-F re-reconcile checkpoint) [45d60be]
+- `ai-resources/audits/risk-checks/2026-07-03-system-owner-v2-build-stage-s0-change-set-plan-time-gate.md` — plan-time risk-check + appended SO commentary [0823210]
+- `logs/session-plan-2026-07-03-S5.md` — the session plan (Gate outcomes section records deferral evidence) [wrap commit]
+- `logs/scratchpads/2026-07-03-16-29-scratchpad.md` — continuity scratchpad (gitignored)
+
+### Files Modified
+- `projects/repo-documentation/vault/architecture/system-doc.md` + `vault/blueprint/blueprint.md` — B14 refresh (frontmatter → 2026-07-03/active, live counts, drift markers cleared, hook-wiring corrected). **NOT committable** — `repo-documentation/.gitignore` excludes `vault/*`; filesystem-only by design.
+- `projects/axcion-ai-system-owner/references/grounding.md` — line-count co-edit (373→381, 137→117) [7c6183b]
+- `projects/axcion-ai-system-redesign/CLAUDE.md` — one bullet documenting the inputs/ exception [45d60be]
+- `logs/session-notes.md` (this note) + `logs/session-notes-archive-2026-07.md` (archive: 4 entries rotated, 10 kept)
+- `logs/decisions.md` — 3 scoping decisions this session
+
+### Decisions Made
+- **improvement-log status flip DEFERRED** (SO second opinion): the 2026-06-02 grounding-corpus entry flip cannot be hunk-split from two earlier abandoned-session flips, so pathspec + own-commit-boundary guards are mutually unsatisfiable while foreign markers are live. Routed to a clean `/resolve-improvement-log` session; verification evidence recorded in `session-plan-2026-07-03-S5.md § Gate outcomes`.
+- **consult.md grounding check found ALREADY IMPLEMENTED** (system-owner.md Phase 1.5 + consult.md Step 5a) — backlog part 2 closes as already-resolved, not built.
+- **inputs/ home** per control-pack R1 (over the redesign's window-outputs/ convention) — documented as an exception in that project's CLAUDE.md + inputs/README.md.
+- **Vault-not-committable correction** discovered at end-gate — recorded in the per-unit plan so later stages don't force-add against the ignore rule.
+- QC auto-fix: blueprint.md §3.1 heading date corrected 2026-04-29 → 2026-07-03 (the one /qc-pass finding).
+
+### Risky actions
+Wrap-time CONCURRENT pre-write guard fired: a live Session S7 (per-id marker present) had its own uncommitted mandate block in `logs/session-notes.md`. Per operator direction ("just wrap this"), completed as a **union wrap** — S7's session-notes block ships under this S5 wrap commit, loudly attributed here. S7's uncommitted command-file edits (`.claude/agents/system-owner.md`, `.claude/commands/consult.md`) were NOT staged (left for S7 to commit). No data lost; S7's block content is preserved intact. End-time /risk-check skipped under the standing skip rule (plan-time PWC covered with all mitigations applied, commits shipped, drift bounded per QC GO) — documented here.
+
+### Next Steps
+- **Build stage S1 (the substrate keystone)** per `per-unit-plan.md § Stage S1`: B7 refusal rules + B1 contract schema + B2 read-map + B6 three-mode structure (confirm the layering-not-replacement assumption with the operator) + B13 authority relationship.
+- **Resolve the B4 write-scope grant** (operator decision + /risk-check, recorded in decisions.md) during S1/S2 so stage S3 isn't blocked.
+- Flip the 2026-06-02 grounding-corpus entry status in a dedicated `/resolve-improvement-log` session (deferred from here).
+
+### Open Questions
+None blocking.
+
 ## 2026-07-03 — Session S6
 
 **Mandate:** Small-fix batch session (operator: "as much as possible, high-to-medium small fixes, ~10-15, triage first" + mid-session directive: Friday cadence surfaces open items). Ran /open-items full, triaged to 17 fixes in 3 groups, blindspot-scan PROCEED-WITH-CONSTRAINTS, reused morning risk-check PWC (subagent-fallback/carveout/reconcile-pointer envelope) with all 6 mitigations + SO points applied, consolidated /qc-pass GO. Registered late (session started via /open-items, no /prime) — this block + per-id marker written at commit time per staging-guard remediation.
@@ -495,3 +428,11 @@ Union commit of two foreign session-note blocks (S4, S5) under this session's wr
 
 ### Open Questions
 None blocking. S5's wrap (if still live) should be run in its own window; its blocks are now in HEAD.
+
+## 2026-07-03 — Session S7
+
+**Mandate:** Parallel small-fix sweep (operator: "as much as possible, high-to-medium small fixes, ~10-15, triage" with an explicit exclusion list = S6's fix set). Triaged /open-items + improvement-log to 12 items (8 edits E1-E8 + 4 verified closures V1-V4), all disjoint from S6's files. Gates: /blindspot-scan PROCEED-WITH-CONSTRAINTS (5 constraints folded in), batched plan-time /risk-check PROCEED-WITH-CAUTION + SO concur (per-boundary commits, E4 late + enumerated, E8 last/unstaged), consolidated /qc-pass REVISE → 2 findings + 2 notes fixed (consult Step 3.5 reachability for general shape; REFS_ROOT wiring in system-owner Phase 1). Registered late (session started via /clarify, no /prime) — this block + per-id marker written at commit time per staging-guard remediation (same pattern as S6).
+
+- Files in scope: .claude/agents/system-owner.md; .claude/commands/consult.md; docs/change-shape-classifier.md; docs/commit-discipline.md; docs/backlog-reconciliation.md; .claude/commands/friday-act.md; .gitignore; audits/risk-checks/2026-07-03-batched-s4-parallel-small-fix-sweep.md; logs/improvement-log.md; logs/friction-log.md; logs/session-notes.md; logs/maintenance-observations.md
+- Out of scope: every item in S6's exclusion list (subagent-spawn fallbacks, audit-discipline carve-out, reconcile template pointer, SETUP.md, graduate-resource, wrap-session edits, friday-checkup step); the 5 root-only workspace commands migration (deletion gate — needs operator); workspace CLAUDE.md (owned by planned trim session)
+- Stop if: staging guard flags foreign files → stop and surface, never re-run
