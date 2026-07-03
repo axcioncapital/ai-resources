@@ -395,3 +395,61 @@ _Feedback collection run manually (not via `session-feedback-collector`) to avoi
 
 ### Open Questions
 None material. (Two friction items to be logged this wrap: the concurrent-collision detection gap and the async-stall misread.)
+
+## 2026-07-03 — /reconcile build + graduation to canonical
+### Summary
+Evaluated (`/clarify`) then built and graduated `/reconcile` — a project-workflow reconciliation command that judges whether a produced output fulfilled its project's mandate (mandate-compliance scoring, resource-activation audit, genericness/substitution check, root-cause classification, three-level fixes each routed to a real closure channel — `/resolve` / `/resolve-repo-problem` / improvement-log), without rewriting the output. Full pipeline: `/clarify` → `/scope` (QC'd GO) → `/placement` → plan-time `/risk-check` (PROCEED-WITH-CAUTION) → `/consult` SO second opinion → built **project-local** in buy-side-service-plan → dry-run against a real approved output (2.4, verdict Conditional Pass; surfaced + fixed 5 agent-logic gaps) → `/qc-pass` (REVISE → 4 fixes incl. a missing `Skill(contract-check)` tool grant) → end-time `/risk-check` (GO) → committed. Operator then directed "use in all matured projects" → **graduated** command+agent to canonical ai-resources (generalized; independent residue scan clean after 1 fix; tier-table) → committed. Assessed all 19 other projects for maturity-fit.
+
+### Files Created
+- `.claude/commands/reconcile.md` (canonical command — graduated) + `.claude/agents/reconcile-reviewer.md` (canonical opus agent — graduated)
+- `docs/reconcile-verdict-definitions.md`, `docs/reconcile-failure-taxonomy.md`, `docs/reconcile-genericness-heuristics.md`, `docs/reconcile-report-template.md` (shared support docs)
+- `audits/risk-checks/2026-07-03-reconcile-command-plan-time-gate.md`, `audits/risk-checks/2026-07-03-reconcile-command-end-time-gate.md`
+- (buy-side-service-plan repo) `.claude/commands/reconcile.md`, `.claude/agents/reconcile-reviewer.md`, `context/mandate-rubric.md`, `context/resource-activation-map.md`, dry-run report under `logs/reconcile-reports/`
+- (axcion-ai-system-owner repo) `output/consultations/consult-2026-07-03-reconcile-risk-check-second-opinion.md`
+- `logs/scratchpads/2026-07-03-10-50-scratchpad.md` (continuity)
+
+### Files Modified
+- `docs/agent-tier-table.md` (reconcile-reviewer → main canonical table; origin note under buy-side subsection)
+- (buy-side-service-plan repo) `.claude/shared-manifest.json`
+- `logs/session-notes.md` (this note); `logs/decisions.md` (this wrap)
+
+### Decisions Made
+Operator-directed: (1) full standalone build, reusable, forensic-only, operator-invoked (`/clarify` locks); (2) after risk-check + SO dissent, build **project-local-first** then graduate (reversed later same session); (3) main command invokes `/contract-check` via Skill tool (not the subagent); (4) **"use in all matured projects"** → graduated to canonical, deliberately re-adopting the 20-project broadcast the SO had advised deferring (operator holds the speed-vs-DR-7 call; OP-11 loud recorded override); (5) rubric authoring for mature projects deferred to a scoped follow-up session; maturity set assessed via 3 read-only agents. QC/residue auto-fixes applied separately (4 QC + 5 dry-run + 1 residue).
+
+### Outcome
+COMPLETION: PARTIAL
+EXECUTION: OPTIMAL
+What was asked but not done: "Deploy across matured projects" is present-not-operable — 8 MATURE-FIT projects identified and the command broadcast, but per-project rubrics/maps deferred to a follow-up, so `/reconcile` clean-aborts everywhere except buy-side. (Minor: note said "5 commits"; git shows 4 reconcile-related — non-material.)
+Better path: none — deferring per-project rubric authoring (must be individually grounded, not mass-produced) at end-of-context was the correct ROI/quality call, and each gate found real issues.
+Confidence: low (mandate is fallback; artifact verification itself high — all claimed artifacts exist and are coherent, both QC-fix spot-checks pass).
+
+### Session Value Audit — 80/20 Review
+TYPE: A — High-Leverage Build: new reusable mandate-reconciliation capability graduated to canonical via the standard promotion path.
+VALUE: exec=M decision=H risk=M compound=H optime=M
+SCORE: 7/10 — coherent QC'd artifact set (command+agent+4 docs) graduated to canonical with full risk-gating; docked because the operable last mile (per-project rubrics for the 8 mature projects) is deferred, so "deployed" currently means present-but-inert outside buy-side.
+GATE: N/A (primarily a build, not maintenance)
+OPPORTUNITY: Correct session — authoring 8 grounded rubrics in the same run would have rushed per-project grounding under context pressure; building the reusable core first was right.
+DECISION: Repeat with constraints — pair the graduation-broadcast with at least a minimal rubric pass (or gate the symlink broadcast on rubric presence) so consuming projects aren't left carrying a command that only clean-aborts.
+LESSON: Graduating a command that depends on per-project operator-authored files broadcasts availability but not operability — the per-project config IS the last mile of "deploy."
+RULE: Trigger: `/graduate-resource` on a command whose runtime requires per-project reference docs. Why it matters: broadcast makes the command present-but-inert across consuming projects; "deployed" overstates reality until those docs exist. Where: `graduate-resource` — add a runtime-dependency check flagging which consuming projects lack the required per-project files.
+
+### Risky actions
+Graduation auto-symlinks `/reconcile` into ~20 shared-manifest projects on their next SessionStart (broadcast). This was risk-analyzed at plan-time (PROCEED-WITH-CAUTION); on re-adoption the M1/M2 mitigations were applied — broadcast logged in the graduate commit message; revert requires `git revert` + `/fix-symlinks` to clear dangling symlinks in synced projects. Projects lacking a mandate-rubric get a clean abort, not a broken run. No third risk-check fired (broadcast already covered by plan-time analysis; avoids per-change ceremony). Staged all commits by explicit path — did NOT sweep the concurrent `/friday-checkup` session's or scope-project session's uncommitted files.
+
+### Session Assessment
+_(wrap-collector, 2026-07-03) — 2 entries → improvement-log (both `session-feedback`), 0 → friction-log._
+- Autonomy-compounding: strong — reusable `/reconcile` command+agent graduated to canonical via the standard promotion path (compound=H); genuine new capability, not one-off.
+- Leanness/cost: broadcast auto-symlinked `/reconcile` into ~20 projects but runtime files exist only in buy-side, so present-but-inert in 19 — routed as the `/graduate-resource` runtime-dependency-check improvement.
+- Principle-drift: DR-7 strain (broadcast before per-project readiness) was an explicit operator override, loud-recorded per OP-11 — handled as designed, not silent drift.
+- Friction: no new signal — concurrent-tree contamination was contained (staged by explicit path) and already logged by the concurrent `/friday-checkup` session.
+- Safety: low/none — the broadcast was gated (plan-time PROCEED-WITH-CAUTION, M1/M2 applied) and reversible (`git revert` + `/fix-symlinks`); rubric-less projects clean-abort, not break.
+- Reusable component — consider `/innovation-sweep`: yes — `/reconcile` + `reconcile-reviewer` + 4 support docs.
+
+### Next Steps
+- **Follow-up (fresh session):** author `context/mandate-rubric.md` + `context/resource-activation-map.md` for the 8 mature-fit projects (corporate-identity, marketing-positioning, nordic-pe-screening-project, positioning-research, research-pe-regime-shift-advisory-gap, axcion-brand-book, axcion-copy-factory, axcion-design-studio) — each grounded per-project, not mass-produced. Copy buy-side-service-plan's pair as the structural template.
+- Operator sign-off on the 8-project set still pending (can adjust tiers at follow-up start; strategic-os is FIT-BUT-EARLY, defer).
+- Add a `/reconcile` pointer line to `templates/project-claude-md/` so future new projects surface it (the reminder mechanism the operator asked about) — routed to improvement-log this wrap.
+
+### Open Questions
+None blocking. Reminder-mechanism template line and 8-project sign-off are the two live threads, both captured above.
+

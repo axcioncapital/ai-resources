@@ -624,3 +624,19 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Category:** config / curation
 - **Friction source:** friction-log 2026-07-02 (command-library secondary finding)
 - **Proposal:** Workspace-root `.claude/commands/` (63) is missing 27 canonical commands AND holds 5 real command files that exist only there (`harness-start`, `run-qc`, `session-report`, `update-md`, `validate`) plus a redundant alias. So any project symlinked to the canonical library silently loses those 5 root-only commands. Fix: migrate the 5 real root-only command files into `ai-resources/.claude/commands/` (or confirm-and-delete as deprecated), so the canonical library is the true superset and per-project symlinks are complete. Shared workspace state — sequence deliberately.
+
+### 2026-07-03 — /graduate-resource: no runtime-dependency check, so a graduated command broadcasts present-but-inert
+- **Status:** logged (pending)
+- **Category:** session-feedback
+- **Provenance:** wrap-collector (machine-authored) 2026-07-03
+- **Friction source:** wrap-collector 2026-07-03 — leanness/operability (dim 2; /reconcile build + graduation session, § Outcome + § Value-Audit RULE)
+- **Proposal:** Graduating `/reconcile` auto-symlinked it into ~20 shared-manifest projects, but the command's runtime requires per-project operator-authored files (`context/mandate-rubric.md` + `context/resource-activation-map.md`) that exist only in buy-side-service-plan — so it clean-aborts (present-but-inert) in the other 19. Add a runtime-dependency check to `/graduate-resource`: when graduating a command whose runtime requires per-project reference docs, flag which consuming projects lack those files (optionally gate the symlink broadcast on their presence), so "broadcast" is not reported as "operable." Distinct from the 2026-06-04 DR-7/AP-7 graduation entry, which gates *whether to graduate* (second-consumer count); this gates *post-graduation operability* once graduation is legitimate.
+- **Target files:** `ai-resources/.claude/commands/graduate-resource.md` (add the runtime-dependency check); possibly `docs/placement-verifier.md` if the check reuses its per-project scan.
+
+### 2026-07-03 — New-project CLAUDE.md template has no /reconcile pointer, so future projects won't surface the command
+- **Status:** logged (pending)
+- **Category:** session-feedback
+- **Provenance:** wrap-collector (machine-authored) 2026-07-03
+- **Friction source:** wrap-collector 2026-07-03 — autonomy-compounding (dim 1; /reconcile build session, § Next Steps + operator-requested reminder mechanism)
+- **Proposal:** `/reconcile` was graduated to canonical and broadcast, but nothing prompts a newly-scaffolded project to actually use it. The operator asked for a reminder mechanism; the session identified the fix as adding a `/reconcile` pointer line to the new-project CLAUDE.md template so future projects surface the command. Add the pointer line to the template fragment (edit the fragment, NOT the consuming `/new-project` command — per `templates/README.md` consumer contract), scoped to matured/output-producing projects where mandate-reconciliation applies.
+- **Target files:** `ai-resources/templates/project-claude-md/` (the fragment `/new-project` consumes at scaffold time).
