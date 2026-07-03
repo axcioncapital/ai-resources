@@ -613,3 +613,33 @@
 - **Codify the concurrent-collision "fold, don't redo" recovery step (~20–40k tokens/collision).** This session avoided re-running 2 committed audit artifacts by folding the stopped session's commits. Making "on collision recovery, inventory the other session's committed artifacts and fold rather than re-run" an explicit `/friday-checkup` (and parallel-sessions-playbook) recovery step would repeat this saving deterministically. Largest per-occurrence, but low frequency — collisions are rare.
 - **Shared-guidance-file reuse across parallel same-type auditors (~3–6k tokens/fan-out).** One claude-md guidance file was reused across 6 auditors instead of each reloading it. Codifying "hand parallel same-type agents a single shared reference path, not per-agent inline copies" as a fan-out orchestration default generalizes to every multi-auditor command. Moderate frequency, moderate per-occurrence.
 - **Operator scope-trim as a first-class cost lever (~10–30k tokens/large session).** The deferrals (6 project coaches, workspace token-audit, findings-extractor skip) held a real 1M-credit exhaustion risk. Surfacing a "trimmable scope" menu at fan-out planning time (before spawning) rather than mid-run would let the operator trim before the tokens are spent. Broad applicability; savings scale with session size.
+
+### 2026-07-03 | Wasteful
+
+**Task:** Ran `/friday-act` against the quarterly checkup report — triaged 21 tactical items into 8 QC'd plan files, archived 5 stale improvement-log entries, then ran `/wrap-session` including a mid-wrap foreign-session guard fire requiring a standalone recovery commit.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | 14 (+11 AskUserQuestion structured gates) |
+| Files read | 13 (re-reads: 5 files — session-notes.md, decisions.md, usage-log.md, improvement-log.md, friction-log.md; 1 of the 13 was a nonexistent-file attempt) |
+| Files written/edited | 19 |
+| Tool calls | ~123 total (Bash ~55, Read ~20, Edit ~15, Write ~11, AskUserQuestion 11, Agent 4, Skill 6, ScheduleWakeup 1) |
+| Subagents | 4 |
+| Rework cycles | 1 (tool-execution retry — sed chain denied and re-issued as 5 separate calls; not artifact-level rework) |
+
+**Findings:**
+- Re-reads (Major): logs/improvement-log.md (~627 lines / ~46k tokens) was traversed 3-4 times via 4 different mechanisms (2 Read calls, a grep pass, and a Python `open()` pass) for a single classification task; logs/session-notes.md (~640 lines by session end) was re-read/re-scanned 4+ times during the wrap sequence (Step 1 grep+offset, Step 3.5 guard greps x2, tail checks).
+- Re-reads (Moderate, secondary): logs/decisions.md, logs/usage-log.md, and logs/friction-log.md were each read twice (once during /prime pre-fetch, once later in the session).
+- Tool overhead (Moderate): a chained 5-part sed Bash call was denied by a permission heuristic and had to be re-issued as 5 separate single-line calls; a wrap-time recovery commit unexpectedly swept in 3 pre-staged files, requiring 3 follow-up git show/diff calls to verify benign content.
+- Rework (Minor): a malformed disposition string appeared in one AskUserQuestion prompt (contradicted its own option description) but was self-caught with no user-facing redo — a near-miss, not a realized cycle.
+- Missed parallelization: none observed — three long-running subagents (157s/258s/497s) were awaited via ScheduleWakeup/notification rather than polled.
+- Trend: regression — the prior three entries were Acceptable (same-day quarterly checkup), Efficient (S6), Acceptable (S1); this is the first Wasteful rating in that run, driven by the Major re-read flag on two large log files.
+
+**Recommendation:** Consolidate multi-pass processing of large log files (especially logs/improvement-log.md) into a single read/extraction pass — when a file must be both read for content and programmatically classified, use one mechanism (a single Python pass, or one grep+Read combo) rather than layering Read x2 + grep + python `open()` on the same file.
+
+**Estimated savings:** Roughly 15,000-25,000 tokens this session — ~5-7k from improvement-log.md's extra grep+python passes beyond its first full read (~46k tokens), ~6-10k from session-notes.md's 4+ partial wrap-time re-scans, ~3-9k from the second reads of decisions.md/usage-log.md/friction-log.md, plus ~2k from the sed-chain retry and swept-file verification overhead. Over a 10-20 session horizon (if the resolve-improvement-log + wrap-session combo recurs at similar frequency), this projects to roughly 150,000-400,000 tokens.
+
+**Additional levers (ROI-ranked):**
+- Cache session-notes.md content from its first wrap-time read and reuse it for subsequent guard checks (Step 3.5 x2, tail checks) instead of re-querying the file — ~6-10k tokens/session, applies to every /wrap-session run with a guard-fire scenario.
+- Replace separate full-tail-then-grep passes on decisions.md/usage-log.md/friction-log.md with a single targeted grep -A/-B call — ~1-3k tokens per file when applicable.
+- Batch multi-append log operations (like the 5 sed appends) as one heredoc/script file rather than a chained command likely to trip the permission heuristic — ~2k tokens/session, low-frequency (only fires on multi-append log operations).

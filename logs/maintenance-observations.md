@@ -460,3 +460,63 @@ Session-shape signals worth noting for the next checkup:
 ## 2026-06-12 — S6 — split-log.sh dormant deployed copies carry pre-fix logic
 
 The fence-aware header scan + preamble-preservation fixes (2026-06-12 S6) landed in the 2 live files only: canonical `logs/scripts/split-log.sh` and the research-workflow template copy. ~14 project-local `logs/scripts/split-log.sh` copies are dormant — `/log-sweep` always invokes the canonical copy (`SCRIPTS_DIR`, log-sweep.md:31), so they have no live blast radius today. But they still carry the old logic (silent preamble loss + fenced-header miscount + `mapfile` bash-3.2 incompatibility). If one is ever reactivated (a project pointing tooling at its local copy, or a stale re-deploy), the defects resurface. Flagged by the SO second opinion on risk-check 2026-06-12-split-log-preamble-preservation-both-copies. Disposition candidate for a Friday cadence: re-sync or delete the dormant copies.
+
+## 2026-07-03 — Friday Act (quarterly tier, source: friday-checkup-2026-07-03.md)
+
+### System Owner inputs (this session)
+- Friday Advisory: (none within 7 days)
+- Systems Review:  (none within 7 days)
+
+### Journal Report (this session)
+- Journal Report: (none within 7 days)
+
+### Disposition summary
+- Tactical: 13 queued for plans, 7 defer, 1 skip (of 21 items; of which 3 System Owner-derived, 0 journal-derived)
+- Triage source: 21 auto-default, 0 operator-override (of 21 items)
+- Policy review: 2 rule-change, 1 no-change, 0 defer
+- Architectural retrospective: skipped (operator deferred response this session)
+
+### Session value review
+- Adopted (rule-change): Lock page/section type before authoring page-scope structure — add a one-line upfront scope-confirm (page type + "focus" definition) before authoring v1. Logged under Policy proposals below.
+
+### Deferred items (from this session)
+- Delete/archive `output/deploy-test-scratch-2026-06-12/` — low, checkup
+- `/log-sweep` (apply) — ai-resources over threshold (improvement-log.md 626, usage-log.md 583, session-notes.md 521) — low, checkup
+- DEFERRED this run — `/token-audit workspace` — low, checkup
+- DEFERRED this run — `/coach` for 6 project scopes — low, checkup
+- DEFERRED — re-run `/token-audit ai-resources` Section 4 synchronous — low, checkup
+- [QUARTERLY] `/repo-dd deep` per scope — low, checkup
+- [QUARTERLY] `/analyze-workflow research-workflow` — low, checkup
+
+### Plans written (this session)
+- `audits/friday-plans/2026-07-03-permission-sweep.md` — 4 items
+- `audits/friday-plans/2026-07-03-claude-md-template.md` — 1 item
+- `audits/friday-plans/2026-07-03-workspace-claude-md.md` — 1 item
+- `audits/friday-plans/2026-07-03-research-workflow.md` — 1 item
+- `audits/friday-plans/2026-07-03-git-remote.md` — 1 item
+- `audits/friday-plans/2026-07-03-prime.md` — 3 items
+- `audits/friday-plans/2026-07-03-wrap-session.md` — 1 item
+- `audits/friday-plans/2026-07-03-w2-4-triage.md` — 1 item
+
+### Policy proposals (monthly+)
+- For "--add-dir registration gap (3rd instance this quarter)": Escalate to a single instruction-level fix — canonical commands that dispatch a project-local subagent must document a fallback (invoke `general-purpose` with the agent definition read from disk and inlined) when the named subagent type is unresolved in a project session. 3rd instance this quarter (2026-06-16, 2026-07-02 ×2); do not continue per-surface patching.
+- For "Adoption lag > build rate (capabilities ship faster than they're wired in)": New commands/skills must name their invocation/wiring path as an explicit plan done-condition before being marked complete — a capability that ships with no named consumer, trigger point, or pipeline integration is not done, regardless of whether the artifact itself is finished. (Coach's "One Thing" recommendation, 2026-07-03 ai-resources scope.)
+- For "Lock page/section type before authoring" (Session Value Review rule): Add a one-line upfront scope-confirm (page type + "focus" definition) to page-scope planning, before authoring v1 — prevents rev-2 section churn.
+
+### Architectural retrospective notes (quarterly only)
+(none — operator deferred response this session)
+
+### Operator observations
+(none)
+
+### Autonomy & Reliability notes
+(none)
+
+### Autonomy-axis posture targets (week ahead)
+- Guardrails: hold
+- Optimization: hold
+- Autonomy: hold
+- Capability: hold
+- Reliability: hold
+- Observability: hold
+- Operator load: hold

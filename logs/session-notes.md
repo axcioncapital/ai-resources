@@ -453,3 +453,75 @@ _(wrap-collector, 2026-07-03) — 2 entries → improvement-log (both `session-f
 ### Open Questions
 None blocking. Reminder-mechanism template line and 8-project sign-off are the two live threads, both captured above.
 
+## 2026-07-03 — Session S1: /friday-act triage — 13 items into 8 fix plans; improvement-log cleanup; orphaned /reconcile entries recovered
+**Mandate:** Run `/friday-act` to triage and apply the 18 tactical follow-ups from the 2026-07-03 quarterly checkup — done when: the 4 critical permission-prompt fixes are applied (or explicitly deferred with a reason) and committed, and the remaining items are triaged into waves or parked.
+- Out of scope: the three active missions (axcion-industry-focus, axcion-ai-system-redesign, book-summary-system); the System Owner v2 build; the pre-existing uncommitted reconcile-*/instruction-audit files already in the tree — do not sweep those into commits.
+- Files in scope: settings.json across layers, project CLAUDE.md files, possibly command/hook files (inferred)
+- Stop if: (none stated)
+
+### Summary
+Ran `/friday-act` (Session 2 of the Friday cadence) against the 2026-07-03 quarterly checkup report. First ran `/resolve-improvement-log` (triggered by the command's own soft-cap gate) — archived 5 resolved entries, left 57 genuinely-active entries untouched. Then triaged the checkup's 18 tactical items plus 3 project-derived items (surfaced by a delegated project-log summarizer) into 13 fix-now items, written as 8 QC'd plan files for follow-up execution sessions. Captured 3 policy-change proposals (quarterly tier) as text only — no CLAUDE.md/audit-discipline.md edits made. Mid-wrap, the foreign-session guard caught an orphaned same-day `/reconcile` session-notes entry that had never been committed; recovered it (plus its accompanying decisions.md/innovation-registry.md/improvement-log.md content) via a standalone recovery commit before continuing.
+
+**Note — mandate vs. actual deliverable:** the mandate line above says "applied and committed," but `/friday-act` by design never executes fixes inline — it produces dispositioned, risk-annotated plan files for later execution sessions. Nothing was applied/committed toward the 13 fix items themselves this session; the mandate wording should have said "triaged into executable plans," not "applied." Flagged transparently in chat when the discrepancy surfaced.
+
+### Files Created
+- `audits/friday-plans/2026-07-03-{permission-sweep,claude-md-template,workspace-claude-md,research-workflow,git-remote,prime,wrap-session,w2-4-triage}.md` — 8 fix-plan files, 13 items total
+- `logs/session-plan-2026-07-03-S1.md`
+- `logs/scratchpads/2026-07-03-11-38-scratchpad.md` (continuity)
+- `audits/working/friday-act-step16a-2026-07-03.md` (subagent working notes — project-log extraction)
+- Auto-memory (outside repo): `feedback_inline_plain_summary.md` — new standing rule, always give an inline plain-English summary after jargon-heavy output
+
+### Files Modified
+- `logs/improvement-log.md` — 5 entries removed (archived) this session; separately, +16 lines from the recovered `/reconcile` session landed in the earlier recovery commit
+- `logs/improvement-log-archive.md` — +5 entries
+- `logs/maintenance-observations.md` — +1 session block (disposition summary, policy proposals, axis targets)
+- `logs/decisions.md`, `logs/innovation-registry.md` — recovered `/reconcile` session content (separate recovery commit, not this session's own work)
+- Auto-memory (outside repo): `MEMORY.md` — indexed the new feedback memory
+
+### Decisions Made
+- **Improvement-log soft-cap gate fired (46/57/62 depending on count method)** — operator chose to run `/resolve-improvement-log` first rather than continue with an inflated backlog count.
+- **One no-active-friction archival candidate declined** — a phrase match ("future session") was inside a quoted historical reference, not a live signal; kept active on operator's call.
+- **5 resolved entries archived** — operator confirmed "archive all 5" after review.
+- **Tactical triage accepted the auto-triage default** (HIGH/MED→f, LOW→d) for all 18 checkup items; item 11 (`/resolve-improvement-log`) specially defaulted to skip since it was already done in-session.
+- **All 3 offered project-derived candidates added** to the fix-now batch (operator selected all three from the summarizer's findings; 2 other candidates were pre-excluded as duplicates of existing log entries).
+- **Policy-level disposition:** 1 no-change (already covered by a queued fix plan), 2 rule-change (--add-dir registration-gap escalation; adoption-lag-vs-build-rate rule), 1 adopted Session-Value-Review rule (lock page-scope type before authoring) — all captured as proposal text, not auto-edited into any canonical doc.
+- **Axis targets: hold all 7** — no autonomy-posture changes this week.
+- **Step 5 free-form reflections deferred** — operator passed on maintenance observations, autonomy/reliability notes, and the architectural retrospective ("continue"); all three logged as none/skipped.
+- **Foreign-session guard fired mid-wrap** (FOREIGN=1, mechanical class UNKNOWN) on the orphaned `/reconcile` entry — operator chose to commit it as a standalone wrap-recovery commit before continuing this session's own wrap.
+
+### Outcome
+COMPLETION: DELIVERED — judged against the session-plan's Execution Sequence (the more authoritative source), not the literal "applied+committed" mandate line, which is demonstrably wrong: `/friday-act` has never executed fixes inline across 4+ prior runs (all ended in committed plan files, same as today). The session correctly flagged the mismatch rather than silently ignoring it. Verified independently: all 8 plan files exist and are substantive (not stubs); no settings.json changed anywhere in the workspace, confirming no permission fixes were applied; improvement-log-archive.md/-log.md, maintenance-observations.md, and decisions.md deltas all match the note precisely.
+EXECUTION: OPTIMAL — the `/resolve-improvement-log` detour was itself required by `/friday-act`'s own soft-cap gate; the plan-QC subagent's one finding was fixed in a normal single-cycle loop, not rework; the orphaned-`/reconcile` foreign-session guard was diagnosed correctly and isolated into a standalone recovery commit rather than contaminating this session's own commit.
+What was asked but not done: none.
+Better path: none.
+Confidence: high.
+
+### Session Value Audit — 80/20 Review
+TYPE: B — Necessary Maintenance (Friday cadence backlog triage → executable plans).
+VALUE: exec=L decision=H risk=M compound=H optime=M
+SCORE: 7/10 — thorough, QC'd, well-triaged output, but zero fixes were actually shipped this session (planning only).
+GATE: PASSED — criterion: 21 items dispositioned, 5 stale log entries archived, 8 risk-annotated QC'd plans produced ready for execution.
+OPPORTUNITY: Correct session — matches the established 4-session `/friday-act` cadence pattern exactly.
+DECISION: Repeat — working, consistent pipeline; no redesign signal.
+LESSON: Session-plan mandate lines for `/friday-act` keep asserting "applied+committed" despite the command's plan-only design — the wording error recurs each cycle rather than being self-correcting.
+RULE: Trigger: any session-plan mandate authored for a `/friday-act` session. Why it matters: `/friday-act` has never executed fixes inline across 4+ historical runs, so "applied+committed" as a done-condition is always false. Where: `session-plan.md` / `session-start.md` mandate template should default to "triaged into executable plans" for `/friday-act` mandates.
+
+### Risky actions
+The pre-write guard's mechanical classifier returned UNKNOWN (neither of its two named shapes — CONCURRENT or REMNANT) for the orphaned `/reconcile` entry. I diagnosed it independently as same-day-but-earlier-and-abandoned (not a live concurrent session), cross-referencing `/prime`'s own live-session check from earlier in this session, and presented that diagnosis plus a REMNANT-shaped remediation choice to the operator rather than the guard's generic CONCURRENT-shape message (which would have wrongly said "switch to the other terminal" — there was no other terminal). The resulting recovery commit unexpectedly swept in 3 additional already-staged files (`decisions.md`, `innovation-registry.md`, `improvement-log.md`) beyond the single file I explicitly staged — verified via `git show --stat`/diff that all three contained legitimate, coherent content from the same orphaned `/reconcile` session (not truly foreign) before treating the commit as correct rather than reverting it.
+
+### Session Assessment
+(wrap-collector, 2026-07-03)
+- Autonomy-compounding: no signal — cadence triage (8 fix-plan files) feeds named execution sessions; no reusable component, no OP-9 speculation.
+- Leanness/cost: no signal — showed restraint (3 policy proposals captured as text only, no CLAUDE.md weight added; ran `/resolve-improvement-log` to shrink backlog).
+- Principle-drift: no signal — no named OP-/DR-/QS-/AP- principle strained; declined a false-positive archival candidate (good discipline).
+- Friction: 2 logged — (a) mandate said "applied and committed" but `/friday-act` only produces plans (process); (b) soft-cap active-entry count is non-deterministic (46/57/62 by method), likely aggravated by a malformed `## id-39` header the `grep '^### '` count misses (command).
+- Safety: low — foreign-session guard's mechanical classifier returned UNKNOWN for a same-day abandoned-orphan `/reconcile` entry and its CONCURRENT-shape fallback ("switch to the other terminal") was wrong; agent diagnosed independently, no harm. Separately, a recovery commit swept 3 pre-staged files (same-session, verified benign) — root-cause dup of the active 2026-06-09 "mid-session commit sweeps staged content" entry, so not re-logged.
+- Routed: 1→improvement-log (guardrail-candidate, low), 2→friction-log.
+
+### Next Steps
+- Execute the 8 fix plans in `audits/friday-plans/2026-07-03-*.md`. Operator's stated priority: git-remote + permission-sweep today (both flagged mechanical/low-risk, though permission-sweep items are risk-check-gated); claude-md-template, workspace-claude-md trim, and the 3 `/prime` bugs this week; research-workflow relay fix and the wrap-session nested-repo bug as separate/dedicated sessions; w2-4-triage is a quick disposition pass, not a build.
+- Draft the 3 captured policy proposals into actual CLAUDE.md/audit-discipline.md rule text in a follow-up session, each gated by its own `/risk-check` — see `logs/maintenance-observations.md` § Policy proposals (2026-07-03 block).
+- Normalize the malformed `## id-39` entry in `logs/improvement-log.md` (wrong header level, `##` instead of `###`) in a future cleanup pass so `/resolve-improvement-log` parses it correctly.
+
+### Open Questions
+None blocking.

@@ -285,3 +285,11 @@
 - **QC cycles:** 0 (diagnostic cadence; independent outcome-check ran at wrap → DELIVERED/ACCEPTABLE 8/10)
 - **Gates:** 7 (5 changed) — recovery-choice:changed, tier:confirmed, scope-select:changed, long-run-trim:changed, coach-scope:changed, collision-resolution:changed, wrap-preflight:confirmed
 - **Mandate fields:** none (no /session-start this session — ran /friday-checkup directly)
+
+### 2026-07-03 — Session S1: /friday-act triage — 13 items into 8 fix plans; improvement-log cleanup; orphaned /reconcile recovery
+- **Commands used:** /prime (auto), /friday-act, /resolve-improvement-log, /qc-pass, /wrap-session; agents: friday-act-16a-summarizer, qc-reviewer, general-purpose (outcome check), session-feedback-collector
+- **Iterations:** 1 (8 plan files draft-01 → QC minor finding (risk-check class label) → draft-02 fixed in place)
+- **Decisions logged:** 1 (decisions.md — orphan-recovery approach + policy-proposal escalation)
+- **QC cycles:** 1 (plan-file QC → GO with 1 minor finding → fixed in place)
+- **Gates:** 11 (1 changed) — auto-mode-approval:confirmed, improvement-log-softcap:confirmed, no-active-friction-candidate:confirmed, archive-5-entries:confirmed, continue-despite-backlog:confirmed, tactical-triage-default:confirmed, project-derived-items:changed (selected beyond the two recommended defaults), policy-disposition:confirmed, axis-targets:confirmed, orphan-recovery-choice:confirmed, wrap-preflight:confirmed
+- **Mandate fields:** specified: work_scope, exit_condition, Out of scope | inferred: Files in scope | omitted: Stop if, Allowed inputs, Required outputs

@@ -448,3 +448,55 @@ Phased, low-risk:
 - **Target files:** `ai-resources/logs/scripts/split-log.sh`; `ai-resources/workflows/research-workflow/logs/scripts/split-log.sh` (lockstep template copy — added at resolution per QC traceability note)
 - **Verified:** 2026-06-12 — confirmed LIVE in S7: scoped /log-sweep rotated the originally-failing `projects/axcion-brand-book/logs/decisions.md` cleanly (611→66, 26 entries archived, exact 611=611 content conservation, fenced template preserved). The S6 residual (dormant copies) also closed in S7: 11 copies re-synced, byte-verified.
 - **Review-cycle:** monthly
+### 2026-06-09 — /risk-check Step 17b mandates a /consult call that can never succeed model-side (guarded by disable-model-invocation) (CLOSED — STALE)
+- **Status:** closed (stale) — RESOLVED 2026-06-12 (S9): premise verified false. The `disable-model-invocation` flag on `consult.md` was REVERTED 2026-06-10 (consult.md L7–12 carries an explicit do-not-re-add comment naming Step 17b as a designed caller); live /consult invocations in S9 and S10 confirmed the dispatch works. No edit to risk-check.md needed — the planned re-point was dropped at the S9 gate (see decisions.md 2026-06-12 S9).
+- **Category:** skill-internal-contradiction + workflow-gate
+- **Source:** Observed live, 2026-06-09 S3. The canonical `/risk-check` skill (Step 17b) instructs, for any non-GO verdict, "invoke `/consult` via the Skill tool" to obtain the system-owner second opinion. But `.claude/commands/consult.md` carries `disable-model-invocation`, so the Skill tool refuses it model-side (`Skill consult cannot be used with Skill tool due to disable-model-invocation`). The prescribed Step 17d fallback ("record the second opinion as unavailable and proceed; verdict stands") therefore fires on EVERY model-driven risk-check run — the mandated second opinion is structurally always unavailable. This session worked around it by invoking the underlying `system-owner` agent directly (operator-confirmed as the standing posture, 2026-06-09 S3), which produced a materially load-bearing advisory (rejected the risk-reviewer's top mitigation as a misread of an intentional contract; surfaced an F1→F3 sequencing dependency). The workaround should be the documented path, not an improvisation.
+- **Gap:** Step 17b names a dispatch route (`/consult` via Skill tool) that the guard makes impossible; the second-opinion gate is silently degraded to no-op on every automated invocation.
+- **Proposal (operator-requested, for Friday cadence):** Reconcile the dispatch. Options to weigh at implementation (this is a canonical-skill edit — run `/risk-check`):
+  1. **Re-point Step 17b at the `system-owner` agent directly** (via the Agent tool with `subagent_type: system-owner`), mirroring the prompt template already in 17b. Removes the contradiction at the source; matches what `/consult` dispatches to anyway. Recommended default.
+  2. **Update Step 17d** to specify "if `/consult` is guarded/unavailable, invoke the `system-owner` agent directly" rather than recording unavailable — makes the workaround the documented fallback without changing the primary path.
+  3. Lift `disable-model-invocation` from `consult.md` — REJECTED on its face: the guard is deliberate (consult is operator-facing); removing it to satisfy risk-check would over-expose it elsewhere.
+- **Recommended default:** Option 1 (re-point at the agent) — single source, no guard conflict, no new surface.
+- **Target files:** `ai-resources/.claude/commands/risk-check.md` Steps 17b/17d (canonical skill body — verify whether risk-check is a skill SKILL.md or a command file before editing).
+- **Review-cycle:** monthly
+
+### 2026-06-10 — Harden session-feedback-collector to append-only (destructive-Write recurrence) (RESOLVED)
+- **Status:** applied — RESOLVED 2026-06-12 (S9 batch, commit 0ee6177: `Write` removed from the agent's toolset, `Edit`+`Bash` added; Constraint E rewritten categorical append-only)
+- **Verified:** 2026-06-12 — S9 independent /qc-pass GO; status flipped 2026-06-12 S11 after confirming the edit live in `.claude/agents/session-feedback-collector.md`
+- **Category:** guardrail-candidate
+- **Severity:** medium
+- **Provenance:** main-session (escalated from friction-log on second occurrence) 2026-06-10
+- **Friction source:** wrap-collector destructive-overwrite incidents — 2026-06-09 (S5, overwrote improvement-log.md) + 2026-06-10 (S1, overwrote friction-log.md)
+- **Proposal:** The `session-feedback-collector` subagent has now destructively overwritten an append-only shared log via a whole-file `Write` in TWO consecutive substantive sessions (S5: `improvement-log.md` → `placeholder`; S1: `friction-log.md` → 1-line header), each time caught + restored from HEAD but only because the file was clean == HEAD at session start. This is a confirmed pattern, not a one-off. Harden the agent so it CANNOT whole-file-`Write` a shared log: (a) instruct the agent to append exclusively via `Bash` heredoc (`cat >> log <<'EOF'`) or `Edit` on a unique anchor, never `Write`; (b) optionally add a pre-write entry-count floor / line-count guard (mirror the `/improve` guard that `docs/commit-discipline.md § Shared-log write-path integrity` prescribes for the non-append logs) so a truncating write is refused before it lands. The agent already self-detects and refuses to reconstruct (good failure behavior) — the gap is purely that the destructive write happens at all. Also: the agent created a stray `.append-marker-tmp` scratch file (S1) — instruct it to use no on-disk scratch.
+- **Target files:** `ai-resources/.claude/agents/session-feedback-collector.md`; cross-ref `docs/commit-discipline.md § Shared-log write-path integrity`.
+- **Review-cycle:** weekly
+
+### 2026-06-12 — split-log.sh: no fail-loud content-conservation tripwire against silent data loss (RESOLVED)
+- **Status:** resolved 2026-06-12 (S10, commit 39c2ba5) — shipped as the conservation tripwire; see the "split-log.sh content-conservation tripwire SHIPPED (S10)" entry below, which records the fix and explicitly resolves this entry. Status flipped 2026-06-12 S11.
+- **Category:** guardrail-candidate
+- **Severity:** low
+- **Provenance:** wrap-collector (machine-authored, appended by main session — collector toolset lacked append primitive) 2026-06-12 S6
+- **Proposal:** `split-log.sh` archival has no content-line-conservation check; both silent data-loss paths fixed this session (preamble deletion, fenced-header miscount) were caught only by manual isolated testing, not by the script itself. Add a pre-write assertion: count content lines of the input file and of (preamble + archive block + keep block); abort non-zero on mismatch before the `mv` lands. Fail-loud against the NEXT unknown loss path, not just the two now closed.
+- **Target files:** `ai-resources/logs/scripts/split-log.sh`; `ai-resources/workflows/research-workflow/logs/scripts/split-log.sh` (lockstep)
+- **Review-cycle:** monthly
+
+### 2026-06-12 — /resolve-improvement-log resolved-classification rule matches zero real entries (strict `applied`+`Verified:` vs de facto `resolved` convention) (RESOLVED)
+- **Status:** applied — RESOLVED 2026-06-12 (S9 batch, commit 0ee6177: two-tier Resolved classification added to `resolve-improvement-log.md` Step 3 — strict tier-1 plus `resolved YYYY-MM-DD` convention tier-2, with [strict]/[convention] presentation tags). The deferred lockstep preamble edit was applied 2026-06-12 S11 (see preamble Status schema note).
+- **Verified:** 2026-06-12 — S9 independent /qc-pass GO; preamble lockstep confirmed in S11
+- **Category:** session-feedback
+- **Provenance:** wrap-collector (machine-authored) 2026-06-12
+- **Friction source:** wrap-collector 2026-06-12 — autonomy-compounding / friction (S8)
+- **Proposal:** `/resolve-improvement-log`'s strict resolved-classification rule (an entry must carry BOTH `Status: applied` AND a `Verified:` line — improvement-log.md preamble L9) matches zero entries in practice; the log's de facto convention marks completion as `resolved YYYY-MM-DD` and most done entries lack the `Verified:` line. The mismatch forced operator adjudication mid-run this session (S8 archived 12: 2 tier-1 strict-match, 9 tier-2 done-marked-without-Verified, 1 superseded watch item). Reconcile the rule with the convention so future runs classify without operator intervention — either teach `/resolve-improvement-log` to also accept the `resolved YYYY-MM-DD` form, or normalize the schema and update preamble + command in lockstep.
+- **Target files:** (to be determined at disposition) — candidate: `ai-resources/.claude/commands/resolve-improvement-log.md` (classification rule); `ai-resources/logs/improvement-log.md` preamble L9 (Verified/Status schema); keep in lockstep.
+- **Review-cycle:** monthly
+
+### 2026-06-12 — split-log.sh content-conservation tripwire SHIPPED (S10)
+- **Status:** applied
+- **Resolved:** 2026-06-12 (S10, /fix-project-issues batch)
+- **Category:** guardrail
+- **Provenance:** /fix-project-issues 2026-06-12 S10 (id-31; SO advisory consult-2026-06-12-fix-project-issues-ai-resources.md)
+- **What shipped:** Pre-write conservation assertion in `split-log.sh`: non-blank line conservation (keep + archive == entry region) + fence-aware header-count conservation (keep + archive headers == TOTAL). Aborts exit 1 BEFORE any write on mismatch. Verified by isolated fixture tests: top/bottom orders, fenced preamble, idempotent re-run, injected off-by-one bug → tripwire fired, files untouched. QC GO. Canonical + template copy byte-identical. This resolves the 2026-06-12 S6 "no fail-loud content-conservation tripwire" entry above.
+- **Target files:** `ai-resources/logs/scripts/split-log.sh`; `ai-resources/workflows/research-workflow/logs/scripts/split-log.sh` (lockstep, cmp-verified)
+- **Verified:** 2026-06-12 — in-session fixture tests (success/abort paths) + independent QC GO (same session, S10)
+

@@ -254,3 +254,10 @@
 
 #### Write Activity
 - Appended by hand at wrap (feedback-collection step run manually, not via `session-feedback-collector`, to avoid the collector's documented destructive-overwrite hazard against the uncommitted improvement-log appends this session made — see friction-log 2026-06-09 S5 / 2026-06-10 S1).
+
+## Session — 2026-07-03 (Session S1: /friday-act triage)
+
+### Friction Events
+
+- **[wrap-collector]** wrap — **Friction type: process (mandate-formation vs command behavior mismatch).** The session mandate's done-condition read "the 4 critical permission-prompt fixes are applied ... and committed," but `/friday-act` by design never executes fixes inline — it produces dispositioned, risk-annotated plan files for later execution sessions. Nothing was applied/committed toward the 13 fix items this session; the session flagged the discrepancy transparently in chat. The mandate-forming step set a completion criterion the command cannot meet. Direction (collector does not propose the fix): mandate formation for `/friday-act` should read "triaged into executable plans," not "applied and committed," reflecting the command's plan-not-apply output.
+- **[wrap-collector]** wrap — **Friction type: command (non-deterministic active-entry count feeding the soft-cap gate).** The improvement-log soft-cap gate fired with an active-entry count reported as 46/57/62 depending on count method — a ~16-entry spread, so the gate's trigger (and the "over 7 active" Friday-execution block) rests on a non-deterministic total. Likely aggravated by a malformed `## id-39` entry (wrong header level — `##` instead of `###`) that a `grep '^### '` count silently under-counts (session Next Steps item 3). Direction (collector does not propose the fix): standardize one canonical active-entry count method across the `/friday-act` soft-cap gate and `/resolve-improvement-log`, and normalize the malformed header so the parser count is stable.
