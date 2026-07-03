@@ -38,8 +38,10 @@ logs/.session-marker-*
 # Archived inbox briefs (Layer C settings.json also denies Read on this path)
 inbox/archive/
 
-# Top-level archive directory (Layer C settings.json also denies Read on this path)
-archive/
+# Top-level archive directory only (anchored 2026-07-03 — the unanchored form silently ignored
+# nested archive dirs, notably logs/missions/archive/, forcing `git add -f` on mission-close
+# records; Layer C settings.json also denies Read on this top-level path)
+/archive/
 
 # Context-engine runtime output (packs are session artifacts; treated as untracked per operator policy)
 output/
