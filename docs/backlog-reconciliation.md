@@ -68,6 +68,15 @@ The scan is bounded by *output* (`--since` returns nothing for repos with no com
 
 **3. Keyword-match each candidate against the merged commit subjects** (see tolerance posture below) and classify.
 
+**4. Target-file touch-scan (opaque-subject fallback — annotate-only).** For a candidate that stays *still-open* after the keyword pass AND names concrete target files (a `Target files:` field or explicit paths in its body), check whether any commit since the anchor touched those files in the owning repo:
+
+```bash
+# $repo = the repo owning the target file — one of the repos already enumerated by the step-2 scan
+git -C "$repo" log --since="${ANCHOR}T00:00:00" --pretty="%h %s" -- <target-file> 2>/dev/null
+```
+
+A hit is a **touch signal — weaker than a subject match, and it never demotes.** The candidate stays still-open; annotate it `target file touched by <hash> since anchor — verify before executing`. Popular files (CLAUDE.md, shared commands) are touched constantly, so a touch alone proves nothing; the annotation routes a cheap verify-first onto the candidate before a vetting pass or execution session spends effort on it. Failure mode this closes (2026-06-12 S10): resolving commits with opaque subjects (an id-04 fix shipped under a "W24" batch subject) sailed past the keyword pass, and 3 of 6 SO-vetted do-now items reached apply before being found dead. This scan is deliberately advisory-with-no-auto-closure (recorded in the 2026-07-03 batched risk-check) — it adds a signal, not an enforcement step.
+
 ## Keyword-match tolerance posture
 
 Classification is deliberately **conservative — biased toward false-negative over false-positive.** A candidate is demoted to *likely-done* only on a confident match:
@@ -82,6 +91,7 @@ Classification is deliberately **conservative — biased toward false-negative o
 - **No match → still-open.** Surface as actionable, unchanged.
 - **Advisory-only — never edit logs.** This primitive reads git and filesystem; it does **not** write to any log, report, or source file. It changes only what a scan *surfaces*, never the underlying record. The source log stays untouched, so the operator can always verify a likely-done call directly. (This matches `/prime`, which never edits `session-notes.md`.)
 - **Demote, don't drop.** Because likely-done items are demoted + tagged rather than removed, a wrong match costs a glance, not a lost item. This is what makes the conservative posture safe.
+- **Touch-signal ≠ match.** A target-file touch (mechanism step 4) never reclassifies a candidate; it only annotates a still-open item with a verify-first note and the touching commit hash.
 
 ## Fall-through on git failure
 
