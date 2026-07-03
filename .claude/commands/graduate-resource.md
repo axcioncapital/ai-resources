@@ -134,6 +134,19 @@ After Step 5's checks pass and before Step 6 / Step 7, run the placement verifie
 
 On `MATCH` or `MATCH-WITH-EXCEPTION`, proceed. On `MISMATCH`, halt — the actual write drifted from the plan; emit the verifier's loud-failure chat block and resume only after operator resolution.
 
+### Step 5b: Runtime-dependency check (present-but-inert guard)
+
+Before reporting the graduation as operable, inventory the resource's **per-project runtime dependencies** — files the command/agent reads at runtime that each consuming project must provide (operator-authored reference docs, `context/*.md` inputs, project-local config). Source: the generalized file's own body — grep it for hard-coded relative paths and "read X" instructions.
+
+If at least one per-project runtime dependency exists:
+
+1. Enumerate the consuming projects that will receive the resource (the shared-manifest / symlink set).
+2. For each project, check whether the dependency files exist. Report one line per project: `{project}: OPERABLE` or `{project}: INERT (missing: {files})`.
+3. State the split in the completion summary. "Broadcast to N projects" is NOT "operable in N projects" — never report the first as the second.
+4. If most consumers are INERT, surface the option of scoping the symlink broadcast to the operable subset — operator's call; do not silently gate.
+
+Skip silently when the resource has no per-project runtime inputs (most commands/agents). Origin: 2026-07-03 — `/reconcile` was graduated and broadcast to ~20 projects while its `context/mandate-rubric.md` + `context/resource-activation-map.md` runtime inputs existed in only one, so it shipped present-but-inert in the rest and the completion report did not say so.
+
 ## Step 6: Register in Settings (Hooks Only)
 
 If the resource is a hook that should fire for all projects:
@@ -151,7 +164,7 @@ Skip this step for commands and agents — they're discovered automatically via 
 3. Commit the new resource in ai-resources:
    - Stage the new file(s)
    - Commit message: `new: {resource-type} {name} — {one-line purpose}` (e.g., `new: command optimize-repo — repository health optimization`)
-   - Push automatically after the commit
+   - Do NOT push — pushes are batched and gated to the `/wrap-session` confirmation prompt (workspace `CLAUDE.md` § Push behavior; stale "push automatically" instruction corrected 2026-07-03)
 
 ## Key Rules
 

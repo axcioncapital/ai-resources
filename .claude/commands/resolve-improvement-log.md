@@ -21,7 +21,7 @@ Archive resolved entries from `ai-resources/logs/improvement-log.md` so stale it
 
    Both Resolved tiers are archived identically. In the step-4 presentation, tag each entry `[strict]` or `[convention]` so the operator can spot-check tier-2 classifications cheaply.
 
-   *Schema-sync note (2026-06-12 S9):* the improvement-log.md preamble (L9) still documents only the strict tier-1 rule. The lockstep preamble edit was deliberately deferred — a concurrent session (S8) owned `improvement-log.md` uncommitted when this tier-2 widening landed, so editing the preamble would have risked a lost-update collision. The two ends are intentionally divergent until a follow-up session updates the preamble: command widened, preamble lagging. Until then, this command file is authoritative for classification.
+   *Schema-sync note (updated 2026-07-03):* the improvement-log.md preamble (L9) now documents both tiers — the lockstep preamble edit deferred in S9 was applied 2026-06-12 S11, so the two ends are converged. Keep this command and the preamble in lockstep on any future classification-rule change.
 
 3b. **Two-tier age detection.** Compute age for each Pending entry: extract the date from the `### YYYY-MM-DD —` header line (or use the most recent `**Review-cycle:**` date if present — deferral resets the clock), then `python3 -c "from datetime import date; print((date.today() - date.fromisoformat('ENTRY_DATE')).days)"`. Skip entries with no parseable date; count them as Pending only.
 

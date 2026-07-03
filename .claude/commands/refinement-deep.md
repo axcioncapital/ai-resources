@@ -23,6 +23,8 @@ This orchestrates three independent review subagents in one invocation. QC check
    - **`qc-reviewer`** — pass it: artifact description, artifact location, original request. Do NOT pass conversation history, your reasoning, or creation context.
    - **`refinement-reviewer`** — pass it: artifact description, artifact location, intended audience. Do NOT pass conversation history, your reasoning, or creation context.
 
+   **Project-session spawn fallback (added 2026-07-03).** If either agent *type* fails to resolve at spawn (project session — `--add-dir` registers files, not agent types), do not abort: resolve `ai-resources/` by ancestor walk-up, read the unresolved definition(s) from `{AI_RES}/.claude/agents/` (`qc-reviewer.md` / `refinement-reviewer.md`), strip the YAML frontmatter, and spawn `general-purpose` subagent(s) with the body inlined plus the same handoff — **explicitly re-asserting `model: opus` on each fallback spawn** (never silently drop to the session model). Note the fallback next to the affected verdict.
+
 4. **Check for clean result.** If QC verdict is **GO** and refinement verdict is **CLEAN**, present both reviews and stop — there is nothing to triage.
 
 5. **Build the suggestion list.** Extract every actionable finding from both reviews into a single numbered list. For each item, note its source (QC or Refinement). Do not filter, reword, or reinterpret — use the reviewers' original findings.

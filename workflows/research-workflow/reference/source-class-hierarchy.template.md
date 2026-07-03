@@ -59,6 +59,8 @@ Each research extract claim records the source class actually used AND the ladde
 
 Specific named sources to mine for evidence beyond the broad ladder categories above. Project fills with authoritative source names per category. Typical categories include primary actor websites, news/PR wires, regulator filings, legal/financial-adviser deal lists, official registries.
 
+> **Contract note (consumer: Check 7).** `research-extract-verifier` Check 7 (Source-Surface Coverage) reads this file at verification time — the evidence-need table rows, the ladders, and this Named-Source Appendix — and flips a scarcity verdict on appendix contents. Once filled, keep row identities, ladder identities, and these appendix headings stable: renamed or restructured headings degrade Check 7 to `unverifiable`. The appendix shape is a two-end contract, not free-form notes.
+
 ### {{CATEGORY_1}}
 
 {{NAMED_SOURCES_1}}

@@ -154,7 +154,7 @@ Input: `$ARGUMENTS` (optional) — explicit path to a journal file. If omitted, 
 
 ### Step 5.5: Output Validation Gate (auto-/qc-pass with journal-scoped inputs)
 
-15b. Spawn the `qc-reviewer` subagent with the following handoff. The agent runs its standard 6-dimension rubric (Request Match, Scope Creep, Risky Assumptions, Things That Could Break, Simpler Alternative, Sibling Redundancy) — the focus areas below are scope/context input that steers what the agent looks for within those dimensions, not a replacement rubric.
+15b. Spawn the `qc-reviewer` subagent with the following handoff. The agent runs its standard 6-dimension rubric (Request Match, Scope Creep, Risky Assumptions, Things That Could Break, Simpler Alternative, Sibling Redundancy) — the focus areas below are scope/context input that steers what the agent looks for within those dimensions, not a replacement rubric. *Project-session spawn fallback (added 2026-07-03): if the `qc-reviewer` type fails to resolve (project session — `--add-dir` registers files, not agent types), read `{AI_RES}/.claude/agents/qc-reviewer.md` via ancestor walk-up, strip the frontmatter, and spawn `general-purpose` with that body inlined plus the same handoff, explicitly re-asserting `model: opus`; note the fallback in the gate output.*
 
   - **Artifact:** `{REPORT_PATH}` — /friday-journal report for {TODAY}.
   - **Original operator request:** "Run /friday-journal on the AI journal."

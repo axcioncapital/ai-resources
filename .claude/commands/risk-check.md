@@ -75,6 +75,8 @@ Invocation semantics: operator-typed, or inline-prompted by other commands (e.g.
 
 12. Subagent returns a ≤20-line summary ending with `REPORT: {absolute path}` as its last line.
 
+12a. **Project-session spawn fallback (added 2026-07-03).** If the `risk-check-reviewer` agent *type* fails to resolve at spawn — the known failure mode when this command runs from a project session, because `--add-dir` grants file access but does not register agent types — do not abort. Resolve `ai-resources/` by ancestor walk-up (the `$AI_RES` idiom used in `new-project.md`), read `{AI_RESOURCES}/.claude/agents/risk-check-reviewer.md`, strip the YAML frontmatter, and spawn a `general-purpose` subagent with that definition body inlined at the top of the prompt followed by the same inputs as item 11 — **explicitly re-asserting the reviewer tier on the spawn (`model: opus`)**: `general-purpose` does not inherit the definition's `model:` frontmatter, and the fallback must not silently drop an Opus-tier reviewer to the session model. Note `(fallback: general-purpose, opus re-asserted)` in the Step 5 chat verdict line. Step 10's file-existence abort is unchanged — it guards a missing definition file; this fallback guards an unregistered agent *type*.
+
 13. If the returned summary lacks the `REPORT:` last-line marker, re-invoke the subagent once with the same inputs. If the re-invocation also lacks the marker, abort with an error naming the malformed summary and do NOT proceed to validation.
 
 ---

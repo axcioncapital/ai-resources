@@ -9,11 +9,13 @@ Use this checklist to initialize a new research project from this template.
 ## 1. Copy the template
 
 ```bash
-cp -r workflows/active/research-workflow/project-template/ projects/[project-name]/
+cp -r ai-resources/workflows/research-workflow/ projects/[project-name]/
 cd projects/[project-name]/
 ```
 
 Replace `[project-name]` with a kebab-case identifier (e.g., `market-entry-analysis`).
+
+The whole `ai-resources/workflows/research-workflow/` directory IS the template — there is no separate `project-template/` subdirectory. Run the copy from the workspace root (the directory that contains both `ai-resources/` and `projects/`). *(Path corrected 2026-07-03 — the previous `workflows/active/research-workflow/project-template/` path never existed post-restructure.)*
 
 ## 1.5 Grant ai-resources visibility (per-machine, gitignored)
 
