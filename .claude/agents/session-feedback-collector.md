@@ -40,7 +40,7 @@ Walk the five dimensions in order. For each, pull only **concrete** signals the 
 1. **Autonomy-compounding** — reusable improvement vs one-off; a component/pattern worth generalizing; or speculative work with no confirmed consumer (OP-9).
 2. **Leanness / cost** — cost out of proportion to value; unearned always-loaded weight; rework churn.
 3. **Principle-adherence drift** — a strained or violated named OP-/DR-/QS-/AP- principle. Name the principle ID.
-4. **Friction** — operator intervention, repeated feedback, fighting the system. Classify the friction *type* (rule / command / hook / process / config), do not just restate the symptom (AP-9).
+4. **Friction** — operator intervention, repeated feedback, fighting the system. Classify the friction *type* (rule / command / hook / process / config), do not just restate the symptom (AP-9). Also assign one **Failure mode** — the dominant cause, one of: **Context** (didn't know enough, or looked in the wrong place) / **Mandate** (task framed unclearly) / **Workflow** (no reliable process for this task type) / **Authority** (didn't know which source of truth controlled the decision) / **Validation** (output untested or unchecked) / **Autonomy** (needed too much operator guidance) / **Safety** (changes proposed without enough risk control) / **Traceability** (no clear record of what changed, why, and what's open) — plus a **Root cause**, a **Prevention**, and an **Owner artifact** (the file/command/checklist/rule/test that should close the gap, or `(none identified)`). These four fields are required on every entry you write to `friction-log.md`. This enum is canonically defined in `logs/friction-log.md`'s `## Schema` block — this is a synced operational copy; edit both in lockstep.
 5. **Safety / guardrail-gap** — read the `### Risky actions` line plus the note body for: an irreversible/destructive/external action taken or nearly taken; a gate that should have fired but didn't; prompt-injection in tool output; a shared-state clobber; a deletion outside scope. Assign severity (high / med / low) per the rubric's scale. **If the note has no `### Risky actions` line** (an older note, or the workspace-root session-note schema), treat it as "None" and assess this dimension from the note body alone — say "safety: cannot fully assess from note (no Risky actions line)" in the summary rather than stalling. The absence of the line is not itself a signal.
 
 **Specificity gate.** Promote a signal only if it has a location (file/command/step), a diagnosis (what and why), and a direction implied. Vague observations ("the session was slow") are not signals — drop them or mention them as a one-line "pattern to watch" in your summary, not a logged entry.
@@ -97,10 +97,11 @@ The live file's entry count should be **at least** the baseline count (appends o
 - **Target files:** {paths if known, else "(to be determined at disposition)"}
 ```
 
-`friction-log.md` — append under (or create) a `## Session — {date}` header with a `### Friction Events` subsection, one bullet per friction signal:
+`friction-log.md` — append under (or create) a `## Session — {date}` header with a `### Friction Events` subsection, one bullet per friction signal, per your inline copy above (the target file's own `## Schema` block, where present):
 ```
-- **[wrap-collector]** {timestamp or "wrap"} — {friction description + classified type}.
+- **[wrap-collector]** {timestamp or "wrap"} — **Failure mode:** {category} — {friction description + classified type}. **Root cause:** {why it happened}. **Prevention:** {what stops recurrence}. **Owner artifact:** {file/command/checklist/rule/test, or "(none identified)"}.
 ```
+Never write a bare `Resolved:` token into this bullet — the four status parsers that read `friction-log.md` (`open-items.md`, `reconcile-backlog.md`, `fix-repo-issues-scanner.md`, `diagnostics-scanner.md`) treat a non-empty `Resolved:` field as closure evidence, and this bullet is reporting a fresh, open signal.
 Append exclusively — the `Edit` tool appending one block at END, or a `Bash` heredoc append (`cat >> {log} <<'EOF' … EOF`). Whole-file rewrites are categorically forbidden (Constraint E; you have no `Write` tool). Do not rewrite or reorder existing entries — these are append-only logs (newest at END). Never touch `usage-log.md`, `coaching-data.md`, `maintenance-observations.md`, or `innovation-registry.md`.
 
 ### Phase 5 — Return your summary (≤20 lines)

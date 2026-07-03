@@ -1,5 +1,35 @@
 # Friction Log
 
+## Schema
+
+Applies to entries dated **2026-07-03 onward**. Existing entries below, dated before 2026-07-03, are not retrofitted.
+
+**Substantive entries** — hand-authored narrative entries and `session-feedback-collector` (`[wrap-collector]`) wrap-time entries — require four additional fields, in this order. A substantive entry is any entry that isn't a bare one-liner produced by `/friction-log [description]`, `/note`'s `friction:` prefix, or `friction-log-auto.sh`'s auto-appended tool-error lines; a rough test: if the entry has more than one sentence of description, or was written by the collector, it's substantive.
+
+- **Failure mode:** one primary category from the fixed enum below (pick the dominant/triggering cause, even when more than one applies):
+  - **Context** — didn't know enough, or looked in the wrong place.
+  - **Mandate** — task framed unclearly.
+  - **Workflow** — no reliable process for this task type.
+  - **Authority** — didn't know which source of truth controlled the decision.
+  - **Validation** — output untested or unchecked.
+  - **Autonomy** — needed too much operator guidance.
+  - **Safety** — changes proposed without enough risk control.
+  - **Traceability** — no clear record of what changed, why, and what's open.
+- **Root cause:** why it actually happened (not just what happened).
+- **Prevention:** what would stop the recurrence.
+- **Owner artifact:** the concrete file / command / checklist / rule / test that should own closing the gap (e.g. "`/prime` Step 2", "`docs/audit-discipline.md`"). If none is identified yet, write `(none identified)` — never omit the field.
+
+**Canonical copy.** This block is the source of truth for the 8-category enum. `session-feedback-collector.md` carries an inline copy so the taxonomy is self-contained wherever the collector fires (it writes into ~9 friction-log.md files across projects, most of which don't carry this block) — the two must be edited in lockstep; this file is canonical, the collector's copy is a synced operational copy.
+
+**Relationship to existing/adjacent fields (none of these are replaced):**
+- **Friction type:** the existing free-text tag (e.g. `process`, `harness`, `config`) — names *which component* was involved. Kept as-is, alongside the new Failure mode category, which names *why* it failed. Not a fixed enum; do not conflate the two.
+- **AP-9's own classification axis** (context / judgment / instruction / model-limitation, per `projects/strategic-os/ai-strategy/principles-base.md`) is a third, narrower lens some entries may still reference. The Failure-mode enum here is a separate, wider taxonomy purpose-built for this log — the two are not required to align, and reconciling them is an open item for the principles doc, not something to resolve ad hoc per entry.
+- **Resolved:** / **[FADING-GATE] verified …:** — unchanged closure stamps. Owner artifact states what *should* close the gap; these state that it *has*. A later close-out still uses the existing stamps.
+
+**Exempt (lightweight, no classification required):** `/friction-log [description]` one-liners, `/note`'s `friction:`-prefixed quick capture, and `friction-log-auto.sh`'s auto-appended tool-error lines. These stay terse by design.
+
+---
+
 ## Session — 2026-04-18 (post-prevention cleanup 2)
 
 ### Friction Events
