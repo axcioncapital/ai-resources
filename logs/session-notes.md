@@ -401,3 +401,45 @@ Two gate-adjacent items, both non-destructive and corrected: (1) skipped the man
 
 ### Open Questions
 None blocking.
+
+## 2026-07-03 — Session S3
+**Mandate:** Fix `check-foreign-staging.sh`'s whitespace tokenizer so the canonical semicolon-separated `- Files in scope:` format no longer produces false-blocked commits — done when: the hook splits on `;` (in addition to comma/whitespace), a semicolon-separated footprint like `path1; path2` matches staged paths correctly, the fix clears `/risk-check`, and the change is committed.
+- Out of scope: everything in the original mandate below (superseded — see Revision note); anything in the concurrent Session S2's declared file scope (git config; project `settings.json`/`.local`; `.claude/commands/prime.md`; the new-project scaffold template fragment + 6 project `CLAUDE.md` files; workspace `CLAUDE.md`); the pre-existing uncommitted `reconcile-*`/instruction-audit/`chat-skills` files already in the tree.
+- Files in scope: `.claude/hooks/check-foreign-staging.sh`; `logs/friction-log.md`
+- Stop if: the 1M-context subagent credit gate blocks `/risk-check` — defer rather than self-QC-and-commit an architectural change (QC-independence rule), same stop condition S2 is operating under.
+
+**Revision (same session, before any execution).** Original mandate above (harden `session-feedback-collector` to append-only) was dropped after live inspection found it **already fixed** — commit `0ee6177` had already removed the `Write` tool from the agent's toolset and added an append-only Constraint E. Pivoted to the second `/open-items` candidate (migrate orphaned workspace-root commands into canonical); plan-time `/risk-check` returned PROCEED-WITH-CAUTION, and the mandatory System-Owner second opinion then substantively disagreed with the migration premise itself — `repo-architecture.md:19` names `validate` as an intentional workspace-only example (not an orphan), and `GAP-2` in `principles-base.md` marks the whole workspace-root-vs-canonical question as system-level "known debt — PARKED." Operator chose to drop that task too (option A: pick a different, cleaner item) rather than have me unilaterally resolve the disagreement. Pivoted again to this hook fix — a single-file, mechanical, verified-still-open bug (confirmed via direct read of `check-foreign-staging.sh:301`, which splits only on `[,\s]+`) with no premise ambiguity and no file overlap with S2.
+
+### Summary
+Ran `/open-items` to produce a tiered backlog, then `/session-plan` to plan this session's work with an explicit constraint: don't collide with a live concurrent session (S2, running today's `/friday-act` fixes in the same checkout). That safety concern surfaced a real gap — this session had no marker of its own yet — so `/prime` ran first to register marker `S3` before any plan was written. Two candidate tasks were tried and dropped on live evidence (one already fixed, one resting on a premise the System Owner's second opinion disproved), before landing on a clean, verifiably-open, zero-overlap fix: `check-foreign-staging.sh`'s footprint tokenizer now handles the canonical semicolon-separated `Files in scope` format, closing a real false-block bug from 2026-07-02. Retroactive `/qc-pass` closed a gap where the commit had cleared `/risk-check` but not independent QC — verdict GO.
+
+### Files Created
+- `logs/session-plan-2026-07-03-S3.md` — session plan (rewritten in place once, after the pivot to the hook fix)
+- `audits/risk-checks/2026-07-03-migrate-orphaned-workspace-root-commands-to-canonical.md` — risk-check report for the dropped command-migration task (PROCEED-WITH-CAUTION; retained as the record of why that task was declined)
+- `audits/risk-checks/2026-07-03-fix-check-foreign-staging-semicolon-tokenizer.md` — risk-check report for the shipped fix (GO)
+- `projects/axcion-ai-system-owner/output/consultations/consult-2026-07-03-riskcheck-2nd-opinion-migrate-orphaned-commands.md` — System-Owner second opinion that surfaced the migration-premise problem (separate repo)
+
+### Files Modified
+- `.claude/hooks/check-foreign-staging.sh` — line 301 regex fix (semicolon-aware tokenizer) — committed `964d626`
+- `logs/friction-log.md` — resolution annotation on the 2026-07-02 S3 entry — committed `964d626`
+- `logs/session-notes.md` — this session's headers, mandate, revision note, and this entry
+
+### Decisions Made
+- Logged to `logs/decisions.md`: dropping the two candidate tasks (collector hardening — already fixed; command migration — premise disproven by the System Owner) and picking the hook fix instead, all operator-directed (option "A" at the pivot point).
+
+### Outcome
+Outcome check skipped per preflight.
+
+### Risky actions
+None. One near-miss avoided by design: the Step 3.5 foreign-session guard correctly fired once (S2's uncommitted header was in the working tree) and this session did not proceed until S2's wrap commit (`815c3f8`) landed and the guard cleared. The earlier `git commit` attempt was separately blocked by the hook's own `no_concrete_footprint` check on this session's own mandate line (a stray `(inferred)` qualifier on an otherwise-concrete file list) — fixed the mandate wording and retried; no override, no bypass used.
+
+### Session Assessment
+Feedback collection skipped per preflight.
+
+### Next Steps
+- Optional stretch item, not urgent: the workspace-root-vs-canonical `.claude/commands/` reconciliation is still open, but re-scope it first — confirm per-command (not blanket) whether each of `run-qc.md`, `update-md.md` is a genuine orphan before touching anything, given `validate.md` turned out not to be one.
+- Consider fixing the `[FADING-GATE]` tag convention mismatch flagged by this session's `/qc-pass` (cosmetic — that tag is normally used for gate-calibration/suppression decisions, not hook-parser bug resolutions). Non-blocking; bundle into a future doc-consistency pass.
+- The `/open-items` Tier 1 list still has several other genuinely-open items (concurrent-session staging-index guard, session-feedback-collector-adjacent guardrail candidates, `/consult` corpus-disambiguation) — none touched this session.
+
+### Open Questions
+None blocking.
