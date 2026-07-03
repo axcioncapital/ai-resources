@@ -35,6 +35,7 @@ Every agent must declare `model:` explicitly in frontmatter — no implicit inhe
 | project-manager | opus | Judgment (project-content adjudication grounded in active project's constitution docs; escalates to system-owner via Function A for general structure questions; redirects change-shaped structure questions to /consult). Added 2026-05-28. |
 | qc-gate | sonnet | QC reviewer for stage transitions. Added 2026-05-14. |
 | qc-reviewer | opus | QC judgment. Correct. |
+| reconcile-reviewer | opus | Judgment (mandate-compliance scoring, resource-activation audit, genericness check, root-cause classification for `/reconcile`). Graduated to canonical 2026-07-03 from buy-side-service-plan (origin). |
 | refinement-reviewer | opus | Refinement judgment. Correct. |
 | repo-dd-auditor | sonnet | Questionnaire-driven factual audit. Correct. |
 | risk-check-reviewer | opus | Judgment (risk evaluation across five dimensions). Added 2026-04-27. |
@@ -80,11 +81,11 @@ These agents exist as regular-file copies (not symlinks) in `projects/axcion-bra
 
 ## Project-local agent copies (buy-side-service-plan)
 
-These agents exist as regular-file copies (not symlinks) in `projects/buy-side-service-plan/.claude/agents/`. Project-local scope — the `/reconcile` build is intentionally unproven-then-graduate: built here first per `docs/ai-resource-creation.md` rule 5 (DR-7), not yet symlinked into `ai-resources/.claude/agents/`. Graduate via `/graduate-resource` once a second confirmed consumer exists.
+These agents exist as regular-file copies (not symlinks) in `projects/buy-side-service-plan/.claude/agents/`. This project is the **origin** of `reconcile-reviewer`, which was graduated to canonical (main table above) on 2026-07-03. The origin regular-file copy is retained per `/graduate-resource`'s "never modify the source copy" rule; it is functionally equivalent to canonical and may be converted to a symlink in a future cleanup. All *other* projects consume the canonical copy via auto-sync.
 
 | Agent | Tier | Notes |
 |---|---|---|
-| reconcile-reviewer | opus | Judgment (mandate-compliance scoring, resource-activation audit, genericness check, root-cause classification for `/reconcile`). Project-local to buy-side-service-plan. Added 2026-07-03. |
+| reconcile-reviewer | opus | Local copy of canonical (origin project). Same tier. Added 2026-07-03; graduated to canonical same day. |
 
 ## Project-local agent copies (strategic-os)
 
