@@ -487,3 +487,35 @@ None — build complete and QC-clean; only the live proof-run remains.
 - Required outputs: design doc for scope-cross-project-scan agent
 - Context pack: output/context-packs/agent-20260701-b7e2a/pack.md
 Design the cross-project context-discovery pass for /scope-project — a new agent that scans sibling projects and surfaces which projects, and which specific files inside them, are relevant to the project being scoped.
+
+## 2026-07-03 — Scoped System Owner v2 build (/scope-project → control pack + brief)
+
+### Summary
+Turned the "System Owner rethink" material (clarified intent + 2026-06-05 ground-truth pack + operator's 2026-06-12 refinement notes) into a scoped, QC'd build package for System Owner v2. Flow: `/clarify` → build plan → honest triage of the ~65 refinement ideas (BUILD/WIRE/DEFER/DECLINE) → `/scope` → full `/scope-project` run producing a 5-document control pack + a `/plan-draft`-ready brief. QC returned **Reduce Scope**; scope cut 15 → 12 pieces. Session skipped `/prime` (no mandate block); deliverable committed to the `project-planning` repo.
+
+### Files Created
+Committed `9162291` in the `project-planning` repo, under `Project Plans/system-owner-v2/` (via the `output/` symlink):
+- `synthesis.md`, `doc-architecture-map.md`, `scope-qc-verdict.md`, `context-pack.md` (the brief)
+- `control-pack/`: `scope-mvp-charter.md` (authority), `technical-design.md`, `governance-authority.md`, `risk-assumptions-register.md`, `execution-roadmap.md`
+- Build plan (not in a repo): `~/.claude/plans/make-a-plan-for-sequential-squirrel.md`
+
+### Files Modified
+- `ai-resources/logs/session-notes.md`, `logs/decisions.md`, `logs/scratchpads/2026-07-03-09-50-scratchpad.md` (this wrap)
+
+### Decisions Made
+- Clarify answers: **Full v2 plumbing · AI strategy senior · owner stays advisory (no Edit/Bash) · adjacent systems interface-stub-only**.
+- Governing triage principle: **wire existing controls, build only the new** (~12 ideas already exist as `/drift-check`, `/risk-check`, `/qc-pass`, parallel-sessions-playbook, decisions.md, etc.). Three pushbacks applied (contract = default-of-record not "binding"; 3-level ladder not 5; owner *requires* `/risk-check`+`/qc-pass` rather than rebuilding them).
+- **Proceed independently of `axcion-ai-system-redesign`** — a parallel design-window (scoped 2026-07-02) that will design a leaner target architecture the SO lives in. Collision surfaced; operator disclosed override; logged as R1 (dominant residual risk).
+- **Reduce Scope accepted** — cut B9 (cost-budget mode), B11 (stub interfaces), B12 (promotion framework) → DEFER. 15 → 12 pieces; removes the cost-ceiling blocker from S3's critical path; cuts redesign rework exposure.
+
+### Risky actions
+Near-miss: the `project-planning/output/` symlink caused a first `git add` to fail "beyond a symbolic link"; resolved to the real `Project Plans/system-owner-v2` path and staged **only** those files — deliberately did NOT sweep the concurrent-session log changes (`friction-log.md`, `improvement-log.md`) present unstaged in that repo. No destructive/external actions.
+
+### Next Steps
+1. `/plan-draft projects/project-planning/output/system-owner-v2/context-pack.md` — build the work-unit plan (4 sessions + S0 pre-req).
+2. Resolve two Operator blockers before the build gets far: **B4 log write-scope grant** (explicit yes + `/risk-check` before S3); **R1 mitigation wiring** (put the control pack in the redesign's `inputs/` + re-reconcile checkpoint at its Session F).
+3. Optional: wire R1 now (offered; not yet done).
+
+### Open Questions
+- Per-invocation cost ceiling — deferred watch item (unblocked S3 after the B9 cut); set before B9 is built post-v2.
+- `systems-building-principles.md` slot still empty (`status: TBD`) — shipping v2 vault-grounded.
