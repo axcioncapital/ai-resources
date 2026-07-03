@@ -398,3 +398,19 @@
 **Alternatives considered.** (Decision 1) Land the flip this session under the five guards — rejected as internally contradictory per the SO. (Decision 2) Build the check anyway — rejected as duplicate of a live implementation. (Decision 3) Use window-outputs/ per local convention — rejected; R1 is the senior, operator-approved directive, and the exception is cheaper than contradicting the control pack.
 
 **Decided by.** Claude recommendation under decision-point posture, with the plan-time /risk-check + mandatory SO second opinion as the deciding inputs for Decision 1; independent /qc-pass GO post-hoc. Wrap completed as an operator-directed union wrap after the CONCURRENT guard fired on a live S7 session.
+
+## 2026-07-03 (S9) — Friction-log Failure Mode Analysis: scope and taxonomy-relationship decisions
+
+**Context.** Operator asked to add a Failure Mode Analysis to `logs/friction-log.md` — an 8-category taxonomy (Context/Mandate/Workflow/Authority/Validation/Autonomy/Safety/Traceability) plus a Failure → Root cause → Prevention → Owner artifact chain. Research surfaced that `friction-log.md` has no existing schema (unlike sibling logs `improvement-log.md`/`defect-log.md`), that four separate producers append to it, and that four separate consumers hardcode-parse it for open/closed status.
+
+**Decision 1 — going-forward only, no retrofit.** The new schema applies to entries dated 2026-07-03 onward; the ~40 pre-existing entries are left untouched.
+
+**Decision 2 — the new enum supplements, not replaces, the existing free-text "Friction type" tag.** Both fields now coexist on substantive entries.
+
+**Decision 3 — only "substantive" writers (hand-authored entries + the `session-feedback-collector` wrap-time agent) must produce the full structure.** The lightweight one-liner writers (`/friction-log`, `/note`'s `friction:` prefix, `friction-log-auto.sh`) stay exempt and unclassified.
+
+**Decision 4 — "Owner artifact" is additive to the existing closure mechanism**, not a replacement. The `Resolved:` / `[FADING-GATE] verified` stamps still do the actual open/closed signaling; the four consumer files that parse them needed no changes.
+
+**Alternatives considered.** (1) Full or selective retrofit of existing entries — rejected as disproportionate cost for a taxonomy that only helps future entries. (2) Replacing "Friction type" with the new enum — rejected; the two answer different questions (which component vs. why it failed) and replacing would lose information with no consumer benefit. (3) Requiring all four writers (including the one-liner and auto-hook writers) to classify — rejected; those writers are deliberately terse by design and forcing classification would degrade their usefulness. (4) Restructuring closure tracking around "Owner artifact" — rejected; would have required updating four separate parser files for no functional gain, since the existing stamps already do the job.
+
+**Decided by.** Operator, via structured `/clarify` → `/scope` questions with explicit options and a recommended default on each; all four decisions were operator selections, not Claude's own judgment calls. A related but separate finding — that the new 8-category enum diverges from AP-9's own canonical 4-value failure axis (`principles-base.md:87`) — surfaced during the mandatory `/risk-check` System-Owner second opinion and was deliberately left open (not decided this session) as a future principles-doc reconciliation item.
