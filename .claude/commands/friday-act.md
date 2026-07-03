@@ -8,6 +8,8 @@ Consume the freshest `/friday-checkup` report, disposition items, and produce pl
 
 This command is Session 2 of the Friday cadence. It does not re-run audits — `/friday-checkup` is Session 1. If audit logic is needed, this command refuses and redirects.
 
+**Output contract:** this command *triages and plans* — it writes dispositioned, risk-annotated plan files; it never applies fixes inline. A session mandate or done-condition for a `/friday-act` session should read "items triaged into executable plan files," never "fixes applied and committed" (mandate-formation mismatch, friction 2026-07-03 S1).
+
 Input: `$ARGUMENTS` (optional) — explicit path to a `friday-checkup-YYYY-MM-DD.md` report. If omitted, locate the freshest report under `ai-resources/audits/`.
 
 ---
@@ -87,7 +89,7 @@ If `SO_ADVISORY_PATH`, `SO_REVIEW_PATH`, and `JOURNAL_PATH` are all `MISSING` AN
 
 ### Step 1.7: Improvement-log health check
 
-Read `{AI_RESOURCES}/logs/improvement-log.md`. Count entries whose `**Status:**` line contains `logged` or `pending` (the active set). If the file does not exist, skip silently.
+Read `{AI_RESOURCES}/logs/improvement-log.md`. Count active entries by exactly one method: the number of `- **Status:**` lines whose value contains `logged` or `pending`. Do NOT count `^### ` entry headers and do not mix methods between runs — header-based counts are non-deterministic when an entry header is malformed or undated (friction 2026-07-03 S1: a 46/57/62 spread across count methods fed this gate). If the file does not exist, skip silently.
 
 Soft cap — if active count > 7:
 ```
