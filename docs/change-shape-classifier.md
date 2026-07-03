@@ -28,7 +28,7 @@ A question is **general** when it is purely conceptual ("how should I think abou
 
 These belong with the consumer, not with the classifier. Each consumer applies its own routing rule on top of the same definition:
 
-- **`/consult` Step 2:** If `QUESTION` matches the change-shaped definition, set `SHAPE = change-shape` and proceed to Step 3 (read routing context). Otherwise, set `SHAPE = general` and skip to Step 4.
+- **`/consult` Step 2:** If `QUESTION` matches the change-shaped definition, set `SHAPE = change-shape` and proceed to Step 3 (read routing context). Otherwise, set `SHAPE = general` and skip to Step 3.5 (input-corpus disambiguation — applies to both shapes; only Step 3's routing context is change-shape-only).
 - **`project-manager` agent Phase 3:** If classification is `structure (change-shaped)` or hybrid's change-shaped subset, decline and redirect via Fallback 5d (emit "REDIRECT TO /consult"). Do NOT escalate to `system-owner` via Task tool — change-shaped questions require Function B routing which lives in `/consult`, not in this agent.
 
 ## Bias rules

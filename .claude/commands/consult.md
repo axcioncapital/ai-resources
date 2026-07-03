@@ -53,7 +53,7 @@ Set `QUESTION` = `$ARGUMENTS` verbatim.
 
 Read `ai-resources/docs/change-shape-classifier.md` for the canonical definition (categories + bias rules). Apply the routing rule below at this consumer:
 
-If `QUESTION` matches the change-shaped definition in the classifier doc, set `SHAPE = change-shape` and proceed to Step 3 (read routing context). Otherwise, set `SHAPE = general` and skip to Step 4.
+If `QUESTION` matches the change-shaped definition in the classifier doc, set `SHAPE = change-shape` and proceed to Step 3 (read routing context). Otherwise, set `SHAPE = general` and skip to Step 3.5 — Step 3's routing context is change-shape-only, but Step 3.5's corpus disambiguation applies to BOTH shapes (the 2026-06-29 wrong-corpus defect was a general-function grading question).
 
 > **One-end contract** — the classifier is canonical in `docs/change-shape-classifier.md`. The `project-manager` agent reads the same doc at its Phase 3. Edit the categories there, not here. (Refactored 2026-05-29 from a two-end verbatim-copy contract; see classifier doc § Provenance.)
 
@@ -67,6 +67,19 @@ If `SHAPE = change-shape`:
 2. Capture the routing baseline as `ROUTING_CONTEXT` — pass it through to the agent in Step 4.
 
 If `SHAPE = general`, set `ROUTING_CONTEXT` = empty.
+
+---
+
+### Step 3.5 — Input-corpus disambiguation (only when the question names a corpus)
+
+If `QUESTION` names an **input corpus** — a directory or document set the System Owner must read and grade (e.g., "grade the strategic-os corpus", "review the plan's inputs/") — resolve that name against the filesystem BEFORE delegating:
+
+1. Find every existing directory whose basename matches the named corpus (e.g., `strategic-os` matches both `projects/strategic-os/` and `knowledge-bases/strategic-os/`).
+2. **Exactly one match** → record its absolute path.
+3. **More than one match** → do NOT silently pick one. Resolve from the question's own context if it names the layer (a project vs. a knowledge base vs. a vault). If still ambiguous: operator-invoked → ask the operator in one line; auto-invoked (e.g., the `/risk-check` Step 17b second-opinion path) → list ALL candidate paths in the Step 4 brief under an explicit `AMBIGUOUS CORPUS` note requiring the agent to state which path it grades and to flag the ambiguity in its advisory.
+4. Append the confirmation to the Step 4 brief: `Input corpus (path-confirmed by /consult Step 3.5): {absolute path}`.
+
+No corpus named → skip silently. Defect this prevents: 2026-06-29 — the SO graded `knowledge-bases/strategic-os/` when the plan's named corpus was `projects/strategic-os/` (basename collision) and returned two BLOCKING findings grounded in the wrong corpus, caught only by manual filesystem verification.
 
 ---
 
