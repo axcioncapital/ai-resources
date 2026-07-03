@@ -1,10 +1,14 @@
 # Commit Discipline (edge cases)
 
-> **When to read this file:** When sequencing edits across multiple commits (commit-boundary sequencing), when a concurrent Claude Code session is disclosed (concurrent-session staging discipline), or before a full-file rewrite of a shared log (shared-log write-path integrity). Workspace CLAUDE.md keeps the bright-line commit behavior; this file holds the edge-case rules.
+> **When to read this file:** When sequencing edits across multiple commits (commit-boundary sequencing), when leftover uncommitted work from prior sessions is found in the tree (scoped commits, not catch-all sweeps), when a concurrent Claude Code session is disclosed (concurrent-session staging discipline), or before a full-file rewrite of a shared log (shared-log write-path integrity). Workspace CLAUDE.md keeps the bright-line commit behavior; this file holds the edge-case rules.
 
 ## Commit-boundary sequencing
 
 When a plan specifies multiple commits and a single file carries changes for more than one commit group, sequence the edits — apply the edits belonging to commit N, stage and commit, then apply the edits belonging to commit N+1 — rather than editing the file once with all changes and relying on `git add` to split them. `git add` cannot split a file by intent.
+
+## Scoped commits, not catch-all sweeps
+
+A catch-all sweep commit ("commit leftover uncommitted artifacts from prior sessions") is a hygiene anti-pattern: the untargeted snapshot mixes unrelated workstreams, obscures provenance, and makes cross-machine conflict reasoning harder (real case: remote commit `4392131`, 2026-06-09 — a leftover-sweep from a second machine produced a non-fast-forward divergence whose disjointness then had to be proven file-by-file). Commit leftover work in scoped batches — one commit per workstream, staged by explicit path — or surface it to the operator; never as one undifferentiated snapshot.
 
 ## Concurrent-session staging discipline
 
