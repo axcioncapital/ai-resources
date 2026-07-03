@@ -89,14 +89,14 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 
    *Sibling-entry informational note (TOCTOU Phase 2+3 atomic shape):* Under marker-scoped session writes (see `docs/session-marker.md`), each session writes its own marker-bearing header `## YYYY-MM-DD — Session ${MARKER}`. Multiple same-day headers is the EXPECTED shape, not a hazard — do NOT emit a `⚠` warning (per `principles.md § AP-10`: no error handling for impossible-or-normal scenarios).
 
-   If brief visibility into concurrent same-day sessions is wanted, count distinct marker-bearing headers and emit one informational line at Step 6:
+   Count distinct marker-bearing headers — `SIBLING_COUNT` is consumed downstream only as a gate (the shared-dir advisory immediately below, and the `/concurrent-session-check` liveness note); it no longer drives its own standalone Step 6 display line:
 
    ```bash
    TODAY=$(date '+%Y-%m-%d')
    SIBLING_COUNT=$(grep -c "^## ${TODAY}" logs/session-notes.md 2>/dev/null || echo 0)
    ```
 
-   If `SIBLING_COUNT > 1`, Step 6 emits (no warning icon): `Today's session count: {N} marker-bearing entries ({list of markers, e.g., 'S1, S2, S3'}). This session is {MARKER}.`
+   `SIBLING_COUNT`'s own standalone Step 6 informational line was trimmed in the 2026-07 brief-simplification pass; it now exists solely to gate the shared-dir advisory below and to inform the `/concurrent-session-check` liveness note (Step 1a below).
 
    *Concurrent-detected shared-dir advisory (C.2, 2026-06-05; extended id-15, 2026-06-05).* When `SIBLING_COUNT > 1` — a concurrent same-day session is likely active — the marker protocol protects per-session log writes, but two surfaces are watched by no guard: **foreign uncommitted edits to shared command/doc files** (`.claude/commands/`, `docs/`) AND **foreign in-place edits to the non-append shared logs** under `logs/` (`improvement-log.md`, `improvement-log-archive.md`, `decisions.md`) — these logs take in-place status flips / entry archiving (not atomic appends), so a foreign mid-edit there is a genuine lost-update surface (see `audits/2026-06-05-concurrent-session-collision-diagnostics-fix.md` § 5). The append-only marker-disambiguated `logs/session-notes.md` is deliberately EXCLUDED — the marker/header model already protects it, and including it would false-positive on every concurrent session. Run one **read-only** check to make both surfaces visible:
 
@@ -133,7 +133,7 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
      - Scratchpad date **≥** last entry date → surface it. Read its `## Resume With` section and take the first content line.
      - Scratchpad date **<** last entry date → a later wrap superseded it; skip silently. **Exception:** a `**QC-PENDING:**` scratchpad is never skipped on this rule — surface it regardless of date.
    - If `logs/scratchpads/` is absent or has no `*-scratchpad.md` file, skip silently.
-   - When surfaced, the scratchpad is a **carryover** signal: its path appears as an exception line in the step 6 brief, and the first content line of its `## Resume With` section is a strong candidate for menu item 1 (step 5). This step does NOT auto-resume — the operator decides by picking that menu item or answering the direction prompt.
+   - When surfaced, the scratchpad feeds a **carryover** menu candidate: the first content line of its `## Resume With` section is a strong candidate for menu item 1 (step 5). (The standalone `↩ Resumable scratchpad: {path}` Step 6 display line was trimmed in the 2026-07 brief-simplification pass — the scratchpad's existence now surfaces only via that menu candidate, or via the QC-PENDING advisory below when applicable. Line 137's QC-PENDING commit-block advisory is a separate line and still emits.) This step does NOT auto-resume — the operator decides by picking that menu item or answering the direction prompt.
    - **QC-PENDING surfacing.** When the surfaced scratchpad carries a `**QC-PENDING:**` marker, flag it prominently as a **commit-block** — emit an advisory line, "⚠ Architectural artifact awaits independent QC — do NOT commit until `/qc-pass` passes (per the QC-PENDING scratchpad)", in addition to placing its `## Resume With` first line (the QC instruction) as menu item 1. Do not let the marker line itself be mistaken for the next action; the action is the `## Resume With` first line.
 
 1d. **Scan active missions (mission-contract subsystem).** A *mission* is a multi-session goal (`/mission`); a session can bind to one so `/drift-check` measures its trajectory against the mission's validation contract. This step makes active missions visible and is a **zero-cost no-op when none exist** — when no `logs/missions/` dir is present in any enumerated repo, this step adds no prompt, no menu item, and no brief line.
@@ -166,16 +166,16 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 
    Each surviving item becomes an **urgent** menu candidate for step 5.
 
-4. **Exception checks.** Compute the following, but carry each to step 6 only when it is abnormal — a normal value is never displayed.
+4. **Exception checks.** Compute the following, but carry each to step 6 only when it is abnormal — a normal value is never displayed. **Model alignment (below) is the one exception:** it is always carried to Step 6 regardless of match/mismatch — see its bullet for the display-styling split.
    - **Working tree:** if the environment's git-status snapshot is non-empty, run `git status --short` and `git diff --stat HEAD` once to confirm it is still current. The env snapshot is point-in-time from session start and can be stale vs actual HEAD (e.g., files already committed in the prior session). Carry forward only if the live result shows unexpected uncommitted changes. This is a Prime-time orientation check, distinct from the commit-time "no pre-commit git status" rule.
-   - **Model alignment:** read the active session model identifier from the system-prompt context (e.g., `claude-opus-4-7[1m]` or `claude-sonnet-4-6[1m]`) — do not run any external command, the identifier is already in context. Identify the cwd-nearest project `CLAUDE.md` and read its `Model Selection` section for the project's recommended model. If the session is opened at the workspace root with no project `CLAUDE.md` loaded, the fallback is Sonnet 1M (`claude-sonnet-4-6[1m]`). Carry forward a `→ /model {recommended}` hint only on mismatch.
+   - **Model alignment:** read the active session model identifier from the system-prompt context (e.g., `claude-opus-4-7[1m]` or `claude-sonnet-4-6[1m]`) — do not run any external command, the identifier is already in context. Identify the cwd-nearest project `CLAUDE.md` and read its `Model Selection` section for the project's recommended model. If the session is opened at the workspace root with no project `CLAUDE.md` loaded, the fallback is Sonnet 1M (`claude-sonnet-4-6[1m]`). Unlike the other checks in this step, ALWAYS carry the model line forward to Step 6 — on match, plain styling (`Model: {session model}`); on mismatch, warning styling with a hint (`⚠ Model: you are on {session model}; this project recommends {recommended} → /model {recommended}`).
    - **Pull result:** carry forward the step 0 result only on failure, when there are unpushed commits, or on an `autostash-conflict` (a pop conflict that returned exit 0 — see Step 0). The `autostash-conflict` case is the highest-priority pull exception: the working tree silently holds conflict markers, so the brief must say so.
    - **Phase READMEs.** If the cwd-rooted project has a `work/` directory, scan it (one level deep) for files matching `W*-*-README.md` (or `Wn-*-README.md`). Capture the matching file paths only — do not read file bodies. Skip silently if `work/` is absent or contains no matches. Bounded scan: one `ls`/`find -maxdepth 2`-equivalent; do not recurse deeper.
 
 5. **Build the numbered task menu.** Merge candidates from:
    - Step 1a — still-open Next Steps from the last session → tag `[carryover]`.
    - Step 1b — the scratchpad `## Resume With` line, if any → tag `[carryover]`.
-   - Step 1d — each active mission's `## Open threads` unchecked items → tag `[mission:<id>]`. Only if `ACTIVE_MISSIONS` is non-empty; omit entirely otherwise.
+   - Step 1d — each active mission's `## Open threads` unchecked items, but ONLY for missions whose repo (from `ACTIVE_MISSIONS`, Step 1d) equals `CWD_REPO` (Step 0) → tag `[mission:<id>]`. Skip building a candidate for any mission whose repo ≠ `CWD_REPO` — it is not actionable from this checkout (the Step 8a/8c cross-repo guard would stop it anyway). Step 1d's multi-repo scan and those guards are unchanged and remain in place as defense-in-depth. Omit entirely if `ACTIVE_MISSIONS` is empty or none of its entries match `CWD_REPO`.
    - Step 2 — unchecked `next-up.md` items → tag `[next-up]`.
    - Step 3 — unresolved HIGH/urgent problems → tag `[urgent]`.
 
@@ -184,31 +184,27 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
    Convert each menu item to **one plain-English sentence** (short sentences, common words — the operator is a non-developer):
    - Keep command names and file names literal (`/kb-review`, `next-up.md`).
    - Drop priority codes (`HIGH`/`MED`/`LOW`), status tags, and section anchors (`§3`, `WU3`) from the displayed text — keep a step number only when it aids meaning.
-   - Append one short tag: `[urgent]`, `[mission: <id>]`, `[carryover]`, or `[next-up]`. For a `[mission: <id>]` item whose mission repo (from `ACTIVE_MISSIONS`, Step 1d) ≠ `CWD_REPO` (Step 0), render it as `[mission: <id> — in <repo-basename>]` so its cross-repo nature is visible at pick time — it cannot be worked on from the current repo (the Step 8a/8c cross-repo guard enforces this).
+   - Append one short tag: `[urgent]`, `[mission: <id>]`, `[carryover]`, or `[next-up]`. (Every `[mission:<id>]` candidate reaching this step already has repo == `CWD_REPO` per the Step 5 filter above, so no cross-repo tag variant is needed here; the Step 8a/8c cross-repo guards remain in place as defense-in-depth regardless.)
 
    Example conversions:
    - `**/kb-review Step 7 registry-stub spec contradicts the registry convention** — MED, do-now` → `Fix the /kb-review command — its Step 7 instructions clash with the registry format.`
    - `Resolve Q1 (core v2 motivation) — without it, Goals (§3) cannot be populated` → `Decide the main reason for the KB v2 rebuild — other plan sections are blocked until this is settled.`
 
-6. **Output the brief — this and nothing else.** All displayed text (the summary, exception lines, menu items) uses the plain-English conversion rules from step 5. Emit an exception line only when it is real; omit the whole line otherwise.
+6. **Output the brief — this and nothing else.** All displayed text (exception lines, menu items) uses the plain-English conversion rules from step 5. Emit an exception line only when it is real; omit the whole line otherwise.
 
 ```
 ## Prime — {date}
 
-Last session ({date}): {one-line plain-English summary}.
-
-{↩ Unfinished from last session: {plain-English carryover} — only if last session had still-open Next Steps}
-{⚠ Needs a fix: {plain-English urgent problem} — one line per step 3 item, only if any}
-{⚠ Model: you are on {session model}; this project recommends {recommended} → /model {recommended} — only on mismatch}
+Model: {session model}
+{⚠ Model: you are on {session model}; this project recommends {recommended} → /model {recommended} — replaces the plain line above; only on mismatch}
 {⚠ Working tree: {short summary} — only if unexpectedly dirty}
 {⚠ Pull: {result} — only on failure or unpushed commits}
 {⚠ Pull: autostash pop conflicted — working tree has conflict markers; stash@{0} preserved. Resolve the markers (or `git checkout --theirs`/`--ours`) and `git stash drop` before starting work. — only on an `autostash-conflict` result from Step 0}
-{Today's session count: {N} marker-bearing entries ({list of markers}). This session is {MARKER}. — informational only, no `⚠` icon; only when SIBLING_COUNT > 1}
 {⚠ Concurrent session may be editing shared files: {foreign-dirty paths under .claude/commands / docs / the non-append logs improvement-log.md / improvement-log-archive.md / decisions.md}; check before editing them — only when SIBLING_COUNT > 1 and the Step 1a read-only `git status` found foreign-dirty shared files/logs}
 {⚠ Concurrent session live in this checkout — before starting a task, run `/concurrent-session-check <task>` to confirm it won't collide, or `/concurrent-session-check` (no argument) to see which menu items are safe. — only when Step 1a found LIVE_FOREIGN_HERE >= 1}
 {⚠ Phase READMEs detected: {paths}; read before opening the relevant work unit — only if step 4 surfaced any}
-{↩ Resumable scratchpad: {path} — only if step 1b surfaced one}
-{◎ Active mission(s): {for each in ACTIVE_MISSIONS: "<id> — <name>"} — only if step 1d found any; advisory, names the multi-session goal(s) this work can serve}
+{⚠ Architectural artifact awaits independent QC — do NOT commit until `/qc-pass` passes (per the QC-PENDING scratchpad at {path}). — only when step 1b surfaced a QC-PENDING scratchpad}
+{◎ Active mission(s): {for each mission in ACTIVE_MISSIONS where mission.repo == CWD_REPO: "<id> — <name>"} — only if at least one same-repo active mission exists; advisory, names the multi-session goal(s) this work can serve}
 
 Next tasks:
   1. {plain-English task}   [{tag}]
@@ -221,12 +217,9 @@ Next tasks:
 Type 1–6 to start that task. Type `auto` to run the #1 item end-to-end with a single approval gate, or `auto 1,3` (or `auto 1 3`) to run several items back-to-back under one combined approval gate. Or tell me something else.
 
 Full backlog & inbox: /open-items
-{Tip: this work spans sessions? Designate a multi-session goal with `/mission create` so later sessions stay on it. — STATIC nudge; show only when carryover/scratchpad candidates exist AND ACTIVE_MISSIONS is empty. No theme-detection. Omit otherwise.}
 ```
 
    Render only as many numbered lines as step 5 produced (1 to 6). If step 5 produced no menu items, replace the `Next tasks:` block and the `Type 1–6 …` line with the single line: `No tracked next steps — tell me what to work on.`
-
-   First session ever (no `session-notes.md` from step 1): replace the `Last session` line with `First session — no prior notes.`
 
 7. **Wait for the operator's response.** Classify the reply:
    - `N auto` (a single menu number followed by the word "auto", e.g. `2 auto` — trimmed input matching `^[1-6]\s+auto$`, N within menu range) → **auto mode**, picked item = #N. Treat identically to `auto N` and go to step 8c. (Check this branch BEFORE the bare-number rule below — otherwise `2 auto` is misread as a bare-number selection of item 2, silently skipping auto-mode and its mandate/plan ceremony.)
