@@ -492,3 +492,31 @@ Skipped per the standing skip rule (plan-time gate covered this session's struct
 - Out of scope: big builds/redesigns (research-workflow F1/F3/F5 canonical fixes; `/create-requirements-doc`; PreToolUse QC-PENDING commit-block hook; the decisions.md citation-stability design decision — needs a Friday-cadence pick, not a mechanical fix); the 5 root-only workspace-command migration (deletion gate — needs operator per S6's prior scoping); split-log.sh 11-copy propagation (operator deprioritized 2026-06-12 S11); the 5 `inbox/*.md` skill-creation briefs (need dedicated `/create-skill` sessions, not small fixes)
 - Files in scope: skills/research-extract-creator/SKILL.md; skills/research-extract-creator/references/extract-template.md; skills/research-extract-verifier/SKILL.md; skills/cluster-memo-refiner/SKILL.md; skills/execution-manifest-creator/references/manifest-template.md; .claude/hooks/check-foreign-staging.sh; docs/commit-discipline.md; logs/improvement-log.md; logs/friction-log.md; logs/maintenance-observations.md; logs/session-notes.md; audits/risk-checks/2026-07-03-check-foreign-staging-exempt-file-sweep-warn.md
 - Stop if: a candidate turns out already-resolved on live re-check → skip and note why, never force a change; staging guard flags a genuine foreign-file conflict → stop and surface
+
+### Summary
+Triaged the ai-resources backlog (`/open-items` sources + `logs/improvement-log.md`) for high-to-medium priority small fixes, live-verifying every candidate against today's S1–S7 resolutions before touching it. Applied 5 fix bundles (~13 sub-items): 4 skill-content polish passes routed through the `/improve-skill` convention (research-extract-creator, research-extract-verifier, cluster-memo-refiner, execution-manifest-creator) and 1 hook safety addition (`check-foreign-staging.sh`, closing the "hook-flag half" of the `9660bf2` incident). QC-reviewed (REVISE → fixed a malformed mandate footprint) and committed.
+
+### Files Modified
+- `skills/research-extract-creator/SKILL.md` + `references/extract-template.md`
+- `skills/research-extract-verifier/SKILL.md`
+- `skills/cluster-memo-refiner/SKILL.md`
+- `skills/execution-manifest-creator/references/manifest-template.md`
+- `.claude/hooks/check-foreign-staging.sh`
+- `docs/commit-discipline.md`
+- `logs/improvement-log.md`, `logs/friction-log.md`, `logs/maintenance-observations.md`
+
+### Decisions Made
+- Operator confirmed running the 4 `/improve-skill` fixes autonomously (skipping the skill's own per-skill Step 1/Step 7 pauses), with one batched review at the end instead — resolves a real conflict between the skill's built-in pause points and this session's "do as much as possible" brief. Routine execution-mode choice; not logged to `decisions.md`.
+- All other decisions this session were direct application of already-verified backlog items (no separate scoping judgment calls).
+
+### Risky actions
+None. This session's own mandate footprint briefly carried a malformed `(inferred)` marker that would have defeated the `check-foreign-staging.sh` guard being fixed — caught by `/qc-pass` before commit, not by the guard itself (the guard wasn't yet staged as an active hook edit at read time). Corrected before commit; no actual foreign-file sweep occurred.
+
+### Next Steps
+- Deliberately left open this session (see mandate's Out-of-scope line): research-workflow F1/F3/F5 canonical fixes; `/create-requirements-doc`; the `decisions.md` citation-stability design decision (needs a Friday-cadence pick); the 5 root-only workspace-command migration (needs operator sign-off on deletion); `split-log.sh` 11-copy propagation (operator deprioritized); the 5 `inbox/*.md` skill-creation briefs (need dedicated `/create-skill` sessions).
+- research-extract-creator item 5 (C6/C7/C8 frontmatter documentation) — explicitly not done this session, still open in improvement-log.
+- positioning-research `run-execution.md` Check 4 port — discretionary, still open (per its own backlog entry, "project's choice when to take it").
+- Check whether S7's per-id marker (`logs/.session-marker-8c6a2cc9-...`) indicates that session never ran `/wrap-session`.
+
+### Open Questions
+None blocking.
