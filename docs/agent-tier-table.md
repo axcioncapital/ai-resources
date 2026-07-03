@@ -78,6 +78,14 @@ These agents exist as regular-file copies (not symlinks) in `projects/axcion-bra
 |---|---|---|
 | brand-strategist | opus | Judgment (PE/M&A brand strategy consultation; produces 8-field scoping notes per `references/scoping-note-rubric.md`). Project-local to axcion-brand-book. Added 2026-05-25. |
 
+## Project-local agent copies (buy-side-service-plan)
+
+These agents exist as regular-file copies (not symlinks) in `projects/buy-side-service-plan/.claude/agents/`. Project-local scope — the `/reconcile` build is intentionally unproven-then-graduate: built here first per `docs/ai-resource-creation.md` rule 5 (DR-7), not yet symlinked into `ai-resources/.claude/agents/`. Graduate via `/graduate-resource` once a second confirmed consumer exists.
+
+| Agent | Tier | Notes |
+|---|---|---|
+| reconcile-reviewer | opus | Judgment (mandate-compliance scoring, resource-activation audit, genericness check, root-cause classification for `/reconcile`). Project-local to buy-side-service-plan. Added 2026-07-03. |
+
 ## Project-local agent copies (strategic-os)
 
 These agents exist as regular-file copies (not symlinks) in `projects/strategic-os/.claude/agents/`. Project-local scope — Strategic OS state retrieval, conflict detection, and OS self-review.
