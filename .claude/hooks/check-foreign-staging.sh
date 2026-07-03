@@ -298,7 +298,7 @@ if no_concrete_footprint:
 # (`CLAUDE.md`). Strip a leading repo-name segment so they compare equal
 # (QC finding, 2026-06-09 S5).
 footprint = []
-for tok in re.split(r'[,\s]+', footprint_raw):
+for tok in re.split(r'[,;\s]+', footprint_raw):
     tok = re.sub(r'^\./', '', tok.strip().strip("`").strip()).rstrip("/")
     if repo_name and tok.startswith(repo_name + "/"):
         tok = tok[len(repo_name) + 1:]
