@@ -67,12 +67,12 @@ Apply the freshness classification using the table below. The class is canonical
 
 | Class | Period | Permitted use |
 |---|---|---|
-| `CURRENT` | 2025–2026 | Current-state claims |
-| `RECENT` | 2023–2024 | Recent-trend claims |
-| `BASELINE` | 2020–2022 | Baseline or pre/post comparison only |
-| `STRUCTURAL` | Pre-2020 | Structural background only |
+| `CURRENT` | Y, Y-1 | Current-state claims |
+| `RECENT` | Y-2, Y-3 | Recent-trend claims |
+| `BASELINE` | Y-4 to Y-6 | Baseline or pre/post comparison only |
+| `STRUCTURAL` | Before Y-6 | Structural background only |
 
-(Periods are project-agnostic relative to the "current" rolling 2-year window declared in the project's `reference/known-limits.md` or equivalent reference doc. If the project does not declare a window, default to a current-window-equals-rolling-2-years posture and emit a one-line warning naming the absent declaration.)
+(Y is the project's declared current/as-of year, resolved from the project's `reference/known-limits.md` or equivalent reference doc. Periods are project-agnostic relative to this Y — e.g., if Y=2026, `CURRENT` covers 2025–2026, `RECENT` covers 2023–2024, `BASELINE` covers 2020–2022, and `STRUCTURAL` is pre-2020. If the project does not declare Y, default Y to the actual current calendar year and emit a one-line warning naming the absent declaration.)
 
 **Mismatch flag.** When a claim attempts to support a current-state assertion from `BASELINE` or `STRUCTURAL` evidence, attach a `[FRESHNESS-MISMATCH]` tag inline with the claim. Downstream consumers (`cluster-memo-refiner`, the deferred claim-permission gate) use this tag to downgrade or filter. This skill emits the flag; it does NOT downgrade — downgrade is the consumer's job.
 
@@ -115,6 +115,21 @@ Single-source claims do not carry a basis — the Independence count already rec
 **Mixed case.** When a claim's channels split — some genuinely independent, some sharing one underlying dataset or release — record the basis of the *colliding* subset (`same-underlying-dataset` or `same-press-release`), and name the split in Notes (which channels collide, which are independent). Do not flatten a mixed case to `independently-observed` (it hides the collision) or to `unclear` (it understates what is known). The conservative tag plus the Notes detail lets the downstream rule collapse only the colliding channels.
 
 **Consumption status (per-project).** This field's strengthened *consumption* — collapsing `same-underlying-dataset` / `same-press-release` channels to one evidentiary role across different source classes (extending the triangulation-packets rule) — is **active in any project whose `reference/quality-standards.md § Source-Diversity Matrix` carries the cross-class collapse clause** (first landed in `research-pe-regime-shift-advisory-gap` on 2026-06-08, then promoted into the canonical workflow template on 2026-06-09 — so any project deployed from canonical inherits it). A project predating that promotion, or one pinned to the same-class-only formulation, still treats the field as informational and forward-compatible: extractors record it; no gate yet enforces the cross-class collapse in that project. **Interim values recorded before consumption activates in a given project are unvalidated** — when a project gains the cross-class clause (by fresh deployment or by editing in the clause), it MUST run a back-validation pass over any extracts already carrying basis tags (re-check them before the rule bites). This is a deployment-time obligation, not a one-time originating-project note: the canonical clause itself now carries it (`quality-standards.md § Source-Diversity Matrix`, Deployment-time obligation).
+
+### Worked Example (per-claim block)
+
+The claim below illustrates the full per-claim schema, combining a `PROXY-DOWNGRADE` case with a multi-channel/multi-source case governed by the "most recent load-bearing source" rule (§ Evidence Freshness):
+
+**Claim [Q1-C07]:** Nordic sub-€25M PE deal volume has grown steadily since 2023, driven by increased sponsor activity across the region.
+- **Sources:** (1) Nordic PE Monitor, "2025 Regional Deal Flow Update," nordicpemonitor.example/2025-update, accessed 2026-06-28 — cites a Preqin regional dataset; (2) Preqin, "Nordic PE Market Data," preqin.example/nordic-data-2023, accessed 2026-06-20 — the original 2023 dataset release.
+- **Source locator:** Q1-A03, paragraph 2.
+- **Strength:** M.
+- **Evidence date:** 2025-05 (most recent load-bearing source — the Nordic PE Monitor update; the 2023-09 Preqin release predates it but is the same underlying dataset, not a separate later observation).
+- **Freshness class:** `CURRENT`.
+- **Evidence lens:** `PROXY-DOWNGRADE`.
+- **Independence:** 1 (both channels trace to the same Preqin dataset).
+- **Independence basis:** `same-underlying-dataset`.
+- **Notes:** Above-lens — the original question asks about Finnish €2–25M PE deals specifically; both sources report a pan-Nordic aggregate with no Finland-specific breakout. Original Finland lens preserved per § Evidence Lens operating rule. Both channels trace to one Preqin dataset (Nordic PE Monitor cites the same figures as the original Preqin release), so the independence count is 1 despite two citations, per § Independence Counting.
 
 ### Coverage Verdicts (per Answer Spec component)
 
@@ -215,3 +230,9 @@ Before delivering the extract(s) for the session, verify every item below and fi
 **Optional-field carve-out (#22)**
 
 - Guard against over-reach on the optional `Disconfirming evidence found` field (per § Disconfirming Evidence): confirm none of the checks above treated its absence as a failure. A missing field is **never** flagged, gapped, or used to downgrade a verdict. The field is not subject to a Self-Check — do not add a presence or capture check for it; this bullet exists only to keep the rest of the Self-Check from mistaking its absence for a gap.
+
+## Runtime Recommendations
+
+- **Model rationale.** Runs at `model: sonnet`. Extraction applies explicit, well-defined rules (Claim ID format, the strength/freshness/lens tables, coverage-verdict thresholds) to a provided report rather than open-ended synthesis, so Sonnet's rule-application capability is sufficient.
+- **Effort rationale.** `effort: medium` — per-claim classification across strength, freshness, lens, and independence basis is more than mechanical matching, but it is not the cross-question, cross-memo synthesis work that warrants `high`.
+- **Context to load before running.** Both required inputs (the research report and its Answer Specs). Also check the project for `reference/known-limits.md` (or equivalent) to resolve the current year Y used in Evidence Freshness classification, and `reference/quality-standards.md § Source-Diversity Matrix` to determine whether the cross-class independence-basis collapse is active for this project (§ Independence Counting).

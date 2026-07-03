@@ -47,6 +47,16 @@ Run ten structured refinement checks against cluster analytical memos. Report fi
 - If a memo is missing a required section, flag which checks cannot run against that memo and proceed with remaining checks. Do not invent content for missing sections.
 - If any Key Finding tagged `[SOURCE-GROUNDED]` cannot be traced to Claim IDs from the underlying briefs, flag as incomplete traceability. Severity: non-blocking (the refiner can still run its ten checks), but the flag must appear in the output for operator awareness.
 
+### Required Reference Sections (`reference/quality-standards.md`)
+
+This skill's checks depend on specific sections of the project's `quality-standards.md`. The dependencies split into two classes:
+
+- **Hard dependencies — halt-or-flag if absent.** No fallback exists; the check cannot substitute memo-internal judgment for the missing vocabulary or classification rule.
+  - `§ Country Coverage Table` (Check 8) — defines the `observed` / `proxied` / `not evidenced` vocabulary. If absent, flag the section as missing and halt Check 8 (other checks proceed unaffected).
+  - `§ Claim-Permission Classes`, including its `— Blocking-Gate` subsection (Check 9) — defines the four permission-class names, verb lists, minimum-evidence thresholds, Source-Diversity Matrix, and the >30% / >40% blocking-gate thresholds. If absent, flag the section as missing and halt Check 9.
+  - `§ Source-Conflict Resolution Procedure` (Check 10) — defines the `RESOLVED-METHODOLOGY` / `RESOLVED-GRANULARITY` / `RESOLVED-TRIANGULATION` / `UNRESOLVED` statuses and the downgrade fallback. If absent, flag the section as missing and halt Check 10.
+- **Presence-gated — degrade gracefully if absent.** `§ Risk-Tier Model` (Check 9's risk-tier ceiling, sub-check 1) is optional: per the presence-gate described above and in Check 9, if this section is absent (or the research plan is absent, or carries no `risk-tier:` fields), every finding simply binds at Tier B (ceiling `SUPPORTED` — no constraint). This is the only reference-doc dependency in this skill that degrades instead of halting.
+
 ## Claim-ID Format
 
 This skill is the canonical **producer** of cluster-memo claim IDs. The format is consumed by `transaction-table-builder` (Claim supported field) and Bundle 2b's claim-permission gate (deferred).
@@ -320,6 +330,49 @@ If any criterion is not met, the memo requires another refinement pass on the fa
 **Default mode: Refinement**
 
 Present check findings as a structured report (per check, per memo) before producing revised memos. Structure the findings report as one section per memo, with sub-sections per check — this groups all issues for a single memo together for easier operator review.
+
+**Report-envelope skeleton.** Each memo gets its own top-level section; each check gets a sub-section holding that check's own Output content (per the Output line in each check above). A roll-up sub-section closes out the memo with the Completion Criteria status and the blocking-gate verdict:
+
+```
+## Refinement Findings — {memo / cluster identifier}
+
+### Check 1 — Cross-Question Synthesis Depth
+{Check 1 Output: single-source findings with disposition — merged / relabeled / retained}
+
+### Check 2 — Escalation Patterns
+{Check 2 Output: escalation patterns, contributing questions, proposed placement}
+
+### Check 3 — Evidence Strength Map Accuracy
+{Check 3 Output: labels checked pass/fail, downgrades applied, uncertain labels flagged}
+
+### Check 4 — "So What" Specificity
+{Check 4 Output: before/after per rewritten recommendation}
+
+### Check 5 — Tension Development
+{Check 5 Output: per-tension completeness/concreteness pass-fail; new tensions with full treatment}
+
+### Check 6 — Dependency Chains
+{Check 6 Output: dependency pairs with classification}
+
+### Check 7 — Named-Transaction Verification
+{Check 7 Output: per finding — row-reference status, same-pattern count, threshold verdict, action taken}
+
+### Check 8 — Country-Parity
+{Check 8 Output: per finding — SE/NO/FI status, gate-rule verdict, pan-Nordic-leakage flag, action taken}
+
+### Check 9 — Permission-Class Emission
+{Check 9 Output: claim count, permission-class distribution, NOT-SUPPORTED ratio, blocking-gate verdict, permission-table path}
+
+### Check 10 — Source-Conflict Validation
+{Check 10 Output: extract-conflicts count, conflict-log-coverage status, unresolved-conflict downgrade-verification status, refinement-blocked flag}
+
+### Roll-Up
+- Completion Criteria 1–11: {met / not met, per criterion}
+- Blocking-gate verdict: {CLEARED / CLEARED-WITH-CAVEATS / CLUSTER-INSUFFICIENT}
+- Refinement-blocked (Check 10): {yes / no}
+```
+
+Repeat the envelope once per memo. If a check could not run (missing input, presence-gate, or hard-dependency halt per Required Reference Sections above), its sub-section states that instead of an Output.
 
 Do not produce revised memos until the user says `RELEASE ARTIFACT`. This lets the user override specific check results before revisions are applied.
 

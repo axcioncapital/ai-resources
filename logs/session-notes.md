@@ -485,3 +485,10 @@ None blocking.
 
 ### End-time /risk-check
 Skipped per the standing skip rule (plan-time gate covered this session's structural classes with mitigations applied, commits already shipped, drift bounded by the consolidated QC pass) — logged here per that rule's documentation requirement.
+
+## 2026-07-03 — Session S8
+
+**Mandate:** Triage `/open-items` + `logs/improvement-log.md` for still-open high-to-medium priority small fixes (cross-checked live against today's S1–S7 resolutions so nothing already-fixed is re-proposed), and apply as many as fit this session (target ~5-10) — done when: the verified-still-open fix set is applied (skill polish via `/improve-skill`; hook edit via direct fix + `/risk-check`), cleared by `/qc-pass`, and committed.
+- Out of scope: big builds/redesigns (research-workflow F1/F3/F5 canonical fixes; `/create-requirements-doc`; PreToolUse QC-PENDING commit-block hook; the decisions.md citation-stability design decision — needs a Friday-cadence pick, not a mechanical fix); the 5 root-only workspace-command migration (deletion gate — needs operator per S6's prior scoping); split-log.sh 11-copy propagation (operator deprioritized 2026-06-12 S11); the 5 `inbox/*.md` skill-creation briefs (need dedicated `/create-skill` sessions, not small fixes)
+- Files in scope: skills/research-extract-creator/SKILL.md; skills/research-extract-creator/references/extract-template.md; skills/research-extract-verifier/SKILL.md; skills/cluster-memo-refiner/SKILL.md; skills/execution-manifest-creator/references/manifest-template.md; .claude/hooks/check-foreign-staging.sh; docs/commit-discipline.md; logs/improvement-log.md; logs/friction-log.md; logs/maintenance-observations.md; logs/session-notes.md; audits/risk-checks/2026-07-03-check-foreign-staging-exempt-file-sweep-warn.md
+- Stop if: a candidate turns out already-resolved on live re-check → skip and note why, never force a change; staging guard flags a genuine foreign-file conflict → stop and surface

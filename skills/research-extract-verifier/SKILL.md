@@ -1,27 +1,25 @@
 ---
 name: research-extract-verifier
 description: >
-  Adversarial verification of Research Extracts against raw Deep Research reports.
-  Identifies extraction failures — missed claims, distorted claims, wrong strength
-  assignments, unjustified coverage verdicts, synthesis-evidence mismatches, and
-  false-scarcity verdicts (THIN/MISSING asserted without searching the expected
-  public surfaces). Produces per-extract verdicts (APPROVED / FLAG — RE-EXTRACT)
-  with specific re-extraction instructions routing back to Step 2.3.
+  Adversarial verification of Research Extracts against raw Deep Research reports —
+  use when a raw report, its Research Extracts, and matching Answer Specs are
+  provided to "verify extracts," "QC the extracts," "check extraction quality,"
+  "run extract verification," "run step 2.4," "run 2.4," or similar. Step 2.4
+  in Stage 2.
 
-  Step 2.4 in Stage 2. Use when Patrik provides a raw Deep Research report, the Research
-  Extracts produced from it, and the corresponding Answer Specs, and asks to "verify
-  extracts," "QC the extracts," "check extraction quality," "run extract verification,"
-  "run step 2.4," "run 2.4," or similar requests to validate extraction accuracy before
-  downstream processing.
+  Flags missed claims, distorted claims, wrong strength assignments, unjustified
+  coverage verdicts, synthesis-evidence mismatches, and false-scarcity verdicts
+  (THIN/MISSING without searching expected public surfaces); produces per-extract
+  APPROVED / FLAG — RE-EXTRACT verdicts with re-extraction instructions to Step 2.3.
 
-  Do NOT use for fixing extracts (this skill flags and routes only — fixing happens at
-  Step 2.3 via research-extract-creator). Do NOT use for source citation verification
-  against URLs (that's Stage 5 fact verification). Do NOT use for evaluating whether
-  research questions are well-formed (that's upstream). Do NOT use for editorial
-  judgments about which findings matter most (that's cluster-analysis-pass). Do NOT use
-  for supplementing evidence from training data or external knowledge.
+  Do NOT use for fixing extracts (Step 2.3, research-extract-creator); citation
+  verification against URLs (Stage 5 fact verification); judging whether
+  research questions are well-formed (upstream); editorial judgments on which
+  findings matter (cluster-analysis-pass); or supplementing evidence from
+  training data or external knowledge.
 model: opus
 effort: high
+allowed-tools: Read, Write
 ---
 
 # Research Extract Verifier
@@ -242,9 +240,15 @@ Write the verification report to a markdown file in the project's working direct
 - **Report too short/vague to verify against:** State this, produce best-effort verification on what's verifiable, note which checks couldn't run and why.
 - **Extract references content not in the provided report:** Flag as potential hallucination. Automatic FLAG regardless of other checks.
 - **Source Locator missing or too vague:** Flag claim as unverifiable for Check 2. If >50% of claims in an extract have unverifiable source locators, flag the entire extract for re-extraction with a note to improve locator specificity.
+- **Answer Spec and raw report directly contradict each other:** Surface the conflict explicitly — state what the Answer Spec asserts and what the report says — rather than silently resolving it by picking one side. Flag the affected component and route for operator clarification before assigning a coverage verdict.
 
 ## Scope Boundaries
 
 - Do not fix extraction errors — flag and route only
 - Do not supplement evidence from training data or external knowledge
 - Do not make editorial judgments about finding importance
+
+## Runtime Recommendations
+
+- **`allowed-tools` (C7) — set to `Read, Write`.** The skill reads the three provided inputs (raw report, extracts, Answer Specs) plus the project reference files Checks 6–7 consult (`reference/quality-standards.md`, `reference/source-class-hierarchy.md`), and writes one verification-report file per session (see Output Protocol). No shell, network, or search tool is used — the Read + Write fence mechanically enforces the no-external-evidence constraint stated in Scope Boundaries.
+- **`disable-model-invocation` (C6) — not set, deliberately.** The description's trigger phrases ("verify extracts," "run step 2.4," etc.) are specific enough that autonomous invocation is safe, and the skill's one file-write side effect — the verification report — is additive documentation of a QC pass rather than a mutation of existing project state, so a model-invocation fence is unnecessary.

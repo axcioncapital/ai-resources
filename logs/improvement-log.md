@@ -321,7 +321,7 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Review-cycle:** monthly
 
 ### 2026-06-08 — research-extract-verifier description-frontmatter polish (5 pre-existing Minors) (DEFERRED)
-- **Status:** deferred — separate description-polish pass
+- **Status:** resolved 2026-07-03 (S8) — all 5 items applied via `/improve-skill`: (1) C2 trigger phrases front-loaded into the first ~200 chars; (2) C3 rewritten third-person, description shrank 1358→1012 chars (under the 1024-char guideline); (3) C7 `allowed-tools: Read, Write` fence added (matches actual tool usage in the body — no Bash/Grep/Glob used); (4) C6 documented in a new `## Runtime Recommendations` section; (5) `## Failure Behavior` gained a 4th bullet for Answer-Spec-vs-report contradictions. Self-checked: all original trigger phrases and exclusions survived the rewrite.
 - **Category:** skill-frontmatter / convention-gate
 - **Source:** cold evaluation during the Check 7 `/improve-skill` pass (2026-06-08 S1). All 5 are pre-existing, none introduced by Check 7.
 - **Why deferred:** Orthogonal to the Check 7 change; folding them in would mix pre-existing cleanup with a scoped canonical change. Operator chose "commit Check 7, defer Minors."
@@ -337,7 +337,7 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Review-cycle:** quarterly
 
 ### 2026-06-08 — research-extract-creator pre-existing convention-gate items (5) (DEFERRED)
-- **Status:** deferred — orthogonal to the #23 field change
+- **Status:** partially resolved 2026-07-03 (S8) — 4 of 5 items applied via `/improve-skill`: (1) C12 freshness table rewritten to relative `Y`/`Y-1`/etc. offsets (contradiction with the "project-agnostic rolling window" note removed); (2) C14 worked example added (one claim block combining a PROXY-DOWNGRADE case + a multi-channel/different-age-sources case); (3) C13 `## Runtime Recommendations` section added; (4) Issue 4 — `evidence_date`/`Freshness class` fields added to `references/extract-template.md`. **Item 5 (C6/C7/C8 frontmatter — `disable-model-invocation`/`allowed-tools`/`paths` documentation) was NOT done this session** — deliberately out of scope for this batch; still open.
 - **Category:** skill-convention-gate
 - **Source:** cold evaluation during the #23 `/improve-skill` pass (2026-06-08 S1). All pre-existing; none introduced by the `independence basis` field.
 - **Why deferred:** Orthogonal to the scoped #23 field; folding them in would mix pre-existing cleanup with a scoped canonical change.
@@ -396,7 +396,7 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Notes:** `audits/working/2026-06-09-resolve-ai-resources-remote-divergence-non-fast-forward.md`
 
 ### 2026-06-09 — New pre-existing Minors surfaced by S3 cold-evals (cluster-memo-refiner ×3, execution-manifest-creator ×1) (DEFERRED)
-- **Status:** logged (pending)
+- **Status:** resolved 2026-07-03 (S8) — 3 of 4 items applied via `/improve-skill`: (1) cluster-memo-refiner report-envelope skeleton added (per-memo section, per-check sub-sections reusing each Check's own Output format, closing Roll-Up sub-section); (3) cluster-memo-refiner "Required Reference Sections" note added, splitting Checks 8/9/10's hard dependencies on `quality-standards.md` from Check 9's presence-gated `§ Risk-Tier Model`; (4) execution-manifest-creator `manifest-template.md` gained a full worked example (Answer Spec → routing → session → source-plan row) alongside the untouched placeholder template. **Item (2) — 30%/40% blocking-gate rationale — checked live and found already substantially addressed** (the existing text already attributes both thresholds to `reference/quality-standards.md § Claim-Permission Classes — Blocking-Gate`); left as-is rather than force a marginal half-sentence addition.
 - **Category:** skill-convention-gate + skill-output-contract
 - **Source:** Independent cold-evaluations during the 2026-06-09 S3 `/improve-skill` defect-cleanup pass. All pre-existing; none introduced by the S3 edits. Held back per scope discipline (outside the parked-defect scope the S3 session was chartered to clear) and logged here rather than folded in.
 - **Proposal:**

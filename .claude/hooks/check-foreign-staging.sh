@@ -412,6 +412,26 @@ def in_footprint(path):
 foreign = [c for c in candidates if not is_exempt(c) and not in_footprint(c)]
 
 if not foreign:
+    # Exempt-file-sweep warn (2026-07-03, improvement-log 2026-07-03 "/open-items
+    # backlog scan → field-match fix" incident 9660bf2): a bare `git commit` with a
+    # CONCRETE, correct footprint can still silently fold in exempt files (append-only
+    # logs, rotation archives) that a LIVE foreign session has mid-flight-staged. The
+    # exempt-list correctly suppresses the hard BLOCK above (co-staging exempt files is
+    # normally benign, no lost update) — but when a concurrent session is actually live,
+    # "benign" is not guaranteed: the exempt file could be that session's in-progress
+    # work, and this commit's message would misattribute it. Warn (never block) only in
+    # this narrow case so the operator/agent can choose a pathspec-scoped commit instead.
+    exempt_foreign = [c for c in candidates if is_exempt(c) and not in_footprint(c)]
+    if exempt_foreign and is_commit and _live_foreign_session(logs_dir, session_id):
+        warn_open(
+            "This commit would include " + str(len(exempt_foreign)) + " exempt file(s) "
+            "outside your declared footprint (" + ", ".join(exempt_foreign) + "), AND a "
+            "live concurrent session is active in this checkout. Exempt files (append-only "
+            "logs, rotation archives, process markers) are usually safe to co-commit, but "
+            "if the concurrent session is mid-write to one of these, a bare `git commit` "
+            "will fold its in-flight content into your commit message. Prefer a "
+            "pathspec-scoped commit (`git commit -- <your-own-paths>`) so only your own "
+            "work lands under this message, or confirm with the operator first.")
     sys.exit(0)
 
 # ---- Confirmed foreign files → BLOCK (exit 2, model-facing stderr) ----

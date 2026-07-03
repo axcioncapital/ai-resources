@@ -21,6 +21,8 @@
 - **Sources:** [Source name(s) + URL(s)]
 - **Source locator:** [Section heading + position in Deep Research report]
 - **Strength:** H / M / L
+- **Evidence date:** [YYYY-MM or YYYY-MM-DD — date of the evidence (publication/event/disclosure), not access date; if multiple sources of different ages, use the most recent load-bearing source]
+- **Freshness class:** CURRENT / RECENT / BASELINE / STRUCTURAL [— add `[FRESHNESS-MISMATCH]` inline if a current-state claim is supported only by BASELINE or STRUCTURAL evidence]
 - **Independence:** [Count]
 - **Independence basis:** [independently-observed / same-underlying-dataset / same-press-release / unclear — for claims citing ≥2 channels; omit for single-source]
 - **Notes:** [Linkage type, caveats]
