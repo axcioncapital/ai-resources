@@ -197,7 +197,7 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 
 ### 2026-05-29 — /risk-check 5-dimension shape does not catch design-internal principle drift
 
-- **Status:** logged (pending)
+- **Status:** resolved 2026-07-03 — verified already done (S7): Dimension 6 "Principle Alignment" + the Step 1.5 pre-dimension consumer inventory shipped in commit `7f3bbfe`; `risk-check-reviewer.md` carries both live. The proposed sixth dimension exists; no further action.
 - **Category:** Audit-recurrence prevention / risk-check shape
 - **Source:** System Owner Function-B advisory on Item 3 (C-1+C-2) plan-time /risk-check — `audits/risk-checks/2026-05-29-c-1-c-2-consult-return-size-cap-project-local-symlink.md § Architectural Commentary`. The SO noted that the C-1 design as briefed to /risk-check contained a conditional-write threshold ("≤30 lines → skip on-disk write") that conflicts with three vault principles (OP-3 loud-failure, DR-6 outputs-go-to-`output/`, AP-7 speculative-abstraction) — but the risk-check-reviewer did not surface this as a finding. Reason: the five dimensions (usage cost, permissions, blast radius, reversibility, hidden coupling) evaluate downstream impact, not design-internal principle conformance.
 - **Friction source:** Pattern observed across recent sessions — the SO second opinion catches principle drift that the risk-check-reviewer misses. The SO second opinion is currently mandatory only on non-GO verdicts; GO verdicts on principle-drifted designs would ship undetected. Adjacent earlier pattern: TOCTOU Phase 2+3 Round 2 inventory miss (same defect class — same-day pre-spec grep checklist entry above already captures the inventory side). This entry is the principle-conformance side.
@@ -206,7 +206,7 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Triage cadence:** next Friday `/friday-act` wave. Likely small implementation; high recurrence frequency on structural-change sessions.
 
 ### 2026-06-02 — §8 grounding-absence self-resolved (proceed-degraded) instead of escalated; System Owner agent running ungrounded
-- **Status:** logged (pending)
+- **Status:** resolved 2026-07-03 — premise broken + superseded (S7): the grounding corpus exists at `projects/axcion-ai-system-owner/references/` (persona.md, grounding.md, toolkit-relationship.md, systems-building-principles.md + 3 more verified on disk); the observed "absence" was the cwd-relative resolution defect, fixed structurally by system-owner.md Phase 0 grounding-root resolution (commit `b9f727d`). Item 2's escalation posture is covered by the agent's Phase 1.5 verify-before-acting rule (halt on verified absence of REQUIRED files, never self-resolve to proceed-degraded).
 - **Category:** principle-drift
 - **Provenance:** wrap-collector (machine-authored) 2026-06-02
 - **Friction source:** wrap-collector 2026-06-02 — principle-drift (Assumptions-Gate-adjacent; from S6 § Decisions + § Outcome + § Next Steps)
@@ -240,7 +240,9 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 
 ---
 
-## id-39 — Read() deny rules: workspace-root scope design (deferred 2026-06-05)
+### 2026-06-05 — id-39 — Read() deny rules: workspace-root scope design (deferred)
+
+*(Header normalized 2026-07-03 S7 from a malformed `## id-39 —` h2 to the schema's dated h3 form — the malformed level made `^### ` entry counts non-deterministic, friction 2026-07-03 S1.)*
 
 - **Status:** pending
 - **Severity:** MED
@@ -371,7 +373,7 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Review-cycle:** monthly
 
 ### 2026-06-09 — Mid-session commit can stage a sibling session's session-notes.md content (no mid-session foreign-content guard) (PENDING)
-- **Status:** logged (pending)
+- **Status:** resolved 2026-07-03 — verified already done (S7): the recommended Option 1 is live as `docs/commit-discipline.md` § Wrap-owns-session-notes (cites this entry's 2026-06-09 S1 incident verbatim; also covers the wrap-written telemetry logs). The "also worth a line" shared-log discipline is live as § Maintenance-owned in-place mutations.
 - **Category:** concurrent-session-collision + commit-discipline
 - **Source:** Observed live, 2026-06-09 S1. Two concurrent sessions ran on the same project (S1 = ai-resources Milestone-4 skill edits; S2 = project-only thesis delivery-readiness QC), correctly scoped to disjoint WORK files. During S1 execution, a mid-session project commit staged `logs/session-notes.md` while S2's marker-bearing header (`## 2026-06-09 — Session S2`) + mandate were already in the working tree — so S1's mid-session commit shipped S2's header+mandate into HEAD. Harmless this time (session-notes.md is append-only + marker-disambiguated; S2's content is legitimate and its own wrap Step 3.5 guard returned FOREIGN=0), but it is a real contamination surface: a sibling session's content lands under the wrong session's commit with no detection.
 - **Gap:** `/wrap-session` Step 3.5 has a foreign-session pre-write guard on `session-notes.md`, but there is NO equivalent guard at **mid-session commit** time. Any mid-session `git add logs/session-notes.md` (or other shared marker-disambiguated/edit-in-place logs) can sweep concurrent-session content with no warning.
@@ -385,7 +387,7 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Review-cycle:** monthly
 
 ### 2026-06-09 — ai-resources cross-machine push divergence (non-fast-forward) — normal git, correctly caught (PENDING)
-- **Status:** logged (pending)
+- **Status:** resolved 2026-07-03 — closed by S7: the divergence itself needed no fix (resolved by rebase at the time); both systemic angles are now landed — (1) catch-all-sweep hygiene rule added to `docs/commit-discipline.md` § Scoped commits, not catch-all sweeps (commit `2e9378d`, cites this entry's `4392131` incident); (2) the mid-session-commit sibling is covered by § Wrap-owns-session-notes.
 - **Category:** session-issue
 - **Source:** /resolve-repo-problem 2026-06-09 (MANUAL)
 - **Friction source:** At the /wrap-session push gate, `git fetch` found the remote 1 commit ahead while local was 3 ahead → non-fast-forward, push paused. Investigation: the remote commit `4392131 chore: commit leftover uncommitted artifacts from prior sessions` came from **Daniel's machine** and branched in parallel off shared ancestor `4cbc613`. NOT a concurrent-session-on-this-machine collision and NOT a real conflict — the two commit sets touch DISJOINT files (Daniel: archive + permission-sweep + a risk-check + execution-log.md; local: the Milestone-3/4 skills + improvement-log + a risk-check). `git merge-tree` confirms a clean merge, zero conflicts. The push gate's fetch-before-push divergence check worked exactly as designed — this is normal cross-machine git behaviour, correctly detected.
@@ -486,7 +488,7 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Review-cycle:** weekly
 
 ### 2026-06-12 — reconcile-at-read misses already-done items behind opaque-subject commits (3 of 6 SO-vetted do-now stale)
-- **Status:** logged (pending)
+- **Status:** resolved 2026-07-03 — closed by S7: target-file touch-scan added to `docs/backlog-reconciliation.md` (mechanism step 4 + "Touch-signal ≠ match" classification bullet, commit `dba5bed`). Deliberately annotate-only (never demotes — conservative posture preserved, recorded in the S7 batched risk-check); propagates by reference to all 4 consumer commands.
 - **Category:** session-feedback
 - **Provenance:** wrap-collector (machine-authored) 2026-06-12
 - **Friction source:** wrap-collector 2026-06-12 — leanness/cost + autonomy-compounding (S10 § Decisions L511–512, § Next Steps L529)
@@ -495,7 +497,7 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Review-cycle:** monthly
 
 ### 2026-06-12 — Mission promote-rw-canonical close findings: SETUP.md stale copy-path + 2 project down-ports + unanchored archive/ gitignore (PENDING)
-- **Status:** logged (pending) — item 1 done 2026-07-03 (SETUP.md Step 1 path corrected: the template IS `ai-resources/workflows/research-workflow/`; copy-from-workspace-root clarified). Items 0 (gitignore anchor — structural, gate it), 2 and 3 (positioning-research down-ports) remain.
+- **Status:** logged (pending) — item 1 done 2026-07-03 (SETUP.md Step 1 path corrected: the template IS `ai-resources/workflows/research-workflow/`; copy-from-workspace-root clarified). Item 0 done 2026-07-03 S7 (`.gitignore` anchored to `/archive/`, gated in the S7 batched risk-check, commit `c9b4fe0`; enumeration confirmed both mission-archive records were already tracked and nothing else newly exposed — `audits/working/archive/` stays ignored via its parent rule, `inbox/archive/` via its own line). Item 2 done 2026-07-03 S7 (`friction-log-auto.sh` down-ported byte-identical + PostToolUse `Bash|Write|Edit|Agent|Skill` wiring added; positioning-research commit `d931d29`). Only item 3 remains (positioning-research `run-execution.md` Check 4 — update available, project's choice when to take it).
 - **Category:** template-defect + propagation
 - **Severity:** low
 - **Provenance:** S11 mission-close deploy-test + /sync-workflow run (2026-06-12)
@@ -504,7 +506,7 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Review-cycle:** monthly
 
 ### 2026-06-12 — system-owner agent loses its grounding corpus when spawned from ai-resources (false Shape-1 halt)
-- **Status:** logged (pending)
+- **Status:** resolved 2026-07-03 — closed by S7: Phase 0 grounding-root resolution added to `system-owner.md` (cwd → workspace-parent → Glob fallback for both `REFS_ROOT` and `VAULT_ROOT`; fail-loud on ambiguous multi-match; archive/output copies excluded; commit `b9f727d`). QC REVISE finding fixed in the same commit: Phase 1's REQUIRED reads wired to `{REFS_ROOT}` explicitly.
 - **Category:** agent-defect
 - **Severity:** medium
 - **Provenance:** use-case investigation 2026-06-12, post-S11 session (audits/use-case-routine-task-improvement-2026-06-12.md § 7)
@@ -540,7 +542,7 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Review-cycle:** monthly
 
 ### 2026-06-29 — SO /consult graded the wrong same-named corpus directory; BLOCKING findings caught only by manual filesystem verification
-- **Status:** logged (pending)
+- **Status:** resolved 2026-07-03 — closed by S7: `/consult` Step 3.5 input-corpus disambiguation added (basename-collision detection, absolute-path confirmation in the agent brief, AMBIGUOUS CORPUS note on the auto-invoked path; canonical commit `68bd57a`, reachable from both question shapes per QC fix). Pair-applied to the axcion-ai-system-owner project-local fork (commit `a51729e`, sync scoped to this step).
 - **Category:** guardrail-candidate
 - **Severity:** low
 - **Provenance:** wrap-collector (machine-authored) 2026-06-29
