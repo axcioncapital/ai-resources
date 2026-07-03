@@ -32,7 +32,7 @@ Resolved entries (Status: applied + Verified) are archived to `improvement-log-a
 ---
 
 ### 2026-06-18 — Purge `[1m]` / 1M-context model declarations causing subagent failures
-- **Status:** logged (pending)
+- **Status:** logged (pending) — items 1–2 done 2026-07-03: the 3 `settings.local.json` `"model"` lines verified already gone (item 1 moot); 5 project-planning evaluator agents changed `claude-opus-4-7` → `opus` (item 2; the 6th match, innovation-triage-auditor, is a symlink to canonical which already reads `opus`). Item 3 (careful 1M-concept rewrite across ~9 command/hook files) remains — needs its own scoped session per this entry's own note.
 - **Category:** infrastructure (harness config / model declarations)
 - **Friction source:** axcion-website session 2026-06-18 — subagents fail to spawn in several projects. Traced to model IDs carrying the `[1m]` (1M-context) suffix and/or a stale version (`claude-opus-4-7`). The 1M-context variant needs separate usage credits; when unavailable the spawn errors. Operator goal: remove `[1m]`/1M-context usage across the harness so subagents spawn reliably on the operator-selected session model. Two scope/rule conflicts were surfaced and resolved during clarify: (a) the `model` field in `settings.local.json` violates the workspace Model Tier rule — resolved to **delete the line entirely** (not strip the suffix); (b) most `[1m]` strings in commands are load-bearing logic, not prose — operator confirmed **rewrite to remove the 1M-context concept**, not literal find-replace. Failure-causing files sit OUTSIDE axcion-website (in sibling projects), so scope was expanded to the whole footprint.
 - **Proposal:**
@@ -303,7 +303,7 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Review-cycle:** monthly
 
 ### 2026-06-08 — Port grep-first dedup fix to the workspace-root wrap/collector copy (DEFERRED)
-- **Status:** deferred — after the canonical fix proves out
+- **Status:** resolved 2026-07-03 — premise broken, nothing to port: no workspace-root collector copy exists. The root `wrap-session.md` Step 6.5 MIRROR NOTE states the `session-feedback-collector` agent resolves from `ai-resources/.claude/agents/` (via `--add-dir`), which already carries the grep-first dedup fix (commit `9f66e6f`) — workspace-root sessions get the fix automatically.
 - **Category:** paired-contract / sync
 - **Source:** plan `let-s-figure-out-a-reflective-lovelace.md` Follow-ups item 2. Canonical fix landed in commit 9f66e6f (ai-resources copy only).
 - **Why deferred:** The workspace-root `wrap-session.md` + its collector path are an independent non-symlink copy under a paired-contract note; the canonical fix intentionally did not touch them this session. Port once the canonical change proves out on a real wrap.
@@ -311,7 +311,7 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Review-cycle:** monthly
 
 ### 2026-06-08 — Document producer-end of the Check-7 / Named-Source-Appendix two-end contract (DEFERRED)
-- **Status:** deferred — small follow-up to the shipped Check 7 change
+- **Status:** resolved 2026-07-03 — contract note added under § Named-Source Appendix in `source-class-hierarchy.template.md` (consumer: Check 7; heading-stability requirement stated). Reference-doc edit, no skill logic touched.
 - **Category:** research-workflow / two-end-contract
 - **Source:** Check 7 (Source-Surface Coverage) landed in `research-extract-verifier` (fix-spec #2, 2026-06-08 S1); risk-check `audits/risk-checks/2026-06-08-check7-source-surface-coverage-research-extract-verifier.md`; system-owner second opinion.
 - **Why deferred:** The skill (consumer end) now reads `reference/source-class-hierarchy.md`'s evidence-need table + ladders + Named-Source Appendix and flips a scarcity verdict on appendix contents. The producer-end template (`workflows/research-workflow/reference/source-class-hierarchy.template.md`) carries the structure but does not yet state that a verifier check consumes the appendix — so a project filler doesn't know the appendix shape is now a contract. Scoped out of the skill commit deliberately.
@@ -426,7 +426,7 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Review-cycle:** monthly
 
 ### 2026-06-10 — Port /wrap-session Step 13 per-id teardown to the workspace-root wrap-session.md copy (PENDING)
-- **Status:** logged (pending)
+- **Status:** resolved 2026-07-03 — verified already done: the workspace-root copy's final step already runs the per-id teardown (`rm -f "logs/.session-marker-${CLAUDE_CODE_SESSION_ID}"`, root `wrap-session.md` L416), ported in a later sync. No edit needed.
 - **Category:** guardrail-candidate
 - **Severity:** low
 - **Provenance:** wrap-collector (machine-authored, manually re-appended after a collector write incident) 2026-06-10
@@ -436,7 +436,7 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Review-cycle:** monthly
 
 ### 2026-06-10 — system-owner agent reports "Full advisory on disk" without writing the file (PENDING)
-- **Status:** logged (pending)
+- **Status:** resolved 2026-07-03 — closed by /reconcile-backlog (caller-side fix live on disk: `consult.md` Step 5a "Post-return existence check" verifies the returned path exists and persists/re-invokes if missing)
 - **Category:** session-issue
 - **Severity:** medium
 - **Provenance:** main-session (observed live during a /clarify → SO-first design session) 2026-06-10
@@ -495,7 +495,7 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Review-cycle:** monthly
 
 ### 2026-06-12 — Mission promote-rw-canonical close findings: SETUP.md stale copy-path + 2 project down-ports + unanchored archive/ gitignore (PENDING)
-- **Status:** logged (pending)
+- **Status:** logged (pending) — item 1 done 2026-07-03 (SETUP.md Step 1 path corrected: the template IS `ai-resources/workflows/research-workflow/`; copy-from-workspace-root clarified). Items 0 (gitignore anchor — structural, gate it), 2 and 3 (positioning-research down-ports) remain.
 - **Category:** template-defect + propagation
 - **Severity:** low
 - **Provenance:** S11 mission-close deploy-test + /sync-workflow run (2026-06-12)
@@ -550,19 +550,19 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Review-cycle:** weekly
 
 ### 2026-07-03 — check-foreign-staging.sh whitespace-tokenizes the Files-in-scope bullet (semicolon format false-blocks commits)
-- **Status:** logged (pending)
+- **Status:** resolved 2026-07-03 — closed by /reconcile-backlog (fixed same day in commit `964d626`, Session S3; semicolon-aware tokenizer live in `.claude/hooks/check-foreign-staging.sh`)
 - **Category:** hook / harness
 - **Friction source:** friction-log 2026-07-02 (S3) — staging-tripwire parser false-positive
 - **Proposal:** `check-foreign-staging.sh` tokenizes the `- Files in scope:` value on whitespace, so the canonical semicolon-separated `/session-start` Step-3 format yields `path;` tokens that never string-match staged paths (11/12 files false-flagged; only the final entry without a trailing `;` matched). Fix: make the hook split on `;` and strip trailing separators/parentheticals (`(inferred)`, `(none stated)`) before matching. Preferred over changing the documented format (which touches the four-reader parse contract). Hook edit = structural class → `/risk-check` before landing. Also note the stale-marker input: the "live concurrent session" signal that armed the tripwire was a per-id marker from an already-wrapped same-day session (wrap does not prune its own per-id marker).
 
 ### 2026-07-03 — Canonical command subagent spawn fails from a project session (--add-dir registers files, not agent types)
-- **Status:** logged (pending)
+- **Status:** resolved 2026-07-03 — spawn fallback (option b) shipped to ALL 5 confirmed spawn sites: `risk-check.md` 12a, `qc-pass.md` 3b, `refinement-pass.md` 3a, `refinement-deep.md` Step 3, `friday-journal.md` 15b (the last two added per SO advisory — do not leave known-broken siblings). Each fallback re-asserts `model: opus` on the `general-purpose` spawn (no silent tier drop) and resolves the agent-def path by ancestor walk-up. Risk-check PWC + mitigations: `audits/risk-checks/2026-07-03-subagent-spawn-fallback-riskcheck-carveout-reconcile-pointer.md`. Non-symlink copies (positioning-research `qc-pass`/`refinement-pass`, research-workflow `qc-pass` variant) intentionally untouched — pre-change behavior. Residual root-cause note: topology-layer agent-type registration (AP-9) would supersede these command-layer fallbacks if ever built.
 - **Category:** harness / process
 - **Friction source:** friction-log 2026-07-02 (S1) — risk-check-reviewer agent type unresolved in project session
 - **Proposal:** Canonical commands (`/risk-check`, likely `/qc-pass`, `/refinement-pass`) fail their subagent spawn from a project session because `--add-dir` grants file access but does not register agent *types*; a blanket `.claude/agents` symlink would over-expose deliberately-scoped project agent dirs. Fix (option b, self-contained per command): give the canonical commands' spawn steps a documented fallback — when the named subagent type is unresolved, run `general-purpose` with the agent definition read from disk and inlined into the prompt (what was done manually in S1, and again by this checkup's audit-repo run). Distinct from logged 2026-06-16 (symlink scaffolding for standalone-openable projects).
 
 ### 2026-07-03 — /tech-consult is a built-but-unwired orphan in project planning
-- **Status:** logged (pending)
+- **Status:** resolved 2026-07-03 — minimum-viable pointer (option b) shipped: pre-intake paragraph + Commands-table row in `projects/project-planning/CLAUDE.md`. Option (a) full integration (a `/plan-draft`-ready handoff pack) deliberately not built — route through `/risk-check` + a design pass if wanted later.
 - **Category:** command / wiring
 - **Friction source:** friction-log 2026-07-02 (operator-flagged — /tech-consult not integrated into project planning)
 - **Proposal:** `/tech-consult` is copied into ~11 projects but named in no planning CLAUDE.md, has no `/plan-draft`-ready handoff, and its output lands only in the conversation — so it runs only if the operator remembers it. Operator asked to integrate it or at minimum add a reminder. Options: (a) full integration — make `/tech-consult` emit (or convert its output into) a `/plan-draft`-ready context pack and register it as an optional Stage-0/1 intake in `projects/project-planning/CLAUDE.md` (a fourth front door alongside `/requirements-pack`, `/context-builder`, `/scope-project`); or (b) minimum-viable pointer in the planning intake section. New/changed command wiring = structural class → route the (a) path through `/risk-check` + a small design pass.
@@ -574,7 +574,7 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Proposal:** Workspace-root `.claude/commands/` (63) is missing 27 canonical commands AND holds 5 real command files that exist only there (`harness-start`, `run-qc`, `session-report`, `update-md`, `validate`) plus a redundant alias. So any project symlinked to the canonical library silently loses those 5 root-only commands. Fix: migrate the 5 real root-only command files into `ai-resources/.claude/commands/` (or confirm-and-delete as deprecated), so the canonical library is the true superset and per-project symlinks are complete. Shared workspace state — sequence deliberately.
 
 ### 2026-07-03 — /graduate-resource: no runtime-dependency check, so a graduated command broadcasts present-but-inert
-- **Status:** logged (pending)
+- **Status:** resolved 2026-07-03 — Step 5b (present-but-inert guard) added to `graduate-resource.md`: per-project OPERABLE/INERT split reported before graduation is announced; broadcast never reported as operable. Bonus same-file fix: Step 7's stale "Push automatically after the commit" corrected to the batched/gated wrap-time push rule.
 - **Category:** session-feedback
 - **Provenance:** wrap-collector (machine-authored) 2026-07-03
 - **Friction source:** wrap-collector 2026-07-03 — leanness/operability (dim 2; /reconcile build + graduation session, § Outcome + § Value-Audit RULE)
@@ -582,7 +582,7 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Target files:** `ai-resources/.claude/commands/graduate-resource.md` (add the runtime-dependency check); possibly `docs/placement-verifier.md` if the check reuses its per-project scan.
 
 ### 2026-07-03 — New-project CLAUDE.md template has no /reconcile pointer, so future projects won't surface the command
-- **Status:** logged (pending)
+- **Status:** resolved 2026-07-03 — pointer added to `templates/project-claude-md/header.md` (an EXISTING consumed fragment — `/new-project`'s hardcoded enumeration needs no edit, per risk-check mitigation), with conditional wording scoped to output-producing maturity and naming the two `context/` runtime files `/reconcile` needs.
 - **Category:** session-feedback
 - **Provenance:** wrap-collector (machine-authored) 2026-07-03
 - **Friction source:** wrap-collector 2026-07-03 — autonomy-compounding (dim 1; /reconcile build session, § Next Steps + operator-requested reminder mechanism)
@@ -590,7 +590,7 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Target files:** `ai-resources/templates/project-claude-md/` (the fragment `/new-project` consumes at scaffold time).
 
 ### 2026-07-03 — Foreign-session guard's mechanical classifier returns UNKNOWN (+ misleading CONCURRENT fallback) for a same-day abandoned-orphan entry
-- **Status:** logged (pending)
+- **Status:** resolved 2026-07-03 — minimal option shipped: UNKNOWN split out of the CONCURRENT branch in BOTH `wrap-session.md` copies (canonical Step 3.5 + root Step 1.5 guard block); UNKNOWN now emits a neutral classify-manually STOP (committed same-day orphan → REMNANT recovery; live terminal → CONCURRENT recovery) instead of CONCURRENT-shape "switch terminal" text. Narrative, code-comment, and branch sites updated in lockstep. The alternative (a new mechanical abandoned-orphan classifier branch) deliberately not built — message-selection fix only.
 - **Category:** guardrail-candidate
 - **Severity:** low
 - **Provenance:** wrap-collector (machine-authored) 2026-07-03
@@ -599,7 +599,7 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Target files:** (to be determined at disposition) — candidate: the pre-write guard's mechanical classifier in `wrap-session.md` Step 3.5 (+ paired workspace-root copy) and its fallback-message selection; cross-ref `docs/session-marker.md`.
 
 ### 2026-07-03 — Session self-waived a mandatory /risk-check change class (settings.local.json edits) on a self-authored materiality exception
-- **Status:** logged (pending)
+- **Status:** resolved 2026-07-03 — class-boundary clarification + explicit no-self-waiver rule added to `audit-discipline.md` § Risk-check change classes. SO-advised shape: a bounded out-of-class definition (gitignored `settings.local.json`, rule-mandated deletion/correction, zero blast radius — must be named in one line when relied on) instead of a discretionary carve-out; every other skip of a listed class requires one-line operator confirmation. Residual follow-up (logged in the doc): sync SO-vault `risk-topology.md` §3/§4 in an SO session.
 - **Category:** guardrail-candidate
 - **Severity:** med
 - **Provenance:** wrap-collector (machine-authored) 2026-07-03
@@ -608,7 +608,7 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Target files:** `ai-resources/docs/audit-discipline.md` § Risk-check change classes (add the carve-out or the confirm-before-skip rule); cross-ref workspace `CLAUDE.md` § Autonomy Rules #9.
 
 ### 2026-07-03 — Wrap note asserted commit as done (past tense) before the git commit had run
-- **Status:** logged (pending)
+- **Status:** resolved 2026-07-03 — commit-verb verification sentence added to the outcome-check step in BOTH copies (canonical `wrap-session.md` Step 6.4 + root Step 4.4; mirror notes updated): completed-tense commit claims must match `git log --oneline` before the note is finalized; unlanded commits written as pending.
 - **Category:** guardrail-candidate
 - **Severity:** low
 - **Provenance:** wrap-collector (machine-authored) 2026-07-03
