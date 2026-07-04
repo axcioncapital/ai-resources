@@ -138,6 +138,7 @@ For each scope:
 2. If `logs/improvement-log.md` does not exist, record `skipped: no improvement-log.md` and continue.
 3. Invoke `/improve`. The command reads `logs/friction-log.md`, appends new entries to `logs/improvement-log.md`. Entries land in the scope's own logs, not `ai-resources/logs/`.
 4. Record the appended count (best-effort, from `/improve`'s own output) and the log path in `RESULTS`.
+5. **Improvement verification** (relocated from `/wrap-session` Step 10, 2026-07-04 — this is cadence work, not per-wrap work). Scan for applied-but-unverified entries: `awk '/^### /{if(a&&!v)print h; h=$0;a=0;v=0} /Status:.*applied/{a=1} /Verified:/{v=1} END{if(a&&!v)print h}' logs/improvement-log.md 2>/dev/null`. If output, present "Unverified improvements in {scope}: [list with date and title]" and ask "Verify any, or skip?" For each confirmed, append `- **Verified:** {date} — confirmed by operator` to that entry. Record verified count in `RESULTS`. Skip silently if no output.
 
 **C. `/coach` — all tiers, per scope (skip if thin)**
 
