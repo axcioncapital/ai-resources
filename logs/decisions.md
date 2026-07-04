@@ -83,3 +83,15 @@
 **Alternatives considered.** (1) Build the full K2 proposal — rejected as speculative duplication of a live component (AP-7). (2) Indicative-run mode instead of hard-abort — deferred (bigger blast radius: reconcile-reviewer + verdict-definitions; logged to improvement-log for a data-gated revisit). (3) Gate on banner-removal alone — rejected on SO advice; a generated rubric could pass by deleting the banner without editing, so the gate keys on `{{AUTHOR:}}` placeholders.
 
 **Decided by.** Claude judgment on operator instruction ("do the build now"); SO-vetted via `/consult` + a risk-check SO second opinion; independently `/qc-pass`'d.
+
+## 2026-07-04 — /wrap-session leanness refactor: guard distribution + telemetry default
+
+**Context.** Operator asked to make `/wrap-session` leaner (too slow, too many tokens, overcomplicated). Plan-time /risk-check returned RECONSIDER (two Highs: blast radius across ~16 project symlinks; hidden coupling of a byte-identical 250-line extraction). Blindspot scan then found scripts are NOT auto-distributed with commands.
+
+**Decision.** (1) Externalize the foreign-session guard to a single ai-resources script reached by ancestor walk-up — chosen over per-project script copies (no distribution mechanism exists) and over keeping it inline (would forfeit ~80% of the leanness win). (2) Flip telemetry to opt-in (operator directive), reworded the always-loaded CLAUDE.md rule as a loud revision, and placed the compensating gap-nudge in /prime (runs every session, already reads usage-log) rather than /session-start (Phase-3 only). (3) Unbundle into 3 sequenced commits per the risk-check redesign.
+
+**Rationale.** Walk-up reuses the exact pattern auto-sync-shared.sh already relies on (low novelty), reaches every checkout, and fixes the same latent gap affecting check-archive.sh. Byte-identical extraction verified by mechanical diff (0 diffs) so behavior is provably preserved before the change reaches projects.
+
+**Alternatives considered.** (a) Per-project script distribution — rejected (needs a new mechanism = bigger structural project). (b) Keep guard inline, take only the smaller B/C win — rejected (guard is most of the weight). (c) Nudge in /session-start — rejected (doesn't run every session → weak baseline protection).
+
+**Decided by.** Operator approval on the two AskUserQuestion forks (telemetry opt-in; Path A walk-up); risk-check + blindspot + independent qc-pass all applied.

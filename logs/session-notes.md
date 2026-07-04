@@ -489,3 +489,39 @@ Skipped per the standing skip rule (`feedback_end_time_risk_check_skip`): plan-t
 
 ### Open Questions
 None.
+
+## 2026-07-04 — /wrap-session leanness refactor (guard externalized, default → core-only)
+
+### Summary
+Rebuilt `/wrap-session` to be leaner (operator: "taking too long, too many tokens, overcomplicated"). Landed as 3 sequenced commits + a QC-fix + a log entry across BOTH repos (ai-resources canonical + workspace-root copy). Canonical wrap body 488 → 248 lines (~49% leaner); default is now core-only with flag-based opt-in. Gate-driven throughout: plan-time /risk-check (RECONSIDER → redesigned), /blindspot-scan (caught the script-distribution blocker), and independent /qc-pass (clean after 4 pointer fixes). First live wrap (this one) exercised the new externalized guard successfully.
+
+### Files Created
+- `ai-resources/logs/scripts/foreign-session-guard.sh` — the foreign-session detector, extracted byte-identical from the former inline Step 3.5 block; both wrap copies call it via ancestor walk-up.
+- `ai-resources/docs/session-value-audit-rubric.md` — externalized Session Value Audit rubric (read by the wrap outcome-check subagent; labels kept byte-identical for /friday-checkup's grep).
+- `ai-resources/audits/risk-checks/2026-07-04-refactor-wrap-session-leanness.md` — plan-time risk-check report (RECONSIDER + redesign).
+- `ai-resources/logs/scratchpads/2026-07-04-22-08-scratchpad.md` — this session's continuity scratchpad.
+
+### Files Modified
+- `ai-resources/.claude/commands/wrap-session.md` + workspace-root `/.claude/commands/wrap-session.md` — guard call, flag-based opt-in default, dead-step cuts, nudge merge, rubric reference.
+- `ai-resources/CLAUDE.md` — Session Telemetry rule reworded (telemetry now opt-in; names /prime as the nudge home).
+- `ai-resources/.claude/commands/prime.md` — new telemetry-gap nudge (instruction + brief ⚠ line).
+- `ai-resources/.claude/commands/friday-checkup.md` — absorbed the relocated improvement-verify (Step 5B.5) + stale-preflight-phrase fix.
+- `ai-resources/docs/session-marker.md` — guard externalization pointer + workspace-root step-label fix.
+- `ai-resources/logs/improvement-log.md` — pending entry for the deferred EXTRA_* echo fix.
+
+### Decisions Made
+- **Guard distribution via walk-up (not per-project script copies).** Blindspot scan found scripts aren't auto-distributed like commands (check-archive.sh is absent from most projects). Chose ancestor walk-up to the single ai-resources script — the pattern auto-sync-shared.sh already uses. Operator-approved (Path A).
+- **Telemetry flipped to opt-in** (operator chose "flip telemetry to opt-in too"), requiring a loud CLAUDE.md rule revision + a /prime safety nudge. Nudge placed in /prime, not /session-start, for reliability (/prime runs every session and already reads usage-log).
+- **Unbundled into 3 sequenced commits** per risk-check redesign, so the delicate byte-identical extraction is isolated and bisectable.
+- QC fixes (4 maintainer-facing pointer corrections) applied per independent qc-reviewer.
+
+### Risky actions
+Structural edit to the most-used session command (copied/symlinked to ~16 projects). Mitigated by: plan-time risk-check, blindspot scan, byte-identical mechanical-diff QC (0 diffs, re-certified), walk-up tested from every checkout type, and independent qc-pass. No destructive/external actions. All commits local — nothing pushed.
+
+### Next Steps
+- **Push gate at this wrap** — confirm push of the local commits (ai-resources + workspace-root).
+- Deferred (logged): one-line fix to add EXTRA_TODAY/PRIOR_MANDATES to the guard's GUARD echo (dedicated session).
+- Optional: run a future wrap with `full` or `+telemetry` to exercise the opt-in passes live.
+
+### Open Questions
+None.
