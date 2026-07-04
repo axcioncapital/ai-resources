@@ -67,3 +67,19 @@
 - **No rewrite drafts.** The report diagnoses and recommends; it does not include rewritten passages. That's the operator's or a follow-up session's job, via the channel named in § 7.
 - **Silence is a finding.** "No passage addresses this dimension" is a valid, citable Weak score — don't strain to find a passage that doesn't exist.
 - **One primary root cause.** Section 6 must commit to a primary failure level, even when several are implicated — a report that names five equally-weighted causes hasn't actually diagnosed anything.
+
+## Ratification banner and gate signals
+
+`/reconcile-activate` scaffolds `context/mandate-rubric.md` and `context/resource-activation-map.md` as *starter drafts*, not finished standards. Two plain-ASCII signals mark a scaffolded file as **un-ratified**; both are defined here as the single source, so the command that writes them and the `/reconcile` Step-2 gate that reads them cannot drift apart.
+
+- **DRAFT banner** — line 1 of each scaffolded file, exactly:
+  > **⚠ DRAFT — NOT RATIFIED.** Scaffolded by `/reconcile-activate` on {DATE}. `/reconcile` will not run against this project until every author placeholder below is replaced with this project's real standard and this banner line is deleted. Auto-drafted structure is scaffolding, not the project's judged quality bar.
+- **Author placeholders** — every value the scaffolder could not derive is written as a `{{AUTHOR: … }}` token naming what the operator must supply.
+
+**Gate rule (read by `/reconcile` Step 2).** A file is un-ratified if **either**:
+- a `{{AUTHOR:` token appears anywhere in it (`grep -F '{{AUTHOR:' FILE`), or
+- the plain-ASCII string `NOT RATIFIED` appears in its first 6 lines (`head -n 6 FILE | grep -F 'NOT RATIFIED'`).
+
+The `{{AUTHOR:` check is load-bearing: a file cannot be ratified by deleting the banner alone — the placeholders must actually be replaced (this closes the "ratify-without-reading" path where a generated rubric would masquerade as operator-authored). Match the plain-ASCII substrings `{{AUTHOR:` and `NOT RATIFIED` only; never grep the `⚠` or `—` glyphs (encoding-fragile) or a bare `DRAFT` / `> **` (would false-positive on the `> **What this file is:**` blockquote that every hand-authored contract file opens with).
+
+**To ratify:** replace every `{{AUTHOR: … }}` placeholder with the project's real content, then delete the banner line (and drop the `(DRAFT)` suffix from each file's H1 title). Files hand-authored without `/reconcile-activate` (e.g. the `buy-side-service-plan` pair) carry neither signal and run normally.

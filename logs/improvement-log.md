@@ -17,6 +17,15 @@ Resolved entries (Status: applied + Verified) are archived to `improvement-log-a
 
 ---
 
+### 2026-07-04 — Indicative-run mode for `/reconcile` against un-ratified scaffolder drafts (SO deferral)
+- **Status:** logged (pending)
+- **Category:** command/skill
+- **Severity:** low
+- **Provenance:** `/reconcile-activate` build, 2026-07-04. Risk-check SO second opinion (`audits/risk-checks/2026-07-04-reconcile-activate-command-and-reconcile-step2-draft-gate.md` § Architectural Commentary, risk 2). The build shipped a hard-abort DRAFT-gate: `/reconcile` refuses to run until the two scaffolded reference files are ratified (all `{{AUTHOR:}}` placeholders replaced + the banner deleted). SO concurred with shipping hard-abort but flagged that, for the ~20 dormant projects, an abort keeps `/reconcile` behind authoring work — the same friction it aims to cure — and proposed a softer indicative mode.
+- **Proposal:** Evaluate a flagged indicative mode: instead of aborting on an un-ratified rubric/map, `/reconcile` runs and stamps the verdict `UNRATIFIED — indicative only`, so the operator sees value before authoring (OP-12, closure-activating). Keep the ratification-required gate on any authoritative/report-write path so indicative output can never be mistaken for a ratified judgment. Requires its own `/risk-check` — blast radius reaches `reconcile-reviewer` + `reconcile-verdict-definitions.md` + multiple `/reconcile` steps. **Trigger:** only worth building once adoption data shows the hard-abort is actually parking projects — i.e. `/reconcile-activate` has run on ≥2 projects and at least one operator stalls at the ratify step. If the scaffolder alone unblocks adoption, close as DROP.
+- **Target files:** (only if built) `ai-resources/.claude/commands/reconcile.md`; `ai-resources/.claude/agents/reconcile-reviewer.md`; `ai-resources/docs/reconcile-verdict-definitions.md`.
+- **Review-cycle:** monthly
+
 ### 2026-07-04 — Revisit the A11 observability reporter once the closure channel is proven (PARKED — reminder)
 - **Status:** parked — OVERTAKEN as a now-build; held on a named-event trigger
 - **Category:** ai-strategy / observability (strategic-os roadmap Slot 3)

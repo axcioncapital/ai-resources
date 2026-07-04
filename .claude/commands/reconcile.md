@@ -1,12 +1,12 @@
 ---
 model: opus
 argument-hint: "[path-to-output-being-reconciled]"
-allowed-tools: Bash(git *), Read, Task, Skill(contract-check)
+allowed-tools: Bash(git *), Bash(grep:*), Bash(head:*), Bash(mkdir:*), Read, Task, Skill(contract-check)
 ---
 
 Judge whether a project output fulfilled the project's mandate — not whether it reads well. `/reconcile` compiles the project's mandate rubric, decomposes the output, audits which project resources should have shaped it, checks for generic (substitutable) advice, classifies the failure into a specific root cause, and recommends fixes at the output/workflow/repo level — each routed into a channel that can actually close it. It does **not** rewrite the output. Run it after an output feels underwhelming, generic, or strategically thin, and you want to know *why* before touching the prose again.
 
-`/reconcile` requires two operator-authored reference files in the project it runs in: `context/mandate-rubric.md` (what "good output" means for this project) and `context/resource-activation-map.md` (which project resources should shape which task types). Without both, the command aborts with instructions rather than judging against a generic standard (Step 2). A project that has not authored them cannot yet run `/reconcile` — see `ai-resources/docs/reconcile-report-template.md` and the two doc shapes it references. `/reconcile-backlog` is a different, unrelated command (status-log triage, not output reconciliation) — do not confuse the two.
+`/reconcile` requires two operator-authored reference files in the project it runs in: `context/mandate-rubric.md` (what "good output" means for this project) and `context/resource-activation-map.md` (which project resources should shape which task types). Without both, the command aborts with instructions rather than judging against a generic standard (Step 2). A project that has not authored them cannot yet run `/reconcile` — run `/reconcile-activate` first to scaffold starter drafts you then edit and ratify (it derives structure and the resource inventory but never authors the final standard for you). See `ai-resources/docs/reconcile-report-template.md` and the two doc shapes it references. `/reconcile-backlog` is a different, unrelated command (status-log triage, not output reconciliation) — do not confuse the two.
 
 Input: `$ARGUMENTS` — required. Path to the output being reconciled, relative to the project root or absolute.
 
@@ -36,8 +36,19 @@ Examples:
 
    Missing: {list whichever of context/mandate-rubric.md, context/resource-activation-map.md is absent}
 
-   These are operator-authored reference docs — /reconcile reads them, it does not generate them. See ai-resources/docs/reconcile-report-template.md for what each must contain.
+   These are operator-authored reference docs — /reconcile reads them, it does not generate them. To scaffold starter drafts you then edit and ratify, run /reconcile-activate {PROJECT_ROOT}. See ai-resources/docs/reconcile-report-template.md for what each must contain.
    ```
+6a. **Ratification gate.** Both files exist — now confirm they are ratified, not un-edited scaffolder drafts (`/reconcile-activate` output). Per `ai-resources/docs/reconcile-report-template.md` § "Ratification banner and gate signals" — the single source for these strings — a file is *un-ratified* if either signal is present:
+    - a `{{AUTHOR:` token appears anywhere in it (`grep -F '{{AUTHOR:' {file}`), or
+    - the plain-ASCII string `NOT RATIFIED` appears in its first 6 lines (`head -n 6 {file} | grep -F 'NOT RATIFIED'`).
+    Match those plain-ASCII substrings only — never `> **` or a bare `DRAFT`, either of which would false-positive on the `> **What this file is:**` blockquote that ratified files open with. If either `MANDATE_RUBRIC_PATH` or `RESOURCE_MAP_PATH` is un-ratified, abort with:
+    ```
+    /reconcile found scaffolder-draft reference files that are not ratified yet.
+
+    Un-ratified: {list whichever of context/mandate-rubric.md, context/resource-activation-map.md still carries a {{AUTHOR:}} placeholder or the DRAFT — NOT RATIFIED banner}
+
+    These were scaffolded by /reconcile-activate as starter drafts. /reconcile will not judge against an un-edited draft — that would rubber-stamp a generated rubric. To ratify: replace every {{AUTHOR: ...}} placeholder with this project's real standard, then delete the top "DRAFT — NOT RATIFIED" banner line from each file. Re-run /reconcile once both are ratified.
+    ```
 7. Set `AI_RESOURCES` = absolute path to the nearest `ai-resources/` directory (walk upward from `PROJECT_ROOT`, same idiom as `ai-resources/.claude/hooks/auto-sync-shared.sh`).
 8. Set `REPORT_DIR` = `{PROJECT_ROOT}/logs/reconcile-reports/`. Create if missing (`mkdir -p`).
 9. Compute `SLUG` from `TARGET_OUTPUT_PATH`'s basename (lowercase, non-alphanumeric runs → single `-`, strip leading/trailing `-`). Set `REPORT_PATH` = `{REPORT_DIR}/{DATE}-{SLUG}.md`. If it already exists from an earlier invocation today, append `-2`, `-3`, etc.
