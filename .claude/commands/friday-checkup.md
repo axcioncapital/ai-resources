@@ -338,7 +338,7 @@ Verifies the Mitigation 3 (strengthened) contract from FX-B1 Path A: every `<!--
     - **Scopes:** ai-resources plus each selected project scope (`{scope_path}/logs/session-notes.md`; skip a scope silently if the file is absent).
     - **Extraction:** grep each file for `### Session Value Audit` blocks in the window and collect per session: date, session title (from the enclosing `## ` header), `TYPE:`, `SCORE:`, `DECISION:`, and any non-empty `RULE:` line.
     - **Compose** the `## Weekly Session Value Review` report section (template in Step 7) with: highest-value sessions (top ~20% by `SCORE:`, minimum 1), lowest-yield sessions (bottom ~20% by `SCORE:`, minimum 1), session types to repeat (`DECISION:` Repeat / Repeat with constraints), session types to constrain or batch (`DECISION:` Repeat with constraints / Batch into maintenance), session types to stop (`DECISION:` Redesign before repeating / Stop this session pattern), and one operating rule change — pick at most ONE recommendation from the collected `RULE:` lines (add / edit / remove a rule), or `none` if no candidate earns it. With few sessions, "top/bottom 20%" means the single best and single worst.
-    - **Empty window:** if no audit blocks exist in the window (feature newly shipped, or outcome checks skipped per wrap preflight), the section body is the single line `(no session value audits this week)`.
+    - **Empty window:** if no audit blocks exist in the window (feature newly shipped, or the outcome check not requested — `/wrap-session` runs it only with `+audit`/`full`), the section body is the single line `(no session value audits this week)`.
 
 ---
 

@@ -55,6 +55,8 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
    ```
    Skip silently if either file does not exist. The pre-fetch is bounded read scope; no main-session reasoning happens over these lines at /prime time — they live in context for the eventual wrap.
 
+   **Telemetry-gap nudge (2026-07-04 — `/wrap-session` telemetry is opt-in, so a forgotten `+telemetry` silently drops a session from the `usage-log` baseline).** This is the one cheap exception to "no reasoning over the pre-fetched log-trio": take the date of the most recent `## ` header in `session-notes.md` (the last wrapped session). If that date does **not** appear in the last 30 lines of `logs/usage-log.md` just read, AND that last session was non-trivial (its note carries a real `### Summary`, not a one-line or aborted entry), then the prior substantive session captured no telemetry — set a telemetry-gap flag and emit the ⚠ telemetry line in the brief (Step 5 template). Skip silently if either file is absent, the dates match, or the last session was trivial. Advisory only — it never blocks; it prompts a backfill.
+
 1a. **Cross-check Next Steps against git log and sibling entries.** Detection logic only — this command has no brief-level Next Steps list; see steps 5–6.
 
    *Canonical primitive.* The merged-multi-repo git cross-check below is the **reference implementation** of the reconcile-at-read primitive now documented in `docs/backlog-reconciliation.md` (shared by `/fix-project-issues`, `/fix-repo-issues`, `/open-items`). The mechanism here and the doc must stay in sync — if you change the scan/classification logic in one, update the other.
@@ -204,6 +206,7 @@ Model: {session model}
 {⚠ Concurrent session live in this checkout — before starting a task, run `/concurrent-session-check <task>` to confirm it won't collide, or `/concurrent-session-check` (no argument) to see which menu items are safe. — only when Step 1a found LIVE_FOREIGN_HERE >= 1}
 {⚠ Phase READMEs detected: {paths}; read before opening the relevant work unit — only if step 4 surfaced any}
 {⚠ Architectural artifact awaits independent QC — do NOT commit until `/qc-pass` passes (per the QC-PENDING scratchpad at {path}). — only when step 1b surfaced a QC-PENDING scratchpad}
+{⚠ Last substantive session ({date}) left no `usage-log` telemetry — run `/usage-analysis` now to backfill it, or wrap future substantive sessions with `/wrap-session +telemetry`. — only when the Step 1 telemetry-gap flag fired}
 {◎ Active mission(s): {for each mission in ACTIVE_MISSIONS where mission.repo == CWD_REPO: "<id> — <name>"} — only if at least one same-repo active mission exists; advisory, names the multi-session goal(s) this work can serve}
 
 Next tasks:

@@ -35,9 +35,9 @@ Existing implementations: `token-audit-auditor`, `token-audit-auditor-mechanical
 
 ## Session Telemetry
 
-Run `/usage-analysis` at the end of every substantive session. Output goes to `logs/usage-log.md` and is the baseline that future token audits measure against — without the data, a token audit can't tell whether past efficiency optimizations actually moved the needle.
+Capture `/usage-analysis` telemetry at the end of every substantive session. Output goes to `logs/usage-log.md` and is the baseline that future token audits measure against — without the data, a token audit can't tell whether past efficiency optimizations actually moved the needle.
 
-`/wrap-session` prompts for this automatically. If the session was trivial (single-file edit, one-question read), dismiss with one letter; don't skip by default.
+**Telemetry is opt-in as of the 2026-07-04 wrap-session leanness refactor** (previously wrap prompted for it automatically). A bare `/wrap-session` runs the core path only and does **not** capture telemetry; request it with `/wrap-session +telemetry` (or `full`) on substantive sessions. To protect the baseline against a forgotten flag, `/prime` nudges at the next session's start when the previous substantive session left no `logs/usage-log.md` entry (`/prime` already reads that log during orientation) — so a missed capture surfaces loudly rather than silently dropping the session from the record. Skip only genuinely trivial sessions (single-file edit, one-question read).
 
 ## Maintenance Cadence
 
