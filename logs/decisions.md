@@ -71,3 +71,15 @@
 **Alternatives considered.** (1) Revert the two copies, commit only `ai-resources` — rejected: re-introduces byte-divergence (the exact drift the scan flagged) and leaves the two copies on stale text. (2) Delete the dead copies now — rejected as out-of-scope for a VS Code-native change, and file deletion in other repos is an autonomy-gated action. The "why do these unregistered duplicates exist at all" cleanup was routed to a future dedicated pass.
 
 **Decided by.** Claude judgment (not operator-directed), surfaced via `/blindspot-scan`; the underlying hook edit was independently `/risk-check`'d (GO) and `/qc-pass`'d (PASS).
+
+## 2026-07-04 — Build /reconcile-activate as the "build→activate" answer to the K2 reconciliation proposal
+
+**Context.** Operator pasted an external proposal (K2) to build a "Project Workflow Reconciliation Agent." Investigation found the capability already exists (`/reconcile` + `reconcile-reviewer`, ~1:1) but is dormant in ~20 of 21 projects because its two required reference files are hand-authored and only buy-side-service-plan has them.
+
+**Decision.** Do not build the proposal as written. Build one new command, `/reconcile-activate`, that scaffolds starter DRAFT versions of the two files (structure + resource inventory + candidate dimension names; every judgment cell an `{{AUTHOR:}}` placeholder), gated so `/reconcile` aborts against an un-ratified draft. Decline the genericness-detector + mandatory-trace ideas; defer contradiction-scan (→ `/qc-pass`) and cross-run failure-trend.
+
+**Rationale.** The binding constraint on adoption is the blank-page authoring cost, which the scaffolder removes directly, while the ratification gate preserves the "operator-authored, not generated" intent. Net shape: 1 new command, 2 folds/defers, 2 declines — minimal surface against an already-large command set.
+
+**Alternatives considered.** (1) Build the full K2 proposal — rejected as speculative duplication of a live component (AP-7). (2) Indicative-run mode instead of hard-abort — deferred (bigger blast radius: reconcile-reviewer + verdict-definitions; logged to improvement-log for a data-gated revisit). (3) Gate on banner-removal alone — rejected on SO advice; a generated rubric could pass by deleting the banner without editing, so the gate keys on `{{AUTHOR:}}` placeholders.
+
+**Decided by.** Claude judgment on operator instruction ("do the build now"); SO-vetted via `/consult` + a risk-check SO second opinion; independently `/qc-pass`'d.

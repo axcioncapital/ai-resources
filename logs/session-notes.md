@@ -453,3 +453,39 @@ None blocking.
 
 ### End-time /risk-check
 Skipped per the standing skip rule (`feedback_end_time_risk_check_skip`): plan-time `/risk-check` already covered this session's structural change class (the hook edit) with a **GO** verdict (no mitigations required); the change was independently QC'd (PASS) and verified via git before commit; the commits shipped exactly what was risk-checked with zero drift. Logged here per the skip rule's documentation requirement.
+
+## 2026-07-04 — Investigated K2 reconciliation proposal; built /reconcile-activate
+
+### Summary
+Investigated whether a pasted external proposal (K2 "Project Workflow Reconciliation Agent") already exists in the AI system. Verdict: yes — `/reconcile` + `reconcile-reviewer` implement it ~1:1 and more maturely; the real gap is adoption (the engine is dormant in ~20 of 21 projects because its two reference files are hand-authored and only buy-side-service-plan has them). On operator instruction, built the SO-vetted top item: `/reconcile-activate`, a scaffolder that drafts starter DRAFT versions of those two files, gated behind operator ratification so an auto-draft can never rubber-stamp.
+
+### Files Created
+- `ai-resources/.claude/commands/reconcile-activate.md` — new scaffolder command (opus tier)
+- `ai-resources/audits/risk-checks/2026-07-04-reconcile-activate-command-and-reconcile-step2-draft-gate.md` — risk-check report (PROCEED-WITH-CAUTION + SO commentary)
+- `ai-resources/audits/working/reconciliation-layer-coverage-2026-07-04.md` — investigation memo / coverage map (gitignored working file)
+- `ai-resources/logs/scratchpads/2026-07-04-15-38-scratchpad.md` — continuity scratchpad
+
+### Files Modified
+- `ai-resources/.claude/commands/reconcile.md` — Step-2 ratification gate (item 6a); prose pointer to `/reconcile-activate`; `allowed-tools` += grep/head/mkdir
+- `ai-resources/docs/reconcile-report-template.md` — new § "Ratification banner and gate signals" (single source for banner + gate strings)
+- `ai-resources/logs/improvement-log.md` — parked entry: indicative-run mode for `/reconcile` (SO deferral)
+
+### Decisions Made
+- Reframe the proposal build→activate; build only investigation item 1 (`/reconcile-activate`). Items 2 (standalone genericness detector) + 4 (mandatory per-output trace) declined; items 3 (contradiction-scan → `/qc-pass`) + 5 (cross-run trend) deferred. (SO-vetted.)
+- Guardrail = hard-abort DRAFT-gate, not indicative-run — matches risk-checked scope; indicative-run deferred to improvement-log.
+- Gate keys on `{{AUTHOR:}}` placeholders + `NOT RATIFIED` banner (adopts SO risk-1 fix: deleting the banner alone cannot ratify).
+- QC-fix (independent): added grep/head/mkdir to `/reconcile` `allowed-tools` (gate would otherwise fail-open outside bypass mode); reworded banner to separate the two gate signals.
+
+### Risky actions
+The Step-2 gate change affects every future `/reconcile` run across all projects. Mitigated and verified before commit: dry-run confirmed the one live consumer (buy-side pair) still runs, a synthetic draft aborts, and a `> **What this file is:**` blockquote does not false-positive. QC caught an `allowed-tools` gap that could have let the gate fail-open — fixed pre-commit. Nothing irreversible/external nearly shipped unmitigated.
+
+### End-time /risk-check
+Skipped per the standing skip rule (`feedback_end_time_risk_check_skip`): plan-time `/risk-check` already covered this session's structural change class (new command + `/reconcile` edit) with a PROCEED-WITH-CAUTION verdict whose three mitigations were all applied and verified; the change was independently `/qc-pass`'d (REVISE → fixed) and dry-run-verified; the build commit (13fe89d) shipped exactly what was risk-checked with zero drift.
+
+### Next Steps
+- Push pending: 2 unpushed commits in ai-resources (13fe89d build + this wrap).
+- Exercise `/reconcile-activate projects/<dormant-project>` end-to-end (not yet run live).
+- Parked follow-ons (improvement-log + memo): indicative-run mode for `/reconcile`; fold contradiction-scan into `/qc-pass` (item 3); cross-run failure-trend into `/friday-checkup` (item 5).
+
+### Open Questions
+None.
