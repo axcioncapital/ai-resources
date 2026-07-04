@@ -402,3 +402,13 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Friction source:** friction-log 2026-07-02 (command-library secondary finding)
 - **Proposal:** Workspace-root `.claude/commands/` (63) is missing 27 canonical commands AND holds 5 real command files that exist only there (`harness-start`, `run-qc`, `session-report`, `update-md`, `validate`) plus a redundant alias. So any project symlinked to the canonical library silently loses those 5 root-only commands. Fix: migrate the 5 real root-only command files into `ai-resources/.claude/commands/` (or confirm-and-delete as deprecated), so the canonical library is the true superset and per-project symlinks are complete. Shared workspace state — sequence deliberately.
 
+
+### 2026-07-04 — foreign-session-guard.sh GUARD echo omits EXTRA_TODAY/PRIOR_MANDATES referenced by REMNANT/MIXED messages
+- **Status:** logged (pending)
+- **Category:** diagnostics / incomplete-message
+- **Severity:** low
+- **Provenance:** independent qc-reviewer pass on the 2026-07-04 wrap-session leanness refactor. **Pre-existing, NOT introduced by the refactor** — the guard extraction was verified byte-identical to the pre-refactor inline block (0 diffs); the pre-refactor `echo "GUARD: ..."` line already omitted these two variables. Confirmed gap, deferred as out-of-scope for the leanness change.
+- **Detail:** `logs/scripts/foreign-session-guard.sh` computes `EXTRA_TODAY_MANDATES` / `EXTRA_PRIOR_MANDATES` inside the `FOREIGN>=1` classifier block, but the `GUARD:` diagnostic echo does not emit them. Both wrap-session copies' REMNANT and MIXED remediation templates render those values to the operator (e.g. `EXTRA_PRIOR_MANDATES=N`), so on a REMNANT/MIXED STOP the model cannot fill them precisely from stdout. The `FOREIGN` count itself IS echoed, so the STOP fires correctly and the grep output is shown — only the precise extra-mandate count is missing from the message. Rare path (concurrent + prior-day-orphan states).
+- **Proposal:** Add `EXTRA_TODAY_MANDATES=${EXTRA_TODAY_MANDATES:-0} EXTRA_PRIOR_MANDATES=${EXTRA_PRIOR_MANDATES:-0}` to the `GUARD:` echo line in `logs/scripts/foreign-session-guard.sh` so the REMNANT/MIXED messages are fully populatable. One-line, low-risk (the vars default 0 when FOREIGN<1). Do in a dedicated small session, not folded into unrelated work.
+- **Target files:** `ai-resources/logs/scripts/foreign-session-guard.sh` (GUARD echo line).
+- **Review-cycle:** monthly
