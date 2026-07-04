@@ -17,6 +17,15 @@ Resolved entries (Status: applied + Verified) are archived to `improvement-log-a
 
 ---
 
+### 2026-07-04 — Adoption watch on `/lean-repo` — retire-or-wire before it becomes an orphan
+- **Status:** logged (pending)
+- **Category:** command/skill (adoption / anti-orphan)
+- **Severity:** medium
+- **Provenance:** end-time `/risk-check` on the `/lean-repo` "Both, whole" build (`audits/risk-checks/2026-07-04-lean-repo-both-endtime.md`) — verdict PROCEED-WITH-CAUTION; top concern = real-usage fit. `/lean-repo` ships with a documented (not wired) closure channel and no cadence/auto-invoker, so it is an orphan-in-waiting by its own doctrine (`docs/ai-resource-creation.md` rule #7 / `/lean-repo` provenance note). This entry is the mitigation the PWC verdict required.
+- **Proposal:** Watch adoption. On the trigger below, check `/lean-repo` invocation count. If it has been invoked ≥1 time and produced a plan an execution session acted on → **wire the closer** (add `lean-repo-*.md` to `/friday-act`'s input globs so the documented closure becomes a wired one) and keep. If it has **zero** invocations → **execute the retirement path**: fold its three leanness questions (control-drift / retroactive-budget / orphan-adoption) into `/architecture-review` as a lens and retire `/lean-repo` + `lean-repo-auditor` (remove command+agent, then revert the `auto-sync-shared.sh` EXCLUDE_COMMANDS entry — in that order).
+- **Target files:** (if wired) `ai-resources/.claude/commands/friday-act.md`; (if retired) `ai-resources/.claude/commands/lean-repo.md`, `ai-resources/.claude/agents/lean-repo-auditor.md`, `ai-resources/.claude/hooks/auto-sync-shared.sh`, `ai-resources/.claude/commands/architecture-review.md`.
+- **Review-cycle:** reviewed 2026-07-04, deferred to → **the next quarterly `/friday-checkup`, or 2026-10-04, whichever fires first** (named-event park per schema). Surfaces at every Friday checkup until then.
+
 ### 2026-07-04 — Indicative-run mode for `/reconcile` against un-ratified scaffolder drafts (SO deferral)
 - **Status:** logged (pending)
 - **Category:** command/skill

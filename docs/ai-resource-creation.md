@@ -16,6 +16,21 @@ When a session identifies the need for a new or modified AI resource:
 
 6. **Generalization-residue verification is mandatory at Step 5.5** (added 2026-05-29; Friday-checkup session-qc-pipeline #4). After `/graduate-resource` Step 5's main-agent self-check, an independent fresh-context subagent grep-scans the generalized file for residue from the source project's `CLAUDE.md` (project names, hardcoded paths, domain terminology). On residue found, a fail-and-revise loop (capped at 2 passes — same discipline as `docs/qc-independence.md` § QC → Triage Auto-Loop) re-runs Step 4 with the residues as explicit revision targets. **Reason:** main-agent self-check on its own output systematically under-detects what reads as generic to the author but as project-specific to a fresh reader. The subagent provides the independent perspective; the loop cap prevents infinite revision against structural mismatches. Boundary: this check verifies *generalization*; *placement* remains owned by `Step 3a` (plan-time) and `Step 5a` (end-time) via `docs/placement-verifier.md`. If both fire, placement-verifier wins on placement-related findings; the residue check defers.
 
+7. **Complexity budget — no new component that doesn't earn its keep.** No new command, agent, mandatory stage/gate, or permanent always-loaded document may be introduced unless it clears **at least one** prong:
+   - **(a) Net-simplification prong** — the change reduces or holds the count of *load-bearing units* (commands, agents, mandatory stages/gates, always-loaded context) while preserving capability. A merge/consolidation that removes ≥1 existing component satisfies (a); a change that adds net components does **not**.
+   - **(b) Evidenced-failure prong** — the change addresses a failure mode with **cited written evidence**: a `logs/friction-log.md` / `logs/defect-log.md` / `logs/coaching-log.md` / `logs/incident-log.md` entry, or a pattern seen ≥2 times. "We might need it," "for completeness," or "for a future phase" does **not** satisfy (b) — that is the AP-7/DR-7 speculative-abstraction violation.
+
+   Before introducing the component, answer all five (record the answers where the decision is made — plan file, risk-check, or `logs/decisions.md`):
+   1. What recurring failure does it prevent?
+   2. How likely / frequent is that failure?
+   3. What does it cost — time, context, operator attention, per-session token load?
+   4. Could the same control fire **conditionally** (risk-tiered) instead of always?
+   5. Does an existing component already do this, or ~80% of it? (If yes → extend it, don't add.)
+
+   **Distinct from `docs/materiality-bar.md`:** that bar governs which *review findings* become Findings; this gate governs whether a new *resource* gets created — a different lifecycle stage. **Operationalizes at creation time** the AP-7/DR-7 speculative-abstraction ban (generalize only on a second confirmed consumer) and **OP-12** (closure before detection): a new *detection* component — an audit, scan, flag, or finding-generator — must additionally ship its **closure channel** (the thing that acts on what it finds) in the same change to clear the gate. A new component that fails prong (a), leans only on prong (b), and is a detector still needs its closer; shipping the detector alone is an OP-12 violation.
+
+   If a component is introduced despite failing the gate, that is a **loud, recorded principle exception (OP-11)** — a deliberate decision logged in `logs/decisions.md` with its rationale, never an in-line "it's fine actually" assertion. `/risk-check` (via `risk-check-reviewer` Dimension 6) enforces this gate at land-time; `/leverage-idea` applies it at proposal-time.
+
 ## Bulk-backfill Exception
 
 Rule #4 (canonical pipeline mandate) admits a narrow exception for one-time bulk frontmatter backfill operations: mechanical edits to many skills that change only frontmatter (no body changes), where running the full pipeline per skill would produce 50+ identical fix passes with no QC signal.

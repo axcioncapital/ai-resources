@@ -43,7 +43,7 @@ done
 [ -z "$AI_RESOURCES" ] && exit 0
 
 # Baked-in exclusions: ai-resources-meta files that never belong in projects.
-EXCLUDE_COMMANDS="new-project deploy-workflow run-sufficiency pipeline-review scope-project"
+EXCLUDE_COMMANDS="new-project deploy-workflow run-sufficiency pipeline-review scope-project lean-repo"
 EXCLUDE_AGENT_GLOBS="pipeline-stage-* session-guide-generator pipeline-review-* scope-*"
 
 # Read project-local exclusions from manifest.
