@@ -105,7 +105,7 @@ A recognized parallel-coordination device: mark in-progress backlog items in `ne
 
 ## 4. Operating procedure (once you have decided to parallelize)
 
-> **⚠ Anti-pattern — ad-hoc same-checkout parallelism (the #1 failure mode).** Do **not** start a second session by opening a new terminal in the *same working checkout* another session is already using. Two sessions sharing one working tree edit the same uncommitted files directly: one silently overwrites the other (a lost update), and the concurrent-session guards — which watch only `logs/session-notes.md` — never see it. This is exactly how the 2026-06-05 (S6) collision happened: two sessions in one checkout, the foreign session's uncommitted edits to a shared command file (`prime.md`) showed up in the other's `git status` with no guard firing (see `audits/2026-06-05-concurrent-session-collision-diagnostics-fix.md`, Mode A). **Planned parallel work starts with the serial planning session below (file-ownership map → worktree per unit), never by opening a second ad-hoc terminal.** If you only need a quick second session, run it in a *different project repo*, not a second checkout of this one.
+> **⚠ Anti-pattern — ad-hoc same-checkout parallelism (the #1 failure mode).** Do **not** start a second session — a new VS Code window **or** a new terminal — on the *same working checkout* another session is already using. Two sessions sharing one working tree edit the same uncommitted files directly: one silently overwrites the other (a lost update), and the concurrent-session guards — which watch only `logs/session-notes.md` — never see it. This is exactly how the 2026-06-05 (S6) collision happened: two sessions in one checkout, the foreign session's uncommitted edits to a shared command file (`prime.md`) showed up in the other's `git status` with no guard firing (see `audits/2026-06-05-concurrent-session-collision-diagnostics-fix.md`, Mode A). **Planned parallel work starts with the serial planning session below (file-ownership map → worktree per unit), never by opening a second ad-hoc window or terminal on the same checkout.** If you only need a quick second session, run it in a *different project repo*, not a second checkout of this one.
 >
 > **Pre-flight check before adding an ad-hoc session.** If a session is already live and you are about to start another, run **`/concurrent-session-check <task>`** first (or `/concurrent-session-check` with no argument to see which backlog items are safe). It reads the live session's declared footprint and tells you whether your task would collide — the planning-time checker upstream of this anti-pattern. Advisory and read-only; it never blocks. A SAFE verdict still means "now isolate via `/new-worktree-session`" (file-safe ≠ checkout-safe).
 
@@ -119,7 +119,7 @@ A recognized parallel-coordination device: mark in-progress backlog items in `ne
    cd ../<repo>-<unit>
    ```
 
-   Open a new session in the worktree directory before doing any work (a command cannot move your shell there for you). Tear down per the § 5 teardown checklist when the unit lands.
+   Then enter the worktree in a **new VS Code window**: `/new-worktree-session` opens it for you (via `code -n` / `open -a`), or open it by hand — VS Code → **File ▸ New Window ▸ Open Folder…** → the worktree. Open the Claude Code panel there and run `/prime` before doing any work — a command cannot move *this* session into the worktree for you. (Terminal users: `cd` into it and run `claude`.) Tear down per the § 5 teardown checklist when the unit lands.
 4. **Stay in lane.** A session that finds it needs another unit's file **stops and flags** — it never crosses into a file it does not own. Crossing lanes is how a clean partition becomes a dirty merge.
 5. **Deliberate landing pass** (§ 5) — never an afterthought.
 
@@ -132,7 +132,7 @@ These lessons were validated by *actually landing* a 3-branch run, then pushing 
 ### Before the merge
 
 1. **Keep the integration target clean — do no interactive work in `main` during a parallel run.** Treat `main` (the integration worktree) as a **pure landing target**: all work happens in feature worktrees. A merge cannot even start against a dirty tree. Make **"stash or clean the target first"** a mandatory pre-merge step.
-2. **`git status` hygiene.** The SessionStart auto-sync hook copies shared commands/agents into every worktree's `.claude/`, where they show up as **untracked noise**. When judging "is this branch clean?", distinguish auto-synced shared resources (ignorable — they regenerate, never commit them) from real deliverables. Misreading them inflates the apparent dirty state.
+2. **`git status` hygiene.** The SessionStart auto-sync hook symlinks shared commands/agents into every worktree's `.claude/`, where they show up as **untracked noise**. When judging "is this branch clean?", distinguish auto-synced shared resources (ignorable — they regenerate, never commit them) from real deliverables. Misreading them inflates the apparent dirty state.
 
 ### Doing the merge
 
