@@ -17,6 +17,15 @@ Resolved entries (Status: applied + Verified) are archived to `improvement-log-a
 
 ---
 
+### 2026-07-04 — Revisit the A11 observability reporter once the closure channel is proven (PARKED — reminder)
+- **Status:** parked — OVERTAKEN as a now-build; held on a named-event trigger
+- **Category:** ai-strategy / observability (strategic-os roadmap Slot 3)
+- **Review-cycle:** reviewed 2026-07-04, deferred to → **the Slot-4 closure channel is built AND demonstrably clearing its queue** — concretely, `/friday-act` ratified as the closure channel with its recurring-item leak fixed under an error-budget→forced-decision rule. Named-event park per the schema rule; surfaces at every Friday checkup until that event fires.
+- **Source:** SO consult 2026-07-04 (`projects/axcion-ai-system-owner/output/consultations/consult-2026-07-04-june-strategy-items-a11-observability-and-op12-closure.md`); operator decision to park **with a reminder** (this entry is the reminder).
+- **Why parked (not built now):** The `A11` "sasabi" unprompted read-only state reporter (strategic-os roadmap Slot 3) has no consumer today — the closure channel (Slot 4) and the autonomous owner (Slot 8) it was meant to feed do not exist. Operator-triggered legibility is already delivered by the Friday cadence (`/friday-checkup`→`/friday-so`→`/systems-review`) + `/open-items` + `repo-state.md`. Building unprompted detection ahead of a working closure channel is itself the detection-ahead-of-closure move `OP-12` counsels against — so the reporter must wait behind Slot 4.
+- **When the trigger fires:** re-evaluate whether an unprompted auto-feed reporter still earns its place (it may, if it cuts operator attention by pushing findings into the now-clearing closure channel instead of a manual `/friday-checkup` run) — or whether the Friday cadence already covers it permanently. Then update strategic-os `implementation-tracker.md` Slot 3 + `candidate-backlog.md` §B.1 accordingly.
+- **Cross-ref:** strategic-os `ai-strategy/implementation-tracker.md` Slot 3 (parked, same trigger) + `ai-strategy/candidate-backlog.md` §B.1 (A11 OVERTAKEN). Companion strategic finding from the same consult (not this entry's scope): the highest-leverage next move is to build/fix the Slot-4 closure channel itself.
+
 ### 2026-07-03 — Keep the System Owner's vault grounding current on a weekly cadence
 - **Status:** logged (pending)
 - **Category:** cadence / infrastructure (Friday cadence + System Owner grounding freshness)
