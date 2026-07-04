@@ -152,7 +152,7 @@ Every place the marker contract is consumed must point back to this doc. Adding 
 - `ai-resources/.claude/commands/contract-check.md` — Step 2b (plan source resolution; glob `logs/session-plan-*${MARKER}.md`).
 - `ai-resources/.claude/commands/drift-check.md` — Step 3 (locate plan; glob `logs/session-plan-*${MARKER}.md`), Step 6 (mandate disambiguation), Step 7 (no-mandate abort), Step 8 (conflict reporting).
 - `ai-resources/.claude/commands/wrap-session.md` — Step 6.4 mandate-resolution chain (plan source for the independent outcome check; glob `logs/session-plan-*${MARKER}.md`). **PAIRED CONTRACT** with the workspace-root copy below — edit both in lockstep.
-- `/.claude/commands/wrap-session.md` (workspace-root paired copy) — Step 6.4 mandate-resolution chain (same glob). Lockstep with the canonical copy above.
+- `/.claude/commands/wrap-session.md` (workspace-root paired copy) — Step 4.4 mandate-resolution chain (same glob). Lockstep with the canonical copy above.
 - `ai-resources/.claude/commands/open-items.md` — table rows for `session-plan-*.md` glob scan.
 - `ai-resources/.claude/agents/fix-repo-issues-scanner.md` — table rows + read-only list.
 - `ai-resources/.claude/commands/decide.md` — Step 2 prior-decision read.
