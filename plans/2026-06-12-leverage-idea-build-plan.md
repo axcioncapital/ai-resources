@@ -1,6 +1,8 @@
 # Build `/leverage-idea` — idea-dump → leverage options → implementation plan
 
-> **Status (2026-06-12): APPROVED — IMPLEMENTATION DEFERRED.** Operator approved the plan and deferred the build to a fresh session. Review chain complete: SO advisory WORTH-DOING → refinement-deep (4 triage fixes applied) → final /qc-pass GO (no findings). Resume: fresh session → `/prime` → execute this plan starting at EP-0 → gates as listed. First live test input: Patrik will supply a real example note dump.
+> **Status (2026-07-04): IMPLEMENTED & COMMITTED.** Built in the 2026-07-04 session. Command landed at `ai-resources/.claude/commands/leverage-idea.md` (ai-resources commit `a142721`); the SO toolkit `coexist` row was added to `toolkit-relationship.md` § 2 (axcion-ai-system-owner commit `fd5eac0`). Gates cleared: `/blindspot-scan` PROCEED-WITH-CONSTRAINTS (the plan's § 5-vs-§ 2 wording slip in Gate 3 was corrected — the row goes in § 2), `/risk-check` GO (report: `audits/risk-checks/2026-07-04-leverage-idea-new-command.md`), `/qc-pass` GO (one description-clause polish applied). Functional verification passed on a synthetic multi-idea dump — the semantic-overlap backstop correctly PARKed a near-duplicate (no new build recommended), validating the command's core anti-duplication behavior; a run on a real operator dump can still be done anytime. Not yet pushed (batched to `/wrap-session`).
+>
+> **Original approval (2026-06-12): APPROVED — IMPLEMENTATION DEFERRED.** Review chain: SO advisory WORTH-DOING → refinement-deep (4 triage fixes applied) → final /qc-pass GO (no findings).
 
 ## Context
 
