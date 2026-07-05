@@ -373,3 +373,36 @@ None. Structural classes touched (new command/agent, hook edit, cross-cutting do
 
 ### Open Questions
 None.
+
+## 2026-07-05 — Lean /blindspot-scan + /risk-check gates (retier opus→sonnet + de-escalate)
+
+### Summary
+Weekly usage telemetry showed `/blindspot-scan` (~10%) and `/risk-check` (~10%) together consuming ~20% of usage. Cut the cost (Tier 1) by (a) retiering the two analytical passes and the risk-check orchestrator opus→sonnet, (b) converting `/risk-check`'s auto-fired `/consult` second opinion into an operator-invoked offer, and (c) tightening the Blind-Spot Scan Gate trigger to `/risk-check` change classes only. Estimated ~20% → ~5–7% for these two gates. Full gate consolidation (Tier 2) deferred to a dedicated session.
+
+### Files Created
+- `audits/risk-checks/2026-07-05-lean-the-two-most-used-advisory-gates-executed-change-set.md` — the end-time risk-check report (PROCEED-WITH-CAUTION).
+- `logs/scratchpads/2026-07-05-12-50-scratchpad.md` — continuity scratchpad.
+
+### Files Modified
+- `.claude/commands/blindspot-scan.md` — frontmatter opus→sonnet.
+- `.claude/agents/risk-check-reviewer.md` — frontmatter opus→sonnet.
+- `.claude/commands/risk-check.md` — frontmatter opus→sonnet; Step 4a auto-consult → operator-invoked offer; item 12a fallback re-asserts sonnet; Step 5 display line updated.
+- `.claude/commands/consult.md` — removed risk-check from auto-invoke guard list + fixed worked example (QC-caught staleness).
+- `docs/agent-tier-table.md` — risk-check-reviewer row → sonnet with OP-11 exception note.
+- `logs/decisions.md` — 2026-07-05 OP-11 decision entry.
+- `CLAUDE.md` (workspace root, separate repo) — Blind-Spot Scan Gate trigger tightened to `/risk-check` classes only; "or ≥3 files" branch dropped.
+
+### Decisions Made
+- Tier 1 retier + de-escalate, logged in full to `logs/decisions.md` (2026-07-05, OP-11 exception). Operator-directed; Sonnet + some-safety-trade authorized.
+- QC fix (separate from operator decisions): stale `consult.md` references to risk-check's old auto-invoke, fixed in the same commit.
+
+### Risky actions
+None irreversible. Deliberate, operator-authorized safety trade: the two judgment gates now run on Sonnet (lower depth) — Opus depth preserved on demand via the new `/consult` offer on non-GO verdicts. All edits are config-level and git-revertible. Recorded loudly as an OP-11 exception in decisions.md + agent-tier-table.
+
+### Next Steps
+- Confirm the push at wrap: 2 build commits (`f3dd9bb` ai-resources, `ea895d6` workspace) + this wrap commit, across 2 repos.
+- Tier 2 (full gate consolidation) — schedule a dedicated session; scope recorded in decisions.md 2026-07-05.
+- Watch reviewer sharpness on Sonnet over the next week; use the `/consult` offer line if a verdict looks shallow on a high-stakes change.
+
+### Open Questions
+None.
