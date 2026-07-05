@@ -23,7 +23,11 @@ Input: `$ARGUMENTS` — the idea dump itself (pasted notes, a ChatGPT export), o
 
 ## Step 1 — Distill the Idea Brief (inline)
 
-The notes are already in main-session context — distill them here; do **not** pass the raw dump downstream. Write a 5-field Idea Brief:
+The notes are already in main-session context — distill them here; do **not** pass the raw dump downstream.
+
+**Strip packaging, keep substance.** A ChatGPT export carries non-substantive scaffolding — preambles, restated prompts, decorative headers, hedging, "in summary" recaps, sign-offs. Strip all of it. But for an *exhaustive* dump, do not flatten the real content to fit five terse lines: let the fields carry every load-bearing specific the notes provide (concrete mechanisms, examples, numbers, named constraints), because Steps 4–5 reason from this brief, not the raw dump. Strip the packaging; keep the signal.
+
+Write a 5-field Idea Brief:
 
 - **Core idea** — what is being proposed, in 1–2 sentences.
 - **Problem it solves** — the gap or friction it addresses.
