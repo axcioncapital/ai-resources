@@ -17,6 +17,16 @@ Resolved entries (Status: applied + Verified) are archived to `improvement-log-a
 
 ---
 
+### 2026-07-05 — AI web-design operating principles: park the framework (2 built as DRAFT, ~28 deferred)
+- **Status:** logged (pending)
+- **Category:** command/skill (leverage-idea PARK) — axcion-design-studio doctrine
+- **Severity:** low
+- **Friction source:** `/leverage-idea` run 2026-07-05 on an operator-pasted ~30-principle essay ("Additional Operating Principles for Designing Websites With AI"). Investigation (3 Explore agents + independent QC) found: ~10 principles already encoded in Studio doctrine (concept-before-pixels, anti-pattern checklist = `positioning-hazards.md`, protect-approved-decisions, tool roles, etc.); mechanism-diversity + visual-energy + cross-page consistency landing via the operator-approved 2026-07-05 page-context-scan change; and only two genuinely-new + operator-emphasized items (Preservation pass, Stop conditions) — which were built now as a DRAFT doc under an OP-11 waiver (`projects/axcion-design-studio/logs/decisions.md` 2026-07-05). The **remaining framework** rests on no recorded evidence and, in one case, conflicts with existing doctrine. Usage history is thin (~4 days, 1 page, 4 sections); building more ahead of usage would be the over-build the essay's own #25/#28 principles warn against.
+- **Proposal:** Keep the remaining ~28 principles parked until section-mode has actually been exercised more. Specifically deferred (no recorded evidence): **#2 one-problem-per-pass, #3 refinement-vs-exploration mode, #11 stress-test bad conditions, #15 subtraction pass as a step, #25 version-1-value test.** Deferred because it **conflicts** with existing doctrine: **#12 "mobile transformation not stack"** contradicts `work/homepage/page-brief.md` ("Mobile preserves the same hierarchy as desktop") — reconcile before any adoption (reconciliation on file: keep hierarchy-preservation as default, require every concept to state a *deliberate* mobile answer — stack or reflow — never a silent stack). If revisited and evidence has recurred, the strongest leverage option is to extend the DRAFT `section-design-principles.md` (same conversion-clarity-review.md pattern), not a new component. The ~10 already-encoded principles need no action.
+- **Target files:** (if built later) `projects/axcion-design-studio/20_criteria/section-design-principles.md` (extend the DRAFT doc); possibly `work/homepage/page-brief.md` (only if #12 is reconciled and adopted).
+- **Review-cycle:** reviewed 2026-07-05, deferred to → **after the homepage is fully designed (its four content sections are approved; CTASection + Footer remain) AND For Investors has been through one full Studio chain run** (named-event park per schema — the same trigger that ratifies the DRAFT doc). Surfaces at every Friday checkup until then.
+- **Notes:** analysis — `ai-resources/audits/working/2026-07-05-idea-ai-web-design-operating-principles.md`.
+
 ### 2026-07-04 — Adoption watch on `/lean-repo` — retire-or-wire before it becomes an orphan
 - **Status:** logged (pending)
 - **Category:** command/skill (adoption / anti-orphan)
