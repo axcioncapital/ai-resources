@@ -1,5 +1,5 @@
 ---
-model: opus
+model: sonnet
 ---
 
 Evaluate a proposed structural change against six risk dimensions before landing — usage cost, permissions, blast radius, reversibility, hidden coupling, and principle alignment. Delegates to the `risk-check-reviewer` subagent (fresh context), which first builds an explicit consumer inventory (grep-based blast radius) before scoring; produces a structured report and a chat verdict: GO / PROCEED-WITH-CAUTION / RECONSIDER. Does NOT execute the change.
@@ -75,7 +75,7 @@ Invocation semantics: operator-typed, or inline-prompted by other commands (e.g.
 
 12. Subagent returns a ≤20-line summary ending with `REPORT: {absolute path}` as its last line.
 
-12a. **Project-session spawn fallback (added 2026-07-03).** If the `risk-check-reviewer` agent *type* fails to resolve at spawn — the known failure mode when this command runs from a project session, because `--add-dir` grants file access but does not register agent types — do not abort. Resolve `ai-resources/` by ancestor walk-up (the `$AI_RES` idiom used in `new-project.md`), read `{AI_RESOURCES}/.claude/agents/risk-check-reviewer.md`, strip the YAML frontmatter, and spawn a `general-purpose` subagent with that definition body inlined at the top of the prompt followed by the same inputs as item 11 — **explicitly re-asserting the reviewer tier on the spawn (`model: opus`)**: `general-purpose` does not inherit the definition's `model:` frontmatter, and the fallback must not silently drop an Opus-tier reviewer to the session model. Note `(fallback: general-purpose, opus re-asserted)` in the Step 5 chat verdict line. Step 10's file-existence abort is unchanged — it guards a missing definition file; this fallback guards an unregistered agent *type*.
+12a. **Project-session spawn fallback (added 2026-07-03).** If the `risk-check-reviewer` agent *type* fails to resolve at spawn — the known failure mode when this command runs from a project session, because `--add-dir` grants file access but does not register agent types — do not abort. Resolve `ai-resources/` by ancestor walk-up (the `$AI_RES` idiom used in `new-project.md`), read `{AI_RESOURCES}/.claude/agents/risk-check-reviewer.md`, strip the YAML frontmatter, and spawn a `general-purpose` subagent with that definition body inlined at the top of the prompt followed by the same inputs as item 11 — **explicitly re-asserting the reviewer tier on the spawn (`model: sonnet`)**: `general-purpose` does not inherit the definition's `model:` frontmatter, and the fallback must pin the reviewer's declared tier rather than inherit the session model (which may be Opus — inheriting would silently raise cost). Note `(fallback: general-purpose, sonnet re-asserted)` in the Step 5 chat verdict line. Step 10's file-existence abort is unchanged — it guards a missing definition file; this fallback guards an unregistered agent *type*.
 
 13. If the returned summary lacks the `REPORT:` last-line marker, re-invoke the subagent once with the same inputs. If the re-invocation also lacks the marker, abort with an error naming the malformed summary and do NOT proceed to validation.
 
@@ -110,29 +110,17 @@ Invocation semantics: operator-typed, or inline-prompted by other commands (e.g.
 
 ---
 
-### Step 4a: System-Owner Second Opinion (non-GO verdicts only)
+### Step 4a: System-Owner Second Opinion (offered on non-GO — not auto-fired)
 
-17a. If `VERDICT` is `GO`, skip this step entirely and proceed to Step 5. The second opinion fires only when the risk-check surfaced real risk — a non-GO verdict.
+17a. If `VERDICT` is `GO`, there is no second-opinion offer. Proceed to Step 5.
 
-17b. If `VERDICT` is `PROCEED-WITH-CAUTION` or `RECONSIDER`, obtain a system-owner second opinion. Invoke `/consult` via the Skill tool — in this workspace slash commands are dispatched as skills, so the Skill tool resolves `.claude/commands/*.md` command files — with this `$ARGUMENTS`:
+17b. If `VERDICT` is `PROCEED-WITH-CAUTION` or `RECONSIDER`, do **NOT** auto-invoke `/consult`. Auto-firing a full System-Owner pass on every non-GO verdict multiplied Opus cost on exactly the changes that had already run the heaviest review (the reviewer subagent). Instead, **offer** the second opinion as a ready-to-run command the operator invokes only when the change genuinely warrants an architectural cross-check. The risk-check-reviewer's verdict stands as the gate result either way; a second opinion, if run, is advisory and does not override it.
 
-   > `Risk-check second opinion. A proposed structural change received a {VERDICT} verdict from the risk-check-reviewer. Change: {CHANGE_DESCRIPTION}. Dimension risks flagged — {one line per dimension: "Dimension N ({name}): {Low|Medium|High}"}. Verdict summary from the report: {the **Summary:** line under ## Verdict}. As a pre-change advisory (Function B), give an architectural second opinion: do you concur with the {VERDICT} verdict, and is the recommended path — {mitigations, for PROCEED-WITH-CAUTION | recommended redesign, for RECONSIDER} — the right one? Name any risk the dimension review missed.`
+17c. Build the offer line — **construct it, do NOT execute it** — and carry it into the Step 5 summary:
 
-   The non-GO verdict is itself the justification for consulting — it satisfies `/consult`'s "genuinely contested or load-bearing" threshold. Do not re-litigate whether to consult; invoke it.
+   > For a System-Owner second opinion, run: `/consult Risk-check second opinion. A proposed structural change received a {VERDICT} verdict from the risk-check-reviewer. Change: {CHANGE_DESCRIPTION}. Dimension risks — {one line per dimension: "Dimension N ({name}): {Low|Medium|High}"}. Verdict summary: {the **Summary:** line under ## Verdict}. Do you concur with the {VERDICT} verdict, and is the recommended path (mitigations for PROCEED-WITH-CAUTION, redesign for RECONSIDER) the right one? Name any risk the dimension review missed.`
 
-17c. Capture the `/consult` output verbatim. Append a new trailing section to `REPORT_PATH`:
-
-   ```
-   ## Architectural Commentary
-
-   _System-owner second opinion (`/consult`, Function B — pre-change advisory), invoked automatically because the verdict is {VERDICT}._
-
-   {/consult output verbatim}
-   ```
-
-17d. If `/consult` errors, cannot run, or returns a `DECLINE — {reason}` output: append the `## Architectural Commentary` section anyway, recording the error or decline text in place of the commentary, and note that the second opinion was unavailable. A failed or declined second opinion does NOT change the verdict and does NOT block — the risk-check-reviewer's verdict stands as the gate result.
-
-17e. The second opinion is advisory; it does not override the verdict. If the system owner disagrees with the verdict, surface that disagreement in the Step 5 chat summary so the operator can weigh both — `/risk-check` does not auto-resolve the conflict.
+   `/risk-check` writes no `## Architectural Commentary` section to `REPORT_PATH`. If the operator runs the offered `/consult`, that command produces its own advisory output; whether to preserve it in the report is the operator's choice, not an automatic append.
 
 ---
 
@@ -154,7 +142,7 @@ Invocation semantics: operator-typed, or inline-prompted by other commands (e.g.
       ```
     - If verdict is `PROCEED-WITH-CAUTION`: list the paired mitigations under `Required mitigations:`.
     - If verdict is `RECONSIDER`: include the recommended-redesign one-liner.
-    - If Step 4a ran (verdict was non-GO): display the `## Architectural Commentary` content under a `System-owner second opinion:` heading. If the system owner disagreed with the verdict, call that out explicitly.
+    - If verdict is non-GO: include the ready-to-run `/consult` offer line built in Step 4a under a `Second opinion (optional):` heading. Do not auto-run it — the operator decides whether to spend the extra pass.
     - `Full report: {REPORT_PATH}`
 
 19. Append guidance based on verdict:

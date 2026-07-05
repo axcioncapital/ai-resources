@@ -1,7 +1,7 @@
 ---
 name: risk-check-reviewer
 description: Evaluates a proposed structural change across six risk dimensions — usage cost, permissions surface, blast radius on other components, reversibility, hidden coupling, and principle alignment. Invoked by /risk-check. Builds an explicit consumer inventory before scoring, writes a structured risk report to disk; returns a ≤20-line summary with a REPORT last-line marker. Do not use for other purposes.
-model: opus
+model: sonnet
 tools:
   - Read
   - Write

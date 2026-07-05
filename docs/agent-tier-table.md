@@ -38,7 +38,7 @@ Every agent must declare `model:` explicitly in frontmatter — no implicit inhe
 | reconcile-reviewer | opus | Judgment (mandate-compliance scoring, resource-activation audit, genericness check, root-cause classification for `/reconcile`). Graduated to canonical 2026-07-03 from buy-side-service-plan (origin). |
 | refinement-reviewer | opus | Refinement judgment. Correct. |
 | repo-dd-auditor | sonnet | Questionnaire-driven factual audit. Correct. |
-| risk-check-reviewer | opus | Judgment (risk evaluation across five dimensions). Added 2026-04-27. |
+| risk-check-reviewer | sonnet | Risk evaluation across six dimensions (consumer inventory + calibration-guided dimension scoring). Added 2026-04-27. Retiered opus→sonnet 2026-07-05 — deliberate cost-reduction exception to the judgment→opus convention (`logs/decisions.md` 2026-07-05); Opus depth preserved as an operator-invoked `/consult` second-opinion offer on non-GO verdicts. |
 | scope-architecture-agent | opus | Judgment (Stage 3 of /scope-project — document-architecture map, four-test justification, resists over-documentation). Added 2026-07-01. |
 | scope-qc-evaluator | opus | Judgment (Stage 5 of /scope-project — consolidated control-pack QC, five-way verdict, three-way ledger; context-isolated). Added 2026-07-01. |
 | scope-synthesis-agent | sonnet | Structured consolidation (Stage 2 of /scope-project — raw material → thematic synthesis). Added 2026-07-01. |

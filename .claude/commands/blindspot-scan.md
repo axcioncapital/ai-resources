@@ -1,6 +1,6 @@
 ---
 description: Adversarial blind-spot scan on the current work package — stale dependent artifacts, real-usage fit, prerequisite/capability validity. Verdict-led, advisory only; modifies no files.
-model: opus
+model: sonnet
 ---
 
 Run an adversarial blind-spot scan on the current work package before the operator proceeds, commits, or closes the session.
