@@ -16,3 +16,7 @@ Append-only. Do not hand-edit prior blocks. Schema is whatever `/tweak` writes �
 ## 2026-05-29 — /tweak invocations
 
 - `/tweak triage` — automatically or create a prioritized list automatically — commit 9d9221b
+
+## 2026-07-05 — /tweak invocations
+
+- `/tweak leverage-idea` — Step 1 strip-packaging-keep-substance distill note — commit f4b3d1b
