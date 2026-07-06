@@ -37,7 +37,16 @@ Create the section folder `work/{surface}/sections/{section}/` and write each ar
 
 **3. Diagnose.** State the section's purpose, what already works, and the specific problem to solve. Write → `diagnosis.md`.
 
-**3.5. Lens Check (mandatory — before directions or prompts).** Actually consult both design skills *in this session* — load and run them, do not reconstruct from memory. Use `ui-ux-pro-max` for section purpose, hierarchy, comprehension, page-flow, CTA logic, density, and responsive behaviour; apply `impeccable`'s critique/refinement principles for hierarchy, typography, spacing, alignment, density, rhythm, and subtraction. State two lines, each naming a **concrete effect on the directions** (not that the lens "was used") — `UI/UX Pro Max consulted: {what it changed}` and `Impeccable consulted: {what it changed}` — or "no change" plainly. **Boundaries:** `impeccable` is a critique/refinement lens only here (design-thinking, no code build); `ui-ux-pro-max` is for hierarchy/comprehension/flow/CTA/density/responsive, **not** a brand-identity or design-system generator (discard its generic `--design-system` output). Write → `lens-check.md`. Steps 4–5 (directions + Nano Banana prompts) must not proceed until this is done and shown.
+**3.5. Lens Check (mandatory — before directions or prompts).** Actually consult both design skills *in this session* — load and run them, do not reconstruct from memory. Use `ui-ux-pro-max` for section purpose, hierarchy, comprehension, page-flow, CTA logic, density, and responsive behaviour; apply `impeccable`'s critique/refinement principles for hierarchy, typography, spacing, alignment, density, rhythm, and subtraction.
+
+The proposal carries **two inline summary lines** — `UI/UX Pro Max consulted: {what it changed}` and `Impeccable consulted: {what it changed}`, or "no change" plainly. But the check is only real if `lens-check.md` records **concrete evidence, not just "lens used."** For each lens, record three things:
+- **Consulted** — what you actually ran/read: the narrow `search.py` query (or the checklist section / `impeccable` reference read), not merely the lens name.
+- **Changed / confirmed** — the specific effect on the directions (a spacing decision, a hierarchy call, a CTA fix), or "confirmed as-is" with the reason.
+- **Rejected** — a direction, device, or option this lens caused you to rule out — or "nothing ruled out" plainly.
+
+A Lens Check that names no concrete effect was not really run. `impeccable`'s critique may be run as **isolated subagents** reading the markdown / PDF / image evidence (its non-degraded path) — see `.claude/skills/README.md § Reference-only ≠ single-context`.
+
+**Boundaries:** `impeccable` is a critique/refinement lens only here (design-thinking, no code build); `ui-ux-pro-max` is for hierarchy/comprehension/flow/CTA/density/responsive with **narrow, task-specific queries**, **not** a brand-identity or design-system generator (discard its generic `--design-system` output — the locked brand system governs identity). Write → `lens-check.md`. Steps 4–5 (directions + Nano Banana prompts) must not proceed until this is done and shown.
 
 **4. Directions.** Produce 2–3 genuinely distinct directions (not variations of one). Each: a short concept description (layout, hierarchy, emphasis, mood), a rough ASCII wireframe, the Step 0 clearance (which repeats it honours, which it avoids, its role/energy), its **mobile transform** (the actual reshape, not "columns stack"), and any **motion** (only where it aids comprehension). Apply the Apple × Blackstone lens (`30_reference-lenses/apple-blackstone-lens.md`) as steering — reach for confident scale (Apple) and institutional weight (Blackstone), always within the brand grammar and the six hazards. Reject any direction that is strong in isolation but repeats a composition/device already on the page or breaks a cross-page constant. Write → `option-a-concept.md`, `option-b-concept.md`, `option-c-concept.md`.
 
@@ -98,7 +107,7 @@ Treat Nano Banana outputs as **directional concept frames, not design specs.** I
 ```
 baseline.png                       # operator-supplied current render
 context-scan.md                    # Step 0 scan (per-run working note)
-lens-check.md                      # Step 3.5 Lens Check (the two consulted-lines)
+lens-check.md                      # Step 3.5 Lens Check — evidence: consulted / changed / rejected, per lens
 diagnosis.md
 option-{a,b,c}-concept.md
 option-{a,b,c}-nano-banana-prompt.md
