@@ -30,6 +30,7 @@ Create the section folder `work/{surface}/sections/{section}/` and write each ar
 - The relevant brand-book chapters via `10_brand-system/` pointers (colour, typography, graphic elements, imagery — whichever the section touches).
 - `20_criteria/positioning-hazards.md` — the six hazards.
 - `30_reference-lenses/apple-blackstone-lens.md` — the Apple × Blackstone reference lens, applied when shaping directions (Step 4). Advisory and subordinate — it never overrides the brand book, mandate, or hazards.
+- `30_reference-lenses/axcion-web-style-lock.md` — the durable cross-page web design language; apply it for visual continuity across surfaces, reject directions that read as disconnected from it, and surface any intended departure before use. Advisory and subordinate — the operator, brand book, mandate, hazards, and approved Figma decisions all outrank it.
 - Any existing record for this section (`work/{surface}/sections/{section}.md` flat file, or `.../{section}/selected-direction.md`).
 - The operator's current section render, saved as `work/{surface}/sections/{section}/baseline.png`. If absent, ask the operator to drop it in before proceeding — the Nano Banana prompts reference it.
 
