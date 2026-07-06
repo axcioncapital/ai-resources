@@ -26,14 +26,14 @@ Create the section folder `work/{surface}/sections/{section}/` and write each ar
 
 **1. Baseline + inputs.** Read before doing anything:
 - The surface's approved copy (the copy-factory Web Copy Master / workbench full-page — never the stale handoff packet).
-- `work/{surface}/figma-build-brief.md` — the page-level authority of record.
+- `work/{surface}/figma-build-brief.md` — the page-level reference (authoritative for goals, brand constraints, positioning hazards, and approved decisions; its section order and components are the current approved snapshot).
 - The relevant brand-book chapters via `10_brand-system/` pointers (colour, typography, graphic elements, imagery — whichever the section touches).
 - `20_criteria/positioning-hazards.md` — the six hazards.
 - `30_reference-lenses/apple-blackstone-lens.md` — the Apple × Blackstone reference lens, applied when shaping directions (Step 4). Advisory and subordinate — it never overrides the brand book, mandate, or hazards.
 - Any existing record for this section (`work/{surface}/sections/{section}.md` flat file, or `.../{section}/selected-direction.md`).
 - The operator's current section render, saved as `work/{surface}/sections/{section}/baseline.png`. If absent, ask the operator to drop it in before proceeding — the Nano Banana prompts reference it.
 
-**2. Page-context scan (Step 0).** Run `§ Section Design Sessions` Step 0 against `figma-build-brief.md`: name (a) what must repeat for coherence, (b) which compositions/devices must NOT repeat here, (c) this section's narrative role + intended energy in the page rhythm, (d) any cross-page duplication. Write → `context-scan.md`. This is a per-run working note derived fresh from the build brief — **not** a maintained page-map authority (the build brief is the authority of record).
+**2. Page-context scan (Step 0).** Run `§ Section Design Sessions` Step 0 against `figma-build-brief.md`: name (a) what must repeat for coherence, (b) which compositions/devices must NOT repeat here, (c) this section's narrative role + intended energy in the page rhythm, (d) any cross-page duplication. Write → `context-scan.md`. This is a per-run working note derived fresh from the build brief — **not** a maintained page-map alongside it (the build brief is the single page-level reference).
 
 **3. Diagnose.** State the section's purpose, what already works, and the specific problem to solve. Write → `diagnosis.md`.
 
@@ -108,4 +108,4 @@ For sections run through this command, `selected-direction.md` is the **authorit
 
 ## Chain-fit guardrail
 
-Directions must stay within the page's QC'd `figma-build-brief.md` and the locked design system — the same rule as `§ Section Design Sessions`. If a direction departs from the approved brief, surface the departure and route the affected part back through the Studio critics → QC before use. This command adds no new critic pass and no new terminal output; it stops at the Claude Design prompt.
+Directions must stay within the page's `figma-build-brief.md` (its Tier-1 goals, brand constraints, positioning hazards, and approved section decisions) and the locked design system — the same rule as `§ Section Design Sessions`. A **Tier-1 departure** (a brand rule, positioning hazard, copy authority, or an approved section decision) must be surfaced and routed back through the Studio critics → QC before use; ordinary layout exploration within the Tier-1 constraints (a different sequence, a split section, a component the website repo would add) is normal work and a handoff note, not a gated departure. This command adds no new critic pass and no new terminal output; it stops at the Claude Design prompt.
