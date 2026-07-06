@@ -101,11 +101,20 @@ A direction can be visually impressive and still be the wrong answer — if it r
 
 Treat Nano Banana outputs as **directional concept frames, not design specs.** Image models alter copy, approximate typography, shift spacing, invent off-system details, and produce attractive-but-unbuildable layouts. Always extract the concept and translate it (Step 9) — never ask Claude Design to copy an image pixel-for-pixel.
 
-## When to use / when to skip
+## Choosing the weight: Lean Exploration → this full run → the Studio chain
 
-**Use** `/explore-section` when: choosing between genuinely different compositions; a section is competent but generic; you need to see how a visual idea looks; the section carries imagery or a custom graphic; text wireframes aren't enough to decide.
+Section work has three tiers of weight. Use the lightest that fits, and escalate only when the **Escalation** checklist below fires. `CLAUDE.md § Section Design Sessions` makes Lean Exploration the default posture and points here for the full procedure.
 
-**Skip it** (go straight to a narrow Claude Design edit) when: the change is only spacing/typography refinement; the direction is already approved; the fix is a narrow Claude Design edit; you're fixing stale copy; you're making a minor mobile adjustment.
+**Lean Exploration (the default, pre-approval).** Most early-stage requests — "give me a couple of directions", "some visual exploration", "a Nano Banana prompt for this section" — do NOT need this full 10-step run. Run the lean loop instead; you do not have to invoke the whole command to explore:
+
+- **Read only the minimum:** the current page/section brief or `work/{surface}/figma-build-brief.md`; the section record if one exists (`sections/{section}.md` or `sections/{section}/selected-direction.md`); the Web Style Lock (`30_reference-lenses/axcion-web-style-lock.md`); `20_criteria/positioning-hazards.md` as a **quick screen only**; and the two mandatory lenses — UI/UX Pro Max + Impeccable — **actually consulted** per `§ Section Design Sessions` Step 0.5. Consult Taste (`design-taste-frontend`) only if the section reads generic, templated, or repetitive.
+- **Produce, and stop there:** a short diagnosis; the concrete lens effects (the two `… consulted: {what it changed}` lines); 1–2 **working directions**; an optional Nano Banana / Claude Design prompt.
+- **Provisional vocabulary only:** "working direction / candidate / test option / worth trying" — never "approved / locked / final" unless the operator explicitly moves a direction toward approval.
+- **Stop before:** VDS creation, the three critic passes, full QC, Figma build-brief updates, commits, and protected-doctrine edits. None of these happen in Lean Exploration — they belong to the escalation tiers below.
+
+**The full 10-step run (this command).** Escalate from lean to the full run when: choosing between genuinely different compositions; a section is competent but generic and you need to SEE it; the section carries imagery or a custom graphic; lean text directions aren't enough to decide. This tier renders concepts and records `selected-direction.md`.
+
+**Skip visual exploration entirely** (go straight to a narrow Claude Design edit) when: the change is only spacing/typography refinement; the direction is already approved; the fix is a narrow Claude Design edit; you're fixing stale copy; you're making a minor mobile adjustment.
 
 ## Artifact folder
 
@@ -128,3 +137,14 @@ For sections run through this command, `selected-direction.md` is the **authorit
 ## Chain-fit guardrail
 
 Directions must stay within the page's `figma-build-brief.md` (its Tier-1 goals, brand constraints, positioning hazards, and approved section decisions) and the locked design system — the same rule as `§ Section Design Sessions`. A **Tier-1 departure** (a brand rule, positioning hazard, copy authority, or an approved section decision) must be surfaced and routed back through the Studio critics → QC before use; ordinary layout exploration within the Tier-1 constraints (a different sequence, a split section, a component the website repo would add) is normal work and a handoff note, not a gated departure. This command adds no new critic pass and no new terminal output; it stops at the Claude Design prompt.
+
+## Escalation — when Lean Exploration hands off
+
+Lean Exploration (and this command) is a **pre-approval** loop. It hands off to a heavier tier when ANY of these fires. **This is the single canonical escalation list** — `CLAUDE.md § Section Design Sessions` points here rather than restating it:
+
+1. **A direction is selected for approval** — record it and route toward Figma / handoff. The lean loop and this command do not themselves approve; the operator approves in Figma.
+2. **The change departs from a brand rule, positioning hazard, approved copy authority, or an approved section decision** (a **Tier-1 departure**) — route the affected part back through the Studio critics → QC (the full `visual-design-spec` chain). See the Chain-fit guardrail above.
+3. **The work affects a full page or the design system, not one exploratory section** — run the whole-surface `visual-design-spec` chain, not the lean loop.
+4. **The operator explicitly asks for approval, handoff, or finalization** — move to the full chain / handoff.
+
+Ordinary layout exploration *within* the Tier-1 constraints stays lean — it is normal section work (and, where it affects the build, a handoff note to the website repo), not a gated departure. Absent any trigger above, exploration stays provisional: working directions and candidates, never "approved" or "locked."
