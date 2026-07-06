@@ -37,16 +37,22 @@ Create the section folder `work/{surface}/sections/{section}/` and write each ar
 
 **3. Diagnose.** State the section's purpose, what already works, and the specific problem to solve. Write → `diagnosis.md`.
 
-**3.5. Lens Check (mandatory — before directions or prompts).** Actually consult both design skills *in this session* — load and run them, do not reconstruct from memory. Use `ui-ux-pro-max` for section purpose, hierarchy, comprehension, page-flow, CTA logic, density, and responsive behaviour; apply `impeccable`'s critique/refinement principles for hierarchy, typography, spacing, alignment, density, rhythm, and subtraction.
+**3.5. Lens Check (mandatory — before directions or prompts).** Actually consult both mandatory lenses *in this session* — load and run them, do not reconstruct from memory. Use `ui-ux-pro-max` (**clarity pass**) for section purpose, hierarchy, comprehension, CTA logic, density, accessibility, **line length**, and responsive behaviour — narrow queries that return concrete constraints (it is retrieval, not a surface evaluator; *mobile reading order* is not in its data — reason that through `impeccable`/manual, not a ui-ux-pro-max search). Apply `impeccable` (**refinement/subtraction pass**) for hierarchy, typography, spacing, alignment, density, rhythm, subtraction, and AI-slop detection.
 
-The proposal carries **two inline summary lines** — `UI/UX Pro Max consulted: {what it changed}` and `Impeccable consulted: {what it changed}`, or "no change" plainly. But the check is only real if `lens-check.md` records **concrete evidence, not just "lens used."** For each lens, record three things:
-- **Consulted** — what you actually ran/read: the narrow `search.py` query (or the checklist section / `impeccable` reference read), not merely the lens name.
-- **Changed / confirmed** — the specific effect on the directions (a spacing decision, a hierarchy call, a CTA fix), or "confirmed as-is" with the reason.
-- **Rejected** — a direction, device, or option this lens caused you to rule out — or "nothing ruled out" plainly.
+The proposal still carries the lean **inline summary lines** — `UI/UX Pro Max consulted: {what it changed}` and `Impeccable consulted: {what it changed}`. But `/explore-section` is the **fuller recorded tier**: `lens-check.md` must record **concrete evidence, not just "lens used"** — the four elements below.
 
-A Lens Check that names no concrete effect was not really run. `impeccable`'s critique may be run as **isolated subagents** reading the markdown / PDF / image evidence (its non-degraded path) — see `.claude/skills/README.md § Reference-only ≠ single-context`.
+For each **mandatory lens** (UI/UX Pro Max, Impeccable), record:
+- **Consulted** — what you actually ran/read: the narrow `search.py` query (or checklist section / `impeccable` reference read), not merely the lens name.
+- **Changed / confirmed** — the specific effect (a spacing decision, a hierarchy call, a CTA fix), or "confirmed as-is" with the reason.
+- **Rejected** — a direction/device/option this lens ruled out — or "nothing ruled out" plainly.
 
-**Boundaries:** `impeccable` is a critique/refinement lens only here (design-thinking, no code build); `ui-ux-pro-max` is for hierarchy/comprehension/flow/CTA/density/responsive with **narrow, task-specific queries**, **not** a brand-identity or design-system generator (discard its generic `--design-system` output — the locked brand system governs identity). Write → `lens-check.md`. Steps 4–5 (directions + Nano Banana prompts) must not proceed until this is done and shown.
+Then two more elements:
+- **Taste** (**anti-template pass**, situational) — was `design-taste-frontend` triggered (a section reading generic/templated/too-safe/visually-repetitive, or needing controlled creative exploration)? If yes, the one **anti-template move** it introduced (cite its §0.D anti-default discipline). If not triggered, say so plainly. Taste is not a mandatory lens and never approves a final direction.
+- **Doctrine residual** — what stays governed by **Axcíon doctrine**, not the skills: brand book → mandate → positioning hazards → this page's `figma-build-brief.md` / section records → operator/Figma approval. Name the calls the skills did **not** get to make (identity, palette, red budget, positioning).
+
+A Lens Check that names no concrete effect was not really run. For **page-level critique, high-stakes judgment, or where independence matters**, run one or two **isolated design-review subagents** over the markdown / PDF / image evidence using `impeccable`'s rubric — borrowing its independence principle, **not** its `detect.mjs` detector or literal `/critique` command (degraded here, no live codebase). Ordinary section work stays inline. See `.claude/skills/README.md § Reference-only ≠ single-context`.
+
+**Boundaries:** `impeccable` is a critique/refinement lens only here (design-thinking, no code build); `ui-ux-pro-max` uses narrow, task-specific queries and is **not** a brand-identity or design-system generator (discard its generic `--design-system` output — the locked brand system governs identity). Write → `lens-check.md`. Steps 4–5 (directions + Nano Banana prompts) must not proceed until this is done and shown.
 
 **4. Directions.** Produce 2–3 genuinely distinct directions (not variations of one). Each: a short concept description (layout, hierarchy, emphasis, mood), a rough ASCII wireframe, the Step 0 clearance (which repeats it honours, which it avoids, its role/energy), its **mobile transform** (the actual reshape, not "columns stack"), and any **motion** (only where it aids comprehension). Apply the Apple × Blackstone lens (`30_reference-lenses/apple-blackstone-lens.md`) as steering — reach for confident scale (Apple) and institutional weight (Blackstone), always within the brand grammar and the six hazards. Reject any direction that is strong in isolation but repeats a composition/device already on the page or breaks a cross-page constant. Write → `option-a-concept.md`, `option-b-concept.md`, `option-c-concept.md`.
 
@@ -107,7 +113,7 @@ Treat Nano Banana outputs as **directional concept frames, not design specs.** I
 ```
 baseline.png                       # operator-supplied current render
 context-scan.md                    # Step 0 scan (per-run working note)
-lens-check.md                      # Step 3.5 Lens Check — evidence: consulted / changed / rejected, per lens
+lens-check.md                      # Step 3.5 — 4 elements: UI/UX + Impeccable (consulted/changed/rejected), Taste-if-triggered, doctrine residual
 diagnosis.md
 option-{a,b,c}-concept.md
 option-{a,b,c}-nano-banana-prompt.md
