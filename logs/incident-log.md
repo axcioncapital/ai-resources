@@ -34,3 +34,14 @@ Each entry is appended by `/resolve-incident` Step 8. Copy this shape exactly �
 ## Entries
 
 <!-- /resolve-incident appends entries below this line -->
+
+### 2026-07-07 — strategic-os `main` diverged from origin (local 3 / origin 20)
+
+- **Status:** resolved
+- **Risk:** Medium
+- **Protected zone touched:** no
+- **Affected component:** project asset
+- **Failure category:** brittle workflow handoff
+- **Root cause:** This machine committed 3 times on stale base `b9f42d7` without pulling while origin advanced 20 commits (2026-06-15→27 "operationalize OS" line); reconciled by rebasing the unique 2026-07-04 park onto origin/main and dropping two superseded promote commits.
+- **Follow-up:** improvement-log entry "2026-07-07 — strategic-os `main` diverged from remote (local 3 / origin 20, pull blocked)" (in `projects/strategic-os/logs/improvement-log.md`)
+- **Record:** `audits/incidents/2026-07-07-strategic-os-main-diverged-from-origin.md`
