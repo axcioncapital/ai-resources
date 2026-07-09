@@ -406,3 +406,40 @@ None irreversible. Deliberate, operator-authorized safety trade: the two judgmen
 
 ### Open Questions
 None.
+
+## 2026-07-09 — Session S1
+
+**Mandate:** Execute W3.2 roadmap item R1 (spine-schemas kernel doc) for the w32-migration-execution mission — done when: the R1 packet is SO-approved and `ai-resources/docs/spine-schemas.md` is written and inline-QC'd against it.
+- Out of scope: F1, R3, PJ (other mission open threads — not started this session)
+- Files in scope: `ai-resources/docs/spine-schemas.md`, `axcion-ai-system-redesign/output/implementation-prep/packets/R1-spine-schemas.md`, `axcion-ai-system-redesign/output/implementation-prep/remediation-register.md`, `ai-resources/logs/missions/w32-migration-execution.md` (pre-existing uncommitted mission setup, operator-confirmed safe to include)
+- Stop if: (none stated)
+- Mission: w32-migration-execution
+
+### Summary
+Started by picking up the mission's R1 open thread ("write the R1 doc"). Before writing, checked the mission's own non-negotiable ("no roadmap item without a gate-passed packet") against `remediation-register.md` — R1 had **no packet** (status: not-started, decision-owner: SO), unlike R3/RT1/PJ. Writing the doc directly would have violated the mission's own gate on day one.
+
+Ran a System Owner shaping consult, which declined to author the packet itself (write-scope boundary + author≠reviewer conflict — SO is also the required pre-execution reviewer) but delivered a fully-grounded packet skeleton with citation-needed markers for redesign-corpus-specific values. Read the redesign target-architecture corpus (`W2.3-reliability-safety-eval-spine.md`, `W3.2-target-architecture.md`) directly, filled every citation-needed item from source (nothing invented), and authored `packets/R1-spine-schemas.md`. A second, independent System Owner review pass then verified the drafted packet field-by-field against source and against R3's interoperation requirements — verdict **SO-APPROVED**, with 2 closure items (not a re-draft). Applied both closure items, then wrote the actual deliverable (`ai-resources/docs/spine-schemas.md`) from the approved packet, and ran a light inline QC pass against the packet's own 5-item verification checklist — all 5 pass.
+
+### Files Created
+- `axcion-ai-system-redesign/output/implementation-prep/packets/R1-spine-schemas.md` — the R1 implementation packet (SO-approved).
+- `ai-resources/docs/spine-schemas.md` — the R1 deliverable: run-manifest schema, defect-entry schema, escalation-packet schema, verification-level table, 11-value failure taxonomy, caller-side 4-check convention, O6 profile.
+- `projects/axcion-ai-system-owner/output/consultations/consult-2026-07-09-r1-spine-schemas-packet.md` — SO shaping consult.
+- `projects/axcion-ai-system-owner/output/consultations/consult-2026-07-09-r1-packet-review.md` — independent SO review consult.
+
+### Files Modified
+- `axcion-ai-system-redesign/output/implementation-prep/remediation-register.md` — R1 row: `not-started` → `verified`, packet link added.
+
+### Decisions Made
+- Did not author the R1 packet inline without SO grounding — routed through a shaping consult first (mission's own non-negotiable: SO-decision-owned items get SO input before execution).
+- Resolved one genuine source ambiguity (whether the O6 profile requires editing the protected `qc-independence.md`) at the independent SO-review gate rather than guessing: publish in the new doc, cross-reference, do not edit.
+- Used a light inline `/qc-pass` rather than a third heavy subagent dispatch, per the independent review's own gate-stacking caution and workspace Subagent Proportionality.
+
+### Risky actions
+None irreversible. New doc only (`ai-resources/docs/spine-schemas.md`) — not a `/risk-check` change class per the SO consult (confirmed against `risk-topology.md` §3). No hooks, permissions, or CLAUDE.md touched.
+
+### Next Steps
+- Mission's remaining open threads: F1 (federation-schemas kernel doc — same packet-gate pattern likely applies, no packet exists yet), R3 (blocked on R1 — now unblocked), PJ (blocked on R3 + F1).
+- `/mission` has no action to check off a single open-thread item short of closing the whole mission (only create/list/read/close exist) — the mission file's `## Open threads` checkbox for R1 is still unchecked even though R1 is done. Minor tooling gap, flagged for a future `/mission` enhancement; did not hand-edit the frozen file to work around it.
+
+### Open Questions
+None.
