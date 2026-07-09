@@ -1,3 +1,43 @@
+# Usage Log
+
+Token efficiency tracking. Each entry records one session's resource usage and waste patterns.
+
+**Ratings:** Efficient | Acceptable | Wasteful
+
+<!-- entries below -->
+
+### 2026-07-09 | Wasteful
+
+**Task:** Executed W3.2 roadmap item R1 (spine-schemas kernel doc) for the `w32-migration-execution` mission — discovered a missing implementation packet mid-flight, ran a two-pass System Owner consult (shaping + independent review) to draft and approve it, then wrote and QC'd the deliverable and committed across three repos.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | 3 (+2 async subagent-completion continuations) |
+| Files read | ~20 (re-reads: 4) |
+| Files written/edited | 8 (6 by main session, 2 by subagents) |
+| Tool calls | ~89 (Bash ~42, Read ~20, Edit ~13, Write ~4, Agent ~2, Skill ~6, AskUserQuestion ~1) |
+| Subagents | 2 |
+| Rework cycles | 1 |
+
+**Findings:**
+- session-notes.md read/tailed 5× and usage-log.md accessed 3× (including a 348-line full read at wrap) with no edits between most reads (Re-reads, Major) — this reverses the trend from the immediately preceding log entry (Efficient) and matches the pattern of the earlier Wasteful outlier two entries back, so this is a regression, not stability.
+- decisions.md and remediation-register.md each read twice across the session with no intervening edits (Re-reads, Moderate).
+- Two Opus system-owner subagents (~147k and ~173k tokens, ~320k combined) each independently re-grounded against overlapping W2.3/target-architecture source material rather than sharing a pre-built context pack — likely structurally necessary for author≠reviewer independence, but still the dominant redundant-read cost of the session (Context bloat, Major).
+- Large cross-project design docs (W2.3, 443 lines; repo-architecture.md, 266 lines full; W3.2, 298 lines) read substantially in the main thread to support packet drafting (Context bloat, Moderate).
+- Wrap-time commit blocked 3× by the foreign-staging pre-commit hook because a scope-relevant file wasn't declared, requiring an AskUserQuestion, a footprint edit, and 3 retries (Rework, Moderate — 1 cycle, systemic across 3 repos).
+- `/mission close-thread` invoked as an unsupported subcommand, producing one unusable Skill dispatch plus an operator explanation (Tool overhead, Minor).
+- Prime-time log tails (session-notes.md, decisions.md, usage-log.md) and later corpus reads (W2.3, W3.2, repo-architecture.md) ran as independent sequential calls with no dependency between them (Missed parallelization, Minor).
+
+**Recommendation:** Before dispatching a second (review) System Owner pass that must stay author-independent, pre-build a shared grounding/citation extract from the overlapping source docs (W2.3 + target-arch) once, and hand identical excerpts to both the shaping and review subagents — preserves the independence requirement while eliminating duplicate corpus re-derivation.
+
+**Estimated savings:** If ~15-20% of each subagent's token spend is redundant corpus-grounding overlap (against 147k and 173k actuals), that's roughly 20-35k tokens per subagent, ~40-70k tokens for this session's two-pass consult. Two-pass SO consults recur periodically (not every session) — over a 10-20 session horizon with a handful of similar two-pass invocations, cumulative savings land in the low-to-mid hundreds-of-thousands of tokens range. Order-of-magnitude only.
+
+**Additional levers (ROI-ranked):**
+- Cache prime/mid-session/wrap tails of session-notes.md, decisions.md, and usage-log.md instead of re-tailing at each checkpoint: ~1-2k tokens saved per avoided re-read × recurs almost every session (prime + wrap pattern) → ~5-8k/session, but compounds to ~75-120k over 10-20 sessions — smaller per-session than the primary lever but more consistently recurring.
+- Declare mission-log files in the session's scope footprint proactively before the wrap commit sequence to avoid the foreign-staging hook rejecting the same file 3×: ~3-6k tokens/session, but only fires when a mid-session file falls outside the declared footprint, so lower expected frequency than the primary lever.
+- Verify supported `/mission` subcommands before invoking to avoid the wasted `close-thread` dispatch: ~1-2k tokens, minor and infrequent — smallest lever here.
+- Batch independent prime-time and corpus-research reads into parallel tool calls: negligible direct token savings (informational/latency-focused per the framework), included for completeness rather than cost impact.
+
 ### 2026-05-29 | Efficient
 
 **Task:** /prime auto-mode multi-item session (operator typed `auto 1,3,4,5`): shipped FL-1+FL-6 friction-log hook unification + C-1+C-2 /consult Function A/B return-size contract + project-local agent symlink swap + improvement-log entry on the System Owner observation. Item 4 closed as no-op (0 eligible entries); Item 5 deferred per Context constraint rule (a concurrent S6 session built it in parallel).
