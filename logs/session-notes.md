@@ -476,3 +476,68 @@ None. Working tree verified clean (`git status -sb`); no foreign uncommitted con
 
 ### Open Questions
 None.
+
+---
+
+## 2026-07-09 (S3) — Preserved strategic-os + management-os into a context pack; abandoned the consolidation migration
+
+> Session marker read `2026-07-09 S2`, but that number belongs to the F1/PJ mission session above (commit `a8b5902`). This session ran no `/prime` (`PRIME_RAN=0`, no per-id marker), so it is the third distinct session today and is logged as **S3**. No mandate block exists for it — the work was operator-directed from a `/clarify`.
+
+### Summary
+
+Built `artifacts/merged-os-context/` — a durable, tracked context pack preserving both `projects/strategic-os/` and `projects/management-os/` (verbatim content, five synthesized briefing docs, full git history as bundles) so both can be retired and a new merged strategy+operations project built from clean inputs. The session's first substantive act was a framing correction: **the consolidation migration never executed.** No file ever moved; Stage 3 was cleared by a 4th `/risk-check` pass and deliberately never started. The operator's "the merging didn't work very well" described the *planning* (four consecutive RECONSIDER verdicts), not a damaged repo. Preservation surfaced three items that deletion would have destroyed — `management-os` had never been pushed, `strategic-os` held a `git stash`, and 22 files were untracked — plus two canonical contract documents trapped inside `strategic-os` that shared workspace infrastructure depends on.
+
+### Files Created
+
+- `artifacts/merged-os-context/README.md` — what the pack is, how to consume it, the three near-losses
+- `artifacts/merged-os-context/BRIEFING.md` — what each project was, its real state, why the merge was wanted, why it stalled
+- `artifacts/merged-os-context/DECISIONS.md` — 20 decisions consolidated from three ledgers with provenance + LIVE/SUPERSEDED/DEAD status
+- `artifacts/merged-os-context/CARRY-FORWARD.md` — Part 1 blocks retirement, Part 2 blocks design
+- `artifacts/merged-os-context/INVENTORY.md` — copy manifest; contract is "every real file copied or listed as excluded, no third category"
+- `artifacts/merged-os-context/strategic-os/` — 105 real files (no symlinks, no `.git`)
+- `artifacts/merged-os-context/management-os/` — 34 real files
+- `artifacts/merged-os-context/strategic-os/logs/STASH-uncommitted-session-notes.md` — content recovered from `refs/stash`
+- `artifacts/merged-os-context/git-bundles/{strategic-os,management-os,kb-strategic-os}.bundle` — 57 / 5 / 10 commits
+- `logs/scratchpads/2026-07-09-16-30-scratchpad.md` — pre-closeout continuity checkpoint
+
+### Files Modified
+
+- `docs/repo-architecture.md` — top-level layout was missing **both** `artifacts/` (tracked) and `archive/` (gitignored, load-bearing for `/archive-project`); added both, plus a canonical home for the project-retirement context-pack artifact type
+- `logs/decisions.md` — logged the consolidation-abandon decision and its four discovery findings
+- (other repos) `projects/strategic-os` `48355dd`, `projects/management-os` `2e2d617` — untracked work committed; `knowledge-bases/strategic-os` `f8af64f` — rebased onto remote
+
+### Decisions Made
+
+**Operator-directed** (via `/clarify` → four-question `AskUserQuestion` gate):
+1. Deletion scope = the two `projects/` folders only; the `knowledge-bases/strategic-os/` vault survives.
+2. Archive form = verbatim files **+** written briefing (not either alone).
+3. Git history = push all three repos, then `git bundle` each into the pack.
+4. `ai-strategy/` = archive it and state in writing that it belongs in `ai-resources/`; **move nothing** this session.
+5. Push gate = "Yes, push all five."
+
+**Claude judgment, surfaced inline:**
+- Placement → `artifacts/merged-os-context/`. Rejected `archive/` despite better semantic adjacency: it is gitignored (`.gitignore:41`) and a `!` negation cannot rescue a child of an excluded directory, so a pack there would never leave the laptop.
+- Retirement path → `/archive-project` (moves with `.git` intact, writes a restore manifest), never `rm -rf`.
+- Copy via `rsync -a --no-links`, never `cp -r` — the latter dereferences symlinks and would inline ~230 shared `ai-resources` command files.
+
+**QC fixes** (separate): six findings from an independent `qc-reviewer` pass — one abridged quote labelled "verbatim", a wrong entry count, a missing line citation, an unfair "the plan under-counted" framing, two trimmed CLAUDE.md quotes, and a commit-count error (`management-os` has three consolidation commits, not four). All fixed before commit.
+
+### Risky actions
+
+Four, none of which landed as harm — but one near-miss is load-bearing:
+1. **Reported repo state without `git fetch` first**, violating the workspace repo-status rule. Consequence: I asserted in **four** documents that the frameworks KB was never filled. It *was* — 5 canonical notes, ~695 lines, living on the vault's remote while the local clone sat 5 commits behind with no `frameworks/` folder at all. **The error was caught by a rejected `git push`, not by any gate.** Had the push been declined, a durable archival artifact would have shipped a false claim about the operator's own work, and `kb-strategic-os.bundle` would have silently omitted the content. Repo integrated (`pull --rebase`, clean), bundle regenerated 5 → 10 commits, all four docs corrected, lesson recorded inside the pack.
+2. Pushed to five remotes — gated and operator-confirmed, per the push rule. `management-os` pushed for the first time ever (`* [new branch]`).
+3. `git pull --rebase` on `kb-strategic-os` rewrote one **unpushed** local commit. Safe by construction; no force push. Verified disjoint file sets before rebasing.
+4. A `rm -rf` inside a scratch verification command was denied by the deny list. The guard worked as designed; command reissued without it.
+
+### Next Steps
+
+- **Build the new merged project:** feed `artifacts/merged-os-context/BRIEFING.md` + `DECISIONS.md` + `CARRY-FORWARD.md` into `/scope-project`.
+- **Before retiring either project** (`CARRY-FORWARD.md` Part 1): graduate `docs/project-state-workflow-spec.md` + `docs/project-context-snapshot-prompt.md` to `ai-resources/docs/` and re-point three citations; graduate `ai-strategy/` (14 files) to `ai-resources/`. Each needs its own `/placement` + `/risk-check` — neither is safe as a side-effect of archiving.
+- **Re-run the grep, never a stored count:** `grep -rln "projects/strategic-os" ai-resources/.claude/ ai-resources/docs/` returns six files; `refresh-project-state.md` matches at two lines (9 and 33).
+- **Retire via `/archive-project`**, never `rm -rf`.
+
+### Open Questions
+
+- The `PreToolUse[Bash]` decision-block hook remains unbuilt. It is the only real closure of the shell-write vector into protected strategy state, and it must exempt `/promote-to-live`'s `cat` heredoc or it breaks the one sanctioned writer. Deferred across three sessions now — deferred, not forgotten.
+- The frameworks KB being *live* (5 canonical notes, gate fires) changes the decision-support calculus for the new project: query the vault, do not rebuild a stub framework list.
