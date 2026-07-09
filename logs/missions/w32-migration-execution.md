@@ -48,6 +48,6 @@ Every W3.2 roadmap item whose implementation home is `ai-resources` is built, ve
 ## Open threads
 
 - [ ] Write **R1** (spine-schemas kernel doc: run-manifest/defect/escalation/verification/taxonomy) — prerequisite for R3 and R4.
-- [ ] Write **F1** (federation-schemas kernel doc: manifest/catalog/evidence-bundle/routing) — prerequisite for PJ.
 - [ ] Implement **R3** (run-manifest write + slim wrap) per `packets/R3-run-manifest.md` — after R1 lands.
-- [ ] Implement **PJ** (propagation join) per `packets/PJ-propagation-join.md` — after R3 and F1 land.
+
+**Dropped 2026-07-09 (S2), operator directive.** **F1** (federation-schemas kernel doc) and **PJ** (propagation join) were removed from active work. PJ hard-depends on F1's `canonical_sources` schema (`packets/PJ-propagation-join.md` § Prerequisites), so dropping F1 orphaned it. Both register rows read `dropped`; the W3.2 roadmap is unchanged, so the items remain recoverable from the design record. Rationale and the hand-edit exception: `logs/decisions.md` (2026-07-09). Note: this edit was made in-session because `/mission` has no remove-thread action — see the same decisions entry.

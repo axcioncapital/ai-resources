@@ -443,3 +443,13 @@ None irreversible. New doc only (`ai-resources/docs/spine-schemas.md`) — not a
 
 ### Open Questions
 None.
+
+## 2026-07-09 — Session S2
+
+**Mandate:** Drop roadmap items F1 and PJ from active work — remove both from the mission's Open threads and mark their register rows `dropped` — done when: neither F1 nor PJ appears as a mission open thread, both register rows read `dropped` with a stated reason, and the decision plus its hand-edit exception are logged in `decisions.md`
+- Out of scope: the W3.2 migration roadmap (frozen design record — left untouched); mission threads R1 and R3; the drafted `PJ-propagation-join.md` packet file (retained on disk, not deleted)
+- Files in scope: ai-resources/logs/missions/w32-migration-execution.md, ai-resources/logs/decisions.md, ai-resources/logs/session-notes.md, projects/axcion-ai-system-redesign/output/implementation-prep/remediation-register.md
+- Stop if: (none stated)
+- Mission: w32-migration-execution
+
+Session was originally mandated to author the F1 packet and write the F1 federation-schemas kernel doc. Operator dropped F1 outright, and PJ with it (PJ hard-depends on F1's `canonical_sources` schema). Original mandate superseded; the removal is now the work. Rationale and scope choice recorded in `logs/decisions.md`.
