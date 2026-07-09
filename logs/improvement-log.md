@@ -431,3 +431,14 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Proposal:** Add `EXTRA_TODAY_MANDATES=${EXTRA_TODAY_MANDATES:-0} EXTRA_PRIOR_MANDATES=${EXTRA_PRIOR_MANDATES:-0}` to the `GUARD:` echo line in `logs/scripts/foreign-session-guard.sh` so the REMNANT/MIXED messages are fully populatable. One-line, low-risk (the vars default 0 when FOREIGN<1). Do in a dedicated small session, not folded into unrelated work.
 - **Target files:** `ai-resources/logs/scripts/foreign-session-guard.sh` (GUARD echo line).
 - **Review-cycle:** monthly
+
+### 2026-07-09 — `/mission` has no thread-level edit action (cannot check off or remove a single open thread)
+
+- **Status:** logged (pending)
+- **Category:** tooling gap / mission-contract subsystem
+- **Severity:** medium
+- **Provenance:** hit twice on the same day. S1 (2026-07-09) completed roadmap item R1 but could not check off its `## Open threads` box, and left it unchecked rather than hand-edit the file. S2 (2026-07-09) was directed to drop F1 and PJ from the mission and had to hand-edit `## Open threads` under an explicit operator authorization, logged as a rule exception in `logs/decisions.md`.
+- **Detail:** `.claude/commands/mission.md` exposes exactly four actions — `create` / `list` / `read` / `close`. The mission file's own header states that `## Open threads` is "edited via `/mission` — never hand-edited from inside a working session." Those two facts are in direct contradiction the moment a single thread needs to be checked off or removed: the sanctioned path does not exist, so a session must either (a) leave the mission file stale, or (b) violate the file's stated rule. S1 chose (a); S2 was forced into (b). The consequence of (a) is a mission whose open-thread list silently misrepresents remaining work — the exact state `/prime` Step 1d reads to build its menu, so a completed thread can be re-offered as a next task.
+- **Proposal:** Add thread-level actions to `/mission` — at minimum `check <id> <thread-substring>` (flip `- [ ]` to `- [x]`) and `drop <id> <thread-substring>` (remove the thread, appending a dated drop note). Both should refuse on ambiguous substring match and write no commit (consistent with the command's existing Step 6 "No commit"). This closes the contradiction rather than papering over it: with the actions present, the "never hand-edit" rule becomes enforceable.
+- **Target files:** `ai-resources/.claude/commands/mission.md` (new Steps for `check` / `drop`; extend Step 1 action parser). Possibly `ai-resources/docs/session-marker.md` if the mission-file contract is documented there.
+- **Review-cycle:** monthly
