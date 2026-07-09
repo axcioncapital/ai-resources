@@ -21,6 +21,8 @@
 │   ├── skills/                                  # workspace-only skills (rare)
 │   └── worktrees/                               # claude-code worktree state
 ├── ai-resources/                                # shared resource library (sub-repo, --add-dir)
+├── archive/                                     # GITIGNORED. Retired project repos, relocated by /archive-project (each keeps its own .git). Restore recipe = the per-project manifest in ai-resources/audits/working/.
+├── artifacts/                                   # TRACKED. Durable workspace-level artifacts that belong to no single project — operator-fillable scaffolds, project-retirement context packs.
 ├── harness/                                     # harness dev project (separate concern)
 │   └── prep/                                    # Phase 3 harness preparation material (templates, checklists, hardening log)
 ├── knowledge-bases/                             # standalone Obsidian KB vaults for cross-project reuse, deployed via /deploy-kb
@@ -113,6 +115,7 @@
 | **Project-specific rule** | `projects/<project>/CLAUDE.md` | Always loaded in that project's sessions. |
 | **Permission shape (canonical)** | `ai-resources/docs/permission-template.md` | Source of truth referenced by `/permission-sweep` and `/new-project`. |
 | **Deployable canonical fragment** (consumed at scaffold time, not at runtime) | `ai-resources/templates/<name>` | Read by `/new-project` via walk-up to `ai-resources/`; never auto-distributed. Edit the fragment, not the consuming command. Examples: `templates/project-settings.json.template`, `templates/project-claude-md/*.md`. |
+| **Project-retirement context pack** (content + briefing + git bundles preserved from one or more projects being retired) | `artifacts/<slug>-context/` | Tracked by the root repo, so it survives the retirement of the projects it describes and is pushed off-machine. Distinct from `archive/` (gitignored, holds the relocated repos themselves). Pairs with `/archive-project`: the pack is the *reading* path, the archived repo is the *recovery* path. Built by hand; no pipeline. Example: `artifacts/merged-os-context/`. |
 
 **Project-local exceptions** (live in project's own `.claude/`, never in ai-resources):
 - Pipeline-stage commands tightly coupled to one project's workflow (e.g., `pipeline-stage-3a.md` for `/new-project`).

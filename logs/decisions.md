@@ -180,3 +180,31 @@ Applied:
 **Alternatives considered.** (a) *This-session-only removal* (delete the plan, leave F1 pending) — rejected by the operator; "remove from open items as well" meant stop tracking it. (b) *Purge F1 from the roadmap* — offered, rejected: rewrites a frozen design record for no gain, since the register already carries live status. (c) *Leave PJ live* — offered, rejected: guarantees a later failure with no owner. (d) *Mark the rows `deferred`* — rejected: semantically false; `deferred` promises a later attempt that nobody intends.
 
 **Decided by.** Operator, via an explicit two-question scope gate (`AskUserQuestion`). Claude declined to infer the scope autonomously: the instruction touched a frozen design artifact, a rule-protected mission file, and a downstream dependency the operator had not been told about — Autonomy Rules #3 (deletion outside session output scope) and #6 (ambiguous instruction, load-bearing interpretation) both applied.
+
+---
+
+## 2026-07-09 — Abandon the strategic-os → management-os consolidation; preserve both into a context pack and rebuild fresh
+
+**Context.** The consolidation of `projects/strategic-os/` into `projects/management-os/` was designed on 2026-07-07 and gated across 2026-07-09. It drew **four consecutive `/risk-check` RECONSIDER verdicts**. Execution plan v4 was cleared for Stage 3 ("The Landing") and deliberately never started — its preconditions were unmet at wrap. **No file ever moved.** The operator elected to abandon the migration and build a new merged project from preserved context instead.
+
+**Decision.** Do not execute the migration. Preserve both projects — verbatim content, full git history as bundles, and five synthesized briefing documents — into `artifacts/merged-os-context/`. Retire both projects via `/archive-project` (never `rm -rf`) once the new merged project is built from that pack. `knowledge-bases/strategic-os/` is out of scope and survives untouched.
+
+**Rationale.** The four RECONSIDER passes produced a plan whose value proved mostly *diagnostic* — how Claude Code permissions actually resolve, which consumers depend on which paths — rather than *constructive*. That diagnostic value is preserved in the pack at a fraction of the cost of executing a 32-consumer, 3-repo migration carrying an accepted, unclosed shell-write residual. `management-os` had no operational evidence to protect: its weekly loop never ran once, and its state file still holds 20 template placeholders. `strategic-os`'s value is content, not repo topology — and content moves cheaply.
+
+**Load-bearing findings discovered while building the pack** — none known beforehand:
+- `projects/management-os` **had never been pushed.** Its GitHub remote existed but held zero branches; all history sat on one laptop, including the *only* copy of the migration's Stage 0–2 findings and three decisions written specifically to outlive `strategic-os`'s archiving.
+- `projects/strategic-os` **had a `git stash`** holding two session-mandate records, including the mandate that produced `state/live/`. A stash lives only in `.git/`; a file copy misses it and deletion destroys it. Recovered to readable text and preserved in the bundle. *(This also explains a naive bundle check reading 55 commits against a source of 57 — `git clone` drops `refs/stash`; `git clone --mirror` does not.)*
+- **Six** canonical `ai-resources` files reference `projects/strategic-os` by path, not the five the Stage-2 changeset listed as functional consumers — and `refresh-project-state.md` references it at **two** lines (9 and 33), not one.
+- **Two canonical contract documents are trapped inside `strategic-os`**: `docs/project-state-workflow-spec.md` (230 lines) and `docs/project-context-snapshot-prompt.md`. Three shared `ai-resources` resources cite the spec as their governing contract with **no fallback**. Separately, `ai-strategy/` (14 files) is internal AI-development doctrine that `risk-check-reviewer` reaches across a repo boundary to read. Both belong in `ai-resources/`. **Neither was moved** — that is a structural change needing its own `/placement` and `/risk-check`, not a side-effect of archiving. Recorded in the pack's `CARRY-FORWARD.md` §1.3 and §1.4.
+
+**Architecture-map gap closed in the same commit.** `repo-architecture.md`'s top-level layout omitted both `artifacts/` (tracked) and `archive/` (gitignored, load-bearing for `/archive-project`), and had no canonical home for a project-retirement context pack. All three added, per the map's own "When this file needs to change" rule.
+
+**Alternatives considered.**
+- *Resume Stage 3 as planned:* rejected by the operator. The plan was sound, but the change remained a 32-consumer, 3-repo migration with an accepted, unclosed shell-write residual.
+- *Preserve only a written briefing, no files:* rejected — loses `state/live/`, the 13 project-local commands, the 3 project-local agents, and the migration findings.
+- *Copy files and delete the projects:* rejected — a plain copy misses git history and, as discovered, the stash. Bundles plus `/archive-project` cost almost nothing and are reversible.
+- *Put the pack in `archive/`:* rejected — `archive/` is gitignored (`.gitignore:41`), so the pack would never leave the laptop, defeating its purpose. A `!` negation cannot rescue a child of an excluded directory. `artifacts/` is tracked and pushes to `workspace-root.git`.
+
+**Gates.** `/placement` → `artifacts/merged-os-context/`. `/risk-check` **not required** — purely additive; no hook, permission, CLAUDE.md, command, skill, symlink, or shared-state automation change. `/blindspot-scan` skipped per the narrow trigger (no runnable infrastructure created). `/qc-pass` → **AGREE, 0 blocking**; one IMPORTANT and five MINOR findings (quote-fidelity trims, descriptive count errors) all fixed before commit. `/risk-check` **is** required before retirement, and before moving `ai-strategy/` or the two contract docs.
+
+**Decided by.** Operator, 2026-07-09, via `/clarify` → four-question scope gate (`AskUserQuestion`): scope = the two projects only; form = verbatim files + written briefing; history = push all three repos, then bundle; `ai-strategy/` = archive and flag as belonging in `ai-resources/`, do not move.
