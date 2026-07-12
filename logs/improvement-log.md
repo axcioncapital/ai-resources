@@ -423,14 +423,14 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 
 
 ### 2026-07-04 — foreign-session-guard.sh GUARD echo omits EXTRA_TODAY/PRIOR_MANDATES referenced by REMNANT/MIXED messages
-- **Status:** logged (pending)
+- **Status:** applied 2026-07-12
+- **Verified:** `EXTRA_TODAY_MANDATES=${EXTRA_TODAY_MANDATES:-0} EXTRA_PRIOR_MANDATES=${EXTRA_PRIOR_MANDATES:-0}` appended to the `GUARD:` echo in `logs/scripts/foreign-session-guard.sh`. Applied exactly as proposed; the `:-0` defaults preserve the FOREIGN<1 path. Fixed via `/fix-repo-issues` plan `audits/fix-plans/fix-repo-issues-2026-07-12-2132.md` (item id-50), committed standalone per this entry's own "dedicated small session" request.
 - **Category:** diagnostics / incomplete-message
 - **Severity:** low
 - **Provenance:** independent qc-reviewer pass on the 2026-07-04 wrap-session leanness refactor. **Pre-existing, NOT introduced by the refactor** — the guard extraction was verified byte-identical to the pre-refactor inline block (0 diffs); the pre-refactor `echo "GUARD: ..."` line already omitted these two variables. Confirmed gap, deferred as out-of-scope for the leanness change.
 - **Detail:** `logs/scripts/foreign-session-guard.sh` computes `EXTRA_TODAY_MANDATES` / `EXTRA_PRIOR_MANDATES` inside the `FOREIGN>=1` classifier block, but the `GUARD:` diagnostic echo does not emit them. Both wrap-session copies' REMNANT and MIXED remediation templates render those values to the operator (e.g. `EXTRA_PRIOR_MANDATES=N`), so on a REMNANT/MIXED STOP the model cannot fill them precisely from stdout. The `FOREIGN` count itself IS echoed, so the STOP fires correctly and the grep output is shown — only the precise extra-mandate count is missing from the message. Rare path (concurrent + prior-day-orphan states).
 - **Proposal:** Add `EXTRA_TODAY_MANDATES=${EXTRA_TODAY_MANDATES:-0} EXTRA_PRIOR_MANDATES=${EXTRA_PRIOR_MANDATES:-0}` to the `GUARD:` echo line in `logs/scripts/foreign-session-guard.sh` so the REMNANT/MIXED messages are fully populatable. One-line, low-risk (the vars default 0 when FOREIGN<1). Do in a dedicated small session, not folded into unrelated work.
 - **Target files:** `ai-resources/logs/scripts/foreign-session-guard.sh` (GUARD echo line).
-- **Review-cycle:** monthly
 
 ### 2026-07-09 — `/mission` has no thread-level edit action (cannot check off or remove a single open thread)
 
@@ -441,4 +441,27 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Detail:** `.claude/commands/mission.md` exposes exactly four actions — `create` / `list` / `read` / `close`. The mission file's own header states that `## Open threads` is "edited via `/mission` — never hand-edited from inside a working session." Those two facts are in direct contradiction the moment a single thread needs to be checked off or removed: the sanctioned path does not exist, so a session must either (a) leave the mission file stale, or (b) violate the file's stated rule. S1 chose (a); S2 was forced into (b). The consequence of (a) is a mission whose open-thread list silently misrepresents remaining work — the exact state `/prime` Step 1d reads to build its menu, so a completed thread can be re-offered as a next task.
 - **Proposal:** Add thread-level actions to `/mission` — at minimum `check <id> <thread-substring>` (flip `- [ ]` to `- [x]`) and `drop <id> <thread-substring>` (remove the thread, appending a dated drop note). Both should refuse on ambiguous substring match and write no commit (consistent with the command's existing Step 6 "No commit"). This closes the contradiction rather than papering over it: with the actions present, the "never hand-edit" rule becomes enforceable.
 - **Target files:** `ai-resources/.claude/commands/mission.md` (new Steps for `check` / `drop`; extend Step 1 action parser). Possibly `ai-resources/docs/session-marker.md` if the mission-file contract is documented there.
+- **Review-cycle:** monthly
+
+### 2026-07-12 — fix-repo-issues-scanner counted "None —" open-questions blocks as open items (23% false-positive rate)
+
+- **Status:** applied 2026-07-12
+- **Verified:** `.claude/agents/fix-repo-issues-scanner.md` Step 1 source table now defers to a new **None-answer detection** rule: an `Open Questions` block is empty when its trimmed content *begins with* `None` (case-insensitive) followed by end-of-content, clause punctuation (`.` `,` `;` `:` `—` `–` `-`), or the word `blocking`. The rule explicitly forbids loosening to a bare `startswith("none")`, so `None of the three decisions are resolved` (followed by a *word*, not punctuation) is still correctly extracted as substantive.
+- **Category:** defect / scanner precision
+- **Severity:** medium
+- **Provenance:** found by the 2026-07-12 `/fix-repo-issues` run itself. The scanner **self-disclosed** it in its own workspace working-notes ("Skipped" section) — it knew the three items read close to "no open questions" and surfaced them anyway, because its rule said to.
+- **Detail:** the source table matched None-answers by **exact whole-content match** against a fixed list (`None`/`None.`/`None blocking`/`None blocking.`). A session note that answers "None" and then explains why — `None — the remaining mission work is a known, bounded follow-up.` — fails that exact match and was classified as a substantive open question. In the 2026-07-12 workspace scan this produced **3 phantom items out of 13 (23%)**, and one of them (`id-01`, settings path-portability) ranked as a **top-2 fix-shaped candidate** — i.e. the noise reached the front of the triage queue, where it would have sent a fix session chasing a closed mission. Every future `/fix-repo-issues` run would have re-surfaced all three.
+- **Root cause:** exact-match where the data is prefix-shaped. Prose after the "None" is explanation, not an open question.
+- **Cross-ref:** fix plan `audits/fix-plans/fix-repo-issues-2026-07-12-2132.md` (item id-53). Two of the three phantoms are recorded in that plan's Skipped section.
+
+### 2026-07-12 — axcion-design-studio's 89 commands are COPIES, not symlinks — they will drift silently
+
+- **Status:** logged (pending)
+- **Category:** scaffold gap / drift surface
+- **Severity:** medium
+- **Provenance:** surfaced while fixing the design-studio agent-registration gap (`/fix-repo-issues` 2026-07-12, item id-08). Direct evidence for the existing **2026-06-16 — /new-project: register command/agent symlinks for standalone-openable projects** entry (line 97), which this entry does not duplicate but substantiates.
+- **Detail:** all 19 sibling projects symlink **both** `.claude/commands/` and `.claude/agents/` into `ai-resources`. `axcion-design-studio` instead holds **89 copied command files** (regular files, not symlinks). **Measured 2026-07-12: all 89 are byte-identical to canonical — there is no drift today.** That is precisely why this is logged rather than fixed in a panic: the exposure is *prospective*, not current. Because they are copies, they will **not** track canonical from here — every future edit to a canonical command silently diverges design-studio's copy, and the project keeps running the old behaviour with no signal to the operator.
+- **Why the auto-sync hook will not fix it on its own:** `auto-sync-shared.sh` never overwrites an existing target (lines 88/105 — `[ -e "$target" ] || [ -L "$target" ] && continue`). It *will* flag divergence via its `AI-RESOURCES DRIFT:` SessionStart warning once the copies actually differ, but it will never replace them. So the drift is *detected-then-ignored* by default; the operator must act on the warning.
+- **Proposal:** Replace the 89 copies with symlinks (the sibling pattern), which makes them self-maintaining and retires the drift surface entirely. Cheap to do while they are still byte-identical — a straight `rm` + re-run of `auto-sync-shared.sh`, which will symlink every command it finds missing. **Do it before they diverge**, because after divergence each file becomes a merge decision rather than a delete. Verify afterwards that nothing in design-studio depended on a locally-modified command.
+- **Target files:** `projects/axcion-design-studio/.claude/commands/` (89 files); mechanism already present at `ai-resources/.claude/hooks/auto-sync-shared.sh`.
 - **Review-cycle:** monthly

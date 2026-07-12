@@ -24,3 +24,11 @@ Whenever a QC subagent (`qc-reviewer`, `qc-gate`, `refinement-reviewer`, post-ed
 5. **Stop after the second post-edit QC** regardless of result. Report the final verdict in the turn summary.
 
 Cap the loop at two post-edit passes — if two passes don't clean the artifact, the problem is structural and the operator decides.
+
+**Cap-exhaustion is a halt-and-surface, not a quiet stop.** When the second post-edit QC returns an unresolved REVISE, the operator can only decide if they are told there is something to decide. Do not simply fall out of the loop. Halt and surface, in the turn summary:
+
+- the findings still unresolved after the final pass, each with the consequence QC named for it;
+- how many triage + fix passes ran, and what each changed;
+- the final verdict, stated as unresolved — never rounded up to GO because the passes ran out.
+
+The artifact is **not** cleared by exhausting the cap. Treat it as blocked pending the operator's call, and say so explicitly rather than continuing as though QC had passed.

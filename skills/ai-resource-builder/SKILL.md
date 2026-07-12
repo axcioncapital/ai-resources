@@ -73,6 +73,8 @@ Skills operate in a multi-tool ecosystem. They may interact with GPT-5 (via API/
 
 **If requirements contradict each other**, surface the conflict and ask the user to resolve it before proceeding.
 
+**Shared-state schema read-completeness.** When the resource reads or writes **shared state** — anything another component also reads or writes (`harness/schemas/`, run manifests, session logs, registries, context packs) — read **every** schema it touches before drafting, not only the one the task names. Partial schema reads produce components that conform to the obvious schema and violate a neighbouring one, and the mismatch surfaces late, after the component is written. Enumerate the touched schemas first; read them all; then draft.
+
 ### Step 2: Plan Bundled Resources
 
 Analyze each concrete example:

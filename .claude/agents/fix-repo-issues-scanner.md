@@ -36,11 +36,30 @@ Read each source if it exists. Skip silently if missing.
 | `logs/next-up.md` | T1 | Every `- [ ]` checkbox line. |
 | `logs/improvement-log.md` | T1 (applied-unverified) / T3 (logged/pending) | **T1:** entries with `**Status:** applied` but no non-empty `**Verified:**` line. **T3:** entries with `**Status:**` matching `logged`, `proposed`, `pending`, or `logged (pending)`. |
 | `logs/decisions.md` | T2 | Entries containing `Defer`/`Deferred` AND a `Trigger for action:` field. Capture entry date, title, trigger text. |
-| `logs/session-notes.md` | T2 (recent) / T3 (stale) | `Open Questions` sections where content ≠ `None`/`None.`/`None blocking`/`None blocking.` (case-insensitive, trimmed). Recent = entry dated within 14 days of `TODAY`. |
+| `logs/session-notes.md` | T2 (recent) / T3 (stale) | `Open Questions` sections whose content is not a **None-answer** (see below). Recent = entry dated within 14 days of `TODAY`. |
 | `logs/session-plan-*.md` (glob) | T1 (recent) / T3 (stale) | `- [ ]` checkbox lines across all marker-scoped session plans (canonical + pass2 variants). Recent = file modified within 14 days of `TODAY`. See `docs/session-marker.md` for the marker contract. |
 | `logs/innovation-registry.md` | T1 / T2 / T3 (by row Status) | Parse the markdown table (columns: Date \| Type \| File \| Status \| Graduated To). Per row, classify by Status: **T1 fix-shaped:** `pending-triage` (untriaged, ≤7 days → suggest `/innovation-sweep`); `triaged:broken-symlink` (clear fix — repoint or delete + status flip). **T2 fix-shaped:** `triaged:graduate` rows where the "Graduated To" column is empty/`—`/`-` OR contains an instruction like `(run \`/graduate-resource ...\`)` (graduation pending). **T2 hygiene:** `triaged:graduate` rows where "Graduated To" populated with `already canonical` or a real ai-resources path BUT the source row's Status is not yet `graduated` (stale status — flip needed). **T3 watch-shaped:** `triaged:loose-end`, `triaged:graduate-candidate`, `pending-triage` older than 14 days (operator-decision pending). **Skip (exclude):** `triaged:project-specific`, `triaged:already-graduated`, `graduated`, `superseded:*`, `merged into *`, `created`. |
 | `logs/coaching-log.md` | T2 (watch-shaped, carry-forward) | Locate the most recent `### YYYY-MM-DD` entry. If its `**Prior recommendation status:**` line contains a phrase indicating the prior cycle's One Thing was not acted on (e.g., "not measurably acted on", "third occurrence", "carried forward again", "survived three coaching cycles unactioned"), surface the entry's `**The One Thing:**` line as a watch-shaped item. One item maximum per scope. |
 | `logs/gate-calibration.md` | T2 (watch-shaped, follow-up) | Locate each `## YYYY-MM-DD — {scope}/{gate}` entry. If its body contains a `**Note:**` line mentioning a follow-up that is "flagged for a separate gated item", "out of scope for this ungated calibration entry", or similar deferral language, surface as a watch-shaped follow-up item. |
+
+**None-answer detection (`Open Questions`).** Decide in two steps — **normalize, then prefix-test.** Skipping the normalize step is the known way to get this wrong (see the note at the end).
+
+**Step A — normalize.** From the block's content, strip leading blank lines, then strip a leading unordered-list marker: `-`, `*`, or `+` followed by whitespace. Then trim. The overwhelmingly common on-disk form is a bullet (`- None.`), so the raw content begins with `-`, not `None` — without this step the prefix test below matches almost nothing it is meant to match.
+
+**Step B — prefix-test.** The block is **empty** — extract nothing from it — when the normalized content **begins with** the word `None` (case-insensitive) and that word is followed by one of:
+
+- end of content (`None`, `- None`);
+- clause punctuation — `.` `,` `;` `:` `(` `—` `–` `-` (e.g. `- None.`, `None — the remaining work is a known follow-up.`, `- None (broken symlink target confirmed; fix is in the execution plan)`);
+- a follower word from the closed allowlist **`blocking`** or **`new`**, each itself optionally followed by any of the above (e.g. `- None blocking. (Carried: …)`, `- None new.`).
+
+**Prose after the None is explanation, not an open question.** Match on the *prefix*, never on the whole block: a session note that answers "None" and then says why is still answering None.
+
+**Both guards are load-bearing — do not drop either.**
+
+- Do **not** skip Step A. Bullet-form (`- None.`) is the majority form in `logs/session-notes.md`; a prefix test run against un-normalized content silently fails on all of them.
+- Do **not** loosen Step B to a bare `startswith("none")`. The follower must be punctuation, end-of-content, or an allowlisted word. `None of the three decisions are resolved` begins with `None` but is followed by the word `of` — which is on neither list — so it is **substantive** and must still be extracted. Widening the allowlist re-opens exactly that hole.
+
+*Origin:* this rule replaces an exact-whole-content match that surfaced 3 phantom items out of 13 in the 2026-07-12 workspace scan (23% false-positive), one of which ranked as a top-2 fix-shaped candidate. The Step A / follower-set requirements were then added by an independent QC pass, which found that a naive prefix-only rule would have missed ~12 bullet-form None-answers — worse than the defect it replaced.
 
 ### Step 2 — Apply hard exclusions
 
