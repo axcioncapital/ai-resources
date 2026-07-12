@@ -476,3 +476,20 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Verification (must be payload-based, not close-based):** after wiring, confirm on **2+ ordinary wraps** that `decisions_refs` is non-empty *whenever the session actually made decisions*. Do **not** re-use the Pass 1 gate's test (`stop_reason`/`outcome` non-null) — that is the proxy that let this slip through: all 3 manifests closed cleanly while carrying nothing.
 - **Target files:** `ai-resources/.claude/commands/wrap-session.md` (manifest-close step); `/.claude/commands/wrap-session.md` (workspace-root paired copy); no change needed to `logs/scripts/run-manifest.sh` (already supports the append).
 - **Method lesson (generalizes past this entry):** a gate must test the property the downstream change **depends on**, not a proxy that correlates with it. "Did the manifest close?" correlates with "is it safe to cut over" — until it doesn't.
+
+### 2026-07-12 — LIVE banned model declarations in the pe-kb-vault settings (missed by the 2026-06-18 purge; both carry the spawn-breaking `[1m]` suffix)
+- **Status:** logged (pending) — **found S4; NOT fixed (outside the session's declared Files in scope; awaiting operator authorization to widen the edit set).**
+- **Category:** infrastructure (harness config / banned model declarations)
+- **Severity:** medium-high — this is a *live* rule violation on a *live* failure mode, not a latent one.
+- **Found by:** S4 (2026-07-12), incidentally — a post-commit verification sweep for the § Model Tier carve-out (`find . -name "settings*.json" | xargs grep -l '"model"'`) was written to *confirm zero hits* and instead returned two.
+- **The finding:**
+  - `knowledge-bases/pe-kb-vault/.claude/settings.json:3` → `"model": "claude-sonnet-4-6[1m]"`
+  - `knowledge-bases/pe-kb-vault/.claude/settings.local.json:2` → `"model": "claude-opus-4-7[1m]"`
+- **Three distinct defects in two lines:**
+  1. **A `"model"` field in `settings.json` at all** — banned at *every* layer by workspace `CLAUDE.md` § Model Tier, which names **vault** explicitly. A declared default contests `/model`, so the operator cannot reliably switch model in that vault's sessions.
+  2. **The `[1m]` suffix** — known to **break subagent spawns** (the 1M-context variant needs separate credits; when unavailable the spawn errors). This is the exact failure the 2026-06-18 entry was opened for.
+  3. **A stale version pin** (`claude-opus-4-7`) — will not track the current Opus.
+- **Why it survived:** the 2026-06-18 entry's item 1 was marked *"done 2026-07-03 — the 3 `settings.local.json` `model` lines verified already gone (item 1 moot)."* That check enumerated three **project** settings files. **It never scanned `knowledge-bases/`.** The purge declared itself complete against an incomplete file list — the same invariant-stem-vs-narrow-grep failure S2 logged this morning ("grep the invariant stem, never the templated form"; here: enumerate *every* settings file, not the three you remembered).
+- **Proposal:** Delete the `"model"` line from both files (the canonical fix — not "strip the suffix"; the field itself is banned). `settings.local.json` is gitignored/per-machine; `settings.json` is tracked. Then re-run the **exhaustive** check as the closure test: `find . -name "settings*.json" -not -path "*/node_modules/*" | xargs grep -l '"model"'` must return **zero**, workspace-wide — not "the three files I checked."
+- **Target files:** `knowledge-bases/pe-kb-vault/.claude/settings.json`; `knowledge-bases/pe-kb-vault/.claude/settings.local.json`.
+- **Method lesson:** a purge is only as complete as its file enumeration. "Verified already gone" against a hand-listed subset is not verification — it is a narrower grep wearing a closure stamp. The 2026-06-18 item should not have been marked moot.
