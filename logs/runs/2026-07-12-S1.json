@@ -25,7 +25,16 @@
     ".claude/commands/session-start.md",
     ".claude/commands/prime.md",
     ".claude/commands/wrap-session.md",
-    "../.claude/commands/wrap-session.md"
+    "../.claude/commands/wrap-session.md",
+    "logs/runs/2026-07-12-S1.json",
+    "docs/spine-schemas.md",
+    "logs/missions/w32-migration-execution.md",
+    "logs/decisions.md",
+    "logs/session-notes.md",
+    "logs/session-notes-archive-2026-07.md",
+    "audits/risk-checks/2026-07-12-w32-r3-durable-run-manifest-slim-wrap-note.md",
+    "projects/axcion-ai-system-redesign/output/implementation-prep/packets/R3-run-manifest.md",
+    "projects/axcion-ai-system-redesign/output/implementation-prep/remediation-register.md"
   ],
   "decisions_refs": [
     "logs/decisions.md#2026-07-12-r3-pass1"
@@ -46,8 +55,8 @@
     "subagents": 0,
     "token_estimate": null
   },
-  "stop_reason": null,
-  "outcome": null,
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
   "failure_class": null,
   "incidents_refs": []
 }
