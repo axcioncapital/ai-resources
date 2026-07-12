@@ -42,7 +42,7 @@ Input: `$ARGUMENTS` — optional. If provided, it is treated as an explicit stat
 
 ### Step 3 — Delegate the independent drift comparison
 
-8. Spawn one general-purpose subagent (fresh context) — **explicitly pin `model: opus` on the spawn.** `general-purpose` carries no tier of its own, so an un-pinned spawn silently inherits the session model: on a Sonnet or Haiku session the drift adjudication would quietly run below the tier this judgment needs. Pin it. (Convention established 2026-07-03 across `/qc-pass`, `/refinement-pass`, `/risk-check`; tier declared 2026-07-12 per W3.2 M-A2a.) Brief:
+8. Spawn one general-purpose subagent (fresh context) — **explicitly pin `model: opus` on the spawn.** `general-purpose` carries no tier of its own, so an un-pinned spawn silently inherits the session model: on a Sonnet or Haiku session the drift adjudication would quietly run below the tier this judgment needs. Pin it. (Pin-the-tier convention established 2026-07-03 — but the tier is **per-dispatch, not blanket opus**: `/qc-pass`, `/refinement-pass`, `/refinement-deep`, `/friday-journal` pin `opus`, while `/risk-check` deliberately pins `sonnet` as a logged cost exception (`logs/decisions.md` 2026-07-05). Do not "correct" risk-check to opus. Tier declared here 2026-07-12 per W3.2 M-A2a.) Brief:
 
    ```
    You are an independent drift reviewer for an in-progress Claude Code session. Judge whether the session's actual work trajectory still matches its mandate. You have NO view of the session's conversation — gather evidence only from the artifacts named below, so your judgment is independent of the main session's self-assessment.

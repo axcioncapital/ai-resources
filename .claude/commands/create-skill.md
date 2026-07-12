@@ -32,7 +32,7 @@ After Patrik approves the plan:
 
 ## Step 3: Evaluate (Subagent)
 
-Spawn a subagent for evaluation — **explicitly pin `model: opus` on the spawn.** A `general-purpose` subagent carries no tier of its own, so an un-pinned spawn silently inherits the session model: on a Sonnet or Haiku session the behavioral analysis and convention gate would quietly run below the tier this judgment needs. Pin it. (Convention established 2026-07-03 across `/qc-pass`, `/refinement-pass`, `/risk-check`; tier declared 2026-07-12 per W3.2 M-A2a.) Pass it ONLY:
+Spawn a subagent for evaluation — **explicitly pin `model: opus` on the spawn.** A `general-purpose` subagent carries no tier of its own, so an un-pinned spawn silently inherits the session model: on a Sonnet or Haiku session the behavioral analysis and convention gate would quietly run below the tier this judgment needs. Pin it. (Pin-the-tier convention established 2026-07-03 — but the tier is **per-dispatch, not blanket opus**: `/qc-pass`, `/refinement-pass`, `/refinement-deep`, `/friday-journal` pin `opus`, while `/risk-check` deliberately pins `sonnet` as a logged cost exception (`logs/decisions.md` 2026-07-05). Do not "correct" risk-check to opus. Tier declared here 2026-07-12 per W3.2 M-A2a.) Pass it ONLY:
 
 - The **path** to the evaluation framework: `skills/ai-resource-builder/references/evaluation-framework.md` — the subagent reads it directly. **Do not read this file in the main session** (token-audit R3, 2026-05-25: 307 lines never reasoned over in main; main was a pure pass-through to the subagent).
 - The newly created SKILL.md path (and any bundled resource paths)

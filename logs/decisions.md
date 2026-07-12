@@ -282,3 +282,29 @@ Applied:
 - **Rationale.** The contract's stated hazard was substantially defused: the plan was already **committed to disk** (`ed3d00a`), so compaction could not lose it. The residual concern — a live concurrent session (S2) mid-mandate — was handled by ordering: code/doc edits first (zero overlap with S2's files), shared-log edits last, explicit-path staging throughout.
 
 - **Outcome.** The precaution was justified and *still insufficient*: a bare `git commit` swept S2's staged deletion anyway. Contained and reversed. The real lesson is not about the two-session contract — it is that `git add <path>` + bare `git commit` is asymmetric, and the guard meant to catch it is inert for markerless sessions. Logged in `friction-log.md`.
+
+## 2026-07-12 (S4) — R3 Pass 2: HOLD. The gate does not hold, and the gate was the wrong test.
+
+- **Decision.** Do **not** implement W3.2 R3 Pass 2 (retiring `### Files Created` / `### Files Modified` / `### Decisions Made` from the wrap note into the run-manifest's `files_changed` / `decisions_refs`). The gate is **closed**, not merely thin.
+
+- **What the gate asked, and why it was insufficient.** The Pass 1 gate (S1 scratchpad + mission thread) said: *confirm 2–3 ordinary sessions produced **closed** manifests (`stop_reason` / `outcome` non-null) before shipping the cut.* On that test the gate **passes**: S1, S2 and S3 all closed with `stop_reason=completed`, `outcome=DELIVERED`. Two of the three (S2, S3) were ordinary sessions not paying attention to the manifest — exactly the evidence requested.
+
+- **The test was a proxy, and the proxy is wrong.** Pass 2 does not depend on the manifest *closing*. It depends on the manifest **carrying the payload** that the retired sections carry. Those are different properties, and the second one fails:
+
+  | Session | Kind | `files_changed` | `decisions_refs` | Decisions actually made |
+  |---|---|---|---|---|
+  | S1 | author (wrote R3) | 15 | **1** | 1 |
+  | S2 | ordinary | 16 | **0** | **5** (`### Decisions Made`) + 1 in `decisions.md` |
+  | S3 | ordinary | 9 | **0** | **2** (in `decisions.md`) |
+
+  `files_changed` populates reliably (15 / 16 / 9). **`decisions_refs` is empty on every ordinary session** — 0-for-2 — while those sessions were making seven real decisions between them. Only the session that *authored the feature* populated it.
+
+- **Root cause — the field is not wired.** `logs/scripts/run-manifest.sh` implements `decisions_refs` append (L247–249, L302–304), but **`wrap-session.md` never calls it.** No `--decisions-ref` invocation exists anywhere in the wrap flow. The field populates only when a session hand-calls the script, which is precisely what S1 did *because S1 was testing it*. So the one datapoint that made the gate look open is the one datapoint that cannot count as evidence.
+
+- **What shipping Pass 2 today would have cost.** Retiring `### Decisions Made` in favour of an unwired `decisions_refs` would have left S2's five decisions and S3's two with **no home in the manifest** — deleting the only structured per-session record of them from the wrap note while the replacement stayed empty. That is exactly the "loses its file/decision record from **both** surfaces" data-loss the two-pass split was created to prevent. The split worked; it just needed the right question asked at the gate.
+
+- **Prerequisite for reopening.** Pass 2 is **blocked** until (1) `wrap-session` actually writes `decisions_refs` at close, and (2) that wiring is proven on 2+ *ordinary* wraps — measured by payload (`decisions_refs` non-empty when the session made decisions), not by `stop_reason`. Logged to `improvement-log.md`. `files_changed` is not in doubt; only the decisions half is.
+
+- **Method lesson (carry into every future gate).** *A gate must test the property the downstream change actually depends on, not a proxy that correlates with it.* "Did it close?" correlates with "is it safe to cut over" — right up until the moment it doesn't. This is the same family as the S2 lesson (*"a test that cannot fail is not a test"*) and the S1 lesson (*the packet's central premise was false*): three consecutive sessions in which the stated gate, taken at face value, would have shipped a defect.
+
+- **Decided by:** S4, on evidence, 2026-07-12. Reversible: the gate reopens the moment `decisions_refs` is wired and proven.
