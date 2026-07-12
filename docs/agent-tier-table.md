@@ -10,30 +10,36 @@ Every agent must declare `model:` explicitly in frontmatter — no implicit inhe
 
 ## Agent tier assignments (ai-resources/.claude/agents/)
 
+**Ground truth is agent frontmatter, not this table.** Reconciled 2026-07-12 (W3.2 M-A4) against the 42 live files in `ai-resources/.claude/agents/`: 5 rows added, 2 relocated, 0 tier mismatches. Rows are alphabetical.
+
 | Agent | Current tier | Notes |
 |---|---|---|
 | claude-md-auditor | opus | Judgment (CLAUDE.md quality audit). Added 2026-04-27. |
 | collaboration-coach | opus | Judgment (cross-session pattern analysis). Correct. |
 | context-discovery | opus | Judgment (context discovery, selection, and cited context-pack assembly). Tier matches declared frontmatter and work type. Added 2026-06-03 (repo-dd F-1, projects/marketing-positioning). |
-| pipeline-review-auditor | opus | Judgment (per-pipeline System-Owner-grounded design review + currency-check against Anthropic doc URLs). Added 2026-05-29. Replaces critical-resource-auditor (deleted 2026-05-29 when `/pipeline-review` subsumed `/audit-critical-resources`). |
 | dd-extract-agent | haiku | Mechanical extraction for repo-dd. Correct. |
 | dd-log-sweep-agent | haiku | Mechanical log scan for repo-dd. Correct. |
+| diagnostics-scanner | sonnet | Structured scan of diagnostic reports + backlog logs for one scope; returns normalized prioritized candidate list. Invoked by /fix-project-issues. **Row added 2026-07-12 (M-A4)** — the agent existed; the table row was missing. |
 | execution-agent | sonnet | API-call dispatcher. Correct. |
+| expert-check-reviewer | opus | Judgment (compares a drafted artifact against book-summary principles in a target KB vault; returns advisory divergence findings). Invoked by /expert-check. **Row added 2026-07-12 (M-A4)** — agent existed; row was missing. |
 | fading-gate-scanner | haiku | Mechanical scan for fading high-confirmation gates in coaching-data.md. Delegated by /friday-checkup. Added 2026-05-27. |
 | findings-extractor | haiku | Mechanical extraction of HIGH/CRITICAL findings from audit sub-reports. Added 2026-05-08. |
 | fix-repo-issues-scanner | sonnet | Structured backlog scan for /fix-repo-issues; returns normalized prioritized issue list. Added 2026-05-27. |
 | friday-act-16a-summarizer | sonnet | Structured extraction of /friday-act Step 16a supplementary inputs (SO Advisory, Systems Review, per-project logs). Added 2026-05-27. |
 | improvement-analyst | opus | Judgment (friction-pattern analysis). Correct. |
 | innovation-triage-auditor | opus | Judgment (per-item verdict for innovation triage). Added 2026-05-08. |
+| lean-repo-auditor | opus | Judgment (leanness / control-drift assessment; reads pre-existing on-disk audit outputs, writes a disposition-grouped simplification plan). Invoked by /lean-repo. **Row added 2026-07-12 (M-A4)** — agent existed; row was missing. |
 | log-sweep-auditor | haiku | Mechanical log inventory and classification for /log-sweep. Added 2026-05-12. |
 | permission-sweep-auditor | sonnet | Structured factual scan (settings/permissions audit). Added 2026-04-27. |
+| pipeline-review-auditor | opus | Judgment (per-pipeline System-Owner-grounded design review + currency-check against Anthropic doc URLs). Added 2026-05-29. Replaces critical-resource-auditor (deleted 2026-05-29 when `/pipeline-review` subsumed `/audit-critical-resources`). |
 | pipeline-stage-3a | sonnet | Structured inventory scan. Correct. |
 | pipeline-stage-3b | opus | Architectural design. Correct. |
 | pipeline-stage-3c | opus | Analytical (implementation spec). Retrofitted from inherit. |
 | pipeline-stage-4 | sonnet | Spec-following implementation. Retrofitted from inherit. |
 | pipeline-stage-5 | sonnet | Verification checks. Correct. |
 | project-manager | opus | Judgment (project-content adjudication grounded in active project's constitution docs; escalates to system-owner via Function A for general structure questions; redirects change-shaped structure questions to /consult). Added 2026-05-28. |
-| qc-gate | sonnet | QC reviewer for stage transitions. Added 2026-05-14. |
+| project-state-scrub-verifier | sonnet | Structured two-pass confidentiality check (deterministic marker/keyword scan + semantic pass) over staged Strategic Context Snapshots before any vault write. Invoked by /refresh-project-state. **Row added 2026-07-12 (M-A4)** — agent existed; row was missing. |
+| project-state-snapshot-agent | sonnet | Structured generation of one Strategic Context Snapshot per project, read-only toward the scanned project. Invoked by /refresh-project-state. **Row added 2026-07-12 (M-A4)** — agent existed; row was missing. |
 | qc-reviewer | opus | QC judgment. Correct. |
 | reconcile-reviewer | opus | Judgment (mandate-compliance scoring, resource-activation audit, genericness check, root-cause classification for `/reconcile`). Graduated to canonical 2026-07-03 from buy-side-service-plan (origin). |
 | refinement-reviewer | opus | Refinement judgment. Correct. |
@@ -48,9 +54,21 @@ Every agent must declare `model:` explicitly in frontmatter — no implicit inhe
 | token-audit-auditor | opus | Judgment sections (4). Correct. |
 | token-audit-auditor-mechanical | haiku | Mechanical sections (2, 5, 6). Correct. |
 | triage-reviewer | opus | Prioritization judgment. Correct. |
-| verification-agent | sonnet | Independent re-derivation for high-stakes outputs. Added 2026-05-14. |
 | workflow-analysis-agent | opus | Architectural analysis. Correct. |
 | workflow-critique-agent | opus | Critique judgment. Correct. |
+
+**Relocated 2026-07-12 (M-A4):** `qc-gate` and `verification-agent` were listed above as canonical `ai-resources` agents. They are not — no such file exists in `ai-resources/.claude/agents/`. They are **research-workflow** agents and are now tracked in the workflow section below. They were *relocated, not deleted* — both are live.
+
+## Workflow agents (`ai-resources/workflows/research-workflow/.claude/agents/`)
+
+Owned by the research-workflow template, not by `ai-resources/.claude/agents/`. Deployed into research projects by `/deploy-workflow` (present today in `positioning-research`, `buy-side-service-plan`, `research-pe-regime-shift-advisory-gap`). Not part of the canonical 42.
+
+| Agent | Tier | Notes |
+|---|---|---|
+| execution-agent | sonnet | API-call dispatcher. Same name and tier as the canonical agent above; the workflow ships its own copy. |
+| improvement-analyst | opus | Friction-pattern analysis. Same name and tier as the canonical agent above; the workflow ships its own copy. |
+| qc-gate | sonnet | QC reviewer for stage transitions. Section added 2026-07-12 (M-A4) — previously mis-listed as a canonical agent. |
+| verification-agent | sonnet | Independent re-derivation for high-stakes outputs. Section added 2026-07-12 (M-A4) — previously mis-listed as a canonical agent. |
 
 ## Project-local agent copies (ai-development-lab)
 
@@ -60,9 +78,11 @@ These agents exist as regular-file copies (not symlinks) in `projects/ai-develop
 |---|---|---|
 | ai-engineer | opus | Judgment (AI engineering feasibility and best-practices evaluation). Project-local to ai-development-lab. Added 2026-05-19. |
 
-## Project-local agent copies (nordic-pe-macro-landscape-H1-2026)
+## Project-local agent copies (nordic-pe-macro-landscape-H1-2026) — ARCHIVED
 
-These agents exist as regular-file copies (not symlinks) in `projects/nordic-pe-macro-landscape-H1-2026/.claude/agents/`. They mirror the canonical ai-resources versions above. Tracked here to satisfy F-9 of the 2026-05-12 repo-dd audit.
+> **Stale as of 2026-07-12 (M-A4).** This project no longer lives under `projects/` — it was archived to `archive/nordic-pe-macro-landscape-H1-2026/`. The agent copies still exist there, so the tiers below remain accurate as a historical record, but **nothing in this section is live**. Retained rather than deleted so the F-9 audit trail survives; delete outright if the archive is ever purged.
+
+These agents exist as regular-file copies (not symlinks) in `archive/nordic-pe-macro-landscape-H1-2026/.claude/agents/`. They mirror the canonical ai-resources versions above. Tracked here to satisfy F-9 of the 2026-05-12 repo-dd audit.
 
 | Agent | Tier | Notes |
 |---|---|---|
