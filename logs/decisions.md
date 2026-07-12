@@ -308,3 +308,16 @@ Applied:
 - **Method lesson (carry into every future gate).** *A gate must test the property the downstream change actually depends on, not a proxy that correlates with it.* "Did it close?" correlates with "is it safe to cut over" — right up until the moment it doesn't. This is the same family as the S2 lesson (*"a test that cannot fail is not a test"*) and the S1 lesson (*the packet's central premise was false*): three consecutive sessions in which the stated gate, taken at face value, would have shipped a defect.
 
 - **Decided by:** S4, on evidence, 2026-07-12. Reversible: the gate reopens the moment `decisions_refs` is wired and proven.
+
+## 2026-07-12 (S4) — § Model Tier carve-out: ratify spawn-site tier pins rather than strip them
+
+- **Context.** Independent QC on the M-A2a tier-pin change (six `general-purpose` spawn sites, commit `69b4bde`) flagged a real tension: workspace `CLAUDE.md` § Model Tier states that per-command/agent/skill YAML frontmatter is "the **only** permitted way to declare a tier outside the live session," and calls the rule non-negotiable. But a `general-purpose` subagent has no frontmatter of its own — the six pins are necessarily written in command body prose, not YAML. Taken literally, the rule was in tension with a practice already live in 5 other commands since 2026-07-03, and the M-A2a change just widened that count to 11.
+- **Options considered (put to the operator via AskUserQuestion):**
+  1. Add a carve-out to § Model Tier permitting spawn-site pins.
+  2. Leave the doctrine unchanged — accept the tension as a known, unresolved gap.
+  3. Revert the six M-A2a pins to restore literal compliance.
+  4. Defer the doctrine question to `/risk-check` before touching CLAUDE.md.
+- **Decision.** Option 1 — add a scoped carve-out. Ratifies what 11 commands already do; the alternative (option 2) leaves a live tripwire where a future `/audit-claude-md` or literal-minded agent has textual grounds to strip all 11 pins and silently downgrade QC, drift adjudication, contract conformance, and skill evaluation to whatever model the operator happens to be on that session.
+- **Rationale.** The ban's own stated purpose is to stop a declared *default* from contesting `/model` — a `settings.json` field that silently overrides the operator's session-start choice for every dispatch. A spawn-site pin does the opposite: it fixes the tier for one specific judgment dispatch that would otherwise silently inherit whatever the operator is on, with no operator-facing signal either way. Frontmatter does this for named agents; the carve-out lets prose do the equivalent for `general-purpose`.
+- **What was NOT weakened.** The settings.json ban itself (no `"model"` field at any layer) is untouched and was reverified after the edit: 0 of 62 workspace settings files declare a model default.
+- **Decided by:** Operator, via AskUserQuestion, 2026-07-12 (S4).
