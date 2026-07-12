@@ -112,7 +112,7 @@ This gate exists because edits to canonical commands and skills auto-symlink to 
 
 ---
 
-## Step 5: Commit and push
+## Step 5: Commit
 
 Per workspace `Commit behavior` and `ai-resources/CLAUDE.md` § Git Rules:
 
@@ -133,10 +133,7 @@ Per workspace `Commit behavior` and `ai-resources/CLAUDE.md` § Git Rules:
    )"
    ```
    Note: the heredoc delimiter is unquoted (`EOF`, not `'EOF'`) so `{TARGET_NAME}` and `{ONELINE}` interpolate; substitute them as literal values at runtime.
-4. Push autonomously per the standing rule:
-   ```bash
-   git push
-   ```
+4. **Do NOT push.** Pushes are batched and gated to the `/wrap-session` confirmation prompt (workspace `CLAUDE.md` § Push behavior). The commit stays local; `/wrap-session` counts it and asks once before pushing.
 5. Capture `SHORT_SHA`:
    ```bash
    SHORT_SHA=$(git rev-parse --short HEAD)
@@ -179,8 +176,9 @@ log: tweak-log.md — record /tweak ${TARGET_NAME}
 Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
 EOF
 )"
-git push
 ```
+
+**Do NOT push either commit.** Pushes are batched and gated to the `/wrap-session` confirmation prompt (workspace `CLAUDE.md` § Push behavior).
 
 This dual-commit shape keeps the audit trail visible in the Friday cadence (the file is registered in `log-sweep.md` Cat A2 with KEEP=10 dated blocks) without overloading `maintenance-observations.md`'s single-writer contract. Per System Owner second-opinion in risk-check report `2026-05-29-tweak-command-creation.md`: one writer × one purpose × one file (`repo-architecture.md` § Q6 canonical pattern; DR-7; OP-3).
 

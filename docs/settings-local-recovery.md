@@ -45,7 +45,9 @@ done
 [ -n "$WORKSPACE" ] || { echo "ERROR: ai-resources not found in any ancestor"; exit 1; }
 
 # Idempotent: adds the absolute workspace root, drops any unfilled {{PLACEHOLDER}},
-# preserves every other key already in settings.local.json (e.g. the model default).
+# preserves every other key already in settings.local.json.
+# NOTE: a "model" key must never live in settings.local.json (or any settings
+# layer) — workspace CLAUDE.md § Model Tier. If you find one, delete it.
 jq --arg dir "$WORKSPACE" \
   '.permissions.additionalDirectories = ((.permissions.additionalDirectories // [] | map(select(startswith("{{") | not))) + [$dir] | unique)' \
   "$LOCAL" > "$LOCAL.tmp" && mv "$LOCAL.tmp" "$LOCAL"

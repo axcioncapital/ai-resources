@@ -64,10 +64,6 @@ Before moving to the next section, ask: "Read all approved sections in the appro
 
 Your feedback is specific and actionable — but if it's always corrections, the drafter only learns what to avoid, never what to keep. Before corrections, note what works: "The three-lens framework structure works, keep that. The evidence calibration on the retainer argument is exactly right." This builds a counterpart to correction-based learning — first drafts improve because the drafter preserves what works, not just avoids what doesn't.
 
-### Use `/compact` strategically
-
-After approving a section, compact before starting the next one. Apply the same pattern used in produce-prose (compacting after each phase) to drafting sessions.
-
 ## After Producing Work
 
 - **`/qc-pass`** — Run a quality check on work just produced. Default after every creation or improvement.
@@ -85,9 +81,9 @@ After 60 minutes of active work, pause for 2 minutes: "Summarize what we've done
 
 ## Before Committing
 
-- Review the diff Claude shows you.
 - Commit messages: `new:`, `update:`, `batch:`, `fix:`.
-- Push happens automatically after commit.
+- Claude commits directly — it does not run a pre-commit `git status` / `git diff` for you to review, and does not ask permission first (workspace `CLAUDE.md` § Commit behavior).
+- Push is **not** automatic. Commits accumulate locally; a single confirmation prompt at `/wrap-session` covers the whole batch (workspace `CLAUDE.md` § Push behavior).
 
 ## Session End
 

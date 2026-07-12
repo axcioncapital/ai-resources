@@ -153,24 +153,35 @@ Planning artifacts (context pack, project plan, optional technical spec) are pro
 
 11. **Announce what was discovered and copied.** Include: source directory, picked versions (e.g., `project-plan-v3.md`), whether a tech spec was found, any QC-verdict warnings. State that Stage 3a is starting. No separate confirmation gate before copy — the announcement names every file, `sources.md` records provenance, and any wrong picks are reversible via the existing `ABORT` gate.
 
-11a. **Scaffold the project's Model Selection section.** Every project declares its own default model. Ask the operator one question:
+11a. **Scaffold the project's Model Selection section (recommended posture — NEVER a default declaration).**
+
+    > **Model defaults are prohibited workspace-wide** (workspace `CLAUDE.md` § Model Tier). Do **not** ask the operator to choose a project default, do **not** write a `"model"` field into any `settings.json` / `settings.local.json` at any layer, and do **not** write a default-model line into the project's `CLAUDE.md`. A declared default contests `/model`, so the operator can no longer switch model in the live session. The operator selects the session model via `/model` at session start; per-command / per-agent / per-skill `model:` frontmatter is the **only** permitted way to bind a tier outside the live session.
+    >
+    > What a project `CLAUDE.md` *may* carry is a **recommended posture** — advisory prose, never a binding default. That is what this step writes.
+    >
+    > *(This step previously templated a banned default-model declaration — and mandated a `[1m]` identifier suffix that is now known to break subagent spawns. Both were removed 2026-07-12; see `logs/decisions.md`. Do not reintroduce either.)*
+
+    Ask the operator one question:
 
     > Project task profile?
-    > (a) Heavy execution → Sonnet 1M (`claude-sonnet-4-6[1m]`) default. Most repo work, KB ops, operational projects.
-    > (b) Heavy judgment → Opus 4.7 (`claude-opus-4-7`) default. Plan/spec drafting, identity drafting, strategic projects.
-    > (c) Mixed → Sonnet 1M default with Opus opt-ins. Most projects; commands/agents declare `model: opus` where judgment is needed.
+    > (a) Heavy execution — most repo work, KB ops, operational projects.
+    > (b) Heavy judgment — plan/spec drafting, identity drafting, strategic projects.
+    > (c) Mixed — most projects.
 
-    **Pre-flight identifier verification.** Before writing the chosen identifier into the project CLAUDE.md, confirm the canonical strings against a live source: read `projects/buy-side-service-plan/CLAUDE.md` for the Opus 4.7 form, and the system-prompt model context for the Sonnet 4.6 1M form. If any string fails to match the precedent, abort scaffolding and surface the discrepancy — do not write a non-resolvable model ID into a new project. Sonnet identifiers must include the `[1m]` suffix to force 1M context (bare `claude-sonnet-4-6` resolves to 200k).
-
-    **Append a `Model Selection` section to `projects/{project-name}/CLAUDE.md`** (insert just before any `## Commit Rules` section, or before the final section if no Commit Rules section exists). Format matching the buy-side-service-plan precedent:
+    **Append a `Model Selection` section to `projects/{project-name}/CLAUDE.md`** (insert just before any `## Commit Rules` section, or before the final section if no Commit Rules section exists). Use **bare tier names** (`opus` / `sonnet` / `haiku`) — never a versioned identifier, never a `[1m]` suffix (both break subagent spawns and go stale on the next model release).
 
     ```
     ## Model Selection
 
-    Default model for this project is {Sonnet 1M | Opus 4.7} (`{full-form identifier}`, set in `.claude/settings.local.json`, which is gitignored — each operator applies the default manually per machine). Reason: {one-line rationale tied to the chosen profile}. {Optional: one line about which commands/agents opt out of the default and why.}.
+    **Recommended posture** (advisory — not a default; the operator picks the session model via `/model`):
+    {profile-appropriate recommendation, e.g. "Lean Sonnet for routine execution and repo edits; reach for Opus on plan drafting, spec design, and judgment-heavy synthesis."}
+
+    Commands, agents, and skills bind their own tier in frontmatter where the task demands it; those bindings are authoritative and independent of the session model.
     ```
 
-    Confirm the section was written by reading the file back and showing the operator the appended text. Do not write `.claude/settings.local.json` automatically — that is a per-operator manual step (gitignored).
+    Keep the section **present** even when the recommendation is unremarkable — `/prime`'s model-alignment check reads this heading (`prime.md` Step 4), and omitting it leaves that check with no section to read.
+
+    Confirm the section was written by reading the file back and showing the operator the appended text. Never write `.claude/settings.local.json` automatically, and never instruct the operator to add a model default to it.
 
 12. **Spawn the Stage 3a subagent** (`pipeline-stage-3a`). Include in the spawn prompt: "Project directory: projects/{project-name}/ — Pipeline directory: projects/{project-name}/pipeline/"
 
@@ -372,11 +383,11 @@ Otherwise, install the three pieces:
    - whether the auto-sync SessionStart hook was added or already present
    - whether the permission-sanity SessionStart hook was added or already present
 
-3. **Grant ai-resources filesystem visibility (per-machine, in gitignored `settings.local.json`)** — Claude Code sandboxes each project to its own directory by default. Shared skills under `ai-resources/skills/` and symlinks into `ai-resources/.claude/{commands,agents}/` are unreachable until the workspace root is added to `permissions.additionalDirectories`. **This grant must NOT be written to the tracked `settings.json`** — per `ai-resources/docs/permission-template.md`, committed settings must never carry a machine-specific absolute path (a recurring portability defect; see the `settings-path-portability` mission, 2026-06-26). It belongs in the gitignored, per-machine `.claude/settings.local.json` — the same home as the model default (task 2). This step writes it there.
+3. **Grant ai-resources filesystem visibility (per-machine, in gitignored `settings.local.json`)** — Claude Code sandboxes each project to its own directory by default. Shared skills under `ai-resources/skills/` and symlinks into `ai-resources/.claude/{commands,agents}/` are unreachable until the workspace root is added to `permissions.additionalDirectories`. **This grant must NOT be written to the tracked `settings.json`** — per `ai-resources/docs/permission-template.md`, committed settings must never carry a machine-specific absolute path (a recurring portability defect; see the `settings-path-portability` mission, 2026-06-26). It belongs in the gitignored, per-machine `.claude/settings.local.json`. This step writes it there. **Note:** `additionalDirectories` is the *only* thing this pipeline writes to `settings.local.json` — a `"model"` field must never be written there (or to any settings layer) per workspace `CLAUDE.md` § Model Tier.
 
    The walk to locate the workspace root mirrors the idiom in `ai-resources/.claude/hooks/auto-sync-shared.sh` (walk upward until an ancestor contains `ai-resources/`). Use an **absolute** path, not a relative one — Claude Code resolves `additionalDirectories` relative to session CWD, which varies by how the project is opened, so a relative form is unsafe. An absolute path is safe to write here precisely because `settings.local.json` is gitignored and never leaves this machine.
 
-   **Load-bearing jq semantics:** `settings.local.json` may not exist yet, or may already hold the operator's model default. jq's `=` operator on the leaf path `.permissions.additionalDirectories` synthesizes any missing parent objects automatically and preserves every other top-level key, so a single idempotent jq call is sufficient — if jq is ever replaced (Python, Node, yq), that tool must do the same parent-object auto-creation and key preservation.
+   **Load-bearing jq semantics:** `settings.local.json` may not exist yet, or may already hold other per-machine keys. jq's `=` operator on the leaf path `.permissions.additionalDirectories` synthesizes any missing parent objects automatically and preserves every other top-level key, so a single idempotent jq call is sufficient — if jq is ever replaced (Python, Node, yq), that tool must do the same parent-object auto-creation and key preservation.
 
    ```bash
    command -v jq >/dev/null || { echo "ERROR: jq required for additionalDirectories merge"; exit 1; }
@@ -399,7 +410,7 @@ Otherwise, install the three pieces:
    fi
    ```
 
-   `settings.local.json` is gitignored (workspace + project `.gitignore`), so this machine-specific path is never committed. On any **other** machine the operator re-runs this same grant (or applies the snippet in `ai-resources/docs/settings-local-recovery.md`) — it is a per-machine step, exactly like the model default.
+   `settings.local.json` is gitignored (workspace + project `.gitignore`), so this machine-specific path is never committed. On any **other** machine the operator re-runs this same grant (or applies the snippet in `ai-resources/docs/settings-local-recovery.md`) — it is a per-machine step.
 
    Report in the step output:
    - whether `additionalDirectories` was added to `settings.local.json`, already present, or skipped (walk failed)

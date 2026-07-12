@@ -81,7 +81,7 @@ Apply the three-tier heuristic from `ai-resources/skills/ai-resource-builder/ref
 
 Map `INTENT` to one tier. Set `RECOMMENDED_MODEL`.
 
-Read `ACTIVE_MODEL` from the system-prompt context (the model identifier already in context, e.g., `claude-sonnet-4-6[1m]`). Do not run any external command. Compare against the **active session model only** — not the project default. (`/prime` Step 4b handles project-default alignment; this step checks task-requirement fit.)
+Read `ACTIVE_MODEL` from the system-prompt context (the model identifier already in context). Do not run any external command. Compare against the **active session model only**. (`/prime` Step 4's model-alignment check compares the session model against the project's *recommended posture*, where one is declared; this step checks task-requirement fit. Note there is no such thing as a project model *default* — defaults are prohibited at every layer per workspace `CLAUDE.md` § Model Tier.)
 
 - If `RECOMMENDED_MODEL` tier matches `ACTIVE_MODEL` tier: note `match`.
 - If mismatch: emit one line `→ /model {shortname}` (e.g., `→ /model opus`). No confirmation prompt.

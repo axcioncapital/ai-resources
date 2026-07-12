@@ -234,7 +234,7 @@ Three writes, in this order:
     Next action: {what would need to happen to close it}
     ```
 
-33. **No commit.** The fix is applied but not committed. Committing is operator-discretionary. After the operator confirms the fix looks good, remind them to commit per workspace commit rules (push happens automatically after commit).
+33. **No commit.** The fix is applied but not committed. Committing is operator-discretionary. After the operator confirms the fix looks good, remind them to commit per workspace commit rules. Do NOT push — pushes are batched and gated to the `/wrap-session` confirmation prompt (workspace `CLAUDE.md` § Push behavior).
 
 ---
 

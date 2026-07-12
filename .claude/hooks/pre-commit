@@ -84,10 +84,27 @@ if [ $errors -gt 0 ]; then
     exit 1
 fi
 
-# Informational skill-size check (non-blocking, exit 0 even on warnings)
-hook_dir="$(dirname "$0")"
-if [ -x "$hook_dir/check-skill-size.sh" ]; then
-    "$hook_dir/check-skill-size.sh" || true
+# Informational skill-size check (non-blocking, exit 0 even on warnings).
+#
+# Resolve the companion script from the REPO ROOT, not from $(dirname "$0").
+# This hook runs from two different locations: the tracked source at
+# .claude/hooks/pre-commit, and the INSTALLED copy at .git/hooks/pre-commit.
+# A $(dirname "$0") lookup resolves to .git/hooks/ when installed — where
+# check-skill-size.sh does not exist — so the check silently no-ops and the
+# hook still reports success. Anchoring to the repo root works from both.
+# (Caught by /risk-check, 2026-07-12: the sync that restored this call would
+# otherwise have achieved nothing, and a "does the commit succeed?" test would
+# have passed with the bug live.)
+# The `|| true` is LOAD-BEARING, not defensive noise. This script runs under
+# `set -e` (line 6). A bare assignment takes the exit status of its command
+# substitution, so a failing `git rev-parse` (bare repo, GIT_DIR without a
+# worktree) would abort the hook with exit 128 and BLOCK THE COMMIT — the exact
+# opposite of this check's non-blocking contract, and it would do so before the
+# `-n` guard below could ever run. Do not remove it.
+repo_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+size_check="${repo_root}/.claude/hooks/check-skill-size.sh"
+if [ -n "$repo_root" ] && [ -x "$size_check" ]; then
+    "$size_check" || true
 fi
 
 echo "All skill checks passed."

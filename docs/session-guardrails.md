@@ -2,7 +2,9 @@
 
 > **When to read this file:** For the full trigger enumeration, exempted-command list, and tuning procedure behind the four advisory flags. The flag names and one-line purposes live in workspace CLAUDE.md; details live here.
 
-Four advisory flags surface session-risk signals in chat so the operator can decide whether to proceed. These are self-enforcement rules — no hook, no hard gate, no named confirmation phrase. When a trigger fires, emit the named flag in a single line and wait for the operator's one-word response (e.g., "proceed", "narrow", "clear", "/clarify"). Exception: `[AMBIGUOUS]` uses the self-resolving form — it does not wait for a one-word response unless the assumption cannot be resolved from context.
+Four advisory flags surface session-risk signals in chat. These are self-enforcement rules — no hook, no hard gate, no named confirmation phrase. **All four are advisory: emit the named flag in a single line and continue working — do not stop for a response** (workspace `CLAUDE.md` § Session Guardrails). The flag is a visible signal the operator can act on if they choose; it is not a gate.
+
+The one exception is `[AMBIGUOUS]`, which self-resolves from available context and blocks **only** when the assumption genuinely cannot be resolved and guessing would materially change the output.
 
 Flag tags are stable, parseable strings: `[HEAVY]`, `[SCOPE]`, `[AMBIGUOUS]`, `[COST]`. Use them verbatim so future telemetry can count fire rates.
 
@@ -20,7 +22,7 @@ Fire *before* the tool call, not after. Triggers:
 
 Skip outside the exemption list when the action is clearly routine (targeted Grep, single known small file Read, one Explore subagent on a scoped question).
 
-Flag format: `[HEAVY] About to {action}. Signal: {which trigger}. Estimated cost: ~{tokens or "large"}. Proceed, narrow, or skip?`
+Flag format: `[HEAVY] About to {action}. Signal: {which trigger}. Estimated cost: ~{tokens or "large"}.` Emit and continue — do not wait for a response.
 
 ## `[SCOPE]` — scope-creep against the exit condition
 
@@ -37,7 +39,7 @@ Fire when work is drifting past the exit condition set at `/prime`. Triggers:
 
 `[SCOPE]` only fires when an exit condition is logged in `ai-resources/logs/session-notes.md` for the current session. If `/prime` was not run (ad-hoc work), `[SCOPE]` is inactive — do not invent an exit condition to flag against.
 
-Flag format: `[SCOPE] Exit condition was "{X from session notes}". New request: "{Y}". Update exit condition, defer to new session, or accept drift?`
+Flag format: `[SCOPE] Exit condition was "{X from session notes}". New request: "{Y}". Proceeding — say the word to narrow or defer.` Emit and continue — do not wait for a response.
 
 **Escalation to `/drift-check`:** `[SCOPE]` is a single-signal nudge. When it fires repeatedly in the same session, or when the deviation feels structural (actual work shape no longer matches the mandate) rather than incidental (one extra ask), escalate to `/drift-check` for a full mandate-vs-trajectory comparison with ALIGNED / MINOR-DRIFT / MAJOR-DRIFT verdict.
 
@@ -62,7 +64,7 @@ Fire when the session has already consumed significant budget and more work is b
 
 `[COST]` handles *when to flag*; the "Pre-compact checkpoint" bullet in workspace CLAUDE.md handles *what to do* (scratchpad + `/clear` over `/compact`).
 
-Flag format: `[COST] Session has spent {subagent count} subagents / {turn count} turns / {artifact count} artifacts. Checkpoint + /clear + restart, or continue?`
+Flag format: `[COST] Session has spent {subagent count} subagents / {turn count} turns / {artifact count} artifacts. Continuing — checkpoint + /clear + restart is available if you want it.` Emit and continue — do not wait for a response.
 
 ## `friction-log: true` — per-command auto-log opt-in
 

@@ -101,9 +101,9 @@ Previous audit: [date of most recent previous audit, or "None"]
 
 4.8. For each `.claude/agents/*.md` file under the audit scope, read the `model:` frontmatter field and compare against the Agent Tier Table in the workspace CLAUDE.md → "Model Tier" → "Agents" subsection. List any agent whose declared tier (Haiku / Sonnet / Opus / inherit) does not match the table, or that is missing from the table entirely. State the agent file, the declared tier, the expected tier per the table, and whether the tier is missing or mismatched.
 
-4.9. For each project directory under `projects/` in the audit scope, compare `.claude/settings.json` against the canonical baseline declared in `ai-resources/.claude/commands/new-project.md` (the `CANONICAL_PERMS` block and the `"model": "sonnet"` top-level default at line ~179). Report:
+4.9. For each project directory under `projects/` in the audit scope, compare `.claude/settings.json` against the canonical baseline declared in `ai-resources/.claude/commands/new-project.md` (the `CANONICAL_PERMS` block). Report:
    - Whether `.claude/settings.json` contains the canonical `permissions.deny` entries (minimum: `Read(archive/**)`); list missing deny entries per project.
-   - Whether `.claude/settings.json` declares `"model": "sonnet"` at the top level; list projects missing the declaration.
+   - **Whether any settings file DECLARES a `"model"` field — this is a defect, not a requirement.** Model defaults are **prohibited at every layer** (user, workspace, `ai-resources`, project, vault) per workspace `CLAUDE.md` § Model Tier: a declared default contests `/model` and blocks the operator from switching model in the live session. Check both `.claude/settings.json` and the gitignored `.claude/settings.local.json`. **List every project that declares one, and flag it for removal.** Never report a *missing* `"model"` field as a gap, and never recommend adding one — such a recommendation must be rejected. *(This item previously demanded the opposite; corrected 2026-07-12 — see `logs/decisions.md`.)*
    - For each project, the date of the most recent commit touching `.claude/settings.json`, and the date of the most recent commit touching the `CANONICAL_PERMS` block in `new-project.md`. (Lets a reader see at a glance which projects predate the current canonical baseline.)
 
 ## Section 5: Context Load
