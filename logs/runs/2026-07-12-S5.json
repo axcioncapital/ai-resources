@@ -16,7 +16,26 @@
     "subagents": [],
     "tools_notable": []
   },
-  "files_changed": [],
+  "files_changed": [
+    "logs/scripts/decision_ref_slug.py",
+    "logs/scripts/check-decision-refs.sh",
+    "logs/scripts/run-manifest.sh",
+    "logs/scripts/run-manifest.test.sh",
+    ".claude/commands/wrap-session.md",
+    "../.claude/commands/wrap-session.md",
+    "docs/spine-schemas.md",
+    "logs/decisions.md",
+    "logs/improvement-log.md",
+    "logs/missions/w32-migration-execution.md",
+    "logs/session-notes.md",
+    "logs/usage-log.md",
+    "logs/session-plan-2026-07-12-S5.md",
+    "audits/risk-checks/2026-07-12-wire-decision-ref-into-wrap-session-manifest-close.md",
+    "audits/risk-checks/2026-07-12-endtime-decision-ref-wiring-executed-set.md",
+    "audits/risk-checks/2026-07-13-regate-decision-ref-wiring-post-reconsider.md",
+    "../projects/axcion-ai-system-redesign/output/implementation-prep/remediation-register.md",
+    "../projects/axcion-ai-system-redesign/output/implementation-prep/packets/R3-run-manifest.md"
+  ],
   "decisions_refs": [
     "logs/decisions.md#2026-07-12-s5-decisions-refs-ref-format-slug-the-decision",
     "logs/decisions.md#2026-07-12-s5-r3-pass-2-has-a-second-prerequisite-and-it-is"
@@ -32,8 +51,8 @@
     "subagents": 0,
     "token_estimate": null
   },
-  "stop_reason": null,
-  "outcome": null,
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
   "failure_class": null,
   "incidents_refs": []
 }

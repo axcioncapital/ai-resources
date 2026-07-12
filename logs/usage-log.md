@@ -683,3 +683,33 @@ Token efficiency tracking. Each entry records one session's resource usage and w
 - Cache session-notes.md content from its first wrap-time read and reuse it for subsequent guard checks (Step 3.5 x2, tail checks) instead of re-querying the file — ~6-10k tokens/session, applies to every /wrap-session run with a guard-fire scenario.
 - Replace separate full-tail-then-grep passes on decisions.md/usage-log.md/friction-log.md with a single targeted grep -A/-B call — ~1-3k tokens per file when applicable.
 - Batch multi-append log operations (like the 5 sed appends) as one heredoc/script file rather than a chained command likely to trip the permission heuristic — ~2k tokens/session, low-frequency (only fires on multi-append log operations).
+
+### 2026-07-12 (S5) | Wasteful
+
+**Task:** Wired both paired copies of `wrap-session.md` to write the run-manifest's `decisions_refs` at close — the blocking prerequisite for R3 Pass 2 (mission `w32-migration-execution`). Two gate-driven redesigns (QC REVISE → slug algorithm moved from prose into code; risk-check RECONSIDER → two silent-failure paths closed + 11 regression assertions). Landed 18 files across 3 repos. Ran past midnight into 2026-07-13.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~5 (initial direction, mandate confirm, one "continue", wrap) |
+| Files read | ~12 (re-reads: 0 genuine — but 2 files needed a second paged `Read` after hitting the 25k page cap: `improvement-log.md` 506 L, `friction-log.md` 329 L) |
+| Files written/edited | ~19 (~14 Edit + 5 Write; 18 committed across 3 repos — ai-resources `3e3d0fe` 15, workspace root `54007f1` 1, redesign `f44411b` 2) |
+| Tool calls | ~75 (Bash ~35, Edit ~14, Read ~12, Write ~5, Skill 5, Agent 4) |
+| Subagents | 5 (risk-check-reviewer ×3 — plan-time ~152k/258s, end-time ~140k/471s, re-gate ~127k/346s; qc-reviewer ×1 ~74k/283s; telemetry ×1) — ~493k subagent tokens |
+| Rework cycles | 2 artifact-level (both gate-caught, same artifact set) + 1 tool-execution retry |
+
+**Findings:**
+- **Rework (Major).** Two redesign cycles on the same artifact set (`spine-schemas` § 1 + both `wrap-session.md` copies): (1) `/qc-pass` REVISE forced the slug algorithm out of prose and into a code module; (2) end-time `/risk-check` RECONSIDER forced two silent-failure paths closed in that new module. Cycle 2 existed only because cycle 1 created the code — the chain compounded. **Cycle 1 was foreseeable:** the repo already held 3 orphaned hand-authored refs on disk as direct evidence that a prose recipe hand-executed by a model does not hold. Handing a deterministic string transform to a model as prose was unsound at design time, not merely in hindsight.
+- **Context bloat (Moderate).** ~65k tokens of orientation reading: `improvement-log.md` (506 L) and `friction-log.md` (329 L) both read in **full** at `/prime`, both exceeding the 25k page cap. `friction-log.md` was never referenced again — its full load (~25–30k) was 100% waste. `improvement-log.md` was afterwards only targeted-Edited, so its full read was never needed either. `decisions.md` was correctly handled by grep/tail — the right pattern existed in-session and was not applied to its two larger siblings.
+- **Subagent cost (Moderate).** ~493k subagent tokens on a change landing 18 files. Each gate was individually rule-mandated — plan-time (structural class), end-time (executed set grew materially past the plan-time set: `run-manifest.sh` moved from "no change" to modified, plus 2 new scripts), re-gate (required by RECONSIDER's own guidance). But the *sequence* is downstream of the rework finding: the executed-set growth that made the end-time check mandatory traces directly to the cycle-1 redesign. A sound first design plausibly collapses three risk-checks to two.
+- **Tool overhead (Minor).** One malformed `git commit -- <paths> -m "msg"` — the `-m` after the `--` separator parsed as a pathspec; commit failed and was re-issued. One wasted call.
+- **Positive — empirical failure-mode testing earned its cost.** Module-deleted / python3-absent / symlink-invocation / garbage-marker / non-UTF-8 probes cost a handful of Bash calls and found 2 real defects (one self-found: the checker tracebacked on a missing module). Best ROI in the session. The midnight rollover surfaced a third bug for free (the checker derived the date from the clock, not the session marker).
+- **Trend:** second consecutive Wasteful. The large-log read class is a **repeat of the prior entry's own Major finding and Recommendation** — partially applied (`decisions.md` targeted) but never shipped for `improvement-log.md` / `friction-log.md`. The character differs (2026-07-03 was process sloppiness; this is design cost with the gates working correctly), but the rubric does not credit a good outcome.
+
+**Recommendation:** Convert `/prime`'s reads of `improvement-log.md` and `friction-log.md` from full `Read` to targeted extraction (grep for open/PENDING status + `tail -N`), exactly as `decisions.md` is already handled. Primary over the design-time fix below: deterministic, fires on **every** session, one line to implement, and it is the second consecutive entry to flag it — the prior recommendation is still unshipped.
+
+**Estimated savings:** ~50–60k tokens/session at orientation — `friction-log.md` ~25–30k (fully unreferenced → 100% recoverable) plus `improvement-log.md`'s full read reduced to a targeted extract, and it removes both page-cap continuation calls. Over 10–20 sessions: ~500k–1.2M tokens. Order-of-magnitude only.
+
+**Additional levers (ROI-ranked):**
+- **Design-time determinism check (~150–280k tokens/occurrence).** Add a plan-time rule: if a step requires a model to hand-execute a *deterministic transform* (slug derivation, ID generation, path normalization), it must be code, not a prose recipe. This is the root of the entire rework chain — it would have avoided cycle 1 (~15–25k main-session) *and* plausibly one of the three risk-checks (~130–150k). Lower frequency, harder to enforce; ~2–4 firings over 10–20 sessions.
+- **Right-size the risk-check chain for gate-caused re-gating (~127–150k/occurrence).** A "re-gate scope" mode that re-scores only the *delta* rather than re-running a full six-dimension review over the whole change. Fires on any RECONSIDER.
+- **Keep the big logs under the page cap at the source (~5–8k/session).** Both are append-only and archived; a tighter archive threshold would remove the second paged read entirely. Bank only if the archival cadence is already being touched.

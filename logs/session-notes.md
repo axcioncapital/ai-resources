@@ -2,151 +2,6 @@
 
 > Archive: [session-notes-archive-2026-07.md](session-notes-archive-2026-07.md)
 
-## 2026-07-04 — Worktree flow made VS Code-native (auto-open + hook nudges)
-
-### Summary
-Investigated whether the workspace already had a git-worktree capability for concurrent sessions — it did (full system: `/new-worktree-session`, `cc-worktree.sh`, `/cleanup-worktree`, the `detect-concurrent-session.sh` hook, and `parallel-sessions-playbook.md`). Operator chose to improve it to be VS Code-native. Made `/new-worktree-session` auto-open the new worktree in a fresh VS Code window (tiered helper: `code` on PATH → bundled macOS `code -n` → `open -a`), reordered the 3 concurrency-hook nudges to lead with `/new-worktree-session` (VS Code-usable) and demote the terminal `cc-worktree` fast-path, and reframed the playbook §4 entry recipe for VS Code. Gated through `/blindspot-scan`, `/risk-check` (GO), and `/qc-pass` (PASS); auto-open verified live — operator confirmed the window opened.
-
-### Files Created
-- `ai-resources/audits/risk-checks/2026-07-04-worktree-hook-nudge-lead-with-new-worktree-session.md` — risk-check report (GO)
-- `ai-resources/logs/scratchpads/2026-07-04-11-41-scratchpad.md` — continuity scratchpad
-
-### Files Modified
-- `ai-resources/.claude/commands/new-worktree-session.md` — VS Code-native Step 3 + `open_in_vscode()` auto-open helper + L18 framing + `copies`→`symlinks` fix
-- `ai-resources/.claude/hooks/detect-concurrent-session.sh` — 3 nudges now lead with `/new-worktree-session`; `cc-worktree` demoted to a parenthetical
-- `ai-resources/docs/parallel-sessions-playbook.md` — §4 anti-pattern + entry recipe VS Code-native; §5 `copies`→`symlinks`
-- `projects/positioning-research/.claude/hooks/detect-concurrent-session.sh` — synced to canonical (separate repo, committed `6d8f17c`)
-- `projects/research-pe-regime-shift-advisory-gap/.claude/hooks/detect-concurrent-session.sh` — synced to canonical (separate repo, committed `3a2d5a9`)
-- `logs/session-notes-archive-2026-07.md` — auto-archived 3 entries (wrap Step 3)
-- `logs/decisions-archive-2026-06.md` — auto-archived 22 entries (wrap Step 3)
-
-### Decisions Made
-- Operator (via `/clarify` AskUserQuestion + plan approval): improve the existing worktree system to VS Code-native; new-VS-Code-window launch style; general reusable capability (not one project).
-- Auto-open default-on with manual fallback (over the instructions-only subset) — kept because the live window-open test passed and operator confirmed it.
-- Inert project hook copies: committed the nudge-text sync to preserve byte-parity with canonical rather than reverting or deleting; the duplicate-copy cleanup routed to a future pass (Claude judgment — see `decisions.md`).
-
-### Risky actions
-None. Test worktree created and torn down cleanly; one harmless test VS Code window opened on the scratchpad; no destructive/external ops; commits are local and unpushed. The two cross-repo commits were sync-only, text-only.
-
-### Next Steps
-- Push the 3 unpushed commits (`ai-resources`, `positioning-research`, `research-pe-regime-shift-advisory-gap`) at the push gate.
-- Optional future: cleanup pass to delete/symlink the 2 unregistered duplicate `detect-concurrent-session.sh` copies in projects (deletion is gated → dedicated session).
-
-### Open Questions
-None blocking.
-
-### End-time /risk-check
-Skipped per the standing skip rule (`feedback_end_time_risk_check_skip`): plan-time `/risk-check` already covered this session's structural change class (the hook edit) with a **GO** verdict (no mitigations required); the change was independently QC'd (PASS) and verified via git before commit; the commits shipped exactly what was risk-checked with zero drift. Logged here per the skip rule's documentation requirement.
-
-## 2026-07-04 — Investigated K2 reconciliation proposal; built /reconcile-activate
-
-### Summary
-Investigated whether a pasted external proposal (K2 "Project Workflow Reconciliation Agent") already exists in the AI system. Verdict: yes — `/reconcile` + `reconcile-reviewer` implement it ~1:1 and more maturely; the real gap is adoption (the engine is dormant in ~20 of 21 projects because its two reference files are hand-authored and only buy-side-service-plan has them). On operator instruction, built the SO-vetted top item: `/reconcile-activate`, a scaffolder that drafts starter DRAFT versions of those two files, gated behind operator ratification so an auto-draft can never rubber-stamp.
-
-### Files Created
-- `ai-resources/.claude/commands/reconcile-activate.md` — new scaffolder command (opus tier)
-- `ai-resources/audits/risk-checks/2026-07-04-reconcile-activate-command-and-reconcile-step2-draft-gate.md` — risk-check report (PROCEED-WITH-CAUTION + SO commentary)
-- `ai-resources/audits/working/reconciliation-layer-coverage-2026-07-04.md` — investigation memo / coverage map (gitignored working file)
-- `ai-resources/logs/scratchpads/2026-07-04-15-38-scratchpad.md` — continuity scratchpad
-
-### Files Modified
-- `ai-resources/.claude/commands/reconcile.md` — Step-2 ratification gate (item 6a); prose pointer to `/reconcile-activate`; `allowed-tools` += grep/head/mkdir
-- `ai-resources/docs/reconcile-report-template.md` — new § "Ratification banner and gate signals" (single source for banner + gate strings)
-- `ai-resources/logs/improvement-log.md` — parked entry: indicative-run mode for `/reconcile` (SO deferral)
-
-### Decisions Made
-- Reframe the proposal build→activate; build only investigation item 1 (`/reconcile-activate`). Items 2 (standalone genericness detector) + 4 (mandatory per-output trace) declined; items 3 (contradiction-scan → `/qc-pass`) + 5 (cross-run trend) deferred. (SO-vetted.)
-- Guardrail = hard-abort DRAFT-gate, not indicative-run — matches risk-checked scope; indicative-run deferred to improvement-log.
-- Gate keys on `{{AUTHOR:}}` placeholders + `NOT RATIFIED` banner (adopts SO risk-1 fix: deleting the banner alone cannot ratify).
-- QC-fix (independent): added grep/head/mkdir to `/reconcile` `allowed-tools` (gate would otherwise fail-open outside bypass mode); reworded banner to separate the two gate signals.
-
-### Risky actions
-The Step-2 gate change affects every future `/reconcile` run across all projects. Mitigated and verified before commit: dry-run confirmed the one live consumer (buy-side pair) still runs, a synthetic draft aborts, and a `> **What this file is:**` blockquote does not false-positive. QC caught an `allowed-tools` gap that could have let the gate fail-open — fixed pre-commit. Nothing irreversible/external nearly shipped unmitigated.
-
-### End-time /risk-check
-Skipped per the standing skip rule (`feedback_end_time_risk_check_skip`): plan-time `/risk-check` already covered this session's structural change class (new command + `/reconcile` edit) with a PROCEED-WITH-CAUTION verdict whose three mitigations were all applied and verified; the change was independently `/qc-pass`'d (REVISE → fixed) and dry-run-verified; the build commit (13fe89d) shipped exactly what was risk-checked with zero drift.
-
-### Next Steps
-- Push pending: 2 unpushed commits in ai-resources (13fe89d build + this wrap).
-- Exercise `/reconcile-activate projects/<dormant-project>` end-to-end (not yet run live).
-- Parked follow-ons (improvement-log + memo): indicative-run mode for `/reconcile`; fold contradiction-scan into `/qc-pass` (item 3); cross-run failure-trend into `/friday-checkup` (item 5).
-
-### Open Questions
-None.
-
-## 2026-07-04 — /wrap-session leanness refactor (guard externalized, default → core-only)
-
-### Summary
-Rebuilt `/wrap-session` to be leaner (operator: "taking too long, too many tokens, overcomplicated"). Landed as 3 sequenced commits + a QC-fix + a log entry across BOTH repos (ai-resources canonical + workspace-root copy). Canonical wrap body 488 → 248 lines (~49% leaner); default is now core-only with flag-based opt-in. Gate-driven throughout: plan-time /risk-check (RECONSIDER → redesigned), /blindspot-scan (caught the script-distribution blocker), and independent /qc-pass (clean after 4 pointer fixes). First live wrap (this one) exercised the new externalized guard successfully.
-
-### Files Created
-- `ai-resources/logs/scripts/foreign-session-guard.sh` — the foreign-session detector, extracted byte-identical from the former inline Step 3.5 block; both wrap copies call it via ancestor walk-up.
-- `ai-resources/docs/session-value-audit-rubric.md` — externalized Session Value Audit rubric (read by the wrap outcome-check subagent; labels kept byte-identical for /friday-checkup's grep).
-- `ai-resources/audits/risk-checks/2026-07-04-refactor-wrap-session-leanness.md` — plan-time risk-check report (RECONSIDER + redesign).
-- `ai-resources/logs/scratchpads/2026-07-04-22-08-scratchpad.md` — this session's continuity scratchpad.
-
-### Files Modified
-- `ai-resources/.claude/commands/wrap-session.md` + workspace-root `/.claude/commands/wrap-session.md` — guard call, flag-based opt-in default, dead-step cuts, nudge merge, rubric reference.
-- `ai-resources/CLAUDE.md` — Session Telemetry rule reworded (telemetry now opt-in; names /prime as the nudge home).
-- `ai-resources/.claude/commands/prime.md` — new telemetry-gap nudge (instruction + brief ⚠ line).
-- `ai-resources/.claude/commands/friday-checkup.md` — absorbed the relocated improvement-verify (Step 5B.5) + stale-preflight-phrase fix.
-- `ai-resources/docs/session-marker.md` — guard externalization pointer + workspace-root step-label fix.
-- `ai-resources/logs/improvement-log.md` — pending entry for the deferred EXTRA_* echo fix.
-
-### Decisions Made
-- **Guard distribution via walk-up (not per-project script copies).** Blindspot scan found scripts aren't auto-distributed like commands (check-archive.sh is absent from most projects). Chose ancestor walk-up to the single ai-resources script — the pattern auto-sync-shared.sh already uses. Operator-approved (Path A).
-- **Telemetry flipped to opt-in** (operator chose "flip telemetry to opt-in too"), requiring a loud CLAUDE.md rule revision + a /prime safety nudge. Nudge placed in /prime, not /session-start, for reliability (/prime runs every session and already reads usage-log).
-- **Unbundled into 3 sequenced commits** per risk-check redesign, so the delicate byte-identical extraction is isolated and bisectable.
-- QC fixes (4 maintainer-facing pointer corrections) applied per independent qc-reviewer.
-
-### Risky actions
-Structural edit to the most-used session command (copied/symlinked to ~16 projects). Mitigated by: plan-time risk-check, blindspot scan, byte-identical mechanical-diff QC (0 diffs, re-certified), walk-up tested from every checkout type, and independent qc-pass. No destructive/external actions. All commits local — nothing pushed.
-
-### Next Steps
-- **Push gate at this wrap** — confirm push of the local commits (ai-resources + workspace-root).
-- Deferred (logged): one-line fix to add EXTRA_TODAY/PRIOR_MANDATES to the guard's GUARD echo (dedicated session).
-- Optional: run a future wrap with `full` or `+telemetry` to exercise the opt-in passes live.
-
-### Open Questions
-None.
-
-## 2026-07-04 — Built /lean-repo + complexity-budget doctrine ("Both, whole" under OP-11 waiver)
-
-### Summary
-Ran /leverage-idea on a pasted /lean-repo idea dump. Investigation found the diagnosis half duplicated 4–5 existing audits and the original self-mutating design was non-compliant; the creation-time complexity-budget gate and a control-drift lens were the only novel slivers. Plan-time /risk-check returned RECONSIDER and the System Owner concurred (ship the doctrine, fold the lens into /architecture-review, don't ship a standalone command). Operator overrode toward "Both, whole" — so the command+agent shipped WITH the legitimacy pieces the gates required (documented closure channel, recorded OP-11 waiver, distribution opt-out), plus the doctrine. End-time /risk-check dropped to PROCEED-WITH-CAUTION; /qc-pass caught and fixed one real path bug.
-
-### Files Created
-- .claude/commands/lean-repo.md — new diagnose-and-plan-only leanness/control-drift command (never mutates; reads on-disk audit outputs).
-- .claude/agents/lean-repo-auditor.md — disk-notes audit subagent for the 3-question leanness lens.
-- logs/scratchpads/2026-07-04-22-33-scratchpad.md — continuity scratchpad.
-- audits/risk-checks/2026-07-04-build-both-lean-repo-command-complexity-budget-doctrine.md — plan-time risk-check report (+ SO commentary appended).
-- audits/risk-checks/2026-07-04-lean-repo-both-endtime.md — end-time risk-check report.
-- (projects/axcion-ai-system-owner) output/consultations/consult-2026-07-04-lean-repo-both-reconsider.md — SO Function-B advisory.
-
-### Files Modified
-- docs/ai-resource-creation.md — added rule #7 "Complexity budget" (creation-time gate; distinct from materiality-bar).
-- .claude/commands/leverage-idea.md — Step 6 enforcement cap for new-component options.
-- .claude/agents/risk-check-reviewer.md — thin complexity-budget cross-ref in Dimension 6 (not a parallel check).
-- .claude/hooks/auto-sync-shared.sh — added lean-repo to EXCLUDE_COMMANDS (opt-out from project distribution).
-- logs/decisions.md — OP-11 waiver + rollback-order note.
-- logs/improvement-log.md — /lean-repo adoption-watch entry (retire-or-wire trigger, quarterly / 2026-10-04).
-- logs/session-notes.md — this note; archive check rolled 3 entries → session-notes-archive-2026-07.md.
-
-### Decisions Made
-- Operator: override the plan-time RECONSIDER and build "Both, whole" (vs the gates' recommended extend-only / fold-into-architecture-review). Logged in decisions.md 2026-07-04.
-- Claude (decision-point): closure = documented reuse of the /risk-check-gated execution path (/friday-act), NOT a new /lean-act (avoids a 3rd component); item 5 retargeted to risk-check-reviewer.md as a thin cross-ref; did NOT wire the budget into system-owner.md (parallel-check proliferation).
-- QC fix: corrected the /architecture-review glob in lean-repo.md (off by one dir level; rerooted on WORKSPACE_ROOT) + dropped the unused WORKING_DIR from the agent handoff.
-
-### Risky actions
-None. Structural classes touched (new command/agent, hook edit, cross-cutting doc) but all gated: plan-time + end-time /risk-check, independent /qc-pass, OP-11 waiver recorded, push held for wrap confirmation.
-
-### Next Steps
-- Confirm the push at wrap (build commits f5f5967 + 5be2e82 + this wrap commit, across 2 repos).
-- Date-triggered follow-up only: the improvement-log adoption watch (next quarterly /friday-checkup, or 2026-10-04).
-
-### Open Questions
-None.
-
 ## 2026-07-05 — Lean /blindspot-scan + /risk-check gates (retier opus→sonnet + de-escalate)
 
 ### Summary
@@ -543,3 +398,44 @@ None blocking.
 - Mission: w32-migration-execution
 
 Continue the W3.2 repo-redesign implementation — wire `wrap-session` (both paired copies) to write `decisions_refs` into the run-manifest at close, the blocking prerequisite for R3 Pass 2.
+
+### Summary
+Wired `decisions_refs` so it actually populates at wrap — the blocking prerequisite for W3.2 R3 Pass 2. The field was dead on arrival: `run-manifest.sh` supported `--decision-ref`, but `wrap-session` never called it, so every ordinary session closed with `[]` (S2 made 5 decisions, S3 made 2 — both empty). This session's manifest is the first ordinary one to carry a real decision record: 2 refs, both resolving to real headers. Three gates fired and **each caught a real defect in the step before it** — the plan-time `/risk-check` killed my ref format on evidence, an independent `/qc-pass` killed its replacement, and the end-time `/risk-check` (RECONSIDER — this mandate's `stop_if`) found two defects in the fix itself. Redesigned rather than overriding; re-gate returned PROCEED-WITH-CAUTION. **This closes ONE of TWO Pass-2 prerequisites — Pass 2 remains BLOCKED.**
+
+### Files Created
+- `logs/scripts/decision_ref_slug.py` — THE single definition of the anchor-slug algorithm; self-testing (14 assertions incl. a collision proof and a negative control)
+- `logs/scripts/check-decision-refs.sh` — falsifiable validator: proves a manifest's refs resolve to real `decisions.md` headers (live log + all monthly archives); wired advisory/report-only at wrap
+- `logs/session-plan-2026-07-12-S5.md`
+- `logs/runs/2026-07-12-S5.json` — this session's run manifest (first ordinary session with a non-empty `decisions_refs`)
+- `audits/risk-checks/2026-07-12-wire-decision-ref-into-wrap-session-manifest-close.md` — plan-time, PROCEED-WITH-CAUTION
+- `audits/risk-checks/2026-07-12-endtime-decision-ref-wiring-executed-set.md` — end-time, RECONSIDER
+- `audits/risk-checks/2026-07-13-regate-decision-ref-wiring-post-reconsider.md` — re-gate, PROCEED-WITH-CAUTION
+- `logs/scratchpads/2026-07-13-00-45-scratchpad.md`
+- `logs/session-notes-archive-2026-07.md` — auto-archived this wrap (4 entries)
+
+### Files Modified
+- `.claude/commands/wrap-session.md` (Step 12d) + `../.claude/commands/wrap-session.md` (workspace-root mirror, Step 4.7) — pass `--decision-ref-from-header` with the header copied verbatim; call the ref-checker at wrap (`|| true`, report-only)
+- `logs/scripts/run-manifest.sh` — new `--decision-ref-from-header` flag; symlink-safe self-location (`SCRIPT_DIR`)
+- `logs/scripts/run-manifest.test.sh` — 24 → 35 assertions
+- `docs/spine-schemas.md` § 1 — ref-format section now *documents the code* rather than defining a prose recipe; the `-2`/`-3` de-dup step deleted (it generated refs resolving to nothing)
+- `logs/decisions.md`, `logs/improvement-log.md`, `logs/missions/w32-migration-execution.md`
+- redesign repo: `output/implementation-prep/remediation-register.md`, `output/implementation-prep/packets/R3-run-manifest.md`
+
+### Decisions Made
+- **Ref format: slug the decision's header text, not `{date}-{marker}`.** Plan-time `/risk-check` proved the latter collides on two real `## 2026-07-12 (S4)` entries. Deviated from the reviewer's recommended sequence-suffix fix (`-1`/`-2`) — that yields a ref nobody can resolve without counting entries. Full rationale: `logs/decisions.md` 2026-07-12 (S5).
+- **Report as ONE of TWO prerequisites; Pass 2 stays BLOCKED.** Second prerequisite found this session and left untouched. `logs/decisions.md` 2026-07-12 (S5).
+- **QC-driven redesign (REVISE):** moved slug generation out of prose and into code. The evidence was already on disk — 3 of 3 hand-authored refs were orphans.
+- **Declined one QC finding** (the "265 headers unreproducible" claim) — verified false: 22 + 46 + 112 + 85 = 265 across 4 files. The reviewer had missed the three monthly archives.
+
+### Risky actions
+None causing loss. Worth naming: **(1)** My first ref format would have written a silently-ambiguous record into *every future manifest* — caught only because the plan-time gate tested it against real data rather than accepting the design. **(2)** My replacement asked a model to hand-derive a slug (counting to 60 chars) at every wrap, forever — a 3-of-3 failure rate was already sitting undetected on disk. **(3)** The end-time gate found my fix silently dropped refs when invoked through a symlink; dormant today (nothing symlinks the script yet), but the repo already symlinks shared scripts across projects. All three were caught by gates, not by me.
+
+### Next Steps
+- **R3 Pass 2 prerequisite P2 — the real blocker.** Wrap Step 5 skips `decisions.md` for "routine" decisions, so those live only in the `### Decisions Made` block Pass 2 deletes. Changing the decision-recording contract = its own `/risk-check`, its own session. **Do not ship Pass 2 until P2 is closed.**
+- **P1's evidence is thin.** S5 is one datapoint and it is the session that *built* the wiring — the same "cannot count as its own evidence" caveat that disqualified S1. Want the same payload result on 1–2 further *ordinary* wraps before Pass 2 reopens.
+- **`axcion-ai-system-redesign` has no git remote** — the entire W3.2 design record lives on this machine only. It reports "0 unpushed" because there is nowhere to push.
+- Session Value Audit worth-doing question (mission open thread) — still needs `/implementation-triage`.
+- Unrelated dirty files left untouched (NOT mine, do not sweep): workspace root `logs/innovation-registry.md`, `projects/axcion-ai-system-redesign/pipeline/project-plan.md`, `.../window-outputs/README.md`, `logs/maintenance-observations.md`; redesign repo `.codex/`, `AGENTS.md`, `output/fable5-*`, `output/fix-execution-workflow.md`.
+
+### Open Questions
+None blocking.
