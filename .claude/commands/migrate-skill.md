@@ -49,7 +49,7 @@ Key migration rules:
 
 ## Step 3: Evaluate (Subagent)
 
-**The main agent** reads `skills/ai-resource-builder/references/evaluation-framework.md` from the repo. Then spawn a subagent, passing it ONLY:
+**The main agent** reads `skills/ai-resource-builder/references/evaluation-framework.md` from the repo. Then spawn a subagent — **explicitly pin `model: opus` on the spawn.** A `general-purpose` subagent carries no tier of its own, so an un-pinned spawn silently inherits the session model: on a Sonnet or Haiku session the behavioral analysis and convention gate would quietly run below the tier this judgment needs. Pin it. (Convention established 2026-07-03 across `/qc-pass`, `/refinement-pass`, `/risk-check`; tier declared 2026-07-12 per W3.2 M-A2a.) Pass it ONLY:
 
 - The evaluation framework contents (that you just read)
 - The newly created SKILL.md (and any bundled resources)

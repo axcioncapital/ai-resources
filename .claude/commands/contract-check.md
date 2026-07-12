@@ -111,7 +111,7 @@ Input: `$ARGUMENTS` — optional. Interpreted as:
 
 ### Step 4 — Delegate the independent conformance comparison
 
-9. Spawn one general-purpose subagent (fresh context) with this brief (verbatim structure):
+9. Spawn one general-purpose subagent (fresh context) — **explicitly pin `model: opus` on the spawn.** `general-purpose` carries no tier of its own, so an un-pinned spawn silently inherits the session model: on a Sonnet or Haiku session the contract-conformance judgment would quietly run below the tier it needs. Pin it. (Convention established 2026-07-03 across `/qc-pass`, `/refinement-pass`, `/risk-check`; tier declared 2026-07-12 per W3.2 M-A2a.) Brief (verbatim structure):
 
    ```
    You are an independent contract-conformance reviewer for an in-progress work artifact. Judge whether the current state of the artifact still matches its original contract — the brief, mandate, plan, or spec that was agreed at the start of work, before any QC iterations modified the draft.

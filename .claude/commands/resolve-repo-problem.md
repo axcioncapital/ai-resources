@@ -38,7 +38,7 @@ Input: `$ARGUMENTS` — optional. A short description of the problem (the error 
 
 ### MANUAL Step 2 — Delegate the investigation
 
-8. Spawn one general-purpose investigator subagent (fresh context) with this brief:
+8. Spawn one general-purpose investigator subagent (fresh context) — **explicitly pin `model: opus` on the spawn.** `general-purpose` carries no tier of its own, so an un-pinned spawn silently inherits the session model: on a Sonnet or Haiku session the root-cause diagnosis and the ranked three-option fix plan would quietly run below the tier this judgment needs. Pin it. (Convention established 2026-07-03 across `/qc-pass`, `/refinement-pass`, `/risk-check`; tier declared 2026-07-12 per W3.2 M-A2a.) Brief:
 
    ```
    You are a repo-problem investigator. Diagnose a reported problem and produce a fix plan. You do NOT apply any fix — this is triage only.
