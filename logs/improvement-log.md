@@ -478,7 +478,7 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Method lesson (generalizes past this entry):** a gate must test the property the downstream change **depends on**, not a proxy that correlates with it. "Did the manifest close?" correlates with "is it safe to cut over" — until it doesn't.
 
 ### 2026-07-12 — LIVE banned model declarations in the pe-kb-vault settings (missed by the 2026-06-18 purge; both carry the spawn-breaking `[1m]` suffix)
-- **Status:** logged (pending) — **found S4; NOT fixed (outside the session's declared Files in scope; awaiting operator authorization to widen the edit set).**
+- **Status:** **applied 2026-07-12 (S4)** — operator authorized the edit-set widening; the `"model"` field was removed from BOTH files. **Verified:** exhaustive workspace-wide closure test — all **62** `settings*.json` scanned, **0** declare a `"model"` field; test proven falsifiable against a planted violation. **Untracked by design:** `knowledge-bases/` is gitignored, so both files are machine-local — the fix is on disk and correct, but it is NOT in git and will NOT propagate to another machine. Any other clone of this workspace still carries the violation and must be fixed locally there too.
 - **Category:** infrastructure (harness config / banned model declarations)
 - **Severity:** medium-high — this is a *live* rule violation on a *live* failure mode, not a latent one.
 - **Found by:** S4 (2026-07-12), incidentally — a post-commit verification sweep for the § Model Tier carve-out (`find . -name "settings*.json" | xargs grep -l '"model"'`) was written to *confirm zero hits* and instead returned two.
