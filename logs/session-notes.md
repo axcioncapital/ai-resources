@@ -381,3 +381,52 @@ None blocking. Pass 2's gate is a check, not an unknown — it either passes or 
 - Mission: w32-migration-execution
 
 Continue W3.2 repo-redesign implementation (mission: w32-migration-execution).
+
+### Summary
+Advanced the W3.2 mission with the **M-A Phase 0 defect batch**. R3 Pass 2 (the next obvious item) was found **gate-blocked** — only one run-manifest existed, self-verified by the session that wrote the code — so it was left untouched and the M-A batch was taken up instead. Wrote the batch's gate packet, then shipped **M-A1** (doc contradictions), **M-A2b** (orphan hook deletion), **M-A3b** (pre-commit path fix), and **M-A3c** (banned model declaration). The defining feature of the session was that **every gate caught a real defect the session had missed — including two the session itself introduced.**
+
+The headline find: the push contradiction was worse than the roadmap knew. It named 2 stale doc copies; the true live set was **4**, and `.claude/commands/tweak.md` did not merely *describe* autonomous push — it **executed** it (a literal `git push` block, plus a second in its log-append step). **Every `/tweak` invocation was pushing mid-session**, violating the operator's gated-push rule, and it had been missed by the W3.2 roadmap, by the 2026-07-03 instruction-leanness campaign, and by the `/risk-check` reviewer. The contradiction is now closed across all four copies for the first time.
+
+### Files Created
+- `projects/axcion-ai-system-redesign/output/implementation-prep/packets/M-A-phase0-defects.md` — the gate packet (currency check, change spec, verification levels, rollback, method lessons).
+- `ai-resources/logs/scripts/pre-commit-hook.test.sh` — durable 3-arm regression suite (ARM A: bug is detectable · ARM B: fix works · ARM C: fail-safe intact).
+- `ai-resources/audits/risk-checks/2026-07-12-m-a-phase0-defect-batch-docs-hooks-precommit-newproject.md` — RECONSIDER #1.
+- `ai-resources/audits/risk-checks/2026-07-12-m-a-wave2-infra-hook-delete-precommit-sync-newproject-generator.md` — RECONSIDER #2.
+- `ai-resources/logs/runs/2026-07-12-S2.json`, `logs/session-plan-2026-07-12-S2.md`.
+
+### Files Modified
+- `.claude/commands/tweak.md` — removed **two** `git push` executions.
+- `.claude/commands/resolve-incident.md` — removed an autonomous-push claim.
+- `.claude/commands/new-project.md` — step 11a rewritten as a compliant recommendation-only Model Selection scaffold; 3 dangling cross-refs repaired; a mandated `[1m]` suffix removed.
+- `.claude/commands/prime.md` — Step 4 model-alignment given a total 3-case contract.
+- `.claude/commands/session-plan.md` — dangling "Step 4b / project-default" ref repaired.
+- `.claude/hooks/pre-commit` — companion-script lookup re-anchored to the repo root; `|| true` fail-safe.
+- `docs/autonomy-rules.md`, `docs/session-rituals.md`, `docs/session-guardrails.md`, `docs/settings-local-recovery.md` — doc reconciliation.
+- `audits/questionnaire.md` — §4.9 **inverted** (it was instructing auditors to demand the prohibited `"model"` field).
+- **Deleted:** `.claude/hooks/model-classifier.sh` (workspace root).
+- `remediation-register.md`, `logs/missions/w32-migration-execution.md`, `logs/decisions.md`.
+
+### Decisions Made
+- **Do not touch R3 Pass 2.** Its gate is not open: one manifest, self-verified by its own author. Forcing it risks the exact data loss the two-pass split exists to prevent.
+- **Carve the push fix out of the deferred instruction-leanness campaign** (operator-authorized) and close it completely rather than partially. Logged as a loud supersession decision — `/risk-check` required it.
+- **Expand the edit set** to `resolve-incident.md`, `tweak.md`, the pre-commit *source* hook, `prime.md`, and `settings-local-recovery.md` — **explicitly authorized by the operator**, per the campaign's standing rule that a risk-check recommendation is not authorization.
+- **Fix `/new-project` by keeping a compliant section, not by deleting it** — preserves `/prime`'s contract instead of breaking it.
+- **M-A3a deferred, not "fixed."** Duplicate startup-context injection is not reproducible from static state; inventing a repo fix for it would be the failure mode this session spent its day avoiding.
+
+### Risky actions
+Three worth naming. **(1) I introduced a commit-blocking bug.** The rewritten pre-commit hook runs under `set -e`; I wrote the repo-root lookup as a bare assignment, so a failing `git rev-parse` would have aborted the hook with exit 128 and **blocked every commit in `ai-resources`** — and my in-file comment called it a fail-safe. Caught by independent `/qc-pass`, fixed with `|| true`, now guarded by ARM C of the regression suite and proven on three real commits. **(2) My "falsifiable" test could not have caught (1)** — it asserted on the warning string and discarded the exit code. Now asserts both. **(3) Deleted a file this session did not create** (`model-classifier.sh`) — an Autonomy Rule #3 pause trigger; operator authorization obtained first, zero consumers verified twice, backup of the untracked pre-commit hook taken before overwrite (`git revert` cannot restore it).
+
+Also: the **staging tripwire correctly blocked** the first commit attempt — the declared `Files in scope:` was stale relative to the operator's mid-session scope expansion. Resolved by correcting the declaration, not by overriding the guard. A concurrent session was live in this checkout throughout; all staging was by explicit path and no foreign file was swept in (verified against the commit's file list).
+
+### End-time /risk-check
+Skipped per the standing skip rule. Plan-time `/risk-check` fired **twice** on this exact change class, both returned RECONSIDER, both redesigns were applied in full and independently QC'd, and the commits shipped exactly the redesigned scope with zero drift. Documented here as the rule requires.
+
+### Next Steps
+- **Push pending** — 4 commits across 3 repos (ai-resources ×2, workspace root, axcion-ai-system-redesign).
+- **R3 Pass 2 gate is now less thin** — this session was an *ordinary* session that produced a closed manifest without paying attention to it, which is precisely the evidence the gate wanted. One or two more ordinary wraps and Pass 2 can proceed.
+- **M-A remainder (small):** M-A2a (declare tiers at command-side/inline-spawn sites — the agent-side half is already done, 42/42) and M-A4 (reconcile `agent-tier-table.md` + `skills/CATALOG.md` against the 42-agent ground truth).
+- **Two loose ends worth a look:** `.git/hooks/pre-commit` is untracked and per-machine, so **other machines still run the stale February hook** and nothing re-syncs it; and `sync-shared-resources.sh` shows the same zero-caller signature as the orphan just deleted (not an M-A item — needs its own disposition).
+- **Telemetry gap persists** — three substantive sessions (2026-07-09, S1, S2) now have no `usage-log` entry. Run `/usage-analysis` to backfill, or wrap with `/wrap-session +telemetry`.
+
+### Open Questions
+None blocking. One judgment call worth the operator's eye: the guardrail docs now say **"emit and continue"** where they previously said "wait for the operator" (`[HEAVY]`/`[SCOPE]`/`[COST]`). This matches canonical CLAUDE.md, but it is a genuine behavior change for future sessions — reversible if the pause was actually wanted.
