@@ -370,3 +370,14 @@ Skipped per the standing skip rule (`feedback_end_time_risk_check_skip`): the pl
 
 ### Open Questions
 None blocking. Pass 2's gate is a check, not an unknown — it either passes or it doesn't.
+
+## 2026-07-12 — Session S2
+**Mandate:** Advance the W3.2 Phase 0 defect batch (M-A1–M-A4, ai-resources-homed) — write the batch's gate packet with a currency check on every claim, then implement the confirmed-live defects and update the remediation register — done when: the M-A batch packet is written and gate-passed, every confirmed-live M-A defect is fixed on disk, every stale M-A claim is explicitly dispositioned in the packet, and the remediation-register M-A rows carry status + verification.
+- Out of scope: R3 Pass 2 (gate-blocked — one self-verified manifest; gate wants 2–3 ordinary wraps); user-layer items (RT1, W1.4-H1/2/3, PSR); Phase 1+ roadmap items.
+- Files in scope: projects/axcion-ai-system-redesign/output/implementation-prep/packets/M-A-phase0-defects.md, projects/axcion-ai-system-redesign/output/implementation-prep/remediation-register.md, ai-resources/docs/autonomy-rules.md, ai-resources/docs/session-rituals.md, ai-resources/docs/session-guardrails.md, ai-resources/docs/settings-local-recovery.md, ai-resources/.claude/commands/tweak.md, ai-resources/.claude/commands/resolve-incident.md, ai-resources/.claude/commands/new-project.md, ai-resources/.claude/commands/prime.md, ai-resources/.claude/commands/session-plan.md, ai-resources/.claude/hooks/pre-commit, ai-resources/.claude/hooks/model-classifier.sh, ai-resources/audits/questionnaire.md, ai-resources/logs/scripts/pre-commit-hook.test.sh, ai-resources/logs/missions/w32-migration-execution.md (EXPANDED mid-session by explicit operator authorization — two decisions: close the push contradiction across all 4 live copies, and proceed with the Wave 2 infra redesign incl. the pre-commit source hook, prime.md and settings-local-recovery.md. questionnaire.md + session-plan.md added from /qc-pass findings — both are references my own change broke.)
+- Stop if: /risk-check returns RECONSIDER or NO-GO on an M-A item (M-A2 wire-or-delete and M-A3 hook/pre-commit touches are structural classes).
+- Allowed inputs: projects/axcion-ai-system-redesign/window-outputs/W3.2-migration-roadmap.md, projects/axcion-ai-system-redesign/output/implementation-prep/packets/ (R1/R3 as precedent), projects/axcion-ai-system-redesign/output/implementation-prep/remediation-register.md, the ai-resources docs/hooks/commands named by each M-A item.
+- Required outputs: the M-A gate packet, the applied fixes for confirmed-live defects, updated remediation-register rows.
+- Mission: w32-migration-execution
+
+Continue W3.2 repo-redesign implementation (mission: w32-migration-execution).

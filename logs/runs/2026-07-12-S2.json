@@ -1,0 +1,50 @@
+{
+  "run_id": "2026-07-12-S2",
+  "project": "ai-resources",
+  "date": "2026-07-12",
+  "marker": "S2",
+  "model": "claude-opus-4-8[1m]",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md#2026-07-12-S2",
+  "mission": "w32-migration-execution",
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    ".claude/commands/prime.md",
+    ".claude/commands/tweak.md",
+    ".claude/commands/resolve-incident.md",
+    ".claude/commands/new-project.md",
+    ".claude/commands/session-plan.md",
+    ".claude/hooks/pre-commit",
+    "docs/autonomy-rules.md",
+    "docs/session-rituals.md",
+    "docs/session-guardrails.md",
+    "docs/settings-local-recovery.md",
+    "audits/questionnaire.md",
+    "logs/scripts/pre-commit-hook.test.sh",
+    "(deleted) .claude/hooks/model-classifier.sh"
+  ],
+  "decisions_refs": [],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": null,
+  "outcome": null,
+  "failure_class": null,
+  "incidents_refs": []
+}
