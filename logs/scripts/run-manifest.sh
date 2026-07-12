@@ -40,6 +40,25 @@
 
 set -uo pipefail
 
+# ---------------------------------------------------------------- self-location
+# Resolve THIS script's real directory, following symlinks. `dirname "$0"` is NOT
+# enough: bash does not resolve the link when populating $0, so invoking this script
+# through a symlink yields the *symlink's* directory, the sibling decision_ref_slug.py
+# lookup misses, and a --decision-ref-from-header ref is silently DROPPED. That was a
+# real, reproduced failure (end-time /risk-check, 2026-07-12 — Dimension 5). The repo
+# already symlinks shared scripts across projects, so this is a live shape, not a
+# hypothetical. `readlink -f` is unavailable on macOS, hence the portable loop.
+_SELF="${BASH_SOURCE[0]}"
+while [ -L "$_SELF" ]; do
+  _SELF_DIR="$(cd -P "$(dirname "$_SELF")" && pwd)"
+  _SELF="$(readlink "$_SELF")"
+  case "$_SELF" in
+    /*) ;;                       # absolute target — take as-is
+    *)  _SELF="$_SELF_DIR/$_SELF" ;;   # relative target — resolve against the link's dir
+  esac
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$_SELF")" && pwd)"
+
 SCRIPT_NAME="run-manifest.sh"
 
 # ---------------------------------------------------------------- schema (mirrors spine-schemas.md §1)
@@ -86,6 +105,23 @@ while [ $# -gt 0 ]; do
     --incident-waived) INCIDENT_WAIVED="${2:-}"; shift 2 ;;
     --file)           FILES+=("${2:-}"); shift 2 ;;
     --decision-ref)   DECISION_REFS+=("${2:-}"); shift 2 ;;
+    # PREFERRED over --decision-ref: pass the decision's header line from decisions.md
+    # VERBATIM and the slug is derived in code. Never hand-derive a slug — of the three
+    # refs hand-authored before this flag existed, three were orphans (see
+    # logs/scripts/decision_ref_slug.py for why this flag exists at all).
+    --decision-ref-from-header)
+                      _hdr="${2:-}"
+                      if [ -n "$_hdr" ]; then
+                        _slug="$(python3 "${SCRIPT_DIR}/decision_ref_slug.py" "$_hdr" 2>/dev/null)"
+                        if [ -n "$_slug" ]; then
+                          DECISION_REFS+=("logs/decisions.md#${_slug}")
+                        else
+                          # Advisory, never fatal (§ OP-5): a slug we cannot derive is a
+                          # dropped ref, not a failed wrap. Say so loudly; do not guess.
+                          note "could not derive a slug from header: ${_hdr} — ref DROPPED (advisory)."
+                        fi
+                      fi
+                      shift 2 ;;
     --skill)          SKILLS+=("${2:-}"); shift 2 ;;
     # --validation "output|level"  e.g. --validation "run-manifest.sh|functional"
     --validation)     VALIDATIONS+=("${2:-}"); shift 2 ;;

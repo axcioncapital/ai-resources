@@ -531,3 +531,15 @@ Three worth naming, none causing loss. **(1) Nearly committed a live session's w
 
 ### Open Questions
 None blocking.
+
+## 2026-07-12 — Session S5
+
+**Mandate:** Wire both paired copies of `wrap-session.md` to call `run-manifest.sh update --decision-ref` at the manifest-close step so `decisions_refs` is populated whenever a session records decisions — done when: the `--decision-ref` call is present in both `wrap-session.md` copies, this session's wrap writes a non-empty `decisions_refs` to `logs/runs/2026-07-12-S5.json`, and the improvement-log entry, mission thread, and R3 register rows record the wiring.
+- Out of scope: R3 Pass 2 itself (the wrap-note cut) — stays BLOCKED; it reopens only after 2+ ordinary wraps prove payload, not on this one self-verified wrap; user-layer Phase 0 items (W1.4-H1/2/3, PSR); Phase 1+ roadmap items; the parked concurrency cluster.
+- Files in scope: .claude/commands/wrap-session.md; ../.claude/commands/wrap-session.md; logs/improvement-log.md; logs/missions/w32-migration-execution.md; logs/decisions.md; logs/session-notes.md; logs/runs/2026-07-12-S5.json; logs/session-plan-2026-07-12-S5.md; ../projects/axcion-ai-system-redesign/output/implementation-prep/remediation-register.md; ../projects/axcion-ai-system-redesign/output/implementation-prep/packets/R3-run-manifest.md (inferred)
+- Stop if: /risk-check returns RECONSIDER or NO-GO on the wrap-session edit (structural class — Critical component, paired copies) — redesign, do not override.
+- Allowed inputs: ../projects/axcion-ai-system-redesign/output/implementation-prep/packets/R3-run-manifest.md; docs/spine-schemas.md; logs/scripts/run-manifest.sh; logs/runs/*.json; ../projects/axcion-ai-system-redesign/output/implementation-prep/remediation-register.md; logs/decisions.md
+- Required outputs: the --decision-ref call live in both wrap-session.md copies; a non-empty decisions_refs in this session's run manifest; updated improvement-log / mission / register rows
+- Mission: w32-migration-execution
+
+Continue the W3.2 repo-redesign implementation — wire `wrap-session` (both paired copies) to write `decisions_refs` into the run-manifest at close, the blocking prerequisite for R3 Pass 2.

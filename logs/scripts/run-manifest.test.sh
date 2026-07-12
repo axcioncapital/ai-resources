@@ -131,6 +131,69 @@ ck 0 $? "close works with the execute bit REMOVED (exec bash \"$0\", not exec \"
 chmod +x "$S" 2>/dev/null
 
 echo
+echo "=== --decision-ref-from-header (S5): slug derived in code, never by hand ==="
+
+# The point of the flag: pass a header VERBATIM, get the right slug, no hand-derivation.
+# Long header (>60 chars) exercises the truncate + trim-back-to-word-boundary path.
+LONGHDR='## 2026-07-12 (S5) — R3 Pass 2 has a SECOND prerequisite, and it is still open'
+bash "$S" start --date 2099-02-02 --marker D1 --runs-dir "$T" --model testmodel >/dev/null 2>&1
+bash "$S" update --date 2099-02-02 --marker D1 --runs-dir "$T" \
+  --decision-ref-from-header "$LONGHDR" >/dev/null 2>&1
+ckv "logs/decisions.md#2026-07-12-s5-r3-pass-2-has-a-second-prerequisite-and-it-is" \
+    "$(python3 -c "import json;print(''.join(json.load(open('$T/2099-02-02-D1.json'))['decisions_refs']))" 2>/dev/null)" \
+    "--decision-ref-from-header derives the slug IN CODE (long header, trim-back path)"
+
+# De-dup: the same decision passed twice must not double-write.
+bash "$S" update --date 2099-02-02 --marker D1 --runs-dir "$T" \
+  --decision-ref-from-header "$LONGHDR" >/dev/null 2>&1
+ckv "1" "$(python3 -c "import json;print(len(json.load(open('$T/2099-02-02-D1.json'))['decisions_refs']))" 2>/dev/null)" \
+    "the same decision ref is de-duplicated, not appended twice"
+
+# ADVISORY RULE: an underivable header drops ONE ref and still exits 0 — never fails the wrap.
+bash "$S" update --date 2099-02-02 --marker D1 --runs-dir "$T" --decision-ref-from-header "###" >/dev/null 2>&1
+ck 0 $? "an underivable header DROPS the ref and exits 0 (advisory, never blocks a wrap)"
+
+# A decision-free session must close with decisions_refs EMPTY — emptiness is the payload
+# signal R3 Pass 2's reopen gate is measured on; a placeholder would silently satisfy it (S4).
+bash "$S" start --date 2099-02-03 --marker D2 --runs-dir "$T" --model testmodel >/dev/null 2>&1
+bash "$S" close --date 2099-02-03 --marker D2 --runs-dir "$T" --outcome DELIVERED >/dev/null 2>&1
+ckv "0" "$(python3 -c "import json;print(len(json.load(open('$T/2099-02-03-D2.json'))['decisions_refs']))" 2>/dev/null)" \
+    "a decision-free session closes with decisions_refs EMPTY (no placeholder ref)"
+
+# SYMLINK INVOCATION — the end-time /risk-check REPRODUCED a silent ref-drop here:
+# `dirname "$0"` yields the SYMLINK's dir, so the sibling decision_ref_slug.py was missed
+# and the ref vanished with only an advisory line. Regression-guard the self-location fix.
+SYMDIR="$T/symlink-probe"; mkdir -p "$SYMDIR"
+ln -sf "$(cd -P "$(dirname "$S")" && pwd)/$(basename "$S")" "$SYMDIR/run-manifest.sh"
+bash "$S" start --date 2099-02-04 --marker D3 --runs-dir "$T" --model testmodel >/dev/null 2>&1
+bash "$SYMDIR/run-manifest.sh" update --date 2099-02-04 --marker D3 --runs-dir "$T" \
+  --decision-ref-from-header "$LONGHDR" >/dev/null 2>&1
+ckv "1" "$(python3 -c "import json;print(len(json.load(open('$T/2099-02-04-D3.json'))['decisions_refs']))" 2>/dev/null)" \
+    "invoked THROUGH A SYMLINK, the slug module still resolves (ref not silently dropped)"
+
+echo
+echo "=== decision_ref_slug.py — the single slug definition ==="
+python3 logs/scripts/decision_ref_slug.py --self-test >/dev/null 2>&1
+ck 0 $? "decision_ref_slug.py self-test passes (collision proof + negative control)"
+
+echo
+echo "=== check-decision-refs.sh — validator degrades, never blocks ==="
+bash -n logs/scripts/check-decision-refs.sh; ck 0 $? "check-decision-refs.sh parses clean"
+bash logs/scripts/check-decision-refs.sh "$T/2099-02-03-D2.json" >/dev/null 2>&1
+ck 0 $? "empty decisions_refs -> exit 0 (a decision-free session is not a failure)"
+bash logs/scripts/check-decision-refs.sh "$T/does-not-exist.json" >/dev/null 2>&1
+ck 0 $? "absent manifest -> exit 0 (advisory, never blocks)"
+printf 'not json' > "$T/broken.json"
+bash logs/scripts/check-decision-refs.sh "$T/broken.json" >/dev/null 2>&1
+ck 0 $? "unreadable/corrupt manifest -> exit 0 (advisory, never blocks)"
+python3 - "$T/orphan.json" <<'PYX'
+import json,sys
+json.dump({"decisions_refs":["logs/decisions.md#no-such-anchor-anywhere"]}, open(sys.argv[1],"w"))
+PYX
+bash logs/scripts/check-decision-refs.sh "$T/orphan.json" >/dev/null 2>&1
+ck 1 $? "an ORPHAN ref exits 1 — the check is falsifiable, not decorative"
+
+echo
 echo "RESULT: $PASS passed, $FAIL failed"
 rm -rf "$T"
 [ "$FAIL" -eq 0 ]

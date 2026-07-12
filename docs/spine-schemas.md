@@ -43,6 +43,28 @@ One JSON record per substantive session, at `logs/runs/{date}-{marker}.json`.
 - **Append-updated** at named checkpoints (post-plan, post-QC).
 - **Closed at wrap** with a schema validation that **aborts loudly on mismatch** — never a silent pass.
 
+### `decisions_refs` — ref format (added 2026-07-12 S5)
+
+Each entry is `logs/decisions.md#{slug}`, where `{slug}` is derived from the decision entry's own **header line text** in `logs/decisions.md`.
+
+**The algorithm lives in code, and this section documents it — it is not a second authority.** The definition is `logs/scripts/decision_ref_slug.py` (`slug()`); the generator is `run-manifest.sh --decision-ref-from-header`, which takes the header line **verbatim** and derives the slug itself; the validator is `logs/scripts/check-decision-refs.sh`, which imports the same function. One function, three call sites.
+
+**Never hand-derive a slug.** Pass the header line to `--decision-ref-from-header` and let the code do it. This is not style advice — it is the finding. When the slug was a prose recipe for a model to execute at wrap time, **three of three** hand-authored refs were orphans that resolved to no real header (S1's, and both of S4's). The recipe asked a language model to count to 60 characters and trim on a word boundary, every wrap, forever, with nothing between it and a durable record.
+
+What the code does, for readers (authoritative source: the module):
+- strip the leading `#` markers; lowercase; collapse each run of non-alphanumerics to a single `-`; strip edge `-`;
+- truncate to 60 chars, then — unless that cut already landed on a word boundary — trim back to the last `-`, so a slug never ends mid-word.
+
+So `## 2026-07-12 (S4) — R3 Pass 2: HOLD. The gate does not hold…` → `logs/decisions.md#2026-07-12-s4-r3-pass-2-hold-the-gate-does-not-hold`.
+
+**There is deliberately no `-2`/`-3` de-duplication suffix.** An earlier draft of this section specified one. It was wrong twice: it de-duplicated *within a manifest* when the real ambiguity is two identically-titled *headers* in `decisions.md`, and a `-2` ref resolves to **nothing** — no such anchor exists — so it manufactured the very orphan it was meant to prevent. Two decisions in one session simply get distinct headers. The session writing the ref is the session writing the header, so this costs nothing.
+
+**Why the header text and not `{date}-{marker}`.** A date+marker key **collides on data that already exists**: `decisions.md` carries two distinct `## 2026-07-12 (S4)` entries (R3 Pass 2 HOLD; § Model Tier carve-out), which a date+marker ref flattens into one ambiguous anchor. Slugging the header text is collision-free by construction, is indifferent to the live `##`/`###` header-level inconsistency, and works for entries carrying no `(S{N})` marker at all. (Established via `/risk-check` PROCEED-WITH-CAUTION, 2026-07-12 — `audits/risk-checks/2026-07-12-wire-decision-ref-into-wrap-session-manifest-close.md`, Dimension 5.)
+
+**Archival staleness — handled, not merely accepted.** When `decisions.md` rotates to `decisions-archive-YYYY-MM.md`, the *file* half of an already-written ref goes stale while the `#{slug}` half stays valid. `check-decision-refs.sh` therefore indexes the live log **and every monthly archive**, so a ref whose month has rotated still resolves. Any future resolver must do the same. Related class: `improvement-log.md` 2026-06-27.
+
+**Emptiness is meaningful — never write a placeholder.** A session that recorded no decisions **omits the flag entirely**, leaving `decisions_refs: []`. Never pass an empty or filler ref: `decisions_refs` non-empty *precisely when the session actually decided something* is the payload test R3 Pass 2's reopen gate depends on, and a garbage entry would silently satisfy it while carrying nothing. This is the proxy-vs-payload lesson that closed the Pass 2 gate at S4.
+
 ## 2. Defect-entry schema
 
 Extends `ai-resources/logs/defect-log.md`'s existing 7 defect classes — this is additive, not a replacement.

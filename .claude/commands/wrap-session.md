@@ -226,6 +226,12 @@ Parse these tokens from `$ARGUMENTS` (whole-token match); everything else in `$A
 
 Pass one `--file` per path from the `### Files Created` / `### Files Modified` lists you just wrote in Step 4, so `files_changed` reflects the real change set.
 
+Pass one **`--decision-ref-from-header`** per decision this session appended to `logs/decisions.md` in Step 5, giving it that decision's **header line, copied verbatim**. The script derives the anchor slug itself (`logs/scripts/decision_ref_slug.py`).
+
+> **⚠ Do NOT hand-derive a slug, and do not use the older `--decision-ref` flag for this.** Copy the header line; let the code slug it. When this was a recipe for the model to execute by hand, **three of three** hand-authored refs came out as orphans pointing at no real header. Format details: `docs/spine-schemas.md` § 1 — but you should not need them, which is the point.
+
+> **⚠ Omit the flag ENTIRELY when the session recorded no decisions.** Never pass an empty string or a filler ref. `decisions_refs: []` is the correct, meaningful state for a decision-free session — and `decisions_refs` being non-empty *precisely when the session actually decided something* is the payload test W3.2 R3 Pass 2's reopen gate depends on. A placeholder entry would silently satisfy that gate while carrying nothing. (This is the proxy-vs-payload error that closed the Pass 2 gate at S4 — `logs/decisions.md` 2026-07-12.)
+
 > **⚠ Every `<…>` below is a value YOU derive and paste as a literal — none of them are shell variables.** Each Bash call gets a fresh shell (env vars do not persist between tool calls), so `--marker "${MARKER}"` would expand to the empty string. `--date` / `--marker` may be omitted entirely — the script self-resolves them from the marker oracle.
 >
 > **`--failure-class`:** omit it when the session had no classifiable failure (the common case). When it *did*, pass one of the 11 closed-set values from `docs/spine-schemas.md` § 5 (wire form: lowercase-hyphenated, e.g. `tool-misuse`, `mandate-drift`). Setting it **arms the § 2 defect trigger** — the manifest will then refuse to validate unless a defect-log entry exists or you pass `--incident-waived "<reason>"`. That is deliberate: the schema is the trigger, not operator memory.
@@ -239,13 +245,27 @@ while [ "$d" != "/" ]; do
   d=$(dirname "$d")
 done
 # Marker + date omitted on purpose — the script resolves them itself.
-# Repeat --file once per path. Add --failure-class ONLY if the session had a real failure.
+# Repeat --file once per path. Repeat --decision-ref-from-header once per decision appended
+#   in Step 5, passing that decision's header line VERBATIM — the script slugs it.
+#   OMIT the flag entirely if the session recorded no decisions (never an empty string).
+# Add --failure-class ONLY if the session had a real failure.
 [ -n "$RM" ] && bash "$RM" close \
   --outcome "<DELIVERED | PARTIAL | ABANDONED>" \
   --stop-reason "<completed | deferred | blocked | cap-hit | compaction>" \
   --file "<path 1>" --file "<path 2>" \
+  --decision-ref-from-header "<paste the decision's header line from decisions.md, verbatim — OMIT entirely if none>" \
   --failure-class "<one of spine-schemas.md §5 — OMIT this flag entirely if none>"
 ```
+
+Then confirm the refs actually resolve — **advisory, report-only**:
+
+```bash
+[ -n "$RM" ] && bash "$(dirname "$RM")/check-decision-refs.sh" || true
+```
+
+Surface its output in chat. **It reports; it never blocks** — a non-zero exit means an orphan ref, which is worth seeing and worth fixing, but is not a reason to stop a wrap or a commit (`|| true` is load-bearing). This is the payload evidence W3.2 R3 Pass 2's reopen gate is measured on; without running it, that evidence is never collected.
+
+**The `--decision-ref-from-header` write is additive and advisory, exactly like `--file`.** It must never block a wrap or a commit: an absent or unwritable manifest is a legitimate path (see THE ADVISORY RULE below), a session with no decisions is a normal session, and an un-sluggable header drops one ref with a loud note rather than failing the wrap. Do not add a check that refuses to close when `decisions_refs` is empty.
 
 **THE ADVISORY RULE — do not "harden" this into a gate.** An **absent** manifest is a routine, legitimate path, not a failure: sessions skip mandate confirmation all the time (`/friday-checkup` started directly with no `/prime`, `/clear`-resumed sessions, trivial wraps). `close` therefore writes a wrap-time stub when none exists, says so in one advisory line, and exits 0. Only a manifest that **exists and is malformed** aborts loudly (non-zero) — that is the "never a silent pass" rule from `spine-schemas.md` § 1, and it applies to schema *mismatch*, never to *absence*.
 
