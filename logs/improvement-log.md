@@ -493,3 +493,13 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Proposal:** Delete the `"model"` line from both files (the canonical fix — not "strip the suffix"; the field itself is banned). `settings.local.json` is gitignored/per-machine; `settings.json` is tracked. Then re-run the **exhaustive** check as the closure test: `find . -name "settings*.json" -not -path "*/node_modules/*" | xargs grep -l '"model"'` must return **zero**, workspace-wide — not "the three files I checked."
 - **Target files:** `knowledge-bases/pe-kb-vault/.claude/settings.json`; `knowledge-bases/pe-kb-vault/.claude/settings.local.json`.
 - **Method lesson:** a purge is only as complete as its file enumeration. "Verified already gone" against a hand-listed subset is not verification — it is a narrower grep wearing a closure stamp. The 2026-06-18 item should not have been marked moot.
+
+### 2026-07-12 — Six more commands spawn `general-purpose` unpinned (§ Model Tier carve-out compliance gap)
+- **Status:** logged (pending)
+- **Category:** command/skill (doctrine-compliance retrofit)
+- **Severity:** low-medium — no defect in effect yet (these six inherit the session model, same as the 11 did before today), but the newly-ratified § Model Tier carve-out now names a "must," and these six are the gap between stated doctrine and live state.
+- **Friction source:** end-time `/risk-check` on the § Model Tier carve-out (S4, 2026-07-12) — verdict RECONSIDER, flagged that the carve-out's blanket "must" phrasing implicated commands never audited. Verified by grep (initial grep pattern missed them due to phrasing variance — "spawn a `general-purpose`" with backticks, "general-purpose agent" not "subagent" — corrected pattern confirmed all six genuinely unpinned, no nearby `model:` line):
+  - `tweak.md:64`, `decide.md:92`, `leverage-idea.md:59`, `graduate-resource.md:87`, `promote-workflow.md:221`, `wrap-session.md:150`.
+- **Proposal:** Pin `model:` at each of the six sites, following the same convention as the 11 already-compliant commands (tier follows the work — judgment dispatches get `opus`; check each site's actual job before assuming blanket opus, per the M-A2a method lesson). `wrap-session.md` in particular should get its **paired workspace-root mirror** updated in lockstep.
+- **Target files:** `ai-resources/.claude/commands/{tweak,decide,leverage-idea,graduate-resource,promote-workflow,wrap-session}.md`; the workspace-root `wrap-session.md` mirror.
+- **Note:** CLAUDE.md § Model Tier's carve-out paragraph was reworded (S4, same session) to state this gap explicitly rather than imply universal compliance — see the carve-out's "Known compliance gap" clause.
