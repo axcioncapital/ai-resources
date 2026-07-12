@@ -110,6 +110,16 @@ This is the closed set. Do not invent a per-command variant.
 10. evaluation blind spot
 11. **confidentiality/disclosure**
 
+**Wire form** (added 2026-07-12 — a disambiguation, not a new value). §1's `failure_class` says only *"one of the 11 taxonomy values (§5)"*, while every other enum in §1 (`lane`, `stop_reason`, `outcome`, `validation.level_reached`) pins its serialized spelling inline. That gap left the on-the-wire form defined **only** in the validator (`ai-resources/logs/scripts/run-manifest.sh`), so a consumer reading the prose labels above would emit `"confidentiality/disclosure"` and be rejected. The 11 values serialize as:
+
+```
+mandate-drift | unsupported-inference | generic-output | weak-prioritization |
+false-completeness | context-omission | instruction-conflict | excessive-complexity |
+tool-misuse | evaluation-blind-spot | confidentiality-disclosure
+```
+
+Lowercase, hyphenated, `/` → `-`. `null` when the session had no classifiable failure. This pins an **existing** field's encoding for its existing consumers (the R3 validator today; R4's incident wrap-gate next) — it adds no field and changes no value. Renames still require the two-end coordination in the Maintenance note above.
+
 Each value = one `failure_class` enum entry (§1) + at least one probing golden task in the evaluation framework. This is a closed set — do not add a 12th value without updating every consumer that enumerates it.
 
 ## 6. Caller-side 4-check convention

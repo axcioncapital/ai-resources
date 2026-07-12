@@ -321,6 +321,35 @@ Using the `logs/session-notes.md` content already read in Step 0 (re-read the la
   - Mission: {MISSION_ID}                 ← write only if Step 1 captured a mission prefix; omit if absent
   ```
 
+### Step 3.5 — Write the run-manifest start-stub (W3.2 R3)
+
+After the mandate line lands on disk, write the durable **start-stub** for this session. This is the one thing that survives a session that dies *before* wrap — the continuity scratchpad (`/wrap-session` Step 0.5) is written AT wrap, so it cannot cover a pre-wrap crash. Schema: `docs/spine-schemas.md` § 1. Implementation: `logs/scripts/run-manifest.sh`.
+
+> **⚠ `MARKER`, `MISSION_ID`, and `PACK_PATH` are values YOU hold from earlier steps — they are NOT shell variables.** Each Bash call runs in a fresh shell; env vars do not persist between tool calls, so writing `--marker "${MARKER}"` would expand to the empty string and no stub would be written. **Substitute the literal values**, and omit a flag entirely when its value is unset. The `--date` / `--marker` flags may also be omitted altogether: the script self-resolves them from the same marker oracle `/prime` writes (`docs/session-marker.md`), which is the safer default.
+
+Resolve the script by ancestor walk-up (same idiom as `/wrap-session` Step 3.5's guard, so this works from any checkout), substituting the bracketed values:
+
+```bash
+d="$(pwd)"; RM=""
+while [ "$d" != "/" ]; do
+  for cand in "$d/ai-resources/logs/scripts/run-manifest.sh" "$d/logs/scripts/run-manifest.sh"; do
+    [ -f "$cand" ] && { RM="$cand"; break 2; }
+  done
+  d=$(dirname "$d")
+done
+# Marker + date omitted on purpose — the script resolves them itself.
+# Add --mission / --pack-path ONLY if this session actually bound one.
+[ -n "$RM" ] && bash "$RM" start \
+  --model "<the active session model identifier, e.g. claude-opus-4-8[1m]>" \
+  --mandate-ref "logs/session-notes.md#<today>-<MARKER>" \
+  --mission "<MISSION_ID — omit this flag if no mission was bound>" \
+  --pack-path "<PACK_PATH — omit this flag if Step 2.4 produced no pack>"
+```
+
+`start` is **idempotent** — an existing manifest is never clobbered, so a re-invoked `/session-start` is safe. If the walk-up finds no script, skip silently: the manifest is an additive durable-state substrate, and its absence must never block mandate capture.
+
+**Do not make this a gate.** Nothing reads the manifest yet (R4 / M-D2 are unbuilt; PJ was dropped 2026-07-09), so a failure here is advisory by construction — see the ADVISORY RULE in `run-manifest.sh`'s header and `principles.md § OP-5`.
+
 ### Step 4 — Confirm and chain to `/session-plan`
 
 Output exactly:

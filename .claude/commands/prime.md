@@ -562,6 +562,29 @@ Full backlog & inbox: /open-items
 
       The `- Context pack:` bullet (added 2026-05-29 for the Context Engine Phase 2) and the `- Mission:` bullet (added 2026-06-09 for the mission-contract subsystem) are **informational pass-through, not part of the five-label parse contract.** All four readers above use fixed-list extraction or labeled-bullet pass-through; they silently ignore both. The `- Context pack:` bullet locates the pack; the `- Mission:` bullet records which multi-session mission this session served and is read by **`/drift-check` only**, as a second reference standard (see `docs/session-marker.md` § Mandate-line bullet contract).
 
+   7.5. **Write the run-manifest start-stub (W3.2 R3).** After the mandate line lands on disk, write this session's durable start-stub. Auto mode never calls `/session-start`, so without this step every auto-mode session would be invisible to crash/orphan detection — the exact blind spot R3 exists to close. Schema: `docs/spine-schemas.md` § 1. Mirrors `/session-start` Step 3.5; keep the two in sync.
+
+      > **⚠ `MARKER`, `MISSION_ID`, and `PACK_PATH` are values YOU hold from earlier steps — NOT shell variables.** Each Bash call gets a fresh shell (env vars do not persist across tool calls), so `--marker "${MARKER}"` would expand empty and no stub would be written. **Substitute the literal values**; omit a flag whose value is unset. `--date` / `--marker` may be omitted entirely — the script self-resolves them from the marker oracle written in step 3 above.
+
+      ```bash
+      d="$(pwd)"; RM=""
+      while [ "$d" != "/" ]; do
+        for cand in "$d/ai-resources/logs/scripts/run-manifest.sh" "$d/logs/scripts/run-manifest.sh"; do
+          [ -f "$cand" ] && { RM="$cand"; break 2; }
+        done
+        d=$(dirname "$d")
+      done
+      # Marker + date omitted on purpose — the script resolves them itself.
+      # Add --mission / --pack-path ONLY if this session actually bound one.
+      [ -n "$RM" ] && bash "$RM" start \
+        --model "<the active session model identifier, e.g. claude-opus-4-8[1m]>" \
+        --mandate-ref "logs/session-notes.md#<today>-<MARKER>" \
+        --mission "<MISSION_ID from step 3.5 — omit this flag if none was bound>" \
+        --pack-path "<PACK_PATH from step 4.5 — omit this flag if no pack>"
+      ```
+
+      `start` is idempotent. If the walk-up finds no script, skip silently — an additive durable-state substrate must never block the auto-mode chain. **Not a gate** (`principles.md § OP-5`): nothing reads the manifest yet.
+
    8. **Write plan.** Write to `logs/session-plan-${TODAY}-${MARKER}.md` (marker + date resolved in step 3; canonical contract `docs/session-marker.md`) using `/session-plan` Step 7 schema (`## Intent`, `## Model`, `## Source Material`, `## Findings / Items to Address`, `## Execution Sequence`, `## Scope Alternatives`, `## Autonomy Posture`, `## Risk`). Apply `/session-plan` Step 7 self-check (length floor ≥25 substantive lines, concrete Findings, concrete Execution Sequence, realistic Scope Alternatives).
 
       For multi-item auto, structure the plan so each picked item is visible:

@@ -222,8 +222,41 @@ Parse these tokens from `$ARGUMENTS` (whole-token match); everything else in `$A
 
 12c. **QC-PENDING commit guard (architectural-change backstop).** Before staging, check whether this session produced or modified any `/risk-check` change-class artifact (hook edits, permission changes, cross-cutting CLAUDE.md edits, new commands or skills, new symlinks, automation with shared-state effects — full list: `ai-resources/docs/audit-discipline.md` § Risk-check change classes) that did **not** receive a passing independent `/qc-pass` this session. Derive from conversation context; if independent QC was unreachable per `ai-resources/docs/qc-independence.md` § Subagent-unavailable fallback (the 1M-credit subagent gate), it did **not** pass. If any such artifact exists: do **not** stage or commit it — write (or refresh) a QC-PENDING continuity scratchpad via `/handoff` (no args) naming the artifact, and surface in chat: "⚠ Architectural artifact {X} has no independent QC — commit blocked; resume in a fresh session via `/prime` → `/qc-pass` → commit." Stage and commit only the QC-clean remainder in the step below. If uncertain whether QC passed, surface and ask rather than committing. Skip silently if every in-class artifact was independently QC'd this session. Rationale: the reactive escalation in `qc-independence.md` depends on the agent catching the QC failure mid-session; this guard is the memory-independent backstop at the commit boundary.
 
+12d. **Close the run manifest (W3.2 R3 — advisory, never blocking).** Finalize this session's durable run manifest (`logs/runs/{date}-{marker}.json`), recording the files this session actually changed. Schema: `docs/spine-schemas.md` § 1. Implementation: `logs/scripts/run-manifest.sh`.
+
+Pass one `--file` per path from the `### Files Created` / `### Files Modified` lists you just wrote in Step 4, so `files_changed` reflects the real change set.
+
+> **⚠ Every `<…>` below is a value YOU derive and paste as a literal — none of them are shell variables.** Each Bash call gets a fresh shell (env vars do not persist between tool calls), so `--marker "${MARKER}"` would expand to the empty string. `--date` / `--marker` may be omitted entirely — the script self-resolves them from the marker oracle.
+>
+> **`--failure-class`:** omit it when the session had no classifiable failure (the common case). When it *did*, pass one of the 11 closed-set values from `docs/spine-schemas.md` § 5 (wire form: lowercase-hyphenated, e.g. `tool-misuse`, `mandate-drift`). Setting it **arms the § 2 defect trigger** — the manifest will then refuse to validate unless a defect-log entry exists or you pass `--incident-waived "<reason>"`. That is deliberate: the schema is the trigger, not operator memory.
+
+```bash
+d="$(pwd)"; RM=""
+while [ "$d" != "/" ]; do
+  for cand in "$d/ai-resources/logs/scripts/run-manifest.sh" "$d/logs/scripts/run-manifest.sh"; do
+    [ -f "$cand" ] && { RM="$cand"; break 2; }
+  done
+  d=$(dirname "$d")
+done
+# Marker + date omitted on purpose — the script resolves them itself.
+# Repeat --file once per path. Add --failure-class ONLY if the session had a real failure.
+[ -n "$RM" ] && bash "$RM" close \
+  --outcome "<DELIVERED | PARTIAL | ABANDONED>" \
+  --stop-reason "<completed | deferred | blocked | cap-hit | compaction>" \
+  --file "<path 1>" --file "<path 2>" \
+  --failure-class "<one of spine-schemas.md §5 — OMIT this flag entirely if none>"
+```
+
+**THE ADVISORY RULE — do not "harden" this into a gate.** An **absent** manifest is a routine, legitimate path, not a failure: sessions skip mandate confirmation all the time (`/friday-checkup` started directly with no `/prime`, `/clear`-resumed sessions, trivial wraps). `close` therefore writes a wrap-time stub when none exists, says so in one advisory line, and exits 0. Only a manifest that **exists and is malformed** aborts loudly (non-zero) — that is the "never a silent pass" rule from `spine-schemas.md` § 1, and it applies to schema *mismatch*, never to *absence*.
+
+If a loud abort does fire, surface it and **continue the wrap** — fix the manifest separately. Blocking a commit on this substrate would be enforcement where the system's own principles call for advisory (`principles.md § OP-5`; § OP-3's "loud failure over silent continuation" means loud *surfacing*, not blocking a legitimate operation). Nothing reads the manifest yet — R4 / M-D2 are unbuilt and PJ was dropped 2026-07-09 — so it has no authority to stop anything. Revisit only once a real consumer lands.
+
+**Staging:** add `logs/runs/{date}-{marker}.json` to the explicit-path list in the commit step below.
+
+*(Wrap-note slimming — retiring `### Files Created` / `### Files Modified` / `### Decisions Made` into `files_changed` / `decisions_refs`, taking the default note from 8 blocks to 5 — is **W3.2 R3 Pass 2**, deliberately NOT done here. It waits until the start-stub has proven it fires on real sessions; shipping the cut first would mean a session whose stub silently failed loses its file/decision record from both surfaces. See `logs/decisions.md` 2026-07-12.)*
+
 After updating logs and writing the telemetry entry, stage and commit changes. **Stage by explicit file paths**, not directory wildcards — directory-level `git add` silently sweeps uncommitted files from concurrent sessions. Enumerate from the Files Created / Files Modified sections just written to the session note, plus always-present wrap-touched files:
-- Always-staged (if modified this session): `logs/session-notes.md`, `logs/decisions.md`, `logs/coaching-data.md`, `logs/friction-log.md`, `logs/improvement-log.md`, `logs/improvement-log-archive.md`, `logs/innovation-registry.md`, `logs/usage-log.md` (the `friction-log.md` / `improvement-log.md` pair covers Step 6.5 feedback-collector writes)
+- Always-staged (if modified this session): `logs/session-notes.md`, `logs/decisions.md`, `logs/coaching-data.md`, `logs/friction-log.md`, `logs/improvement-log.md`, `logs/improvement-log-archive.md`, `logs/innovation-registry.md`, `logs/usage-log.md` (the `friction-log.md` / `improvement-log.md` pair covers Step 6.5 feedback-collector writes), `logs/runs/{date}-{marker}.json` (this session's run manifest, closed in Step 12d — marker-scoped, so it can never collide with a concurrent session's)
 - Session-specific: every path listed in Files Created / Files Modified for this session, staged by explicit name
 
 Run as two separate commands, not chained:

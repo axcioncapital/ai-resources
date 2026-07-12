@@ -1,0 +1,53 @@
+{
+  "run_id": "2026-07-12-S1",
+  "project": "ai-resources",
+  "date": "2026-07-12",
+  "marker": "S1",
+  "model": "claude-opus-4-8[1m]",
+  "lane": "standard",
+  "mandate_ref": "logs/session-notes.md#2026-07-12-S1",
+  "mission": "w32-migration-execution",
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [
+      "risk-check",
+      "consult"
+    ],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    "logs/scripts/run-manifest.sh",
+    "logs/scripts/run-manifest.test.sh",
+    ".claude/commands/session-start.md",
+    ".claude/commands/prime.md",
+    ".claude/commands/wrap-session.md",
+    "../.claude/commands/wrap-session.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-12-r3-pass1"
+  ],
+  "validation": [
+    {
+      "output": "logs/scripts/run-manifest.sh",
+      "level_reached": "functional"
+    }
+  ],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": null,
+  "outcome": null,
+  "failure_class": null,
+  "incidents_refs": []
+}

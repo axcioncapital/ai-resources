@@ -541,3 +541,16 @@ Four, none of which landed as harm — but one near-miss is load-bearing:
 
 - The `PreToolUse[Bash]` decision-block hook remains unbuilt. It is the only real closure of the shell-write vector into protected strategy state, and it must exempt `/promote-to-live`'s `cat` heredoc or it breaks the one sanctioned writer. Deferred across three sessions now — deferred, not forgotten.
 - The frameworks KB being *live* (5 canonical notes, gate fires) changes the decision-support calculus for the new project: query the vault, do not rebuild a stub framework list.
+
+---
+
+## 2026-07-12 — Session S1
+**Mandate:** Implement W3.2 roadmap item R3 (durable run-manifest + slim wrap note) per its SO-cleared packet — start-stub at mandate confirmation on every session-entry path, running `files_changed` updates, close-and-schema-validate at wrap with a loud abort on mismatch, and the wrap note cut from 11 sections to 5 — done when: `logs/runs/{date}-{marker}.json` is written and closed by a real session, the negative test (malformed manifest) produces a loud abort rather than a silent pass, the wrap-note template renders 5 sections, and the R3 packet + remediation-register rows read verified.
+- Out of scope: PJ (propagation join) and R4 (incident wrap-gate) — separate packets that consume this manifest; PJ is dropped. RT1 grant ledger, permissions, hooks, settings. Other durable-state moves (findings sidecars, backlog index — M-C5).
+- Files in scope: (inferred) ai-resources/logs/scripts/run-manifest.sh (new), ai-resources/.claude/commands/{session-start,prime,wrap-session}.md, workspace-root .claude/commands/wrap-session.md, projects/axcion-ai-system-redesign/output/implementation-prep/packets/R3-run-manifest.md, projects/axcion-ai-system-redesign/output/implementation-prep/remediation-register.md
+- Stop if: /risk-check returns RECONSIDER or NO-GO on the core-command edits (packet §7 flags this as a conscious judgment call — R3 changes core-command behaviour and introduces shared durable state)
+- Allowed inputs: projects/axcion-ai-system-redesign/output/implementation-prep/packets/R3-run-manifest.md, ai-resources/docs/spine-schemas.md, ai-resources/.claude/commands/wrap-session.md, ai-resources/.claude/commands/session-start.md, ai-resources/.claude/commands/prime.md, ai-resources/logs/scripts/, workspace-root .claude/commands/wrap-session.md
+- Required outputs: ai-resources/logs/scripts/run-manifest.sh, edits to ai-resources/.claude/commands/wrap-session.md + session-start.md + prime.md, workspace-root wrap-session.md mirror, updated R3 packet gate/verification sections, updated remediation-register R3 row
+- Mission: w32-migration-execution
+
+Implement W3.2 R3 (durable run-manifest + slim wrap note) per `packets/R3-run-manifest.md`.
