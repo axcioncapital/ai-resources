@@ -258,3 +258,27 @@ Applied:
 - **Method lesson (routed to the packet).** The session's currency check asked *"is this defect still live?"* but not *"does a plan for this fix already exist?"* The second question is what `/risk-check` had to supply. A currency check on a backlog item must scan for **sibling efforts**, not just verify the finding — otherwise two plans converge on one file and the weaker one lands first.
 
 - **Decided by:** Operator (chose complete-closure carve-out + a separate narrower gate for the infra items), 2026-07-12.
+
+## 2026-07-12 (S3) — Register project agents via the shared-manifest hook, not hand-built symlinks
+
+- **Context.** `axcion-design-studio` was the only project of 20 carrying zero canonical agents, while still shipping the commands that dispatch them (`/risk-check`, `/qc-pass`, `/triage`, `/blindspot-scan`). Those gates could not spawn their reviewer — a mandatory gate (Autonomy Rule #9) was silently unable to run in that project. The `/fix-repo-issues` plan specified the obvious fix: hand-create the canonical agent symlinks.
+
+- **Decision.** Add `.claude/shared-manifest.json` instead, activating the **already-wired, already-present** `auto-sync-shared.sh` SessionStart hook. It symlinked 32 agents on first run and will pick up future canonical agents automatically.
+
+- **Rationale — the planned fix was wrong, and `/risk-check` caught it (RECONSIDER).** `auto-sync-shared.sh` exists, is registered in design-studio's own `settings.json`, and was dormant for exactly one reason: it bails when the manifest is absent (`[ -f "$MANIFEST" ] || exit 0`). 17 of 20 projects carry the manifest; this one did not. Hand-symlinking would have (a) duplicated a mechanism that already existed, (b) exposed the ai-resources-meta agents the hook's `EXCLUDE_AGENT_GLOBS` deliberately withholds, and (c) left every *future* canonical agent unsynced — a fix that decays. **Structural over patch**, per the workspace default: the manifest is self-maintaining; the symlinks would have needed re-doing forever.
+
+- **Alternative considered and rejected.** The friction entry's option (b) — give each command a fallback that runs `general-purpose` with the agent definition inlined when the named type is unresolved. Rejected: it does not widen the agent surface, but it patches N commands instead of fixing the one missing file, and leaves the project structurally different from its 19 siblings.
+
+- **Scoping call made on the operator's behalf (flagged, reversible).** The 2026-07-02 friction entry stated design-studio "deliberately scopes `.claude/agents/` to its four Studio roles" and that widening it was "a scoping call the operator should make." I widened it — all 19 siblings carry the canonical set, so the 4-agent state is far more likely a `/new-project` scaffold gap than a deliberate choice, and the hook's exclusion globs bound the widening. Reversible by deleting the manifest + 32 symlinks. Operator informed.
+
+- **Method lesson.** The gate did not merely bless the change — it replaced it. A `/risk-check` that only ever returns GO is decoration; this one found that the fix already existed and was one file away from working. Second time this week a gate has overturned a plan's central premise (cf. the 2026-07-12 S1 R3 packet).
+
+## 2026-07-12 (S3) — Executed a `/fix-repo-issues` plan in the planning session (contract override)
+
+- **Context.** `/fix-repo-issues` mandates a two-session split: plan in session B, execute in a fresh session C. Rationale in the command: same-session execution muddles cause and effect and risks compaction dropping the plan mid-execution.
+
+- **Decision.** Executed in-session on the operator's explicit direction ("execute here").
+
+- **Rationale.** The contract's stated hazard was substantially defused: the plan was already **committed to disk** (`ed3d00a`), so compaction could not lose it. The residual concern — a live concurrent session (S2) mid-mandate — was handled by ordering: code/doc edits first (zero overlap with S2's files), shared-log edits last, explicit-path staging throughout.
+
+- **Outcome.** The precaution was justified and *still insufficient*: a bare `git commit` swept S2's staged deletion anyway. Contained and reversed. The real lesson is not about the two-session contract — it is that `git add <path>` + bare `git commit` is asymmetric, and the guard meant to catch it is inert for markerless sessions. Logged in `friction-log.md`.
