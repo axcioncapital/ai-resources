@@ -1,9 +1,20 @@
 ---
 mission_id: w32-migration-execution
 mission_name: Execute the W3.2 migration roadmap in ai-resources
-status: active
+status: superseded
 started: 2026-07-09
+closed: 2026-07-13
 ---
+
+> # ⛔ SUPERSEDED — HISTORICAL RECORD ONLY. NO SESSION BINDS TO THIS MISSION.
+>
+> **Closed 2026-07-13.** Not completed — **superseded**, together with the W3.2 roadmap whose execution it existed to steer. The goal below ("every W3.2 roadmap item… is built, verified and closed") is no longer a goal: most of those items were retired for lack of evidence.
+>
+> `status:` is deliberately **not** `active` — `/prime` and `/mission list` scan for `status: active`, so no future session will bind to this mission or be measured against its validation contract.
+>
+> **The current authority is:** [`ai-resources/plans/repo-redesign-authoritative-implementation-report.md`](../../plans/repo-redesign-authoritative-implementation-report.md) — a five-item queue (RR-01…RR-05) with **no mission contract, no packets, no register and no per-item gates**. That machinery was an artifact of a phantom item count and consumed 72.5% of this mission's effort.
+>
+> **Do not open the threads below. Do not resume from them.** Rationale: `ai-resources/logs/decisions.md` § 2026-07-13 (S2).
 
 <!--
   MISSION CONTRACT — a multi-session goal that individual sessions serve.
