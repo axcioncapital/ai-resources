@@ -582,7 +582,9 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Target files:** `projects/positioning-research/.claude/hooks/detect-concurrent-session.sh` (delete), `projects/research-pe-regime-shift-advisory-gap/.claude/hooks/detect-concurrent-session.sh` (delete). Doc already corrected: `ai-resources/docs/session-marker.md` (§ Runtime non-command consumers).
 
 ### 2026-07-13 — `~/.claude/settings.json` declares `"model": "opus[1m]"` — a live violation of a non-negotiable workspace rule
-- **Status:** logged (pending) — **needs an operator decision; deliberately NOT auto-fixed**
+- **Status:** **DECLINED by operator, 2026-07-13 ("forget this one"). Do not re-raise.** The field stays. Recorded so the violation is *known and accepted* rather than silently rediscovered by every future audit — any audit or checkup that flags it again should be closed by pointing here, not re-escalated.
+- **Standing consequence of the decline (not a re-raise — just the honest cost, on the record):** the workspace rule's own rationale is that a declared default contests `/model`. If a `/model` switch ever fails to take effect mid-session, this field is the first place to look. Separately, the `[1m]` suffix is on record (2026-06-18) as causing subagent spawn failures. Neither is speculative; both are accepted.
+- ~~**Status:** logged (pending) — needs an operator decision; deliberately NOT auto-fixed~~
 - **Category:** harness config / model tiering
 - **Severity:** high — this is a *standing* violation of a rule the workspace calls non-negotiable, and it plausibly explains a real symptom.
 - **Source:** `risk-check-reviewer`, ai-resources 2026-07-13 S4 (found incidentally while reviewing an unrelated `SessionEnd` hook addition to the same file). Independently confirmed by direct read: `~/.claude/settings.json` line 150.
