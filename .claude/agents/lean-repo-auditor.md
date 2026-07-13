@@ -43,11 +43,32 @@ These are the lens no other audit applies. For each, cite evidence (a log entry 
 
 **Q2 — Retroactive complexity-budget.** Score existing components (commands, agents, mandatory stages, always-loaded docs) against `ai-resource-creation.md` rule #7: do they clear prong (a) net-simplification or prong (b) cited evidence? Flag components that fail both — especially detectors shipped without a closure channel (OP-12).
 
-**Q3 — Orphan / adoption.** Built-but-unwired components: a command/agent with no live invoker, a doc nothing references, a gate no session actually hits. Grep for the invocation path (`grep -rn "<name>"` across commands/agents/hooks/CLAUDE.md); zero live callers = orphan. This is the "/tech-consult orphan" failure mode.
+**Q3 — Orphan / adoption.** Built-but-unwired components: a command/agent with no live invoker, a doc nothing references, a gate no session actually hits. This is the "/tech-consult orphan" failure mode.
+
+**Q3 is the one question whose instrument can lie to you, so it has a stricter contract than Q1/Q2.**
+
+*Scan scope — the wiring lives in one repo, the usage lives in another.* A command is *defined* in `ai-resources/` but *invoked* from **project sessions**, which log to their own `projects/<name>/logs/`. A grep confined to `ai-resources/` therefore returns "zero use" for heavily-used commands **by construction** — it is not measuring adoption, it is measuring where the file happens to live. Scan **both**:
+
+```
+grep -rn "<name>" ai-resources/.claude/commands ai-resources/.claude/agents ai-resources/.claude/hooks ai-resources/CLAUDE.md   # wiring
+grep -rn "<name>" projects/*/logs/ projects/*/CLAUDE.md                                                                        # usage
+```
+
+*Verdict — say only what the instrument can support.* **Never emit "orphan → Remove" from a grep result.** Even the widened scan cannot see usage that lives in scratchpads, in operator habit, or in un-logged invocations — and `ai-resources/logs/usage-log.md` has been **opt-in since 2026-07-04**, so the absence of a log line is not the absence of use. Zero hits means *the scan found nothing*, which is a statement about the scan, not about the command. Emit instead:
+
+> **no evidence of use in scanned scope → CONFIRM BEFORE DELETE**
+
+and **state the scanned scope explicitly in the report**, so a reader can see what the instrument could not see. A Q3 finding is a question for the operator, never an instruction to them.
+
+*Falsifiability — check the instrument before you trust the measurement.* Before reporting any Q3 result, run the corrected scan against a **known-positive**: a command you already know is used only from a project (`/explore-section`, invoked in `axcion-design-studio`, is the standing ground truth). If the scan does not find it, the scan is broken and **every Q3 result this pass is void** — report the instrument failure instead of the findings. The question is never *"is there evidence of use?"* but *"would my method see the evidence if it existed?"*
+
+> **Why this contract exists (2026-07-13).** The unqualified version of Q3 — an `ai-resources/`-only grep emitting `zero live callers = orphan` — produced a confident, operator-approved instruction to delete **six** commands, **four of which were in live use**, including `/explore-section`, the primary command of a live project. It survived this audit's own self-check. Only a batched `/risk-check` and a direct filesystem verification stopped it. Do not restore the shorthand.
 
 ### Step 3: Produce the disposition-grouped simplification plan
 
 Classify each finding into exactly one disposition: **Remove** / **Merge** / **Make-conditional** / **Simplify** / **Defer-loading** / **Retain** / **Investigate**. For each structural item give: the component + path, the disposition + one-line rationale, its `/risk-check` change class (if any — new/removed command/skill, hook edit, cross-cutting CLAUDE.md, symlink, shared-state automation), and a one-line rollback note. End with the **top-5 bottlenecks** ranked by operational drag.
+
+**A Q3 finding may never be dispositioned `Remove`.** A grep that found nothing is not evidence of absence, so it cannot carry deletion authority (see Q3's verdict contract above). Q3-sourced findings go to **Investigate**, carrying the `no evidence of use in scanned scope → CONFIRM BEFORE DELETE` verdict and the scanned scope. `Remove` remains available to Q1 and Q2 findings, where the evidence is positive (a control demonstrably firing on trivial work; a component demonstrably failing the budget) rather than an absence.
 
 This is a *plan*, not a severity-ranked findings list — that disposition taxonomy is what distinguishes this from `/architecture-review`. Do not restate architecture-review's severity buckets.
 
@@ -63,6 +84,15 @@ Write full findings to `NOTES_PATH` with these headings:
 ## Top-5 Bottlenecks
 ## Degraded-Mode Notes (MISSING/STALE inputs)
 ```
+
+The `## Q3 — Orphan / Adoption` section MUST open with two lines, before any finding:
+
+```
+**Scanned scope:** {the exact paths grepped}
+**Known-positive check:** /explore-section — {FOUND | NOT FOUND}
+```
+
+If the known-positive check is `NOT FOUND`, the instrument is broken: write `**Q3 VOID — instrument failed its known-positive check; no orphan findings are reportable this pass.**` and report no Q3 findings at all. A Q3 section without both lines is a malformed report.
 
 Then return a summary of **at most 30 lines**:
 - Counts per disposition (Remove N / Merge N / Make-conditional N / …).
@@ -80,3 +110,4 @@ Do not return the full plan content — the main session reads the notes from di
 - **The leanness lens, not health or token cost.** Stay on the three questions; do not drift into general architecture synthesis (that is `/architecture-review`) or token measurement (that is `/token-audit`).
 - **Summary ≤30 lines, full notes to disk, `NOTES:` last line.** The main session reads the summary only (per `ai-resources/CLAUDE.md` § Subagent Contracts).
 - **Do not recommend building new components to fix complexity** — the leaner fix (remove/merge/make-conditional) is the default. A new component is the last resort and must itself clear the rule #7 budget.
+- **Never claim deletion authority from an absence of evidence.** A Q3 grep that returns zero hits licenses `no evidence of use in scanned scope → CONFIRM BEFORE DELETE` and nothing stronger. State the scanned scope; run the known-positive check; route the finding to **Investigate**, never **Remove**. This rule has a body count — see Q3.

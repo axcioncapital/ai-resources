@@ -45,3 +45,14 @@ inbox/archive/
 
 # Context-engine runtime output (packs are session artifacts; treated as untracked per operator policy)
 output/
+
+# Codex CLI harness mirror — operator experiment, NOT a maintained artifact (operator call, 2026-07-13 S12).
+# It appeared untracked on 2026-07-13 as a full parallel port of the harness (~42 agents, 19 hooks, its own
+# check-foreign-staging.sh) and was NOT gitignored, so any broad `git add` would have swept ~60 files into
+# the repo. It also carries its own copy of the /lean-repo Q3 orphan lens, which is NOT kept in sync with
+# the canonical fix (id-55) — a third copy nobody maintains is exactly the drift this repo keeps paying for.
+# Ignored so it cannot be committed by accident. If Codex is ever adopted for real, the decision to track
+# and sync this mirror is a deliberate one to make — not an outcome of a wildcard staging command.
+.codex/
+.agents/
+AGENTS.md

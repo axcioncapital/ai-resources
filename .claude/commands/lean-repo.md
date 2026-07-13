@@ -76,6 +76,15 @@ Write `{OUTPUT_PATH}`:
 {From the agent notes. Group under: Remove / Merge / Make-conditional / Simplify / Defer-loading / Retain / Investigate.
 Each structural item: component + path — disposition rationale — /risk-check change class (if any) — rollback note.}
 
+## Orphan / Adoption (Q3) — scanned scope and its limits
+**Scanned scope:** {the exact paths the agent grepped — copy verbatim from the agent's Q3 section}
+**Known-positive check:** /explore-section — {FOUND | NOT FOUND}
+
+{Q3 findings, each carrying the verdict `no evidence of use in scanned scope → CONFIRM BEFORE DELETE`.
+If the known-positive check is NOT FOUND, write instead: **Q3 VOID — the orphan scan failed its own known-positive check; no orphan findings are reportable this pass.**}
+
+> A zero-hit grep is a fact about the scan, not about the component. Usage also lives in scratchpads, in operator habit, and in un-logged invocations, and `logs/usage-log.md` has been opt-in since 2026-07-04 — absence of a log line is not absence of use. Nothing in this section is a deletion instruction.
+
 ## Top-5 Bottlenecks
 {Ranked by operational drag, one line each.}
 
@@ -118,3 +127,4 @@ A `/lean-repo` plan with no execution path is exactly the OP-12 failure this com
 - **Prefer consolidation over deletion; conditional over mandatory; defer-loading over always-loaded.** Removing components you don't understand is not leanness.
 - **Do not add process to remove process.** A recommendation that introduces a new command/agent/gate must itself clear the `docs/ai-resource-creation.md` rule #7 complexity budget, or it is not a simplification.
 - **The three questions are the boundary.** Control-drift, budget-fail, orphan. If a finding is really "general health" or "token cost," it belongs to `/architecture-review` or `/token-audit` — route it there, don't restate it here.
+- **Q3 never carries deletion authority.** An orphan finding is an *absence of evidence*, and this repo's usage evidence is distributed across project logs, scratchpads, and un-logged operator habit — no grep sees all of it. A Q3 finding is reported as `no evidence of use in scanned scope → CONFIRM BEFORE DELETE`, dispositioned **Investigate** (never **Remove**), with the scanned scope stated and the `/explore-section` known-positive check run. On 2026-07-13 the unqualified version of this lens produced an operator-approved instruction to delete six commands, four of them in live use. Do not restore the shorthand.

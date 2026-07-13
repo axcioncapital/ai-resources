@@ -381,6 +381,22 @@ def is_exempt(path):
             return True
         if re.match(r'session-plan-\d{4}-\d{2}-\d{2}-S\d+.*\.md$', base):
             return True
+        # Run manifests (logs/runs/YYYY-MM-DD-S{N}.json), written by run-manifest.sh
+        # and staged by /wrap-session Step 12d. Same marker-scoped process-artifact
+        # class as session-plan-*.md directly above: the date+marker IS the filename,
+        # so the file is structurally per-session and can never carry foreign work.
+        # Before this clause, one command instructed the stage and this guard blocked
+        # it — fired on every wrap whose mandate was written at /prime time (i.e. the
+        # normal case), and taught sessions to reach for a bypass of the exact tripwire
+        # that stops concurrent-session contamination (improvement-log 2026-07-13, id-53).
+        # Deliberately NOT added to EXEMPT_DIR_PREFIXES: that is a blanket `startswith`
+        # prefix, which would exempt ANY path under logs/runs/. This clause exempts only
+        # the manifest filename shape, so a stray logs/runs/* file is still guarded.
+        # `== "logs/runs/" + base` (not `startswith`) pins the file to a DIRECT child of
+        # logs/runs/ — otherwise a nested logs/runs/<anything>/2026-07-13-S1.json would
+        # satisfy both the prefix and the basename regex and slip through exempt.
+        if path == "logs/runs/" + base and re.match(r'\d{4}-\d{2}-\d{2}-S\d+\.json$', base):
+            return True
         if base.endswith("-scratchpad.md"):
             return True
         # Log-rotation byproducts (session-notes-archive-YYYY-MM.md,
