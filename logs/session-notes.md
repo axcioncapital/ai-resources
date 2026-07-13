@@ -505,3 +505,17 @@ None. The one near-risk was editing `prime.md` — a file read at every session 
 
 - Does the operator accept retiring `/lean-repo`? (Carried from S6 — its own Bucket-D verdict recommends it; M-1 must land first or the lens is lost with the component.)
 - `backup-session-plan.sh`: wire it or delete it? (Carried from S6 — registered in no settings layer anywhere, despite its own header claiming it is wired.)
+
+## 2026-07-13 — Session S8
+
+**Mandate:** Execute the `/lean-repo` plan (`audits/lean-repo-2026-07-13.md`) — triage its 22 items by urgency and value, then execute the most important fixes — done when: a triage ranking of all 22 items is written down, and the top-ranked fixes are applied and committed with the plan's item statuses updated
+- Out of scope: (none stated)
+- Files in scope: audits/lean-repo-2026-07-13.md; audits/risk-checks/2026-07-13-lean-repo-tier1-batched-removals-merge-wiring.md; docs/audit-discipline.md; logs/gate-calibration.md; docs/agent-tier-table.md; docs/ai-resource-creation.md; .claude/commands/lean-repo.md; .claude/commands/architecture-review.md; .claude/commands/friday-checkup.md; .claude/commands/promote-workflow.md; .claude/commands/list-critical-resources.md; .claude/commands/explore-section.md; .claude/commands/project-next-steps.md; .claude/commands/post-project-review.md; .claude/commands/project-consultant.md; .claude/commands/tech-consult.md; .claude/agents/lean-repo-auditor.md; .claude/agents/execution-agent.md; .claude/hooks/auto-sync-shared.sh; .claude/hooks/backup-session-plan.sh; logs/improvement-log.md; logs/decisions.md; logs/session-notes.md; logs/session-plan-2026-07-13-S8.md; logs/runs/2026-07-13-S8.json; CLAUDE.md (workspace root)
+  - *Footprint note (2026-07-13 S8):* the original bullet used brace-expansion shorthand (`.claude/commands/{a,b}.md`), which `check-foreign-staging.sh` matches **literally** — so it correctly blocked a commit touching paths I had in fact declared. Rewritten as literal paths. The session-artifact paths (`logs/runs/*.json`, the risk-check report, the session plan) did not exist when the mandate was written and are added here rather than overridden past the gate. Same known contract-break logged at 2026-07-13 S7.
+- Stop if: (none stated)
+- Allowed inputs: ai-resources/CLAUDE.md; plans/repo-redesign-authoritative-implementation-report.md; logs/improvement-log.md; logs/decisions.md; logs/coaching-log.md; audits/friday-checkup-2026-07-03.md; audits/working/lean-repo-2026-07-13-notes.md
+- Context pack: output/context-packs/architecture-20260713-e9d3b/pack.md
+
+Execute the /lean-repo plan (audits/lean-repo-2026-07-13.md): triage the 22 items by urgency and value, then execute the most important fixes.
+
+**SO advisory (pre-plan, `/consult` 2026-07-13):** `projects/axcion-ai-system-owner/output/consultations/consult-2026-07-13-lean-repo-gaps.md` — all 4 engine-flagged gaps are real. MC-1 is NOT to land this session (No-self-waivers conflict + wrong venue for re-tiering the highest-volume gate); I-1…I-7 operator yes/no first; bounded items batched under one plan-time + one end-time `/risk-check`; S-1/D-1 QC-reachability-gated.
