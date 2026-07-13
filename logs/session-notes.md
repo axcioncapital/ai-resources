@@ -521,3 +521,12 @@ Landed the `/lean-repo` worktree, then — on operator direction ("fix 1") — f
 - **Does the operator accept retiring `/lean-repo`?** Its own Bucket-D verdict recommends it (the lens is real; the command is not viable — no invocation path, excluded from distribution). M-1 must land first, or the lens is lost with the component. Carried from S5; a live decision, not a fait accompli.
 - **`backup-session-plan.sh`: wire it or delete it?** Registered in **no** settings layer anywhere, while its own header claims it is wired. Binary; ambiguity is the only option strictly worse than both. Carried from S5.
 - **The "sessions run in a circle" concern (S4) — this session is both an instance and a counter-example.** The operator asked for a merge and got a merge *plus* a structural fix to the session machinery. But the fix closed a real defect found in flight, gated and verified, rather than adding machinery for its own sake — and the defect would have silently corrupted the session record on the *next* worktree session. Worth continuing to watch; not resolved.
+
+## 2026-07-13 — Session S8
+
+**Mandate:** Read-only pre-deployment fitness audit of the canonical research workflow against the Sector Intelligence Programme v3 context pack — done when: `audits/research-workflow-deployment-fitness-2026-07-13.md` is written with a verdict, QC-passed, and (after operator acceptance) a mission with fix threads exists in `logs/missions/`
+- Out of scope: editing any workflow/command/agent/hook/skill/CLAUDE.md file; deploying; applying fixes or calibration; designing the deployed project; resolving the programme's §13 open decisions; reading the main ai-resources checkout
+- Files in scope: audits/research-workflow-deployment-fitness-2026-07-13.md; audits/working/research-workflow-fitness/*; logs/missions/*; logs/session-notes.md; logs/session-plan-2026-07-13-S8.md
+- Stop if: the worktree's workflow files turn out to differ from canonical main (audit baseline invalid) — surface it, do not silently re-baseline
+
+Session runs in the ai-resources-research-workflow worktree (branch session/2026-07-13-research-workflow, baseline 9992b06; workflow files verified byte-equal to main at 849ff8a).
