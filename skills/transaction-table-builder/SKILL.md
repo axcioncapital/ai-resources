@@ -83,11 +83,13 @@ Each column maps to one of the 13 mandatory fields. The `EV (EUR)` and `EV discl
 
 | Target | Buyer | Seller | Country | Sector | Date | Buyer type | Deal type | EV (EUR) | EV disclosure | Size-lens | Source 1 | Source 2 | Claim supported |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Nordic Components AB | Adelis Platform Co | Family (Karlsson) | Sweden | Industrial services | 2025-09-12 | sponsor-backed platform | add-on | 8500000 | disclosed | CONFIRMED_IN_LENS | Adelis press release (2025-09-12) | Affärsvärlden article (2025-09-15) | 1.1-cluster-04-claim-12 |
-| Visby Software Oy | CapMan Growth Equity Fund III | Founders | Finland | Software | 2025-11-03 | PE | platform | — | undisclosed | LIKELY_IN_LENS | CapMan press release (2025-11-03) | Talouselämä article (2025-11-04) | 1.1-cluster-07-claim-03, 1.1-cluster-07-claim-05 |
-| TechFinland Oy | Investor AB (strategic) | Vaaka Partners Fund III | Finland ← Sweden | Financial software | 2025-08-21 | strategic | secondary | 180000000 | disclosed | ABOVE_LENS | Investor AB press release (2025-08-21) | — | UNVERIFIED |
+| Nordic Components AB | Nordvik Platform Co | Family (Karlsson) | Sweden | Industrial services | 2025-09-12 | sponsor-backed platform | add-on | 8500000 | disclosed | CONFIRMED_IN_LENS | Nordvik Partners press release (2025-09-12) | Nordic Business Review article (2025-09-15) | 1.1-cluster-04-claim-12 |
+| Brunnsvik Software Oy | Aurora Nord Growth Equity Fund III | Founders | Finland | Software | 2025-11-03 | PE | platform | — | undisclosed | LIKELY_IN_LENS | Aurora Nord press release (2025-11-03) | Helsinki Business Weekly article (2025-11-04) | 1.1-cluster-07-claim-03, 1.1-cluster-07-claim-05 |
+| TechFinland Oy | Lindholm Industri AB (strategic) | Saaristo Partners Fund III | Finland ← Sweden | Financial software | 2025-08-21 | strategic | secondary | 180000000 | disclosed | ABOVE_LENS | Lindholm Industri press release (2025-08-21) | — | UNVERIFIED |
 
-Notes: Row 3 is single-source at table-build time (only DNB PR confirmed). Row 3 claim ID UNVERIFIED — no cluster-memo claim has yet been emitted in the new scheme to attach to.
+Notes: Row 3 is single-source at table-build time (only the buyer's own PR confirmed). Row 3 claim ID UNVERIFIED — no cluster-memo claim has yet been emitted in the new scheme to attach to.
+
+> **All firm, fund and publication names in this example are fictional.** Shared skills sync to every project; a real sponsor, buyer or adviser name in an example is confidential residue, not illustration. Invent names — do not paste them from a live engagement.
 ```
 
 Three contracts the example demonstrates verbatim:

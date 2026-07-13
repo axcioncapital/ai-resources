@@ -179,7 +179,7 @@ Run all ten checks against every memo. Report findings per check per memo before
 
 **Procedure — two sub-checks:**
 
-1. **Transaction-row-ID reference rule.** For each finding that names one or more specific transactions (e.g., "Adelis's add-on of Nordic Components AB," "the Visby Software take-private"), check that the finding references the transaction-table row by row ID (one row ID per named transaction). The row ID is the Target+Buyer+Date triple as it appears in the table (or a `row:N` index if the project uses indexed rows). If the table is absent, this sub-check skips; flag in the output.
+1. **Transaction-row-ID reference rule.** For each finding that names one or more specific transactions (e.g., "Nordvik Partners's add-on of Nordic Components AB," "the Brunnsvik Software take-private" — fictional names; never paste a real sponsor or target into a shared skill), check that the finding references the transaction-table row by row ID (one row ID per named transaction). The row ID is the Target+Buyer+Date triple as it appears in the table (or a `row:N` index if the project uses indexed rows). If the table is absent, this sub-check skips; flag in the output.
 
 2. **Same-pattern threshold (operator verbatim from v4 § S-05 step 4):**
 

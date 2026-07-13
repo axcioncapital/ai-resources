@@ -68,12 +68,12 @@ The operator inserts this marker inside (or immediately before) the paragraph th
 
 **Example input:**
 ```markdown
-Nordic add-on activity rose meaningfully in 2025, with platforms in Sweden and Finland accounting for most of the increase. <!-- improve: cite Adelis add-on Q3 — the specific deal matters more than the aggregate trend here -->
+Nordic add-on activity rose meaningfully in 2025, with platforms in Sweden and Finland accounting for most of the increase. <!-- improve: cite the Nordvik Partners add-on Q3 — the specific deal matters more than the aggregate trend here -->
 ```
 
 **Example output (after apply):**
 ```markdown
-Nordic add-on activity rose meaningfully in 2025, with platforms in Sweden and Finland accounting for most of the increase — exemplified by Adelis's Q3 add-on of Nordic Components AB [1.1-cluster-04-claim-12], which substantiates the platform-driven pattern more directly than aggregate Argentum tallies do.
+Nordic add-on activity rose meaningfully in 2025, with platforms in Sweden and Finland accounting for most of the increase — exemplified by Nordvik Partners's Q3 add-on of Nordic Components AB [1.1-cluster-04-claim-12], which substantiates the platform-driven pattern more directly than aggregate pan-Nordic advisory tallies do.
 ```
 
 (Citation IDs in the apply output are preserved verbatim from the draft / inserted by the operator's improve idea where the operator names them. The skill does NOT mint new citation IDs.)

@@ -49,7 +49,7 @@ Format as a single line: `¹ Label · ² Label · ³ Label · …`
   - Multi-author joint work: semicolon-separated surnames, e.g., `Harris; Jenkinson; Kaplan`
   - Org variants / successor entities: slash, e.g., `Invest Europe / EDC`
   - Proxies / sources-of-sources: parenthetical, e.g., `Copenhagen Economics (for SVCA)`, `S&P Global Market Intelligence (citing Preqin)`
-  - Multi-source concatenation (one citation number backed by several distinct sources): semicolon-joined list, e.g., `SSE Dissertation; Sampford Advisors; Private Equity Professional`
+  - Multi-source concatenation (one citation number backed by several distinct sources): semicolon-joined list, e.g., `University Dissertation; Ravndal Advisors; PE Practitioner Review` (fictional source names — never paste real advisers or publications from a live engagement into a shared skill)
 - **Numbering:** entries listed in ascending local-number order. Numbering starts at 1 for each H1 module and is sequential within the block.
 - **Duplicate labels within a module** are allowed. If two distinct sources both compress to the same org name (e.g., two separate McKinsey publications), list both entries at their respective local numbers — do not dedupe.
 - **Unused entries dropped.** A source present in the evidence pack but never cited in a given module's prose does not appear in that module's Sources block. It remains in the Source Registry (working artifact) only.

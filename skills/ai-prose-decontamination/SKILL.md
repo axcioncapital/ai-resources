@@ -159,7 +159,7 @@ AI-generated analytical prose reaches for academic-essay constructions — multi
 
 **Detection patterns:**
 
-1. **Convergence framings** — sentences whose subject is a multi-source aggregate stated as if it were a phenomenon: "Three independent series converge for 2023 through H1 2025"; "The data points cluster around 8% per annum"; "Multiple sources align on the finding that...". Replace with direct attribution: "KPMG, Argentum, and Clearwater all report stable volumes in 2023–H1 2025: KPMG averaged 355 quarterly deals in 2023..." or compress to the headline statistic with citations stacked: "Nordic deal volume held near 370 per quarter through 2023–2024 [Q1] [Q2] [Q3]."
+1. **Convergence framings** — sentences whose subject is a multi-source aggregate stated as if it were a phenomenon: "Three independent series converge for 2023 through H1 2025"; "The data points cluster around 8% per annum"; "Multiple sources align on the finding that...". Replace with direct attribution: "KPMG, EY, and Clearwater all report stable volumes in 2023–H1 2025: KPMG averaged 355 quarterly deals in 2023..." or compress to the headline statistic with citations stacked: "Nordic deal volume held near 370 per quarter through 2023–2024 [Q1] [Q2] [Q3]."
 
 2. **Indirect attribution constructions** — "X is best read as Y," "X is best understood as Y," "X should be read as Y." Reduce to direct framings: "X reflects Y" or "X means Y" or "Y is what X is showing us."
 
