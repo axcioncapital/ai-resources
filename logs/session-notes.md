@@ -577,3 +577,10 @@ Secondary, contained: the `check-foreign-staging.sh` tripwire **blocked the firs
 **Mandate deviation — operator-directed, recorded plainly.** The session opened as the RR-04 worktree pilot. During `/prime` I surfaced a defect in the concurrent-session liveness oracle; the operator replied **"fix it"**, which redirected the session. **The worktree pilot did NOT run.** `/new-worktree-session` has still never been executed and **RR-04 remains open** — do not let this session's note read as if it closed. The pilot's one finding stands and is carried forward: the command is `disable-model-invocation: true`, so only the operator can invoke it (type `/new-worktree-session lean-repo` on its own line). The `Files in scope` bullet above was rewritten from `(inferred)` to the truth once the real work was known.
 
 RR-04 worktree pilot (redirected): the pilot's `/prime` surfaced a false "concurrent session is live" warning; on operator direction the session fixed the underlying liveness-oracle defect instead of running the pilot.
+
+## 2026-07-13 — Session S5
+
+**Mandate:** Execute RR-05 from the authoritative repo-redesign report — run `/lean-repo` for the first time against the repository, in the isolated `ai-resources-lean-repo` worktree — done when: a written assessment exists at `audits/lean-repo-2026-07-13.md` with the four RR-05 buckets populated (remove-now / consolidation-candidates / justified-keep / weak-findings-from-the-tool-itself), and the inflow design rule is staged for adoption in writing
+- Out of scope: applying any fix from the plan (the command is diagnose-and-plan-only); the nine rejected M-B command merges (rejected as a method — any consolidation must come from actual findings); building any automated inflow checker (RR-05 says explicitly: build no checker)
+- Files in scope: audits/lean-repo-2026-07-13.md (new); audits/working/lean-repo-2026-07-13-notes.md (new); logs/session-notes.md; logs/.session-marker*
+- Stop if: the `lean-repo-auditor` agent returns a malformed summary twice — surface it rather than hand-composing the assessment (the tool's own credibility is bucket (d) of this mandate)
