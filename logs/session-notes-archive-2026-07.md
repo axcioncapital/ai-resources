@@ -1137,3 +1137,54 @@ Ran `/fix-repo-issues` across `ai-resources` + workspace (65 raw backlog candida
 
 ### Open Questions
 None blocking. One judgment call for the operator: design-studio's agent surface was widened from 4 to 36 agents. If the narrow 4-agent scoping was deliberate rather than a `/new-project` scaffold gap, delete `projects/axcion-design-studio/.claude/shared-manifest.json` and the 32 symlinks.
+## 2026-07-12 — Session S4
+
+**Mandate:** Advance the W3.2 repo-redesign mission — close the M-A Phase 0 remainder (M-A2a command-side model-tier declarations; M-A4 reconcile agent-tier-table.md + skills/CATALOG.md against the 42-agent ground truth), then re-assess the R3 Pass 2 gate against the three closed run-manifests and implement Pass 2 only if the gate genuinely holds — done when: M-A2a and M-A4 are applied and verified on disk with remediation-register rows carrying status + verification and the mission thread checked off, and the R3 Pass 2 gate verdict is recorded explicitly with its evidence (Pass 2 implemented only if that verdict is proceed).
+- Out of scope: the parked concurrency cluster (id-05 / id-34 / id-37 / id-29 / id-35 — needs its own structural session); M-A3a (duplicate startup-context injection — not reproducible from static state, must not be fixed speculatively); user-layer roadmap items (RT1, W1.4-H1/2/3, PSR); Phase 1+ roadmap items.
+- Files in scope: docs/agent-tier-table.md, skills/CATALOG.md, .claude/commands/wrap-session.md, .claude/agents/session-feedback-collector.md, projects/axcion-ai-system-redesign/output/implementation-prep/packets/M-A-phase0-defects.md, projects/axcion-ai-system-redesign/output/implementation-prep/remediation-register.md, logs/missions/w32-migration-execution.md, logs/session-notes.md, logs/decisions.md, logs/friction-log.md, logs/improvement-log.md, logs/runs/2026-07-12-S3.json, logs/runs/2026-07-12-S4.json, logs/session-plan-2026-07-12-S4.md (plus the command-side spawn-site files enumerated for M-A2a at execution, and the workspace-root wrap-session.md mirror only if R3 Pass 2 proceeds)
+- Stop if: /risk-check returns RECONSIDER or NO-GO on R3 Pass 2 (structural class — touches /wrap-session, a Critical component, in both paired copies) — redesign, do not override; or the Pass 2 gate evidence does not hold on inspection — then hold and say so.
+- Allowed inputs: projects/axcion-ai-system-redesign/window-outputs/W3.2-migration-roadmap.md, projects/axcion-ai-system-redesign/output/implementation-prep/packets/, logs/runs/*.json, logs/scratchpads/2026-07-12-S1-r3-pass1-scratchpad.md, docs/spine-schemas.md, docs/agent-tier-table.md, the ai-resources commands/agents named by each M-A item.
+- Required outputs: applied M-A2a + M-A4 fixes; updated remediation-register rows; an explicit recorded R3 Pass 2 gate verdict.
+- Mission: w32-migration-execution
+
+**S3 recovery (this session, pre-mandate):** S3 wrapped fully but its wrap commit never landed — a complete batch (2 decisions, the concurrent-staging friction entry, its run-manifest, its session note) sat staged-but-uncommitted in the shared index. S4 committed it as-is, content unmodified. Left stranded it would have been swept into this session's commit under the wrong message — the exact failure S3's own friction entry documents. The staging tripwire blocked the recovery commit until this mandate declared a footprint; the block was correct.
+
+### Summary
+Closed the M-A Phase 0 batch: M-A2a (model tiers pinned at six inline `general-purpose` spawn sites) and M-A4 (`agent-tier-table.md` + `CATALOG.md` reconciled to ground truth), both mechanically verified. Evaluated the R3 Pass 2 gate and returned **HOLD** — the gate tested whether manifests *close* (they do, 3/3) when the real dependency is whether they carry the *payload*; `decisions_refs` is empty on both ordinary sessions. An independent QC pass caught two real defects in the fix-forward instructions (a wrong flag name that would have crashed the script; a precedent note that misattributed `/risk-check`'s tier). Mid-session, QC also flagged a genuine tension in workspace `CLAUDE.md` § Model Tier, which the operator resolved with a ratified carve-out. Recovered S3's orphaned wrap commit, found and fixed a live banned-model-declaration violation in the pe-kb-vault settings (missed by an earlier purge), and pushed the two repos whose content this session verified directly.
+
+### Files Created
+- `logs/session-plan-2026-07-12-S4.md`
+- `logs/scratchpads/2026-07-12-22-57-scratchpad.md`
+
+### Files Modified
+- `docs/agent-tier-table.md`, `skills/CATALOG.md` — M-A4 reconciliation
+- `.claude/commands/{drift-check,contract-check,resolve-repo-problem,create-skill,improve-skill,migrate-skill}.md` — M-A2a tier pins + QC-fix reword of the `/risk-check` precedent note
+- `logs/decisions.md` — R3 Pass 2 HOLD verdict
+- `logs/improvement-log.md` — `decisions_refs` wiring prerequisite; pe-kb-vault violation entry (logged, then updated to applied)
+- `logs/missions/w32-migration-execution.md` — M-A remainder closed; R3 Pass 2 marked blocked
+- `projects/axcion-ai-system-redesign/output/implementation-prep/remediation-register.md` — M-A2, M-A4 verified rows; R3 row updated
+- `../../CLAUDE.md` (workspace root) — § Model Tier carve-out for spawn-site pins (operator-ratified)
+- `logs/runs/2026-07-12-S4.json` — this session's run manifest
+- `logs/session-notes.md` — S3's orphan entry recovered (standalone commit); this entry
+- **Untracked (machine-local, `knowledge-bases/` is gitignored):** `knowledge-bases/pe-kb-vault/.claude/settings.json`, `.claude/settings.local.json` — banned `"model"` fields with the spawn-breaking `[1m]` suffix removed. Fix does not propagate to other clones.
+
+### Decisions Made
+- **R3 Pass 2: HOLD**, on evidence — see `logs/decisions.md` 2026-07-12 (S4) for the full analysis.
+- **§ Model Tier carve-out ratified** (operator, via AskUserQuestion) — pinning `model:` on a `general-purpose` spawn is now doctrine-permitted; the settings.json default ban is unweakened and reverified (0/62 files). **End-time `/risk-check` on the carve-out itself returned RECONSIDER** (usage cost / blast radius / hidden coupling all High — 23 consumers of an always-loaded file) — verified real: the carve-out's "must" clause implicated 6 more commands (`tweak`, `decide`, `leverage-idea`, `graduate-resource`, `promote-workflow`, `wrap-session`) that genuinely spawn `general-purpose` unpinned. Applied the reviewer's redesign directly — reworded to state the gap explicitly (206→174 words) rather than imply universal compliance; the 6-site retrofit logged to `improvement-log.md` as new scope, not fixed this session.
+- **pe-kb-vault fix authorized now, not deferred to Friday** (operator) — a live spawn-breaking violation, fixed immediately rather than left for the cadence.
+- **Push scope: only `ai-resources` + workspace root** (operator) — the two repos this session's content could be verified against directly; three other repos (34 commits from unreviewed prior sessions) left untouched.
+- **S3's orphaned entry: standalone wrap-recovery commit** (operator) — content committed unmodified, attributed to S3, not folded into S4's own note.
+
+### Risky actions
+Three worth naming, none causing loss. **(1) Nearly committed a live session's work under my own message.** Before this session's mandate was written, `logs/decisions.md` appeared staged-but-uncommitted with content I initially read as an "orphaned" S3 batch; I attempted to commit it. S3 was in fact still live and committed it itself moments later (`e86a290`) — my attempt found nothing to commit, not a foreign sweep, but the read that led to it was wrong, and the staging tripwire (which blocked my first attempt on a footprint technicality) is the only reason no collision occurred. **(2) A `git commit <pathspec>` gotcha swept my own S4 mandate header into the "S3 wrap-recovery" commit** (`6aa2497`), which its own message claims did NOT happen ("not folded into S4's own wrap commit"). Root cause: `git commit <pathspec>` re-adds the *working-tree* content for that path, silently overriding whatever was staged in the index — I had staged a narrower S3-only version specifically to avoid this. No content was lost or misattributed (it was my own header, correctly authored), but the commit message is now inaccurate and was not amended, per the standing no-amend rule; corrected here for the record. Logged as a friction/method note: the stage-narrow-then-restore-working-tree trick does not survive a pathspec'd commit. **(3) Two of my own verification scripts were initially broken** — one by zsh unquoted-array word-splitting, one by a malformed regex — both caught only via a negative control (S2's "a test that cannot fail is not a test" lesson, applied here for real).
+
+### Next Steps
+- **R3 Pass 2 prerequisite:** wire `wrap-session.md` (both paired copies) to call `run-manifest.sh --decision-ref` at close, then prove it on 2+ ordinary wraps measured by payload — never again by `stop_reason`.
+- **`axcion-ai-system-redesign` has no git remote configured** — the W3.2 packets and remediation register live only on this machine. Worth wiring up before it's the only copy of the design record.
+- **`projects/interpersonal-communication`** still carries a banned `"model": "sonnet[1m]"` on its `origin/main`, flagged since 2026-05-21. Fix needs `git reset --hard` — operator call, not autonomous.
+- **The git-commit-pathspec gotcha (Risky action 2)** is worth a one-line addition to `docs/commit-discipline.md` if the stage-narrow-then-restore pattern is ever needed again.
+- Push the three left-unreviewed repos (`axcion-ai-system-owner` 6, `project-planning` 3, `axcion-design-studio` 25 + 15 dirty) once reviewed, at operator's discretion.
+- Session Value Audit worth-doing question (mission open thread) remains untouched — still needs an `/implementation-triage` call.
+
+### Open Questions
+None blocking.
