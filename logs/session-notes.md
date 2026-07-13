@@ -2,66 +2,6 @@
 
 > Archive: [session-notes-archive-2026-07.md](session-notes-archive-2026-07.md)
 
-## 2026-07-12 — Session S2
-**Mandate:** Advance the W3.2 Phase 0 defect batch (M-A1–M-A4, ai-resources-homed) — write the batch's gate packet with a currency check on every claim, then implement the confirmed-live defects and update the remediation register — done when: the M-A batch packet is written and gate-passed, every confirmed-live M-A defect is fixed on disk, every stale M-A claim is explicitly dispositioned in the packet, and the remediation-register M-A rows carry status + verification.
-- Out of scope: R3 Pass 2 (gate-blocked — one self-verified manifest; gate wants 2–3 ordinary wraps); user-layer items (RT1, W1.4-H1/2/3, PSR); Phase 1+ roadmap items.
-- Files in scope: projects/axcion-ai-system-redesign/output/implementation-prep/packets/M-A-phase0-defects.md, projects/axcion-ai-system-redesign/output/implementation-prep/remediation-register.md, ai-resources/docs/autonomy-rules.md, ai-resources/docs/session-rituals.md, ai-resources/docs/session-guardrails.md, ai-resources/docs/settings-local-recovery.md, ai-resources/.claude/commands/tweak.md, ai-resources/.claude/commands/resolve-incident.md, ai-resources/.claude/commands/new-project.md, ai-resources/.claude/commands/prime.md, ai-resources/.claude/commands/session-plan.md, ai-resources/.claude/hooks/pre-commit, ai-resources/.claude/hooks/model-classifier.sh, ai-resources/audits/questionnaire.md, ai-resources/logs/scripts/pre-commit-hook.test.sh, ai-resources/logs/missions/w32-migration-execution.md (EXPANDED mid-session by explicit operator authorization — two decisions: close the push contradiction across all 4 live copies, and proceed with the Wave 2 infra redesign incl. the pre-commit source hook, prime.md and settings-local-recovery.md. questionnaire.md + session-plan.md added from /qc-pass findings — both are references my own change broke.)
-- Stop if: /risk-check returns RECONSIDER or NO-GO on an M-A item (M-A2 wire-or-delete and M-A3 hook/pre-commit touches are structural classes).
-- Allowed inputs: projects/axcion-ai-system-redesign/window-outputs/W3.2-migration-roadmap.md, projects/axcion-ai-system-redesign/output/implementation-prep/packets/ (R1/R3 as precedent), projects/axcion-ai-system-redesign/output/implementation-prep/remediation-register.md, the ai-resources docs/hooks/commands named by each M-A item.
-- Required outputs: the M-A gate packet, the applied fixes for confirmed-live defects, updated remediation-register rows.
-- Mission: w32-migration-execution
-
-Continue W3.2 repo-redesign implementation (mission: w32-migration-execution).
-
-### Summary
-Advanced the W3.2 mission with the **M-A Phase 0 defect batch**. R3 Pass 2 (the next obvious item) was found **gate-blocked** — only one run-manifest existed, self-verified by the session that wrote the code — so it was left untouched and the M-A batch was taken up instead. Wrote the batch's gate packet, then shipped **M-A1** (doc contradictions), **M-A2b** (orphan hook deletion), **M-A3b** (pre-commit path fix), and **M-A3c** (banned model declaration). The defining feature of the session was that **every gate caught a real defect the session had missed — including two the session itself introduced.**
-
-The headline find: the push contradiction was worse than the roadmap knew. It named 2 stale doc copies; the true live set was **4**, and `.claude/commands/tweak.md` did not merely *describe* autonomous push — it **executed** it (a literal `git push` block, plus a second in its log-append step). **Every `/tweak` invocation was pushing mid-session**, violating the operator's gated-push rule, and it had been missed by the W3.2 roadmap, by the 2026-07-03 instruction-leanness campaign, and by the `/risk-check` reviewer. The contradiction is now closed across all four copies for the first time.
-
-### Files Created
-- `projects/axcion-ai-system-redesign/output/implementation-prep/packets/M-A-phase0-defects.md` — the gate packet (currency check, change spec, verification levels, rollback, method lessons).
-- `ai-resources/logs/scripts/pre-commit-hook.test.sh` — durable 3-arm regression suite (ARM A: bug is detectable · ARM B: fix works · ARM C: fail-safe intact).
-- `ai-resources/audits/risk-checks/2026-07-12-m-a-phase0-defect-batch-docs-hooks-precommit-newproject.md` — RECONSIDER #1.
-- `ai-resources/audits/risk-checks/2026-07-12-m-a-wave2-infra-hook-delete-precommit-sync-newproject-generator.md` — RECONSIDER #2.
-- `ai-resources/logs/runs/2026-07-12-S2.json`, `logs/session-plan-2026-07-12-S2.md`.
-
-### Files Modified
-- `.claude/commands/tweak.md` — removed **two** `git push` executions.
-- `.claude/commands/resolve-incident.md` — removed an autonomous-push claim.
-- `.claude/commands/new-project.md` — step 11a rewritten as a compliant recommendation-only Model Selection scaffold; 3 dangling cross-refs repaired; a mandated `[1m]` suffix removed.
-- `.claude/commands/prime.md` — Step 4 model-alignment given a total 3-case contract.
-- `.claude/commands/session-plan.md` — dangling "Step 4b / project-default" ref repaired.
-- `.claude/hooks/pre-commit` — companion-script lookup re-anchored to the repo root; `|| true` fail-safe.
-- `docs/autonomy-rules.md`, `docs/session-rituals.md`, `docs/session-guardrails.md`, `docs/settings-local-recovery.md` — doc reconciliation.
-- `audits/questionnaire.md` — §4.9 **inverted** (it was instructing auditors to demand the prohibited `"model"` field).
-- **Deleted:** `.claude/hooks/model-classifier.sh` (workspace root).
-- `remediation-register.md`, `logs/missions/w32-migration-execution.md`, `logs/decisions.md`.
-
-### Decisions Made
-- **Do not touch R3 Pass 2.** Its gate is not open: one manifest, self-verified by its own author. Forcing it risks the exact data loss the two-pass split exists to prevent.
-- **Carve the push fix out of the deferred instruction-leanness campaign** (operator-authorized) and close it completely rather than partially. Logged as a loud supersession decision — `/risk-check` required it.
-- **Expand the edit set** to `resolve-incident.md`, `tweak.md`, the pre-commit *source* hook, `prime.md`, and `settings-local-recovery.md` — **explicitly authorized by the operator**, per the campaign's standing rule that a risk-check recommendation is not authorization.
-- **Fix `/new-project` by keeping a compliant section, not by deleting it** — preserves `/prime`'s contract instead of breaking it.
-- **M-A3a deferred, not "fixed."** Duplicate startup-context injection is not reproducible from static state; inventing a repo fix for it would be the failure mode this session spent its day avoiding.
-
-### Risky actions
-Three worth naming. **(1) I introduced a commit-blocking bug.** The rewritten pre-commit hook runs under `set -e`; I wrote the repo-root lookup as a bare assignment, so a failing `git rev-parse` would have aborted the hook with exit 128 and **blocked every commit in `ai-resources`** — and my in-file comment called it a fail-safe. Caught by independent `/qc-pass`, fixed with `|| true`, now guarded by ARM C of the regression suite and proven on three real commits. **(2) My "falsifiable" test could not have caught (1)** — it asserted on the warning string and discarded the exit code. Now asserts both. **(3) Deleted a file this session did not create** (`model-classifier.sh`) — an Autonomy Rule #3 pause trigger; operator authorization obtained first, zero consumers verified twice, backup of the untracked pre-commit hook taken before overwrite (`git revert` cannot restore it).
-
-Also: the **staging tripwire correctly blocked** the first commit attempt — the declared `Files in scope:` was stale relative to the operator's mid-session scope expansion. Resolved by correcting the declaration, not by overriding the guard. A concurrent session was live in this checkout throughout; all staging was by explicit path and no foreign file was swept in (verified against the commit's file list).
-
-### End-time /risk-check
-Skipped per the standing skip rule. Plan-time `/risk-check` fired **twice** on this exact change class, both returned RECONSIDER, both redesigns were applied in full and independently QC'd, and the commits shipped exactly the redesigned scope with zero drift. Documented here as the rule requires.
-
-### Next Steps
-- **Push pending** — 4 commits across 3 repos (ai-resources ×2, workspace root, axcion-ai-system-redesign).
-- **R3 Pass 2 gate is now less thin** — this session was an *ordinary* session that produced a closed manifest without paying attention to it, which is precisely the evidence the gate wanted. One or two more ordinary wraps and Pass 2 can proceed.
-- **M-A remainder (small):** M-A2a (declare tiers at command-side/inline-spawn sites — the agent-side half is already done, 42/42) and M-A4 (reconcile `agent-tier-table.md` + `skills/CATALOG.md` against the 42-agent ground truth).
-- **Two loose ends worth a look:** `.git/hooks/pre-commit` is untracked and per-machine, so **other machines still run the stale February hook** and nothing re-syncs it; and `sync-shared-resources.sh` shows the same zero-caller signature as the orphan just deleted (not an M-A item — needs its own disposition).
-- **Telemetry gap persists** — three substantive sessions (2026-07-09, S1, S2) now have no `usage-log` entry. Run `/usage-analysis` to backfill, or wrap with `/wrap-session +telemetry`.
-
-### Open Questions
-None blocking. One judgment call worth the operator's eye: the guardrail docs now say **"emit and continue"** where they previously said "wait for the operator" (`[HEAVY]`/`[SCOPE]`/`[COST]`). This matches canonical CLAUDE.md, but it is a genuine behavior change for future sessions — reversible if the pause was actually wanted.
-
 ## 2026-07-12 — Session S3
 
 **Mandate:** Scan the accumulated backlog across ai-resources + workspace, plan the items that do not conflict with the concurrent session, then execute that plan — done when: every planned item is applied, verified, and its source log entry status-flipped.
@@ -546,3 +486,38 @@ None. The session was diagnose-and-plan-only by the command's own contract; no r
 - Gate: `/risk-check` → **PROCEED-WITH-CAUTION**, one required mitigation (stale two-end-registry entry describing the deleted `if/else` block), applied before commit. `/blindspot-scan` deliberately skipped — its two distinctive checks (real-environment fit; symlink fan-out) were performed empirically instead: the edited block was extracted from `prime.md` and executed, and all 27 workspace copies were enumerated (24 symlinks inherit the fix; the 2 non-symlink forks are 33-line stubs with no marker block).
 
 Merge the finished `/lean-repo` audit from the `session/2026-07-13-lean-repo` worktree branch into `main`, then tear the worktree down with the new `/close-worktree-session` command.
+
+### Summary
+
+Landed the `/lean-repo` worktree, then — on operator direction ("fix 1") — fixed the marker-allocation defect the landing had surfaced. **Both halves shipped and committed.**
+
+**The landing.** Merged `session/2026-07-13-lean-repo` into `main` (a real merge; the branches had diverged). The predicted `logs/session-notes.md` conflict was resolved as a **union, not a choice**: the branch was cut before S4 wrote its wrap body, so it carried S4's header without its body and then appended S5, while `main` had S4's full body plus S6. All three kept in chronological order. Verified S1–S6 present with bodies intact and 27 older entries in the archive — **no entry dropped**. Worktree removed, branch deleted. `audits/lean-repo-2026-07-13.md`, the inflow rule, and the RR-05 status flip are now on `main`.
+
+**The fix.** `/prime` allocated `S{N}` from checkout-local state only. A git worktree is a separate checkout with its own gitignored marker file and its own working-tree `session-notes.md` — so worktree sessions allocated from the same namespace with **no shared allocator**. This session was nearly handed **S5**, which the branch it was merging had already used. Allocation is now `N = 1 + MAX(marker file, working-tree headers, all-refs headers)` — a read-only widening, applied byte-identical to all three lockstep blocks, documented in a new `docs/session-marker.md` § **Marker allocation** (the doc previously had no allocation contract at all, only a resolution one — part of why the bug survived).
+
+### Decisions Made
+
+- **Resolve the merge conflict as a union, not a choice** (routine, but load-bearing). Keeping "both entries, S4 then S5" — as S5's own Next Steps advised — would have lost S4's *body*, which existed only on `main`. The correct union is S4-body → S5 → S6. Verified by counting entries and subsections across the merged file and the archive rather than by eyeballing the diff.
+- **Fix the marker allocator by scanning all refs, NOT by having worktrees reserve markers up front.** The rejected alternative reintroduces a shared allocator — precisely the coupling worktrees exist to remove — and would need a lock. The branches already *are* the allocation record; the fix reads them. Recorded in `decisions.md`.
+- **Ran `/risk-check`; deliberately skipped `/blindspot-scan`.** Both gates nominally trigger on changed automation with shared-state effects. `/risk-check` was run (it is the Autonomy-rule-#9 gate, and S3's lesson today was that skipping it on a fan-out change nearly shipped a real bug). `/blindspot-scan`'s two distinctive checks were instead performed **empirically**: the edited block was extracted from `prime.md` and executed, and all 27 workspace copies of `prime.md` were enumerated (24 symlinks inherit the fix; the 2 non-symlink forks are 33-line stubs with no marker block). Execution is stronger evidence than a subagent reasoning about the same question. Per workspace `Do not stack gates`.
+- **No `/qc-pass` on top of `/risk-check`** — per workspace `Subagent Proportionality` ("a change already cleared by the gates it needs does not also get an independent QC-pass subagent on top"). The risk-check reviewer *was* the independent pass: fresh context, verified all five adversarial questions by execution, and reproduced the bug on a real `git worktree`.
+
+### Risky actions
+
+**Two destructive operations run, both structurally contained; one gate blocked me and was right to.**
+
+- **Worktree removal + branch deletion** (irreversible). Contained by design: the merge was committed first, `git worktree remove` was run **without** `--force`, and `git branch -d` (never `-D`) refuses unless fully merged. Both refusals were left free to fire; neither did. **A documented claim was falsified in the process:** S5's Next Steps asserted `--force` would be *required* here. It was not — plain `remove` returned 0. Had the command trusted that prose, it would have been needlessly capable of discarding work.
+- **The `check-foreign-staging.sh` tripwire BLOCKED the merge commit** — correctly. I had declared the redesign report at `projects/axcion-ai-system-redesign/output/...`; the file the merge actually touches lives at `plans/...` in *this* repo. Not foreign contamination: my own declaration was wrong, written from memory while the correct path sat in a `git diff --stat` I had already run. Footprint corrected with operator approval and recorded in the mandate. **This is the second consecutive session in which a gate had to catch me asserting a fact about the repo without looking** (S4's retracted false finding was the same shape). The pattern — not the individual slip — is the finding, and it is logged in `friction-log.md`.
+- **A near-miss that the system did NOT catch:** the duplicate-marker collision was caught *by hand*, because I happened to diff the branch before planning. No gate saw it. That is the whole reason the fix shipped rather than being logged for later.
+
+### Next Steps
+
+- **Execute the `/lean-repo` plan** (`audits/lean-repo-2026-07-13.md`, now on `main` — 22 items, seven dispositions) in a `/risk-check`-gated session; `/friday-act` is the recurring home. Its own suggested order: **MC-1** (tier `/risk-check` by change class — makes every later gated change cheaper) → the **7 Investigate** yes/no questions (cheapest pass, plausibly the biggest cut: ~924 lines across 6 unused commands) → **M-1 strictly before R-3** (fold the lens into `/architecture-review` and *wire* it, or the lens dies with the component) → R-1, R-2 → D-1, S-1.
+- **Ship the `/prime` full-read fix.** Four consecutive `usage-log` entries have now named it, and this session walked into it **again** — `/prime` Step 3 dumped a 225 KB `friction-log.md` + `improvement-log.md` read at orientation before I re-issued as targeted greps. One line in `prime.md` Step 3: grep-for-open-status + `tail -N`, exactly as `decisions.md` is already handled.
+- **Reconcile the report's RR-04 row** to match commit `5fce38c` (carried from S5; still open).
+
+### Open Questions
+
+- **Does the operator accept retiring `/lean-repo`?** Its own Bucket-D verdict recommends it (the lens is real; the command is not viable — no invocation path, excluded from distribution). M-1 must land first, or the lens is lost with the component. Carried from S5; a live decision, not a fait accompli.
+- **`backup-session-plan.sh`: wire it or delete it?** Registered in **no** settings layer anywhere, while its own header claims it is wired. Binary; ambiguity is the only option strictly worse than both. Carried from S5.
+- **The "sessions run in a circle" concern (S4) — this session is both an instance and a counter-example.** The operator asked for a merge and got a merge *plus* a structural fix to the session machinery. But the fix closed a real defect found in flight, gated and verified, rather than adding machinery for its own sake — and the defect would have silently corrupted the session record on the *next* worktree session. Worth continuing to watch; not resolved.

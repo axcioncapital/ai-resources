@@ -81,3 +81,26 @@
 **Explicitly NOT decided:** weakening or retiring `/risk-check`. The authoritative report's line 39 is binding — *"The gates are not the villain, and this is not a licence to skip them."* The "No self-waivers" clause in `docs/audit-discipline.md` stays untouched: a session may still never skip a listed class on its own materiality judgment. This entry exists partly to prevent a future reader from citing the 93% figure as licence to skip gates. **It is not.**
 
 **Decided by:** `/lean-repo` assessment (RR-05); execution deferred to a `/risk-check`-gated session.
+
+## 2026-07-13 (S6) — Fix the split-brain session-marker allocator by reading all refs, not by reserving markers
+
+**Context.** `/prime` allocated the session marker `S{N}` as `(shared marker file) + 1`, with a `session-notes.md` header scan used only as an else-branch when that file was absent. Both sources are **checkout-local**. A git worktree is a *separate checkout* with its own gitignored `logs/.session-marker` and its own working-tree `session-notes.md` — both invisible from the main checkout. So worktree sessions allocate from the same `S{N}` namespace with **no shared allocator**: a split-brain counter.
+
+This session hit it. The marker file read `S4`; the branch being merged already carried a committed `## 2026-07-13 — Session S5` header. The old rule would have allocated **S5** — an exact duplicate, landing the instant the branch merged. It was caught **by hand** (I happened to diff the branch before planning), not by any gate.
+
+A duplicate `S{N}` is not cosmetic: it breaks the `grep -Fxq "## {date} — Session {MARKER}"` *"does my header exist"* test used by `/prime` 8a, `/session-start` Step 3 and `/session-plan` Step 0 — each would match the **wrong** entry, and a wrap could append its summary under a foreign session's header. It also collides the `logs/session-plan-{date}-S{N}.md` filename.
+
+**Decision.** Allocation becomes `N = 1 + MAX` of three sources, always: (a) the shared marker file, (b) `session-notes.md` in the working tree, (c) `session-notes.md` across **all refs** (`git grep` over `refs/heads`). Source (c) is new. Applied byte-identical to all three lockstep blocks in `prime.md`; contract documented in a new `docs/session-marker.md` § **Marker allocation**.
+
+**Rationale.** The branches already **are** the record of what was allocated. Reading them is a read-only widening of a scan that already exists: no new state, no new file, no new gate, no lock. It also required documenting the *write* path for the first time — the doc previously described only marker *resolution* (the read path), and that undocumented gap is part of why the bug survived.
+
+**Alternatives considered.**
+- **(a) Have worktree sessions reserve markers up front from the main checkout — REJECTED.** This reintroduces a **shared allocator**, which is precisely the coupling git worktrees exist to remove, and it would need a lock to be correct. It trades a read for a write and a synchronisation primitive, on the exact axis the worktree model is supposed to decouple.
+- **(b) Change the marker format to embed the checkout/branch (e.g. `S5-lean-repo`) — REJECTED.** Every consumer parses `S[0-9]+`; this is a far larger blast radius than the bug warrants, for no gain over (c).
+- **(c) Leave it and rely on operators noticing — REJECTED.** It was caught by luck once; the next worktree session hits the same trap, and the failure is silent and corrupts the session record.
+
+**Gate.** `/risk-check` → **PROCEED-WITH-CAUTION**. The reviewer verified all five adversarial questions **by execution** and reproduced the bug on a real `git worktree`. It established the **load-bearing fail-safe property**: `HIGH` is seeded from the marker file *before* the scan loop, and the loop only ever *raises* it — so a git failure or a non-git directory degrades to old marker-file-only behaviour and can **never** reset `HIGH` to 0 and allocate `S1` over an existing `S5`. Any future edit that scans first and consults the marker file second reintroduces exactly that destructive regression; it is now stated in the doc as an invariant. The reviewer also found that the change **silently fixes a second, latent destructive bug**: on a *corrupt* marker file, the OLD logic already allocated `S1` over an existing `S5`. Its one required mitigation (a stale two-end-registry entry still documenting the deleted `if/else` block) was applied before commit.
+
+**Known gap (accepted, documented).** Source (c) sees only **committed** headers. Two sessions priming in different checkouts, neither having committed, can still collide — no ref exists to observe. Unclosable read-side without reintroducing the rejected shared allocator, and strictly narrower than the bug it replaces (which fired on *every* worktree session whose branch merged).
+
+**Decided by:** Operator ("fix 1", extending the session mandate after the defect was surfaced and logged).
