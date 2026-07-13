@@ -17,6 +17,15 @@ Resolved entries (Status: applied + Verified) are archived to `improvement-log-a
 
 ---
 
+### 2026-07-13 — `/fix-symlinks` never scans the workspace root — 3 dead symlinks rotted there unnoticed
+- **Status:** logged (pending)
+- **Category:** command/skill (coverage gap) — symlink hygiene
+- **Severity:** medium
+- **Provenance:** surfaced while fixing the `auto-sync-shared.sh` workspace-root exclusion bug (`logs/decisions.md` 2026-07-13; risk report `audits/risk-checks/2026-07-13-change-the-shared-sessionstart-hook-ai-resources-claude.md`). The workspace root carries **3 broken command symlinks** — `audit-critical-resources.md`, `diagnostics-plan.md`, `route-change.md` — whose sources no longer exist in `ai-resources/.claude/commands/`. They are dead links, not stale copies. **The dead links are the symptom; the coverage gap is the finding.** `/fix-symlinks` scans `projects/*/` only and explicitly does not scan the workspace root or `ai-resources/` itself (`fix-symlinks.md:7`), so nothing in the system was ever going to catch them — and `auto-sync-shared.sh`'s idempotency guard (`[ -e "$target" ] || [ -L "$target" ] && continue`, lines ~88/105) treats a *broken* symlink as "already present" and skips it forever. The root is now (as of the 2026-07-13 fix) a first-class sync target that receives the meta-commands, which makes the blind spot more consequential than when it was opened.
+- **Proposal:** Two parts, in order. **(1)** Delete the 3 dead symlinks at `<workspace-root>/.claude/commands/` (a manual `rm` — `/fix-symlinks` cannot reach them today). Also reconcile the root's agent count (43 root vs 42 canonical — one unaccounted file, not yet identified). **(2)** The durable fix: extend `/fix-symlinks` scan scope to include the **workspace root**, so root-level symlink rot is detected on the same cadence as project-level rot. Decide explicitly whether `ai-resources/` itself should also come in scope, or stay excluded by design (it holds the canonical files, not links to them — likely stays excluded, but the exclusion should be *stated*, not incidental). Do **not** widen the scope silently: `fix-symlinks.md:7` currently documents the narrow scope as intentional, so that line is the contract to change.
+- **Target files:** `ai-resources/.claude/commands/fix-symlinks.md` (Step 1 scope declaration, line ~7, plus the scan loop); `ai-resources/docs/repo-architecture.md` § Symlink topology (record the widened scope alongside the 2026-07-13 workspace-root exception already documented there).
+- **Review-cycle:** reviewed 2026-07-13, deferred to → **the next weekly `/friday-checkup`** (part 1 is a 1-minute cleanup and should not wait; part 2 is the real work and is `/risk-check`-gated as a command edit). Surfaces at every Friday checkup until then.
+
 ### 2026-07-05 — AI web-design operating principles: park the framework (2 built as DRAFT, ~28 deferred)
 - **Status:** logged (pending)
 - **Category:** command/skill (leverage-idea PARK) — axcion-design-studio doctrine
