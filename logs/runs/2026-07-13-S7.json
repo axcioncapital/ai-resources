@@ -1,0 +1,46 @@
+{
+  "run_id": "2026-07-13-S7",
+  "project": "ai-resources",
+  "date": "2026-07-13",
+  "marker": "S7",
+  "model": "claude-opus-4-8[1m]",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md#2026-07-13-S7",
+  "mission": null,
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    "ai-resources/.claude/commands/prime.md",
+    "logs/improvement-log.md",
+    "logs/session-notes.md",
+    "logs/session-plan-2026-07-13-S7.md",
+    "logs/decisions.md",
+    "logs/scratchpads/2026-07-13-S7-prime-step3-fix-scratchpad.md",
+    "logs/session-notes-archive-2026-07.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-13-prime-step-3-bounded-grep-design-for-the-friction"
+  ],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": null,
+  "incidents_refs": []
+}

@@ -122,3 +122,20 @@ A duplicate `S{N}` is not cosmetic: it breaks the `grep -Fxq "## {date} — Sess
 **Known gap (accepted, documented).** Source (c) sees only **committed** headers. Two sessions priming in different checkouts, neither having committed, can still collide — no ref exists to observe. Unclosable read-side without reintroducing the rejected shared allocator, and strictly narrower than the bug it replaces (which fired on *every* worktree session whose branch merged).
 
 **Decided by:** Operator ("fix 1", extending the session mandate after the defect was surfaced and logged).
+
+## 2026-07-13 — `/prime` Step 3: bounded-grep design for the friction/improvement-log scan
+
+**Context.** `/prime` Step 3 full-read `friction-log.md` and `improvement-log.md` at every orientation to find unresolved HIGH/urgent items — ~50-60k tokens/session, named in five consecutive `usage-log` telemetry entries, never shipped. This session's own `/prime` reproduced the defect a sixth time, which meant the correct scan output was already known before any fix was drafted.
+
+**Decision.** Replace the full reads with two bounded `grep` scans, shaped differently per file rather than one shared pattern:
+- `improvement-log.md` (schema'd — `### header` / `- **Status:**` / `- **Severity:**`): `grep -nE -B6 "^- \*\*Severity:\*\* *(high|HIGH|medium-high|critical|urgent)"`. The `-B6` context window is sized specifically to carry each severity hit's header + status lines back with it, so the resolved/applied/DECLINED filter can run on the grep output alone.
+- `friction-log.md` (no severity field — free-text prose): `grep -nE "HIGH|urgent|do-now" | grep -viE "resolved|verified|shipped|archived|declined" | head -n 40`, since the resolution stamp sits on the same line as the finding.
+
+**Alternatives considered.**
+- **(a) `-B4` context window — REJECTED.** Tested directly: at `-B4` the header is lost on entries whose `- **Status:**` line runs to multiple wrapped lines (several 2026-07 entries do). Losing the header makes the filter unusable without a second read, defeating the fix.
+- **(b) One shared grep pattern for both files — REJECTED.** The two logs have genuinely different shapes (one schema'd, one free prose with inline resolution stamps); a single pattern would either miss `improvement-log.md`'s structured severity field or produce noise on `friction-log.md`'s prose. Shaping the scan to each file's actual structure was cheaper and more accurate than forcing one pattern to fit both.
+- **(c) Leave the full read and rely on operator/session discipline — REJECTED.** Already tried, five times, per the improvement-log entry's own telemetry citations. Discipline is not the fix; the read pattern is.
+
+**Validation before shipping (not just reasoned about).** Ran the bounded scan against both live logs and confirmed it reproduces exactly the same single open HIGH item this session's accidental full read had surfaced, correctly excluding an `applied` entry and an operator-`DECLINED` entry. Planted a fake `critical`-severity test entry and confirmed the grep catches it — proves the scan is not passing vacuously. Re-grepped `prime.md` post-edit to confirm no full `Read` of either log remains anywhere in the file.
+
+**Decided by:** Claude, within the session's mandate — the design choice (window size, per-file pattern shape) was not operator-specified; the operator approved the mandate and plan that scoped the fix.

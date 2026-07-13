@@ -142,4 +142,4 @@
 | 2026-06-09 | agent | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/strategic-os/.claude/agents/state-retrieval-agent.md | triaged:project-specific | OS-local inclusion-list wiring for project-state reads |
 | 2026-07-03 | agent | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/buy-side-service-plan/.claude/agents/reconcile-reviewer.md | graduated | Graduated to canonical ai-resources/.claude/agents/ 2026-07-03 (same session); buy-side is origin |
 | 2026-07-03 | command | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/buy-side-service-plan/.claude/commands/reconcile.md | graduated | Graduated to canonical ai-resources/.claude/commands/ 2026-07-03 (same session); buy-side is origin |
-| 2026-07-13 | hook | /Users/patrik.lindeberg/.claude/hooks/cleanup-session-marker.sh | detected | — |
+| 2026-07-13 | hook | /Users/patrik.lindeberg/.claude/hooks/cleanup-session-marker.sh | triaged:graduate | — |

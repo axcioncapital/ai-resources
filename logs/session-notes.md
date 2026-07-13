@@ -2,55 +2,6 @@
 
 > Archive: [session-notes-archive-2026-07.md](session-notes-archive-2026-07.md)
 
-## 2026-07-12 — Session S3
-
-**Mandate:** Scan the accumulated backlog across ai-resources + workspace, plan the items that do not conflict with the concurrent session, then execute that plan — done when: every planned item is applied, verified, and its source log entry status-flipped.
-- Out of scope: any item overlapping concurrent session S2's W3.2 M-A1–M-A4 mandate surface; the parked concurrency cluster; the 5 inbox build briefs.
-- Files in scope: audits/fix-plans/fix-repo-issues-2026-07-12-2132.md, audits/risk-checks/2026-07-12-symlink-canonical-agents-into-axcion-design-studio.md, docs/qc-independence.md, skills/ai-resource-builder/SKILL.md, .claude/agents/fix-repo-issues-scanner.md, logs/scripts/foreign-session-guard.sh, logs/improvement-log.md, logs/friction-log.md, logs/session-notes.md, logs/decisions.md, logs/runs/2026-07-12-S3.json, projects/axcion-design-studio/.claude/shared-manifest.json
-- Stop if: a gate (`/risk-check`, `/qc-pass`) returns RECONSIDER or REVISE — redesign, do not override.
-
-*(Retro-declared at wrap. No `/session-start` ran this session — `/prime` was used for orientation and the operator dispatched `/fix-repo-issues` directly, so no mandate and no per-id marker were ever written. The footprint above was added because `check-foreign-staging.sh` **blocked the wrap commit** for having none. That block is correct, and the chicken-and-egg it exposes is itself a finding — see `### Risky actions`.)*
-
-### Summary
-
-Ran `/fix-repo-issues` across `ai-resources` + workspace (65 raw backlog candidates → 6-item plan), then executed the plan **in the same session** at the operator's explicit direction, overriding the command's two-session contract. Scope was filtered to avoid the concurrent S2 session's W3.2 M-A mandate surface; the exclusion held exactly — zero real conflicts, despite S2 editing `autonomy-rules.md`, `session-guardrails.md`, `session-rituals.md`, `new-project.md`, `pre-commit` and deleting `model-classifier.sh` throughout. The reconcile-at-read pass proved its worth twice: two of the highest-ranked "urgent" items were **already fixed but never status-flipped**, one of them ranked top-2 while describing a problem that no longer existed. Both gates that fired (`/risk-check`, `/qc-pass`) caught real defects in my own proposed fixes.
-
-### Files Created
-- `audits/fix-plans/fix-repo-issues-2026-07-12-2132.md` — the 6-item fix plan
-- `audits/risk-checks/2026-07-12-symlink-canonical-agents-into-axcion-design-studio.md` — RECONSIDER verdict
-- `projects/axcion-design-studio/.claude/shared-manifest.json` — activates the dormant auto-sync hook
-- `logs/scratchpads/2026-07-12-S3-fix-repo-issues-scratchpad.md`
-- (32 agent symlinks in `projects/axcion-design-studio/.claude/agents/`, created by the hook)
-
-### Files Modified
-- `docs/qc-independence.md` — cap-exhaustion is now halt-and-surface, not a quiet stop
-- `skills/ai-resource-builder/SKILL.md` — shared-state schema read-completeness rule
-- `.claude/agents/fix-repo-issues-scanner.md` — None-answer detection rewritten (normalize → prefix-test)
-- `logs/scripts/foreign-session-guard.sh` — GUARD echo now emits `EXTRA_TODAY/PRIOR_MANDATES`
-- `logs/improvement-log.md` — 1 entry closed; 2 new entries (scanner defect; design-studio command-copy drift)
-- `logs/friction-log.md` — 2 entries closed with evidence; 1 new entry (staging-index entanglement)
-- workspace `logs/improvement-log.md` — 3 entries closed
-
-### Decisions Made
-- **Executed the plan in the planning session** (operator directive, overriding `/fix-repo-issues`'s two-session contract). Mitigating factor: the plan was already committed to disk, so the contract's stated rationale — compaction dropping the plan mid-execution — did not apply.
-- **Scope: `ai-resources` + workspace only**, not all 21 projects. Picked and proceeded per decision-point posture rather than presenting a 23-scope menu; the backlog lives almost entirely in these two, and `axcion-ai-system-redesign` was excluded precisely because S2 was writing there.
-- **design-studio agent registration: took the manifest route, not hand-built symlinks** — `/risk-check` returned RECONSIDER on my original plan. See Outcome/QC below.
-- **Widened design-studio's agent surface (32 canonical agents)** — the 2026-07-02 friction entry called this "a scoping call the operator should make." I made it (19 sibling projects carry the set; `/risk-check` endorsed the route) and flagged it to the operator as reversible.
-
-### Risky actions
-**Three, all contained, all surfaced:**
-1. **Swept a concurrent session's staged work into my commit.** A bare `git commit` at the workspace root committed the whole shared index, including S2's staged deletion of `.claude/hooks/model-classifier.sh` (commit `434c8b7`). Caught by a post-commit `--name-status` read; reversed via `reset --soft` + `restore --staged` + recommit as `ff545c0`. No data lost; S2's work preserved and it committed normally afterwards.
-2. **A gate that should have fired, didn't — and worse, mis-identified me.** `check-foreign-staging.sh` is registered and its 2026-07-03 fix is present, but this session had **no per-id marker** (`/prime` Step 8 never ran). It fell back to the *shared* marker (`S2`) and resolved my "declared footprint" to **S2's mandate**. At the workspace root it passed silently. This is not fail-open — it is identity theft between sessions, and it is the routine path for any orientation-then-work session.
-3. **The guard blocks the correct discipline.** It blocked `git commit -- <path>` — the pathspec-scoped form `commit-discipline.md` prescribes, which is structurally immune to the sweep — because it doesn't parse the pathspec. It punishes compliance.
-
-### Next Steps
-1. **`/fix-repo-issues` parked concurrency cluster — one structural session** (`id-05`/`id-34`/`id-37`/`id-29`/`id-35`). This session produced the decisive evidence; see the friction entry and the scratchpad. The class has been "fixed" ~4× and recurred ~8× because each fix closed a *surface* while the *identification layer* stayed weak.
-2. Convert axcion-design-studio's 89 copied commands to symlinks — cheap now (byte-identical), expensive after they diverge.
-3. Migrate the innovation registry's 70 `detected` rows to real triage statuses — the source currently yields zero items to any scanner, silently.
-
-### Open Questions
-None blocking. One judgment call for the operator: design-studio's agent surface was widened from 4 to 36 agents. If the narrow 4-agent scoping was deliberate rather than a `/new-project` scaffold gap, delete `projects/axcion-design-studio/.claude/shared-manifest.json` and the 32 symlinks.
-
 ## 2026-07-12 — Session S4
 
 **Mandate:** Advance the W3.2 repo-redesign mission — close the M-A Phase 0 remainder (M-A2a command-side model-tier declarations; M-A4 reconcile agent-tier-table.md + skills/CATALOG.md against the 42-agent ground truth), then re-assess the R3 Pass 2 gate against the three closed run-manifests and implement Pass 2 only if the gate genuinely holds — done when: M-A2a and M-A4 are applied and verified on disk with remediation-register rows carrying status + verification and the mission thread checked off, and the R3 Pass 2 gate verdict is recorded explicitly with its evidence (Pass 2 implemented only if that verdict is proceed).
@@ -526,7 +477,31 @@ Landed the `/lean-repo` worktree, then — on operator direction ("fix 1") — f
 
 **Mandate:** Replace `/prime` Step 3's two full-file Reads of `logs/friction-log.md` and `logs/improvement-log.md` with a bounded grep-for-open-status + `tail`, matching how `logs/decisions.md` is already handled in the same step — done when: `prime.md` Step 3 issues no full `Read` of either log, the fork enumeration confirms no other real (non-stub) copy carries a Step 3 needing the same edit, and the 2026-07-13 HIGH improvement-log entry reads applied + Verified with the change committed
 - Out of scope: the 24 symlinked copies (they inherit the fix) and the 2 stub forks (no Step 3); any Step 3 behaviour beyond read-bounding — the HIGH/urgent filter itself is not rewritten
-- Files in scope: ai-resources/.claude/commands/prime.md; logs/improvement-log.md
+- Files in scope: ai-resources/.claude/commands/prime.md; logs/improvement-log.md; logs/session-notes.md; logs/decisions.md; logs/session-notes-archive-2026-07.md; logs/innovation-registry.md; logs/runs/2026-07-13-S7.json (wrap-time footprint widened at commit — these did not exist when the mandate was written; same known contract-break as the 2026-07-13 improvement-log entry re: check-foreign-staging.sh)
 - Stop if: the fork enumeration surfaces a real (non-stub) `prime.md` copy that DOES carry Step 3 — surface it, do not silently edit or skip it
 
 Fix `/prime` Step 3: replace the two full-file Reads of `friction-log.md` and `improvement-log.md` with a bounded grep-for-open-status + tail, matching how `decisions.md` is already handled in the same step.
+
+### Summary
+
+Fixed the HIGH-severity, five-times-recommended-never-shipped backlog item: `/prime` Step 3 was full-reading `friction-log.md` (~411 L) and `improvement-log.md` (~642 L) at every orientation, in every project, to find a handful of unresolved HIGH/urgent items. Replaced with two bounded `grep` scans matching the pattern `decisions.md` already used two lines away. This session's own `/prime` reproduced the bug a sixth time at its own orientation, which gave the fix an unusually strong validation input: the correct scan output was already known before the fix was drafted.
+
+### Decisions Made
+
+- **Bounded scan design (`-B6` window on `improvement-log.md`, same-line `grep -v` on `friction-log.md`) — tested, not merely reasoned about.** Logged to `decisions.md`.
+- **Skip `/risk-check` for this change.** Checked against `docs/audit-discipline.md` § Risk-check change classes rather than asserted from memory: the edit touches only a read path (writes nothing, reorders nothing against shared state), so no structural change class applies. Routine — not logged separately to `decisions.md`.
+- **Treat the two extra `prime.md` copies (found via `find`) as a git worktree, not independent forks.** Verified via `git worktree list` + `diff` (byte-identical, shared `.git`). No lockstep edit needed; corrected the stale "3 real files" claim in the improvement-log entry instead of leaving it. Routine fact-check, not logged separately.
+
+### Risky actions
+
+None. The one near-risk was editing `prime.md` — a file read at every session start in 24 checkouts — but the edit was validated against known ground truth (this session's own accidental full read) and falsifiability-tested (a planted `critical` entry was confirmed caught) before shipping, and confirmed via re-grep that no full `Read` remained. A concurrent session was live in a sibling git worktree throughout; its working tree was checked and found clean before editing the shared file, so no collision occurred.
+
+### Next Steps
+
+- **Execute the `/lean-repo` plan** (`audits/lean-repo-2026-07-13.md`, on `main` — 22 items, seven dispositions), carried from S6/S5. Suggested order: MC-1 → the 7 Investigate questions → M-1 strictly before R-3 → R-1, R-2 → D-1, S-1. `/risk-check`-gated session; `/friday-act` is the recurring home.
+- **Reconcile the report's RR-04 row** to match commit `5fce38c` (carried from S5 → S6 → S7, still open — not picked at this session's own `/prime` menu).
+
+### Open Questions
+
+- Does the operator accept retiring `/lean-repo`? (Carried from S6 — its own Bucket-D verdict recommends it; M-1 must land first or the lens is lost with the component.)
+- `backup-session-plan.sh`: wire it or delete it? (Carried from S6 — registered in no settings layer anywhere, despite its own header claiming it is wired.)
