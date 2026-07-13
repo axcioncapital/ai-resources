@@ -130,8 +130,8 @@ Only work that solves a demonstrated problem. New identifiers: this is a new pro
 - **Affected systems.** `ai-resources/` command and agent library; the always-loaded `CLAUDE.md` files.
 - **Dependencies.** None. **Do not start the nine old roadmap merges automatically.** They are rejected as a method (see Dropped work). Any consolidation must come out of `/lean-repo`'s actual findings, not the old plan's prescription.
 - **Completion condition.** A written assessment with the four buckets populated, and the inflow design rule adopted in writing: *a proposed new command states which existing command it replaces, or why a separate command is genuinely necessary.* **A written design principle — not an automated blocking mechanism.** Build no checker for it.
-- **Status.** ⏳ Not started — requires a broader assessment pass.
-- **Commit.** —
+- **Status.** ✅ **Complete** — run 2026-07-13 (S5). Assessment: `audits/lean-repo-2026-07-13.md`. Inflow rule adopted in `docs/ai-resource-creation.md` § rule #7; **no checker built**, per this item's explicit instruction. Bucket (d) populated honestly: the tool's own first run is judged **not viable as a standalone command** — retire it, keep the lens, wire it.
+- **Commit.** `f6d2c63` (assessment) + this session's wrap commit (inflow rule + status).
 
 ---
 
@@ -215,7 +215,7 @@ Updated as items complete. Evidence lives in the files; this table is the index.
 | **RR-02** — private firm names in shared skills | ✅ Complete | Grep for all seven named firms (Vaaka, Investor AB, Adelis, Argentum, Visby Software, Sampford, Affärsvärlden) across the **whole synchronised** `skills/` library and every synced project copy workspace-wide → **zero hits** (2026-07-13 S3). Completion condition met. | `6dc926e` |
 | **RR-03** — wrap-note cut (R3 Pass 2) | ✅ Complete | Shipped 2026-07-13 S3. Both wrap copies cut in lockstep; `### Decisions Made` retained in both; no live component still requires the removed blocks; wrap still records the file set (manifest) and still stages by explicit paths. `/risk-check` → **PROCEED-WITH-CAUTION**, all mitigations applied (see notes below). | see wrap commit |
 | **RR-04** — worktree pilot | ⏳ Not started | Requires normal operational use. **Now the highest-value remaining item** — a second concurrent-session collision occurred on 2026-07-13, this one corrupting the *decision record* (two opposite approved decisions on one question, 30 min apart). | — |
-| **RR-05** — `/lean-repo` + inflow rule | ⏳ Not started | Requires an assessment pass. | — |
+| **RR-05** — `/lean-repo` + inflow rule | ✅ Complete | Run 2026-07-13 S5 in an isolated worktree. Both halves of the completion condition met: (1) written assessment at `audits/lean-repo-2026-07-13.md` with all four buckets populated — 22 items (Remove 3 / Merge 1 / Make-conditional 1 / Simplify 1 / Defer-loading 1 / Retain 8 / Investigate 7) — including **Bucket D**, which honestly reports that ~1/3 of the pass's findings restate `/friday-checkup` and `/token-audit`; (2) the **inflow design rule adopted in writing** in `docs/ai-resource-creation.md` under rule #7, as a written principle with **no checker built**. Headline finding: `/risk-check` fires at one weight across six change classes — 336 reports, **93% proceed**, above the repo's own ≥90% fading-gate threshold, never once calibrated — yet 8/14 RECONSIDER on genuine architecture. **Tier it, don't weaken it.** Bucket-D verdict on the tool itself: **the lens is real; the command is not viable** — retire `/lean-repo`, fold its three questions into `/architecture-review`, and wire that into `/friday-checkup`'s quarterly tier (which has *also* never run). | `f6d2c63` |
 
 ### Notes from execution
 
