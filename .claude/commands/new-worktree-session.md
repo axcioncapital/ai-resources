@@ -110,9 +110,15 @@ State these briefly; `docs/parallel-sessions-playbook.md` is the authority:
 
 ## Step 5 — Teardown is a tracked phase
 
-When the unit lands, tear the worktree down — do not leave it as cruft:
+When the unit lands, **run `/close-worktree-session`** from the main checkout. It is the teardown
+half of this command: merge the branch → remove the worktree → delete the branch, with the guards
+this prose cannot enforce (refuses on a dirty worktree, on a live session still in it, and on a
+merge conflict; never uses `--force` or `-D`).
+
+Equivalent by hand, if you prefer — but you lose the guards:
 
 ```bash
+git -C "$REPO_ROOT" merge "{BRANCH}"                     # land the work first
 git -C "$REPO_ROOT" worktree remove "{WORKTREE_PATH}"   # add --force only if intentionally discarding
 git -C "$REPO_ROOT" branch -d "{BRANCH}"                 # -d's merged-check is a safety net
 ```
