@@ -606,3 +606,12 @@ Opened as the RR-04 worktree pilot; `/prime` false-fired a "concurrent session i
 - **Verify the new `SessionEnd` hook actually fired** once a session has ended after a CLI restart: `tail ~/.claude/hooks/cleanup-session-marker.log` should show a `REMOVED` line. `SKIP`/`NOOP` means the payload schema differs from the assumption — the hook fails safe and says so rather than deleting the wrong file. (Settings load at session start, so it may not be active for the session that wrote it.)
 - **RR-05** — adopt the inflow rule once `/lean-repo`'s report is in. This is the item that speaks to the circle.
 - The new worktree folder is not in the workspace root's `.gitignore`, so it shows as untracked there until removed. Cosmetic; deliberately not fixed.
+
+## 2026-07-13 — Session S6
+
+**Mandate:** Merge `session/2026-07-13-lean-repo` (carrying the completed `/lean-repo` audit) into `main`, reconciling the expected `logs/session-notes.md` conflict, then tear down the `ai-resources-lean-repo` worktree via `/close-worktree-session` — done when: `audits/lean-repo-2026-07-13.md` is present on `main`, every session entry S1–S6 survives the conflict resolution, `git worktree list` shows only the main checkout, and `session/2026-07-13-lean-repo` is deleted
+- Out of scope: acting on the `/lean-repo` report's findings (a separate session); pushing (batched to `/wrap-session`)
+- Files in scope: logs/session-notes.md; audits/lean-repo-2026-07-13.md; logs/session-notes-archive-2026-07.md; logs/decisions.md; logs/improvement-log.md; logs/usage-log.md; logs/runs/2026-07-13-S5.json; docs/ai-resource-creation.md; projects/axcion-ai-system-redesign/output/repo-redesign-authoritative-implementation-report.md
+- Stop if: the `session-notes.md` conflict cannot be reconciled without losing a session entry — surface it, do not force a resolution
+
+Merge the finished `/lean-repo` audit from the `session/2026-07-13-lean-repo` worktree branch into `main`, then tear the worktree down with the new `/close-worktree-session` command.
