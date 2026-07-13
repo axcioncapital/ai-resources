@@ -507,3 +507,49 @@ Mandate was to triage the 22 items in the `/lean-repo` plan and execute the most
 - **End-time `/risk-check`:** **SKIPPED, deliberately.** Conditions for the documented skip all hold: the plan-time gate covered this exact change class (hook edit) on this exact change set; its verdict was applied rather than mitigated-around; the commits are shipped; and drift is bounded *downward* — the session executed a strict subset of what was gated, never more. Re-firing on a set the gate already rejected-and-narrowed is ceremony, not signal.
 - **`/blindspot-scan`:** not run. The trigger (touched `.claude/hooks/`) fires on the letter of the rule, but its two distinctive checks were already answered empirically this session: real-environment fit (`grep` across *every* settings layer including the user layer proved the hook was registered nowhere and had never run) and consumer/blast-radius (the `/risk-check` built an explicit ~114-consumer inventory). Per Subagent Proportionality — do not stack gates.
 - **`/qc-pass`:** not stacked on top of `/risk-check` for the same reason. The one in-class artifact that landed (the hook deletion) was cleared by the gate designated for it and verified inline.
+
+## 2026-07-13 — Session S9
+
+**Mandate:** Run `/fix-repo-issues` on the `ai-resources` backlog and produce a triaged fix plan — done when: a plan file is written to `audits/fix-plans/` and committed
+- Out of scope: applying any of the fixes (`/fix-repo-issues` is plan-only by contract — execution is a separate session)
+- Files in scope: audits/fix-plans/fix-repo-issues-2026-07-13-2134.md; logs/session-notes.md; logs/decisions.md; logs/improvement-log.md; logs/runs/2026-07-13-S9.json; logs/scratchpads/2026-07-13-S9-fix-repo-issues-plan-scratchpad.md; projects/axcion-ai-system-owner/output/consultations/consult-2026-07-13-fix-plan-materiality.md
+- Stop if: (none stated)
+
+> *Mandate written **retroactively at wrap**, not at `/prime`. `/prime` was interrupted at Step 7 by the `/fix-repo-issues` invocation, so `/session-start` never ran and no footprint was ever declared. The S9 marker was allocated at wrap. `check-foreign-staging.sh` then **blocked the wrap commit** — correctly: a footprint-less session plus an apparently-live concurrent marker is its highest-risk shape. The footprint above is the honest declaration the guard asked for, not a bypass. See `### Risky actions`.*
+
+### Summary
+
+Planning session. Ran `/fix-repo-issues` on the `ai-resources` scope; the scanner surfaced **55** backlog items and I shortlisted 6. The operator asked the right question — *"are these important or nice-to-haves?"* — which triggered a `/consult` to the System Owner. Its verdict: **"most of this is grooming — and the batch is still worth a session, at ~40% of its scope."** The plan was cut **6 → 3** and written to `audits/fix-plans/fix-repo-issues-2026-07-13-2134.md`. No fixes were applied; `/fix-repo-issues` is plan-only by contract.
+
+**The session's real yield is a second instance of the same defect class S8 found.** Three of my six proposed items were **already done** — two caught by the git reconcile-at-read pass, and one (the "3 dead workspace-root symlinks") caught only by opening the filesystem. The `improvement-log.md` entry asserting those symlinks exist is stale and factually wrong; `find` at the workspace root returns **zero** dangling symlinks. The SO got this one wrong too — it reported "verified dangling this pass," having verified only that the *targets* were absent, not that the *links* remained. Two independent sources agreed and both were wrong; only the filesystem settled it.
+
+### Decisions Made
+
+- **Cut the plan 6 → 3 on the SO's materiality verdict.** Items 1 (`/lean-repo` orphan lens) and 2 (`check-foreign-staging.sh` allowlist) are control-integrity defects — broken machinery whose job is catching defects — and justify the session alone. Items 4 (`run-manifest.sh` midnight), 5 (six unpinned `general-purpose` spawns), and half of 3 were grooming, and are parked with named unpark triggers rather than fixed. *(Logged to `decisions.md`.)*
+- **Adopted the SO's strengthening of item 1 over my own weaker fix.** I had scoped id-55 as "widen the Q3 grep to `projects/*/`." The SO's correction: that makes the lens *less wrong, not right* — "zero hits" still would not mean "unused." The plan now also requires downgrading the emitted verdict from `orphan → delete` to `no evidence in scanned scope → confirm before delete`, and validating with a **planted known-positive** (`/explore-section`). *(Logged.)*
+- **Parked id-48b (widen `/fix-symlinks` to the workspace root) as a design hazard, not a backlog item.** The SO caught that the 2026-07-13 workspace-root exception makes `lean-repo`, `new-project`, `deploy-workflow`, `pipeline-review`, and `scope-project` *legitimate* at the root — and `/fix-symlinks` re-reads `EXCLUDE_COMMANDS` from `auto-sync-shared.sh` via `sed`. Executed as originally specified, the widened scan would **delete exactly those five commands**: the same near-miss class as id-55, in the very item meant to clean up after it. *(Logged.)*
+- Routine: scoped the scan to `ai-resources` only (option `1`) on the operator's pick; skipped the workspace and all 22 project scopes.
+
+### Risky actions
+
+**None taken.** One was proposed and stopped before it reached a plan: id-48b would have widened a scan that, as specified, deletes five live commands from the workspace root. Caught by the SO consult at plan time — before the plan file was written, not after. Separately, my own plan item to delete 3 "dead symlinks" was killed by direct filesystem verification; had it been executed, it would have been a no-op, not damage.
+
+### Next Steps
+
+- **Execute the fix plan** — fresh session: *"Execute the fix plan at `ai-resources/audits/fix-plans/fix-repo-issues-2026-07-13-2134.md`"*. Self-contained: 3 items, gate discipline stated (ONE batched plan-time `/risk-check` for items 1+2, one at end-time — not per item), verification method stated per item.
+- **Then M-1 → R-3, strict order.** id-55 must land first; M-1 folds the defective lens into `/architecture-review`.
+- Carried S5 → S9, still open: reconcile the `/lean-repo` report's RR-04 row to match commit `5fce38c`.
+- SO side finding, not closed: `systems-building-principles.md` in `axcion-ai-system-owner` is still an empty `TBD`. The SO ran this advisory on the vault base alone and flagged that a "when is maintenance worth it" question is exactly where that gap costs most.
+
+### Open Questions
+
+- Does the operator accept retiring `/lean-repo`? Its own Bucket-D verdict recommends it — and for the second cycle running, the tool's most valuable finding came from *auditing the tool's output*, not from the tool.
+- MC-1: is the operator willing to make its check bright-line/mechanical? Only that shape clears the No-self-waivers clause.
+- **The one worth sitting with, from the SO:** *"A parked item that never recurs was never a defect — it was a preference."* Six consecutive harness-maintenance sessions is a system whose **detection has outrun its closure** (`principles.md § OP-12`). The remedy is not more scans.
+
+### Gate record
+
+- **`/consult` (system-owner, Opus):** RAN, operator-requested. Verdict adopted in full — including its correction to my own item-1 fix and its catch on id-48b. Report: `projects/axcion-ai-system-owner/output/consultations/consult-2026-07-13-fix-plan-materiality.md`.
+- **`/risk-check`:** **not run — correctly.** This session applied **no** structural change. It wrote a plan file and an advisory; both are inert documents. The change classes fire on the *execution* session, where the plan explicitly schedules them (one batched plan-time gate + one end-time gate).
+- **`/blindspot-scan`:** not run. Trigger did not fire — no runnable infrastructure was created or rewired this session.
+- **`/qc-pass`:** not run on the plan. The Step 4 inline clarify gate plus the SO consult already gave it two independent reviews, and the SO's review *changed the artifact*. Stacking a third would be the gate ceremony this very plan is written to reduce.
