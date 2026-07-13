@@ -177,20 +177,66 @@ If either fails, check:
 
 ## Placeholder Reference
 
-All placeholders used in template files:
+> **Deploy-time placeholder registry (load-bearing, lockstep contract).** This table mirrors the
+> canonical registry in `/deploy-workflow` **Step 5b**, which is the authority the deploy command
+> reads. The two must be updated together. If you add a placeholder to any template file, add it to
+> **both** — `/deploy-workflow` Step 5d cross-checks the template against the registry and will
+> **stop the deploy** on an unregistered placeholder rather than silently skip it.
+>
+> The template contains **128** distinct `{{...}}` tokens. Only the **30** below are resolved at
+> deployment. The other 98 are deliberately preserved — see *What is NOT filled at deploy time*.
+
+### Class A — required at deployment (26)
 
 | Placeholder | Files | Purpose |
 |------------|-------|---------|
 | `{{PROJECT_TITLE}}` | CLAUDE.md, reference/stage-instructions.md, reference/file-conventions.md, reference/quality-standards.md, reference/style-guide.md | Project name in headings |
-| `{{PROJECT_DESCRIPTION}}` | CLAUDE.md | Project scope description |
+| `{{PROJECT_DESCRIPTION}}` | CLAUDE.md, reference/style-guide.md | Project scope description |
 | `{{ANALYTICAL_LENS}}` | CLAUDE.md | Analytical framework |
 | `{{CURRENT_SECTION}}` | CLAUDE.md | Starting section |
 | `{{DOCUMENT_ARCHITECTURE}}` | CLAUDE.md | Document structure |
 | `{{EVIDENCE_CALIBRATION}}` | CLAUDE.md | Evidence availability note |
-| `{{OPERATOR_NAME}}` | CLAUDE.md | Operator's name |
+| `{{OPERATOR_NAME}}` | CLAUDE.md, reference/style-guide.md | Operator's name |
+| `{{CONFIDENTIAL_IDENTIFIER_1}}` | CLAUDE.md § Confidentiality Boundaries | First confidential identifier. **If the project has none, replace the whole list with** `No confidentiality constraints for this project.` |
+| `{{CONFIDENTIAL_IDENTIFIER_2}}` | CLAUDE.md § Confidentiality Boundaries | Second confidential identifier (same rule) |
+| `{{REPORT_SET}}` | CLAUDE.md § Project Config | Config 1 — report list; report-count derived from length |
+| `{{SECTION_IDS}}` | CLAUDE.md § Project Config | Config 2 — parameterizes per-section paths |
+| `{{COUNTRY_SET}}` | CLAUDE.md § Project Config | Config 3 — **canonical**; `reference/source-class-hierarchy.md` § Project Country Set is the derived mirror |
+| `{{COUNTRY_SUPERSET}}` | CLAUDE.md § Project Config | Config 4 — pan-region leakage detection; always a superset of Country set |
+| `{{LANGUAGES}}` | CLAUDE.md § Project Config | Config 5 — ISO 639-1 codes; empty = English-only |
+| `{{DEAL_SIZE_LENS}}` | CLAUDE.md § Project Config | Config 6 — operator-facing only |
+| `{{DOMAIN}}` | CLAUDE.md § Project Config, reference/style-guide.md | Config 7 — parameterizes jargon-gloss whitelist |
+| `{{VERIFICATION_POSTURE}}` | CLAUDE.md § Project Config | Config 8 — `per-claim-cited` \| `lighter-than-formal` \| `interpretive-only` |
+| `{{SOURCE_AVAILABILITY}}` | CLAUDE.md § Project Config | Config 9 — `public-only` \| `mixed` \| `paid-databases-allowed` |
+| `{{RESEARCH_AREA_PHRASE}}` | CLAUDE.md § Project Config, .claude/commands/run-execution.md, reference/style-guide.md, reference/stage-instructions.md | Config 10 — Perplexity query prefix |
+| `{{CURRENT_PERIOD}}` | CLAUDE.md § Project Config | Config 11 — parameterizes freshness classes |
+| `{{DELIVERY_VAULT}}` | CLAUDE.md § Project Config | Config 12 — optional in effect, but **must still be resolved**; write `none` if unused |
+| `{{DOCUMENT_MODEL}}` | CLAUDE.md § Project Config | Config 13 — enum `report` \| `section`. **Required; halt on missing** — Stage-5 dispatch reads it first |
 | `{{SECTION_SEQUENCE}}` | reference/stage-instructions.md | Section ordering constraints |
-| _(workspace-root grant)_ | .claude/settings.local.json (gitignored, not a `{{PLACEHOLDER}}`) | Absolute path to workspace root containing ai-resources/, set by hand at step 1.5 in the gitignored local file — never the tracked settings.json |
-| `{{PART_TWO_DIR}}` | .claude/commands/produce-architecture.md | Part-2 source directory slug under `parts/` (e.g., `part-2-service`). Only needed if the project uses `/produce-architecture` (parts-based document model) |
-| `{{PART_THREE_DIR}}` | .claude/commands/produce-architecture.md | Part-3 source directory slug under `parts/` (e.g., `part-3-strategy`). Only needed if using `/produce-architecture` |
-| `{{PART_TWO_PROSE_DIR}}` | .claude/commands/produce-architecture.md | Part-2 prose-output directory slug under `output/` (e.g., `part-2-prose`). Only needed if using `/produce-architecture` |
-| `{{PART_THREE_PROSE_DIR}}` | .claude/commands/produce-architecture.md | Part-3 prose-output directory slug under `output/` (e.g., `part-3-prose`). Only needed if using `/produce-architecture` |
+| `{{CLUSTER_BLOCK_THRESHOLD}}` | reference/quality-standards.md | Cluster-level QC block threshold |
+| `{{SECTION_BLOCK_THRESHOLD}}` | reference/quality-standards.md | Section-level QC block threshold |
+| `{{FACT_VERIFICATION_SYSTEM_PROMPT}}` | reference/sops/fact-verification-prompt.md | Stage-4 verification prompt — ships as a bare stub to be authored |
+
+### Class B — conditional (4)
+
+Fill **only** if this project uses the parts-based document model (`/produce-architecture` with a `parts/` directory). Otherwise leave them unfilled — they are an unused optional component, and `/deploy-workflow` excludes the file from fill scope entirely.
+
+| Placeholder | Files | Purpose |
+|------------|-------|---------|
+| `{{PART_TWO_DIR}}` | .claude/commands/produce-architecture.md | Part-2 source dir slug under `parts/` (e.g. `part-2-service`) |
+| `{{PART_THREE_DIR}}` | .claude/commands/produce-architecture.md | Part-3 source dir slug under `parts/` (e.g. `part-3-strategy`) |
+| `{{PART_TWO_PROSE_DIR}}` | .claude/commands/produce-architecture.md | Part-2 prose-output dir slug under `output/` (e.g. `part-2-prose`) |
+| `{{PART_THREE_PROSE_DIR}}` | .claude/commands/produce-architecture.md | Part-3 prose-output dir slug under `output/` (e.g. `part-3-prose`) |
+
+### Not a placeholder
+
+| Item | Where | Note |
+|---|---|---|
+| _(workspace-root grant)_ | .claude/settings.local.json (gitignored) | Absolute path to the workspace root containing `ai-resources/`. Set by hand at step 1.5 in the gitignored local file — **never** the tracked settings.json. Not a `{{…}}` token. |
+
+### What is NOT filled at deploy time (98 tokens — preserved by design)
+
+- **Class C — notation (3).** `{{Country_1}}`, `{{Country_2}}`, `{{Country_N}}` in `reference/quality-standards.md` are column headers in an *example* Country Coverage Table. They illustrate a format; they are not values. Never fill, never prompt.
+- **Class D — template-internal (94).** Every `{{...}}` inside the six `reference/*.template.md` files. Those templates are **deferred** — you instantiate each one per-project *after* deployment, and the deploy leaves them **byte-identical**. `/deploy-workflow` Step 11 verifies this with a `diff`.
+
+A deployed project therefore still contains ~97 `{{...}}` tokens, and that is **correct**. Do not "clean them up" with a blanket find-and-replace — you would destroy the deferred templates.

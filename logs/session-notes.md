@@ -527,3 +527,23 @@ None. The one near-miss was mine and was caught by a gate: I asserted "not deplo
 - **`/mission` still has no `update` verb** (logged in `improvement-log.md`, S10). S11 again edited the mission file directly — this time under explicit operator authorization for the acceptance-test change, so it is sanctioned, but the structural gap is now two sessions old and every fix session ahead will hit it.
 - **Thread 2's true severity is unknown.** If it also turns out not to be a blocker, the mission has *zero* demonstrated deployment blockers and the deployment gate should be re-examined — possibly the pilot can deploy sooner than the 8-thread plan assumes.
 - **Four latent defects were found by execution and routed** (threads 5 and 8, plus deferred cleanups). The class-ladder hole — a claim with 2 sources in 1 class matches no permission class at all — means some real claims are currently unclassifiable. That is a live correctness gap in the two deployed projects, not just a template issue.
+
+## 2026-07-13 — Session S13
+**Mandate:** Establish by execution what `/deploy-workflow` actually does with the research-workflow template's placeholders, then fix Steps 5–7 and Step 11's leftover-placeholder assertion so it fills only the immediate deploy-time placeholders (including `{{CONFIDENTIAL_IDENTIFIER_N}}`), leaves template-internal placeholders in the six `*.template.md` files and unused optional components byte-identical, and validates only what deployment must resolve — done when: thread 2's acceptance test has been EXECUTED against a scratch deployment and its result recorded, thread 2 is ticked in the mission file citing that result (or reclassified with evidence if execution shows it is not a blocker), and the work is committed (no push).
+- Out of scope: threads 3–8; the Sector Intelligence pilot's content and per-unit config; the seven "explicitly not to be built" shapes; widening the placeholder discovery regex (the audit's §4 D-3 remedy — reversed by its own §7 addendum and by the mission file, which governs)
+- Files in scope: .claude/commands/deploy-workflow.md, workflows/research-workflow/SETUP.md, logs/missions/research-workflow-deploy-fitness.md, logs/session-notes.md
+- Stop if: `/risk-check` returns RECONSIDER or NO-GO on the deploy-workflow edit
+- Allowed inputs: workflows/research-workflow/ (the template, incl. its six reference/*.template.md files), workflows/research-workflow/reference/file-conventions.md, audits/research-workflow-deployment-fitness-2026-07-13.md (diagnosis only — its runtime claims are not to be trusted), .claude/commands/sync-workflow.md
+- Required outputs: .claude/commands/deploy-workflow.md, logs/missions/research-workflow-deploy-fitness.md
+- Context pack: output/context-packs/command-20260713-d3b6a/pack.md
+- Mission: research-workflow-deploy-fitness
+
+Mission thread 2 — deployment placeholder handling in `/deploy-workflow`. Verify the "blocker" status BY EXECUTION first (run the deploy against a scratch target and observe what it actually does with placeholders), then fix as the observed behaviour warrants.
+
+**Pre-flight facts established by the context engine (not by trusting the audit):**
+1. **`/deploy-workflow` has no dry-run or scratch mode** — Step 2 hardcodes the target under `projects/` and Step 9 runs `git init` + commit. The acceptance test's "scratch target" needs a purpose-built harness; it cannot be a bare invocation.
+2. **A live defect, found without execution:** `SETUP.md` (:44, :173) carries a literal `{{PLACEHOLDER}}` *documentation* token that the current narrow `{{[A-Z_]*}}` regex matches — so today's deploy already prompts the operator for a doc example's value.
+3. **Scope widened to Step 11.** The zero-leftover assertion sits at Step 7 (:285) *and* Step 11 item 1 (:332). Fixing only 5–7 leaves Step 11 failing the deploy against the six preserved `*.template.md` files.
+4. **The audit contradicts itself, unmarked.** §4 D-3 (:103) still instructs "widen Step 5's placeholder pattern"; §7 (:151) and the mission (:128) reverse it. An implementer reading §4 alone builds the reverted remedy.
+5. **No canonical deploy-time placeholder list exists.** `SETUP.md:182–196` is the closest thing and omits both `{{CONFIDENTIAL_IDENTIFIER_N}}` fields and all 13 Project Config fields — producing that list is part of the fix, not a precondition of it.
+6. **Blast radius is one command:** `/sync-workflow` carries no placeholder logic.

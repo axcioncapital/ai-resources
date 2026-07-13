@@ -1,0 +1,36 @@
+{
+  "run_id": "2026-07-13-S13",
+  "project": "ai-resources-research-workflow",
+  "date": "2026-07-13",
+  "marker": "S13",
+  "model": "claude-opus-4-8[1m]",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md#2026-07-13-S13",
+  "mission": "research-workflow-deploy-fitness",
+  "context": {
+    "pack_path": "output/context-packs/command-20260713-d3b6a/pack.md",
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [],
+  "decisions_refs": [],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": null,
+  "outcome": null,
+  "failure_class": null,
+  "incidents_refs": []
+}
