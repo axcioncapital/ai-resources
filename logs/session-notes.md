@@ -439,3 +439,61 @@ None causing loss. Worth naming: **(1)** My first ref format would have written 
 
 ### Open Questions
 None blocking.
+
+## 2026-07-13 — Session S1
+
+**Mandate:** (1) Close R3 Pass 2 prerequisite P2 — decide and land the change that gives every decision the wrap note records a manifest-referenceable home, via a gate-passed packet, applied to both paired `wrap-session.md` copies; (2) run `/implementation-triage` on the Session Value Audit worth-doing question — done when: the P2 packet has passed `/risk-check` and the contract change is live in both wrap copies (or, on RECONSIDER/NO-GO, the redesign is recorded and P2 stays open with the reason logged), the mission + remediation-register rows are updated, and the Session Value Audit verdict is recorded in `logs/decisions.md` with its mission thread closed
+- Out of scope: R3 Pass 2 itself (the wrap-note cut) — stays BLOCKED regardless of P2's outcome, since P1's evidence is still one self-built datapoint; the paired-copy section-name divergence (`Files Created`/`Files Modified` vs `Files Changed`) beyond what the P2 fix must touch; the six-command Model Tier pinning retrofit; user-layer Phase 0 items
+- Files in scope: .claude/commands/wrap-session.md; ../.claude/commands/wrap-session.md; logs/missions/w32-migration-execution.md; logs/decisions.md; docs/spine-schemas.md; logs/session-notes.md; logs/runs/2026-07-13-S1.json; logs/session-plan-2026-07-13-S1.md; ../projects/axcion-ai-system-redesign/output/implementation-prep/remediation-register.md; ../projects/axcion-ai-system-redesign/output/implementation-prep/packets/R3-run-manifest.md; a new P2 packet under the same packets/ directory
+- Stop if: /risk-check returns RECONSIDER or NO-GO on the decision-recording contract change — redesign, do not override (mission non-negotiable: risk-check-class items pass the gate before execution, not retroactively)
+- Allowed inputs: output/context-packs/command-20260713-c4b1e/pack.md; docs/spine-schemas.md; ../projects/axcion-ai-system-redesign/output/implementation-prep/packets/R3-run-manifest.md; ../projects/axcion-ai-system-redesign/output/implementation-prep/remediation-register.md; logs/decisions.md; logs/missions/w32-migration-execution.md; .claude/commands/implementation-triage.md
+- Required outputs: a gate-passed P2 packet; the decision-recording contract change live in both wrap-session.md copies; updated mission thread + remediation-register rows; the Session Value Audit triage verdict recorded in logs/decisions.md
+- Context pack: output/context-packs/command-20260713-c4b1e/pack.md
+- Mission: w32-migration-execution
+
+Auto multi-item: Close R3 Pass 2 prerequisite P2 — change the decision-recording contract so every decision the wrap note carries reaches a manifest-referenceable home; Run /implementation-triage on the Session Value Audit worth-doing question.
+
+### Summary
+Closed **R3 Pass 2 prerequisite P2** — not by changing the decision-recording contract, but by **narrowing Pass 2** so it retains the `### Decisions Made` block and cuts only the two file-list blocks (canonical note 8 → 6; root mirror 7 → 6). P2 existed *only* because the cut deleted that block; retain it and the prerequisite dissolves. Also triaged the **Session Value Audit** worth-doing question (verdict: keep it, don't retire, don't de-gate — the real defect is that its signal has no variance). Three gates fired and **each caught a real defect in the step before it**, including one I caught in my own output an hour after committing it. **Pass 2's gate is now OPEN and ready to ship next session.**
+
+### Files Created
+- `projects/axcion-ai-system-redesign/output/implementation-prep/packets/P2-decision-recording-contract.md` — the design record: three options costed, Option C shipped, gate + QC results, method lesson
+- `audits/risk-checks/2026-07-13-p2-decision-recording-contract-narrow-pass2-option-c.md` — plan-time gate, PROCEED-WITH-CAUTION
+- `logs/session-plan-2026-07-13-S1.md`
+- `logs/runs/2026-07-13-S1.json` — this session's run manifest
+- `output/context-packs/command-20260713-c4b1e/pack.md` — context pack (`sufficient_to_implement: false`; it surfaced the paired-copy divergence and the missing packet)
+- `logs/scratchpads/2026-07-13-11-30-scratchpad.md`
+
+### Files Modified
+- `.claude/commands/wrap-session.md` (canonical) — deferred-Pass-2 comment rewritten (`### Decisions Made` no longer slated for deletion; target now 8 → 6); the block now *states* the routine-decision property rather than implying it. **Step 5 itself unchanged** — the contract was deliberately NOT touched.
+- `../.claude/commands/wrap-session.md` (workspace-root mirror) — Step 4 reconciled from *always-ask* to *append-by-default*; the `Write "None" if routine session` escape hatch removed; `PAIRED CONTRACT` guard comment added
+- `logs/missions/w32-migration-execution.md` — P2 closed; SVA thread closed; Pass 2 gate corrected to OPEN
+- `logs/decisions.md` — 3 entries; `logs/improvement-log.md` — SVA bounded fix + a verification correction on a concurrent session's entry
+- `projects/axcion-ai-system-redesign/output/implementation-prep/packets/R3-run-manifest.md` — Pass 2 section rewritten as ship-ready; every stale `8 → 5` / `11 → 5` target corrected or struck
+- `projects/axcion-ai-system-redesign/output/implementation-prep/remediation-register.md` — R3 row + updates
+
+### Decisions Made
+**Logged to `decisions.md` (analytical):**
+- **Close P2 by narrowing the cut, not by changing the contract.** Rejected (A) appending every routine decision to `decisions.md` — bloats the curated journal `/prime` reads via `tail -10`, degrading orientation on *every* session; and (B) a `decisions_inline` kernel field — no consumer would read it (DR-7, already dropped from this mission).
+- **Session Value Audit: keep it; do NOT retire, do NOT de-gate.** The real defect is that the signal has no variance (7 firings, all 8–9 / PASSED / Repeat) because it is opt-in — sample composition, not sample size.
+- **Correction: P1 does NOT block Pass 2.** Self-caught at end of session, after I had already written the opposite into three docs.
+
+**Routine (recorded here only):**
+- Reconciliation direction for the paired-copy divergence: **root adopts canonical's append-by-default** (canonical is the copy `decisions_refs` was built against, and root's always-ask was strictly lossier).
+- Wrote the P2 packet *before* running `/risk-check` rather than after — the packet is a zero-blast-radius design doc, and the mission's non-negotiable requires the gate to rule on an existing packet.
+- Did not implement the SVA follow-up fix this session — it touches `/friday-checkup`, a Critical component, and needs its own gate. Logged instead.
+
+### Risky actions
+**One near-miss, caught by QC, not by me.** My first P2 fix verified itself by asserting the `### Decisions Made` **heading** was present in both copies. It was — but the root mirror's block said *"Write 'None' if routine session,"* so retaining the heading there was **vacuous**: a routine session would write "None" AND skip the log, losing the decision from both surfaces anyway. **The fix would have shipped with a false "P2 CLOSED" claim and a Level-1 check that certified it as true.** A false closure is worse than no fix, because it stops anyone looking again. Fixed; the check now asserts the property and is proven falsifiable.
+
+Separately: a **concurrent `project-planning` session** committed to this repo mid-session (`e8b2449`, 10:04). No collision — its content was already in HEAD by the time I staged — but my `/prime` scan predated it, so I only found it by reading a log tail. Its P1 claim was verified rather than trusted: symptom real, **diagnosis falsified**; correction appended to its entry rather than overwriting it.
+
+### Next Steps
+- **Ship R3 Pass 2 — the gate is OPEN and this is now a one-session job.** The ship sequence is written into `packets/R3-run-manifest.md` § "🟢 Pass 2 — READY TO SHIP"; do not re-derive it. Cut `### Files Created` + `### Files Modified` → `files_changed` in **both** paired copies; **retain `### Decisions Made`**; repoint `session-feedback-collector`'s *file* signals only; `/risk-check`; verify; close R3.
+- **⚠ Check before landing:** a session with an **absent manifest** closes with an empty `files_changed` → thin file record. Bounded, but confirm the absent-manifest path; consider retaining the file lists when `files_changed` is empty.
+- **Then move on to other work** (operator's stated direction).
+- **P1 (`decisions_refs` failing on the mandated flag) is now an ordinary backlog bug, NOT a gate.** Next diagnostic: re-run the failing `close` from the `project-planning` cwd and capture stdout — the `ref DROPPED (advisory)` line is the discriminator. **Do NOT "fix" the tempfile path — it is not broken.**
+- SVA follow-up: one honesty line in `friday-checkup.md` Step 14.5 (N-of-M + self-selected sample). Logged in `improvement-log.md`; needs its own gate.
+
+### Open Questions
+None blocking. One worth raising if the cleanup drags: the wrap-note slimming has now consumed four sessions to trim two sections from a note, and its original justification has never been re-examined. If Pass 2 does not land cleanly next session, re-justify before continuing.

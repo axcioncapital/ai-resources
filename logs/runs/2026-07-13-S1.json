@@ -1,0 +1,55 @@
+{
+  "run_id": "2026-07-13-S1",
+  "project": "ai-resources",
+  "date": "2026-07-13",
+  "marker": "S1",
+  "model": "claude-opus-4-8[1m]",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md#2026-07-13-S1",
+  "mission": "w32-migration-execution",
+  "context": {
+    "pack_path": "output/context-packs/command-20260713-c4b1e/pack.md",
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    "projects/axcion-ai-system-redesign/output/implementation-prep/packets/P2-decision-recording-contract.md",
+    "audits/risk-checks/2026-07-13-p2-decision-recording-contract-narrow-pass2-option-c.md",
+    "logs/session-plan-2026-07-13-S1.md",
+    "logs/runs/2026-07-13-S1.json",
+    "output/context-packs/command-20260713-c4b1e/pack.md",
+    "logs/scratchpads/2026-07-13-11-30-scratchpad.md",
+    ".claude/commands/wrap-session.md",
+    "../.claude/commands/wrap-session.md",
+    "logs/missions/w32-migration-execution.md",
+    "logs/decisions.md",
+    "logs/improvement-log.md",
+    "logs/session-notes.md",
+    "projects/axcion-ai-system-redesign/output/implementation-prep/packets/R3-run-manifest.md",
+    "projects/axcion-ai-system-redesign/output/implementation-prep/remediation-register.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-13-s1-close-r3-pass-2-s-p2-prerequisite-by-narrowing",
+    "logs/decisions.md#2026-07-13-s1-session-value-audit-keep-it-do-not-de-gate-it",
+    "logs/decisions.md#2026-07-13-s1-end-of-session-correction-p1-does-not-block-r3"
+  ],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": null,
+  "incidents_refs": []
+}
