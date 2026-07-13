@@ -478,3 +478,19 @@ Recommended but declined by the operator: a short `/prime` session first (Step 3
 ### Open Questions
 
 - `/mission` has no `update` verb, so the next fix session cannot tick thread 1 off through a sanctioned path. Logged with a proposed fix; unresolved.
+
+## 2026-07-13 — Session S11
+**Mandate:** Align the input contracts of `claim-permission-gate` and `country-parity-checker` to `analysis/cluster-memos/{section}/` — the path `/run-cluster` actually writes — filtering on the `-refined` variant suffix and retaining the pre-flight guard (mission thread 1, the Stage-3 deadlock) — done when: the thread-1 acceptance test passes against real behaviour (`/run-cluster` → `/run-sufficiency` clears the Phase A and Phase C pre-flights and produces permission and parity tables), thread 1 is ticked in the mission file citing the test result, and the work is committed (no push).
+- Out of scope: creating or customizing the Sector Intelligence pilot; the pilot's research content and per-unit config; all seven "explicitly not to be built" shapes; threads 3–8 (thread 2 only if context clearly allows after thread 1 closes)
+- Files in scope: skills/claim-permission-gate/SKILL.md, skills/country-parity-checker/SKILL.md, logs/missions/research-workflow-deploy-fitness.md, logs/session-notes.md
+- Stop if: `/risk-check` returns RECONSIDER or NO-GO on the skill-contract edit
+- Allowed inputs: workflows/research-workflow/.claude/commands/run-cluster.md, workflows/research-workflow/.claude/commands/run-sufficiency.md, workflows/research-workflow/reference/file-conventions.md, skills/ai-resource-builder/SKILL.md, workflows/research-workflow/.claude/commands/review-chapter.md, audits/research-workflow-deployment-fitness-2026-07-13.md
+- Required outputs: skills/claim-permission-gate/SKILL.md, skills/country-parity-checker/SKILL.md
+- Context pack: output/context-packs/skill-20260713-c4f1a/pack.md
+- Mission: research-workflow-deploy-fitness
+
+Implement the research-workflow fix plan (mission `research-workflow-deploy-fitness`), starting with thread 1 — the Stage-3 folder-path deadlock.
+
+Two design decisions resolved pre-edit from the context pack's missing-context items, both adopting existing in-repo precedent rather than inventing a mechanism:
+1. **Refined-vs-unrefined filter.** `run-cluster.md:36` writes BOTH `-memo.md` and `-memo-refined.md` into the same directory, so a bare path swap points both skills at two files per cluster. The skills will address the `-refined` variant by name, per the variant-suffix rule at `file-conventions.md:19` and the precedent at `review-chapter.md:26`. The audit's "~4 lines" remedy under-specified this.
+2. **Declared path vs. passed argument.** `run-sufficiency.md:44,55` already passes the memo directory at dispatch while both skills hardcode and pre-flight-verify a declared path. Resolution: align the declaration to the real path and KEEP the pre-flight. Rejected: dropping the declared path so the skills consume only the passed argument — that would delete the pre-flight guard, which is correct behaviour ("run `/run-cluster` first") merely aimed at a directory that never existed.
