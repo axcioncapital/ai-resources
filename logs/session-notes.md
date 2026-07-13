@@ -495,3 +495,41 @@ Separately, two near-misses **prevented** by verification rather than by gates: 
 - Out of scope: the 48-item Tier-3 backlog and the 5 inbox briefs; retiring `/lean-repo` (open operator question); the `~/.claude/settings.json` model field (operator DECLINED — do not re-raise); repo hygiene in `axcion-ai-system-owner`
 - Files in scope: .claude/commands/prime.md (+ its real non-symlink copies); docs/session-marker.md; .claude/hooks/detect-concurrent-session.sh; .claude/hooks/check-foreign-staging.sh; .claude/commands/wrap-session.md (+ workspace-root paired copy); .claude/settings.json; logs/improvement-log.md; .claude/commands/architecture-review.md (stretch only); logs/session-notes.md; logs/session-plan-2026-07-13-S13.md; logs/runs/2026-07-13-S13.json
 - Stop if: `/risk-check` returns RECONSIDER or NO-GO; or the allocator falsification test fails (do not ship an unproven marker allocator — it is the third defect in this subsystem today)
+
+### Summary
+
+Fixed the HIGH cross-checkout marker collision with a **real mutex**, not a convention. Closed three false/duplicate backlog records. Established the marker-corpse root cause — and it was none of the three candidates the log listed. Deliberately did **not** ship the mtime-liveness heartbeat: its RECONSIDER findings stand, and shipping it would have traded noise for data loss. 2 commits (`e6e5722`, `43267a3`); tree clean.
+
+**The allocator (`43267a3`).** A fourth allocation source: a claim directory in the **shared git common dir**, which every worktree of a repo resolves to identically, which is untracked and branch-independent — so a claim is visible across checkouts **without being committed**, which is exactly the blind spot the old three sources could not see. `mkdir` is atomic on POSIX, so the claim loop is a **genuine mutex**: two `/prime` runs firing at the same instant cannot both win the same `S{N}`. Scoped by `git rev-parse --show-prefix` so a subdirectory project with its own `session-notes.md` does not share a namespace with unrelated siblings. All 3 blocks in `prime.md` in lockstep, hash-identical (`54972a65f58b`). The doc's claim that this gap was *"unclosable read-side without a shared allocator"* was **wrong**.
+
+**The log closures (`e6e5722`).** id-46 closed **void** — its premise ("89 commands are copies that will drift") is false, proven by **inode**: design-studio's `prime.md` and canonical are both inode `9709986`, literally the same file, reached through a **directory symlink**. Its proposed fix would have `rm`'d files through the symlink, i.e. **deleted canonical**. id-53 verified by lifting `check-foreign-staging.sh`'s real matcher and running six cases both directions (6/6). The two marker-corpse entries merged — same defect, filed twice, which would have produced two partial fixes each looking complete.
+
+### Decisions Made
+
+- **Split the bundle on the plan-time RECONSIDER, rather than force it through.** `/risk-check` returned RECONSIDER on the three-part bundle. Adopted its redesign: ship the bookkeeping and the allocator; hold the heartbeat. Two of the five findings (R-3 path shape, R-4 namespace scope) were closed first — **R-4 resolved in the design's favour**, since each repo owns its own `session-notes.md`, so `S{N}` is per-repo by design and the common dir's scope matches the namespace's scope exactly.
+- **Did NOT ship the mtime-liveness heartbeat.** R-1 stands: an undefined threshold creates a **false negative** — a live-but-idle session read as dead, letting another session silently overwrite its uncommitted work. That is the data-loss mode the guard exists to prevent, i.e. *worse than the noise it replaces*. R-2 (four consumers, not two) and R-5 (unversioned user-level files, no backup) also unresolved.
+- **Shipped the allocator with a known one-sided gap, on operator instruction.** The `ai-resources-research-workflow` worktree runs a real (non-symlink) `prime.md` 10 commits behind main, so it keeps allocating blind. Operator was offered rebase / close / ship-anyway / park, and chose **ship anyway with the gap logged loudly**. Recorded in `docs/session-marker.md` § Known gap and `improvement-log.md`. *(Routine-adjacent but load-bearing: it bounds what the fix actually guarantees.)*
+- **Did not act on an ambiguous operator `1`.** Mid-session the operator typed a bare `1` with no open numbered list. It could have meant "rebase the worktree" or "do M-1". Asked rather than guessed; the operator said `continue`, so the prior explicit answer stood and the worktree was left untouched. **Not touching another session's checkout on an ambiguous token was the point.**
+
+### Risky actions
+
+**One, and the gate caught it — not me.** The first allocator build passed my own harness **7/7** and would have shipped a **hard crash into 25 checkouts**. The claim scan used a shell glob; the Bash tool's real shell is **zsh**, where an *unmatched* glob raises `NOMATCH` — the command errors and the loop body never runs. That is the state on the **first `/prime` of every day, in every repo**. Under bash the pattern survives as a literal and is skipped harmlessly, so **my bash-only harness passed a block the real shell crashes on.** Caught by the **end-time `/risk-check`**. Fixed (`find` instead of glob), re-verified 12/12 with every run under zsh.
+
+Separately, a guard in my own edit script caught that `prime.md` has **four** `TODAY=` blocks, not three — the fourth is Step 1a's sibling-count block. A naive "replace all matches" would have corrupted it.
+
+Also note: the allocator's prune uses `rm -rf` **inside `.git`**. Explicitly tested that it cannot escape the claims directory (sentinel files elsewhere in `.git` survive).
+
+### Next Steps
+
+- **Rebase or close `session/2026-07-13-research-workflow`.** Closes the accepted gap and makes the mutex two-sided. Cheapest high-value item outstanding — and it is the same checkout that caused the S11 collision.
+- **M-1 → R-3, strict order.** Untouched this session. M-1 folds the corrected `/lean-repo` Q3 orphan lens into `/architecture-review`. Do NOT invert the order.
+- **The heartbeat fix** — only with R-1 (derive and defend a threshold; test a *live long-idle* session, not just a planted stale marker), R-2 (migrate all **four** liveness consumers in one edit), and R-5 (back up the unversioned `~/.claude/` files first) answered **up front**. Root cause is known; the design is now the hard part, not the diagnosis.
+- Carried: reconcile the `/lean-repo` report's RR-04 row to commit `5fce38c`.
+- Carried: `systems-building-principles.md` in `axcion-ai-system-owner` is still an empty `TBD`.
+- Repo hygiene, not mine: `axcion-ai-system-owner` carries a deleted `route-change.md`, a type-changed agent symlink, and ~70 untracked consultation outputs. Accumulating.
+
+### Open Questions
+
+- **Does the operator accept retiring `/lean-repo`?** Still open from S9, now three sessions running.
+- **Why is SessionEnd never delivered for the sessions that leave marker corpses?** The hook is registered, fires, and logs. The four corpse session IDs appear **nowhere** in its log. Leading hypothesis — closing a VS Code window is not a clean exit — is unconfirmed, and it decides the shape of the heartbeat fix.
+- **The one worth sitting with, and it has changed since S12.** S12 concluded that four false records in two days were all caught by *looking*, never by a gate — and that more scans were not the remedy. This session says something sharper: **three gates fired, and all three caught something real, all by opening the artifact.** The end-time gate caught a crash *my own passing test suite had blessed*. So the lesson is not "gates don't work" — it is that **verification only counts when it runs against the real thing, in the real environment.** A green harness in the wrong shell is indistinguishable from no harness at all.

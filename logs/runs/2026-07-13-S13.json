@@ -16,8 +16,22 @@
     "subagents": [],
     "tools_notable": []
   },
-  "files_changed": [],
-  "decisions_refs": [],
+  "files_changed": [
+    "logs/session-notes.md",
+    "logs/decisions.md",
+    "logs/improvement-log.md",
+    "logs/session-plan-2026-07-13-S13.md",
+    "logs/runs/2026-07-13-S13.json",
+    ".claude/commands/prime.md",
+    "docs/session-marker.md",
+    "logs/scripts/prime-allocator.test.sh",
+    "logs/scratchpads/2026-07-13-S13-marker-allocator-mutex-scratchpad.md",
+    "audits/risk-checks/2026-07-13-marker-lifecycle-bundle-common-dir-allocator-plus-mtime-liveness.md",
+    "audits/risk-checks/2026-07-13-endtime-prime-allocator-git-common-dir-atomic-claim.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-13-s13"
+  ],
   "validation": [],
   "evaluator_findings": {
     "sidecar_refs": [],
@@ -29,8 +43,8 @@
     "subagents": 0,
     "token_estimate": null
   },
-  "stop_reason": null,
-  "outcome": null,
+  "stop_reason": "deferred",
+  "outcome": "PARTIAL",
   "failure_class": null,
   "incidents_refs": []
 }
