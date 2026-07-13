@@ -166,3 +166,32 @@ A duplicate `S{N}` is not cosmetic: it breaks the `grep -Fxq "## {date} — Sess
 **Preserve the fail-safe invariant.** Source (d) must be added *inside* the scan loop, after `HIGH` is seeded from the marker file — never before. `HIGH` only ever *rises*, so a failure in (d) degrades to old behaviour and can never reset to 0 and allocate `S1` over an existing `S5`. Any edit that scans first and seeds second reintroduces a destructive regression.
 
 **Decided by:** Claude (S10), surfaced to the operator at wrap. Proposed fix logged to `improvement-log.md`; not implemented this session.
+
+## 2026-07-13 (S11) — Thread 1's acceptance test was replaced because it could not fail; two audit premises struck as false
+
+**Context.** Mission `research-workflow-deploy-fitness`, thread 1: two canonical skills (`claim-permission-gate`, `country-parity-checker`) declared and pre-flight-verified an input directory `analysis/{section}/cluster-memos-refined/` that nothing creates. The audit (C-1/F-1) and the mission file both called this an "unconditional runtime deadlock at the first research unit" and a demonstrated deployment blocker.
+
+**Decision 1 — the audit's "unconditional deadlock" is FALSE, and thread 1 is reclassified as a latent contract defect.**
+Evidence, on disk, not argued: the defect landed 2026-05-26 (`9871b95`). `projects/research-pe-regime-shift-advisory-gap` ran Stage 3 on 2026-06-03 and `projects/positioning-research` on 2026-06-10 — both *after* it — and **both completed**: real cluster memos, permission tables written, both `.done` sentinels present, and the bad directory existing nowhere. Neither project holds a local skill copy; both symlink the broken canonical.
+**Mechanism:** `/run-sufficiency` passes the memo directory to each sub-agent at dispatch (`run-sufficiency.md:44,55`). The sub-agent uses the directory it is handed; the path declared in the skill was inert prose. The deadlock is real **only** on the declared-contract route — a skill dispatched standalone, or any consumer honouring its stated inputs — which S11 confirmed empirically (both skills exited at pre-flight when dispatched without the directory).
+
+**Decision 2 — the mission's "not deployed anywhere / blast radius zero" premise is FALSE.**
+I asserted it myself in the `/risk-check` brief without checking; the reviewer disproved it. Two live projects symlink these canonical skills into `ai-resources/skills/` and have completed Stage 3. Every canonical edit in this mission goes live in both on merge to `main`. Third instance of the logged "declare a repo fact from recall" pattern (S4, S6, now S11) — caught by a gate all three times, never by me.
+
+**Decision 3 — thread 1's frozen acceptance test was REPLACED (operator-authorized).**
+The frozen test — "in a scratch project, `/run-cluster` then `/run-sufficiency` completes Phase A and Phase C pre-flights and produces permission and parity tables" — **already passed against the broken skills**, twice, in production, for exactly the reason in Decision 1. It would have returned green before and after the fix. Closing thread 1 on it would have been the "verified by a test that could never fail" outcome the mission's own non-negotiables forbid.
+**Replacement:** dispatch each skill *standalone*, with the memo directory NOT passed, against a fixture holding both memo variants per cluster. This exercises the declared contract — the thing that was actually broken.
+**Result:** pre-fix both `EXITED-AT-PREFLIGHT`; post-fix both `PROCEEDED` (Phase A → 2 permission tables + sentinel; Phase C → parity table + sentinel), both reading only `*-memo-refined.md`. Same test, opposite outcomes.
+
+**Decision 4 — the fix is NOT a bare path swap; a refined-only filter was added.**
+`run-cluster.md:36` writes BOTH `{section}-cluster-NN-memo.md` and `-memo-refined.md` into the same directory, while both skills' input tables promise "one memo per cluster" and need the refined one (it carries the claim IDs). A bare repoint would have handed them two files per cluster, one unrefined. The audit's "2 files, ~4 lines" remedy under-specified the fix. The filter adopts the existing variant-suffix rule (`file-conventions.md` Rule 2) and the existing precedent (`review-chapter.md:26`) — no new mechanism, per "smallest general fix wins".
+
+**Decision 5 — the declared path + pre-flight were KEPT, not deleted.**
+*Alternative rejected:* drop the declared input path so the skills consume only the directory `/run-sufficiency` passes at dispatch, collapsing the two-source-of-truth. Rejected because it deletes a *correct* guard — the "run `/run-cluster` first" pre-flight is right behaviour that was merely aimed at a directory that never existed, and it is the only thing protecting a standalone dispatch. The duplication remains but is now explicit and lockstep-bound via a new "Input-path contract (load-bearing)" cross-reference in both skills, rather than silently contradictory. A later thread may collapse it — but not by removing the guard.
+
+**The generalizable lesson, written into the mission file and binding on every remaining thread.**
+The audit reasons from what the files *say*. These "skills" are instructions an agent *reads*, and what the runtime *does* with them can differ — which is precisely how a "demonstrated blocker" turned out never to have blocked anything. **Thread 2 carries the same label from the same reasoning and is now UNVERIFIED, not confirmed.** If it too fails to reproduce, the mission has zero demonstrated blockers and the deployment gate itself should be re-examined. Verify remaining threads by execution, not by reading.
+
+**Corollary, proven this session:** running the skills for real surfaced four latent defects no file-level audit had found — including a genuine hole in the class ladder (a claim with 2 sources in 1 class matches *no* permission class), which is a live correctness gap in the two deployed projects. Routed to threads 5 and 8; not fixed here (scope discipline is this mission's stated primary failure mode).
+
+**Decided by:** Claude (S11), with the two false premises surfaced to the operator before any edit; operator authorized the acceptance-test replacement and the read-only live-project verification.

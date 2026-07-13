@@ -494,3 +494,36 @@ Implement the research-workflow fix plan (mission `research-workflow-deploy-fitn
 Two design decisions resolved pre-edit from the context pack's missing-context items, both adopting existing in-repo precedent rather than inventing a mechanism:
 1. **Refined-vs-unrefined filter.** `run-cluster.md:36` writes BOTH `-memo.md` and `-memo-refined.md` into the same directory, so a bare path swap points both skills at two files per cluster. The skills will address the `-refined` variant by name, per the variant-suffix rule at `file-conventions.md:19` and the precedent at `review-chapter.md:26`. The audit's "~4 lines" remedy under-specified this.
 2. **Declared path vs. passed argument.** `run-sufficiency.md:44,55` already passes the memo directory at dispatch while both skills hardcode and pre-flight-verify a declared path. Resolution: align the declaration to the real path and KEEP the pre-flight. Rejected: dropping the declared path so the skills consume only the passed argument — that would delete the pre-flight guard, which is correct behaviour ("run `/run-cluster` first") merely aimed at a directory that never existed.
+
+### Summary
+
+Fixed and closed **mission thread 1** (Stage-3 cluster-memo path contract) — committed `f924921`, skill-validation hook passed. The fix itself was four lines plus a filter; the session's real output was discovering that **two of the mission's own load-bearing premises are false**, and that thread 1's frozen acceptance test could not fail. Both were found by refusing to take a claim on trust — the `/risk-check` refused mine, and I then refused the audit's.
+
+### Decisions Made
+
+**The fix (thread 1):**
+- Repointed 4 defect lines in `claim-permission-gate/SKILL.md` (:49, :151) and `country-parity-checker/SKILL.md` (:39, :130) from the non-existent `analysis/{section}/cluster-memos-refined/` to `analysis/cluster-memos/{section}/` — the path `run-cluster.md:36` actually writes.
+- **Added a refined-only filter, which was NOT in the plan or the audit.** `run-cluster` writes BOTH `-memo.md` and `-memo-refined.md` into that one directory, so a bare path swap would have handed both skills two files per cluster — one without claim IDs — while their input tables promise "one memo per cluster". The audit's "~4 lines" remedy under-specified the fix. Filter adopts the existing variant-suffix rule (`file-conventions.md` Rule 2) and precedent (`review-chapter.md:26`); no new mechanism.
+- **Kept the declared path + pre-flight** rather than deleting them in favour of the directory `/run-sufficiency` already passes at dispatch. Rejected deletion: it would remove a correct guard, and that guard is exactly what protects a standalone dispatch. The two-source-of-truth remains, but is now explicit and lockstep-bound (a new "Input-path contract" cross-reference in both skills) instead of silently contradictory.
+- Sentinel paths `analysis/{section}/` deliberately untouched — a find-replace there would have silently broken Pass-3 re-entry.
+
+**Corrections to the mission's own record (operator-authorized; the contract is otherwise frozen):**
+- **Reclassified thread 1** from "demonstrated deployment blocker" to *latent contract defect*. It never blocked the live route.
+- **Replaced thread 1's acceptance test.** The frozen one ("run the two commands, check they complete") already passed against the broken skills — twice, in production — so it was green before and after the fix and proved nothing. Replacement dispatches each skill standalone with no directory passed, exercising the declared contract that was actually broken.
+- **Flagged thread 2's blocker status as UNVERIFIED**, not false. It was classified by the same audit reasoning that got thread 1 wrong. Must be established by execution before being treated as a gate.
+
+### Risky actions
+
+None. The one near-miss was mine and was caught by a gate: I asserted "not deployed anywhere / blast radius zero" in the `/risk-check` brief without checking, and the reviewer disproved it. Two live projects symlink these canonical skills and have completed Stage 3. Had the claim gone unchallenged, a canonical edit would have shipped into two active projects under a false zero-blast-radius assumption. This is the third instance of the logged "declare a repo fact from recall instead of a one-token check" pattern (2026-07-13 S4, S6) — the harness caught it again, not me. No project file was touched; the corrected pre-flight was dry-run read-only against both projects' real data and passes in each.
+
+### Next Steps
+
+- **Thread 2 (deployment placeholder handling) — but verify its blocker status by EXECUTION first.** Do not inherit the "demonstrated blocker" label. Establish what `/deploy-workflow` actually does with placeholders against a scratch target before treating any of it as a gate.
+- Alternatively **thread 3** (deploy hygiene bundle): small, self-contained, and its premise does not rest on the audit's runtime claims.
+- **Apply the S11 method rule to every remaining thread:** the audit reasons from what the files *say*; these skills are instructions an agent *reads*, and the runtime can do otherwise. Verify by running, not by reading.
+
+### Open Questions
+
+- **`/mission` still has no `update` verb** (logged in `improvement-log.md`, S10). S11 again edited the mission file directly — this time under explicit operator authorization for the acceptance-test change, so it is sanctioned, but the structural gap is now two sessions old and every fix session ahead will hit it.
+- **Thread 2's true severity is unknown.** If it also turns out not to be a blocker, the mission has *zero* demonstrated deployment blockers and the deployment gate should be re-examined — possibly the pilot can deploy sooner than the 8-thread plan assumes.
+- **Four latent defects were found by execution and routed** (threads 5 and 8, plus deferred cleanups). The class-ladder hole — a claim with 2 sources in 1 class matches no permission class at all — means some real claims are currently unclassifiable. That is a live correctness gap in the two deployed projects, not just a template issue.
