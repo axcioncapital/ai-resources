@@ -566,3 +566,14 @@ Secondary, contained: the `check-foreign-staging.sh` tripwire **blocked the firs
 ### Open Questions
 
 - **Should `wrap-session` stay `"local"` in `research-workflow`'s `shared-manifest.json`?** It is the root cause of the forked-wrap class. Making it `"shared"` would put every template-deployed project on canonical — but forked wraps may exist deliberately (a research project's wrap has different stages). Not decided; the reader fallback makes it non-urgent.
+
+## 2026-07-13 — Session S4
+
+**Mandate:** Run `/new-worktree-session lean-repo` for the first time to create an isolated git worktree for the upcoming `/lean-repo` assessment, and verify the command works end-to-end in the real VS Code environment — done when: `git worktree list` shows the new worktree on its own branch, a new VS Code window is open on that directory, and any defect in the command is written to a log
+- Out of scope: running `/lean-repo` itself (that is a separate session inside the new worktree); worktree teardown
+- Files in scope: ~/.claude/hooks/cleanup-session-marker.sh (new, outside git); ~/.claude/settings.json (SessionEnd registration, outside git; backup at ~/.claude/settings.json.bak-2026-07-13); docs/session-marker.md; logs/friction-log.md; logs/improvement-log.md; audits/risk-checks/2026-07-13-user-level-sessionend-hook-marker-cleanup.md; logs/session-notes.md; logs/session-plan-2026-07-13-S4.md; logs/runs/2026-07-13-S4.json; logs/.session-marker-* (ghost-marker cleanup)
+- Stop if: `git worktree add` errors — surface the exact stderr and stop, do not retry blindly (the command's own Step 2 rule)
+
+**Mandate deviation — operator-directed, recorded plainly.** The session opened as the RR-04 worktree pilot. During `/prime` I surfaced a defect in the concurrent-session liveness oracle; the operator replied **"fix it"**, which redirected the session. **The worktree pilot did NOT run.** `/new-worktree-session` has still never been executed and **RR-04 remains open** — do not let this session's note read as if it closed. The pilot's one finding stands and is carried forward: the command is `disable-model-invocation: true`, so only the operator can invoke it (type `/new-worktree-session lean-repo` on its own line). The `Files in scope` bullet above was rewritten from `(inferred)` to the truth once the real work was known.
+
+RR-04 worktree pilot (redirected): the pilot's `/prime` surfaced a false "concurrent session is live" warning; on operator direction the session fixed the underlying liveness-oracle defect instead of running the pilot.
