@@ -49,3 +49,35 @@
 **Also decided (routine).** No mission contract was created for the RR programme. The operator initially asked for one; the report explicitly retires the mission contract as part of the W3.2 machinery. The conflict was surfaced, and the operator's direction was to execute the report as written instead. The superseded `w32-migration-execution` mission was archived to `logs/missions/archive/`.
 
 **Decided by:** Operator (risk-check mandate), on a caught omission during RR-03 execution.
+
+## 2026-07-13 (S5) — Adopt the inflow design rule as written doctrine, and build no checker for it
+
+**Context.** RR-05 required two things: run `/lean-repo` once, and adopt an *inflow rule* that brakes command growth. The repo has 89 commands and 42 agents, **+5 commands in the 10 days** since the last token-audit and **0 ever removed**. The `/lean-repo` pass found six commands with zero references and zero logged invocations (924 lines), and — the sharpest datum — that **two** repo-level design diagnostics (`/lean-repo`, `/architecture-review`) have **never run**, because neither has an invocation path.
+
+**Decision.** The rule is adopted in `docs/ai-resource-creation.md` under rule #7, as a **sharpening of question 5** ("does an existing component already do this?"), not as a new rule:
+
+> A proposed new command must state which existing command it replaces, or why a separate command is genuinely necessary — and must name its invocation path (the registered pipeline, cadence, or hook that will call it). A command whose only trigger is the operator remembering it exists is not shipped; it is wired or deferred.
+
+**Explicitly: no checker was built.** RR-05 says so outright ("a written design principle — not an automated blocking mechanism. Build no checker for it").
+
+**Rationale for the no-checker half — it is not laziness, it is the rule applying to itself.** A checker would be a new always-on control, and would therefore have to clear the very complexity budget it exists to enforce. It would fail prong (a) on sight. The `/lean-repo` pass supplies the empirical backing: the repo's problem is *not* that it lacks detection machinery — it has hooks, scanners, and logs firing continuously — but that **detection outruns closure** (36 `logged (pending)` vs **2** `applied` in the improvement log, ~5% closure). Adding one more automated detector to a system already drowning in un-actioned detections would worsen the exact pathology being treated. A written principle that a human applies at design time costs zero tokens per session and has no closure debt.
+
+**Alternatives considered.** (a) *Build a pre-commit checker that rejects an unwired new command* — rejected on the reasoning above, and RR-05 pre-emptively forbade it. (b) *Put the rule in workspace `CLAUDE.md`* — rejected: `CLAUDE.md` is already 242 lines against a 170-line target and is read on every turn of every session; a rule that fires only at resource-creation time has no business in always-loaded context (this is finding D-1 of the same pass, applied to itself). `docs/ai-resource-creation.md` is read exactly when it is needed.
+
+**A conflict was surfaced rather than silently resolved.** `/lean-repo`'s guardrails state it *never mutates the repo*; RR-05's completion condition requires the rule be *adopted in writing*. Both are operator-authored. Rather than quietly slip a doc edit into a plan-only pass, the conflict was named and the edit made as a separate, explicitly-approved act after the `/lean-repo` run had closed.
+
+**Decided by:** Operator, on the recommendation of the RR-05 `/lean-repo` assessment.
+
+## 2026-07-13 (S5) — `/risk-check` is untiered, not unworthy: tier it, do not weaken it
+
+**Context.** The `/lean-repo` pass extracted the verdict from **all 336 reports** in `audits/risk-checks/`: **115 GO + 196 PROCEED-WITH-CAUTION = 93% proceed**, against **24 RECONSIDER (7%)**. The repo's own fading-gate rule (`logs/gate-calibration.md`) sets the retirement/recalibration trigger at **≥90% confirm-rate**. `/risk-check` — the highest-volume gate in the repository, firing ~4× per active day for three months — has therefore been **over the repo's own threshold for months and has never once been calibrated.** `gate-calibration.md` records exactly **two** gates ever reviewed.
+
+**The counter-evidence is decisive and cuts the other way.** The same gate returns **8/14 RECONSIDER during genuine architectural execution** (authoritative report, line 39) — versus the 7% corpus baseline — and on 2026-07-13 it caught a real defect that would have silently zeroed the file-record signal across 21+14 symlinked project copies.
+
+**Decision (recorded as a finding, not yet executed).** The correct reading is **proportionality, not worth**. A gate that returns 57% RECONSIDER on real architecture and ~0% on trivia is not a failing gate — it is an **untiered** one, firing at full weight on six change classes of wildly different blast radius. The plan's MC-1 proposes: full gate for the four blast-radius classes (hook edits · permission changes · cross-cutting CLAUDE.md · shared-state automation); a **lightweight inline check** for the two additive, contained classes (new command/skill, new symlink), **escalating to the full gate on any non-trivial answer**.
+
+**Rationale for routing it through the meta-control rather than by fiat.** The change is to be made as a **recorded calibration decision** in `logs/gate-calibration.md` with a `Review-cycle:` date, via `/friday-checkup`'s existing fading-gate detection — not as a unilateral doc edit. This is the meta-control doing the exact job it was built for, on the one gate it has never been pointed at. A falsification trigger is set with it: **if the RECONSIDER rate on the remaining gated classes does not rise materially above 7% within 30 days, the tiering did not find the signal and must be reverted.**
+
+**Explicitly NOT decided:** weakening or retiring `/risk-check`. The authoritative report's line 39 is binding — *"The gates are not the villain, and this is not a licence to skip them."* The "No self-waivers" clause in `docs/audit-discipline.md` stays untouched: a session may still never skip a listed class on its own materiality judgment. This entry exists partly to prevent a future reader from citing the 93% figure as licence to skip gates. **It is not.**
+
+**Decided by:** `/lean-repo` assessment (RR-05); execution deferred to a `/risk-check`-gated session.
