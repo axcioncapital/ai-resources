@@ -809,3 +809,72 @@ None. Structural classes touched (new command/agent, hook edit, cross-cutting do
 
 ### Open Questions
 None.
+## 2026-07-05 — Lean /blindspot-scan + /risk-check gates (retier opus→sonnet + de-escalate)
+
+### Summary
+Weekly usage telemetry showed `/blindspot-scan` (~10%) and `/risk-check` (~10%) together consuming ~20% of usage. Cut the cost (Tier 1) by (a) retiering the two analytical passes and the risk-check orchestrator opus→sonnet, (b) converting `/risk-check`'s auto-fired `/consult` second opinion into an operator-invoked offer, and (c) tightening the Blind-Spot Scan Gate trigger to `/risk-check` change classes only. Estimated ~20% → ~5–7% for these two gates. Full gate consolidation (Tier 2) deferred to a dedicated session.
+
+### Files Created
+- `audits/risk-checks/2026-07-05-lean-the-two-most-used-advisory-gates-executed-change-set.md` — the end-time risk-check report (PROCEED-WITH-CAUTION).
+- `logs/scratchpads/2026-07-05-12-50-scratchpad.md` — continuity scratchpad.
+
+### Files Modified
+- `.claude/commands/blindspot-scan.md` — frontmatter opus→sonnet.
+- `.claude/agents/risk-check-reviewer.md` — frontmatter opus→sonnet.
+- `.claude/commands/risk-check.md` — frontmatter opus→sonnet; Step 4a auto-consult → operator-invoked offer; item 12a fallback re-asserts sonnet; Step 5 display line updated.
+- `.claude/commands/consult.md` — removed risk-check from auto-invoke guard list + fixed worked example (QC-caught staleness).
+- `docs/agent-tier-table.md` — risk-check-reviewer row → sonnet with OP-11 exception note.
+- `logs/decisions.md` — 2026-07-05 OP-11 decision entry.
+- `CLAUDE.md` (workspace root, separate repo) — Blind-Spot Scan Gate trigger tightened to `/risk-check` classes only; "or ≥3 files" branch dropped.
+
+### Decisions Made
+- Tier 1 retier + de-escalate, logged in full to `logs/decisions.md` (2026-07-05, OP-11 exception). Operator-directed; Sonnet + some-safety-trade authorized.
+- QC fix (separate from operator decisions): stale `consult.md` references to risk-check's old auto-invoke, fixed in the same commit.
+
+### Risky actions
+None irreversible. Deliberate, operator-authorized safety trade: the two judgment gates now run on Sonnet (lower depth) — Opus depth preserved on demand via the new `/consult` offer on non-GO verdicts. All edits are config-level and git-revertible. Recorded loudly as an OP-11 exception in decisions.md + agent-tier-table.
+
+### Next Steps
+- Confirm the push at wrap: 2 build commits (`f3dd9bb` ai-resources, `ea895d6` workspace) + this wrap commit, across 2 repos.
+- Tier 2 (full gate consolidation) — schedule a dedicated session; scope recorded in decisions.md 2026-07-05.
+- Watch reviewer sharpness on Sonnet over the next week; use the `/consult` offer line if a verdict looks shallow on a high-stakes change.
+
+### Open Questions
+None.
+
+## 2026-07-09 — Session S1
+
+**Mandate:** Execute W3.2 roadmap item R1 (spine-schemas kernel doc) for the w32-migration-execution mission — done when: the R1 packet is SO-approved and `ai-resources/docs/spine-schemas.md` is written and inline-QC'd against it.
+- Out of scope: F1, R3, PJ (other mission open threads — not started this session)
+- Files in scope: `ai-resources/docs/spine-schemas.md`, `axcion-ai-system-redesign/output/implementation-prep/packets/R1-spine-schemas.md`, `axcion-ai-system-redesign/output/implementation-prep/remediation-register.md`, `ai-resources/logs/missions/w32-migration-execution.md` (pre-existing uncommitted mission setup, operator-confirmed safe to include)
+- Stop if: (none stated)
+- Mission: w32-migration-execution
+
+### Summary
+Started by picking up the mission's R1 open thread ("write the R1 doc"). Before writing, checked the mission's own non-negotiable ("no roadmap item without a gate-passed packet") against `remediation-register.md` — R1 had **no packet** (status: not-started, decision-owner: SO), unlike R3/RT1/PJ. Writing the doc directly would have violated the mission's own gate on day one.
+
+Ran a System Owner shaping consult, which declined to author the packet itself (write-scope boundary + author≠reviewer conflict — SO is also the required pre-execution reviewer) but delivered a fully-grounded packet skeleton with citation-needed markers for redesign-corpus-specific values. Read the redesign target-architecture corpus (`W2.3-reliability-safety-eval-spine.md`, `W3.2-target-architecture.md`) directly, filled every citation-needed item from source (nothing invented), and authored `packets/R1-spine-schemas.md`. A second, independent System Owner review pass then verified the drafted packet field-by-field against source and against R3's interoperation requirements — verdict **SO-APPROVED**, with 2 closure items (not a re-draft). Applied both closure items, then wrote the actual deliverable (`ai-resources/docs/spine-schemas.md`) from the approved packet, and ran a light inline QC pass against the packet's own 5-item verification checklist — all 5 pass.
+
+### Files Created
+- `axcion-ai-system-redesign/output/implementation-prep/packets/R1-spine-schemas.md` — the R1 implementation packet (SO-approved).
+- `ai-resources/docs/spine-schemas.md` — the R1 deliverable: run-manifest schema, defect-entry schema, escalation-packet schema, verification-level table, 11-value failure taxonomy, caller-side 4-check convention, O6 profile.
+- `projects/axcion-ai-system-owner/output/consultations/consult-2026-07-09-r1-spine-schemas-packet.md` — SO shaping consult.
+- `projects/axcion-ai-system-owner/output/consultations/consult-2026-07-09-r1-packet-review.md` — independent SO review consult.
+
+### Files Modified
+- `axcion-ai-system-redesign/output/implementation-prep/remediation-register.md` — R1 row: `not-started` → `verified`, packet link added.
+
+### Decisions Made
+- Did not author the R1 packet inline without SO grounding — routed through a shaping consult first (mission's own non-negotiable: SO-decision-owned items get SO input before execution).
+- Resolved one genuine source ambiguity (whether the O6 profile requires editing the protected `qc-independence.md`) at the independent SO-review gate rather than guessing: publish in the new doc, cross-reference, do not edit.
+- Used a light inline `/qc-pass` rather than a third heavy subagent dispatch, per the independent review's own gate-stacking caution and workspace Subagent Proportionality.
+
+### Risky actions
+None irreversible. New doc only (`ai-resources/docs/spine-schemas.md`) — not a `/risk-check` change class per the SO consult (confirmed against `risk-topology.md` §3). No hooks, permissions, or CLAUDE.md touched.
+
+### Next Steps
+- Mission's remaining open threads: F1 (federation-schemas kernel doc — same packet-gate pattern likely applies, no packet exists yet), R3 (blocked on R1 — now unblocked), PJ (blocked on R3 + F1).
+- `/mission` has no action to check off a single open-thread item short of closing the whole mission (only create/list/read/close exist) — the mission file's `## Open threads` checkbox for R1 is still unchecked even though R1 is done. Minor tooling gap, flagged for a future `/mission` enhancement; did not hand-edit the frozen file to work around it.
+
+### Open Questions
+None.

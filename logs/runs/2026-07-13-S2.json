@@ -21,9 +21,26 @@
     "logs/friction-log.md",
     "logs/session-plan-2026-07-13-S2.md",
     "logs/runs/2026-07-13-S2.json",
-    "projects/project-planning/.gitignore"
+    "projects/project-planning/.gitignore",
+    "ai-resources/plans/repo-redesign-authoritative-implementation-report.md",
+    "ai-resources/logs/scratchpads/2026-07-13-S2-repo-redesign-scratchpad.md",
+    "ai-resources/logs/decisions.md",
+    "ai-resources/logs/session-notes.md",
+    "ai-resources/logs/session-notes-archive-2026-07.md",
+    "ai-resources/logs/scripts/check-decision-refs.sh",
+    "ai-resources/logs/missions/w32-migration-execution.md",
+    "ai-resources/skills/transaction-table-builder/SKILL.md",
+    "ai-resources/skills/chapter-revision-applier/SKILL.md",
+    "ai-resources/skills/cluster-memo-refiner/SKILL.md",
+    "ai-resources/skills/ai-prose-decontamination/SKILL.md",
+    "ai-resources/skills/citation-converter/references/instruction-a.md",
+    "projects/axcion-ai-system-redesign/window-outputs/W3.2-migration-roadmap.md",
+    "projects/axcion-ai-system-redesign/output/implementation-prep/remediation-register.md"
   ],
-  "decisions_refs": [],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-13-s2-retire-the-w3-2-migration-roadmap-as-plan-of",
+    "logs/decisions.md#2026-07-13-s2-operator-halted-implementation-mid-execution"
+  ],
   "validation": [],
   "evaluator_findings": {
     "sidecar_refs": [],
@@ -35,9 +52,9 @@
     "subagents": 0,
     "token_estimate": null
   },
-  "stop_reason": "blocked",
-  "outcome": "ABANDONED",
+  "stop_reason": "deferred",
+  "outcome": "PARTIAL",
   "failure_class": "mandate-drift",
   "incidents_refs": [],
-  "incident_waived": "Mandate invalidated mid-session by a concurrent session that retired the W3.2 programme; this session detected the collision and deferred rather than committing over it. Full incident record (collision + this session's own validation error) written to logs/friction-log.md 2026-07-13 (S2) — no separate defect-log entry, per the operating rule adopted today (logs/decisions.md 2026-07-13 S2): build no new checker, register or review process."
+  "incident_waived": "Process failure, fully recorded rather than silently dropped: executed an implementation in the same turn that produced the plan, leaving no operator review window. Recorded in decisions.md 2026-07-13 (S2) with the corrective rule, in today's session note (Risky actions), and in the S2 scratchpad. A defect-log entry would duplicate, not add — defect-log tracks output-quality defects, and this was a process/mandate failure."
 }
