@@ -2,117 +2,6 @@
 
 > Archive: [session-notes-archive-2026-07.md](session-notes-archive-2026-07.md)
 
-## 2026-07-12 — Session S5
-
-**Mandate:** Wire both paired copies of `wrap-session.md` to call `run-manifest.sh update --decision-ref` at the manifest-close step so `decisions_refs` is populated whenever a session records decisions — done when: the `--decision-ref` call is present in both `wrap-session.md` copies, this session's wrap writes a non-empty `decisions_refs` to `logs/runs/2026-07-12-S5.json`, and the improvement-log entry, mission thread, and R3 register rows record the wiring.
-- Out of scope: R3 Pass 2 itself (the wrap-note cut) — stays BLOCKED; it reopens only after 2+ ordinary wraps prove payload, not on this one self-verified wrap; user-layer Phase 0 items (W1.4-H1/2/3, PSR); Phase 1+ roadmap items; the parked concurrency cluster.
-- Files in scope: .claude/commands/wrap-session.md; ../.claude/commands/wrap-session.md; logs/improvement-log.md; logs/missions/w32-migration-execution.md; logs/decisions.md; logs/session-notes.md; logs/runs/2026-07-12-S5.json; logs/session-plan-2026-07-12-S5.md; ../projects/axcion-ai-system-redesign/output/implementation-prep/remediation-register.md; ../projects/axcion-ai-system-redesign/output/implementation-prep/packets/R3-run-manifest.md (inferred)
-- Stop if: /risk-check returns RECONSIDER or NO-GO on the wrap-session edit (structural class — Critical component, paired copies) — redesign, do not override.
-- Allowed inputs: ../projects/axcion-ai-system-redesign/output/implementation-prep/packets/R3-run-manifest.md; docs/spine-schemas.md; logs/scripts/run-manifest.sh; logs/runs/*.json; ../projects/axcion-ai-system-redesign/output/implementation-prep/remediation-register.md; logs/decisions.md
-- Required outputs: the --decision-ref call live in both wrap-session.md copies; a non-empty decisions_refs in this session's run manifest; updated improvement-log / mission / register rows
-- Mission: w32-migration-execution
-
-Continue the W3.2 repo-redesign implementation — wire `wrap-session` (both paired copies) to write `decisions_refs` into the run-manifest at close, the blocking prerequisite for R3 Pass 2.
-
-### Summary
-Wired `decisions_refs` so it actually populates at wrap — the blocking prerequisite for W3.2 R3 Pass 2. The field was dead on arrival: `run-manifest.sh` supported `--decision-ref`, but `wrap-session` never called it, so every ordinary session closed with `[]` (S2 made 5 decisions, S3 made 2 — both empty). This session's manifest is the first ordinary one to carry a real decision record: 2 refs, both resolving to real headers. Three gates fired and **each caught a real defect in the step before it** — the plan-time `/risk-check` killed my ref format on evidence, an independent `/qc-pass` killed its replacement, and the end-time `/risk-check` (RECONSIDER — this mandate's `stop_if`) found two defects in the fix itself. Redesigned rather than overriding; re-gate returned PROCEED-WITH-CAUTION. **This closes ONE of TWO Pass-2 prerequisites — Pass 2 remains BLOCKED.**
-
-### Files Created
-- `logs/scripts/decision_ref_slug.py` — THE single definition of the anchor-slug algorithm; self-testing (14 assertions incl. a collision proof and a negative control)
-- `logs/scripts/check-decision-refs.sh` — falsifiable validator: proves a manifest's refs resolve to real `decisions.md` headers (live log + all monthly archives); wired advisory/report-only at wrap
-- `logs/session-plan-2026-07-12-S5.md`
-- `logs/runs/2026-07-12-S5.json` — this session's run manifest (first ordinary session with a non-empty `decisions_refs`)
-- `audits/risk-checks/2026-07-12-wire-decision-ref-into-wrap-session-manifest-close.md` — plan-time, PROCEED-WITH-CAUTION
-- `audits/risk-checks/2026-07-12-endtime-decision-ref-wiring-executed-set.md` — end-time, RECONSIDER
-- `audits/risk-checks/2026-07-13-regate-decision-ref-wiring-post-reconsider.md` — re-gate, PROCEED-WITH-CAUTION
-- `logs/scratchpads/2026-07-13-00-45-scratchpad.md`
-- `logs/session-notes-archive-2026-07.md` — auto-archived this wrap (4 entries)
-
-### Files Modified
-- `.claude/commands/wrap-session.md` (Step 12d) + `../.claude/commands/wrap-session.md` (workspace-root mirror, Step 4.7) — pass `--decision-ref-from-header` with the header copied verbatim; call the ref-checker at wrap (`|| true`, report-only)
-- `logs/scripts/run-manifest.sh` — new `--decision-ref-from-header` flag; symlink-safe self-location (`SCRIPT_DIR`)
-- `logs/scripts/run-manifest.test.sh` — 24 → 35 assertions
-- `docs/spine-schemas.md` § 1 — ref-format section now *documents the code* rather than defining a prose recipe; the `-2`/`-3` de-dup step deleted (it generated refs resolving to nothing)
-- `logs/decisions.md`, `logs/improvement-log.md`, `logs/missions/w32-migration-execution.md`
-- redesign repo: `output/implementation-prep/remediation-register.md`, `output/implementation-prep/packets/R3-run-manifest.md`
-
-### Decisions Made
-- **Ref format: slug the decision's header text, not `{date}-{marker}`.** Plan-time `/risk-check` proved the latter collides on two real `## 2026-07-12 (S4)` entries. Deviated from the reviewer's recommended sequence-suffix fix (`-1`/`-2`) — that yields a ref nobody can resolve without counting entries. Full rationale: `logs/decisions.md` 2026-07-12 (S5).
-- **Report as ONE of TWO prerequisites; Pass 2 stays BLOCKED.** Second prerequisite found this session and left untouched. `logs/decisions.md` 2026-07-12 (S5).
-- **QC-driven redesign (REVISE):** moved slug generation out of prose and into code. The evidence was already on disk — 3 of 3 hand-authored refs were orphans.
-- **Declined one QC finding** (the "265 headers unreproducible" claim) — verified false: 22 + 46 + 112 + 85 = 265 across 4 files. The reviewer had missed the three monthly archives.
-
-### Risky actions
-None causing loss. Worth naming: **(1)** My first ref format would have written a silently-ambiguous record into *every future manifest* — caught only because the plan-time gate tested it against real data rather than accepting the design. **(2)** My replacement asked a model to hand-derive a slug (counting to 60 chars) at every wrap, forever — a 3-of-3 failure rate was already sitting undetected on disk. **(3)** The end-time gate found my fix silently dropped refs when invoked through a symlink; dormant today (nothing symlinks the script yet), but the repo already symlinks shared scripts across projects. All three were caught by gates, not by me.
-
-### Next Steps
-- **R3 Pass 2 prerequisite P2 — the real blocker.** Wrap Step 5 skips `decisions.md` for "routine" decisions, so those live only in the `### Decisions Made` block Pass 2 deletes. Changing the decision-recording contract = its own `/risk-check`, its own session. **Do not ship Pass 2 until P2 is closed.**
-- **P1's evidence is thin.** S5 is one datapoint and it is the session that *built* the wiring — the same "cannot count as its own evidence" caveat that disqualified S1. Want the same payload result on 1–2 further *ordinary* wraps before Pass 2 reopens.
-- **`axcion-ai-system-redesign` has no git remote** — the entire W3.2 design record lives on this machine only. It reports "0 unpushed" because there is nowhere to push.
-- Session Value Audit worth-doing question (mission open thread) — still needs `/implementation-triage`.
-- Unrelated dirty files left untouched (NOT mine, do not sweep): workspace root `logs/innovation-registry.md`, `projects/axcion-ai-system-redesign/pipeline/project-plan.md`, `.../window-outputs/README.md`, `logs/maintenance-observations.md`; redesign repo `.codex/`, `AGENTS.md`, `output/fable5-*`, `output/fix-execution-workflow.md`.
-
-### Open Questions
-None blocking.
-
-## 2026-07-13 — Session S1
-
-**Mandate:** (1) Close R3 Pass 2 prerequisite P2 — decide and land the change that gives every decision the wrap note records a manifest-referenceable home, via a gate-passed packet, applied to both paired `wrap-session.md` copies; (2) run `/implementation-triage` on the Session Value Audit worth-doing question — done when: the P2 packet has passed `/risk-check` and the contract change is live in both wrap copies (or, on RECONSIDER/NO-GO, the redesign is recorded and P2 stays open with the reason logged), the mission + remediation-register rows are updated, and the Session Value Audit verdict is recorded in `logs/decisions.md` with its mission thread closed
-- Out of scope: R3 Pass 2 itself (the wrap-note cut) — stays BLOCKED regardless of P2's outcome, since P1's evidence is still one self-built datapoint; the paired-copy section-name divergence (`Files Created`/`Files Modified` vs `Files Changed`) beyond what the P2 fix must touch; the six-command Model Tier pinning retrofit; user-layer Phase 0 items
-- Files in scope: .claude/commands/wrap-session.md; ../.claude/commands/wrap-session.md; logs/missions/w32-migration-execution.md; logs/decisions.md; docs/spine-schemas.md; logs/session-notes.md; logs/runs/2026-07-13-S1.json; logs/session-plan-2026-07-13-S1.md; ../projects/axcion-ai-system-redesign/output/implementation-prep/remediation-register.md; ../projects/axcion-ai-system-redesign/output/implementation-prep/packets/R3-run-manifest.md; a new P2 packet under the same packets/ directory
-- Stop if: /risk-check returns RECONSIDER or NO-GO on the decision-recording contract change — redesign, do not override (mission non-negotiable: risk-check-class items pass the gate before execution, not retroactively)
-- Allowed inputs: output/context-packs/command-20260713-c4b1e/pack.md; docs/spine-schemas.md; ../projects/axcion-ai-system-redesign/output/implementation-prep/packets/R3-run-manifest.md; ../projects/axcion-ai-system-redesign/output/implementation-prep/remediation-register.md; logs/decisions.md; logs/missions/w32-migration-execution.md; .claude/commands/implementation-triage.md
-- Required outputs: a gate-passed P2 packet; the decision-recording contract change live in both wrap-session.md copies; updated mission thread + remediation-register rows; the Session Value Audit triage verdict recorded in logs/decisions.md
-- Context pack: output/context-packs/command-20260713-c4b1e/pack.md
-- Mission: w32-migration-execution
-
-Auto multi-item: Close R3 Pass 2 prerequisite P2 — change the decision-recording contract so every decision the wrap note carries reaches a manifest-referenceable home; Run /implementation-triage on the Session Value Audit worth-doing question.
-
-### Summary
-Closed **R3 Pass 2 prerequisite P2** — not by changing the decision-recording contract, but by **narrowing Pass 2** so it retains the `### Decisions Made` block and cuts only the two file-list blocks (canonical note 8 → 6; root mirror 7 → 6). P2 existed *only* because the cut deleted that block; retain it and the prerequisite dissolves. Also triaged the **Session Value Audit** worth-doing question (verdict: keep it, don't retire, don't de-gate — the real defect is that its signal has no variance). Three gates fired and **each caught a real defect in the step before it**, including one I caught in my own output an hour after committing it. **Pass 2's gate is now OPEN and ready to ship next session.**
-
-### Files Created
-- `projects/axcion-ai-system-redesign/output/implementation-prep/packets/P2-decision-recording-contract.md` — the design record: three options costed, Option C shipped, gate + QC results, method lesson
-- `audits/risk-checks/2026-07-13-p2-decision-recording-contract-narrow-pass2-option-c.md` — plan-time gate, PROCEED-WITH-CAUTION
-- `logs/session-plan-2026-07-13-S1.md`
-- `logs/runs/2026-07-13-S1.json` — this session's run manifest
-- `output/context-packs/command-20260713-c4b1e/pack.md` — context pack (`sufficient_to_implement: false`; it surfaced the paired-copy divergence and the missing packet)
-- `logs/scratchpads/2026-07-13-11-30-scratchpad.md`
-
-### Files Modified
-- `.claude/commands/wrap-session.md` (canonical) — deferred-Pass-2 comment rewritten (`### Decisions Made` no longer slated for deletion; target now 8 → 6); the block now *states* the routine-decision property rather than implying it. **Step 5 itself unchanged** — the contract was deliberately NOT touched.
-- `../.claude/commands/wrap-session.md` (workspace-root mirror) — Step 4 reconciled from *always-ask* to *append-by-default*; the `Write "None" if routine session` escape hatch removed; `PAIRED CONTRACT` guard comment added
-- `logs/missions/w32-migration-execution.md` — P2 closed; SVA thread closed; Pass 2 gate corrected to OPEN
-- `logs/decisions.md` — 3 entries; `logs/improvement-log.md` — SVA bounded fix + a verification correction on a concurrent session's entry
-- `projects/axcion-ai-system-redesign/output/implementation-prep/packets/R3-run-manifest.md` — Pass 2 section rewritten as ship-ready; every stale `8 → 5` / `11 → 5` target corrected or struck
-- `projects/axcion-ai-system-redesign/output/implementation-prep/remediation-register.md` — R3 row + updates
-
-### Decisions Made
-**Logged to `decisions.md` (analytical):**
-- **Close P2 by narrowing the cut, not by changing the contract.** Rejected (A) appending every routine decision to `decisions.md` — bloats the curated journal `/prime` reads via `tail -10`, degrading orientation on *every* session; and (B) a `decisions_inline` kernel field — no consumer would read it (DR-7, already dropped from this mission).
-- **Session Value Audit: keep it; do NOT retire, do NOT de-gate.** The real defect is that the signal has no variance (7 firings, all 8–9 / PASSED / Repeat) because it is opt-in — sample composition, not sample size.
-- **Correction: P1 does NOT block Pass 2.** Self-caught at end of session, after I had already written the opposite into three docs.
-
-**Routine (recorded here only):**
-- Reconciliation direction for the paired-copy divergence: **root adopts canonical's append-by-default** (canonical is the copy `decisions_refs` was built against, and root's always-ask was strictly lossier).
-- Wrote the P2 packet *before* running `/risk-check` rather than after — the packet is a zero-blast-radius design doc, and the mission's non-negotiable requires the gate to rule on an existing packet.
-- Did not implement the SVA follow-up fix this session — it touches `/friday-checkup`, a Critical component, and needs its own gate. Logged instead.
-
-### Risky actions
-**One near-miss, caught by QC, not by me.** My first P2 fix verified itself by asserting the `### Decisions Made` **heading** was present in both copies. It was — but the root mirror's block said *"Write 'None' if routine session,"* so retaining the heading there was **vacuous**: a routine session would write "None" AND skip the log, losing the decision from both surfaces anyway. **The fix would have shipped with a false "P2 CLOSED" claim and a Level-1 check that certified it as true.** A false closure is worse than no fix, because it stops anyone looking again. Fixed; the check now asserts the property and is proven falsifiable.
-
-Separately: a **concurrent `project-planning` session** committed to this repo mid-session (`e8b2449`, 10:04). No collision — its content was already in HEAD by the time I staged — but my `/prime` scan predated it, so I only found it by reading a log tail. Its P1 claim was verified rather than trusted: symptom real, **diagnosis falsified**; correction appended to its entry rather than overwriting it.
-
-### Next Steps
-- **Ship R3 Pass 2 — the gate is OPEN and this is now a one-session job.** The ship sequence is written into `packets/R3-run-manifest.md` § "🟢 Pass 2 — READY TO SHIP"; do not re-derive it. Cut `### Files Created` + `### Files Modified` → `files_changed` in **both** paired copies; **retain `### Decisions Made`**; repoint `session-feedback-collector`'s *file* signals only; `/risk-check`; verify; close R3.
-- **⚠ Check before landing:** a session with an **absent manifest** closes with an empty `files_changed` → thin file record. Bounded, but confirm the absent-manifest path; consider retaining the file lists when `files_changed` is empty.
-- **Then move on to other work** (operator's stated direction).
-- **P1 (`decisions_refs` failing on the mandated flag) is now an ordinary backlog bug, NOT a gate.** Next diagnostic: re-run the failing `close` from the `project-planning` cwd and capture stdout — the `ref DROPPED (advisory)` line is the discriminator. **Do NOT "fix" the tempfile path — it is not broken.**
-- SVA follow-up: one honesty line in `friday-checkup.md` Step 14.5 (N-of-M + self-selected sample). Logged in `improvement-log.md`; needs its own gate.
-
-### Open Questions
-None blocking. One worth raising if the cleanup drags: the wrap-note slimming has now consumed four sessions to trim two sections from a note, and its original justification has never been re-examined. If Pass 2 does not land cleanly next session, re-justify before continuing.
-
 ## 2026-07-13 — Session S2
 
 **Mandate:** Ship W3.2 R3 Pass 2 (the narrowed 2-section cut, both paired wrap-session.md copies), run the discriminator diagnostic on the P1 decisions_refs failure (diagnose and log only), and clear two leftovers (stale mission headline; swept project-planning scratchpad) — done when: Pass 2 is live in both paired copies with `### Decisions Made` retained and /risk-check passed and verification run; R3 is closed in the mission thread and remediation register; the P1 discriminator has been run from the project-planning cwd with full output captured and its verdict appended to logs/improvement-log.md; the stale mission headline is corrected and the project-planning scratchpad untracked
@@ -531,7 +420,7 @@ None. The one near-miss was mine and was caught by a gate: I asserted "not deplo
 ## 2026-07-13 — Session S13
 **Mandate:** Establish by execution what `/deploy-workflow` actually does with the research-workflow template's placeholders, then fix Steps 5–7 and Step 11's leftover-placeholder assertion so it fills only the immediate deploy-time placeholders (including `{{CONFIDENTIAL_IDENTIFIER_N}}`), leaves template-internal placeholders in the six `*.template.md` files and unused optional components byte-identical, and validates only what deployment must resolve — done when: thread 2's acceptance test has been EXECUTED against a scratch deployment and its result recorded, thread 2 is ticked in the mission file citing that result (or reclassified with evidence if execution shows it is not a blocker), and the work is committed (no push).
 - Out of scope: threads 3–8; the Sector Intelligence pilot's content and per-unit config; the seven "explicitly not to be built" shapes; widening the placeholder discovery regex (the audit's §4 D-3 remedy — reversed by its own §7 addendum and by the mission file, which governs)
-- Files in scope: .claude/commands/deploy-workflow.md, workflows/research-workflow/SETUP.md, logs/missions/research-workflow-deploy-fitness.md, logs/session-notes.md
+- Files in scope: .claude/commands/deploy-workflow.md, workflows/research-workflow/SETUP.md, logs/missions/research-workflow-deploy-fitness.md, logs/session-notes.md, logs/decisions.md, logs/innovation-registry.md, logs/runs/2026-07-13-S13.json, logs/session-notes-archive-2026-07.md (widened at wrap — the original declaration predated the wrap-time innovation-triage step and log writes; footprint genuinely was too narrow, corrected per the wrap-step-vs-hook-allowlist precedent logged 2026-07-13)
 - Stop if: `/risk-check` returns RECONSIDER or NO-GO on the deploy-workflow edit
 - Allowed inputs: workflows/research-workflow/ (the template, incl. its six reference/*.template.md files), workflows/research-workflow/reference/file-conventions.md, audits/research-workflow-deployment-fitness-2026-07-13.md (diagnosis only — its runtime claims are not to be trusted), .claude/commands/sync-workflow.md
 - Required outputs: .claude/commands/deploy-workflow.md, logs/missions/research-workflow-deploy-fitness.md
@@ -547,3 +436,54 @@ Mission thread 2 — deployment placeholder handling in `/deploy-workflow`. Veri
 4. **The audit contradicts itself, unmarked.** §4 D-3 (:103) still instructs "widen Step 5's placeholder pattern"; §7 (:151) and the mission (:128) reverse it. An implementer reading §4 alone builds the reverted remedy.
 5. **No canonical deploy-time placeholder list exists.** `SETUP.md:182–196` is the closest thing and omits both `{{CONFIDENTIAL_IDENTIFIER_N}}` fields and all 13 Project Config fields — producing that list is part of the fix, not a precondition of it.
 6. **Blast radius is one command:** `/sync-workflow` carries no placeholder logic.
+
+## 2026-07-13 — Session S13: thread 2 fixed — /deploy-workflow's placeholder step was dead code, not a scoping bug
+
+### Summary
+
+Fixed and closed **mission thread 2** (deployment placeholder handling in `/deploy-workflow`) — committed `93e04b7`. The audit called thread 2 a "demonstrated deployment blocker" from the same reasoning that got thread 1 wrong. It was not one. Execution against a scratch fixture showed the real defect: Step 7's `find | xargs sed` word-splits on the space every real deploy path contains, making it dead code that has never worked in this workspace — and destructive on any space-free path, since it mutates the six preserved template files. Rebuilt Steps 5–7 and Step 11 around a declared four-class placeholder registry instead of regex discovery, and completed `SETUP.md`'s placeholder table, which had omitted 15 of 34 required values.
+
+### Decisions Made
+
+**The fix (thread 2):**
+- Replaced Step 5's `grep -roh '{{[A-Z_]*}}'` discovery with a declared registry: Class A required (26), Class B conditional (4, parts-model only), Class C never-fill notation (3), Class D template-internal (94). Registry is authority; regex demoted to a Step 5d drift cross-check that **stops the deploy** on any unregistered placeholder — proven falsifiable (planted an unregistered token, it was caught).
+- Fixed Step 7's shell defects: `-print0 | xargs -0` (the space-splitting bug) and `\( -name … -o -name … \)` grouping (the untyped-second-branch bug), both commented as load-bearing so a future "simplification" doesn't reintroduce them. Scope-list path changed from a fixed `/tmp/fill-scope.list` to a per-project path, closing a concurrent-deploy collision the risk-check reviewer flagged.
+- Replaced the "no `{{` anywhere" leftover-placeholder assertion (Step 7 verify + Step 11 item 1) — it failed every correct deploy by ~97 counts (94 template-internal + 3 notation) and was therefore ignored — with a registry-scoped assertion plus a `diff -r` byte-identity check on the six template files.
+- Completed `workflows/research-workflow/SETUP.md`'s Placeholder Reference table: it listed 8 placeholders and omitted all 13 Project Config fields and both `CONFIDENTIAL_IDENTIFIER` fields. Bound to the Step 5b registry by a stated lockstep contract, enforced (not just asserted) by extending Step 5d to diff SETUP.md's names against the registry.
+- **Reclassified thread 2** from "demonstrated blocker" to *not a blocker* — same shape as thread 1. Both live deployed projects carry no genuinely-wrong unfilled deploy-time placeholder; the deploying agent read the fill instruction and used its own tools rather than the broken `sed`.
+
+**Design decisions made mid-session, both operator-implicit (continuing S11's standing method rule):**
+- Verify by execution before designing any fix (S11's rule, reapplied). Built a scratch-fixture harness on a space-containing path specifically to reproduce the real deploy path shape.
+- Widened scope from the mandate's "Steps 5–7" to include Step 11, once the context-discovery engine flagged that the same broken assertion also lives there — confirmed operator-side via the `y` on the re-emitted mandate confirmation.
+
+### Outcome
+
+COMPLETION: DELIVERED
+EXECUTION: OPTIMAL
+Notes: Mandate delivered in full — thread 2 tested by execution (not by reading), reclassified with evidence, ticked in the mission file citing the result, `/risk-check` GO obtained and both reviewer-flagged hardening items applied before commit. No rework loops; the one correction mid-session (nearly asserting research-pe's unfilled PART_* placeholders as a defect) was self-caught against SETUP.md's own conditional-placeholder documentation before being reported, not after.
+What was asked but not done: none.
+Better path: none.
+Confidence: high (mandate resolved from today's `**Mandate:**` block, session-plan, and mission file, all consistent).
+
+### Session Value Audit — 80/20 Review
+
+Skipped (not requested — `+audit`/`full` not passed).
+
+### Risky actions
+
+None. The destructive `sed -i ''` test runs were confined to scratch fixtures under the session scratchpad; the real `workflows/research-workflow/` template and `projects/` were never targets. Confirmed clean before and after each run.
+
+### Session Assessment
+
+Skipped (not requested — `+feedback`/`full` not passed).
+
+### Next Steps
+
+- **Decide the deployment-gate question raised this session:** the mission now has zero demonstrated blockers (threads 1 and 2 both reclassified). Re-examine whether "fix canonical before deploying" still holds, or whether the Sector Intelligence pilot can deploy sooner — operator call, not resolved this session.
+- If continuing the mission: **thread 3** (deploy hygiene bundle) is next in the mission's own priority order — small, self-contained, premise independent of the audit's runtime claims.
+- Threads 4–8 remain open and unordered relative to each other.
+
+### Open Questions
+
+- Same standing gap as S10/S11: `/mission` has no `update` verb; thread 2's tick-off was another direct hand-edit of the mission file (logged, not newly discovered).
+- The `ai-resources/` canonical copy of `deploy-workflow.md` is still unedited — this fix lives only in this worktree until the branch merges to `main`. The three symlinked consumers (workspace root, `archive/nordic-pe-macro-landscape-H1-2026`, `projects/axcion-website`) will not see the fix until then.
