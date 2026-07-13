@@ -1,0 +1,43 @@
+{
+  "run_id": "2026-07-13-S2",
+  "project": "ai-resources",
+  "date": "2026-07-13",
+  "marker": "S2",
+  "model": "claude-opus-4-8[1m]",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md#2026-07-13-S2",
+  "mission": "w32-migration-execution",
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    "logs/session-notes.md",
+    "logs/friction-log.md",
+    "logs/session-plan-2026-07-13-S2.md",
+    "logs/runs/2026-07-13-S2.json",
+    "projects/project-planning/.gitignore"
+  ],
+  "decisions_refs": [],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "blocked",
+  "outcome": "ABANDONED",
+  "failure_class": "mandate-drift",
+  "incidents_refs": [],
+  "incident_waived": "Mandate invalidated mid-session by a concurrent session that retired the W3.2 programme; this session detected the collision and deferred rather than committing over it. Full incident record (collision + this session's own validation error) written to logs/friction-log.md 2026-07-13 (S2) — no separate defect-log entry, per the operating rule adopted today (logs/decisions.md 2026-07-13 S2): build no new checker, register or review process."
+}
