@@ -6,7 +6,8 @@
 #   1. Files listed in the project's .claude/shared-manifest.json under
 #      commands.local / agents.local (project-owned, never overwritten).
 #   2. Files in the baked-in EXCLUDE lists below (ai-resources-meta — never
-#      belong inside a downstream project).
+#      belong inside a downstream project). NOT applied at the workspace root,
+#      which is a valid home for these commands, not a downstream project.
 #   3. Files that already exist at the target (any kind: file, symlink, or
 #      broken symlink — never overwrites).
 #
@@ -42,8 +43,28 @@ while :; do
 done
 [ -z "$AI_RESOURCES" ] && exit 0
 
-# Baked-in exclusions: ai-resources-meta files that never belong in projects.
-EXCLUDE_COMMANDS="new-project deploy-workflow run-sufficiency pipeline-review scope-project lean-repo"
+# Workspace-root detection. The walk above stops at the first ancestor holding
+# ai-resources/; if that ancestor IS $PROJECT_DIR, then ai-resources/ is a DIRECT
+# child and we are syncing the workspace root itself — not a downstream project.
+# The root is where the ai-resources-meta commands below are *meant* to be run
+# (see new-project.md "CWD guard": running from the workspace root is valid;
+# only running from inside ai-resources/ is blocked), so the exclusions must not
+# apply here. Note this is correctly 0 when $PROJECT_DIR is ai-resources itself:
+# ai-resources contains no ai-resources/ child, so the walk lands on the parent.
+IS_WORKSPACE_ROOT=0
+[ "$d" = "$PROJECT_DIR" ] && IS_WORKSPACE_ROOT=1
+
+# Baked-in exclusions: ai-resources-meta files that never belong in a downstream
+# project. Exempted at the workspace root (IS_WORKSPACE_ROOT) — see above.
+#
+# FORMAT CONTRACT — load-bearing, do not reflow: fix-symlinks.md:81-82 re-reads
+# both lists out of this file with `sed -n 's/^EXCLUDE_COMMANDS="\(.*\)"$/\1/p'`
+# to keep a single source of truth. That parse needs each list to stay a static,
+# single-line, start-of-line literal assignment. Gate where these lists are
+# APPLIED (the four `IS_WORKSPACE_ROOT` conditionals below), never how they are
+# ASSIGNED — a computed or multi-line value parses to empty and silently
+# disables the /fix-symlinks drift scan (fix-symlinks.md:88-91).
+EXCLUDE_COMMANDS="new-project deploy-workflow pipeline-review scope-project lean-repo"
 EXCLUDE_AGENT_GLOBS="pipeline-stage-* session-guide-generator pipeline-review-* scope-*"
 
 # Read project-local exclusions from manifest.
@@ -82,7 +103,7 @@ failed=""
 for src in "$AI_RESOURCES"/.claude/commands/*.md; do
   [ -f "$src" ] || continue
   name=$(basename "$src" .md)
-  in_list "$name" "$EXCLUDE_COMMANDS" && continue
+  if [ "$IS_WORKSPACE_ROOT" -eq 0 ] && in_list "$name" "$EXCLUDE_COMMANDS"; then continue; fi
   in_list "$name" "$LOCAL_COMMANDS" && continue
   target="$PROJECT_DIR/.claude/commands/${name}.md"
   [ -e "$target" ] || [ -L "$target" ] && continue
@@ -99,7 +120,7 @@ done
 for src in "$AI_RESOURCES"/.claude/agents/*.md; do
   [ -f "$src" ] || continue
   name=$(basename "$src" .md)
-  matches_glob "$name" "$EXCLUDE_AGENT_GLOBS" && continue
+  if [ "$IS_WORKSPACE_ROOT" -eq 0 ] && matches_glob "$name" "$EXCLUDE_AGENT_GLOBS"; then continue; fi
   in_list "$name" "$LOCAL_AGENTS" && continue
   target="$PROJECT_DIR/.claude/agents/${name}.md"
   [ -e "$target" ] || [ -L "$target" ] && continue
@@ -120,7 +141,7 @@ drifted=""
 for src in "$AI_RESOURCES"/.claude/commands/*.md; do
   [ -f "$src" ] || continue
   name=$(basename "$src" .md)
-  in_list "$name" "$EXCLUDE_COMMANDS" && continue
+  if [ "$IS_WORKSPACE_ROOT" -eq 0 ] && in_list "$name" "$EXCLUDE_COMMANDS"; then continue; fi
   in_list "$name" "$LOCAL_COMMANDS" && continue
   target="$PROJECT_DIR/.claude/commands/${name}.md"
   [ -f "$target" ] && [ ! -L "$target" ] || continue
@@ -130,7 +151,7 @@ done
 for src in "$AI_RESOURCES"/.claude/agents/*.md; do
   [ -f "$src" ] || continue
   name=$(basename "$src" .md)
-  matches_glob "$name" "$EXCLUDE_AGENT_GLOBS" && continue
+  if [ "$IS_WORKSPACE_ROOT" -eq 0 ] && matches_glob "$name" "$EXCLUDE_AGENT_GLOBS"; then continue; fi
   in_list "$name" "$LOCAL_AGENTS" && continue
   target="$PROJECT_DIR/.claude/agents/${name}.md"
   [ -f "$target" ] && [ ! -L "$target" ] || continue
