@@ -34,7 +34,9 @@ Two files, written together by `/prime`. The per-session-id file is the **identi
 
 **Lifetime:** written by `/prime` at session start. Overwritten by `/prime` on same-day re-invocation (`S1` → `S2` → ...). A new day resets to `S1`.
 
-**Role at v1:** still serves the same-day `S{N}` increment lookup and back-compat / loud-fallback. It is **no longer the identity oracle** — removing it entirely is a separable later change (DR-7/AP-7), deliberately deferred. Concurrent same-day `/prime`s can still race on the *number* here (both compute S2), but that is a benign cosmetic collision — identity comes from the per-id file, so attribution is never corrupted.
+**Role at v1:** still serves the same-day `S{N}` increment lookup and back-compat / loud-fallback. It is **no longer the identity oracle** — removing it entirely is a separable later change (DR-7/AP-7), deliberately deferred. Concurrent same-day `/prime`s **in the same checkout** can still race on the *number* here (both compute S2); that race is cosmetic for *attribution* — identity comes from the per-id file, so who-wrote-what is never corrupted.
+
+**But a duplicate `S{N}` is NOT harmless in general, and this file is not the whole allocator.** A duplicate number collides the *marker-scoped artifacts* keyed off it — the `## {date} — Session S{N}` header and the `logs/session-plan-{date}-S{N}.md` filename — which is what `/prime` 8a, `/session-start` Step 3 and `/session-plan` Step 0 test with `grep -Fxq`. Across **separate checkouts** (a git worktree), this file cannot prevent the duplicate at all: a worktree has its own gitignored copy of it. See **§ Marker allocation** below, which is the authority on how `S{N}` is chosen.
 
 ### Both-or-neither writer invariant (BLOCKING)
 
@@ -48,7 +50,33 @@ Two files, written together by `/prime`. The per-session-id file is the **identi
 
 ---
 
-## Marker resolution (canonical pattern — every consumer uses this shape)
+## Marker allocation (the WRITE path — `/prime` only)
+
+**Do not confuse this with § Marker resolution below.** *Allocation* chooses a **new** `S{N}` at session start and is performed by `/prime` alone (Steps 8a.3.a / 8b.3.a / 8c.3 — three copies of one block). *Resolution* is how every **other** consumer looks up the marker it was already given. Changing one does not change the other; the three `/prime` copies and this section must stay in lockstep.
+
+**Rule: `N` = 1 + the MAX of three sources. Take the max of all three — never trust one alone.**
+
+| # | Source | Sees |
+|---|---|---|
+| (a) | `logs/.session-marker` | this checkout's last allocation |
+| (b) | `logs/session-notes.md`, working tree | headers this checkout has written |
+| (c) | `logs/session-notes.md`, **all refs** (`git grep` over `refs/heads`) | headers a **worktree** session allocated and committed |
+
+**Why (c) exists — and why this is a union, not an if/else chain.** A git worktree is a *separate checkout*. It has its own `logs/.session-marker` (gitignored, never shared) and its own working-tree `session-notes.md`. Both are invisible from the main checkout. So a worktree session allocates from the **same `S{N}` namespace with no shared allocator** — a split-brain counter. Without (c), two checkouts hand out the **same** `S{N}`, and the duplicate `## {date} — Session S{N}` header materialises the instant the branch merges. That breaks the `grep -Fxq "## {date} — Session {MARKER}"` "does my header exist" test relied on by `/prime` 8a, `/session-start` Step 3 and `/session-plan` Step 0 — each would match the *wrong* entry, and a wrap could append its summary under a foreign session's header. It also collides `logs/session-plan-{date}-S{N}.md`.
+
+The pre-2026-07-13 logic used (a) with (b) as an *else*-branch fallback, and never looked at (c). It was therefore blind to every worktree session.
+
+**Real incident (2026-07-13 S6).** A session opened in the main checkout to merge a worktree branch. The marker file read `S4`; the branch being merged already carried a committed `## 2026-07-13 — Session S5` header. The old rule (`marker + 1`) would have allocated **S5** — an exact duplicate, landing on merge. Caught by hand, not by the system. Fix verified by execution against a simulated branch: old logic allocates the duplicate; the union rule steps over it.
+
+**Do NOT "fix" this by having worktree sessions reserve markers up front.** That reintroduces a shared allocator — the precise coupling worktrees exist to remove — and would need a lock. The branches already *are* the allocation record; (c) simply reads it.
+
+**Known gap (accepted, degrades safe).** (c) sees only what a worktree session has **committed**. Two sessions that `/prime` in different checkouts and neither has committed its header yet can still collide — no ref exists to observe. This is unclosable read-side without a shared allocator, and it is strictly narrower than the bug it replaces (which fired on *every* worktree session whose branch was merged, committed or not). The same-checkout simultaneous-`/prime` race (both read state before either writes) is likewise unchanged and remains cosmetic-for-attribution per § Same-day counter.
+
+**Cost.** One `git for-each-ref` + one `git grep` over `logs/session-notes.md` per `/prime`. Bounded by branch count (typically 1–2). Read-only; adds no state and no gate. If the repo is not a git repo or the git calls fail, they are suppressed and allocation falls through to (a)+(b) — i.e. exactly the old behaviour.
+
+---
+
+## Marker resolution (the READ path — canonical pattern, every consumer uses this shape)
 
 Resolve the **per-session-id identity oracle first**; fall back **loudly** to the shared file only if the oracle is unavailable (older CLI without the harness var, or per-id file missing/stale).
 
@@ -138,7 +166,10 @@ Every place the marker contract is consumed must point back to this doc. Adding 
 
 **Writers** (hard-fail on marker absent/stale):
 
-- `ai-resources/.claude/commands/prime.md` — Steps 8a.3.a / 8b.3.a / 8c.3 (writes BOTH the shared file and the per-session-id identity oracle `logs/.session-marker-${CLAUDE_CODE_SESSION_ID}`, plus orphan-prune of stale per-id files) and Step 8c.8 (auto-mode plan write). **Lockstep triplet:** the marker-resolution logic that computes `S{N}` (the `if [ -f logs/.session-marker ] … else … fi` block, including the 2026-07-03 absent-marker fallback that resumes `N` from the highest today-dated `## <today> — Session S{N}` header via `grep -oE "^## ${TODAY} — Session S[0-9]+" … | grep -oE '[0-9]+$' | sort -n | tail -1`) is **triplicated byte-identical across these three steps**. Any change to it must land in all three in the same edit and be diff-verified byte-identical — a divergence would make the numbered-pick (8a), free-text (8b), and auto-mode (8c) paths resolve `N` differently. The absent-marker fallback matches the em-dash `—` **literally** (an ASCII hyphen silently matches nothing and regresses to `N=1`) and takes the **numeric** max (so `S10 > S9`); verify by execution, not review.
+- `ai-resources/.claude/commands/prime.md` — Steps 8a.3.a / 8b.3.a / 8c.3 (writes BOTH the shared file and the per-session-id identity oracle `logs/.session-marker-${CLAUDE_CODE_SESSION_ID}`, plus orphan-prune of stale per-id files) and Step 8c.8 (auto-mode plan write). **`/prime` is the sole ALLOCATOR of `S{N}` — the rule it implements is canonical in § Marker allocation above, not here. Read that section before touching these blocks.** Since 2026-07-13 the rule is `N = 1 + MAX(a, b, c)` — shared marker file, working-tree `session-notes.md` headers, and `session-notes.md` headers across **all refs** (the worktree/split-brain fix). It superseded the old `if [ -f logs/.session-marker ] … else … fi` chain, in which the header-scan was merely an absent-marker fallback.
+  - **Lockstep triplet:** the allocation block is **triplicated byte-identical** across steps 8a.3.a / 8b.3.a / 8c.3. Any change must land in all three in the same edit and be diff-verified byte-identical — a divergence would make the numbered-pick (8a), free-text (8b), and auto-mode (8c) paths allocate `N` differently.
+  - **Two traps that survive the rewrite, both still live:** the header scan matches the em-dash `—` **literally** (an ASCII hyphen silently matches nothing — under the old rule that regressed to `N=1`; under the new rule it silently drops sources (b) and (c), degrading to marker-file-only), and comparisons must be **numeric**, not lexical (so `S10 > S9`). Verify by execution, not review.
+  - **Fail-safe property, do not break it:** `HIGH` is seeded from the marker file *before* the scan loop, and the loop only ever *raises* it. So a git failure, a non-git directory, or an empty scan degrades to the old marker-file-only behaviour — it can never reset `HIGH` to 0 and allocate `S1` over an existing `S5`. Verified by execution (`/risk-check`, 2026-07-13: no-git-repo, failing-git stub, corrupt marker, marker-ahead). Any future edit that computes `HIGH` from the scan *first* and consults the marker file *second* would reintroduce exactly that destructive regression.
 - `ai-resources/.claude/commands/session-start.md` — Step 3 (header location; resolves marker per-id-first).
 - `ai-resources/.claude/commands/session-plan.md` — Step 0 (header gate) and Step 7 (plan write).
 

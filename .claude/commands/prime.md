@@ -263,20 +263,36 @@ Full backlog & inbox: /open-items
 
          ```bash
          TODAY=$(date '+%Y-%m-%d')
-         N=1
-         if [ -f logs/.session-marker ]; then
+         # Allocate N = 1 + the highest S{N} seen across THREE sources. Take the MAX of all three;
+         # never trust one alone (they see different slices of the same S{N} namespace):
+         #   (a) logs/.session-marker        — this checkout's last allocation.
+         #   (b) session-notes.md, worktree  — headers this checkout has written.
+         #   (c) session-notes.md, ALL refs  — headers a WORKTREE session allocated and committed.
+         # (c) is why this is a union and not an if/else chain. A git worktree is a separate
+         # checkout with its own (a) and its own (b) — both invisible from here — so it allocates
+         # from the same S{N} namespace with no shared allocator. Without (c), two checkouts hand
+         # out the SAME S{N}, and the duplicate `## <today> — Session S{N}` header lands the moment
+         # the branch merges, breaking the `grep -Fxq` "does my header exist" check that /prime 8a,
+         # /session-start Step 3 and /session-plan Step 0 all rely on. Real incident: 2026-07-13 S6.
+         # Do NOT "fix" this by making worktrees reserve markers up front — that reintroduces the
+         # shared allocator worktrees exist to remove. The branches already ARE the allocation record.
+         HIGH=0
+         if [ -f logs/.session-marker ]; then                         # (a)
            PREV=$(cat logs/.session-marker)
            case "$PREV" in
-             "${TODAY} S"*) N=$((${PREV##*S} + 1));;
+             "${TODAY} S"*) n="${PREV##*S}"
+                            case "$n" in ''|*[!0-9]*) ;; *) [ "$n" -gt "$HIGH" ] && HIGH="$n";; esac;;
            esac
-         else
-           # Marker file absent (fresh clone, or a prior cleanup removed it): resume N from the
-           # highest today-dated `## <today> — Session S{N}` header in session-notes.md (numeric
-           # max, em-dash literal) so a same-day session that already wrapped is not collided with.
-           HIGH=$(grep -oE "^## ${TODAY} — Session S[0-9]+" logs/session-notes.md 2>/dev/null | grep -oE '[0-9]+$' | sort -n | tail -1)
-           [ -n "$HIGH" ] && N=$((HIGH + 1))
          fi
-         MARKER="S${N}"
+         for n in $( { grep -hoE "^## ${TODAY} — Session S[0-9]+" logs/session-notes.md 2>/dev/null   # (b)
+                       git grep -hoE "^## ${TODAY} — Session S[0-9]+" \
+                           $(git for-each-ref --format='%(refname)' refs/heads 2>/dev/null) \
+                           -- logs/session-notes.md 2>/dev/null                                       # (c)
+                     } | grep -oE '[0-9]+$' ); do
+           case "$n" in ''|*[!0-9]*) continue;; esac
+           [ "$n" -gt "$HIGH" ] && HIGH="$n"
+         done
+         MARKER="S$((HIGH + 1))"
          echo "${TODAY} ${MARKER}" > logs/.session-marker
          # Identity oracle (Option 2′): also write a per-session-id marker file no concurrent /prime can clobber.
          [ -n "${CLAUDE_CODE_SESSION_ID}" ] && echo "${TODAY} ${MARKER}" > "logs/.session-marker-${CLAUDE_CODE_SESSION_ID}"
@@ -324,20 +340,36 @@ Full backlog & inbox: /open-items
 
          ```bash
          TODAY=$(date '+%Y-%m-%d')
-         N=1
-         if [ -f logs/.session-marker ]; then
+         # Allocate N = 1 + the highest S{N} seen across THREE sources. Take the MAX of all three;
+         # never trust one alone (they see different slices of the same S{N} namespace):
+         #   (a) logs/.session-marker        — this checkout's last allocation.
+         #   (b) session-notes.md, worktree  — headers this checkout has written.
+         #   (c) session-notes.md, ALL refs  — headers a WORKTREE session allocated and committed.
+         # (c) is why this is a union and not an if/else chain. A git worktree is a separate
+         # checkout with its own (a) and its own (b) — both invisible from here — so it allocates
+         # from the same S{N} namespace with no shared allocator. Without (c), two checkouts hand
+         # out the SAME S{N}, and the duplicate `## <today> — Session S{N}` header lands the moment
+         # the branch merges, breaking the `grep -Fxq` "does my header exist" check that /prime 8a,
+         # /session-start Step 3 and /session-plan Step 0 all rely on. Real incident: 2026-07-13 S6.
+         # Do NOT "fix" this by making worktrees reserve markers up front — that reintroduces the
+         # shared allocator worktrees exist to remove. The branches already ARE the allocation record.
+         HIGH=0
+         if [ -f logs/.session-marker ]; then                         # (a)
            PREV=$(cat logs/.session-marker)
            case "$PREV" in
-             "${TODAY} S"*) N=$((${PREV##*S} + 1));;
+             "${TODAY} S"*) n="${PREV##*S}"
+                            case "$n" in ''|*[!0-9]*) ;; *) [ "$n" -gt "$HIGH" ] && HIGH="$n";; esac;;
            esac
-         else
-           # Marker file absent (fresh clone, or a prior cleanup removed it): resume N from the
-           # highest today-dated `## <today> — Session S{N}` header in session-notes.md (numeric
-           # max, em-dash literal) so a same-day session that already wrapped is not collided with.
-           HIGH=$(grep -oE "^## ${TODAY} — Session S[0-9]+" logs/session-notes.md 2>/dev/null | grep -oE '[0-9]+$' | sort -n | tail -1)
-           [ -n "$HIGH" ] && N=$((HIGH + 1))
          fi
-         MARKER="S${N}"
+         for n in $( { grep -hoE "^## ${TODAY} — Session S[0-9]+" logs/session-notes.md 2>/dev/null   # (b)
+                       git grep -hoE "^## ${TODAY} — Session S[0-9]+" \
+                           $(git for-each-ref --format='%(refname)' refs/heads 2>/dev/null) \
+                           -- logs/session-notes.md 2>/dev/null                                       # (c)
+                     } | grep -oE '[0-9]+$' ); do
+           case "$n" in ''|*[!0-9]*) continue;; esac
+           [ "$n" -gt "$HIGH" ] && HIGH="$n"
+         done
+         MARKER="S$((HIGH + 1))"
          echo "${TODAY} ${MARKER}" > logs/.session-marker
          # Identity oracle (Option 2′): also write a per-session-id marker file no concurrent /prime can clobber.
          [ -n "${CLAUDE_CODE_SESSION_ID}" ] && echo "${TODAY} ${MARKER}" > "logs/.session-marker-${CLAUDE_CODE_SESSION_ID}"
@@ -401,20 +433,36 @@ Full backlog & inbox: /open-items
 
       ```bash
       TODAY=$(date '+%Y-%m-%d')
-      N=1
-      if [ -f logs/.session-marker ]; then
+      # Allocate N = 1 + the highest S{N} seen across THREE sources. Take the MAX of all three;
+      # never trust one alone (they see different slices of the same S{N} namespace):
+      #   (a) logs/.session-marker        — this checkout's last allocation.
+      #   (b) session-notes.md, worktree  — headers this checkout has written.
+      #   (c) session-notes.md, ALL refs  — headers a WORKTREE session allocated and committed.
+      # (c) is why this is a union and not an if/else chain. A git worktree is a separate
+      # checkout with its own (a) and its own (b) — both invisible from here — so it allocates
+      # from the same S{N} namespace with no shared allocator. Without (c), two checkouts hand
+      # out the SAME S{N}, and the duplicate `## <today> — Session S{N}` header lands the moment
+      # the branch merges, breaking the `grep -Fxq` "does my header exist" check that /prime 8a,
+      # /session-start Step 3 and /session-plan Step 0 all rely on. Real incident: 2026-07-13 S6.
+      # Do NOT "fix" this by making worktrees reserve markers up front — that reintroduces the
+      # shared allocator worktrees exist to remove. The branches already ARE the allocation record.
+      HIGH=0
+      if [ -f logs/.session-marker ]; then                         # (a)
         PREV=$(cat logs/.session-marker)
         case "$PREV" in
-          "${TODAY} S"*) N=$((${PREV##*S} + 1));;
+          "${TODAY} S"*) n="${PREV##*S}"
+                         case "$n" in ''|*[!0-9]*) ;; *) [ "$n" -gt "$HIGH" ] && HIGH="$n";; esac;;
         esac
-      else
-        # Marker file absent (fresh clone, or a prior cleanup removed it): resume N from the
-        # highest today-dated `## <today> — Session S{N}` header in session-notes.md (numeric
-        # max, em-dash literal) so a same-day session that already wrapped is not collided with.
-        HIGH=$(grep -oE "^## ${TODAY} — Session S[0-9]+" logs/session-notes.md 2>/dev/null | grep -oE '[0-9]+$' | sort -n | tail -1)
-        [ -n "$HIGH" ] && N=$((HIGH + 1))
       fi
-      MARKER="S${N}"
+      for n in $( { grep -hoE "^## ${TODAY} — Session S[0-9]+" logs/session-notes.md 2>/dev/null   # (b)
+                    git grep -hoE "^## ${TODAY} — Session S[0-9]+" \
+                        $(git for-each-ref --format='%(refname)' refs/heads 2>/dev/null) \
+                        -- logs/session-notes.md 2>/dev/null                                       # (c)
+                  } | grep -oE '[0-9]+$' ); do
+        case "$n" in ''|*[!0-9]*) continue;; esac
+        [ "$n" -gt "$HIGH" ] && HIGH="$n"
+      done
+      MARKER="S$((HIGH + 1))"
       echo "${TODAY} ${MARKER}" > logs/.session-marker
       # Identity oracle (Option 2′): also write a per-session-id marker file no concurrent /prime can clobber.
       [ -n "${CLAUDE_CODE_SESSION_ID}" ] && echo "${TODAY} ${MARKER}" > "logs/.session-marker-${CLAUDE_CODE_SESSION_ID}"
