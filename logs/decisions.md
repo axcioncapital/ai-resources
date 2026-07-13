@@ -122,3 +122,47 @@ A duplicate `S{N}` is not cosmetic: it breaks the `grep -Fxq "## {date} — Sess
 **Known gap (accepted, documented).** Source (c) sees only **committed** headers. Two sessions priming in different checkouts, neither having committed, can still collide — no ref exists to observe. Unclosable read-side without reintroducing the rejected shared allocator, and strictly narrower than the bug it replaces (which fired on *every* worktree session whose branch merged).
 
 **Decided by:** Operator ("fix 1", extending the session mandate after the defect was surfaced and logged).
+
+## 2026-07-13 (S10) — The research-workflow fix plan governs; the audit is demoted to historical diagnosis, and two of its claims are struck as false
+
+**Context.** S8 (on Fable) produced a pre-deployment fitness audit of the canonical research workflow plus a mission contract seeded from it. The operator then supplied a revised 8-item fix set that both *narrows* the audit's requirements (several "required canonical builds" become bounded fixes) and *widens* them (items the S8 mission marked "do NOT build — evidence-gated" are now approved in bounded form). S10 had to decide what the authority relationship between these documents is.
+
+**Decision.** The **mission file is the governing fix plan**; the audit report is the historical diagnosis. Where they disagree, the mission file wins, and it says so explicitly in its header. The audit's §1–7 were left byte-unchanged — including the two claims struck below — so the record of what was originally believed survives intact and is not silently retconned.
+
+**Two audit claims struck as false, by direct read rather than by argument:**
+1. **F-9's "silent failure" claim about a missing `known-limits.md` is false.** `run-cluster.md:11` treats the file as **hard-class** and halts with a remediation prompt if it is absent or unfilled. The audit contradicts itself: its own **F-13(b)** states the file is hard-class in `run-cluster` and soft-class in `run-sufficiency`, and direct read confirms F-13(b) (`run-sufficiency.md:30` — *"Not a fatal pre-condition"*). The consequence of dropping the SETUP obligation is therefore a **delayed hard interruption at Stage 3**, not silent drift. The fix's value is preventing a costly mid-research-unit stop, not preventing corruption.
+2. **F-6's "zero wired post-drafting citation control" is overstated.** Compliance QC, citation conversion and operator review all exist and are wired. What is absent is an **automatically wired independent fact-verification step**: `verify-chapter` exists but `run-report` never calls it.
+
+**Rationale.** An audit whose findings are load-bearing for eight downstream fix sessions cannot carry a false failure-mode claim, because the claim determines the *shape* of the fix. F-9-as-written would have justified a defensive canonical guard against silent drift; F-9-as-corrected justifies only a better deploy message. The cheaper, correct fix is only visible once the claim is checked. This is the second consecutive session in which a claim in this audit was falsified by reading the file it describes.
+
+**Alternatives considered.**
+- **(a) Amend the audit in place — REJECTED.** It is the record of an assessment made at a point in time by a specific method; editing its findings retroactively destroys the ability to ask later "what did the audit actually miss, and why." The correction belongs in the governing document, which now names the falsification explicitly.
+- **(b) Treat the audit as governing and the mission as derived — REJECTED.** The operator's 8-item set materially supersedes the audit's §4/§7 fix lists; keeping the audit authoritative would leave the plan permanently in conflict with its own source.
+- **(c) Accept the operator's external review without verification — REJECTED** (standing convention: triage, don't rubber-stamp). All five of its points were adopted, but only after the one checkable factual dispute was settled by reading the file. Had it been wrong, adopting it would have written a *new* false claim into the governing plan.
+
+**Blocker scope corrected — against my own error, not the reviewer's.** My first draft of the plan asserted "all eight fixes block `/deploy-workflow`." Neither the operator's brief nor the audit ever claimed this; the audit's §7 names exactly two blockers. The plan now states that only threads 1–2 are demonstrated blockers and threads 3–8 are approved improvements to land before deployment — a weaker and true claim. An implementation session that hits a wall on thread 7 needs to know it can still deploy.
+
+**Decided by:** Operator (revised 8-item fix set; external review), with the audit-claim falsifications established by direct read this session.
+
+## 2026-07-13 (S10) — The marker allocator's "accepted known gap" is not acceptable: it fired 46 seconds after it was accepted
+
+**Context.** S6 (earlier today) fixed the session-marker allocator so it scans committed headers across all refs, closing the case where a git worktree and the main checkout hand out the same `S{N}`. It documented a residual gap — *"Source (c) sees only **committed** headers. Two sessions priming in different checkouts, neither having committed, can still collide"* — and **accepted** it as narrow and *"unclosable read-side without reintroducing the rejected shared allocator."*
+
+**What happened.** It fired the same day. This session (worktree) and a concurrent session (main `ai-resources` checkout) both allocated **S9**, 46 seconds apart — commits `11a4b39` (21:56:21) and `9e8988d` (21:57:07). Neither had committed its header at allocation time, so neither was observable to the other. On merge, `logs/session-notes.md` would have carried two `## 2026-07-13 — Session S9` headers, breaking the `grep -Fxq` header-existence check that `/prime` 8a, `/session-start` Step 3 and `/session-plan` Step 0 all depend on.
+
+**Decision.** Renumber this session to **S10** (the main checkout's S9 was already on `main`, so the worktree's was the one to move) and **reject the "unclosable" framing**. The gap is closable read-side.
+
+**Rationale — the S6 analysis missed an observation surface.** It enumerated two: the local marker file, and *committed* refs. There is a third: **a git worktree shares the git dir, and `git worktree list` yields the filesystem path of every sibling checkout — so each sibling's *working-tree* `logs/session-notes.md` is directly readable.** Adding that as source (d) closes the uncommitted-header case with another **read**. No shared allocator, no lock, no write. The rejected-alternative analysis in the S6 decision stands on its own terms; it simply never considered this option, so "unclosable" was a conclusion about the options enumerated, not about the problem.
+
+**Two things this reveals beyond the bug itself.**
+1. **The gap was not narrow, and the acceptance rested on the belief that it was.** Two checkouts (main + worktree) is now the normal working shape here, so "both sessions prime before either commits" is the *common* path, not a rare race.
+2. **It was caught by a wrap-time verification prompted by the operator asking "is it safe?" — not by any gate.** No guard fires on marker collision. The foreign-session guard checks `session-notes.md` for foreign *content*, not for duplicate *markers*.
+
+**Alternatives considered.**
+- **(a) Accept the duplicate and de-duplicate at merge — REJECTED.** The duplicate breaks a check three commands depend on, and merge-time is exactly when nobody is looking.
+- **(b) Reintroduce a shared allocator with a lock — REJECTED, same as S6.** It restores the coupling worktrees exist to remove. Source (d) obtains the same information with a read.
+- **(c) Renumber the *main* checkout's session instead — REJECTED.** Its S9 is already committed on `main`; the worktree's is on an unmerged feature branch and is cheaper to move.
+
+**Preserve the fail-safe invariant.** Source (d) must be added *inside* the scan loop, after `HIGH` is seeded from the marker file — never before. `HIGH` only ever *rises*, so a failure in (d) degrades to old behaviour and can never reset to 0 and allocate `S1` over an existing `S5`. Any edit that scans first and seeds second reintroduces a destructive regression.
+
+**Decided by:** Claude (S10), surfaced to the operator at wrap. Proposed fix logged to `improvement-log.md`; not implemented this session.
