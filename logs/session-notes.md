@@ -530,3 +530,13 @@ Landed the `/lean-repo` worktree, then — on operator direction ("fix 1") — f
 - Stop if: the worktree's workflow files turn out to differ from canonical main (audit baseline invalid) — surface it, do not silently re-baseline
 
 Session runs in the ai-resources-research-workflow worktree (branch session/2026-07-13-research-workflow, baseline 9992b06; workflow files verified byte-equal to main at 849ff8a).
+
+## 2026-07-13 — Session S10
+
+**Mandate:** Update the research-workflow fix plan (`logs/missions/research-workflow-deploy-fitness.md`) to the operator's revised 8-item pre-deployment fix set — done when: the mission file's Goal, scope, validation contract and open threads reflect all 8 items with concrete attach points and acceptance tests, QC-passed, committed (no push).
+- Out of scope: implementing any of the fixes; editing any workflow/skill/command/`.gitignore`/`deploy-workflow` file; creating or customizing the Sector Intelligence project; rewriting the §1–7 audit report (it is the historical record)
+- Files in scope: logs/missions/research-workflow-deploy-fitness.md; logs/session-notes.md; logs/improvement-log.md (one entry re the `/mission` update-verb gap)
+- Stop if: the revision would require changing the audit's factual findings rather than the plan built on them
+- Mission: research-workflow-deploy-fitness
+
+Plan-revision session (no implementation). Operator corrected an initial misread — the deliverable is the updated fix plan, not the fixes. Note: `/mission` exposes no update verb, so the file is rewritten directly as continued authoring — the mission is uncommitted and has served zero sessions, so this is authoring, not mid-flight contract drift.
