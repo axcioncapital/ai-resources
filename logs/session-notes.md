@@ -559,3 +559,14 @@ Investigated the status of the W3.2 repo-redesign implementation plan (46 items,
 - Argentum: public data source (keep, like KPMG) or deal-party residue (stay removed)? Currently removed.
 - Should the invented firm names be replaced with unmistakable placeholders ("Sponsor A", "Fund B") to remove any chance of colliding with a real firm?
 - Push: five commits across two repos remain local and unpushed.
+
+## 2026-07-13 — Session S3
+
+**Mandate:** Execute the authoritative repo-redesign implementation report — verify RR-01 and RR-02 against their completion conditions, ship RR-03 (the wrap-note cut) in one pass, and update the report's Results table — done when: RR-01 and RR-02 are verified with evidence and marked complete in the Results table; RR-03 is shipped in both paired wrap-session.md copies with `### Decisions Made` retained and all downstream readers repointed; the Results table reflects true on-disk state
+- Out of scope: RR-04 (worktree pilot — requires normal operational use, not a work session); RR-05 (`/lean-repo` run — requires its own assessment pass); creating a mission contract for the RR programme (the report explicitly retires it); re-deriving RR-03's gate (the report forbids it — "ship it in one pass"); any packet, register or new gate machinery
+- Files in scope: plans/repo-redesign-authoritative-implementation-report.md; .claude/commands/wrap-session.md; ../.claude/commands/wrap-session.md; .claude/agents/session-feedback-collector.md; .claude/agents/collaboration-coach.md; docs/session-value-audit-rubric.md; docs/commit-discipline.md; logs/missions/w32-migration-execution.md → logs/missions/archive/w32-migration-execution.md (archive move — BOTH source and destination paths); audits/risk-checks/2026-07-13-rr-03-wrap-note-cut-executed.md (risk-check report)
+- Stop if: RR-03's cut is found to break a live reader that the report did not enumerate — surface it, do not work around it silently
+
+**Footprint correction (pre-commit, honest).** The `- Files in scope:` bullet originally named only `logs/missions/w32-migration-execution.md` — the archive move's *source* path — and omitted the *destination* path plus the `/risk-check` report. The `check-foreign-staging.sh` tripwire caught the mismatch and **blocked the commit**, correctly: the staged `logs/missions/archive/w32-migration-execution.md` sat outside the declared footprint. The guard was not overridden — the footprint was corrected to the truth, which is what it was asking for. Both files are this session's own work (the archive move the mandate authorises, and the gate report the mandate required); no foreign content is staged.
+
+Execute the authoritative repo-redesign implementation report: verify RR-01/RR-02, ship RR-03, update the Results table. Retire the superseded w32-migration-execution mission to archive.

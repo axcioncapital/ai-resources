@@ -44,7 +44,10 @@ For each dimension, extract the specific measurable signals described below. Cou
 ### Dimension 1: Iteration Efficiency
 
 **Extract from session notes:**
-- Count draft iterations per section (e.g., `draft-01`, `draft-02`, `draft-03` in Files Created)
+- Count draft iterations per section (e.g., `draft-01`, `draft-02`, `draft-03`). **Source the file list in this order, taking the first that resolves:**
+  1. The run manifest's `files_changed` array — `logs/runs/{date}-{marker}.json`. This is the file record wherever the wrap has been migrated (canonical + workspace mirror, since `RR-03`, 2026-07-13).
+  2. **Fallback — the session note's `### Files Created` / `### Files Modified` / `### Files Changed` blocks.** This agent is symlinked into ~21 projects, and not every project's `wrap-session.md` is the canonical one: an un-migrated *forked* wrap still writes those blocks and never writes a manifest (`positioning-research` is a live example — it has no `logs/runs/` at all). Reading only the manifest would silently zero out the coaching signal in exactly those projects.
+  3. If neither resolves, report the file signal as **unavailable** — say so plainly; do not infer it from `git status`, which sweeps concurrent sessions' files.
 - Track section-over-section trend: are later sections converging faster?
 - Note carry-forward items from Next Steps and whether they resolve in the next session
 

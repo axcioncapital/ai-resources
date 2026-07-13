@@ -30,7 +30,12 @@ If the session-note block or the rubric is missing, stop and return a one-line n
 ### Phase 1 — Read the rubric and the session
 
 1. Read the rubric (`session-feedback-dimensions.md`) in full. It defines the five dimensions, the routing table, the severity scale, and the four hard constraints. Those constraints are binding on you.
-2. Read today's session-note block. Note especially: `### Summary`, `### Files Created` / `### Files Modified` / `### Files Changed`, `### Decisions Made`, `### Risky actions` (warm-sourced danger input written by the wrap), `### Open Questions`.
+2. Read today's session-note block. Note especially: `### Summary`, `### Decisions Made`, `### Risky actions` (warm-sourced danger input written by the wrap), `### Open Questions`.
+
+   **For the session's file record, take the first source that resolves:**
+   1. This session's run manifest — `logs/runs/{date}-{marker}.json`, field `files_changed`. This is the file record wherever the wrap has been migrated (canonical + workspace mirror, since `RR-03`, 2026-07-13, which retired the note's file blocks).
+   2. **Fallback — the note's `### Files Created` / `### Files Modified` / `### Files Changed` blocks.** This agent is symlinked into ~14 projects and not all of them run the canonical wrap: an un-migrated *forked* `wrap-session.md` still writes those blocks and never writes a manifest (`positioning-research` is a live example — no `logs/runs/` exists there). Reading only the manifest would silently drop the file signal in exactly those projects.
+   3. If neither resolves (e.g. a session that died before wrap), treat the file signal as **unavailable** and say so — do not infer it from `git status`, which sweeps concurrent sessions' files.
 3. Where a claim depends on an artifact (e.g. "did this session add always-loaded CLAUDE.md weight?"), inspect the named file with Read/Grep rather than guessing.
 
 ### Phase 2 — Extract signals per dimension

@@ -210,12 +210,26 @@ Updated as items complete. Evidence lives in the files; this table is the index.
 
 | Item | Status | Verified by | Commit |
 |---|---|---|---|
-| **RR-01** — `check-decision-refs.sh` repo-blindness | ⏳ In progress | — | — |
-| **RR-02** — private firm names in shared skills | ⏳ In progress | — | — |
-| **RR-03** — wrap-note cut (R3 Pass 2) | ⏳ In progress | — | — |
-| **RR-04** — worktree pilot | ⏳ Not started | Requires normal operational use. | — |
+| **RR-01** — `check-decision-refs.sh` repo-blindness | ✅ Complete | Run from **two** repos (2026-07-13 S3). From `project-planning` it reads *that* repo's manifest and *that* repo's `decisions.md` — **3/3 refs resolve**, absolute paths printed. From `ai-resources` it reads ai-resources'. A ref valid in one repo is no longer reported as an orphan from the other. Completion condition met. | `df53459` |
+| **RR-02** — private firm names in shared skills | ✅ Complete | Grep for all seven named firms (Vaaka, Investor AB, Adelis, Argentum, Visby Software, Sampford, Affärsvärlden) across the **whole synchronised** `skills/` library and every synced project copy workspace-wide → **zero hits** (2026-07-13 S3). Completion condition met. | `6dc926e` |
+| **RR-03** — wrap-note cut (R3 Pass 2) | ✅ Complete | Shipped 2026-07-13 S3. Both wrap copies cut in lockstep; `### Decisions Made` retained in both; no live component still requires the removed blocks; wrap still records the file set (manifest) and still stages by explicit paths. `/risk-check` → **PROCEED-WITH-CAUTION**, all mitigations applied (see notes below). | see wrap commit |
+| **RR-04** — worktree pilot | ⏳ Not started | Requires normal operational use. **Now the highest-value remaining item** — a second concurrent-session collision occurred on 2026-07-13, this one corrupting the *decision record* (two opposite approved decisions on one question, 30 min apart). | — |
 | **RR-05** — `/lean-repo` + inflow rule | ⏳ Not started | Requires an assessment pass. | — |
 
 ### Notes from execution
 
-_Filled in as items land._
+**RR-03 — the gate caught a real defect the executing session had missed (2026-07-13 S3).**
+
+The session initially reasoned that this report's *"No approval gates"* and RR-03's *"ship it in one pass"* waived `/risk-check`. **That reading was wrong** — line 39 of this report says explicitly that the gates are *not* the villain and this is *not* a licence to skip them. What this report retires is the bespoke packet/register/per-item-approval machinery; standing workspace rules (Autonomy Rule 9) are untouched. The operator caught the omission and the gate was run. It returned **PROCEED-WITH-CAUTION** and found a defect the session's own sweep had missed. Logged: `logs/friction-log.md` 2026-07-13 (S3), failure mode **Authority**.
+
+**The defect: the cut silently broke un-migrated forked wraps.** `collaboration-coach.md` (symlinked into **21** projects) and `session-feedback-collector.md` (**14**) were repointed to read the run manifest as the file record. But **`positioning-research` runs a forked `wrap-session.md`** — a real file, not a symlink, 3.6 KB vs canonical's 48 KB — which still writes the old note blocks, has no manifest wiring, and has **no `logs/runs/` directory at all**. Reading only the manifest would have silently zeroed the file signal there.
+
+**It is not a one-off.** `ai-resources/workflows/research-workflow/.claude/shared-manifest.json` lists `wrap-session` under **`"local"`**, so *every* project deployed from that template gets its own forked wrap. The gap is reproduced by design for all future template-deployed research projects. A one-off sync of `positioning-research` (the reviewer's first-choice mitigation) would therefore have left the next such project broken.
+
+**Mitigation applied — structural, not a patch.** All four repointed readers now resolve the file record in priority order: (1) the run manifest, (2) **fallback** to the note's `### Files Created` / `### Files Modified` / `### Files Changed` blocks, which still exist in un-migrated forks, (3) declare the signal *unavailable* rather than infer it from `git status`. This works in every project regardless of migration state, present and future.
+
+**Manifest-close reliability — measured, not assumed.** The reviewer asked for 1–2 weeks of tracking before trusting the manifest as sole record. Measured instead: of the 9 marker-bearing sessions in `ai-resources`, **8 have manifests, and all 7 closed since R3 Pass 1 wired it (2026-07-12) carry a populated `files_changed`** (15, 16, 9, 15, 18, 14, 19 files). The one header with no manifest (`2026-07-09-S2`) predates the wiring. Close rate since wiring: **7/7.**
+
+**Residual exposure, accepted and documented in-file.** A session that dies before wrap has no manifest, so under the cut it now has no file record on *either* surface (previously the note carried one). Bounded: the note's other 6 blocks survive and `git log` still holds the truth. The alternative — hand-copying a file list on every session forever to cover a rare crash — is precisely the duplication the cut exists to remove.
+
+**Note the shape of this.** Two of RR-03's five sessions of "gate archaeology" chased a blocker (`P1`) that did not exist. The one gate that *was* nearly skipped is the one that found a real bug. The lesson is not "fewer gates" or "more gates" — it is the report's own operating rule: gate on the *evidence*, not on the ceremony.

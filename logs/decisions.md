@@ -401,3 +401,21 @@ Applied:
 - **Rule to carry.** **When a plan is itself the deliverable, the plan gets reviewed before it gets executed — regardless of what the execution instruction says.** If an instruction appears to authorize executing a plan in the same turn that produces it, that is a conflict to surface, not a licence to proceed. Cheap to honour (one turn), expensive to skip (five commits the operator never agreed to in their final form).
 - **Second-order note.** The session's own subject matter was a programme that had over-invested in gates. The correction to that must not become *no* pause at all: the fix for excess ceremony is fewer, better-placed checkpoints — and "operator reads the plan before it ships" is one of the few that always earns its keep.
 - **Decided by:** Operator (halt + keep), on a per-commit review of the shipped diffs.
+
+## 2026-07-13 (S3) — A plan may retire its own gates; it cannot waive a standing workspace rule
+
+**Context.** Executing `RR-03` (the wrap-note cut) from the authoritative repo-redesign implementation report. The report retires the W3.2 governance stack in strong terms — *"No packets. No register. No mission contract. No approval gates"* — and `RR-03` itself says *"Ship it in one pass. Do not re-derive its gate."* Reading those, I decided not to run `/risk-check` on a change touching both paired `wrap-session.md` copies, two symlinked agents and two docs. The operator interrupted to ask whether risk-check was running. It was not.
+
+**Decision.** **`/risk-check` is mandatory for core-architecture fixes, and no plan document waives it.** A plan has authority to retire the bespoke gates *it itself created*; it has no authority over standing workspace rules (Autonomy Rule 9). Where a plan appears to waive a standing gate, that is a **conflict to surface** under the Design Judgment Principles — not a permission to act on.
+
+**Rationale.** The report never claimed the waiver I read into it. Line 39, verbatim: *"**The gates are not the villain, and this is not a licence to skip them.** ... The fix is better items, not fewer checks."* I let the document's rhetorical direction (anti-ceremony, genuinely its whole thesis) override its explicit text. And `RR-03`'s "do not re-derive its gate" refers to the imaginary **P1/P2 prerequisite** that consumed four sessions — not to the risk gate.
+
+**Vindicated immediately, which is the point.** The gate returned **PROCEED-WITH-CAUTION** and found a real defect my own sweep had missed: `collaboration-coach.md` (symlinked into 21 projects) and `session-feedback-collector.md` (14) were repointed at the run manifest, but `positioning-research` runs a **forked** `wrap-session.md` that writes no manifest and has no `logs/runs/` — its coaching signal would have silently gone to zero. Worse, `research-workflow`'s `shared-manifest.json` classes `wrap-session` as `"local"`, so **every** template-deployed project reproduces that fork by design. Fixed structurally: all four readers now fall back to the note's file blocks when no manifest exists.
+
+**The shape of it.** Four of RR-03's sessions were spent on a blocker that did not exist. The one gate nearly skipped is the one that found a real bug. The lesson is neither "more gates" nor "fewer gates" — it is the report's own operating rule: gate on evidence, not on ceremony.
+
+**Alternatives considered.** (a) Sync `positioning-research` to canonical — rejected: touches another project, needs its own gate, and leaves every *future* template-deployed project broken. (b) Accept the degraded signal — rejected: silent, and it degrades the exact instrument meant to observe session quality.
+
+**Also decided (routine).** No mission contract was created for the RR programme. The operator initially asked for one; the report explicitly retires the mission contract as part of the W3.2 machinery. The conflict was surfaced, and the operator's direction was to execute the report as written instead. The superseded `w32-migration-execution` mission was archived to `logs/missions/archive/`.
+
+**Decided by:** Operator (risk-check mandate), on a caught omission during RR-03 execution.
