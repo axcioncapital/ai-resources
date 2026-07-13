@@ -577,3 +577,32 @@ Secondary, contained: the `check-foreign-staging.sh` tripwire **blocked the firs
 **Mandate deviation — operator-directed, recorded plainly.** The session opened as the RR-04 worktree pilot. During `/prime` I surfaced a defect in the concurrent-session liveness oracle; the operator replied **"fix it"**, which redirected the session. **The worktree pilot did NOT run.** `/new-worktree-session` has still never been executed and **RR-04 remains open** — do not let this session's note read as if it closed. The pilot's one finding stands and is carried forward: the command is `disable-model-invocation: true`, so only the operator can invoke it (type `/new-worktree-session lean-repo` on its own line). The `Files in scope` bullet above was rewritten from `(inferred)` to the truth once the real work was known.
 
 RR-04 worktree pilot (redirected): the pilot's `/prime` surfaced a false "concurrent session is live" warning; on operator direction the session fixed the underlying liveness-oracle defect instead of running the pilot.
+
+### Summary
+
+Opened as the RR-04 worktree pilot; `/prime` false-fired a "concurrent session is live" warning; the operator said "fix it"; the session became a fix for that defect and only returned to the pilot at the end. **Both landed.**
+
+**The fix.** The concurrent-session liveness oracle was structurally unreliable: teardown of the per-id marker lived only in `/wrap-session` Step 13 — the final action of a ~300-line command, after the commit — and was simply not being executed (of today's three wrapped sessions, only S2 ran it). Wrapped sessions therefore looked live, false-firing the same-checkout warning on every second-or-later session of any day. Teardown moved from **model-remembered to harness-enforced**: a new user-level `SessionEnd` hook (`~/.claude/hooks/cleanup-session-marker.sh`) now removes the marker whenever a session ends, in every repo. Six safety cases tested before wiring (valid / empty-id / both-sources-empty / traversal-id / no-`logs/`-dir / env-fallback).
+
+**RR-04 is CLOSED — the pilot ran and produced a real result.** `/new-worktree-session lean-repo` created `ai-resources-lean-repo` on `session/2026-07-13-lean-repo` and opened a VS Code window on it (operator confirmed). **The finding: `code` is NOT on this machine's PATH — tier 1 of the command's open-in-VS-Code chain fails.** It opened only via the tier-2 bundled-binary fallback. Written the obvious way (`code -n "$dir"`), the command would have shipped inert — the exact failure mode of `cc-worktree.sh` (2026-06-10). The fallback chain is load-bearing and is now proven. `/lean-repo` is running in that worktree as a separate session.
+
+### Decisions Made
+
+- **`"model": "opus[1m]"` in `~/.claude/settings.json` — DECLINED by the operator ("forget this one"). The field stays,** despite being a live violation of workspace `CLAUDE.md`'s "non-negotiable" no-model-field rule. Recorded as known-and-accepted in `improvement-log.md` so future audits close it by pointing there rather than re-escalating. Consequence noted once: if `/model` ever fails to stick mid-session, that field is the first suspect.
+- **The two dead `detect-concurrent-session.sh` project copies deleted** (operator-approved). Committed in their own repos (both local-only, no remote).
+- **User-level was chosen for the `SessionEnd` hook** over ai-resources-only and template+per-project. `/blindspot-scan` established that `prime.md` is symlinked into every project, so an ai-resources-level fix would have closed the bug in one repo and been recorded as closing the class.
+
+### Risky actions
+
+**I logged a false finding and caught it only by trying to implement it.** I claimed the concurrency hook was unregistered in two projects — having grepped only the *project* and *repo* settings layers. It is registered at the **user** layer, by absolute path, and has been live in those projects all along. `/blindspot-scan` and `/risk-check` both passed the claim through, because both reasoned from the same incomplete inventory I gave them. **A gate cannot catch a search space you did not look in.** Retracted in place (commit `9417fc7`) rather than quietly deleted. Rule now in the doc: to ask "is this wired?", enumerate **all four** settings layers.
+
+### Open Questions
+
+- **The operator called out, mid-session, that these sessions "run in a circle" — and he is right.** He asked for one command to be run; four exchanges later this session had shipped two commits of session-machinery, spent a 170k-token review subagent, and still not run the command. The maintenance surface of the session infrastructure now reliably generates its own next task: every session that touches it finds something wrong with it, and fixing that reveals more. The gates are individually correct and collectively turn every small request into a large one. **This is the same diagnosis the repo-redesign report already made about W3.2 — and this session added to the machinery anyway.** Not resolved. It belongs to `/lean-repo` (now running) and should be the next real decision, not another audit.
+
+### Next Steps
+
+- **`/lean-repo` is running in the `ai-resources-lean-repo` worktree.** Its report lands at `audits/lean-repo-2026-07-13.md` on branch `session/2026-07-13-lean-repo`. Merge that branch back to `main`, then tear the worktree down (`git worktree remove ../ai-resources-lean-repo` + `git branch -d session/2026-07-13-lean-repo`).
+- **Verify the new `SessionEnd` hook actually fired** once a session has ended after a CLI restart: `tail ~/.claude/hooks/cleanup-session-marker.log` should show a `REMOVED` line. `SKIP`/`NOOP` means the payload schema differs from the assumption — the hook fails safe and says so rather than deleting the wrong file. (Settings load at session start, so it may not be active for the session that wrote it.)
+- **RR-05** — adopt the inflow rule once `/lean-repo`'s report is in. This is the item that speaks to the circle.
+- The new worktree folder is not in the workspace root's `.gitignore`, so it shows as untracked there until removed. Cosmetic; deliberately not fixed.
