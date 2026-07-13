@@ -161,10 +161,25 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 
    `next-up.md` is **not** a universal file — it exists in some project log directories and is absent in others. `/prime` does not create it. If the file is absent, skip silently; the menu falls back to the still-open Next Steps from step 1a plus the urgent items from step 3. An absent or empty `next-up.md` is normal, not an error.
 
-3. **Scan for urgent problems.** Read `logs/friction-log.md` and `logs/improvement-log.md` if they exist. Read each file **once** and apply the HIGH/urgent filter in-context — do not issue multiple `grep` passes over the same file. Collect only **unresolved HIGH / urgent** items:
-   - Include an item only if its text carries a HIGH-severity marker (`HIGH`, `urgent`, or `do-now` attached to a HIGH item).
-   - Exclude anything marked `LOW` or `MED`, and exclude entries whose status is `resolved`, `applied`, or `verified`.
-   - If neither file exists, skip silently.
+3. **Scan for urgent problems — bounded scan, NEVER a full read.** Collect only **unresolved HIGH / urgent** items from `logs/friction-log.md` and `logs/improvement-log.md`.
+
+   **Do NOT `Read` either file.** They are long (~400 L and ~650 L, and both grow monotonically) and a full read of the pair cost ~50–60k tokens at *every* orientation in *every* project — a defect named in five consecutive `usage-log` telemetry entries before it was fixed (2026-07-13; see `logs/improvement-log.md` of that date). The `decisions.md` pre-fetch in Step 1 is already bounded; this step now matches it. A future edit that "simplifies" this back into a `Read` re-opens the single most expensive recurring leak in the harness — do not.
+
+   Issue exactly these two bounded scans:
+
+   ```
+   Bash(grep -nE -B6 "^- \*\*Severity:\*\* *(high|HIGH|medium-high|critical|urgent)" logs/improvement-log.md)
+   Bash(grep -nE "HIGH|urgent|do-now" logs/friction-log.md | grep -viE "resolved|verified|shipped|archived|declined" | head -n 40)
+   ```
+
+   The two files have different shapes, so the two scans do different jobs:
+   - **`improvement-log.md` is schema'd** (`### {date} — {title}` / `- **Status:**` / `- **Severity:**`). The `-B6` window is sized to carry each severity hit's **header and status lines** back with it — that is what makes the filter below applicable without a second read. Do not narrow it: at `-B4` the header is lost on entries whose status runs to multiple lines.
+   - **`friction-log.md` has no severity field** — its severity words are free text inside prose bullets, and its resolution stamps (`— **Resolved:**`, `[FADING-GATE] verified`) sit on the *same* line as the finding, which is why the same-line `grep -v` works. Treat its hits as **candidates to judge, not findings**: incidental matches are expected (a shell variable named `HIGH`, a quoted phrase), and they are cheap to discard in-context because only the matching lines are returned.
+
+   Then apply the filter to the returned lines only:
+   - Include an item only if it carries a HIGH-severity marker (`HIGH`, `urgent`, `critical`, or `do-now` attached to a HIGH item).
+   - Exclude anything marked `LOW` or `MED`, and exclude entries whose status is `resolved`, `applied`, `verified`, or operator-`DECLINED`.
+   - If either file does not exist, its scan returns nothing — skip silently.
 
    Each surviving item becomes an **urgent** menu candidate for step 5.
 

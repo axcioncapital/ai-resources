@@ -521,3 +521,12 @@ Landed the `/lean-repo` worktree, then — on operator direction ("fix 1") — f
 - **Does the operator accept retiring `/lean-repo`?** Its own Bucket-D verdict recommends it (the lens is real; the command is not viable — no invocation path, excluded from distribution). M-1 must land first, or the lens is lost with the component. Carried from S5; a live decision, not a fait accompli.
 - **`backup-session-plan.sh`: wire it or delete it?** Registered in **no** settings layer anywhere, while its own header claims it is wired. Binary; ambiguity is the only option strictly worse than both. Carried from S5.
 - **The "sessions run in a circle" concern (S4) — this session is both an instance and a counter-example.** The operator asked for a merge and got a merge *plus* a structural fix to the session machinery. But the fix closed a real defect found in flight, gated and verified, rather than adding machinery for its own sake — and the defect would have silently corrupted the session record on the *next* worktree session. Worth continuing to watch; not resolved.
+
+## 2026-07-13 — Session S7
+
+**Mandate:** Replace `/prime` Step 3's two full-file Reads of `logs/friction-log.md` and `logs/improvement-log.md` with a bounded grep-for-open-status + `tail`, matching how `logs/decisions.md` is already handled in the same step — done when: `prime.md` Step 3 issues no full `Read` of either log, the fork enumeration confirms no other real (non-stub) copy carries a Step 3 needing the same edit, and the 2026-07-13 HIGH improvement-log entry reads applied + Verified with the change committed
+- Out of scope: the 24 symlinked copies (they inherit the fix) and the 2 stub forks (no Step 3); any Step 3 behaviour beyond read-bounding — the HIGH/urgent filter itself is not rewritten
+- Files in scope: ai-resources/.claude/commands/prime.md; logs/improvement-log.md
+- Stop if: the fork enumeration surfaces a real (non-stub) `prime.md` copy that DOES carry Step 3 — surface it, do not silently edit or skip it
+
+Fix `/prime` Step 3: replace the two full-file Reads of `friction-log.md` and `improvement-log.md` with a bounded grep-for-open-status + tail, matching how `decisions.md` is already handled in the same step.
