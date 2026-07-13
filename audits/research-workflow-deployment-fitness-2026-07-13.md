@@ -137,3 +137,26 @@ These must NOT be generalized into the canonical workflow. Proper home in parent
 ---
 
 *Method note: five read-only subagents traced the programme contract through the executing files (commands, skills, agents, hooks, settings — not summary docs); the main session independently spot-verified the verdict-driving claims (F-1 paths, F-2/F-14 caps, F-4 gitignore) by direct read. Full evidence: `audits/working/research-workflow-fitness/00–05`.*
+
+---
+
+## 7. Post-audit triage addendum (2026-07-13, same session)
+
+The operator submitted an external critical review; every checkable claim in it was verified against the files and the triage below is now the **governing state**. Sections 1–6 above stand unchanged as the original record.
+
+**Verified corrections to the original findings:**
+- **F-2/C-2 overstated.** `research-structure-creator/SKILL.md:121–134` admits sections owning zero reader questions (Support / Future-State), so a 7-section architecture is reachable without a canonical build; `run-report.md` Step 4.1.6 gates the architecture at the operator. C-2 becomes **conditional** — build declared-outline mode only if pilots show repeated architecture drift.
+- **F-3/C-3 conflated two things.** An evidenced negative ("subsector unattractive") already builds from SUPPORTED claims about weak activity/economics; genuine absence-of-evidence should stay cautious, which matches §5.5's actual wording. A new permission class would touch several downstream skills — not the "smallest remedy" claimed. Downgraded to a **trigger-gated watch**: if Phase F BLOCKs an honest negative in a pilot, log it; second occurrence reopens the thread. The documented `OPERATOR-OVERRIDE` (run-sufficiency.md §Operator-override) is the interim path.
+- **F-4/D-1 false for this environment.** `~/.config/git/ignore` line 1 (`**/.claude/settings.local.json`) covers every repo on this machine — verified via `git check-ignore -v`. The generic portability defect stands; the "every fresh deploy commits it" claim does not hold here. Deferred to the first fix batch (one-line fix; `logs/scratchpads/` ride-along dropped).
+- **F-10/D-3 was more serious AND the audit's remedy was wrong.** All 65 broad-only placeholders are template-internal (7 template/config files) and must NOT be filled at deploy; widening the Step-5 regex would demand them prematurely and Step 6/7 could sed-corrupt the `.template.md` shapes. Step 7's existing leftover check (`grep -r '{{'`) already hits 6 template files today. Corrected remedy: **explicit deploy-time placeholder list + exclude `*.template.md` and later-stage files from replacement and zero-leftover validation** (this also captures `{{CONFIDENTIAL_IDENTIFIER_N}}` in CLAUDE.md, a genuine deploy-time placeholder the narrow pattern misses).
+- **C-4 deferred with a written-trigger condition.** Manual `/verify-chapter` before KB approval / external reuse is acceptable for the pilot **only as a written step** in the pilot project's gate checklist — not a remembered one (memory-dependent gates are this workspace's most-documented failure mode). Canonical wiring stays a mission thread.
+- **F-5 resolved: option (a).** Manual Stage-2 execution model confirmed for pilot 1; programme pack §6 wording to be corrected to match the runtime. C-5 (Stage-2 automation) is not built.
+- **F-12:** accept the harmless CLEARED-WITH-CAVEATS noise for the pilot; no >1.0 threshold hack as standing config; presence-gate stays a low-priority thread.
+
+**Revised required-before-deployment list (supersedes §4):**
+1. **C-1 — align the two Pass-3 skill input paths** to `analysis/cluster-memos/{section}/` (canonical; 2 files; acceptance test unchanged).
+2. **D-3′ — deployment placeholder scoping** per the corrected remedy above (deployment-command; acceptance: fresh deploy fills only deploy-time placeholders, `.template.md` shapes survive byte-identical, leftover check passes).
+
+**Before research begins (project-local, written into the pilot project):** scoping preamble + §4.2 similarity test in the task plan; 7-section checklist enforced at the architecture gate; ≥1 explicit disconfirmation question per unit; manual `/verify-chapter` step in the pre-KB gate checklist; §8.5-consistent evidence-calibration note; manual research operating model recorded (Claude plans/extracts/adjudicates/writes; operator runs external research sessions).
+
+**Everything else** moves to the follow-up mission as deferred threads with named triggers (F-7 before research unit 2; C-2/C-3/F-14 evidence-gated on pilot signals; D-1, D-2, python3 guard, C-4 wiring, F-11, F-13, F-12 as batched cleanups).
