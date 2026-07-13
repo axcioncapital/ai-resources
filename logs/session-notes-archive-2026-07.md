@@ -912,3 +912,121 @@ None. Working tree verified clean (`git status -sb`); no foreign uncommitted con
 None.
 
 ---
+## 2026-07-09 (S3) — Preserved strategic-os + management-os into a context pack; abandoned the consolidation migration
+
+> Session marker read `2026-07-09 S2`, but that number belongs to the F1/PJ mission session above (commit `a8b5902`). This session ran no `/prime` (`PRIME_RAN=0`, no per-id marker), so it is the third distinct session today and is logged as **S3**. No mandate block exists for it — the work was operator-directed from a `/clarify`.
+
+### Summary
+
+Built `artifacts/merged-os-context/` — a durable, tracked context pack preserving both `projects/strategic-os/` and `projects/management-os/` (verbatim content, five synthesized briefing docs, full git history as bundles) so both can be retired and a new merged strategy+operations project built from clean inputs. The session's first substantive act was a framing correction: **the consolidation migration never executed.** No file ever moved; Stage 3 was cleared by a 4th `/risk-check` pass and deliberately never started. The operator's "the merging didn't work very well" described the *planning* (four consecutive RECONSIDER verdicts), not a damaged repo. Preservation surfaced three items that deletion would have destroyed — `management-os` had never been pushed, `strategic-os` held a `git stash`, and 22 files were untracked — plus two canonical contract documents trapped inside `strategic-os` that shared workspace infrastructure depends on.
+
+### Files Created
+
+- `artifacts/merged-os-context/README.md` — what the pack is, how to consume it, the three near-losses
+- `artifacts/merged-os-context/BRIEFING.md` — what each project was, its real state, why the merge was wanted, why it stalled
+- `artifacts/merged-os-context/DECISIONS.md` — 20 decisions consolidated from three ledgers with provenance + LIVE/SUPERSEDED/DEAD status
+- `artifacts/merged-os-context/CARRY-FORWARD.md` — Part 1 blocks retirement, Part 2 blocks design
+- `artifacts/merged-os-context/INVENTORY.md` — copy manifest; contract is "every real file copied or listed as excluded, no third category"
+- `artifacts/merged-os-context/strategic-os/` — 105 real files (no symlinks, no `.git`)
+- `artifacts/merged-os-context/management-os/` — 34 real files
+- `artifacts/merged-os-context/strategic-os/logs/STASH-uncommitted-session-notes.md` — content recovered from `refs/stash`
+- `artifacts/merged-os-context/git-bundles/{strategic-os,management-os,kb-strategic-os}.bundle` — 57 / 5 / 10 commits
+- `logs/scratchpads/2026-07-09-16-30-scratchpad.md` — pre-closeout continuity checkpoint
+
+### Files Modified
+
+- `docs/repo-architecture.md` — top-level layout was missing **both** `artifacts/` (tracked) and `archive/` (gitignored, load-bearing for `/archive-project`); added both, plus a canonical home for the project-retirement context-pack artifact type
+- `logs/decisions.md` — logged the consolidation-abandon decision and its four discovery findings
+- (other repos) `projects/strategic-os` `48355dd`, `projects/management-os` `2e2d617` — untracked work committed; `knowledge-bases/strategic-os` `f8af64f` — rebased onto remote
+
+### Decisions Made
+
+**Operator-directed** (via `/clarify` → four-question `AskUserQuestion` gate):
+1. Deletion scope = the two `projects/` folders only; the `knowledge-bases/strategic-os/` vault survives.
+2. Archive form = verbatim files **+** written briefing (not either alone).
+3. Git history = push all three repos, then `git bundle` each into the pack.
+4. `ai-strategy/` = archive it and state in writing that it belongs in `ai-resources/`; **move nothing** this session.
+5. Push gate = "Yes, push all five."
+
+**Claude judgment, surfaced inline:**
+- Placement → `artifacts/merged-os-context/`. Rejected `archive/` despite better semantic adjacency: it is gitignored (`.gitignore:41`) and a `!` negation cannot rescue a child of an excluded directory, so a pack there would never leave the laptop.
+- Retirement path → `/archive-project` (moves with `.git` intact, writes a restore manifest), never `rm -rf`.
+- Copy via `rsync -a --no-links`, never `cp -r` — the latter dereferences symlinks and would inline ~230 shared `ai-resources` command files.
+
+**QC fixes** (separate): six findings from an independent `qc-reviewer` pass — one abridged quote labelled "verbatim", a wrong entry count, a missing line citation, an unfair "the plan under-counted" framing, two trimmed CLAUDE.md quotes, and a commit-count error (`management-os` has three consolidation commits, not four). All fixed before commit.
+
+### Risky actions
+
+Four, none of which landed as harm — but one near-miss is load-bearing:
+1. **Reported repo state without `git fetch` first**, violating the workspace repo-status rule. Consequence: I asserted in **four** documents that the frameworks KB was never filled. It *was* — 5 canonical notes, ~695 lines, living on the vault's remote while the local clone sat 5 commits behind with no `frameworks/` folder at all. **The error was caught by a rejected `git push`, not by any gate.** Had the push been declined, a durable archival artifact would have shipped a false claim about the operator's own work, and `kb-strategic-os.bundle` would have silently omitted the content. Repo integrated (`pull --rebase`, clean), bundle regenerated 5 → 10 commits, all four docs corrected, lesson recorded inside the pack.
+2. Pushed to five remotes — gated and operator-confirmed, per the push rule. `management-os` pushed for the first time ever (`* [new branch]`).
+3. `git pull --rebase` on `kb-strategic-os` rewrote one **unpushed** local commit. Safe by construction; no force push. Verified disjoint file sets before rebasing.
+4. A `rm -rf` inside a scratch verification command was denied by the deny list. The guard worked as designed; command reissued without it.
+
+### Next Steps
+
+- **Build the new merged project:** feed `artifacts/merged-os-context/BRIEFING.md` + `DECISIONS.md` + `CARRY-FORWARD.md` into `/scope-project`.
+- **Before retiring either project** (`CARRY-FORWARD.md` Part 1): graduate `docs/project-state-workflow-spec.md` + `docs/project-context-snapshot-prompt.md` to `ai-resources/docs/` and re-point three citations; graduate `ai-strategy/` (14 files) to `ai-resources/`. Each needs its own `/placement` + `/risk-check` — neither is safe as a side-effect of archiving.
+- **Re-run the grep, never a stored count:** `grep -rln "projects/strategic-os" ai-resources/.claude/ ai-resources/docs/` returns six files; `refresh-project-state.md` matches at two lines (9 and 33).
+- **Retire via `/archive-project`**, never `rm -rf`.
+
+### Open Questions
+
+- The `PreToolUse[Bash]` decision-block hook remains unbuilt. It is the only real closure of the shell-write vector into protected strategy state, and it must exempt `/promote-to-live`'s `cat` heredoc or it breaks the one sanctioned writer. Deferred across three sessions now — deferred, not forgotten.
+- The frameworks KB being *live* (5 canonical notes, gate fires) changes the decision-support calculus for the new project: query the vault, do not rebuild a stub framework list.
+
+---
+
+## 2026-07-12 — Session S1
+**Mandate:** Implement W3.2 roadmap item R3 (durable run-manifest + slim wrap note) per its SO-cleared packet — start-stub at mandate confirmation on every session-entry path, running `files_changed` updates, close-and-schema-validate at wrap with a loud abort on mismatch, and the wrap note cut from 11 sections to 5 — done when: `logs/runs/{date}-{marker}.json` is written and closed by a real session, the negative test (malformed manifest) produces a loud abort rather than a silent pass, the wrap-note template renders 5 sections, and the R3 packet + remediation-register rows read verified.
+- Out of scope: PJ (propagation join) and R4 (incident wrap-gate) — separate packets that consume this manifest; PJ is dropped. RT1 grant ledger, permissions, hooks, settings. Other durable-state moves (findings sidecars, backlog index — M-C5).
+- Files in scope: (inferred) ai-resources/logs/scripts/run-manifest.sh (new), ai-resources/.claude/commands/{session-start,prime,wrap-session}.md, workspace-root .claude/commands/wrap-session.md, projects/axcion-ai-system-redesign/output/implementation-prep/packets/R3-run-manifest.md, projects/axcion-ai-system-redesign/output/implementation-prep/remediation-register.md
+- Stop if: /risk-check returns RECONSIDER or NO-GO on the core-command edits (packet §7 flags this as a conscious judgment call — R3 changes core-command behaviour and introduces shared durable state)
+- Allowed inputs: projects/axcion-ai-system-redesign/output/implementation-prep/packets/R3-run-manifest.md, ai-resources/docs/spine-schemas.md, ai-resources/.claude/commands/wrap-session.md, ai-resources/.claude/commands/session-start.md, ai-resources/.claude/commands/prime.md, ai-resources/logs/scripts/, workspace-root .claude/commands/wrap-session.md
+- Required outputs: ai-resources/logs/scripts/run-manifest.sh, edits to ai-resources/.claude/commands/wrap-session.md + session-start.md + prime.md, workspace-root wrap-session.md mirror, updated R3 packet gate/verification sections, updated remediation-register R3 row
+- Mission: w32-migration-execution
+
+Implement W3.2 R3 (durable run-manifest + slim wrap note) per `packets/R3-run-manifest.md`.
+
+### Summary
+Executed W3.2 R3 **Pass 1** — the durable run-manifest. Every session now writes a start-stub at mandate confirmation (`logs/runs/{date}-{marker}.json`), maintains `files_changed` running, and closes with an **advisory** schema validation at wrap. The session's defining event was **not** building it: `/risk-check` returned **RECONSIDER** and caught that the R3 packet's central justification was false. The packet said cut the wrap note "11 sections → 5" because "the retired sections' load-bearing content already lives in the manifest" — but the "11" is a **phantom** (the note has been 8 blocks since the 2026-07-04 leanness refactor; three of its sections are opt-in and fire in ~0–13% of sessions), and those sections have **no field** in the R1 schema, so retiring them would have silently broken `/friday-checkup`'s Weekly Session Value Review and the `session-feedback-collector`. An SO consult (mission non-negotiable) converged independently and supplied the cheaper route: the wanted 5-block note is reachable **for free** via a 3-section cut, with zero kernel drift. Scope was redesigned, not overridden (`DR-8` — a RECONSIDER is binding). R3 split into Pass 1 (shipped) / Pass 2 (open, gated).
+
+### Files Created
+- `ai-resources/logs/scripts/run-manifest.sh` — the artifact: `start` / `update` / `close` / `validate`. Self-resolves date+marker from the marker oracle.
+- `ai-resources/logs/scripts/run-manifest.test.sh` — durable regression suite, **24/24** (level 1 + 2, the mandatory floor for executable surfaces).
+- `ai-resources/logs/runs/2026-07-12-S1.json` — this session's live manifest (first real one).
+- `ai-resources/audits/risk-checks/2026-07-12-w32-r3-durable-run-manifest-slim-wrap-note.md` — the RECONSIDER report.
+- `projects/axcion-ai-system-owner/output/consultations/consult-2026-07-12-r1-schema-extension-r3-slim-wrap.md` — SO advisory.
+- `ai-resources/logs/session-plan-2026-07-12-S1.md`, `logs/scratchpads/2026-07-12-S1-r3-pass1-scratchpad.md`.
+
+### Files Modified
+- `ai-resources/.claude/commands/session-start.md` — new Step 3.5 (start-stub write).
+- `ai-resources/.claude/commands/prime.md` — new Step 7.5 in the 8c auto-mode block (auto-mode sessions were otherwise invisible to crash detection).
+- `ai-resources/.claude/commands/wrap-session.md` — new Step 12d (advisory close/validate) + manifest added to the always-staged list.
+- `.claude/commands/wrap-session.md` (workspace root) — mirror Step 4.7.
+- `ai-resources/docs/spine-schemas.md` — §5 failure-taxonomy **wire form** pinned (was defined only inside the validator; R4 would have emitted `confidentiality/disclosure` and been rejected).
+- `projects/axcion-ai-system-redesign/.../packets/R3-run-manifest.md` + `remediation-register.md` — currency correction + Pass 1 `verified`.
+- `ai-resources/logs/missions/w32-migration-execution.md` — R1 + R3-Pass-1 threads closed (R1's checkbox had lagged its work since 2026-07-09).
+- `ai-resources/logs/decisions.md`, `logs/session-notes.md`, `logs/session-notes-archive-2026-07.md` (archive: 7 entries rotated, 10 kept).
+
+### Decisions Made
+- **Do not extend the R1 kernel doc.** Operator initially chose to extend it to hit the packet's literal target — but the target turned out reachable for free, so the extension lost its purpose. Also fails `DR-7`/`AP-7`: no consumer reads the proposed fields (R4/M-D2 unbuilt, PJ dropped). `execution` fails hardest — its only reader today is the operator in chat, so JSON-ifying it would *remove* its only reader.
+- **Split R3 into two passes.** Pass 1 (this session): script + start-stub at both mandate-confirmation points + advisory close. Wrap note untouched. Pass 2 (open): the 3-section cut taking the default note 8 → 5. Gated on the wrap-time close having actually fired on real sessions.
+- **Close/validate is ADVISORY, never blocking.** Absent manifest is a *routine* path (`/friday-checkup` with no `/prime`, `/clear`-resumed sessions); only present-and-malformed aborts loudly. Blocking commits on a substrate nothing reads would be enforcement where `OP-5` calls for advisory.
+- **Route the Session Value Audit's fate to `/implementation-triage`** — 2 firings in 31 sessions. A worth-keeping question, not a migration question; must not be killed by side effect.
+- **QC fixes (independent `qc-reviewer`, AGREE-WITH-FIXES, all 5 applied):** the showstopper — command blocks used `${MARKER}`/`${MISSION_ID}` as shell variables, but each Bash call gets a fresh shell, so they'd expand empty and **the start-stub would never have fired**. Fixed structurally (script self-resolves). Plus `exec bash "$0"` (the bare form silently depended on the execute bit → a valid manifest would have become a loud FALSE failure), the wire-form pin, and the root mirror's silently-dropped `--failure-class`.
+
+### Risky actions
+Two worth naming. **(1)** Resolved an unfinished interactive rebase left over from a prior session (conflict in `logs/session-notes.md` from 2026-07-11). Both conflicting entries were additive and legitimate; kept both, lost nothing — but this was a working-tree recovery on shared state, done before any new work. **(2)** The change edits the three highest-traffic commands in the repo (`/prime`, `/session-start`, `/wrap-session`) — a bug here degrades every future session. Contained by: plan-time `/risk-check` (RECONSIDER → redesign), SO review, 24/24 functional tests, independent `/qc-pass`, and the advisory-never-blocking invariant. **Near-miss worth recording:** without the QC pass, the start-stub would have shipped completely inert — the fixture tests could not see it, because the defect lived in the command *instructions*, not the script.
+
+### End-time /risk-check
+Skipped per the standing skip rule (`feedback_end_time_risk_check_skip`): the plan-time `/risk-check` fired on this exact change class, returned RECONSIDER, and its redesign was fully applied and independently QC'd; the commits shipped exactly the redesigned scope with zero drift. Documented here per the skip rule's requirement.
+
+### Next Steps
+- **Push pending** — 5 commits across 4 repos (ai-resources, workspace root, axcion-ai-system-redesign, axcion-ai-system-owner).
+- **W3.2 R3 Pass 2** — the wrap-note 8→5 cut. **Check the gate first:** confirm real wraps are producing *closed* manifests (`stop_reason`/`outcome` non-null in `logs/runs/*.json`). Do not ship the cut against an unproven close path.
+- **`/implementation-triage` on the Session Value Audit** — 2 firings in 31 sessions; decide its fate on the merits.
+- Telemetry gap persists: the 2026-07-09 session and this one left no `usage-log` entry (bare wraps). Run `/usage-analysis` to backfill, or use `/wrap-session +telemetry`.
+
+### Open Questions
+None blocking. Pass 2's gate is a check, not an unknown — it either passes or it doesn't.
