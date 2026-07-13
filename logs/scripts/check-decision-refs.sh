@@ -43,10 +43,43 @@ while [ -L "$_SELF" ]; do
 done
 SCRIPT_DIR="$(cd -P "$(dirname "$_SELF")" && pwd)"
 
-REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-cd "$REPO_ROOT" || exit 0
-
+# Resolve an explicit manifest argument against the CALLER's cwd, before any cd below.
 MANIFEST="${1:-}"
+if [ -n "$MANIFEST" ]; then
+  case "$MANIFEST" in
+    /*) ;;
+    *)  MANIFEST="$(pwd)/$MANIFEST" ;;
+  esac
+fi
+
+# REPO ROOT COMES FROM THE CALLER, NOT FROM THIS FILE.
+#
+# There is ONE copy of this script (in ai-resources), and EVERY repo's wrap invokes that
+# same copy — `bash "$(dirname "$RM")/check-decision-refs.sh"`. Deriving the repo root from
+# SCRIPT_DIR therefore made the checker always inspect **ai-resources**, whatever repo the
+# caller was in. On 2026-07-13 a project-planning wrap ran concurrently with an ai-resources
+# session: this script read the *ai-resources* session's still-open start-stub (same
+# `2026-07-13 S1` marker, decisions_refs still empty), printed a RELATIVE path, and reported
+# the caller's refs as missing. They were not missing — project-planning's own manifest
+# carried all three, correctly slugged. That false report was written up as bug "P1" and
+# burned ~2 sessions before anyone opened the file.
+#
+# So: walk up from the CALLER's cwd to the nearest ancestor that owns a logs/decisions.md.
+# And print ABSOLUTE paths everywhere below, so "which file did it actually read" is never
+# a guess again. (W3.2 RR-01; rationale in plans/repo-redesign-authoritative-implementation-report.md.)
+REPO_ROOT=""
+d="$(pwd)"
+while [ "$d" != "/" ]; do
+  if [ -f "$d/logs/decisions.md" ]; then REPO_ROOT="$d"; break; fi
+  d="$(dirname "$d")"
+done
+if [ -z "$REPO_ROOT" ]; then
+  echo "REFCHECK: no logs/decisions.md in any ancestor of $(pwd) — nothing to check (advisory)."
+  exit 0
+fi
+cd "$REPO_ROOT" || exit 0
+echo "REFCHECK: repo root ${REPO_ROOT}"
+
 if [ -z "$MANIFEST" ]; then
   # Take BOTH the date and the marker from the marker file — never `date` for the date half.
   # The marker file records the session's OWN date ("2026-07-12 S5"). A session that runs
@@ -65,10 +98,11 @@ if [ -z "$MANIFEST" ]; then
     echo "REFCHECK: no usable session marker — nothing to check (advisory)."
     exit 0
   fi
-  MANIFEST="logs/runs/${SESSION_DATE}-${MARKER}.json"
+  MANIFEST="${REPO_ROOT}/logs/runs/${SESSION_DATE}-${MARKER}.json"
 fi
 
 [ -f "$MANIFEST" ] || { echo "REFCHECK: manifest absent at ${MANIFEST} — nothing to check (advisory)."; exit 0; }
+echo "REFCHECK: manifest ${MANIFEST}"
 
 MANIFEST="$MANIFEST" SCRIPT_DIR="$SCRIPT_DIR" python3 - <<'PY'
 import json, os, re, sys, glob
@@ -133,7 +167,9 @@ for r in refs:
         orphans.append(r)
 
 print(f"\nREFCHECK: {len(refs) - len(orphans)}/{len(refs)} refs resolve "
-      f"({len(known)} headers indexed across {len(sources)} file(s)).")
+      f"({len(known)} headers indexed across {len(sources)} file(s)):")
+for p in sources:
+    print(f"  indexed: {os.path.abspath(p)}")
 
 if orphans:
     print("\nORPHAN refs point at no real decision header. Likely causes:")
