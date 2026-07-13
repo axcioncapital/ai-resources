@@ -103,6 +103,7 @@ Only work that solves a demonstrated problem. New identifiers: this is a new pro
 - **Dependencies.** None. R3 Pass 1 is shipped and proven. **The "P1" blocker does not exist** (see RR-01) — this was established on 2026-07-13 and is not to be re-litigated.
 - **Completion condition.** Neither wrap copy references the deleted headings anywhere; `### Decisions Made` survives in both; no command, agent or doc still requires the removed blocks; a wrap still records the session's file set (in the manifest) and still stages by explicit paths.
 - **Explicit scope limit.** This is a **small implementation change, not another investigation.** It has already consumed four sessions of gate archaeology over a blocker that was imaginary. Ship it in one pass. Do not re-derive its gate.
+  > **"Do not re-derive its gate" means the P1/P2 *prerequisite* — NOT `/risk-check`.** A session executing this item on 2026-07-13 read the line (together with this report's "No approval gates") as waiving the standing risk gate, and was corrected by the operator. `/risk-check` then returned PROCEED-WITH-CAUTION and caught a real defect that session had missed. **This report retires the bespoke packet/register/per-item-approval machinery it created; it has no authority over standing workspace rules** (Autonomy Rule 9) — see line 39. Recorded here because a rule in the decision journal is not read at execution time, and this is where the mistake was made.
 - **Status.** See the Results table.
 - **Commit.** See the Results table.
 

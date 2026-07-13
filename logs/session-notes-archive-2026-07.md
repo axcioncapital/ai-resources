@@ -878,3 +878,37 @@ None irreversible. New doc only (`ai-resources/docs/spine-schemas.md`) — not a
 
 ### Open Questions
 None.
+## 2026-07-09 — Session S2
+
+**Mandate:** Drop roadmap items F1 and PJ from active work — remove both from the mission's Open threads and mark their register rows `dropped` — done when: neither F1 nor PJ appears as a mission open thread, both register rows read `dropped` with a stated reason, and the decision plus its hand-edit exception are logged in `decisions.md`
+- Out of scope: the W3.2 migration roadmap (frozen design record — left untouched); mission threads R1 and R3; the drafted `PJ-propagation-join.md` packet file (retained on disk, not deleted)
+- Files in scope: ai-resources/logs/missions/w32-migration-execution.md, ai-resources/logs/decisions.md, ai-resources/logs/session-notes.md, projects/axcion-ai-system-redesign/output/implementation-prep/remediation-register.md
+- Stop if: (none stated)
+- Mission: w32-migration-execution
+
+Session was originally mandated to author the F1 packet and write the F1 federation-schemas kernel doc. Operator dropped F1 outright, and PJ with it (PJ hard-depends on F1's `canonical_sources` schema). Original mandate superseded; the removal is now the work. Rationale and scope choice recorded in `logs/decisions.md`.
+
+## 2026-07-10 — Closed out /new-project settings-path fix — already completed by settings-path-portability mission
+### Summary
+Resumed the long-paused S1 task (redirect `additionalDirectories` from tracked `settings.json` to per-machine `settings.local.json` across `/new-project`, `/deploy-workflow`, `/permission-sweep`, + docs). Verification against the live files showed the entire intent — including the two consumers the 2026-06-26 `/risk-check` flagged as unscoped (SETUP.md + the RW template placeholder) — was already delivered by the `settings-path-portability` mission (commits `4043345`, `eef6aaa`, `e9977ab`; 2026-06-26/27) and the S4/S6 backlog sessions. No edits made; nothing to land. Session was investigation + close-out only.
+
+### Files Created
+- None.
+
+### Files Modified
+- `logs/session-notes.md` (this note), `logs/decisions.md` (supersession decision).
+
+### Decisions Made
+- **Do not apply this session's planned change-set** — the `/new-project` → `settings.local.json` retarget and all coupled edits are already live via the `settings-path-portability` mission. Re-landing our version would churn correct files and risk regressing the more complete mission work.
+
+### Risky actions
+None. Working tree verified clean (`git status -sb`); no foreign uncommitted content in `logs/session-notes.md` (WT == HEAD).
+
+### Next Steps
+- None for this task — closed as superseded.
+- Unrelated standing item (surfaced 2026-06-26): the stale `session-plan-2026-06-11-S1.md` holds orphaned concurrent-session-coverage content — harmless artifact, no action required.
+
+### Open Questions
+None.
+
+---

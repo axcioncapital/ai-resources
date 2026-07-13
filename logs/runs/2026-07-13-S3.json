@@ -16,8 +16,26 @@
     "subagents": [],
     "tools_notable": []
   },
-  "files_changed": [],
-  "decisions_refs": [],
+  "files_changed": [
+    ".claude/commands/wrap-session.md",
+    "../.claude/commands/wrap-session.md",
+    ".claude/agents/session-feedback-collector.md",
+    ".claude/agents/collaboration-coach.md",
+    "docs/session-value-audit-rubric.md",
+    "docs/commit-discipline.md",
+    "plans/repo-redesign-authoritative-implementation-report.md",
+    "audits/risk-checks/2026-07-13-rr-03-wrap-note-cut-executed.md",
+    "logs/missions/archive/w32-migration-execution.md",
+    "logs/decisions.md",
+    "logs/friction-log.md",
+    "logs/session-notes.md",
+    "logs/usage-log.md",
+    "logs/session-notes-archive-2026-07.md",
+    "logs/decisions-archive-2026-07.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-13-s3-a-plan-may-retire-its-own-gates-it-cannot"
+  ],
   "validation": [],
   "evaluator_findings": {
     "sidecar_refs": [],
@@ -29,8 +47,8 @@
     "subagents": 0,
     "token_estimate": null
   },
-  "stop_reason": null,
-  "outcome": null,
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
   "failure_class": null,
   "incidents_refs": []
 }
