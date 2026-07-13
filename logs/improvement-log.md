@@ -733,6 +733,40 @@ Proposed: make liveness **derivable** (marker mtime freshness, refreshed on the 
 - **Workaround applied this session:** S12 yielded the marker — it re-allocated S11 → S12 (marker files, `session-plan` filename, `run-manifest` filename, and the `session-notes.md` header), leaving S11 to the worktree session that claimed it first and was mid-flight. Deterministic tie-break used: *the session that discovers the collision yields.* That is a convention, not a mechanism — it only works because a human happened to look.
 - **Target files:** `ai-resources/.claude/commands/prime.md` (the marker-allocation block, which appears **three times** — Steps 8a.3.a, 8b.3.a, 8c.3 — and must be edited in lockstep); `ai-resources/docs/session-marker.md` (§ Marker resolution — the canonical contract).
 
+#### ✅ FIXED 2026-07-13 (S13) — with a mutex, not a wider read
+
+**A fourth allocation source (d) was added: a claim directory in the SHARED GIT COMMON DIR** — `$(git rev-parse --path-format=absolute --git-common-dir)/axcion-session-markers/{date}-S{N}/`. All worktrees of a repo share that directory; it is untracked and branch-independent, so **a claim is visible across checkouts without being committed** — which is precisely the blind spot (a)–(c) could not see.
+
+**The claim is atomic, not advisory.** `mkdir` is atomic on POSIX: exactly one caller creates a given directory, every other gets `EEXIST`. So the allocation loop is a **genuine mutex across checkouts**, not merely a narrower race window. This entry's own framing — and `session-marker.md`'s, which called the gap *"unclosable read-side without a shared allocator"* — **was wrong. It was closable.** The doc's warning against a *reservation* scheme was right and is preserved; a claim taken at allocation time by whoever allocates is a different thing from a marker reserved ahead of use.
+
+**Verified by falsification on a real git repo with a real worktree — 12/12, every run under ZSH**, against the block *extracted from `prime.md` itself*, not a draft:
+- Old logic **reproduces the bug**: hands out `S1` while a live worktree session holds an uncommitted `S7`. New logic → `S8`.
+- Works in **both directions** (a run inside the worktree sees main's claims).
+- **Fail-safe holds**: no git repo + marker says `S5` → `S6`, never `S1`.
+- **Mutex holds**: two simultaneous `/prime` runs got distinct markers, not a collision.
+- Stale prior-day claims pruned; cannot inflate today's `N`.
+- A **subdirectory project** gets its own namespace, not a sibling's.
+- The prune's `rm -rf` **cannot escape** the claims dir (sentinels elsewhere in `.git` survive).
+
+**Lockstep:** all 3 blocks in `prime.md` replaced and hash-verified identical (`54972a65f58b`). **A guard in the edit script caught a real mistake mid-flight — there are FOUR `TODAY=` blocks in `prime.md`, not three; the fourth is Step 1a's sibling-count block.** A naive "replace all matches" would have corrupted it. Distribution: 25 of 29 workspace copies are symlinks and inherit the fix for free; 3 are 33-line stubs with no allocator block.
+
+#### ⚠ The end-time `/risk-check` caught a SHIPPING CRASH — read this, it is the most useful thing in this entry
+
+**The first version of this fix passed 7/7 and was wrong.** The end-time gate (`audits/risk-checks/2026-07-13-endtime-prime-allocator-git-common-dir-atomic-claim.md`, PROCEED-WITH-CAUTION) found two real defects that my own harness could not see:
+
+1. **zsh `NOMATCH` — a hard crash on the first `/prime` of every day, in every repo.** The claim scan used a glob (`for d in "$CLAIMS"/${TODAY}-S*`). **The Bash tool's real shell is zsh**, where an *unmatched* glob raises `NOMATCH`: the command errors and **the loop body never runs**. Under bash the pattern survives as a literal and `[ -d ]` skips it harmlessly. So **my harness ran bash, passed, and would have shipped a crash into 25 checkouts.** Reproduced both ways at the gate's prompting: zsh → `no matches found`, body skipped; bash → completes. **Fixed:** `find "$CLAIMS" -mindepth 1 -maxdepth 1 -type d -name "${TODAY}-S*"`. **A green test suite in the wrong shell is not evidence** — the harness now runs every allocator invocation under zsh.
+2. **Claim-namespace over-sharing.** The claim dir was keyed by repo (common dir) alone. But `projects/axcion-website/` is **not its own git repo** — it lives inside the workspace-root repo while keeping its **own** `logs/session-notes.md`, hence its own `S{N}` sequence. It would have shared one claim namespace with unrelated siblings under the same `.git`, inflating its numbering. **Fixed:** the claim path is scoped by `git rev-parse --show-prefix`, so claim namespace == `session-notes.md` scope. Worktrees (empty prefix → `_root`) still share, which is exactly what the mutex requires.
+
+**This is the pattern of the week, and it is now 3-for-3.** S12's plan-time gate caught a fix-plan instruction that would have silently done nothing (`startswith` vs glob). This session's plan-time gate caught a one-sided mutex. This session's *end-time* gate caught a crash that a passing test suite had blessed. **In every case the gate read the artifact, and the artifact disagreed with the claim about it.** The one thing that has never caught a defect in this subsystem is a confident summary of what the code does.
+
+#### ⚠ ACCEPTED GAP — operator call, 2026-07-13 (do not read this as "done everywhere")
+
+**`ai-resources-research-workflow` still runs the OLD allocator**, and will keep allocating blind. Its `prime.md` is a **real file** (not a symlink) on a branch 10 commits behind main — `sha=a0a24de11d16` vs canonical `31fe5952510d`. **It is the only divergent copy in the workspace.**
+
+The mutex therefore protects only the checkouts that *have* it. **This is not a flaw in the mechanism — it is the cost of the mechanism living in a branch-tracked file, and it cannot be fixed from inside `prime.md`.** Operator was offered the rebase and chose to ship without it (`/risk-check` findings R-3 and R-4 were closed first; R-4 resolved *in the design's favour* — per-repo namespace scope is correct by design, since each repo owns its own `session-notes.md`).
+
+**Operational rule, now in `docs/session-marker.md`: refresh a long-lived worktree branch before trusting the mutex across it.** Until `session/2026-07-13-research-workflow` is rebased or closed, a collision with *that* checkout remains possible — and it is the same checkout that produced the S11 collision this entry documents.
+
 ### 2026-07-13 — Parked item id-46 ("axcion-design-studio's 89 commands are COPIES, not symlinks") rests on a false premise
 - **Status:** OPEN — id-46 should be **closed as void**, not executed. Flagged here rather than edited in place, because id-46 is a *parked* item and closing it is a disposition call.
 - **Category:** backlog hygiene / false record

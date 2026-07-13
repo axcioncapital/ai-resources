@@ -54,25 +54,64 @@ Two files, written together by `/prime`. The per-session-id file is the **identi
 
 **Do not confuse this with § Marker resolution below.** *Allocation* chooses a **new** `S{N}` at session start and is performed by `/prime` alone (Steps 8a.3.a / 8b.3.a / 8c.3 — three copies of one block). *Resolution* is how every **other** consumer looks up the marker it was already given. Changing one does not change the other; the three `/prime` copies and this section must stay in lockstep.
 
-**Rule: `N` = 1 + the MAX of three sources. Take the max of all three — never trust one alone.**
+**Rule: `N` = 1 + the MAX of four sources — then CLAIM `N` atomically.** Take the max of all four; never trust one alone. Each sees a different slice of the same namespace.
 
 | # | Source | Sees |
 |---|---|---|
 | (a) | `logs/.session-marker` | this checkout's last allocation |
 | (b) | `logs/session-notes.md`, working tree | headers this checkout has written |
-| (c) | `logs/session-notes.md`, **all refs** (`git grep` over `refs/heads`) | headers a **worktree** session allocated and committed |
+| (c) | `logs/session-notes.md`, **all refs** (`git grep` over `refs/heads`) | headers a **worktree** session allocated and **committed** |
+| (d) | `$(git rev-parse --path-format=absolute --git-common-dir)/axcion-session-markers/{scope}/` | allocations **in flight** in any checkout — committed or not |
 
-**Why (c) exists — and why this is a union, not an if/else chain.** A git worktree is a *separate checkout*. It has its own `logs/.session-marker` (gitignored, never shared) and its own working-tree `session-notes.md`. Both are invisible from the main checkout. So a worktree session allocates from the **same `S{N}` namespace with no shared allocator** — a split-brain counter. Without (c), two checkouts hand out the **same** `S{N}`, and the duplicate `## {date} — Session S{N}` header materialises the instant the branch merges. That breaks the `grep -Fxq "## {date} — Session {MARKER}"` "does my header exist" test relied on by `/prime` 8a, `/session-start` Step 3 and `/session-plan` Step 0 — each would match the *wrong* entry, and a wrap could append its summary under a foreign session's header. It also collides `logs/session-plan-{date}-S{N}.md`.
+**Why (c) exists — and why this is a union, not an if/else chain.** A git worktree is a *separate checkout*. It has its own `logs/.session-marker` (gitignored, never shared) and its own working-tree `session-notes.md`. Both are invisible from the main checkout. So a worktree session allocates from the **same `S{N}` namespace** — a split-brain counter. Without (c), two checkouts hand out the **same** `S{N}`, and the duplicate `## {date} — Session S{N}` header materialises the instant the branch merges. That breaks the `grep -Fxq "## {date} — Session {MARKER}"` "does my header exist" test relied on by `/prime` 8a, `/session-start` Step 3 and `/session-plan` Step 0 — each would match the *wrong* entry, and a wrap could append its summary under a foreign session's header. It also collides `logs/session-plan-{date}-S{N}.md`.
 
-The pre-2026-07-13 logic used (a) with (b) as an *else*-branch fallback, and never looked at (c). It was therefore blind to every worktree session.
+**Real incident (2026-07-13 S6) — closed by (c).** A session opened in the main checkout to merge a worktree branch. The marker file read `S4`; the branch already carried a committed `## 2026-07-13 — Session S5` header. The old rule (`marker + 1`) would have allocated **S5** — an exact duplicate, landing on merge.
 
-**Real incident (2026-07-13 S6).** A session opened in the main checkout to merge a worktree branch. The marker file read `S4`; the branch being merged already carried a committed `## 2026-07-13 — Session S5` header. The old rule (`marker + 1`) would have allocated **S5** — an exact duplicate, landing on merge. Caught by hand, not by the system. Fix verified by execution against a simulated branch: old logic allocates the duplicate; the union rule steps over it.
+### Why (d) exists — the gap (c) could not close
 
-**Do NOT "fix" this by having worktree sessions reserve markers up front.** That reintroduces a shared allocator — the precise coupling worktrees exist to remove — and would need a lock. The branches already *are* the allocation record; (c) simply reads it.
+**(c) sees only what a worktree session has COMMITTED.** An **uncommitted, in-flight** allocation in another checkout is invisible to (a), (b) *and* (c) alike — there is no ref to observe. Until 2026-07-13 this doc called that gap *"unclosable read-side without a shared allocator."* **That was wrong, and it cost a live collision.**
 
-**Known gap (accepted, degrades safe).** (c) sees only what a worktree session has **committed**. Two sessions that `/prime` in different checkouts and neither has committed its header yet can still collide — no ref exists to observe. This is unclosable read-side without a shared allocator, and it is strictly narrower than the bug it replaces (which fired on *every* worktree session whose branch was merged, committed or not). The same-checkout simultaneous-`/prime` race (both read state before either writes) is likewise unchanged and remains cosmetic-for-attribution per § Same-day counter.
+**Real incident (2026-07-13 S11) — the gap firing.** A live session in the `ai-resources-research-workflow` worktree held `S11` (header written, not committed; dirty tree) at the moment a session in the main checkout also allocated `S11`. (c) could not see it. **No gate caught it** — it surfaced only because someone happened to inspect the worktree while verifying an unrelated matter. The discovering session yielded `S11 → S12` by hand. A convention, not a mechanism.
 
-**Cost.** One `git for-each-ref` + one `git grep` over `logs/session-notes.md` per `/prime`. Bounded by branch count (typically 1–2). Read-only; adds no state and no gate. If the repo is not a git repo or the git calls fail, they are suppressed and allocation falls through to (a)+(b) — i.e. exactly the old behaviour.
+**(d) closes it, and the claim is a MUTEX, not a reservation.** The distinction matters, because this doc correctly warns (below) against a reservation scheme:
+
+- The **git common dir** is shared by every worktree of a repo (`git rev-parse --git-common-dir` resolves to the same path from every checkout), is **not tracked** and **not branch-scoped** — so a claim is visible across checkouts *without being committed*, which is precisely the blind spot. It never shows in a diff or `git status`.
+- **`mkdir` is atomic on POSIX.** Exactly one caller can create a given directory; every other gets `EEXIST`. So the claim loop is a genuine mutex — two `/prime` runs firing at the same instant *cannot* both win the same `S{N}`; the loser sees `EEXIST` and takes the next number. This is a real fix, not a narrower race window.
+- **`--path-format=absolute` is REQUIRED.** The bare command returns a **relative** `.git` from a main checkout but an **absolute** path from a worktree. Without the flag it silently resolves against the wrong cwd.
+
+**The `{scope}` segment — why the claim namespace is scoped by `git rev-parse --show-prefix`.** The common dir is per-**repo**, but `S{N}` is per-**session-notes.md**, and those are not always the same thing:
+
+- **Worktrees of one repo** share a common dir *and* sit at the repo root (empty prefix → `_root`). They therefore **share** a claim namespace — which is exactly what the mutex needs, since they also share the `session-notes.md` history that merges between them.
+- **A project that is a plain subdirectory of a repo** — `projects/axcion-website/` is not its own git repo, yet keeps its **own** `logs/session-notes.md` and therefore its own `S{N}` sequence — would otherwise share one claim namespace with every unrelated sibling under the same `.git`, inflating its numbering. Scoping by the repo-relative prefix keeps **claim namespace == `session-notes.md` scope**, which is the invariant that actually matters.
+
+**Implementation constraint — `find`, never a glob (BLOCKING).** The Bash tool's real shell is **zsh**, where an **unmatched glob triggers `NOMATCH`**: the command errors and the loop body never runs. That is precisely the state on the **first `/prime` of every day, in every repo** (claims dir exists, no today-dated entry yet). Under bash the unmatched pattern survives as a literal and `[ -d ]` skips it — so **a bash-only test passes a block that crashes in the real shell.** This shipped once and was caught by the end-time `/risk-check` (2026-07-13). Enumerate claims with `find "$CLAIMS" -mindepth 1 -maxdepth 1 -type d -name "${TODAY}-S*"`. Do not "simplify" it back to a glob. **Test the allocator under zsh, not bash.**
+
+**Still do NOT have worktree sessions reserve markers up front.** That reintroduces a shared *allocator* — the coupling worktrees exist to remove — and needs a lock held across a session's life. (d) is different in kind: the claim is taken **at allocation time, by whoever allocates**, and released never (it is pruned by date). Nothing is held; nothing is reserved ahead.
+
+### ⚠ Known gap (accepted — operator call, 2026-07-13 S13)
+
+**A checkout running an OLD copy of the allocation block neither writes claims nor reads them.** `prime.md` is a **real file** in a worktree (not a symlink), so a worktree on a branch that predates this change **keeps allocating blind**, and the mutex protects only the checkouts that have it.
+
+This is not a flaw in the mechanism — it is the cost of the mechanism living in a **branch-tracked file**. It cannot be fixed from inside `prime.md`.
+
+**Operational rule: refresh (rebase/merge) a long-lived worktree branch before trusting the mutex across it.** As of 2026-07-13, `ai-resources-research-workflow` is exactly such a stale checkout (10 commits behind, real `prime.md`, `sha=a0a24de11d16` vs canonical) and is the **only** divergent copy in the workspace — all 25 other copies are symlinks and inherit the fix.
+
+**Cost.** One `git for-each-ref` + one `git grep`, plus one `git rev-parse`, a directory listing, and one `mkdir` per `/prime`. Bounded by branch count (typically 1–2) and by same-day claim count.
+
+**FAIL-SAFE INVARIANT — load-bearing, do not invert.** `HIGH` is seeded from (a) **before** any scan, and every source below only ever **raises** it. So a git failure, a missing common dir, or `/prime` running outside a git repo degrades to the old marker-file-only behaviour — it can **never** reset `HIGH` to 0 and allocate `S1` over an existing `S5`. Any future edit that scans first and consults the marker file second reintroduces exactly that destructive regression.
+
+**Verification standard (2026-07-13 S13) — BLOCKING, and stricter than it was.** The block ships only against a falsification harness on a **real git repo with a real worktree**, with **every allocator run executed under `zsh`**, and run against the text **extracted from `prime.md` itself** — never against a draft. The harness must prove, at minimum:
+
+1. The **first `/prime` of the day** completes (the zsh `NOMATCH` case).
+2. **Old** logic is *shown* to hand out the colliding marker; **new** logic steps over it.
+3. It works **from the worktree side** too, not just from main.
+4. **Fail-safe:** git broken + marker says `S5` → `S6`, never `S1`.
+5. **Mutex:** two concurrent runs receive **distinct** markers.
+6. Stale prior-day claims are pruned and **cannot inflate** today's `N`.
+7. A **subdirectory project** gets its own namespace, not a sibling's.
+8. The prune's `rm -rf` **cannot escape** the claims directory (sentinel files elsewhere in `.git` survive).
+
+12/12 at ship time. **The first version of this harness ran under bash and passed a block that zsh crashes on.** A green harness in the wrong shell is not evidence.
 
 ---
 

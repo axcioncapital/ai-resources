@@ -278,21 +278,47 @@ Full backlog & inbox: /open-items
 
          ```bash
          TODAY=$(date '+%Y-%m-%d')
-         # Allocate N = 1 + the highest S{N} seen across THREE sources. Take the MAX of all three;
-         # never trust one alone (they see different slices of the same S{N} namespace):
+         # Allocate N = 1 + the highest S{N} seen across FOUR sources, then CLAIM it atomically.
+         # Take the MAX of all four; never trust one alone (each sees a different slice of the
+         # same S{N} namespace):
          #   (a) logs/.session-marker        — this checkout's last allocation.
          #   (b) session-notes.md, worktree  — headers this checkout has written.
-         #   (c) session-notes.md, ALL refs  — headers a WORKTREE session allocated and committed.
-         # (c) is why this is a union and not an if/else chain. A git worktree is a separate
-         # checkout with its own (a) and its own (b) — both invisible from here — so it allocates
-         # from the same S{N} namespace with no shared allocator. Without (c), two checkouts hand
-         # out the SAME S{N}, and the duplicate `## <today> — Session S{N}` header lands the moment
-         # the branch merges, breaking the `grep -Fxq` "does my header exist" check that /prime 8a,
-         # /session-start Step 3 and /session-plan Step 0 all rely on. Real incident: 2026-07-13 S6.
+         #   (c) session-notes.md, ALL refs  — headers a WORKTREE session allocated and COMMITTED.
+         #   (d) the shared claim dir        — allocations IN FLIGHT in any checkout, committed or not.
+         #
+         # (d) is the fix for the defect (a)-(c) cannot see. A git worktree is a separate checkout
+         # with its own (a) and its own (b), and (c) only sees what has been COMMITTED — so an
+         # UNCOMMITTED, in-flight allocation in another checkout is invisible to all three, and two
+         # checkouts hand out the SAME S{N}. The duplicate `## <today> — Session S{N}` header then
+         # lands the moment the branch merges, breaking the `grep -Fxq` "does my header exist" check
+         # that /prime 8a, /session-start Step 3 and /session-plan Step 0 all rely on.
+         # Real incidents: 2026-07-13 S6 (committed-header collision → fixed by (c)) and
+         # 2026-07-13 S11 (uncommitted in-flight collision → (c) did not cover it; S12 yielded by hand).
+         #
+         # CLAIMING IS ATOMIC, NOT ADVISORY. `mkdir` is atomic on POSIX: exactly one caller can create
+         # a given directory, and every other caller gets EEXIST. So the claim loop below is a genuine
+         # mutex across checkouts — not merely a narrower race window. Two /prime runs firing at the
+         # same instant CANNOT both win the same S{N}; the loser sees EEXIST and takes the next number.
+         #
          # Do NOT "fix" this by making worktrees reserve markers up front — that reintroduces the
-         # shared allocator worktrees exist to remove. The branches already ARE the allocation record.
+         # shared allocator worktrees exist to remove. A claim is made at allocation time, by whoever
+         # allocates. Nothing is held; nothing is reserved ahead.
+         #
+         # ⚠ KNOWN GAP, ACCEPTED (operator call, 2026-07-13 S13): a checkout running an OLD copy of
+         # this block neither writes claims nor reads them. `prime.md` is a REAL FILE in a worktree
+         # (not a symlink), so a worktree on a branch predating this change keeps allocating blind, and
+         # the mutex protects only the checkouts that have it. Not a flaw in the mechanism — the cost of
+         # the mechanism living in a branch-tracked file. Refresh (rebase/merge) a long-lived worktree
+         # branch before trusting the mutex across it. See docs/session-marker.md § Known gap.
+         #
+         # FAIL-SAFE INVARIANT — LOAD-BEARING, DO NOT INVERT:
+         # HIGH is seeded from the marker file BEFORE any scan, and every scan below only ever RAISES
+         # it. So a git failure, a missing common dir, or /prime running outside a git repo degrades to
+         # the old marker-file-only behaviour — it can NEVER reset HIGH to 0 and allocate S1 over an
+         # existing S5. Any future edit that scans first and consults the marker file second
+         # reintroduces exactly that destructive regression. (friction-log.md 2026-07-13.)
          HIGH=0
-         if [ -f logs/.session-marker ]; then                         # (a)
+         if [ -f logs/.session-marker ]; then                         # (a) — seeds HIGH. Must stay first.
            PREV=$(cat logs/.session-marker)
            case "$PREV" in
              "${TODAY} S"*) n="${PREV##*S}"
@@ -307,7 +333,54 @@ Full backlog & inbox: /open-items
            case "$n" in ''|*[!0-9]*) continue;; esac
            [ "$n" -gt "$HIGH" ] && HIGH="$n"
          done
-         MARKER="S$((HIGH + 1))"
+         # (d) Shared claim dir. Empty CLAIMS => degrade to (a)-(c) silently and safely (fail-safe).
+         CLAIMS=""
+         GIT_COMMON=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)
+         if [ -n "$GIT_COMMON" ] && [ -d "$GIT_COMMON" ]; then
+           # `--path-format=absolute` is REQUIRED: the bare command returns a RELATIVE `.git` from a
+           # main checkout but an ABSOLUTE path from a worktree. Without it this resolves against the
+           # wrong cwd. (Verified 2026-07-13.)
+           #
+           # SCOPE the namespace by the cwd's path INSIDE the repo. Worktrees of one repo share a common
+           # dir AND sit at the repo root (empty prefix) → they SHARE a claim namespace, which is exactly
+           # what the mutex needs. But a project that is a plain SUBDIRECTORY of a repo — e.g.
+           # projects/axcion-website/, which is NOT its own repo yet keeps its own logs/session-notes.md
+           # and therefore its own S{N} sequence — would otherwise share a claim namespace with unrelated
+           # siblings under the same .git, inflating its S{N}. Scoping keeps namespace == session-notes.
+           SCOPE=$(git rev-parse --show-prefix 2>/dev/null | tr -d '\n' | tr -c 'A-Za-z0-9._-' '-')
+           [ -z "$SCOPE" ] && SCOPE="_root"
+           CLAIMS="$GIT_COMMON/axcion-session-markers/$SCOPE"
+           mkdir -p "$CLAIMS" 2>/dev/null || CLAIMS=""
+         fi
+         if [ -n "$CLAIMS" ]; then
+           # `find`, NOT a glob. The Bash tool's real shell is ZSH, where an UNMATCHED glob triggers
+           # NOMATCH: the command errors and the loop body never runs — which is exactly the state on
+           # the FIRST /prime of every day, in every repo. Under bash the literal survives and `[ -d ]`
+           # skips it, so a bash-only test PASSES while the real shell CRASHES. Verified both ways,
+           # 2026-07-13 (caught by the end-time /risk-check). Do NOT "simplify" this back to a glob.
+           for n in $(find "$CLAIMS" -mindepth 1 -maxdepth 1 -type d -name "${TODAY}-S*" 2>/dev/null \
+                      | sed 's|.*-S||'); do
+             case "$n" in ''|*[!0-9]*) continue;; esac
+             [ "$n" -gt "$HIGH" ] && HIGH="$n"
+           done
+           # Prune claims not dated today (bounded growth). -type d never follows symlinks here, and
+           # -mindepth 1 plus the non-empty CLAIMS guard above make the rm -rf reach nothing outside
+           # this directory.
+           find "$CLAIMS" -mindepth 1 -maxdepth 1 -type d ! -name "${TODAY}-*" -exec rm -rf {} + 2>/dev/null
+         fi
+         # Atomic claim loop. mkdir succeeds for exactly one caller; the loser bumps and retries.
+         N=$((HIGH + 1))
+         while : ; do
+           if [ -z "$CLAIMS" ]; then MARKER="S${N}"; break; fi        # no common dir → no mutex, old behaviour
+           if mkdir "$CLAIMS/${TODAY}-S${N}" 2>/dev/null; then        # ← the atomic step
+             MARKER="S${N}"
+             printf '%s\n' "${CLAUDE_CODE_SESSION_ID:-unknown} $(date '+%H:%M:%S')" \
+               > "$CLAIMS/${TODAY}-S${N}/owner" 2>/dev/null           # debug breadcrumb only; never read for logic
+             break
+           fi
+           N=$((N + 1))
+           if [ "$N" -gt 999 ]; then MARKER="S${N}"; break; fi        # runaway guard — cannot spin forever
+         done
          echo "${TODAY} ${MARKER}" > logs/.session-marker
          # Identity oracle (Option 2′): also write a per-session-id marker file no concurrent /prime can clobber.
          [ -n "${CLAUDE_CODE_SESSION_ID}" ] && echo "${TODAY} ${MARKER}" > "logs/.session-marker-${CLAUDE_CODE_SESSION_ID}"
@@ -355,21 +428,47 @@ Full backlog & inbox: /open-items
 
          ```bash
          TODAY=$(date '+%Y-%m-%d')
-         # Allocate N = 1 + the highest S{N} seen across THREE sources. Take the MAX of all three;
-         # never trust one alone (they see different slices of the same S{N} namespace):
+         # Allocate N = 1 + the highest S{N} seen across FOUR sources, then CLAIM it atomically.
+         # Take the MAX of all four; never trust one alone (each sees a different slice of the
+         # same S{N} namespace):
          #   (a) logs/.session-marker        — this checkout's last allocation.
          #   (b) session-notes.md, worktree  — headers this checkout has written.
-         #   (c) session-notes.md, ALL refs  — headers a WORKTREE session allocated and committed.
-         # (c) is why this is a union and not an if/else chain. A git worktree is a separate
-         # checkout with its own (a) and its own (b) — both invisible from here — so it allocates
-         # from the same S{N} namespace with no shared allocator. Without (c), two checkouts hand
-         # out the SAME S{N}, and the duplicate `## <today> — Session S{N}` header lands the moment
-         # the branch merges, breaking the `grep -Fxq` "does my header exist" check that /prime 8a,
-         # /session-start Step 3 and /session-plan Step 0 all rely on. Real incident: 2026-07-13 S6.
+         #   (c) session-notes.md, ALL refs  — headers a WORKTREE session allocated and COMMITTED.
+         #   (d) the shared claim dir        — allocations IN FLIGHT in any checkout, committed or not.
+         #
+         # (d) is the fix for the defect (a)-(c) cannot see. A git worktree is a separate checkout
+         # with its own (a) and its own (b), and (c) only sees what has been COMMITTED — so an
+         # UNCOMMITTED, in-flight allocation in another checkout is invisible to all three, and two
+         # checkouts hand out the SAME S{N}. The duplicate `## <today> — Session S{N}` header then
+         # lands the moment the branch merges, breaking the `grep -Fxq` "does my header exist" check
+         # that /prime 8a, /session-start Step 3 and /session-plan Step 0 all rely on.
+         # Real incidents: 2026-07-13 S6 (committed-header collision → fixed by (c)) and
+         # 2026-07-13 S11 (uncommitted in-flight collision → (c) did not cover it; S12 yielded by hand).
+         #
+         # CLAIMING IS ATOMIC, NOT ADVISORY. `mkdir` is atomic on POSIX: exactly one caller can create
+         # a given directory, and every other caller gets EEXIST. So the claim loop below is a genuine
+         # mutex across checkouts — not merely a narrower race window. Two /prime runs firing at the
+         # same instant CANNOT both win the same S{N}; the loser sees EEXIST and takes the next number.
+         #
          # Do NOT "fix" this by making worktrees reserve markers up front — that reintroduces the
-         # shared allocator worktrees exist to remove. The branches already ARE the allocation record.
+         # shared allocator worktrees exist to remove. A claim is made at allocation time, by whoever
+         # allocates. Nothing is held; nothing is reserved ahead.
+         #
+         # ⚠ KNOWN GAP, ACCEPTED (operator call, 2026-07-13 S13): a checkout running an OLD copy of
+         # this block neither writes claims nor reads them. `prime.md` is a REAL FILE in a worktree
+         # (not a symlink), so a worktree on a branch predating this change keeps allocating blind, and
+         # the mutex protects only the checkouts that have it. Not a flaw in the mechanism — the cost of
+         # the mechanism living in a branch-tracked file. Refresh (rebase/merge) a long-lived worktree
+         # branch before trusting the mutex across it. See docs/session-marker.md § Known gap.
+         #
+         # FAIL-SAFE INVARIANT — LOAD-BEARING, DO NOT INVERT:
+         # HIGH is seeded from the marker file BEFORE any scan, and every scan below only ever RAISES
+         # it. So a git failure, a missing common dir, or /prime running outside a git repo degrades to
+         # the old marker-file-only behaviour — it can NEVER reset HIGH to 0 and allocate S1 over an
+         # existing S5. Any future edit that scans first and consults the marker file second
+         # reintroduces exactly that destructive regression. (friction-log.md 2026-07-13.)
          HIGH=0
-         if [ -f logs/.session-marker ]; then                         # (a)
+         if [ -f logs/.session-marker ]; then                         # (a) — seeds HIGH. Must stay first.
            PREV=$(cat logs/.session-marker)
            case "$PREV" in
              "${TODAY} S"*) n="${PREV##*S}"
@@ -384,7 +483,54 @@ Full backlog & inbox: /open-items
            case "$n" in ''|*[!0-9]*) continue;; esac
            [ "$n" -gt "$HIGH" ] && HIGH="$n"
          done
-         MARKER="S$((HIGH + 1))"
+         # (d) Shared claim dir. Empty CLAIMS => degrade to (a)-(c) silently and safely (fail-safe).
+         CLAIMS=""
+         GIT_COMMON=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)
+         if [ -n "$GIT_COMMON" ] && [ -d "$GIT_COMMON" ]; then
+           # `--path-format=absolute` is REQUIRED: the bare command returns a RELATIVE `.git` from a
+           # main checkout but an ABSOLUTE path from a worktree. Without it this resolves against the
+           # wrong cwd. (Verified 2026-07-13.)
+           #
+           # SCOPE the namespace by the cwd's path INSIDE the repo. Worktrees of one repo share a common
+           # dir AND sit at the repo root (empty prefix) → they SHARE a claim namespace, which is exactly
+           # what the mutex needs. But a project that is a plain SUBDIRECTORY of a repo — e.g.
+           # projects/axcion-website/, which is NOT its own repo yet keeps its own logs/session-notes.md
+           # and therefore its own S{N} sequence — would otherwise share a claim namespace with unrelated
+           # siblings under the same .git, inflating its S{N}. Scoping keeps namespace == session-notes.
+           SCOPE=$(git rev-parse --show-prefix 2>/dev/null | tr -d '\n' | tr -c 'A-Za-z0-9._-' '-')
+           [ -z "$SCOPE" ] && SCOPE="_root"
+           CLAIMS="$GIT_COMMON/axcion-session-markers/$SCOPE"
+           mkdir -p "$CLAIMS" 2>/dev/null || CLAIMS=""
+         fi
+         if [ -n "$CLAIMS" ]; then
+           # `find`, NOT a glob. The Bash tool's real shell is ZSH, where an UNMATCHED glob triggers
+           # NOMATCH: the command errors and the loop body never runs — which is exactly the state on
+           # the FIRST /prime of every day, in every repo. Under bash the literal survives and `[ -d ]`
+           # skips it, so a bash-only test PASSES while the real shell CRASHES. Verified both ways,
+           # 2026-07-13 (caught by the end-time /risk-check). Do NOT "simplify" this back to a glob.
+           for n in $(find "$CLAIMS" -mindepth 1 -maxdepth 1 -type d -name "${TODAY}-S*" 2>/dev/null \
+                      | sed 's|.*-S||'); do
+             case "$n" in ''|*[!0-9]*) continue;; esac
+             [ "$n" -gt "$HIGH" ] && HIGH="$n"
+           done
+           # Prune claims not dated today (bounded growth). -type d never follows symlinks here, and
+           # -mindepth 1 plus the non-empty CLAIMS guard above make the rm -rf reach nothing outside
+           # this directory.
+           find "$CLAIMS" -mindepth 1 -maxdepth 1 -type d ! -name "${TODAY}-*" -exec rm -rf {} + 2>/dev/null
+         fi
+         # Atomic claim loop. mkdir succeeds for exactly one caller; the loser bumps and retries.
+         N=$((HIGH + 1))
+         while : ; do
+           if [ -z "$CLAIMS" ]; then MARKER="S${N}"; break; fi        # no common dir → no mutex, old behaviour
+           if mkdir "$CLAIMS/${TODAY}-S${N}" 2>/dev/null; then        # ← the atomic step
+             MARKER="S${N}"
+             printf '%s\n' "${CLAUDE_CODE_SESSION_ID:-unknown} $(date '+%H:%M:%S')" \
+               > "$CLAIMS/${TODAY}-S${N}/owner" 2>/dev/null           # debug breadcrumb only; never read for logic
+             break
+           fi
+           N=$((N + 1))
+           if [ "$N" -gt 999 ]; then MARKER="S${N}"; break; fi        # runaway guard — cannot spin forever
+         done
          echo "${TODAY} ${MARKER}" > logs/.session-marker
          # Identity oracle (Option 2′): also write a per-session-id marker file no concurrent /prime can clobber.
          [ -n "${CLAUDE_CODE_SESSION_ID}" ] && echo "${TODAY} ${MARKER}" > "logs/.session-marker-${CLAUDE_CODE_SESSION_ID}"
@@ -448,21 +594,47 @@ Full backlog & inbox: /open-items
 
       ```bash
       TODAY=$(date '+%Y-%m-%d')
-      # Allocate N = 1 + the highest S{N} seen across THREE sources. Take the MAX of all three;
-      # never trust one alone (they see different slices of the same S{N} namespace):
+      # Allocate N = 1 + the highest S{N} seen across FOUR sources, then CLAIM it atomically.
+      # Take the MAX of all four; never trust one alone (each sees a different slice of the
+      # same S{N} namespace):
       #   (a) logs/.session-marker        — this checkout's last allocation.
       #   (b) session-notes.md, worktree  — headers this checkout has written.
-      #   (c) session-notes.md, ALL refs  — headers a WORKTREE session allocated and committed.
-      # (c) is why this is a union and not an if/else chain. A git worktree is a separate
-      # checkout with its own (a) and its own (b) — both invisible from here — so it allocates
-      # from the same S{N} namespace with no shared allocator. Without (c), two checkouts hand
-      # out the SAME S{N}, and the duplicate `## <today> — Session S{N}` header lands the moment
-      # the branch merges, breaking the `grep -Fxq` "does my header exist" check that /prime 8a,
-      # /session-start Step 3 and /session-plan Step 0 all rely on. Real incident: 2026-07-13 S6.
+      #   (c) session-notes.md, ALL refs  — headers a WORKTREE session allocated and COMMITTED.
+      #   (d) the shared claim dir        — allocations IN FLIGHT in any checkout, committed or not.
+      #
+      # (d) is the fix for the defect (a)-(c) cannot see. A git worktree is a separate checkout
+      # with its own (a) and its own (b), and (c) only sees what has been COMMITTED — so an
+      # UNCOMMITTED, in-flight allocation in another checkout is invisible to all three, and two
+      # checkouts hand out the SAME S{N}. The duplicate `## <today> — Session S{N}` header then
+      # lands the moment the branch merges, breaking the `grep -Fxq` "does my header exist" check
+      # that /prime 8a, /session-start Step 3 and /session-plan Step 0 all rely on.
+      # Real incidents: 2026-07-13 S6 (committed-header collision → fixed by (c)) and
+      # 2026-07-13 S11 (uncommitted in-flight collision → (c) did not cover it; S12 yielded by hand).
+      #
+      # CLAIMING IS ATOMIC, NOT ADVISORY. `mkdir` is atomic on POSIX: exactly one caller can create
+      # a given directory, and every other caller gets EEXIST. So the claim loop below is a genuine
+      # mutex across checkouts — not merely a narrower race window. Two /prime runs firing at the
+      # same instant CANNOT both win the same S{N}; the loser sees EEXIST and takes the next number.
+      #
       # Do NOT "fix" this by making worktrees reserve markers up front — that reintroduces the
-      # shared allocator worktrees exist to remove. The branches already ARE the allocation record.
+      # shared allocator worktrees exist to remove. A claim is made at allocation time, by whoever
+      # allocates. Nothing is held; nothing is reserved ahead.
+      #
+      # ⚠ KNOWN GAP, ACCEPTED (operator call, 2026-07-13 S13): a checkout running an OLD copy of
+      # this block neither writes claims nor reads them. `prime.md` is a REAL FILE in a worktree
+      # (not a symlink), so a worktree on a branch predating this change keeps allocating blind, and
+      # the mutex protects only the checkouts that have it. Not a flaw in the mechanism — the cost of
+      # the mechanism living in a branch-tracked file. Refresh (rebase/merge) a long-lived worktree
+      # branch before trusting the mutex across it. See docs/session-marker.md § Known gap.
+      #
+      # FAIL-SAFE INVARIANT — LOAD-BEARING, DO NOT INVERT:
+      # HIGH is seeded from the marker file BEFORE any scan, and every scan below only ever RAISES
+      # it. So a git failure, a missing common dir, or /prime running outside a git repo degrades to
+      # the old marker-file-only behaviour — it can NEVER reset HIGH to 0 and allocate S1 over an
+      # existing S5. Any future edit that scans first and consults the marker file second
+      # reintroduces exactly that destructive regression. (friction-log.md 2026-07-13.)
       HIGH=0
-      if [ -f logs/.session-marker ]; then                         # (a)
+      if [ -f logs/.session-marker ]; then                         # (a) — seeds HIGH. Must stay first.
         PREV=$(cat logs/.session-marker)
         case "$PREV" in
           "${TODAY} S"*) n="${PREV##*S}"
@@ -477,7 +649,54 @@ Full backlog & inbox: /open-items
         case "$n" in ''|*[!0-9]*) continue;; esac
         [ "$n" -gt "$HIGH" ] && HIGH="$n"
       done
-      MARKER="S$((HIGH + 1))"
+      # (d) Shared claim dir. Empty CLAIMS => degrade to (a)-(c) silently and safely (fail-safe).
+      CLAIMS=""
+      GIT_COMMON=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)
+      if [ -n "$GIT_COMMON" ] && [ -d "$GIT_COMMON" ]; then
+        # `--path-format=absolute` is REQUIRED: the bare command returns a RELATIVE `.git` from a
+        # main checkout but an ABSOLUTE path from a worktree. Without it this resolves against the
+        # wrong cwd. (Verified 2026-07-13.)
+        #
+        # SCOPE the namespace by the cwd's path INSIDE the repo. Worktrees of one repo share a common
+        # dir AND sit at the repo root (empty prefix) → they SHARE a claim namespace, which is exactly
+        # what the mutex needs. But a project that is a plain SUBDIRECTORY of a repo — e.g.
+        # projects/axcion-website/, which is NOT its own repo yet keeps its own logs/session-notes.md
+        # and therefore its own S{N} sequence — would otherwise share a claim namespace with unrelated
+        # siblings under the same .git, inflating its S{N}. Scoping keeps namespace == session-notes.
+        SCOPE=$(git rev-parse --show-prefix 2>/dev/null | tr -d '\n' | tr -c 'A-Za-z0-9._-' '-')
+        [ -z "$SCOPE" ] && SCOPE="_root"
+        CLAIMS="$GIT_COMMON/axcion-session-markers/$SCOPE"
+        mkdir -p "$CLAIMS" 2>/dev/null || CLAIMS=""
+      fi
+      if [ -n "$CLAIMS" ]; then
+        # `find`, NOT a glob. The Bash tool's real shell is ZSH, where an UNMATCHED glob triggers
+        # NOMATCH: the command errors and the loop body never runs — which is exactly the state on
+        # the FIRST /prime of every day, in every repo. Under bash the literal survives and `[ -d ]`
+        # skips it, so a bash-only test PASSES while the real shell CRASHES. Verified both ways,
+        # 2026-07-13 (caught by the end-time /risk-check). Do NOT "simplify" this back to a glob.
+        for n in $(find "$CLAIMS" -mindepth 1 -maxdepth 1 -type d -name "${TODAY}-S*" 2>/dev/null \
+                   | sed 's|.*-S||'); do
+          case "$n" in ''|*[!0-9]*) continue;; esac
+          [ "$n" -gt "$HIGH" ] && HIGH="$n"
+        done
+        # Prune claims not dated today (bounded growth). -type d never follows symlinks here, and
+        # -mindepth 1 plus the non-empty CLAIMS guard above make the rm -rf reach nothing outside
+        # this directory.
+        find "$CLAIMS" -mindepth 1 -maxdepth 1 -type d ! -name "${TODAY}-*" -exec rm -rf {} + 2>/dev/null
+      fi
+      # Atomic claim loop. mkdir succeeds for exactly one caller; the loser bumps and retries.
+      N=$((HIGH + 1))
+      while : ; do
+        if [ -z "$CLAIMS" ]; then MARKER="S${N}"; break; fi        # no common dir → no mutex, old behaviour
+        if mkdir "$CLAIMS/${TODAY}-S${N}" 2>/dev/null; then        # ← the atomic step
+          MARKER="S${N}"
+          printf '%s\n' "${CLAUDE_CODE_SESSION_ID:-unknown} $(date '+%H:%M:%S')" \
+            > "$CLAIMS/${TODAY}-S${N}/owner" 2>/dev/null           # debug breadcrumb only; never read for logic
+          break
+        fi
+        N=$((N + 1))
+        if [ "$N" -gt 999 ]; then MARKER="S${N}"; break; fi        # runaway guard — cannot spin forever
+      done
       echo "${TODAY} ${MARKER}" > logs/.session-marker
       # Identity oracle (Option 2′): also write a per-session-id marker file no concurrent /prime can clobber.
       [ -n "${CLAUDE_CODE_SESSION_ID}" ] && echo "${TODAY} ${MARKER}" > "logs/.session-marker-${CLAUDE_CODE_SESSION_ID}"
