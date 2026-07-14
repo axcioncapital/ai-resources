@@ -16,8 +16,26 @@
     "subagents": [],
     "tools_notable": []
   },
-  "files_changed": [],
-  "decisions_refs": [],
+  "files_changed": [
+    ".claude/agents/risk-check-reviewer.md",
+    ".claude/agents/qc-reviewer.md",
+    ".claude/commands/risk-check.md",
+    "logs/missions/research-workflow-deploy-fitness.md",
+    "logs/improvement-log.md",
+    "logs/session-notes.md",
+    "logs/session-plan-2026-07-14-S7.md",
+    "logs/decisions.md",
+    "logs/decisions-archive-2026-07.md",
+    "logs/coaching-data.md",
+    "logs/usage-log.md",
+    "logs/scratchpads/2026-07-14-18-30-scratchpad.md",
+    "logs/runs/2026-07-14-S7.json",
+    "audits/risk-checks/2026-07-14-repo-repair-pilot-v1-require-gate-hook.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-14-s7-the-pilot-s-enforcement-half-was-cut-on-its",
+    "logs/decisions.md#2026-07-14-s7-a-gate-that-grades-an-artifact-cannot-catch-a"
+  ],
   "validation": [],
   "evaluator_findings": {
     "sidecar_refs": [],
@@ -29,8 +47,8 @@
     "subagents": 0,
     "token_estimate": null
   },
-  "stop_reason": null,
-  "outcome": null,
+  "stop_reason": "blocked",
+  "outcome": "PARTIAL",
   "failure_class": null,
   "incidents_refs": []
 }

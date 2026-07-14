@@ -511,3 +511,73 @@ None — read-only investigation; the only writes were to two plan files under `
 - Stop if: REGRESSION TEST A still returns GO after the qc-reviewer edit — the premise check is then words, and the rest of the plan rests on it. Report honestly and stop rather than proceeding.
 - Required outputs: `ai-resources/.claude/hooks/require-gate.sh` (new); `logs/session-plan-2026-07-14-S7.md`
 - Mission: (none — this is repo-harness work, not the research-workflow mission)
+
+### Summary
+
+Implemented the approved repo-repair pilot V1 (`~/.claude/plans/investigate-why-our-recurring-humble-curry.md`) — **Half 1 only**. The plan gates its own construction (*"If the plan cannot pass the gate it installs, the gate does not work"*), and both plan-time gates returned non-GO: `/consult` → **CUT BACK** ("land the two reviewer edits, do not land the hook"), `/risk-check` → **RECONSIDER** (4 High dimensions). So the two reviewer edits landed and the blocking hook did not. **REGRESSION TEST A — the plan's own stop condition — PASSED decisively:** the fixed `qc-reviewer`, dispatched blind against the audit the OLD agent had passed with a `GO`, returned **REVISE**, catching F-1's invented consequence and the F-9/F-13(b) self-contradiction unprompted, plus four further defects. Commit `c3c0334`, unpushed.
+
+Verifying the plan's claims against the files (rather than trusting them) found **five errors in the plan itself** — the failure class the pilot exists to end, committed by the pilot's own author. Two were load-bearing.
+
+### Decisions Made
+
+- **Land Half 1; do NOT land the hook.** Operator-confirmed ("go") after both gates returned non-GO. Not a scope cut for convenience — compliance with `audit-discipline.md`'s verdict semantics (*"RECONSIDER — redesign before proceeding. Do NOT downgrade the verdict to push the change through."*).
+- **The three `risk-check.md` consumer fixes are in scope even though the plan omitted them.** `risk-check.md:93` hard-validates *"six `### Dimension N` subsections (1–6)"* and **aborts** on failure; both agents are symlinked into ~24 checkouts. Shipping Dimension 7 without this breaks `/risk-check` everywhere, immediately. Landing Dimension 7 without its consumer was never an option.
+- **Dimension 7 and the premise check OUTRANK the other dimensions rather than averaging with them.** A High/INCOMPLETE on Problem Reality forces RECONSIDER on its own; an untraced consequence forces REVISE regardless of dims 1–6. Rationale: six clean dimensions outvoting a false premise is *exactly* how the 7-of-8-wrong audit collected a `GO` from `qc-reviewer`. Averaging would have reproduced the defect.
+- **Carved out `risk-check-reviewer`'s "treat the passed inputs as the entire world" line.** That sentence is *why* the agent swallowed premises by design. Without the carve-out (scope, not truth), Dimension 7 was dead on arrival.
+- **The doctrine edits (`protected-zones.md`, `audit-discipline.md`) wait for the hook.** They are the *policy* the hook *enforces*. Landing them alone makes `/risk-check` mandatory on every command/agent edit with no mechanism to enforce it — the cost with none of the protection, and a rule one must remember to obey (the plan's own thesis: *"a rule you must remember to read is not a control; it is a wish"*).
+- **`warn-settings-change.sh` NOT deleted** — logged instead (HIGH, improvement-log). The plan said delete it "when the hook lands"; it did not. Deletion is an operator call (Autonomy Rule #3).
+- **Corrected the audit's false F-13(d) at its source in the live mission file** — it had already propagated into the deferred-cleanup task list, where a future session would have chased it.
+- **End-time `/risk-check` skipped, documented.** Plan-time gate ran and returned RECONSIDER; I complied by cutting the hook, so the executed change set is a strict *subset* of what was reviewed. Drift is bounded downward. Per the standing end-time skip rule.
+
+### Outcome
+
+COMPLETION: PARTIAL
+EXECUTION: ACCEPTABLE
+
+**What was asked but not done:** `require-gate.sh` (not created/wired/tested — a named required output does not exist on disk); the `Files-checked:` footers; the two doctrine edits. **This non-delivery is correct compliance, not a shortfall** — the governing plan gates its own construction, both gates returned non-GO, and `audit-discipline.md` verdict semantics forbid downgrading RECONSIDER to push a change through. The stop condition (Test A returns GO) did **not** fire: Test A **passed**, old GO → new REVISE. **Delivered beyond the plan and necessary:** the three `risk-check.md` consumer fixes — L93 hard-validates six dimensions and *aborts*; both agents are symlinked into ~24 checkouts, so Dimension 7 without this breaks `/risk-check` everywhere.
+
+**Better path (both fair, both mine):**
+- `logs/runs/2026-07-14-S7.json` was staged into the work commit `c3c0334` while still an **empty start-stub** (`files_changed: []` for a 9-file commit). It is the canonical file-evidence record since RR-03 retired the note's file blocks. Closed at wrap, but it should not have shipped empty.
+- The two facts that killed the hook (`warn-settings-change.sh` fail-open; the settings.json scoping gap) were each reachable by a one-line `echo … | bash` and one doc read. **A short claim-re-derivation pass against the plan *before* Stage 0** would have surfaced them ahead of the gates, instead of building the entire session-plan stage order around a design that was already dead.
+
+Confidence: high
+
+### Session Value Audit — 80/20 Review
+
+TYPE: A — High-Leverage Build. Materially improved the two most fanned-out agents in the repo (`qc-reviewer`, `risk-check-reviewer`, ~24 symlinks each) and *proved* the improvement empirically rather than asserting it.
+VALUE: exec=M decision=H risk=H compound=H optime=M
+SCORE: 9/10 — three files landed and live across ~24 checkouts, a regression test with a known answer flipped GO→REVISE, a fail-open guard was caught before wiring, an aborting consumer bug was caught before shipping, and a false claim was corrected inside a live mission file; docked for the unshipped enforcement half and the empty manifest.
+GATE: PASSED — asset-building, not comfort maintenance. Fixed a recurring failure (false-premise propagation — the mechanism behind a 7-of-8-wrong audit collecting a GO); improved reliability of high-use commands; prevented likely degradation (a hook that blocks nothing; a `risk-check.md:93` abort across 24 checkouts). Proven by a changed verdict on a fixed input, not by assertion.
+OPPORTUNITY: Correct session — the alternative (land the full plan) would have shipped a self-locking guard that is inert in ~20 of ~24 checkouts. The session plan had already pre-named this exact cut-back as its fallback branch, so the halving was planned, not improvised.
+DECISION: Repeat with constraints — **test-before-wire** (assert a hook's exit code against a synthetic payload before treating it as protection), and re-derive a plan's counts/claims by execution before implementing. Verifying rather than trusting the plan found five errors in it, two load-bearing.
+LESSON: A gate is only worth what it costs you when it fires on *you* — this plan failed the gate it was written to install, and that was the session's highest-value output.
+RULE: A hook's payload contract is unverifiable by reading — pipe a synthetic payload and assert the exit code before wiring, and **never model a new hook on an unwired one** (an unwired hook is never observed to fail). Trigger: any new or edited `.claude/hooks/*.sh`. Why: two hooks in this repo have now been found fail-open or false-firing, and the fail-open one survived precisely by never being wired. Where: `docs/audit-discipline.md` § hook change class.
+
+### Risky actions
+
+None. The riskiest action was the one **not** taken: wiring a blocking `PreToolUse` hook modelled on `warn-settings-change.sh`. That hook **fails open** (verified by execution: fed a real payload it exits 0), it would not fire for ~20 project-rooted sessions, and once wired it blocks edits to itself and to the `settings.json` it lives in. Copying it would have shipped a guard that silently blocks nothing — the repo's most-repeated failure mode ("inert safeguard"), reproduced by the plan written to end it. The gates caught it; I did not catch it first.
+
+### Session Assessment
+
+*(wrap-collector, 2026-07-14 — appends: improvement-log 82→83, friction-log 36→37)*
+
+- **Autonomy-compounding:** strong. Dimension 7 + the `qc-reviewer` premise check are reusable, symlink-distributed gates, and REGRESSION TEST A proved they bite (fixed agent, dispatched blind, flipped the old `GO` to `REVISE`). No OP-9 speculation — the unconsumed hook was deliberately *not* built.
+- **Leanness/cost:** no signal. Per-dispatch agent weight only; no always-loaded weight added. Cutting Half 2 avoided churn rather than causing it.
+- **Principle-drift:** none by this session. DR-8 held (RECONSIDER not downgraded to push the change through), OP-9 held, Autonomy Rule #3 held (`warn-settings-change.sh` logged, not unilaterally deleted). The false premises sit in the *plan artifact*, filed as a system gap — not as a grade on the session.
+- **Friction:** the approved plan carried 5 factual errors (2 load-bearing) into execution, and **nothing on the plan path grades premises**. Failure mode **Validation**. → `friction-log.md`.
+- **Safety: med — near-miss.** Wiring a blocking `PreToolUse` hook modelled on a template that fails open. Both plan-time gates caught it; **the session did not catch it first.** Nothing irreversible was taken.
+- **Reusable component produced — consider `/innovation-sweep`:** yes. The **regression-test-a-judgment-agent** pattern — dispatch the repaired reviewer *blind* against an artifact the old one passed, assert the verdict flips. It is the only thing that actually proved the fix works, and it is unregistered.
+- **Dropped as duplicate:** a guardrail-candidate for *mandatory test-before-wire on hooks* — already carried verbatim by `improvement-log.md:1081`.
+
+### Next Steps
+
+- **Redesign the enforcement mechanism** — the hook as specified is dead. Both gates' recommended redesign: wire into **every project's** `settings.json` via the upward-walk idiom (`auto-sync-shared.sh` pattern), **or** move enforcement to a **git pre-commit hook** (precedent: `session-notes.md:331`). Separate change, own gate. **Test-before-wire is mandatory** — pipe a synthetic payload, assert the exit code. A hook's payload contract is unverifiable by reading.
+- **Decide: merge the 8 ungated entry points?** The plan chose the hook *instead of* collapsing them. With the hook reconsidered, the merge has no cheaper rival. Operator decision.
+- **Fix or delete `warn-settings-change.sh`** (correct L6 to `.tool_input.file_path`, or remove it). It currently looks like protection and provides none.
+- **The five critical fixes from the S6 investigation remain unstarted** (marker teardown; versioned hook wiring; suffixed session numbers; wrap queue rule; deny narrowing). The pilot is now half-done; this is the natural next block.
+- **Re-head the research-workflow audit as SUPERSEDED.** Its §1/§4 contradict its own §7, and Test A found its entire cited evidence base (`audits/working/research-workflow-fitness/00–05`) **does not exist** — every `file:line` claim in it is untraceable. The mission file governs.
+
+### Open Questions
+
+- Enforcement shape: git pre-commit hook vs. per-project `settings.json` wiring? (Pre-commit is the stronger guard but fires later; PreToolUse fires early but is session-root-scoped and Bash-bypassable.)
+- Does the hook redesign supersede the "merge the 8 entry points" option, or are they complementary?

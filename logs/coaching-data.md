@@ -301,3 +301,11 @@
 - **QC cycles:** 1 (independent qc-reviewer on the /prime fix → GO, zero findings)
 - **Gates:** 2 (2 changed) — plan-approval:changed (operator picked "push into /prime bugs" over the other two depth options offered), challenge-disposition:changed (concurrent-session S3 collision — operator relayed S3's "wrap here first" coordination, reshaping the resolution approach)
 - **Mandate fields:** specified: work_scope, exit_condition, Out of scope, Files in scope, Stop if | omitted: Allowed inputs, Required outputs
+
+### 2026-07-14 — S7: repo-repair pilot V1, Half 1 (reviewer edits landed; hook cut on its own gates' verdicts)
+- **Commands used:** /prime, /risk-check (dispatched as risk-check-reviewer), /consult (dispatched as system-owner), /qc-pass (dispatched as qc-reviewer — Regression Test A), /wrap-session
+- **Iterations:** 0 (no drafting; the plan was pre-approved — this was verify-then-execute, not author-then-revise)
+- **Decisions logged:** 2
+- **QC cycles:** 1 — Regression Test A: blind qc-reviewer re-run against the audit the OLD agent passed with a GO. Old: GO → New: REVISE. Passed the plan's stop condition; caught F-1's invented consequence and the F-9/F-13(b) self-contradiction unprompted, plus 4 further defects.
+- **Gates:** 3 (2 changed) — plan-approval:changed (operator halted mid-edit, asked "should we execute or not", then confirmed the cut-back split with "go"), risk-check:changed (RECONSIDER — hook cut), consult:changed (CUT BACK — hook cut). Both structural gates materially changed the shipped scope; neither was a rubber stamp.
+- **Mandate fields:** specified: work_scope, exit_condition, out_of_scope, files_in_scope, stop_if, required_outputs | omitted: allowed_inputs
