@@ -1,0 +1,49 @@
+{
+  "run_id": "2026-07-14-S3",
+  "project": "ai-resources-research-workflow",
+  "date": "2026-07-14",
+  "marker": "S3",
+  "model": "unknown",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md",
+  "mission": null,
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    "skills/claim-permission-gate/SKILL.md",
+    "skills/cluster-memo-refiner/SKILL.md",
+    "skills/section-directive-drafter/SKILL.md",
+    "workflows/research-workflow/.claude/commands/run-synthesis.md",
+    "workflows/research-workflow/.claude/commands/run-sufficiency.md",
+    "workflows/research-workflow/reference/quality-standards.md",
+    "workflows/research-workflow/reference/stage-instructions.md",
+    "logs/session-notes.md",
+    "logs/decisions.md",
+    "logs/scratchpads/2026-07-14-12-08-scratchpad.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-14-s3-outputs-side-chassis-provenance-gate-stamp"
+  ],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": null,
+  "incidents_refs": []
+}
