@@ -739,3 +739,62 @@ Confidence: high on the fix (verified by execution, red→green, twice-gated). H
 - **Is the `research-workflow-deployment-fitness` audit trustworthy at all as a work source?** Three for three on falsified premises. Its findings are not worthless (each thread pointed at a genuinely broken *area*), but its *diagnoses* have been wrong every time, and acting on them directly wastes a session's opening. A cheaper protocol might be: treat each remaining thread as a *pointer to a suspect area*, verify by execution first, and expect to rewrite the fix.
 - Same standing gap as S10/S11/S13: `/mission` still has no `update` verb; thread 5's tick-off was another direct hand-edit of the mission file.
 - The `ai-resources/` canonical copies are still unedited — this fix lives only in the `session/2026-07-13-research-workflow` worktree branch until it merges to `main`. The symlinked consumers (including both live projects) do not see it until then. **Note the interaction:** on merge, the hard-exit gate activates in both live projects. That is intended and safe, but it means the first person to delete a sentinel there will hit a halt.
+
+## 2026-07-14 — Session S3
+**Mandate:** Close the outputs-side half of the thread-5 stale-chassis defect — permission tables carry no chassis version, and `section-directive-drafter` (symlinked, ungated) consumes them — but ONLY after testing by execution whether a stale table actually produces a bad directive — done when: the premise is verified or falsified by a blind execution run against a real stale table; if verified, `claim-permission-gate` stamps `chassis_version:` into permission-table frontmatter and `section-directive-drafter` flags/exits on a missing or pre-2026-07-14 value; `/risk-check` cleared; committed on this branch before merge.
+- Out of scope: The chassis back-port into the two live projects (standing deferred operator decision). Threads 3/4/6/7/8. The Stage 4.3 enforcement gap (thread-7-shaped). Re-adjudicating the existing 1.1 permission tables in either live project.
+- Files in scope: skills/claim-permission-gate/SKILL.md; skills/section-directive-drafter/SKILL.md; workflows/research-workflow/reference/quality-standards.md (only if the table schema is chassis-owned — verify)
+- Stop if: The execution test FALSIFIES the premise (a stale table does not produce a bad directive, or the drafter already degrades safely) — then do not fix; report and go straight to merge.
+- Mission: research-workflow-deploy-fitness
+
+Fix the outputs-side stale-chassis gap before merging the worktree. Premise to be tested first, per the mission's standing verify-by-execution rule.
+
+### Summary
+
+Closed the outputs-side half of the thread-5 chassis-version defect, tested it by execution before and after, ran `/risk-check` and applied all five mitigations, then merged the worktree branch into `main` (commit `2e6a9d5`) after a live concurrent session (S4) was confirmed clean. Files touched: `skills/claim-permission-gate/SKILL.md`, `skills/cluster-memo-refiner/SKILL.md`, `skills/section-directive-drafter/SKILL.md`, `workflows/research-workflow/.claude/commands/run-synthesis.md`, `workflows/research-workflow/.claude/commands/run-sufficiency.md`, `workflows/research-workflow/reference/quality-standards.md`, `workflows/research-workflow/reference/stage-instructions.md`.
+
+**The premise, tested rather than assumed.** A blind adjudicator re-graded a real stale permission table (research-pe, section 1.1, cluster 03, generated 2026-06-03) under the current chassis: 2 of 6 claims moved `PROXY-SUPPORTED` → `ILLUSTRATIVE-ONLY`. A blind `section-directive-drafter` run on the *original* stale table then confirmed the consequence — it emitted "hedged framing required" for both, licensing a market-pattern generalization the current rules forbid outright. The chassis-version gate from thread 5 protected the *next* run and said nothing about verdicts already on disk. That was the actual gap.
+
+**The fix:** both producers (`claim-permission-gate`, `cluster-memo-refiner`) now stamp `chassis_version:` into permission-table frontmatter; three consumers (`section-directive-drafter`, `/run-synthesis`, `/run-sufficiency` Step 0) hard-exit on a missing or pre-2026-07-14 value. A re-stamp invariant (`generated_at` ≥ `chassis_version`) closes the one-line forgery an adversarial test found in the first draft.
+
+**Tested red/green/adversarial, not just red/green.** Unversioned table → EXIT. A table with the version field pasted onto an untouched body → PROCEEDED (a real defect in my own gate, found by dispatching an adversarial subagent instructed to try to defeat it). Fixed with the re-stamp invariant; re-tested, now EXIT/EXIT/PROCEED across unversioned/forged/genuine.
+
+### Decisions Made
+
+**Decision 1 — gate `section-directive-drafter` and `/run-synthesis`, deliberately NOT `country-parity-checker`.** Verified by reading its Behavior step 3 that it never touches the Assigned-class column — it reads the claim inventory, not the verdicts, so a stale table cannot corrupt its output. Gating it would be gate ceremony with no hazard behind it. `/risk-check` confirmed this call was correct.
+
+**Decision 2 — no content hash; route deliberate overrides to the existing signed `OPERATOR-OVERRIDE` path instead.** The adversarial test proved two self-asserted fields can be forged with two edits. A content hash would close it, and was deliberately not built: these are model-executed skills, not scripts, and cannot compute a trustworthy digest without new shell machinery — and the actual threat is operator error (a documented hand-edit path exists in `/run-sufficiency`), not an adversary. `/risk-check` confirmed this call was correct too. The limit is stated plainly in the chassis rather than the gate overselling itself.
+
+**Decision 3 — fix the dead end `/risk-check` found before committing, not after.** My first-draft refusal messages said "delete the sentinel and re-run" — but `claim-permission-gate` carries its own chassis-version hard exit, and both live projects have unversioned chassis copies, so that path walks an operator into a *second* hard exit with the sentinel already gone (not `git revert`-able). Every refusal message now says back-port first, sentinel second, re-run third, in every one of the three gated files plus the reference doc.
+
+**Decision 4 — merge only after re-verifying live-session state, not on trust.** First check found session S4 live in `main`'s checkout with uncommitted changes to the same file (`session-notes.md`) my branch modifies — stopped rather than merging over it. Re-checked after the operator confirmed S4 was done: `session-notes.md` was clean, only two untracked files remained (neither of S4's tracked work). Proceeded only after that direct check.
+
+**Decision 5 — resolved all six merge conflicts as a union, not a pick.** Both `main` (S4) and this branch (S1/S3) had appended distinct session entries to the same append-only logs since the fork. Kept both sides in every hunk — verified afterward, by content, that both sessions' entries survived and the actual fix files had zero conflicts.
+
+### Outcome
+
+COMPLETION: DELIVERED
+EXECUTION: ACCEPTABLE
+Notes: The stated done-when conditions were met — premise tested by execution before committing to a fix; `chassis_version` stamped by both producers; three consumers gated; `/risk-check` cleared with all five mitigations applied; committed and merged. What was asked but not done: none — the chassis back-port itself was explicitly out of scope for this session's mandate (a standing deferred operator decision) and was surfaced, not actioned, consistent with that scope bound.
+Better path: none identified with evidence — the adversarial-test-then-fix pattern (find the forgery, fix it, re-test) is the kind of rework that earns its cost rather than the self-inflicted kind from the prior session; each round found a real defect, not a repeated one.
+Confidence: high — verified by execution at every stage (the premise, the gate, the fix, the re-test, the merge state).
+
+### Risky actions
+
+Two, both caught before they landed. (1) Started to merge into `main` while a live concurrent session (S4) held uncommitted changes to a file my branch also modifies — stopped, did not merge, waited for confirmation, re-verified clean state before proceeding. (2) My own gate's first draft printed a remediation path ("delete the sentinel and re-run") that dead-ended an operator in a second hard exit with no way back — found by `/risk-check` before commit, fixed in all three locations before landing.
+
+### Session Assessment
+
+Feedback collection skipped (not requested).
+
+### Next Steps
+
+**Chassis back-port into the two live projects** (`research-pe-regime-shift-advisory-gap`, `positioning-research`) — recommended, not yet actioned. Both now carry the gated *skills* (symlinked, live as of the merge) but their *chassis copies* remain unversioned, so a new section will hard-exit with a back-port-first prompt. Small job: back-port `§ Claim-Permission Classes` (and its subsections, per the chassis's own Lockstep contract table) into both projects' `reference/quality-standards.md`. Nothing breaks today — both hold `.claim-permission-gate.done` sentinels for section 1.1.
+
+**From the main `ai-resources` window (not this one): run `/close-worktree-session`** once this wrap's marker teardown completes. It refuses to run from inside this worktree and refuses while this session's marker is live — both by design.
+
+**Standing, unchanged from S1:** the mission's premise ("fix canonical before deploying") is still 0-for-3 on demonstrated blockers across threads 1, 2, 5. Not re-litigated this session, which was scoped to closing thread 5's outputs-side gap only. Re-examine the gate decision before opening thread 3.
+
+### Open Questions
+
+Same as S1, standing: is the `research-workflow-deployment-fitness` audit still a trustworthy work source for the remaining threads (3/4/6/7/8)? `/mission` still has no `update` verb.
