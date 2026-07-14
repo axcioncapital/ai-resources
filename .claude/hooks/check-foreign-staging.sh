@@ -31,8 +31,10 @@
 #   footprint (no marker, no `- Files in scope:` bullet, or a bullet that reads
 #   `(inferred)`/`(none stated)` with no concrete paths), the guard CANNOT judge
 #   foreignness. It then splits on concurrency:
-#     • A LIVE foreign session is active in this checkout (a today-dated per-id marker
-#       other than this session's own is present) → BLOCK (exit 2, stop-and-confirm).
+#     • A LIVE foreign session is active in this checkout (a per-id marker, ANY DATE, other
+#       than this session's own is present) → BLOCK (exit 2, stop-and-confirm). [Was
+#       "today-dated" until 2026-07-14; that filter silently missed an overnight session —
+#       the marker is pruned by teardown, not by date. See _live_foreign_session().]
 #       This was the worst remaining blind spot (improvement-log 467/501): no footprint
 #       AND a concurrent session is exactly when a blind commit sweeps the other session's
 #       staged files. P3 escalates it from warn to a hard stop.
@@ -195,18 +197,25 @@ sess_date = dm.group(0) if dm else ""
 
 # ---- Live-foreign-session oracle (P3, 2026-06-11) ----
 def _live_foreign_session(logs_dir, self_session_id):
-    # A today-dated per-id marker (logs/.session-marker-<id>) OTHER than this session's
-    # own = a session that primed in THIS checkout today and has not wrapped (/wrap-session
-    # Step 13 removes the marker at teardown) ≈ a live foreign session here. This mirrors the
-    # oracle path in detect-concurrent-session.sh. Self is excluded by id, so this session's
-    # OWN per-id marker (which DOES exist by PreToolUse time — /prime wrote it) never counts.
+    # A per-id marker (logs/.session-marker-<id>) OTHER than this session's own = a session
+    # that primed in THIS checkout and has not wrapped (/wrap-session Step 13 removes the
+    # marker at teardown) ≈ a live foreign session here. This mirrors the oracle path in
+    # detect-concurrent-session.sh. Self is excluded by id, so this session's OWN per-id
+    # marker (which DOES exist by PreToolUse time — /prime wrote it) never counts.
     # If this session has no id (old CLI), the oracle is unavailable → return False so P3
     # degrades to the original warn+allow; never escalate to a stop we cannot ground.
+    #
+    # ⚠ ANY DATE — do NOT re-add a today-only filter. (Fixed 2026-07-14.) This function
+    # previously required `content.split(" ")[0] == today`, which silently missed a session
+    # that primed YESTERDAY and is still open overnight: the P3 escalation (no-footprint +
+    # live concurrent session → BLOCK) quietly downgraded to a warn, and a blind commit could
+    # sweep that session's staged files. The marker is pruned by SESSION TEARDOWN, not by
+    # date — a marker's date records when the session STARTED, never whether it has ENDED.
+    # Filtering it by date is a category error. The identical bug existed in
+    # close-worktree-session.md Step 3 and was fixed in the same change; a crashed session's
+    # stale marker is the accepted cost, and it is the correct trade (a false stop costs one
+    # operator sentence; a false pass costs another session's work).
     if not self_session_id:
-        return False
-    try:
-        today = datetime.date.today().isoformat()
-    except Exception:
         return False
     self_name = ".session-marker-" + self_session_id
     try:
@@ -220,7 +229,7 @@ def _live_foreign_session(logs_dir, self_session_id):
             content = open(os.path.join(logs_dir, name)).read().strip()
         except Exception:
             continue
-        if content and content.split(" ")[0] == today:
+        if content:
             return True
     return False
 

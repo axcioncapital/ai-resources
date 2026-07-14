@@ -833,6 +833,15 @@ Full backlog & inbox: /open-items
       - `edit` → ask one prompt: `What should change? State corrections in 'b: / a: / r: / f:' syntax (b=work_scope, a=allowed_inputs, r=required_outputs, f=files_in_scope), or other text as a free amendment to work_scope.` Apply corrections, re-emit the gate block once, accept only `go` or `abort` on the re-response. Do not loop further.
       - Anything else (including free text not preceded by `edit`) → re-ask once: `Reply 'go', 'edit', or 'abort'. Free-text refinements require 'edit' first.` Accept only `go` / `edit` / `abort` on the re-response.
 
+   6.5. **`Files in scope` mechanical check (pre-write).** Auto mode has no `/session-start` Step 2.5 equivalent — it derives `files_in_scope` at Step 8c.4 and writes it at 8c.7 with **nothing in between** — which makes it the *less* guarded of the two mandate-writing paths, and the one the operator never sees the field on before it lands. Apply `/session-start` Step 2.5 check 3 verbatim before the write:
+
+   a. **Shape test — HARD REJECT.** Every entry must look like a path (contains `/`, or a known extension, or is a bare `CLAUDE.md`/`SKILL.md`; globs pass). **Prose never reaches disk.** `(inferred)` remains the one legal non-listed shape. On failure, re-derive mechanically — `git diff --name-only`, `find`, `grep -rl` — and paste the output.
+   b. **Existence test — HARD REJECT, made safe by routing.** `test -e` each entry. A file this session will **create** is not a file *in scope* — it is a **required output**, and the mandate has a field for it (`- Required outputs:`). Route it there; then everything left in `files_in_scope` already exists, and the hard reject carries zero false-positive risk. Auto mode derives both fields itself at Step 8c.4, so it can do this routing without asking. *(A "warn, never reject" variant was cut on 2026-07-14 System-Owner review — a warning is a soft nudge to a model that can rationalise past it, which is the exact failure this check exists to stop. Do not re-weaken it.)*
+
+   **The companion rule: paste the paths themselves, from a command's output. A reference to the command is not a footprint** — its consumer (`check-foreign-staging.sh`) is a parser, not a reader, and a prose footprint makes that guard **fail open**, leaving the session with no staging protection while appearing to have declared a scope.
+
+   *(Added 2026-07-14. The five-for-five recall-assertion pattern in `logs/improvement-log.md` is the trigger; the fifth instance was committed **inside the session shipping this check**, in the prompt handed to the reviewer whose job was to catch it. The habit is not "I forget to check" — it is that a plausible recollection is indistinguishable from an observation from the inside. Only the machine separates them, so the machine has to do it.)*
+
    7. **Write mandate.** Locate today's `## YYYY-MM-DD` header in `logs/session-notes.md`. **Append the mandate line immediately after the header, before any existing body content** — placement contract identical to `/session-start` Step 3. Format identical to `/session-start` Step 3 exact bullet structure:
 
       ```

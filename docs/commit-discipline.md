@@ -26,7 +26,10 @@ When the operator has disclosed a concurrent Claude Code session on the same rep
 
 ### Foreign-staging tripwire (`check-foreign-staging.sh`)
 
-A `PreToolUse(Bash)` hook (`.claude/hooks/check-foreign-staging.sh`, wired in `.claude/settings.json`) automates the *whole-file* half of the discipline above. Before a gated git verb runs — `git commit`, `git commit --amend`, `git commit -a`, and the working-tree-wide adds `git add -A` / `--all` / `-u` / `.` (explicit-pathspec `git add <path>` is **not** gated) — it compares the files that verb would stage against this session's declared footprint and **blocks (exit 2)** if any staged file is neither in the footprint nor exempt. This is the automation of Fix 2 in `audits/2026-06-09-concurrent-session-isolation-fix-plan.md`; it exists because the S3 (2026-06-09) `git commit --amend` swept a foreign session's staged `claim-permission.template.md` with no guard.
+A `PreToolUse(Bash)` hook (`.claude/hooks/check-foreign-staging.sh`) automates the *whole-file* half of the discipline above.
+
+> **⚠ Where it is actually wired — corrected 2026-07-14 (this line previously said "wired in `.claude/settings.json`", which is false).** Both this hook and `check-destructive-liveness.sh` are wired in the **user-level** `~/.claude/settings.json`, not in any repo settings file (grep confirms zero mention of either hook in any `ai-resources/.claude/settings*.json`). **This is a real structural weakness, not a detail:** the hook *bodies* are versioned in git and propagate to every clone; their *wiring* is machine-local and unversioned, so **on any other machine the hooks exist and never fire.** A `git clone` of this repo gets the guards' code and none of their protection, silently. Backing up and versioning `~/.claude/` is tracked as R-5 in `logs/improvement-log.md`.
+ Before a gated git verb runs — `git commit`, `git commit --amend`, `git commit -a`, and the working-tree-wide adds `git add -A` / `--all` / `-u` / `.` (explicit-pathspec `git add <path>` is **not** gated) — it compares the files that verb would stage against this session's declared footprint and **blocks (exit 2)** if any staged file is neither in the footprint nor exempt. This is the automation of Fix 2 in `audits/2026-06-09-concurrent-session-isolation-fix-plan.md`; it exists because the S3 (2026-06-09) `git commit --amend` swept a foreign session's staged `claim-permission.template.md` with no guard.
 
 **It is an advisory tripwire, not enforcement** (principle OP-5). `exit 2` feeds the foreign-file list back to the *agent* (not an operator permission prompt — this respects the zero-permission-prompt / `bypassPermissions` floor), and the agent could technically re-run the commit. So the block message instructs **stop and surface the files to the operator**, not silent self-correction. The tripwire **pairs with — does not replace — the `git diff --cached` shared-file review** above: it catches whole *foreign files*; the diff review catches foreign *hunks* inside files you legitimately own (e.g. `CLAUDE.md`), which the hook cannot see.
 
@@ -37,6 +40,34 @@ A `PreToolUse(Bash)` hook (`.claude/hooks/check-foreign-staging.sh`, wired in `.
 **Narrow exception (2026-07-03, incident `9660bf2`).** "Benign" above assumes no live foreign session — with a concurrent session actually active, an exempt file can still be that session's in-flight work, and a bare `git commit` folding it in silently misattributes it. The hook now warns (never blocks) in exactly that case: a `git commit` would include exempt-but-outside-footprint files AND a live foreign per-id marker is present. The exempt-list's benign-by-default classification is unchanged; this only adds a signal for the one case where "benign" isn't guaranteed.
 
 **Distinct from the parked QC-PENDING commit-block hook** (`logs/decisions.md`, 2026-06-08, "Decision 3 — hook parked"): that hook would block committing an architectural change before its independent QC passes; this one blocks committing another session's files. Different trigger, different purpose — they do not overlap and must not be merged.
+
+## Destructive-op pre-flight (liveness probe)
+
+Before any destructive git op on a checkout — `git worktree remove`, `git branch -d`/`-D`, `git reset --hard`, `git clean -f` — the **target** checkout must be probed for signs that a session is working in it. **The target, not the current one.**
+
+**This is enforced by a hook, not by this section.** `.claude/hooks/check-destructive-liveness.sh` (`PreToolUse(Bash)`) runs the probes automatically, at execution time, immediately before the command. It blocks (`exit 2`) on any hit. This section documents *what it does and why*; it is not the control. **Do not treat reading this file as satisfying the check** — that inversion is exactly the failure recorded below.
+
+The three probes, run against the resolved target:
+
+1. `git -C <target> status --short` — uncommitted work?
+2. `<target>/logs/.session-marker-*` — a session primed there and has not wrapped? **Any date, not just today.** An overnight session's marker is dated yesterday; a today-only filter silently passes it. (`close-worktree-session.md` Step 3 carried precisely that bug until 2026-07-14.)
+3. mtimes of the target's dirty files — written in the last two hours?
+
+Any hit → **STOP and ask the operator.** Liveness is the one fact only the operator holds.
+
+**Why a hook and not this doctrine.** On 2026-07-14 (S2) a session planned `git worktree remove` on a worktree holding a **live Claude session with 173+ lines of uncommitted work** across five files, two of them canonical skills, with no other copy anywhere. Every gate passed it. What caught it was the operator noticing an open editor window.
+
+A prose warning saying exactly this — *"Never remove a worktree a live session still occupies"* — **already existed** in `new-worktree-session.md` and `close-worktree-session.md` before that incident, **and it did not fire**, because the destructive command was assembled directly in a session plan and never touched either file. Adding a fourth prose location would have changed nothing about that causal path. **A rule you must remember to read is not a control; it is a wish.** The 2026-07-14 plan-time `/risk-check` said so in as many words, and the doc-only design was replaced with the hook.
+
+**`/risk-check` is also the wrong home, and this is not a matter of taste.** It runs at *plan* time and reads the repo *at rest*. A session can go live between the gate and the act — which is not hypothetical: on 2026-07-14 (S4) the target worktree was verified clean and idle at 10:50, and was **occupied by a new live session by 11:10**, twenty-five minutes later, while the fix for this very defect was being written. Putting the probe in a plan-time gate relocates the bug one layer up. **Liveness must be probed at execution time, by the executor, or it is a reading of a moving system.**
+
+**The generalisable statement.** Every other gate in this repo (`/risk-check`, `/blindspot-scan`, `/lean-repo`, `/qc-pass`) inspects the artifact **at rest**. This hazard is the artifact **in motion**. A file census cannot see a running process. *A clean worktree is not an idle worktree.*
+
+**Reference implementation:** `close-worktree-session.md` Steps 2–3 — its guards correctly probe `$WT_PATH` (the target), and are sound. They are simply not in the path when a session invokes the destructive verb directly, which is what the hook covers.
+
+**Known limit, stated rather than papered over:** a *crashed* session leaves a stale marker, so probe (2) can fire on a genuinely idle checkout. That is the correct trade — a false stop costs one operator sentence; a false pass costs unrecoverable work. Probe (3) exists to help tell the two apart (stale marker + clean tree + no recent writes ≈ a corpse). The operator decides; the hook never decides for them.
+
+**Test harness:** `logs/scripts/test-destructive-liveness.sh` (14 cases: negative / self-target / idle-target / live-target). It went **red twice** before it went green — once because the hook degraded *open* on the very command it exists to stop (a quoted path containing spaces resolved to an empty target). Run it after any edit to the hook. A test that has never failed has never been tested.
 
 ## Shared-log write-path integrity (read-during-rewrite hazard)
 

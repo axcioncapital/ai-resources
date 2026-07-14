@@ -115,18 +115,25 @@ half of this command: merge the branch → remove the worktree → delete the br
 this prose cannot enforce (refuses on a dirty worktree, on a live session still in it, and on a
 merge conflict; never uses `--force` or `-D`).
 
-Equivalent by hand, if you prefer — but you lose the guards:
+**Do not hand-roll the teardown.** *(This block previously printed the three destructive commands
+verbatim under the heading "Equivalent by hand, if you prefer — but you lose the guards." It was
+the documented on-ramp to the 2026-07-14 near-miss: a session that took the by-hand route and came
+within one operator remark of destroying a live session's 173+ lines of uncommitted work. The
+warning below was already on this page, in bold, and it did not fire — because the session assembled
+the commands from a plan and never opened this file. **A warning printed next to a loaded gun is not
+a safety.** The by-hand snippet is therefore gone; the command is the path.)*
 
-```bash
-git -C "$REPO_ROOT" merge "{BRANCH}"                     # land the work first
-git -C "$REPO_ROOT" worktree remove "{WORKTREE_PATH}"   # add --force only if intentionally discarding
-git -C "$REPO_ROOT" branch -d "{BRANCH}"                 # -d's merged-check is a safety net
-```
+If you genuinely must run the teardown by hand, the destructive verbs are now covered by
+`.claude/hooks/check-destructive-liveness.sh` — a `PreToolUse(Bash)` hook that probes the **target**
+checkout for uncommitted work, a live session marker, and recent writes, and blocks on any hit. It
+fires whether or not you read this page, which is the entire point. Doctrine:
+`docs/commit-discipline.md` § Destructive-op pre-flight.
 
-**Never remove a worktree a live session still occupies**, and remove the
-integration-driving session's own worktree last (playbook § 5 teardown checklist). For a
-full investigate-and-clean pass across all worktrees, use `/cleanup-worktree`; to inventory
-active worktrees, `/monday-prep` runs `git worktree list`.
+**Never remove a worktree a live session still occupies** — and note that "clean" is not "idle":
+a `git status` you ran minutes ago is a reading of a moving system. Remove the integration-driving
+session's own worktree last (playbook § 5 teardown checklist). For a full investigate-and-clean pass
+across all worktrees, use `/cleanup-worktree`; to inventory active worktrees, `/monday-prep` runs
+`git worktree list`.
 
 ---
 

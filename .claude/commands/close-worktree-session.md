@@ -95,15 +95,28 @@ ignored; say so in one line rather than silently passing them.
 
 ## Step 3 — Guard: is a session still live in there?
 
-A worktree has its own `logs/` tree, so it carries its own per-session markers. A today-dated
+A worktree has its own `logs/` tree, so it carries its own per-session markers. A
 `logs/.session-marker-*` inside `$WT_PATH` means a session primed there and has not ended.
 
+**Scan ANY date — not just today.** *(Fixed 2026-07-14. This block previously filtered on
+`"${TODAY} "*`, which silently passed a session that primed **yesterday** and is still open
+overnight — the guard reported clear on an occupied worktree. The marker is pruned by session
+teardown, not by date, so a marker's date says when the session **started**, never whether it
+has **ended**. Dating the filter to today was a category error.)*
+
 ```bash
-TODAY=$(date '+%Y-%m-%d')
 for f in "$WT_PATH"/logs/.session-marker-*; do
   [ -f "$f" ] || continue
-  case "$(cat "$f" 2>/dev/null)" in "${TODAY} "*) echo "LIVE: $(basename "$f")";; esac
+  echo "LIVE: $(basename "$f")  →  $(cat "$f" 2>/dev/null)"
 done
+```
+
+**Third probe — recent writes.** Steps 2–3 ask "is there work?" and "did someone prime?".
+Neither catches a session that primed long ago and is *editing right now* with nothing yet
+saved to a git-visible change. Check whether the target was written to recently:
+
+```bash
+find "$WT_PATH" -type f -not -path "*/.git/*" -newermt "-120 minutes" 2>/dev/null | head -5
 ```
 
 Any hit → **stop:**
@@ -116,6 +129,15 @@ harness-enforced `SessionEnd` hook (`~/.claude/hooks/cleanup-session-marker.sh`)
 model remembering the last step of `/wrap-session`. Before that fix, wrapped sessions left ghost
 markers and this check would have false-fired on every already-finished session. Contract:
 `docs/session-marker.md` § Per-id marker teardown.
+
+**These guards are sound — and they are not the only thing standing between you and a destroyed
+worktree, because they only run if you invoke THIS command.** On 2026-07-14 a session assembled
+`git worktree remove` directly in a session plan, never ran `/close-worktree-session`, and came
+within one operator remark of destroying a live session's 173+ lines of uncommitted work. These
+Steps 2–3 were correct and were simply never in the path. That is why the probes are now ALSO
+enforced by `.claude/hooks/check-destructive-liveness.sh`, a `PreToolUse(Bash)` hook that fires on
+the destructive verb itself regardless of which command (or no command) is running. Doctrine and
+rationale: `docs/commit-discipline.md` § Destructive-op pre-flight.
 
 **Known gap, state it if the guard fires and the operator insists the session is closed:** the hook
 does not fire on a hard crash, so a crashed session can leave a stale marker. If the operator
