@@ -279,6 +279,29 @@ If a loud abort does fire, surface it and **continue the wrap** — fix the mani
 
 **Residual exposure, named and bounded.** A session that dies before wrap, or whose manifest is absent, gets a wrap-time stub with an empty `files_changed` — and now has **no** file record on either surface, where previously the note carried one. This is the one real cost of the cut and it was accepted knowingly: the note's other 6 blocks survive, `git log` still holds the truth, and the alternative (keeping a hand-copied list forever, on every session, to cover a rare crash) is the duplication the cut exists to remove.
 
+12e. **Findings disposition — CORE PATH, runs on every wrap, no flag required. Every finding is queued or explicitly declined. There is no silent third option.**
+
+**This is the step that decides whether this session's work compounds or evaporates.** Do it inline, in the main session — no subagent (Subagent Proportionality: this is a routing decision over findings you already hold, not independent judgment).
+
+**Why it exists.** Before 2026-07-14, a **bare** `/wrap-session` produced **zero** findings: the only step that writes to `improvement-log.md` is the gated Step 6.5 collector, which is skipped unless `+feedback` / `full` is passed. And even when it ran, it wrote a `Severity:` line **only** for `guardrail-candidate` entries — while `/prime` Step 3 builds the next session's task menu **by grepping on severity**. So an ordinary finding was captured accurately, filed in the right log, looked correct, and was **structurally unreachable**. That is the mechanism behind this repo's most expensive recurring failure: *a correctly-diagnosed defect named five or six consecutive times and actioned zero times.* Nothing was lost. Nothing was reachable either.
+
+**The countable set.** A "finding" is: (a) each bullet of the `### Session Assessment` block, if Step 6.5 ran; (b) each friction event surfaced this session; (c) anything you flagged in chat as a defect, gap, or "we should fix X" — **including findings about your own work.** If you noticed it and it named a real problem, it is in the set.
+
+**For EVERY finding, choose exactly one — and write the choice down:**
+
+- **QUEUE** → append an entry to `logs/improvement-log.md` **with a `- **Severity:**` line** (`high` / `medium-high` / `medium` / `low`). Format per `session-feedback-collector.md` § Write formats. **Only `high` and `medium-high` reach the `/prime` task menu**; `medium` / `low` are recorded but surface only via `/open-items`. That is legitimate triage — but *choose* it, do not back into it.
+- **DECLINE** → write **one line** in the session note under a `### Findings Declined` heading, naming the finding and why it is not worth queueing (already fixed / cosmetic / no named consequence / superseded by X). A decline is a decision and it goes on the record, so a later session can see it was *considered and rejected*, not merely missed.
+
+**Then state the count in chat, and make it check out:**
+
+> Findings: {N} — queued {Q} (severity: {…}), declined {D}. {Q} + {D} = {N}.
+
+If `Q + D ≠ N`, findings are falling off the end — stop and account for the difference. **Do not "handle" a finding by mentioning it in the summary.** A chat line is read once and gone; it is a *notification*, not a *queue*. Conflating the two is precisely the defect this step exists to end.
+
+**Never inflate severity to force a finding onto the menu.** An over-severe log is as useless as an invisible one, because the operator stops trusting the level. If it matters, say `high` honestly; if it does not, decline it honestly.
+
+---
+
 After updating logs and writing the telemetry entry, stage and commit changes. **Stage by explicit file paths**, not directory wildcards — directory-level `git add` silently sweeps uncommitted files from concurrent sessions. Enumerate from the **same conversation-context-derived path list you passed as `--file` flags in Step 12d** (the note no longer carries a file list to read off), plus always-present wrap-touched files:
 - Always-staged (if modified this session): `logs/session-notes.md`, `logs/decisions.md`, `logs/coaching-data.md`, `logs/friction-log.md`, `logs/improvement-log.md`, `logs/improvement-log-archive.md`, `logs/innovation-registry.md`, `logs/usage-log.md` (the `friction-log.md` / `improvement-log.md` pair covers Step 6.5 feedback-collector writes), `logs/runs/{date}-{marker}.json` (this session's run manifest, closed in Step 12d — marker-scoped, so it can never collide with a concurrent session's)
 - Session-specific: every path in the Step 12d `--file` list, staged by explicit name. The manifest's `files_changed` array and the staged set are the same list by construction — if they diverge, the manifest is wrong, because the manifest is now the record.

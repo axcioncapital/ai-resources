@@ -184,7 +184,17 @@ if not marker_raw:
         except Exception:
             marker_raw = ""
 
-mm = re.search(r'\bS\d+\b', marker_raw)
+# Marker grammar: `S{N}` (legacy) or `S{N}-{id3}` (current — 3 chars of the session id).
+# The suffix exists because two sessions in different checkouts could allocate the SAME S{N}
+# (four real collisions in two days). A suffixed name cannot collide, so the S{N} number no
+# longer has to be globally unique — the marker as a WHOLE does.
+#
+# ⚠ The optional group is LOAD-BEARING, not defensive padding. A bare `\bS\d+\b` MATCHES
+# `S7-a4f` and returns `S7` — it does not fail, it SILENTLY TRUNCATES. Two different sessions
+# (`S7-a4f`, `S7-b2c`) then both resolve to `S7`, and this guard reads the WRONG session's
+# footprint out of session-notes.md with no error anywhere. Verified by execution, 2026-07-14.
+# Readers accept BOTH grammars (500+ legacy headers still on disk); writers emit only the new one.
+mm = re.search(r'\bS\d+(?:-[A-Za-z0-9]{3})?\b', marker_raw)
 sess = mm.group(0) if mm else ""
 # Marker date (the marker file stores "YYYY-MM-DD SX" — docs/session-marker.md).
 # Defect A fix (2026-06-12, improvement-log first-firing entry): the header lookup
@@ -245,8 +255,15 @@ if sess and sess_date and os.path.isfile(notes):
     # session's header matches — not a prior day's same-S entry. If sess_date is
     # empty (malformed marker), the gate above skips the read entirely and the
     # session falls through to the no-concrete-footprint path (safe degrade).
+    #
+    # ⚠ The terminator is `(?![-\w])`, NOT `\b`. This is not style — it is the mixed-grammar
+    # correctness condition. `\b` fires between `7` and `-`, so a LEGACY marker `S7` would match
+    # the header `## <date> — Session S7-a4f` and this guard would read a DIFFERENT session's
+    # `- Files in scope:` footprint as its own. `(?![-\w])` refuses to match when a hyphen or word
+    # character follows, so `S7` matches only `Session S7` and `S7-a4f` matches only
+    # `Session S7-a4f`. Both grammars coexist on disk during the transition; keep this exact.
     header_re = re.compile(
-        r'^##\s+' + re.escape(sess_date) + r'\s+—\s+Session\s+' + re.escape(sess) + r'\b')
+        r'^##\s+' + re.escape(sess_date) + r'\s+—\s+Session\s+' + re.escape(sess) + r'(?![-\w])')
     in_block = False
     for ln in lines:
         if ln.startswith("## "):
@@ -404,7 +421,16 @@ def is_exempt(path):
         # `== "logs/runs/" + base` (not `startswith`) pins the file to a DIRECT child of
         # logs/runs/ — otherwise a nested logs/runs/<anything>/2026-07-13-S1.json would
         # satisfy both the prefix and the basename regex and slip through exempt.
-        if path == "logs/runs/" + base and re.match(r'\d{4}-\d{2}-\d{2}-S\d+\.json$', base):
+        #
+        # ⚠ The `(?:-[A-Za-z0-9]{3})?` group is what keeps `/wrap-session` WORKING under the
+        # suffixed marker grammar. Without it, `\d{4}-\d{2}-\d{2}-S\d+\.json$` cannot match
+        # `2026-07-14-S7-a4f.json` — `S\d+` consumes `S7`, then `\.json$` meets `-a4f.json` and
+        # fails. The manifest loses its exemption, this guard blocks the wrap commit, and it does
+        # so in EVERY checkout. Proven end-to-end in a fixture (2026-07-14 S8): `…-S1.json` → exit
+        # 0; `…-S1-a4f.json` → exit 2. The marker rename would have re-created exactly the
+        # command-fights-guard defect this clause was written to fix.
+        if path == "logs/runs/" + base and re.match(
+                r'\d{4}-\d{2}-\d{2}-S\d+(?:-[A-Za-z0-9]{3})?\.json$', base):
             return True
         if base.endswith("-scratchpad.md"):
             return True

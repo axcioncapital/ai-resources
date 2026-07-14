@@ -136,6 +136,21 @@
             "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/friday-checkup-reminder.sh",
             "timeout": 5,
             "statusMessage": "Checking Friday cadence..."
+          },
+          {
+            "type": "command",
+            "command": "bash \"/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/hooks/sentinel-hook-probe.sh\" ABS",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/sentinel-hook-probe.sh\" CPD_QUOTED",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/sentinel-hook-probe.sh CPD_UNQUOTED",
+            "timeout": 5
           }
         ]
       }

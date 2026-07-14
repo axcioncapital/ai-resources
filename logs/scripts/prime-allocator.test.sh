@@ -4,10 +4,40 @@
 # Bash tool's real shell is zsh. The first version of this harness ran bash and PASSED a
 # block that zsh crashes on (NOMATCH). Caught by the end-time /risk-check. Never test the
 # allocator under bash alone again.
-SP="/private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/9028157c-878f-4639-92f6-e048914dd21b/scratchpad"
+#
+# ⚠ SOURCE OF TRUTH — FIXED 2026-07-14 (S8). READ THIS BEFORE TOUCHING THE HARNESS.
+#   This test used to read the allocator from `$SP/newblock.txt` — a file in a PREVIOUS session's
+#   scratchpad, hardcoded by session id. That made the suite a snapshot test of dead code: on
+#   2026-07-14 it reported "12 passed, 0 failed" while testing an allocator that contained the OLD
+#   broken seed and NONE of that session's fix. A green run proved nothing about what ships.
+#
+#   It now EXTRACTS the allocator block directly out of `.claude/commands/prime.md`, so the thing
+#   under test is the thing that runs. If prime.md's allocator changes, this suite sees it — which
+#   is the only property that makes a regression test worth keeping. Do not reintroduce a copy.
+ALLOC_SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/.claude/commands/prime.md"
+[ -f "$ALLOC_SRC" ] || { echo "FATAL: cannot find prime.md at $ALLOC_SRC"; exit 2; }
+
+SP="${TMPDIR:-/tmp}/prime-allocator-test.$$"
 T="$SP/mk"
 rm -rf "$T"
-mkdir -p "$T/main"
+mkdir -p "$T/main" "$SP"
+
+# Pull the first fenced bash block that contains the allocator, and dedent it.
+awk '
+  /^[[:space:]]*```bash[[:space:]]*$/ { inblk=1; buf=""; next }
+  inblk && /^[[:space:]]*```[[:space:]]*$/ {
+      if (buf ~ /Allocate N = 1/) { printf "%s", buf; exit }
+      inblk=0; buf=""; next
+  }
+  inblk { buf = buf $0 "\n" }
+' "$ALLOC_SRC" | sed -e 's/^         //' > "$SP/newblock.txt"
+
+if ! grep -q 'MARKER=' "$SP/newblock.txt"; then
+  echo "FATAL: allocator extraction from prime.md failed (no MARKER= assignment found)."
+  echo "       The fence markers or the 'Allocate N = 1' anchor changed. Fix the extractor —"
+  echo "       do NOT fall back to a copy, which is the defect this replaced."
+  exit 2
+fi
 cd "$T/main" || exit 1
 git init -q .
 git config user.email t@t
@@ -50,7 +80,14 @@ check () {
   else printf '  FAIL  %-54s got %s, wanted %s\n' "$1" "$3" "$2"; FAIL=$((FAIL+1)); fi
 }
 # every allocator run goes through ZSH
-run () { ( cd "$1" && zsh "$T/new.sh" 2>&1 | grep '^MARKER=' | sed 's/MARKER=//' ); }
+#
+# `run` returns the marker with the id-suffix STRIPPED, because TESTS 0–7 are assertions about the
+# NUMBER the allocator chose (S1 / S8 / S9 …) — the property the mutex, the fail-safe and the
+# namespace scoping all exist to protect. The suffix is a separate property with a separate job
+# (global uniqueness) and it is asserted on its own in TEST 8. Keeping them apart means a failure
+# tells you WHICH property broke instead of just "the string differs".
+run ()      { ( cd "$1" && zsh "$T/new.sh" 2>&1 | grep '^MARKER=' | sed 's/MARKER=//' | sed 's/-[A-Za-z0-9]*$//' ); }
+run_full () { ( cd "$1" && zsh "$T/new.sh" 2>&1 | grep '^MARKER=' | sed 's/MARKER=//' ); }
 
 echo "===== TEST 0 — ZSH FIRST-RUN-OF-DAY (the bug the end-time gate caught) ====="
 echo "Claims dir exists but holds NO today-dated entry. A glob NOMATCHes here under zsh."
@@ -58,7 +95,9 @@ OUT=$( cd "$T/main" && zsh "$T/new.sh" 2>&1 )
 if printf '%s' "$OUT" | grep -qi "no matches found"; then
   printf '  FAIL  %-54s zsh NOMATCH crash still present\n' "first /prime of the day under zsh"; FAIL=$((FAIL+1))
 else
-  M=$(printf '%s' "$OUT" | grep '^MARKER=' | sed 's/MARKER=//')
+  # Suffix stripped: this test asserts the NUMBER (that the zsh NOMATCH crash does not reset it).
+  # The suffix is asserted in TEST 8.
+  M=$(printf '%s' "$OUT" | grep '^MARKER=' | sed 's/MARKER=//' | sed 's/-[A-Za-z0-9]*$//')
   check "first /prime of the day under zsh (no NOMATCH)" "S1" "$M"
 fi
 
@@ -126,6 +165,44 @@ mkdir -p "$T/main/.git/refs/SENTINEL-DIR"
 run "$T/main" > /dev/null
 [ -f "$T/main/.git/SENTINEL-DO-NOT-DELETE" ] && { printf '  PASS  %-54s\n' ".git sentinel file untouched"; PASS=$((PASS+1)); } || { printf '  FAIL  sentinel DELETED\n'; FAIL=$((FAIL+1)); }
 [ -d "$T/main/.git/refs/SENTINEL-DIR" ] && { printf '  PASS  %-54s\n' ".git/refs sentinel dir untouched"; PASS=$((PASS+1)); } || { printf '  FAIL  refs sentinel DELETED\n'; FAIL=$((FAIL+1)); }
+
+echo
+echo "===== TEST 8 — THE SUFFIX: collisions must be IMPOSSIBLE, not merely unlikely ====="
+echo "The mutex narrows the race; it cannot close it (a checkout on an older prime.md"
+echo "allocates blind — that gap produced FOUR real collisions in two days). The id suffix"
+echo "is what makes two sessions unable to share a marker AT ALL. Assert that directly."
+mkdir -p "$T/coll/logs"; ( cd "$T/coll" && git init -q . && git config user.email t@t && git config user.name t \
+  && printf '# notes\n' > logs/session-notes.md && git add -A && git commit -qm i ) >/dev/null 2>&1
+
+# Force BOTH sessions to compute the SAME N by resetting the marker between runs, and give them
+# different session ids. Under the old grammar both would produce "S6" — the exact collision.
+printf '%s S5\n' "$TODAY" > "$T/coll/logs/.session-marker"
+rm -rf "$T/coll/.git/axcion-session-markers"
+MA=$( cd "$T/coll" && CLAUDE_CODE_SESSION_ID="aaa11111-1111-1111-1111-111111111111" zsh "$T/new.sh" 2>&1 | grep '^MARKER=' | sed 's/MARKER=//' )
+printf '%s S5\n' "$TODAY" > "$T/coll/logs/.session-marker"
+rm -rf "$T/coll/.git/axcion-session-markers"
+MB=$( cd "$T/coll" && CLAUDE_CODE_SESSION_ID="bbb22222-2222-2222-2222-222222222222" zsh "$T/new.sh" 2>&1 | grep '^MARKER=' | sed 's/MARKER=//' )
+printf '  same N forced; session A -> %s ; session B -> %s\n' "$MA" "$MB"
+check "A and B both allocate number 6"                     "S6" "$(printf '%s' "$MA" | sed 's/-[A-Za-z0-9]*$//')"
+check "…and B likewise"                                    "S6" "$(printf '%s' "$MB" | sed 's/-[A-Za-z0-9]*$//')"
+if [ "$MA" != "$MB" ]; then printf '  PASS  %-54s %s != %s\n' "IDENTICAL N, DISTINCT MARKERS — collision impossible" "$MA" "$MB"; PASS=$((PASS+1))
+else printf '  FAIL  COLLIDED: both sessions got %s\n' "$MA"; FAIL=$((FAIL+1)); fi
+check "A's marker carries its own id3"                     "S6-aaa" "$MA"
+check "B's marker carries its own id3"                     "S6-bbb" "$MB"
+
+# Degrade-safe: no session id (older CLI) must fall back to the legacy bare S{N}, not to "S6-".
+printf '%s S5\n' "$TODAY" > "$T/coll/logs/.session-marker"
+rm -rf "$T/coll/.git/axcion-session-markers"
+MC=$( cd "$T/coll" && CLAUDE_CODE_SESSION_ID="" zsh "$T/new.sh" 2>&1 | grep '^MARKER=' | sed 's/MARKER=//' )
+check "no CLAUDE_CODE_SESSION_ID => legacy bare S{N}"      "S6" "$MC"
+
+# THE FAIL-SAFE, under the NEW grammar. This is the line that would allocate S1 over an existing
+# S7 if the seed could not parse a suffixed marker — the "destructive regression" prime.md warns
+# about. Assert it against a SUFFIXED marker, which is what the file will actually contain now.
+mkdir -p "$T/nogit2/logs"                      # deliberately NOT a git repo → every scan fails
+printf '%s S7-a4f\n' "$TODAY" > "$T/nogit2/logs/.session-marker"
+MD=$( cd "$T/nogit2" && zsh "$T/new.sh" 2>&1 | grep '^MARKER=' | sed 's/MARKER=//' | sed 's/-[A-Za-z0-9]*$//' )
+check "FAIL-SAFE reads a SUFFIXED marker: S7-a4f => S8"    "S8" "$MD"
 
 echo
 echo "-------------------------------------------------------------"

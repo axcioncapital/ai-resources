@@ -15,11 +15,46 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 
    Define `AI_RESOURCES="/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources"`.
 
+   **BEHIND-CHECK FIRST — do not pull a repo that has nothing to pull.** For each repo, fetch and ask
+   how far behind it is *before* running any rebase:
+
+   ```bash
+   GIT_TERMINAL_PROMPT=0 git -C "$REPO" fetch --quiet 2>/dev/null
+   BEHIND=$(git -C "$REPO" rev-list --count HEAD..@{u} 2>/dev/null || echo "")
+   ```
+
+   - `BEHIND` = `0` → **skip the pull entirely.** Record `up to date`. **Do not run `pull --rebase`.**
+   - `BEHIND` empty (no upstream / detached HEAD) → record `skip (no upstream configured)`; no pull.
+   - `BEHIND` ≥ 1 → run the pull below.
+
+   **Why this guard exists, and why it is not merely an optimisation (2026-07-14, S5 → fixed S8).**
+   `/prime` ran `pull --rebase --autostash` unconditionally, hit a content conflict in
+   `logs/session-notes.md`, and **halted orientation mid-rebase** — leaving the repo in a
+   `rebase-in-progress` state at the very start of a session. **The conflict was entirely spurious:
+   `origin/main` had not moved at all** (`[ahead 5]`, zero behind), so there was nothing to pull.
+   `--rebase` nonetheless replayed local commits — including a local **merge** commit — flattening it
+   and re-applying conflicts that the merge had already resolved.
+   **This repo creates local merge commits by design** (`/close-worktree-session` Step 4 makes them),
+   so rebasing local history re-litigates settled conflicts. It will happen again on any
+   merge-bearing history. The behind-check removes the whole class: with nothing to pull, there is
+   nothing to rebase.
+
    Run `GIT_TERMINAL_PROMPT=0 git -C "$CWD_REPO" pull --rebase --autostash`. If `$CWD_REPO` differs
    from `$AI_RESOURCES`, also run `GIT_TERMINAL_PROMPT=0 git -C "$AI_RESOURCES" pull --rebase --autostash`.
    `--rebase --autostash` is explicit (not left to per-machine `pull.rebase` config) so a dirty working
    tree from a prior same-day session is stashed, rebased over, and popped back in one command — the
    rebase no longer refuses to start, removing the failure-and-recovery round-trip. Capture each result:
+   - **Rebase conflicted mid-flight — the case that had NO defined handling and halted a session start.**
+     If the pull leaves the repo mid-rebase (`git -C "$REPO" rev-parse --verify -q REBASE_HEAD` succeeds,
+     or `git -C "$REPO" status` reports `rebase in progress`), **do not attempt to resolve it and do not
+     stop the session.** Restore the repo and keep orienting:
+     ```bash
+     git -C "$REPO" rebase --abort 2>/dev/null
+     ```
+     Record `failed: rebase conflicted — aborted, repo restored; local history unchanged`. Carry it to
+     the Step 6 brief as a ⚠ line. Orientation continues on the pre-pull state, which is a perfectly
+     good state to work from. **A failed pull must never leave the operator in a half-rebased repo at
+     the moment they are trying to start work** — that turns a no-op into an incident.
    - **Autostash pop conflict — detect FIRST, before the exit-code cases below.** With `--autostash`, the history rebase can succeed (exit 0) while the *pop* of the stashed dirty tree conflicts. Git prints `Applying autostash resulted in conflicts. Your changes are safe in the stash.` but still **returns exit 0**, so the exit-code cases below would mislabel it `updated`. Detect it via any of three signals (OR — robust to git wording changes): the captured pull output contains `Applying autostash resulted in conflicts`; OR `git -C "$REPO" stash list` shows a residual `autostash` entry; OR `git -C "$REPO" status --short` shows a conflicted (`UU`) path. If any fires → `autostash-conflict` (the working tree now carries conflict markers and `stash@{0}` is preserved). Classify this BEFORE the two exit-0 cases.
    - Exit 0 + "Already up to date." → `up to date`
    - Exit 0, no "Already up to date." → `updated`
@@ -321,7 +356,14 @@ Full backlog & inbox: /open-items
          if [ -f logs/.session-marker ]; then                         # (a) — seeds HIGH. Must stay first.
            PREV=$(cat logs/.session-marker)
            case "$PREV" in
-             "${TODAY} S"*) n="${PREV##*S}"
+             # SUFFIX-TOLERANT, AND THIS IS THE MOST DANGEROUS LINE IN THE ALLOCATOR.
+             # Markers now read `2026-07-14 S7-a4f`, not just `2026-07-14 S7`. The old
+             # `n="${PREV##*S}"` yielded `7-a4f`, which the `*[!0-9]*` guard below REJECTS —
+             # leaving HIGH=0, so the next allocation is S1 ON TOP OF AN EXISTING S7. That is
+             # precisely the "destructive regression" the invariant above warns against, and it
+             # would have shipped silently. Strip the date, strip the leading S, then strip the
+             # suffix — never `##*S`, which would also cut at an `S` inside the id suffix.
+             "${TODAY} S"*) tok="${PREV#* }"; n="${tok#S}"; n="${n%%-*}"
                             case "$n" in ''|*[!0-9]*) ;; *) [ "$n" -gt "$HIGH" ] && HIGH="$n";; esac;;
            esac
          fi
@@ -368,18 +410,33 @@ Full backlog & inbox: /open-items
            # this directory.
            find "$CLAIMS" -mindepth 1 -maxdepth 1 -type d ! -name "${TODAY}-*" -exec rm -rf {} + 2>/dev/null
          fi
+         # SESSION-ID SUFFIX — this is what actually makes collisions IMPOSSIBLE, rather than
+         # merely unlikely. The claim-dir mutex below narrows the race but cannot close it: a
+         # checkout running an older copy of prime.md neither writes claims nor reads them, so it
+         # allocates blind (the "known gap" above — it produced FOUR real collisions in two days).
+         # A marker that carries 3 characters of this session's own id cannot collide with another
+         # session's marker no matter what N either of them picks, because no two sessions share an
+         # id. The uniqueness now lives in the NAME, not in a lock every participant must honour.
+         # (The mutex is retained as belt-and-braces — it still yields tidy sequential numbers —
+         # but it is no longer load-bearing for correctness.)
+         #
+         # Degrades safe: no CLAUDE_CODE_SESSION_ID (older CLI) → empty suffix → legacy bare S{N},
+         # exactly today's behaviour. Readers accept both grammars.
+         ID3=$(printf '%s' "${CLAUDE_CODE_SESSION_ID:-}" | tr -cd 'A-Za-z0-9' | cut -c1-3)
+         if [ -n "$ID3" ]; then SFX="-${ID3}"; else SFX=""; fi
+
          # Atomic claim loop. mkdir succeeds for exactly one caller; the loser bumps and retries.
          N=$((HIGH + 1))
          while : ; do
-           if [ -z "$CLAIMS" ]; then MARKER="S${N}"; break; fi        # no common dir → no mutex, old behaviour
+           if [ -z "$CLAIMS" ]; then MARKER="S${N}${SFX}"; break; fi        # no common dir → no mutex, old behaviour
            if mkdir "$CLAIMS/${TODAY}-S${N}" 2>/dev/null; then        # ← the atomic step
-             MARKER="S${N}"
+             MARKER="S${N}${SFX}"
              printf '%s\n' "${CLAUDE_CODE_SESSION_ID:-unknown} $(date '+%H:%M:%S')" \
                > "$CLAIMS/${TODAY}-S${N}/owner" 2>/dev/null           # debug breadcrumb only; never read for logic
              break
            fi
            N=$((N + 1))
-           if [ "$N" -gt 999 ]; then MARKER="S${N}"; break; fi        # runaway guard — cannot spin forever
+           if [ "$N" -gt 999 ]; then MARKER="S${N}${SFX}"; break; fi        # runaway guard — cannot spin forever
          done
          echo "${TODAY} ${MARKER}" > logs/.session-marker
          # Identity oracle (Option 2′): also write a per-session-id marker file no concurrent /prime can clobber.
@@ -471,7 +528,14 @@ Full backlog & inbox: /open-items
          if [ -f logs/.session-marker ]; then                         # (a) — seeds HIGH. Must stay first.
            PREV=$(cat logs/.session-marker)
            case "$PREV" in
-             "${TODAY} S"*) n="${PREV##*S}"
+             # SUFFIX-TOLERANT, AND THIS IS THE MOST DANGEROUS LINE IN THE ALLOCATOR.
+             # Markers now read `2026-07-14 S7-a4f`, not just `2026-07-14 S7`. The old
+             # `n="${PREV##*S}"` yielded `7-a4f`, which the `*[!0-9]*` guard below REJECTS —
+             # leaving HIGH=0, so the next allocation is S1 ON TOP OF AN EXISTING S7. That is
+             # precisely the "destructive regression" the invariant above warns against, and it
+             # would have shipped silently. Strip the date, strip the leading S, then strip the
+             # suffix — never `##*S`, which would also cut at an `S` inside the id suffix.
+             "${TODAY} S"*) tok="${PREV#* }"; n="${tok#S}"; n="${n%%-*}"
                             case "$n" in ''|*[!0-9]*) ;; *) [ "$n" -gt "$HIGH" ] && HIGH="$n";; esac;;
            esac
          fi
@@ -518,18 +582,33 @@ Full backlog & inbox: /open-items
            # this directory.
            find "$CLAIMS" -mindepth 1 -maxdepth 1 -type d ! -name "${TODAY}-*" -exec rm -rf {} + 2>/dev/null
          fi
+         # SESSION-ID SUFFIX — this is what actually makes collisions IMPOSSIBLE, rather than
+         # merely unlikely. The claim-dir mutex below narrows the race but cannot close it: a
+         # checkout running an older copy of prime.md neither writes claims nor reads them, so it
+         # allocates blind (the "known gap" above — it produced FOUR real collisions in two days).
+         # A marker that carries 3 characters of this session's own id cannot collide with another
+         # session's marker no matter what N either of them picks, because no two sessions share an
+         # id. The uniqueness now lives in the NAME, not in a lock every participant must honour.
+         # (The mutex is retained as belt-and-braces — it still yields tidy sequential numbers —
+         # but it is no longer load-bearing for correctness.)
+         #
+         # Degrades safe: no CLAUDE_CODE_SESSION_ID (older CLI) → empty suffix → legacy bare S{N},
+         # exactly today's behaviour. Readers accept both grammars.
+         ID3=$(printf '%s' "${CLAUDE_CODE_SESSION_ID:-}" | tr -cd 'A-Za-z0-9' | cut -c1-3)
+         if [ -n "$ID3" ]; then SFX="-${ID3}"; else SFX=""; fi
+
          # Atomic claim loop. mkdir succeeds for exactly one caller; the loser bumps and retries.
          N=$((HIGH + 1))
          while : ; do
-           if [ -z "$CLAIMS" ]; then MARKER="S${N}"; break; fi        # no common dir → no mutex, old behaviour
+           if [ -z "$CLAIMS" ]; then MARKER="S${N}${SFX}"; break; fi        # no common dir → no mutex, old behaviour
            if mkdir "$CLAIMS/${TODAY}-S${N}" 2>/dev/null; then        # ← the atomic step
-             MARKER="S${N}"
+             MARKER="S${N}${SFX}"
              printf '%s\n' "${CLAUDE_CODE_SESSION_ID:-unknown} $(date '+%H:%M:%S')" \
                > "$CLAIMS/${TODAY}-S${N}/owner" 2>/dev/null           # debug breadcrumb only; never read for logic
              break
            fi
            N=$((N + 1))
-           if [ "$N" -gt 999 ]; then MARKER="S${N}"; break; fi        # runaway guard — cannot spin forever
+           if [ "$N" -gt 999 ]; then MARKER="S${N}${SFX}"; break; fi        # runaway guard — cannot spin forever
          done
          echo "${TODAY} ${MARKER}" > logs/.session-marker
          # Identity oracle (Option 2′): also write a per-session-id marker file no concurrent /prime can clobber.
@@ -637,7 +716,14 @@ Full backlog & inbox: /open-items
       if [ -f logs/.session-marker ]; then                         # (a) — seeds HIGH. Must stay first.
         PREV=$(cat logs/.session-marker)
         case "$PREV" in
-          "${TODAY} S"*) n="${PREV##*S}"
+          # SUFFIX-TOLERANT, AND THIS IS THE MOST DANGEROUS LINE IN THE ALLOCATOR.
+          # Markers now read `2026-07-14 S7-a4f`, not just `2026-07-14 S7`. The old
+          # `${PREV##*S}` yielded `7-a4f`, which the `*[!0-9]*` guard below REJECTS — leaving
+          # HIGH=0, so the next allocation is S1 ON TOP OF AN EXISTING S7. That is precisely the
+          # "destructive regression" the invariant above warns against, and it would have shipped
+          # silently. Strip the date, strip the leading S, then strip the suffix — never `##*S`,
+          # which would also cut at an `S` inside the id suffix.
+          "${TODAY} S"*) tok="${PREV#* }"; n="${tok#S}"; n="${n%%-*}"
                          case "$n" in ''|*[!0-9]*) ;; *) [ "$n" -gt "$HIGH" ] && HIGH="$n";; esac;;
         esac
       fi
@@ -684,18 +770,33 @@ Full backlog & inbox: /open-items
         # this directory.
         find "$CLAIMS" -mindepth 1 -maxdepth 1 -type d ! -name "${TODAY}-*" -exec rm -rf {} + 2>/dev/null
       fi
+      # SESSION-ID SUFFIX — this is what actually makes collisions IMPOSSIBLE, rather than merely
+      # unlikely. The claim-dir mutex below narrows the race but cannot close it: a checkout
+      # running an older copy of prime.md neither writes claims nor reads them, so it allocates
+      # blind (the "known gap" above — it produced FOUR real collisions in two days). A marker
+      # carrying 3 characters of this session's own id cannot collide with another session's
+      # marker no matter what N either picks, because no two sessions share an id. The uniqueness
+      # now lives in the NAME, not in a lock every participant must honour. (The mutex is retained
+      # as belt-and-braces — it still yields tidy sequential numbers — but it is no longer
+      # load-bearing for correctness.)
+      #
+      # Degrades safe: no CLAUDE_CODE_SESSION_ID (older CLI) → empty suffix → legacy bare S{N},
+      # exactly today's behaviour. Readers accept both grammars.
+      ID3=$(printf '%s' "${CLAUDE_CODE_SESSION_ID:-}" | tr -cd 'A-Za-z0-9' | cut -c1-3)
+      if [ -n "$ID3" ]; then SFX="-${ID3}"; else SFX=""; fi
+
       # Atomic claim loop. mkdir succeeds for exactly one caller; the loser bumps and retries.
       N=$((HIGH + 1))
       while : ; do
-        if [ -z "$CLAIMS" ]; then MARKER="S${N}"; break; fi        # no common dir → no mutex, old behaviour
+        if [ -z "$CLAIMS" ]; then MARKER="S${N}${SFX}"; break; fi        # no common dir → no mutex, old behaviour
         if mkdir "$CLAIMS/${TODAY}-S${N}" 2>/dev/null; then        # ← the atomic step
-          MARKER="S${N}"
+          MARKER="S${N}${SFX}"
           printf '%s\n' "${CLAUDE_CODE_SESSION_ID:-unknown} $(date '+%H:%M:%S')" \
             > "$CLAIMS/${TODAY}-S${N}/owner" 2>/dev/null           # debug breadcrumb only; never read for logic
           break
         fi
         N=$((N + 1))
-        if [ "$N" -gt 999 ]; then MARKER="S${N}"; break; fi        # runaway guard — cannot spin forever
+        if [ "$N" -gt 999 ]; then MARKER="S${N}${SFX}"; break; fi        # runaway guard — cannot spin forever
       done
       echo "${TODAY} ${MARKER}" > logs/.session-marker
       # Identity oracle (Option 2′): also write a per-session-id marker file no concurrent /prime can clobber.

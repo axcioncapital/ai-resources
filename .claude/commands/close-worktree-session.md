@@ -124,10 +124,39 @@ Any hit → **stop:**
 > A session still appears to be live in that worktree. Close it (or `/clear` it) before landing —
 > removing a worktree out from under a running session is how work gets lost.
 
-**This guard is trustworthy as of 2026-07-13** and was not before: the marker is now removed by a
-harness-enforced `SessionEnd` hook (`~/.claude/hooks/cleanup-session-marker.sh`) rather than by a
-model remembering the last step of `/wrap-session`. Before that fix, wrapped sessions left ghost
-markers and this check would have false-fired on every already-finished session. Contract:
+**This guard is a LIVENESS oracle — NOT a "has-wrapped" oracle. Know the difference before you
+trust it, or you will reach for `rm`.** *(Corrected 2026-07-14 S8. The previous text asserted the
+guard "is trustworthy as of 2026-07-13" **because** a `SessionEnd` hook removes the marker "rather
+than a model remembering the last step of `/wrap-session`". That framing is what produced the S5
+incident: it implies a wrapped session leaves no marker, so a marker on a wrapped session reads as
+a guard malfunction — and the operator "fixes" the guard by deleting its evidence.)*
+
+The marker is removed by `~/.claude/hooks/cleanup-session-marker.sh` on **`SessionEnd`**, which
+fires when the **CLI process ends** — normal exit, `/clear`, `/quit` (`docs/session-marker.md:227`).
+It does **not** fire when `/wrap-session` finishes. Therefore:
+
+> **A session that has wrapped but whose window is still open is STILL LIVE, its marker is
+> CORRECTLY present, and this guard is RIGHT to block it.**
+
+That is not a false positive. The guard and the operator are asserting different things and both
+are true: you mean *"that session has finished its work"*; the marker means *"that process is still
+running"*. Only the second is observable from here.
+
+**Verified 2026-07-14 (S8) by execution, not by reading:** fed a payload naming a real marker, the
+hook removes the per-id file and correctly leaves the shared one, logging `REMOVED`. It works. The
+`NOOP marker-absent` lines filling its log are sessions that never ran `/prime` and so had no marker
+to remove — correct behaviour, not silent failure.
+
+**If the operator confirms the target is genuinely idle,** re-run the same command with the override.
+It proceeds and writes an audit line to `logs/destructive-override.log`:
+
+```bash
+AXCION_LIVENESS_OVERRIDE=1 git worktree remove "<absolute path>"
+```
+
+**Never delete the marker files to get past this guard.** That was the sanctioned workaround until
+2026-07-14 and it is now closed. It defeats the guard by erasing the evidence the guard reads, leaves
+no record, and trains the habit of deleting a signal that will one day be true. Contract:
 `docs/session-marker.md` § Per-id marker teardown.
 
 **These guards are sound — and they are not the only thing standing between you and a destroyed

@@ -137,9 +137,21 @@ if [ -n "${MARKER}" ]; then
   # Marker-aware path: count own marker-bearing headers + mandates under those headers in WT and HEAD.
   # Own headers are matched on ${MARKER_DATE} (= TODAY for same-day sessions, YESTERDAY for overnight
   # rollover sessions per the grace window above) so the own-contribution count is correct in both cases.
-  OWN_WT_HEADERS=$(grep -c "^## ${MARKER_DATE} — Session ${MARKER}" logs/session-notes.md 2>/dev/null)
+  # ⚠ TERMINATED, and it must stay that way. These greps were unterminated, which is harmless
+  # while every marker is a bare `S{N}` but becomes a mis-count the moment the suffixed grammar
+  # (`S{N}-{id3}`) coexists with legacy headers: an unterminated `Session S7` prefix-matches the
+  # header `Session S7-a4f`, so a session whose marker is the legacy `S7` counts a DIFFERENT
+  # session's header as its own and the foreign-write guard mis-attributes the file.
+  #
+  # `([^-A-Za-z0-9]|$)` — NOT a plain `$` anchor. Real headers legitimately carry trailing prose
+  # (`## 2026-07-14 — Session S2: the research-workflow branch lands…`), so `$` would match none of
+  # them. This terminator accepts end-of-line OR any following character that is not a hyphen or
+  # alphanumeric (`:`, space, …), while REFUSING the `-` that begins a suffix. So `S7` matches
+  # `Session S7` and `Session S7: …` but never `Session S7-a4f`. Both grammars are on disk during
+  # the transition (500+ legacy headers).
+  OWN_WT_HEADERS=$(grep -cE "^## ${MARKER_DATE} — Session ${MARKER}([^-A-Za-z0-9]|$)" logs/session-notes.md 2>/dev/null)
   OWN_WT_HEADERS=${OWN_WT_HEADERS:-0}
-  OWN_HEAD_HEADERS=$(git show HEAD:logs/session-notes.md 2>/dev/null | grep -c "^## ${MARKER_DATE} — Session ${MARKER}")
+  OWN_HEAD_HEADERS=$(git show HEAD:logs/session-notes.md 2>/dev/null | grep -cE "^## ${MARKER_DATE} — Session ${MARKER}([^-A-Za-z0-9]|$)")
   OWN_HEAD_HEADERS=${OWN_HEAD_HEADERS:-0}
   OWN_ADDED_HEADERS=$((OWN_WT_HEADERS - OWN_HEAD_HEADERS))
 

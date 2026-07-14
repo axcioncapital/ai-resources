@@ -64,9 +64,27 @@ Before logging anything, check each candidate against the **active** logs only �
 
 Apply the rubric's four hard constraints. Restated here because they are binding and enforced in your body, not the caller's:
 
-**Constraint A — Enforced per-session append cap, fail loud.**
-- `improvement-log.md`: append **at most 2 entries this session.** If you have more than 2 qualifying improvement/drift/guardrail signals, fill the 2 slots in this priority order: (1) any `guardrail-candidate` (safety), highest severity first; (2) `principle-drift`; (3) `session-feedback` improvement/optimization. Every signal that does not get a slot is **listed in your summary** under a visible "Not logged (per-session cap): …" line. Never silently drop.
-- `friction-log.md`: not soft-capped downstream, but cap at **3 appends** to avoid noise; overflow goes to the same "Not logged" summary line.
+**Constraint A — Enforced per-session append cap, fail loud, and NOTHING FALLS OFF THE END.**
+- `improvement-log.md`: append **at most 2 full entries this session.** If you have more than 2 qualifying improvement/drift/guardrail signals, fill the 2 slots in this priority order: (1) any `guardrail-candidate` (safety), highest severity first; (2) `principle-drift`; (3) `session-feedback` improvement/optimization.
+- **Overflow is WRITTEN TO DISK, not just mentioned.** Every signal that does not win a slot goes into **one additional `Deferred findings` entry** appended to `improvement-log.md` — never into a chat line alone.
+
+  ```
+  ### {date} — Deferred findings ({N} over the per-session cap)
+  - **Status:** logged (pending)
+  - **Category:** session-feedback
+  - **Severity:** {the HIGHEST severity among the deferred signals}
+  - **Provenance:** wrap-collector (machine-authored) {date}
+  - **Proposal:** {N} signals exceeded this session's 2-entry cap and are recorded here in full so
+    they remain reachable. Promote any of them to its own entry when actioned.
+    1. **[{severity}]** {signal — concrete, one or two sentences} → target: {path or "(tbd)"}
+    2. **[{severity}]** …
+  - **Target files:** (see per-signal targets above)
+  ```
+
+  **Why this exists (2026-07-14).** The cap previously routed overflow to a *"Not logged (per-session cap): …"* line in the chat summary. **A chat line is not a queue.** It is read once, by one session, and then it is gone — so the cap silently converted every third-and-beyond finding into a finding that was *diagnosed, judged worth logging, and then discarded*. The `Deferred findings` entry keeps the cap's purpose (the log does not fill with 8 machine-written blocks per session) while removing its cost (nothing is lost). It carries a `Severity:` like any other entry, so it **reaches the `/prime` task menu** — which a chat line never could.
+
+- `friction-log.md`: cap at **3 appends** to avoid noise. Overflow follows the same rule — it goes into the `Deferred findings` entry above, **not** into a chat line.
+- Still list everything deferred in your summary as well, so the operator sees it immediately. The summary is the *notification*; the log entry is the *queue*. Do not confuse the two — that confusion is the defect this constraint now fixes.
 
 **Constraint B — Provenance tag on every entry.**
 - `improvement-log.md` entries carry a `**Provenance:** wrap-collector (machine-authored) {date}` field.
@@ -95,12 +113,37 @@ The live file's entry count should be **at least** the baseline count (appends o
 ### {date} — {short title}
 - **Status:** logged (pending)
 - **Category:** session-feedback | principle-drift | guardrail-candidate
-- **Severity:** high | med | low        ← guardrail-candidate only; omit otherwise
+- **Severity:** high | medium-high | medium | low     ← MANDATORY ON EVERY ENTRY. Never omit.
 - **Provenance:** wrap-collector (machine-authored) {date}
 - **Friction source:** wrap-collector {date} — {dimension}
 - **Proposal:** {concrete, one-to-three sentences: what to change or guard, and where}
 - **Target files:** {paths if known, else "(to be determined at disposition)"}
 ```
+
+> **⚠ `Severity:` IS MANDATORY ON EVERY ENTRY — and this is the single most consequential field you
+> write. Do not make it conditional again.**
+>
+> **Why.** `/prime` Step 3 builds the next session's task menu with this scan, and nothing else:
+> ```
+> grep -nE -B6 "^- \*\*Severity:\*\* *(high|HIGH|medium-high|critical|urgent)" logs/improvement-log.md
+> ```
+> **An entry with no `Severity:` line cannot match that grep and therefore CAN NEVER REACH THE TASK
+> MENU.** Until 2026-07-14 this field was written for `guardrail-candidate` entries only. So an
+> ordinary finding was captured accurately, filed in the right log, looked completely correct — and
+> was **structurally invisible to every future session**. That is the mechanism behind the repo's
+> most expensive recurring failure: *a correctly-diagnosed defect named five or six consecutive times
+> and actioned zero times.* The finding was never lost. It was **unreachable**.
+>
+> **Know where each level lands — state the routing when you choose one:**
+> - `high` / `medium-high` → reaches the `/prime` task menu. Use for anything that should be *worked on*.
+> - `medium` / `low` → recorded, but **does NOT reach the menu**. Surfaced only by `/open-items`.
+>   That is defensible triage, but it must be a **deliberate** choice, not a surprise. If a finding
+>   deserves action, it needs `medium-high` or above — anything less is a decision to defer it
+>   indefinitely.
+>
+> **Never invent urgency to game the menu.** The fix for "this matters and nobody sees it" is an
+> honest severity, not an inflated one. An over-severe log is as useless as an invisible one, because
+> the operator stops trusting the level.
 
 `friction-log.md` — append under (or create) a `## Session — {date}` header with a `### Friction Events` subsection, one bullet per friction signal, per your inline copy above (the target file's own `## Schema` block, where present):
 ```

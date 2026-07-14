@@ -581,3 +581,12 @@ None. The riskiest action was the one **not** taken: wiring a blocking `PreToolU
 
 - Enforcement shape: git pre-commit hook vs. per-project `settings.json` wiring? (Pre-commit is the stronger guard but fires later; PreToolUse fires early but is session-root-scoped and Bash-bypassable.)
 - Does the hook redesign supersede the "merge the 8 entry points" option, or are they complementary?
+
+## 2026-07-14 — Session S8
+
+**Mandate:** Investigate and fix seven harness defects (session-marker cleanup; versioned hook wiring + installer; suffixed session numbers replacing the mkdir mutex; wrap-session findings→task queueing; deny-rule narrowing; /prime pull step; wrap/staging self-conflict) — done when: each fix is proven by execution against a known-positive fixture, not by reading the diff, and the change set is committed.
+- Out of scope: the research-workflow deployment mission; the /risk-check wrong-checkout bug; the seven at-rest gates named by /consult; re-wiring check-permission-sanity.sh / auto-sync-shared.sh / warn-settings-change.sh (logged only).
+- Files in scope: ai-resources/.claude/commands/prime.md, ai-resources/.claude/commands/wrap-session.md, .claude/commands/wrap-session.md, ai-resources/.claude/commands/session-start.md, ai-resources/.claude/commands/session-plan.md, ai-resources/.claude/commands/concurrent-session-check.md, ai-resources/.claude/commands/close-worktree-session.md, ai-resources/.claude/hooks/check-foreign-staging.sh, ai-resources/.claude/hooks/check-destructive-liveness.sh, ai-resources/.codex/hooks/check-foreign-staging.sh, ai-resources/.claude/agents/session-feedback-collector.md, ai-resources/.claude/settings.json, .claude/settings.json, ~/.claude/settings.json, ai-resources/logs/scripts/foreign-session-guard.sh, ai-resources/logs/scripts/run-manifest.sh, ai-resources/logs/scripts/prime-allocator.test.sh, ai-resources/logs/scripts/run-manifest.test.sh, ai-resources/docs/session-marker.md, ai-resources/logs/usage-log.md
+- Stop if: the known-positive fixture shows check-foreign-staging.sh cannot block (fail-open) — the Fix 3 regex work is then moot and the guard needs rebuilding first. Report and stop.
+- Required outputs: ai-resources/logs/scripts/install-hooks.sh, ai-resources/.claude/hooks/check-hook-wiring.sh, ai-resources/.claude/hooks/cleanup-session-marker.sh, logs/session-plan-2026-07-14-S8.md
+- Mission: (none — repo-harness work)

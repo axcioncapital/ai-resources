@@ -16,7 +16,19 @@ Two files, written together by `/prime`. The per-session-id file is the **identi
 
 **Path:** `logs/.session-marker-${CLAUDE_CODE_SESSION_ID}` (cwd-relative). `CLAUDE_CODE_SESSION_ID` is injected into every Bash tool call by the harness.
 
-**Format:** one line: `{YYYY-MM-DD} S{N}` — e.g., `2026-06-01 S5`.
+**Format:** one line: `{YYYY-MM-DD} S{N}-{id3}` — e.g., `2026-07-14 S5-a4f`, where `id3` is the first 3 alphanumeric characters of `CLAUDE_CODE_SESSION_ID`.
+
+> **Two grammars are live, and every reader must accept both.** The **legacy** form is a bare `S{N}` (`2026-06-01 S5`). The **current** form carries the id suffix. Writers emit only the suffixed form; ~500 legacy headers remain on disk and in git history, so **readers must match `S\d+(-[A-Za-z0-9]{3})?`** — never a bare `S\d+`.
+>
+> **Why the suffix (2026-07-14, S8).** The `S{N}` number was allocated by a claim-dir mutex, which **narrows** the race but cannot close it: a checkout running an older `prime.md` neither writes claims nor reads them, so it allocates blind. That gap produced **four real marker collisions in two days**. Two sessions with the same `S{N}` write the same `## {date} — Session S{N}` header, which breaks the `grep -Fxq` "does my header exist" check that `/prime` 8a, `/session-start` Step 3 and `/session-plan` Step 0 all depend on — and a wrap can then append its summary under a **foreign session's header**.
+>
+> A suffixed marker **cannot** collide, whatever `N` either session picks, because no two sessions share an id. **The uniqueness now lives in the name, not in a lock every participant must honour** — which is the point: a lock is only as good as the oldest checkout that participates in it, and participation was version-controlled.
+>
+> **Two traps for anyone extending a reader — both were live defects, both found by execution:**
+> 1. **`\bS\d+\b` does not fail on `S7-a4f`; it SILENTLY TRUNCATES to `S7`.** Two different sessions then resolve to the same token and the reader picks up the wrong session's data with no error. Use `\bS\d+(?:-[A-Za-z0-9]{3})?\b`.
+> 2. **A `\b` terminator after a marker matches a suffix boundary.** `Session S7\b` matches `Session S7-a4f`. Use `(?![-\w])` (regex) or `([^-A-Za-z0-9]|$)` (grep -E). A plain `$` anchor is **wrong** — real headers legitimately carry trailing prose (`## 2026-07-14 — Session S2: the branch lands…`).
+>
+> **Degrades safe:** no `CLAUDE_CODE_SESSION_ID` (older CLI) → empty suffix → legacy bare `S{N}`, i.e. exactly the previous behaviour.
 
 **Gitignore:** YES — `logs/.session-marker-*`. Per-machine, per-session state, not committed.
 
@@ -28,7 +40,7 @@ Two files, written together by `/prime`. The per-session-id file is the **identi
 
 **Path:** `logs/.session-marker` (cwd-relative, in the git root of the active project / ai-resources).
 
-**Format:** one line: `{YYYY-MM-DD} S{N}` — e.g., `2026-05-30 S1`.
+**Format:** one line: `{YYYY-MM-DD} S{N}-{id3}` — e.g., `2026-07-14 S1-a4f`. Same grammar as the identity oracle above; both grammars readable, suffixed form written.
 
 **Gitignore:** YES. Per-machine session state, not committed. Present in `.gitignore` from Phase 1 commit `ea93d62`.
 
@@ -248,7 +260,9 @@ Every place the marker contract is consumed must point back to this doc. Adding 
 
 **Runtime non-command consumers** (load-bearing parse logic — a silent non-match degrades behavior with no error):
 
-- `ai-resources/.claude/hooks/backup-session-plan.sh` (+ project-local copies, e.g. `projects/research-pe-regime-shift-advisory-gap/.claude/hooks/backup-session-plan.sh`) — PreToolUse Write hook; line-20 regex must match every plan filename form or backups silently stop. Regex cap widened to `{0,6}` (2026-06-05) to cover date-qualified names (`session-plan-YYYY-MM-DD-S{N}.md` = 4 segments, +1 for pass2 = 5). **Both the canonical and every project-local copy must be updated in lockstep on any filename-format change.**
+- ~~`ai-resources/.claude/hooks/backup-session-plan.sh`~~ — **⚠ CORRECTED 2026-07-14 (S8): THIS FILE DOES NOT EXIST.** Verified with `[ -f ]` and `[ -L ]`: there is no `backup-session-plan.sh` under `ai-resources/.claude/hooks/`. The only copy anywhere is `ai-resources/.codex/hooks/backup-session-plan.sh`. This registry line has been directing maintainers to edit a file that is not there — and, worse, telling them a plan-filename change is covered when nothing covers it. *(A dangling symlink to the missing canonical file also survives at `archive/nordic-pe-macro-landscape-H1-2026/.claude/hooks/backup-session-plan.sh`; `[ -f ]` reports it false and hides that it is a symlink at all — use `[ -L ]`.)*
+  - **Live copy:** `ai-resources/.codex/hooks/backup-session-plan.sh` — PreToolUse Write hook; its line-20 regex `(-[a-zA-Z0-9]+){0,6}` must match every plan filename or backups silently stop. Under the suffixed grammar, `session-plan-2026-07-14-S7-a4f-pass2.md` is **exactly 6** segments — **at the cap**. One more segment and backups stop with no error. Each segment must also stay `[a-zA-Z0-9]+`: an id suffix containing `_` or `.` would break it.
+  - **A registry that names a file which does not exist is worse than no registry** — it converts "I checked the contract" into a false negative. Re-derive this list with `[ -L ]`/`[ -f ]` before trusting it.
 - `ai-resources/.claude/hooks/detect-concurrent-session.sh` — SessionStart hook. **Registered ONCE, at the USER level** (`~/.claude/settings.json` → `SessionStart`), by **absolute path** to this canonical copy — so it fires for every session on the machine regardless of which folder is open, and derives its target from `CLAUDE_PROJECT_DIR`. **It is registered in NO repo-level or project-level `settings.json`** (verified 2026-07-13: a grep for `detect-concurrent` across the user, workspace-root, ai-resources, and all project settings files matches the user layer only).
   - ⚠ **Corrected 2026-07-13 — this entry previously said "+ byte-identical project copies … All three copies must be updated in lockstep".** That was wrong and actively harmful: because the sole registration points at *this* canonical file by absolute path, the two project copies (`projects/positioning-research/.claude/hooks/`, `projects/research-pe-regime-shift-advisory-gap/.claude/hooks/`) are **never executed by anything**. They are dead duplicates, and the lockstep instruction taxed every future maintainer with keeping two inert files in sync. **Do not sync them. Do not treat their drift as a defect.** Deletion is proposed in `logs/improvement-log.md` (2026-07-13), pending operator approval. If you are here because you changed the canonical hook: you are done — there are no copies to update.
   - Behaviour: reads the today-dated per-id marker set (`logs/.session-marker-*`, excluding this session's own) as a **liveness signal** to fire the same-checkout sharp nudge only when an un-wrapped foreign session exists here. Depends on the teardown above to keep the signal accurate — **as of 2026-07-13 that dependency is on the `SessionEnd` hook (harness-enforced), not on `/wrap-session` Step 13 (model-executed, and demonstrably skipped)**; falls back to the legacy shared-marker heuristic when the per-id oracle is unpopulated. There is **one** live copy of this hook (see the correction note above) — no lockstep sync is required. A silent non-match degrades to the soft machine-wide warning, never a block (SessionStart cannot block — see the hook header).

@@ -64,13 +64,21 @@ Exclude this session's own marker (`logs/.session-marker-${CLAUDE_CODE_SESSION_I
 
 ## Step 3 — Gather LIVE footprints (the declared side)
 
-For **each** other live session `S{N}` detected in Step 2, build its declared footprint:
+For **each** other live session detected in Step 2, build its declared footprint. Call that
+session's marker `${FOREIGN_MARKER}` — read it from the marker file's contents, do **not** assume a
+shape. **Two grammars are live on disk:** the legacy `S{N}` (e.g. `S7`) and the current
+`S{N}-{id3}` (e.g. `S7-a4f`, where `id3` is 3 characters of that session's id). Take the marker
+token whole; never re-derive it by matching `S` + digits, which truncates `S7-a4f` to `S7` and
+silently points every lookup below at the wrong session.
 
-- **Mandate bullet** — under its `## ${TODAY} — Session S{N}` header in `logs/session-notes.md`,
-  read the `- Files in scope:` bullet (the `/session-start` Step 3 parse contract; see
-  `docs/session-marker.md` registry).
-- **Plan file** — read `logs/session-plan-${TODAY}-S{N}.md` if present; take its declared
-  source/scope file list.
+- **Mandate bullet** — under its `## ${TODAY} — Session ${FOREIGN_MARKER}` header in
+  `logs/session-notes.md`, read the `- Files in scope:` bullet (the `/session-start` Step 3 parse
+  contract; see `docs/session-marker.md` registry).
+- **Plan file** — read `logs/session-plan-${TODAY}-${FOREIGN_MARKER}.md` if present; take its
+  declared source/scope file list. *(This line previously hardcoded the literal
+  `logs/session-plan-${TODAY}-S{N}.md`, which finds nothing once a session's marker carries a
+  suffix — the check then reports a live session as having declared no scope, which reads as
+  "safe to touch anything". Fixed 2026-07-14 S8.)*
 - The session's footprint is the **union** of concrete paths from both.
 
 **HARD GATE — UNKNOWN-SCOPE, never SAFE.** A session can hold a marker (and even a plan file)

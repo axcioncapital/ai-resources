@@ -152,10 +152,32 @@ _VB = r'(?:^|[\n;&|(])\s*'
 # workspace contains spaces — treat `\S+` as a defect anywhere it can meet a path.
 _GC = r'(?:-C\s+(?:"[^"]*"|\'[^\']*\'|\S+)\s+)?'
 
-RE_WORKTREE = _VB + r'git\s+' + _GC + r'worktree\s+remove\b([^&|;\n]*)'
-RE_BRANCH   = _VB + r'git\s+' + _GC + r'branch\s+[^&|;\n]*?-(?:d|D)\b([^&|;\n]*)'
-RE_RESET    = _VB + r'git\s+' + _GC + r'reset\b[^&|;\n]*?--hard\b'
-RE_CLEAN    = _VB + r'git\s+' + _GC + r'clean\b[^&|;\n]*?-[a-zA-Z]*f'
+# ENV-ASSIGNMENT PREFIX — CLOSES A SILENT BYPASS OF ALL FOUR GATED VERBS.
+#
+# `_VB` anchors to a command-segment boundary and was immediately followed by `git\s+`. But a
+# shell command may legally carry environment assignments BEFORE the binary:
+#
+#     FOO=bar git worktree remove <path>          <- was NOT detected  -> exit 0, SILENTLY ALLOWED
+#     env FOO=bar git worktree remove <path>      <- was NOT detected  -> exit 0, SILENTLY ALLOWED
+#     git worktree remove <path>                  <- detected, blocked (correct)
+#     cd /tmp && git worktree remove <path>       <- detected, blocked (correct)
+#
+# Reproduced by execution 2026-07-14 (S8) against a live marker. This was NOT a designed override
+# — it was an open hole in the one guard that exists because a session came a single operator
+# remark from destroying 173+ lines of uncommitted work in two canonical skills. It defeated ALL
+# FOUR verbs (worktree remove / branch -D / reset --hard / clean -f), because every pattern shares
+# the `_VB + git` prefix.
+#
+# ⚠ The hole is also why the override below had to be built SECOND, not first: an
+# `AXCION_LIVENESS_OVERRIDE=1 git …` override would have "worked" by exploiting this bug — shipping
+# a feature that made the hole look intentional, and leaving `FOO=bar` as a live bypass. Close the
+# hole, THEN add the door. Order is load-bearing; do not reorder.
+_ENVPFX = r'(?:env\s+)?(?:[A-Za-z_][A-Za-z0-9_]*=(?:"[^"]*"|\'[^\']*\'|[^\s;&|]*)\s+)*'
+
+RE_WORKTREE = _VB + _ENVPFX + r'git\s+' + _GC + r'worktree\s+remove\b([^&|;\n]*)'
+RE_BRANCH   = _VB + _ENVPFX + r'git\s+' + _GC + r'branch\s+[^&|;\n]*?-(?:d|D)\b([^&|;\n]*)'
+RE_RESET    = _VB + _ENVPFX + r'git\s+' + _GC + r'reset\b[^&|;\n]*?--hard\b'
+RE_CLEAN    = _VB + _ENVPFX + r'git\s+' + _GC + r'clean\b[^&|;\n]*?-[a-zA-Z]*f'
 
 # DETECT the verb on `scan` (heredoc/quote-blanked) so a mere mention cannot gate.
 is_worktree = bool(re.search(RE_WORKTREE, scan))
@@ -165,6 +187,41 @@ is_clean    = bool(re.search(RE_CLEAN, scan))
 
 if not (is_worktree or is_branch or is_reset or is_clean):
     sys.exit(0)   # not a destructive verb → nothing to guard. Cheap path; no git/file reads.
+
+# ---- OPERATOR OVERRIDE — an auditable door, replacing a guard-defeating workaround ----
+#
+# WHY THIS EXISTS. Before this, the ONLY way past a false-positive block was to DELETE THE MARKER
+# FILES THE GUARD READS and re-run the command. That is what actually happened on 2026-07-14 (S5),
+# and it is recorded in friction-log.md as a guard-defeat path "sitting in the open". A guard whose
+# documented bypass is "erase its evidence, then retry" does not stay a guard for long: the habit it
+# trains is deleting a signal, and one day that signal will be true.
+#
+# THE REAL FALSE-POSITIVE THIS SERVES. The marker is a LIVENESS oracle, not a "has-wrapped" oracle.
+# SessionEnd (which tears the marker down) fires when the CLI PROCESS ends — not when
+# /wrap-session finishes (docs/session-marker.md:227). So a session that has wrapped but whose
+# window is still open is STILL LIVE by the oracle's definition, and the guard is RIGHT to block.
+# The operator, meaning "that session is finished", needs a way to say so — on the record.
+#
+# CONTRACT: this allows the command and WRITES AN AUDIT LINE. It never silently permits. If you are
+# reaching for `rm` on a marker file, use this instead — that is the entire point.
+override = bool(re.search(r'\bAXCION_LIVENESS_OVERRIDE=1\b', cmd))
+if override:
+    try:
+        log_dir = os.path.join(
+            subprocess.run(["git", "rev-parse", "--show-toplevel"],
+                           capture_output=True, text=True, timeout=4).stdout.strip() or ".",
+            "logs")
+        os.makedirs(log_dir, exist_ok=True)
+        with open(os.path.join(log_dir, "destructive-override.log"), "a") as f:
+            f.write("%s  session=%s  cmd=%s\n" % (
+                datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+                os.environ.get("CLAUDE_CODE_SESSION_ID", "<unknown>"),
+                cmd.strip().replace("\n", " ")[:300]))
+    except Exception:
+        pass  # An override must never fail because its own audit trail could not be written.
+    print("[destructive-op liveness] OVERRIDE ACCEPTED — operator asserted the target is idle. "
+          "Recorded in logs/destructive-override.log.", file=sys.stderr)
+    sys.exit(0)
 
 # EXTRACT arguments from the RAW command, never from `scan`.
 #
@@ -395,6 +452,16 @@ lines.append("scan in this repo can see a running process.")
 lines.append("  • Session is LIVE → do not proceed. Let it wrap and commit first.")
 lines.append("  • Operator confirms it is IDLE (a crashed session can leave a stale marker) →")
 lines.append("    they say so explicitly, and only then does this become their call, not yours.")
+lines.append("")
+lines.append("If — and ONLY if — the operator confirms the target is idle, re-run the SAME command")
+lines.append("with the override prefix. It proceeds and writes an audit line to")
+lines.append("logs/destructive-override.log:")
+lines.append("")
+lines.append("    AXCION_LIVENESS_OVERRIDE=1 " + cmd.strip().split("\n")[0][:160])
+lines.append("")
+lines.append("⚠ Do NOT delete the marker files to get past this. That was the old workaround, it")
+lines.append("defeats the guard by erasing the evidence it reads, and it leaves no record. The")
+lines.append("override above exists precisely so you never have to do that again.")
 
 print("\n".join(lines), file=sys.stderr)
 sys.exit(2)
