@@ -1,0 +1,60 @@
+{
+  "run_id": "2026-07-14-S8",
+  "project": "ai-resources",
+  "date": "2026-07-14",
+  "marker": "S8",
+  "model": "unknown",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md",
+  "mission": null,
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    "ai-resources/.claude/hooks/check-destructive-liveness.sh",
+    "ai-resources/.claude/hooks/check-foreign-staging.sh",
+    "ai-resources/.claude/hooks/sentinel-hook-probe.sh",
+    "ai-resources/.codex/hooks/check-foreign-staging.sh",
+    "ai-resources/.claude/commands/prime.md",
+    "ai-resources/.claude/commands/close-worktree-session.md",
+    "ai-resources/.claude/commands/concurrent-session-check.md",
+    "ai-resources/.claude/commands/wrap-session.md",
+    ".claude/commands/wrap-session.md",
+    "ai-resources/.claude/agents/session-feedback-collector.md",
+    "ai-resources/.claude/settings.json",
+    "ai-resources/logs/scripts/foreign-session-guard.sh",
+    "ai-resources/logs/scripts/prime-allocator.test.sh",
+    "ai-resources/docs/session-marker.md",
+    "ai-resources/logs/improvement-log.md",
+    "ai-resources/logs/session-notes.md",
+    "ai-resources/logs/decisions.md",
+    "ai-resources/logs/session-plan-2026-07-14-S8.md",
+    "ai-resources/logs/scratchpads/2026-07-14-21-30-scratchpad.md",
+    "ai-resources/audits/risk-checks/2026-07-14-batched-repo-repair-marker-grammar-hook-wiring-deny-rules.md",
+    "ai-resources/audits/risk-checks/2026-07-14-batched-repo-repair-V2-post-reconsider.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-14-s8-close-a-guard-s-hole-before-adding-its-door"
+  ],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "deferred",
+  "outcome": "PARTIAL",
+  "failure_class": null,
+  "incidents_refs": []
+}
