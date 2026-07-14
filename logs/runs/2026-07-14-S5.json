@@ -1,0 +1,46 @@
+{
+  "run_id": "2026-07-14-S5",
+  "project": "ai-resources",
+  "date": "2026-07-14",
+  "marker": "S5",
+  "model": "unknown",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md",
+  "mission": null,
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    "logs/friction-log.md",
+    "logs/improvement-log.md",
+    "logs/session-notes.md",
+    "logs/session-notes-archive-2026-07.md",
+    "logs/decisions.md",
+    "logs/scratchpads/2026-07-14-S5-close-worktree-scratchpad.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-14-s5-treat-delete-the-marker-then-re-run-the"
+  ],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": "tool-misuse",
+  "incidents_refs": [],
+  "incident_waived": "Zero-damage near-miss, not an output defect: rm -f in a for-loop over $(find ...) word-split spaced paths; every fragment was a non-existent path and nothing was deleted. Fully logged to friction-log.md and queued to improvement-log.md (MED-HIGH) as the sixth assert-from-recall. No artifact or output was affected."
+}
