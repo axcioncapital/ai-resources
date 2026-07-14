@@ -36,7 +36,7 @@ Splitting parity-checking from synthesis preserves the four-pass principle: *the
 
 | Input | Path | Required |
 |---|---|---|
-| Refined cluster memos | `analysis/{section}/cluster-memos-refined/` (directory; one memo per cluster) | yes |
+| Refined cluster memos | `analysis/cluster-memos/{section}/` — read **only** the refined variant, `{section}-cluster-NN-memo-refined.md` (one per cluster). The unrefined `{section}-cluster-NN-memo.md` sits in the same directory and is **not** an input to this skill. | yes |
 | Claim-permission tables | `analysis/claim-permission/{section}/{section}-cluster-NN-permission-table.md` (one per cluster) | yes |
 | Project country set | `## Project Country Set` section in `reference/source-class-hierarchy.md` | yes |
 
@@ -127,7 +127,7 @@ Body:
 ## Behavior
 
 1. **Pre-flight.**
-   - Verify `analysis/{section}/cluster-memos-refined/` exists and contains at least one memo. If absent: exit with prompt naming the missing path and recommending `/run-cluster` first.
+   - Verify `analysis/cluster-memos/{section}/` exists and contains at least one **refined** memo matching `{section}-cluster-NN-memo-refined.md`. If the directory is absent, or contains no file matching that refined pattern: exit with prompt naming the missing path and recommending `/run-cluster` first. A directory holding only unrefined `{section}-cluster-NN-memo.md` files does **not** satisfy this check — `/run-cluster` writes both variants into this one directory, and only the refined variant carries the claim IDs this skill reads.
    - Verify the claim-permission table directory `analysis/claim-permission/{section}/` exists and contains at least one cluster permission table. If absent: exit with prompt noting Phase A must run first (sentinel `.claim-permission-gate.done` should be present).
    - Verify `reference/source-class-hierarchy.md` exists. If absent: exit with the generic remediation prompt under Failure Behavior.
    - Verify the `## Project Country Set` section is present and parseable in the hierarchy. If absent or malformed: exit with prompt naming the expected schema.
@@ -176,3 +176,4 @@ Body:
 - The output is consumed by `/run-sufficiency` Phase F (gate-clearance emission) — non-OK verdicts feed the NOT-SUPPORTED-ratio computation per the gate-clearance schema.
 - Sibling Pass 3 skills under `/run-sufficiency`: `claim-permission-gate` (Phase A, runs first), `stop-conditions-check` (Phase D, inline in /run-sufficiency), `source-conflict-resolver` (Phase E, inline), `gate-clearance-emitter` (Phase F, inline). When `counter-search-runner` lands (a deferred remediation in some pipelines), it occupies Phase B between Phase A and Phase C.
 - The project-level reference doc that unblocks this skill is `reference/source-class-hierarchy.md` (must include the `## Project Country Set` section).
+- **Input-path contract (load-bearing).** The refined-memo input path is owned by two upstream sources and this skill must not restate it independently: `/run-cluster` is the **writer** (it writes both `{section}-cluster-NN-memo.md` and `{section}-cluster-NN-memo-refined.md` into `analysis/cluster-memos/{section}/`), and `reference/file-conventions.md` is the **naming registry** — its canonical row fixes the directory, and its Rule 2 (variant-suffix convention) fixes the `-refined` suffix this skill filters on. If either changes, this skill's Inputs row and pre-flight change in lockstep. Sibling `claim-permission-gate` carries the identical contract and must be updated with it.

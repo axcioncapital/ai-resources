@@ -1,0 +1,46 @@
+{
+  "run_id": "2026-07-13-S10",
+  "project": "ai-resources-research-workflow",
+  "date": "2026-07-13",
+  "marker": "S10",
+  "model": "unknown",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md",
+  "mission": null,
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    "logs/missions/research-workflow-deploy-fitness.md",
+    "logs/improvement-log.md",
+    "logs/session-notes.md",
+    "logs/decisions.md",
+    "logs/session-notes-archive-2026-07.md",
+    "logs/scratchpads/2026-07-13-22-15-scratchpad.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-13-s10-the-research-workflow-fix-plan-governs-the",
+    "logs/decisions.md#2026-07-13-s10-the-marker-allocator-s-accepted-known-gap-is"
+  ],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": null,
+  "incidents_refs": []
+}

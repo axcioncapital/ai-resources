@@ -245,47 +245,180 @@ fi
 
 Ensure `{PROJECT_DIR}/.claude/settings.local.json` is gitignored (Claude Code convention — `/permission-sweep` rule 12 flags it if tracked). `unique` makes the merge idempotent; the `map(select(...))` strip removes any `{{PLACEHOLDER}}` entry before appending the real workspace path. Report whether the workspace root was added to the local file or already present.
 
-## Step 5: Discover placeholders
+## Step 5: Determine placeholders to fill
 
-Scan all files in `{PROJECT_DIR}/` for `{{...}}` patterns. Collect the unique placeholder names.
+**The deploy-time placeholder set is DECLARED, not discovered.** The registry in 5b is the authority. A regex scan is used only as a drift cross-check (5d) — never to decide what gets filled.
+
+**Why (verified by execution, 2026-07-13 — mission `research-workflow-deploy-fitness` thread 2).** The template holds **128** distinct `{{...}}` tokens, but only **30** are resolved at deployment. Of the rest, **94** live *only* inside the six `reference/*.template.md` files — deferred templates the operator instantiates later — and the remainder are notation inside documentation tables. The old scan-and-fill-everything approach was wrong in both directions at once: its `{{[A-Z_]*}}` pattern **missed 65** real placeholders (every digit-bearing one, including `{{CONFIDENTIAL_IDENTIFIER_1/2}}`), while **demanding values for template-internal tokens** it had no business touching — and then `sed`-rewriting the template files, destroying the shapes the operator needs later.
+
+**Do NOT "fix" this by widening the regex.** A wider pattern finds the missing 65 *and* sweeps in the 94 template-internal ones. The regex is not the mechanism; the registry is.
+
+### 5a. Fill scope — the only files the deploy may rewrite
+
+FILL SCOPE = every `*.md` and `*.json` under `{PROJECT_DIR}/`, **excluding**:
+
+| Excluded | Why |
+|---|---|
+| `reference/*.template.md` (6 files) | Deferred templates. The operator instantiates these per-project later. **Must survive deployment byte-identical.** |
+| `SETUP.md` | The operator checklist. It *documents* placeholders — its tables name them literally — so filling it would corrupt its own reference table. Removed at Step 10 regardless. |
+| `.claude/commands/produce-architecture.md` | **Only when the project does not use the parts-based document model** — see 5c. Its 4 placeholders are an unused optional component and must stay unfilled. |
+
+### 5b. Deploy-time placeholder registry — the authority
+
+**Class A — required (26).** Every deployment resolves all of these.
+
+| Placeholder | Lives in | Purpose |
+|---|---|---|
+| `{{PROJECT_TITLE}}` | CLAUDE.md, reference/{stage-instructions,file-conventions,quality-standards,style-guide}.md | Project name in headings |
+| `{{PROJECT_DESCRIPTION}}` | CLAUDE.md, reference/style-guide.md | Project scope description |
+| `{{ANALYTICAL_LENS}}` | CLAUDE.md | Analytical framework |
+| `{{CURRENT_SECTION}}` | CLAUDE.md | Starting section |
+| `{{DOCUMENT_ARCHITECTURE}}` | CLAUDE.md | Document structure |
+| `{{EVIDENCE_CALIBRATION}}` | CLAUDE.md | Evidence-availability note |
+| `{{OPERATOR_NAME}}` | CLAUDE.md, reference/style-guide.md | Operator's name |
+| `{{CONFIDENTIAL_IDENTIFIER_1}}` | CLAUDE.md | Confidentiality boundary 1 (use "No confidentiality constraints for this project." if none) |
+| `{{CONFIDENTIAL_IDENTIFIER_2}}` | CLAUDE.md | Confidentiality boundary 2 (same) |
+| `{{REPORT_SET}}` | CLAUDE.md § Project Config | Config field 1 |
+| `{{SECTION_IDS}}` | CLAUDE.md § Project Config | Config field 2 |
+| `{{COUNTRY_SET}}` | CLAUDE.md § Project Config | Config field 3 (canonical; source-class-hierarchy mirrors it) |
+| `{{COUNTRY_SUPERSET}}` | CLAUDE.md § Project Config | Config field 4 (pan-region leakage detection) |
+| `{{LANGUAGES}}` | CLAUDE.md § Project Config | Config field 5 (ISO 639-1; empty = English-only) |
+| `{{DEAL_SIZE_LENS}}` | CLAUDE.md § Project Config | Config field 6 |
+| `{{DOMAIN}}` | CLAUDE.md § Project Config, reference/style-guide.md | Config field 7 |
+| `{{VERIFICATION_POSTURE}}` | CLAUDE.md § Project Config | Config field 8 |
+| `{{SOURCE_AVAILABILITY}}` | CLAUDE.md § Project Config | Config field 9 |
+| `{{RESEARCH_AREA_PHRASE}}` | CLAUDE.md § Project Config, .claude/commands/run-execution.md, reference/{style-guide,stage-instructions}.md | Config field 10 |
+| `{{CURRENT_PERIOD}}` | CLAUDE.md § Project Config | Config field 11 |
+| `{{DELIVERY_VAULT}}` | CLAUDE.md § Project Config | Config field 12 (optional value, but must still be resolved — write `none` if unused) |
+| `{{DOCUMENT_MODEL}}` | CLAUDE.md § Project Config | Config field 13 — enum `report` \| `section`; **required, halt on missing** |
+| `{{SECTION_SEQUENCE}}` | reference/stage-instructions.md | Section ordering constraints |
+| `{{CLUSTER_BLOCK_THRESHOLD}}` | reference/quality-standards.md | Cluster-level QC threshold |
+| `{{SECTION_BLOCK_THRESHOLD}}` | reference/quality-standards.md | Section-level QC threshold |
+| `{{FACT_VERIFICATION_SYSTEM_PROMPT}}` | reference/sops/fact-verification-prompt.md | Stage-4 verification prompt (a stub to be authored) |
+
+**Class B — conditional (4).** Fill **only** if the project uses the parts-based document model (`/produce-architecture`). Otherwise leave unfilled and exclude the file from fill scope — an unused optional component.
+
+| Placeholder | Lives in |
+|---|---|
+| `{{PART_TWO_DIR}}` · `{{PART_THREE_DIR}}` · `{{PART_TWO_PROSE_DIR}}` · `{{PART_THREE_PROSE_DIR}}` | .claude/commands/produce-architecture.md |
+
+**Class C — never fill, never prompt (notation, not placeholders).** These are *illustrations of a format*, not values.
+
+| Token | Lives in | What it is |
+|---|---|---|
+| `{{Country_1}}` · `{{Country_2}}` · `{{Country_N}}` | reference/quality-standards.md:106 | Column headers in an example Country Coverage Table — generic by design |
+| `{{PLACEHOLDER}}` | SETUP.md | A documentation example ("replace all `{{PLACEHOLDER}}` values"). Out of fill scope anyway. |
+
+**Class D — template-internal (94).** Everything inside `reference/*.template.md`. Never touched at deploy time. The operator resolves them when instantiating each template.
+
+### 5c. Resolve the conditional class [Operator]
+
+Ask once:
+
+> Does this project use the parts-based document model (`/produce-architecture`, with a `parts/` directory)? [y/n]
+
+- **y** → add `.claude/commands/produce-architecture.md` to fill scope; the 4 Class-B placeholders join the required set for this deployment.
+- **n** → leave it excluded. Its placeholders stay unfilled by design.
+
+### 5d. Drift cross-check (a warning, never a prompt)
+
+The registry is hand-maintained, so it can fall behind the template. Catch that loudly rather than silently filling nothing:
 
 ```bash
-grep -roh '{{[A-Z_]*}}' {PROJECT_DIR}/ | sort -u
+# Broad scan of FILL SCOPE ONLY — template files and SETUP.md are excluded by construction.
+find "{PROJECT_DIR}" -type f \( -name "*.md" -o -name "*.json" \) \
+     ! -name "*.template.md" ! -name "SETUP.md" -print0 \
+  | xargs -0 grep -oh '{{[A-Za-z0-9_]*}}' 2>/dev/null | sort -u
 ```
 
-For each placeholder, check if `{PROJECT_DIR}/SETUP.md` exists and contains a description for it (look in the Placeholder Reference table or the step descriptions). Build a list of placeholders with their descriptions.
+Compare the result against Class A + Class B + Class C. Anything **not** in any class is an **unregistered placeholder**: report it loudly and stop — the template has gained a placeholder the registry does not know about, and the registry must be updated before this deploy proceeds. Do not silently fill it, and do not silently skip it.
 
-Display the list to the user:
+**Also check the SETUP.md mirror.** `SETUP.md` § Placeholder Reference restates this registry for the operator, and it is excluded from fill scope — so the scan above cannot see it drift. Verify the mirror directly: extract the placeholder names from SETUP.md's Class A and Class B tables and compare them to the registry above.
+
+```bash
+grep -oh '{{[A-Za-z0-9_]*}}' "{PROJECT_DIR}/SETUP.md" | sort -u
 ```
-Found N placeholders to fill:
-- {{PLACEHOLDER_1}} — description from SETUP.md (or "no description available")
-- {{PLACEHOLDER_2}} — description
-...
+
+Any name present in one list but not the other means the lockstep contract has been broken — **stop and reconcile before deploying.** This is the guard against the exact failure that caused thread 1 of the deployment-fitness mission: a declared contract that quietly stopped matching reality. The registry in 5b is the authority; SETUP.md is the mirror.
+
+Then display the fill plan:
+
+```
+Deploy-time placeholders to fill: N
+  Class A (required):     26
+  Class B (conditional):   4  [included | excluded — parts-based model not in use]
+Preserved untouched:
+  Class C (notation):      3
+  Class D (template-internal, in 6 *.template.md files): 94
 ```
 
 ## Step 6: Collect placeholder values [Operator]
 
-Ask the user to provide values for all placeholders. Present them as a group so the user can provide all values at once, or go one by one — follow the user's preference.
+Ask the user for values for the **Class A** set (plus **Class B** if 5c selected it). Present them as a group so the user can supply everything at once, or go one by one — follow the user's preference.
 
-For `{{OPERATOR_NAME}}`: default to the git user's first name if available (`git config user.name`). Tell the user the default and let them confirm or override.
+- `{{OPERATOR_NAME}}` — default to the git user's first name (`git config user.name`). State the default; let the user confirm or override.
+- `{{CONFIDENTIAL_IDENTIFIER_1/2}}` — if the project has no confidentiality constraints, the CLAUDE.md section itself says to replace the list with `No confidentiality constraints for this project.` Offer that as the default for both.
+- `{{DOCUMENT_MODEL}}` — enum `report` | `section`. **Halt if the user cannot supply it**; downstream Stage-5 dispatch reads it first.
+- `{{DELIVERY_VAULT}}` — optional in effect, but must still be *resolved*. Default `none`.
+
+Never prompt for Class C or Class D tokens.
 
 ## Step 7: Replace placeholders
 
-For each placeholder, replace all occurrences across all files in `{PROJECT_DIR}/`:
+Replace each collected value across **fill scope only** (Step 5a).
 
 ```bash
-find {PROJECT_DIR}/ -type f -name "*.md" -o -name "*.json" | xargs sed -i '' 's/{{PLACEHOLDER}}/value/g'
+# Build the fill-scope file list ONCE, NUL-delimited.
+#
+# Two defects fixed here (both verified by execution, 2026-07-13 — thread 2):
+#   1. `-print0 | xargs -0` is LOAD-BEARING, not style. The previous `find ... | xargs`
+#      word-split on spaces, and EVERY real deploy path contains one
+#      ("…/Claude Code/Axcion AI Repo/…"). It fed sed a truncated path, sed exited 1,
+#      and ZERO replacements were made. The step was dead code in this workspace.
+#   2. `\( -name … -o -name … \)` grouping is LOAD-BEARING. Without the parens, `-o`
+#      breaks `-type f`'s binding and the second branch matches directories too.
+#
+# The two `! -name` exclusions are the byte-identical guarantee for the deferred
+# templates. Do not remove them, and do not "simplify" this back to a bare
+# `find | xargs` — that reintroduces both defects at once.
+#
+# The scope file is named per-project, NOT a fixed /tmp path: two deploys running
+# concurrently would otherwise overwrite each other's file list and each would sed
+# the OTHER project's files.
+SCOPE_LIST="/tmp/deploy-fill-scope-{PROJECT_NAME}.list"
+
+find "{PROJECT_DIR}" -type f \( -name "*.md" -o -name "*.json" \) \
+     ! -name "*.template.md" ! -name "SETUP.md" -print0 > "$SCOPE_LIST"
+
+# If the parts-based model is NOT in use, also drop produce-architecture.md from the list.
 ```
 
-Be careful with sed special characters in values — escape `/`, `&`, and `\` in replacement strings.
-
-After replacement, verify no `{{...}}` patterns remain:
+For each placeholder/value pair, escape `/`, `&`, and `\` in the replacement, then:
 
 ```bash
-grep -r '{{' {PROJECT_DIR}/ --include="*.md" --include="*.json"
+xargs -0 sed -i '' "s/{{PLACEHOLDER}}/escaped_value/g" < "$SCOPE_LIST"
 ```
 
-If any remain, report them and ask the user for the missing values.
+### Step 7 verification
+
+Assert that no **deploy-time** placeholder remains in fill scope. Class C and Class D tokens are *expected* to survive and must not be reported.
+
+```bash
+# Registry placeholders only — build REGISTRY_RE from the Class A (+ Class B, if selected)
+# names collected in Step 5, e.g. 'PROJECT_TITLE|PROJECT_DESCRIPTION|...|DOCUMENT_MODEL'
+xargs -0 grep -l -E "\{\{(${REGISTRY_RE})\}\}" < "$SCOPE_LIST"
+```
+
+Empty output = pass. Any hit = a value was collected but not applied; report the file and the placeholder, and re-apply.
+
+**Do NOT assert `grep -r '{{' {PROJECT_DIR}/` returns nothing.** That was the old check, and it is wrong by construction: 94 Class-D placeholders live in the preserved template files and 3 Class-C tokens live in `quality-standards.md`, so a *correct* deploy fails that assertion by ~97 counts. A check that always cries wolf gets ignored — which is exactly how a real leftover would slip through.
+
+Then confirm the preservation guarantee holds:
+
+```bash
+# The six deferred templates must be byte-identical to the source template.
+diff -r "{TEMPLATE_DIR}/reference" "{PROJECT_DIR}/reference" --include="*.template.md"
+```
 
 ## Step 8: Create skill symlinks (conditional)
 
@@ -329,10 +462,11 @@ git commit -m "remove setup checklist (setup complete)"
 
 Run a quick validation:
 
-1. Confirm no `{{...}}` placeholders remain in any `.md` or `.json` file.
-2. Confirm all symlinks in `reference/skills/` resolve (if the directory exists).
-3. Confirm `CLAUDE.md` exists and has at least one heading.
-4. Confirm `.claude/settings.json` is valid JSON (if it exists).
+1. Confirm no **deploy-time** placeholder remains in fill scope — i.e. re-run the Step 7 verification (`REGISTRY_RE` over `$SCOPE_LIST`). **Do not assert that zero `{{...}}` tokens remain anywhere:** the six `reference/*.template.md` files legitimately retain 94 Class-D placeholders and `reference/quality-standards.md` retains 3 Class-C notation tokens. A correct deploy *must* leave those in place — asserting otherwise fails every clean deployment by ~97 counts and trains the operator to ignore the check.
+2. Confirm the six `reference/*.template.md` files are **byte-identical** to the source template (`diff -r`, per Step 7). This is the deferred-template preservation guarantee.
+3. Confirm all symlinks in `reference/skills/` resolve (if the directory exists).
+4. Confirm `CLAUDE.md` exists and has at least one heading.
+5. Confirm `.claude/settings.json` is valid JSON (if it exists).
 
 Report the validation results. If all pass:
 

@@ -216,3 +216,91 @@ The operator answered the I-1…I-7 questions and approved removing six commands
 - **The generalizable lesson, and it is not "test more":** *a green harness in the wrong environment is indistinguishable from no harness at all.* There is a standing rule in this workspace to validate shell code **by execution, not review**. I did validate by execution — in the wrong shell. The rule needed the second half.
 
 **Decided by:** Claude, within the session's stated mandate, under a plan-time `/blindspot-scan` (PAUSE-AND-FIX), a plan-time `/risk-check` (RECONSIDER — redesign adopted) and an end-time `/risk-check` (PROCEED-WITH-CAUTION — both mitigations applied before commit). Operator arbitrated the worktree question directly.
+## 2026-07-13 (S10) — The research-workflow fix plan governs; the audit is demoted to historical diagnosis, and two of its claims are struck as false
+
+**Context.** S8 (on Fable) produced a pre-deployment fitness audit of the canonical research workflow plus a mission contract seeded from it. The operator then supplied a revised 8-item fix set that both *narrows* the audit's requirements (several "required canonical builds" become bounded fixes) and *widens* them (items the S8 mission marked "do NOT build — evidence-gated" are now approved in bounded form). S10 had to decide what the authority relationship between these documents is.
+
+**Decision.** The **mission file is the governing fix plan**; the audit report is the historical diagnosis. Where they disagree, the mission file wins, and it says so explicitly in its header. The audit's §1–7 were left byte-unchanged — including the two claims struck below — so the record of what was originally believed survives intact and is not silently retconned.
+
+**Two audit claims struck as false, by direct read rather than by argument:**
+1. **F-9's "silent failure" claim about a missing `known-limits.md` is false.** `run-cluster.md:11` treats the file as **hard-class** and halts with a remediation prompt if it is absent or unfilled. The audit contradicts itself: its own **F-13(b)** states the file is hard-class in `run-cluster` and soft-class in `run-sufficiency`, and direct read confirms F-13(b) (`run-sufficiency.md:30` — *"Not a fatal pre-condition"*). The consequence of dropping the SETUP obligation is therefore a **delayed hard interruption at Stage 3**, not silent drift. The fix's value is preventing a costly mid-research-unit stop, not preventing corruption.
+2. **F-6's "zero wired post-drafting citation control" is overstated.** Compliance QC, citation conversion and operator review all exist and are wired. What is absent is an **automatically wired independent fact-verification step**: `verify-chapter` exists but `run-report` never calls it.
+
+**Rationale.** An audit whose findings are load-bearing for eight downstream fix sessions cannot carry a false failure-mode claim, because the claim determines the *shape* of the fix. F-9-as-written would have justified a defensive canonical guard against silent drift; F-9-as-corrected justifies only a better deploy message. The cheaper, correct fix is only visible once the claim is checked. This is the second consecutive session in which a claim in this audit was falsified by reading the file it describes.
+
+**Alternatives considered.**
+- **(a) Amend the audit in place — REJECTED.** It is the record of an assessment made at a point in time by a specific method; editing its findings retroactively destroys the ability to ask later "what did the audit actually miss, and why." The correction belongs in the governing document, which now names the falsification explicitly.
+- **(b) Treat the audit as governing and the mission as derived — REJECTED.** The operator's 8-item set materially supersedes the audit's §4/§7 fix lists; keeping the audit authoritative would leave the plan permanently in conflict with its own source.
+- **(c) Accept the operator's external review without verification — REJECTED** (standing convention: triage, don't rubber-stamp). All five of its points were adopted, but only after the one checkable factual dispute was settled by reading the file. Had it been wrong, adopting it would have written a *new* false claim into the governing plan.
+
+**Blocker scope corrected — against my own error, not the reviewer's.** My first draft of the plan asserted "all eight fixes block `/deploy-workflow`." Neither the operator's brief nor the audit ever claimed this; the audit's §7 names exactly two blockers. The plan now states that only threads 1–2 are demonstrated blockers and threads 3–8 are approved improvements to land before deployment — a weaker and true claim. An implementation session that hits a wall on thread 7 needs to know it can still deploy.
+
+**Decided by:** Operator (revised 8-item fix set; external review), with the audit-claim falsifications established by direct read this session.
+
+## 2026-07-13 (S10) — The marker allocator's "accepted known gap" is not acceptable: it fired 46 seconds after it was accepted
+
+**Context.** S6 (earlier today) fixed the session-marker allocator so it scans committed headers across all refs, closing the case where a git worktree and the main checkout hand out the same `S{N}`. It documented a residual gap — *"Source (c) sees only **committed** headers. Two sessions priming in different checkouts, neither having committed, can still collide"* — and **accepted** it as narrow and *"unclosable read-side without reintroducing the rejected shared allocator."*
+
+**What happened.** It fired the same day. This session (worktree) and a concurrent session (main `ai-resources` checkout) both allocated **S9**, 46 seconds apart — commits `11a4b39` (21:56:21) and `9e8988d` (21:57:07). Neither had committed its header at allocation time, so neither was observable to the other. On merge, `logs/session-notes.md` would have carried two `## 2026-07-13 — Session S9` headers, breaking the `grep -Fxq` header-existence check that `/prime` 8a, `/session-start` Step 3 and `/session-plan` Step 0 all depend on.
+
+**Decision.** Renumber this session to **S10** (the main checkout's S9 was already on `main`, so the worktree's was the one to move) and **reject the "unclosable" framing**. The gap is closable read-side.
+
+**Rationale — the S6 analysis missed an observation surface.** It enumerated two: the local marker file, and *committed* refs. There is a third: **a git worktree shares the git dir, and `git worktree list` yields the filesystem path of every sibling checkout — so each sibling's *working-tree* `logs/session-notes.md` is directly readable.** Adding that as source (d) closes the uncommitted-header case with another **read**. No shared allocator, no lock, no write. The rejected-alternative analysis in the S6 decision stands on its own terms; it simply never considered this option, so "unclosable" was a conclusion about the options enumerated, not about the problem.
+
+**Two things this reveals beyond the bug itself.**
+1. **The gap was not narrow, and the acceptance rested on the belief that it was.** Two checkouts (main + worktree) is now the normal working shape here, so "both sessions prime before either commits" is the *common* path, not a rare race.
+2. **It was caught by a wrap-time verification prompted by the operator asking "is it safe?" — not by any gate.** No guard fires on marker collision. The foreign-session guard checks `session-notes.md` for foreign *content*, not for duplicate *markers*.
+
+**Alternatives considered.**
+- **(a) Accept the duplicate and de-duplicate at merge — REJECTED.** The duplicate breaks a check three commands depend on, and merge-time is exactly when nobody is looking.
+- **(b) Reintroduce a shared allocator with a lock — REJECTED, same as S6.** It restores the coupling worktrees exist to remove. Source (d) obtains the same information with a read.
+- **(c) Renumber the *main* checkout's session instead — REJECTED.** Its S9 is already committed on `main`; the worktree's is on an unmerged feature branch and is cheaper to move.
+
+**Preserve the fail-safe invariant.** Source (d) must be added *inside* the scan loop, after `HIGH` is seeded from the marker file — never before. `HIGH` only ever *rises*, so a failure in (d) degrades to old behaviour and can never reset to 0 and allocate `S1` over an existing `S5`. Any edit that scans first and seeds second reintroduces a destructive regression.
+
+**Decided by:** Claude (S10), surfaced to the operator at wrap. Proposed fix logged to `improvement-log.md`; not implemented this session.
+
+## 2026-07-13 (S11) — Thread 1's acceptance test was replaced because it could not fail; two audit premises struck as false
+
+**Context.** Mission `research-workflow-deploy-fitness`, thread 1: two canonical skills (`claim-permission-gate`, `country-parity-checker`) declared and pre-flight-verified an input directory `analysis/{section}/cluster-memos-refined/` that nothing creates. The audit (C-1/F-1) and the mission file both called this an "unconditional runtime deadlock at the first research unit" and a demonstrated deployment blocker.
+
+**Decision 1 — the audit's "unconditional deadlock" is FALSE, and thread 1 is reclassified as a latent contract defect.**
+Evidence, on disk, not argued: the defect landed 2026-05-26 (`9871b95`). `projects/research-pe-regime-shift-advisory-gap` ran Stage 3 on 2026-06-03 and `projects/positioning-research` on 2026-06-10 — both *after* it — and **both completed**: real cluster memos, permission tables written, both `.done` sentinels present, and the bad directory existing nowhere. Neither project holds a local skill copy; both symlink the broken canonical.
+**Mechanism:** `/run-sufficiency` passes the memo directory to each sub-agent at dispatch (`run-sufficiency.md:44,55`). The sub-agent uses the directory it is handed; the path declared in the skill was inert prose. The deadlock is real **only** on the declared-contract route — a skill dispatched standalone, or any consumer honouring its stated inputs — which S11 confirmed empirically (both skills exited at pre-flight when dispatched without the directory).
+
+**Decision 2 — the mission's "not deployed anywhere / blast radius zero" premise is FALSE.**
+I asserted it myself in the `/risk-check` brief without checking; the reviewer disproved it. Two live projects symlink these canonical skills into `ai-resources/skills/` and have completed Stage 3. Every canonical edit in this mission goes live in both on merge to `main`. Third instance of the logged "declare a repo fact from recall" pattern (S4, S6, now S11) — caught by a gate all three times, never by me.
+
+**Decision 3 — thread 1's frozen acceptance test was REPLACED (operator-authorized).**
+The frozen test — "in a scratch project, `/run-cluster` then `/run-sufficiency` completes Phase A and Phase C pre-flights and produces permission and parity tables" — **already passed against the broken skills**, twice, in production, for exactly the reason in Decision 1. It would have returned green before and after the fix. Closing thread 1 on it would have been the "verified by a test that could never fail" outcome the mission's own non-negotiables forbid.
+**Replacement:** dispatch each skill *standalone*, with the memo directory NOT passed, against a fixture holding both memo variants per cluster. This exercises the declared contract — the thing that was actually broken.
+**Result:** pre-fix both `EXITED-AT-PREFLIGHT`; post-fix both `PROCEEDED` (Phase A → 2 permission tables + sentinel; Phase C → parity table + sentinel), both reading only `*-memo-refined.md`. Same test, opposite outcomes.
+
+**Decision 4 — the fix is NOT a bare path swap; a refined-only filter was added.**
+`run-cluster.md:36` writes BOTH `{section}-cluster-NN-memo.md` and `-memo-refined.md` into the same directory, while both skills' input tables promise "one memo per cluster" and need the refined one (it carries the claim IDs). A bare repoint would have handed them two files per cluster, one unrefined. The audit's "2 files, ~4 lines" remedy under-specified the fix. The filter adopts the existing variant-suffix rule (`file-conventions.md` Rule 2) and the existing precedent (`review-chapter.md:26`) — no new mechanism, per "smallest general fix wins".
+
+**Decision 5 — the declared path + pre-flight were KEPT, not deleted.**
+*Alternative rejected:* drop the declared input path so the skills consume only the directory `/run-sufficiency` passes at dispatch, collapsing the two-source-of-truth. Rejected because it deletes a *correct* guard — the "run `/run-cluster` first" pre-flight is right behaviour that was merely aimed at a directory that never existed, and it is the only thing protecting a standalone dispatch. The duplication remains but is now explicit and lockstep-bound via a new "Input-path contract (load-bearing)" cross-reference in both skills, rather than silently contradictory. A later thread may collapse it — but not by removing the guard.
+
+**The generalizable lesson, written into the mission file and binding on every remaining thread.**
+The audit reasons from what the files *say*. These "skills" are instructions an agent *reads*, and what the runtime *does* with them can differ — which is precisely how a "demonstrated blocker" turned out never to have blocked anything. **Thread 2 carries the same label from the same reasoning and is now UNVERIFIED, not confirmed.** If it too fails to reproduce, the mission has zero demonstrated blockers and the deployment gate itself should be re-examined. Verify remaining threads by execution, not by reading.
+
+**Corollary, proven this session:** running the skills for real surfaced four latent defects no file-level audit had found — including a genuine hole in the class ladder (a claim with 2 sources in 1 class matches *no* permission class), which is a live correctness gap in the two deployed projects. Routed to threads 5 and 8; not fixed here (scope discipline is this mission's stated primary failure mode).
+
+**Decided by:** Claude (S11), with the two false premises surfaced to the operator before any edit; operator authorized the acceptance-test replacement and the read-only live-project verification.
+
+## 2026-07-13 — S13: thread 2 reclassified from "demonstrated blocker" to not-a-blocker; placeholder handling rebuilt on a declared registry
+
+**Context:** Mission `research-workflow-deploy-fitness` thread 2 — `/deploy-workflow`'s placeholder handling — was labelled a "demonstrated deployment blocker" by the audit, using the same file-level reasoning that S11 had already shown was wrong for thread 1. The standing rule from S11 was to verify every remaining thread by execution before treating its label as true.
+
+**Decision 1 — verify by execution before designing a fix.** Built a scratch-fixture test harness on a path containing a space (mirroring the real deploy path `…/Claude Code/Axcion AI Repo/…`), rather than trusting the audit's or the context-engine's framing of the defect. This surfaced a defect neither had found: Step 7's `find | xargs sed` is not merely incomplete, it is non-functional in this workspace — word-splitting on the space produces zero replacements and an exit-1 error. **Alternative rejected:** designing the fix directly from the audit's stated remedy (widen the discovery regex) — the mission file had already flagged that remedy as reversed by its own §7 addendum, but confirming *why* it was wrong required running the code, not reading it.
+
+**Decision 2 — the placeholder set is DECLARED, not discovered.** Replaced regex-based discovery with a hand-maintained four-class registry (required / conditional / notation / template-internal) as the authority, with the regex demoted to a drift cross-check that stops the deploy on any unregistered token. **Alternative rejected:** widening the regex to catch digit-bearing placeholders — this was the audit's original remedy and is actively wrong: a wider pattern would also sweep in the 94 template-internal placeholders and demand values for them prematurely, which is the opposite of what deployment needs.
+
+**Decision 3 — reclassify thread 2, not merely fix it.** Both live deployed projects (`research-pe-regime-shift-advisory-gap`, `positioning-research`) were checked read-only and carry no genuinely-wrong unfilled deploy-time placeholder. Thread 2 therefore did not block either real deployment, for the same structural reason as thread 1: the deploying agent read the fill instruction and executed it with its own tools, routing around the broken `sed`. **Consequence stated explicitly in the mission file, not resolved:** the mission now has zero demonstrated blockers across its two "blocker"-labelled threads, and whether the "fix canonical before deploying" premise still holds is an open operator decision.
+
+**Decision 4 — scope widened from the mandate's "Steps 5–7" to include Step 11.** The context-discovery engine flagged that the same broken leftover-placeholder assertion also lives at Step 11 item 1; fixing only 5–7 would have left a correct deploy failing validation. Confirmed with the operator via the re-emitted mandate ("y").
+
+**Decision 5 — two risk-check-reviewer hardening findings applied before commit, not deferred.** (a) The SETUP.md mirror table was excluded from Step 5d's drift scan (since SETUP.md itself is excluded from fill scope), so it could silently drift from the registry — closed by adding an explicit SETUP.md-vs-registry name diff to Step 5d. (b) Step 7's scope-list path was a fixed `/tmp/fill-scope.list`, which two concurrent deploys would collide on — closed by making it per-project (`/tmp/deploy-fill-scope-{PROJECT_NAME}.list`). Both verified against the shipped file, not just the review comment, before commit.
+
+**Decided by:** Claude (S13). Verdict and reclassification stated to the operator before commit; operator had already authorized "fix thread 2 anyway" over the alternative of pausing to re-examine the deployment gate first.
