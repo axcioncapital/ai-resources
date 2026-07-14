@@ -88,13 +88,21 @@ Two files, written together by `/prime`. The per-session-id file is the **identi
 
 **Still do NOT have worktree sessions reserve markers up front.** That reintroduces a shared *allocator* — the coupling worktrees exist to remove — and needs a lock held across a session's life. (d) is different in kind: the claim is taken **at allocation time, by whoever allocates**, and released never (it is pruned by date). Nothing is held; nothing is reserved ahead.
 
-### ⚠ Known gap (accepted — operator call, 2026-07-13 S13)
+### ⚠ Known gap — NO LONGER THEORETICAL. It fired on 2026-07-14.
+
+*(Accepted by operator call, 2026-07-13 S13. Upgraded from "accepted risk" to **demonstrated defect**, 2026-07-14 S2.)*
 
 **A checkout running an OLD copy of the allocation block neither writes claims nor reads them.** `prime.md` is a **real file** in a worktree (not a symlink), so a worktree on a branch that predates this change **keeps allocating blind**, and the mutex protects only the checkouts that have it.
 
 This is not a flaw in the mechanism — it is the cost of the mechanism living in a **branch-tracked file**. It cannot be fixed from inside `prime.md`.
 
-**Operational rule: refresh (rebase/merge) a long-lived worktree branch before trusting the mutex across it.** As of 2026-07-13, `ai-resources-research-workflow` is exactly such a stale checkout (10 commits behind, real `prime.md`, `sha=a0a24de11d16` vs canonical) and is the **only** divergent copy in the workspace — all 25 other copies are symlinks and inherit the fix.
+**What happened on 2026-07-14 (S2).** A live session in the `ai-resources-research-workflow` worktree — running the pre-mutex `prime.md` — allocated marker **S1**, blind to the claim this session had already taken on `S1` in the shared claim dir. Two live sessions, same marker, same day. The main-checkout session detected the collision only because it inspected the worktree directly before acting, and **yielded** (renumbering itself `S2`). Nothing automatic caught it. The same day's merge of that branch surfaced **two further collisions that had already reached disk unnoticed** — `2026-07-13 Session S8` and `Session S13` each existed twice, as entirely different sessions, and were preserved as `S8-rw` / `S13-rw`. **The gap has now produced three real collisions.**
+
+**Operational rule: refresh (rebase/merge) a long-lived worktree branch before trusting the mutex across it.** Until the stale checkout is refreshed, treat *any* marker it allocates as unclaimed, and check the other checkout's `logs/.session-marker` by hand before relying on your own.
+
+**Census — corrected 2026-07-14 (the prior figure here was wrong).** The workspace holds **29 `prime.md` files: 24 symlinks + 5 real files.** The 5 real files are: canonical (`ai-resources/.claude/commands/prime.md`), the stale worktree copy, and **three unrelated 33-line stubs** carrying *zero* allocator content (`workflows/research-workflow/.claude/commands/prime.md`, its worktree twin, and a copy under `output/deploy-test-scratch-2026-06-12/`). The earlier claim — *"the only divergent copy… all 25 other copies are symlinks"* — miscounted both sides. **The conclusion nevertheless holds:** the worktree copy is the only divergent *allocator-bearing* file.
+
+**Do not pin a canonical hash in this document.** A prior version asserted `canonical sha=31fe5952510d`; that value was already stale when written (it predates `54f09bb`, the allocator-mutex fix that changed the file), and a verification step checking against it would return a **false FAIL** — or, worse, "correct" a correct file toward a dead constant. Verify divergence by comparing a checkout's allocator block against canonical **at the time of checking**, never against a number copied out of a doc.
 
 **Cost.** One `git for-each-ref` + one `git grep`, plus one `git rev-parse`, a directory listing, and one `mkdir` per `/prime`. Bounded by branch count (typically 1–2) and by same-day claim count.
 

@@ -1,8 +1,8 @@
 {
-  "run_id": "2026-07-14-S1",
+  "run_id": "2026-07-14-S2",
   "project": "ai-resources",
   "date": "2026-07-14",
-  "marker": "S1",
+  "marker": "S2",
   "model": "claude-opus-4-8[1m]",
   "lane": null,
   "mandate_ref": "logs/session-notes.md#2026-07-14-S1",
