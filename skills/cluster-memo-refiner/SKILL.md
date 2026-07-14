@@ -231,17 +231,50 @@ Run all ten checks against every memo. Report findings per check per memo before
 
 ### Check 9 — Permission-Class Emission
 
+> **Permission-class contract (load-bearing).** The class names, conditions, adjudication order, and ceilings applied in this check are owned by `reference/quality-standards.md § Claim-Permission Classes`. Two other files carry working copies: this check, and `claim-permission-gate` (the authoritative Pass-3 gate, which supersedes this check's table at the shared path). A fourth file, `section-directive-drafter`, consumes the class **verb lists and prose framing** (not the conditions) and must be updated when those change. **All change together.** Any edit to the conditions, names, adjudication order, or ceilings requires a paired edit plus a `/risk-check` re-fire. Acceptance test for any future edit: the worked-cases table in the chassis § Adjudication order — every case must land in exactly one class.
+
+> **⚠ CHASSIS-VERSION GATE — check FIRST, before running Check 9, and HARD-EXIT on failure.** Read the chassis-version marker in `reference/quality-standards.md § Claim-Permission Classes` (`**Chassis version: \`YYYY-MM-DD\`.**`, or `<!-- chassis-version: YYYY-MM-DD -->`). **Check 9 requires chassis version `2026-07-14` or later.** If the marker is absent or its date is earlier, **STOP — grade nothing** — and emit:
+>
+> > **cluster-memo-refiner Check 9 halted: this project's `reference/quality-standards.md` predates the 2026-07-14 permission re-cut.** This skill is canonical and symlinked; your chassis is a local copy and was not updated with it. Grading under the new adjudication order against the old class conditions would produce confident, wrong permission classes with **no error**. Back-port § Claim-Permission Classes (all subsections), § Country Coverage Table's gate rule, and § Research Stop Conditions from the canonical template, then re-run.
+>
+> This is load-bearing for the same reason as in `claim-permission-gate`: the skill travels by symlink and the chassis does not, so the two diverge on merge — and every other check here is a heading-presence check that an old chassis passes. A hard exit is the only thing that catches it.
+
 **Target:** Surviving findings without a permission-class label; per-cluster permission table not emitted.
 
 **Procedure — three sub-checks:**
 
-1. **Permission-class assignment.** For each surviving Key Finding (post Checks 1–8), assign one of four classes per `reference/quality-standards.md § Claim-Permission Classes`:
-   - `SUPPORTED` — direct evidence, ≥2 source channels, in-lens or directly-applicable proxy with no downgrade
-   - `PROXY-SUPPORTED` — proxy evidence with downgrade (above-lens or pan-Nordic for country-specific claim)
-   - `ILLUSTRATIVE-ONLY` — <3 same-pattern transactions, OR single-source named-example, OR two-or-more-countries `not evidenced` from Check 8
-   - `NOT-SUPPORTED` — no direct or proxy evidence at any source class
+1. **Permission-class assignment.** For each surviving Key Finding (post Checks 1–8), assign one of four classes per `reference/quality-standards.md § Claim-Permission Classes`.
 
-   Apply the minimum evidence thresholds per claim type and the Source-Diversity Matrix from `reference/quality-standards.md` (same § Claim-Permission Classes). Triangulation-packets rule: three independent KPMG quarterly reports count as ONE evidentiary role, not three. Where the project's `quality-standards.md` carries the cross-class collapse clause, the same applies across *different* source classes sharing one underlying origin — e.g., a trade-body summary and a specialist-press article both restating the same Bain/Preqin figure count as ONE role, not two (per the `independence basis` field).
+   > **Lockstep contract (load-bearing).** The class conditions below are a **restatement** of the authority table in `reference/quality-standards.md § Claim-Permission Classes`. That section is the source of truth; this is a working copy. **Any edit to the class conditions, names, adjudication order, or ceilings must be applied to the chassis, this check, and `claim-permission-gate` together**, and requires a `/risk-check` re-fire per the chassis's Canonical-ordering rule. These two copies silently diverged before 2026-07-14 — an unguarded duplicate is a defect waiting to re-open.
+
+   **Grade the class on evidence alone.** The class is a function of two things and nothing else: the count of **independent evidentiary roles**, then evidence **fit**. The claim's rhetorical ambition does NOT enter here — that is what the ceilings are for (below). Assign exactly one:
+
+   - `SUPPORTED` — **≥2** independent evidentiary roles, evidence **direct and in-scope** (or a directly-applicable proxy needing no downgrade)
+   - `PROXY-SUPPORTED` — **≥2** independent evidentiary roles, but the evidence is **proxy and requires downgrade** (out-of-scope, region-aggregate for a country-specific claim, or `PROXY-DOWNGRADE`-tagged)
+   - `ILLUSTRATIVE-ONLY` — **exactly 1** independent evidentiary role (direct or proxy). It cannot be triangulated, so it cannot carry a generalization — but it may be stated, attributed, as the single attested case or datum.
+   - `NOT-SUPPORTED` — **zero** evidentiary roles: no direct and no proxy evidence at any source class
+
+   These four are **mutually exclusive and jointly exhaustive** — every evidence shape lands in exactly one, so do not invent a precedence rule. In particular: a single direct in-scope source that is *not* a named example (e.g. one regulator statistic) is `ILLUSTRATIVE-ONLY`, not a fall-through; and a pattern claim resting on 2 direct roles is `SUPPORTED`, with its generalization then bounded by the ceiling in sub-check 1b — **not** re-graded to `ILLUSTRATIVE-ONLY`.
+
+   **Evidenced negatives grade normally.** A finding whose content is negative ("the practice does not occur in this segment") is graded on the same ladder and **can reach `SUPPORTED`** when ≥2 independent roles positively evidence the absence. Do not downgrade a conclusion for being negative. Conversely, a *failed search* is `NOT-SUPPORTED` and licenses neither the claim nor its negation — never invert it into a positive assertion of the opposite. Full rule: chassis § Evidenced Negatives vs Absence of Evidence.
+
+   Apply the minimum evidence thresholds per claim type and the Source-Diversity Matrix from `reference/quality-standards.md` (same § Claim-Permission Classes). A project's per-claim-type table may **raise** the roles needed for `SUPPORTED`; it may not redefine a class. **Triangulation-packets rule:** N independent reports from the same source class count as ONE evidentiary role, not N. Where the project's `quality-standards.md` carries the cross-class collapse clause, the same applies across *different* source classes sharing one underlying origin — e.g. a trade-body summary and a specialist-press article both restating the same underlying benchmark figure count as ONE role, not two (per the `independence basis` field).
+
+   **1b. Generalization ceiling (a cap on the claim, not a re-grade of the evidence).** After the class is assigned, bound the finding's *scope* by how many same-pattern instances support it — the ladder in sub-check 2 below (`<3` illustrative / `3–5` directional-with-caveat / `5+` across ≥2 countries pattern-permitted). This ladder governs **how broadly the finding may generalize**, not what class its evidence earns.
+
+   **This check owns the NARROW branch** — it is the only consumer that does. Unlike `claim-permission-gate` (which must carry claim text verbatim and can therefore only cap), this check may rewrite a finding's scope. So: a finding that generalizes beyond what its instance count supports is **narrowed** to what the instances attest; only if it cannot be narrowed — it is inherently a generalization — is it capped at `ILLUSTRATIVE-ONLY`. Do not silently downgrade: relabel or escalate per sub-check 2. Record any applied cap in the Notes column.
+
+   **When the ceiling fires — two tests, both required.** **(1) Does the finding's claim generalize?** Read the claim text: does it extrapolate a pattern across a class of actors, deals, or periods? If **no** (a single attested datum, a named case), the ceiling is **inapplicable** — record `instances: n/a`. **(2) If it generalizes, is there a warrant?** A generalization is warranted by **exactly one of two things**: **≥3 same-pattern instances**, **OR ≥1 population-level evidentiary role** (a complete statutory register, a mandatory-filing database, an exhaustive transaction record — coverage of the whole population the claim quantifies over; **a large sample is NOT a population** — a 140-respondent survey cannot supply the warrant alone). If **either** is present, the ceiling does not fire. If **neither** is, it fires.
+
+   An **instance** is one observed occurrence of the asserted pattern — *not* a source and *not* an evidentiary role (three reports on the same deal = ONE instance). **Instances set the ceiling; roles set the class.** Never read `n/a` as `0`.
+
+   > **⚠ RECORDING OBLIGATION — this check is the writer, and the Pass-3 gate will flag you if you skip it.** For **every finding whose claim text generalizes**, you MUST record its warrant in the memo, as **either**:
+   > - `instances: {count}` — the same-pattern instance count, **or**
+   > - `instances: n/a (population-level — {named source})` — naming the population-level source.
+   >
+   > A **bare `n/a` on a generalizing finding is a defect, not an exemption** — it tells the gate nothing about why the claim may generalize, and silence is not permission. `claim-permission-gate` will cap such a claim at `ILLUSTRATIVE-ONLY` and flag it `[POPULATION-LEVEL-UNVERIFIED — operator review]`. **This is what protects an evidenced negative** — a claim with zero positive instances by construction ("no CVs were used in this segment") is warranted by population coverage, not by an instance count, and only *this* check can record that. If you don't, a well-evidenced negative gets capped downstream on a technicality.
+   >
+   > Findings written before 2026-07-14 do not carry this field. Expect gate flags on the first re-run against an existing project; that is memo-completion work, not an evidence failure. Full rule: chassis § Permission ceilings.
 
    **Risk-tier permission ceiling (a cap, not a re-grade).** After the evidence-graded class above is assigned, cap it by the finding's risk tier per `reference/quality-standards.md § Risk-Tier Model`. The tier never *raises* a class — a Tier-A finding with thin evidence still lands NOT-SUPPORTED; the ceiling only bounds the top.
    - **Resolve the finding's contributing questions.** These are the research questions feeding this Key Finding — already identified by Check 1 (cross-question contribution count) and Check 2 (contributing-question notes on escalation findings). Read each contributing question's `risk-tier:` value from the research plan.
@@ -255,7 +288,7 @@ Run all ten checks against every memo. Report findings per check per memo before
 
    The four permission-class names, their verb lists, and gate semantics (§ Claim-Permission Classes) are unchanged by this ceiling — it is the single point of contact between the control-effort axis and the permission machinery.
 
-   **Composition with other downgrades.** The tier ceiling, the Check 8 country-parity downgrade (≥2 countries `not evidenced` → ILLUSTRATIVE-ONLY), and the Check 10 unresolved-conflict downgrade (one class down) all move a finding's class in the *same* (more-restrictive) direction. The finding's final class is therefore the **most-restrictive of all of them**; because they compose monotonically downward, the order in which they are applied does not change the result.
+   **Composition with other downgrades.** The **four ceilings** — the risk-tier ceiling, the generalization ceiling (sub-check 1b), the Check 8 country-coverage ceiling (≥2 countries `not evidenced` → cap at ILLUSTRATIVE-ONLY), and the Check 10 unresolved-conflict downgrade (one class down) — all move a finding's class in the *same* (more-restrictive) direction. The finding's final class is therefore the **most-restrictive of all of them**; because they compose monotonically downward, the order in which they are applied does not change the result. **All of them cap; none of them re-grades the evidence** — the evidence-graded class is assigned first, once, and every cap is recorded in the Notes column so the operator can tell an evidence verdict from a ceiling.
 
 2. **No-orphan-citation enforcement.** Each citation must answer the question "What exact sentence does this source support?" If the answer is vague or the source supports only a general topical area, remove the citation OR downgrade the dependent claim by one permission class. Record the downgrade rationale inline.
 
