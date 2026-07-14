@@ -502,3 +502,12 @@ None — read-only investigation; the only writes were to two plan files under `
 - Does the operator's model-field decline extend to the current `claude-fable-5[1m]` value?
 - Pilot-first or critical-fixes-first? (Either is safe; gate-receipt tax differs.)
 - Why does `SessionEnd` not fire on a normal wrap — window-stays-open hypothesis unconfirmed (Fix 1 step 1).
+
+## 2026-07-14 — Session S7
+
+**Mandate:** Implement the approved repo-repair pilot V1 (`~/.claude/plans/investigate-why-our-recurring-humble-curry.md`) in its stated execution order (Dimension 7 → qc-reviewer premise check → REGRESSION TEST A → `Files-checked:` footers → doctrine docs → `require-gate.sh` + wiring) — done when: the 7 hook tests in §5 pass with the hook seen to block, Regression Test A returns a non-GO verdict catching F-1, and the change set is committed.
+- Out of scope: workspace `CLAUDE.md`; `/resolve-incident`; the §4b deferred items (liveness rule already shipped as `check-destructive-liveness.sh`); the five critical repo fixes from the S6 investigation (separate sequencing decision); the V2 evidence-grade rollout across diagnostic commands.
+- Files in scope: `ai-resources/.claude/agents/risk-check-reviewer.md`, `ai-resources/.claude/agents/qc-reviewer.md`, `ai-resources/.claude/commands/risk-check.md`, `ai-resources/.claude/commands/consult.md`, `ai-resources/docs/protected-zones.md`, `ai-resources/docs/audit-discipline.md`, `ai-resources/.claude/settings.json`, `.claude/hooks/warn-settings-change.sh` (delete), `ai-resources/audits/research-workflow-deployment-fitness-2026-07-13.md` (read-only, regression-test input)
+- Stop if: REGRESSION TEST A still returns GO after the qc-reviewer edit — the premise check is then words, and the rest of the plan rests on it. Report honestly and stop rather than proceeding.
+- Required outputs: `ai-resources/.claude/hooks/require-gate.sh` (new); `logs/session-plan-2026-07-14-S7.md`
+- Mission: (none — this is repo-harness work, not the research-workflow mission)

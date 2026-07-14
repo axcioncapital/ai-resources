@@ -2,7 +2,7 @@
 model: sonnet
 ---
 
-Evaluate a proposed structural change against six risk dimensions before landing — usage cost, permissions, blast radius, reversibility, hidden coupling, and principle alignment. Delegates to the `risk-check-reviewer` subagent (fresh context), which first builds an explicit consumer inventory (grep-based blast radius) before scoring; produces a structured report and a chat verdict: GO / PROCEED-WITH-CAUTION / RECONSIDER. Does NOT execute the change.
+Evaluate a proposed structural change against seven risk dimensions before landing — usage cost, permissions, blast radius, reversibility, hidden coupling, principle alignment, and problem reality. Delegates to the `risk-check-reviewer` subagent (fresh context), which first builds an explicit consumer inventory (grep-based blast radius) before scoring; produces a structured report and a chat verdict: GO / PROCEED-WITH-CAUTION / RECONSIDER. Does NOT execute the change.
 
 Input: `$ARGUMENTS` — free-text description of the proposed change, optionally referencing file paths.
 
@@ -90,7 +90,7 @@ Invocation semantics: operator-typed, or inline-prompted by other commands (e.g.
 15. Verify presence rules (structural):
     - `## Verdict` section present with a valid verdict token.
     - `## Consumer Inventory` section present (either an inventory table, or the explicit "No consumers found — isolated change." line).
-    - `## Dimensions` section present with six `### Dimension N: ...` subsections (1–6, in order).
+    - `## Dimensions` section present with seven `### Dimension N: ...` subsections (1–7, in order).
 
 16. Verify section-by-verdict rules (enforce the agent's Step 8 template OMIT contract so malformed reports cannot ship):
 
@@ -139,6 +139,7 @@ Invocation semantics: operator-typed, or inline-prompted by other commands (e.g.
       - Reversibility:       {Low | Medium | High}
       - Hidden coupling:     {Low | Medium | High}
       - Principle alignment: {Low | Medium | High}
+      - Problem reality:     {Low | Medium | High | INCOMPLETE}
       ```
     - If verdict is `PROCEED-WITH-CAUTION`: list the paired mitigations under `Required mitigations:`.
     - If verdict is `RECONSIDER`: include the recommended-redesign one-liner.
