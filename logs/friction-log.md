@@ -387,7 +387,9 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Prevention:** when fixing a defect in a component that is symlinked or copied into other repos, establish the **fan-out first** (`find projects -type l -name '<file>'`) and let it choose the fix's layer. The layer is a consequence of the blast radius, not a matter of taste.
   - **Owner artifact:** (none identified) — reasoning discipline, not a component. `/blindspot-scan` already caught it, which is the gate working as designed.
 
-## 2026-07-13 — Session S6 (landing the lean-repo worktree)
+## Session — 2026-07-13 (S6) (landing the lean-repo worktree)
+
+### Friction Events
 
 - **Friction type: harness (the session-marker oracle cannot see session headers that live on un-merged worktree branches — it would have handed this session a duplicate marker).**
   - **What happened.** `/prime` resolved this session's marker by the canonical rule: read `logs/.session-marker` (which held `2026-07-13 S4`), increment → **S5**. But the branch this session existed to merge, `session/2026-07-13-lean-repo`, already carried its own `## 2026-07-13 — Session S5` header in `logs/session-notes.md`. Taking S5 would have produced **two S5 entries in one file** the instant the merge landed. I noticed only because I diffed the branch's `session-notes.md` before planning, and took **S6** instead.
@@ -412,7 +414,9 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
 
 - **Positive — `/close-worktree-session` worked on its first real run, and its refusals are correct.** Executed end-to-end today (its first ever execution): guards passed (not-inside-worktree, worktree-clean, no-live-session), the merge **conflicted exactly as predicted**, and the command's contract held — it stops on conflict and leaves the worktree and branch intact, which is the one sequence that could otherwise destroy the work being merged. After hand-resolution, teardown ran clean. **One documented claim was falsified:** S5's Next Steps asserted `worktree remove --force` would be *required* because the checkout held ignored files. It was not — plain `git worktree remove` succeeded (exit 0). Had the command reached for `--force` on that advice, it would have been discarding-work-capable for no reason. **The command's refusal to offer `--force` as a convenience is vindicated; the prose that recommended it was wrong.** No change needed to the command; the stale advice died with the branch.
 
-## 2026-07-14 — Session S1 (landing the research-workflow branch)
+## Session — 2026-07-14 (S1) (landing the research-workflow branch)
+
+### Friction Events
 
 - **Friction type: validation (I wrote a falsification test that provably could not fail on the disaster it existed to catch — one day after logging that exact lesson).**
   - **What happened.** The session plan's Stage 1 protected a three-way log merge with a before/after check: capture `git show session/…:logs/session-notes.md | grep -c '^## '` (the **branch's** header count), re-count after the merge, compare. The plan-time `/risk-check` measured the actual numbers: `main` has **11** headers, the branch has **11**, and a *correct* union merge yields **15**. So a wholesale `--theirs` resolution — which silently discards `main`'s S7, S9 and S12 — produces **11** and **passes the check**. A wholesale `--ours` resolution also produces 11 and passes. **The test returns green on precisely the two catastrophes it was written to prevent.** Same for `decisions.md` (12 / 11 / 16) and `improvement-log.md` (60 / 57 / 62).
@@ -462,7 +466,9 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
 
 - **The line worth keeping.** Every gate this week caught something real, and every one caught it **by opening the artifact**. But today the gates missed the biggest thing — a live session with unsaved work — because **the artifact they open is the repo at rest, and the hazard was the repo in motion.** Static analysis cannot see a running process. The check that saved us was the operator glancing at an open window. Build the liveness probe; do not build another scan.
 
-## 2026-07-14 — Session S4 (shipping the destructive-op liveness probe)
+## Session — 2026-07-14 (S4) (shipping the destructive-op liveness probe)
+
+### Friction Events
 
 *(Allocated S3; yielded it mid-session to a blind worktree session — see the marker entry below.)*
 

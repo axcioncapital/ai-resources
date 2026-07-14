@@ -1,0 +1,54 @@
+{
+  "run_id": "2026-07-14-S4",
+  "project": "ai-resources",
+  "date": "2026-07-14",
+  "marker": "S4",
+  "model": "claude-opus-4-8[1m]",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md#2026-07-14-S4",
+  "mission": null,
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    ".claude/hooks/check-destructive-liveness.sh",
+    ".claude/hooks/check-foreign-staging.sh",
+    ".claude/commands/close-worktree-session.md",
+    ".claude/commands/new-worktree-session.md",
+    ".claude/commands/session-start.md",
+    ".claude/commands/prime.md",
+    "docs/commit-discipline.md",
+    "logs/scripts/test-destructive-liveness.sh",
+    "audits/risk-checks/2026-07-14-destructive-op-liveness-preflight-and-files-in-scope-predicate.md",
+    "logs/session-notes.md",
+    "logs/decisions.md",
+    "logs/friction-log.md",
+    "logs/improvement-log.md",
+    "logs/usage-log.md",
+    "logs/scratchpads/2026-07-14-S4-destructive-liveness-hook-scratchpad.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-14-session-s4-the-destructive-op-liveness-probe-a"
+  ],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": null,
+  "incidents_refs": []
+}
