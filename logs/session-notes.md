@@ -472,3 +472,33 @@ Closed the `ai-resources-research-workflow` worktree at the operator's request: 
 - **The S13 question is answered, and the answer is worse than the guess.** *"Why is `SessionEnd` never delivered for the sessions that leave marker corpses?"* — the standing hypothesis was **crashed sessions**. **Falsified.** S3 wrapped cleanly, committed, and still left both markers. So the corpse is the **default outcome of a normal wrap**, `close-worktree-session.md` L127–131's trustworthiness claim is **false as written**, and the liveness guard false-fires on every finished session.
 - **The one worth sitting with.** Every catch this session came from a machine instructed to distrust me — the hook blocked me twice; the scan proved the queue landed; `git branch -d` certified the merge. Every failure came from me trusting my own reading: I read the word-splitting warning and then wrote the bug. **S4 asked whether the countermeasure to assert-from-recall is a *checker* or a *process*. This session is evidence for a third answer: it is neither — it is that the destructive act and the evidence of its correctness must not happen in the same breath.** The failing loop's `echo` and its `rm` ran in the *same pass*, so the proof and the damage were simultaneous. Separate them and the class dies.
 - Standing, unchanged: is the `research-workflow-deployment-fitness` audit a trustworthy work source (0-for-3 on premises)? `/mission` still has no `update` verb.
+
+## 2026-07-14 — S6: Repo investigation — five critical operational issues verified; repo-repair pilot cross-checked and updated
+
+### Summary
+
+Read-only investigation (operator-requested): "what must we fix immediately to continue normal operations?" Three parallel explorers (hooks/settings, incident trail, data-integrity surfaces) plus main-session re-verification of every load-bearing claim, then an independent adversarial subagent that upheld all 15 claim clusters. Produced a ranked critical-fix report (verdict: **Yes with restrictions**; five issues), a plain-English fix list, second-tier recommendations, and a recommendation to PROCEED with the approved repo-repair pilot V1 — whose plan file was updated in place with four cross-check corrections. No repo files were touched by the investigation itself; both deliverables live in `~/.claude/plans/` (`investigate-the-current-state-radiant-cat.md`, `investigate-why-our-recurring-humble-curry.md`).
+
+### Decisions Made
+
+- **Investigation verdict:** "Yes with restrictions." Five critical issues, ranked: (1) SessionEnd marker teardown never fires → liveness guards false-fire, bypass = delete evidence; (2) hook wiring machine-local/unversioned; (3) session-number allocation collisions (4 in 2 days); (4) deny rules (`Bash(git checkout *)`, archive Read patterns) hard-block merge conflict resolution; (5) wrap-session core path queues no findings. Fix order 1→2→3→5→4.
+- **Excluded** the `~/.claude/settings.json` `model` field as a finding — operator declined the fix 2026-07-13; noted the decline was against `opus[1m]` and the value is now `claude-fable-5[1m]` (operator confirmation pending).
+- **Repo-repair pilot V1: proceed, with four adjustments** folded into the plan file — §4b liveness rule marked STALE (already shipped as `check-destructive-liveness.sh`, `0667cc6`); quote `$CLAUDE_PROJECT_DIR` when wiring `require-gate.sh`; guard against the /risk-check wrong-checkout receipt false-block (new Known dependency #2 + suggested test 8); retire `warn-settings-change.sh` when the new hook lands. Addendum block added inside the plan's resume banner with sequencing note and "ONLY live session" execution condition.
+- **Report corrections from independent verification** (both folded in): workspace-root working tree is NOT clean (dirty tracked files, zero unpushed); model-field decline predates the current value.
+
+### Risky actions
+
+None — read-only investigation; the only writes were to two plan files under `~/.claude/plans/` and this wrap's log entries. (One prescribed hook script was executed by an explorer with synthetic test input only.)
+
+### Next Steps
+
+- Operator: confirm the model-field "leave it" decision still applies to `claude-fable-5[1m]`; choose sequencing (critical Fixes 1–2 before or after the pilot).
+- Execute critical fixes in order: Fix 1 (wrap-session marker self-teardown + `close-worktree-session.md` L124–131 correction + SessionEnd root-cause), Fix 2 (versioned wiring installer + SessionStart probe), Fix 3 (suffix session markers), Fix 5 (wrap finding→queue rule), Fix 4 (deny narrowing — operator decision, route to `/friday-act`).
+- Execute the repo-repair pilot (`~/.claude/plans/investigate-why-our-recurring-humble-curry.md`) in a fresh, ONLY session — read the resume banner including the 2026-07-14 addendum first.
+- Not yet queued anywhere: project-repo commit/push sweep (3 repos have no remote; ~100+ dirty files each) and the two stranded stashes (`marketing-positioning` autostash, `strategic-os` park-A11 WIP).
+
+### Open Questions
+
+- Does the operator's model-field decline extend to the current `claude-fable-5[1m]` value?
+- Pilot-first or critical-fixes-first? (Either is safe; gate-receipt tax differs.)
+- Why does `SessionEnd` not fire on a normal wrap — window-stays-open hypothesis unconfirmed (Fix 1 step 1).

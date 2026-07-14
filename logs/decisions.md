@@ -396,3 +396,15 @@ The audit reasons from what the files *say*. These "skills" are instructions an 
 **Sequencing note (separate, and the reason nothing was lost).** The branch held **one commit reachable from nowhere else** (`ca68eaa`, 122 lines). Merged to `main` **before** any removal, then deleted with `git branch -d` (lowercase), so **git certified** the branch was fully merged rather than me asserting it. `-D` would have destroyed the commit silently against a perfectly clean `git status`.
 
 **Decided by:** Claude (S5), within the operator's instruction to close the worktree. Operator supplied the liveness confirmation the guard requires and directed that the problems be logged.
+
+### 2026-07-14 — Proceed with repo-repair pilot V1, with four investigation cross-check adjustments folded into the plan
+
+**Context.** The operator asked whether to proceed with the approved repo-repair pilot (`~/.claude/plans/investigate-why-our-recurring-humble-curry.md`) after this session's full repo investigation (independently verified by an adversarial subagent) had produced a five-issue critical-fix report.
+
+**Decision.** Proceed — the plan is sound (regression test with known answer, kill switch, self-gating) — but four investigation findings were folded into the plan file first: (1) its §4b "liveness rule" deferral is stale (the hook already shipped as `check-destructive-liveness.sh`, commit `0667cc6`, while the plan was being approved — do not re-implement); (2) the new `require-gate.sh` wiring must QUOTE `$CLAUDE_PROJECT_DIR` (all 9 existing entries are unquoted and survive only via zsh's no-word-split behavior); (3) the open "/risk-check writes its report into the wrong checkout" bug can make the new gate false-block legitimate edits — added as Known dependency #2 with a suggested verification test 8; (4) `warn-settings-change.sh` (unwired orphan) is superseded by the new hook and should be deleted in the same change.
+
+**Rationale.** The plan and the investigation were produced by concurrent/adjacent sessions on the same day — the staleness in (1) is itself an instance of the concurrent-session hazard the plan's own resume block warns about. Folding corrections into the plan file (clearly marked as a post-approval addendum) beats leaving them in chat, where the executing fresh session would never see them.
+
+**Alternatives considered.** (a) Reject the plan and fold its content into the critical-fix sequence — rejected: the plan targets a different failure class (diagnosis without opening files) and is already operator-approved and deliberately minimal. (b) Leave the corrections in chat only — rejected: the plan explicitly executes in a fresh session that would not inherit this conversation. (c) Sequence mandated (pilot vs. critical fixes) — left open as an explicit operator decision recorded in the addendum; either order is safe.
+
+**Decided by:** Claude (S6), on the operator's direct questions ("do you recommend I proceed?", "update the plan"); the sequencing choice and the model-field confirmation remain with the operator.

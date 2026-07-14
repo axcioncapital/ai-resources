@@ -1,0 +1,41 @@
+{
+  "run_id": "2026-07-14-S6",
+  "project": "ai-resources",
+  "date": "2026-07-14",
+  "marker": "S6",
+  "model": "unknown",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md",
+  "mission": null,
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    "logs/session-notes.md",
+    "logs/decisions.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-14-proceed-with-repo-repair-pilot-v1-with-four"
+  ],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": null,
+  "incidents_refs": []
+}
