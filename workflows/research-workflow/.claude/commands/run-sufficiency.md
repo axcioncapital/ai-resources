@@ -35,6 +35,19 @@ Verify all of the following before launching any phase. If any check fails, exit
 
 **Optional advisory check.** Look for `analysis/{section}/.counter-search-runner.done`. If present: Phase A's claim-permission tables will record `disconfirmation_tested: true`. If absent: Phase A records `disconfirmation_tested: false` and emits the regime disclosure inline per the `claim-permission-gate` skill's contract. Step 0 does NOT treat the absence of this sentinel as a failure — it is the slimmed-pipeline default.
 
+**⚠ Chassis-provenance check on PRE-EXISTING permission tables (blocking — added 2026-07-14).** This fires **only when `analysis/{section}/.claim-permission-gate.done` is already present** — i.e. Phase A will be **skipped** on re-entry, and Phases D and F will consume tables written by a *previous* run. Phase D applies the stop conditions to those permission verdicts; Phase F computes the NOT-SUPPORTED ratios and the **gate-clearance verdict that every Pass-4 command reads at its Step 0** — both straight from those tables. **Phase A's own chassis-version gate cannot protect them, because on this path Phase A never runs.** That is the hole this check closes.
+
+For every table under `analysis/claim-permission/{section}/`, read the frontmatter `chassis_version:` field. Require **`2026-07-14` or later**, AND the re-stamp invariant **`generated_at` ≥ `chassis_version`** (a table cannot have been produced before the rules that graded it). If any table fails either test, **exit before dispatching any phase**:
+
+> Section {section} carries permission tables from an earlier run, graded under chassis version `{version or 'unversioned (pre-2026-07-14)'}`. Phases D and F would compute the stop conditions and the gate-clearance verdict from stale verdicts. Re-adjudication is required.
+>
+> **Do these in order — step 2 is NOT reversible by `git revert`:**
+> 1. **Back-port** `§ Claim-Permission Classes` (and its subsections) from the canonical `reference/quality-standards.md` into this project's own copy.
+> 2. Delete `analysis/{section}/.claim-permission-gate.done`.
+> 3. Re-run `/run-sufficiency {section}`.
+
+**The ordering is load-bearing, and it is the entire reason this message spells the steps out.** Deleting the sentinel *before* the back-port drops the operator into `claim-permission-gate`'s own chassis-version hard exit — sentinel already gone, no way forward, and no revert that restores it. **Back-port first, always.** (Found by `/risk-check`, 2026-07-14: the first draft of this gate printed "delete the sentinel and re-run" and dead-ended exactly this way.)
+
 If all Step 0 checks pass: proceed to Phase A.
 
 ---

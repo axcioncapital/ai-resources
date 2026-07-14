@@ -27,6 +27,24 @@ The gate-clearance verdict is the load-bearing contract between Pass 3 and Pass 
 
 Additionally: read the per-cluster permission tables from `/analysis/claim-permission/{section}/`. These constrain what `cluster-synthesis-drafter` may state — a chapter may not state a NOT-SUPPORTED claim; PROXY-SUPPORTED and ILLUSTRATIVE-ONLY claims must carry their permission-class signal into prose. Pass the relevant per-cluster permission table to each cluster's synthesis sub-agent in Step 2.
 
+7. **⚠ Chassis-provenance gate on the permission tables — check before passing ANY table to a synthesis sub-agent, and exit on failure.** For every permission table read above, check its frontmatter `chassis_version:` field. **`/run-synthesis` requires `chassis_version: 2026-07-14` or later.** If the field is **absent**, or its date is **earlier than `2026-07-14`**, exit. Emit:
+   > Permission table `{path}` carries chassis version `{version or 'unversioned (pre-2026-07-14)'}`. Its class verdicts were graded by a rule set with a known gap and overlap and must not be used to constrain synthesis prose. Re-adjudication is required.
+   >
+   > **Do these in order — step 2 is NOT reversible by `git revert`:**
+   > 1. **Back-port** `§ Claim-Permission Classes` from the canonical `reference/quality-standards.md` into this project's own copy.
+   > 2. Delete `analysis/{section}/.claim-permission-gate.done`.
+   > 3. Re-run `/run-sufficiency {section}`, then re-invoke `/run-synthesis {section}`.
+
+   **The ordering is load-bearing.** `claim-permission-gate` carries its own chassis-version hard exit, so deleting the sentinel *before* the back-port lands the operator in a second hard exit with the sentinel already gone. Never print "delete the sentinel and re-run" without the back-port step first (found by `/risk-check`, 2026-07-14 — the first draft of this gate dead-ended exactly that way).
+
+   **Also apply the re-stamp invariant — a version field alone is forgeable.** `chassis_version` is self-asserted frontmatter; a hand-pasted line defeats a bare presence-and-date check. So additionally require:
+
+   > **`generated_at` MUST be greater than or equal to `chassis_version`.** A table cannot have been produced *before* the rules that produced it existed.
+
+   If `generated_at` precedes `chassis_version`, the table was **re-stamped, not re-adjudicated**. Exit: *"Permission table `{path}` declares `chassis_version: {v}` but was generated `{generated_at}`, before that chassis existed. The stamp was added without re-adjudicating the claims. Delete `analysis/{section}/.claim-permission-gate.done` and re-run `/run-sufficiency {section}` — do not hand-edit the version field."* This matters here because § Operator-override already documents a path where the operator edits permission tables by hand.
+
+   **Why this is an exit and not a caveat.** The permission class is what licenses a verb and a framing at Pass 4 — it is the last control between an evidence verdict and a sentence in the report. A stale table does not fail loudly; it hands Pass 4 a *wrong permission*. Demonstrated by execution 2026-07-14: re-adjudicating a real pre-2026-07-14 table under the current chassis moved **2 of 6 claims** from `PROXY-SUPPORTED` to `ILLUSTRATIVE-ONLY` — and `PROXY-SUPPORTED` licenses a hedged market-pattern generalization that `ILLUSTRATIVE-ONLY` forbids outright. Passing the stale table forward would have let synthesis assert two market-level claims the evidence does not carry, with no error anywhere in the pipeline. **This is the same gate `section-directive-drafter` and the Pass-3 skills carry; the three must stay in lockstep** (see `reference/quality-standards.md § Provenance is stamped on outputs, not only gated on inputs`).
+
 ---
 
 ### Step 1: Load Inputs

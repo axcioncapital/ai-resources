@@ -82,6 +82,7 @@ Directory created on first write.
 ---
 section: {section identifier}
 cluster: {cluster ID}
+chassis_version: {YYYY-MM-DD — copied verbatim from the chassis-version marker read at pre-flight}
 generated_at: {YYYY-MM-DD}
 disconfirmation_tested: {true | false}
 regime_note: {one-line statement of the disconfirmation regime — see Regime disclosure below}
@@ -97,6 +98,7 @@ regime_note: {one-line statement of the disconfirmation regime — see Regime di
 | ... | ... | ... | ... | ... | ... |
 ```
 
+- **`chassis_version`** is the version marker you read at the pre-flight chassis-version gate, copied **verbatim**. It is not optional and it is not the date you ran — it is the identity of the *rules* that produced these verdicts. **This field is the outputs-side half of the chassis-version gate, and it exists for the same reason** (added 2026-07-14): the gate stops a *new* run against *old* rules, but says nothing about a table already on disk. A permission table is a set of confident class verdicts; without this field nothing downstream can tell whether they were graded by a rule set since found to have a gap and an overlap. **Demonstrated, not hypothetical:** re-adjudicating a real pre-2026-07-14 table (`research-pe-regime-shift-advisory-gap` 1.1-cluster-03) under the current rules moved **2 of 6 claims** from `PROXY-SUPPORTED` to `ILLUSTRATIVE-ONLY` — and a blind `section-directive-drafter` run on the stale table confirmed it would **permit both to be written as hedged market-pattern claims**, which the current rules forbid outright. A stale table launders an over-claim into the report, silently. Never omit this field; never back-fill it with a guess.
 - **Claim ID** comes verbatim from the cluster memo (do not renumber).
 - **Claim text** is the full claim (not truncated — operators must be able to audit assigned class against full text).
 - **Supporting evidence** is a one-line summary listing source titles or IDs (with `→` separators for multiple).
