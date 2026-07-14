@@ -977,3 +977,53 @@ The mutex therefore protects only the checkouts that *have* it. **This is not a 
 - **The generalisable defect.** Several logs have a *documented reader contract* (a heading shape, an anchor format, an append direction) that lives **only in the reader**, and nothing checks a writer against it. Writers drift; readers go quiet. **Note the pattern with `session-notes.md`, whose append-to-end direction IS enforced (by `check-archive.sh`) and has not drifted** — the difference is enforcement, not care.
 - **Fix.** (a) Repair the `usage-log.md` ordering. (b) Add a cheap format assertion for each parsed log — a script that confirms the newest entry matches the shape its readers require, run at wrap. This is the same "verify by running the reader, not by trusting the writer" principle the queue-gap entry above turns on: **a write-only check would have passed this session while changing nothing.**
 - **Target files:** `ai-resources/logs/usage-log.md` (ordering); a new format-assertion script under `logs/scripts/`; `ai-resources/.claude/commands/wrap-session.md` (call it).
+### 2026-07-14 — Symlinked consumers + a locally-COPIED rule file = a stale-rules hazard nothing in the system can detect
+- **Status:** logged (pending)
+- **Category:** guardrail-candidate
+- **Severity:** med — a near-miss: the hazard was live and undetectable, but `/risk-check` caught it before the merge and the session closed it *locally* in the two affected skills. The generalizable shape is still unguarded.
+- **Provenance:** wrap-collector (machine-authored) 2026-07-14
+- **Friction source:** wrap-collector 2026-07-14 — safety / guardrail-gap (dim 5)
+- **Proposal:** The distribution topology of the research workflow is **mixed**: the canonical *skills* are **symlinked** into the two live projects, but each project holds its **own real copy** of the claim-permission chassis (`reference/quality-standards.md`). A merge therefore updates the *consumers* and leaves the *rules* stale — and every existing pre-flight check is a **heading-presence** check, which an old chassis passes. Both live projects would have adjudicated evidence claims under new instructions against old rules, producing confident wrong permission tables **with no error surfaced**. The session closed this for the two affected skills (chassis-version marker + hard-exit pre-flight gate). What is *not* closed: (a) nothing detects the same shape elsewhere — any canonical component that is symlinked while its reference data is copied has this hazard latently, and no inventory of that pattern exists; (b) presence-checks as a class are the wrong instrument for a versioned contract, and other pre-flight gates in the workflow still use them. Direction for disposition: inventory symlink-vs-copy topology across shared components, and treat "reference file is copied, consumer is symlinked" as a class that requires a version marker, not a presence check.
+- **Target files:** `ai-resources/workflows/research-workflow/reference/quality-standards.md` (chassis version marker — shipped); `ai-resources/skills/claim-permission-gate/SKILL.md`, `ai-resources/skills/cluster-memo-refiner/SKILL.md` (hard-exit gates — shipped); the un-scoped part: `ai-resources/docs/repo-architecture.md` § Symlink topology (no rule covers copied reference data behind symlinked consumers) — remainder (to be determined at disposition).
+
+### 2026-07-14 — The deploy-fitness audit is a work source whose premises have now failed 3 for 3 — re-gate it before spending another session inside it
+- **Status:** logged (pending)
+- **Category:** session-feedback
+- **Provenance:** wrap-collector (machine-authored) 2026-07-14
+- **Friction source:** wrap-collector 2026-07-14 — autonomy-compounding / leanness (dims 1, 2)
+- **Proposal:** The `research-workflow-deploy-fitness` mission's source audit has now had its **stated premise falsified on every thread that has been executed — threads 1, 2 and 5**. Thread 5's stated defect (`SUPPORTED` needs ≥3 sources / ≥2 classes; a 2-source-1-class hole) was **fictional**: those thresholds exist in **no file** — grep-verified against the canonical chassis, `claim-permission.template.md`, and both live projects' `quality-standards.md`. They came from a prior session's throwaway test fixture. The failure is **systematic, not bad luck**: the audit reasons from what files *say* rather than what the runtime *does*, and every time execution has been applied its conclusion has flipped. Threads 3, 4, 6, 7, 8 come from the same audit by the same method, so there is a real chance the remaining mission fixes an artifact rather than an obstacle. Note this is a defect in a **work source**, not in a session — and it is expensive in exactly the way dim-2 tracks: each thread burns a session opening on a diagnosis that then has to be rewritten. Direction for disposition: (a) re-examine the mission's "fix canonical before deploying" gate before ordering another thread — the demonstrated-blocker count is 0 for 3; (b) if the mission continues, downgrade each remaining thread from a *diagnosis to implement* to a *pointer to a suspect area*, verify by execution first, and budget for rewriting the fix. Each thread has pointed at a genuinely broken area, so the audit is not worthless — its **diagnoses** are what have not held.
+- **Target files:** `logs/missions/research-workflow-deploy-fitness.md` (the gate decision + thread framing); the audit artifact behind it (to be determined at disposition).
+
+## 2026-07-14 — Add a bounded-change fast path to the session-open chain
+
+**Status:** OPEN
+**Source:** `/usage-analysis` telemetry, 2026-07-14 S1 (verdict: Wasteful — this was one of its two Major findings)
+**Severity:** MED
+**Est. saving:** ~40–70k tokens/session on bounded changes, plus the wall-clock the operator actually complained about.
+
+**The problem, and it was operator-visible.** On a bounded 4-file content-only edit, the session-open chain ran **four gates before a single line of the actual fix changed**: `/prime` → `/session-start` (with its own mandate-confirmation prompt) → the `context-discovery` agent → `/session-plan`. **The operator interrupted mid-turn twice to ask about it** — *"How does it take so long to write a plan?"* and later *"Is there still lot left?"*. A finding the operator has to raise is worse than one telemetry raises.
+
+The chain is not scaled to task size. It is correct for a genuinely architectural session; it is ceremony on a scoped fix whose files are already known.
+
+**Proposed fix (structural, not a reminder).** Add a **bounded-change fast path**: when the mandate names **≤5 known files** and the change is **content-only** (no new command/skill/agent/hook, no new symlink, no automation with shared-state effects), then:
+- let the `context-discovery` pack **be** the plan (it already produces `files_in_scope` / `allowed_inputs` / `required_outputs` and a readiness verdict), and
+- **drop `/session-start`'s duplicate mandate echo and `/session-plan` entirely.**
+
+Mandate capture still happens (the `**Mandate:**` line is load-bearing for four downstream readers); what is cut is the *second* confirmation of the same mandate and the plan file that restates what the pack already says. The heavy gates (`/risk-check`, execution verification) are **not** touched — they earned their cost outright this session and must not be cut.
+
+**Why this is logged HERE and not only in `usage-log.md`.** `usage-log.md` is a **record, not a queue** — nothing converts an entry there into a task, and five consecutive sessions proved it: the `/prime` Step 3 full-read fix was recommended five times in telemetry and executed zero times, until 2026-07-13 S6 wrote it into *this* log, where `/prime`'s open-item scan surfaces it in the task menu. It shipped the next session and **did not fire again this session** (first clean orientation in six). Recommending this fix only in telemetry would reproduce that exact six-session arc verbatim.
+
+**Do NOT read this as "gate less."** The same session's two heavy gates each paid for themselves outright — the blind execution fixture found the real defects *and* two the session introduced, and `/risk-check`'s RECONSIDER caught a live silent-misadjudication hazard the session had missed entirely. The lesson is **where** to spend, not **whether**.
+
+## 2026-07-14 — Add an inline consistency check when editing a partition-shaped rule set
+
+**Status:** OPEN
+**Source:** `/usage-analysis` telemetry + `session-feedback-collector`, 2026-07-14 S1
+**Severity:** MED
+**Est. saving:** ~150k tokens/occurrence (two wasted adversarial rounds at ~75k each).
+
+**The problem.** Thread 5 re-cut a four-class partition (the research-workflow's claim-permission classes). **Three of the four adversarial verification rounds were spent finding defects the author had introduced in the previous round** — a direct self-contradiction between a *"absent input → ceiling does not fire"* rule and a *"required-but-missing input → ceiling fires"* rule; and a generalization ceiling declared *"gated on the claim, not the evidence"* whose fire-test then read an evidence-side field. The expensive blind-execution fixture caught both — **the system worked** — but each catch cost a fresh ~75k run, and both were the kind of defect a **~2k inline assertion** would have caught before dispatch.
+
+**Proposed fix.** When editing a rule set that claims to be a **partition** (mutually exclusive + jointly exhaustive), assert it **inline before dispatching any verification subagent**: enumerate the axis, walk the boundary cases through the rules by hand, and check that no rule contradicts another rule added in the same edit. Cheap, and it converts an expensive external catch into a free internal one. Candidate home: a short check in `docs/analytical-output-principles.md`, or a note in the `ai-resource-builder` quality-check framework.
+
+**Precedent for why this is worth writing down:** the chassis edited in this session now carries its own acceptance test (a worked-cases table where every case must land in exactly one class). That table exists *because* this lesson was learned expensively. Generalise it.
