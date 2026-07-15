@@ -628,3 +628,14 @@ Separately: **discovered an open bypass in `check-destructive-liveness.sh`** —
 
 - Why are the nine repo-level hooks dead? Three candidate causes; the sentinel answers it in one restart. **Do not re-assert the quoting diagnosis without that result.**
 - How many past audits are invalidated by the gitignore-aware `grep` shell function? A recursive grep from the workspace root sees an **empty ai-resources** and reports it as clean. Unknown false-negative rate across every prior consumer-inventory and orphan scan.
+
+## 2026-07-15 — Session S1-d99
+
+**Mandate:** Close the four urgent backlog items, each fix proven by execution (not code-read) — done when: all four items closed in their source logs, each proven by execution, and the hook-wiring cluster (1,3,4) verified against a real re-fire / fresh-clone shape.
+- Out of scope: the research-workflow deploy-fitness mission (item 5); the deny-rule narrowing (deferred to /friday-act); the /consult fabrication hardening and the seven at-rest gates; item 6 (test-script audit) unless trivially adjacent to item 1.
+- Files in scope: .claude/settings.json, .claude/hooks/sentinel-hook-probe.sh, logs/sentinel-hook-probe.log, .claude/commands/wrap-session.md, ../.claude/commands/wrap-session.md, .claude/commands/risk-check.md, logs/usage-log.md, .claude/agents/session-feedback-collector.md, .claude/commands/close-worktree-session.md
+- Stop if: item 1's quoting fix does not revive the hooks on re-fire (premise wrong → report and stop that thread); or /risk-check returns NO-GO on the wiring changes.
+- Allowed inputs: logs/session-plan-2026-07-14-S8.md (installer spec), logs/improvement-log.md (the entries)
+- Required outputs: logs/scripts/install-hooks.sh, .claude/hooks/check-hook-wiring.sh
+
+Auto multi-item (the four urgent backlog items): (1) Revive nine dead repo-level hooks — cause proven by sentinel = word-splitting on unquoted $CLAUDE_PROJECT_DIR in a spaced workspace path; quote the hook commands in ai-resources/.claude/settings.json and remove the sentinel probe; (2) Three this-week fixes — wrap-session core path must convert findings into tasks, /risk-check must write its report into the correct checkout, and usage-log.md format must be readable by its own parsers; (3) SessionEnd marker teardown does not fire on a clean wrap — diagnose the real cause and add a belt-and-braces marker teardown to /wrap-session; (4) Hook WIRING is unversioned (lives in ~/.claude/settings.json) — build a versioned installer so a fresh clone actually gets the guards.

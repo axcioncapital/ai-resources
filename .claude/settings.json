@@ -42,7 +42,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/check-heavy-tool.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-heavy-tool.sh\"",
             "timeout": 5,
             "statusMessage": "Heavy-tool check..."
           }
@@ -53,7 +53,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/friction-log-auto.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/friction-log-auto.sh\"",
             "timeout": 5,
             "statusMessage": "Checking friction log..."
           }
@@ -66,13 +66,13 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/log-write-activity.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/log-write-activity.sh\"",
             "timeout": 5,
             "statusMessage": "Logging write activity..."
           },
           {
             "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/auto-qc-nudge.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/auto-qc-nudge.sh\"",
             "timeout": 5,
             "statusMessage": "Checking for significant artifact writes..."
           }
@@ -83,7 +83,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/friction-log-auto.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/friction-log-auto.sh\"",
             "timeout": 5,
             "statusMessage": "Friction-event check..."
           }
@@ -95,7 +95,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/check-stop-reminders.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-stop-reminders.sh\"",
             "timeout": 5,
             "statusMessage": "Checking session-end reminders..."
           }
@@ -105,13 +105,13 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/coach-reminder.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/coach-reminder.sh\"",
             "timeout": 5,
             "statusMessage": "Checking coach reminder..."
           },
           {
             "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/improve-reminder.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/improve-reminder.sh\"",
             "timeout": 5,
             "statusMessage": "Checking improve reminder..."
           }
@@ -121,7 +121,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/auto-resolve-nudge.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/auto-resolve-nudge.sh\"",
             "timeout": 5,
             "statusMessage": "Checking for QC findings to resolve..."
           }
@@ -133,24 +133,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/friday-checkup-reminder.sh",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/friday-checkup-reminder.sh\"",
             "timeout": 5,
             "statusMessage": "Checking Friday cadence..."
-          },
-          {
-            "type": "command",
-            "command": "bash \"/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.claude/hooks/sentinel-hook-probe.sh\" ABS",
-            "timeout": 5
-          },
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/sentinel-hook-probe.sh\" CPD_QUOTED",
-            "timeout": 5
-          },
-          {
-            "type": "command",
-            "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/sentinel-hook-probe.sh CPD_UNQUOTED",
-            "timeout": 5
           }
         ]
       }

@@ -46,8 +46,25 @@ Invocation semantics: operator-typed, or inline-prompted by other commands (e.g.
 ### Step 2: Path Setup
 
 3. Set `DATE` = today in `YYYY-MM-DD`.
-4. Set `AI_RESOURCES` = absolute path to the `ai-resources/` directory.
-5. Set `REPORT_DIR` = `{AI_RESOURCES}/audits/risk-checks/`. Create if missing (`mkdir -p {REPORT_DIR}`).
+4. Set `AI_RESOURCES` = absolute path to the canonical `ai-resources/` directory (resolve by ancestor walk-up or the known workspace path). Used for the agent-def lookup in Step 10.
+5. Set `REPORT_DIR` by resolving it against the **current checkout**, not a hard-coded canonical path — so a worktree session's report lands in its own checkout rather than contaminating `main`. (`audits/risk-checks/` is `check-foreign-staging.sh`-exempt, so a report written into the wrong checkout would be committed there silently, with no tripwire — which is exactly the defect this resolves.) Three cases, all defined:
+   ```bash
+   CHECKOUT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
+   CUR_COMMON="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)"
+   AIRES_COMMON="$(git -C "{AI_RESOURCES}" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)"
+   if [ -n "$CUR_COMMON" ] && [ "$CUR_COMMON" = "$AIRES_COMMON" ]; then
+     # (a) an ai-resources checkout — main OR a git worktree of it (a worktree shares its main repo's
+     #     git-common-dir). Write into THIS checkout so the report travels with the branch and never
+     #     lands in a foreign checkout. Main-checkout behaviour is UNCHANGED: CHECKOUT_ROOT == AI_RESOURCES there.
+     REPORT_DIR="$CHECKOUT_ROOT/audits/risk-checks/"
+   else
+     # (b) an ordinary project session invoking the symlinked /risk-check (its git-common-dir differs
+     #     from ai-resources'), OR git is unavailable. Keep the canonical trail where dozens of
+     #     project risk-check reports already live. Behaviour UNCHANGED for this common case.
+     REPORT_DIR="{AI_RESOURCES}/audits/risk-checks/"
+   fi
+   ```
+   The git-common-dir comparison is the exact "same repository?" test: a worktree shares its main repo's common dir (→ case a, writes into its own working tree), while a project repo — even one that happens to carry its own top-level `skills/` — has a different common dir (→ case b). Basename matching is deliberately **not** used: a worktree directory is not named `ai-resources`, so a basename test would misroute the very case this fixes. Create if missing (`mkdir -p "$REPORT_DIR"`).
 6. Extract referenced file paths from `CHANGE_DESCRIPTION`. Strategy: find tokens that look like paths — contain a `/` and end in a recognized extension (`.md`, `.sh`, `.json`, `.yaml`, `.yml`, `.py`, `.ts`, `.js`) — plus bare filenames matching `CLAUDE.md` or `SKILL.md`.
    - For each candidate, resolve against `AI_RESOURCES` (relative) or accept as-is (absolute).
    - For each resolved path, record its existence status: `exists` or `not yet present`.
