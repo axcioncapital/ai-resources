@@ -121,3 +121,15 @@ Nine repo-level hooks have never fired (verified: the `[HEAVY]` guardrail, auto-
 **The meta-lesson, recorded because it is the expensive one.** `/risk-check` returned **RECONSIDER twice and was right both times** — on the deny rules, and on the hook-wiring cause. Separately, **five of this session's own test fixtures returned confident, plausible, WRONG results** before one worked (wrong repo variable; argv instead of stdin; a `|` delimiter colliding with event names; `timeout` not existing on macOS; `ls` hiding dotfiles). One of them nearly became the finding *"the staging guard is fail-open."* **A plausible result from a broken instrument is indistinguishable from a real one, and it does not care that you are currently writing a rule against it.** Only an explicit before/after existence check ever settled anything. The same shape appeared in the test harness itself: `prime-allocator.test.sh` reported **"12 passed, 0 failed"** while reading its subject from a *dead session's scratchpad* containing the old, broken code.
 
 **Decided by:** Claude (S8), under two operator-confirmed choices (ship-the-four-and-sentinel; deny rules to `/friday-act`).
+
+### 2026-07-15 (S1-d99) — Rescope the "urgents" fix set on a /risk-check RECONSIDER; defer the installer
+
+**Context:** Auto-mode ran the four urgent backlog items. A pre-gate premise check plus the plan-time `/risk-check` (RECONSIDER) established that 2 of 6 planned fixes were already shipped (the log lagged the code) and that item 4 — a versioned hook-wiring installer writing to the unversioned `~/.claude/settings.json` — carried a High/High Permissions/Reversibility profile, with two prior RECONSIDERs on the same subsystem.
+
+**Decision:** Build items 1 / 2b / 2c; status-flip items 2a + 3 (verified already-shipped by direct read + `git show 8de46fd`); defer item 4 to its own gated session with a mandatory backup-before-merge redesign and a must-not-disturb guard on the operator-DECLINED `"model"` field.
+
+**Rationale:** The reviewer's two catches (item 3 already shipped; item 4 High/High) were both re-verified against the files rather than taken on faith — consistent with the S8 lesson that a reviewer can also assert-from-recall. Bundling a High/High user-settings write alongside three low-risk fixes would have spent the single approval gate on the riskiest item; splitting it out keeps each change proportionate to its risk.
+
+**Alternatives considered:** (a) include item 4 with inline mitigations — rejected, it needs its own `/risk-check` and the backup step the bundle dropped; (b) re-implement items 2a/3 to be safe — rejected, re-editing `close-worktree-session.md` would revert a deliberate S8 fix (OP-11 loud-revision violation).
+
+**Decided by:** Claude (S1-d99), operator-approved rescope (`go`).

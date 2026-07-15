@@ -942,3 +942,26 @@ Token efficiency tracking. Each entry records one session's resource usage and w
 - **Adopt `improvement-log.md` prevention (b) — a mechanical `Files in scope` path check at `/session-start` Step 3 (~5–10k/occurrence, now 4-for-4).** Prevention (a) ("derive it mechanically, never by hand") is **0-for-4** and its own trigger condition (*"prefer (a) unless the pattern recurs a third time"*) has been met and exceeded. `check-foreign-staging.sh` already pays the cost of catching this at commit time, loudly, after the work is done — moving the check earlier is strictly cheaper than the block it replaces.
 - **Narrow the archive deny rule (~3–5k/session, fourth consecutive entry).** A `Read` cost-guard is blocking `git checkout` — a write. Smaller than the primary, but it has now been observed, logged, and ignored four entries running, and this time it hard-blocked a merge and required manual operator intervention. Permission-surface change → `/risk-check` class → `/friday-act`.
 - **Batch the `session-notes.md` offset reads (~1–2k/session).** Four separate targeted reads of the same ~540-line file. Purely mechanical; smallest lever here.
+
+### 2026-07-15 (S1-d99) | Efficient
+
+**Task:** Auto-mode "do the urgents" — resolved 4 backlog items (hook-quoting fix reviving 9 dead hooks, risk-check REPORT_DIR discriminator, usage-log entry relocation + falsifiable format guard, and a correctly-deferred versioned installer), status-flipped 4 stale improvement-log entries, and committed the batch.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | 5 |
+| Files read | 11 (re-reads: 0) |
+| Files written/edited | 10 |
+| Tool calls | 75 total |
+| Subagents | 2 |
+| Rework cycles | 0 |
+
+**Findings:**
+None — session was efficient.
+
+**Recommendation:** No action needed.
+
+**Estimated savings:** N/A — no recommendation.
+
+**Additional levers (ROI-ranked):**
+No additional levers — session was efficient.

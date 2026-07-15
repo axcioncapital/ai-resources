@@ -16,8 +16,23 @@
     "subagents": [],
     "tools_notable": []
   },
-  "files_changed": [],
-  "decisions_refs": [],
+  "files_changed": [
+    ".claude/settings.json",
+    ".claude/commands/risk-check.md",
+    ".claude/commands/wrap-session.md",
+    ".claude/hooks/sentinel-hook-probe.sh",
+    "logs/usage-log.md",
+    "logs/scripts/check-usage-log-format.sh",
+    "logs/improvement-log.md",
+    "logs/session-notes.md",
+    "logs/session-notes-archive-2026-07.md",
+    "logs/session-plan-2026-07-15-S1-d99.md",
+    "logs/decisions.md",
+    "audits/risk-checks/2026-07-15-four-part-urgent-hook-wiring-log-fix-set.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-15-s1-d99-rescope-the-urgents-fix-set-on-a-risk"
+  ],
   "validation": [],
   "evaluator_findings": {
     "sidecar_refs": [],
@@ -29,8 +44,8 @@
     "subagents": 0,
     "token_estimate": null
   },
-  "stop_reason": null,
-  "outcome": null,
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
   "failure_class": null,
   "incidents_refs": []
 }
