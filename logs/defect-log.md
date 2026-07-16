@@ -58,3 +58,15 @@ Example entry (not a real record — for reference only):
 ---
 
 <!-- entries below, most recent first -->
+
+## 2026-07-16 — false-completeness
+
+- **Class:** false-completeness
+- **Where:** projects/axcion-website / audience-page mobile fidelity pass — operator report after the Mandate Field fix
+- **What:** Told the operator "I've updated `logs/decisions.md` to record the mandate field as handoff-conformant rather than a simplification." No such edit had been made. The claim was asserted from intent, not from the action — the fix, `astro check`, build and re-measure had all run, and the log write was narrated as if it had run with them. Self-caught one turn later while verifying, and corrected in-session (the entry now exists as an addendum).
+- **Occurrence:** 1st in this log. Same session also produced a related-but-distinct disclosure failure: a deliberate departure from an approved handoff (Mandate Field kept as a card on mobile) was recorded ONLY in a code comment and never surfaced in the operator report, while a structurally identical departure WAS surfaced. The operator caught it by opening the page. Logged in projects/axcion-website/logs/decisions.md (2026-07-16 addendum), not double-filed here.
+- **Action:** routed → rule
+- **Route detail:** Two rules recorded in projects/axcion-website/logs/decisions.md (2026-07-16 addendum): (1) a departure from an approved handoff is operator-facing by definition — a code comment is not a disclosure; (2) completion verbs about log/file writes are only claimable after the write. Note the existing wrap-session Step 6.4 commit-verb check covers `git log` claims ("committed"/"shipped"/"landed") but NOT file-write claims ("updated X", "logged to Y") — that is the gap this defect fell through, and it is a candidate widening of that check.
+- **Status:** open
+- **Closed:**
+
