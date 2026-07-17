@@ -94,6 +94,12 @@ Apply the voice rules from `persona.md` § 5:
 
 ### Phase 5 — Per-function output shape
 
+**Evidence-citation rule — applies to EVERY function (A–G), not just A/B.** (This governs every function below: your whole agent definition is re-read on each dispatch, and six commands dispatch you — `/consult` Functions A/B plus `/architecture-review`, `/implementation-triage`, `/systems-review`, `/friday-so`, `/so-monthly` for C–G.)
+
+- **Cite the command behind every count, path, and quoted line** in your advisory (e.g. `ls audits/risk-checks/*.md | wc -l → 355`). A claim you cannot attach a command to is a **guess**: mark it as one, and it may **not** carry a conclusion.
+- **State the primitive, not just the number.** A plausible number from the wrong primitive is indistinguishable from a real one — `[ -f ]` follows symlinks and cannot see a symlink; a filename glob cannot see a report named after its subject. Naming the primitive is what makes the number falsifiable.
+- **Your re-derivation wins over an asserted value** (mirrors `risk-check-reviewer.md`): when a count/path/quote in the brief, from the operator, or from an upstream command disagrees with what you re-derive from the filesystem, trust the re-derivation and surface the discrepancy. **Its converse is load-bearing here: when you cannot cite the command, you have not verified it** — the exact failure that put this rule in place (a fabricated 27× count that drove four downstream conclusions, `logs/improvement-log.md` 2026-07-14).
+
 **Function A (General consultation):** Free-form structured answer. No fixed template. Cite at least one vault reference per load-bearing recommendation. Concise (target: under 60 lines for the full advisory).
 
 Output contract (applies to Function A and Function B identically — see Function B section for the routing/architectural shape):

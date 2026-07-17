@@ -85,6 +85,12 @@ No corpus named → skip silently. Defect this prevents: 2026-06-29 — the SO g
 
 ---
 
+### Step 3.6 — Pre-dispatch premise verification (before delegating)
+
+Before spawning `system-owner` in Step 4, verify the premises of `QUESTION` (and of any change description, count, or quoted line it carries): **run every script it cites, open every file:line it cites, and re-derive every count — recording the primitive used** (`[ -f ]` follows symlinks; a filename glob cannot see a report named after its subject, so a plausible number from the wrong primitive is indistinguishable from a real one). Any claim that fails is corrected in the brief passed to Step 4 *before* the agent sees it. This is the input-side complement to the citation rule the `system-owner` agent applies to its own output (its Phase 5 output contract); it spends a bounded ~5k to stop a false premise from consuming a full Opus advisory pass (`logs/improvement-log.md` 2026-07-14). Adds **no new command** — a required check inside the existing dispatch path.
+
+---
+
 ### Step 4 — Delegate to the `system-owner` agent
 
 Spawn the `system-owner` subagent via the `Task` tool with this brief (verbatim structure):
@@ -102,6 +108,8 @@ Routing context (read from ai-resources/docs/repo-architecture.md by /consult be
 {ROUTING_CONTEXT verbatim}
 
 Apply the procedure in your agent definition: read the three references + systems-building-principles.md, apply the per-function read map, and produce a response in System Owner voice. Cite specific principles / blueprint sections / risk-topology entries for each load-bearing recommendation. Apply the decline-when-ungrounded rule if grounding is insufficient.
+
+Premise-check (your Phase 5 evidence-citation rule): cite the command behind every count, path, and quoted line in your advisory; an uncited value is a guess and may not carry a conclusion, and your re-derivation from the filesystem wins over any asserted value.
 
 Output contract: write the full advisory to projects/axcion-ai-system-owner/output/consultations/consult-{DATE}-{SLUG}.md per your agent definition's Phase 5 output contract, then return a ≤30-line structured summary. First line of the summary must be the verbatim path-back line `**Full advisory on disk:** {path}`, followed by a blank line, then the summary body.
 ```

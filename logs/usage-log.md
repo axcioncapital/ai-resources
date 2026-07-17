@@ -965,3 +965,30 @@ None — session was efficient.
 
 **Additional levers (ROI-ranked):**
 No additional levers — session was efficient.
+
+### 2026-07-17 (S2-21e) | Efficient
+
+**Task:** Auto-mode bundle — closed three urgent `improvement-log.md` backlog items via verified file-text edits: (1) usage-log writer PREPEND→APPEND fix across `usage-analysis.md` and `session-usage-analyzer/SKILL.md`; (2) pre-dispatch premise-verification step added to `risk-check.md`, `consult.md`, and `audit-discipline.md`; (3) `system-owner.md` Phase 5 evidence-citation rule (functions A–G) plus `consult.md` brief reinforcement. Plan-time `/risk-check` returned PROCEED-WITH-CAUTION, all 4 mitigations applied; 3 improvement-log entries flipped to applied; committed `625e2a9`.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | 6 |
+| Files read | ~16 (re-reads: ~0) |
+| Files written/edited | ~13 |
+| Tool calls | ~36 total |
+| Subagents | 2 (`risk-check-reviewer`; this usage analyzer) |
+| Rework cycles | 0 |
+
+**Findings:**
+- **Positive — premise-verification applied to its own plan before the gate.** Item 2's own discipline (verify claims against live files before citing them) was self-applied to this session's plan ahead of dispatching `/risk-check`: every cited line/behavior was re-read from the running files first, so no false premise entered the gate.
+- **Positive — subagent proportionality respected.** One combined `/risk-check` covered all three backlog items rather than three separate gates or a stacked qc-pass; the context-discovery engine was skipped since scope was already known from the backlog; inline read-back substituted for the reviewer's live-/consult smoke-test mitigation without altering the output contract.
+- **Positive — zero rework.** All six edits verified structurally on read-back (numbering intact, guards green); no correction cycles.
+- **Minor process note (not a waste finding) — usage-log crossed the 25-entry maintenance threshold (29 entries); archival was deliberately deferred to `/log-sweep`** rather than run inline, a proportionality call flagged at wrap rather than silently skipped.
+- **Trend:** second consecutive Efficient rating, continuing the recovery from 2026-07-14 (S2, Wasteful) through 2026-07-15 (S1-d99, Efficient) — zero rework cycles across both of the last two entries.
+
+**Recommendation:** No action needed.
+
+**Estimated savings:** N/A — no recommendation.
+
+**Additional levers (ROI-ranked):**
+No additional levers — session was efficient.

@@ -55,7 +55,7 @@ Token efficiency tracking. Each entry records one session's resource usage and w
 <!-- entries below -->
 ```
 
-Then add the entry below the `<!-- entries below -->` marker. If the file already exists, insert the new entry directly below the `<!-- entries below -->` marker (above all existing entries).
+Then **append the entry at the end of the file — the tail.** That is where `/prime`'s reader (`tail -n 30 logs/usage-log.md`, `/prime` Step 1) looks, and where `logs/scripts/check-usage-log-format.sh` requires the newest entry to sit (newest at the bottom). The `<!-- entries below -->` marker is only the reader's anchor, **not** an insertion point — do NOT insert the new entry directly below the marker above existing entries. A prepend there sits above the reader's 30-line window and is invisible to its own consumer (the 2026-07-14 defect this convention exists to prevent: `logs/improvement-log.md` 2026-07-15). On a brand-new file the first entry naturally follows the marker; every subsequent entry is appended at the tail.
 
 3. **Confirm and print the full entry.** Say "Usage analysis added to logs/usage-log.md" and print the full entry below the confirmation.
 
