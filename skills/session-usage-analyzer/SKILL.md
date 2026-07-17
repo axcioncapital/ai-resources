@@ -115,11 +115,11 @@ When the calling agent passes `MAINTENANCE: true` (triggered when the log has >2
 ```
 
 3. Return two blocks:
-   - The trend summary entry (to insert at the top of the log after the marker)
+   - The trend summary entry (to append at the end of the log — the tail — where the reader looks)
    - The full text of the 15 archived entries (the calling agent appends these to `logs/usage-log-archive.md`)
 
 The calling agent then:
-- Inserts the trend summary below the `<!-- entries below -->` marker
+- Appends the trend summary at the end of the log (the tail — newest at the bottom, where `/prime`'s `tail -n 30` reader looks; the `### TREND` header is excluded from `check-usage-log-format.sh`'s dated-entry checks, so a tail-appended TREND entry does not trip the guard)
 - Appends the 15 entries to `logs/usage-log-archive.md` (creates if needed, with header `# Usage Log — Archive`)
 - Removes the 15 entries from the main log
 

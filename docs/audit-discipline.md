@@ -42,6 +42,8 @@ Sessions without an explicit plan (auto-mode quick fixes, single-file edits) ski
 
 Each gate fires once per session. Mid-session re-invocation of `/risk-check` is operator-discretionary, not required by this rule. The point of the two-gate model is to avoid per-change firing — that pattern multiplied tokens without proportionate signal.
 
+**Premise-verification precondition (both gates).** Before either gate dispatches its reviewer subagent, the invoking command runs a bounded pre-dispatch premise check on the payload: run every script it cites, open every line it cites, and re-derive every count (recording the primitive used), then correct any false claim in the payload *before* the subagent sees it. A gate that reasons from an unverified premise produces confident, expensive, wrong output — the ~360k-token miss of 2026-07-14 (`logs/improvement-log.md`). This is Problem Reality applied to the gate's **input**, symmetric with the Dimension-7 / premise checks the reviewers already apply to their **output**. Implemented in `risk-check.md` Step 2.6 and `consult.md` Step 3.6.
+
 ### Verdict semantics
 
 - **GO** — proceed with the change as planned.

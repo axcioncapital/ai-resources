@@ -531,3 +531,13 @@ None.
 ### Findings Declined
 
 - **Reader `tail -n 30` vs ~35-line entries:** `/prime`'s usage-log reader reads the last 30 lines, but a single entry is ~35 lines, so a correctly-tailed entry's `###` header can sit just outside the reader's window. Declined — pre-existing reader *design* (not introduced or worsened this session), low consequence (the body usually repeats the date; the telemetry-gap nudge fired correctly this prime), and it is the reader's concern, not the writer-contract this session fixed. Cross-referenced in the queued improvement-log entry so it is not lost.
+
+## 2026-07-17 — Session S2-21e
+
+**Mandate:** Close three urgent backlog items — (1) /usage-analysis Step 4.2 + session-usage-analyzer SKILL maintenance routine changed from PREPEND to APPEND-at-tail; (2) a pre-dispatch premise-verification step (run every cited script, open every cited line, re-derive every count) added to /risk-check and /consult before the subagent spawn, plus a gate-scope note in audit-discipline.md; (3) the premise-check clause + "state the primitive, not the count" rule ported into system-owner.md output contract and /consult dispatch brief — done when: all three items status-flipped to applied in logs/improvement-log.md, each verified against actual file text (not a code-read), item 1 confirmed consistent with check-usage-log-format.sh.
+- Out of scope: the reader-side `tail -n 30` vs ~35-line window (item 1 declined it — reader design, not writer contract); building any new command; back-porting to live project chassis copies; all other open backlog items.
+- Files in scope: .claude/commands/usage-analysis.md, skills/session-usage-analyzer/SKILL.md, .claude/commands/risk-check.md, .claude/commands/consult.md, docs/audit-discipline.md, .claude/agents/system-owner.md
+- Stop if: item 1's APPEND change conflicts with what check-usage-log-format.sh expects (premise wrong → report and stop that thread); or /risk-check returns NO-GO on the gate-dispatch changes.
+- Allowed inputs: logs/improvement-log.md (the three entries)
+
+Auto multi-item (three urgent backlog items): (1) /usage-analysis + session-usage-analyzer SKILL — change telemetry writer from PREPEND to APPEND-at-tail to match the /prime tail-reader; (2) finish the gate-premise check — a pre-dispatch "verify every cited script/line/count" step on /risk-check and /consult; (3) port the premise-check clause into system-owner.md output contract so the last unhardened reviewer cites the command behind every count/path/quote.
