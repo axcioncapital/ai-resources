@@ -353,14 +353,29 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
-<<<<<<< Updated upstream
+- 23:52 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/db57817b-029c-44f9-aef3-f3a23cd82f3f/scratchpad/commitA.txt
+- 23:52 — docs/session-marker.md
+- 23:51 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/output/consultations/consult-2026-07-17-friday-act-weekly-triage.md
+- 23:51 — docs/session-marker.md
+- 23:51 — docs/session-marker.md
+- 23:50 — docs/session-marker.md
+- 23:48 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/db57817b-029c-44f9-aef3-f3a23cd82f3f/scratchpad/harness.py
+- 23:36 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/db57817b-029c-44f9-aef3-f3a23cd82f3f/scratchpad/harness.py
+- 23:34 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/db57817b-029c-44f9-aef3-f3a23cd82f3f/scratchpad/dedupe_prime.py
+- 23:24 — audits/risk-checks/2026-07-17-dedupe-prime-session-marker-allocator.md
+- 23:14 — logs/retirement-backlog.md
 - 23:13 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/friday-checkup-2026-07-17.md
+- 23:12 — logs/session-notes.md
 - 23:10 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/reports/repo-health-report.md
+- 23:09 — .claude/commands/close-worktree-session.md
 - 23:08 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/permission-sweep-2026-07-17.md
 - 23:07 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/reports/.audit-temp/context-health-findings.json
 - 23:07 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/working/permission-sweep-2026-07-17.md.summary.md
 - 23:07 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/working/permission-sweep-2026-07-17.md
+- 23:06 — logs/scripts/check-duplicate-session-headers.sh
+- 23:06 — .gitattributes
 - 23:04 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/reports/.audit-temp/practices-findings.json
+- 23:01 — audits/risk-checks/2026-07-17-add-gitattributes-merge-union-for-append-only-session-logs.md
 - 22:59 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/reports/.audit-temp/settings-findings.json
 - 22:56 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/reports/.audit-temp/command-findings.json
 - 22:55 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/log-sweep-2026-07-17.md
@@ -368,25 +383,16 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
 - 22:52 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/working/log-sweep-project-axcion-ai-system-owner-2026-07-17.md
 - 22:52 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources-parallel/27d06d1f-68b1-40b4-811a-f5606fe13d37/scratchpad/build_report.py
 - 22:50 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/reports/.audit-temp/skill-findings.json
+- 22:50 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/5965c405-3749-48ef-870c-4de0911b205f/scratchpad/oth.txt
+- 22:50 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/output/consultations/consult-2026-07-17-trim-prime.md
+- 22:50 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/5965c405-3749-48ef-870c-4de0911b205f/scratchpad/cur.txt
+- 22:50 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/5965c405-3749-48ef-870c-4de0911b205f/scratchpad/base.txt
 - 22:49 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources-parallel/27d06d1f-68b1-40b4-811a-f5606fe13d37/scratchpad/classify.sh
 - 22:47 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-website/logs/coaching-log.md
 - 22:45 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources-parallel/27d06d1f-68b1-40b4-811a-f5606fe13d37/scratchpad/audit.py
 - 22:44 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/reports/.audit-temp/claude-md-findings.json
 - 22:42 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/reports/.audit-temp/file-org-findings.json
-=======
-- 23:36 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/db57817b-029c-44f9-aef3-f3a23cd82f3f/scratchpad/harness.py
-- 23:34 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/db57817b-029c-44f9-aef3-f3a23cd82f3f/scratchpad/dedupe_prime.py
-- 23:24 — audits/risk-checks/2026-07-17-dedupe-prime-session-marker-allocator.md
-- 23:14 — logs/retirement-backlog.md
-- 23:12 — logs/session-notes.md
-- 23:09 — .claude/commands/close-worktree-session.md
-- 23:06 — logs/scripts/check-duplicate-session-headers.sh
-- 23:06 — .gitattributes
-- 23:01 — audits/risk-checks/2026-07-17-add-gitattributes-merge-union-for-append-only-session-logs.md
-- 22:50 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/5965c405-3749-48ef-870c-4de0911b205f/scratchpad/oth.txt
-- 22:50 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/output/consultations/consult-2026-07-17-trim-prime.md
-- 22:50 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/5965c405-3749-48ef-870c-4de0911b205f/scratchpad/cur.txt
-- 22:50 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/5965c405-3749-48ef-870c-4de0911b205f/scratchpad/base.txt
+- 19:59 — README.md
 - 11:08 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/9207f153-51a3-4a07-b2b7-3bb733d8866c/scratchpad/adversarial-verification.md
 - 10:59 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/9207f153-51a3-4a07-b2b7-3bb733d8866c/scratchpad/fresh-deep-critique.md
 - 10:56 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/9207f153-51a3-4a07-b2b7-3bb733d8866c/scratchpad/reconciliation-ledger.md
@@ -394,8 +400,6 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
 - 10:38 — logs/scripts/check-usage-log-format.sh
 - 10:34 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/d998d82b-b496-4cb9-a50c-d7c1db6cde8b/scratchpad/relocate_s2.py
 - 10:32 — .claude/commands/risk-check.md
-- 19:59 — README.md
->>>>>>> Stashed changes
 
 - `logs/friction-log.md` (this entry); `logs/session-notes.md` (S2 entry); `logs/session-plan-2026-07-13-S2.md`; `logs/runs/2026-07-13-S2.json`. Session's substantive W3.2 work was **discarded, not committed** — superseded mid-session by the concurrent session's W3.2 retirement. Template edits (`templates/mission-contract.md`, redesign `implementation-packet-template.md`) were made and then **reverted**: they added a rule to artifacts the other session had just retired.
 
