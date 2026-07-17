@@ -159,3 +159,17 @@ Nine repo-level hooks have never fired (verified: the `[HEAVY]` guardrail, auto-
 **Alternatives considered:** run the live `/consult` smoke-test as recommended — rejected on cost/benefit (nothing the dispatch would exercise was changed); split into three separate risk-checks — rejected (one combined review is cheaper and the three share a consumer set).
 
 **Decided by:** Claude (S2-21e), under operator-approved auto mode (`go`).
+
+## 2026-07-17 — De-duplicate the /prime session-marker allocator into a shared Step 8k sub-step
+
+**Context:** `/prime` loads a 1,009-line command file on every invocation before drawing the orientation menu; the ~134-line marker allocator was inlined three times (8a.3.a / 8b.3.a / 8c.3) — a measured model-side load cost and a "keep three copies byte-identical" maintenance tax.
+
+**Decision:** Collapse the three copies into one shared Step 8k sub-step referenced by 8a/8b/8c (Option A). prime.md 1009→739 lines. Header-existence check, header append, and mtime write stay per-branch; control flow and the marker→header→mtime ordering unchanged.
+
+**Rationale:** The allocator is branch-agnostic (references no per-branch variable), so one shared block is strictly safer than three (removes silent-drift risk). Behavior-preservation proven — a zsh falsification harness passes identically on the deduped and original blocks.
+
+**Alternatives considered:** Option B (move allocator to docs/session-marker.md, read on-demand) — rejected: new cross-repo runtime read on the task-selection hot path; failure collapses the TOCTOU guarantee. Option C (rationale comments to decisions.md) — rejected: A de-duplicates them for free. Deferred (SO-flagged): extract to an executable script — larger win, its own `/risk-check`.
+
+**Gates:** `/consult` (SO: GO on A) → `/risk-check` PROCEED-WITH-CAUTION (4 mitigations, all applied) → BLOCKING zsh harness passed. End-time `/risk-check` skipped (plan-time covered; mitigations applied; harness proves behavior-preservation; commits shipped; drift bounded).
+
+**Decided by:** Claude (session db57817b), operator-approved ("proceed").

@@ -1221,3 +1221,13 @@ Mandate capture still happens (the `**Mandate:**` line is load-bearing for four 
 - **Fix direction.** The orphan-cleanup loop `for f in logs/.session-marker-*; do [ -f "$f" ] || continue; …` uses a raw glob — the exact zsh-NOMATCH class the CLAIMS scan directly above it already avoids with `find`. Guard it the same way: a `find logs -maxdepth 1 -name '.session-marker-*'` loop (matching the CLAIMS idiom), or a zsh null-glob qualifier. Now that the allocator is a single Step 8k block, the fix lands once.
 - **Target files:** `ai-resources/.claude/commands/prime.md` (Step 8k orphan-cleanup loop).
 - **Note:** structural class (allocator edit) → needs `/risk-check` + harness re-run when executed.
+
+### 2026-07-17 — `/close-worktree-session` committed unresolved stash-pop conflict markers into a tracked log
+
+- **Status:** logged (pending) — queued 2026-07-17 (observed cross-session from S-db5).
+- **Severity:** medium-high — data-integrity defect: `<<<<<<< Updated upstream / >>>>>>> Stashed changes` markers reached HEAD in `logs/friction-log.md` and would have been pushed to origin. Caught and cleaned by hand this session (commit 856d7b3), but the merge/wrap flow produced it silently.
+- **Category:** command (worktree merge / append-only-log conflict handling)
+- **What surfaced it.** A concurrent `/close-worktree-session` (session S1-596) merging `session/2026-07-17-parallel` stashed main's pending work, popped it with a conflict in `friction-log.md`'s `#### Write Activity` section, and committed the markers rather than resolving them. The same session had just added `.gitattributes merge=union` for append-only logs (commit a934f00) to prevent exactly this — so either the union driver did not govern the stash-pop path, or it was not yet in effect for that operation.
+- **Fix direction.** Confirm whether `git stash pop` honors the `merge=union` gitattributes driver (a merge does; a stash pop may not); add a post-merge conflict-marker scan (`git grep -lE '^(<<<<<<<|>>>>>>>)'`) as a hard gate before the close-worktree commit, so markers can never reach HEAD.
+- **Target files:** `ai-resources/.claude/commands/close-worktree-session.md`; possibly `.gitattributes`.
+- **Note:** observed from an adjacent session; needs that command's context to fix. Structural class → `/risk-check` when executed.

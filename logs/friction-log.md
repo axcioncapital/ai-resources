@@ -353,6 +353,11 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 23:58 — audits/friday-plans/2026-07-17-repo-hygiene.md
+- 23:58 — logs/scratchpads/2026-07-17-23-45-scratchpad.md
+- 23:57 — audits/friday-plans/2026-07-17-permissions.md
+- 23:57 — audits/friday-plans/2026-07-17-deploy-gate-decision.md
+- 23:57 — audits/friday-plans/2026-07-17-improvement-log-closure.md
 - 23:52 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/db57817b-029c-44f9-aef3-f3a23cd82f3f/scratchpad/commitA.txt
 - 23:52 — docs/session-marker.md
 - 23:51 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/output/consultations/consult-2026-07-17-friday-act-weekly-triage.md

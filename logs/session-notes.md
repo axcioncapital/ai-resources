@@ -2,53 +2,6 @@
 
 > Archive: [session-notes-archive-2026-07.md](session-notes-archive-2026-07.md)
 
-## 2026-07-14 — Session S2: the research-workflow branch lands; my plan would have deleted a live session's work
-
-*(Mandate for this session is recorded under the `## 2026-07-14 — Session S2` header above — the merge appended the branch's own entries after it, so the body lives here at the tail.)*
-
-### Summary
-
-Landed the stranded `session/2026-07-13-research-workflow` branch into `main` — 8 commits of canonical work that had been sitting unmerged: `/deploy-workflow` (+176 L), two canonical skills, `SETUP.md`, three audits, and an **active mission file that `/prime` could not see from `main`**. Reconciled the stale RR-04 row and corrected two false facts in `docs/session-marker.md`. Dropped M-1 on a plan-time `/risk-check` RECONSIDER. 4 commits (`6ec350d`, `b8618d7`, `3c185a0`, `ff526b6`); tree clean; **14 unpushed at wrap**.
-
-**The session's real yield is not the merge — it is two things the merge exposed.** First, the marker-mutex gap stopped being theoretical: a **live concurrent session in the worktree allocated marker S1 blind**, colliding with this session's S1 (this session yielded and renumbered to **S2**), and the merge surfaced **two further collisions already on disk** — `2026-07-13 S8` and `S13` each existed twice as entirely different sessions. Second, and worse: **the plan called for removing that worktree, and the worktree held a live session with 173+ lines of uncommitted work.** Executing the plan as written would have destroyed it.
-
-**The worktree was deliberately RETAINED.** It is still live at wrap time. Do not touch it.
-
-### Decisions Made
-
-- **DROP M-1 from scope** on the plan-time `/risk-check` RECONSIDER, adopting the reviewer's redesign. M-1 alone is **net-additive**: it duplicates the Q3 orphan lens (whose own file says *"this rule has a body count"*) with nothing keeping the two copies in sync — the net-simplification arithmetic only works as the **pair M-1 + R-3**, and R-3 is an open operator decision. It also targets **two un-inventoried consumers**: a project-local **fork** of `/architecture-review` (a real file, not a symlink — folding into canonical would leave the fork lens-less, silently) and `system-owner.md` Function C (shared by six commands). *(Logged to `decisions.md`.)*
-- **RETAIN the worktree and its branch** rather than removing them, reversing the mandate's own exit condition. The mandate said *"its worktree removed"*; the worktree turned out to hold a **live session with uncommitted work**. Exit conditions are not licences to destroy. *(Logged.)*
-- **YIELD marker S1 to the concurrent worktree session; renumber this session S2.** The worktree runs the pre-mutex `prime.md` and cannot see the shared claim dir, so it allocated blind and could not be asked to move. The session that *can* act yields — precedent: S12 yielded by hand. *(Logged.)*
-- **REPLACE the plan's falsification test before executing it** — the plan-time gate proved it inert. *(Logged.)*
-- **Resolve the archive conflict `--theirs`, not `--ours`** — the concurrent session independently reviewed it and corrected my characterisation: the diff is a blank line **before a heading mid-file**, not a trailing line, so `--theirs` preserves correct heading rendering. Adopted its correction. *(Routine, but recorded: a second reading beat my first.)*
-- Routine: `innovation-registry.md`'s merge conflict was the **same row with two contradictory verdicts** — took the branch's (`nothing to graduate — already at user level`), which is the factually correct one.
-
-### Risky actions
-
-**The plan would have destroyed a live session's uncommitted work, and no gate could have caught it.** The mandate, the plan (Stage 1 step 6) and the `/risk-check` prompt all specified `git worktree remove` + `git branch -D` on `ai-resources-research-workflow`. That checkout held a **live Claude session**, primed the same morning, with **173 lines of uncommitted work across 5 files** (two canonical skills among them). I had verified the branch exhaustively — 8 commits, unpushed, no upstream, *clean tree*, mechanically derived footprint — and **never checked whether anything was running in it**. "Clean tree" was read at 08:50 and treated as a permanent property; it is a reading of a moving system.
-
-**`/risk-check` did not cover it either**, and this is the generalisable part. It returned RECONSIDER and was excellent — it falsified my hazard model, my census and my constants — and it scored *this exact action* **Reversibility: Medium**, reasoning the worktree is *"reconstructible"* from the merge commit. **That is true of committed content and silent about uncommitted content.** Its method is a static grep-based consumer inventory. **A file census cannot see a running process.** Every gate we have reads the repo *at rest*; the hazard was the repo *in motion*.
-
-**What caught it: the operator said "the worktree is still active."** Not a scan, not a subagent, not a hook.
-
-Also: `check-foreign-staging.sh` **blocked the merge commit** (the mandate's `Files in scope` was written as prose, not paths — the guard was right). A `Read` deny rule on `logs/*archive*.md` **hard-blocked the merge** by refusing `git checkout`/`git add` — writes, not reads — leaving **both** Claude sessions stuck until the operator ran the command by hand. No irreversible action was taken.
-
-### Next Steps
-
-- **Rebase `session/2026-07-13-research-workflow` onto `main` — but ONLY after its live session wraps.** This is what finally closes the marker-mutex gap (three real collisions and counting). Confirm with the operator that the worktree session is done; it has uncommitted work and must commit first. **Do not remove the worktree while it is live.**
-- **Ship the destructive-op liveness probe** into `docs/commit-discipline.md`: before any `worktree remove` / `branch -D` / `reset --hard` / `clean -f`, probe the **target** checkout for (1) uncommitted work, (2) a session marker, (3) recent file mtimes — any hit → STOP and ask. It must run immediately before the command, by the executor; putting it in `/risk-check` re-creates the same bug one layer up. Also check whether `/close-worktree-session`'s no-live-session guard reads the *target* checkout or only the current one.
-- **M-1 + R-3 as one scoped session**, with scope explicitly including the `/architecture-review` fork and `system-owner.md` Function C. Full analysis: `audits/risk-checks/2026-07-14-land-research-workflow-branch-m1-orphan-lens-fold.md`.
-- **Narrow the `Read(logs/*archive*.md)` deny rule** so routine git plumbing is not caught by a read-cost guard — fourth consecutive session logging this tax, and this time it blocked a merge. Permission-surface change → `/risk-check` class → `/friday-act`.
-- **The heartbeat fix** — unchanged from S13: blocked on R-1 (derive and defend a liveness threshold), R-2 (four consumers, one edit), R-5 (back up the unversioned `~/.claude/` files). Root cause known; the design is the hard part.
-- Carried: `systems-building-principles.md` in `axcion-ai-system-owner` is still an empty `TBD`.
-- Repo hygiene, not mine: `axcion-ai-system-owner` carries a deleted `route-change.md`, a type-changed agent symlink, and ~70 untracked consultation outputs.
-
-### Open Questions
-
-- **Does the operator accept retiring `/lean-repo` (R-3)?** Still open, now four sessions running. M-1 must land with it, not before it.
-- **Why is SessionEnd never delivered for the sessions that leave marker corpses?** Unchanged from S13; still decides the shape of the heartbeat fix.
-- **The one worth sitting with.** Every gate this week caught something real, and every one caught it **by opening the artifact**. Today the gates missed the biggest thing — a live session with unsaved work — because **the artifact they open is the repo at rest, and the hazard was the repo in motion.** Static analysis cannot see a running process. The check that saved us was a human glancing at an open window. **Build the liveness probe; do not build another scan.**
-
 ## 2026-07-14 — Session S4
 
 *(Allocated S3 at 10:52 and **yielded it at 11:10** to a live session that primed in the `ai-resources-research-workflow` worktree at 11:06 and allocated S3 blind — it runs the pre-mutex `prime.md` and cannot see the shared claim dir. Fourth marker collision. Precedent 3-for-3: the session that can act, yields.)*
@@ -530,3 +483,28 @@ None.
 ### Findings Declined
 
 None — the one finding surfaced (five other reviewer-class agents lack the premise-check clause) was QUEUED to `improvement-log.md` at medium severity, not declined.
+
+## 2026-07-17 — /prime marker-allocator de-dup (Step 8k) + concurrent-session incident recovery
+
+### Summary
+Investigated why `/prime` feels slow. Timing proved the git/file work is ~0.9s; the real cost is the 1,009-line command file loaded on every invocation, ~70% of which (steps 8a/8b/8c) never runs when just showing the menu, with the ~134-line session-marker allocator triplicated. Ran `/consult` (SO → Option A) then `/risk-check` (PROCEED-WITH-CAUTION, 4 mitigations), then de-duplicated the allocator into one shared **Step 8k** sub-step referenced by 8a/8b/8c (prime.md 1009→739 lines) via a deterministic extract-and-splice. The BLOCKING zsh falsification harness passed and was proven behavior-identical to the original block. Mid-session, a concurrent `/close-worktree-session` (session S1-596) committed stash-pop conflict markers into `logs/friction-log.md` and churned the shared checkout; paused, waited for it to finish, then committed a clean union resolution.
+
+### Decisions Made
+- **De-duplicate the /prime marker allocator into a shared Step 8k sub-step (Option A)** — declined Option B (move to a doc; new cross-repo hot-path read) and Option C (comments to decisions.md; A captures it). Gated: SO advisory (GO) → `/risk-check` PROCEED-WITH-CAUTION → 4 mitigations applied → BLOCKING zsh harness passed & proven behavior-preserving. Logged to `decisions.md`.
+- Companion `docs/session-marker.md` edits retired the lockstep-triplet contract (L61/L67/L228/L229).
+- Committed a union resolution of the concurrent session's conflict-marker'd `friction-log.md` to clear corruption before any push (commit 856d7b3).
+- **End-time `/risk-check` skipped (documented):** plan-time gate ran with all mitigations applied and the harness proving behavior-preservation; commits shipped; drift bounded to the exact scoped change; no second heavy risk-check subagent (subagent proportionality).
+
+### Risky actions
+A concurrent `/close-worktree-session` merge committed unresolved conflict markers into a tracked log (`logs/friction-log.md`) that reached HEAD and would have been pushed — caught and cleaned (commit 856d7b3). Paused mid-work rather than committing into the actively-mutating shared checkout.
+
+### Findings Declined
+None — both findings this session were QUEUED (T4 zsh-NOMATCH glob → 1884349; `/close-worktree-session` conflict-marker commit → this wrap).
+
+### Next Steps
+- Refresh the `ai-resources-2` / `ai-resources-parallel` worktrees (rebase/merge onto `09f2c26`) so their non-symlinked `prime.md` copies inherit Step 8k.
+- Optional larger follow-up (SO-flagged, separate `/risk-check`): extract the allocator to an executable script — biggest safe load win.
+- Parked (needs `/risk-check`): fix the zsh-NOMATCH orphan-cleanup glob in Step 8k.
+
+### Open Questions
+None.
