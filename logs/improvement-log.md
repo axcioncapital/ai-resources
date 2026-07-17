@@ -1211,3 +1211,13 @@ Mandate capture still happens (the `**Mandate:**` line is load-bearing for four 
 - **What surfaced it.** This session hardened `system-owner.md` (item 3) with a Phase 5 evidence-citation rule (cite the command behind every count/path/quote; uncited = guess, no conclusion; state the primitive). The session's own `/risk-check` Dimension 7 independently grepped the other reviewer-shaped agents and found NONE carry the clause — so item 3's "the ONE reviewer left unhardened" framing is scoped to the `c3c0334` triad (`risk-check-reviewer` + `qc-reviewer` hardened; `system-owner` was the third), not workspace-wide.
 - **Fix direction.** Port the same minimal clause (or a cross-reference to it — mirrors `risk-check-reviewer.md` / `qc-reviewer.md` / now `system-owner.md`) into each agent's output contract. Confirm each agent's actual output-contract section by read before editing; skip any that structurally cannot fabricate a load-bearing count (pure pass-through). Mechanical, low-risk.
 - **Target files:** `.claude/agents/refinement-reviewer.md`, `.claude/agents/triage-reviewer.md`, `.claude/agents/reconcile-reviewer.md`, `.claude/agents/expert-check-reviewer.md`, `.claude/agents/scope-qc-evaluator.md`.
+
+### 2026-07-17 — `/prime` allocator orphan-cleanup glob crashes under zsh NOMATCH when session-id is unset (old-CLI edge)
+
+- **Status:** logged (pending) — queued 2026-07-17 (S-db5).
+- **Severity:** LOW — old-CLI edge only; modern CLI always writes a per-id marker first, so the glob always matches and the bug never fires in practice.
+- **Category:** command (shell robustness)
+- **What surfaced it.** The BLOCKING zsh falsification harness for the Step 8k allocator de-dup (risk-check `2026-07-17-dedupe-prime-session-marker-allocator`). Case T4 (unset `CLAUDE_CODE_SESSION_ID`, zsh) failed: `zsh: no matches found: logs/.session-marker-*`. Confirmed **pre-existing** — the original triplicated block fails T4 identically, so the de-dup introduced nothing new; it only made the latent bug live in one place instead of three. Deliberately NOT folded into the de-dup commit, to keep that gated diff strictly behavior-preserving.
+- **Fix direction.** The orphan-cleanup loop `for f in logs/.session-marker-*; do [ -f "$f" ] || continue; …` uses a raw glob — the exact zsh-NOMATCH class the CLAIMS scan directly above it already avoids with `find`. Guard it the same way: a `find logs -maxdepth 1 -name '.session-marker-*'` loop (matching the CLAIMS idiom), or a zsh null-glob qualifier. Now that the allocator is a single Step 8k block, the fix lands once.
+- **Target files:** `ai-resources/.claude/commands/prime.md` (Step 8k orphan-cleanup loop).
+- **Note:** structural class (allocator edit) → needs `/risk-check` + harness re-run when executed.
