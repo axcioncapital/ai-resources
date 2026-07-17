@@ -133,3 +133,18 @@ Nine repo-level hooks have never fired (verified: the `[HEAVY]` guardrail, auto-
 **Alternatives considered:** (a) include item 4 with inline mitigations — rejected, it needs its own `/risk-check` and the backup step the bundle dropped; (b) re-implement items 2a/3 to be safe — rejected, re-editing `close-worktree-session.md` would revert a deliberate S8 fix (OP-11 loud-revision violation).
 
 **Decided by:** Claude (S1-d99), operator-approved rescope (`go`).
+
+### 2026-07-17 (S1-596) — Automate the append-only-log union merge to end cross-worktree collisions; guard the one case union hides
+
+**Context:** Investigation of "worktree sessions collide even when they're different worktrees." Root cause: the five session logs are shared, git-tracked, append-at-EOF files with no merge rule, so two worktree branches that both appended conflict at merge. The marker mutex only dedupes the *number*, not the file merge. The repo's own docs (`commit-discipline.md`, `parallel-sessions-playbook.md`) already classify these as "union — keep both", and sessions have resolved this by hand every time (e.g. `decisions.md` 2026-07-14 S3, Decision 5: "resolved all six merge conflicts as a union, not a pick").
+
+**Decision:** Add a repo-root `.gitattributes` giving `merge=union` to the three provably pure-append-at-EOF logs — `session-notes.md`, `decisions.md`, `coaching-data.md`. Exclude `improvement-log.md` (107 in-place `**Status:**` flips), `friction-log.md` (10 in-place `Resolved:` stamps), and `usage-log.md` (prepend writer + documented fragile format) — union would corrupt those. Ship a companion guard, `logs/scripts/check-duplicate-session-headers.sh`, wired into `/close-worktree-session` Step 4.
+
+**Rationale:** OP-2 (automate execution, gate judgment) — every historical resolution of this exact conflict chose "union", i.e. an always-the-same-outcome decision, which is what OP-2 licenses automating. Proven by execution (git merge-file: default EXIT=1 conflict → `--union` EXIT=0, both blocks kept, headers intact).
+
+**Gate:** `/risk-check` → **PROCEED-WITH-CAUTION** (`audits/risk-checks/2026-07-17-add-gitattributes-merge-union-for-append-only-session-logs.md`; 85 consumers, 0 must-change; Blast-radius High on breadth alone). Its three required mitigations, all applied:
+- **(1) Restore the forcing function union removes.** Union silently concatenates two sessions that collided under the *same* marker header — the case a plain conflict used to catch by accident. The new guard greps merged logs for a duplicate `## {date} — Session {marker}` line and STOPs `/close-worktree-session` before teardown. Proven by execution: clean on the real logs, exit 1 on a planted collision, no false-positive on two distinct sessions.
+- **(2) Marker-suffix regex — verified already closed.** Union safety rests on marker uniqueness; `check-foreign-staging.sh:197` already uses `\bS\d+(?:-[A-Za-z0-9]{3})?\b` (the load-bearing suffix group, "verified by execution 2026-07-14"). No residual exposure.
+- **(3) Reversibility is future-merges-only.** Deleting `.gitattributes` restores default merge for future merges but does NOT retroactively repair a merge already resolved under union — that needs manual inspection (the same guard), not a plain `git revert`.
+
+**Out of scope (unchanged):** the deeper marker-allocator relocation ("participation is version-controlled", `improvement-log.md:889`) — this is the narrow, safe first slice.

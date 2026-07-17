@@ -531,3 +531,13 @@ None.
 ### Findings Declined
 
 - **Reader `tail -n 30` vs ~35-line entries:** `/prime`'s usage-log reader reads the last 30 lines, but a single entry is ~35 lines, so a correctly-tailed entry's `###` header can sit just outside the reader's window. Declined — pre-existing reader *design* (not introduced or worsened this session), low consequence (the body usually repeats the date; the telemetry-gap nudge fired correctly this prime), and it is the reader's concern, not the writer-contract this session fixed. Cross-referenced in the queued improvement-log entry so it is not lost.
+
+## 2026-07-17 — Session S1-596
+
+**Mandate:** Stop cross-worktree session collisions by giving the strictly append-only shared logs a `.gitattributes` `merge=union` driver, so two worktree branches no longer conflict at merge — done when: a `.gitattributes` with `merge=union` on the verified append-only logs is committed, and `/risk-check` returns GO.
+- Out of scope: the deeper marker-allocator relocation ("participation is version-controlled" HIGH item); `usage-log.md` and `improvement-log.md` (NOT append-only — excluded from union merge).
+- Files in scope: .gitattributes, logs/scripts/check-duplicate-session-headers.sh, .claude/commands/close-worktree-session.md, logs/decisions.md, logs/session-notes.md, audits/risk-checks/2026-07-17-add-gitattributes-merge-union-for-append-only-session-logs.md
+- Stop if: `/risk-check` returns NO-GO; or the append-only premise fails verification for any candidate log.
+- Required outputs: .gitattributes
+
+Investigation (this session): confirmed the collision is the 5 shared tracked append-only logs merging across worktree branches with no merge rule; marker mutex intact for same-code worktrees; documented known-gap (stale worktree) is a separate path. Proceeding to fix.
