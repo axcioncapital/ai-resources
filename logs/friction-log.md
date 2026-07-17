@@ -353,6 +353,25 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 23:13 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/friday-checkup-2026-07-17.md
+- 23:10 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/reports/repo-health-report.md
+- 23:08 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/permission-sweep-2026-07-17.md
+- 23:07 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/reports/.audit-temp/context-health-findings.json
+- 23:07 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/working/permission-sweep-2026-07-17.md.summary.md
+- 23:07 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/working/permission-sweep-2026-07-17.md
+- 23:04 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/reports/.audit-temp/practices-findings.json
+- 22:59 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/reports/.audit-temp/settings-findings.json
+- 22:56 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/reports/.audit-temp/command-findings.json
+- 22:55 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/log-sweep-2026-07-17.md
+- 22:54 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources-parallel/27d06d1f-68b1-40b4-811a-f5606fe13d37/scratchpad/write_notes2.py
+- 22:52 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/working/log-sweep-project-axcion-ai-system-owner-2026-07-17.md
+- 22:52 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources-parallel/27d06d1f-68b1-40b4-811a-f5606fe13d37/scratchpad/build_report.py
+- 22:50 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/reports/.audit-temp/skill-findings.json
+- 22:49 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources-parallel/27d06d1f-68b1-40b4-811a-f5606fe13d37/scratchpad/classify.sh
+- 22:47 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-website/logs/coaching-log.md
+- 22:45 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources-parallel/27d06d1f-68b1-40b4-811a-f5606fe13d37/scratchpad/audit.py
+- 22:44 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/reports/.audit-temp/claude-md-findings.json
+- 22:42 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/reports/.audit-temp/file-org-findings.json
 
 - `logs/friction-log.md` (this entry); `logs/session-notes.md` (S2 entry); `logs/session-plan-2026-07-13-S2.md`; `logs/runs/2026-07-13-S2.json`. Session's substantive W3.2 work was **discarded, not committed** — superseded mid-session by the concurrent session's W3.2 retirement. Template edits (`templates/mission-contract.md`, redesign `implementation-packet-template.md`) were made and then **reverted**: they added a rule to artifacts the other session had just retired.
 
