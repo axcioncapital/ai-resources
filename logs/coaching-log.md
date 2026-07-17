@@ -197,3 +197,19 @@ Coaching feedback captured via `/coach`. Newest entries at the bottom.
 **The One Thing:** Shipping capabilities faster than adopting them — before greenlighting any new-command build, make its invocation path a plan done-condition (name the registered pipeline intake that will call it). If the only way it runs is you remembering it, wire it or defer it; don't ship a memory-dependent orphan (e.g. /tech-consult).
 **Prior recommendation status:** Partially acted on (06-12 feedback-collector append-only held behaviorally; collector/triage-reviewer toolset hardening still unshipped).
 **Promotion candidates:** none this cycle
+
+### 2026-07-17
+**Coverage:** 10 sessions (2026-07-13 → 2026-07-15)
+
+| Dimension | Rating | Trend |
+|-----------|--------|-------|
+| Iteration Efficiency | Watch | ↓ |
+| Decision Patterns | Healthy (strong) | ↑ |
+| QC Disposition | Healthy | → |
+| Delegation Effectiveness | Watch | → |
+| Workflow Evolution | Watch (mixed) | → |
+
+**The One Thing:** Make the research-workflow deployment-gate decision before opening mission thread 3 — the deploy-fitness audit has falsified its own premise on 3 consecutive threads (0 demonstrated blockers). Re-examine the gate now, or treat remaining threads as suspect-area pointers and budget verify-by-execution first.
+**Prior recommendation status:** Substantially acted on (2026-07-03 wire-or-defer/anti-orphan — S4 shipped the liveness probe as a wired hook; S7 cut the unwired enforcement hook).
+**Promotion candidates:** none this cycle (wire-or-defer/anti-orphan habit flagged as next-cycle qualifier).
+**Note:** assert-from-recall pattern hit 6+ occurrences this window — improvement-log L857 escalation trigger MET; see Friday-checkup tactical follow-ups.
