@@ -1,0 +1,22 @@
+# Merge driver for the append-only session logs.
+#
+# WHY: worktree sessions each append their own block to the END of these shared,
+# git-tracked logs on separate branches. The default 3-way merge raises an add/add
+# conflict at EOF every time two worktree branches both touched a log — the
+# "cross-worktree collision". `merge=union` keeps BOTH sides' lines, which is always
+# correct for append-only logs (each session's block is an independent record; you
+# never want to drop one). Proven by execution: default merge EXIT=1 with conflict
+# markers; --union EXIT=0, both blocks kept, headers intact.
+#
+# SCOPE: only files that are provably PURE append-at-EOF with zero in-place edits.
+# Deliberately EXCLUDED — union would corrupt these (in-place status flips / prepend
+# writer): logs/improvement-log.md, logs/friction-log.md, logs/usage-log.md.
+#
+# SAFETY: union silently keeps both blocks, which HIDES the rare case of two sessions
+# colliding under the SAME marker header (a plain conflict would have caught it). That
+# detection is restored mechanically by logs/scripts/check-duplicate-session-headers.sh,
+# run post-merge by /close-worktree-session Step 4.
+# Full rationale: audits/risk-checks/2026-07-17-add-gitattributes-merge-union-for-append-only-session-logs.md
+logs/session-notes.md   merge=union
+logs/decisions.md       merge=union
+logs/coaching-data.md   merge=union

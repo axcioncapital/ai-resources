@@ -182,7 +182,21 @@ git -C "$REPO_ROOT" merge "$BRANCH"
 ```
 
 - **Clean merge (fast-forward or merge commit)** → report which, and the files it brought in
-  (`git -C "$REPO_ROOT" diff --stat ORIG_HEAD..HEAD`). Continue to Step 5.
+  (`git -C "$REPO_ROOT" diff --stat ORIG_HEAD..HEAD`). Then run the post-merge collision check
+  **before continuing**:
+
+  ```bash
+  bash "$REPO_ROOT/logs/scripts/check-duplicate-session-headers.sh" "$REPO_ROOT/logs"
+  ```
+
+  The union merge driver (`.gitattributes`) keeps both sides of an append-only-log conflict — which
+  is correct for two different sessions, but silently concatenates two sessions that collided under
+  the **same** marker header instead of raising a conflict. This check restores that detection.
+  - **Exit 0 (no duplicate)** → continue to Step 5.
+  - **Exit 1 (duplicate header)** → **STOP. Do not remove the worktree or delete the branch.** A
+    duplicate `## {date} — Session {marker}` line means two sessions share one marker and the union
+    merge blended them. Surface the duplicate lines verbatim and hand back control — the collision
+    needs both sides intact to disambiguate. Same survive-on-failure posture as a merge conflict.
 - **Conflict** → **STOP. Do not attempt to resolve it.** Report the conflicting paths verbatim and:
 
   > The merge conflicts. I have not touched the conflict, and nothing has been removed — the
