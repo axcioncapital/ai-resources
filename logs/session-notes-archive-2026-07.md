@@ -2142,3 +2142,53 @@ Mission thread 2 — deployment placeholder handling in `/deploy-workflow`. Veri
 4. **The audit contradicts itself, unmarked.** §4 D-3 (:103) still instructs "widen Step 5's placeholder pattern"; §7 (:151) and the mission (:128) reverse it. An implementer reading §4 alone builds the reverted remedy.
 5. **No canonical deploy-time placeholder list exists.** `SETUP.md:182–196` is the closest thing and omits both `{{CONFIDENTIAL_IDENTIFIER_N}}` fields and all 13 Project Config fields — producing that list is part of the fix, not a precondition of it.
 6. **Blast radius is one command:** `/sync-workflow` carries no placeholder logic.
+## 2026-07-13 — Session S13-rw: thread 2 fixed — /deploy-workflow's placeholder step was dead code, not a scoping bug
+
+### Summary
+
+Fixed and closed **mission thread 2** (deployment placeholder handling in `/deploy-workflow`) — committed `93e04b7`. The audit called thread 2 a "demonstrated deployment blocker" from the same reasoning that got thread 1 wrong. It was not one. Execution against a scratch fixture showed the real defect: Step 7's `find | xargs sed` word-splits on the space every real deploy path contains, making it dead code that has never worked in this workspace — and destructive on any space-free path, since it mutates the six preserved template files. Rebuilt Steps 5–7 and Step 11 around a declared four-class placeholder registry instead of regex discovery, and completed `SETUP.md`'s placeholder table, which had omitted 15 of 34 required values.
+
+### Decisions Made
+
+**The fix (thread 2):**
+- Replaced Step 5's `grep -roh '{{[A-Z_]*}}'` discovery with a declared registry: Class A required (26), Class B conditional (4, parts-model only), Class C never-fill notation (3), Class D template-internal (94). Registry is authority; regex demoted to a Step 5d drift cross-check that **stops the deploy** on any unregistered placeholder — proven falsifiable (planted an unregistered token, it was caught).
+- Fixed Step 7's shell defects: `-print0 | xargs -0` (the space-splitting bug) and `\( -name … -o -name … \)` grouping (the untyped-second-branch bug), both commented as load-bearing so a future "simplification" doesn't reintroduce them. Scope-list path changed from a fixed `/tmp/fill-scope.list` to a per-project path, closing a concurrent-deploy collision the risk-check reviewer flagged.
+- Replaced the "no `{{` anywhere" leftover-placeholder assertion (Step 7 verify + Step 11 item 1) — it failed every correct deploy by ~97 counts (94 template-internal + 3 notation) and was therefore ignored — with a registry-scoped assertion plus a `diff -r` byte-identity check on the six template files.
+- Completed `workflows/research-workflow/SETUP.md`'s Placeholder Reference table: it listed 8 placeholders and omitted all 13 Project Config fields and both `CONFIDENTIAL_IDENTIFIER` fields. Bound to the Step 5b registry by a stated lockstep contract, enforced (not just asserted) by extending Step 5d to diff SETUP.md's names against the registry.
+- **Reclassified thread 2** from "demonstrated blocker" to *not a blocker* — same shape as thread 1. Both live deployed projects carry no genuinely-wrong unfilled deploy-time placeholder; the deploying agent read the fill instruction and used its own tools rather than the broken `sed`.
+
+**Design decisions made mid-session, both operator-implicit (continuing S11's standing method rule):**
+- Verify by execution before designing any fix (S11's rule, reapplied). Built a scratch-fixture harness on a space-containing path specifically to reproduce the real deploy path shape.
+- Widened scope from the mandate's "Steps 5–7" to include Step 11, once the context-discovery engine flagged that the same broken assertion also lives there — confirmed operator-side via the `y` on the re-emitted mandate confirmation.
+
+### Outcome
+
+COMPLETION: DELIVERED
+EXECUTION: OPTIMAL
+Notes: Mandate delivered in full — thread 2 tested by execution (not by reading), reclassified with evidence, ticked in the mission file citing the result, `/risk-check` GO obtained and both reviewer-flagged hardening items applied before commit. No rework loops; the one correction mid-session (nearly asserting research-pe's unfilled PART_* placeholders as a defect) was self-caught against SETUP.md's own conditional-placeholder documentation before being reported, not after.
+What was asked but not done: none.
+Better path: none.
+Confidence: high (mandate resolved from today's `**Mandate:**` block, session-plan, and mission file, all consistent).
+
+### Session Value Audit — 80/20 Review
+
+Skipped (not requested — `+audit`/`full` not passed).
+
+### Risky actions
+
+None. The destructive `sed -i ''` test runs were confined to scratch fixtures under the session scratchpad; the real `workflows/research-workflow/` template and `projects/` were never targets. Confirmed clean before and after each run.
+
+### Session Assessment
+
+Skipped (not requested — `+feedback`/`full` not passed).
+
+### Next Steps
+
+- **Decide the deployment-gate question raised this session:** the mission now has zero demonstrated blockers (threads 1 and 2 both reclassified). Re-examine whether "fix canonical before deploying" still holds, or whether the Sector Intelligence pilot can deploy sooner — operator call, not resolved this session.
+- If continuing the mission: **thread 3** (deploy hygiene bundle) is next in the mission's own priority order — small, self-contained, premise independent of the audit's runtime claims.
+- Threads 4–8 remain open and unordered relative to each other.
+
+### Open Questions
+
+- Same standing gap as S10/S11: `/mission` has no `update` verb; thread 2's tick-off was another direct hand-edit of the mission file (logged, not newly discovered).
+- The `ai-resources/` canonical copy of `deploy-workflow.md` is still unedited — this fix lives only in this worktree until the branch merges to `main`. The three symlinked consumers (workspace root, `archive/nordic-pe-macro-landscape-H1-2026`, `projects/axcion-website`) will not see the fix until then.

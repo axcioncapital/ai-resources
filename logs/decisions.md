@@ -133,3 +133,15 @@ Nine repo-level hooks have never fired (verified: the `[HEAVY]` guardrail, auto-
 **Alternatives considered:** (a) include item 4 with inline mitigations — rejected, it needs its own `/risk-check` and the backup step the bundle dropped; (b) re-implement items 2a/3 to be safe — rejected, re-editing `close-worktree-session.md` would revert a deliberate S8 fix (OP-11 loud-revision violation).
 
 **Decided by:** Claude (S1-d99), operator-approved rescope (`go`).
+
+## 2026-07-17 (S2-21e) — Gate-hardening bundle: proportionality and mitigation-substitution calls
+
+**Context:** Auto-mode session closing three urgent backlog items (usage-log writer fix; pre-dispatch gate premise check on `/risk-check`+`/consult`; `system-owner` output-contract hardening). Plan-time `/risk-check` returned PROCEED-WITH-CAUTION with four mitigations.
+
+**Decision:** (a) Run ONE combined `/risk-check` for all three items and NO separate `/qc-pass` subagent; (b) substitute inline read-back for the reviewer's "smoke-test a live `/consult` dispatch" mitigation; (c) skip the context-discovery engine in the auto-mode chain.
+
+**Rationale:** (a) These are additive instruction edits to already-wired canonical commands/agents; the independent `/risk-check` + operator `go` + per-file inline verification are the gates this class needs — stacking a `/qc-pass` on top is the "don't stack gates" anti-pattern (Subagent Proportionality). (b) The edits touch neither the ≤30-line summary nor the path-back output-contract text, so that contract is preserved by construction and confirmable by read-back; a ~148k Opus live dispatch to re-verify untouched formatting is disproportionate. (c) Scope was fully enumerated and existence-verified from the backlog entries; the risk-check consumer inventory (24 consumers) covered blast radius, so the discovery engine added nothing.
+
+**Alternatives considered:** run the live `/consult` smoke-test as recommended — rejected on cost/benefit (nothing the dispatch would exercise was changed); split into three separate risk-checks — rejected (one combined review is cheaper and the three share a consumer set).
+
+**Decided by:** Claude (S2-21e), under operator-approved auto mode (`go`).

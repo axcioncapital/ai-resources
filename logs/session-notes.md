@@ -2,57 +2,6 @@
 
 > Archive: [session-notes-archive-2026-07.md](session-notes-archive-2026-07.md)
 
-## 2026-07-13 — Session S13-rw: thread 2 fixed — /deploy-workflow's placeholder step was dead code, not a scoping bug
-
-### Summary
-
-Fixed and closed **mission thread 2** (deployment placeholder handling in `/deploy-workflow`) — committed `93e04b7`. The audit called thread 2 a "demonstrated deployment blocker" from the same reasoning that got thread 1 wrong. It was not one. Execution against a scratch fixture showed the real defect: Step 7's `find | xargs sed` word-splits on the space every real deploy path contains, making it dead code that has never worked in this workspace — and destructive on any space-free path, since it mutates the six preserved template files. Rebuilt Steps 5–7 and Step 11 around a declared four-class placeholder registry instead of regex discovery, and completed `SETUP.md`'s placeholder table, which had omitted 15 of 34 required values.
-
-### Decisions Made
-
-**The fix (thread 2):**
-- Replaced Step 5's `grep -roh '{{[A-Z_]*}}'` discovery with a declared registry: Class A required (26), Class B conditional (4, parts-model only), Class C never-fill notation (3), Class D template-internal (94). Registry is authority; regex demoted to a Step 5d drift cross-check that **stops the deploy** on any unregistered placeholder — proven falsifiable (planted an unregistered token, it was caught).
-- Fixed Step 7's shell defects: `-print0 | xargs -0` (the space-splitting bug) and `\( -name … -o -name … \)` grouping (the untyped-second-branch bug), both commented as load-bearing so a future "simplification" doesn't reintroduce them. Scope-list path changed from a fixed `/tmp/fill-scope.list` to a per-project path, closing a concurrent-deploy collision the risk-check reviewer flagged.
-- Replaced the "no `{{` anywhere" leftover-placeholder assertion (Step 7 verify + Step 11 item 1) — it failed every correct deploy by ~97 counts (94 template-internal + 3 notation) and was therefore ignored — with a registry-scoped assertion plus a `diff -r` byte-identity check on the six template files.
-- Completed `workflows/research-workflow/SETUP.md`'s Placeholder Reference table: it listed 8 placeholders and omitted all 13 Project Config fields and both `CONFIDENTIAL_IDENTIFIER` fields. Bound to the Step 5b registry by a stated lockstep contract, enforced (not just asserted) by extending Step 5d to diff SETUP.md's names against the registry.
-- **Reclassified thread 2** from "demonstrated blocker" to *not a blocker* — same shape as thread 1. Both live deployed projects carry no genuinely-wrong unfilled deploy-time placeholder; the deploying agent read the fill instruction and used its own tools rather than the broken `sed`.
-
-**Design decisions made mid-session, both operator-implicit (continuing S11's standing method rule):**
-- Verify by execution before designing any fix (S11's rule, reapplied). Built a scratch-fixture harness on a space-containing path specifically to reproduce the real deploy path shape.
-- Widened scope from the mandate's "Steps 5–7" to include Step 11, once the context-discovery engine flagged that the same broken assertion also lives there — confirmed operator-side via the `y` on the re-emitted mandate confirmation.
-
-### Outcome
-
-COMPLETION: DELIVERED
-EXECUTION: OPTIMAL
-Notes: Mandate delivered in full — thread 2 tested by execution (not by reading), reclassified with evidence, ticked in the mission file citing the result, `/risk-check` GO obtained and both reviewer-flagged hardening items applied before commit. No rework loops; the one correction mid-session (nearly asserting research-pe's unfilled PART_* placeholders as a defect) was self-caught against SETUP.md's own conditional-placeholder documentation before being reported, not after.
-What was asked but not done: none.
-Better path: none.
-Confidence: high (mandate resolved from today's `**Mandate:**` block, session-plan, and mission file, all consistent).
-
-### Session Value Audit — 80/20 Review
-
-Skipped (not requested — `+audit`/`full` not passed).
-
-### Risky actions
-
-None. The destructive `sed -i ''` test runs were confined to scratch fixtures under the session scratchpad; the real `workflows/research-workflow/` template and `projects/` were never targets. Confirmed clean before and after each run.
-
-### Session Assessment
-
-Skipped (not requested — `+feedback`/`full` not passed).
-
-### Next Steps
-
-- **Decide the deployment-gate question raised this session:** the mission now has zero demonstrated blockers (threads 1 and 2 both reclassified). Re-examine whether "fix canonical before deploying" still holds, or whether the Sector Intelligence pilot can deploy sooner — operator call, not resolved this session.
-- If continuing the mission: **thread 3** (deploy hygiene bundle) is next in the mission's own priority order — small, self-contained, premise independent of the audit's runtime claims.
-- Threads 4–8 remain open and unordered relative to each other.
-
-### Open Questions
-
-- Same standing gap as S10/S11: `/mission` has no `update` verb; thread 2's tick-off was another direct hand-edit of the mission file (logged, not newly discovered).
-- The `ai-resources/` canonical copy of `deploy-workflow.md` is still unedited — this fix lives only in this worktree until the branch merges to `main`. The three symlinked consumers (workspace root, `archive/nordic-pe-macro-landscape-H1-2026`, `projects/axcion-website`) will not see the fix until then.
-
 ## 2026-07-14 — Session S2: the research-workflow branch lands; my plan would have deleted a live session's work
 
 *(Mandate for this session is recorded under the `## 2026-07-14 — Session S2` header above — the merge appended the branch's own entries after it, so the body lives here at the tail.)*
@@ -541,3 +490,34 @@ None.
 - Allowed inputs: logs/improvement-log.md (the three entries)
 
 Auto multi-item (three urgent backlog items): (1) /usage-analysis + session-usage-analyzer SKILL — change telemetry writer from PREPEND to APPEND-at-tail to match the /prime tail-reader; (2) finish the gate-premise check — a pre-dispatch "verify every cited script/line/count" step on /risk-check and /consult; (3) port the premise-check clause into system-owner.md output contract so the last unhardened reviewer cites the command behind every count/path/quote.
+
+### Summary
+
+Auto-mode bundle (menu items 1–3, three urgent `[urgent]` backlog items). Closed all three by verified file-text edits, not code-reads: (1) the usage-log writer now APPENDs at the tail in `usage-analysis.md:58` and `session-usage-analyzer/SKILL.md:118,122` (was PREPEND — invisible to `/prime`'s `tail -n 30` reader); (2) a pre-dispatch premise-verification step added to `risk-check.md` (Step 2.6 / item 10a) and `consult.md` (Step 3.6), plus an `audit-discipline.md` § When-to-fire note — run every cited script, open every cited line, re-derive every count before the reviewer spawns; (3) `system-owner.md` Phase 5 gained a general evidence-citation rule (all functions A–G) requiring every count/path/quote to cite its command, with a `consult.md` Step 4 brief reinforcement. Plan-time `/risk-check` → PROCEED-WITH-CAUTION; all 4 mitigations applied. Committed `625e2a9`.
+
+### Decisions Made
+
+- **Bundled all three items under one approval gate + one combined `/risk-check`** (auto mode, operator `go`). Shared theme (writer/reader + gate/premise integrity), all additive command/agent-contract edits.
+- **No separate `/qc-pass` subagent** — the independent plan-time `/risk-check` (PROCEED-WITH-CAUTION) + operator sign-off + inline read-back verification are the gates this instruction-edit class needs (Subagent Proportionality; don't stack gates). Mirrors the S1-d99 precedent.
+- **Applied item 2's own discipline to this session's plan**: re-read every cited line/behavior from the running files before dispatching the risk-check (premise-verify the plan before the gate).
+- **Skipped the context-discovery engine** (auto-mode 8c.4.5): scope was fully enumerated + existence-verified from the backlog; the risk-check consumer inventory covered blast radius.
+- **Substituted inline read-back for the reviewer's live-`/consult`-dispatch smoke-test mitigation**: the edits don't touch the ≤30-line/path-back output contract, so it is preserved by construction — a ~148k Opus dispatch to re-confirm untouched formatting was disproportionate.
+- End-time `/risk-check` skipped — see Risky actions.
+
+### Risky actions
+
+Edited six symlinked/shared canonical files (two gate commands, one shared agent, one command, one skill, one doc) — all git-tracked and revertible; no irreversible/external action taken. **End-time `/risk-check` skipped, documented:** the plan-time gate ran, returned PROCEED-WITH-CAUTION, and all 4 mitigations were applied; the executed set equals the reviewed set (no additions, no drift), and commit `625e2a9` already shipped. Per the standing end-time skip rule (plan-time covered + mitigations applied + commits shipped + drift bounded). Blast radius is High only post-merge — this is a git worktree of canonical `ai-resources`, so pre-merge the change is contained to this checkout.
+
+### Next Steps
+
+- **Restart a session to confirm the new gate steps behave** — the pre-dispatch premise check fires on the next `/risk-check` and `/consult`; the system-owner citation rule applies on the next dispatch.
+- **Queued follow-up (medium):** port the premise-check clause to the other five reviewer-class agents (`refinement-reviewer`, `triage-reviewer`, `reconcile-reviewer`, `expert-check-reviewer`, `scope-qc-evaluator`) — they also lack the antibody (surfaced by this session's `/risk-check` Dimension 7).
+- Push pending: `625e2a9` + this wrap commit, plus 2 pre-existing unpushed commits on the canonical `ai-resources` checkout.
+
+### Open Questions
+
+None.
+
+### Findings Declined
+
+None — the one finding surfaced (five other reviewer-class agents lack the premise-check clause) was QUEUED to `improvement-log.md` at medium severity, not declined.
