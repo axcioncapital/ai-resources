@@ -10,6 +10,15 @@ Session orchestrator. Run after `/prime` to plan HOW the session will run before
 
 ## Step 0 — Confirm `/prime` ran this session, resolve marker, check for same-session re-invocation
 
+**Leading-token normalization — run this FIRST, before anything reads `$ARGUMENTS`.** Callers may prefix the intent with zero or more literal `{key:value}` tokens. Strip leading tokens in a loop until the remaining text begins with something else, capturing each:
+
+- `{gate:post-plan}` → set `POST_PLAN_GATE = true`. The invoking branch has declared that it will hold an approval gate after this command finishes. Consumed by Step 8.
+- Any other `{key:value}` token → strip and ignore (forward-compatible; an unrecognized token must never reach `INTENT`).
+
+If no leading token is present, `POST_PLAN_GATE` is unset — **this is the common case and the default**, and it reproduces this command's pre-2026-07-18 behaviour exactly.
+
+**Everywhere below, `$ARGUMENTS` denotes the stripped remainder, never the raw argument string.** This normalization must precede the `UPCOMING_INTENT` assignment further down this step: that assignment caches `$ARGUMENTS` *verbatim*, so a token stripped only at Step 1 would already have leaked into `UPCOMING_INTENT` and from there into the plan file's `## Intent` line. (Caught by `/risk-check`, 2026-07-18 — the first design of this change stripped at Step 1 and had exactly that hole.)
+
 Read `logs/session-notes.md`. Resolve this session's marker via `docs/session-marker.md` § Marker resolution (per-session-id oracle first, loud fallback to the shared file). If `MARKER` is empty (absent or stale), hard-fail per the uniform writer contract: `[/session-plan Step 0] HARD-FAIL: session marker unresolved (logs/.session-marker-${CLAUDE_CODE_SESSION_ID} and shared logs/.session-marker both absent or stale). Run /prime to populate the marker for this session, then retry.`
 
 Locate the marker-bearing header `## YYYY-MM-DD — Session ${MARKER}` in `session-notes.md`. If absent, hard-fail: `[/session-plan Step 0] HARD-FAIL: this session's marker-bearing header missing from logs/session-notes.md. Run /prime to seed the header.`
@@ -213,13 +222,23 @@ No `Class:` line is written to `logs/session-notes.md` — the field was removed
 
 ---
 
-## Step 8 — Confirm and auto-proceed
+## Step 8 — Confirm, then either hand back to a caller-declared gate or auto-proceed
 
-After writing, emit one line:
+**Branch on `POST_PLAN_GATE` (set by Step 0's leading-token normalization).**
+
+**If `POST_PLAN_GATE` is set** — the invoking branch declared a post-plan approval gate. Emit:
+
+> Plan ready — review `{OUTPUT_TARGET}`. Reply `go` to start execution, or run `/qc-pass` on the plan first.
+
+Then **stop and wait for the operator. Do NOT begin execution.** The gate belongs to the caller; this command's job ends at the plan write. Today the only caller that sets this is `/prime` 8a (numbered-menu task selection), whose Step 8a.d owns the pause — see the note below for why it cannot be left to recall.
+
+**If `POST_PLAN_GATE` is unset** (the default — free-text intent via `/prime` 8b, a direct `/session-plan` invocation, or `/session-start` invoked outside a gated branch), emit:
 
 > Plan written to `{OUTPUT_TARGET}` ({autonomy posture}). Begin execution.
 
-Do NOT emit a `/qc-pass` handoff and do NOT pause for operator confirmation. The session begins under the declared autonomy posture immediately. The operator can run `/qc-pass`, `/contract-check`, or `/drift-check` at any time on their own initiative — and `/session-plan` Step 0's collision-detection prompts plus Step 1's `(none derived)` sentinels remain the only gates that legitimately pause this command. Everything else flows through.
+Do NOT emit a `/qc-pass` handoff and do NOT pause for operator confirmation. The session begins under the declared autonomy posture immediately. The operator can run `/qc-pass`, `/contract-check`, or `/drift-check` at any time on their own initiative — and `/session-plan` Step 0's collision-detection prompts plus Step 1's `(none derived)` sentinels remain the only *self-imposed* gates that pause this command. Everything else flows through.
+
+> **Why this is a token and not a sentence telling you to remember `/prime` 8a.d.** This command is chain-invoked, so Step 8 is the *most recently loaded* instruction at the decision point, while the caller's pause was loaded many turns earlier and may sit behind intervening tool output. When those two conflict, the recency-favoured reading wins — and before 2026-07-18 the recency-favoured reading was "begin execution", i.e. execute a plan the operator has never seen. The token makes the caller's gate a fact present in *this* step's own inputs rather than something the reader has to recall. **Do not "simplify" this back into an unconditional instruction, and do not resolve a future conflict here by weakening `/prime` 8a's pause** — the 8a/8b split is deliberate: a numbered menu pick is not the operator stating the work, so it gets an approval gate that free-text intent does not. Source: `logs/improvement-log.md` 2026-07-18.
 
 **Manual-QC opt-in:** if the operator wants a plan-time QC sweep before execution, they invoke `/qc-pass` directly. The chained-from-`/session-start` default skips this — judgment errors are caught downstream by `/drift-check` mid-session and `/contract-check` near wrap, per workspace `Decision-Point Posture`.
 

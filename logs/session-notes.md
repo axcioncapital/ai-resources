@@ -468,3 +468,13 @@ Bulk edit to 30 entries of a durable operator-facing log, backed up to `scratchp
 
 ### Open Questions
 None.
+
+## 2026-07-18 — Session S7-bb5
+**Mandate:** Resolve the `/prime` 8a.d vs `/session-plan` Step 8 contract conflict by making `/session-plan` Step 8 conditional on the invoking branch, so a numbered-menu task selection keeps its post-plan approval gate instead of auto-executing — done when: `/session-plan` Step 8 no longer instructs auto-execution when the caller declared a post-plan gate (verified by re-reading the shipped file), every caller (`/prime` 8a/8b/8c, direct invocation) is confirmed to land on the correct behaviour, and the 2026-07-18 improvement-log entry is flipped to applied with what shipped cited
+- Out of scope: removing or weakening `/prime` 8a's pause (the 8a/8b split is intentional and the log entry forbids this route); the other two active missions and their threads; the workspace-root copy of any command, unless the fix proves it must move in lockstep
+- Files in scope: .claude/commands/session-plan.md, .claude/commands/prime.md, logs/improvement-log.md
+- Stop if: /risk-check returns NO-GO on the command edit; the fix would require touching commands outside ai-resources/.claude/commands/
+- Required outputs: audits/risk-checks/2026-07-18-session-plan-step8-caller-aware-gate.md (only if /risk-check fires)
+- Scope growth (declared, not silent): two files added to the footprint on operator authorization after the plan's step-2 stop point fired. (1) `.claude/commands/session-start.md` — the caller-chain trace established that `/session-plan` is reached via session-start's Step 4 chain, not via prime 8a.c, so the gate signal must hop through it; session-start.md:380 also carries a THIRD copy of the conflicting absolute, which the improvement-log entry does not name. (2) `../projects/axcion-sector-intelligence/.claude/commands/session-plan.md` — a real copy (not a symlink), byte-identical to canonical, carrying the same defect at its own line 222; editing canonical alone would silently leave that project on the buggy behaviour. This second file is outside the mandate's declared `ai-resources/.claude/commands/` boundary and was authorized explicitly.
+
+Fix the conflict between `/prime` Step 8a.d and `/session-plan` Step 8 — they give opposite instructions at the same moment about whether execution begins automatically, so an approval gate can be skipped.

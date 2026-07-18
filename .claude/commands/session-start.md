@@ -82,9 +82,15 @@ Read-only (no `git add`, no write). If non-empty, append the dirty paths to the 
 
 ### Step 1 — Read the mandate
 
-**Mission prefix (mission-contract subsystem).** If `$ARGUMENTS` begins with a `{mission:<id>}` token (passed by `/prime` Step 8m when the session bound a mission), strip that leading token and capture `MISSION_ID = <id>`; the remainder is the mandate text. If no such prefix is present, `MISSION_ID` is unset — this is the common case and nothing mission-related happens downstream. The token is a literal prefix, e.g. `{mission:regime-shift-canonical} Apply the W24 audit fixes` → `MISSION_ID = regime-shift-canonical`, mandate = `Apply the W24 audit fixes`.
+**Leading-token prefixes.** `$ARGUMENTS` may begin with zero or more literal `{key:value}` tokens passed by the invoking branch. Strip leading tokens **in a loop** until the remaining text begins with something else, capturing each as it is consumed. Order-independent — do not assume a fixed sequence:
 
-If `$ARGUMENTS` is non-empty (after stripping any mission prefix), use it verbatim as `MANDATE_TEXT`.
+- `{mission:<id>}` (mission-contract subsystem, passed by `/prime` Step 8m when the session bound a mission) → capture `MISSION_ID = <id>`. If absent, `MISSION_ID` is unset — the common case; nothing mission-related happens downstream.
+- `{gate:post-plan}` (passed by `/prime` Step 8a.b) → capture `POST_PLAN_GATE = true`. Records that the invoking branch will hold an approval gate after `/session-plan` finishes. This command does not act on it; **Step 4 forwards it** so the gate survives the chain hop. If absent, `POST_PLAN_GATE` is unset — the default, and the pre-2026-07-18 behaviour.
+- Any other `{key:value}` token → strip and ignore (forward-compatible; an unrecognized token must never reach `MANDATE_TEXT`).
+
+Tokens are literal prefixes, e.g. `{gate:post-plan} {mission:regime-shift-canonical} Apply the W24 audit fixes` → `POST_PLAN_GATE = true`, `MISSION_ID = regime-shift-canonical`, mandate = `Apply the W24 audit fixes`.
+
+If `$ARGUMENTS` is non-empty (after stripping any leading tokens), use it verbatim as `MANDATE_TEXT`.
 
 Otherwise, ask the operator **one prompt** (wait for one answer):
 
@@ -377,7 +383,9 @@ Proceeding to /session-plan.
 
 Then **chain-invoke `/session-plan`** immediately, passing `work_scope` verbatim as `$ARGUMENTS`. Use the Skill tool: `skill = "session-plan"`, `args = "{work_scope}"` (the exact `work_scope` string parsed in Step 2). Do not pause for operator confirmation before invoking — the chain is the default path.
 
-**Chained-mode contract:** `/session-plan` Step 0 retains all of its existing pause points (same-session 3-option prompt; concurrent-session collision; missing `/prime` header; `(none derived)` sentinels). Those are the only legitimate gates. Everything else runs through to the plan write and the session begins under the declared autonomy posture without further confirmation.
+**Forward the gate token.** If Step 1 captured `POST_PLAN_GATE`, prefix the args instead: `args = "{gate:post-plan} {work_scope}"`. `/session-plan` Step 0 strips it and Step 8 acts on it. **This forwarding is load-bearing** — the 8a path reaches `/session-plan` through *this* chain, not through `/prime` 8a.c directly, so dropping the token here silently removes the operator's approval gate. Do not "simplify" it away as redundant. Do not forward `{mission:<id>}`: that token is consumed here and recorded on the mandate line, and `/session-plan` has no use for it.
+
+**Chained-mode contract:** `/session-plan` Step 0 retains all of its existing *self-imposed* pause points (same-session 3-option prompt; concurrent-session collision; missing `/prime` header; `(none derived)` sentinels), **and it additionally honours a caller-declared post-plan gate via the `{gate:post-plan}` token forwarded above.** Absent that token, everything else runs through to the plan write and the session begins under the declared autonomy posture without further confirmation. *(Corrected 2026-07-18: this paragraph previously read "Those are the only legitimate gates", which was a third copy of the same absolute that made `/session-plan` Step 8 contradict `/prime` 8a.d. A caller-declared gate is legitimate; see `logs/improvement-log.md` 2026-07-18.)*
 
 **If Step 2.5 self-check auto-fixed a field silently:** still chain — the self-check's one-line note already surfaced the fix. Do not add a second confirmation prompt.
 

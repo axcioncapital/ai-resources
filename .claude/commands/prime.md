@@ -484,12 +484,18 @@ Full backlog & inbox: /open-items
 
          Order: marker first (top of step a), header append (middle), mtime last. Marker before append so the header can embed `${MARKER}`; mtime after append so `/session-start` Step 0.5's check sees this session's own write.
       a2. **Mission binding.** Run the Step 8m sub-step (skips silently if no active missions). If it resolves a `MISSION_ID`, prepend `{mission:<id>}` to the `/session-start` args in step b.
-      b. Invoke the `/session-start` command with `TASK_TEXT` as its arguments (becomes the mandate), prefixed with `{mission:<id>}` if step a2 bound one. It runs its own mandate-confirmation prompt — that is expected; do not suppress it.
+      b. Invoke the `/session-start` command with `TASK_TEXT` as its arguments (becomes the mandate), prefixed with **`{gate:post-plan}`** — always, on this branch — and additionally with `{mission:<id>}` if step a2 bound one. It runs its own mandate-confirmation prompt — that is expected; do not suppress it.
+
+         **The `{gate:post-plan}` token is what makes step d's pause survive the chain**, and it is mandatory on 8a. `/session-start` Step 1 strips and captures it, Step 4 forwards it to `/session-plan`, and `/session-plan` Step 8 branches on it to hand control back here instead of auto-executing. Omitting it silently reverts to the pre-2026-07-18 defect: `/session-plan`'s auto-proceed instruction is the freshest one at the decision point and wins over step d below, so the session begins executing a plan the operator has never approved. **8b must NOT pass this token** — see 8b.3.d. Source: `logs/improvement-log.md` 2026-07-18.
       c. After `/session-start` finishes, invoke the `/session-plan` command with `TASK_TEXT` as its arguments (becomes the intent). It writes `logs/session-plan-${TODAY}-${MARKER}.md` (marker-scoped per `docs/session-marker.md`). If THIS session's marker-scoped plan already exists, `/session-plan` Step 0 surfaces a 3-option keep/overwrite/pass2 prompt — that is expected mid-chain; the operator answers it normally.
+
+         **Note on the real call path:** `/session-start` Step 4 already chain-invokes `/session-plan`, so in practice the chain reaches it there and this sub-step is satisfied by that hop. Either way the gate token travels with it.
       d. **Pause.** After `/session-plan` finishes, output:
          > Plan ready — review `logs/session-plan-${TODAY}-${MARKER}.md`. Reply `go` to start execution, or run `/qc-pass` on the plan first.
 
          Wait for the operator. Do NOT begin execution on your own.
+
+         As of 2026-07-18 this pause is **also carried mechanically** by the `{gate:post-plan}` token from step b, so it no longer depends on this instruction being recalled at a decision point many turns downstream. If a future edit removes the token, this sentence alone will not hold the gate — that is precisely the failure the token was added to fix.
 
 8b. **Free-text intent.** The operator named the work directly instead of picking a number.
    1. Resolve the operator's stated work → `TASK_TEXT` (the work description, including any inline scope boundary like "just the refactor, not the follow-up PRs").
@@ -518,6 +524,8 @@ Full backlog & inbox: /open-items
       b. Invoke the `/session-start` command with `TASK_TEXT` as its arguments (becomes the mandate), prefixed with `{mission:<id>}` if step a2 bound one. It runs its own mandate-confirmation prompt — that is expected; do not suppress it.
       c. After `/session-start` finishes, invoke the `/session-plan` command with `TASK_TEXT` as its arguments (becomes the intent). It writes `logs/session-plan-${TODAY}-${MARKER}.md` (marker-scoped per `docs/session-marker.md`). If THIS session's marker-scoped plan already exists, `/session-plan` Step 0 surfaces a 3-option keep/overwrite/pass2 prompt — that is expected mid-chain; the operator answers it normally.
       d. **Begin execution immediately** under full autonomy (per workspace CLAUDE.md Autonomy Rules). No second `go`/`proceed` confirmation required — the operator stating the work directly IS the go signal. This is 8b's structural delta vs 8a, which pauses for explicit `go` after `/session-plan`.
+
+         **8b passes no `{gate:post-plan}` token** (contrast 8a.3.b). That absence is what preserves this branch's auto-execute behaviour: `/session-plan` Step 8 treats an unset gate as the default and proceeds. Adding the token here would convert 8b into 8a and introduce a pause the operator has not asked for.
 
 8c. **Auto mode.** The operator typed `auto` (optionally with item numbers) — run the picked menu item(s) end-to-end with a single combined approval gate and no per-stage prompts.
 
