@@ -2291,3 +2291,214 @@ Also fixed the **same today-only marker bug in two existing guards** (`close-wor
 
 - **The one worth sitting with, and it is not the one I expected.** The gates worked: `/risk-check` killed my design, `/consult` found two live defects, the harness found three more, and the probe caught a real live session. **Every single one of those catches came from something instructed to distrust me** — and every failure this session came from me trusting my own recall. The generalisable countermeasure to assert-from-recall may not be a *checker* at all; it may be that **no repo fact stated to a reviewer or written in a plan should be accepted without the command that produced it**. That is a process rule, and I do not yet know how to enforce it without ceremony.
 - Does the operator accept retiring `/lean-repo` (R-3)? Still open, five sessions running.
+## 2026-07-14 — Session S1
+**Mandate:** Verify each of thread 5's three premises against the real files, then repair the evidence-adjudication rules that are actually broken — the four-class table's gap and overlap, the evidenced-negative vs absence-of-evidence wording, and the skill-vs-chassis class-name authority split — with no new permission class — done when: each premise carries a written verdict backed by a direct read (confirmed/corrected/withdrawn); the class table admits every real evidence shape exactly once (no gap, no overlap), verified by working the failing cases through it; thread 5 is ticked in logs/missions/research-workflow-deploy-fitness.md citing the result; and the fix is committed.
+- Out of scope: No new permission class. No widening into threads 6/7/8. The two live projects' own reference/ copies are not edited — canonical only. The phantom-consumer finding (chassis asserts verb-list + orphan-citation enforcement in evidence-to-report-writer / chapter-prose-reviewer / citation-converter / cluster-synthesis-drafter, all four of which contain zero permission-class vocabulary) is ROUTED to the mission file, not fixed here — it is thread-7-shaped work.
+- Files in scope: workflows/research-workflow/reference/quality-standards.md; skills/claim-permission-gate/SKILL.md; skills/cluster-memo-refiner/SKILL.md (lockstep — Check 9 duplicates the same four class conditions); skills/country-parity-checker/SKILL.md (only if it restates the class vocabulary — verify); workflows/research-workflow/.claude/commands/run-sufficiency.md (only if it carries sufficiency rules needing the same separation — verify)
+- Stop if: Closing the gap/overlap cannot be done without adding a fifth permission class — that breaches the mandate's explicit no-new-class bound; surface it instead of proceeding.
+- Context pack: output/context-packs/architecture-20260714-b4e7d/pack.md
+- Mission: research-workflow-deploy-fitness
+
+Mission thread 5 — clarify the evidence rules (bounded C-3, no new permission class), plus the two S11 execution-found defects routed to this thread. S11's stated premise for the threshold hole ("2 sources in 1 class matches no class"; "SUPPORTED needs ≥3 sources/≥2 classes") was CORRECTED at session-start by direct read: those thresholds exist in no file — not the canonical chassis, not claim-permission.template.md, not either live project's quality-standards.md. The real defect is differently shaped (mixed-axis class cut → one gap + one overlap). Third consecutive thread whose audit-stated premise did not survive a read.
+
+### Summary
+
+Fixed and closed **mission thread 5** (evidence rules) — committed `e768f1f`, plus `1e1b246` / `dd87476` in the two live projects. Thread 5's *stated* defect does not exist; the area it pointed at was broken anyway, in a different and worse way. No new permission class, as mandated.
+
+**The premise failed for the third consecutive thread.** S11 routed thread 5 with "a hole in the canonical class thresholds — `SUPPORTED` needs ≥3 sources/≥2 classes." Those thresholds appear in **no file** — grepped against the canonical chassis, `claim-permission.template.md`, and *both* live projects' `quality-standards.md`. They came from S11's own throwaway test fixture. Threads 1, 2 and 5 have now each had their audit-stated premise collapse on contact with the files.
+
+**What was actually broken (found by execution, none of it in the audit):**
+- The four permission classes were cut on **mixed axes** (evidence quantity / evidence type / rhetorical role). A mixed-axis cut cannot partition, and didn't: a **gap** (a single direct in-scope source that is not a named example matched *no* class) and an **overlap** (a 2-role pattern claim matched `SUPPORTED` and `ILLUSTRATIVE-ONLY` at once, no tie-break).
+- A **second overlap**: `NOT-SUPPORTED` carried a non-role-gated `OR all-source-classes-exhausted` clause, so ≥2 proxy roles + a Cond. 3 closure matched two classes.
+- **`ILLUSTRATIVE-ONLY` was structurally unreachable.** No stop condition can be met by a subtask that found exactly one source (Cond. 1 needs two; Cond. 2 needs one *plus three named examples*; Cond. 3/4 require that nothing was found) — so the reciprocal rule downgraded every single-source claim to `NOT-SUPPORTED` as a process penalty. The class survived *only* because no skill ever implemented that rule. An unenforced rule masking a contradiction, not a safeguard.
+- `NOT-SUPPORTED` was carrying **three unrelated meanings**: "we found nothing", "the negative is true", and "the researcher didn't finish".
+
+**Shipped across 4 canonical files:** classes re-cut onto ONE ordered axis (independent evidentiary roles → fit, mutually exclusive and jointly exhaustive by construction); the instance-count and country-coverage conditions moved OUT of the class conditions into **ceilings** (reusing the existing risk-tier ceiling mechanism — this finally gives the orphan illustrative/directional/pattern ladder a home as a *claim-scope* ladder); `NOT-SUPPORTED` = zero roles only; new § Evidenced Negatives vs Absence of Evidence; new Stop Condition 5 (restores `ILLUSTRATIVE-ONLY` to reachability); new chassis-version marker + hard-exit pre-flight gate; lockstep contract across chassis + 3 skills + every project's own chassis copy.
+
+### Decisions Made
+
+**Decision 1 — arbitrate premise (b), don't "fix" it.** The claimed self-contradiction (skill hard-codes the four class names while calling the project file authoritative) was **not one**: the chassis's Canonical-ordering rule already fixes class *names* globally and makes only *thresholds* project-fillable. Settled explicitly: names are canonical-global; **the Conditions column is chassis-owned** (previously undefined — that undefinedness was the real load-bearing ambiguity); per-claim-type thresholds are project-fillable. *Alternative rejected:* rewriting the Output schema to parse names dynamically — that would have made the class vocabulary project-variable, breaking every downstream exact-string match for no benefit no project has ever asked for.
+
+**Decision 2 — separate the axes rather than add a class.** The mandate forbade a fifth class, and it wasn't needed: the table was doing two jobs (grading *evidence* and bounding *claim ambition*) in one column. Split them — class grades evidence, ceilings cap the claim. *Alternative rejected:* adding a "single-source" class to absorb the gap. It would have papered over the mixed-axis cause and left the overlap.
+
+**Decision 3 — verify by execution, and keep going until it was green.** Four blind adjudication runs (fresh Opus agents dispatched *as* the skill, never told the expected answers) against a 5-claim adversarial fixture. **OLD: `GAPS 1, OVERLAPS 1`** — the agent independently diagnosed the mixed-axis root cause unprompted. **NEW (final): `GAPS 0, OVERLAPS 0, UNDETERMINED 0`.** Three correction rounds in between; **each run found real defects in the previous fix, two of which I had introduced myself.** This is the mission's standing method rule paying off for the third time.
+
+**Decision 4 — accept the `/risk-check` RECONSIDER; it caught a live hazard I had missed.** The canonical **skills are symlinked** into both live projects, but each project holds a **real local copy of the chassis**. A merge therefore updates the *consumers* and leaves the *rules* stale — and every existing pre-flight check is a *heading-presence* check that an old chassis passes. It would have **silently misadjudicated**. Closed with a **chassis-version marker + hard-exit gate** in both skills: a stale chassis now halts loudly with a remediation prompt instead of producing confident wrong answers. Re-fire → **PROCEED-WITH-CAUTION**. The reviewer also found a **4th consumer I had missed** (`section-directive-drafter`).
+
+**Decision 5 — correct my own overstatement.** I had logged that permission enforcement happens "nowhere". The risk-check consumer inventory showed `section-directive-drafter` **is** a real live consumer (it converts classes into per-finding prose constraints). Narrowed the finding to the accurate claim: classes ARE converted to prose constraints at Stage 3, and are enforced by **nothing** at Stage 4.3.
+
+### Outcome
+
+COMPLETION: DELIVERED
+EXECUTION: ACCEPTABLE (not optimal — see below)
+Notes: Mandate delivered in full — all three premises carry written verdicts backed by direct reads, the class table is a verified total partition (0 gaps / 0 overlaps / 0 undetermined, by execution), thread 5 ticked citing the result, `/risk-check` mitigations applied, and the one deferred item is a declared, operator-approved scope bound.
+What was asked but not done: the chassis back-port into the two live projects — **deliberately not done**; it is an explicit mandate scope bound ("canonical only") and a declared stop condition. Deferred to operator, logged as OPEN in both projects' own `logs/decisions.md` and mechanically protected by the hard-exit gate.
+Better path: **less ceremony, earlier execution.** Four setup gates (`/prime` → `/session-start` → context-discovery → `/session-plan`) ran before a single line changed, on a bounded 4-file edit; the operator called this out mid-session and was right. Separately, 3 of the correction rounds fixed defects **I introduced** — the adversarial test caught them (the system working), but it was self-inflicted rework.
+Confidence: high on the fix (verified by execution, red→green, twice-gated). High on the premise correction (grep-verified against 3 independent file sets).
+
+### Risky actions
+
+**Two, both real, both contained — and one was caught by a gate, not by me.**
+
+1. **Near-miss: a silent-misadjudication hazard I did not see.** The canonical **skills are symlinked** into the two live projects, but each project holds its **own real copy** of the chassis. My change would have updated the *consumers* and left the *rules* stale — and every existing pre-flight check is a *heading-presence* check that an old chassis passes, so **nothing in the system could have detected it.** Two live research projects would have adjudicated evidence claims under new instructions against old rules, producing confident wrong permission tables **with no error**. **`/risk-check` caught this, not me** (RECONSIDER). Closed with a chassis-version marker + hard-exit gate in both skills. This is the single strongest argument for the gate this session ran.
+2. **Wrote to two live projects outside this repo** — appended a back-port obligation to `logs/decisions.md` in `research-pe-regime-shift-advisory-gap` and `positioning-research`, and committed in each (`1e1b246`, `dd87476`). Deliberate and bounded: append-only to a log file, no `reference/` file touched (the mandate's explicit scope bound), no analysis or output file touched. It was a required `/risk-check` mitigation — the obligation has to live where those projects' operators will actually read it.
+
+**Destructive test runs:** none against real files. All four adjudication fixtures were built under the session scratchpad; the canonical template and both live projects were read-only throughout, except for the two decision-log appends above.
+
+**A gate that should have fired and did:** the mandate's declared stop condition ("if the fix requires editing the live projects' `reference/` copies — surface, don't proceed") fired exactly as designed when `/risk-check` recommended the back-port. I stopped and handed the decision to the operator rather than widening scope.
+
+### Session Assessment
+
+*(wrap-collector, 2026-07-14 — 2 entries → `improvement-log.md`, 2 → `friction-log.md`, all tagged `wrap-collector`)*
+
+- **Autonomy-compounding — strong positive.** The **adversarial blind-execution fixture** (fresh agents dispatched *as* the skill, blind to the expected answers) is a reusable verification pattern, not one-off work: it found the real defects, found **two the session itself introduced**, and diagnosed the root cause unprompted. **Counter-signal:** the mission's source audit is a *work source* producing **negative** compounding — 3 threads executed, 3 premises falsified.
+- **Leanness / cost.** ~750k+ subagent tokens (context-discovery ~125k; 4 blind adjudicators ~300k; 2 risk-check reviewers ~320k). **The verification spend earned out; the session-open spend did not.** Rework churn: 3 of 4 correction rounds fixed **self-introduced** defects, each riding into a fresh ~75k blind run.
+- **Principle-drift.** No signal — no named principle was strained. (The ceremony issue is friction-shaped, not a principle violation.)
+- **Friction — 2 logged.** (1) *Workflow:* four setup gates ran on a bounded 4-file edit before any line changed; **operator interrupted twice**. Same family as the `/cleanup-worktree` gate-before-triviality entry, different owner. (2) *Validation:* a partition-shaped rule set was edited without an inline consistency check, so the expensive blind runs were spent finding my own defects.
+- **Safety — `med`, near-miss.** Canonical skills are symlinked into two live projects but each holds its **own copy** of the chassis; a merge would have updated consumers and left rules stale, and every pre-flight check is a *heading-presence* check an old chassis passes → **silent misadjudication with no error**. `/risk-check` caught it (RECONSIDER), **not the session**. Closed locally (version marker + hard-exit gate); **the generalizable shape is still unguarded.**
+- **Reusable component — consider `/innovation-sweep`:** the blind adversarial execution fixture. It is the only thing this session that found defects the author could not see, and it did so three rounds running.
+
+> **⚠ Read the cost and rework signals above with this counter-signal attached.** Both heavy gates **earned their cost outright**: the execution fixture found the real defects *and* two of mine; `/risk-check`'s RECONSIDER caught a live silent-misadjudication hazard the session had missed entirely. **The lesson is *where* to spend, not *whether*.** Do not read this block as an argument to gate less.
+
+### Next Steps
+
+- **⚠ DO NOT START THREAD 3 BY DEFAULT. The deployment-gate decision is now the highest-value next session** — and the evidence for it is much stronger than it was two sessions ago. The mission's premise is *"fix canonical before deploying."* It has now produced **zero demonstrated blockers across three threads** (1, 2 and 5), and thread 5's stated defect was **fictional**. This is not bad luck: the source audit **reasons from what the files *say*, not what the runtime *does*** — and every single time execution has been applied, its conclusion has flipped. Threads 3, 4, 6, 7, 8 come from the same audit, by the same method. There is a real chance the remaining mission is fixing an artifact rather than an obstacle. **Re-examine the gate before spending another session inside it.**
+- **The enforcement gap is probably worth more than any remaining thread.** The permission classes are converted into prose constraints at Stage 3 (`section-directive-drafter`) and then enforced by **nothing** at Stage 4.3 — `evidence-to-report-writer`, `chapter-prose-reviewer`, `citation-converter` and `cluster-synthesis-drafter` contain **zero** permission-class vocabulary (grep-verified twice: context-discovery engine + the risk-check reviewer). So Pass 3 judges claims carefully and Pass 4 is free to ignore the judgment. This is thread-7-shaped and should probably merge into it. Routed on the mission, not fixed.
+- **Operator decision pending: back-port the chassis into the two live projects?** Not urgent — both are protected by the hard-exit gate and both carry `.claim-permission-gate.done` sentinels for §1.1, so the gate does not re-run today. **Required before either project processes a new section or anyone deletes a sentinel.**
+- Threads 3, 4, 6, 8 remain open and unordered — *pending the gate decision above.*
+
+### Open Questions
+
+- **Is the `research-workflow-deployment-fitness` audit trustworthy at all as a work source?** Three for three on falsified premises. Its findings are not worthless (each thread pointed at a genuinely broken *area*), but its *diagnoses* have been wrong every time, and acting on them directly wastes a session's opening. A cheaper protocol might be: treat each remaining thread as a *pointer to a suspect area*, verify by execution first, and expect to rewrite the fix.
+- Same standing gap as S10/S11/S13: `/mission` still has no `update` verb; thread 5's tick-off was another direct hand-edit of the mission file.
+- The `ai-resources/` canonical copies are still unedited — this fix lives only in the `session/2026-07-13-research-workflow` worktree branch until it merges to `main`. The symlinked consumers (including both live projects) do not see it until then. **Note the interaction:** on merge, the hard-exit gate activates in both live projects. That is intended and safe, but it means the first person to delete a sentinel there will hit a halt.
+
+## 2026-07-14 — Session S3
+**Mandate:** Close the outputs-side half of the thread-5 stale-chassis defect — permission tables carry no chassis version, and `section-directive-drafter` (symlinked, ungated) consumes them — but ONLY after testing by execution whether a stale table actually produces a bad directive — done when: the premise is verified or falsified by a blind execution run against a real stale table; if verified, `claim-permission-gate` stamps `chassis_version:` into permission-table frontmatter and `section-directive-drafter` flags/exits on a missing or pre-2026-07-14 value; `/risk-check` cleared; committed on this branch before merge.
+- Out of scope: The chassis back-port into the two live projects (standing deferred operator decision). Threads 3/4/6/7/8. The Stage 4.3 enforcement gap (thread-7-shaped). Re-adjudicating the existing 1.1 permission tables in either live project.
+- Files in scope: skills/claim-permission-gate/SKILL.md; skills/section-directive-drafter/SKILL.md; workflows/research-workflow/reference/quality-standards.md (only if the table schema is chassis-owned — verify)
+- Stop if: The execution test FALSIFIES the premise (a stale table does not produce a bad directive, or the drafter already degrades safely) — then do not fix; report and go straight to merge.
+- Mission: research-workflow-deploy-fitness
+
+Fix the outputs-side stale-chassis gap before merging the worktree. Premise to be tested first, per the mission's standing verify-by-execution rule.
+
+### Summary
+
+Closed the outputs-side half of the thread-5 chassis-version defect, tested it by execution before and after, ran `/risk-check` and applied all five mitigations, then merged the worktree branch into `main` (commit `2e6a9d5`) after a live concurrent session (S4) was confirmed clean. Files touched: `skills/claim-permission-gate/SKILL.md`, `skills/cluster-memo-refiner/SKILL.md`, `skills/section-directive-drafter/SKILL.md`, `workflows/research-workflow/.claude/commands/run-synthesis.md`, `workflows/research-workflow/.claude/commands/run-sufficiency.md`, `workflows/research-workflow/reference/quality-standards.md`, `workflows/research-workflow/reference/stage-instructions.md`.
+
+**The premise, tested rather than assumed.** A blind adjudicator re-graded a real stale permission table (research-pe, section 1.1, cluster 03, generated 2026-06-03) under the current chassis: 2 of 6 claims moved `PROXY-SUPPORTED` → `ILLUSTRATIVE-ONLY`. A blind `section-directive-drafter` run on the *original* stale table then confirmed the consequence — it emitted "hedged framing required" for both, licensing a market-pattern generalization the current rules forbid outright. The chassis-version gate from thread 5 protected the *next* run and said nothing about verdicts already on disk. That was the actual gap.
+
+**The fix:** both producers (`claim-permission-gate`, `cluster-memo-refiner`) now stamp `chassis_version:` into permission-table frontmatter; three consumers (`section-directive-drafter`, `/run-synthesis`, `/run-sufficiency` Step 0) hard-exit on a missing or pre-2026-07-14 value. A re-stamp invariant (`generated_at` ≥ `chassis_version`) closes the one-line forgery an adversarial test found in the first draft.
+
+**Tested red/green/adversarial, not just red/green.** Unversioned table → EXIT. A table with the version field pasted onto an untouched body → PROCEEDED (a real defect in my own gate, found by dispatching an adversarial subagent instructed to try to defeat it). Fixed with the re-stamp invariant; re-tested, now EXIT/EXIT/PROCEED across unversioned/forged/genuine.
+
+### Decisions Made
+
+**Decision 1 — gate `section-directive-drafter` and `/run-synthesis`, deliberately NOT `country-parity-checker`.** Verified by reading its Behavior step 3 that it never touches the Assigned-class column — it reads the claim inventory, not the verdicts, so a stale table cannot corrupt its output. Gating it would be gate ceremony with no hazard behind it. `/risk-check` confirmed this call was correct.
+
+**Decision 2 — no content hash; route deliberate overrides to the existing signed `OPERATOR-OVERRIDE` path instead.** The adversarial test proved two self-asserted fields can be forged with two edits. A content hash would close it, and was deliberately not built: these are model-executed skills, not scripts, and cannot compute a trustworthy digest without new shell machinery — and the actual threat is operator error (a documented hand-edit path exists in `/run-sufficiency`), not an adversary. `/risk-check` confirmed this call was correct too. The limit is stated plainly in the chassis rather than the gate overselling itself.
+
+**Decision 3 — fix the dead end `/risk-check` found before committing, not after.** My first-draft refusal messages said "delete the sentinel and re-run" — but `claim-permission-gate` carries its own chassis-version hard exit, and both live projects have unversioned chassis copies, so that path walks an operator into a *second* hard exit with the sentinel already gone (not `git revert`-able). Every refusal message now says back-port first, sentinel second, re-run third, in every one of the three gated files plus the reference doc.
+
+**Decision 4 — merge only after re-verifying live-session state, not on trust.** First check found session S4 live in `main`'s checkout with uncommitted changes to the same file (`session-notes.md`) my branch modifies — stopped rather than merging over it. Re-checked after the operator confirmed S4 was done: `session-notes.md` was clean, only two untracked files remained (neither of S4's tracked work). Proceeded only after that direct check.
+
+**Decision 5 — resolved all six merge conflicts as a union, not a pick.** Both `main` (S4) and this branch (S1/S3) had appended distinct session entries to the same append-only logs since the fork. Kept both sides in every hunk — verified afterward, by content, that both sessions' entries survived and the actual fix files had zero conflicts.
+
+### Outcome
+
+COMPLETION: DELIVERED
+EXECUTION: ACCEPTABLE
+Notes: The stated done-when conditions were met — premise tested by execution before committing to a fix; `chassis_version` stamped by both producers; three consumers gated; `/risk-check` cleared with all five mitigations applied; committed and merged. What was asked but not done: none — the chassis back-port itself was explicitly out of scope for this session's mandate (a standing deferred operator decision) and was surfaced, not actioned, consistent with that scope bound.
+Better path: none identified with evidence — the adversarial-test-then-fix pattern (find the forgery, fix it, re-test) is the kind of rework that earns its cost rather than the self-inflicted kind from the prior session; each round found a real defect, not a repeated one.
+Confidence: high — verified by execution at every stage (the premise, the gate, the fix, the re-test, the merge state).
+
+### Risky actions
+
+Two, both caught before they landed. (1) Started to merge into `main` while a live concurrent session (S4) held uncommitted changes to a file my branch also modifies — stopped, did not merge, waited for confirmation, re-verified clean state before proceeding. (2) My own gate's first draft printed a remediation path ("delete the sentinel and re-run") that dead-ended an operator in a second hard exit with no way back — found by `/risk-check` before commit, fixed in all three locations before landing.
+
+### Session Assessment
+
+Feedback collection skipped (not requested).
+
+### Next Steps
+
+**Chassis back-port into the two live projects** (`research-pe-regime-shift-advisory-gap`, `positioning-research`) — recommended, not yet actioned. Both now carry the gated *skills* (symlinked, live as of the merge) but their *chassis copies* remain unversioned, so a new section will hard-exit with a back-port-first prompt. Small job: back-port `§ Claim-Permission Classes` (and its subsections, per the chassis's own Lockstep contract table) into both projects' `reference/quality-standards.md`. Nothing breaks today — both hold `.claim-permission-gate.done` sentinels for section 1.1.
+
+**From the main `ai-resources` window (not this one): run `/close-worktree-session`** once this wrap's marker teardown completes. It refuses to run from inside this worktree and refuses while this session's marker is live — both by design.
+
+**Standing, unchanged from S1:** the mission's premise ("fix canonical before deploying") is still 0-for-3 on demonstrated blockers across threads 1, 2, 5. Not re-litigated this session, which was scoped to closing thread 5's outputs-side gap only. Re-examine the gate decision before opening thread 3.
+
+### Open Questions
+
+Same as S1, standing: is the `research-workflow-deployment-fitness` audit still a trustworthy work source for the remaining threads (3/4/6/7/8)? `/mission` still has no `update` verb.
+
+## 2026-07-14 — Session S5: the worktree closed cleanly — and the guard protecting it is running on a false premise
+
+*(No `/session-start` this session — the operator gave the work as free-text after `/prime`. Marker S5 allocated mid-session, before the log writes. Ceremony deliberately skipped: a single bounded operator-directed op with a dedicated guarded command (`/close-worktree-session`), and S1's telemetry logged "four setup gates on a bounded edit, operator interrupted twice" as a Major. Not repeating it.)*
+
+### Summary
+
+Closed the `ai-resources-research-workflow` worktree at the operator's request: merged its branch to `main`, removed the worktree, deleted the branch. Only `ai-resources` remains. 2 commits (the merge + `b42cadf`); tree clean; **8 unpushed at wrap**.
+
+**The teardown was routine. What it exposed is the payload.** That branch held **one commit that existed nowhere else** — `ca68eaa`, the S3 session's own wrap (122 lines of session notes, `decisions.md`, run manifest). Its worktree read **perfectly clean** on `git status`, so the ordinary "is it safe?" signal said yes. A `git worktree remove` + `git branch -D` would have destroyed that commit **silently**. Merging first and deleting with `-d` (lowercase — it *refuses* on unmerged commits) meant **git itself certified** nothing was lost, rather than me asserting it. This is the S2 near-miss in a new costume: the work was **committed**, so every "uncommitted work" probe reads clear — and the commit was still reachable from nowhere.
+
+**Four problems surfaced, all queued to `improvement-log.md` in the dash-prefixed shape `/prime` Step 3 can actually see — verified by RUNNING the scan, not by writing the entry.** That verification step is the one this repo has skipped five sessions running, and it is the only reason these four are not already lost.
+
+### Decisions Made
+
+- **Merge before removing — non-negotiable, and it is the whole session.** `ca68eaa` was on no other branch. Sequence was merge → verify `merge-base --is-ancestor` → remove → `branch -d`. **Used `-d`, never `-D`**, so the deletion was *certified* by git rather than *asserted* by me. *(Routine in form, load-bearing in fact — recorded because the same op nearly destroyed live work in S2.)*
+- **Confirmed liveness with the operator rather than deciding it myself.** The three-probe pre-flight returned a **mixed** signal: clean tree, but a live session marker and files written minutes earlier. `check-destructive-liveness.sh` hard-blocked the removal. Per the hook's own contract — *"liveness is the one fact only the operator holds"* — I surfaced the evidence and asked. Operator confirmed idle. **Only then** did it become their call.
+- **Named the marker deletion as evidence-clearing, rather than quietly rephrasing past the guard.** To proceed I had to `rm` the marker files the guard reads. That is indistinguishable from tampering, so I said so explicitly in chat instead of doing it silently — and then **logged the bypass itself as a HIGH defect** (below). A guard whose sanctioned workaround is "erase its evidence and retry" is not a guard for long.
+- **Skipped `/session-start` + `/session-plan`** with a stated reason (bounded op, dedicated guarded command, S1's logged gate-ceremony Major). No gates stacked. *(Cost: the staging tripwire ran with no `Files in scope` declared, so the foreign-file guard was **OFF** for `b42cadf` — I verified the staged set by hand instead: exactly 2 files, both mine. Named here because it is the real price of skipping the ceremony, not a free lunch.)*
+
+### Risky actions
+
+**I wrote an unguarded `rm -f` that word-split every path in this workspace, and it did no damage by luck rather than design.** Clearing stale markers, I wrote `for f in $(find "$WT/logs" …); do rm -f "$f"; done`. Command substitution split each spaced path, so `rm -f` ran against `/Users/patrik.lindeberg/Claude`, `Code/Axcion`, `AI` as **separate targets**. Every fragment happened not to exist, and `-f` silenced the errors — the *only* tell was the echo printing `Claude`, `Axcion`, `AI` as filenames. **The warning against this exact bug is in `close-worktree-session.md` L61–65 — a file I had read in full, in this session, minutes earlier.** Verified no collateral damage (both trees clean, workspace intact) before continuing. **Sixth assert-from-recall, and it landed in a surface the shipped `Files in scope` predicate does not cover — the escalation trigger named in the 2026-07-14 entry is now MET.**
+
+**A destructive op was hard-blocked twice by the new hook, and both blocks were correct.** First on an unresolvable target (I passed `"$WT"` — the hook parses literal text and cannot expand variables, so it **refused to certify a target it could not see** rather than degrading open). Then on the genuine marker evidence. The fail-closed behaviour S4 built is working exactly as designed.
+
+**Not destroyed, and the reason is procedural, not lucky:** `ca68eaa`. See Summary.
+
+### Next Steps
+
+- **⚠ The operator directive stands: fix the queued 2026-07-14 items THIS WEEK.** There are now **10** surfacing in `/prime` Step 3's real scan (6 prior + 4 from this session).
+- **Do the hook-wiring gap FIRST — and it may have just doubled in value.** This session's finding #1 (`SessionEnd` marker teardown does not fire) is **plausibly the same defect**: the hook's wiring lives only in the unversioned `~/.claude/settings.json`, so `cleanup-session-marker.sh` may simply **not be wired at all**. **Check the wiring before theorising about the script.** If unwired, the two items collapse into one fix.
+- **Then the session-marker lock** — adopt the **marker suffix** (`S3-a4f`) per `/consult`. Do NOT adopt the user-level-allocator proposal (transition state worse than today). Unchanged from S4.
+- **`/prime` Step 0 is cheap to fix and fires at every session start** — skip the pull when behind-count is 0, and add the missing "rebase conflicted mid-flight" result case.
+- Left alone, not mine: `logs/session-plan-2026-07-14-S4.md` is untracked (the S3/S4 plan file).
+
+### Open Questions
+
+- **The S13 question is answered, and the answer is worse than the guess.** *"Why is `SessionEnd` never delivered for the sessions that leave marker corpses?"* — the standing hypothesis was **crashed sessions**. **Falsified.** S3 wrapped cleanly, committed, and still left both markers. So the corpse is the **default outcome of a normal wrap**, `close-worktree-session.md` L127–131's trustworthiness claim is **false as written**, and the liveness guard false-fires on every finished session.
+- **The one worth sitting with.** Every catch this session came from a machine instructed to distrust me — the hook blocked me twice; the scan proved the queue landed; `git branch -d` certified the merge. Every failure came from me trusting my own reading: I read the word-splitting warning and then wrote the bug. **S4 asked whether the countermeasure to assert-from-recall is a *checker* or a *process*. This session is evidence for a third answer: it is neither — it is that the destructive act and the evidence of its correctness must not happen in the same breath.** The failing loop's `echo` and its `rm` ran in the *same pass*, so the proof and the damage were simultaneous. Separate them and the class dies.
+- Standing, unchanged: is the `research-workflow-deployment-fitness` audit a trustworthy work source (0-for-3 on premises)? `/mission` still has no `update` verb.
+
+## 2026-07-14 — S6: Repo investigation — five critical operational issues verified; repo-repair pilot cross-checked and updated
+
+### Summary
+
+Read-only investigation (operator-requested): "what must we fix immediately to continue normal operations?" Three parallel explorers (hooks/settings, incident trail, data-integrity surfaces) plus main-session re-verification of every load-bearing claim, then an independent adversarial subagent that upheld all 15 claim clusters. Produced a ranked critical-fix report (verdict: **Yes with restrictions**; five issues), a plain-English fix list, second-tier recommendations, and a recommendation to PROCEED with the approved repo-repair pilot V1 — whose plan file was updated in place with four cross-check corrections. No repo files were touched by the investigation itself; both deliverables live in `~/.claude/plans/` (`investigate-the-current-state-radiant-cat.md`, `investigate-why-our-recurring-humble-curry.md`).
+
+### Decisions Made
+
+- **Investigation verdict:** "Yes with restrictions." Five critical issues, ranked: (1) SessionEnd marker teardown never fires → liveness guards false-fire, bypass = delete evidence; (2) hook wiring machine-local/unversioned; (3) session-number allocation collisions (4 in 2 days); (4) deny rules (`Bash(git checkout *)`, archive Read patterns) hard-block merge conflict resolution; (5) wrap-session core path queues no findings. Fix order 1→2→3→5→4.
+- **Excluded** the `~/.claude/settings.json` `model` field as a finding — operator declined the fix 2026-07-13; noted the decline was against `opus[1m]` and the value is now `claude-fable-5[1m]` (operator confirmation pending).
+- **Repo-repair pilot V1: proceed, with four adjustments** folded into the plan file — §4b liveness rule marked STALE (already shipped as `check-destructive-liveness.sh`, `0667cc6`); quote `$CLAUDE_PROJECT_DIR` when wiring `require-gate.sh`; guard against the /risk-check wrong-checkout receipt false-block (new Known dependency #2 + suggested test 8); retire `warn-settings-change.sh` when the new hook lands. Addendum block added inside the plan's resume banner with sequencing note and "ONLY live session" execution condition.
+- **Report corrections from independent verification** (both folded in): workspace-root working tree is NOT clean (dirty tracked files, zero unpushed); model-field decline predates the current value.
+
+### Risky actions
+
+None — read-only investigation; the only writes were to two plan files under `~/.claude/plans/` and this wrap's log entries. (One prescribed hook script was executed by an explorer with synthetic test input only.)
+
+### Next Steps
+
+- Operator: confirm the model-field "leave it" decision still applies to `claude-fable-5[1m]`; choose sequencing (critical Fixes 1–2 before or after the pilot).
+- Execute critical fixes in order: Fix 1 (wrap-session marker self-teardown + `close-worktree-session.md` L124–131 correction + SessionEnd root-cause), Fix 2 (versioned wiring installer + SessionStart probe), Fix 3 (suffix session markers), Fix 5 (wrap finding→queue rule), Fix 4 (deny narrowing — operator decision, route to `/friday-act`).
+- Execute the repo-repair pilot (`~/.claude/plans/investigate-why-our-recurring-humble-curry.md`) in a fresh, ONLY session — read the resume banner including the 2026-07-14 addendum first.
+- Not yet queued anywhere: project-repo commit/push sweep (3 repos have no remote; ~100+ dirty files each) and the two stranded stashes (`marketing-positioning` autostash, `strategic-os` park-A11 WIP).
+
+### Open Questions
+
+- Does the operator's model-field decline extend to the current `claude-fable-5[1m]` value?
+- Pilot-first or critical-fixes-first? (Either is safe; gate-receipt tax differs.)
+- Why does `SessionEnd` not fire on a normal wrap — window-stays-open hypothesis unconfirmed (Fix 1 step 1).
