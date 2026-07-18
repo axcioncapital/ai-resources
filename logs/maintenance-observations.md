@@ -422,3 +422,66 @@ The fence-aware header scan + preamble-preservation fixes (2026-06-12 S6) landed
 
 ### Open follow-up
 - `check-foreign-staging.sh` bare-commit flag (warn when a pathspec-less `git commit` runs while a foreign per-id marker is live, even if all extra staged files are exempt) — the un-fixed half of the 2026-07-03 `9660bf2` friction entry; the documented-default half landed in `docs/commit-discipline.md` (commit `af89a07`). — **Resolved 2026-07-03 (S8):** flag shipped in `check-foreign-staging.sh`'s `if not foreign:` branch, gated by plan-time `/risk-check`. Both halves of the 9660bf2 fix direction are now closed.
+
+## 2026-07-17 — Friday Act (weekly tier, source: friday-checkup-2026-07-17.md)
+
+### System Owner inputs (this session)
+- Friday Advisory: (none within 7 days — freshest 2026-06-05)
+- Systems Review:  (none within 7 days — freshest 2026-06-05)
+
+### Journal Report (this session)
+- Journal Report: (none within 7 days — freshest 2026-05-29)
+
+### Disposition summary
+- Tactical: 12 queued for plans, 14 defer, 3 skip (of 29 items; of which 0 System Owner-derived, 0 journal-derived)
+- Triage source: 0 auto-default, 29 operator-override (of 29 items) — operator ran a `/consult` (system-owner) triage and approved a modified set (SO changes: item 28 defer→fix, item 10 fix→defer). Advisory on disk: `projects/axcion-ai-system-owner/output/consultations/consult-2026-07-17-friday-act-weekly-triage.md`.
+- Policy review: n/a (weekly tier)
+
+### Session value review
+- Adopted (constrain/batch working agreement): **test-before-wire builds** — assert a hook's exit code against a synthetic payload before wiring; re-derive a plan's counts/claims by execution before implementing. (Highest-value session this window: ai-resources S7, 9/10.)
+
+### Deferred items (from this session)
+- [SESSION-ISSUE] Step 3.5 CONCURRENT strands a no-own-marker committed session — med, checkup (already DEFER'd 2026-06-05 to a dedicated /risk-check session)
+- [SESSION-ISSUE] Unmarked /clarify-first session risks false-CONCURRENT wrap guard — med, checkup (structural, dedicated session)
+- website: page-authority (doc 01/03) grounding rule + QC-gate to project CLAUDE.md — med, checkup (SO-moved to defer: website-scoped working practice, not an ai-resources fix)
+- [COACH] website Tier-C visual-verdict backlog (37 files) — med, checkup (website working practice)
+- inbox brief: audit-workflow-pipeline — med, checkup
+- inbox brief: codex-second-opinion-brief — med, checkup
+- inbox brief: decision-report — med, checkup
+- inbox brief: repo-review-brief — med, checkup
+- inbox brief: workflow-diagnosis — med, checkup
+- /cleanup-worktree (dirty tree; concurrent-session caveat) — med, checkup (wrap-time action)
+- Batch 34 ADVISORY permission hygiene via /permission-sweep — low, checkup (folds into the Plan 3 permission-sweep run)
+- Update docs/permission-template.md stale intentional-narrow example — low, checkup
+- Archive over-threshold logs via /log-sweep — low, checkup (wrap-time / dedicated run)
+- website: re-anchor session-notes mandate on mid-session operator pivot — low, checkup
+
+### Skipped (from this session)
+- Remove `"model":"opus[1m]"` from `~/.claude/settings.json` — high, checkup — ⚠ **operator-DECLINED 2026-07-13** ("forget this one — do not re-raise", improvement-log:602); honoring the decline. See Policy proposals for the decline-memory meta-defect.
+- git push ai-resources / workspace — med, checkup — handled by the wrap-time gated push prompt, not a plan.
+
+### Plans written (this session)
+- audits/friday-plans/2026-07-17-improvement-log-closure.md — 3 items (Cluster 1, the spine)
+- audits/friday-plans/2026-07-17-deploy-gate-decision.md — 1 item (Cluster 2)
+- audits/friday-plans/2026-07-17-permissions.md — 4 items (Cluster 3, concurrency-gated)
+- audits/friday-plans/2026-07-17-repo-hygiene.md — 4 items (Cluster 4 + remaining)
+
+### Policy proposals (for a follow-up session with its own plan + /risk-check)
+- **Hook payload verification rule** (Session Value Review rule-change, adopted): add to `docs/audit-discipline.md` § hook change class — "A hook's payload contract is unverifiable by reading — pipe a synthetic payload and assert the exit code before wiring, and never model a new hook on an unwired one." Trigger: any new/edited `.claude/hooks/*.sh`. Grounded in the S7 fail-open `warn-settings-change.sh` finding. Cross-cutting doc edit → own plan + /risk-check.
+- **Decline-memory meta-defect** (SO-flagged this triage): `/friday-checkup` re-raised a logged operator-decline (the `~/.claude/settings.json` `"model"` field, improvement-log:602) because it has no decline-memory — every future audit rediscovers it. Route a suppression entry to the gate-calibration system so a logged decline is not re-escalated. `[CITATION NEEDED: exact gate-calibration.md suppression path — not read this session.]`
+
+### Operator observations
+(none — apply mode; operator can amend)
+
+### Autonomy & Reliability notes
+- **Concurrency blocked execution, not planning.** A live foreign session in the ai-resources main checkout (`LIVE_FOREIGN_HERE=1`) means `/permission-sweep`, `/log-sweep`, `/cleanup-worktree`, and improvement-log edits (shared, non-append surfaces) cannot execute this cadence until it clears (DR-10). `/friday-act` only plans, so all still earned plan slots — but each plan carries the precondition explicitly. Structural signal: friday-act fix plans that touch shared state should be execution-gated on concurrency, which these now are.
+- **The binding constraint is closure, not detection (SO).** improvement-log at ~46 active / 94 headers (6.5–13× the soft cap of 7). Queuing 12 new fixes onto that pile is the OP-12 anti-pattern; the week's committed spine is therefore the closure cluster (Plan 1), not the full 12-item list. The most self-running improvement would be a forcing function that closes/archives on a cadence rather than relying on a soft-cap nudge that fired and was continued-past this session.
+
+### Autonomy-axis posture targets (week ahead)
+- Guardrails: hold
+- Optimization: hold
+- Autonomy: hold
+- Capability: hold
+- Reliability: hold
+- Observability: hold
+- Operator load: hold
