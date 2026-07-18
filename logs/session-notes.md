@@ -368,3 +368,11 @@ None.
 
 ### Findings Declined
 None — the one open item from this session's `/risk-check` (the `docs/session-marker.md` registry note) was queued as a Next Step, not declined.
+
+## 2026-07-18 — Session S10-163
+**Mandate:** Verify the open backlog against live files, rank what is genuinely worth fixing, consult the System Owner on prioritisation, and repopulate the repo-health mission's thread list — done when: `## Open threads` in `repo-health-backlog-2026-07.md` carries a verified, dependency-ordered thread set and the triage report is on disk
+- Out of scope: implementing any of the fixes themselves; the three-repos-without-a-remote backup task (operator-deprioritised mid-session)
+- Files in scope: logs/missions/repo-health-backlog-2026-07.md
+- Stop if: the mission's frozen sections (Goal / In-Out scope / Validation contract) would need to change to fit the new threads
+- Required outputs: audits/2026-07-18-verified-backlog-triage.md, audits/working/verify-2026-07-18-clusterA-markers.md, audits/working/verify-2026-07-18-clusterB-hooks.md, audits/working/verify-2026-07-18-clusterC-commands.md, audits/working/verify-2026-07-18-clusterD-logs.md, audits/working/verify-2026-07-18-clusterE-research-workflow.md
+- Mission: repo-health-backlog-2026-07
