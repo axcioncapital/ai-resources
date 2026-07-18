@@ -16,8 +16,19 @@
     "subagents": [],
     "tools_notable": []
   },
-  "files_changed": [],
-  "decisions_refs": [],
+  "files_changed": [
+    "logs/improvement-log.md",
+    "logs/missions/repo-health-backlog-2026-07.md",
+    "logs/session-notes.md",
+    "logs/decisions.md",
+    "audits/friday-plans/2026-07-17-permissions.md",
+    "logs/session-plan-2026-07-18-S6-ac5.md",
+    "logs/scratchpads/2026-07-18-16-00-scratchpad.md",
+    "audits/working/thread-verification-2026-07-18-S6.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-18-s6-ac5-fix-thread-2-at-the-schema-rather-than-at"
+  ],
   "validation": [],
   "evaluator_findings": {
     "sidecar_refs": [],
@@ -29,8 +40,8 @@
     "subagents": 0,
     "token_estimate": null
   },
-  "stop_reason": null,
-  "outcome": null,
+  "stop_reason": "deferred",
+  "outcome": "PARTIAL",
   "failure_class": null,
   "incidents_refs": []
 }
