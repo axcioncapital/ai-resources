@@ -386,3 +386,44 @@ Operator asked, post-wrap, what to fix before starting the mission's 10 items. R
 
 ### Open Questions
 None. (Q4 of the `/clarify` — whether operator-declined items should appear in the ranked list — went unanswered; the default of excluding them was applied and stated in `/scope`, which the operator approved.)
+
+## 2026-07-18 — Session S5-531
+**Mandate:** Fix three repo-health problems in operator-set order — (1) close the silent session-marker failure path by making the wrap fail loudly when the shared marker names a different session, (2) give `/mission` a sanctioned verb to tick off an open thread, (3) drain `improvement-log.md` then widen the `/prime` Step 3 severity anchor — done when: the marker mismatch fails loudly verified against a planted mismatch, `/mission` ticks a thread verified by execution, and the drained log plus widened scan are re-run with before/after line counts recorded.
+- Out of scope: the other seven mission threads (3, 4, 5, 7, 8, 9, 10); fresh audit runs; the four uncommitted risk-check notes and stray session-plan files already in the working tree
+- Files in scope: .claude/commands/wrap-session.md, ../.claude/commands/wrap-session.md, .claude/commands/mission.md, .claude/commands/prime.md, .claude/commands/resolve-improvement-log.md, logs/improvement-log.md, logs/improvement-log-archive.md, logs/missions/repo-health-backlog-2026-07.md, logs/session-notes.md, logs/friction-log.md, logs/scripts/run-manifest.sh, logs/scripts/run-manifest.test.sh
+- Scope growth (declared, not silent): three files were added to the footprint after the mandate was written. `.claude/commands/resolve-improvement-log.md` — thread 1 could not be closed without it, because its classifier saw only 6 of 22 finished entries; the drain was the mandated work and the classifier was the blocker. `logs/scripts/run-manifest.test.sh` — the guard's regression tests. `logs/friction-log.md` — hook-written Write Activity only, not authored by this session.
+- Stop if: /risk-check returns NO-GO on a change class; an edit would touch a file a live concurrent session owns
+- Required outputs: logs/runs/2026-07-18-S5-531.json; any /risk-check report under audits/risk-checks/
+- Mission: repo-health-backlog-2026-07
+
+Fix three repo-health problems in operator-set order: (1) the session-marker gap — make the wrap fail loudly when the shared marker names a different session; (2) mission thread 6 — give `/mission` a verb to tick off a thread; (3) mission threads 1 and 2 together — drain the improvement-log backlog first, then widen the `/prime` Step 3 scan anchor.
+
+### Summary
+Three operator-ranked repo-health fixes, executed in the operator's order and each verified by execution rather than assertion. The marker guard stops `run-manifest.sh` writing a manifest the session cannot attribute — closing the silent-overwrite path observed live in S4-8c3 — with the suite going 35 → 46 passing. `/mission` gained a `check` verb, making its own "never hand-edit `## Open threads`" contract satisfiable for the first time. The improvement-log drain took `/prime`'s Step 3 orientation scan from **234 → 147 lines**. Two of the three items turned out to be mis-diagnosed in the backlog, and correcting the diagnosis was the substantive work: thread 1's drain was blocked by a classifier that could see only 6 of 22 finished entries, and thread 2 asks for a scan-widening that would gain 2 entries while the real gap (30 entries with no Severity field) is unreachable by any anchor. Landed as `da61cd8` (ai-resources) and `faa6c1a` (workspace root paired copy); **not pushed** — the operator deferred the push.
+
+### Decisions Made
+- **Fix the classifier before draining, rather than hand-archiving 22 entries** (operator chose `fix` from three options). `/resolve-improvement-log` tiers 1+2 matched only 6 of 22 finished entries because this log's dominant convention is `applied <date>` with no separate `Verified:` line. Hand-archiving would have left the next drain equally blind. Added tier 3 anchored on `^applied` + date; 16 entries archived.
+- **Thread 2 left UNTICKED, deliberately.** Its stated cost — "a third of the backlog can never reach the task menu" — remains true for the 30 Severity-less entries. Widening the anchor gains 2 (both MED). Surfacing 30 unclassified entries would enlarge the very scan Step 3 exists to bound, so the scan now reports a bounded *count* instead. Ticking it would be the false reporting the `/mission check` verb was built to prevent.
+- **Presence-testing over identity-comparison in the marker guard** (Claude's call, after external review found the 3-char suffix collidable). Rejected the reviewer's suggested fix of lengthening the suffix: the suffix is part of the marker grammar read by session-notes headers, plan/manifest filenames and ~21 symlinked command copies. Testing whether this session wrote its *own* per-id marker needs no comparison at all.
+- **Guard made advisory (NOTICE + no write + exit 0), not fatal** (Claude's call, second review pass). Declining the write achieves the entire safety goal; a non-zero exit contradicted this script's own ADVISORY RULE and handed a `/clarify`-first session an instruction it cannot follow.
+- **`/mission drop` deferred**; `check` alone unblocks the mission, and the single recorded `drop` use was a one-off under explicit authorization.
+- **Both marker and `/mission` entries left `partially applied`**, so tier 3 cannot archive work that is half-done and bury its deferred remainder in the deny-read archive.
+- Routine: normalized 6 drifted `##` dated headings to `###`; added `Edit` to `mission.md` `allowed-tools`; corrected the preamble's stale "applied + Verified" archival line.
+
+### Risky actions
+Two destructive edits to durable operator-facing content, both backed up first to `scratchpad/backup/` because `git checkout` is denied by name in this workspace (mission thread 4) and git is therefore not a reliable undo: the 16-entry archive move, and the 6-heading normalization. **Two mandatory gates were waived by the operator** — `/risk-check` (Autonomy Rules #9, structural change classes) and `/blindspot-scan` — and replaced by three external Codex review passes. That substitution was net-positive: the external passes caught a collision hole and a contract contradiction that neither waived gate targets. No independent `/qc-pass` was run either; the operator directed the commit after reviewing externally. Mandate `Files in scope` was widened mid-session to match the real footprint, declared explicitly in the mandate block rather than silently.
+
+### Findings Declined
+- **`/prime` Step 3's `-B6` window cost** — 143 of the 147 remaining lines come from 18 severity hits × a 6-line context window. Narrowing it is explicitly forbidden by `prime.md:211` (at `-B4` the header is lost). Not a defect; the window is load-bearing. No entry filed.
+- **The 2 un-dashed `**Severity:**` entries were not normalized** to the dashed form. The anchor now tolerates both, so normalizing is cosmetic, and every edit to durable log content carries risk. Declined as no-named-consequence.
+- **`logs/friction-log.md` "Write Activity" hook noise** — 31 lines appended this session by a hook, mechanically. Not a finding; it is the hook working.
+
+### Next Steps
+1. **The marker ALLOCATION gap — the loud half, still open and the highest-value remaining item.** This session closed only the *silent* consequence (manifest overwrite). Both loud consequences remain fully live: the wrap halt from `foreign-session-guard.sh` (`FOREIGN=2 → CONCURRENT`) and `check-foreign-staging.sh` inheriting the previous session's footprint. Fix = hoist allocation from `/prime` Step 8 to `/prime` completion; touches 8a/8b/8c plus the plan-mode guard that must write nothing. Every `/clarify`-first session hits this until it lands.
+2. **Mission thread 2's real content** — give the 30 Severity-less entries a Severity field. Log-hygiene, `/friday-act`-shaped. Only then is thread 2 honestly tickable.
+3. Mission threads 3, 4, 5, 7, 8, 9, 10 remain open (8 of 10 after this session). Thread 3 (hook wiring unversioned) jumps the queue if a second machine is near.
+4. **Push** — 10 unpushed commits in ai-resources, 1 in workspace root.
+5. Carried from S4-8c3: do not run `audits/friday-plans/2026-07-17-permissions.md` as written (thread 4: wrong target); flip the workspace-root `improvement-log.md` 2026-06-09 graduated-agent entry; Sector Intelligence pilot deploy.
+
+### Open Questions
+None.

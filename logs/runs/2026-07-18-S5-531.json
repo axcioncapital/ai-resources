@@ -1,0 +1,54 @@
+{
+  "run_id": "2026-07-18-S5-531",
+  "project": "ai-resources",
+  "date": "2026-07-18",
+  "marker": "S5-531",
+  "model": "claude-opus-4-8[1m]",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md#2026-07-18-S5-531",
+  "mission": "repo-health-backlog-2026-07",
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    "logs/scripts/run-manifest.sh",
+    "logs/scripts/run-manifest.test.sh",
+    ".claude/commands/mission.md",
+    ".claude/commands/prime.md",
+    ".claude/commands/resolve-improvement-log.md",
+    ".claude/commands/wrap-session.md",
+    "../.claude/commands/wrap-session.md",
+    "logs/improvement-log.md",
+    "logs/improvement-log-archive.md",
+    "logs/missions/repo-health-backlog-2026-07.md",
+    "logs/session-notes.md",
+    "logs/decisions.md",
+    "logs/friction-log.md",
+    "logs/session-plan-2026-07-18-S5-531.md",
+    "logs/scratchpads/2026-07-18-15-25-scratchpad.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-18-two-backlog-items-were-mis-diagnosed-the"
+  ],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": null,
+  "incidents_refs": []
+}
