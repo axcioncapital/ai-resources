@@ -16,8 +16,21 @@
     "subagents": [],
     "tools_notable": []
   },
-  "files_changed": [],
-  "decisions_refs": [],
+  "files_changed": [
+    "logs/scripts/run-manifest.sh",
+    "logs/scripts/run-manifest.test.sh",
+    "logs/missions/repo-health-backlog-2026-07.md",
+    "logs/improvement-log.md",
+    "audits/risk-checks/2026-07-18-run-manifest-cross-midnight-close-fix.md",
+    "logs/session-notes.md",
+    "logs/decisions.md",
+    "logs/session-plan-2026-07-18-S9-f53.md",
+    "logs/session-plan-2026-07-18-S9-f53-thread3-parked.md",
+    "logs/scratchpads/2026-07-18-21-17-scratchpad.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-18-s9-f53-run-manifest-sh-cross-midnight-fix"
+  ],
   "validation": [],
   "evaluator_findings": {
     "sidecar_refs": [],
@@ -29,8 +42,8 @@
     "subagents": 0,
     "token_estimate": null
   },
-  "stop_reason": null,
-  "outcome": null,
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
   "failure_class": null,
   "incidents_refs": []
 }

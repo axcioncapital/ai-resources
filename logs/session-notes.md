@@ -342,3 +342,29 @@ None.
 **Task switched at operator request.** This session first set up mission thread 3 (unversioned hook wiring); the operator redirected to a different task before implementation began. No thread-3 code was written. Its plan — which carries an execution-verified 7-registration inventory, the hardcoded-path finding, and a VS-Code environment-fit flag — is parked at `logs/session-plan-2026-07-18-S9-f53-thread3-parked.md` for whichever session takes thread 3 up.
 
 Close mission thread 8 of `repo-health-backlog-2026-07` — `run-manifest.sh` cannot close a manifest across midnight, so any session wrapping after 00:00 leaves a permanently null-outcome record in the durable substrate crash-detection reads.
+
+### Summary
+Set up mission thread 3 (unversioned hook wiring) first — wrote a mandate and a fully execution-verified plan — then the operator redirected before any thread-3 code was written. Switched to thread 8: `run-manifest.sh` couldn't close a session record across midnight. Reproduced the defect in a sandbox (two failure modes plus an unlogged third — a misleading error message), ran `/risk-check` before writing any fix, then fixed it test-first: 6 new red-then-green test cases, full suite 52→57 passing, 0 regressions. Ticked mission thread 8, flipped the origin improvement-log entry to partially applied, committed `b46449c`.
+
+### Decisions Made
+- **Task switch honored without argument.** Operator said "do a different task then" after reviewing the thread-3 plan; thread 3 was parked (plan retained on disk, not deleted) rather than discarded, since real verification work had already gone into it.
+- **Rejected the origin log entry's own proposed ~1-day staleness window for the per-id marker.** Trust is unbounded by design: attribution rests on the marker's filename (unforgeable by another session), not its date, so a window adds no safety and reintroduces the identical bug at whatever boundary it picks. Recorded in the code comment and the commit message so it isn't re-litigated.
+- **Deferred one `/risk-check` mitigation with a named reason rather than silently dropping it.** The reviewer asked for a registry note in `docs/session-marker.md`; that file was outside this session's declared scope, so the divergence is documented in `run-manifest.sh`'s own header instead, and the doc note is logged as an open follow-up (scratchpad + improvement-log entry) rather than either done-without-scope or dropped-without-mention.
+- **Skipped the end-time `/risk-check`** (workspace standing skip rule): the plan-time gate already covered the exact change that shipped, its mitigations were applied, the commit already landed, and no scope drift occurred between plan and execution.
+- **Did not dispatch a separate `/qc-pass` subagent on top of the risk-check.** Per Subagent Proportionality ("do not stack gates"), the change was already cleared by an independent `/risk-check` (consumer inventory, dimension scoring) plus test-driven execution verification stronger than a typical code-review QC pass would provide: 6 new tests written to fail against the pre-fix script, confirmed failing, then confirmed passing after the fix, against a full 57-test suite with zero regressions. The risk-check itself scored no dimension High and the blast radius as bounded/advisory-only (nothing reads the manifest yet). Judged as inline-verification-sufficient, not a case needing independent judgment.
+- **Corrected my own recall error before executing on it.** Referred to "`/mission update`" in the plan and mandate from memory; the actual verb is `check`. Caught it by reading `mission.md` before invoking, not after.
+
+### Risky actions
+None — the change is a bug fix to an existing script whose only current consumers treat it as advisory (nothing reads the manifest yet, per `principles.md § OP-5`), and it was test-verified end to end before commit.
+
+### Next Steps
+1. **Thread 3 (hook wiring)** is parked, not abandoned — plan at `logs/session-plan-2026-07-18-S9-f53-thread3-parked.md`, execution-verified inventory intact, ready to resume as-is.
+2. **Deferred `docs/session-marker.md` registry note** — add a one-line mention of `run-manifest.sh`'s bounded staleness divergence (see this session's `/risk-check` report, mitigation 2).
+3. Mission `repo-health-backlog-2026-07`: 5 of 10 threads open (3, 5, 7, 9, 10).
+4. Push — 3 commits in ai-resources this session (plus whatever the wrap commit adds).
+
+### Open Questions
+None.
+
+### Findings Declined
+None — the one open item from this session's `/risk-check` (the `docs/session-marker.md` registry note) was queued as a Next Step, not declined.
