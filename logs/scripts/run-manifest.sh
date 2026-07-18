@@ -151,25 +151,93 @@ fi
 #   caller to paste the right literal, the script resolves date and marker itself, from the same
 #   oracle `/prime` and `/wrap-session` already use (`docs/session-marker.md` § Marker resolution).
 #   An explicit --date / --marker still wins, so the tests and any future caller can pin them.
+#
+#   ⚠ ONE DELIBERATE DIVERGENCE FROM THAT DOC (2026-07-18) — stated here because it is the kind of
+#   silent drift this repo keeps paying for. `docs/session-marker.md` describes resolution as
+#   TODAY-DATED ONLY. That still holds for the SHARED marker file, but NOT for the per-session-id
+#   marker, which this script now trusts regardless of date so a session wrapping after midnight can
+#   close its own stub instead of dying. The marker grammar and lifecycle are untouched; this is a
+#   consumer-side staleness policy. Full rationale at the CROSS-MIDNIGHT block below.
 MARKER_SRC="flag"
+DATE_SRC="flag"
 if [ -z "$DATE" ]; then
   DATE="$(date '+%Y-%m-%d')"
+  DATE_SRC="today"
 fi
+LOGS_DIR="$(dirname "$RUNS_DIR")"
+PERID_MARKER_FILE="${LOGS_DIR}/.session-marker-${CLAUDE_CODE_SESSION_ID:-__unset__}"
+
+# ------------------------------------------------------------------ CROSS-MIDNIGHT CLOSE (2026-07-18)
+# THE TWO MARKER SOURCES ARE NOT INTERCHANGEABLE, AND THIS BLOCK IS WHERE THAT STOPS BEING IMPLICIT.
+#
+#   Per-id  (`.session-marker-$CLAUDE_CODE_SESSION_ID`) — trusted REGARDLESS OF DATE.
+#   Shared  (`.session-marker`)                         — trusted ONLY when dated today. Unchanged.
+#
+# WHY THE PER-ID RELAXATION IS SAFE, AND WHY THE SHARED ONE WOULD NOT BE. Attribution here rests on
+#   the FILENAME, not on the date: no other session can write a file named after this session's id,
+#   so a per-id marker is ours whatever day it was written. The shared file carries no such proof —
+#   `/prime` allocates at its Step 8, which a `/clarify`-first session never reaches, leaving the
+#   PREVIOUS session's marker in place at the same date. That is the S4-8c3 incident (2026-07-18,
+#   `logs/improvement-log.md`), and the guard at the `MARKER_SRC = .session-marker` branch below is
+#   its fix. Relaxing the date on the SHARED path would re-open it exactly; relaxing it on the
+#   per-id path cannot, because the date was never what made that path trustworthy.
+#
+# WHAT WAS BROKEN. `DATE` was re-derived from `date` on EVERY invocation, and BOTH markers were
+#   accepted only when prefixed with that fresh date. So a session that started at 23:50 and wrapped
+#   at 00:10 had a valid per-id marker dated yesterday, matched nothing, and hit `die` — exit 2,
+#   mid-wrap, with its start-stub stranded at `outcome: null` permanently. With `--marker` pinned but
+#   `--date` omitted it was worse but quieter: a SECOND manifest under today's date while the real
+#   one stayed null. Both reproduced in a sandbox before this fix; both covered by
+#   `run-manifest.test.sh` § CROSS-MIDNIGHT, which fails against the pre-fix script.
+#
+# TRUST IS UNBOUNDED, DELIBERATELY — do not "harden" this with an N-day window.
+#   The originating log entry floated bounding it to ~1 day. Rejected on purpose: safety comes from
+#   the filename, so a window adds no attribution strength, and ANY boundary just reintroduces this
+#   same bug for a session that spans it — a 3-day session is unusual, not wrong. A window would be
+#   the appearance of rigour paying for a fresh instance of the defect being fixed here.
+#
+# DEGRADES SAFE. No `CLAUDE_CODE_SESSION_ID` (older CLI) → no per-id file can be identified → this
+#   block is inert and the shared today-only path below behaves exactly as it always did.
+#
+# NOTE FOR `docs/session-marker.md` READERS: the marker GRAMMAR and lifecycle are untouched. This is
+#   a consumer-side staleness policy, and it is a deliberate, documented divergence from the
+#   "today-dated only" resolution pattern that doc describes — see the header note above.
+PERID_DATE=""; PERID_MARK=""
+if [ -n "${CLAUDE_CODE_SESSION_ID:-}" ] && [ -f "$PERID_MARKER_FILE" ]; then
+  _pl="$(cat "$PERID_MARKER_FILE" 2>/dev/null)"
+  # Shape-check before trusting: "YYYY-MM-DD <marker>". A malformed line is ignored, not guessed at.
+  case "$_pl" in
+    [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\ ?*)
+      PERID_DATE="${_pl%% *}"; PERID_MARK="${_pl#* }" ;;
+  esac
+fi
+
+# (1) No --marker: adopt this session's own marker AND the date it was allocated under.
+if [ -z "$MARKER" ] && [ -n "$PERID_MARK" ]; then
+  MARKER="$PERID_MARK"
+  MARKER_SRC="$(basename "$PERID_MARKER_FILE")"
+  if [ "$DATE_SRC" = "today" ]; then DATE="$PERID_DATE"; DATE_SRC="per-id-marker"; fi
+fi
+
+# (2) --marker pinned but --date omitted: take the date from this session's own marker when it names
+#     the SAME marker. Without this, a pinned-marker wrap forks a second manifest across midnight.
+#     The equality test is what keeps it attributable — an unrelated pinned marker is left alone.
+if [ "$DATE_SRC" = "today" ] && [ -n "$PERID_MARK" ] && [ "$MARKER" = "$PERID_MARK" ]; then
+  DATE="$PERID_DATE"; DATE_SRC="per-id-marker"
+fi
+
+# (3) Shared marker — TODAY-ONLY. Deliberately unchanged; see the rationale above.
 if [ -z "$MARKER" ]; then
-  # Per-session-id marker first (no concurrent session can clobber it), then the shared file.
-  LOGS_DIR="$(dirname "$RUNS_DIR")"
-  for cand in "${LOGS_DIR}/.session-marker-${CLAUDE_CODE_SESSION_ID:-__unset__}" "${LOGS_DIR}/.session-marker"; do
-    [ -f "$cand" ] || continue
-    line="$(cat "$cand" 2>/dev/null)"
-    # Format: "YYYY-MM-DD SN". Only trust it if it is dated TODAY — a stale marker from a prior
-    # day would otherwise write this session's state into another session's manifest.
+  _shared="${LOGS_DIR}/.session-marker"
+  if [ -f "$_shared" ]; then
+    line="$(cat "$_shared" 2>/dev/null)"
     case "$line" in
-      "${DATE} "*) MARKER="${line#* }"; MARKER_SRC="$(basename "$cand")"; break ;;
+      "${DATE} "*) MARKER="${line#* }"; MARKER_SRC=".session-marker" ;;
     esac
-  done
+  fi
 fi
 if [ -z "$MARKER" ]; then
-  die "could not resolve the session marker (no --marker, and no today-dated marker file under ${LOGS_DIR:-$RUNS_DIR/..}). Run /prime to seed the marker, or pass --marker explicitly."
+  die "could not resolve the session marker (no --marker; no per-id marker at ${PERID_MARKER_FILE}; and no today-dated ${LOGS_DIR}/.session-marker). Run /prime to seed the marker, or pass --marker explicitly."
 fi
 
 # ----------------------------------------------- session-identity cross-check (added 2026-07-18)
@@ -409,7 +477,19 @@ s["stop_reason"] = "completed"
 s["lane"] = s.get("lane") or None
 save(fp, s)
 ' || die "failed to write wrap-time stub at ${MANIFEST}"
-      note "no start-stub existed (session skipped mandate confirmation) — wrote a wrap-time stub instead. Advisory only; not an error."
+      # DO NOT ASSERT A CAUSE THIS CODE CANNOT SEE. The old text named exactly one ("session skipped
+      # mandate confirmation") and stated it flatly. Across midnight that was simply WRONG — a stub
+      # did exist, under yesterday's date — and a confidently wrong diagnosis at 00:10 is how the
+      # cross-midnight defect stayed invisible. The resolver above now handles that case; this
+      # message still must not out-claim its evidence, because a mis-pinned `--date` reaches here too.
+      # `find`, not a glob: an unmatched glob under zsh errors instead of expanding empty.
+      _sibling="$(find "$RUNS_DIR" -maxdepth 1 -name "*-${MARKER}.json" \
+                    ! -name "$(basename "$MANIFEST")" 2>/dev/null | head -n 2 | tr '\n' ' ')"
+      if [ -n "$_sibling" ]; then
+        note "no start-stub at $(basename "$MANIFEST") — but marker ${MARKER} already has a manifest under a DIFFERENT date: ${_sibling}. A wrap-time stub was written anyway, so this session may now hold TWO records. If it started on the other date, close that one with --date <that date> and delete this stub."
+      else
+        note "no start-stub existed for ${DATE}-${MARKER} (no /session-start or /prime mandate step ran, most likely) — wrote a wrap-time stub instead. Advisory only; not an error."
+      fi
     fi
     python3 -c "$PY_LIB"'
 fp = os.environ["M_FILE"]

@@ -330,3 +330,15 @@ Edited a permission deny list in `~/.claude/settings.json` — a file **outside 
 
 ### Open Questions
 None.
+
+## 2026-07-18 — Session S9-f53
+**Mandate:** Fix `run-manifest.sh` so a session wrapping after midnight closes its own start-stub instead of dying or writing a second manifest — done when: the reproduced failure goes red-to-green by execution, a midnight case is added to `run-manifest.test.sh` and passes, mission thread 8 is ticked via `/mission update`, and the improvement-log entry is flipped citing what shipped
+- Out of scope: the session-marker file grammar and `docs/session-marker.md`'s marker contract (widening there is thread-3/marker territory and needs its own gate); the other four open mission threads (3, 5, 7, 9, 10); `/wrap-session`'s own step ordering
+- Files in scope: logs/scripts/run-manifest.sh, logs/scripts/run-manifest.test.sh, logs/missions/repo-health-backlog-2026-07.md, logs/improvement-log.md
+- Stop if: the fix cannot be made without changing the marker-file grammar or the `docs/session-marker.md` contract; the test harness cannot be made to reproduce the midnight case deterministically
+- Allowed inputs: docs/spine-schemas.md, docs/session-marker.md, .claude/commands/wrap-session.md, .claude/commands/session-start.md
+- Mission: repo-health-backlog-2026-07
+
+**Task switched at operator request.** This session first set up mission thread 3 (unversioned hook wiring); the operator redirected to a different task before implementation began. No thread-3 code was written. Its plan — which carries an execution-verified 7-registration inventory, the hardcoded-path finding, and a VS-Code environment-fit flag — is parked at `logs/session-plan-2026-07-18-S9-f53-thread3-parked.md` for whichever session takes thread 3 up.
+
+Close mission thread 8 of `repo-health-backlog-2026-07` — `run-manifest.sh` cannot close a manifest across midnight, so any session wrapping after 00:00 leaves a permanently null-outcome record in the durable substrate crash-detection reads.

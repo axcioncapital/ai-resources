@@ -286,6 +286,78 @@ bash logs/scripts/check-decision-refs.sh "$T/orphan.json" >/dev/null 2>&1
 ck 1 $? "an ORPHAN ref exits 1 — the check is falsifiable, not decorative"
 
 echo
+echo "=== CROSS-MIDNIGHT CLOSE — a session that wraps after 00:00 must close ITS OWN stub ==="
+# Mission repo-health-backlog-2026-07 thread 8. Reproduced pre-fix: `close` with no flags exits 2
+# and strands the stub at outcome=null forever; with --marker but no --date it writes a SECOND
+# manifest under today's date while the real one stays null.
+#
+# NO CLOCK MOCKING IS NEEDED, and that is deliberate: the defect's real condition is
+# "the marker's date != the current date", so a marker dated 2099-03-01 reproduces it exactly and
+# deterministically on every future run. A test that shifted the system clock would be both
+# fragile and unnecessary.
+MD="$T/midnight"; ML="$MD/logs"; MR="$ML/runs"; mkdir -p "$MR"
+SID="sess-midnight-aaa"
+TODAY_REAL="$(date '+%Y-%m-%d')"
+
+# --- case 1: no flags at all (the documented /wrap-session path) ---
+printf '2099-03-01 M1-aaa\n' > "$ML/.session-marker-$SID"
+printf '2099-03-01 M1-aaa\n' > "$ML/.session-marker"
+CLAUDE_CODE_SESSION_ID="$SID" bash "$S" start --date 2099-03-01 --marker M1-aaa \
+  --runs-dir "$MR" --model opus >/dev/null 2>&1
+CLAUDE_CODE_SESSION_ID="$SID" bash "$S" close --runs-dir "$MR" --outcome DELIVERED >/dev/null 2>&1
+ck 0 $? "close with NO flags across a date boundary -> exit 0 (was exit 2: die)"
+ckv "DELIVERED" "$(python3 -c "import json;print(json.load(open('$MR/2099-03-01-M1-aaa.json'))['outcome'])" 2>/dev/null)" \
+    "  ...and it closed the ORIGINAL stub, not a new one"
+[ ! -f "$MR/$TODAY_REAL-M1-aaa.json" ]
+ck 0 $? "  ...and wrote NO second manifest under the current date"
+
+# --- case 2: --marker pinned but --date omitted (the split-manifest half) ---
+printf '2099-03-02 M2-aaa\n' > "$ML/.session-marker-$SID"
+CLAUDE_CODE_SESSION_ID="$SID" bash "$S" start --date 2099-03-02 --marker M2-aaa \
+  --runs-dir "$MR" --model opus >/dev/null 2>&1
+CLAUDE_CODE_SESSION_ID="$SID" bash "$S" close --marker M2-aaa --runs-dir "$MR" \
+  --outcome DELIVERED >/dev/null 2>&1
+ckv "DELIVERED" "$(python3 -c "import json;print(json.load(open('$MR/2099-03-02-M2-aaa.json'))['outcome'])" 2>/dev/null)" \
+    "--marker without --date closes the real stub (was: wrote a SECOND manifest)"
+[ ! -f "$MR/$TODAY_REAL-M2-aaa.json" ]
+ck 0 $? "  ...and no duplicate manifest under the current date"
+
+# --- case 3: multi-day idle. Trust is UNBOUNDED by deliberate decision (see run-manifest.sh
+#     header): attribution safety comes from the per-id FILENAME, not from the date, so a bounded
+#     window would only reintroduce this same bug at whatever boundary it picked. ---
+printf '2099-01-05 M3-aaa\n' > "$ML/.session-marker-$SID"
+CLAUDE_CODE_SESSION_ID="$SID" bash "$S" start --date 2099-01-05 --marker M3-aaa \
+  --runs-dir "$MR" --model opus >/dev/null 2>&1
+CLAUDE_CODE_SESSION_ID="$SID" bash "$S" close --runs-dir "$MR" --outcome PARTIAL >/dev/null 2>&1
+ckv "PARTIAL" "$(python3 -c "import json;print(json.load(open('$MR/2099-01-05-M3-aaa.json'))['outcome'])" 2>/dev/null)" \
+    "a marker MONTHS stale still closes its own stub (trust is unbounded by design)"
+
+echo
+echo "=== ...WITHOUT re-opening the S4-8c3 attributable-overwrite hole (guard added 2026-07-18) ==="
+# The naive fix — "stop requiring the marker to be dated today" — would let a session claim the
+# SHARED marker, which may name a DIFFERENT session. Relaxation is confined to the per-id marker.
+FD="$T/foreign"; FL="$FD/logs"; FR="$FL/runs"; mkdir -p "$FR"
+printf '%s F9-zzz\n' "$TODAY_REAL" > "$FL/.session-marker"   # shared file names a FOREIGN session
+# no per-id marker for our session id -> nothing proves the shared marker is ours
+CLAUDE_CODE_SESSION_ID="sess-other-bbb" bash "$S" close --runs-dir "$FR" --outcome DELIVERED >/dev/null 2>&1
+ck 0 $? "shared-marker-only + session id set -> NOTICE, exit 0 (identity guard intact)"
+[ ! -f "$FR/$TODAY_REAL-F9-zzz.json" ]
+ck 0 $? "  ...and the foreign session's manifest was NOT written over"
+
+# A STALE shared marker must still be refused — the relaxation must not leak to the shared path.
+printf '2099-03-01 F8-zzz\n' > "$FL/.session-marker"
+CLAUDE_CODE_SESSION_ID="sess-other-bbb" bash "$S" close --runs-dir "$FR" --outcome DELIVERED >/dev/null 2>&1
+ck 2 $? "a STALE shared marker is still refused (relaxation did NOT leak to the shared path)"
+
+# Older CLI: no session id -> per-id path cannot apply -> legacy today-only behaviour preserved.
+printf '2099-03-01 L7-yyy\n' > "$FL/.session-marker"
+env -u CLAUDE_CODE_SESSION_ID bash "$S" close --runs-dir "$FR" --outcome DELIVERED >/dev/null 2>&1
+ck 2 $? "no CLAUDE_CODE_SESSION_ID + stale shared marker -> unchanged legacy exit 2"
+printf '%s L6-yyy\n' "$TODAY_REAL" > "$FL/.session-marker"
+env -u CLAUDE_CODE_SESSION_ID bash "$S" start --runs-dir "$FR" --model opus >/dev/null 2>&1
+ck 0 $? "no CLAUDE_CODE_SESSION_ID + today-dated shared marker -> still works (legacy intact)"
+
+echo
 echo "RESULT: $PASS passed, $FAIL failed"
 rm -rf "$T"
 [ "$FAIL" -eq 0 ]
