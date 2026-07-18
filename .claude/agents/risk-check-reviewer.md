@@ -58,6 +58,14 @@ grep -rniI --exclude-dir=.git "<term>" "{AI_RESOURCES}" "{AI_RESOURCES}/.."
 
 Use `Grep`/`Glob` rather than raw Bash where it is cleaner; the requirement is coverage, not the tool. Search `.claude/commands/`, `.claude/agents/`, `.claude/hooks/`, `skills/`, `workflows/`, `docs/`, and always-loaded `CLAUDE.md` files at minimum.
 
+**Instrument check — a consumer inventory is an absence-claim, so state what could not see it.** The grep above names absolute paths and is therefore *not* affected by the shadowed `grep` (see `docs/audit-discipline.md` § Absence-claims). But if you narrow it to a dot-rooted walk (`grep -r <term> .`), the ambient `grep` silently skips every gitignored path — measured at 122 vs 194 files in `ai-resources` — and "no consumers found" becomes indistinguishable from "could not see them". If an inventory returning **zero or near-zero** hits is about to carry a verdict, prove the instrument first:
+
+```
+. logs/scripts/search-canary.sh     # $SEARCH_CANARY = clear | blind | inconclusive
+```
+
+If it reports `blind`, re-run the inventory with `command grep -r` before scoring Blast Radius.
+
 **Produce the inventory.** Record one row per distinct consumer:
 
 - `consumer path` — the file that references the change target.

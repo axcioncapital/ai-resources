@@ -58,6 +58,14 @@ grep -rn "<name>" projects/*/logs/ projects/*/CLAUDE.md                         
 
 > **no evidence of use in scanned scope → CONFIRM BEFORE DELETE**
 
+*Prove the instrument before reporting a zero.* Q3's whole output is an absence-claim, so a blind scan produces a false orphan — the most expensive error this audit can make. The scans above name subdirectories and are therefore immune to the shadowed `grep`, but a dot-rooted walk (`grep -r <name> .`) is not: the ambient `grep` skips every gitignored path, including `logs/scratchpads/`, which is exactly where un-logged usage evidence would sit (`docs/audit-discipline.md` § Absence-claims). **Before emitting any zero-hit Q3 finding**, run:
+
+```
+. logs/scripts/search-canary.sh     # $SEARCH_CANARY = clear | blind | inconclusive
+```
+
+On `blind`, re-run with `command grep -r` and report which instrument produced the zero. A Q3 finding that does not name its instrument is not yet a finding.
+
 and **state the scanned scope explicitly in the report**, so a reader can see what the instrument could not see. A Q3 finding is a question for the operator, never an instruction to them.
 
 *Falsifiability — check the instrument before you trust the measurement.* Before reporting any Q3 result, run the corrected scan against a **known-positive**: a command you already know is used only from a project (`/explore-section`, invoked in `axcion-design-studio`, is the standing ground truth). If the scan does not find it, the scan is broken and **every Q3 result this pass is void** — report the instrument failure instead of the findings. The question is never *"is there evidence of use?"* but *"would my method see the evidence if it existed?"*

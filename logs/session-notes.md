@@ -411,3 +411,18 @@ None taken. One nearly-taken and correctly gated: creating three GitHub repos an
 ### Open Questions
 - Should `mission_name` be updated despite frontmatter being frozen? (16 threads, name says 10.)
 - Research-workflow thread 7's acceptance test is unsatisfiable (enum mismatch, zero overlap). Amending it means amending a frozen validation contract — operator decision.
+
+## 2026-07-18 — Session S11-637
+**Mandate:** Establish whether the repo's search instrument actually compromises its absence-claims, and make the answer durable — done when: the instrument's real scope is measured rather than assumed, a known-positive canary demonstrably reports `blind` when sourced and refuses when executed, the finding is written into `docs/audit-discipline.md`, and the changes are committed
+- Out of scope: editing scan sites proven immune (churn, no named consequence); removing the shell shadowing itself (harness-owned, regenerated per session); any other mission thread
+- Files in scope: logs/scripts/search-canary.sh, docs/audit-discipline.md, .claude/agents/risk-check-reviewer.md, .claude/agents/lean-repo-auditor.md, logs/missions/repo-health-backlog-2026-07.md
+- Stop if: /risk-check returns RECONSIDER or NO-GO
+- Required outputs: logs/scripts/search-canary.sh
+- Mission: repo-health-backlog-2026-07
+- ⚠ SCOPE CORRECTED TWICE MID-SESSION, both times by execution, both times narrowing. **14 → 4:** (a) `--ignore-files` filters tree traversal ONLY — a gitignored file named explicitly is still searched (`grep "defaultMode" .claude/settings.local.json` → 1 hit, matching `command grep`), so explicit-path greps are immune; (b) the count of 14 came from a heuristic regex of mine that over-matched *prose mentions* of grep. **4 → 0:** only the dot-rooted walk (`grep -r <term> .`) is blind — a named subdirectory or absolute path is not — and **no committed site anywhere uses that form**, so the prescribed site edits would have been churn. The thread's own fix instruction was overridden on measured evidence; `/risk-check` independently re-verified the zero and confirmed the override was correct (`audits/risk-checks/2026-07-18-end-time-search-canary-absence-claim-rule-zero-site-edits.md`). What replaced the site edits: the canary + the `audit-discipline.md` rule + canary pointers at the two agents that make load-bearing absence-claims (`risk-check-reviewer` consumer inventory, `lean-repo-auditor` Q3 orphan verdict) — the last of these added as a required `/risk-check` mitigation, to stop the canary shipping as an unwired orphan.
+- Required outputs: logs/scripts/search-canary.sh
+- Mission: repo-health-backlog-2026-07
+
+Repo-health mission `repo-health-backlog-2026-07` — thread 11 first (dependency-ordered): the shell `grep` resolves to a gitignore-aware function, so every absence-claim made through it carries silent false-negative risk. Fix the scanning sites to use `command grep` / `git grep` / `rg -uu` with explicit scope, plus a known-positive canary so blindness announces itself instead of returning a clean-looking zero.
+
+**Premise verified before scoping (S11-637):** `grep` is a shell function at snapshot line 83 → bundled ugrep with `--ignore-files -I --exclude-dir=.git`; reproduced at 122 vs 194 files in this repo. Two corrections to the thread as written: (a) `find` is shadowed too (→ `bfs`, line 71) but carries no ignore flags, so it is *not* blind — record, do not fix; (b) the blind set is `audits/working/` + `logs/scratchpads/` + `inbox/archive/`, and `CLAUDE.md § Subagent Contracts` *requires* audit subagents to write their notes into `audits/working/` — the repo's own convention writes evidence into the one directory its search instrument cannot see.

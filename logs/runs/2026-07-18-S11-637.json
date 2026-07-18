@@ -1,0 +1,36 @@
+{
+  "run_id": "2026-07-18-S11-637",
+  "project": "ai-resources",
+  "date": "2026-07-18",
+  "marker": "S11-637",
+  "model": "claude-opus-4-8[1m]",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md#2026-07-18-S11-637",
+  "mission": "repo-health-backlog-2026-07",
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [],
+  "decisions_refs": [],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": null,
+  "outcome": null,
+  "failure_class": null,
+  "incidents_refs": []
+}

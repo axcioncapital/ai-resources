@@ -16,6 +16,43 @@ This is a bright-line rule — do not skip even when the audit tags a recommenda
 
 Backlog logs and dated audit reports go stale — an item is fixed (committed) but its log entry is never status-flipped, or a dated report freezes a finding a later commit resolves. **When a backlog/log/report candidate conflicts with live repo state (git log, filesystem), live state wins; logs are advisory.** Any issue-surfacing scan must reconcile its candidate list against live state before surfacing candidates as actionable. The canonical mechanism (merged multi-repo `git log --since=<anchor>` cross-check, conservative keyword-match, advisory demote-and-tag — never edit logs) is defined once in `backlog-reconciliation.md`; its consumers are `/prime`, `/fix-project-issues`, `/fix-repo-issues`, and `/open-items`. Edit the primitive there, not in each command.
 
+## Absence-claims: the search instrument is not neutral
+
+An audit's most common output is an absence-claim — *"nothing references X"*, *"no consumer exists"*, *"this hook is registered nowhere"*. Those claims are only as good as the instrument, and in a Claude Code session the instrument is shadowed.
+
+**The fact.** The harness writes a shell snapshot that replaces `grep` with a bundled `ugrep -G --ignore-files --hidden -I --exclude-dir=.git`. `--ignore-files` honours `.gitignore`. Measured in `ai-resources` 2026-07-18: `grep -rl "Severity" .` → **122** files; `command grep -rl` → **194**. The 72-file gap is `audits/working/`, `logs/scratchpads/`, `inbox/archive/`, `/archive/`.
+
+**Why that gap is the worst possible one.** `CLAUDE.md § Subagent Contracts` *requires* audit subagents to write their full findings into `audits/working/`. The repo's convention deposits its evidence in a directory its default search instrument cannot see.
+
+**The scope is narrow — know it precisely, and do not over-correct.** Verified by execution 2026-07-18:
+
+| Form | Blind? |
+|---|---|
+| `grep -r <term> .` or `./` | **YES** |
+| `grep -r <term> <subdir>` | no |
+| `grep -r <term> /abs/path` | no |
+| `grep <term> <file>` (even a gitignored file) | no |
+| any `grep` inside a script file (`.sh`) | no — the shadow is a shell function and does not cross a process boundary |
+
+So the exposure is **not** in committed scan sites. Checked 2026-07-18: no site in `.claude/commands`, `.claude/agents`, `.claude/hooks` or `logs/scripts` uses the dot-rooted form. The exposure is in the **ad-hoc `grep -r <term> .` a session types while verifying something** — including the greps used to gather evidence for audits and mission threads. It is a property of how we *verify*, not of what we have *committed*. Do not "fix" immune sites; that is churn with no consequence.
+
+**The rule.** Any claim of the form *"there is no X"* must be made with an instrument that can see everything, and must say which:
+
+```
+command grep -r <term> .   # everything, ignores .gitignore
+git grep <term>            # tracked files only — honest, and states its own scope
+```
+
+**When in doubt, prove it.** `logs/scripts/search-canary.sh` plants a known-positive in a gitignored path and reports whether the ambient shell can find it. It **must be sourced, not executed** — an executed script is a child process where `grep` is already the real `grep`, so it would report "clear" in every session including blind ones:
+
+```
+. logs/scripts/search-canary.sh     # $SEARCH_CANARY = clear | blind | inconclusive
+```
+
+Advisory, not a gate — nothing blocks on `blind`. Reach for it when an absence-claim is load-bearing (a deletion, an orphan verdict, a consumer inventory), not on every scan.
+
+**Origin:** mission `repo-health-backlog-2026-07` thread 11, 2026-07-18. The thread was filed as "every absence-claim in every past audit is unreliable"; execution narrowed it to the dot-rooted ad-hoc form and found zero committed sites affected. The narrowing is the finding — a blanket rewrite of every `grep` in the repo would have been the wrong fix.
+
 ## Risk-check change classes
 
 If a session touches a structural change in any of the following classes, run `/risk-check` at two session boundaries (not per-change — see *When to fire* below):
