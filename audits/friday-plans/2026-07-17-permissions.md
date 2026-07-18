@@ -1,5 +1,41 @@
 # Friday Act Plan — 2026-07-17 — permissions
 
+> # ⚠ SUPERSEDED IN PART — 2026-07-18 (S6-ac5). Do not run as written.
+>
+> **Read this banner before executing any item.** The plan is not retired wholesale — items 2, 3 and 4
+> were **not assessed** on 2026-07-18 and there is no reason to think they are wrong. What follows is
+> scoped precisely, because killing valid queued work would be its own defect.
+>
+> ### 1. This plan is NOT a fix for the `git checkout` block. Do not run it believing it is.
+>
+> `logs/missions/repo-health-backlog-2026-07.md` thread 4 states that this plan "targets those Read
+> patterns and would ship without unblocking git." **That routing is spurious — verified 2026-07-18 by
+> reading this plan in full.** It touches neither `Bash(git checkout *)` **nor** the archive `Read()`
+> patterns. It is simply not about thread 4. The real blocking rule is `Bash(git checkout *)` at
+> `~/.claude/settings.json:47` and workspace-root `.claude/settings.json:27` — proven by execution:
+> `git checkout --help`, which reads nothing and names no archive path, is denied.
+>
+> ### 2. Item 1's ai-resources finding is FALSE — verified, do not act on it.
+>
+> Item 1 cites *"ai-resources `settings.local.json` Rule 5 (narrow `Bash(...)` grants, no `Bash(*)`)"*.
+> Literally true and **operationally meaningless**: the sibling `.claude/settings.json` grants `Bash(*)`,
+> and **both** files set `defaultMode: bypassPermissions`. The merged effective permission set already
+> allows everything. Verified by direct read of both files, 2026-07-18.
+>
+> **The other two thirds of item 1 (brand-book Rule 3, ipc/knowledge-base Rule 4) were NOT verified**
+> and are **suspect by association, not disproven** — they were produced by the same `/permission-sweep`
+> Rules 5/6 defect that generated the false one (each judges a single file's `allow` array without
+> evaluating the merged layer stack or `defaultMode`; this is mission thread 5). **Re-verify each against
+> the merged effective permissions before acting.** Do not run `/permission-sweep` non-dry to "remediate
+> all three in one pass" until that defect is fixed — the sweep is the thing that produced the false HIGH.
+>
+> ### 3. Items 2, 3, 4 — untouched by this review.
+>
+> Not assessed on 2026-07-18. The DR-10 concurrency precondition below still applies to them.
+>
+> *Full verification record: `audits/working/thread-verification-2026-07-18-S6.md` (note: `audits/working/`*
+> *is gitignored, so that file is on disk but not in git history).*
+
 **Source report:** friday-checkup-2026-07-17.md (weekly tier, recovery run)
 **Journal report:** (none — freshest is 2026-05-29, outside the 7-day window)
 **Generated:** 2026-07-17

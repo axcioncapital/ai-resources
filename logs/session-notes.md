@@ -433,6 +433,7 @@ None.
 - Out of scope: thread 3 (hook-wiring installer — its own gated session, scored High/High on /risk-check twice); mission threads 5, 7, 9, 10; the research-workflow-deploy-fitness mission; project repos under projects/; workspace-root files other than the settings file thread 4 names
 - Files in scope: logs/improvement-log.md, logs/missions/repo-health-backlog-2026-07.md, logs/session-notes.md, docs/permission-template.md, .claude/settings.json, ../.claude/settings.json, /Users/patrik.lindeberg/.claude/settings.json, logs/scripts/run-manifest.sh, logs/scripts/run-manifest.test.sh
 - Stop if: /risk-check returns NO-GO on a settings-file change; thread 4's fix would require writing ~/.claude/settings.json without a backup design (that is thread 3's carved-out scope); an edit would touch a file a live concurrent session owns
+- Scope growth (declared, not silent): `audits/friday-plans/2026-07-17-permissions.md` added to the footprint on operator authorization mid-session. It was not in the original `Files in scope`. Reason: verification established the plan is mis-routed to thread 4 and that its item 1 rests on a false CRITICAL, so leaving it armed means a future session runs a `/risk-check` against a finding known to be wrong. Marked SUPERSEDED-IN-PART (banner only; no item deleted — items 2/3/4 were never assessed and stay valid).
 - Required outputs: audits/working/thread-verification-2026-07-18-S6.md, logs/runs/2026-07-18-S6-ac5.json, any /risk-check report under audits/risk-checks/
 - Mission: repo-health-backlog-2026-07
 
