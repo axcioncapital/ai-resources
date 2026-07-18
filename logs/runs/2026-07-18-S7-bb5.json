@@ -16,8 +16,23 @@
     "subagents": [],
     "tools_notable": []
   },
-  "files_changed": [],
-  "decisions_refs": [],
+  "files_changed": [
+    ".claude/commands/prime.md",
+    ".claude/commands/session-start.md",
+    ".claude/commands/session-plan.md",
+    "logs/improvement-log.md",
+    "logs/decisions.md",
+    "logs/session-notes.md",
+    "logs/session-plan-2026-07-18-S7-bb5.md",
+    "logs/usage-log.md",
+    "logs/scratchpads/2026-07-18-19-11-scratchpad.md",
+    "audits/risk-checks/2026-07-18-session-plan-step8-caller-aware-gate.md",
+    "audits/working/gate-token-design-2026-07-18-S7-bb5.md",
+    "../projects/axcion-sector-intelligence/.claude/commands/session-plan.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-18-s7-bb5-carry-prime-8a-s-post-plan-gate-as-a-token"
+  ],
   "validation": [],
   "evaluator_findings": {
     "sidecar_refs": [],
@@ -29,8 +44,8 @@
     "subagents": 0,
     "token_estimate": null
   },
-  "stop_reason": null,
-  "outcome": null,
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
   "failure_class": null,
   "incidents_refs": []
 }
