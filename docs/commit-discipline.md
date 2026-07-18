@@ -69,6 +69,25 @@ A prose warning saying exactly this — *"Never remove a worktree a live session
 
 **Test harness:** `logs/scripts/test-destructive-liveness.sh` (14 cases: negative / self-target / idle-target / live-target). It went **red twice** before it went green — once because the hook degraded *open* on the very command it exists to stop (a quoted path containing spaces resolved to an empty target). Run it after any edit to the hook. A test that has never failed has never been tested.
 
+## Destructive git-checkout forms (model-side rule — NOT enforced)
+
+**Read the honesty label first.** This is a behavioural rule with **no hook and no deny rule behind it**. By the standard the section above establishes — *a rule you must remember to read is not a control; it is a wish* — this is a wish. It is written down because the alternative was worse, not because it protects anything.
+
+**The rule.** These forms discard uncommitted work irreversibly. Do not run them on a repo with a dirty working tree without first stashing (`git stash`) or asking the operator:
+
+- `git checkout .` and `git checkout -- <path>` — discard changes to the tree / a path
+- `git checkout <tree-ish> -- <path>` and `git checkout HEAD .` — overwrite from another commit
+- `git checkout <file>` (bare pathspec, no `--`) — same discard; **the most common accident**
+- `git checkout -f` / `--force` — discard on switch
+- `git checkout -p` / `--patch` — discard selected hunks
+- `git restore <path>` — git's modern equivalent, identical effect, never denied in any layer
+
+Safe and unrestricted: `git checkout <branch>`, `-b`, `-B`, `-`, `--ours`/`--theirs`, `--detach`, `--track`, `--help`. Git itself refuses a branch switch that would clobber local modifications, so the switch forms carry their own guard.
+
+**Why there is no deny rule (2026-07-18, mission `repo-health-backlog-2026-07` thread 4).** There was one — `Bash(git checkout *)` — and it was retired because it denied by **verb, not effect**: it blocked `git checkout --help`, stalled work in 5 logged sessions, and `bypassPermissions` cannot waive a deny. The obvious repair — enumerate the destructive forms in the deny list — was attempted 2026-07-14, scored `RECONSIDER`, and re-tested by execution on 2026-07-18. It **cannot work**: `git checkout foo` is identical in shape whether `foo` is a branch or a file, so no static glob can classify it; a pattern broad enough to catch the bare-pathspec form also wrongly blocks `git checkout "branch with space"` (both verified by execution). The destructive set is open-ended, which is the property that defeats deny-lists.
+
+**What would actually enforce this** is a `PreToolUse` hook that parses the command and asks git whether the argument resolves to a ref — the shape `check-destructive-liveness.sh` already uses for its own verbs. That is queued, not built. Until it exists, this section is documentation of a known gap, not a countermeasure. **Do not cite it as one.**
+
 ## Shared-log write-path integrity (read-during-rewrite hazard)
 
 The non-append shared logs (`logs/improvement-log.md`, `logs/friction-log.md`) are written by several actors (the `session-feedback-collector` agent, `/improve`, manual edits, `/resolve-improvement-log`). When two run concurrently, a `Read` that lands inside another actor's non-atomic full-file rewrite returns a **silently truncated** file that looks complete — and a downstream `Write` of that "full" content persists the truncation as a mass deletion. Real near-miss (2026-06-05 S7): a `Read` returned a 17-line snapshot of a ~24-entry `improvement-log.md` mid-rewrite; had it been written back, ~23 entries would have been destroyed.

@@ -69,7 +69,7 @@ Canonical shape:
     ],
     "deny": [
       "Bash(rm -rf *)", "Bash(sudo *)",
-      "Bash(git reset --hard *)", "Bash(git checkout *)"
+      "Bash(git reset --hard *)"
     ]
   }
 }
@@ -80,6 +80,8 @@ Canonical shape:
 - Dotfile-path glob: `Edit(**/.claude/**)` and `Write(**/.claude/**)` — covers nested `.claude/` directories across all projects (root cause #2).
 - **No absolute-path `Edit(/Users/...)` / `Write(/Users/...)` globs** — RETIRED 2026-06-27 as portability defects (mission `settings-path-portability`, Group 3). They were never functional fallbacks: a single-leading-slash glob is project-root-relative (resolves to `<project-root>/Users/...`, matching nothing), and under `defaultMode: bypassPermissions` all allow-rules are ignored anyway. Machine-specific config, where genuinely needed, lives only in gitignored `settings.local.json`. See `docs/settings-portability-invariant.md`.
 - `Bash(rm *)` in allow — fixes Delete/Remove prompts. `rm -rf` still denied.
+- **`Bash(git checkout *)` RETIRED 2026-07-18** (mission `repo-health-backlog-2026-07` thread 4; risk-check `audits/risk-checks/2026-07-18-narrow-git-checkout-deny-rule-two-settings-layers.md`). It denied by **verb, not by effect** — `git checkout --help`, which cannot modify a byte, was blocked, as were `<branch>`, `-b`, `--ours`/`--theirs`. It stalled work in 5 logged sessions, once freezing both open sessions mid-merge, and `bypassPermissions` cannot waive a deny. **Do not restore it, and do not replace it with an enumerated deny list of destructive forms** — that was attempted 2026-07-14, scored `RECONSIDER`, and is recorded at `logs/improvement-log.md` (2026-07-14) as the wrong shape because the destructive set is open-ended. A 2026-07-18 re-attempt confirmed it by execution: the most common accident form, `git checkout <file>` (bare pathspec, no `--`), is **structurally uncatchable** by any glob, because `git checkout foo` is identical in shape whether `foo` is a branch (safe) or a file (destructive) — only git can resolve which.
+- **Accepted residual risk, documented rather than silently shipped.** Destructive checkout forms (`git checkout .`, `-- <path>`, `<tree-ish> -- <path>`, `-f`, `-p`) are now unguarded at this layer. This is a smaller change than it appears: `git restore <file>` — git's own modern replacement for `git checkout -- <file>` — achieves identical discard and has **never** been denied in any layer, so equivalent capability was always one verb away. The blanket rule offered the appearance of protection, not protection. The model-side rule lives in `docs/commit-discipline.md` § Destructive git-checkout forms; real enforcement, if wanted, belongs in a `PreToolUse` hook that can parse the command (queued, not built).
 - Additional denies for destructive git ops (workspace-root-specific safeguards).
 
 ---
