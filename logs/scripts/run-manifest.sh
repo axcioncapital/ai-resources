@@ -172,6 +172,93 @@ if [ -z "$MARKER" ]; then
   die "could not resolve the session marker (no --marker, and no today-dated marker file under ${LOGS_DIR:-$RUNS_DIR/..}). Run /prime to seed the marker, or pass --marker explicitly."
 fi
 
+# ----------------------------------------------- session-identity cross-check (added 2026-07-18)
+# WHY: the shared `logs/.session-marker` is a VALID-LOOKING ORACLE THAT CAN POINT AT ANOTHER
+#   SESSION. `/prime` allocates the marker at its Step 8, which is reached only when the operator
+#   picks a menu item or states a task. A session opening with `/clarify` (or `/consult`, or any
+#   path that never selects a task) allocates nothing — so the shared file still holds the
+#   PREVIOUS session's marker, same date, therefore not pruned by the today-check in the loop
+#   above. `close` would then resolve to that session's manifest and OVERWRITE ITS RECORD, with
+#   no error and nothing to notice. Observed live 2026-07-18, session S4-8c3
+#   (`logs/improvement-log.md` 2026-07-18 entry): avoided only because the operator happened to
+#   read the marker file by eye.
+#
+# THE TEST IS PRESENCE OF THIS SESSION'S OWN MARKER — NOT A COMPARISON OF NAMES. Reaching this
+#   point already proves the per-id marker `logs/.session-marker-$CLAUDE_CODE_SESSION_ID` did not
+#   supply a today-dated marker, because the resolution loop tries it FIRST and would have set
+#   MARKER_SRC to that filename. So this session never allocated a marker, and the shared file
+#   cannot be attributed to it whatever it contains.
+#
+#   An earlier version of this guard compared the marker's 3-character id suffix against this
+#   session's first three alphanumerics. That was NOT collision-resistant — `/prime` Step 8k cuts
+#   the suffix to 3 chars, so two sessions sharing a 3-char id prefix produce the same suffix and
+#   the guard waved the second one through (reproduced: session `abc99999-…` accepted marker
+#   `S3-abc` from a different `abc…` session and wrote its manifest). Lengthening the suffix was
+#   rejected: the suffix is part of the marker GRAMMAR that session-notes headers, plan filenames,
+#   manifest filenames and ~21 symlinked command copies all read. Presence needs no comparison at
+#   all, so it is both stronger and cheaper. The suffix is now used ONLY to name the likely owner
+#   in the warning text — never to decide.
+#
+# SCOPE — two carve-outs:
+#   1. Per-id-resolved markers are trustworthy BY CONSTRUCTION (no concurrent session can write
+#      that filename) and skip the check entirely. This is the normal path.
+#   2. No CLAUDE_CODE_SESSION_ID (older CLI) → no identity exists to attribute against → skip
+#      silently, preserving pre-per-id-marker behaviour exactly.
+#   A suffix-less legacy marker gets NO carve-out: with a session id present, `/prime` would have
+#   written a suffixed marker, so a bare `S5` is itself evidence of a foreign or stale allocation.
+#
+# WHY THIS WARNS AND SKIPS RATHER THAN ABORTING — read before "hardening" it.
+#   The danger is WRITING to a manifest we cannot claim; it is not the mere fact of a bad marker.
+#   Declining to write achieves the whole safety goal, so there is no reason to also fail the
+#   command. And an ABSENT manifest is explicitly routine per THE ADVISORY RULE at the top of this
+#   file, while a non-zero exit invites a caller to treat a legitimate state as a fault — both
+#   `/session-start` Step 3.5 and `/wrap-session` Step 12d state that a manifest failure is
+#   surfaced and the session CONTINUES. An earlier draft called `die` here AND told the caller to
+#   "pass this session's own values" — advice a `/clarify`-first session cannot follow, because
+#   the marker it would need is precisely what was never allocated. So: say what happened, say
+#   what was NOT written, name the only real remedy (`/prime`, or an explicit `--marker` if the
+#   session genuinely knows its own), and exit 0 without touching anything.
+#
+# THIS DOES NOT VIOLATE THE ADVISORY RULE AT THE TOP OF THIS FILE. That rule governs ABSENCE — a
+#   missing manifest is routine, so never block on it. This guards ATTRIBUTION: declining to
+#   write a record the script cannot correctly attribute is not policy enforcement, it is
+#   refusing to destroy another session's data. `principles.md § OP-3` (loud failure over silent
+#   continuation) governs here — and it is satisfied by SURFACING, which is what the notice does.
+#
+# THERE MAY BE NO REMEDY AT ALL, AND THAT IS AN ACCEPTABLE OUTCOME — do not write the message as
+#   if a fix is always available. The session this fires for most often is a `/clarify`-first one
+#   that never allocated a marker: it cannot pass `--marker`, because no marker of its own exists
+#   to pass. For that session the correct end state is simply NO MANIFEST, which the ADVISORY RULE
+#   already blesses. `--date`/`--marker` helps only a session that genuinely knows its own values,
+#   and `/prime` helps only the NEXT session. Never imply the caller can resolve this in-flight.
+#
+# CONSEQUENCE ACCEPTED DELIBERATELY: this also declines the case where the shared marker really IS
+#   this session's — e.g. its per-id marker was already torn down. That is unreachable in the
+#   normal flow (`/wrap-session` Step 13 removes the per-id marker as its FINAL action, after Step
+#   12d has closed the manifest), and where it does arise the session has no marker of its own
+#   anyway, so skipping the write beats a lucky guess at whose record to overwrite.
+if [ "$MARKER_SRC" = ".session-marker" ] && [ -n "${CLAUDE_CODE_SESSION_ID:-}" ]; then
+  # Rationale lives in the block immediately above — single authority, do not restate it here.
+  # The id suffix below is used ONLY to name the likely owner in the notice text. It is never
+  # consulted to decide anything; the decision was made by reaching this branch at all.
+  _self_id3="$(printf '%s' "$CLAUDE_CODE_SESSION_ID" | tr -cd 'A-Za-z0-9' | cut -c1-3)"
+  case "$MARKER" in
+    *-*) _owner="most likely the session whose id starts '${MARKER##*-}'" ;;
+    *)   _owner="an unidentified session (the marker carries no id suffix)" ;;
+  esac
+  printf '%s: NOTICE: no manifest written — this session cannot claim a marker.\n' "$SCRIPT_NAME" >&2
+  printf '  Resolved %s from the SHARED marker file (%s).\n' "$MARKER" "$_owner" >&2
+  printf '  This session (id starts %s) wrote no per-id marker today, so nothing proves the marker\n' "$_self_id3" >&2
+  printf '  is ours; writing would risk overwriting %s-%s.json, which belongs to another session.\n' "$DATE" "$MARKER" >&2
+  printf '  Cause: /prime allocates the marker at its Step 8, which a /clarify-first session never reaches.\n' >&2
+  printf '  This is NOT a failure to fix mid-wrap. An absent manifest is a routine, supported state\n' >&2
+  printf '  (see THE ADVISORY RULE above) — surface this line and CONTINUE the session normally.\n' >&2
+  printf '  Do not invent a marker, and do not delete a marker file to get past this.\n' >&2
+  printf '  Remedy, if this session genuinely knows its own marker: re-run with --date/--marker.\n' >&2
+  printf '  Otherwise run /prime at session start so a per-id marker exists. See docs/session-marker.md.\n' >&2
+  exit 0
+fi
+
 MANIFEST="${RUNS_DIR}/${DATE}-${MARKER}.json"
 
 need_python

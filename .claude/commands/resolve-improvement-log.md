@@ -10,20 +10,31 @@ Archive resolved entries from `ai-resources/logs/improvement-log.md` so stale it
 
 1. **Read `ai-resources/logs/improvement-log.md`.** If the file doesn't exist, tell the operator: "No improvement log at `ai-resources/logs/improvement-log.md`. Nothing to do." Stop.
 
-2. **Parse entries.** Entries are header-bounded `### ` blocks. Each block runs from one `### ` line up to (but not including) the next `### ` line or end-of-file.
+2. **Parse entries.** An entry begins at a **dated** heading at level 2 **or** 3 — regex `^#{2,3} \d{4}-\d{2}-\d{2}` — and runs up to (but not including) the next such heading or end-of-file.
 
-   **Malformed-entry handling:** Content preceding the first `### ` header, or orphaned content between blocks that does not belong to a preceding block, is left untouched. Do not error, discard, or attempt to re-anchor. If orphaned content exists, count the lines and mention it in the final summary ("Skipped N orphaned lines, no header").
+   **Why both levels, and why `dated` is the discriminator.** The schema specifies `### YYYY-MM-DD — {title}`, but heading drift happens: on 2026-07-18 six live entries carried `## YYYY-MM-DD` instead. A `### `-only boundary does not skip those entries — it **silently merges them into the entry above**, which is far worse than missing them. Concretely: an *open* finding written with `##` became mechanically part of the preceding *resolved* entry, so archiving the resolved one would have carried the open finding into the deny-read archive with it. (Caught in external review the same day; the six headings were normalized to `###` at the same time, so today both ends agree — this rule is the guard against the next drift, not a workaround for the current one.) The date is what separates an entry heading from a structural one: `## Schema` at the top of the log must never be read as an entry boundary, and requiring `\d{4}-\d{2}-\d{2}` excludes it without a name blocklist.
+
+   **Malformed-heading reporting.** While parsing, count entries whose heading is `## ` rather than `### `. If any exist, name them in the Step 8 summary (`{N} entries use a '##' heading — normalize to '###'`). Parse them correctly *and* report them: silently accepting drift is how the schema erodes.
+
+   **Malformed-entry handling:** Content preceding the first dated heading — which includes the `## Schema` preamble, correctly, since it carries no date — or orphaned content between blocks that does not belong to a preceding block, is left untouched. Do not error, discard, or attempt to re-anchor. If orphaned content exists, count the lines and mention it in the final summary ("Skipped N orphaned lines, no header").
 
 3. **Classify each entry:**
    - **Resolved (tier 1 — strict)** — the entry contains both a line starting `**Status:** applied` AND a line starting `**Verified:**`.
    - **Resolved (tier 2 — convention)** — the entry's `**Status:**` line contains `resolved` or `RESOLVED` followed by a `YYYY-MM-DD` date (the log's de facto completion convention — most done entries use `Status: ... RESOLVED 2026-06-05 ...` or similar instead of the strict applied+Verified pair; see the 2026-06-12 S8 friction entry that motivated this tier). A `resolved` token *inside the proposal prose* does NOT qualify — only on the `**Status:**` line itself.
-   - **Pending** — anything else (missing Status, Status is "logged"/"proposed"/"pending"/"deferred"/"parked", or "applied" without a Verified line).
+   - **Resolved (tier 3 — applied-with-date)** — the `**Status:**` line's *value* **begins with** `applied` (after stripping leading `**`/whitespace) and carries a `YYYY-MM-DD` date within the next ~40 characters. Regex: `^applied\b.{0,40}?\d{4}-\d{2}-\d{2}` against the stripped value, case-insensitive. Matches the log's now-dominant shape, `- **Status:** **applied 2026-07-17 (S2-21e).** Fixed at the source — …`, which carries no separate `**Verified:**` line.
 
-   Both Resolved tiers are archived identically. In the step-4 presentation, tag each entry `[strict]` or `[convention]` so the operator can spot-check tier-2 classifications cheaply.
+     **Why the anchor is `^` and not a substring search — this is the whole safety of the tier.** Requiring the value to *start* with `applied` is what excludes the two shapes that must never be archived, without needing a blocklist: `**partially applied 2026-07-14 (S4) — DELIBERATELY NOT …`, which starts with `partially`, and any prose mention of a fix having been applied elsewhere in the entry body (tier 3, like tier 2, reads only the `**Status:**` line). Verified against the live log on 2026-07-18: the rule caught 10 genuinely-finished entries and correctly rejected `partially applied …`, `DECLINED by operator …`, `CLOSED AS VOID …`, `closed — falsified …`, and `OPEN — …`. Do not "simplify" this to a substring match for `applied`.
 
-   *Schema-sync note (updated 2026-07-03):* the improvement-log.md preamble (L9) now documents both tiers — the lockstep preamble edit deferred in S9 was applied 2026-06-12 S11, so the two ends are converged. Keep this command and the preamble in lockstep on any future classification-rule change.
+     **`closed` / `void` are deliberately NOT a resolved tier.** Step 3b's `c` disposition sets `**Status:** closed {TODAY}` and specifies the entry *stays in the active log*. Archiving a `closed` entry would contradict the disposition this command itself writes. Leave them.
+   - **Pending** — anything else (missing Status, Status is "logged"/"proposed"/"pending"/"deferred"/"parked"/"closed"/"void"/"declined", or `applied` that is qualified — e.g. `partially applied`).
 
-3b. **Two-tier age detection.** Compute age for each Pending entry: extract the date from the `### YYYY-MM-DD —` header line (or use the most recent `**Review-cycle:**` date if present — deferral resets the clock), then `python3 -c "from datetime import date; print((date.today() - date.fromisoformat('ENTRY_DATE')).days)"`. Skip entries with no parseable date; count them as Pending only.
+   All three Resolved tiers are archived identically. In the step-4 presentation, tag each entry `[strict]`, `[convention]`, or `[applied-dated]` so the operator can spot-check the looser classifications cheaply.
+
+   *(Tier 3 added 2026-07-18. Cause: tiers 1+2 saw only **6** of the log's finished entries because the dominant convention — `applied <date>` with no `Verified:` line — satisfied neither. The backlog read that as "29 resolved entries left unarchived" and blamed neglect; the real cause was that the drain could not see them, so the log grew while the tool reported nothing to do. This is why `/prime`'s Step 3 scan re-bloated to 234 lines. Fixing the classifier is the structural fix; hand-archiving would have left the next drain just as blind.)*
+
+   *Schema-sync note (updated 2026-07-18):* the improvement-log.md preamble documents all **three** tiers, and its closing line lists the non-resolved statuses (`partially applied` / `closed` / `void` / `DECLINED`). Both ends were re-converged when tier 3 was added. Keep this command and the preamble in lockstep on any future classification-rule change.
+
+3b. **Two-tier age detection.** ("Two-tier" here means the two *age* bands below — warm and stale. It is unrelated to the three *resolution* tiers in Step 3.) Compute age for each Pending entry: extract the date from its dated heading line, matching level 2 or 3 exactly as the Step 2 boundary rule does (`^#{2,3} \d{4}-\d{2}-\d{2}`) — or use the most recent `**Review-cycle:**` date if present, since deferral resets the clock, then `python3 -c "from datetime import date; print((date.today() - date.fromisoformat('ENTRY_DATE')).days)"`. Skip entries with no parseable date; count them as Pending only.
 
    **WARM_PENDING (> 21 days) — informational, no per-item prompt.** From the Pending set, collect entries whose age > 21 days and ≤ 42 days. If non-empty, display:
    ```
@@ -124,7 +135,8 @@ Wait for the operator's reply. Accept the same shapes as Step 6 (`y`, `n`, `sele
    Active improvement-log: M pending entries remaining.
    No-active-friction archived: {A} entries. [Omit line if NO_ACTIVE_FRICTION was empty or operator declined.]
    Stale-pending surfaced: {S} entries ({D} dispositioned, {K} kept as-is). [Omit line if STALE_PENDING was empty.]
-   [If orphaned content: Skipped K orphaned lines (no `### ` header) — left in place.]
+   [If orphaned content: Skipped K orphaned lines (no dated heading) — left in place.]
+   [If any entry used a `##` heading: {N} entries use a '##' heading — normalize to '###'.]
    ```
 
 $ARGUMENTS

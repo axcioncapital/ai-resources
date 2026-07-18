@@ -200,15 +200,24 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 
    **Do NOT `Read` either file.** They are long (~400 L and ~650 L, and both grow monotonically) and a full read of the pair cost ~50–60k tokens at *every* orientation in *every* project — a defect named in five consecutive `usage-log` telemetry entries before it was fixed (2026-07-13; see `logs/improvement-log.md` of that date). The `decisions.md` pre-fetch in Step 1 is already bounded; this step now matches it. A future edit that "simplifies" this back into a `Read` re-opens the single most expensive recurring leak in the harness — do not.
 
-   Issue exactly these two bounded scans:
+   Issue exactly these three bounded scans:
 
    ```
-   Bash(grep -nE -B6 "^- \*\*Severity:\*\* *(high|HIGH|medium-high|critical|urgent)" logs/improvement-log.md)
+   Bash(grep -nE -B6 "^-? ?\*\*Severity:\*\* *(high|HIGH|medium-high|critical|urgent)" logs/improvement-log.md)
    Bash(grep -nE "HIGH|urgent|do-now" logs/friction-log.md | grep -viE "resolved|verified|shipped|archived|declined" | head -n 40)
+   Bash(python3 -c "
+import re
+L=open('logs/improvement-log.md',encoding='utf-8').read().split('\n')
+H=[i for i,l in enumerate(L) if re.match(r'^#{2,3} \d{4}-\d{2}-\d{2}',l)]
+n=sum(1 for k,s in enumerate(H) if not any(re.match(r'^-? ?\*\*Severity:\*\*',x) for x in L[s:(H[k+1] if k+1<len(H) else len(L))]))
+print(f'UNCLASSIFIED: {n} of {len(H)} entries carry no Severity field') if n else None")
    ```
 
-   The two files have different shapes, so the two scans do different jobs:
+   The three scans do different jobs — the files have different shapes, and the third measures a gap rather than reading content:
    - **`improvement-log.md` is schema'd** (`### {date} — {title}` / `- **Status:**` / `- **Severity:**`). The `-B6` window is sized to carry each severity hit's **header and status lines** back with it — that is what makes the filter below applicable without a second read. Do not narrow it: at `-B4` the header is lost on entries whose status runs to multiple lines.
+
+     The severity anchor is `^-? ?\*\*Severity:\*\*` — the `-? ?` tolerates the **un-dashed** variant (`**Severity:** …` with no leading `- `), which two live entries use. Widened 2026-07-18; the old `^- ` anchor silently skipped them.
+   - **The third scan is a COUNT, not a content read — and that distinction is the whole design.** As of 2026-07-18, 30 of 87 entries carry no `Severity` field at all, so no severity anchor can ever reach them. The tempting fix is to widen the scan until it sees them; that is wrong, and it is why the backlog item asking for it was mis-scoped. An entry with no Severity field is not *hidden HIGH work* — it is **unclassified**, and dumping 30 unclassified entries into the task menu would make the menu worse while multiplying the token cost this step exists to bound. So the scan reports the *number* in one line and stops. Visible, bounded, honest: the operator learns the backlog has an unclassified tail without paying to read it. The real remedy is to give those entries a `Severity` field (a log-hygiene task for `/friday-act`), not to loosen this scan. Print nothing when the count is zero.
    - **`friction-log.md` has no severity field** — its severity words are free text inside prose bullets, and its resolution stamps (`— **Resolved:**`, `[FADING-GATE] verified`) sit on the *same* line as the finding, which is why the same-line `grep -v` works. Treat its hits as **candidates to judge, not findings**: incidental matches are expected (a shell variable named `HIGH`, a quoted phrase), and they are cheap to discard in-context because only the matching lines are returned.
 
    Then apply the filter to the returned lines only:
