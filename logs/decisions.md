@@ -173,3 +173,17 @@ Nine repo-level hooks have never fired (verified: the `[HEAVY]` guardrail, auto-
 **Gates:** `/consult` (SO: GO on A) → `/risk-check` PROCEED-WITH-CAUTION (4 mitigations, all applied) → BLOCKING zsh harness passed. End-time `/risk-check` skipped (plan-time covered; mitigations applied; harness proves behavior-preservation; commits shipped; drift bounded).
 
 **Decided by:** Claude (session db57817b), operator-approved ("proceed").
+
+## 2026-07-18 — Process-grounded session liveness (concurrent-session detection rewrite)
+
+**Context:** Concurrent-session false warnings and commit-blocks persisted despite worktree isolation. Investigation (session dec29660 / S1-dec) found: macOS pgrep excludes the caller's own ancestors, so detect-concurrent-session.sh never counted its own session — with exactly one other session live the hook exited before any marker check (the sharp warning was dead in the most common case); ghost markers from crashed sessions read as live; the detect hook's today-only marker filter and /prime's "not dated today" orphan prune were both category errors (a marker's date records session START, never END — a live overnight session was invisible to one and deleted by the other).
+
+**Decision:** Liveness = per-id marker (ANY date) AND ≥1 foreign Claude CLI process with kernel cwd inside the checkout (ps enumeration, ancestor-walk self-exclusion, single lsof -d cwd call). Foreign markers with zero foreign processes in the checkout are provably dead and auto-pruned by the SessionStart hook (its only write). /prime's date-prune removed, not rewritten — cleanup centralized in the user-level hook, which is registered once by absolute path and therefore immune to stale worktree prime.md copies. Degrades: ps empty/missing or lsof failing → warn/block on marker-only evidence, prune nothing, never silence.
+
+**Rationale:** A marker proves a session started; a process proves a window is open; only the conjunction is evidence of a live session (VS Code reuses CLI processes across session ids and keeps idle ones alive for days — process-only over-fires; markers alone can't die — marker-only false-fires). Centralizing cleanup where version skew cannot reach it follows the S{N}-suffix lesson: correctness in a single enforced point, not a convention every checkout must honor.
+
+**Alternatives considered:** Per-session lease files (id→pid+start-time map, machine-global) — deferred, not rejected: closes the remaining ghost-plus-idle-window ambiguity and the unprimed-session blind spot, but is a new state class; queued for /consult + /risk-check. Checkout write-lock — recommended against (session-lifetime lock with stale-lock hostage risk; SessionStart cannot block, so enforcement would land in PreToolUse guards that already exist). Single-signal designs (marker-only status quo; process-only) — rejected, each false-fires alone.
+
+**Gates:** Operator-directed no-subagent implementation; external QC (Codex), two rounds, all findings fixed (degraded-lsof any-date warn; ancestor-walk test coverage T8/T9/G7/G8; stale date-prune contracts swept). Verified: 19/19 falsification harness, real-environment smoke test, zsh execution of the Step-8k block extracted from prime.md. Commits 979ed01 (ai-resources) / 6d33830 (workspace root) on explicit operator approval.
+
+**Decided by:** Claude (session dec29660 / S1-dec), operator-approved.

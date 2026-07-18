@@ -1,0 +1,51 @@
+{
+  "run_id": "2026-07-18-S1-dec",
+  "project": "ai-resources",
+  "date": "2026-07-18",
+  "marker": "S1-dec",
+  "model": "unknown",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md",
+  "mission": null,
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    ".claude/hooks/detect-concurrent-session.sh",
+    ".claude/hooks/check-foreign-staging.sh",
+    ".claude/commands/prime.md",
+    ".claude/commands/wrap-session.md",
+    "docs/session-marker.md",
+    "docs/commit-discipline.md",
+    "audits/working/concurrent-session-liveness-fix-2026-07-18.md",
+    "audits/working/liveness-harness-2026-07-18.sh",
+    "logs/session-notes.md",
+    "logs/decisions.md",
+    "logs/improvement-log.md",
+    "logs/scratchpads/2026-07-18-11-04-scratchpad.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-18-process-grounded-session-liveness-concurrent"
+  ],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": null,
+  "incidents_refs": []
+}

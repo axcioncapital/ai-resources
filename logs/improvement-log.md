@@ -1231,3 +1231,16 @@ Mandate capture still happens (the `**Mandate:**` line is load-bearing for four 
 - **Fix direction.** Confirm whether `git stash pop` honors the `merge=union` gitattributes driver (a merge does; a stash pop may not); add a post-merge conflict-marker scan (`git grep -lE '^(<<<<<<<|>>>>>>>)'`) as a hard gate before the close-worktree commit, so markers can never reach HEAD.
 - **Target files:** `ai-resources/.claude/commands/close-worktree-session.md`; possibly `.gitattributes`.
 - **Note:** observed from an adjacent session; needs that command's context to fix. Structural class → `/risk-check` when executed.
+
+## 2026-07-18 — check-foreign-staging.sh scopes to CLAUDE_PROJECT_DIR, not the git command's cwd
+- Cross-repo commits from a session are judged against the SESSION repo's index and footprint, not the target repo's. Observed 2026-07-18: a workspace-root pathspec commit from an ai-resources session was blocked on ai-resources' staged foreign files. Fails toward blocking (never a silent pass), but mis-scoped — root-repo commits get no guard of their own repo state.
+- Fix direction: resolve repo_root from the gated command's execution cwd at PreToolUse time rather than CLAUDE_PROJECT_DIR; add a cross-repo fixture to audits/working/liveness-harness-2026-07-18.sh.
+- **Severity:** medium
+- Provenance: wrap 2026-07-18 S1-dec (session dec29660).
+
+## 2026-07-18 — Lease-based session identity (id→pid map) — approved follow-up to the liveness fix
+- Residual gaps after 979ed01: a ghost marker beside an unrelated open window on the same folder still over-warns (no per-marker id→pid mapping exists), and sessions that never run /prime stay invisible to liveness detection. Agreed design: SessionStart-written lease (session id, CLI PID, process start time, canonical checkout path; machine-global store e.g. ~/.claude/session-leases/), validated-never-trusted (PID + start-time check), SessionEnd removal plus liveness quarantine; close-worktree-session landing guard on a validated live lease. Checkout write-lock recommended against (decisions.md 2026-07-18).
+- Next step: fresh session → /consult (SO; put the write-lock question explicitly) → /risk-check → build. Inputs: audits/working/concurrent-session-liveness-fix-2026-07-18.md + liveness-harness-2026-07-18.sh.
+- **Severity:** medium-high
+- Provenance: wrap 2026-07-18 S1-dec (session dec29660), operator-endorsed direction.
+- Second facet, same class (observed 3x this session): the candidate set is computed from the full index (`git diff --cached`) even when the gated command is a pathspec-scoped `git commit -- <paths>` — a commit that structurally CANNOT include the foreign files is still blocked on them. Fix direction: parse the commit pathspec (from the already-blanked `scan` text) and intersect candidates with it before the foreign check.

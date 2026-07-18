@@ -2,59 +2,6 @@
 
 > Archive: [session-notes-archive-2026-07.md](session-notes-archive-2026-07.md)
 
-## 2026-07-14 — Session S4
-
-*(Allocated S3 at 10:52 and **yielded it at 11:10** to a live session that primed in the `ai-resources-research-workflow` worktree at 11:06 and allocated S3 blind — it runs the pre-mutex `prime.md` and cannot see the shared claim dir. Fourth marker collision. Precedent 3-for-3: the session that can act, yields.)*
-
-**Mandate:** Complete two picked menu items — (1) ship the destructive-op liveness pre-flight into `docs/commit-discipline.md` (probe the TARGET checkout for uncommitted work, a session marker, and recent dirty-file mtimes immediately before any `worktree remove` / `branch -D` / `reset --hard` / `clean -f`; any hit → STOP and ask the operator) and verify whether `/close-worktree-session`'s no-live-session guard reads the target checkout or only the current one, fixing it if not; (2) ship prevention (b) for assert-from-recall — a mechanical `Files in scope` path-validity check at `/session-start` Step 3 and `/prime` Step 8c.7 that rejects prose and confirms every declared path exists on disk, plus the companion rule that the field must carry pasted literal paths — done when: the liveness-probe section is present in `commit-discipline.md`, `/close-worktree-session`'s guard scope is verified in writing (and fixed if it probes the wrong checkout), the mechanical `Files in scope` check is present in both `session-start.md` Step 3 and `prime.md` Step 8c.7, and both `improvement-log.md` entries are flipped from OPEN to applied with a verification line
-- Out of scope: implementing the liveness probe inside `/risk-check` (the entry explicitly rejects it — the gate runs at plan time and would relocate the same bug one layer up); rebasing or removing the `ai-resources-research-workflow` worktree (menu item 1, not picked); narrowing the `Read` deny rule (menu item 6, not picked)
-- Files in scope: ai-resources/docs/commit-discipline.md; ai-resources/.claude/commands/close-worktree-session.md; ai-resources/.claude/commands/new-worktree-session.md; ai-resources/.claude/commands/session-start.md; ai-resources/.claude/commands/prime.md; ai-resources/.claude/hooks/check-destructive-liveness.sh; ai-resources/.claude/hooks/check-foreign-staging.sh; ai-resources/logs/scripts/test-destructive-liveness.sh; ai-resources/logs/improvement-log.md; ai-resources/logs/friction-log.md; ai-resources/logs/decisions.md
-- Stop if: any fix would require editing inside the `ai-resources-research-workflow` worktree, or performing a destructive git op on any checkout — surface, do not proceed
-
-*(Footprint AMENDED 11:12 after the plan-time `/risk-check` returned RECONSIDER. Operator approved the full fix. Added: `new-worktree-session.md` — it prints the unguarded destructive commands verbatim and is the on-ramp to the S2 failure; `check-destructive-liveness.sh` — the new PreToolUse hook, which is the only mechanism in the change set that fires without depending on anyone's memory; `decisions.md` — records the deliberate decision to leave the worktree fork stale. Paths pasted from `find` output, per the companion rule this session is shipping.)*
-
-Auto multi-item: Ship the destructive-op liveness probe (probe the TARGET checkout before any worktree remove / branch -D / reset --hard / clean -f; verify /close-worktree-session's guard scope); Ship prevention (b) for assert-from-recall (mechanical Files-in-scope path-validity check at /session-start Step 3 and /prime Step 8c.7 — rejects prose, verifies every declared path exists).
-
-### Summary
-
-Shipped the destructive-op liveness probe — **as a `PreToolUse(Bash)` hook, not the doc the backlog entry prescribed** — plus the mechanical `Files in scope` predicate. 3 commits (`0667cc6`, `df24323`, `c596413`), tree clean, **5 unpushed**. The plan-time `/risk-check` returned RECONSIDER on my original doc-only design and was right: a functionally identical prose warning **already existed** in `new-worktree-session.md` and **did not fire** in the S2 near-miss, because that session assembled `git worktree remove` in a plan and never opened the file carrying the warning. **A rule you must remember to read is not a control; it is a wish.**
-
-**The session's real yield is that the probe fired on its own author, in production, before it shipped.** At 10:50 I verified the `ai-resources-research-workflow` worktree "clean and idle" and told the operator the rebase was unblocked. At **11:10** the new three-probe pre-flight returned it **OCCUPIED** — a session had primed there at 11:06 holding 3 uncommitted files (two canonical `SKILL.md`s) and had allocated a **colliding marker**. I was 25 minutes from reproducing S2's exact mistake inside the session convened to prevent it. *A clean worktree is not an idle worktree; a `git status` from twenty minutes ago is a reading of a moving system.*
-
-Also fixed the **same today-only marker bug in two existing guards** (`close-worktree-session.md` Step 3; `check-foreign-staging.sh`), deleted `new-worktree-session.md`'s block that printed the unguarded destructive commands verbatim, and corrected a false wiring statement in `commit-discipline.md`.
-
-### Decisions Made
-
-- **Ship a hook, not the doc the backlog entry asked for.** The entry said *"structural, three commands — NOT a new gate"* and named `commit-discipline.md`. `/risk-check` RECONSIDER killed it on evidence. The doc still landed — as the hook's *documentation*, explicitly labelled not-the-control. *(Logged.)*
-- **Do NOT merge the two `PreToolUse` hooks; keep the duplication.** `/consult` was asked directly and answered no: independent degrade-open is both guards' whole contract, and their text-sanitiser usages have **already forked load-bearingly** (detect-on-blanked vs extract-from-raw — the distinction that, when I got it wrong, made the hook exit 0 on the command it exists to stop). Flip condition is measured latency, not code duplication. *(Logged.)*
-- **Leave the worktree fork stale, with the drift risk named** — the `/risk-check` redesign's explicit alternative. The rebase is blocked by the very hazard this session fixed. *(Logged.)*
-- **Yield marker S3 → S4** to the blind worktree session. Precedent 3-for-3: the session that can act, yields. *(Logged.)*
-- **`Files in scope` existence test is a HARD reject, not a warning.** `/consult` supplied the cut my plan had dropped: a file this session will *create* is a **Required output**, not a file in scope. Route it there and the hard reject carries zero false-positive risk. **A warning is a soft nudge addressed to a model that can rationalise past it.** *(Logged.)*
-- Routine: skipped `/blindspot-scan` with a stated reason (its distinctive check — *will this actually run in the real environment?* — was answered empirically: the hook was executed 17 times, including against a real live worktree, and its wiring verified in `settings.json`). No gates stacked.
-
-### Risky actions
-
-**The liveness probe I was building caught me about to do the thing it was built to prevent.** I told the operator at 10:50 that the worktree rebase was "genuinely unblocked" on the strength of a clean `git status`. Twenty-five minutes later the probe found a live session in it with unsaved work in two canonical skills. **Nothing was destroyed, and the only reason is that I ran the probe before the command rather than trusting my earlier reading.**
-
-**Three defects in the guard itself, each of which would have shipped a control that looked installed and did nothing.** (1) A quoted target path containing spaces resolved to an empty target → the hook exited **0** on `git worktree remove <live worktree>`; every path in this workspace has spaces. (2) The **same** space bug in the `-C <path>` prefix made the verb undetectable entirely — **found by the `/consult` System Owner, not by my harness**, which had no `-C` case. (3) A self-target false-block. A detected verb with an unresolvable target now **fails closed**. The harness went RED three times; a harness that had never failed would have shipped a broken guard with full confidence.
-
-**Fifth assert-from-recall, committed inside the session fixing assert-from-recall.** I told the `/risk-check` reviewer *"commit-discipline.md = canonical only"* when a second real copy sat in the output of my own `find`, printed minutes earlier in the same session. Caught only because the reviewer was **explicitly instructed not to trust my counts**.
-
-**Did not commit** the untracked `audits/risk-checks/2026-07-14-outputs-side-chassis-provenance-gate-claim-permission.md` — it is the **worktree session's** report, written into this checkout by a `/risk-check` cross-checkout bug (now queued). `audits/risk-checks/` is *exempt* from the staging tripwire, so a bare `git commit` would have swept it in with no guard firing.
-
-### Next Steps
-
-- **⚠ OPERATOR DIRECTIVE: fix the queued items THIS WEEK.** All six 2026-07-14 items now surface in `/prime` Step 3's real scan (verified by running it, not by assuming).
-- **Sequence matters — do the hook-wiring gap FIRST.** Hook *bodies* are versioned; hook *wiring* is not (both `PreToolUse` guards are wired only in the unversioned `~/.claude/settings.json`). A clone gets the guards' code and **none** of their protection, silently. Every other user-level fix inherits this disease, so it is the prerequisite.
-- **Then the session-marker lock.** My framing was **wrong** and `/consult` corrected it: the lock lives in the git common dir and is fine — **participation** in it is version-controlled, because the consulting code lives in `prime.md`. **Unenforced protocol, not broken lock.** Adopt the **marker suffix** (`S3-a4f`), which makes collisions cosmetic and retires the entire mutex apparatus. **Do NOT adopt my proposed user-level allocator** — it has a transition state worse than today.
-- **Rebase `ai-resources-research-workflow` the moment it is idle** — run the new probe first. It holds real copies of all five files edited today plus a pre-mutex `prime.md`.
-- `/risk-check` writes its report into the wrong checkout — cause is **inferred, not read**; verify before fixing.
-- Seven more gates read the repo at rest while standing in for a liveness fact (`/permission-sweep` is the worst — it writes `settings.json` guarded by "operator discipline" alone).
-
-### Open Questions
-
-- **The one worth sitting with, and it is not the one I expected.** The gates worked: `/risk-check` killed my design, `/consult` found two live defects, the harness found three more, and the probe caught a real live session. **Every single one of those catches came from something instructed to distrust me** — and every failure this session came from me trusting my own recall. The generalisable countermeasure to assert-from-recall may not be a *checker* at all; it may be that **no repo fact stated to a reviewer or written in a plan should be accepted without the command that produced it**. That is a process rule, and I do not yet know how to enforce it without ceremony.
-- Does the operator accept retiring `/lean-repo` (R-3)? Still open, five sessions running.
 ## 2026-07-14 — Session S1
 **Mandate:** Verify each of thread 5's three premises against the real files, then repair the evidence-adjudication rules that are actually broken — the four-class table's gap and overlap, the evidenced-negative vs absence-of-evidence wording, and the skill-vs-chassis class-name authority split — with no new permission class — done when: each premise carries a written verdict backed by a direct read (confirmed/corrected/withdrawn); the class table admits every real evidence shape exactly once (no gap, no overlap), verified by working the failing cases through it; thread 5 is ticked in logs/missions/research-workflow-deploy-fitness.md citing the result; and the fix is committed.
 - Out of scope: No new permission class. No widening into threads 6/7/8. The two live projects' own reference/ copies are not edited — canonical only. The phantom-consumer finding (chassis asserts verb-list + orphan-citation enforcement in evidence-to-report-writer / chapter-prose-reviewer / citation-converter / cluster-synthesis-drafter, all four of which contain zero permission-class vocabulary) is ROUTED to the mission file, not fixed here — it is thread-7-shaped work.
@@ -505,6 +452,67 @@ None — both findings this session were QUEUED (T4 zsh-NOMATCH glob → 1884349
 - Refresh the `ai-resources-2` / `ai-resources-parallel` worktrees (rebase/merge onto `09f2c26`) so their non-symlinked `prime.md` copies inherit Step 8k.
 - Optional larger follow-up (SO-flagged, separate `/risk-check`): extract the allocator to an executable script — biggest safe load win.
 - Parked (needs `/risk-check`): fix the zsh-NOMATCH orphan-cleanup glob in Step 8k.
+
+### Open Questions
+None.
+
+## 2026-07-17 — /friday-act weekly triage → 4 plan files (SO-consulted)
+
+### Summary
+Ran `/friday-act` (Session 2 of the Friday cadence) against `friday-checkup-2026-07-17.md` (weekly tier, recovery run — 14 days since the last checkup). Dispositioned 29 tactical follow-ups, then — at the operator's request — ran a `/consult` (system-owner) triage before committing to the fix-now set. The SO reframed the week around **closure over detection** (improvement-log at ~46 active / 94 headers, 6.5–13× the soft cap — OP-12) and a **DR-10 concurrency gate** (a live foreign session blocks execution of the permission/log items), and corrected two dispositions (item 28 defer→fix, item 10 fix→defer). Applied both, generated 4 area-grouped plan files, verified their risk-check annotations inline (plan QC GO), and appended the Friday Act session block to `maintenance-observations.md`. No fixes applied — `/friday-act` triages and plans only.
+
+### Decisions Made
+- Final tactical disposition: **12 fix-now / 14 defer / 3 skip** (of 29). Fix-now grouped into 4 plans under `audits/friday-plans/`: improvement-log-closure (the SO-designated spine), deploy-gate-decision, permissions (concurrency-gated), repo-hygiene.
+- Applied the SO's two corrections: item 28 (`/resolve-improvement-log`) defer→fix (cheapest loop-closer); item 10 (website page-authority rule) fix→defer (website working practice, not an ai-resources fix).
+- Skipped item 3 (remove `~/.claude` `"model":"opus[1m]"`) — honoring the operator's 2026-07-13 decline (improvement-log:602); flagged the decline-memory meta-defect (checkup re-raises it) as a policy proposal.
+- Routed the git-push items to the wrap-time push gate (not plan files); `/cleanup-worktree` to wrap-time.
+- Plan-file QC run as an inline self-check (proportionate) rather than a dispatched qc-reviewer — short schema-bound files, and each in-class item also carries its own execution-time `/risk-check` as defense-in-depth.
+
+### Risky actions
+None taken by this session. Noted (not caused here): a concurrent session (S1-596) committed conflict markers into `friction-log.md` earlier today and cleaned them (856d7b3) — already logged by that session. This session wrote only new plan files + a `maintenance-observations.md` append (no shared-log clobber). This session allocated no marker of its own (menu-mode `/prime` + `/friday-act` write none).
+
+### Findings Declined
+- **Decline-memory meta-defect** (checkup re-raises a logged operator-decline because it has no suppression memory) — declined from improvement-log; routed instead as a `/friday-act` policy proposal in `maintenance-observations.md` (2026-07-17 block) for a follow-up gate-calibration session. Routed, not dropped.
+- **DR-10 structural signal** (friday-act plans touching shared state should be concurrency-gated) — declined from improvement-log; already applied structurally (every plan file carries the precondition) and captured in the maintenance-observations autonomy notes.
+- **Hook-payload verification rule** (Session Value Review rule-change adopted) — declined from improvement-log; queued as a policy proposal (cross-cutting `docs/audit-discipline.md` edit needs its own plan + `/risk-check`).
+
+### Next Steps
+- Execute the 4 friday-act plans in order: **1 improvement-log-closure → 2 deploy-gate-decision → 3 permissions** (after `/concurrent-session-check` confirms the foreign session cleared) **→ 4 repo-hygiene** (same check for its item 3). Open each plan file in its own session.
+- Follow-up policy session: draft + `/risk-check` the hook-payload rule and the decline-memory gate-calibration fix.
+
+### Open Questions
+None.
+
+## 2026-07-18 — Session S1-dec
+
+**Mandate:** Investigate recurring concurrent-session problems despite git worktrees; implement the smallest durable fix (process-grounded session liveness in the detect hook + staging guard, prime date-prune removal); verify via scenario harness (19/19) and real-environment smoke test; resolve all external-QC (Codex) findings; commit on operator approval.
+- Out of scope: lease-based session-identity redesign (deferred to fresh session with /consult + /risk-check); /prime Step 1a code; concurrent-session-check.md; close-worktree-session.md.
+- Files in scope: .claude/hooks/detect-concurrent-session.sh .claude/hooks/check-foreign-staging.sh .claude/commands/prime.md .claude/commands/wrap-session.md docs/session-marker.md docs/commit-discipline.md audits/working/concurrent-session-liveness-fix-2026-07-18.md audits/working/liveness-harness-2026-07-18.sh
+- Stop if: any foreign session's staged or unstaged work would be swept into a commit.
+- Allowed inputs: repo hooks/commands/docs/logs; live process table; ~/.claude hooks, settings, and cleanup-hook log.
+- Required outputs: verified fix + QC report + verification harness under audits/working/.
+
+### Summary
+Investigated why concurrent-session problems persist despite worktree use; root-caused four defects: macOS pgrep excludes the caller's own ancestors, so the detect hook never counted its own session and the sharp warning was silently dead in the common 2-session case; ghost markers from crashed sessions armed false warnings and commit-blocks; date-vs-liveness category errors in the detect hook (today-only filter) and /prime's orphan prune (deleted live overnight markers); close-worktree landing collisions (context — already union-merge-mitigated). Implemented process-grounded liveness: detect hook + staging guard now require a per-id marker (any date) AND a foreign Claude CLI process with cwd in the checkout; provably-dead markers are auto-pruned by the SessionStart hook; /prime's date-prune removed. Verified via 19/19 falsification harness, real-environment smoke test, and zsh execution of the edited Step 8k block. External QC (Codex) ran two rounds; all findings fixed. Committed 979ed01 (ai-resources, 6 files) and 6d33830 (workspace-root wrap-session pair) on operator approval, preserving un-wrapped session S1-596's staged work via unstage/pathspec-commit/restage.
+
+### Decisions Made
+- Process-grounded two-signal liveness (marker AND process-cwd) over adding new lease state this pass; auto-prune only on process-table proof; all degrades fail toward warning/blocking, never silence.
+- Cleanup centralized in the user-level SessionStart hook; /prime's date-prune removed rather than rewritten — stale worktree prime.md copies cannot carry old behavior (same lesson as the S{N}-suffix fix).
+- Lease-based session identity (operator-proposed design) evaluated: adopt leases + close-worktree landing guard, recommend against the checkout write-lock; build deferred to a fresh session gated on /consult + /risk-check.
+- End-time /risk-check skipped (documented): operator directed a no-subagent session; external Codex QC (2 rounds) + the 19-test harness served as the verification gate; commits shipped on explicit operator approval; drift bounded to the declared footprint.
+- Commit mechanics: foreign session S1-596's staged files temporarily unstaged around pathspec commits and restored byte-identically (parity verified first); audits/working/ artifacts left uncommitted (directory gitignored by design).
+
+### Risky actions
+Temporarily unstaged five files staged by un-wrapped session S1-596, restored byte-identically after pathspec commits. Shipped a hook that deletes files (stale marker auto-prune) — deletion gated on process-table proof, degrades to no-prune. Both tripwire blocks encountered were correct guard behavior, not overrides.
+
+### Findings Declined
+- audits/working/ report + harness uncommitted: the directory is gitignored by design (working-notes convention); QC-report §7 assumption corrected in-session — no action.
+- Non-/prime sessions invisible to liveness detection: pre-existing documented gap, subsumed by the queued lease follow-up — not double-filed.
+
+### Next Steps
+- Answer the wrap push prompt (2 commits across 2 repos).
+- Close the stale S1-596 VS Code window; its marker then clears via the SessionEnd hook (or the next session-start prune).
+- Fresh session for the lease build: /consult (System Owner — put the checkout write-lock question to it explicitly), then /risk-check, then build. Design inputs: audits/working/concurrent-session-liveness-fix-2026-07-18.md + liveness-harness-2026-07-18.sh.
 
 ### Open Questions
 None.
