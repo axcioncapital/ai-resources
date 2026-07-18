@@ -296,7 +296,7 @@ Process each over-threshold file. For each file, apply the action that matches i
 ### Notes
 
 - **No operator approval gate after folder pick.** Operator confirmed automated mode at plan time (2026-05-08). The `AskUserQuestion` in Step 4 is the only gate.
-- **Subagent contract compliance:** each `log-sweep-auditor` invocation writes full notes to `audits/working/log-sweep-{scope}-{date}.md` and returns a ≤20-line summary. Main session reads summaries only (Step 24).
+- **Subagent contract compliance:** each `log-sweep-auditor` invocation writes full notes to `audits/working/log-sweep-{scope}-{run-token}-{date}.md` (the per-invocation run token prevents same-scope same-date parallel dispatches from colliding on one path; token sits before the date so the `log-sweep-*-{date}.md` staging glob keeps matching) and returns a ≤20-line summary. Main session reads summaries only (Step 24) — the actual notes path always comes from the summary line, never from filename reconstruction.
 - **Cat D self-exclusion:** `log-archiver.sh --mode whole-file-by-mtime` excludes `log-sweep-*.md` and `log-sweep-manifest-*.md` from whole-file moves by design (mitigation #2). The auditor also excludes them from Cat D classification.
 - **Scope boundaries:** discovery covers `ai-resources/` and `projects/*/` only. `workflows/*/` is explicitly excluded.
 - **Failure handling:** if any individual file operation fails, record it and continue. Do not abort the whole run.

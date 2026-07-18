@@ -106,7 +106,15 @@ If `REAL` does not start with `SCOPE_PATH`, skip the file and note it as `symlin
 
 ## Write working notes
 
-Write full inventory notes to `{WORKING_DIR}/log-sweep-{SCOPE_LABEL_SAFE}-{DATE}.md` where `SCOPE_LABEL_SAFE` is the scope label with `:` replaced by `-` (e.g., `project-global-macro-analysis`).
+**First, derive a per-invocation run token** so concurrent instances can never write the same notes path (two same-scope dispatches on the same date — a re-run, or two concurrent sessions — previously collided on one shared filename). Compute it ONCE via a single Bash call and reuse the printed literal value everywhere after (each Bash call is a fresh shell — a `$RUN_TOKEN` variable does not survive to later calls):
+
+```bash
+echo "$(date +%H%M%S)-$RANDOM"
+```
+
+Write full inventory notes to `{WORKING_DIR}/log-sweep-{SCOPE_LABEL_SAFE}-{RUN_TOKEN}-{DATE}.md` where `SCOPE_LABEL_SAFE` is the scope label with `:` replaced by `-` (e.g., `project-global-macro-analysis`) and `RUN_TOKEN` is the literal token computed above.
+
+**Token position is load-bearing:** it sits BEFORE `{DATE}`, never after — `/log-sweep`'s staging glob (`log-sweep-*-{DATE}.md`, in log-sweep.md's two staging notes — Steps 36 and 38) matches only filenames that END with `-{DATE}.md`. The name still starts with `log-sweep-`, so the discovery filter and Cat D self-exclusion keep matching too. The main session learns the actual path from your returned summary line — it never reconstructs the filename.
 
 Structure:
 
