@@ -992,3 +992,33 @@ No additional levers — session was efficient.
 
 **Additional levers (ROI-ranked):**
 No additional levers — session was efficient.
+
+### 2026-07-18 (S4-8c3) | Acceptable
+
+**Task:** Operator asked for the top open maintenance/repo-health items in `ai-resources`, with a mandatory independent verification pass to confirm each item is still open and real. Scoped via `/clarify` → `/scope`; 22 candidates gathered inline from the backlog logs and the four 2026-07-17 audit reports, then verified by 5 parallel Opus-pinned `general-purpose` agents (one per cluster). Result: 10 confirmed, 12 dropped as already-fixed, not-real, inert, or mis-attributed.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | ~10 |
+| Files read | ~14 (re-reads: 0 full — `improvement-log.md` and `friction-log.md` were touched by several bounded `awk`/`grep`/`sed` windows each, never loaded whole) |
+| Files written/edited | 11 (7 created, 4 modified) |
+| Tool calls | ~25 total (main session; heavily batched — orientation and candidate-gathering each ran as one message with 4–10 parallel calls) |
+| Subagents | 6 (5 cluster verifiers + this analyzer); verifier spend 89.5k / 76k / 92k / 133k / 96k = ~487k |
+| Rework cycles | 0 |
+
+**Findings:**
+- **Fan-out sizing — 5 agents where 3 would have covered the same 22 candidates (Tool overhead, Moderate).** The clusters split by *topic* (markers/hooks; commands/scripts; log parsers/bloat; permissions; improvement opportunities) rather than by *verification cost*, and the spread confirms the imbalance: 76k for the smallest cluster against 133k for the largest, a 1.75× range. Each agent pays the same fixed entry cost before doing any work — two CLAUDE.md layers, memory, repo orientation, and re-reading the same backlog logs the main session had already windowed. At roughly 20k of fixed load per agent, ~100k of the ~487k was duplicated context, not verification. Recommendation template: *N independent operations each re-paid a fixed context load — consolidate into fewer, larger units.*
+- **Missing session marker forced a wrap halt and a recovery commit (Tool overhead, Moderate).** `/prime` ran but never reached Step 8 allocation because the operator diverted to `/clarify`, so no marker was written. The foreign-session guard then read `FOREIGN=2, CONCURRENT` and halted the wrap: ~5 extra tool calls plus a full operator round-trip to confirm the other sessions were closed, then a recovery commit. The same gap nearly caused `run-manifest.sh` to overwrite the *previous* session's manifest, since the shared marker file still named S3-919 — avoided only by pinning `--marker` by hand. Now logged as a medium-high `improvement-log.md` entry.
+- **Positive — the verification spend bought a real correction, which is why this is not Wasteful.** 12 of 22 candidates were dropped, and 3 of 4 permission findings in the 2026-07-17 `/friday-checkup` were shown to be stale or mis-derived with the 4th mis-attributed. An unverified pass would have handed the operator a list more than half noise and carried a prior audit's errors forward. One agent also rejected its own strongest independent finding on consequence grounds rather than padding the list.
+- **Positive — the known large-log defect stayed fixed.** Zero full reads of `improvement-log.md` (102 entries) or `friction-log.md`; all candidate gathering ran through bounded status-line and window reads. That is the ~50–60k/session defect fixed 2026-07-13 holding for a third session.
+- **Positive — `/clarify` → `/scope` ceremony was earned, not overhead.** Four turns before work started looks expensive, but the operator changed scope three times inside them ("no need to propose a fix", "also include things to improve", "just ai-resources"). Each of those landing after the fan-out would have invalidated some or all of ~487k of verification. Four cheap turns bought insurance against a re-run; this is the correct ordering and should not be trimmed.
+- **Trend:** regression — breaks two consecutive Efficient ratings (2026-07-15 S1-d99, 2026-07-17 S2-21e). Rework is still zero for a third session; the cost this time is structural (fan-out sizing) and infrastructural (marker gap), not corrective.
+
+**Recommendation:** **Size verification fan-outs by cost, not by topic — cap at 3 agents unless a cluster genuinely exceeds one agent's working budget.** Every additional `general-purpose` agent re-pays two CLAUDE.md layers, memory, and repo orientation before verifying anything, so the marginal agent buys parallelism at a fixed ~20k toll. Group the 22 candidates into 3 balanced workloads rather than 5 topical ones; the topical split served the *writer's* mental model, not the verification work.
+
+**Estimated savings:** ~20k fixed context load × 2 surplus agents = **~40k/session** on verification-shaped sessions, before counting the re-reading of backlog logs the main session had already windowed (plausibly ~60–80k all in). Verification fan-outs of this shape run perhaps every second or third session, so ~200–400k over a 10–20 session horizon. Note the ceiling: this trims overhead, it does not touch the ~380k of genuine verification work, which the permission-finding correction shows was worth paying.
+
+**Additional levers (ROI-ranked):**
+- **Close the marker gap at `/prime` rather than at Step 8 (~5–10k/occurrence, plus one averted manifest overwrite).** Write the session marker at `/prime` entry, not at menu-allocation, so a diversion to `/clarify` cannot leave the session unnamed. Token savings are modest, but this one also nearly destroyed the previous session's run manifest — the value is not token-denominated. Already queued medium-high in `improvement-log.md`; listed here as the second lever because the fan-out fix is the larger *token* number.
+- **Have cluster agents return findings-only and skip the disk-notes write when the cluster confirms fewer than ~3 items (~10–20k/session).** Five `audits/working/verify-cluster-*.md` files were written; the main session read only the ≤30-line summaries. The notes-to-disk contract earns its cost on large scans, but a cluster that confirms one or two items is paying formatting overhead for a file nobody opens.
+- **Pass the main session's already-gathered candidate windows into each agent's prompt (~15–30k/session).** The main session had already run bounded `awk`/`grep` over the backlog logs; the agents then re-derived much of that context independently. Handing over the extracted status lines inline turns five repeated log traversals into zero. Smaller than the primary because it overlaps with it — consolidating to 3 agents already removes two of the five duplications.

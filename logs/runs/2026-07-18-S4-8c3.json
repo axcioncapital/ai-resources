@@ -1,0 +1,51 @@
+{
+  "run_id": "2026-07-18-S4-8c3",
+  "project": "ai-resources",
+  "date": "2026-07-18",
+  "marker": "S4-8c3",
+  "model": "unknown",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md",
+  "mission": null,
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    "logs/missions/repo-health-backlog-2026-07.md",
+    "audits/working/verify-cluster-A-2026-07-18.md",
+    "audits/working/verify-cluster-B-2026-07-18.md",
+    "audits/working/verify-cluster-C-2026-07-18.md",
+    "audits/working/verify-cluster-D-2026-07-18.md",
+    "audits/working/verify-cluster-E-2026-07-18.md",
+    "logs/session-notes.md",
+    "logs/decisions.md",
+    "logs/improvement-log.md",
+    "logs/friction-log.md",
+    "logs/usage-log.md",
+    "logs/scratchpads/2026-07-18-12-40-scratchpad.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-18-s4-8c3-the-verified-backlog-supersedes-the-logged"
+  ],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": null,
+  "incidents_refs": []
+}
