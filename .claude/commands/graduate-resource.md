@@ -157,6 +157,8 @@ If the resource is a hook that should fire for all projects:
 
 Skip this step for commands and agents — they're discovered automatically via `--add-dir`.
 
+> **Dispatch timing (session-start registry load).** That automatic discovery happens **at session start**, not on write. A command or agent graduated during *this* session is on disk but is **not yet invocable as `/name` or dispatchable by subagent-type name until the next session start.** If a validation or follow-on step in the graduating session depends on dispatching the freshly-graduated agent *by name* (e.g., a workflow acceptance run), it will silently fall back to a `general-purpose` stand-in and leave the real by-name dispatch path unexercised. When that matters, run the validation in a **fresh session** (or restart) after graduation. *(Recorded 2026-06-09 against `/refresh-project-state`'s `project-state-*` agents; generalized here 2026-07-18.)*
+
 ## Step 7: Update Tracking
 
 1. If the source project has an `logs/innovation-registry.md`, update the entry: status → `graduated`, Graduated To → the target path
