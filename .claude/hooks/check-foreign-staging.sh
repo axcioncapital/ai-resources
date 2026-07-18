@@ -32,9 +32,12 @@
 #   `(inferred)`/`(none stated)` with no concrete paths), the guard CANNOT judge
 #   foreignness. It then splits on concurrency:
 #     • A LIVE foreign session is active in this checkout (a per-id marker, ANY DATE, other
-#       than this session's own is present) → BLOCK (exit 2, stop-and-confirm). [Was
-#       "today-dated" until 2026-07-14; that filter silently missed an overnight session —
-#       the marker is pruned by teardown, not by date. See _live_foreign_session().]
+#       than this session's own is present AND — process-grounded 2026-07-18 — a foreign
+#       Claude CLI process still has its kernel cwd inside this checkout) → BLOCK (exit 2,
+#       stop-and-confirm). [Was "today-dated" until 2026-07-14; that filter silently missed
+#       an overnight session — the marker is pruned by teardown, not by date. The process
+#       condition was added 2026-07-18 because ghost markers from crashed/killed sessions
+#       were arming this block on solo sessions. See _live_foreign_session().]
 #       This was the worst remaining blind spot (improvement-log 467/501): no footprint
 #       AND a concurrent session is exactly when a blind commit sweeps the other session's
 #       staged files. P3 escalates it from warn to a hard stop.
@@ -150,6 +153,65 @@ def sh(args):
     except Exception:
         return ""
 
+# Claude CLI process pattern — overridable for testing (mirrors detect-concurrent-session.sh).
+CC_PROCESS_PATTERN = os.environ.get("CC_PROCESS_PATTERN", "native-binary/claude")
+
+def _claude_pids():
+    # ps, NOT pgrep: macOS pgrep excludes the calling process's own ancestors by
+    # default, so it would never see THIS session's CLI process (verified by
+    # execution 2026-07-18 — same fix as detect-concurrent-session.sh).
+    # Returns None when ps itself failed (empty output — a real system always
+    # lists processes); the caller must treat that as ungrounded, not as absence.
+    out = sh(["ps", "-axo", "pid=,command="])
+    if not out.strip():
+        return None
+    pids = []
+    for line in out.splitlines():
+        line = line.strip()
+        if CC_PROCESS_PATTERN in line and "grep" not in line:
+            tok = line.split(None, 1)[0]
+            if tok.isdigit():
+                pids.append(tok)
+    return pids
+
+def _self_cli_pid():
+    # Walk up the ancestor chain from this hook to find the CLI process hosting
+    # THIS session, so it can be excluded from the foreign count.
+    p = str(os.getppid())
+    for _ in range(10):
+        cmd = sh(["ps", "-o", "command=", "-p", p]).strip()
+        if CC_PROCESS_PATTERN in cmd:
+            return p
+        pp = sh(["ps", "-o", "ppid=", "-p", p]).strip()
+        if not pp or pp in ("0", "1"):
+            return ""
+        p = pp
+    return ""
+
+def _foreign_cli_here(root_dir):
+    """(grounded, count) of FOREIGN Claude CLI processes whose kernel cwd is inside
+    root_dir — the set of sessions that share this checkout's git index. grounded is
+    False when ps/lsof could not answer; the caller must then fall back to the
+    marker-only heuristic rather than treating count=0 as proof of absence."""
+    pids = _claude_pids()
+    if pids is None:
+        return (False, 0)      # ps failed → ungrounded, never "proof of absence"
+    self_pid = _self_cli_pid()
+    foreign = [p for p in pids if p != self_pid]
+    if not foreign:
+        return (True, 0)
+    out = sh(["lsof", "-a", "-p", ",".join(foreign), "-d", "cwd", "-Fn"])
+    cwds = [l[1:] for l in out.splitlines() if l.startswith("n")]
+    if not cwds:
+        return (False, 0)
+    root = os.path.realpath(root_dir)
+    n = 0
+    for c in cwds:
+        rc = os.path.realpath(c)
+        if rc == root or rc.startswith(root + os.sep):
+            n += 1
+    return (True, n)
+
 project_dir = os.environ.get("CLAUDE_PROJECT_DIR", "") or os.getcwd()
 repo_root = sh(["git", "-C", project_dir, "rev-parse", "--show-toplevel"]).strip()
 if not repo_root:
@@ -225,6 +287,19 @@ def _live_foreign_session(logs_dir, self_session_id):
     # close-worktree-session.md Step 3 and was fixed in the same change; a crashed session's
     # stale marker is the accepted cost, and it is the correct trade (a false stop costs one
     # operator sentence; a false pass costs another session's work).
+    # PROCESS-GROUNDING (2026-07-18) — a marker alone proves a session PRIMED here,
+    # never that it is still alive: crashed/killed sessions leave markers (SessionEnd
+    # cannot fire on SIGKILL), and those ghosts were arming this guard's highest-risk
+    # BLOCK on solo sessions (friction-log 2026-07-12: "the guard was blocking on two
+    # ghosts"). A session that is genuinely live in this checkout has a Claude CLI
+    # process with its kernel cwd inside the repo (verified against the live process
+    # table 2026-07-18). So: live == foreign marker present AND >=1 foreign CLI
+    # process with cwd inside this checkout. If ps/lsof cannot answer (grounded
+    # False), keep the marker-only answer — degrade toward blocking, matching the
+    # documented trade (a false stop costs one operator sentence; a false pass costs
+    # another session's work). Markers alone are still required: idle VS Code windows
+    # keep CLI processes alive for days after their sessions ended, so process
+    # presence alone would over-block every footprint-less commit.
     if not self_session_id:
         return False
     self_name = ".session-marker-" + self_session_id
@@ -232,6 +307,7 @@ def _live_foreign_session(logs_dir, self_session_id):
         names = os.listdir(logs_dir)
     except Exception:
         return False
+    marker_found = False
     for name in names:
         if not name.startswith(".session-marker-") or name == self_name:
             continue
@@ -240,8 +316,14 @@ def _live_foreign_session(logs_dir, self_session_id):
         except Exception:
             continue
         if content:
-            return True
-    return False
+            marker_found = True
+            break
+    if not marker_found:
+        return False
+    grounded, n_here = _foreign_cli_here(os.path.dirname(logs_dir))
+    if not grounded:
+        return True
+    return n_here >= 1
 
 # ---- Read the `- Files in scope:` bullet under this session's marker header ----
 footprint_raw = ""

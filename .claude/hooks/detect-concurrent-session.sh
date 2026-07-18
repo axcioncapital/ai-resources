@@ -1,73 +1,69 @@
 #!/bin/bash
-# SessionStart hook: proactively warn when more than one Claude Code session is
-# running, because concurrent sessions race on this project's shared session
-# state (logs/.session-marker, logs/.prime-mtime, logs/session-notes.md). This
-# is the DR-8 "concurrent-session detection hook" (improvement-log TOCTOU race
-# class; 3-4 recurrences in 5 days before this hook shipped 2026-06-01).
+# SessionStart hook: proactively warn when another Claude Code session is live in
+# THIS checkout (sharp nudge) or elsewhere on the machine (soft notice), because
+# concurrent sessions race on this project's shared session state
+# (logs/.session-marker*, logs/session-notes.md) and on the shared git index.
+# This is the DR-8 "concurrent-session detection hook" (improvement-log TOCTOU race
+# class; shipped 2026-06-01, process-grounded rewrite 2026-07-18).
 #
-# DESIGN — read-only detector (NO new shared-mutable state).
-#   This hook deliberately keeps no registry of its own. A registry built to
-#   detect races would itself be a shared-mutable file that races (principles
-#   AP-10) — the exact failure mode it is meant to catch, one layer up. Instead
-#   it READS an existing OS signal: the count of running Claude Code CLI
-#   processes. It reads the marker file only as read-only context, never as the
-#   detection signal (the marker is the file that suffers the clobber bug).
+# DESIGN — read the OS, not a registry (principles AP-10). The hook keeps no
+#   registry of its own. Liveness is derived from two independent signals:
+#     1. The process table: Claude Code CLI processes and their KERNEL CWD (lsof).
+#        A session's CLI process sits with cwd = the folder the session was opened
+#        on (verified against the live process table 2026-07-18: every native-binary
+#        process cwd matched its session's project folder exactly).
+#     2. The per-id marker set (logs/.session-marker-*): which sessions PRIMED here
+#        and have not torn down (SessionEnd hook, wrap Step 13, handoff C3 — or,
+#        for hard-killed sessions, THIS hook's liveness prune below).
+#   A foreign marker alone proves a session STARTED here — not that it is still
+#   alive (crashed/killed sessions leave markers; the SessionEnd hook cannot fire
+#   on SIGKILL). A foreign process-with-cwd-here alone proves a CLI process is
+#   open on this folder (typically an idle VS Code window) — not that a session
+#   primed here (VS Code keeps idle CLI processes alive long after their sessions
+#   ended, and there is no process→session-id mapping). The hook requires BOTH:
+#     marker present AND >=1 foreign CLI process with cwd in this checkout → SHARP.
+#     marker present AND zero foreign CLI processes here → the marker's session
+#       CANNOT be running (its host process would have cwd here) → provably stale
+#       → AUTO-PRUNE the marker file(s). This is the automatic cleanup that keeps
+#       ghost markers from arming false warnings and false commit-blocks.
+#   Markers are matched at ANY DATE, not just today: a marker's date records when
+#   the session STARTED, never whether it has ENDED (the same category error was
+#   fixed in check-foreign-staging.sh on 2026-07-14; this hook kept a today-only
+#   filter until 2026-07-18, which made a live overnight session invisible).
 #
-# SIGNAL — `pgrep -f 'native-binary/claude'` counts Claude Code CLI sessions.
-#   Verified 2026-06-01 against the live process table: matches the VS Code
-#   extension native binary (resources/native-binary/claude ...), excludes the
-#   Claude.app desktop helper. The current session is always in the count, so a
-#   count >= 2 means >= 1 OTHER session is live.
-#   1:1 BASELINE — verified 2026-06-01 that one session yields exactly one match
-#   (no double-count): 3 live sessions matched 3 processes, all top-level (none a
-#   child of another matched claude), AND subagents spawned in-session did NOT
-#   add matches (subagents run inside the parent session process). So the
-#   `>= 2 means >= 1 other` threshold has no off-by-N. If a future Claude Code
-#   build spawns a matching child/worker per session, re-verify this baseline.
+# ENUMERATION — ps, NOT pgrep (fixed 2026-07-18). macOS pgrep excludes the
+#   calling process's OWN ANCESTORS by default (see pgrep(1), -a flag). This hook
+#   runs as a child of its session's CLI process, so `pgrep -f` never counted the
+#   current session — the old `count >= 2 means >= 1 other` arithmetic therefore
+#   undercounted by one, and with exactly ONE other live session the hook exited
+#   silently before any marker check. (The 2026-06-01 "1:1 baseline" was measured
+#   from a context where the ancestor exclusion did not bite; verified wrong by
+#   execution 2026-07-18: pgrep -f matched every CLI process EXCEPT this session's
+#   own ancestor; pgrep -a -f matched all.) `ps -axo pid=,command=` has no such
+#   exclusion. The current session's process is identified by walking up the
+#   ancestor chain and is excluded from the foreign count explicitly.
 #
-# SCOPE — machine-wide, not project-scoped. Process args do not carry the
-#   session cwd, so a session in an UNRELATED project also counts. Accepted
-#   best-effort limitation for a non-blocking warning (see docs/session-marker.md
-#   § Concurrent-session detection). Future enhancement: scope by cwd via lsof.
+# WHY ONLY A NUDGE — NOT A BLOCK (verified 2026-06-10 against the Claude Code hooks
+#   docs): a SessionStart hook CANNOT block a session; its strongest action is a
+#   message. The blocking of the one dangerous move — a cross-session COMMIT — is
+#   enforced by check-foreign-staging.sh (PreToolUse), which reads the same two
+#   signals. This hook is the best-effort early heads-up that PAIRS WITH it.
 #
-# SAME-CHECKOUT NUDGE (2026-06-05; liveness-tightened 2026-06-10) — when the machine-wide
-#   signal (count >= 2) is combined with an un-wrapped foreign session in THIS checkout, the
-#   hook emits a SHARP, actionable nudge pointing at /new-worktree-session (the structural
-#   remedy). When only the machine-wide signal holds (no foreign session here), it keeps the
-#   SOFTER warning.
+# DEGRADES —
+#   * ps unavailable → loud one-line skip notice (OP-3, no silent rot).
+#   * lsof unavailable or returning nothing for live foreign pids → liveness cannot
+#     be grounded; fall back to the legacy today-dated-marker heuristic and prune
+#     NOTHING (never delete state the hook cannot ground).
+#   * CLAUDE_CODE_SESSION_ID unset (old CLI) → legacy shared-marker heuristic,
+#     unchanged (same fallback boundary as docs/session-marker.md resolution).
+#   * A session working in a directory its CLI process does not have as cwd (e.g.
+#     an agent-side EnterWorktree) is invisible to the cwd signal — accepted; this
+#     workspace isolates via per-window VS Code worktree sessions.
 #
-#   LIVENESS DISCRIMINATOR (2026-06-10, Fix 1) — the original same-checkout signal was "a
-#   today-dated shared logs/.session-marker is present." That over-fired: the shared marker is
-#   DATE-pruned (by /prime's orphan cleanup), not LIVENESS-pruned, so it stayed set after this
-#   operator's OWN earlier session wrapped — firing the sharp nudge on every solo same-day
-#   re-open. The fix makes the per-session marker set a liveness signal: /prime writes
-#   logs/.session-marker-${CLAUDE_CODE_SESSION_ID}; /wrap-session REMOVES it at teardown
-#   (wrap-session.md Step 13). So a today-dated per-id marker (excluding this session's own) =
-#   an un-wrapped ≈ live foreign session in THIS checkout, and ABSENT per-id markers means every
-#   session that primed here today has wrapped → no live foreign session → soft path (this is the
-#   false-fire fix). The shared logs/.session-marker is NOT consulted on the oracle path — reading
-#   it (date-pruned, not liveness-pruned) is exactly what caused the old false-fire. The legacy
-#   shared-marker heuristic survives ONLY as the genuine old-CLI fallback (CLAUDE_CODE_SESSION_ID
-#   unset), the same fallback boundary as the marker-resolution loud fallback in session-marker.md.
-#   STILL A HEURISTIC, degrades safe: a CRASHED session leaves a stale per-id marker until
-#   /prime's next-day prune (occasional unnecessary nudge), and the precise lsof/cwd detector
-#   remains deliberately deferred as brittle. Never a block, never a missed real collision.
-#
-# WHY ONLY A NUDGE — NOT A BLOCK (verified 2026-06-10 against the Claude Code hooks docs):
-#   a SessionStart hook CANNOT block a session. On exit code 2 stderr is shown to the user but
-#   execution continues; SessionStart is an advisory/context-injection event, not in the set of
-#   hook events that can block (PreToolUse, UserPromptSubmit, PermissionRequest, ...). The
-#   session's cwd is also already fixed before any hook runs (so it cannot redirect into a
-#   worktree). Therefore the STRONGEST this hook can do is a forceful message, which the operator
-#   can still proceed past. The actual blocking of the one dangerous move — a cross-session
-#   COMMIT that ships another session's staged files — is enforced by check-foreign-staging.sh,
-#   a PreToolUse hook (Fix 2, commit f5e013c). This hook is the best-effort early heads-up that
-#   PAIRS WITH that commit-time block; it does not and cannot replace it.
-#
-# CONTRACT — non-blocking. Every path ends in `exit 0`. If the process signal is
-#   unavailable (pgrep absent), emit a loud one-line skip notice (principles
-#   OP-3, no silent rot) rather than failing closed. Two-end contract (the /wrap-session
-#   Step 13 per-id teardown this hook depends on): registered in docs/session-marker.md.
+# CONTRACT — non-blocking. Every path ends in `exit 0`. The ONLY write this hook
+#   performs is `rm -f` of provably-dead foreign marker files in $PROJECT_DIR/logs
+#   (cleanup of detection state, never content). Two-end contract registered in
+#   docs/session-marker.md § Concurrent-session detection.
 
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(pwd)}"
 TODAY=$(date +%Y-%m-%d)
@@ -84,76 +80,126 @@ emit() {
 }
 
 # --- Signal availability guard (OP-3: loud skip, never silent rot) ---
-if ! command -v pgrep >/dev/null 2>&1; then
-  emit "CONCURRENCY CHECK SKIPPED — pgrep unavailable; cannot detect concurrent Claude Code sessions on this machine."
+if ! command -v ps >/dev/null 2>&1; then
+  emit "CONCURRENCY CHECK SKIPPED — ps unavailable; cannot detect concurrent Claude Code sessions on this machine."
 fi
 
-# --- Count running Claude Code CLI sessions ---
+# --- Enumerate Claude Code CLI processes (ps, not pgrep — see header) ---
 # CC_PROCESS_PATTERN may be overridden in the environment for testing.
 CC_PROCESS_PATTERN="${CC_PROCESS_PATTERN:-native-binary/claude}"
-SESSION_COUNT=$(pgrep -f "$CC_PROCESS_PATTERN" 2>/dev/null | wc -l | tr -d ' ')
+PS_OUT=$(ps -axo pid=,command= 2>/dev/null)
+if [ -z "$PS_OUT" ]; then
+  # ps exists but answered nothing — a real system always lists processes, so this is
+  # a failure, not an empty result. Never prune or conclude "no sessions" on it.
+  emit "CONCURRENCY CHECK SKIPPED — ps returned nothing; cannot detect concurrent Claude Code sessions on this machine."
+fi
+ALL_PIDS=$(printf '%s\n' "$PS_OUT" | grep -F "$CC_PROCESS_PATTERN" | grep -v grep | awk '{print $1}')
 
-# Non-numeric (defensive) → proceed silently.
-case "$SESSION_COUNT" in
-  ''|*[!0-9]*) exit 0 ;;
-esac
+# --- Identify THIS session's own CLI process (ancestor walk from this hook) ---
+SELF_PID=""
+P=$$
+for _ in 1 2 3 4 5 6 7 8 9 10; do
+  case "$(ps -o command= -p "$P" 2>/dev/null)" in
+    *"$CC_PROCESS_PATTERN"*) SELF_PID="$P"; break ;;
+  esac
+  P=$(ps -o ppid= -p "$P" 2>/dev/null | tr -d ' ')
+  case "$P" in ''|0|1) break ;; esac
+done
 
-# <= 1 session (just this one) → no concurrency to warn about.
-[ "$SESSION_COUNT" -le 1 ] && exit 0
+# --- Foreign process set (everything matching the pattern except our own) ---
+OTHERS=0
+FOREIGN_PIDS=""
+for pid in $ALL_PIDS; do
+  case "$pid" in ''|*[!0-9]*) continue ;; esac
+  [ -n "$SELF_PID" ] && [ "$pid" = "$SELF_PID" ] && continue
+  OTHERS=$((OTHERS + 1))
+  FOREIGN_PIDS="${FOREIGN_PIDS},${pid}"
+done
+FOREIGN_PIDS="${FOREIGN_PIDS#,}"
 
-OTHERS=$((SESSION_COUNT - 1))
-
-# --- Same-checkout liveness discriminator (per-id marker oracle) ---
-# /prime writes logs/.session-marker-${CLAUDE_CODE_SESSION_ID} per session; /wrap-session
-# REMOVES it at teardown (Step 13). So a today-dated per-id marker is a session that primed in
-# THIS checkout today and has NOT wrapped ≈ a live (or crashed) session here. THIS session's own
-# marker is excluded — and at a normal SessionStart it does not exist yet, because /prime runs
-# AFTER this hook. This is the precise same-checkout signal the legacy shared-marker heuristic
-# could not give: the shared logs/.session-marker is date-pruned, not liveness-pruned, so it
-# stayed set after this operator's OWN earlier session wrapped, false-firing the sharp nudge on
-# every solo same-day re-open. The per-id-marker + wrap-teardown pair removes that false-fire.
-if [ -z "${CLAUDE_CODE_SESSION_ID}" ]; then
-  # OLD-CLI FALLBACK — the harness does not inject CLAUDE_CODE_SESSION_ID, so /prime could not have
-  # written per-id markers and the liveness oracle is genuinely unavailable. Preserve the legacy
-  # shared-marker heuristic so the safety net is not lost on an old CLI. This is the SAME fallback
-  # boundary as the marker-resolution loud fallback (docs/session-marker.md: legacy path only when
-  # the var is unset, never when it is set-but-file-absent). HEURISTIC: a prior WRAPPED session also
-  # leaves a today shared-marker, so this path can over-fire; degrades safe (soft nudge, never a
-  # block — SessionStart cannot block; see header).
-  TODAY_MARKER_HERE=0
-  MARKER_CONTENT=""
-  MARKER_FILE="$PROJECT_DIR/logs/.session-marker"
-  if [ -f "$MARKER_FILE" ]; then
-    MARKER_CONTENT=$(cat "$MARKER_FILE" 2>/dev/null)
-    [ "${MARKER_CONTENT%% *}" = "$TODAY" ] && TODAY_MARKER_HERE=1
+# --- Ground liveness: how many foreign CLI processes have cwd = THIS checkout? ---
+# GROUNDED=1 means the process-table signal is usable (lsof answered, or there are
+# no foreign processes at all — in which case nothing can be live here).
+GROUNDED=0
+FOREIGN_HERE=0
+if [ "$OTHERS" -eq 0 ]; then
+  GROUNDED=1
+elif command -v lsof >/dev/null 2>&1; then
+  HERE=$(cd "$PROJECT_DIR" 2>/dev/null && pwd -P)
+  if [ -n "$HERE" ]; then
+    CWDS=$(lsof -a -p "$FOREIGN_PIDS" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p')
+    if [ -n "$CWDS" ]; then
+      GROUNDED=1
+      FOREIGN_HERE=$(printf '%s\n' "$CWDS" | grep -Fxc "$HERE")
+    fi
   fi
-  if [ "$TODAY_MARKER_HERE" -eq 1 ]; then
-    emit "CONCURRENT SESSIONS — another session may be active in THIS checkout (${OTHERS} other session(s) running; this project primed today: ${MARKER_CONTENT}). Two sessions in one checkout silently overwrite each other's uncommitted edits. DO NOT start parallel work here: run /new-worktree-session for an isolated copy (it opens the worktree in a new VS Code window), or finish/'/clear' the other session first. (Terminal users: cc-worktree <unit>.) (Heuristic: if the other session already wrapped, this checkout is safe — verify before parallel work.) See docs/parallel-sessions-playbook.md § 4."
+fi
+
+PRUNED=0
+if [ -z "${CLAUDE_CODE_SESSION_ID}" ]; then
+  # OLD-CLI FALLBACK — no session id, so /prime could not have written per-id markers
+  # and the marker oracle is unavailable. Preserve the legacy shared-marker heuristic
+  # (same fallback boundary as docs/session-marker.md marker resolution). HEURISTIC:
+  # a prior WRAPPED session also leaves a today-dated shared marker, so this path can
+  # over-fire; degrades safe (nudge only — SessionStart cannot block; see header).
+  if [ "$OTHERS" -ge 1 ]; then
+    MARKER_CONTENT=""
+    MARKER_FILE="$PROJECT_DIR/logs/.session-marker"
+    if [ -f "$MARKER_FILE" ]; then
+      MARKER_CONTENT=$(cat "$MARKER_FILE" 2>/dev/null)
+      if [ "${MARKER_CONTENT%% *}" = "$TODAY" ]; then
+        emit "CONCURRENT SESSIONS — another session may be active in THIS checkout (${OTHERS} other session(s) running; this project primed today: ${MARKER_CONTENT}). Two sessions in one checkout silently overwrite each other's uncommitted edits. DO NOT start parallel work here: run /new-worktree-session for an isolated copy (it opens the worktree in a new VS Code window), or finish/'/clear' the other session first. (Terminal users: cc-worktree <unit>.) (Heuristic: if the other session already wrapped, this checkout is safe — verify before parallel work.) See docs/parallel-sessions-playbook.md § 4."
+      fi
+    fi
   fi
 else
-  # ORACLE PATH — decide purely on the un-wrapped foreign per-id liveness set. A today-dated per-id
-  # marker OTHER than this session's own = a session that primed in THIS checkout today and has NOT
-  # wrapped ≈ a live foreign session here. THIS session's own marker is excluded (and at a normal
-  # SessionStart it does not exist yet — /prime runs after this hook). Crucially, ABSENT per-id
-  # markers => every session that primed here today has wrapped (Step 13 teardown removed its marker)
-  # => no live foreign session here => fall through to SOFT. This is the false-fire fix: the
-  # operator's OWN already-wrapped session no longer triggers the sharp nudge on a solo same-day
-  # re-open. (The shared logs/.session-marker is deliberately NOT consulted here — it is date-pruned,
-  # not liveness-pruned, and reading it is exactly what caused the old false-fire.)
+  # ORACLE PATH — per-id markers say who PRIMED here; the process table says whether
+  # anyone is still HERE. Both signals must agree before the sharp nudge fires.
   SELF_MARKER="$PROJECT_DIR/logs/.session-marker-${CLAUDE_CODE_SESSION_ID}"
-  LIVE_FOREIGN_HERE=0
+  FOREIGN_MARKERS=0
+  FOREIGN_MARKER_FILES=""
+  FOREIGN_MARKER_NAMES=""
   for f in "$PROJECT_DIR"/logs/.session-marker-*; do
     [ -f "$f" ] || continue                          # glob matched nothing → no per-id markers
     [ "$f" = "$SELF_MARKER" ] && continue            # exclude this session's own
-    c=$(cat "$f" 2>/dev/null)
-    [ "${c%% *}" = "$TODAY" ] && LIVE_FOREIGN_HERE=$((LIVE_FOREIGN_HERE + 1))
+    FOREIGN_MARKERS=$((FOREIGN_MARKERS + 1))
+    FOREIGN_MARKER_FILES="$FOREIGN_MARKER_FILES$f
+"
+    FOREIGN_MARKER_NAMES="$FOREIGN_MARKER_NAMES $(cat "$f" 2>/dev/null | head -1)"
   done
-  if [ "$LIVE_FOREIGN_HERE" -ge 1 ]; then
-    # SHARP nudge — an un-wrapped foreign session primed in THIS checkout today (genuine same-checkout concurrency).
-    emit "CONCURRENT SESSIONS — another session is ACTIVE in THIS checkout (${LIVE_FOREIGN_HERE} un-wrapped session(s) primed here today; ${OTHERS} live session(s) on this machine). Two sessions in one checkout silently overwrite each other's uncommitted edits — this is the recurring collision. Before you start anything here, run /concurrent-session-check <task> (or with no argument to scan the backlog) to see whether your next task even collides with the live session's declared files. DO NOT start parallel work here: run /new-worktree-session to get an isolated copy — it opens the worktree in a new VS Code window; start a session there and work in THAT — or finish/'/clear' the other session before running /prime or /wrap-session. (Terminal users: cc-worktree <unit>.) The commit-time guard (check-foreign-staging.sh) blocks a cross-session COMMIT, but it cannot stop live-edit races — isolate now. See docs/parallel-sessions-playbook.md § 4."
+  if [ "$FOREIGN_MARKERS" -ge 1 ]; then
+    if [ "$GROUNDED" -eq 1 ]; then
+      if [ "$FOREIGN_HERE" -ge 1 ]; then
+        # SHARP nudge — a session primed in THIS checkout has not torn down AND a foreign
+        # Claude CLI process still has its cwd here: genuine same-checkout concurrency
+        # (or an open idle window that can wake and resume mutating this checkout).
+        emit "CONCURRENT SESSIONS — another session is ACTIVE in THIS checkout (${FOREIGN_MARKERS} un-torn-down session marker(s):${FOREIGN_MARKER_NAMES}; ${FOREIGN_HERE} other Claude CLI process(es) in this folder, ${OTHERS} other machine-wide). Two sessions in one checkout silently overwrite each other's uncommitted edits — this is the recurring collision. Before you start anything here, run /concurrent-session-check <task> (or with no argument to scan the backlog) to see whether your next task even collides with the live session's declared files. DO NOT start parallel work here: run /new-worktree-session to get an isolated copy — it opens the worktree in a new VS Code window; start a session there and work in THAT — or finish/'/clear' the other session before running /prime or /wrap-session. (Terminal users: cc-worktree <unit>.) The commit-time guard (check-foreign-staging.sh) blocks a cross-session COMMIT, but it cannot stop live-edit races — isolate now. See docs/parallel-sessions-playbook.md § 4."
+      else
+        # PROVABLY STALE — a session that primed here has no CLI process left with cwd in
+        # this checkout: it ended without teardown (SIGKILL/crash/closed window). Prune the
+        # ghost marker(s) so they stop arming false sharp nudges and false commit-blocks.
+        printf '%s' "$FOREIGN_MARKER_FILES" | while IFS= read -r f; do
+          [ -n "$f" ] && [ -f "$f" ] && rm -f "$f" 2>/dev/null
+        done
+        PRUNED=$FOREIGN_MARKERS
+      fi
+    else
+      # DEGRADE — lsof could not ground liveness. ANY-date foreign markers must warn
+      # here (not just today's): an overnight live session's marker is yesterday-dated,
+      # and with liveness unverifiable, staying silent — or worse, falling through to
+      # the "probably clear" soft message below — would mislabel a possibly-live
+      # session as absent (QC finding, 2026-07-18). Prune NOTHING in this mode.
+      emit "CONCURRENT SESSIONS — another session may be ACTIVE in THIS checkout (${FOREIGN_MARKERS} un-torn-down session marker(s):${FOREIGN_MARKER_NAMES}; liveness could not be verified — lsof unavailable; ${OTHERS} other session process(es) machine-wide). Two sessions in one checkout silently overwrite each other's uncommitted edits. Run /concurrent-session-check <task> before starting, or /new-worktree-session for an isolated copy. See docs/parallel-sessions-playbook.md § 4."
+    fi
   fi
-  # No un-wrapped foreign session in THIS checkout → fall through to the soft machine-wide notice.
 fi
 
-# SOFT warning — a live session exists machine-wide, but none is un-wrapped in THIS checkout.
-emit "CONCURRENT SESSIONS — ${OTHERS} other Claude Code session(s) running on this machine (${SESSION_COUNT} total). None is un-wrapped in THIS checkout, so this folder is probably clear — but if you start parallel work in this project, isolate it: run /new-worktree-session for a separate worktree (it opens in a new VS Code window) rather than a second session in this checkout. (Terminal users: cc-worktree <unit>.) Two sessions in one checkout silently overwrite each other's uncommitted edits. See docs/parallel-sessions-playbook.md § 4."
+# --- No live foreign session in THIS checkout ---
+[ "$OTHERS" -eq 0 ] && exit 0
+
+PRUNE_NOTE=""
+[ "$PRUNED" -gt 0 ] && PRUNE_NOTE=" (Cleaned ${PRUNED} stale session marker(s) left by ended/crashed sessions in this checkout.)"
+
+# SOFT warning — other Claude sessions/windows exist machine-wide, but none is both
+# marked and present in THIS checkout.
+emit "CONCURRENT SESSIONS — ${OTHERS} other Claude Code CLI process(es) on this machine (${FOREIGN_HERE:-0} in this folder, none with an un-torn-down session marker here — this folder is probably clear).${PRUNE_NOTE} If you start parallel work in this project, isolate it: run /new-worktree-session for a separate worktree (it opens in a new VS Code window) rather than a second session in this checkout. (Terminal users: cc-worktree <unit>.) Two sessions in one checkout silently overwrite each other's uncommitted edits. See docs/parallel-sessions-playbook.md § 4."

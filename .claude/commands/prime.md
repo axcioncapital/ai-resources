@@ -143,7 +143,7 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 
    This is read-only (no `git add`, no write). If `FOREIGN_SHARED` is non-empty, carry the dirty paths to Step 6 as an exception line naming the foreign-dirty shared files/logs — these are files a concurrent session may be mid-edit on, so editing them this session risks a lost-update collision. If `SIBLING_COUNT ≤ 1` or the check returns nothing, skip silently (no line). The advisory only *names* the surface; it does not block.
 
-   *Live-foreign-session check → `/concurrent-session-check` nudge (S3, 2026-06-12).* `SIBLING_COUNT` above counts same-day *headers* — it cannot tell a live session from one that already wrapped (the marker is date-pruned, not liveness-pruned), so it is the wrong gate for a "you have a concurrent session right now" nudge. Reuse instead the precise liveness oracle that `detect-concurrent-session.sh` already uses: the per-id marker set. `/prime` writes this session's own per-id marker only at Step 8 (after orientation), so at Step 1a time **every** today-dated `logs/.session-marker-*` other than this session's own is a foreign session that primed in this checkout today and has not wrapped (≈ live). Run one **read-only** scan:
+   *Live-foreign-session check → `/concurrent-session-check` nudge (S3, 2026-06-12).* `SIBLING_COUNT` above counts same-day *headers* — it cannot tell a live session from one that already wrapped (the marker is date-pruned, not liveness-pruned), so it is the wrong gate for a "you have a concurrent session right now" nudge. Reuse instead the per-id marker set. `/prime` writes this session's own per-id marker only at Step 8 (after orientation), so at Step 1a time **every** today-dated `logs/.session-marker-*` other than this session's own is a foreign session that primed in this checkout today and has not torn down. (Since 2026-07-18 this set is pre-cleaned: `detect-concurrent-session.sh` runs at every session start — i.e. before any `/prime` — and prunes markers whose session provably has no Claude CLI process left in this checkout, so a surviving foreign marker here is much more likely to be genuinely live. This step's own read stays today-scoped and heuristic; the hook is the authority on liveness.) Run one **read-only** scan:
 
    ```bash
    # LIVE_FOREIGN_HERE — count of un-wrapped foreign sessions in THIS checkout (same signal as detect-concurrent-session.sh).
@@ -432,11 +432,15 @@ Full backlog & inbox: /open-items
    echo "${TODAY} ${MARKER}" > logs/.session-marker
    # Identity oracle (Option 2′): also write a per-session-id marker file no concurrent /prime can clobber.
    [ -n "${CLAUDE_CODE_SESSION_ID}" ] && echo "${TODAY} ${MARKER}" > "logs/.session-marker-${CLAUDE_CODE_SESSION_ID}"
-   # Orphan cleanup: prune per-id marker files not dated today.
-   for f in logs/.session-marker-*; do
-     [ -f "$f" ] || continue
-     case "$(cat "$f" 2>/dev/null)" in "${TODAY} "*) ;; *) rm -f "$f";; esac
-   done
+   # Orphan cleanup — REMOVED here (2026-07-18), owned by detect-concurrent-session.sh.
+   # The old "prune per-id markers not dated today" loop was a category error: a marker's
+   # date records when its session STARTED, never whether it ENDED — so it deleted a live
+   # overnight session's marker (making that session invisible to every guard) while
+   # leaving same-day ghosts armed. The SessionStart hook now prunes markers on LIVENESS
+   # (no foreign Claude CLI process with cwd in this checkout → provably dead → rm),
+   # fires before any /prime can run, and is registered once at the user level by
+   # absolute path — so stale worktree copies of THIS file cannot carry the old
+   # behaviour the way a prime-side prune would. Do not re-add a date-based prune.
    ```
 
    Same-day re-invocations increment within the day (`S1` → `S2` → …); a new day resets to `S1`.
