@@ -427,3 +427,15 @@ Two destructive edits to durable operator-facing content, both backed up first t
 
 ### Open Questions
 None.
+
+## 2026-07-18 — Session S6-ac5
+**Mandate:** Verify by execution whether mission threads 2, 4 and (stretch) 8 of `repo-health-backlog-2026-07` are still real and unfixed, then fix only those confirmed real — done when: each of threads 2 and 4 carries either an execution-verified fix or a recorded decline reason citing command output, and the mission file's checkboxes plus the matching improvement-log entries reflect that verdict
+- Out of scope: thread 3 (hook-wiring installer — its own gated session, scored High/High on /risk-check twice); mission threads 5, 7, 9, 10; the research-workflow-deploy-fitness mission; project repos under projects/; workspace-root files other than the settings file thread 4 names
+- Files in scope: logs/improvement-log.md, logs/missions/repo-health-backlog-2026-07.md, logs/session-notes.md, docs/permission-template.md, .claude/settings.json, ../.claude/settings.json, /Users/patrik.lindeberg/.claude/settings.json, logs/scripts/run-manifest.sh, logs/scripts/run-manifest.test.sh
+- Stop if: /risk-check returns NO-GO on a settings-file change; thread 4's fix would require writing ~/.claude/settings.json without a backup design (that is thread 3's carved-out scope); an edit would touch a file a live concurrent session owns
+- Required outputs: audits/working/thread-verification-2026-07-18-S6.md, logs/runs/2026-07-18-S6-ac5.json, any /risk-check report under audits/risk-checks/
+- Mission: repo-health-backlog-2026-07
+
+**Operator amendment (mid-session-start):** verify each problem is still real and unresolved BEFORE fixing it. No file edit for a thread until its defect is reproduced by a command whose output is pasted. Matches the mission's own non-negotiable ("verify by execution, not by reading") and last session's finding that 2 of 3 backlog items were mis-diagnosed.
+
+Start fixing the `repo-health-backlog-2026-07` mission. Committed scope: thread 2's real content (give the 30 improvement-log entries with no `Severity` field one, so they become reachable by the `/prime` Step 3 scan) and thread 4 (the `git checkout` permission block — establish the real blocking rule by execution before changing any settings file, since the queued `/friday-act` fix targets a rule the log's own data falsifies). Stretch, not committed: thread 8 (`run-manifest.sh` cannot close a manifest across midnight).
