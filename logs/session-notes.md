@@ -426,3 +426,31 @@ None taken. One nearly-taken and correctly gated: creating three GitHub repos an
 Repo-health mission `repo-health-backlog-2026-07` — thread 11 first (dependency-ordered): the shell `grep` resolves to a gitignore-aware function, so every absence-claim made through it carries silent false-negative risk. Fix the scanning sites to use `command grep` / `git grep` / `rg -uu` with explicit scope, plus a known-positive canary so blindness announces itself instead of returning a clean-looking zero.
 
 **Premise verified before scoping (S11-637):** `grep` is a shell function at snapshot line 83 → bundled ugrep with `--ignore-files -I --exclude-dir=.git`; reproduced at 122 vs 194 files in this repo. Two corrections to the thread as written: (a) `find` is shadowed too (→ `bfs`, line 71) but carries no ignore flags, so it is *not* blind — record, do not fix; (b) the blind set is `audits/working/` + `logs/scratchpads/` + `inbox/archive/`, and `CLAUDE.md § Subagent Contracts` *requires* audit subagents to write their notes into `audits/working/` — the repo's own convention writes evidence into the one directory its search instrument cannot see.
+
+### Summary
+Mission `repo-health-backlog-2026-07`, thread 11 — the dependency-first thread, filed as *"the repo's search instrument is blind, and every absence-claim has been made through it."* Verified the premise before acting on it: **it held, and the impact was roughly an order of magnitude smaller than filed.** Four properties established by execution narrowed the thread twice (14 sites → 4 → 0), ending in the conclusion that the thread's own prescribed fix — edit the scanning commands and agents — would have been churn. Zero scanning sites were edited. Shipped a sourced-only blindness canary, the rule in `docs/audit-discipline.md`, and canary pointers at the three load-bearing absence-claim sites. One commit, `028c15a`.
+
+### Decisions Made
+- **Overrode the thread's written fix instruction — zero site edits.** Thread 11 prescribed `command grep` / `git grep` with explicit scope "in scanning commands and agents." Measurement showed only the dot-rooted walk (`grep -r <term> .`) is blind, and **no committed site anywhere uses that form**. Editing immune sites fails the materiality bar. `/risk-check` independently re-verified the zero and confirmed the override; it also rated defensive future-proofing edits speculative (AP-7/DR-7) and not warranted.
+- **Canary is sourced-only, and refuses to answer when executed.** The shadow is a shell function and does not survive a process boundary, so an executed script always sees the real `grep`. Refusal (exit 2) is the design, not a limitation.
+- **Did not wire the canary into `/prime`.** Mission thread 15 is specifically about `/prime`'s per-session scan already exceeding its stated budget (222 lines vs 40). Chose the `/risk-check`-suggested third option instead: pointers at the three agents that make load-bearing absence-claims.
+- **Thread 11 deliberately left UNTICKED.** Hand-ticking is the unverified-tick mechanism thread 12 exists to fix. The work is done; the tick is not this session's to make.
+- **Routine:** ran the end-time `/risk-check` despite assessing that no listed change class was touched — the class boundary was close enough that the no-self-waiver rule counselled caution. The reviewer confirmed the class assessment was correct.
+
+### Risky actions
+None. No destructive git operations; no external writes; push correctly deferred to the wrap gate. One near-miss that was caught rather than shipped: **two successive canary drafts could never have failed** (draft 1 executed as a subprocess and got the real `grep`; draft 2 walked from inside the ignored directory, which defeats the ignore). Both reported "clear" against a demonstrably blind shell. Caught by requiring the check to fail before trusting it — not by review.
+
+### Findings Declined
+- **`find` is shadowed too** (snapshot line 71 → bundled `bfs`) — but it carries no ignore flags, so it is not blind. Recorded in `audit-discipline.md` and the mission thread so a future session does not re-investigate. No defect, nothing to fix.
+- **`skills/ai-resource-builder/SKILL.md` is 447 lines against a 300-line convention** — pre-existing, flagged informationally by the commit hook, and this session added 2 lines. No named consequence; not this session's to fix.
+- **The two can-never-fail canary drafts, as a new log entry.** The "inert safeguard" class already carries 6+ logged instances; a 7th would inflate the log without adding a fix. The countermeasure that actually caught it — *require the guard to FAIL before trusting it* — is now written into the canary's own header, into `audit-discipline.md`, and into the commit message, which is where a future author will meet it.
+
+### Next Steps
+1. **Thread 12** (`/mission check` must read the validation contract) — the generator of the stale-record disease. Until it lands, no thread can be ticked honestly, including thread 11 whose work is now complete.
+2. **Staging guard** — outside the mission but still the highest-ROI single fix: parse `Required outputs` and treat the union with `Files in scope` as the permitted footprint.
+3. Then thread 7 (reviewer premise-check, narrowed to two agents) per the mission's dependency order.
+4. Push — 10 unpushed commits in ai-resources.
+
+### Open Questions
+- The canary still depends on a human sourcing it. `/risk-check` rated this Medium and the three agent pointers only partly mitigate it — they instruct, they do not enforce. Is an enforcing trigger wanted, or is instruct-only the right ceiling here?
+- Unchanged from S10-163: should `mission_name` be updated despite frontmatter being frozen (it still reads "10 verified items" against 16 threads)?

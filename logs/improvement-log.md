@@ -18,6 +18,37 @@ Resolved entries are archived to `improvement-log-archive.md` via `/resolve-impr
 
 ---
 
+### 2026-07-18 — A heuristic regex was trusted as a file census and set a mandate's scope wrongly — three times in one session
+- **Status:** logged (pending)
+- **Category:** verification method / assert-from-heuristic
+- **Severity:** medium-high — it wrote a **false count into a signed mandate** (`14 sites`), and the error survived the mandate-confirmation gate because the operator has no independent way to check a number I derived. It was caught only because execution continued and kept contradicting it; a shorter session would have shipped the wrong scope and done ~14 files of useless edits. Same family as the logged assert-from-recall pattern, but the mechanism is different and not covered by it: the claim was *derived*, not *recalled*, which makes it feel verified.
+- **Source:** ai-resources 2026-07-18 (S11-637), mission thread 11.
+- **What happened.** To find "sites that could be affected by the blind `grep`", I wrote a regex (`grep [^|]*-[a-zA-Z]*[rR]`) and treated its hit count as a census. It over-matched three separate times: (1) **14 files** — it matched *prose mentions* of grep (`prime.md:690` advising `grep -rl`, `deploy-workflow.md:414` warning against a `grep -r` assertion); (2) narrowed to **6**, still including a line that tells the reader *not* to run the command; (3) at pre-dispatch premise verification it flagged `split-log.sh:80-81`, which are `grep -c .` with `.` as the *pattern* on a pipe, not a traversal root. The count of 14 had by then been written into the mandate's `Files in scope` and its `done when` clause.
+- **Why the existing antibodies did not catch it.** `/session-start` Step 2.5 checks that `files_in_scope` entries are **shaped like paths and exist** — all 14 were real files, so it passed cleanly. Nothing checks whether the *predicate that selected them* is sound. The mechanical check validates the noun, not the reasoning that produced the list.
+- **Proposal.** When a count or file-set derived from a pattern match is about to become **load-bearing** (entering a mandate, a plan's scope, or a finding), spot-check **2–3 actual hits against the claim** before quoting the number — open them and confirm each is really an instance of the thing being counted. Cheap (one Read), and it would have caught this at the first pass. Candidate home: `docs/audit-discipline.md` § Absence-claims (which now covers instrument blindness but not selector soundness) — the two are the same lesson from opposite ends: a scan can lie by missing things *or* by over-matching them.
+- **Target files:** `docs/audit-discipline.md`; possibly `session-start.md` Step 2.5 as a one-line note that the check validates shape, not selection.
+
+### 2026-07-18 — A mandate goes stale the moment scope corrects, and nothing re-reads it
+- **Status:** logged (pending)
+- **Category:** session mandate / drift
+- **Severity:** medium — the artifact that four downstream readers parse as the session's contract can silently describe work that was abandoned. Caught this session, but by luck of running an optional-by-class gate.
+- **Source:** ai-resources 2026-07-18 (S11-637), surfaced as `/risk-check` mitigation D7.
+- **What happened.** The mandate was written with `Files in scope: {3 agent/command files}` and `done when: each of the 4 exposed sites states its scope explicitly`. Execution then narrowed scope to **zero** site edits and produced an entirely different deliverable set (a new script, a doc section, three pointer edits). The mandate on disk still described the abandoned plan at the point the change set was complete and ready to commit. The `/risk-check` reviewer — reading the mandate as its contract source — flagged the mismatch. Nothing in the session flow would otherwise have re-read it: `/session-start` writes it once, `/wrap-session` Step 6.4 reads it only when `+audit` is passed, and `/drift-check` and `/contract-check` are operator-invoked.
+- **Why this is not just "update your mandate".** A scope correction is exactly the moment the mandate is *most* wrong and *least* likely to be re-read, because attention is on the new direction. The failure is structural, not a lapse: the mandate is written at the one moment the session knows least about what it will do.
+- **Proposal.** Cheapest sufficient shape: when a session logs a scope correction (this one wrote a `⚠ SCOPE CORRECTED` line into the mandate block by hand), that same edit should rewrite the `done when` and `Files in scope` values rather than appending a note beneath stale ones. Consider a one-line rule in `session-start.md` § Step 3's parse-contract note: *a scope change rewrites the mandate line; it never annotates around it.* Explicitly **not** proposing a new gate — the repo's standing rule is not to add gates for this class.
+- **Target files:** `session-start.md` (Step 3 parse-contract note), `docs/session-marker.md` § Mandate-line bullet contract.
+
+### 2026-07-18 — The blindness canary ships unwired: three pointers instruct, nothing enforces
+- **Status:** logged (pending)
+- **Category:** orphan risk / inert safeguard
+- **Severity:** medium — it is a *diagnostic*, not a guard, so an unsourced canary costs nothing directly. The risk is that it becomes a thing the repo believes it has: a later audit reads `audit-discipline.md`, sees a canary referenced, and treats absence-claims as covered when in practice nobody has sourced it.
+- **Source:** ai-resources 2026-07-18 (S11-637); `/risk-check` rated this Medium (Hidden coupling / Principle alignment) and it is the residual after mitigation D6.
+- **What happened.** `logs/scripts/search-canary.sh` was shipped with pointers at three load-bearing absence-claim sites (`risk-check-reviewer` consumer inventory, `lean-repo-auditor` Q3 orphan verdict, `ai-resource-builder` Consumer-Inventory Gate). All three are **instructions to a reader**, not triggers. Deliberately not wired into `/prime`: thread 15 records `/prime`'s scan already at 222 lines against a 40-line budget, so a per-session check would worsen an open thread.
+- **The honest position.** This is the repo's most-repeated defect class (*inert safeguard*, 6+ logged instances) in its mildest form. It was surfaced to `/risk-check` explicitly rather than shipped quietly, and the reviewer's preferred mitigation was applied. It is recorded here so that "the canary exists" is never mistaken for "absence-claims are verified."
+- **Proposal.** Re-evaluate after the next `/lean-repo` or `/risk-check` run that produces a zero-hit absence-claim: check whether the canary was actually sourced. If it was not, the pointers are not working and the choice is between a real trigger and deleting the canary — **not** a fourth pointer. Concrete review trigger: the next monthly `/friday-checkup`.
+- **Review-cycle:** reviewed 2026-07-18, deferred to the next monthly `/friday-checkup`.
+- **Target files:** `logs/scripts/search-canary.sh`, `docs/audit-discipline.md`, and whichever consumer proves to need a real trigger.
+
 ### 2026-07-18 — The subagent "full notes to disk" contract writes its evidence into a gitignored directory, so audit evidence never survives the machine
 - **Status:** logged (pending)
 - **Category:** subagent contract / evidence durability
