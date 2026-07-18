@@ -2,223 +2,6 @@
 
 > Archive: [session-notes-archive-2026-07.md](session-notes-archive-2026-07.md)
 
-## 2026-07-14 — Session S7
-
-**Mandate:** Implement the approved repo-repair pilot V1 (`~/.claude/plans/investigate-why-our-recurring-humble-curry.md`) in its stated execution order (Dimension 7 → qc-reviewer premise check → REGRESSION TEST A → `Files-checked:` footers → doctrine docs → `require-gate.sh` + wiring) — done when: the 7 hook tests in §5 pass with the hook seen to block, Regression Test A returns a non-GO verdict catching F-1, and the change set is committed.
-- Out of scope: workspace `CLAUDE.md`; `/resolve-incident`; the §4b deferred items (liveness rule already shipped as `check-destructive-liveness.sh`); the five critical repo fixes from the S6 investigation (separate sequencing decision); the V2 evidence-grade rollout across diagnostic commands.
-- Files in scope: `ai-resources/.claude/agents/risk-check-reviewer.md`, `ai-resources/.claude/agents/qc-reviewer.md`, `ai-resources/.claude/commands/risk-check.md`, `ai-resources/.claude/commands/consult.md`, `ai-resources/docs/protected-zones.md`, `ai-resources/docs/audit-discipline.md`, `ai-resources/.claude/settings.json`, `.claude/hooks/warn-settings-change.sh` (delete), `ai-resources/audits/research-workflow-deployment-fitness-2026-07-13.md` (read-only, regression-test input)
-- Stop if: REGRESSION TEST A still returns GO after the qc-reviewer edit — the premise check is then words, and the rest of the plan rests on it. Report honestly and stop rather than proceeding.
-- Required outputs: `ai-resources/.claude/hooks/require-gate.sh` (new); `logs/session-plan-2026-07-14-S7.md`
-- Mission: (none — this is repo-harness work, not the research-workflow mission)
-
-### Summary
-
-Implemented the approved repo-repair pilot V1 (`~/.claude/plans/investigate-why-our-recurring-humble-curry.md`) — **Half 1 only**. The plan gates its own construction (*"If the plan cannot pass the gate it installs, the gate does not work"*), and both plan-time gates returned non-GO: `/consult` → **CUT BACK** ("land the two reviewer edits, do not land the hook"), `/risk-check` → **RECONSIDER** (4 High dimensions). So the two reviewer edits landed and the blocking hook did not. **REGRESSION TEST A — the plan's own stop condition — PASSED decisively:** the fixed `qc-reviewer`, dispatched blind against the audit the OLD agent had passed with a `GO`, returned **REVISE**, catching F-1's invented consequence and the F-9/F-13(b) self-contradiction unprompted, plus four further defects. Commit `c3c0334`, unpushed.
-
-Verifying the plan's claims against the files (rather than trusting them) found **five errors in the plan itself** — the failure class the pilot exists to end, committed by the pilot's own author. Two were load-bearing.
-
-### Decisions Made
-
-- **Land Half 1; do NOT land the hook.** Operator-confirmed ("go") after both gates returned non-GO. Not a scope cut for convenience — compliance with `audit-discipline.md`'s verdict semantics (*"RECONSIDER — redesign before proceeding. Do NOT downgrade the verdict to push the change through."*).
-- **The three `risk-check.md` consumer fixes are in scope even though the plan omitted them.** `risk-check.md:93` hard-validates *"six `### Dimension N` subsections (1–6)"* and **aborts** on failure; both agents are symlinked into ~24 checkouts. Shipping Dimension 7 without this breaks `/risk-check` everywhere, immediately. Landing Dimension 7 without its consumer was never an option.
-- **Dimension 7 and the premise check OUTRANK the other dimensions rather than averaging with them.** A High/INCOMPLETE on Problem Reality forces RECONSIDER on its own; an untraced consequence forces REVISE regardless of dims 1–6. Rationale: six clean dimensions outvoting a false premise is *exactly* how the 7-of-8-wrong audit collected a `GO` from `qc-reviewer`. Averaging would have reproduced the defect.
-- **Carved out `risk-check-reviewer`'s "treat the passed inputs as the entire world" line.** That sentence is *why* the agent swallowed premises by design. Without the carve-out (scope, not truth), Dimension 7 was dead on arrival.
-- **The doctrine edits (`protected-zones.md`, `audit-discipline.md`) wait for the hook.** They are the *policy* the hook *enforces*. Landing them alone makes `/risk-check` mandatory on every command/agent edit with no mechanism to enforce it — the cost with none of the protection, and a rule one must remember to obey (the plan's own thesis: *"a rule you must remember to read is not a control; it is a wish"*).
-- **`warn-settings-change.sh` NOT deleted** — logged instead (HIGH, improvement-log). The plan said delete it "when the hook lands"; it did not. Deletion is an operator call (Autonomy Rule #3).
-- **Corrected the audit's false F-13(d) at its source in the live mission file** — it had already propagated into the deferred-cleanup task list, where a future session would have chased it.
-- **End-time `/risk-check` skipped, documented.** Plan-time gate ran and returned RECONSIDER; I complied by cutting the hook, so the executed change set is a strict *subset* of what was reviewed. Drift is bounded downward. Per the standing end-time skip rule.
-
-### Outcome
-
-COMPLETION: PARTIAL
-EXECUTION: ACCEPTABLE
-
-**What was asked but not done:** `require-gate.sh` (not created/wired/tested — a named required output does not exist on disk); the `Files-checked:` footers; the two doctrine edits. **This non-delivery is correct compliance, not a shortfall** — the governing plan gates its own construction, both gates returned non-GO, and `audit-discipline.md` verdict semantics forbid downgrading RECONSIDER to push a change through. The stop condition (Test A returns GO) did **not** fire: Test A **passed**, old GO → new REVISE. **Delivered beyond the plan and necessary:** the three `risk-check.md` consumer fixes — L93 hard-validates six dimensions and *aborts*; both agents are symlinked into ~24 checkouts, so Dimension 7 without this breaks `/risk-check` everywhere.
-
-**Better path (both fair, both mine):**
-- `logs/runs/2026-07-14-S7.json` was staged into the work commit `c3c0334` while still an **empty start-stub** (`files_changed: []` for a 9-file commit). It is the canonical file-evidence record since RR-03 retired the note's file blocks. Closed at wrap, but it should not have shipped empty.
-- The two facts that killed the hook (`warn-settings-change.sh` fail-open; the settings.json scoping gap) were each reachable by a one-line `echo … | bash` and one doc read. **A short claim-re-derivation pass against the plan *before* Stage 0** would have surfaced them ahead of the gates, instead of building the entire session-plan stage order around a design that was already dead.
-
-Confidence: high
-
-### Session Value Audit — 80/20 Review
-
-TYPE: A — High-Leverage Build. Materially improved the two most fanned-out agents in the repo (`qc-reviewer`, `risk-check-reviewer`, ~24 symlinks each) and *proved* the improvement empirically rather than asserting it.
-VALUE: exec=M decision=H risk=H compound=H optime=M
-SCORE: 9/10 — three files landed and live across ~24 checkouts, a regression test with a known answer flipped GO→REVISE, a fail-open guard was caught before wiring, an aborting consumer bug was caught before shipping, and a false claim was corrected inside a live mission file; docked for the unshipped enforcement half and the empty manifest.
-GATE: PASSED — asset-building, not comfort maintenance. Fixed a recurring failure (false-premise propagation — the mechanism behind a 7-of-8-wrong audit collecting a GO); improved reliability of high-use commands; prevented likely degradation (a hook that blocks nothing; a `risk-check.md:93` abort across 24 checkouts). Proven by a changed verdict on a fixed input, not by assertion.
-OPPORTUNITY: Correct session — the alternative (land the full plan) would have shipped a self-locking guard that is inert in ~20 of ~24 checkouts. The session plan had already pre-named this exact cut-back as its fallback branch, so the halving was planned, not improvised.
-DECISION: Repeat with constraints — **test-before-wire** (assert a hook's exit code against a synthetic payload before treating it as protection), and re-derive a plan's counts/claims by execution before implementing. Verifying rather than trusting the plan found five errors in it, two load-bearing.
-LESSON: A gate is only worth what it costs you when it fires on *you* — this plan failed the gate it was written to install, and that was the session's highest-value output.
-RULE: A hook's payload contract is unverifiable by reading — pipe a synthetic payload and assert the exit code before wiring, and **never model a new hook on an unwired one** (an unwired hook is never observed to fail). Trigger: any new or edited `.claude/hooks/*.sh`. Why: two hooks in this repo have now been found fail-open or false-firing, and the fail-open one survived precisely by never being wired. Where: `docs/audit-discipline.md` § hook change class.
-
-### Risky actions
-
-None. The riskiest action was the one **not** taken: wiring a blocking `PreToolUse` hook modelled on `warn-settings-change.sh`. That hook **fails open** (verified by execution: fed a real payload it exits 0), it would not fire for ~20 project-rooted sessions, and once wired it blocks edits to itself and to the `settings.json` it lives in. Copying it would have shipped a guard that silently blocks nothing — the repo's most-repeated failure mode ("inert safeguard"), reproduced by the plan written to end it. The gates caught it; I did not catch it first.
-
-### Session Assessment
-
-*(wrap-collector, 2026-07-14 — appends: improvement-log 82→83, friction-log 36→37)*
-
-- **Autonomy-compounding:** strong. Dimension 7 + the `qc-reviewer` premise check are reusable, symlink-distributed gates, and REGRESSION TEST A proved they bite (fixed agent, dispatched blind, flipped the old `GO` to `REVISE`). No OP-9 speculation — the unconsumed hook was deliberately *not* built.
-- **Leanness/cost:** no signal. Per-dispatch agent weight only; no always-loaded weight added. Cutting Half 2 avoided churn rather than causing it.
-- **Principle-drift:** none by this session. DR-8 held (RECONSIDER not downgraded to push the change through), OP-9 held, Autonomy Rule #3 held (`warn-settings-change.sh` logged, not unilaterally deleted). The false premises sit in the *plan artifact*, filed as a system gap — not as a grade on the session.
-- **Friction:** the approved plan carried 5 factual errors (2 load-bearing) into execution, and **nothing on the plan path grades premises**. Failure mode **Validation**. → `friction-log.md`.
-- **Safety: med — near-miss.** Wiring a blocking `PreToolUse` hook modelled on a template that fails open. Both plan-time gates caught it; **the session did not catch it first.** Nothing irreversible was taken.
-- **Reusable component produced — consider `/innovation-sweep`:** yes. The **regression-test-a-judgment-agent** pattern — dispatch the repaired reviewer *blind* against an artifact the old one passed, assert the verdict flips. It is the only thing that actually proved the fix works, and it is unregistered.
-- **Dropped as duplicate:** a guardrail-candidate for *mandatory test-before-wire on hooks* — already carried verbatim by `improvement-log.md:1081`.
-
-### Next Steps
-
-- **Redesign the enforcement mechanism** — the hook as specified is dead. Both gates' recommended redesign: wire into **every project's** `settings.json` via the upward-walk idiom (`auto-sync-shared.sh` pattern), **or** move enforcement to a **git pre-commit hook** (precedent: `session-notes.md:331`). Separate change, own gate. **Test-before-wire is mandatory** — pipe a synthetic payload, assert the exit code. A hook's payload contract is unverifiable by reading.
-- **Decide: merge the 8 ungated entry points?** The plan chose the hook *instead of* collapsing them. With the hook reconsidered, the merge has no cheaper rival. Operator decision.
-- **Fix or delete `warn-settings-change.sh`** (correct L6 to `.tool_input.file_path`, or remove it). It currently looks like protection and provides none.
-- **The five critical fixes from the S6 investigation remain unstarted** (marker teardown; versioned hook wiring; suffixed session numbers; wrap queue rule; deny narrowing). The pilot is now half-done; this is the natural next block.
-- **Re-head the research-workflow audit as SUPERSEDED.** Its §1/§4 contradict its own §7, and Test A found its entire cited evidence base (`audits/working/research-workflow-fitness/00–05`) **does not exist** — every `file:line` claim in it is untraceable. The mission file governs.
-
-### Open Questions
-
-- Enforcement shape: git pre-commit hook vs. per-project `settings.json` wiring? (Pre-commit is the stronger guard but fires later; PreToolUse fires early but is session-root-scoped and Bash-bypassable.)
-- Does the hook redesign supersede the "merge the 8 entry points" option, or are they complementary?
-
-## 2026-07-14 — Session S8
-
-**Mandate:** Investigate and fix seven harness defects (session-marker cleanup; versioned hook wiring + installer; suffixed session numbers replacing the mkdir mutex; wrap-session findings→task queueing; deny-rule narrowing; /prime pull step; wrap/staging self-conflict) — done when: each fix is proven by execution against a known-positive fixture, not by reading the diff, and the change set is committed.
-- Out of scope: the research-workflow deployment mission; the /risk-check wrong-checkout bug; the seven at-rest gates named by /consult; re-wiring check-permission-sanity.sh / auto-sync-shared.sh / warn-settings-change.sh (logged only).
-- Files in scope: ai-resources/.claude/commands/prime.md, ai-resources/.claude/commands/wrap-session.md, .claude/commands/wrap-session.md, ai-resources/.claude/commands/session-start.md, ai-resources/.claude/commands/session-plan.md, ai-resources/.claude/commands/concurrent-session-check.md, ai-resources/.claude/commands/close-worktree-session.md, ai-resources/.claude/hooks/check-foreign-staging.sh, ai-resources/.claude/hooks/check-destructive-liveness.sh, ai-resources/.codex/hooks/check-foreign-staging.sh, ai-resources/.claude/agents/session-feedback-collector.md, ai-resources/.claude/settings.json, .claude/settings.json, ~/.claude/settings.json, ai-resources/logs/scripts/foreign-session-guard.sh, ai-resources/logs/scripts/run-manifest.sh, ai-resources/logs/scripts/prime-allocator.test.sh, ai-resources/logs/scripts/run-manifest.test.sh, ai-resources/docs/session-marker.md, ai-resources/logs/usage-log.md
-- Stop if: the known-positive fixture shows check-foreign-staging.sh cannot block (fail-open) — the Fix 3 regex work is then moot and the guard needs rebuilding first. Report and stop.
-- Required outputs: ai-resources/logs/scripts/install-hooks.sh, ai-resources/.claude/hooks/check-hook-wiring.sh, ai-resources/.claude/hooks/cleanup-session-marker.sh, logs/session-plan-2026-07-14-S8.md
-- Mission: (none — repo-harness work)
-
-### Summary
-
-Investigated seven handed-down repo defects and **re-derived every premise by execution before planning**. Three of the seven were false or refuted, and my own V1 plan then carried three false consequence claims of its own — both sets corrected. **Four fixes shipped and verified** (destructive-op bypass + logged override; suffixed session markers with four proven breaks; findings-reach-the-task-menu severity fix; `/prime` pull behind-check). **Two deliberately deferred** after `/risk-check` returned **RECONSIDER twice — and was right both times**.
-
-The session's highest-value output is not a fix: it is that **the gates caught me twice on claims I was confident about**, and that **five of my own test fixtures returned plausible, wrong results** before one worked.
-
-### Decisions Made
-
-- **Ship four proven fixes; defer the hook-wiring fix pending a sentinel test.** The nine repo hooks *are* dead, but the **cause is not established**: `sh -c` proves *`sh`* word-splits, not that the harness does — **zsh returns exit 0 on the same command**, and `CLAUDE_PROJECT_DIR` is unset in the tool environment. Under two of three candidate causes, quoting is **a no-op that looks like a fix**. Wired a 3-way sentinel instead (ABS / CPD_QUOTED / CPD_UNQUOTED); one session restart discriminates. Operator chose this option.
-- **Deny-rule narrowing CUT to `/friday-act`.** `/risk-check` scored Permissions **High** and showed my patterns were **a WIDENING** — they left `git checkout HEAD -- <file>` and `git checkout <branch> -- <file>` allowed, both destructive and both blocked today. Correct shape is an **allow-list inversion**; that needs its own gate. Operator's brief pre-authorised this route.
-- **Close the env-var bypass BEFORE adding the override.** Order is load-bearing: the operator-chosen `AXCION_LIVENESS_OVERRIDE=1` would otherwise have "worked" **by exploiting the bug**, shipping a feature that made an open hole look intentional and leaving `FOO=bar` live.
-- **Marker readers before writers.** Suffixed markers ship only after every reader accepts both grammars — writing the new form first would have broken the live concurrent session mid-flight.
-- **RETAIN the `mkdir` claim-dir mutex** (deviation from the approved plan, which said remove it). The suffix makes collisions structurally impossible, so the mutex is now redundant — but it still yields tidy sequential numbers, and removing ~120 lines from a file live in **24 checkouts** after two RECONSIDER verdicts adds blast radius for no correctness gain. Removal queued as a clean separate simplification.
-- **Rewrite `prime-allocator.test.sh` to extract its subject from `prime.md`.** It was reading a **dead session's scratchpad** and reporting "12 passed, 0 failed" while testing an allocator containing the old broken seed. Fixed and proven falsifiable.
-- **`decisions.md`'s separate `(S4)` marker grammar left unsuffixed** — nothing keys liveness or collision-safety off it; changing it widens the diff for no protection.
-- **End-time `/risk-check` skipped, documented** (see Risky actions).
-
-### Risky actions
-
-**The riskiest thing this session was a fix I nearly shipped that would have made things worse.** Quoting the `$CLAUDE_PROJECT_DIR` paths *looks* like the obvious repair for nine dead hooks — and under two of three live causes it changes nothing while creating the belief that the guards are back on. A guard you believe is armed and isn't is worse than one you know is off. The `/risk-check` re-gate caught it; **I did not catch it first**, and my own verification (`sh -c` with quotes → exit 0) would have gone green either way.
-
-Separately: **discovered an open bypass in `check-destructive-liveness.sh`** — `FOO=bar git worktree remove` sailed straight through, for all four gated verbs. That is the guard that exists because a session came one operator remark from destroying 173+ lines of live work. Closed and re-verified. **Nothing irreversible was taken.**
-
-**End-time `/risk-check` skipped, and here is the reasoning on the record:** the plan-time gate ran **twice**, returned **RECONSIDER both times**, and I complied by cutting rather than downgrading (per `audit-discipline.md` verdict semantics). The executed set is a **strict subset** of what was reviewed, minus the highest-risk item (permissions — zero settings `deny`/`allow` edits were made, verified by the reviewer), plus the reviewer's **own recommended** sentinel. Drift is bounded downward. Per the standing end-time skip rule.
-
-### Next Steps
-
-- **RESTART A SESSION, then `cat ai-resources/logs/sentinel-hook-probe.log`.** Highest-value next action, costs nothing. Decode: no lines → repo-level hooks never load; only `ABS` → `CLAUDE_PROJECT_DIR` unset for hooks (use absolute paths / the installer); `ABS`+`CPD_QUOTED` but not `CPD_UNQUOTED` → word-splitting, quoting is the fix; all three → the premise is wrong, redo the diagnosis. Then delete the sentinel and its 3 wirings.
-- **The installer + wiring probe are BUILT AND TESTED but NOT LANDED** — held in scratchpad pending the cause (landing a fix of unknown efficacy is the exact failure this session exists to end). Spec: `logs/session-plan-2026-07-14-S8.md` Phase 1. Scratchpads are ephemeral; rebuild from the spec if gone.
-- **Deny rules → `/friday-act`.** Do NOT retry enumerate-the-destructive-forms. First settle by execution: does a `Read()` deny actually block a *Bash* command that merely names the path?
-- **Audit the other `*.test.sh` for the copied-subject shape** — a test that reads its subject from anywhere but the shipped artifact is a snapshot test of history.
-- **`.codex/` is gitignored** — its marker-grammar fix is on disk but not in git and will not propagate.
-
-### Open Questions
-
-- Why are the nine repo-level hooks dead? Three candidate causes; the sentinel answers it in one restart. **Do not re-assert the quoting diagnosis without that result.**
-- How many past audits are invalidated by the gitignore-aware `grep` shell function? A recursive grep from the workspace root sees an **empty ai-resources** and reports it as clean. Unknown false-negative rate across every prior consumer-inventory and orphan scan.
-
-## 2026-07-15 — Session S1-d99
-
-**Mandate:** Close the four urgent backlog items, each fix proven by execution (not code-read) — done when: all four items closed in their source logs, each proven by execution, and the hook-wiring cluster (1,3,4) verified against a real re-fire / fresh-clone shape.
-- Out of scope: the research-workflow deploy-fitness mission (item 5); the deny-rule narrowing (deferred to /friday-act); the /consult fabrication hardening and the seven at-rest gates; item 6 (test-script audit) unless trivially adjacent to item 1.
-- Files in scope: .claude/settings.json, .claude/hooks/sentinel-hook-probe.sh, logs/sentinel-hook-probe.log, .claude/commands/wrap-session.md, ../.claude/commands/wrap-session.md, .claude/commands/risk-check.md, logs/usage-log.md, .claude/agents/session-feedback-collector.md, .claude/commands/close-worktree-session.md
-- Stop if: item 1's quoting fix does not revive the hooks on re-fire (premise wrong → report and stop that thread); or /risk-check returns NO-GO on the wiring changes.
-- Allowed inputs: logs/session-plan-2026-07-14-S8.md (installer spec), logs/improvement-log.md (the entries)
-- Required outputs: logs/scripts/install-hooks.sh, .claude/hooks/check-hook-wiring.sh
-
-Auto multi-item (the four urgent backlog items): (1) Revive nine dead repo-level hooks — cause proven by sentinel = word-splitting on unquoted $CLAUDE_PROJECT_DIR in a spaced workspace path; quote the hook commands in ai-resources/.claude/settings.json and remove the sentinel probe; (2) Three this-week fixes — wrap-session core path must convert findings into tasks, /risk-check must write its report into the correct checkout, and usage-log.md format must be readable by its own parsers; (3) SessionEnd marker teardown does not fire on a clean wrap — diagnose the real cause and add a belt-and-braces marker teardown to /wrap-session; (4) Hook WIRING is unversioned (lives in ~/.claude/settings.json) — build a versioned installer so a fresh clone actually gets the guards.
-
-### Summary
-
-Auto-mode "do the urgents" (menu items 1–4). Two gates shrank the work before any wasted build: a pre-gate premise check found item 2(a) already shipped, and `/risk-check` returned **RECONSIDER**, independently verifying that item 3 was *also* already shipped and that item 4's installer carried a High/High (Permissions/Reversibility) profile. Built 3 fixes (item 1 hook-quoting revives 9 dead hooks; 2b risk-check report path; 2c usage-log ordering + a falsifiable format guard), status-flipped 4 stale improvement-log entries to resolved, and deferred item 4 to its own gated session with a recorded redesign spec. Committed 3179771; telemetry captured this wrap.
-
-### Decisions Made
-
-- **Rescope on RECONSIDER:** build items 1 / 2b / 2c, status-flip 2a + 3 (verified already-shipped), defer item 4. Operator approved (`go`).
-- **Item 2b** implemented via a `git rev-parse --git-common-dir` "same repository?" discriminator — a worktree writes into its own checkout; main and ordinary project sessions are unchanged. Basename matching rejected (a worktree dir is not named `ai-resources`). Discriminator proven by execution before writing.
-- **Item 2c** fixed by relocating the prepended `### 2026-07-14 (S2)` entry to the tail (SHA-256 byte-identical) and adding a read-only guard wired into wrap Step 12 — not by changing the reader.
-- **No separate qc-reviewer subagent:** `/risk-check` (independent) + operator sign-off on the rescope + per-diff execution verification are the gates this change needs (Subagent Proportionality — don't stack gates).
-- End-time `/risk-check` skipped — see Risky actions.
-
-### Risky actions
-
-Deleted the sentinel probe (tracked script + untracked log) and rewrote `.claude/settings.json` (versioned, hook wiring) — both git-tracked/revertible, JSON re-validated post-write; nothing irreversible taken. **End-time `/risk-check` skipped, documented:** the plan-time gate ran, returned RECONSIDER, and I applied its redesign (dropped item 3, deferred item 4, scoped item 2b per its Dimension-5 guidance). The executed set is a strict subset of what was reviewed, minus the single highest-risk item (item 4); drift is bounded downward and commit 3179771 already shipped. Per the standing end-time skip rule.
-
-### Next Steps
-
-- **Restart a session to confirm the 9 revived hooks now fire** (settings load at SessionStart, not mid-session). The `[HEAVY]` guardrail, friction-log-auto, and friday-checkup-reminder should return.
-- **Item 4 — versioned hook-wiring installer**, its own gated session: timestamped backup of `~/.claude/settings.json` before merge; idempotent merge that preserves the operator-DECLINED `"model"` field; its own `/risk-check`. Full redesign spec in `improvement-log.md`.
-- Deny-rule narrowing remains queued for `/friday-act` (unchanged).
-
-### Open Questions
-
-None.
-
-### Findings Declined
-
-- **Reader `tail -n 30` vs ~35-line entries:** `/prime`'s usage-log reader reads the last 30 lines, but a single entry is ~35 lines, so a correctly-tailed entry's `###` header can sit just outside the reader's window. Declined — pre-existing reader *design* (not introduced or worsened this session), low consequence (the body usually repeats the date; the telemetry-gap nudge fired correctly this prime), and it is the reader's concern, not the writer-contract this session fixed. Cross-referenced in the queued improvement-log entry so it is not lost.
-
-## 2026-07-17 — Session S1-596
-
-**Mandate:** Stop cross-worktree session collisions by giving the strictly append-only shared logs a `.gitattributes` `merge=union` driver, so two worktree branches no longer conflict at merge — done when: a `.gitattributes` with `merge=union` on the verified append-only logs is committed, and `/risk-check` returns GO.
-- Out of scope: the deeper marker-allocator relocation ("participation is version-controlled" HIGH item); `usage-log.md` and `improvement-log.md` (NOT append-only — excluded from union merge).
-- Files in scope: .gitattributes, logs/scripts/check-duplicate-session-headers.sh, .claude/commands/close-worktree-session.md, logs/decisions.md, logs/session-notes.md, audits/risk-checks/2026-07-17-add-gitattributes-merge-union-for-append-only-session-logs.md
-- Stop if: `/risk-check` returns NO-GO; or the append-only premise fails verification for any candidate log.
-- Required outputs: .gitattributes
-
-Investigation (this session): confirmed the collision is the 5 shared tracked append-only logs merging across worktree branches with no merge rule; marker mutex intact for same-code worktrees; documented known-gap (stale worktree) is a separate path. Proceeding to fix.
-## 2026-07-17 — Session S2-21e
-
-**Mandate:** Close three urgent backlog items — (1) /usage-analysis Step 4.2 + session-usage-analyzer SKILL maintenance routine changed from PREPEND to APPEND-at-tail; (2) a pre-dispatch premise-verification step (run every cited script, open every cited line, re-derive every count) added to /risk-check and /consult before the subagent spawn, plus a gate-scope note in audit-discipline.md; (3) the premise-check clause + "state the primitive, not the count" rule ported into system-owner.md output contract and /consult dispatch brief — done when: all three items status-flipped to applied in logs/improvement-log.md, each verified against actual file text (not a code-read), item 1 confirmed consistent with check-usage-log-format.sh.
-- Out of scope: the reader-side `tail -n 30` vs ~35-line window (item 1 declined it — reader design, not writer contract); building any new command; back-porting to live project chassis copies; all other open backlog items.
-- Files in scope: .claude/commands/usage-analysis.md, skills/session-usage-analyzer/SKILL.md, .claude/commands/risk-check.md, .claude/commands/consult.md, docs/audit-discipline.md, .claude/agents/system-owner.md
-- Stop if: item 1's APPEND change conflicts with what check-usage-log-format.sh expects (premise wrong → report and stop that thread); or /risk-check returns NO-GO on the gate-dispatch changes.
-- Allowed inputs: logs/improvement-log.md (the three entries)
-
-Auto multi-item (three urgent backlog items): (1) /usage-analysis + session-usage-analyzer SKILL — change telemetry writer from PREPEND to APPEND-at-tail to match the /prime tail-reader; (2) finish the gate-premise check — a pre-dispatch "verify every cited script/line/count" step on /risk-check and /consult; (3) port the premise-check clause into system-owner.md output contract so the last unhardened reviewer cites the command behind every count/path/quote.
-
-### Summary
-
-Auto-mode bundle (menu items 1–3, three urgent `[urgent]` backlog items). Closed all three by verified file-text edits, not code-reads: (1) the usage-log writer now APPENDs at the tail in `usage-analysis.md:58` and `session-usage-analyzer/SKILL.md:118,122` (was PREPEND — invisible to `/prime`'s `tail -n 30` reader); (2) a pre-dispatch premise-verification step added to `risk-check.md` (Step 2.6 / item 10a) and `consult.md` (Step 3.6), plus an `audit-discipline.md` § When-to-fire note — run every cited script, open every cited line, re-derive every count before the reviewer spawns; (3) `system-owner.md` Phase 5 gained a general evidence-citation rule (all functions A–G) requiring every count/path/quote to cite its command, with a `consult.md` Step 4 brief reinforcement. Plan-time `/risk-check` → PROCEED-WITH-CAUTION; all 4 mitigations applied. Committed `625e2a9`.
-
-### Decisions Made
-
-- **Bundled all three items under one approval gate + one combined `/risk-check`** (auto mode, operator `go`). Shared theme (writer/reader + gate/premise integrity), all additive command/agent-contract edits.
-- **No separate `/qc-pass` subagent** — the independent plan-time `/risk-check` (PROCEED-WITH-CAUTION) + operator sign-off + inline read-back verification are the gates this instruction-edit class needs (Subagent Proportionality; don't stack gates). Mirrors the S1-d99 precedent.
-- **Applied item 2's own discipline to this session's plan**: re-read every cited line/behavior from the running files before dispatching the risk-check (premise-verify the plan before the gate).
-- **Skipped the context-discovery engine** (auto-mode 8c.4.5): scope was fully enumerated + existence-verified from the backlog; the risk-check consumer inventory covered blast radius.
-- **Substituted inline read-back for the reviewer's live-`/consult`-dispatch smoke-test mitigation**: the edits don't touch the ≤30-line/path-back output contract, so it is preserved by construction — a ~148k Opus dispatch to re-confirm untouched formatting was disproportionate.
-- End-time `/risk-check` skipped — see Risky actions.
-
-### Risky actions
-
-Edited six symlinked/shared canonical files (two gate commands, one shared agent, one command, one skill, one doc) — all git-tracked and revertible; no irreversible/external action taken. **End-time `/risk-check` skipped, documented:** the plan-time gate ran, returned PROCEED-WITH-CAUTION, and all 4 mitigations were applied; the executed set equals the reviewed set (no additions, no drift), and commit `625e2a9` already shipped. Per the standing end-time skip rule (plan-time covered + mitigations applied + commits shipped + drift bounded). Blast radius is High only post-merge — this is a git worktree of canonical `ai-resources`, so pre-merge the change is contained to this checkout.
-
-### Next Steps
-
-- **Restart a session to confirm the new gate steps behave** — the pre-dispatch premise check fires on the next `/risk-check` and `/consult`; the system-owner citation rule applies on the next dispatch.
-- **Queued follow-up (medium):** port the premise-check clause to the other five reviewer-class agents (`refinement-reviewer`, `triage-reviewer`, `reconcile-reviewer`, `expert-check-reviewer`, `scope-qc-evaluator`) — they also lack the antibody (surfaced by this session's `/risk-check` Dimension 7).
-- Push pending: `625e2a9` + this wrap commit, plus 2 pre-existing unpushed commits on the canonical `ai-resources` checkout.
-
-### Open Questions
-
-None.
-
-### Findings Declined
-
-None — the one finding surfaced (five other reviewer-class agents lack the premise-check clause) was QUEUED to `improvement-log.md` at medium severity, not declined.
-
 ## 2026-07-17 — /prime marker-allocator de-dup (Step 8k) + concurrent-session incident recovery
 
 ### Summary
@@ -503,6 +286,47 @@ Edited three canonical commands that sit on the session-entry hot path (`prime.m
 3. **Reword `/prime` 8a.c** — it commands an invocation `/session-start` Step 4 has already made. Queued low; annotated but not restructured.
 4. **Push** — 18 commits unpushed in ai-resources, 1 in axcion-sector-intelligence.
 5. Carried from S6-ac5: thread 4 (the `git checkout` block, its own session, allow-list inversion); thread 8 (`run-manifest.sh` cross-midnight close); mission threads 3, 5, 7, 9, 10 still open. Sector Intelligence pilot deploy remains gate-lifted.
+
+### Open Questions
+None.
+
+## 2026-07-18 — Session S8-a1b
+**Mandate:** Replace the blanket `Bash(git checkout *)` deny in `~/.claude/settings.json` and workspace-root `.claude/settings.json` with rules that block only the destructive forms, so ordinary branch and merge work runs unblocked — done when: `git checkout <branch>` and `git checkout --help` run without a permission block and `git checkout .` / `git checkout -- <path>` still block, both proven by execution; mission thread 4 ticked; the improvement-log entry flipped with what shipped cited
+- Out of scope: the `"model": "opus[1m]"` field in `~/.claude/settings.json` (operator-DECLINED 2026-07-13 — must not be touched while editing that file); the archive `Read()` deny patterns (verified a separate item; the routing between them is spurious); the other six open mission threads
+- Files in scope: /Users/patrik.lindeberg/.claude/settings.json, /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/.claude/settings.json, docs/permission-template.md
+- Stop if: `/risk-check` returns NO-GO, or returns RECONSIDER a second time on the narrowed design; the fix would require touching the operator-declined `model` field
+- Allowed inputs: logs/missions/repo-health-backlog-2026-07.md, logs/improvement-log.md, audits/risk-checks/
+- Mission: repo-health-backlog-2026-07
+- **Exit condition partially SUPERSEDED (declared, not silent).** The mandate's second done-when clause — *"`git checkout .` / `git checkout -- <path>` still block, proven by execution"* — is **no longer satisfiable and was deliberately abandoned**, because the design changed mid-session at an operator decision. The plan was to *narrow* the deny rule; `/risk-check` plus this repo's own 2026-07-14 postmortem established that no glob set can express the safe/destructive split, so the rule was **deleted outright** and replaced with a model-side rule. Those two forms are therefore now *allowed* by design. Clauses 1 and 3 were met as written and verified by execution. Do not read this session as having met its mandate verbatim — it met a superseding, operator-chosen version of it.
+- **Scope growth (declared, not silent):** `../CLAUDE.md` (workspace root, always-loaded) and `docs/commit-discipline.md` were edited, neither in the declared `Files in scope`. Both carry the model-side rule that replaces the deleted deny rule — the named half of the option the operator selected when the design conflict was surfaced. Authorized explicitly, not assumed.
+
+Unblock `git checkout` — it is denied by name in two settings files, `bypassPermissions` cannot waive it, and it has stalled work five times. Mission thread 4 of repo-health-backlog-2026-07.
+
+### Summary
+Closed mission thread 4 of `repo-health-backlog-2026-07`: retired the `"Bash(git checkout *)"` deny rule from `~/.claude/settings.json:47`, workspace-root `.claude/settings.json:27`, and the canonical Layer B shape in `docs/permission-template.md` — the last of which would otherwise have re-seeded the rule into every new project. The rule denied by **verb, not effect**: `git checkout --help`, which cannot modify a byte, was blocked, and `bypassPermissions` cannot waive a deny; 5 logged work stalls, one freezing both open sessions mid-merge. **The fix that shipped is not the fix that was planned.** The session designed a 9-pattern enumerated deny set, verified it against a 21-command fnmatch table, and took it through a full `/risk-check` — which caught that `improvement-log.md:953`, from the 2026-07-14 attempt on this same rule, already reads *"do not attempt the enumerate-the-bad-forms approach again."* That line had appeared in this session's own `/prime` orientation output and was read past. Two commits: `32a5402` (ai-resources), `1530845` (workspace root).
+
+### Decisions Made
+- **Deletion + a model-side rule, not a narrowed deny set** — operator-selected at a surfaced conflict, from three offered options. Three independent sources pointed away from a larger deny list: this repo's own 2026-07-14 postmortem, the operator's standing architecture (`bypassPermissions` floor + model-side rules, "never add to deny list"), and Anthropic's documented warning that argument-constraining Bash patterns are fragile. The session stopped and surfaced the conflict rather than proceeding on a PROCEED-WITH-CAUTION that technically permitted it.
+- **The entry's own prescribed remedy was also rejected, with reason.** It called for an "allow-list inversion." Not implementable: deny is evaluated before allow and cannot carry allowlist exceptions, and under `bypassPermissions` an allow-list has nothing to bite on. Both the forbidden shape and the prescribed shape were unavailable — recorded so a future session does not re-attempt either.
+- **The model-side rule is labelled as unenforced, deliberately.** `docs/commit-discipline.md` § Destructive git-checkout forms opens by stating it is a wish, not a control. The section it joins carries this repo's own lesson that a rule you must remember to read is not a control; dressing this one up as protection would have reproduced that exact failure.
+- **Rule detail placed in `commit-discipline.md`, one short line in always-loaded workspace `CLAUDE.md`** — keeps the always-loaded file lean per the repo's short-pointer convention while ensuring the rule actually fires.
+- **End-time `/risk-check` skipped (documented, per the standing skip rule).** The shipped design is simpler and *more* reversible than the design the plan-time gate scored (one deleted line per file vs a nine-pattern rewrite); the design change was an explicit operator decision with the widening tradeoff stated in the option text; and the one thing a fresh reviewer would add — the consumer question — was closed inline by sweeping all 68 settings files in the workspace, none of which carries the rule. Disclosed to the operator in chat with an offer to run it anyway; not taken up.
+- **No `/qc-pass` subagent stacked on top** (workspace `Subagent Proportionality` — "do not stack gates"). The change was already cleared by an independent `/risk-check`, operator sign-off on the exact design at a surfaced conflict, execution verification of every claim, and an inline consumer re-sweep.
+- Routine: `permission-template.md` was added to the footprint once the risk-check identified it as a missed consumer; the improvement-log entry was flipped to **partially applied**, not applied, because its archive-`Read()` half is untouched.
+
+### Risky actions
+Edited a permission deny list in `~/.claude/settings.json` — a file **outside any git repo**, so `git revert` cannot undo it; mitigated by a timestamped backup (`~/.claude/settings.json.bak-2026-07-18-S8-a1b`) written before the edit, per the risk-check mitigation. The edit was a targeted JSON-array change, not a file rewrite, specifically to leave the operator-**DECLINED** `"model": "opus[1m]"` field untouched — verified intact at `:166` afterwards. **The change removes a destructive-op guard**: `git checkout .`, `-- <path>`, `-f`, `-p` and friends are now unguarded. Accepted knowingly and documented in three places; the honest size of it is that `git restore <path>` does identical damage and has never been denied in any layer, so the blanket rule supplied the appearance of protection rather than protection. **A gate caught a real error this session**: the plan was one step from shipping an approach this repo had already recorded as wrong.
+
+### Findings Declined
+- **`git restore` being unguarded** — declined as a new entry: it is now recorded in `docs/permission-template.md`, `docs/commit-discipline.md`, and the flipped improvement-log entry, all three naming it as the reason the residual risk is smaller than it looks. Nothing left to queue.
+- **A concurrent session pushed `ba75e1f` to origin mid-session** (confirmed via `git branch -r --contains`) — declined: an observation about workspace concurrency, not a defect. Noted here so the unpushed counts in this note are not read as inconsistent with `/prime`'s.
+
+### Next Steps
+1. **Build the destructive-checkout enforcement hook** — the structural fix this session could only document. A `PreToolUse` hook that parses the command and asks git whether the argument resolves to a ref is the only instrument that can express the safe/destructive split. Queued to `improvement-log.md`; inherits mission thread 3's unversioned-hook-wiring problem until that lands.
+2. **Mission `repo-health-backlog-2026-07`: 6 of 10 threads open** — 3 (hook wiring, heavy: scored High/High twice, needs its own gated session), 5 (`/permission-sweep` merged-layer evaluation), 7 (reviewer premise-check antibody), 8 (`run-manifest.sh` cross-midnight), 9 (assert-from-recall standing rule — thread 7 is its countermeasure), 10 (liveness in mutating commands; verify the 9 unconfirmed before fixing).
+3. **The archive `Read()` half of the 2026-07-14 entry is still open** — `ai-resources/.claude/settings.json:30` `Read(logs/*archive*.md)`. The entry is marked *partially applied* precisely so this is not read as closed.
+4. **Push** — 1 commit in ai-resources, 2 at workspace root.
+5. Carried: Sector Intelligence pilot deploy (gate lifted 2026-07-18 S3-919); the `axcion-sector-intelligence` `session-plan.md` symlink conversion (S7-bb5, needs its own `/risk-check`).
 
 ### Open Questions
 None.
