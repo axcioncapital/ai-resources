@@ -18,6 +18,16 @@ Resolved entries are archived to `improvement-log-archive.md` via `/resolve-impr
 
 ---
 
+### 2026-07-18 — The subagent "full notes to disk" contract writes its evidence into a gitignored directory, so audit evidence never survives the machine
+- **Status:** logged (pending)
+- **Category:** subagent contract / evidence durability
+- **Severity:** medium — it does not break a session, and the *conclusions* survive in the committed report. What is lost is the **evidence layer**: the per-item file:line citations, the commands run, and the reasoning that distinguishes a verified finding from a plausible one. That layer is exactly what this repo has repeatedly needed and lacked — five entries were closed this session precisely because nobody could cheaply re-check the original claim.
+- **Source:** ai-resources 2026-07-18 (S10-163), observed at commit time — `git add` refused the five cluster notes with *"The following paths are ignored by one of your .gitignore files: audits/working"*.
+- **What happened.** `ai-resources/CLAUDE.md` § Subagent Contracts requires audit/scan subagents to *"write full notes to disk and return only a short summary,"* naming `audits/working/...` as the location. `.gitignore:25` ignores `audits/working/`, and `repo-architecture.md:50` describes it as *"transient subagent working notes"* — so the contract and the ignore rule are each individually coherent and jointly guarantee the notes are local-only. This session's five verification agents wrote **119 KB across 5 files** (19–33 KB each) containing every file:line citation behind the triage report. None of it is tracked; 384 of the 397 files in that directory are untracked.
+- **Why this is not simply "working notes are transient."** The summary cap (30 lines) exists so the main session does not re-read the full notes — which means the notes are the **only** durable record of *how* a finding was verified. A finding whose evidence has evaporated is indistinguishable, six weeks later, from a finding that was asserted; and re-deriving it costs a fresh agent pass. That is the precise mechanism behind this log's stale-entry problem, applied to the tooling built to fix it.
+- **Proposal.** Do **not** simply un-ignore `audits/working/` — the directory is 4.4 MB and genuinely holds transient scratch. Instead separate the two kinds of output: transient scratch stays in `audits/working/`, while **evidence that a committed report cites** is written to a tracked location (e.g. `audits/evidence/{date}-{slug}/`) and staged with the report. The rule of thumb: if a committed artifact cites it, it is not transient. Decide the split before adding a fourth cluster of agents that produce citable notes.
+- **Target files:** `ai-resources/CLAUDE.md` § Subagent Contracts, `docs/repo-architecture.md` (canonical-homes table), `.gitignore`, and the audit-agent definitions that hard-code `audits/working/`.
+
 ### 2026-07-18 — The staging guard blocks the sessions that follow the mandate schema *correctly* — it never reads `Required outputs`
 - **Status:** logged (pending)
 - **Category:** hook/command contract mismatch — session mandate schema vs. staging tripwire

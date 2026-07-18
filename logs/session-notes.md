@@ -376,3 +376,38 @@ None — the one open item from this session's `/risk-check` (the `docs/session-
 - Stop if: the mission's frozen sections (Goal / In-Out scope / Validation contract) would need to change to fit the new threads
 - Required outputs: audits/2026-07-18-verified-backlog-triage.md, audits/working/verify-2026-07-18-clusterA-markers.md, audits/working/verify-2026-07-18-clusterB-hooks.md, audits/working/verify-2026-07-18-clusterC-commands.md, audits/working/verify-2026-07-18-clusterD-logs.md, audits/working/verify-2026-07-18-clusterE-research-workflow.md
 - Mission: repo-health-backlog-2026-07
+
+### Summary
+Verification-and-triage session; no fixes implemented. Five parallel agents (pinned opus) re-checked ~30 backlog claims against live files instead of against the log entries. About a third did not survive: **5 entries assert defects that are already fixed** (including L800, labelled "the highest-value structural item in this log" — it is the spec of the fix that shipped) and **~6 more carried a false premise, wrong target file, or wrong counts**. Produced `audits/2026-07-18-verified-backlog-triage.md`, ran `/consult`, triaged an operator-supplied external Codex review per-item, then repopulated `repo-health-backlog-2026-07` to 11 dependency-ordered threads and flipped the 5 stale entries with cited evidence.
+
+### Decisions Made
+- **Mission ordering criterion changed from severity to dependency.** Thread 11 (the shell `grep` is gitignore-aware) runs first — not because it is worst, but because every other thread's verification runs through it. "Consequence-if-unfixed" is a severity ordering and is wrong for a mission.
+- **Reviewer premise-check narrowed from five agents to two** (`triage-reviewer`, `scope-qc-evaluator`). External review established that `refinement-reviewer` and `expert-check-reviewer` have deliberately narrower jobs where blanket filesystem checks duplicate QC — copying the rubric everywhere is the over-application `CLAUDE.md § Subagent Proportionality` forbids. This **overrode** the System Owner, who did not narrow it.
+- **Staging-guard defect routed OUT of the mission despite being the highest-ROI item on the report.** It serves none of the mission's three frozen Goal clauses; urgency is not mission fit. Ordinary backlog, own session.
+- **Stacked-gate item reclassified rather than closed** (SO, `AP-11`). A rule written 3× and still unfollowed is evidence the *rule* is wrong, not that discipline is missing. I had been using the no-new-gates non-negotiable as cover — it forbids building a gate, not diagnosing the rule.
+- **`audits/working/` bloat kept OUT of the mission despite SO pushback** — every number in the source claim was false and `/log-sweep` self-excludes its own notes by design. External review concurred.
+- **Thread 13 deliberately NOT ticked** although its work is done and committed. Hand-ticking is the unverified-tick mechanism thread 12 exists to fix.
+- **Mission repopulated by hand** — `/mission` exposes no `update` verb. Recorded in-file as an unsanctioned write and as thread 12's sibling defect, not as precedent.
+- **Routine:** operator deprioritised the three-repos-without-a-remote finding mid-session; recorded in the report, not actioned.
+
+### Risky actions
+None taken. One nearly-taken and correctly gated: creating three GitHub repos and pushing ~32 MB of buy-side research to a third party — stopped at the external-write gate and surfaced for operator decision rather than executed on a general "go". Operator deprioritised it. No destructive git operations; no repo mutations by any of the six subagents (cluster B verified its own no-mutation claim by porcelain diff).
+
+### Findings Declined
+- **`mission_name` still reads "10 verified items" with 16 threads** — frozen frontmatter; surfaced to the operator as their call rather than silently edited.
+- **Three project repos with no git remote** (603 commits, ~32 MB) — real and irreversible-on-loss, but operator-deprioritised this session. Recorded in the triage report so it is not lost.
+- **`audits/working/` size** — every number in the claim was false (397/4.4 MB/88, not 328/4.1 MB/53) and the 31.6% that cannot be swept is excluded *by design*. Housekeeping, not a defect.
+- **`rm` inside a `for` loop over `$(find …)`** — FALSE on code; the construct exists nowhere in `logs/scripts/` or `.claude/hooks/`. Survives only in log prose.
+- **friction-log auto-capture PostToolUse branch "is dead code"** — FALSE; proven live by execution against a scratch copy. Its real defect (dead in the *template*) is queued as thread 14(c).
+- **Partial conflict enumeration** — the `/prime` step the entry proposes fixing does not exist. Rewrite the entry against its real attach point or close it; do not implement as written.
+
+### Next Steps
+1. **Thread 11 first** (`command grep` / `git grep` / `rg -uu` + a known-positive canary). Cheap, and every later thread's verification depends on it.
+2. **Then thread 12** (`/mission check` must read the validation contract) — it is the generator, and until it lands no thread can be ticked honestly, including thread 13 whose work is already done.
+3. **Staging guard** — outside the mission but the highest-ROI single fix: parse `Required outputs` and treat the union with `Files in scope` as the permitted footprint.
+4. Re-derive the `/friday-checkup` dormancy-regex count (20 vs 37) before sizing thread 14; repair it in lockstep with the friction-log header drift or the checkup breaks.
+5. Push — 7 unpushed commits in ai-resources.
+
+### Open Questions
+- Should `mission_name` be updated despite frontmatter being frozen? (16 threads, name says 10.)
+- Research-workflow thread 7's acceptance test is unsatisfiable (enum mismatch, zero overlap). Amending it means amending a frozen validation contract — operator decision.
