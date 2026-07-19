@@ -454,3 +454,41 @@ None. No destructive git operations; no external writes; push correctly deferred
 ### Open Questions
 - The canary still depends on a human sourcing it. `/risk-check` rated this Medium and the three agent pointers only partly mitigate it — they instruct, they do not enforce. Is an enforcing trigger wanted, or is instruct-only the right ceiling here?
 - Unchanged from S10-163: should `mission_name` be updated despite frontmatter being frozen (it still reads "10 verified items" against 16 threads)?
+
+## 2026-07-18 — Session S12-3cd
+**Mandate:** Fix `/mission check` to read the validation contract before ticking and add the missing `update` verb, then flip five already-fixed backlog entries with cited evidence per entry, then make `/permission-sweep` evaluate the merged layer stack if context allows — done when: `/mission check` demonstrably refuses-or-warns on an unmet acceptance assertion (verified by execution against this mission's own live contradiction), the `update` verb revises a thread list without a hand-edit, five `improvement-log.md` entries are flipped each citing a command or file:line, threads 11/12/13 are ticked through the new sanctioned path, and the commits land
+- Out of scope: thread 15 (`/prime` scan cost — own session; 18 symlink consumers and both obvious remedies forbidden by the thread); thread 3 (hook wiring — own gated session, two prior /risk-check RECONSIDERs); reopening any underlying fix that thread 13's five entries describe
+- Files in scope: .claude/commands/mission.md, logs/improvement-log.md, logs/missions/repo-health-backlog-2026-07.md, .claude/agents/permission-sweep-auditor.md, docs/permission-template.md
+- Stop if: /risk-check returns RECONSIDER or NO-GO on the `update` verb's new write capability against a frozen-contract file; or a concurrent session is found mid-edit on logs/improvement-log.md (three live sessions in this checkout; that file takes in-place edits, not appends)
+- Mission: repo-health-backlog-2026-07
+- ⚠ SCOPE CORRECTED AT PLAN TIME, before any edit — declared, not silent. **Thread 13's work was already complete when this mandate was signed.** Commit `d03971e` (S10-163, 22:17 today) flipped all five entries with cited evidence per entry, which is thread 13's stated deliverable ("the citation is the deliverable, not the flip"); verified by `git show --stat d03971e` and by the five live `**Status:** **RESOLVED**` lines at `improvement-log.md:775, :796, :844, :883, :972`, each carrying a resolvable commit or file:line citation. Thread 13 is therefore in thread 11's position — complete, unticked, blocked only by thread 12's broken tick mechanism. **Effect on scope:** "flip five entries" becomes "verify five flips and tick", and the freed context promotes thread 5 from conditional ("if context allows") to a firm second item. Done-when is unchanged in substance: threads 11/12/13 still close through the new sanctioned path, and thread 5 now lands in this session rather than maybe.
+
+Repo-health mission `repo-health-backlog-2026-07`, continuing in dependency order. Thread 12 first (`/mission check` must read the validation contract, plus the missing `update` verb) — it is the generator of the stale-record disease and it blocks the honest tick of threads 11 and 13. Then thread 13 (flip five backlog entries whose defects are already fixed, with cited evidence per entry). Then thread 5 if context allows (`/permission-sweep` must evaluate the merged layer stack before Rules 5/6 fire).
+
+### Summary
+Mission `repo-health-backlog-2026-07`, dependency order. **Thread 5 shipped** (`b7b6911`): `/permission-sweep` was judging each settings file in isolation, which cannot answer the question Rules 1/5/6 exist to ask. Root cause found by reading rather than assuming — the auditor assigns every file a layer letter in Step 2 and **never used it anywhere in 235 lines**; no merge or precedence concept existed. Fixed with a Step 2.5 effective-view computation, scoped to the three prompt-causation rules, verified by a three-direction execution test. **Thread 12 stopped at a `/risk-check` RECONSIDER** (`17f62c8`) and shipped nothing; its redesign is carried in `improvement-log.md` (`64edc8a`). Threads 11 and 13 were verified complete but deliberately left unticked.
+
+### Decisions Made
+- **Substituted a different design for thread 12's filed remedy, then had the gate reject the substitute.** The thread says "refuse-or-warn when *the named assertion* is unmet"; no thread in any of the 5 mission files declares an assertion, so the remedy has no referent (independently confirmed; Problem reality Low). My substitute — a required `--evidence` citation — was rejected at Principle alignment **High** because it was presence-only and therefore "another checklist", which the mission's non-negotiable `:63` forbids. The rejection was correct and I accepted it in full.
+- **Treated the stalled re-score as nothing, not as a pass.** The redesign was sent back via `SendMessage`; that agent stalled at 600s and wrote no verdict. RECONSIDER stands unchallenged; no thread-12 change was committed.
+- **Deliberately did not tick threads 5, 11 or 13** despite all three being complete with execution-verified evidence. Ticking three threads through a mechanism a gate had flagged as unsound the same session would be the precise behaviour the mission exists to end. Accepted cost, stated: `/prime` Step 1d re-offers all three every session until thread 12 lands.
+- **Amended the mandate on disk mid-session, declared not silent**, when execution showed thread 13's work was already complete in `d03971e`. Nothing else re-reads a mandate after a scope change — the same gap S11-637 recorded.
+- **Demote-not-delete for suppressed permission findings.** Dropping them hides genuine per-file drift; leaving them CRITICAL is the false alarm. Suppression scoped to Rules 1/5/6 only — `bypassPermissions` does not make a stale path correct.
+- **Routine:** skipped the end-time `/risk-check` after applying the skip test explicitly rather than after the fact — the executed change set (one agent definition, one doc, logs) touches none of the six listed classes.
+
+### Risky actions
+None. No destructive git operations; no external writes; push correctly deferred to the wrap gate. One near-miss caught rather than shipped: **the thread-5 verification harness returned a false PASS on case C** — `sed \|` alternation is a GNU extension BSD sed does not support, so the Rule 9 pattern never matched and reported "clean" for the wrong reason. Caught only because the expected value was declared before the run. Also noted: three foreign sessions were live in this checkout all session; `logs/improvement-log.md` was re-checked for foreign edits immediately before its in-place edit.
+
+### Findings Declined
+- **Thread 13's work being already complete (`d03971e`) as a new log entry.** It is a scope fact, not a defect — already recorded in the mandate amendment above, in the session plan's verified-facts table, and in the scratchpad. A log entry would add a third copy with no fix attached.
+
+### Next Steps
+1. **Thread 12**, from the redesign in `improvement-log.md` (`64edc8a`) — **not** from the thread text, which is confirmed unimplementable. Re-gate the closed-set `--assertion` design first; the three open questions the stalled re-score never answered are listed in the entry.
+2. **Tick threads 5, 11, 13** in one batch the moment thread 12 lands. All three have their evidence recorded and citable.
+3. Decide the `promote-rw-canonical.md` status-less edge case explicitly rather than by accident.
+4. **Telemetry backfill** — this was a substantive session wrapped bare; run `/usage-analysis` or expect `/prime`'s nudge.
+5. Push — 3 unpushed commits.
+
+### Open Questions
+- Is the honest fix for thread 12 actually the schema migration (declared assertion field across 5 mission files + template) that I rejected as too invasive? The reviewer raised it and the stalled re-score never answered it.
+- Does `--assertion none` become the escape hatch every ticker takes, making the whole mechanism optional in practice? Fatal to the design if so.

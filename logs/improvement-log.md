@@ -18,6 +18,25 @@ Resolved entries are archived to `improvement-log-archive.md` via `/resolve-impr
 
 ---
 
+### 2026-07-19 — GNU-only shell idioms silently no-op on macOS, so a verification harness reports the reassuring answer
+
+- **Status:** logged (pending)
+- **Category:** tooling / verification method — the "instrument is not neutral" family
+- **Severity:** medium — no single instance is severe, but the failure is **silent and reassuring by construction**: the check does not error, it returns *clean*. This is the third distinct instrument in this family (`grep` shadowed to gitignore-aware ugrep, 2026-07-18; `zsh` tied parameters clobbering `$PATH`; now BSD-vs-GNU utility divergence), and unlike the first two it has no written rule.
+
+- **Observed live (S12-3cd, 2026-07-19).** The thread-5 fix was verified by a three-direction execution test whose case C existed specifically to prove the new suppression does **not** leak into non-prompt-causation rules. Case C returned `Rule9_NEW=no` — i.e. "no stale path found", the reassuring answer. **It was wrong.** The extractor used `sed -n 's/^\(Edit\|Write\)(...'`, and `\|` alternation is a **GNU extension that BSD sed (macOS default) does not support**: the pattern never matched, so nothing was ever tested. Confirmed by execution — the same input through `s/^Edit(...` extracted the path correctly, while the alternation form returned empty.
+
+- **Why it was caught, and why that is the whole lesson.** The expected value (`Rule9_NEW=yes`) had been **declared in the test output before the run**. The mismatch was visible in one line. Had the harness merely printed results for interpretation, `no` would have read as "no stale path — good", and an over-suppression bug would have shipped behind a green check. **This is the same shape as S11-637's two dead canaries** (a check that could not fail, reporting clear against a demonstrably blind shell), reached by a different route: there the instrument was shadowed, here it silently lacked a feature.
+
+- **The generalisable rule, which is what is worth keeping:** a verification harness is itself an instrument, and an unverified instrument that returns "clean" is indistinguishable from a clean result. Two cheap countermeasures, both already proven here: (1) **declare the expected value before running** — this is what converted a silent false pass into a one-line mismatch; (2) **prefer POSIX-portable forms** in throwaway harnesses (`grep -E`, separate `sed` expressions, `awk`) over GNU-only idioms, or test the extractor against a known-positive first.
+
+- **Known GNU-only idioms that no-op or misbehave on macOS BSD tools:** `sed` `\|` alternation and `\+`/`\?` quantifiers in BRE; `sed -i` without a backup-suffix argument; `grep -P`; `date -d`; `readlink -f`. Several already have workarounds scattered through this repo's scripts; none is written down as a rule.
+
+- **Proposal:** add a short subsection to `docs/audit-discipline.md` § *Absence-claims: the search instrument is not neutral* — it already carries the shadowed-`grep` finding and is exactly the right home. State the family (shadowed tools, tied parameters, BSD/GNU divergence), the two countermeasures above, and the idiom list. **Do not build a checker for this** — it is a discipline about how throwaway harnesses are written, and this mission's own non-negotiable forbids answering discipline problems with new gates.
+- **Target files:** `ai-resources/docs/audit-discipline.md` (§ Absence-claims — add the BSD/GNU subsection).
+
+---
+
 ### 2026-07-18 — Mission thread 12's redesign is gate-cleared in shape but unscored; carry it, do not re-derive it
 
 - **Status:** logged (pending) — **carries the finished redesign for thread 12.** A session picking thread 12 up should start from the design below, not from the thread text, which is not implementable as written.
