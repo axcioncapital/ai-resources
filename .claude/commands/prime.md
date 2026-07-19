@@ -8,7 +8,7 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 
 **Output discipline:** The operator is a non-developer. The brief must be short and scannable — convert terse log shorthand into plain English (short sentences, common words). Show only what the operator needs to choose the next task; everything else stays silent unless it needs attention.
 
-**Execution discipline:** The orientation steps issue many *independent* read-only git/file calls; running them one-at-a-time is the main avoidable latency. Batch independent calls into a single message with multiple tool calls rather than firing them serially. Safe to fire together: **Step 1** (session-notes + log-trio reads), **Step 1b** (scratchpad listing), **Step 2** (`next-up.md`), **Step 3** (`friction-log.md` + `improvement-log.md`); **Step 0**'s per-repo `pull` may join the same batch. **Two ordering dependencies must be preserved — do not hoist a dependent call into the batch ahead of what it needs:** (1) **Step 1a**'s git cross-check consumes both `CWD_REPO` / `AI_RESOURCES` (established in Step 0) *and* the entry date parsed in Step 1, so it runs *after* Step 0 and Step 1, never alongside them; (2) **Step 4**'s working-tree `git status` must run *after* the Step 0 pulls so it sees post-pull state. Everything else across steps 0–4 is independent and should be batched.
+**Execution discipline:** The orientation steps issue many *independent* read-only git/file calls; running them one-at-a-time is the main avoidable latency. Batch independent calls into a single message with multiple tool calls rather than firing them serially. Safe to fire together: **Step 1** (session-notes + log-trio reads), **Step 1b** (scratchpad listing), **Step 2** (`next-up.md`), **Step 3** (`friction-log.md` + `improvement-log.md`); **Step 0**'s per-repo `pull` may join the same batch. **Three ordering dependencies must be preserved — do not hoist a dependent call into the batch ahead of what it needs:** (1) **Step 1a**'s git cross-check consumes both `CWD_REPO` / `AI_RESOURCES` (established in Step 0) *and* the entry date parsed in Step 1, so it runs *after* Step 0 and Step 1, never alongside them; (2) **Step 4**'s working-tree `git status` must run *after* the Step 0 pulls so it sees post-pull state; (3) **Step 1c** depends on **Step 0 only** — both its file reads and its one optional path-2 `git log` resolve against `CWD_REPO`. Hoisted into the batch ahead of Step 0, the path is unresolved, the read silently misses, and the brief block never renders — the same failure mode as (1). It does **not** depend on Step 1a: Step 1c deliberately does not consume Step 1a's merged result set (that set spans sibling repos and is wrongly scoped for plan position — see Step 1c's ground-truth rule), so the two are independent and may batch together once Step 0 has run. Everything else across steps 0–4 is independent and should be batched.
 
 0. **Pull latest.** Determine the cwd's git root: `CWD_REPO=$(git -C "$(pwd)" rev-parse --show-toplevel 2>/dev/null)`.
    If this fails, note `Pulled: n/a (not a git repo)` and skip to step 1.
@@ -173,6 +173,45 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
    - When surfaced, the scratchpad feeds a **carryover** menu candidate: the first content line of its `## Resume With` section is a strong candidate for menu item 1 (step 5). (The standalone `↩ Resumable scratchpad: {path}` Step 6 display line was trimmed in the 2026-07 brief-simplification pass — the scratchpad's existence now surfaces only via that menu candidate, or via the QC-PENDING advisory below when applicable. Line 137's QC-PENDING commit-block advisory is a separate line and still emits.) This step does NOT auto-resume — the operator decides by picking that menu item or answering the direction prompt.
    - **QC-PENDING surfacing.** When the surfaced scratchpad carries a `**QC-PENDING:**` marker, flag it prominently as a **commit-block** — emit an advisory line, "⚠ Architectural artifact awaits independent QC — do NOT commit until `/qc-pass` passes (per the QC-PENDING scratchpad)", in addition to placing its `## Resume With` first line (the QC instruction) as menu item 1. Do not let the marker line itself be mistaken for the next action; the action is the `## Resume With` first line.
 
+1c. **Read the project's plan position.** Detect where the project actually stands against its plan, so the brief can lead with *where we are and what is next* rather than only a backlog menu. This step is a **zero-cost no-op in any repo without a plan** — including `ai-resources` itself, which has no `pipeline/` — and adds no reads, no line, and no menu item there.
+
+   *Cascade source.* This reuses the detection cascade documented in `.claude/commands/project-next-steps.md` (Step 2), which in turn derives from `skills/session-guide-generator/SKILL.md` Step 2. One deliberate divergence: **position is checked before the plan spine, reordered for cost.** The source command lists the plan first; here `pipeline-state.md` is small and authoritative, so it is the cheap happy path and short-circuits the expensive one. That inversion is intentional — do not "correct" it back.
+
+   Detect in this order and **stop as soon as position is confident**:
+
+   1. `$CWD_REPO/pipeline/pipeline-state.md` — if present, read it. Its stage table states position directly. This is the common case — 19 project repos carry this file as of 2026-07-19, the large majority.
+   2. Otherwise, the plan spine — first that exists: `pipeline/project-plan.md`, a `plan/` directory at the project root, phase/workflow definitions in the project `CLAUDE.md`, the latest `logs/session-plan*.md`.
+   3. Neither exists → **skip silently.** No `PROJECT_POSITION`, no brief block, no cost.
+
+   **Resolve the spine to exactly one file before going further.** Two of the four spine options are not single files, and the bounded-read recipe below is undefined for them — resolve first, then apply it to the resolved `<plan-file>`:
+   - `pipeline/project-plan.md` or `logs/session-plan*.md` → already a file (for the glob, take the most recent by mtime, same `ls -t` rule Step 1b uses).
+   - A `plan/` **directory** → take the lowest-numbered / lexically-first `*.md` inside it that still carries an incomplete marker; that file is `<plan-file>`. Do not read the directory's other files.
+   - Project **`CLAUDE.md`** → `<plan-file>` is `CLAUDE.md` itself, and the grep below is scoped to its phase/workflow section rather than the whole file.
+
+   If the spine resolves to nothing readable, treat it as case 3 above and skip silently. Do **not** fall back to reading several candidates "to be sure" — that is the unbounded behaviour this step exists to prevent.
+
+   **Bounded read — NEVER a full read of the plan file.** On the step-2 fallback, do **not** `Read` the plan whole. Plan files run long and grow monotonically, and a full read here re-opens the exact cost class that Step 3 below exists to prevent (see its warning: ~50–60k tokens per orientation, named in five consecutive telemetry entries before the 2026-07-13 fix). Instead, grep for stage/phase headers and completion markers and read only a bounded slice around the first incomplete one:
+   ```
+   Bash(grep -nE "^#{2,3} +(Stage|Phase|W[0-9])|^- \[[ x]\]|✅|\*\*(complete|done)\*\*" <plan-file> | head -n 40)
+   Read(<plan-file>, offset=<first incomplete marker>, limit=40)
+   ```
+   If the grep returns **stage/phase headers but no completion markers at all** — a real and common shape (verified 2026-07-19 against a live 900-line project plan, which carries `### Phase Vn` headers and no checkboxes) — anchor the slice on the **last** header instead, as the furthest-along section, and say the position is inferred from plan structure rather than from an explicit completion marker. If the grep returns nothing at all, skip silently per case 3. Do not improvise a wider read to find markers that are not there.
+
+   A future edit that "simplifies" this into a plain `Read` is a regression, not a simplification — do not.
+
+   **Ground truth — Step 1a's merged result set is deliberately NOT reused by either path.** Step 1a's merged git log is anchored to `--since=<last session-notes entry date>`. That window is correct for adjudicating last session's Next Steps and **too narrow for plan position**: a plan step completed weeks ago falls outside it entirely and would be reported as still-pending — the precise defect the cross-check exists to prevent. So:
+   - **Path 1 (`pipeline-state.md` present):** trust the file as-is and issue **no git call at all.** It is a maintained completion signal, not an inference. Do **not** try to corroborate it against Step 1a's result set: that set merges commits from `$CWD_REPO`, `$AI_RESOURCES`, *and* every sibling repo under `projects/*/` into one unattributed list (see Step 1a), so a commit from ai-resources or an unrelated project reads as movement on this project's stage. There is also no cheap way to learn when the state file was last updated — `Read` returns no mtime. Trusting the file is both cheaper and more honest than a corroboration this step cannot actually perform.
+   - **Path 2 (plan-marker fallback):** Step 1a's window is insufficient, and plan markers are the one signal stale enough to need checking. Resolve the plan file's own last-modified date first, then issue **exactly one** git call scoped to `$CWD_REPO`:
+     ```
+     Bash(date -r <plan-file> +%F 2>/dev/null)                                  # filesystem stat, not a git call
+     Bash(git -C "$CWD_REPO" log --since=<that date> --pretty="%h %s" 2>/dev/null)
+     ```
+     Check whether the first incomplete marker already appears done in those commit subjects. **One git call is the ceiling** — do not fan out across sibling repos the way Step 1a does. If `date -r` fails, skip the corroboration entirely and report the marker as-is rather than spending a second call hunting for a date.
+
+   **Readiness verdict.** Derive from the plan position plus the open questions already extracted from `session-notes.md` in Step 1 — both are in context, so this costs nothing extra. Emit a verdict plus one short reason. Keep it to that: the full four-point OK/GAP readiness check belongs to `/project-next-steps`, not here.
+
+   Set `PROJECT_POSITION` = `{where_we_are, status, next_action}`, each **one short plain-English sentence** per the Step 5 conversion rules, and carry it to Step 6. If detection reached step 3 above (no plan, no state), leave `PROJECT_POSITION` unset and carry nothing.
+
 1d. **Scan active missions (mission-contract subsystem).** A *mission* is a multi-session goal (`/mission`); a session can bind to one so `/drift-check` measures its trajectory against the mission's validation contract. This step makes active missions visible and is a **zero-cost no-op when none exist** — when no `logs/missions/` dir is present in any enumerated repo, this step adds no prompt, no menu item, and no brief line.
 
    Reuse the Step 1a repo enumeration (`CWD_REPO`, `AI_RESOURCES`, sibling `projects/*/` repos — already de-duped there). For each enumerated repo, scan **`<repo>/logs/missions/*.md` only — never `<repo>/logs/missions/archive/`** (closed missions are archived and must not reappear here, keeping the scan bounded as missions accumulate):
@@ -250,6 +289,8 @@ if os.path.exists(p):
    - Step 2 — unchecked `next-up.md` items → tag `[next-up]`.
    - Step 3 — unresolved HIGH/urgent problems → tag `[urgent]`.
 
+   Step 1c's `PROJECT_POSITION` is **not** a menu candidate — it renders as its own block in Step 6 and does not consume a numbered slot. Overlap between that block's `Next:` line and menu item 1 is **expected and deliberately not deduped**: the block *explains* the next step, the menu *selects* it, and a stable numbered selector is worth the small repetition. Do not add dedupe logic here.
+
    Rank: **urgent → mission → carryover → next-up.** Cap the menu at **6 items.** If fewer than 6 candidates exist, show fewer. If zero candidates exist, show no menu (step 6 handles this). A `[mission:<id>]`-tagged item carries its source mission id so the Step 8 binding sub-step can auto-bind without asking.
 
    Convert each menu item to **one plain-English sentence** (short sentences, common words — the operator is a non-developer):
@@ -278,6 +319,11 @@ Model: {session model}
 {⚠ Last substantive session ({date}) left no `usage-log` telemetry — run `/usage-analysis` now to backfill it, or wrap future substantive sessions with `/wrap-session +telemetry`. — only when the Step 1 telemetry-gap flag fired}
 {◎ Active mission(s): {for each mission in ACTIVE_MISSIONS where mission.repo == CWD_REPO: "<id> — <name>"} — only if at least one same-repo active mission exists; advisory, names the multi-session goal(s) this work can serve}
 
+Where we are:
+  {PROJECT_POSITION.where_we_are}
+  Status: {PROJECT_POSITION.status}
+  Next: {PROJECT_POSITION.next_action}
+
 Next tasks:
   1. {plain-English task}   [{tag}]
   2. {plain-English task}   [{tag}]
@@ -292,6 +338,8 @@ Full backlog & inbox: /open-items
 ```
 
    Render only as many numbered lines as step 5 produced (1 to 6). If step 5 produced no menu items, replace the `Next tasks:` block and the `Type 1–6 …` line with the single line: `No tracked next steps — tell me what to work on.`
+
+   **`Where we are:` block — omit entirely when Step 1c left `PROJECT_POSITION` unset** (no plan and no `pipeline-state.md` in this repo). Drop the heading and all three lines, not just their values — an empty labelled block is worse than no block, and this is the normal shape in any non-project repo. Same "emit only when real" rule the exception lines above follow.
 
 7. **Wait for the operator's response.** Classify the reply:
    - `N auto` (a single menu number followed by the word "auto", e.g. `2 auto` — trimmed input matching `^[1-6]\s+auto$`, N within menu range) → **auto mode**, picked item = #N. Treat identically to `auto N` and go to step 8c. (Check this branch BEFORE the bare-number rule below — otherwise `2 auto` is misread as a bare-number selection of item 2, silently skipping auto-mode and its mandate/plan ceremony.)

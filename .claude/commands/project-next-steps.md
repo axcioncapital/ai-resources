@@ -2,6 +2,7 @@
 model: opus
 description: Plain-language project resume briefing — where the project stands, whether it's ready to continue, and the next steps to take before resuming.
 argument-hint: "[project name or path — optional; defaults to current directory]"
+allowed-tools: Read, Glob, Grep, Bash(git *)
 ---
 
 # /project-next-steps — Resume Briefing
@@ -13,9 +14,9 @@ project's plan and recent state, then tells you three things in plain language:
 2. **Are we ready to continue** — a quick check on the very next planned step.
 3. **What to do before resuming** — a short, concrete list of next steps to clear first.
 
-It produces a report you read now (in chat) **and** saves a dated copy in the project's
-`logs/` folder. It is read-only: it never changes project files, and it does not do the
-work — it only tells you what the work is.
+It prints the full report inline, in chat. It writes nothing — no report file, no log
+entry, no edit to any project file. It also does not do the work; it only tells you what
+the work is.
 
 This is different from the neighbours:
 - `/session-guide` looks *forward* and renders the plan's upcoming sessions. This command
@@ -45,7 +46,11 @@ This is different from the neighbours:
 ## Step 2 — Read the plan and recent state (token-lean cascade)
 
 Read only what you need. Skip any file that does not exist — silently. Use `Read`, `Glob`,
-and `Grep`; never write or edit a source file. Reuse the detection approach from the
+`Grep`, and read-only `git` calls only — the git allowance matters, because the ground-truth
+check at the end of this step depends on it. Never write or edit **any** file, anywhere —
+including under `logs/`. (The narrower "never write a *source* file" wording used here until
+2026-07-19 was what left the old `logs/` report write looking permissible.) Reuse the
+detection approach from the
 `session-guide-generator` skill (`skills/session-guide-generator/SKILL.md`, Step 2) rather
 than reinventing it. Stop reading for state as soon as you can confidently say where the
 project is — do not read everything.
@@ -74,7 +79,7 @@ project is — do not read everything.
 is done against what is actually committed. If a "next step" already appears done in the
 commits, say so — do not list finished work as pending. (Same cross-check `/prime` uses.)
 
-## Step 3 — Write the report
+## Step 3 — Compose the report
 
 Build the report with these four parts, in this order.
 
@@ -111,13 +116,15 @@ One of:
 - `BLOCKED — next steps` — clear the Section C list first.
 - `BLOCKED — needs a decision` — an open decision must be made before work can continue.
 
-## Step 4 — Save and report back
+## Step 4 — Report back
 
-- Write the full A–D report to `{project}/logs/{YYYY-MM-DD}-project-next-steps.md`. The
-  date prefix keeps a history of resume points; if the file for today already exists,
-  overwrite it.
-- Then echo to chat, short: the one-line "where we are" summary, the verdict, the single
-  top next action, and the saved file path as a clickable link. Do not paste the whole
-  report into chat — point to the file.
+- **Print the full A–D report inline, in chat.** All four sections, in order. This is the
+  deliverable — there is no file to point at.
+- **Write nothing.** No report file, no `logs/` entry, no edit to any project file. This
+  command is read-only toward the entire project tree, not just its inputs. (It previously
+  saved a dated copy to `{project}/logs/{YYYY-MM-DD}-project-next-steps.md`; that write was
+  removed 2026-07-19 — the report is wanted in chat, and a dated file history was not.)
+- Keep the Step-2 reading discipline intact: it is the read cascade that is token-lean, not
+  the output. Do not abbreviate the report to compensate for printing it in full.
 
 $ARGUMENTS
