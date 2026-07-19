@@ -1484,3 +1484,33 @@ At `/wrap-session` Step 3.5, the foreign-session guard's shared-file fallback re
 - **Aggravating detail:** the understated figure sat inside a bullet the session itself titled "HONEST COST NOTE, against this change's own interest." Self-critical framing is not evidence of accuracy, and arguably made the number *less* likely to be independently checked, not more.
 - **Proposal:** the durable countermeasure is narrower than "measure more carefully" — it is mechanical: **a static-cost claim about a committed file must be derived from the committed artifact, both sides** (`git show <sha>^:path | wc -c` vs `git show <sha>:path | wc -c`), never assembled from a sum of the edit strings the author remembers making. This should be stated as a standing instruction wherever a session is asked to report a static-cost delta for a `/risk-check` brief or a commit message (e.g. `risk-check.md`'s guidance to callers, or a short rule in `docs/commit-discipline.md`).
 - **Target files:** `ai-resources/docs/commit-discipline.md` (add the git-show-both-sides rule for any commit message stating a size/cost delta); `ai-resources/.claude/commands/risk-check.md` (caller guidance on measuring static cost, if a canonical instruction location doesn't already exist there).
+
+### 2026-07-19 — `check-foreign-staging.sh` resolves a gated `git add` against the wrong repo when the command runs inside a nested project repo, producing a false BLOCK that widening the footprint cannot clear
+
+- **Status:** logged (pending)
+- **Category:** hook (staging tripwire, `check-foreign-staging.sh`)
+- **Severity:** medium-high — it hard-blocks (exit 2) a legitimate commit, and the block is **unclearable by the remedy the hook itself prescribes**, so the operator is pushed toward either abandoning the commit or bypassing the guard. A guard whose only escape is a bypass trains the bypass.
+- **Source:** workspace root, 2026-07-19 session S2-e73 (`/new-project` post-pipeline git setup for `axcion-communication-system`).
+
+**Observed, not inferred.** With cwd = `projects/axcion-communication-system/` (a freshly `git init`-ed standalone repo nested inside the workspace-root repo), `git add .` was blocked with six "foreign" paths listed:
+
+```
+logs/innovation-registry.md
+logs/maintenance-observations.md
+projects/axcion-ai-system-redesign/pipeline/project-plan.md
+projects/axcion-ai-system-redesign/window-outputs/README.md
+logs/destructive-override.log
+projects/axcion-sector-intelligence/
+```
+
+Every one of those is a **workspace-root** dirty path. None could be staged by that command: `git rev-parse --show-toplevel` from that cwd returns the *project* repo, and two of the six (`logs/maintenance-observations.md`, `logs/destructive-override.log`) **do not exist in the project repo at all**. The hook computed the would-be-staged set against the workspace-root repo rather than the repo the verb actually targets.
+
+**The path-collision half is the more subtle bug.** The third path, `logs/innovation-registry.md`, *does* exist in the project repo — as a different file, created by the pipeline's Stage 4. The hook compares **repo-relative path strings** with no repo scoping, so an identically-named file in a different repo reads as the same file. Any nested project carrying the conventional `logs/` layout (which is every project in this workspace) will collide this way.
+
+**Why widening the footprint does not fix it.** The prescribed remedy — route the file into `- Files in scope:` / `- Required outputs:` — was applied (`projects/axcion-communication-system` added to Required outputs) and the block **re-fired identically**, because the flagged paths are workspace-root files that will never be in a project-scoped footprint and were never going to be staged. The hook's own stderr remedy is unreachable for this failure mode.
+
+**Worked around, not fixed, in-session.** Staged with explicit pathspecs instead of `.` — sanctioned by the hook's own contract (line 40: "`git add <pathspec>` — NOT gated (explicit, low-risk)"), and genuinely safer since every path is named. The resulting commit was verified clean: 60 files, zero symlinks, `settings.local.json` correctly excluded, no foreign paths. This is a workaround because it depends on the author knowing that exemption exists.
+
+**Proposal.** Resolve the target repo before computing the staged set: derive `git rev-parse --show-toplevel` from the Bash call's cwd, run the `git diff --cached` / `git status` probes with `-C <that toplevel>`, and compare footprint paths **relative to that same toplevel** — so a nested repo is judged against its own tree and a same-named file in a different repo cannot collide. Secondary: when the resolved toplevel differs from the workspace root the footprint was declared against, prefer the soft warn over the hard block, since the footprint is expressed in the wrong coordinate system and cannot be authoritative.
+
+**Target files:** `ai-resources/.claude/hooks/check-foreign-staging.sh` (repo resolution + path-relativization); `ai-resources/docs/commit-discipline.md` (two-end contract note, if the block semantics change).
