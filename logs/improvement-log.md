@@ -1548,3 +1548,51 @@ Every one of those is a **workspace-root** dirty path. None could be staged by t
 2. **Defensive fix:** give `check-archive.sh`'s call site in `wrap-session.md` Step 3 (and `check-usage-log-format.sh`'s in Step 12) the same ancestor-walk-up pattern already proven for `foreign-session-guard.sh` and `run-manifest.sh`, so a project missing `logs/scripts/` degrades to "found it in ai-resources" instead of "not found at all."
 
 **Target files:** `ai-resources/.claude/commands/new-project.md` or `.claude/hooks/auto-sync-shared.sh` (provisioning fix); `ai-resources/.claude/commands/wrap-session.md` Steps 3 and 12, and the workspace-root mirror copy (defensive fix — walk-up pattern, mirroring the Step 3.5 / Step 12d idiom already in the same file).
+
+### 2026-07-19 — Cross-repo shared-log write landed silently inside a concurrent session's unrelated commit, no guard caught it
+
+- **Status:** logged (pending)
+- **Category:** concurrent-session guard gap (cross-repo)
+- **Severity:** low — no data was lost this time (content verified intact, just misattributed) and the mechanism is inherently non-blocking. Flagged because the near-miss shape recurs any time a project session writes to a shared `ai-resources/` log while an `ai-resources`-rooted session is also live.
+- **Source:** session S1-573 (`axcion-communication-system`), `/wrap-session` Step 12e. Appended a finding to `ai-resources/logs/improvement-log.md`; moments later `git log` showed it had been swept into commit `c3d5fe7`, an unrelated commit ("fix: thread 14 orphan hooks…") from a concurrent session (mission `repo-health-backlog-2026-07`, marker `S4-2b2`) that was live in the same `ai-resources` checkout at the time. Content confirmed intact via `git show c3d5fe7 -- logs/improvement-log.md`.
+
+**Why no existing guard caught it.** `/wrap-session`'s foreign-session pre-write guard (Step 3.5) and `/prime`'s shared-dir advisory both scope their check to the **calling project's own** `logs/session-notes.md` / shared paths. Neither checks whether a **different repo** (`ai-resources`) that this session is about to write into has a live concurrent session of its own. A project session writing to a shared `ai-resources/` log is exactly the blind spot: it is "foreign" from `ai-resources`'s point of view but the guard machinery never runs there, because `/wrap-session`'s cwd is the project, not `ai-resources`.
+
+**Proposal:** extend the foreign-session pre-write guard (or add a lightweight pre-check before Step 12e's `ai-resources/logs/improvement-log.md` append) to also probe `ai-resources` for a live per-id session marker (`ai-resources/logs/.session-marker-*`, same liveness convention as `docs/session-marker.md`) before writing to its shared logs from a project session. On a live hit, either defer the write (queue it in the project-local log only, with a note to backport) or accept the sweep as low-risk and simply document it — the fix may be "accept and document," not "add a new guard," given the severity is low and content loss did not occur.
+
+**Target files:** `ai-resources/.claude/commands/wrap-session.md` Step 12e (or the shared `foreign-session-guard.sh`, if the fix is judged worth generalizing to cross-repo scope); `ai-resources/docs/session-marker.md` (document the gap if the decision is "accept, don't fix").
+
+### 2026-07-19 — Deleting `warn-settings-change.sh` invalidates System Owner v2 stage S2/B3's stated remedy — that plan does not know its premise is now false
+
+- **Status:** logged (pending)
+- **Category:** cross-project dependency (System Owner v2 planning, `projects/project-planning`)
+- **Severity:** medium-high — an active, dated (2026-07-03, no superseded marker) build item plans to *"wire the already-built-but-unwired `warn-settings-change.sh`"* as its mechanical protected-zone detector. That premise was already false before today (the 2026-07-14 consult established the script fails open even when wired), and this session's deletion (`ai-resources` mission thread 14a, S4-2b2) makes the file reference dangle as well. Nobody has told the plan. If S2/B3 is picked up as written, the session either discovers a missing file mid-build or, worse, silently re-creates a fails-open guard to satisfy the literal instruction.
+- **Source:** ai-resources, 2026-07-19 session S4-2b2. Found by `/risk-check`'s consumer inventory (this session's own brief had enumerated only the file's *registrations*, not its *dependents* — registration-absence is not dependency-absence).
+
+**What needs to happen, in the `project-planning` repo, not here.** `projects/project-planning/Project Plans/system-owner-v2/control-pack/technical-design.md:32-34` (B3) and `execution-roadmap.md:30` (sequences B3 into S2) both need re-planning: not "wire the existing script" but "build a working protected-zone detector" — the classification/permission split B3 already describes is sound, only its named implementation vehicle is gone. `projects/repo-documentation/vault/architecture/system-doc.md:200` also cross-references the file as live and needs the same correction, alongside two sibling vault docs (`vault/blueprint/blueprint.md:105`, `vault/components/hooks.md:153-168`).
+
+**Full reasoning and the deletion decision:** `ai-resources/logs/decisions.md` 2026-07-19 (S4-2b2).
+
+**Target files:** `projects/project-planning/Project Plans/system-owner-v2/control-pack/technical-design.md`, `execution-roadmap.md`; `projects/repo-documentation/vault/{blueprint/blueprint.md, components/hooks.md, architecture/system-doc.md}`.
+
+### 2026-07-19 — `.codex/hooks/check-foreign-staging.sh` is a divergent, unregistered sibling fork of the canonical staging guard
+
+- **Status:** logged (pending)
+- **Category:** infrastructure (hook drift / sibling-fork hygiene)
+- **Severity:** medium — currently inert (unregistered, confirmed via `.codex/hooks.json`), so no live blast radius today. Risk is latent: it is older than canonical (lacks this morning's `4066dc4`-era Required-outputs union) and will silently diverge further with every canonical fix to `check-foreign-staging.sh` unless someone decides its fate.
+- **Source:** ai-resources, 2026-07-19 session S4-2b2. Surfaced by `/risk-check`'s consumer inventory (`audits/risk-checks/2026-07-19-bundled-staging-hook-repo-resolution-thread-14-orphan-hooks.md` § Dimension 5) while scoring item 1 (`check-foreign-staging.sh` wrong-repo resolution); not investigated further this session — item 1 itself was held at RECONSIDER.
+
+**Decide, don't default:** fix in parallel with the canonical hook whenever it's next touched, delete if `.codex/` tooling no longer needs its own copy, or park with a dated note explaining why the fork is intentional. Whichever session next picks up item 1 (the canonical hook's wrong-repo fix) should make this call in the same pass — it is the natural point where the divergence would otherwise widen again.
+
+**Target files:** `ai-resources/.codex/hooks/check-foreign-staging.sh`; `.codex/hooks.json` (confirm registration status either way).
+
+### 2026-07-19 — `wrap-session.md` Step 4 warns against prepending to `session-notes.md`; Step 5 (`decisions.md`) carries no matching warning, and the omission caused a real mis-ordered commit
+
+- **Status:** logged (pending)
+- **Category:** command/skill (`wrap-session.md` Step 5 / mid-session decision-logging guidance)
+- **Severity:** medium-high — it already fired live, not hypothetically. Mid-session (S4-2b2), a decision entry was appended directly after `decisions.md`'s header instead of at the true end, landing a 2026-07-19 entry ahead of every 2026-07-14 through 2026-07-18 entry — and it **shipped in commit `c3d5fe7` before being noticed**. Caught and corrected at the next wrap boundary (moved to the correct position, no new commit needed beyond staging the fix), but only because this session happened to re-read the file's structure at wrap time. `decisions.md` follows the identical oldest-top/newest-bottom convention as `session-notes.md` — `check-archive.sh` treats top entries as oldest for both — yet only `session-notes.md`'s wrap step carries the explicit "do NOT prepend, `check-archive.sh` interprets top entries as oldest" guard. Mid-session decision-logging (the in-session equivalent of `wrap-session.md` Step 5, run ad hoc rather than only at wrap) has no such guard anywhere.
+- **Source:** ai-resources, 2026-07-19 session S4-2b2 (observed directly — the misordered entry and its correction are both in this session's transcript, not inferred).
+
+**Proposal:** add the same append-point warning `wrap-session.md` Step 4 carries for `session-notes.md` to Step 5's `decisions.md` instructions — "append at the END of the file; do NOT insert after the header, `check-archive.sh` interprets top entries as oldest and will archive them out of order." Consider whether any in-session decision-logging guidance (referenced from `CLAUDE.md` § Commit Rules or similar) should carry the same one-line warning, since this mistake happened mid-session, not at wrap.
+
+**Target files:** `ai-resources/.claude/commands/wrap-session.md` Step 5 (+ workspace-root mirror); any in-session decision-logging reference doc, if one exists.
