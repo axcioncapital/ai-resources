@@ -45,6 +45,45 @@ EOF'                                                                            
 run "branch not checked out anywhere"     'git branch -D no-such-branch-xyz'                   0
 run "git clean WITHOUT -f (dry run)"      'git clean -n'                                       0
 echo ""
+echo "=== OVERRIDE BINDING — an inert override must NOT open the door (added 2026-07-19, S5-dd5) ==="
+# These assert on the OVERRIDE BRANCH, not on the exit code — and that distinction is the
+# whole point of the block.
+#
+# Asserting exit 2 here would have been WRONG, and wrong in this harness's already-logged
+# failure mode: whether a destructive command BLOCKS depends on ambient liveness (marker
+# files in logs/, live processes), so an exit-code assertion would pass today and silently
+# flip the day the markers are cleaned — green-by-vacuum, the exact rot recorded against
+# $WT below. What is actually under test is narrower and environment-independent: did the
+# guard treat this string as a genuine operator override? That is observable directly, in
+# the OVERRIDE ACCEPTED line the override branch prints, and nowhere else.
+#
+# Both shapes WERE accepted as genuine overrides before the fix (reproduced by execution,
+# 2026-07-19). The bug: a bare `re.search` on RAW `cmd`, which neither bound the flag to the
+# destructive verb nor respected the quote-blanking that verb detection already uses.
+#
+# ⚠ Do NOT convert these to exit-code checks, and do NOT relax them to make a run go green.
+#   If a negative case starts reporting ACCEPTED, the override check has been reverted to a
+#   raw `cmd` search — read the "THE OVERRIDE MUST BE MATCHED ON `scan`" comment in the hook.
+ovr() {
+  desc="$1"; cmd="$2"; want="$3"   # want = yes|no  (should the override branch fire?)
+  payload=$(python3 -c "
+import json,sys
+print(json.dumps({'tool_name':'Bash','tool_input':{'command':sys.argv[1]}}))
+" "$cmd")
+  out=$(printf '%s' "$payload" | bash "$H" 2>&1)
+  if printf '%s' "$out" | grep -q "OVERRIDE ACCEPTED"; then got="yes"; else got="no"; fi
+  if [ "$got" = "$want" ]; then
+    st="PASS"; PASSN=$((PASSN+1))
+  else
+    st="**FAIL**"; FAILN=$((FAILN+1))
+  fi
+  printf '%-9s override=%-3s (want %-3s)  %s\n' "$st" "$got" "$want" "$desc"
+}
+ovr "CONTROL: genuine override binds to the verb" 'AXCION_LIVENESS_OVERRIDE=1 git reset --hard' yes
+ovr "inert: bound to NOTE, not the verb"          'NOTE=AXCION_LIVENESS_OVERRIDE=1 git reset --hard' no
+ovr "inert: only inside a quoted string"          'git commit -m "use AXCION_LIVENESS_OVERRIDE=1 to override" && git reset --hard' no
+ovr "CONTROL: no override token at all"           'git reset --hard' no
+echo ""
 echo "=== SELF-TARGET — own tree, own marker excluded (exit 0) ==="
 run "reset --hard on own checkout"        'git reset --hard'                                   0
 run "clean -fd on own checkout"           'git clean -fd'                                      0

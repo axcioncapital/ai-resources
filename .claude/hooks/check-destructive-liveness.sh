@@ -204,7 +204,37 @@ if not (is_worktree or is_branch or is_reset or is_clean):
 #
 # CONTRACT: this allows the command and WRITES AN AUDIT LINE. It never silently permits. If you are
 # reaching for `rm` on a marker file, use this instead — that is the entire point.
-override = bool(re.search(r'\bAXCION_LIVENESS_OVERRIDE=1\b', cmd))
+# ⚠ THE OVERRIDE MUST BE MATCHED ON `scan`, AND MUST BIND TO THE DESTRUCTIVE VERB.
+#
+# The original form was `re.search(r'\bAXCION_LIVENESS_OVERRIDE=1\b', cmd)` — raw `cmd`, no
+# binding. That put the override check on the WRONG SIDE of this file's own load-bearing
+# cmd/scan split (documented below at "LOAD-BEARING SPLIT"): verb DETECTION correctly uses
+# `scan`, so a quoted mention cannot gate, while the override read raw `cmd`, so a quoted
+# mention COULD open the door. Two shapes were accepted that must not be, both reproduced by
+# execution 2026-07-19 (S5-dd5) before this fix and re-run as fixtures after it:
+#
+#   NOTE=AXCION_LIVENESS_OVERRIDE=1 git reset --hard              <- bound to NOTE, not the verb
+#   git commit -m "…AXCION_LIVENESS_OVERRIDE=1…" && git reset --hard  <- only inside a quoted string
+#
+# The fix reuses `_ENVPFX`'s own grammar (:175) rather than inventing one: the override must
+# appear as one of the environment assignments prefixing an actual destructive verb. `_VB`
+# (:142) anchors each pattern to a real command boundary (`^` or `[\n;&|(]`), which is what
+# stops the engine from matching the token where it sits INSIDE another assignment's value —
+# that anchor is why `NOTE=AXCION_LIVENESS_OVERRIDE=1 …` cannot match. Matching on `scan`
+# (quoted spans blanked) is what kills the second shape.
+#
+# Do NOT "simplify" this back to a bare search on `cmd`. That is the defect, exactly.
+_ASSIGN = r'[A-Za-z_][A-Za-z0-9_]*=(?:"[^"]*"|\'[^\']*\'|[^\s;&|]*)\s+'
+_OVRPFX = (r'(?:env\s+)?(?:' + _ASSIGN + r')*AXCION_LIVENESS_OVERRIDE=1\s+'
+           r'(?:' + _ASSIGN + r')*')
+
+RE_OVR_WORKTREE = _VB + _OVRPFX + r'git\s+' + _GC + r'worktree\s+remove\b'
+RE_OVR_BRANCH   = _VB + _OVRPFX + r'git\s+' + _GC + r'branch\s+[^&|;\n]*?-(?:d|D)\b'
+RE_OVR_RESET    = _VB + _OVRPFX + r'git\s+' + _GC + r'reset\b[^&|;\n]*?--hard\b'
+RE_OVR_CLEAN    = _VB + _OVRPFX + r'git\s+' + _GC + r'clean\b[^&|;\n]*?-[a-zA-Z]*f'
+
+override = any(re.search(p, scan) for p in
+               (RE_OVR_WORKTREE, RE_OVR_BRANCH, RE_OVR_RESET, RE_OVR_CLEAN))
 if override:
     try:
         log_dir = os.path.join(
@@ -212,15 +242,28 @@ if override:
                            capture_output=True, text=True, timeout=4).stdout.strip() or ".",
             "logs")
         os.makedirs(log_dir, exist_ok=True)
+        # ⚠ THIS RECORD IS WRITTEN AT PreToolUse — BEFORE THE COMMAND RUNS. It therefore
+        # CANNOT attest that the command succeeded, or even that it executed: the operator
+        # may interrupt, a later hook may block, or the command may fail. The record asserts
+        # exactly one thing — that an override was requested and this guard accepted it —
+        # and the `event=` / `outcome=` fields say so in the line itself, so a future reader
+        # cannot mistake the trail for an execution log. (Fixed 2026-07-19, S5-dd5: the prior
+        # line carried no outcome field at all, so every entry read as "this happened.")
+        #
+        # Adding a real outcome would require a PostToolUse counterpart — a new registration
+        # on a globally-registered hook. That is a separately-scoped change and needs its own
+        # /risk-check; it was explicitly declined as a rider on this fix. Do not bolt it on here.
         with open(os.path.join(log_dir, "destructive-override.log"), "a") as f:
-            f.write("%s  session=%s  cmd=%s\n" % (
-                datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
-                os.environ.get("CLAUDE_CODE_SESSION_ID", "<unknown>"),
-                cmd.strip().replace("\n", " ")[:300]))
+            f.write("%s  event=override-accepted  phase=pre-execution  outcome=unknown"
+                    "  session=%s  cmd=%s\n" % (
+                        datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+                        os.environ.get("CLAUDE_CODE_SESSION_ID", "<unknown>"),
+                        cmd.strip().replace("\n", " ")[:300]))
     except Exception:
         pass  # An override must never fail because its own audit trail could not be written.
     print("[destructive-op liveness] OVERRIDE ACCEPTED — operator asserted the target is idle. "
-          "Recorded in logs/destructive-override.log.", file=sys.stderr)
+          "Guard stands down; the command has NOT yet run and its outcome is unrecorded. "
+          "Request logged to logs/destructive-override.log.", file=sys.stderr)
     sys.exit(0)
 
 # EXTRACT arguments from the RAW command, never from `scan`.
