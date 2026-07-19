@@ -461,3 +461,39 @@ Narrow correctness fix to `/prime` Step 3, gated by its own `/risk-check` before
 - ⚠ **KNOWN REGEX IMPRECISION, accepted deliberately, not overlooked.** `\*{0,2}` admits the single-star italic form (`- **Severity:** *high*`), which is outside the documented contract — the contract is plain or double-star bold only. `(\*\*)?` expresses it exactly. Verified by execution: `\*{0,2}` matches `*high*`, `(\*\*)?` does not, and the live log contains **zero** single-star severity values (`command grep -nE '^-? ?\*\*Severity:\*\* *\*[^*]'` → no hits), so there are no false positives today. **Operator decision: do NOT reopen this gated fix for it** — another gate plus another edit to a 26-consumer file is disproportionate to a latent, currently-inert imprecision. Fix it in the externalized scanner, where the pattern moves anyway. Recorded here so the externalization inherits the exact intended contract rather than copying `\*{0,2}` forward unexamined.
 - **NOT touched, deliberately:** the stale "30 of 87 entries carry no `Severity` field" prose at `prime.md:220`. It is falsified (live count is 0), and the prior session's mandate included deleting it — but it is outside THIS mandate's work_scope and was not scored by this gate. Editing it would be an ungated change to a file with 26 consumers. Routed to follow-up, not silently folded in.
 - **Thread 15 NOT ticked.** Nothing in this session addresses the scan's cost; the externalization redesign remains unbuilt and ungated.
+
+### Decisions Made
+
+- Evaluated Codex's externalization proposal against the repo rather than accepting it wholesale — confirmed it does not address Blast Radius (only Usage Cost) and lacks a fail-loud contract for a missing/crashed helper. Directed: fix the two narrow defects now under their own gate; the externalization gets a later, separate gate brief with 7 named requirements.
+- Operator caught my `[ -L ]`-through-symlinked-directory instrument error (`axcion-design-studio` miscalled independent) before it reached the gate — corrected consumer count 25 → 26 via `readlink -f`.
+- Skipped `/session-plan` for this fix — proportionality call, stated not asked, for a 2-defect change against an already-verified premise set.
+- `/risk-check` → PROCEED-WITH-CAUTION; all three required mitigations applied (smoke test with control case, `prime.md:219` doc line, corrected 7-of-26 count) before commit.
+- Operator directed: correct the durable cost record via a new commit, not an amend, after catching the +52-vs-+838-char error.
+- Operator directed: do not reopen the gated fix for the `\*{0,2}` single-star-italic imprecision — zero live impact, defer to the externalized scanner.
+- Left `prime.md:220`'s stale "30 of 87" prose untouched — outside this mandate's scope, unscored by this gate, routed to follow-up rather than folded in silently.
+
+### Outcome
+
+Outcome check skipped (not requested).
+
+### Risky actions
+
+Momentarily misattributed my own uncommitted `Bash`/`Edit` write to `logs/session-notes.md` to a concurrent session, based on a harness "file changed on disk" message, before checking the evidence (Step 0.5 mtime delta, `git status`, header count) — self-corrected within the same turn, before any wrong action was taken. No harm; flagged as a near-miss reasoning pattern (assert-from-plausible-derivation applied to a harness message rather than a repo fact).
+
+### Session Assessment
+
+Feedback collection skipped (not requested).
+
+### Findings Declined
+
+- `\*{0,2}` also admits single-star italic severity values (`*high*`), outside the documented bold-only contract — no named consequence today (zero occurrences in the live log), and the operator explicitly directed deferring the fix to the externalized scanner rather than reopening this gate. Fully recorded above; not queued separately to avoid duplication.
+
+### Next Steps
+
+- Assemble the externalization gate brief for `/prime` Step 3 — Codex's design plus the operator's 7 requirements (blast radius addressed directly; mandatory fail-loud lookup/execution contract; six-candidate + one-summary cap; explicit ordering rule matching Step 5's severity-then-newest; static/dynamic/combined measurement; session-frequency-weighted ROI view; "delete Step 3" / "accept current cost" as named alternatives) — then `/risk-check` it. This is the substantial remaining piece of mission thread 15.
+- Delete the stale "30 of 87" prose at `prime.md:220` (falsified, live count is 0) — small, but touches a 26-consumer file, so give it its own light gate rather than folding it into an unrelated session.
+- Other `repo-health-backlog-2026-07` threads (10, 11, 13, 16, 7) remain open and unpicked.
+
+### Open Questions
+
+Should the externalization gate brief be the next session's focus, or should one of the smaller unblocked threads (10, 11, 13, 16) go first? Not resolved this session — thread 11 is marked "RUN THIS FIRST" in the mission's own dependency ordering and was not addressed here.

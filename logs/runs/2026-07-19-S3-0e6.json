@@ -16,8 +16,17 @@
     "subagents": [],
     "tools_notable": []
   },
-  "files_changed": [],
-  "decisions_refs": [],
+  "files_changed": [
+    ".claude/commands/prime.md",
+    "audits/risk-checks/2026-07-19-two-narrow-correctness-fixes-to-prime-step-3-anchor-guard.md",
+    "logs/session-notes.md",
+    "logs/decisions.md",
+    "logs/improvement-log.md",
+    "logs/scratchpads/2026-07-19-15-30-scratchpad.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-19-s3-0e6-ship-the-narrow-prime-step-3-fix-now-gated"
+  ],
   "validation": [],
   "evaluator_findings": {
     "sidecar_refs": [],
@@ -29,8 +38,8 @@
     "subagents": 0,
     "token_estimate": null
   },
-  "stop_reason": null,
-  "outcome": null,
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
   "failure_class": null,
   "incidents_refs": []
 }
