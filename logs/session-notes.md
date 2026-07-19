@@ -473,3 +473,36 @@ Also observed, not acted on: the three stale per-id markers from 2026-07-18 rema
 ### Open Questions
 
 None. The one open design question — how to prune a dead session's marker when no per-process session id is available — was **answered** this session: prune on a provable-completion oracle (`session-notes` records which markers wrapped) instead of a process-liveness one, inverting "prove it is dead" (impossible here) into "prove it is finished" (already on disk). What remains is building it behind a falsification test, not deciding it.
+
+## 2026-07-19 — Session S6-e72 (cont.) — Prime plan-position block + /project-next-steps inline-only
+
+### Summary
+
+Added a bounded "Where we are" plan-position block to `/prime` (new Step 1c) so its brief leads with the project's actual stage, status, and next action instead of only the backlog menu — sourced by reading `pipeline-state.md` / the plan spine directly, not by invoking the heavier `/project-next-steps` command, to protect `/prime`'s sonnet-tier cost budget. Converted `/project-next-steps` to print its full report inline in chat and write no file at all, closing a live self-contradiction in its own description ("read-only" vs. a Step 4 file write). Ran `/clarify` before planning, `/qc-pass` twice (plan-stage and implementation-stage, both REVISE, both fully resolved), and `/blindspot-scan` before implementing.
+
+### Decisions Made
+
+- Four `/clarify` answers fixed the design: the plan-position block sits above the menu (menu itself unchanged); `/prime` absorbs the cheap detection directly rather than invoking the opus-tier command; standalone `/project-next-steps` prints the full A–D report, not a shortened one; no history file at all (the one pre-existing leftover report is left untouched).
+- Plan-stage QC (REVISE) forced dropping a planned "fix" outright — converting the `axcion-design-studio` copy of `/project-next-steps` to a per-file symlink — once execution proved the premise false: that project's whole `.claude/commands` directory is already a symlink, so the file already resolves to canonical. `ls -la`/`test -L` had both reported "regular file" because they follow the intermediate directory symlink.
+- Plan-stage QC also caught a false claim in my own plan: that adding `allowed-tools` frontmatter would make the command's no-write property "structural" — it would not, since the proposed list still granted unrestricted `Bash`. Corrected to `Bash(git *)`, reframed as defense-in-depth only (enforcement under `bypassPermissions` is unverified).
+- Implementation-stage QC (REVISE) forced four more fixes: dropped an unobtainable plan-file mtime lookup and an unfiltered cross-repo git-log consultation for the `pipeline-state.md` happy path; defined `<plan-file>` resolution for the previously-undefined `plan/`-directory and project-`CLAUDE.md` spine cases; allowed read-only `git` in `/project-next-steps`' own Step 2 tool sentence (it had forbidden the tool its own ground-truth check needs); removed a dangling "saved file" link instruction that Change 3 had missed. Live execution-testing of the new shell recipes against a real 900-line project plan then surfaced a fifth gap — phase headers with zero completion markers — fixed the same way.
+- Declined dispatching `/risk-check` as its own subagent — satisfied inline, since `/blindspot-scan`'s consumer inventory (19 readers, all symlinks, change additive and default-skip) already produced the evidence that gate exists to get.
+- End-time `/risk-check` gate (Step 12b) also skipped per the standing skip rule: plan-time covered with mitigations applied, commit already shipped (`bf0c8a5`), drift bounded (scope came in one file lighter than planned, not wider).
+
+### Risky actions
+
+None.
+
+### Findings Declined
+
+- **Stale `prime.md:315` line-number citations in `artifacts/merged-os-context/strategic-os/ai-strategy/*.md` and `logs/missions/repo-health-backlog-2026-07.md:80`**, surfaced by this session's `/blindspot-scan`. Not filed: the citations were already ~278 lines stale before this edit (this session's insertion added only 34 more), every citation carries the step-id (`Step 8c.4.5`) alongside the number as a durable fallback anchor, and fixing it means editing unrelated strategy-planning docs in a different project — out of scope for this task.
+
+### Next Steps
+
+- First live test still pending: run `/prime` in a project with `pipeline/pipeline-state.md` (e.g. `axcion-website`) and confirm the "Where we are" block renders correctly above the menu.
+- Separately run `/project-next-steps` standalone in a project and confirm it prints the full A–D report inline with no file write.
+- Confirm `/prime` run from `ai-resources` itself shows no change (no `pipeline/` here) — expected behaviour, not a regression, if seen.
+
+### Open Questions
+
+None.
