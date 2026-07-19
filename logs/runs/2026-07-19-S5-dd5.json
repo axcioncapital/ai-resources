@@ -1,0 +1,47 @@
+{
+  "run_id": "2026-07-19-S5-dd5",
+  "project": "ai-resources",
+  "date": "2026-07-19",
+  "marker": "S5-dd5",
+  "model": "claude-opus-4-8[1m]",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md#2026-07-19-S5-dd5",
+  "mission": "repo-health-backlog-2026-07",
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    ".claude/hooks/check-destructive-liveness.sh",
+    "logs/scripts/test-destructive-liveness.sh",
+    "audits/risk-checks/2026-07-19-staging-guard-cwd-resolution-destructive-override-binding.md",
+    "logs/improvement-log.md",
+    "logs/session-notes.md",
+    "logs/decisions.md",
+    "logs/session-plan-2026-07-19-S5-dd5.md",
+    "logs/scratchpads/2026-07-19-14-45-scratchpad.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-19-s5-dd5-landing-a-fix-to-a-global-spof-hook"
+  ],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "PARTIAL",
+  "failure_class": null,
+  "incidents_refs": []
+}
