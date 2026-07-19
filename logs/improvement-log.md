@@ -18,6 +18,32 @@ Resolved entries are archived to `improvement-log-archive.md` via `/resolve-impr
 
 ---
 
+### 2026-07-18 — Mission thread 12's redesign is gate-cleared in shape but unscored; carry it, do not re-derive it
+
+- **Status:** logged (pending) — **carries the finished redesign for thread 12.** A session picking thread 12 up should start from the design below, not from the thread text, which is not implementable as written.
+- **Category:** command/skill (mission-contract subsystem) — `/mission check`, `/mission update`
+- **Severity:** medium-high — thread 12 is the *generator* of the stale-record disease: while `check` is unfixed, no mission thread can be ticked honestly, and three threads with execution-verified evidence (5, 11, 13) are sitting complete-but-unticked across two missions. `/prime` Step 1d re-offers all three as task-menu candidates at every session start, which is the exact noise the mission was convened to reduce.
+
+- **What happened (S12-3cd).** A plan-time `/risk-check` returned **RECONSIDER** (`audits/risk-checks/2026-07-18-mission-check-evidence-citation-and-update-verb.md`, committed `17f62c8`). It **cleared the `update <id>` verb** — "well-justified and not the concern", both hand-edit precedents re-verified by direct quote — and **rejected the `check --evidence` half** at Principle alignment **High**. A redesign was sent back to the same reviewer for re-scoring; **that agent stalled at 600s and returned no verdict**, writing nothing (the report on disk is still the first pass). **RECONSIDER therefore stands unchallenged. Nothing from thread 12 was committed.** Do not read the stall as a pass.
+
+- **The rejected design, and why — worth keeping so it is not re-proposed.** `check` would have required a `--evidence` argument holding a command or `file:line`. The reviewer's objection is correct and general: the check was **presence-only** — it never re-ran the command or re-opened the line — so an author fills the field with whatever satisfies the parser. That is functionally "another checklist", which this mission's own non-negotiable (`repo-health-backlog-2026-07.md:63`) and thread 12's own text both forbid, and a credible **7th instance** of the repo's most-repeated "inert safeguard" class. My framing of it as "argument validation, not a gate" did not survive adversarial inspection.
+
+- **⚠ THREAD 12'S FILED REMEDY IS NOT IMPLEMENTABLE AS WRITTEN — independently confirmed, Problem reality scored Low.** The thread says *"refuse-or-warn when **the named assertion** is unmet."* **No thread in any of the 5 mission files declares which acceptance assertion it serves** (`grep -nE "^- \[[ x]\].*[Aa]ssertion"` across all 5 → the only hits are two acceptance-assertion checkboxes that merely contain the word, plus thread 12's own descriptive text). The mapping the remedy presupposes has never existed. **This is the second confirmed instance of the "filed remedy names a fix that cannot work" pattern** — the 2026-07-18 entry recording the first said *"Score: 1 for 1 on entries tested. A second instance should be enough to stop recording and start labelling the fields."* **That trigger is now met.**
+
+- **THE REDESIGN TO IMPLEMENT (unscored — re-gate it, then build):**
+  1. `check` prints the `## Validation contract` acceptance assertions **enumerated 1..N**, reading only that section. The separate `## Open threads` read must stay separate — acceptance assertions are *themselves* `- [ ]` checkboxes (`repo-health-backlog-2026-07.md:54-59`), so a whole-file checkbox scan would collide with the thread list.
+  2. `check` requires `--assertion <N|none>`. `<N>` must resolve to an assertion that **actually exists in the parsed contract** — a closed set validated against file content, which is what distinguishes it from the rejected free-text field: it cannot be satisfied with noise.
+  3. `none` is permitted but requires `--why "<reason>"`. Several live threads genuinely serve no single assertion (thread 14 is a real instance); forcing a false mapping would manufacture the very wrong-tick the change exists to prevent.
+  4. Both the assertion choice (or `none` + why) and the evidence string are recorded under the ticked thread, so a wrong or absent mapping is visible to the next reader, to `/prime` Step 1d, and to `/drift-check`.
+  5. **Declared residual, to be recorded rather than hidden:** `check` still does **not** execute the cited evidence command. Executing arbitrary argument text is its own hazard, and S11-637 established in this repo that a child process does not inherit the session's shell shadowing — so an executed check can report clean against a demonstrably blind shell.
+  - **Open questions the stalled re-score never answered, and which the next gate must:** (a) does the closed-set `--assertion` escape the "another checklist" finding, or is `none` an escape hatch every ticker takes, making the mechanism optional in practice? (b) is recording the mapping *at tick time* an acceptable substitute for a declared thread→assertion schema field, or does it merely relocate the same unverified claim? (c) the rejected alternative — adding a declared assertion field to all 5 mission files plus `templates/mission-contract.md` — may be the honest fix the substitution is avoiding.
+
+- **⚠ UNHANDLED EDGE CASE, found in this session's pre-dispatch premise check.** `ai-resources/logs/missions/promote-rw-canonical.md` has **no `status:` line at all** — not active, not paused, absent. It is therefore invisible to `/mission list` (item 12 filters `status: active`) and to `/prime` Step 1d. Neither the existing verbs nor the redesign define what `check`/`update` should do against a status-less mission file. Decide it explicitly; do not let it be decided by accident.
+
+- **Target files:** `ai-resources/.claude/commands/mission.md` (Step 5 `check`; new `update` verb); `ai-resources/templates/mission-contract.md` (only if the schema-field alternative is chosen).
+
+---
+
 ### 2026-07-18 — A heuristic regex was trusted as a file census and set a mandate's scope wrongly — three times in one session
 - **Status:** logged (pending)
 - **Category:** verification method / assert-from-heuristic
