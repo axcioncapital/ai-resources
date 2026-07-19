@@ -18,6 +18,51 @@ Resolved entries are archived to `improvement-log-archive.md` via `/resolve-impr
 
 ---
 
+### 2026-07-19 — `test-destructive-liveness.sh` has been lying in BOTH directions since its fixture worktree was deleted — and its own author predicted exactly this
+
+- **Status:** logged (pending) — **blocks mission thread 16 from landing.** A session picking up thread 16 must resolve this first or accept shipping to a global SPOF with no regression signal.
+- **Category:** infrastructure (test harness for a globally-registered hook)
+- **Severity:** **high** — it is the regression net for `check-destructive-liveness.sh`, which gates every `git worktree remove` / `branch -d` / `reset --hard` / `clean -f` in every checkout, registered exactly once at user level (`~/.claude/settings.json`, verified this session by `command grep -rl` over `settings*.json`). The harness currently reports **12 PASS / 5 FAIL → "RED — do not ship"**, and *neither number is trustworthy*.
+- **Discovered:** 2026-07-19 (S5-dd5) while attempting to satisfy a `/risk-check` mitigation that required re-running this harness green before landing thread 16. The mitigation could not be honestly satisfied, which is what surfaced the rot.
+
+**Both directions are wrong, which is the part that matters.**
+
+1. **False RED (5 cases).** `logs/scripts/test-destructive-liveness.sh:6` hard-codes `WT=".../ai-resources-research-workflow"` and `:59-60,:69` hard-code the branch `session/2026-07-13-research-workflow`. **Both were deleted** — `git worktree list` returns only the main checkout, `git branch --list` returns empty for that branch (both verified by execution this session). The two `branch -d/-D` cases therefore exercise "branch not checked out anywhere", which correctly exits 0, while the test demands 2. The two SELF-TARGET cases fail for a *different* environmental reason: three stale foreign per-id markers from 2026-07-18 (`S8-a1b`, `S9-f53`, `S11-637`) are still on disk, so the hook correctly sees foreign live sessions and blocks.
+2. **False GREEN — green-by-vacuum (≥3 cases).** The three `worktree remove '$WT'` cases *pass*, but only because `$WT` no longer resolves, so the hook takes its FAIL-CLOSED branch (unresolvable target → exit 2) — which happens to equal the expected value. They assert "blocks a live checkout" and actually demonstrate "blocks an unresolvable path." **They would pass identically if the liveness detection were deleted entirely.**
+
+**⚠ The author wrote the warning, dated it, and it came true anyway.** `:9-12` reads verbatim: *"the LIVE-TARGET cases below depend on `$WT` actually being an occupied checkout… If that worktree is ever cleaned up or wrapped, those cases will go GREEN-BY-VACUUM — passing for the wrong reason. Re-point `$WT` at a genuinely occupied checkout, or synthesize one, before trusting them."* The prediction was correct and specific, sat in the file, and nothing acted on it — because a comment is not a control. **This is the repo's most-repeated failure class (inert safeguard, 6+ logged instances) in its purest form yet: a test suite that cannot fail for the reason it claims to test, carrying its own written confession.** Compare the 2026-07-14 S8 entry (an allocator regression test validating a dead session's scratchpad, reporting ALL PASS) — same disease, and that one was also caught only by accident.
+
+- **Proposal:** make the harness **hermetic** — synthesize the occupied checkout inside `$TMP` (a real repo, a checked-out branch, an un-wrapped per-id marker, uncommitted work) instead of pointing at an external path that can be deleted, and give SELF-TARGET a controlled marker environment rather than inheriting whatever the live `logs/` happens to hold. **Do NOT repair by re-pointing `$WT` at some other real worktree** — that reproduces the identical rot with a fresh expiry date. **Do NOT repair by adjusting expected values until the suite goes green** — several current passes are already fake, so a green suite is exactly what this defect looks like. Every case must be verified to FAIL against a deliberately broken hook before the suite is trusted (the falsifiability discipline that caught two dead canary drafts in S11-637).
+- **Scoping honesty:** this is not a mechanical touch-up. Isolating SELF-TARGET from ambient marker state is a genuine design question, and the harness guards a global SPOF. It deserves its own scoped session, not a rider on thread 16.
+- **Target files:** `logs/scripts/test-destructive-liveness.sh`.
+
+### 2026-07-19 — Mission thread 16's override defect is fully diagnosed and gate-scored; the mechanism is sharper than the thread says, and there is a THIRD exploit shape
+
+- **Status:** logged (pending) — **carries the finished, gated design for thread 16. Not built:** blocked on the harness entry immediately above, whose repair is a required `/risk-check` mitigation. A session picking thread 16 up should start from this block, not from the thread text.
+- **Category:** hook (`check-destructive-liveness.sh`) — mission `repo-health-backlog-2026-07`, thread 16
+- **Severity:** medium-high — an inert override is accepted as a genuine one and written to the audit trail as such, so the guard's own evidence base cannot be trusted; and it is the evidence base a future session would use to judge whether the guard works.
+
+**Diagnosis, established by execution (not by reading), 2026-07-19 S5-dd5.** The thread describes defect (a) as *"matches `AXCION_LIVENESS_OVERRIDE=1` anywhere in the command string."* True but imprecise, and the precise form points straight at the fix: **the file maintains two views of the command — `cmd` (raw) and `scan` (quoted spans blanked by `_command_text_only`) — and documents that split at `:227-230` as "⚠ LOAD-BEARING SPLIT — DO NOT 'SIMPLIFY' BY REUSING `scan` FOR BOTH."** Destructive-verb *detection* correctly uses `scan` (`:183-186`), so a mere mention of a verb inside a quoted string cannot gate. **The override check at `:207` uses `cmd` — it is on the wrong side of the file's own safety split.**
+
+**Executed evidence** (payloads fed to the live hook on stdin; the hook only decides, it never executes):
+
+| payload | result | |
+|---|---|---|
+| `git status` | override path not taken | control |
+| `git reset --hard` (bare) | override path not taken | control |
+| `AXCION_LIVENESS_OVERRIDE=1 git reset --hard` | **ACCEPTED** | correct |
+| `NOTE=AXCION_LIVENESS_OVERRIDE=1 git reset --hard` | **ACCEPTED** | defect, as filed |
+| `git commit -m "use AXCION_LIVENESS_OVERRIDE=1 to override" && git reset --hard` | **ACCEPTED** | **NEW — not in the thread** |
+
+The third row is a new exploit shape: the flag appears **only inside a quoted commit message**, with a destructive verb later in the same compound command. All three override rows also wrote audit lines asserting a genuine operator override — confirming defect (b) in the same run.
+
+**⚠ Methodology note, recorded because the error is the interesting part.** The first harness passed the payload as `argv[1]`. All five cases returned exit 0 with no output — *including both controls*. That uniformity was the tell: `:92` is `payload=$(cat)`, so the hook reads **stdin**, my harness supplied none, JSON parsing threw, and every case exited 0 for the same trivial reason. **A test that cannot fail proves nothing, and only the controls exposed it.** Same class as the entry above; caught in flight this time.
+
+- **Proposal (a):** evaluate the override against `scan`, not `cmd`, **and** require the assignment to occupy the environment-prefix position of the destructive command. `_ENVPFX` already exists at `:175` as exactly this primitive and is already composed into `RE_WORKTREE`/`RE_BRANCH`/`RE_RESET`/`RE_CLEAN` (`:177-180`) — the fix reuses a tested building block rather than inventing a regex.
+- **Proposal (b) — DECIDED by the gate, adopt as written:** relabel the PreToolUse record to assert only what is true at that moment (*an override was requested and accepted*), never that the command succeeded. **Do not** add `outcome`/`exit_code` with a PostToolUse counterpart: that is a new registration on a global SPOF hook and warrants its own `/risk-check` as a separately-scoped change, not a rider.
+- **Gate outcome:** `/risk-check` 2026-07-19 → Item 3(a) **PROCEED-WITH-CAUTION**, Item 3(b) **PROCEED-WITH-CAUTION**, bundle RECONSIDER (driven by Item 1). Report: `audits/risk-checks/2026-07-19-staging-guard-cwd-resolution-destructive-override-binding.md`. Required mitigations: add both negative fixtures as permanent cases, re-run the **full** harness before landing, name a rollback plan in the commit message.
+- **Target files:** `.claude/hooks/check-destructive-liveness.sh` (`:207`, `:208-224`), `logs/scripts/test-destructive-liveness.sh` (new negative fixtures).
+
 ### 2026-07-19 — Thread 15's emit-side redesign is SCORED: RECONSIDER — the fix measured its own output and never its own weight
 
 - **Status:** logged (pending) — **carries the finished-but-ungated redesign for mission thread 15.** A session picking thread 15 up should start from the GATE OUTCOME block below, not from the thread text.
