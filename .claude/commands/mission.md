@@ -1,7 +1,7 @@
 ---
 model: sonnet
-description: Mission contract lifecycle — designate, list, read, and close multi-session missions. A mission is a goal that spans many sessions; sessions bind to it at /prime and are measured against its validation contract by /drift-check. Advisory infrastructure only.
-argument-hint: "[create <id> \"<name>\" | list | read <id> | check <id> <thread-substring> | close <id>]"
+description: Mission contract lifecycle — designate, list, read, tick threads on, revise the thread list of, and close multi-session missions. A mission is a goal that spans many sessions; sessions bind to it at /prime and are measured against its validation contract by /drift-check. Advisory infrastructure only.
+argument-hint: "[create <id> \"<name>\" | list | read <id> | check <id> <thread-substring> | update <id> | close <id>]"
 allowed-tools: Bash, Read, Write, Edit
 ---
 
@@ -24,10 +24,10 @@ A **mission** is a multi-session goal — e.g. "make the regime-shift project th
 
 ### Step 1 — Parse action
 
-5. Read the first token of `$ARGUMENTS` as `ACTION` (`create` | `list` | `read` | `check` | `close`). If `$ARGUMENTS` is empty, default `ACTION` = `list`.
-6. If `ACTION` is none of the five, abort with a one-line usage reminder:
+5. Read the first token of `$ARGUMENTS` as `ACTION` (`create` | `list` | `read` | `check` | `update` | `close`). If `$ARGUMENTS` is empty, default `ACTION` = `list`.
+6. If `ACTION` is none of the six, abort with a one-line usage reminder:
    ```
-   Usage: /mission [create <id> "<name>" | list | read <id> | check <id> <thread-substring> | close <id>]
+   Usage: /mission [create <id> "<name>" | list | read <id> | check <id> <thread-substring> | update <id> | close <id>]
    ```
 
 ---
@@ -70,6 +70,60 @@ A **mission** is a multi-session goal — e.g. "make the regime-shift project th
     - **The only match is already checked (`- [x]`)** → report `Thread already checked: {text}` and exit successfully without editing. This is a no-op, not an error — re-running a check after a resumed session is normal.
 20. Flip that single line's `- [ ]` to `- [x]`. Use `Edit` against the exact line text so the match is unambiguous. Change **nothing else** — not the thread's text, not its ordering, not any other line in the file. The Goal / scope / Validation contract stay frozen per the design contract.
 21. Confirm in one line naming the ticked thread and the remaining count: `Checked: {thread text, truncated}. {N} of {M} threads now open in <id>.` If that leaves zero threads open, add one line: `All threads are checked — run /mission close <id> when the mission's validation contract is satisfied.` (Advisory only: do **not** auto-close. Closing is a judgment about the validation contract, not a checkbox count.)
+
+---
+
+### Step 5.5 — `update <id>`
+
+**Why this verb exists.** `:12` states that `## Open threads` changes *"only via this command — never hand-written from inside a working session."* Until now the command had no verb that could revise a thread list — only `check`, which flips one checkbox. So any real revision (re-prioritising, repopulating after a verification pass, correcting a thread's text) had to be a hand-edit the contract forbids. That has now happened **twice** — `repo-health-backlog-2026-07.md:87-91` and `research-workflow-deploy-fitness.md:11-18` both carry an in-file admission of it. This verb closes the gap between what the contract requires and what the command can do. Cleared by `/risk-check` twice: 2026-07-18 ("well-justified and not the concern") and 2026-07-19, where it was explicitly unimplicated in both High findings that stopped the `check` redesign.
+
+**What it may and may not touch.** `update` revises **only** `## Open threads`. The Goal / In-scope-Out-of-scope / Validation contract sections are frozen per the design contract at `:12`, and this verb enforces that **by byte comparison, not by intention** — see item 26c. Do not "simplify" the guard into a promise that the edit stays in bounds; a guard that trusts the writer is the inert-safeguard pattern this repo has logged eight times.
+
+22a. Parse `<id>` (second token). If missing, abort:
+   ```
+   Usage: /mission update <id>
+   ```
+
+22b. Locate `<id>.md` using the Step 4 lookup order — `MISSIONS_DIR` first, then the enumerated repos (Step 11). **Never `archive/`.** A closed mission's threads are not revisable; if the file is found only in `archive/`, abort with: `Mission <id> is closed (archived at {path}). Reopen it before updating threads.`
+
+22c. **Assert the frozen/mutable boundary before touching anything — this is load-bearing.** The guard below defines the frozen region as *everything before the `## Open threads` heading*, which is correct **only because `## Open threads` is the last `## ` section** in every mission file (verified 2026-07-19 across `repo-health-backlog-2026-07.md`, `research-workflow-deploy-fitness.md`, and `templates/mission-contract.md` — it is last in all three). If a future mission file adds a section *after* `## Open threads`, that section would silently fall inside the mutable region and could be clobbered with no guard firing. So verify rather than assume:
+
+   ```bash
+   command grep -nE "^## " "<mission file>"
+   ```
+
+   If `## Open threads` is **not** the final `## ` heading, abort without writing:
+   `Cannot update <id>: '## Open threads' is not the last section (found '{next heading}' after it). The frozen-section guard assumes Open threads runs to EOF. Fix the file's section order, or extend this verb to bound the mutable region explicitly.`
+
+   Exactly one `## Open threads` heading must exist. Zero → abort (`no '## Open threads' section`). More than one → abort naming both line numbers; never guess which is authoritative.
+
+23a. **Capture the frozen prefix's fingerprint BEFORE the write.** The frozen region is byte-offset 0 up to (not including) the `## Open threads` line:
+
+   ```bash
+   command sed -n '1,{N-1}p' "<mission file>" | shasum -a 256   # N = line number of '## Open threads'
+   ```
+
+   Record this as `FROZEN_BEFORE`. Also copy the whole file to a timestamped backup outside the repo (scratchpad or `/tmp`) so item 26c can restore byte-exactly rather than reconstruct.
+
+23b. **Show the current thread list and take the revision.** Print the current `## Open threads` content (from its heading to EOF) so the operator/session sees what is being replaced. The revised block is supplied by the invoking session. Rewrite **only** from the `## Open threads` line to EOF; leave every byte before line `N` untouched.
+
+   Preserve the heading line itself verbatim — the replacement supplies the *body*, not a new heading. `/prime` Step 1d and `check` both anchor on that exact string.
+
+23c. **Verify byte-identity AFTER the write, and restore on any difference.** Re-read the file, re-locate `## Open threads` (its line number may legitimately be unchanged, since only content after it moved), and recompute the prefix hash the same way:
+
+   ```bash
+   command sed -n '1,{N-1}p' "<mission file>" | shasum -a 256   # → FROZEN_AFTER
+   ```
+
+   - `FROZEN_AFTER` == `FROZEN_BEFORE` → the frozen sections are byte-identical. Continue to item 24a.
+   - `FROZEN_AFTER` != `FROZEN_BEFORE` → **the write perturbed a frozen section.** Restore the backup over the file, confirm the restore by re-hashing, and abort:
+     `Update to <id> REVERTED — the write changed bytes outside '## Open threads' (frozen prefix hash {before} → {after}). The mission file is unchanged; the backup at {path} was restored and re-verified.`
+
+   This comparison is the whole guard. It catches the failure modes an intention-based check cannot: a trailing-whitespace change, a line-ending flip, an `Edit` that matched a string appearing in both a frozen section and the thread list, or a replacement block that accidentally carried a `## ` heading of its own.
+
+24a. Confirm in one line: `Updated <id>: {M} threads ({K} unchecked). Frozen sections verified byte-identical.`
+
+24b. `update` does **not** tick, untick, or interpret threads — it replaces the list. Use `check` to tick a thread. If a revision both restructures the list *and* completes a thread, run `update` first and `check` after, so the tick is recorded against the list that will actually persist.
 
 ---
 
