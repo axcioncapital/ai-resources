@@ -16,8 +16,21 @@
     "subagents": [],
     "tools_notable": []
   },
-  "files_changed": [],
-  "decisions_refs": [],
+  "files_changed": [
+    "logs/session-notes.md",
+    "logs/session-notes-archive-2026-07.md",
+    "logs/session-plan-2026-07-19-S1-e58.md",
+    "logs/decisions.md",
+    "logs/improvement-log.md",
+    "logs/usage-log.md",
+    ".claude/commands/mission.md",
+    "docs/repo-architecture.md",
+    "audits/risk-checks/2026-07-19-mission-check-closed-set-assertion-redesign-regate.md",
+    "logs/scratchpads/2026-07-19-01-45-scratchpad.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-19-s1-e58-thread-12-s-second-reconsider-shipping-the"
+  ],
   "validation": [],
   "evaluator_findings": {
     "sidecar_refs": [],
@@ -29,8 +42,8 @@
     "subagents": 0,
     "token_estimate": null
   },
-  "stop_reason": null,
-  "outcome": null,
+  "stop_reason": "deferred",
+  "outcome": "PARTIAL",
   "failure_class": null,
   "incidents_refs": []
 }
