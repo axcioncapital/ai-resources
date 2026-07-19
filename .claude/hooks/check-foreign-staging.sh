@@ -7,9 +7,17 @@
 #
 # WHAT IT GUARDS — when a gated git verb is about to run, it compares the files
 #   that verb would stage against THIS session's declared footprint (the mandate's
-#   `- Files in scope:` bullet). Files that are neither in the footprint nor on the
-#   exempt-list are "foreign" — most likely another concurrent session's staged
-#   work about to be swept into this commit.
+#   `- Files in scope:` bullet UNION its `- Required outputs:` bullet). Files that are
+#   neither in the footprint nor on the exempt-list are "foreign" — most likely another
+#   concurrent session's staged work about to be swept into this commit.
+#
+#   The two bullets are read ASYMMETRICALLY, and that is load-bearing (2026-07-19):
+#   files_in_scope is hard-validated by /session-start Step 2.5 and drives the
+#   "is the guard armed at all?" decision; required_outputs is an unvalidated free-text
+#   field, is shape-filtered per token, and may only WIDEN an already-armed guard. The
+#   result is monotonic — the union can turn a block into a pass, never a pass into a
+#   block. Both the DO-NOT-UNION note at the no_concrete_footprint gate and the shape
+#   filter at the parse site are required to keep that property; do not remove either.
 #
 # AUTHORITY — this is an ADVISORY STAGING TRIPWIRE, not enforcement (principles
 #   OP-5). exit 2 feeds the foreign-file list back to the AGENT (not a permission
@@ -325,8 +333,17 @@ def _live_foreign_session(logs_dir, self_session_id):
         return True
     return n_here >= 1
 
-# ---- Read the `- Files in scope:` bullet under this session's marker header ----
+# ---- Read the footprint bullets under this session's marker header ----
+# TWO bullets are read (2026-07-19): `- Files in scope:` (files this session will touch)
+# and `- Required outputs:` (files this session will CREATE). Reading only the first was a
+# defect: /session-start Step 2.5(b) HARD-REJECTS a not-yet-existing path from files_in_scope
+# and routes it to required_outputs, so a session that followed the schema exactly had its
+# own outputs reported as foreign and its commit blocked (observed live 2026-07-19,
+# axcion-content-programme). The guard's remediation text then pushed the operator to widen
+# files_in_scope with not-yet-created files — precisely what Step 2.5(b) forbids. Two rules
+# in the same harness contradicted each other; this reads the second field instead.
 footprint_raw = ""
+outputs_raw = ""
 notes = os.path.join(logs_dir, "session-notes.md")
 if sess and sess_date and os.path.isfile(notes):
     try:
@@ -351,8 +368,19 @@ if sess and sess_date and os.path.isfile(notes):
         if ln.startswith("## "):
             in_block = bool(header_re.match(ln))
             continue
-        if in_block and ln.lstrip().startswith("- Files in scope:"):
+        if not in_block:
+            continue
+        _s = ln.lstrip()
+        # First occurrence of each bullet wins — preserves the original single-bullet
+        # `break` semantics per field. The loop now runs to the end of THIS session's
+        # block instead of breaking on the first hit; `in_block` is reset by the
+        # `ln.startswith("## ")` arm above, so the scan still cannot read another
+        # session's bullets.
+        if _s.startswith("- Files in scope:") and not footprint_raw:
             footprint_raw = ln.split(":", 1)[1].strip()
+        elif _s.startswith("- Required outputs:") and not outputs_raw:
+            outputs_raw = ln.split(":", 1)[1].strip()
+        if footprint_raw and outputs_raw:
             break
 
 # ---- Q3 fail-open / P3 escalation: no concrete footprint ----
@@ -366,6 +394,16 @@ if sess and sess_date and os.path.isfile(notes):
 #       genuine commit/add-wide invocations pay for it — ordinary Bash calls already exited.
 #   (b) no live foreign session → warn + allow (the original fail-open): with no concurrent
 #       session there is no foreign-contamination risk to block on.
+# ⚠ THIS GATE IS DRIVEN BY `footprint_raw` (files_in_scope) ALONE — DO NOT union
+# `outputs_raw` into it. That asymmetry is deliberate and it is what keeps the
+# 2026-07-19 required-outputs change MONOTONIC: required_outputs may only WIDEN an
+# already-armed guard, never ARM one that is off today. `required_outputs` is an
+# UNVALIDATED free-text field (session-start Step 2.5 validates work_scope,
+# exit_condition, files_in_scope and stop_if — not this one), and real entries on disk
+# are prose: "settled article-research policy landed in a durable home". Letting such a
+# field switch the guard ON would arm it with a near-empty effective footprint, so every
+# staged file reads foreign and a SOLO session hard-blocks with no concurrency present —
+# a new false-block class, which is the failure shape this file's history is full of.
 low = footprint_raw.lower()
 no_concrete_footprint = (
     not footprint_raw
@@ -411,6 +449,43 @@ for tok in re.split(r'[,;\s]+', footprint_raw):
     if repo_name and tok.startswith(repo_name + "/"):
         tok = tok[len(repo_name) + 1:]
     if tok and not tok.startswith("("):
+        footprint.append(tok)
+
+# ---- Union in `- Required outputs:` (2026-07-19) ----
+# WHY A SHAPE FILTER HERE AND NOT ABOVE. `files_in_scope` is hard-validated by
+# /session-start Step 2.5 check 3 (shape test + existence test, both HARD REJECT), so its
+# tokens are already paths and are parsed above verbatim. `required_outputs` has NO
+# validation of any kind — Step 2.5 checks four fields and this is not one of them. Live
+# examples on disk: a clean path list; prose with zero paths ("settled article-research
+# policy landed in a durable home"); and prose mixed with paths and a parenthetical. So
+# every token is shape-tested before it is allowed into a footprint that a PARSER consumes.
+#
+# This filter is heuristic and deliberately errs toward DROPPING. A dropped real path costs
+# a false block that already happens today (no regression); an admitted junk token cannot
+# cost anything, because widening a footprint can only turn a block into a pass. That
+# asymmetry is why the filter is safe to keep simple — but see the DO-NOT-UNION warning on
+# the no_concrete_footprint gate above, which is what makes the asymmetry hold.
+#
+# Do NOT "fix" this by adding validation to required_outputs in this change — that is a
+# separate, larger change touching every writer of the mandate line (/session-start,
+# /prime Step 8c.7). Scope it on its own if wanted.
+_PATH_SHAPE = re.compile(r'/|\.(?:md|sh|json|ya?ml|py|ts|js|txt|csv|toml|ini)$', re.I)
+
+for tok in re.split(r'[,;\s]+', outputs_raw):
+    tok = re.sub(r'^\./', '', tok.strip().strip("`").strip())
+    if not tok or tok.startswith("("):
+        continue
+    # Leading `/` = not a repo-relative path. Git candidate paths are ALWAYS
+    # repo-root-relative, so such a token could never match one; dropping it keeps
+    # prose like "a `/risk-check` report under …" out of the block message.
+    if tok.startswith("/"):
+        continue
+    if not _PATH_SHAPE.search(tok) and tok not in ("CLAUDE.md", "SKILL.md"):
+        continue
+    tok = tok.rstrip("/")
+    if repo_name and tok.startswith(repo_name + "/"):
+        tok = tok[len(repo_name) + 1:]
+    if tok and tok not in footprint:
         footprint.append(tok)
 
 # ---- Compute the candidate file set the verb would stage ----
@@ -573,15 +648,19 @@ msg = (
     "[staging-tripwire] BLOCKED — this `" + verb + "` would stage "
     + str(len(foreign)) + " file(s) OUTSIDE this session's declared footprint:\n  "
     + "\n  ".join(foreign)
-    + "\n\nThis is the concurrent-session contamination pattern: a file that is "
-    "neither in your `- Files in scope:` nor a shared log/process artifact is about "
-    "to be swept into your commit — most likely another live session's staged work.\n"
+    + "\n\nThis is the concurrent-session contamination pattern: a file that is in "
+    "neither `- Files in scope:` nor `- Required outputs:`, and is not a shared log or "
+    "process artifact, is about to be swept into your commit — most likely another live "
+    "session's staged work.\n"
     "STOP. Do NOT retry the commit as-is. Surface these files to the operator and "
     "confirm they belong to THIS session:\n"
     "  • If they are another session's work — unstage them "
     "(`git restore --staged <path>`) and commit only your footprint.\n"
-    "  • If they genuinely belong to this session — your declared footprint "
-    "is too narrow; tell the operator before overriding.\n"
+    "  • If they genuinely belong to this session — your declared footprint is too "
+    "narrow. Route each file to the RIGHT field: one this session CREATED belongs in "
+    "`- Required outputs:`, one it edited in `- Files in scope:`. Do NOT put a created "
+    "file in Files in scope — /session-start Step 2.5(b) rejects it. Tell the operator "
+    "before overriding.\n"
     "Declared footprint: " + ", ".join(footprint)
 )
 print(msg, file=sys.stderr)
