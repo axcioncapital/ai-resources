@@ -203,20 +203,24 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
    Issue exactly these three bounded scans:
 
    ```
-   Bash(grep -nE -B6 "^-? ?\*\*Severity:\*\* *(high|HIGH|medium-high|critical|urgent)" logs/improvement-log.md)
+   Bash(grep -nE -B6 "^-? ?\*\*Severity:\*\* *\*{0,2}(high|HIGH|medium-high|critical|urgent)" logs/improvement-log.md)
    Bash(grep -nE "HIGH|urgent|do-now" logs/friction-log.md | grep -viE "resolved|verified|shipped|archived|declined" | head -n 40)
    Bash(python3 -c "
-import re
-L=open('logs/improvement-log.md',encoding='utf-8').read().split('\n')
-H=[i for i,l in enumerate(L) if re.match(r'^#{2,3} \d{4}-\d{2}-\d{2}',l)]
-n=sum(1 for k,s in enumerate(H) if not any(re.match(r'^-? ?\*\*Severity:\*\*',x) for x in L[s:(H[k+1] if k+1<len(H) else len(L))]))
-print(f'UNCLASSIFIED: {n} of {len(H)} entries carry no Severity field') if n else None")
+import re,os
+p='logs/improvement-log.md'
+if os.path.exists(p):
+    L=open(p,encoding='utf-8').read().split('\n')
+    H=[i for i,l in enumerate(L) if re.match(r'^#{2,3} \d{4}-\d{2}-\d{2}',l)]
+    n=sum(1 for k,s in enumerate(H) if not any(re.match(r'^-? ?\*\*Severity:\*\*',x) for x in L[s:(H[k+1] if k+1<len(H) else len(L))]))
+    print(f'UNCLASSIFIED: {n} of {len(H)} entries carry no Severity field') if n else None")
    ```
 
    The three scans do different jobs — the files have different shapes, and the third measures a gap rather than reading content:
    - **`improvement-log.md` is schema'd** (`### {date} — {title}` / `- **Status:**` / `- **Severity:**`). The `-B6` window is sized to carry each severity hit's **header and status lines** back with it — that is what makes the filter below applicable without a second read. Do not narrow it: at `-B4` the header is lost on entries whose status runs to multiple lines.
 
      The severity anchor is `^-? ?\*\*Severity:\*\*` — the `-? ?` tolerates the **un-dashed** variant (`**Severity:** …` with no leading `- `), which two live entries use. Widened 2026-07-18; the old `^- ` anchor silently skipped them.
+
+     The `\*{0,2}` before the value tolerates a **bolded severity value** (`- **Severity:** **high**`), which two live entries use. Widened 2026-07-19; the old anchor required the value to start immediately after the colon-space and silently skipped both. **Do not widen further to admit a delimiter before the value** — `logs/improvement-log.md:13` is the log's own schema block and reads ``- **Severity:** `low` | `medium` | `medium-high` | `high` | `critical` ``. An anchor loose enough to match that vocabulary *declaration* injects a phantom urgent item into the task menu of every consumer. The backtick is what excludes it today; `\*{0,2}` matches zero asterisks and then fails on it. That exclusion is load-bearing and was verified by execution before this widening shipped.
    - **The third scan is a COUNT, not a content read — and that distinction is the whole design.** As of 2026-07-18, 30 of 87 entries carry no `Severity` field at all, so no severity anchor can ever reach them. The tempting fix is to widen the scan until it sees them; that is wrong, and it is why the backlog item asking for it was mis-scoped. An entry with no Severity field is not *hidden HIGH work* — it is **unclassified**, and dumping 30 unclassified entries into the task menu would make the menu worse while multiplying the token cost this step exists to bound. So the scan reports the *number* in one line and stops. Visible, bounded, honest: the operator learns the backlog has an unclassified tail without paying to read it. The real remedy is to give those entries a `Severity` field (a log-hygiene task for `/friday-act`), not to loosen this scan. Print nothing when the count is zero.
    - **`friction-log.md` has no severity field** — its severity words are free text inside prose bullets, and its resolution stamps (`— **Resolved:**`, `[FADING-GATE] verified`) sit on the *same* line as the finding, which is why the same-line `grep -v` works. Treat its hits as **candidates to judge, not findings**: incidental matches are expected (a shell variable named `HIGH`, a quoted phrase), and they are cheap to discard in-context because only the matching lines are returned.
 
