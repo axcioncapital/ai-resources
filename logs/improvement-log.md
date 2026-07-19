@@ -1532,7 +1532,7 @@ At `/wrap-session` Step 3.5, the foreign-session guard's shared-file fallback re
 
 ### 2026-07-19 — `check-foreign-staging.sh` resolves a gated `git add` against the wrong repo when the command runs inside a nested project repo, producing a false BLOCK that widening the footprint cannot clear
 
-- **Status:** logged (pending)
+- **Status:** logged (pending) — **SCORED TWICE, RECONSIDER both times (2026-07-19: S4-2b2, then S5-dd5). Nothing built either time.** The second gate ANSWERED the open design question and named a concrete buildable path — see § SECOND GATE OUTCOME at the end of this entry. A session picking this up should start from there, not from the proposal below, and should not attempt a third variation of the "degrade to warn" shape.
 - **Category:** hook (staging tripwire, `check-foreign-staging.sh`)
 - **Severity:** medium-high — it hard-blocks (exit 2) a legitimate commit, and the block is **unclearable by the remedy the hook itself prescribes**, so the operator is pushed toward either abandoning the commit or bypassing the guard. A guard whose only escape is a bypass trains the bypass.
 - **Source:** workspace root, 2026-07-19 session S2-e73 (`/new-project` post-pipeline git setup for `axcion-communication-system`).
@@ -1559,6 +1559,18 @@ Every one of those is a **workspace-root** dirty path. None could be staged by t
 **Proposal.** Resolve the target repo before computing the staged set: derive `git rev-parse --show-toplevel` from the Bash call's cwd, run the `git diff --cached` / `git status` probes with `-C <that toplevel>`, and compare footprint paths **relative to that same toplevel** — so a nested repo is judged against its own tree and a same-named file in a different repo cannot collide. Secondary: when the resolved toplevel differs from the workspace root the footprint was declared against, prefer the soft warn over the hard block, since the footprint is expressed in the wrong coordinate system and cannot be authoritative.
 
 **Target files:** `ai-resources/.claude/hooks/check-foreign-staging.sh` (repo resolution + path-relativization); `ai-resources/docs/commit-discipline.md` (two-end contract note, if the block semantics change).
+
+### SECOND GATE OUTCOME — 2026-07-19 (S5-dd5): RECONSIDER again, but the design question is now ANSWERED
+
+Report: `audits/risk-checks/2026-07-19-staging-guard-cwd-resolution-destructive-override-binding.md` (committed in `56304a7`). Dimensions: Blast radius High, Hidden coupling High, Reversibility Medium, Principle alignment Medium, others Low. 24 consumers inventoried, 7 must-change.
+
+**⚠ The Proposal above is now PARTLY SUPERSEDED and its last sentence is actively dangerous.** It ends: *"prefer the soft warn over the hard block."* Both gates rejected exactly that. Soft-warn-on-uncertainty risks silently reopening the fail-open that `979ed01` (2026-07-18) closed on this same file, and it inverts the file's established **"uncertain → protect"** doctrine. Do not build it.
+
+**The buildable path the gate named — a precedent already live and tested in the same file.** Generalize `check-foreign-staging.sh:521-526`'s existing `cd X && <verb>` parsing (today used only for candidate-subdir scoping) to resolve the repo **toplevel**: parse the leading `cd`, resolve it against the payload's `cwd`, then `git -C <resolved path> rev-parse --show-toplevel`. **Any shape that pattern cannot parse — nested `cd`s, `;`-chains, subshells, variable-substituted paths — must FAIL CLOSED (hard block), never soft-warn.** Fixture (iii) must prove both directions: a parsed compound `cd` resolves correctly (no false block), and a deliberately-unparseable compound form fails closed rather than warning.
+
+**On bundling (the gate was asked to score whether S5-dd5 routed around the first gate's "own dedicated session" instruction).** Verdict: the "materially different shape" claim **substantially holds** — the gate independently confirmed no shared code path in the fix diff (`_command_text_only`, the only function the two hooks share, is untouched), and it scored Item 1 on its own merits at the same bar as if it stood alone. It still lands on RECONSIDER on those merits alone. The practical property the original recommendation protected — that Item 1's outcome not gate or dilute the other item — was preserved by sequencing the other item first and letting it land independently, which it did (`56304a7`).
+
+**Next session's shape:** adopt the fail-closed design above, build and pass all three fixtures **against built code** (not a design candidate), name the rollback plan, decide fix/delete/park on the divergent `.codex/hooks/check-foreign-staging.sh` fork (measured this session: 464 lines vs 668 canonical, materially behind), then re-run `/risk-check`. Per the gate: *"A second RECONSIDER here is the gate working as designed, not a failure of the redesign effort."*
 
 ### 2026-07-19 — `/prime` cross-checks Next Steps against git but NOT mission threads, so a shipped mission thread is re-offered as open work at every orientation
 
