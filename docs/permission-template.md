@@ -379,17 +379,39 @@ Canonical block:
 
 ## Detection rulebook (used by `/permission-sweep`)
 
+> **Rules 1, 5 and 6 are MERGED-EFFECTIVE predicates, not per-file predicates (corrected 2026-07-18).**
+> They exist to predict a *live prompt*, and a session never runs against one settings file — it runs
+> against the merged layer stack. Evaluate them against `EFFECTIVE_ALLOW` and `EFFECTIVE_DEFAULT_MODE`
+> as computed in `permission-sweep-auditor.md` § Step 2.5, never against a single file's `allow` array.
+> Two consequences, both load-bearing:
+> - A per-file gap that an **ancestor layer already fills** does not fire. A `settings.local.json` is
+>   evaluated together with its sibling `settings.json` — they are two halves of one layer.
+> - Where `EFFECTIVE_DEFAULT_MODE` is `bypassPermissions`, an allow-list gap **cannot** produce a
+>   prompt, so these three rules do not fire at all.
+>
+> When a rule would have fired on the file alone but the effective view suppresses it, **demote to
+> ADVISORY with a `Suppressed-by:` reason — do not delete it.** Dropping it hides genuine per-file
+> drift; leaving it CRITICAL is the false alarm.
+>
+> *Why this warning exists:* evaluated per-file, Rule 5 emitted a **CRITICAL** against
+> `ai-resources/.claude/settings.local.json` ("narrow `Bash(...)` grants, no `Bash(*)`"). True of that
+> file in isolation and operationally meaningless — the sibling `settings.json` grants `Bash(*)` at
+> `:4` and **both** files set `defaultMode: bypassPermissions` (`:32`, `:9`). Zero prompts were
+> possible. The false CRITICAL reached the 2026-07-17 `/friday-checkup` as an actionable HIGH and a
+> `/friday-act` remediation item was queued against a correct file. **Scope the suppression to these
+> three rules only** — it does not apply to Rules 7, 8 or 9, which are not prompt-causation.
+
 ### CRITICAL — cause live Edit/Delete prompts
 
-1. `settings.local.json` missing `defaultMode: bypassPermissions` where parent `settings.json` has it (or parent is one of Layers A–D and the local file contains a `permissions` block).
+1. `settings.local.json` missing `defaultMode: bypassPermissions` where parent `settings.json` has it (or parent is one of Layers A–D and the local file contains a `permissions` block). **Merged-effective — see the note above.**
 2. Project/workspace `settings.json` missing `defaultMode` entirely.
 3. Broad glob `Edit(X/**)` or `Write(X/**)` without dotfile-path companion (`Edit(**/.claude/**)` or `Edit(X/**/.claude/**)`).
 4. Missing bare-tool entries (`Edit`, `Write`, `MultiEdit`) alongside scoped patterns.
-5. Missing `Bash(*)` in files that allow narrow bash commands only (e.g., `Bash(git add *)` without catch-all).
+5. Missing `Bash(*)` in files that allow narrow bash commands only (e.g., `Bash(git add *)` without catch-all). **Merged-effective — see the note above.**
 
 ### HIGH — Delete prompts or future Edit prompts
 
-6. No `Bash(rm *)` in allow (Delete/Remove failure mode, separate from Edit).
+6. No `Bash(rm *)` in allow (Delete/Remove failure mode, separate from Edit). **Merged-effective — see the note above.**
 7. Deny-shadows-allow (same tool-path pattern on both lists). Flag but don't auto-fix — sometimes intentional.
 8. `additionalDirectories` workspace-root grant absent from BOTH the project's tracked `settings.json` and its gitignored `settings.local.json` (Layer D′) — with no other mechanism granting the workspace root, ai-resources symlinks will not resolve. The canonical home for the grant is `settings.local.json` (machine-specific absolute path; see Layer D′). Presence in the local file fully satisfies this rule; absence of `additionalDirectories` from the tracked `settings.json` is **expected and not a finding**. A tracked `settings.json` that still carries `additionalDirectories` with a foreign-machine absolute path is an **ADVISORY** (relocate to `settings.local.json`), not a HIGH stale-path finding — the path is correct on the machine that deployed it.
 9. Absolute-path allow entries with stale workspace paths (path no longer exists on disk).

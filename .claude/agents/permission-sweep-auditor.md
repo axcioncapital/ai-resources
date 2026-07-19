@@ -64,6 +64,31 @@ Assign each file to a layer:
 - `Layer D` — `projects/{name}/.claude/settings.json` and nested project/workflow `settings.json`
 - `Layer D′` — any project `settings.local.json`
 
+### Step 2.5: Compute the EFFECTIVE (merged) permission view — before any rule fires
+
+**Why this step exists.** Step 2 assigns every file a layer letter, and until 2026-07-18 nothing ever used it. Rules 1, 5 and 6 are *prompt-causation* predicates — they exist to answer "will this file cause a live Edit/Delete prompt?" — but they were evaluated against **one file's `allow` array in isolation**, which cannot answer that question. A session does not run against one settings file; it runs against the merged stack.
+
+**The failure this produced, verified by execution 2026-07-18.** The auditor emitted a CRITICAL against `ai-resources/.claude/settings.local.json` for "narrow `Bash(...)` grants, no `Bash(*)`" (Rule 5). Literally true of that file, and operationally meaningless: the sibling `ai-resources/.claude/settings.json` grants `Bash(*)` at `:4`, **and both files set `defaultMode: bypassPermissions`** (`settings.json:32`, `settings.local.json:9`). Zero prompts were possible. That false CRITICAL reached the 2026-07-17 `/friday-checkup` as an actionable HIGH and a `/friday-act` remediation item was queued against it. **Audit tooling that emits false CRITICALs does not merely waste attention — it causes harmful "repairs" to correct files.**
+
+For each scanned file, before applying Step 3's rulebook, compute and record:
+
+1. **`ANCESTOR_LAYERS`** — the layers whose settings a session in this file's scope also sees. Precedence, narrowest last: `A` (user) → `B`/`B′` (workspace root) → `C` (ai-resources) → `D`/`D′` (project). A `settings.local.json` is evaluated together with its sibling `settings.json`, never alone — they are two halves of one layer, not two independent files.
+2. **`EFFECTIVE_ALLOW`** — the union of `permissions.allow` across this file and its ancestor layers.
+3. **`EFFECTIVE_DEFAULT_MODE`** — the `defaultMode` in force for this file's scope: the narrowest layer that sets one wins; if none sets one, record `unset`.
+
+```bash
+# Illustrative — the sibling pair is the case the old per-file loop got wrong.
+DIR="$(dirname "$FILE_PATH")"
+SIBLING_ALLOW=$(jq -r '.permissions.allow[]?' "$DIR/settings.json" "$DIR/settings.local.json" 2>/dev/null | sort -u)
+EFFECTIVE_MODE=$(jq -r '.permissions.defaultMode // empty' "$DIR/settings.local.json" "$DIR/settings.json" 2>/dev/null | head -1)
+```
+
+**Applying the effective view to the rulebook (this is the whole point — do not skip it):**
+
+- **Rules 1, 5, 6 (prompt-causation) consult `EFFECTIVE_ALLOW` and `EFFECTIVE_DEFAULT_MODE`, not the single file.** A rule does not fire on a per-file gap that the merged stack already fills. And when `EFFECTIVE_DEFAULT_MODE` is `bypassPermissions`, an allow-list gap **cannot** cause a prompt, so the prompt-causation rules do not fire on it at all.
+- **DEMOTE, do not delete.** When a rule would have fired on the file alone but is suppressed by the effective view, record it as **ADVISORY** with `Suppressed-by:` naming the specific reason — e.g. `Suppressed-by: EFFECTIVE_DEFAULT_MODE=bypassPermissions (settings.json:32); EFFECTIVE_ALLOW carries Bash(*) from Layer C settings.json:4`. Silently dropping it would hide genuine per-file drift; leaving it CRITICAL is the false alarm this step exists to end. The demoted finding keeps the information and removes the false urgency.
+- **Rules that are NOT prompt-causation keep firing unchanged** — Rule 7 (deny-shadows-allow), Rule 9 (stale absolute paths), Rule 8 (`additionalDirectories`), and the template-integrity check. `bypassPermissions` does not make a stale path correct or a deny-shadow intentional. **Do not over-apply the suppression**; it is scoped to the three prompt-causation rules and to nothing else.
+
 ### Step 3: For each file, apply the detection rulebook
 
 For each file, load it with `jq`:
