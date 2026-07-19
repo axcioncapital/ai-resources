@@ -63,3 +63,17 @@
 **Consequence accepted.** Two detection logics now exist for adjacent purposes — `/prime`'s bounded Step 1c and `/project-next-steps`' full cascade — rather than one shared implementation. Step 1c documents itself as deriving from the same source and explicitly cedes the full readiness check to the standalone command, to keep the two from drifting into contradictory logic over time.
 
 **Decided by:** Operator, via a `/clarify` multiple-choice answer ("Absorb the read into prime — Recommended"), before planning began. Implementation QC'd twice (`qc-reviewer`, plan-stage and post-implementation), both passes REVISE, both fully resolved before commit (`bf0c8a5`).
+
+## 2026-07-19 (S7-5a1) — Ship `check-citation-resolution.sh` deliberately unwired, with a delete-by date
+
+**Context.** `/risk-check` returned PROCEED-WITH-CAUTION on a new command-invoked scan that reports `path:NNN` citations which no longer resolve. Hidden coupling and Principle alignment both scored Medium for one reason: it is new detection with **no closure channel and zero consumers**. This repo has precedent on both sides — `F-11 — two dead guards` (built, registered nowhere), and `warn-settings-change.sh`, deleted 2026-07-19 as "an unwired guard that failed open".
+
+**Decision — ship it unwired, and bound the tension with a deletion trigger rather than an intention.** It is registered in no `settings.json` event and called by no command. Wiring it into a hook now would inherit the open HIGH that hook registrations in this workspace are unversioned (mission thread 3), so a fresh clone would get a guard that silently never fires — the exact failure `warn-settings-change.sh` was deleted for.
+
+**The trigger, recorded because an unwired guard with no expiry is how the orphan class starts:** wire it into `/friday-act`'s log-hygiene pass at the next monthly-tier `/friday-checkup`, **or delete it**. If neither has happened by the following monthly checkup, delete it — do not let it sit unwired for a third cycle. The same trigger is written into the script's own header, so it travels with the file rather than only living here.
+
+**Alternatives considered.** (i) *Register it as a hook now* — rejected: inherits the unversioned-wiring defect, and the gate scored that as the higher risk. (ii) *Don't build it, record the design only* — rejected: PROCEED-WITH-CAUTION is not the mandate's stop condition (that is RECONSIDER/NO-GO), and the check found two genuine dangling citations on its first live run, so the problem is real rather than inferred.
+
+**What it deliberately does not do.** It verifies that a citation *resolves*, never that the cited line *says what the citing entry claims*. Of the five recorded instances of the defect it descends from, a presence-check would have caught **zero** — every one carried a plausible citation that was simply wrong. That ceiling is stated in the script's own output so a clean run cannot be misread as an all-clear.
+
+**Decided by:** Claude, under the S7-5a1 mandate, applying both `/risk-check` mitigations. Gate report: `audits/risk-checks/2026-07-19-citation-resolution-scan-logs-scripts.md`.

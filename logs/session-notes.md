@@ -506,3 +506,20 @@ None.
 ### Open Questions
 
 None.
+
+## 2026-07-19 — Session S7-5a1
+
+**Mandate:** Merge the S6-623 queued-instruction evidence from `axcion-content-programme` into the existing 2026-07-14 entry at `logs/improvement-log.md:1082`, escalate it to `high` on that entry's own stated trigger, then design and `/risk-check` a mechanical detector for backlog `Proposal:` / `Target files:` lines that prescribe a route while carrying no `file:line` evidence and no explicit unverified marker — done when: the entry is merged and escalated on disk, `/risk-check` has returned a verdict and that verdict is honoured, and (on GO only) the detector executes against the live log and returns a real count.
+- Out of scope: raising a new duplicate entry (one already exists at `:1082`); rule-shaped fixes — a `CLAUDE.md` rule and a log-schema field were both built and rejected with evidence by S6-623; editing `axcion-content-programme`'s own log or `CLAUDE.md`.
+- Files in scope: logs/improvement-log.md, .claude/commands/prime.md, .claude/commands/wrap-session.md, .claude/agents/session-feedback-collector.md, .claude/commands/open-items.md, logs/scripts/search-canary.sh
+- Stop if: `/risk-check` returns RECONSIDER or NO-GO — record the design, build nothing (three consecutive RECONSIDERs have been honoured in this repo; that is the pattern, not an exception); or the only remaining viable design turns out to be rule-shaped.
+- Allowed inputs: docs/audit-discipline.md, docs/spine-schemas.md, logs/decisions.md, logs/scripts/check-usage-log-format.sh, logs/scripts/check-decision-refs.sh, CLAUDE.md
+- Required outputs: logs/scripts/check-fix-route-evidence.sh, audits/risk-checks/2026-07-19-backlog-route-evidence-detector.md
+- Context pack: output/context-packs/hook-20260719-b4e7c/pack.md
+
+**Correction carried into this mandate (S7-5a1, pre-write).** The mandate as first stated was wrong in three ways, all caught before any disk write:
+1. It said to raise a *new* high-severity entry. One already exists — `improvement-log.md:1082` (2026-07-14), same defect in this repo's own wording. The original `/prime`-time claim that no entry existed came from grepping content-programme's phrasing ("queued instruction") against a log that words it differently — an instrument whose scope did not cover the claim, i.e. the defect itself.
+2. It aimed the detector at `Fix:` lines. Measured: `Fix:` 1 / `Fix candidate:` 0 / `Proposal:` 70 / `Target files:` 108 in this repo; the reverse in content-programme. The routed instruction prescribed a route into this repo without checking the target shape existed here — instance five, committed inside the handoff that describes the defect.
+3. The context pack asserted "no file in the workspace mentions S6-623" (actual: 12 files). Cause is the documented `.gitignore`-honouring-grep trap — `docs/audit-discipline.md:37`, `logs/scripts/search-canary.sh`; `.gitignore:56` ignores `projects/axcion-content-programme/`, so dot-rooted `grep -r X .` returns 0 while `command grep -r X .` returns 12. The same trap caught this session's own first verification before the canary exposed it.
+
+One pack conflict was a **false positive**: `improvement-log.md:180`'s "the declared schema field is the more honest fix" concerns `/mission check`'s assertion field, a different artifact — not a contradiction of S6-623's rejection. It is, however, live precedent for the same shape (declare the field at filing time, read it at execution time).
