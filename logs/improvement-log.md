@@ -1747,3 +1747,101 @@ PROJECT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 **Proposal.** Either (a) make `check-archive.sh` resolve its target from `$CLAUDE_PROJECT_DIR` (now that the env var is actually reliable — the comment disclaiming it may be stale) or from `cwd`, matching `run-manifest.sh` and `foreign-session-guard.sh`'s pattern, so a walk-up invocation is safe by construction; or (b) if `$0`-relative resolution is load-bearing for some reason not yet re-derived, have `/wrap-session`'s own walk-up instruction explicitly refuse to invoke `check-archive.sh` from a canonical (non-project-local) path, and instead skip the archive check with a loud note when no project-local copy exists — never silently substitute the canonical copy for a script whose resolution model doesn't support that substitution. Whichever fix ships, add a self-check to the script that prints the resolved `PROJECT_DIR` on every run, so a wrong-target invocation is visible even when it produces no archive (closing exactly the blind spot that let the prior session's wrong verification stand unchallenged for one session).
 
 **Target files:** `ai-resources/logs/scripts/check-archive.sh`; `ai-resources/.claude/commands/wrap-session.md` Step 3 (and its workspace-root mirror); the two-script walk-up idiom documentation if one exists.
+
+### 2026-07-20 — 33 canonical commands are unreachable from a workspace-root session, including two that `/prime` and `/wrap-session` both instruct invoking
+
+- **Status:** logged (pending)
+- **Severity:** **medium-high** — it silently breaks a documented, instructed flow. `/prime` Step 8a/8b tells the session to invoke `/session-start` then `/session-plan`; from the workspace root **neither command exists**, so the instruction cannot be followed and the session either improvises or drops the step.
+- **Category:** distribution (workspace-root command symlinks)
+- **Source:** workspace root, 2026-07-20 session S1-6b8, hit live while following `/prime` Step 8b.
+
+**Observed, not inferred.** `Skill(session-start)` returned `Unknown skill: session-start`. Enumeration: `ai-resources/.claude/commands/` holds **90** `.md` files; `.claude/commands/` at the workspace root holds **63** entries. **33 are missing**, among them `session-start`, `session-plan`, `blindspot-scan`, `placement`, `mission`, `contract-check`, `decide`, `tweak`, `fix-repo-issues`, `project-next-steps`, `reconcile*`, `log-defect`, `resolve-incident`, `expert-check`, `pm`, `scope-project`.
+
+**Why it is worse than a missing convenience.** Several of the 33 are named as *required steps inside commands that DO exist at the root*:
+- `/prime` Step 8a.3.b–c and 8b.3.b–c invoke `/session-start` and `/session-plan` by name.
+- Workspace `CLAUDE.md` § Placement Discipline instructs running `/placement`; § Blind-Spot Scan Gate instructs `/blindspot-scan`; § Contract-Conformance Check instructs `/contract-check`.
+- This very command's Step 4.6 nudges `/blindspot-scan`.
+
+So the workspace's own always-loaded rules instruct commands the workspace cannot run. A session that follows the rules faithfully hits a wall; a session that does not, never notices.
+
+**Worked around, not fixed, in-session.** S1-6b8 proceeded without either command and hand-wrote the load-bearing part of `/session-start` — the `**Mandate:**` line and its labelled bullets, which `check-foreign-staging.sh` parses to decide what the session may stage. Skipping that would have left the staging guard with no footprint to read.
+
+**Proposal — decide the intent first; the two fixes are opposite.** Either (a) the absence is an oversight → add the 33 symlinks (matching the existing relative `../../ai-resources/.claude/commands/X.md` form) and the instructions become true; or (b) the absence is deliberate — some of the 33 may be genuinely project-scoped — → then the *instructions* are wrong and `/prime`, `/wrap-session` and workspace `CLAUDE.md` must stop naming unreachable commands. **Do not add 33 symlinks without checking (b)**: a command that was excluded on purpose being silently re-admitted is its own defect.
+
+**Target files:** workspace-root `.claude/commands/` (symlink set); `ai-resources/.claude/commands/prime.md` Steps 8a/8b; workspace-root `CLAUDE.md` §§ Placement Discipline / Blind-Spot Scan Gate / Contract-Conformance Check; `ai-resources/.claude/commands/wrap-session.md` Step 4.6 and its workspace-root mirror.
+
+### 2026-07-20 — `pipeline-stage-4` cannot spawn a subagent, so it graded its own build on a gate its own spec declared binding
+
+- **Status:** logged (pending)
+- **Severity:** **medium** — it does not corrupt output, but it converts an independent gate into a self-assessment silently, and it will recur on every pipeline run whose spec includes a gated change class.
+- **Category:** agent definition (tool grant)
+- **Source:** workspace root, 2026-07-20 session S1-6b8, `/new-project` for `axcion-pitch-engine`.
+
+**Observed.** The implementation spec's Operation 8 required an **end-time `/risk-check`** (a hook is a gated structural class; the Architecture Gate had recorded the requirement as *binding and not downgradable*). `pipeline-stage-4`'s toolset is Read/Write/Edit/Bash/Glob/Grep — **no `Task`/`Agent` tool** — so it could not spawn `risk-check-reviewer`. It executed the rubric inline against its own work and returned GO.
+
+**To its credit it disclosed this** in the report's own line 7, citing § Subagent Proportionality, rather than presenting the verdict as independent. The failure is structural, not behavioural: the agent did the best available thing.
+
+**Why it matters beyond this run.** The builder assessing the build is exactly what QC independence exists to prevent. Here it was tolerable — the plan-time pass *was* independent, the design only shrank afterwards, and the main session re-verified the build mechanically. **Neither of those conditions is guaranteed on the next run.** A Stage 4 that *expands* scope, or whose main session does not re-verify, produces a self-issued GO with nothing behind it.
+
+**Proposal.** Either (a) grant `pipeline-stage-4` the `Agent` tool so it can spawn the reviewer its specs require — with an explicit tier pin on the spawn, per § Model Tier's carve-out; or (b) keep the grant narrow and instead have `/new-project`'s Gate Protocol run the end-time `/risk-check` **in the orchestrating session** after Stage 4 returns, where the `Agent` tool is available. **(b) is cheaper and arguably better placed** — the gate is about the change set, not about the builder, and the orchestrator already owns the other gates.
+
+**Target files:** `ai-resources/.claude/agents/pipeline-stage-4.md` (tool grant) if (a); `ai-resources/.claude/commands/new-project.md` (Gate Protocol / Post-Stage-5) if (b).
+
+### 2026-07-20 — `/new-project` step 11a writes a `## Model Selection` section into a `CLAUDE.md` that does not exist yet
+
+- **Status:** logged (pending)
+- **Severity:** low
+- **Category:** command ordering (`/new-project` First Run)
+- **Source:** workspace root, 2026-07-20 session S1-6b8.
+
+Step 11a runs at **First Run** and instructs: *"Append a `Model Selection` section to `projects/{name}/CLAUDE.md`."* But the project `CLAUDE.md` is not created until **Stage 4** (or post-pipeline enrichment step 4), so at 11a time there is no file to append to. Step 11a even instructs confirming the write by reading the file back — which cannot succeed.
+
+Worked around by capturing the operator's task-profile answer at 11a and deferring the section write until `CLAUDE.md` existed (logged as `pipeline/decisions.md` #5). The section is required: `/prime` Step 4 reads that heading, and its absence leaves the model-alignment check with nothing to read.
+
+**Proposal.** Move the section write from step 11a to post-pipeline enrichment step 4 (where `CLAUDE.md` is already being assembled), keeping the *question* at 11a so the operator is asked once, early. Alternatively have 11a create a minimal `CLAUDE.md` stub — worse, since Stage 4 then has to merge into it.
+
+**Target files:** `ai-resources/.claude/commands/new-project.md` step 11a and post-pipeline enrichment step 4.
+
+### 2026-07-20 — `auto-sync-shared.sh` exits 0 and links nothing when the manifest is absent, so a mis-ordered enrichment silently no-ops
+
+- **Status:** logged (pending)
+- **Severity:** low — the enrichment step order in `/new-project` is already correct; this is a trap for anyone who reorders or runs the sync standalone.
+- **Category:** hook (silent-success failure mode)
+- **Source:** workspace root, 2026-07-20 session S1-6b8; found by the Stage 5 test pass, confirmed by reading the script.
+
+`auto-sync-shared.sh:30` reads `[ -f "$MANIFEST" ] || exit 0`, commented *"project opts out of managed symlinks entirely."* With no `.claude/shared-manifest.json`, the sync **exits 0 having linked nothing** — success and total no-op are indistinguishable from the exit code alone. `/new-project` enrichment happens to create the manifest (step 1) before the sync (step 5), so the shipped order is safe; a reorder, or a standalone invocation, is not. The downstream symptom is step 5a reporting all 10 canonical commands missing, which reads as a broken hook rather than an ordering slip.
+
+Note the spec for this project asserted the tolerance came from `jq` handling an absent file — **wrong mechanism**; the bail happens before `jq` runs. Right outcome, wrong reason, which is how this stayed unexamined.
+
+**Proposal.** Emit one line on the opt-out path (`"no shared-manifest.json — opting out, linked 0 files"`) so a silent no-op is distinguishable from a silent success. One `echo`, no behaviour change.
+
+**Target files:** `ai-resources/.claude/hooks/auto-sync-shared.sh` (~line 30).
+
+### 2026-07-20 — Two more instances of the recall-assertion pattern, both self-inflicted, both caught by a subagent rather than by a gate
+
+- **Status:** logged (pending)
+- **Severity:** low — no output was corrupted; both were caught before shipping. Filed as **evidence on an already-tracked pattern**, not as a new defect class.
+- **Category:** process (assertion discipline)
+- **Source:** workspace root, 2026-07-20 session S1-6b8. Continues the five-instance series in the 2026-07-14 entry.
+
+Two distinct mechanisms, same session:
+
+1. **Fabricated-looking citation.** I wrote that `project-plan-v3.md § 10` recommends skipping the spec cycle, quoting "one buildable component (a grep-based reference check)". § 10 is the **Risk Register**; the recommendation is § 9 line 389. The quoted phrase appears **nowhere in the plan** — it comes from an HTML comment at `plan-qc-verdict.md:127`, i.e. the QC evaluator's characterisation, which I attributed to the plan itself. It had already propagated into `sources.md` and `decisions.md` as load-bearing justification before the Stage 3b agent grepped the plan and found it absent. The § 9 text also carries a **condition** the bad citation dropped ("Revisit only if S3.2 adds a command surface and more than two commands are proposed") — a condition that is live for this project.
+
+2. **Incomplete amendment propagation.** After two gates amended the architecture, I updated §2.2, §2.4, §5.4 and the D1 row — and left §4's control-flow paragraph, §8's scope line, §5.3's `jq` dependency and §2.4's matcher bullet still describing the dropped layer. Stage 3c read the amendment blocks, followed them correctly, and **reported the contradiction instead of silently resolving it**. Had it resolved silently in the other direction, it would have specced the dropped design.
+
+**What is worth noting rather than the generic lesson.** Both were caught by a *subagent doing its own verification*, not by any gate whose job it was. The `/risk-check` premise-verification step (2.6) caught a third (a precedent described backwards) — that one *was* a gate doing its job, and it is the only one of the three that was. The countermeasure that keeps working is **"the reader greps rather than trusting the citation,"** which is a property of how subagents are briefed, not of any checklist.
+
+**Proposal.** No new gate — the pattern already has an entry and a proposed countermeasure, and adding a gate to a system flagged for over-gating is the wrong move. Instead: when amending a multi-section design document, **grep the whole document for the terms being amended** before declaring the amendment complete (`grep -n "PostToolUse\|Check B\|jq"` would have caught all four misses in one call). Worth adding as one line wherever amendment discipline is written down, if such a place exists.
+
+**Target files:** `ai-resources/logs/improvement-log.md` 2026-07-14 entry (this is its sixth and seventh instance); no code target.
+
+### 2026-07-21 — PowerPoint production capability (Design Studio Phase 2) — activation parked
+
+- **Status:** logged (pending)
+- **Category:** project capability (leverage-idea PARK of execution; plan + spike completed)
+- **Review-cycle:** reviewed 2026-07-21, deferred to → first qualifying Pitch Engine presentation brief arrives (all 12 fields populated, Fields 1–3 concrete: named audience, real meeting, observable desired decision) — or explicit operator activation of Phase 2
+- **Friction source:** Five-doc idea dump proposing the Design Studio own PowerPoint production. Worth doing, but the operator chose plan-now-park-execution: rollout is months out (Jul–Dec 2026), and archetype design without a real brief is speculative. All reconciliation work (locked Pitch Engine contract, Brand Book §4.3 deck grammar, red-team rev. 2) is captured so activation starts warm, not cold.
+- **Proposal:** Activate Phase 2 per the recorded activation plan: tier-C doctrine edits → /create-skill (deck-design-spec, draft brief embedded in the plan) → /risk-check + /blindspot-scan → build phases (floor ~2–3 wks; full ~5–9 part-time wks). python-pptx route spike-proven 2026-07-21 (PASS, 10/10 checks); kill criteria K1/K2 + manual-first-deck escape hatch recorded. First deck may be hand-built per Pitch Engine contract rule 3 while the system builds.
+- **Target files:** `projects/axcion-design-studio/30_reference-lenses/phase2-powerpoint/phase2-activation-plan.md` (start at §11 Activation sequence, Step 0 revalidation first)
+- **Notes:** analysis — `ai-resources/audits/working/2026-07-21-idea-powerpoint-production-design-studio.md`
