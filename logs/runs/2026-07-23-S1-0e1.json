@@ -1,0 +1,51 @@
+{
+  "run_id": "2026-07-23-S1-0e1",
+  "project": "ai-resources",
+  "date": "2026-07-23",
+  "marker": "S1-0e1",
+  "model": "claude-opus-4-8[1m]",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md#2026-07-23-S1-0e1",
+  "mission": null,
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    ".claude/commands/prime.md",
+    ".claude/commands/session-start.md",
+    ".claude/commands/session-plan.md",
+    ".claude/commands/wrap-session.md",
+    "docs/session-marker.md",
+    "logs/decisions.md",
+    "audits/risk-checks/2026-07-23-commit-2-of-2-new-project-direct-route-lean-session-harness.md",
+    "audits/risk-checks/2026-07-23-commit-2-revised-direct-route-lean-harness-re-gate.md",
+    "logs/session-notes.md",
+    "logs/improvement-log.md",
+    "logs/session-plan-2026-07-23-S1-0e1.md",
+    "audits/working/2026-07-23-commit2-revised-design.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-23-s1-0e1-land-new-project-direct-route-lean-harness"
+  ],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": null,
+  "incidents_refs": []
+}
