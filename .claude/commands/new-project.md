@@ -67,9 +67,17 @@ Planning artifacts (context pack, project plan, optional technical spec) are pro
    # Context pack — required
    [ -f "$SRC/context-pack.md" ] || { echo "ERROR: $SRC/context-pack.md not found. Cannot proceed."; exit 1; }
 
-   # Latest project-plan — required. sort -V handles v10+ correctly (ls -v is GNU-only, not portable to macOS BSD).
+   # Execution route — read from the brief. ONLY the exact literal `direct` activates the
+   # lightweight path; `engineered`, absent, or malformed all fall through to the engineered
+   # (full) path (fail-safe). See ai-resources/docs/control-pack-schema.md §7(d). Resolved in step 4b.
+   ROUTE=$(grep -m1 -oE '^\*\*Execution route:\*\* *(direct|engineered)\b' "$SRC/context-pack.md" 2>/dev/null | grep -oE '(direct|engineered)$')
+
+   # Latest project-plan — REQUIRED for the engineered path; OPTIONAL for direct (a brief suffices).
+   # sort -V handles v10+ correctly (ls -v is GNU-only, not portable to macOS BSD).
    LATEST_PLAN=$(ls "$SRC"/project-plan-v*.md 2>/dev/null | sort -V | tail -n 1)
-   [ -n "$LATEST_PLAN" ] || { echo "ERROR: No project-plan-v*.md in $SRC. Cannot proceed."; exit 1; }
+   if [ "$ROUTE" != "direct" ]; then
+     [ -n "$LATEST_PLAN" ] || { echo "ERROR: No project-plan-v*.md in $SRC. Cannot proceed (engineered route requires an approved plan)."; exit 1; }
+   fi
 
    # Latest tech-spec — optional
    LATEST_SPEC=$(ls "$SRC"/tech-spec-v*.md 2>/dev/null | sort -V | tail -n 1)
@@ -96,6 +104,12 @@ Planning artifacts (context pack, project plan, optional technical spec) are pro
    ```
 
    QC verdict checks are advisory-only: if a verdict is missing or non-PASS, emit a warning and continue. Hard-blocking on a missing verdict file (e.g., operator deleted it while iterating) would create false-abort friction; the operator gate-keeps the planning workflow itself.
+
+4b. **Resolve the execution route and branch — do this before any scaffolding.** Using `ROUTE` from step 4:
+   - If `ROUTE` is empty (the brief carried no valid `**Execution route:**` line) **and** `projects/{project-name}/CLAUDE.md` already exists with an exact `**Execution route:** direct` line, set `ROUTE=direct` (a re-run / continuation of a direct project).
+   - If `ROUTE` is still empty, **ask the operator once:** *"Execution route for {project-name}? `direct` = lightweight (deliverables + minimal support; no pipeline, no architecture/spec/testing stages) or `engineered` = full pipeline. Choose `engineered` only if the project needs durable engineering machinery or material technical risk — shared state, integrations, deployment, coordinated testing, or comparable lifecycle complexity; executable code alone is not a reason."* Default on no clear answer: `engineered` (fail-safe).
+   - **If `ROUTE == direct` → go to the `## Direct Route` section and do NOT execute steps 5–12 or any staged pipeline.** That section is self-contained (it asks for the GitHub URL, scaffolds, enriches leanly, and inits git).
+   - **Otherwise (`engineered`, the fail-safe default) → continue with step 5 below** — the full pipeline, unchanged.
 
 5. **Ask for the GitHub repository link.** The user should provide the URL of the project's GitHub repo (e.g., `https://github.com/axcion-ai/project-name`).
 
@@ -195,6 +209,76 @@ Planning artifacts (context pack, project plan, optional technical spec) are pro
 **Agent name mapping:** Stages 3a–5 use the `pipeline-stage-{N}` naming convention. Stage 6 (Session Guide) uses the `session-guide-generator` agent instead.
 
 **Legacy pipeline-state migration.** If a pipeline-state.md still lists Stage 2 or 2.5 as `in_progress` or `pending` (from before this change), stop and tell the operator they have two options: (a) manually edit the state file to remove those rows and set Stage 3a to `in_progress` (confirming the project's plan and tech spec exist in `projects/project-planning/output/{name}/`), or (b) abandon the in-progress pipeline and re-run `/new-project` from scratch. Do not auto-migrate.
+
+## Direct Route (execution_route == `direct`)
+
+Reached from First Run step 4b when the resolved route is exactly `direct`. Produces a **lightweight** project — the requested deliverables plus only explicitly-justified support — and **nothing else**. There is no pipeline, no stages, and no architecture/spec/testing machinery. Everything here is deliberately smaller than the engineered path; do not add machinery the operator did not request.
+
+**Do NOT create for a direct project:** a `pipeline/` directory or anything under it (`context-pack.md` / `project-plan.md` copies, `sources.md`, `pipeline-state.md`, `decisions.md`, `repo-snapshot.md`, `architecture.md`, `implementation-spec.md`, `implementation-log.md`, `test-results.md`). **Do NOT** spawn Stages 3a–5 or the Architecture Gate. **Do NOT** emit the `/repo-dd` + `/analyze-workflow` baseline reminder. **Do NOT** pre-create `logs/decisions.md`. **Do NOT** install `shared-manifest.json` or wire the auto-sync SessionStart hook.
+
+All steps are idempotent — re-running `/new-project` on an existing direct project makes no destructive change and adds no machinery.
+
+1. **Ask for the GitHub repository link** (as engineered step 5) — used for git setup in step 7.
+
+2. **Create the project directory** — `projects/{project-name}/` only. **No `pipeline/` subdirectory.** The brief is NOT copied in; it stays in the planning workspace (git and that workspace already preserve it).
+
+3. **Lean `CLAUDE.md`.** Follow enrichment step 4's mechanics with two differences:
+   - Render `header.md` **minus its `*Maintenance pointer:*` paragraph** — the `/reconcile` pointer is engineered-only. Render only the title + description (with `{{NAME}}` / `{{PROJECT_DESCRIPTION}}` substituted); do not add a second template.
+   - Immediately under the header, write the line: `**Execution route:** direct`
+   Then append the four canonical sections (Input File Handling / Commit Rules / Compaction / Session Boundaries) exactly as engineered step 4. **Do not** add a Model Selection section (`/prime`'s model check renders a plain line when it is absent) and **do not** add the `/reconcile` pointer.
+
+4. **`settings.json` — permissions + the permission-sanity hook ONLY (no auto-sync hook).** Merge the canonical permissions block and the **permission-sanity** SessionStart hook from the template, but **omit the auto-sync hook** — direct projects are not wired for full-library sync. Locate the template by the same walk-up idiom as enrichment step 2.
+
+   ```bash
+   command -v jq >/dev/null || { echo "ERROR: jq required for settings merge"; exit 1; }
+   SETTINGS="projects/{project-name}/.claude/settings.json"
+   mkdir -p "$(dirname "$SETTINGS")"
+   [ -f "$SETTINGS" ] || echo '{}' > "$SETTINGS"
+
+   d="$(cd projects/{project-name} && pwd)"; AI_RES=""
+   while [ "$d" != "/" ]; do d=$(dirname "$d"); [ -d "$d/ai-resources" ] && AI_RES="$d/ai-resources" && break; done
+   [ -n "$AI_RES" ] || { echo "ERROR: ai-resources not found in any ancestor"; exit 1; }
+   TEMPLATE="$AI_RES/templates/project-settings.json.template"
+   [ -f "$TEMPLATE" ] || { echo "ERROR: canonical settings template missing at $TEMPLATE"; exit 1; }
+
+   CANONICAL_PERMS=$(jq -c '.permissions' "$TEMPLATE")
+   SANITY_HOOK=$(jq -c '.hooks.SessionStart[1].hooks[0]' "$TEMPLATE")   # [1] = permission-sanity; [0] = auto-sync (omitted for direct)
+
+   jq --argjson perms "$CANONICAL_PERMS" --argjson sanity "$SANITY_HOOK" '
+     (if (.permissions.allow // []) | length > 0 then . else .permissions = $perms end)
+     | .hooks = (.hooks // {})
+     | .hooks.SessionStart = (.hooks.SessionStart // [])
+     | (if (.hooks.SessionStart | any(.hooks? // [.] | .[]? | .command == $sanity.command))
+        then . else .hooks.SessionStart += [{"hooks":[$sanity]}] end)
+   ' "$SETTINGS" > "$SETTINGS.tmp" && mv "$SETTINGS.tmp" "$SETTINGS"
+   ```
+
+5. **`settings.local.json`** — write the `additionalDirectories` grant exactly as enrichment step 3 (per-machine, gitignored, absolute path).
+
+6. **Fixed core symlink set (no auto-sync).** Symlink only the minimum core commands directly from ai-resources into the project. Do not install `shared-manifest.json` and do not run `auto-sync-shared.sh`. Specialists remain reachable on demand via the `additionalDirectories` grant; to opt into full sync later, add the auto-sync hook (enrichment step 2) and re-run `/new-project`.
+
+   ```bash
+   # Recompute AI_RES here — each Bash block is a fresh shell, so a value from step 4 does not persist.
+   d="$(cd projects/{project-name} && pwd)"; AI_RES=""
+   while [ "$d" != "/" ]; do d=$(dirname "$d"); [ -d "$d/ai-resources" ] && AI_RES="$d/ai-resources" && break; done
+   [ -n "$AI_RES" ] || { echo "ERROR: ai-resources not found in any ancestor — cannot symlink core commands"; exit 1; }
+
+   CORE="prime wrap-session session-start session-plan open-items qc-pass resolve clarify scope recommend"
+   mkdir -p "projects/{project-name}/.claude/commands"
+   for c in $CORE; do
+     SRCCMD="$AI_RES/.claude/commands/${c}.md"
+     LNK="projects/{project-name}/.claude/commands/${c}.md"
+     [ -f "$SRCCMD" ] || { echo "WARN: core command missing in ai-resources: ${c}.md"; continue; }
+     [ -e "$LNK" ] || ln -s "$SRCCMD" "$LNK"
+   done
+   echo "Core command set symlinked (no auto-sync hook installed — direct project)."
+   ```
+
+7. **Git repository setup** — exactly as engineered step 5b (init the project's own repo, untrack from workspace root, add to root `.gitignore`, initial commit, **no push**), using the GitHub URL from step 1 (direct projects have no `pipeline-state.md` to read it from).
+
+8. **No `logs/decisions.md` yet.** Create `logs/` and `logs/decisions.md` **lazily** — only when the first durable decision is actually recorded (`/wrap-session` and `/prime` both tolerate its absence). Do not pre-create the register.
+
+9. **Report and hand off.** Report: route = direct; project directory created (no `pipeline/`); lean `CLAUDE.md` written with the route line; `settings.json` (permissions + sanity hook, no auto-sync); `settings.local.json` grant; core command set symlinked (N of 10); git initialized, initial commit left unpushed. Skipped by design: pipeline, Stages 3a–5, Architecture Gate, the `/reconcile` pointer, and the `/repo-dd` / `/analyze-workflow` reminder. Then **author the requested deliverables directly** — research, drafting, and review still happen; they produce deliverables, not governance artifacts.
 
 ## Gate Protocol
 
