@@ -542,12 +542,19 @@ Full backlog & inbox: /open-items
       c. After `/session-start` finishes, invoke the `/session-plan` command with `TASK_TEXT` as its arguments (becomes the intent). It writes `logs/session-plan-${TODAY}-${MARKER}.md` (marker-scoped per `docs/session-marker.md`). If THIS session's marker-scoped plan already exists, `/session-plan` Step 0 surfaces a 3-option keep/overwrite/pass2 prompt — that is expected mid-chain; the operator answers it normally.
 
          **Note on the real call path:** `/session-start` Step 4 already chain-invokes `/session-plan`, so in practice the chain reaches it there and this sub-step is satisfied by that hop. Either way the gate token travels with it.
-      d. **Pause.** After `/session-plan` finishes, output:
+
+         **Direct-route branch (Commit 2, 2026-07-23).** For a direct-route project (`DIRECT=1` via the canonical predicate, `docs/session-marker.md` § Direct-route detection), `/session-start` Step 4 **skips** this chain — no `/session-plan` is invoked and **no plan file is written.** This sub-step c is a no-op on the direct route; go straight to step d's direct branch.
+      d. **Pause.** After `/session-plan` finishes (engineered) or after `/session-start` returns (direct), output the review prompt:
+
+         **Engineered route (`DIRECT=0`, plan file written):**
          > Plan ready — review `logs/session-plan-${TODAY}-${MARKER}.md`. Reply `go` to start execution, or run `/qc-pass` on the plan first.
 
-         Wait for the operator. Do NOT begin execution on your own.
+         **Direct route (`DIRECT=1`, no plan file):** there is no plan file to review. Output instead:
+         > Mandate written — review it in `logs/session-notes.md` (this session's `## ${TODAY} — Session ${MARKER}` block). Reply `go` to start execution, or run `/session-plan` first if you want a durable plan.
 
-         As of 2026-07-18 this pause is **also carried mechanically** by the `{gate:post-plan}` token from step b, so it no longer depends on this instruction being recalled at a decision point many turns downstream. If a future edit removes the token, this sentence alone will not hold the gate — that is precisely the failure the token was added to fix.
+         Wait for the operator either way. Do NOT begin execution on your own.
+
+         As of 2026-07-18 this pause is **also carried mechanically** by the `{gate:post-plan}` token from step b (engineered route), so it no longer depends on this instruction being recalled at a decision point many turns downstream. If a future edit removes the token, this sentence alone will not hold the gate — that is precisely the failure the token was added to fix. On the direct route no plan exists to gate, so the pause is this sub-step's own lean go-prompt above.
 
 8b. **Free-text intent.** The operator named the work directly instead of picking a number.
    1. Resolve the operator's stated work → `TASK_TEXT` (the work description, including any inline scope boundary like "just the refactor, not the follow-up PRs").
@@ -575,7 +582,9 @@ Full backlog & inbox: /open-items
       a2. **Mission binding.** Run the Step 8m sub-step (skips silently if no active missions). If it resolves a `MISSION_ID`, prepend `{mission:<id>}` to the `/session-start` args in step b.
       b. Invoke the `/session-start` command with `TASK_TEXT` as its arguments (becomes the mandate), prefixed with `{mission:<id>}` if step a2 bound one. It runs its own mandate-confirmation prompt — that is expected; do not suppress it.
       c. After `/session-start` finishes, invoke the `/session-plan` command with `TASK_TEXT` as its arguments (becomes the intent). It writes `logs/session-plan-${TODAY}-${MARKER}.md` (marker-scoped per `docs/session-marker.md`). If THIS session's marker-scoped plan already exists, `/session-plan` Step 0 surfaces a 3-option keep/overwrite/pass2 prompt — that is expected mid-chain; the operator answers it normally.
-      d. **Begin execution immediately** under full autonomy (per workspace CLAUDE.md Autonomy Rules). No second `go`/`proceed` confirmation required — the operator stating the work directly IS the go signal. This is 8b's structural delta vs 8a, which pauses for explicit `go` after `/session-plan`.
+
+         **Direct-route branch (Commit 2, 2026-07-23).** For a direct-route project (`DIRECT=1`, `docs/session-marker.md` § Direct-route detection), `/session-start` Step 4 **skips** the `/session-plan` chain — no plan file is written. This sub-step c is a no-op on the direct route; go straight to step d (which begins execution regardless).
+      d. **Begin execution immediately** under full autonomy (per workspace CLAUDE.md Autonomy Rules). No second `go`/`proceed` confirmation required — the operator stating the work directly IS the go signal. This is 8b's structural delta vs 8a, which pauses for explicit `go` after `/session-plan`. (On the direct route the only difference is that no plan artifact exists — execution still begins immediately.)
 
          **8b passes no `{gate:post-plan}` token** (contrast 8a.3.b). That absence is what preserves this branch's auto-execute behaviour: `/session-plan` Step 8 treats an unset gate as the default and proceeds. Adding the token here would convert 8b into 8a and introduce a pause the operator has not asked for.
 
@@ -629,6 +638,8 @@ Full backlog & inbox: /open-items
       ```
 
    3.5. **Mission binding (auto-bind only).** Run the Step 8m sub-step in **auto-bind-only mode**: if any picked item is `[mission:<id>]`-sourced, set `MISSION_ID` to that mission (first such, if several). **Do NOT emit the interactive binding prompt in auto mode** — auto mode's contract is a single approval gate with no per-stage prompts. If no picked item is mission-sourced, `MISSION_ID` stays unset. The bound mission (if any) is disclosed in the Step 8c.6 approval gate and written as the `- Mission:` bullet in Step 8c.7.
+
+   3.6. **Compute `DIRECT` (Commit 2, 2026-07-23).** Evaluate the canonical route predicate once here (`docs/session-marker.md` § Direct-route detection — read the project-root `CLAUDE.md` for an exact `**Execution route:** direct` line; `DIRECT=0` for engineered / absent / malformed / wrong-case). Carry `DIRECT` forward to the Step 8c.6 gate disclosure line and the Step 8c.8 plan-write skip. If unevaluated for any reason, both consumers must treat it as `DIRECT=0` (fail-safe: the plan file is written — today's behaviour).
 
    4. **Derive mandate fields** inline (matches `/session-start` Step 2 logic without the confirmation prompt). Apply to each picked item, then compose:
       - `work_scope` — one sentence naming the work and its concrete deliverable. For `SINGLE_ITEM`, derived from the picked item. For multi-item, compose as `Complete picked menu items: (1) {item-N work + deliverable}; (2) {item-M work + deliverable}; ...` listing every picked item.
@@ -717,6 +728,7 @@ Full backlog & inbox: /open-items
       → Intent: {INTENT}
       → Model: {RECOMMENDED_MODEL} — {match | → /model {shortname}}
       → Autonomy: {AUTONOMY_POSTURE}
+      {→ Route: direct — no committed plan file will be written (Step 8c.8 skipped); mandate + run-manifest still written. — only if DIRECT=1}
 
       {if STRUCTURAL_RISK is true:}
       **Risk-check**
@@ -786,7 +798,9 @@ Full backlog & inbox: /open-items
 
       `start` is idempotent. If the walk-up finds no script, skip silently — an additive durable-state substrate must never block the auto-mode chain. **Not a gate** (`principles.md § OP-5`): nothing reads the manifest yet.
 
-   8. **Write plan.** Write to `logs/session-plan-${TODAY}-${MARKER}.md` (marker + date resolved in step 3; canonical contract `docs/session-marker.md`) using `/session-plan` Step 7 schema (`## Intent`, `## Model`, `## Source Material`, `## Findings / Items to Address`, `## Execution Sequence`, `## Scope Alternatives`, `## Autonomy Posture`, `## Risk`). Apply `/session-plan` Step 7 self-check (length floor ≥25 substantive lines, concrete Findings, concrete Execution Sequence, realistic Scope Alternatives).
+   8. **Write plan.** **Direct-route skip (Commit 2, 2026-07-23):** if `DIRECT=1` (canonical predicate, `docs/session-marker.md` § Direct-route detection), **skip this step entirely** — a direct-route project gets no committed `logs/session-plan-*.md`. The Step 8c.6 approval gate already disclosed the direct route; note "direct route — no plan file" in the gate block. The mandate (8c.7) and run-manifest (8c.7.5) are still written. Then proceed to step 9. For `DIRECT=0` (engineered), write the plan as below.
+
+      Write to `logs/session-plan-${TODAY}-${MARKER}.md` (marker + date resolved in step 3; canonical contract `docs/session-marker.md`) using `/session-plan` Step 7 schema (`## Intent`, `## Model`, `## Source Material`, `## Findings / Items to Address`, `## Execution Sequence`, `## Scope Alternatives`, `## Autonomy Posture`, `## Risk`). Apply `/session-plan` Step 7 self-check (length floor ≥25 substantive lines, concrete Findings, concrete Execution Sequence, realistic Scope Alternatives).
 
       For multi-item auto, structure the plan so each picked item is visible:
       - `## Source Material` lists every picked item's source path (one bullet per item).

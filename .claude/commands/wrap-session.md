@@ -297,6 +297,8 @@ If a loud abort does fire, surface it and **continue the wrap** — fix the mani
 
 **The countable set.** A "finding" is: (a) each bullet of the `### Session Assessment` block, if Step 6.5 ran; (b) each friction event surfaced this session; (c) anything you flagged in chat as a defect, gap, or "we should fix X" — **including findings about your own work.** If you noticed it and it named a real problem, it is in the set.
 
+**Direct-route early exit (Commit 2, 2026-07-23).** If `DIRECT=1` (canonical predicate, `docs/session-marker.md` § Direct-route detection) **AND** the countable set is empty (`N=0`), skip the disposition ceremony below — emit one line, `Findings: 0 — direct route, no review produced findings.`, and continue the wrap. When `N≥1`, disposition runs in full even on the direct route: a real finding is never dropped for being in a lean session. On the engineered route (`DIRECT=0`), disposition always runs as below regardless of `N`.
+
 **For EVERY finding, choose exactly one — and write the choice down:**
 
 - **QUEUE** → append an entry to `logs/improvement-log.md` **with a `- **Severity:**` line** (`high` / `medium-high` / `medium` / `low`). Format per `session-feedback-collector.md` § Write formats. **Only `high` and `medium-high` reach the `/prime` task menu**; `medium` / `low` are recorded but surface only via `/open-items`. That is legitimate triage — but *choose* it, do not back into it.

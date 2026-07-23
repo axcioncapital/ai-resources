@@ -325,6 +325,8 @@ Where `files_in_scope_written` is:
 - `(inferred)` — if `files_inferred = true` (operator did not state or correct this field)
 - the operator's stated/corrected value — if `files_inferred = false`
 
+**Direct-route inferred-path resolution (Commit 2, 2026-07-23).** Compute `DIRECT` via the canonical predicate (`docs/session-marker.md` § Direct-route detection — read the project-root `CLAUDE.md` for an exact `**Execution route:** direct` line; `DIRECT=0` for anything else). If `DIRECT=1` **and** `files_inferred = true`, write the **resolved inferred paths** (the concrete list you already computed for the Step 2 echo) as `files_in_scope_written`, NOT the literal `(inferred)`. Reason: a direct-route session writes no `logs/session-plan-*.md`, so `concurrent-session-check.md` (Step 3) has no plan-file `## Source Material` to supplement a bare `(inferred)` footprint and would classify the session UNKNOWN-SCOPE. Writing the resolved paths ships a concrete footprint by default. If no paths are derivable at all, `(inferred)` stands and UNKNOWN-SCOPE is the correct fail-safe outcome. For `DIRECT=0` (the engineered route), behaviour is unchanged — the `(inferred)` marker is written as before.
+
 Resolve this session's marker (see `docs/session-marker.md` § Marker resolution — per-session-id oracle first, loud fallback to the shared file). If `MARKER` is empty, hard-fail per the uniform writer contract: `[/session-start Step 3] HARD-FAIL: session marker unresolved (logs/.session-marker-${CLAUDE_CODE_SESSION_ID} and shared logs/.session-marker both absent or stale). Run /prime to populate the marker for this session, then retry.`
 
 Using the `logs/session-notes.md` content already read in Step 0 (re-read the last 10 lines if Step 2 took >30s — the marker-scoped header still requires a fresh read since Step 0's snapshot may be stale), locate this session's marker-bearing header.
@@ -372,7 +374,18 @@ done
 
 **Do not make this a gate.** Nothing reads the manifest yet (R4 / M-D2 are unbuilt; PJ was dropped 2026-07-09), so a failure here is advisory by construction — see the ADVISORY RULE in `run-manifest.sh`'s header and `principles.md § OP-5`.
 
-### Step 4 — Confirm and chain to `/session-plan`
+### Step 4 — Confirm and chain to `/session-plan` (engineered route) / lean handoff (direct route)
+
+**Direct-route branch (Commit 2, 2026-07-23) — evaluate FIRST.** Compute `DIRECT` via the canonical predicate (`docs/session-marker.md` § Direct-route detection — read the project-root `CLAUDE.md` for an exact `**Execution route:** direct` line; `DIRECT=0` for engineered / absent / malformed / wrong-case). If `DIRECT=1`, do **not** chain-invoke `/session-plan` and do **not** write a plan file — a direct-route project gets no mandatory plan. Emit exactly:
+
+```
+Mandate written → logs/session-notes.md
+Direct route — no auto-plan. `/session-plan` is opt-in (run it explicitly if this session needs a durable plan).
+```
+
+Then return control to the invoking `/prime` branch **without chaining**: `/prime` 8a.3.d (numbered-menu) shows its own lean go-prompt; `/prime` 8b.3.d (free-text) begins execution immediately. If `/session-start` was invoked directly (not via `/prime`), simply stop here — the operator drives from the mandate. **Ignore any `{gate:post-plan}` token on the direct route** — there is no plan to gate; the mandate-review pause (if any) belongs to `/prime` 8a.3.d. Everything below Step 4 applies to the **engineered route (`DIRECT=0`) only.**
+
+---
 
 Output exactly:
 

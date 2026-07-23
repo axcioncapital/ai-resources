@@ -294,6 +294,46 @@ Changing the `- Mission:` label or the mission-file location requires updating `
 
 ---
 
+## Direct-route harness exception (Commit 2, 2026-07-23)
+
+`/new-project`'s **direct** execution route (`docs/control-pack-schema.md` §7(d)) gives bounded document projects a lean session harness. A session in such a project runs a **reduced ceremony** while keeping the full marker/mandate/run-manifest spine. This section is the canonical registry of the exception and of the detection predicate the harness commands share.
+
+### Direct-route detection predicate (canonical — all harness commands use this shape)
+
+A session is direct **only** when the project-root `CLAUDE.md` carries the exact literal line `**Execution route:** direct`:
+
+```bash
+PROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
+ROUTE_LINE=$(grep -m1 -oE '^\*\*Execution route:\*\* *direct[[:space:]]*$' "$PROOT/CLAUDE.md" 2>/dev/null)
+[ -n "$ROUTE_LINE" ] && DIRECT=1 || DIRECT=0
+```
+
+**Fail-safe by construction:** the grep is **case-sensitive** and **end-anchored**, so `engineered`, an absent line, a malformed value, wrong-case `Direct`, or `direct-x` all yield `DIRECT=0` = today's full harness. `**Execution route:** direct` is written into a direct project's `CLAUDE.md` by `/new-project` (`new-project.md:227`, Commit 1). Mirrors the creation-time predicate at `new-project.md:73`.
+
+### What `DIRECT=1` changes (and what it deliberately does NOT)
+
+**Removed (ceremony only):**
+- `session-start.md` Step 4 does **not** auto-chain `/session-plan`; it emits a lean handoff instead.
+- No committed `logs/session-plan-*.md` is written (neither via the chain nor `prime.md` 8c.8).
+- `prime.md` 8a.3.d's post-mandate prompt does **not** reference a plan file (that file is never created for direct); it points at the mandate in `session-notes.md`.
+- `wrap-session.md` Step 12e skips the findings-disposition ceremony **only** when the finding set is empty (`N=0`); when findings exist it runs in full.
+
+**Preserved (the safety / crash-recovery / collision spine — unchanged from the engineered route):**
+- Per-session marker + marker-bearing `session-notes.md` header (`prime.md` Step 8k).
+- The **full mandate block**, including `- Files in scope:` and `- Required outputs:` — this is what keeps a direct session visible to `concurrent-session-check.md` (which reads `- Files in scope:`).
+- Run-manifest start-stub (`session-start.md` Step 3.5 / `prime.md` 8c.7.5) and close (`wrap-session.md` Step 12d).
+- Marker teardown at wrap; `.prime-mtime`; the staging guard.
+
+`/session-plan` remains available on **explicit** operator invocation for a direct project and writes normally then — it is opt-in, not removed.
+
+### Known, bounded limitation (recorded, not silent)
+
+`concurrent-session-check.md:84-97` classifies a session whose `- Files in scope:` reads the literal `(inferred)` **with no concrete paths and no plan file** as UNKNOWN-SCOPE (it refuses to certify SAFE — a **fail-safe** loud refusal, not a silent pass). On the engineered route the auto-written plan file's `## Source Material` supplements the footprint; the direct route has no plan file. **Mitigation:** for `DIRECT=1`, `session-start.md` Step 3 writes the **resolved** inferred paths (which it already computes for the Step 2 echo) rather than the literal `(inferred)`, so a direct session ships a concrete footprint by default and does not land in UNKNOWN-SCOPE for want of a plan file. Residual: if a direct session genuinely has no derivable scope, it is UNKNOWN-SCOPE — the correct fail-safe outcome.
+
+**Writers of the predicate:** `prime.md` (8a/8b/8c), `session-start.md` (Step 4 + Step 3 inferred-path resolution), `wrap-session.md` (Step 12e). `session-plan.md` carries only a doc note (opt-in for direct; no functional branch). Changing the route literal or this exception's surface requires updating all four commands and this section. Gate history: `audits/risk-checks/2026-07-23-commit-2-of-2-*.md` (superseded) + `…-re-gate.md`; OP-11 landing decision: `logs/decisions.md` 2026-07-23 (S1-0e1).
+
+---
+
 ## Why this protocol exists
 
 See `ai-resources/logs/improvement-log.md` entry "2026-05-28 — Concurrent sessions cause TOCTOU races on shared log files" (lines 73-138). Three commands previously read shared log files, made decisions based on the read, and later wrote back — between read and write, an arbitrary number of conversation turns elapsed during which a concurrent session could write to the same file invisible to the first session's point-in-time mtime guard. Classic TOCTOU race. The structural fix (this protocol) eliminates the shared mutable file: every session writes to its own marker-scoped file; downstream readers either resolve the marker and target only the matching file (writers + targeted consumers) or scan the glob for read-only aggregation.

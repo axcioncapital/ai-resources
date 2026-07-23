@@ -6,6 +6,8 @@ argument-hint: "[session intent — or leave blank to use next steps from last s
 
 Session orchestrator. Run after `/prime` to plan HOW the session will run before execution starts. Produces a written plan at `logs/session-plan-${YYYY-MM-DD}-${MARKER}.md` (date + marker-scoped per `docs/session-marker.md`; overwrite each same-session re-invocation). Not to be confused with the research-workflow's per-section `session-plan.md` under `workflows/research-workflow/`.
 
+> **Direct-route projects (Commit 2, 2026-07-23): `/session-plan` is opt-in, not auto-chained.** For a project whose `CLAUDE.md` carries `**Execution route:** direct` (`docs/session-marker.md` § Direct-route detection), `/prime` and `/session-start` do **not** invoke `/session-plan` automatically — a bounded document session gets no mandatory plan. This command is unchanged when the operator runs it **explicitly**: an explicitly-requested plan is a wanted plan, so it writes the committed plan file normally. There is no functional branch here; the "skip" lives entirely in the callers (`session-start.md` Step 4). The engineered route is unaffected — the auto-chain runs as before.
+
 ---
 
 ## Step 0 — Confirm `/prime` ran this session, resolve marker, check for same-session re-invocation
