@@ -93,3 +93,15 @@
 **Independent QC still applies.** This decision authorises the anticipatory build; it does not waive the pre-commit `/qc-pass` (workspace QC-independence rule), which runs before the commit lands.
 
 **Decided by:** Patrik (operator), 2026-07-23, choosing "Proceed via OP-11 + land" over "Stop — hold at 2nd RECONSIDER" after the re-gate. Executed by Claude under the S1-0e1 mandate. Gate reports: `audits/risk-checks/2026-07-23-commit-2-of-2-new-project-direct-route-lean-session-harness.md` (superseded, RECONSIDER) and `audits/risk-checks/2026-07-23-commit-2-revised-direct-route-lean-harness-re-gate.md` (revised, RECONSIDER on OP-9). **Canonical committed spec of the shipped behaviour: `docs/session-marker.md` § Direct-route harness exception** (the working design note `audits/working/2026-07-23-commit2-revised-design.md` is gitignored local scratch, not part of the tree).
+
+## 2026-07-24 — Triage the 30 open HIGH improvement-log entries instead of building or shrinking /prime's scan
+
+**Context.** `/prime`'s menu item 1 was mission thread 15: a twice-`/risk-check`-RECONSIDER'd redesign of the Step 3 orientation scan (399 lines / 81,008 chars per session). The operator asked to build it while explicitly skipping the safety check. Before setting the session up, measuring the current state found 3 of the redesign's 4 named sub-tasks already fixed live, and that 40% of the scan's cost came from entries already marked RESOLVED/DECLINED/FIXED — a fact the twice-rejected design never used, because closing entries doesn't touch `prime.md` at all.
+
+**Decision.** Triage the 30 open HIGH-severity backlog entries by verifying each against the live repo, over two other options: (i) archive closed entries only, or (ii) archive plus a small `prime.md` emit-shape edit to approach the 40-line budget.
+
+**Rationale.** Triage does not touch `.claude/commands/prime.md` — the surface both risk reviews rejected — so the operator's "skip the safety check" instruction cost nothing here; `/risk-check` would not have fired on this path regardless. It also directly tests the load-bearing but unverified premise (many open entries no longer earn HIGH) rather than assuming it.
+
+**Alternatives considered.** (i) Archive-only — smaller win (~40%), no `prime.md` risk, would not have surfaced the two false-close near-misses this session caught. (ii) Archive + emit-shape edit — closer to budget, but edits `prime.md`, the exact surface twice rejected; shipping it under an explicit "skip the check" instruction would have been a real, uncontested override of two independent RECONSIDER verdicts, not a moot one.
+
+**Decided by:** Patrik (operator), 2026-07-24, via `AskUserQuestion` selecting "Triage the 30 open items instead" over the archive-only and archive-plus-edit options. Executed by Claude under the S1-7fe mandate.

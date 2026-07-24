@@ -16,8 +16,16 @@
     "subagents": [],
     "tools_notable": []
   },
-  "files_changed": [],
-  "decisions_refs": [],
+  "files_changed": [
+    "logs/improvement-log.md",
+    "logs/improvement-log-archive.md",
+    "logs/session-notes.md",
+    "logs/session-plan-2026-07-24-S1-7fe.md",
+    "logs/decisions.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-24-triage-the-30-open-high-improvement-log-entries"
+  ],
   "validation": [],
   "evaluator_findings": {
     "sidecar_refs": [],
@@ -29,8 +37,8 @@
     "subagents": 0,
     "token_estimate": null
   },
-  "stop_reason": null,
-  "outcome": null,
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
   "failure_class": null,
   "incidents_refs": []
 }

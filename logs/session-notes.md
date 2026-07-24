@@ -486,3 +486,28 @@ None.
 
 
 Triage the 30 open HIGH-severity entries in `logs/improvement-log.md` — close, park, or downgrade what no longer earns HIGH.
+
+## 2026-07-24 — Triage sweep cuts /prime's improvement-log scan ~20%, catches two of its own false closes
+
+### Summary
+Triaged the 30 open HIGH-severity entries in `logs/improvement-log.md` that `/prime`'s Step 3 scan surfaces at every orientation. Verified each against the live repo rather than trusting the entry text; closed 5, downgraded 5 to `medium`, annotated 2 with corrections, left 18 genuinely still open. Caught and reversed two of my own incorrect closes before commit, after a second independent check found each had verified only one clause of a two-part claim. Scan emit fell from 399 to 319 lines (81,008 to 71,710 chars); entry count conserved at 187 across the active log and archive.
+
+### Decisions Made
+- Declined the original menu item (mission thread 15's twice-RECONSIDER'd `/prime` scan redesign) after measuring that 3 of its 4 named sub-tasks were already fixed live; operator chose to triage the backlog instead of building the redesign or editing the scan's emit shape. Logged to `decisions.md`.
+- Discovered by execution, before any disposition was applied: parking (`Review-cycle:` reset) does not shrink the scan — a parked entry is required to stay in the active log and keeps its `Severity:` line. Only archiving or downgrading severity removes an entry from the scan's anchor match. Adjusted the plan's disposition categories accordingly.
+- Reversed 2 of 7 initial closes (`close-worktree-session` stash-pop entry; friction-log header-grammar entry) after a second, differently-targeted check found each verified only one clause of a two-part claim. Both restored to the active log with a note recording exactly what was confirmed and what remains open.
+
+### Risky actions
+None. Two false closes were caught and reversed before commit — nothing incorrect shipped. The AskUserQuestion scope gate and the plan-approval gate both fired as designed.
+
+### Next Steps
+- The largest remaining scan-cost driver (26 of 40 surviving hits are `medium-high`, treated as urgent-tier by the anchor) is out of reach without editing `.claude/commands/prime.md`, which is twice `/risk-check` RECONSIDER'd — a dedicated session would need to re-gate that design, not extend today's triage.
+- `/friday-act` candidate: 13 of 19 project `improvement-log.md` files carry no `Severity` schema, so `/prime`'s urgent scan returns zero there silently (already logged, `:127`).
+- A new finding was queued this session (compound-claim partial-verification failure) — it is a doc note, not a build task; no follow-up session required.
+
+### Open Questions
+None.
+
+### Findings Declined
+- Mission-thread-15 sub-task discrepancy (3 of 4 sub-tasks already fixed live) — already fully captured in the entry's own annotation this session; no separate action needed.
+- A `git status --cached` invalid-flag typo during the prior commit step — cosmetic, no consequence; the following `git commit` ran independently and succeeded.

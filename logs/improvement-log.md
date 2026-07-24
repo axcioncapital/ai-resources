@@ -19,6 +19,19 @@ Resolved entries are archived to `improvement-log-archive.md` via `/resolve-impr
 
 ---
 
+### 2026-07-24 — A multi-clause defect claim was closed on partial verification, twice in one triage session
+
+- **Status:** logged (pending)
+- **Category:** process / verification method — adjacent to the `:157` "instrument is not neutral" family, but a distinct failure shape
+- **Severity:** medium-high — it produced two false CLOSE dispositions inside a session whose explicit purpose was accuracy, and the archive is deny-read: an unnoticed false close would have been effectively permanent.
+
+**What happened (S1-7fe, 2026-07-24, during a 30-entry improvement-log triage).** Two entries were closed after checking only one half of a two-part claim. The `close-worktree-session` stash-pop entry was closed on a `grep -n conflict` match, but the command has zero stash-handling — the guards found were merge-only, a different mechanism than the one the entry named. The friction-log parser entry was closed after confirming the missing heading was restored, without checking the claim's second half (grammar drift) or enumerating the four parsers the entry names. Both were caught and reversed before commit by a second, differently-targeted check — not by the first verification pass, which read as sufficient at the time it ran.
+
+**The generalisable lesson.** When an entry states a compound claim ("X is missing AND Y has drifted"), confirming one clause is not confirming the entry. The natural failure mode is stopping at the first clause that resolves cleanly, because it *feels* like the claim is settled. A verification pass over a multi-clause claim needs an explicit per-clause checklist, not a single instrument run.
+
+- **Proposal.** Do not build a checker for this — it is a discipline about how a verification pass is scoped, matching the sibling `:157` entry's explicit "do not build a checker for this." Add a short subsection to `docs/audit-discipline.md` § Absence-claims: before closing an entry on verification, list its claim's distinct clauses and confirm each independently; a close is valid only when every listed clause has its own confirmed check.
+- **Target files:** `ai-resources/docs/audit-discipline.md` (§ Absence-claims — add the compound-claim subsection, alongside the existing scope-axis note).
+
 ### 2026-07-19 — Mission thread 15 (`/prime` Step 3 emit cost) held at RECONSIDER, and two of its stated sub-tasks are false
 
 - **Status:** logged (pending) — **gate-held. Nothing built**, per the S6-e72 mandate's stop condition. A session picking thread 15 up should start from this block, not from the thread text.
