@@ -7,6 +7,46 @@ set -e
 
 errors=0
 
+# ===== Commit-boundary integrity guards — run on EVERY commit, before the SKILL.md early exit =====
+
+# Guard 1: unresolved conflict markers.
+# Block the UNAMBIGUOUS markers only — <<<<<<<, >>>>>>>, ||||||| . `=======` is DELIBERATELY
+# EXCLUDED: it collides with Markdown setext headings and ==== dividers, and every real git
+# conflict also emits <<<<<<< and >>>>>>>, so those catch it anyway. Anchored at line-start with
+# a trailing space-or-EOL, so a marker mentioned mid-line or inside backticks is immune.
+conflict_markers=$(git diff --cached -U0 | grep -E '^\+(<{7}|>{7}|\|{7})( |$)' || true)
+if [ -n "$conflict_markers" ]; then
+    echo "BLOCKED: staged content contains unresolved conflict markers:" >&2
+    git diff --cached --name-only -G'^(<{7}|>{7}|\|{7})( |$)' >&2
+    echo "  Resolve the conflict, or use 'git commit --no-verify' if the marker is intentional." >&2
+    exit 1
+fi
+
+# Guard 2: append-order for newest-last logs (prevents a prepended entry shipping in a
+# mid-session commit — the recorded failure, c3d5fe7). Delegates to check-append-order.sh,
+# resolved from the repo root so it works from both the tracked and the installed hook copy.
+ao_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+ao_script="${ao_root}/logs/scripts/check-append-order.sh"
+if [ -n "$ao_root" ] && [ -x "$ao_script" ]; then
+    ao_fail=0
+    while IFS='|' read -r ao_path ao_re; do
+        [ -n "$ao_path" ] || continue
+        if git diff --cached --name-only --diff-filter=ACM | grep -Fxq "$ao_path"; then
+            bash "$ao_script" "$ao_path" "$ao_re" || ao_fail=1
+        fi
+    done <<'AO_LOGS'
+logs/session-notes.md|^## [0-9]{4}-[0-9]{2}-[0-9]{2}
+logs/decisions.md|^## [0-9]{4}-[0-9]{2}-[0-9]{2}
+logs/usage-log.md|^### [0-9]{4}-[0-9]{2}-[0-9]{2}
+AO_LOGS
+    if [ "$ao_fail" -ne 0 ]; then
+        echo "  Append-order check failed. Fix the ordering, or 'git commit --no-verify' to override." >&2
+        exit 1
+    fi
+fi
+
+# ===== end integrity guards =====
+
 echo "Running skill validation..."
 
 # Find all SKILL.md files staged for commit

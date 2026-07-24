@@ -117,6 +117,85 @@ grep -qE '^repo_root=.*\|\|[[:space:]]*true' "$HOOK" \
   || fail "ARM C: $HOOK resolves repo_root WITHOUT '|| true'. Under set -e a failing git rev-parse (bare repo, GIT_DIR without worktree) will abort the hook and BLOCK EVERY COMMIT."
 echo ">>> ARM C pass: hook's repo_root assignment is guarded."
 
+# ---------------------------------------------------------------------------
 echo ""
-echo "ALL ARMS PASS (A: bug detectable · B: fix works · C: fail-safe intact)"
+echo "########## ARM D — CONFLICT MARKERS: block real markers, allow look-alikes ##########"
+MK="$SCRATCH/markers"
+mkdir -p "$MK"
+( cd "$MK" && git init -q . && git config user.email t@t.t && git config user.name t )
+cp "$HOOK" "$MK/.git/hooks/pre-commit"; chmod +x "$MK/.git/hooks/pre-commit"
+cd "$MK" || exit 1
+# D1: a real conflict marker at line-start -> hook exit 1.
+printf 'ok line\n<<<<<<< HEAD\nmine\n=======\ntheirs\n>>>>>>> branch\n' > file.txt
+git add file.txt
+bash .git/hooks/pre-commit >/dev/null 2>&1 && fail "ARM D1: real conflict markers were NOT blocked."
+echo ">>> ARM D1 pass: real conflict marker -> exit 1."
+git rm -q --cached file.txt >/dev/null 2>&1; rm -f file.txt
+# D2: a clean staged file -> hook exit 0.
+printf 'clean content\nno markers here\n' > clean.txt
+git add clean.txt
+bash .git/hooks/pre-commit >/dev/null 2>&1 || fail "ARM D2: a clean staged file was WRONGLY blocked."
+echo ">>> ARM D2 pass: clean file -> exit 0."
+git rm -q --cached clean.txt >/dev/null 2>&1; rm -f clean.txt
+# D3: setext heading ('=======' at line start) + a mid-line backticked marker -> exit 0.
+# The settled policy excludes '=======' and anchors on line-start, so neither is a false positive.
+printf 'Title\n=======\n\nSee the `<<<<<<<` marker syntax mid-line.\n' > doc.md
+git add doc.md
+bash .git/hooks/pre-commit >/dev/null 2>&1 || fail "ARM D3: setext heading / mid-line marker mention was WRONGLY blocked."
+echo ">>> ARM D3 pass: '=======' setext + mid-line mention -> exit 0."
+cd "$SCRATCH" || exit 1
+
+# ---------------------------------------------------------------------------
+echo ""
+echo "########## ARM E — APPEND-ORDER INTEGRATION: hook wires check-append-order.sh ##########"
+AO="$SCRATCH/appendorder"
+mkdir -p "$AO/logs/scripts"
+( cd "$AO" && git init -q . && git config user.email t@t.t && git config user.name t )
+cp "$HOOK" "$AO/.git/hooks/pre-commit"; chmod +x "$AO/.git/hooks/pre-commit"
+cp "$AIR/logs/scripts/check-append-order.sh" "$AO/logs/scripts/"; chmod +x "$AO/logs/scripts/check-append-order.sh"
+cd "$AO" || exit 1
+cat > logs/decisions.md <<'EOF'
+# Decisions
+
+## 2026-07-10 — Old
+body
+
+## 2026-07-20 — Newer
+body
+EOF
+git add logs/decisions.md; git commit -q -m base --no-verify
+# E1: prepend a newest entry -> hook blocks (via check-append-order.sh).
+python3 - <<'PY'
+p='logs/decisions.md'; s=open(p).read()
+open(p,'w').write(s.replace("# Decisions\n\n","# Decisions\n\n## 2026-07-25 — Prepended\nbody\n\n",1))
+PY
+git add logs/decisions.md
+bash .git/hooks/pre-commit >/dev/null 2>&1 && fail "ARM E1: hook did not block a prepended decisions.md entry."
+echo ">>> ARM E1 pass: hook blocks a prepend through check-append-order.sh."
+git checkout -q HEAD -- logs/decisions.md
+# E2: clean append -> hook allows.
+printf '\n## 2026-07-25 — Appended\nbody\n' >> logs/decisions.md
+git add logs/decisions.md
+bash .git/hooks/pre-commit >/dev/null 2>&1 || fail "ARM E2: hook WRONGLY blocked a clean append."
+echo ">>> ARM E2 pass: hook allows a clean append."
+git checkout -q HEAD -- logs/decisions.md
+cd "$SCRATCH" || exit 1
+
+# ---------------------------------------------------------------------------
+echo ""
+echo "########## ARM F — END-TO-END: a real 'git commit' of a prepend is refused ##########"
+cd "$AO" || exit 1
+git config core.hooksPath "$AO/.git/hooks"
+python3 - <<'PY'
+p='logs/decisions.md'; s=open(p).read()
+open(p,'w').write(s.replace("# Decisions\n\n","# Decisions\n\n## 2026-07-25 — Prepended E2E\nbody\n\n",1))
+PY
+git add logs/decisions.md
+git commit -q -m "should be blocked" 2>/dev/null && fail "ARM F: a real 'git commit' of a prepend SUCCEEDED (must be blocked)."
+echo ">>> ARM F pass: end-to-end, 'git commit' is refused by the installed hook."
+git checkout -q HEAD -- logs/decisions.md
+cd "$SCRATCH" || exit 1
+
+echo ""
+echo "ALL ARMS PASS (A: path-bug detectable · B: size fix works · C: fail-safe intact · D: markers · E: append-order wired · F: end-to-end commit blocked)"
 exit 0
