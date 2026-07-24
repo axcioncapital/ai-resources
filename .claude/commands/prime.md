@@ -264,8 +264,12 @@ if os.path.exists(p):
    - **`friction-log.md` has no severity field** — its severity words are free text inside prose bullets, and its resolution stamps (`— **Resolved:**`, `[FADING-GATE] verified`) sit on the *same* line as the finding, which is why the same-line `grep -v` works. Treat its hits as **candidates to judge, not findings**: incidental matches are expected (a shell variable named `HIGH`, a quoted phrase), and they are cheap to discard in-context because only the matching lines are returned.
 
    Then apply the filter to the returned lines only:
-   - Include an item only if it carries a HIGH-severity marker (`HIGH`, `urgent`, `critical`, or `do-now` attached to a HIGH item).
-   - Exclude anything marked `LOW` or `MED`, and exclude entries whose status is `resolved`, `applied`, `verified`, or operator-`DECLINED`.
+   - Include an item if it carries `high`, `medium-high`, `critical`, `urgent`, or `do-now`. **`medium-high` IS included — it is the deliberate second tier of menu-reach, not a borderline case.**
+   - Exclude anything marked `low` or `medium`, and exclude entries whose status is `resolved`, `applied`, `verified`, or operator-`DECLINED`.
+
+     **`medium-high` is load-bearing here and this wording was stale until 2026-07-24.** The rule previously read *"include only if it carries a HIGH-severity marker (`HIGH`, `urgent`, `critical`, or `do-now`)"* and *"exclude anything marked `LOW` or `MED`"* — naming `medium-high` in **neither** clause. That silence read as an anchor-vs-filter contradiction and nearly cost the tier its menu-reach: a 2026-07-24 change proposed deleting `medium-high` from the anchor above (a ~70% emit reduction), on the premise that the filter already discarded it. **It does not, and three other files say so explicitly** — `wrap-session.md` Step 12e (*"Only `high` and `medium-high` reach the `/prime` task menu"*), `.claude/agents/session-feedback-collector.md:138` (*"`high` / `medium-high` → reaches the `/prime` task menu. Use for anything that should be worked on."*), and `logs/improvement-log.md:13`, the log's own schema. The anchor was right; this prose was wrong. `/risk-check` returned RECONSIDER on the deletion (report: `audits/risk-checks/2026-07-24-narrow-prime-step3-severity-anchor-medium-high.md`).
+
+     **So: narrowing this tier is a POLICY change to what earns a place on the task menu, not a cost optimisation, and it may not be made here alone.** Changing it requires updating the writer-side guidance in `wrap-session.md` Step 12e and `session-feedback-collector.md` in the same commit, plus a `logs/decisions.md` record. A large Step 3 emit is a signal that too many `medium-high` items are genuinely open — the remedy is backlog triage, not a quieter scan.
    - If either file does not exist, its scan returns nothing — skip silently.
 
    Each surviving item becomes an **urgent** menu candidate for step 5.
