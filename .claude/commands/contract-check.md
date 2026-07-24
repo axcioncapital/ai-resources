@@ -12,6 +12,7 @@ Check whether an artifact still matches what was originally agreed at the start 
 - A long-running session has produced cumulative local fixes and the operator wants to verify the result still matches the original brief.
 - An artifact built across multiple sessions reaches a checkpoint.
 - The operator suspects drift but `/drift-check` returns ALIGNED (because session trajectory looks fine, but the artifact itself has wandered).
+- A `/risk-check` (or other gate) caused the **deliverable itself** to change — a redesign, a dropped component, an exit condition rendered unsatisfiable. **Key on the deliverable changing, not on the verdict token:** a `PROCEED-WITH-CAUTION` whose findings the operator resolved by cutting scope qualifies; a `RECONSIDER` resolved by a purely internal redesign may not.
 
 Input: `$ARGUMENTS` — optional. Interpreted as:
 - **If a valid file path** (exists on disk, or starts with `/` or `./` or matches `**/*.md` or `**/*.json` etc.) → use as the contract path. Read the file at that path as `CONTRACT`.

@@ -86,7 +86,7 @@ Invocation semantics: operator-typed, or inline-prompted by other commands (e.g.
 10a. **Verify the premises of `CHANGE_DESCRIPTION` before spending a full reviewer pass on it.** A gate that reasons from a false premise produces confident, expensive, wrong output — the ~360k-token miss recorded in `logs/improvement-log.md` (2026-07-14): two reviewers reasoned from a plan carrying five factual errors, and the two load-bearing ones were caught only by direct execution afterwards. Before spawning the subagent in Step 3, run a **bounded** check on the load-bearing claims in `CHANGE_DESCRIPTION`:
    - **Run every script it cites** (e.g. a hook it calls "proof the pattern works" — actually run it and observe the exit code, don't trust the description).
    - **Open every file:line it cites** and confirm the quoted text and the claimed behavior are really there.
-   - **Re-derive every count it states, and record the primitive used** (`ls … | wc -l`, `grep -c`, `[ -L ]` vs `[ -f ]`) — a plausible number from the wrong primitive is indistinguishable from a real one (`[ -f ]` follows symlinks; a filename glob cannot see a report named after its subject).
+   - **Re-derive every count it states, record the primitive used, and assert the primitive's scope covers the claim's scope** (`ls … | wc -l`, `grep -c`, `[ -L ]` vs `[ -f ]`) — a plausible number from the wrong primitive is indistinguishable from a real one (`[ -f ]` follows symlinks; a filename glob cannot see a report named after its subject), and a *correct* number from a **repo-scoped** instrument is equally misleading when the claim is **workspace-scoped**. State the scope explicitly (repo / workspace / cross-repo); any workspace-scoped claim must be derived by a cross-repo enumeration, never a repo-local one.
    - Any claim that fails becomes a **correction to `CHANGE_DESCRIPTION`** *before* Step 3 sees it — not a note appended after. This is Problem Reality (the reviewer's Dimension 7) applied to the gate's **input**, symmetric with the Dimension-7 check the reviewer already applies to its **output**.
    - Keep it proportionate (~5k): verify the load-bearing claims, not every incidental token. This step adds **no new command** — it is a required check inside the existing gate-dispatch path.
 
@@ -178,6 +178,7 @@ Invocation semantics: operator-typed, or inline-prompted by other commands (e.g.
     - `GO` → "Proceed with the change as planned."
     - `PROCEED-WITH-CAUTION` → "Mitigations above are required. Confirm each is applied when you land the change."
     - `RECONSIDER` → "Address the findings before proceeding. Re-invoke /risk-check after redesign."
+    - On any **non-GO** verdict, also append one advisory line: "If resolving this changes **what gets delivered** rather than **how it is built**, run `/contract-check` before committing." (Advisory only — do not auto-invoke `/contract-check`; the operator decides.)
 
 ---
 
