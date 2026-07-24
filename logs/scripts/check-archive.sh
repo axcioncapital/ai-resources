@@ -8,10 +8,21 @@ set -euo pipefail
 WARN_ONLY=0
 [ "${1:-}" = "--warn-only" ] && WARN_ONLY=1
 
-# Relative-path-only: CLAUDE_PROJECT_DIR is unreliable when ai-resources is loaded via --add-dir.
-PROJECT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+# Tool path: this script's own directory (split-log.sh is a sibling — $0-relative is correct here).
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SPLIT="$SCRIPT_DIR/split-log.sh"
+
+# Data/target path: the CALLER's project — NOT guessed from $0 or pwd. Every caller passes it
+# explicitly (wrap-session.md Step 3, log-sweep.md Cat A1). A missing target means a broken
+# caller, so refuse loudly rather than archive the wrong repo's logs (the wrong-repo defect).
+if [ -n "${CLAUDE_PROJECT_DIR:-}" ] && [ -d "${CLAUDE_PROJECT_DIR}/logs" ]; then
+    PROJECT_DIR="$(cd "$CLAUDE_PROJECT_DIR" && pwd)"
+else
+    echo "check-archive: ERROR — no archive target. CLAUDE_PROJECT_DIR is unset or has no logs/." >&2
+    echo "  Every caller must pass CLAUDE_PROJECT_DIR=\"\$(pwd)\". Nothing archived." >&2
+    exit 1
+fi
 LOGS="$PROJECT_DIR/logs"
-SPLIT="$PROJECT_DIR/logs/scripts/split-log.sh"
 
 # file:threshold:keep:order  (order is bottom for all — /wrap-session appends to end)
 # coaching-data.md deliberately excluded — uses ### headers only, split-log.sh requires ## headers.

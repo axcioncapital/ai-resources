@@ -188,9 +188,9 @@ Process each over-threshold file. For each file, apply the action that matches i
 
 31. For the `ai-resources` scope Cat A1 files (`session-notes.md`, `decisions.md`):
     ```bash
-    cd "{AI_RESOURCES}" && bash logs/scripts/check-archive.sh
+    cd "{AI_RESOURCES}" && CLAUDE_PROJECT_DIR="$(pwd)" bash logs/scripts/check-archive.sh
     ```
-    `check-archive.sh` handles both files in one run. Capture output. If it prints `Auto-archived`, extract the archive filenames and add to `APPLIED_LIST`. If it exits non-zero, record `FAILED: check-archive.sh` and continue.
+    The `CLAUDE_PROJECT_DIR="$(pwd)"` prefix is required: `check-archive.sh` now archives the caller's project (the target it is passed) and refuses with `exit 1` if no target is given. `check-archive.sh` handles both files in one run. Capture output. If it prints `Auto-archived`, extract the archive filenames and add to `APPLIED_LIST`. If it exits non-zero, record `FAILED: check-archive.sh` and continue.
 
 **Cat A2 — `split-log.sh` direct with absolute path**
 
