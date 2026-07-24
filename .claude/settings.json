@@ -23,11 +23,9 @@
       "Bash(rm -rf *)",
       "Bash(sudo *)",
       "Read(archive/**)",
-      "Read(logs/*-archive-*.md)",
       "Read(inbox/archive/**)",
       "Read(**/deprecated/**)",
-      "Read(**/old/**)",
-      "Read(logs/*archive*.md)"
+      "Read(**/old/**)"
     ],
     "defaultMode": "bypassPermissions"
   },

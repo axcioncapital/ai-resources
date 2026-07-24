@@ -18,7 +18,7 @@ Run the improvement analyst to review this session's friction and suggest workfl
    
    The agent reads log contents, CLAUDE.md, settings.json, commands, and hooks independently. Do NOT pass log contents inline or conversation history — the agent gathers its own context for independent analysis.
    
-   **De-dup note:** The active improvement log is the source of truth for de-dup. The archive file (`improvement-log-archive.md`) is excluded from the agent's read scope due to a `Read(logs/*archive*.md)` deny rule — do not pass it. Entries archived from the active log represent completed fixes; re-proposing an already-fixed root cause is low risk and preferable to a deny-rule violation.
+   **De-dup note:** The active improvement log is the source of truth for de-dup. The archive file (`improvement-log-archive.md`) is out of the agent's default read scope for **relevance and token economy** — archived entries are completed fixes, so re-proposing an already-fixed root cause is low-risk and not worth the extra read; do not pass it. (This is a scoping choice, not a permission constraint — the former `Read(logs/*archive*.md)` deny that once forced it was removed by this mission's thread 3.)
 
 3. **Present findings to the operator.** Show the ranked findings from the analyst. For each finding, offer three actions:
    - **Apply** — implement the proposed change now

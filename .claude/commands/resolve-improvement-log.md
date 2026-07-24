@@ -116,9 +116,9 @@ Wait for the operator's reply. Accept the same shapes as Step 6 (`y`, `n`, `sele
 
 7. **Archive procedure:**
 
-   **Append-only — do NOT read the archive.** `ai-resources/.claude/settings.json` denies `Read(logs/*archive*.md)` (line 32), which matches `improvement-log-archive.md`. Any "read archive → merge → sort → rewrite" path is blocked by that deny and silently breaks the moment an earlier-dated entry needs archiving. This procedure therefore appends only, and never reads the archive file. The active log's outgoing order IS the canonical chronological order (entries accumulate oldest→newest top-to-bottom), so archive-time append order preserves chronology without a re-sort. **Do not "optimize" this back to a read-merge-sort path — it will hit the deny rule.**
+   **Append-only — do NOT read-merge-sort the archive.** This procedure appends selected entries to the **end** of the archive and never reads it back. The reason is **data integrity, not permissions**: the active log's outgoing order IS the canonical chronological order (entries accumulate oldest→newest top-to-bottom), so a plain append preserves chronology with no re-sort, while a "read → merge → sort → rewrite" path risks reordering or corrupting a large archive for no benefit — and silently breaks the moment an earlier-dated entry needs archiving. **Do not "optimize" this into a read-merge-sort path.** (The former `Read(logs/*archive*.md)` deny that also blocked such a path is removed by this mission's thread 3; the append-only discipline stands on its own data-integrity merit.)
 
-   a. **Create the archive if missing — without reading it.** Run via Bash (a test-then-create guard; never `Read`/`Write` against the archive path, since both would trip the deny or its Read-before-Write requirement):
+   a. **Create the archive if missing — without reading it.** Run via Bash (a test-then-create guard; append-only via Bash keeps the archive write a pure append, with no Read-before-Write round trip):
       ```bash
       test -f ai-resources/logs/improvement-log-archive.md || printf '# Improvement Log — Archive\n\n' > ai-resources/logs/improvement-log-archive.md
       ```

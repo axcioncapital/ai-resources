@@ -129,7 +129,7 @@ Canonical shape:
     "deny": [
       "Bash(rm -rf *)", "Bash(sudo *)",
       "Read(archive/**)",
-      "Read(logs/*-archive-*.md)", "Read(inbox/archive/**)",
+      "Read(inbox/archive/**)",
       "Read(**/deprecated/**)", "Read(**/old/**)"
     ]
   }
