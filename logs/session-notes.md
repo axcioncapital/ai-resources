@@ -476,3 +476,13 @@ None.
 
 ### Findings Declined
 - QC reviewer's cross-reference anchor-text mismatch (`docs/session-marker.md` cross-refs say "§ Direct-route detection"; the actual heading is "### Direct-route detection predicate" under "## Direct-route harness exception") — cosmetic, resolvable by any reader, no named consequence.
+
+## 2026-07-24 — Session S1-7fe
+**Mandate:** Triage the 30 open HIGH-severity entries in `logs/improvement-log.md`, verifying each by execution then closing, parking, or downgrading it — done when: all 30 entries carry an explicit disposition, closed entries are archived to `logs/improvement-log-archive.md`, and the `/prime` Step 3 scan emits materially fewer than today's 399 lines
+- Out of scope: editing `.claude/commands/prime.md` — the scan design itself, twice /risk-check RECONSIDER'd
+- Files in scope: logs/improvement-log.md, logs/improvement-log-archive.md
+- Stop if: an entry's disposition would require building a fix rather than judging status — log it and move on
+- Mission: repo-health-backlog-2026-07
+
+
+Triage the 30 open HIGH-severity entries in `logs/improvement-log.md` — close, park, or downgrade what no longer earns HIGH.
