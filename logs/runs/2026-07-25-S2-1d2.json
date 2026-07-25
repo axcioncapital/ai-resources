@@ -16,8 +16,26 @@
     "subagents": [],
     "tools_notable": []
   },
-  "files_changed": [],
-  "decisions_refs": [],
+  "files_changed": [
+    "logs/missions/repo-integrity-repairs-2026-07.md",
+    "logs/session-plan-2026-07-25-S2-1d2.md",
+    "audits/risk-checks/2026-07-25-proposed-change-create-3-new-symlinks-in-the-workspace-root.md",
+    "logs/session-notes.md",
+    "logs/decisions.md",
+    "logs/improvement-log.md",
+    "../.claude/commands/session-start.md",
+    "../.claude/commands/session-plan.md",
+    "../.claude/commands/concurrent-session-check.md",
+    "../.claude/agents/context-discovery.md",
+    "../projects/project-planning/Project Plans/system-owner-v2/context-pack.md",
+    "../projects/project-planning/Project Plans/system-owner-v2/per-unit-plan.md",
+    "../projects/project-planning/Project Plans/system-owner-v2/synthesis.md",
+    "../projects/project-planning/Project Plans/system-owner-v2/control-pack/execution-roadmap.md",
+    "../projects/project-planning/Project Plans/system-owner-v2/control-pack/technical-design.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-25-s2-1d2-scoped-both-fixes-narrowly-3-of-33-links-5"
+  ],
   "validation": [],
   "evaluator_findings": {
     "sidecar_refs": [],
@@ -29,8 +47,8 @@
     "subagents": 0,
     "token_estimate": null
   },
-  "stop_reason": null,
-  "outcome": null,
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
   "failure_class": null,
   "incidents_refs": []
 }
