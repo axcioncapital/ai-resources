@@ -145,3 +145,10 @@
 | 2026-07-13 | hook | /Users/patrik.lindeberg/.claude/hooks/cleanup-session-marker.sh | triaged:project-specific | Already at user level (broadest possible scope) — nothing to graduate; resolved in place, S13 wrap |
 | 2026-07-17 | command | .claude/commands/usage-analysis.md | triaged:project-specific | — (already canonical in ai-resources; edited this session, not a new innovation — no graduation needed) |
 | 2026-07-17 | agent | .claude/agents/system-owner.md | triaged:project-specific | — (already canonical in ai-resources; edited this session, not a new innovation — no graduation needed) |
+| 2026-07-24 | command | /Users/patrik.lindeberg/Claude Code/ai-resources-wave1-correction/.claude/commands/log-sweep.md | triaged:not-innovation | — |
+| 2026-07-24 | command | /Users/patrik.lindeberg/Claude Code/ai-resources-wave1-correction/.claude/commands/wrap-session.md | triaged:not-innovation | — |
+| 2026-07-24 | command | /Users/patrik.lindeberg/Claude Code/ai-resources-wave1-correction/.claude/commands/improve.md | triaged:not-innovation | — |
+| 2026-07-24 | command | /Users/patrik.lindeberg/Claude Code/ai-resources-wave1-correction/.claude/commands/resolve-improvement-log.md | triaged:not-innovation | — |
+| 2026-07-24 | hook | /Users/patrik.lindeberg/Claude Code/ai-resources-wave1-correction/.claude/hooks/pre-commit | triaged:not-innovation | — |
+| 2026-07-24 | command | /Users/patrik.lindeberg/Claude Code/ai-resources-wave1-correction/.claude/commands/risk-check.md | triaged:not-innovation | — |
+| 2026-07-24 | command | /Users/patrik.lindeberg/Claude Code/ai-resources-wave1-correction/.claude/commands/contract-check.md | triaged:not-innovation | — |

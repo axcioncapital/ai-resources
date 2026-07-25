@@ -1,0 +1,60 @@
+{
+  "run_id": "2026-07-25-S2-81c",
+  "project": "ai-resources",
+  "date": "2026-07-25",
+  "marker": "S2-81c",
+  "model": "unknown",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md",
+  "mission": null,
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    ".claude/commands/contract-check.md",
+    ".claude/commands/improve.md",
+    ".claude/commands/log-sweep.md",
+    ".claude/commands/resolve-improvement-log.md",
+    ".claude/commands/risk-check.md",
+    ".claude/commands/wrap-session.md",
+    ".claude/hooks/pre-commit",
+    ".claude/settings.json",
+    "docs/permission-template.md",
+    "logs/improvement-log.md",
+    "logs/missions/repo-integrity-repairs-2026-07-wave1-correction-plan-v2.md",
+    "logs/scripts/check-append-order.sh",
+    "logs/scripts/check-append-order.test.sh",
+    "logs/scripts/check-archive.sh",
+    "logs/scripts/check-archive.test.sh",
+    "logs/scripts/pre-commit-hook.test.sh",
+    "../CLAUDE.md",
+    "logs/session-notes.md",
+    "logs/decisions.md",
+    "logs/innovation-registry.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-25-s2-81c-cont-append-order-guard-rebuilt-as-a",
+    "logs/decisions.md#2026-07-25-s2-81c-cont-revert-the-two-entry-formats-closure"
+  ],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": null,
+  "incidents_refs": []
+}

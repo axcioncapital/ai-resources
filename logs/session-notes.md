@@ -393,3 +393,43 @@ None.
 ### Findings Declined
 - **Own mid-session claim: "two improvement-log entries are invisible to `/prime`'s severity anchor due to a missing dash-prefix."** Raised in chat, then retracted after batch-C verification: `prime.md:245`'s anchor already tolerates both the missing dash and bold asterisks. The two entries (`:1114`, `:1135`) are genuinely `MED` (medium)-tier, which the scan correctly excludes by design — not a defect. Declined, not queued.
 - Every other verified-real item from the triage was either queued into the new mission (16 items) or explicitly named as belonging to the sibling mission (5 items) or as needing a dedicated session (4 items). Nothing was silently dropped.
+
+## 2026-07-24 — Session S2-81c
+
+**Mandate:** Diagnose the repository mechanisms behind mission `repo-integrity-repairs-2026-07` Wave 1 (threads 1–10) and produce a least-complex structural correction plan for external (Codex) review — analysis only, no implementation — done when: a correction plan covering all 10 Wave 1 threads (causal mechanism, competing explanation, recommended correction, files affected, before/after behaviour, tests, rollback, approval-required items) is written to `audits/working/2026-07-24-wave1-correction-plan.md`
+- Out of scope: implementing or applying any fix; editing `.claude/commands/prime.md`; threads 3/7/10/12/15 of `repo-health-backlog-2026-07`; Wave 2 threads 11–16
+- Files in scope: logs/scripts/check-archive.sh, .claude/commands/wrap-session.md, .claude/commands/risk-check.md, .claude/commands/contract-check.md, .claude/commands/close-worktree-session.md, .claude/settings.json, .claude/agents/, logs/improvement-log.md, logs/missions/repo-integrity-repairs-2026-07.md, ../CLAUDE.md, ../.claude/commands/wrap-session.md, logs/innovation-registry.md (widened 2026-07-25 wrap — scope evolved via live operator direction across the session: implementation, Codex R3 review + fixes, merge to main, push, cleanup, wrap-time innovation triage)
+- Stop if: (none stated)
+- Required outputs: audits/working/2026-07-24-wave1-correction-plan.md
+- Mission: repo-integrity-repairs-2026-07
+
+## 2026-07-25 — Codex R3 review of Wave 1 correction: 3 findings fixed, merged to main, pushed
+
+### Summary
+Continuation of Session S2-81c (Wave 1 correction, mission `repo-integrity-repairs-2026-07`): the implementation branch `mission/wave1-correction` (6 commits, isolated worktree) was delivered to Codex via a pushed branch and received an independent implementation review (R3). Codex confirmed 2 of 10 threads correct (§1 wrong-repo archive fix, §7 conflict-marker hook) but found 3 real defects: the append-order guard (§3/thread 4) used a date-gate + text-identity check instead of the approved purely-positional invariant, letting a backdated prepend and an exact-duplicate-header prepend through; the "two entry formats" improvement-log item (thread 10) was closed prematurely while 3 of 5 live writers still emit no `Severity` line; and the `/contract-check` fifth-trigger mirror into workspace `CLAUDE.md` (thread 7) was never applied (cross-repo — the ai-resources branch structurally could not carry it). All three were independently verified against the actual code/log state, then fixed: the guard was rewritten positionally with 2 new regression tests (backdated prepend, duplicate-header prepend), the log entry was reverted to `partially applied` with the writer-sweep parked as a new 2026-07-25 entry, and the CLAUDE.md mirror was applied in the workspace-root repo. The corrected branch was re-pushed, fast-forward merged into `main`, the installed pre-commit hook was refreshed to match the tracked copy (guards now live), both repos were pushed to origin, and the branch/worktree/bundle scaffolding was removed.
+
+### Decisions Made
+- **Append-order guard redesign (positional, not date/text).** Rewrote `check-append-order.sh` to identify additions strictly by `git diff --cached` line position and reject any added header above the last retained header — dropping the prior date-gate (`>= newest retained date`) and text-identity matching, both of which Codex demonstrated as bypassable. **Rationale:** the archive hazard this guard exists to prevent is purely positional (`check-archive.sh` treats file-top as oldest), so any check keyed on date or text content is a weaker proxy for the actual invariant. **Alternatives considered:** patching the existing date-gate to also cover backdated entries — rejected, because it would not fix the independent text-identity hole and would leave two special-cased conditions instead of one general one.
+- **Reverted thread-10 "two entry formats" closure to `partially applied`, parked the writer-sweep rather than fixing all 3 writers inline.** The live `2026-07-21` PowerPoint entry proved 3 writers (`leverage-idea.md`, `improve.md`, `resolve-repo-problem.md`) still ship entries with no `Severity` line. **Rationale:** fixing all 3 writer templates plus a schema-regression test is a broader multi-file change than the Wave 1 correction pass and not itself a defect in the shipped Wave 1 edits — per the workspace CLAUDE.md ROI/structural-fix rule, a structural fix needing its own session is parked, not patched on top of a correction commit. **Alternatives considered:** inline-fixing all 3 writers now — rejected as scope growth beyond what Codex's finding required (the finding was "don't claim it's closed," not "fix everything now").
+- **Finding #3 disposition — mirror the CLAUDE.md trigger rather than amend the plan to drop it.** Operator-directed via AskUserQuestion; kept three-way consistency (contract-check.md / risk-check.md / workspace CLAUDE.md) over trading it for CLAUDE.md leanness.
+- **Fast-forward merge to `main`, not a merge commit.** Branch and main had a clean linear ancestor relationship (0 commits behind); ff-only preserves per-section commit granularity already designed into the branch (one commit per plan section, independently revertible).
+- Operator confirmed both pushes (initial branch push, then the corrected branch + merge-to-main push) via explicit y/n per workspace CLAUDE.md push gate; confirmed cleanup (branch/worktree/bundle deletion) via explicit y.
+
+### Outcome
+(Outcome check skipped — not requested this wrap.)
+
+### Risky actions
+None ungated. Two `git push` operations landed directly on `main` (both repos) and a branch/worktree/14MB-bundle deletion occurred — all were explicitly operator-confirmed (y/n) before execution per the workspace CLAUDE.md push gate and destructive-action autonomy rules; no action was taken without a prior confirmation.
+
+### Next Steps
+- Consider `/mission update` on `repo-integrity-repairs-2026-07` thread 10 — its closure bundled two entries; one (two-entry-formats) is now reverted to `partially applied` and the mission contract may want to reflect that.
+- The parked writer-sweep follow-up (3 improvement-log writers still missing `Severity`) is logged as a `2026-07-25` entry in `logs/improvement-log.md`, medium-high severity — will surface via `/prime` Step 3 in a future session.
+
+### Findings Declined
+- **Codex R3 finding #1 (append-order guard date-gate/text-identity weakness)** — already fixed this session (`logs/scripts/check-append-order.sh` rewritten positionally, 2 new regression tests added, full suite + hook integration re-verified). No queue entry: nothing remains open.
+- **Codex R3 finding #3 (contract-check fifth-trigger mirror missing from workspace CLAUDE.md)** — already fixed this session (bullet added to workspace-root `CLAUDE.md` § Contract-Conformance Check, committed `0a4c774`). No queue entry: nothing remains open.
+
+**Findings: 4 — queued 2 (severity: 1 medium-high [writer-side Severity gap, 3 writers], 1 medium [innovation-registry worktree false-positive]), declined 2 (both already fixed this session). 2 + 2 = 4.**
+
+### Open Questions
+None.

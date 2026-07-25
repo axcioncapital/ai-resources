@@ -1852,3 +1852,16 @@ The parent entry's schema and invisibility halves are closed, and two writers (`
 **Proposal (structural — park, do not patch).** In one dedicated pass, make **every** live improvement-log writer emit a `- **Severity:**` line as part of its entry template, then add a schema-regression test that fails if any entry in `logs/improvement-log.md` lacks the field (the two-parser `no_severity` count already used to verify the backfill is the natural check to wire). Deliberately scoped out of the Wave 1 correction pass — it is a broader multi-file writer change, not a defect in the shipped Wave 1 edits, and per the ROI gate a structural fix that needs its own session is parked, not patched onto a correction commit.
 
 **Target files:** `ai-resources/.claude/commands/leverage-idea.md`, `ai-resources/.claude/commands/improve.md`, `ai-resources/.claude/commands/resolve-repo-problem.md`; a new schema-regression test under `ai-resources/logs/scripts/`.
+
+### 2026-07-25 (cont.) — Innovation-registry auto-detection false-positives on worktree checkouts of ai-resources itself
+
+- **Status:** logged (pending)
+- **Severity:** medium — not blocking, but recurring: every worktree-based session (an established, encouraged pattern for isolated implementation — see mission `repo-integrity-repairs-2026-07`'s Wave 1) generates N false "detected" rows requiring manual triage at the next `/wrap-session`.
+- **Category:** infrastructure (innovation-registry detection heuristic)
+- **Source:** this session (S2-81c cont., wrap Step 8). `logs/innovation-registry.md` held 7 rows dated 2026-07-24, type `command`/`hook`, all pointing at paths under `/Users/patrik.lindeberg/Claude Code/ai-resources-wave1-correction/.claude/...` — a git worktree of this same repo, now merged and removed. Each path was an edit to a file that already exists canonically at the matching `ai-resources/.claude/...` path; none were new artifacts.
+
+The detector appears to key on filesystem path alone (treating any `.claude/commands/*.md` or `.claude/hooks/*` under a path not literally named `ai-resources/` as a "new project" with "new" innovations), rather than comparing against the canonical repo's own tracked files by content or git-relative path. A worktree directory is never named `ai-resources` by construction (git requires a distinct directory), so this will false-positive on every future worktree session.
+
+**Proposal.** Have the detector resolve a candidate path's `git rev-parse --path-format=absolute --git-common-dir` before flagging it and skip (or dedupe against) any candidate whose common-dir matches an already-canonical checkout's common-dir — the same test `risk-check.md` Step 2 already uses to distinguish a worktree from a foreign project. This reuses an existing, working pattern rather than inventing a new one.
+
+**Target files:** the innovation-detection mechanism (not yet located precisely this session — likely a hook or `/wrap-session` Step 8's upstream writer into `logs/innovation-registry.md`; locate before implementing).
