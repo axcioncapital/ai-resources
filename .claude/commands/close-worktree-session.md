@@ -27,6 +27,15 @@ three-command shell paste has none of them.
 - **Never `git branch -D`.** Plain `-d` refuses to delete a branch whose commits are not merged.
   That refusal is the last thing standing between the operator and lost work.
 - **Never auto-resolve a merge conflict.** Stop, show the conflicting paths, hand back control.
+- **Never let a conflict marker reach HEAD.** Not from a merge, and not from a `git stash pop`.
+  A `<<<<<<<` / `>>>>>>>` line committed to a tracked log is a data-integrity failure, and it has
+  happened once already — 2026-07-17, `logs/friction-log.md`, caught and cleaned by hand in
+  `856d7b3`. Step 4.5 is the mechanical guard; it runs before the worktree or branch is touched.
+- **Never `git stash` the main checkout to force the merge through.** If `$REPO_ROOT` is dirty,
+  `git merge` refuses — and stash → merge → pop is the improvised workaround that produced the
+  2026-07-17 incident. Stop and hand back control instead (Step 4's pre-flight). Stashing on the
+  operator's behalf is the same class of "helpful" workaround as `--force` and `-D`, and is
+  refused for the same reason.
 - **Never remove a worktree a live session still occupies.**
 - **Never push.** Push stays gated and batched to session wrap (workspace `CLAUDE.md`).
 
@@ -174,7 +183,25 @@ confirms the worktree is genuinely idle, proceed — but make them say so; do no
 
 ## Step 4 — Merge the branch into the main checkout
 
-Confirm the merge target is the repo's default branch and that the operator is on it:
+**Pre-flight: is the MAIN checkout clean?** Step 2 checked the *worktree*. Nothing so far has
+checked `$REPO_ROOT`, and that is the tree `git merge` actually refuses on.
+
+```bash
+git -C "$REPO_ROOT" status --short
+```
+
+Non-empty → **stop.** Say:
+
+> The main checkout has uncommitted changes, so the merge cannot run. Commit or stash them
+> yourself in that window, then re-run this. I will not stash them for you — a stash pop can
+> conflict, and on 2026-07-17 that path put conflict markers into a tracked log.
+
+**Do not stash and do not offer to.** This refusal is the point: `git merge`'s own refusal is a
+guard, and routing around it with a stash is how the 2026-07-17 incident happened. The same
+untracked-`.claude/`-only exception from Step 2 applies here; say so in one line rather than
+silently passing it.
+
+Then confirm the merge target is the repo's default branch and that the operator is on it:
 
 ```bash
 git -C "$REPO_ROOT" rev-parse --abbrev-ref HEAD     # expect: main
@@ -205,6 +232,43 @@ git -C "$REPO_ROOT" merge "$BRANCH"
 
   The worktree and branch **must survive a failed merge.** Never proceed to Steps 5–6 on a
   conflict; that is the one sequence that could destroy the work being merged.
+
+## Step 4.5 — Guard: no conflict markers anywhere
+
+Run this **before** Step 5 removes anything, and again after **any** `git stash pop` performed at
+any point in this flow:
+
+```bash
+git -C "$REPO_ROOT" grep -lE '^(<<<<<<<|>>>>>>>)'          # working tree
+git -C "$REPO_ROOT" grep -lE '^(<<<<<<<|>>>>>>>)' HEAD     # committed content
+```
+
+**⚠ The exit codes are inverted from a normal check — read this before wiring it into anything.**
+`git grep` exits **0 when it FINDS matches** and **1 when it finds none**. So here, **exit 0 is the
+failure case.** A naive `cmd && continue` does exactly the wrong thing. Verified by execution
+2026-07-25 against two fixtures: marker-bearing tree → exit 0 plus the filename; clean tree →
+exit 1, no output.
+
+- **Either command exits 0** → **STOP. Do not remove the worktree, do not delete the branch, do
+  not commit.** Print the paths verbatim. Markers in the working tree mean a merge or pop was left
+  unresolved; markers in `HEAD` mean they have already been committed and must be cleaned before
+  anything else proceeds.
+- **Both exit 1** → clean; continue to Step 5.
+
+**Why this gate cannot be replaced by the `merge=union` driver.** `.gitattributes` applies
+`merge=union` to `logs/session-notes.md`, `logs/decisions.md` and `logs/coaching-data.md` only.
+`logs/friction-log.md`, `logs/improvement-log.md` and `logs/usage-log.md` are **deliberately
+excluded** — they take in-place edits, not pure appends, so union would silently corrupt them.
+Those three are therefore permanently unprotected against a conflicting merge or pop, and
+`friction-log.md` is exactly the file the 2026-07-17 incident damaged. This gate is the only
+control that covers them.
+
+Confirmed by execution (2026-07-25), with a control case proving the test can fail: `git stash pop`
+**does** honor `merge=union` where it applies — union file → both sides concatenated, no markers,
+stash dropped; non-union file → `<<<<<<< Updated upstream` / `>>>>>>> Stashed changes` in the tree
+and the stash entry retained. So the driver is real protection for the three files it covers and
+**no** protection for the three it does not. Do not narrow this gate on the belief that union
+handles it.
 
 ## Step 5 — Remove the worktree
 
