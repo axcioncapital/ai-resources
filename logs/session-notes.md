@@ -469,3 +469,16 @@ Installed a `pre-commit` hook into the workspace-root repo, which can block ever
 
 ### Open Questions
 - The workspace-root repo carries a pre-existing **uncommitted** `logs/decisions.md` change (a `2026-07-19` entry, ~23 lines) that predates this session and is unrelated to it. Left untouched deliberately — flagged to the operator, not resolved or staged here.
+
+## 2026-07-25 — Session S2-1d2
+
+**Mandate:** Symlink the 3 canonical commands that root `/prime` instructs invoking into the workspace-root `.claude/commands/`, and correct the false `warn-settings-change.sh` premise in the 5 live system-owner-v2 plan files — done when: all 3 symlinks resolve to their canonical targets, and none of the 5 plan files asserts the script exists.
+- Out of scope: the other 30 root-missing canonical commands (several deliberately project-scoped, e.g. `explore-section` is Design Studio-local); the ~12 historical records naming `warn-settings-change.sh` (repo snapshots, phase-1 inventories, June consultation outputs, integrity reports) — editing them would falsify the point-in-time record; mission thread 5, dropped mid-session as churn on a wrong premise.
+- Files in scope: projects/project-planning/Project Plans/system-owner-v2/context-pack.md, projects/project-planning/Project Plans/system-owner-v2/per-unit-plan.md, projects/project-planning/Project Plans/system-owner-v2/synthesis.md, projects/project-planning/Project Plans/system-owner-v2/control-pack/execution-roadmap.md, projects/project-planning/Project Plans/system-owner-v2/control-pack/technical-design.md
+- Stop if: a root symlink target turns out to be a real file rather than absent; a system-owner-v2 file turns out to be a historical record rather than a live plan.
+- Required outputs: .claude/commands/session-start.md, .claude/commands/session-plan.md, .claude/commands/concurrent-session-check.md
+- Mission: repo-integrity-repairs-2026-07
+
+Two verified repo fixes, both threads of mission `repo-integrity-repairs-2026-07`: (1) symlink the 3 canonical commands that root `/prime` instructs invoking but which do not exist at the workspace root (thread 11, narrowed from 33 to 3); (2) correct the false `warn-settings-change.sh` premise in the 5 live system-owner-v2 plan files, leaving the ~12 historical records untouched (thread 13, narrowed).
+
+**Thread 5 dropped mid-session.** Scoped as "add the `command grep` antibody to 4 audit agents"; verification showed `token-audit-auditor.md`, `diagnostics-scanner.md` and `fix-repo-issues-scanner.md` contain **zero** occurrences of `grep`, and `repo-dd-auditor.md`'s single occurrence is prose, not a scan site. There is no exposure to harden. `logs/scripts/search-canary.sh`'s header already records the same 2026-07-18 finding and its deliberate decision — *"no site edits were made: editing immune sites would be churn with no consequence."* Disposition: close thread 5 as already-correctly-decided, citing the canary header. Root cause of the mis-scope: counted the *absence of a mitigation* and read it as *presence of a vulnerability*.
