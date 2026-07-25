@@ -1865,3 +1865,14 @@ The detector appears to key on filesystem path alone (treating any `.claude/comm
 **Proposal.** Have the detector resolve a candidate path's `git rev-parse --path-format=absolute --git-common-dir` before flagging it and skip (or dedupe against) any candidate whose common-dir matches an already-canonical checkout's common-dir — the same test `risk-check.md` Step 2 already uses to distinguish a worktree from a foreign project. This reuses an existing, working pattern rather than inventing a new one.
 
 **Target files:** the innovation-detection mechanism (not yet located precisely this session — likely a hook or `/wrap-session` Step 8's upstream writer into `logs/innovation-registry.md`; locate before implementing).
+
+### 2026-07-25 (cont. 2) — `check-foreign-staging.sh`'s EXEMPT_BASENAMES omits 3 of `/wrap-session`'s own "always-staged shared logs"
+
+- **Status:** logged (pending)
+- **Severity:** medium — not data-loss risk, but a recurring false-block: any wrap-session commit that touches one of the 3 missing files gets blocked by the staging tripwire and must be resolved by either widening a session's declared mandate footprint or an explicit operator override, every time.
+- **Category:** infrastructure (hook / wrap-session cross-reference drift)
+- **Source:** this session (S2-81c cont.), live during `/wrap-session`'s own commit step. The tripwire blocked staging `logs/innovation-registry.md` (edited this session, Step 8 innovation triage) because it is not in `check-foreign-staging.sh`'s `EXEMPT_BASENAMES` set (`session-notes.md`, `decisions.md`, `usage-log.md`, `improvement-log.md`, `coaching-data.md` only). But `wrap-session.md:318`'s own "Always-staged (if modified this session)" list additionally names `logs/friction-log.md`, `logs/improvement-log-archive.md`, and `logs/innovation-registry.md` as shared logs at the same tier — none of the three are in the hook's exempt set. Resolved this session by widening the session's own `Files in scope` mandate bullet (legitimate here — the mandate block was still uncommitted working-tree content, not frozen history) rather than by hook edit, since a hook-behavior change is its own gated edit and out of scope for a wrap.
+
+**Proposal.** Add `logs/friction-log.md`, `logs/improvement-log-archive.md`, and `logs/innovation-registry.md` to `check-foreign-staging.sh`'s `EXEMPT_BASENAMES`, so the two lists (the hook's exempt set and `wrap-session.md`'s always-staged set) describe the same files. This is a hook edit (risk-check change class) — gate it with `/risk-check` before landing, and add a regression case confirming each of the 3 newly-exempted basenames passes the tripwire when staged outside a session's declared footprint.
+
+**Target files:** `ai-resources/.claude/hooks/check-foreign-staging.sh` (`EXEMPT_BASENAMES`), its test suite.

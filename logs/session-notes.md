@@ -429,7 +429,7 @@ None ungated. Two `git push` operations landed directly on `main` (both repos) a
 - **Codex R3 finding #1 (append-order guard date-gate/text-identity weakness)** — already fixed this session (`logs/scripts/check-append-order.sh` rewritten positionally, 2 new regression tests added, full suite + hook integration re-verified). No queue entry: nothing remains open.
 - **Codex R3 finding #3 (contract-check fifth-trigger mirror missing from workspace CLAUDE.md)** — already fixed this session (bullet added to workspace-root `CLAUDE.md` § Contract-Conformance Check, committed `0a4c774`). No queue entry: nothing remains open.
 
-**Findings: 4 — queued 2 (severity: 1 medium-high [writer-side Severity gap, 3 writers], 1 medium [innovation-registry worktree false-positive]), declined 2 (both already fixed this session). 2 + 2 = 4.**
+**Findings: 5 — queued 3 (severity: 1 medium-high [writer-side Severity gap, 3 writers], 2 medium [innovation-registry worktree false-positive; `check-foreign-staging.sh` EXEMPT_BASENAMES missing 3 of `wrap-session.md`'s own always-staged shared logs — surfaced live by this very wrap's commit step]), declined 2 (both already fixed this session). 3 + 2 = 5.**
 
 ### Open Questions
 None.
