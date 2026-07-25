@@ -16,8 +16,20 @@
     "subagents": [],
     "tools_notable": []
   },
-  "files_changed": [],
-  "decisions_refs": [],
+  "files_changed": [
+    ".claude/commands/close-worktree-session.md",
+    "logs/missions/research-workflow-deploy-fitness.md",
+    "logs/friction-log.md",
+    "logs/missions/repo-integrity-repairs-2026-07.md",
+    "logs/improvement-log.md",
+    "logs/session-notes.md",
+    "logs/decisions.md",
+    "logs/session-plan-2026-07-25-S3-4fd.md",
+    "logs/scratchpads/2026-07-25-S3-4fd-scratchpad.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-25-s3-4fd-ran-close-worktree-session-s-stash-fix"
+  ],
   "validation": [],
   "evaluator_findings": {
     "sidecar_refs": [],
@@ -29,8 +41,8 @@
     "subagents": 0,
     "token_estimate": null
   },
-  "stop_reason": null,
-  "outcome": null,
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
   "failure_class": null,
   "incidents_refs": []
 }
