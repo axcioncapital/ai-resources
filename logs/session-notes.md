@@ -433,3 +433,39 @@ None ungated. Two `git push` operations landed directly on `main` (both repos) a
 
 ### Open Questions
 None.
+
+## 2026-07-25 — Session S1-940
+
+**Mandate:** Commit the untracked `repo-integrity-repairs-2026-07` mission file, then verify Wave 1 threads 1–9 against the mission's acceptance assertions and tick only those that pass — done when: the mission file is tracked in git, and each of threads 1–9 carries either a tick with a cited verification or a recorded one-line reason it stays open, with thread 10 left unticked and its revert reason recorded.
+- Out of scope: Wave 2 threads 11–16; the sibling missions `repo-health-backlog-2026-07` and `research-workflow-deploy-fitness`; thread 10, which stays open by design rather than by omission.
+- Files in scope: logs/missions/repo-integrity-repairs-2026-07.md, .claude/commands/wrap-session.md, ../.claude/commands/wrap-session.md
+- Scope extension (operator-directed, post-mandate): after the verification pass completed, the operator directed follow-on work — `/mission update` on threads 4 and 8, then closing assertion 3 by adding the missing append-direction warnings at the 3 uncovered write sites across both `wrap-session.md` copies.
+- Stop if: a thread can only be verified by editing `.claude/commands/prime.md` (mission non-negotiable — it belongs to the sibling mission's thread 15); verifying a thread would require deleting a stale marker or archive file that the thread cites as evidence; a thread's acceptance assertion cannot be checked by execution or inspection, in which case leave it open rather than tick it on a commit subject alone.
+- Allowed inputs: logs/scripts/check-archive.sh, logs/scripts/check-append-order.sh, .claude/settings.json, logs/improvement-log-archive.md, .claude/commands/wrap-session.md, ../.claude/commands/wrap-session.md, .claude/agents/lean-repo-auditor.md, .claude/commands/risk-check.md, .claude/commands/contract-check.md, .claude/commands/close-worktree-session.md, ../CLAUDE.md
+- Mission: repo-integrity-repairs-2026-07
+
+Commit the untracked `repo-integrity-repairs-2026-07` mission file, then verify Wave 1 threads 1–9 against the mission's acceptance assertions and tick those that pass; thread 10 stays open with a recorded reason.
+
+### Summary
+Committed the previously-untracked `repo-integrity-repairs-2026-07` mission file, then verified Wave 1 threads 1–9 against the mission's own validation contract rather than against the commit subjects that claimed them — only 4 of 9 actually passed (1, 3, 6, 7), not the 8 an initial commit-message read suggested. Ticked those four; the other five (2, 5, 8, 9, plus already-open thread 10) stay open with recorded evidence, including thread 2's count moving the wrong way (14 of 27 projects now lack `logs/scripts/`, up from 13). Operator then directed follow-on work via `/mission update`: threads 4 and 8 were revised with new evidence rather than closed, closing assertion 3 required adding append-direction prose warnings at 3 previously-uncovered write sites across both `wrap-session.md` copies (canonical + workspace-root), and `/risk-check` gated a hook install (`check-append-order.sh` + `pre-commit`) into the workspace-root repo, which had had no commit-boundary protection of any kind. Thread 4 then closed on its own literal test — a 4-of-4 count across both copies.
+
+### Decisions Made
+- **Declined to soften the mission's frozen `## Validation contract` assertion 3, even though I proposed it first.** The `/mission update` design contract freezes that section at creation precisely so a session cannot redefine its own pass/fail test; satisfying the assertion as written turned out to cost ~3 lines of prose, so there was nothing to trade away by softening it. Self-caught before any write via the `update` verb's byte-comparison guard, which would have reverted the edit regardless.
+- **Thread 8 disposition — reduce scope, do not close.** The shipped conflict-marker guard blocks the corruption but leaves `/close-worktree-session` with zero stash handling for the operator to resolve. Recorded as a narrower open thread rather than treated as closed.
+- **Corrected a false premise I fed to the `/risk-check` gate.** I told the reviewer the workspace-root repo had no skills (implying the SKILL.md validator half of the hook would no-op); it actually has 6 tracked `SKILL.md` files. The reviewer's consumer inventory caught this; I re-verified by execution (`git ls-files`) and tested all 6 against the validator's actual rules — 0 of 6 would currently block, but the dependency is now disclosed in the install commit rather than left unstated.
+
+### Risky actions
+Installed a `pre-commit` hook into the workspace-root repo, which can block every future commit there. Gated by an independent `/risk-check` (PROCEED-WITH-CAUTION, 0 High / 4 Medium), all four required mitigations applied, and verified before commit by falsification — a deliberately backdated entry staged into the repo's real `logs/decisions.md` was blocked with exit 1, then the file was restored and confirmed byte-identical to a pre-test backup. No QC-PENDING block: a structural hook-install change gets `/risk-check` as its required gate, not a stacked `/qc-pass` on top (workspace CLAUDE.md § Subagent Proportionality, "do not stack gates").
+
+### Findings Declined
+- **Thread 2's worsening count (13→14 projects missing `logs/scripts/`)** — already tracked as mission thread 2 with this session's updated evidence recorded inline; no separate improvement-log entry needed.
+- **The `.git/hooks/` unversioned-wiring gap, now duplicated in a second repo by this session's own hook install** — already tracked as sibling mission `repo-health-backlog-2026-07` thread 3 (an installer design twice `/risk-check` RECONSIDER'd); this session's install is disclosed as a second instance in commit `503fe8f`, not a new entry.
+
+**Findings: 3 — queued 1 (severity: 1 medium-high [unverified-premise pattern fed to a gate]), declined 2 (both already tracked under existing mission threads). 1 + 2 = 3.**
+
+### Next Steps
+- Wave 1 remaining, ranked: thread 2 (worsening — fix requires `new-project.md` to provision `logs/scripts/` on scaffold, currently 0 matches); threads 5 and 9 (small, self-contained, untouched); thread 8 (narrowed to stash handling only); thread 10 (blocked on the parked writer-sweep, `2026-07-25` improvement-log entry).
+- `logs/scripts/check-append-order.sh` and its `pre-commit` hook are now live in the workspace-root repo — worth confirming they survive the next fresh clone or `/permission-sweep`-style audit, since `.git/hooks/` is unversioned by construction.
+
+### Open Questions
+- The workspace-root repo carries a pre-existing **uncommitted** `logs/decisions.md` change (a `2026-07-19` entry, ~23 lines) that predates this session and is unrelated to it. Left untouched deliberately — flagged to the operator, not resolved or staged here.

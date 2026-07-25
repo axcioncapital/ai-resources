@@ -1,0 +1,45 @@
+{
+  "run_id": "2026-07-25-S1-940",
+  "project": "ai-resources",
+  "date": "2026-07-25",
+  "marker": "S1-940",
+  "model": "claude-opus-5[1m]",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md#2026-07-25-S1-940",
+  "mission": "repo-integrity-repairs-2026-07",
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    "logs/missions/repo-integrity-repairs-2026-07.md",
+    ".claude/commands/wrap-session.md",
+    "audits/risk-checks/2026-07-25-install-append-order-guard-into-workspace-root-repo.md",
+    "logs/session-notes.md",
+    "logs/session-plan-2026-07-25-S1-940.md",
+    "logs/decisions.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-25-s1-940-declined-to-revise-the-mission-s-frozen"
+  ],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": null,
+  "incidents_refs": []
+}
