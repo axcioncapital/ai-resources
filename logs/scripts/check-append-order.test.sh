@@ -8,12 +8,14 @@
 # The suite tests the SHIPPED script (not a copy) against a throwaway git repo in $TMPDIR,
 # staging fixtures and reading git's staged state exactly as the pre-commit hook does.
 #
-# Cases (the last three are the ones a naive "is the newest date at the tail?" check misses):
-#   (a) clean append at the end            -> exit 0
-#   (b) cross-day prepend at the top        -> exit 1
-#   (c) same-date prepend (== newest)       -> exit 1   [max-at-tail check cannot catch this]
-#   (d) two added, the EARLIER one misplaced-> exit 1   [checking only the last header misses it]
-#   (e) in-place body edit, no new header   -> exit 0   [must not false-positive]
+# Cases (the guard is POSITIONAL — it neither date-gates nor identifies additions by text):
+#   (a) clean append at the end                 -> exit 0
+#   (b) cross-day prepend at the top            -> exit 1
+#   (c) same-date prepend (== newest)           -> exit 1   [a max-date-at-tail check misses this]
+#   (d) two added, the EARLIER one misplaced    -> exit 1   [checking only the last header misses it]
+#   (e) in-place body edit, no new header       -> exit 0   [must not false-positive]
+#   (f) BACKDATED prepend (older than newest)   -> exit 1   [a DATE-GATED check let this through — Codex R3]
+#   (g) EXACT-DUPLICATE-header prepend          -> exit 1   [a TEXT-IDENTITY check let this through — Codex R3]
 #
 # Run: bash logs/scripts/check-append-order.test.sh
 
@@ -102,6 +104,33 @@ PY
 if run_check >/dev/null 2>&1; then echo ">>> pass (e): in-place body edit -> exit 0"; else fail "(e) body edit was BLOCKED (false positive)"; fi
 reset_fixture
 
+# --- (f) BACKDATED prepend (unique text, date OLDER than the newest retained) -> exit 1 ---
+# A DATE-GATED guard ("only check entries dated >= newest retained") PASSES this: 2026-07-15 is
+# older than the newest retained 2026-07-20, so it is never position-checked. But it sits at the
+# TOP, exactly where the archive hazard treats it as oldest. A positional guard blocks it.
+python3 - <<'PY'
+p='logs/decisions.md'; s=open(p).read()
+new="## 2026-07-15 — Backdated prepend\nbody\n\n"
+open(p,'w').write(s.replace("# Decisions\n\n","# Decisions\n\n"+new,1))
+PY
+out_f="$(run_check 2>&1)"; rc_f=$?
+[ "$rc_f" -eq 0 ] && fail "(f) backdated prepend was ALLOWED (should block)"
+echo "$out_f" | grep -q "Backdated prepend" || fail "(f) blocked but did not name the misplaced entry"
+echo ">>> pass (f): backdated prepend -> exit 1, named"
+reset_fixture
+
+# --- (g) EXACT-DUPLICATE-header prepend -> exit 1 ---
+# The prepended header text is IDENTICAL to an existing entry ("## 2026-07-20 — Old B"). A
+# TEXT-IDENTITY guard cannot tell the new copy from the pre-existing one and lets it through.
+# A positional guard identifies the addition by diff line number and blocks it.
+python3 - <<'PY'
+p='logs/decisions.md'; s=open(p).read()
+new="## 2026-07-20 — Old B\nduplicate prepended body\n\n"
+open(p,'w').write(s.replace("# Decisions\n\n","# Decisions\n\n"+new,1))
+PY
+if run_check >/dev/null 2>&1; then fail "(g) exact-duplicate-header prepend was ALLOWED (should block)"; else echo ">>> pass (g): exact-duplicate-header prepend -> exit 1"; fi
+reset_fixture
+
 echo ""
-echo "ALL CASES PASS (a: append ok · b: cross-day prepend blocked · c: same-day prepend blocked · d: earlier-misplaced blocked · e: body edit ok)"
+echo "ALL CASES PASS (a: append ok · b: cross-day prepend blocked · c: same-day prepend blocked · d: earlier-misplaced blocked · e: body edit ok · f: backdated prepend blocked · g: duplicate-header prepend blocked)"
 exit 0
