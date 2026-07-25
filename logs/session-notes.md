@@ -517,3 +517,14 @@ Skipped (not requested — `+feedback` / `full` not passed).
 
 ### Open Questions
 None.
+
+## 2026-07-25 — Session S3-4fd
+**Mandate:** Complete five verified-premise repo-integrity fixes in one wave — stash handling in `/close-worktree-session`, verify-first rewrite of 5 deploy-fitness threads, 2 friction-log subheader repairs, and 2 already-fixed thread closures — done when: `command grep -ci stash` on `close-worktree-session.md` returns >0 with the guard proven by execution; all 5 deploy-fitness thread lines read verify-first; every friction-log session block carries a `### Friction Events` subheader; and threads 8/15/16/10 plus the repo-health `git checkout` thread are ticked with cited evidence.
+- Out of scope: repo-health threads 2, 9, 12, 14, 15; the hook-wiring installer; check-archive.sh
+- Files in scope: .claude/commands/close-worktree-session.md, logs/missions/research-workflow-deploy-fitness.md, logs/friction-log.md, logs/missions/repo-integrity-repairs-2026-07.md, logs/missions/repo-health-backlog-2026-07.md
+- Stop if: a premise fails re-verification at execution time — drop that item rather than build on it
+- Mission: repo-integrity-repairs-2026-07
+
+**Gate waiver (operator-authorized, 2026-07-25).** Item 1 (`/close-worktree-session` stash handling) falls in the `/risk-check` "automation with shared-state effects" change class, so a plan-time gate was owed. The operator was told the gate was owed and explicitly directed "DO not run risk check. Run item 1 too." Recorded here per `docs/audit-discipline.md` § Risk-check change classes — "No self-waivers … a one-line operator confirmation is required first, always." This is that confirmation, not a session-side materiality judgment. The end-time gate is likewise waived by the same instruction.
+
+Wave: five verified-premise repo-integrity items bundled into one session — (1) add stash handling to `/close-worktree-session`; (2) downgrade the deploy-fitness mission's threads 3/4/6/7/8 to verify-premise-first; (3) repair the 2 friction-log session blocks invisible to their four parsers; (4) close mission thread 10 (already fixed, verified); (5) close the repo-health `git checkout` thread (already retired, verified against all three settings files).
