@@ -196,7 +196,9 @@ Three writes, in this order:
 
 31. If fired: append a `logged (pending)` entry to `{AI_RESOURCES}/logs/improvement-log.md` using the existing improvement-log schema (see the `### Improvement-log entry schema` block in `resolve-repo-problem.md` for the exact shape — use this heading as the content anchor, not a line number). The `Proposal` field should describe the structural fix in 2–4 sentences naming target files. The `Notes` field should cite `INCIDENT_PATH`. The `Category` field should be `incident-followup`. **Operator-approved write-coupling to the Friday cadence (same pattern as `/resolve-repo-problem`; coupling approved 2026-05-28).** Do not auto-promote — the Friday cadence triages it.
 
-    > **Verbatim-shape contract — improvement-log append schema.** The field names used here (`Status`, `Category`, `Source`, `Friction source`, `Proposal`, `Target files`, `Notes`) are a two-end contract with `/friday-act` and `/resolve-improvement-log`. If the improvement-log schema block in `resolve-repo-problem.md` changes field names, this step and the contract comment must be updated in the same commit.
+    > **Verbatim-shape contract — improvement-log append schema.** The field names used here (`Status`, `Category`, `Severity`, `Source`, `Friction source`, `Proposal`, `Target files`, `Notes`) are a two-end contract with `/friday-act` and `/resolve-improvement-log`. If the improvement-log schema block in `resolve-repo-problem.md` changes field names, this step and the contract comment must be updated in the same commit.
+    >
+    > **`Severity` is mandatory** (added 2026-07-26). `/prime` Step 3 anchors on `^-? ?\*\*Severity:\*\*` and surfaces only `high` / `medium-high` / `critical` entries as task-menu candidates, so an incident follow-up written without it is **unreachable**, not merely low-priority. This step writes `logged (pending)` entries, which are exactly the ones that need to reach the menu. Vocabulary: `logs/improvement-log.md` § Schema.
 
 ---
 
