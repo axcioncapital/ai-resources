@@ -152,5 +152,10 @@
 | 2026-07-24 | hook | /Users/patrik.lindeberg/Claude Code/ai-resources-wave1-correction/.claude/hooks/pre-commit | triaged:not-innovation | — |
 | 2026-07-24 | command | /Users/patrik.lindeberg/Claude Code/ai-resources-wave1-correction/.claude/commands/risk-check.md | triaged:not-innovation | — |
 | 2026-07-24 | command | /Users/patrik.lindeberg/Claude Code/ai-resources-wave1-correction/.claude/commands/contract-check.md | triaged:not-innovation | — |
-| 2026-07-26 | command | .claude/commands/develop-ai-resource.md | detected | — |
-| 2026-07-26 | command | .claude/commands/placement.md | detected | — |
+| 2026-07-26 | command | .claude/commands/develop-ai-resource.md | triaged:false-positive | **EVIDENCE — preserved deliberately, do not delete.** Canonical ai-resources command, edited inside the worktree `ai-resources-develop-ai-resource`. `detect-innovation.sh`'s skip pattern `*/ai-resources/.claude/*` misses because a git worktree directory is never named `ai-resources` by construction. This row is the live demonstration case for improvement-log 2026-07-25 (cont.). Not an innovation; nothing to graduate. The hook fix is a separate change and is deliberately out of scope here. |
+| 2026-07-26 | command | .claude/commands/placement.md | triaged:false-positive | **EVIDENCE — preserved deliberately, do not delete.** Same defect and same session as the row above. |
+| 2026-07-26 | command | .claude/commands/leverage-idea.md | triaged:false-positive | **EVIDENCE — preserved deliberately, do not delete.** Same worktree-detection defect as the two rows above. |
+| 2026-07-26 | command | .claude/commands/fix-repo-issues.md | triaged:false-positive | **EVIDENCE — preserved deliberately, do not delete.** Same worktree-detection defect. |
+| 2026-07-26 | command | .claude/commands/deploy-kb.md | triaged:false-positive | **EVIDENCE — preserved deliberately, do not delete.** Same worktree-detection defect. |
+| 2026-07-26 | command | .claude/commands/request-skill.md | triaged:false-positive | **EVIDENCE — preserved deliberately, do not delete.** Same worktree-detection defect. |
+| 2026-07-26 | command | .claude/commands/graduate-resource.md | triaged:false-positive | **EVIDENCE — preserved deliberately, do not delete.** Same worktree-detection defect. Seven false rows from a single session — the recurrence rate the improvement-log entry predicted, now measured rather than inferred. |

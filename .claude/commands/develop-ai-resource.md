@@ -8,7 +8,13 @@ argument-hint: "[a need in plain English, a path to an inbox brief, or an existi
 
 Decide whether a durable Axcíon AI resource should exist — skill, reusable prompt, persistent instruction, reference file, command, script or hook — then build, test and demonstrate the smallest one that does.
 
-**Authority (v1).** This is the **standard qualification path for creating a new durable AI resource** — `/create-skill` bounces an unqualified brief back here once, so new-skill work reaches a build engine through this command. It **can also qualify an improvement when deliberately invoked**, and that is the right call when the improvement is large, contested, or might really be a new resource. It is **not** the required route for improvements: `/improve-skill` stays independently reachable in v1 and is not subordinate to this command. An improvement to an already-identified skill has its mechanism question settled, so calling `/improve-skill` directly is the ordinary path, not a bypass.
+**Authority (v1).**
+
+- **Creating a new durable resource** — this is the standard qualification path. `/create-skill` bounces an unqualified brief back here once, so new-resource work reaches a build engine through this command.
+- **Improving an existing skill** — go straight to `/improve-skill` when the skill, the requested improvement and the mechanism are all already identified and settled. That is the ordinary path, not a bypass; `/improve-skill` stays independently reachable in v1.
+- **Qualify the improvement here first** when the underlying need, scope, mechanism or system fit is materially uncertain or contested, or when the improvement may justify a different or a materially expanded resource.
+
+This command is never mandatory or standard for *every* material improvement. The settled-mechanism test above is what decides.
 
 **Boundary vs neighbours.**
 - `/create-skill` and `/improve-skill` are the build engines this command hands skill-class work to at Step 2. `/improve-skill` is additionally an entry point in its own right, per **Authority** above.
@@ -38,7 +44,9 @@ accept the limitation → change an operating habit or information flow → norm
 
 A thinking aid — go straight to a later rung when the evidence warrants it.
 
-**1.5 Apply the complexity budget** when the verdict is a **new or materially expanded** durable component. Read `docs/ai-resource-creation.md` rule #7 and apply it insofar as it stays compatible with the governing specification and foundational principles — a consequential one-off need can qualify without a prescribed log entry. Where rule #7 and the specification genuinely conflict, bring the conflict to the operator and ask which governs; `/risk-check` judges premise and consequence, not which document wins.
+**1.5 Apply the complexity budget** when the verdict is a **new or materially expanded** durable component. Read `docs/ai-resource-creation.md` rule #7 and apply it insofar as it stays compatible with the governing specification and the foundational principles at `projects/repo-documentation/vault/principles/principles.md` — a consequential one-off need can qualify without a prescribed log entry.
+
+Where two applicable authoritative sources appear to conflict, establish precedence first: the governing specification and the foundational principles set it. Bring the conflict to the operator **only** when the sources genuinely conflict *and* precedence cannot be established that way. `/risk-check` judges premise and consequence, not which document wins.
 
 **1.6 Verdict.** One of: **no build · accept the limitation · normal prompting · change an operating habit · reuse as-is · improve an existing resource · use an external resource · bounded experiment · project-local resource · shared resource · defer** (with a concrete trigger — a date, a quarter or a named event).
 
@@ -57,7 +65,7 @@ A thinking aid — go straight to a later rung when the evidence warrants it.
 - **Prompt, reference file, persistent instruction** → draft directly. Small, bounded, reversible.
 - **Command, script, hook** → build the smallest version; Step 3 selects the verification. Deterministic surfaces get executable tests.
 
-**2.3 Apply the specialist authoring method to any skill-class candidate.** The five practices below are the authoritative Axcíon copy — adapted, not installed, and not tracking upstream. Source: Matt Pocock's `writing-great-skills` (`SKILL.md` + `GLOSSARY.md`) at commit `697d4ce9742da558fd1ba6697c8e9775e2e302dd` of `github.com/mattpocock/skills`, the latest revision touching that path as of 2026-07-26. They cover only what `skills/ai-resource-builder/` leaves uncovered — trigger front-loading, negative triggers, progressive disclosure, required sections and the size budget already live there.
+**2.3 Apply the specialist authoring method to any skill-class candidate.** The five practices below are the authoritative Axcíon copy — adapted, not installed, and not tracking upstream. Source: Matt Pocock's `writing-great-skills` (`SKILL.md` + `GLOSSARY.md`) — **pinned snapshot as of 2026-07-26**, commit `697d4ce9742da558fd1ba6697c8e9775e2e302dd` of `github.com/mattpocock/skills`. That commit is the snapshot boundary, not the authoring revision: it added cross-harness metadata, and the practices below were last materially changed at `af6d6922`. They cover only what `skills/ai-resource-builder/` leaves uncovered — trigger front-loading, negative triggers, progressive disclosure, required sections and the size budget already live there.
 
 - **Leading words.** A compact concept already in the model's pretraining that the agent thinks with while running the skill. Make the steering word load-bearing: *"a weak leading word (be thorough when the agent is already thorough-ish) is a no-op; the fix is a stronger word (relentless), not a different technique."*
 - **Completion criteria as steering.** *"A demanding completion criterion drives thorough legwork."* Each step states the condition that tells the agent the work is done — checkable, and exhaustive where that matters — not merely what to do.

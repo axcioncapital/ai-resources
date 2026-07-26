@@ -290,7 +290,7 @@ Do NOT execute any fixes in this session. Do NOT auto-spawn the execution sessio
   - `/friday-act` — Friday-cadence orchestrator (audit-driven, tier-aware).
   - `/resolve` — post-QC triage (QC-finding-sourced fixes only).
   - `/innovation-sweep` — innovation-registry triage (untriaged detected entries).
-  - `/create-skill` — inbox brief fulfillment (build-shaped items).
+  - `/develop-ai-resource` — inbox brief fulfillment (build-shaped items). It qualifies the need, then hands a qualified brief to `/create-skill`.
 - **No companion execute command.** The plan file is self-explanatory enough that fresh-session Claude can pick it up via natural language. If execution sessions repeatedly need scaffolding, revisit and consider a `/execute-fix-plan` sibling.
 
 $ARGUMENTS

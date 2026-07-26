@@ -206,7 +206,7 @@ Print to chat:
 
 | Recommendation | Bridge |
 |---|---|
-| New skill | `/create-skill` — inbox brief drafted in the analysis file; copy to `ai-resources/inbox/` on approval |
+| New skill | `/develop-ai-resource` — the standard qualification path; it qualifies the need and hands a qualified brief to `/create-skill`. Inbox brief drafted in the analysis file; copy to `ai-resources/inbox/` on approval. The brief written here carries no `**Mechanism:**`/`**Evidence:**` field, so it is raw by construction — that is expected. |
 | New command / agent / hook / other structural class | Plan's Gates name the `/risk-check` class; the bridge repeats it |
 | Extend existing resource (non-class) | The plan is the execution spec — run it on approval or in a follow-up session |
 | PARK | Logged to `improvement-log.md` with a concrete Review-cycle trigger |

@@ -17,7 +17,9 @@ I am Patrik, a non-developer. Explain technical details in plain language. Commi
 
 ## Skill Creation and Improvement
 
-`/develop-ai-resource` is the standard qualification path for **creating** a new durable resource — it answers whether one should exist and in what form, and can end in no build. It also qualifies an **improvement** when deliberately invoked, which is worth doing when the improvement is large, contested, or might really be a new resource. It is not the only entry point: `/improve-skill` stays directly available for an already-identified skill, where the mechanism question is settled.
+**Creating** a new durable resource: `/develop-ai-resource` is the standard qualification path — it answers whether one should exist and in what form, and can end in no build.
+
+**Improving** an existing skill: go straight to `/improve-skill` when the skill, the requested improvement and the mechanism are already identified and settled. Qualify through `/develop-ai-resource` first when the need, scope, mechanism or system fit is materially uncertain or contested, or when the improvement may justify a different or materially expanded resource. `/develop-ai-resource` is not mandatory or standard for every material improvement.
 
 See `skills/ai-resource-builder/SKILL.md` for skill format, creation sequence, improvement sequence, and quality-check framework. `/create-skill` and `/improve-skill` read that SKILL.md at invocation.
 

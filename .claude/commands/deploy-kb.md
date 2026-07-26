@@ -19,7 +19,7 @@ Identify two paths:
 
 Set `SKILL_TEMPLATES` to `{AI_RESOURCES}/skills/obsidian-kb-builder/templates/`.
 
-Verify `{SKILL_TEMPLATES}scaffold/` and `{SKILL_TEMPLATES}note-templates/` exist. If either is missing, stop and report: "obsidian-kb-builder skill templates not found — run `/create-skill obsidian-kb-builder` first."
+Verify `{SKILL_TEMPLATES}scaffold/` and `{SKILL_TEMPLATES}note-templates/` exist. If either is missing, stop and report: "obsidian-kb-builder skill templates not found — build the skill first with `/develop-ai-resource obsidian-kb-builder`, which qualifies the need and hands off to `/create-skill`."
 
 ## Step 2: Collect inputs
 

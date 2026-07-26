@@ -64,4 +64,4 @@ Show Patrik the brief content. Then ask: "Ready to build this? I'll run `/develo
 
 On confirmation, proceed to `/develop-ai-resource`, passing the brief file path. It establishes whether a skill is the right mechanism and hands a qualified brief to `/create-skill`. A brief written here carries no `**Mechanism:**` or `**Evidence:**` field, so it is raw by construction — that is expected, and it is what `/develop-ai-resource` supplies.
 
-No session switch needed — `ai-resources/` is connected via `--add-dir`, so the full creation pipeline runs from the current workspace.
+**Command availability.** `--add-dir` on `ai-resources/` grants file access and loads `.claude/skills/` from it — it does **not** load `.claude/commands/`. A same-session handoff therefore works only when `/develop-ai-resource` and `/create-skill` are already present in this project's own `.claude/commands/`, which the shared-resource sync provides as symlinks to canonical. Check before promising a handoff: if the commands are absent, the brief still lands in `inbox/` and is fulfilled from a session that does have them.

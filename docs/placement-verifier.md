@@ -4,7 +4,7 @@
 >
 > **Why this exists:** `/placement` returns a routing recommendation in chat, then pipelines `Write` files independently. Without verification, recommendation and write can diverge silently — the file lands somewhere other than the recommended canonical home, and no gate catches the mismatch. This procedure closes that gap. It is the structural counterpart to `/placement`: `/placement` advises, this procedure verifies.
 >
-> **Scope at v1:** Integrated into `/graduate-resource` only (the highest-leverage pipeline per the originating plan). Extension to `/create-skill`, `/improve-skill`, `/migrate-skill`, `/new-project` is deferred to `/friday-act` triage gated on observed placement misses, per `principles.md § DR-7` (generalize only when a second confirmed consumer exists).
+> **Scope at v1:** Integrated into `/graduate-resource` only (the highest-leverage pipeline per the originating plan). Extension to `/create-skill`, `/improve-skill`, `/migrate-skill`, `/new-project` is deferred to `/friday-act` triage gated on observed placement misses, per `projects/repo-documentation/vault/principles/principles.md § DR-7` (generalize only when a second confirmed consumer exists; workspace-relative path — the principles vault is not inside this repo).
 
 ---
 

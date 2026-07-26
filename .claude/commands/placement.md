@@ -66,9 +66,10 @@ This command is **not** auto-wired into `/create-skill` or any other pipeline. O
 9. Identify any **paired files** that must be edited or created in the same commit (e.g., a new command may need: command file + agent definition + entry in `audit-discipline.md` + reference in workspace CLAUDE.md).
 
 10. Identify the relevant **creation pipeline**, if any:
-    - New durable resource whose *existence* or *mechanism* is not yet settled → `/develop-ai-resource` (it qualifies the need, then hands a qualified brief to the build engine below). Name the expected engine alongside it.
+    - New durable resource → `/develop-ai-resource` (the standard qualification path; it qualifies the need, then hands a qualified brief to the build engine below). Name the expected engine alongside it.
     - New skill, already qualified → `/create-skill`
-    - Existing skill modification → `/improve-skill` (directly — an already-identified skill has its mechanism settled)
+    - Existing skill modification, mechanism settled → `/improve-skill` directly — use this when the skill, the requested improvement and the mechanism are all already identified.
+    - Existing skill modification, mechanism unsettled → `/develop-ai-resource` — use this when the need, scope, mechanism or system fit is materially uncertain or contested, or when the change may justify a different or materially expanded resource.
     - Skill arriving from Claude Chat → `/migrate-skill`
     - New project → `/new-project`
     - Graduation from project to ai-resources → `/graduate-resource`
