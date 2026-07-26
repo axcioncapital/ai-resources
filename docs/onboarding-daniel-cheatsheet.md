@@ -49,7 +49,7 @@
 | Command | Purpose | When to fire |
 |---|---|---|
 | `/deploy-kb` | Deploy an Obsidian knowledge base vault | Phase where KB is deployed |
-| `/create-skill` | Build a new skill through the canonical pipeline | Phase where role-play skill is built |
+| `/develop-ai-resource` | Qualify a new skill or resource — whether it should exist and in what form — then hand a qualified brief to the build engine (`/create-skill`) | Phase where role-play skill is built |
 | `/request-skill` | File a skill request brief to ai-resources inbox | When you identify a skill gap mid-project |
 
 ### Logging

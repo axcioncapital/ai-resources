@@ -108,7 +108,7 @@
 | **Workflow template** (graduated from `workflows/active/`) | `ai-resources/workflows/<name>/` | Graduated via `/graduate-resource`. |
 | **Obsidian KB vault** (cross-project reuse) | `knowledge-bases/<name>/` | Deployed via `/deploy-kb` standalone option. Project-scoped vaults instead live under `projects/<project>/vault/`. |
 | **Style reference** (style/formatting source) | `ai-resources/style-references/<name>.md` | Loaded by prose/formatting skills. |
-| **Skill request brief** (intake) | `ai-resources/inbox/<slug>-brief.md` | Moved to `inbox/archive/` once `/create-skill` fulfills it. |
+| **Skill request brief** (intake) | `ai-resources/inbox/<slug>-brief.md` | Qualified by `/develop-ai-resource`, which hands a qualified brief to the build engine. Moved to `inbox/archive/` once the build engine fulfills it — or, when the operator accepts a no-build / reuse / rejection / deferral disposition, archived with a one-line disposition note (a deferral names its reopening trigger). |
 | **Plan artifact** (retained from a session) | `ai-resources/plans/<name>.md` (in-repo) **or** `~/.claude/plans/<auto-slug>.md` (Claude Code plan-mode default; outside repo) | Retain in-repo when load-bearing; otherwise let plan-mode default location apply. |
 | **Workspace-level rule (cross-project)** | `~/Claude Code/Axcion AI Repo/CLAUDE.md` | Always loaded in every workspace session. |
 | **ai-resources project rule** | `ai-resources/CLAUDE.md` | Always loaded in ai-resources sessions. |

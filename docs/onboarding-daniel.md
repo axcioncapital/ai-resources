@@ -289,7 +289,7 @@ Two different types of AI resources exist in this system. Understanding the diff
 - They encode a specific methodology — how to write a certain type of document, how to evaluate quality against a rubric, how to run a specific analytical task
 - Skills are loaded automatically when a task matches their trigger, or explicitly by commands
 - You rarely invoke them directly — commands call them internally
-- **Key rule:** never edit a skill file from inside a project. If a skill needs changing, the change goes to `ai-resources/skills/` directly. Patrik handles this through `/create-skill` and `/improve-skill`.
+- **Key rule:** never edit a skill file from inside a project. If a skill needs changing, the change goes to `ai-resources/skills/` directly. Patrik handles this: a **new** skill is qualified through `/develop-ai-resource`, which decides whether it should exist and then hands a qualified brief to `/create-skill`; a settled change to an existing skill goes through `/improve-skill`.
 
 **One line:** commands are what you type; skills are what Claude knows how to do.
 

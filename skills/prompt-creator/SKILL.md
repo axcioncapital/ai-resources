@@ -6,7 +6,8 @@ description: >
   for," "write a prompt that," "help me prompt Claude to," or when a task
   description is provided with an explicit expectation of a reusable prompt as
   output. Do NOT use for: research execution prompts (use research-prompt-creator),
-  SKILL.md creation or editing (use create-skill / improve-skill), CLAUDE.md
+  SKILL.md creation or editing (use develop-ai-resource for a new skill,
+  improve-skill to change an existing one), CLAUDE.md
   rules or project instructions (use update-claude-md), or CustomGPT / Perplexity
   prompt formats (these follow tool-specific conventions in their respective skills).
 model: sonnet

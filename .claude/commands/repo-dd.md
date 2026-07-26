@@ -177,7 +177,7 @@ Steps 8-14 run only when $ARGUMENTS contains "deep" or "full". They produce a se
     - Research pipeline: /run-preparation through /produce-knowledge-file
     - Project setup pipeline: /new-project through /session-guide
     - Session lifecycle: /prime → [work] → /wrap-session
-    - Skill management: /request-skill → /create-skill → /improve-skill
+    - Skill management: /request-skill → /develop-ai-resource → /create-skill → /improve-skill
     - Workflow management: /deploy-workflow → /sync-workflow
     For each chain, identify the single point of failure — the component whose breakage has the widest blast radius.
 38. Check for untracked dependencies — features that are load-bearing by convention but not by file reference. Examples: CLAUDE.md behavioral sections that shape every session, symlink conventions that deployments depend on, commit message formats that hooks parse.

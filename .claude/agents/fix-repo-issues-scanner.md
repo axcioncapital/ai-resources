@@ -104,7 +104,7 @@ For each item, set `item_type` to one of `fix` / `build` / `watch` using its sou
   - `logs/session-notes.md` Open Questions (T2, recent)
   - `logs/decisions.md` T2 (Defer + Trigger fired)
   - `logs/innovation-registry.md` rows classified T1 fix-shaped (`triaged:broken-symlink`, fresh `pending-triage` ≤7d) or T2 hygiene (stale-status flip)
-- `build` — separate `/create-skill` (or equivalent build) session, not a fix-plan item:
+- `build` — separate `/develop-ai-resource` (qualification, which then hands off to the build engine) or equivalent build session, not a fix-plan item:
   - Any `inbox/*.md` brief
 - `watch` — parked / threshold / stale, no current action:
   - `logs/improvement-log.md` T3 (logged / pending / proposed)
@@ -196,7 +196,7 @@ Top candidates by type (up to 10 total, by priority then age within each type):
     id-NN | {tier} | {priority_signal or -} | {age_days}d | {source-shortname} | {one-line desc, max 80 chars}
     ...
 
-  Build-shaped (separate /create-skill or build session):
+  Build-shaped (separate /develop-ai-resource or build session):
     id-NN | {tier} | {priority_signal or -} | {age_days}d | {source-shortname} | {one-line desc}
     ...
 

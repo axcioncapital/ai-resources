@@ -111,8 +111,9 @@ Session 2 order: F4 `/friday-act` → F5 graduate resource review → F6 harness
 ## On-Demand — As Needed
 
 - **`/request-skill`** — Skill gap surfaces during work? Capture the need to `inbox/`.
-- **`/create-skill`** — Build a new skill through the canonical pipeline.
-- **`/improve-skill`** — Modify an existing skill through the canonical pipeline.
+- **`/develop-ai-resource`** — Standard qualification path for a **new** durable resource: whether it should exist and in what form. Can end in no build, reuse or a deferral; otherwise hands a qualified brief to the build engine.
+- **`/create-skill`** — Build a new skill from a qualified brief.
+- **`/improve-skill`** — Modify an existing skill through the canonical pipeline. Direct when the skill, the improvement and the mechanism are settled; qualify through `/develop-ai-resource` first when they are not.
 - **`/migrate-skill`** — Convert an existing Chat prompt into a Claude Code skill.
 - **`/graduate-resource`** — Promote a project-level resource to the shared library.
 - **`/new-project`** — Create a new project through the project pipeline.

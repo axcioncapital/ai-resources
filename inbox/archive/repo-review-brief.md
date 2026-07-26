@@ -1,5 +1,7 @@
 # Build Brief: /repo-review Command
 
+> **Disposition — 2026-07-26: reuse as-is / no build. Operator accepted.** `/repo-dd deep` already answers all four questions here — Steps 9, 10, 11 and 13, gated by the `deep` and `full` tiers — and produces the judgment and prioritised recommendations this brief assumed it lacked. The brief is the artifact of a decision superseded on the day it was written: it and the `/repo-dd` deep tier were added in the same commit (`27b2485`, 2026-04-06), whose `logs/decisions.md` records *"Merged /repo-dd-deep into /repo-dd as depth levels"* superseding *"/repo-dd and /repo-review are separate commands"*. Qualified through `/develop-ai-resource`; no candidate built. Not a deferral — no reopening trigger.
+
 ## What This Is
 A reusable command for periodic operational health assessment of the Axcion AI workspace. Complements `/repo-dd` (structural audit) with a judgment layer that `/repo-dd` deliberately excludes.
 

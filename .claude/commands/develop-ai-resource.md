@@ -44,7 +44,9 @@ accept the limitation → change an operating habit or information flow → norm
 
 A thinking aid — go straight to a later rung when the evidence warrants it.
 
-**1.5 Apply the complexity budget** when the verdict is a **new or materially expanded** durable component. Read `docs/ai-resource-creation.md` rule #7 and apply it insofar as it stays compatible with the governing specification and the foundational principles at `projects/repo-documentation/vault/principles/principles.md` — a consequential one-off need can qualify without a prescribed log entry.
+**1.5 Apply the complexity budget** when the verdict is a **new or materially expanded** durable component. Read `docs/ai-resource-creation.md` rule #7 and apply it insofar as it stays compatible with the governing specification and the foundational principles at `{WORKSPACE}/projects/repo-documentation/vault/principles/principles.md` — a consequential one-off need can qualify without a prescribed log entry.
+
+`{WORKSPACE}` is the Axcíon AI Repo root: resolve it by ancestor walk-up from the session directory — the nearest ancestor holding both `ai-resources/` and `projects/` — the same idiom `auto-sync-shared.sh` and `/reconcile` use. The principles vault lives at the workspace layer, not inside this repo, so a repo-relative path resolves from neither an `ai-resources` session nor a project session. If the walk-up finds no such ancestor, say the principles were unreachable and proceed on `docs/ai-resource-creation.md` rule #7 alone — do not infer their content.
 
 Where two applicable authoritative sources appear to conflict, establish precedence first: the governing specification and the foundational principles set it. Bring the conflict to the operator **only** when the sources genuinely conflict *and* precedence cannot be established that way. `/risk-check` judges premise and consequence, not which document wins.
 
@@ -118,9 +120,11 @@ The operator then chooses **Ship** (adopt via normal integration practice) · **
 
 **When no candidate was built,** give the recommendation, the evidence, and the existing capability or habit that serves the need instead. The operator chooses **Accept** or **Reconsider with additional evidence**.
 
+**Closing an `inbox/` brief.** When the input was a brief in `inbox/` and the operator accepts a disposition of **no build · reuse as-is · rejection · deferral**, move the brief to `inbox/archive/` — the same convention a fulfilled brief follows. Add one line at the top of the archived file: the date, the disposition, and the reason in a clause. For a **deferral**, that line names the concrete trigger that would reopen it — a date, a quarter or a named event. The intake queue then holds only briefs still awaiting a decision. No register, tracker or status file.
+
 Where the recommendation is an external resource, state which is proposed — **reference without installing · install or enable · adapt or copy into Axcíon · use only its method now**. Each is a separate decision.
 
-**Completion criterion:** candidate built — before/after demonstrated and a disposition obtained. No candidate — recommendation explained, and accepted or reconsidered.
+**Completion criterion:** candidate built — before/after demonstrated and a disposition obtained. No candidate — recommendation explained, and accepted or reconsidered. Either way, if the input was an `inbox/` brief, it has left the intake queue.
 
 ---
 

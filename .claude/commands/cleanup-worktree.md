@@ -160,6 +160,6 @@ If any step fails in a way not covered by the plan's abort scope:
 - **Running `/wrap-session`.** Separate command, separate invocation.
 - **Workspace health audit.** Use `/audit-repo`.
 - **Structural or judgment audit of repo contents.** Use `/repo-dd`.
-- **Creating or modifying skills.** Use `/create-skill` or `/improve-skill`.
+- **Creating or modifying skills.** Use `/develop-ai-resource` for a new resource (it qualifies the need, then hands off to the build engine) or `/improve-skill` for a settled improvement to an existing skill.
 - **Single-file commits.** Regular commit flow.
 - **Running during an active content-production session.** Cleanup is a dedicated session, not a sidebar.

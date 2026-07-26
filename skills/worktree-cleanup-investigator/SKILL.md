@@ -38,7 +38,8 @@ Trigger on any of these operator statements:
 | Workspace-level health audit (file org, skill inventory, settings) | `/audit-repo` / `repo-health-analyzer` |
 | Structural or judgment audit of repo contents | `/repo-dd` |
 | Active content-production session needs to commit the current turn's work | Regular commit flow |
-| Creating or modifying a skill | `/create-skill` / `/improve-skill` |
+| Creating a new skill or resource | `/develop-ai-resource` — qualifies the need, then hands off to the build engine |
+| Modifying an existing skill | `/improve-skill` (settled improvement) |
 | Pushing to remote | Manual — push stays manual per project rules |
 
 This skill is for dedicated cleanup sessions where the dirt predates the current session and the operator needs a structured pass over it — not for routine commits or for audits that don't touch git state.

@@ -4,7 +4,7 @@
 
 This repo stores AI resources — primarily skills (SKILL.md files under `skills/`), plus prompts, docs, templates, and audit/log artifacts. Non-obvious conventions:
 
-- **Inbox flow:** resource briefs land in `inbox/` (created via `/request-skill` in project sessions, picked up by `/develop-ai-resource` here, which qualifies the need and hands a qualified brief to `/create-skill`); fulfilled briefs move to `inbox/archive/` to clear the intake queue without losing the record.
+- **Inbox flow:** resource briefs land in `inbox/` (created via `/request-skill` in project sessions, picked up by `/develop-ai-resource` here, which qualifies the need and hands a qualified brief to `/create-skill`); fulfilled briefs move to `inbox/archive/` to clear the intake queue without losing the record. A brief the operator dispositions as **no build, reuse as-is, rejection or deferral** is archived the same way, with a one-line disposition note at the top — and, for a deferral, the concrete trigger that would reopen it. `inbox/` holds only briefs still awaiting a decision.
 - **`templates/`** holds canonical deployable fragments consumed at scaffold time (project settings + project CLAUDE.md sections) — edit the fragment, not the consuming command. See `templates/README.md` for the consumer contract.
 - **`logs/`** includes the output-quality `defect-log.md` — see `docs/defect-to-fix-loop.md` for the rule/eval/example closure loop.
 - **Session telemetry (`usage-log.md`)** is written by `/usage-analysis` into each *consuming project's* `logs/` directory — `logs/usage-log.md` here records ai-resources sessions only; there is no single cross-project usage log.
