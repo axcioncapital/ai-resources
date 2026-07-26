@@ -128,12 +128,15 @@ Both modes append entries in this shape. It conforms to the `## Schema` block of
 
 - **Status:** logged (pending)
 - **Category:** session-issue
+- **Severity:** {low | medium | medium-high | high | critical}
 - **Source:** {AUTO: "/resolve-repo-problem AUTO mode YYYY-MM-DD" | MANUAL: "/resolve-repo-problem YYYY-MM-DD"}
 - **Friction source:** {1-2 sentences — what was expected, what happened, which command/hook/rule was involved}
 - **Proposal:** {AUTO: the single recommended fix, 2-4 sentences, naming target files, flagging if the fix is itself a /risk-check change class | MANUAL: a 2-4 sentence summary of the subagent's recommended option}
 - **Target files:** {files to edit when the fix is executed}
 - **Notes:** {MANUAL only — the audits/working/ notes path; omit this field entirely in AUTO mode}
 ```
+
+**`Severity:` is mandatory.** `/prime` Step 3's orientation scan anchors on `^-? ?\*\*Severity:\*\*` and surfaces only `high` / `medium-high` / `critical` entries as task-menu candidates, so an entry written without the field is **unreachable** by the one channel that turns findings into shipped work — not low-priority, invisible. Rate the issue honestly; triage happens downstream. Vocabulary: `logs/improvement-log.md` § Schema.
 
 `Category: session-issue` is a recognised value under the schema's free-text "broad classification" definition. If `{scope}/logs/improvement-log.md` does not exist, create it first with the `# Improvement Log` header followed by the `## Schema` block copied from the canonical `ai-resources/logs/improvement-log.md`, then append the entry.
 

@@ -152,12 +152,15 @@ For a PARK outcome, append one `logged (pending)` entry to `{AI_RESOURCES}/logs/
 
 - **Status:** logged (pending)
 - **Category:** command/skill (leverage-idea PARK)
+- **Severity:** {low | medium | medium-high | high | critical}
 - **Review-cycle:** reviewed {DATE}, deferred to → {concrete trigger — a date, a quarter, or a named event}
 - **Friction source:** {the idea + why it is parked rather than built now}
 - **Proposal:** {the parked idea in 2–4 sentences; note the strongest leverage option for if it is revisited}
 - **Target files:** {likely attach point(s) if built later}
 - **Notes:** analysis — {ANALYSIS_PATH}
 ```
+
+**`Severity:` is mandatory, and it is independent of parking.** A parked idea still carries its true severity — deferral is expressed by `Review-cycle:`, never by omitting or deflating `Severity`. The field has a machine consumer: `/prime` Step 3 anchors on `^-? ?\*\*Severity:\*\*` and surfaces only `high` / `medium-high` / `critical` entries as task-menu candidates, so a PARK entry written without it is **unreachable** rather than merely low-priority. This path has already shipped one such entry (`2026-07-21 — PowerPoint production capability`). Vocabulary: `logs/improvement-log.md` § Schema.
 
 The `Review-cycle:` trigger is a **hard requirement, not a guideline** — it must be concrete (a date, a quarter, or a named event), never "later"/"someday". A park with no real trigger never drains, and `/resolve-improvement-log` Step 3b rejects a vague trigger. This shape matches the schema `/resolve-improvement-log` archives against.
 

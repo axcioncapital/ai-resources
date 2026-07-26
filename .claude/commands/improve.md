@@ -41,6 +41,7 @@ Run the improvement analyst to review this session's friction and suggest workfl
      ### {YYYY-MM-DD} — {finding title}
      - **Status:** applied
      - **Category:** {category}
+     - **Severity:** {low | medium | medium-high | high | critical}
      - **Friction source:** {which friction entry triggered this}
      - **What changed:** {description of what was created or modified}
      ```
@@ -51,9 +52,12 @@ Run the improvement analyst to review this session's friction and suggest workfl
      ### {YYYY-MM-DD} — {finding title}
      - **Status:** logged (pending)
      - **Category:** {category}
+     - **Severity:** {low | medium | medium-high | high | critical}
      - **Friction source:** {which friction entry triggered this}
      - **Proposal:** {the full proposal text from the analyst}
      ```
+
+   **`Severity` is mandatory on both templates above, not optional.** `/prime` Step 3's orientation scan anchors on `^-? ?\*\*Severity:\*\*` and surfaces only `high` / `medium-high` / `critical` entries as task-menu candidates. An entry written without the field is not low-priority — it is **unreachable** by the one channel that converts findings into shipped work, and nothing announces the drop. Schema and vocabulary: `logs/improvement-log.md` § Schema.
 
    **For dismissed items:** no action.
 
