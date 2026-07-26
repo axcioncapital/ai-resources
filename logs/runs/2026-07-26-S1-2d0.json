@@ -1,0 +1,77 @@
+{
+  "run_id": "2026-07-26-S1-2d0",
+  "project": "ai-resources",
+  "date": "2026-07-26",
+  "marker": "S1-2d0",
+  "model": "claude-opus-5[1m]",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md#2026-07-26-S1-2d0",
+  "mission": "repo-integrity-repairs-2026-07",
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    ".claude/commands/leverage-idea.md",
+    ".claude/commands/improve.md",
+    ".claude/commands/resolve-repo-problem.md",
+    ".claude/commands/resolve-incident.md",
+    ".claude/commands/fix-project-issues.md",
+    ".claude/commands/new-project.md",
+    "logs/missions/repo-integrity-repairs-2026-07.md",
+    "logs/improvement-log.md",
+    "logs/session-plan-2026-07-26-S1-2d0.md",
+    "logs/session-notes.md",
+    "logs/decisions.md",
+    "logs/scratchpads/2026-07-26-S1-2d0-scratchpad.md",
+    "../projects/axcion-ai-system-owner/logs/scripts/check-archive.sh",
+    "../projects/axcion-ai-system-owner/logs/scripts/split-log.sh",
+    "../projects/axcion-ai-system-redesign/logs/scripts/check-archive.sh",
+    "../projects/axcion-ai-system-redesign/logs/scripts/split-log.sh",
+    "../projects/axcion-communication-system/logs/scripts/check-archive.sh",
+    "../projects/axcion-communication-system/logs/scripts/split-log.sh",
+    "../projects/axcion-copy-factory/logs/scripts/check-archive.sh",
+    "../projects/axcion-copy-factory/logs/scripts/split-log.sh",
+    "../projects/axcion-design-studio/logs/scripts/check-archive.sh",
+    "../projects/axcion-design-studio/logs/scripts/split-log.sh",
+    "../projects/axcion-linkedin-os/logs/scripts/check-archive.sh",
+    "../projects/axcion-linkedin-os/logs/scripts/split-log.sh",
+    "../projects/axcion-pitch-engine/logs/scripts/check-archive.sh",
+    "../projects/axcion-pitch-engine/logs/scripts/split-log.sh",
+    "../projects/axcion-systems-builder/logs/scripts/check-archive.sh",
+    "../projects/axcion-systems-builder/logs/scripts/split-log.sh",
+    "../projects/axcion-website/logs/scripts/check-archive.sh",
+    "../projects/axcion-website/logs/scripts/split-log.sh",
+    "../projects/corporate-identity/logs/scripts/check-archive.sh",
+    "../projects/corporate-identity/logs/scripts/split-log.sh",
+    "../projects/management-os/logs/scripts/check-archive.sh",
+    "../projects/management-os/logs/scripts/split-log.sh",
+    "../projects/repo-documentation/logs/scripts/check-archive.sh",
+    "../projects/repo-documentation/logs/scripts/split-log.sh",
+    "../projects/strategic-os/logs/scripts/check-archive.sh",
+    "../projects/strategic-os/logs/scripts/split-log.sh"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-26-operator-s-risk-check-waiver-applied-to-both-the"
+  ],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": null,
+  "incidents_refs": []
+}

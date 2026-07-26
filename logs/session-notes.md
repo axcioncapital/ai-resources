@@ -268,3 +268,36 @@ None — no new findings surfaced this session outside the improvement-log entri
 **Premise corrections established before execution (re-verified, not inherited from the thread text).** (a) The unprovisioned count is **14 of 27**, not the thread's 13 — `personal/` joined. (b) The thread's "walk-up" framing is false: `wrap-session.md:31` calls `bash logs/scripts/check-archive.sh` on a plain relative path, so in the 14 projects the call fails outright and their logs have never been archived. (c) The 13 provisioned copies are **not** broken — they resolve `PROJECT_DIR` from their own location, which is correct for a local copy, and several carry deliberate customisation (`axcion-brand-book` uses 1500/700 thresholds against canonical 500/400). Replacing or symlinking them would destroy real settings, so they are out of scope. (d) Disclosed consequence, operator-approved: provisioning switches archiving **on**, so at the next wrap four projects (`axcion-website` 1861 lines, `axcion-design-studio` 1065, `axcion-ai-system-redesign` 684, `strategic-os` 512) will have session notes trimmed to the last 10 entries with the remainder moved to an archive file.
 
 Auto multi-item: writer-sweep for the three `Severity`-less improvement-log writers (mission thread 10); `logs/scripts/` provisioning for the 14 projects lacking it plus the `new-project.md` scaffold fix (mission thread 2).
+
+### Summary
+
+Ran the two `/prime` auto-mode items picked at session start, both closing threads on mission `repo-integrity-repairs-2026-07`. Item 1 (writer-sweep) turned out to cover five writers, not the three the source entry named — found by enumerating every improvement-log append-site rather than trusting the list. Item 2 (provisioning) turned out to be 13 real projects, not 14, and its "wrong-repo write" framing was false — the actual defect was that unprovisioned projects never archived at all. Both threads closed with cited evidence; the mission moved from 11 to 13 of 16 threads closed.
+
+### Decisions Made
+
+- **Writer-sweep scope, item 1.** The mandate named three writers (from the source improvement-log entry). Before writing anything, enumerated every file that appends to `improvement-log.md` and found five — `resolve-incident.md` and `fix-project-issues.md` were missing from the list. Fixed all five rather than the three named, since closing on the incomplete list would have been a second false closure on the same thread (already reverted once, 2026-07-25, for exactly that).
+- **`resolve-incident.md` fix triggered its own stated obligation.** That file's line 199 declares a verbatim field-name contract requiring it be updated *in the same commit* whenever the schema block it points to changes. The first writer-sweep commit changed that schema and didn't honor the contract; a second commit did.
+- **Severity backfill for the one remaining unclassified entry.** The `2026-07-21 — PowerPoint production capability` entry (the writer-sweep defect's own live demonstration case) was backfilled at `medium`, not `high` — it is a deliberately parked capability with a real activation trigger, and `medium` lets it surface via its `Review-cycle:` without being promoted into the urgent task menu that `high`/`medium-high` would trigger.
+- **`personal/` dropped from provisioning, item 2.** The mandate's Required-outputs list named 14 projects including `personal/`. On inspection it is a completely empty directory — no `CLAUDE.md`, no `.claude/`, no `logs/`, not its own git repo. Provisioning it would have been infrastructure for a consumer that does not exist. Dropped under the mandate's own stop-if clause rather than built. Real count: 13 of 26 real projects.
+- **Copy, not symlink, for the 13 provisioned projects.** Several existing `logs/scripts/` copies elsewhere in the repo carry deliberate customisation (`axcion-brand-book` runs 1500/700-line thresholds against canonical 500/400). Symlinking would silently remove that ability. Copies match the established topology.
+- **The 13 already-provisioned projects were left untouched, including divergent ones.** They resolve their archive target from their own location, which is correct for a local copy — the wrong-repo defect only bit projects with no local copy. Normalising them was judged destructive churn, not a fix, and was out of scope by the mandate.
+- **Operator's "skip risk check" instruction applied to both the plan-time and end-time gate.** Item 2 (project-creation automation, 14-repo writes) is a `/risk-check` change class. The operator's mid-session reply — "go both but skip risk check" — was recorded as a plan-time waiver in the mandate block. At wrap, `/wrap-session` Step 12b's end-time gate would ordinarily fire on the same change class; treated as covered by the same instruction rather than re-asking, consistent with the prior session's (S3-4fd) explicit pattern of extending an operator waiver to both checkpoints. Not a self-waiver — the underlying authorization is the operator's own words, applied to its natural symmetric checkpoint.
+
+### Risky actions
+
+Cross-repo writes into 13 project repos (creating `logs/scripts/check-archive.sh` + `split-log.sh` where absent — additive only, no existing file overwritten, verified by pre-flight before each write) under an operator-authorized `/risk-check` waiver; no independent QC-pass ran on either item, per this session's standing instruction not to use the Agent tool unless asked. Verification was inline and execution-based throughout (fixture tests, byte-comparison against canonical, falsification tests with declared-first expectations, a mandatory pre-flight refusing to overwrite). No destructive action was taken or nearly taken.
+
+### Next Steps
+
+- Mission `repo-integrity-repairs-2026-07`: 13 of 16 threads closed. 3 remain open (9, 12, 14).
+- 33 commits are unpushed across 14 repos, pending this wrap's push-gate confirmation.
+- **Two repos need an operator decision before they can be pushed:** `axcion-ai-system-redesign` has no upstream configured and no remote at all; `axcion-pitch-engine` has a remote (`origin`) but no upstream branch set. Both will need `git push -u origin main` (or equivalent) rather than a bare `git push`.
+- Four projects now exceed canonical archive thresholds and will archive at their own next wrap — expected, not a defect: `axcion-website`, `axcion-design-studio`, `axcion-ai-system-redesign`, `strategic-os`.
+
+### Open Questions
+
+- Does `axcion-ai-system-redesign` need a GitHub remote created, or is it intentionally local-only? It currently has no remote configured at all, so its 2 unpushed commits (including this session's) cannot be pushed until that's resolved.
+
+### Findings Declined
+
+- **Recurring "incomplete source set" pattern (this session's two instances: the three-writers list was five; the 13-vs-14 project count).** Already tracked as a named class by the `2026-07-24` and `2026-07-25` improvement-log entries. Declined a new entry — this session's instances are corroborating evidence, recorded inline in the mission thread closures (`logs/missions/repo-integrity-repairs-2026-07.md` threads 2 and 10) rather than duplicated as a fresh log entry.

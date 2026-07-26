@@ -177,3 +177,16 @@
 **Alternatives considered.** (i) Drop item 1 from the wave, ship the other four — offered to the operator as the no-gate-needed alternative; declined. (ii) Run `/risk-check` anyway despite the standing no-Agent-tool instruction — not offered as a live option, since it would have required breaking a different explicit instruction from earlier in the session to satisfy this one. (iii) Treat the standing no-Agent-tool instruction as implicitly waiving `/risk-check` too, without asking — rejected; a scope-implied waiver on a mandatory gate is exactly the self-waiver the audit-discipline doc forbids, so I surfaced the conflict instead of resolving it silently.
 
 **Decided by:** the operator, directly and explicitly, after the tradeoff was named. Not a Decision-Point-Posture pick-and-proceed call.
+
+## 2026-07-26 — Operator's risk-check waiver applied to both the plan-time and end-time gate
+
+**Context.** Session S1-2d0 ran auto-mode item 2 (provisioning `logs/scripts/` in 14 projects + a `new-project.md` scaffold edit) — a `/risk-check` "automation with shared-state effects" change class. Mid-session, the conflict between the mandatory gate and the standing no-Agent-tool instruction was surfaced to the operator, who replied "go both but skip risk check." That reply was recorded as a plan-time waiver in the mandate block. At wrap, `/wrap-session` Step 12b's end-time gate would ordinarily fire on the same touched change class.
+
+**Decision.** Treated the operator's instruction as covering the end-time gate too, rather than re-surfacing the same conflict a second time in the same session for the same change.
+
+**Rationale.** The operator's words ("skip risk check") named the gate mechanism, not a specific checkpoint — the plan-time and end-time gates are two invocations of the identical `/risk-check` command against the identical change set already reviewed once. Re-asking would have restated a conflict the operator had already resolved, with no new information since the plan-time ask. The immediately preceding session (S3-4fd, 2026-07-25) established the same pattern explicitly in its own gate-waiver note ("The end-time gate is likewise waived by the same instruction"), so this is applying a precedent already set in this mission, not inventing a new one.
+
+**Alternatives considered.**
+- *Re-ask at wrap time.* Rejected as needless — same change, same operator, same session, no new facts since the plan-time answer.
+- *Treat the plan-time waiver as silently covering the end-time gate without recording the extension.* Rejected — per `docs/audit-discipline.md` § Risk-check change classes, waivers are recorded explicitly rather than inferred; this entry is that record for the symmetric checkpoint.
+- *Run `/risk-check` anyway at wrap, overriding the standing no-Agent-tool instruction.* Not offered as a live option — it would have broken a different explicit session instruction to satisfy this one, the same reasoning the S3-4fd precedent already worked through.
