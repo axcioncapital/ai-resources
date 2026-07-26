@@ -152,3 +152,5 @@
 | 2026-07-24 | hook | /Users/patrik.lindeberg/Claude Code/ai-resources-wave1-correction/.claude/hooks/pre-commit | triaged:not-innovation | — |
 | 2026-07-24 | command | /Users/patrik.lindeberg/Claude Code/ai-resources-wave1-correction/.claude/commands/risk-check.md | triaged:not-innovation | — |
 | 2026-07-24 | command | /Users/patrik.lindeberg/Claude Code/ai-resources-wave1-correction/.claude/commands/contract-check.md | triaged:not-innovation | — |
+| 2026-07-26 | command | .claude/commands/develop-ai-resource.md | detected | — |
+| 2026-07-26 | command | .claude/commands/placement.md | detected | — |

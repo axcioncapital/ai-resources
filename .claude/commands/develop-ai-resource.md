@@ -8,8 +8,10 @@ argument-hint: "[a need in plain English, a path to an inbox brief, or an existi
 
 Decide whether a durable Axcíon AI resource should exist — skill, reusable prompt, persistent instruction, reference file, command, script or hook — then build, test and demonstrate the smallest one that does.
 
+**Authority (v1).** This is the **standard qualification path for creating a new durable AI resource** — `/create-skill` bounces an unqualified brief back here once, so new-skill work reaches a build engine through this command. It **can also qualify an improvement when deliberately invoked**, and that is the right call when the improvement is large, contested, or might really be a new resource. It is **not** the required route for improvements: `/improve-skill` stays independently reachable in v1 and is not subordinate to this command. An improvement to an already-identified skill has its mechanism question settled, so calling `/improve-skill` directly is the ordinary path, not a bypass.
+
 **Boundary vs neighbours.**
-- `/create-skill` and `/improve-skill` are the build engines for skill-class work, invoked from Step 2. An improvement to an already-identified skill may also go straight to `/improve-skill`: the mechanism question is already settled there, so only Step 1.2's evidence check applies.
+- `/create-skill` and `/improve-skill` are the build engines this command hands skill-class work to at Step 2. `/improve-skill` is additionally an entry point in its own right, per **Authority** above.
 - `/placement` remains a standalone advisory route. This command reads the same authoritative placement heuristics when mechanism or location is genuinely open.
 - `/leverage-idea` starts from an idea dump and stops at a plan; `/request-skill` captures a brief for later. This qualifies and builds now.
 - `/risk-check`, `/qc-pass` and `/implementation-triage` are specialist capabilities Step 3 draws on when the claim and consequence warrant it.
@@ -55,7 +57,15 @@ A thinking aid — go straight to a later rung when the evidence warrants it.
 - **Prompt, reference file, persistent instruction** → draft directly. Small, bounded, reversible.
 - **Command, script, hook** → build the smallest version; Step 3 selects the verification. Deterministic surfaces get executable tests.
 
-**2.3 Apply the specialist authoring method to any skill-class candidate.** Read `skills/ai-resource-builder/references/review-principles.md`, which carries the adapted `writing-great-skills` practices with pinned upstream sources; consult the upstream source itself when the candidate's design turns on a practice not covered there. Select only the practices relevant to this candidate and **name which were used**; report the method **unassessed** when the source cannot be reached. This method governs skill *quality* — need validation, mechanism selection, placement, system fit and adoption stay with this command.
+**2.3 Apply the specialist authoring method to any skill-class candidate.** The five practices below are the authoritative Axcíon copy — adapted, not installed, and not tracking upstream. Source: Matt Pocock's `writing-great-skills` (`SKILL.md` + `GLOSSARY.md`) at commit `697d4ce9742da558fd1ba6697c8e9775e2e302dd` of `github.com/mattpocock/skills`, the latest revision touching that path as of 2026-07-26. They cover only what `skills/ai-resource-builder/` leaves uncovered — trigger front-loading, negative triggers, progressive disclosure, required sections and the size budget already live there.
+
+- **Leading words.** A compact concept already in the model's pretraining that the agent thinks with while running the skill. Make the steering word load-bearing: *"a weak leading word (be thorough when the agent is already thorough-ish) is a no-op; the fix is a stronger word (relentless), not a different technique."*
+- **Completion criteria as steering.** *"A demanding completion criterion drives thorough legwork."* Each step states the condition that tells the agent the work is done — checkable, and exhaustive where that matters — not merely what to do.
+- **Premature completion.** Steps still ahead create forward pull that tempts the agent to rush the one in front. Sharpen the current step's completion criterion first; split the sequence only if that fails.
+- **No-op detection.** For every sentence ask *does this change behaviour versus the default?* When one fails, delete the whole sentence rather than trimming words from it.
+- **Negation backfires.** Prohibition drags the forbidden behaviour into context: *"don't think of an elephant"* names the elephant and makes it **more** available. State the positive target wherever a target can be stated. This governs skill *bodies*; a description's negative triggers stay negative — they route, they do not steer.
+
+Apply these while drafting the brief for the engine **and** while reading what the engine returns — not as a post-hoc read. Select only the practices this candidate turns on, and in the Step 4 report **name each practice used and the concrete change it produced**. A practice named without a change it produced is not evidence it was applied. This method governs skill *quality*; need validation, mechanism selection, placement, system fit and adoption stay with this command.
 
 **Qualified brief contract.** The `/request-skill` brief shape (`# Resource Brief:` / Requested / Origin / Capability / Trigger Conditions / Exclusions / Context / Existing Skills Reviewed) plus two required fields:
 

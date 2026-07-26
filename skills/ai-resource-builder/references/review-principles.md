@@ -40,12 +40,4 @@ Each principle states **what to check** and **why it matters**. Evaluators apply
 
 Draft principles from recurrence escalation appear here for operator review. Move approved principles to the appropriate section above; delete rejected ones.
 
-### Adapted from `writing-great-skills` (external method, added 2026-07-26)
-
-Not from recurrence escalation — adapted from Matt Pocock's `writing-great-skills`, inspected 2026-07-26 at `github.com/mattpocock/skills/blob/main/skills/productivity/writing-great-skills/{SKILL.md,GLOSSARY.md}`. Pinned to that date; no automatic updates. These five are the practices this framework did **not** already cover — trigger front-loading, negative triggers, progressive disclosure, required sections and the size budget are already handled above and in `skill-architecture.md`. Applies to skill quality only, never to whether a skill should exist.
-
-- **Leading words:** A compact concept the model already knows, carrying a behavioural principle in the fewest tokens. Check that a skill's steering words are load-bearing — *"a weak leading word (be thorough when the agent is already thorough-ish) is a no-op."*
-- **Completion criteria as steering:** *"A demanding completion criterion drives thorough legwork."* Check that each step states the condition that tells the agent it is done, not merely what to do.
-- **Premature completion:** Visible later steps create forward pull that invites stopping the current step early. Check whether a step's bound is clear enough to survive the next step being in view.
-- **No-op detection:** For every sentence ask *"does it change behaviour versus the default?"* When one fails, delete the whole sentence rather than trimming words from it.
-- **Negation backfires:** *"Don't think of an elephant names the elephant and makes it more available, not less."* Check that prohibitions are rewritten as the positive target wherever the target can be stated.
+(none yet)

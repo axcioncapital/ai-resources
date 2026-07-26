@@ -66,8 +66,9 @@ This command is **not** auto-wired into `/create-skill` or any other pipeline. O
 9. Identify any **paired files** that must be edited or created in the same commit (e.g., a new command may need: command file + agent definition + entry in `audit-discipline.md` + reference in workspace CLAUDE.md).
 
 10. Identify the relevant **creation pipeline**, if any:
-    - New skill → `/create-skill`
-    - Existing skill modification → `/improve-skill`
+    - New durable resource whose *existence* or *mechanism* is not yet settled → `/develop-ai-resource` (it qualifies the need, then hands a qualified brief to the build engine below). Name the expected engine alongside it.
+    - New skill, already qualified → `/create-skill`
+    - Existing skill modification → `/improve-skill` (directly — an already-identified skill has its mechanism settled)
     - Skill arriving from Claude Chat → `/migrate-skill`
     - New project → `/new-project`
     - Graduation from project to ai-resources → `/graduate-resource`
@@ -96,7 +97,7 @@ This command is **not** auto-wired into `/create-skill` or any other pipeline. O
 - {path} — {create | edit} — {one-line purpose}
 {repeat as needed}
 
-**Pipeline:** {/create-skill | /improve-skill | /migrate-skill | /new-project | /graduate-resource | /deploy-workflow | /sync-workflow | none — edit directly}
+**Pipeline:** {/develop-ai-resource → {engine} | /create-skill | /improve-skill | /migrate-skill | /new-project | /graduate-resource | /deploy-workflow | /sync-workflow | none — edit directly}
 
 **Risk-check:** {not required | required: plan-time | required: end-time | required: both} — {one-line reason}
 
