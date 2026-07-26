@@ -278,6 +278,8 @@ All steps are idempotent — re-running `/new-project` on an existing direct pro
 
 8. **No `logs/decisions.md` yet.** Create `logs/` and `logs/decisions.md` **lazily** — only when the first durable decision is actually recorded (`/wrap-session` and `/prime` both tolerate its absence). Do not pre-create the register.
 
+   **But when `logs/` is created — lazily or otherwise — provision `logs/scripts/` with it**, using the same copy block as engineered step 4a. `/wrap-session` Step 3 calls `logs/scripts/check-archive.sh` on a plain relative path with no walk-up, so a direct project that grows a `logs/` directory without `scripts/` fails that step at every wrap and never archives. Deferring the *register* is deliberate; deferring the *archiver* just reproduces the gap this rule exists to close.
+
 9. **Report and hand off.** Report: route = direct; project directory created (no `pipeline/`); lean `CLAUDE.md` written with the route line; `settings.json` (permissions + sanity hook, no auto-sync); `settings.local.json` grant; core command set symlinked (N of 10); git initialized, initial commit left unpushed. Skipped by design: pipeline, Stages 3a–5, Architecture Gate, the `/reconcile` pointer, and the `/repo-dd` / `/analyze-workflow` reminder. Then **author the requested deliverables directly** — research, drafting, and review still happen; they produce deliverables, not governance artifacts.
 
 ## Gate Protocol
@@ -623,8 +625,29 @@ EOF
    fi
    ```
 
+   **Also provision `logs/scripts/`.** `/wrap-session` Step 3 runs `CLAUDE_PROJECT_DIR="$(pwd)" bash logs/scripts/check-archive.sh` on a **plain relative path** — there is no walk-up fallback at that call site. A project without `logs/scripts/` therefore fails that step at every wrap and its logs are never archived. This was true of 13 projects before 2026-07-26, some with session notes over 1800 lines.
+
+   **Copy, do not symlink.** Per-project copies are the established topology and are deliberately customised in several projects (`axcion-brand-book` runs 1500/700 line thresholds against canonical 500/400). A symlink would silently remove that ability.
+
+   ```bash
+   SCRIPTS_DIR="$LOGS_DIR/scripts"
+   CANON_SCRIPTS="ai-resources/logs/scripts"
+   mkdir -p "$SCRIPTS_DIR"
+   for s in check-archive.sh split-log.sh; do
+     if [ ! -f "$SCRIPTS_DIR/$s" ]; then
+       cp "$CANON_SCRIPTS/$s" "$SCRIPTS_DIR/$s" && chmod +x "$SCRIPTS_DIR/$s"
+       echo "Created $SCRIPTS_DIR/$s"
+     else
+       echo "$SCRIPTS_DIR/$s already present — skipping"
+     fi
+   done
+   ```
+
+   `check-archive.sh` locates `split-log.sh` as a sibling in its own directory, so both must be copied together — copying only the first yields a script that fails at the point it tries to archive.
+
    Report in the step output:
    - created `logs/decisions.md` / already present
+   - created `logs/scripts/{check-archive,split-log}.sh` / already present
 
 5. **Initial sync** — run the hook once now so the project starts with all shared commands/agents already linked, instead of waiting for the next session start:
 
