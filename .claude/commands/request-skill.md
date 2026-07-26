@@ -58,8 +58,10 @@ Use lowercase-hyphenated naming for the brief file (e.g., `service-blueprint-dra
 
 ## Step 4: Confirm and Hand Off
 
-Show Patrik the brief content. Then ask: "Ready to create this skill? I'll run `/create-skill` with this brief."
+This command captures a brief for later fulfilment; qualification happens when the brief is fulfilled.
 
-On confirmation, proceed directly to `/create-skill`. The brief in `inbox/` serves as the resource brief that `/create-skill` Step 1 expects. Pass the brief file path so `/create-skill` can read it.
+Show Patrik the brief content. Then ask: "Ready to build this? I'll run `/develop-ai-resource` with this brief."
+
+On confirmation, proceed to `/develop-ai-resource`, passing the brief file path. It establishes whether a skill is the right mechanism and hands a qualified brief to `/create-skill`. A brief written here carries no `**Mechanism:**` or `**Evidence:**` field, so it is raw by construction — that is expected, and it is what `/develop-ai-resource` supplies.
 
 No session switch needed — `ai-resources/` is connected via `--add-dir`, so the full creation pipeline runs from the current workspace.

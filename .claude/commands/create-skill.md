@@ -6,6 +6,8 @@ model: opus
 
 Execute this pipeline when Patrik provides a resource brief for a new skill.
 
+**Pre-flight.** This pipeline builds a skill already judged worth building. A **qualified brief** carries `**Mechanism:**` and `**Evidence:**` fields — proceed to Step 1. Anything else is a raw need: run `/develop-ai-resource` once to establish whether a skill is the right mechanism, then return here with the qualified brief it produces. Route once; a brief arriving with both fields is qualified by definition.
+
 ## Step 1: Understand the Need
 
 Read the resource brief Patrik provides. Then read `skills/ai-resource-builder/SKILL.md` for the creation methodology (see the Create Workflow section).

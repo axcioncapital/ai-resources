@@ -4,7 +4,7 @@
 
 This repo stores AI resources — primarily skills (SKILL.md files under `skills/`), plus prompts, docs, templates, and audit/log artifacts. Non-obvious conventions:
 
-- **Inbox flow:** resource briefs land in `inbox/` (created via `/request-skill` in project sessions, picked up by `/create-skill` here); fulfilled briefs move to `inbox/archive/` to clear the intake queue without losing the record.
+- **Inbox flow:** resource briefs land in `inbox/` (created via `/request-skill` in project sessions, picked up by `/develop-ai-resource` here, which qualifies the need and hands a qualified brief to `/create-skill`); fulfilled briefs move to `inbox/archive/` to clear the intake queue without losing the record.
 - **`templates/`** holds canonical deployable fragments consumed at scaffold time (project settings + project CLAUDE.md sections) — edit the fragment, not the consuming command. See `templates/README.md` for the consumer contract.
 - **`logs/`** includes the output-quality `defect-log.md` — see `docs/defect-to-fix-loop.md` for the rule/eval/example closure loop.
 - **Session telemetry (`usage-log.md`)** is written by `/usage-analysis` into each *consuming project's* `logs/` directory — `logs/usage-log.md` here records ai-resources sessions only; there is no single cross-project usage log.
@@ -16,6 +16,8 @@ These resources operate across a multi-tool ecosystem — not just Claude. Skill
 I am Patrik, a non-developer. Explain technical details in plain language. Commit/push behavior: see `## Commit Rules` below.
 
 ## Skill Creation and Improvement
+
+`/develop-ai-resource` is the entry point when the question is whether a durable resource should exist and in what form; it can end in no build. It hands skill-class work to the build engines.
 
 See `skills/ai-resource-builder/SKILL.md` for skill format, creation sequence, improvement sequence, and quality-check framework. `/create-skill` and `/improve-skill` read that SKILL.md at invocation.
 
