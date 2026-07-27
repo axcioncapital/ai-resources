@@ -308,7 +308,7 @@ ROUTE_LINE=$(grep -m1 -oE '^\*\*Execution route:\*\* *direct[[:space:]]*$' "$PRO
 [ -n "$ROUTE_LINE" ] && DIRECT=1 || DIRECT=0
 ```
 
-**Fail-safe by construction:** the grep is **case-sensitive** and **end-anchored**, so `engineered`, an absent line, a malformed value, wrong-case `Direct`, or `direct-x` all yield `DIRECT=0` = today's full harness. `**Execution route:** direct` is written into a direct project's `CLAUDE.md` by `/new-project` (`new-project.md:227`, Commit 1). Mirrors the creation-time predicate at `new-project.md:73`.
+**Fail-safe by construction:** the grep is **case-sensitive** and **end-anchored**, so `engineered`, an absent line, a malformed value, wrong-case `Direct`, or `direct-x` all yield `DIRECT=0` = today's full harness. `**Execution route:** direct` is written into a direct project's `CLAUDE.md` by `/new-project` (`## Direct Route` step 3, which renders the minimal skeleton and then appends this one line). It mirrors the creation-time predicate in `/new-project` First Run step 4, which reads the same line out of the planning brief's context pack. *(Both cited by section, not line number: the line numbers moved on 2026-07-27 and would rot again at the next edit.)*
 
 ### What `DIRECT=1` changes (and what it deliberately does NOT)
 

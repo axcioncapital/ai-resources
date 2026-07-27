@@ -57,6 +57,31 @@ State the disposition and the reason in one line before acting, so the operator 
 
 Ambiguity resolves toward fallthrough, never toward A, B or C.
 
+### 0.3a Project `CLAUDE.md` outcome — decide before anything is created
+
+Every path below this point creates files. Decide **now**, before the first `mkdir`, which of three outcomes this need gets, and state the outcome and the reason in one line. This decision binds disposition C (0.4), the engineered path (First Run step 6) and the Direct Route alike — none of them may create a project directory before it has been made.
+
+**First, the specialist-template check — it stops this command.** If the need is a **Research Workflow** project (research execution, source-class analysis, staged research reports — the workflow under `ai-resources/workflows/research-workflow/`), this command does **not** scaffold it and does **not** create the project directory. That workflow owns a specialist project `CLAUDE.md`, stored inert as `CLAUDE.md.template` and activated at deploy time by `/deploy-workflow` (`docs/repo-architecture.md` § Non-active filenames for specialist templates). Scaffolding here would create a second, wrong `CLAUDE.md` at the deploy target.
+
+> Stop. Create nothing — no directory, no files, no git init. Report: *"This is a Research Workflow project. `/new-project` does not scaffold it — run `/deploy-workflow` instead, which deploys the workflow's own specialist `CLAUDE.md` along with the rest of the workflow."* Then end the run.
+
+Otherwise choose exactly one:
+
+| Outcome | When | What gets written |
+|---|---|---|
+| **1 — Specialist template** | a workflow owns the project `CLAUDE.md` for this kind of need | nothing here — hand off to that workflow's deploy command (today: Research Workflow → `/deploy-workflow`) |
+| **2 — Minimal project file** | a durable project: everything on the engineered path, and every direct-route project | `templates/project-claude-md.md` (title + description), plus the route line on the direct path, plus **only** project-specific sections that earn their place |
+| **3 — No project file** | a genuinely short-lived document project — disposition C, where the deliverable is the point and no session-governing rule is needed | no `CLAUDE.md` at all. **Report the two consequences below.** |
+
+**What earns a project-specific section (outcome 2).** A section belongs in a project `CLAUDE.md` only if it states a rule that applies to *every turn* in that project's sessions and can live nowhere else — the workspace `## CLAUDE.md Scoping` rule. Concretely: the project's own pipeline stages, its own routing map, a confidentiality boundary, a domain constraint. **Never copy a workspace rule into it.** Input-file handling, commit and push behaviour, compaction, session boundaries, QC discipline and model tiering are workspace-level and already load in every session; restating them per project is exactly the duplication that was stripped from 26 project files on 2026-07-27. If you cannot say why a section must be project-local, it does not go in.
+
+**Outcome 3 — the two consequences, reported explicitly.** A project with no `CLAUDE.md` is not merely thinner; it is invisible to two subsystems. Name both in the report rather than letting the operator find out later:
+
+1. **`/refresh-project-state` skips it entirely.** That command enumerates projects with `Glob projects/*/CLAUDE.md` and *silently skips* any candidate directory without one (`refresh-project-state.md` Step 2, and §9). The project therefore receives **no Strategic Context Snapshot** in the `knowledge-bases/strategic-os/` vault and never appears in cross-project strategic queries.
+2. **The Context Engine never runs for it.** `/session-start` Step 2.4 skip condition 3 tests `! [ -f "<project-root>/CLAUDE.md" ]` and skips the `context-discovery` agent before it is invoked. Sessions in that project get **no context pack**, and their mandate's `Files in scope` stays `(inferred)`.
+
+Neither is a one-way door — adding a `CLAUDE.md` later restores both. Choose outcome 3 when the project genuinely ends with its document; choose outcome 2 if in doubt.
+
 ### 0.4 Disposition C — ordered sequence
 
 **Preconditions 1–4 run first. All four must pass before anything is created. Any failure stops the path, creates nothing, and reports. None is auto-corrected.**
@@ -300,36 +325,6 @@ Planning artifacts (context pack, project plan, optional technical spec) are pro
 
 11. **Announce what was discovered and copied.** Include: source directory, picked versions (e.g., `project-plan-v3.md`), whether a tech spec was found, any QC-verdict warnings. State that Stage 3a is starting. No separate confirmation gate before copy — the announcement names every file, `sources.md` records provenance, and any wrong picks are reversible via the existing `ABORT` gate.
 
-11a. **Scaffold the project's Model Selection section (recommended posture — NEVER a default declaration).**
-
-    > **Model defaults are prohibited workspace-wide** (workspace `CLAUDE.md` § Model Tier). Do **not** ask the operator to choose a project default, do **not** write a `"model"` field into any `settings.json` / `settings.local.json` at any layer, and do **not** write a default-model line into the project's `CLAUDE.md`. A declared default contests `/model`, so the operator can no longer switch model in the live session. The operator selects the session model via `/model` at session start; per-command / per-agent / per-skill `model:` frontmatter is the **only** permitted way to bind a tier outside the live session.
-    >
-    > What a project `CLAUDE.md` *may* carry is a **recommended posture** — advisory prose, never a binding default. That is what this step writes.
-    >
-    > *(This step previously templated a banned default-model declaration — and mandated a `[1m]` identifier suffix that is now known to break subagent spawns. Both were removed 2026-07-12; see `logs/decisions.md`. Do not reintroduce either.)*
-
-    Ask the operator one question:
-
-    > Project task profile?
-    > (a) Heavy execution — most repo work, KB ops, operational projects.
-    > (b) Heavy judgment — plan/spec drafting, identity drafting, strategic projects.
-    > (c) Mixed — most projects.
-
-    **Append a `Model Selection` section to `projects/{project-name}/CLAUDE.md`** (insert just before any `## Commit Rules` section, or before the final section if no Commit Rules section exists). Use **bare tier names** (`opus` / `sonnet` / `haiku`) — never a versioned identifier, never a `[1m]` suffix (both break subagent spawns and go stale on the next model release).
-
-    ```
-    ## Model Selection
-
-    **Recommended posture** (advisory — not a default; the operator picks the session model via `/model`):
-    {profile-appropriate recommendation, e.g. "Lean Sonnet for routine execution and repo edits; reach for Opus on plan drafting, spec design, and judgment-heavy synthesis."}
-
-    Commands, agents, and skills bind their own tier in frontmatter where the task demands it; those bindings are authoritative and independent of the session model.
-    ```
-
-    Keep the section **present** even when the recommendation is unremarkable — `/prime`'s model-alignment check reads this heading (`prime.md` Step 4), and omitting it leaves that check with no section to read.
-
-    Confirm the section was written by reading the file back and showing the operator the appended text. Never write `.claude/settings.local.json` automatically, and never instruct the operator to add a model default to it.
-
 12. **Spawn the Stage 3a subagent** (`pipeline-stage-3a`). Include in the spawn prompt: "Project directory: projects/{project-name}/ — Pipeline directory: projects/{project-name}/pipeline/"
 
 ### Continuation
@@ -355,10 +350,13 @@ All steps are idempotent — re-running `/new-project` on an existing direct pro
 
 2. **Create the project directory** — `projects/{project-name}/` only. **No `pipeline/` subdirectory.** The brief is NOT copied in; it stays in the planning workspace (git and that workspace already preserve it).
 
-3. **Lean `CLAUDE.md`.** Follow enrichment step 4's mechanics with two differences:
-   - Render `header.md` **minus its `*Maintenance pointer:*` paragraph** — the `/reconcile` pointer is engineered-only. Render only the title + description (with `{{NAME}}` / `{{PROJECT_DESCRIPTION}}` substituted); do not add a second template.
-   - Immediately under the header, write the line: `**Execution route:** direct`
-   Then append the four canonical sections (Input File Handling / Commit Rules / Compaction / Session Boundaries) exactly as engineered step 4. **Do not** add a Model Selection section (`/prime`'s model check renders a plain line when it is absent) and **do not** add the `/reconcile` pointer.
+3. **Minimal `CLAUDE.md` (Step 0.3a outcome 2).** Render `templates/project-claude-md.md` with `{{NAME}}` / `{{PROJECT_DESCRIPTION}}` substituted — the same mechanics as enrichment step 4, **including its never-overwrite guard** — then write one line immediately under the description:
+
+   ```
+   **Execution route:** direct
+   ```
+
+   That is the whole file: title, description, route line — five lines including the blanks. **Do not** append any workspace-rule section, **do not** add a `## Model Selection` section, and **do not** add a `/reconcile` pointer. The route line must match the canonical predicate exactly (`docs/session-marker.md` § Direct-route detection): literal `**Execution route:** direct`, at line start, lower-case `direct`. `/prime`, `/session-start` and `/session-plan` all key on it, so a stylistic variation silently reverts the project to the engineered route.
 
 4. **`settings.json` — permissions + the permission-sanity hook ONLY (no auto-sync hook).** Merge the canonical permissions block and the **permission-sanity** SessionStart hook from the template, but **omit the auto-sync hook** — direct projects are not wired for full-library sync. Locate the template by the same walk-up idiom as enrichment step 2.
 
@@ -635,92 +633,69 @@ Otherwise, install the three pieces:
    - whether `additionalDirectories` was added to `settings.local.json`, already present, or skipped (walk failed)
    - the absolute workspace path that was added
 
-4. **`projects/{name}/CLAUDE.md`** — ensure the project CLAUDE.md contains four canonical sections: `## Input File Handling`, `## Commit Rules`, `## Compaction`, and `## Session Boundaries`. These guarantee that projects opened without the parent workspace CLAUDE.md loaded still see the load-bearing behavioral rules.
+4. **`projects/{name}/CLAUDE.md`** — write the minimal project file (Step 0.3a **outcome 2**), then add **only** project-specific sections that earn their place.
 
-   Each section is a short-form mirror — not a verbatim copy of the workspace-level text — so it satisfies the workspace `## CLAUDE.md Scoping` rule ("short pointer acceptable; verbatim duplication is not") while preserving the 2026-04-13 "Commit Rules propagate by explicit copy" decision (inheritance alone proved unreliable in practice, so the rule must appear in-context).
+   **Skip this step entirely if Step 0.3a chose outcome 1 or outcome 3.** Outcome 1 hands off to the workflow's own deploy command; outcome 3 creates no file, and its two consequences are reported per 0.3a.
 
-   **Policy (per section, applied independently):**
-   - If `projects/{name}/CLAUDE.md` does not exist → render `templates/project-claude-md/header.md` (with `{name}` and `{project-description}` substituted) followed by the four canonical fragments. `{name}` and `{project-description}` are passed into the bash block as `PROJECT_NAME` / `PROJECT_DESCRIPTION` env vars by the calling agent (substituted into the assignment lines below); the python3 step at runtime does the literal-string replace inside `header.md` content, so apostrophes / ampersands / backslashes in `{project-description}` are safe.
-   - If `projects/{name}/CLAUDE.md` exists and already contains a given heading → leave that section alone. Report "{section} already present, skipping."
-   - If `projects/{name}/CLAUDE.md` exists but has no given heading → append that canonical fragment to the end of the file (preceded by a blank line).
+   **Never overwrite an existing file.** If `projects/{name}/CLAUDE.md` already exists, leave it byte-for-byte as it is and report *"CLAUDE.md already present — left unchanged"*. A rerun of `/new-project` against an existing project changes nothing here. There is no per-section append and no backfill: this command writes a project's `CLAUDE.md` once, at creation.
 
-   **Canonical content source.** The four canonical sections (and the `# {name}` / `{project-description}` header used only on fresh creation) live as individual fragment files under `ai-resources/templates/project-claude-md/` — `header.md`, `input-file-handling.md`, `commit-rules.md`, `compaction.md`, `session-boundaries.md`. These files are the **single source of truth** for the canonical wording. To update what gets written into project CLAUDE.md files, edit the template fragments — not this command. The procedure below reads them at runtime via walk-up to `ai-resources/` (same idiom as the settings merge in step 2). See `ai-resources/templates/README.md` for the consumer contract and the 2026-04-13 KEEP verdict on the workspace-inheritance workaround.
+   **No workspace rules are copied.** The four canonical section fragments (`## Input File Handling`, `## Commit Rules`, `## Compaction`, `## Session Boundaries`) were removed on 2026-07-27. Those rules are workspace-level and already load in every session; restating them per project is the duplication that was then stripped back out of 26 project files. Do not reintroduce them here or in the Direct Route. The same applies to `## Model Selection` — see the note at the end of this step.
+
+   **Canonical content source.** The skeleton is `ai-resources/templates/project-claude-md.md` — title and description only, carrying the mustache placeholders `{{NAME}}` and `{{PROJECT_DESCRIPTION}}`. It is the single source of truth for the created file's opening; to change what a new project starts with, edit the template, not this command. The mustache syntax is deliberately distinct from the single-brace `{name}` / `{project-description}` tokens the calling agent substitutes into this bash source, so the agent's global substitution pass cannot corrupt the python search strings. See `ai-resources/templates/README.md` for the consumer contract.
 
    **Procedure:**
 
    ```bash
    CLAUDE_MD="projects/{name}/CLAUDE.md"
 
-   # Locate canonical templates via walk-up to ai-resources/ (same idiom as step 2)
+   # Locate the canonical template via walk-up to ai-resources/ (same idiom as step 2)
    d="$(cd projects/{name} && pwd)"
    AI_RES=""
    while [ "$d" != "/" ]; do
      d=$(dirname "$d")
      [ -d "$d/ai-resources" ] && AI_RES="$d/ai-resources" && break
    done
-   [ -n "$AI_RES" ] || { echo "ERROR: ai-resources not found in any ancestor — cannot locate canonical CLAUDE.md templates"; exit 1; }
+   [ -n "$AI_RES" ] || { echo "ERROR: ai-resources not found in any ancestor — cannot locate the canonical CLAUDE.md template"; exit 1; }
 
-   FRAG_DIR="$AI_RES/templates/project-claude-md"
-   for f in header.md input-file-handling.md commit-rules.md compaction.md session-boundaries.md; do
-     [ -f "$FRAG_DIR/$f" ] || { echo "ERROR: canonical CLAUDE.md fragment missing at $FRAG_DIR/$f"; exit 1; }
-   done
+   SKELETON="$AI_RES/templates/project-claude-md.md"
+   [ -f "$SKELETON" ] || { echo "ERROR: canonical CLAUDE.md skeleton missing at $SKELETON"; exit 1; }
 
-   if [ ! -f "$CLAUDE_MD" ]; then
-     # Fresh creation: render header.md with {name} / {project-description} substituted, then concat the four canonical sections.
-     #
+   if [ -f "$CLAUDE_MD" ]; then
+     # Idempotency guard: an existing project CLAUDE.md is never rewritten, appended to, or backfilled.
+     echo "CLAUDE.md already present at $CLAUDE_MD — left unchanged"
+   else
      # Substitution mechanics — read this before editing:
      # The calling agent processes this bash source as text and replaces {name} + {project-description} GLOBALLY
      # before the Bash tool runs. To survive that, the substitution targets must appear EXACTLY ONCE each — on the
-     # PROJECT_NAME= / PROJECT_DESCRIPTION= lines below. The python3 step then does a literal string-replace on
-     # header.md content using PROJECT_NAME / PROJECT_DESCRIPTION as values; argv-passing avoids all shell-quoting
+     # PROJECT_NAME= / PROJECT_DESCRIPTION= lines below. The python3 step then does a literal string-replace on the
+     # skeleton's content using PROJECT_NAME / PROJECT_DESCRIPTION as values; argv-passing avoids all shell-quoting
      # hazards (apostrophes, ampersands, backslashes, dollar signs in the project description are safe).
      #
      # python3 is on macOS by default and is already an implicit dependency of other ai-resources tooling. If the
      # python3 dependency becomes a concern, awk with `-v` (which also passes vars without shell interpretation)
      # is the closest alternative; sed is NOT safe here because `&` in PROJECT_DESCRIPTION expands to the match.
-     # header.md uses mustache-style placeholders {{NAME}} and {{PROJECT_DESCRIPTION}} — distinct from the agent's
-     # single-brace {name} / {project-description} tokens, so the agent's global text-substitution pass over this
-     # bash source never touches the python search strings or the template content.
+     # The skeleton uses mustache-style placeholders {{NAME}} and {{PROJECT_DESCRIPTION}} — distinct from the
+     # agent's single-brace {name} / {project-description} tokens, so the agent's global text-substitution pass
+     # over this bash source never touches the python search strings or the template content.
      PROJECT_NAME="{name}"
      PROJECT_DESCRIPTION="{project-description}"
      python3 -c "
 import sys
 with open(sys.argv[1]) as f: content = f.read()
 sys.stdout.write(content.replace('{{NAME}}', sys.argv[2]).replace('{{PROJECT_DESCRIPTION}}', sys.argv[3]))
-" "$FRAG_DIR/header.md" "$PROJECT_NAME" "$PROJECT_DESCRIPTION" > "$CLAUDE_MD" \
+" "$SKELETON" "$PROJECT_NAME" "$PROJECT_DESCRIPTION" > "$CLAUDE_MD" \
        || { echo "ERROR: python3 substitution failed"; exit 1; }
-     {
-       echo
-       cat "$FRAG_DIR/input-file-handling.md"
-       echo
-       cat "$FRAG_DIR/commit-rules.md"
-       echo
-       cat "$FRAG_DIR/compaction.md"
-       echo
-       cat "$FRAG_DIR/session-boundaries.md"
-     } >> "$CLAUDE_MD"
-   else
-     # Idempotent per-section append: each section appended only if its heading is absent.
-     for pair in \
-       "## Input File Handling|input-file-handling.md" \
-       "## Commit Rules|commit-rules.md" \
-       "## Compaction|compaction.md" \
-       "## Session Boundaries|session-boundaries.md"; do
-       HEADING="${pair%|*}"
-       FRAG="${pair#*|}"
-       SECTION_NAME="${HEADING#\#\# }"
-       if grep -q "^${HEADING}" "$CLAUDE_MD"; then
-         echo "${SECTION_NAME} already present in $CLAUDE_MD — skipping"
-       else
-         echo "" >> "$CLAUDE_MD"
-         cat "$FRAG_DIR/$FRAG" >> "$CLAUDE_MD"
-       fi
-     done
+     echo "CLAUDE.md created from the minimal skeleton at $CLAUDE_MD"
    fi
    ```
 
+   **Then, and only then, consider project-specific sections** — added by hand, one at a time, each with a justification you can state in one line. Apply the 0.3a test: does this rule apply to every turn in this project's sessions, and can it live nowhere else? Most projects need none at creation; a project needing three is unusual. If the answer is "none", the file stays at title and description — that is a correct result, not an incomplete one.
+
+   **Do not write a `## Model Selection` section, and do not ask the operator for a model preference.** Model defaults are prohibited at every layer (workspace `CLAUDE.md` § Model Tier); the operator selects the session model with `/model`, and commands, agents and skills bind their own tier in frontmatter. `/prime`'s model-alignment check renders a plain line when the section is absent, which is the normal and expected state.
+
    Report in the step output:
-   - created new CLAUDE.md / appended Input File Handling / appended Commit Rules / appended Compaction / appended Session Boundaries / already present (per section)
+   - CLAUDE.md created from skeleton / already present, left unchanged
+   - project-specific sections added, each with its one-line justification (or "none — title and description only")
 
 4a. **Scaffold `projects/{name}/logs/` with `decisions.md`.** Every project tracks session-level decisions in `logs/decisions.md` (mirror of the ai-resources logs convention; consumed by `/prime` Step 4 and `/wrap-session`). Create the directory and a minimal scaffold file. Idempotent — skip the write if the file already exists, but still ensure the directory is present.
 
@@ -902,7 +877,11 @@ EOF
 
 ### Report
 
-Report what was created: manifest path, settings.json modifications (permissions block, SessionStart hook), the `additionalDirectories` grant written to the gitignored `settings.local.json`, CLAUDE.md state (created / appended / already present), `logs/decisions.md` scaffold (created / already present), the list of files the initial sync symlinked, the canonical command verification result (all 10 present / N missing), and the git setup result (remote, initial commit, workspace root `.gitignore`, and that the initial commit was left **unpushed** — it ships at `/wrap-session` with the gated-push batch). From this point on, any new command added to `ai-resources/.claude/commands/` will be available in this project on the next session start automatically, and skills under `ai-resources/skills/` are reachable via the filesystem grant.
+Report what was created: manifest path, settings.json modifications (permissions block, SessionStart hook), the `additionalDirectories` grant written to the gitignored `settings.local.json`, CLAUDE.md state (created from skeleton / already present, left unchanged) together with any project-specific sections added and their justification, `logs/decisions.md` scaffold (created / already present), the list of files the initial sync symlinked, the canonical command verification result (all 10 present / N missing), and the git setup result (remote, initial commit, workspace root `.gitignore`, and that the initial commit was left **unpushed** — it ships at `/wrap-session` with the gated-push batch). From this point on, any new command added to `ai-resources/.claude/commands/` will be available in this project on the next session start automatically, and skills under `ai-resources/skills/` are reachable via the filesystem grant.
+
+**Then add the `/reconcile` maintenance notice to the report — in the report only, never written into the project's `CLAUDE.md`.** This is guidance for the operator at hand-off, not a standing instruction the project carries forever (moved here on 2026-07-27; it previously shipped as a paragraph inside every engineered project's `CLAUDE.md`). Engineered route only — the Direct Route omits it by design.
+
+> Once this project produces real deliverables, run `/reconcile` after each major output to judge it against the project mandate (mandate-compliance, resource activation, genericness). `/reconcile` is canonical in `ai-resources` and is symlinked into this project by the sync above. It needs `context/mandate-rubric.md` and `context/resource-activation-map.md` to run — when the first deliverable approaches, scaffold both with `/reconcile-activate`, then author and ratify them (replacing the `{{AUTHOR:}}` placeholders) before the first `/reconcile`.
 
 ## Key Rules
 

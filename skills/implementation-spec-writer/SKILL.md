@@ -50,7 +50,9 @@ Optional inputs:
 
 The repo snapshot provides the current filesystem state. The architecture document provides the target state. The implementation spec bridges the gap.
 
-**Project baseline templates:** If the architecture references canonical project scaffolding, the real templates live at `templates/project-claude-md/` (the four constant CLAUDE.md section fragments — `input-file-handling.md`, `commit-rules.md`, `compaction.md`, `session-boundaries.md` — plus `header.md`) and `templates/project-settings.json.template` (the canonical permissions block + two SessionStart hooks). Read `templates/README.md` for the consumer contract. These are **constant fragments**, not a `{{PLACEHOLDER}}`-resolution system: only `header.md` carries substitution tokens (`{{NAME}}` / `{{PROJECT_DESCRIPTION}}`); the four CLAUDE.md fragments and the settings template are copied/merged as-is and must never be globally search-replaced. `/new-project`'s enrichment steps are the reference consumer — mirror their idempotent-append model (CLAUDE.md sections) and jq-merge model (settings), not a placeholder-resolution pass.
+**Project baseline templates:** If the architecture references canonical project scaffolding, the real templates live at `templates/project-claude-md.md` (a minimal skeleton — title and description only, carrying `{{NAME}}` / `{{PROJECT_DESCRIPTION}}`) and `templates/project-settings.json.template` (the canonical permissions block + two SessionStart hooks). Read `templates/README.md` for the consumer contract. The settings template is merged as-is and must never be globally search-replaced; the CLAUDE.md skeleton resolves its two mustache tokens once, at file creation. `/new-project`'s enrichment steps are the reference consumer — mirror their **write-once** model for the project `CLAUDE.md` (an existing file is never overwritten, appended to, or backfilled) and their jq-merge model for settings.
+
+**Do not emit operations that copy workspace rules into a project `CLAUDE.md`.** The four canonical section fragments (`## Input File Handling`, `## Commit Rules`, `## Compaction`, `## Session Boundaries`) were deleted on 2026-07-27; those rules are workspace-level and already load in every session. A project `CLAUDE.md` carries title, description, and only sections that are genuinely project-specific — plus `**Execution route:** direct` on a direct-route project. Never emit a `## Model Selection` section: model defaults are prohibited at every layer.
 
 ---
 
@@ -255,9 +257,9 @@ If the project's specific dependencies require deviating from this default seque
 For every component in the architecture, produce one operation block following the templates above. Be exhaustive — if the architecture says "create a skill called X," the operation must specify frontmatter, sections, key behaviors, and verification steps.
 
 **Baseline template integration:** When the architecture pulls in canonical scaffolding, emit operations that follow the real template contract (locations and substitution model are in Input Expectation above and `templates/README.md`):
-- **CLAUDE.md sections:** the four fragments under `templates/project-claude-md/` are constants — emit an operation that appends each section idempotently (skip if its heading already exists), exactly as `/new-project` step 4 does. Do not "resolve placeholders"; these fragments carry none.
+- **Project CLAUDE.md:** `templates/project-claude-md.md` is a minimal skeleton (title + description). Emit a **write-once** operation guarded on `[ ! -f ]`, exactly as `/new-project` step 4 does — an existing project `CLAUDE.md` is left byte-for-byte unchanged. There is no per-section append and no backfill. Any project-specific section beyond the skeleton must be individually justified in the spec.
 - **settings.json:** `templates/project-settings.json.template` carries the canonical permissions block and two SessionStart hooks — emit a jq-merge operation (gated on an empty `.permissions.allow`), mirroring `/new-project` step 2. Do not hand-edit JSON as strings.
-- **Fresh CLAUDE.md only:** `header.md` is the one fragment with substitution tokens (`{{NAME}}` / `{{PROJECT_DESCRIPTION}}`), resolved once at file creation.
+- **Substitution:** the skeleton is the only CLAUDE.md template carrying tokens (`{{NAME}}` / `{{PROJECT_DESCRIPTION}}`), resolved once at file creation.
 
 **Critical rule:** If the architecture is ambiguous about a component's behavior, do NOT fill in the gap with your own interpretation. Instead, flag it:
 
