@@ -105,7 +105,7 @@
 | **Operational log** (session-notes, decisions, friction, etc.) | `ai-resources/logs/<name>.md` | Project-specific logs live in the project's own `logs/`. |
 | **Audit artifact** (dated audit/checkup output) | `ai-resources/audits/<name-or-subdir>/<YYYY-MM-DD>-<slug>.md` | Audit-specific subdirs (e.g., `audits/risk-checks/`) keep the root tidy. |
 | **Standalone prompt** (consumed by non-Claude tools) | `ai-resources/prompts/<name>.md` | Read directly by GPT-5/Perplexity flows. |
-| **Workflow template** (graduated from `workflows/active/`) | `ai-resources/workflows/<name>/` | Graduated via `/graduate-resource`. |
+| **Workflow template** (graduated from `workflows/active/`) | `ai-resources/workflows/<name>/` | Graduated via `/graduate-resource`. Any file that would be *auto-loaded* at its canonical path is stored under a non-active filename and renamed at deploy time — see **Non-active filenames for specialist templates** below. |
 | **Obsidian KB vault** (cross-project reuse) | `knowledge-bases/<name>/` | Deployed via `/deploy-kb` standalone option. Project-scoped vaults instead live under `projects/<project>/vault/`. |
 | **Style reference** (style/formatting source) | `ai-resources/style-references/<name>.md` | Loaded by prose/formatting skills. |
 | **Skill request brief** (intake) | `ai-resources/inbox/<slug>-brief.md` | Qualified by `/develop-ai-resource`, which hands a qualified brief to the build engine. Moved to `inbox/archive/` once the build engine fulfills it — or, when the operator accepts a no-build / reuse / rejection / deferral disposition, archived with a one-line disposition note (a deferral names its reopening trigger). |
@@ -116,6 +116,24 @@
 | **Permission shape (canonical)** | `ai-resources/docs/permission-template.md` | Source of truth referenced by `/permission-sweep` and `/new-project`. |
 | **Deployable canonical fragment** (consumed at scaffold time, not at runtime) | `ai-resources/templates/<name>` | Read by `/new-project` via walk-up to `ai-resources/`; never auto-distributed. Edit the fragment, not the consuming command. Examples: `templates/project-settings.json.template`, `templates/project-claude-md/*.md`. |
 | **Project-retirement context pack** (content + briefing + git bundles preserved from one or more projects being retired) | `artifacts/<slug>-context/` | Tracked by the root repo, so it survives the retirement of the projects it describes and is pushed off-machine. Distinct from `archive/` (gitignored, holds the relocated repos themselves). Pairs with `/archive-project`: the pack is the *reading* path, the archived repo is the *recovery* path. Built by hand; no pipeline. Example: `artifacts/merged-os-context/`. |
+
+### Non-active filenames for specialist templates
+
+A template is a *document* while it sits in `ai-resources/`, and becomes an *instruction file* only once it is deployed. Where those two states share a filename, Claude Code cannot tell them apart: it loads any `CLAUDE.md` as nested instructions for sessions working under that directory, and any `.claude/settings.json` as live configuration. A canonical template stored under the active name is therefore silently in force inside the resource repo — carrying deployed-project rules and unresolved `{{PLACEHOLDER}}` tokens into sessions that have nothing to do with a deployed project.
+
+**Rule: store such a template under a non-active filename; the deploying command renames it.**
+
+| Canonical (inert, in `ai-resources/`) | Deployed (active, in the project) | Renamed by |
+|---|---|---|
+| `workflows/<name>/CLAUDE.md.template` | `CLAUDE.md` | `/deploy-workflow` Step 3a |
+| `templates/project-settings.json.template` | `.claude/settings.json` | `/new-project`, `/deploy-workflow` Step 4 |
+
+Two obligations come with the rule, and both have already failed once in practice:
+
+- **Rename before any placeholder pass.** Fill scopes are built from `*.md` / `*.json` globs, which a `.template` suffix does not match. A rename that happens after filling produces a deployment that reports success and ships a file whose placeholders are all unresolved. `/deploy-workflow` Step 7a hard-stops on this.
+- **Readers must resolve both names.** Anything that reads a canonical template's instruction file — `/analyze-workflow`, `workflow-system-analyzer` — resolves `CLAUDE.md` first, then `CLAUDE.md.template`, and only then reports "None". Resolving the active name alone returns "not found" for every canonical template and silently drops it from the analysis.
+
+*(Convention recorded 2026-07-27, Change 1. The `templates/` row predates it and follows the same shape.)*
 
 **Project-local exceptions** (live in project's own `.claude/`, never in ai-resources):
 - Pipeline-stage commands tightly coupled to one project's workflow (e.g., `pipeline-stage-3a.md` for `/new-project`).

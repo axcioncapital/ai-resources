@@ -32,13 +32,44 @@ Set `PROJECT_DIR` to `{WORKSPACE_ROOT}/projects/{PROJECT_NAME}`.
 
 Verify `{PROJECT_DIR}` does not already exist. If it does, stop and tell the user.
 
-## Step 3: Copy template
+## Step 3: Copy template, then activate the project CLAUDE.md
 
 ```bash
 cp -r {TEMPLATE_PATH}/ {PROJECT_DIR}/
 ```
 
-Confirm the copy succeeded by checking `{PROJECT_DIR}/CLAUDE.md` exists.
+### 3a. Rename `CLAUDE.md.template` → `CLAUDE.md`
+
+The canonical template ships its project `CLAUDE.md` under the **non-active filename** `CLAUDE.md.template`. That is deliberate: a file literally named `CLAUDE.md` inside `ai-resources/workflows/` is loaded as nested instructions by any session working under that directory, so the resource repo would inherit deployed-project rules and unresolved `{{PLACEHOLDER}}` tokens as if they were live instructions. Storing it inert and activating it here is what keeps the template out of the resource repo's own instruction load.
+
+**This rename must happen now — before Step 5's fill-scope construction and before Step 7's placeholder replacement.** `CLAUDE.md.template` matches neither `*.md` nor `*.json`, so it is invisible to the fill scope; leaving the rename until after Step 7 would deploy a `CLAUDE.md` whose 22 Class-A placeholders are all still unresolved.
+
+```bash
+# Rename first, then confirm — the confirmation below asserts the post-rename state.
+[ -f "{PROJECT_DIR}/CLAUDE.md.template" ] || { echo "ERROR: {PROJECT_DIR}/CLAUDE.md.template not found after copy — the template may not carry one, or the copy failed"; exit 1; }
+mv "{PROJECT_DIR}/CLAUDE.md.template" "{PROJECT_DIR}/CLAUDE.md"
+```
+
+### 3b. Confirm the copy and the activation
+
+Three assertions, all required:
+
+```bash
+# 1. The copy succeeded and the project CLAUDE.md is now active.
+[ -f "{PROJECT_DIR}/CLAUDE.md" ] || { echo "ERROR: no CLAUDE.md in {PROJECT_DIR} after rename"; exit 1; }
+
+# 2. No inert copy was left behind. A surviving .template would be dead weight in the
+#    deployed project and a second, drifting source of the same rules.
+#    Written as `if`, NOT as `[ -e … ] && { …; exit 1; }`: the `&&` form returns 1 when the
+#    file is correctly absent, so as the last statement in a block it reports failure on the
+#    success path. Same silent-wrong-result class as the two shell traps logged 2026-07-27.
+if [ -e "{PROJECT_DIR}/CLAUDE.md.template" ]; then
+  echo "ERROR: CLAUDE.md.template still present in {PROJECT_DIR} after rename"
+  exit 1
+fi
+
+echo "Project CLAUDE.md activated from CLAUDE.md.template"
+```
 
 ## Step 4: Enrich with shared ai-resources features
 
@@ -365,6 +396,29 @@ Never prompt for Class C or Class D tokens.
 
 ## Step 7: Replace placeholders
 
+### 7a. Hard guard — the project CLAUDE.md must already be active
+
+**Stop the deployment if `CLAUDE.md.template` still exists.** Step 3a should have renamed it; if it did not, every placeholder below silently misses the project's most important file.
+
+This guard is not defensive decoration — it closes a **silent** failure mode. `CLAUDE.md.template` matches neither `*.md` nor `*.json`, so it is excluded from the Step 5a fill scope *by construction*. The `sed` pass would therefore succeed, report success, and leave the deployed `CLAUDE.md.template` holding all 22 of its unresolved Class-A placeholders — and Step 5d's drift cross-check cannot catch it either, because that scan is also fill-scope-bounded. Nothing else in this command looks at the file. Without this guard the deploy is green and the project is broken.
+
+```bash
+if [ -e "{PROJECT_DIR}/CLAUDE.md.template" ]; then
+  cat <<'ERR'
+ERROR: deployment stopped — {PROJECT_DIR}/CLAUDE.md.template still exists at placeholder-fill time.
+
+Step 3a must rename CLAUDE.md.template -> CLAUDE.md BEFORE this step. The fill scope built in
+Step 5a covers only *.md and *.json; ".template" matches neither, so proceeding would leave every
+placeholder in the project's CLAUDE.md unresolved while reporting a successful deployment.
+
+Fix: run Step 3a's rename, then re-run from Step 5.
+ERR
+  exit 1
+fi
+```
+
+### 7b. Apply the values
+
 Replace each collected value across **fill scope only** (Step 5a).
 
 ```bash
@@ -413,11 +467,63 @@ Empty output = pass. Any hit = a value was collected but not applied; report the
 
 **Do NOT assert `grep -r '{{' {PROJECT_DIR}/` returns nothing.** That was the old check, and it is wrong by construction: 94 Class-D placeholders live in the preserved template files and 3 Class-C tokens live in `quality-standards.md`, so a *correct* deploy fails that assertion by ~97 counts. A check that always cries wolf gets ignored — which is exactly how a real leftover would slip through.
 
-Then confirm the preservation guarantee holds:
+### Step 7 preservation check — deferred templates must be byte-identical
+
+The six `reference/*.template.md` files are deferred templates the operator instantiates later. They must survive deployment **byte-for-byte**. This check fails the deployment if any of them changed or went missing.
+
+**Two defects were repaired here (2026-07-27, Change 1). Do not reintroduce either.**
+
+1. **`diff --include=` does not exist.** `--include` is a `grep` / `rsync` option; GNU `diff` spells the equivalent `--exclude`, and BSD `diff` (the macOS default, which is what runs here) has no include filter at all. The old line was not a weak check — it was **not a check**, because `diff` rejected the unknown option and exited non-zero before comparing anything.
+2. **`TEMPLATE_DIR` is never defined in this command.** Step 1 sets `TEMPLATE_PATH`. `TEMPLATE_DIR` belongs to `/sync-workflow`, a different command. Under an unset variable the path collapses to `/reference`.
 
 ```bash
-# The six deferred templates must be byte-identical to the source template.
-diff -r "{TEMPLATE_DIR}/reference" "{PROJECT_DIR}/reference" --include="*.template.md"
+# Each Bash block gets a FRESH shell — nothing survives from an earlier block. Re-establish
+# all three values here. These use this command's normal {BRACE} substitution: replace each
+# with the value resolved in Steps 1-2 before executing the block.
+TEMPLATE_PATH="{TEMPLATE_PATH}"    # Step 1 — the selected workflow template directory
+PROJECT_DIR="{PROJECT_DIR}"        # Step 2 — {WORKSPACE_ROOT}/projects/{PROJECT_NAME}
+PROJECT_NAME="{PROJECT_NAME}"      # Step 2 — validated kebab-case project name
+
+# Refuse to run on an empty value. Without this, "$TEMPLATE_PATH/reference" collapses to
+# "/reference": find then either errors on a nonexistent path or — if such a directory ever
+# existed — silently scans the wrong tree and reports a clean PASS. A preservation check that
+# passes without comparing anything is worse than no check.
+for v in TEMPLATE_PATH PROJECT_DIR PROJECT_NAME; do
+  eval "val=\${$v:-}"
+  [ -n "$val" ] || { echo "ERROR: $v is empty — refusing to run the preservation check"; exit 1; }
+done
+[ -d "$TEMPLATE_PATH/reference" ] || { echo "ERROR: no reference/ under $TEMPLATE_PATH"; exit 1; }
+[ -d "$PROJECT_DIR/reference" ]   || { echo "ERROR: no reference/ under $PROJECT_DIR"; exit 1; }
+
+# Per-project temp file: two concurrent deploys must not share a drift record.
+DRIFT="/tmp/deploy-template-drift-${PROJECT_NAME}.list"
+: > "$DRIFT"
+
+# -print0 / read -r -d '' is LOAD-BEARING, not style. Every real deploy path on this machine
+# contains a space ("…/Claude Code/Axcion AI Repo/…"). A newline-delimited read splits those
+# paths and compares files that do not exist — the same defect that made Step 7's fill pass
+# dead code before 2026-07-13. `cmp -s` is byte-exact and portable across BSD and GNU.
+find "$TEMPLATE_PATH/reference" -type f -name '*.template.md' -print0 \
+| while IFS= read -r -d '' src; do
+    rel="${src#"$TEMPLATE_PATH"/}"
+    dst="$PROJECT_DIR/$rel"
+    if [ ! -f "$dst" ]; then
+      printf 'MISSING  %s\n' "$rel" >> "$DRIFT"
+    elif ! cmp -s "$src" "$dst"; then
+      printf 'CHANGED  %s\n' "$rel" >> "$DRIFT"
+    fi
+  done
+# The loop body runs in a subshell (pipe), so it cannot export a variable — which is exactly
+# why drift is recorded in a FILE and the verdict is read from the file below.
+
+if [ -s "$DRIFT" ]; then
+  echo "DEPLOY FAILED — deferred templates were modified or lost:"
+  cat "$DRIFT"
+  rm -f "$DRIFT"          # deleted on the failure path too
+  exit 1
+fi
+rm -f "$DRIFT"            # ...and on the success path
+echo "Deferred-template preservation: PASS — all reference/*.template.md byte-identical"
 ```
 
 ## Step 8: Create skill symlinks (conditional)
@@ -463,9 +569,9 @@ git commit -m "remove setup checklist (setup complete)"
 Run a quick validation:
 
 1. Confirm no **deploy-time** placeholder remains in fill scope — i.e. re-run the Step 7 verification (`REGISTRY_RE` over `$SCOPE_LIST`). **Do not assert that zero `{{...}}` tokens remain anywhere:** the six `reference/*.template.md` files legitimately retain 94 Class-D placeholders and `reference/quality-standards.md` retains 3 Class-C notation tokens. A correct deploy *must* leave those in place — asserting otherwise fails every clean deployment by ~97 counts and trains the operator to ignore the check.
-2. Confirm the six `reference/*.template.md` files are **byte-identical** to the source template (`diff -r`, per Step 7). This is the deferred-template preservation guarantee.
+2. Confirm the six `reference/*.template.md` files are **byte-identical** to the source template. Re-run the Step 7 preservation check verbatim — the `find -print0` / `read -r -d ''` / `cmp -s` loop, with `TEMPLATE_PATH`, `PROJECT_DIR` and `PROJECT_NAME` re-established in this block. This is the deferred-template preservation guarantee. **Do not substitute `diff -r … --include="*.template.md"`:** `--include` is not a `diff` option, so that form never compared anything (repaired 2026-07-27, Change 1).
 3. Confirm all symlinks in `reference/skills/` resolve (if the directory exists).
-4. Confirm `CLAUDE.md` exists and has at least one heading.
+4. Confirm `CLAUDE.md` exists and has at least one heading, **and that no `CLAUDE.md.template` remains** in the project — the Step 3a activation must have both renamed the file and left no inert copy behind.
 5. Confirm `.claude/settings.json` is valid JSON (if it exists).
 
 Report the validation results. If all pass:
