@@ -8,13 +8,146 @@ You are the orchestrator for Axcíon's project pipeline. This pipeline discovers
 
 ## Scope Validation
 
-This pipeline is for **any Axcíon project that requires Claude Code** — whether that's building AI resources (skills, workflows, agents), setting up a research project, configuring a new workspace, or any other project where Claude Code is the execution environment. Before doing anything else, check whether the user's input describes work that will be built or run through Claude Code. If not, stop and explain that this pipeline is for Claude Code-based projects.
+This command serves **any Axcíon need that arrives asking for a project** — building AI resources (skills, workflows, agents), setting up a research project, configuring a new workspace, or any other work where Claude Code is the execution environment. It equally serves needs that turn out **not** to warrant a project: ordinary one-time work, and work an existing repository already owns. Step 0 decides which.
+
+Before doing anything else, check that the input describes Axcíon work with a deliverable behind it. Reject only genuinely off-scope input — a bare question with nothing to produce, or a request belonging to a different tool entirely. **Do not reject an input because it may not need a repository, or may not be built or run through Claude Code.** Those are Step 0 dispositions, not scope failures.
 
 **CWD guard:** Check if the current working directory is the `ai-resources` repo itself (i.e., the CWD contains a `skills/` directory and a `CLAUDE.md` with "Axcion AI Resource Repository" at the root level). If so, stop and tell the user:
 
 > "This command should be run from a project repo or the Axcíon AI workspace root, not from ai-resources directly. Open your target repo and run `/new-project` from there."
 
 **Note:** Running from the Axcíon AI workspace root (the parent directory that contains `ai-resources/`, `projects/`, etc.) is valid — the guard only blocks running from inside `ai-resources/` itself.
+
+## Step 0 — Qualify
+
+Most needs that arrive here do not require the full pipeline. Decide what the need actually warrants **before** any provisioning runs. Nothing in this step is recorded as a route, mode, classification or state — the disposition is a judgment you state in chat and then act on.
+
+**Input.** `$ARGUMENTS` — the need in ordinary language. If it is empty, ask exactly one question and wait:
+
+> "What do you need? One or two lines is enough."
+
+**Immediate fallthrough.** If the input reads as *resume*, *continue*, *next stage* or similar on work already under way, skip the rest of Step 0 and go straight to `## First Run vs. Continuation`.
+
+### 0.1 State the need
+
+Reflect the need back in three lines: the practical outcome wanted, who uses it, and what would show it worked. Ask only business questions that genuinely cannot be inferred from the input and the repository. Ask no technical questions — architecture, tooling and structure are yours to decide, not the operator's.
+
+### 0.2 Inspect existing ownership
+
+Find out whether something already owns this responsibility. **Do not assume a project has a `CLAUDE.md`** — inspect whichever authority surface is actually present.
+
+1. `ls projects/` to get the candidate set.
+2. Pick at most **three** plausible owners, by name and by what the need is about.
+3. For each, `ls` its top level, then read **whichever of these exists**, in this order: `README.md` → `PROJECT.md` → `CLAUDE.md`.
+4. If none exists, judge from the directory's own structure — subdirectory names, and the two or three most recent files under `output/`, `docs/` or equivalent. If the directory is empty, that is *insufficient evidence to judge* — say so rather than guessing.
+5. **Read budget: 10 files total.** Exceeding it is a finding to report, not a licence to keep reading.
+
+State each candidate as **owns it** / **owns part of it** / **adjacent but different**, giving the path and the specific file the judgment rests on.
+
+### 0.3 Choose one disposition
+
+State the disposition and the reason in one line before acting, so the operator can redirect in a sentence.
+
+| Disposition | Condition | What happens | Files created |
+|---|---|---|---|
+| **A — No repository** | one-time or ordinary work; no durable responsibility | Do the work now. Deliver in chat, or write one file **only** into a location the operator names, or an existing project's `output/`. Never invent a top-level directory. | 0 (or 1 named file) |
+| **B — Existing owner** | an existing repository already holds the responsibility | Name the owner, its path, and the file the judgment rests on. Return a qualified handoff in chat. Do **not** modify that repository. | 0 |
+| **C — Small durable document project** | durable, unowned, and there is an immediately useful document to write now | Run 0.4 in order. | 1–3 |
+| **Fallthrough** | anything else — software, automation, an AI resource, shared infrastructure, a multi-session build, or any need you cannot confidently place | Say so in one line, then continue to `## Pre-Flight Validation` unchanged. | legacy behaviour |
+
+Ambiguity resolves toward fallthrough, never toward A, B or C.
+
+### 0.4 Disposition C — ordered sequence
+
+**Preconditions 1–4 run first. All four must pass before anything is created. Any failure stops the path, creates nothing, and reports. None is auto-corrected.**
+
+1. **Name validation.** Must match `^[a-z0-9]+(-[a-z0-9]+)*$` and be ≤ 64 characters — no spaces, dots, slashes, or leading/trailing hyphen. On failure, propose a corrected name and ask the operator to confirm it. Do not silently normalise.
+
+2. **Target path validation.** Resolve the workspace root by walking up to the nearest ancestor containing **both** `ai-resources/` and `projects/`. Assert the target resolves to exactly `<workspace-root>/projects/<name>`. Reject any path containing `..`. Reject the case where `projects/` is itself a symlink.
+
+3. **Non-existence.** `[ -e "<target>" ]` must be false — file, directory or symlink alike. If anything exists there, **stop**. Do not write into it, reuse it, merge with it, or rename around it. Report the collision and the operator's options.
+
+4. **Root `.gitignore` is committable.** Determine all three:
+
+   ```bash
+   grep -Fxq "projects/<name>/" "<workspace-root>/.gitignore"      # entry already present?
+   git -C "<workspace-root>" diff        --quiet -- .gitignore     # unstaged changes?
+   git -C "<workspace-root>" diff --cached --quiet -- .gitignore   # staged changes?
+   ```
+
+   - Entry **present** → pass. Nothing will need writing to `.gitignore` later.
+   - Entry **absent** and `.gitignore` **clean** against HEAD → pass.
+   - Entry **absent** and `.gitignore` **dirty** (staged or unstaged) → **STOP HERE.** Do not `mkdir`. Do not write any file. Do not stage or commit anything. Report a **paused** disposition naming: the pre-existing modification to `.gitignore`, why the line cannot be appended into a contested file, and the two ways forward — commit or stash the pending `.gitignore` change and re-run, or proceed without ignoring and accept an untracked project tree in the root repo. The operator decides.
+
+5. **Create the directory.** `mkdir "<target>"` — non-recursive, so it fails if something appears between check and create.
+
+6. **Write the deliverable and any justified companions.**
+   - `projects/{name}/{deliverable}.md` — **always.** The document itself; this is the point of the disposition.
+   - `projects/{name}/PROJECT.md` — **only when work continues past this session.** Exactly these four headings:
+
+     ```markdown
+     # Project
+
+     ## Outcome and scope
+
+     ## Current work and next action
+
+     ## Verification and disposition
+     ```
+
+   - `projects/{name}/README.md` — **only when a durable explanation of purpose is needed beyond the document itself.** For a single-document project, normally no.
+
+7. **Verify and correct — a final pass, completed before any mutating Git command runs.**
+
+   Do all content editing first. Then, when you believe the files are finished, run this pass:
+
+   1. **Re-read every file you created, from disk.** Not from memory of what you wrote — open each one again. This is the step that catches what drafting missed.
+   2. **Compare the final contents against all four of:** the need as stated in 0.1; the authority sources you actually relied on; the scope and exclusions you set; and the practical-use requirement — can the intended user use this as it stands?
+   3. **Resolve every known factual, scope or usability concern before committing.** Fix what is wrong.
+      - If an unresolved concern **materially affects factual accuracy or practical usability**, pause before any mutating Git command and ask the unresolved business question, or report the missing evidence. **Do not commit.**
+      - A genuinely **non-blocking** limitation may be disclosed clearly in the document and in your report.
+   4. If `PROJECT.md` was written, confirm its next action matches what the document actually leaves open.
+   5. **State explicitly that this final verification is complete** before any mutating Git command, including `git init`, `git add` or `git commit`. Read-only Git inspection required by the earlier preconditions — for example precondition 4's `git diff --quiet -- .gitignore` checks — remains permitted.
+
+   **Nothing is staged, committed or initialised until step 7 has finished**, so the first commit records a verified deliverable rather than a draft plus a fix-up.
+
+   **After the project's initial commit is created, do not modify project content or create a corrective commit during the same run. If a new content defect is discovered after committing, report the result as paused and stop.** Leave the commit as it stands and name the defect in the report — the operator decides what happens next. The remedy for an unverified commit is a more careful step 7, not a second commit.
+
+8. **Initialise the project repository.**
+
+   ```bash
+   git -C "projects/{name}" init
+   git -C "projects/{name}" add .
+   git -C "projects/{name}" commit -m "init: {name} — {one-line purpose}"
+   ```
+
+   **No remote** — do not ask for a GitHub URL; one can be added later. **No push.**
+
+9. **Ignore the project in the root repo** — follow 0.5.
+
+10. **Report** one of *delivered and closed* / *created and ready for use* / *paused*. Name every file created, and report each commit **actually** created. Always report the project's initial-commit SHA. Report a root `.gitignore` commit SHA **only when this run created one**; if the entry already existed and no root commit was made, say so explicitly.
+
+**Prohibited on this path.** Do not create: a `.claude/` directory, `settings.json`, `settings.local.json`, hooks, agents, symlinks, `pipeline/`, `pipeline-state.md`, `decisions.md`, `sources.md`, `logs/`, a `Model Selection` section, a project `CLAUDE.md`, an `**Execution route:**` line, copied planning artifacts, or any empty directory.
+
+### 0.5 Root `.gitignore` — isolated, recoverable commit
+
+The one write this path makes outside the new project.
+
+**Step 1 — re-check, cheaply.** Re-run precondition 4's three tests immediately before writing; state can have changed. If the entry is now present → skip to the report. If `.gitignore` has become dirty → **stop**: the project exists and is committed, the ignore line is pending, and the report says so with the recovery options. Never append into a file that has become contested.
+
+**Step 2 — append.** Confirm the file's last byte is a newline; if not, append one first so the new entry cannot be glued onto the previous line. Then append exactly one line: `projects/{name}/`. **Append only** — do not sort, dedupe, reflow, or group it with other `projects/` entries. Every existing byte is preserved.
+
+**Step 3 — commit that path alone, by pathspec.**
+
+```bash
+git -C "<workspace-root>" commit -m "chore: ignore projects/{name}/ — project has its own repo" -- .gitignore
+```
+
+The pathspec form commits the working-tree content of `.gitignore` only; it does not consult or disturb the index for any other path, so unrelated modified and untracked files cannot be swept in. Record the resulting SHA. **No push** — pushes stay batched and gated.
+
+**Step 4 — forbidden.** Never `git add -A`, `git add .`, `git add -u`, `git commit -a`, or any commit without a pathspec. Never stage or commit any path other than `.gitignore`.
+
+**Recovery.** `git -C "<workspace-root>" revert <sha>` — one file, one added line, so the revert is clean. If the line ends up uncommitted, remove exactly that line with a targeted edit. **Never** `git checkout -- .gitignore` or `git restore .gitignore` — either would discard any other uncommitted change to that file.
 
 ## Pre-Flight Validation
 
