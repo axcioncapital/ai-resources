@@ -99,3 +99,17 @@ An audit-derived permission change triggers BOTH requirements:
 - `/risk-check` (this section).
 
 These are complementary, not redundant: the top-3 analysis confirms the audit's recommendation does not break existing commands; `/risk-check` evaluates the broader risk posture (usage cost, permissions surface, blast radius, reversibility, hidden coupling) of the planned change as a whole.
+
+## Subagent Proportionality
+
+> **When to read this section:** when deciding whether a change needs a dispatched subagent (QC-pass, extra reviewer, red-team) or whether inline verification suffices — and when a mandatory gate above has fired on a change that does not warrant its full ceremony.
+
+Default to **inline verification** — targeted grep/read, read-back, self-check against the rubric. Reserve dispatched subagents (QC-pass, extra reviewers, red-team) for changes that are genuinely architectural, high-risk, high-blast-radius, or need independent judgment. This does **not** waive QC: it picks the lightest form that actually verifies the change — inline self-check for light edits (per the `qc-independence.md` skip conditions), a dispatched independent pass for substantive or uncertain artifacts.
+
+- **Do not stack gates.** A change already cleared by the gates it needs — `/blindspot-scan`, `/risk-check`, operator sign-off on the *exact* diffs, an inline re-grep — does not also get an independent QC-pass subagent on top. Gate ceremony scales with the task's real risk, not by default.
+- **Keep a mandatory gate proportionate.** When a required gate (e.g. one of the `/risk-check` change classes above) fires on a light change, run the lightest form that satisfies it. Before dispatching a *heavy* subagent, state in one line why the main session cannot do the check inline.
+- **Do not over-correct into banning subagents.** They remain the right tool for real architecture, protected doctrine, and high-blast-radius work. The failure mode is overuse, not existence.
+
+This doctrine governs **gate ceremony**, which is why it lives here beside the change classes and the two-gate model rather than in `qc-independence.md`: "do not stack gates" ranges over `/blindspot-scan` and `/risk-check`, not only QC. For how QC subagents themselves work — context isolation, skip conditions, mechanical mode, the subagent-unavailable fallback — see `qc-independence.md`.
+
+*(Moved here from the workspace-root `CLAUDE.md` on 2026-07-27, migration Stage 5 §6.2. The plan deliberately left the destination open between this file and `qc-independence.md`; decided here because the operative rules are about gate proportionality, not QC mechanics.)*

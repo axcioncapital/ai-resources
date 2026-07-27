@@ -117,6 +117,23 @@ These agents exist as regular-file copies (not symlinks) in `projects/strategic-
 | self-review-agent | opus | Judgment (periodic OS self-review; checks staleness, contradictions, unowned risks). Project-local to strategic-os. Added 2026-05-27. |
 | state-retrieval-agent | sonnet | Structured cross-project read of strategic-signal files; returns snapshot for state view and decision queries. Project-local to strategic-os. Added 2026-05-27. |
 
+## `general-purpose` dispatch-pinning — compliance roster
+
+`general-purpose` has no frontmatter of its own, so an un-pinned spawn silently inherits the session model — a judgment dispatch could run at Haiku on a Haiku session with no signal. Pinning the tier in the spawn instruction (e.g. *"pin `model: opus` on the spawn"*) is permitted **per-dispatch, never blanket**, and is the target state. It is not a banned "default": it overrides nothing the operator chose, unlike a `settings.json` default, which contests `/model` for every dispatch. Ratified 2026-07-12 (W3.2 M-A2a; rationale in `logs/decisions.md` 2026-07-12). The prohibition on model *defaults* itself stays canonical in workspace `CLAUDE.md` § Model Tier.
+
+**Known compliance gap — tracked, not silently ignored.** As of 2026-07-12:
+
+| State | Commands |
+|---|---|
+| Pins the tier (11) | `/qc-pass`, `/refinement-pass`, `/refinement-deep`, `/friday-journal`, `/drift-check`, `/contract-check`, `/resolve-repo-problem`, plus three skill-pipeline evaluators — all `opus` except `/risk-check`, a logged `sonnet` cost exception (**do not "normalize" it upward**) |
+| Spawns `general-purpose` unpinned, not yet retrofitted (≥6) | `tweak`, `decide`, `leverage-idea`, `graduate-resource`, `promote-workflow`, `wrap-session` |
+
+Tracked in `logs/improvement-log.md` 2026-07-12. Do not read the gap as tolerance for new unpinned spawns — **new commands pin from creation.**
+
+This roster is perishable compliance data: it goes stale on every retrofit. Update it here when a command is retrofitted; it deliberately does not live in the always-loaded workspace `CLAUDE.md`.
+
+*(Moved here from the workspace-root `CLAUDE.md` on 2026-07-27, migration Stage 5 §6.4.)*
+
 ## Maintenance
 
-When adding a new agent, place it in the table. When changing an agent's tier, update the table in the same commit.
+When adding a new agent, place it in the table. When changing an agent's tier, update the table in the same commit. When a command is retrofitted to pin its `general-purpose` dispatch tier, move it between the two rows of the compliance roster above in the same commit.

@@ -31,6 +31,21 @@ When work reaches a decision point (multiple approaches, stage gate, plan-mode o
 
 Skill stage gates auto-advance unless a genuine risk warrants surfacing in session-plan. "Would you like to proceed to the next stage?" is not a pause trigger.
 
-# Model Escalation — de-duplication clause
+# Model Escalation
 
-The Model Escalation rule (workspace CLAUDE.md) does NOT fire while a `QC → Triage Auto-Loop` is in progress. The auto-loop's existing `qc-reviewer` and `triage-reviewer` subagent passes are themselves the escalation; double-spawning is prohibited.
+> **When to read this section:** when work is not converging on the operating model and you are deciding whether to escalate tier.
+
+When work isn't converging on the operating model, escalate before continuing. Triggers (any one fires):
+
+- Same task fails twice on the operating model with similar errors.
+- Output is plausible but shallow — repeats your inputs without improving them.
+- Multiple independent constraints can't be reconciled.
+- Operator says "this isn't converging" or "switch to Opus."
+
+**Action:** Stop. Spawn an Opus subagent with current state + prior attempts; ask for root cause and minimum next step. Apply the diagnosis. Decide whether to continue on the current tier or escalate via `/model`.
+
+## De-duplication clause
+
+This rule does NOT fire while a `QC → Triage Auto-Loop` is in progress. The auto-loop's existing `qc-reviewer` and `triage-reviewer` subagent passes are themselves the escalation; double-spawning is prohibited.
+
+*(Triggers and Action moved here from the workspace-root `CLAUDE.md` on 2026-07-27, migration Stage 5 §6.2. Before that move this file carried only the de-duplication clause, so the root's `§ Model Escalation` pointer resolved to a partial rule.)*
