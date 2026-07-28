@@ -21,7 +21,7 @@ This command is never mandatory or standard for *every* material improvement. Th
 - `/placement` remains a standalone advisory route. This command reads the same authoritative placement heuristics when mechanism or location is genuinely open.
 - `/leverage-idea` starts from an idea dump and stops at a plan; `/request-skill` captures a brief for later. This qualifies and builds now.
 - `/risk-check`, `/qc-pass` and `/implementation-triage` are specialist capabilities Step 3 draws on when the claim and consequence warrant it.
-- `/work-loop` develops **operating capabilities** — business, operational and product abilities inside projects that already exist — by the method in `skills/capability-development/SKILL.md`. It owns the operating outcome; this command owns the artifact. The skill is not the capability; it is one implementation component. A brief arriving from it carries `**Capability:**` and `**Settled upstream:**` — see Step 1's upstream-brief clause.
+- `/work-loop` develops **operating capabilities** — business, operational and product abilities inside projects that already exist — by the method in `skills/capability-development/SKILL.md`. It owns the operating outcome; this command owns the artifact. The skill is not the capability; it is one implementation component. A brief arriving from it carries `**Capability:**` and `**Settled upstream:**`; those labels are a *claim* of provenance that Step 1.0 verifies against the named record before honouring — see Step 1's upstream-brief clause.
 
 Input: `$ARGUMENTS` — a plain-English need, a path to a brief in `ai-resources/inbox/`, or an existing resource to improve. If empty, ask for the need in one line and wait.
 
@@ -29,7 +29,42 @@ Input: `$ARGUMENTS` — a plain-English need, a path to a brief in `ai-resources
 
 ### Step 1 — Qualify
 
-**1.0 Upstream-qualified brief.** When the input brief carries both `**Capability:**` and `**Settled upstream:**`, it arrives from `/work-loop`, which has already validated the operating need, established ownership and the seam, and holds the adoption decision. Read the record named in `**Capability:**` and treat 1.1 and 1.2 as satisfied by it — do not re-derive the need and do not re-classify its evidence. **Steps 1.3–1.6 still run in full, scoped to the artifact:** does this artifact already exist, is this rung the smallest mechanism for *this artifact*, and where does it belong. Step 4's disposition covers the artifact only and returns to the calling unit; it is not an independent adoption decision. A brief carrying neither field is an ordinary direct invocation — ignore this clause.
+**1.0 Upstream-qualified brief — verify the record, then trust it. Never the reverse.**
+
+A brief carrying both `**Capability:**` and `**Settled upstream:**` claims to arrive from `/work-loop`, which has already validated the operating need, established ownership and the seam, and holds the adoption decision. **Two markdown field labels are a claim of provenance, not proof of it** — any document can carry them. So upstream mode is entered only when the claim is corroborated by a real record on disk.
+
+**Route on field presence:**
+
+- **Neither field** → ordinary direct invocation. Ignore this clause entirely and run Step 1 from 1.1. This is the common case and produces no output.
+- **Exactly one field** → **malformed upstream handoff.** Report it and run 1.1–1.6 in full. A half-formed handoff is not a handoff.
+- **Both fields** → run the four checks below. **All four must pass.**
+
+**The four checks.** `{WORKSPACE}` resolves by the ancestor walk-up defined at 1.5. **If that walk-up fails, the checks cannot run: report a malformed upstream handoff on that ground and run 1.1–1.6 in full.** An unrunnable check is a failed check, never a passed one.
+
+1. **The record resolves to exactly one file.** `**Capability:**` carries **either** a workspace-relative path to the record **or** a bare slug — and nothing else. A path is used as given. A bare slug is resolved by glob, and **exactly one** match is required; zero matches and two-or-more matches both fail.
+   ```bash
+   # bare-slug form
+   ls {WORKSPACE}/projects/*/development/{slug}.md 2>/dev/null | wc -l   # must be exactly 1
+   ```
+2. **It is a capability record, in the expected location.** The resolved path must match `projects/{p}/development/{slug}.md` — the `development/` directory is what makes it a capability record's home; a file of the same name anywhere else is not one — **and** the file must open with YAML frontmatter carrying a `capability:` key. A file with no frontmatter, or frontmatter without that key, is some other document and fails here. (Reachable only via the path form; the bare-slug glob is already rooted at `projects/*/development/`.)
+3. **Its identity agrees with the brief.** Read the frontmatter and require both:
+   - `capability:` equals the slug the brief supplied — or, when a path was supplied, its **filename stem, without the `.md` extension**;
+   - `owner_project:` equals the `{p}` segment of the record's own path.
+
+   A record whose frontmatter disagrees with its own location, or with the brief that pointed at it, is reporting an identity it cannot support.
+4. **Its `status:` is in the ACTIVE set** — `in-development` · `continue-trial` · `revise` · `paused`, per the `STATUS IS A SET` block in `templates/capability-record.md`. A record at a TERMINAL status (`adopted` · `keep-local` · `closed` · `retired` · `rejected`) fails this check.
+
+   **Why this check exists.** Records are never deleted; a `rejected` record persists forever *as the evidence that the need was refused*. Without this check, that record would satisfy checks 1–3 and cause 1.1 to treat the need as validated by a document whose own content says the opposite — the same trust-the-label failure one level deeper. An ACTIVE status is the expected state at handoff because the **capability** is still in development; the check keys on the record's `status:` and makes no claim about the state of any calling unit.
+
+**All four pass → upstream mode.** Treat 1.1 and 1.2 as satisfied by the record: do not re-derive the need and do not re-classify its evidence. Say so in one line, naming the resolved path and the record's `status:`, so the operator can see which record was trusted. **Steps 1.3–1.6 still run in full, scoped to the artifact:** does this artifact already exist, is this rung the smallest mechanism for *this artifact*, and where does it belong. Step 4's disposition covers the artifact only and returns to the calling unit; it is not an independent adoption decision — Step 4 carries the matching branch.
+
+**Any check fails → MALFORMED UPSTREAM HANDOFF.** Report which check failed, what was expected, and what was observed — including the resolved path when there was one. Then **run 1.1–1.6 in full**, exactly as an ordinary direct invocation. Three prohibitions, each closing a way the failure could be silently swallowed:
+
+- **Do not skip 1.1–1.2.** A failed provenance check means the need is *unvalidated*, which is precisely when qualification is needed most. Failing open here would make the check decorative.
+- **Do not auto-repair the record**, and do not create one. Writing a capability record is `/work-loop`'s sole authority (`templates/capability-record.md`); a consumer that repairs its own input destroys the evidence that the handoff was broken.
+- **Do not infer the capability's content from the brief alone.** If the record cannot be read, its contents are unknown — not reconstructable from the document that pointed at it.
+
+> **No executable component emits these fields yet** — the producer ships with `/work-loop`'s capability route. Until then, any brief reaching this clause came from something other than `/work-loop`, which is why the checks above are mandatory rather than advisory. Check 1 is the normative value contract for `**Capability:**`; the producer-side obligations it creates are recorded in `plans/2026-07-28-work-loop-consolidated-build-plan.md` §11.
 
 **1.1 State the understanding.** Three lines: the practical outcome wanted, what happens today, and any ambiguity blocking responsible progress. Read attachments and conversation first, then ask only where an answer would change the outcome, boundary or usefulness — grouped, in plain English.
 
@@ -120,6 +155,13 @@ Judge depth in-session and store no classification. Deeper verification fits a r
 **When a candidate was built,** give the operator: the need; the mechanism and why; what was reused, changed or left alone; **what happened before and what happens with the candidate**; where it applies and where it does not; what was actually tested and observed; what changes if it ships; and what would later justify simplifying, replacing or removing it.
 
 The operator then chooses **Ship** (adopt via normal integration practice) · **Revise** (return only to the step the feedback affects) · **Defer** (preserve recoverably, unadopted) · **Delete candidate** (remove it, system unchanged). Adoption and integration wait for that choice.
+
+**In upstream mode (1.0), this step returns a disposition — it does not make the adoption decision.** Record the disposition against the **capability record** named in the brief, which is the durable address and stays open while the capability is in development; the capability's adoption decision belongs to `/work-loop` and its own operator gate, not here. This applies to **both** branches of this step, the built-candidate one above and the no-candidate one below.
+
+Two consequences worth stating, because each would otherwise leave a step unsatisfiable:
+
+- **Return address is the record, not the calling unit.** `docs/work-loop.md:157` defines the `routed-out` outcome as ownership having *"left the loop terminally"*, and `:171` marks the routed-out unit `Status: complete`, so the unit that handed the brief over may already be closed by the time this step runs. `.claude/commands/work-loop.md:124` says the opposite — "return its disposition to this unit". **That contradiction is in the caller and is commit 5's to reconcile**, not this command's; keying on the record avoids depending on which way it resolves.
+- **When the input was an `inbox/` brief, the returned disposition is what triggers archiving** under the closing rule below — there is no separate operator acceptance in upstream mode, because the accept/reject decision sits with `/work-loop`.
 
 **When no candidate was built,** give the recommendation, the evidence, and the existing capability or habit that serves the need instead. The operator chooses **Accept** or **Reconsider with additional evidence**.
 

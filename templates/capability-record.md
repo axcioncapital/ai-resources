@@ -105,6 +105,13 @@ Verified need · intended outcome · users · public interface · observable beh
 
 { A claim that was not tested is `unassessed`, never `passed`. }
 
+## Independent review
+
+{ Round · date · subject · findings · the disposition of each finding — accept and fix, accept and
+defer with a concrete trigger, or reject with cited evidence. Briefs and reviews live in
+`logs/loop/` for the life of the stream and are deleted at stream close; this section is what makes
+a lost review regenerable afterwards. }
+
 ## Decisions
 
 ### D1 — { YYYY-MM-DD } — { title }
