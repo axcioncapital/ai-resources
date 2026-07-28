@@ -21,12 +21,15 @@ This command is never mandatory or standard for *every* material improvement. Th
 - `/placement` remains a standalone advisory route. This command reads the same authoritative placement heuristics when mechanism or location is genuinely open.
 - `/leverage-idea` starts from an idea dump and stops at a plan; `/request-skill` captures a brief for later. This qualifies and builds now.
 - `/risk-check`, `/qc-pass` and `/implementation-triage` are specialist capabilities Step 3 draws on when the claim and consequence warrant it.
+- `/work-loop` develops **operating capabilities** — business, operational and product abilities inside projects that already exist — by the method in `skills/capability-development/SKILL.md`. It owns the operating outcome; this command owns the artifact. The skill is not the capability; it is one implementation component. A brief arriving from it carries `**Capability:**` and `**Settled upstream:**` — see Step 1's upstream-brief clause.
 
 Input: `$ARGUMENTS` — a plain-English need, a path to a brief in `ai-resources/inbox/`, or an existing resource to improve. If empty, ask for the need in one line and wait.
 
 ---
 
 ### Step 1 — Qualify
+
+**1.0 Upstream-qualified brief.** When the input brief carries both `**Capability:**` and `**Settled upstream:**`, it arrives from `/work-loop`, which has already validated the operating need, established ownership and the seam, and holds the adoption decision. Read the record named in `**Capability:**` and treat 1.1 and 1.2 as satisfied by it — do not re-derive the need and do not re-classify its evidence. **Steps 1.3–1.6 still run in full, scoped to the artifact:** does this artifact already exist, is this rung the smallest mechanism for *this artifact*, and where does it belong. Step 4's disposition covers the artifact only and returns to the calling unit; it is not an independent adoption decision. A brief carrying neither field is an ordinary direct invocation — ignore this clause.
 
 **1.1 State the understanding.** Three lines: the practical outcome wanted, what happens today, and any ambiguity blocking responsible progress. Read attachments and conversation first, then ask only where an answer would change the outcome, boundary or usefulness — grouped, in plain English.
 
