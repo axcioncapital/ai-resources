@@ -1919,3 +1919,20 @@ Applying Step 1c literally would have made the `/prime` brief report the project
 **Proposal.** Add one clause to `prime.md` Step 1c Path 1, before trusting `pipeline-state.md` as current: check the file's own mtime for staleness relative to the repo's recent commit activity (`date -r <plan-file>` — the same primitive Path 2 already uses — compared against whether commits have landed elsewhere in the repo since), and downgrade to "state as historical, do not derive Where-we-are from it" when the file is stale relative to ongoing repo activity. This is more general than grepping the project's CLAUDE.md for a specific marker phrase, since it doesn't depend on guessing per-repo wording.
 
 **Target files:** `ai-resources/.claude/commands/prime.md` (Step 1c, Path 1 trust-as-is branch).
+
+### 2026-07-28 — Codex `work-loop` controller emits its brief without the required activation explanation
+
+- **Status:** logged (pending) — operator-waived for the MVP, not fixed
+- **Severity:** medium — non-functional. The brief Codex produced was correct, repository-grounded and contract-shaped, so nothing downstream broke. The cost is diagnostic: without the explanation, the operator cannot tell an informed skill selection from a lucky one, which is the only signal the activation path has.
+- **Category:** cross-model wiring (C2 Codex controller skill, `ai-resources/.agents/skills/work-loop/SKILL.md`)
+- **Source:** A-CX-1 acceptance run, 2026-07-28 (workspace-root session S4-42d).
+
+A-CX-1 requires three behaviours from a fresh, design-context-free Codex task: select `work-loop` from a plain-language need that does not name the skill, **explain the choice in three to four plain sentences before emitting**, and produce a 15–25 line brief. Selection and brief were both evidenced — a 22-line contract-shaped `BRIEF` with all six header fields, `REPO: ai-resources`, `BASE` = live ai-resources HEAD `0cc4035`, and a premise set that proved correct against the live files under independent verification. The explanation did not appear.
+
+**Operator disposition 2026-07-28: PASS WITH OPERATOR WAIVER.** Judged a non-functional MVP presentation miss, not an activation failure. `ai-resources/AGENTS.md` was left unchanged. Recorded here as the follow-up the waiver reserved rather than closed.
+
+Why it is worth keeping visible: the explanation is what distinguishes *Codex understood the need and chose this skill* from *Codex pattern-matched on something in the task*. A-CX-1 exists precisely because RR-05 makes C2 the design's only wiring point, so the activation path has no other observable. Waiving the signal is reasonable at MVP; losing the record of having waived it is how a design ends up trusting an unmeasured path.
+
+**Proposal.** Make the explanation structurally unavoidable rather than instructed: have C2 emit it as a named field the brief block itself carries (e.g. a `WHY THIS SKILL:` line above `BRIEF`), so a brief without it is visibly malformed on arrival instead of silently incomplete. Re-run A-CX-1 against that shape.
+
+**Target files:** `ai-resources/.agents/skills/work-loop/SKILL.md` (activation and brief-emission section); `ai-resources/plans/2026-07-28-work-loop-consolidated-build-plan.md` §11 A-CX-1 (pass condition, if the shape changes).
