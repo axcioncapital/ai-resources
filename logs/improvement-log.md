@@ -1936,3 +1936,52 @@ Why it is worth keeping visible: the explanation is what distinguishes *Codex un
 **Proposal.** Make the explanation structurally unavoidable rather than instructed: have C2 emit it as a named field the brief block itself carries (e.g. a `WHY THIS SKILL:` line above `BRIEF`), so a brief without it is visibly malformed on arrival instead of silently incomplete. Re-run A-CX-1 against that shape.
 
 **Target files:** `ai-resources/.agents/skills/work-loop/SKILL.md` (activation and brief-emission section); `ai-resources/plans/2026-07-28-work-loop-consolidated-build-plan.md` §11 A-CX-1 (pass condition, if the shape changes).
+
+### 2026-07-28 — A measurement of an in-flight file goes stale inside the same session, and nothing signals it
+
+- **Status:** logged (pending)
+- **Severity:** medium-high — it produced a **false PASS in a committed acceptance-test record** and separately came within one step of rejecting a true premise and stopping correct work. Both in one session. It reaches `/prime`'s task menu deliberately.
+- **Category:** verification discipline / multi-writer working tree
+- **Source:** workspace-root session S4-42d, 2026-07-28.
+
+Twice in one session a file was measured, the result recorded, and the file then changed underneath the record. (1) A-CORE-3 was run against `ai-resources/docs/work-loop.md` at 172 lines and recorded **PASS**; the file was rewritten to 213 lines forty minutes later, so the committed test record asserted a pass against a ceiling the file no longer met. (2) A premise in a Codex brief asserted a step ordering that a cached read of the same file contradicted — verifying from the cached copy would have emitted `PREMISE: rejected` and stopped a correct unit. It was caught only by noticing an mtime.
+
+The common shape: **a read is treated as a fact about the file rather than a fact about the file at a time.** It bites hardest on in-flight components that two writers (here Claude and Codex, both authoring in `ai-resources`) touch in one session — exactly the cross-model arrangement the `/work-loop` design institutionalises, so the exposure grows rather than shrinks.
+
+Existing partial mitigation: `/work-loop` C3 Step 4 now says to re-derive against the live file every time. That is an instruction inside one command, and the failure occurred *outside* a loop unit both times.
+
+**Proposal.** Cheapest sufficient shape: capture `stat` mtime alongside every recorded measurement, so a stale result is visibly stale rather than silently wrong — a recorded pass that carries no timestamp cannot be audited at all. Stronger option if this recurs: re-measure size/grep acceptance results immediately before the commit that claims them, which the operator directed ad hoc this session and which caught the A-CORE-3 breach.
+
+**Target files:** `ai-resources/plans/2026-07-28-work-loop-consolidated-build-plan.md` §11 (acceptance-test recording convention); possibly `ai-resources/docs/audit-discipline.md` (evidence standard).
+
+### 2026-07-28 — Foreign-session guard inverts attribution for a `/prime`-less session
+
+- **Status:** logged (pending)
+- **Severity:** medium — it does not lose data (the guard stops rather than merges) but it names the wrong blocks, and the operator must know the classifier is inverted to resolve it correctly. A less careful wrap could ship an orphan's content under its own commit, which is the exact failure the guard exists to prevent.
+- **Category:** infrastructure (`ai-resources/logs/scripts/foreign-session-guard.sh`, marker-aware attribution)
+- **Source:** workspace-root session S4-42d wrap, 2026-07-28.
+
+A session opened directly into `/work-loop` (no `/prime`) holds no per-id marker. At wrap, the guard recovered `S3-5ca` from the **shared** marker file, judged it "partial-setup own", and ran attribution against it. Result: `MARKER=S3-5ca OWN_HEADERS_SUBTRACT=1 FOREIGN=2 FOREIGN_CLASS=CONCURRENT`. It subtracted the **orphan's** header as own and flagged **this session's real block** as foreign — the attribution inverted.
+
+Two further mismatches surfaced in the same fire. The class was `CONCURRENT`, whose documented remedy is "switch to the other terminal and wrap it first" — impossible, since neither S2-130 nor S3-5ca was live. And `REMNANT`, the orphan-recovery branch, keys on **prior-day** extras, so **same-day orphans from sessions that never wrapped have no matching branch at all**. The recovery commit had to adapt REMNANT's message shape by hand.
+
+Note the guard was not wrong given its inputs, and its refusal to proceed was correct. `run-manifest.sh`'s sibling guard behaved perfectly in the same wrap — it declined to write and named the risk of overwriting `2026-07-28-S3-5ca.json`. The gap is the classifier's shape, not its caution.
+
+**Proposal.** Add a same-day-orphan class distinct from `CONCURRENT` — the discriminator already exists in the data (a today-dated extra whose session has no live per-id marker is an orphan, not a concurrent writer) — and give it REMNANT's recovery text with a same-day message shape. Separately, when the marker is recovered from the shared file rather than a per-id one, mark the attribution **low-confidence** in the `GUARD:` line so the reader knows own/foreign may be inverted.
+
+**Target files:** `ai-resources/logs/scripts/foreign-session-guard.sh` (classifier + `GUARD:` line); both `wrap-session.md` copies (Step 1.5 / Step 3.5 branch text); `ai-resources/docs/session-marker.md`.
+
+### 2026-07-28 — Canonical `wrap-session` still absorbs unrecognised `+flags` silently
+
+- **Status:** logged (pending)
+- **Severity:** medium — the workspace-root copy is fixed; the canonical copy, which **20 symlinked consumers** resolve to, is not. An operator passing `+nonsense` (or a typo of a real flag) to a wrap in `ai-resources` or any of those projects still gets silence and an un-run pass they may believe ran.
+- **Category:** command defect (paired-copy divergence)
+- **Source:** loop unit `2026-07-28-wrap-session-unknown-flag-frame`, deferred finding; workspace-root session S4-42d.
+
+The workspace-root copy now reports any whole `+`-prefixed token that fails the Step 0.4 whole-token match, in two classes (known-canonically-unimplemented, and unknown-anywhere). The canonical copy retains the original behaviour: non-matching tokens fall through to "the operator's free-text wrap-up context" with no report. Canonical carries five flags rather than three, so its unknown class is narrower — but it is not empty, and its blast radius is 20 consumers against the root copy's one.
+
+Deliberately out of scope at the time: the unit's brief said "do not add telemetry support or modify the ai-resources command." The divergence is documented in-file at the root copy with a note instructing future readers not to "reconcile" the frame away.
+
+**Proposal.** Port the frame to canonical, adjusted for its five flags: the known-canonically class becomes empty there (all five are implemented), leaving one unknown-anywhere branch. Keep both copies' divergence notes in sync when it lands.
+
+**Target files:** `ai-resources/.claude/commands/wrap-session.md` Step 0.4; `/.claude/commands/wrap-session.md` Step 0.4 (divergence note update once ported).
