@@ -23,7 +23,7 @@ Build one operator-facing command, `/work-loop`, backed by two skills and one co
 
 **Verified in the operator's Codex session:** Codex reads the `ai-resources` repository directly including git state, reads sibling repositories from that root, and discovers the `.agents/skills/` catalog when rooted there. It writes and runs git within `ai-resources`; sibling write access is not assured and this design never requires it.
 
-**Verified by filesystem inspection 2026-07-28:** 91 commands, 42 agents, 81 skills · workspace root has 61 symlinks + 6 real files and **no** `shared-manifest.json` · **25 of 27** projects carry a manifest and auto-sync · `global-macro-analysis` has no manifest but does have `.claude/commands/` holding 51 relative symlinks; its latest git activity is `55b6eae`, **2026-06-12** · `personal/` is an empty directory, not a project · **zero** direct-route projects exist · `logs/` exists in 26 of 27 projects, in `ai-resources` and at the root · `.claude/commands/session-start.md:330` hard-fails without a `/prime` marker and `:379`/`:397` branch the plan chain on execution route — which is why `/work-loop` invokes neither · `.claude/commands/mission.md:71` never guesses a thread · risk classes at `docs/audit-discipline.md:60-65`, two-gate model at `:73-81`.
+**Verified by filesystem inspection 2026-07-28:** 91 commands, 42 agents, 81 skills · workspace root has 61 symlinks + 6 real files and **no** `shared-manifest.json` · **25 of 27** projects carry a manifest and auto-sync · `global-macro-analysis` has no manifest but does have `.claude/commands/` holding **39 relative symlinks (+13 real project-local `kb-*.md` files)**; its latest git activity is `55b6eae`, **2026-06-12** · `personal/` is an empty directory, not a project · **zero** direct-route projects exist · `logs/` exists in 26 of 27 projects, in `ai-resources` and at the root · `.claude/commands/session-start.md:330` hard-fails without a `/prime` marker and `:379`/`:397` branch the plan chain on execution route — which is why `/work-loop` invokes neither · `.claude/commands/mission.md:71` never guesses a thread · risk classes at `docs/audit-discipline.md:60-65`, two-gate model at `:73-81`.
 
 **Unverified:** whether Codex selects the new skill from a plain request without being named. Test **A-CX-1**, §11.
 
@@ -226,6 +226,10 @@ Resolution: exactly one candidate in the highest non-empty tier → resume it, a
 
 Rejected: `~/.codex/skills/` (outside every git repository — unversioned, undistributed, unauditable) and symlinking `.agents/skills/` into projects (needs a distribution mechanism that does not exist).
 
+**Correction — premise failure found in implementation, 2026-07-28 S3.** This section's reasoning did not survive inspection. **`.agents/` was gitignored** (`.gitignore`, committed; operator call 2026-07-13 S12, which also ignores `.codex/` and `AGENTS.md` as an unmaintained experiment). Zero files under `.agents/` were tracked — including the four existing `source-command-*` skills. Two consequences the plan missed: **commit 2 was unexecutable**, since its entire file list is C2 and nothing under `.agents/` could be staged; and the stated ground for rejecting `~/.codex/skills/` — *unversioned, undistributed, unauditable* — applied equally to a gitignored `.agents/`, so it did not distinguish the two options at all.
+
+**Resolved by operator decision, 2026-07-28:** track **only** `.agents/skills/work-loop/`, via a narrowed `.gitignore` rule. `.codex/`, `AGENTS.md` and the four `source-command-*` skills stay ignored — this is the "deliberate decision to track" the 2026-07-13 note reserved, scoped to one subtree rather than an adoption of the mirror. Verified: exactly one file (`C2`) becomes visible; all four legacy skills, `.codex/` and `AGENTS.md` re-checked as still ignored. **Commit 2 therefore carries `.gitignore` alongside C2** (§10.3, corrected).
+
 ---
 
 ## 9. Files
@@ -234,7 +238,7 @@ Rejected: `~/.codex/skills/` (outside every git repository — unversioned, undi
 
 | # | Path | Purpose | Size |
 |---|---|---|---|
-| **C1** | `ai-resources/docs/work-loop.md` | The contract: eight loop steps · universal route triggers (citing, not copying) · route→depth→stops · stream allocation, collision handling and unit cardinality · six block formats with the `UNIT`/`STREAM`/`PHASE`/`REPO`/`BASE`/`NEXT` header · phase table · artifact ownership, mutability and **stream retention** · commit boundary · reconciliation and resume order · Codex control-room declaration · the three boundary sentences | ≤180 lines |
+| **C1** | `ai-resources/docs/work-loop.md` | The contract: eight loop steps · universal route triggers (citing, not copying) · route→depth→stops · stream allocation, collision handling and unit cardinality · six block formats with the `UNIT`/`STREAM`/`PHASE`/`REPO`/`BASE`/`NEXT` header · phase table · artifact ownership, mutability and **stream retention** · commit boundary · reconciliation and resume order · Codex control-room declaration · the three boundary sentences | ≤220 lines *(amended from ≤180, 2026-07-28 — see §11 A-CORE-3)* |
 | **C2** | `ai-resources/.agents/skills/work-loop/SKILL.md` | Codex controller: activation description · brief preparation · evidence review, premise dimension first · no-access fallback · redesign prohibition | ~150 lines |
 | **C3** | `ai-resources/.claude/commands/work-loop.md` | Claude executor. Orchestration and implementation; reads C1 always, C4 for capability units. `model: opus`, `effort: high` | Target ≤300 lines — see §13 |
 | **C4** | `ai-resources/skills/capability-development/SKILL.md` | The methodology. `disable-model-invocation: true`, `model: opus`, `effort: high`. Text lifted from the superseded plan §§7–10, 12, 14, 16, Appendix A, re-read against the live repository | 350–500 lines |
@@ -263,7 +267,7 @@ Rejected: `~/.codex/skills/` (outside every git repository — unversioned, undi
         projects/global-macro-analysis/.claude/commands/work-loop.md
   ```
 
-  This matches the 51 relative symlinks already in that directory exactly. **A manifest is deliberately not installed** — it would pull roughly 90 commands into the project at next SessionStart, a far larger change than this MVP is authorised to make. The project is low-activity but not dead: latest git activity `55b6eae`, **2026-06-12**.
+  This matches the **39 relative symlinks** already in that directory exactly. The directory is a *mix*, not a symlink farm: 52 entries = 39 symlinks + **13 real project-local `kb-*.md` command files**. That strengthens the decision below rather than weakening it — **A manifest is deliberately not installed** because it would pull roughly 90 commands into the project at next SessionStart *and* put those 13 local `kb-*` commands at risk, a far larger change than this MVP is authorised to make. The project is low-activity but not dead: latest git activity `55b6eae`, **2026-06-12**.
 
 **Reach:** `/work-loop` is available in **26 of 27 projects** — 25 automatically by `auto-sync-shared.sh`, plus `global-macro-analysis` by S2 — and at the workspace root by S1. `personal/` is an empty directory, not a project.
 
@@ -302,7 +306,7 @@ Three implementation sessions. Grouping is fixed so each end-time gate sees a co
 | # | Session | Commit | Files | Verification | Complete when |
 |---|---|---|---|---|---|
 | **1** | A | `new: /work-loop — cross-model work loop (solo + reviewed, non-capability)` | C1, C3 (challenged and capability branches stubbed), S1, S2 | A-CORE-1..7, A-DIST-1..3, A-GIT-1, A-REC-1 | Approved pilot defect closed end to end; one resume after `/clear` |
-| **2** | A | `new: work-loop Codex controller skill` | C2 | **A-CX-1 first**, then A-CX-2 | Codex activates from plain language in a fresh task; one reviewed round trip closed |
+| **2** | A | `new: work-loop Codex controller skill` | C2, **`.gitignore`** (narrowed `.agents/` rule — see §8 Correction; without it C2 cannot be staged at all) | **A-CX-1 first**, then A-CX-2 | Codex activates from plain language in a fresh task; one reviewed round trip closed |
 | **3** | A | `update: /work-loop — challenged route, stream correlation, distinct pre/post reviews` | C3, C1 | A-CHAL-1..3, A-STREAM-1..2 | One challenged non-capability stream closed with two reviews in two units |
 | **4** | B | `new: capability-development skill + capability-record template` | C4, C5, E2 | `/qc-pass` on C4; A-CAP-0; A-CORE-7 | Skill inert; template renders with no `{{` left |
 | **5** | B | `update: /work-loop — capability units, record correlation, cardinality` | C3 | A-CAP-1..7, A-RES-1..2, A-REC-2 | One solo capability unit and one reviewed capability across ≥2 correlated units |
@@ -332,7 +336,11 @@ Safe partial reverts: 7 alone · 6 alone (consequence: duplicated Step-1 work pe
 
 - **A-CORE-1 — Non-capability defect fix, solo.** Using the §10.1 approved pilot defect. **Pass:** brief written; route stated `solo` with the criterion; premise verified before any edit; evidence written with populated `LIMITATIONS`; pathspec commit; **artifacts deleted at stream close, which for solo is the single unit's close**; no Codex review, no `/qc-pass`, no `/risk-check`, no stop. Three operator actions.
 - **A-CORE-2 — False premise stops.** Assert something disproved — e.g. *"`check-decision-refs.sh` still resolves its repo root from its own location"* (fixed in `df53459`). **Pass:** `PREMISE: rejected` with the commit cited; **zero edits**. Needs no pilot authorization.
-- **A-CORE-3 — Sizes.** `wc -l`: C1 ≤180; C3 at or below its recorded ceiling (§13).
+- **A-CORE-3 — Sizes.** `wc -l`: C1 ≤220; C3 at or below its recorded ceiling (§13).
+
+  **Ceiling amended 180 → 220 by operator decision, 2026-07-28.** The original 180 was an estimate made before three defects were found and fixed in the contract itself. The increase covers exactly: (a) **§ Closing without a change** — the shared lifecycle for `rejected-premise`, `route-unavailable` and `routed-out`, including the durable `logs/decisions.md` pointer without which a unit that stopped leaves no trace distinguishable from one never attempted; (b) the **open-before-verify rationale** at § The eight steps, which resolves a real ordering defect (premises were verified before any stream, unit id or brief existed, so a rejection could produce evidence unreachable by every resume tier and reconciliation row); and (c) **§ Artifact root**, the deterministic rule fixing an observed case where a unit declared `REPO: ai-resources` while its artifacts were committed at the workspace root, leaving the open stream invisible to the only root entitled to resume it.
+
+  **Do not trim load-bearing behaviour to satisfy the old estimate.** Each of the three is a correction to an evidenced defect, two of them caught by independent review. §13's ordered responses were applied in order: no redundancy was found to remove, no material belonged elsewhere, so the ceiling was raised and the reason recorded here. A number that was a guess does not outrank behaviour that was verified.
 - **A-CORE-4 — No trigger table copied.** Grep C1 for H1–H6/M1–M5 text and the risk-class list; grep C4 for the universal triggers. **Pass:** zero both ways; each cites the other by path.
 - **A-CORE-5 — Evidence quality.** **Pass:** every claim names what was run and observed; `LIMITATIONS` populated; no bare assertion.
 - **A-CORE-6 — Correction loop terminates.** Three findings, one demonstrably wrong. **Pass:** each carries one of six dispositions; the wrong one rejected with evidence; the unit closes after one correction pass; `/resolve` and `/triage` do not fire.
@@ -370,7 +378,7 @@ Safe partial reverts: 7 alone · 6 alone (consequence: duplicated Step-1 work pe
 - **A-HAND-2 — Direct invocation unchanged.** Plain need, no capability fields. **Pass:** full Step 1 including 1.1–1.2, identical to pre-commit-6.
 - **A-DIST-1 — Workspace root.** `ls -la .claude/commands/work-loop.md` from the root. **Pass:** symlink resolves; command invocable there.
 - **A-DIST-2 — Managed-project distribution.** Open a session in a manifest-carrying project. **Pass:** relative symlink appears after SessionStart, no manual step.
-- **A-DIST-3 — `global-macro-analysis`.** `ls -la projects/global-macro-analysis/.claude/commands/work-loop.md`. **Pass:** relative symlink present in the same `../../../../` shape as its 51 siblings, resolving to the canonical file; **no `shared-manifest.json` was created**; no other command was added to that project.
+- **A-DIST-3 — `global-macro-analysis`.** `ls -la projects/global-macro-analysis/.claude/commands/work-loop.md`. **Pass:** relative symlink present in the same `../../../../` shape as its **39 symlinked siblings** (the directory also holds 13 real project-local `kb-*.md` files, which must be left untouched), resolving to the canonical file; **no `shared-manifest.json` was created**; no other command was added to that project.
 - **A-GIT-1 — Recovery after stream cleanup.** After a **stream** closes: for **every** unit in the stream, `git show {stream-closing-commit}^:logs/loop/{unit}.brief.md`, and the same for its evidence and each `review-{n}.md`. **Pass:** every artifact returns full content; **no `{STREAM}-*` file remains in the working tree**; artifacts of any other open stream are untouched.
 
 ### Codex
