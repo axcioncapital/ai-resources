@@ -17,6 +17,9 @@ credentials*.json
 # Local-only Claude Code settings (operator overrides, not shared)
 .claude/settings.local.json
 
+# Isolated git worktrees created by EnterWorktree (checkouts, never repo content)
+.claude/worktrees/
+
 # Python
 __pycache__/
 *.pyc
@@ -54,5 +57,17 @@ output/
 # Ignored so it cannot be committed by accident. If Codex is ever adopted for real, the decision to track
 # and sync this mirror is a deliberate one to make — not an outcome of a wildcard staging command.
 .codex/
-.agents/
 AGENTS.md
+
+# `.agents/` stays ignored EXCEPT the one skill deliberately adopted (operator call, 2026-07-28 S3).
+# This is the "deliberate decision to track" the note above reserves — narrowed to a single subtree,
+# not an adoption of the mirror. `.codex/`, `AGENTS.md` and the four `source-command-*` skills remain
+# ignored and unmaintained.
+#
+# Why four rules and not one `!.agents/skills/work-loop/`: git does not descend into an excluded
+# directory, so a negation for a path inside `.agents/` never gets evaluated. Each level must be
+# re-included before the next can be excluded. Verified with `git check-ignore -v` after the edit.
+.agents/*
+!.agents/skills/
+.agents/skills/*
+!.agents/skills/work-loop/
