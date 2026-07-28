@@ -8,8 +8,9 @@ Single source of truth for the canonical shape of a new Axcíon AI project's `.c
 - `project-claude-md.md` — the **entire** canonical project `CLAUDE.md`: a title heading and a description, nothing else. Contains two mustache-style placeholders, `{{NAME}}` and `{{PROJECT_DESCRIPTION}}`, resolved once at file creation. These intentionally use the same `{{...}}` syntax that research-workflow templates use for deploy-time placeholders (e.g. `{{WORKSPACE_ROOT}}`) and are intentionally DIFFERENT from the single-brace `{name}` / `{project-description}` tokens that the `/new-project` agent substitutes in bash source — separating the two syntaxes prevents agent global-substitution from corrupting the consumer's search strings.
 - `incident-log-template.md` — canonical fillable shape for a `/resolve-incident` per-incident record. Consumed by `/resolve-incident` (Step 5 — reads and fills pre-edit; Step 8 — writes filled record to `audits/incidents/`). Contains `{FIELD}` placeholders replaced at runtime by the command, not at scaffold time.
 - `mission-contract.md` — canonical shape for a multi-session mission contract (mission-contract subsystem, added 2026-06-09). Consumed by `/mission create`, which substitutes the frontmatter (`mission_id` / `mission_name` / `status` / `started`) and writes the file to `<repo>/logs/missions/<id>.md`. Body sections (Goal / In-Out scope / Validation contract / Open threads) are authoring prompts the operator fills in. Frozen at creation; only `status` and `Open threads` mutate, via `/mission` only.
+- `capability-record.md` — canonical shape for one operating-capability development record (work-loop subsystem, added 2026-07-28). Consumed by `/work-loop`, which substitutes the frontmatter (`capability` / `name` / `route` / `phase` / `status` / `owner_project` / `stream` / `active_unit` / `opened` / `updated`) and writes the file to `projects/<owner-project>/development/<slug>.md`. Body sections are authoring prompts. **Not frozen** — unlike `mission-contract.md`, this is a living record: `phase`, `active_unit`, `updated` and `## Current phase and next action` are rewritten at every phase boundary and after every slice, which is what makes a capability resumable. Solo-route units write no record at all. The record is never deleted to tidy up; a rejected capability keeps its record with `status: rejected`. Method lives in `skills/capability-development/SKILL.md`, process in `docs/work-loop.md` — the template holds neither.
 
-`project-claude-md.md` is the only CLAUDE.md template. `incident-log-template.md` and `mission-contract.md` use placeholders resolved at runtime by their consuming command; `project-settings.json.template` carries none.
+`project-claude-md.md` is the only CLAUDE.md template. `incident-log-template.md`, `mission-contract.md` and `capability-record.md` use placeholders resolved at runtime by their consuming command; `project-settings.json.template` carries none.
 
 ## What a project `CLAUDE.md` contains
 
@@ -21,12 +22,13 @@ Most new projects need no project-specific section at all. A file that is title 
 
 ## Consumer contract
 
-Four consumers:
+Five consumers:
 
 1. **`/new-project`** (step 2 + step 4 + Direct Route step 3) — the original consumer; writes `settings.json` and the project `CLAUDE.md` when scaffolding a new project.
 2. **`/deploy-workflow`** (step 4, sub-step `### Ensure permissions baseline in deployed settings.json`) — added 2026-05-25. Consumes `project-settings.json.template` only (not the CLAUDE.md skeleton), and only writes when the deployed project's `.permissions.allow` is empty. Note that the Research Workflow ships its **own** specialist project `CLAUDE.md` as `CLAUDE.md.template`, stored inside the workflow, not here — `/new-project` hands Research Workflow requests to `/deploy-workflow` at its Step 0.3a rather than scaffolding them.
 3. **`/resolve-incident`** (Step 5 + Step 8) — added 2026-05-28. Consumes `incident-log-template.md` only. Step 5 reads the template and fills all pre-edit fields; Step 8 writes the filled record as a new file under `audits/incidents/{DATE}-{SLUG}.md`. Does not write to any project CLAUDE.md or settings.json.
 4. **`/mission create`** (Step 2) — added 2026-06-09. Consumes `mission-contract.md` only. Reads the template, substitutes the four frontmatter fields, and writes the file to `<repo>/logs/missions/<id>.md`. Does not touch any project CLAUDE.md or settings.json.
+5. **`/work-loop`** (capability units only) — added 2026-07-28. Consumes `capability-record.md` only. Reads the template, substitutes the frontmatter, and writes the file to `projects/<owner-project>/development/<slug>.md` when a capability unit classifies `reviewed` or `challenged`. Solo units consume nothing here. Does not touch any project CLAUDE.md or settings.json.
 
 All consumers:
 
@@ -35,7 +37,7 @@ All consumers:
 3. For `settings.json`: the predicate "already has a non-empty `permissions.allow` array" still gates the merge (consumers 1 and 2 only).
 4. For `CLAUDE.md`: **write-once.** The `[ ! -f ]` guard gates the whole write (consumer 1 only). An existing project `CLAUDE.md` is left byte-for-byte unchanged — never overwritten, never appended to, never backfilled.
 
-When adding a fifth consumer, update this contract list and the `## What's here` description for the affected template file.
+When adding a sixth consumer, update this contract list and the `## What's here` description for the affected template file.
 
 ## 2026-04-13 decision — **SUPERSEDED 2026-07-27**
 
