@@ -1985,3 +1985,18 @@ Deliberately out of scope at the time: the unit's brief said "do not add telemet
 **Proposal.** Port the frame to canonical, adjusted for its five flags: the known-canonically class becomes empty there (all five are implemented), leaving one unknown-anywhere branch. Keep both copies' divergence notes in sync when it lands.
 
 **Target files:** `ai-resources/.claude/commands/wrap-session.md` Step 0.4; `/.claude/commands/wrap-session.md` Step 0.4 (divergence note update once ported).
+
+### 2026-07-28 — `repo-architecture.md` Q1 has no home for a project-local *non-Claude* utility script
+
+- **Status:** logged (pending)
+- **Severity:** low — advisory only, `/placement` still produced a confident, actionable recommendation by extending an existing precedent; nothing was blocked or misplaced.
+- **Category:** documentation gap (`docs/repo-architecture.md` § Placement heuristics, Q1)
+- **Source:** `axcion-systems-builder` session, 2026-07-28 — `/placement` run for `cases/scripts/build-review-packet.sh`.
+
+Q1 routes project-specific artifacts to "that project's own `.claude/` or root," which silently assumes every project-local artifact is a Claude Code artifact (skill/command/agent/hook). It is not, here: a plain bash script assembling a Codex review packet, with no Claude Code surface at all. `.claude/` was wrong by type, and the map gave no second option.
+
+The precedent that resolved it was already living in the repo, uncatalogued: `axcion-systems-builder/logs/scripts/` holds two log-maintenance scripts (`check-archive.sh`, `split-log.sh`) serving `logs/`. Read as a pattern rather than a one-off, that gives `{domain}/scripts/` for plain scripts serving a project domain — which is where `cases/scripts/build-review-packet.sh` landed. The map doesn't say this; `/placement`'s recommendation had to derive it from an unindexed sibling case.
+
+**Proposal.** Add one line under Q1 or Q2 noting that plain scripts (no Claude Code surface) serving a project domain live in `{domain}/scripts/`, with `logs/scripts/` cited as the existing instance. Cheap — this is a missing sentence, not a missing mechanism.
+
+**Target files:** `ai-resources/docs/repo-architecture.md` § Placement heuristics (Q1 or Q2).
