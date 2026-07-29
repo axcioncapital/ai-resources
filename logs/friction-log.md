@@ -353,6 +353,7 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 20:23 — logs/loop/2026-07-29-review-layer-consolidation-build-4.evidence.md
 - 20:21 — logs/loop/2026-07-29-review-layer-consolidation-build-3.evidence.md
 - 20:19 — logs/loop/2026-07-29-review-layer-consolidation-build-2.evidence.md
 - 20:16 — skills/worktree-cleanup-investigator/references/execution-protocol.md
