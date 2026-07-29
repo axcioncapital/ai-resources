@@ -19,6 +19,24 @@ Resolved entries are archived to `improvement-log-archive.md` via `/resolve-impr
 
 ---
 
+### 2026-07-29 — `/work-loop` sends every reviewed unit to Codex, but the contract defines the reviewed route as one review *of the result*
+
+- **Status:** logged (pending)
+- **Category:** command/contract disagreement — `.claude/commands/work-loop.md` Step 7 vs `ai-resources/docs/work-loop.md:74`
+- **Severity:** medium — it does not corrupt state or produce a wrong answer, but it spends a full external review round on units that have no result to review, and it puts the command in breach of its own "the contract wins" rule. Cost scales with every reviewed-route Frame and Land unit run.
+- **Review-cycle:** reviewed 2026-07-29, deferred to → the next `/work-loop` contract-scoped brief (the same session that fixes `.claude/commands/work-loop.md:247`, already recorded as a known contradiction in `logs/decisions.md` 2026-07-29)
+
+**Found by** Codex review-1 of `/work-loop` unit `2026-07-29-leverage-idea-lifecycle-frame` (MATERIAL 3), adjudicated `out-of-scope` because that unit's object was `leverage-idea.md` and editing `/work-loop`'s own command or contract would have been exactly the incidental edit scope discipline forbids.
+
+**The disagreement, verbatim.** `docs/work-loop.md:74` (§ Route → depth → stops) defines the reviewed route's independent review as "**One Codex review of the result.**" `.claude/commands/work-loop.md` Step 7 says "**Reviewed route:** emit the evidence as a chat block for Codex" with **no phase carve-out** — while the *same step* explicitly states that on the challenged route "Frame, Build and Land carry none." So the command carves Frame out of review on the heavier route and not on the lighter one.
+
+A Frame unit produces no result by design (`docs/work-loop.md:117` — Frame closes "What is the need, who owns it, and is it in scope at all?"), so a reviewed-route Frame unit is sent to Codex with nothing the contract's definition covers. The command's own preamble settles which text governs: *"Where this file and the contract disagree, the contract wins and the disagreement is a defect to report."*
+
+- **Proposal.** Decide the intent first, then make one file follow the other — do not patch both toward a vague middle. Two coherent options:
+  - **(a) Command follows contract.** Add a phase carve-out to Step 7's reviewed branch mirroring the challenged branch: review attaches to the unit that produces a result (Prove for a multi-phase stream; the single unit for a one-unit stream). Cheaper, and matches the contract as written.
+  - **(b) Contract follows command.** Widen `docs/work-loop.md:74` to "one Codex review per unit" for reviewed work. More expensive per stream, but note the **counter-evidence for (a)**: the Frame review that surfaced this defect also produced MATERIAL 2, which reversed that unit's execution-boundary conclusion and re-routed the whole stream to `/develop-ai-resource` *before* any implementation was attempted. A pre-implementation review on the reviewed route demonstrably caught a wrong-owner call. Weigh that against (a)'s saving rather than assuming the cheaper option is correct.
+- **Target files:** `ai-resources/.claude/commands/work-loop.md` (Step 7, reviewed-route branch), `ai-resources/docs/work-loop.md:74`.
+
 ### 2026-07-24 — Concluding from an incomplete source set: three instances in one session, the third caught only by a dispatched gate
 
 - **Status:** logged (pending)

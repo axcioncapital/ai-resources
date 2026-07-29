@@ -255,3 +255,206 @@ not a new enduring programme — so `docs/work-loop.md:49`'s terminal exit does 
 - **Not checked:** whether any of the 14 consuming projects documents `/leverage-idea` behaviour in
   its own project `CLAUDE.md` or docs. Only the symlink targets were resolved, not the projects'
   prose.
+
+---
+
+# APPENDED 2026-07-29 — ADJUDICATION of review-1, and the unit's outcome
+
+Review-1 transcribed at `8edd216`. Four findings, four dispositions. **Section 5 of this evidence
+("Is it in scope at all?") is superseded by MATERIAL 2's disposition below** — the original text is
+retained unedited above, because this file is append-only and a superseded judgment that is quietly
+deleted cannot be audited.
+
+---
+
+## MATERIAL 1 — "premise P2 was not fully confirmed" → **rejected**
+
+**The finding's observation is correct; its conclusion is not.** Codex is right that
+`develop-ai-resource.md:9` omits agent definitions and that `:73`'s `.claude/agents/` search
+establishes duplicate-search coverage rather than lifecycle ownership. This evidence had already
+recorded that narrower point (P2 row, and the LIMITATIONS bullet above).
+
+What is rejected is the conclusion that this leaves an **authority gap** requiring resolution before
+an agent handoff is compliant. The authority exists; it is simply not in the file Codex inspected.
+Codex's stated object list names `develop-ai-resource.md`, `docs/work-loop.md` and
+`.claude/commands/work-loop.md` — **not** `docs/ai-resource-creation.md`, which is the governing
+rules document that workspace `CLAUDE.md` § AI Resource Creation designates as "Full rules".
+
+Evidence that disproves the gap — `grep -n "agent" docs/ai-resource-creation.md`:
+
+- `:3` — "When a session identifies the need for a new or modified AI resource (skill, command,
+  **agent definition**, workflow template)…" — agents are in the governed set.
+- `:7` — rule 1: "Reusable skills, commands, and **agent definitions** … belong in `ai-resources/`."
+- `:15` — rule 4: "**`/develop-ai-resource` is the standard qualification path for creating a new
+  durable resource**" — the unqualified noun, governing the set `:3` and `:7` define.
+- `:27` — rule 7, the complexity budget: "No new command, **agent**, mandatory stage/gate, or
+  permanent always-loaded document may be introduced unless…" — agents are explicitly a gated
+  component class.
+
+Plus workspace `CLAUDE.md` § AI Resource Creation: "Shared AI resources (skills, commands, **agent
+definitions**, workflow templates) belong in `ai-resources/`. Qualify a **new** durable resource
+through `/develop-ai-resource`."
+
+So a new-agent route to `/develop-ai-resource` rests on **four cited lines in the governing rules
+document plus an always-loaded workspace rule**, not on inference from a duplicate-search scope.
+P2 stands as confirmed.
+
+**Residual true observation, carried forward (not a gap, a documentation inconsistency):**
+`develop-ai-resource.md:9`'s own enumeration is narrower than the rule it implements. That is worth
+correcting in the command's text, and it is **inside the receiving command's own scope**, so it is
+carried in the handoff below rather than parked separately.
+
+---
+
+## MATERIAL 2 — "Frame's execution-boundary judgment conflicts with the contract" → **fixed**
+
+**Accepted in full. Frame's § 5 conclusion was wrong and is corrected here. This is the finding that
+changes the unit's outcome.**
+
+Frame argued the output *shape* was unchanged, so the change was a settled correction. That test was
+too narrow, and Codex's three-axis test is the correct one. Checking each axis against the live file:
+
+| Axis | Today | Under the Required result | Changed? |
+|---|---|---|---|
+| **Authority** | "Advisory only: it stops at the implementation plan and applies no change" (`:9`); "Stop here — no execution" (`:144`) | "It must become an evidence-grounded **routing and handoff** command" (brief, Need) | **Yes** |
+| **Input domain** | "an idea dump about adding or improving an **Axcíon AI resource**" (`:9`); `/tech-consult` named only as a boundary to stay *away* from (`:11`) | must also accept operating capabilities, project scoping, broad technical needs, and named project/domain decisions | **Yes** |
+| **Output contract** | terminal plan; "The command itself never writes to `inbox/`" (`:142`) | lifecycle handoffs, each with "a self-contained payload or **durable inbox address**" | **Yes** |
+
+All three move. `docs/work-loop.md:48` routes out when an existing durable AI artifact is "materially
+expanded", and a change to a command's authority, input domain and output contract simultaneously is
+that, whatever the file-count. Frame's counter-argument — that only the destination set's correctness
+changed — survives for **D1 alone** (row `:210` contradicting `develop-ai-resource.md:13`) and does
+not survive for the Required result as a whole. I do not get to substitute the smaller need I could
+implement for the larger one the brief actually states.
+
+**Two independent authorities confirm the receiver**, neither cited in Frame's original § 5:
+
+- `develop-ai-resource.md:15` — "**Qualify the improvement here first** when the underlying need,
+  scope, mechanism or system fit is materially uncertain or contested, **or when the improvement may
+  justify a different or a materially expanded resource**."
+- `docs/ai-resource-creation.md:21` — the same rule in the governing document: "Qualify through
+  `/develop-ai-resource` first when … the improvement may justify a different or **materially
+  expanded** resource."
+
+There is also no competing receiver: `/improve-skill` is skill-only and `/leverage-idea` is a command;
+`/tweak` is for ≤1-file cosmetic changes (`leverage-idea.md:45`). No third path exists.
+
+**Whole need, not a component.** `docs/work-loop.md:48` makes the `/develop-ai-resource` hand-off
+non-terminal only "when the artifact is a component of a live stream" — i.e. when a capability's
+operating outcome and adoption decision stay in the loop. This is a non-capability stream (§ 2); there
+is no capability record and no operating outcome held here. The artifact change **is** the whole need.
+Therefore the close is **`routed-out`** and the stream closes with it.
+
+**Noted for the record, because it is the same rule biting its author:** this stream's own brief
+declares it falsified if "any proposed new durable AI resource bypasses `/develop-ai-resource`". The
+expansion of `/leverage-idea` is itself a materially expanded durable AI resource. Implementing it
+here would have satisfied the brief's own falsification condition.
+
+---
+
+## MATERIAL 3 — "review requested at the wrong reviewed-route phase" → **out-of-scope**
+
+**Confirmed as a real defect, and it is not this unit's to fix. Owner: `/work-loop` itself —
+`.claude/commands/work-loop.md` Step 7 and `docs/work-loop.md:74`.**
+
+The disagreement is verbatim:
+
+- `docs/work-loop.md:74` — reviewed route independent review is "**One Codex review of the result.**"
+- `.claude/commands/work-loop.md` Step 7 — "**Reviewed route:** emit the evidence as a chat block for
+  Codex" with **no phase carve-out**, while the same step explicitly states that on the challenged
+  route "Frame, Build and Land carry none."
+
+A Frame unit produces no result — this unit's own § 5 header says the object was not edited — so the
+command routed to Codex an object the contract's reviewed-route definition does not cover. The
+command's own preamble governs the outcome: "Where this file and the contract disagree, the contract
+wins and the disagreement is a defect to report."
+
+**Accepted without reservation:** this review does **not** count as the reviewed route's result
+review. Nothing is left dangling by that, because the stream closes `routed-out` under MATERIAL 2 and
+no result will exist for this stream to review.
+
+The object under work here is `leverage-idea.md`; editing `/work-loop`'s own command or contract is
+outside the brief's stated scope and would be exactly the incidental edit that scope discipline
+forbids. **Durably recorded** at `logs/improvement-log.md` (2026-07-29 entry, Severity `medium`) so
+it reaches the Friday cadence rather than dying with this stream's deleted artifacts.
+
+**Judgment stated plainly rather than hidden:** the finding is materially useful, and the Frame review
+it questions is what produced MATERIAL 2 — the finding that corrected this unit's conclusion. That is
+an argument about the *value* of a Frame review, not about what the contract currently says. The
+contract says what it says; changing it is a separate brief.
+
+---
+
+## MINOR 1 — "negative result lacked a positive control" → **fixed**
+
+Correct, and the contract's own standard (`docs/work-loop.md:204`, and `/work-loop` Step 4's
+"Negative results need a positive control"). The control is supplied now.
+
+**Control.** The same grep pattern, run over a range known to contain a matching path — the commit
+that added `leverage-idea.md`:
+
+```
+LI=$(git log --diff-filter=A --format=%H -- .claude/commands/leverage-idea.md | tail -1)   # a142721
+git log --name-only --pretty=format:"" ${LI}~1..${LI} \
+  | grep -E "leverage-idea|agent-tier-table|develop-ai-resource" | sort -u
+```
+→ **fired, two paths**: `.claude/commands/leverage-idea.md`,
+`audits/risk-checks/2026-07-04-leverage-idea-new-command.md`. The check can detect a match.
+
+**Negative re-run.** `git log --name-only --pretty=format:"" 44062e4..2b8b350 | grep -v "^$" | sort -u`
+→ exactly one path, `logs/loop/2026-07-29-prime-minimum-responsibility-build-2.brief.md`. Filtered
+through the same pattern → empty. **This matches Codex's independent inspection of the same range
+exactly.** The no-overlap conclusion in § 0 now meets the negative-result standard.
+
+---
+
+## OUTCOME
+
+`routed-out` — the unit's whole need is a **material expansion** of an existing durable AI artifact
+(`/leverage-idea`), which `docs/work-loop.md:48` § Execution boundary assigns to
+`/develop-ai-resource`, corroborated by `develop-ai-resource.md:15` and
+`docs/ai-resource-creation.md:21`.
+
+**Owner:** `/develop-ai-resource`.
+**Brief handed over:** `inbox/leverage-idea-lifecycle-routing.md` — a **raw** brief by construction. It
+carries no `**Mechanism:**` and no `**Evidence:**` (so `/create-skill` would correctly bounce it, per
+`create-skill.md:9`), and no `**Capability:**` / `**Settled upstream:**` (this is not a capability
+handoff; there is no capability record, and `docs/work-loop.md:194` reserves those labels). Section
+headings avoid the bold-label form entirely so that Step 1.0's field-presence routing
+(`develop-ai-resource.md:36-40`) cannot misread a heading as a single reserved field and report a
+malformed upstream handoff. `/develop-ai-resource` will therefore run Steps 1.1–1.6 in full, which is
+correct — the need has had no independent qualification.
+
+**Zero edits were made to the object under work.** `.claude/commands/leverage-idea.md` is byte-identical
+to the version Frame inspected and to the version Codex verified by hash.
+
+**What the receiving command inherits** (all five defects stand as findings; the diagnosis is not
+discarded with the routing): D1 the bridge matrix bypass, D2 the gitignored-only address, D3 the
+AI-resource-only lever menu, D4 the hardcoded `AI_RESOURCES` path, D5 the unpinned `general-purpose`
+dispatch (with `docs/agent-tier-table.md:139`'s same-commit roster-move obligation), plus MATERIAL 1's
+residual — `develop-ai-resource.md:9`'s enumeration being narrower than the rule it implements.
+
+## LIMITATIONS (appended)
+
+- **The route-out decision rests on a judgment about "materially expanded", which the contract does
+  not define operationally.** Codex's three-axis test (authority / input domain / output contract) is
+  a reasonable reading and I have adopted it, but it is the reviewer's construction, not the
+  contract's text. A different reading could keep D1 alone inside `/work-loop`.
+- **D1 in isolation is very likely a settled correction** that `/work-loop` could have implemented —
+  `leverage-idea.md:210` factually contradicts `develop-ai-resource.md:13`. It leaves with the rest
+  because the brief's need is the whole expansion, not because D1 was judged out of reach. If the
+  operator wants only D1 fixed, that is a **new, narrower brief** and a new stream, not a resumption
+  of this one.
+- **The receiving command has not been run.** Nothing here establishes that `/develop-ai-resource`
+  will accept, qualify or build this; it may return "no build", which is a valid outcome of that
+  command and not a failure of this routing.
+- **`/leverage-idea` was still never executed end-to-end** (carried from the original LIMITATIONS).
+  D1–D3 are read from the command text, not observed in a run.
+- **The System Owner `toolkit-relationship.md` row remains stale and unfixable from here.** Codex
+  inspected it and reports it still describes `/leverage-idea` as producing build proposals and
+  feeding `/request-skill`. It lives outside this repository; the brief forbids sibling edits. It is
+  named in the handoff brief so the receiving command inherits it rather than rediscovering it.
+- **This review is recorded as a Frame review, not as the reviewed route's result review**
+  (MATERIAL 3). No result review was ever owed by this stream, since the stream closes without a
+  result.
+
