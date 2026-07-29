@@ -86,6 +86,8 @@ Read-only (no `git add`, no write). If non-empty, append the dirty paths to the 
 
 - `{mission:<id>}` (mission-contract subsystem, passed by `/prime` Step 8m when the session bound a mission) → capture `MISSION_ID = <id>`. If absent, `MISSION_ID` is unset — the common case; nothing mission-related happens downstream.
 - `{gate:post-plan}` (passed by `/prime` Step 8a.b) → capture `POST_PLAN_GATE = true`. Records that the invoking branch will hold an approval gate after `/session-plan` finishes. This command does not act on it; **Step 4 forwards it** so the gate survives the chain hop. If absent, `POST_PLAN_GATE` is unset — the default, and the pre-2026-07-18 behaviour.
+- `{gate:auto}` (passed by `/prime` Step 8c.9) → capture `AUTO_GATE = true`. Auto mode **delegates its single approval gate to this command**: Step 2 suppresses its echo and its wait, and **Step 2.6 holds exactly one gate** covering the mandate, the context-pack outcome and the structural risk. `/prime` hands over `STRUCTURAL_RISK` alongside the token for that block. If absent, `AUTO_GATE` is unset and Step 2 behaves exactly as it always has.
+- `{plan:overwrite}` (passed by `/prime` Step 8c.9 alongside `{gate:auto}`) → capture `PLAN_OVERWRITE = true`. This command does not act on it; **Step 4 forwards it** to `/session-plan`, whose Step 0 reads it as a pre-selected overwrite so the chain does not stop to ask about a same-session plan file.
 - Any other `{key:value}` token → strip and ignore (forward-compatible; an unrecognized token must never reach `MANDATE_TEXT`).
 
 Tokens are literal prefixes, e.g. `{gate:post-plan} {mission:regime-shift-canonical} Apply the W24 audit fixes` → `POST_PLAN_GATE = true`, `MISSION_ID = regime-shift-canonical`, mandate = `Apply the W24 audit fixes`.
@@ -107,6 +109,8 @@ Extract from `MANDATE_TEXT`:
 - `stop_if` — conditions that should halt the session; default `"(none stated)"` if not mentioned
 - `allowed_inputs` — OPTIONAL. Explicit list of files/directories the session is authorized to read. No default — **absent means absent** (no `(none stated)` placeholder; the bullet does not appear in the echo or disk-write). Extract from `MANDATE_TEXT` if present via an `allowed_inputs:` prefix line, or via the correction syntax `a:` letter in Step 2's confirmation step.
 - `required_outputs` — OPTIONAL. Explicit list of files/artifacts the session is expected to produce. No default — **absent means absent**. Extract from `MANDATE_TEXT` if present via a `required_outputs:` prefix line, or via the correction syntax `r:` letter in Step 2's confirmation step.
+
+**Under `{gate:auto}` (`AUTO_GATE` set): parse the fields above, then go straight to Step 2.4 — do not echo the block below and do not wait for a response.** Auto mode's one approval gate is held at Step 2.6, *after* discovery and validation, so an echo here would be a second operator stop that auto mode's contract does not allow. Everything else in this step applies to the ordinary interactive path only.
 
 Echo the following confirmation block to the operator. Render it as Markdown — do NOT emit a raw pre-formatted code block, and do NOT emit the ``` fences shown below; those fences only delimit the template structure for this instruction. Follow these rendering rules exactly:
 
@@ -246,6 +250,8 @@ Apply to the parsed mandate state:
 4. **`pack_path`** — capture as `PACK_PATH` for Step 3's mandate-line write.
 5. **`pack_tracked`** — capture the `tracked|untracked` token from line 1 as `PACK_TRACKED`; carry to the re-emit block.
 
+**Under `{gate:auto}` (`AUTO_GATE` set): skip this re-emit entirely, on all four outcomes**, and proceed to Step 2.5. Step 2.6's gate is auto mode's single operator-facing block, and it renders the pack outcome itself — including `engine-skipped` and `engine-error`, which produce no re-emit here at all. Emitting both would give auto mode two stops; emitting neither is what the pre-2026-07-29 design did on those two outcomes, and it is the silent-approval hole Step 2.6 exists to close.
+
 **Re-emit the Step 2 confirmation block** with outcome class visible. Use one of three header lines depending on outcome — operator must SEE the readiness state, not have it silently absorbed:
 
 - `success-enriched`: `## Mandate Confirmation — Engine pack: enriched ({pack_tracked})`
@@ -290,6 +296,66 @@ Before proceeding to Step 3's disk write, validate the parsed mandate against th
 
 Re-asks happen at most once per failed field. If a re-ask response is still non-conformant, accept it and proceed — `/qc-pass` and `/drift-check` are the downstream catchers per workspace `Decision-Point Posture`. Self-check failures that auto-fixed silently must be logged in a one-line note appended to the Step 4 "Mandate written" confirmation: `Self-check auto-fixed: {field}: {old} → {new}`. Re-ask-resolved failures get no log.
 
+### Step 2.6 — Auto-mode approval gate
+
+**Runs only when `AUTO_GATE` is set** (`{gate:auto}`, from `/prime` Step 8c.9). On the ordinary interactive path this step does not exist — skip silently to Step 3.
+
+This is **auto mode's single operator-facing gate**, and it sits here, after Step 2.4's discovery and Step 2.5's validation, for two reasons that are the whole point of the placement:
+
+1. **It shows validated state.** `files_inferred` is set at Step 2 and cleared at Step 2.4, which substitutes the engine's concrete paths. A gate placed before Step 2.5 would approve paths that had never met the shape and existence tests, and they would reach disk unchecked.
+2. **It is unconditional.** It fires on **all four** engine outcomes — `success-enriched`, `success-insufficient`, `engine-skipped`, `engine-error`. Step 2.4's re-emit covers only the first two, so a gate built on that re-emit would let auto mode write a mandate, a manifest and a plan and then execute, with **no operator stop at all**, on every project lacking a root `CLAUDE.md`. Do not make this step conditional on the engine outcome.
+
+Emit one block. Chat-echo styling (`→` / `·` markers, bold section labels); the Step 3 disk-write follows its own parse contract and this styling never propagates there.
+
+```
+## Auto Mode — {YYYY-MM-DD}
+
+{single item: **Picked item:** {item text}  ·  **Source:** [{source path}]({source path})}
+{multi-item: **Picked items:** numbered list, one line per item — menu number, text, source link}
+
+**Mandate**
+→ Work: {work_scope} — complete fully within this session where context allows.
+· Out of scope: {out_of_scope}
+· Files in scope: {files_in_scope}{ (inferred) if files_inferred is still true}
+· Done when: {exit_condition}
+· Stop if: {stop_if}
+{· Allowed inputs: {allowed_inputs} — only if set}
+{· Required outputs: {required_outputs} — only if set}
+{· Mission: {MISSION_ID} — only if Step 1 captured one}
+
+**Context pack**
+{success-enriched / success-insufficient:}  → `{PACK_PATH}` ({PACK_TRACKED}) — {N} files in scope, {N} allowed inputs, {N} required outputs, {N} missing-context items
+{success-insufficient adds:}               ⚠ {readiness gap} — review the missing-context items before execution.
+{engine-skipped:}                          · Context pack: skipped — {reason}
+{engine-error:}                            ⚠ Context pack: failed — {cause, or "no cause given"}. Proceeding with the derived mandate.
+
+**Plan**
+→ Model and autonomy posture are set by `/session-plan` and disclosed after the plan is written.
+{→ Route: direct — no committed plan file will be written; mandate + run-manifest still are. — only if DIRECT=1}
+
+{if STRUCTURAL_RISK is true:}
+**Risk-check**
+→ Will run before execution begins (structural class detected). On RECONSIDER or NO-GO, auto mode pauses; mandate and plan are retained on disk for revision.
+
+---
+
+Reply `go` to write mandate + plan and begin execution.
+Reply `edit` to adjust before writing.
+Reply `abort` to stop without writing anything further.
+
+Default (no response within the turn): **abort**.
+```
+
+**Model tier and autonomy posture are deliberately absent from this block.** `/session-plan` owns both (its Steps 2 and 5) and discloses them once the plan is written. `/prime` owns `STRUCTURAL_RISK` alone, because it owns the `/risk-check` call that field drives. One field, one owner — the alternative is two derivations that can silently disagree after an `edit`.
+
+**Parser:**
+- `go` / `y` / `yes` (case-insensitive, trimmed) → proceed to Step 3.
+- `abort` → write nothing further and return to `/prime` 8c.9, which owns the abort message. **Be precise about what "nothing" means:** the marker, the marker-bearing header and `logs/.prime-mtime` were written by `/prime` 8c.5 *before* this gate and are **not** rolled back. The mandate, run-manifest stub and plan are not written.
+- `edit` → ask one prompt: `What should change? State corrections in 'b: / a: / r: / f:' syntax (b=work_scope, a=allowed_inputs, r=required_outputs, f=files_in_scope), or other text as a free amendment to work_scope.` Apply the corrections, **then re-run Step 2.5 over the corrected fields**, then re-render this block once. Accept only `go` or `abort` on the re-response; do not loop further.
+- Anything else → re-ask once: `Reply 'go', 'edit', or 'abort'. Free-text refinements require 'edit' first.` Accept only `go` / `edit` / `abort` on the re-response.
+
+**Re-running Step 2.5 after an `edit` is load-bearing, not belt-and-braces.** A correction typed at this gate is operator-supplied text that has never been validated — an `f:` correction naming a path that does not exist would otherwise go straight to disk, which is the exact failure Step 2.5's existence test exists to prevent. If the correction changes `work_scope`, `/prime` re-derives `STRUCTURAL_RISK` from the corrected scope before the block is re-rendered, so the risk line can never be stale relative to the scope the operator approved.
+
 ### Step 3 — Write the mandate line
 
 <!-- LOAD-BEARING: bullet labels below are parsed verbatim by /wrap-session Step 7a. Do not stylize. If Step 2 echo styling changes, do NOT propagate here. -->
@@ -319,7 +385,7 @@ Do not rename these labels or marker strings without updating all readers. The `
 
 The `- Context pack:` bullet (added 2026-05-29 for the Context Engine Phase 2) is **informational, not part of the parse contract.** All five readers above use fixed-list extraction or labeled-bullet pass-through; they silently ignore `- Context pack:`. The bullet exists for the operator to see which pack contributed to the mandate when reviewing session-notes later, and for future Phase 2 consumers (pre-edit check, drift-relative-to-pack) to locate the pack.
 
-The `- Mission:` bullet (added 2026-06-09 for the mission-contract subsystem) is likewise **not part of the five-label parse contract** — all five readers above pass it through untouched. It is, however, **load-bearing for exactly one reader: `/drift-check`**, which reads `MISSION_ID` to locate the bound mission file and judge trajectory against its validation contract (a second reference standard alongside the mandate). This split — pass-through for five readers, load-bearing for `/drift-check` — is registered in `docs/session-marker.md` § Mandate-line bullet contract. The bullet is written by `/session-start` Step 1's mission prefix and by `/prime` Step 8c.7 (auto mode); both originate from `/prime` Step 8m binding. `/session-start` never writes to the mission file itself.
+The `- Mission:` bullet (added 2026-06-09 for the mission-contract subsystem) is likewise **not part of the five-label parse contract** — all five readers above pass it through untouched. It is, however, **load-bearing for exactly one reader: `/drift-check`**, which reads `MISSION_ID` to locate the bound mission file and judge trajectory against its validation contract (a second reference standard alongside the mandate). This split — pass-through for five readers, load-bearing for `/drift-check` — is registered in `docs/session-marker.md` § Mandate-line bullet contract. The bullet is written here alone, from the `{mission:<id>}` prefix Step 1 captures — on every path, including `/prime` auto mode, which forwards the token at its Step 8c.9 rather than writing the bullet itself. It originates from `/prime` Step 8m binding. `/session-start` never writes to the mission file itself.
 
 Where `files_in_scope_written` is:
 - `(inferred)` — if `files_inferred = true` (operator did not state or correct this field)
@@ -395,6 +461,8 @@ Proceeding to /session-plan.
 ```
 
 Then **chain-invoke `/session-plan`** immediately, passing `work_scope` verbatim as `$ARGUMENTS`. Use the Skill tool: `skill = "session-plan"`, `args = "{work_scope}"` (the exact `work_scope` string parsed in Step 2). Do not pause for operator confirmation before invoking — the chain is the default path.
+
+**Forward the auto-mode tokens.** If Step 1 captured `AUTO_GATE`, prefix `{gate:auto}`; if it captured `PLAN_OVERWRITE`, prefix `{plan:overwrite}`. Both are forwarded together on the auto path, e.g. `args = "{gate:auto} {plan:overwrite} {work_scope}"`. `{plan:overwrite}` pre-selects `/session-plan` Step 0's overwrite option so the chain does not stop to ask about a same-session plan file; `{gate:auto}` tells `/session-plan` Step 8 to **write the plan and return to `/prime` without emitting "Begin execution"** — `/prime` 8c.11 must still run `/risk-check` before any structural edit, so a `/session-plan` that started work here would put execution ahead of the risk gate. **Do not drop either token:** without `{plan:overwrite}` the chain stops for a question auto mode has already answered, and without `{gate:auto}` it begins execution one step too early.
 
 **Forward the gate token.** If Step 1 captured `POST_PLAN_GATE`, prefix the args instead: `args = "{gate:post-plan} {work_scope}"`. `/session-plan` Step 0 strips it and Step 8 acts on it. **This forwarding is load-bearing** — the 8a path reaches `/session-plan` through *this* chain, not through `/prime` 8a.c directly, so dropping the token here silently removes the operator's approval gate. Do not "simplify" it away as redundant. Do not forward `{mission:<id>}`: that token is consumed here and recorded on the mandate line, and `/session-plan` has no use for it.
 
