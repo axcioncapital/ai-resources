@@ -2,8 +2,13 @@
 
 **Status:** FINAL BUILD AUTHORITY on operator approval. No repository change made.
 **Date:** 2026-07-28 · **Author:** Claude (Opus 5)
-**Supersedes:** `ai-resources/plans/2026-07-28-develop-capability-build-plan.md` and the `/work-loop` investigation memo of 2026-07-28.
-**Retained as drafting source only:** the superseded plan's §§7–10, 12, 14, 16 and Appendix A supply the text for file C4. Its counts are stale — see §13.
+**Supersedes:** all four `develop-capability` drafts (`2026-07-28-develop-capability-build-plan.md` → `-v2.md` → `-v3.md` → `-v3.1.md`) and the `/work-loop` investigation memo of 2026-07-28.
+
+**Drafting source for C4 — `2026-07-28-develop-capability-build-plan-v3.md`, and only that one.** Its §§7–10, 12, 14, 16 and Appendix A supply C4's text; its own banner names it as the drafting source and lists exactly those sections. Its counts are stale — see §13, and re-read every technical premise against the live repository.
+
+> **Do not draft from v1, v2 or v3.1.** *(Corrected 2026-07-29 — before this, the pointer above and the three sites at §9.1 C4, §9.3 E6 and §13 all said "the superseded plan", which resolves to **v1** via the Supersedes line.)* **v1** carries *"Do not implement from this version"* and five blocking Codex findings — two of them (confidential-data rule unsafe; active-status set incomplete) sit **inside the very sections a drafter is sent to**, and both were inherited into C4's first draft and caught only by independent QC. **v2** is worse still: its banner reads *"⚠ PREMISE VOID — DO NOT IMPLEMENT"* — its justifying premise was overturned mid-revision. **v3.1** is review trail only by its own banner. All four remain on disk as the review trail; exactly one is a drafting source.
+>
+> Note for the record: `logs/improvement-log.md` (2026-07-28) filed this defect but prescribed naming **`-v2.md`** as the corrected source. That fix direction is itself wrong — it would have pointed drafters at the premise-void draft. The banners were read before this edit rather than the log's remedy being applied as written.
 
 **Changed from rev. 2:** artifact retention moved from unit close to stream close (§5.1, §6.3, §7.1, A-GIT-1, A-STREAM-1) · two gated build sessions with exact grouping (§10.2, §10.3) · `global-macro-analysis` gains one relative symlink and its date is corrected (§2, §9.3, A-DIST-3) · orphan repoint now conditional on incomplete evidence (§7.0) · stream-ID collision handling (§5.1). Nothing else redesigned.
 
@@ -238,10 +243,10 @@ Rejected: `~/.codex/skills/` (outside every git repository — unversioned, undi
 
 | # | Path | Purpose | Size |
 |---|---|---|---|
-| **C1** | `ai-resources/docs/work-loop.md` | The contract: eight loop steps · universal route triggers (citing, not copying) · route→depth→stops · stream allocation, collision handling and unit cardinality · six block formats with the `UNIT`/`STREAM`/`PHASE`/`REPO`/`BASE`/`NEXT` header · phase table · artifact ownership, mutability and **stream retention** · commit boundary · reconciliation and resume order · Codex control-room declaration · the three boundary sentences | ≤220 lines *(amended from ≤180, 2026-07-28 — see §11 A-CORE-3)* |
+| **C1** | `ai-resources/docs/work-loop.md` | The contract: eight loop steps · universal route triggers (citing, not copying) · route→depth→stops · stream allocation, collision handling and unit cardinality · six block formats with the `UNIT`/`STREAM`/`PHASE`/`REPO`/`BASE`/`NEXT` header · phase table · artifact ownership, mutability and **stream retention** · commit boundary · reconciliation and resume order · Codex control-room declaration · the three boundary sentences | ≤260 lines *(amended ≤180 → ≤220 → ≤260, 2026-07-28 — see §11 A-CORE-3 and §13; C1 now sits at exactly 260, zero headroom, deliberately)* |
 | **C2** | `ai-resources/.agents/skills/work-loop/SKILL.md` | Codex controller: activation description · brief preparation · evidence review, premise dimension first · no-access fallback · redesign prohibition | ~150 lines |
 | **C3** | `ai-resources/.claude/commands/work-loop.md` | Claude executor. Orchestration and implementation; reads C1 always, C4 for capability units. `model: opus`, `effort: high` | Target ≤300 lines — see §13 |
-| **C4** | `ai-resources/skills/capability-development/SKILL.md` | The methodology. `disable-model-invocation: true`, `model: opus`, `effort: high`. Text lifted from the superseded plan §§7–10, 12, 14, 16, Appendix A, re-read against the live repository | 350–500 lines |
+| **C4** | `ai-resources/skills/capability-development/SKILL.md` | The methodology. `disable-model-invocation: true`, `model: opus`, `effort: high`. Text lifted from **`-v3.md`** §§7–10, 12, 14, 16, Appendix A — **not v1, not v2** (see the drafting-source note at the head of this document) — re-read against the live repository | 350–500 lines |
 | **C5** | `ai-resources/templates/capability-record.md` | Record template — §12.4 schema plus `stream:`, `active_unit:`, `## Units` | ~75 lines |
 | **C6** | `ai-resources/plans/2026-07-28-work-loop-consolidated-build-plan.md` | This document (**not a component**) | — |
 
@@ -254,7 +259,7 @@ Rejected: `~/.codex/skills/` (outside every git repository — unversioned, undi
 | **E3** | `new-project.md` | Add `work-loop` to the direct-route core symlink set (line 398) | Low — forward-looking |
 | **E4** | `inbox/codex-second-opinion-brief.md` | `git mv` to `inbox/archive/` + disposition line | None |
 | **E5** | `docs/ai-resource-creation.md` | One sentence in rule #4 naming `/work-loop` as the operating-outcome sibling | Low |
-| **E6** | `plans/2026-07-28-develop-capability-build-plan.md` | Superseded banner; retained as C4 drafting source only | None |
+| **E6** | The four `develop-capability` drafts (`.md`, `-v2.md`, `-v3.md`, `-v3.1.md`) | Superseded banner on each. **`-v3.md` is the C4 drafting source; the other three are review trail only** — v1 carries five blocking findings inside the drafted sections and v2 is premise-void | None |
 
 ### 9.3 Append — 1 · Symlinks — 2
 
@@ -419,6 +424,46 @@ Step 1.0 ships as a **fail-closed consumer before its producer exists** — deli
   **On failure: stop.** Do not edit `ai-resources/AGENTS.md`. End Session A after commit 2, report the result, propose the amended footprint — an activation pointer is one candidate, a rewritten description another — and **obtain operator approval for the amended footprint before any further edit.** A fallback is not pre-authorized.
 - **A-CX-2 — Full reviewed round trip.** Brief → evidence → review → adjudication → close on one real unit. **Pass:** every material finding carries a disposition; rejections cite evidence.
 
+### Verification status — assessed 2026-07-29 (S2-7fc), after commit `84e735c`
+
+**What this subsection is for.** S1-208 landed commits 3 and 5 and recorded the tests below as **unassessed, not passed** — correctly, since they could not run inline. This pass sorts every one of them into *what was actually observed* versus *what still cannot be observed without a runtime or cross-model exercise*, so no later session can read an unassessed test as green. Per A-CAP-6's own rule, **unassessed is never passed** — and a *partial* pass names which clauses passed and which did not.
+
+**Method note.** Every "expect zero" grep below was paired with a **positive control** — the same pattern run against a file that provably contains the thing — because a grep that silently matches nothing is indistinguishable from a grep that legitimately finds nothing. Seven silently-wrong-verification incidents are logged in this repo, and two of them passed a positive control on emptiness alone; the controls are recorded per line so the result is re-checkable rather than merely asserted.
+
+**Provenance caveat on the three observational passes.** A-CHAL-1, A-CHAL-2 and part of A-RES-2 were observed against the **live `2026-07-29-prime-allocator-extraction-shape` challenged stream**, which another session was running concurrently. That is a genuine `/work-loop` challenged run and its on-disk artifacts decide the clauses cited — but it is **not a controlled test this build set up**, and the stream was mid-flight (through Shape, not through Prove or stream close). Clauses depending on stream close are therefore outstanding, not passed.
+
+| Test | Verdict | Evidence / what is still missing |
+|---|---|---|
+| **A-CHAL-1** | **pass (observational) — all clauses** | `{unit}.plan.md` written (plus `-v2`, `-v3`); stopped without implementing — `logs/scripts/allocate-session-marker.zsh` absent, `.claude/commands/prime.md` clean in working tree and no staged diff, `logs/scripts/prime-allocator.test.sh` last modified 2026-07-14 (two weeks pre-stream) so not touched by it. The `/risk-check`-unchanged clause also holds: `.claude/commands/risk-check.md` has **zero** commits since 2026-07-27 and is clean in the working tree (positive control: the same query returns 2 commits for `docs/work-loop.md`). |
+| **A-CHAL-2** | **pass (partial, observational)** | `git log --follow`: `brief.md` = 1 commit, `review-1.md` = 1 commit, `review-2.md` = 1 commit — one add each, no modification. The closure review appears as a separate `-2` **file**, never an edit to `review-1`, which is the clause this test names. Outstanding → **CODEX**: evidence-append-only (no `evidence.md` exists; stream has not reached Prove) and one-delete-at-stream-close (stream still open). |
+| **A-CHAL-3** | **unassessed — CODEX** | Requires a challenged stream through all three gates; G2 and G3 are Codex review gates. Cannot be run by Claude without substituting for the assigned tool. |
+| **A-STREAM-1** | **unassessed — CODEX** | Requires a challenged stream across two sessions with a day between. The live stream is same-day and Codex-gated. |
+| **A-STREAM-2** | **unassessed — RUNTIME** | Requires two streams deliberately opened on one date under one slug. Today's three streams carry distinct slugs, so no collision occurred and nothing on disk exercises the `-2`/`-3` allocation. |
+| **A-CAP-1** | **unassessed — RUNTIME** | Requires running a solo capability unit. No `development/` record exists anywhere. |
+| **A-CAP-2** | **unassessed — CODEX** | Reviewed capability across units — the reviewed route is Codex-gated by construction. |
+| **A-CAP-3** | **unassessed — RUNTIME** | Requires a capability unit-open commit to inspect; none exists. |
+| **A-CAP-6** | **unassessed — RUNTIME** | Requires exercising a gate with Codex forced unavailable. Needs no external model, but needs a live gate. |
+| **A-CAP-7** | **unassessed — RUNTIME** | Requires a canary-planted trial run plus `git log -p` / `git grep` sweep. |
+| **A-REC-2** | **unassessed — RUNTIME** | Both sub-cases need fixture records plus a bare `/work-loop` invocation. No external model needed. |
+| **A-RES-2** | **pass (partial)** | The **"no code path sorts by timestamp"** clause holds: stated explicitly at `docs/work-loop.md:258` and `.claude/commands/work-loop.md:28`, and zero `mtime` / `ls -t` mechanics in either file (positive control: `prime.md` returns 18 `mtime` hits, so the instrument works). Outstanding → **RUNTIME**: the three-fixture tier-precedence run with Tier-2 newest by mtime. |
+| **AT-7** (runtime half) | **unassessed — RUNTIME**; **contract half passes** | Contract half verified: `templates/capability-record.md:6` and `:33–38` define the ACTIVE set and forbid `in-development` alone; `docs/work-loop.md:250` states the set and Tier 1 (`:252`) and Tier 3 (`:256`) both match *the whole ACTIVE set*. Negative control: the only line matching an "in-development alone" pattern is `:250` itself — the prohibition text — so no tier retains the narrow filter. Outstanding: the four fixture records + TERMINAL negative control + bare invocation. |
+
+**Re-checked opportunistically (already recorded passed at earlier commits; near-zero cost to confirm against the landed text):**
+
+- **A-CORE-3 — pass.** `wc -l`: C1 = **260** against its amended 260 ceiling (zero headroom, deliberate — see §13); C3 = **251** against 300.
+- **A-CORE-4 — pass.** Zero `H1–H6`/`M1–M5` ids in C1 and zero risk-class terms in C1 or C4. The single `universal route triggers` hit in C4 (`SKILL.md:438`) is a **negative boundary declaration** — *"Never restates the universal route triggers. They have exactly one owner and this file cites it."* — i.e. the opposite of a copy. Mutual citation holds: C1→C4 ×2, C4→C1 ×14. Positive control: the trigger-id grep does find its owner file; the risk-class grep does find `docs/audit-discipline.md`.
+- **A-CORE-7 — pass, both directions.** C4 returns **zero** for `active_unit` / resume / tier-resolution / stream-allocation (positive control: C3 returns 33). C3 returns **one** methodology-term hit, `work-loop.md:161`, which is a citation that explicitly disclaims ownership — *"It owns the method… This command owns none of that and restates none of it."* (positive control: C4 returns 21).
+- **A-CAP-0 — ⚠ FAIL on its third clause.** Clause 1 passes (`disable-model-invocation: true`, `SKILL.md:17`). Clause 2 passes (`model: opus` in both C3 `:2` and C4 `:15`). **Clause 3 fails:** a live model default sits at `~/.claude/settings.json:166` — `"model": "opus[1m]"` — which workspace `CLAUDE.md` § Model Tier prohibits at every layer. All four repo-level settings files are clean (positive control confirmed the grep detects a `"model"` key). This is **not** a defect in C1/C3/C4 and needs no edit to them; it is the already-logged harness-config item (`logs/improvement-log.md` 2026-07-29, severity high) and a **gated** change class, so it is reported here and deliberately not fixed in this session.
+
+**Net — the 13 tests S1-208 left unassessed, counted so the groups do not double-count.** By verdict: **1 full pass** (A-CHAL-1), **2 partial passes** (A-CHAL-2, A-RES-2), **10 still fully unassessed**. 1 + 2 + 10 = 13.
+
+Cross-cut by *what is blocking the outstanding work* — this view deliberately includes the two partials, so it sums to 12, not 13, and A-CHAL-1 appears in neither group because nothing about it is outstanding:
+
+- **RUNTIME-blocked — 8** (A-STREAM-2, A-CAP-1, A-CAP-3, A-CAP-6, A-CAP-7, A-REC-2, AT-7, plus A-RES-2's remaining clause). Needs fixture records and a bare `/work-loop` invocation. **No external model required** — this is the cheaper half.
+- **CODEX-blocked — 4** (A-CHAL-3, A-STREAM-1, A-CAP-2, plus A-CHAL-2's remaining clauses). The challenged and reviewed routes are Codex-gated by construction, and Claude may not substitute for the assigned tool — workspace `CLAUDE.md` § Cross-Model Rules.
+
+The RUNTIME group is the natural next unit of work, but it needs a session whose mandate is to **build fixtures** — not a closeout session. Constructing capability records and invoking `/work-loop` from within a closeout would open a live stream in a `logs/loop/` directory that another stream already occupies.
+
 ---
 
 ## 12. Exclusions
@@ -457,4 +502,4 @@ Step 1.0 ships as a **fail-closed consumer before its producer exists** — deli
 
 The premise remains operator-stated rather than evidenced, and §2.1 records what this actually adds rather than a flattering version of it. What keeps the bet proportionate is unchanged and verifiable: no always-loaded content, no `/prime` edit, no permission or hook change, no automated gate, and a footprint that reverts completely — with Session B reverting whole without touching Session A.
 
-**Two things the implementing session must not inherit as settled.** C1's universal trigger prose should be written against the live `docs/audit-discipline.md`, not this plan's paraphrase. And C4's text should be lifted from the superseded plan and then **re-read against the live repository** — its F2 (88 commands) and F14 (26 projects, 20 with `pipeline-state`) are already stale against today's 91 and 27/21. Any technical premise here that inspection disproves should be challenged and corrected, not implemented.
+**Two things the implementing session must not inherit as settled.** C1's universal trigger prose should be written against the live `docs/audit-discipline.md`, not this plan's paraphrase. And C4's text should be lifted from **`-v3.md`** (not v1 — see the drafting-source note at the head of this document) and then **re-read against the live repository** — its F2 (88 commands) and F14 (26 projects, 20 with `pipeline-state`) are already stale against today's 91 and 27/21. Any technical premise here that inspection disproves should be challenged and corrected, not implemented.
