@@ -1,0 +1,257 @@
+UNIT: 2026-07-29-leverage-idea-lifecycle-frame    STREAM: 2026-07-29-leverage-idea-lifecycle    PHASE: frame
+REPO: ai-resources                                BASE: 44062e4bb811bd06cdb83263686fe436521cfc27    NEXT: Codex
+
+EVIDENCE
+Status: complete
+Route: reviewed (non-capability)
+Object under work: NOT EDITED — Frame closes need/owner/scope only.
+
+---
+
+## 0. BASE deviation (stated, not silently absorbed)
+
+The brief declares `BASE: 2b8b350`. This worktree is at `44062e4`, which is `2b8b350`'s **parent**
+(`git merge-base main HEAD` → `44062e4` = HEAD; `git log HEAD..main` → exactly one commit, `2b8b350`).
+So this unit is one commit behind the declared base, not diverged from it.
+
+`2b8b350` is `loop: open 2026-07-29-prime-minimum-responsibility-build-2` — an unrelated stream worked
+by a concurrent worktree session. Overlap check against this stream's targets:
+`git log --name-only 44062e4~6..main | grep -E "leverage-idea|agent-tier-table|develop-ai-resource"`
+→ **empty**. Files that stream touches: `prime.md`, `session-start.md`, `docs/session-marker.md`,
+`logs/decisions.md`, `logs/improvement-log.md`, `logs/runs/*.json`, `logs/session-notes.md`.
+No collision. Working from `44062e4` is safe for this stream.
+
+---
+
+## 1. Premise verification
+
+| # | Premise | Verdict | What was run → what was observed |
+|---|---|---|---|
+| P1 | leverage-idea stops at an implementation plan; only the new-skill bridge routes through `/develop-ai-resource` | **confirmed** | `Read leverage-idea.md:1-220`; `grep -n "develop-ai-resource" leverage-idea.md` → exactly one hit, `:209` (the "New skill" bridge row). Stop-at-plan asserted twice: `:9` "Advisory only: it stops at the implementation plan and applies no change", `:144` "Stop here — no execution." Steps 7/9/10 read in full. |
+| P2 | `/develop-ai-resource` is the standard qualification path for every new durable AI resource | **confirmed** (one wording imprecision) | `develop-ai-resource.md:13` verbatim: "Creating a new durable resource — this is the standard qualification path." `:9` enumerates "skill, reusable prompt, persistent instruction, reference file, command, script or hook". **"Agent" is not in that enumeration**; agent coverage rests on `:73` (1.3 search scope explicitly includes `.claude/agents/`) and workspace `CLAUDE.md` § AI Resource Creation ("skills, commands, agent definitions, workflow templates"). The premise holds; the command's own list is one word short of it. |
+| P3 | A raw direct brief omits Mechanism/Evidence; Capability/Settled upstream are reserved for corroborated `/work-loop` capability handoffs | **confirmed** | `create-skill.md:9`: "A **qualified brief** carries `**Mechanism:**` and `**Evidence:**` fields… Anything else is a raw need." `request-skill.md:65` states the same from the producer side. `develop-ai-resource.md:121-122` is where both fields are produced. `:32-67` (Step 1.0) gates `**Capability:**`/`**Settled upstream:**` behind four checks against a real record on disk; `docs/work-loop.md:189-194` makes either-label-alone a malformed handoff. |
+| P4 | `audits/working/` is gitignored, so its analysis cannot be the sole durable next action | **confirmed** | `.gitignore:28` → `audits/working/`. `git check-ignore -v audits/working/test.md` → exit 0, matched by `.gitignore:28`. **Positive control:** `git check-ignore -v docs/work-loop.md` → exit 1 (not ignored) — the check discriminates rather than always reporting "ignored". **Refinement:** `git ls-files audits/working/` → 13 tracked files, all `audit-summary-*` / `audit-working-notes-*` force-added before the rule; `ls audits/working/ \| grep -i idea` → none. No `/leverage-idea` output is tracked, and any new write there is ignored. |
+| P5 | leverage-idea hardcodes AI_RESOURCES and dispatches general-purpose unpinned | **confirmed** | `leverage-idea.md:51` → `AI_RESOURCES = "/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources"` (absolute). `:57`/`:59` dispatch a `general-purpose` subagent via `Task` with no model pin (`grep -n "model:" leverage-idea.md` → only `:3`, the command's own frontmatter). `docs/agent-tier-table.md:129` lists `leverage-idea` **by name** in the row "Spawns `general-purpose` unpinned, not yet retrofitted (≥6)". |
+| P6 | Shared through project symlinks — the applicable route trigger must be tested, not assumed local | **confirmed** | `find projects -name "leverage-idea.md" -type l` → **14** symlinks (`buy-side-service-plan`, `axcion-pitch-engine`, `axcion-sector-intelligence`, `strategic-os`, `project-planning`, `axcion-website`, `management-os`, `axcion-linkedin-os`, `repo-documentation`, `axcion-copy-factory`, `axcion-communication-system`, `axcion-ai-system-redesign`, `axcion-content-programme`, `axcion-systems-builder`). Each resolves to `../../../../ai-resources/.claude/commands/leverage-idea.md`. `find projects -name "leverage-idea.md" \| wc -l` → 14 (all are symlinks; none is a local fork). |
+
+**No load-bearing premise was rejected. The unit proceeds.**
+
+---
+
+## 2. Route classification
+
+```
+ROUTE: reviewed — "changes a shared ai-resources resource symlinked into projects"
+```
+
+**Reviewed trigger that fired** (`docs/work-loop.md:60`): the object is a shared `ai-resources`
+resource symlinked into projects — 14 symlinks verified at P6.
+
+**Challenged disproved, per trigger** (`docs/work-loop.md:59`):
+
+- *`/risk-check` structural class* — the classes are owned by `docs/audit-discipline.md:60-65`: hook
+  edits, permission changes, cross-cutting CLAUDE.md, **new** commands or skills, new symlinks,
+  shared-state automation. This stream edits an **existing** command and the brief forbids adding any
+  new durable component. No class matches.
+- *Deletes or retires an active resource* — no; `/leverage-idea` survives and stays reachable.
+- *Changes git, branch or worktree behaviour* — no.
+- *Touches three or more repositories* — no; brief scope is `ai-resources` only, and the 14 consumers
+  are symlinks to the canonical file, so no sibling write is needed to propagate.
+- *Has already failed to converge twice* — no; this is the stream's first unit.
+
+**Non-capability.** The object is a shared command's routing rule, not an operating outcome inside a
+project (`docs/work-loop.md:13`, § Boundary sentences). Therefore: **no capability record, no
+`projects/{p}/development/{slug}.md`, no `active_unit` pointer.** Confirmed there is no `projects/`
+directory in this repository at all and `grep -rn "^stream:"` finds only the template placeholder at
+`templates/capability-record.md:9`.
+
+**Escalation tripwire recorded for Shape.** If the fix requires editing `ai-resources/CLAUDE.md`, that
+is cross-cutting always-loaded content (`docs/audit-discipline.md:62`) and the route escalates to
+**challenged**, arming G1 immediately (`docs/work-loop.md:67`, `:87`). The brief's named scope —
+`leverage-idea.md` plus boundary documents / the tier roster — stays inside **reviewed**.
+
+---
+
+## 3. The need — five evidenced defects
+
+### D1 — The bridge matrix routes every non-skill new resource around the qualification owner
+
+`leverage-idea.md:207-214` is the Step 10 handoff matrix. Row `:209` ("New skill") is the **only** row
+naming `/develop-ai-resource`. The adjacent row `:210` covers "New command / agent / hook / other
+structural class" and its entire bridge is *"Plan's Gates name the `/risk-check` class; the bridge
+repeats it."* — a risk gate, not a qualification path.
+
+That contradicts `develop-ai-resource.md:13` ("Creating a new durable resource — this is the standard
+qualification path") read against `:9`, which names **command, script or hook** among durable
+resources. So the shipped command routes a proposed new command, hook or script straight to
+implementation gating with the qualification step skipped.
+
+**This is the brief's falsification condition #1 — "any proposed new durable AI resource bypasses
+`/develop-ai-resource`" — and the current command already satisfies it.** It is a defect in the
+existing artifact, not a feature request.
+
+### D2 — For most outcomes the only next-action address is a gitignored file
+
+Step 9 (`:167-197`) writes `{ANALYSIS_PATH}` = `{AI_RESOURCES}/audits/working/{DATE}-idea-{SLUG}.md`
+(`:54`) and calls it "the one operator-facing deliverable" (`:169`). Step 10 prints
+`Analysis: {ANALYSIS_PATH}` (`:204`). That path is gitignored (P4).
+
+Only two outcomes leave a tracked trace:
+
+- **PARK** → Step 8 appends to `logs/improvement-log.md` (`git ls-files logs/improvement-log.md` →
+  tracked). This path is sound and has a machine consumer (`/prime` Step 3 anchors on `Severity:`,
+  `:163`).
+- **New skill** → Step 7 embeds an inbox brief *verbatim inside the analysis file*, but `:142` states
+  "The command itself never writes to `inbox/`." It becomes durable only once the operator copies it.
+
+Every other WORTH-DOING outcome — extend-existing, new command, new hook, new doc, cross-model — ends
+with its plan living in an ignored file plus chat scrollback.
+
+**Brief's falsification condition #4 — "an ignored analysis file is the only next-action address" —
+is the current behaviour** for the majority of outcomes.
+
+### D3 — The lever menu is AI-resource-only, so a non-AI idea has nowhere to go
+
+Step 5's menu (`:103-107`) is exactly five levers: extend an existing resource · new command + agent ·
+new CLAUDE.md rule or doc · new hook · park. The cross-model check (`:116`) redirects an idea whose
+home is GPT / Perplexity / Notion / NotebookLM, but still assumes an *AI-resource build*.
+
+Absent from the command entirely (`grep` over the file): `/scope-project`, `/tech-consult`,
+`/work-loop`, `/improve-skill` as a first-class route, and any notion of a named project or domain
+owner. Yet those boundaries are already asserted **from the other side**:
+
+- `develop-ai-resource.md:22` — "`/leverage-idea` starts from an idea dump and stops at a plan".
+- `develop-ai-resource.md:24` — `/work-loop` "owns the operating outcome; this command owns the
+  artifact", i.e. an operating-capability idea belongs to `/work-loop`, which `leverage-idea.md`
+  never mentions.
+- `leverage-idea.md:11` names `/tech-consult` only as a *boundary to stay away from*, never as a
+  destination an idea can be routed to.
+
+**Brief's falsification condition #3 — "a non-AI idea is forced through an AI-resource lever menu" —
+is the current behaviour.** The menu has no exit that is not a Claude Code artifact or a park.
+
+### D4 — Hardcoded absolute `AI_RESOURCES` is wrong under the live worktree layout
+
+`:51` pins `AI_RESOURCES` to `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources` — the
+**main** worktree. `git worktree list` shows four live worktrees of this repository
+(`ai-resources` @ main, `ai-resources-2`, `ai-resources-leverage-idea`, `ai-resources-work-loop`).
+A `/leverage-idea` run from any non-main worktree reads and writes the main worktree's tree while the
+session's own branch state sits elsewhere. Low severity for reads; for the PARK write
+(`logs/improvement-log.md`, `:148`) it means an append lands on whatever branch main happens to hold.
+
+### D5 — Unpinned `general-purpose` dispatch
+
+`:57`/`:59` spawn `general-purpose` with no tier pin. Per `docs/agent-tier-table.md:122`, an unpinned
+spawn silently inherits the session model, so a judgment dispatch can run at Haiku with no signal;
+per-dispatch pinning is "permitted **per-dispatch, never blanket**, and is the target state".
+`leverage-idea` is named in the not-yet-retrofitted roster row at `:129`. `:139` requires that fixing
+this **moves the command between roster rows in the same commit** — so `docs/agent-tier-table.md` is
+a mandatory co-edit if D5 is taken, and is inside the brief's stated scope ("tier roster").
+
+---
+
+## 4. Who owns it
+
+**Repository:** `ai-resources` (`git remote -v` → `axcioncapital/ai-resources`). Single repo; no
+sibling write required.
+
+**Primary object:** `.claude/commands/leverage-idea.md` (220 lines).
+
+**Consumer contracts that must stay accurate if the object changes:**
+
+| Consumer | Line | What it asserts about `/leverage-idea` |
+|---|---|---|
+| `.claude/commands/develop-ai-resource.md` | `:22` | "starts from an idea dump and stops at a plan" — a boundary sentence that becomes stale if the stop point moves |
+| `.claude/commands/develop-ai-resource.md` | `:24` | gives `/work-loop` the operating outcome — the boundary D3 must route to |
+| `docs/agent-tier-table.md` | `:129`, `:139` | roster row; mandatory same-commit move if D5 is fixed |
+| `.claude/commands/create-skill.md` | `:9` | defines what makes a brief qualified vs. raw — constrains what D1's handoff may carry |
+| `.claude/commands/request-skill.md` | `:65` | the sibling raw-brief producer; its wording is the precedent for `:209` |
+
+**Distribution:** 14 per-file symlinks under `projects/*/.claude/commands/leverage-idea.md`, each
+resolving to the canonical file. One edit propagates to all 14 with no per-project action — which is
+exactly why the route is `reviewed` rather than `solo`.
+
+**Not a target:** `plans/2026-06-12-leverage-idea-build-plan.md` is the historical build record
+(status banner: "IMPLEMENTED & COMMITTED"). Read-only history. Its `:77` names a post-landing row in
+the System Owner's `toolkit-relationship.md`, which lives **outside this repository** — see
+LIMITATIONS.
+
+---
+
+## 5. Is it in scope at all?
+
+**Yes — `/work-loop` implements; this does not route out.**
+
+`docs/work-loop.md:44` (§ Execution boundary) admits "decision rules, processes … and settled
+corrections to existing commands, skills, scripts and hooks". D1–D5 are corrections to a decision rule
+inside an existing command. The brief additionally forbids adding "a command, agent, mandatory gate,
+tracker or other durable component", so no new artifact is authored.
+
+The route-out test at `:48` is "a **new** durable AI artifact must be authored, **or an existing one
+materially expanded**". The part of this need that comes closest to *material expansion* is the change
+to the command's own purpose statement at `:9` ("it stops at the implementation plan").
+
+**Frame's judgment: not a material expansion, so no hand-off to `/develop-ai-resource`.** The reasoning,
+stated so the review can attack it: the command's *output shape* is unchanged — still advisory, still
+executes nothing, still terminates at a routing decision plus a payload. What changes is the
+**correctness and completeness of the destination set**, and the **durability of the address** each
+destination is given. Correcting where a router points is a settled correction; giving the router a
+new engine would not be. **This judgment is the single most contestable call in this unit and is the
+thing Shape must hold to.**
+
+**Not `/scope-project`.** A legitimate owner exists (`ai-resources`, the command itself), and this is
+not a new enduring programme — so `docs/work-loop.md:49`'s terminal exit does not apply.
+
+---
+
+## 6. What Shape must close (handed forward, not decided here)
+
+1. **The D1 correction's exact shape.** Which bridge rows exist, and what each hands over. Constraint
+   from the brief: every non-terminal route names *an exact existing command* plus a self-contained
+   payload or a durable inbox address.
+2. **The D2 address.** Where a non-PARK, non-skill outcome becomes durable. `inbox/` is tracked
+   (`git ls-files inbox/` → `.gitkeep` + archived briefs), so it is a candidate — but `:142`
+   currently forbids the command writing there, and reversing that is a behaviour change the review
+   should see argued, not assumed.
+3. **Whether D4 and D5 are in this stream or deferred.** Both are real and both are cheap, but neither
+   is named in the "Required result". D5 drags `docs/agent-tier-table.md` in as a mandatory co-edit
+   (`:139`).
+4. **The safeguards that must survive** (brief's falsification condition #5): the Step 2 duplicate
+   gate (`:44`) and triviality gate (`:45`); the PARK path's mandatory `Severity:` (`:163`) and
+   concrete `Review-cycle:` trigger (`:165`); the settled-improvement fast path to `/improve-skill`
+   (`:44`, `:214`), which is independently correct per `develop-ai-resource.md:14`.
+5. **The complexity-budget cap** at `:128` — an enforcement gate, not advisory. Any new route must not
+   silently become a way around it.
+
+---
+
+## LIMITATIONS
+
+- **Frame made no edit to the object under work.** The design of the fix is Shape's; nothing here is
+  an approved change. Section 5's "not a material expansion" call is a *judgment*, argued but not
+  proved, and is the intended target of this unit's review.
+- **`/leverage-idea` was not executed end-to-end.** D2's claim rests on reading Steps 8–10, not on
+  observing a run. No output from this command exists anywhere in this tree to inspect
+  (`ls audits/working/ | grep -i idea` → none), so there is no empirical instance of the ignored-file
+  failure — only the code path that produces it.
+- **Consumer scan was repository-scoped to this worktree.** `grep -rn "leverage-idea" --include="*.md" .`
+  covered `ai-resources` only. One consumer is known to exist **outside** it and was **not** checked:
+  `plans/2026-06-12-leverage-idea-build-plan.md:77` records a `/leverage-idea` row appended to the
+  System Owner's `toolkit-relationship.md` in `projects/axcion-ai-system-owner/`. The brief forbids
+  sibling-repo *edits*; it does not make a sibling reference cease to exist. If the command's purpose
+  statement changes, that row may go stale and this stream cannot fix it.
+- **P2 carries a wording imprecision, accepted not resolved.** `develop-ai-resource.md:9` does not
+  contain the word "agent". Agent coverage is inferred from `:73` and workspace `CLAUDE.md`. If Shape
+  writes a bridge row routing a proposed **agent** to `/develop-ai-resource`, it rests on that
+  inference rather than on the command's own enumeration.
+- **Working from `44062e4`, one commit behind the declared `BASE: 2b8b350`.** Overlap with the
+  intervening commit's stream was checked and is empty (§ 0), but the two streams are live
+  concurrently in separate worktrees and nothing prevents a later collision in `logs/decisions.md` or
+  `logs/improvement-log.md`, which both streams may append to.
+- **The `2026-07-29-prime-minimum-responsibility` stream is open in shared history** and unreachable
+  from this unit's authority. It was deliberately not resumed. If it lands changes to `/prime`'s task
+  menu, and this stream later touches `improvement-log.md` severity semantics (`:163`), the
+  interaction is unexamined.
+- **Not checked:** whether any of the 14 consuming projects documents `/leverage-idea` behaviour in
+  its own project `CLAUDE.md` or docs. Only the symlink targets were resolved, not the projects'
+  prose.
