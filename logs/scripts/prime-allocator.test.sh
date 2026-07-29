@@ -5,37 +5,36 @@
 # block that zsh crashes on (NOMATCH). Caught by the end-time /risk-check. Never test the
 # allocator under bash alone again.
 #
-# ⚠ SOURCE OF TRUTH — FIXED 2026-07-14 (S8). READ THIS BEFORE TOUCHING THE HARNESS.
+# ⚠ SOURCE OF TRUTH — FIXED 2026-07-14 (S8), REPOINTED 2026-07-29. READ BEFORE TOUCHING THE HARNESS.
 #   This test used to read the allocator from `$SP/newblock.txt` — a file in a PREVIOUS session's
 #   scratchpad, hardcoded by session id. That made the suite a snapshot test of dead code: on
 #   2026-07-14 it reported "12 passed, 0 failed" while testing an allocator that contained the OLD
 #   broken seed and NONE of that session's fix. A green run proved nothing about what ships.
 #
-#   It now EXTRACTS the allocator block directly out of `.claude/commands/prime.md`, so the thing
-#   under test is the thing that runs. If prime.md's allocator changes, this suite sees it — which
-#   is the only property that makes a regression test worth keeping. Do not reintroduce a copy.
-ALLOC_SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/.claude/commands/prime.md"
-[ -f "$ALLOC_SRC" ] || { echo "FATAL: cannot find prime.md at $ALLOC_SRC"; exit 2; }
+#   The 2026-07-14 fix made it EXTRACT the allocator out of `.claude/commands/prime.md` by awk,
+#   anchored on a fence position, the literal string "Allocate N = 1", and an exact indent width.
+#   That was the right fix for logic living inside a markdown prompt, but the anchor was fragile by
+#   construction — a reformatted fence or a reworded comment would have silently broken extraction.
+#
+#   2026-07-29 (capability prime-runtime-delegation, Slice 2): the allocator MOVED OUT of prime.md
+#   into `logs/scripts/prime-marker.sh`, so there is nothing left to scrape. This suite now runs the
+#   SCRIPT DIRECTLY — no awk, no anchors, no extraction step that can drift. The thing under test is
+#   the file that ships. Do not reintroduce a copy, and do not reintroduce an extractor.
+ALLOC_SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/logs/scripts/prime-marker.sh"
+[ -f "$ALLOC_SRC" ] || { echo "FATAL: cannot find prime-marker.sh at $ALLOC_SRC"; exit 2; }
 
 SP="${TMPDIR:-/tmp}/prime-allocator-test.$$"
 T="$SP/mk"
 rm -rf "$T"
 mkdir -p "$T/main" "$SP"
 
-# Pull the first fenced bash block that contains the allocator, and dedent it.
-awk '
-  /^[[:space:]]*```bash[[:space:]]*$/ { inblk=1; buf=""; next }
-  inblk && /^[[:space:]]*```[[:space:]]*$/ {
-      if (buf ~ /Allocate N = 1/) { printf "%s", buf; exit }
-      inblk=0; buf=""; next
-  }
-  inblk { buf = buf $0 "\n" }
-' "$ALLOC_SRC" | sed -e 's/^         //' > "$SP/newblock.txt"
+# The allocator is a script now — copy it verbatim. No extraction step, so no anchor to drift.
+cp "$ALLOC_SRC" "$SP/alloc.sh"
 
-if ! grep -q 'MARKER=' "$SP/newblock.txt"; then
-  echo "FATAL: allocator extraction from prime.md failed (no MARKER= assignment found)."
-  echo "       The fence markers or the 'Allocate N = 1' anchor changed. Fix the extractor —"
-  echo "       do NOT fall back to a copy, which is the defect this replaced."
+if ! grep -q 'MARKER=' "$SP/alloc.sh"; then
+  echo "FATAL: $ALLOC_SRC carries no MARKER= assignment — it is not the allocator."
+  echo "       Fix the script or the path; do NOT fall back to an inline copy, which is the"
+  echo "       defect the 2026-07-14 fix replaced."
   exit 2
 fi
 cd "$T/main" || exit 1
@@ -49,7 +48,7 @@ git commit -qm init
 git worktree add -q "$T/wt" -b wtbranch
 TODAY=$(date '+%Y-%m-%d')
 
-cp "$SP/newblock.txt" "$T/new.sh"
+cp "$SP/alloc.sh" "$T/new.sh"
 printf 'echo "MARKER=$MARKER"\n' >> "$T/new.sh"
 
 cat > "$T/old.sh" <<'OLD'

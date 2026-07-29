@@ -4,9 +4,9 @@ STREAM: 2026-07-29-prime-minimum-responsibility
 PHASE: build
 REPO: ai-resources
 BASE: c07c9fa
-NEXT: Claude — produce the measured package amendment, then resume S2 and wire the artifact
+NEXT: Prove unit — judge the stream against Shape's falsification criteria (a later unit)
 
-Status: in-progress
+Status: complete
 
 The qualification this unit suspended at route-out for has **returned**. The artifact exists and is
 green; **it is not wired** — `prime.md` is untouched by this unit. The unit stays open for the wiring.
@@ -117,3 +117,130 @@ LIMITATIONS:
   reach) is unmeasured.
 - Two of the brief's four premises did not hold as written (P1b rejected, P4 partially). The verdict
   was re-derived from what was observed rather than from the brief's framing.
+
+---
+
+# Session 2 — 2026-07-29 (S3-060): the package amendment, and Slice 2 landed
+
+Operator directive unchanged and re-recorded: **`/risk-check`, `/qc-pass` and all subagent dispatch
+are DECLINED.** They were **not run**. Recorded as **declined** — never as passed, satisfied or
+waived. Everything below is direct inspection and deterministic executable tests.
+
+## 1 · The measured package amendment (deliverable 1)
+
+Written to `logs/loop/2026-07-29-prime-minimum-responsibility-shape.plan-v5.md`. Plan-v4 is immutable
+and was **not** edited; v5 supersedes its § 4 arithmetic and § 5 option set only.
+
+What the amendment records, and what was run to establish each:
+
+- **Option (ii) is foreclosed.** D3 qualified **only** `prime-marker.sh`; Step 1a's cross-check and
+  Step 1d's mission scan were qualified and **declined for v1**, each with a reopening trigger. So
+  F10's 66 lines — plan-v4's "single biggest line saving available" — are **uncashable in v1**, not
+  merely uncashed. Read from the record's D3 (`prime-runtime-delegation.md:204-232`).
+- **Two of plan-v4's own budget cells rested on a rejected premise.** Its Step 1d budget (A=12, B=6)
+  was justified by *"`mission.md:47–48` already carries the identical repo enumeration"*. Build-2's
+  premise P1b tested that and **rejected** it — `mission.md` carries no such shell; `:47` is one prose
+  sentence that *cites* `/prime`, so the dependency runs the opposite way. Corrected to A=16, B=16.
+  Budget B's Step 1a cell (16) likewise assumed a relocation plan-v4 § 2 itself disrecommends and D3
+  has now declined as a script; corrected to 54.
+- **Revised arithmetic.** Orientation floor A 275 → **279**, B 172 → **220**. Final reachable
+  **426** (A) / **367** (B). **≤300 remains falsified, and by a wider margin than v4 stated** — B is
+  **67** short, not 16. Per D2 and the operator's 2026-07-29 scoping, the frozen ≤300 assertion is
+  **not** renegotiated; a shortfall is recorded unmet.
+
+## 2 · Slice 2 landed (deliverable 2)
+
+**`prime.md` Step 8k replaced by a call to the script.**
+Run: python splice of `.claude/commands/prime.md`, asserting `lines[365]` starts `8k. **Marker
+allocation` and `lines[512]` starts `8h. **Session-entry write` before writing.
+Observed: 147 lines (`:366–512`, 11,130 chars) → **15 lines** (`:366–380`, 2,293 chars).
+`wc -l` **635 → 503**, measured, not computed. **−132 lines; −8,837 chars per read × 29 consumers.**
+
+**`prime-allocator.test.sh` repointed in the same change.**
+Run: three edits — `ALLOC_SRC` from `.claude/commands/prime.md` to `logs/scripts/prime-marker.sh`;
+the 8-line awk extractor + dedent replaced by a single `cp`; the FATAL branch reworded from
+"extraction failed" to "carries no MARKER= assignment"; temp file renamed `newblock.txt` → `alloc.sh`.
+Observed: the suite no longer scrapes markdown. **There is no anchor left to drift** — the fence
+position, the `Allocate N = 1` literal and the nine-space dedent are all gone from the test's path.
+
+**All in-file references to 8k survive.** Run: `grep -n "8k"` over the new `prime.md`.
+Observed: 5 hits (`:366`, `:377`, `:385`, `:406`, `:419`) — every one names the sub-step's *identity
+or contract*, none referenced the inline shell. `8h`'s "Run the **Step 8k marker-allocation
+sub-step**" hand-off is unchanged and still resolves.
+
+**A formatting defect was introduced and caught.** The splice consumed the blank line separating 8k
+from 8h. Detected by a mechanical check over every `^8[a-z]\. ` sub-step confirming a blank line
+precedes each; 8h failed it. Fixed, re-checked — 6 of 6 OK. This is why the final figure is 503/−132
+and not the 502/−133 the amendment was first drafted at; **the amendment was corrected before it was
+committed**, rather than shipping a number that was wrong by one.
+
+## 3 · Both suites run (deliverable 3)
+
+| Suite | Before the swap | After the swap |
+|---|---|---|
+| `prime-allocator.test.sh` (tripwire) | 19 passed / 0 failed | **19 passed / 0 failed**, repointed at the script |
+| `prime-marker.test.sh` (differential) | **20 passed / 0 failed**, both bash and zsh | **hard-exit 2 — retired by design** |
+
+**The differential suite's exit is the expected terminal state, and its own author anticipated it.**
+Its failure text reads: *"Either Slice 2 has landed (block replaced by a call to the script — retire
+this suite), or the fence/anchor moved."* Its 20/0 run **before** the swap is the equivalence proof
+that licensed the swap; with the block gone it has nothing left to compare. **It is left on disk, not
+deleted** — see § 5.
+
+**FALSIFICATION CONTROL — the green run is load-bearing, not vacuous.** A green tripwire proves
+nothing unless it can go red; that is precisely the 2026-07-14 defect this whole slice exists to
+retire. Run: reverted the script's fail-safe seed from the suffix-tolerant
+`tok="${PREV#* }"; n="${tok#S}"; n="${n%%-*}"` to the naive `n="${PREV##*S}"`, re-ran the suite,
+restored, confirmed `git diff` empty, re-ran again.
+Observed: **18 passed / 1 failed, `*** DO NOT SHIP ***`** — and it failed on exactly the destructive
+regression the invariant names: *"FAIL-SAFE reads a SUFFIXED marker: S7-a4f => S8 — got S1, wanted
+S8"*, i.e. S1 allocated over an existing S7. After restore, **19/0**. The suite is reading the
+shipped script.
+
+**CALL-SITE CONTRACT — proven by execution, closing build-2's largest prior limitation.**
+The earlier evidence recorded *"no `/prime` has run through the script down any dispatch branch"*.
+Run: the call site copied **verbatim** out of the new `prime.md:371-372` into a throwaway git fixture,
+executed under **zsh** (the Bash tool's real shell), six cases.
+Observed:
+1. `TODAY=[2026-07-29]`, `MARKER=[S1-zzz]` — the `${MARKER_LINE%% *}` / `${MARKER_LINE#* }` split works.
+2. Both marker files written: `.session-marker` and `.session-marker-zzz99999-…`, content `2026-07-29 S1-zzz`.
+3. Second invocation → `S2-zzz`. Increments.
+4. `CLAUDE_CODE_SESSION_ID=""` → `S3`. Legacy bare grammar; degrades safe.
+5. **Negative control** — broken script path: `|| exit 1` fired, exit 7 propagated. A missing script
+   cannot fail silently.
+6. **Negative control** — run from a non-repo-root cwd: refused loudly, exit 1,
+   *"no ./logs directory — run from the repository root"*.
+
+## 4 · This session's own /prime is the last inline-block run
+
+`S3-060` was allocated by the **inline block**, at session start, before this slice landed. The next
+`/prime` in this checkout will be the first to allocate through the script in production. That is the
+one property still unproven by anything other than the fixture above, and it is unprovable from
+inside the session that changes it.
+
+---
+
+LIMITATIONS:
+- **No production `/prime` has yet run through the call site.** Proven in a fixture under zsh with
+  both negative controls, not in a live orientation. First real exercise is the next `/prime`.
+- **`/risk-check`, `/qc-pass` and all subagent dispatch: operator-declined, NOT run.** Independent
+  review of both the artifact and this integration is **outstanding**, not satisfied. The route is
+  `challenged`; its post-implementation Codex review belongs to the **Prove** unit and has not
+  happened. Nothing here should be read as having passed a gate.
+- **`prime-marker.test.sh` is now permanently non-runnable and is still on disk.** Retiring it is
+  prescribed by the record's next-action item 3 but was **not** in this session's instruction, so it
+  is recorded as a `deferred` finding rather than deleted as a quiet extra edit. Its FATAL text
+  self-documents the state for the next reader.
+- **Slice 4's figures remain structural estimates.** Only Slice 2 is measured by execution. Eleven of
+  thirteen orientation regions are still un-drafted, carrying plan-v4's ±15-line uncertainty — which
+  exceeds Budget A's 4-line margin against the ≤430 waypoint.
+- **The −8,837 chars/read figure counts characters, not tokens.** Direction certain; magnitude in
+  tokens unmeasured.
+- **The 29-consumer count is a point-in-time `find`.** Three sibling worktrees hold their own copies
+  of `prime.md` on other branches (`ai-resources-2` at 830 lines, `-work-loop` and `-leverage-idea` at
+  635); they receive this change only on merge, and until then those checkouts still run the inline
+  block. That is normal branch behaviour, not a defect, but it means "29 consumers updated" is true
+  of `main` only.
+- **The governance gap is unresolved and now applies twice.** `docs/work-loop.md` still defines no
+  path for amending a G1-approved package mid-Build. plan-v5 is the second amendment written under
+  v4 § 6a's chosen-not-prescribed shape.

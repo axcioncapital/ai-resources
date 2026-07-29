@@ -438,3 +438,9 @@ None beyond what the capability record's `## Current phase and next action` alre
   separate queue entry.
 
 Findings: 6 — queued 1 (severity: high), declined 5. 1 + 5 = 6.
+
+## 2026-07-29 — Session S3-060
+
+**Work:** Continue `/work-loop` stream `2026-07-29-prime-minimum-responsibility`, unit **build-2** (mission `lean-prime-2026-07`). In order: (1) update the measured package amendment — record that **only `prime-marker.sh` qualified**, and that the two judgment-bearing scans (Step 1a's git cross-check, Step 1d's mission scan) **remain in `/prime`**; (2) resume **Build Slice 2** — replace `prime.md` Step 8k with a call to `logs/scripts/prime-marker.sh` **and** repoint `logs/scripts/prime-allocator.test.sh` at the script **in the same commit**; (3) run both test suites; (4) **stop after closing Build-2 — do not begin Slice 4.**
+- Mission: lean-prime-2026-07
+- **Operator directive, this session:** `/risk-check`, `/qc-pass` and all subagent dispatch are **operator-declined** — recorded as declined, never as passed or completed. Verification is by direct inspection and deterministic executable tests only.
