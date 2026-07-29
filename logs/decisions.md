@@ -310,3 +310,52 @@ minimum-responsibility-shape.plan-v4.md` concluded "the ≤300 target is FALSIFI
 scoped that conclusion: it is valid as **"≤300 is falsified for the current relocation-only
 package"**, and **not** as "≤300 is impossible". Plan-v4 is an immutable artifact and is not edited;
 this is its corrected reading. The mission's ≤300 acceptance assertion stays **frozen**.
+
+## 2026-07-29 — /work-loop 2026-07-29-leverage-idea-lifecycle-frame: routed-out
+
+**Need.** Turn `/leverage-idea` from a command that stops at an implementation plan into an
+evidence-grounded routing and handoff command that reaches the lifecycle owner.
+
+**Outcome.** `routed-out` — **owner: `/develop-ai-resource`.** All six of the brief's premises were
+confirmed (with positive controls), and Frame initially judged the work a settled correction that
+`/work-loop` could implement. Codex review-1 (MATERIAL 2) disproved that conclusion and it was
+adjudicated `fixed`: the required change moves the artifact's **authority** (advisory plan-producer →
+routing-and-handoff command), its **input domain** (`leverage-idea.md:9`, workspace-AI-resource ideas
+only → also operating capabilities, projects, technical needs, domain decisions) and its **output
+contract** (`:142`, terminal plan and never writes to `inbox/` → lifecycle handoffs with durable
+addresses). Three axes moving at once is a **material expansion of an existing durable AI artifact**
+under `docs/work-loop.md:48`, which assigns it to `/develop-ai-resource` — corroborated by
+`develop-ai-resource.md:15` and `docs/ai-resource-creation.md:21`. Because the artifact change is the
+stream's **whole need** and not a component of a capability stream, the hand-off is terminal.
+**Zero edits were made to `.claude/commands/leverage-idea.md`** (`git diff 44062e4 HEAD` → empty,
+positive control on `logs/improvement-log.md` → 18 insertions, so the check discriminates).
+
+**The brief's own falsification condition applied to itself.** It declared the work falsified if "any
+proposed new durable AI resource bypasses `/develop-ai-resource`". The expansion of `/leverage-idea`
+is itself a materially expanded durable AI resource; implementing it inside `/work-loop` would have
+met that condition.
+
+**Handed over.** `inbox/leverage-idea-lifecycle-routing.md` — a **raw** brief by construction,
+carrying no `Mechanism`/`Evidence` and neither reserved upstream label, with heading-form sections so
+`/develop-ai-resource` Step 1.0's field-presence routing cannot misread it as a malformed capability
+handoff. It inherits all five verified defects (D1 bridge-matrix bypass at `leverage-idea.md:210`
+contradicting `develop-ai-resource.md:13`; D2 gitignored-only next-action address; D3 AI-resource-only
+lever menu; D4 hardcoded `AI_RESOURCES` at `:51` under four live worktrees; D5 unpinned
+`general-purpose` dispatch with `docs/agent-tier-table.md:139`'s same-commit roster obligation), plus
+the review residual that `develop-ai-resource.md:9`'s own enumeration omits agent definitions while
+`docs/ai-resource-creation.md:3`,`:7`,`:15`,`:27` place them under its authority.
+
+**D1 alone is very likely a settled correction** `/work-loop` could have taken. It leaves with the
+rest because the brief's need is the whole expansion. **Fixing only D1 is a new, narrower brief and a
+new stream — not a resumption of this one.**
+
+**Also produced.** One `/work-loop` defect logged to `logs/improvement-log.md` (2026-07-29, severity
+`medium`, from review MATERIAL 3, adjudicated `out-of-scope`): `.claude/commands/work-loop.md` Step 7
+sends **every** reviewed unit to Codex, while `docs/work-loop.md:74` defines the reviewed route as one
+review *of the result* — and the same step already carves Frame out on the challenged route. This
+Frame review is therefore **not** counted as the reviewed route's result review. Note the
+counter-evidence recorded there: this "wrongly placed" pre-implementation review is what caught the
+wrong-owner call above.
+
+**Artifacts.** `logs/loop/2026-07-29-leverage-idea-lifecycle-frame.*` (brief, evidence, review-1),
+deleted at stream close; **recoverable at `1a40c60`**.
