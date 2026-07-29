@@ -55,3 +55,17 @@ Each passes the test in plan-v3 § 5: it produces the command's own primary outp
 ## 4. Falsifiers
 
 1 clear (no symlink touched; the 7 pre-existing breakages are unchanged) · 2 clear (counts unmoved) · 3 clear · 4 clear (no new component) · 5 clear (§ 3) · 6 clear (no excluded file) · 7 clear (zero deletions in S3) · 8 clear for S3's scope · 9 N/A.
+
+---
+
+Status: complete
+
+Marker appended 2026-07-29 during `/work-loop` Step 1 reconciliation, not at the time
+the unit ran. The S3 work landed at commit c1b4435 and is unaltered by this append;
+only this closure block was added.
+
+**Ordering rule was not satisfied for this unit.** The statement above that "brief and
+evidence are combined" describes what was done, not a permitted variant. This unit had
+no `…-build-3.brief.md` until one was written retrospectively in the same reconciliation
+that added this marker. That recovery brief carries the full notice and is not evidence
+that the original ordering was met.

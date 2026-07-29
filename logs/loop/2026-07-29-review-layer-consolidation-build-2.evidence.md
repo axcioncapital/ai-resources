@@ -61,3 +61,12 @@ EVIDENCE
 ## 5. Scope
 
 No policy document owned by S1 was edited. No S3- or S4-owned file was edited. 18 tracked files changed: 11 commands, 2 hook deletions, `settings.json`, `skills/handoff/SKILL.md`, `execution-protocol.md`, and two hook-written autologs (`logs/friction-log.md`, `logs/innovation-registry.md`) that are not policy edits.
+
+---
+
+Status: complete
+
+Marker appended 2026-07-29 during `/work-loop` Step 1 reconciliation, not at the time
+the unit ran. The S2 work landed at commit e410328 and is unaltered by this append;
+only this closure block was added. The unit was left unmarked when it finished, which
+made it indefinitely resumable under `docs/work-loop.md` § Resume order.

@@ -47,3 +47,17 @@ One append-only entry in `logs/decisions.md`, dated 2026-07-29. It records: the 
 **Delivered:** no general Claude review and no risk-reviewer subagent fires automatically from any file this stream may edit. Two prompting hooks gone. Eleven commands, one agent, two skills and nine governing/guidance documents realigned to one proportional rule.
 
 **Not delivered, by design and named:** `prime.md:816` still fires the plan-time gate and `session-plan.md:157` still emits the two-gate pointer — both excluded by the brief. Workspace-root `CLAUDE.md` still carries the unconditional QC mandate, so **behavior in workspace-rooted sessions does not change until that follow-up lands**. Both are § 6 items with owners and an order, recorded in `logs/decisions.md`.
+
+---
+
+Status: complete
+
+Marker appended 2026-07-29 during `/work-loop` Step 1 reconciliation, not at the time
+the unit ran. The S4 work landed at commit 8840672 and is unaltered by this append;
+only this closure block was added.
+
+**Ordering rule was not satisfied for this unit**, as for Build-3. The recovery brief
+`…-build-4.brief.md` was written retrospectively and carries the full notice. It also
+records one open question this evidence does not answer: plan-v3 § 3 S4 lists eight
+guidance files including `docs/weekly-cadence.md`, and § 1 above reports seven without
+it. Left for Prove rather than reconciled here.

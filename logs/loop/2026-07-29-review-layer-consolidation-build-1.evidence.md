@@ -79,3 +79,12 @@ Disposition: **added to S2's file set.** This is not a scope change; plan-v3 § 
 - **§ 3 S1 said "governing documents only; no command files."** Five command files were added — § 2.
 - **§ 9 falsifier 1 assumed both predicates return empty.** They do not at BASE — § 5. Re-keyed to *no new breakage relative to BASE*.
 - **§ 7 ordering** superseded by the G1 binding condition, as recorded in this unit's brief.
+
+---
+
+Status: complete
+
+Marker appended 2026-07-29 during `/work-loop` Step 1 reconciliation, not at the time
+the unit ran. The S1 work landed at commit ff000a4 and is unaltered by this append;
+only this closure block was added. The unit was left unmarked when it finished, which
+made it indefinitely resumable under `docs/work-loop.md` § Resume order.
