@@ -353,6 +353,14 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 20:46 — logs/session-notes.md
+- 20:45 — logs/scratchpads/2026-07-29-20-45-scratchpad.md
+- 20:38 — logs/decisions.md
+- 20:37 — inbox/leverage-idea-lifecycle-routing.md
+- 20:36 — logs/loop/2026-07-29-leverage-idea-lifecycle-frame.evidence.md
+- 20:34 — logs/loop/2026-07-29-leverage-idea-lifecycle-frame.review-1.md
+- 20:27 — logs/loop/2026-07-29-leverage-idea-lifecycle-frame.evidence.md
+- 20:22 — logs/loop/2026-07-29-leverage-idea-lifecycle-frame.brief.md
 - 11:04 — logs/loop/2026-07-29-prime-allocator-extraction-shape.review-1.md
 - 10:58 — logs/loop/2026-07-29-prime-allocator-extraction-shape.plan.md
 - 10:55 — logs/loop/2026-07-29-prime-allocator-extraction-shape.brief.md
