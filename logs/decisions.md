@@ -248,3 +248,65 @@
 **Two contract defects reported, not worked around.** (1) **The four-outcome axis has no token for a G1-declined package, and its gloss contradicts the challenged route's structure.** § Block formats:196 says only the first outcome "changed the object under work" — but a Shape unit *never* changes it (Step 5a Shape #2; contract:91), so a literal reading forces every Shape unit onto § Closing without a change, which closes the stream in the same commit and makes it structurally impossible to reach Build, Prove or Land. Read as descriptive rather than definitional: `close` means *the unit's own deliverable landed*. (2) **§ Closing without a change's durable-pointer trigger under-covers its own rationale.** It lists only the three non-`close` outcomes, yet its stated rationale (:216) — no change, no record, artifacts deleted at stream close — holds fully for this `close` too. The pointer was written on the rationale, not the trigger; without it a stream costing three plan revisions and two review rounds would leave no trace and the same brief would return within the week.
 
 **Decided by:** the operator, at G1, 2026-07-29. Claude executed the close; the scope judgement was the operator's. Contract defects are Claude's findings and remain open — fixing `docs/work-loop.md` is out of this unit's brief and needs its own unit.
+
+## 2026-07-29 — Operator decision: `/work-loop` MAY edit `/prime`, under three conditions
+
+**This entry is the record the mission `lean-prime-2026-07` requires and did not have.** Its first
+non-negotiable reads: *"The scope conflict at `.claude/commands/work-loop.md:247` ('Never edits
+`/prime`') versus `docs/work-loop.md` § Execution boundary must be resolved by an explicit operator
+decision recorded in `logs/decisions.md` before any unit edits `prime.md`. It survived two Codex
+review rounds unnoticed on the closed allocator stream; it may not be settled by silence a third
+time."*
+
+**Decision (operator, verbatim in substance).** `/work-loop` may edit `/prime` when **all three**
+hold:
+1. `/prime` is the **explicit object of an approved brief** — not incidental collateral of a slice
+   aimed elsewhere;
+2. `docs/work-loop.md` permits the **settled correction** (§ Execution boundary: ordinary, in-scope
+   edits to things that already exist, and capability slices — not the authoring of a new durable
+   artifact, which routes to `/develop-ai-resource`);
+3. the **applicable route gates have passed** — for challenged work, G1 before implementation.
+
+This authorizes the current stream `2026-07-29-prime-minimum-responsibility` and **ratifies keeping
+Slices 1 and 3** (`1b96aa6`, and the Slice 3 implementation commit under `fe00955`).
+
+**The process violation is recorded, not erased.** Slices 1 and 3 edited `prime.md` **before** this
+entry existed. The mission's non-negotiable was breached at the moment of those edits and no
+subsequent authorization changes that fact. Plan-v3 § 7.4 item 2 had disposed of the conflict as
+*"authority already resolved by the command's own conflict rule; the text is a defect, routed
+separately"* — a **self-resolution by the hand writing the plan**, which is precisely the settlement
+mode the non-negotiable forbade and precisely what "settled by silence a third time" describes. The
+operator's ratification is prospective authorization plus retrospective acceptance of the result; it
+is **not** a finding that the rule was followed. **Do not rewrite history to claim otherwise** — no
+session may later cite this entry as evidence that the decision preceded the edits.
+
+**`.claude/commands/work-loop.md:247` is stale and contradictory, and is NOT corrected here.** The
+line still reads *"Never edits `/prime`, workspace `CLAUDE.md`, permissions, hooks or settings."* It
+now contradicts this decision on its first clause while remaining correct on the other four. Fixing
+it inside this stream would be exactly the incidental edit condition 1 excludes. It requires a
+**separately scoped correction** — its own brief, its own gate — and until that lands the line stands
+as a known contradiction with this entry as the authority.
+
+**Rationale.** The command file and the contract disagreed, and the contract is the authority
+(`docs/work-loop.md` § Execution boundary explicitly admits "settled corrections to existing commands,
+skills, scripts and hooks"; `:260` contemplates a `/prime` step as a separable change). But *which*
+document wins is a different question from *whether a session may decide that for itself* — and the
+mission's answer to the second was "no, an operator decides, in writing, first." The three conditions
+narrow the authorization to the case that was actually argued: `/prime` as the declared object of an
+approved, gated brief. They do not license a session to edit `/prime` in passing.
+
+**Alternatives considered.**
+- *Correct `work-loop.md:247` in the same act.* Rejected by the operator — it is a separate change
+  with its own blast radius, and folding it in would repeat the pattern this decision exists to stop.
+- *Revert Slices 1 and 3 and re-land them under the authorization.* Rejected — both are verified,
+  behaviour-preserving and green on the allocator tripwire (19/0 after each); reverting to re-land
+  identical content would destroy working evidence to purchase a cleaner-looking history, which is
+  the "rewrite history" outcome this entry forbids.
+- *Read the ratification as retroactively curing the violation.* Explicitly rejected by the operator.
+  The violation stays on the record.
+
+**Also recorded here — the scope of plan-v4's falsification finding.** `logs/loop/2026-07-29-prime-
+minimum-responsibility-shape.plan-v4.md` concluded "the ≤300 target is FALSIFIED". The operator has
+scoped that conclusion: it is valid as **"≤300 is falsified for the current relocation-only
+package"**, and **not** as "≤300 is impossible". Plan-v4 is an immutable artifact and is not edited;
+this is its corrected reading. The mission's ≤300 acceptance assertion stays **frozen**.
