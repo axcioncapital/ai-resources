@@ -11,7 +11,9 @@ Examples:
 - `/risk-check add new slash command /placement and docs/repo-architecture.md`
 - `/risk-check allow Bash(rg:*) in workspace settings.json`
 
-Required-when-mandatory change classes (per `ai-resources/docs/audit-discipline.md` § Risk-check change classes):
+**This command is operator-invoked only.** It is not a gate and nothing fires it automatically. A change in one of the classes below is high-consequence and takes the risk-aware review row of `ai-resources/docs/qc-independence.md` § The rule — normally one risk-aware Codex review. `/risk-check` is the fallback when that review cannot reach the change, or when the operator simply wants this dimension set applied.
+
+High-consequence change classes (per `ai-resources/docs/audit-discipline.md` § Risk-check change classes):
 - Hook edits (`.claude/hooks/*.sh`)
 - Permission changes (`settings.json` `allow` / `ask` / `deny` edits)
 - CLAUDE.md edits that are cross-cutting (workspace-level or project-level always-loaded)
@@ -19,15 +21,9 @@ Required-when-mandatory change classes (per `ai-resources/docs/audit-discipline.
 - New symlinks
 - Automation with shared-state effects (scripts that auto-write to logs, cross-repo writes, auto-commit)
 
-For non-listed change classes, `/risk-check` is optional and operator-invoked as judgment dictates.
+A change outside the list is sized on its own consequence by the same rule.
 
-Two intended call sites per session (per `ai-resources/docs/audit-discipline.md` § When to fire):
-- **Plan-time** — once after the plan is approved, if the plan touches any required class. `$ARGUMENTS` describes the *design*.
-- **End-time** — once before commit, batched across every in-class change the session actually made. `$ARGUMENTS` describes the *executed* change set.
-
-Sessions without an explicit plan run only the end-time gate. Mid-session per-change firing is **not** the intended pattern — it multiplies tokens without proportionate signal.
-
-Invocation semantics: operator-typed, or inline-prompted by other commands (e.g., `/friday-act`). There is NO SessionStart / Stop / PreToolUse hook that auto-fires `/risk-check` — that would over-escalate on ordinary edits.
+Invocation semantics: **operator-typed only.** No command, hook or policy invokes `/risk-check` — there is no plan-time gate, no end-time gate, and no SessionStart / Stop / PreToolUse hook. Run it once per change when you run it at all; repeated firing on the same change multiplies tokens without proportionate signal. `$ARGUMENTS` describes whatever you want scored — a design not yet built, or an executed change set — but say which, so the reviewer does not treat unbuilt work as executed.
 
 ---
 

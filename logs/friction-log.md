@@ -353,6 +353,46 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 20:09 — logs/loop/2026-07-29-review-layer-consolidation-build-1.evidence.md
+- 20:07 — docs/qc-independence.md
+- 20:07 — docs/audit-discipline.md
+- 20:07 — .claude/commands/graduate-resource.md
+- 20:05 — .claude/commands/graduate-resource.md
+- 20:05 — .claude/commands/contract-check.md
+- 20:05 — .claude/commands/contract-check.md
+- 20:05 — .claude/commands/create-skill.md
+- 20:05 — .claude/commands/risk-check.md
+- 20:04 — .claude/commands/risk-check.md
+- 20:04 — .claude/commands/placement.md
+- 20:02 — audits/risk-checks/2026-07-29-transition-gate-legacy-end-time-risk-check-run-once-under-an.md
+- 13:46 — docs/commit-discipline.md
+- 13:46 — docs/autonomy-rules.md
+- 13:46 — docs/commit-discipline.md
+- 13:46 — docs/placement-verifier.md
+- 13:46 — docs/placement-verifier.md
+- 13:46 — docs/repo-architecture.md
+- 13:46 — docs/audit-discipline.md
+- 13:45 — skills/ai-resource-builder/SKILL.md
+- 13:45 — skills/ai-resource-builder/SKILL.md
+- 13:45 — skills/ai-resource-builder/SKILL.md
+- 13:45 — docs/ai-resource-creation.md
+- 13:44 — docs/ai-resource-creation.md
+- 13:44 — docs/ai-resource-creation.md
+- 13:44 — docs/repo-architecture.md
+- 13:44 — docs/repo-architecture.md
+- 13:44 — docs/protected-zones.md
+- 13:44 — docs/protected-zones.md
+- 13:44 — docs/protected-zones.md
+- 13:44 — docs/protected-zones.md
+- 13:43 — docs/work-loop.md
+- 13:43 — docs/work-loop.md
+- 13:43 — docs/autonomy-rules.md
+- 13:43 — docs/autonomy-rules.md
+- 13:42 — docs/audit-discipline.md
+- 13:42 — docs/audit-discipline.md
+- 13:42 — docs/audit-discipline.md
+- 13:42 — docs/qc-independence.md
+- 13:40 — logs/loop/2026-07-29-review-layer-consolidation-build-1.brief.md
 - 13:23 — logs/loop/2026-07-29-review-layer-consolidation-shape.plan-v3.md
 - 13:15 — logs/scratchpads/2026-07-29-continuity-scratchpad.md
 - 13:12 — logs/loop/2026-07-29-review-layer-consolidation-shape.plan-v2.md

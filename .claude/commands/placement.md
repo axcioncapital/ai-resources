@@ -76,7 +76,7 @@ This command is **not** auto-wired into `/create-skill` or any other pipeline. O
     - Workflow deployment / sync → `/deploy-workflow` / `/sync-workflow`
     - Direct edit (no pipeline) → state "no pipeline; edit directly"
 
-11. Determine whether `/risk-check` is required. Required iff `CHANGE` falls into one of the change classes listed in `{AI_RESOURCES}/docs/audit-discipline.md § Risk-check change classes` (the canonical source — do not maintain an inline copy of the list here). If required, note which gate fires (plan-time, end-time, or both — per the same doc's § When to fire (two-gate model)).
+11. Determine whether `CHANGE` is **high-consequence**. It is iff `CHANGE` falls into one of the change classes listed in `{AI_RESOURCES}/docs/audit-discipline.md § Risk-check change classes` (the canonical source — do not maintain an inline copy of the list here). If it does, note that the change takes the risk-aware review row of `{AI_RESOURCES}/docs/qc-independence.md § The rule` — one risk-aware review before implementation. No gate fires from the class match.
 
 ---
 

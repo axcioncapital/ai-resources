@@ -10,23 +10,23 @@
 
 | Path or glob | Why protected | Required review |
 | --- | --- | --- |
-| `CLAUDE.md` (workspace root + ai-resources) | Always-loaded into every session; every rule change affects all future turns | `/risk-check` mandatory; `/consult` if the change is structural or non-trivial |
-| `.claude/hooks/*.sh` | Per-session-event runtime; failure modes are often invisible until something breaks | `/risk-check` mandatory |
-| `.claude/settings.json` (any layer) | Permission surface and hook wiring; changes can silently block or over-allow tools | `/risk-check` mandatory |
-| `.claude/commands/*.md` (shared — in `ai-resources/`) | Autosynced to all projects; a behavior change affects every project session | `/risk-check` if behavior-changing; cosmetic/doc edits may skip |
-| `.claude/agents/*.md` (shared — in `ai-resources/`) | Autosynced to all projects; scope or authority changes affect all downstream invocations | `/risk-check` if behavior-changing; `/consult` if scope or authority changes |
+| `CLAUDE.md` (workspace root + ai-resources) | Always-loaded into every session; every rule change affects all future turns | Risk-aware review required; `/consult` if the change is structural or non-trivial |
+| `.claude/hooks/*.sh` | Per-session-event runtime; failure modes are often invisible until something breaks | Risk-aware review required |
+| `.claude/settings.json` (any layer) | Permission surface and hook wiring; changes can silently block or over-allow tools | Risk-aware review required |
+| `.claude/commands/*.md` (shared — in `ai-resources/`) | Autosynced to all projects; a behavior change affects every project session | Risk-aware review if behavior-changing; cosmetic/doc edits may skip |
+| `.claude/agents/*.md` (shared — in `ai-resources/`) | Autosynced to all projects; scope or authority changes affect all downstream invocations | Risk-aware review if behavior-changing; `/consult` if scope or authority changes |
 | `templates/**` | Consumer contract bound to `/new-project` and `/deploy-workflow`; changing a template changes every future scaffold | Read `templates/README.md` consumer-contract section before any edit |
-| `docs/repo-architecture.md` | Source-of-truth for `/route-change` routing; stale map produces wrong placement recommendations | `/risk-check` mandatory |
-| `docs/audit-discipline.md` | Defines the mandatory `/risk-check` change classes; editing it redefines when the gate fires | `/risk-check` mandatory |
-| `docs/autonomy-rules.md` | Defines the operator-confirmation gates (Autonomy Rules #1–#10); editing it changes when Claude stops | `/risk-check` mandatory |
-| `docs/qc-independence.md` | Defines QC methodology and auto-loop mechanics | `/risk-check` if changing methodology; cosmetic edits may skip |
+| `docs/repo-architecture.md` | Source-of-truth for `/route-change` routing; stale map produces wrong placement recommendations | Risk-aware review required |
+| `docs/audit-discipline.md` | Defines the structural change classes; editing it redefines which changes count as high-consequence | Risk-aware review required |
+| `docs/autonomy-rules.md` | Defines the operator-confirmation gates (Autonomy Rules #1–#10); editing it changes when Claude stops | Risk-aware review required |
+| `docs/qc-independence.md` | Defines the independent-review rule — which changes get reviewed, by whom, and how findings close | Risk-aware review if changing the rule; cosmetic edits may skip |
 | `logs/improvement-log.md` (schema block only) | Two-end contract between `/friday-act`, `/resolve-repo-problem`, and `/resolve-incident`; schema changes break consumers | Read schema block before any schema change; align all consumers in the same commit |
 
 ---
 
 ## What "elevated review" means here
 
-- **`/risk-check` mandatory** — run `/risk-check <description>` before implementing the change. A RECONSIDER verdict blocks — do not proceed. A PROCEED-WITH-CAUTION verdict requires applying all listed mitigations.
+- **Risk-aware review required** — the change takes the risk-aware review row of `qc-independence.md` § The rule: one Codex review carrying the seven risk dimensions, **before** implementing. Apply what it found before the change lands. A material finding left unresolved blocks — surface it and stop, do not proceed on the reasoning that the review ran. `/risk-check` is available as the operator-invoked fallback when Codex cannot reach the change.
 - **`/consult` (Function B)** — invoke `/consult` as a pre-change advisory when the change is structural or load-bearing. Pre-invoke gate: `/consult` Step 0 requires a prior Read of the relevant file.
 - **Read consumer contract** — read the named reference doc; confirm the planned change does not break stated consumers. No further gate required unless the read surfaces a conflict.
 

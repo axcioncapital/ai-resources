@@ -55,7 +55,7 @@ The subagent must NOT receive the resource brief, the creation conversation, or 
 
 ## Step 4: Auto-Fix (Severity-Calibrated Iteration)
 
-The workspace `CLAUDE.md` "QC → Triage Auto-Loop" rule (5-step loop with 2-pass cap) governs what follows. Step 3's evaluator surfaces findings; 4a–4c implement the auto-loop's triage → fix → post-edit QC sequence. Do not skip to post-edit QC without running triage.
+Step 3's evaluator surfaces findings; 4a–4c classify, fix and regression-check them. This is the pipeline's own inline fix sequence — the author acting on their evaluator's output, not an independent review — so it runs whatever the change's review row is (`ai-resources/docs/qc-independence.md` § The rule). Do not skip the classification in 4a: fixing before classifying is what turns MINOR polish into rework.
 
 ### 4a: Triage
 

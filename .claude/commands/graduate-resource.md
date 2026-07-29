@@ -96,7 +96,7 @@ After Step 5's self-checks pass, run an independent residue scan via a fresh-con
   4. Return a ≤20-line summary to the main session with: total residue count, residue-class breakdown, top-3 highest-priority residues (one line each: `{line N}: "{snippet}" → suggest replacement`).
 - **Output verdict** (last line of summary): exactly one of `RESIDUE: clean` (no findings) or `RESIDUE: {N}` (N residues found, see notes file).
 
-**Fail-and-revise loop (cap: 2 passes — mirrors `docs/qc-independence.md` § QC → Triage Auto-Loop):**
+**Fail-and-revise loop (cap: 2 passes — this check's own cap, per `docs/ai-resource-creation.md` rule 6):**
 
 - **Pass 1.** If verdict is `RESIDUE: clean`, proceed to Step 5a.
 - If verdict is `RESIDUE: {N>0}`, re-run Step 4 with the residue findings as explicit revision targets. Main agent: read the working-notes file, apply the suggested replacements, write the revised file. Then spawn a second residue-check subagent pass with `WORKING_NOTES_PATH` suffixed `-pass2` (preserves Pass-1 evidence).
@@ -123,7 +123,7 @@ Pick one:
 (c) **Abort the graduation** — the residues indicate the resource is not generalizable in its current shape; revert Step 4 and either redesign or keep the resource project-local.
 ```
 
-The 2-pass cap is the same discipline as the QC → Triage Auto-Loop — repeated machine fixes hitting the same residues are a structural signal, not a fix-able fault.
+The 2-pass cap belongs to this check alone: residue detection is a mechanical grep with a converging target, so repeated machine fixes hitting the same residues are a structural signal, not a fix-able fault. It is not a review round and does not interact with `docs/qc-independence.md` § The rule.
 
 ### Step 5a: End-time placement verification
 
