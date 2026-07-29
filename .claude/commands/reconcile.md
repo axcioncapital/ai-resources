@@ -55,7 +55,7 @@ Examples:
 
 ### Step 3 — (removed)
 
-10. *Nothing runs here.* An automatic `/contract-check` sat at this step until 2026-07-29. It was removed with the rest of the stacked review layer: the file itself already conceded the result was *"corroborating evidence only, never a hard dependency"*, and `reconcile-reviewer` in Step 4 produces the mandate-compliance judgment this command exists to emit. Set `CONTRACT_CHECK_RESULT` = `"not run"`. The operator can still invoke `/contract-check` directly when cumulative drift across several rounds is the actual question.
+10. *Nothing runs here.* An automatic `/contract-check` sat at this step until 2026-07-29. It was removed with the rest of the stacked review layer: the file itself already conceded the result was *"corroborating evidence only, never a hard dependency"*, and `reconcile-reviewer` in Step 4 produces the mandate-compliance judgment this command exists to emit. The operator can still invoke `/contract-check` directly when cumulative drift across several rounds is the actual question.
 
 ### Step 4 — Spawn `reconcile-reviewer` subagent
 
@@ -65,7 +65,6 @@ Examples:
     - `MANDATE_RUBRIC_PATH`
     - `RESOURCE_MAP_PATH`
     - `FORENSIC_SOURCES` — `{PROJECT_ROOT}/logs/session-notes.md`, `{PROJECT_ROOT}/logs/decisions.md`, plus instruction to check `git log` for `TARGET_OUTPUT_PATH`'s production window
-    - `CONTRACT_CHECK_RESULT` — from Step 3
     - `REPORT_PATH`
     - `DATE`
 13. Subagent returns a ≤30-line summary ending with `REPORT: {absolute path}` as its last line.
