@@ -353,6 +353,14 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 13:23 — logs/loop/2026-07-29-review-layer-consolidation-shape.plan-v3.md
+- 13:15 — logs/scratchpads/2026-07-29-continuity-scratchpad.md
+- 13:12 — logs/loop/2026-07-29-review-layer-consolidation-shape.plan-v2.md
+- 13:08 — logs/loop/2026-07-29-review-layer-consolidation-shape.review-1.md
+- 12:53 — logs/loop/2026-07-29-review-layer-consolidation-shape.plan.md
+- 12:48 — logs/loop/2026-07-29-review-layer-consolidation-shape.brief.md
+- 12:33 — logs/loop/2026-07-29-review-layer-consolidation-frame.evidence.md
+- 12:29 — logs/loop/2026-07-29-review-layer-consolidation-frame.brief.md
 - 11:04 — logs/loop/2026-07-29-prime-allocator-extraction-shape.review-1.md
 - 10:58 — logs/loop/2026-07-29-prime-allocator-extraction-shape.plan.md
 - 10:55 — logs/loop/2026-07-29-prime-allocator-extraction-shape.brief.md
