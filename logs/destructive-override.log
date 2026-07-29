@@ -1,0 +1,5 @@
+2026-07-19T14:27:24  event=override-accepted  phase=pre-execution  outcome=unknown  session=dd57f02f-45f3-419e-997b-47cae8078e6a  cmd=AXCION_LIVENESS_OVERRIDE=1 git reset --hard
+2026-07-19T15:16:23  event=override-accepted  phase=pre-execution  outcome=unknown  session=fixtureselfsession0001  cmd=AXCION_LIVENESS_OVERRIDE=1 git reset --hard
+2026-07-19T15:17:29  event=override-accepted  phase=pre-execution  outcome=unknown  session=fixtureselfsession0001  cmd=AXCION_LIVENESS_OVERRIDE=1 git reset --hard
+2026-07-19T15:17:32  event=override-accepted  phase=pre-execution  outcome=unknown  session=fixtureselfsession0001  cmd=NOTE=AXCION_LIVENESS_OVERRIDE=1 git reset --hard
+2026-07-19T15:17:32  event=override-accepted  phase=pre-execution  outcome=unknown  session=fixtureselfsession0001  cmd=git commit -m "use AXCION_LIVENESS_OVERRIDE=1 to override" && git reset --hard

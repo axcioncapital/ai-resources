@@ -353,6 +353,122 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 22:27 — logs/scratchpads/2026-07-29-22-10-scratchpad.md
+- 22:24 — logs/session-notes.md
+- 22:22 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 22:22 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 22:22 — logs/loop/2026-07-29-prime-minimum-responsibility-prove.brief.md
+- 22:20 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 22:20 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 22:20 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 22:19 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 22:19 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 22:18 — logs/loop/2026-07-29-prime-minimum-responsibility-build-4.evidence.md
+- 22:17 — .claude/commands/prime.md
+- 22:16 — .claude/commands/prime.md
+- 22:14 — .claude/commands/prime.md
+- 22:14 — .claude/commands/prime.md
+- 22:14 — .claude/commands/prime.md
+- 22:13 — .claude/commands/prime.md
+- 22:12 — .claude/commands/prime.md
+- 22:12 — .claude/commands/prime.md
+- 22:12 — .claude/commands/prime.md
+- 22:11 — .claude/commands/prime.md
+- 22:10 — .claude/commands/prime.md
+- 22:09 — .claude/commands/prime.md
+- 22:08 — .claude/commands/prime.md
+- 22:08 — .claude/commands/prime.md
+- 22:08 — .claude/commands/prime.md
+- 22:06 — .claude/commands/prime.md
+- 22:05 — .claude/commands/prime.md
+- 22:05 — .claude/commands/prime.md
+- 22:04 — .claude/commands/prime.md
+- 22:04 — docs/qc-independence.md
+- 22:04 — .claude/commands/project-next-steps.md
+- 21:48 — docs/session-marker.md
+- 21:47 — docs/heavy-read-discipline.md
+- 21:45 — docs/heavy-read-discipline.md
+- 21:45 — docs/commit-discipline.md
+- 21:42 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 21:41 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 21:41 — logs/loop/2026-07-29-prime-minimum-responsibility-build-4.brief.md
+- 21:35 — logs/scratchpads/2026-07-29-21-34-scratchpad.md
+- 21:07 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 21:07 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 21:07 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 21:07 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 21:07 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 21:06 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 21:06 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 21:06 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/060bd992-9d3e-4bee-b470-56dfcbe11d45/scratchpad/evidence-append.md
+- 21:05 — logs/loop/2026-07-29-prime-minimum-responsibility-shape.plan-v5.md
+- 21:05 — logs/loop/2026-07-29-prime-minimum-responsibility-shape.plan-v5.md
+- 21:04 — logs/loop/2026-07-29-prime-minimum-responsibility-shape.plan-v5.md
+- 21:04 — .claude/commands/prime.md
+- 21:03 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/060bd992-9d3e-4bee-b470-56dfcbe11d45/scratchpad/callsite-check.sh
+- 21:02 — logs/scripts/prime-allocator.test.sh
+- 21:02 — logs/scripts/prime-allocator.test.sh
+- 21:02 — logs/scripts/prime-allocator.test.sh
+- 21:00 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/060bd992-9d3e-4bee-b470-56dfcbe11d45/scratchpad/8k-replacement.md
+- 21:00 — logs/loop/2026-07-29-prime-minimum-responsibility-shape.plan-v5.md
+- 20:45 — logs/session-notes.md
+- 20:44 — logs/scratchpads/2026-07-29-21-05-scratchpad.md
+- 20:40 — logs/loop/2026-07-29-prime-minimum-responsibility-build-2.evidence.md
+- 20:39 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 20:39 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 20:39 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 20:38 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 20:38 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 20:37 — logs/scripts/prime-marker.test.sh
+- 20:36 — logs/scripts/prime-marker.sh
+- 20:22 — logs/scratchpads/2026-07-29-20-22-scratchpad.md
+- 20:17 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 20:16 — logs/loop/2026-07-29-prime-minimum-responsibility-build-2.brief.md
+- 20:09 — logs/loop/2026-07-29-prime-minimum-responsibility-shape.plan-v4.md
+- 19:57 — logs/scratchpads/2026-07-29-19-56-scratchpad.md
+- 13:45 — logs/loop/2026-07-29-prime-minimum-responsibility-build-3.evidence.md
+- 13:43 — .claude/commands/prime.md
+- 13:42 — logs/loop/2026-07-29-prime-minimum-responsibility-build-3.brief.md
+- 13:41 — logs/session-notes.md
+- 13:41 — logs/loop/2026-07-29-prime-minimum-responsibility-build-1.evidence.md
+- 13:22 — logs/session-notes.md
+- 13:21 — logs/loop/2026-07-29-prime-minimum-responsibility-build-1.evidence.md
+- 13:20 — logs/loop/2026-07-29-prime-minimum-responsibility-build-1.evidence.md
+- 13:19 — .claude/commands/session-start.md
+- 13:19 — .claude/commands/prime.md
+- 13:18 — docs/session-marker.md
+- 13:17 — .codex/agents/context-discovery.toml
+- 13:17 — .codex/agents/context-discovery.toml
+- 13:17 — .codex/agents/context-discovery.toml
+- 13:17 — .claude/agents/context-discovery.md
+- 13:17 — .claude/agents/context-discovery.md
+- 13:17 — .claude/agents/context-discovery.md
+- 13:17 — .claude/commands/session-plan.md
+- 13:17 — .claude/commands/session-plan.md
+- 13:17 — .claude/commands/session-plan.md
+- 13:16 — .claude/commands/session-start.md
+- 13:16 — .claude/commands/session-start.md
+- 13:15 — .claude/commands/session-start.md
+- 13:15 — .claude/commands/session-start.md
+- 13:15 — .claude/commands/session-start.md
+- 13:14 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/a544b2da-67f5-424f-87af-8ba66bfc620f/scratchpad/new-8c.md
+- 13:12 — logs/loop/2026-07-29-prime-minimum-responsibility-build-1.brief.md
+- 13:08 — logs/loop/2026-07-29-prime-minimum-responsibility-shape.evidence.md
+- 13:05 — logs/scratchpads/2026-07-29-13-04-scratchpad.md
+- 13:02 — logs/loop/2026-07-29-prime-minimum-responsibility-shape.review-2.md
+- 13:01 — logs/loop/2026-07-29-prime-minimum-responsibility-shape.plan-v3.md
+- 12:53 — logs/loop/2026-07-29-prime-minimum-responsibility-shape.plan-v2.md
+- 12:49 — logs/loop/2026-07-29-prime-minimum-responsibility-shape.review-1.md
+- 12:30 — logs/loop/2026-07-29-prime-minimum-responsibility-shape.plan.md
+- 12:24 — logs/loop/2026-07-29-prime-minimum-responsibility-shape.brief.md
+- 11:45 — logs/missions/lean-prime-2026-07.md
+- 11:42 — logs/loop/2026-07-29-prime-minimum-responsibility-frame.evidence.md
+- 11:36 — logs/loop/2026-07-29-prime-minimum-responsibility-frame.brief.md
+- 11:35 — logs/loop/2026-07-29-prime-allocator-extraction-shape.evidence.md
+- 11:25 — logs/scratchpads/2026-07-29-11-24-scratchpad.md
+- 11:21 — logs/loop/2026-07-29-prime-allocator-extraction-shape.plan-v3.md
+- 11:19 — logs/loop/2026-07-29-prime-allocator-extraction-shape.review-2.md
+- 11:07 — logs/loop/2026-07-29-prime-allocator-extraction-shape.plan-v2.md
 - 11:04 — logs/loop/2026-07-29-prime-allocator-extraction-shape.review-1.md
 - 10:58 — logs/loop/2026-07-29-prime-allocator-extraction-shape.plan.md
 - 10:55 — logs/loop/2026-07-29-prime-allocator-extraction-shape.brief.md
