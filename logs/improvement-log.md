@@ -1942,3 +1942,28 @@ That is the right call and it still loses information. `UNKNOWN` is defined as *
 **Target files:** `ai-resources/skills/transaction-table-builder/SKILL.md` (§ Size-Lens Classification, § The 13 Mandatory Fields row 10, and the worked example); downstream consumers `cluster-memo-refiner` (Check 7), `evidence-to-report-writer` (named-transaction size-lens verification).
 
 **Second, smaller gap in the same skill, same source:** the § Deal-Value Recovery Routine's step 2 instructs the executor to consult company registries and names PRH (FI) explicitly. On any project operating under a no-registry constraint — here `known-limits.md` limit 15, operator-confirmed and structural — that step must be suppressed, and the skill offers no conditional. It was suppressed by instruction at invocation. Worth a one-line conditional in the skill so the next project does not have to catch it manually.
+
+---
+
+## `AGENTS.md` is a find-replace of `CLAUDE.md`, not an instruction file authored for Codex
+
+- **Status:** logged (pending)
+- **Severity:** medium-high — one rule is inverted rather than merely stale, and the file is auto-loaded by Codex on every session in the affected repo.
+- **Category:** project instruction files (`AGENTS.md` in Codex-enabled projects)
+- **Source:** `axcion-sector-intelligence` / `industrial-software` worktree, 2026-07-29, found while preparing a Codex repair session.
+
+**The finding.** `AGENTS.md` and `CLAUDE.md` in this worktree differ by **12 lines total**, and every one is a mechanical substitution artifact — `Claude Code`/`Claude` → `Codex`, `CLAUDE.md` → `AGENTS.md`. The file was produced by find-replace from the Claude-facing instructions and was never authored for what Codex actually does.
+
+**The tell** is the Cross-Model Rules line: *"Research Execution GPT verifies Codex's prose for fact-checking (Stage 4)."* Codex does not write the prose — Claude Code owns Stages 4 and 5. The sentence is only coherent with the original word in it.
+
+**Why it matters rather than just reads oddly.** Under **Decision 33** Codex is the Stage-2 gathering lane. The inherited line told it the opposite: *"Research Execution GPT produces evidence (Stage 2) — Codex does not substitute its own research."* A Codex session reading that literally has been instructed not to do the one job it is being given. It is the same failure class as Decision 34's stale `source-class-hierarchy.md` row — an instruction that wrongly **closes** a path is near-invisible downstream, because nothing reports a gap when work is simply never attempted.
+
+**Fixed narrowly at source** (2026-07-29): the three Cross-Model Rules lines in that worktree's `AGENTS.md` were rewritten to describe Codex's real role, with a note recording why. That is propagation of an already-approved decision, not a new one.
+
+**Not fixed, and the actual proposal.** The rest of the file still hands Codex the whole Claude ruleset — commit behaviour, file-write discipline, compaction protocol, QC independence, skill-library rules, the `[Operator + Claude Code]` autonomy tags. Most is inert for Codex; some is not. **The commit rule is the sharpest**: *"Commit directly. Do not ask for permission"* is now addressed to a second writer in a checkout shared with Claude Code, which is exactly the clobbering hazard pilot-1's own Codex handoff warned about in its § 0.
+
+Proposal: author `AGENTS.md` **for Codex** rather than deriving it. It needs only what Codex actually uses — unit scope and boundary, the evidence-and-limits rules, the Evidence Pack contract, output paths, and an explicit "do not commit in a shared checkout" rule. Sections describing Claude's stages, commands and QC loops should be dropped, not translated. A shared canonical core with two thin tool-specific wrappers would also work and would stop the two drifting apart again.
+
+**Interim mitigation applied, not a substitute for the fix:** the Codex session prompt (`session-S1.md`) now carries explicit "write one file only" and "do not commit" guards in-prompt, so the prompt does not rely on `AGENTS.md` being correct.
+
+**Target files:** `projects/axcion-sector-intelligence/AGENTS.md` and each worktree copy; check any other Codex-enabled project for the same derived-by-find-replace pattern.
