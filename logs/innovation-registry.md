@@ -159,3 +159,4 @@
 | 2026-07-26 | command | .claude/commands/deploy-kb.md | triaged:false-positive | **EVIDENCE — preserved deliberately, do not delete.** Same worktree-detection defect. |
 | 2026-07-26 | command | .claude/commands/request-skill.md | triaged:false-positive | **EVIDENCE — preserved deliberately, do not delete.** Same worktree-detection defect. |
 | 2026-07-26 | command | .claude/commands/graduate-resource.md | triaged:false-positive | **EVIDENCE — preserved deliberately, do not delete.** Same worktree-detection defect. Seven false rows from a single session — the recurrence rate the improvement-log entry predicted, now measured rather than inferred. |
+| 2026-07-29 | command | .claude/commands/promote-workflow.md | detected | — |

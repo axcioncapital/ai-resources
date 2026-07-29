@@ -17,7 +17,7 @@ Examples:
 ## Hard rules (read before starting — do not override)
 
 1. **No edit without a diagnosis.** Step 3 must produce a root-cause block with ≥1 file:line citation before Step 6 may run. A plausible guess is not a diagnosis.
-2. **No protected-zone edit without a passing gate.** If Step 2 identifies a protected zone, `/risk-check` must run and return GO or PROCEED-WITH-CAUTION (with mitigations applied) before Step 6 proceeds. A RECONSIDER verdict stops the fix — write the record with `status: escalated` and stop.
+2. **No protected-zone edit without its independent review.** If Step 2 identifies a protected zone, the fix takes the risk-aware review row (`ai-resources/docs/qc-independence.md` § The rule) and its material findings are applied before Step 6 proceeds. A material finding left unresolved stops the fix — write the record with `status: escalated` and stop.
 3. **Bounded implementation.** Step 6 may only touch the files stated in Step 4. Opportunistic edits outside that set are not allowed. If implementation reveals the plan was wrong, stop, update Steps 3–4, and re-enter Step 6 once.
 4. **Verification receipt is mandatory.** Step 7 requires all four fields to be non-blank. Do not proceed to Step 8 with any blank field.
 5. **No commit.** This command implements the fix but does not commit. Committing is operator-discretionary. See Step 9.
@@ -75,13 +75,11 @@ Classify the fault before any investigation. The goal is to decide the required 
 
 12. **Gate check:**
     - If `RISK = Critical` → stop. Write the incident record with `status: escalated`, note that Critical-risk changes require explicit operator approval (Autonomy Rule #4 / #9), and output the gate result to chat. Do not proceed.
-    - If `RISK = High` OR `PROTECTED = yes` → invoke `/risk-check $ISSUE` via Skill tool. Capture the verdict.
-      - `GO` → proceed.
-      - `PROCEED-WITH-CAUTION` → note the required mitigations; proceed only if all mitigations can be applied in this session.
-      - `RECONSIDER` → write the incident record with `status: escalated` (see Step 8 for the write). Output to chat: the risk-check verdict + what was found. Stop — do not proceed to Step 3.
-
-    > **Verbatim-shape contract — `/risk-check` verdict tokens.** The three token literals above (`GO`, `PROCEED-WITH-CAUTION`, `RECONSIDER`) are the canonical values defined in `audit-discipline.md § Verdict semantics`. If that section ever renames a token, this step must be updated in the same commit. Do not parse partial matches or add synonyms.
-    - If `RISK ≤ Medium` AND `PROTECTED = no` → proceed directly to Step 3. Set `RISK_CHECK_VERDICT = N/A`.
+    - If `RISK = High` OR `PROTECTED = yes` → the fix is **high-consequence**: it takes the risk-aware review row of `ai-resources/docs/qc-independence.md` § The rule. Get that one review of the proposed fix before editing anything, and record what it found in `REVIEW_FINDINGS`.
+      - No material finding, or all applied → proceed.
+      - A **material finding left unresolved** → write the incident record with `status: escalated` (see Step 8 for the write). Output the finding and its named consequence to chat. Stop — do not proceed to Step 3.
+      - Review unreachable → record `REVIEW_FINDINGS = unassessed`, say so in chat, and let the operator decide whether to proceed. Never round `unassessed` up to reviewed.
+    - If `RISK ≤ Medium` AND `PROTECTED = no` → proceed directly to Step 3. Set `REVIEW_FINDINGS = N/A`.
 
 ---
 
@@ -110,13 +108,13 @@ Classify the fault before any investigation. The goal is to decide the required 
 
 17. List files that will NOT be changed even though they touch the same area, with a one-line reason for each exclusion.
 
-18. **High-risk second opinion.** If `RISK ≥ High`:
+18. **High-risk second opinion — operator-invoked, not automatic.** The review in Step 2 already covers this fix. Where the operator wants an architectural cross-check on top, offer `/consult` as a ready-to-run line and run it only if they ask. Do **not** invoke it automatically. When it is run:
     a. **Pre-invoke gate:** `/consult` Step 0 requires a prior Read before its read-first gate will pass. Read the single most relevant file the question turns on (the command body, agent spec, or hook that the fix modifies). You likely already read this in Step 3 — if so, this is already satisfied.
-    b. Invoke `/consult` (Function B — pre-change advisory) via Skill tool with a brief that includes: the fault description, the proposed fix, the `/risk-check` verdict (if run), and the question: "Is this the smallest safe durable fix, or does this approach create downstream risks I haven't named?"
+    b. Invoke `/consult` (Function B — pre-change advisory) via Skill tool with a brief that includes: the fault description, the proposed fix, the Step 2 review findings (if any), and the question: "Is this the smallest safe durable fix, or does this approach create downstream risks I haven't named?"
 
     > **Verbatim-shape contract — `/consult` Function B selector.** "Function B" is the advisory function defined in `projects/repo-documentation/vault/references/grounding.md § 2`. It is invoked by passing `Function: B — Pre-change advisory` in the system-owner agent brief. If `/consult` or `grounding.md` is ever reorganized and Function B is renamed, this step and the contract comment must be updated in the same commit.
 
-    c. Record the system-owner second opinion verbatim in the incident record (Classification section, `/consult second opinion` field). The second opinion is advisory — it does not override the risk-check verdict.
+    c. Record the system-owner second opinion verbatim in the incident record (Classification section, `/consult second opinion` field). The second opinion is advisory — it does not override the Step 2 review.
 
 ---
 
@@ -126,7 +124,7 @@ Classify the fault before any investigation. The goal is to decide the required 
 
 20. Fill in all fields that can be determined before the edit:
     - Frontmatter: `incident-id`, `status: implementing`, `severity`, `risk`, `protected-zone-touched`.
-    - Intake, Classification (with risk-check and consult verdicts if applicable), Diagnosis, and Resolution sections.
+    - Intake, Classification (with review findings and any consult opinion, if applicable), Diagnosis, and Resolution sections.
     - Verification receipt: leave all four fields with placeholder text — they will be filled in Step 7.
     - Pattern-tracking fields: fill as accurately as possible; "unsure" is acceptable.
 
@@ -219,7 +217,7 @@ Three writes, in this order:
     If the incident was **escalated** (RECONSIDER verdict or Critical risk):
     ```
     Incident escalated — {DATE}
-    Reason: {1 sentence — risk-check verdict or Critical-class change}
+    Reason: {1 sentence — unresolved material review finding, or Critical-class change}
     Diagnosis: {1 sentence}
     No changes made.
     Record: audits/incidents/{DATE}-{SLUG}.md

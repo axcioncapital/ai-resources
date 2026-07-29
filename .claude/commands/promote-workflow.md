@@ -34,7 +34,7 @@ the work that existing commands already do:
 
 - `/innovation-sweep` — optional P0 discovery aid (finds innovations the per-write hook missed).
 - `/graduate-resource` — its Step 5.5 residue-scan subagent contract is reused verbatim in P3.
-- `/risk-check` and `/qc-pass` — the P5 gates.
+- The change's own independent review — the P5 pass (`docs/qc-independence.md` § The rule).
 - `/sync-workflow` — the P6 re-sync verification.
 
 ---
@@ -150,11 +150,11 @@ direction. Nothing not on this list gets touched.
 
 ## Progress
 - [ ] P0 inventory frozen
-- [ ] P1 judgment items QC'd
+- [ ] P1 judgment items evidence-qualified
 - [ ] P2 true-conflicts merged
 - [ ] P3 project-ahead files graduated
 - [ ] P4 deployment surface reconciled
-- [ ] P5 risk-check + QC + commits
+- [ ] P5 risk-aware review + commits
 - [ ] P6 residue scan + re-sync verified
 ```
 
@@ -178,18 +178,22 @@ Wait for confirmation. Once confirmed, mark `[x] P0` in the inventory's Progress
 autonomously through P1–P4 (the gate covers them). Re-surface only on a stop-condition, a residue
 cap-hit, or a P5 risk-check non-GO.
 
-## Phase 1 — QC the judgment items
+## Phase 1 — Qualify the judgment items
 
 Some promotions are **evidence-backed judgment fixes** (e.g. the mission's D-series skill edits)
-rather than mechanical tooling deltas. These graduate **only if** their supporting evidence passes
-an independent `/qc-pass`.
+rather than mechanical tooling deltas. These graduate **only if** their supporting evidence is
+real. That is a **deterministic check, not a review** — the promotion itself is reviewed once,
+later, per `ai-resources/docs/qc-independence.md` § The rule.
 
 1. Identify judgment items in the inventory (skill/rule changes whose correctness depends on an
    analysis or calibration report, not just a code delta).
-2. Run `/qc-pass` on each item's evidence artifact.
-3. **QC PASS** → the item stays in the promotion set.
-4. **QC FAIL** → **defer, do not drop.** Record the deferral in the inventory (move the row to a
-   `## Deferred (QC pending)` section with the reason). A failed item is never silently removed.
+2. For each, verify mechanically: the cited evidence artifact **exists on disk**, every file:line
+   it cites **resolves and says what the item claims**, and the item clears the materiality floor
+   (`docs/materiality-bar.md` — a statable consequence of not promoting it).
+3. **Qualifies** → the item stays in the promotion set.
+4. **Fails** → **defer, do not drop.** Record the deferral in the inventory (move the row to a
+   `## Deferred (evidence pending)` section, naming which of the three checks failed). A failed
+   item is never silently removed.
 
 Mark `[x] P1`.
 
@@ -240,16 +244,17 @@ The template's deployment contract must describe the files just changed:
 
 Mark `[x] P4`.
 
-## Phase 5 — Gates & commits
+## Phase 5 — Review & commits
 
-1. **`/risk-check`** — this promotion typically spans multiple structural change classes (canonical
-   template + shared hook + shared skills). Run it. On **RECONSIDER / NO-GO**, halt and surface the
-   verdict; the inventory and any merged files stay on disk for revision.
-2. On **GO** (or PROCEED-WITH-CAUTION with mitigations applied) → **independent `/qc-pass`** on the
-   landed changes. Resolve findings to GO.
-3. **Commit in logical groups** (one per landing group from the inventory) with the P4 consumer note
+1. **One risk-aware review** — a promotion typically spans multiple structural change classes
+   (canonical template + shared hook + shared skills), so it is high-consequence and takes the
+   risk-aware review row of `ai-resources/docs/qc-independence.md` § The rule. One review, of the
+   landed changes, carrying the seven risk dimensions. There is no second pass: apply what it
+   found. On a **material finding left unresolved**, halt and surface it; the inventory and any
+   merged files stay on disk for revision.
+2. **Commit in logical groups** (one per landing group from the inventory) with the P4 consumer note
    in each message. Per workspace rules: commit directly, no pre-commit `git status`/`diff`.
-4. **Push is gated to session end** — never push here. Commits accumulate; the single y/n push
+3. **Push is gated to session end** — never push here. Commits accumulate; the single y/n push
    confirmation happens at `/wrap-session`.
 
 Mark `[x] P5`.
@@ -278,9 +283,9 @@ Mark `[x] P6`. The promotion is complete; remind the operator to `/wrap-session`
 - **Never hardcode a project token into the template.** Generalize per the DROP list; residue-scan
   to prove it.
 - **Skill-class fixes go to skills, not template commands.**
-- **QC-fail defers, never drops.**
-- **No edit lands without `/risk-check` GO; no commit lands without independent QC.** If QC is
-  unreachable (subagent-gate + oversized context), commit-block and `/handoff` QC-PENDING per
-  `docs/qc-independence.md`.
+- **Evidence-fail defers, never drops.**
+- **The promotion gets one risk-aware review, and its material findings are applied before commit.**
+  If that review cannot be reached, record the promotion `unassessed` and say so — never round it up
+  to reviewed (`docs/qc-independence.md` § When the reviewer cannot be reached).
 - **Push is operator-gated at session end** — the only irreversible step, never autonomous.
 - **Verify-present, never re-graduate** already-canonical work.

@@ -353,6 +353,23 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 20:19 — logs/loop/2026-07-29-review-layer-consolidation-build-2.evidence.md
+- 20:16 — skills/worktree-cleanup-investigator/references/execution-protocol.md
+- 20:16 — skills/worktree-cleanup-investigator/references/execution-protocol.md
+- 20:14 — skills/handoff/SKILL.md
+- 20:14 — skills/handoff/SKILL.md
+- 20:14 — .claude/commands/promote-workflow.md
+- 20:13 — .claude/commands/promote-workflow.md
+- 20:13 — .claude/commands/promote-workflow.md
+- 20:13 — .claude/commands/promote-workflow.md
+- 20:13 — .claude/commands/promote-workflow.md
+- 20:13 — .claude/commands/promote-workflow.md
+- 20:12 — .claude/commands/promote-workflow.md
+- 20:12 — .claude/commands/qc-pass.md
+- 20:12 — .claude/commands/wrap-session.md
+- 20:11 — .claude/settings.json
+- 20:10 — .claude/settings.json
+- 20:10 — logs/loop/2026-07-29-review-layer-consolidation-build-2.brief.md
 - 20:09 — logs/loop/2026-07-29-review-layer-consolidation-build-1.evidence.md
 - 20:07 — docs/qc-independence.md
 - 20:07 — docs/audit-discipline.md

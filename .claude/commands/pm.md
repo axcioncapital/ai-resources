@@ -85,73 +85,15 @@ Apply your full procedure (Phase 1 project detection → Phase 2 constitution-do
 
 Wait for the agent's response. Capture it verbatim as `PM_RULING`.
 
-**Skip QC and go directly to Step 6 if `PM_RULING` is a fallback (5a DECLINE / 5b NO PROJECT DETECTED / 5c NO CONSTITUTION DOCS / 5d REDIRECT TO /consult).** Fallbacks are bounded outputs; QC adds no signal there.
+Capture it as `FINAL_RULING`.
 
----
-
-### Step 4 — QC the ruling
-
-Spawn the `qc-reviewer` subagent via the `Task` tool with this brief (verbatim structure):
-
-```
-## QC Request
-
-**Artifact:** Project Manager ruling produced by the `project-manager` agent in response to a /pm invocation.
-
-**Artifact content (verbatim):**
-{PM_RULING verbatim}
-
-**Original operator request:**
-{OPEN_QUESTION verbatim}
-
-**Scope / artifact purpose:** Project-content advisory ruling grounded in the active project's constitution docs. The ruling must (a) ground every load-bearing claim in a citation to a constitution doc, (b) classify the question correctly per PM's Phase 3 rules, (c) produce a declarative verdict (not opinion-seeking), (d) surface conflicts between constitution docs rather than silently resolve them, and (e) for forward-looking questions, produce paste-ready mandate/plan text in the Verdict section.
-
-Constitution docs the project-manager read (extract from the ruling's header line) are accessible at the active project root. Verify citations against the actual files where load-bearing.
-
-Apply your standard rubric. Return GO, REVISE (with specific findings), or FLAG FOR EXTERNAL QC.
-```
-
-Wait for the qc-reviewer's response. Capture as `QC_VERDICT`.
-
----
-
-### Step 5 — Apply QC verdict (pass cap: 2 total)
-
-If `QC_VERDICT` is **GO**:
-- Set `FINAL_RULING` = `PM_RULING`. Proceed to Step 6.
-
-If `QC_VERDICT` is **REVISE**:
-- If this is the first revision (`PASS_COUNT` = 1): spawn the `project-manager` agent again via `Task` with the same brief as Step 3, plus an additional steering paragraph appended at the bottom:
-  ```
-  QC revision note: the prior ruling was flagged by qc-reviewer with these findings:
-  {qc-reviewer's findings, verbatim}
-
-  Produce a revised ruling that addresses these findings while staying within your standard procedure. Do not abandon the constitution-doc grounding to satisfy QC — if a finding asks for content the docs don't support, apply Fallback 5a (DECLINE) on that claim and surface the limitation in the verdict.
-  ```
-  Capture the revised output as `PM_RULING` (overwriting prior). Increment `PASS_COUNT` to 2. Return to Step 4 (re-QC the revision).
-
-- If this is the second revision (`PASS_COUNT` = 2): pass cap reached. Set `FINAL_RULING` = `PM_RULING` (the second-pass output) and append a footer to it:
-  ```
-  ---
-  ### QC Note
-  This ruling reached the /pm QC pass cap (2 passes). qc-reviewer's remaining findings on the final pass: {qc-reviewer's findings, verbatim}. Operator may run `/qc-pass` externally for a fresh independent review, or invoke `/pm` again with refined steering.
-  ```
-  Proceed to Step 6.
-
-If `QC_VERDICT` is **FLAG FOR EXTERNAL QC**:
-- Set `FINAL_RULING` = `PM_RULING` and append:
-  ```
-  ---
-  ### QC Note
-  qc-reviewer flagged this ruling for external QC: {qc-reviewer's flag reason}. Recommend running `/qc-pass` before treating the ruling as load-bearing.
-  ```
-  Proceed to Step 6.
+*(An internal `qc-reviewer` pass with a 2-pass cap sat here until 2026-07-29. It was removed with the rest of the automatically-stacked review layer — a `/pm` ruling is an advisory chat answer, not a committed artifact, and `/consult` answers harder questions with no internal review at all. The operator can still run `/qc-pass` on a ruling that is genuinely load-bearing; see Step 6.)*
 
 ---
 
 ### Step 6 — Return the final ruling unmodified
 
-Output `FINAL_RULING` verbatim to the operator. Do NOT add a preamble, do NOT summarize, do NOT add an "I hope this helps" closing. The agent's voice is the Project Manager voice; wrapping it in command-shell prose dilutes it. The QC footer (if any) is part of the final ruling and is preserved as-is.
+Output `FINAL_RULING` verbatim to the operator. Do NOT add a preamble, do NOT summarize, do NOT add an "I hope this helps" closing. The agent's voice is the Project Manager voice; wrapping it in command-shell prose dilutes it. Where the ruling is load-bearing enough to cite downstream, offer the operator `/qc-pass` on it in one line — offer, never run.
 
 ---
 
@@ -159,9 +101,8 @@ Output `FINAL_RULING` verbatim to the operator. Do NOT add a preamble, do NOT su
 
 - `/pm` writes nothing to disk at v1. Output is chat-only.
 - `/pm` is **advisory with strong precedence** — the main session treats the ruling as the default answer. Operator retains veto.
-- `/pm` includes an **internal QC pass** (Step 4) — the PM ruling is reviewed by `qc-reviewer` before being returned to the main session, with a pass cap of 2. This diverges from `/consult` (which has no internal QC). Rationale: PM rulings will be cited as load-bearing project-content decisions and feed forward-looking artifacts (mandate text, session-plan outlines) into `/session-start` / `/session-plan` — the internal QC step reduces the chance of an ungrounded ruling propagating downstream. Operator can still run `/qc-pass` externally on any ruling that feels especially load-bearing.
-- Fallback rulings (5a/5b/5c/5d) skip QC. Those are bounded outputs; QC adds no signal.
+- `/pm` runs **no internal review**, matching `/consult`. A ruling is an advisory chat answer, not a committed artifact; the change it informs is what gets reviewed, once, per `ai-resources/docs/qc-independence.md` § The rule. Step 6 offers `/qc-pass` on a genuinely load-bearing ruling.
 - `/pm` does NOT auto-fire from any hook; operator-invoked only.
 - The agent decides whether to escalate to `system-owner` internally; the operator does not pre-route.
 - For change-shaped structure questions (operator proposes a specific repo modification), the agent emits Fallback 5d (REDIRECT TO /consult) — re-invoke `/consult` directly for those.
-- **Plan divergence note:** the approved plan at `/Users/patrik.lindeberg/.claude/plans/i-want-to-build-tidy-lake.md` specified no internal QC step (mirroring `/consult`). This implementation diverges per operator direction (2026-05-28) given that PM rulings will solve "quite important issues" — the QC pass is binding precedence for any future audit.
+- **Plan-divergence note, now closed:** the approved plan specified no internal QC step (mirroring `/consult`). A 2026-05-28 operator direction added one; it was removed again on 2026-07-29 with the rest of the stacked review layer, so the command is back to the plan as originally approved.

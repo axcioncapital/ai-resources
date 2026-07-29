@@ -67,12 +67,6 @@
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/log-write-activity.sh\"",
             "timeout": 5,
             "statusMessage": "Logging write activity..."
-          },
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/auto-qc-nudge.sh\"",
-            "timeout": 5,
-            "statusMessage": "Checking for significant artifact writes..."
           }
         ]
       },
@@ -112,16 +106,6 @@
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/improve-reminder.sh\"",
             "timeout": 5,
             "statusMessage": "Checking improve reminder..."
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/auto-resolve-nudge.sh\"",
-            "timeout": 5,
-            "statusMessage": "Checking for QC findings to resolve..."
           }
         ]
       }
