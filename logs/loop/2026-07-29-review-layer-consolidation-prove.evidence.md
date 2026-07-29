@@ -298,3 +298,27 @@ pointer as well as a stale mandate. Follow-up 4 must repair both, not just the m
 
 **Verdict of this re-verification: the adjudication holds.** Nothing was found that changes the G2
 package. No repair was made by this session.
+
+---
+
+# G2 — RELEASE GATE: APPROVED
+
+**Decided by the operator, 2026-07-29.** The gate's object was the evidence above, Codex Prove
+review-1, the adjudication in §§ 9–14, and the residual limitations in § 12. The operator approved
+release with all four follow-ups explicitly deferred, and directed that no further review, sweep,
+`/qc-pass` or `/risk-check` be run.
+
+**What G2 approved.** The four Build slices S1–S4 as landed, plus the twenty-four Prove repairs
+(five in § 6, nineteen in § 9). One independent review per change, sized to consequence, now governs
+every file this stream was entitled to edit.
+
+**What G2 explicitly did not approve, and did not claim.** The end state is not reached. The four
+items in § 13 are deferred by operator decision, not resolved. Follow-up 4 in particular means the
+`/work-loop` command still instructs two stacked `/risk-check` gates on the challenged route; until
+it lands, the operating model this stream describes is not what a session actually runs. The
+limitations in § 12 stand unchanged — in particular that this unit repaired what it reviewed, and
+that plan-v3's consumer-counting scope remains unreproduced.
+
+**Outcome:** `close`.
+
+Status: complete
