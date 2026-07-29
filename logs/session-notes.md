@@ -365,3 +365,79 @@ the working tree at stream close per `docs/work-loop.md` § Artifacts).
 
 ### Open Questions
 None.
+
+## 2026-07-29 — /leverage-idea → routing-and-handoff command: qualified, built, gated, committed (merge pending)
+
+### Summary
+Ran `/develop-ai-resource` on `inbox/leverage-idea-lifecycle-routing.md` — the raw brief routed out of
+`/work-loop`'s `2026-07-29-leverage-idea-lifecycle-frame` unit. Qualified through Step 1 (verdict:
+improve an existing shared resource, no new component), built the expansion (Step 2), self-verified by
+execution and a simplify pass (Step 3), then ran independent `/qc-pass` + `/risk-check` on operator
+authorization. Both returned non-passing verdicts; all findings were independently re-verified, fixed
+(re-QC waived by the operator), and the candidate was committed. Landed in this worktree
+(`session/2026-07-29-leverage-idea`, commit `b2bb1bd`); merging into `main` was scoped, dry-run
+verified clean, and left pending for the operator to trigger.
+
+### Decisions Made
+- **(Claude, `/develop-ai-resource` Step 1.6)** Verdict: improve an existing shared resource —
+  `.claude/commands/leverage-idea.md`, no new component. Mechanism is direct edit, not `/improve-skill`
+  (object is a command, not a skill). Complexity budget cleared on both prongs (net-simplification +
+  cited evidence in `logs/improvement-log.md` 2026-07-12).
+- **(Operator)** Authorized fresh-context subagents specifically for `/qc-pass` and `/risk-check` on
+  this candidate (the session's default posture otherwise excludes the Agent tool), with a conditional
+  rule: both PASS/GO → commit; either non-passing → stop and show findings before committing.
+- **(Operator)** Keep the tracked `inbox/` write on the new-AI-resource route — the one genuinely new
+  behavior flagged at the Step 4 report.
+- **(Operator)** No edits to the System Owner sibling repo (`projects/axcion-ai-system-owner/`) in this
+  change; `toolkit-relationship.md`'s stale `/leverage-idea` row is a named, deferred follow-up.
+- **(Operator, risk-accepted — logged to `decisions.md`)** After both gates returned non-passing
+  verdicts: apply the identified fixes and commit, **skipping the re-QC** that would ordinarily follow
+  a QC-REVISE fix pass. See `decisions.md` 2026-07-29 for rationale and alternatives considered.
+- **QC fixes applied** (`qc-reviewer` verdict: REVISE, all three fixed): `develop-ai-resource.md:22`
+  stop-point wording updated (`/leverage-idea` no longer described as stopping at a plan); Step 7's
+  `## Capability` heading-form clause added, preventing a brief from this command's own main route
+  from tripping `/develop-ai-resource` Step 1.0's malformed-upstream-handoff check; `WORKSPACE` in the
+  Step 4 investigator brief redefined by ancestor walk-up instead of parent-of-`AI_RESOURCES` (latent,
+  not live today, but wrong once a worktree sits outside the workspace root).
+- **Risk-check mitigations dispositioned** (`risk-check-reviewer` verdict: PROCEED-WITH-CAUTION, blast
+  radius High — inherent to the 14-project symlink fan-out): `toolkit-relationship.md` — DEFERRED
+  (sibling repo excluded by operator instruction); stale `leverage-idea.md` line citations in four
+  `plans/2026-07-28-develop-capability-build-plan*.md` files — DECLINED (all four carriers are
+  SUPERSEDED/HALTED with DO-NOT-IMPLEMENT banners; the live build authority cites the command nowhere);
+  `/work-loop` input-shape compatibility — VERIFIED (accepts a plain-English need, matching the payload
+  shape this command now hands it).
+
+### Risky actions
+The first commit attempt silently staged only the brief's deletion — a prior `git rm` had already
+removed `inbox/leverage-idea-lifecycle-routing.md` from the pathspec list, so the follow-on `git add`
+with that stale path in it aborted with a fatal pathspec error and staged nothing else, but the
+subsequent `git commit` still ran against whatever was already staged (the deletion alone) rather than
+failing loudly. Caught immediately by the mandated post-commit `git show --stat` self-verification,
+before any push; corrected by re-staging the full file set and amending. No push occurred against the
+incomplete commit. Worth a structural look: a `git add` that partially fails on a multi-path invocation
+should probably be treated as blocking, not silently proceeding to commit whatever did stage.
+
+### Findings Declined
+- Stale `/leverage-idea.md` line-number citations in four `plans/2026-07-28-develop-capability-build-plan*.md`
+  files — not queued: all four carriers are SUPERSEDED/HALTED with DO-NOT-IMPLEMENT banners, and the
+  live build authority (`plans/2026-07-28-work-loop-consolidated-build-plan.md`) cites the command
+  nowhere. No live consumer to protect. (Full check: this session's `/risk-check` report.)
+
+### Next Steps
+- **Land the branch.** `session/2026-07-29-leverage-idea` is 7 commits ahead of `main`; a dry-run merge
+  (`git merge-tree --write-tree`) came back clean with no conflicts. Run
+  `git -C ".../ai-resources" merge session/2026-07-29-leverage-idea` from the main checkout, then decide
+  on push (gated, per this session's wrap prompt below).
+- **The branch has no upstream and is not on GitHub** — until merged or pushed, these 7 commits exist
+  on this machine only. Do not delete the `ai-resources-leverage-idea` worktree before that happens.
+- Separate follow-up session: update `projects/axcion-ai-system-owner/references/toolkit-relationship.md`
+  § 2's `/leverage-idea` row (sibling repo, excluded from this change by operator instruction) — now
+  queued in `logs/improvement-log.md` 2026-07-29 (severity medium-high) so it stays reachable.
+- 5 of 6 commands remain unretrofitted for the `general-purpose` dispatch-pinning carve-out (`tweak`,
+  `decide`, `graduate-resource`, `promote-workflow`, `wrap-session`) — tracked, not blocking.
+- New this session: a `git add`-with-stale-pathspec near-miss queued to `logs/improvement-log.md`
+  2026-07-29 (severity medium) — see § Risky actions above.
+
+### Open Questions
+Whether to merge into `main` and/or push now, or leave both for a later session — explicitly left to
+the operator, not yet decided as of this wrap.

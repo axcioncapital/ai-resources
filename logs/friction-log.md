@@ -353,6 +353,36 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 22:41 — logs/session-notes.md
+- 22:37 — logs/scratchpads/2026-07-29-22-37-scratchpad.md
+- 22:37 — logs/decisions.md
+- 22:36 — logs/session-notes.md
+- 21:31 — .claude/commands/leverage-idea.md
+- 21:31 — .claude/commands/leverage-idea.md
+- 21:31 — .claude/commands/develop-ai-resource.md
+- 21:14 — audits/risk-checks/2026-07-29-leverage-idea-lifecycle-routing-expansion.md
+- 21:00 — .claude/commands/leverage-idea.md
+- 21:00 — .claude/commands/leverage-idea.md
+- 20:58 — .claude/commands/leverage-idea.md
+- 20:58 — .claude/commands/leverage-idea.md
+- 20:58 — .claude/commands/leverage-idea.md
+- 20:58 — .claude/commands/leverage-idea.md
+- 20:58 — .claude/commands/leverage-idea.md
+- 20:57 — .claude/commands/leverage-idea.md
+- 20:57 — .claude/commands/leverage-idea.md
+- 20:56 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources-leverage-idea/c7877d4a-46b3-4335-89ec-b1123c8d70bb/scratchpad/test-resolver.sh
+- 20:55 — .claude/commands/develop-ai-resource.md
+- 20:55 — docs/agent-tier-table.md
+- 20:55 — .claude/commands/leverage-idea.md
+- 20:54 — .claude/commands/leverage-idea.md
+- 20:54 — .claude/commands/leverage-idea.md
+- 20:53 — .claude/commands/leverage-idea.md
+- 20:53 — .claude/commands/leverage-idea.md
+- 20:53 — .claude/commands/leverage-idea.md
+- 20:53 — .claude/commands/leverage-idea.md
+- 20:52 — .claude/commands/leverage-idea.md
+- 20:52 — .claude/commands/leverage-idea.md
+- 20:52 — .claude/commands/leverage-idea.md
 - 20:46 — logs/session-notes.md
 - 20:45 — logs/scratchpads/2026-07-29-20-45-scratchpad.md
 - 20:38 — logs/decisions.md

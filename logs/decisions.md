@@ -359,3 +359,36 @@ wrong-owner call above.
 
 **Artifacts.** `logs/loop/2026-07-29-leverage-idea-lifecycle-frame.*` (brief, evidence, review-1),
 deleted at stream close; **recoverable at `1a40c60`**.
+
+## 2026-07-29 — Operator waives re-QC after fixing a QC-REVISE, on the `/leverage-idea` expansion
+
+**Context.** `/develop-ai-resource` built the `/leverage-idea` routing-and-handoff expansion (session
+`2026-07-29-leverage-idea`). Both independent gates were run on operator authorization: `/qc-pass`
+returned **REVISE** (3 findings: a stale consumer-contract sentence, a field-name collision that could
+trip a false malformed-upstream-handoff report on the command's own main route, and a latent
+`WORKSPACE`-derivation bug), and `/risk-check` returned **PROCEED-WITH-CAUTION** (blast radius High,
+3 mitigations). All findings were independently re-verified by the main session before any fix — none
+were taken on the reviewer's word alone.
+
+**Decision.** Apply the three `/qc-pass` fixes, then commit **without** re-running independent QC on
+the fixed artifact — the ordinary next step under the QC → Triage Auto-Loop after a REVISE-then-fix
+cycle. The operator instructed this directly: *"do it but skip qc pass."*
+
+**Rationale.** All three findings were one-clause, mechanically verifiable edits (a sentence rewrite, a
+one-line rendering-form clause, a WORKSPACE definition swapped for an idiom already used two lines
+away) — not structural rework the fix pass itself could plausibly get wrong in a new way. Each fix was
+verified by direct grep/read against the finding before being counted as done. The `/risk-check`
+verdict (which does not require re-QC to stand) was unaffected by any of the three fixes.
+
+**Alternatives considered.** Re-run `/qc-pass` on the fixed artifact (the default QC → Triage Auto-Loop
+path) — rejected by the operator as unnecessary ceremony on three mechanical, independently-verified
+one-clause edits. Not rejected on cost grounds; the operator's instruction was explicit and unconditional.
+
+**Residual risk, named rather than hidden.** No independent reviewer has seen the fixed artifact as a
+whole. If a fix introduced a new problem, it would surface only on next use or a later audit pass, not
+before commit. Accepted deliberately, not overlooked.
+
+**Decided by:** the operator, 2026-07-29, mid-session. Full detail: `logs/session-notes.md` 2026-07-29
+entry § Decisions Made; the `/qc-pass` and `/risk-check` reports live at
+`audits/risk-checks/2026-07-29-leverage-idea-lifecycle-routing-expansion.md` (risk-check) and in the
+session's own conversation transcript (qc-pass — not written to disk by that command).
