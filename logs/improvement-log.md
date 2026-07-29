@@ -2017,3 +2017,35 @@ The precedent that resolved it was already living in the repo, uncatalogued: `ax
 **Counter-consideration to weigh before acting.** Early QC sees an incomplete artifact and may raise findings that later edits would have closed anyway, which trades one kind of waste for another. The narrow claim worth testing first: does it hold specifically for *fold-ins* (transcribing settled decisions into existing documents), where the shape is known up front and QC's real job is fidelity-checking rather than judging a design?
 
 **Target files:** `ai-resources/docs/qc-independence.md`; possibly the `Completion Standard` / `QC Independence Rule` wording in the workspace `CLAUDE.md`.
+
+### 2026-07-29 — `check-foreign-staging.sh` guard degrades to warn-only on any `/handoff`-resumed session
+
+- **Status:** logged (pending)
+- **Severity:** medium-high — it fails open in exactly the condition it exists to catch. Observed live this session: a concurrent session was writing to the same worktree while the guard was off for all five of this session's commits.
+- **Category:** hook / staging safety (`.claude/hooks/check-foreign-staging.sh`)
+- **Source:** `ai-resources` session, 2026-07-29 — `/work-loop` review-layer-consolidation Prove + G2, resumed from `/handoff` with no `/session-start`.
+
+The guard reads this session's declared footprint from the session marker that `/session-start` Step 2.5 writes. A session resumed from a `/handoff` scratchpad never runs `/prime` → `/session-start`, so no marker exists, no concrete footprint is found, and the guard drops to warn-only: it prints `No concrete session footprint declared … the foreign-file staging guard is OFF for this commit` and stages whatever it is given.
+
+**Why this is the bad case rather than a cosmetic one.** Handoff-resumed sessions are, by construction, the ones most likely to share a worktree with another session — a handoff exists because work was split across sessions. This session hit exactly that: another session made four commits (`85a4bcc`, `ddfe7a4`, `315e0ae`, `89222f2`) into the same worktree and left `logs/friction-log.md` and `logs/innovation-registry.md` dirty, while the guard was off for every commit here. Nothing foreign was shipped, but only because staged paths were verified by hand each time — the mechanism was doing nothing.
+
+Note also that writing a `Files in scope:` line into the **commit message** does not satisfy it; the guard reads the marker, not the message. That is a reasonable design, but the warn text does not say so, so the natural repair attempt fails silently.
+
+**Proposal.** Either have `/handoff`'s resume path write a footprint marker equivalent to `/session-start` Step 2.5, or make the warn text name the actual remedy (`run /session-start to declare a footprint`) instead of describing the degraded state. The first is the structural fix; the second is the one-line stopgap.
+
+**Target files:** `.claude/hooks/check-foreign-staging.sh`; `skills/handoff/SKILL.md` (resume path); possibly `.claude/commands/session-start.md` Step 2.5.
+
+### 2026-07-29 — `/work-loop` consumer-count falsifiers cannot be re-derived; the counting scope is never recorded
+
+- **Status:** logged (pending)
+- **Severity:** medium — it does not corrupt anything, but it makes a falsifier unverifiable at exactly the phase whose job is verification, and the failure is silent: three plausible scopes each return a confident wrong number.
+- **Category:** workflow / falsifier design (`docs/work-loop.md`, Shape plan convention)
+- **Source:** `ai-resources` session, 2026-07-29 — Prove unit of the review-layer-consolidation stream.
+
+The Shape plan (`plan-v3` § 8) fixed twelve consumer counts (qc-pass 26, consult 28, reconcile 15, …) and falsifier 2 was "count regression." At Prove those counts could not be reproduced: counting from the workspace root gave 38/39/19, excluding archives and sibling worktrees gave 31/32/16, and neither matched § 8. The plan records the numbers but not the command, root, or exclusion set that produced them — so a later unit cannot tell a real regression from a scope mismatch, and the natural move is to keep adjusting exclusions until the numbers agree, which proves nothing.
+
+Falsifier 2 was closed here on a structural argument instead (content-only edits, no file added or deleted under any `commands/` path, no symlink mode change — therefore no count can have moved). That is sound and is arguably the better check, but it was reached by working around the gap rather than through it.
+
+**Proposal.** Require any Shape plan that states a count to state the **derivation** beside it — the exact command including root and exclusions, in one line. Cheap to write once, and it converts an unfalsifiable number into a falsifiable one. Worth considering more generally: a falsifier phrased as a re-derived absolute count is fragile; one phrased structurally ("no file added or deleted under X") is not.
+
+**Target files:** `docs/work-loop.md` § The challenged route (Shape's falsification-criteria guidance).

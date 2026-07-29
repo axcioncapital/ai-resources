@@ -301,3 +301,43 @@ Cross-repo writes into 13 project repos (creating `logs/scripts/check-archive.sh
 ### Findings Declined
 
 - **Recurring "incomplete source set" pattern (this session's two instances: the three-writers list was five; the 13-vs-14 project count).** Already tracked as a named class by the `2026-07-24` and `2026-07-25` improvement-log entries. Declined a new entry — this session's instances are corroborating evidence, recorded inline in the mission thread closures (`logs/missions/repo-integrity-repairs-2026-07.md` threads 2 and 10) rather than duplicated as a fresh log entry.
+
+## 2026-07-29 — Closed the review-layer-consolidation work-loop stream at G2
+
+### Summary
+
+Resumed from a `/handoff` scratchpad mid-Prove on the `2026-07-29-review-layer-consolidation` stream and took it through to stream close. Finished the P3/P4 verification the prior session left half-done, adjudicated Codex Prove review-1 (verdict REVISE), applied the resulting repairs, and closed the stream on the operator's G2 approval. Prove and the review together found **24 live references to machinery the four Build slices had already declared removed** — five caught by the protected-safeguard pass, nineteen more by adjudicating the review. Two were materially broken producer/consumer contracts that would have silently dropped a high-consequence item's review. All protected safeguards verified unchanged throughout.
+
+### Decisions Made
+
+**On the review adjudication**
+- **M1 accepted in part** — 19 sites repaired, 7 declined. The line drawn: this stream removed the *automatic* firings, but `/qc-pass` and `/risk-check` survive as operator-invoked commands and `audit-discipline.md` § Risk-check change classes is a live heading. A site is a defect when it makes a review fire as a standing step or names a field/verdict no producer emits; a site that names the live taxonomy or describes an operator invoking a surviving command is not. Rekeying the latter would break valid pointers to simulate migration.
+- **M2, m1, m2 accepted in full** — the `work-loop.md:105` omission, the falsifier 1/4 wording, and the missing LIMITATIONS section.
+- **One of my own calls reversed mid-verification** — I initially declined the `parallel-sessions-playbook` sites, then the deterministic sweep flagged `:227`'s "`/risk-check`-gated" as the identical phrase I had just repaired in `lean-repo.md:92`. Treating the same phrase differently by file type is not defensible; repaired for consistency, reversal recorded in the evidence rather than dropped.
+- **Two defects found by following the review's lead rather than its list** — `resolve-incident.md:217,243` still escalated on a "RECONSIDER verdict" the command no longer produces. Codex did not cite them.
+- **Falsifier 2 closed structurally, not by re-counting** — plan-v3's counting scope could not be reproduced (three attempts, three different totals, none matching). Chose the structural argument over adjusting exclusions until the numbers agreed. Recorded as a limitation and queued as an improvement item.
+
+**On closure (operator-directed)**
+- **G2 APPROVED by the operator**, with all four remaining items deferred and no further review round. Closure executed per `docs/work-loop.md` § Artifacts as two commits — evidence marked `Status: complete` first (`b8ef77f`), then the stream-closing commit deleting all 19 `logs/loop/{STREAM}-*` files (`1c82aef`), so the final evidence state exists in git before deletion. Same two-commit resolution used at `94a4618`.
+- **Telemetry not captured** — operator-directed (`core path only`). Deliberate, not an omission.
+- **Concurrent session's dirty files left untouched** — operator-directed.
+
+### Risky actions
+
+**Deleted 19 files in the stream-closing commit** (`logs/loop/2026-07-29-review-layer-consolidation-*`) — contract-required, operator-directed, all recoverable at `b8ef77f`, and the other open stream (`2026-07-29-prime-minimum-responsibility-*`) was verified untouched before staging. Separately: the `check-foreign-staging.sh` guard was **off for all five commits** this session (no session marker on a `/handoff`-resumed session) while a concurrent session was actively writing to the same worktree — staged paths were verified by hand on every commit instead. Queued as a medium-high improvement item.
+
+### Findings Declined
+
+- **The pattern-scope method rule** (a reference sweep must be keyed on the concept, not the token — four consecutive units declared the sweep complete and each was wrong). Declined a separate improvement entry: it is recorded durably as the method rule in the stream's `logs/decisions.md` closure record, which is the right home for a rule derived from a closed stream.
+- **The four deferred follow-ups** (prime-owned files; workspace-root `CLAUDE.md`; `projects/positioning-research`; `work-loop.md:105`). Declined queueing — the operator explicitly took ownership at G2 and all four are recorded with line numbers in the closure record. Duplicating them into `improvement-log.md` would create two backlogs for one set of items.
+- **"This unit repaired what it reviewed"** — a real limitation (24 sites changed by the session judging them, no independent read of the repairs), but it is stated in the Prove evidence § 12 and in the closure record, and the operator adjudicated G2 with it visible. Nothing further to queue.
+
+### Next Steps
+
+- **Follow-up 4 is the one that matters** — `.claude/commands/work-loop.md:105` still orders two stacked `/risk-check` gates on the challenged route and cites `docs/audit-discipline.md:73-81`, a line range S1 deleted. Until it lands, the command running the loop contradicts the policy the loop just shipped. It was correctly excluded from this stream (a stream may not rewrite the contract it runs under) and is now unblocked, because that stream has closed.
+- Follow-ups 1–3 (prime-owned files, workspace-root `CLAUDE.md`, `projects/positioning-research`) as the operator sequences them. Follow-up 2 is what makes the change visible in workspace-rooted sessions at all.
+- The other open stream `2026-07-29-prime-minimum-responsibility` still has Frame evidence and a Shape brief on disk, awaiting its Shape unit.
+
+### Open Questions
+
+- A concurrent session was working this same stream in this worktree (four commits, plus dirty `logs/friction-log.md` and `logs/innovation-registry.md` left in place per instruction). Whether it still has uncommitted work is unknown from here — worth confirming before that worktree is used again.
