@@ -1,0 +1,48 @@
+{
+  "run_id": "2026-07-29-S4-efd",
+  "project": "ai-resources",
+  "date": "2026-07-29",
+  "marker": "S4-efd",
+  "model": "unknown",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md",
+  "mission": null,
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    ".claude/commands/prime.md",
+    ".claude/commands/project-next-steps.md",
+    "docs/commit-discipline.md",
+    "docs/heavy-read-discipline.md",
+    "docs/session-marker.md",
+    "docs/qc-independence.md",
+    "logs/loop/2026-07-29-prime-minimum-responsibility-build-4.brief.md",
+    "logs/loop/2026-07-29-prime-minimum-responsibility-build-4.evidence.md",
+    "logs/loop/2026-07-29-prime-minimum-responsibility-prove.brief.md",
+    "logs/scripts/prime-marker.test.sh",
+    "logs/session-notes.md"
+  ],
+  "decisions_refs": [],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": null,
+  "incidents_refs": []
+}

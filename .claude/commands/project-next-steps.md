@@ -61,6 +61,12 @@ project is — do not read everything.
 3. Phase / workflow definitions in the project `CLAUDE.md`.
 4. The latest `logs/session-plan*.md`.
 
+> **One deliberate divergence downstream.** `/prime` Step 1c reuses this cascade but checks
+> **position before the plan spine**, inverting the two blocks below. `pipeline-state.md` is small
+> and authoritative, so it is the cheap happy path and short-circuits the expensive one. That
+> inversion is intentional at the `/prime` call site and is not a drift from this file — do not
+> "correct" it back. Reasoning: `docs/heavy-read-discipline.md` § Bounded-read recipes → Step 1c.
+
 **Current position (authoritative completion signal first, stop when confident):**
 1. `{project}/pipeline/pipeline-state.md` — if present, read it; the stage table tells you
    what is done.
