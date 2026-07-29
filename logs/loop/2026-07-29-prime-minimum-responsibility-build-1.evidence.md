@@ -146,3 +146,23 @@ this file in a state no commit explains.
 - **Not checked:** whether any of `prime.md`'s 28 symlinked consumers reads an 8c sub-step by number
   at runtime. They are symlinks to the same file, so content propagates; the risk is a *reader* that
   parses for `8c.7`, and no such reader was searched for beyond the citation sweep.
+
+## CLOSE
+
+**Outcome:** `close` — Slice 1 landed. `/prime` 8c went 236 → 48 lines, auto mode's single approval
+gate now sits in `/session-start` Step 2.6 after discovery and validation, and the mandate, manifest
+and plan writes belong to their owners.
+
+**Commits:** `bd0ca61` (brief) · `1b96aa6` (implementation + evidence).
+
+**What closed:** the Build unit `2026-07-29-prime-minimum-responsibility-build-1`.
+
+**Stream:** **stays open.** Slice 1 is the first of five. Next by the G1-approved order is **Slice 3**
+(consolidate marker → header → mtime into 8h; depends on Slice 1 only), then Slice 2 — which remains
+**blocked** until the Option A capability record is opened and `/develop-ai-resource` is run in
+upstream mode for `prime-marker.sh` — then Slice 4, measure, and Slice 5 if the live count still
+exceeds 300.
+
+**Two findings carried forward, neither resolved by this unit:** the census primitive is unreliable
+and P-CITE must be re-specified before Prove (Finding 1); and one in-scope file is gitignored, so
+`git revert` does not fully roll this slice back (Finding 2, disposition `operator`).
