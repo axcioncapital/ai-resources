@@ -265,3 +265,36 @@ Both conditions are met. No architectural change was made: no command, agent, ho
 was added, removed or rewired by this adjudication — only instruction text was rekeyed onto the
 existing three-row rule, and one template field onto the value its producer already emits. **No
 further Codex round. Ready for G2.**
+
+## 15. Cross-session re-verification before G2 — appended by the session that took the stream over
+
+§ 12 limitation 3 says this unit repaired what it reviewed and that no party outside the authoring
+session had read the repairs. The operator transferred the stream to a second session, which
+re-derived the load-bearing claims from the live files with no reliance on the text above. **This is
+a second Claude session, not an independent model** — it does not discharge the Codex-independence
+requirement and is not offered as doing so. It is a fresh-context re-derivation, and it is a weaker
+check than the Codex review that already passed.
+
+| Claim re-derived | Command run | Observed |
+|---|---|---|
+| The four **declined** M1 sites read as claimed | `sed -n` on each cited line | Confirmed. `implementation-triage.md:63` reads *"The operator runs `/risk-check` for risk-class changes"* — accurate after the change. `lean-repo.md:77,117` and `lean-repo-auditor.md:77` each use *"`/risk-check` change class"* as a classification label against a live `audit-discipline.md` heading. Declining all four is correct; rekeying them would break valid pointers. |
+| No standing-step prescription survives | `grep -rnE '(gated by\|gate it\|then run\|must run\|gate before\|auto-run\|automatically (run\|fire\|invoke))[^.]{0,60}/(qc-pass\|risk-check\|contract-check\|blindspot-scan)'` over `.claude/ docs/ skills/ templates/`, excluding the three excluded files | **Zero hits.** |
+| Templates carry no dead gate field | `grep -rnE '/(qc-pass\|risk-check)' templates/` | One hit, `mission-contract.md:31`, listing `/qc-pass` among optional fresh-context checks an operator *may* run. Descriptive, not a standing step — not a defect under § 9's test. |
+| Excluded files untouched by the whole stream | `git diff --name-only 267c4c2..HEAD -- work-loop.md prime.md session-plan.md` | **Empty.** Falsifier 6 holds. `work-loop.md:105` still carries the two-gate text, exactly as follow-up 4 records. |
+| Six protected hooks unchanged | per-path `git diff --name-only 0bf726d..HEAD` | All six **UNCHANGED**. |
+| Permission surface unchanged | `git diff 0bf726d..HEAD -- .claude/settings.json` filtered for `allow\|ask\|deny\|Bash(\|Read(\|Write(\|Edit(` | **0 lines.** `settings.json` parses as valid JSON. |
+| `materiality-bar.md` unchanged | `git diff --name-only 0bf726d..HEAD` | **Empty.** |
+| The M1 repair commit touched no protected path | `git show --name-only e24ba61` filtered for `hooks/\|settings.json\|materiality-bar` | **Empty.** |
+| `cleanup-worktree` hard gates survive | `grep -c` for gate/confirmation markers | **9** occurrences present. |
+
+**Baseline note.** `0bf726d` is used above rather than the `2cb245e` recorded in this file's header: it
+is the last commit before any object edit in this stream, so it is the correct pre-change baseline for
+a protected-safeguard diff. `2cb245e` is a Shape plan-revision commit two commits earlier and includes
+no object edits either, so the two give the same answer here; the tighter one is stated for precision.
+
+**One addition to § 13 follow-up 4.** `work-loop.md:105` cites `docs/audit-discipline.md:73-81` for the
+two-gate rule. S1 **deleted** § When to fire at those lines, so the citation is a dangling line-range
+pointer as well as a stale mandate. Follow-up 4 must repair both, not just the mandate.
+
+**Verdict of this re-verification: the adjudication holds.** Nothing was found that changes the G2
+package. No repair was made by this session.
