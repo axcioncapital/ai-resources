@@ -1919,3 +1919,26 @@ Applying Step 1c literally would have made the `/prime` brief report the project
 **Proposal.** Add one clause to `prime.md` Step 1c Path 1, before trusting `pipeline-state.md` as current: check the file's own mtime for staleness relative to the repo's recent commit activity (`date -r <plan-file>` — the same primitive Path 2 already uses — compared against whether commits have landed elsewhere in the repo since), and downgrade to "state as historical, do not derive Where-we-are from it" when the file is stale relative to ongoing repo activity. This is more general than grepping the project's CLAUDE.md for a specific marker phrase, since it doesn't depend on guessing per-repo wording.
 
 **Target files:** `ai-resources/.claude/commands/prime.md` (Step 1c, Path 1 trust-as-is branch).
+
+---
+
+## `transaction-table-builder` size-lens enum has no BELOW_LENS class
+
+- **Status:** logged (pending)
+- **Severity:** medium — silent precision loss. The skill's own output cannot express a precisely-known fact, and the fallback value (`UNKNOWN`) actively misdescribes it.
+- **Category:** canonical skill contract (`transaction-table-builder` § Size-Lens Classification)
+- **Source:** `axcion-sector-intelligence` / `industrial-software` worktree, Step 2.3b, 2026-07-29.
+
+The skill defines five size-lens classes: `CONFIRMED_IN_LENS`, `LIKELY_IN_LENS`, `POSSIBLY_IN_LENS`, `ABOVE_LENS`, `UNKNOWN`. **There is no class for a deal whose EV is disclosed and falls below the project band.** The enum is asymmetric — it can say "above the band" but not "below it".
+
+On this unit that is not an edge case, it is the finding. Three of the five disclosed EVs sit below the EUR 5–25M band (eSite 0.3M, Trackinno 1.1M, Atmotics 2.0M) — and those three are the *entire* qualifying Finnish transaction set for the research unit. The sub-agent handled it correctly: it declined to invent a `BELOW_LENS` string, because the class labels are an exact-match contract that `cluster-memo-refiner` and `evidence-to-report-writer` match against, and recorded `UNKNOWN` with the value in the EV column and the below-band position stated in Notes.
+
+That is the right call and it still loses information. `UNKNOWN` is defined as *"cannot classify; default if no signal in either direction."* These three rows are the opposite — the EV is disclosed, exact, and classifiable. Anything reading the size-lens column alone now sees three unclassifiable rows where the truth is "precisely known, systematically below the lens." On a unit whose verdict turns on whether Finnish deal flow reaches the lower-mid-market band, that is the single most decision-relevant fact in the table, and the column cannot carry it.
+
+**Proposal.** Add a sixth class, `BELOW_LENS` — "EV disclosed and below the project size-lens lower bound, or clearly inferable as such" — mirroring `ABOVE_LENS`. Then either extend the downstream exact-match sets in `cluster-memo-refiner` (Check 7) and `evidence-to-report-writer` to accept it, or specify that unrecognised classes degrade to `UNKNOWN` at those consumers so the addition is backward-safe.
+
+**Gated.** This is a canonical-resource change with live downstream consumers matching on exact strings — autonomy rule #9 applies, so it needs `/risk-check` before landing. Flagged here rather than fixed.
+
+**Target files:** `ai-resources/skills/transaction-table-builder/SKILL.md` (§ Size-Lens Classification, § The 13 Mandatory Fields row 10, and the worked example); downstream consumers `cluster-memo-refiner` (Check 7), `evidence-to-report-writer` (named-transaction size-lens verification).
+
+**Second, smaller gap in the same skill, same source:** the § Deal-Value Recovery Routine's step 2 instructs the executor to consult company registries and names PRH (FI) explicitly. On any project operating under a no-registry constraint — here `known-limits.md` limit 15, operator-confirmed and structural — that step must be suppressed, and the skill offers no conditional. It was suppressed by instruction at invocation. Worth a one-line conditional in the skill so the next project does not have to catch it manually.
