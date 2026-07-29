@@ -225,8 +225,8 @@ Every place the marker contract is consumed must point back to this doc. Adding 
 
 **Writers** (hard-fail on marker absent/stale):
 
-- `ai-resources/.claude/commands/prime.md` — shared **Step 8k** (`Marker allocation`, referenced by 8a/8b/8c; writes BOTH the shared file and the per-session-id identity oracle `logs/.session-marker-${CLAUDE_CODE_SESSION_ID}`; orphan-pruning removed 2026-07-18 — liveness-grounded pruning lives in `detect-concurrent-session.sh`) and Step 8c.8 (auto-mode plan write). **`/prime` is the sole ALLOCATOR of `S{N}` — the rule it implements is canonical in § Marker allocation above, not here. Read that section before touching these blocks.** Since 2026-07-13 the rule is `N = 1 + MAX(a, b, c)` — shared marker file, working-tree `session-notes.md` headers, and `session-notes.md` headers across **all refs** (the worktree/split-brain fix). It superseded the old `if [ -f logs/.session-marker ] … else … fi` chain, in which the header-scan was merely an absent-marker fallback.
-  - **Single shared block (de-duplicated 2026-07-17):** the allocation block lives ONCE in `/prime` **Step 8k** (`Marker allocation`), referenced by the numbered-pick (8a), free-text (8b), and auto-mode (8c) paths. The former byte-identical triplication across 8a.3.a / 8b.3.a / 8c.3 — and the lockstep-sync tax it imposed — was removed by de-duplication (risk-check `2026-07-17-dedupe-prime-session-marker-allocator`, harness-verified behavior-preserving). There is now nothing to keep in sync across branches; edit the one Step 8k block. **The em-dash-literal and fail-safe traps below still apply — they now live in that single block.**
+- `ai-resources/.claude/commands/prime.md` — shared **Step 8k** (`Marker allocation`, referenced by 8a/8b/8c; writes BOTH the shared file and the per-session-id identity oracle `logs/.session-marker-${CLAUDE_CODE_SESSION_ID}`; orphan-pruning removed 2026-07-18 — liveness-grounded pruning lives in `detect-concurrent-session.sh`) . **`/prime` is the sole ALLOCATOR of `S{N}` — the rule it implements is canonical in § Marker allocation above, not here. Read that section before touching these blocks.** Since 2026-07-13 the rule is `N = 1 + MAX(a, b, c)` — shared marker file, working-tree `session-notes.md` headers, and `session-notes.md` headers across **all refs** (the worktree/split-brain fix). It superseded the old `if [ -f logs/.session-marker ] … else … fi` chain, in which the header-scan was merely an absent-marker fallback.
+  - **Single shared block (de-duplicated 2026-07-17):** the allocation block lives ONCE in `/prime` **Step 8k** (`Marker allocation`), referenced by the numbered-pick (8a), free-text (8b), and auto-mode (8c) paths. The former byte-identical triplication of the allocator across 8a.3.a / 8b.3.a / 8c.3 — and the lockstep-sync tax it imposed — was removed by de-duplication (risk-check `2026-07-17-dedupe-prime-session-marker-allocator`, harness-verified behavior-preserving). The *sequence wrapped around* it (allocate → marker-bearing header → mtime) stayed triplicated until 2026-07-29, when it was consolidated into `/prime` **Step 8h** (`Session-entry write`), which calls 8k and takes the caller's work-description line as its one parameter. There is now nothing to keep in sync across branches; edit the one Step 8k block, or Step 8h for the sequence around it. **The em-dash-literal and fail-safe traps below still apply — they now live in that single block.**
   - **Two traps that survive the rewrite, both still live:** the header scan matches the em-dash `—` **literally** (an ASCII hyphen silently matches nothing — under the old rule that regressed to `N=1`; under the new rule it silently drops sources (b) and (c), degrading to marker-file-only), and comparisons must be **numeric**, not lexical (so `S10 > S9`). Verify by execution, not review.
   - **Fail-safe property, do not break it:** `HIGH` is seeded from the marker file *before* the scan loop, and the loop only ever *raises* it. So a git failure, a non-git directory, or an empty scan degrades to the old marker-file-only behaviour — it can never reset `HIGH` to 0 and allocate `S1` over an existing `S5`. Verified by execution (`/risk-check`, 2026-07-13: no-git-repo, failing-git stub, corrupt marker, marker-ahead). Any future edit that computes `HIGH` from the scan *first* and consults the marker file *second* would reintroduce exactly that destructive regression.
 - `ai-resources/.claude/commands/session-start.md` — Step 3 (header location; resolves marker per-id-first).
@@ -282,13 +282,13 @@ If you rename `.session-marker` or change the file-naming scheme, update each of
 
 ## Mandate-line bullet contract (`- Mission:` split — added 2026-06-09)
 
-The `**Mandate:**` block written under each marker-bearing header (by `session-start.md` Step 3 and `prime.md` Step 8c.7) carries a fixed set of load-bearing labelled bullets (`- Out of scope:`, `- Files in scope:`, `- Stop if:`, `- Allowed inputs:`, `- Required outputs:`) plus two **informational pass-through** bullets that most readers ignore: `- Context pack:` and `- Mission:`.
+The `**Mandate:**` block written under each marker-bearing header (by `session-start.md` Step 3 — the sole writer since 2026-07-29; `/prime` auto mode reaches it by delegation) carries a fixed set of load-bearing labelled bullets (`- Out of scope:`, `- Files in scope:`, `- Stop if:`, `- Allowed inputs:`, `- Required outputs:`) plus two **informational pass-through** bullets that most readers ignore: `- Context pack:` and `- Mission:`.
 
 The **`- Mission: <id>`** bullet (mission-contract subsystem) has a deliberately **split contract**:
 
 - **Pass-through (the fixed-label readers):** `wrap-session.md` Step 7a, workspace-root `wrap-session.md` Step 2b, `contract-check.md` Step 2.5c, and `concurrent-session-check.md` Step 3 — all use fixed-label extraction and silently ignore the bullet. (`monday-prep.md` writes a separate bold-header week-mandate and does not parse this bullet schema at all, so it is unaffected a fortiori.) Adding the bullet cannot break any of them (verified via the `- Context pack:` precedent, DR-9 reader check 2026-06-09).
 - **Load-bearing (exactly 1 reader):** **`drift-check.md` Step 7a** reads `<id>`, locates the mission file (`<repo>/logs/missions/<id>.md`, then `ai-resources/logs/missions/<id>.md`), and judges trajectory against its `## Validation contract` as a *second* reference standard. **Degrade-loud contract:** if the id names no readable mission file, `/drift-check` emits one visible notice and falls back to mandate-only — never hard-fails, never silently ignores.
-- **Writers:** `session-start.md` Step 1 (strips the `{mission:<id>}` arg prefix passed by `/prime` Step 8m) and `prime.md` Step 8c.7 (auto mode). The bullet originates only from `/prime` Step 8m binding. **No command writes the mission file from inside a session** — only `/mission` mutates `logs/missions/`; this keeps the session hot path free of any concurrent-write to the mission file (risk-check mitigation, `audits/risk-checks/2026-06-09-plan-time-gate-for-the-mission-contracts-subsystem-build.md`).
+- **Writers:** `session-start.md` Step 1 alone (it strips the `{mission:<id>}` arg prefix, which `/prime` Step 8m passes on both the 8a/8b and the auto-mode paths). The bullet originates only from `/prime` Step 8m binding. **No command writes the mission file from inside a session** — only `/mission` mutates `logs/missions/`; this keeps the session hot path free of any concurrent-write to the mission file (risk-check mitigation, `audits/risk-checks/2026-06-09-plan-time-gate-for-the-mission-contracts-subsystem-build.md`).
 
 Changing the `- Mission:` label or the mission-file location requires updating `drift-check.md` Step 7a, both writers, and `/mission`.
 
@@ -314,14 +314,14 @@ ROUTE_LINE=$(grep -m1 -oE '^\*\*Execution route:\*\* *direct[[:space:]]*$' "$PRO
 
 **Removed (ceremony only):**
 - `session-start.md` Step 4 does **not** auto-chain `/session-plan`; it emits a lean handoff instead.
-- No committed `logs/session-plan-*.md` is written (neither via the chain nor `prime.md` 8c.8).
+- No committed `logs/session-plan-*.md` is written (the `/session-start` Step 4 chain is skipped, and since 2026-07-29 that is the only path to a plan file).
 - `prime.md` 8a.3.d's post-mandate prompt does **not** reference a plan file (that file is never created for direct); it points at the mandate in `session-notes.md`.
 - `wrap-session.md` Step 12e skips the findings-disposition ceremony **only** when the finding set is empty (`N=0`); when findings exist it runs in full.
 
 **Preserved (the safety / crash-recovery / collision spine — unchanged from the engineered route):**
 - Per-session marker + marker-bearing `session-notes.md` header (`prime.md` Step 8k).
 - The **full mandate block**, including `- Files in scope:` and `- Required outputs:` — this is what keeps a direct session visible to `concurrent-session-check.md` (which reads `- Files in scope:`).
-- Run-manifest start-stub (`session-start.md` Step 3.5 / `prime.md` 8c.7.5) and close (`wrap-session.md` Step 12d).
+- Run-manifest start-stub (`session-start.md` Step 3.5 — sole writer since 2026-07-29) and close (`wrap-session.md` Step 12d).
 - Marker teardown at wrap; `.prime-mtime`; the staging guard.
 
 `/session-plan` remains available on **explicit** operator invocation for a direct project and writes normally then — it is opt-in, not removed.
@@ -333,6 +333,16 @@ ROUTE_LINE=$(grep -m1 -oE '^\*\*Execution route:\*\* *direct[[:space:]]*$' "$PRO
 **Writers of the predicate:** `prime.md` (8a/8b/8c), `session-start.md` (Step 4 + Step 3 inferred-path resolution), `wrap-session.md` (Step 12e). `session-plan.md` carries only a doc note (opt-in for direct; no functional branch). Changing the route literal or this exception's surface requires updating all four commands and this section. Gate history: `audits/risk-checks/2026-07-23-commit-2-of-2-*.md` (superseded) + `…-re-gate.md`; OP-11 landing decision: `logs/decisions.md` 2026-07-23 (S1-0e1).
 
 ---
+
+## Auto-mode done-condition check
+
+Cited by `/prime` Step 8c.2, which holds the mechanism; this section holds the reason it exists and must not be weakened.
+
+Auto mode spends **one** approval gate and, when a structural class is touched, **one** `/risk-check` on the entire picked bundle. An item with no derivable done-condition cannot be graded, so it is not recognised as unscoped until execution is already underway — that is, *after* the gate has been spent on it. The check therefore has to run before any disk write, not at execution time.
+
+**The failing shape is specific:** an item whose text names only an activity, with no observable end-state, and whose source line supplies no target. "Review the System Owner reference files" is the canonical case — it entered the executable set on 2026-06-04 (session S6) with no specifiable done-condition, which is the logged trigger for this check (vault W2.4 finding #1; session-harness `/friday-act` #4). A passing item names an observable deliverable, check or target: a file written, an item checked off, a finding addressed, a commit landed, a count reached.
+
+**Held items are held, not dropped.** The operator can restate an item with a deliverable and re-pick it, or proceed with the scoped subset. Auto mode never silently narrows the bundle — the held items and the reason are always named in the emitted block.
 
 ## Why this protocol exists
 

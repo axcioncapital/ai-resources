@@ -467,8 +467,8 @@ for tok in re.split(r'[,;\s]+', footprint_raw):
 # the no_concrete_footprint gate above, which is what makes the asymmetry hold.
 #
 # Do NOT "fix" this by adding validation to required_outputs in this change — that is a
-# separate, larger change touching every writer of the mandate line (/session-start,
-# /prime Step 8c.7). Scope it on its own if wanted.
+# separate, larger change touching every writer of the mandate line (/session-start
+# Step 3, the sole writer since 2026-07-29). Scope it on its own if wanted.
 _PATH_SHAPE = re.compile(r'/|\.(?:md|sh|json|ya?ml|py|ts|js|txt|csv|toml|ini)$', re.I)
 
 for tok in re.split(r'[,;\s]+', outputs_raw):

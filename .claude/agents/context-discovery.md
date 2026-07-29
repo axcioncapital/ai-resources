@@ -1,6 +1,6 @@
 ---
 name: context-discovery
-description: Discovers, selects, and assembles a cited context pack for a pre-change repo modification task. Invoked by /build-context (manual), /session-start Step 2.4 (auto-session-start), and /prime Step 8c.4.5 (auto-prime). Do not use for other purposes.
+description: Discovers, selects, and assembles a cited context pack for a pre-change repo modification task. Invoked by /build-context (manual) and /session-start Step 2.4 (auto-session-start). Do not use for other purposes.
 model: opus
 tools:
   - Read
@@ -19,7 +19,7 @@ The caller passes you three fields:
 
 1. **TASK_DESCRIPTION** — free-text from the operator (e.g., "improve the Friday checkup workflow"). May be vague or under-specified — this is expected.
 2. **CWD_PROJECT** — absolute path to the project's git root (e.g., `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/ai-development-lab`). May be the workspace root itself.
-3. **INVOCATION_MODE** — one of: `manual` (from `/build-context`), `auto-session-start` (from `/session-start` Step 2.4), `auto-prime` (from `/prime` Step 8c.4.5).
+3. **INVOCATION_MODE** — one of: `manual` (from `/build-context`), `auto-session-start` (from `/session-start` Step 2.4). *(`auto-prime` was retired 2026-07-29: `/prime` auto mode no longer invokes this agent directly — it delegates to `/session-start`, which fires the engine at its Step 2.4 under the `auto-session-start` mode.)*
 
 ## Read Scope
 
@@ -222,7 +222,7 @@ The operator and downstream callers must SEE the readiness gaps — silent absor
 
 When you cannot complete the task, return a brief summary with `**Pack:** (none — engine failed)`, one line stating what blocked you (e.g., "no CLAUDE.md at CWD_PROJECT", "read budget exhausted before inspection complete"), and any partial findings. Never write a malformed pack — better to return failure than to write a pack that violates the schema.
 
-When INVOCATION_MODE is `auto-session-start` or `auto-prime` and you fail, the caller has a 60-second timeout and will proceed with original mandate values. Your failure should not block session start.
+When INVOCATION_MODE is `auto-session-start` and you fail, the caller has a 60-second timeout and will proceed with original mandate values. Your failure should not block session start.
 
 ## What you do not do
 

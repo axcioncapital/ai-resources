@@ -15,6 +15,8 @@ Session orchestrator. Run after `/prime` to plan HOW the session will run before
 **Leading-token normalization — run this FIRST, before anything reads `$ARGUMENTS`.** Callers may prefix the intent with zero or more literal `{key:value}` tokens. Strip leading tokens in a loop until the remaining text begins with something else, capturing each:
 
 - `{gate:post-plan}` → set `POST_PLAN_GATE = true`. The invoking branch has declared that it will hold an approval gate after this command finishes. Consumed by Step 8.
+- `{plan:overwrite}` (forwarded by `/session-start` Step 4 on the auto path) → set `PLAN_OVERWRITE = true`. The same-session re-invocation check below **takes option 2 (overwrite) without prompting**. Auto mode has already held its one approval gate at `/session-start` Step 2.6, so stopping here to ask would add a second stop its contract does not allow. **This silently overwrites a plan file written earlier in the same session** — accepted deliberately: under the marker-scoped path only *this* session can own that file, and auto mode re-planning its own session is the intended case.
+- `{gate:auto}` (forwarded by `/session-start` Step 4 on the auto path) → set `AUTO_GATE = true`. Consumed by Step 8: write the plan, then **return to `/prime` without beginning execution**.
 - Any other `{key:value}` token → strip and ignore (forward-compatible; an unrecognized token must never reach `INTENT`).
 
 If no leading token is present, `POST_PLAN_GATE` is unset — **this is the common case and the default**, and it reproduces this command's pre-2026-07-18 behaviour exactly.
@@ -35,6 +37,8 @@ Set `TODAY` = today in `YYYY-MM-DD` format (`date '+%Y-%m-%d'` or the date prefi
 > 3. Write new plan to `logs/session-plan-${TODAY}-${MARKER}-pass2.md` instead — continue to Step 1, output to pass2
 >
 > Default (no response within the turn): **option 1 — keep current plan**.
+
+**If `PLAN_OVERWRITE` is set, do not emit this prompt at all** — take option 2 directly (OUTPUT_TARGET = `logs/session-plan-${TODAY}-${MARKER}.md`) and continue to Step 1.
 
 Apply the chosen option: Option 1 → stop, no changes. Option 2 → continue to Step 1 (OUTPUT_TARGET = `logs/session-plan-${TODAY}-${MARKER}.md`). Option 3 → continue to Step 1 (OUTPUT_TARGET = `logs/session-plan-${TODAY}-${MARKER}-pass2.md`).
 
@@ -226,7 +230,13 @@ No `Class:` line is written to `logs/session-notes.md` — the field was removed
 
 ## Step 8 — Confirm, then either hand back to a caller-declared gate or auto-proceed
 
-**Branch on `POST_PLAN_GATE` (set by Step 0's leading-token normalization).**
+**Branch on `AUTO_GATE` first, then on `POST_PLAN_GATE` (both set by Step 0's leading-token normalization).**
+
+**If `AUTO_GATE` is set** — this command was reached through auto mode's chain (`/prime` 8c.9 → `/session-start` Step 4 → here). Emit exactly:
+
+> Plan written to `{OUTPUT_TARGET}`. Returning to /prime.
+
+Then **return control without beginning execution and without emitting "Begin execution".** Auto mode's approval was taken at `/session-start` Step 2.6, but approval is not the last gate: `/prime` 8c.11 still has to run `/risk-check` when the picked work touches a structural class, and 8c.12 owns the execution start. Beginning work here would place the first structural edit *ahead* of the risk gate — the precise ordering `/risk-check` exists to prevent. This branch is checked before `POST_PLAN_GATE` because the default branch below ends in "Begin execution", which is exactly the wrong instruction on this path.
 
 **If `POST_PLAN_GATE` is set** — the invoking branch declared a post-plan approval gate. Emit:
 

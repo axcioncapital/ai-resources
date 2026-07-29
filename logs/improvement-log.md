@@ -2018,6 +2018,111 @@ The precedent that resolved it was already living in the repo, uncatalogued: `ax
 
 **Target files:** `ai-resources/docs/qc-independence.md`; possibly the `Completion Standard` / `QC Independence Rule` wording in the workspace `CLAUDE.md`.
 
+### 2026-07-29 — A standing "no Agent tool unless requested" instruction structurally blocks `/qc-pass` — not just its anticipation cost, its execution
+
+- **Status:** logged (pending)
+- **Severity:** high — disables the workspace's own "never self-QC-and-commit" rule for the duration the instruction holds, silently and without a substitute. Recurs in every session carrying the same standing instruction, not just this one.
+- **Category:** workflow / gate sequencing (`ai-resources/docs/qc-independence.md`; interacts with harness-level "no Agent tool unless requested" directives)
+- **Source:** `axcion-systems-builder` session, 2026-07-29 (S2-d34) — a multi-document fold-in of Codex Review 2 findings into `03-clean-system-definition-v2.md`, `02-detailed-needs-document.md`, and `working/phase7-v1-reconciliation.md`, committed with no independent QC.
+
+**Distinct from the 2026-07-29 (S1-c63) entry above, one step further along the same fault line.** That entry describes `/qc-pass` being invoked and then interrupted — cost paid in anticipation even though the gate never completed. This session never invoked it at all: a standing session-level instruction ("Do not call the AgentTool unless the user requested it") was in force, and `/qc-pass` dispatches the `qc-reviewer` agent via the Agent tool. Running it would have meant knowingly violating the standing instruction; not running it meant knowingly violating the QC Independence Rule's "Never self-QC-and-commit." The session picked the second, surfaced the conflict in the session note and the operator-facing summary rather than resolving it silently, and substituted inline verification (source-quote checks, stale/new-string greps, markdown table integrity checks) as a partial mitigation — but inline verification by the same session is exactly what the QC Independence Rule exists to rule out.
+
+**Why this is worse than the anticipation-cost finding, not a duplicate of it.** That entry's proposal (fire QC earlier) assumes QC eventually runs. Under a standing "no Agent tool unless requested" instruction, it structurally cannot — every session carrying that instruction is permanently exempt from independent QC on every artifact, with no visible flag anywhere that this is happening except a self-authored note the operator has to notice and read.
+
+**Proposal.** `/qc-pass` (and `/risk-check`, and any other command whose mechanism is a subagent dispatch) needs a documented precedence rule for this exact conflict: does a standing "no Agent tool unless requested" instruction override the QC Independence Rule, or does the QC Independence Rule count as the operator having already "requested" QC dispatch by writing it into CLAUDE.md? Right now neither `qc-independence.md` nor the audit-discipline doc says, and the gap was resolved ad hoc, in-session, by inline substitution — the same failure mode `qc-independence.md`'s own "Never self-QC-and-commit" line exists to prevent.
+
+**Target files:** `ai-resources/docs/qc-independence.md` (add explicit precedence guidance); `ai-resources/docs/audit-discipline.md` § Subagent Proportionality (cross-reference); root workspace `CLAUDE.md` § QC Independence Rule (if the resolution is "CLAUDE.md-stated QC requirements count as pre-authorized," state that explicitly so a future session doesn't re-derive it under pressure).
+
+### 2026-07-29 — `docs/work-loop.md` defines no path for amending a G1-approved package once Build has begun
+
+- **Status:** logged (pending)
+- **Severity:** medium-high — the contract's only defined gate placement is "end of the Shape unit", so any package correction discovered during Build is procedurally homeless. Hit live on stream `2026-07-29-prime-minimum-responsibility`; will recur on any challenged stream whose Build measurement contradicts its Shape estimate.
+- **Category:** contract gap (`ai-resources/docs/work-loop.md` § The challenged route, § Artifacts)
+- **Source:** `ai-resources`, 2026-07-29 — Build-3's Finding 4 measured a line demand plan-v3 never itemised; the operator ordered a measured package amendment before Slice 4 opened, and there was no defined artifact or gate for it.
+
+**The gap.** § The challenged route places G1 "at the end of the **Shape** unit, after the pre-implementation review is adjudicated", holding "the plan, the pre-implementation review, the adjudication of its findings, and the slice list Build will execute". It defines escalation into G1 (an escalating unit "stops at G1 with whatever package exists") but **no re-arming of G1 for an already-approved package**. § Artifacts gives plans a `-vN` revision mechanism, but binds every artifact to its unit — and the Shape unit that owned G1 is closed. § Cardinality gives Build one unit per slice and states plainly that "Build sits between G1 and G2 and holds no review of its own", so a Build unit cannot host the decision either. The result: when Build measurement falsifies a Shape estimate, the correction has no defined home, no defined gate, and no defined outcome token.
+
+**What was done in the absence of a rule, and why it is a choice rather than a precedent.** The amendment was written as the closed Shape unit's `plan-v4` (§ Artifacts' own `-vN` revision shape), no implementation edit was made, and it was returned to the operator for explicit approval before any Build unit opened. That is the conservative reading, but the contract does not prescribe it and a different session could reasonably have opened a fresh Shape unit on the same stream, or folded the amendment into a Build unit's evidence — the second of which would have buried a package-level decision inside a slice-level artifact.
+
+**Why it must be logged here rather than left in the stream.** § Artifacts deletes every `logs/loop/{STREAM}-*` file at stream close. The amendment recording this gap is one of them. Without an entry outside the stream, the gap's only trace would be a deleted file in a commit whose SHA nobody holds — the exact failure mode § Closing without a change describes for unrecorded outcomes.
+
+**Proposal.** Add a § Amending an approved package to `docs/work-loop.md`: name the artifact (a `-vN` plan revision on the stream, not the unit), name the gate (G1 re-arms for the amended portion only, with the unamended slices staying approved), and name what an amendment may not do (reopen a landed slice — Slice 3 stayed closed here, correctly, but only because the operator said so explicitly).
+
+**Target files:** `ai-resources/docs/work-loop.md` (§ The challenged route, § Artifacts, § Streams, units and phases); `ai-resources/.claude/commands/work-loop.md` if the command needs a corresponding step.
+
+### 2026-07-29 — `.claude/commands/work-loop.md:247` is now a stale, contradictory instruction
+
+- **Status:** logged (pending)
+- **Severity:** medium — a live authoritative override exists (`logs/decisions.md`, 2026-07-29), so
+  nothing is currently misled by it in practice; but a future session reading the command file in
+  isolation, without cross-checking `decisions.md`, would see an absolute prohibition that no longer
+  holds.
+- **Category:** documentation drift (`ai-resources/.claude/commands/work-loop.md` § What this command
+  never does)
+- **Source:** `ai-resources`, 2026-07-29 — surfaced while resolving the mission `lean-prime-2026-07`
+  non-negotiable on `/work-loop` editing `/prime`.
+
+**The defect.** `work-loop.md:247` reads: *"Never edits `/prime`, workspace `CLAUDE.md`, permissions,
+hooks or settings."* The operator's 2026-07-29 decision (`logs/decisions.md`) establishes that
+`/work-loop` **may** edit `/prime` when it is the explicit object of an approved brief, the settled-
+correction clause of `docs/work-loop.md` § Execution boundary applies, and the applicable route gates
+have passed. The command file's blanket "never" now contradicts the contract doc and the operator
+decision on its first clause, while remaining correct on the other four (`CLAUDE.md`, permissions,
+hooks, settings).
+
+**Why it was not fixed in the stream that found it.** The operator scoped the authorization narrowly
+— to the current stream's three-condition case — and explicitly declined to fold the command-file
+correction into the same act, calling it "a separately scoped correction" with its own blast radius.
+Fixing it here would have been exactly the kind of incidental, undeclared edit the authorization's
+first condition (`/prime` as the explicit object of an approved brief) exists to exclude.
+
+**Proposal.** Narrow `work-loop.md:247`'s first clause to match the operator's three-condition
+authorization — or point it at `docs/work-loop.md` § Execution boundary and `logs/decisions.md`
+rather than restating a rule that can drift out of sync with the contract doc again. Needs its own
+brief and route classification (likely `reviewed` — a shared command file, one clause).
+
+**Target files:** `ai-resources/.claude/commands/work-loop.md:247`.
+
+---
+
+### 2026-07-29 — `grep` is a shell function that expands `$VAR` inside single quotes, and it returns silent false negatives
+
+- **Status:** logged (pending)
+- **Category:** harness / evidence integrity — the instrument-scope family (`:22`, 2026-07-24), but a
+  distinct mechanism: there the instrument's *scope* was wrong, here the instrument *silently lies*.
+- **Severity:** high — it converts "I searched and found nothing" into "it does not exist", with no
+  error, no exit-code signal and no visible difference from a true negative. Every command in this
+  repo that reasons from an empty `grep` result is exposed, and several *decide* on emptiness:
+  `/prime` Step 3's urgent scan, `docs/backlog-reconciliation.md`'s keyword-match pass, and the
+  `grep -Fxq` header-existence check at `prime.md:521` whose exit-1 branch **writes a session
+  header**.
+- **Observed, not inferred (2026-07-29, S2-5a5).** While verifying a `/work-loop` premise, the search
+  `grep -n 'for d in "$WORKSPACE_ROOT"/projects' .claude/commands/prime.md` returned **empty**. The
+  loop is plainly at `.claude/commands/prime.md:111`. `type grep` reports:
+  `grep is a shell function from /Users/patrik.lindeberg/.claude/shell-snapshots/snapshot-zsh-*.sh`.
+  The wrapper expands `$WORKSPACE_ROOT` **inside single quotes** — which POSIX quoting guarantees it
+  must not — so the pattern became `for d in ""/projects` and matched nothing. Escaping the dollar
+  (`'...\$WORKSPACE_ROOT...'`) returns the correct hit at `:111`; the unescaped form returns exit 1.
+  Both were run side by side against the same file in the same call.
+- **Why this is more than a quoting nuisance.** The session was one unrun positive control away from
+  reporting "`/prime` Step 1a's sibling-repo loop does not exist" **into a qualification decision** —
+  a fabricated premise of exactly the shape the 2026-07-29 usage-log entry scored **Major** (a
+  repo-scoped instrument answering a workspace-scoped question). The defect was caught only because
+  the empty result contradicted a file already read in the same session. Nothing structural caught
+  it. An empty `grep` in this environment is **not evidence of absence** until a positive control has
+  shown the pattern can match at all — which is the `work-loop.md` § Block formats evidence standard
+  ("an empty result is not evidence until a positive control has shown the check can detect the thing
+  it is looking for") applied to the tool rather than to the finding.
+- **Proposal:** (a) state in `docs/` — harness/evidence rules — that single quotes do **not** protect
+  `$` from the `grep` wrapper, and that literal-`$` patterns must escape it or use the `Grep` tool;
+  (b) require a positive control before any *decision* rests on an empty `grep`, matching the existing
+  evidence standard; (c) audit the decide-on-empty call sites named above — `prime.md:521`'s
+  `grep -Fxq` is the highest-consequence one, since its exit-1 branch writes to `session-notes.md`
+  (its own text already warns "treat exit 1 strictly as not-found → create, never as command failed",
+  which is correct for a *true* negative and dangerous under a *false* one). (d) Worth checking
+  whether the same wrapper affects other snapshot-wrapped commands.
+- **Target files:** `ai-resources/docs/` (new or existing harness/evidence rule),
+  `ai-resources/.claude/commands/prime.md:521`, `ai-resources/docs/backlog-reconciliation.md:80-94`.
 ### 2026-07-29 — `check-foreign-staging.sh` guard degrades to warn-only on any `/handoff`-resumed session
 
 - **Status:** logged (pending)

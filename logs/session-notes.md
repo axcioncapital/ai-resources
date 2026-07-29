@@ -341,3 +341,145 @@ Resumed from a `/handoff` scratchpad mid-Prove on the `2026-07-29-review-layer-c
 ### Open Questions
 
 - A concurrent session was working this same stream in this worktree (four commits, plus dirty `logs/friction-log.md` and `logs/innovation-registry.md` left in place per instruction). Whether it still has uncommitted work is unknown from here — worth confirming before that worktree is used again.
+## 2026-07-29 — Session S1-2dd
+
+**Mandate:** Produce the immutable Shape PLAN for `/work-loop` stream `2026-07-29-prime-minimum-responsibility` — an implementable plan reducing canonical `prime.md` from 830 to ≤300 lines without weakening session initialization or changing the operator experience — done when: the PLAN is written to `logs/loop/2026-07-29-prime-minimum-responsibility-shape.plan.md` with a line budget on every retained `/prime` section, one authoritative owner named for every delegated responsibility, vertical Build slices with dependencies and rollback defined, a stated qualification route for any new durable artifact, and the unit stopped at G1 for Codex review.
+- Out of scope: Slices 2, 3, 4 and 5 — this session executes Slice 1 only. Prove and Land are separate units.
+- Files in scope: .claude/commands/prime.md, .claude/commands/session-start.md, .claude/commands/session-plan.md, .claude/commands/build-context.md, .claude/commands/work-loop.md, .claude/agents/context-discovery.md, .claude/hooks/check-foreign-staging.sh, docs/work-loop.md, docs/session-marker.md, docs/context-pack-schema.md, docs/backlog-reconciliation.md, logs/scripts/run-manifest.sh, logs/loop/2026-07-29-prime-minimum-responsibility-frame.evidence.md, logs/loop/2026-07-29-prime-minimum-responsibility-frame.brief.md, logs/missions/lean-prime-2026-07.md
+- Stop if: a stated premise fails verification at execution time — report the failure rather than build the plan on it.
+- Required outputs: logs/loop/2026-07-29-prime-minimum-responsibility-shape.brief.md, logs/loop/2026-07-29-prime-minimum-responsibility-shape.plan.md, logs/loop/2026-07-29-prime-minimum-responsibility-shape.evidence.md, logs/loop/2026-07-29-prime-minimum-responsibility-build-1.brief.md, logs/loop/2026-07-29-prime-minimum-responsibility-build-1.evidence.md
+- Mission: lean-prime-2026-07
+
+**Mandate amended 2026-07-29, after G1.** The block above was written for the **Shape** unit, whose defining property is that the object under work stays untouched — hence its original `Out of scope: editing any object under work`. G1 then approved the slice list, the Shape unit closed, and Build unit `-build-1` opened to execute **Slice 1**, which edits `prime.md` and nine other files by design. The footprint was widened to Slice 1's approved census and the stale out-of-scope clause replaced. Surfaced by `check-foreign-staging.sh`, which blocked the Slice 1 commit against the narrower footprint — the guard working as intended, not overridden. `.codex/agents/context-discovery.toml` was briefly edited by Slice 1 and has been **reverted** (operator call, 2026-07-29): `.gitignore:52-59` classifies `.codex/` as an unmaintained operator experiment whose adoption is a separate lifecycle decision, so syncing it inside a slice was out of bounds. It is correctly absent from the fields above, Slice 1's tracked census is 9 files, and `git revert` on `1b96aa6` is a complete rollback. See the build-1 evidence, R2.
+
+### Summary
+
+Continued `/work-loop` stream `2026-07-29-prime-minimum-responsibility` from the prior handoff.
+Produced `shape.plan-v4.md`, a measured package amendment showing `prime.md` cannot reach ≤430 or
+≤300 under a relocation-only package (behaviour-preserving lands 419, aggressive 316 — both short).
+Then executed an operator decision resolving the mission's outstanding non-negotiable — `/work-loop`
+may edit `/prime` under three conditions, recorded in `logs/decisions.md` with the prior process
+violation left on the record rather than erased. Re-scoped Slice 2 from a narrow allocator-only
+capability to one "Prime runtime delegation" capability and opened its record and hand-off brief,
+suspended pending `/develop-ai-resource` qualification. No edit was made to `prime.md` itself.
+
+### Decisions Made
+
+Both substantive decisions were operator-directed and are formally recorded in `logs/decisions.md`
+(not restated here): (1) the `/work-loop`-may-edit-`/prime` scope resolution — three conditions,
+ratifies Slices 1 and 3, process violation stays on record, `work-loop.md:247` stays stale pending a
+separately scoped fix; (2) plan-v4's falsification conclusion is scoped to the relocation-only
+package, not to ≤300 generally — recorded as a corrected reading, plan-v4 itself left unedited
+(immutable per `docs/work-loop.md` § Artifacts). One routine judgment call: severity levels on the
+two findings queued to `improvement-log.md` at wrap (medium-high, medium — reasoned in each entry).
+
+### Risky actions
+
+**A gate that should have fired but didn't, discovered and recorded this session (not newly risky
+today).** The mission's non-negotiable required an operator decision in `logs/decisions.md` before
+any `/work-loop` unit edited `prime.md`; Slices 1 and 3 (prior sessions) edited it first and the
+decision entry did not exist until this session. Fully disclosed and recorded in `logs/decisions.md`,
+2026-07-29, which explicitly forbids any future session from citing it as evidence the decision
+preceded the edits. No destructive git operation, no push, and no permission bypass occurred this
+session.
+
+### Next Steps
+
+- Run `/develop-ai-resource` in upstream mode against `logs/loop/2026-07-29-prime-minimum-responsibility-build-2.brief.md` (capability: `prime-runtime-delegation`, record at `projects/axcion-ai-system-owner/development/prime-runtime-delegation.md`). Do not preselect a shape — reuse, one script, several scripts, or no build are all admissible.
+- Before Step 3 of that pipeline: confirm the operator's posture on Agent-tool use — `/risk-check` and `/qc-pass` both dispatch subagents, and this session's standing no-Agent-tool-unless-asked instruction is a live, already-logged conflict with no documented precedence rule.
+- After qualification returns: produce the measured package amendment (resulting `prime.md` line count **and** runtime cost) before Slice 2 resumes, per the brief's constraints.
+- Separately: `.claude/commands/work-loop.md:247` needs its own scoped correction — queued to `improvement-log.md` this wrap, not yet actioned.
+- Consider a `/mission` update to `lean-prime-2026-07`'s `## Open threads` reflecting the re-scoped capability.
+
+### Open Questions
+
+None beyond what `projects/axcion-ai-system-owner/development/prime-runtime-delegation.md`'s
+`## Current phase and next action` already states as the pointer.
+
+### Findings Declined
+
+None — both findings surfaced this session (the work-loop amendment-path contract gap, and the stale
+`work-loop.md:247` line) were queued to `logs/improvement-log.md`, not declined.
+
+## 2026-07-29 — Session S2-5a5
+
+**Work:** Continue `/work-loop` stream `2026-07-29-prime-minimum-responsibility` (mission `lean-prime-2026-07`). Run `/develop-ai-resource` in upstream mode against `logs/loop/2026-07-29-prime-minimum-responsibility-build-2.brief.md` — capability `prime-runtime-delegation`, record at `projects/axcion-ai-system-owner/development/prime-runtime-delegation.md`. Shape is NOT preselected: reuse, one script, several scripts and no build are all admissible.
+- Mission: lean-prime-2026-07
+- **Operator directive, this session:** `/risk-check`, `/qc-pass` and all subagent dispatch are **operator-declined** — recorded as declined, never as passed or completed. Verification is by direct inspection and deterministic executable tests only.
+
+### Summary
+
+Corrected a mis-picked task from `/prime` (caught by the operator before any write), then resumed the
+actual open `/work-loop` unit: build-2 of stream `2026-07-29-prime-minimum-responsibility` (mission
+`lean-prime-2026-07`). Ran `/develop-ai-resource` in upstream mode against the build-2 brief under the
+operator directive above. Qualified and built one artifact — `logs/scripts/prime-marker.sh`, the
+marker allocator extracted to a real script, proven equivalent to the live `prime.md` block by a
+20/0 differential test under both bash and zsh — and **declined** the brief's other two candidate
+responsibilities after re-deriving their premises: two of the brief's four premises were false as
+stated. Also found and logged a high-severity harness defect (a shell `grep` wrapper that silently
+mis-evaluates single-quoted `$VAR` patterns), caught only because a positive control was run before
+trusting an empty search result inside this same qualification.
+
+### Decisions Made
+
+- **Capability record `prime-runtime-delegation.md`, D3:** build the allocator only; decline Step 1a's
+  and Step 1d's scans for v1, each with a stated reopening trigger; keep the allocator's 88 comment
+  lines **in the script** rather than relocating them to `docs/session-marker.md` — a deliberate
+  deviation from plan-v3's slice text, reasoned in D3 (zero orientation cost in a script vs. a read
+  cost in a doc; co-location with the code they guard).
+- **Gates:** `/risk-check`, `/qc-pass`, all subagent dispatch — operator-directed decline this session,
+  recorded as declined (never passed, never waived) in the evidence file, the capability record's D3,
+  and both commit messages.
+- **Routine:** logged the `grep`-wrapper finding at `high` severity given its blast radius (several
+  commands decide on an empty `grep` result, one of which writes a session header on that branch) —
+  reasoned inline in the improvement-log entry.
+
+### Risky actions
+
+None taken. One near-miss avoided, not executed: a `grep` instrument bug nearly produced a fabricated
+premise (an empty search read as "this code doesn't exist") inside a qualification decision — caught
+by running a positive control on the instrument before trusting the result, so nothing false shipped.
+Logged as a harness defect below, not a materialized session risk.
+
+### Next Steps
+
+1. Produce the measured package amendment before Slice 2 resumes — two of its three inputs are now
+   measured (`prime.md` 635 → ~493 projected; orientation-cost delta −10,870 chars per read × 29
+   consumers); the third (what merged Slice 4+5 can still reach) is unmeasured.
+2. Resume Build Slice 2: replace `prime.md` Step 8k with a call to `logs/scripts/prime-marker.sh`,
+   **and repoint `logs/scripts/prime-allocator.test.sh` at the script in the same commit** — landing
+   one half without the other recreates the "green run over dead code" defect that file's own header
+   already documents from 2026-07-14.
+3. Decide on independent Codex review before or alongside the wiring — the route is `challenged` and
+   that obligation is currently **unmet**, not waived, per operator direction this session.
+- `/work-loop` picks this up naturally next session via Tier 1 resume (`active_unit` still build-2).
+
+### Open Questions
+
+None beyond what the capability record's `## Current phase and next action` already states.
+
+### Findings Declined
+
+- **The initial mis-pick of the wrong `/prime` menu item** — declined: caught and corrected before any
+  write (zero cost), and matches the already-extensively-logged assert-from-recall failure family;
+  no new prevention beyond what that family already prescribes (verify session state before acting on
+  an ambiguous instruction).
+- **Premise: `mission.md:47-48` does not duplicate Step 1d's scan** — declined for the improvement-log
+  channel: fully recorded durably in the capability record's D3 and the unit's evidence file, which is
+  the correct durable home for a brief-specific verification finding, not a recurring infra defect.
+- **Premise: Step 1a's scan is only partly deterministic (classification half is judgement)** — same
+  disposition and same reasoning as above; recorded in D3 and the evidence file.
+- **`prime-allocator.test.sh`'s awk-extraction fragility** — declined: pre-existing and already
+  self-documented in that file's own header comment (`:8-16`, dated 2026-07-14); not new this session.
+- **`run-manifest.sh` restates `/prime` marker semantics in 11 comment sites** — declined: an
+  informational observation from this session's verification pass, comments only (no duplicated
+  logic), no maintenance-drift risk beyond a future edit updating one without the other — not worth a
+  separate queue entry.
+
+Findings: 6 — queued 1 (severity: high), declined 5. 1 + 5 = 6.
+
+## 2026-07-29 — Session S3-060
+
+**Work:** Continue `/work-loop` stream `2026-07-29-prime-minimum-responsibility`, unit **build-2** (mission `lean-prime-2026-07`). In order: (1) update the measured package amendment — record that **only `prime-marker.sh` qualified**, and that the two judgment-bearing scans (Step 1a's git cross-check, Step 1d's mission scan) **remain in `/prime`**; (2) resume **Build Slice 2** — replace `prime.md` Step 8k with a call to `logs/scripts/prime-marker.sh` **and** repoint `logs/scripts/prime-allocator.test.sh` at the script **in the same commit**; (3) run both test suites; (4) **stop after closing Build-2 — do not begin Slice 4.**
+- Mission: lean-prime-2026-07
+- **Operator directive, this session:** `/risk-check`, `/qc-pass` and all subagent dispatch are **operator-declined** — recorded as declined, never as passed or completed. Verification is by direct inspection and deterministic executable tests only.

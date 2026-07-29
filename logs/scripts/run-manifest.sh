@@ -35,7 +35,8 @@
 #   Manifests live under the CALLER's checkout, same convention as the other log scripts:
 #   `${CLAUDE_PROJECT_DIR:-$(pwd)}/logs/runs/`. Override with `--runs-dir`.
 #
-# Two-end contract: `/session-start` Step 3 and `/prime` Step 8c.7 call `start`;
+# Two-end contract: `/session-start` Step 3 calls `start` (the sole caller since
+# 2026-07-29 — `/prime` auto mode reaches it by delegating to `/session-start`);
 # `/wrap-session` calls `close`. Consumers R4 / M-D2 will read these files once they land.
 
 set -uo pipefail

@@ -14,7 +14,7 @@ The discovery work — classifying the task, reading the project's CLAUDE.md as 
 - **Mid-session pivot** — switching to a sub-task; refresh context for the narrower scope without writing a new mandate.
 - **Phase 1 evaluation** — testing the engine on real tasks against Brief 1's evaluation rubric (right files / no missing dep / no stale content / handoff improves execution / reduces operator effort / safe to act from pack alone).
 
-This command does NOT write a mandate, does NOT chain into `/session-plan`, and does NOT begin any session-init flow. For session-init context, the engine auto-fires inside `/session-start` Step 2.4 and `/prime` Step 8c.4.5.
+This command does NOT write a mandate, does NOT chain into `/session-plan`, and does NOT begin any session-init flow. For session-init context, the engine auto-fires inside `/session-start` Step 2.4 — including on `/prime`'s auto-mode path, which reaches it by delegating to `/session-start`.
 
 ## Steps
 

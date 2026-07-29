@@ -359,156 +359,51 @@ Full backlog & inbox: /open-items
    - Else, emit exactly one line: `This session serves which active mission? {[1] <id> — <name> … [N] …} — or 'none'.` Parse the reply: a number → that mission's id; `none` / empty / anything else → no mission. One prompt only; default is `none`.
    - Carry `MISSION_ID` forward. If unset/`none`, the session has no mission bullet and everything downstream proceeds exactly as today.
 
-   **Wiring:** 8a and 8b prepend `{mission:<id>}` to the args passed to `/session-start` (which strips and records it — see `session-start.md` Step 1). 8c writes the `- Mission: <id>` bullet inline in its Step 8c.7 mandate block. When `MISSION_ID` is unset, none of this happens.
+   **Wiring:** all three branches prepend `{mission:<id>}` to the args passed to `/session-start`, which strips it and writes the `- Mission: <id>` bullet (see `session-start.md` Step 1). 8c does this at its Step 8c.9 dispatch, alongside `{gate:auto}` and `{plan:overwrite}`; it no longer writes the bullet itself. When `MISSION_ID` is unset, none of this happens.
 
    **Cross-repo note:** the pre-write cross-repo mission guard (Steps 8a sub-step a0, 8c sub-step 2.5) fires *before* this binding, deriving the picked mission's repo from `ACTIVE_MISSIONS` (Step 1d), not from `MISSION_ID` here — so a wrong-repo pick is caught before any marker/header write. Do not move Step 8m earlier to "cover" that case; the guard already does, and 8m must stay after the write per the marker contract. (8b/free-text needs no guard — there is no `[mission:<id>]` menu item to mis-pick.)
 
 8k. **Marker allocation (shared sub-step — referenced by 8a / 8b / 8c).** Allocate this session's marker per the TOCTOU Phase 2+3 atomic contract (canonical: `docs/session-marker.md`). Produces `${TODAY}` and `${MARKER}`, and writes `logs/.session-marker` plus the per-id `logs/.session-marker-${CLAUDE_CODE_SESSION_ID}`. Run it once per non-plan-mode dispatch — after the branch's cross-repo mission guard (8a sub-step a0 / 8c sub-step 2.5) and before the branch's header-existence check.
 
-   **Caller contract — ordering is the caller's responsibility (mirrors 8m's Wiring note).** This sub-step produces `${MARKER}` and writes only the marker files; it does NOT touch `session-notes.md`. The calling branch owns the rest of the marker → header → mtime ordering: after 8k returns, run the `grep -Fxq` header-existence check, append this session's marker-bearing header (with the branch's own work-description text), then write `logs/.prime-mtime` — in that order. Marker before header so the header can embed `${MARKER}`; mtime after the append so `/session-start` Step 0.5 sees this session's own write. `/session-start` Step 3 and `/session-plan` Step 0 both require THIS session's marker-bearing header to exist.
+   **`logs/scripts/prime-marker.sh` is the executing owner of this logic — call it, never reinline it.** Run it from the repository root and split its single stdout line:
 
    ```bash
-   TODAY=$(date '+%Y-%m-%d')
-   # Allocate N = 1 + the highest S{N} seen across FOUR sources, then CLAIM it atomically.
-   # Take the MAX of all four; never trust one alone (each sees a different slice of the
-   # same S{N} namespace):
-   #   (a) logs/.session-marker        — this checkout's last allocation.
-   #   (b) session-notes.md, worktree  — headers this checkout has written.
-   #   (c) session-notes.md, ALL refs  — headers a WORKTREE session allocated and COMMITTED.
-   #   (d) the shared claim dir        — allocations IN FLIGHT in any checkout, committed or not.
-   #
-   # (d) is the fix for the defect (a)-(c) cannot see. A git worktree is a separate checkout
-   # with its own (a) and its own (b), and (c) only sees what has been COMMITTED — so an
-   # UNCOMMITTED, in-flight allocation in another checkout is invisible to all three, and two
-   # checkouts hand out the SAME S{N}. The duplicate `## <today> — Session S{N}` header then
-   # lands the moment the branch merges, breaking the `grep -Fxq` "does my header exist" check
-   # that /prime 8a, /session-start Step 3 and /session-plan Step 0 all rely on.
-   # Real incidents: 2026-07-13 S6 (committed-header collision → fixed by (c)) and
-   # 2026-07-13 S11 (uncommitted in-flight collision → (c) did not cover it; S12 yielded by hand).
-   #
-   # CLAIMING IS ATOMIC, NOT ADVISORY. `mkdir` is atomic on POSIX: exactly one caller can create
-   # a given directory, and every other caller gets EEXIST. So the claim loop below is a genuine
-   # mutex across checkouts — not merely a narrower race window. Two /prime runs firing at the
-   # same instant CANNOT both win the same S{N}; the loser sees EEXIST and takes the next number.
-   #
-   # Do NOT "fix" this by making worktrees reserve markers up front — that reintroduces the
-   # shared allocator worktrees exist to remove. A claim is made at allocation time, by whoever
-   # allocates. Nothing is held; nothing is reserved ahead.
-   #
-   # ⚠ KNOWN GAP, ACCEPTED (operator call, 2026-07-13 S13): a checkout running an OLD copy of
-   # this block neither writes claims nor reads them. `prime.md` is a REAL FILE in a worktree
-   # (not a symlink), so a worktree on a branch predating this change keeps allocating blind, and
-   # the mutex protects only the checkouts that have it. Not a flaw in the mechanism — the cost of
-   # the mechanism living in a branch-tracked file. Refresh (rebase/merge) a long-lived worktree
-   # branch before trusting the mutex across it. See docs/session-marker.md § Known gap.
-   #
-   # FAIL-SAFE INVARIANT — LOAD-BEARING, DO NOT INVERT:
-   # HIGH is seeded from the marker file BEFORE any scan, and every scan below only ever RAISES
-   # it. So a git failure, a missing common dir, or /prime running outside a git repo degrades to
-   # the old marker-file-only behaviour — it can NEVER reset HIGH to 0 and allocate S1 over an
-   # existing S5. Any future edit that scans first and consults the marker file second
-   # reintroduces exactly that destructive regression. (friction-log.md 2026-07-13.)
-   HIGH=0
-   if [ -f logs/.session-marker ]; then                         # (a) — seeds HIGH. Must stay first.
-     PREV=$(cat logs/.session-marker)
-     case "$PREV" in
-       # SUFFIX-TOLERANT, AND THIS IS THE MOST DANGEROUS LINE IN THE ALLOCATOR.
-       # Markers now read `2026-07-14 S7-a4f`, not just `2026-07-14 S7`. The old
-       # `${PREV##*S}` yielded `7-a4f`, which the `*[!0-9]*` guard below REJECTS — leaving
-       # HIGH=0, so the next allocation is S1 ON TOP OF AN EXISTING S7. That is precisely the
-       # "destructive regression" the invariant above warns against, and it would have shipped
-       # silently. Strip the date, strip the leading S, then strip the suffix — never `##*S`,
-       # which would also cut at an `S` inside the id suffix.
-       "${TODAY} S"*) tok="${PREV#* }"; n="${tok#S}"; n="${n%%-*}"
-                      case "$n" in ''|*[!0-9]*) ;; *) [ "$n" -gt "$HIGH" ] && HIGH="$n";; esac;;
-     esac
-   fi
-   for n in $( { grep -hoE "^## ${TODAY} — Session S[0-9]+" logs/session-notes.md 2>/dev/null   # (b)
-                 git grep -hoE "^## ${TODAY} — Session S[0-9]+" \
-                     $(git for-each-ref --format='%(refname)' refs/heads 2>/dev/null) \
-                     -- logs/session-notes.md 2>/dev/null                                       # (c)
-               } | grep -oE '[0-9]+$' ); do
-     case "$n" in ''|*[!0-9]*) continue;; esac
-     [ "$n" -gt "$HIGH" ] && HIGH="$n"
-   done
-   # (d) Shared claim dir. Empty CLAIMS => degrade to (a)-(c) silently and safely (fail-safe).
-   CLAIMS=""
-   GIT_COMMON=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)
-   if [ -n "$GIT_COMMON" ] && [ -d "$GIT_COMMON" ]; then
-     # `--path-format=absolute` is REQUIRED: the bare command returns a RELATIVE `.git` from a
-     # main checkout but an ABSOLUTE path from a worktree. Without it this resolves against the
-     # wrong cwd. (Verified 2026-07-13.)
-     #
-     # SCOPE the namespace by the cwd's path INSIDE the repo. Worktrees of one repo share a common
-     # dir AND sit at the repo root (empty prefix) → they SHARE a claim namespace, which is exactly
-     # what the mutex needs. But a project that is a plain SUBDIRECTORY of a repo — e.g.
-     # projects/axcion-website/, which is NOT its own repo yet keeps its own logs/session-notes.md
-     # and therefore its own S{N} sequence — would otherwise share a claim namespace with unrelated
-     # siblings under the same .git, inflating its S{N}. Scoping keeps namespace == session-notes.
-     SCOPE=$(git rev-parse --show-prefix 2>/dev/null | tr -d '\n' | tr -c 'A-Za-z0-9._-' '-')
-     [ -z "$SCOPE" ] && SCOPE="_root"
-     CLAIMS="$GIT_COMMON/axcion-session-markers/$SCOPE"
-     mkdir -p "$CLAIMS" 2>/dev/null || CLAIMS=""
-   fi
-   if [ -n "$CLAIMS" ]; then
-     # `find`, NOT a glob. The Bash tool's real shell is ZSH, where an UNMATCHED glob triggers
-     # NOMATCH: the command errors and the loop body never runs — which is exactly the state on
-     # the FIRST /prime of every day, in every repo. Under bash the literal survives and `[ -d ]`
-     # skips it, so a bash-only test PASSES while the real shell CRASHES. Verified both ways,
-     # 2026-07-13 (caught by the end-time /risk-check). Do NOT "simplify" this back to a glob.
-     for n in $(find "$CLAIMS" -mindepth 1 -maxdepth 1 -type d -name "${TODAY}-S*" 2>/dev/null \
-                | sed 's|.*-S||'); do
-       case "$n" in ''|*[!0-9]*) continue;; esac
-       [ "$n" -gt "$HIGH" ] && HIGH="$n"
-     done
-     # Prune claims not dated today (bounded growth). -type d never follows symlinks here, and
-     # -mindepth 1 plus the non-empty CLAIMS guard above make the rm -rf reach nothing outside
-     # this directory.
-     find "$CLAIMS" -mindepth 1 -maxdepth 1 -type d ! -name "${TODAY}-*" -exec rm -rf {} + 2>/dev/null
-   fi
-   # SESSION-ID SUFFIX — this is what actually makes collisions IMPOSSIBLE, rather than merely
-   # unlikely. The claim-dir mutex below narrows the race but cannot close it: a checkout
-   # running an older copy of prime.md neither writes claims nor reads them, so it allocates
-   # blind (the "known gap" above — it produced FOUR real collisions in two days). A marker
-   # carrying 3 characters of this session's own id cannot collide with another session's
-   # marker no matter what N either picks, because no two sessions share an id. The uniqueness
-   # now lives in the NAME, not in a lock every participant must honour. (The mutex is retained
-   # as belt-and-braces — it still yields tidy sequential numbers — but it is no longer
-   # load-bearing for correctness.)
-   #
-   # Degrades safe: no CLAUDE_CODE_SESSION_ID (older CLI) → empty suffix → legacy bare S{N},
-   # exactly today's behaviour. Readers accept both grammars.
-   ID3=$(printf '%s' "${CLAUDE_CODE_SESSION_ID:-}" | tr -cd 'A-Za-z0-9' | cut -c1-3)
-   if [ -n "$ID3" ]; then SFX="-${ID3}"; else SFX=""; fi
-
-   # Atomic claim loop. mkdir succeeds for exactly one caller; the loser bumps and retries.
-   N=$((HIGH + 1))
-   while : ; do
-     if [ -z "$CLAIMS" ]; then MARKER="S${N}${SFX}"; break; fi        # no common dir → no mutex, old behaviour
-     if mkdir "$CLAIMS/${TODAY}-S${N}" 2>/dev/null; then        # ← the atomic step
-       MARKER="S${N}${SFX}"
-       printf '%s\n' "${CLAUDE_CODE_SESSION_ID:-unknown} $(date '+%H:%M:%S')" \
-         > "$CLAIMS/${TODAY}-S${N}/owner" 2>/dev/null           # debug breadcrumb only; never read for logic
-       break
-     fi
-     N=$((N + 1))
-     if [ "$N" -gt 999 ]; then MARKER="S${N}${SFX}"; break; fi        # runaway guard — cannot spin forever
-   done
-   echo "${TODAY} ${MARKER}" > logs/.session-marker
-   # Identity oracle (Option 2′): also write a per-session-id marker file no concurrent /prime can clobber.
-   [ -n "${CLAUDE_CODE_SESSION_ID}" ] && echo "${TODAY} ${MARKER}" > "logs/.session-marker-${CLAUDE_CODE_SESSION_ID}"
-   # Orphan cleanup — REMOVED here (2026-07-18), owned by detect-concurrent-session.sh.
-   # The old "prune per-id markers not dated today" loop was a category error: a marker's
-   # date records when its session STARTED, never whether it ENDED — so it deleted a live
-   # overnight session's marker (making that session invisible to every guard) while
-   # leaving same-day ghosts armed. The SessionStart hook now prunes markers on LIVENESS
-   # (no foreign Claude CLI process with cwd in this checkout → provably dead → rm),
-   # fires before any /prime can run, and is registered once at the user level by
-   # absolute path — so stale worktree copies of THIS file cannot carry the old
-   # behaviour the way a prime-side prune would. Do not re-add a date-based prune.
+   MARKER_LINE=$(bash logs/scripts/prime-marker.sh) || exit 1
+   TODAY="${MARKER_LINE%% *}"; MARKER="${MARKER_LINE#* }"
    ```
 
+   The fail-safe seed invariant, the atomic `mkdir` claim, the zsh `find`-not-glob rule and the session-id suffix are all load-bearing. They live in the script beside the code they guard, and `logs/scripts/prime-allocator.test.sh` is the tripwire that holds them. **Reinlining this logic here would restore the defect the extraction fixed** — code inside an executable prompt is validated by *reading* rather than by *running*, and its one executing consumer had to scrape it out of markdown by awk. That scrape reported "12 passed, 0 failed" against a stale copy on 2026-07-14. (Extracted 2026-07-29, capability `prime-runtime-delegation`.)
+
+   **Caller contract — ordering is the caller's responsibility (mirrors 8m's Wiring note).** This sub-step produces `${MARKER}` and writes only the marker files; it does NOT touch `session-notes.md`. The calling branch owns the rest of the marker → header → mtime ordering: after 8k returns, run the `grep -Fxq` header-existence check, append this session's marker-bearing header (with the branch's own work-description text), then write `logs/.prime-mtime` — in that order. Marker before header so the header can embed `${MARKER}`; mtime after the append so `/session-start` Step 0.5 sees this session's own write. `/session-start` Step 3 and `/session-plan` Step 0 both require THIS session's marker-bearing header to exist.
+
    Same-day re-invocations increment within the day (`S1` → `S2` → …); a new day resets to `S1`.
+
+8h. **Session-entry write (shared sub-step — referenced by 8a / 8b / 8c).** Allocate the marker, ensure this session's marker-bearing header exists, and stamp the mtime — in that order, which is load-bearing. Takes one parameter, `WORK_DESC` (the work-description line the caller wants recorded under the header); everything else is identical across the three branches, which is why this lives once.
+
+   Run it after the caller's cross-repo mission guard (8a sub-step a0 / 8c.4) and before the caller invokes `/session-start`.
+
+   1. **Marker.** Run the **Step 8k marker-allocation sub-step** to obtain `${TODAY}` and `${MARKER}`. 8k writes `logs/.session-marker` and the per-id marker; it does NOT touch `session-notes.md` — that is this sub-step's job.
+
+   2. **Marker-bearing header.** Check for THIS session's header with a literal whole-line grep (full-file, so immune to entry length; `-Fx` matches the em-dash and `${MARKER}` verbatim with no regex risk):
+
+      ```
+      Bash(grep -Fxq "## ${TODAY} — Session ${MARKER}" logs/session-notes.md)
+      ```
+
+      **exit 0 → header already present** (rare — same-marker re-invocation): reuse it and append `WORK_DESC` beneath it. **exit 1 → header absent** (the common case at `/prime` time): append a new `## ${TODAY} — Session ${MARKER}` header with `WORK_DESC` as its work description. Treat exit 1 strictly as "not found → create", **never** as "command failed → skip the write" — suppressing this session's header breaks the `/session-start` Step 3 and `/session-plan` Step 0 preconditions, both of which require it to exist.
+
+      Foreign concurrent sessions write under their own marker-bearing headers (e.g. `## YYYY-MM-DD — Session S2`); those do **not** count as "this session's header". The marker is the disambiguator. The pre-Phase-2 "no duplicate same-day header" rule is replaced by "this session writes only under its own marker-bearing header".
+
+   3. **mtime.** **After the append succeeds**, write `session-notes.md`'s mtime to `logs/.prime-mtime` (consumed by `/session-start` Step 0.5's foreign-write check):
+
+      ```bash
+      stat -f %m logs/session-notes.md 2>/dev/null > logs/.prime-mtime \
+        || stat -c %Y logs/session-notes.md 2>/dev/null > logs/.prime-mtime
+      ```
+
+   **Order is marker → header append → mtime, and it is not arbitrary.** Marker first, so the header can embed `${MARKER}`. mtime last, so `/session-start` Step 0.5 sees this session's own write rather than a pre-write timestamp — reversing these two makes every session look like it was written by a foreign one.
+
+   *(Consolidated 2026-07-29. This sequence was previously written three times — 8a.3.a, 8b.3.a and 8c.3 — wrapped around the already-shared 8k allocator. The three differed only in `WORK_DESC`, which is now the parameter. Edit this one block; there is nothing to keep in sync across branches.)*
 
 8a. **Task selected by number.**
    1. Resolve the number to its menu item → `TASK_TEXT` (the plain-English task text).
@@ -521,24 +416,7 @@ Full backlog & inbox: /open-items
          > ⚠ This task belongs to mission `{id}`, which lives in `{repo}` — but you're priming in `{CWD_REPO}`. Setting it up here would write the marker/header and run `/session-start` in the *wrong* repo. Open `{repo}` as your session folder and re-run `/prime` there to work on this mission. (Reply `here` to override and set it up in the current repo anyway.)
 
          Wait for the operator. On `here` → proceed to sub-step a. On anything else → stop, write nothing. A same-repo pick (mission repo == `CWD_REPO`) skips this guard silently. Derive the repo from `ACTIVE_MISSIONS` here, not from Step 8m's later `MISSION_ID` — this guard must fire before the sub-step-a marker/header write.
-      a. **Determine this session's marker.** Run the **Step 8k marker-allocation sub-step** (shared with 8b/8c) to allocate this session's number and obtain `${TODAY}` and `${MARKER}`. 8k writes `logs/.session-marker` and the per-id marker; it does NOT touch `session-notes.md` — the header write below is this branch's responsibility.
-
-         **Ensure this session's marker-bearing entry exists** in `/logs/session-notes.md`. Check for THIS session's header with a literal whole-line grep (full-file, so immune to entry length; `-Fx` matches the em-dash and `${MARKER}` verbatim with no regex risk):
-         ```
-         Bash(grep -Fxq "## ${TODAY} — Session ${MARKER}" logs/session-notes.md)
-         ```
-         **exit 0 → header already present** (rare — same-marker re-invocation): reuse it, append `TASK_TEXT` as a work-description line beneath it. **exit 1 → header absent** (the common case at `/prime` time): append a new `## ${TODAY} — Session ${MARKER}` header with `TASK_TEXT` as the work description. Treat exit 1 strictly as "not found → create", never as "command failed → skip the write" — suppressing this session's header breaks the `/session-start` / `/session-plan` precondition noted below.
-
-         Foreign concurrent sessions write under their own marker-bearing headers (e.g., `## YYYY-MM-DD — Session S2`); those do NOT count as "this session's header." The marker is the disambiguator. The pre-Phase-2 "no duplicate same-day header" rule is replaced by "this session writes only under its own marker-bearing header." This must happen before step c — `/session-start` Step 3 and `/session-plan` Step 0 require THIS session's marker-bearing header to exist.
-
-         **After the append succeeds**, write `session-notes.md`'s mtime to `logs/.prime-mtime` (for `/session-start` Step 0.5's foreign-write check):
-
-         ```bash
-         stat -f %m logs/session-notes.md 2>/dev/null > logs/.prime-mtime \
-           || stat -c %Y logs/session-notes.md 2>/dev/null > logs/.prime-mtime
-         ```
-
-         Order: marker first (top of step a), header append (middle), mtime last. Marker before append so the header can embed `${MARKER}`; mtime after append so `/session-start` Step 0.5's check sees this session's own write.
+      a. **Session-entry write.** Run the **Step 8h shared sub-step** with `WORK_DESC = TASK_TEXT`. It allocates the marker (via 8k), ensures this session's marker-bearing header exists, and stamps `logs/.prime-mtime`, in that order. This must happen before step c — `/session-start` Step 3 and `/session-plan` Step 0 both require THIS session's marker-bearing header to exist.
       a2. **Mission binding.** Run the Step 8m sub-step (skips silently if no active missions). If it resolves a `MISSION_ID`, prepend `{mission:<id>}` to the `/session-start` args in step b.
       b. Invoke the `/session-start` command with `TASK_TEXT` as its arguments (becomes the mandate), prefixed with **`{gate:post-plan}`** — always, on this branch — and additionally with `{mission:<id>}` if step a2 bound one. It runs its own mandate-confirmation prompt — that is expected; do not suppress it.
 
@@ -567,22 +445,7 @@ Full backlog & inbox: /open-items
 
       Then stop.
    3. If plan mode is **not** active:
-      a. **Determine this session's marker.** Run the **Step 8k marker-allocation sub-step** (shared with 8a/8c) to allocate this session's number and obtain `${TODAY}` and `${MARKER}`, then ensure this session's marker-bearing entry exists (same contract as Step 8a — see `docs/session-marker.md`).
-
-         Check for THIS session's header with a literal whole-line grep (full-file, immune to entry length; `-Fx` matches the em-dash verbatim):
-         ```
-         Bash(grep -Fxq "## ${TODAY} — Session ${MARKER}" logs/session-notes.md)
-         ```
-         **exit 0** → reuse the existing header, append `TASK_TEXT`. **exit 1** → create a new `## ${TODAY} — Session ${MARKER}` header with `TASK_TEXT`. Exit 1 means "not found → create", never "command failed → skip".
-
-         **After the append succeeds**, write `session-notes.md`'s mtime to `logs/.prime-mtime`:
-
-         ```bash
-         stat -f %m logs/session-notes.md 2>/dev/null > logs/.prime-mtime \
-           || stat -c %Y logs/session-notes.md 2>/dev/null > logs/.prime-mtime
-         ```
-
-         Order: marker → header append → mtime (same contract as Step 8a.3.a).
+      a. **Session-entry write.** Run the **Step 8h shared sub-step** with `WORK_DESC = TASK_TEXT`.
       a2. **Mission binding.** Run the Step 8m sub-step (skips silently if no active missions). If it resolves a `MISSION_ID`, prepend `{mission:<id>}` to the `/session-start` args in step b.
       b. Invoke the `/session-start` command with `TASK_TEXT` as its arguments (becomes the mandate), prefixed with `{mission:<id>}` if step a2 bound one. It runs its own mandate-confirmation prompt — that is expected; do not suppress it.
       c. After `/session-start` finishes, invoke the `/session-plan` command with `TASK_TEXT` as its arguments (becomes the intent). It writes `logs/session-plan-${TODAY}-${MARKER}.md` (marker-scoped per `docs/session-marker.md`). If THIS session's marker-scoped plan already exists, `/session-plan` Step 0 surfaces a 3-option keep/overwrite/pass2 prompt — that is expected mid-chain; the operator answers it normally.
@@ -592,239 +455,49 @@ Full backlog & inbox: /open-items
 
          **8b passes no `{gate:post-plan}` token** (contrast 8a.3.b). That absence is what preserves this branch's auto-execute behaviour: `/session-plan` Step 8 treats an unset gate as the default and proceeds. Adding the token here would convert 8b into 8a and introduce a pause the operator has not asked for.
 
-8c. **Auto mode.** The operator typed `auto` (optionally with item numbers) — run the picked menu item(s) end-to-end with a single combined approval gate and no per-stage prompts.
+8c. **Auto mode.** The operator typed `auto` (optionally with item numbers) — run the picked menu item(s) end-to-end with a single combined approval gate and no per-stage prompts. **8c owns picking, the guards and dispatch. It does not derive, echo or write the mandate, the manifest or the plan** — `/session-start` and `/session-plan` own those, and 8c reaches them by invoking `/session-start` under `{gate:auto}`.
 
    1. **Resolve PICKED_ITEMS.** Parse the operator's reply:
-      - `auto` / `a` (no number) → `PICKED_ITEMS` = [item #1 from the menu built in Step 5].
-      - `auto N` — or the equivalent `N auto` shape (`^[1-6]\s+auto$`, normalized by Step 7) → `PICKED_ITEMS` = [item #N].
-      - `auto N,M,...` or `auto N M ...` → `PICKED_ITEMS` = [item #N, item #M, ...] in the order the operator gave them. Deduplicate while preserving first-seen order.
+      - `auto` / `a` (no number) → [item #1 from the menu built in Step 5].
+      - `auto N` — or the equivalent `N auto` shape (`^[1-6]\s+auto$`, normalized by Step 7) → [item #N].
+      - `auto N,M,...` or `auto N M ...` → [item #N, item #M, ...] in the order the operator gave them. Deduplicate while preserving first-seen order.
 
-      Validate that every requested number is within the rendered menu range. If any number is out of range, ask once for a valid `auto` reply and re-classify (per Step 7 ambiguity rule). If the menu has zero items, output `No tracked next steps — auto mode needs a task. Tell me what to work on.` and stop.
+      Validate that every requested number is within the rendered menu range. If any is out of range, ask once for a valid `auto` reply and re-classify (per Step 7 ambiguity rule). If the menu has zero items, output `No tracked next steps — auto mode needs a task. Tell me what to work on.` and stop. `PICKED_ITEMS_TEXT` is a short comma-joined preview of the picked items' text; `SINGLE_ITEM` is true when exactly one entry was picked.
 
-      `PICKED_ITEMS_TEXT` is a short comma-joined preview of the picked items' plain-English text (used in operator-facing messages below). `SINGLE_ITEM` is true when `PICKED_ITEMS` has exactly one entry.
+   2. **Per-item done-condition presence-check.** Before any disk write, verify every picked item carries a derivable done-condition — an observable deliverable, check or target (file written, item checked off, finding addressed, commit landed, count reached). The item text plus its source line is the evidence. An item naming only an activity with no observable end-state ("review X", "look into Y", "think about Z") whose source line supplies no target **fails**. Rationale and the logged trigger: `docs/session-marker.md` § Auto-mode done-condition check.
 
-   1.5. **Per-item done-condition presence-check.** Before any disk write (marker, header, mandate, plan — all at Step 8c.3 and later), verify every picked item carries a derivable done-condition. An auto-bundle that includes an unscoped item wastes the single approval gate (and any `/risk-check`) on work that cannot be graded — the item is recognized as unscoped only mid-execution, after the gate has passed (logged: vault W2.4 finding #1 + session-harness friday-act #4, 2026-06-04 S6 — "review the System Owner reference files" entered the executable set with no specifiable done-condition).
+      All items pass → continue to 8c.3. One or more fail → hold them back, write nothing, and emit:
 
-      For each item in `PICKED_ITEMS`, attempt to derive a one-line done-condition — an observable deliverable, check, or target (file written, item checked off, finding addressed, commit landed, count reached). The item text plus its source (the `[urgent]` / `[carryover]` / `[next-up]` line it came from) is the evidence. An item whose text names only an activity with no observable end-state (e.g. "review X", "look into Y", "think about Z") and whose source line supplies no target fails the check.
+      > Auto mode — {K} of {N} picked items have no concrete done-condition and were held back:
+      > {for each held item: `  • {item text} — needs a concrete deliverable (file / check / target). Define it, then re-pick this item.`}
+      >
+      > {if any items passed:} I can proceed with the {M} scoped item(s): {passed-items-text}. Reply `go` to run those, or restate the held item(s) with a deliverable.
+      > {if zero items passed:} Restate the held item(s) with a deliverable (file / check / target), then re-send `auto`.
 
-      - **All items pass** → proceed to Step 8c.2 unchanged.
-      - **One or more items fail** → hold the failing items back. Do NOT write anything yet. Emit:
+      On `go` with a non-empty passed set → set `PICKED_ITEMS` to the passed subset (preserving order), recompute `PICKED_ITEMS_TEXT` / `SINGLE_ITEM`, and continue. On a restated item → re-run this check against the restatement. If zero items passed and the operator does not restate, stop without writing.
 
-        > Auto mode — {K} of {N} picked items have no concrete done-condition and were held back:
-        > {for each held item: `  • {item text} — needs a concrete deliverable (file / check / target). Define it, then re-pick this item.`}
-        >
-        > {if any items passed:} I can proceed with the {M} scoped item(s): {passed-items-text}. Reply `go` to run those, or restate the held item(s) with a deliverable.
-        > {if zero items passed:} Restate the held item(s) with a deliverable (file / check / target), then re-send `auto`.
+   3. **Plan-mode guard.** If a plan-mode system reminder is present in context, output `Auto mode noted: {PICKED_ITEMS_TEXT}. You're in plan mode — I won't write anything yet. Exit plan mode and re-send 'auto' (or 'go') to proceed.` Then stop.
 
-        On `go` with a non-empty passed set → set `PICKED_ITEMS` to the passed subset (preserve order), recompute `PICKED_ITEMS_TEXT` / `SINGLE_ITEM`, and proceed to Step 8c.2. On a restated item → re-run this check against the restatement. If zero items passed and the operator does not restate, stop without writing.
+   4. **Cross-repo mission guard.** If any picked item is `[mission:<id>]`-sourced AND that mission's repo (from `ACTIVE_MISSIONS`, Step 1d) ≠ `CWD_REPO` (Step 0), STOP and emit the same wrong-repo warning as Step 8a's cross-repo guard, listing each offending item and its repo. Wait; on `here` → continue to 8c.5; on anything else → stop, write nothing. This is a **deliberate single-condition exception** to auto mode's "single approval gate, no per-stage prompts" contract (it fires ONLY when a picked mission's repo ≠ `CWD_REPO`) — do not remove it as a stray prompt. It is load-bearing precisely because the 8c.5 header write precedes the approval gate, so this is the only point that stops a wrong-repo header before disk. Derive the repo from `ACTIVE_MISSIONS`, not from the 8c.6 auto-bind (which runs after the write). Same-repo picks skip it silently.
 
-   2. **Plan-mode guard.** If a plan-mode system reminder is present in context, output: `Auto mode noted: {PICKED_ITEMS_TEXT}. You're in plan mode — I won't write anything yet. Exit plan mode and re-send 'auto' (or 'go') to proceed.` Then stop.
+   5. **Session-entry write.** Run the **Step 8h shared sub-step** with `WORK_DESC` = the picked item's plain-English text if `SINGLE_ITEM`, otherwise `Auto multi-item: {item-N text}; {item-M text}; …` listing every picked item separated by `;` in operator order.
 
-   2.5. **Cross-repo mission guard (deliberate auto-mode exception).** Before the Step 8c.3 marker/header write: if any picked item is `[mission:<id>]`-sourced AND that mission's repo (from `ACTIVE_MISSIONS`, Step 1d) ≠ `CWD_REPO` (Step 0), STOP and emit the same wrong-repo warning as Step 8a's cross-repo guard, listing each offending picked item and its repo. Wait; on `here` → proceed to 8c.3; on anything else → stop, write nothing. This is a **deliberate single-condition exception** to auto mode's "single approval gate, no per-stage prompts" contract (fires ONLY when a picked mission's repo ≠ `CWD_REPO`) — do not remove it as a stray prompt. It is load-bearing here because the 8c.3 header write precedes the 8c.6 approval gate, so this is the only point that stops a wrong-repo header before disk. Derive the repo from `ACTIVE_MISSIONS`, not from the Step 8c.3.5 auto-bind (which runs after the write). Same-repo picks skip it silently.
+      **These three writes precede the approval gate by necessity, and `abort` does not roll them back** — see 8c.9.
 
-   3. **Marker resolution + marker-bearing header + mtime marker** (same contract as Step 8a — see `docs/session-marker.md`). Run the **Step 8k marker-allocation sub-step** (shared with 8a/8b) to allocate this session's number and obtain `${TODAY}` and `${MARKER}`, then write the marker-bearing header and mtime as below:
+   6. **Mission auto-bind, then route.** Run the **Step 8m** sub-step in auto-bind-only mode: if any picked item is `[mission:<id>]`-sourced, set `MISSION_ID` to that mission (the first, if several). **Do not emit the interactive binding prompt** — auto mode's contract is one approval gate with no per-stage prompts. If no picked item is mission-sourced, `MISSION_ID` stays unset. Then evaluate `DIRECT` once via the canonical predicate (`docs/session-marker.md` § Direct-route detection). If it cannot be evaluated for any reason, treat it as `DIRECT=0` — fail-safe, meaning the plan file is written.
 
-      Check for THIS session's header with a literal whole-line grep (full-file, immune to entry length; `-Fx` matches the em-dash verbatim):
-      ```
-      Bash(grep -Fxq "## ${TODAY} — Session ${MARKER}" logs/session-notes.md)
-      ```
-      **exit 0** → reuse the existing header, append the work-description line. **exit 1** → create a new `## ${TODAY} — Session ${MARKER}` header. Exit 1 means "not found → create", never "command failed → skip".
+   7. **Compose `MANDATE_TEXT`.** Build the single string `/session-start` Step 2 will parse. **8c does not derive the individual mandate fields and does not echo them.** For `SINGLE_ITEM`, the picked item's work and its concrete deliverable, plus any bound the item states. For multi-item: `Complete picked menu items: (1) {item-N work + deliverable}; (2) {item-M work + deliverable}; …` covering every picked item in operator order, followed by any per-item scope bounds joined with `;`.
 
-      Work-description line text:
-      - If `SINGLE_ITEM`: the picked item's plain-English text.
-      - If multi-item: `Auto multi-item: {item-N text}; {item-M text}; ...` listing every picked item separated by `;` in operator order.
+   8. **Derive `STRUCTURAL_RISK` — and nothing else.** Boolean: true if any picked item touches a structural change class (full list: `ai-resources/docs/audit-discipline.md`). **`/prime` is this field's sole owner**, because 8c.11 owns the `/risk-check` call it drives. Model tier and autonomy posture are **not** derived here — `/session-plan` owns both and discloses them after the plan write.
 
-      Then write `logs/.prime-mtime` (after the header append, never before):
+   9. **Dispatch to `/session-start`, which holds the approval gate.** Invoke it via the Skill tool with `args = "{gate:auto} {plan:overwrite} {mission:<MISSION_ID>, only if bound} {MANDATE_TEXT}"`, and hand it `STRUCTURAL_RISK` for the gate block. Under `{gate:auto}` that command suppresses its Step 2 echo and wait, runs Step 2.4 discovery and Step 2.5 validation in their existing order, then holds **one** approval gate — on **every** engine outcome, including skipped and failed — and on `go` writes the mandate (its Step 3), the run-manifest stub (3.5) and the plan (via `/session-plan`), returning here **without beginning execution**. `{plan:overwrite}` pre-selects `/session-plan` Step 0's overwrite option so the chain does not stop to ask.
 
-      ```bash
-      stat -f %m logs/session-notes.md 2>/dev/null > logs/.prime-mtime \
-        || stat -c %Y logs/session-notes.md 2>/dev/null > logs/.prime-mtime
-      ```
+      **On `abort` nothing further is written and control returns here.** The marker, header and mtime written at 8c.5 remain, because they precede the gate. Output `Auto mode aborted. No mandate, manifest or plan written — today's session header remains.` and stop.
 
-   3.5. **Mission binding (auto-bind only).** Run the Step 8m sub-step in **auto-bind-only mode**: if any picked item is `[mission:<id>]`-sourced, set `MISSION_ID` to that mission (first such, if several). **Do NOT emit the interactive binding prompt in auto mode** — auto mode's contract is a single approval gate with no per-stage prompts. If no picked item is mission-sourced, `MISSION_ID` stays unset. The bound mission (if any) is disclosed in the Step 8c.6 approval gate and written as the `- Mission:` bullet in Step 8c.7.
+   10. **Direct route.** When `DIRECT=1`, `/session-start` Step 4 does not chain to `/session-plan` and no `logs/session-plan-*.md` is written; the mandate and run-manifest still are. The gate block at 8c.9 disclosed this.
 
-   3.6. **Compute `DIRECT` (Commit 2, 2026-07-23).** Evaluate the canonical route predicate once here (`docs/session-marker.md` § Direct-route detection — read the project-root `CLAUDE.md` for an exact `**Execution route:** direct` line; `DIRECT=0` for engineered / absent / malformed / wrong-case). Carry `DIRECT` forward to the Step 8c.6 gate disclosure line and the Step 8c.8 plan-write skip. If unevaluated for any reason, both consumers must treat it as `DIRECT=0` (fail-safe: the plan file is written — today's behaviour).
+   11. **Run `/risk-check` if `STRUCTURAL_RISK` is true.** The plan-time gate per workspace Autonomy Rules #9; the 8c.9 gate disclosed it in advance, so the operator is not surprised. **GO** → continue to 8c.12. **RECONSIDER / NO-GO** → output `Risk-check verdict: {verdict}. Mandate and plan retained on disk. Auto mode paused — review {risk-check report path} before resuming.` and stop; mandate and plan stay on disk for revision. If `STRUCTURAL_RISK` is false, skip silently. **No structural edit may precede this step.**
 
-   4. **Derive mandate fields** inline (matches `/session-start` Step 2 logic without the confirmation prompt). Apply to each picked item, then compose:
-      - `work_scope` — one sentence naming the work and its concrete deliverable. For `SINGLE_ITEM`, derived from the picked item. For multi-item, compose as `Complete picked menu items: (1) {item-N work + deliverable}; (2) {item-M work + deliverable}; ...` listing every picked item.
-      - `exit_condition` — an observable condition (file written, item checked off, finding addressed, commit landed). For `SINGLE_ITEM`, the item's exit. For multi-item, `all picked items closed in their respective source files` unless every item shares a single concrete exit, in which case use that.
-      - `out_of_scope` — `(none stated)` unless any picked item explicitly bounds itself; in multi-item mode, combine any bounds with `;`.
-      - `files_in_scope` — union of inferred source paths across all picked items. Flag as `(inferred)` per `/session-start` Step 3 convention.
-      - `stop_if` — `(none stated)` unless any picked item carries a `[BLOCKING]`-style halt condition; if multiple do, combine with `;`.
-      - `allowed_inputs`, `required_outputs` — leave absent (no `(none stated)` placeholder).
+   12. **Begin execution under the autonomy posture `/session-plan` set.** No further confirmation gate — the 8c.9 approval covered execution for every picked item. Run multi-item picks in the operator-given order and do NOT pause between items; emit a one-line between-gate summary at each item boundary (workspace `Between-gate summaries`). Complete the mandate fully within this session where context allows; if context is clearly constrained, follow the workspace `Context constraint deferral` rule — flag the deferral and log it, do not rush. During execution: run `/qc-pass` on substantive artifacts before declaring them complete, follow `ai-resources/docs/compaction-protocol.md` checkpoints on long work, surface `[SCOPE]` / `[HEAVY]` / `[AMBIGUOUS]` / `[COST]` guardrail flags, and commit directly per the workspace `Commit behavior` rule.
 
-   4.5. **Context discovery (engine pre-step).** Optionally invoke the **`context-discovery` agent** to pre-populate `files_in_scope` / `allowed_inputs` / `required_outputs` from the active project's CLAUDE.md routing map. Mirrors `/session-start` Step 2.4 but runs inline without re-emit (the Step 8c.6 approval gate is the operator's first sight of the mandate).
-
-      **Skip silently if any of these conditions hold** — no warning, no agent invocation, proceed to Step 8c.5:
-
-      a. `work_scope` is fewer than 5 whitespace-separated tokens.
-      b. `work_scope` matches a known meta-command literal: `/prime`, `/open-items`, `/wrap-session`, `/handoff`, `/clear`.
-      c. No `CLAUDE.md` exists at the project root: `! [ -f "$(git rev-parse --show-toplevel 2>/dev/null)/CLAUDE.md" ]`.
-
-      **Otherwise, invoke the agent** via the Agent tool with `subagent_type: context-discovery` and three fields:
-
-      - `TASK_DESCRIPTION = {work_scope}` (from Step 8c.4)
-      - `CWD_PROJECT = $(git rev-parse --show-toplevel)`
-      - `INVOCATION_MODE = auto-prime`
-
-      Parse the agent's first line for outcome class per `ai-resources/docs/context-pack-schema.md § 5b`:
-
-      | First line shape | Outcome | Action |
-      |---|---|---|
-      | `**Pack:** {abs path} \| tracked` or `\| untracked` | `success-enriched` or `success-insufficient` (read readiness booleans in summary lines 5–6 to distinguish) | Read pack frontmatter; apply fields below |
-      | `**Pack:** (skipped — {reason})` | `engine-skipped` | Carry no pack; proceed to 8c.5 |
-      | `**Pack:** (none — engine failed){...}` | `engine-error` | Log one chat line: `Note: context engine failed — {cause from summary, or "no cause given"}. Proceeding with derived mandate.` Carry no pack |
-
-      **No timeout enforcement.** The Agent tool runs to completion; the engine is best-effort. If it never returns, the chain stalls — operator can interrupt and re-invoke without the engine pre-step.
-
-      **For `success-enriched` and `success-insufficient`:** Read the pack file at the path from line 1. Parse YAML frontmatter for `files_in_scope`, `allowed_inputs`, `required_outputs`, `sufficient_to_plan`, `sufficient_to_implement`.
-
-      Apply to derived mandate state:
-      1. `files_in_scope` — REPLACE the `(inferred)` value from Step 8c.4 with the engine's concrete list.
-      2. `allowed_inputs` — SET to engine value if absent in Step 8c.4.
-      3. `required_outputs` — SET to engine value if absent in Step 8c.4.
-      4. Capture `PACK_PATH` (line 1), `PACK_TRACKED` (`tracked` or `untracked` token from line 1), `PACK_OUTCOME` (`success-enriched` or `success-insufficient`), and `PACK_INSUFFICIENT_NOTE` if `success-insufficient` (one short sentence: `"sufficient_to_implement=false, {N} missing-context items"`).
-
-      Carry `PACK_PATH`, `PACK_TRACKED`, `PACK_OUTCOME`, `PACK_INSUFFICIENT_NOTE` forward to Step 8c.6 (approval gate) and Step 8c.7 (mandate write).
-
-   5. **Derive plan fields** inline (matches `/session-plan` Step 2 + 5–7 logic without the per-stage prompts):
-      - `INTENT` — one-sentence summary. For `SINGLE_ITEM`, the item's summary. For multi-item, e.g. `Run {N} picked menu items in order: {short label-1}; {short label-2}; ...`.
-      - `RECOMMENDED_MODEL` — apply `/session-plan` Step 2 three-tier heuristic (deciding → opus; doing → sonnet; mechanical → haiku) to the picked items as a whole. For multi-item, pick the higher-cognitive-load tier across the set (e.g., one deciding item + four doing items → opus). Compare to `ACTIVE_MODEL` from the system-prompt context. Emit `→ /model {shortname}` on mismatch.
-      - `AUTONOMY_POSTURE` — `Full autonomy` default; downgrade to `Gated` if any picked item touches structural change classes (hook edits, permission changes, cross-cutting CLAUDE.md edits, new commands/skills, new symlinks, new always-loaded content, automation with shared-state effects — full list: `ai-resources/docs/audit-discipline.md`).
-      - `STRUCTURAL_RISK` — boolean: true if any picked item triggers any structural class.
-
-   6. **Single approval gate.** Emit one block — this is the only operator-facing pause in auto mode, regardless of how many items were picked. The block below uses chat-echo styling (icons `→` / `·`, multi-bullet layout); the disk-write at Step 8c.7 follows the load-bearing parse contract instead. Do not propagate the gate-block styling to the disk write.
-
-      For `SINGLE_ITEM`, render the **Picked item** line as `**Picked item:** {item text}` with a single **Source** line.
-
-      For multi-item, replace the single **Picked item** / **Source** pair with a `**Picked items:**` numbered list — one line per picked item with its menu number, plain-English text, and source path link. Example:
-
-      ```
-      **Picked items:**
-        1. {item-1 text}  ·  [{source-1 path}]({source-1 path})
-        3. {item-3 text}  ·  [{source-3 path}]({source-3 path})
-        5. {item-5 text}  ·  [{source-5 path}]({source-5 path})
-      ```
-
-      Full gate block:
-
-      ```
-      ## Auto Mode — {YYYY-MM-DD}
-
-      {single-item: **Picked item:** {item text}  /  **Source:** [{source path}]({source path})}
-      {multi-item: **Picked items:** block as shown above}
-
-      **Mandate**
-      → Work: {work_scope} — complete fully within this session where context allows.
-      · Out of scope: {out_of_scope}
-      · Files in scope: {files_in_scope_written}{ (inferred) if applicable}
-      · Done when: {exit_condition}
-      · Stop if: {stop_if}
-      {· Mission: {MISSION_ID} — only if Step 8c.3.5 bound one}
-
-      {if PACK_PATH is set (Step 8c.4.5 produced a pack):}
-      **Context pack** — {PACK_OUTCOME} ({PACK_TRACKED})
-      → `{PACK_PATH}`
-      {if PACK_OUTCOME == success-insufficient:}
-      ⚠ {PACK_INSUFFICIENT_NOTE} — review missing-context items in the pack before execution.
-
-      **Plan**
-      → Intent: {INTENT}
-      → Model: {RECOMMENDED_MODEL} — {match | → /model {shortname}}
-      → Autonomy: {AUTONOMY_POSTURE}
-      {→ Route: direct — no committed plan file will be written (Step 8c.8 skipped); mandate + run-manifest still written. — only if DIRECT=1}
-
-      {if STRUCTURAL_RISK is true:}
-      **Risk-check**
-      → Will run before execution begins (structural class detected). On RECONSIDER or NO-GO, auto mode pauses; mandate and plan are retained on disk for revision.
-
-      ---
-
-      Reply `go` to write mandate + plan and begin execution.
-      Reply `edit` to adjust before writing.
-      Reply `abort` to stop without writing anything.
-
-      Default (no response within the turn): **abort** — nothing written.
-      ```
-
-      **Parser:**
-      - `go` / `y` / `yes` (case-insensitive, trimmed) → proceed to 8c.7.
-      - `abort` → output `Auto mode aborted. Nothing written.` Stop.
-      - `edit` → ask one prompt: `What should change? State corrections in 'b: / a: / r: / f:' syntax (b=work_scope, a=allowed_inputs, r=required_outputs, f=files_in_scope), or other text as a free amendment to work_scope.` Apply corrections, re-emit the gate block once, accept only `go` or `abort` on the re-response. Do not loop further.
-      - Anything else (including free text not preceded by `edit`) → re-ask once: `Reply 'go', 'edit', or 'abort'. Free-text refinements require 'edit' first.` Accept only `go` / `edit` / `abort` on the re-response.
-
-   6.5. **`Files in scope` mechanical check (pre-write).** Auto mode has no `/session-start` Step 2.5 equivalent — it derives `files_in_scope` at Step 8c.4 and writes it at 8c.7 with **nothing in between** — which makes it the *less* guarded of the two mandate-writing paths, and the one the operator never sees the field on before it lands. Apply `/session-start` Step 2.5 check 3 verbatim before the write:
-
-   a. **Shape test — HARD REJECT.** Every entry must look like a path (contains `/`, or a known extension, or is a bare `CLAUDE.md`/`SKILL.md`; globs pass). **Prose never reaches disk.** `(inferred)` remains the one legal non-listed shape. On failure, re-derive mechanically — `git diff --name-only`, `find`, `grep -rl` — and paste the output.
-   b. **Existence test — HARD REJECT, made safe by routing.** `test -e` each entry. A file this session will **create** is not a file *in scope* — it is a **required output**, and the mandate has a field for it (`- Required outputs:`). Route it there; then everything left in `files_in_scope` already exists, and the hard reject carries zero false-positive risk. Auto mode derives both fields itself at Step 8c.4, so it can do this routing without asking. *(A "warn, never reject" variant was cut on 2026-07-14 System-Owner review — a warning is a soft nudge to a model that can rationalise past it, which is the exact failure this check exists to stop. Do not re-weaken it.)*
-
-   **The companion rule: paste the paths themselves, from a command's output. A reference to the command is not a footprint** — its consumer (`check-foreign-staging.sh`) is a parser, not a reader, and a prose footprint makes that guard **fail open**, leaving the session with no staging protection while appearing to have declared a scope.
-
-   *(Added 2026-07-14. The five-for-five recall-assertion pattern in `logs/improvement-log.md` is the trigger; the fifth instance was committed **inside the session shipping this check**, in the prompt handed to the reviewer whose job was to catch it. The habit is not "I forget to check" — it is that a plausible recollection is indistinguishable from an observation from the inside. Only the machine separates them, so the machine has to do it.)*
-
-   7. **Write mandate.** Locate today's `## YYYY-MM-DD` header in `logs/session-notes.md`. **Append the mandate line immediately after the header, before any existing body content** — placement contract identical to `/session-start` Step 3. Format identical to `/session-start` Step 3 exact bullet structure:
-
-      ```
-      **Mandate:** {work_scope} — done when: {exit_condition}
-      - Out of scope: {out_of_scope}
-      - Files in scope: {files_in_scope_written}
-      - Stop if: {stop_if}
-      - Allowed inputs: {allowed_inputs}      ← write only if set; omit the bullet entirely if absent
-      - Required outputs: {required_outputs}  ← write only if set; omit if absent
-      - Context pack: {PACK_PATH}             ← write only if Step 8c.4.5 produced a pack; omit if absent
-      - Mission: {MISSION_ID}                 ← write only if Step 8c.3.5 bound a mission; omit if absent
-      ```
-
-      **Parse contract:** the `**Mandate:**` line shape, the bullet labels (`- Out of scope:`, `- Files in scope:`, `- Stop if:`, `- Allowed inputs:`, `- Required outputs:`), and the `(inferred)` / `(none stated)` markers are load-bearing. Four downstream readers depend on them (verified pre-flight, 2026-05-29): canonical `/wrap-session` Step 7a, workspace-root `wrap-session.md` Step 2b, `/drift-check` Step 5, and `/contract-check` Step 2.5c. Do not insert extra prose into the `**Mandate:**` line itself or rename labels. The "complete fully within this session where context allows" posture lives in Step 8c.10's execution behavior, not in the mandate line — keeping it out of the disk-write preserves the two-segment parse contract (head ` — done when: ` tail).
-
-      The `- Context pack:` bullet (added 2026-05-29 for the Context Engine Phase 2) and the `- Mission:` bullet (added 2026-06-09 for the mission-contract subsystem) are **informational pass-through, not part of the five-label parse contract.** All four readers above use fixed-list extraction or labeled-bullet pass-through; they silently ignore both. The `- Context pack:` bullet locates the pack; the `- Mission:` bullet records which multi-session mission this session served and is read by **`/drift-check` only**, as a second reference standard (see `docs/session-marker.md` § Mandate-line bullet contract).
-
-   7.5. **Write the run-manifest start-stub (W3.2 R3).** After the mandate line lands on disk, write this session's durable start-stub. Auto mode never calls `/session-start`, so without this step every auto-mode session would be invisible to crash/orphan detection — the exact blind spot R3 exists to close. Schema: `docs/spine-schemas.md` § 1. Mirrors `/session-start` Step 3.5; keep the two in sync.
-
-      > **⚠ `MARKER`, `MISSION_ID`, and `PACK_PATH` are values YOU hold from earlier steps — NOT shell variables.** Each Bash call gets a fresh shell (env vars do not persist across tool calls), so `--marker "${MARKER}"` would expand empty and no stub would be written. **Substitute the literal values**; omit a flag whose value is unset. `--date` / `--marker` may be omitted entirely — the script self-resolves them from the marker oracle written in step 3 above.
-
-      ```bash
-      d="$(pwd)"; RM=""
-      while [ "$d" != "/" ]; do
-        for cand in "$d/ai-resources/logs/scripts/run-manifest.sh" "$d/logs/scripts/run-manifest.sh"; do
-          [ -f "$cand" ] && { RM="$cand"; break 2; }
-        done
-        d=$(dirname "$d")
-      done
-      # Marker + date omitted on purpose — the script resolves them itself.
-      # Add --mission / --pack-path ONLY if this session actually bound one.
-      [ -n "$RM" ] && bash "$RM" start \
-        --model "<the active session model identifier, e.g. claude-opus-4-8[1m]>" \
-        --mandate-ref "logs/session-notes.md#<today>-<MARKER>" \
-        --mission "<MISSION_ID from step 3.5 — omit this flag if none was bound>" \
-        --pack-path "<PACK_PATH from step 4.5 — omit this flag if no pack>"
-      ```
-
-      `start` is idempotent. If the walk-up finds no script, skip silently — an additive durable-state substrate must never block the auto-mode chain. **Not a gate** (`principles.md § OP-5`): nothing reads the manifest yet.
-
-   8. **Write plan.** **Direct-route skip (Commit 2, 2026-07-23):** if `DIRECT=1` (canonical predicate, `docs/session-marker.md` § Direct-route detection), **skip this step entirely** — a direct-route project gets no committed `logs/session-plan-*.md`. The Step 8c.6 approval gate already disclosed the direct route; note "direct route — no plan file" in the gate block. The mandate (8c.7) and run-manifest (8c.7.5) are still written. Then proceed to step 9. For `DIRECT=0` (engineered), write the plan as below.
-
-      Write to `logs/session-plan-${TODAY}-${MARKER}.md` (marker + date resolved in step 3; canonical contract `docs/session-marker.md`) using `/session-plan` Step 7 schema (`## Intent`, `## Model`, `## Source Material`, `## Findings / Items to Address`, `## Execution Sequence`, `## Scope Alternatives`, `## Autonomy Posture`, `## Risk`). Apply `/session-plan` Step 7 self-check (length floor ≥25 substantive lines, concrete Findings, concrete Execution Sequence, realistic Scope Alternatives).
-
-      For multi-item auto, structure the plan so each picked item is visible:
-      - `## Source Material` lists every picked item's source path (one bullet per item).
-      - `## Findings / Items to Address` has one subsection (`### Item N — {short label}`) per picked item, capturing the concrete findings for that item.
-      - `## Execution Sequence` groups stages by picked item in the operator-given order (e.g., `### Stage 1 — Item 1: {label}`, `### Stage 2 — Item 3: {label}`, …). No per-item operator pause between stages — the single approval gate at Step 8c.6 covers them all.
-
-      Under TOCTOU Phase 2+3 atomic, no concurrent-session collision check is needed — each session writes its own marker-scoped plan, so foreign-session collisions are structurally impossible.
-
-   9. **Run `/risk-check` if STRUCTURAL_RISK is true.** This is the plan-time gate per workspace Autonomy Rules #9. The single approval gate at step 8c.6 disclosed this in advance, so the operator is not surprised. Verdict handling:
-       - **GO** → proceed to 8c.10.
-       - **RECONSIDER / NO-GO** → output `Risk-check verdict: {verdict}. Mandate and plan retained on disk. Auto mode paused — review {risk-check report path} before resuming.` Stop. The plan and mandate stay on disk for the operator to revise.
-
-       If STRUCTURAL_RISK is false, skip this step silently.
-
-   10. **Begin execution under {AUTONOMY_POSTURE}.** No further confirmation gate — the Step 8c.6 approval covered execution for every picked item. For multi-item auto, run the items in the operator-given order; do NOT pause between items. Complete the mandate fully within this session where context allows; if context is clearly constrained (extended session, approaching compaction), follow the workspace `Context constraint deferral` rule — flag the deferral and log it, do not rush. Between items, emit a brief between-gate summary per workspace `Between-gate summaries` rule (one short line: what just finished, what's next).
-
-       **During execution:**
-       - Run `/qc-pass` on substantive artifacts before declaring them complete.
-       - For long-running work, follow `ai-resources/docs/compaction-protocol.md` named checkpoints.
-       - Surface `[SCOPE]`, `[HEAVY]`, `[AMBIGUOUS]`, `[COST]` guardrail flags per workspace rules.
-       - Commit directly per workspace `Commit behavior` rule (no pre-commit checks, no permission asks).
-
-   11. **On mandate completion.** Output: `Mandate complete. Run /wrap-session to capture telemetry and journal the session. Push pending — let me know when to push.` Do not auto-invoke `/wrap-session` — the operator decides when to wrap.
+   13. **On mandate completion.** Output `Mandate complete. Run /wrap-session to capture telemetry and journal the session. Push pending — let me know when to push.` Do not auto-invoke `/wrap-session` — the operator decides when to wrap.
