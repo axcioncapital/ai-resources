@@ -1,25 +1,44 @@
 ---
-description: Process a pasted idea dump (ChatGPT export, brainstorm) into a structured Idea Brief, investigate workspace evidence and repo attach-points, generate 2–4 distinct leverage options, and recommend one with a worth-doing verdict and implementation plan — or PARK to improvement-log.md. Advisory only — writes analysis to audits/working/ and (on PARK) a pending entry to logs/improvement-log.md; applies no other change.
+description: Route a rough idea to the command that owns its next step. Distils a pasted dump (ChatGPT export, brainstorm) into an Idea Brief, checks workspace evidence, classifies the idea's domain, generates 2–4 distinct leverage options, and hands the recommended one to its lifecycle owner with a self-contained payload — or PARKs it. Writes analysis to audits/working/ (supporting evidence), a Resource Brief to inbox/ on the new-AI-resource route, and a pending entry to logs/improvement-log.md on PARK. Applies no other change.
 model: opus
 argument-hint: "[pasted idea dump / notes, or a path to a notes file — leave blank to use the pasted block]"
 ---
 
-# /leverage-idea — idea dump → leverage options → worth-doing verdict → implementation plan
+# /leverage-idea — idea dump → leverage options → verdict → handoff to the owner
 
-Take a messy idea dump about adding or improving an Axcíon AI resource and route it to the **best way to plug it into the system**. The pipeline distills the dump into a clean Idea Brief, checks whether the workspace shows real evidence of the need, investigates where in the repo the idea could attach, generates 2–4 **distinct** leverage options, and recommends one with a worth-doing verdict and an implementation plan — or concludes "don't build this" and PARKs it. **Advisory only: it stops at the implementation plan and applies no change.**
+Take a messy idea dump and land it with **the command that owns its next step**. The pipeline distils the dump into a clean Idea Brief, checks whether the workspace shows real evidence of the need, investigates where the idea could attach, classifies which **domain** it belongs to, generates 2–4 **distinct** leverage options, and recommends one — then hands it over.
 
-**Boundary vs `/tech-consult` (nearest scope-neighbour).** `/tech-consult` translates a broad business or project need into a build-ready technical plan — need-first, pre-idea, spanning project/business scope. `/leverage-idea` starts from an already-captured idea about **workspace AI resources** (the Claude Code substrate) and routes it to the best attach point — idea-first, system-routing. Reach for `/tech-consult` when you have a need and no solution yet; reach for `/leverage-idea` when you already have an idea for a resource and need the best way to build it.
+**An idea leaves this command in someone's hands.** Every run ends in one of two states: a **named owner** (an exact existing command, with a payload it can act on) or a **terminal outcome** (reuse as-is, `/tweak`, or PARK with a concrete review trigger). A run that ends in a plan and no owner has not finished. This command still applies no change to the system itself — handing over is not executing.
 
-**Boundary vs siblings.** `/request-skill` is intake-only (no investigation) — `/leverage-idea` feeds it. `/implementation-triage` judges an *already-proposed* implementation — `/leverage-idea` *produces* the proposal. `/resolve-repo-problem` handles faults, not ideas.
+**Where the routes go.** `/leverage-idea` is idea-first and owner-finding; the commands it routes to are need-first or already-decided. Reach for it when you have rough notes and do not yet know who owns them.
+
+- `/tech-consult` — a broad business or project need with no solution yet. This command *routes to* it; it is not a wall.
+- `/work-loop` — an operating capability inside a project that already exists.
+- `/scope-project` — a new enduring programme, or work no existing owner fits.
+- `/develop-ai-resource` — any new or materially expanded durable AI resource, of **every** class.
+- `/implementation-triage` — judges an *already-proposed* implementation; `/leverage-idea` *produces* the proposal, and the operator may chain triage for an independent ROI read.
+- `/request-skill` — intake-only, no investigation. Use it to capture a brief when no investigation is wanted.
+- `/resolve-repo-problem` — faults, not ideas.
 
 Input: `$ARGUMENTS` — the idea dump itself (pasted notes, a ChatGPT export), or a path to a notes file. If empty, use the most recent pasted block in the conversation. If nothing is present, ask the operator for the notes and stop.
 
 ---
 
-## Step 0 — Input resolution + multi-idea split
+## Step 0 — Input and repo resolution + multi-idea split
 
 1. Resolve the raw notes: `$ARGUMENTS` verbatim if it is prose; if it is a readable file path, Read that file; if empty, use the most recent pasted idea block in the conversation. If no notes can be found, emit `/leverage-idea needs an idea dump — paste your notes or give a file path.` and stop.
-2. Scan for **multiple distinct ideas**. If the notes carry more than one separable idea, pick the strongest to process now (decision-point posture — state the pick + the runner-up in one line each), and record the rest under `## Deferred Ideas` in the analysis file (Step 9). One idea → skip the split.
+
+2. **Resolve `AI_RESOURCES` from the session, never from a fixed path** — before any step reads or writes. Several worktrees of this repository are live at once (`git worktree list`), so a pinned absolute path makes a session on one branch read and write another's tree, including the Step 2 duplicate scan and the Step 8 PARK append. Resolve in this order and stop at the first that succeeds:
+
+   a. **Session is inside an ai-resources worktree.** Take `git rev-parse --show-toplevel` from the session directory. If that directory contains **both** `skills/ai-resource-builder/SKILL.md` and a **regular-file** (not symlink) `.claude/commands/leverage-idea.md`, set `AI_RESOURCES` to it. Those two together identify the canonical repo rather than a project that symlinks it.
+
+   b. **Session is a project.** Walk up from the session directory to the nearest ancestor holding **both** `ai-resources/` and `projects/` — the workspace root, the same idiom `auto-sync-shared.sh` and `/reconcile` use. Set `AI_RESOURCES = {that ancestor}/ai-resources`.
+
+   c. **Neither resolves.** Emit `/leverage-idea cannot locate ai-resources from this session — run it from a project or from an ai-resources worktree.` and stop. **Do not fall back to a hardcoded path**; writing into the wrong worktree is the failure this step exists to prevent.
+
+   State the resolved `AI_RESOURCES` in one line so a run from an unexpected tree is visible before anything is written.
+
+3. Scan for **multiple distinct ideas**. If the notes carry more than one separable idea, pick the strongest to process now (decision-point posture — state the pick + the runner-up in one line each), and record the rest under `## Deferred Ideas` in the analysis file (Step 9). One idea → skip the split.
 
 ## Step 1 — Distill the Idea Brief (inline)
 
@@ -41,30 +60,34 @@ Any claim in the notes about the *current workspace state* ("we don't have X", "
 
 Before spending a subagent, run two cheap gates:
 
-- **Duplicate gate.** Glob/grep `ai-resources/.claude/commands/` and `ai-resources/.claude/agents/`, and scan `ai-resources/skills/*/SKILL.md` frontmatter, for a resource that already does this. **Exact duplicate** → point the operator to the existing resource and recommend `/improve-skill` (skills) or `/tweak` / direct edit (commands, agents); end, write no files. **Partial overlap** → carry it forward as a candidate "extend existing" attach point (do **not** short-circuit).
+- **Duplicate gate.** Glob/grep `{AI_RESOURCES}/.claude/commands/` and `{AI_RESOURCES}/.claude/agents/`, and scan `{AI_RESOURCES}/skills/*/SKILL.md` frontmatter, for a resource that already does this. **Exact duplicate** → point the operator to the existing resource; end, write no files. If it needs a change to serve the idea, name the owner: `/improve-skill` for a skill, `/tweak` for a ≤1-file cosmetic edit, `/work-loop` for a settled correction to a command, agent, script or hook. **Partial overlap** → carry it forward as a candidate "extend existing" attach point (do **not** short-circuit). This gate scans the Claude Code substrate only: for an idea that turns out not to be an AI resource it finds nothing, which is correct — Step 5a is where that idea gets its domain.
 - **Triviality gate.** If the idea is a ≤1-file cosmetic change (wording, a single line), recommend `/tweak "..."`; end, write no files.
 
 If either gate ends the run, report the routing in chat only.
 
 ## Step 3 — Path setup
 
-1. `AI_RESOURCES = "/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources"`.
-2. `DATE` = today (`YYYY-MM-DD`).
-3. Compute `SLUG` from the Idea Brief's Core idea: lowercase, replace non-alphanumeric runs with a single `-`, strip leading/trailing `-`, truncate to 50 characters at a `-` boundary. If empty, fall back to `idea-{HHMMSS}`.
-4. `ANALYSIS_PATH = {AI_RESOURCES}/audits/working/{DATE}-idea-{SLUG}.md`. If it already exists, append `-2`, `-3`, … until unique.
-5. `NOTES_PATH = {AI_RESOURCES}/audits/working/{DATE}-idea-{SLUG}-investigation.md` (subagent working notes — internal plumbing; carry the same uniqueness suffix as `ANALYSIS_PATH`).
+`AI_RESOURCES` is already resolved (Step 0.2).
+
+1. `DATE` = today (`YYYY-MM-DD`).
+2. Compute `SLUG` from the Idea Brief's Core idea: lowercase, replace non-alphanumeric runs with a single `-`, strip leading/trailing `-`, truncate to 50 characters at a `-` boundary. If empty, fall back to `idea-{HHMMSS}`.
+3. `ANALYSIS_PATH = {AI_RESOURCES}/audits/working/{DATE}-idea-{SLUG}.md`. If it already exists, append `-2`, `-3`, … until unique.
+4. `NOTES_PATH = {AI_RESOURCES}/audits/working/{DATE}-idea-{SLUG}-investigation.md` (subagent working notes — internal plumbing; carry the same uniqueness suffix as `ANALYSIS_PATH`).
 
 ## Step 4 — Investigation (one general-purpose subagent, inline brief)
 
-Spawn **one** general-purpose investigator subagent (fresh context) via the `Task` tool with the brief below. It receives the **distilled Idea Brief only** — never the raw dump.
+Spawn **one** general-purpose investigator subagent (fresh context) via the `Task` tool with the brief below, **pinning `model: opus` on the spawn**. It receives the **distilled Idea Brief only** — never the raw dump.
+
+`general-purpose` carries no frontmatter, so an un-pinned spawn silently inherits the session model: this dispatch would run at Haiku on a Haiku session with no signal, and Part B's semantic near-duplicate sweep — the backstop for what Step 2's mechanical gate misses — is judgment work that degrades invisibly at a lower tier. Pinning per-dispatch is the permitted form (workspace `CLAUDE.md` § Model Tier carve-out; roster in `docs/agent-tier-table.md`).
 
 ```
-You are an AI-resource idea investigator. Gather evidence and map repo attach-points for a proposed workspace resource. You produce no recommendation and apply no change — investigation only.
+You are an idea investigator. Gather evidence for a proposed idea and map where it could attach. You produce no recommendation and apply no change — investigation only. The idea may or may not be about the Claude Code substrate; do not assume it is, and do not steer findings toward a workspace-resource answer. Report what you find, including "this is not an AI-resource idea" when that is what the evidence shows.
 
 IDEA BRIEF (distilled by the main session):
 {the 5-field Idea Brief, including any [verify] workspace-assertion tags}
 
 AI_RESOURCES: {AI_RESOURCES}
+WORKSPACE: {the nearest ancestor of AI_RESOURCES holding both ai-resources/ and projects/ — the same walk-up as Step 0.2b, not simply AI_RESOURCES' parent, which is only correct while every worktree sits directly under the workspace root}
 
 Procedure:
 
@@ -76,7 +99,13 @@ Part A — Use-case evidence. Search the workspace evidence logs for signs this 
 - recent {AI_RESOURCES}/audits/ report headers
 Cite specific entries (date + one-line quote) or state "no evidence found" — never infer a use case that is not written down. Resolve each [verify] workspace-assertion tag: confirm or refute it against repo state, and say which.
 
-Part B — Repo surface & attach points. Find existing resources that touch this space and candidate attach points (with paths). Search SEMANTICALLY — by capability and purpose, not just name-match — across the full command, skill, and agent libraries under {AI_RESOURCES}. This is the backstop for near-duplicates a name-only scan misses. For each candidate attach point, give the path and one line on what it currently does.
+Part B — Surface & attach points. Find what already touches this space and where the idea could attach (with paths). Search SEMANTICALLY — by capability and purpose, not just name-match. This is the backstop for near-duplicates a name-only scan misses. For each candidate attach point, give the path and one line on what it currently does.
+
+Search BOTH, and say which produced each hit:
+- {AI_RESOURCES} — the full command, skill and agent libraries, plus docs/.
+- {WORKSPACE}/projects/ — each project's CLAUDE.md and its plan / roadmap / decisions files. An idea about a business capability, a programme or a domain decision attaches HERE, not in the resource library, and naming the owning project is the most useful thing you can return for one.
+
+If the resource library yields nothing and a project does, say so plainly — that is a finding, not a gap.
 
 Write your FULL findings to: {NOTES_PATH}
 Use these exact headings:
@@ -96,15 +125,24 @@ Do not edit, create, or delete any file other than {NOTES_PATH}.
 
 Read **only the returned summary** (per the `ai-resources/CLAUDE.md` Subagent Contract — do not re-read the full notes unless a specific finding needs context). Capture the `NOTES:` path. If the summary lacks the `NOTES: {NOTES_PATH}` last line, re-invoke once with the same brief; if it is still malformed, note that in chat and proceed with the summary you have.
 
-## Step 5 — Leverage options (inline — the heart)
+## Step 5 — Domain, then leverage options (inline — the heart)
 
-Generate **2–4 distinct** leverage options from the lever menu. They must be different *levers*, not size variants of one lever:
+**5a. Classify the domain first.** The lever menu depends on it, and picking levers before the domain is settled is how a project or business idea gets forced through an AI-resource menu it does not fit. Name the domain in one line with the evidence that places it there; where two are arguable, name both and say which governs and why.
 
-- **Extend an existing resource** (name it + attach point).
-- **New command + agent.**
-- **New CLAUDE.md rule or doc.**
-- **New hook.**
-- **Park** (don't build).
+| Domain | The idea is… | Lever menu |
+|---|---|---|
+| **AI resource** | about the Claude Code substrate itself — a skill, command, agent, hook, CLAUDE.md rule, doc, script, prompt or persistent instruction | extend an existing resource (name it + attach point) · a new or materially expanded resource of any class · a bounded correction to one that exists · park |
+| **Operating capability** | a business, operational or product ability inside a project that already exists | develop the capability in its owning project · extend an existing capability · park |
+| **Project or programme** | new enduring work, or work no existing owner fits | scope it as a project · fold it into an existing project's roadmap · park |
+| **Technical need** | a need with no solution chosen yet — the dump describes a problem, not a build | consult for a build-ready plan · adopt an existing tool or service · park |
+| **Domain or content decision** | owned by a named project's subject matter (a framework, a methodology, a content call) | hand to the owning project · record it as a decision there · park |
+| **Cross-tool** | belongs in GPT, Perplexity, Notion or NotebookLM rather than the Claude Code substrate | assign the tool explicitly (workspace cross-model rules) · park |
+
+An inherently non-Claude idea carries its **tool assignment** in the option itself — name the tool that will do the work rather than letting a Claude Code build become the default answer.
+
+A dump often carries more than one domain. Split it: process the strongest here and record the rest under `## Deferred Ideas` (Step 9), each with its own domain, so a deferred piece resumes with its owner already named.
+
+**5b. Generate 2–4 distinct options** from the domain's lever menu. They must be different *levers*, not size variants of one lever. Where the domain's own menu offers fewer than two live levers, park is always the second.
 
 Per-option block:
 - **Shape** — 1–2 sentences: what it is + the attach point (cite a Step 4 path).
@@ -112,8 +150,6 @@ Per-option block:
 - **Effort** — S / M / L.
 - **Risk** — including the `/risk-check` change class if one matches (per `ai-resources/docs/audit-discipline.md`: new command/skill, hook edit, cross-cutting CLAUDE.md, new symlink, shared-state automation).
 - **Evidence** — cite the Step 4 use-case evidence, or mark "speculative".
-
-**Cross-model check.** If the idea's best home is another tool in the ecosystem (GPT via API/CustomGPT, Perplexity, Notion, NotebookLM) rather than the Claude Code substrate, the option must carry that **tool assignment** explicitly — do not default an inherently non-Claude idea into a Claude Code build (workspace cross-model rules).
 
 End with one **Ranking** line ordering the options.
 
@@ -127,11 +163,15 @@ No workspace evidence does **not** auto-fail the verdict, but it must flag the v
 
 **Complexity-budget cap (enforcement, not advisory).** If the recommended option introduces a **new component** — a new command, agent, mandatory stage/gate, or permanent always-loaded doc — it must clear the complexity-budget gate (`docs/ai-resource-creation.md` rule #7): at least one of prong (a) net-simplification or prong (b) cited-evidence, and, for a new *detection* component, a named closure channel. An option that fails the gate is **capped at `MARGINAL`** — this cap is an explicit gate action (OP-5 enforcement), so state it as such: name the failed prong and, if the operator still wants to build, require the OP-11 waiver in `logs/decisions.md`. An extend-existing option (no net-new component) is not subject to the cap.
 
+**The cap survives the route — no handoff is a way around it.** The gate keys on whether the *recommended option* introduces a new component, not on which command receives it. Routing a new-component option to `/work-loop`, `/scope-project`, `/tech-consult` or a project owner does not exempt it: apply the cap here, and carry the failed prong into the Step 7 payload so the receiving command inherits the finding rather than meeting the proposal clean. Routes into non-`ai-resources` domains still take the cap when the option would add an `ai-resources` component; a purely project-local artifact (a project `output/` deliverable, a decision record) is not a load-bearing unit under rule #7 and is not capped.
+
 **This is a routing verdict, not a context-isolated ROI certification** — it is self-generated by the same reasoning that built the options. For a big or contested call, the operator can chain `/implementation-triage` for an independent ROI read. State this line in the output.
 
-## Step 7 — Implementation plan (skip on PARK)
+## Step 7 — Handoff payload (skip on PARK)
 
-For a WORTH-DOING (or operator-accepted MARGINAL) recommendation, write the plan:
+For a WORTH-DOING (or operator-accepted MARGINAL) recommendation, write the plan **and** the payload that carries it to its owner.
+
+**The plan:**
 
 - **Target files** — what gets created / edited.
 - **Step sequence** — the build order.
@@ -139,9 +179,24 @@ For a WORTH-DOING (or operator-accepted MARGINAL) recommendation, write the plan
 - **Effort** — S / M / L.
 - **Open assumptions** — anything the operator must confirm.
 
-If the recommendation is a **new skill**, embed the inbox brief **verbatim** in `/request-skill` format (`# Resource Brief:` name / Requested / Origin / Capability / Trigger Conditions / Exclusions / Context / Existing Skills Reviewed), ready to copy into `ai-resources/inbox/` on approval. The command itself never writes to `inbox/`.
+**The payload — self-contained, by the standard below.** `{ANALYSIS_PATH}` sits under `audits/working/`, which is **gitignored** (`.gitignore`) and does not survive as a shared address. It is supporting evidence, never the next-action address. So the payload must carry everything the receiving command needs to start:
 
-**Stop here — no execution.**
+> **A payload is self-contained when the receiving command can act on it without opening `{ANALYSIS_PATH}`.** Test it by reading the payload alone and asking what the receiver would have to go looking for. Anything it would have to fetch belongs inside the payload.
+
+That means, in every payload: the Core idea and the problem it solves; the domain from Step 5a; the recommended lever and the rejected alternative; the verdict, with the evidence cited *inline* (a date plus the quoted line, not a pointer to the analysis file) or marked speculative; any complexity-budget finding; and the specific ask of the receiving command. Cite `{ANALYSIS_PATH}` at the foot as supporting detail.
+
+Emit the payload as a fenced block the operator pastes into the named command. Where the receiving command defines its own input shape, use that shape:
+
+- **New or materially expanded AI resource** → `/develop-ai-resource`, in the `/request-skill` brief shape (`# Resource Brief:` name / Requested / Origin / Capability / Trigger Conditions / Exclusions / Context / Existing Skills Reviewed). **Render Capability as the `## Capability` heading, exactly as `/request-skill` does — never as a `**Capability:**` bold label.** That label is one of two reserved upstream-provenance fields, and `/develop-ai-resource` Step 1.0 reads a brief carrying exactly one of them as a **malformed upstream handoff**. A brief from here has no upstream capability record, so the heading form is what makes it read correctly as the ordinary raw brief it is. **Write it to `{AI_RESOURCES}/inbox/{DATE}-{SLUG}.md`** (append `-2`, `-3`, … if that path is taken — never overwrite a brief awaiting a decision) — the tracked intake queue is this route's durable address, and it is what lets the route survive the session ending. Say in chat that it was written and give the path. The brief carries no `**Mechanism:**` / `**Evidence:**` field, so it is **raw by construction** — that is expected, and it is what `/develop-ai-resource` supplies. `inbox/` drains by its own convention: `/develop-ai-resource` archives the brief to `inbox/archive/` with a one-line disposition on any of no build, reuse as-is, rejection or deferral, so a written brief cannot sit there unresolved.
+- **Operating capability** → `/work-loop`, as a unit brief naming the capability and its owning project.
+- **Project or programme** → `/scope-project`, as the raw material plus the domain finding.
+- **Technical need** → `/tech-consult`, as the need statement — a need, deliberately not a solution.
+- **Settled skill improvement** → `/improve-skill`, naming the skill, the improvement and why the mechanism is already settled.
+- **Bounded correction to something that exists** → `/work-loop` for a settled correction, or `/tweak` when it is ≤1-file cosmetic.
+- **Named project or domain owner** → the owning project's session. There is no command to name, so the payload *is* the address: state the owning project and, where the ask is a multi-field gap that blocks that project, shape the payload as a requirements doc for its `output/` (workspace `CLAUDE.md` § Requirements-Doc Default). If the operator will not act now, PARK it instead — an unowned payload is not a handoff.
+- **Cross-tool** → the assigned tool, with the prompt or brief that tool needs.
+
+**Completion criterion for this step:** the payload names an exact existing command (or a named project owner), and passes the self-contained test above. **Stop here — handing over is not executing.**
 
 ## Step 8 — PARK path
 
@@ -151,7 +206,7 @@ For a PARK outcome, append one `logged (pending)` entry to `{AI_RESOURCES}/logs/
 ### {DATE} — {short idea title}
 
 - **Status:** logged (pending)
-- **Category:** command/skill (leverage-idea PARK)
+- **Category:** {the Step 5a domain} (leverage-idea PARK)
 - **Severity:** {low | medium | medium-high | high | critical}
 - **Review-cycle:** reviewed {DATE}, deferred to → {concrete trigger — a date, a quarter, or a named event}
 - **Friction source:** {the idea + why it is parked rather than built now}
@@ -166,13 +221,16 @@ The `Review-cycle:` trigger is a **hard requirement, not a guideline** — it mu
 
 ## Step 9 — Write the analysis file
 
-Write `{ANALYSIS_PATH}` — the one operator-facing deliverable:
+Write `{ANALYSIS_PATH}` — the **working record**: the reasoning behind the recommendation, kept for a reader who wants to audit how the verdict was reached. It is supporting evidence. The next action lives in the Step 7 payload and the Step 8 PARK entry, both of which stand on their own.
 
 ```
 # Leverage-Idea Analysis — {idea title} — {DATE}
 
 ## Idea Brief
 {the 5 fields}
+
+## Domain
+{the Step 5a classification + the evidence placing it there}
 
 ## Evidence Findings
 {from the Step 4 summary — do not re-read the full notes}
@@ -186,32 +244,41 @@ Write `{ANALYSIS_PATH}` — the one operator-facing deliverable:
 ## Recommendation & Verdict
 {recommended + rejected alternative + verdict + the routing-not-ROI line}
 
-## Implementation Plan   — or —   ## Park Rationale
-{Step 7 plan, or the PARK rationale + concrete Review-cycle trigger}
+## Handoff   — or —   ## Park Rationale
+{the Step 7 plan + payload and where the payload was sent, or the PARK rationale + concrete Review-cycle trigger}
 
 ## Deferred Ideas
-{any ideas split off in Step 0 — omit this heading if none}
+{any ideas split off in Step 0 — each with its own domain — omit this heading if none}
 
 ---
 Investigation notes: {NOTES_PATH}
 ```
 
-## Step 10 — Chat report + handoff bridge
+## Step 10 — Chat report + owner
 
 Print to chat:
-- The verdict line.
+- The verdict line, and the Step 5a domain.
 - Recommended option + rejected alternative (one line each).
-- `Analysis: {ANALYSIS_PATH}`.
-- Exactly **one** advisory bridge line from the matrix below. The bridge never auto-invokes — it is a suggestion the operator acts on.
+- Exactly **one** row from the table below — the owner, and where the payload went.
+- `Supporting analysis: {ANALYSIS_PATH}` — last, and labelled as supporting. It is gitignored; it is not the address.
 
-| Recommendation | Bridge |
-|---|---|
-| New skill | `/develop-ai-resource` — the standard qualification path; it qualifies the need and hands a qualified brief to `/create-skill`. Inbox brief drafted in the analysis file; copy to `ai-resources/inbox/` on approval. The brief written here carries no `**Mechanism:**`/`**Evidence:**` field, so it is raw by construction — that is expected. |
-| New command / agent / hook / other structural class | Plan's Gates name the `/risk-check` class; the bridge repeats it |
-| Extend existing resource (non-class) | The plan is the execution spec — run it on approval or in a follow-up session |
-| PARK | Logged to `improvement-log.md` with a concrete Review-cycle trigger |
-| Tiny tweak (Step 2) | `/tweak "..."` — chat only |
-| Duplicate (Step 2) | Existing resource named + `/improve-skill` — chat only |
+The handoff never auto-invokes. It names who owns the next step and hands them what they need; the operator makes the call.
+
+| Outcome | Owner | What goes with it |
+|---|---|---|
+| **New or materially expanded AI resource — *any* class**: skill, command, agent definition, hook, CLAUDE.md rule, doc, script, reusable prompt, persistent instruction | `/develop-ai-resource` | Resource Brief written to `{AI_RESOURCES}/inbox/{DATE}-{SLUG}.md` — give the path. Raw by construction (no `**Mechanism:**`/`**Evidence:**`); that command supplies both. It qualifies the need and hands a qualified brief to `/create-skill` for a skill, or builds directly for the other classes. |
+| **Operating capability** in an existing project | `/work-loop` | The Step 7 payload — the capability and its owning project |
+| **Project or programme** | `/scope-project` | The Step 7 payload — raw material + the domain finding |
+| **Technical need, no solution chosen** | `/tech-consult` | The Step 7 payload — the need, stated as a need |
+| **Settled skill improvement** | `/improve-skill` | The skill, the improvement, and why the mechanism is settled |
+| **Bounded correction to something that exists** | `/work-loop` (settled correction) or `/tweak` (≤1-file cosmetic) | The Step 7 payload |
+| **Domain or content decision** | the named owning project | The Step 7 payload, or a requirements doc for that project's `output/` |
+| **Cross-tool** | the assigned tool | The prompt or brief that tool needs |
+| **Reuse as-is** (Step 2 duplicate) | *terminal* | The existing resource named in chat; `/improve-skill` if it needs a change |
+| **Tiny tweak** (Step 2 triviality) | *terminal* | `/tweak "..."` — chat only |
+| **PARK** | *terminal* | Entry in `logs/improvement-log.md` with `Severity:` and a concrete `Review-cycle:` trigger |
+
+**Every new durable AI resource goes through `/develop-ai-resource`, whatever its class.** Row 1 covers all of them by design: `docs/ai-resource-creation.md` rule #4 and workspace `CLAUDE.md` § AI Resource Creation put the whole class under that command, and a structural change class routing only to `/risk-check` would send the change to a risk gate while skipping the question of whether the resource should exist. `/risk-check` is a gate the plan's own Gates line names when a class matches; it is not the owner.
 
 Remind the operator to run `/wrap-session` if the work is complete.
 

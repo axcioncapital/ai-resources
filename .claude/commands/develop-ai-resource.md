@@ -6,7 +6,7 @@ argument-hint: "[a need in plain English, a path to an inbox brief, or an existi
 
 # /develop-ai-resource — need → mechanism → candidate → demonstrated decision
 
-Decide whether a durable Axcíon AI resource should exist — skill, reusable prompt, persistent instruction, reference file, command, script or hook — then build, test and demonstrate the smallest one that does.
+Decide whether a durable Axcíon AI resource should exist — skill, agent definition, reusable prompt, persistent instruction, reference file, command, script or hook — then build, test and demonstrate the smallest one that does.
 
 **Authority (v1).**
 
@@ -19,7 +19,7 @@ This command is never mandatory or standard for *every* material improvement. Th
 **Boundary vs neighbours.**
 - `/create-skill` and `/improve-skill` are the build engines this command hands skill-class work to at Step 2. `/improve-skill` is additionally an entry point in its own right, per **Authority** above.
 - `/placement` remains a standalone advisory route. This command reads the same authoritative placement heuristics when mechanism or location is genuinely open.
-- `/leverage-idea` starts from an idea dump and stops at a plan; `/request-skill` captures a brief for later. This qualifies and builds now.
+- `/leverage-idea` starts from an idea dump and hands the recommended option to the command that owns its next step. On the new-or-materially-expanded-resource route it names this command and writes the brief to `inbox/` itself, so that arrival is an ordinary `inbox/` invocation — raw by construction, carrying neither reserved upstream label. `/request-skill` captures a brief for later. This qualifies and builds now.
 - `/risk-check`, `/qc-pass` and `/implementation-triage` are specialist capabilities Step 3 draws on when the claim and consequence warrant it.
 - `/work-loop` develops **operating capabilities** — business, operational and product abilities inside projects that already exist — by the method in `skills/capability-development/SKILL.md`. It owns the operating outcome; this command owns the artifact. The skill is not the capability; it is one implementation component. A brief arriving from it carries `**Capability:**` and `**Settled upstream:**`; those labels are a *claim* of provenance that Step 1.0 verifies against the named record before honouring — see Step 1's upstream-brief clause.
 
