@@ -166,3 +166,111 @@ exceeds 300.
 **Two findings carried forward, neither resolved by this unit:** the census primitive is unreliable
 and P-CITE must be re-specified before Prove (Finding 1); and one in-scope file is gitignored, so
 `git revert` does not fully roll this slice back (Finding 2, disposition `operator`).
+
+---
+
+## Post-close resolutions (operator, 2026-07-29)
+
+Appended after the unit closed. The three items below were decided by the operator in response to
+this evidence; each supersedes the disposition recorded above where they differ.
+
+### R1 — P-CITE re-specified
+
+Supersedes Finding 1's `deferred` disposition. **Prove runs the version below, not plan-v3's.**
+
+**Correction to Finding 1's framing.** The earlier text called `grep` broken. That is wrong and is
+withdrawn. `grep` is not defective — the fault was the **primitive chosen**: a recursive walk with
+`--include` filtering behaved unsuitably over hidden directories in this tree, so the sweep it
+produced could not support a completeness claim. The defect is in the method selected for P-CITE,
+not in the tool.
+
+**P-CITE (re-specified).** Search **tracked, active surfaces only**, using `git grep` — which indexes
+the git object store rather than walking the filesystem, so hidden-directory traversal and
+`--include` filtering are not in the path at all, and untracked files are excluded by construction
+rather than by pattern.
+
+```bash
+# Sweep — tracked files only, historical/generated surfaces excluded by pathspec.
+git grep -n -E '8c\.4\.5|8c\.7|8c\.7\.5|8c\.8|auto-prime' -- \
+  ':(exclude)logs/loop/**'            ':(exclude)logs/runs/**' \
+  ':(exclude)logs/scratchpads/**'     ':(exclude)logs/session-notes*' \
+  ':(exclude)logs/session-plan-*'     ':(exclude)logs/improvement-log*' \
+  ':(exclude)logs/decisions*'         ':(exclude)logs/friction-log*' \
+  ':(exclude)logs/usage-log*'         ':(exclude)logs/incident-log.md' \
+  ':(exclude)logs/coaching-*'         ':(exclude)logs/maintenance-observations*' \
+  ':(exclude)audits/**'               ':(exclude)plans/**' \
+  ':(exclude)output/**'
+```
+
+**`logs/scripts/` is INCLUDED** — it holds live consumers (`run-manifest.sh`,
+`prime-allocator.test.sh`) that the slices themselves modify, and review-2 F3 was correct that
+excluding all of `logs/` omits them. Only the historical and generated paths above are excluded, each
+named explicitly rather than by a blanket directory rule.
+
+**`.codex/**` is excluded, and by construction rather than by pathspec** — it is untracked
+(`.gitignore:52-59`), so `git grep` never sees it. This is the correct outcome, not a gap: see R2.
+
+**Positive control — required, and it runs against the pre-change tree.** An empty result proves
+nothing until the same query has been shown to detect the thing it looks for:
+
+```bash
+git stash -q                                    # or: git grep … <pre-change-SHA> -- …
+<the sweep above>                               # MUST return the full known set
+git stash pop -q
+```
+
+**The known pre-change set, executed and confirmed at SHA `1dc38b3`: 8 tracked files, 28 matching
+lines** — `.claude/commands/prime.md` 12 · `docs/session-marker.md` 5 · `docs/context-pack-schema.md`
+4 · `.claude/agents/context-discovery.md` 3 · `.claude/commands/build-context.md` 1 ·
+`.claude/commands/session-start.md` 1 · `.claude/hooks/check-foreign-staging.sh` 1 ·
+`logs/scripts/run-manifest.sh` 1. **A control returning fewer than this falsifies the sweep, and the
+post-change result must be discarded rather than reported.**
+
+*(This corrects the "9 files, 29 hits" figure stated earlier in this evidence. That count came from
+the unsuitable primitive and was itself wrong in two ways: it counted the now-out-of-domain
+`.codex/agents/context-discovery.toml`, and it scored that file **1** matching line where the file
+actually contains **3** — the same undercount that motivated re-specifying the sweep. The corrected
+figure above was produced by `git grep` and re-run against the pre-change SHA to confirm it.)*
+
+**Post-change result, run and confirmed:** one hit —
+`.claude/agents/context-discovery.md:22`, the note recording that `auto-prime` was retired. A
+retirement note naming the retired value is intended, not a stale citation. Every other site is
+repointed.
+
+### R2 — `.codex/` stays untracked; the three local edits are reverted
+
+Supersedes Finding 2's `operator` disposition. **Resolved: do not force-track.**
+
+`.gitignore:52-59` does not merely ignore `.codex/` — it *classifies* it: a Codex CLI harness mirror,
+"operator experiment, NOT a maintained artifact" (operator call, 2026-07-13 S12), carrying its own
+unsynced copies of canonical logic, ignored specifically "so it cannot be committed by accident. If
+Codex is ever adopted for real, the decision to track and sync this mirror is a deliberate one to
+make." Editing it as part of a slice was exactly the un-decided sync that rule exists to prevent —
+the earlier judgement that a stale mirror is "the worse divergence" assumed the mirror is maintained,
+and the classification says it is not.
+
+**Action taken:** all three edits to `.codex/agents/context-discovery.toml` reverted to their original
+text (`:2`, `:14`, `:217` restored to their `auto-prime` wording; verified — 3 occurrences present).
+The file is byte-restored and no longer diverges from the state Slice 1 found.
+
+**Consequences, all resolved rather than carried:**
+- Slice 1's census is now **9 actionable tracked files**, not 10. Every one is committed in `1b96aa6`.
+- **`git revert` on `1b96aa6` is now a complete rollback.** The gap Finding 2 raised does not exist.
+- The Codex mirror keeps its own pre-existing staleness, which is its normal condition under the
+  classification and is not this stream's to fix. If Codex is adopted, tracking and syncing the
+  mirror is its own lifecycle decision.
+
+### R3 — `session-start.md` +68 accepted as a disclosed Build variance
+
+Supersedes Deviation 2's framing. **Slice 1 is not reopened for line count.**
+
+The approved estimate was +42; the measured growth is +68. Accepted as a **disclosed Build variance**:
+Slice 1 moved each responsibility to its correct owner and delivered a real net reduction of **110
+lines**, which is the outcome the slice was approved for. Growth in a delegate is the expected shape
+of a delegation, and re-opening a landed slice to shave a command that is now correctly-owned would
+trade a real architectural gain for a cosmetic count.
+
+**Carried to G2 as a limitation**, not closed here: the workspace-leanness figure presented at G1
+understated the delegate's growth by 62%, and the same estimating method produced plan-v3's remaining
+per-slice budgets. Prove should treat the outstanding slice estimates as carrying comparable
+uncertainty and report the measured totals rather than the projected ones.
