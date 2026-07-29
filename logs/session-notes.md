@@ -475,3 +475,131 @@ Prove unit is open: `2026-07-29-prime-minimum-responsibility-prove`. Next sessio
 ### Open Questions
 
 None blocking. Noted, not resolved: rationale for the 13 orientation regions is now split across five destination docs — a future editor changing a rule in `prime.md` without reading its cited rationale is a real, unmitigated risk.
+## 2026-07-29 — `/work-loop` unit: `/leverage-idea` lifecycle-routing brief routed out to `/develop-ai-resource`
+
+### Summary
+Ran one `/work-loop` unit (skill `work-loop`, worktree `ai-resources-leverage-idea`) against a
+Codex-authored brief asking `/leverage-idea` to become an evidence-grounded routing-and-handoff
+command instead of stopping at an implementation plan. Verified all six of the brief's premises
+(confirmed, with positive controls), classified the route `reviewed` (14 project symlinks), wrote
+Frame evidence diagnosing five defects in the shipped command, and sent it to Codex for review. Codex's
+review reversed the unit's initial judgment: the requested change moves the command's authority, input
+domain and output contract at once, which is a material expansion under `docs/work-loop.md:48` and
+belongs to `/develop-ai-resource`, not to a `/work-loop` settled correction. Adjudicated all four
+review findings, wrote a raw handoff brief to `inbox/`, logged one `/work-loop` contract defect the
+review also surfaced, and closed the unit `routed-out`. `.claude/commands/leverage-idea.md` was never
+edited.
+
+### Decisions Made
+- **`routed-out`, not implemented here** — accepted Codex's MATERIAL 2 finding in full; the command's
+  three-axis expansion (authority / input domain / output contract) is material, not a settled
+  correction. Superseded, did not delete, the Frame evidence's original narrower judgment (append-only
+  rule).
+- **MATERIAL 1 rejected** — Codex's "agent authority gap" claim rested on inspecting 3 files; the
+  governing rules doc `docs/ai-resource-creation.md` names agent definitions under
+  `/develop-ai-resource`'s authority four times, uninspected by the reviewer. Kept the narrower true
+  observation (the command's own list omits the word "agent") as a text-fix note in the handoff.
+- **MATERIAL 3 (a real `/work-loop` contract/command disagreement) logged, not fixed inline** — fixing
+  it would have edited `/work-loop`'s own files, outside this unit's declared object
+  (`leverage-idea.md`). Logged to `logs/improvement-log.md` instead.
+- **D1 (the bridge-matrix bypass) travels with the rest of the expansion rather than being split out**
+  — it is very likely a settled correction on its own, but the brief's stated need was the whole
+  expansion; splitting it out would be a new, narrower brief.
+
+### Outcome
+Outcome check skipped (not requested).
+
+### Session Value Audit — 80/20 Review
+Skipped (not requested).
+
+### Risky actions
+None — no destructive or external action taken; no gate skipped. One notable near-miss avoided: the
+unit's initial route judgment (implement inside `/work-loop`) would have satisfied the brief's own
+falsification condition ("any proposed new durable AI resource bypasses `/develop-ai-resource`") had
+it not been caught by review before any edit was made.
+
+### Next Steps
+Run `/develop-ai-resource inbox/leverage-idea-lifecycle-routing.md` in a fresh session to qualify
+whether and how `/leverage-idea` should be expanded. A legitimate outcome of that command is "no
+build." Full evidentiary trail (premises, route reasoning, all five defects, adjudication) is
+recoverable at commit `1a40c60` (`logs/loop/2026-07-29-leverage-idea-lifecycle-frame.*`, deleted from
+the working tree at stream close per `docs/work-loop.md` § Artifacts).
+
+### Open Questions
+None.
+
+## 2026-07-29 — /leverage-idea → routing-and-handoff command: qualified, built, gated, committed (merge pending)
+
+### Summary
+Ran `/develop-ai-resource` on `inbox/leverage-idea-lifecycle-routing.md` — the raw brief routed out of
+`/work-loop`'s `2026-07-29-leverage-idea-lifecycle-frame` unit. Qualified through Step 1 (verdict:
+improve an existing shared resource, no new component), built the expansion (Step 2), self-verified by
+execution and a simplify pass (Step 3), then ran independent `/qc-pass` + `/risk-check` on operator
+authorization. Both returned non-passing verdicts; all findings were independently re-verified, fixed
+(re-QC waived by the operator), and the candidate was committed. Landed in this worktree
+(`session/2026-07-29-leverage-idea`, commit `b2bb1bd`); merging into `main` was scoped, dry-run
+verified clean, and left pending for the operator to trigger.
+
+### Decisions Made
+- **(Claude, `/develop-ai-resource` Step 1.6)** Verdict: improve an existing shared resource —
+  `.claude/commands/leverage-idea.md`, no new component. Mechanism is direct edit, not `/improve-skill`
+  (object is a command, not a skill). Complexity budget cleared on both prongs (net-simplification +
+  cited evidence in `logs/improvement-log.md` 2026-07-12).
+- **(Operator)** Authorized fresh-context subagents specifically for `/qc-pass` and `/risk-check` on
+  this candidate (the session's default posture otherwise excludes the Agent tool), with a conditional
+  rule: both PASS/GO → commit; either non-passing → stop and show findings before committing.
+- **(Operator)** Keep the tracked `inbox/` write on the new-AI-resource route — the one genuinely new
+  behavior flagged at the Step 4 report.
+- **(Operator)** No edits to the System Owner sibling repo (`projects/axcion-ai-system-owner/`) in this
+  change; `toolkit-relationship.md`'s stale `/leverage-idea` row is a named, deferred follow-up.
+- **(Operator, risk-accepted — logged to `decisions.md`)** After both gates returned non-passing
+  verdicts: apply the identified fixes and commit, **skipping the re-QC** that would ordinarily follow
+  a QC-REVISE fix pass. See `decisions.md` 2026-07-29 for rationale and alternatives considered.
+- **QC fixes applied** (`qc-reviewer` verdict: REVISE, all three fixed): `develop-ai-resource.md:22`
+  stop-point wording updated (`/leverage-idea` no longer described as stopping at a plan); Step 7's
+  `## Capability` heading-form clause added, preventing a brief from this command's own main route
+  from tripping `/develop-ai-resource` Step 1.0's malformed-upstream-handoff check; `WORKSPACE` in the
+  Step 4 investigator brief redefined by ancestor walk-up instead of parent-of-`AI_RESOURCES` (latent,
+  not live today, but wrong once a worktree sits outside the workspace root).
+- **Risk-check mitigations dispositioned** (`risk-check-reviewer` verdict: PROCEED-WITH-CAUTION, blast
+  radius High — inherent to the 14-project symlink fan-out): `toolkit-relationship.md` — DEFERRED
+  (sibling repo excluded by operator instruction); stale `leverage-idea.md` line citations in four
+  `plans/2026-07-28-develop-capability-build-plan*.md` files — DECLINED (all four carriers are
+  SUPERSEDED/HALTED with DO-NOT-IMPLEMENT banners; the live build authority cites the command nowhere);
+  `/work-loop` input-shape compatibility — VERIFIED (accepts a plain-English need, matching the payload
+  shape this command now hands it).
+
+### Risky actions
+The first commit attempt silently staged only the brief's deletion — a prior `git rm` had already
+removed `inbox/leverage-idea-lifecycle-routing.md` from the pathspec list, so the follow-on `git add`
+with that stale path in it aborted with a fatal pathspec error and staged nothing else, but the
+subsequent `git commit` still ran against whatever was already staged (the deletion alone) rather than
+failing loudly. Caught immediately by the mandated post-commit `git show --stat` self-verification,
+before any push; corrected by re-staging the full file set and amending. No push occurred against the
+incomplete commit. Worth a structural look: a `git add` that partially fails on a multi-path invocation
+should probably be treated as blocking, not silently proceeding to commit whatever did stage.
+
+### Findings Declined
+- Stale `/leverage-idea.md` line-number citations in four `plans/2026-07-28-develop-capability-build-plan*.md`
+  files — not queued: all four carriers are SUPERSEDED/HALTED with DO-NOT-IMPLEMENT banners, and the
+  live build authority (`plans/2026-07-28-work-loop-consolidated-build-plan.md`) cites the command
+  nowhere. No live consumer to protect. (Full check: this session's `/risk-check` report.)
+
+### Next Steps
+- **Land the branch.** `session/2026-07-29-leverage-idea` is 7 commits ahead of `main`; a dry-run merge
+  (`git merge-tree --write-tree`) came back clean with no conflicts. Run
+  `git -C ".../ai-resources" merge session/2026-07-29-leverage-idea` from the main checkout, then decide
+  on push (gated, per this session's wrap prompt below).
+- **The branch has no upstream and is not on GitHub** — until merged or pushed, these 7 commits exist
+  on this machine only. Do not delete the `ai-resources-leverage-idea` worktree before that happens.
+- Separate follow-up session: update `projects/axcion-ai-system-owner/references/toolkit-relationship.md`
+  § 2's `/leverage-idea` row (sibling repo, excluded from this change by operator instruction) — now
+  queued in `logs/improvement-log.md` 2026-07-29 (severity medium-high) so it stays reachable.
+- 5 of 6 commands remain unretrofitted for the `general-purpose` dispatch-pinning carve-out (`tweak`,
+  `decide`, `graduate-resource`, `promote-workflow`, `wrap-session`) — tracked, not blocking.
+- New this session: a `git add`-with-stale-pathspec near-miss queued to `logs/improvement-log.md`
+  2026-07-29 (severity medium) — see § Risky actions above.
+
+### Open Questions
+Whether to merge into `main` and/or push now, or leave both for a later session — explicitly left to
+the operator, not yet decided as of this wrap.

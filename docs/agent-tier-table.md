@@ -121,12 +121,12 @@ These agents exist as regular-file copies (not symlinks) in `projects/strategic-
 
 `general-purpose` has no frontmatter of its own, so an un-pinned spawn silently inherits the session model — a judgment dispatch could run at Haiku on a Haiku session with no signal. Pinning the tier in the spawn instruction (e.g. *"pin `model: opus` on the spawn"*) is permitted **per-dispatch, never blanket**, and is the target state. It is not a banned "default": it overrides nothing the operator chose, unlike a `settings.json` default, which contests `/model` for every dispatch. Ratified 2026-07-12 (W3.2 M-A2a; rationale in `logs/decisions.md` 2026-07-12). The prohibition on model *defaults* itself stays canonical in workspace `CLAUDE.md` § Model Tier.
 
-**Known compliance gap — tracked, not silently ignored.** As of 2026-07-12:
+**Known compliance gap — tracked, not silently ignored.** As of 2026-07-29:
 
 | State | Commands |
 |---|---|
-| Pins the tier (11) | `/qc-pass`, `/refinement-pass`, `/refinement-deep`, `/friday-journal`, `/drift-check`, `/contract-check`, `/resolve-repo-problem`, plus three skill-pipeline evaluators — all `opus` except `/risk-check`, a logged `sonnet` cost exception (**do not "normalize" it upward**) |
-| Spawns `general-purpose` unpinned, not yet retrofitted (≥6) | `tweak`, `decide`, `leverage-idea`, `graduate-resource`, `promote-workflow`, `wrap-session` |
+| Pins the tier (12) | `/qc-pass`, `/refinement-pass`, `/refinement-deep`, `/friday-journal`, `/drift-check`, `/contract-check`, `/resolve-repo-problem`, `/leverage-idea`, plus three skill-pipeline evaluators — all `opus` except `/risk-check`, a logged `sonnet` cost exception (**do not "normalize" it upward**) |
+| Spawns `general-purpose` unpinned, not yet retrofitted (≥5) | `tweak`, `decide`, `graduate-resource`, `promote-workflow`, `wrap-session` |
 
 Tracked in `logs/improvement-log.md` 2026-07-12. Do not read the gap as tolerance for new unpinned spawns — **new commands pin from creation.**
 

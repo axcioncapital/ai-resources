@@ -19,6 +19,24 @@ Resolved entries are archived to `improvement-log-archive.md` via `/resolve-impr
 
 ---
 
+### 2026-07-29 — `/work-loop` sends every reviewed unit to Codex, but the contract defines the reviewed route as one review *of the result*
+
+- **Status:** logged (pending)
+- **Category:** command/contract disagreement — `.claude/commands/work-loop.md` Step 7 vs `ai-resources/docs/work-loop.md:74`
+- **Severity:** medium — it does not corrupt state or produce a wrong answer, but it spends a full external review round on units that have no result to review, and it puts the command in breach of its own "the contract wins" rule. Cost scales with every reviewed-route Frame and Land unit run.
+- **Review-cycle:** reviewed 2026-07-29, deferred to → the next `/work-loop` contract-scoped brief (the same session that fixes `.claude/commands/work-loop.md:247`, already recorded as a known contradiction in `logs/decisions.md` 2026-07-29)
+
+**Found by** Codex review-1 of `/work-loop` unit `2026-07-29-leverage-idea-lifecycle-frame` (MATERIAL 3), adjudicated `out-of-scope` because that unit's object was `leverage-idea.md` and editing `/work-loop`'s own command or contract would have been exactly the incidental edit scope discipline forbids.
+
+**The disagreement, verbatim.** `docs/work-loop.md:74` (§ Route → depth → stops) defines the reviewed route's independent review as "**One Codex review of the result.**" `.claude/commands/work-loop.md` Step 7 says "**Reviewed route:** emit the evidence as a chat block for Codex" with **no phase carve-out** — while the *same step* explicitly states that on the challenged route "Frame, Build and Land carry none." So the command carves Frame out of review on the heavier route and not on the lighter one.
+
+A Frame unit produces no result by design (`docs/work-loop.md:117` — Frame closes "What is the need, who owns it, and is it in scope at all?"), so a reviewed-route Frame unit is sent to Codex with nothing the contract's definition covers. The command's own preamble settles which text governs: *"Where this file and the contract disagree, the contract wins and the disagreement is a defect to report."*
+
+- **Proposal.** Decide the intent first, then make one file follow the other — do not patch both toward a vague middle. Two coherent options:
+  - **(a) Command follows contract.** Add a phase carve-out to Step 7's reviewed branch mirroring the challenged branch: review attaches to the unit that produces a result (Prove for a multi-phase stream; the single unit for a one-unit stream). Cheaper, and matches the contract as written.
+  - **(b) Contract follows command.** Widen `docs/work-loop.md:74` to "one Codex review per unit" for reviewed work. More expensive per stream, but note the **counter-evidence for (a)**: the Frame review that surfaced this defect also produced MATERIAL 2, which reversed that unit's execution-boundary conclusion and re-routed the whole stream to `/develop-ai-resource` *before* any implementation was attempted. A pre-implementation review on the reviewed route demonstrably caught a wrong-owner call. Weigh that against (a)'s saving rather than assuming the cheaper option is correct.
+- **Target files:** `ai-resources/.claude/commands/work-loop.md` (Step 7, reviewed-route branch), `ai-resources/docs/work-loop.md:74`.
+
 ### 2026-07-24 — Concluding from an incomplete source set: three instances in one session, the third caught only by a dispatched gate
 
 - **Status:** logged (pending)
@@ -722,6 +740,7 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Proposal:** Pin `model:` at each of the six sites, following the same convention as the 11 already-compliant commands (tier follows the work — judgment dispatches get `opus`; check each site's actual job before assuming blanket opus, per the M-A2a method lesson). `wrap-session.md` in particular should get its **paired workspace-root mirror** updated in lockstep.
 - **Target files:** `ai-resources/.claude/commands/{tweak,decide,leverage-idea,graduate-resource,promote-workflow,wrap-session}.md`; the workspace-root `wrap-session.md` mirror.
 - **Note:** CLAUDE.md § Model Tier's carve-out paragraph was reworded (S4, same session) to state this gap explicitly rather than imply universal compliance — see the carve-out's "Known compliance gap" clause.
+- **Partial — 1 of 6 done, 2026-07-29.** `leverage-idea.md` now pins `model: opus` on its Step 4 investigator dispatch, and `docs/agent-tier-table.md`'s compliance roster was moved in the same commit per that file's maintenance rule. Tier reasoning, per the M-A2a "check each site's actual job" method: the dispatch runs Part B's semantic near-duplicate sweep across the whole command/skill/agent library — the backstop for what the Step 2 mechanical gate misses — which is judgment work that degrades invisibly at a lower tier. **Five remain: `tweak`, `decide`, `graduate-resource`, `promote-workflow`, `wrap-session`** (plus `wrap-session`'s paired workspace-root mirror). Entry stays `logged (pending)`; do not archive on the strength of the one retrofit.
 
 ### 2026-07-13 — `run-manifest.sh` marker oracle breaks across midnight (same defect class already fixed one file over)
 - **Status:** **PARTIALLY APPLIED 2026-07-18 (S9-f53)** — the defect is fixed and covered by tests; the entry's *shared-helper* proposal is deliberately NOT done and stays open. Mission `repo-health-backlog-2026-07` thread 8 checked.
@@ -2123,3 +2142,24 @@ brief and route classification (likely `reviewed` — a shared command file, one
   whether the same wrapper affects other snapshot-wrapped commands.
 - **Target files:** `ai-resources/docs/` (new or existing harness/evidence rule),
   `ai-resources/.claude/commands/prime.md:521`, `ai-resources/docs/backlog-reconciliation.md:80-94`.
+
+### 2026-07-29 — `toolkit-relationship.md` § 2's `/leverage-idea` row is now materially wrong
+
+- **Status:** logged (pending)
+- **Category:** doc/reference (System Owner sibling-repo grounding file, cross-repo)
+- **Severity:** medium-high — the file is read by the `system-owner` agent on every invocation, and the row now misdescribes both the command's authority and its stop point.
+- **Review-cycle:** reviewed 2026-07-29, deferred to → the next session touching `projects/axcion-ai-system-owner/`, or the next `/consult`/`/implementation-triage` invocation that discusses `/leverage-idea`, whichever comes first
+- **Friction source:** `projects/axcion-ai-system-owner/references/toolkit-relationship.md:55` still reads *"[`/leverage-idea`] produces build proposals the operator may later bring to `/consult` or `/implementation-triage`, and feeds `/request-skill` on a new-skill recommendation."* As of `b2bb1bd` (this session, `ai-resources-leverage-idea` worktree), `/leverage-idea` no longer stops at a plan: it hands the recommended option to the exact command that owns it (`/develop-ai-resource`, `/work-loop`, `/scope-project`, `/tech-consult`, `/improve-skill`, `/tweak`, or a named project owner) and, on the new-or-materially-expanded-resource route, writes a Resource Brief directly to `inbox/` itself rather than "feeding `/request-skill`". Both facts in the existing row are now false.
+- **Proposal:** Rewrite the `/leverage-idea` row to describe the routing-and-handoff behavior — name the owner/route table (`.claude/commands/leverage-idea.md` Step 10) and the direct `inbox/` write on the new-resource route. Independently flagged as the top required mitigation by this session's `/risk-check` (`audits/risk-checks/2026-07-29-leverage-idea-lifecycle-routing-expansion.md`, blast radius High).
+- **Target files:** `projects/axcion-ai-system-owner/references/toolkit-relationship.md` § 2.
+- **Notes:** deliberately NOT fixed in the session that produced the defect — the operator explicitly excluded sibling-repo edits from that change (`inbox/archive/leverage-idea-lifecycle-routing.md` disposition note; `logs/session-notes.md` 2026-07-29 entry).
+
+### 2026-07-29 — A `git add` with one stale pathspec silently commits a partial stage instead of aborting the commit
+
+- **Status:** logged (pending)
+- **Category:** process / git discipline
+- **Severity:** medium — no data was lost and the wrap-mandated post-commit `git show --stat` self-verification caught it before any push, but the failure mode is generic (not specific to this session) and the safety net that caught it is a manual step, not a structural one.
+- **Review-cycle:** reviewed 2026-07-29, deferred to → next `/friday-checkup` or a dedicated commit-discipline session
+- **Friction source:** Observed directly, session `2026-07-29-leverage-idea`. A `git rm --quiet inbox/leverage-idea-lifecycle-routing.md` was run to archive a fulfilled brief. The follow-on `git add <5 other paths> inbox/leverage-idea-lifecycle-routing.md` (the removed path still listed, stale) aborted with `fatal: pathspec 'inbox/leverage-idea-lifecycle-routing.md' did not match any files` and staged **none** of the 6 paths — but the subsequent `git commit` still ran and committed whatever happened to already be staged (just the deletion, from the `git rm`), silently, with no indication that 5 intended files were missing. Caught only because this repo's own commit discipline mandates verifying the result afterward (`git show --stat`), not because anything blocked the bad commit from happening.
+- **Proposal:** No fix to a shared component proposed here — this is a single `git add` invocation's own failure semantics (a partial-pathspec-match aborts staging but does not prevent a subsequent commit from proceeding on the stale index). Two directions worth considering in a dedicated session: (a) a lightweight local habit/tooling change — verify `git diff --cached --name-only` matches the intended file list before every commit, not just after; (b) whether this is common enough across sessions to warrant a structural guard (a pre-commit check comparing staged-file-count against the invoking session's declared intent). Not proposing (b) here — one observed instance, caught safely, is evidence-class "one-off but consequential," not yet "recurring."
+- **Target files:** none identified yet — this is a process observation, not a code-target defect.
