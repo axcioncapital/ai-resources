@@ -144,4 +144,4 @@ Both modes append entries in this shape. It conforms to the `## Schema` block of
 
 ### Triage only — no fix, no commit
 
-`/resolve-repo-problem` applies no fix and commits nothing in either mode. The diagnosis and fix plan are advisory. In MANUAL mode the operator chooses an option; executing it is separate work — and if the chosen option is a structural fix flagged for `/risk-check`, run that gate before landing it. The `logged (pending)` entry — written by either mode — is resolved through `/friday-checkup` → `/friday-act`, not in the session that logged it.
+`/resolve-repo-problem` applies no fix and commits nothing in either mode. The diagnosis and fix plan are advisory. In MANUAL mode the operator chooses an option; executing it is separate work — and if the chosen option is a structural fix flagged as a change class, give it its one risk-aware review before landing it (`ai-resources/docs/qc-independence.md` § The rule). The `logged (pending)` entry — written by either mode — is resolved through `/friday-checkup` → `/friday-act`, not in the session that logged it.

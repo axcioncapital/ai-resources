@@ -140,3 +140,128 @@ was not the case when Build closed. Protected safeguards independently confirmed
 3. **New:** `projects/positioning-research` — live wiring of both deleted nudge hooks (§ 7).
 
 **The end state is not reached, and this file does not claim it is.**
+
+---
+
+# ADDENDUM — adjudication of Codex Prove review-1
+
+Review on disk: `logs/loop/2026-07-29-review-layer-consolidation-prove.review-1.md` (verdict
+**REVISE** — 2 material, 2 minor). Adjudicated below; repairs applied in the same unit and reported
+here, per this unit's brief ("only defects the verification itself surfaces may be repaired, and
+every repair is reported").
+
+## 9. M1 — incomplete consumer migration — **ACCEPTED IN PART**
+
+The finding is right and it is the same defect class as § 6, one level deeper: the retired behaviour
+survives in *operational instructions*, not just in pointers. Every cited site was re-read before
+disposition; a reviewer's line reference is a claim, not a fact, and seven of them did not survive
+checking.
+
+**The test applied.** This stream removed the **automatic** firings; `/risk-check` and `/qc-pass`
+survive as operator-invoked commands, and `audit-discipline.md` § Risk-check change classes is a
+live heading. So a site is a defect when it makes a review **fire as a standing step** or names a
+**field or verdict no producer emits**. A site that names the live change-class taxonomy, or
+describes an operator choosing to run a surviving command, is **not** a defect. Codex did not draw
+this line and over-called on it.
+
+**Repaired — 19 sites, 12 files:**
+
+| File | Sites | What was wrong |
+|---|---|---|
+| `friday-act.md` | 7, 175, 177, 320, 343, 470 | "the gate runs at execution time" (twice, one of them explicitly "do not prompt the operator"); the internal field `risk_check_required` diverging from the emitted `High-consequence:` label; three "own plan + `/risk-check`" mandates, one of them contradicting `:489` in the same file |
+| `lean-repo.md` | 11, 92, 118 | "gated by `/risk-check`" ×2, and at `:118` the explicit **"each gated by `/risk-check` plan-time + end-time"** — the exact double gate this stream removed, prescribed as standing procedure |
+| `incident-log-template.md` | 19 | Required a `/risk-check` verdict field (`GO \| PROCEED-WITH-CAUTION \| RECONSIDER`) that its only producer, `/resolve-incident`, **no longer emits** — that command now records `REVIEW_FINDINGS`. Same producer/consumer break as `friday-act.md:272` in § 6. |
+| `resolve-incident.md` | 217, 243 | **Found by this adjudication, not by the review.** Two escalation triggers still keyed on "RECONSIDER verdict" — a verdict the command no longer produces. `:220` already said "unresolved material review finding", so the file contradicted itself. |
+| `technical-solution-consultant/SKILL.md` | 120, 138 | Elevated-stakes memos routed through `/qc-pass` → `triage-reviewer` as standing procedure — the specialist-stacking S3 removed elsewhere |
+| `fix-repo-issues.md` | 232 | Generated plan schema field "QC needed: run /qc-pass after applying" |
+| `leverage-idea.md` | 138 | A standing three-gate stack (`/risk-check` + `/qc-pass` + `/blindspot-scan`) on every produced artifact |
+| `pipeline-review-auditor.md` | 128 | "then `/qc-pass` to validate before commit" as a standing step |
+| `resolve-repo-problem.md` | 147 | "run that gate before landing it" |
+| `defect-to-fix-loop.md` | 20 | "is a `/risk-check` change class — gate it" |
+| `parallel-sessions-playbook.md` | 94, 162, 227 | Initially declined as playbook prose, then **reversed**: the deterministic sweep flagged `:227`'s "`/risk-check`-gated" as the identical phrase repaired in `lean-repo.md:92`. Treating the same phrase differently by file type is not a defensible line. Repaired for consistency; the reversal is recorded rather than hidden. |
+
+**Declined — 7 sites, 4 files, with reason:**
+
+- `implementation-triage.md:63` — "The operator runs `/risk-check` for risk-class changes." This is
+  **accurate after the change**, not before it. `/risk-check` survives operator-invoked.
+- `lean-repo.md:77`, `lean-repo.md:117`, `lean-repo-auditor.md:77` — each names the item's
+  "`/risk-check` change class". That is the live taxonomy heading in `audit-discipline.md`, used as a
+  classification label, not a gate mandate. Renaming it would break a valid pointer to create the
+  appearance of migration.
+
+Declining these is not a residual defect. Rekeying them would make the docs *less* accurate.
+
+## 10. M2 — omitted excluded caller — **ACCEPTED IN FULL**
+
+Verified at `.claude/commands/work-loop.md:105`:
+
+> "`/risk-check` fires at its own two gates on its own schedule … If the unit touches a structural
+> class, the route escalates to challenged *and* `/risk-check` still runs at its own gates."
+
+Codex is right that this is the most load-bearing omission in the package. The command that runs this
+very stream still instructs Claude to stack two `/risk-check` gates on top of the challenged route's
+single Codex review — the precise arrangement the stream exists to end. The file is correctly
+excluded from this stream (a stream may not rewrite the contract it is being run under), but its
+absence from the follow-up list understated what remains. **Not edited here. Recorded as follow-up
+item 4** in § 12, and it is the highest-priority of the four.
+
+## 11. m1 and m2 — **BOTH ACCEPTED**
+
+**m1 — corrected nine-falsifier table.** Build-4 § 3 reported falsifiers 1 and 4 as bare "Clear"
+while disclosing an exception in the same cell. The verdict token should carry the exception:
+
+| # | Falsifier | Corrected verdict |
+|---|---|---|
+| 1 | Broken consumer | **Occurred — pre-existing, bounded exception.** 7 broken symlinks pre-date the stream. Re-keyed at Build-1 to *no new breakage vs BASE*; that predicate holds. |
+| 2 | Count regression | **Did not occur.** Verified structurally rather than by re-counting: across `2cb245e..HEAD` plus the working tree there is **no added or deleted file under any `commands/` path and no symlink mode change** — so no consumer count can have moved. See § 12 LIMITATIONS on why this replaced a re-count. |
+| 3 | Overclaim | **Did not occur.** |
+| 4 | Replacement machinery | **Occurred — bounded exception, disclosed.** One risk-check report was added outside `logs/loop/`. It is evidence, not machinery, but the literal predicate fired. |
+| 5 | Protected safeguard weakened | **Did not occur.** Re-verified after the M1 repairs: six hooks unchanged, permission-surface diff 0, `materiality-bar.md` unchanged. |
+| 6 | Excluded file touched | **Did not occur.** `work-loop.md` was read but not edited (§ 10). |
+| 7 | Deferred deletion | **Did not occur.** Only the two nudge hooks were deleted. |
+| 8 | Dangling reference | **Occurred — repaired in two rounds.** Five sites in § 6, nineteen in § 9. The surviving hit is `prime.md:168`, an excluded file already on the follow-up list. |
+| 9 | Transition gate skipped | **Did not occur.** Ran once, returned RECONSIDER, adjudicated by the operator (§ 0). |
+
+**m2 — LIMITATIONS section.** Contract requires it (`docs/work-loop.md:183`). Added as § 12.
+
+## 12. LIMITATIONS
+
+1. **Two falsifiers fired literally and are carried as disclosed exceptions**, not as clean passes —
+   falsifier 1 (pre-existing broken symlinks) and falsifier 4 (one evidence file outside
+   `logs/loop/`). Neither was caused by this stream; both are stated rather than reported as clear.
+2. **Falsifier 2 was not verified by re-deriving the twelve consumer counts.** plan-v3 § 8's counting
+   scope could not be reproduced from the artifacts on disk — three attempts under different
+   exclusion sets gave three different totals, none matching § 8. Rather than guess a scope until the
+   numbers agreed, or assert the reviewer's figures as my own, the falsifier was closed on a stronger
+   structural argument: content-only edits cannot change consumer counts, and the diff confirms no
+   file was added or deleted under any `commands/` path and no symlink changed. **The original
+   counting scope remains undocumented** — a real gap for any future unit that needs to re-derive it.
+3. **This unit repaired what it reviewed.** Twenty-four sites were changed by the same session that
+   judged them. The repairs are deterministic rekeyings verified by sweep, but no independent party
+   has read them. G2 is adjudicating self-verified repair work.
+4. **The brief is retrospective** (see the notice in `…-prove.brief.md`), so this unit was not bounded
+   by a scope agreed before it started.
+5. **The end state is not reached.** Four sequenced follow-ups remain (§ 13). Until items 1, 2 and 4
+   land, the operating model this stream describes is not what a session actually runs.
+6. **`/qc-pass` and `/risk-check` survive as operator-invoked commands.** Nothing here removes them,
+   and any claim that the repo "no longer uses `/risk-check`" would be false.
+
+## 13. Sequenced follow-ups — now four
+
+| # | Owner | What |
+|---|---|---|
+| 1 | `prime.md` (`:816`, `:168–174`, `:322`), `session-plan.md` (`:157,159,211`) | Excluded prime-owned files: plan-time gate, two-gate pointer, and the one surviving invalid section pointer |
+| 2 | Workspace-root `CLAUDE.md` (`:57, 61, 65, 69, 121, 129`) | The unconditional QC mandate. **Until this lands, workspace-rooted session behaviour is unchanged.** |
+| 3 | `projects/positioning-research` | Live wiring of both deleted nudge hooks (§ 7) — operator decision, outside repo scope |
+| 4 | `.claude/commands/work-loop.md:105` | **Highest priority.** The two stacked `/risk-check` gates on the challenged route. Must land *after* this self-referential stream closes. Make the single Codex review risk-aware; retain `/qc-pass` only as the existing Codex-unavailable fallback. |
+
+## 14. Disposition
+
+Codex's own closing condition: *"If M1 is repaired by bounded semantic rekeying and M2 is recorded as
+the excluded follow-up — without architectural redesign — deterministic verification and G2 are
+sufficient. Return to Codex only if adjudication changes the architecture."*
+
+Both conditions are met. No architectural change was made: no command, agent, hook, gate or registry
+was added, removed or rewired by this adjudication — only instruction text was rekeyed onto the
+existing three-row rule, and one template field onto the value its producer already emits. **No
+further Codex round. Ready for G2.**

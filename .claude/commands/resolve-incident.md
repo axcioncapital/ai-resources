@@ -214,7 +214,7 @@ Three writes, in this order:
     Full record: audits/incidents/{DATE}-{SLUG}.md
     ```
 
-    If the incident was **escalated** (RECONSIDER verdict or Critical risk):
+    If the incident was **escalated** (an unresolved material review finding, or Critical risk):
     ```
     Incident escalated — {DATE}
     Reason: {1 sentence — unresolved material review finding, or Critical-class change}
@@ -240,7 +240,7 @@ Three writes, in this order:
 
 ## Escalated-record fast path (Steps 2 and 6 abort cases)
 
-When the command stops early (RECONSIDER verdict, Critical risk, Step 6 plan failure), still write a partial incident record:
+When the command stops early (an unresolved material review finding, Critical risk, Step 6 plan failure), still write a partial incident record:
 
 - Fill all fields up to the point where the command stopped.
 - Set `status: escalated` (risk gate) or `status: deferred` (implementation failure).
