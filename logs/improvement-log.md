@@ -2049,3 +2049,36 @@ The precedent that resolved it was already living in the repo, uncatalogued: `ax
 **Proposal.** Add a § Amending an approved package to `docs/work-loop.md`: name the artifact (a `-vN` plan revision on the stream, not the unit), name the gate (G1 re-arms for the amended portion only, with the unamended slices staying approved), and name what an amendment may not do (reopen a landed slice — Slice 3 stayed closed here, correctly, but only because the operator said so explicitly).
 
 **Target files:** `ai-resources/docs/work-loop.md` (§ The challenged route, § Artifacts, § Streams, units and phases); `ai-resources/.claude/commands/work-loop.md` if the command needs a corresponding step.
+
+### 2026-07-29 — `.claude/commands/work-loop.md:247` is now a stale, contradictory instruction
+
+- **Status:** logged (pending)
+- **Severity:** medium — a live authoritative override exists (`logs/decisions.md`, 2026-07-29), so
+  nothing is currently misled by it in practice; but a future session reading the command file in
+  isolation, without cross-checking `decisions.md`, would see an absolute prohibition that no longer
+  holds.
+- **Category:** documentation drift (`ai-resources/.claude/commands/work-loop.md` § What this command
+  never does)
+- **Source:** `ai-resources`, 2026-07-29 — surfaced while resolving the mission `lean-prime-2026-07`
+  non-negotiable on `/work-loop` editing `/prime`.
+
+**The defect.** `work-loop.md:247` reads: *"Never edits `/prime`, workspace `CLAUDE.md`, permissions,
+hooks or settings."* The operator's 2026-07-29 decision (`logs/decisions.md`) establishes that
+`/work-loop` **may** edit `/prime` when it is the explicit object of an approved brief, the settled-
+correction clause of `docs/work-loop.md` § Execution boundary applies, and the applicable route gates
+have passed. The command file's blanket "never" now contradicts the contract doc and the operator
+decision on its first clause, while remaining correct on the other four (`CLAUDE.md`, permissions,
+hooks, settings).
+
+**Why it was not fixed in the stream that found it.** The operator scoped the authorization narrowly
+— to the current stream's three-condition case — and explicitly declined to fold the command-file
+correction into the same act, calling it "a separately scoped correction" with its own blast radius.
+Fixing it here would have been exactly the kind of incidental, undeclared edit the authorization's
+first condition (`/prime` as the explicit object of an approved brief) exists to exclude.
+
+**Proposal.** Narrow `work-loop.md:247`'s first clause to match the operator's three-condition
+authorization — or point it at `docs/work-loop.md` § Execution boundary and `logs/decisions.md`
+rather than restating a rule that can drift out of sync with the contract doc again. Needs its own
+brief and route classification (likely `reviewed` — a shared command file, one clause).
+
+**Target files:** `ai-resources/.claude/commands/work-loop.md:247`.
