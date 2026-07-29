@@ -2000,3 +2000,20 @@ The precedent that resolved it was already living in the repo, uncatalogued: `ax
 **Proposal.** Add one line under Q1 or Q2 noting that plain scripts (no Claude Code surface) serving a project domain live in `{domain}/scripts/`, with `logs/scripts/` cited as the existing instance. Cheap — this is a missing sentence, not a missing mechanism.
 
 **Target files:** `ai-resources/docs/repo-architecture.md` § Placement heuristics (Q1 or Q2).
+
+### 2026-07-29 — A QC gate costs most before it runs: anticipation shapes the artifact, and that cost is paid even when the gate is cancelled
+
+- **Status:** logged (pending)
+- **Severity:** medium-high — recurs in every substantive session, is invisible in telemetry (the gate shows as "not run"), and the operator raised it directly as a complaint about session length.
+- **Category:** workflow / gate sequencing (`ai-resources/docs/qc-independence.md`)
+- **Source:** `axcion-systems-builder` session, 2026-07-29 (S1-c63) — operator interrupted `/qc-pass` mid-dispatch and asked for an explicit account of how the gates cost time.
+
+**The measurable part is small and was mostly wasted.** `/risk-check` never ran. `/qc-pass` was invoked and the operator killed the subagent dispatch before the reviewer did any work. Direct cost: two turns and ~140 lines of handoff prose (≈45 lines of skill arguments, ≈95 lines of subagent prompt) that were discarded. Plus prior reasoning spent deciding *which* gates applied — whether the Blind-Spot Scan fires on a build-script edit, and whether the base "do not call the Agent tool unless requested" instruction conflicts with the QC Independence Rule's "never self-QC-and-commit."
+
+**The larger part is invisible and is the actual finding.** Knowing a reviewer was coming changed what got written *before* the gate was reached: three documents each gained a "why this is X and not Y" rationale paragraph, the edited script gained a seven-line comment block explaining a bug no longer present in it, and the review brief ran to 106 lines. Some of that is load-bearing for the external reviewer; a meaningful fraction exists to pre-empt an objection. **That cost is incurred at authoring time and is therefore paid in full whether or not the gate ever fires** — which is exactly what happened here.
+
+**Proposal — sequencing, not removal.** The rule currently reads as "run `/qc-pass` after producing or editing any substantive artifact, before approval or commit," which places it at the end, on finished work, where it reads as ceremony and where its findings are most expensive to act on. Add guidance that on multi-document fold-ins QC should fire **on the first artifact, early**, before rationale and cross-reference passes — same cost to run, findings arrive while they are cheap to fix, and the anticipation premium is not paid on work that has already been polished.
+
+**Counter-consideration to weigh before acting.** Early QC sees an incomplete artifact and may raise findings that later edits would have closed anyway, which trades one kind of waste for another. The narrow claim worth testing first: does it hold specifically for *fold-ins* (transcribing settled decisions into existing documents), where the shape is known up front and QC's real job is fidelity-checking rather than judging a design?
+
+**Target files:** `ai-resources/docs/qc-independence.md`; possibly the `Completion Standard` / `QC Independence Rule` wording in the workspace `CLAUDE.md`.
