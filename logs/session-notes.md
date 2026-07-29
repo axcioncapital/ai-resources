@@ -361,3 +361,9 @@ None beyond what `projects/axcion-ai-system-owner/development/prime-runtime-dele
 
 None — both findings surfaced this session (the work-loop amendment-path contract gap, and the stale
 `work-loop.md:247` line) were queued to `logs/improvement-log.md`, not declined.
+
+## 2026-07-29 — Session S2-5a5
+
+**Work:** Continue `/work-loop` stream `2026-07-29-prime-minimum-responsibility` (mission `lean-prime-2026-07`). Run `/develop-ai-resource` in upstream mode against `logs/loop/2026-07-29-prime-minimum-responsibility-build-2.brief.md` — capability `prime-runtime-delegation`, record at `projects/axcion-ai-system-owner/development/prime-runtime-delegation.md`. Shape is NOT preselected: reuse, one script, several scripts and no build are all admissible.
+- Mission: lean-prime-2026-07
+- **Operator directive, this session:** `/risk-check`, `/qc-pass` and all subagent dispatch are **operator-declined** — recorded as declined, never as passed or completed. Verification is by direct inspection and deterministic executable tests only.

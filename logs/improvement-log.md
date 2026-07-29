@@ -2082,3 +2082,44 @@ rather than restating a rule that can drift out of sync with the contract doc ag
 brief and route classification (likely `reviewed` — a shared command file, one clause).
 
 **Target files:** `ai-resources/.claude/commands/work-loop.md:247`.
+
+---
+
+### 2026-07-29 — `grep` is a shell function that expands `$VAR` inside single quotes, and it returns silent false negatives
+
+- **Status:** logged (pending)
+- **Category:** harness / evidence integrity — the instrument-scope family (`:22`, 2026-07-24), but a
+  distinct mechanism: there the instrument's *scope* was wrong, here the instrument *silently lies*.
+- **Severity:** high — it converts "I searched and found nothing" into "it does not exist", with no
+  error, no exit-code signal and no visible difference from a true negative. Every command in this
+  repo that reasons from an empty `grep` result is exposed, and several *decide* on emptiness:
+  `/prime` Step 3's urgent scan, `docs/backlog-reconciliation.md`'s keyword-match pass, and the
+  `grep -Fxq` header-existence check at `prime.md:521` whose exit-1 branch **writes a session
+  header**.
+- **Observed, not inferred (2026-07-29, S2-5a5).** While verifying a `/work-loop` premise, the search
+  `grep -n 'for d in "$WORKSPACE_ROOT"/projects' .claude/commands/prime.md` returned **empty**. The
+  loop is plainly at `.claude/commands/prime.md:111`. `type grep` reports:
+  `grep is a shell function from /Users/patrik.lindeberg/.claude/shell-snapshots/snapshot-zsh-*.sh`.
+  The wrapper expands `$WORKSPACE_ROOT` **inside single quotes** — which POSIX quoting guarantees it
+  must not — so the pattern became `for d in ""/projects` and matched nothing. Escaping the dollar
+  (`'...\$WORKSPACE_ROOT...'`) returns the correct hit at `:111`; the unescaped form returns exit 1.
+  Both were run side by side against the same file in the same call.
+- **Why this is more than a quoting nuisance.** The session was one unrun positive control away from
+  reporting "`/prime` Step 1a's sibling-repo loop does not exist" **into a qualification decision** —
+  a fabricated premise of exactly the shape the 2026-07-29 usage-log entry scored **Major** (a
+  repo-scoped instrument answering a workspace-scoped question). The defect was caught only because
+  the empty result contradicted a file already read in the same session. Nothing structural caught
+  it. An empty `grep` in this environment is **not evidence of absence** until a positive control has
+  shown the pattern can match at all — which is the `work-loop.md` § Block formats evidence standard
+  ("an empty result is not evidence until a positive control has shown the check can detect the thing
+  it is looking for") applied to the tool rather than to the finding.
+- **Proposal:** (a) state in `docs/` — harness/evidence rules — that single quotes do **not** protect
+  `$` from the `grep` wrapper, and that literal-`$` patterns must escape it or use the `Grep` tool;
+  (b) require a positive control before any *decision* rests on an empty `grep`, matching the existing
+  evidence standard; (c) audit the decide-on-empty call sites named above — `prime.md:521`'s
+  `grep -Fxq` is the highest-consequence one, since its exit-1 branch writes to `session-notes.md`
+  (its own text already warns "treat exit 1 strictly as not-found → create, never as command failed",
+  which is correct for a *true* negative and dangerous under a *false* one). (d) Worth checking
+  whether the same wrapper affects other snapshot-wrapped commands.
+- **Target files:** `ai-resources/docs/` (new or existing harness/evidence rule),
+  `ai-resources/.claude/commands/prime.md:521`, `ai-resources/docs/backlog-reconciliation.md:80-94`.
