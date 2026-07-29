@@ -315,7 +315,6 @@ Canonical block (apply hooks in this order):
   "hooks": [
     { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/log-write-activity.sh\"",  "timeout": 5, "statusMessage": "Logging write activity..." },
     { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/detect-innovation.sh\"",   "timeout": 5, "statusMessage": "Checking for innovation..." },
-    { "type": "command", "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/auto-qc-nudge.sh",      "timeout": 5, "statusMessage": "Checking for significant artifact writes..." },
     { "type": "command", "command": "bash $CLAUDE_PROJECT_DIR/.claude/hooks/check-claim-ids.sh",    "timeout": 5, "statusMessage": "Checking citation tags..." }
   ]
 }
@@ -324,8 +323,9 @@ Canonical block (apply hooks in this order):
 **Hook roles:**
 - `log-write-activity.sh` — appends a per-write line to the project's write-activity log (timestamp, file, stage). Cheap audit trail.
 - `detect-innovation.sh` — pattern-matches the written path against the innovation-detection rules; flags new commands/agents/hooks/skills for `/innovation-sweep` review.
-- `auto-qc-nudge.sh` — if the write is a "significant artifact" (chapter prose, decision document, plan), nudges the session toward `/qc-pass`.
 - `check-claim-ids.sh` — for citation-pipeline projects, scans the written file for unresolved claim-ID tags (`[CITATION NEEDED]`, `[CLAIM-ID-?]`).
+
+**`auto-qc-nudge.sh` was removed from this wiring on 2026-07-29.** It fired on every "significant artifact" write and nudged the session toward `/qc-pass` — the standing automatic review layer this repo retired (`qc-independence.md` § The rule). Do not re-add it, and do not wire a replacement nudge. A change gets one independent review sized to its consequence, decided at the change, not a per-write prompt. Existing projects may still carry a local copy of the script; an unwired copy is harmless, a wired one is residue.
 
 **Auto-commit hook deliberately excluded.** A fifth hook observed in nordic-pe-macro auto-commits every Write event. This conflicts with the workspace **Commit Rules** (operator-approved commits, no `--no-verify`, no bypass) and is kept project-local per the loose-end verdict in `audits/innovation-sweep-2026-05-16.md` (LE3). Do **not** include the auto-commit hook in any project that follows workspace commit policy.
 

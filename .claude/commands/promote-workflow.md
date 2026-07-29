@@ -176,7 +176,7 @@ P2 merge-down.
 
 Wait for confirmation. Once confirmed, mark `[x] P0` in the inventory's Progress section and proceed
 autonomously through P1–P4 (the gate covers them). Re-surface only on a stop-condition, a residue
-cap-hit, or a P5 risk-check non-GO.
+cap-hit, or a material finding from the P5 review that cannot be resolved.
 
 ## Phase 1 — Qualify the judgment items
 

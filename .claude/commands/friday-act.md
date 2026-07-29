@@ -269,7 +269,7 @@ where risk ∈ {high, med, low}. Empty line to finish, or `(none)` to skip.
 
 ### {ordinal}. [{risk}] {item text}
 - **Source:** {checkup | so-derived | journal-derived}
-- **Risk-check required:** {yes — change class: {class} | no}
+- **High-consequence:** {yes — change class: {class} | no}
 - **W2.4 auto-draft:** {yes — decide (a) auto-draft or (b) manual at execution time | no}
 
 (repeat for each item, ordered high → med → low within this plan)
