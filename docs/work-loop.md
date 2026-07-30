@@ -56,7 +56,7 @@ It **routes out**, and does not implement, in exactly two cases. **The two diffe
 
 Universal — every unit of any type. Any one fires; ambiguity resolves **upward**.
 
-- **Challenged** — touches a `/risk-check` structural change class **as listed at `docs/audit-discipline.md:60-65`** (that file is the sole owner of the list; it is cited here, never copied); or deletes or retires an active resource; or changes git, branch or worktree behaviour; or touches three or more repositories; or has already failed to converge twice.
+- **Challenged** — touches a structural change class **as listed at `docs/audit-discipline.md:60-65`** (that file is the sole owner of the list; it is cited here, never copied); or deletes or retires an active resource; or changes git, branch or worktree behaviour; or touches three or more repositories; or has already failed to converge twice.
 - **Reviewed** — changes a shared `ai-resources` resource symlinked into projects; or produces an artifact that leaves the repository; or changes five or more files; or produces analytical output the operator cannot judge unaided.
 - **Solo** — residual: one repository, revert-reversible, four files or fewer, no shared blast radius, no external delivery.
 
@@ -71,7 +71,7 @@ A structural risk class does not fire a separate gate. It makes the change **hig
 | Route | Independent review | Operator stops |
 |---|---|---|
 | **solo** | None. A mandatory risk class escalates the route rather than bolting a gate onto it. | 0 |
-| **reviewed** | One Codex review of the result — **risk-aware when the change is in a structural class**. `/qc-pass` only as fallback, when Codex cannot reach the object. | 1 — the lifecycle decision, and only when the stream has a genuine adoption question. A defect fix closes as `close` with no stop. |
+| **reviewed** | One Codex review of the result — **risk-aware when the change is in a structural class**. Inline self-review only as fallback, when Codex cannot reach the object. | 1 — the lifecycle decision, and only when the stream has a genuine adoption question. A defect fix closes as `close` with no stop. |
 | **challenged** | Codex before implementation and after, **in separate units**. Both are **risk-aware** — a challenged route is high-consequence by construction. | 3 — G1 scope and package · G2 release · G3 lifecycle |
 
 ### The challenged route — gates and review placement
@@ -199,7 +199,7 @@ decision. Do not reopen these. Qualify the ARTIFACT only; return its disposition
 
 This is the unit's outcome axis. A capability's `status:` (adopt / hold / reject at Land) is a separate axis on the record and never substitutes for one of these.
 
-**Six dispositions**, one per material finding: `fixed` · `deferred` (with the trigger that reopens it) · `rejected` (with the evidence that disproves it) · `already-true` (with the citation) · `out-of-scope` (with the owner) · `operator` (needs a decision this loop cannot make). `/resolve` and `/triage` do not fire — adjudication is the loop's own step 7.
+**Six dispositions**, one per material finding: `fixed` · `deferred` (with the trigger that reopens it) · `rejected` (with the evidence that disproves it) · `already-true` (with the citation) · `out-of-scope` (with the owner) · `operator` (needs a decision this loop cannot make). `/triage` does not fire — adjudication is the loop's own step 7.
 
 **Evidence standard.** Every claim names what was run and what was observed. A bare assertion is not evidence, and an empty result is not evidence until a positive control has shown the check can detect the thing it is looking for.
 

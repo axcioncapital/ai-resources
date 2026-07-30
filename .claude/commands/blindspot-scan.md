@@ -13,9 +13,9 @@ Run an adversarial blind-spot scan on the current work package before the operat
 |---|---|
 | Intent-vs-artifact mismatch (work no longer matches the original brief/contract) | `/contract-check` |
 | Trajectory drift (session wandering from its mandate) | `/drift-check` |
-| Structural risk (coupling, blast radius, permissions, reversibility) | `/risk-check` |
+| Structural risk (coupling, blast radius, permissions, reversibility) | a risk-aware Codex review (`docs/qc-independence.md` § Risk-aware review) |
 | Whether the work is worth doing at all / proportionality of the work itself | `/implementation-triage` — this is also the boundary for Check B: usage-fit judges a built or planned artifact's *fit*, not whether to build it |
-| General artifact quality (correctness, completeness vs spec) | `/qc-pass` |
+| General artifact quality (correctness, completeness vs spec) | the change's one independent Codex review |
 
 Input: `$ARGUMENTS` — optional one-line description of the work package. If empty, auto-detect (Step 1).
 
@@ -81,4 +81,4 @@ Return exactly this shape:
 
 ### Step 8 — Finding closure
 
-The scan itself modifies no files. But on `PAUSE-AND-FIX` or `PROCEED-WITH-CONSTRAINTS`, instruct the session to record each open finding durably — in this session's session-plan file if one exists, otherwise as a `logs/maintenance-observations.md` session block — so closure routes into the existing fix loops (`/resolve`, `/friday-act`) instead of depending on operator memory. A finding that lives only in chat is itself a blind spot.
+The scan itself modifies no files. But on `PAUSE-AND-FIX` or `PROCEED-WITH-CONSTRAINTS`, instruct the session to record each open finding durably — in this session's session-plan file if one exists, otherwise as a `logs/maintenance-observations.md` session block — so closure routes into the existing fix loops (`/triage`, `/friday-act`) instead of depending on operator memory. A finding that lives only in chat is itself a blind spot.

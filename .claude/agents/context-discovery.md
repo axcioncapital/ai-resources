@@ -82,7 +82,7 @@ For each `task_type`, the default starting points are:
 - **project** → `{CWD_PROJECT}/CLAUDE.md` (already read), `{CWD_PROJECT}/.claude/`, `{CWD_PROJECT}/logs/decisions.md`, `{CWD_PROJECT}/logs/friction-log.md`.
 - **documentation** → `{CWD_PROJECT}/docs/`, `ai-resources/docs/`, workspace-root `docs/`. CLAUDE.md files at each layer.
 - **incident** → `{CWD_PROJECT}/logs/friction-log.md`, `{CWD_PROJECT}/logs/improvement-log.md`, `ai-resources/logs/improvement-log.md`, `{CWD_PROJECT}/audits/`, recent `logs/session-notes.md` entries.
-- **qc** → `ai-resources/.claude/commands/qc-pass.md`, `ai-resources/.claude/agents/qc-reviewer.md`, `ai-resources/docs/qc-independence.md`, plus any QC-specific commands the CLAUDE.md names.
+- **review** → `ai-resources/docs/qc-independence.md`, `ai-resources/docs/materiality-bar.md`, plus any review-specific commands the CLAUDE.md names.
 - **architecture** → workspace `CLAUDE.md`, `ai-resources/CLAUDE.md`, `{CWD_PROJECT}/CLAUDE.md`, `ai-resources/docs/audit-discipline.md`, `ai-resources/docs/repo-architecture.md` if it exists, plus the project's own scope-out items.
 
 For TASK_DESCRIPTION that name specific paths or component names, add those to the candidate list directly. For descriptions that name a workflow or pipeline, add the workflow's reference docs from CLAUDE.md.

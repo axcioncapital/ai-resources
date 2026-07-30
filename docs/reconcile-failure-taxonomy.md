@@ -36,7 +36,7 @@ Once the level is named, state *why* it happened — this is what makes the fix 
 
 | Fix level | What changes | Routes into |
 |---|---|---|
-| **Output-level** | The current deliverable — sharper prioritization, removed generic language, added missing dimension. | `/resolve` (single-output fix, operator-actioned same session) |
+| **Output-level** | The current deliverable — sharper prioritization, removed generic language, added missing dimension. | direct fix (single-output, operator-actioned same session) |
 | **Workflow-level** | A step added, removed, or reordered in how this *type* of task gets produced next time. | `/resolve-repo-problem` (MANUAL mode, if the workflow gap is a repo-level pattern) or a direct project CLAUDE.md / skill edit if it's local to this one project's process |
 | **Repo-level** | `mandate-rubric.md`, `resource-activation-map.md`, or upstream CLAUDE.md/skill instructions themselves need a durable edit. | `logs/improvement-log.md` (Pending → Applied, Friday-cadence drain) for cross-session patterns; direct edit for a single obvious rubric gap |
 

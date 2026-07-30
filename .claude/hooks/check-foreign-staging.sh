@@ -477,7 +477,7 @@ for tok in re.split(r'[,;\s]+', outputs_raw):
         continue
     # Leading `/` = not a repo-relative path. Git candidate paths are ALWAYS
     # repo-root-relative, so such a token could never match one; dropping it keeps
-    # prose like "a `/risk-check` report under …" out of the block message.
+    # prose like "a review report under …" out of the block message.
     if tok.startswith("/"):
         continue
     if not _PATH_SHAPE.search(tok) and tok not in ("CLAUDE.md", "SKILL.md"):

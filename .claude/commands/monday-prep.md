@@ -264,7 +264,7 @@ Proposed week mandate for {WEEK}:
 
 **Quality checks required:**
 - one independent review per change, sized to its consequence — not a review chain
-- /qc-pass and /triage are operator-invoked, never automatic
+- reviews and /triage are operator-invoked, never automatic
 
 **Threshold overrides:**
 {any overrides from the conversation; "none" if default}

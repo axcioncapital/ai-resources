@@ -28,7 +28,7 @@ When a session identifies the need for a new or modified AI resource:
    - **(a) Net-simplification prong** — the change reduces or holds the count of *load-bearing units* (commands, agents, mandatory stages/gates, always-loaded context) while preserving capability. A merge/consolidation that removes ≥1 existing component satisfies (a); a change that adds net components does **not**.
    - **(b) Evidenced-failure prong** — the change addresses a failure mode with **cited written evidence**: a `logs/friction-log.md` / `logs/defect-log.md` / `logs/coaching-log.md` / `logs/incident-log.md` entry, or a pattern seen ≥2 times. "We might need it," "for completeness," or "for a future phase" does **not** satisfy (b) — that is the AP-7/DR-7 speculative-abstraction violation.
 
-   Before introducing the component, answer all five (record the answers where the decision is made — plan file, risk-check, or `logs/decisions.md`):
+   Before introducing the component, answer all five (record the answers where the decision is made — plan file, review report, or `logs/decisions.md`):
    1. What recurring failure does it prevent?
    2. How likely / frequent is that failure?
    3. What does it cost — time, context, operator attention, per-session token load?

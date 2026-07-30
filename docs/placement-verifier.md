@@ -80,7 +80,7 @@ The verifier procedure itself writes nothing. Logging is delegated to `/friction
 
 ---
 
-## Two-gate firing model — by analogy to `/risk-check`
+## Two-gate firing model
 
 The two gates here are this verifier's own, and they are **deterministic path checks, not reviews** — nothing about them changed when the review layer was consolidated on 2026-07-29. The reason for two: a plan-time gate catches placement errors before tokens are spent on the wrong-place write; an end-time gate catches drift between what the pipeline planned and what it actually wrote.
 

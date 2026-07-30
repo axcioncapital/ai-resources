@@ -7,9 +7,9 @@ argument-hint: "<question or situation>"
 <!-- DO NOT add `disable-model-invocation: true` here. /consult is auto-invoked by name from
      resolve-incident.md and pm.md (Fallback 5d) as a designed
      second-opinion step; the flag removes /consult from the model-invocable set and silently
-     breaks both. (risk-check.md was listed here until 2026-07-05; it now surfaces an operator-typed
-     /consult offer on non-GO verdicts instead of auto-invoking, so it no longer depends on
-     model-invocability.) The spontaneous-firing concern it was meant to address is already
+     breaks both. (risk-check.md was listed here until 2026-07-05 and the command was retired
+     entirely on 2026-07-30, so it is no longer a consumer either way.) The spontaneous-firing
+     concern the flag was meant to address is already
      covered by Step 0's read-first gate + the preamble line below. (Regression: added
      2026-05-29 in 51b69dc, reverted 2026-06-10.) -->
 

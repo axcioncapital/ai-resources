@@ -161,7 +161,6 @@ Every working session follows the same basic arc:
   - `/scope` — to produce a summary of what's in vs. out of scope
   - `/recommend` — to have Claude proceed on its own best judgment at a decision point
   - `/triage` — optional, to rank a large set of proposed changes before you decide
-  - `/qc-pass` — an independent quality check, when a change needs a review and Codex is not giving it one
 
 **Mid-session pause (if you need to stop and come back):**
 - Run `/save-session` before closing — it preserves current state so you can resume cleanly
@@ -282,7 +281,7 @@ Two different types of AI resources exist in this system. Understanding the diff
 - Files that live in `.claude/commands/` (in ai-resources, then auto-synced into each project)
 - You invoke them by typing `/command-name` in the chat
 - Each command orchestrates a multi-step workflow — it may spawn subagents, write logs, read multiple files, and produce structured output
-- Some commands are for sessions (prime, wrap-session), some for quality (qc-pass, triage), some for resources (create-skill, deploy-kb)
+- Some commands are for sessions (prime, wrap-session), some for quality (triage, refinement-pass), some for resources (create-skill, deploy-kb)
 
 **Skills** (reusable methodology files)
 - Files that live in `ai-resources/skills/<skill-name>/SKILL.md`

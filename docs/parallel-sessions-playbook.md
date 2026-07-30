@@ -84,7 +84,7 @@ The workspace has a marker contract and three guards. **They detect collisions; 
 - `session-start.md` Step 0.5 (mtime guard) and `wrap-session.md` Step 3.5 (foreign-write guard) — detect a foreign write *after* it lands.
 - `.claude/hooks/detect-concurrent-session.sh` — proactively warns at session start that another session is running. As of 2026-06-10 (Fix 1) its same-checkout sharp nudge is liveness-tightened (it reads the un-wrapped per-id marker set, so it no longer false-fires on your own already-wrapped same-day session). It is still only a **nudge** — a SessionStart hook cannot block — so the *enforcement* of the one dangerous move lives in `.claude/hooks/check-foreign-staging.sh` (Fix 2), a PreToolUse hook that blocks a cross-session commit from shipping another session's staged files.
 
-**Do not restate or re-implement these here, and do not author a competing gate taxonomy.** Point at them. For pause/gate behavior during parallel work, the authority is `docs/autonomy-rules.md` (#1 destructive git ops, #2 external writes incl. push, #9 structural-change `/risk-check`).
+**Do not restate or re-implement these here, and do not author a competing gate taxonomy.** Point at them. For pause/gate behavior during parallel work, the authority is `docs/autonomy-rules.md` (#1 destructive git ops, #2 external writes incl. push, #9 structural change classes).
 
 ### Quarantine the bookkeeping
 
@@ -234,6 +234,6 @@ _Provisional — see currency note below._ The decision rule the System Owner ap
 ## Related
 
 - `docs/session-marker.md` — the per-session marker contract (within-session race fix; this playbook is the cross-branch layer above it).
-- `docs/autonomy-rules.md` — the pause/gate authority for destructive git ops, pushes, and structural-change `/risk-check`.
+- `docs/autonomy-rules.md` — the pause/gate authority for destructive git ops, pushes, and structural change classes.
 - `.claude/hooks/detect-concurrent-session.sh` — proactive concurrent-session warning.
 - `docs/compaction-protocol.md` — named checkpoints, relevant to the single-session-with-checkpoints alternative (§ 6).

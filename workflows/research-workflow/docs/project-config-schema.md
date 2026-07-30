@@ -109,7 +109,7 @@ Arg-shape is then validated against the declared mode at Phase 0; it is not a di
 - `Document model: "report"` → arg must match `^[rR][0-9]+$`. Mismatch halts.
 - `Document model: "section"` → arg must match `^[0-9]+\.[0-9]+$`. Mismatch halts.
 
-Enum values `report` / `section` are reserved at v1 landing of this field. Adding a new mode requires a Path A v4-style design + `/risk-check`.
+Enum values `report` / `section` are reserved at v1 landing of this field. Adding a new mode requires a Path A v4-style design plus a risk-aware review.
 
 ---
 
@@ -145,5 +145,5 @@ Until one of those triggers fires, CLAUDE.md is the right home — keep it.
 
 - `audits/workflow-audit/05-template-fitness.md` §3.3 — original schema source-of-truth (12-field block + consumer enumeration)
 - `audits/workflow-audit/05-template-fitness.md` §3.4 — worked example showing schema instantiation for a hypothetical "European industrial M&A H2 2026" project
-- `ai-resources/docs/audit-discipline.md` — `/risk-check` change classes (CLAUDE.md edit + new doc creation both apply)
+- `ai-resources/docs/audit-discipline.md` — structural change classes (CLAUDE.md edit + new doc creation both apply)
 - `plans/fix-phase-plan-v1.md` Work Unit 3 (FX-B7) — fix-phase landing scope; Work Unit 4 (FX-B1) — first consumer-builder

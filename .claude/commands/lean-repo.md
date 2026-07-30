@@ -74,7 +74,7 @@ Write `{OUTPUT_PATH}`:
 
 ## Simplification Plan (by disposition)
 {From the agent notes. Group under: Remove / Merge / Make-conditional / Simplify / Defer-loading / Retain / Investigate.
-Each structural item: component + path — disposition rationale — /risk-check change class (if any) — rollback note.}
+Each structural item: component + path — disposition rationale — structural change class (if any) — rollback note.}
 
 ## Orphan / Adoption (Q3) — scanned scope and its limits
 **Scanned scope:** {the exact paths the agent grepped — copy verbatim from the agent's Q3 section}
@@ -114,7 +114,7 @@ Print to chat:
 
 This command detects simplifications; it does not apply them. The closer is the workspace's existing diagnose→execute separation:
 
-1. The plan's structural items are each tagged with their `/risk-check` change class and a rollback note — they are execution-ready.
+1. The plan's structural items are each tagged with their structural change class and a rollback note — they are execution-ready.
 2. They land in a **separate execution session** (never this one). During the Friday cadence, `/friday-act` is the recurring home for dispositioning a leanness plan into executable plan files; outside the cadence, run the items directly in a fresh session, each taking its **one** risk-aware review before it lands (`ai-resources/docs/qc-independence.md` § The rule) — one review, not a plan-time and end-time pair.
 3. Removals/merges of commands, agents, hooks, or CLAUDE.md rules are structural change classes — they follow `docs/audit-discipline.md` and cannot be self-applied by the diagnosing session.
 

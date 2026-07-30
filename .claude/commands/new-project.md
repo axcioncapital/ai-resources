@@ -394,7 +394,7 @@ All steps are idempotent — re-running `/new-project` on an existing direct pro
    while [ "$d" != "/" ]; do d=$(dirname "$d"); [ -d "$d/ai-resources" ] && AI_RES="$d/ai-resources" && break; done
    [ -n "$AI_RES" ] || { echo "ERROR: ai-resources not found in any ancestor — cannot symlink core commands"; exit 1; }
 
-   CORE="prime wrap-session session-start session-plan open-items qc-pass resolve clarify scope recommend work-loop"
+   CORE="prime wrap-session session-start session-plan open-items clarify scope recommend work-loop"
    mkdir -p "projects/{project-name}/.claude/commands"
    for c in $CORE; do
      SRCCMD="$AI_RES/.claude/commands/${c}.md"
@@ -564,7 +564,7 @@ Otherwise, install the three pieces:
    mkdir -p "$(dirname "$SETTINGS")"
    [ -f "$SETTINGS" ] || echo '{}' > "$SETTINGS"
 
-   # Locate canonical templates via walk-up to ai-resources/ (load-bearing per /risk-check 2026-05-25 mitigation #2)
+   # Locate canonical templates via walk-up to ai-resources/ (load-bearing per review 2026-05-25 mitigation #2)
    d="$(cd projects/{name} && pwd)"
    AI_RES=""
    while [ "$d" != "/" ]; do
@@ -771,15 +771,13 @@ EOF
    - `session-start.md` — Phase-3 mandate capture
    - `session-plan.md` (writes `logs/session-plan-{YYYY-MM-DD}-{marker}.md` per `docs/session-marker.md`) — session-orchestration planning
    - `open-items.md` — backlog inventory
-   - `qc-pass.md` — independent QC pass
-   - `resolve.md` — QC-finding triage and resolution
    - `clarify.md` — request-clarification structured prompt
    - `scope.md` — scope-summary generator
    - `recommend.md` — operator-defers-to-Claude self-decision path
 
    ```bash
    MISSING=()
-   for cmd in prime wrap-session session-start session-plan open-items qc-pass resolve clarify scope recommend; do
+   for cmd in prime wrap-session session-start session-plan open-items clarify scope recommend; do
      if [ ! -L "projects/{name}/.claude/commands/${cmd}.md" ] && [ ! -f "projects/{name}/.claude/commands/${cmd}.md" ]; then
        MISSING+=("${cmd}.md")
      fi

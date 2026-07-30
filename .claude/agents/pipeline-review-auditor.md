@@ -41,7 +41,7 @@ Read these five reference files first. If any one of them cannot be read, ABORT 
 
 If `projects/axcion-ai-system-owner/references/systems-building-principles.md` exists with `status: active`, also read it. If `status: TBD — operator-provided` or missing, skip.
 
-This abort-on-missing-read mitigation is required by the `/risk-check` plan-time review of `/pipeline-review` (Dimension 5: Hidden coupling, Medium risk). Silent degrade would let the memo ship with shallow grounding and no operator signal.
+This abort-on-missing-read mitigation is required by the plan-time review of `/pipeline-review` (Dimension 5: Hidden coupling, Medium risk). Silent degrade would let the memo ship with shallow grounding and no operator signal.
 
 ---
 

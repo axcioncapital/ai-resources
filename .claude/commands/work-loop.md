@@ -102,7 +102,7 @@ For a **capability** unit, additionally apply `skills/capability-development/SKI
 | **challenged**, non-capability | Live — see Step 5a |
 | any **capability** unit | Live — see Step 5b, **in addition to** this row's route branch |
 
-`/risk-check` fires at its own two gates on its own schedule (`docs/audit-discipline.md:73-81`). This command never absorbs, replaces, reschedules or substitutes for it. If the unit touches a structural class, the route escalates to challenged *and* `/risk-check` still runs at its own gates.
+A structural class fires no gate of its own. If the unit touches one, the route escalates to **challenged** and its Codex reviews are briefed **risk-aware** — the seven dimensions plus the premise-verification precondition (`docs/qc-independence.md` § Risk-aware review). One review per unit, sized to the change; nothing is bolted on beside it.
 
 ### Step 5a — Challenged route
 
@@ -131,7 +131,7 @@ Close the phase's question — what is the need, who owns it, is it in scope at 
 4. **Transcribe the review verbatim** to `logs/loop/{unit}.review-1.md`. Commit by pathspec. Adjudicate every material finding per Step 7's disposition rules.
 5. **G1 — stop.** Put in front of the operator: the plan, the review, the adjudication, and the slice list Build will execute. Ask for scope-and-package approval. **Wait.** Do not open a Build unit on your own.
 
-If Codex cannot reach the plan, apply Step 7's fallback — `/qc-pass`, recorded **`unassessed`, never passed** — and say so at G1 so the operator decides with the gap explicit.
+If Codex cannot reach the plan, apply Step 7's fallback — inline self-review, recorded **`unassessed`, never passed** — and say so at G1 so the operator decides with the gap explicit.
 
 #### Build units — one per slice, no gate
 
@@ -215,11 +215,11 @@ While implementing:
 
 **Challenged route:** the review is **per phase and already placed** — Step 5a runs it inside the Shape unit (object: the plan) and the Prove unit (object: the result), and Frame, Build and Land carry none. Do not add a review here on top of Step 5a's; that would produce a third review the route does not define. This step still owns the evidence write and the adjudication rules for whichever review Step 5a ran.
 
-**If Codex cannot reach the object under review** — no repository access, or the object is outside `ai-resources` and unreadable — fall back to `/qc-pass` **and record the review as `unassessed`, not passed.** Never substitute a Claude subagent and describe it as independent: same model, same session lineage, no independence. The operator decides with the gap explicit.
+**If Codex cannot reach the object under review** — no repository access, or the object is outside `ai-resources` and unreadable — fall back to **inline self-review against the same criteria, and record the review as `unassessed`, not passed.** Never substitute a Claude subagent and describe it as independent: same model, same session lineage, no independence. The operator decides with the gap explicit.
 
 **Adjudicate every material finding** with exactly one of the six dispositions in `docs/work-loop.md` § Block formats — `fixed` · `deferred` · `rejected` · `already-true` · `out-of-scope` · `operator` — each with its reason, and `rejected` with the evidence that disproves the finding. A finding is not dismissed by disagreeing with it.
 
-`/resolve` and `/triage` do **not** fire. Adjudication is this step.
+`/triage` does **not** fire. Adjudication is this step.
 
 One correction pass, then the unit closes. A second review round is `review-2` and is justified only when the corrections changed something the first review's verdict rested on (`docs/work-loop.md` § The challenged route) — not on a general wish for more assurance.
 

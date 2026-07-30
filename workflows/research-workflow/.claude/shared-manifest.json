@@ -32,8 +32,6 @@
       "clarify",
       "coach",
       "note",
-      "qc-pass",
-      "refinement-deep",
       "refinement-pass",
       "scope",
       "triage",
@@ -49,7 +47,6 @@
     ],
     "shared": [
       "collaboration-coach",
-      "qc-reviewer",
       "refinement-reviewer",
       "triage-reviewer",
       "workflow-analysis-agent",

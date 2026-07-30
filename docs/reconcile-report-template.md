@@ -47,7 +47,7 @@
 
 {Every fix names its level AND its closure channel per reconcile-failure-taxonomy.md § Fix levels. A fix with no named channel is incomplete — do not list one.}
 
-**Output-level fix** → routes to `/resolve`
+**Output-level fix** → applied directly by the operator
 {Specific, actionable change to the current artifact. Omit this subsection if no output-level fix applies.}
 
 **Workflow-level fix** → routes to `/resolve-repo-problem` (repo-level pattern) or a direct project CLAUDE.md/skill edit (local to this project)

@@ -87,13 +87,13 @@ Wait for the agent's response. Capture it verbatim as `PM_RULING`.
 
 Capture it as `FINAL_RULING`.
 
-*(An internal `qc-reviewer` pass with a 2-pass cap sat here until 2026-07-29. It was removed with the rest of the automatically-stacked review layer — a `/pm` ruling is an advisory chat answer, not a committed artifact, and `/consult` answers harder questions with no internal review at all. The operator can still run `/qc-pass` on a ruling that is genuinely load-bearing; see Step 6.)*
+*(An internal `qc-reviewer` pass with a 2-pass cap sat here until 2026-07-29. It was removed with the rest of the automatically-stacked review layer — a `/pm` ruling is an advisory chat answer, not a committed artifact, and `/consult` answers harder questions with no internal review at all. The `qc-reviewer` agent itself was deleted on 2026-07-30.)*
 
 ---
 
 ### Step 6 — Return the final ruling unmodified
 
-Output `FINAL_RULING` verbatim to the operator. Do NOT add a preamble, do NOT summarize, do NOT add an "I hope this helps" closing. The agent's voice is the Project Manager voice; wrapping it in command-shell prose dilutes it. Where the ruling is load-bearing enough to cite downstream, offer the operator `/qc-pass` on it in one line — offer, never run.
+Output `FINAL_RULING` verbatim to the operator. Do NOT add a preamble, do NOT summarize, do NOT add an "I hope this helps" closing. The agent's voice is the Project Manager voice; wrapping it in command-shell prose dilutes it. Where the ruling is load-bearing enough to cite downstream, say so in one line — the review belongs to the change the ruling informs, not to the ruling itself.
 
 ---
 
@@ -101,7 +101,7 @@ Output `FINAL_RULING` verbatim to the operator. Do NOT add a preamble, do NOT su
 
 - `/pm` writes nothing to disk at v1. Output is chat-only.
 - `/pm` is **advisory with strong precedence** — the main session treats the ruling as the default answer. Operator retains veto.
-- `/pm` runs **no internal review**, matching `/consult`. A ruling is an advisory chat answer, not a committed artifact; the change it informs is what gets reviewed, once, per `ai-resources/docs/qc-independence.md` § The rule. Step 6 offers `/qc-pass` on a genuinely load-bearing ruling.
+- `/pm` runs **no internal review**, matching `/consult`. A ruling is an advisory chat answer, not a committed artifact; the change it informs is what gets reviewed, once, per `ai-resources/docs/qc-independence.md` § The rule.
 - `/pm` does NOT auto-fire from any hook; operator-invoked only.
 - The agent decides whether to escalate to `system-owner` internally; the operator does not pre-route.
 - For change-shaped structure questions (operator proposes a specific repo modification), the agent emits Fallback 5d (REDIRECT TO /consult) — re-invoke `/consult` directly for those.

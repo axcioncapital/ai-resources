@@ -55,7 +55,6 @@ After each approved section: ask Claude to "flag contradictions across all appro
 
 **End**
 ```
-/qc-pass            Quality check — when Codex is not reviewing the change
 /refinement-pass    Refinement pass on writing quality (independent of QC)
 /wrap-session       Wraps session, triggers logging
 /improve            Reviews friction log, proposes fixes
@@ -161,7 +160,6 @@ Start with `/prime`. Declare exit condition and autonomy level. Run from workspa
 | `/clarify` | Before executing something ambiguous |
 | `/friction-log` | Anything awkward or slow during session |
 | `/note` | Judgment call or workflow observation |
-| `/qc-pass` | When a change needs a review and Codex is not giving it one |
 | `/wrap-session` | Every session end |
 | `/friday-checkup` | Every Friday Session 1 |
 | `/friday-so` | Every Friday Session 1 (after checkup) |

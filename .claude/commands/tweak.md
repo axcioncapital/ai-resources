@@ -180,7 +180,7 @@ EOF
 
 **Do NOT push either commit.** Pushes are batched and gated to the `/wrap-session` confirmation prompt (workspace `CLAUDE.md` § Push behavior).
 
-This dual-commit shape keeps the audit trail visible in the Friday cadence (the file is registered in `log-sweep.md` Cat A2 with KEEP=10 dated blocks) without overloading `maintenance-observations.md`'s single-writer contract. Per System Owner second-opinion in risk-check report `2026-05-29-tweak-command-creation.md`: one writer × one purpose × one file (`repo-architecture.md` § Q6 canonical pattern; DR-7; OP-3).
+This dual-commit shape keeps the audit trail visible in the Friday cadence (the file is registered in `log-sweep.md` Cat A2 with KEEP=10 dated blocks) without overloading `maintenance-observations.md`'s single-writer contract. Per System Owner second-opinion in review report `2026-05-29-tweak-command-creation.md`: one writer × one purpose × one file (`repo-architecture.md` § Q6 canonical pattern; DR-7; OP-3).
 
 ---
 

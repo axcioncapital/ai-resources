@@ -61,7 +61,7 @@ Classify the fault before any investigation. The goal is to decide the required 
 
 9. Read `{AI_RESOURCES}/docs/protected-zones.md`.
 
-10. Read the relevant section of `{AI_RESOURCES}/docs/audit-discipline.md` under the `## Risk-check change classes` heading to confirm the current class list. (Use this heading as the content anchor — do not rely on line numbers, which drift on reformatting.)
+10. Read the relevant section of `{AI_RESOURCES}/docs/audit-discipline.md` under the `## Structural change classes` heading to confirm the current class list. (Use this heading as the content anchor — do not rely on line numbers, which drift on reformatting.)
 
 11. For the fix area described in `ISSUE`, decide:
 

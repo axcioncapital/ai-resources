@@ -105,7 +105,7 @@ Merged formatting, H3 placement, and H3 refinement in a single sonnet agent. KEE
 
 ## Phase 3 — Merged Formatting + Editorial Integration QC [delegate-qc]
 
-Merged two-stage QC. One qc-reviewer subagent runs both checks in explicit sequence: formatting-qc first (including any mechanical fixes), then document-integration-qc on the post-fix prose. The merge preserves the editorial pass's dependency on the formatting pass — the editorial pass explicitly receives the formatting pass's output as "already addressed" context.
+Merged two-stage QC. One qc-gate subagent runs both checks in explicit sequence: formatting-qc first (including any mechanical fixes), then document-integration-qc on the post-fix prose. The merge preserves the editorial pass's dependency on the formatting pass — the editorial pass explicitly receives the formatting pass's output as "already addressed" context.
 
 1. Read the prose file (post-Phase 2 — final formatted version with H3 applied).
 2. Read `/ai-resources/skills/formatting-qc/SKILL.md`.
@@ -114,7 +114,7 @@ Merged two-stage QC. One qc-reviewer subagent runs both checks in explicit seque
 5. Resolve the absolute path to the style reference (per Phase 2 step 4).
 6. Collect from Phase 2: the formatting change log and any deferred/flagged items.
 7. Gather any cross-section integration findings carried forward from `/produce-prose-draft` (section-mode Phase 4, if available in the session context).
-8. Launch a qc-reviewer sub-agent. Pass it:
+8. Launch a qc-gate sub-agent. Pass it:
    - The formatting-qc skill content (labeled: "STAGE 1 SKILL — formatting mechanics")
    - The document-integration-qc skill content (labeled: "STAGE 2 SKILL — editorial quality")
    - The prose file content

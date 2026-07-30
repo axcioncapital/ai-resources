@@ -1,7 +1,7 @@
 #!/bin/bash
 # PreToolUse(Bash) destructive-op liveness probe — the fix for the 2026-07-14 S2
 # near-miss (improvement-log.md 2026-07-14, "Destructive git ops have NO liveness
-# check"). S2's mandate, session plan and /risk-check prompt ALL specified
+# check"). S2's mandate, session plan and risk-review prompt ALL specified
 # `git worktree remove` + `git branch -D` on a worktree that held a LIVE Claude
 # session with 173+ lines of uncommitted work across 5 files. Every gate passed it.
 # What caught it was the operator noticing an open VS Code window.
@@ -12,14 +12,14 @@
 #   close-worktree-session.md before S2, and it DID NOT FIRE — because S2 assembled the
 #   destructive command directly in a session plan and never opened either file. A gate
 #   that must be REMEMBERED is not a gate; memory-dependent gates are this workspace's
-#   most-documented failure mode. /risk-check is likewise the wrong home: it runs at PLAN
+#   most-documented failure mode. a plan-time risk review is likewise the wrong home: it runs at PLAN
 #   time, reads the repo at rest, and a session can go live between the gate and the act
 #   — that relocates the bug one layer up rather than fixing it. Liveness must be probed
 #   at EXECUTION time, by the executor, immediately before the command. That is a
 #   PreToolUse hook, and nothing else.
 #
-# WHY IT WORKS WHERE A FILE CENSUS CANNOT — every other gate in this repo (/risk-check,
-#   /blindspot-scan, /lean-repo, /qc-pass) reads the artifact AT REST. This hazard is the
+# WHY IT WORKS WHERE A FILE CENSUS CANNOT — every other gate in this repo (the risk-aware review,
+#   /blindspot-scan, /lean-repo) reads the artifact AT REST. This hazard is the
 #   artifact IN MOTION. A file census cannot see a running process. This hook does not
 #   inspect content; it asks "is anyone home?" — three cheap, mechanical questions against
 #   the TARGET checkout, not the current one. (S2's fatal reading was `git status` on the
@@ -252,7 +252,7 @@ if override:
         #
         # Adding a real outcome would require a PostToolUse counterpart — a new registration
         # on a globally-registered hook. That is a separately-scoped change and needs its own
-        # /risk-check; it was explicitly declined as a rider on this fix. Do not bolt it on here.
+        # the risk review; it was explicitly declined as a rider on this fix. Do not bolt it on here.
         with open(os.path.join(log_dir, "destructive-override.log"), "a") as f:
             f.write("%s  event=override-accepted  phase=pre-execution  outcome=unknown"
                     "  session=%s  cmd=%s\n" % (

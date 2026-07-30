@@ -28,7 +28,7 @@ started: { YYYY-MM-DD }
 
 ## Validation contract
 
-> Written now, at mission creation — before any implementation session. Defines "done" and "on-mission" independently of how the work gets done, so a fresh-context check (`/drift-check`, `/contract-check`, `/qc-pass`) can judge against it rather than against a session's own account of itself.
+> Written now, at mission creation — before any implementation session. Defines "done" and "on-mission" independently of how the work gets done, so a fresh-context check (`/drift-check`, `/contract-check`, an independent review) can judge against it rather than against a session's own account of itself.
 
 **Acceptance assertions** — concrete statements that must ALL be true when the mission is complete:
 - [ ] { assertion 1 — observable, checkable }

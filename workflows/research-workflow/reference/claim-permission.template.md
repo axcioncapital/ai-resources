@@ -2,7 +2,7 @@
 
 > **Purpose.** Project-fillable per-claim-type tables consumed by `cluster-memo-refiner` Check 9, the Pass 3 gate-clearance emitter, and `evidence-to-report-writer` at synthesis time. The project copies this template to `reference/claim-permission.md` and fills the rows for its own domain.
 >
-> **Canonical-ordering rule (must not be violated without `/risk-check` re-fire).** The companion chassis at `reference/quality-standards.md § Claim-Permission Classes` is the source of truth for **class names** (SUPPORTED / PROXY-SUPPORTED / ILLUSTRATIVE-ONLY / NOT-SUPPORTED), the **permitted-prose-verb lists**, and the **gate semantics** (blocking-gate threshold rule, gate-clearance artifact schema). This file is the source of truth for the **per-claim-type evidence thresholds** ONLY. Edits that cross this boundary in either direction require `/risk-check` re-fire.
+> **Canonical-ordering rule (must not be violated without a fresh risk-aware review).** The companion chassis at `reference/quality-standards.md § Claim-Permission Classes` is the source of truth for **class names** (SUPPORTED / PROXY-SUPPORTED / ILLUSTRATIVE-ONLY / NOT-SUPPORTED), the **permitted-prose-verb lists**, and the **gate semantics** (blocking-gate threshold rule, gate-clearance artifact schema). This file is the source of truth for the **per-claim-type evidence thresholds** ONLY. Edits that cross this boundary in either direction require a fresh risk-aware review.
 >
 > **Consumed by:**
 > - `cluster-memo-refiner` Check 9 (Permission-Class Emission) — reads the Minimum Evidence Thresholds and Source-Diversity Matrix rows to classify each claim.

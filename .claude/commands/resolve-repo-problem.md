@@ -38,7 +38,7 @@ Input: `$ARGUMENTS` — optional. A short description of the problem (the error 
 
 ### MANUAL Step 2 — Delegate the investigation
 
-8. Spawn one general-purpose investigator subagent (fresh context) — **explicitly pin `model: opus` on the spawn.** `general-purpose` carries no tier of its own, so an un-pinned spawn silently inherits the session model: on a Sonnet or Haiku session the root-cause diagnosis and the ranked three-option fix plan would quietly run below the tier this judgment needs. Pin it. (Pin-the-tier convention established 2026-07-03 — but the tier is **per-dispatch, not blanket opus**: `/qc-pass`, `/refinement-pass`, `/refinement-deep`, `/friday-journal` pin `opus`, while `/risk-check` deliberately pins `sonnet` as a logged cost exception (`logs/decisions.md` 2026-07-05). Do not "correct" risk-check to opus. Tier declared here 2026-07-12 per W3.2 M-A2a.) Brief:
+8. Spawn one general-purpose investigator subagent (fresh context) — **explicitly pin `model: opus` on the spawn.** `general-purpose` carries no tier of its own, so an un-pinned spawn silently inherits the session model: on a Sonnet or Haiku session the root-cause diagnosis and the ranked three-option fix plan would quietly run below the tier this judgment needs. Pin it. (Pin-the-tier convention established 2026-07-03 — the tier is **per-dispatch, not blanket opus**: judgment dispatches such as `/refinement-pass` and `/friday-journal` pin `opus`, while mechanical scan dispatches pin `sonnet` as a logged cost exception (`logs/decisions.md` 2026-07-05). Tier declared here 2026-07-12 per W3.2 M-A2a.) Brief:
 
    ```
    You are a repo-problem investigator. Diagnose a reported problem and produce a fix plan. You do NOT apply any fix — this is triage only.
@@ -54,7 +54,7 @@ Input: `$ARGUMENTS` — optional. A short description of the problem (the error 
    3. Diagnose the root cause. Distinguish the symptom from the cause. If the evidence does not support a single root cause, say so and list the candidate causes rather than forcing one.
    4. Produce a ranked three-option fix plan:
       - Quick patch — the smallest change that resolves the symptom. Note what it leaves unaddressed.
-      - Structural fix — addresses the root cause. Note its blast radius and whether it needs a /risk-check gate.
+      - Structural fix — addresses the root cause. Note its blast radius and whether it is high-consequence enough to need a risk-aware review.
       - Defer — what is lost or risked by not fixing now, and what signal would make it urgent.
       Rank the three by a risk-vs-effort judgment and name your recommended option.
 
@@ -85,7 +85,7 @@ Input: `$ARGUMENTS` — optional. A short description of the problem (the error 
     Fix path: /resolve-incident "{1-line diagnosis + the recommended fix} — triage notes: {NOTES_PATH}"
     ```
 
-    The argument carries the diagnosis and cites `{NOTES_PATH}` so `/resolve-incident` Step 3 builds on the existing triage notes instead of re-investigating. If the subagent's plan flagged the recommended option as a `/risk-check` change class, append ` [risk-check class]` inside the quoted argument so the fix session enters with eyes open.
+    The argument carries the diagnosis and cites `{NOTES_PATH}` so `/resolve-incident` Step 3 builds on the existing triage notes instead of re-investigating. If the subagent's plan flagged the recommended option as a structural change class, append ` [structural class]` inside the quoted argument so the fix session enters with eyes open.
 
     The bridge is **advisory chat output only** — do not invoke `/resolve-incident`; the operator's re-invocation is the gate-preserving turn.
 
@@ -103,7 +103,7 @@ Runs entirely in the main session. **No subagent** — the operator invokes AUTO
 
 **B. Diagnose.** Distinguish symptom from root cause. If the evidence supports more than one cause, list the candidates rather than forcing one.
 
-**C. Propose a fix.** Name ONE recommended fix (not a three-option ranked plan), naming the target files. If the fix is itself a `/risk-check` change class (hook, settings.json, CLAUDE.md, new command, symlink), say so in the proposal.
+**C. Propose a fix.** Name ONE recommended fix (not a three-option ranked plan), naming the target files. If the fix is itself a structural change class (hook, settings.json, CLAUDE.md, new command, symlink), say so in the proposal.
 
 **D. Write the entry.** Append one self-contained `logged (pending)` entry to `{scope}/logs/improvement-log.md` using the schema below. `{scope}` = `git rev-parse --show-toplevel` of the cwd (fall back to cwd). No `audits/working/` notes file in AUTO mode — the entry is the write-up.
 
@@ -115,7 +115,7 @@ Runs entirely in the main session. **No subagent** — the operator invokes AUTO
 Fix path: /resolve-incident "{1-line diagnosis + the recommended fix}"
 ```
 
-The argument is the **inline diagnosis text only — never cite a notes path** (AUTO mode writes no `audits/working/` file; citing one would fabricate a reference). If step C flagged the fix as a `/risk-check` change class, append ` [risk-check class]` inside the quoted argument — step F reads that determination from step C; it makes none of its own. AUTO mode may *offer* the fix via this bridge, never perform it — the operator's re-invocation of `/resolve-incident` is the gate-preserving turn.
+The argument is the **inline diagnosis text only — never cite a notes path** (AUTO mode writes no `audits/working/` file; citing one would fabricate a reference). If step C flagged the fix as a structural change class, append ` [structural class]` inside the quoted argument — step F reads that determination from step C; it makes none of its own. AUTO mode may *offer* the fix via this bridge, never perform it — the operator's re-invocation of `/resolve-incident` is the gate-preserving turn.
 
 ---
 
@@ -131,7 +131,7 @@ Both modes append entries in this shape. It conforms to the `## Schema` block of
 - **Severity:** {low | medium | medium-high | high | critical}
 - **Source:** {AUTO: "/resolve-repo-problem AUTO mode YYYY-MM-DD" | MANUAL: "/resolve-repo-problem YYYY-MM-DD"}
 - **Friction source:** {1-2 sentences — what was expected, what happened, which command/hook/rule was involved}
-- **Proposal:** {AUTO: the single recommended fix, 2-4 sentences, naming target files, flagging if the fix is itself a /risk-check change class | MANUAL: a 2-4 sentence summary of the subagent's recommended option}
+- **Proposal:** {AUTO: the single recommended fix, 2-4 sentences, naming target files, flagging if the fix is itself a structural change class | MANUAL: a 2-4 sentence summary of the subagent's recommended option}
 - **Target files:** {files to edit when the fix is executed}
 - **Notes:** {MANUAL only — the audits/working/ notes path; omit this field entirely in AUTO mode}
 ```

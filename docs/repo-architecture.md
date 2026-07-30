@@ -41,7 +41,7 @@
 │   ├── agents/                                  # canonical agents (autosynced to projects)
 │   └── hooks/                                   # ai-resources hooks
 ├── audits/                                      # audit artifacts
-│   ├── risk-checks/                             # `/risk-check` reports
+│   ├── risk-checks/                             # historical risk-review reports (command retired 2026-07-30)
 │   ├── incidents/                               # `/resolve-incident` per-incident full records
 │   ├── pipeline-review-registry.md              # registry for `/pipeline-review` (subsumed `/audit-critical-resources` on 2026-05-29)
 │   ├── friday-checkup-YYYY-MM-DD.md             # weekly/monthly/quarterly checkup reports
@@ -279,7 +279,7 @@ Mechanical changes (renaming a single skill, adding the 71st skill, etc.) do **n
 - `ai-resources/CLAUDE.md` — repo-level rules
 - `~/Claude Code/Axcion AI Repo/CLAUDE.md` — workspace-level rules
 - `ai-resources/docs/ai-resource-creation.md` — placement rules + canonical pipelines
-- `ai-resources/docs/audit-discipline.md` — `/risk-check` classes, Friday-cadence tiers
+- `ai-resources/docs/audit-discipline.md` — structural change classes, Friday-cadence tiers
 - `ai-resources/docs/permission-template.md` — canonical settings shapes
 
 - `ai-resources/docs/agent-tier-table.md` — agent model tiering

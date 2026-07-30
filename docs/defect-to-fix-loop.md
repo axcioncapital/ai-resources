@@ -25,7 +25,7 @@ Choose by *what the system is missing*, not by convenience:
 
 This workspace has no automated output-quality test harness yet, so "eval" maps to the nearest re-firing check, chosen by where the defect lives:
 
-- **Cross-cutting class** (e.g. `generic-prose`, `missed-contradiction`, `wrong-tone` — defects that recur across many artifacts) → add a re-firing check to the `qc-reviewer` agent or its `skills/ai-resource-builder/references/review-principles.md`. Precedent: the gate-calibration bright-line fix codified into `review-principles.md`.
+- **Cross-cutting class** (e.g. `generic-prose`, `missed-contradiction`, `wrong-tone` — defects that recur across many artifacts) → add a re-firing check to `skills/ai-resource-builder/references/review-principles.md`, which the review brief draws on. Precedent: the gate-calibration bright-line fix codified into `review-principles.md`.
 - **Skill-local class** (a defect specific to one skill's output) → add a check to that skill's own quality-check section (Step 6 "Quality Check" in `skills/ai-resource-builder/SKILL.md`).
 
 Eval cases created here should **feed** the planned slot-5 eval substrate (governing-doc roadmap), not fork a parallel one. Until that substrate exists, an eval-routed defect is a re-firing QC check; when the substrate lands, these checks become its seed cases.
@@ -42,7 +42,7 @@ The arc is not done when the log exists. It is done when the **first defect clas
 
 ## Wiring status
 
-Session 1 (2026-06-04) built this document and `defect-log.md` — the detection-and-closure *design*. Session 2 (2026-06-04, S8, risk-checked GO) wired the capture and detection paths:
+Session 1 (2026-06-04) built this document and `defect-log.md` — the detection-and-closure *design*. Session 2 (2026-06-04, S8, risk-reviewed GO) wired the capture and detection paths:
 
 - ✅ **`/log-defect` capture command** — `ai-resources/.claude/commands/log-defect.md` (shipped S8). Captures one entry, classifies, detects recurrence at capture time.
 - ✅ **Recurrence-scan step** — `/friday-checkup` Step 6 Defect-log recurrence scan, all tiers (shipped S8). Surfaces `[DEFECT-RECURRENCE]` follow-up lines.

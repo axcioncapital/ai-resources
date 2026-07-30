@@ -103,7 +103,7 @@ Paths that need multiple decisions (see `decision-taxonomy.md` → Combining dec
 **Rule:** Once the plan is written, run an independent QC subagent against the plan file before any revision or execution.
 
 **Subagent contract:**
-- Subagent type: `qc-reviewer` (or `qc-gate` if the current project has that alias). Mirrors the path-passing + write-to-disk pattern used by `repo-dd-auditor` and `token-audit-auditor` and documented in `ai-resources/CLAUDE.md → Subagent Contracts`.
+- Subagent type: `general-purpose` with `model: opus` pinned on the spawn. Mirrors the path-passing + write-to-disk pattern used by `repo-dd-auditor` and `token-audit-auditor` and documented in `ai-resources/CLAUDE.md → Subagent Contracts`.
 - Inputs the subagent receives:
   1. **`PLAN_PATH`** — absolute path to the plan file. The subagent reads the plan at invocation time. Do NOT pass the plan content verbatim. Path-passing is the standard pattern in this repo and is consistent with the workspace `CLAUDE.md → Input File Handling` rule ("subagents should receive paths, not content, when the content already lives on disk").
   2. **Original operator request** — quoted inline in the subagent brief (short enough that inlining is cheaper than a second read).
@@ -120,7 +120,7 @@ Paths that need multiple decisions (see `decision-taxonomy.md` → Combining dec
 - Decision misclassifications that a reader with no context would question.
 
 **Output contract — write to disk, return summary:**
-- The subagent writes the full QC report to `<PLAN_PATH>.qc-pass-1.md` (same directory as the plan; suffix distinguishes first from second pass).
+- The subagent writes the full review report to `<PLAN_PATH>.review-1.md` (same directory as the plan; suffix distinguishes first from second pass).
 - The subagent returns to the main session: (a) the absolute path to the report file, and (b) a ≤20-line structured summary (one line per finding with severity tag: BLOCKING / IMPORTANT / MINOR).
 - The main session reads the full report from disk only when a summary item requires deeper context (e.g., to draft a response during triage). Mirrors the 30-line-cap / write-full-notes-to-disk contract in `ai-resources/CLAUDE.md → Subagent Contracts`; tighter 20-line cap here because the QC report is invoked up to 3 times per cleanup session (2 QC + 1 triage).
 

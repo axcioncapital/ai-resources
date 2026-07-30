@@ -26,7 +26,7 @@
 
 ## What "elevated review" means here
 
-- **Risk-aware review required** — the change takes the risk-aware review row of `qc-independence.md` § The rule: one Codex review carrying the seven risk dimensions, **before** implementing. Apply what it found before the change lands. A material finding left unresolved blocks — surface it and stop, do not proceed on the reasoning that the review ran. `/risk-check` is available as the operator-invoked fallback when Codex cannot reach the change.
+- **Risk-aware review required** — the change takes the risk-aware review row of `qc-independence.md` § The rule: one Codex review carrying the seven risk dimensions, **before** implementing. Apply what it found before the change lands. A material finding left unresolved blocks — surface it and stop, do not proceed on the reasoning that the review ran. When Codex cannot reach the change, fall back to inline self-review and record the result as `unassessed`, never as passed (`qc-independence.md` § When the reviewer cannot be reached).
 - **`/consult` (Function B)** — invoke `/consult` as a pre-change advisory when the change is structural or load-bearing. Pre-invoke gate: `/consult` Step 0 requires a prior Read of the relevant file.
 - **Read consumer contract** — read the named reference doc; confirm the planned change does not break stated consumers. No further gate required unless the read surfaces a conflict.
 

@@ -4,7 +4,7 @@
 >
 > **How to instantiate:** copy this file to `<project>/reference/stage-5-paths.md`, pick the schema block matching the project's `Document model:` (`report` or `section`), fill in the project-specific values, and delete the other schema block + the operator notes. The result is a small file (~10–15 lines of values) the canonical commands parse mechanically.
 >
-> **Placeholder set (v1):** `{section}` (from `## Project Config` `Section IDs:`); `{report}` (from `Report set:`; report-mode only); `{N}` (numeric index derived from arg, e.g., `R1` → `N=1`); `{part}` (section-mode only — first numeric component of arg, e.g., `2.4` → `part=2`). Adding placeholders requires a Path A v4-style design + `/risk-check`.
+> **Placeholder set (v1):** `{section}` (from `## Project Config` `Section IDs:`); `{report}` (from `Report set:`; report-mode only); `{N}` (numeric index derived from arg, e.g., `R1` → `N=1`); `{part}` (section-mode only — first numeric component of arg, e.g., `2.4` → `part=2`). Adding placeholders requires a Path A v4-style design plus a risk-aware review.
 
 ---
 

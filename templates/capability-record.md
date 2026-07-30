@@ -137,4 +137,4 @@ Phase: { phase }. Next: { one concrete action }.
 
 ## Pointers
 
-{ Plans, specs, review reports, risk-check reports, closing commit SHAs — by path, never copied in. }
+{ Plans, specs, review reports, closing commit SHAs — by path, never copied in. }

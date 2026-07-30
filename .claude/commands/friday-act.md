@@ -172,7 +172,7 @@ If active count ≤ 7, proceed silently.
     - **Empty response (Enter):** accept the default disposition string from 13a. Set `triage_source = auto-default` for every item in the batch.
     - **Non-empty response:** validate against `^[fds]+$` and that length matches item count. Re-prompt on mismatch. On valid override, set `triage_source = operator-override` for every item in the batch.
 15. For each item dispositioned `f`:
-    a. Check whether the fix touches a `/risk-check` change class (per `ai-resources/docs/audit-discipline.md` § Risk-check change classes — hook file (`.sh`), `settings.json`, workspace `CLAUDE.md`, project `CLAUDE.md`, a new command/skill path, a new symlink, or auto-write/cross-repo automation). If yes, record `high_consequence: true`; otherwise `false`. Do not prompt the operator — the item takes its one risk-aware review at execution time in the follow-up session (`ai-resources/docs/qc-independence.md` § The rule).
+    a. Check whether the fix touches a structural change class (per `ai-resources/docs/audit-discipline.md` § Structural change classes — hook file (`.sh`), `settings.json`, workspace `CLAUDE.md`, project `CLAUDE.md`, a new command/skill path, a new symlink, or auto-write/cross-repo automation). If yes, record `high_consequence: true`; otherwise `false`. Do not prompt the operator — the item takes its one risk-aware review at execution time in the follow-up session (`ai-resources/docs/qc-independence.md` § The rule).
     b. If the item's source label starts with `repo-documentation:w2-4-improvements`, record `w2_4_source: true`; otherwise `false`. No agent is spawned here — the auto-draft sub-disposition runs in the follow-up session when the operator executes the plan.
     c. Append the item to `FIX_NOW_ITEMS` with fields: `{source: checkup, risk, text, high_consequence, w2_4_source, triage_source}`.
 
@@ -213,7 +213,7 @@ where risk ∈ {high, med, low}. Empty line to finish, or `(none)` to skip.
 
 16c. Validate each pasted line against `^\[(high|med|low)\] .+$`. Re-prompt on malformed input. Capture accepted items as a parallel list to the Step 3 tactical follow-ups (preserve `risk` and `text`).
 
-16d. For each batch of accepted SO-derived items, run the same disposition loop as Step 3 (items 13a–15c logic — auto-triage default with operator override). For each `f` item: apply the risk-check-class check (15a) and W2.4 check (15b); append to `FIX_NOW_ITEMS` with `source: so-derived` and the resolved `triage_source` per 14.
+16d. For each batch of accepted SO-derived items, run the same disposition loop as Step 3 (items 13a–15c logic — auto-triage default with operator override). For each `f` item: apply the structural-class check (15a) and W2.4 check (15b); append to `FIX_NOW_ITEMS` with `source: so-derived` and the resolved `triage_source` per 14.
 
 16e. Append accepted SO-derived dispositions into the same `RESULTS` structure used by Step 3, tagged with `source: so-derived` so Step 5 can subtotal them and the deferred-items list can label them.
 
@@ -231,7 +231,7 @@ where risk ∈ {high, med, low}. Empty line to finish, or `(none)` to skip.
 
   Per-item disposition (one letter per item, in order; same f/d/s vocabulary):
   ```
-- Feed them into the same disposition loop as items 13a–15c (auto-triage default with operator override). For each `f` item: apply the risk-check-class check (15a) and W2.4 check (15b); append to `FIX_NOW_ITEMS` with `source: journal-derived` and the resolved `triage_source` per 14.
+- Feed them into the same disposition loop as items 13a–15c (auto-triage default with operator override). For each `f` item: apply the structural-class check (15a) and W2.4 check (15b); append to `FIX_NOW_ITEMS` with `source: journal-derived` and the resolved `triage_source` per 14.
 - Tag accepted dispositions in `RESULTS` with `source: journal-derived` so Step 5 subtotals them separately.
 
 ---
@@ -281,7 +281,7 @@ where risk ∈ {high, med, low}. Empty line to finish, or `(none)` to skip.
 - Run `/wrap-session` when all items in this plan are done.
 ```
 
-16k. **Plan-file review — offered, not automatic.** Before announcing the plans, offer one line: `Optional: review the plan files written in 16j? (y/n)`. Run `/qc-pass` only on `y`, scoped to the `{TODAY}-{slug}.md` files, evaluating against the Step 3.6 plan-file schema and the change-class list in `ai-resources/docs/audit-discipline.md` § Risk-check change classes — in particular any incorrect `High-consequence:` annotation, asserted for a change not on the canonical list or missed for one that is.
+16k. **Plan-file review — offered, not automatic.** Before announcing the plans, offer one line: `Optional: review the plan files written in 16j? (y/n)`. On `y`, review the `{TODAY}-{slug}.md` files inline against the Step 3.6 plan-file schema and the change-class list in `ai-resources/docs/audit-discipline.md` § Structural change classes — in particular any incorrect `High-consequence:` annotation, asserted for a change not on the canonical list or missed for one that is.
    - Apply what the review finds directly to the affected plan file(s). Applying findings is the work; it does not earn a second pass (`ai-resources/docs/qc-independence.md` § Findings).
    - A material finding that cannot be self-resolved from the change-class list is surfaced to the operator per Autonomy Rule #4.
    - This never re-opens the operator's `f/d/s` dispositions from Steps 3 and 3.5.

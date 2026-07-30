@@ -353,6 +353,92 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 19:18 — skills/ai-resource-builder/references/operational-frontmatter.md
+- 19:17 — docs/autonomy-rules.md
+- 19:17 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/CLAUDE.md
+- 19:16 — docs/agent-tier-table.md
+- 19:15 — .claude/settings.local.json
+- 19:13 — .claude/agents/lean-repo-auditor.md
+- 19:13 — .claude/commands/mission.md
+- 19:13 — .claude/commands/leverage-idea.md
+- 19:13 — .claude/commands/session-start.md
+- 19:11 — .claude/commands/pm.md
+- 19:11 — .claude/commands/pm.md
+- 19:11 — .claude/commands/pm.md
+- 19:10 — .claude/commands/list-critical-resources.md
+- 19:10 — .claude/commands/cleanup-worktree.md
+- 19:10 — .claude/commands/friday-journal.md
+- 19:10 — .claude/commands/friday-journal.md
+- 19:10 — .claude/commands/friday-journal.md
+- 19:01 — .claude/commands/friday-act.md
+- 19:01 — .claude/commands/consult.md
+- 19:01 — .claude/commands/list-critical-resources.md
+- 19:01 — .claude/agents/system-owner.md
+- 18:59 — .claude/commands/session-start.md
+- 18:59 — .claude/commands/session-start.md
+- 18:59 — .claude/commands/archive-project.md
+- 18:59 — .claude/commands/placement.md
+- 18:59 — .claude/commands/placement.md
+- 18:59 — .claude/commands/placement.md
+- 18:58 — .claude/commands/placement.md
+- 18:58 — .claude/commands/friday-journal.md
+- 18:58 — .claude/commands/friday-checkup.md
+- 18:58 — .claude/commands/friday-checkup.md
+- 18:57 — .claude/commands/fix-repo-issues.md
+- 18:57 — .claude/commands/contract-check.md
+- 18:57 — docs/audit-discipline.md
+- 18:57 — docs/audit-discipline.md
+- 18:56 — .claude/commands/implementation-triage.md
+- 18:56 — .claude/commands/implementation-triage.md
+- 18:56 — .claude/agents/expert-check-reviewer.md
+- 18:56 — .claude/commands/expert-check.md
+- 18:56 — .claude/commands/expert-check.md
+- 18:56 — .claude/commands/expert-check.md
+- 18:56 — .claude/commands/monday-prep.md
+- 18:56 — .claude/agents/context-discovery.md
+- 18:54 — .claude/commands/develop-ai-resource.md
+- 18:54 — .claude/commands/develop-ai-resource.md
+- 18:54 — .claude/commands/blindspot-scan.md
+- 18:54 — .claude/commands/blindspot-scan.md
+- 18:54 — .claude/commands/work-loop.md
+- 18:53 — .claude/commands/work-loop.md
+- 18:53 — .claude/commands/work-loop.md
+- 18:51 — .claude/commands/resolve-repo-problem.md
+- 18:51 — .claude/commands/resolve-repo-problem.md
+- 18:48 — .claude/commands/decide.md
+- 18:47 — .claude/commands/decide.md
+- 18:47 — .claude/commands/decide.md
+- 18:47 — .claude/commands/decide.md
+- 18:47 — .claude/commands/decide.md
+- 18:47 — .claude/commands/new-project.md
+- 18:47 — .claude/commands/new-project.md
+- 18:47 — .claude/commands/new-project.md
+- 18:47 — .claude/commands/new-project.md
+- 18:46 — .claude/commands/session-plan.md
+- 18:46 — .claude/commands/session-plan.md
+- 18:46 — .claude/commands/session-plan.md
+- 18:46 — .claude/commands/session-plan.md
+- 18:46 — .claude/commands/session-plan.md
+- 18:45 — .claude/commands/session-plan.md
+- 18:45 — .claude/commands/session-plan.md
+- 18:45 — .claude/commands/session-plan.md
+- 18:45 — .claude/commands/session-plan.md
+- 18:45 — .claude/commands/session-plan.md
+- 18:45 — .claude/commands/prime.md
+- 18:44 — .claude/commands/prime.md
+- 18:44 — .claude/commands/prime.md
+- 18:43 — .claude/commands/prime.md
+- 18:43 — .claude/commands/prime.md
+- 18:43 — .claude/commands/prime.md
+- 18:41 — docs/qc-independence.md
+- 18:41 — docs/qc-independence.md
+- 18:41 — docs/qc-independence.md
+- 18:41 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/CLAUDE.md
+- 18:40 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/CLAUDE.md
+- 18:40 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/CLAUDE.md
+- 18:40 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/CLAUDE.md
+- 18:40 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/CLAUDE.md
+- 18:40 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/CLAUDE.md
 - 09:57 — logs/innovation-registry.md
 - 22:27 — logs/scratchpads/2026-07-29-22-10-scratchpad.md
 - 22:24 — logs/session-notes.md

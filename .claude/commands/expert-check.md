@@ -12,15 +12,15 @@ Run an independent **Expert Check** on the work you just drafted: an agent reads
 
 ## Why a subagent?
 
-You drafted the work — you cannot objectively measure it against an external framework. The `expert-check-reviewer` runs as a separate agent with no access to your conversation, so the comparison is independent (same rationale as `/qc-pass`).
+You drafted the work — you cannot objectively measure it against an external framework. The `expert-check-reviewer` runs as a separate agent with no access to your conversation, so the comparison is independent (same rationale as any independent review — `docs/qc-independence.md` § Context isolation).
 
 ## Boundary — what this is NOT
 
 - **`/expert-check`** tests the draft against **external KB principles** (does it follow the book's method?).
-- **`/qc-pass`** tests the artifact against **its own criteria** (is it internally correct, in-scope, sound?).
+- **The change's independent Codex review** tests the artifact against **its own criteria** (is it internally correct, in-scope, sound?).
 - **`/refinement-pass`** polishes prose and structure.
 
-Run them for different reasons. Do not use Expert Check to catch internal defects, and do not use `/qc-pass` to check framework adherence.
+Run them for different reasons. Do not use Expert Check to catch internal defects, and do not expect the ordinary review to check framework adherence.
 
 ## Steps
 
@@ -37,7 +37,7 @@ Run them for different reasons. Do not use Expert Check to catch internal defect
 4. **Present the results verbatim.** Show the subagent's output exactly as returned — including `ALIGNED`, `DIVERGENCES FOUND`, or `NO APPLICABLE REFERENCE`. Do not filter or soften divergences.
 
 5. **State the closure path, then wait.** Findings are advisory inputs, not decisions. Offer the operator the ways to act:
-   - Route the divergences through `/decide` or `/resolve` for a structured disposition, OR
+   - Route the divergences through `/decide` or `/triage` for a structured disposition, OR
    - Disposition them inline (accept / reject / revise each), OR
    - Note them and proceed (the check is advisory; the step is not blocked).
 

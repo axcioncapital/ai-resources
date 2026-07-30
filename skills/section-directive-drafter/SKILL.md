@@ -61,7 +61,7 @@ Before proceeding, verify:
 
   *__Do these in order — step 2 is NOT reversible by `git revert`:__ (1) **back-port** `§ Claim-Permission Classes` from the canonical `reference/quality-standards.md` into this project's own copy; (2) delete `analysis/{section}/.claim-permission-gate.done`; (3) re-run `/run-sufficiency {section}`; (4) re-invoke this skill."*
 
-  **The ordering is load-bearing.** `claim-permission-gate` carries its own chassis-version hard exit, so deleting the sentinel *before* the back-port lands the operator in a **second** hard exit with the sentinel already gone and nothing to restore it. **Never print "delete the sentinel and re-run" without the back-port step first** — the first draft of this gate did exactly that and created a dead end (found by `/risk-check`, 2026-07-14).
+  **The ordering is load-bearing.** `claim-permission-gate` carries its own chassis-version hard exit, so deleting the sentinel *before* the back-port lands the operator in a **second** hard exit with the sentinel already gone and nothing to restore it. **Never print "delete the sentinel and re-run" without the back-port step first** — the first draft of this gate did exactly that and created a dead end (found in review, 2026-07-14).
 
   **The stamp must be EARNED, not merely PRESENT — check the re-stamp invariant too.** `chassis_version` is a self-asserted frontmatter field. A version check alone tests whether the file *claims* freshness, not whether its verdicts *are* fresh — and a hand-pasted line defeats it in one edit. So apply this invariant as part of the same gate:
 

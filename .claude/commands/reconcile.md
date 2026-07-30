@@ -90,10 +90,10 @@ Examples:
     - `Full report: {REPORT_PATH}`
 18. Append guidance by disposition:
     - `Accept as-is` → "No action needed — the output meets the bar."
-    - `Revise in place` → "Route the output-level fix through /resolve."
+    - `Revise in place` → "Apply the output-level fix directly; use /triage first if there are many."
     - `Rerun under a corrected workflow` → "The gap is upstream of this artifact — apply the workflow/repo-level fix before regenerating."
     - `Escalate` → "The mandate itself can't judge this — resolve the rubric gap with the operator before re-running /reconcile."
 
 ### Step 7 — No commit, no execution
 
-19. `/reconcile` is a diagnostic gate. It does not rewrite the target output, does not apply any recommended fix, and does not commit the report. The operator (or a follow-up `/resolve` / `/resolve-repo-problem` / `improvement-log.md` entry, per the fix's named channel) decides the next action.
+19. `/reconcile` is a diagnostic gate. It does not rewrite the target output, does not apply any recommended fix, and does not commit the report. The operator (or a follow-up `/triage` / `/resolve-repo-problem` / `improvement-log.md` entry, per the fix's named channel) decides the next action.

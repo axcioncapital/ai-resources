@@ -66,7 +66,6 @@ Your feedback is specific and actionable — but if it's always corrections, the
 
 ## After Producing Work
 
-- **`/qc-pass`** — Run a quality check on work just produced. **Not a default** — a change gets one independent review, sized to its consequence (`qc-independence.md` § The rule). Reach for this when Codex is not reviewing the change, or when you want a second look on something genuinely hard.
 - **`/refinement-pass`** — Run a refinement pass on writing quality. Independent of the correctness review, not a stage after it.
 
 ## Pre-Compact Checkpoint (~50% context)

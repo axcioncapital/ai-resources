@@ -148,7 +148,7 @@ Per-option block:
 - **Shape** — 1–2 sentences: what it is + the attach point (cite a Step 4 path).
 - **Fit** — how well it serves the Core idea.
 - **Effort** — S / M / L.
-- **Risk** — including the `/risk-check` change class if one matches (per `ai-resources/docs/audit-discipline.md`: new command/skill, hook edit, cross-cutting CLAUDE.md, new symlink, shared-state automation).
+- **Risk** — including the structural change class if one matches (per `ai-resources/docs/audit-discipline.md`: new command/skill, hook edit, cross-cutting CLAUDE.md, new symlink, shared-state automation).
 - **Evidence** — cite the Step 4 use-case evidence, or mark "speculative".
 
 End with one **Ranking** line ordering the options.
@@ -175,7 +175,7 @@ For a WORTH-DOING (or operator-accepted MARGINAL) recommendation, write the plan
 
 - **Target files** — what gets created / edited.
 - **Step sequence** — the build order.
-- **Review** — if the implementation falls in a change class (`ai-resources/docs/audit-discipline.md` § Risk-check change classes), it is high-consequence and takes **one** risk-aware review before landing (`docs/qc-independence.md` § The rule). One review, not a stack.
+- **Review** — if the implementation falls in a change class (`ai-resources/docs/audit-discipline.md` § Structural change classes), it is high-consequence and takes **one** risk-aware review before landing (`docs/qc-independence.md` § The rule). One review, not a stack.
 - **Effort** — S / M / L.
 - **Open assumptions** — anything the operator must confirm.
 
@@ -278,7 +278,7 @@ The handoff never auto-invokes. It names who owns the next step and hands them w
 | **Tiny tweak** (Step 2 triviality) | *terminal* | `/tweak "..."` — chat only |
 | **PARK** | *terminal* | Entry in `logs/improvement-log.md` with `Severity:` and a concrete `Review-cycle:` trigger |
 
-**Every new durable AI resource goes through `/develop-ai-resource`, whatever its class.** Row 1 covers all of them by design: `docs/ai-resource-creation.md` rule #4 and workspace `CLAUDE.md` § AI Resource Creation put the whole class under that command, and a structural change class routing only to `/risk-check` would send the change to a risk gate while skipping the question of whether the resource should exist. `/risk-check` is a gate the plan's own Gates line names when a class matches; it is not the owner.
+**Every new durable AI resource goes through `/develop-ai-resource`, whatever its class.** Row 1 covers all of them by design: `docs/ai-resource-creation.md` rule #4 and workspace `CLAUDE.md` § AI Resource Creation put the whole class under that command, and a structural change class routing only to a risk review would send the change to a risk gate while skipping the question of whether the resource should exist. A risk-aware review is what the plan's own Gates line names when a class matches; it is not the owner.
 
 Remind the operator to run `/wrap-session` if the work is complete.
 
