@@ -271,47 +271,24 @@ Full backlog & inbox: /open-items
 
    **Cross-repo note:** the pre-write cross-repo mission guard (Steps 8a sub-step a0, 8c sub-step 2.5) fires *before* this binding, deriving the picked mission's repo from `ACTIVE_MISSIONS` (Step 1d), not from `MISSION_ID` here — so a wrong-repo pick is caught before any marker/header write. Do not move Step 8m earlier to "cover" that case; the guard already does, and 8m must stay after the write per the marker contract. (8b/free-text needs no guard — there is no `[mission:<id>]` menu item to mis-pick.)
 
-8k. **Marker allocation (shared sub-step — referenced by 8a / 8b / 8c).** Allocate this session's marker per the TOCTOU Phase 2+3 atomic contract (canonical: `docs/session-marker.md`). Produces `${TODAY}` and `${MARKER}`, and writes `logs/.session-marker` plus the per-id `logs/.session-marker-${CLAUDE_CODE_SESSION_ID}`. Run it once per non-plan-mode dispatch — after the branch's cross-repo mission guard (8a sub-step a0 / 8c sub-step 2.5) and before the branch's header-existence check.
-
-   **`logs/scripts/prime-marker.sh` is the executing owner of this logic — call it, never reinline it.** Run it from the repository root and split its single stdout line:
+8h. **Session entry (shared sub-step — referenced by 8a / 8b / 8c).** One owner performs the complete
+   sequence — allocate the marker, append this session's marker-bearing header, stamp the mtime — in that
+   order. The order is load-bearing and is enforced inside the script rather than restated here. Takes one
+   parameter, `WORK_DESC`. Run it after the caller's guards and before `/session-start`.
 
    ```bash
-   MARKER_LINE=$(bash logs/scripts/prime-marker.sh) || exit 1
+   MARKER_LINE=$(bash "$AI_RESOURCES/logs/scripts/prime-session-entry.sh" "$WORK_DESC") || exit 1
    TODAY="${MARKER_LINE%% *}"; MARKER="${MARKER_LINE#* }"
    ```
 
-   The fail-safe seed invariant, the atomic `mkdir` claim, the zsh `find`-not-glob rule and the session-id suffix are all load-bearing. They live in the script beside the code they guard, and `logs/scripts/prime-allocator.test.sh` is the tripwire that holds them. **Reinlining this logic here would restore the defect the extraction fixed** — code inside an executable prompt is validated by *reading* rather than by *running*, and its one executing consumer had to scrape it out of markdown by awk. That scrape reported "12 passed, 0 failed" against a stale copy on 2026-07-14. (Extracted 2026-07-29, capability `prime-runtime-delegation`.)
-
-   **Caller contract — ordering is the caller's responsibility (mirrors 8m's Wiring note).** This sub-step produces `${MARKER}` and writes only the marker files; it does NOT touch `session-notes.md`. The calling branch owns the rest of the marker → header → mtime ordering: after 8k returns, run the `grep -Fxq` header-existence check, append this session's marker-bearing header (with the branch's own work-description text), then write `logs/.prime-mtime` — in that order. Marker before header so the header can embed `${MARKER}`; mtime after the append so `/session-start` Step 0.5 sees this session's own write. `/session-start` Step 3 and `/session-plan` Step 0 both require THIS session's marker-bearing header to exist.
-
-   Same-day re-invocations increment within the day (`S1` → `S2` → …); a new day resets to `S1`.
-
-8h. **Session-entry write (shared sub-step — referenced by 8a / 8b / 8c).** Allocate the marker, ensure this session's marker-bearing header exists, and stamp the mtime — in that order, which is load-bearing. Takes one parameter, `WORK_DESC` (the work-description line the caller wants recorded under the header); everything else is identical across the three branches, which is why this lives once.
-
-   Run it after the caller's cross-repo mission guard (8a sub-step a0 / 8c.4) and before the caller invokes `/session-start`.
-
-   1. **Marker.** Run the **Step 8k marker-allocation sub-step** to obtain `${TODAY}` and `${MARKER}`. 8k writes `logs/.session-marker` and the per-id marker; it does NOT touch `session-notes.md` — that is this sub-step's job.
-
-   2. **Marker-bearing header.** Check for THIS session's header with a literal whole-line grep (full-file, so immune to entry length; `-Fx` matches the em-dash and `${MARKER}` verbatim with no regex risk):
-
-      ```
-      Bash(grep -Fxq "## ${TODAY} — Session ${MARKER}" logs/session-notes.md)
-      ```
-
-      **exit 0 → header already present** (rare — same-marker re-invocation): reuse it and append `WORK_DESC` beneath it. **exit 1 → header absent** (the common case at `/prime` time): append a new `## ${TODAY} — Session ${MARKER}` header with `WORK_DESC` as its work description. Treat exit 1 strictly as "not found → create", **never** as "command failed → skip the write" — suppressing this session's header breaks the `/session-start` Step 3 and `/session-plan` Step 0 preconditions, both of which require it to exist.
-
-      Foreign concurrent sessions write under their own marker-bearing headers (e.g. `## YYYY-MM-DD — Session S2`); those do **not** count as "this session's header". The marker is the disambiguator. The pre-Phase-2 "no duplicate same-day header" rule is replaced by "this session writes only under its own marker-bearing header".
-
-   3. **mtime.** **After the append succeeds**, write `session-notes.md`'s mtime to `logs/.prime-mtime` (consumed by `/session-start` Step 0.5's foreign-write check):
-
-      ```bash
-      stat -f %m logs/session-notes.md 2>/dev/null > logs/.prime-mtime \
-        || stat -c %Y logs/session-notes.md 2>/dev/null > logs/.prime-mtime
-      ```
-
-   **Order is marker → header append → mtime, and it is not arbitrary.** Marker first, so the header can embed `${MARKER}`. mtime last, so `/session-start` Step 0.5 sees this session's own write rather than a pre-write timestamp — reversing these two makes every session look like it was written by a foreign one.
-
-   *(Consolidated 2026-07-29. This sequence was previously written three times — 8a.3.a, 8b.3.a and 8c.3 — wrapped around the already-shared 8k allocator. The three differed only in `WORK_DESC`, which is now the parameter. Edit this one block; there is nothing to keep in sync across branches.)*
+   **Located absolutely; runs against the current repository.** cwd owns the `logs/` it writes, so each
+   checkout keeps its own marker sequence and the call resolves from every consumer, not only
+   `ai-resources`. If any step fails the script exits non-zero and `|| exit 1` stops the branch before the
+   next write; re-running `/prime` recovers, at the cost of one burned marker number. Marker grammar, the
+   header shape and the ordering rule live in the script beside the code they guard, with
+   `logs/scripts/prime-allocator.test.sh` as the tripwire. **Never reinline this logic:** code inside an
+   executable prompt is validated by reading rather than by running, which is the defect the extraction
+   fixed. Canonical protocol: `docs/session-marker.md`.
 
 8a. **Task selected by number.**
    1. Resolve the number to its menu item → `TASK_TEXT` (the plain-English task text).
@@ -324,7 +301,7 @@ Full backlog & inbox: /open-items
          > ⚠ This task belongs to mission `{id}`, which lives in `{repo}` — but you're priming in `{CWD_REPO}`. Setting it up here would write the marker/header and run `/session-start` in the *wrong* repo. Open `{repo}` as your session folder and re-run `/prime` there to work on this mission. (Reply `here` to override and set it up in the current repo anyway.)
 
          Wait for the operator. On `here` → proceed to sub-step a. On anything else → stop, write nothing. A same-repo pick (mission repo == `CWD_REPO`) skips this guard silently. Derive the repo from `ACTIVE_MISSIONS` here, not from Step 8m's later `MISSION_ID` — this guard must fire before the sub-step-a marker/header write.
-      a. **Session-entry write.** Run the **Step 8h shared sub-step** with `WORK_DESC = TASK_TEXT`. It allocates the marker (via 8k), ensures this session's marker-bearing header exists, and stamps `logs/.prime-mtime`, in that order. This must happen before step c — `/session-start` Step 3 and `/session-plan` Step 0 both require THIS session's marker-bearing header to exist.
+      a. **Session-entry write.** Run the **Step 8h shared sub-step** with `WORK_DESC = TASK_TEXT`. It allocates the marker, appends this session's marker-bearing header, and stamps `logs/.prime-mtime`, in that order. This must happen before step c — `/session-start` Step 3 and `/session-plan` Step 0 both require THIS session's marker-bearing header to exist.
       a2. **Mission binding.** Run the Step 8m sub-step (skips silently if no active missions). If it resolves a `MISSION_ID`, prepend `{mission:<id>}` to the `/session-start` args in step b.
       b. Invoke the `/session-start` command with `TASK_TEXT` as its arguments (becomes the mandate), prefixed with **`{gate:post-plan}`** — always, on this branch — and additionally with `{mission:<id>}` if step a2 bound one. It runs its own mandate-confirmation prompt — that is expected; do not suppress it.
 
