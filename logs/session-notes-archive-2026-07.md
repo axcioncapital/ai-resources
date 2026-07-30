@@ -3732,3 +3732,50 @@ Installed a `pre-commit` hook into the workspace-root repo, which can block ever
 
 ### Open Questions
 - The workspace-root repo carries a pre-existing **uncommitted** `logs/decisions.md` change (a `2026-07-19` entry, ~23 lines) that predates this session and is unrelated to it. Left untouched deliberately — flagged to the operator, not resolved or staged here.
+## 2026-07-25 — Session S2-1d2
+
+**Mandate:** Symlink the 3 canonical commands that root `/prime` instructs invoking into the workspace-root `.claude/commands/`, and correct the false `warn-settings-change.sh` premise in the 5 live system-owner-v2 plan files — done when: all 3 symlinks resolve to their canonical targets, and none of the 5 plan files asserts the script exists.
+- Out of scope: the other 30 root-missing canonical commands (several deliberately project-scoped, e.g. `explore-section` is Design Studio-local); the ~12 historical records naming `warn-settings-change.sh` (repo snapshots, phase-1 inventories, June consultation outputs, integrity reports) — editing them would falsify the point-in-time record; mission thread 5, dropped mid-session as churn on a wrong premise.
+- Files in scope: projects/project-planning/Project Plans/system-owner-v2/context-pack.md, projects/project-planning/Project Plans/system-owner-v2/per-unit-plan.md, projects/project-planning/Project Plans/system-owner-v2/synthesis.md, projects/project-planning/Project Plans/system-owner-v2/control-pack/execution-roadmap.md, projects/project-planning/Project Plans/system-owner-v2/control-pack/technical-design.md
+- Stop if: a root symlink target turns out to be a real file rather than absent; a system-owner-v2 file turns out to be a historical record rather than a live plan.
+- Required outputs: .claude/commands/session-start.md, .claude/commands/session-plan.md, .claude/commands/concurrent-session-check.md
+- Mission: repo-integrity-repairs-2026-07
+
+Two verified repo fixes, both threads of mission `repo-integrity-repairs-2026-07`: (1) symlink the 3 canonical commands that root `/prime` instructs invoking but which do not exist at the workspace root (thread 11, narrowed from 33 to 3); (2) correct the false `warn-settings-change.sh` premise in the 5 live system-owner-v2 plan files, leaving the ~12 historical records untouched (thread 13, narrowed).
+
+**Thread 5 dropped mid-session.** Scoped as "add the `command grep` antibody to 4 audit agents"; verification showed `token-audit-auditor.md`, `diagnostics-scanner.md` and `fix-repo-issues-scanner.md` contain **zero** occurrences of `grep`, and `repo-dd-auditor.md`'s single occurrence is prose, not a scan site. There is no exposure to harden. `logs/scripts/search-canary.sh`'s header already records the same 2026-07-18 finding and its deliberate decision — *"no site edits were made: editing immune sites would be churn with no consequence."* Disposition: close thread 5 as already-correctly-decided, citing the canary header. Root cause of the mis-scope: counted the *absence of a mitigation* and read it as *presence of a vulnerability*.
+
+### Decisions Made
+- Linked exactly 3 of 33 missing root commands (`session-start.md`, `session-plan.md`, `concurrent-session-check.md`), not all 33 — several of the other 30 are deliberately project-scoped (`explore-section.md` is Design Studio-local; `pm.md`/`archive-project.md`/`scope-project.md`/`project-next-steps.md` are project-flow commands). Whether the remaining 30 belong at root is left open as a design question, not decided here.
+- Corrected 5 of ~17 files referencing the deleted `warn-settings-change.sh`, not all ~17 — the other ~12 are point-in-time historical records (repo snapshots, phase-1 inventories, June consultation outputs, an integrity report); editing them would falsify the record of what was true when written.
+- Applied the `/risk-check` reviewer's mitigation (a 4th symlink, `.claude/agents/context-discovery.md`) rather than accepting the PROCEED-WITH-CAUTION verdict's caution and proceeding without it — the finding (root's `.claude/agents/` had no `context-discovery.md`, which `session-start.md` invokes) was independently re-verified before acting.
+- Dropped mission thread 5 mid-session rather than executing it as scoped — the routine-decision reasoning and full evidence trail are recorded in the mission file itself (`logs/missions/repo-integrity-repairs-2026-07.md`, thread 5) and in commit `83793f0`, not duplicated here.
+- Kept the mission's ticked-thread text rather than deleting it, when asked "did you remove them from the mission?" — ticking (invisible to `/prime`'s task menu) achieves the "stop re-surfacing finished work" goal while preserving the closure reason; operator did not request deletion after the tradeoff was explained.
+
+### Outcome
+Skipped (not requested — `+audit` / `full` not passed).
+
+### Session Value Audit — 80/20 Review
+Skipped (not requested — `+audit` / `full` not passed).
+
+### Risky actions
+None — all writes were to non-shared-state files (own mission threads, own plan/manifest, 5 doc corrections, 4 new additive symlinks each verified absent beforehand). The one structural change (new symlinks) went through `/risk-check` before landing, per the mandatory gate.
+
+### Session Assessment
+Skipped (not requested — `+feedback` / `full` not passed).
+
+### Findings Queued
+- **Reviewer and executor independently made the identical instrument-scope error on the same finding** — this session's own initial scoping and the prior S1-940 session's mission-note re-verification both counted "no `command grep` antibody present" as "scan site is exposed," for agents that turn out to have zero grep scan sites at all. Two independent occurrences of the same mis-scoping pattern; queued at `logs/improvement-log.md` (severity: medium-high) with a proposed structural fix (require a precondition count alongside any "lacks mitigation X" claim).
+
+### Findings Declined
+- Thread 2's worsening count and thread 8/9's "still open, unchanged" status — already re-verified and recorded in-place in the mission file by the prior S1-940 session; no new finding to file, this session did not touch those threads.
+- The workspace-root repo's own uncommitted `logs/friction-log.md` (~281 lines, from a prior session's wrap) and ~14 other stale uncommitted files (old risk-check reports, stray session-plan/run files from 2026-07-14/18/19) — visible directly via `git status`, not a hidden defect requiring a log entry to be rediscoverable, and not created or broken by this session's work. Already flagged to the operator in chat and in Next Steps below.
+
+**Findings: 3 — queued 1 (severity: medium-high), declined 2. 1 + 2 = 3.**
+
+### Next Steps
+- Mission `repo-integrity-repairs-2026-07`: 8 of 16 threads closed. 8 remain open (2, 8, 9, 10, 12, 14, 15, 16). Threads 8 and 9 are flagged by the prior session's own Next Steps as "small, self-contained, untouched" — good next pick.
+- The leftover uncommitted files noted above (friction-log.md and ~14 stray files) should get a dedicated commit or `/log-sweep` pass at some point — not urgent, but they will keep showing up as working-tree noise until then.
+
+### Open Questions
+None.

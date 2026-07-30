@@ -353,6 +353,10 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 19:31 — logs/session-notes.md
+- 19:31 — logs/scratchpads/2026-07-30-19-30-scratchpad.md
+- 19:22 — /Users/patrik.lindeberg/.claude/projects/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/memory/feedback_zsh_tied_parameters.md
+- 19:22 — /Users/patrik.lindeberg/.claude/projects/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/memory/feedback_zsh_tied_parameters.md
 - 19:18 — skills/ai-resource-builder/references/operational-frontmatter.md
 - 19:17 — docs/autonomy-rules.md
 - 19:17 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/CLAUDE.md
