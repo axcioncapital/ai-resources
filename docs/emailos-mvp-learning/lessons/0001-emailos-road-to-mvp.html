@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EmailOS: From Needs to a Testable MVP</title>
+  <link rel="stylesheet" href="../assets/course.css">
+</head>
+<body>
+  <main>
+    <article class="page">
+      <header>
+        <p class="eyebrow">Lesson 1 · EmailOS development</p>
+        <h1>Learn the gates, not the phase numbers.</h1>
+        <p class="lede">
+          Your job is not to “move EmailOS forward.” Your job is to remove the next uncertainty
+          without pretending a later decision has already been made. By the end, you should be able
+          to name the next artifact, the tool that owns it, and the evidence required to move on.
+        </p>
+        <div class="topline">
+          <span class="pill">10 minutes</span>
+          <span class="pill">One-page lesson</span>
+          <span class="pill">Win: lead the route to MVP testing</span>
+          <a class="pill" href="../reference/emailos-mvp-run-card.html">Open the run card</a>
+        </div>
+      </header>
+
+      <section class="principle">
+        <div class="idea">
+          Every gate answers a different question: What is true? What is the product? How should it
+          work technically? Can the built loop survive a real test?
+        </div>
+        <div class="state">
+          <p class="eyebrow">You are here</p>
+          <strong>Phase 5 is not complete.</strong> The Needs Document is substantial, but A2
+          (who builds/operates it) and A3 (the approved compliance source and owner) still need
+          factual answers. Files <code>03</code>–<code>06</code> are stubs.
+          <a href="../../../../projects/axcion-systems-builder/cases/email-system/02-detailed-needs-document.md">Evidence</a>
+        </div>
+      </section>
+
+      <section class="gates" aria-label="The four EmailOS gates">
+        <article class="gate">
+          <span class="gate-number">1</span>
+          <h3>Truth gate · Needs → Review 1</h3>
+          <p class="question">Can we describe the operating need without inventing ownership or policy?</p>
+          <p>
+            In Systems Builder, run <code>/prime</code>, then
+            <code>/session-start "EmailOS Phase 5–6 — close A2/A3 and prepare Review 1"</code>.
+            Answer who owns the CRM, build, operation, compliance source, maintenance and conversion
+            into checks. Run <code>/qc-pass</code> and <code>/reconcile cases/email-system/02-detailed-needs-document.md</code>.
+          </p>
+          <span class="command">bash cases/scripts/build-review-packet.sh build email-system 6
+bash cases/scripts/build-review-packet.sh verify email-system 6</span>
+          <p class="why">
+            <strong>Why:</strong> architecture built on unnamed owners or nonexistent policy is fiction.
+            Claude authors, Codex challenges, and you disposition every finding.
+            <a href="../../../../projects/axcion-systems-builder/AGENTS.md">Role source</a>
+          </p>
+        </article>
+
+        <article class="gate">
+          <span class="gate-number">2</span>
+          <h3>Product gate · V2 → MVP → Reviews 2–3</h3>
+          <p class="question">What must the system do—and what is the smallest complete loop?</p>
+          <p>
+            First classify every V1 idea: Retain, Refine, Defer, Remove, Technical option, or
+            Unresolved. Save the reconciliation and draft <code>03</code> without choosing technology.
+            After Review 2, classify every V2 capability into MVP, Manual during MVP, Next, Later,
+            Rejected, or Unresolved; draft <code>04</code> and run Review 3.
+          </p>
+          <span class="command"># Same packet commands; use phase 8 for V2 and phase 9 for MVP.</span>
+          <p class="why">
+            <strong>Why:</strong> V2 protects the approved need; Phase 9 protects you from building the
+            full imagined future. Manual work is allowed when it still proves the core loop.
+            <a href="../../../../projects/axcion-systems-builder/workflow.md">Primary source</a>
+          </p>
+        </article>
+
+        <article class="gate">
+          <span class="gate-number">3</span>
+          <h3>Solution gate · Approaches → V3 → Review 4</h3>
+          <p class="question">What is the simplest credible way to deliver that MVP safely?</p>
+          <p>
+            Compare at least two approaches on effort, reliability, Gmail/CRM integration, human
+            control, compliance, reversibility and failure recovery. Draft <code>05</code>; state
+            deliberately rejected complexity. Run QC, reconcile, and the Phase 12 Codex packet.
+            Then translate approved V3 into <code>06-implementation-brief.md</code>—adding no capability.
+          </p>
+          <span class="command">/session-start "EmailOS Phases 10–13 — select, red-team and brief the smallest credible solution"</span>
+          <p class="why">
+            <strong>Why:</strong> technology is now answering a bounded product question. Before this
+            gate, it would quietly redefine the product.
+            <a href="../../../../projects/axcion-systems-builder/engine.md">Operating source</a>
+          </p>
+        </article>
+
+        <article class="gate">
+          <span class="gate-number">4</span>
+          <h3>Build gate · Plan → Spec → Implementation</h3>
+          <p class="question">Can a fresh implementation agent build and verify the approved loop without guessing?</p>
+          <p>
+            In Project Planning, use <code>06</code> as the intake and point back to <code>01</code>–<code>05</code>
+            as authorities. This is an adapter, not a second discovery cycle. Approve the context pack,
+            then run the plan and spec cycles until both QC verdicts pass.
+          </p>
+          <span class="command">/context-builder &lt;absolute-path-to-06&gt;
+/plan-draft output/email-os/context-pack.md → /plan-refine email-os → /plan-evaluate email-os
+/spec-draft email-os → /spec-refine email-os → /spec-evaluate email-os
+# From the workspace root, after PASS:
+/new-project email-os</span>
+          <p class="why">
+            <strong>Why:</strong> the brief says what to build; the plan orders the work; the spec removes
+            integration ambiguity; <code>/new-project</code> implements and verifies it.
+            <a href="../../../../projects/project-planning/CLAUDE.md">Planning source</a>
+          </p>
+        </article>
+      </section>
+
+      <section class="strip">
+        <div class="callout">
+          <strong>MVP hypothesis—not yet a decision:</strong> select 10–15 qualified contacts in the
+          CRM → assemble approved context → draft in the right language → founder approves → send via
+          Gmail → return reply, permission and next action to the CRM.
+        </div>
+        <div class="callout stop">
+          <strong>Ready for pilot means:</strong> Stage 5 passes; a safe end-to-end dry run works; no
+          message bypasses approval; CRM remains the buyer-state authority; suppression, reply and
+          failure paths preserve state. Only then test a real controlled wave.
+        </div>
+      </section>
+
+      <section class="practice">
+        <p class="eyebrow">Retrieval practice · answer before revealing</p>
+        <div class="practice-grid">
+          <details>
+            <summary>A2/A3 are open, but a CRM tool looks promising. What next?</summary>
+            <p>Close A2/A3 and Review 1. Tool selection belongs after the MVP boundary.</p>
+          </details>
+          <details>
+            <summary>V2 is approved and contains twenty useful capabilities. What next?</summary>
+            <p>Classify all twenty; keep only a complete, safe learning loop in the MVP.</p>
+          </details>
+          <details>
+            <summary>When does “MVP defined” become “MVP ready to test”?</summary>
+            <p>After planning, implementation and Stage 5 verification—not when document 04 is approved.</p>
+          </details>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <span>Memory hook: <strong>truth → product → solution → build</strong></span>
+        <span>Primary reading: <a href="../../../../projects/axcion-systems-builder/workflow.md">Systems Builder workflow</a></span>
+        <span>Ask your teacher about any gate that still feels mechanical.</span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

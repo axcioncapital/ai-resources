@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EmailOS MVP Run Card</title>
+  <link rel="stylesheet" href="../assets/course.css">
+</head>
+<body>
+  <main>
+    <article class="page run-card">
+      <header>
+        <p class="eyebrow">Printable reference · repository state 2026-07-30</p>
+        <h1>EmailOS MVP run card</h1>
+        <p class="lede">Use this after the lesson. It is a navigation aid, not a substitute for the approval decisions.</p>
+        <div class="topline">
+          <span class="pill">Current gate: Truth</span>
+          <span class="pill">Current blockers: A2 + A3</span>
+          <a class="pill" href="../lessons/0001-emailos-road-to-mvp.html">Return to lesson</a>
+        </div>
+      </header>
+
+      <table>
+        <tbody>
+          <tr>
+            <th>Start each Systems Builder session</th>
+            <td>
+              <code>/prime</code> → <code>/session-start "&lt;one phase outcome and done condition&gt;"</code>.
+              One time only: <code>/reconcile-activate</code>, then author and ratify both reference files.
+            </td>
+          </tr>
+          <tr>
+            <th>1 · Approve Needs</th>
+            <td>
+              Close A2: CRM owner, EmailOS builder, ongoing operator. Close A3: compliance/guidance
+              source, maintainer, machine-check owner. Then <code>/qc-pass</code> and
+              <code>/reconcile cases/email-system/02-detailed-needs-document.md</code>.
+            </td>
+          </tr>
+          <tr>
+            <th>Codex Review 1</th>
+            <td>
+              <code>bash cases/scripts/build-review-packet.sh build email-system 6</code><br>
+              <code>bash cases/scripts/build-review-packet.sh verify email-system 6</code><br>
+              Ask Codex to red-team the verified packet under AGENTS.md Review 1. You disposition every finding.
+            </td>
+          </tr>
+          <tr>
+            <th>2 · Approve V2</th>
+            <td>
+              Reconcile every V1 concept; save <code>working/phase7-v1-reconciliation.md</code>; draft
+              <code>03-clean-system-definition-v2.md</code>; QC + reconcile; repeat the packet cycle with phase <code>8</code>.
+            </td>
+          </tr>
+          <tr>
+            <th>3 · Approve MVP</th>
+            <td>
+              Classify every V2 capability: MVP / Manual / Next / Later / Rejected / Unresolved.
+              Draft <code>04-mvp-scope-and-product-roadmap.md</code>; QC + reconcile; packet phase <code>9</code>.
+            </td>
+          </tr>
+          <tr>
+            <th>4 · Approve solution</th>
+            <td>
+              Compare at least two technical approaches. Draft <code>05-approved-solution-definition-v3.md</code>;
+              QC + reconcile; packet phase <code>12</code>. Preserve CRM authority, approval, compliance,
+              reversibility, and failure recovery.
+            </td>
+          </tr>
+          <tr>
+            <th>5 · Complete handoff</th>
+            <td>
+              Draft <code>06-implementation-brief.md</code> from approved V3 without adding capabilities.
+              Run <code>/qc-pass</code> and <code>/reconcile cases/email-system/06-implementation-brief.md</code>.
+            </td>
+          </tr>
+          <tr>
+            <th>6 · Plan and specify</th>
+            <td>
+              In Project Planning:
+              <ul>
+                <li><code>/context-builder &lt;absolute-path-to-06&gt;</code> — treat <code>01</code>–<code>05</code> as authorities; route <strong>engineered</strong>.</li>
+                <li><code>/plan-draft output/email-os/context-pack.md</code> → <code>/plan-refine email-os</code> → <code>/plan-evaluate email-os</code> until PASS.</li>
+                <li><code>/spec-draft email-os</code> → <code>/spec-refine email-os</code> → <code>/spec-evaluate email-os</code> until PASS.</li>
+              </ul>
+            </td>
+          </tr>
+          <tr>
+            <th>7 · Build and verify</th>
+            <td>
+              From the workspace root: <code>/new-project email-os</code>. Continue through Stage 5.
+              Stop before a real wave unless the full dry run, approval gate, CRM/Gmail state,
+              suppression/reply paths and failure recovery all pass.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <section class="strip">
+        <div class="callout">
+          <strong>Artifact 04 is an MVP definition.</strong> It is not an implemented MVP.
+        </div>
+        <div class="callout stop">
+          <strong>Never hand-build a review packet.</strong> Build and verify immediately before Codex handoff.
+        </div>
+      </section>
+
+      <footer class="footer">
+        <span><strong>Decision model:</strong> truth → product → solution → build</span>
+        <span><a href="../../../../projects/axcion-systems-builder/workflow.md">Workflow authority</a></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>
