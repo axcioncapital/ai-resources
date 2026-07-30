@@ -27,9 +27,17 @@
     "logs/loop/2026-07-29-prime-minimum-responsibility-build-4.evidence.md",
     "logs/loop/2026-07-29-prime-minimum-responsibility-prove.brief.md",
     "logs/scripts/prime-marker.test.sh",
-    "logs/session-notes.md"
+    "logs/session-notes.md",
+    "logs/friction-log.md",
+    "logs/improvement-log.md",
+    "logs/decisions.md",
+    "logs/innovation-registry.md",
+    "logs/session-notes-archive-2026-07.md",
+    "logs/decisions-archive-2026-07.md"
   ],
-  "decisions_refs": [],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-30-resolve-a-blocked-worktree-merge-by-fixing"
+  ],
   "validation": [],
   "evaluator_findings": {
     "sidecar_refs": [],

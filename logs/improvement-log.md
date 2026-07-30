@@ -2194,3 +2194,16 @@ Falsifier 2 was closed here on a structural argument instead (content-only edits
 **Proposal.** Require any Shape plan that states a count to state the **derivation** beside it — the exact command including root and exclusions, in one line. Cheap to write once, and it converts an unfalsifiable number into a falsifiable one. Worth considering more generally: a falsifier phrased as a re-derived absolute count is fragile; one phrased structurally ("no file added or deleted under X") is not.
 
 **Target files:** `docs/work-loop.md` § The challenged route (Shape's falsification-criteria guidance).
+
+### 2026-07-30 — `/close-worktree-session`'s conflict guidance covers markers, not append-order
+
+- **Status:** logged (pending)
+- **Severity:** medium — no data was lost (caught by an existing pre-commit hook before it could land), but the failure mode is generic to any worktree landing two concurrent sessions' append-only logs, not specific to this session.
+- **Category:** command guidance (`.claude/commands/close-worktree-session.md`)
+- **Source:** `ai-resources` main checkout, 2026-07-30 — landing `session/2026-07-29-2`, operator-directed ("just merge this... don't ask me anything").
+
+`/close-worktree-session` Step 4.5 is thorough about one failure mode of manual conflict resolution — unresolved `<<<<<<<`/`>>>>>>>` markers reaching the tree or `HEAD` — and silent about a second one that fired here: when a conflict in an append-only log (`logs/friction-log.md`, `logs/improvement-log.md`) is resolved by combining both sides (correct — neither side should be discarded), the combined result can still violate the repo's newest-last append-order convention, because each side's block gets inserted as a unit rather than merged entry-by-entry. `logs/session-notes.md` and `logs/decisions.md` were flagged in-order by union-merge but `check-append-order`'s pre-commit hook caught the friction-log/improvement-log resolution putting a block out of order, requiring a manual reorder (moving the block to file end) before the commit would proceed. The hook caught it this time, but the command's own conflict-resolution guidance gives no heads-up that this check exists or what to do if it fires.
+
+**Proposal.** Add one line to Step 4.5 (or a new sub-step immediately after it): after resolving any conflict in an append-only log by combining both sides, expect `check-append-order` to run at commit time and be prepared to reorder the combined blocks to file end — do not treat a hook failure at that point as a sign the conflict resolution itself was wrong.
+
+**Target files:** `.claude/commands/close-worktree-session.md` § Step 4.5.
