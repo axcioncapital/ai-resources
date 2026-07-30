@@ -133,3 +133,136 @@ LIMITATIONS:
 
 *(No `Status: complete` marker: the unit is open at G1 by design. It is added, with the operator's G1
 decision and the CLOSE block, when the gate resolves.)*
+
+---
+
+# APPENDED 2026-07-30 — review round 2
+
+**STATUS: still OPEN, awaiting G1.** BASE for this section: `bc8edd6`.
+
+## 7. Round 2 — Codex, object `…plan-v2.md`. Verdict: REVISE BEFORE G1
+
+Four material findings (M1–M4) plus R1–R4 answers and one minor. Transcribed verbatim to
+`…shape.review-2.md` (`bc8edd6`). Round-2 justification under `docs/work-loop.md` § The challenged route:
+plan-v2 redesigned S3's owner, withdrew F-RULES for F-BEHAVE and re-scoped S6 from optional to mandatory —
+each changed something review-1's verdict rested on. **§ 6 of this file recorded that review-2 had been
+dropped as a reasoned act; that reasoning is superseded by the round having been run.**
+
+## 8. Every finding was verified against the object before adjudication — none accepted on assertion
+
+```
+M1: CONFIRMED — all five hand-backs read at HEAD
+  · ran: sed over session-start.md 440-470, 340-355; session-plan.md 228-255
+  · observed: :452 "return control to the invoking /prime branch ... 8a.3.d ... 8b.3.d begins execution
+    immediately" · :465 "/prime 8c.11 still owns the review-sizing disclosure and 8c.12 owns the execution
+    start" · session-plan.md :235-239 "Returning to /prime ... without beginning execution" · :241-245
+    "The gate belongs to the caller ... /prime 8a ... Step 8a.d owns the pause" · :349 "/prime owns
+    STRUCTURAL_RISK alone"
+  · consequence confirmed: with v2's Step 9, three routes dead-end at the hand-back
+
+M1 (8c.9 sub-claim): CONFIRMED, and larger than review-2 stated
+  · ran: recursive grep "8c\.[0-9]" over .claude, docs, skills (both roots), excluding audits/ and logs/
+  · observed: 10 lines outside prime.md — 8c.9 × 7, 8c.11 × 2, 8c.12 × 2, 8c.5 × 1, 8c.2 × 1
+  · v2 § 4 counted 8c.9 as ONE retained site and never enumerated 8c.5 / 8c.11 / 8c.12 at all
+
+M2: CONFIRMED, and the rule violation is stronger than the race
+  · ran: grep "lost.update" over docs/ and .claude/ ; read docs/commit-discipline.md § Maintenance-owned
+    in-place mutations
+  · observed: :132 classifies these two logs' in-place mutation as a lost-update surface confined to
+    "dedicated, single-purpose sessions"; the rule states "An ordinary work session appends only; it never
+    reaches into an existing entry", and names this exact drift — "a new command that 'helpfully' flips a
+    status as a side-effect of ordinary mid-session work would violate it"
+  · /wrap-session is an ordinary work session. v2's <!-- promoted --> stamp would have been the rule's
+    first violation, independent of any race
+
+M3 (CWD_REPO half): CONFIRMED
+  · ran: read prime.md:389 and v2 §§ 6.1, 6.2, 6.4
+  · observed: CWD_REPO comes from Step 0 today; v2's drafted Step 0 returns only SYNC, and no drafted
+    block defines CWD_REPO. v2's 8g cross-repo guard could not have executed
+
+M3 (telemetry half): REJECTED on evidence — see plan-v3 § 8
+  · ran: read the removal list (§ 1 above, prime.md :61-62) against prime.md :67 and ai-resources/CLAUDE.md
+    § Session Telemetry
+  · observed: the removal target is the log-trio PREFETCH at :61-62; the telemetry-gap nudge is a separate
+    paragraph at :67, and CLAUDE.md § Session Telemetry places the nudge on /prime by name
+  · what WAS unfixed and now is: v2 deleted the prefetch, kept the nudge, and never stated how the nudge
+    still gets its input
+
+M4: CONFIRMED, and the real state count is six, not three
+  · ran: read logs/scripts/prime-marker.sh:140-158 ; grep "session-marker-" .claude/hooks/detect-concurrent-session.sh
+  · observed: FOUR persistent writes precede the header — mkdir claim (:144), owner breadcrumb (:146),
+    logs/.session-marker (:156), logs/.session-marker-${SESSION_ID} (:158). "Marker write fails → nothing
+    written" is false
+  · observed: the hook keys on logs/.session-marker-* at :158 and :162, so a failure between write 3 and 4
+    leaves the session invisible to concurrent detection — a blast radius into a different subsystem that
+    v2's three-row table could not express
+
+MINOR (Budget C): CONFIRMED — v2 § 2 lists four script owners (one extended, three new) plus the test
+  script, while §§ 0 and 3 said "three scripts"
+```
+
+## 9. One defect found by this unit that review-2 did not raise
+
+```
+8c.2 IS NOT A DANGLING CITATION — v2 § 4 and § 1 of this file are both wrong
+  · ran: read prime.md 8c sub-step 2 ; read docs/session-marker.md:339 in context
+  · observed: prime.md 8c.2 is the per-item done-condition presence-check, and :339 sits in
+    § Auto-mode done-condition check citing it as the step that "holds the mechanism" — a correct,
+    mutual cross-reference
+  · ROOT CAUSE: the premise at § 1 above was recorded "confirmed" on a grep proving the STRING was
+    present. It never tested whether the referent existed. A positive control was run for the citation
+    ENUMERATOR and for the prime-mtime and hook-write greps, but not for this one
+  · CONSEQUENCE AVOIDED: S1 was scheduled to "fix" it, which would have broken a correct citation
+```
+
+This is the evidence standard's own failure mode — an empty-or-present result treated as evidence without
+a control. It is recorded rather than quietly corrected, and named as a residual weakness in plan-v3 § 7:
+the same error class was not systematically swept for across the rest of the premise set.
+
+## 10. Measurement — recounted, every cell script-parsed from plan-v3 itself
+
+| Budget | v2 claimed | v3 measured | Why it moved |
+|---|---:|---:|---|
+| **A** — `/prime` lines | 186 | **188** | v2 counted its own fence line as `/prime` content at §§ 6.1 and 6.3 (13/19 vs 12/18); §§ 6.2 and 6.4 grew by the `CWD_REPO`, telemetry-split and renumbering corrections |
+| **B** — other model-read prompts | +12 | **+48** | v2's figure predated any inspection of the receiving owners. Review-2 M1 predicted this |
+| **C** — script owners | "three" | **four** + a test script | one extended, three new |
+
+**A = 188 against ≤300, slack 112. 223 lines leave `/prime`; 48 arrive elsewhere — a 4.6 : 1 ratio, so the
+move remains delegation rather than relocation.** Verified by re-parsing plan-v3's own fenced blocks and
+recomputing both totals: A = 188 and B = +48 both reproduce exactly.
+
+**A fourth hand-count error was found and corrected in this round** (v2's fence-line miscount). Three
+prior ones are recorded at § 3. Every figure in plan-v3 is script-produced.
+
+## 11. G1 package — held for the operator, corrected
+
+The plan (**v3**), both reviews verbatim (round 1 and round 2), the adjudication of each (plan-v3 § 8),
+and the six-slice list: **S1** session-entry owner + locator (release blocker) · **S2** removals needing
+no new owner, incl. `STRUCTURAL_RISK` and its four downstream sites · **S3** promotion owner then retire
+Step 3 · **S4** git sync out · **S5** state collection out · **S6** post-dispatch transfer, now including
+real edits to `/session-plan` Step 8 and `/session-start` Step 4.
+
+**One explicit G1 decision item:** plan-v3 declines review-2's instruction to remove the telemetry-gap
+nudge, on the evidence that `ai-resources/CLAUDE.md` § Session Telemetry places it on `/prime` by name
+(plan-v3 § 8). If the operator's settled direction was to remove it, that rule is retired in the same
+slice and Budget A falls further.
+
+---
+
+LIMITATIONS (round 2 — superseding nothing above; all round-1 limitations still stand):
+
+- **Still nothing built or run.** A = 188 remains a projection from drafted text. It becomes a measurement
+  only when `wc -l` runs against a real `prime.md` at Prove.
+- **Budget B could rise again.** The hand-back sweep grepped `/prime` **step identifiers**. A downstream
+  command that returns to `/prime` without naming a step identifier is invisible to it. Named, not closed.
+- **Four scripts still do not exist.** `prime-collect.sh` remains the largest unproven behavioural surface.
+- **Every falsification criterion remains `unassessed`** — including the six added this round (R1–R8,
+  F-PROMOTE-RACE, F-NO-SOURCE-WRITE, F-CWDREPO) and the rewritten F-RECOVER. None is inheritable.
+- **Five of six marker partial states will remain unassessed by design** (plan-v3 § 5 F-RECOVER), with a
+  stated reopen trigger.
+- **Promotion reachability is deliberately reduced** — findings from a never-wrapped session now wait for
+  the next wrap in that repo rather than the next `/prime`. Accepted with a one-week trigger, not fixed.
+- **The `8c.2` error class was not swept for.** One premise was found confirmed-on-partial-observation;
+  the rest of the premise set was not re-tested for the same defect.
+
+*(Still no `Status: complete`: the unit remains open at G1.)*
