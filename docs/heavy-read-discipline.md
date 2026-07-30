@@ -110,7 +110,7 @@ Several same-day entries (`S1`, `S2`, …) routinely stack in `logs/session-note
 
 The anchor is `^## [0-9]` rather than `^## `, and that matters: a `## Heading` inside an entry body or inside a fenced code block would otherwise false-match and truncate the read to a fragment. Anchoring on a leading digit means only a date header can match.
 
-The log-trio pre-fetch (`decisions.md` tail, `usage-log.md` tail) comes from token-audit R4, 2026-05-25. Both files are touched by `/wrap-session` at session end, and a recurring Edit-before-Read failure on `session-notes.md` — 3 of the last 4 sessions at the time, per usage-log telemetry — disappears when the trio is already in `/prime`'s context at orientation.
+**The log-trio pre-fetch was retired 2026-07-30** (stream `2026-07-30-prime-session-entry-ownership`, S2). It came from token-audit R4, 2026-05-25: pre-fetching the `decisions.md` and `usage-log.md` tails at orientation was meant to have them in context for the eventual wrap, against a recurring Edit-before-Read failure on `session-notes.md`. But `/prime` did no reasoning over them, and a tail read many turns before its consumer is a bet on the context surviving that far — one `/clear` or one compaction and it has to be re-read anyway. The `usage-log.md` tail survives, moved **inside** the telemetry-gap nudge that is its only reader; the `decisions.md` tail is gone with no replacement. Restoring a speculative pre-fetch here needs a fresh measurement, not this paragraph.
 
 ### Step 1c — why plan position is never read with a plain `Read`
 

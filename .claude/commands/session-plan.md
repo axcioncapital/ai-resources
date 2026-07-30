@@ -96,7 +96,7 @@ Apply the three-tier heuristic from `ai-resources/skills/ai-resource-builder/ref
 
 Map `INTENT` to one tier. Set `RECOMMENDED_MODEL`.
 
-Read `ACTIVE_MODEL` from the system-prompt context (the model identifier already in context). Do not run any external command. Compare against the **active session model only**. (`/prime` Step 4's model-alignment check compares the session model against the project's *recommended posture*, where one is declared; this step checks task-requirement fit. Note there is no such thing as a project model *default* — defaults are prohibited at every layer per workspace `CLAUDE.md` § Model Tier.)
+Read `ACTIVE_MODEL` from the system-prompt context (the model identifier already in context). Do not run any external command. Compare against the **active session model only**. This step checks task-requirement fit, and it is the **only** model check in the session-entry chain — `/prime`'s Step 4 model-alignment reporting was retired 2026-07-30. Note there is no such thing as a project model *default* — defaults are prohibited at every layer per workspace `CLAUDE.md` § Model Tier.
 
 - If `RECOMMENDED_MODEL` tier matches `ACTIVE_MODEL` tier: note `match`.
 - If mismatch: emit one line `→ /model {shortname}` (e.g., `→ /model opus`). No confirmation prompt.
@@ -236,7 +236,7 @@ No `Class:` line is written to `logs/session-notes.md` — the field was removed
 
 > Plan written to `{OUTPUT_TARGET}`. Returning to /prime.
 
-Then **return control without beginning execution and without emitting "Begin execution".** Auto mode's approval was taken at `/session-start` Step 2.6, but this command's job still ends at the plan write: `/prime` 8c.11 owns the review-sizing disclosure and 8c.12 owns the execution start. This branch is checked before `POST_PLAN_GATE` because the default branch below ends in "Begin execution", which is exactly the wrong instruction on this path.
+Then **return control without beginning execution and without emitting "Begin execution".** Auto mode's approval was taken at `/session-start` Step 2.6, but this command's job still ends at the plan write: `/prime` 8c.12 owns the execution start. This branch is checked before `POST_PLAN_GATE` because the default branch below ends in "Begin execution", which is exactly the wrong instruction on this path.
 
 **If `POST_PLAN_GATE` is set** — the invoking branch declared a post-plan approval gate. Emit:
 

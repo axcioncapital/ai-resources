@@ -6,7 +6,7 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 
 **Principle:** Prime never asserts state from a single source. Each surfaced next-step or status claim must be cross-checked against git log since the claim's source timestamp before being reported as current.
 
-**Output + execution discipline:** The operator is a non-developer — the brief is short, scannable, plain English (short sentences, common words), and shows only what is needed to pick the next task; everything else stays silent unless it needs attention. Orientation issues many *independent* read-only git/file calls, so **batch them into one message**; firing them serially is the main avoidable latency. Safe to batch: **Step 1** (session-notes + log-trio), **Step 1b**, **Step 2**, **Step 3**, and **Step 0**'s per-repo `pull`. **Three ordering dependencies must survive the batching — never hoist a dependent call ahead of what it needs:** (1) **Step 1a** needs `CWD_REPO`/`AI_RESOURCES` from Step 0 *and* the entry date from Step 1; (2) **Step 4**'s working-tree `git status` must run *after* the Step 0 pulls, so it sees post-pull state; (3) **Step 1c** needs Step 0 only — hoisted ahead of it, `CWD_REPO` is unresolved, the read silently misses and the brief block never renders. Step 1c does **not** depend on Step 1a — it deliberately does not consume that merged result set (wrongly scoped for plan position; see its ground-truth rule) — so those two may batch together once Step 0 has run. Everything else across steps 0–4 is independent and should be batched.
+**Output + execution discipline:** The operator is a non-developer — the brief is short, scannable, plain English (short sentences, common words), and shows only what is needed to pick the next task; everything else stays silent unless it needs attention. Orientation issues many *independent* read-only git/file calls, so **batch them into one message**; firing them serially is the main avoidable latency. Safe to batch: **Step 1** (session-notes + the `usage-log` tail), **Step 1b**, **Step 2**, **Step 3**, and **Step 0**'s per-repo `pull`. **Three ordering dependencies must survive the batching — never hoist a dependent call ahead of what it needs:** (1) **Step 1a** needs `CWD_REPO`/`AI_RESOURCES` from Step 0 *and* the entry date from Step 1; (2) **Step 4**'s working-tree `git status` must run *after* the Step 0 pulls, so it sees post-pull state; (3) **Step 1c** needs Step 0 only — hoisted ahead of it, `CWD_REPO` is unresolved, the read silently misses and the brief block never renders. Step 1c does **not** depend on Step 1a — it deliberately does not consume that merged result set (wrongly scoped for plan position; see its ground-truth rule) — so those two may batch together once Step 0 has run. Everything else across steps 0–4 is independent and should be batched.
 
 0. **Pull latest.** Determine the cwd's git root: `CWD_REPO=$(git -C "$(pwd)" rev-parse --show-toplevel 2>/dev/null)`.
    If this fails, note `Pulled: n/a (not a git repo)` and skip to step 1. Define
@@ -58,13 +58,10 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
    **Read method (deterministic — do not improvise against same-day clutter).** Locate the last entry's
    date-header with `Bash(grep -n "^## [0-9]" logs/session-notes.md | tail -1)` → `START`, then read
    header-to-EOF in one call: `Read(logs/session-notes.md, offset=START)`. **Never substitute a fixed
-   last-N-lines window.** Then pre-fetch the log-trio — `Bash(tail -n 10 logs/decisions.md)` and
-   `Bash(tail -n 30 logs/usage-log.md)`, each skipped silently if absent. No main-session reasoning
-   happens over the trio at `/prime` time; it lives in context for the eventual wrap. Why the `^## [0-9]`
-   anchor, the offset read and the pre-fetch take these shapes: `docs/heavy-read-discipline.md`
-   § Bounded-read recipes → Step 1.
+   last-N-lines window.** Why the `^## [0-9]` anchor and the offset read take these shapes:
+   `docs/heavy-read-discipline.md` § Bounded-read recipes → Step 1.
 
-   **Telemetry-gap nudge.** The one cheap exception to "no reasoning over the pre-fetched log-trio": take the date of the most recent `## ` header in `session-notes.md` (the last wrapped session). If that date does **not** appear in the last 30 lines of `logs/usage-log.md` just read, AND that last session was non-trivial (its note carries a real `### Summary`, not a one-line or aborted entry), then the prior substantive session captured no telemetry — set a telemetry-gap flag and emit the ⚠ telemetry line in the brief (Step 6 template). Skip silently if either file is absent, the dates match, or the last session was trivial. Advisory only — it never blocks; it prompts a backfill.
+   **Telemetry-gap nudge.** Read the tail of the telemetry log — `Bash(tail -n 30 logs/usage-log.md)`, skipped silently if absent. Take the date of the most recent `## ` header in `session-notes.md` (the last wrapped session). If that date does **not** appear in those 30 lines, AND that last session was non-trivial (its note carries a real `### Summary`, not a one-line or aborted entry), then the prior substantive session captured no telemetry — set a telemetry-gap flag and emit the ⚠ telemetry line in the brief (Step 6 template). Skip silently if either file is absent, the dates match, or the last session was trivial. Advisory only — it never blocks; it prompts a backfill.
 
 1a. **Cross-check Next Steps against git log and sibling entries.** Detection logic only — this command has no brief-level Next Steps list; see steps 5–6.
 
@@ -128,7 +125,6 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
    - Compare the selected scratchpad's mtime date to the date of the last `session-notes.md` entry from Step 1. **≥** → surface it: read its `## Resume With` section and take the first content line. **<** → a later wrap superseded it; skip silently.
    - If `logs/scratchpads/` is absent or has no `*-scratchpad.md` file, skip silently.
    - When surfaced, the scratchpad feeds a **carryover** menu candidate: the first content line of its `## Resume With` section is a strong candidate for menu item 1 (step 5). It has no standalone Step 6 display line. This step does NOT auto-resume — the operator decides by picking that menu item or answering the direction prompt.
-   - **Legacy `**QC-PENDING:**` markers.** The commit-block they encoded was retired on 2026-07-30 (`docs/qc-independence.md`). Treat such a marker as ordinary scratchpad text: it grants no mtime exemption, blocks no commit, and must not be surfaced as an advisory.
 
 1c. **Read the project's plan position.** Detect where the project actually stands against its plan, so the brief can lead with *where we are and what is next* rather than only a backlog menu. This step is a **zero-cost no-op in any repo without a plan** — including `ai-resources` itself, which has no `pipeline/` — and adds no reads, no line, and no menu item there.
 
@@ -195,11 +191,8 @@ if os.path.exists(p):
 
    Each surviving item becomes an **urgent** menu candidate for step 5.
 
-4. **Exception checks.** Compute the following, but carry each to step 6 only when it is abnormal — a normal value is never displayed. **Model alignment is the one exception:** it is ALWAYS carried to Step 6, matched or not.
+4. **Exception checks.** Compute the following, but carry each to step 6 only when it is abnormal — a normal value is never displayed.
    - **Working tree:** if the environment's git-status snapshot is non-empty, run `git status --short` and `git diff --stat HEAD` once to confirm it is still current. The env snapshot is point-in-time from session start and can be stale vs actual HEAD (e.g., files already committed in the prior session). Carry forward only if the live result shows unexpected uncommitted changes. This is a Prime-time orientation check, distinct from the commit-time "no pre-commit git status" rule.
-   - **Model alignment:** read the active session model identifier from the system-prompt context — do not run any external command, it is already in context. Identify the cwd-nearest project `CLAUDE.md` and read its `## Model Selection` section for the project's **recommended posture** (advisory prose — never a declared default; defaults are prohibited per workspace `CLAUDE.md` § Model Tier). Two cases:
-     - The section exists **and names exactly ONE tier** → compare the session model against it. On match, plain styling (`Model: {session model}`); on mismatch, warning styling with a hint (`⚠ Model: you are on {session model}; this project recommends {recommended} → /model {recommended}`).
-     - **Anything else** — no project `CLAUDE.md`, no `## Model Selection` section, or a section naming more than one tier → emit the plain line only (`Model: {session model}`) and **never a `→ /model` nudge**. A multi-tier posture resolves against the *task*, which Step 4 does not yet know, so collapsing it to one tier would fire a false downgrade warning at nearly every session start; and with nothing to compare against, do not invent a recommendation. **An absent section is the normal state, not a defect** — nothing has written one since `/new-project` step 11a was deleted on 2026-07-27, and only a handful of legacy projects still carry one.
    - **Pull result:** carry forward the step 0 result only on failure, when there are unpushed commits, or on an `autostash-conflict` (a pop conflict that returned exit 0 — see Step 0). The `autostash-conflict` case is the highest-priority pull exception: the working tree silently holds conflict markers, so the brief must say so.
    - **Phase READMEs.** If the cwd-rooted project has a `work/` directory, scan it (one level deep) for files matching `W*-*-README.md` (or `Wn-*-README.md`). Capture the matching file paths only — do not read file bodies. Skip silently if `work/` is absent or contains no matches. Bounded scan: one `ls`/`find -maxdepth 2`-equivalent; do not recurse deeper.
 
@@ -224,8 +217,6 @@ if os.path.exists(p):
 ```
 ## Prime — {date}
 
-Model: {session model}
-{⚠ Model: you are on {session model}; this project recommends {recommended} → /model {recommended} — replaces the plain line above; only on mismatch}
 {⚠ Working tree: {short summary} — only if unexpectedly dirty}
 {⚠ Pull: {result} — only on failure or unpushed commits}
 {⚠ Pull: autostash pop conflicted — working tree has conflict markers; stash@{0} preserved. Resolve the markers (or `git checkout --theirs`/`--ours`) and `git stash drop` before starting work. — only on an `autostash-conflict` result from Step 0}
@@ -244,7 +235,7 @@ Next tasks:
   1. {plain-English task}   [{tag}]
   2. {plain-English task}   [{tag}]     … one line per candidate, up to 6
 
-Type 1–6 to start that task. Type `auto` to run the #1 item end-to-end with a single approval gate, or `auto 1,3` (or `auto 1 3`) to run several items back-to-back under one combined approval gate. Or tell me something else.
+Type 1–6 to start that task. Type `auto` to run the #1 item end-to-end with a single approval gate, or `auto N` for a different item. Or tell me something else.
 
 Full backlog & inbox: /open-items
 ```
@@ -258,9 +249,8 @@ Full backlog & inbox: /open-items
    - A bare number `1` through `6` (within the rendered menu range) — or `do 2` / `task 2` / `option 2` — → **task selection.** Go to step 8a.
    - `auto` / `a` (case-insensitive, trimmed) — or `do auto` / `run auto` → **auto mode**, picked item = #1. Go to step 8c.
    - `auto N` (single number within menu range) → **auto mode**, picked item = #N. Go to step 8c.
-   - `auto N,M,...` or `auto N M ...` (multiple numbers within menu range, separated by commas or spaces) → **auto mode (multi-item)**, picked items = those numbers in the order given. Go to step 8c.
    - Anything else (a sentence, a different task, a question) → **free-text intent.** Go to step 8b.
-   - If the reply is ambiguous (a number outside the rendered menu range, an `auto N` where N is outside range, or "2 but first do X"), ask once for a plain number, the word `auto` (optionally followed by one or more item numbers), or a sentence, then classify the re-response.
+   - If the reply is ambiguous (a number outside the rendered menu range, an `auto N` where N is outside range, or "2 but first do X"), ask once for a plain number, the word `auto` (optionally followed by one item number), or a sentence, then classify the re-response.
 
 8m. **Mission binding (shared sub-step — referenced by 8a / 8b / 8c).** Resolves which active mission, if any, this session serves. **Skip entirely — no prompt, no output — when `ACTIVE_MISSIONS` (Step 1d) is empty** (the common case). Run only after a non-plan-mode dispatch is confirmed (i.e., past each branch's plan-mode guard), and before the branch calls `/session-start` (8a/8b) or writes the inline mandate (8c). Resolve `MISSION_ID`:
    - If the picked/stated task came from a `[mission:<id>]` menu item → `MISSION_ID = <id>`. **Auto-bound; no prompt.** (Primary path — picking a mission's open thread IS the binding.)
@@ -340,49 +330,45 @@ Full backlog & inbox: /open-items
 
          **8b passes no `{gate:post-plan}` token** (contrast 8a.3.b). That absence is what preserves this branch's auto-execute behaviour: `/session-plan` Step 8 treats an unset gate as the default and proceeds. Adding the token here would convert 8b into 8a and introduce a pause the operator has not asked for.
 
-8c. **Auto mode.** The operator typed `auto` (optionally with item numbers) — run the picked menu item(s) end-to-end with a single combined approval gate and no per-stage prompts. **8c owns picking, the guards and dispatch. It does not derive, echo or write the mandate, the manifest or the plan** — `/session-start` and `/session-plan` own those, and 8c reaches them by invoking `/session-start` under `{gate:auto}`.
+8c. **Auto mode.** The operator typed `auto` (optionally with an item number) — run the picked menu item end-to-end with a single approval gate and no per-stage prompts. **One item only.** **8c owns picking, the guards and dispatch. It does not derive, echo or write the mandate, the manifest or the plan** — `/session-start` and `/session-plan` own those, and 8c reaches them by invoking `/session-start` under `{gate:auto}`.
 
-   1. **Resolve PICKED_ITEMS.** Parse the operator's reply:
-      - `auto` / `a` (no number) → [item #1 from the menu built in Step 5].
-      - `auto N` — or the equivalent `N auto` shape (`^[1-6]\s+auto$`, normalized by Step 7) → [item #N].
-      - `auto N,M,...` or `auto N M ...` → [item #N, item #M, ...] in the order the operator gave them. Deduplicate while preserving first-seen order.
+   1. **Resolve `PICKED_ITEM`.** Parse the operator's reply:
+      - `auto` / `a` (no number) → item #1 from the menu built in Step 5.
+      - `auto N` — or the equivalent `N auto` shape (`^[1-6]\s+auto$`, normalized by Step 7) → item #N.
 
-      Validate that every requested number is within the rendered menu range. If any is out of range, ask once for a valid `auto` reply and re-classify (per Step 7 ambiguity rule). If the menu has zero items, output `No tracked next steps — auto mode needs a task. Tell me what to work on.` and stop. `PICKED_ITEMS_TEXT` is a short comma-joined preview of the picked items' text; `SINGLE_ITEM` is true when exactly one entry was picked.
+      Validate that the requested number is within the rendered menu range. If it is out of range, ask once for a valid `auto` reply and re-classify (per Step 7 ambiguity rule). If the menu has zero items, output `No tracked next steps — auto mode needs a task. Tell me what to work on.` and stop. `PICKED_ITEM_TEXT` is the picked item's text.
 
-   2. **Per-item done-condition presence-check.** Before any disk write, verify every picked item carries a derivable done-condition — an observable deliverable, check or target (file written, item checked off, finding addressed, commit landed, count reached). The item text plus its source line is the evidence. An item naming only an activity with no observable end-state ("review X", "look into Y", "think about Z") whose source line supplies no target **fails**. Rationale and the logged trigger: `docs/session-marker.md` § Auto-mode done-condition check.
+   2. **Done-condition presence-check.** Before any disk write, verify the picked item carries a derivable done-condition — an observable deliverable, check or target (file written, item checked off, finding addressed, commit landed, count reached). The item text plus its source line is the evidence. An item naming only an activity with no observable end-state ("review X", "look into Y", "think about Z") whose source line supplies no target **fails**. Rationale and the logged trigger: `docs/session-marker.md` § Auto-mode done-condition check.
 
-      All items pass → continue to 8c.3. One or more fail → hold them back, write nothing, and emit:
+      It passes → continue to 8c.3. It fails → hold it, write nothing, and emit:
 
-      > Auto mode — {K} of {N} picked items have no concrete done-condition and were held back:
-      > {for each held item: `  • {item text} — needs a concrete deliverable (file / check / target). Define it, then re-pick this item.`}
-      >
-      > {if any items passed:} I can proceed with the {M} scoped item(s): {passed-items-text}. Reply `go` to run those, or restate the held item(s) with a deliverable.
-      > {if zero items passed:} Restate the held item(s) with a deliverable (file / check / target), then re-send `auto`.
+      > Auto mode — `{PICKED_ITEM_TEXT}` has no concrete done-condition, so I've held it.
+      > Restate it with a deliverable (file / check / target), then re-send `auto`.
 
-      On `go` with a non-empty passed set → set `PICKED_ITEMS` to the passed subset (preserving order), recompute `PICKED_ITEMS_TEXT` / `SINGLE_ITEM`, and continue. On a restated item → re-run this check against the restatement. If zero items passed and the operator does not restate, stop without writing.
+      On a restated item → re-run this check against the restatement. If the operator does not restate, stop without writing.
 
-   3. **Plan-mode guard.** If a plan-mode system reminder is present in context, output `Auto mode noted: {PICKED_ITEMS_TEXT}. You're in plan mode — I won't write anything yet. Exit plan mode and re-send 'auto' (or 'go') to proceed.` Then stop.
+   3. **Plan-mode guard.** If a plan-mode system reminder is present in context, output `Auto mode noted: {PICKED_ITEM_TEXT}. You're in plan mode — I won't write anything yet. Exit plan mode and re-send 'auto' (or 'go') to proceed.` Then stop.
 
-   4. **Cross-repo mission guard.** If any picked item is `[mission:<id>]`-sourced AND that mission's repo (from `ACTIVE_MISSIONS`, Step 1d) ≠ `CWD_REPO` (Step 0), STOP and emit the same wrong-repo warning as Step 8a's cross-repo guard, listing each offending item and its repo. Wait; on `here` → continue to 8c.5; on anything else → stop, write nothing. This is a **deliberate single-condition exception** to auto mode's "single approval gate, no per-stage prompts" contract (it fires ONLY when a picked mission's repo ≠ `CWD_REPO`) — do not remove it as a stray prompt. It is load-bearing precisely because the 8c.5 header write precedes the approval gate, so this is the only point that stops a wrong-repo header before disk. Derive the repo from `ACTIVE_MISSIONS`, not from the 8c.6 auto-bind (which runs after the write). Same-repo picks skip it silently.
+   4. **Cross-repo mission guard.** If the picked item is `[mission:<id>]`-sourced AND that mission's repo (from `ACTIVE_MISSIONS`, Step 1d) ≠ `CWD_REPO` (Step 0), STOP and emit the same wrong-repo warning as Step 8a's cross-repo guard, naming the item and its repo. Wait; on `here` → continue to 8c.5; on anything else → stop, write nothing. This is a **deliberate single-condition exception** to auto mode's "single approval gate, no per-stage prompts" contract (it fires ONLY when the picked mission's repo ≠ `CWD_REPO`) — do not remove it as a stray prompt. It is load-bearing precisely because the 8c.5 header write precedes the approval gate, so this is the only point that stops a wrong-repo header before disk. Derive the repo from `ACTIVE_MISSIONS`, not from the 8c.6 auto-bind (which runs after the write). Same-repo picks skip it silently.
 
-   5. **Session-entry write.** Run the **Step 8h shared sub-step** with `WORK_DESC` = the picked item's plain-English text if `SINGLE_ITEM`, otherwise `Auto multi-item: {item-N text}; {item-M text}; …` listing every picked item separated by `;` in operator order.
+   5. **Session-entry write.** Run the **Step 8h shared sub-step** with `WORK_DESC = PICKED_ITEM_TEXT`.
 
       **These three writes precede the approval gate by necessity, and `abort` does not roll them back** — see 8c.9.
 
-   6. **Mission auto-bind, then route.** Run the **Step 8m** sub-step in auto-bind-only mode: if any picked item is `[mission:<id>]`-sourced, set `MISSION_ID` to that mission (the first, if several). **Do not emit the interactive binding prompt** — auto mode's contract is one approval gate with no per-stage prompts. If no picked item is mission-sourced, `MISSION_ID` stays unset. Then evaluate `DIRECT` once via the canonical predicate (`docs/session-marker.md` § Direct-route detection). If it cannot be evaluated for any reason, treat it as `DIRECT=0` — fail-safe, meaning the plan file is written.
+   6. **Mission auto-bind, then route.** Run the **Step 8m** sub-step in auto-bind-only mode: if the picked item is `[mission:<id>]`-sourced, set `MISSION_ID` to that mission. **Do not emit the interactive binding prompt** — auto mode's contract is one approval gate with no per-stage prompts. If the picked item is not mission-sourced, `MISSION_ID` stays unset. Then evaluate `DIRECT` once via the canonical predicate (`docs/session-marker.md` § Direct-route detection). If it cannot be evaluated for any reason, treat it as `DIRECT=0` — fail-safe, meaning the plan file is written.
 
-   7. **Compose `MANDATE_TEXT`.** Build the single string `/session-start` Step 2 will parse. **8c does not derive the individual mandate fields and does not echo them.** For `SINGLE_ITEM`, the picked item's work and its concrete deliverable, plus any bound the item states. For multi-item: `Complete picked menu items: (1) {item-N work + deliverable}; (2) {item-M work + deliverable}; …` covering every picked item in operator order, followed by any per-item scope bounds joined with `;`.
+   7. **Compose `MANDATE_TEXT`.** Build the single string `/session-start` Step 2 will parse: the picked item's work and its concrete deliverable, plus any bound the item states. **8c does not derive the individual mandate fields and does not echo them.**
 
-   8. **Derive `STRUCTURAL_RISK` — and nothing else.** Boolean: true if any picked item touches a structural change class (full list: `ai-resources/docs/audit-discipline.md`). **`/prime` is this field's sole owner**, because 8c.11 owns the review-sizing disclosure it drives. Model tier and autonomy posture are **not** derived here — `/session-plan` owns both and discloses them after the plan write.
+      *(Sub-step 8 retired 2026-07-30 — `STRUCTURAL_RISK` derivation. The numbering gap is deliberate; retained identifiers keep their numbers.)*
 
-   9. **Dispatch to `/session-start`, which holds the approval gate.** Invoke it via the Skill tool with `args = "{gate:auto} {plan:overwrite} {mission:<MISSION_ID>, only if bound} {MANDATE_TEXT}"`, and hand it `STRUCTURAL_RISK` for the gate block. Under `{gate:auto}` that command suppresses its Step 2 echo and wait, runs Step 2.4 discovery and Step 2.5 validation in their existing order, then holds **one** approval gate — on **every** engine outcome, including skipped and failed — and on `go` writes the mandate (its Step 3), the run-manifest stub (3.5) and the plan (via `/session-plan`), returning here **without beginning execution**. `{plan:overwrite}` pre-selects `/session-plan` Step 0's overwrite option so the chain does not stop to ask.
+   9. **Dispatch to `/session-start`, which holds the approval gate.** Invoke it via the Skill tool with `args = "{gate:auto} {plan:overwrite} {mission:<MISSION_ID>, only if bound} {MANDATE_TEXT}"`. Under `{gate:auto}` that command suppresses its Step 2 echo and wait, runs Step 2.4 discovery and Step 2.5 validation in their existing order, then holds **one** approval gate — on **every** engine outcome, including skipped and failed — and on `go` writes the mandate (its Step 3), the run-manifest stub (3.5) and the plan (via `/session-plan`), returning here **without beginning execution**. `{plan:overwrite}` pre-selects `/session-plan` Step 0's overwrite option so the chain does not stop to ask.
 
       **On `abort` nothing further is written and control returns here.** The marker, header and mtime written at 8c.5 remain, because they precede the gate. Output `Auto mode aborted. No mandate, manifest or plan written — today's session header remains.` and stop.
 
    10. **Direct route.** When `DIRECT=1`, `/session-start` Step 4 does not chain to `/session-plan` and no `logs/session-plan-*.md` is written; the mandate and run-manifest still are. The gate block at 8c.9 disclosed this.
 
-   11. **Disclose review sizing if `STRUCTURAL_RISK` is true.** No separate gate runs — a structural class does not fire a check of its own; it makes the change high-consequence, which is carried inside the review sizing (`ai-resources/docs/qc-independence.md` § The rule). Emit one line — `Structural change class touched — the independent review for this work is briefed risk-aware.` — and continue to 8c.12. If `STRUCTURAL_RISK` is false, skip silently.
+      *(Sub-step 11 retired 2026-07-30 — the `STRUCTURAL_RISK` review-sizing disclosure went with the field it read. A structural class still makes the change high-consequence; that is carried inside the review sizing, `ai-resources/docs/qc-independence.md` § The rule.)*
 
-   12. **Begin execution under the autonomy posture `/session-plan` set.** No further confirmation gate — the 8c.9 approval covered execution for every picked item. Run multi-item picks in the operator-given order and do NOT pause between items; emit a one-line between-gate summary at each item boundary (workspace `Between-gate summaries`). Complete the mandate fully within this session where context allows; if context is clearly constrained, follow the workspace `Context constraint deferral` rule — flag the deferral and log it, do not rush. During execution: size the independent review to the change per `ai-resources/docs/qc-independence.md` (no review fires automatically), follow `ai-resources/docs/compaction-protocol.md` checkpoints on long work, surface `[SCOPE]` / `[HEAVY]` / `[AMBIGUOUS]` / `[COST]` guardrail flags, and commit directly per the workspace `Commit behavior` rule.
+   12. **Begin execution under the autonomy posture `/session-plan` set.** No further confirmation gate — the 8c.9 approval covered execution. Complete the mandate fully within this session where context allows; if context is clearly constrained, follow the workspace `Context constraint deferral` rule — flag the deferral and log it, do not rush. During execution: size the independent review to the change per `ai-resources/docs/qc-independence.md` (no review fires automatically), follow `ai-resources/docs/compaction-protocol.md` checkpoints on long work, surface `[SCOPE]` / `[HEAVY]` / `[AMBIGUOUS]` / `[COST]` guardrail flags, and commit directly per the workspace `Commit behavior` rule.
 
    13. **On mandate completion.** Output `Mandate complete. Run /wrap-session to capture telemetry and journal the session. Push pending — let me know when to push.` Do not auto-invoke `/wrap-session` — the operator decides when to wrap.

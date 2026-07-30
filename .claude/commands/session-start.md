@@ -86,7 +86,7 @@ Read-only (no `git add`, no write). If non-empty, append the dirty paths to the 
 
 - `{mission:<id>}` (mission-contract subsystem, passed by `/prime` Step 8m when the session bound a mission) → capture `MISSION_ID = <id>`. If absent, `MISSION_ID` is unset — the common case; nothing mission-related happens downstream.
 - `{gate:post-plan}` (passed by `/prime` Step 8a.b) → capture `POST_PLAN_GATE = true`. Records that the invoking branch will hold an approval gate after `/session-plan` finishes. This command does not act on it; **Step 4 forwards it** so the gate survives the chain hop. If absent, `POST_PLAN_GATE` is unset — the default, and the pre-2026-07-18 behaviour.
-- `{gate:auto}` (passed by `/prime` Step 8c.9) → capture `AUTO_GATE = true`. Auto mode **delegates its single approval gate to this command**: Step 2 suppresses its echo and its wait, and **Step 2.6 holds exactly one gate** covering the mandate, the context-pack outcome and the structural risk. `/prime` hands over `STRUCTURAL_RISK` alongside the token for that block. If absent, `AUTO_GATE` is unset and Step 2 behaves exactly as it always has.
+- `{gate:auto}` (passed by `/prime` Step 8c.9) → capture `AUTO_GATE = true`. Auto mode **delegates its single approval gate to this command**: Step 2 suppresses its echo and its wait, and **Step 2.6 holds exactly one gate** covering the mandate and the context-pack outcome. If absent, `AUTO_GATE` is unset and Step 2 behaves exactly as it always has.
 - `{plan:overwrite}` (passed by `/prime` Step 8c.9 alongside `{gate:auto}`) → capture `PLAN_OVERWRITE = true`. This command does not act on it; **Step 4 forwards it** to `/session-plan`, whose Step 0 reads it as a pre-selected overwrite so the chain does not stop to ask about a same-session plan file.
 - Any other `{key:value}` token → strip and ignore (forward-compatible; an unrecognized token must never reach `MANDATE_TEXT`).
 
@@ -310,8 +310,7 @@ Emit one block. Chat-echo styling (`→` / `·` markers, bold section labels); t
 ```
 ## Auto Mode — {YYYY-MM-DD}
 
-{single item: **Picked item:** {item text}  ·  **Source:** [{source path}]({source path})}
-{multi-item: **Picked items:** numbered list, one line per item — menu number, text, source link}
+**Picked item:** {item text}  ·  **Source:** [{source path}]({source path})
 
 **Mandate**
 → Work: {work_scope} — complete fully within this session where context allows.
@@ -333,10 +332,6 @@ Emit one block. Chat-echo styling (`→` / `·` markers, bold section labels); t
 → Model and autonomy posture are set by `/session-plan` and disclosed after the plan is written.
 {→ Route: direct — no committed plan file will be written; mandate + run-manifest still are. — only if DIRECT=1}
 
-{if STRUCTURAL_RISK is true:}
-**Risk-check**
-→ Will run before execution begins (structural class detected). On RECONSIDER or NO-GO, auto mode pauses; mandate and plan are retained on disk for revision.
-
 ---
 
 Reply `go` to write mandate + plan and begin execution.
@@ -346,7 +341,7 @@ Reply `abort` to stop without writing anything further.
 Default (no response within the turn): **abort**.
 ```
 
-**Model tier and autonomy posture are deliberately absent from this block.** `/session-plan` owns both (its Steps 2 and 5) and discloses them once the plan is written. `/prime` owns `STRUCTURAL_RISK` alone, because it owns the review-sizing disclosure that field drives. One field, one owner — the alternative is two derivations that can silently disagree after an `edit`.
+**Model tier and autonomy posture are deliberately absent from this block.** `/session-plan` owns both (its Steps 2 and 5) and discloses them once the plan is written. A structural change class is likewise absent: it fires no gate of its own and is carried inside the review sizing (`ai-resources/docs/qc-independence.md` § The rule). *(A `STRUCTURAL_RISK` field derived by `/prime` and rendered here as a `**Risk-check**` block was retired 2026-07-30 — its only rendered consumer advertised `/risk-check`, itself retired the same day.)*
 
 **Parser:**
 - `go` / `y` / `yes` (case-insensitive, trimmed) → proceed to Step 3.
@@ -354,7 +349,7 @@ Default (no response within the turn): **abort**.
 - `edit` → ask one prompt: `What should change? State corrections in 'b: / a: / r: / f:' syntax (b=work_scope, a=allowed_inputs, r=required_outputs, f=files_in_scope), or other text as a free amendment to work_scope.` Apply the corrections, **then re-run Step 2.5 over the corrected fields**, then re-render this block once. Accept only `go` or `abort` on the re-response; do not loop further.
 - Anything else → re-ask once: `Reply 'go', 'edit', or 'abort'. Free-text refinements require 'edit' first.` Accept only `go` / `edit` / `abort` on the re-response.
 
-**Re-running Step 2.5 after an `edit` is load-bearing, not belt-and-braces.** A correction typed at this gate is operator-supplied text that has never been validated — an `f:` correction naming a path that does not exist would otherwise go straight to disk, which is the exact failure Step 2.5's existence test exists to prevent. If the correction changes `work_scope`, `/prime` re-derives `STRUCTURAL_RISK` from the corrected scope before the block is re-rendered, so the risk line can never be stale relative to the scope the operator approved.
+**Re-running Step 2.5 after an `edit` is load-bearing, not belt-and-braces.** A correction typed at this gate is operator-supplied text that has never been validated — an `f:` correction naming a path that does not exist would otherwise go straight to disk, which is the exact failure Step 2.5's existence test exists to prevent.
 
 ### Step 3 — Write the mandate line
 
@@ -462,7 +457,7 @@ Proceeding to /session-plan.
 
 Then **chain-invoke `/session-plan`** immediately, passing `work_scope` verbatim as `$ARGUMENTS`. Use the Skill tool: `skill = "session-plan"`, `args = "{work_scope}"` (the exact `work_scope` string parsed in Step 2). Do not pause for operator confirmation before invoking — the chain is the default path.
 
-**Forward the auto-mode tokens.** If Step 1 captured `AUTO_GATE`, prefix `{gate:auto}`; if it captured `PLAN_OVERWRITE`, prefix `{plan:overwrite}`. Both are forwarded together on the auto path, e.g. `args = "{gate:auto} {plan:overwrite} {work_scope}"`. `{plan:overwrite}` pre-selects `/session-plan` Step 0's overwrite option so the chain does not stop to ask about a same-session plan file; `{gate:auto}` tells `/session-plan` Step 8 to **write the plan and return to `/prime` without emitting "Begin execution"** — `/prime` 8c.11 still owns the review-sizing disclosure and 8c.12 owns the execution start, so a `/session-plan` that started work here would take over a step that is not its own. **Do not drop either token:** without `{plan:overwrite}` the chain stops for a question auto mode has already answered, and without `{gate:auto}` it begins execution one step too early.
+**Forward the auto-mode tokens.** If Step 1 captured `AUTO_GATE`, prefix `{gate:auto}`; if it captured `PLAN_OVERWRITE`, prefix `{plan:overwrite}`. Both are forwarded together on the auto path, e.g. `args = "{gate:auto} {plan:overwrite} {work_scope}"`. `{plan:overwrite}` pre-selects `/session-plan` Step 0's overwrite option so the chain does not stop to ask about a same-session plan file; `{gate:auto}` tells `/session-plan` Step 8 to **write the plan and return to `/prime` without emitting "Begin execution"** — `/prime` 8c.12 owns the execution start, so a `/session-plan` that started work here would take over a step that is not its own. **Do not drop either token:** without `{plan:overwrite}` the chain stops for a question auto mode has already answered, and without `{gate:auto}` it begins execution one step too early.
 
 **Forward the gate token.** If Step 1 captured `POST_PLAN_GATE`, prefix the args instead: `args = "{gate:post-plan} {work_scope}"`. `/session-plan` Step 0 strips it and Step 8 acts on it. **This forwarding is load-bearing** — the 8a path reaches `/session-plan` through *this* chain, not through `/prime` 8a.c directly, so dropping the token here silently removes the operator's approval gate. Do not "simplify" it away as redundant. Do not forward `{mission:<id>}`: that token is consumed here and recorded on the mandate line, and `/session-plan` has no use for it.
 

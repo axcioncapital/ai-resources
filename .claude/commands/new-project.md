@@ -691,7 +691,7 @@ sys.stdout.write(content.replace('{{NAME}}', sys.argv[2]).replace('{{PROJECT_DES
 
    **Then, and only then, consider project-specific sections** — added by hand, one at a time, each with a justification you can state in one line. Apply the 0.3a test: does this rule apply to every turn in this project's sessions, and can it live nowhere else? Most projects need none at creation; a project needing three is unusual. If the answer is "none", the file stays at title and description — that is a correct result, not an incomplete one.
 
-   **Do not write a `## Model Selection` section, and do not ask the operator for a model preference.** Model defaults are prohibited at every layer (workspace `CLAUDE.md` § Model Tier); the operator selects the session model with `/model`, and commands, agents and skills bind their own tier in frontmatter. `/prime`'s model-alignment check renders a plain line when the section is absent, which is the normal and expected state.
+   **Do not write a `## Model Selection` section, and do not ask the operator for a model preference.** Model defaults are prohibited at every layer (workspace `CLAUDE.md` § Model Tier); the operator selects the session model with `/model`, and commands, agents and skills bind their own tier in frontmatter. An absent section is the normal and expected state, and nothing reads for one — `/prime`'s model-alignment check was retired 2026-07-30; `/session-plan` Step 2 is the only model check left, and it compares the session model against the *task*, never against a project section.
 
    Report in the step output:
    - CLAUDE.md created from skeleton / already present, left unchanged
