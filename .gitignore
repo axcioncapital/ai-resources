@@ -38,6 +38,10 @@ logs/.session-marker
 # Per-session-id identity oracle (Option 2′, keyed by CLAUDE_CODE_SESSION_ID — un-clobberable by a concurrent /prime; see docs/session-marker.md)
 logs/.session-marker-*
 
+# Promotion mutex held by logs/scripts/promote-findings.sh for the length of one sweep. Removed by
+# the script's own EXIT trap; ignored here so a crashed run's residue can never be committed.
+logs/.promote.lock/
+
 # Archived inbox briefs (Layer C settings.json also denies Read on this path)
 inbox/archive/
 

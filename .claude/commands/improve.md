@@ -57,7 +57,7 @@ Run the improvement analyst to review this session's friction and suggest workfl
      - **Proposal:** {the full proposal text from the analyst}
      ```
 
-   **`Severity` is mandatory on both templates above, not optional.** `/prime` Step 3's orientation scan anchors on `^-? ?\*\*Severity:\*\*` and surfaces only `high` / `medium-high` / `critical` entries as task-menu candidates. An entry written without the field is not low-priority — it is **unreachable** by the one channel that converts findings into shipped work, and nothing announces the drop. Schema and vocabulary: `logs/improvement-log.md` § Schema.
+   **`Severity` is mandatory on both templates above, not optional.** the wrap-time promotion sweep (`logs/scripts/promote-findings.sh`) anchors on `**Severity:**` and queues only `high` / `medium-high` / `critical` / `urgent` entries into `logs/next-up.md`, which `/prime` Step 2 renders as task-menu candidates. An entry written without the field is not low-priority — it is **unreachable** by the one channel that converts findings into shipped work, and nothing announces the drop. Schema and vocabulary: `logs/improvement-log.md` § Schema.
 
    **For dismissed items:** no action.
 

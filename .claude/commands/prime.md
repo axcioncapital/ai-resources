@@ -163,33 +163,9 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 
    From each matched file capture the `mission_id` and `mission_name` frontmatter, the owning repo, and the unchecked `- [ ]` lines under `## Open threads`. Build `ACTIVE_MISSIONS` = list of `{id, name, repo, open_threads[]}`. If the list is empty, set a flag and skip every mission-related addition below (the common case). Carry `ACTIVE_MISSIONS` to Step 5 (menu candidates), Step 6 (brief), and the Step 8 binding sub-step.
 
-2. **Read `next-up.md`.** Read `logs/next-up.md` if it exists and collect every unchecked checkbox item (`- [ ]` lines) as a routine menu candidate for step 5. The file is **not** universal — `/prime` never creates it, and an absent or empty one is normal, not an error. If absent, skip silently; the menu falls back to step 1a's still-open Next Steps plus step 3's urgent items.
+2. **Read `next-up.md`.** Read `logs/next-up.md` if it exists and collect every unchecked checkbox item (`- [ ]` lines) as a menu candidate for step 5. This is now the **only** channel by which a severity-tagged finding reaches the menu — `logs/scripts/promote-findings.sh` fills the queue at wrap. An absent or empty file is normal, not an error: skip silently, and the menu falls back to step 1a's still-open Next Steps.
 
-3. **Scan for urgent problems — bounded scan, NEVER a full read.** Collect only **unresolved HIGH / urgent** items from `logs/friction-log.md` and `logs/improvement-log.md`. **Do NOT `Read` either file** — a full read of the pair cost ~50–60k tokens at *every* orientation in *every* project until it was fixed on 2026-07-13, and re-opening it restores the single most expensive recurring leak this harness has had. Issue exactly these three bounded scans:
-
-   ```
-   Bash(grep -nE -B6 "^-? ?\*\*Severity:\*\* *\*{0,2}(high|HIGH|medium-high|critical|urgent)" logs/improvement-log.md)
-   Bash(grep -nE "HIGH|urgent|do-now" logs/friction-log.md | grep -viE "resolved|verified|shipped|archived|declined" | head -n 40)
-   Bash(python3 -c "
-import re,os
-p='logs/improvement-log.md'
-if os.path.exists(p):
-    L=open(p,encoding='utf-8').read().split('\n')
-    H=[i for i,l in enumerate(L) if re.match(r'^#{2,3} \d{4}-\d{2}-\d{2}',l)]
-    n=sum(1 for k,s in enumerate(H) if not any(re.match(r'^-? ?\*\*Severity:\*\*',x) for x in L[s:(H[k+1] if k+1<len(H) else len(L))]))
-    print(f'UNCLASSIFIED: {n} of {len(H)} entries carry no Severity field') if n else None")
-   ```
-
-   The three do different jobs. `improvement-log.md` is schema'd, so the `-B6` window carries each hit's **header and status lines** back with it, which is what makes the filter below applicable without a second read. `friction-log.md` has no severity field, so its hits are **candidates to judge, not findings** — incidental matches are expected and are cheap to discard in-context. The third is a **count, not a content read**: it reports how many entries carry no `Severity` field and stops, printing nothing when that count is zero. Why each anchor has exactly the shape it does — the `-B6` sizing, the two widenings, and the backtick exclusion that must **not** be loosened — is in `docs/heavy-read-discipline.md` § Bounded-read recipes → Step 3.
-
-   Then apply the filter to the returned lines only:
-   - Include an item if it carries `high`, `medium-high`, `critical`, `urgent`, or `do-now`. **`medium-high` IS included — it is the deliberate second tier of menu-reach, not a borderline case.**
-   - Exclude anything marked `low` or `medium`, and exclude entries whose status is `resolved`, `applied`, `verified`, or operator-`DECLINED`.
-   - If either file does not exist, its scan returns nothing — skip silently.
-
-   **Narrowing the `medium-high` tier is a POLICY change to what earns a place on the task menu, not a cost optimisation, and it may not be made here alone.** Three other files carry the same contract — `wrap-session.md` Step 12e, `.claude/agents/session-feedback-collector.md:138`, and `logs/improvement-log.md:13` (the log's own schema) — so changing it requires updating the writer-side guidance in the first two **in the same commit**, plus a `logs/decisions.md` record. A large Step 3 emit signals that too many `medium-high` items are genuinely open; the remedy is backlog triage, not a quieter scan. This narrowing was proposed once, on 2026-07-24, and returned RECONSIDER.
-
-   Each surviving item becomes an **urgent** menu candidate for step 5.
+   *(Step 3 — the bounded urgent-log scan — was retired 2026-07-30. Orientation no longer greps the backlog: promotion is a write, orientation is a read, and the scan re-ran at every `/prime` in every project to re-derive a set that changes only when a finding is written. The severity contract it carried, including the `medium-high` menu-reach tier that must not be narrowed alone, moved to `logs/scripts/promote-findings.sh` with it. Record: `logs/decisions.md`, 2026-07-30. The numbering gap is deliberate.)*
 
 4. **Exception checks.** Compute the following, but carry each to step 6 only when it is abnormal — a normal value is never displayed.
    - **Working tree:** if the environment's git-status snapshot is non-empty, run `git status --short` and `git diff --stat HEAD` once to confirm it is still current. The env snapshot is point-in-time from session start and can be stale vs actual HEAD (e.g., files already committed in the prior session). Carry forward only if the live result shows unexpected uncommitted changes. This is a Prime-time orientation check, distinct from the commit-time "no pre-commit git status" rule.
@@ -200,8 +176,7 @@ if os.path.exists(p):
    - Step 1a — still-open Next Steps from the last session → tag `[carryover]`.
    - Step 1b — the scratchpad `## Resume With` line, if any → tag `[carryover]`.
    - Step 1d — each active mission's `## Open threads` unchecked items, but ONLY for missions whose repo (from `ACTIVE_MISSIONS`, Step 1d) equals `CWD_REPO` (Step 0) → tag `[mission:<id>]`. Skip building a candidate for any mission whose repo ≠ `CWD_REPO` — it is not actionable from this checkout (the Step 8a/8c cross-repo guard would stop it anyway). Step 1d's multi-repo scan and those guards are unchanged and remain in place as defense-in-depth. Omit entirely if `ACTIVE_MISSIONS` is empty or none of its entries match `CWD_REPO`.
-   - Step 2 — unchecked `next-up.md` items → tag `[next-up]`.
-   - Step 3 — unresolved HIGH/urgent problems → tag `[urgent]`.
+   - Step 2 — unchecked `next-up.md` items. An item carrying a `<!-- promote:… -->` id was promoted from a severity-tagged backlog finding → tag `[urgent]`; any other item → tag `[next-up]`. **That id is what preserves the two tiers now that one queue feeds both** — without the split, a promoted `high` finding would rank below ordinary carryover.
 
    Step 1c's `PROJECT_POSITION` is **not** a menu candidate — it renders as its own block in Step 6 and does not consume a numbered slot. Overlap between that block's `Next:` line and menu item 1 is **expected and deliberately not deduped**: the block *explains* the next step, the menu *selects* it, and a stable numbered selector is worth the small repetition. Do not add dedupe logic here.
 
@@ -209,7 +184,7 @@ if os.path.exists(p):
 
    Convert each menu item to **one plain-English sentence** (short sentences, common words — the operator is a non-developer):
    - Keep command names and file names literal (`/kb-review`, `next-up.md`).
-   - Drop priority codes (`HIGH`/`MED`/`LOW`), status tags, and section anchors (`§3`, `WU3`) from the displayed text — keep a step number only when it aids meaning.
+   - Drop priority codes (`HIGH`/`MED`/`LOW`), status tags, section anchors (`§3`, `WU3`), the trailing source path and the `<!-- promote:… -->` id from the displayed text — keep a step number only when it aids meaning.
    - Append one short tag: `[urgent]`, `[mission: <id>]`, `[carryover]`, or `[next-up]`. Every `[mission:<id>]` candidate reaching this step already has repo == `CWD_REPO`, so no cross-repo tag variant is needed.
 
 6. **Output the brief — this and nothing else.** All displayed text (exception lines, menu items) uses the plain-English conversion rules from step 5. Emit an exception line only when it is real; omit the whole line otherwise.

@@ -136,7 +136,7 @@ Both modes append entries in this shape. It conforms to the `## Schema` block of
 - **Notes:** {MANUAL only — the audits/working/ notes path; omit this field entirely in AUTO mode}
 ```
 
-**`Severity:` is mandatory.** `/prime` Step 3's orientation scan anchors on `^-? ?\*\*Severity:\*\*` and surfaces only `high` / `medium-high` / `critical` entries as task-menu candidates, so an entry written without the field is **unreachable** by the one channel that turns findings into shipped work — not low-priority, invisible. Rate the issue honestly; triage happens downstream. Vocabulary: `logs/improvement-log.md` § Schema.
+**`Severity:` is mandatory.** the wrap-time promotion sweep (`logs/scripts/promote-findings.sh`) anchors on `**Severity:**` and queues only `high` / `medium-high` / `critical` / `urgent` entries into `logs/next-up.md`, which `/prime` Step 2 renders as task-menu candidates, so an entry written without the field is **unreachable** by the one channel that turns findings into shipped work — not low-priority, invisible. Rate the issue honestly; triage happens downstream. Vocabulary: `logs/improvement-log.md` § Schema.
 
 `Category: session-issue` is a recognised value under the schema's free-text "broad classification" definition. If `{scope}/logs/improvement-log.md` does not exist, create it first with the `# Improvement Log` header followed by the `## Schema` block copied from the canonical `ai-resources/logs/improvement-log.md`, then append the entry.
 

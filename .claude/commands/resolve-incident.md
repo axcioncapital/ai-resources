@@ -196,7 +196,7 @@ Three writes, in this order:
 
     > **Verbatim-shape contract — improvement-log append schema.** The field names used here (`Status`, `Category`, `Severity`, `Source`, `Friction source`, `Proposal`, `Target files`, `Notes`) are a two-end contract with `/friday-act` and `/resolve-improvement-log`. If the improvement-log schema block in `resolve-repo-problem.md` changes field names, this step and the contract comment must be updated in the same commit.
     >
-    > **`Severity` is mandatory** (added 2026-07-26). `/prime` Step 3 anchors on `^-? ?\*\*Severity:\*\*` and surfaces only `high` / `medium-high` / `critical` entries as task-menu candidates, so an incident follow-up written without it is **unreachable**, not merely low-priority. This step writes `logged (pending)` entries, which are exactly the ones that need to reach the menu. Vocabulary: `logs/improvement-log.md` § Schema.
+    > **`Severity` is mandatory** (added 2026-07-26). the wrap-time promotion sweep (`logs/scripts/promote-findings.sh`) anchors on `**Severity:**` and queues only `high` / `medium-high` / `critical` / `urgent` entries into `logs/next-up.md`, which `/prime` Step 2 renders as task-menu candidates, so an incident follow-up written without it is **unreachable**, not merely low-priority. This step writes `logged (pending)` entries, which are exactly the ones that need to reach the menu. Vocabulary: `logs/improvement-log.md` § Schema.
 
 ---
 

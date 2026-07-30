@@ -183,6 +183,22 @@ Parse these tokens from `$ARGUMENTS` (whole-token match); everything else in `$A
    - **Surface high-severity safety signals in chat.** If the summary's Safety line reports any `high` signal, surface it prominently: "⚠ Safety signal logged as guardrail-candidate (high): {one line}". This is advisory — it does NOT block the commit or push.
    - **Route, don't run.** If the summary indicates friction was routed, or a reusable component warrants `/innovation-sweep`, emit a one-line nudge ("Friction routed — consider `/improve`"). Do NOT auto-fire any downstream command.
    - **Staging note:** if the collector wrote to `friction-log.md` or `improvement-log.md`, those paths must be staged in the commit step below (they are in the always-staged list).
+
+6.6. **Promote findings to the task queue — CORE PATH, no flag required.** Run the promotion owner. It sweeps every open `high` / `medium-high` / `critical` / `urgent` entry in this repo's `friction-log.md` and `improvement-log.md` and appends each one not already queued to `logs/next-up.md` as an unchecked item carrying its source path and a content-derived promotion id. `/prime` Step 2 reads that queue.
+
+   ```bash
+   AI_RESOURCES="/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources"
+   bash "$AI_RESOURCES/logs/scripts/promote-findings.sh"   # lock-serialised; safe to run concurrently
+   ```
+
+   **Absolute path, cwd untouched** — the script writes into the *calling* repo's `logs/`, so one copy serves every consumer checkout. `/wrap-session` does not otherwise define `AI_RESOURCES`, hence the literal here.
+
+   **Runs after Step 6.5**, so this session's own collector findings are swept in the same wrap. Stage `logs/next-up.md` in the commit step if it changed.
+
+   **It never writes the source logs.** Promotion identity lives in the destination, which keeps the sweep inside `docs/commit-discipline.md` § Maintenance-owned in-place mutations — that rule forbids an ordinary work session from reaching into an existing entry in these logs, and a `<!-- promoted -->` stamp would be exactly that.
+
+   **It is backward-looking, and that is a real reduction against what it replaced.** Findings from a session that never wrapped are picked up by the next wrap **in that repository**; if no further wrap ever occurs there, they are never promoted. The retired `/prime` Step 3 re-grepped at every orientation, which is more frequent than wrap. Accepted deliberately at G1. **Trigger to reconsider:** any finding observed sitting unpromoted for more than one week. Replaces `/prime` Step 3, retired 2026-07-30.
+
 7. **Coaching data capture.** If neither `+coaching` nor `full` was passed in `$ARGUMENTS`, skip this step and note "Coaching capture skipped (not requested)" in chat. Otherwise:
 
    **7a — Read today's mandate block.** Before writing the coaching entry, scan `logs/session-notes.md` from today's `## YYYY-MM-DD` header to the next `##` header (or EOF). Check whether a `**Mandate:**` line appears in that range. *(Format produced by `session-start.md` Step 3 — keep bullet label strings and marker tokens in sync.)*
@@ -291,7 +307,7 @@ If a loud abort does fire, surface it and **continue the wrap** — fix the mani
 
 **This is the step that decides whether this session's work compounds or evaporates.** Do it inline, in the main session — no subagent (Subagent Proportionality: this is a routing decision over findings you already hold, not independent judgment).
 
-**Why it exists.** Before 2026-07-14, a **bare** `/wrap-session` produced **zero** findings: the only step that writes to `improvement-log.md` is the gated Step 6.5 collector, which is skipped unless `+feedback` / `full` is passed. And even when it ran, it wrote a `Severity:` line **only** for `guardrail-candidate` entries — while `/prime` Step 3 builds the next session's task menu **by grepping on severity**. So an ordinary finding was captured accurately, filed in the right log, looked correct, and was **structurally unreachable**. That is the mechanism behind this repo's most expensive recurring failure: *a correctly-diagnosed defect named five or six consecutive times and actioned zero times.* Nothing was lost. Nothing was reachable either.
+**Why it exists.** Before 2026-07-14, a **bare** `/wrap-session` produced **zero** findings: the only step that writes to `improvement-log.md` is the gated Step 6.5 collector, which is skipped unless `+feedback` / `full` is passed. And even when it ran, it wrote a `Severity:` line **only** for `guardrail-candidate` entries — while the next session's task menu was built **by grepping on severity**. So an ordinary finding was captured accurately, filed in the right log, looked correct, and was **structurally unreachable**. That is the mechanism behind this repo's most expensive recurring failure: *a correctly-diagnosed defect named five or six consecutive times and actioned zero times.* Nothing was lost. Nothing was reachable either.
 
 **The countable set.** A "finding" is: (a) each bullet of the `### Session Assessment` block, if Step 6.5 ran; (b) each friction event surfaced this session; (c) anything you flagged in chat as a defect, gap, or "we should fix X" — **including findings about your own work.** If you noticed it and it named a real problem, it is in the set.
 
@@ -313,7 +329,7 @@ If `Q + D ≠ N`, findings are falling off the end — stop and account for the 
 ---
 
 After updating logs and writing the telemetry entry, stage and commit changes. **Stage by explicit file paths**, not directory wildcards — directory-level `git add` silently sweeps uncommitted files from concurrent sessions. Enumerate from the **same conversation-context-derived path list you passed as `--file` flags in Step 12d** (the note no longer carries a file list to read off), plus always-present wrap-touched files:
-- Always-staged (if modified this session): `logs/session-notes.md`, `logs/decisions.md`, `logs/coaching-data.md`, `logs/friction-log.md`, `logs/improvement-log.md`, `logs/improvement-log-archive.md`, `logs/innovation-registry.md`, `logs/usage-log.md` (the `friction-log.md` / `improvement-log.md` pair covers Step 6.5 feedback-collector writes), `logs/runs/{date}-{marker}.json` (this session's run manifest, closed in Step 12d — marker-scoped, so it can never collide with a concurrent session's)
+- Always-staged (if modified this session): `logs/session-notes.md`, `logs/decisions.md`, `logs/coaching-data.md`, `logs/friction-log.md`, `logs/improvement-log.md`, `logs/improvement-log-archive.md`, `logs/innovation-registry.md`, `logs/usage-log.md` (the `friction-log.md` / `improvement-log.md` pair covers Step 6.5 feedback-collector writes), `logs/next-up.md` (Step 6.6's promotion sweep — the only file it writes), `logs/runs/{date}-{marker}.json` (this session's run manifest, closed in Step 12d — marker-scoped, so it can never collide with a concurrent session's)
 - Session-specific: every path in the Step 12d `--file` list, staged by explicit name. The manifest's `files_changed` array and the staged set are the same list by construction — if they diverge, the manifest is wrong, because the manifest is now the record.
 
 Run as two separate commands, not chained:

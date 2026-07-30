@@ -97,3 +97,58 @@
 **Recovery.** All deleted files are in git history immediately prior to this commit.
 
 **Decided by:** the operator, on both scope questions. Claude executed the migration and chose the per-file replacement wording.
+
+## 2026-07-30 — `/prime` Step 3 retired; finding promotion moves to a wrap-time owner
+
+**Context.** `/prime` Step 3 was the only channel by which a severity-tagged finding reached the task
+menu. It re-grepped `friction-log.md` and `improvement-log.md` at **every** orientation, in every
+project, to re-derive a set that only changes when a finding is *written*. Before it was bounded on
+2026-07-13 a full read of the pair cost ~50–60k tokens per session — the most expensive recurring leak
+this harness has had — and even bounded it stayed the largest read in the orientation path.
+
+**Decision.** Retire Step 3. `logs/scripts/promote-findings.sh` now sweeps the same entries once, at
+wrap (`/wrap-session` Step 6.6, core path, no flag), and appends each not-already-queued finding to
+`logs/next-up.md`. `/prime` Step 2 already read that queue; it is now the single channel. Promotion is
+a write, orientation is a read — separating them is the whole point.
+
+**The `medium-high` menu-reach contract moved with the scan, unchanged.** `prime.md:194` required that
+narrowing that tier be done together with the two writer-side files plus a `logs/decisions.md` record.
+This entry discharges the record half for the *relocation*; the tier itself is **not** narrowed —
+`high` / `medium-high` / `critical` / `urgent` all still promote. The lockstep requirement now names
+`promote-findings.sh` (`wrap-session.md` Step 12e, `session-feedback-collector.md`, and
+`logs/improvement-log.md` § Schema repointed in the same commit).
+
+**Identity lives in the destination, never in the source.** A content-derived id (`sha1` of source path
++ entry header, 12 hex) is written on the `next-up.md` line. The rejected alternative — stamping
+`<!-- promoted -->` into the source entry — is forbidden by `docs/commit-discipline.md` § Maintenance-
+owned in-place mutations, which confines in-place mutation of these two logs to dedicated sessions and
+names a command that flips a status as a side-effect of ordinary work as exactly the drift it guards
+against. `/wrap-session` is an ordinary work session, so that design would have been the rule's first
+violation. Concurrency is handled by a `mkdir logs/.promote.lock` mutex; each sweep also de-duplicates
+the queue by id, so a git union of two checkouts self-heals.
+
+**Two accepted reductions, both deliberate, neither claimed away.**
+1. **Backward-looking.** Findings from a session that never wraps are promoted by the next wrap *in
+   that repository*; if none ever occurs there, they are never promoted. Step 3 re-grepped at every
+   orientation, which is more frequent. *Rejected alternative:* also call the sweep from `/prime` — it
+   puts a write back into the orientation path this stream exists to make read-only. **Trigger to
+   adopt it anyway:** any finding observed unpromoted for more than one week.
+2. **`friction-log.md` contributes nothing today.** It has no severity field, so Step 3 fell back to a
+   keyword grep whose hits its own text called "candidates to judge, not findings" — a session could
+   discard the incidental matches in context. A script cannot. Measured at retirement: that grep
+   returned 3 hits and **all 3 were prose**. The sweep therefore applies the same severity-field test
+   to both logs; the friction path is live code matching zero entries, not a stub. Consequence stated
+   plainly: an un-tagged friction entry now reaches no queue at all. Closing that needs a severity
+   field in the friction-log schema, not a looser regex.
+
+**Menu tiering preserved.** With one queue feeding both tiers, `/prime` Step 5 tags a `next-up.md` item
+carrying a `<!-- promote:… -->` id as `[urgent]` and everything else as `[next-up]`, keeping the
+four-tier rank. Without that split a promoted `high` finding would have ranked below ordinary carryover.
+
+**First production sweep:** 29 findings promoted from `improvement-log.md`, 0 from `friction-log.md`,
+both source logs byte-identical afterwards (`shasum` before/after). Verified by
+`logs/scripts/promote-findings.test.sh` — 35 assertions, 0 failed.
+
+**Decided by:** Claude, executing the G1-approved plan `logs/loop/2026-07-30-prime-session-entry-
+ownership-shape.plan-v3.md` § 1 S3. The two reductions above were approved at G1; the friction-log
+finding is new evidence from this slice and is recorded here rather than silently absorbed.
