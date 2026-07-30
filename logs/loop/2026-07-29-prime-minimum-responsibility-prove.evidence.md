@@ -300,3 +300,45 @@ Neither could turn a decline into a release, and no correction touched the objec
   retained for revision or reverted (F4, a Land question).
 
 Status: complete
+
+---
+
+## CLOSE
+
+```
+CLOSE
+UNIT: 2026-07-29-prime-minimum-responsibility-prove
+OUTCOME: close
+COMMITS: cb11500 (evidence) · e8809f2 (review-1 transcribed, findings adjudicated) · this commit
+```
+
+**What closed.** The Prove phase. The stream's result was measured against `shape.plan.md` § 6, the
+post-implementation Codex review was obtained and transcribed verbatim, and all five findings were
+adjudicated — two `fixed`, three `already-true`, none rejected.
+
+**G2 decision — release DECLINED.** Taken by the operator on 2026-07-30, matching the recommendation of
+both the implementer and the reviewer. The project-relative `prime-marker.sh` call is broken in 31 of
+the 32 roots that carry it.
+
+**Final criteria tally: 4 pass · 2 falsified · 13 unassessed**, of nineteen.
+
+**The stream does NOT close with this unit.** Land remains, and takes the lifecycle decision.
+
+**Operator direction carried to Land and to the successor stream (2026-07-30).** Recorded here because
+it changes what "done" means for this capability, and a later reader of this unit must not conclude
+otherwise:
+
+- **≤300 stays frozen.** It is not renegotiated, not replaced by the ≤430 waypoint, and 413 is an
+  **interim result, not an accepted endpoint.** D2 is reaffirmed, not softened.
+- **The mission `lean-prime-2026-07` stays active.** It is not closed as successful.
+- **The architecture is now an operator decision, not a proposal.** `/prime` orients → shows the menu →
+  interprets the selection → establishes session entry → dispatches → stops. Six responsibilities,
+  enumerated in the successor stream's brief.
+- **Multi-item auto mode is RETIRED by operator decision.** This **reverses** the position recorded at
+  handoff, which kept it on usage evidence (~10 real `auto 1,3` runs). The usage evidence is not a
+  counter-argument to a retirement decision and is not to be re-raised. `auto` and `auto N` are retained.
+- **"Behaviour preserving" does not extend to features the operator has explicitly retired.** Where a
+  removal has an evidenced technical blocker, the response is to design the smallest replacement that
+  preserves the required *outcome* — never to preserve the existing machinery.
+- **No `/risk-check`, no `/qc-pass`, no subagent review.** Codex remains the sole independent reviewer,
+  through `/work-loop`.
