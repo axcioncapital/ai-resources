@@ -265,4 +265,47 @@ LIMITATIONS (round 2 — superseding nothing above; all round-1 limitations stil
 - **The `8c.2` error class was not swept for.** One premise was found confirmed-on-partial-observation;
   the rest of the premise set was not re-tested for the same defect.
 
-*(Still no `Status: complete`: the unit remains open at G1.)*
+---
+
+# G1 — RESOLVED 2026-07-30
+
+**Operator decision: APPROVED.** The six-slice plan at `…shape.plan-v3.md` is approved as corrected, at
+the scope stated there. Build begins in the **next** session, one unit per slice, starting with S1.
+
+**Telemetry item resolved with the approval.** The G1 package carried one explicit decision item (§ 11):
+plan-v3 declined review-2's instruction to delete the telemetry-gap nudge, on the evidence that
+`ai-resources/CLAUDE.md` § Session Telemetry places that nudge on `/prime` by name. Approving plan-v3 as
+written adopts that resolution — **the nudge is retained**, its input moves into `prime-collect.sh` as
+`TELEMETRY_GAP`, and the stale `CLAUDE.md` parenthetical describing how `/prime` reads the log is repaired
+in S5. Reversible at any Build unit: retiring the `CLAUDE.md` rule would remove B12 and the
+`TELEMETRY_GAP` block and lower Budget A further.
+
+Status: complete
+
+CLOSE
+UNIT: 2026-07-30-prime-session-entry-ownership-shape
+OUTCOME: **close** — the work landed. The unit's deliverable was the plan; it exists, was reviewed twice,
+and is approved.
+
+**Commits:** `4826796` (brief) · `eebaea0` `6cf5f4f` (plan v1) · `49c8582` (review-1) · `904faf0`
+(plan v2) · `a1cd788` (evidence) · `bc8edd6` (review-2) · `eb20386` (plan v3) · `77ca339` (evidence,
+round 2) · this commit (G1 + close).
+
+**What closed:** the Shape phase. Two independent review rounds run and adjudicated — six findings in
+round 1, four plus one minor in round 2, plus one defect this unit found in its own premise work
+(§ 9). Every round-2 finding was verified against the object before adjudication; one was rejected on
+cited evidence rather than accepted.
+
+**The stream does NOT close with this unit.** `2026-07-30-prime-session-entry-ownership` stays open
+through Build (S1–S6), Prove (G2) and Land (G3). Per `docs/work-loop.md` § Artifacts, every
+`logs/loop/2026-07-30-prime-session-entry-ownership-*` file is **retained until the stream closes** — the
+Prove unit must be able to read this unit's plan and both reviews on disk, days later and after any
+number of `/clear`s. Do not delete them at Build.
+
+**NEXT: Build unit S1** — `2026-07-30-prime-session-entry-ownership-build-1`. Opens in a new session, per
+operator direction. `/work-loop` will resume it from the record (Tier 3, `active_unit: none` with the
+next action stated). S1 is the release blocker: complete the session-entry owner and fix the script
+locator. Nothing in `prime.md` has been modified by this unit.
+
+*(Nothing was built, and that is Shape's defining property on the challenged route. Every falsification
+criterion in plan-v3 § 5 remains `unassessed` and must stay so until Build and Prove execute them.)*
