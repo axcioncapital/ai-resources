@@ -6,51 +6,24 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 
 **Principle:** Prime never asserts state from a single source. Each surfaced next-step or status claim must be cross-checked against git log since the claim's source timestamp before being reported as current.
 
-**Output + execution discipline:** The operator is a non-developer — the brief is short, scannable, plain English (short sentences, common words), and shows only what is needed to pick the next task; everything else stays silent unless it needs attention. Orientation issues many *independent* read-only git/file calls, so **batch them into one message**; firing them serially is the main avoidable latency. Safe to batch: **Step 1** (session-notes + the `usage-log` tail), **Step 1b**, **Step 2**, **Step 3**, and **Step 0**'s per-repo `pull`. **Three ordering dependencies must survive the batching — never hoist a dependent call ahead of what it needs:** (1) **Step 1a** needs `CWD_REPO`/`AI_RESOURCES` from Step 0 *and* the entry date from Step 1; (2) **Step 4**'s working-tree `git status` must run *after* the Step 0 pulls, so it sees post-pull state; (3) **Step 1c** needs Step 0 only — hoisted ahead of it, `CWD_REPO` is unresolved, the read silently misses and the brief block never renders. Step 1c does **not** depend on Step 1a — it deliberately does not consume that merged result set (wrongly scoped for plan position; see its ground-truth rule) — so those two may batch together once Step 0 has run. Everything else across steps 0–4 is independent and should be batched.
+**Output + execution discipline:** The operator is a non-developer — the brief is short, scannable, plain English (short sentences, common words), and shows only what is needed to pick the next task; everything else stays silent unless it needs attention. Orientation issues many *independent* read-only git/file calls, so **batch them into one message**; firing them serially is the main avoidable latency. Safe to batch: **Step 1** (session-notes + the `usage-log` tail), **Step 1b**, and **Step 2**. **Three ordering dependencies must survive the batching — never hoist a dependent call ahead of what it needs:** (1) **Step 1a** needs `CWD_REPO`/`AI_RESOURCES` from Step 0 *and* the entry date from Step 1; (2) **Step 4**'s working-tree `git status` must run *after* Step 0's sync, so it sees post-pull state; (3) **Step 1c** needs Step 0 only — hoisted ahead of it, `CWD_REPO` is unresolved, the read silently misses and the brief block never renders. Step 1c does **not** depend on Step 1a — it deliberately does not consume that merged result set (wrongly scoped for plan position; see its ground-truth rule) — so those two may batch together once Step 0 has run. Everything else across steps 0–4 is independent and should be batched.
 
-0. **Pull latest.** Determine the cwd's git root: `CWD_REPO=$(git -C "$(pwd)" rev-parse --show-toplevel 2>/dev/null)`.
-   If this fails, note `Pulled: n/a (not a git repo)` and skip to step 1. Define
-   `AI_RESOURCES="/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources"`.
-
-   **BEHIND-CHECK FIRST — do not pull a repo that has nothing to pull.** For each repo, fetch and ask
-   how far behind it is *before* running any rebase:
+0. **Sync.** Run the sync owner. It fetches, **skips the pull entirely when the repo is not behind**,
+   pulls with `--rebase --autostash`, aborts and restores on a conflicted rebase, classifies the outcome
+   and counts unpushed commits — for this repo and for `ai-resources`. The behind-check removes an
+   incident class rather than saving time; the four result shapes and the autostash-pop case:
+   `docs/commit-discipline.md` § Orientation pull.
 
    ```bash
-   GIT_TERMINAL_PROMPT=0 git -C "$REPO" fetch --quiet 2>/dev/null
-   BEHIND=$(git -C "$REPO" rev-list --count HEAD..@{u} 2>/dev/null || echo "")
+   AI_RESOURCES="/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources"
+   SYNC=$(bash "$AI_RESOURCES/logs/scripts/prime-sync.sh")
    ```
 
-   - `BEHIND` = `0` → **skip the pull entirely.** Record `up to date`. **Do not run `pull --rebase`.**
-   - `BEHIND` empty (no upstream / detached HEAD) → record `skip (no upstream configured)`; no pull.
-   - `BEHIND` ≥ 1 → run the pull below.
-
-   This guard is **not** an optimisation — it removes an incident class (2026-07-14 S5 → fixed S8).
-   Why, and why the other three shapes below are what they are: `docs/commit-discipline.md` § Orientation pull.
-
-   Run `GIT_TERMINAL_PROMPT=0 git -C "$CWD_REPO" pull --rebase --autostash`. If `$CWD_REPO` differs
-   from `$AI_RESOURCES`, also run `GIT_TERMINAL_PROMPT=0 git -C "$AI_RESOURCES" pull --rebase --autostash`.
-   Both flags stay explicit, never left to per-machine config. Capture each result:
-   - **Rebase conflicted mid-flight.** If the pull leaves the repo mid-rebase (`git -C "$REPO" rev-parse
-     --verify -q REBASE_HEAD` succeeds, or `git -C "$REPO" status` reports `rebase in progress`), **do not
-     attempt to resolve it and do not stop the session** — restore the repo and keep orienting:
-     ```bash
-     git -C "$REPO" rebase --abort 2>/dev/null
-     ```
-     Record `failed: rebase conflicted — aborted, repo restored; local history unchanged` and carry it to
-     the Step 6 brief as a ⚠ line. Orientation continues on the pre-pull state. **A failed pull must never
-     leave the operator in a half-rebased repo at the moment they are trying to start work.**
-   - **Autostash pop conflict — detect FIRST, before the exit-code cases below.** With `--autostash`, the history rebase can succeed (exit 0) while the *pop* of the stashed dirty tree conflicts, so the exit-code cases below would mislabel it `updated`. Detect via any of three signals (OR — git's wording is not a stable interface): the captured pull output contains `Applying autostash resulted in conflicts`; OR `git -C "$REPO" stash list` shows a residual `autostash` entry; OR `git -C "$REPO" status --short` shows a conflicted (`UU`) path. If any fires → `autostash-conflict` (working tree carries conflict markers; `stash@{0}` preserved). Classify this BEFORE the two exit-0 cases.
-   - Exit 0 + "Already up to date." → `up to date`
-   - Exit 0, no "Already up to date." → `updated`
-   - Exit non-zero + "no tracking information" → `skip (no upstream configured)`
-   - Exit non-zero, other → `failed: {first relevant stderr line}`
-
-   After pulling each repo, check for unpushed commits:
-   `git -C "$REPO" log @{u}..HEAD --oneline 2>/dev/null | wc -l`
-   If count > 0, append ` — {N} unpushed` to that repo's result string (e.g., `up to date — 3 unpushed`).
-   If the upstream check itself fails (detached HEAD, no upstream), omit the unpushed clause silently.
-
-   Do not stop on failure — record and continue. The result is carried to step 4 and surfaced in the step 6 brief only as an exception (pull failure, unpushed commits, or an `autostash-conflict`).
+   `SYNC` returns `CWD_REPO: {absolute path}` — **the repository root every later step scopes its reads
+   to** — followed by one `SYNC: {repo} — {result}` line per repo. Outside a git repo `CWD_REPO` reads
+   `(none)`; carry that and continue. **Never stop on a sync failure:** every failure comes back as a
+   classified result string, and Step 6 shows it only as an exception (a failure, unpushed commits, or
+   `autostash-conflict`). Tripwire: `logs/scripts/prime-sync.test.sh`.
 
 1. Read the last entry from `/logs/session-notes.md`. Extract: date, summary, next steps, open questions.
    If the file doesn't exist or is empty, this is the first session — note that and skip to step 2.
@@ -169,7 +142,7 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 
 4. **Exception checks.** Compute the following, but carry each to step 6 only when it is abnormal — a normal value is never displayed.
    - **Working tree:** if the environment's git-status snapshot is non-empty, run `git status --short` and `git diff --stat HEAD` once to confirm it is still current. The env snapshot is point-in-time from session start and can be stale vs actual HEAD (e.g., files already committed in the prior session). Carry forward only if the live result shows unexpected uncommitted changes. This is a Prime-time orientation check, distinct from the commit-time "no pre-commit git status" rule.
-   - **Pull result:** carry forward the step 0 result only on failure, when there are unpushed commits, or on an `autostash-conflict` (a pop conflict that returned exit 0 — see Step 0). The `autostash-conflict` case is the highest-priority pull exception: the working tree silently holds conflict markers, so the brief must say so.
+   - **Sync result:** carry forward a `SYNC` line from Step 0 only on a `failed:` result, when it carries an unpushed clause, or on `autostash-conflict`. The `autostash-conflict` case is the highest-priority exception: the working tree silently holds conflict markers, so the brief must say so.
    - **Phase READMEs.** If the cwd-rooted project has a `work/` directory, scan it (one level deep) for files matching `W*-*-README.md` (or `Wn-*-README.md`). Capture the matching file paths only — do not read file bodies. Skip silently if `work/` is absent or contains no matches. Bounded scan: one `ls`/`find -maxdepth 2`-equivalent; do not recurse deeper.
 
 5. **Build the numbered task menu.** Merge candidates from:
@@ -193,8 +166,8 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 ## Prime — {date}
 
 {⚠ Working tree: {short summary} — only if unexpectedly dirty}
-{⚠ Pull: {result} — only on failure or unpushed commits}
-{⚠ Pull: autostash pop conflicted — working tree has conflict markers; stash@{0} preserved. Resolve the markers (or `git checkout --theirs`/`--ours`) and `git stash drop` before starting work. — only on an `autostash-conflict` result from Step 0}
+{⚠ Sync: {result} — only on a `failed:` result or an unpushed clause}
+{⚠ Sync: autostash pop conflicted — working tree has conflict markers; stash@{0} preserved. Resolve the markers (or `git checkout --theirs`/`--ours`) and `git stash drop` before starting work. — only on an `autostash-conflict` result from Step 0}
 {⚠ Concurrent session may be editing shared files: {foreign-dirty paths under .claude/commands / docs / the non-append logs improvement-log.md / improvement-log-archive.md / decisions.md}; check before editing them — only when SIBLING_COUNT > 1 and the Step 1a read-only `git status` found foreign-dirty shared files/logs}
 {⚠ Concurrent session live in this checkout — before starting a task, run `/concurrent-session-check <task>` to confirm it won't collide, or `/concurrent-session-check` (no argument) to see which menu items are safe. — only when Step 1a found LIVE_FOREIGN_HERE >= 1}
 {⚠ Phase READMEs detected: {paths}; read before opening the relevant work unit — only if step 4 surfaced any}
