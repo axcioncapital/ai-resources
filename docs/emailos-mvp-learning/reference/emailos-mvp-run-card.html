@@ -10,12 +10,12 @@
   <main>
     <article class="page run-card">
       <header>
-        <p class="eyebrow">Printable reference · repository state 2026-07-30</p>
-        <h1>EmailOS MVP run card</h1>
-        <p class="lede">Use this after the lesson. It is a navigation aid, not a substitute for the approval decisions.</p>
+        <p class="eyebrow">Printable SOP · repository state 2026-07-30</p>
+        <h1>EmailOS: current state to pilot-ready MVP</h1>
+        <p class="lede">Choose the command by what it owns. Do not run every command as a compulsory stage.</p>
         <div class="topline">
-          <span class="pill">Current gate: Truth</span>
-          <span class="pill">Current blockers: A2 + A3</span>
+          <span class="pill">Now: Systems Builder</span>
+          <span class="pill">Blockers: A2 + A3</span>
           <a class="pill" href="../lessons/0001-emailos-road-to-mvp.html">Return to lesson</a>
         </div>
       </header>
@@ -23,74 +23,85 @@
       <table>
         <tbody>
           <tr>
-            <th>Start each Systems Builder session</th>
+            <th>Command map</th>
             <td>
-              <code>/prime</code> → <code>/session-start "&lt;one phase outcome and done condition&gt;"</code>.
-              One time only: <code>/reconcile-activate</code>, then author and ratify both reference files.
+              <strong>Rough, ownerless idea:</strong> <code>/leverage-idea</code> ·
+              <strong>system definition:</strong> Systems Builder ·
+              <strong>project creation:</strong> Project Planning + <code>/new-project</code> ·
+              <strong>operating capability:</strong> <code>/work-loop</code> ·
+              <strong>AI artifact inside a slice:</strong> <code>/develop-ai-resource</code>.
+              There is no live <code>/develop-capability</code> command.
             </td>
           </tr>
           <tr>
-            <th>1 · Approve Needs</th>
+            <th>Do not restart intake</th>
             <td>
-              Close A2: CRM owner, EmailOS builder, ongoing operator. Close A3: compliance/guidance
-              source, maintainer, machine-check owner. Then <code>/qc-pass</code> and
+              EmailOS already has a case and detailed Needs Document. Do not run
+              <code>/leverage-idea</code>; continue from the current Systems Builder state.
+            </td>
+          </tr>
+          <tr>
+            <th>1 · Complete Needs</th>
+            <td>
+              In Systems Builder: <code>/prime</code> →
+              <code>/session-start "EmailOS Phase 5–6 — close A2/A3 and prepare Review 1"</code>.
+              Close A2: CRM owner, EmailOS builder, operator. Close A3: compliance/guidance source,
+              maintainer, machine-check owner. Run <code>/qc-pass</code> and
               <code>/reconcile cases/email-system/02-detailed-needs-document.md</code>.
             </td>
           </tr>
           <tr>
-            <th>Codex Review 1</th>
+            <th>2 · Definition package</th>
             <td>
-              <code>bash cases/scripts/build-review-packet.sh build email-system 6</code><br>
-              <code>bash cases/scripts/build-review-packet.sh verify email-system 6</code><br>
-              Ask Codex to red-team the verified packet under AGENTS.md Review 1. You disposition every finding.
+              Produce <code>03</code> V2 → <code>04</code> MVP/roadmap → compare ≥2 approaches →
+              <code>05</code> V3 → <code>06</code> Implementation Brief. Run QC + reconcile on each.
+              At reviews use phase <code>6</code>, <code>8</code>, <code>9</code>, then <code>12</code>:
+              <code>bash cases/scripts/build-review-packet.sh {build|verify} email-system &lt;phase&gt;</code>.
             </td>
           </tr>
           <tr>
-            <th>2 · Approve V2</th>
-            <td>
-              Reconcile every V1 concept; save <code>working/phase7-v1-reconciliation.md</code>; draft
-              <code>03-clean-system-definition-v2.md</code>; QC + reconcile; repeat the packet cycle with phase <code>8</code>.
-            </td>
-          </tr>
-          <tr>
-            <th>3 · Approve MVP</th>
-            <td>
-              Classify every V2 capability: MVP / Manual / Next / Later / Rejected / Unresolved.
-              Draft <code>04-mvp-scope-and-product-roadmap.md</code>; QC + reconcile; packet phase <code>9</code>.
-            </td>
-          </tr>
-          <tr>
-            <th>4 · Approve solution</th>
-            <td>
-              Compare at least two technical approaches. Draft <code>05-approved-solution-definition-v3.md</code>;
-              QC + reconcile; packet phase <code>12</code>. Preserve CRM authority, approval, compliance,
-              reversibility, and failure recovery.
-            </td>
-          </tr>
-          <tr>
-            <th>5 · Complete handoff</th>
-            <td>
-              Draft <code>06-implementation-brief.md</code> from approved V3 without adding capabilities.
-              Run <code>/qc-pass</code> and <code>/reconcile cases/email-system/06-implementation-brief.md</code>.
-            </td>
-          </tr>
-          <tr>
-            <th>6 · Plan and specify</th>
+            <th>3 · Plan the project</th>
             <td>
               In Project Planning:
-              <ul>
-                <li><code>/context-builder &lt;absolute-path-to-06&gt;</code> — treat <code>01</code>–<code>05</code> as authorities; route <strong>engineered</strong>.</li>
-                <li><code>/plan-draft output/email-os/context-pack.md</code> → <code>/plan-refine email-os</code> → <code>/plan-evaluate email-os</code> until PASS.</li>
-                <li><code>/spec-draft email-os</code> → <code>/spec-refine email-os</code> → <code>/spec-evaluate email-os</code> until PASS.</li>
-              </ul>
+              <code>/context-builder &lt;absolute-path-to-06&gt;</code> (treat <code>01</code>–<code>05</code>
+              as authority; engineered route) →
+              <code>/plan-draft</code> / <code>/plan-refine email-os</code> /
+              <code>/plan-evaluate email-os</code> until PASS →
+              <code>/spec-draft email-os</code> / <code>/spec-refine email-os</code> /
+              <code>/spec-evaluate email-os</code> until PASS.
             </td>
           </tr>
           <tr>
-            <th>7 · Build and verify</th>
+            <th>4 · Create EmailOS</th>
             <td>
               From the workspace root: <code>/new-project email-os</code>. Continue through Stage 5.
-              Stop before a real wave unless the full dry run, approval gate, CRM/Gmail state,
-              suppression/reply paths and failure recovery all pass.
+              This establishes the project and initial technically verified implementation; it does
+              not by itself prove that the operating workflow is pilot-ready.
+            </td>
+          </tr>
+          <tr>
+            <th>5 · Develop capability</th>
+            <td>
+              Open the new EmailOS project and run:
+              <code>/work-loop "Develop EmailOS as an operating capability. Treat Systems Builder 01–06 and /new-project Stage 5 results as settled evidence; build only unproven end-to-end slices."</code>
+              Expect Frame → Shape/G1 → one Build unit per complete behaviour → Prove/G2.
+            </td>
+          </tr>
+          <tr>
+            <th>Artifact side branch</th>
+            <td>
+              If—and only if—a slice needs a new skill, command, agent, prompt or similar durable AI
+              artifact, carry the bounded handoff to <code>/develop-ai-resource</code>. Return its
+              disposition to the live <code>/work-loop</code> capability record and resume.
+            </td>
+          </tr>
+          <tr>
+            <th>6 · Stop at pilot-ready</th>
+            <td>
+              Stop after Prove/G2 confirms, using synthetic or redacted data: CRM remains authoritative;
+              drafts meet the approved bar; approval cannot be bypassed; Gmail/CRM state stays aligned;
+              suppression, replies, failures and recovery work. The real 10–15-contact wave is Land
+              and belongs to the next lesson.
             </td>
           </tr>
         </tbody>
@@ -98,16 +109,19 @@
 
       <section class="strip">
         <div class="callout">
-          <strong>Artifact 04 is an MVP definition.</strong> It is not an implemented MVP.
+          <strong>No duplicate build:</strong> reuse Stage 5 evidence when it proves a behaviour;
+          <code>/work-loop</code> builds and proves only the remaining operating gaps.
         </div>
         <div class="callout stop">
-          <strong>Never hand-build a review packet.</strong> Build and verify immediately before Codex handoff.
+          <strong>Three different milestones:</strong> <code>04</code> defines the MVP;
+          <code>/new-project</code> builds an implementation; <code>/work-loop</code> proves the
+          operating capability is safe to release into a pilot.
         </div>
       </section>
 
       <footer class="footer">
-        <span><strong>Decision model:</strong> truth → product → solution → build</span>
-        <span><a href="../../../../projects/axcion-systems-builder/workflow.md">Workflow authority</a></span>
+        <span><strong>Memory hook:</strong> route → define → create → develop → release</span>
+        <span><a href="../../../docs/work-loop.md">Capability process authority</a></span>
       </footer>
     </article>
   </main>

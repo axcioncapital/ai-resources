@@ -16,6 +16,14 @@
   Cross-case decisions that may inform but do not automatically settle EmailOS. Use for: separating EmailOS ownership from nearby precedents.
 - [Review-packet builder](../../../projects/axcion-systems-builder/cases/scripts/build-review-packet.sh)
   Executable authority for building and verifying packets at Phases 6, 8, 9, and 12. Use for: exact terminal syntax and stale-packet protection.
+- [`/leverage-idea`](../../.claude/commands/leverage-idea.md)
+  Authority for routing a rough, owner-uncertain idea to its next lifecycle. Use for: recognising why EmailOS is already past idea intake and should not be sent through it again.
+- [`/work-loop` contract](../../docs/work-loop.md)
+  Process authority for developing an operating capability inside an existing project. Use for: streams, route depth, review placement, evidence, and the Frame–Shape–Build–Prove–Land lifecycle.
+- [Capability-development method](../../skills/capability-development/SKILL.md)
+  Method consumed by `/work-loop` for operating-capability units. Use for: the intervention ladder, owner and seam selection, trials, vertical slices, proof, and lifecycle decisions.
+- [`/develop-ai-resource`](../../.claude/commands/develop-ai-resource.md)
+  Authority for qualifying and building a new or materially expanded durable AI artifact. Use for: a bounded artifact handoff from `/work-loop`, never for owning EmailOS as a whole.
 - [Project Planning operating guide](../../../projects/project-planning/CLAUDE.md)
   Authority for context-pack, plan, and spec creation before `/new-project`. Use for: the post-Systems-Builder adapter sequence.
 - [`/new-project` command](../../.claude/commands/new-project.md)
@@ -31,4 +39,5 @@
 ## Gaps
 
 - The repository documents no single explicit adapter command from Systems Builder's `01`–`06` package to the planning artifacts `/new-project` currently discovers. The lesson therefore labels the Project Planning bridge as a derived, conservative handoff rather than pretending it is a documented one-command transition.
+- `/new-project` currently includes implementation and Stage 5 verification, while `/work-loop` owns capability slices and operating proof once a project exists. No authority document gives one canonical overlap rule. The lesson therefore uses the conservative seam: `/new-project` establishes the project and initial verified implementation; `/work-loop` inspects that as current reality, reuses evidence that already proves a behaviour, and builds only missing capability slices.
 - EmailOS's final technical approach is intentionally unknown until Phase 10. Any earlier architecture shown in a lesson would be speculation.

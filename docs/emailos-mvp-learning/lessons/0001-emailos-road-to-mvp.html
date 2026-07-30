@@ -11,11 +11,11 @@
     <article class="page">
       <header>
         <p class="eyebrow">Lesson 1 · EmailOS development</p>
-        <h1>Learn the gates, not the phase numbers.</h1>
+        <h1>Know which lifecycle owns the next move.</h1>
         <p class="lede">
-          Your job is not to “move EmailOS forward.” Your job is to remove the next uncertainty
-          without pretending a later decision has already been made. By the end, you should be able
-          to name the next artifact, the tool that owns it, and the evidence required to move on.
+          EmailOS crosses several lifecycles. They are not interchangeable commands: one routes an
+          idea, one defines the system, one creates the project, one develops the operating
+          capability, and one may build an AI artifact inside it. Your skill is choosing the owner.
         </p>
         <div class="topline">
           <span class="pill">10 minutes</span>
@@ -27,106 +27,111 @@
 
       <section class="principle">
         <div class="idea">
-          Every gate answers a different question: What is true? What is the product? How should it
-          work technically? Can the built loop survive a real test?
+          Commands are owners, not a checklist: route → define → create the project → develop and
+          prove the capability. An artifact branch returns to the capability that requested it.
         </div>
         <div class="state">
           <p class="eyebrow">You are here</p>
-          <strong>Phase 5 is not complete.</strong> The Needs Document is substantial, but A2
-          (who builds/operates it) and A3 (the approved compliance source and owner) still need
-          factual answers. Files <code>03</code>–<code>06</code> are stubs.
+          <strong>Definition is still in progress.</strong> The EmailOS Needs Document is substantial,
+          but A2 (who builds/operates it) and A3 (the compliance source and owner) still need factual
+          answers. Files <code>03</code>–<code>06</code> are stubs.
           <a href="../../../../projects/axcion-systems-builder/cases/email-system/02-detailed-needs-document.md">Evidence</a>
         </div>
       </section>
 
-      <section class="gates" aria-label="The four EmailOS gates">
+      <section class="gates" aria-label="The four EmailOS lifecycle owners">
         <article class="gate">
           <span class="gate-number">1</span>
-          <h3>Truth gate · Needs → Review 1</h3>
-          <p class="question">Can we describe the operating need without inventing ownership or policy?</p>
+          <h3>Define · Systems Builder owns the work now</h3>
+          <p class="question">What should EmailOS do, what is its MVP, and which solution is approved?</p>
           <p>
-            In Systems Builder, run <code>/prime</code>, then
+            Do <strong>not</strong> run <code>/leverage-idea</code>: it routes rough, owner-uncertain
+            notes, while this case already has a home and a substantive Needs Document. Continue in
+            Systems Builder with <code>/prime</code>, then
             <code>/session-start "EmailOS Phase 5–6 — close A2/A3 and prepare Review 1"</code>.
-            Answer who owns the CRM, build, operation, compliance source, maintenance and conversion
-            into checks. Run <code>/qc-pass</code> and <code>/reconcile cases/email-system/02-detailed-needs-document.md</code>.
+            Progress through V2, MVP, two technical approaches, V3 and <code>06</code>.
           </p>
-          <span class="command">bash cases/scripts/build-review-packet.sh build email-system 6
-bash cases/scripts/build-review-packet.sh verify email-system 6</span>
+          <span class="command">bash cases/scripts/build-review-packet.sh build email-system {6|8|9|12}
+bash cases/scripts/build-review-packet.sh verify email-system {6|8|9|12}</span>
           <p class="why">
-            <strong>Why:</strong> architecture built on unnamed owners or nonexistent policy is fiction.
-            Claude authors, Codex challenges, and you disposition every finding.
-            <a href="../../../../projects/axcion-systems-builder/AGENTS.md">Role source</a>
+            <strong>Exit:</strong> an approved definition package—not a running capability. Claude
+            authors, Codex red-teams at four points, and you decide.
+            <a href="../../../../projects/axcion-systems-builder/workflow.md">Definition source</a>
           </p>
         </article>
 
         <article class="gate">
           <span class="gate-number">2</span>
-          <h3>Product gate · V2 → MVP → Reviews 2–3</h3>
-          <p class="question">What must the system do—and what is the smallest complete loop?</p>
+          <h3>Create · Planning + <code>/new-project</code></h3>
+          <p class="question">Can a fresh implementation agent create EmailOS without guessing?</p>
           <p>
-            First classify every V1 idea: Retain, Refine, Defer, Remove, Technical option, or
-            Unresolved. Save the reconciliation and draft <code>03</code> without choosing technology.
-            After Review 2, classify every V2 capability into MVP, Manual during MVP, Next, Later,
-            Rejected, or Unresolved; draft <code>04</code> and run Review 3.
+            Use <code>06</code> as Project Planning intake and treat <code>01</code>–<code>05</code> as
+            authorities, not questions to rediscover. Approve the context pack, plan and spec; then
+            run <code>/new-project email-os</code> from the workspace root through Stage 5.
           </p>
-          <span class="command"># Same packet commands; use phase 8 for V2 and phase 9 for MVP.</span>
+          <span class="command">/context-builder &lt;absolute-path-to-06&gt;
+/plan-draft … → /plan-refine email-os → /plan-evaluate email-os
+/spec-draft email-os → /spec-refine email-os → /spec-evaluate email-os
+/new-project email-os</span>
           <p class="why">
-            <strong>Why:</strong> V2 protects the approved need; Phase 9 protects you from building the
-            full imagined future. Manual work is allowed when it still proves the core loop.
-            <a href="../../../../projects/axcion-systems-builder/workflow.md">Primary source</a>
+            <strong>Exit:</strong> an EmailOS project and initial technically verified implementation
+            exist. That still does not prove the operating capability works.
+            <a href="../../../../projects/project-planning/CLAUDE.md">Planning source</a>
           </p>
         </article>
 
         <article class="gate">
           <span class="gate-number">3</span>
-          <h3>Solution gate · Approaches → V3 → Review 4</h3>
-          <p class="question">What is the simplest credible way to deliver that MVP safely?</p>
+          <h3>Develop · <code>/work-loop</code> owns the capability</h3>
+          <p class="question">Can EmailOS repeatedly produce the approved result across its real seam?</p>
           <p>
-            Compare at least two approaches on effort, reliability, Gmail/CRM integration, human
-            control, compliance, reversibility and failure recovery. Draft <code>05</code>; state
-            deliberately rejected complexity. Run QC, reconcile, and the Phase 12 Codex packet.
-            Then translate approved V3 into <code>06-implementation-brief.md</code>—adding no capability.
+            Open the new EmailOS project and run <code>/work-loop</code>. It loads the
+            <code>capability-development</code> method—there is no live
+            <code>/develop-capability</code> command. Tell it to consume the approved
+            <code>01</code>–<code>06</code> package and Stage 5 evidence as current reality rather
+            than redo proven work.
           </p>
-          <span class="command">/session-start "EmailOS Phases 10–13 — select, red-team and brief the smallest credible solution"</span>
+          <span class="command">/work-loop "Develop EmailOS as an operating capability: approved CRM record → reviewable draft → founder approval → Gmail action → reply, permission and next action preserved. Treat Systems Builder 01–06 and /new-project Stage 5 results as settled evidence; build only unproven slices."</span>
           <p class="why">
-            <strong>Why:</strong> technology is now answering a bounded product question. Before this
-            gate, it would quietly redefine the product.
-            <a href="../../../../projects/axcion-systems-builder/engine.md">Operating source</a>
+            CRM/Gmail integration, confidential data and sent communications signal consequential
+            work: expect a synthetic trial, explicit approval, vertical slices, and
+            failure/recovery behaviour.
+            <a href="../../../skills/capability-development/SKILL.md">Method source</a>
           </p>
         </article>
 
         <article class="gate">
           <span class="gate-number">4</span>
-          <h3>Build gate · Plan → Spec → Implementation</h3>
-          <p class="question">Can a fresh implementation agent build and verify the approved loop without guessing?</p>
+          <h3>Release · stop after <code>/work-loop</code> Prove</h3>
+          <p class="question">Is the MVP ready to enter a controlled real-contact pilot?</p>
           <p>
-            In Project Planning, use <code>06</code> as the intake and point back to <code>01</code>–<code>05</code>
-            as authorities. This is an adapter, not a second discovery cycle. Approve the context pack,
-            then run the plan and spec cycles until both QC verdicts pass.
+            Build one complete behaviour per slice. In Prove, test the operating seam with synthetic
+            or redacted data: CRM authority, draft quality, approval enforcement, Gmail/CRM state,
+            suppression, replies, visible failure and recovery. Existing Stage 5 evidence may satisfy
+            a criterion; record it rather than rebuilding it.
           </p>
-          <span class="command">/context-builder &lt;absolute-path-to-06&gt;
-/plan-draft output/email-os/context-pack.md → /plan-refine email-os → /plan-evaluate email-os
-/spec-draft email-os → /spec-refine email-os → /spec-evaluate email-os
-# From the workspace root, after PASS:
-/new-project email-os</span>
+          <span class="command">Frame → Shape/G1 → Build slices → Prove/G2 → STOP
+# The controlled live wave belongs to Land, after release approval.</span>
           <p class="why">
-            <strong>Why:</strong> the brief says what to build; the plan orders the work; the spec removes
-            integration ambiguity; <code>/new-project</code> implements and verifies it.
-            <a href="../../../../projects/project-planning/CLAUDE.md">Planning source</a>
+            <strong>Finish line:</strong> the capability passed Prove and the release gate. The next
+            lesson begins with the 10–15-contact pilot and adopt/hold/reject decision.
+            <a href="../../../docs/work-loop.md">Process source</a>
           </p>
         </article>
       </section>
 
       <section class="strip">
         <div class="callout">
-          <strong>MVP hypothesis—not yet a decision:</strong> select 10–15 qualified contacts in the
-          CRM → assemble approved context → draft in the right language → founder approves → send via
-          Gmail → return reply, permission and next action to the CRM.
+          <strong>Side branch only:</strong> if a <code>/work-loop</code> slice genuinely requires a
+          new skill, command, agent or prompt, hand that bounded artifact to
+          <code>/develop-ai-resource</code>. Its disposition returns to the capability; it never owns
+          EmailOS or decides adoption.
         </div>
         <div class="callout stop">
-          <strong>Ready for pilot means:</strong> Stage 5 passes; a safe end-to-end dry run works; no
-          message bypasses approval; CRM remains the buyer-state authority; suppression, reply and
-          failure paths preserve state. Only then test a real controlled wave.
+          <strong>Current seam:</strong> <code>/new-project</code> Stage 4–5 and
+          <code>/work-loop</code> Build–Prove overlap. Until the repo names a sharper rule, never redo
+          demonstrated behaviour: create with <code>/new-project</code>, then let
+          <code>/work-loop</code> inspect, reuse evidence and close only the operating gaps.
         </div>
       </section>
 
@@ -134,24 +139,24 @@ bash cases/scripts/build-review-packet.sh verify email-system 6</span>
         <p class="eyebrow">Retrieval practice · answer before revealing</p>
         <div class="practice-grid">
           <details>
-            <summary>A2/A3 are open, but a CRM tool looks promising. What next?</summary>
-            <p>Close A2/A3 and Review 1. Tool selection belongs after the MVP boundary.</p>
+            <summary>You have an EmailOS case and Needs Document. Run <code>/leverage-idea</code>?</summary>
+            <p>No. Routing is complete; continue the Systems Builder definition.</p>
           </details>
           <details>
-            <summary>V2 is approved and contains twenty useful capabilities. What next?</summary>
-            <p>Classify all twenty; keep only a complete, safe learning loop in the MVP.</p>
+            <summary>A Build slice needs a new drafting skill. Who owns what?</summary>
+            <p><code>/work-loop</code> retains the outcome; <code>/develop-ai-resource</code> owns the skill.</p>
           </details>
           <details>
-            <summary>When does “MVP defined” become “MVP ready to test”?</summary>
-            <p>After planning, implementation and Stage 5 verification—not when document 04 is approved.</p>
+            <summary><code>/new-project</code> Stage 5 passed. Is the live wave automatically next?</summary>
+            <p>No. Run capability Prove; pilot only after its release gate.</p>
           </details>
         </div>
       </section>
 
       <footer class="footer">
-        <span>Memory hook: <strong>truth → product → solution → build</strong></span>
-        <span>Primary reading: <a href="../../../../projects/axcion-systems-builder/workflow.md">Systems Builder workflow</a></span>
-        <span>Ask your teacher about any gate that still feels mechanical.</span>
+        <span>Memory hook: <strong>route → define → create → develop → release</strong></span>
+        <span>Primary reading: <a href="../../../skills/capability-development/SKILL.md">Capability-development method</a></span>
+        <span>Ask your teacher about any boundary that still feels ambiguous.</span>
       </footer>
     </article>
   </main>
