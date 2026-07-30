@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Axcíon AI Resource Lifecycle Playbook</title>
+  <link rel="stylesheet" href="../assets/course.css">
+</head>
+<body>
+  <main>
+    <header class="hero">
+      <p class="eyebrow">Printable SOP · Draft 1 · 2026-07-30</p>
+      <h1>Notes → decision → implementation.</h1>
+      <p class="lede">
+        Keep this page open when you want to develop an operating capability, create an AI resource,
+        or fix something that already exists.
+      </p>
+      <div class="jump screen-only">
+        <a href="#start">Start here</a>
+        <a href="#capability">Capability lane</a>
+        <a href="#artifact">Artifact lane</a>
+        <a href="#fix">Fix lane</a>
+        <a href="#gates">Gates</a>
+      </div>
+      <p class="print-only">Axcíon AI Resource Lifecycle Playbook — draft 1, 2026-07-30</p>
+    </header>
+
+    <section class="sheet" id="start">
+      <p class="eyebrow">Start here</p>
+      <h2>I have a bunch of notes. What do I run?</h2>
+
+      <div class="callout">
+        <strong>Default for a messy idea dump:</strong>
+        <span class="command">/leverage-idea path/to/notes.md</span>
+        It investigates and hands off. It does not implement.
+      </div>
+
+      <div class="why-box" style="margin-top: 1rem">
+        <strong>Drafting rule:</strong> first draft the brief—outcome, evidence, examples, triggers,
+        exclusions and proposed structure. Do not draft the final skill or command before the plan;
+        the final resource file is implementation.
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>If the notes are really about…</th>
+            <th>Owner</th>
+            <th>Next command</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>A project outcome or repeatable operating ability</td>
+            <td>Operating capability</td>
+            <td><code>/work-loop</code></td>
+          </tr>
+          <tr>
+            <td>A new skill, command, agent, hook, prompt, script or persistent instruction</td>
+            <td>AI artifact</td>
+            <td><code>/develop-ai-resource</code></td>
+          </tr>
+          <tr>
+            <td>A skill gap you only want to record for later, without investigation now</td>
+            <td>Intake</td>
+            <td><code>/request-skill</code></td>
+          </tr>
+          <tr>
+            <td>A known, settled change to an existing skill</td>
+            <td>Existing skill</td>
+            <td><code>/improve-skill</code></td>
+          </tr>
+          <tr>
+            <td>A settled correction to another existing resource</td>
+            <td>Existing object</td>
+            <td><code>/work-loop</code></td>
+          </tr>
+          <tr>
+            <td>A symptom whose root cause is unknown</td>
+            <td>Investigation</td>
+            <td><code>/resolve-repo-problem</code></td>
+          </tr>
+          <tr>
+            <td>A one-line cosmetic edit</td>
+            <td>Tiny fix</td>
+            <td><code>/tweak</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="sheet" id="capability">
+      <p class="eyebrow">Lane A</p>
+      <h2>Develop an operating capability.</h2>
+
+      <div class="flow">
+        <span>Frame</span><b>→</b>
+        <span>Shape</span><b>→</b>
+        <span>Build slices</span><b>→</b>
+        <span>Prove</span><b>→</b>
+        <span>Land</span>
+      </div>
+
+      <ol>
+        <li><strong>Frame:</strong> state the operating outcome, owner and evidence of the need.</li>
+        <li><strong>Shape:</strong> define the smallest intervention, slices and falsification criteria.</li>
+        <li><strong>Build:</strong> implement one complete slice at a time.</li>
+        <li><strong>Prove:</strong> test against Shape's criteria using observed evidence.</li>
+        <li><strong>Land:</strong> adopt, hold or reject. Record the lifecycle status.</li>
+      </ol>
+
+      <span class="command">/work-loop "&lt;the project must be able to…&gt;"</span>
+
+      <div class="callout warning">
+        If the capability needs a new AI artifact, `/work-loop` hands that component to
+        `/develop-ai-resource`. The capability stream keeps the operating outcome and adoption decision.
+      </div>
+    </section>
+
+    <section class="sheet" id="artifact">
+      <p class="eyebrow">Lane B</p>
+      <h2>Create or materially expand an AI artifact.</h2>
+
+      <ol>
+        <li>
+          <strong>Distil and route rough notes.</strong>
+          <span class="command">/leverage-idea path/to/notes.md</span>
+          Expected output: evidence-backed options, recommendation, implementation plan and a raw
+          Resource Brief in <code>inbox/</code>.
+        </li>
+        <li>
+          <strong>Qualify the artifact.</strong>
+          <span class="command">/develop-ai-resource inbox/&lt;brief&gt;.md</span>
+          It checks the need, existing coverage, smallest mechanism, placement and complexity budget.
+          No build, reuse, a habit change or deferral can be the correct answer.
+        </li>
+        <li>
+          <strong>Use the selected build engine.</strong>
+          <ul>
+            <li>New skill → <code>/create-skill</code></li>
+            <li>Existing settled skill change → <code>/improve-skill</code></li>
+            <li>Prompt, reference or instruction → bounded direct draft</li>
+            <li>Command, script or hook → smallest implementation plus executable checks</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Apply the proportional independent review at the correct boundary.</strong>
+          A new command or skill is high-consequence: give the approved implementation plan to Codex
+          once for a risk-aware review before implementation. A normal consequential artifact gets
+          one Codex review of the result after deterministic evidence exists. The build engine's own
+          skill evaluation remains part of the engine and is not an extra general review.
+        </li>
+        <li>
+          <strong>Verify three separate claims.</strong>
+          <ul>
+            <li>Is it well made?</li>
+            <li>Does it belong in the system?</li>
+            <li>Does it do what it claims?</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Choose a disposition.</strong> Ship, revise, defer or delete candidate. Archive an
+          inbox brief when its disposition closes the intake question.
+        </li>
+      </ol>
+
+      <div class="why-box">
+        <strong>Why qualification comes before implementation:</strong> a well-written skill can still
+        be the wrong mechanism, duplicate an existing resource or cost more to maintain than the
+        failure it prevents.
+      </div>
+    </section>
+
+    <section class="sheet" id="fix">
+      <p class="eyebrow">Lane C</p>
+      <h2>Fix an existing AI resource.</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Condition</th>
+            <th>Command</th>
+            <th>Exit condition</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Cosmetic, one inline edit</td>
+            <td><code>/tweak target "change"</code></td>
+            <td>Read-back proves the exact edit.</td>
+          </tr>
+          <tr>
+            <td>Skill + change + mechanism are settled</td>
+            <td><code>/improve-skill target</code></td>
+            <td>Feedback resolved, skill evaluated, evidence reviewed, operator approves.</td>
+          </tr>
+          <tr>
+            <td>Existing command, agent, script, hook, doc or process; correction settled</td>
+            <td><code>/work-loop "need"</code></td>
+            <td>Premises verified, route completed, evidence returned, stream closed.</td>
+          </tr>
+          <tr>
+            <td>Need, scope or mechanism is uncertain—or change materially expands the resource</td>
+            <td><code>/develop-ai-resource "need"</code></td>
+            <td>Artifact re-qualified before build.</td>
+          </tr>
+          <tr>
+            <td>Only a symptom is known</td>
+            <td><code>/resolve-repo-problem "symptom"</code></td>
+            <td>Root cause and ranked fix plan exist; implementation remains separate.</td>
+          </tr>
+          <tr>
+            <td>A mid-session fault must be diagnosed and fixed now</td>
+            <td><code>/resolve-incident "fault"</code></td>
+            <td>Diagnosis, bounded fix, verification receipt and incident record exist.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="sheet" id="gates">
+      <p class="eyebrow">Operator checklist</p>
+      <h2>Do not pass a gate unless you can answer its question.</h2>
+
+      <ul class="checklist">
+        <li><strong>Need:</strong> What happens today, and what evidence says it matters?</li>
+        <li><strong>Ownership:</strong> Is this an operating outcome, an artifact, or a correction?</li>
+        <li><strong>Mechanism:</strong> Why is this the smallest reliable rung?</li>
+        <li><strong>Plan:</strong> What changes, what stays out, and what would falsify success?</li>
+        <li><strong>Review:</strong> Is the independent review proportional and non-duplicative?</li>
+        <li><strong>Evidence:</strong> What was run and what was observed?</li>
+        <li><strong>Decision:</strong> Ship, revise, defer, delete, adopt, hold or reject?</li>
+        <li><strong>Close:</strong> Commit locally; do not push; run <code>/wrap-session +telemetry</code> for a substantive session.</li>
+      </ul>
+
+      <div class="two-col">
+        <div class="callout">
+          <strong>Review source of truth</strong><br>
+          Use <code>docs/qc-independence.md</code>. The 2026-07-29 consolidation is still propagating
+          through callers.
+        </div>
+        <div class="callout">
+          <strong>Work-loop source of truth</strong><br>
+          Use <code>docs/work-loop.md</code> over the command when they disagree.
+        </div>
+      </div>
+    </section>
+
+    <section class="sheet sources">
+      <h2>When to stop</h2>
+      <p>
+        Stop and re-route when a premise is false, ownership is unclear, a change crosses the approved
+        scope, an unresolved material review finding remains, or the candidate cannot be tested. A
+        visible stop is safer than a plausible completion.
+      </p>
+      <p>
+        Teaching companion:
+        <a href="../lessons/0001-route-before-you-build.html">Lesson 1 — Route Before You Build</a>.
+      </p>
+    </section>
+  </main>
+</body>
+</html>
