@@ -85,7 +85,7 @@ Read-only (no `git add`, no write). If non-empty, append the dirty paths to the 
 **Leading-token prefixes.** `$ARGUMENTS` may begin with zero or more literal `{key:value}` tokens passed by the invoking branch. Strip leading tokens **in a loop** until the remaining text begins with something else, capturing each as it is consumed. Order-independent — do not assume a fixed sequence:
 
 - `{mission:<id>}` (mission-contract subsystem, passed by `/prime` Step 8m when the session bound a mission) → capture `MISSION_ID = <id>`. If absent, `MISSION_ID` is unset — the common case; nothing mission-related happens downstream.
-- `{gate:post-plan}` (passed by `/prime` Step 8a.b) → capture `POST_PLAN_GATE = true`. Records that the invoking branch will hold an approval gate after `/session-plan` finishes. This command does not act on it; **Step 4 forwards it** so the gate survives the chain hop. If absent, `POST_PLAN_GATE` is unset — the default, and the pre-2026-07-18 behaviour.
+- `{gate:post-plan}` (passed by `/prime` Step 8a) → capture `POST_PLAN_GATE = true`. Records that the invoking branch will hold an approval gate after `/session-plan` finishes. This command does not act on it; **Step 4 forwards it** so the gate survives the chain hop. If absent, `POST_PLAN_GATE` is unset — the default, and the pre-2026-07-18 behaviour.
 - `{gate:auto}` (passed by `/prime` Step 8c.9) → capture `AUTO_GATE = true`. Auto mode **delegates its single approval gate to this command**: Step 2 suppresses its echo and its wait, and **Step 2.6 holds exactly one gate** covering the mandate and the context-pack outcome. If absent, `AUTO_GATE` is unset and Step 2 behaves exactly as it always has.
 - `{plan:overwrite}` (passed by `/prime` Step 8c.9 alongside `{gate:auto}`) → capture `PLAN_OVERWRITE = true`. This command does not act on it; **Step 4 forwards it** to `/session-plan`, whose Step 0 reads it as a pre-selected overwrite so the chain does not stop to ask about a same-session plan file.
 - Any other `{key:value}` token → strip and ignore (forward-compatible; an unrecognized token must never reach `MANDATE_TEXT`).
@@ -345,7 +345,7 @@ Default (no response within the turn): **abort**.
 
 **Parser:**
 - `go` / `y` / `yes` (case-insensitive, trimmed) → proceed to Step 3.
-- `abort` → write nothing further and return to `/prime` 8c.9, which owns the abort message. **Be precise about what "nothing" means:** the marker, the marker-bearing header and `logs/.prime-mtime` were written by `/prime` 8c.5 *before* this gate and are **not** rolled back. The mandate, run-manifest stub and plan are not written.
+- `abort` → write nothing further and return to `/prime` 8c.9, which owns the abort message. **Be precise about what "nothing" means:** the marker, the marker-bearing header and `logs/.prime-mtime` were written by `/prime` 8c.3 (via the shared 8h) *before* this gate and are **not** rolled back. The mandate, run-manifest stub and plan are not written.
 - `edit` → ask one prompt: `What should change? State corrections in 'b: / a: / r: / f:' syntax (b=work_scope, a=allowed_inputs, r=required_outputs, f=files_in_scope), or other text as a free amendment to work_scope.` Apply the corrections, **then re-run Step 2.5 over the corrected fields**, then re-render this block once. Accept only `go` or `abort` on the re-response; do not loop further.
 - Anything else → re-ask once: `Reply 'go', 'edit', or 'abort'. Free-text refinements require 'edit' first.` Accept only `go` / `edit` / `abort` on the re-response.
 
@@ -444,7 +444,21 @@ Mandate written → logs/session-notes.md
 Direct route — no auto-plan. `/session-plan` is opt-in (run it explicitly if this session needs a durable plan).
 ```
 
-Then return control to the invoking `/prime` branch **without chaining**: `/prime` 8a.3.d (numbered-menu) shows its own lean go-prompt; `/prime` 8b.3.d (free-text) begins execution immediately. If `/session-start` was invoked directly (not via `/prime`), simply stop here — the operator drives from the mandate. **Ignore any `{gate:post-plan}` token on the direct route** — there is no plan to gate; the mandate-review pause (if any) belongs to `/prime` 8a.3.d. Everything below Step 4 applies to the **engineered route (`DIRECT=0`) only.**
+**This branch is the direct route's terminal owner as of 2026-07-30.** There is no `/session-plan` hop behind it and `/prime` now ends at dispatch (its Step 9), so the pause — or the execution start — belongs here. Branch on the token Step 1 captured:
+
+- **`POST_PLAN_GATE` set** (a numbered pick via `/prime` 8a) — there is no plan file to review, so gate on the mandate instead. Emit:
+
+  > Mandate written — review it in `logs/session-notes.md` (this session's `## ${TODAY} — Session ${MARKER}` block). Reply `go` to start execution, or run `/session-plan` first if you want a durable plan.
+
+  Then **wait.** On `go`, begin execution. On anything else, do not start.
+
+- **`POST_PLAN_GATE` unset** — begin execution immediately. Three callers land here and all three have already had their go signal: free-text via `/prime` 8b (the operator stating the work *is* the signal), auto mode via `/prime` 8c.9 (its single gate was taken at Step 2.6 above, and it covers execution), and a direct `/session-start` invocation (the operator drives from the mandate). **Do not add a confirmation stop here** — on the auto path it would be the second gate that mode's contract forbids.
+
+Either way, run `/session-plan` § Post-plan execution for the autonomy posture, the guardrail flags, the between-item summaries and the wrap reminder. Citing that one section is deliberate: it is what keeps the direct route from drifting away from the engineered one.
+
+> **The pre-2026-07-30 instruction to *ignore* `{gate:post-plan}` on this route is deliberately reversed, and the reversal is load-bearing.** That instruction was correct only while `/prime` held the pause itself at 8a.3.d. With `/prime` stopping at dispatch, this token is the **only** thing still distinguishing a numbered pick from free-text on the direct route — an edit that restores the ignore-instruction produces a direct route that never pauses, silently. Stream `2026-07-30-prime-session-entry-ownership`, S6.
+
+Everything below Step 4 applies to the **engineered route (`DIRECT=0`) only.**
 
 ---
 
@@ -457,9 +471,9 @@ Proceeding to /session-plan.
 
 Then **chain-invoke `/session-plan`** immediately, passing `work_scope` verbatim as `$ARGUMENTS`. Use the Skill tool: `skill = "session-plan"`, `args = "{work_scope}"` (the exact `work_scope` string parsed in Step 2). Do not pause for operator confirmation before invoking — the chain is the default path.
 
-**Forward the auto-mode tokens.** If Step 1 captured `AUTO_GATE`, prefix `{gate:auto}`; if it captured `PLAN_OVERWRITE`, prefix `{plan:overwrite}`. Both are forwarded together on the auto path, e.g. `args = "{gate:auto} {plan:overwrite} {work_scope}"`. `{plan:overwrite}` pre-selects `/session-plan` Step 0's overwrite option so the chain does not stop to ask about a same-session plan file; `{gate:auto}` tells `/session-plan` Step 8 to **write the plan and return to `/prime` without emitting "Begin execution"** — `/prime` 8c.12 owns the execution start, so a `/session-plan` that started work here would take over a step that is not its own. **Do not drop either token:** without `{plan:overwrite}` the chain stops for a question auto mode has already answered, and without `{gate:auto}` it begins execution one step too early.
+**Forward the auto-mode tokens.** If Step 1 captured `AUTO_GATE`, prefix `{gate:auto}`; if it captured `PLAN_OVERWRITE`, prefix `{plan:overwrite}`. Both are forwarded together on the auto path, e.g. `args = "{gate:auto} {plan:overwrite} {work_scope}"`. `{plan:overwrite}` pre-selects `/session-plan` Step 0's overwrite option so the chain does not stop to ask about a same-session plan file; `{gate:auto}` tells `/session-plan` Step 8 to **write the plan and begin execution without a second stop** — auto mode's single approval, held at Step 2.6 above, already covers execution. **Do not drop either token:** without `{plan:overwrite}` the chain stops for a question auto mode has already answered, and without `{gate:auto}` `/session-plan` cannot tell the auto route from an ordinary one. *(Until 2026-07-30 this token meant "return to `/prime` 8c.12 without executing"; that step no longer exists — `/session-plan` Step 8 is the terminal owner on all three routes.)*
 
-**Forward the gate token.** If Step 1 captured `POST_PLAN_GATE`, prefix the args instead: `args = "{gate:post-plan} {work_scope}"`. `/session-plan` Step 0 strips it and Step 8 acts on it. **This forwarding is load-bearing** — the 8a path reaches `/session-plan` through *this* chain, not through `/prime` 8a.c directly, so dropping the token here silently removes the operator's approval gate. Do not "simplify" it away as redundant. Do not forward `{mission:<id>}`: that token is consumed here and recorded on the mandate line, and `/session-plan` has no use for it.
+**Forward the gate token.** If Step 1 captured `POST_PLAN_GATE`, prefix the args instead: `args = "{gate:post-plan} {work_scope}"`. `/session-plan` Step 0 strips it and Step 8 acts on it. **This forwarding is load-bearing** — the 8a path reaches `/session-plan` only through *this* chain, and since 2026-07-30 `/prime` holds no pause of its own to fall back on, so dropping the token here removes the operator's approval gate outright. Do not "simplify" it away as redundant. Do not forward `{mission:<id>}`: that token is consumed here and recorded on the mandate line, and `/session-plan` has no use for it.
 
 **Chained-mode contract:** `/session-plan` Step 0 retains all of its existing *self-imposed* pause points (same-session 3-option prompt; concurrent-session collision; missing `/prime` header; `(none derived)` sentinels), **and it additionally honours a caller-declared post-plan gate via the `{gate:post-plan}` token forwarded above.** Absent that token, everything else runs through to the plan write and the session begins under the declared autonomy posture without further confirmation. *(Corrected 2026-07-18: this paragraph previously read "Those are the only legitimate gates", which was a third copy of the same absolute that made `/session-plan` Step 8 contradict `/prime` 8a.d. A caller-declared gate is legitimate; see `logs/improvement-log.md` 2026-07-18.)*
 

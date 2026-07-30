@@ -16,7 +16,7 @@ Session orchestrator. Run after `/prime` to plan HOW the session will run before
 
 - `{gate:post-plan}` → set `POST_PLAN_GATE = true`. The invoking branch has declared that it will hold an approval gate after this command finishes. Consumed by Step 8.
 - `{plan:overwrite}` (forwarded by `/session-start` Step 4 on the auto path) → set `PLAN_OVERWRITE = true`. The same-session re-invocation check below **takes option 2 (overwrite) without prompting**. Auto mode has already held its one approval gate at `/session-start` Step 2.6, so stopping here to ask would add a second stop its contract does not allow. **This silently overwrites a plan file written earlier in the same session** — accepted deliberately: under the marker-scoped path only *this* session can own that file, and auto mode re-planning its own session is the intended case.
-- `{gate:auto}` (forwarded by `/session-start` Step 4 on the auto path) → set `AUTO_GATE = true`. Consumed by Step 8: write the plan, then **return to `/prime` without beginning execution**.
+- `{gate:auto}` (forwarded by `/session-start` Step 4 on the auto path) → set `AUTO_GATE = true`. Consumed by Step 8: write the plan, then **begin execution without a second stop** — auto mode's single approval was already taken at `/session-start` Step 2.6. *(Until 2026-07-30 this token meant "return to `/prime` without executing"; `/prime` no longer has a step to return to.)*
 - Any other `{key:value}` token → strip and ignore (forward-compatible; an unrecognized token must never reach `INTENT`).
 
 If no leading token is present, `POST_PLAN_GATE` is unset — **this is the common case and the default**, and it reproduces this command's pre-2026-07-18 behaviour exactly.
@@ -228,29 +228,44 @@ No `Class:` line is written to `logs/session-notes.md` — the field was removed
 
 ---
 
-## Step 8 — Confirm, then either hand back to a caller-declared gate or auto-proceed
+## Step 8 — Confirm, then either hold the declared gate or begin execution
 
 **Branch on `AUTO_GATE` first, then on `POST_PLAN_GATE` (both set by Step 0's leading-token normalization).**
 
-**If `AUTO_GATE` is set** — this command was reached through auto mode's chain (`/prime` 8c.9 → `/session-start` Step 4 → here). Emit exactly:
+> **This step is a terminal owner as of 2026-07-30.** `/prime` now ends at dispatch (its Step 9), so there is nowhere left to "return to" — every branch below either begins execution here or holds a gate and begins execution on `go`. Before this change, two of the three branches handed control back to `/prime` 8c.11 / 8c.12 / 8a.3.d, none of which still exist. Stream `2026-07-30-prime-session-entry-ownership`, S6.
 
-> Plan written to `{OUTPUT_TARGET}`. Returning to /prime.
+**If `AUTO_GATE` is set** — reached through auto mode's chain (`/prime` 8c.9 → `/session-start` Step 4 → here). Auto mode's single approval was taken at `/session-start` Step 2.6 **and it covers execution**, so this branch does not pause. Emit:
 
-Then **return control without beginning execution and without emitting "Begin execution".** Auto mode's approval was taken at `/session-start` Step 2.6, but this command's job still ends at the plan write: `/prime` 8c.12 owns the execution start. This branch is checked before `POST_PLAN_GATE` because the default branch below ends in "Begin execution", which is exactly the wrong instruction on this path.
+> Plan written to `{OUTPUT_TARGET}` ({autonomy posture}). Begin execution.
 
-**If `POST_PLAN_GATE` is set** — the invoking branch declared a post-plan approval gate. Emit:
+Then **begin execution** under that posture and run § Post-plan execution below. *(Ownership moved here 2026-07-30. This branch previously emitted "Returning to /prime" and stopped — with `/prime` 8c.12 deleted, that wording strands the session after the operator has already approved the work.)*
+
+**If `POST_PLAN_GATE` is set** — the invoking branch declared a post-plan approval gate (today: `/prime` 8a, a numbered menu pick). Emit:
 
 > Plan ready — review `{OUTPUT_TARGET}`. Reply `go` to start execution.
 
-Then **stop and wait for the operator. Do NOT begin execution.** The gate belongs to the caller; this command's job ends at the plan write. Today the only caller that sets this is `/prime` 8a (numbered-menu task selection), whose Step 8a.d owns the pause — see the note below for why it cannot be left to recall.
+Then **stop and wait for the operator.** On `go`, begin execution under the declared posture and run § Post-plan execution. On anything else, do not start. *(The pause was always emitted here; the `go` continuation moved here 2026-07-30 from `/prime` 8a.3.d.)*
 
 **If `POST_PLAN_GATE` is unset** (the default — free-text intent via `/prime` 8b, a direct `/session-plan` invocation, or `/session-start` invoked outside a gated branch), emit:
 
 > Plan written to `{OUTPUT_TARGET}` ({autonomy posture}). Begin execution.
 
-Do NOT emit a review handoff and do NOT pause for operator confirmation. The session begins under the declared autonomy posture immediately. The operator can run `/contract-check` or `/drift-check` at any time on their own initiative — and `/session-plan` Step 0's collision-detection prompts plus Step 1's `(none derived)` sentinels remain the only *self-imposed* gates that pause this command. Everything else flows through.
+Then begin execution immediately and run § Post-plan execution. Do NOT emit a review handoff and do NOT pause for operator confirmation. The operator can run `/contract-check` or `/drift-check` at any time on their own initiative — and Step 0's collision-detection prompts plus Step 1's `(none derived)` sentinels remain the only *self-imposed* gates that pause this command.
 
-> **Why this is a token and not a sentence telling you to remember `/prime` 8a.d.** This command is chain-invoked, so Step 8 is the *most recently loaded* instruction at the decision point, while the caller's pause was loaded many turns earlier and may sit behind intervening tool output. When those two conflict, the recency-favoured reading wins — and before 2026-07-18 the recency-favoured reading was "begin execution", i.e. execute a plan the operator has never seen. The token makes the caller's gate a fact present in *this* step's own inputs rather than something the reader has to recall. **Do not "simplify" this back into an unconditional instruction, and do not resolve a future conflict here by weakening `/prime` 8a's pause** — the 8a/8b split is deliberate: a numbered menu pick is not the operator stating the work, so it gets an approval gate that free-text intent does not. Source: `logs/improvement-log.md` 2026-07-18.
+> **Why the gate is a token and not a sentence telling you to remember the caller's pause.** This command is chain-invoked, so Step 8 is the *most recently loaded* instruction at the decision point, while the caller's intent was loaded many turns earlier and may sit behind intervening tool output. When those two conflict, the recency-favoured reading wins — and before 2026-07-18 the recency-favoured reading was "begin execution", i.e. execute a plan the operator has never seen. The token makes the caller's gate a fact present in *this* step's own inputs rather than something the reader has to recall. **Do not "simplify" it back into an unconditional instruction, and do not resolve a future conflict by weakening it** — the 8a/8b split is deliberate: a numbered menu pick is not the operator stating the work, so it gets an approval gate that free-text intent does not. Source: `logs/improvement-log.md` 2026-07-18.
+
+## § Post-plan execution
+
+**Shared by all three Step 8 branches, and by `/session-start` Step 4's direct route** — which reaches this section without a plan file, and is the only caller that does. It is a section rather than a fourth branch precisely so the direct route cannot drift from the engineered one: both terminal owners cite this one text.
+
+Run the picked work in the operator-given order without pausing between items. Emit a one-line between-gate summary at each item boundary (workspace `CLAUDE.md` § Between-gate summaries) — visibility, not an approval gate. Complete the mandate fully within this session where context allows; if context is clearly constrained, follow the workspace `Context constraint deferral` rule and flag the deferral rather than rushing to close. During execution:
+
+- Size the independent review to the change per `ai-resources/docs/qc-independence.md`. **No review fires automatically.**
+- Follow `ai-resources/docs/compaction-protocol.md` checkpoints on long work.
+- Surface `[SCOPE]` / `[HEAVY]` / `[AMBIGUOUS]` / `[COST]` guardrail flags.
+- Commit directly per the workspace `Commit behavior` rule. Do not push — pushes are batched to wrap.
+
+**On mandate completion** emit `Mandate complete. Run /wrap-session to capture telemetry and journal the session. Push pending — let me know when to push.` Do not auto-invoke `/wrap-session` — the operator decides when to wrap. *(This reminder was previously owned by `/prime` 8c.13, which the auto route reached and the other two routes never did; anchoring it here is what puts it on every terminal path.)*
 
 **No plan-time review fires here.** A plan is not an artifact this command reviews, and no review is spawned automatically (`ai-resources/docs/qc-independence.md`). Judgment errors are caught downstream by `/drift-check` mid-session and `/contract-check` near wrap, per workspace `Decision-Point Posture`.
 

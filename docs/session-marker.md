@@ -315,7 +315,7 @@ ROUTE_LINE=$(grep -m1 -oE '^\*\*Execution route:\*\* *direct[[:space:]]*$' "$PRO
 **Removed (ceremony only):**
 - `session-start.md` Step 4 does **not** auto-chain `/session-plan`; it emits a lean handoff instead.
 - No committed `logs/session-plan-*.md` is written (the `/session-start` Step 4 chain is skipped, and since 2026-07-29 that is the only path to a plan file).
-- `prime.md` 8a.3.d's post-mandate prompt does **not** reference a plan file (that file is never created for direct); it points at the mandate in `session-notes.md`.
+- The direct route's post-mandate prompt — owned by `/session-start` Step 4 since 2026-07-30, previously `prime.md` 8a.3.d — does **not** reference a plan file (that file is never created for direct); it points at the mandate in `session-notes.md`.
 - `wrap-session.md` Step 12e skips the findings-disposition ceremony **only** when the finding set is empty (`N=0`); when findings exist it runs in full.
 
 **Preserved (the safety / crash-recovery / collision spine — unchanged from the engineered route):**

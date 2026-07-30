@@ -137,14 +137,18 @@ Full backlog & inbox: /open-items
    - Anything else (a sentence, a different task, a question) → **free-text intent.** Go to step 8b.
    - If the reply is ambiguous (a number outside the rendered menu range, an `auto N` where N is outside range, or "2 but first do X"), ask once for a plain number, the word `auto` (optionally followed by one item number), or a sentence, then classify the re-response.
 
-8m. **Mission binding (shared sub-step — referenced by 8a / 8b / 8c).** Resolves which active mission, if any, this session serves. **Skip entirely — no prompt, no output — when `ACTIVE_MISSIONS` (Step 1d) is empty** (the common case). Run only after a non-plan-mode dispatch is confirmed (i.e., past each branch's plan-mode guard), and before the branch calls `/session-start` (8a/8b) or writes the inline mandate (8c). Resolve `MISSION_ID`:
-   - If the picked/stated task came from a `[mission:<id>]` menu item → `MISSION_ID = <id>`. **Auto-bound; no prompt.** (Primary path — picking a mission's open thread IS the binding.)
-   - Else, emit exactly one line: `This session serves which active mission? {[1] <id> — <name> … [N] …} — or 'none'.` Parse the reply: a number → that mission's id; `none` / empty / anything else → no mission. One prompt only; default is `none`.
-   - Carry `MISSION_ID` forward. If unset/`none`, the session has no mission bullet and everything downstream proceeds exactly as today.
+8m. **Mission binding (shared sub-step — 8a / 8b / 8c).** Resolves which active mission, if any, this
+   session serves. **Skip entirely — no prompt, no output — when `ACTIVE_MISSIONS` (Step 1d) is empty**
+   (the common case). Run after the branch's guards (8g) and before 8h.
+   - Picked item is `[mission:<id>]`-sourced → `MISSION_ID = <id>`, **auto-bound, no prompt.** Picking a
+     mission's open thread IS the binding.
+   - Otherwise emit exactly one line: `This session serves which active mission? {[1] <id> — <name> … [N] …} — or 'none'.`
+     A number → that mission's id; `none` / empty / anything else → no mission. One prompt only; default `none`.
 
-   **Wiring:** all three branches prepend `{mission:<id>}` to the args passed to `/session-start`, which strips it and writes the `- Mission: <id>` bullet (see `session-start.md` Step 1). 8c does this at its Step 8c.9 dispatch, alongside `{gate:auto}` and `{plan:overwrite}`; it no longer writes the bullet itself. When `MISSION_ID` is unset, none of this happens.
-
-   **Cross-repo note:** the pre-write cross-repo mission guard (Steps 8a sub-step a0, 8c sub-step 2.5) fires *before* this binding, deriving the picked mission's repo from `ACTIVE_MISSIONS` (Step 1d), not from `MISSION_ID` here — so a wrong-repo pick is caught before any marker/header write. Do not move Step 8m earlier to "cover" that case; the guard already does, and 8m must stay after the write per the marker contract. (8b/free-text needs no guard — there is no `[mission:<id>]` menu item to mis-pick.)
+   **Wiring:** all three branches prepend `{mission:<id>}` to the `/session-start` args; that command
+   strips it and writes the `- Mission: <id>` mandate bullet (`session-start.md` Step 1). When
+   `MISSION_ID` is unset, none of this happens. The cross-repo guard is **8g.2**, which fires before this
+   binding and before any write — do not move 8m earlier to "cover" that case.
 
 8h. **Session entry (shared sub-step — referenced by 8a / 8b / 8c).** One owner performs the complete
    sequence — allocate the marker, append this session's marker-bearing header, stamp the mtime — in that
@@ -165,95 +169,96 @@ Full backlog & inbox: /open-items
    executable prompt is validated by reading rather than by running, which is the defect the extraction
    fixed. Canonical protocol: `docs/session-marker.md`.
 
-8a. **Task selected by number.**
-   1. Resolve the number to its menu item → `TASK_TEXT` (the plain-English task text).
-   2. **Plan-mode guard.** If a plan-mode system reminder is present in context (plan mode is active), do NOT run `/session-start` or `/session-plan`, and do NOT write anything. Output:
-      > Task {N} noted: {TASK_TEXT}. You're in plan mode — I won't run `/session-start` yet. Exit plan mode when you're ready to execute, then re-send `{N}` (or say `go`) and I'll run `/session-start` and `/session-plan` for this task.
+8g. **Guards (shared sub-step — 8a / 8b / 8c).** Two, in this order, **before any write.**
 
-      Then stop.
-   3. If plan mode is **not** active:
-      a0. **Cross-repo mission guard.** If the picked item is `[mission:<id>]`-sourced AND that mission's repo (from `ACTIVE_MISSIONS`, Step 1d) ≠ `CWD_REPO` (Step 0), STOP before any write and emit:
-         > ⚠ This task belongs to mission `{id}`, which lives in `{repo}` — but you're priming in `{CWD_REPO}`. Setting it up here would write the marker/header and run `/session-start` in the *wrong* repo. Open `{repo}` as your session folder and re-run `/prime` there to work on this mission. (Reply `here` to override and set it up in the current repo anyway.)
+   1. **Plan mode.** If a plan-mode system reminder is in context, write nothing — no marker, no header,
+      no mtime — and output `{TASK_TEXT} noted. You're in plan mode — nothing written. Exit plan mode and
+      re-send to proceed.` Then stop.
+   2. **Cross-repo mission.** If the picked item is `[mission:<id>]`-sourced AND that mission's repo (from
+      `ACTIVE_MISSIONS`, Step 1d) ≠ `CWD_REPO` (Step 1), STOP before any write and emit:
 
-         Wait for the operator. On `here` → proceed to sub-step a. On anything else → stop, write nothing. A same-repo pick (mission repo == `CWD_REPO`) skips this guard silently. Derive the repo from `ACTIVE_MISSIONS` here, not from Step 8m's later `MISSION_ID` — this guard must fire before the sub-step-a marker/header write.
-      a. **Session-entry write.** Run the **Step 8h shared sub-step** with `WORK_DESC = TASK_TEXT`. It allocates the marker, appends this session's marker-bearing header, and stamps `logs/.prime-mtime`, in that order. This must happen before step c — `/session-start` Step 3 and `/session-plan` Step 0 both require THIS session's marker-bearing header to exist.
-      a2. **Mission binding.** Run the Step 8m sub-step (skips silently if no active missions). If it resolves a `MISSION_ID`, prepend `{mission:<id>}` to the `/session-start` args in step b.
-      b. Invoke the `/session-start` command with `TASK_TEXT` as its arguments (becomes the mandate), prefixed with **`{gate:post-plan}`** — always, on this branch — and additionally with `{mission:<id>}` if step a2 bound one. It runs its own mandate-confirmation prompt — that is expected; do not suppress it.
+      > ⚠ This task belongs to mission `{id}`, which lives in `{repo}` — but you're priming in
+      > `{CWD_REPO}`. Setting it up here would write the marker/header and run `/session-start` in the
+      > *wrong* repo. Open `{repo}` as your session folder and re-run `/prime` there. (Reply `here` to
+      > override and set it up in the current repo anyway.)
 
-         **The `{gate:post-plan}` token is what makes step d's pause survive the chain**, and it is mandatory on 8a. `/session-start` Step 1 strips and captures it, Step 4 forwards it to `/session-plan`, and `/session-plan` Step 8 branches on it to hand control back here instead of auto-executing. Omitting it silently reverts to the pre-2026-07-18 defect: `/session-plan`'s auto-proceed instruction is the freshest one at the decision point and wins over step d below, so the session begins executing a plan the operator has never approved. **8b must NOT pass this token** — see 8b.3.d. Source: `logs/improvement-log.md` 2026-07-18.
-      c. After `/session-start` finishes, invoke the `/session-plan` command with `TASK_TEXT` as its arguments (becomes the intent). It writes `logs/session-plan-${TODAY}-${MARKER}.md` (marker-scoped per `docs/session-marker.md`). If THIS session's marker-scoped plan already exists, `/session-plan` Step 0 surfaces a 3-option keep/overwrite/pass2 prompt — that is expected mid-chain; the operator answers it normally.
+      Wait. On `here` proceed; on anything else stop, having written nothing. Same-repo picks skip
+      silently. Derive the repo from `ACTIVE_MISSIONS`, never from 8m's later `MISSION_ID` — this guard
+      must fire before 8h writes. In auto mode this is a **deliberate single-condition exception** to the
+      one-gate contract; do not remove it as a stray prompt.
 
-         **Note on the real call path:** `/session-start` Step 4 already chain-invokes `/session-plan`, so in practice the chain reaches it there and this sub-step is satisfied by that hop. Either way the gate token travels with it.
+8a. **Numbered selection.** Resolve the number to its menu item → `TASK_TEXT`. Run 8g, then 8m, then 8h
+   with `WORK_DESC = TASK_TEXT`. Dispatch: invoke `/session-start` with
+   `"{gate:post-plan} {mission:<id>, if bound} TASK_TEXT"`. Then Step 9.
 
-         **Direct-route branch (Commit 2, 2026-07-23).** For a direct-route project (`DIRECT=1` via the canonical predicate, `docs/session-marker.md` § Direct-route detection), `/session-start` Step 4 **skips** this chain — no `/session-plan` is invoked and **no plan file is written.** This sub-step c is a no-op on the direct route; go straight to step d's direct branch.
-      d. **Pause.** After `/session-plan` finishes (engineered) or after `/session-start` returns (direct), output the review prompt:
+   **`{gate:post-plan}` is mandatory on this branch.** `/session-start` Step 1 captures it, Step 4
+   forwards it (engineered) or branches on it (direct), and `/session-plan` Step 8 holds the pause and
+   owns the `go` continuation. It is the *only* thing distinguishing a numbered pick from free-text on
+   either route: omit it and the session begins executing a plan nobody approved
+   (`logs/improvement-log.md` 2026-07-18). **8b must NOT pass it.**
 
-         **Engineered route (`DIRECT=0`, plan file written):**
-         > Plan ready — review `logs/session-plan-${TODAY}-${MARKER}.md`. Reply `go` to start execution.
+8b. **Free-text intent.** Resolve the operator's stated work → `TASK_TEXT`, keeping any inline scope bound
+   ("just the refactor, not the follow-up PRs"). Run 8g, then 8m, then 8h with `WORK_DESC = TASK_TEXT`.
+   Dispatch: invoke `/session-start` with `"{mission:<id>, if bound} TASK_TEXT"`. Then Step 9.
 
-         **Direct route (`DIRECT=1`, no plan file):** there is no plan file to review. Output instead:
-         > Mandate written — review it in `logs/session-notes.md` (this session's `## ${TODAY} — Session ${MARKER}` block). Reply `go` to start execution, or run `/session-plan` first if you want a durable plan.
+   **Pass no `{gate:post-plan}` token.** Its absence is what lets this branch proceed without a second
+   confirmation — the operator stating the work IS the go signal — and that is 8b's only structural
+   difference from 8a. Adding the token here would convert 8b into 8a.
 
-         Wait for the operator either way. Do NOT begin execution on your own.
+8c. **Auto mode.** Run one picked menu item end-to-end with a single approval gate and no per-stage
+   prompts. **One item only.** 8c owns picking, the guards and dispatch; it does not derive, echo or write
+   the mandate, the manifest or the plan.
 
-         As of 2026-07-18 this pause is **also carried mechanically** by the `{gate:post-plan}` token from step b (engineered route), so it no longer depends on this instruction being recalled at a decision point many turns downstream. If a future edit removes the token, this sentence alone will not hold the gate — that is precisely the failure the token was added to fix. On the direct route no plan exists to gate, so the pause is this sub-step's own lean go-prompt above.
+   1. **Resolve `PICKED_ITEM`.** `auto` / `a` → item #1. `auto N`, or the equivalent `N auto` shape
+      (`^[1-6]\s+auto$`, normalized by Step 7) → item #N. Validate N against the rendered menu range; out
+      of range → ask once for a valid `auto` reply and re-classify (Step 7 ambiguity rule). Empty menu →
+      `No tracked next steps — auto mode needs a task. Tell me what to work on.` and stop.
 
-8b. **Free-text intent.** The operator named the work directly instead of picking a number.
-   1. Resolve the operator's stated work → `TASK_TEXT` (the work description, including any inline scope boundary like "just the refactor, not the follow-up PRs").
-   2. **Plan-mode guard.** If a plan-mode system reminder is present in context (plan mode is active), do NOT run `/session-start` or `/session-plan`, and do NOT write anything. Output:
-      > Free-text task noted: {TASK_TEXT}. You're in plan mode — I won't run `/session-start` yet. Exit plan mode when you're ready to execute, then re-send the task (or say `go`) and I'll run `/session-start` and `/session-plan` for it.
-
-      Then stop.
-   3. If plan mode is **not** active:
-      a. **Session-entry write.** Run the **Step 8h shared sub-step** with `WORK_DESC = TASK_TEXT`.
-      a2. **Mission binding.** Run the Step 8m sub-step (skips silently if no active missions). If it resolves a `MISSION_ID`, prepend `{mission:<id>}` to the `/session-start` args in step b.
-      b. Invoke the `/session-start` command with `TASK_TEXT` as its arguments (becomes the mandate), prefixed with `{mission:<id>}` if step a2 bound one. It runs its own mandate-confirmation prompt — that is expected; do not suppress it.
-      c. After `/session-start` finishes, invoke the `/session-plan` command with `TASK_TEXT` as its arguments (becomes the intent). It writes `logs/session-plan-${TODAY}-${MARKER}.md` (marker-scoped per `docs/session-marker.md`). If THIS session's marker-scoped plan already exists, `/session-plan` Step 0 surfaces a 3-option keep/overwrite/pass2 prompt — that is expected mid-chain; the operator answers it normally.
-
-         **Direct-route branch (Commit 2, 2026-07-23).** For a direct-route project (`DIRECT=1`, `docs/session-marker.md` § Direct-route detection), `/session-start` Step 4 **skips** the `/session-plan` chain — no plan file is written. This sub-step c is a no-op on the direct route; go straight to step d (which begins execution regardless).
-      d. **Begin execution immediately** under full autonomy (per workspace CLAUDE.md Autonomy Rules). No second `go`/`proceed` confirmation required — the operator stating the work directly IS the go signal. This is 8b's structural delta vs 8a, which pauses for explicit `go` after `/session-plan`. (On the direct route the only difference is that no plan artifact exists — execution still begins immediately.)
-
-         **8b passes no `{gate:post-plan}` token** (contrast 8a.3.b). That absence is what preserves this branch's auto-execute behaviour: `/session-plan` Step 8 treats an unset gate as the default and proceeds. Adding the token here would convert 8b into 8a and introduce a pause the operator has not asked for.
-
-8c. **Auto mode.** The operator typed `auto` (optionally with an item number) — run the picked menu item end-to-end with a single approval gate and no per-stage prompts. **One item only.** **8c owns picking, the guards and dispatch. It does not derive, echo or write the mandate, the manifest or the plan** — `/session-start` and `/session-plan` own those, and 8c reaches them by invoking `/session-start` under `{gate:auto}`.
-
-   1. **Resolve `PICKED_ITEM`.** Parse the operator's reply:
-      - `auto` / `a` (no number) → item #1 from the menu built in Step 5.
-      - `auto N` — or the equivalent `N auto` shape (`^[1-6]\s+auto$`, normalized by Step 7) → item #N.
-
-      Validate that the requested number is within the rendered menu range. If it is out of range, ask once for a valid `auto` reply and re-classify (per Step 7 ambiguity rule). If the menu has zero items, output `No tracked next steps — auto mode needs a task. Tell me what to work on.` and stop. `PICKED_ITEM_TEXT` is the picked item's text.
-
-   2. **Done-condition presence-check.** Before any disk write, verify the picked item carries a derivable done-condition — an observable deliverable, check or target (file written, item checked off, finding addressed, commit landed, count reached). The item text plus its source line is the evidence. An item naming only an activity with no observable end-state ("review X", "look into Y", "think about Z") whose source line supplies no target **fails**. Rationale and the logged trigger: `docs/session-marker.md` § Auto-mode done-condition check.
-
-      It passes → continue to 8c.3. It fails → hold it, write nothing, and emit:
+   2. **Done-condition presence-check.** Before any disk write, the picked item must carry an observable
+      deliverable — a file written, an item checked off, a finding addressed, a commit landed, a count
+      reached. The item text plus its source line is the evidence. An item naming only an activity
+      ("review X", "look into Y", "think about Z") whose source line supplies no target **fails**: hold
+      it, write nothing, and emit:
 
       > Auto mode — `{PICKED_ITEM_TEXT}` has no concrete done-condition, so I've held it.
       > Restate it with a deliverable (file / check / target), then re-send `auto`.
 
-      On a restated item → re-run this check against the restatement. If the operator does not restate, stop without writing.
+      Re-run this check against any restatement. If the operator does not restate, stop without writing.
+      Rationale and the logged trigger: `docs/session-marker.md` § Auto-mode done-condition check.
 
-   3. **Plan-mode guard.** If a plan-mode system reminder is present in context, output `Auto mode noted: {PICKED_ITEM_TEXT}. You're in plan mode — I won't write anything yet. Exit plan mode and re-send 'auto' (or 'go') to proceed.` Then stop.
+   3. **Guards, write, bind.** Run 8g, then 8h with `WORK_DESC = PICKED_ITEM_TEXT`, then 8m in
+      **auto-bind-only** mode — set `MISSION_ID` from a `[mission:<id>]` item without emitting the
+      interactive prompt, because auto mode holds one gate. Then evaluate `DIRECT` once via the canonical
+      predicate (`docs/session-marker.md` § Direct-route detection); if it cannot be evaluated for any
+      reason treat it as `DIRECT=0` — fail-safe, meaning the plan file is written. **8h's three writes
+      precede the approval gate by necessity and `abort` does not roll them back** — see 8c.9.
 
-   4. **Cross-repo mission guard.** If the picked item is `[mission:<id>]`-sourced AND that mission's repo (from `ACTIVE_MISSIONS`, Step 1d) ≠ `CWD_REPO` (Step 0), STOP and emit the same wrong-repo warning as Step 8a's cross-repo guard, naming the item and its repo. Wait; on `here` → continue to 8c.5; on anything else → stop, write nothing. This is a **deliberate single-condition exception** to auto mode's "single approval gate, no per-stage prompts" contract (it fires ONLY when the picked mission's repo ≠ `CWD_REPO`) — do not remove it as a stray prompt. It is load-bearing precisely because the 8c.5 header write precedes the approval gate, so this is the only point that stops a wrong-repo header before disk. Derive the repo from `ACTIVE_MISSIONS`, not from the 8c.6 auto-bind (which runs after the write). Same-repo picks skip it silently.
+      *(Sub-steps 4–8 retired 2026-07-30 — the plan-mode and cross-repo guards moved to the shared 8g, the
+      mandate composition to `/session-start`, and `STRUCTURAL_RISK` was deleted with `/risk-check`. The
+      numbering gap is deliberate; retained identifiers keep their numbers.)*
 
-   5. **Session-entry write.** Run the **Step 8h shared sub-step** with `WORK_DESC = PICKED_ITEM_TEXT`.
+   9. **Dispatch.** Invoke `/session-start` via the Skill tool with
+      `args = "{gate:auto} {plan:overwrite} {mission:<id>, if bound} {MANDATE_TEXT}"`, where
+      `MANDATE_TEXT` is the picked item's work plus its concrete deliverable and any bound it states.
+      Under `{gate:auto}` that command suppresses its Step 2 echo and wait, runs Step 2.4 discovery and
+      Step 2.5 validation in order, then holds **one** approval gate — on **every** engine outcome,
+      including skipped and failed. On `go` it writes the mandate and the run-manifest stub and reaches
+      `/session-plan`, which writes the plan and begins execution. `{plan:overwrite}` pre-answers
+      `/session-plan` Step 0 so the chain does not stop to ask. On `abort` nothing further is written;
+      the marker, header and mtime from 8h remain because they precede the gate — say so:
+      `Auto mode aborted. No mandate, manifest or plan written — today's session header remains.`
+      Then Step 9.
 
-      **These three writes precede the approval gate by necessity, and `abort` does not roll them back** — see 8c.9.
+   10. **Direct route.** When `DIRECT=1`, `/session-start` Step 4 does not chain to `/session-plan` and no
+      `logs/session-plan-*.md` is written; the mandate and run-manifest still are, and Step 4 becomes the
+      terminal owner. The gate block at 8c.9 disclosed this.
 
-   6. **Mission auto-bind, then route.** Run the **Step 8m** sub-step in auto-bind-only mode: if the picked item is `[mission:<id>]`-sourced, set `MISSION_ID` to that mission. **Do not emit the interactive binding prompt** — auto mode's contract is one approval gate with no per-stage prompts. If the picked item is not mission-sourced, `MISSION_ID` stays unset. Then evaluate `DIRECT` once via the canonical predicate (`docs/session-marker.md` § Direct-route detection). If it cannot be evaluated for any reason, treat it as `DIRECT=0` — fail-safe, meaning the plan file is written.
+      *(Sub-steps 11–13 retired 2026-07-30 — 11 with `STRUCTURAL_RISK`, 12 (execution start, posture,
+      guardrail flags, between-item summaries, checkpoints) and 13 (the wrap reminder) to `/session-plan`
+      § Post-plan execution, which every terminal path reaches; 13 previously sat on the auto route alone.)*
 
-   7. **Compose `MANDATE_TEXT`.** Build the single string `/session-start` Step 2 will parse: the picked item's work and its concrete deliverable, plus any bound the item states. **8c does not derive the individual mandate fields and does not echo them.**
-
-      *(Sub-step 8 retired 2026-07-30 — `STRUCTURAL_RISK` derivation. The numbering gap is deliberate; retained identifiers keep their numbers.)*
-
-   9. **Dispatch to `/session-start`, which holds the approval gate.** Invoke it via the Skill tool with `args = "{gate:auto} {plan:overwrite} {mission:<MISSION_ID>, only if bound} {MANDATE_TEXT}"`. Under `{gate:auto}` that command suppresses its Step 2 echo and wait, runs Step 2.4 discovery and Step 2.5 validation in their existing order, then holds **one** approval gate — on **every** engine outcome, including skipped and failed — and on `go` writes the mandate (its Step 3), the run-manifest stub (3.5) and the plan (via `/session-plan`), returning here **without beginning execution**. `{plan:overwrite}` pre-selects `/session-plan` Step 0's overwrite option so the chain does not stop to ask.
-
-      **On `abort` nothing further is written and control returns here.** The marker, header and mtime written at 8c.5 remain, because they precede the gate. Output `Auto mode aborted. No mandate, manifest or plan written — today's session header remains.` and stop.
-
-   10. **Direct route.** When `DIRECT=1`, `/session-start` Step 4 does not chain to `/session-plan` and no `logs/session-plan-*.md` is written; the mandate and run-manifest still are. The gate block at 8c.9 disclosed this.
-
-      *(Sub-step 11 retired 2026-07-30 — the `STRUCTURAL_RISK` review-sizing disclosure went with the field it read. A structural class still makes the change high-consequence; that is carried inside the review sizing, `ai-resources/docs/qc-independence.md` § The rule.)*
-
-   12. **Begin execution under the autonomy posture `/session-plan` set.** No further confirmation gate — the 8c.9 approval covered execution. Complete the mandate fully within this session where context allows; if context is clearly constrained, follow the workspace `Context constraint deferral` rule — flag the deferral and log it, do not rush. During execution: size the independent review to the change per `ai-resources/docs/qc-independence.md` (no review fires automatically), follow `ai-resources/docs/compaction-protocol.md` checkpoints on long work, surface `[SCOPE]` / `[HEAVY]` / `[AMBIGUOUS]` / `[COST]` guardrail flags, and commit directly per the workspace `Commit behavior` rule.
-
-   13. **On mandate completion.** Output `Mandate complete. Run /wrap-session to capture telemetry and journal the session. Push pending — let me know when to push.` Do not auto-invoke `/wrap-session` — the operator decides when to wrap.
+9. **Stop.** **`/prime` ends at dispatch.** Execution, the autonomy posture, the post-plan pause and its
+   `go`, the guardrail flags, between-item summaries, compaction checkpoints and the wrap reminder all
+   belong to `/session-start` Step 4 (direct route) and `/session-plan` Step 8 + § Post-plan execution
+   (all routes). Do not begin work here, and do not chain into `/wrap-session`. The step is named so that
+   "did `/prime` stop?" is an observation rather than an inference.
