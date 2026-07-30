@@ -229,7 +229,7 @@ Do NOT execute fixes in the planning session that produced this file.
 - **Source:** [{absolute_source_path}]({absolute_source_path}){:line N if applicable}  *(always render the absolute path — the plan file lives in `ai-resources/audits/fix-plans/` but item sources span scopes; absolute paths keep links resolvable regardless of where the execution session is `cd`'d)*
 - **Fix:** {concrete instruction — file to edit, edit shape, expected outcome}
 - **Post-fix log update:** {improvement-log status flip / friction-log `[FADING-GATE] verified` annotation / innovation-registry status update / none}
-- **QC needed:** {yes — run /qc-pass after applying | no — log-hygiene-only edit}
+- **Review needed:** {yes — high-consequence, takes one independent review before landing (`docs/qc-independence.md` § The rule) | no — log-hygiene-only edit}
 
 ### [{scope_slug}/id-02] {one-line description}
 - ...

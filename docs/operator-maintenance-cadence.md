@@ -64,7 +64,7 @@ Run `/pipeline-review` once per week (any day; operator-invoked). The command su
 - Memos land in `audits/pipeline-reviews/{pipeline-slug}-{date}.md`.
 - Registry: `audits/pipeline-review-registry.md`. Bumped once per cycle, batched after all subagents return.
 
-**Fix session is separate.** The memo says what to do; a follow-up session does it — `/improve-skill` for skill-shaped memos, manual edit + `/qc-pass` for command-shaped memos.
+**Fix session is separate.** The memo says what to do; a follow-up session does it — `/improve-skill` for skill-shaped memos, manual edit for command-shaped memos, each reviewed once per `qc-independence.md` § The rule.
 
 Subsumed `/audit-critical-resources` on 2026-05-29 — its currency-check against pinned Anthropic doc URLs is now part of the auditor's Brokenness section. Distinct from `/friday-checkup` (housekeeping). This cadence answers both *what could be better?* and *what is broken?* for the critical-resource population.
 

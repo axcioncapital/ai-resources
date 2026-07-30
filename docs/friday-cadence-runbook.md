@@ -82,7 +82,7 @@ Start with `/prime`. Run from workspace root or ai-resources.
 
 **What to expect inside F4** (so the prompts don't surprise you):
 - Per tactical item, you choose **f** (fix now) / **d** (defer) / **s** (skip).
-- F4 auto-runs `/qc-pass` on the plan files it writes.
+- F4 **offers** a review of the plan files it writes (y/n) — it does not auto-run one.
 - On monthly+ tiers it adds a **policy review** (r / n / d per observation).
 - It ends by asking for a 7-character **autonomy-axis** posture string.
 

@@ -17,7 +17,7 @@ Source: AI strategy governing document §5.8 (Defect capture). Paired log: `../l
 
 Choose by *what the system is missing*, not by convenience:
 
-- **Rule** — when the system needs a **clearer constraint**. The desired behaviour can be stated as a short instruction. Lands in the relevant skill's `SKILL.md`, a `docs/` principle file (e.g. `analytical-output-principles.md`), or an always-loaded `CLAUDE.md` rule. *(An always-loaded `CLAUDE.md` rule is a `/risk-check` change class — gate it.)*
+- **Rule** — when the system needs a **clearer constraint**. The desired behaviour can be stated as a short instruction. Lands in the relevant skill's `SKILL.md`, a `docs/` principle file (e.g. `analytical-output-principles.md`), or an always-loaded `CLAUDE.md` rule. *(An always-loaded `CLAUDE.md` rule is a change class — high-consequence, so it takes one risk-aware review before landing.)*
 - **Eval case** — when the defect **must be tested and prevented from silently returning**. A constraint alone won't catch regression; you need a check that re-fires on future work. (Landing place below.)
 - **Example** — when the system needs a **better model of the desired output**. The fix is a concrete sample, not a rule. Lands in `style-references/` or a skill's examples.
 

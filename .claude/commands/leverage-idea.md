@@ -175,7 +175,7 @@ For a WORTH-DOING (or operator-accepted MARGINAL) recommendation, write the plan
 
 - **Target files** — what gets created / edited.
 - **Step sequence** — the build order.
-- **Gates** — the `/risk-check` change class if matched; `/qc-pass` after the artifact is written; `/blindspot-scan` post-approval when it is a risk-check class.
+- **Review** — if the implementation falls in a change class (`ai-resources/docs/audit-discipline.md` § Risk-check change classes), it is high-consequence and takes **one** risk-aware review before landing (`docs/qc-independence.md` § The rule). One review, not a stack.
 - **Effort** — S / M / L.
 - **Open assumptions** — anything the operator must confirm.
 

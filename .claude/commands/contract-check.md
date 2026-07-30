@@ -8,7 +8,7 @@ allowed-tools: Bash(git *), Read, Task
 Check whether an artifact still matches what was originally agreed at the start of work. `/contract-check` resolves the original contract, identifies the current artifact, then delegates an **independent** comparison to a fresh-context subagent. The subagent receives only the contract text and the artifact text — no QC history, no session conversation, no creation context. Advisory only — it modifies no files and does not correct course; it tells the operator whether a correction is needed.
 
 `/contract-check` is the artifact-content drift complement to `/drift-check` (which watches session trajectory). Use it when:
-- Two or more rounds of QC pass → resolve findings → re-QC have completed (the two-pass cap moment — see `ai-resources/docs/qc-independence.md` § QC → Triage Auto-Loop).
+- A review found a material issue that forced a redesign, and the redesign has now been reviewed in turn (`ai-resources/docs/qc-independence.md` § Findings). Two reviews of the same work is the moment cumulative drift becomes invisible to either one.
 - A long-running session has produced cumulative local fixes and the operator wants to verify the result still matches the original brief.
 - An artifact built across multiple sessions reaches a checkpoint.
 - The operator suspects drift but `/drift-check` returns ALIGNED (because session trajectory looks fine, but the artifact itself has wandered).
@@ -203,5 +203,5 @@ Input: `$ARGUMENTS` — optional. Interpreted as:
 ### Notes for future extension
 
 - **Freeze-baseline at `/scope` time** (deferred). The cleanest contract source is one written explicitly at start-of-work to `logs/contracts/{date}-{slug}.md`. Adding a write step to `/scope` (and to `/session-start`, `/create-skill` Step 4, etc.) is a separate change that improves auto-detect reliability. Until that lands, auto-detect order in Step 2 falls back through session-plan, mandate-block, and project briefs.
-- **Two-pass cap interaction.** When the two-pass cap fires (`ai-resources/docs/qc-independence.md` § QC → Triage Auto-Loop — "structural resolution required"), `/contract-check` is the right instrument to surface *what* structurally drifted. Future work may auto-invoke this command at the cap; today it is operator-triggered.
+- **Post-redesign interaction.** When a review's material finding forces a redesign (`ai-resources/docs/qc-independence.md` § Findings), `/contract-check` is the right instrument to surface *what* structurally drifted between the original mandate and the redesigned artifact. Operator-triggered; nothing invokes it automatically.
 - **Per-project-type calibration.** The hard/soft contract distinction in Step 4 is the v1 calibration knob. If the verdicts come back consistently mis-calibrated for a project type, tune the rubric or add per-project-type instructions.

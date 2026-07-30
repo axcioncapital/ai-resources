@@ -172,7 +172,7 @@ The workspace's auto-sync hook (`ai-resources/.claude/hooks/auto-sync-shared.sh`
 | CLAUDE.md layering | three layers | Workspace CLAUDE.md (cross-project) + ai-resources CLAUDE.md (resource-repo rules) + project CLAUDE.md (project-specific). All always-loaded for sessions in their scope. |
 | Permission template | one source of truth | `ai-resources/docs/permission-template.md` defines canonical settings shapes for all four layers (user / workspace / ai-resources / project). `/permission-sweep` audits drift; `/new-project` emits canonical shape per project. |
 
-| Audit discipline | one source of truth | `ai-resources/docs/audit-discipline.md` lists `/risk-check` change classes, two-gate firing model, and Friday-cadence tiers. |
+| Audit discipline | one source of truth | `ai-resources/docs/audit-discipline.md` lists the structural change classes and the Friday-cadence tiers. How a change in one of those classes is reviewed: `ai-resources/docs/qc-independence.md`. |
 | Logs split | parallel | Workspace `logs/` (workspace-level decisions, innovations, sessions). ai-resources `logs/` (canonical resource-work logs). Project `logs/` (project-specific sessions). Each session writes to its own scope. |
 | Command/agent ↔ knowledge-bases | read-only, downward | `/expert-check` (via the `expert-check-reviewer` agent) reads book-summary notes from a target KB vault under `knowledge-bases/` by path, topic-matched against the step subject. Read-only; advisory output only; requires an explicit KB target (no all-KB default). First shared consumer of `knowledge-bases/` vault content as command input. |
 
@@ -214,7 +214,7 @@ The workspace's auto-sync hook (`ai-resources/.claude/hooks/auto-sync-shared.sh`
 
 > **CLAUDE.md scoping rule** (from workspace CLAUDE.md): project CLAUDE.md is for cross-session project-specific rules only — content that applies to *every turn* in that project's sessions and cannot live elsewhere. Do not duplicate skill methodology, workflow methodology, or canonical workspace rules.
 
-### Q5: Is the change a structural change class? Then run `/risk-check`.
+### Q5: Is the change a structural change class? Then it is high-consequence.
 
 Change classes (per `audit-discipline.md`):
 - Hook edits (`.claude/hooks/*.sh`)
@@ -224,7 +224,7 @@ Change classes (per `audit-discipline.md`):
 - New symlinks
 - Automation with shared-state effects
 
-**Two-gate firing model:** plan-time once (after plan approval) + end-time once (before commit). Per-change firing is the failure mode the gate model exists to prevent.
+**What that means:** the change takes the risk-aware review row of `qc-independence.md` § The rule — one Codex review carrying the seven risk dimensions, before implementation, then the deterministic execution-time safeguards. No command fires from the class match; the class is a consequence test, not a trigger.
 
 ### Q6: Will the artifact write a log? Pick the right log.
 

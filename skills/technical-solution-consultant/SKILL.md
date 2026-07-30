@@ -117,7 +117,7 @@ Before delivering any stage output, run the five behaviors as a checklist agains
 4. Did I red-team my own recommendation — and, if the elevated-stakes signal fired, give it extra scrutiny?
 5. Did I separate best-now from best-later?
 
-If the elevated-stakes signal fired, recommend the operator route the memo through `/qc-pass` before acting on it. This skill does not own a separate reviewer — it relies on the existing `/qc-pass` → `triage-reviewer` loop for independent review.
+If the elevated-stakes signal fired, say so in the memo and recommend one independent review before acting on it. This skill owns no reviewer and adds no pass of its own — the review is the one the change already earns under `ai-resources/docs/qc-independence.md` § The rule.
 
 ## Handoff & Fit
 
@@ -135,7 +135,7 @@ If the provided information is insufficient to recommend confidently, say so rat
 - **Two-pass cost:** two-pass mainly *reorders* the work — it inserts a pause between the option landscape and the scored recommendation to cut anchoring — rather than doubling it. It still adds a round-trip, so it's gated on the elevated-stakes signal, not run by default.
 - **Context:** long intake or a multi-stage full-chain run can grow context; if approaching limits mid-chain, deliver through the decision gate, then resume the build block in a fresh turn.
 - **Frontmatter posture (deliberate omissions):** no `allowed-tools` restriction (the skill is advisory and may read project files), no `paths` scoping (invokable from any directory), and `disable-model-invocation` is left unset (auto-invocation is fine — the skill has no file or external side effects; it produces advisory output only).
-- **Independent review:** this skill owns no built-in reviewer. For elevated-stakes outputs, route the memo through `/qc-pass` → `triage-reviewer`.
+- **Independent review:** this skill owns no built-in reviewer and stacks no pass. An elevated-stakes memo takes the one review its consequence earns (`ai-resources/docs/qc-independence.md` § The rule).
 
 ## Failure Behavior
 

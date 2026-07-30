@@ -16,7 +16,7 @@ protected-zone-touched: {yes | no}
 
 - **Risk:** {Low | Medium | High | Critical} — {1-line reasoning citing `audit-discipline.md` class, or "no in-class change"}
 - **Protected zones touched:** {none | list — name each zone from `docs/protected-zones.md`}
-- **`/risk-check` verdict:** {GO | PROCEED-WITH-CAUTION: {mitigations} | RECONSIDER | N/A — risk below High and no protected zone}
+- **Independent review:** {what the one risk-aware review found, and how each material finding was resolved | unassessed — reviewer unreachable, never rounded up to reviewed | N/A — risk below High and no protected zone}
 - **`/consult` second opinion:** {verbatim System Owner output | N/A — not required}
 
 ## Diagnosis

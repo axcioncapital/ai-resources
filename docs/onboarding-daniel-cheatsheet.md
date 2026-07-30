@@ -30,10 +30,10 @@
 
 | Command | Purpose | When to fire |
 |---|---|---|
-| `/qc-pass` | Independent quality check on work just produced | After any significant creation or edit |
-| `/triage` | Prioritize a set of proposed changes or QC findings | After Claude proposes changes or after `/qc-pass` |
-| `/refinement-pass` | Independent refinement review (after QC passes) | When you want a deeper review beyond QC |
-| `/resolve` | Translate QC findings into fix recommendations | After `/qc-pass` returns findings |
+| `/qc-pass` | Independent quality check on work just produced | When a change needs a review and Codex is not giving it one |
+| `/triage` | Rank a large set of proposed changes or findings | Optional, when there are too many to weigh at once |
+| `/refinement-pass` | Independent review of writing quality | When the writing itself is what needs work |
+| `/resolve` | Rank review findings and recommend fixes | Optional, when a review returns many findings at once |
 
 ### Project work
 
@@ -42,7 +42,7 @@
 | `/open-items` | Scan project for unresolved items; produce a backlog | When you want to see what's pending |
 | `/session-guide` | Generate a progress view for a project | To orient a new session or see where the project stands |
 | `/update-claude-md` | Add or update a rule in CLAUDE.md | When you want to make a session behavior permanent |
-| `/risk-check` | Evaluate a proposed structural change across 5 risk dimensions | Before hooks, permission changes, new commands or skills, cross-cutting edits |
+| `/risk-check` | Score a structural change across 7 risk dimensions | Operator-invoked only. Normally the change's one review is risk-aware instead |
 
 ### Project-specific (interpersonal-communication)
 

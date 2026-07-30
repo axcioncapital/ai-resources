@@ -4,6 +4,8 @@ model: opus
 
 After a `/qc-pass`, run this command to get an importance verdict and concrete fix recommendation for each finding — so you only need to approve or reject, not diagnose.
 
+> **Retirement deferred (2026-07-29).** The Stop hook that used to nudge for this command was deleted in the same consolidation; nothing invokes it automatically now. It is **not deleted** only because 26 projects link to it (one via a whole-directory symlink), so removal needs a cross-project migration. It remains genuinely useful when a review returns many findings at once and you want them ranked before deciding — but applying findings is the work, and it does not earn another review round (`ai-resources/docs/qc-independence.md` § Findings).
+
 ## Steps
 
 1. **Find the QC review.** Scan recent conversation context for a `## QC Review` block containing a `### Findings` section. If none found → tell the operator: *"No recent QC review in context. Run `/qc-pass` first, then `/resolve`."* Stop. Note: QC findings dropped from context after `/clear` or `/compact` are correctly caught by this gate — the operator re-runs `/qc-pass` on the artifact.

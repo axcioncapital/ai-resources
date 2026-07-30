@@ -125,7 +125,7 @@ If none, write `(none — no cross-resource interactions detected in this read)`
 The single best command to run next to apply the most important picked recommendation:
 
 - **For skill-shaped pipelines:** `/improve-skill {PIPELINE_PATH} — {one-line focus area}`.
-- **For command-shaped pipelines:** open a fresh session, edit the command file with the picked changes inline, then `/qc-pass` to validate before commit.
+- **For command-shaped pipelines:** open a fresh session, edit the command file with the picked changes inline, then give the change the one independent review its consequence earns before commit (`ai-resources/docs/qc-independence.md` § The rule).
 
 If no improvements were proposed, write `(none — no fix session warranted this cycle)`.
 ```

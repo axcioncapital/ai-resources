@@ -1,36 +1,69 @@
-# QC Independence Rule
+# Independent Review Rule
 
-> **When to read this file:** When running QC (post-edit QC, plan QC, mechanical-mode decisions); when applying triage findings via the QC → Triage Auto-Loop; or when a skip-condition decision affects whether QC fires.
+> **When to read this file:** When deciding whether a change needs an independent review and which kind; when a review returns findings; or when the reviewer you would normally use cannot be reached.
 
-Evaluation and QC must run with fresh context to avoid self-evaluation bias. In Claude Code, this means running evaluators as subagents — separate Claude instances that receive only the artifact under review and the evaluation criteria, with no knowledge of the creation conversation.
+**One independent review per change, proportional to consequence. Not a chain.**
 
-- **Context isolation:** Evaluators receive only the artifact, the criteria, and the artifact's declared purpose. Never pass conversation history, creation rationale, or operator feedback.
-- **Post-edit QC is mandatory.** After applying fixes to an artifact, run an independent post-edit QC pass via subagent (fresh context) before operator approval or commit. Mechanical verification by the main agent (word counts, grep) is not a substitute. Skip QC when **all** of the following are true: (a) ≤5 lines changed; (b) the change is a mechanical substitution (renaming a value, fixing a syntax pattern, updating a reference) with unambiguous intent; (c) the correct form is already validated elsewhere in the repo (e.g., the same syntax exists and works in another file). If any condition fails, run QC. Formatting-only and whitespace changes always skip.
-- **Mechanical-mode QC (second gear).** When QC runs on a substitution-shaped edit to a repo-infrastructure file (settings, commands, agents, SKILL.md, CLAUDE.md, hooks, prompts, and analogous infra) — e.g., string/typo fixes, value edits, permission entries, path/key renames, reference updates, small wording corrections — and qc-reviewer selects `Rubric: mechanical-mode`, accept the narrower M1/M2/M3 rubric. The main agent does not re-expand scope post-hoc or request a full-rubric re-run unless the mechanical-mode verdict flagged a blocking-adjacent Note. Rationale: full-rubric QC on mechanical infra work surfaces out-of-scope observations as findings and triggers over-escalation in triage — the exact pattern that motivates this rule. Mechanical mode does NOT apply to new files, new sections/capabilities, or structural reorganization; those always get the full rubric.
-- **Plan QC before presenting plans for approval.** When presenting a non-trivial execution plan to the operator, run an independent `qc-reviewer` pass on the plan itself. The reviewer evaluates the plan against the governing spec and surfaces conformance gaps, missing pause points, unverified assumptions, and scope hazards. Required when a plan affects >3 files, has >2 decision gates, or introduces new conventions. Below that threshold, plan QC is optional but recommended.
-- **Self-check before external plan QC.** Before spawning `qc-reviewer` on a plan, run a quick self-check against the reviewer's rubric (evaluation dimensions in `.claude/agents/qc-reviewer.md`). Catches the highest-ROI findings without the cost of an external pass; avoids full-rewrite feedback cycles.
-- **Subagent-unavailable fallback (1M-credit exhaustion).** Independent QC requires spawning a subagent, and the harness forces 1M context onto every subagent. When subagent dispatch is impossible — most commonly a 1M-context session whose credits are exhausted by earlier subagent calls, so `qc-reviewer` fails on every per-dispatch model override with "Usage credits required for 1M context" — the gate is **unreachable, not waived**. Fallback posture: (a) run **inline self-QC** against the same rubric (`.claude/agents/qc-reviewer.md` dimensions) as a degraded substitute; (b) **surface the degradation in chat** — state that independent QC could not run and why, so the operator sees the gate was reached and blocked, not silently skipped; (c) treat a self-QC-only artifact as **provisionally cleared** and flag it for an independent pass when subagents are available again. Inline self-QC is a real check — it has caught material gaps — but it is not a full substitute for fresh context. **Architectural-change exception — commit-blocking, not provisional.** The (a)–(c) soft fallback above applies to routine artifacts only. When the unreachable-QC condition holds (dispatch fails with "Usage credits required for 1M context" *and* the conversation already exceeds 200k tokens, so a `/model` downgrade cannot fit the session into a standard-context window) **and** the artifact is an architectural change — any change in a `/risk-check` change class per `audit-discipline.md` § Risk-check change classes (hook edits, permission changes, cross-cutting CLAUDE.md edits, new commands/skills, new symlinks, shared-state automation) — self-QC does **not** clear it for commit. Do **not** commit. Instead: run `/handoff` continuity mode carrying a **QC-PENDING** directive (name the on-disk artifact paths; state that independent QC is required before commit), then `/clear` and resume in a fresh, small-context session where `/prime` surfaces the pending block, run independent `/qc-pass` there, and commit only after it passes. The edited files persist in the working tree across `/clear` — only the conversation is cleared — so the fresh session QCs the on-disk artifact directly. For architectural changes, **prevention is the primary path**, not the backstop: switch to a standard-context model via `/model` *before* the QC gate, or run QC early before context crosses 200k; the deferred-handoff route is what to do when prevention was missed. **Prevention beats fallback:** when a session is not yet credit-exhausted but a subagent-heavy stretch is coming (≈1M-context session + 2+ prior subagent calls), switch to a standard-context model via `/model` *before* the QC gate is exercised rather than after it fails.
+Review must run with fresh context to avoid self-evaluation bias: a reviewer that watched the work being made cannot judge it independently. That is why the reviewer is a different model or a subagent that receives only the artifact — never the conversation that produced it.
 
-**How the deferred block actually resurfaces — the `/prime` Step 1b end of the contract.** The deferral above only works if the fresh session is *told*, so `/prime` Step 1b gives a `**QC-PENDING:**` scratchpad two privileges over ordinary continuity scratchpads: it is selected regardless of mtime when several exist, and it is **exempt from the date-supersession skip** that would otherwise bury it under a newer, more trivial scratchpad. It then surfaces as a commit-block advisory *and* as menu item 1. Both privileges are load-bearing — a commit-block that a later trivial wrap can hide is not a block. The action is the scratchpad's `## Resume With` first line; the marker line itself is not the action. (Rationale relocated from `prime.md` 2026-07-29, stream `2026-07-29-prime-minimum-responsibility`, Slice 4; the selection rules themselves stay executable in Step 1b.)
+## The rule
 
-# QC → Triage Auto-Loop
+| Change | Review |
+|---|---|
+| **Small or mechanical** | **None.** Deterministic verification only — run the thing, grep the result, read the file back. |
+| **Normal, consequential** | **One Codex review** of the result, after deterministic evidence exists. Fix material findings, then finish. |
+| **High-consequence or destructive** | **One risk-aware Codex review** (§ Risk-aware review) before implementation; operator decision where the review surfaces one; then implement behind the deterministic execution-time safeguards, which are never removed. |
 
-Finding generation is bounded upstream by the **materiality floor** (`docs/materiality-bar.md`): a review subagent lists an observation as a Finding only when it can name a concrete consequence of not fixing it. Cosmetic/preference observations stay out of Findings (Notes at most), so the auto-loop below runs on material findings only — fewer items reach triage, and trivia never becomes backlog. The floor governs what counts as a finding, not whether to review; high-stakes work still gets the full pass.
+**Small or mechanical** — a substitution-shaped edit to a repo-infrastructure file (settings, commands, agents, SKILL.md, CLAUDE.md, hooks, prompts, and analogous infra): string and typo fixes, value edits, permission entries, path or key renames, reference updates, small wording corrections. Also: ≤5 lines changed where intent is unambiguous *and* the correct form is already validated elsewhere in the repo. Formatting and whitespace changes are always in this row. It does **not** cover new files, new sections or capabilities, or structural reorganization — those are consequential.
 
-Whenever a QC subagent (`qc-reviewer`, `qc-gate`, `refinement-reviewer`, post-edit QC, or any `/qc-pass` or `/refinement-pass` output) returns findings:
+**High-consequence or destructive** — the change falls in a structural change class (`audit-discipline.md` § Risk-check change classes: hook edits, permission changes, cross-cutting CLAUDE.md edits, new commands or skills, new symlinks, shared-state automation), or it deletes, overwrites or moves something `git revert` cannot recover.
 
-1. **Auto-spawn `triage-reviewer` subagent** on the **Findings** (not Notes). Skip triage entirely when qc-reviewer returned verdict GO and either (a) all content is under the Notes section (only `[Out-of-scope]` observations), or (b) the rubric was `mechanical-mode` with all M-checks Clear. In either case, spawning triage re-escalates what QC correctly deprioritized or runs on an empty findings list. Pass the scope line from qc-reviewer's output into the triage brief so triage can apply the Out-of-scope → Park default to any remaining tagged findings.
-2. **Apply everything triage outputs** — Keep / Fix / Rework items, including structural rework.
-3. **Run post-edit QC subagent** (fresh context) on the modified artifact. (Skip per QC Independence Rule skip conditions when applicable — see post-edit QC mandatory clause above.)
-4. **If post-edit QC surfaces new findings**, apply one more triage + fix pass.
-5. **Stop after the second post-edit QC** regardless of result. Report the final verdict in the turn summary.
+Sizing is a judgment about *consequence*, not about effort or line count. When a change sits between two rows, take the heavier one.
 
-Cap the loop at two post-edit passes — if two passes don't clean the artifact, the problem is structural and the operator decides.
+## Codex is the reviewer
 
-**Cap-exhaustion is a halt-and-surface, not a quiet stop.** When the second post-edit QC returns an unresolved REVISE, the operator can only decide if they are told there is something to decide. Do not simply fall out of the loop. Halt and surface, in the turn summary:
+For `/work-loop`-routed work, Codex is the independent review (`docs/work-loop.md` § Route → depth → stops). No Claude QC pass runs in addition to it — that is the duplication this rule exists to prevent.
 
-- the findings still unresolved after the final pass, each with the consequence QC named for it;
-- how many triage + fix passes ran, and what each changed;
-- the final verdict, stated as unresolved — never rounded up to GO because the passes ran out.
+Outside `/work-loop`, consequential work still gets one review. Route it through `/work-loop`, or run `/qc-pass` once as the deliberate substitute. What is not permitted is running both, or running either twice for reassurance.
 
-The artifact is **not** cleared by exhausting the cap. Treat it as blocked pending the operator's call, and say so explicitly rather than continuing as though QC had passed.
+**No general review fires automatically.** `/qc-pass`, `/refinement-pass`, `/refinement-deep`, `/triage`, `/resolve` and `/risk-check` are operator-invoked. No command, hook or policy spawns them on its own.
+
+> **In transition (2026-07-29).** The line above states the policy, which is authoritative from now. It is not yet a description of every file: callers that still spawn a review automatically are being removed slice by slice, and `/prime` and `/session-plan` are excluded from that work entirely, so they keep firing until their own follow-up lands. Where a caller and this rule disagree, **this rule wins and the caller is stale** — do not restore an automatic review because a command still asks for one.
+
+## Risk-aware review
+
+For the third row, the review brief carries these seven dimensions in addition to the ordinary review: **usage cost, permissions surface, blast radius on other components, reversibility, hidden coupling, principle alignment, and problem reality** (was the defect observed, or only inferred?).
+
+**Premise-verification precondition.** Before the review is briefed, the requester runs a bounded pre-dispatch premise check on the payload: run every script it cites, open every line it cites, and re-derive every count, recording the primitive used. Correct any false claim *before* the reviewer sees it. A review that reasons from an unverified premise produces confident, expensive, wrong output — the ~360k-token miss of 2026-07-14 (`logs/improvement-log.md`). This applies Problem Reality to the review's **input**, symmetric with the dimension applied to its **output**.
+
+An explicit consumer inventory belongs in the payload, not in the reviewer: enumerating consumers is a grep, and `skills/ai-resource-builder/SKILL.md` § Consumer-Inventory Gate already owns it at the cheaper point.
+
+## Context isolation
+
+Reviewers receive only the artifact, the criteria, and the artifact's declared purpose. Never pass conversation history, creation rationale, or operator feedback.
+
+## When the reviewer cannot be reached
+
+Codex unreachable, or subagent dispatch impossible (most often a 1M-context session whose credits are exhausted, failing with "Usage credits required for 1M context"):
+
+1. Use the **explicitly chosen fallback** — `/qc-pass` for a Codex-unreachable review, or inline self-review against the same criteria when no subagent can spawn at all.
+2. **Surface the degradation** in chat: state that the intended review could not run, and why. The gate was reached and blocked, not silently skipped.
+3. **Record the result as `unassessed`**, never as passed.
+
+Inline self-review is a real check and has caught material gaps, but it is not a substitute for fresh context. **Prevention beats fallback:** when a subagent-heavy stretch is coming in a 1M-context session, switch to a standard-context model via `/model` *before* the review, not after it fails.
+
+There is no commit-block and no deferred-session requirement. A change whose review is recorded `unassessed` is visible as such; the operator decides whether that is acceptable.
+
+## Findings
+
+Finding generation is bounded by the **materiality floor** (`docs/materiality-bar.md`): a reviewer lists an observation as a Finding only when it can name a concrete consequence of not fixing it. Cosmetic and preference observations stay out of Findings (Notes at most). The floor governs what counts as a finding, not whether to review.
+
+Apply what the review found. **Fixing findings is not a new review cycle** — the fix is the work, and it does not earn another pass.
+
+**A second review happens only when the first found a material issue that forced a redesign** — not on a pass counter, and never on a wish for more assurance. Reviewing the redesign is reviewing a different artifact; re-reviewing the same artifact for reassurance is the pattern this file removes.
+
+**An unresolved material finding is a halt-and-surface, not a quiet stop.** When a material finding is left unresolved, say so in the turn summary — the finding, the consequence the review named for it, and the verdict stated as unresolved, never rounded up to passing. The artifact is not cleared by the review having happened. Treat it as blocked pending the operator's call, and say so explicitly.
+
+---
+
+*Retired 2026-07-29 (stream `2026-07-29-review-layer-consolidation`): the mandatory post-edit QC pass, the plan-QC requirement, the QC → Triage auto-loop with its two-pass cap, and the QC-PENDING commit-block and deferred-session architecture. Rationale and consumer inventory: `logs/decisions.md`. Callers still referencing them are listed as sequenced follow-up in that entry — they are known, not missed.*

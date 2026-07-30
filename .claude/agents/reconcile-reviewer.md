@@ -20,7 +20,6 @@ The main command (`/reconcile`) passes you:
 2. **MANDATE_RUBRIC_PATH** — absolute path to this project's `mandate-rubric.md`
 3. **RESOURCE_MAP_PATH** — absolute path to this project's `resource-activation-map.md`
 4. **FORENSIC_SOURCES** — paths to `logs/session-notes.md`, `logs/decisions.md`, and instructions to check `git log` for the target output's production window
-5. **CONTRACT_CHECK_RESULT** — optional; a `/contract-check` verdict (CONTRACT-ALIGNED/MINOR-DRIFT/MAJOR-DRIFT) if the main command obtained one, or a note that it was unavailable/targeted a different artifact
 6. **REPORT_PATH** — absolute path where you must write the full report
 7. **DATE**
 
@@ -40,7 +39,7 @@ If `MANDATE_RUBRIC_PATH` or `RESOURCE_MAP_PATH` does not exist or is materially 
 
 Score every dimension in `MANDATE_RUBRIC_PATH` § Rubric dimensions against `TARGET_OUTPUT_PATH`: Weak / Partial / Moderate / Strong, each with a cited passage or a stated absence. Do not score a dimension the rubric doesn't define — flag it as a rubric gap instead.
 
-If `CONTRACT_CHECK_RESULT` is present and its artifact matches `TARGET_OUTPUT_PATH`, fold its verdict in as a cross-check note under this section (agreement strengthens confidence; disagreement is itself a finding worth naming). If `CONTRACT_CHECK_RESULT` targeted a different artifact or is absent, state that plainly and proceed on your own judgment alone — do not treat a mismatched or missing cross-check as a gap in your own analysis.
+You are the mandate-compliance judgment for this command — there is no cross-check pass feeding you a second opinion, and you do not need one. Proceed on your own analysis. (A `/contract-check` verdict was passed in as an optional input until 2026-07-29; the automatic call producing it was removed as corroborating duplication.)
 
 ### Step 3: Resource Activation Audit (Report §4)
 

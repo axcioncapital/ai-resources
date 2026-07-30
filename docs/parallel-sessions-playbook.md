@@ -91,7 +91,7 @@ The workspace has a marker contract and three guards. **They detect collisions; 
 The principle: **if no two sessions write the same file (logs included), there are zero conflicts.** Two ways to get there:
 
 - **Serialized closing pass (default, no harness change).** Sessions do their work in isolation; logs are reconciled at the landing phase as unions (§ 5). This is what the current harness supports today.
-- **Per-session log namespacing (a harness change — gated).** Giving each session its own log files removes the bookkeeping-conflict surface entirely. **This is not a free win.** It trades merge-conflicts for **history fragmentation** plus a reconciliation step, and it would change the marker contract's file-naming and tracking policy. It is a structural change: route it through `/risk-check`, update the `docs/session-marker.md` two-end registry, and present it as a tradeoff — never silently adopt it as "obviously better."
+- **Per-session log namespacing (a harness change — gated).** Giving each session its own log files removes the bookkeeping-conflict surface entirely. **This is not a free win.** It trades merge-conflicts for **history fragmentation** plus a reconciliation step, and it would change the marker contract's file-naming and tracking policy. It is a structural change: high-consequence, so it takes one risk-aware review before landing (`ai-resources/docs/qc-independence.md` § The rule), update the `docs/session-marker.md` two-end registry, and present it as a tradeoff — never silently adopt it as "obviously better."
 
 ### The "[IN FLIGHT]" coordination marker — and its merge rule
 
@@ -159,7 +159,7 @@ These lessons were validated by *actually landing* a 3-branch run, then pushing 
 
 ### Worked example of state-file leakage (cross-reference)
 
-`logs/.prime-mtime` and `logs/.session-marker` are per-session transient state — written fresh each session, read within-session by the guards, **never meant to be shared through git.** In the origin project they were tracked or got committed, so every session re-committed them and they caused dirty-tree blocks before merges. The local fix: `git rm --cached logs/.prime-mtime logs/.session-marker` + add both to `.gitignore` + one cleanup commit (`--cached` keeps the local files so the harness still works). Because the harness writes these markers in **every** project, the same `.gitignore` lines almost certainly belong in every project's `.gitignore` — that workspace-wide sweep is a separate, `/risk-check`-scoped hygiene item, not part of running a parallel session. This is the canonical example of the "quarantine shared state" principle applied to transient markers.
+`logs/.prime-mtime` and `logs/.session-marker` are per-session transient state — written fresh each session, read within-session by the guards, **never meant to be shared through git.** In the origin project they were tracked or got committed, so every session re-committed them and they caused dirty-tree blocks before merges. The local fix: `git rm --cached logs/.prime-mtime logs/.session-marker` + add both to `.gitignore` + one cleanup commit (`--cached` keeps the local files so the harness still works). Because the harness writes these markers in **every** project, the same `.gitignore` lines almost certainly belong in every project's `.gitignore` — that workspace-wide sweep is a separate change-class hygiene item taking its own one review, not part of running a parallel session. This is the canonical example of the "quarantine shared state" principle applied to transient markers.
 
 ---
 
@@ -224,7 +224,7 @@ _Provisional — see currency note below._ The decision rule the System Owner ap
 1. **Draw the file-ownership map first.** Can't draw it without overlap → don't parallelize (§ 6, Branch B).
 2. **Two co-dominant levers:** clean decomposition *and* high autonomy. Missing either → sequential.
 3. **Bias to new files.** Additions parallelize free; shared-file edits are the whole conflict surface.
-4. **Quarantine bookkeeping;** per-session log namespacing is a `/risk-check`-gated harness change, not a free win.
+4. **Quarantine bookkeeping;** per-session log namespacing is a high-consequence harness change taking one risk-aware review, not a free win.
 5. **Land deliberately:** clean target first, merge one branch at a time, gate only content conflicts, integration-QC for "both sides present," then **tear down** (live-session-aware ordering).
 6. **The remote is multi-writer too:** `pull --rebase`, push small and often; divergence is a standing condition.
 7. **Name the target:** wall-clock vs total effort vs cost — they give different answers.

@@ -2163,3 +2163,34 @@ brief and route classification (likely `reviewed` — a shared command file, one
 - **Friction source:** Observed directly, session `2026-07-29-leverage-idea`. A `git rm --quiet inbox/leverage-idea-lifecycle-routing.md` was run to archive a fulfilled brief. The follow-on `git add <5 other paths> inbox/leverage-idea-lifecycle-routing.md` (the removed path still listed, stale) aborted with `fatal: pathspec 'inbox/leverage-idea-lifecycle-routing.md' did not match any files` and staged **none** of the 6 paths — but the subsequent `git commit` still ran and committed whatever happened to already be staged (just the deletion, from the `git rm`), silently, with no indication that 5 intended files were missing. Caught only because this repo's own commit discipline mandates verifying the result afterward (`git show --stat`), not because anything blocked the bad commit from happening.
 - **Proposal:** No fix to a shared component proposed here — this is a single `git add` invocation's own failure semantics (a partial-pathspec-match aborts staging but does not prevent a subsequent commit from proceeding on the stale index). Two directions worth considering in a dedicated session: (a) a lightweight local habit/tooling change — verify `git diff --cached --name-only` matches the intended file list before every commit, not just after; (b) whether this is common enough across sessions to warrant a structural guard (a pre-commit check comparing staged-file-count against the invoking session's declared intent). Not proposing (b) here — one observed instance, caught safely, is evidence-class "one-off but consequential," not yet "recurring."
 - **Target files:** none identified yet — this is a process observation, not a code-target defect.
+### 2026-07-29 — `check-foreign-staging.sh` guard degrades to warn-only on any `/handoff`-resumed session
+
+- **Status:** logged (pending)
+- **Severity:** medium-high — it fails open in exactly the condition it exists to catch. Observed live this session: a concurrent session was writing to the same worktree while the guard was off for all five of this session's commits.
+- **Category:** hook / staging safety (`.claude/hooks/check-foreign-staging.sh`)
+- **Source:** `ai-resources` session, 2026-07-29 — `/work-loop` review-layer-consolidation Prove + G2, resumed from `/handoff` with no `/session-start`.
+
+The guard reads this session's declared footprint from the session marker that `/session-start` Step 2.5 writes. A session resumed from a `/handoff` scratchpad never runs `/prime` → `/session-start`, so no marker exists, no concrete footprint is found, and the guard drops to warn-only: it prints `No concrete session footprint declared … the foreign-file staging guard is OFF for this commit` and stages whatever it is given.
+
+**Why this is the bad case rather than a cosmetic one.** Handoff-resumed sessions are, by construction, the ones most likely to share a worktree with another session — a handoff exists because work was split across sessions. This session hit exactly that: another session made four commits (`85a4bcc`, `ddfe7a4`, `315e0ae`, `89222f2`) into the same worktree and left `logs/friction-log.md` and `logs/innovation-registry.md` dirty, while the guard was off for every commit here. Nothing foreign was shipped, but only because staged paths were verified by hand each time — the mechanism was doing nothing.
+
+Note also that writing a `Files in scope:` line into the **commit message** does not satisfy it; the guard reads the marker, not the message. That is a reasonable design, but the warn text does not say so, so the natural repair attempt fails silently.
+
+**Proposal.** Either have `/handoff`'s resume path write a footprint marker equivalent to `/session-start` Step 2.5, or make the warn text name the actual remedy (`run /session-start to declare a footprint`) instead of describing the degraded state. The first is the structural fix; the second is the one-line stopgap.
+
+**Target files:** `.claude/hooks/check-foreign-staging.sh`; `skills/handoff/SKILL.md` (resume path); possibly `.claude/commands/session-start.md` Step 2.5.
+
+### 2026-07-29 — `/work-loop` consumer-count falsifiers cannot be re-derived; the counting scope is never recorded
+
+- **Status:** logged (pending)
+- **Severity:** medium — it does not corrupt anything, but it makes a falsifier unverifiable at exactly the phase whose job is verification, and the failure is silent: three plausible scopes each return a confident wrong number.
+- **Category:** workflow / falsifier design (`docs/work-loop.md`, Shape plan convention)
+- **Source:** `ai-resources` session, 2026-07-29 — Prove unit of the review-layer-consolidation stream.
+
+The Shape plan (`plan-v3` § 8) fixed twelve consumer counts (qc-pass 26, consult 28, reconcile 15, …) and falsifier 2 was "count regression." At Prove those counts could not be reproduced: counting from the workspace root gave 38/39/19, excluding archives and sibling worktrees gave 31/32/16, and neither matched § 8. The plan records the numbers but not the command, root, or exclusion set that produced them — so a later unit cannot tell a real regression from a scope mismatch, and the natural move is to keep adjusting exclusions until the numbers agree, which proves nothing.
+
+Falsifier 2 was closed here on a structural argument instead (content-only edits, no file added or deleted under any `commands/` path, no symlink mode change — therefore no count can have moved). That is sound and is arguably the better check, but it was reached by working around the gap rather than through it.
+
+**Proposal.** Require any Shape plan that states a count to state the **derivation** beside it — the exact command including root and exclusions, in one line. Cheap to write once, and it converts an unfalsifiable number into a falsifiable one. Worth considering more generally: a falsifier phrased as a re-derived absolute count is fragile; one phrased structurally ("no file added or deleted under X") is not.
+
+**Target files:** `docs/work-loop.md` § The challenged route (Shape's falsification-criteria guidance).

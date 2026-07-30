@@ -54,7 +54,7 @@ Reference material: `harness/prep/` at workspace root — mandate template, repo
 
 - **`/friction-log [what happened]`** — Log anything awkward, slow, or broken. Just describe it, don't diagnose.
 - **`/note [observation]`** — Log a workflow observation as it happens.
-- **`/triage`** — When Claude proposes changes or suggestions, run this before approving to get them prioritized.
+- **`/triage`** — When Claude proposes many changes at once, run this to get them ranked before you decide. Optional — nothing invokes it for you.
 
 ### After approving any section: 60-second coherence scan
 
@@ -66,8 +66,8 @@ Your feedback is specific and actionable — but if it's always corrections, the
 
 ## After Producing Work
 
-- **`/qc-pass`** — Run a quality check on work just produced. Default after every creation or improvement.
-- **`/refinement-pass`** — Run a refinement pass on work just produced (after QC passes).
+- **`/qc-pass`** — Run a quality check on work just produced. **Not a default** — a change gets one independent review, sized to its consequence (`qc-independence.md` § The rule). Reach for this when Codex is not reviewing the change, or when you want a second look on something genuinely hard.
+- **`/refinement-pass`** — Run a refinement pass on writing quality. Independent of the correctness review, not a stage after it.
 
 ## Pre-Compact Checkpoint (~50% context)
 

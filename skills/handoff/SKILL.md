@@ -72,10 +72,6 @@ Written to: `logs/scratchpads/{YYYY-MM-DD}-{HH-MM}-scratchpad.md`
 # Session Scratchpad — {date} {time}
 
 **Saved at:** {ISO 8601 timestamp}
-{**QC-PENDING:** include ONLY when this handoff defers an architectural change
-whose independent QC could not run — value names the on-disk artifact path(s)
-and states "independent /qc-pass required before commit". Omit otherwise.
-See Step C1 → QC-PENDING handoffs.}
 
 ## Current Task
 {Stage, step, command, specific activity}
@@ -174,28 +170,19 @@ context — you already know what was produced this session.
 format above. Omit any section that has no content (e.g., no decisions → skip
 that section entirely).
 
-**QC-PENDING handoffs (architectural-change commit-block).** When this handoff
-is triggered because an architectural change could not get independent QC — the
-1M-context QC gate, see `docs/qc-independence.md` § Subagent-unavailable
-fallback — encode the commit-block explicitly so it survives `/clear` and the
-fresh session cannot miss it:
-1. Add a `**QC-PENDING:**` line right after `**Saved at:**`, naming the on-disk
-   artifact path(s) and stating "independent /qc-pass required before commit".
-2. Populate `## Resume With` so the resume action is self-contained and owns
-   its own cleanup. FIRST line (the part `/prime` promotes to menu item 1):
-   "Run independent `/qc-pass` on {artifact paths}, then commit — do NOT commit
-   before QC passes (architectural change, QC was unreachable in the prior
-   session)." Then add a FINAL line: "After the commit lands, delete this
-   scratchpad (`logs/scratchpads/{this file}`) so the QC-PENDING block drains
-   and `/prime` stops surfacing it." The deletion is owned by this resume
-   action — no other command performs it.
-3. Add a matching `## Operator Directives` entry restating the commit-block.
+**Unreached-review handoffs.** When this handoff carries a change whose
+independent review could not be reached, do not invent a commit-block. Record
+it the way `docs/qc-independence.md` § When the reviewer cannot be reached
+requires: name the on-disk artifact path(s) in `## Current Task`, state the
+result as `unassessed`, and put "obtain an independent review of {artifact
+paths}, or accept it unassessed" as the first line of `## Resume With` so it
+becomes the fresh session's menu item 1. The operator decides whether the gap
+is acceptable; nothing is blocked on their behalf.
 
-`/prime` recognizes the `**QC-PENDING:**` marker, surfaces it as a blocking
-carryover, and exempts it from the newer-scratchpad supersession skip — so the
-block is not silently buried. Because the supersession-exemption keeps the block
-alive until removed, the resume action's final delete step (item 2) is what
-drains it; without that delete the warning would re-surface every session.
+*(The `**QC-PENDING:**` marker and its commit-block were retired 2026-07-29 —
+stream `2026-07-29-review-layer-consolidation`. `/prime` still carries marker
+detection; it is inert, because nothing writes the marker any more, and it is
+removed by that stream's named prime-owned follow-up.)*
 
 **C2 — Confirm.** After writing, output the file path and remind the operator:
 - Run `/clear` to start fresh, then `/prime` to resume

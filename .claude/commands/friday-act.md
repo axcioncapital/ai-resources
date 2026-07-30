@@ -4,7 +4,7 @@ model: sonnet
 
 # /friday-act — Session 2 of the Friday cadence (operator-driven fixes)
 
-Consume the freshest `/friday-checkup` report, disposition items, and produce plan files for follow-up implementation sessions. Tier-differentiated decision shape: weekly = tactical fixes; monthly = + policy-level review; quarterly = + architectural retrospective. `/risk-check` annotations are written into plan files; the gate runs at execution time. Captures repo-health observations and next-week autonomy-axis posture targets at exit.
+Consume the freshest `/friday-checkup` report, disposition items, and produce plan files for follow-up implementation sessions. Tier-differentiated decision shape: weekly = tactical fixes; monthly = + policy-level review; quarterly = + architectural retrospective. High-consequence annotations are written into plan files; the annotated item takes its one risk-aware review at execution time. Captures repo-health observations and next-week autonomy-axis posture targets at exit.
 
 This command is Session 2 of the Friday cadence. It does not re-run audits — `/friday-checkup` is Session 1. If audit logic is needed, this command refuses and redirects.
 
@@ -172,9 +172,9 @@ If active count ≤ 7, proceed silently.
     - **Empty response (Enter):** accept the default disposition string from 13a. Set `triage_source = auto-default` for every item in the batch.
     - **Non-empty response:** validate against `^[fds]+$` and that length matches item count. Re-prompt on mismatch. On valid override, set `triage_source = operator-override` for every item in the batch.
 15. For each item dispositioned `f`:
-    a. Check whether the fix touches a `/risk-check` change class (per `ai-resources/docs/audit-discipline.md` § Risk-check change classes — hook file (`.sh`), `settings.json`, workspace `CLAUDE.md`, project `CLAUDE.md`, a new command/skill path, a new symlink, or auto-write/cross-repo automation). If yes, record `risk_check_required: true`; otherwise `false`. Do not prompt the operator — the gate runs at execution time in the follow-up session.
+    a. Check whether the fix touches a `/risk-check` change class (per `ai-resources/docs/audit-discipline.md` § Risk-check change classes — hook file (`.sh`), `settings.json`, workspace `CLAUDE.md`, project `CLAUDE.md`, a new command/skill path, a new symlink, or auto-write/cross-repo automation). If yes, record `high_consequence: true`; otherwise `false`. Do not prompt the operator — the item takes its one risk-aware review at execution time in the follow-up session (`ai-resources/docs/qc-independence.md` § The rule).
     b. If the item's source label starts with `repo-documentation:w2-4-improvements`, record `w2_4_source: true`; otherwise `false`. No agent is spawned here — the auto-draft sub-disposition runs in the follow-up session when the operator executes the plan.
-    c. Append the item to `FIX_NOW_ITEMS` with fields: `{source: checkup, risk, text, risk_check_required, w2_4_source, triage_source}`.
+    c. Append the item to `FIX_NOW_ITEMS` with fields: `{source: checkup, risk, text, high_consequence, w2_4_source, triage_source}`.
 
 16. Items dispositioned `d` are accumulated for Step 5 logging.
 
@@ -269,24 +269,23 @@ where risk ∈ {high, med, low}. Empty line to finish, or `(none)` to skip.
 
 ### {ordinal}. [{risk}] {item text}
 - **Source:** {checkup | so-derived | journal-derived}
-- **Risk-check required:** {yes — change class: {class} | no}
+- **High-consequence:** {yes — change class: {class} | no}
 - **W2.4 auto-draft:** {yes — decide (a) auto-draft or (b) manual at execution time | no}
 
 (repeat for each item, ordered high → med → low within this plan)
 
 ## Execution notes
 - Commit each fix separately (workspace commit-behavior rules).
-- For any item marked "Risk-check required: yes", run `/risk-check` before executing that item.
+- For any item marked "High-consequence: yes", give it one risk-aware review before executing that item (`ai-resources/docs/qc-independence.md` § The rule).
 - For any item marked "W2.4 auto-draft: yes", decide auto-draft vs. manual at execution time per the W2.4 sub-disposition in the `/friday-act` Step 3 W2.4 instructions.
 - Run `/wrap-session` when all items in this plan are done.
 ```
 
-16k. **Plan-file QC (automatic).** Before announcing the plans, QC the files written in 16j — plan files are substantive artifacts and fall under the workspace QC rule ("run `/qc-pass` after producing any substantive artifact or plan, before commit").
-   - Invoke `/qc-pass`. The QC target is the set of `{TODAY}-{slug}.md` files written in 16j; the evaluation criteria are the Step 3.6 plan-file schema and the risk-check change-class list in `ai-resources/docs/audit-discipline.md` § Risk-check change classes. Flag in particular any incorrect `Risk-check required:` annotation — a change class asserted for a change not on the canonical list, or a real change class missed.
-   - **GO / no findings:** proceed to 16l.
-   - **Findings returned:** the QC → Triage auto-loop applies (`ai-resources/docs/qc-independence.md`). Apply the corrections to the affected plan file(s) in place. Editorial DISAGREE verdicts that cannot be self-resolved from the change-class list are surfaced to the operator per Autonomy Rule #4.
-   - This QC reviews plan-file content only — it does not re-open the operator's `f/d/s` dispositions from Steps 3 and 3.5.
-   - Carry the QC outcome (`GO` or `{N} finding(s) fixed`) to the 16l summary.
+16k. **Plan-file review — offered, not automatic.** Before announcing the plans, offer one line: `Optional: review the plan files written in 16j? (y/n)`. Run `/qc-pass` only on `y`, scoped to the `{TODAY}-{slug}.md` files, evaluating against the Step 3.6 plan-file schema and the change-class list in `ai-resources/docs/audit-discipline.md` § Risk-check change classes — in particular any incorrect `High-consequence:` annotation, asserted for a change not on the canonical list or missed for one that is.
+   - Apply what the review finds directly to the affected plan file(s). Applying findings is the work; it does not earn a second pass (`ai-resources/docs/qc-independence.md` § Findings).
+   - A material finding that cannot be self-resolved from the change-class list is surfaced to the operator per Autonomy Rule #4.
+   - This never re-opens the operator's `f/d/s` dispositions from Steps 3 and 3.5.
+   - Carry the outcome (`skipped`, `no findings`, or `{N} finding(s) fixed`) to the 16l summary.
 
 16l. Print to operator:
 ```
@@ -318,7 +317,7 @@ Open each plan in a follow-up session to execute. Implement all plans before nex
     ```
 19. Wait for per-observation disposition. For each `r`:
     - Prompt: `Proposed rule edit for "{observation}" (one or two lines):`
-    - Capture the operator's text. **Do NOT auto-edit CLAUDE.md or audit-discipline.md.** Rule edits are structural and must go through their own plan + `/risk-check` cycle in a follow-up session. Log the proposal to the session block in Step 5 under a `Policy proposals` subsection.
+    - Capture the operator's text. **Do NOT auto-edit CLAUDE.md or audit-discipline.md.** Rule edits are structural and high-consequence: they go through their own plan plus one risk-aware review in a follow-up session (`ai-resources/docs/qc-independence.md` § The rule). Log the proposal to the session block in Step 5 under a `Policy proposals` subsection.
     - Defer execution. Step 5 closeout reminds the operator to schedule a follow-up session for the rule edits.
 20. For `n` and `d` dispositions: log under `Policy review` in the session block, no further action.
 
@@ -341,7 +340,7 @@ Open each plan in a follow-up session to execute. Implement all plans before nex
       (n)o-change — noted, no action this cycle
       (d)efer   — re-evaluate next cycle
     ```
-20d. Wait for per-item disposition. For an adopted **rule-change** item, follow the same rule as Step 4's `r` disposition: capture proposed edit text, do NOT auto-edit CLAUDE.md or any command — log the proposal under the Step 5 `Policy proposals` subsection for a follow-up session with its own plan + `/risk-check`. Adopted constrain/stop items are operator working agreements — log them under `Session value review` in the Step 5 session block; no file edits from this step.
+20d. Wait for per-item disposition. For an adopted **rule-change** item, follow the same rule as Step 4's `r` disposition: capture proposed edit text, do NOT auto-edit CLAUDE.md or any command — log the proposal under the Step 5 `Policy proposals` subsection for a follow-up session with its own plan plus one risk-aware review. Adopted constrain/stop items are operator working agreements — log them under `Session value review` in the Step 5 session block; no file edits from this step.
 
 ---
 
@@ -468,7 +467,7 @@ Open each plan in a follow-up session to execute. Implement all plans before nex
     Session block appended to: ai-resources/logs/maintenance-observations.md
 
     {If any policy proposals were captured:}
-    Policy proposals captured — schedule a follow-up session to draft + /risk-check the rule edits.
+    Policy proposals captured — schedule a follow-up session to draft the rule edits and give them their one risk-aware review.
 
     Suggested next: /wrap-session
     ```
@@ -485,9 +484,9 @@ Open each plan in a follow-up session to execute. Implement all plans before nex
 - **Project-internal logs (Steps 1.5 + 16a).** `/friday-act` enumerates scoped projects from the checkup report's `## Scopes audited` block and reads each scoped project's `improvement-log.md` (active entries), `session-notes.md` (last 3 entries), and `friction-log.md` (last 5 entries, if present) at Step 16a. These reads surface project-internal context the checkup roll-up may have compressed — recurring friction, in-flight improvement work, recent decisions. Items derived from these reads feed into the same paste-prompt as SO-derived items (16b–16e) and are labeled `so-derived` in `RESULTS` for subtotal purposes (the source label distinguishes paste-input from journal-derived; project-derived items are paste-input mechanically).
 - **Token cost of Step 16a (delegated to subagent).** Step 16a delegates all supplementary-input reads to the `friday-act-16a-summarizer` subagent, which writes full extraction to `audits/working/friday-act-step16a-{TODAY}.md` and returns a ≤30-line paste-ready summary. Main-session context cost is bounded by the summary cap rather than raw section volume (pre-delegation: ~500–1500 lines for a typical 2–3-project run). If running near context limits, the ≤30-line cap removes the need to split the disposition session. Step 3 and the checkup report itself are unaffected.
 - **7-day vs. 10-day filter rationale.** Supplementary inputs (Friday Advisory, Systems Review, Journal Report) all use a **7-day** filename-date filter — these are session-window-scoped artifacts produced for a specific Friday and stale beyond that week. The checkup report itself uses a **10-day** abort threshold (Step 1.7) because it pairs with the `friday-checkup-reminder.sh` hook's recovery-Friday window; a 10-day grace allows skipped-Friday recovery without re-running the audit. The two thresholds are intentionally distinct: 7-day = "fresh for this Friday's session"; 10-day = "fresh enough to still be the basis for action."
-- **`/risk-check` gate (Step 3.6).** The change-class check runs at plan-write time (Step 3.6) to annotate plan files — it does NOT prompt the operator or invoke `/risk-check` during `/friday-act`. The gate runs in the follow-up session, immediately before executing the flagged item.
-- **Plan-file QC (Step 3.6, sub-step 16k).** After plan files are written, `/friday-act` runs an automatic `/qc-pass` on them before announcing them — plan files are substantive artifacts subject to the workspace QC rule. The failure mode this guards is an incorrect `Risk-check required:` annotation; added 2026-05-22 after a cycle shipped 4 wrong annotations caught only by later operator review. Findings are corrected in place via the QC → Triage auto-loop; the QC outcome is reported in the 16l summary.
-- **No auto-edit of CLAUDE.md or audit-discipline.md.** Policy proposals (Step 4) capture intent; the rule edits themselves go through their own plan + `/risk-check` cycle.
+- **Change-class annotation (Step 3.6).** The change-class check runs at plan-write time to annotate plan files — it does NOT invoke anything during `/friday-act`. The annotated item takes its risk-aware review in the follow-up session, immediately before it is executed.
+- **Plan-file review (sub-step 16k).** Offered, never automatic (2026-07-29). The failure mode it guards is an incorrect `High-consequence:` annotation; it was added 2026-05-22 after a cycle shipped 4 wrong annotations caught only by later operator review, and that evidence is why it is retained as an offer rather than dropped. Findings are applied in place, once; the outcome is reported in the 16l summary.
+- **No auto-edit of CLAUDE.md or audit-discipline.md.** Policy proposals (Step 4) capture intent; the rule edits themselves are high-consequence and go through their own plan plus one risk-aware review.
 - **Coaching-log untouched.** The seven autonomy axes are forward-looking weekly posture targets; coaching-log's five session-pattern dimensions are backward-looking session ratings. Different orientation, kept separate (per workspace decision 2026-04-24).
 - **Skipped-Friday recovery.** If `DAYS > 10` (Step 1.7), the command refuses. Recovery flow: run `/friday-checkup` first; that command's Step 0 will offer recovery-Friday vs. fold-into-next-Friday options; then re-invoke `/friday-act` against the fresh report.
 - **Plan branching (Step 3.6).** Fix-now items are written to plan files in `audits/friday-plans/`, never executed inline. Threshold: ≤ 4 items → one `{date}-consolidated.md`; > 4 → one `{date}-{area-slug}.md` per file/area group (items with no identifiable path target go into `{date}-general.md`). Plan files use a fixed schema (see Step 3.6). Each plan is implemented in its own follow-up session before the next Friday. W2.4 auto-draft sub-disposition is deferred to the execution session; the plan file annotates the item as W2.4-sourced.

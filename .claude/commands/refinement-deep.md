@@ -4,6 +4,8 @@ model: opus
 
 Run a deep review of the work you just produced: QC + refinement in parallel, then triage the combined findings.
 
+> **Retirement deferred (2026-07-29).** This command *is* the stacked review the 2026-07-29 consolidation removed — three reviewers on one artifact. Nothing invokes it automatically any more, so it costs nothing while it sits. It is **not deleted** only because 26 projects link to it, one of them through a whole-directory symlink that would break every command at once; deletion needs a cross-project migration. Until then: reach for it only when a single review has genuinely failed to settle a hard artifact, never as the default. The default is one review, sized to the change (`ai-resources/docs/qc-independence.md` § The rule).
+
 ## Why this command?
 
 This orchestrates three independent review subagents in one invocation. QC checks correctness, refinement checks writing quality, and triage prioritizes the combined findings — so the operator gets a single, actionable report instead of running three separate commands.

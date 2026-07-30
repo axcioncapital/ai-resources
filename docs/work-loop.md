@@ -62,7 +62,7 @@ Universal — every unit of any type. Any one fires; ambiguity resolves **upward
 
 Capability units carry **additional** triggers owned by `skills/capability-development/SKILL.md` § Route triggers. That file cites this section and does not restate it.
 
-`/risk-check` fires at its own two gates on its own schedule (`docs/audit-discipline.md:73-81`), unchanged. The route never absorbs, replaces or reschedules it.
+A structural risk class does not fire a separate gate. It makes the change **high-consequence**, which is carried inside the route: the Codex review for that unit is briefed **risk-aware** (`docs/qc-independence.md` § Risk-aware review — the seven dimensions plus the premise-verification precondition), and a solo unit escalates rather than bolting a reviewer onto itself. One review, sized to the change.
 
 **Escalation** is additive: nothing already produced is discarded, and escalation into challenged arms G1 immediately. **De-escalation** requires every trigger disproven with cited evidence, only at a phase boundary, and never after a stop has approved the heavier route.
 
@@ -71,8 +71,8 @@ Capability units carry **additional** triggers owned by `skills/capability-devel
 | Route | Independent review | Operator stops |
 |---|---|---|
 | **solo** | None. A mandatory risk class escalates the route rather than bolting a gate onto it. | 0 |
-| **reviewed** | One Codex review of the result. `/qc-pass` only as fallback, when Codex cannot reach the object. | 1 — the lifecycle decision, and only when the stream has a genuine adoption question. A defect fix closes as `close` with no stop. |
-| **challenged** | Codex before implementation and after, **in separate units**. | 3 — G1 scope and package · G2 release · G3 lifecycle |
+| **reviewed** | One Codex review of the result — **risk-aware when the change is in a structural class**. `/qc-pass` only as fallback, when Codex cannot reach the object. | 1 — the lifecycle decision, and only when the stream has a genuine adoption question. A defect fix closes as `close` with no stop. |
+| **challenged** | Codex before implementation and after, **in separate units**. Both are **risk-aware** — a challenged route is high-consequence by construction. | 3 — G1 scope and package · G2 release · G3 lifecycle |
 
 ### The challenged route — gates and review placement
 
