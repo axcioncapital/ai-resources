@@ -62,7 +62,7 @@ for d in "$WORKSPACE_ROOT"/projects/*/; do
 done
 ```
 
-The scan is bounded by *output* (`--since` returns nothing for repos with no commits since the anchor), not by invocation count. A repo `--show-toplevel`-equal to one already scanned is skipped (no double-count). Any directory that is not a git repo, or whose `git` call errors, is skipped silently. This is the same merged scan `/prime` Step 1a runs; that is the reference implementation.
+The scan is bounded by *output* (`--since` returns nothing for repos with no commits since the anchor), not by invocation count. A repo `--show-toplevel`-equal to one already scanned is skipped (no double-count). Any directory that is not a git repo, or whose `git` call errors, is skipped silently. This is the same merged scan `/prime` Step 1a runs. Its **reference implementation** is `logs/scripts/prime-collect.sh` (the `COMMITS` block), tested by `logs/scripts/prime-collect.test.sh` TESTS 3 and 7 — read the script, not the command, when you need the exact shape.
 
 **Efficiency note.** Anchor dates cluster — many candidates share a date or fall after the same recent date. Run the merged scan once per **distinct (or earliest) anchor date** and reuse the result set across candidates that share it, rather than re-running git per candidate. The whole scan can usually collapse to one `--since=<earliest-anchor>` pass whose output is then matched against every candidate.
 
@@ -95,7 +95,7 @@ Classification is deliberately **conservative — biased toward false-negative o
 
 ## Fall-through on git failure
 
-If a `git` call fails, or the merged scan returns nothing, **treat the affected candidates as still-open and continue.** Reconciliation is best-effort: it can demote noise, but it must never block a scan or silently drop a candidate when git is unavailable. Same posture as `/prime` Step 1a.
+If a `git` call fails, or the merged scan returns nothing, **treat the affected candidates as still-open and continue.** Reconciliation is best-effort: it can demote noise, but it must never block a scan or silently drop a candidate when git is unavailable. Same posture as `/prime` Step 1a, whose collector exits 0 on every failure by contract.
 
 ## Consumers
 
@@ -108,4 +108,4 @@ Four call sites invoke this primitive. Changes to the mechanism here propagate t
 | `/fix-repo-issues` | Step 3 aggregation, before triage grouping | Folded into the **Skip** group, annotated with commit hash |
 | `/open-items` | Step 1/2 scan, anchored sources only | Separate "likely-already-done — verify" section below the live backlog |
 
-`/prime` Step 1a is the reference implementation of the merged git scan; this doc generalizes its logic for the other three consumers.
+`logs/scripts/prime-collect.sh` — the executing owner behind `/prime` Step 1a since 2026-07-30 — is the reference implementation of the merged git scan; this doc generalizes its logic for the other three consumers, and its test suite is what keeps the generalization honest.

@@ -102,7 +102,7 @@ It says: when reading archive/historical material, ask whether a specific downst
 
 ## Bounded-read recipes in `/prime` — why they are shaped as they are
 
-> **Rationale home only.** The **recipes themselves** — the greps, the offsets, the anchors, the filters — live in `.claude/commands/prime.md` Steps 1, 1c and 3, which is what executes them. This section holds only the reasoning and the incident history, so those steps stay short. Relocated from `prime.md` on 2026-07-29 (stream `2026-07-29-prime-minimum-responsibility`, Slice 4). **Never move a rule here:** a rule read from a doc either costs the tokens it was meant to save, or silently stops firing.
+> **Rationale home only.** The **recipes themselves** — the greps, the offsets, the anchors, the filters — live in `logs/scripts/prime-collect.sh`, which is what executes them, and are exercised by `logs/scripts/prime-collect.test.sh`. This section holds only the reasoning and the incident history, so `/prime`'s steps stay short. Relocated from `prime.md` on 2026-07-29 (stream `2026-07-29-prime-minimum-responsibility`, Slice 4); the recipes themselves moved out of `prime.md` and into the collector on 2026-07-30 (stream `2026-07-30-prime-session-entry-ownership`, S5) — the step numbers below are retained as the names those reads are still known by. **Never move a rule here:** a rule read from a doc either costs the tokens it was meant to save, or silently stops firing.
 
 ### Step 1 — why the last entry is located by grep, not by a line window
 
@@ -114,7 +114,7 @@ The anchor is `^## [0-9]` rather than `^## `, and that matters: a `## Heading` i
 
 ### Step 1c — why plan position is never read with a plain `Read`
 
-Plan files run long and grow monotonically. A full read here re-opens the exact cost class Step 3 exists to prevent (below), which is why the step greps for stage/phase headers and completion markers and reads only a bounded slice around the first incomplete one. **A future edit that "simplifies" this into a plain `Read` is a regression, not a simplification.**
+Plan files run long and grow monotonically. A full read here re-opens the exact cost class Step 3 exists to prevent (below), which is why the collector greps for stage/phase headers and completion markers and emits only a bounded slice around the first incomplete one. **A future edit that "simplifies" this into a plain `Read` is a regression, not a simplification.** The bound is now enforced by a test rather than by prose: `prime-collect.test.sh` TEST 5 runs an 800-line plan file through the cascade and fails if the emitted slice exceeds 45 lines.
 
 The step deliberately checks `pipeline-state.md` *before* the plan spine, inverting the order of the cascade it derives from (`.claude/commands/project-next-steps.md` Step 2). The state file is small and authoritative, so it is the cheap happy path and short-circuits the expensive one. That inversion is intentional; do not "correct" it back.
 

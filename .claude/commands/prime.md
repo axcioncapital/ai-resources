@@ -6,7 +6,7 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 
 **Principle:** Prime never asserts state from a single source. Each surfaced next-step or status claim must be cross-checked against git log since the claim's source timestamp before being reported as current.
 
-**Output + execution discipline:** The operator is a non-developer — the brief is short, scannable, plain English (short sentences, common words), and shows only what is needed to pick the next task; everything else stays silent unless it needs attention. Orientation issues many *independent* read-only git/file calls, so **batch them into one message**; firing them serially is the main avoidable latency. Safe to batch: **Step 1** (session-notes + the `usage-log` tail), **Step 1b**, and **Step 2**. **Three ordering dependencies must survive the batching — never hoist a dependent call ahead of what it needs:** (1) **Step 1a** needs `CWD_REPO`/`AI_RESOURCES` from Step 0 *and* the entry date from Step 1; (2) **Step 4**'s working-tree `git status` must run *after* Step 0's sync, so it sees post-pull state; (3) **Step 1c** needs Step 0 only — hoisted ahead of it, `CWD_REPO` is unresolved, the read silently misses and the brief block never renders. Step 1c does **not** depend on Step 1a — it deliberately does not consume that merged result set (wrongly scoped for plan position; see its ground-truth rule) — so those two may batch together once Step 0 has run. Everything else across steps 0–4 is independent and should be batched.
+**Output + execution discipline:** The operator is a non-developer — the brief is short, scannable, plain English (short sentences, common words), and shows only what is needed to pick the next task; everything else stays silent unless it needs attention. Orientation's reads are now **two script calls** — Step 0's sync and Step 1's collector — plus Step 4's exception checks. **Batch Steps 0 and 1 into one message**; firing them serially is the main avoidable latency, and the collector resolves its own repo root, so it does not wait on the sync. **One ordering dependency must survive the batching:** Step 4's working-tree `git status` runs *after* Step 0's sync, so it sees post-pull state. Steps 1a–1d, 2 and 5 read `STATE` and issue no calls of their own — a step that finds itself running a `git log`, a `grep` over a log file or a directory listing has re-implemented the collector and should be corrected, not extended.
 
 0. **Sync.** Run the sync owner. It fetches, **skips the pull entirely when the repo is not behind**,
    pulls with `--rebase --autostash`, aborts and restores on a conflicted rebase, classifies the outcome
@@ -25,118 +25,55 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
    classified result string, and Step 6 shows it only as an exception (a failure, unpushed commits, or
    `autostash-conflict`). Tripwire: `logs/scripts/prime-sync.test.sh`.
 
-1. Read the last entry from `/logs/session-notes.md`. Extract: date, summary, next steps, open questions.
-   If the file doesn't exist or is empty, this is the first session — note that and skip to step 2.
-
-   **Read method (deterministic — do not improvise against same-day clutter).** Locate the last entry's
-   date-header with `Bash(grep -n "^## [0-9]" logs/session-notes.md | tail -1)` → `START`, then read
-   header-to-EOF in one call: `Read(logs/session-notes.md, offset=START)`. **Never substitute a fixed
-   last-N-lines window.** Why the `^## [0-9]` anchor and the offset read take these shapes:
-   `docs/heavy-read-discipline.md` § Bounded-read recipes → Step 1.
-
-   **Telemetry-gap nudge.** Read the tail of the telemetry log — `Bash(tail -n 30 logs/usage-log.md)`, skipped silently if absent. Take the date of the most recent `## ` header in `session-notes.md` (the last wrapped session). If that date does **not** appear in those 30 lines, AND that last session was non-trivial (its note carries a real `### Summary`, not a one-line or aborted entry), then the prior substantive session captured no telemetry — set a telemetry-gap flag and emit the ⚠ telemetry line in the brief (Step 6 template). Skip silently if either file is absent, the dates match, or the last session was trivial. Advisory only — it never blocks; it prompts a backfill.
-
-1a. **Cross-check Next Steps against git log and sibling entries.** Detection logic only — this command has no brief-level Next Steps list; see steps 5–6.
-
-   *Canonical primitive.* The merged multi-repo git cross-check below is the **reference implementation** of the reconcile-at-read primitive documented in `docs/backlog-reconciliation.md` (shared by `/fix-project-issues`, `/fix-repo-issues`, `/open-items`). The mechanism here and the doc must stay in sync — if you change the scan or classification logic in one, update the other. That doc also holds this scan's rationale: the dual-repo blindspot, the sibling-repo extension, the cost note and the fall-through posture.
-
-   *Git cross-check:* Parse the `## YYYY-MM-DD` header date from the source entry, then run
-   `git -C "$CWD_REPO" log --since="<entry-date>T00:00:00" --pretty="%h %s" --all 2>/dev/null`.
-
-   If `$CWD_REPO` differs from `$AI_RESOURCES` (the variable established in Step 0), ALSO run
-   `git -C "$AI_RESOURCES" log --since="<entry-date>T00:00:00" --pretty="%h %s" --all 2>/dev/null`
-   and merge the two result sets before the keyword-match pass below. Then extend the merge to the active sibling project repos — a Next Step is frequently resolved by a commit that landed in another project repo, which a cwd-only or dual-repo scan would surface as still-open:
+1. **Collect state.** Run the collector from the repository root. It performs every bounded read
+   orientation needs — the last `session-notes.md` entry, its Next Steps bullets, the merged
+   multi-repo commit set for a bounded window since that entry's date, the newest scratchpad, the
+   plan-position cascade, active missions, `logs/next-up.md`, the shared-file concurrency advisory,
+   the calling repository's identity and the telemetry-gap test. Read bounds live in the collector,
+   not here: `docs/heavy-read-discipline.md` § Bounded-read recipes.
 
    ```bash
-   WORKSPACE_ROOT="$(dirname "$AI_RESOURCES")"
-   for d in "$WORKSPACE_ROOT"/projects/*/; do
-     repo="$(git -C "$d" rev-parse --show-toplevel 2>/dev/null)" || continue   # skip non-repos
-     [ "$repo" = "$CWD_REPO" ] && continue                                     # already scanned above
-     [ "$repo" = "$AI_RESOURCES" ] && continue                                 # already scanned above
-     git -C "$repo" log --since="<entry-date>T00:00:00" --pretty="%h %s" --all 2>/dev/null
-   done
+   STATE=$(bash "$AI_RESOURCES/logs/scripts/prime-collect.sh")
    ```
 
-   For each Next Steps bullet, check if any commit subject across the merged result set contains keywords from that bullet. Classify the bullet:
-   - **Match found → likely-DONE.** Do NOT promote it into the numbered menu (step 5) — the menu must not spend slots on probably-finished work.
-   - **No match → still open.** It becomes a carryover/menu candidate for step 5.
+   `STATE` carries `CWD_REPO` and `TELEMETRY_GAP` as scalars, and fenced blocks — `LAST_ENTRY`,
+   `NEXT_STEPS`, `COMMITS`, `SCRATCHPAD`, `POSITION`, `MISSIONS`, `NEXT_UP`, `FOREIGN_SHARED`. **A
+   block being absent means that source does not exist here:** skip it silently, add no brief line,
+   spend no menu slot. `CWD_REPO` repeats Step 0's value and never disagrees with it. **Concurrent-session
+   liveness is NOT collected** — the SessionStart hook already reported it in this session's context;
+   read that and issue no scan of your own. `TELEMETRY_GAP` is the collector's own bounded `usage-log.md`
+   test, so the nudge survives without `/prime` reading either log (`ai-resources/CLAUDE.md`
+   § Session Telemetry requires the nudge; it never required the prefetch). Tripwire:
+   `logs/scripts/prime-collect.test.sh`.
 
-   `/prime` never edits `session-notes.md`, so every Next Step bullet stays untouched in the source file — the operator can verify there directly if a likely-DONE call looks wrong. If either git command fails or returns nothing, fall through to whichever result set succeeded; if both fail, treat all bullets as still-open and continue.
+1a. **Judge which Next Steps are done.** For each `NEXT_STEPS` bullet, test whether any `COMMITS`
+   subject carries its distinctive keywords. Match → likely-DONE; keep it out of the menu. No match →
+   still open; it becomes a carryover candidate for step 5. When in doubt, still-open. `/prime` never
+   edits `session-notes.md`, so the operator can always check the source if a likely-DONE call looks
+   wrong. The scan and its fall-through posture belong to `docs/backlog-reconciliation.md` — the
+   collector is that primitive's reference implementation; the classification is judgement and stays
+   here. `COMMITS` opens with a `window:` line and may end with a `truncated:` line — **when it is
+   truncated, an unmatched bullet proves nothing**, so keep it still-open and never report it DONE.
+   When `FOREIGN_SHARED` is present, carry its paths to Step 6 as the shared-file advisory: a
+   concurrent session may be mid-edit on them. It names a surface; it never blocks.
 
-   *Sibling-entry note.* Multiple same-day marker-bearing headers are the EXPECTED shape — **do NOT emit a `⚠` for them.** Count them with `TODAY=$(date '+%Y-%m-%d')` and `SIBLING_COUNT=$(grep -c "^## ${TODAY}" logs/session-notes.md 2>/dev/null || echo 0)`. `SIBLING_COUNT` is consumed only as a gate — for the shared-dir advisory below and the liveness nudge after it — never as its own Step 6 display line.
+1b. **Scratchpad.** When `SCRATCHPAD` is present, its `resume_with:` line is a strong candidate for
+   menu item 1, tagged `[carryover]`. No brief line of its own; never auto-resumes — the operator
+   decides by picking it.
 
-   *Concurrent-detected shared-dir advisory.* When `SIBLING_COUNT > 1`, run one **read-only** check (no `git add`, no write) over the two surfaces no other guard watches — shared command/doc files, and the **non-append** shared logs:
+1c. **Plan position.** When `POSITION` is present, set `PROJECT_POSITION` = `{where_we_are, status,
+   next_action}` from it — each **one short plain-English sentence** per the Step 5 conversion rules —
+   and derive a one-line readiness verdict from it plus the open questions in `LAST_ENTRY`. An
+   `anchor:` of `inferred-from-plan-structure` means no completion marker was found: say the position
+   is inferred rather than stated. When `POSITION` is absent — the normal shape in any repo without a
+   plan — leave `PROJECT_POSITION` unset and omit the block entirely rather than showing empty labels.
+   The full four-point readiness check belongs to `/project-next-steps`, not here.
 
-   ```bash
-   FOREIGN_SHARED=$(git status --short -- .claude/commands docs logs/improvement-log.md logs/improvement-log-archive.md logs/decisions.md 2>/dev/null)
-   ```
+1d. **Missions.** When `MISSIONS` is present, set `ACTIVE_MISSIONS` = its entries, each
+   `{id, name, repo, open_threads[]}`, and carry it to Steps 5, 6 and the 8m binding sub-step. Absent
+   is the common case: no prompt, no line, no item.
 
-   `logs/session-notes.md` is deliberately absent from that pathspec. If `FOREIGN_SHARED` is non-empty, carry the dirty paths to Step 6 as an exception line naming the foreign-dirty shared files/logs — a concurrent session may be mid-edit on them, so editing them this session risks a lost update. If `SIBLING_COUNT ≤ 1` or the check returns nothing, skip silently (no line). The advisory only *names* the surface; it does not block.
-
-   *Live-foreign-session check → `/concurrent-session-check` nudge.* `SIBLING_COUNT` counts same-day *headers* and cannot tell a live session from one that already wrapped, so the nudge uses the per-id marker set instead. `/prime` writes this session's own per-id marker only at Step 8 (after orientation), so at Step 1a time **every** today-dated `logs/.session-marker-*` other than this session's own is a foreign session that primed in this checkout today and has not torn down. Run one **read-only** scan:
-
-   ```bash
-   # LIVE_FOREIGN_HERE — count of un-wrapped foreign sessions in THIS checkout (same signal as detect-concurrent-session.sh).
-   LIVE_FOREIGN_HERE=0
-   if [ -n "${CLAUDE_CODE_SESSION_ID}" ]; then
-     SELF_MARKER="logs/.session-marker-${CLAUDE_CODE_SESSION_ID}"
-     for f in logs/.session-marker-*; do
-       [ -f "$f" ] || continue                       # glob matched nothing → no per-id markers
-       [ "$f" = "$SELF_MARKER" ] && continue          # exclude this session's own (defensive — not yet written at orientation)
-       c=$(cat "$f" 2>/dev/null)
-       [ "${c%% *}" = "$TODAY" ] && LIVE_FOREIGN_HERE=$((LIVE_FOREIGN_HERE + 1))
-     done
-   fi
-   ```
-
-   If `CLAUDE_CODE_SESSION_ID` is unset (old CLI), leave `LIVE_FOREIGN_HERE=0` and skip the nudge silently — degrade safe. If `LIVE_FOREIGN_HERE >= 1`, carry it to Step 6, which emits the `/concurrent-session-check` nudge line. Never blocks. Why these three signals differ, why `logs/session-notes.md` is excluded above, and why the SessionStart hook rather than this step is the authority on liveness: `docs/session-marker.md` § Concurrent-session detection.
-
-1b. **Detect a resumable continuity scratchpad.** `/handoff` continuity mode and `/wrap-session` Step 0.5 both write session-state scratchpads to `logs/scratchpads/`. Surface the most recent one so the operator can choose to resume it.
-
-   - List `logs/scratchpads/` for files matching the glob `*-scratchpad.md` **exactly** — this excludes other files that may share the directory (e.g., `*-implementation-plan.md`).
-   - Select the most recent by **filesystem mtime** (`ls -t` over the matches). Do NOT sort by the `YYYY-MM-DD-HH-MM` timestamp in the filename: it is typed by the AI session that wrote the scratchpad and skews 2–3 hours, so lexical filename order does NOT track chronological order. `logs/scratchpads/` is gitignored, so mtime always reflects the real local write time.
-   - Compare the selected scratchpad's mtime date to the date of the last `session-notes.md` entry from Step 1. **≥** → surface it: read its `## Resume With` section and take the first content line. **<** → a later wrap superseded it; skip silently.
-   - If `logs/scratchpads/` is absent or has no `*-scratchpad.md` file, skip silently.
-   - When surfaced, the scratchpad feeds a **carryover** menu candidate: the first content line of its `## Resume With` section is a strong candidate for menu item 1 (step 5). It has no standalone Step 6 display line. This step does NOT auto-resume — the operator decides by picking that menu item or answering the direction prompt.
-
-1c. **Read the project's plan position.** Detect where the project actually stands against its plan, so the brief can lead with *where we are and what is next* rather than only a backlog menu. This step is a **zero-cost no-op in any repo without a plan** — including `ai-resources` itself, which has no `pipeline/` — and adds no reads, no line, and no menu item there.
-
-   *Cascade source.* This reuses the detection cascade in `.claude/commands/project-next-steps.md` (Step 2), which derives from `skills/session-guide-generator/SKILL.md` Step 2 — with one deliberate divergence: **position is checked before the plan spine.** That inversion is intentional; do not "correct" it back. Its reasoning, and why every read below is bounded: `docs/heavy-read-discipline.md` § Bounded-read recipes → Step 1c.
-
-   Detect in this order and **stop as soon as position is confident**:
-
-   1. `$CWD_REPO/pipeline/pipeline-state.md` — if present, read it. Its stage table states position directly. This is the common case — 19 project repos carry this file as of 2026-07-19, the large majority.
-   2. Otherwise, the plan spine — first that exists: `pipeline/project-plan.md`, a `plan/` directory at the project root, phase/workflow definitions in the project `CLAUDE.md`, the latest `logs/session-plan*.md`.
-   3. Neither exists → **skip silently.** No `PROJECT_POSITION`, no brief block, no cost.
-
-   **Resolve the spine to exactly one `<plan-file>` before going further** — two of the four options are not single files, and the read recipe below is undefined for them. `pipeline/project-plan.md` or `logs/session-plan*.md` → already a file (for the glob, most recent by mtime, the `ls -t` rule Step 1b uses). A `plan/` **directory** → the lowest-numbered / lexically-first `*.md` inside it still carrying an incomplete marker; do not read the directory's other files. Project **`CLAUDE.md`** → `<plan-file>` is `CLAUDE.md` itself, with the grep scoped to its phase/workflow section rather than the whole file. If the spine resolves to nothing readable, treat it as case 3 and skip silently — do **not** read several candidates "to be sure".
-
-   **Bounded read — NEVER a full read of the plan file, and a later edit that "simplifies" this into a plain `Read` is a regression.** Grep for stage/phase headers and completion markers with `Bash(grep -nE "^#{2,3} +(Stage|Phase|W[0-9])|^- \[[ x]\]|✅|\*\*(complete|done)\*\*" <plan-file> | head -n 40)`, then read only a bounded slice around the first incomplete one: `Read(<plan-file>, offset=<first incomplete marker>, limit=40)`. If the grep returns **stage/phase headers but no completion markers at all** — a real and common shape — anchor the slice on the **last** header instead, as the furthest-along section, and say the position is inferred from plan structure rather than from an explicit completion marker. If the grep returns nothing at all, skip silently per case 3. Do not improvise a wider read to find markers that are not there.
-
-   **Ground truth — Step 1a's merged result set is deliberately NOT reused by either path.** Its `--since` window is anchored to the last session-notes entry date: right for adjudicating last session's Next Steps, and **too narrow for plan position**, where a step completed weeks ago falls outside it and would read as still-pending.
-   - **Path 1 (`pipeline-state.md` present):** trust the file as-is and issue **no git call at all.** It is a maintained completion signal, not an inference, and Step 1a's set merges commits from `$AI_RESOURCES` and every sibling repo into one unattributed list — so an unrelated project's commit would read as movement on this project's stage.
-   - **Path 2 (plan-marker fallback):** resolve the plan file's own last-modified date with `Bash(date -r <plan-file> +%F 2>/dev/null)` (a filesystem stat, not a git call), then issue **exactly one** git call scoped to `$CWD_REPO`: `Bash(git -C "$CWD_REPO" log --since=<that date> --pretty="%h %s" 2>/dev/null)`. Check whether the first incomplete marker already appears done in those commit subjects. **One git call is the ceiling** — do not fan out across sibling repos the way Step 1a does. If `date -r` fails, skip the corroboration and report the marker as-is.
-
-   **Readiness verdict.** Derive from the plan position plus the open questions already extracted from `session-notes.md` in Step 1 — both are in context, so this costs nothing extra. Emit a verdict plus one short reason. Keep it to that: the full four-point OK/GAP readiness check belongs to `/project-next-steps`, not here.
-
-   Set `PROJECT_POSITION` = `{where_we_are, status, next_action}`, each **one short plain-English sentence** per the Step 5 conversion rules, and carry it to Step 6. If detection reached case 3 above (no plan, no state), leave `PROJECT_POSITION` unset and carry nothing.
-
-1d. **Scan active missions (mission-contract subsystem).** A *mission* is a multi-session goal owned by `/mission`; a session binds to one so `/drift-check` can measure its trajectory against the mission's validation contract. **Zero-cost no-op when none exist** — with no `logs/missions/` dir in any enumerated repo this step adds no prompt, no menu item and no brief line. Reuse the Step 1a repo enumeration (`CWD_REPO`, `AI_RESOURCES`, sibling `projects/*/` repos — already de-duped there), and scan **`<repo>/logs/missions/*.md` only — never `<repo>/logs/missions/archive/`**, so closed missions cannot reappear and the scan stays bounded as missions accumulate:
-
-   ```bash
-   WORKSPACE_ROOT="$(dirname "$AI_RESOURCES")"   # same derivation as Step 1a
-   for repo in "$CWD_REPO" "$AI_RESOURCES" "$WORKSPACE_ROOT"/projects/*/; do
-     [ -d "$repo/logs/missions" ] || continue
-     for m in "$repo"/logs/missions/*.md; do
-       [ -f "$m" ] || continue
-       grep -q '^status: active' "$m" || continue   # active only
-     done
-   done
-   ```
-
-   From each matched file capture the `mission_id` and `mission_name` frontmatter, the owning repo, and the unchecked `- [ ]` lines under `## Open threads`. Build `ACTIVE_MISSIONS` = list of `{id, name, repo, open_threads[]}`. If the list is empty, set a flag and skip every mission-related addition below (the common case). Carry `ACTIVE_MISSIONS` to Step 5 (menu candidates), Step 6 (brief), and the Step 8 binding sub-step.
-
-2. **Read `next-up.md`.** Read `logs/next-up.md` if it exists and collect every unchecked checkbox item (`- [ ]` lines) as a menu candidate for step 5. This is now the **only** channel by which a severity-tagged finding reaches the menu — `logs/scripts/promote-findings.sh` fills the queue at wrap. An absent or empty file is normal, not an error: skip silently, and the menu falls back to step 1a's still-open Next Steps.
+2. **Next-up queue.** Take every line in `STATE`'s `NEXT_UP` block as a menu candidate for step 5 — the collector already filtered them to unchecked items. This is now the **only** channel by which a severity-tagged finding reaches the menu — `logs/scripts/promote-findings.sh` fills the queue at wrap. An absent or empty file is normal, not an error: skip silently, and the menu falls back to step 1a's still-open Next Steps.
 
    *(Step 3 — the bounded urgent-log scan — was retired 2026-07-30. Orientation no longer greps the backlog: promotion is a write, orientation is a read, and the scan re-ran at every `/prime` in every project to re-derive a set that changes only when a finding is written. The severity contract it carried, including the `medium-high` menu-reach tier that must not be narrowed alone, moved to `logs/scripts/promote-findings.sh` with it. Record: `logs/decisions.md`, 2026-07-30. The numbering gap is deliberate.)*
 
@@ -147,7 +84,7 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 
 5. **Build the numbered task menu.** Merge candidates from:
    - Step 1a — still-open Next Steps from the last session → tag `[carryover]`.
-   - Step 1b — the scratchpad `## Resume With` line, if any → tag `[carryover]`.
+   - Step 1b — the scratchpad `resume_with:` line, if any → tag `[carryover]`.
    - Step 1d — each active mission's `## Open threads` unchecked items, but ONLY for missions whose repo (from `ACTIVE_MISSIONS`, Step 1d) equals `CWD_REPO` (Step 0) → tag `[mission:<id>]`. Skip building a candidate for any mission whose repo ≠ `CWD_REPO` — it is not actionable from this checkout (the Step 8a/8c cross-repo guard would stop it anyway). Step 1d's multi-repo scan and those guards are unchanged and remain in place as defense-in-depth. Omit entirely if `ACTIVE_MISSIONS` is empty or none of its entries match `CWD_REPO`.
    - Step 2 — unchecked `next-up.md` items. An item carrying a `<!-- promote:… -->` id was promoted from a severity-tagged backlog finding → tag `[urgent]`; any other item → tag `[next-up]`. **That id is what preserves the two tiers now that one queue feeds both** — without the split, a promoted `high` finding would rank below ordinary carryover.
 
@@ -168,8 +105,8 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 {⚠ Working tree: {short summary} — only if unexpectedly dirty}
 {⚠ Sync: {result} — only on a `failed:` result or an unpushed clause}
 {⚠ Sync: autostash pop conflicted — working tree has conflict markers; stash@{0} preserved. Resolve the markers (or `git checkout --theirs`/`--ours`) and `git stash drop` before starting work. — only on an `autostash-conflict` result from Step 0}
-{⚠ Concurrent session may be editing shared files: {foreign-dirty paths under .claude/commands / docs / the non-append logs improvement-log.md / improvement-log-archive.md / decisions.md}; check before editing them — only when SIBLING_COUNT > 1 and the Step 1a read-only `git status` found foreign-dirty shared files/logs}
-{⚠ Concurrent session live in this checkout — before starting a task, run `/concurrent-session-check <task>` to confirm it won't collide, or `/concurrent-session-check` (no argument) to see which menu items are safe. — only when Step 1a found LIVE_FOREIGN_HERE >= 1}
+{⚠ Concurrent session may be editing shared files: {the paths in STATE's FOREIGN_SHARED block}; check before editing them — only when that block is present}
+{⚠ Concurrent session live in this checkout — before starting a task, run `/concurrent-session-check <task>` to confirm it won't collide, or `/concurrent-session-check` (no argument) to see which menu items are safe. — only when the SessionStart concurrency hook reported a live foreign session in this checkout; `/prime` reads that message from context and runs no scan of its own}
 {⚠ Phase READMEs detected: {paths}; read before opening the relevant work unit — only if step 4 surfaced any}
 {⚠ Last substantive session ({date}) left no `usage-log` telemetry — run `/usage-analysis` now to backfill it, or wrap future substantive sessions with `/wrap-session +telemetry`. — only when the Step 1 telemetry-gap flag fired}
 {◎ Active mission(s): {for each mission in ACTIVE_MISSIONS where mission.repo == CWD_REPO: "<id> — <name>"} — only if at least one same-repo active mission exists; advisory, names the multi-session goal(s) this work can serve}
