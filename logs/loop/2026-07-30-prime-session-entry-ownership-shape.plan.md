@@ -27,8 +27,8 @@ spent the slice list. This plan is built so that failure mode cannot repeat:
   no compression it has not written. Steps 5, 6, 7, 8m, 8a, 8b, 8c and the preamble are all carried at
   100% — any compression there is upside the budget does not spend.
 
-The resulting figure is therefore a **ceiling, not a target**: 230 lines, against a ≤300 requirement,
-with 70 lines of unspent slack. If every optional slice is dropped, the target is still met.
+The resulting figure is therefore a **ceiling, not a target**: **237 lines**, against a ≤300 requirement,
+with 63 lines of unspent slack. If the one optional slice is dropped entirely, the target is still met.
 
 ---
 
