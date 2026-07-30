@@ -190,3 +190,113 @@ LIMITATIONS:
   because § Artifacts requires any surviving `WORKDIR` to be named with its reason.
 - **`prime.md@8b49da2:409` still invokes `/risk-check`**, retired 2026-07-30 by `38981e5`. Correct at
   the SHA under judgement and outside this unit's scope; noted so the Land unit does not rediscover it.
+
+---
+
+## APPENDED 2026-07-30 — census correction, post-review-1
+
+Review-1 finding **F5** is confirmed, and correcting it surfaced a second error in the same census
+running the *opposite* way. Both original figures are withdrawn. Appended, not rewritten, per
+§ Artifacts (evidence is append-only).
+
+**Error 1 — the variant exclusion, as F5 states.** The headline "28 of 29 consumers" and "0 of 28"
+counted every `projects/*` entry carrying `.claude/commands/prime.md`. One of those 28,
+`axcion-sector-intelligence`, is an intentional 33-line variant that **does not contain the call at
+all**, so it cannot abort at Step 8k. Within `projects/`, the affected count is **27 of 28**, matching
+review-1. Ran: `grep -q "prime-marker.sh"` per project entry → 27 contain it, 1 does not.
+
+**Error 2 — the census scope was too narrow, and this was not caught by review-1 either.** Both the
+evidence and review-1 counted only `projects/`. Five further roots outside `projects/` carry the
+canonical 411-line `prime.md` and therefore the failing call: the **workspace root**, `harness/`,
+`knowledge-bases/pe-kb-vault/`, `archive/nordic-pe-macro-landscape-H1-2026/`, and `ai-resources/`
+itself. Only the last of those owns the script.
+
+**Authoritative figure.** Ran, over every candidate root, an `-e` existence test (which follows
+symlinks) for `.claude/commands/prime.md`, a `grep -q "prime-marker.sh"` on it, and an `-f` test for
+`logs/scripts/prime-marker.sh` in the same root:
+
+| | Count |
+|---|---:|
+| Roots whose `prime.md` contains the call | **32** |
+| Of those, roots **missing** the script — dispatch aborts | **31** |
+| Roots where dispatch succeeds | **1** (`ai-resources`) |
+
+The 32 = 27 project entries + workspace root + `harness` + `pe-kb-vault` + `archive/nordic-pe-macro-…`
++ `ai-resources`. Excluded and stated: `axcion-sector-intelligence` and both `workflows/research-workflow`
+copies (33-line variants, no call), and the `ai-resources-work-loop` git worktree (635-line pre-stream
+copy, no call).
+
+**Method note.** An earlier pass using `find -path "*/.claude/commands/prime.md"` returned 31, not 32 —
+it silently missed `axcion-design-studio`. The `-e` test above is the authoritative one; `find`'s result
+is discarded. Recorded because the two methods disagree by one and the discrepancy is not self-evident.
+
+**Withdrawn claim.** The limitation *"This can only understate the blast radius, never overstate it"*
+was **wrong in both directions** and is withdrawn. Excluding the 33-line variants makes the
+project-scoped figure an **over**statement (F5's point); restricting the census to `projects/` made the
+overall figure a substantial **under**statement. The corrected count is larger than either original.
+
+**Effect on the verdict: none, except to widen it.** F-DISPATCH stands and is strengthened — the failure
+reaches 31 roots rather than 28, including the workspace root itself. The twelve dispatch criteria remain
+`unassessed`.
+
+---
+
+## APPENDED 2026-07-30 — F-DUP downgraded to `unassessed`, post-review-1
+
+Review-1 finding **F1** is accepted. **F-DUP's `pass` is withdrawn and replaced with `unassessed`.**
+
+The criterion specifies *"grep the 8 duplication declarations … positive control: same grep on the
+pre-change file must return 8"*. Two things are required and only one was delivered: a control that
+fires (delivered — 13 hits), and a control that fires **on the specified eight** (not delivered). A
+superset returning 13 does not demonstrate that all eight declarations are inside it. The original entry
+disclosed the substitution but still recorded `pass`, which overstates what was shown — the substitution
+is not a limitation on a passing result, it is the absence of the result.
+
+The four residual post-change hits were each read in full and none is a copied schema; that observation
+stands on its own and is unaffected. What is not established is that the check would have *found* a
+residual copied schema had one survived. A criterion that cannot be shown to detect its target cannot
+report a pass.
+
+**Corrected criteria tally: 4 pass · 2 falsified · 13 unassessed** (the twelve dispatch criteria plus
+F-DUP), of nineteen.
+
+**Reopening condition.** Before any later release proof, § 6's eight declarations must be enumerated
+explicitly — as a literal list committed alongside the criterion, not as a regex reconstructed from three
+examples and an ellipsis. That the plan's own criterion is not reproducible from the plan is itself a
+defect in the Shape artifact, and it belongs to the correction stream, not to this closed measurement.
+
+---
+
+## ADJUDICATION — review-1
+
+| # | Finding | Disposition | Reason |
+|---|---|---|---|
+| **F1** | F-DUP is unassessed, not passed | **`fixed`** | Accepted in full. `pass` withdrawn; recorded `unassessed` in the append above. The reviewer's distinction is correct and the original entry did not make it: a control that fires is not a control that fires *on the specified eight*. Corrected tally is 4 pass · 2 falsified · 13 unassessed. Enumerating the eight declarations is assigned to the correction stream, with the non-reproducibility of § 6's own criterion recorded as a defect in the Shape artifact. |
+| **F2** | The shared marker call is a release-blocking runtime defect | **`already-true`** | This is the evidence's own controlling result — § F-DISPATCH, with the two-fixture isolation and the 27/28 positive control. The review reached it independently, from different objects (`prime-runtime-delegation.md` § Public interface, which this unit did not inspect), and adds the Step 8h → 8k path. Recorded as independent confirmation, not a new finding. The **release consequence** is not adjudicable here — it is the G2 decision, carried to the operator. |
+| **F3** | Shape's published step-interface constraint was breached | **`already-true`** | Stated in § "Additional finding" with the full pre/post id sets — 7 removed, 3 minted, 4 retained. The review adds no fact this unit did not record. Repair is **not** performed here: the brief forbids repair inside this unit, so both the dangling `docs/session-marker.md:339` citation and the C2 reconciliation carry to the correction stream. |
+| **F4** | The frozen size acceptance criterion failed | **`already-true`** | Recorded as F-LINES FALSIFIED — 413 against ≤300, shortfall 113 — and carried per D2 without renegotiation. The review's framing (the ≤430 waypoint does not replace the frozen criterion) matches the evidence and the operator's standing directive that the historical failure stay visible. Whether the over-target result is retained is the **Land** lifecycle decision, not a Prove finding. |
+| **F5** | The blast-radius headline overcounts one project | **`fixed`** | Confirmed by independent re-derivation: 27 of 28 project entries contain the call; `axcion-sector-intelligence`'s 33-line variant does not. **The correction went further than the finding.** Both the evidence *and* review-1 scoped the census to `projects/`, missing five roots outside it — the workspace root, `harness/`, `knowledge-bases/pe-kb-vault/`, `archive/nordic-pe-macro-…/` and `ai-resources/`. Authoritative figure: **32 roots carry the call, 31 abort, 1 works.** The "can only understate" limitation was wrong in both directions and is withdrawn. |
+
+**No finding rejected.** Two fixed, three already-true. F2's release consequence and F4's retention
+question are both **operator** decisions and are held at G2 rather than disposed of here.
+
+**No `review-2`.** The contract's bar is corrections that changed something the first review's verdict
+rested on. F1 and F5 changed the *record* — a criterion's status and a census figure — and both moved
+in the direction the verdict already pointed: F1 removes a claimed pass, F5 widens the blast radius.
+Neither could turn a decline into a release, and no correction touched the object under work.
+
+---
+
+## G2 PACKAGE
+
+**Recommendation: decline release.** Reviewer and implementer agree independently.
+
+- **Evidence:** this file, commits `cb11500` (original) and the append/adjudication commit below.
+- **Review:** `logs/loop/2026-07-29-prime-minimum-responsibility-prove.review-1.md`, verbatim.
+- **Residual limitation:** thirteen of nineteen criteria are `unassessed`. They cannot be inherited by a
+  later correction — every dispatch criterion must be re-run from a real project-consumer root against
+  the then-current package, and F-DUP needs a reproducible declaration list first.
+- **Held for the operator:** the release decision (F2) and whether the over-target 413-line result is
+  retained for revision or reverted (F4, a Land question).
+
+Status: complete
