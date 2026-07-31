@@ -338,12 +338,18 @@ fi
 # the log — so the read moves here and the command keeps the nudge (ai-resources/CLAUDE.md
 # § Session Telemetry). Trivial sessions are excluded by requiring a real `### Summary`: a one-line or
 # aborted entry legitimately has no telemetry and must not raise a warning.
+#
+# AN ABSENT usage-log.md IS THE STRONGEST GAP, NOT AN EXEMPTION. The file's existence was previously a
+# precondition of the whole test, so a consumer that had never captured telemetry at all — the exact
+# state the nudge exists to catch — reported `TELEMETRY_GAP: no` and stayed silent forever. Observed in
+# a real consumer (`axcion-website`: substantive last entry, no usage log, no nudge). Existence is now
+# folded into the staleness test instead of gating it: no file ⇒ no entry for this date ⇒ gap.
 TELEMETRY_GAP="no"
 USAGE_LOG="$ROOT/logs/usage-log.md"
-if [ -n "$ENTRY_DATE" ] && [ -f "$USAGE_LOG" ] && [ -n "$ENTRY_TEXT" ]; then
+if [ -n "$ENTRY_DATE" ] && [ -n "$ENTRY_TEXT" ]; then
   if printf '%s\n' "$ENTRY_TEXT" | grep -q '^### Summary' \
      && [ "$(printf '%s\n' "$ENTRY_TEXT" | wc -l | tr -d ' ')" -gt 6 ]; then
-    if ! tail -n 30 "$USAGE_LOG" 2>/dev/null | grep -q "$ENTRY_DATE"; then
+    if [ ! -f "$USAGE_LOG" ] || ! tail -n 30 "$USAGE_LOG" 2>/dev/null | grep -q "$ENTRY_DATE"; then
       TELEMETRY_GAP="yes"
     fi
   fi

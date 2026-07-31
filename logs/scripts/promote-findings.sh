@@ -68,10 +68,48 @@ set -u
 # Held -> another sweep is covering the same entries. Exit 0 and say nothing: a wrap must not fail,
 # and a "could not promote" line here would be noise, not information.
 LOCK="logs/.promote.lock"
-mkdir "$LOCK" 2>/dev/null || exit 0
-# Released on every exit path, including a crash mid-write. A stale lock directory would block every
-# future sweep silently, which is the one failure mode worse than a duplicate.
-trap 'rmdir "$LOCK" 2>/dev/null' EXIT INT TERM
+
+# STALE-OWNER RECOVERY. The trap below cannot run after SIGKILL, a host termination or a hard crash,
+# so a lock directory can outlive its owner. Without recovery that corpse makes every later sweep
+# exit 0 silently — promotion is disabled permanently and nothing ever says so, which is strictly
+# worse than the duplicate the lock exists to prevent. Two independent staleness signals, because
+# each covers the other's blind spot:
+#   * dead owner — the recorded pid no longer exists (the common crash case), and
+#   * age        — the lock is older than any real sweep (seconds), which covers pid REUSE, where a
+#                  recycled pid belongs to an unrelated live process and would look owned forever.
+if ! mkdir "$LOCK" 2>/dev/null; then
+  _stale=0
+  _owner=$(cat "$LOCK/pid" 2>/dev/null)
+  case "$_owner" in
+    # NO PID YET IS "LIVE", NOT "STALE" — deliberately. `mkdir` is the atomic step and the pid write
+    # necessarily follows it, so a sweep that has just won the lock is briefly pid-less. Reclaiming on
+    # a missing pid would let a contender in through that window and break the mutual exclusion the
+    # lock exists for. A crash inside that microsecond window is left to the age backstop below.
+    ''|*[!0-9]*) : ;;
+    *) kill -0 "$_owner" 2>/dev/null || _stale=1 ;; # owner recorded but gone → corpse, reclaim now
+  esac
+  # AGE BACKSTOP — covers what pid liveness cannot: a pid RECYCLED to an unrelated live process (which
+  # would otherwise look owned forever), and the pid-less crash window above. 10 minutes is ~two orders
+  # of magnitude above a real sweep, so it can only ever fire on a corpse, never on a live contender.
+  [ -n "$(find "$LOCK" -maxdepth 0 -mmin +10 2>/dev/null)" ] && _stale=1
+
+  if [ "$_stale" = 1 ]; then
+    rm -rf "$LOCK" 2>/dev/null
+    # Losing this race is fine: another sweep reclaimed first and is now covering the same entries.
+    mkdir "$LOCK" 2>/dev/null || exit 0
+  else
+    # Genuinely held by a live sweep — it is covering the same entries. Exit 0 and say nothing: a wrap
+    # must not fail, and a "could not promote" line here would be noise, not information.
+    exit 0
+  fi
+fi
+
+# Record the owner so a later sweep can tell a live holder from a corpse. Written after the lock is
+# won, so it always describes the current holder.
+printf '%s\n' "$$" > "$LOCK/pid" 2>/dev/null
+# Released on every exit path the shell can still observe. `rm -rf` rather than `rmdir` — the lock
+# directory now holds the pid file.
+trap 'rm -rf "$LOCK" 2>/dev/null' EXIT INT TERM
 
 python3 - <<'PY'
 import hashlib, os, re, sys
@@ -85,10 +123,31 @@ ENTRY  = re.compile(r'^#{2,3} \d{4}-\d{2}-\d{2}')
 SEV    = re.compile(r'^-?\s*\*\*Severity:\*\*\s*\**\s*(critical|urgent|medium-high|high)\b', re.I)
 SEVANY = re.compile(r'^-?\s*\*\*Severity:\*\*', re.I)
 STATUS = re.compile(r'^-?\s*\*\*Status:\*\*', re.I)
-# Same exclusion set /prime Step 3 applied to the returned lines. `closed` and `void` are NOT here:
-# the improvement-log schema keeps them in the active log by design, and their entries carry
-# `Severity: none`, so the severity test already drops them.
-DONE   = re.compile(r'resolved|applied|verified|declined', re.I)
+# TERMINAL STATUS IS PARSED FROM THE VALUE'S HEAD, NOT SEARCHED FOR ANYWHERE IN THE LINE.
+# An unanchored search matched the `applied` inside `partially applied` and silently dropped entries
+# that say, in their own body, that half the problem is still open — including a live medium-high
+# finding. The `partially` prefix is load-bearing and already load-bearing elsewhere: tier 3 of
+# `/resolve-improvement-log` anchors on `^applied` for exactly this reason.
+#
+# `closed`/`void` ARE in the set now. They were previously omitted because such entries carry
+# `Severity: none` and the severity test drops them first — still true, so their presence is inert
+# for that shape. They earn their place on the *retraction* shape below, where a genuinely closed
+# entry keeps a qualifying severity.
+DONE   = re.compile(r'^(resolved|applied|verified|declined|closed|void)\b', re.I)
+# The status VALUE — everything after the `**Status:**` label.
+STATVAL = re.compile(r'^-?\s*\*\*Status:\*\*\s*(.*)$', re.I)
+# Retracted text carries no current status. `~~OPEN — no fix applied.~~ **CLOSED — FIXED**` is a real
+# and recurring shape: strike-through spans are removed BEFORE the head is read, so the head is the
+# status that still stands, not the one the author crossed out.
+STRUCK  = re.compile(r'~~.*?~~', re.S)
+# Leading markdown decoration is not part of the value.
+DECOR   = re.compile(r'^[\s*~`_]+')
+
+def status_value(line):
+    m = STATVAL.match(line)
+    if not m:
+        return ""
+    return DECOR.sub("", STRUCK.sub("", m.group(1)))
 IDTAG  = re.compile(r'<!--\s*promote:([0-9a-f]{12})\s*-->')
 
 def promotion_id(path, header):
@@ -113,8 +172,9 @@ def qualifying(path):
             seen_sev += 1
         if not any(SEV.match(x) for x in block):
             continue
-        status = " ".join(x for x in block if STATUS.match(x))
-        if DONE.search(status):
+        # Each status line is judged on its OWN head. Joining them first would let one line's value
+        # run into the next line's label, which is how an anchored head test gets defeated.
+        if any(DONE.match(status_value(x)) for x in block if STATUS.match(x)):
             continue
         out.append((promotion_id(path, lines[s]), title_of(lines[s]), path))
     return out, seen_sev

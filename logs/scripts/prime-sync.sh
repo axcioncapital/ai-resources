@@ -69,10 +69,32 @@ sync_repo () {
   NAME=$(basename "$REPO")
 
   GIT_TERMINAL_PROMPT=0 git -C "$REPO" fetch --quiet 2>/dev/null
+  FETCH_RC=$?
+
+  # Upstream existence is settled FIRST, and independently of the fetch result. `git fetch` also exits
+  # non-zero when there is no remote at all, so reading the exit code before this test would relabel
+  # every remote-less checkout as a fetch failure instead of the correct "no upstream" skip.
+  if ! git -C "$REPO" rev-parse --abbrev-ref --symbolic-full-name '@{u}' >/dev/null 2>&1; then
+    # No upstream, or a detached HEAD. Nothing to pull and nothing to count.
+    printf 'SYNC: %s — skip (no upstream configured)\n' "$NAME"
+    return 0
+  fi
+
+  # FETCH FAILED WITH AN UPSTREAM PRESENT — the remote-tracking ref is now STALE, so every question
+  # asked below it ("how far behind?") is answered from old data. The result was previously discarded,
+  # which let an offline remote report `up to date` off a stale ref: the operator is told the checkout
+  # is current at the exact moment nobody can know whether it is. Report the unknown instead.
+  # `unpushed_suffix` stays — it counts against the local ref only, which a failed fetch cannot stale.
+  if [ "$FETCH_RC" -ne 0 ]; then
+    printf 'SYNC: %s — failed: fetch unavailable — remote state unknown, no pull attempted%s\n' \
+      "$NAME" "$(unpushed_suffix "$REPO")"
+    return 0
+  fi
+
   BEHIND=$(git -C "$REPO" rev-list --count HEAD..@{u} 2>/dev/null || echo "")
 
   if [ -z "$BEHIND" ]; then
-    # No upstream, or a detached HEAD. Nothing to pull and nothing to count.
+    # Upstream is configured but uncountable (a ref that resolves but has no reachable history yet).
     printf 'SYNC: %s — skip (no upstream configured)\n' "$NAME"
     return 0
   fi

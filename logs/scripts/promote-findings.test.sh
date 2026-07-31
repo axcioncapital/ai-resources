@@ -200,6 +200,79 @@ run "$C" >/dev/null
 check "released lock: the SAME run now promotes" "3" "$(nq "$C")"
 
 echo
+echo "===== TEST 8b — STALE-OWNER RECOVERY: a crashed sweep must not disable promotion forever ====="
+# The trap cannot run after SIGKILL, a host termination or a hard crash. Before recovery existed, the
+# leftover lock made every later sweep exit 0 and silently write nothing — promotion was dead and
+# nothing said so. Three cases, because the two staleness signals cover different failure shapes.
+
+# (a) DEAD OWNER — the crash shape that actually happens: pid recorded, process gone.
+G="$T/g"; fixture "$G"
+mkdir -p "$G/logs/.promote.lock"
+DEADPID=$$
+while kill -0 "$DEADPID" 2>/dev/null; do DEADPID=$((DEADPID + 7919)); [ "$DEADPID" -gt 99999 ] && DEADPID=$((DEADPID - 99000)); done
+printf '%s\n' "$DEADPID" > "$G/logs/.promote.lock/pid"
+run "$G" >/dev/null
+check "dead-owner lock is reclaimed, sweep promotes" "3" "$(nq "$G")"
+[ -d "$G/logs/.promote.lock" ] && bad "lock survived the reclaiming run" || ok "lock released after reclaim"
+
+# (b) LIVE OWNER — must still be honoured. Recovery must not become a licence to trample a real sweep.
+H="$T/h"; fixture "$H"
+mkdir -p "$H/logs/.promote.lock"
+printf '%s\n' "$$" > "$H/logs/.promote.lock/pid"   # this test process is unambiguously alive
+OUTH=$(run "$H")
+check "live-owner lock is honoured: nothing written" "" "$OUTH"
+[ -f "$H/logs/next-up.md" ] && bad "trampled a lock held by a LIVE owner" || ok "live-owner lock respected"
+
+# (c) AGED PID-LESS LOCK — the crash-inside-the-mkdir-window shape, plus the pid-reuse case. A pid-less
+#     lock is treated as live (see the script), so ONLY the age backstop can free it.
+I="$T/i"; fixture "$I"
+mkdir -p "$I/logs/.promote.lock"
+OUTI=$(run "$I")
+check "fresh pid-less lock is still honoured" "" "$OUTI"
+touch -t 200001010000 "$I/logs/.promote.lock"      # backdate well past the 10-minute threshold
+run "$I" >/dev/null
+check "aged pid-less lock is reclaimed by the backstop" "3" "$(nq "$I")"
+
+echo
+echo "===== TEST 8c — F-PARTIAL: a terminal WORD is not a terminal STATUS ====="
+# The exclusion test used to search the whole status line, so `applied` inside `partially applied`
+# read as done and silently dropped entries whose own body says half the problem is open — including
+# a live medium-high finding. The `partially` prefix is load-bearing (tier 3 of
+# /resolve-improvement-log anchors on `^applied` for the same reason).
+J="$T/j"; fixture "$J"
+cat >> "$J/logs/improvement-log.md" <<'LOG'
+
+### 2026-07-20 — Entry P, partially applied and still open
+
+- **Status:** **partially applied 2026-07-18 (S5-531)** — the silent half is closed; the other half is open.
+- **Severity:** medium-high — must promote, the entry is NOT finished.
+
+### 2026-07-21 — Entry Q, retracted OPEN then genuinely closed
+
+- **Status:** ~~OPEN — surfaced in S12; no fix applied.~~ **CLOSED — FIXED in a later mission.**
+- **Severity:** high — must NOT promote, the strike-through retracts the OPEN.
+
+### 2026-07-22 — Entry R, deferred with a terminal word deep in the prose
+
+- **Status:** OPEN — deferred to its own gated session; an earlier patch was applied elsewhere.
+- **Severity:** high — must promote, `applied` here is narrative, not the status.
+LOG
+run "$J" >/dev/null
+grep -Fq "Entry P, partially applied" "$J/logs/next-up.md" \
+  && ok "'partially applied' promotes (not read as terminal)" \
+  || bad "'partially applied' was dropped — the terminal-word bug is back"
+grep -Fq "Entry R, deferred" "$J/logs/next-up.md" \
+  && ok "a terminal word mid-prose does not close an OPEN entry" \
+  || bad "narrative 'applied' wrongly closed an OPEN entry"
+grep -Fq "Entry Q, retracted" "$J/logs/next-up.md" \
+  && bad "a retracted ~~OPEN~~ was promoted despite a real CLOSED status" \
+  || ok "strike-through retraction respected: genuinely closed entry excluded"
+# The plain terminal statuses must still be excluded — the anchor tightened the test, not loosened it.
+for no in "Entry F, high but already applied" "Entry G, high but resolved"; do
+  grep -Fq "$no" "$J/logs/next-up.md" && bad "WRONGLY promoted: $no" || ok "still excluded: $no"
+done
+
+echo
 echo "===== TEST 9 — degrade-safe: a missing source log is skipped, not fatal ====="
 D="$T/d"; fixture "$D"; rm -f "$D/logs/friction-log.md"
 OUTD=$(run "$D"); RCD=$?

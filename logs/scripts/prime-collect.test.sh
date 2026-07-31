@@ -224,6 +224,30 @@ check "gap clears once the date appears"          "no"  "$(scalar "$R8" TELEMETR
 printf '## 2026-07-31 — quick fix\n' > "$R8/logs/session-notes.md"
 check "trivial entry raises no gap"               "no"  "$(scalar "$R8" TELEMETRY_GAP)"
 
+# REGRESSION — a consumer that has NEVER captured telemetry is the strongest gap there is, and it was
+# the one case the nudge could not report. The test used to be gated on `[ -f usage-log.md ]`, so an
+# absent log skipped the whole check and returned `no`; the nudge was therefore structurally unable to
+# fire in exactly the repo that needed it most. Observed live in the `axcion-website` consumer:
+# substantive last entry, no usage log, `TELEMETRY_GAP: no`.
+cat > "$R8/logs/session-notes.md" <<'EOF'
+## 2026-07-30 — a substantive session
+EOF
+cat >> "$R8/logs/session-notes.md" <<'EOF'
+
+### Summary
+Real work happened here, across enough lines that this is clearly not an aborted entry.
+More body.
+More body.
+
+### Next Steps
+- something
+EOF
+rm -f "$R8/logs/usage-log.md"
+check "absent usage-log + substantive entry → gap" "yes" "$(scalar "$R8" TELEMETRY_GAP)"
+# The trivial-entry exemption must survive the change — absence of the log is not licence to nag.
+printf '## 2026-07-31 — quick fix\n' > "$R8/logs/session-notes.md"
+check "absent usage-log + trivial entry → no gap"  "no"  "$(scalar "$R8" TELEMETRY_GAP)"
+
 echo
 echo "=== TEST 9 — FOREIGN_SHARED gates on sibling headers, and NEVER on session-notes itself ==="
 R9=$(make_repo foreign)

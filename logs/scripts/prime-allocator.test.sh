@@ -353,6 +353,64 @@ grep -q "^## ${TODAY} — Session S2" "$RC/logs/session-notes.md" \
   || { printf '  FAIL  recovery run did not complete the sequence\n'; FAIL=$((FAIL+1)); }
 
 echo
+echo "===== TEST 12b — F-MARKER-WRITE: a FAILED marker write must stop the sequence ====="
+echo "Both redirections used to be unchecked, so a marker write that failed still returned 0 and"
+echo "let the run continue into the header and the mtime stamp — a partial state indistinguishable"
+echo "from a complete one. Occupying the marker path with a DIRECTORY makes the redirection fail."
+
+# (a) SHARED marker unwritable. The per-id write goes first and succeeds, so this also exercises the
+#     both-or-neither ROLLBACK: shared-without-per-id is the forbidden half-state, and the run must
+#     not end holding a per-id file it can no longer pair.
+WA="$T/wfail-shared"; fresh_repo "$WA"
+WAID="aaa55555-5555-5555-5555-555555555555"
+mkdir "$WA/logs/.session-marker"
+( cd "$WA" && CLAUDE_CODE_SESSION_ID="$WAID" zsh "$T/new.sh" "shared marker unwritable" ) >/dev/null 2>&1
+WARC=$?
+[ "$WARC" -ne 0 ] && { printf '  PASS  %-54s got %s\n' "(a) unwritable shared marker exits non-zero" "$WARC"; PASS=$((PASS+1)); } \
+                  || { printf '  FAIL  (a) exited 0 despite a failed shared-marker write\n'; FAIL=$((FAIL+1)); }
+[ -f "$WA/logs/.session-marker-$WAID" ] \
+  && { printf '  FAIL  (a) per-id marker left behind — both-or-neither rollback did not run\n'; FAIL=$((FAIL+1)); } \
+  || { printf '  PASS  %-54s\n' "(a) per-id marker rolled back (neither state)"; PASS=$((PASS+1)); }
+if grep -q "^## ${TODAY} — Session S" "$WA/logs/session-notes.md"; then
+  printf '  FAIL  (a) a header was appended after a failed marker write\n'; FAIL=$((FAIL+1))
+else printf '  PASS  %-54s\n' "(a) no header appended"; PASS=$((PASS+1)); fi
+[ -f "$WA/logs/.prime-mtime" ] && { printf '  FAIL  (a) .prime-mtime stamped after a failed marker write\n'; FAIL=$((FAIL+1)); } \
+                              || { printf '  PASS  %-54s\n' "(a) no .prime-mtime stamped"; PASS=$((PASS+1)); }
+
+# (b) PER-ID marker unwritable. It is written FIRST precisely so this aborts before the shared file is
+#     touched — the forbidden shared-without-per-id state must be structurally unreachable.
+WB="$T/wfail-perid"; fresh_repo "$WB"
+WBID="bbb66666-6666-6666-6666-666666666666"
+mkdir "$WB/logs/.session-marker-$WBID"
+( cd "$WB" && CLAUDE_CODE_SESSION_ID="$WBID" zsh "$T/new.sh" "per-id marker unwritable" ) >/dev/null 2>&1
+WBRC=$?
+[ "$WBRC" -ne 0 ] && { printf '  PASS  %-54s got %s\n' "(b) unwritable per-id marker exits non-zero" "$WBRC"; PASS=$((PASS+1)); } \
+                  || { printf '  FAIL  (b) exited 0 despite a failed per-id write\n'; FAIL=$((FAIL+1)); }
+[ -f "$WB/logs/.session-marker" ] \
+  && { printf '  FAIL  (b) SHARED marker written without a per-id pair — invariant violated\n'; FAIL=$((FAIL+1)); } \
+  || { printf '  PASS  %-54s\n' "(b) shared marker never written (invariant held)"; PASS=$((PASS+1)); }
+if grep -q "^## ${TODAY} — Session S" "$WB/logs/session-notes.md"; then
+  printf '  FAIL  (b) a header was appended after a failed marker write\n'; FAIL=$((FAIL+1))
+else printf '  PASS  %-54s\n' "(b) no header appended"; PASS=$((PASS+1)); fi
+
+# CONTROL — the same probe must go RED against the unchecked writes this test was built to catch.
+# Without it, (a) and (b) green prove only that the harness runs, not that the guard exists.
+sed -e 's|echo "${TODAY} ${MARKER}" > "$PERID" \|\| return 1|echo "${TODAY} ${MARKER}" > "$PERID"|' \
+    -e 's|if ! echo "${TODAY} ${MARKER}" > logs/.session-marker; then|if false; then|' \
+    "$SP/alloc.sh" > "$T/wfail-mutant.sh"
+if ! grep -q 'if false; then' "$T/wfail-mutant.sh"; then
+  printf '  FAIL  CONTROL: could not mutate the marker writes — the anchor lines have changed\n'; FAIL=$((FAIL+1))
+else
+  WM="$T/wfail-mutant"; fresh_repo "$WM"
+  WMID="ccc77777-7777-7777-7777-777777777777"
+  mkdir "$WM/logs/.session-marker"
+  ( cd "$WM" && CLAUDE_CODE_SESSION_ID="$WMID" zsh "$T/wfail-mutant.sh" "unchecked writes" ) >/dev/null 2>&1
+  if grep -q "^## ${TODAY} — Session S" "$WM/logs/session-notes.md"; then
+    printf '  PASS  %-54s\n' "CONTROL: unchecked writes DO append a header"; PASS=$((PASS+1))
+  else printf '  FAIL  CONTROL: the mutant wrote no header — TEST 12b is inert\n'; FAIL=$((FAIL+1)); fi
+fi
+
+echo
 echo "===== TEST 13 — CONTROL: this suite can go RED ====="
 echo "Mutate the fail-safe seed (the single most destructive possible regression) and re-run"
 echo "TEST 3's scenario. If the mutant still passes, every green above is worthless."

@@ -167,6 +167,33 @@ grep -q 'exit 0' "$SRC" && ok "terminates exit 0 (orientation never stops on a s
                         || bad "no unconditional exit 0"
 
 echo
+echo "===== TEST 9c — F-FETCH: an unreachable remote must never read as 'up to date' ====="
+# The fetch result used to be discarded. With the remote gone the tracking ref stays on disk and still
+# equals HEAD, so the behind-check answered 0 from STALE data and the operator was told the checkout
+# was current at the exact moment nobody could know whether it was.
+make_pair r8
+mv "$T/r8.git" "$T/r8-GONE.git"          # upstream configured, remote unreachable, ref left behind
+R8LINE=$(sync_line "$T/r8")
+R8RES=$(printf '%s' "$R8LINE" | sed 's/^SYNC: [^ ]* — //')
+case "$R8RES" in
+  up\ to\ date*) bad "STALE-REF FALSE SUCCESS: reported '$R8RES' with the remote unreachable" ;;
+  failed:*)      ok  "unreachable remote is reported as a failure, not as success" ;;
+  *)             bad "unexpected result for an unreachable remote: '$R8RES'" ;;
+esac
+printf '%s' "$R8LINE" | grep -q 'remote state unknown' \
+  && ok "…and the line says the remote state is UNKNOWN" \
+  || bad "the failure line does not tell the operator the state is unknown"
+# The pull must not be attempted against a remote we could not even reach.
+rm -f "$T/log8"; run_traced "$T/r8" "$T/log8" >/dev/null 2>&1
+check "no pull attempted after a failed fetch" "0" "$(grep -c 'pull --rebase' "$T/log8" | tr -d ' ')"
+check "exit 0 regardless (orientation continues)" "0" "$( ( cd "$T/r8" && bash "$SRC" "$NOREPO" >/dev/null 2>&1 ); echo $? )"
+# REGRESSION GUARD — `git fetch` also exits non-zero when there is no remote AT ALL. That case must
+# keep its own wording, or every remote-less checkout gets relabelled a fetch failure.
+make_pair r9
+( cd "$T/r9" && git branch --unset-upstream 2>/dev/null; git remote remove origin 2>/dev/null ) >/dev/null 2>&1
+check "no remote at all still reads as 'no upstream'" "skip (no upstream configured)" "$(result_of "$T/r9")"
+
+echo
 echo "===== TEST 10 — CONTROL: this suite can go RED ====="
 # Remove the behind-check guard; TEST 2's assertion must flip from "no pull" to "pull ran". If it
 # does not flip, TEST 2 proves nothing about the guard. (This control has already earned its keep:

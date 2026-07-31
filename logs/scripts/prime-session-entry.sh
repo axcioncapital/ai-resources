@@ -191,11 +191,32 @@ allocate_marker () {
     if [ "$N" -gt 999 ]; then MARKER="S${N}${SFX}"; break; fi   # runaway guard — cannot spin forever
   done
 
-  echo "${TODAY} ${MARKER}" > logs/.session-marker
   # BOTH-OR-NEITHER WRITER INVARIANT (docs/session-marker.md § Both-or-neither writer invariant).
   # Identity oracle (Option 2'): a per-session-id marker file no concurrent allocation can clobber.
   # These two writes are ONE unit — never author a path that writes the shared file alone.
-  [ -n "${CLAUDE_CODE_SESSION_ID:-}" ] && echo "${TODAY} ${MARKER}" > "logs/.session-marker-${CLAUDE_CODE_SESSION_ID}"
+  #
+  # WRITE ORDER IS THE INVARIANT'S ENFORCEMENT. The per-id file goes FIRST, because the forbidden
+  # half-state is *shared-without-per-id* (it leaves the session with no identity oracle, and the wrap
+  # guard then mis-attributes this session's own header as foreign). Writing per-id first means a
+  # failure there aborts before the shared file is touched, so the forbidden state is unreachable.
+  #
+  # A FAILED WRITE MUST STOP THE SEQUENCE. Redirections were previously unchecked, so a marker write
+  # that failed (read-only logs/, a directory occupying the marker path, a full disk) still returned 0
+  # and let main() proceed to append the header and stamp the mtime — a partial state the next /prime
+  # cannot distinguish from a complete one. Both writes are now tested.
+  PERID=""
+  if [ -n "${CLAUDE_CODE_SESSION_ID:-}" ]; then
+    PERID="logs/.session-marker-${CLAUDE_CODE_SESSION_ID}"
+    echo "${TODAY} ${MARKER}" > "$PERID" || return 1
+  fi
+
+  if ! echo "${TODAY} ${MARKER}" > logs/.session-marker; then
+    # Shared write failed with the per-id file already on disk. Roll the per-id write back so the
+    # session ends in NEITHER state rather than a half-state a later reader would trust. The file is
+    # named for this session's own id, so removing it cannot touch a concurrent session's marker.
+    [ -n "$PERID" ] && rm -f "$PERID" 2>/dev/null
+    return 1
+  fi
 
   # Orphan cleanup is deliberately NOT here — it is owned by detect-concurrent-session.sh.
   # A date-based prune was a category error: a marker's date records when its session STARTED, never
