@@ -252,7 +252,8 @@ pass is unspent, and G2 is closed.
 
 ---
 
-LIMITATIONS: This entry adjudicates an implementation review; **no object under repair was modified in
+LIMITATIONS (Entries 1–2, as written before the correction pass): This entry adjudicates an
+implementation review; **no object under repair was modified in
 this unit** and no correction has been made, so nothing here demonstrates that either finding is
 resolved. Both findings were reproduced against the live candidate blobs, but the resolutions are
 **specified, not written** — as at Shape Entry 3, recording the chosen resolution before spending the
@@ -264,3 +265,132 @@ operator's to overturn. No behavioural evidence exists or can exist before Stage
 M10 remain unexecuted. Line numbers cited are as of the candidate blobs `8a7ba07f…` (contract) and
 `877a6645…` (command) and will move once the correction lands. The unit remains **open** and **G2
 remains closed**.
+
+---
+
+## 6. Entry 3 — 2026-07-31 — operator binding recorded, correction pass spent, criteria re-measured
+
+Appended, not rewritten (`docs/work-loop.md` § Artifacts). Entries 1–2 stand unedited as the record of
+what was decided before the operator's decision arrived.
+
+**Two things in this file's header block are now superseded, and are deliberately left unedited:** the
+status note's clause "the bounded correction pass is unspent" — it is now **consumed** (§6.5) — and the
+`NEXT:` field, since the decision has been made and the next actor is a fresh Codex Prove reviewer. The
+`Status: incomplete — unit open` marker itself **remains correct**: the unit is still open, G2 is still
+closed, and § Resume order must keep offering this stream.
+
+### 6.1 The operator's binding, recorded verbatim in substance
+
+**Option A approved, as a narrow Slice-1-only scope binding.** For this Slice 1 candidate the permitted
+`BASE..HEAD` path set is:
+
+1. the four G1-approved implementation targets;
+2. this stream's `logs/loop/` artifacts;
+3. `docs/work-loop-repair-workflow.md` at its existing immutable identity — introducing commit
+   `17ad3aa4209904991467796dd904a80a2c7bf0b8`, blob `37c6be795568dd6942dc3883bb067ff03b0a5007`.
+
+That document is classified as **pre-Shape repair-program governance, not an S1 implementation target.**
+
+**The binding does not:** authorize modifying `docs/work-loop-repair-workflow.md` · add it to the
+implementation slice · widen the four target-file scope · change the approved base · mutate plan-v4 or
+its identity · create a general exception for any other file, stream or slice.
+
+**Any different blob for that path, or any additional outside path, still fails the bounded-diff
+requirement.** The binding supersedes A20/F12's previously unsatisfiable path-set reading **only** to
+the precise extent stated above.
+
+**Verified against Git before the binding was relied on:**
+
+| Condition | Command | Observed |
+|---|---|---|
+| Commit resolves | `git rev-parse 17ad3aa4209904991467796dd904a80a2c7bf0b8` | resolves; subject "new: work-loop-repair-workflow — supervised multi-session repair method" |
+| Blob at that commit | `git rev-parse 17ad3aa4…:docs/work-loop-repair-workflow.md` | `37c6be795568dd6942dc3883bb067ff03b0a5007` |
+| Blob at HEAD | `git rev-parse HEAD:docs/work-loop-repair-workflow.md` | `37c6be795568dd6942dc3883bb067ff03b0a5007` — **identical, so the binding's condition is met** |
+| Predates the approved package | `git merge-base --is-ancestor 17ad3aa4… df45a2b1…` | true — it precedes plan-v4 and G1 |
+
+**G1-PV1-02 — disposition updated from `operator` to `fixed`.** Resolved by this exact binding, not by
+any edit. plan-v4 remains at blob `9ae4839a…`; the approved base remains `6050a5b…`; the repair
+workflow was not touched.
+
+### 6.2 The correction pass — spent once, on both findings
+
+**Commit `e384d8c383c226f00176abe6956bf5f5c29acab8`.** Two files, both already in scope.
+`.agents/skills/work-loop/SKILL.md` and `templates/capability-record.md` were **not** touched —
+verified: their blobs still equal their S1 values `bc8e4931…` and `f9ac9d4d…`.
+
+**G1-PV1-01 — disposition updated from `deferred` to `fixed`.** Five sites, not the three specified:
+
+| # | Site | Correction | Source |
+|---|---|---|---|
+| 1 | `.claude/commands/work-loop.md:272` | Per-review-point table — Shape closes `hold-reframe`; **Prove carries the finding into G2 as a residual limitation**; reviewed route takes neither | Specified in review |
+| 2 | `docs/work-loop.md:212` | "After `review-2` **at a challenged Shape review point**", plus an explicit non-application paragraph | Specified in review |
+| 3 | `docs/work-loop.md:295` | The `review-3` signal no longer routes a Prove unit to `hold-reframe` | Specified in review |
+| 4 | `docs/work-loop.md:94` | **Found by the required negative search, not named in the review.** The § challenged route paragraph — which speaks of `review-2` "in either unit" — asserted `hold-reframe` with no phase qualifier. The most exposed leak of the five, because it sits in the section a reader consults for route behaviour | This unit |
+| 5 | `.claude/commands/work-loop.md:168` | **Also found by the negative search.** Step 5a's Shape-block sentence was scoped only by its surrounding heading; now qualified in its own text | This unit |
+
+Sites 4 and 5 are the same defect class the review named. Correcting only the three cited lines would
+have left the leak reachable, so the correction covers the class rather than the citation list. No new
+rule, no new outcome, no new machinery was introduced.
+
+### 6.3 Traces the review required to close
+
+| ID | Check | Expected | Observed | Verdict |
+|---|---|---|---|---|
+| **T1** | **Negative** — a close-rule mention of `hold-reframe` with no Shape qualifier | zero genuine leaks | Raw grep returns **four** lines; each inspected individually and **none is a leak** — see the adjudication below | **PASS** |
+| **T2** | **Positive control for T1** — the same grep must still find the Shape close-rules | non-zero | **4** close-rule lines carry a Shape qualifier (`docs/work-loop.md:94`, `:212`; `.claude/commands/work-loop.md:168`, `:278`). The search can detect the construct it looks for | **PASS** |
+| **T3** | **Positive trace** — a Shape `review-2` material finding still closes `hold-reframe` | intact | `docs/work-loop.md:212–215` and `.claude/commands/work-loop.md:168`, `:278` | **PASS** |
+| **T4** | **Positive trace** — Prove still reaches G2 with an unresolved finding | intact | `docs/work-loop.md:84`, `:94`, `:217`; `.claude/commands/work-loop.md:179`, `:279` — all route it to G2 as a residual limitation | **PASS** |
+| **T5** | Reviewed route does not acquire the terminal outcome | stated | `.claude/commands/work-loop.md:280`; `docs/work-loop.md:217` | **PASS** |
+
+**T1's four raw hits, adjudicated one by one — a bare "zero" would have been false, so it is not
+claimed:**
+
+| Line | Why it is not a leak |
+|---|---|
+| `docs/work-loop.md:215` | The bullet's qualifier is in its lead-in two lines above (`:212`, "at a challenged Shape review point"). The grep is line-scoped and cannot see it |
+| `docs/work-loop.md:217` | **This is the fix** — it states that the branch does *not* apply outside Shape |
+| `docs/work-loop.md:363` | § Closing without a change, step 1: what evidence must carry *once* an outcome is used. A consequence rule, not a close rule |
+| `.claude/commands/work-loop.md:217` | The capability-record transition, conditioned on a stream having already closed `hold-reframe` — an event now reachable only at Shape. Downstream of the close rule, not a second statement of it |
+
+### 6.4 Acceptance and falsification criteria re-measured
+
+| ID | Before | Now | Evidence |
+|---|---|---|---|
+| **A12** | PASS, boundary caveat | **PASS** | Lifecycle intact at `docs/work-loop.md:207–210`; the caveat was the leak, now closed |
+| **A13** | **FAIL** | **PASS** | Terminal branch confined to challenged Shape at five sites; `Shape review point only` retained at `:227` |
+| **A16** | **FAIL in consumer coherence** | **PASS** | `review-{n}`, `n ∈ {1,2}` at `:295`; no rendering routes Prove to `hold-reframe`, so the Prove branch's `review-1.md` no longer contradicts anything |
+| **A17** | PASS | **PASS, unchanged** | Template blob still `f9ac9d4d…`, identical to S1 |
+| **A18** | PASS | **PASS** | `grep -nE 'at most one review round'` → zero on both files; control fires at `d44a4fc:docs/work-loop.md:102` |
+| **A19** | PASS | **PASS** | `grep -nEi 'G4\|fourth gate\|four gates'` → one hit, the pre-existing `:96` prohibition. No new occurrence |
+| **A20** | **FAIL** | **PASS under the operator binding** | Filter over `git diff --name-only 6050a5b HEAD` excluding the three permitted classes → **zero paths**. Positive control: the same filter with `docs/work-loop.md` un-excluded returns it, so the filter works |
+| **F4** | did not fire | **does not fire** | No third cycle at any review point |
+| **F11** | did not fire | **does not fire** | `hold-reframe` remains a terminal close, not a gate (`docs/work-loop.md:225`); exactly G1, G2, G3 |
+| **F12** | **FIRED** | **does not fire** | No path outside the operator-bound permitted set; the third path's blob matches `37c6be79…` exactly |
+
+A1–A11, A14 and A15 were not touched by this correction and were verified unaffected — the two edited
+files' other sections are unchanged, and the two untouched files are byte-identical to S1.
+
+### 6.5 Budget after the correction pass
+
+| Item | Status |
+|---|---|
+| Initial independent Prove review | **Consumed** — `34563750…`, blob `1144ef83…` |
+| One bounded material correction pass | **Consumed** — commit `e384d8c3…`, one pass, both findings |
+| One conditional closure `review-2` | **Available, and justified** — the correction changed matters this verdict rested on |
+| `review-3` | **Does not exist** in this unit or stream |
+| **G2** | **Closed.** Not opened, not armed, no package presented |
+
+If `review-2` returns a further unresolved material finding, `hold-reframe` does **not** apply — this
+is a Prove unit, and the correction just made that explicit. The finding would be carried into G2 as a
+residual limitation for the operator to decide.
+
+LIMITATIONS: The corrections are text. They were verified by reading every changed site, by a negative
+search whose four raw hits were each adjudicated rather than dismissed, and by positive controls on
+both the search and the path filter — **none of that demonstrates that a future session obeys them**,
+which is behavioural and belongs to Stage 9 (Use). M8, M9 and M10 remain unexecuted. A20 now passes
+**only** under the operator's Slice-1 binding; on plan-v4's literal wording it remains unsatisfiable,
+and the binding is recorded rather than folded into the plan, whose blob is untouched at `9ae4839a…`.
+The judgment that sites 4 and 5 belong inside the same correction — rather than being new scope — is
+mine: they are the identical defect class in the same two files, and leaving them would have left the
+finding open. A fresh reviewer may overturn it. Line numbers are as of blobs recomputed in §7. The unit
+remains **open** and **G2 remains closed**.

@@ -244,3 +244,41 @@ identity in this file was computed against Git in this worktree; none is asserte
 of the S1 commit `8762fc7f…` and will move if any of the four files changes.
 
 Status: complete.
+
+---
+
+## 8. Entry 2 — 2026-07-31 — three verdicts in §3 superseded as incorrect
+
+Appended after this unit closed. **Nothing above is rewritten** — evidence is append-only, not
+immutable (`docs/work-loop.md` § Artifacts), and §3's table stands unedited as the record of what was
+claimed at the time. The precedent is the Shape unit's Entry 3 → Entry 4 supersession.
+
+Independent Prove `review-1` (commit `34563750a3fa80c0e3a8c112616a8a58d57026f6`, blob
+`1144ef835547864e43bcbe5fcda8baa25a237527`) returned **REVISE BEFORE G2** with two material findings.
+Three verdicts in §3 above were wrong, and all three were mine:
+
+| Criterion | §3 claimed | Correct verdict for the S1 candidate | Why §3 was wrong |
+|---|---|---|---|
+| **A13** | PASS | **FAIL** | I cited the contract's Shape-only reservation at `:225` and never checked the general Step 7 sentence I had written in the same commit, which stated the `hold-reframe` branch with no phase qualifier |
+| **A16** | PASS | **FAIL in consumer coherence** | Contract-side was correct; I did not test it against the Prove branch that the unqualified rule reached |
+| **A20** | PASS | **FAIL as A20 was written** | The row's own observation listed `docs/work-loop-repair-workflow.md`, a path outside the expected set, and I recorded PASS against it. A claim contradicted by the evidence in the same row |
+
+**Current status of each**, after the Prove correction pass (commit `e384d8c383c226f00176abe6956bf5f5c29acab8`)
+and the operator's Slice-1 scope binding — measured in `…-prove.evidence.md` §4:
+
+| Criterion | Now |
+|---|---|
+| A13 | **PASS** — the terminal branch is confined to a challenged Shape review point at five sites |
+| A16 | **PASS** — no rendering routes a Prove unit to `hold-reframe`; BF-2 returns to a genuine deferral |
+| A20 | **PASS** under the operator's explicit Slice-1 binding, with the blob condition met and a positive control |
+
+**One further correction to this file's reasoning.** §5's BF-2 entry, and my later adjudication of it,
+accepted that the generic Step 7 rule made a Prove `review-2` newly operational. **Verified and
+false:** the approved base already permitted it — `git show 6050a5b:.claude/commands/work-loop.md`
+line 224 reads "A second review round is `review-2` and is justified only when…", inside the same
+Step 7, and the base Prove branch at line 144 already hard-coded `review-1.md`. `hold-reframe` appeared
+**zero** times in either file at base. So S1 introduced the `hold-reframe` leak and **not** the Prove
+`review-2` path; BF-2's imprecision is pre-existing and unchanged by S1. The deferral was correct; the
+reason given for questioning it was not.
+
+Status: complete (unchanged — this unit remains closed. This entry corrects its record, not its state).
