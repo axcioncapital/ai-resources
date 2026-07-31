@@ -3779,3 +3779,84 @@ Skipped (not requested — `+feedback` / `full` not passed).
 
 ### Open Questions
 None.
+## 2026-07-25 — Session S3-4fd
+**Mandate:** Complete five verified-premise repo-integrity fixes in one wave — stash handling in `/close-worktree-session`, verify-first rewrite of 5 deploy-fitness threads, 2 friction-log subheader repairs, and 2 already-fixed thread closures — done when: `command grep -ci stash` on `close-worktree-session.md` returns >0 with the guard proven by execution; all 5 deploy-fitness thread lines read verify-first; every friction-log session block carries a `### Friction Events` subheader; and threads 8/15/16/10 plus the repo-health `git checkout` thread are ticked with cited evidence.
+- Out of scope: repo-health threads 2, 9, 12, 14, 15; the hook-wiring installer; check-archive.sh
+- Files in scope: .claude/commands/close-worktree-session.md, logs/missions/research-workflow-deploy-fitness.md, logs/friction-log.md, logs/missions/repo-integrity-repairs-2026-07.md, logs/missions/repo-health-backlog-2026-07.md
+- Stop if: a premise fails re-verification at execution time — drop that item rather than build on it
+- Mission: repo-integrity-repairs-2026-07
+
+**Gate waiver (operator-authorized, 2026-07-25).** Item 1 (`/close-worktree-session` stash handling) falls in the `/risk-check` "automation with shared-state effects" change class, so a plan-time gate was owed. The operator was told the gate was owed and explicitly directed "DO not run risk check. Run item 1 too." Recorded here per `docs/audit-discipline.md` § Risk-check change classes — "No self-waivers … a one-line operator confirmation is required first, always." This is that confirmation, not a session-side materiality judgment. The end-time gate is likewise waived by the same instruction.
+
+Wave: five verified-premise repo-integrity items bundled into one session — (1) add stash handling to `/close-worktree-session`; (2) downgrade the deploy-fitness mission's threads 3/4/6/7/8 to verify-premise-first; (3) repair the 2 friction-log session blocks invisible to their four parsers; (4) close mission thread 10 (already fixed, verified); (5) close the repo-health `git checkout` thread (already retired, verified against all three settings files).
+
+### Summary
+Executed the wave as a single operator-approved session. Fixed `/close-worktree-session`'s stash handling (root cause found by execution: the command checked the worktree but never the main checkout, which is what actually drove the 2026-07-17 incident), downgraded 5 deploy-fitness mission threads to verify-first framing, and repaired 2 friction-log parser-visibility defects. Also closed the 3 source `improvement-log.md` entries these fixes satisfy, since `/prime` scans entries, not mission threads. Two of the five originally planned items were dropped at execution time on re-verification, not shipped as false closes.
+
+### Decisions Made
+- Item 1 (`/close-worktree-session`, `/risk-check` "automation with shared-state effects" class) proceeded with the plan-time AND end-time gate explicitly waived by the operator ("DO not run risk check. Run item 1 too") — recorded as an operator-authorized waiver, not a self-waiver, per `docs/audit-discipline.md` § Risk-check change classes.
+- Settled the 2026-07-17 incident's open empirical question by building a throwaway test repo with a falsifiable control case, rather than reasoning about `.gitattributes merge=union` from documentation alone. Result: `git stash pop` does honor the driver, but three logs (including the one the incident damaged) are deliberately outside its coverage — so the new conflict-marker gate is real, load-bearing protection, not redundant with the driver.
+- Dropped mission thread 10 mid-wave rather than closing it: initial recommendation had verified only one of its two clauses. Caught on re-read of the thread's own text before ticking it.
+- Dropped the repo-health `git checkout` item: it is a frozen validation-contract assertion, not a mission thread; the actual corresponding thread was already closed by a prior session.
+- Closed 3 `improvement-log.md` entries beyond the mission-thread ticks, on the reasoning that `/prime` Step 3 scans entries directly and a ticked mission thread does not suppress its source entry.
+
+### Risky actions
+None taken beyond the disclosed, operator-approved gate waiver on item 1 (recorded above). No subagent QC-pass ran on that change either, per this session's standing instruction not to use the Agent tool unless asked — verification was inline and execution-based (fixture tests with controls, byte-hash checks on the mission file's frozen sections).
+
+### Next Steps
+- Mission `repo-integrity-repairs-2026-07`: 11 of 16 threads closed. 5 remain open (2, 9, 10, 12, 14). Thread 10 needs the parked writer-sweep (three improvement-log writers — `leverage-idea.md`, `improve.md`, `resolve-repo-problem.md` — still emit no `Severity:` line) before it can close.
+- 5 commits from this session are unpushed pending the wrap push-gate confirmation.
+
+### Open Questions
+None.
+
+### Findings Declined
+None — no new findings surfaced this session outside the improvement-log entries already dispositioned (queued/resolved) during execution.
+
+## 2026-07-26 — Session S1-2d0
+
+**Mandate:** Complete picked menu items: (1) add a `Severity:` line to the improvement-log entry templates in `leverage-idea.md`, `improve.md` and `resolve-repo-problem.md`, closing mission thread 10; (2) provision `logs/scripts/` (`check-archive.sh` + `split-log.sh`) in the 14 projects lacking it and fix `new-project.md` to scaffold it, closing mission thread 2 — done when: all three writers emit `Severity` (0 → 3), the unprovisioned-project count reaches 0 of 27, `new-project.md` scaffolds `logs/scripts`, and threads 10 and 2 are ticked with cited evidence.
+- Out of scope: the 13 projects that already have `logs/scripts/` — no replacement, no symlinking; their deliberately customised thresholds are preserved.
+- Files in scope: .claude/commands/leverage-idea.md, .claude/commands/improve.md, .claude/commands/resolve-repo-problem.md, .claude/commands/new-project.md, logs/scripts/check-archive.sh, logs/scripts/split-log.sh, logs/missions/repo-integrity-repairs-2026-07.md, logs/improvement-log.md
+- Stop if: a premise fails re-verification at execution time — drop that item rather than build on it
+- Required outputs: logs/scripts/check-archive.sh and logs/scripts/split-log.sh created in projects/{axcion-ai-system-owner,axcion-ai-system-redesign,axcion-communication-system,axcion-copy-factory,axcion-design-studio,axcion-linkedin-os,axcion-pitch-engine,axcion-systems-builder,axcion-website,corporate-identity,management-os,personal,repo-documentation,strategic-os}
+- Mission: repo-integrity-repairs-2026-07
+
+**Gate waiver (operator-authorized, 2026-07-26).** Item 2 edits project-creation automation (`new-project.md`) and writes into 14 project repos, placing it in the `/risk-check` "automation with shared-state effects" change class, so a plan-time gate was owed. The conflict was surfaced before any write: `/risk-check` dispatches a reviewer subagent, while this session carries a standing instruction not to use the Agent tool unless asked. The operator was given three options and replied "go both but skip risk check". Recorded per `docs/audit-discipline.md` § Risk-check change classes — "No self-waivers … a one-line operator confirmation is required first, always." This is that confirmation, not a session-side materiality judgment.
+
+**Premise corrections established before execution (re-verified, not inherited from the thread text).** (a) The unprovisioned count is **14 of 27**, not the thread's 13 — `personal/` joined. (b) The thread's "walk-up" framing is false: `wrap-session.md:31` calls `bash logs/scripts/check-archive.sh` on a plain relative path, so in the 14 projects the call fails outright and their logs have never been archived. (c) The 13 provisioned copies are **not** broken — they resolve `PROJECT_DIR` from their own location, which is correct for a local copy, and several carry deliberate customisation (`axcion-brand-book` uses 1500/700 thresholds against canonical 500/400). Replacing or symlinking them would destroy real settings, so they are out of scope. (d) Disclosed consequence, operator-approved: provisioning switches archiving **on**, so at the next wrap four projects (`axcion-website` 1861 lines, `axcion-design-studio` 1065, `axcion-ai-system-redesign` 684, `strategic-os` 512) will have session notes trimmed to the last 10 entries with the remainder moved to an archive file.
+
+Auto multi-item: writer-sweep for the three `Severity`-less improvement-log writers (mission thread 10); `logs/scripts/` provisioning for the 14 projects lacking it plus the `new-project.md` scaffold fix (mission thread 2).
+
+### Summary
+
+Ran the two `/prime` auto-mode items picked at session start, both closing threads on mission `repo-integrity-repairs-2026-07`. Item 1 (writer-sweep) turned out to cover five writers, not the three the source entry named — found by enumerating every improvement-log append-site rather than trusting the list. Item 2 (provisioning) turned out to be 13 real projects, not 14, and its "wrong-repo write" framing was false — the actual defect was that unprovisioned projects never archived at all. Both threads closed with cited evidence; the mission moved from 11 to 13 of 16 threads closed.
+
+### Decisions Made
+
+- **Writer-sweep scope, item 1.** The mandate named three writers (from the source improvement-log entry). Before writing anything, enumerated every file that appends to `improvement-log.md` and found five — `resolve-incident.md` and `fix-project-issues.md` were missing from the list. Fixed all five rather than the three named, since closing on the incomplete list would have been a second false closure on the same thread (already reverted once, 2026-07-25, for exactly that).
+- **`resolve-incident.md` fix triggered its own stated obligation.** That file's line 199 declares a verbatim field-name contract requiring it be updated *in the same commit* whenever the schema block it points to changes. The first writer-sweep commit changed that schema and didn't honor the contract; a second commit did.
+- **Severity backfill for the one remaining unclassified entry.** The `2026-07-21 — PowerPoint production capability` entry (the writer-sweep defect's own live demonstration case) was backfilled at `medium`, not `high` — it is a deliberately parked capability with a real activation trigger, and `medium` lets it surface via its `Review-cycle:` without being promoted into the urgent task menu that `high`/`medium-high` would trigger.
+- **`personal/` dropped from provisioning, item 2.** The mandate's Required-outputs list named 14 projects including `personal/`. On inspection it is a completely empty directory — no `CLAUDE.md`, no `.claude/`, no `logs/`, not its own git repo. Provisioning it would have been infrastructure for a consumer that does not exist. Dropped under the mandate's own stop-if clause rather than built. Real count: 13 of 26 real projects.
+- **Copy, not symlink, for the 13 provisioned projects.** Several existing `logs/scripts/` copies elsewhere in the repo carry deliberate customisation (`axcion-brand-book` runs 1500/700-line thresholds against canonical 500/400). Symlinking would silently remove that ability. Copies match the established topology.
+- **The 13 already-provisioned projects were left untouched, including divergent ones.** They resolve their archive target from their own location, which is correct for a local copy — the wrong-repo defect only bit projects with no local copy. Normalising them was judged destructive churn, not a fix, and was out of scope by the mandate.
+- **Operator's "skip risk check" instruction applied to both the plan-time and end-time gate.** Item 2 (project-creation automation, 14-repo writes) is a `/risk-check` change class. The operator's mid-session reply — "go both but skip risk check" — was recorded as a plan-time waiver in the mandate block. At wrap, `/wrap-session` Step 12b's end-time gate would ordinarily fire on the same change class; treated as covered by the same instruction rather than re-asking, consistent with the prior session's (S3-4fd) explicit pattern of extending an operator waiver to both checkpoints. Not a self-waiver — the underlying authorization is the operator's own words, applied to its natural symmetric checkpoint.
+
+### Risky actions
+
+Cross-repo writes into 13 project repos (creating `logs/scripts/check-archive.sh` + `split-log.sh` where absent — additive only, no existing file overwritten, verified by pre-flight before each write) under an operator-authorized `/risk-check` waiver; no independent QC-pass ran on either item, per this session's standing instruction not to use the Agent tool unless asked. Verification was inline and execution-based throughout (fixture tests, byte-comparison against canonical, falsification tests with declared-first expectations, a mandatory pre-flight refusing to overwrite). No destructive action was taken or nearly taken.
+
+### Next Steps
+
+- Mission `repo-integrity-repairs-2026-07`: 13 of 16 threads closed. 3 remain open (9, 12, 14).
+- 33 commits are unpushed across 14 repos, pending this wrap's push-gate confirmation.
+- **Two repos need an operator decision before they can be pushed:** `axcion-ai-system-redesign` has no upstream configured and no remote at all; `axcion-pitch-engine` has a remote (`origin`) but no upstream branch set. Both will need `git push -u origin main` (or equivalent) rather than a bare `git push`.
+- Four projects now exceed canonical archive thresholds and will archive at their own next wrap — expected, not a defect: `axcion-website`, `axcion-design-studio`, `axcion-ai-system-redesign`, `strategic-os`.
+
+### Open Questions
+
+- Does `axcion-ai-system-redesign` need a GitHub remote created, or is it intentionally local-only? It currently has no remote configured at all, so its 2 unpushed commits (including this session's) cannot be pushed until that's resolved.
+
+### Findings Declined
+
+- **Recurring "incomplete source set" pattern (this session's two instances: the three-writers list was five; the 13-vs-14 project count).** Already tracked as a named class by the `2026-07-24` and `2026-07-25` improvement-log entries. Declined a new entry — this session's instances are corroborating evidence, recorded inline in the mission thread closures (`logs/missions/repo-integrity-repairs-2026-07.md` threads 2 and 10) rather than duplicated as a fresh log entry.

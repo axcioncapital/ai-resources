@@ -152,3 +152,46 @@ both source logs byte-identical afterwards (`shasum` before/after). Verified by
 **Decided by:** Claude, executing the G1-approved plan `logs/loop/2026-07-30-prime-session-entry-
 ownership-shape.plan-v3.md` § 1 S3. The two reductions above were approved at G1; the friction-log
 finding is new evidence from this slice and is recorded here rather than silently absorbed.
+
+## 2026-07-31 — work-loop repair Slice 1: operator scope binding for A20/F12 (Option A)
+
+**Context.** Slice 1's approved plan (plan-v4) defined acceptance criterion A20 / falsifier F12 as: the
+`BASE..HEAD` diff must touch only the four G1-approved target files plus the stream's own `logs/loop/`
+artifacts. Codex's Prove `review-1` found this criterion failing — `docs/work-loop-repair-workflow.md`
+sits in the diff and is outside that set. Traced in the worktree
+(`ai-resources-g1-reviewed-plan`): the repair-workflow doc was introduced at commit `17ad3aa4…`, the
+**second commit of the entire repair program**, before Frame, before Shape, before plan-v1 existed. It
+was therefore already present — and A20 already unsatisfiable as literally written — at the point
+`review-1` and `review-2` inspected plan-v4 and at the point G1 was approved. Neither review nor G1
+caught it.
+
+**Decision.** The operator approved **Option A**: a narrow, Slice-1-only scope binding recognizing
+`docs/work-loop-repair-workflow.md`, at its exact existing blob `37c6be795568dd6942dc3883bb067ff03b0a5007`
+(unmodified since `17ad3aa4…`), as pre-Shape repair-program governance rather than an S1 implementation
+target. The binding does not authorize modifying that document, does not add it to the implementation
+slice, does not widen the four-file scope, does not change the approved base `6050a5b8…`, does not
+mutate plan-v4 or its identity, and creates no general exception for any other file, stream or slice.
+Recorded verbatim in the Prove evidence's Entry 3 and CLOSE block, verified against Git before being
+relied on.
+
+**Rationale.** The property A20/F12 actually protect — no unapproved object changed — was independently
+verifiable as satisfied: the S1 implementation commit (`8762fc7f…`) touched exactly the four approved
+files, and the repair-workflow doc's blob was unchanged throughout. The binding states a fact already
+true rather than editing anything; plan-v4's blob stays `9ae4839a…`, so G1 remains valid without
+reopening it.
+
+**Alternatives considered.**
+- **Option B — accept A20/F12 as failed and stop** (`hold-reframe` the stream). Truthful and available,
+  but disproportionate: it would halt a sound, correctly-scoped implementation over a criterion that was
+  unsatisfiable from the moment it was authored, for reasons unrelated to what was actually built.
+- **Option C — move the approved base past `17ad3aa4…`.** Rejected as strictly worse: `BASE:` is a
+  binding field printed verbatim in every artifact of the stream (Frame brief, all four plan revisions,
+  both Shape reviews, all evidence, both handoffs), and plan-v4 §11.5 uses `6050a5b8…` as a literal
+  verification command argument. Moving it would make every existing artifact's stated base stale and
+  contradict the approved plan's own verification text.
+
+**Named risk, not hidden.** This is a post-G1 clarification of an approved criterion's reading, which is
+adjacent to a separately-tracked open finding (OF-1: a 2026-07-29 package mutated after G1 in a
+different stream). It differs in kind — nothing here is edited, and the decision is explicit, attributed
+and recorded, the opposite of a silent mutation — but the adjacency was surfaced to the operator before
+approval rather than glossed over.

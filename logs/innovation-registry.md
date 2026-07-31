@@ -164,3 +164,4 @@
 | 2026-07-29 | agent | .claude/agents/pipeline-review-auditor.md | triaged:project-specific | — |
 | 2026-07-29 | command | .claude/commands/resolve-incident.md | triaged:project-specific | — |
 | 2026-07-29 | command | .claude/commands/resolve-repo-problem.md | triaged:project-specific | — |
+| 2026-07-31 | command | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/.claude/commands/work-loop.md | n/a:existing-canonical-resource | — |
