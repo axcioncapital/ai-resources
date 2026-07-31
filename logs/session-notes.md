@@ -481,3 +481,76 @@ None — no findings surfaced this session beyond the retirement work itself, wh
 
 ### Open Questions
 None.
+
+## 2026-07-31 — Supervised work-loop repair, Slice 1 Shape — plan reviewed twice, G1 approved
+
+### Summary
+Acquired sole-writer ownership of the dedicated repair worktree (`ai-resources-g1-reviewed-plan`,
+branch `codex/2026-07-31-g1-reviewed-plan-invariant`) per `docs/work-loop-repair-workflow.md`, after
+verifying a prior session's committed release. Ran the Shape unit for Slice 1 (G1 reviewed-plan
+integrity) to completion: transcribed and adjudicated an independent Codex review of plan-v2 (3
+material findings), produced plan-v3, then plan-v4 after an operator-directed proportionality
+withdrawal on one finding's design, transcribed and adjudicated a zero-finding closure review-2, ran
+the mandated pre-G1 identity comparison, and presented the G1 package. **Operator approved G1**, bound
+to the exact plan-v4/review-2 identities. Wrote the implementation handoff, released ownership, and
+verified the worktree clean. No object under repair (`docs/work-loop.md`,
+`.claude/commands/work-loop.md`, `.agents/skills/work-loop/SKILL.md`, `templates/capability-record.md`)
+was touched — this unit is planning-and-review only; nothing has been implemented.
+
+All substantive work happened in the dedicated repair worktree, on a branch not yet merged to `main`.
+Nothing in this `ai-resources` checkout was modified by the repair work itself — only this wrap's own
+bookkeeping touches this checkout.
+
+### Decisions Made
+- **Wrap-routing (mine, stated not asked).** This session's persistent shell cwd was confirmed to be
+  this main checkout, not the repair worktree — verified before writing anything, since the repair
+  workflow forbids writing to that worktree without re-acquiring ownership (already explicitly
+  released) and forbids any diff there outside the approved four-file/`logs/loop/` scope. No conflict
+  needed resolving in practice; confirmed rather than assumed.
+- **Decisions-journal routing (mine, stated not asked).** The session's substantive operator decisions
+  — widening Slice 1's implementation scope from three files to four (plan-v2), and withdrawing the
+  RV2-01 byte-identity/verbatim-persistence requirement as disproportionate (plan-v4) — are **not**
+  duplicated into this checkout's `logs/decisions.md`. They are already durably recorded, append-only,
+  inside the repair unit's own Shape evidence artifact
+  (`logs/loop/2026-07-31-g1-reviewed-plan-invariant-shape.evidence.md`, on the repair branch), per the
+  repair workflow's own artifact discipline (§14: "Do not create multiple permanent planning-document
+  families"). A `logs/decisions.md` pointer entry is the stream-close convention
+  (`docs/work-loop.md` § Closing without a change) and belongs to this stream's eventual close, not to
+  an in-flight Shape unit — recorded here so the omission reads as deliberate, not missed.
+- **G1 approval, operator-issued, on the repair branch.** Bound to `plan-v4` (commit `df45a2b1a42a2140c85a56e71c395407dc9eb903`,
+  blob `9ae4839afc8ccb23c4bd50a2644f32213273ed90`) and `review-2` (commit `12b22dd9acfc76094f0803f29d64b5935ead4f83`,
+  blob `848ee9f940c562f421c6ef727e358d21c73a299f`). Authorizes only the exact one-slice, four-file
+  package plan-v4 states; the zsh-syntax annotation permits safe shell forms during verification only,
+  not additional scope.
+
+### Risky actions
+None. Every write this session was confined to `logs/loop/` on a dedicated branch, staged by explicit
+pathspec; nothing under repair was touched; nothing was pushed mid-session.
+
+### Session Assessment
+Skipped (Step 6.5 not requested — no `+feedback`/`full` flag).
+
+### Next Steps
+- **The real continuation point is the repair handoff, not a command in this checkout:**
+  `logs/loop/2026-07-31-g1-reviewed-plan-invariant-shape.handoff-2.md`
+  (commit `833762c2a0570287f0e9ec31743bdeffbac59a2e`, worktree
+  `ai-resources-g1-reviewed-plan`, branch `codex/2026-07-31-g1-reviewed-plan-invariant`). A new Claude
+  session must verify it, explicitly acquire ownership, then open the Build unit and implement the
+  G1-approved plan-v4 package — exactly the four files it names, nothing else.
+- Two prior-session worktrees remain open and untouched (`ai-resources-leverage-idea`,
+  `ai-resources-work-loop`) — same as noted in the entry above; still someone else's separate
+  `/close-worktree-session` call.
+- This wrap's push gate, if confirmed, ships both this checkout's wrap commit and the repair branch's
+  accumulated commits (same origin, different branch) — see the push prompt below.
+
+### Findings Declined
+- **Shell-syntax hazard in the plan's mandatory shell note** (declined for `improvement-log.md`).
+  Two distinct zsh hazards surfaced this session — unquoted word-splitting (silent false negative,
+  Frame §1) and `:l` read as a lowercase parameter modifier (loud failure, Shape evidence §9.5). Not
+  queued as a general-system finding: it is already actionable and recorded inside the repair stream's
+  own artifacts (plan-v4 §11.5's shell note, and the handoff's method note), which the next Build
+  session will read directly. Duplicating it into this checkout's `improvement-log.md` would be a
+  second, less-precise copy of guidance that already has an owner and a concrete next reader.
+
+### Open Questions
+None. The repair stream's next action is fully specified in the handoff.

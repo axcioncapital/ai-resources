@@ -32,3 +32,8 @@ Promoted findings carry their source and a content-derived id; tick an item to r
 - [ ] `grep` is a shell function that expands `$VAR` inside single quotes, and it returns silent false negatives — `logs/improvement-log.md` <!-- promote:c6814f429646 -->
 - [ ] `toolkit-relationship.md` § 2's `/leverage-idea` row is now materially wrong — `logs/improvement-log.md` <!-- promote:233a1c11c210 -->
 - [ ] `check-foreign-staging.sh` guard degrades to warn-only on any `/handoff`-resumed session — `logs/improvement-log.md` <!-- promote:675f0d2a0a47 -->
+
+- [ ] I state repo facts from recall instead of checking them — now 4-for-4 in one session, and the fourth was written INTO the entry cataloguing the other three — `logs/improvement-log.md` <!-- promote:f034f079ad5b -->
+- [ ] Hook BODIES are versioned; hook WIRING is not — a clone gets the guards' code and none of their protection, silently — `logs/improvement-log.md` <!-- promote:379fec7dc59a -->
+- [ ] The two deny rules that block ordinary git work — DEFERRED to /friday-act, and my proposed fix was WRONG — `logs/improvement-log.md` <!-- promote:8717826ef775 -->
+- [ ] A `/clarify`-first session gets no marker, so the wrap guard classifies its own work as foreign and halts the wrap — `logs/improvement-log.md` <!-- promote:b9a7d0e41983 -->
