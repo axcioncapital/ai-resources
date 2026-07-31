@@ -78,37 +78,58 @@ These are the downstream-outcome rows review-2 R3 added: numbered / free-text / 
 direct, plus `auto N` resolution and the wrap reminder on every terminal path. They are what proves
 ownership actually transferred; `B14` alone could not.
 
-### B1–B14 — five measured, nine unassessed
+### B1–B14 — nine measured, five unassessed
+
+**Split each row into the half a script owns and the half the model owns.** The collector's output is
+the input `/prime` renders from; it is also the half that can regress *silently*, because no human sees
+it. Measuring it is not the same as observing the rendering, and every row below says which half it
+proves. Each "empty" result carries a positive control — an inert control means the result proves
+nothing, and one was caught inert and fixed before being trusted.
 
 ```
+B4:  PASS (rule)   the N-auto precedence rule discriminates as written
+  · ran: the rule's own regex ^[1-6][[:space:]]+auto$ against six real inputs
+  · observed: "2 auto" and "2  auto" -> auto mode item 2; "auto", "2", "7 auto", "2 autos" -> not
+    N-auto. So `2 auto` cannot be misread as a bare-number selection of item 2.
+
+B6:  PASS (operands only)
+  · observed: with an active mission in a fixture repo, CWD_REPO and the MISSIONS block are both
+    emitted, so the cross-repo guard has both operands to compare
+  · NOT proven: that the stop PRECEDES the write. That ordering is the whole point of B6 and needs
+    a live run.
+
+B8:  PASS (input)   no candidates -> NEXT_STEPS and NEXT_UP both empty
+  · control LIVE: a real dated `### Next Steps` entry DOES appear, so the empty result is meaningful
+  · the control was first written wrong (undated header), came back INERT, and was fixed — the
+    original B8 "pass" was measuring nothing
+
+B9:  PASS (input)   no plan file -> POSITION block not emitted at all
+  · control LIVE: with a plan file the cascade DOES emit
+
+B11: PASS (input)   no active missions -> MISSIONS empty
+  · control LIVE: an active mission DOES appear
+
 B12: PASS at the collector contract
   · ran: prime-collect.test.sh TEST 8, incl. the new absent-usage-log case
   · observed: TELEMETRY_GAP=yes on a real gap; =yes when usage-log.md is absent entirely;
     =no once the date appears; =no on a trivial entry
-  · NOT proven: /prime's RENDERING of the nudge. The collector's answer is correct; that the
-    command surfaces it live is unassessed.
+  · NOT proven: /prime's RENDERING of the nudge.
 
 B14: PASS (negative half only)
   · observed: /prime ends at Step 9, "Stop. /prime ends at dispatch"; no execution turn follows
-  · this row was always insufficient on its own — R1-R8 carry the positive half
+  · always insufficient alone — R1-R8 carry the positive half
 
 B1 / B3 (mechanism, STATIC only): {gate:post-plan} and {gate:auto} both present in the dispatch
-  region. Static presence is not behavioural proof; the behavioural proof is R1/R2 and R5/R6.
+  region. Static presence is not behavioural proof; R1/R2 and R5/R6 carry that.
 
-B2, B4, B5, B6, B7, B8, B9, B10, B11, B13: unassessed
-  · each needs a live /prime run in the judgement layer, which no script can stand in for:
+STILL UNASSESSED — B2, B5, B7, B10, B13:
     B2  free-text dispatch WITHOUT the token
-    B4  `N auto` read as auto mode, not bare-number selection
     B5  plan-mode guard writes nothing (no marker, no header, no mtime)
-    B6  cross-repo mission guard fires BEFORE any write
     B7  wrong menu number asks once and re-classifies
-    B8  empty menu renders the no-tracked-next-steps line
-    B9  `Where we are:` omitted when no plan exists
     B10 mission auto-binds from a [mission:<id>] item without prompting
-    B11 mission binding skips silently when no missions are active
     B13 done-condition check holds an activity-only item
-  · B5 and B6 are the two worth running first: both are WRITE-SUPPRESSION guards, so a regression
-    in either is silent and lands in real repo state rather than in a message.
+  · B5 is the one that matters most: it is a WRITE-SUPPRESSION guard, so a regression is silent
+    and lands in real repo state rather than in a message. B6's ordering half is second.
 ```
 
 ---
@@ -228,9 +249,10 @@ Budget B                    +40         (drafted +48)
 
 ## 9. What is NOT proven — read this before answering G2
 
-1. **Nine B-rows are unassessed** (B2, B4–B11, B13). All are judgement-layer behaviours needing a live
-   `/prime`. **B5 and B6 matter most**: both suppress writes, so a regression in either is silent and
-   lands in real repo state.
+1. **Five B-rows are unassessed** (B2, B5, B7, B10, B13), down from nine. Four more (B6, B8, B9, B11)
+   are proven only on their **collector half** — the input is correct, the rendering is not observed.
+   **B5 matters most**: it is a write-suppression guard, so a regression is silent and lands in real
+   repo state rather than in a message. B6's ordering half ("the stop precedes the write") is second.
 2. **The telemetry nudge's rendering is unassessed.** The collector returns the right answer; that
    `/prime` surfaces it has not been observed live.
 3. **No `/develop-ai-resource` qualification** ran for the three scripts built after `prime-session-entry.sh`.
