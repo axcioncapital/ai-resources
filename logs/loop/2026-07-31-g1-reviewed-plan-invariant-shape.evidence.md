@@ -311,3 +311,104 @@ LIMITATIONS: This entry records a decision and its scope, not a verified rule. P
 when it was written. No behavioural evidence exists for any part of the header-repair design — a live
 malformed-header re-emission is unreachable until the slice is built and belongs to Stage 9 (Use). The
 unit remains open and G1 remains closed.
+
+---
+
+## 9. Entry 5 — 2026-07-31 — closure review-2 received, adjudicated, pre-G1 identity checks passed
+
+Appended, not rewritten (`docs/work-loop.md:141`).
+
+### 9.1 Binding verification of the returned block
+
+Compared field by field against the active binding (`docs/work-loop-repair-workflow.md` §6.1) before
+any write: repair · slice · unit · stream · repo · worktree · branch · base · HEAD · object identity ·
+role. **All matched. No stop fired.** Verified against Git, not against chat memory:
+
+| Check | Command | Observed |
+|---|---|---|
+| HEAD at receipt | `git rev-parse HEAD` | `df45a2b1a42a2140c85a56e71c395407dc9eb903` — matches the block |
+| Worktree | `git status --porcelain` | empty |
+| Plan-v4 at its declared commit | `git rev-parse df45a2b1…:{plan-v4}` | `9ae4839afc8ccb23c4bd50a2644f32213273ed90` |
+| Plan-v4 at HEAD | `git rev-parse HEAD:{plan-v4}` | `9ae4839afc8ccb23c4bd50a2644f32213273ed90` — byte-identical |
+| Base ancestry | `git merge-base --is-ancestor 6050a5b HEAD` | true |
+| Four targets vs base | `git diff --stat 6050a5b HEAD -- <four paths>` | empty — untouched |
+
+### 9.2 Transcription and review identity
+
+Transcribed **verbatim and unedited** (`…repair-workflow.md` §5.4), committed by explicit pathspec.
+Review identity computed **after** transcription and commit, per the design plan-v4 §6.2 specifies:
+
+| Field | Value |
+|---|---|
+| `REVIEW-PATH` | `logs/loop/2026-07-31-g1-reviewed-plan-invariant-shape.review-2.md` |
+| `REVIEW-COMMIT` | `12b22dd9acfc76094f0803f29d64b5935ead4f83` |
+| `REVIEW-BLOB` | `848ee9f940c562f421c6ef727e358d21c73a299f` |
+
+**Binding relation verified:** `git rev-parse 12b22dd9…:{REVIEW-PATH}` → `848ee9f9…`. Holds.
+
+### 9.3 Adjudication — zero findings
+
+**Verdict: PASS — NO MATERIAL FINDINGS REMAIN.** Material findings: 0. Minor findings: 0. New
+findings: none.
+
+**There is therefore no disposition to record.** `docs/work-loop.md:202` assigns one disposition per
+*material* finding; with none returned, the adjudication is the recorded fact that the review closed
+clean. Nothing was rejected, deferred, or ruled out of scope, because nothing was raised.
+
+Review-2 independently closed all three review-1 findings: **G1-RV2-01 CLOSED** on the
+operator-approved proportional design, with the §13.4 residual explicitly acknowledged as visible for
+G1 judgment rather than represented as eliminated; **G1-RV2-02 CLOSED**; **G1-RV2-03 CLOSED**. It also
+returned PASS on proportionality and overengineering, and independently recomputed the plan's
+historical identity fixtures and the review-1 identity fixture against Git.
+
+### 9.4 Pre-G1 identity checks — `…repair-workflow.md` §9.1
+
+§9.1 requires that immediately before G1 the candidate plan identity be recomputed and compared with
+the review's. Run under §9.1, which is the operative authority — plan-v4 §6.5 is a *proposed* rule and
+is not yet implemented in any authority file.
+
+| Field | Recomputed candidate | Stated by review-2 | Result |
+|---|---|---|---|
+| `PLAN-PATH` | `logs/loop/…-shape.plan-v4.md` | `logs/loop/…-shape.plan-v4.md` | **match** |
+| `PLAN-COMMIT` | `df45a2b1a42a2140c85a56e71c395407dc9eb903` | `df45a2b1a42a2140c85a56e71c395407dc9eb903` | **match** |
+| `PLAN-BLOB` | `9ae4839afc8ccb23c4bd50a2644f32213273ed90` | `9ae4839afc8ccb23c4bd50a2644f32213273ed90` | **match** |
+
+Candidate committed: yes. Worktree clean: yes. Review artifact exists and its own binding relation
+holds (§9.2). Plan-v4 has not been mutated since review — its introducing commit is unchanged, so the
+review is not stale.
+
+**All checks pass. G1 is not blocked.**
+
+### 9.5 Method note — a second zsh hazard, caught and corrected
+
+Computing the review identity, `git rev-parse "$R_COMMIT:logs/loop/…"` failed: **zsh read `:l` as the
+lowercase parameter modifier** and consumed the `l` of `logs/`, producing
+`12b22dd9…ogs/loop/…` and a `fatal: ambiguous argument`. Corrected by brace-delimiting the parameter
+(`"${R_COMMIT}:${RPATH}"`), and every identity above was recomputed with that form.
+
+This is a *different* zsh failure from the word-splitting one recorded in Frame §1, and it failed
+**loudly** rather than silently — a wrong-looking SHA path is unusable, whereas the Frame case returned
+a plausible empty result. Recorded because plan-v4 §11.5's mandatory shell note currently warns only
+about unquoted word-splitting; Build should widen it to brace-delimit any parameter followed by `:`.
+**Non-material** — it changes no rule, no criterion and no design, only the shell form used to run a
+check — so it is recorded here as an annotation and does **not** mutate the reviewed plan
+(plan-v4 §6.11). No result in this entry rests on the failed form.
+
+### 9.6 Budget
+
+| Item | Status |
+|---|---|
+| One initial independent review | **Consumed** — review-1, commit `96b27e53…`, blob `eb827a67…` |
+| One bounded material correction pass | **Consumed** — produced plan-v3, then plan-v4 by operator-directed pre-review adjustment. One pass |
+| One conditional closure `review-2` | **Consumed** — commit `12b22dd9…`, blob `848ee9f9…`, zero findings |
+| `review-3` | **Does not exist** in this unit or stream |
+
+`hold-reframe` is **not** triggered: §10's terminal outcome fires only when a material change is still
+required after `review-2`, and none is.
+
+LIMITATIONS: The verdict rests on a plan review, not an implementation review — no target
+implementation exists, so the behavioural scenarios M8–M10 remain unexecuted and belong to Stage 9
+(Use). RV2-01's content-level residual (§13.4 of plan-v4) is deliberate, operator-decided, and
+declared rather than closed. Every identity above is verified against Git in this worktree; none rests
+on an asserted value. The unit remains open. **G1 is now armed and the package is presented, but no
+gate has passed and no implementation is authorized.**
