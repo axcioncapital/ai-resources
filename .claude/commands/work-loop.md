@@ -127,11 +127,45 @@ Close the phase's question — what is the need, who owns it, is it in scope at 
 
 1. **Write `logs/loop/{unit}.plan.md`** in the contract's `PLAN` shape: what will be done, in order · what it touches · **what would falsify it**. The falsification criteria are load-bearing — Prove is judged against them, so a plan that states none makes G2 unfalsifiable. Immutable; a revision is `-v2`. Commit by pathspec.
 2. **Make no edit to the object under work.** This is the route's defining property. The plan is the deliverable of this unit.
-3. **Emit the plan for Codex review** as a chat block, and tell the operator plainly: paste it into the Codex `work-loop` task, then paste the returned `REVIEW` block back here. **The object under review is the plan, not a diff.**
-4. **Transcribe the review verbatim** to `logs/loop/{unit}.review-1.md`. Commit by pathspec. Adjudicate every material finding per Step 7's disposition rules.
-5. **G1 — stop.** Put in front of the operator: the plan, the review, the adjudication, and the slice list Build will execute. Ask for scope-and-package approval. **Wait.** Do not open a Build unit on your own.
+3. **Emit the plan for Codex review** as a chat block, and tell the operator plainly: paste it into the Codex `work-loop` task, then paste the returned `REVIEW` block back here. **The object under review is the plan, not a diff.** State the plan's path and the commit that contains it, so the reviewer reads the same bytes it will name.
+4. **Validate the returned header — before writing anything.** A Shape `REVIEW` carries `PLAN-PATH`, `PLAN-COMMIT` and `PLAN-BLOB` after its six header fields (`docs/work-loop.md` § Reviewed-object identity). Check that all three are present, that both SHAs are full 40-hex, and that the review's own binding relation holds: `git rev-parse {PLAN-COMMIT}:{PLAN-PATH}` returns `{PLAN-BLOB}`. **Validate first, transcribe second** — the review artifact is immutable, so a malformed header written into it would have no lawful correction path. On a malformed header take the header-repair path below.
+5. **Transcribe the review verbatim** to `logs/loop/{unit}.review-{n}.md` — `n` is `1` for the initial review and `2` for a closure review; there is no `n ≥ 3`. Commit by pathspec. Then **compute the review identity from git** — `REVIEW-PATH`, `REVIEW-COMMIT` = `git log -1 --format=%H -- {REVIEW-PATH}`, `REVIEW-BLOB` = `git rev-parse {REVIEW-COMMIT}:{REVIEW-PATH}` — and verify the binding relation. It is computed *after* the commit for a reason: the reviewer cannot name the commit that will contain its own transcription. Adjudicate every material finding per Step 7's disposition rules.
+6. **Run the G1 precondition** (`docs/work-loop.md` § Reviewed-object identity → The G1 precondition). Recompute the candidate plan's identity from git, take the plan identity the latest valid review names — `review-2` where one exists, otherwise `review-1` — verify that review's own binding relation, and compare all three plan fields by exact string equality. **A hard stop on any of:** mismatch on any field · a missing or malformed field, including an abbreviated SHA · a review whose stated blob is inconsistent with its own commit and path · an unverifiable review identity · an uncommitted, dirty or absent candidate. Name the failed field and both values, do not open G1, and present no package. A pass produces no stop — report it in one line inside the package.
+7. **G1 — stop.** Put in front of the operator:
 
-If Codex cannot reach the plan, apply Step 7's fallback — inline self-review, recorded **`unassessed`, never passed** — and say so at G1 so the operator decides with the gap explicit.
+   | Element | Shown as |
+   |---|---|
+   | Plan | `PLAN-PATH` + `PLAN-COMMIT` + `PLAN-BLOB` |
+   | Review | `REVIEW-PATH` + `REVIEW-COMMIT` + `REVIEW-BLOB`, and the plan identity that review names |
+   | Adjudication | one disposition per material finding, each with its reason |
+   | Slices | the slice list Build will execute |
+   | Limitations | residual limitations |
+   | Comparison | one line — passed, with the matched plan blob |
+
+   **Identities, never bare names.** A package that offers "the plan and the review" has not met `docs/work-loop.md` § Reviewed-object identity — the whole point is that the operator approves bytes a reviewer demonstrably read. Ask for scope-and-package approval. **Wait.** Do not open a Build unit on your own.
+
+**Shell note — brace-delimit every parameter followed by `:`.** Compute identities as `git rev-parse "${RCOMMIT}:${RPATH}"`. This session's shell is `zsh`, where `${VAR}:l` is the lowercase parameter modifier: an undelimited `"$RCOMMIT:logs/loop/…"` silently consumes the `l` of `logs/` and fails with `fatal: ambiguous argument`. Pass multiple paths as explicit literals or as a shell array — zsh does not word-split an unquoted parameter, so several paths held in one variable are read as a single filename and every check returns a spurious "no matches". Re-run every zero result against a case that must match.
+
+**A malformed header — exactly one repair, and the receipt is written first.**
+
+1. **Write the `HEADER-REPAIR` receipt into `logs/loop/{unit}.evidence.md` and commit it by pathspec, before requesting anything.** It records four things: the date · that the single re-emission allowance is now **consumed** · the plan identity the received block named, as received · and the received block's **verdict, finding IDs, and material and minor counts**.
+2. **Request one header-only re-emission** — the same review with the three `PLAN-*` lines corrected. Not a new review and not a revised one.
+3. **Check it against the receipt.** Verdict, finding IDs and counts must match what was recorded. Consistent → transcribe and continue at step 5. A mismatch on any of them means it is not the same review, so the allowance does not cover it — and a second invalid header takes the same exit: **stop before G1**, leave the unit open, return the blocker handoff below.
+
+**Before requesting any re-emission, read the unit's evidence.** A `HEADER-REPAIR` entry already sitting there proves the allowance was spent in an earlier session: **no further re-emission is permitted**, and the only moves left are a valid header or the blocker stop. That is precisely why the receipt is committed rather than remembered — a cap that lives only in the session resets every time the session does.
+
+The header request is **not** `review-2`, consumes **no** material-correction budget, and does **not** trigger `hold-reframe`.
+
+**If Codex cannot reach the plan, G1 does not open on a self-review.** An inline or self-review recorded `unassessed` is not independent, so it cannot satisfy the precondition for a challenged Shape unit (`docs/work-loop.md` § An `unassessed` review cannot open G1). Do not present a package, and do not close the unit:
+
+- stop before G1;
+- **leave the unit open** — do not mark the evidence `Status: complete`, so § Resume order Tier 2 re-offers the stream once a reviewer is available;
+- return a **blocker handoff**: the six-field block header, the plan identity, why G1 is blocked, and what would unblock it;
+- open no gate, and invent no `CLOSE` outcome for it.
+
+Step 7's `unassessed` fallback still stands for the reviewed route and for Prove. What is denied here is its sufficiency at a challenged Shape G1 — the one review that can stop a bad change before it is made cannot be the executor reviewing itself.
+
+**If a material finding survives `review-2`, the stream closes `hold-reframe`.** The lifecycle is one initial review, at most one material correction, at most one closure `review-2`, and no `review-3` (`docs/work-loop.md` § Correction lifecycle). When `review-2` still requires a material change, do not correct again and do not open a third round: close the unit `hold-reframe` by § Closing without a change — evidence carrying the outcome, the surviving finding and **both identities**, the `CLOSE` block, the stream closing in the same commit, and the durable `logs/decisions.md` pointer with the recovery SHA. **It is a terminal close, not a stop** — it asks the operator nothing and adds no gate. Continuation is a **new** stream whose brief cites the held one. For a capability unit, also run Step 5b's record transition.
 
 #### Build units — one per slice, no gate
 
@@ -178,6 +212,20 @@ A solo capability unit **writes no record**, creates no `development/` directory
 
 **Status is a set, not a flag.** `in-development` · `continue-trial` · `revise` · `paused` are ACTIVE — all four resumable, per contract § Resume order. `paused` **requires** a `reopen_trigger:`; one without is malformed — report it, never auto-repair it. Only a TERMINAL status (`adopted` · `keep-local` · `closed` · `retired` · `rejected`) leaves the active set.
 
+#### `hold-reframe` on the record — close, then continue on a new stream
+
+When a challenged capability stream closes `hold-reframe` (Step 5a), the record takes this transition. Every field and section it writes already exists — no new frontmatter key, no new section:
+
+1. Append the `## Units` row with outcome `hold-reframe`. Append-only, never a rewrite.
+2. Set `active_unit: none` and `updated:` to today, in the closing commit.
+3. Set `status: paused` with a concrete `reopen_trigger:`. **The stream is terminal; the capability is not** — so a TERMINAL status would be wrong here, and `paused` is exactly right. A `paused` record with no trigger is malformed.
+4. Write the held stream's closing commit SHAs into `## Pointers` **before** its `logs/loop/{STREAM}-*` artifacts are deleted at stream close. Once deleted, those SHAs are the only route back.
+5. State in `## Current phase and next action` that continuation requires a **new** stream citing the held one, and what must be reframed.
+
+**Continuation allocates a new stream — the one exception to the carry rule.** On operator-authorized continuation from a `hold-reframe` record, **allocate** a new stream by the ordinary collision check against both surfaces and update `stream:` to it, leaving the held stream preserved in `## Pointers`. The `## Units` table keeps its existing rows unchanged; new rows carry the new stream's unit ids.
+
+**This exception is stated for `hold-reframe` and for nothing else.** Every ordinary continuation still carries the stream unchanged — the silent-split hazard described at Step 2 is untouched. The exception is safe here precisely because the held stream is terminal and its artifacts are already deleted: there is nothing left to correlate against, which is the condition that makes carrying correct in every other case.
+
 #### Cardinality
 
 One unit per phase — Frame, Shape, Prove, Land — **except Build, which is one unit per slice.** Each Build unit implements exactly one slice to the skill's slice standard, appends its own `## Units` row, and closes. Do not batch two slices into one unit to save a commit: the per-slice boundary is what caps crash cost and keeps each brief describable in a 15–25 line block.
@@ -215,13 +263,13 @@ While implementing:
 
 **Challenged route:** the review is **per phase and already placed** — Step 5a runs it inside the Shape unit (object: the plan) and the Prove unit (object: the result), and Frame, Build and Land carry none. Do not add a review here on top of Step 5a's; that would produce a third review the route does not define. This step still owns the evidence write and the adjudication rules for whichever review Step 5a ran.
 
-**If Codex cannot reach the object under review** — no repository access, or the object is outside `ai-resources` and unreadable — fall back to **inline self-review against the same criteria, and record the review as `unassessed`, not passed.** Never substitute a Claude subagent and describe it as independent: same model, same session lineage, no independence. The operator decides with the gap explicit.
+**If Codex cannot reach the object under review** — no repository access, or the object is outside `ai-resources` and unreadable — fall back to **inline self-review against the same criteria, and record the review as `unassessed`, not passed.** Never substitute a Claude subagent and describe it as independent: same model, same session lineage, no independence. The operator decides with the gap explicit. **This fallback does not reach G1.** In a challenged **Shape** unit an `unassessed` review cannot satisfy the G1 precondition — Step 5a's blocker stop applies instead, and the unit stays open (`docs/work-loop.md` § An `unassessed` review cannot open G1). The fallback stands as written for the reviewed route and for Prove.
 
 **Adjudicate every material finding** with exactly one of the six dispositions in `docs/work-loop.md` § Block formats — `fixed` · `deferred` · `rejected` · `already-true` · `out-of-scope` · `operator` — each with its reason, and `rejected` with the evidence that disproves the finding. A finding is not dismissed by disagreeing with it.
 
 `/triage` does **not** fire. Adjudication is this step.
 
-One correction pass, then the unit closes. A second review round is `review-2` and is justified only when the corrections changed something the first review's verdict rested on (`docs/work-loop.md` § The challenged route) — not on a general wish for more assurance.
+One correction pass, then the unit closes. A second review round is `review-2` and is justified only when the corrections changed something the first review's verdict rested on (`docs/work-loop.md` § The challenged route) — not on a general wish for more assurance. **There is no `review-3`.** If a material finding survives `review-2`, the correction lifecycle is spent: the stream closes `hold-reframe` (`docs/work-loop.md` § Correction lifecycle), which is a terminal close and not a further stop.
 
 ## Step 8 — Close
 
@@ -231,9 +279,9 @@ One correction pass, then the unit closes. A second review round is `review-2` a
 
 **If the stream stops here without reaching Land** — abandoned, blocked, or deferred — do not leave the record in limbo. Set `status: paused` with a concrete `reopen_trigger:` (a date, a quarter or a named event) alongside `active_unit: none`. A record parked with no trigger never drains; `skills/capability-development/SKILL.md` names that as this method's most common failure.
 
-Write the `CLOSE` block: outcome · commits · what closed · whether the stream closed with it. The outcome is exactly one of the four in `docs/work-loop.md` § Block formats — `close` · `rejected-premise` · `route-unavailable` · `routed-out`.
+Write the `CLOSE` block: outcome · commits · what closed · whether the stream closed with it. The outcome is exactly one of the five in `docs/work-loop.md` § Block formats — `close` · `rejected-premise` · `route-unavailable` · `routed-out` · `hold-reframe`.
 
-**Only `close` leaves its trace in the repository.** The other three changed nothing, so they all take § Closing without a change, which requires the durable one-entry pointer in `logs/decisions.md` alongside the evidence — without it, a unit that stopped is indistinguishable from one never attempted, and the same disproved brief returns a week later.
+**Only `close` leaves its trace in the repository.** The other four changed nothing, so they all take § Closing without a change, which requires the durable one-entry pointer in `logs/decisions.md` alongside the evidence — without it, a unit that stopped is indistinguishable from one never attempted, and the same disproved brief returns a week later. A `hold-reframe` close additionally carries **both identities** — the plan's and the review's — in its evidence, so the held object stays recoverable by content; for a capability, Step 5b's record transition runs in the same commit.
 
 **The stream's last unit closes the stream in the same commit.** For solo, that is this single unit. On stream close, delete **every** `logs/loop/{STREAM}-*` file together, in the closing commit, by pathspec. Artifacts stay recoverable from git afterwards; the commit SHAs are the pointer. No stream is left in an "awaiting closure" state.
 

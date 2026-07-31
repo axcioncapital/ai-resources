@@ -39,7 +39,7 @@ Before writing it:
 2. **Read the object.** You have repository access; use it. Open the file, run the script, check the line the request cites. A brief written from the operator's description alone inherits every error in that description.
 3. **State premises as checkable claims, not as background.** Each premise is something Claude will run, open or re-derive at its step 3. "The hook fires at SessionStart" is a premise. "The hook is important" is not — it cannot be checked, so it cannot be a premise.
 4. **Say what would falsify success.** A brief with no falsifier produces evidence that cannot fail, which is not evidence.
-5. **Scope it to one unit.** One bounded piece of work, one evidence package, at most one review round. If it does not fit, say so and split it — an oversized brief is the most common cause of a unit that never closes.
+5. **Scope it to one unit.** One bounded piece of work, one evidence package, one review lifecycle — one initial review, at most one material correction, at most one closure `review-2`, never a third (`docs/work-loop.md` § Reviewed-object identity → Correction lifecycle). If it does not fit, say so and split it — an oversized brief is the most common cause of a unit that never closes.
 
 **Do not classify the route for Claude.** Route classification is Claude's step 4 against the contract's triggers. You may note which triggers look likely and why; do not state the route as decided.
 
@@ -62,6 +62,30 @@ When evidence comes back, produce one `REVIEW` block. Work the dimensions **in t
 **Rank findings as material or minor, and say which are which.** Every material finding will get exactly one disposition from Claude. Padding the list with minor observations dilutes the ones that matter.
 
 **When you are wrong, expect to be told.** Claude may reject a finding with disposition `rejected` and cited evidence. A rejection carrying real evidence closes the matter — do not re-raise the same finding in a later round with different wording. Re-raising a disproved finding is the failure mode that makes independent review feel expensive and useless.
+
+---
+
+## Reviewing a Shape plan — the header carries the plan's identity
+
+A Shape review's object is a **plan file**, not a diff and not an evidence package. A plan can be revised between your review and G1, and the revision would still be called "the plan" — so **the block you emit must say which bytes you actually read.** After the six standard header fields, carry three more lines:
+
+```
+PLAN-PATH:   logs/loop/{shape-unit}.plan[-v{n}].md
+PLAN-COMMIT: {40-hex}
+PLAN-BLOB:   {40-hex}
+```
+
+- `PLAN-PATH` — the repository-relative path of the plan you inspected.
+- `PLAN-COMMIT` — the full commit SHA at which you read it: `git log -1 --format=%H -- {PLAN-PATH}`.
+- `PLAN-BLOB` — the full blob SHA at that commit: `git rev-parse {PLAN-COMMIT}:{PLAN-PATH}`.
+
+**Full 40-hex SHAs only.** Claude compares these by exact string equality, so an abbreviated SHA is a malformed header, not a shorthand.
+
+**Read the plan at that commit.** Reviewing a paste and then naming a commit you did not read is worse than no identity at all — it certifies bytes you never saw.
+
+**Emit the plan identity only.** The review artifact's own path, commit and blob are Claude's to compute after transcribing and committing your block; you cannot name the commit that will contain your own review.
+
+**A missing or malformed header blocks G1, and it can be repaired exactly once.** Claude will ask you to re-emit **the same review** with the three lines corrected — a header-only repair. If the re-emission's verdict, finding IDs or material/minor counts differ from the block Claude received, it is a *new* review, the one-time allowance does not cover it, and the unit stops before G1. So re-emit the same judgment; a header repair is not an opportunity to revise one.
 
 ---
 

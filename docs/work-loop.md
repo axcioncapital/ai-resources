@@ -80,7 +80,7 @@ The three stops are **exactly three**. A passing verdict produces no stop; a sto
 
 | Gate | Sits at | Operator is deciding | Held package |
 |---|---|---|---|
-| **G1 — scope and package** | End of the **Shape** unit, after the pre-implementation review is adjudicated | Whether this is the right change, at the right scope, before anything is built | The plan, the pre-implementation review, the adjudication of its findings, and the slice list Build will execute |
+| **G1 — scope and package** | End of the **Shape** unit, after the pre-implementation review is adjudicated **and its precondition passes** | Whether this is the right change, at the right scope, before anything is built | The plan and the pre-implementation review **by identity, never by name** — path, containing commit and blob for each — plus the adjudication of the findings and the slice list Build will execute (§ Reviewed-object identity → The G1 held package) |
 | **G2 — release** | End of the **Prove** unit, after the post-implementation review is adjudicated | Whether what was built is fit to stand | The evidence, the post-implementation review, the adjudication, and any residual limitation |
 | **G3 — lifecycle** | The **Land** unit | Adopt, hold or reject — and for a capability, which `status:` the record takes | Everything above plus the real-use result |
 
@@ -91,22 +91,171 @@ The three stops are **exactly three**. A passing verdict produces no stop; a sto
 - **Shape's review reads a plan, not a diff.** Its object is `{shape-unit}.plan.md` — what will be done and what would falsify it. It is the only gate that can stop a bad change *before* it is made, which is why a challenged unit may never be run as reviewed.
 - **Prove's review reads the result against Shape's falsification criteria.** Its object is the implemented change plus `{prove-unit}.evidence.md`. It asks whether what Shape said would falsify success actually occurred — not whether the work looks reasonable.
 
-A `review-2` in either unit is a closure review after corrections, justified only when the corrections changed something the first review's verdict rested on — never on a general wish for more assurance. It is never the other phase's review filed in the wrong unit. (The Independent Review SOP is an **operator-supplied document that does not live in this repository**; its five triggers cannot be the operative test here, because nothing in the repository states them. The bar above is this contract's own and is what a reader applies.)
+A `review-2` in either unit is a closure review after corrections, justified only when the corrections changed something the first review's verdict rested on — never on a general wish for more assurance. It is never the other phase's review filed in the wrong unit. **§ Reviewed-object identity → Correction lifecycle owns the full sequence** — one initial review, at most one material correction, at most one `review-2`, no `review-3`, and `hold-reframe` when a material finding survives `review-2`. (The Independent Review SOP is an **operator-supplied document that does not live in this repository**; its five triggers cannot be the operative test here, because nothing in the repository states them. The bar above is this contract's own and is what a reader applies.)
 
 **Build sits between G1 and G2 and holds no review of its own.** Build units are one per slice; each returns evidence and commits, and the stream's correlation is what lets Prove read every slice's evidence at once. A slice that cannot be verified is a finding at Prove, not a fourth gate.
 
 ---
 
+## Reviewed-object identity and the G1 precondition
+
+**A review is worth exactly what it inspected, and "the plan" is a name rather than a proof.** The challenged route's whole value is that G1 decides on something an independent reviewer actually read. A name cannot carry that: a plan may be revised between the review and the gate, and the package would still be described in the same words. So a challenged Shape unit identifies what it carries to G1 by **content**, not by name.
+
+Observed failure this makes impossible (2026-07-29, two streams — `prime-minimum-responsibility` and `review-layer-consolidation`): a plan revised after review reached G1, in full compliance with the contract as it then stood, because the held package was specified by name and no consumer-side check compared the presented plan against the reviewed one. Nothing was wrong on disk and nothing warned. *Rejected alternative:* trust the revision label. `-v2` is navigation, not content, and it is written by the same session that would benefit from getting it wrong.
+
+### Plan identity
+
+Three fields; the blob is the authority on content.
+
+| Field | Form |
+|---|---|
+| `PLAN-PATH` | repository-relative path |
+| `PLAN-COMMIT` | full 40-hex commit SHA at which the plan exists at that path |
+| `PLAN-BLOB` | full 40-hex blob SHA of the plan at that commit |
+
+**Binding relation:** `git rev-parse {PLAN-COMMIT}:{PLAN-PATH}` returns `{PLAN-BLOB}`. Abbreviated SHAs are rejected, so every comparison is exact string equality — no prefix matching, and no second hash beside the blob.
+
+### Review identity
+
+The same three fields, for the review artifact.
+
+| Field | Form |
+|---|---|
+| `REVIEW-PATH` | repository-relative path — `logs/loop/{unit}.review-{n}.md` |
+| `REVIEW-COMMIT` | full 40-hex commit SHA at which the review exists at that path |
+| `REVIEW-BLOB` | full 40-hex blob SHA of the review at that commit |
+
+**Binding relation:** `git rev-parse {REVIEW-COMMIT}:{REVIEW-PATH}` returns `{REVIEW-BLOB}`.
+
+**Review identity is computed by Claude after verbatim transcription and commit — never declared by the reviewer.** A reviewer cannot name the commit that will contain its own transcription, so asking for it in the `REVIEW` block would be unsatisfiable. The order is: validate the header, transcribe verbatim, commit by pathspec, then compute the three fields from git and verify the binding relation.
+
+### The review header carries the plan identity
+
+Every Shape `REVIEW` block carries three lines after the six standard header fields:
+
+```
+PLAN-PATH:   logs/loop/{shape-unit}.plan[-v{n}].md
+PLAN-COMMIT: {40-hex}
+PLAN-BLOB:   {40-hex}
+```
+
+The reviewer emits **plan** identity only; review identity is Claude's to compute, above. `.agents/skills/work-loop/SKILL.md` carries the same requirement from the reviewer's side and is the surface Codex reads.
+
+**The header is validated before the review is transcribed, never after.** A review artifact is immutable (§ Artifacts), so a malformed header written into one would have no lawful correction path afterwards. Validating first makes every transcribed review valid by construction.
+
+### The G1 precondition
+
+Runs in the Shape unit, after adjudication, immediately before G1, and nowhere else.
+
+1. The candidate plan is committed. Uncommitted, dirty or absent is a stop.
+2. Compute the candidate identity — `PLAN-PATH`; `PLAN-COMMIT` = `git log -1 --format=%H -- {PLAN-PATH}`; `PLAN-BLOB` = `git rev-parse {PLAN-COMMIT}:{PLAN-PATH}`.
+3. Take the plan identity from the latest valid review — `review-2` where one exists, otherwise `review-1`.
+4. Verify that review's own plan binding relation. This is what catches an internally inconsistent header.
+5. Compare all three plan fields by exact string equality.
+6. Compute and verify the **review** identity of the artifact just used.
+
+**G1 is blocked by any one of:** a candidate that is uncommitted or absent · no review artifact · a missing field · a malformed field, including an abbreviated SHA · a review whose stated blob is inconsistent with its own commit and path · any plan field differing from the candidate's · a review identity whose binding relation fails.
+
+The stop names the failed field and both values. G1 does not open and no package is presented. **Fail-closed: absence of proof blocks.**
+
+**This is a precondition on G1, not a stop of its own.** It puts no decision in front of the operator — it either lets G1 open or blocks before it. A passing comparison produces no stop; it is reported in one line inside the package. The stops stay exactly three.
+
+### The G1 held package, in identities
+
+| Element | Displayed as |
+|---|---|
+| Plan | `PLAN-PATH` + `PLAN-COMMIT` + `PLAN-BLOB` |
+| Review | `REVIEW-PATH` + `REVIEW-COMMIT` + `REVIEW-BLOB`, and the plan identity that review names |
+| Adjudication | one disposition per material finding, each with its reason |
+| Slice list | the slices Build will execute |
+| Limitations | residual limitations |
+| Comparison | one line — passed, with the matched plan blob |
+
+A package that presents its plan or its review by bare name has not met this section.
+
+### An `unassessed` review cannot open G1
+
+**An inline or self-review recorded `unassessed` cannot satisfy the precondition.** It is not independent, so a plan resting on it is not an independently reviewed plan — and § The challenged route gives Shape's review the one job of stopping a bad change *before* it is made. This replaces the `unassessed` path at G1 **for challenged Shape only.** `unassessed` is not removed from the contract: it remains available for reviewed-route work and for Prove, where the fallback is unchanged.
+
+When the independent reviewer cannot inspect the plan:
+
+- stop before G1;
+- **leave the Shape unit open** — do not close it, and do not mark its evidence `Status: complete`;
+- return a **blocker handoff**: the six-field block header, the plan identity, why G1 is blocked, and what would unblock it;
+- open no gate and invent no new `CLOSE` outcome.
+
+**This needs no new machinery.** An open unit whose evidence lacks `Status: complete` is already *incomplete* under § Resume order, so Tier 2 re-offers it and the stream resumes when independent review is available. The existing mechanism is the recovery path.
+
+### A malformed header — one repair, with a receipt that survives a restart
+
+A missing or malformed `PLAN-PATH`, `PLAN-COMMIT` or `PLAN-BLOB` blocks G1. Exactly **one** mechanical re-emission may be requested, and it is spent in this order:
+
+1. **Write the `HEADER-REPAIR` receipt first** — into `logs/loop/{unit}.evidence.md`, committed by pathspec, **before** anything is requested. It records four things: the date · that the single re-emission allowance is now **consumed** · the plan identity the received block named, as received · and the received block's **verdict, finding IDs, and material and minor counts**.
+2. **Request the re-emission.** It is **header-only** — the same review with the three `PLAN-*` fields corrected. A formatting repair, not a new review and not a revised one.
+3. **Check the re-emission against the receipt.** Its verdict, finding IDs and counts must match what was recorded. Consistent → transcribe and continue. A mismatch on any of them means it is not the same review, so the allowance does not cover it: stop before G1, leave the unit open, return the blocker handoff. A second invalid header takes the same stop.
+
+**Resume rule.** An executor resuming an open Shape unit reads the evidence before acting. A `HEADER-REPAIR` entry is proof that the allowance is already consumed: **no further re-emission is permitted**, and the only remaining moves are a valid header or the blocker stop. That is what makes the cap survive a restart instead of resetting with every session — a control expressed only as an in-session intention is not a cap.
+
+**Why the receipt goes to the evidence file and not the review artifact.** A malformed header must never be written into `logs/loop/{unit}.review-{n}.md`, which is immutable and where no lawful correction would exist. The evidence file is append-only but not immutable, and exists precisely to record what was received and observed. A receipt is not a transcription.
+
+The header request is **not** `review-2`, does **not** consume the material-correction budget, and does **not** trigger `hold-reframe`.
+
+**Declared residual.** Matching verdict, finding IDs and counts detects a substituted or renumbered review. It does not detect a re-emission whose reasoning changed underneath an unchanged set of IDs. That is a deliberate proportionality decision, recorded here rather than hidden.
+
+### Correction lifecycle
+
+- One initial independent review — `review-1`.
+- At most **one** material correction. It produces a new immutable plan revision, never an edit to the reviewed one.
+- At most **one** closure `review-2`, justified only when the correction changed something the first verdict rested on.
+- **No `review-3`.** It does not exist in the same unit or stream.
+
+After `review-2`:
+
+- no material change still required → the exact reviewed revision proceeds to the G1 precondition above, then to G1;
+- material change still required → the stream closes **`hold-reframe`**.
+
+Non-material findings consume nothing — see § Materiality. A settled finding is not reopened without new evidence.
+
+#### `hold-reframe`
+
+`hold-reframe` is the terminal outcome for an unresolved material `review-2`, and it is reserved for exactly that case. It is a fifth unit outcome joining the three that close without altering the object under work: Shape makes no object edit, so § Closing without a change applies to it unchanged — evidence carrying the outcome and both identities, the `CLOSE` block, the stream closing in the same commit, and the durable `logs/decisions.md` pointer with the recovery SHA.
+
+**It is terminal for the stream and it is not a gate.** It opens no operator decision and adds no stop. Continuation starts a **new** stream whose brief cites the held one and states what is being reframed.
+
+**Shape review point only.** A Prove-side `hold-reframe` would have to dispose of object edits that have already landed; that is a release question, and it belongs to G2.
+
+#### `hold-reframe` on a capability record
+
+Non-capability challenged work has no record and needs nothing beyond the above. A challenged **capability** stream closes its record like this, using existing fields and sections only:
+
+1. Append the `## Units` row with outcome `hold-reframe` — append-only, never a rewrite.
+2. Set `active_unit: none` and `updated:` to today, in the closing commit.
+3. Set `status: paused` with a concrete `reopen_trigger:`. The **stream** is terminal; the **capability** is not, so no TERMINAL status is correct here. A `paused` record without a trigger is malformed.
+4. Write the held stream's closing commit SHAs into `## Pointers` **before** its `logs/loop/{STREAM}-*` artifacts are deleted at stream close — once deleted, those SHAs are the only route back.
+5. State in `## Current phase and next action` that continuation requires a new stream citing the held one, and what must be reframed.
+
+**Resume — the one exception to the carry rule.** On operator-authorized continuation from a `hold-reframe` record, the executor **allocates** a new stream by the ordinary collision check (§ Streams, units and phases) and updates `stream:` to it, preserving the held stream in `## Pointers`. The `## Units` table keeps its existing rows unchanged; new rows carry the new stream's unit ids.
+
+**The exception is stated for `hold-reframe` and for nothing else.** Every ordinary continuation still carries the stream unchanged, so the silent-split hazard that rule exists to prevent is untouched. The exception is safe precisely because the held stream is terminal and its artifacts are already deleted: nothing is left to correlate against, which is the condition that makes carrying correct in the ordinary case.
+
+### Materiality
+
+A change to a reviewed plan is **material** when it can affect execution or judgment: need or intended outcome · scope or exclusions · architecture or behavioural design · interfaces, consumers or ownership · slice boundaries or ordering · acceptance or falsification criteria · verification design · rollback or risk · the basis of a review verdict or an operator decision. Spelling, punctuation, formatting and non-substantive citation repairs are non-material **only** when meaning is unchanged. **Ambiguity resolves as material.**
+
+**A non-material finding is annotated, never mutated in.** It is recorded in the adjudication or as a G1 annotation, and it cannot change the plan's blob. That is what stops a wording note from minting a revision and pulling another review round in behind it. A material correction is the only thing that produces a new revision, and it spends the one correction the lifecycle allows.
+
+---
+
 ## Streams, units and phases
 
-A **stream** spans many units. A **unit** is one bounded piece of work with one brief, one evidence package and at most one review round.
+A **stream** spans many units. A **unit** is one bounded piece of work with one brief, one evidence package and one review lifecycle — one initial review, at most one material correction, at most one closure `review-2`, no `review-3` (§ Reviewed-object identity → Correction lifecycle).
 
 ```
 STREAM = {date-of-first-unit}-{slug}[-{n}]
 UNIT   = {STREAM}-{phase}
 ```
 
-The stream is allocated once, at its first unit, and carried forward unchanged — a Prove unit keeps the stream's original date even when run days later.
+The stream is allocated once, at its first unit, and carried forward unchanged — a Prove unit keeps the stream's original date even when run days later. **One case allocates instead of carrying, and only one:** continuation from a record that closed `hold-reframe`, whose held stream is terminal and whose artifacts are already deleted (§ Reviewed-object identity → `hold-reframe` on a capability record). Every other continuation carries.
 
 **Collision handling.** Before allocating, check **both** surfaces for the candidate id: any `logs/loop/{candidate}-*` artifact, and any `development/*.md` carrying `stream: {candidate}`. On a hit append `-2`, then `-3`, until clear. Unit ids derive from the resolved stream and cannot collide independently. Allocation is single-writer, so an existence check suffices — no allocator, no shared counter.
 
@@ -141,7 +290,7 @@ Temporary state lives entirely in `logs/loop/`, single-writer:
 | `{unit}.evidence.md` | Claude | Claude | **Append-only, not immutable** |
 | `{unit}.review-{n}.md` | Codex | Claude transcribes | **Immutable** |
 
-The `-{n}` ordinal starts at 1. A closure review after corrections — justified only on § The challenged route's bar, and never on a general wish for more assurance — is `-2`, never an edit to `-1`. Pre- and post-implementation reviews are never both in one unit.
+**The review path is `logs/loop/{unit}.review-{n}.md` with `n ∈ {1, 2}`, and nothing else is a valid review artifact.** The ordinal starts at 1. A closure review after corrections — justified only on § The challenged route's bar, and never on a general wish for more assurance — is `-2`, never an edit to `-1`. **`n ≥ 3` does not exist:** the lifecycle permits no `review-3`, so a `review-3.md` is not a file to be written but a signal that the stream should have closed `hold-reframe` (§ Reviewed-object identity → Correction lifecycle). Pre- and post-implementation reviews are never both in one unit.
 
 **Commit boundary.** Every temporary artifact is committed by explicit pathspec **at write time**, before the next phase begins.
 
@@ -181,7 +330,7 @@ REPO: {target repo}  BASE: {git SHA}        NEXT: {who acts next}
 | **BRIEF** | Codex → Claude | Need · scope · premises to verify · what would falsify success. 15–25 lines |
 | **PLAN** | Claude, challenged only | What will be done, in order · what it touches · what would falsify it |
 | **EVIDENCE** | Claude → Codex | Per claim: what was run, what was observed. `LIMITATIONS:` populated, never blank |
-| **REVIEW** | Codex → Claude | Findings, **premise dimension first**. Each finding states the object it inspected |
+| **REVIEW** | Codex → Claude | Findings, **premise dimension first**. Each finding states the object it inspected. A **Shape** review additionally carries the three-line plan identity after the six header fields (§ Reviewed-object identity → The review header) |
 | **ADJUDICATION** | Claude | One disposition per material finding (below), each with its reason |
 | **CLOSE** | Claude | Outcome · commits · what closed · whether the stream closed with it |
 
@@ -193,9 +342,9 @@ decision. Do not reopen these. Qualify the ARTIFACT only; return its disposition
 
 **A `BRIEF` handed out to `/develop-ai-resource` carries those two extra labels — a contract between the commands, not a courtesy.** Both are required; either alone is a malformed handoff. **`**Capability:**` takes the bare slug or the path and nothing else — no owner, no trailing `record:` clause.** The composite form carried by the superseded `develop-capability-build-plan*.md` drafts is **rejected** by Step 1.0's check 1, and fails as a *provenance* error rather than a format one, which is far harder to diagnose. The pair is a *claim* of provenance, not proof of one — any document can carry them — so Step 1.0 verifies it against the named record on disk before honouring it, and reports a malformed handoff rather than repairing it. That verification is the consumer's; this section owns only the shape.
 
-**Four outcomes**, exactly one per `CLOSE` block. The first changed the object under work; the other three did not, and all three take § Closing without a change:
+**Five outcomes**, exactly one per `CLOSE` block. The first changed the object under work; the other four did not, and all four take § Closing without a change:
 
-`close` — the work landed · `rejected-premise` — a load-bearing premise was disproved at step 4 · `route-unavailable` — the classified route is not built in this revision · `routed-out` — the unit's **whole need** left the loop terminally under § Execution boundary, which owns the whole-need-versus-component distinction and is the section to read before closing any hand-off. Mis-closing a component hand-off as `routed-out` deletes the stream's artifacts under § Artifacts while the capability is still in development, stranding the record the disposition must return to.
+`close` — the work landed · `rejected-premise` — a load-bearing premise was disproved at step 4 · `route-unavailable` — the classified route is not built in this revision · `routed-out` — the unit's **whole need** left the loop terminally under § Execution boundary, which owns the whole-need-versus-component distinction and is the section to read before closing any hand-off · `hold-reframe` — a material finding survived `review-2` at a challenged **Shape** review point, so the correction lifecycle has run out and the stream closes terminally (§ Reviewed-object identity → `hold-reframe`). Mis-closing a component hand-off as `routed-out` deletes the stream's artifacts under § Artifacts while the capability is still in development, stranding the record the disposition must return to.
 
 This is the unit's outcome axis. A capability's `status:` (adopt / hold / reject at Land) is a separate axis on the record and never substitutes for one of these.
 
@@ -207,13 +356,13 @@ This is the unit's outcome axis. A capability's `status:` (adopt / hold / reject
 
 ## Closing without a change
 
-Three outcomes close a unit that never altered the object under work: `rejected-premise`, `route-unavailable` and `routed-out`. All three take the **same** path, and it is the ordinary one — there is no separate lifecycle for a unit that stops early.
+Four outcomes close a unit that never altered the object under work: `rejected-premise`, `route-unavailable`, `routed-out` and `hold-reframe`. All four take the **same** path, and it is the ordinary one — there is no separate lifecycle for a unit that stops early.
 
-1. **Write `logs/loop/{unit}.evidence.md`** carrying the outcome and the proof of it: for `rejected-premise`, the premise and what disproved it; for `route-unavailable`, the trigger that fired and the revision that lands the route; for `routed-out`, the owner and the brief handed over. `LIMITATIONS:` is populated as on any unit. Mark it `Status: complete` — the unit is finished, not outstanding, and § Resume order must not offer it again.
+1. **Write `logs/loop/{unit}.evidence.md`** carrying the outcome and the proof of it: for `rejected-premise`, the premise and what disproved it; for `route-unavailable`, the trigger that fired and the revision that lands the route; for `routed-out`, the owner and the brief handed over; for `hold-reframe`, the surviving material finding **and both identities** — the plan's and the review's, each as path, commit and blob — so the held object is recoverable by content and not only by name. `LIMITATIONS:` is populated as on any unit. Mark it `Status: complete` — the unit is finished, not outstanding, and § Resume order must not offer it again.
 2. **Write the `CLOSE` block** with that outcome, then close the stream. A unit that stops before implementation is always its stream's last unit, so the stream closes in the same commit and its artifacts are deleted there, exactly as § Artifacts prescribes.
 3. **Append the durable pointer** (below) in that same commit.
 
-**The durable pointer is not optional, and it is what keeps the outcome findable.** A unit that closed as `close` leaves its change in the repository; the change *is* the durable trace. These three leave nothing — no change, no record for non-capability work, and artifacts deleted at stream close. Without a pointer their only trace is a deleted file in a commit no one holds the SHA for, which is indistinguishable from the work never having been attempted. That is how a disproved premise comes back as the same brief a week later.
+**The durable pointer is not optional, and it is what keeps the outcome findable.** A unit that closed as `close` leaves its change in the repository; the change *is* the durable trace. These four leave nothing — no change, no record for non-capability work, and artifacts deleted at stream close. Without a pointer their only trace is a deleted file in a commit no one holds the SHA for, which is indistinguishable from the work never having been attempted. That is how a disproved premise comes back as the same brief a week later.
 
 So the closing commit appends one entry to `logs/decisions.md`:
 

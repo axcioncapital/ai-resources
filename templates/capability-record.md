@@ -95,7 +95,7 @@ Verified need · intended outcome · users · public interface · observable beh
 
 | Unit | Phase / slice | Route | Commits | Outcome |
 |---|---|---|---|---|
-| { unit-id } | { phase or S{n} } | { route } | { SHAs } | { close \| rejected-premise \| route-unavailable \| routed-out } |
+| { unit-id } | { phase or S{n} } | { route } | { SHAs } | { close \| rejected-premise \| route-unavailable \| routed-out \| hold-reframe } |
 
 ## Verification evidence
 
