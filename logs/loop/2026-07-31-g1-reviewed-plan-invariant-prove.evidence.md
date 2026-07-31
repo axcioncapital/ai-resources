@@ -3,9 +3,8 @@ REPO: ai-resources                                  BASE: 6050a5b83f976583154f79
 
 # Prove evidence — Slice 1, G1 reviewed-plan integrity
 
-Status: **incomplete — unit open.** Append-only (`docs/work-loop.md` § Artifacts). The marker is
-deliberate: the bounded correction pass is unspent, **G2 is closed**, and § Resume order must keep
-offering this stream.
+Status: **complete.** Marked at close — see § 7. (This line read `incomplete — unit open` while the
+unit was open; the closure operation is what changes it, per `docs/work-loop.md` Step 8.)
 
 Governing authority: `docs/work-loop-repair-workflow.md` §§ Stage 8, 10, 11, 14.
 Role: Claude repository engineer — sole writer, ownership acquired this session.
@@ -394,3 +393,45 @@ The judgment that sites 4 and 5 belong inside the same correction — rather tha
 mine: they are the identical defect class in the same two files, and leaving them would have left the
 finding open. A fresh reviewer may overturn it. Line numbers are as of blobs recomputed in §7. The unit
 remains **open** and **G2 remains closed**.
+
+---
+
+## 7. CLOSE — 2026-07-31
+
+**Outcome:** `close` — the work landed.
+
+**Operator decisions, Slice 1 only:** repository transcription and identity tracking for Prove
+`review-2` **waived**; the Codex closure verdict that both findings are resolved **accepted**;
+**G2 APPROVED** for exact candidate HEAD `179bc0d60d7846c0343e124658c1ba70572253de`; representative Use
+**waived** with the documented residual limitations accepted; **G3 ADOPT — Slice 1 complete.**
+
+**Durable Git pointer** (the closing commit is this branch's tip and cannot name itself):
+
+| Anchor | SHA |
+|---|---|
+| Approved base | `6050a5b83f976583154f79ecfd5335691ba3d156` |
+| S1 implementation | `8762fc7fc413d1149eb3dec531d235bc368d1108` |
+| Bounded correction | `e384d8c383c226f00176abe6956bf5f5c29acab8` |
+| **G2/G3-approved candidate HEAD** | `179bc0d60d7846c0343e124658c1ba70572253de` |
+
+**Final target blobs:** `docs/work-loop.md` `c0226b7868ba63355c8dfeadffd610e3ba3bbfcd` ·
+`.claude/commands/work-loop.md` `74aa0c2b86e3fe710ca5c170eff78e6dff942cc2` ·
+`.agents/skills/work-loop/SKILL.md` `bc8e4931178586f79b53aa5ca03cd9203636db64` ·
+`templates/capability-record.md` `f9ac9d4d5e838a194cdf78734e9a5cd61440975a`.
+
+**What closed:** the Prove unit and, with it, the stream `2026-07-31-g1-reviewed-plan-invariant`.
+Non-capability work — no record, no `status:` axis.
+
+**Artifacts retained, not deleted.** `/work-loop`'s stream-close deletion does not govern this repair
+(`docs/work-loop-repair-workflow.md` §1, §13.1), and § Stage 10 forbids deleting temporary artifacts
+while they are the repair program's record. Slice 1 is one of eight.
+
+**Residual limitations carried into adoption, unchanged:** the RV2-01 content-level residual
+(plan-v4 §13.4) · no validator; every check is an instruction (§13.5) · the allocation exception is
+stated, not enforced (§13.6) · no behavioural evidence — M8/M10 unexecuted, Use waived (§11.6) ·
+deferred BF-1, BF-2, OF-1, OF-3.
+
+**Ownership release.** Effective with the commit containing this block, I release sole-writer ownership
+of this repair worktree. No other session may write before explicitly acquiring it.
+
+Status: complete. Stream closed.
