@@ -165,7 +165,7 @@ The header request is **not** `review-2`, consumes **no** material-correction bu
 
 Step 7's `unassessed` fallback still stands for the reviewed route and for Prove. What is denied here is its sufficiency at a challenged Shape G1 — the one review that can stop a bad change before it is made cannot be the executor reviewing itself.
 
-**If a material finding survives `review-2`, the stream closes `hold-reframe`.** The lifecycle is one initial review, at most one material correction, at most one closure `review-2`, and no `review-3` (`docs/work-loop.md` § Correction lifecycle). When `review-2` still requires a material change, do not correct again and do not open a third round: close the unit `hold-reframe` by § Closing without a change — evidence carrying the outcome, the surviving finding and **both identities**, the `CLOSE` block, the stream closing in the same commit, and the durable `logs/decisions.md` pointer with the recovery SHA. **It is a terminal close, not a stop** — it asks the operator nothing and adds no gate. Continuation is a **new** stream whose brief cites the held one. For a capability unit, also run Step 5b's record transition.
+**If a material finding survives `review-2` at this Shape review point, the stream closes `hold-reframe`.** The lifecycle is one initial review, at most one material correction, at most one closure `review-2`, and no `review-3` (`docs/work-loop.md` § Correction lifecycle). **This branch is Shape's alone** — Step 7 states what the other review points do instead. When `review-2` still requires a material change, do not correct again and do not open a third round: close the unit `hold-reframe` by § Closing without a change — evidence carrying the outcome, the surviving finding and **both identities**, the `CLOSE` block, the stream closing in the same commit, and the durable `logs/decisions.md` pointer with the recovery SHA. **It is a terminal close, not a stop** — it asks the operator nothing and adds no gate. Continuation is a **new** stream whose brief cites the held one. For a capability unit, also run Step 5b's record transition.
 
 #### Build units — one per slice, no gate
 
@@ -269,7 +269,17 @@ While implementing:
 
 `/triage` does **not** fire. Adjudication is this step.
 
-One correction pass, then the unit closes. A second review round is `review-2` and is justified only when the corrections changed something the first review's verdict rested on (`docs/work-loop.md` § The challenged route) — not on a general wish for more assurance. **There is no `review-3`.** If a material finding survives `review-2`, the correction lifecycle is spent: the stream closes `hold-reframe` (`docs/work-loop.md` § Correction lifecycle), which is a terminal close and not a further stop.
+One correction pass, then the unit closes. A second review round is `review-2` and is justified only when the corrections changed something the first review's verdict rested on (`docs/work-loop.md` § The challenged route) — not on a general wish for more assurance. **There is no `review-3`.**
+
+**When a material finding survives `review-2`, what follows depends on the review point — and only one of them closes the stream.**
+
+| Review point | What a surviving material finding means |
+|---|---|
+| **Challenged Shape** | The correction lifecycle is spent and the stream closes **`hold-reframe`** (`docs/work-loop.md` § Correction lifecycle) — a terminal close, not a further stop. Shape has made no edit to the object under work, so there is nothing landed to dispose of. |
+| **Challenged Prove** | **`hold-reframe` does not apply.** The object edits have already landed, so whether they are fit to stand is a *release* question: carry the unresolved finding into **G2** as a residual limitation and let the operator decide there. Do not close the stream on it. |
+| **Reviewed route** | Takes neither. It has no G1 and no `hold-reframe`. The finding is adjudicated with one of the six dispositions and surfaces at the lifecycle decision — or as `operator` if the loop cannot settle it. |
+
+**`hold-reframe` is reserved to challenged Shape and nowhere else.** Applying it at Prove would terminate a stream that already contains landed work, which is precisely the decision G2 exists to take. Prove-side non-convergence beyond carrying the finding to G2 is **not defined in this revision**.
 
 ## Step 8 — Close
 

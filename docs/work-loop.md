@@ -91,7 +91,7 @@ The three stops are **exactly three**. A passing verdict produces no stop; a sto
 - **Shape's review reads a plan, not a diff.** Its object is `{shape-unit}.plan.md` — what will be done and what would falsify it. It is the only gate that can stop a bad change *before* it is made, which is why a challenged unit may never be run as reviewed.
 - **Prove's review reads the result against Shape's falsification criteria.** Its object is the implemented change plus `{prove-unit}.evidence.md`. It asks whether what Shape said would falsify success actually occurred — not whether the work looks reasonable.
 
-A `review-2` in either unit is a closure review after corrections, justified only when the corrections changed something the first review's verdict rested on — never on a general wish for more assurance. It is never the other phase's review filed in the wrong unit. **§ Reviewed-object identity → Correction lifecycle owns the full sequence** — one initial review, at most one material correction, at most one `review-2`, no `review-3`, and `hold-reframe` when a material finding survives `review-2`. (The Independent Review SOP is an **operator-supplied document that does not live in this repository**; its five triggers cannot be the operative test here, because nothing in the repository states them. The bar above is this contract's own and is what a reader applies.)
+A `review-2` in either unit is a closure review after corrections, justified only when the corrections changed something the first review's verdict rested on — never on a general wish for more assurance. It is never the other phase's review filed in the wrong unit. **§ Reviewed-object identity → Correction lifecycle owns the full sequence** — one initial review, at most one material correction, at most one `review-2`, no `review-3`, and — **at a challenged Shape review point only** — `hold-reframe` when a material finding survives `review-2`. A material finding surviving **Prove**'s `review-2` is carried into G2 as a residual limitation instead; the terminal outcome does not reach it. (The Independent Review SOP is an **operator-supplied document that does not live in this repository**; its five triggers cannot be the operative test here, because nothing in the repository states them. The bar above is this contract's own and is what a reader applies.)
 
 **Build sits between G1 and G2 and holds no review of its own.** Build units are one per slice; each returns evidence and commits, and the stream's correlation is what lets Prove read every slice's evidence at once. A slice that cannot be verified is a finding at Prove, not a fourth gate.
 
@@ -209,10 +209,12 @@ The header request is **not** `review-2`, does **not** consume the material-corr
 - At most **one** closure `review-2`, justified only when the correction changed something the first verdict rested on.
 - **No `review-3`.** It does not exist in the same unit or stream.
 
-After `review-2`:
+After `review-2` **at a challenged Shape review point** — the only review point whose terminal branch this section defines:
 
 - no material change still required → the exact reviewed revision proceeds to the G1 precondition above, then to G1;
 - material change still required → the stream closes **`hold-reframe`**.
+
+**At every other review point the terminal branch does not apply, and this is the boundary that matters.** A material finding surviving a **Prove** `review-2` is a *release* question, not a lifecycle one: the object edits have already landed, so the finding is carried into **G2** as a residual limitation and the operator decides there. Disposing of landed work is G2's decision, never this section's. **Reviewed-route** work has neither G1 nor `hold-reframe`; its findings are adjudicated and surface at the lifecycle decision. Prove-side non-convergence beyond carrying the finding to G2 is **not defined in this revision**.
 
 Non-material findings consume nothing — see § Materiality. A settled finding is not reopened without new evidence.
 
@@ -290,7 +292,7 @@ Temporary state lives entirely in `logs/loop/`, single-writer:
 | `{unit}.evidence.md` | Claude | Claude | **Append-only, not immutable** |
 | `{unit}.review-{n}.md` | Codex | Claude transcribes | **Immutable** |
 
-**The review path is `logs/loop/{unit}.review-{n}.md` with `n ∈ {1, 2}`, and nothing else is a valid review artifact.** The ordinal starts at 1. A closure review after corrections — justified only on § The challenged route's bar, and never on a general wish for more assurance — is `-2`, never an edit to `-1`. **`n ≥ 3` does not exist:** the lifecycle permits no `review-3`, so a `review-3.md` is not a file to be written but a signal that the stream should have closed `hold-reframe` (§ Reviewed-object identity → Correction lifecycle). Pre- and post-implementation reviews are never both in one unit.
+**The review path is `logs/loop/{unit}.review-{n}.md` with `n ∈ {1, 2}`, and nothing else is a valid review artifact.** The ordinal starts at 1. A closure review after corrections — justified only on § The challenged route's bar, and never on a general wish for more assurance — is `-2`, never an edit to `-1`. **`n ≥ 3` does not exist:** the lifecycle permits no `review-3`, so a `review-3.md` is not a file to be written but a signal that the correction lifecycle was already spent — at a challenged **Shape** review point that means the stream should have closed `hold-reframe`; at any other review point it means the unresolved finding belonged at that phase's gate (§ Reviewed-object identity → Correction lifecycle). Pre- and post-implementation reviews are never both in one unit.
 
 **Commit boundary.** Every temporary artifact is committed by explicit pathspec **at write time**, before the next phase begins.
 
