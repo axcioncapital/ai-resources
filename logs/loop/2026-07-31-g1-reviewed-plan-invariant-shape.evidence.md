@@ -207,3 +207,57 @@ a revised plan. RV2-03's feasibility verdict rests on reading the current comman
 template, not on executing a capability `hold-reframe`, which is unreachable until the slice is built
 and belongs to Stage 9 (Use). Line numbers are as of the blobs recorded in plan-v2 §13.6. The unit
 remains open and G1 remains closed.
+
+---
+
+## 7. Entry 3 — 2026-07-31 — operator correction to the RV2-01 disposition
+
+Appended, not rewritten (`docs/work-loop.md:141`). §3's `fixed` disposition on **G1-RV2-01** stands;
+its *persisted-field set* is corrected and strengthened by explicit operator decision.
+
+**The defect in my §3 proposal, as stated by the operator and accepted.** Recording only the verdict,
+the finding IDs and the material/minor counts does **not** prove the substantive review stayed
+unchanged. A re-emitted block could carry the same verdict, the same finding IDs and the same counts
+while its reasoning, its evidence or its required corrections had changed underneath them. That would
+let a materially different review enter through the header-repair allowance, which is precisely the
+unbudgeted second review the cap exists to prevent. My proposal was a weaker proxy for the property it
+claimed to establish.
+
+**Corrected rule, to be written into plan-v3:**
+
+1. The `HEADER-REPAIR` entry persists the **complete first malformed `REVIEW` block, verbatim**,
+   in `logs/loop/{unit}.evidence.md`, committed by pathspec at write time.
+2. The re-emitted block must be **byte-identical** to it except for the three header lines
+   `PLAN-PATH`, `PLAN-COMMIT` and `PLAN-BLOB`, which must be present and well-formed in the
+   re-emission. Every byte outside those three lines must match exactly. This covers a header line
+   that was malformed, missing, or duplicated in the original.
+3. **Any other difference makes it a new review**, which the header-repair allowance does not permit.
+   A new review is not in the budget, so the executor stops before G1 and returns the blocker handoff.
+4. **On resumption, the committed entry is itself the proof that the single allowance has already
+   been consumed.** No further re-emission is permitted; the only remaining moves are a valid header
+   or the blocker stop.
+
+**This does not contradict plan-v2 §6.3, and the distinction is load-bearing.** §6.3 forbids writing a
+malformed header into the **review artifact** `logs/loop/{unit}.review-{n}.md`, which is *immutable*
+(`docs/work-loop.md:142`) — once a bad header is baked in there, no lawful correction path exists.
+The `HEADER-REPAIR` entry is written to the **evidence** file, which is *append-only, not immutable*
+(`:141`) and exists to record what was received and observed. Recording the received block as a
+receipt is not transcribing it as the review. §6.3's ordering — validate, then transcribe — is
+unchanged.
+
+**Scope unaffected.** This stays inside the existing artifact family (`{unit}.evidence.md`, already
+written by this unit) and inside the four-file implementation scope. It adds no artifact family, no
+frontmatter key, no validator and no gate.
+
+**Budget unaffected by this correction.** It refines a disposition recorded in §3 before the
+correction pass was executed; plan-v3 does not yet exist. The accounting in §4 stands: initial review
+consumed, one bounded correction pass authorized and now being executed, conditional `review-2`
+available and justified.
+
+**RV2-02 and RV2-03 are confirmed ready by the operator** and their §3 dispositions are carried into
+plan-v3 unchanged.
+
+LIMITATIONS: This entry records a corrected rule, not a verified one. Plan-v3 did not exist when it was
+written, so nothing here has been checked against a revised plan, and the byte-identity rule has no
+behavioural evidence — a live malformed-header re-emission is unreachable until the slice is built and
+belongs to Stage 9 (Use). The unit remains open and G1 remains closed.
