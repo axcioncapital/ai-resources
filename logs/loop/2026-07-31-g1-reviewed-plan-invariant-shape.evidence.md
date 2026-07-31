@@ -261,3 +261,53 @@ LIMITATIONS: This entry records a corrected rule, not a verified one. Plan-v3 di
 written, so nothing here has been checked against a revised plan, and the byte-identity rule has no
 behavioural evidence — a live malformed-header re-emission is unreachable until the slice is built and
 belongs to Stage 9 (Use). The unit remains open and G1 remains closed.
+
+---
+
+## 8. Entry 4 — 2026-07-31 — Entry 3 superseded by later operator decision
+
+Appended, not rewritten (`docs/work-loop.md:141`). **Entry 3 stands unedited as the record of what was
+decided at the time.** This entry supersedes it.
+
+**Decision.** The operator has withdrawn the requirement introduced in Entry 3 as **disproportionate**.
+Superseded, specifically:
+
+- persistence of the **complete first malformed `REVIEW` block, verbatim**;
+- the **byte-identity** comparison of the re-emission against that persisted block;
+- every acceptance, scenario, falsification, verification and limitation clause that depended on either.
+
+**Reinstated — the original §3 resolution.** The committed `HEADER-REPAIR` entry records: the date ·
+the statement that the single re-emission allowance is consumed · the plan identity the received block
+named · the received block's **verdict, finding IDs, and material/minor counts**.
+
+**Retained unchanged:** the re-emission is a **header-only re-emission of the same review**. The
+allowance is capped at one, the receipt is committed before the request is made, and the committed
+entry is what proves the allowance already spent when a session resumes.
+
+**Also retained unchanged:** the RV2-02 and RV2-03 dispositions and their designs, exactly as
+adjudicated in §3 and as written into plan-v3.
+
+**Artifact consequence.** Plan-v3 (commit `9faf94518dfdb64b614440e0703ecf2969f9a239`, blob
+`af92e6992e0445535a6a6cc45c149f19c663c74d`) carries the superseded requirement and is immutable, so it
+cannot be edited. It is therefore an **unreviewed historical intermediate**: it was never submitted for
+review, and it is **not** a review candidate. **Plan-v4 is the sole candidate for `review-2`.**
+
+**Budget.** v3 → v4 is an **operator-directed pre-review adjustment inside the already-consumed bounded
+correction pass** — not a second correction pass and not a review correction. `docs/work-loop-repair-workflow.md`
+§9.2 freezes a plan only once independently reviewed, and no review has inspected plan-v3, so the
+adjustment is on the same footing as the pre-review v1 → v2 operator reframe. Accounting is unchanged
+from §4: initial review **consumed**; bounded correction pass **consumed**; conditional `review-2`
+**available and unused**; `review-3` does not exist.
+
+**Declared residual, recorded for the independent reviewer rather than argued here.** Codex finding
+G1-RV2-01 asked for three things: a committed binding of the allowance's expenditure, a resume rule,
+and "how the corrected body is proven unchanged." The first two are fully met by the reinstated design.
+The third is now met **partially** — matching verdict, finding IDs and counts detects a substituted or
+renumbered review, but not a re-emission whose reasoning or required corrections changed under
+unchanged IDs. This is a deliberate operator proportionality decision, stated so that `review-2`
+evaluates it with the trade-off visible instead of rediscovering it.
+
+LIMITATIONS: This entry records a decision and its scope, not a verified rule. Plan-v4 did not exist
+when it was written. No behavioural evidence exists for any part of the header-repair design — a live
+malformed-header re-emission is unreachable until the slice is built and belongs to Stage 9 (Use). The
+unit remains open and G1 remains closed.
