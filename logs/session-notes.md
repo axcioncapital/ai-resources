@@ -952,3 +952,15 @@ trigger as "the pilot," so Step 7 is where they get tested for real.
 
 ### Open Questions
 None. Step 6 is closed with no unresolved threads.
+
+## 2026-08-01 — Session S11-cf1
+
+**Mandate:** Make the Work Loop v2 v1-retirement decision (the hard boundary at pilot start), then open the Phase 3 pilot — start the pilot log and run the first genuine CRM or Email OS work unit through the MVP — done when: `plans/work-loop-v2-mvp/step-7-v1-retirement-decision.md` exists and the decision is recorded in `logs/decisions.md`; `plans/work-loop-v2-mvp/step-7-pilot-log.md` exists and holds pilot unit 1's record; one real CRM or Email OS unit has run end-to-end through `$work-loop-v2` with its task-state file in `logs/work-loop/`; and the mission's Step 7 threads reflect what actually closed, with evidence.
+- Out of scope: Step 8 entirely (fixing pilot blockers, the regression set, the post-pilot assessment, executing the retirement); pilot units 2 and 3 and the mid-task session-handoff test (the handoff requires a later session by construction); redesigning the MVP; reopening any of the six disclosed limitations in `step-6-candidate-review.md` § 8.5 unless a pilot unit materially obstructs operation.
+- Files in scope: plans/work-loop-v2-mvp/step-6-candidate-review.md, plans/work-loop-v2-mvp/work-loop-v2-mvp-proposal-v0.4.md, docs/work-loop.md, .claude/commands/work-loop.md, .claude/commands/work-loop-v2.md, .agents/skills/work-loop-v2/SKILL.md, logs/missions/work-loop-v2-mvp.md, logs/decisions.md, logs/session-notes.md
+- Stop if: the only available pilot unit would have to be manufactured rather than genuine — Proposal § Phase 3 requires real work units, and a fabricated one tests nothing; or a pilot observation would enter MVP scope without having materially obstructed useful operation (the Proposal's pilot presumption is no change).
+- Allowed inputs: plans/work-loop-v2-mvp/, docs/work-loop.md, docs/work-loop-spec.md, .claude/commands/work-loop.md, .agents/skills/work-loop/SKILL.md, .claude/commands/work-loop-v2.md, .agents/skills/work-loop-v2/SKILL.md, logs/missions/work-loop-v2-mvp.md, logs/decisions.md, logs/work-loop/, projects/axcion-crm/, projects/axcion-systems-builder-email-os/
+- Required outputs: plans/work-loop-v2-mvp/step-7-v1-retirement-decision.md, plans/work-loop-v2-mvp/step-7-pilot-log.md, logs/work-loop/{pilot-unit-1-task-id}.md
+- Mission: work-loop-v2-mvp
+
+**Work:** Work Loop v2 MVP Step 7 — v1 retirement decision, then pilot real CRM / Email OS units

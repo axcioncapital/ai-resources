@@ -325,3 +325,43 @@ would have been the second broad review the mission's non-negotiables forbid.
 `step-6-closure-verdict.md` (Codex's not-resolved verdict); `step-6-live-verification.md` (both live
 tests, independently verified); `step-6-candidate-review.md` §§ 2, 8.5, 9 (the closed record); commit
 `882e53b` (Step 6 closed).
+
+## 2026-08-01 — Work Loop v1 retires immediately (Proposal Decision 4, settled at pilot start)
+
+**Context.** Proposal Decision 4 makes the v1 retirement choice a hard boundary at Work Loop v2 pilot
+start: archive immediately, or archive after pilot success, but decided no later than pilot start.
+Step 7 opened the pilot, so the decision came due.
+
+Inspection before the decision established two things the Proposal's binary framing did not
+anticipate. First, **v2 does not replace all of v1**: v1 carries a capability-development subsystem
+(the `capability-development` skill, capability records, G1–G3 gates) and a challenged route, and the
+string `capability` appears zero times across all three v2 artifacts — by design, since Proposal
+Decision 1 scopes the MVP to the Direct and Standard lanes. Second, **v1 has live dependants and
+in-flight work**: two live commands (`/develop-ai-resource`, `/leverage-idea`), the wording of
+`docs/qc-independence.md`'s Independent Review Rule, one in-development capability record
+(`prime-runtime-delegation`), the open `lean-prime-2026-07` mission, and 64 commits unmerged across
+three v1 branches in git worktrees.
+
+**Decision (operator).** **Option A — archive v1 immediately.** Claude presented three options and
+recommended C (retire only the half v2 replaces; decide the capability route separately on its own
+evidence). The operator chose A. Recorded as settled, not deferred.
+
+**Not reopened.** The coverage gap was surfaced before the choice, not after it. This entry records
+the decision and its blast radius; it does not relitigate the option.
+
+**Execution is deliberately not part of this decision.** Retiring a command wired into two live
+commands, one doctrine document and 64 unmerged commits is a structural change class, so it takes one
+risk-aware independent Codex review before implementation (`docs/qc-independence.md` § Risk-aware
+review). No such review has been sized. Execution belongs to Step 8 (Proposal `:111`) and must, in
+order: resolve the 64 unmerged commits; close or migrate the `prime-runtime-delegation` record and
+`lean-prime-2026-07`'s two open threads; decide the fate of the capability-development subsystem,
+which A leaves with no successor; repair the six documentation and routing consumers; prune the
+already-`prunable` `session/2026-07-29-work-loop` worktree; then archive the four v1 artifacts.
+
+**Alternatives considered.** *B — archive after pilot success*: not taken; same stranding as A, later.
+*C — scoped retirement, Claude's recommendation*: not taken; it concedes part of Decision 4's
+anti-drift purpose and holds only if the deferred second decision carries a hard trigger.
+
+**Recorded:** `plans/work-loop-v2-mvp/step-7-v1-retirement-decision.md` (the full record, with the
+verified dependant list and the execution checklist); Proposal Decision 4 (`:38`) and Decision 1
+(`:35`); `logs/missions/work-loop-v2-mvp.md` (Step 7 thread).
