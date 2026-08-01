@@ -695,6 +695,60 @@ non-trivial work — including finding that the blocker's own framing was half w
 prove is that the state file alone would have sufficed with no orientation context at all; that
 measurement is not obtainable through the normal path.
 
+### Closure — 2026-08-01
+
+Codex assessed the closure unit and **passed it with no correction required**. The task
+`foreign-staging-target-repo` is closed; state file reduced to the closing record at `turn: operator`,
+commit `2526ac4`. Two accepted limitations carried out of it, documented in
+`docs/commit-discipline.md` with no remedy prescribed.
+
+**FP-12 — Codex declined to write the closing record, citing a rule that does not exist.** It reported
+the write was "blocked by this repository's rule prohibiting Codex from approving or closing work" and
+asked the operator to authorize an override. Searched `docs/qc-independence.md`, `AGENTS.md`, `.codex/`
+and the core: **no such rule.** The only live rule in that area is *"Who commits: Claude"*
+(core `:227-231`), which exists because Codex was refused write access to `.git` — a *commit*
+restriction, not a verdict restriction. The core assigns closure to Codex explicitly at `:74`
+(*"decides one of three things: close, correct once, or stop"*). Codex conflated "cannot commit" with
+"may not approve", and the proposed remedy was an operator override of a governance rule that was
+never in the way. **Nothing was overridden.** Generalisable lesson, and the sharper one: *a model
+citing a rule is not evidence the rule exists.* An override request is the moment to read the rule,
+not the moment to grant it — granting this one would have created a standing exception to a
+prohibition that does not exist, which is worse than the block it was meant to clear.
+
+**Core fix this implies (recorded, not applied):** § 4's *"Who commits: Claude"* note and § 3 step 5's
+assessment role are in different sections and neither points at the other. One line in § 4 would close
+it — *Codex decides closure; Claude writes and commits the closing record.*
+
+### The pilot's own result — read this before judging the exit condition
+
+Raised by the operator mid-session, in these words: **"is this ceremony?"** It is the pilot's central
+question and the honest answer is *partly*, with a clean split.
+
+**What earned its keep — the review, unambiguously.** Codex found two real defects in Claude's work
+that Claude's own green harness reported as absent (§ The correction round). It required paired
+allow/block assertions that caught three separate instances of an assertion passing for the wrong
+reason. That is not ceremony; it is the single highest-value component of the loop, and it is the one
+thing a self-review structurally cannot supply.
+
+**What was ceremony — the bookkeeping.** Unit 2 applied dispositions the operator had *already*
+decided, wrapped in a brief, a premise check, an evidence requirement and an assessment. The scope
+question that opened the closure unit — *may closure tick one checkbox in `next-up.md`* — consumed a
+hand-back, an operator stop, a state-file edit and a commit, to resolve to "yes".
+
+**The finding that matters most, and it is measurable.** Core § 2's Direct Work bypass — the rule that
+keeps small reversible work *out* of the loop — **never fired once in the entire pilot.** Condition 5
+has stood `STILL OWED` since Unit 1 and is still owed at closure. Meanwhile a one-checkbox tick went
+through the full protocol. **A bypass that never fires is not a bypass; it is a rule that exists on
+paper.** That is not a failure of the pilot — it is the pilot working: this is precisely the kind of
+result a pilot exists to produce, and it is invisible from inside any single unit.
+
+**What this implies for the exit decision** (the operator's call, not settled here): the loop's value
+concentrated almost entirely in adversarial review, and the review is *separable* from the state
+files, turn flags, unit numbering and the operator acting as message bus between two models. A v0.2
+that keeps the review and sheds most of the bookkeeping is the shape this evidence points at. Cost
+side, stated plainly: three sessions and seven commits on one commit-guard hook in a personal
+workspace.
+
 ---
 
 ## Pilot exit condition
@@ -702,3 +756,9 @@ measurement is not obtainable through the normal path.
 *"You can honestly say the loop helped you get real project work done"* (Proposal `:102`).
 
 Not a count of units and not a green harness — the operator's judgment on usefulness.
+
+**Input to that judgment, 2026-08-01:** the work got done and is real — a live guard repaired,
+regression-covered, and honestly documented including two gaps it does not close. Two of the three
+defects fixed along the way were found by the *review*, not by the protocol around it. See
+§ The pilot's own result above before deciding; the split between review and bookkeeping is the
+decision that actually matters.
