@@ -91,18 +91,28 @@ check "1.1   the brief landed in logs/work-loop/, not logs/loop/" \
   "[ -f '$CODEX_F' ]"
 check "1.1   it did NOT fall back to logs/loop/" \
   "[ ! -e 'logs/loop/$CODEX_TASK.md' ]"
-check "1.1   turn is claude — the hand-off points at Claude" \
-  "grep -qE '^turn:[[:space:]]*claude' '$CODEX_F'"
 check "1.1   the task id matches the file it was written to" \
   "grep -qE \"^task:[[:space:]]*$CODEX_TASK\" '$CODEX_F'"
+
+# 1.1 and 1.4 have MUTUALLY EXCLUSIVE end states on this one file: 1.4 is required to
+# erase the brief and flip turn away from claude. Asserting 1.1's hand-off against the
+# working tree therefore fails once 1.4 succeeds — which is what happened on the first
+# green run, and it was the harness at fault, not the behaviour.
+#
+# 1.1 is a claim about the OPENING hand-off, so it is read at the commit that added the
+# file. Derived, not hardcoded: if Codex never opened the unit there is no adding commit
+# and every assertion below fails. Still falsifiable.
+OPENED=$(git log --diff-filter=A --format=%H -- "$CODEX_F" 2>/dev/null | tail -1)
+at_open() { [ -n "$OPENED" ] && git show "$OPENED:$CODEX_F" 2>/dev/null; }
+
+check "1.1   the opening hand-off was committed by Claude" \
+  "[ -n \"\$OPENED\" ] && at_open | grep -qE \"^task:[[:space:]]*$CODEX_TASK\""
+check "1.1   turn was claude at open — the hand-off points at Claude" \
+  "at_open | grep -qE '^turn:[[:space:]]*claude'"
 # A brief must carry claims Claude can CHECK. Asserting the word "brief" appears would
 # pass on any file containing the heading; require a checkable-claims line instead.
-check "1.1   the brief states claims to check against the repository" \
-  "grep -qiE '^check against the repository' '$CODEX_F'"
-# Assert the COMMITTED state, not merely that the file exists in the working tree —
-# Claude committing the file Codex wrote is half of what 1.1 claims.
-check "1.1   Claude committed the brief Codex wrote" \
-  "git show HEAD:'$CODEX_F' 2>/dev/null | grep -qE '^task:[[:space:]]*$CODEX_TASK'"
+check "1.1   the brief stated claims to check against the repository" \
+  "at_open | grep -qiE '^check against the repository'"
 
 # --- 1.4 Codex closes: the file reduces to the four closing fields ----------
 # EVERY negative below is conjoined with a positive closure marker. On its own,
