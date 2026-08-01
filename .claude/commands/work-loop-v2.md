@@ -12,7 +12,7 @@ Input: `$ARGUMENTS` — a task id, or empty to use the only state file whose `tu
 
 This command is not a session lifecycle command. It does not invoke `/prime`, `/session-start` or `/session-plan`.
 
-**Scope of this version — Slice 1, Claude side.** Behaviours 1.2 and 1.3 only. Not yet built, and not to be improvised here: file-identity rejection of a stale or foreign state file (Slice 2, behaviour 2.2), the bounded single correction (2.3, 2.4), and the admission test that decides Direct Work versus the loop (Slice 3). If the work in front of you needs one of those, say so and stop — do not invent it.
+**Scope of this version — Slice 1 Claude side, plus Slice 2 continuity.** Behaviours 1.2, 1.3, the fresh-session pickup (2.1) and file-identity rejection (2.2). Not yet built, and not to be improvised here: the bounded single correction exercised end to end (2.3, 2.4), and the admission test that decides Direct Work versus the loop (Slice 3). If the work in front of you needs one of those, say so and stop — do not invent it.
 
 ---
 
@@ -21,6 +21,8 @@ This command is not a session lifecycle command. It does not invoke `/prime`, `/
 Read the state file at `logs/work-loop/{task-id}.md`. Resolve `{task-id}` from `$ARGUMENTS`, or — if empty — from the single file under `logs/work-loop/` whose frontmatter `turn:` is `claude`. If more than one qualifies, list them and ask which. Never guess.
 
 Read the repository, not the conversation. Core § 3 step 1: do not rebuild the situation from memory or from chat.
+
+**Validate the file's identity read-only, before anything else is done with it** (core § 6 rule 2). If the frontmatter `task:` does not match the resolved `{task-id}`, the file is stale or belongs to a different task: report the mismatch — both values, in plain words — and **change nothing**. No inspection record, no turn flip, no commit; the rejection leaves no trace in the file, and that is the point. If it is not obvious which side is correct, the report ends with the question for the operator (core § 7). Then stop. The same applies to a file that is missing or has no readable `task:` / `turn:` frontmatter — report, change nothing, stop.
 
 If `turn:` is not `claude`, stop and say whose move it is. Change nothing.
 
