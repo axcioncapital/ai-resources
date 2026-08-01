@@ -876,3 +876,17 @@ judged trade-off rather than pure oversight.
 **One, blocking Step 6:** finding C — correct it fully, bound it to a disclosed limitation with a
 pilot reopening trigger, or accept it outright. Deferred by the operator on 2026-08-01. Claude's
 recommendation is the bounded option, with the stated caveat that Claude authored the artifacts.
+
+## 2026-08-01 — Session S10-7e5
+
+**Mandate:** Prepare a self-contained adjudication brief that lets Codex give an independent verdict on Work Loop v2 Step 6 finding C — done when: `plans/work-loop-v2-mvp/step-6-finding-c-adjudication-brief.md` exists, names every context file Codex must read by path, states the three recorded options and the two conflicts, discloses Claude's authorship conflict, and is committed
+- Out of scope: settling finding C (operator will not decide before Codex's verdict); the Step 6 closure check, acceptance, limitations list and mission-thread tick (all blocked on that verdict); any second broad review; Step 7 work
+- Files in scope: logs/session-notes.md
+- Stop if: the brief would require Claude to pre-judge finding C, or would route the adjudication through `$work-loop-v2` (self-hosting, forbidden by Proposal § 6)
+- Allowed inputs: plans/work-loop-v2-mvp/, logs/decisions.md, logs/missions/work-loop-v2-mvp.md, logs/scripts/work-loop-v2-slice-1.test.sh, .claude/commands/work-loop-v2.md, .agents/skills/work-loop-v2/SKILL.md
+- Required outputs: plans/work-loop-v2-mvp/step-6-finding-c-adjudication-brief.md
+- Context pack: output/context-packs/qc-20260801-c6f1a/pack.md
+- Mission: work-loop-v2-mvp
+- Mandate revised mid-session 2026-08-01 by operator directive: the original mandate was to settle finding C and close Step 6. The operator directed that Codex give an independent verdict on C first and stated they will not decide before it. Step 6 acceptance is therefore deferred, not abandoned.
+
+**Work:** Work Loop v2 MVP Step 6 — prepare the Codex adjudication brief for finding C (revised from: settle C and accept the candidate)
