@@ -637,6 +637,43 @@ that from being observed cleanly. Not a defect in the state file, the command or
 of the measurement. If a future unit needs a clean measurement, it has to bypass `/prime` or start
 from a checkout with no session-notes entry.
 
+### The correction round — condition 4, and the strongest catch of the pilot so far
+
+Codex assessed the hand-back and froze **two findings**. Both were real, both were corrected in one
+bounded round, and **finding 1 was a defect the implementation had introduced** — not a
+misunderstanding, not a scope quibble.
+
+**Finding 1: the fix repaired candidate discovery and silently broke footprint discovery.** The
+implementation pointed `logs_dir` at the *target* repository, but the marker contract makes the marker
+and mandate relative to wherever `/prime` ran. In the originating real case — a session rooted in the
+workspace repo staging into a freshly-initialised nested repo — the guard would look for its own
+mandate in a repository that has never heard of it, find nothing, take the no-concrete-footprint
+branch, and **turn itself off** for precisely the case the fix existed to protect. Corrected by
+separating session scope from target scope and translating both into absolute paths at one point.
+
+**Finding 2: a quoted leading `cd` did not fail closed.** `_command_text_only()` blanks quoted spans,
+so `cd "nested dir" && git add .` reached the target parser as `cd "" && …` and the empty path
+resolved to the base repository, silently. Corrected by parsing the leading `cd` from the raw command
+— resolving quoted literals rather than rejecting them, because every checkout path in this workspace
+contains a space, so rejection would fail closed on ordinary work.
+
+**Why this is the pilot's strongest review result to date.** Unit 1's review caught nothing material.
+Unit 2's correction round was exercised on findings Codex raised about presentation and completeness.
+Here the reviewer found a defect that the author's own 9/9 green harness reported as absent — because
+the *fixtures* shared the author's blind spot. Every fixture gave every repository its own valid
+marker, so the two scopes never diverged in test, and the mistake was invisible to the instrument
+built to catch it. **The harness was not weak; it was wrong in the same direction as the code.** No
+amount of re-running it would have surfaced this.
+
+**And the same pattern recurred inside the correction.** Codex required *both* halves — an
+in-footprint allow and an out-of-footprint block. Running the finished correction against a stub with
+finding 1 re-injected shows why: **C9, the allow case, still passes**, because "allowed" is also what
+a guard that gave up on finding any footprint returns. Only C10 discriminates. That is the third
+instance in this unit of an assertion satisfied for the wrong reason (FP-8: red for the wrong
+mechanism; FP-9: green against a dead hook; now C9: allowed by an absent guard). **An allow-shaped
+assertion is almost never evidence on its own** — this belongs in the core's evidence rules, not just
+in this log.
+
 ### Verdicts
 
 Against the seven conditions. Rows 3 and 7 were left `PENDING` by the opening session by design;
@@ -647,7 +684,7 @@ this section settles them on observed evidence.
 | 1 | Useful context preparation | **yes** — and stronger than prior units: the brief corrected Claude's *instrument*, not just its facts (FP-7) |
 | 2 | Alignment with the approved project plan | **yes** — unit boundary respected; docs, fork and defect record untouched, across both sessions |
 | 3 | State recovery | **yes, with a disclosed contamination.** Every action taken came from the state file and Git; its `Next action` was executable as written. But `/prime` preloads the prior session-notes summary, so a clean-room proof was not available (FP-11) |
-| 4 | One bounded correction | **pending Codex's assessment** — the unit is handed back complete; no assessment round has run yet |
+| 4 | One bounded correction | **yes — and the strongest instance in the pilot.** Codex froze two findings, both real; finding 1 was a defect the implementation introduced and that the author's own green harness could not see. Corrected in ONE round, no scope growth, no argument. Pending only Codex's closure check |
 | 5 | The Direct Work bypass | **STILL OWED.** Unchanged: the defect is not small and reversible, so it was correctly admitted. Needs a separate genuinely-small request; manufacturing one would breach the genuine-units constraint |
 | 6 | Operator intervention | **yes** — the operator ran Codex; Claude cannot open a unit |
 | 7 | Clean fresh-session continuation | **yes, qualified.** The session resumed and finished the unit without asking the operator a single recovery question, and without the `~/.claude/settings.json` gate the checkpoint expected. Qualified by the same FP-11 contamination |

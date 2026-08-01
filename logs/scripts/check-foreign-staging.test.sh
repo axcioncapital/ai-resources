@@ -68,14 +68,38 @@ TODAY=$(date '+%Y-%m-%d')
 # $1 = fixture dir name. $2 = "infootprint" to put ALL nested dirt inside the
 # nested footprint (used by the allow-case).
 # ---------------------------------------------------------------------------
+#
+# MODES (2026-08-01, correction 1). The footprint always lives in the PARENT —
+# it is the SESSION repo, and the marker contract makes the mandate relative to
+# where /prime ran, not to whatever repo a command later targets. A `nosession`
+# nested repo carries no logs/ at all, which is the originating real case: a
+# session rooted in the workspace, staging into a freshly-initialised nested repo.
+#
+#   (default)             parent footprint covers parent only; nested has own logs/
+#   infootprint           parent footprint covers the NESTED file; nested dirt = owned only
+#   nosession             parent footprint covers parent only; nested has NO logs/
+#   nosession-infootprint parent footprint covers the NESTED file; nested has NO logs/
+#   spacedir              like default, but the nested dir is named `nested dir`
 make_fixture() {
   local name="$1" mode="${2:-}"
   local root="$TMPROOT/$name"
   mkdir -p "$root"
 
   _mkrepo() {
-    local d="$1" footprint="$2"
-    mkdir -p "$d/logs" "$d/src"
+    local d="$1" footprint="$2" nosession="${3:-}"
+    mkdir -p "$d/src"
+    if [ -n "$nosession" ]; then
+      # No logs/, no marker, no session-notes — the target repo knows nothing
+      # about this session. Reading the footprint from HERE is the defect.
+      git -C "$d" init -q
+      git -C "$d" config user.email "harness@test.local"
+      git -C "$d" config user.name  "harness"
+      echo "seed" > "$d/seed.txt"
+      git -C "$d" add seed.txt
+      git -C "$d" commit -q -m "seed"
+      return 0
+    fi
+    mkdir -p "$d/logs"
     git -C "$d" init -q
     git -C "$d" config user.email "harness@test.local"
     git -C "$d" config user.name  "harness"
@@ -97,7 +121,18 @@ make_fixture() {
 NOTES
   }
 
-  _mkrepo "$root/parent" "src/parent-owned.txt"
+  local nested_name="nested"
+  [ "$mode" = "spacedir" ] && nested_name="nested dir"
+
+  # The SESSION footprint. For the *-infootprint modes it must name the NESTED
+  # path, because the footprint is read from the session repo (the parent) — the
+  # nested repo's own mandate is never consulted.
+  local parent_fp="src/parent-owned.txt"
+  case "$mode" in
+    infootprint|nosession-infootprint) parent_fp="$nested_name/src/nested-owned.txt" ;;
+  esac
+
+  _mkrepo "$root/parent" "$parent_fp"
   echo "dirty" > "$root/parent/src/parent-owned.txt"
   echo "dirty" > "$root/parent/parent-dirt.txt"
 
@@ -109,15 +144,19 @@ NOTES
   # C3 blocks on `nested/`, and the case goes red for the WRONG mechanism —
   # detecting "judged the wrong repo" but never reproducing the silent pass
   # the defect record describes. Caught by running it, 2026-08-01.
-  echo "nested/" > "$root/parent/.gitignore"
+  echo "$nested_name/" > "$root/parent/.gitignore"
   git -C "$root/parent" add .gitignore
   git -C "$root/parent" commit -q -m "ignore nested repo"
 
-  _mkrepo "$root/parent/nested" "src/nested-owned.txt"
-  echo "dirty" > "$root/parent/nested/src/nested-owned.txt"
-  if [ "$mode" != "infootprint" ]; then
-    echo "dirty" > "$root/parent/nested/nested-dirt.txt"
-  fi
+  local nosession=""
+  case "$mode" in nosession|nosession-infootprint) nosession="nosession" ;; esac
+
+  _mkrepo "$root/parent/$nested_name" "src/nested-owned.txt" "$nosession"
+  echo "dirty" > "$root/parent/$nested_name/src/nested-owned.txt"
+  case "$mode" in
+    infootprint|nosession-infootprint) : ;;
+    *) echo "dirty" > "$root/parent/$nested_name/nested-dirt.txt" ;;
+  esac
 
   echo "$root"
 }
@@ -270,6 +309,60 @@ ok=0
 if [ "$RC" -eq 2 ] && echo "$OUT" | grep -q "nested-dirt.txt" && ! echo "$OUT" | grep -q "parent-dirt.txt"; then ok=1; fi
 assert "C8_absent_payload_cwd_falls_back" expect_green \
   "process cwd still judged when the payload omits cwd" "$ok"
+
+# ===========================================================================
+echo "C9  session state ONLY in the parent, nested in-footprint -> must ALLOW"
+# ===========================================================================
+# Codex correction 1. The nested repo carries NO logs/, no marker, no mandate —
+# the originating real case. The footprint must be read from the SESSION repo
+# (the parent) and translated into the target's coordinates. Reading it from the
+# target finds no marker at all, which turns the guard OFF and exits non-blocking
+# for the wrong reason.
+R=$(make_fixture c9 nosession-infootprint)
+run_hook "$R/parent/nested" "$R/parent" "git add ."
+ok=0; [ "$RC" -eq 0 ] && ok=1
+assert "C9_session_scope_infootprint_allows" expect_green \
+  "parent-declared footprint covers the nested file" "$ok"
+
+# ===========================================================================
+echo "C10 session state ONLY in the parent, nested out-of-footprint -> must BLOCK"
+# ===========================================================================
+# The paired must-block half of C9 — without it, C9's exit 0 is satisfied by a
+# guard that simply gave up on finding a footprint. Also pins that unrelated
+# parent dirt never enters the target's candidate set.
+R=$(make_fixture c10 nosession)
+run_hook "$R/parent/nested" "$R/parent" "git add ."
+ok=0
+if [ "$RC" -eq 2 ] && echo "$OUT" | grep -q "nested-dirt.txt" && ! echo "$OUT" | grep -q "parent-dirt.txt"; then ok=1; fi
+assert "C10_session_scope_outfootprint_blocks" expect_green \
+  "blocks on nested dirt using the PARENT's footprint, never parent dirt" "$ok"
+
+# ===========================================================================
+echo "C11 a QUOTED leading cd resolves to the right repo (not the base)"
+# ===========================================================================
+# Codex correction 2. _command_text_only() blanks quoted spans, so
+# `cd "nested dir" && git add .` reached the target parser as `cd "" && …` and
+# resolved to the BASE repo silently. Quoted paths are the normal case in this
+# workspace — every checkout path contains spaces — so this must resolve, not
+# fail closed. A regression here reads as "blocks on parent-dirt.txt".
+R=$(make_fixture c11 spacedir)
+run_hook "$R/parent" "$R/parent" 'cd "nested dir" && git add .'
+ok=0
+if [ "$RC" -eq 2 ] && echo "$OUT" | grep -q "nested-dirt.txt" && ! echo "$OUT" | grep -q "parent-dirt.txt"; then ok=1; fi
+assert "C11_quoted_cd_resolves_target" expect_green \
+  "quoted path with a space resolves to the nested repo" "$ok"
+
+# ===========================================================================
+echo "C12 a VARIABLE leading cd still fails closed"
+# ===========================================================================
+# The other half of correction 2: resolving quoted literals must not open the
+# door to shell evaluation. `$VAR` is unresolvable without running the shell, so
+# a wide add carrying one must still exit 2.
+R=$(make_fixture c12)
+run_hook "$R/parent" "$R/parent" 'cd "$TARGET_DIR" && git add .'
+ok=0; [ "$RC" -eq 2 ] && ok=1
+assert "C12_variable_cd_fails_closed" expect_green \
+  "exit 2 — a \$VAR path is never evaluated" "$ok"
 
 echo
 echo "-------------------------------------------------------------"
