@@ -9,182 +9,63 @@ actually affect, while preserving a hard block when that target cannot be resolv
 the live canonical hook, permanent executable regression coverage, the maintained-copy disposition,
 the operator-facing contract, and closure of the recorded defect.
 
-Approved boundary: `.claude/hooks/check-foreign-staging.sh`; focused executable coverage under
-`logs/scripts/`; only necessary follow-on changes to `docs/commit-discipline.md`,
-`logs/improvement-log.md`, `.codex/hooks/check-foreign-staging.sh`, and
-`/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-sector-intelligence/.claude/hooks/check-foreign-staging.sh`.
-The two canonical worktree copies may be checked but not edited. Excluded: other hooks, a general
-shell parser, unrelated cleanup, a soft-warn fallback for an ambiguous command target, the retired
-`/risk-check`, and extending `auto-sync-shared.sh` to hooks.
+Approved boundary names the canonical hook, focused coverage under `logs/scripts/`,
+`docs/commit-discipline.md`, `logs/improvement-log.md`, `.codex/hooks/check-foreign-staging.sh`, and
+the sector-intelligence project fork. **Widened by operator decision, 2026-08-01, to include
+`logs/next-up.md`** — for the single purpose of ticking the promoted item `8c600934fdd0` once
+`logs/improvement-log.md` marks the nested-target defect resolved. No other edit to that file is in
+scope. Stated out loud rather than absorbed silently, per core § 6 rule 4.
 
 ## Current lane and unit
 Standard. Named reason for the loop: this pilot task spans a globally wired guard, cross-session
 handoff, fail-capable regression evidence, and divergent copies whose authority differs.
 
-Unit 2 — apply the already-authorized maintained-copy dispositions. Park the ignored `.codex` experiment
-unchanged; bring the sector-intelligence project fork up to the accepted canonical behavior while
-preserving exactly its two project-specific exemptions. Do not edit documentation or defect records
-in this unit.
-
-## Brief
-Why: Unit 1 repaired and proved the live canonical hook, but the task is not complete while a
-project-specific maintained fork remains on the pre-fix behavior. Conversely, synchronizing the
-ignored `.codex` experiment would contradict the operator's existing decision not to maintain it.
-
-Check these premises before editing:
-
-1. `ai-resources/.gitignore` still labels `.codex/` an operator experiment and explicitly says it is
-   not maintained; `.codex/hooks.json` still does not register `check-foreign-staging.sh`. If either
-   is false, stop and hand back. If both hold, the disposition is **park unchanged** — do not edit or
-   delete the `.codex` hook.
-2. `projects/axcion-sector-intelligence/logs/decisions.md` Decision 28 still records a follow-up
-   backport of the canonical staging hook and requires preservation of `qc-log.md` and
-   `research-quality-log.md` in `EXEMPT_BASENAMES`. Confirm those two names exist in the project fork
-   and identify any other intentional project-only behavior before replacing anything.
-3. The sector fork remains a regular file materially behind the canonical hook, and no project
-   instruction prohibits the recorded backport. Confirm its local registration status as a fact;
-   registration does not change the disposition and must not be edited in this unit.
-4. The canonical target-repository harness is 15/15 green as recorded by Unit 1. Re-run it before the
-   port so a pre-existing failure is not attributed to this unit.
-
-If a premise the port rests on is false, record what was inspected and found, set `turn: codex`,
-commit the state-file update, and stop.
-
-Implementation boundary:
-
-- Make the sector-intelligence hook behaviorally identical to the accepted canonical hook, with only
-  the two project-authorized extra exempt basenames retained: `qc-log.md` and
-  `research-quality-log.md`.
-- Do not add hook synchronization machinery, change settings/registration, edit `.codex/`, edit the
-  two canonical worktree copies, or absorb the deferred subdirectory-byproduct exemption issue.
-- Preserve the sector repository's instructions and make its repository commit separately from the
-  ai-resources state-file commit.
-
-Evidence required:
-
-- Run `bash logs/scripts/check-foreign-staging.test.sh` against the canonical hook and via
-  `HOOK_OVERRIDE` against the sector hook; both must report 15/15 green and exit 0.
-- Produce a fail-capable mechanical comparison showing the sector executable differs from canonical
-  only by the two named `EXEMPT_BASENAMES` entries. The check must fail when either authorized extra
-  is removed and when any other executable difference is injected; prose inspection alone is not
-  evidence.
-- Run syntax checks on both hook files and record the commands and decisive results.
-
-Stop if the sector fork carries another intentional project behavior, if satisfying its two
-exemptions requires changing canonical behavior, if the canonical pre-check is not green, or if the
-post-port harness/comparison cannot distinguish a real sync from a stale fork.
+Unit 3 — closure — is unblocked and awaits its brief from Codex. The scope decision it was pending is
+answered in the boundary above: the queue-item tick is in scope.
 
 ## Latest material result
+Unit 1 accepted after one correction and one final tightly-bounded fix. The canonical hook separates
+session and target scopes, safely resolves quoted literal leading `cd`, fails closed for unresolvable
+wide-add targets, and supports session state rooted in a plain project subdirectory. Claude recorded
+15/15 green with defect-specific falsification and no regression.
 
-### Unit 2 — maintained-copy dispositions applied (session S13-ad0)
+Unit 2 accepted. `.codex/` is parked unchanged under the existing operator decision: ignored,
+unmaintained, and unregistered. The sector-intelligence fork is synchronized to canonical behavior
+with exactly its two authorized additions, `qc-log.md` and `research-quality-log.md`; the live diff
+contains only their comment and entries. Both hooks recorded 15/15 green, syntax checks passed, and
+the comparison was falsified against removal of either exemption and an unrelated executable change.
+The sector hook was committed separately as `563e3fe`. Corrected measurement at assessment: the
+current canonical and sector files are 838 and 846 lines; Unit 2's recorded 797-line canonical count
+was wrong, but the materially-behind premise and the port result are unchanged.
 
-**All four premises hold; nothing was built on an unverified one.**
+Unit 2's assessment was independently re-verified against the live repository on 2026-08-01 at
+operator request: canonical 838 lines and sector 846; `diff` between the two executables returns
+exactly the two authorized `EXEMPT_BASENAMES` entries and their seven-line comment and nothing else;
+`.codex/` remains gitignored (`.gitignore:63`) with no `check-foreign-staging` registration in
+`.codex/hooks.json` and its hook file untouched since 2026-07-14; sector commit `563e3fe` touches
+that one file only. The harness reports 15/15 green against the canonical hook and 15/15 via
+`HOOK_OVERRIDE` against the sector fork. It is fail-capable, and now measured: against a no-op stub
+hook it reports 4 passed / 11 failed, so 11 of the 15 assertions carry real signal and 4 are
+allow-shaped cases that a dead guard also satisfies. That is the quantified form of FP-9 and it
+belongs in the closing record rather than in prose.
 
-1. **HOLDS → park `.codex` unchanged.** `.gitignore:63` ignores `.codex/` and `:69` states it
-   "remain[s] ignored and unmaintained"; `.codex/hooks.json` registers `check-foreign-staging.sh`
-   **zero** times. Not edited, not deleted — mtime still Jul 14, verified after the unit.
-2. **HOLDS.** `projects/axcion-sector-intelligence/logs/decisions.md:228` (Decision 28) records the
-   fork as "~213 diff-lines behind", flags the backport as follow-up, and names the two entries to
-   preserve. Both `qc-log.md` and `research-quality-log.md` were present in the fork's
-   `EXEMPT_BASENAMES` before the port.
-   **Other project-only behavior: none.** `EXEMPT_DIR_PREFIXES` is byte-identical to canonical, and a
-   grep for sector/precision-components/industrial-software markers returns hits **only** inside the
-   two authorized entries' own comment. The two exemptions are the whole of the project-specific
-   surface.
-3. **HOLDS.** The fork is a regular file (`-rwxr-xr-x`, not a symlink), 515 lines against canonical's
-   797 — materially behind. **Registration recorded as fact, not acted on:** the fork is registered in
-   *neither* `settings.json` nor `settings.local.json` (0 occurrences in each); the single user-level
-   registration points at the **canonical** hook by absolute path. The fork is therefore dormant. Per
-   instruction, registration was not edited and the disposition is unchanged.
-4. **HOLDS.** Canonical harness re-run **before** the port: 15/15 green, exit 0.
+Decisions to carry into closure: ambiguous-target fail-closed remains limited to wide adds; the
+`.codex` experiment remains parked; the sector fork remains canonical plus its two local exemptions.
 
-**What was done.** The sector hook is now the canonical file with exactly the two authorized extra
-exempt basenames re-inserted, their original comment block carried over **verbatim** so its provenance
-survives. Executable bit preserved (0755). No synchronization machinery added, no settings touched, no
-`.codex/` edit, no worktree-copy edit, and the deferred subdirectory-byproduct issue was not absorbed.
+Deferrals to carry into closure:
 
-**Evidence.**
-
-| Check | Command | Result |
-|---|---|---|
-| canonical behaviour | `bash logs/scripts/check-foreign-staging.test.sh` | **15/15 green, exit 0** |
-| sector behaviour | same harness via `HOOK_OVERRIDE=<sector hook>` | **15/15 green, exit 0** |
-| shell syntax | `bash -n` on both hooks | both OK |
-| python syntax | extract `PYEOF` body → `py_compile`, both hooks | both OK |
-| mechanical comparison | strip the two authorized entries → byte-compare to canonical, **and** assert both names present | **PASS** |
-
-**The comparison is fail-capable — demonstrated, not asserted.** Three injections, each against a
-copy, never the real file:
-
-| Injection | Verdict |
-|---|---|
-| remove `"qc-log.md"` | **FAIL** — missing authorized exemption |
-| remove `"research-quality-log.md"` | **FAIL** — missing authorized exemption |
-| unrelated executable change (`EXEMPT_DIR_PREFIXES` shortened) | **FAIL** — differs beyond the two authorized entries |
-| the real sector file | PASS |
-
-**Commits — separate per repository, as instructed.** Sector repo: `563e3fe` (the hook alone; that
-repo carries unrelated pre-existing dirt, none of it staged). ai-resources: this state-file commit.
-
-### Observation surfaced during Unit 2 — NOT fixed, NOT in scope, and it corrects a claim made earlier in this file
-
-Committing the ported hook did **not** trigger the guard, and the reason is not the coordinate fix.
-Chased to ground rather than assumed:
-
-- The coordinate translation is **sound**. An isolated two-repo probe — session scope in repo A
-  declaring `.claude/hooks/check-foreign-staging.sh`, the *same relative path* staged in a different
-  repo B — returns **exit 2, BLOCKED**. Same-path-different-repo is correctly foreign.
-- The real cause: **`PreToolUse` fires before the command runs, so a combined
-  `git add <explicit-path> && git commit` presents an EMPTY index.** `candidates` is empty and the
-  hook exits 0 at "nothing staged → nothing to guard". Confirmed by execution: the identical foreign
-  file gives `exit 0` in the combined form and `exit 2` when already staged.
-- **Pre-existing, not introduced by Unit 1** — the commit path has always read `git diff --cached` at
-  pre-command time. But it is material, because this workspace's own commit rule prescribes exactly
-  the single-step shape ("stage the relevant files, write the commit message, and commit in a single
-  step"), so in normal use the guard's commit arm is far narrower than it reads. Its remaining real
-  coverage is a bare `git commit`/`--amend`/`-a` over an index a *foreign* session already populated —
-  which is the documented threat model, so this is a scope-of-protection finding, not a break.
-- **Correction to the record:** the earlier hand-back said the fixed hook "gated that very commit and
-  allowed it, which is a live production check on top of the harness." **That was wrong.** The hook
-  exited early on an empty index; it never evaluated the footprint. The harness evidence stands on its
-  own; that one sentence did not, and it is withdrawn here rather than left to be discovered.
-
-Left for Codex to scope alongside the deferred exempt-list item. Both are comparison/coverage
-questions about the same guard, and neither belongs inside Unit 2's boundary.
-
----
-
-### Unit 1 (accepted)
-
-Unit 1 accepted after one correction and one final tightly-bounded fix. The canonical hook now
-separates session and target scopes, supports safely quoted literal leading `cd`, fails closed for
-unresolvable wide-add targets, and supports session state rooted in a plain project subdirectory.
-Claude recorded 15/15 green with defect-specific falsification; the final fix broke no prior case.
-
-Decision carried forward: ambiguous-target fail-closed remains limited to wide adds. An unresolvable
-`cd` on a gated commit falls back to the base cwd; this was outside Unit 1's required behavior, and
-broadly blocking multi-line commits would create a larger false-block regression.
-
-Deferral for task closure: the byproduct exempt-list compares target-repo-relative paths, so a plain
-subdirectory project's own `proj/logs/.session-marker-*` can read as foreign. It was newly noticed at
-the final closure check and therefore did not enter another correction round. Defer as a separate
-unit because it is a different comparison site and needs its own behavior decision and evidence.
+1. A plain-subdirectory project's own `proj/logs/.session-marker-*` may read as foreign because the
+   byproduct exempt-list still compares target-repo-relative paths. Newly noticed at Unit 1's final
+   closure check; separate comparison site requiring its own behavior decision and evidence.
+2. A combined `git add <explicit-path> && git commit` reaches PreToolUse before the add, so the commit
+   arm sees an empty index and does not evaluate the file. Pre-existing and still consistent with the
+   original threat model of a foreign session already populating the index, but materially narrower
+   than the hook header and the repository's single-step commit convention imply. Newly noticed in
+   Unit 2; separate coverage decision, not folded into this task.
 
 ## Next action
-
-**Codex — assess Unit 2.** Executed within the boundary; all four premises verified by execution
-first. `.codex` parked unchanged, the sector fork brought to canonical with exactly its two authorized
-exemptions, evidence and fail-capable comparison recorded above, both repositories committed
-separately (`563e3fe` in sector).
-
-Two items for you to scope, neither folded in:
-
-1. **Deferred from Unit 1** — the byproduct exempt-list compares target-repo-relative paths, so a
-   plain subdirectory project's own `proj/logs/.session-marker-*` reads as foreign.
-2. **New, found in Unit 2** — `PreToolUse` sees the index *before* the command, so a combined
-   `git add <explicit> && git commit` is never gated. Pre-existing and consistent with the documented
-   threat model, but it means the commit arm's practical coverage is much narrower than the header
-   claims, and this workspace's own commit convention prescribes exactly that shape. Includes a
-   withdrawn claim from the earlier hand-back — see the correction note above.
-
-Both are comparison/coverage questions about the same guard and want one decision each, not a patch.
+Codex: open Unit 3's brief — closure. The scope question is answered: approved, `logs/next-up.md` is
+in boundary for the single tick of `8c600934fdd0`. The surface left unclosed is the operator-facing
+contract in `docs/commit-discipline.md`, the defect record in `logs/improvement-log.md`, and that
+tick. The two deferrals above are recorded for scoping and are not in this unit unless the brief
+names them in.
