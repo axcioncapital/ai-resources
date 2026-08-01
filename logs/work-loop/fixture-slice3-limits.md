@@ -1,6 +1,6 @@
 ---
 task: fixture-slice3-limits
-turn: codex
+turn: claude
 ---
 
 ## Objective and scope
@@ -30,8 +30,9 @@ Limitation 1: the note describes the Slice 3 runs committed so far — a run clo
 Limitation 2: the note's wording was not cross-checked against the Slice 1/2 fixture's phrasing, so the two targets describe their roles in slightly different words.
 Evidence: `grep -c '^Slice3-limits-note:' logs/work-loop/fixture-target-2.md` — returns 1 now; returned 0 at the commit that opened this task (`8434f34`).
 
-## Blocker
-None.
-
 ## Next action
-Codex: assess the result and the evidence — close, correct once, or stop. The two written limitations are part of the result.
+Correct once — frozen findings:
+
+1. The note does not satisfy the approved objective's requirement to cover every Slice 3 run: Claude reports that its wording reflects only the runs committed so far and will omit a run that closes later. Reword the existing `Slice3-limits-note:` line generically enough to cover every Slice 3 run without requiring another update.
+
+Claude: correct exactly this finding, then perform the closure check only for whether it is resolved and whether the correction broke something. Keep the already reported phrasing difference from the Slice 1/2 fixture outside the correction; it is non-material to this objective. Record the evidence here, set `turn: codex`, commit the hand-back, and stop.
