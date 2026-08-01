@@ -44,3 +44,5 @@ Promoted findings carry their source and a content-derived id; tick an item to r
 
 - [ ] `~/.claude/settings.json` carries a prohibited `model` field, in the form known to break subagent spawns — `logs/improvement-log.md` <!-- promote:145f3e6002df -->
 - [ ] `ai-resources/CLAUDE.md` documents a SessionStart hook that does not run — `logs/improvement-log.md` <!-- promote:b9f9d2432470 -->
+
+- [ ] Workspace `CLAUDE.md`'s model-field prohibition names a layer that `/model` owns, so it cannot be complied with — `logs/improvement-log.md` <!-- promote:0d003a541c41 -->

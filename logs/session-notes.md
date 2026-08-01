@@ -2,34 +2,6 @@
 
 > Archive: [session-notes-archive-2026-07.md](session-notes-archive-2026-07.md)
 
-## 2026-07-30 — Retired /qc-pass, /risk-check, /resolve, /refinement-deep — Codex is the second opinion
-
-### Summary
-Operator instruction: retire the QC-pass and risk-check gates, since Codex second-opinion review now covers that role. The 2026-07-29 review-layer consolidation had already made Codex the reviewer in policy but explicitly deferred the cross-project migration ("26 projects link to them"); this session completed that migration and executed the retirement. Deleted `/qc-pass`, `/risk-check`, `/resolve`, `/refinement-deep`, the `qc-reviewer` and `risk-check-reviewer` agents, their `.codex` twins, ~180 project symlinks, 3 forked `qc-pass.md` copies, and two `.codex` auto-nudge hooks that were still live-firing on every Write/Edit. Found and fixed five genuine functional breaks (not just stale prose) where deleted resources were still actively invoked or spawned: `/prime` 8c.11, `/new-project`'s symlink scaffolding, `/friday-journal` + `/cleanup-worktree`'s subagent spawns, and the research-workflow template's manifest + commands. Renamed `audit-discipline.md` § "Risk-check change classes" → "Structural change classes" throughout. Verified clean: no dead agent spawns, no broken symlinks, all touched JSON/shell parses.
-
-### Decisions Made
-- **(Operator, via AskUserQuestion)** Blast radius: retire the QC-loop machinery (`/resolve`, `/refinement-deep`) alongside the two named commands, not just the two, and not keeping `/qc-pass` as a Codex-unreachable fallback.
-- **(Operator, via AskUserQuestion)** Sweep depth: fix wiring + docs (commands/agents/hooks/settings/CLAUDE.md/docs/skills/templates/workflow-templates); leave `logs/`, `audits/`, `plans/`, `reports/` untouched as historical record.
-- **(Claude)** Repointed `/friday-journal` and `/cleanup-worktree`'s deleted `qc-reviewer` spawns to a tier-pinned `general-purpose` dispatch with the rubric inlined, rather than leaving them broken or inventing a replacement named agent.
-- **(Claude)** Repointed the research-workflow template's spawns to its own pre-existing local `qc-gate` agent rather than the deleted canonical `qc-reviewer`.
-- Full context, rationale, and alternatives considered logged in `logs/decisions.md` under this same date/title.
-
-### Outcome
-(Step 6.4 skipped — not requested)
-
-### Risky actions
-None — all deletions were of resources whose canonical successor (Codex review) already existed in policy since 2026-07-29; nothing irreversible outside normal git history, and everything deleted is recoverable from git immediately prior to the retirement commits.
-
-### Next Steps
-- Push the two unpushed commits (`ai-resources` `38981e5`, workspace root `dc30c9d`) via this wrap's push gate.
-- Two other session worktrees remain open from a prior session (`ai-resources-leverage-idea`, `ai-resources-work-loop`) — untouched this session, landing each is a separate `/close-worktree-session` call.
-
-### Findings Declined
-None — no findings surfaced this session beyond the retirement work itself, which was fully executed and verified, not deferred.
-
-### Open Questions
-None.
-
 ## 2026-07-31 — Supervised work-loop repair, Slice 1 Shape — plan reviewed twice, G1 approved
 
 ### Summary
@@ -755,3 +727,92 @@ mission's own non-negotiables, Step 6 already is the one candidate review the mi
 34-assertion harness is the standing check. `unassessed` remains in the mission thread as a factual
 record that no review ran, per `docs/qc-independence.md` — paired with the decision that none was
 sized.
+
+## 2026-08-01 — Session S7-3fc
+
+**Mandate:** Implement Slice 2 of Work Loop v2 (continuity and correction, behaviours 2.1–2.4) red-green in this fresh session — done when: behaviours 2.1–2.4 each have a constructed failing case shown failing before the work and passing after, with the implementation committed
+- Out of scope: a review step before the work (settled operator decision, mission file); Slice 3 behaviours (admission discipline); Step 6 review; Step 7 v1 retirement and pilot; editing any v1 artifact (`docs/work-loop.md`, `docs/work-loop-spec.md`, `.claude/commands/work-loop.md`, `.agents/skills/work-loop/SKILL.md`)
+- Files in scope: plans/work-loop-v2-mvp/step-4-slice-plan.md, plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md, .claude/commands/work-loop-v2.md, .agents/skills/work-loop-v2/SKILL.md, logs/scripts/work-loop-v2-slice-1.test.sh, logs/missions/work-loop-v2-mvp.md
+- Stop if: (none stated)
+- Allowed inputs: plans/work-loop-v2-mvp/step-5-slice-1-evidence.md, plans/work-loop-v2-mvp/README.md, plans/work-loop-v2-mvp/pocock-lifecycle-work-loop-mvp-v0.4.md, plans/work-loop-v2-mvp/step-2-transport-seam-conclusions.md, logs/decisions.md, logs/work-loop/fixture-slice1-true.md, docs/cross-model-rules.md
+- Required outputs: .claude/commands/work-loop-v2.md, .agents/skills/work-loop-v2/SKILL.md
+- Context pack: output/context-packs/command-20260801-b7e3a/pack.md
+- Mission: work-loop-v2-mvp
+
+**Work:** Work Loop v2 MVP Step 5 — implement Slice 2 (continuity and correction, behaviours 2.1–2.4), red-green
+
+### Summary
+Completed Work Loop v2 Slice 2: all four behaviours (2.1–2.4) implemented and demonstrated
+red-green, harness extended from 34 to 78 assertions, 78/78 exit 0. Behaviour 2.1 was exercised by
+this genuinely fresh session picking up a committed task from the state file and Git alone — the
+substitute exercise the Slice 1 no-review decision relied on. 2.2's file-identity rejection was
+shown failing at two layers (missing check in the artifact; the pre-edit command genuinely writing
+into a foreign file) before the fix, and the field is now proven. 2.3 and 2.4 ran through real
+Codex judgment: Codex froze two findings it found on its own in a deliberately defective unit,
+closed after one bounded round, recorded the dangled adjacent problem as a deferral in its own
+words, and — on a constructed task whose second finding could not be fixed without crossing the
+approved scope — chose once from the correction-exit menu on explicit value-and-risk grounds.
+Evidence record written; mission thread ticked with the frozen prefix verified byte-identical.
+
+### Decisions Made
+- **(Claude)** Ran 2.1 first in the session, before implementing anything, so the fresh-session
+  pickup happened at orientation-level exposure only — the recommended resolution of the context
+  pack's open scope question, confirmed by the operator at mandate confirmation.
+- **(Claude)** Demonstrated 2.2's run-level red by executing the pre-edit command against the
+  foreign fixture only up to its first mutating write, then halting and reverting — carrying the
+  defective run to a committed unit would have polluted history to prove a proven point.
+- **(Claude)** Gave 2.4 its own constructed fixture (`fixture-slice2-menu`) after the correction
+  task resolved both its findings fully — an honest partial resolution needs a structural blocker,
+  so the fixture's second finding names a file its scope excludes (core § 6 rule 4 bars the edit).
+  The fixture's first pass and assessment block are declared fixture material in the file itself.
+- **(Claude)** Read the heading-level fix as inside Codex's frozen finding 2 ("the complete
+  end-of-file shape") rather than as scope growth — stated in the hand-back, not silently assumed.
+- **(Operator, deferred not decided)** Asked why the Codex prompts must be pasted rather than read
+  from the state files — answered (a file cannot invoke Codex; two tasks were simultaneously at
+  turn: codex), and the real improvement (bare `$work-loop-v2` resolving the open task itself) was
+  recorded as a deferral for the Step 6 review rather than improvised mid-slice.
+
+### Risky actions
+None destructive. The 2.2 red demonstration deliberately mutated a fixture state file with the
+pre-edit command, was halted at the first write, and was reverted from in-context content before
+the fix landed; nothing was committed in the mutated state. Both mission-file writes went through
+the update/check guard with the frozen prefix hashed before and after, byte-identical both times
+(f312397…). Codex ran no git command at any point — verified per invocation via `git status`.
+
+### Findings Declined
+- **Codex's first menu-closure run wrote nothing to disk** (operator reported done; file untouched;
+  re-run wrote correctly). Declined for the queue: single occurrence, caught by the verify-against-
+  disk protocol working as designed, recorded as limitation 3 in the evidence record, and the Step 7
+  pilot — already a queued mission thread — is the designated window to observe recurrence.
+- **The harness filename still says `slice-1` while covering Slices 1–2.** Declined: cosmetic; the
+  header states the real scope; renaming would break references in both artifacts, the mission file
+  and two evidence records for zero behavioural gain.
+
+Findings: 3 — queued 1 (severity: medium 1), declined 2. 1 + 2 = 3.
+
+The queued finding: the Codex-side invocation currently requires the operator to paste a prompt
+naming the task id; the resource could resolve the open task itself (single `turn: codex` file, ask
+when several qualify). Operator-raised this session; logged to `logs/improvement-log.md` at medium —
+it reaches `/open-items`, and its natural pickup is the Step 6 review or the pilot.
+
+### Next Steps
+- **Slice 3 — implement admission discipline (behaviours 3.1–3.4), fresh session, red-green.**
+  Straight to work, per the settled no-pre-review decision in the mission file.
+- Then Step 6 — one fresh-context candidate review, frozen by exact commit; the bare-invocation
+  deferral and Slice 2's recorded limitations are inputs to it.
+- Slice 2 limitations carry forward as open, not blockers: folder creation from an absent
+  `logs/work-loop/` remains untested (Slice 1's limitation, still standing); Slice 2's opening
+  briefs were hand-written fixtures — Codex opening was proven in Slice 1 only.
+
+### Open Questions
+None.
+
+### Review status
+This session touched a structural change class (edits to an existing command and a Codex-side skill
+resource). **No separate independent review ran, and none was sized** — the same settled operator
+decision recorded for Slice 1 applies (`logs/missions/work-loop-v2-mvp.md`, Step 5 Slice 1 entry):
+the mission's non-negotiables forbid a review layer beyond Step 6's one fresh-context candidate
+review, and the standing checks are stronger this time — the 78-assertion harness plus behaviour
+2.1's real fresh-session exercise of the command, which is precisely the substitute exercise that
+decision named. `unassessed` is recorded here as fact per `docs/qc-independence.md`; Step 6 remains
+the mission's one review and these changes are inside its frozen-commit scope.

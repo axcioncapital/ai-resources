@@ -2289,15 +2289,17 @@ Falsifier 2 was closed here on a structural argument instead (content-only edits
 - **Self-demonstrating note:** this entry is `medium-high` and therefore menu-reaching, but the promotion sweep was **not** re-run this wrap — its output file is the one that cannot be committed. Promotion is deferred to the next wrap, by the very defect described here.
 - **Target files:** `.claude/hooks/check-foreign-staging.sh` (shared-artifact allowlist); `.claude/commands/wrap-session.md` Steps 6.6 and the staging list, if the two-end contract should be stated there too.
 
-### 2026-08-01 — `~/.claude/settings.json` carries a prohibited `model` field, in the form known to break subagent spawns
+### 2026-08-01 — Workspace `CLAUDE.md`'s model-field prohibition names a layer that `/model` owns, so it cannot be complied with
 
-- **Status:** logged (pending)
-- **Category:** settings-layer defect (`~/.claude/settings.json`)
-- **Severity:** high — this is the single most likely reason a `/model` switch fails to stick anywhere on this machine, and it uses the exact `[1m]` suffix `feedback_sonnet_1m_suffix` already identified as causing subagent spawn failures. Live in the layer every session on this machine inherits.
-- **Review-cycle:** reviewed 2026-08-01, deferred to → next harness maintenance pass
-- **Friction source:** `ai-resources` session 2026-08-01 (S6-974). Found while writing `docs/harness-and-permission-troubleshooting.md`: `~/.claude/settings.json` has `"model": "opus[1m]"`. Two standing rules broken at once — workspace `CLAUDE.md` § Model Tier prohibits a declared default in any settings layer because it contests `/model`, and the `[1m]` suffix is separately banned. Confirmed by `python3 -c "import json; print(json.load(open('~/.claude/settings.json'))['model'])"` → `opus[1m]`.
-- **Proposal.** Delete the `model` key from `~/.claude/settings.json`. One-line fix; no downstream dependency found.
-- **Target files:** `~/.claude/settings.json`.
+- **Status:** logged (pending) — **supersedes a withdrawn finding filed the same day; see Correction below**
+- **Category:** rule/tool conflict (workspace `CLAUDE.md` § Model Tier; `~/.claude/settings.json`)
+- **Severity:** medium-high — the rule is marked non-negotiable and explicitly names the "user" layer, but that layer is where `/model` stores the operator's live selection. Any session that reads the rule literally and "fixes" the user layer destroys the operator's model choice. That is not hypothetical: this session's own troubleshooting doc gave exactly that instruction before it was caught.
+- **Review-cycle:** reviewed 2026-08-01, deferred to → operator decision (a non-negotiable rule cannot be narrowed by a working session)
+- **Friction source:** `ai-resources` session 2026-08-01 (S6-974). **CORRECTION — the original entry here claimed `~/.claude/settings.json` carried a *prohibited rogue* `model` field and proposed deleting it. That was wrong and the proposed fix was destructive.** An independent review checked the claim against the live file: the key read `"opus[1m]"` at ~14:33 and `"claude-fable-5[1m]"` at 14:40:08 in the same session, with nothing in that session writing it. `/model` writes that key — it is the storage for the operator's selection, not a default contesting it. Deleting it erases the selection and `/model` rewrites it immediately. The `[1m]` half of the original claim was also a scope error: `feedback_sonnet_1m_suffix` governs **YAML frontmatter** on commands/agents/skills (where the suffix breaks subagent spawns), not the settings key that `/model` writes in exactly that form.
+- **What actually remains.** A genuine conflict between the rule and the tool. `CLAUDE.md` § Model Tier: "Do not declare a `model` field in ANY `.claude/settings.json` (any layer: user, workspace, ai-resources, project, vault)". The rationale given — "a declared default contests `/model` overrides" — is sound for *committed* layers and inverted for the *user* layer, which is `/model`'s own storage.
+- **Proposal (operator decision, NOT applied).** Narrow the prohibition to committed layers — workspace / ai-resources / project / vault — and carve out `~/.claude/settings.json` as `/model`'s storage. Also narrow the `[1m]` rule's stated scope to frontmatter, since it is currently written broadly enough to be misread as covering the settings key. Both are edits to a rule marked non-negotiable, so neither may be made by a working session.
+- **Target files:** workspace `CLAUDE.md` § Model Tier; `docs/harness-and-permission-troubleshooting.md` §§ 4.5 + 5 (already corrected 2026-08-01).
+- **Method note worth keeping.** This was caught by an independent review re-deriving the claim from the live file instead of trusting the doc — the Work Loop's safety rule 1 ("check claims against the live repository before acting") applied to my own output. The original finding was written *while verifying other things by execution*, which is precisely why it read as trustworthy.
 
 ### 2026-08-01 — `Bash(rm -rf *)` deny rule blocks by verb-text, not by effect — third occurrence
 
@@ -2318,3 +2320,13 @@ Falsifier 2 was closed here on a structural argument instead (content-only edits
 - **Friction source:** `ai-resources` session 2026-08-01 (S6-974). `ai-resources/CLAUDE.md` § Permission Management states "the `check-permission-sanity.sh` SessionStart hook nudges on drift." Verified: the script is registered in **no** settings.json across all layers, and is not invoked by `.git/hooks/pre-commit` either — orphaned in both hook systems. Same pattern found for `auto-sync-shared.sh` and `check-template-drift.sh`, though CLAUDE.md makes no claim about those two, so only `check-permission-sanity.sh` is a documentation-vs-reality mismatch and not merely dead code.
 - **Proposal.** Either register `check-permission-sanity.sh` in a `SessionStart` hook entry (likely `~/.claude/settings.json`, alongside the other user-level SessionStart hooks), or correct the CLAUDE.md sentence to state it is unwired. Separately: decide whether `auto-sync-shared.sh` and `check-template-drift.sh` should be wired or removed — no CLAUDE.md claim depends on them, so lower urgency.
 - **Target files:** `ai-resources/CLAUDE.md` § Permission Management; `~/.claude/settings.json` (hooks); `.claude/hooks/check-permission-sanity.sh`, `auto-sync-shared.sh`, `check-template-drift.sh`.
+
+### 2026-08-01 — Codex-side Work Loop invocation needs a pasted prompt naming the task id
+
+- **Status:** logged (pending)
+- **Category:** resource ergonomics (`.agents/skills/work-loop-v2/SKILL.md`)
+- **Severity:** medium — the loop works, but every Codex turn costs the operator a pasted prompt; the resource could resolve the open task itself and cut the operator's move to one short line.
+- **Review-cycle:** logged 2026-08-01, natural pickup → Work Loop v2 Step 6 review or the Step 7 pilot
+- **Friction source:** `ai-resources` session 2026-08-01 (S7-3fc), operator-raised mid-slice ("Why don't you write this in the state files so that codex can read the prompt?"). The instruction already lives in each state file's `## Next action`; the paste exists only to invoke the skill and name the task, because the resource has no rule for resolving "the open task" (two tasks sat at `turn: codex` simultaneously this session). Deliberately not improvised mid-slice — new resource behaviour under a frozen slice scope. Recorded as deferral 1 in `plans/work-loop-v2-mvp/step-5-slice-2-evidence.md`.
+- **Proposal.** Give the Codex resource the same resolution rule the Claude command has: invoked bare, pick the single file whose `turn:` is `codex`; when several qualify, list them and ask. The operator's move becomes `$work-loop-v2` (or `$work-loop-v2 <task-id>` to disambiguate).
+- **Target files:** `.agents/skills/work-loop-v2/SKILL.md`.
