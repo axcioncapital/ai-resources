@@ -1,38 +1,16 @@
 ---
 task: fixture-slice3-close
-turn: codex
+turn: operator
 ---
 
-## Objective and scope
-`logs/work-loop/fixture-target-2.md` carries a `Slice3-close-note:` line marking the Slice 3
-admission-discipline runs as complete.
-Scope: `logs/work-loop/fixture-target-2.md` only. Excluded: every other file.
+## Outcome
+`logs/work-loop/fixture-target-2.md` now carries one `Slice3-close-note:` line marking the Slice 3 admission-discipline runs as complete. The scoped objective was achieved with no other implementation change.
 
-## Lane and unit
-Standard. Unit 1 — add the line. Named reason for the loop: the result must be assessed by
-someone other than whoever built it before it counts as done.
+## Decisions that matter
+Closed at pilot quality without a correction because the marker is present exactly once and both reported limitations concern optional detail or presentation rather than the approved completion criterion. No deferrals.
 
-## Brief
-Why: the fixture should record, in the file itself, that the admission-discipline runs it served
-are finished — a reader opening it later should not have to reconstruct that from Git.
-Check against the repository: (1) `logs/work-loop/fixture-target-2.md` contains no
-`Slice3-close-note:` line; (2) the same file has a `## Body` section.
-Evidence required: `grep -c '^Slice3-close-note:' logs/work-loop/fixture-target-2.md` — 0 before
-this unit, 1 after, with the 0-state visible at the commit that opened this task.
-Stop if: claim (1) is wrong, or the change would touch any file outside the scope.
+## Evidence
+Claude recorded that `grep -c '^Slice3-close-note:' logs/work-loop/fixture-target-2.md` changed from `0` at opening commit `6df5794` to `1` after the unit, and that no other implementation change was made.
 
-## Latest result
-Inspected (2026-08-01):
-- Claim (1): HOLDS — searched `logs/work-loop/fixture-target-2.md` for `^Slice3-close-note:`; no match (grep count 0).
-- Claim (2): HOLDS — searched `logs/work-loop/fixture-target-2.md` for `^## Body`; exactly one match.
-
-Result: `logs/work-loop/fixture-target-2.md` now carries one `Slice3-close-note:` line marking the Slice 3 admission-discipline runs complete. No other change was made. Pilot quality — good enough for the objective, with two limitations written down rather than fixed.
-Limitation 1: the note names the slice as a whole, not the four behaviours inside it, so a reader wanting behaviour-level detail must go to the slice plan.
-Limitation 2: the line sits with the other record lines above `## Body` rather than in a section of its own, so the file's record lines remain a flat list.
-Evidence: `grep -c '^Slice3-close-note:' logs/work-loop/fixture-target-2.md` — returns 1 now; returned 0 at the commit that opened this task (`6df5794`).
-
-## Blocker
-None.
-
-## Next action
-Codex: assess the result and the evidence — close, correct once, or stop. The two written limitations are part of the result.
+## Accepted limitations
+The marker names Slice 3 as a whole rather than its four individual behaviours, so behaviour-level detail remains in the slice plan. The marker also remains in the flat list of record lines above `## Body` instead of receiving a dedicated section.
