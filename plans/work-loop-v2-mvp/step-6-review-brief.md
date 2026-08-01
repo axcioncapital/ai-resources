@@ -121,8 +121,13 @@ limitation** for a pilot-quality candidate, or a **material finding** that must 
 
 ## 6. What to hand back
 
-Write your findings into `logs/work-loop/step6-review.md` with `turn: claude`, and end your reply
-with the Next instruction to the operator. Structure:
+Write your findings into `plans/work-loop-v2-mvp/step-6-review-findings.md`, then tell the operator
+what to do next.
+
+**Do not invoke `$work-loop-v2` to run this review, and do not open a task-state file for it.** This
+review governs the Work Loop; running it *through* the Work Loop would be self-hosting, which the
+Proposal (§ 6) and the mission's non-negotiables forbid. Read the files directly and write one
+findings document. Structure:
 
 ```markdown
 ## Verdict
