@@ -260,9 +260,7 @@ corr_limits()    { awk '/^## Accepted limitations/{f=1;next} /^## /{f=0} f' "$CO
 check "2.3   the task was closed (Outcome present)" "corr_closed"
 check "2.3   the newly noticed problem was recorded as a deferral, not corrected" \
   "corr_closed && corr_decisions | grep -qi 'defer'"
-check "2.4   a partly resolved finding was accepted as a written limitation" \
-  "corr_closed && [ -n \"\$(corr_limits | grep -v '^[[:space:]]*\$' | grep -v '^None\.\$')\" ]"
-check "2.4   the closed file points at the operator" \
+check "2.3   the closed file points at the operator" \
   "corr_closed && grep -qE '^turn:[[:space:]]*operator' '$CORR_F'"
 for active in 'Objective and scope' 'Lane and unit' 'Latest result' 'Blocker' 'Next action'; do
   check "2.3   active field did NOT survive closure: $active" \
@@ -270,6 +268,61 @@ for active in 'Objective and scope' 'Lane and unit' 'Latest result' 'Blocker' 'N
 done
 check "2.3   the committed state carries the closed shape" \
   "git show HEAD:'$CORR_F' 2>/dev/null | grep -qE '^## Outcome'"
+
+# --- 2.4 the way out of correction: one menu choice, on value and risk -------
+# Run (g): a constructed mid-correction state whose frozen findings contain one
+# finding resolvable in scope and one not (it names an excluded file — core § 6
+# rule 4 bars the edit). The correction resolves what it can and hands the rest
+# back as partly resolved; the closure check must choose once from core § 3's
+# menu and close — not open a third round, not choose on a round counter.
+MENU_F="logs/work-loop/fixture-slice2-menu.md"
+
+check "2.4   fixture present: $MENU_F" "[ -f '$MENU_F' ]"
+
+MENU_OPENED=$(git log --diff-filter=A --format=%H -- "$MENU_F" 2>/dev/null | tail -1)
+menu_at_open() { [ -n "$MENU_OPENED" ] && git show "$MENU_OPENED:$MENU_F" 2>/dev/null; }
+check "2.4   the mid-correction state was committed pointing at Claude, findings frozen" \
+  "menu_at_open | grep -qE '^turn:[[:space:]]*claude' && menu_at_open | grep -q '^Correct once — frozen findings:'"
+
+# The honest partial hand-back must exist as a committed version: turn flipped to
+# codex, the words 'partly resolved' present. Falsifiable — no such version exists
+# until the correction round actually runs.
+menu_partial() {
+  git log --format=%H -- "$MENU_F" 2>/dev/null | while read -r h; do
+    v=$(git show "$h:$MENU_F" 2>/dev/null)
+    echo "$v" | grep -qE '^turn:[[:space:]]*codex' \
+      && echo "$v" | grep -qi 'partly resolved' \
+      && echo "$h"
+  done | head -1
+}
+check "2.4   the partial resolution was handed back honestly (committed, turn: codex)" \
+  "[ -n \"\$(menu_partial)\" ]"
+
+# No second round: exactly one committed version carries the frozen-findings block
+# pointing at Claude — the constructed opening. A third-round attempt adds another.
+menu_rounds() {
+  git log --format=%H -- "$MENU_F" 2>/dev/null | while read -r h; do
+    git show "$h:$MENU_F" 2>/dev/null \
+      | awk '/^## Next action/{f=1;next} /^## /{f=0} f' \
+      | grep -q '^Correct once — frozen findings:' \
+      && git show "$h:$MENU_F" 2>/dev/null | grep -qE '^turn:[[:space:]]*claude' \
+      && echo "$h"
+  done | wc -l | tr -d ' '
+}
+check "2.4   no further correction round was opened" "[ \"\$(menu_rounds)\" = '1' ]"
+
+menu_closed() { [ -f "$MENU_F" ] && grep -qE '^## Outcome' "$MENU_F"; }
+menu_limits() { awk '/^## Accepted limitations/{f=1;next} /^## /{f=0} f' "$MENU_F"; }
+
+check "2.4   the task was closed (Outcome present)" "menu_closed"
+check "2.4   the unresolved finding was accepted as a written limitation" \
+  "menu_closed && [ -n \"\$(menu_limits | grep -v '^[[:space:]]*\$' | grep -v '^None\.\$')\" ]"
+check "2.4   the closed file points at the operator" \
+  "menu_closed && grep -qE '^turn:[[:space:]]*operator' '$MENU_F'"
+check "2.4   no active field survived closure" \
+  "menu_closed && ! grep -qE '^## (Objective and scope|Lane and unit|Latest result|Blocker|Next action)' '$MENU_F'"
+check "2.4   the committed state carries the closed shape" \
+  "git show HEAD:'$MENU_F' 2>/dev/null | grep -qE '^## Outcome'"
 
 # --- v1 isolation: logs/loop/ must gain nothing (slice plan 1.1) ------------
 check "v1    no Slice 1 or Slice 2 artifact leaked into logs/loop/" \
