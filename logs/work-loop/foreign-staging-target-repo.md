@@ -47,6 +47,50 @@ This task is the pilot's mid-task session-handoff test. If the Claude session en
 
 ## Latest result
 
+### Correction round 2 — final bounded fix (session S13-ad0)
+
+**Reporting only what was asked: does the fix work, and did it break anything.**
+
+**Does it work: yes.** The premise was verified against the document before building, not taken on
+trust — `docs/session-marker.md:17` makes the marker path cwd-relative, and `:97` records the exact
+supported shape verbatim ("a project that is a plain subdirectory of a repo … is not its own git repo,
+yet keeps its **own** `logs/session-notes.md`"). `git rev-parse --show-toplevel` walks past that
+project to the repo root, so the previous code read a sibling's session state or none at all. Correct
+as reported.
+
+Session state now resolves by **walking upward from the active project directory to the first ancestor
+whose `logs/` actually holds this session's state** — per-id marker first (unique to this session, so
+a hit is unambiguous), then the shared marker, then `session-notes.md`, then the git toplevel as a
+last resort. Where the project *is* the repo root — the common case — this returns exactly what the
+toplevel call returned, so nothing changes there.
+
+**Did it break anything: no.** 15/15 green. Target-repository candidate discovery and the quoted-`cd`
+parser were not touched, as instructed.
+
+| Stub | Re-injected defect | Result |
+|---|---|---|
+| toplevel | session root back to `git rev-parse --show-toplevel` | **C14 fails, alone** — 14/15 |
+| defect1 | session scope collapsed into target scope | C10 + C14 fail — 13/15 |
+| defect2 | leading `cd` parsed from `scan` again | C11 fails, alone — 14/15 |
+| no-op | dead hook | 11 failures |
+
+New cases **C13/C14**: a plain-subdirectory project whose marker and mandate exist *only* under
+`<parent repo>/proj/logs`, with the enclosing repo carrying none. Allow and paired block halves, as
+required. Under the `toplevel` stub **C13 still passes and only C14 fails** — the fourth instance in
+this unit of an allow-shaped assertion being unable to discriminate.
+
+**One item surfaced that is deliberately NOT fixed here, because it is outside the stated scope.**
+The exempt-list for a session's own byproducts tests `path.startswith("logs/")`, which is
+**repo-root-relative**. In a subdirectory project the marker sits at `proj/logs/.session-marker-*`,
+does not match, and is therefore treated as a foreign file. This is a *different* coordinate gap from
+the footprint-root question this correction was scoped to, and the instruction was explicit that no
+other finding is in scope. Rather than fix it silently or let it contaminate the new cases, the
+fixture commits its session-state files — which is also the realistic shape, since a project's marker
+is normally already tracked — and the gap is reported here for Codex to scope. It was found by C13
+failing on first run, not by inspection.
+
+---
+
 ### Correction round 1 — both frozen findings resolved (session S13-ad0)
 
 **Both findings were real, and finding 1 was a defect this implementation introduced.** Neither was
@@ -308,53 +352,39 @@ footprint translation cannot be established from the existing session/marker con
 
 ## Next action
 
-**Codex — closure check.** Both frozen findings are corrected; see § Correction round 1. Reporting as
-your instruction required:
+**Codex — closure check on correction round 2.** Reporting exactly the two things asked for:
 
-- **Finding 1: resolved.** Session and target scopes separated; footprint and candidates translated
-  into one absolute coordinate system at a single point. Proven by C9 (allow) + C10 (block) with the
-  nested target carrying no session state, and falsified by a stub that collapses the scopes (C10
-  fails).
-- **Finding 2: resolved**, by resolving safely-quoted literals rather than blocking them — option A of
-  the two you offered. Rationale stated above: every path in this workspace contains a space, so
-  option B would fail closed on ordinary work. `$`/backtick remain unresolvable even when quoted.
-  Proven by C11, falsified by a stub that reverts to parsing from `scan` (C11 fails), and bounded by
-  C12 (`$VAR` still exits 2).
-- **Did the correction break anything?** No. 13/13 green, all four required behaviours and both
-  controls intact, hook body compiles, both scripts parse. One fixture change was **forced** by
-  finding 1 and is disclosed above: the `infootprint` mode now declares the footprint in the parent,
-  because the nested repo's own `logs/` is correctly no longer read. The old fixture shape is what hid
-  finding 1.
-- **One judgement call to accept or reject:** fail-closed remains scoped to **wide adds only**; a
-  gated `git commit` carrying an unresolvable `cd` still falls back to the base cwd. Unchanged from
-  the first hand-back and flagged again because correction 1 did not alter it.
+- **Does the final fix work?** Yes. Session-state and footprint coordinate root is now the actual
+  active project directory where `/prime` wrote `logs/`, resolved by upward walk to this session's own
+  marker rather than by git toplevel. Proven by C13 (allow) + C14 (block) on a plain-subdirectory
+  project, and falsified by a stub restoring git-toplevel resolution, under which **C14 fails alone**.
+- **Did it break any existing case?** No. 15/15 green; target discovery and the quoted-`cd` parser
+  untouched, per scope.
+
+**One item for you to scope, not fixed here:** the byproduct exempt-list is repo-root-relative
+(`path.startswith("logs/")`), so a subdirectory project's own marker at `proj/logs/.session-marker-*`
+reads as foreign. Same class of coordinate bug, different site, and explicitly outside this round's
+scope — so it is reported rather than folded in. The new fixture commits its session state to keep the
+two questions from being conflated.
 
 ---
 
-**Superseded — the frozen findings from assessment round 1, retained for the record.**
+**Superseded — round 2's instruction, retained for the record.**
 
-Correct once — frozen findings:
+Final tightly-bounded fix — correction closure only:
 
-1. **The candidate repository is now correct, but the session footprint is read from the wrong
-   repository.** The implementation sets `logs_dir = <target repo>/logs`, while the marker contract
-   makes `logs/.session-marker-${CLAUDE_CODE_SESSION_ID}` and `logs/session-notes.md` cwd-relative to
-   the active session/project where `/prime` and `/session-start` wrote them. In the originating case,
-   the session was rooted in the workspace repo and the gated command targeted a newly initialised
-   nested repo; the target repo cannot be assumed to contain this session's marker or mandate. That
-   can disable the guard or make it read another session's footprint. Keep candidate discovery scoped
-   to the resolved target repo, but resolve this session's marker and footprint from the session
-   scope and translate the footprint and target candidates into one explicit coordinate system.
-   Extend the isolated harness with the current marker/mandate present only in the parent session
-   scope and the nested target carrying no matching session state: prove both an in-footprint allow
-   and an out-of-footprint block, with unrelated parent dirt never entering the candidate set.
+The quoted-`cd` finding is resolved. The session-footprint finding is only partly resolved because
+the new code sets `session_repo_root` to `git -C "$CLAUDE_PROJECT_DIR" rev-parse --show-toplevel` and
+then reads `<session_repo_root>/logs`. `docs/session-marker.md` makes the marker paths cwd-relative
+to the active project and explicitly records that a project may be a plain subdirectory of a larger
+Git repository while keeping its own `logs/session-notes.md` and marker namespace. In that supported
+shape, the current code reads the parent repository's session state and can again disable the guard
+or use the wrong footprint.
 
-2. **A quoted leading `cd` does not fail closed.** `_command_text_only` blanks quoted spans before the
-   target parser runs, so `cd "nested dir" && git add .` becomes `cd "" && git add .`; stripping the
-   quotes yields an empty path, which is treated as the base directory rather than as unresolved.
-   Either resolve a safely quoted literal path without general shell evaluation, or classify it as an
-   unresolvable wide-add target and exit 2. Add a harness case that distinguishes the repaired result
-   from the current wrong-repository behavior.
-
-Claude: correct only findings 1–2, preserve the existing required behaviours and controls, run the
-complete isolated harness plus a falsification that would fail if either defect remained, then set
-`turn: codex` and report whether both findings are resolved and whether the correction broke anything.
+Claude: make the session-state and footprint coordinate root the actual active session/project
+directory where `/prime` wrote `logs/`, without changing target-repository candidate discovery or
+the now-correct quoted-`cd` parser. Add one isolated plain-subdirectory-project fixture with its
+marker and mandate only under `<parent repo>/<project>/logs`; prove an in-footprint allow and its
+paired out-of-footprint block, and falsify the block against the current Git-toplevel behavior.
+Re-run the complete harness and report only: whether this final fix works, and whether it broke any
+existing case. Then set `turn: codex`. No other code, documentation, copy, or finding is in scope.

@@ -364,6 +364,90 @@ ok=0; [ "$RC" -eq 2 ] && ok=1
 assert "C12_variable_cd_fails_closed" expect_green \
   "exit 2 — a \$VAR path is never evaluated" "$ok"
 
+# ---------------------------------------------------------------------------
+# Plain-subdirectory-project fixture (Codex correction 2, 2026-08-01).
+#
+# `docs/session-marker.md:97` — a project may be a plain SUBDIRECTORY of a repo
+# and still keep its own logs/session-notes.md and marker namespace. Here the
+# session state exists ONLY at <parent>/proj/logs; the parent repo has NO logs/
+# at all. Resolving the session root by `git rev-parse --show-toplevel` lands on
+# <parent>, finds no session state, and disables the guard.
+#
+#   parent/            git repo, NO logs/
+#     parent-dirt.txt  dirty, outside the project entirely
+#     proj/            plain subdirectory — NOT a git repo
+#       logs/          marker + mandate live HERE and nowhere else
+#       src/proj-owned.txt  dirty, IN footprint
+#       proj-dirt.txt       dirty, OUT of footprint  (unless $2 = infootprint)
+# ---------------------------------------------------------------------------
+make_subproject_fixture() {
+  local name="$1" mode="${2:-}"
+  local root="$TMPROOT/$name"
+  mkdir -p "$root/parent/proj/logs" "$root/parent/proj/src"
+  git -C "$root/parent" init -q
+  git -C "$root/parent" config user.email "harness@test.local"
+  git -C "$root/parent" config user.name  "harness"
+  echo "seed" > "$root/parent/seed.txt"
+  git -C "$root/parent" add seed.txt
+  git -C "$root/parent" commit -q -m "seed"
+
+  # Session state ONLY here. Footprint is project-relative, per the cwd-relative
+  # marker contract — NOT relative to the enclosing git repo.
+  printf '%s %s\n' "$TODAY" "$MARKER" > "$root/parent/proj/logs/.session-marker-$FAKE_SESSION_ID"
+  cat > "$root/parent/proj/logs/session-notes.md" <<NOTES
+# Session Notes
+
+## $TODAY — Session $MARKER
+
+**Mandate:** subdirectory-project fixture — done when: the harness says so.
+- Out of scope: (none stated)
+- Files in scope: src/proj-owned.txt
+- Stop if: (none stated)
+NOTES
+
+  # Commit the session-state files so they are not themselves candidates.
+  #
+  # NOT cosmetic, and NOT hiding anything: the exempt-list for a session's own
+  # byproducts tests `path.startswith("logs/")`, which is REPO-root-relative, so in
+  # a subdirectory project the marker at `proj/logs/.session-marker-*` is not
+  # recognised as exempt and reads as a foreign file. That is a SEPARATE coordinate
+  # gap from the footprint-root question these two cases exist to test, and it is
+  # outside this correction's stated scope — so it is reported to Codex rather than
+  # fixed here, and the fixture is kept from conflating the two. Committing them is
+  # also the realistic shape: a project's marker is normally already tracked.
+  git -C "$root/parent" add proj/logs
+  git -C "$root/parent" commit -q -m "project session state"
+
+  echo "dirty" > "$root/parent/parent-dirt.txt"
+  echo "dirty" > "$root/parent/proj/src/proj-owned.txt"
+  [ "$mode" = "infootprint" ] || echo "dirty" > "$root/parent/proj/proj-dirt.txt"
+  echo "$root"
+}
+
+# ===========================================================================
+echo "C13 subdirectory project, in-footprint -> must ALLOW"
+# ===========================================================================
+R=$(make_subproject_fixture c13 infootprint)
+run_hook "$R/parent/proj" "$R/parent/proj" "git add ."
+ok=0; [ "$RC" -eq 0 ] && ok=1
+assert "C13_subproject_infootprint_allows" expect_green \
+  "project-relative footprint read from proj/logs, not the repo root" "$ok"
+
+# ===========================================================================
+echo "C14 subdirectory project, out-of-footprint -> must BLOCK"
+# ===========================================================================
+# The discriminating half. Under git-toplevel resolution the session root is the
+# PARENT, which has no logs/ — so no footprint is found, the guard switches off,
+# and this case allows instead of blocking. C13 alone cannot see that, for the
+# same reason C9 alone could not see the previous defect: "allowed" is also what
+# a guard that gave up returns.
+R=$(make_subproject_fixture c14)
+run_hook "$R/parent/proj" "$R/parent/proj" "git add ."
+ok=0
+if [ "$RC" -eq 2 ] && echo "$OUT" | grep -q "proj-dirt.txt" && ! echo "$OUT" | grep -q "parent-dirt.txt"; then ok=1; fi
+assert "C14_subproject_outfootprint_blocks" expect_green \
+  "blocks on proj dirt; parent dirt never enters the candidate set" "$ok"
+
 echo
 echo "-------------------------------------------------------------"
 echo "passed: $PASS    failed: $FAIL    (of which expected-red: $RED_EXPECTED)"

@@ -324,7 +324,48 @@ if not repo_root:
 # no-concrete-footprint branch fires and the guard turns itself OFF — or, worse, it
 # finds ANOTHER session's marker and judges against a stranger's footprint.
 session_dir = os.environ.get("CLAUDE_PROJECT_DIR", "") or os.getcwd()
-session_repo_root = sh(["git", "-C", session_dir, "rev-parse", "--show-toplevel"]).strip() \
+
+def _session_state_root(start):
+    """The directory whose `logs/` actually holds THIS session's state.
+
+    NOT the git toplevel (correction 2, 2026-08-01). `docs/session-marker.md:17`
+    makes the marker path **cwd-relative**, and `:97` records the supported shape
+    this breaks on: a project that is a plain SUBDIRECTORY of a repo
+    (`projects/axcion-website/`) is not its own git repo yet keeps its **own**
+    `logs/session-notes.md` and its own marker namespace. Resolving via
+    `git rev-parse --show-toplevel` walks straight past that project to the repo
+    root, reads a sibling's session state — or none at all — and so can disable the
+    guard or judge against the wrong footprint, which is the same failure the
+    session/target split was introduced to remove.
+
+    Walks upward and returns the first ancestor carrying this session's own per-id
+    marker; that marker is unique to this session, so a hit is unambiguous. Falls
+    back to the shared marker, then to `session-notes.md`, then (via the caller) to
+    the git toplevel — preserving today's behaviour wherever the project IS the
+    repo root, which is the common case."""
+    try:
+        base = os.path.realpath(start)
+    except Exception:
+        return ""
+    sid = os.environ.get("CLAUDE_CODE_SESSION_ID", "")
+    probes = []
+    if sid:
+        probes.append(os.path.join("logs", ".session-marker-" + sid))
+    probes.append(os.path.join("logs", ".session-marker"))
+    probes.append(os.path.join("logs", "session-notes.md"))
+    for probe in probes:                       # strongest signal first, each to the root
+        d = base
+        while True:
+            if os.path.exists(os.path.join(d, probe)):
+                return d
+            parent = os.path.dirname(d)
+            if parent == d:
+                break
+            d = parent
+    return ""
+
+session_repo_root = _session_state_root(session_dir) \
+    or sh(["git", "-C", session_dir, "rev-parse", "--show-toplevel"]).strip() \
     or repo_root
 logs_dir = os.path.join(session_repo_root, "logs")
 # Footprint tokens are written relative to the SESSION repo, so the optional
