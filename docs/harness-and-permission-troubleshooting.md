@@ -2,11 +2,11 @@
 
 > **When to read this file:** a permission prompt blocked work that should have been allowed; a hook fired at the wrong time, or didn't fire at all; a settings change didn't take effect; the session is running on the wrong model. Symptom-first — find your symptom, follow the row.
 >
-> **Owner:** operator. **Written:** 2026-08-01 (session S6-974), from a live permission block encountered mid-session and verified by execution against this machine. **Update condition:** a new failure mode is diagnosed, or one of the "verified findings" in § 5 is fixed.
+> **Owner:** operator. **Written:** 2026-08-01 (session S6-974), from a live permission block encountered mid-session and verified by execution against this machine. **Revised 2026-08-01 (same day):** § 4.5 and § 5 finding #1 were wrong and are corrected — the original advice there was destructive; § 3.4 added. **Update condition:** a new failure mode is diagnosed, or a finding in § 5 is fixed, corrected or withdrawn.
 
 This file is **self-contained** — every diagnosis below can be run without opening another document. Deeper reference material is listed in § 7, but you should not need it to unblock yourself.
 
-**Verification marker used throughout:** ✅ = confirmed by running it on this machine on 2026-08-01. ▫ = standard Claude Code behaviour, not separately re-tested here.
+**Verification marker used throughout:** ✅ = confirmed on this machine on 2026-08-01, either by executing the check or by directly observing live state (§ 4.5's finding rests on an observed value change, not on a test). ▫ = standard Claude Code behaviour, not separately re-tested here.
 
 ---
 
@@ -17,11 +17,12 @@ This file is **self-contained** — every diagnosis below can be run without ope
 | "Permission to use Bash… has been denied" — and you are in bypass mode | A **deny rule** matched the command string. Deny beats everything. | § 3.1 |
 | Prompts appear for ordinary reads/edits | A settings layer lost `defaultMode: bypassPermissions` | § 3.2 |
 | A project session can't see `ai-resources/` | `additionalDirectories` missing or has a stale absolute path | § 3.3 |
+| A **file read** is blocked — name contains `client`, `deal`, `confidential`, or sits under `archive/`, `old/`, `deprecated/` | A `Read(...)` deny matched the **filename pattern**, even on a non-confidential file | § 3.4 |
 | A hook that should fire, doesn't | It exists on disk but is **registered nowhere** | § 4.1 |
 | A hook fires but you can't find it in `settings.json` | It's a **git** hook, a different system | § 4.2 |
 | A hook blocks a commit and you think it's wrong | Read its message — most are correct; there is a right way to override | § 4.3 |
 | Settings edit had no effect | Wrong layer, or the file is invalid JSON | § 4.4 |
-| Session is on an unexpected model | A `model` field in `settings.json` is contesting `/model` | § 4.5 |
+| Session is on an unexpected model | A `model` field in a **committed** layer is contesting `/model` — the user layer's key is normal, do not delete it | § 4.5 |
 | `/prime` or a wrap command hard-fails on "marker unresolved" | Session marker missing or stale | § 4.6 |
 
 ---
@@ -63,15 +64,20 @@ A deny rule in **any** applicable layer blocks the command. You must find and re
 
 ```bash
 cd "<workspace root>"
-for f in ~/.claude/settings.json .claude/settings.json \
-         ai-resources/.claude/settings.json; do
+for f in ~/.claude/settings.json .claude/settings.json .claude/settings.local.json \
+         ai-resources/.claude/settings.json ai-resources/.claude/settings.local.json; do
+  [ -f "$f" ] || continue
   echo "--- $f"
   python3 -c "
-import json; d=json.load(open('$f'))
+import json,sys
+try: d=json.load(open('$f'))
+except Exception as e: print('   UNREADABLE:', e); sys.exit()
 for r in d.get('permissions',{}).get('deny',[]): print('   deny:', r)
 "
 done
 ```
+
+*(All five layers, with an exists-guard and a JSON-error guard. An unguarded loop crashes with a Python traceback the moment a `settings.local.json` is absent — which is the normal state at some layers.)*
 
 **Fix — in order of preference:**
 
@@ -83,19 +89,22 @@ done
 
 ### 3.2 Ordinary reads and edits are prompting
 
-One layer has lost its `defaultMode`. Check all four:
+One layer has lost its `defaultMode`. Check all five:
 
 ```bash
-for f in ~/.claude/settings.json .claude/settings.json \
+for f in ~/.claude/settings.json .claude/settings.json .claude/settings.local.json \
          ai-resources/.claude/settings.json ai-resources/.claude/settings.local.json; do
-  [ -f "$f" ] && python3 -c "
-import json; d=json.load(open('$f'))
+  [ -f "$f" ] || continue
+  python3 -c "
+import json,sys
+try: d=json.load(open('$f'))
+except Exception as e: print('$f → UNREADABLE:', e); sys.exit()
 print('$f →', d.get('permissions',{}).get('defaultMode','(MISSING)'))
 "
 done
 ```
 
-Any layer printing `(MISSING)` is the culprit. **Fix:** run `/permission-sweep`, which diagnoses and repairs drift across every layer in one approved pass against the canonical shapes. Prefer it to hand-editing — hand edits are how layers drift apart in the first place.
+Any layer printing `(MISSING)` is the culprit — but note a layer may legitimately omit `defaultMode` if a stronger layer sets it; check what actually changed rather than filling in every blank. **Fix:** run `/permission-sweep`, which diagnoses and repairs drift across every layer in one approved pass against the canonical shapes. Prefer it to hand-editing — hand edits are how layers drift apart in the first place.
 
 For gaps that are *empirical* rather than structural (you keep getting prompted for one specific harmless command), use `/fewer-permission-prompts`, which reads your actual transcripts and proposes a targeted allowlist.
 
@@ -114,6 +123,43 @@ print(d.get('permissions',{}).get('additionalDirectories','(none)'))
 
 ---
 
+### 3.4 A file read is blocked — "client", "deal", "confidential", or an archive path
+
+Not all denies are `Bash(...)`. The workspace layer also denies **reads by filename pattern**, and given the nature of the work here these are the denies most likely to bite:
+
+| Deny rule | Layer | Blocks reading |
+|---|---|---|
+| `Read(**/*client-*)` | workspace | any path containing `client-` |
+| `Read(**/*deal-*)` | workspace | any path containing `deal-` |
+| `Read(**/*confidential*)` | workspace | any path containing `confidential` |
+| `Read(archive/**)`, `Read(inbox/archive/**)` | ai-resources | archived material |
+| `Read(**/deprecated/**)`, `Read(**/old/**)` | ai-resources | deprecated / old trees |
+
+**The symptom is a blocked `Read` on a file you can plainly see exists** — and because the rule matches a *substring of the filename*, it fires on files that are not confidential at all (`deal-pipeline-template.md`, `client-onboarding-checklist.md`).
+
+**Diagnose:**
+
+```bash
+for f in ~/.claude/settings.json .claude/settings.json .claude/settings.local.json \
+         ai-resources/.claude/settings.json ai-resources/.claude/settings.local.json; do
+  [ -f "$f" ] && python3 -c "
+import json,sys
+try: d=json.load(open('$f'))
+except Exception as e: print('$f → UNREADABLE:', e); sys.exit()
+for r in d.get('permissions',{}).get('deny',[]):
+    if r.startswith('Read('): print('  $f →', r)
+"
+done
+```
+
+**Fix:** these denies are deliberate confidentiality guards, not drift — do **not** remove them reflexively. Options, in order:
+
+1. **Rename the file** if the match is incidental (`deal-pipeline-template.md` → `pipeline-template.md`). Cheapest fix, and it removes the false positive permanently.
+2. **Narrow the rule** — operator decision, since it weakens a confidentiality control.
+3. **Last resort — read it another way**, e.g. `Bash(grep ...)` on the file, which the `Read(...)` deny does not cover. ⚠ This is a **real gap in the guard, not a blessed workaround**, which is why it is listed last: it defeats a confidentiality control by accident of implementation. Use it only after positively confirming the file is not confidential. If it *is*, stop — do not route around the block.
+
+---
+
 ## 4. Harness problems
 
 ### 4.1 A hook that should fire, doesn't
@@ -126,10 +172,16 @@ print(d.get('permissions',{}).get('additionalDirectories','(none)'))
 cd "<workspace root>"
 ALL=$(cat ~/.claude/settings.json .claude/settings.json .claude/settings.local.json \
           ai-resources/.claude/settings.json ai-resources/.claude/settings.local.json 2>/dev/null)
-for s in $(ls -1 ai-resources/.claude/hooks/*.sh | xargs -n1 basename); do
-  echo "$ALL" | command grep -q "$s" && echo "  WIRED    $s" || echo "  ORPHAN   $s"
+for d in .claude/hooks ai-resources/.claude/hooks; do
+  [ -d "$d" ] || continue
+  for s in $(ls -1 "$d"/*.sh 2>/dev/null | xargs -n1 basename); do
+    echo "$ALL" | command grep -q "$s" \
+      && echo "  WIRED    $d/$s" || echo "  ORPHAN   $d/$s"
+  done
 done
 ```
+
+*(Both hook directories, labelled by source. Scanning only `ai-resources/.claude/hooks/` — as an earlier version of this snippet did — silently omits the six scripts at the workspace root and returns a complete-looking table. Same trap as § 4.2: clean output is not evidence of coverage.)*
 
 Anything printing `ORPHAN` does not run — **unless it is called by the git pre-commit hook instead** (§ 4.2). Check that before concluding it is dead.
 
@@ -144,11 +196,17 @@ There are **two independent hook systems**, and they are easy to confuse:
 | Claude Code hooks | `settings.json` → `hooks` | tool use, session start/end, compaction, stop | `check-foreign-staging.sh` |
 | Git hooks | `.git/hooks/` (per clone, not versioned) | git operations | `pre-commit` |
 
-✅ On this machine the "Running skill validation…" message seen on every commit comes from `.git/hooks/pre-commit`, which calls `check-skill-size.sh`. That script reads as an ORPHAN in the § 4.1 scan because it is not in any `settings.json` — but it very much runs. Check both systems before declaring a hook dead:
+✅ In `ai-resources/` the "Running skill validation…" message seen on every commit comes from `.git/hooks/pre-commit`, which calls `check-skill-size.sh`. That script reads as an ORPHAN in the § 4.1 scan because it is not in any `settings.json` — but it very much runs there. Check both systems before declaring a hook dead:
 
 ```bash
 command grep -n "<script-name>" .git/hooks/pre-commit
 ```
+
+> **⚠ It is repo-dependent, and the success message is not evidence it ran.** The pre-commit hook resolves the script from the **repo root** (`${repo_root}/.claude/hooks/check-skill-size.sh`) and calls it only `if [ -x ]`. ✅ Verified 2026-08-01: the **workspace root** repo has a `.git/hooks/pre-commit` but **no** `.claude/hooks/check-skill-size.sh`, so there the check silently no-ops **while the hook still prints `All skill checks passed.`** The hook's own comments warn about this exact shape. So: "All skill checks passed" means the hook finished, **not** that a skill was validated. Confirm the script exists in the repo you are committing from:
+>
+> ```bash
+> ls -l "$(git rev-parse --show-toplevel)/.claude/hooks/check-skill-size.sh"
+> ```
 
 ### 4.3 A hook blocked a commit
 
@@ -167,7 +225,7 @@ Two causes, in order of likelihood:
 2. **The file is invalid JSON**, so the whole file is ignored. Validate every layer:
 
 ```bash
-for f in ~/.claude/settings.json .claude/settings.json \
+for f in ~/.claude/settings.json .claude/settings.json .claude/settings.local.json \
          ai-resources/.claude/settings.json ai-resources/.claude/settings.local.json; do
   [ -f "$f" ] && { python3 -m json.tool "$f" >/dev/null 2>&1 \
     && echo "OK      $f" || echo "INVALID $f"; }
@@ -178,23 +236,39 @@ A trailing comma is the usual culprit. An invalid file fails **silently** — yo
 
 ### 4.5 The session is on an unexpected model
 
-**Model defaults are prohibited in every settings layer in this workspace.** The reason is mechanical: a declared default contests your `/model` choice, so you cannot reliably switch model in a live session.
+> **⚠ CORRECTED 2026-08-01, same day as first writing. The original version of this section was backwards and its advice was destructive** — it told you to delete the `model` key from `~/.claude/settings.json`. **Do not do that.** See the boxed note below.
+
+**`~/.claude/settings.json`'s `model` key is written by the `/model` command. It is not a rogue default — it is where your selection is stored.**
+
+✅ **Verified by observation:** that key read `"opus[1m]"` at ~14:33 on 2026-08-01 and `"claude-fable-5[1m]"` at 14:40:08 the same session, with nothing in this session writing to it. It is tool-managed. Deleting it erases your current model selection, and `/model` writes it straight back.
+
+**So the diagnosis splits by layer:**
+
+| Layer | A `model` key here means | Action |
+|---|---|---|
+| `~/.claude/settings.json` (user) | your `/model` selection, stored | **leave it alone** |
+| workspace / ai-resources / project / vault (committed) | a declared default that **does** contest `/model` | remove it |
 
 ```bash
-for f in ~/.claude/settings.json .claude/settings.json \
-         ai-resources/.claude/settings.json; do
+# Committed layers only — the user layer is deliberately not checked.
+for f in .claude/settings.json .claude/settings.local.json \
+         ai-resources/.claude/settings.json ai-resources/.claude/settings.local.json; do
   [ -f "$f" ] && python3 -c "
-import json; d=json.load(open('$f'))
+import json,sys
+try: d=json.load(open('$f'))
+except Exception as e: print('$f → UNREADABLE:', e); sys.exit()
 print('$f → model:', repr(d.get('model','(none — correct)')))
 "
 done
 ```
 
-Any layer printing anything other than `(none — correct)` is the cause. **Fix:** remove the `model` key from that file; select the model with `/model` at session start instead.
+Any **committed** layer printing other than `(none — correct)` is the cause. **Fix:** remove the `model` key from that file; select with `/model` instead.
 
 The only permitted way to pin a tier outside the live session is per-command / per-agent / per-skill YAML frontmatter (`model: opus`).
 
-> ⚠ **Never write a `[1m]` / 1M-context suffix in a model identifier** (e.g. `opus[1m]`). The suffix causes subagent spawn failures. Use bare tier names — `opus`, `sonnet`, `haiku`.
+> **⚠ Unresolved rule conflict — operator decision pending.** Workspace `CLAUDE.md` § Model Tier bans a `model` field in **any** `.claude/settings.json` and names the user layer explicitly, calling the rule non-negotiable. But the user layer is the one `/model` owns and writes. As written, the rule cannot be complied with while using `/model` at all. The evidence supports narrowing it to committed layers, with the user layer carved out as `/model`'s storage — **but that rule is marked non-negotiable, so it has not been changed.** Until the operator rules on it, follow the table above and treat the CLAUDE.md sentence as known-contested on the user layer only.
+
+> **On the `[1m]` suffix — scope matters, and the original version of this section got it wrong.** The standing rule ("never write `[1m]` / 1M-context model identifiers") is about **YAML frontmatter on commands, agents and skills**, where the suffix causes subagent spawn failures. It does **not** apply to the `model` key in `~/.claude/settings.json`, which `/model` writes in exactly that form as normal operation. Keep bare tier names (`opus`, `sonnet`) in frontmatter; leave the settings key to `/model`.
 
 ### 4.6 "HARD-FAIL: session marker unresolved"
 
@@ -214,13 +288,30 @@ ls -la logs/.session-marker-* 2>/dev/null       # per-session-id markers
 
 ## 5. Verified findings on this machine, 2026-08-01
 
-These were found while writing this file, each confirmed by execution. **None has been fixed** — all three are harness-config or documentation changes, which are operator decisions.
+These were found while writing this file and checked by execution — **except finding #1, which execution disproved; it is withdrawn below and its original advice must not be followed.** **Two live findings remain**, both harness-config changes and therefore operator decisions. Neither has been fixed.
 
-**1. `~/.claude/settings.json` carries `"model": "opus[1m]"`.** ✅ This breaks two standing rules at once: model defaults are prohibited in any settings layer, and the `[1m]` suffix is the form known to cause subagent spawn failures. It is also the single most likely reason a `/model` switch would fail to stick. **Recommended fix:** delete the `model` key from that file.
+**1. ~~`~/.claude/settings.json` carries a rogue `model` field.~~ WITHDRAWN — this finding was wrong, and its recommended fix was destructive.** ✅ The key is written by `/model`; it is where your selection is stored, not a default contesting it. Proof: it read `"opus[1m]"` at ~14:33 and `"claude-fable-5[1m]"` at 14:40:08 in the same session, with nothing in that session writing it. Deleting it would erase the operator's model selection, and `/model` would rewrite it immediately. See § 4.5.
+
+**What survives is a genuine rule conflict, not a settings defect.** Workspace `CLAUDE.md` § Model Tier bans a `model` field in **any** layer and names the user layer explicitly, marking the rule non-negotiable — but the user layer is `/model`'s own storage, so the rule as written cannot be complied with while using `/model`. **Recommended resolution (operator decision, not applied):** narrow the prohibition to committed layers (workspace / ai-resources / project / vault) and carve out the user layer. **How this was caught:** an independent review checked the claim against the live file instead of trusting the doc — the same premise-checking discipline the Work Loop's rule 1 exists to enforce, applied to my own output.
 
 **2. `Bash(rm -rf *)` is denied at three layers and protects nothing.** ✅ It blocked a harmless deletion of a nonexistent scratchpad path, while `rm -r` — identical destructive power — passed freely. It has now blocked the same legitimate cleanup three times across sessions (twice in S2-af1, once in S6-974). Same "denies by verb, not effect" pattern that retired the git-checkout deny rule. **Recommended fix:** remove it, consistent with the agreed zero-prompt setup.
 
-**3. `ai-resources/CLAUDE.md` claims a hook that does not run.** ✅ It states "the `check-permission-sanity.sh` SessionStart hook nudges on drift." That script is registered in **no** settings file and is **not** called by the git pre-commit hook. It is an orphan in both systems. Two further scripts are orphaned the same way: `auto-sync-shared.sh` and `check-template-drift.sh`. **Recommended fix:** register the hook, or correct the CLAUDE.md sentence. A documented safety net that does not fire is worse than none, because it is trusted.
+**3. `ai-resources/CLAUDE.md` claims a hook that does not run — and it is one of five orphans, not one.** ✅ CLAUDE.md states "the `check-permission-sanity.sh` SessionStart hook nudges on drift." That script is registered in **no** settings file and is **not** called by any git hook. It is an orphan in both systems.
+
+✅ **Widening the § 4.1 scan to both hook directories (2026-08-01) raised the orphan count from three to five.** The earlier scan globbed `ai-resources/.claude/hooks/` only, so the workspace root was never examined:
+
+| Orphan | Directory | Notes |
+|---|---|---|
+| `check-permission-sanity.sh` | ai-resources | the one CLAUDE.md claims is live |
+| `auto-sync-shared.sh` | ai-resources | |
+| `check-template-drift.sh` | ai-resources | |
+| `check-skill-size.sh` | ai-resources | **not dead** — called by `ai-resources/.git/hooks/pre-commit`; see § 4.2 |
+| `session-start.sh` | **workspace root** | newly found; the `precompact.sh` / `postcompact.sh` hits are comments (`# see session-start.sh`), not calls |
+| `sync-shared-resources.sh` | **workspace root** | newly found; unwired in every system, yet documented as live in ~12 project files (`repo-documentation` vault and blueprint, `corporate-identity` pipeline, `harness-preflight-report.md`) |
+
+`sync-shared-resources.sh` is the worst of these: a **sync** mechanism that never fires, while the repo's own documentation treats it as running. Note the compounding effect with § 4.1's warning — hook bodies are versioned, registrations are not.
+
+**Recommended fix:** for each, either register it or correct the documents that claim it runs. A documented safety net that does not fire is worse than none, because it is trusted.
 
 ---
 
@@ -228,7 +319,7 @@ These were found while writing this file, each confirmed by execution. **None ha
 
 - **Do not add deny rules.** They block by text and are trivially side-stepped by a different spelling, so they cost working time and buy no safety.
 - **Do not add an `allow` rule to cancel a `deny`.** Precedence makes it a no-op.
-- **Do not add a `model` field to any `settings.json`.** It contests `/model` in the live session. This rule is non-negotiable; audit recommendations to add a "canonical model baseline" are to be rejected.
+- **Do not add a `model` field to any *committed* `settings.json`** (workspace / ai-resources / project / vault). It contests `/model` in the live session; audit recommendations to add a "canonical model baseline" are to be rejected. **The user layer is the exception** — `~/.claude/settings.json`'s `model` key is written by `/model` itself and must be left alone. See § 4.5, where the wording of the underlying `CLAUDE.md` rule is flagged as an unresolved conflict pending an operator decision.
 - **Do not put machine-specific absolute paths in a committed `settings.json`.** They belong in `settings.local.json`.
 - **Do not reach for `--no-verify` as the first move.** A hook block is usually correct; fix the cause.
 - **Do not hand-edit permissions across several layers.** Run `/permission-sweep` so the layers stay consistent.
