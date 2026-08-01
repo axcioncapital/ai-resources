@@ -111,10 +111,63 @@ create fails the check. Falsifiability re-proven — with the file re-planted, 2
 - **A new issue was written up:** `issue-codex-request-intake.md` — Codex could not see a
   chat-pasted request at all. Second occurrence of that class.
 
-## 6. THE OPEN DECISION — finding C
+## 6. FINDING C — SETTLED: option 1, correct in full
 
-**This is the only thing blocking Step 6.** The operator deferred it on 2026-08-01 to be settled next
-session.
+**Settled 2026-08-01 (session S10-7e5) by independent verdict, not by Claude.** The operator directed
+that Codex adjudicate C and stated they would not decide before an independent verdict existed. Brief:
+`step-6-finding-c-adjudication-brief.md`. Verdict: `step-6-finding-c-verdict.md`.
+
+**Codex chose option 1 — correct C fully — against Claude's recommendation of option 2.** Its grounds,
+in short: the duplicated policy is executable instruction inside the two prompts that run the loop,
+not documentation debt; correcting finding A removed the observed contradiction but not the mechanism
+that produced it; and option 2's reopening trigger would make the pilot wait for a known
+source-of-truth violation to cause harm before honouring a binding standard. On the second conflict
+it ruled the remaining restatement **inconsistent application, not a judged trade-off**: Slice 3's
+asymmetric assignment of *actions* by actor was sound, but it did not license restating the *rule*
+each actor applies.
+
+**Codex also corrected Claude's measurement, and it was right.** Claude reported ten positive wording
+locks; the true surface is **11 positive policy-wording locks, or 14 including three section-presence
+form locks**. Claude's grep filter missed line 213 because that assertion routes through the
+`step1_of` helper. Re-verified by explicit line read before any edit. The correction Claude
+recommended against was therefore *more* expensive than Claude had measured — and the measurement
+error ran in Claude's own favour, which is the reason the brief asked for it to be re-derived.
+
+**What was corrected.** The rule now lives in one place and the artifacts link to it:
+
+| File | Change | Lines |
+|---|---|---|
+| `.claude/commands/work-loop-v2.md` | Restated policy replaced by links to the owning core sections; Claude-side mechanics, output contracts and stop behaviours retained | 114 → 113 |
+| `.agents/skills/work-loop-v2/SKILL.md` | Same, Codex side; finding A's intake fix, Next-routing table, path rule and no-git boundary all preserved | 120 → 116 |
+| `work-loop-v2-executable-core-v0.1.md` | Names the shared hand-off token `Correct once — frozen findings:` once, as its owner (§ 3) | 282 → 293 |
+| `logs/scripts/work-loop-v2-slice-1.test.sh` | 14 positive wording/form locks rewritten as link, interface and mechanic checks | 620 → 673 |
+
+Both runtime artifacts got **shorter**, satisfying the writing standard's final-pass rule. The core
+edit is the single one Codex authorised: without it, removing the token from both artifacts would
+have left an orphaned interface.
+
+**Falsifiability — every rewritten assertion proven able to fail.** Codex required that the harness
+not be made green by deletion. Three proof runs, artifacts restored from a checksummed copy after
+each:
+
+| Proof run | Result |
+|---|---|
+| New harness vs. **pre-correction** artifacts | **8 red** — the restatement and token-duplication checks |
+| Core links and retained mechanics stripped | **8 red** — the link and mechanic checks |
+| Targeted removal of the read-only rejection mechanic | **1 red** |
+
+17 of 17 new or rewritten assertions are failing-capable. Harness after correction: **149 passed, 0
+failed, exit 0** (was 143).
+
+**One thing this correction did *not* settle** — Codex's own deferral, recorded and not done: the
+writing standard's tension between "never restate the core" and its requirement that stop conditions
+name their on-stop behaviour. The practical boundary used here is link the trigger, keep the
+actor-specific mechanics. The standard was **not** edited during Step 6.
+
+---
+
+*The record below is the decision as it stood before the verdict, kept because it is what Codex was
+asked to adjudicate.*
 
 ### Why it is not a simple fix
 
@@ -181,20 +234,34 @@ Items 1 and 2 are now corrected. Items 3, 4, 5 carry into the accepted candidate
 - Revisit bare Codex task discovery only if manual task identification becomes observed pilot
   friction. *(Partly overtaken: bare discovery was demonstrated working this session.)*
 
-## 9. What next session must do
+## 9. State of Step 6 — one item outstanding
 
-1. **Settle finding C** — options in § 6. This is the blocking item.
-2. **Act on the decision.** If option 1, make the correction; if 2 or 3, write the limitation (with
-   its reopening trigger for option 2).
-3. **Run the closure check.** A, B, C plus blocking regressions only. Do **not** restart a broad
-   review — forbidden by the mission's non-negotiables. The harness (`bash
-   logs/scripts/work-loop-v2-slice-1.test.sh` from the repo root) is the regression instrument;
-   143 assertions, exit 0 expected.
-4. **Re-record the accepted candidate** — its commit and the four blob hashes, per § 2. The reviewed
-   commit `cc443e1` is *not* the accepted one.
-5. **Write the disclosed-limitations list** into this file: items 3, 4 and 5 from § 7, plus whatever
-   C's resolution adds.
-6. **Tick the mission's Step 6 thread** with evidence, and commit.
+**Done (session S10-7e5, 2026-08-01):**
+
+1. ✅ **Finding C settled** — option 1, by Codex's independent verdict. § 6.
+2. ✅ **The correction made** — all three runtime files plus the single authorised core edit. § 6.
+3. ✅ **Regression instrument green** — 149 assertions, exit 0, every rewritten assertion proven able
+   to fail first.
+4. ✅ **A and B verified intact** — finding A's six markers all present in the skill (direct operator
+   intake, the three-case Next table, the `logs/work-loop/` rule, the no-git boundary); finding B's
+   closed-set state-file check untouched in the harness.
+
+**Outstanding — the closure check, which is the reviewer's move, not Claude's:**
+
+Codex answers **two questions and nothing else** (core § 3): *are A, B and C resolved, and did the
+correction break something?* Scope brief: `step-6-closure-check-brief.md`. A second broad review is
+forbidden by the mission's non-negotiables — anything newly noticed becomes a deferral.
+
+**Then, and only after the closure check passes:**
+
+5. **Re-record the accepted candidate** — its commit and the four blob hashes, per § 2. Neither
+   `cc443e1` (reviewed) nor the correction commit is the accepted one until the check clears.
+6. **Write the disclosed-limitations list**: items 3, 4 and 5 from § 7, plus Codex's deferral on the
+   writing standard's stop-condition tension (§ 6).
+7. **Tick the mission's Step 6 thread** with evidence, and commit.
+
+The thread is deliberately **not** ticked yet. Ticking before the closure check would close Step 6 by
+assertion, which is the failure mode this mission has already recorded once.
 
 Then Step 7 begins with the v1 retirement decision, which is a hard boundary at pilot start and does
 not slip past it.

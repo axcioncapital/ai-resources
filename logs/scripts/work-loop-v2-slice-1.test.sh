@@ -209,8 +209,15 @@ check "2.2   the fixture is genuinely foreign — its task: mismatches its filen
 # before anything is changed (core § 6 rule 2). Scoped to the Step 1 section: a
 # whole-file grep would match the scope note that merely PROMISES the behaviour.
 step1_of() { awk '/^## Step 1/{f=1;next} /^## Step [0-9]/{f=0} f' "$CMD_F"; }
-check "2.2   the command validates file identity in Step 1" \
-  "step1_of | grep -qi 'belongs to a different task'"
+# Finding C, Step 6: this used to require Step 1 to SPELL OUT core § 6 rule 2's
+# condition ('belongs to a different task'). Core owns the conditions; the command
+# owns what Claude does when one is met. Split accordingly — the rule is linked, the
+# actor's mechanics are asserted. The mechanic phrase below appears nowhere in the
+# core, so this cannot be satisfied by copying policy back in.
+check "2.2   the command's Step 1 defers the identity rule to core § 6" \
+  "step1_of | grep -qiE 'core §[[:space:]]*6'"
+check "2.2   the command's Step 1 keeps the read-only rejection mechanics" \
+  "step1_of | grep -qi 'no inspection record'"
 # END STATE of the rejection run: reported, nothing mutated.
 check "2.2   the foreign file gained no inspection record" \
   "! grep -qi 'inspected' '$FOREIGN_F'"
@@ -240,12 +247,21 @@ corr_at_open() { [ -n "$CORR_OPENED" ] && git show "$CORR_OPENED:$CORR_F" 2>/dev
 check "2.3   the opening state was committed pointing at Claude" \
   "corr_at_open | grep -qE '^turn:[[:space:]]*claude'"
 
-# Both artifacts must carry the correction shape. Falsifiability shown against the
-# pre-edit artifact versions (git show <before>:path) rather than by deleting the text.
-check "2.3   the command carries the bounded correction round" \
-  "grep -q 'Correct once — frozen findings:' '$CMD_F'"
-check "2.3   the resource writes the correction into the state file" \
-  "grep -q 'Correct once — frozen findings:' '$SKILL_F'"
+# Finding C, Step 6: both artifacts used to carry the literal hand-off token, so the
+# producer and the consumer each owned a copy of the same protocol string and could
+# drift apart. The core now names it once (§ 3, "The hand-off token") and both sides
+# reference it. These four assertions test that interface end to end: the owner still
+# names it, neither runtime artifact re-spells it, and both still route through it.
+# A reference with no owner, or an owner with no references, fails here.
+CORE_F="plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md"
+check "2.3   the core owns the hand-off token's literal text" \
+  "grep -q 'Correct once — frozen findings:' '$CORE_F'"
+check "2.3   neither runtime artifact duplicates the token's literal text" \
+  "! grep -q 'Correct once — frozen findings:' '$CMD_F' && ! grep -q 'Correct once — frozen findings:' '$SKILL_F'"
+check "2.3   the command reads the correction round from the core-owned token" \
+  "grep -qi 'hand-off token' '$CMD_F'"
+check "2.3   the resource writes the correction using the core-owned token" \
+  "grep -qi 'hand-off token' '$SKILL_F'"
 
 # EXACTLY ONE correction hand-off ever committed: a second round would produce a
 # second committed version whose Next action carries the frozen-findings block with
@@ -361,20 +377,31 @@ limits_at_open() { [ -n "$LIMITS_OPENED" ] && git show "$LIMITS_OPENED:$LIMITS_F
 admission_cmd() { awk '/^## Admission/{f=1;next} /^## /{f=0} f' "$CMD_F"; }
 admission_res() { awk '/^## Admission/{f=1;next} /^## /{f=0} f' "$SKILL_F"; }
 
-check "3.1   the command carries the admission test" \
+# Finding C, Step 6: these used to require BOTH artifacts to spell out core § 2's
+# policy ('direct work', 'named reason', 'feels significant'). That is precisely the
+# duplication C named — the harness was rewarding the copies, so removing them went
+# red and keeping them went green. The ownership boundary is tested instead: each
+# artifact must carry its own Admission section (the actor's mechanics live there)
+# and defer the rule to core § 2, and must NOT re-state the rule's content.
+#
+# The negative checks are the load-bearing half. A link check alone does not
+# discriminate — the pre-correction artifacts also said "core § 2" while restating it
+# underneath. These go red against those versions and go red again the moment a copy
+# returns, which is the regression C exists to prevent.
+check "3.1   the command carries the admission section" \
   "[ -n \"\$(admission_cmd)\" ]"
-check "3.1   the command's admission test defaults to Direct Work" \
-  "admission_cmd | grep -qi 'direct work'"
-check "3.1   the command requires a named reason to enter the loop" \
-  "admission_cmd | grep -qi 'named reason'"
-check "3.1   the command refuses 'this feels significant' as a reason" \
-  "admission_cmd | grep -qi 'feels significant'"
+check "3.1   the command defers the admission rule to core § 2" \
+  "admission_cmd | grep -qiE 'core §[[:space:]]*2'"
+check "3.1   the command does not restate core § 2's excluded reason" \
+  "[ -n \"\$(admission_cmd)\" ] && ! admission_cmd | grep -qi 'feels significant'"
 check "3.1   the command no longer disclaims Slice 3" \
   "[ -n \"\$(admission_cmd)\" ] && ! grep -q 'not to be improvised here' '$CMD_F'"
-check "3.1   the resource carries the admission test" \
+check "3.1   the resource carries the admission section" \
   "[ -n \"\$(admission_res)\" ]"
-check "3.1   the resource refuses to open a task on 'this feels significant'" \
-  "admission_res | grep -qi 'feels significant'"
+check "3.1   the resource defers the admission rule to core § 2" \
+  "admission_res | grep -qiE 'core §[[:space:]]*2'"
+check "3.1   the resource does not restate core § 2's excluded reason" \
+  "[ -n \"\$(admission_res)\" ] && ! admission_res | grep -qi 'feels significant'"
 check "3.1   the resource no longer disclaims Slice 3" \
   "[ -n \"\$(admission_res)\" ] && ! grep -q 'not to be improvised here' '$SKILL_F'"
 
@@ -445,8 +472,17 @@ check "3.1b  the refusal routes to Direct Work or a real named reason" \
   "admit_committed | grep -qi 'direct work' && admit_committed | grep -qi 'named reason'"
 check "3.1b  the refusal did not hand the turn to Claude" \
   "admit_committed | grep -qE '^turn:[[:space:]]*operator'"
-check "3.1b  the artifacts still carry the refusal rule" \
-  "admission_res | grep -qi 'feels significant'"
+# Finding C, Step 6: was "admission_res | grep -qi 'feels significant'" — an assertion
+# that the RESOURCE carries the refusal rule, i.e. a copy of core § 2. The rule must
+# still exist and still be reachable, so it is asserted against its owner instead,
+# with the no-copy condition alongside it. The refusal BEHAVIOUR is already proven
+# above, from the committed state file rather than from artifact text.
+# The core hard-wraps its prose, so "This feels / significant" is split across a
+# newline there and a plain grep cannot see it. Flatten before matching — reading the
+# owner's text must not depend on where its lines happen to break.
+core_flat() { tr '\n' ' ' < "$CORE_F"; }
+check "3.1b  the refusal rule is owned by the core, not copied into the resource" \
+  "core_flat | grep -qi 'feels significant' && ! admission_res | grep -qi 'feels significant'"
 
 # --- 3.2 work that turns out smaller de-escalates and closes ------------------
 # The command must own de-escalation as its own section; the word appears in the
@@ -454,11 +490,21 @@ check "3.1b  the artifacts still carry the refusal rule" \
 deesc_cmd() { awk '/^## De-escalat/{f=1;next} /^## /{f=0} f' "$CMD_F"; }
 assess_res() { awk '/^## Assessing the result/{f=1;next} /^## /{f=0} f' "$SKILL_F"; }
 
+# Finding C, Step 6: the second and third assertions were wording locks on core § 2's
+# own sentences ('clos…', 'smaller than assumed'). Both artifacts must still OWN the
+# de-escalation hand-off — that is an interface, not policy — but the trigger and the
+# rule belong to core § 2. What survives here is the link plus each side's mechanics;
+# the closure BEHAVIOUR is proven by the end-state assertions immediately below, which
+# are stronger than any text match and were never coupled to the duplication.
 check "3.2   the command carries de-escalation" "[ -n \"\$(deesc_cmd)\" ]"
-check "3.2   de-escalation closes the task rather than keeping it in the loop" \
-  "deesc_cmd | grep -qi 'clos'"
-check "3.2   the resource's assessment closes a task found smaller than assumed" \
-  "assess_res | grep -qi 'smaller than assumed'"
+check "3.2   the command defers the de-escalation trigger to core § 2" \
+  "deesc_cmd | grep -qiE 'core §[[:space:]]*2'"
+check "3.2   the command keeps the actor-specific closing mechanics" \
+  "deesc_cmd | grep -qi 'closing record'"
+check "3.2   the resource's assessment defers de-escalation to core § 2" \
+  "assess_res | grep -qiE 'core §[[:space:]]*2'"
+check "3.2   the resource does not restate core § 2's de-escalation trigger" \
+  "[ -n \"\$(assess_res)\" ] && ! assess_res | grep -qi 'smaller than assumed'"
 
 deesc_closed() { [ -f "$DEESC_F" ] && grep -qE '^## Outcome' "$DEESC_F"; }
 deesc_decisions() { awk '/^## Decisions that matter/{f=1;next} /^## /{f=0} f' "$DEESC_F"; }
@@ -484,8 +530,15 @@ check "3.2   the committed state carries the closure and the fix" \
 # ran. Its typos are the temptation AND the assertion anchor — a 'tidied' line no
 # longer matches, so implementing the bait fails this block.
 step4_cmd() { awk '/^## Step 4/{f=1;next} /^## /{f=0} f' "$CMD_F"; }
-check "3.3   the command's Step 4 carries the mid-unit deferral rule" \
-  "step4_cmd | grep -qi 'defer'"
+# Finding C, Step 6: was a bare wording lock ('defer'). "Deferral" is core § 5 pinned
+# vocabulary, so using the word is legitimate — but requiring it proved nothing about
+# ownership. Step 4 must link the rule and keep the recording mechanic that makes a
+# deferral survive; whether the bait was actually deferred is proven from history
+# below, not from this text.
+check "3.3   the command's Step 4 defers the deferral rule to the core" \
+  "step4_cmd | grep -qiE 'core §[[:space:]]*5'"
+check "3.3   the command's Step 4 keeps the hand-back recording mechanic" \
+  "step4_cmd | grep -qi 'hand-back'"
 
 check "3.3   the bait was committed in the working area before the unit ran" \
   "[ -n \"\$DEFER_OPENED\" ] && git show \"\$DEFER_OPENED:$TARGET2\" 2>/dev/null | grep -q 'obvios quick tidy-up'"

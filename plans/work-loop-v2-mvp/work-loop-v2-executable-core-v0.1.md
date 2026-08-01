@@ -100,6 +100,17 @@ Close, or use the menu below.
 Anything newly noticed during the closure check is **recorded as a deferral**. It never becomes a
 second correction round.
 
+**The hand-off token.** Codex writes the frozen findings into the state file's `Next action`, opening
+with this exact line:
+
+```
+Correct once — frozen findings:
+```
+
+followed by the numbered findings. Claude reads that line as the signal that the invocation is the
+one correction rather than a new unit. It is a protocol token shared by both sides: it is named here,
+once, so that the producer and the consumer cannot drift apart. Change it here or nowhere.
+
 ### If the correction was not enough
 
 Codex chooses **once**, on value and risk — not on a round counter: accept it as a written
