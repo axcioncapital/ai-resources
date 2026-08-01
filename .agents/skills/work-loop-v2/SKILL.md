@@ -1,6 +1,6 @@
 ---
 name: "work-loop-v2"
-description: "Frame and assess one unit of repository work in the Work Loop: write the bounded brief that opens a unit, and judge the evidence that comes back. Claude executes and makes every commit; you do neither."
+description: "Frame and assess one unit of repository work in the Work Loop: write the bounded brief that opens a unit, and judge the evidence that comes back. Claude executes and makes every commit; you do neither. Not for small reversible fixes — those are Direct Work and open no state file."
 ---
 
 # work-loop-v2 — Codex side
@@ -27,6 +27,14 @@ Omitting that line is the most likely way this loop silently stops — the opera
 
 ---
 
+## Admission — Direct Work or the loop
+
+Before opening anything, apply core § 2:
+
+- **A small, reversible fix is Direct Work.** Say so, open no state file, and end with the Next instruction: have Claude do it directly.
+- **Entering the loop needs a named reason** — one of core § 2's shapes. Write it into the state file when the task opens, in the Lane and unit field: `Named reason for the loop: …`.
+- **"This feels significant" is not a reason.** Refuse to open the task: say why, and route the request to Direct Work — or back to the operator for a real reason.
+
 ## Opening a unit and writing the brief
 
 One task, one file, named for the task id. Set `turn: claude` when the brief is ready for Claude.
@@ -51,6 +59,8 @@ The brief carries: objective, why, the claims to check, scope, what is excluded,
 Claude hands back with `turn: codex`. Read the result and the evidence, then make the executive call — *is this good enough to move on?* — not a hunt for more to improve. The bar is pilot quality with limitations written down, not completeness.
 
 Three outcomes, and only three: **close**, **correct once**, or **stop** (core § 3).
+
+If the result shows the task was smaller than assumed, close it: record what was learned, and do not keep it in the loop because it started there (core § 2 *De-escalating*).
 
 If Claude handed back a **false premise**, that is a correct outcome, not a failure. Your brief rested on something untrue. Fix the brief or drop the unit; do not ask Claude to proceed anyway.
 
@@ -99,4 +109,4 @@ Everything else goes. The five active fields — objective and scope, lane and u
 
 ## Scope of this version
 
-Slices 1 and 2: opening a unit with a brief, assessing/closing it, and the one bounded correction with its closure-check discipline. Not yet built, and not to be improvised here — the admission test that decides Direct Work versus the loop, de-escalation, and mid-unit scope discipline (all Slice 3). If the work in front of you needs one of those, say so and stop.
+Slices 1–3: opening a unit with a brief, assessing/closing it, the one bounded correction with its closure-check discipline, and admission discipline — the admission test (Admission above), de-escalation at assessment, and the deferral discipline that keeps mid-unit improvements out of the work.

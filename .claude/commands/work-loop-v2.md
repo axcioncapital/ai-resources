@@ -4,7 +4,7 @@ effort: high
 argument-hint: "[the task id whose state file to act on, or nothing to use the only open one]"
 ---
 
-Run Claude's half of one Work Loop v2 unit: read the task-state file, check the brief's premises against the live repository, then either hand back a false premise or implement the unit and hand back evidence. Codex frames and assesses; Claude owns repository reality and makes every commit.
+Run Claude's half of one Work Loop v2 unit: read the task-state file, check the brief's premises against the live repository, then either hand back a false premise or implement the unit and hand back evidence. Codex frames and assesses; Claude owns repository reality and makes every commit. Not for small reversible fixes — those are Direct Work and open no state file (Admission below).
 
 Input: `$ARGUMENTS` — a task id, or empty to use the only state file whose `turn:` is `claude`.
 
@@ -12,9 +12,19 @@ Input: `$ARGUMENTS` — a task id, or empty to use the only state file whose `tu
 
 This command is not a session lifecycle command. It does not invoke `/prime`, `/session-start` or `/session-plan`.
 
-**Scope of this version — Slices 1 and 2, Claude side.** Behaviours 1.2, 1.3, the fresh-session pickup (2.1), file-identity rejection (2.2), and Claude's half of the bounded correction (2.3, 2.4 — the Correction rounds section below). Not yet built, and not to be improvised here: the admission test that decides Direct Work versus the loop, de-escalation, and mid-unit scope discipline (all Slice 3). If the work in front of you needs one of those, say so and stop — do not invent it.
+**Scope of this version — Slices 1–3, Claude side.** Behaviours 1.2, 1.3, the fresh-session pickup (2.1), file-identity rejection (2.2), Claude's half of the bounded correction (2.3, 2.4 — the Correction rounds section below), and admission discipline: the admission test (Admission below), de-escalation (De-escalating below), and mid-unit deferrals (Step 4).
 
 ---
+
+## Admission — Direct Work or the loop
+
+Runs when the work arrives without a state file — the operator brings a request rather than a task id. Core § 2 decides; this step applies it:
+
+- **A small, reversible fix is Direct Work.** Say that Direct Work applies, do the work, and open no state file. No loop ceremony for work that does not need it.
+- **Entering the loop needs a named reason** — one of core § 2's shapes, written into the state file when the task opens. Before acting on a new task, check the file carries its reason.
+- **"This feels significant" is not a reason.** Refuse to run a task whose only stated reason is felt importance: say why, point at core § 2, and offer the Direct Work path instead.
+
+When invoked on an existing state file that carries its reason, admission was decided at open — go to Step 1.
 
 ## Step 1 — Orient
 
@@ -63,6 +73,17 @@ Do all of this and nothing else:
 ## Step 4 — If every claim holds, implement the unit
 
 Stay inside `## Objective and scope`. A change that would touch anything the scope excludes is a hand-back under Step 3's rules, not a judgement call (core § 6 rule 4 — scope changes go to the operator).
+
+**An adjacent improvement noticed mid-unit is a deferral, not work** (core § 5, § 6 rule 4). However attractive, record it in the hand-back in plain words — what it is, and why it is not being done now — and leave it unimplemented. A deferral that is neither recorded nor implemented has silently disappeared, which is the failure.
+
+## De-escalating — when the work turns out smaller
+
+Core § 2 *De-escalating*. If inspection or implementation shows the task is really a small, reversible fix, do not keep it in the loop because it started there:
+
+1. Say so, in plain words.
+2. Reduce the state file to the closing record (core § 4), recording under `## Decisions that matter` that the task de-escalated and what was learned. Set `turn: operator`.
+3. Finish the work directly, as Direct Work.
+4. `git add` the state file and the changed files by explicit pathspec, commit once, stop.
 
 ## Step 5 — Write the result and the evidence
 
