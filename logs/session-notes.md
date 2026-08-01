@@ -1129,3 +1129,13 @@ Skipped (not requested).
 The mission's definition of done requires the operator's judgment that the loop produced useful real
 work, not merely a count of completed units. Three units have now closed or reached their designed
 stopping point. Not answered this session.
+
+## 2026-08-01 — Session S13-ad0
+
+**Mandate:** Resume Work Loop v2 pilot unit 3 from its state file and Git alone — settle the PreToolUse hook cwd question by execution, implement the smallest resolver in check-foreign-staging.sh, and record the unit's outcome in the pilot log — done when: logs/scripts/check-foreign-staging.test.sh reports 6/6 green against the fixed hook; the same harness still reports failure when run against a dead-hook stub; and plans/work-loop-v2-mvp/step-7-pilot-log.md § Unit 3 records the outcome with an evidenced verdict on pilot conditions 3 and 7.
+- Out of scope: Step 8 entirely (demonstrated-blocker fixes, the regression set, the post-pilot assessment, the v1 retirement, the portable-installation blocker); manufacturing a unit to exercise pilot condition 5 (the Direct Work bypass) — it waits for a genuinely small real fix; the .codex fork of the hook, the defect record and the sector-intelligence copy, all three held to later units by Codex's opening brief.
+- Files in scope: logs/work-loop/foreign-staging-target-repo.md, .claude/hooks/check-foreign-staging.sh, logs/scripts/check-foreign-staging.test.sh, plans/work-loop-v2-mvp/step-7-pilot-log.md, logs/session-notes.md
+- Stop if: the operator declines the throwaway probe hook in ~/.claude/settings.json and no other execution-based way exists to settle the hook-cwd question — stop rather than infer it; or the harness comes back green against the unmodified hook, meaning the recorded defect no longer reproduces — hand back rather than build.
+- Mission: work-loop-v2-mvp
+
+**Work:** Resume Work Loop v2 pilot unit 3 from the state file and Git alone — settle the hook-cwd question by execution, then implement the resolver to 6/6 green

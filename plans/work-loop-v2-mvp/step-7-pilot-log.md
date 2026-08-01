@@ -558,31 +558,105 @@ a limitation in the state file with the remedy named (positive-identity assertio
 green is accepted). The harness's own summary logic did refuse to report success under the stub,
 which is a real property and was not designed in.
 
+### Resumption — the handoff test's result (session S13-ad0, 2026-08-01)
+
+**The pickup worked.** A fresh session read `logs/work-loop/foreign-staging-target-repo.md`, verified
+the tree against Git (`git log --oneline -3`, hook unmodified at 668 lines, harness present at
+`2135c0c`), re-ran the harness to the recorded 4 RED / 2 GREEN baseline, and executed the checkpoint's
+`Next action` list in order without needing anything the prior session held only in context. The state
+file's `Next action` was **executable as written** — the single most useful property it had.
+
+**Disclosed contamination — the test is not clean-room, and the reason is structural.** `/prime`
+loads the previous `session-notes.md` entry at orientation, and that entry carries a prose summary of
+unit 3. So the resuming session had a summary in context before it opened the state file. This does
+not invalidate the result — every *action* taken came from the state file, and the state file was
+independently sufficient on its own reading — but a genuinely clean proof is not available through the
+normal orientation path. **That is itself a finding about the pilot's method** (FP-11 below), not a
+defect in the state file.
+
+**The gating question was settled without the gated change the checkpoint predicted.** The checkpoint
+proposed registering a throwaway probe hook in `~/.claude/settings.json` and correctly flagged it as
+needing operator approval. A cheaper route existed and was taken: `check-foreign-staging.sh` is
+*already* registered and fires on every Bash call, and it is the one file the unit boundary permits
+editing — so a temporary dump was added to it, triggered three times, read, and removed. The hook was
+verified byte-identical to `HEAD` afterwards. **No harness-config change, no operator gate, no
+`~/.claude/settings.json` write.**
+
+**What the probe established, by execution:**
+
+1. A PreToolUse payload **does** carry a `cwd` key. Live key set: `cwd`, `effort`, `hook_event_name`,
+   `permission_mode`, `prompt_id`, `session_id`, `tool_input`, `tool_name`, `tool_use_id`,
+   `transcript_path`. The checkpoint recorded this as unverified in either direction — no hook in the
+   repo read it, so the repo carried no evidence. It is sent.
+2. `os.getcwd()` of the hook process **equals** the Bash tool's cwd, and both diverge from
+   `CLAUDE_PROJECT_DIR`, which stays pinned to the session root. Preferring `CLAUDE_PROJECT_DIR` at
+   `:223` is therefore the defect itself, exactly as premise 1 stated.
+3. **The nuance the checkpoint did not anticipate, and it changes the fix.** That cwd is the
+   **pre-command** cwd — the hook fires before the command runs. So cwd alone resolves the
+   already-inside-nested case (C1/C2) but **cannot** resolve `cd nested && git add .` (C3). The
+   checkpoint's "if the former, the fix is nearly free: change the precedence" is **half right**: the
+   precedence change is necessary and not sufficient, and the leading-`cd` parse is still required.
+
+**The fix.** Three changes, all inside the unit boundary. Target repo resolved from the payload cwd
+(falling back to `os.getcwd()`), plus a single supported leading `cd <literal> &&` — `&&` is
+load-bearing because it is what guarantees the `cd` succeeded. Subshells, `;`/newline sequencing,
+multiple `cd`s and variable/glob/`~` paths are treated as **unresolved and fail closed with exit 2**
+when a wide add is present, never soft-warned. `git add .` scoping now derives from `target_dir`'s path
+*relative to the resolved repo root* rather than from the `cd` token's raw text, which is what makes
+the nested and same-repo cases share one code path. Fail-closed is scoped to wide adds only; a gated
+`git commit` with an unresolvable `cd` falls back to the base cwd — a **disclosed limitation**, taken
+because blocking every multi-line commit would be a false-block regression worse than the gap.
+
+**Evidence — 9/9 green, and falsified twice.** The harness grew from 6 cases to 9 and passes fully
+against the repaired hook. It was then run against two deliberately broken hooks, and reported failure
+against both: a dead no-op stub (7 failures) and a **payload-cwd-blind** stub with the original defect
+line re-injected (5 failures). The second is the sharper instrument — under it C1, C2, C2b, C7 and C8
+fail while C3 and C4 still pass, correctly attributing those two to the `cd`-parsing fix rather than
+to the cwd fix.
+
+**FP-9 is closed.** C2's green was satisfied by a dead hook; it now carries `C2b`, a positive-identity
+companion on the same fixture and the same command, differing by one out-of-footprint file that a live
+hook must block on. Under the no-op stub C2 still passes and **C2b fails**, which is precisely the
+discrimination that was missing.
+
+### Friction points (resumption)
+
+**FP-10 — the harness tested the fallback and never the production shape, and would have gone green
+either way.** `run_hook` built its payload with only `tool_name` and `tool_input`: no `cwd` key. So
+every case exercised the `os.getcwd()` fallback, and a hook that ignored the payload `cwd` entirely
+would still have passed all six. Found only because the probe revealed the key exists. Fixed:
+`run_hook` now sends `cwd` by default (production shape), `C7` proves the payload value beats the
+process cwd, and `C8` pins the fallback for callers that omit it. **Generalisable lesson:** a harness
+written before the interface was verified encodes the author's assumption about the interface, and
+goes green against it.
+
+**FP-11 — the handoff test cannot be run clean through the normal orientation path.** `/prime` loads
+the prior `session-notes.md` entry, which summarises the unit, before any state file is read. Unit 3
+was designed to test whether the state file *alone* suffices, and orientation structurally prevents
+that from being observed cleanly. Not a defect in the state file, the command or the core — a property
+of the measurement. If a future unit needs a clean measurement, it has to bypass `/prime` or start
+from a checkout with no session-notes entry.
+
 ### Verdicts
 
-Against the seven conditions. **Rows 3 and 7 are deliberately left unresolved** — they are the whole
-point of this unit and they can only be verdicted by the session that resumes, not by the one that
-set the handoff up. Recording them as `yes` now would close them by assertion, which is the failure
-mode this pilot has avoided twice already.
+Against the seven conditions. Rows 3 and 7 were left `PENDING` by the opening session by design;
+this section settles them on observed evidence.
 
 | # | Condition | Verdict |
 |---|---|---|
 | 1 | Useful context preparation | **yes** — and stronger than prior units: the brief corrected Claude's *instrument*, not just its facts (FP-7) |
-| 2 | Alignment with the approved project plan | **yes** — unit boundary respected; docs, fork and defect record untouched |
-| 3 | State recovery | **PENDING — staged, not proven.** The checkpoint is committed and self-contained. The next session's pickup is the test |
-| 4 | One bounded correction | `n/a` so far — no assessment round has run; the unit is mid-implementation |
-| 5 | The Direct Work bypass | **STILL OWED.** Cannot be carried by this unit: the tokenizer defect is not small and reversible, so it was correctly admitted. Needs a separate genuinely-small request, and manufacturing one would breach the genuine-units constraint |
+| 2 | Alignment with the approved project plan | **yes** — unit boundary respected; docs, fork and defect record untouched, across both sessions |
+| 3 | State recovery | **yes, with a disclosed contamination.** Every action taken came from the state file and Git; its `Next action` was executable as written. But `/prime` preloads the prior session-notes summary, so a clean-room proof was not available (FP-11) |
+| 4 | One bounded correction | **pending Codex's assessment** — the unit is handed back complete; no assessment round has run yet |
+| 5 | The Direct Work bypass | **STILL OWED.** Unchanged: the defect is not small and reversible, so it was correctly admitted. Needs a separate genuinely-small request; manufacturing one would breach the genuine-units constraint |
 | 6 | Operator intervention | **yes** — the operator ran Codex; Claude cannot open a unit |
-| 7 | Clean fresh-session continuation | **PENDING — staged, not proven.** Same test as row 3 |
+| 7 | Clean fresh-session continuation | **yes, qualified.** The session resumed and finished the unit without asking the operator a single recovery question, and without the `~/.claude/settings.json` gate the checkpoint expected. Qualified by the same FP-11 contamination |
 
-**What the resuming session settles.** If it can pick the unit up from the state file and Git alone,
-rows 3 and 7 close for real. If it cannot, that is the more valuable result and must be recorded as
-such rather than repaired by re-reading this log.
-
-**The open question that gates the resumption** is recorded in the state file, not here: no hook in
-this repo reads a payload `cwd`, and it is unverified whether a PreToolUse hook runs with the Bash
-tool's cwd or the project directory. Settling that by execution is step 1 of the next session, and it
-requires operator approval because the probe touches `~/.claude/settings.json`.
+**The honest summary of what this unit proved.** A committed state file carrying premises, red
+evidence, a named blocker and an executable `Next action` was enough for a different session to finish
+non-trivial work — including finding that the blocker's own framing was half wrong. What it did *not*
+prove is that the state file alone would have sufficed with no orientation context at all; that
+measurement is not obtainable through the normal path.
 
 ---
 

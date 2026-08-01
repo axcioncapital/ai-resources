@@ -144,7 +144,12 @@ def _add_is_wide(command):
     # Boundary-anchored (Symptom B) so a quoted/heredoc `git add` mention cannot gate.
     for m in re.finditer(_VERB_BOUNDARY + r'git\s+add\b([^&|;]*)', command):
         args = m.group(1)
-        if re.search(r'(^|\s)(-A|--all|-u|--update|\.)(\s|$)', args):
+        # `)` terminates the token as well as whitespace/end — otherwise a wide add
+        # inside a subshell, `(cd x; git add .)`, is not even SEEN as wide and exits
+        # ungated at the early exit below, which is the recorded C4 blind spot
+        # (2026-08-01). `./docs/x.md` still does not match: the `\.` arm requires the
+        # token to be exactly `.`, and there the next char is `/`.
+        if re.search(r'(^|\s)(-A|--all|-u|--update|\.)(\s|$|\))', args):
             return True
     return False
 
@@ -220,8 +225,67 @@ def _foreign_cli_here(root_dir):
             n += 1
     return (True, n)
 
-project_dir = os.environ.get("CLAUDE_PROJECT_DIR", "") or os.getcwd()
-repo_root = sh(["git", "-C", project_dir, "rev-parse", "--show-toplevel"]).strip()
+# ---- Target-repository resolution (2026-08-01, unit foreign-staging-target-repo) ----
+# The repository to judge is the one the COMMAND will actually affect — not the
+# session's project root. Preferring CLAUDE_PROJECT_DIR was the defect: it stays
+# pinned to the session root, so a gated command run inside a NESTED repo was
+# judged against the parent (false block), and `cd nested && git add .` inspected
+# parent paths that the add could never stage (silent pass — worse).
+#
+# Settled BY EXECUTION, not inference (session S13-ad0, probe registered in this
+# hook and removed): a PreToolUse hook payload DOES carry a `cwd` key, os.getcwd()
+# equals it, and both track the Bash tool's cwd as it stands BEFORE the command
+# runs — while CLAUDE_PROJECT_DIR stays pinned to the session root regardless.
+# Because that cwd is the PRE-command one, cwd alone cannot resolve
+# `cd nested && git add .`; the leading-`cd` parse below is still required.
+base_dir = (payload.get("cwd") or "").strip() or os.getcwd()
+
+# Exactly one supported command shape moves the target: a single leading literal
+# `cd <path> &&`. `&&` is load-bearing — it guarantees the cd SUCCEEDED before the
+# git verb runs. `;`, a newline, a subshell `( ... )`, multiple `cd`s, or a path
+# carrying a variable/glob/`~` cannot give that guarantee (with `;` or a newline the
+# add still runs, in the ORIGINAL cwd, when the cd fails), so those shapes are
+# treated as UNRESOLVED and fail closed rather than being evaluated against a
+# repository that may not be the target.
+_UNSAFE_CD_PATH = re.compile(r'[$`*?~\[\]]')
+target_dir = base_dir
+unresolved_target = False
+
+_all_cds = re.findall(r'(?:^|[\n;&|(])\s*cd\s+([^\s;&|)]+)', scan)
+if _all_cds:
+    _lead = re.match(r'^\s*cd\s+([^\s;&|)]+)\s*&&', scan)
+    if _lead and len(_all_cds) == 1 and "(" not in scan:
+        _cd_path = _lead.group(1).strip().strip('"').strip("'")
+        if _UNSAFE_CD_PATH.search(_cd_path):
+            unresolved_target = True
+        else:
+            target_dir = _cd_path if os.path.isabs(_cd_path) \
+                else os.path.join(base_dir, _cd_path)
+    else:
+        unresolved_target = True
+
+# Fail closed ONLY for wide adds — the shape whose blast radius is the whole working
+# tree of an unknown repository. A gated `git commit` with an unresolvable cd falls
+# back to base_dir; that is a disclosed limitation, not an oversight (the brief's
+# required behaviours name the wide-add case, and blocking every multi-line commit
+# would be a false-block regression far worse than the gap).
+if unresolved_target and is_add_wide:
+    sys.stderr.write(
+        "[staging-tripwire] BLOCKED — unresolvable target repository.\n"
+        "This command contains a working-tree-wide `git add` AND changes directory in\n"
+        "a form this guard cannot resolve safely, so it cannot tell which repository\n"
+        "would be staged, or judge the staged set against this session's footprint.\n"
+        "\n"
+        "Supported:   a single leading `cd <literal-path> && git add ...`\n"
+        "Unsupported: subshells `( ... )`, `;` or newline sequencing, multiple `cd`s,\n"
+        "             and paths containing variables, globs or `~`.\n"
+        "\n"
+        "STOP and surface to the operator. Then either run the add from inside the\n"
+        "target repository, or stage explicit pathspecs (`git add <path>`), which are\n"
+        "not gated.\n")
+    sys.exit(2)
+
+repo_root = sh(["git", "-C", target_dir, "rev-parse", "--show-toplevel"]).strip()
 if not repo_root:
     sys.exit(0)  # not a git repo → nothing to guard, degrade open
 
@@ -518,12 +582,24 @@ if is_add_wide:
         re.search(r'\bgit\s+add\b[^&|;]*\s(-u|--update)\b', scan)
         and not re.search(r'\bgit\s+add\b[^&|;]*\s(-A|--all)\b', scan)
         and not re.search(r'\bgit\s+add\b[^&|;]*\s\.(\s|$)', scan))
+    # `git add .` stages only what lies under the directory the add RUNS IN. That
+    # directory is target_dir (the pre-command cwd, plus any supported leading `cd`),
+    # so scope the candidate set by target_dir's path RELATIVE TO the resolved repo
+    # root. Deriving it from the repo root rather than from the cd token's raw text
+    # is what lets the nested-repo and same-repo cases share one code path: when
+    # target_dir IS the repo root — `cd nested && git add .`, where the nested dir is
+    # itself a repo — the relative path is "." and nothing is filtered out. The old
+    # text-based version set subdir="nested" against the PARENT repo, where `nested/`
+    # is gitignored, so it filtered every candidate away and passed silently.
     subdir = None
-    mcd = re.search(r'\bcd\s+([^\s;&|]+)\s*&&.*\bgit\s+add\b[^&|;]*\s\.(\s|$)', scan)
-    if mcd:
-        subdir = re.sub(r'^\./', '', mcd.group(1).strip().strip('"').strip("'")).rstrip("/")
-        if repo_name and subdir.startswith(repo_name + "/"):
-            subdir = subdir[len(repo_name) + 1:]
+    if re.search(r'\bgit\s+add\b[^&|;]*\s\.(\s|$|\))', scan):
+        try:
+            _rel = os.path.relpath(os.path.realpath(target_dir),
+                                   os.path.realpath(repo_root))
+        except Exception:
+            _rel = "."
+        if _rel not in (".", "") and not _rel.startswith(".."):
+            subdir = _rel
     for is_untracked, path in porcelain_entries():
         if add_u_only and is_untracked:
             continue

@@ -122,13 +122,25 @@ NOTES
   echo "$root"
 }
 
-# run_hook <cwd> <claude_project_dir> <command>  -> sets RC and OUT
+# run_hook <cwd> <claude_project_dir> <command> [payload_cwd]  -> sets RC and OUT
+#
+# payload_cwd defaults to <cwd>, which is the PRODUCTION shape: a real PreToolUse
+# payload carries a `cwd` key equal to the Bash tool's cwd (verified by execution
+# 2026-08-01 — the live payload keys are cwd, effort, hook_event_name,
+# permission_mode, prompt_id, session_id, tool_input, tool_name, tool_use_id,
+# transcript_path). Pass the literal __OMIT__ to drop the key and exercise the
+# os.getcwd() fallback instead. Until this parameter existed the harness sent NO
+# cwd key at all, so every case tested the fallback and none tested production —
+# the hook could have ignored the payload field entirely and still gone green.
 run_hook() {
-  local cwd="$1" cpd="$2" cmd="$3"
+  local cwd="$1" cpd="$2" cmd="$3" payload_cwd="${4-$1}"
   local payload
   payload=$(python3 -c '
 import json,sys
-print(json.dumps({"tool_name":"Bash","tool_input":{"command":sys.argv[1]}}))' "$cmd")
+d = {"tool_name": "Bash", "tool_input": {"command": sys.argv[1]}}
+if sys.argv[2] != "__OMIT__":
+    d["cwd"] = sys.argv[2]
+print(json.dumps(d))' "$cmd" "$payload_cwd")
   OUT=$(cd "$cwd" && printf '%s' "$payload" | \
         CLAUDE_PROJECT_DIR="$cpd" CLAUDE_CODE_SESSION_ID="$FAKE_SESSION_ID" \
         bash "$HOOK" 2>&1)
@@ -177,6 +189,21 @@ ok=0; [ "$RC" -eq 0 ] && ok=1
 assert "C2_nested_cwd_infootprint_allows" expect_red \
   "exit 0 — parent dirt is unreachable from this cwd" "$ok"
 
+# --- C2b: positive identity for C2 (FP-9 remedy) ----------------------------
+# C2 asserts ONLY `exit 0`, which a dead hook satisfies for free — proven by
+# running the whole harness against a no-op stub, where C2 stayed green. An
+# assertion that cannot fail is not evidence, so C2's green counts only when
+# paired with this companion: the SAME fixture and the SAME command, differing
+# by one file that the nested footprint does not cover. A live hook must block
+# and name it; a dead hook exits 0 and fails here. Do not delete one without
+# the other.
+echo "$(printf 'dirty')" > "$R/parent/nested/late-dirt.txt"
+run_hook "$R/parent/nested" "$R/parent" "git add ."
+ok=0
+if [ "$RC" -eq 2 ] && echo "$OUT" | grep -q "late-dirt.txt" && ! echo "$OUT" | grep -q "parent-dirt.txt"; then ok=1; fi
+assert "C2b_same_fixture_still_blocks_foreign" expect_green \
+  "proves C2's exit 0 came from a LIVE hook, not a dead one" "$ok"
+
 # ===========================================================================
 echo "C3  'cd nested && git add .' must match the C1 decision (currently silent pass)"
 # ===========================================================================
@@ -214,6 +241,35 @@ run_hook "$R/parent" "$R/parent" "git add src/parent-owned.txt"
 ok=0; [ "$RC" -eq 0 ] && [ -z "$OUT" ] && ok=1
 assert "C6_explicit_pathspec_ungated" expect_green \
   "exit 0, no output — explicit adds are not gated" "$ok"
+
+# ===========================================================================
+echo "C7  the payload's cwd governs, not the hook process's cwd"
+# ===========================================================================
+# The two diverge in production the moment the operator's Bash cwd differs from
+# where the hook process happens to start, and the whole repair rests on reading
+# the payload. Here the hook PROCESS runs in the parent while the PAYLOAD says
+# nested: a hook honouring the payload blocks on nested dirt, one falling back to
+# its own cwd blocks on parent dirt. Without this case the hook could ignore the
+# payload key entirely and every other case would still pass.
+R=$(make_fixture c7)
+run_hook "$R/parent" "$R/parent" "git add ." "$R/parent/nested"
+ok=0
+if [ "$RC" -eq 2 ] && echo "$OUT" | grep -q "nested-dirt.txt" && ! echo "$OUT" | grep -q "parent-dirt.txt"; then ok=1; fi
+assert "C7_payload_cwd_beats_process_cwd" expect_green \
+  "judges the payload's repo, not the process's" "$ok"
+
+# ===========================================================================
+echo "C8  no payload cwd -> falls back to the process cwd (compatibility)"
+# ===========================================================================
+# The fallback must keep working: a caller that sends no cwd key (an older or
+# non-Claude-Code invoker) must still be judged against the process cwd rather
+# than crashing or degrading open.
+R=$(make_fixture c8)
+run_hook "$R/parent/nested" "$R/parent" "git add ." "__OMIT__"
+ok=0
+if [ "$RC" -eq 2 ] && echo "$OUT" | grep -q "nested-dirt.txt" && ! echo "$OUT" | grep -q "parent-dirt.txt"; then ok=1; fi
+assert "C8_absent_payload_cwd_falls_back" expect_green \
+  "process cwd still judged when the payload omits cwd" "$ok"
 
 echo
 echo "-------------------------------------------------------------"
