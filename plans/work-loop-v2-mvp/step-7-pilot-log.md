@@ -38,16 +38,25 @@ The seven conditions from Proposal `:98`. Each unit records a verdict against ev
 |---|---|---|---|---|
 | 1 | Useful context preparation | yes | yes | **yes** |
 | 2 | Alignment with the approved project plan | yes | yes | **yes** |
-| 3 | State recovery | n/a | n/a | **pending — staged** |
-| 4 | One bounded correction | not exercised | **yes** | n/a so far |
+| 3 | State recovery | n/a | n/a | **yes, contaminated** |
+| 4 | One bounded correction | not exercised | **yes** | **yes — strongest** |
 | 5 | The Direct Work bypass | n/a | n/a | **still owed** |
 | 6 | Operator intervention | yes ×2 | not needed | **yes** |
-| 7 | Clean fresh-session continuation | partly | n/a | **pending — staged** |
+| 7 | Clean fresh-session continuation | partly | n/a | **yes, qualified** |
 
 **After two units, three conditions have never been exercised — and all three need the same thing:**
 a unit that crosses a real session boundary (3 and 7), and a request small enough to be refused
 admission (5). Both units so far were opened, executed and closed inside one session, and both were
 admitted to the loop. Unit 3 is where these close or are recorded as untested.
+
+**Resolved after Unit 3 (table reconciled 2026-08-01, S14-198).** Rows 3, 4 and 7 above were carried
+as `pending — staged` / `n/a so far` while Unit 3 was open; Unit 3's § Verdicts settled all three on
+observed evidence and the table had not been brought forward. Row 3 is **yes, with a disclosed
+contamination** — every action came from the state file and Git, but `/prime` preloads the prior
+session-notes summary, so a clean-room proof was not obtainable (FP-11). Row 7 is **yes, qualified**
+by the same contamination. Row 4 is **yes, and the pilot's strongest instance** — Codex froze two real
+findings, one a defect the author's own green harness could not see. **Row 5 alone remains owed**, and
+it is the finding that matters most (§ The pilot's own result).
 
 **At least one Standard-lane unit must need a session handoff mid-task** (Proposal `:96`). That unit
 is what exercises rows 3 and 7 for real. It cannot be done inside a single session — it requires a
@@ -762,3 +771,52 @@ regression-covered, and honestly documented including two gaps it does not close
 defects fixed along the way were found by the *review*, not by the protocol around it. See
 § The pilot's own result above before deciding; the split between review and bookkeeping is the
 decision that actually matters.
+
+---
+
+### The decision — 2026-08-01, S14-198
+
+**Exit accepted, with a v0.2 rework.** The operator's call, taken on the input above and on
+§ The pilot's own result. In the operator's terms: the loop did help real project work get done, and
+the shape it did it in is not the shape to keep.
+
+**What that means, stated so a later session does not have to infer it:**
+
+1. **The pilot is closed.** Three units ran, all genuine, all closed by Codex. Six of seven conditions
+   are settled on observed evidence (§ What the pilot tests, reconciled the same session). Condition 5
+   is **recorded as untested, not as failed** — see § 3 below.
+2. **The adversarial review is kept.** It is the component the evidence supports without qualification,
+   and it is the one a self-review structurally cannot supply.
+3. **Most of the bookkeeping goes** in v0.2 — the state-file ceremony, turn flags, unit numbering, and
+   the operator acting as message bus between two models. Scope and shape are **not decided here**;
+   this decision only fixes the direction.
+4. **v0.2 is post-MVP work, not Step 8 work.** The mission's Step 8 ends *"stop; do not keep designing
+   it."* Designing v0.2 inside Step 8 would turn the MVP's final step into the next project. Step 8
+   is re-scoped accordingly (§ Step 8 after the exit decision, below).
+
+**Condition 5 — closed as untested.** The Direct Work bypass never fired in three units, and the
+standing constraint forbids manufacturing a unit to exercise it. It is recorded here as **untested,
+with the reason**, rather than left open indefinitely or quietly marked satisfied. Its evidence is
+negative and is itself a finding: a bypass that never fires in three consecutive genuine units is
+evidence about the *admission rule*, not a gap in the pilot. **This is the single strongest input to
+the v0.2 rework** and should be the first thing that design session reads.
+
+**Acceptance assertion amended the same session (operator decision).** The mission's assertion
+*"At least two real CRM / Email OS units have completed through the loop"* named a domain the pilot
+did not use: all three units were `ai-resources` / `axcion-systems-builder` infrastructure. The
+constraint's substance — *genuine units the operator wanted done anyway, never manufactured* — was met
+in full. The assertion was amended to match the substance rather than read as satisfied against its
+literal wording. Recorded at `logs/missions/work-loop-v2-mvp.md`, assertion 8.
+
+### Step 8 after the exit decision
+
+The exit decision changes what Step 8 contains. Recorded here because the mission thread's wording
+predates it.
+
+| Step 8 item | Status after the decision |
+|---|---|
+| Fix demonstrated blockers — portable installation (a–d) | **Deferred to v0.2.** It would build a distribution route for a command, skill and core that the rework changes. Building it now is work done twice. The blocker itself is unchanged and stays named in the mission thread |
+| Run the regression set | **Baseline only.** The 149-assertion harness stands as the record of what v0.1 did; a v0.2 rework will invalidate much of it, so it is not extended here |
+| Post-pilot assessment | **Done** — § The pilot's own result plus this section are it |
+| Execute v1 retirement | **Unchanged and still owed.** Independent of the v2 shape; Option A stands. Gated on one risk-aware Codex review of the six prerequisites in `step-7-v1-retirement-decision.md` § 4. Not executed this session |
+| Stop | Applies

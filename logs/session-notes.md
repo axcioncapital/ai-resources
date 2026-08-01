@@ -1186,3 +1186,12 @@ granted, and would have created a standing exception to a non-existent prohibiti
 ### Open Questions
 - Whether v0.2 keeps the adversarial review and sheds the bookkeeping. The evidence points there; the
   call is the operator's and is not made here.
+
+## 2026-08-01 — Session S14-198
+**Mandate:** Make the Work Loop v2 pilot exit decision (Step 7), then execute Step 8 — retirement obligations plus the installation blocker — done when: the exit decision is written into `plans/work-loop-v2-mvp/step-7-pilot-log.md` § Pilot exit condition, Step 8's retirement obligations are executed with the mission's Step 8 thread ticked and evidenced, and the installation blocker has either a landed fix or a written scoped decision on disk.
+- Out of scope: manufacturing pilot condition 5 (the Direct Work bypass) — it must arrive on its own from a genuinely small real fix; the v0.2 redesign question (keep the adversarial review, shed the bookkeeping), which is an open operator question.
+- Files in scope: plans/work-loop-v2-mvp/step-7-pilot-log.md, plans/work-loop-v2-mvp/step-7-v1-retirement-decision.md, plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md, logs/missions/work-loop-v2-mvp.md, .claude/commands/work-loop-v2.md, .agents/skills/work-loop-v2
+- Stop if: the pilot exit decision cannot be made from what is already written (surface to the operator rather than deciding it); or the installation contract turns out to need a new subsystem rather than a bounded fix.
+- Mission: work-loop-v2-mvp
+
+**Work:** Continue Work Loop v2 — pilot exit decision (Step 7) then Step 8 retirement obligations and the installation blocker

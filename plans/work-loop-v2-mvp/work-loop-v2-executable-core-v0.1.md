@@ -72,6 +72,8 @@ A task usually takes several units.
 4. **Execute.** Claude checks the brief's claims first (§ 6, rule 1), then implements, then writes
    the result and the evidence into the state file.
 5. **Assess.** Codex reads the result and decides one of three things: close, correct once, or stop.
+   **The closing decision is Codex's.** § 4's "Who commits: Claude" is a `.git`-access fact and does
+   not restrict Codex's verdict — Codex closes, Claude writes and commits the closing record.
 6. **Close, correct once, or stop.**
 
 ### The "good enough, proceed" judgment
@@ -229,6 +231,11 @@ material result and let Git hold the history.
 > committing. It follows what Step 2 observed: Codex can write repository files, but was refused
 > write access to `.git`, the folder Git keeps its own records in.
 > See `step-2-transport-seam-conclusions.md` § 2.
+>
+> **This is a commit restriction, not a verdict restriction.** It does not limit what Codex may
+> decide. § 3 step 5 assigns closure to Codex; this rule only says who runs the commit afterwards.
+> *(Added 2026-08-01, S14-198 — FP-12: Codex read this rule as a prohibition on approving or closing
+> work and stopped mid-unit. The two sections did not point at each other.)*
 
 ---
 
