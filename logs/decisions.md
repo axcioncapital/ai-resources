@@ -351,3 +351,40 @@ not it enters the loop.
 **Wider point this is an instance of.** External review input is a brief like any other and its
 premises are verified before adoption. Here the reviewer was sincere, specific, and wrong about which
 document it was quoting — which is exactly the failure mode the folder README was written to prevent.
+
+## 2026-08-01 — Amended the work-loop-v2-mvp mission's frozen acceptance assertion 1
+
+**Context.** The prior session (S3-19b) settled that Claude, not Codex, commits the Work Loop v2
+task-state file — forced by Step 2's finding that Codex is refused write access to `.git` in two
+independent sessions, with a positive control proving it is not a repository fault. That decision
+amended the Proposal's destination behaviour 1, but the mission's validation contract — frozen at
+mission creation, before implementation began — still carried the pre-amendment wording ("Codex …
+writes a bounded brief into a task-state file, and commits it"). As written, the mission could not
+satisfy its own definition of done. S3-19b deliberately left the choice to the operator rather than
+deciding it.
+
+**Decision.** Amend acceptance assertion 1 to read "Codex is given an objective and writes a bounded
+brief into a task-state file; **Claude commits it** — the operator transports nothing by hand." The
+date, the original wording, and the basis are recorded inline beside the assertion in
+`logs/missions/work-loop-v2-mvp.md`, and the resolution is cross-referenced in
+`plans/work-loop-v2-mvp/README.md`.
+
+**Rationale.** A contract that cannot be satisfied measures nothing. The alternative — leaving the
+freeze absolute and recording a standing divergence — keeps the freeze more literally intact, but
+means the assertion is either waived at mission close or blocks closure permanently. A waived
+assertion teaches the habit of waiving assertions, which is worse than a recorded, reasoned amendment.
+The amendment is narrow by design: it does not lower the bar the assertion sets. The substance —
+a bounded brief reaches the state file and is committed, with nothing carried by hand — is unchanged.
+Only who runs the commit changed, and that changed on evidence, not preference.
+
+**Alternatives considered.**
+- **Record the divergence, do not edit the frozen contract.** Rejected — keeps the mission
+  permanently unable to close against its own literal text, and pushes the judgment call to whoever
+  closes the mission later, with less context than the operator has now.
+- **Leave it open, decide at mission close.** Not offered as an option — the contradiction was already
+  known and named at S3-19b; deferring a known, resolvable contradiction serves no one.
+
+**Scope of the amendment.** This is the *only* edit made to `work-loop-v2-mvp.md`'s frozen prefix
+(`## Goal` through `## Validation contract`). Verified by hashing the prefix before and after both the
+`/mission update` and `/mission check` operations that touched the file this session — byte-identical
+in both cases, confirming nothing else in the frozen contract moved.

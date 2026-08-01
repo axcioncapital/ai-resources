@@ -2,82 +2,6 @@
 
 > Archive: [session-notes-archive-2026-07.md](session-notes-archive-2026-07.md)
 
-## 2026-07-29 — /leverage-idea → routing-and-handoff command: qualified, built, gated, committed (merge pending)
-
-### Summary
-Ran `/develop-ai-resource` on `inbox/leverage-idea-lifecycle-routing.md` — the raw brief routed out of
-`/work-loop`'s `2026-07-29-leverage-idea-lifecycle-frame` unit. Qualified through Step 1 (verdict:
-improve an existing shared resource, no new component), built the expansion (Step 2), self-verified by
-execution and a simplify pass (Step 3), then ran independent `/qc-pass` + `/risk-check` on operator
-authorization. Both returned non-passing verdicts; all findings were independently re-verified, fixed
-(re-QC waived by the operator), and the candidate was committed. Landed in this worktree
-(`session/2026-07-29-leverage-idea`, commit `b2bb1bd`); merging into `main` was scoped, dry-run
-verified clean, and left pending for the operator to trigger.
-
-### Decisions Made
-- **(Claude, `/develop-ai-resource` Step 1.6)** Verdict: improve an existing shared resource —
-  `.claude/commands/leverage-idea.md`, no new component. Mechanism is direct edit, not `/improve-skill`
-  (object is a command, not a skill). Complexity budget cleared on both prongs (net-simplification +
-  cited evidence in `logs/improvement-log.md` 2026-07-12).
-- **(Operator)** Authorized fresh-context subagents specifically for `/qc-pass` and `/risk-check` on
-  this candidate (the session's default posture otherwise excludes the Agent tool), with a conditional
-  rule: both PASS/GO → commit; either non-passing → stop and show findings before committing.
-- **(Operator)** Keep the tracked `inbox/` write on the new-AI-resource route — the one genuinely new
-  behavior flagged at the Step 4 report.
-- **(Operator)** No edits to the System Owner sibling repo (`projects/axcion-ai-system-owner/`) in this
-  change; `toolkit-relationship.md`'s stale `/leverage-idea` row is a named, deferred follow-up.
-- **(Operator, risk-accepted — logged to `decisions.md`)** After both gates returned non-passing
-  verdicts: apply the identified fixes and commit, **skipping the re-QC** that would ordinarily follow
-  a QC-REVISE fix pass. See `decisions.md` 2026-07-29 for rationale and alternatives considered.
-- **QC fixes applied** (`qc-reviewer` verdict: REVISE, all three fixed): `develop-ai-resource.md:22`
-  stop-point wording updated (`/leverage-idea` no longer described as stopping at a plan); Step 7's
-  `## Capability` heading-form clause added, preventing a brief from this command's own main route
-  from tripping `/develop-ai-resource` Step 1.0's malformed-upstream-handoff check; `WORKSPACE` in the
-  Step 4 investigator brief redefined by ancestor walk-up instead of parent-of-`AI_RESOURCES` (latent,
-  not live today, but wrong once a worktree sits outside the workspace root).
-- **Risk-check mitigations dispositioned** (`risk-check-reviewer` verdict: PROCEED-WITH-CAUTION, blast
-  radius High — inherent to the 14-project symlink fan-out): `toolkit-relationship.md` — DEFERRED
-  (sibling repo excluded by operator instruction); stale `leverage-idea.md` line citations in four
-  `plans/2026-07-28-develop-capability-build-plan*.md` files — DECLINED (all four carriers are
-  SUPERSEDED/HALTED with DO-NOT-IMPLEMENT banners; the live build authority cites the command nowhere);
-  `/work-loop` input-shape compatibility — VERIFIED (accepts a plain-English need, matching the payload
-  shape this command now hands it).
-
-### Risky actions
-The first commit attempt silently staged only the brief's deletion — a prior `git rm` had already
-removed `inbox/leverage-idea-lifecycle-routing.md` from the pathspec list, so the follow-on `git add`
-with that stale path in it aborted with a fatal pathspec error and staged nothing else, but the
-subsequent `git commit` still ran against whatever was already staged (the deletion alone) rather than
-failing loudly. Caught immediately by the mandated post-commit `git show --stat` self-verification,
-before any push; corrected by re-staging the full file set and amending. No push occurred against the
-incomplete commit. Worth a structural look: a `git add` that partially fails on a multi-path invocation
-should probably be treated as blocking, not silently proceeding to commit whatever did stage.
-
-### Findings Declined
-- Stale `/leverage-idea.md` line-number citations in four `plans/2026-07-28-develop-capability-build-plan*.md`
-  files — not queued: all four carriers are SUPERSEDED/HALTED with DO-NOT-IMPLEMENT banners, and the
-  live build authority (`plans/2026-07-28-work-loop-consolidated-build-plan.md`) cites the command
-  nowhere. No live consumer to protect. (Full check: this session's `/risk-check` report.)
-
-### Next Steps
-- **Land the branch.** `session/2026-07-29-leverage-idea` is 7 commits ahead of `main`; a dry-run merge
-  (`git merge-tree --write-tree`) came back clean with no conflicts. Run
-  `git -C ".../ai-resources" merge session/2026-07-29-leverage-idea` from the main checkout, then decide
-  on push (gated, per this session's wrap prompt below).
-- **The branch has no upstream and is not on GitHub** — until merged or pushed, these 7 commits exist
-  on this machine only. Do not delete the `ai-resources-leverage-idea` worktree before that happens.
-- Separate follow-up session: update `projects/axcion-ai-system-owner/references/toolkit-relationship.md`
-  § 2's `/leverage-idea` row (sibling repo, excluded from this change by operator instruction) — now
-  queued in `logs/improvement-log.md` 2026-07-29 (severity medium-high) so it stays reachable.
-- 5 of 6 commands remain unretrofitted for the `general-purpose` dispatch-pinning carve-out (`tweak`,
-  `decide`, `graduate-resource`, `promote-workflow`, `wrap-session`) — tracked, not blocking.
-- New this session: a `git add`-with-stale-pathspec near-miss queued to `logs/improvement-log.md`
-  2026-07-29 (severity medium) — see § Risky actions above.
-
-### Open Questions
-Whether to merge into `main` and/or push now, or leave both for a later session — explicitly left to
-the operator, not yet decided as of this wrap.
-
 ## 2026-07-29 — Closed the review-layer-consolidation work-loop stream at G2
 
 ### Summary
@@ -610,3 +534,94 @@ brief into a task-state file, and commits it"* — which the settled "Claude com
 contradicts. The contract is frozen at mission creation, so this session did not edit it. **As it
 stands, the mission cannot satisfy its own definition of done.** The operator decides: amend the
 assertion, or accept and record the divergence.
+
+## 2026-08-01 — Session S4-1bc
+
+**Mandate:** Write the Work Loop v2 MVP slice plan as one short note covering the three Proposal slices with a few observable acceptance behaviours each, and put the mission-contract contradiction to the operator for a decision — done when: `plans/work-loop-v2-mvp/step-4-slice-plan.md` exists and is committed with all three slices present, each carrying observable acceptance behaviours and the Slice 1 split point recorded; the operator has glanced at it; and the mission-contract contradiction has the operator's decision, recorded in the plan README and (if amended) in the mission file.
+- Out of scope: implementing any slice (Step 5); reopening any settled decision in Proposal Section 3 or changing the stated transport; anything from the Complete System explainer (Document 4) — destination reference only, creates no requirements; editing, retiring or "aligning" Work Loop v1; ticket machinery (`/to-tickets` in spirit only).
+- Files in scope: logs/missions/work-loop-v2-mvp.md, plans/work-loop-v2-mvp/README.md, logs/session-notes.md
+- Stop if: a slice cannot be given acceptance behaviours without reopening a settled Proposal decision or making a Proposal-level call — surface it to the operator rather than deciding it; or Document 4 is the only source for something the slice plan would contain.
+- Allowed inputs: plans/work-loop-v2-mvp/README.md, plans/work-loop-v2-mvp/work-loop-v2-mvp-proposal-v0.4.md, plans/work-loop-v2-mvp/pocock-lifecycle-work-loop-mvp-v0.4.md, plans/work-loop-v2-mvp/skill-writing-standard-work-loop-v0.2.md, plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md, plans/work-loop-v2-mvp/step-1-codex-packaging-findings.md, plans/work-loop-v2-mvp/step-2-transport-seam-conclusions.md, plans/work-loop-v2-mvp/qc-process-v0.1.md, logs/missions/work-loop-v2-mvp.md
+- Required outputs: plans/work-loop-v2-mvp/step-4-slice-plan.md, logs/next-up.md
+- Mission: work-loop-v2-mvp
+
+**Work:** Work Loop v2 MVP Step 4 — write the slice plan with acceptance behaviours
+
+### Summary
+Wrote the Work Loop v2 MVP Step 4 slice plan — three slices, four acceptance behaviours each, every
+behaviour carrying a constructible failing case and a trace to a Proposal destination behaviour or a
+core section. Reconciled all eight Phase 4 regression items against the slices (six map, two are
+built by nothing, correctly). Resolved the operator-escalated mission-contract contradiction from the
+prior session: acceptance assertion 1 amended so "Claude commits" is now the mission's own definition
+of done, not a standing divergence from it. Mid-session, a concurrent session wrapped and wrote its
+own commit while this session was still working; verified no cross-contamination.
+
+### Decisions Made
+
+**On the slice plan's design (local, reversible, recorded in the note itself)**
+- **Slice 1's split point made concrete.** Playbook and Proposal both permit splitting Slice 1 at the
+  Codex-side/Claude-side boundary but do not say which half goes first. Chose Claude side first
+  (1.2 verify-premises/refuse-false-premise, 1.3 execute-and-evidence): it can be exercised against a
+  hand-written state-file fixture without waiting on the Codex resource, and 1.2(b) is Phase 2's own
+  stated exit condition — it must not be the deferred half.
+- **File-identity rejection (2.2) placed in Slice 2, not Slice 1.** The Step 2 prototype could not
+  exercise it — a stale leftover cannot arise in a single clean round trip
+  (`step-2-transport-seam-conclusions.md` § 5) — so it belongs with the slice that tests continuity,
+  not the one that proves the seam.
+- **Mid-unit deferral (3.3) and closure-check deferral (2.3) kept as separate behaviours.** The
+  writing standard's § 8 failing-case table lists them apart; building one does not exercise the
+  other.
+- **Two non-behaviour build obligations recorded in the note rather than assumed carried forward** —
+  the Codex resource's `.gitignore` re-include, and reliance on explicit `$name` invocation (over-cap
+  description budget: 12,963 chars against an 8,000-char fallback cap). The Playbook tells a Step 5
+  session to load only the slice note and the core and nothing else from planning history
+  (`:129`), so anything true but unwritten here is invisible to that session.
+
+**On the mission-contract contradiction (operator, offered two options, chose one)**
+- **Amended acceptance assertion 1** rather than recording a standing divergence. Original: "Codex …
+  writes a bounded brief into a task-state file, and commits it." Now: "…Claude commits it." The
+  amendment does not lower the bar — the substance (a bounded brief reaches the state file and is
+  committed, operator transports nothing by hand) is unchanged; only who runs the commit changed, on
+  the Step 2 evidence that Codex was refused write access to `.git` in two independent sessions with
+  a positive control proving it is not a repository fault. Date, original wording, and basis recorded
+  inline beside the assertion — the only amendment made to the frozen contract; the freeze otherwise
+  stands. Recorded in `plans/work-loop-v2-mvp/README.md` too, so a reader following either document
+  sees the resolution.
+
+**On my own commit (Claude, forced by a guard)**
+- **Replaced my mandate's `Files in scope: (inferred)` with the concrete paths already confirmed with
+  the operator at plan time.** The `check-foreign-staging.sh` guard blocked the first commit attempt:
+  a live per-id marker from an unrelated abandoned session (`S2-af1`, 12:03) made this look like the
+  highest-risk concurrent-session shape, and the guard correctly refused to guess which staged files
+  were mine. Fixed per the guard's own prescribed remedy rather than working around it.
+
+### Outcome
+Outcome check skipped (not requested).
+
+### Risky actions
+Two, neither destructive. First: the mission file's frozen-contract prefix (`## Goal` through end of
+`## Validation contract`) was edited via `/mission update` then `/mission check`, hashed before and
+after each operation and verified byte-identical both times — the amendment landed only inside
+`## Open threads`, per the mission subsystem's own contract. Second: a concurrent session committed
+(`382f449`) to this same repo mid-session, staging files this session did not author. Caught by the
+`check-foreign-staging.sh` guard before the first commit attempt; resolved by declaring a concrete
+`Files in scope` footprint rather than overriding the guard. No foreign file was included in either
+of this session's two commits.
+
+### Findings Declined
+- **Leftover per-id session marker (`logs/.session-marker-af1a2dc7-...`, S2-af1, stale since 12:03)
+  is what triggered the guard's highest-risk branch.** Not queued as a new finding — this is a fresh
+  instance of an already-tracked mission thread (`repo-health-backlog-2026-07`, item 3 /
+  `next-up.md` marker-teardown entries), not a new defect. No new entry needed.
+
+### Next Steps
+- **Step 5 — implement Slice 1 (core round trip), fresh session, red-green.** Load only
+  `plans/work-loop-v2-mvp/step-4-slice-plan.md` and the executable core — nothing else from planning
+  history (Playbook `:129`). Build the Claude side (1.2, 1.3) first per the recorded split-point
+  rationale.
+- Watch for the untested premise the slice note flags: whether explicit `$name` invocation is
+  reliable under Codex's over-cap description budget. If Slice 1 fails at invocation, check that
+  before debugging the loop logic itself.
+
+### Open Questions
+None.

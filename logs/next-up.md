@@ -37,3 +37,7 @@ Promoted findings carry their source and a content-derived id; tick an item to r
 - [ ] Hook BODIES are versioned; hook WIRING is not — a clone gets the guards' code and none of their protection, silently — `logs/improvement-log.md` <!-- promote:379fec7dc59a -->
 - [ ] The two deny rules that block ordinary git work — DEFERRED to /friday-act, and my proposed fix was WRONG — `logs/improvement-log.md` <!-- promote:8717826ef775 -->
 - [ ] A `/clarify`-first session gets no marker, so the wrap guard classifies its own work as foreign and halts the wrap — `logs/improvement-log.md` <!-- promote:b9a7d0e41983 -->
+
+- [ ] A settled operator decision now contradicts a FROZEN mission acceptance assertion, and nothing reconciles them — `logs/improvement-log.md` <!-- promote:e997f725ba3a -->
+
+- [ ] `wrap-session` Step 6.6 tells every wrap to stage `logs/next-up.md`; `check-foreign-staging.sh` blocks every wrap that does — `logs/improvement-log.md` <!-- promote:2d5d04e385d4 -->
