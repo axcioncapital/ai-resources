@@ -217,6 +217,41 @@ get a project that looks installed and is not.
 project — at which point this stops being one project's local state and becomes a distribution
 problem.*
 
+##### The trigger has FIRED — found 2026-08-01, and it was already true when FP-3 was written
+
+v2 is installed in **three** projects, not two. Verified by scanning every `projects/*/` for the
+command, the skill and the core path:
+
+| Project | Command | Skill | Core path resolves? |
+|---|---|---|---|
+| `ai-resources` | native | native | yes |
+| `axcion-systems-builder` | symlink | symlink | yes, via the third symlink |
+| **`axcion-design-studio`** | **a real byte-identical COPY**, `2026-08-01 18:33` | **absent** | **no** |
+
+`axcion-design-studio` is the failure mode in its pure form: the command is present, so the project
+**looks** installed, and the command's *first instruction* — read the core — cannot resolve, because
+`plans/work-loop-v2-mvp/` does not exist there. No Codex skill, so Codex has no route in. No
+`logs/work-loop/`, so there is nowhere to write. It is a **copy, not a link**, so it will drift from
+the canonical command silently and nothing will report the divergence.
+
+It predates the systems-builder install by about an hour, so FP-3's count was wrong at the moment it
+was written — the third-project condition was already met and went unobserved.
+
+**Classification unchanged in kind, changed in status:** FP-3 stays a TRIGGER by class; its trigger
+has now fired, which is the mechanism by which it legitimately enters scope without being an
+OBSTRUCTION. The pilot's presumption of no change is respected — a fired trigger is a recorded
+condition being met, not scope creep.
+
+**Disposition, operator-directed 2026-08-01** (the operator raised installation portability as a
+proposed item and directed that it be added if absent). Split on the MVP's own boundary, because
+Step 8 says *"fix demonstrated blockers only"* and ends with *"stop; do not keep designing it"*:
+
+- **Into Step 8** — the demonstrated, bounded half. See the Step 8 thread in
+  `logs/missions/work-loop-v2-mvp.md`.
+- **Post-MVP, its own thread** — the full installation contract, `/new-project` scaffolding, the
+  update path for existing projects, and fresh-checkout verification. Justified now that the trigger
+  has fired, and deliberately not folded into the MVP's final step.
+
 ### Resolution of FP-1 and FP-2
 
 Operator-directed, 2026-08-01. Three symlinks created in `projects/axcion-systems-builder`, each
