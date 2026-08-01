@@ -77,7 +77,37 @@ the pre-correction command carried the same `(core § 7)` pointer.
 
 ---
 
-## Test 2 — Codex side, corrected skill, non-qualifying admission request ⏳ NOT RUN
+## Test 2 — Codex side, corrected skill, non-qualifying admission request ✅ PASS
+
+**Run 2026-08-01 by the operator in a fresh Codex session.** Codex's full reply:
+
+> No loop task opened. Core §2 explicitly excludes "this feels significant" as a qualifying reason,
+> and wording polish appears small and reversible—so Direct Work applies.
+> **Next:** have Claude do this directly — no loop task.
+
+All four pass conditions met:
+
+| Condition | Evidence |
+|---|---|
+| 1. Engages with a chat-pasted request; does not wait for a state file | It answered substantively. This is the live re-test of finding A — the same request was invisible to Codex before that fix |
+| 2. Refuses, naming the reason non-qualifying under core § 2 | "Core §2 explicitly excludes 'this feels significant' as a qualifying reason" |
+| 3. **No state file created** | Verified on disk: `logs/work-loop/` holds 14 entries, exactly the known fixture set; `git status` clean |
+| 4. Next routes to the operator or Direct Work, not to Claude | "**Next:** have Claude do this directly — no loop task" |
+
+Two things worth recording beyond a bare pass:
+
+- **The Next line is verbatim row three of the skill's routing table** (`— (Direct Work, no file)`).
+  Codex reached the table and used it exactly, which is finding A's correction firing in live use
+  rather than in a fixture.
+- **Codex applied the admission test twice over, not once.** It cited core § 2's exclusion *and*
+  independently judged the work "small and reversible" — the positive Direct Work limb of core § 2.
+  It did not stop at the disqualifying reason. That is the test applied more completely than the pass
+  condition required, and it is evidence the linked rule is being *read* rather than pattern-matched
+  from a copy in the skill — the copy no longer exists there.
+
+Harness re-run after this test: **149 passed, 0 failed, exit 0.** Working tree unchanged.
+
+### (Original specification of this test, kept for the record)
 
 **Required:** in a fresh Codex session, give the corrected skill a non-qualifying admission request
 directly in conversation. It must apply core § 2, open no state file, and route the Next instruction
@@ -124,8 +154,22 @@ Unchanged by the live run, as expected — the run mutated nothing.
 
 ---
 
-## What clears the closure
+## The closure clears — 3 of 3
 
-Codex's verdict: *"If both live checks pass, no code change is needed and the closure may clear on
-that evidence."* Test 1 and Test 3 have passed. **Test 2 is outstanding.** Until it runs, Step 6 is
-not complete, the accepted commit is not recorded, and the mission's Step 6 thread stays unticked.
+Codex's verdict set the condition in advance: *"If both live checks pass, no code change is needed
+and the closure may clear on that evidence."*
+
+| Test | Result |
+|---|---|
+| 1 — Claude side, foreign-state rejection | ✅ PASS, independently verified |
+| 2 — Codex side, non-qualifying admission | ✅ PASS, verified on disk |
+| 3 — harness | ✅ PASS, 149/0, exit 0 |
+
+**No code change was needed.** Both live checks passed, so the permitted final fix was consumed as
+verification only — exactly as Codex specified. The candidate bytes are unchanged since `fc6c07c`.
+
+**Who cleared it, stated plainly.** Codex pre-authorised the clearing conditional on this evidence,
+and the evidence is objective and re-checkable by anyone: blob hashes, a file count, a harness exit
+code. Claude did not substitute its own judgment for the reviewer's. If the operator prefers explicit
+confirmation rather than a pre-authorised condition, this file is the thing to send back — nothing
+further has been built on top of it that would need unwinding.

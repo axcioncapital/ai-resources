@@ -39,11 +39,24 @@ candidate review."*
 | `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` | `baf753b1b87e147bbb43a021fb17d821e35d5ac9` |
 | `logs/scripts/work-loop-v2-slice-1.test.sh` | `06b5b17377a1ef5c2db9d72bad49801356d7da68` |
 
-**The candidate has since moved.** Corrections for findings A and B landed at **`edd0d97`**, so the
-three files above other than the command now differ from what was reviewed. This is legitimate — it
-is the one correction pass the protocol provides for — but it means **the candidate that gets
-accepted is `edd0d97` or later, not `cc443e1`.** Whoever closes this must re-record the accepted
-commit and its hashes. Do not write `cc443e1` into the acceptance.
+**The candidate has since moved.** Corrections for findings A and B landed at `edd0d97`, and the
+finding C correction at `fc6c07c`. `cc443e1` is the *reviewed* commit and is not the accepted one.
+
+### ✅ ACCEPTED CANDIDATE — commit `fc6c07c`
+
+Accepted 2026-08-01, session S10-7e5, after the closure check cleared on live evidence
+(`step-6-live-verification.md`). **Approval attaches to these bytes, never to a name:**
+
+| File | Lines | Blob hash accepted |
+|---|---|---|
+| `.claude/commands/work-loop-v2.md` | 113 | `82ff6ebb79ccd63b28407298118ac964eef3dba1` |
+| `.agents/skills/work-loop-v2/SKILL.md` | 116 | `7eb64cb851756d81ad9dd1041a1ee7e93dc06918` |
+| `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` | 293 | `4790ede0ff1d4939e7320bc800e0fb8b351fbb06` |
+| `logs/scripts/work-loop-v2-slice-1.test.sh` | 673 | `19ede0ec380658eba516492d131747b1889ca70a` |
+
+Verify with `git hash-object <path>`. If any differs, a new candidate exists and this acceptance does
+not cover it. Acceptance state: harness **149 passed, 0 failed, exit 0**; three findings corrected;
+two live invocations of the corrected prompts passed.
 
 **Who reviewed.** Codex, fresh context, briefed by `step-6-review-brief.md`. Claude authored all four
 candidate files and was therefore ineligible (`qc-process-v0.1.md` rule 2: the author does not grade
@@ -234,7 +247,39 @@ Items 1 and 2 are now corrected. Items 3, 4, 5 carry into the accepted candidate
 - Revisit bare Codex task discovery only if manual task identification becomes observed pilot
   friction. *(Partly overtaken: bare discovery was demonstrated working this session.)*
 
-## 9. State of Step 6 — one item outstanding
+## 8.5. DISCLOSED LIMITATIONS — what the pilot carries
+
+Step 6's exit condition. Each is recorded, not hidden; the reviewer judged each an acceptable
+disclosed limitation for a pilot-quality candidate rather than a material finding.
+
+1. **Folder creation from a genuinely absent `logs/work-loop/` is untested.** The folder existed
+   throughout all three slices, so the case was unconstructible. It bites only on a fresh checkout.
+2. **Most opening briefs were hand-written fixtures.** Codex genuinely opening a unit was
+   demonstrated in Slice 1 and again in the Step 6 admission run; Slices 2 and 3 used fixtures.
+3. **Slice 2's menu task's first pass and assessment block are fixture material.** Its correction
+   hand-back and closure are real.
+4. **The writing standard's internal tension is unresolved** — "never restate the core" versus its
+   requirement that stop conditions name their on-stop behaviour. The accepted practical boundary:
+   link the shared trigger and rule; keep only actor-specific on-stop mechanics. The standard was
+   deliberately **not** edited during Step 6. *Reopening trigger: pilot use shows the boundary is
+   unclear or causes drift.*
+5. **Core § 6 rule 2 and core § 7 contradict each other for the file-identity case.** Rule 2 says
+   report and change nothing; § 7's operator-stop procedure says write the question into the state
+   file, set `turn: operator`, and commit. Both cannot hold. Found by a fresh reader during live
+   verification, recorded as a deferral under closure-check discipline, and confirmed **pre-existing**
+   rather than correction-caused. The command resolves it toward changing nothing. *Reopening
+   trigger: a pilot unit where the ambiguity produces a wrong action, or the first time the core is
+   revised for any reason.*
+6. **Behavioural evidence is largely historical.** Most harness assertions read outcomes from git
+   history rather than re-running the prompts. Two live invocations were added at closure precisely
+   because of this, but they cover two behaviours, not twelve. *Reopening trigger: the pilot is the
+   real test; a behaviour that fails there should be suspected of never having been re-verified after
+   a prompt change.*
+
+Items 1–3 were carried by the reviewer from § 7. Items 4–6 were added by the finding C correction and
+its closure check.
+
+## 9. State of Step 6 — complete
 
 **Done (session S10-7e5, 2026-08-01):**
 
@@ -246,22 +291,23 @@ Items 1 and 2 are now corrected. Items 3, 4, 5 carry into the accepted candidate
    intake, the three-case Next table, the `logs/work-loop/` rule, the no-git boundary); finding B's
    closed-set state-file check untouched in the harness.
 
-**Outstanding — the closure check, which is the reviewer's move, not Claude's:**
+5. ✅ **Closure check run** — by Codex, scoped to core § 3's two questions
+   (`step-6-closure-check-brief.md`). It returned **not resolved yet**: A, B and C were structurally
+   resolved and the harness green, but the harness's behavioural assertions read outcomes produced by
+   the *pre-correction* prompts from git history, so they could not show that a model reading the
+   *corrected* prompts still behaves correctly. A fair objection, and one Claude had missed.
+6. ✅ **Live verification** — Codex chose core § 3's "one final tightly bounded fix" and spent it on
+   verification rather than on code. All three checks passed and **no code change was needed**:
+   Claude-side foreign-state rejection (fresh-context, independently verified), Codex-side
+   non-qualifying admission (verified on disk), harness 149/0. Record:
+   `step-6-live-verification.md`.
+7. ✅ **Accepted candidate recorded** — commit `fc6c07c` and its four blob hashes, § 2.
+8. ✅ **Disclosed-limitations list written** — § 8.5, six items, each with a reopening trigger.
+9. ✅ **Mission Step 6 thread ticked** with evidence.
 
-Codex answers **two questions and nothing else** (core § 3): *are A, B and C resolved, and did the
-correction break something?* Scope brief: `step-6-closure-check-brief.md`. A second broad review is
-forbidden by the mission's non-negotiables — anything newly noticed becomes a deferral.
-
-**Then, and only after the closure check passes:**
-
-5. **Re-record the accepted candidate** — its commit and the four blob hashes, per § 2. Neither
-   `cc443e1` (reviewed) nor the correction commit is the accepted one until the check clears.
-6. **Write the disclosed-limitations list**: items 3, 4 and 5 from § 7, plus Codex's deferral on the
-   writing standard's stop-condition tension (§ 6).
-7. **Tick the mission's Step 6 thread** with evidence, and commit.
-
-The thread is deliberately **not** ticked yet. Ticking before the closure check would close Step 6 by
-assertion, which is the failure mode this mission has already recorded once.
+**Step 6 is complete.** The thread was held unticked until the closure cleared on evidence; ticking
+it earlier would have closed Step 6 by assertion, the failure mode this mission has already recorded
+once.
 
 Then Step 7 begins with the v1 retirement decision, which is a hard boundary at pilot start and does
 not slip past it.
