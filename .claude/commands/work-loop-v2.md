@@ -26,6 +26,8 @@ Read the repository, not the conversation. Core § 3 step 1: do not rebuild the 
 
 If `turn:` is not `claude`, stop and say whose move it is. Change nothing.
 
+If `## Next action` opens with `Correct once — frozen findings:`, this invocation is the one bounded correction, not a new unit — go to **Correction rounds** below and skip Steps 2–5.
+
 ## Step 2 — Check the premises before acting
 
 Core § 6 rule 1. Take every claim under `## Brief` → `Check against the repository:` and check it **by inspection** — open the file, run the grep, read the line. Not by recall.
@@ -76,6 +78,15 @@ Evidence: <the check, what it returns now, and what it returned before>
 The state file is current truth, not a diary (core § 4). Replace the previous result; do not append a running log. Git holds the history.
 
 Then set `turn: codex`, set `## Next action` to what Codex assesses, `git add` by explicit pathspec — the state file and the files the unit changed — and commit.
+
+## Correction rounds
+
+Core § 3 *Correcting once*. The frozen findings in `## Next action` are the whole scope; the set does not grow, shrink, or get reinterpreted.
+
+1. Reproduce each frozen finding by inspection first, the same way Step 2 checks claims. A finding that does not reproduce is handed back as exactly that — not silently dropped.
+2. Correct exactly the frozen findings. Nothing else. Anything newly noticed — however attractive — goes into the hand-back in plain words as a candidate deferral, and is not implemented.
+3. A finding you can only partly resolve is handed back as exactly that: what was resolved, what was not, and why. Do not stretch the evidence to cover the gap (core § 6 rule 5).
+4. Write the result and evidence into `## Latest result` per Step 5's shape. Set `turn: codex`. Set `## Next action` to the closure check on the frozen findings only. `git add` the state file and the corrected files by explicit pathspec, commit, stop.
 
 ## Step 6 — Report in one line
 

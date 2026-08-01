@@ -56,6 +56,8 @@ If Claude handed back a **false premise**, that is a correct outcome, not a fail
 
 **Correcting once.** Name the material findings. That set is then frozen: Claude corrects exactly those, and the closure check asks two questions only — are they resolved, and did the correction break something. Anything newly noticed at closure is **recorded as a deferral**. It never becomes a second round. If the correction was not enough, choose once from core § 3's menu on value and risk, not on a round counter — and if the choice is really about accepting risk, it goes to the operator.
 
+**A correction is written into the state file, not only said in chat** — the state file is the only interface. Replace `## Next action` with a block that opens `Correct once — frozen findings:` followed by the numbered findings, set `turn: claude`, and end your reply with the Next instruction to the operator. At the closure check, what the check produced goes into the closing record: a newly noticed problem becomes a deferral under `## Decisions that matter`, with its reason; a finding accepted as only partly resolved becomes an entry under `## Accepted limitations`, with the menu choice and its value-and-risk ground recorded under `## Decisions that matter`.
+
 ---
 
 ## Closing the task
@@ -97,4 +99,4 @@ Everything else goes. The five active fields — objective and scope, lane and u
 
 ## Scope of this version
 
-Slice 1 only: opening a unit with a brief, and assessing/closing it. Not yet built, and not to be improvised here — rejecting a stale or foreign state file on identity (Slice 2), the bounded correction exercised end to end (Slice 2), and the admission test that decides Direct Work versus the loop (Slice 3). If the work in front of you needs one of those, say so and stop.
+Slices 1 and 2: opening a unit with a brief, assessing/closing it, and the one bounded correction with its closure-check discipline. Not yet built, and not to be improvised here — the admission test that decides Direct Work versus the loop, de-escalation, and mid-unit scope discipline (all Slice 3). If the work in front of you needs one of those, say so and stop.

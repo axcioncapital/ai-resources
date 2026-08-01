@@ -215,6 +215,62 @@ check "2.2   no mutated version of the foreign file was committed" \
 check "2.2   the foreign unit never ran — the target gained no Ownership-note:" \
   "! grep -q '^Ownership-note:' '$TARGET'"
 
+# --- 2.3 exactly one bounded correction / 2.4 the way out of correction ------
+# Run (f): the unit is implemented with seeded material defects; Codex assesses and
+# freezes the findings; Claude corrects exactly those (one partly, honestly); Codex's
+# closure check defers what it newly notices, chooses once from the core § 3 menu,
+# and closes. All read from the state file and Git — the only interface.
+CORR_F="logs/work-loop/fixture-slice2-correction.md"
+SKILL_F=".agents/skills/work-loop-v2/SKILL.md"
+
+check "2.3   fixture present: $CORR_F" "[ -f '$CORR_F' ]"
+
+CORR_OPENED=$(git log --diff-filter=A --format=%H -- "$CORR_F" 2>/dev/null | tail -1)
+corr_at_open() { [ -n "$CORR_OPENED" ] && git show "$CORR_OPENED:$CORR_F" 2>/dev/null; }
+check "2.3   the opening state was committed pointing at Claude" \
+  "corr_at_open | grep -qE '^turn:[[:space:]]*claude'"
+
+# Both artifacts must carry the correction shape. Falsifiability shown against the
+# pre-edit artifact versions (git show <before>:path) rather than by deleting the text.
+check "2.3   the command carries the bounded correction round" \
+  "grep -q 'Correct once — frozen findings:' '$CMD_F'"
+check "2.3   the resource writes the correction into the state file" \
+  "grep -q 'Correct once — frozen findings:' '$SKILL_F'"
+
+# EXACTLY ONE correction hand-off ever committed: a second round would produce a
+# second committed version whose Next action carries the frozen-findings block with
+# turn: claude. One is the pass; zero means the round never ran; two is 2.3's failure.
+corr_rounds() {
+  git log --format=%H -- "$CORR_F" 2>/dev/null | while read -r h; do
+    git show "$h:$CORR_F" 2>/dev/null \
+      | awk '/^## Next action/{f=1;next} /^## /{f=0} f' \
+      | grep -q '^Correct once — frozen findings:' \
+      && git show "$h:$CORR_F" 2>/dev/null | grep -qE '^turn:[[:space:]]*claude' \
+      && echo "$h"
+  done | wc -l | tr -d ' '
+}
+check "2.3   exactly one bounded correction hand-off was committed" \
+  "[ \"\$(corr_rounds)\" = '1' ]"
+
+# Closure. Every negative is conjoined with the positive closure marker (1.4's rule).
+corr_closed() { [ -f "$CORR_F" ] && grep -qE '^## Outcome' "$CORR_F"; }
+corr_decisions() { awk '/^## Decisions that matter/{f=1;next} /^## /{f=0} f' "$CORR_F"; }
+corr_limits()    { awk '/^## Accepted limitations/{f=1;next} /^## /{f=0} f' "$CORR_F"; }
+
+check "2.3   the task was closed (Outcome present)" "corr_closed"
+check "2.3   the newly noticed problem was recorded as a deferral, not corrected" \
+  "corr_closed && corr_decisions | grep -qi 'defer'"
+check "2.4   a partly resolved finding was accepted as a written limitation" \
+  "corr_closed && [ -n \"\$(corr_limits | grep -v '^[[:space:]]*\$' | grep -v '^None\.\$')\" ]"
+check "2.4   the closed file points at the operator" \
+  "corr_closed && grep -qE '^turn:[[:space:]]*operator' '$CORR_F'"
+for active in 'Objective and scope' 'Lane and unit' 'Latest result' 'Blocker' 'Next action'; do
+  check "2.3   active field did NOT survive closure: $active" \
+    "corr_closed && ! grep -qE '^## $active' '$CORR_F'"
+done
+check "2.3   the committed state carries the closed shape" \
+  "git show HEAD:'$CORR_F' 2>/dev/null | grep -qE '^## Outcome'"
+
 # --- v1 isolation: logs/loop/ must gain nothing (slice plan 1.1) ------------
 check "v1    no Slice 1 or Slice 2 artifact leaked into logs/loop/" \
   "! ls logs/loop/ 2>/dev/null | grep -qE 'fixture-slice1|fixture-slice2|$CODEX_TASK'"
