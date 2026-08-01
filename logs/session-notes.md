@@ -2,36 +2,6 @@
 
 > Archive: [session-notes-archive-2026-07.md](session-notes-archive-2026-07.md)
 
-## 2026-07-29 — Session S4-efd
-
-**Work:** Continue `/work-loop` stream `2026-07-29-prime-minimum-responsibility`, unit **build-4** (mission `lean-prime-2026-07`). Resumed from the S3-060 handoff scratchpad. In order: (1) capture the **live smoke test** of the extracted allocator — the first production allocation through `logs/scripts/prime-marker.sh` (directive 7); (2) open Build unit `2026-07-29-prime-minimum-responsibility-build-4` (brief → `active_unit` → commit); (3) verify premises; (4) execute **merged Slice 4+5** under plan-v5 § 3 **Budget A** (behaviour-preserving), aiming ≤430 lines; (5) resolve the retired `prime-marker.test.sh` before Prove.
-- Mission: lean-prime-2026-07
-- **Operator directives, carried verbatim from the S3-060 authorization:** `/risk-check`, `/qc-pass` and all subagent dispatch are **operator-declined** — recorded as declined, never as passed, satisfied or waived, and **not** encoded as a QC-PENDING commit-block. Keep every executable rule in `/prime`; relocate or compress rationale only. Preserve Step 1a cross-check, Step 1d mission scan, Step 3 `medium-high` handling, Step 7 reply classifier. **If ≤430 cannot be reached without changing behaviour, STOP and record the measured shortfall — do not force the target.** Do not open Prove until build-4 closes.
-
-### Summary
-
-Resumed from the S3-060 handoff. Captured the **live smoke test** of the extracted allocator (directive 7): registered a falsifiable prediction (`S4-efd`) before running `logs/scripts/prime-marker.sh`, then matched it exactly — the first production allocation through the script. Opened Build unit `build-4`, verified premises, then executed **merged Slice 4+5** on `prime.md`: **503 → 413 lines** (orientation 356 → 266, dispatch unchanged at 147), landing Slice 5 (the stale `/new-project` step-11a citation) in the same unit. Verified with a rule-preservation diff carrying its own falsification control (which caught and reverted one over-compression), Step 7 byte-identity, 28/28 symlink resolution, and the allocator suite (19/0). Retired `prime-marker.test.sh` per directive 6 — its own FATAL message prescribed it once Slice 2 landed. Closed build-4 and opened the **Prove (G2)** unit.
-
-### Decisions Made
-
-- Registered the allocator prediction (`S4-efd`) **before** running it, so the match is falsifiable evidence rather than an assumption.
-- Reverted one compression — Step 1a's `$AI_RESOURCES` git-log call — after the rule-preservation diff showed it had turned a literal command into a prose reference. Restored per plan-v4 § 2's rule/rationale boundary.
-- Retired `logs/scripts/prime-marker.test.sh`: its own FATAL message prescribed retirement once Slice 2 landed, and no live consumer referenced it (only log records did).
-- **≤300 mission target recorded MISSED by 113** (413 lines), not renegotiated, per D2. **≤430 waypoint MET by 17.**
-- Scoped the Prove unit's 14 behavioural falsification criteria to a **scratch checkout**, not this working checkout — they write markers, headers and run manifests that would otherwise contaminate the artifacts `F-ARTIFACTS` asserts on.
-- `/risk-check`, `/qc-pass` and subagent dispatch stayed operator-declined for this unit, carried verbatim from the S3-060 authorization — recorded as declined, never as passed or waived.
-
-### Risky actions
-
-None. No destructive git operations, no external writes, no shared-state clobber. Four commits landed this session across two repos (`ai-resources`, `axcion-ai-system-owner`); none pushed.
-
-### Next Steps
-
-Prove unit is open: `2026-07-29-prime-minimum-responsibility-prove`. Next session: stand up a scratch checkout and run the 14 behavioural falsification criteria from `…shape.plan.md` § 6 — F-MENU, F-NUM/F-FREE/F-AUTO, F-1GATE, F-8AGATE, F-8BNOGATE, F-ARTIFACTS, F-DIRECT/F-ENG, F-MISSION, F-FAIL — then send the evidence to Codex for the G2 review. F-LINES (falsified, recorded), F-ALLOC, F-SEED and F-QUAL are already evidenced and carried forward, not re-run.
-
-### Open Questions
-
-None blocking. Noted, not resolved: rationale for the 13 orientation regions is now split across five destination docs — a future editor changing a rule in `prime.md` without reading its cited rationale is a real, unmitigated risk.
 ## 2026-07-29 — `/work-loop` unit: `/leverage-idea` lifecycle-routing brief routed out to `/develop-ai-resource`
 
 ### Summary
@@ -510,3 +480,71 @@ and the minimal viable schema, per Playbook Step 2.
 None blocking. Noted, not resolved: whether Codex's inability to commit in the observed session is a
 fixed runtime property or a configurable/escalatable one — named as Step 2's first thing to test, not
 answered here.
+
+## 2026-08-01 — Session S2-af1
+
+**Mandate:** Prototype the Work Loop v2 transport seam (throwaway) — run one repository-based Codex/Claude round trip through a minimal state file and record the seam's real behaviour plus the minimal viable schema — done when: the round trip has worked once end to end across both apps; `plans/work-loop-v2-mvp/step-2-transport-seam-conclusions.md` exists and is committed recording the seam's behaviour and the minimal viable schema; both sharpened questions (can Codex commit at all; does a new `.agents/skills/` skill need its own `.gitignore` re-include) are answered by execution or named as operator-checkable gaps; and the prototype artifacts are discarded.
+- Out of scope: writing the executable core (Step 3); building the Claude command or the Codex resource; designing schema beyond what the prototype actually proves; any capability from the Complete System explainer (Consequential lane, worktrees, reviewer machinery, automation) — destination reference only, creates no requirements; editing, retiring or "aligning" Work Loop v1; keeping the prototype code.
+- Files in scope: .gitignore, logs/missions/work-loop-v2-mvp.md
+- Stop if: the Codex side cannot be driven at all from this machine — record it as an operator-checkable gap rather than simulating Codex's half of the round trip; or answering a question would require asserting Codex behaviour that cannot be observed — record the gap and continue with the rest.
+- Allowed inputs: plans/work-loop-v2-mvp/README.md, plans/work-loop-v2-mvp/work-loop-v2-mvp-proposal-v0.4.md, plans/work-loop-v2-mvp/pocock-lifecycle-work-loop-mvp-v0.4.md, plans/work-loop-v2-mvp/skill-writing-standard-work-loop-v0.2.md, plans/work-loop-v2-mvp/step-1-codex-packaging-findings.md, .agents/skills/work-loop/SKILL.md, docs/work-loop.md, .gitignore, ~/.codex/ and any Codex config or install surface present on this machine
+- Required outputs: plans/work-loop-v2-mvp/step-2-transport-seam-conclusions.md, logs/loop/wl2-state.md
+- Mission: work-loop-v2-mvp
+
+**Work:** Work Loop v2 MVP Step 2 — transport-seam prototype (throwaway): test the Codex/Claude repository round trip
+
+### Summary
+Ran Playbook Step 2 to completion: a throwaway round trip between Codex and Claude through a
+minimal state file (`logs/loop/wl2-state.md`). The round trip worked end to end (Codex writes brief
+→ Claude reads/answers/commits → Codex reads result), but the key finding is that **git carried
+none of the hand-off** — the file's full history is one commit (Claude's), so the shared working
+tree did the transporting, not git. Both of Step 1's inherited premises were answered by execution:
+Codex still cannot write `.git` (two independent sessions, same error), proven to be a Codex sandbox
+restriction rather than a repo fault (positive control: Claude ran Codex's identical failing command
+and it succeeded); and a new `.agents/skills/` skill needs exactly one `.gitignore` re-include line,
+not four. Harvested a three-field minimal schema (`turn` / `Brief` / `Result`) with per-field
+evidence, and flagged that `turn` is a protocol field absent from the Proposal's content ceiling —
+for Step 3 to decide, not decided here. Wrote and committed the conclusions note, ticked both
+mission threads with evidence pointers, and discarded the prototype (state file removed; one probe
+skill folder remains — see Risky actions).
+
+### Decisions Made
+- Chose the shared-working-tree fallback (Codex writes/Claude commits) to *run* the round trip once
+  Codex's `.git` block reproduced, rather than stopping the session — the Playbook explicitly allows
+  this as a way to learn, and the mandate's `stop_if` only requires recording a gap, not halting on
+  one. Did not treat the fallback as a transport redesign; the conclusions note states this
+  explicitly as a Proposal-level decision reserved for the operator.
+- Corrected the count sent back to Codex in the state file's Result section: the on-disk count of
+  6 skill folders included the session's own throwaway probe folder. Rather than write a
+  misleading number, both counts were recorded (6 raw / 5 excluding the probe) with the reason
+  stated inline.
+- Reverted the `.gitignore` re-include line immediately after using it to prove premise 2, rather
+  than leaving it live — a live re-include is a commit hazard the plan's step 8 exists to prevent.
+- Self-corrected the mandate line's `Files in scope` value mid-session after a hook flagged that
+  `(inferred)` disables `check-foreign-staging.sh`'s guard regardless of what concrete paths are
+  appended alongside it — removed the marker, kept the paths.
+
+### Outcome
+Outcome check skipped (not requested).
+
+### Session Value Audit — 80/20 Review
+Skipped (not requested).
+
+### Risky actions
+None destructive. One loose end: a throwaway probe skill folder (`.agents/skills/wl2-probe/`) is
+still on disk — its removal was declined at the permission prompt twice (mid-session and at
+cleanup). It is gitignored so it cannot be committed by accident, but it was not cleaned up as the
+plan's step 8 intended. Flagged in the continuity scratchpad for the operator or the next session.
+
+### Findings Declined
+- **Probe folder deletion declined twice at the permission prompt.** Not queued — this is routine
+  permission-in-the-loop behavior, not a system defect. Already recorded above under Risky actions
+  with the continuity scratchpad as the operator-facing follow-up.
+- **Codex cannot write `.git` (2 independent sessions); a new `.agents/skills/` skill needs exactly
+  one `.gitignore` line, not four.** Not queued — both are fully recorded, with evidence and source
+  tags, inside `plans/work-loop-v2-mvp/step-2-transport-seam-conclusions.md`, the correct durable
+  home for build-relevant Codex-runtime facts this project's later steps will read directly. Same
+  reasoning Step 1 applied to its own declined finding (`codex --help` blocked): duplicating into
+  `improvement-log.md` would split one fact across two owners for no benefit.
+
+Findings: 3 — queued 1 (severity: medium), declined 2. 1 + 2 = 3.

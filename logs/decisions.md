@@ -225,3 +225,40 @@ contract graduates to `docs/` — matching how this build is meant to end.
   folders already living under `docs/`. Rejected for now: those folders are read by commands/operators
   as ongoing reference; this folder governs a one-time construction and is expected to be superseded
   by its own output. Revisit at ship time if the surviving core belongs in `docs/` anyway.
+
+## 2026-08-01 — Work Loop v2 MVP Step 2: fallback transport run to learn, NOT adopted as the design
+
+**Context.** Step 2's throwaway round-trip prototype reproduced Step 1's finding that Codex cannot
+write `.git` in this environment (`Unable to create '.git/index.lock': Operation not permitted`),
+now observed in two independent Codex sessions. The Proposal's stated transport is: Codex writes a
+state file and commits it; Claude reads, writes a result, commits; Codex reads the result. With
+Codex's commit blocked, the round trip as specified could not run unmodified.
+
+**Decision.** Ran the round trip anyway, using the repository's shared working tree as the transport
+for Codex's hop (Codex writes the file; Claude commits it) instead of stopping the session. Recorded
+this in the conclusions note as an **observation** — "the round trip's real transport was the shared
+filesystem, and the commit was a durability layer on top of it" — explicitly **not** as a proposed
+redesign of the Proposal's transport.
+
+**Rationale.** The Playbook's own Step 2 text permits exactly this: "the seam still has options that
+do not require redesigning anything — the working tree is shared, so a state file can be exchanged
+without either side committing it — but choosing among them is a Proposal-level matter and is not
+decided in this note." The session's mandate `stop_if` only required recording the gap if Codex
+could not be driven at all — it could be, just not for the `.git` write specifically — so continuing
+to test the actual question (does *some* round trip work cleanly?) stayed inside the mandate. Also
+established Codex's block is not fixed policy: it is a sandbox restriction on the Codex process
+(proven by positive control — Claude ran Codex's identical failing `git add` and it succeeded), and
+the Codex binary documents configurable levers (`--sandbox`, `--ask-for-approval`, `--add-dir`) that
+`~/.codex/config.toml` currently leaves unset. So the *permanent* transport question is still open,
+not foreclosed by this session's workaround.
+
+**Alternatives considered.**
+- **Stop the session at the block and escalate to the operator immediately.** Rejected: the mandate
+  explicitly scoped this as a throwaway prototype meant to answer "does the round trip work
+  cleanly," and stopping at the first obstacle would have delivered nothing for that question while
+  the fallback path was already named as permitted in the governing Playbook text.
+- **Treat the fallback as the new design and update the Proposal.** Rejected: per `README.md`'s
+  authority order, the Proposal is authoritative and a transport redesign is explicitly out of this
+  session's scope (`stop_if` / `Out of scope` on the mandate). Left as an operator decision, to be
+  made with the additional evidence this session produced (positive control, documented sandbox
+  levers, the "workspace-write doesn't fix it" dead end already ruled out).

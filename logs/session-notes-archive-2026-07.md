@@ -4001,3 +4001,33 @@ Findings: 6 — queued 1 (severity: high), declined 5. 1 + 5 = 6.
 **Work:** Continue `/work-loop` stream `2026-07-29-prime-minimum-responsibility`, unit **build-2** (mission `lean-prime-2026-07`). In order: (1) update the measured package amendment — record that **only `prime-marker.sh` qualified**, and that the two judgment-bearing scans (Step 1a's git cross-check, Step 1d's mission scan) **remain in `/prime`**; (2) resume **Build Slice 2** — replace `prime.md` Step 8k with a call to `logs/scripts/prime-marker.sh` **and** repoint `logs/scripts/prime-allocator.test.sh` at the script **in the same commit**; (3) run both test suites; (4) **stop after closing Build-2 — do not begin Slice 4.**
 - Mission: lean-prime-2026-07
 - **Operator directive, this session:** `/risk-check`, `/qc-pass` and all subagent dispatch are **operator-declined** — recorded as declined, never as passed or completed. Verification is by direct inspection and deterministic executable tests only.
+## 2026-07-29 — Session S4-efd
+
+**Work:** Continue `/work-loop` stream `2026-07-29-prime-minimum-responsibility`, unit **build-4** (mission `lean-prime-2026-07`). Resumed from the S3-060 handoff scratchpad. In order: (1) capture the **live smoke test** of the extracted allocator — the first production allocation through `logs/scripts/prime-marker.sh` (directive 7); (2) open Build unit `2026-07-29-prime-minimum-responsibility-build-4` (brief → `active_unit` → commit); (3) verify premises; (4) execute **merged Slice 4+5** under plan-v5 § 3 **Budget A** (behaviour-preserving), aiming ≤430 lines; (5) resolve the retired `prime-marker.test.sh` before Prove.
+- Mission: lean-prime-2026-07
+- **Operator directives, carried verbatim from the S3-060 authorization:** `/risk-check`, `/qc-pass` and all subagent dispatch are **operator-declined** — recorded as declined, never as passed, satisfied or waived, and **not** encoded as a QC-PENDING commit-block. Keep every executable rule in `/prime`; relocate or compress rationale only. Preserve Step 1a cross-check, Step 1d mission scan, Step 3 `medium-high` handling, Step 7 reply classifier. **If ≤430 cannot be reached without changing behaviour, STOP and record the measured shortfall — do not force the target.** Do not open Prove until build-4 closes.
+
+### Summary
+
+Resumed from the S3-060 handoff. Captured the **live smoke test** of the extracted allocator (directive 7): registered a falsifiable prediction (`S4-efd`) before running `logs/scripts/prime-marker.sh`, then matched it exactly — the first production allocation through the script. Opened Build unit `build-4`, verified premises, then executed **merged Slice 4+5** on `prime.md`: **503 → 413 lines** (orientation 356 → 266, dispatch unchanged at 147), landing Slice 5 (the stale `/new-project` step-11a citation) in the same unit. Verified with a rule-preservation diff carrying its own falsification control (which caught and reverted one over-compression), Step 7 byte-identity, 28/28 symlink resolution, and the allocator suite (19/0). Retired `prime-marker.test.sh` per directive 6 — its own FATAL message prescribed it once Slice 2 landed. Closed build-4 and opened the **Prove (G2)** unit.
+
+### Decisions Made
+
+- Registered the allocator prediction (`S4-efd`) **before** running it, so the match is falsifiable evidence rather than an assumption.
+- Reverted one compression — Step 1a's `$AI_RESOURCES` git-log call — after the rule-preservation diff showed it had turned a literal command into a prose reference. Restored per plan-v4 § 2's rule/rationale boundary.
+- Retired `logs/scripts/prime-marker.test.sh`: its own FATAL message prescribed retirement once Slice 2 landed, and no live consumer referenced it (only log records did).
+- **≤300 mission target recorded MISSED by 113** (413 lines), not renegotiated, per D2. **≤430 waypoint MET by 17.**
+- Scoped the Prove unit's 14 behavioural falsification criteria to a **scratch checkout**, not this working checkout — they write markers, headers and run manifests that would otherwise contaminate the artifacts `F-ARTIFACTS` asserts on.
+- `/risk-check`, `/qc-pass` and subagent dispatch stayed operator-declined for this unit, carried verbatim from the S3-060 authorization — recorded as declined, never as passed or waived.
+
+### Risky actions
+
+None. No destructive git operations, no external writes, no shared-state clobber. Four commits landed this session across two repos (`ai-resources`, `axcion-ai-system-owner`); none pushed.
+
+### Next Steps
+
+Prove unit is open: `2026-07-29-prime-minimum-responsibility-prove`. Next session: stand up a scratch checkout and run the 14 behavioural falsification criteria from `…shape.plan.md` § 6 — F-MENU, F-NUM/F-FREE/F-AUTO, F-1GATE, F-8AGATE, F-8BNOGATE, F-ARTIFACTS, F-DIRECT/F-ENG, F-MISSION, F-FAIL — then send the evidence to Codex for the G2 review. F-LINES (falsified, recorded), F-ALLOC, F-SEED and F-QUAL are already evidenced and carried forward, not re-run.
+
+### Open Questions
+
+None blocking. Noted, not resolved: rationale for the 13 orientation regions is now split across five destination docs — a future editor changing a rule in `prime.md` without reading its cited rationale is a real, unmitigated risk.
