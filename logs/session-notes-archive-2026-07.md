@@ -4197,3 +4197,30 @@ Resumed from a `/handoff` scratchpad mid-Prove on the `2026-07-29-review-layer-c
 ### Open Questions
 
 - A concurrent session was working this same stream in this worktree (four commits, plus dirty `logs/friction-log.md` and `logs/innovation-registry.md` left in place per instruction). Whether it still has uncommitted work is unknown from here — worth confirming before that worktree is used again.
+## 2026-07-30 — Created and landed worktree `session/2026-07-29-2` into main (merge conflict resolved, log append-order fixed)
+
+### Summary
+Ran `/new-worktree-session` to create an isolated worktree (`ai-resources-2`, branch `session/2026-07-29-2`) for parallel work, opened it in a new VS Code window. Later ran `/close-worktree-session` to land it; the standard guard correctly blocked on uncommitted changes in the worktree (auto-generated log-append content), which was committed rather than discarded. The merge into `main` then conflicted in `logs/friction-log.md` and `logs/improvement-log.md` — both pure-append conflicts against a concurrent session's own merged-in work — resolved by combining both sides' entries rather than picking one. That combination left two other logs (`session-notes.md`, `decisions.md`, already union-merged) with entries out of the repo's required newest-last order, tripping the `check-append-order` pre-commit hook; fixed by relocating the misplaced blocks to file end, content and internal order unchanged. Merge committed (`b15880e`), post-merge duplicate-header and conflict-marker checks passed clean, worktree removed and branch deleted.
+
+### Decisions Made
+- **(Operator)** "Just merge this, don't ask me anything" — instruction to proceed through the uncommitted-changes and merge-conflict guards without further questions. Interpreted as authorization to resolve conflicts safely (preserve all content, never discard) rather than to bypass safety checks recklessly: committed the worktree's dirty files instead of discarding them, combined both sides of the append-only conflicts instead of picking one, and fixed the resulting append-order violation structurally rather than with `--no-verify`.
+- **(Claude)** Resolved the `friction-log.md`/`improvement-log.md` merge conflicts by concatenating both sides (HEAD's block, then the branch's block) since both were pure appends with no in-place edits on either side — no content lost.
+- **(Claude)** Did not use `--no-verify` when `check-append-order` blocked the merge commit; instead relocated the two misplaced blocks (`session-notes.md` lines 305–343, `decisions.md` lines 252–314) to end-of-file to satisfy the append-order contract.
+- **(Claude, per operator's "2")** Named the worktree unit `2` (branch `session/2026-07-29-2`) since no descriptive unit name was supplied when `/new-worktree-session` was invoked.
+- **(Claude)** Triaged 5 pre-existing `detected` innovation-registry rows (from the merged-in worktree's own session work, dated 2026-07-29: `promote-workflow.md`, `lean-repo.md`, `pipeline-review-auditor.md`, `resolve-incident.md`, `resolve-repo-problem.md`) as `triaged:project-specific` — all are edits to commands/agents already living in this canonical `ai-resources` repo, so no further graduation destination applies.
+
+### Outcome
+(Step 6.4 skipped — not requested)
+
+### Risky actions
+Resolved a git merge conflict on shared log files, combining content from a concurrent session, rather than stopping per `/close-worktree-session`'s normal guard ("never auto-resolve a merge conflict — stop and hand back control"). Done under explicit, repeated operator instruction after an initial guard trip on uncommitted worktree changes. Mitigated by verifying no conflict markers landed in the working tree or `HEAD` (both checks confirmed clean) and by never discarding either side's content. Also removed a worktree and deleted a branch — both guarded, both completed cleanly (worktree was clean at removal time, branch was fully merged before deletion).
+
+### Next Steps
+- Two other session worktrees remain open: `ai-resources-leverage-idea` (branch `session/2026-07-29-leverage-idea`, per its own session note 7 commits ahead, dry-run-clean) and `ai-resources-work-loop` (branch `session/2026-07-29-work-loop`). Neither was touched this session — landing each is a separate `/close-worktree-session` call from the main checkout.
+- Commits are unpushed on `main` pending this wrap's push gate.
+
+### Findings Declined
+- **Operator override of the merge-conflict stop-and-handback guard.** Not queued as a separate improvement-log entry — it is a one-off, explicitly operator-directed override (not a recurring defect pattern), and it is already recorded above under `### Risky actions` with its mitigation.
+
+### Open Questions
+None.

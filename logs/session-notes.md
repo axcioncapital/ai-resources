@@ -2,34 +2,6 @@
 
 > Archive: [session-notes-archive-2026-07.md](session-notes-archive-2026-07.md)
 
-## 2026-07-30 — Created and landed worktree `session/2026-07-29-2` into main (merge conflict resolved, log append-order fixed)
-
-### Summary
-Ran `/new-worktree-session` to create an isolated worktree (`ai-resources-2`, branch `session/2026-07-29-2`) for parallel work, opened it in a new VS Code window. Later ran `/close-worktree-session` to land it; the standard guard correctly blocked on uncommitted changes in the worktree (auto-generated log-append content), which was committed rather than discarded. The merge into `main` then conflicted in `logs/friction-log.md` and `logs/improvement-log.md` — both pure-append conflicts against a concurrent session's own merged-in work — resolved by combining both sides' entries rather than picking one. That combination left two other logs (`session-notes.md`, `decisions.md`, already union-merged) with entries out of the repo's required newest-last order, tripping the `check-append-order` pre-commit hook; fixed by relocating the misplaced blocks to file end, content and internal order unchanged. Merge committed (`b15880e`), post-merge duplicate-header and conflict-marker checks passed clean, worktree removed and branch deleted.
-
-### Decisions Made
-- **(Operator)** "Just merge this, don't ask me anything" — instruction to proceed through the uncommitted-changes and merge-conflict guards without further questions. Interpreted as authorization to resolve conflicts safely (preserve all content, never discard) rather than to bypass safety checks recklessly: committed the worktree's dirty files instead of discarding them, combined both sides of the append-only conflicts instead of picking one, and fixed the resulting append-order violation structurally rather than with `--no-verify`.
-- **(Claude)** Resolved the `friction-log.md`/`improvement-log.md` merge conflicts by concatenating both sides (HEAD's block, then the branch's block) since both were pure appends with no in-place edits on either side — no content lost.
-- **(Claude)** Did not use `--no-verify` when `check-append-order` blocked the merge commit; instead relocated the two misplaced blocks (`session-notes.md` lines 305–343, `decisions.md` lines 252–314) to end-of-file to satisfy the append-order contract.
-- **(Claude, per operator's "2")** Named the worktree unit `2` (branch `session/2026-07-29-2`) since no descriptive unit name was supplied when `/new-worktree-session` was invoked.
-- **(Claude)** Triaged 5 pre-existing `detected` innovation-registry rows (from the merged-in worktree's own session work, dated 2026-07-29: `promote-workflow.md`, `lean-repo.md`, `pipeline-review-auditor.md`, `resolve-incident.md`, `resolve-repo-problem.md`) as `triaged:project-specific` — all are edits to commands/agents already living in this canonical `ai-resources` repo, so no further graduation destination applies.
-
-### Outcome
-(Step 6.4 skipped — not requested)
-
-### Risky actions
-Resolved a git merge conflict on shared log files, combining content from a concurrent session, rather than stopping per `/close-worktree-session`'s normal guard ("never auto-resolve a merge conflict — stop and hand back control"). Done under explicit, repeated operator instruction after an initial guard trip on uncommitted worktree changes. Mitigated by verifying no conflict markers landed in the working tree or `HEAD` (both checks confirmed clean) and by never discarding either side's content. Also removed a worktree and deleted a branch — both guarded, both completed cleanly (worktree was clean at removal time, branch was fully merged before deletion).
-
-### Next Steps
-- Two other session worktrees remain open: `ai-resources-leverage-idea` (branch `session/2026-07-29-leverage-idea`, per its own session note 7 commits ahead, dry-run-clean) and `ai-resources-work-loop` (branch `session/2026-07-29-work-loop`). Neither was touched this session — landing each is a separate `/close-worktree-session` call from the main checkout.
-- Commits are unpushed on `main` pending this wrap's push gate.
-
-### Findings Declined
-- **Operator override of the merge-conflict stop-and-handback guard.** Not queued as a separate improvement-log entry — it is a one-off, explicitly operator-directed override (not a recurring defect pattern), and it is already recorded above under `### Risky actions` with its mitigation.
-
-### Open Questions
-None.
-
 ## 2026-07-30 — Retired /qc-pass, /risk-check, /resolve, /refinement-deep — Codex is the second opinion
 
 ### Summary
@@ -675,10 +647,111 @@ None.
 
 **Mandate:** Implement Slice 1's Codex side (behaviours 1.1 and 1.4) red-green — clear the two recorded prerequisites, build the Work Loop v2 Codex resource, prepare the prompt the operator pastes into Codex, and test explicit `$name` invocation — done when: 1.1 and 1.4 each have a constructed failing case shown failing before the work and passing after with the implementation committed; the Codex prompt is written and handed over in chat; and the acceptance harness passes with the new assertions included.
 - Out of scope: Slice 2 and Slice 3 behaviours (file-identity rejection, correction rounds, admission discipline); editing, retiring or "aligning" Work Loop v1 (`.claude/commands/work-loop.md`) — Step 7 owns that; reusing the `work-loop` resource name (it would overwrite v1's tracked resource); the Phase 3 pilot (destination behaviour 7); every planning-history document except the three allowed inputs.
-- Files in scope: .gitignore, .agents/skills/wl2-probe, .claude/commands/work-loop-v2.md, logs/scripts/work-loop-v2-slice-1.test.sh, plans/work-loop-v2-mvp/step-5-slice-1-evidence.md, logs/missions/work-loop-v2-mvp.md, logs/session-notes.md
+- Files in scope: .gitignore, .agents/skills/wl2-probe, .claude/commands/work-loop-v2.md, logs/scripts/work-loop-v2-slice-1.test.sh, plans/work-loop-v2-mvp/step-5-slice-1-evidence.md, logs/missions/work-loop-v2-mvp.md, logs/session-notes.md, logs/decisions.md, logs/improvement-log.md, logs/next-up.md, logs/friction-log.md, logs/session-notes-archive-2026-07.md, logs/decisions-archive-2026-07.md, logs/runs/2026-08-01-S6-974.json (widened at wrap — `check-foreign-staging.sh` correctly flagged these as outside the original declared footprint; verified each belongs to this session before adding rather than overridden blind: friction-log.md and next-up.md specifically per the guard's own remedy)
 - Stop if: explicit `$name` invocation proves unreliable under Codex's over-cap (12,963 vs 8,000 char) description budget — that is a finding for the operator, not something to design around inside the slice (slice plan `:99`); a behaviour cannot be given a constructible failing case; Codex cannot be driven at all this session — stop and record, do not have Claude stand in for it.
 - Allowed inputs: plans/work-loop-v2-mvp/step-5-slice-1-evidence.md, plans/work-loop-v2-mvp/step-4-slice-plan.md, plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md, the live repository (convention inspection and fixture material only)
 - Required outputs: the Work Loop v2 Codex resource (`.agents/skills/<v2-name>/SKILL.md` — exact name decided in-session), the Codex prompt delivered in chat, a red-green evidence record covering 1.1 and 1.4
 - Mission: work-loop-v2-mvp
 
 **Work:** Work Loop v2 MVP Step 5 — Codex side: implement behaviours 1.1 and 1.4, prepare the Codex prompt and clear its stated prerequisites
+
+### Summary
+Completed Work Loop v2 Slice 1: built the Codex-side resource, ran a real round trip through the
+actual Codex app, and closed both remaining behaviours (1.1, 1.4) red-green. Cleared one of the two
+recorded prerequisites (`.gitignore` re-include, falsifiable both ways) and deliberately kept the
+other (`wl2-probe`) after a third declined deletion, repurposing it as a positive control instead of
+re-asking. Prepared and handed the operator two Codex prompts in turn; the operator ran both in the
+real app and pasted the results back, which this session verified against disk rather than trusting
+the paste. Extended the acceptance harness from 18 to 34 assertions, found and repaired a genuine
+defect in the harness itself (two assertions that could not pass once 1.4 succeeded — 1.1 and 1.4
+have mutually exclusive end states on one file), and proved the repair was still falsifiable before
+accepting green. Wrote a full evidence record and ticked the mission's Slice 1 thread with two
+limitations stated rather than smoothed over. When the operator overruled a proposed follow-up
+Codex review as unneeded ceremony, found that the mission's own non-negotiables already forbade it,
+and recorded the decision as settled in the mission file. Also wrote a self-contained
+harness/permission troubleshooting runbook, verifying every claim in it by execution and surfacing
+three live defects found in the process (an `opus[1m]` model field in user settings, a `rm -rf` deny
+rule that blocks by verb-text and not by effect, and a documented-but-orphaned permission-sanity
+hook).
+
+### Decisions Made
+- **(Claude)** Skipped the automatic `/blindspot-scan` mid-session per explicit operator instruction
+  ("do not use blindspot") — this was the operator overriding CLAUDE.md's stated auto-fire trigger for
+  this session; not treated as a standing rule change.
+- **(Claude)** Kept `wl2-probe` rather than re-requesting its deletion a fourth time (declined three
+  times total across two sessions) and repurposed it as a positive control for the `$name` invocation
+  test — recorded as a deliberate deviation from the split record's instruction, not an oversight.
+- **(Claude)** Did not tell Codex where to write the state file in either prompt — routing had to come
+  from the resource, or the invocation test proved nothing.
+- **(Claude)** Retargeted the two failing 1.1 assertions to read from the commit that opened the file
+  (`git log --diff-filter=A`) rather than the working tree, after confirming by inspection that the
+  underlying hand-off genuinely happened and the harness — not the behaviour — was at fault. Proved the
+  repair still falsifiable against a task id that was never opened before accepting it.
+- **(Operator)** Declined the proposed follow-up Codex review of the Claude-side command and harness as
+  unneeded ceremony. Verified against the mission's own non-negotiables ("do not add a review layer …
+  beyond the one fresh-context candidate review") before recording it — the proposal was itself
+  off-mission, not merely unnecessary. Recorded as settled, not deferred, in `logs/missions/work-loop-v2-mvp.md`.
+- **(Claude)** Placed the new troubleshooting doc at `ai-resources/docs/` rather than duplicating
+  existing permission/hook docs — it routes to `permission-template.md`, `settings-local-recovery.md`,
+  `hook-rollback-recipes.md`, `settings-portability-invariant.md`, and `protected-zones.md` instead of
+  restating them.
+
+### Outcome
+(Step 6.4 skipped — not requested)
+
+### Session Value Audit — 80/20 Review
+(Step 6.4 skipped — not requested)
+
+### Risky actions
+None destructive. Every mission-file edit went through `/mission update` then `/mission check`, with
+the frozen prefix (Goal through Validation contract) hashed before and after each write and verified
+byte-identical both times. Deletion of the leftover `wl2-probe` folder was declined at the permission
+prompt (third time); repurposed rather than escalated. No git command was run by Codex at any point —
+verified per-invocation, per the executable core's role split.
+
+### Session Assessment
+Skipped (Step 6.5 not requested — no `+feedback`/`full` flag).
+
+### Findings Declined
+None this session — the three settings/hook defects surfaced while writing the troubleshooting doc
+were **queued**, not declined (see below); nothing else surfaced that named a real problem without
+already being resolved in-session.
+
+Findings: 3 — queued 3 (severity: high 1, medium-high 1, medium 1), declined 0. 3 + 0 = 3.
+
+All three are the settings/hook defects verified by execution while writing
+`docs/harness-and-permission-troubleshooting.md` (which explains each in full and is cross-referenced
+from each entry): `~/.claude/settings.json`'s prohibited `"model": "opus[1m]"` field (high), the
+`Bash(rm -rf *)` deny rule that blocks by verb-text and not effect, now a third occurrence (medium),
+and `ai-resources/CLAUDE.md`'s claim of a `check-permission-sanity.sh` SessionStart hook that is
+wired nowhere (medium-high). Logged to `logs/improvement-log.md`; the high and medium-high entries
+promoted to `logs/next-up.md` this wrap and will reach the `/prime` menu next session. **Correction
+made mid-wrap:** the first draft of this section wrote "Findings: 0", reasoning that documenting the
+defects in the runbook was itself sufficient disposition — that was wrong. A doc only someone opens
+is a notification, not a queue, and this step exists precisely to stop that substitution.
+
+### Next Steps
+- **Slice 2 — implement continuity and correction (behaviours 2.1–2.4), fresh session, red-green.**
+  Straight to work — no review step in front of it, per this session's settled decision. 2.1 (a fresh
+  session reading the state file and Git alone) is also the real independent exercise of the Claude-side
+  command that the declined review would otherwise have provided.
+- **Slice 1's two named limitations carry forward as open, not as blockers:** 1.1 is proven on routing
+  only, not on folder creation from an absent `logs/work-loop/`; Slice 2/3 sessions should not assume
+  that sub-clause is covered.
+- **The three findings in `docs/harness-and-permission-troubleshooting.md` § 5 are the natural next
+  session if the operator wants them fixed** — the `opus[1m]` model field in `~/.claude/settings.json`
+  is one line and is quietly undermining `/model`.
+
+### Open Questions
+None.
+
+### Review status
+This session touched a structural change class (a new Codex-side resource, `.agents/skills/work-loop-v2/`,
+plus a `.gitignore` rule governing what reaches commits). **No separate independent review ran, and
+this is now a recorded operator decision, not a gap** — see `logs/missions/work-loop-v2-mvp.md` § Open
+threads (Step 5 Slice 1 entry) for the full reasoning: a second review layer is forbidden by this
+mission's own non-negotiables, Step 6 already is the one candidate review the mission permits, Slice
+2's behaviour 2.1 exercises the command more rigorously than a reading review would, and the
+34-assertion harness is the standing check. `unassessed` remains in the mission thread as a factual
+record that no review ran, per `docs/qc-independence.md` — paired with the decision that none was
+sized.

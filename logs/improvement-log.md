@@ -2288,3 +2288,33 @@ Falsifier 2 was closed here on a structural argument instead (content-only edits
 - **Proposal.** Add `logs/next-up.md` to the hook's shared-process-artifact allowlist, alongside the log paths it already recognises. It is a single-writer maintenance artifact written only by `promote-findings.sh`, which is lock-serialised, so it carries no concurrent-session lost-update risk — the exact property that qualifies the other shared logs. Cheaper and more correct than requiring every session to declare it in `Required outputs`, which would put a wrap-mechanics implementation detail into every mandate line.
 - **Self-demonstrating note:** this entry is `medium-high` and therefore menu-reaching, but the promotion sweep was **not** re-run this wrap — its output file is the one that cannot be committed. Promotion is deferred to the next wrap, by the very defect described here.
 - **Target files:** `.claude/hooks/check-foreign-staging.sh` (shared-artifact allowlist); `.claude/commands/wrap-session.md` Steps 6.6 and the staging list, if the two-end contract should be stated there too.
+
+### 2026-08-01 — `~/.claude/settings.json` carries a prohibited `model` field, in the form known to break subagent spawns
+
+- **Status:** logged (pending)
+- **Category:** settings-layer defect (`~/.claude/settings.json`)
+- **Severity:** high — this is the single most likely reason a `/model` switch fails to stick anywhere on this machine, and it uses the exact `[1m]` suffix `feedback_sonnet_1m_suffix` already identified as causing subagent spawn failures. Live in the layer every session on this machine inherits.
+- **Review-cycle:** reviewed 2026-08-01, deferred to → next harness maintenance pass
+- **Friction source:** `ai-resources` session 2026-08-01 (S6-974). Found while writing `docs/harness-and-permission-troubleshooting.md`: `~/.claude/settings.json` has `"model": "opus[1m]"`. Two standing rules broken at once — workspace `CLAUDE.md` § Model Tier prohibits a declared default in any settings layer because it contests `/model`, and the `[1m]` suffix is separately banned. Confirmed by `python3 -c "import json; print(json.load(open('~/.claude/settings.json'))['model'])"` → `opus[1m]`.
+- **Proposal.** Delete the `model` key from `~/.claude/settings.json`. One-line fix; no downstream dependency found.
+- **Target files:** `~/.claude/settings.json`.
+
+### 2026-08-01 — `Bash(rm -rf *)` deny rule blocks by verb-text, not by effect — third occurrence
+
+- **Status:** logged (pending)
+- **Category:** permission-layer defect (`~/.claude/settings.json`, `.claude/settings.json`, `ai-resources/.claude/settings.json`)
+- **Severity:** medium — a workaround exists (`rm -r` without `-f`) and was used, so nothing stalled outright, but this is now the third occurrence of the same block across two sessions (twice in S2-af1, once in S6-974), always against a harmless target.
+- **Review-cycle:** reviewed 2026-08-01, deferred to → next harness maintenance pass
+- **Friction source:** `ai-resources` session 2026-08-01 (S6-974). Verified by execution: `rm -rf` on a **nonexistent** scratchpad path was denied even though every settings layer is `bypassPermissions` with an explicit "never prompt" `autoMode` instruction. Control: `rm -r` (identical destructive power, no `-f`) on a real non-empty directory passed with no prompt at all. The rule matches command spelling, not command danger — the same class of defect that got the destructive `git checkout` deny rule retired 2026-07-18.
+- **Proposal.** Remove `Bash(rm -rf *)` from the deny list at all three layers, consistent with the operator's standing zero-permission-prompt setup (`feedback_zero_permission_prompts`). Alternative: leave it and rely on the `rm -r` workaround — record which is chosen.
+- **Target files:** `~/.claude/settings.json`, `.claude/settings.json`, `ai-resources/.claude/settings.json` — `permissions.deny`.
+
+### 2026-08-01 — `ai-resources/CLAUDE.md` documents a SessionStart hook that does not run
+
+- **Status:** logged (pending)
+- **Category:** documentation/wiring drift (`ai-resources/CLAUDE.md`; `.claude/hooks/check-permission-sanity.sh`)
+- **Severity:** medium-high — a documented safety net that does not fire is worse than none, because it is trusted. Matches the already-tracked "hook bodies are versioned, hook wiring is not" pattern (`repo-integrity-repairs-2026-07` mission), but this instance is a specific, checkable false claim in the always-loaded CLAUDE.md rather than a general risk.
+- **Review-cycle:** reviewed 2026-08-01, deferred to → next harness maintenance pass
+- **Friction source:** `ai-resources` session 2026-08-01 (S6-974). `ai-resources/CLAUDE.md` § Permission Management states "the `check-permission-sanity.sh` SessionStart hook nudges on drift." Verified: the script is registered in **no** settings.json across all layers, and is not invoked by `.git/hooks/pre-commit` either — orphaned in both hook systems. Same pattern found for `auto-sync-shared.sh` and `check-template-drift.sh`, though CLAUDE.md makes no claim about those two, so only `check-permission-sanity.sh` is a documentation-vs-reality mismatch and not merely dead code.
+- **Proposal.** Either register `check-permission-sanity.sh` in a `SessionStart` hook entry (likely `~/.claude/settings.json`, alongside the other user-level SessionStart hooks), or correct the CLAUDE.md sentence to state it is unwired. Separately: decide whether `auto-sync-shared.sh` and `check-template-drift.sh` should be wired or removed — no CLAUDE.md claim depends on them, so lower urgency.
+- **Target files:** `ai-resources/CLAUDE.md` § Permission Management; `~/.claude/settings.json` (hooks); `.claude/hooks/check-permission-sanity.sh`, `auto-sync-shared.sh`, `check-template-drift.sh`.

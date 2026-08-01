@@ -41,3 +41,6 @@ Promoted findings carry their source and a content-derived id; tick an item to r
 - [ ] A settled operator decision now contradicts a FROZEN mission acceptance assertion, and nothing reconciles them — `logs/improvement-log.md` <!-- promote:e997f725ba3a -->
 
 - [ ] `wrap-session` Step 6.6 tells every wrap to stage `logs/next-up.md`; `check-foreign-staging.sh` blocks every wrap that does — `logs/improvement-log.md` <!-- promote:2d5d04e385d4 -->
+
+- [ ] `~/.claude/settings.json` carries a prohibited `model` field, in the form known to break subagent spawns — `logs/improvement-log.md` <!-- promote:145f3e6002df -->
+- [ ] `ai-resources/CLAUDE.md` documents a SessionStart hook that does not run — `logs/improvement-log.md` <!-- promote:b9f9d2432470 -->

@@ -353,6 +353,361 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 14:43 — logs/session-notes.md
+- 14:41 — logs/decisions.md
+- 14:41 — logs/session-notes.md
+- 14:40 — logs/missions/work-loop-v2-mvp.md
+- 14:39 — docs/harness-and-permission-troubleshooting.md
+- 14:31 — logs/missions/work-loop-v2-mvp.md
+- 14:31 — logs/missions/work-loop-v2-mvp.md
+- 14:30 — plans/work-loop-v2-mvp/step-5-slice-1-evidence.md
+- 14:29 — plans/work-loop-v2-mvp/step-5-slice-1-evidence.md
+- 14:29 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 14:26 — logs/work-loop/fixture-slice1-codex.md
+- 14:26 — logs/work-loop/fixture-slice1-codex.md
+- 14:26 — logs/work-loop/fixture-target.md
+- 14:20 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 14:20 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 14:20 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 14:20 — .agents/skills/work-loop-v2/SKILL.md
+- 14:19 — .agents/skills/work-loop-v2/SKILL.md
+- 14:19 — logs/gate-calibration.md
+- 14:19 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/.claude/commands/wrap-session.md
+- 14:19 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/.claude/commands/wrap-session.md
+- 14:19 — .claude/commands/wrap-session.md
+- 14:18 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/CLAUDE.md
+- 14:18 — .gitignore
+- 14:17 — logs/session-plan-2026-08-01-S6-974.md
+- 14:15 — logs/session-notes.md
+- 14:10 — logs/scratchpads/2026-08-01-S5-646-scratchpad.md
+- 14:09 — logs/session-notes.md
+- 14:09 — logs/session-notes.md
+- 14:08 — logs/decisions.md
+- 14:08 — logs/session-notes.md
+- 14:05 — plans/work-loop-v2-mvp/step-5-slice-1-evidence.md
+- 14:04 — logs/work-loop/fixture-slice1-true.md
+- 14:04 — logs/work-loop/fixture-slice1-true.md
+- 14:04 — logs/work-loop/fixture-target.md
+- 14:04 — logs/work-loop/fixture-slice1-false.md
+- 14:03 — logs/work-loop/fixture-slice1-false.md
+- 14:03 — .claude/commands/work-loop-v2.md
+- 14:02 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 14:02 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 14:01 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 14:00 — logs/work-loop/fixture-slice1-false.md
+- 14:00 — logs/work-loop/fixture-slice1-true.md
+- 14:00 — logs/work-loop/fixture-target.md
+- 13:58 — logs/session-plan-2026-08-01-S5-646.md
+- 13:56 — logs/session-plan-2026-08-01-S5-646.md
+- 13:55 — logs/session-notes.md
+- 13:49 — logs/session-notes.md
+- 13:48 — logs/scratchpads/2026-08-01-13-47-scratchpad.md
+- 13:47 — logs/session-notes.md
+- 13:44 — logs/missions/work-loop-v2-mvp.md
+- 13:43 — logs/missions/work-loop-v2-mvp.md
+- 13:43 — plans/work-loop-v2-mvp/README.md
+- 13:43 — logs/missions/work-loop-v2-mvp.md
+- 13:40 — logs/session-notes.md
+- 13:38 — plans/work-loop-v2-mvp/step-4-slice-plan.md
+- 13:34 — logs/session-plan-2026-08-01-S4-1bc.md
+- 13:33 — logs/session-notes.md
+- 13:29 — logs/session-notes.md
+- 13:26 — logs/session-notes.md
+- 13:26 — logs/scratchpads/2026-08-01-15-40-scratchpad.md
+- 13:24 — logs/missions/work-loop-v2-mvp.md
+- 13:24 — logs/missions/work-loop-v2-mvp.md
+- 13:23 — plans/work-loop-v2-mvp/README.md
+- 13:23 — plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md
+- 13:23 — plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md
+- 13:23 — plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md
+- 12:46 — plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md
+- 12:46 — plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md
+- 12:46 — plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md
+- 12:44 — audits/working/2026-08-01-wl2-core-qc.md
+- 12:36 — /Users/patrik.lindeberg/.claude/projects/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/memory/MEMORY.md
+- 12:36 — /Users/patrik.lindeberg/.claude/projects/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/memory/feedback_qc_three_dimensions.md
+- 12:36 — plans/work-loop-v2-mvp/qc-process-v0.1.md
+- 12:34 — plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md
+- 12:33 — plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md
+- 12:32 — plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md
+- 12:29 — logs/session-plan-2026-08-01-S3-19b.md
+- 12:28 — logs/session-notes.md
+- 12:23 — logs/session-notes.md
+- 12:22 — logs/decisions.md
+- 12:21 — logs/session-notes.md
+- 12:21 — logs/scratchpads/2026-08-01-12-20-scratchpad.md
+- 12:18 — logs/missions/work-loop-v2-mvp.md
+- 12:18 — plans/work-loop-v2-mvp/step-2-transport-seam-conclusions.md
+- 12:15 — logs/session-notes.md
+- 12:15 — logs/session-notes.md
+- 12:14 — logs/loop/wl2-state.md
+- 12:14 — logs/loop/wl2-state.md
+- 12:08 — .gitignore
+- 12:08 — .gitignore
+- 12:07 — logs/session-plan-2026-08-01-S2-af1.md
+- 12:05 — logs/session-notes.md
+- 11:59 — logs/scratchpads/2026-08-01-11-59-scratchpad.md
+- 11:59 — logs/session-notes.md
+- 11:57 — plans/work-loop-v2-mvp/step-1-codex-packaging-findings.md
+- 11:40 — logs/session-plan-2026-08-01-S1-eb7.md
+- 11:38 — logs/session-notes.md
+- 11:34 — logs/usage-log.md
+- 11:32 — logs/decisions.md
+- 11:31 — logs/session-notes.md
+- 06:56 — logs/missions/work-loop-v2-mvp.md
+- 06:56 — docs/repo-architecture.md
+- 06:56 — logs/missions/work-loop-v2-mvp.md
+- 06:55 — plans/work-loop-v2-mvp/README.md
+- 06:55 — plans/work-loop-v2-mvp/README.md
+- 06:54 — plans/work-loop-v2-mvp/skill-writing-standard-work-loop-v0.2.md
+- 06:54 — plans/work-loop-v2-mvp/the-work-loop-explained-complete-system-v0.2.md
+- 06:52 — plans/work-loop-v2-mvp/pocock-lifecycle-work-loop-mvp-v0.4.md
+- 06:51 — plans/work-loop-v2-mvp/work-loop-v2-mvp-proposal-v0.4.md
+- 21:23 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-active-unit-routing/logs/loop/2026-07-31-active-unit-routing-preflight-shape.evidence.md
+- 21:22 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-active-unit-routing/logs/loop/2026-07-31-active-unit-routing-preflight-shape.plan.md
+- 21:19 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-active-unit-routing/logs/loop/2026-07-31-active-unit-routing-preflight-shape.brief.md
+- 21:15 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-active-unit-routing/logs/loop/2026-07-31-active-unit-routing-shape.evidence.md
+- 21:14 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-active-unit-routing/logs/loop/2026-07-31-active-unit-routing-shape.evidence.md
+- 21:13 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-active-unit-routing/logs/loop/2026-07-31-active-unit-routing-shape.review-2.md
+- 21:04 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-active-unit-routing/logs/loop/2026-07-31-active-unit-routing-shape.evidence.md
+- 21:04 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-active-unit-routing/logs/loop/2026-07-31-active-unit-routing-shape.evidence.md
+- 21:03 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-active-unit-routing/logs/loop/2026-07-31-active-unit-routing-shape.plan-v2.md
+- 17:23 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-active-unit-routing/logs/loop/2026-07-31-active-unit-routing-shape.evidence.md
+- 17:22 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-active-unit-routing/logs/loop/2026-07-31-active-unit-routing-shape.plan.md
+- 17:20 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-active-unit-routing/logs/loop/2026-07-31-active-unit-routing-shape.brief.md
+- 17:18 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-active-unit-routing/logs/loop/2026-07-31-active-unit-routing-frame.evidence.md
+- 17:18 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-active-unit-routing/logs/loop/2026-07-31-active-unit-routing-frame.evidence.md
+- 17:18 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-active-unit-routing/logs/loop/2026-07-31-active-unit-routing-frame.evidence.md
+- 17:15 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-active-unit-routing/logs/loop/2026-07-31-active-unit-routing-frame.brief.md
+- 17:08 — logs/innovation-registry.md
+- 17:05 — logs/scratchpads/2026-07-31-17-04-scratchpad.md
+- 17:03 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/logs/loop/2026-07-31-g1-reviewed-plan-invariant-prove.evidence.md
+- 16:51 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/logs/loop/2026-07-31-g1-reviewed-plan-invariant-prove.evidence.md
+- 16:49 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/logs/loop/2026-07-31-g1-reviewed-plan-invariant-prove.evidence.md
+- 16:49 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/logs/loop/2026-07-31-g1-reviewed-plan-invariant-build-1.evidence.md
+- 16:47 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/.claude/commands/work-loop.md
+- 16:45 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/docs/work-loop.md
+- 16:44 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/docs/work-loop.md
+- 16:44 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/docs/work-loop.md
+- 16:44 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/.claude/commands/work-loop.md
+- 16:36 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/logs/loop/2026-07-31-g1-reviewed-plan-invariant-prove.evidence.md
+- 16:34 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/logs/loop/2026-07-31-g1-reviewed-plan-invariant-prove.review-1.md
+- 16:33 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/logs/loop/2026-07-31-g1-reviewed-plan-invariant-prove.brief.md
+- 16:13 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/logs/loop/2026-07-31-g1-reviewed-plan-invariant-build-1.handoff.md
+- 16:11 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/logs/loop/2026-07-31-g1-reviewed-plan-invariant-build-1.evidence.md
+- 16:11 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/logs/loop/2026-07-31-g1-reviewed-plan-invariant-build-1.evidence.md
+- 16:08 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/.claude/commands/work-loop.md
+- 16:05 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/templates/capability-record.md
+- 16:04 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/.claude/commands/work-loop.md
+- 16:03 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/.claude/commands/work-loop.md
+- 16:03 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/.claude/commands/work-loop.md
+- 16:03 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/.claude/commands/work-loop.md
+- 15:57 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/.agents/skills/work-loop/SKILL.md
+- 15:57 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/.agents/skills/work-loop/SKILL.md
+- 15:56 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/docs/work-loop.md
+- 15:56 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/docs/work-loop.md
+- 15:56 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/docs/work-loop.md
+- 15:56 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/docs/work-loop.md
+- 15:56 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/docs/work-loop.md
+- 15:56 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/docs/work-loop.md
+- 15:56 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/docs/work-loop.md
+- 15:55 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/docs/work-loop.md
+- 15:55 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/docs/work-loop.md
+- 15:55 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/docs/work-loop.md
+- 15:52 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/logs/loop/2026-07-31-g1-reviewed-plan-invariant-build-1.brief.md
+- 15:37 — logs/session-notes.md
+- 15:31 — docs/work-loop-spec.md
+- 15:28 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/logs/loop/2026-07-31-g1-reviewed-plan-invariant-shape.handoff-2.md
+- 14:10 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/logs/loop/2026-07-31-g1-reviewed-plan-invariant-shape.evidence.md
+- 14:09 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/logs/loop/2026-07-31-g1-reviewed-plan-invariant-shape.review-2.md
+- 13:59 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/logs/loop/2026-07-31-g1-reviewed-plan-invariant-shape.plan-v4.md
+- 13:56 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/logs/loop/2026-07-31-g1-reviewed-plan-invariant-shape.evidence.md
+- 13:45 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/logs/loop/2026-07-31-g1-reviewed-plan-invariant-shape.plan-v3.md
+- 13:42 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/logs/loop/2026-07-31-g1-reviewed-plan-invariant-shape.evidence.md
+- 13:37 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/logs/loop/2026-07-31-g1-reviewed-plan-invariant-shape.evidence.md
+- 13:35 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/logs/loop/2026-07-31-g1-reviewed-plan-invariant-shape.review-1.md
+- 13:21 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/logs/scratchpads/2026-07-31-10-21-scratchpad.md
+- 13:18 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/logs/loop/2026-07-31-g1-reviewed-plan-invariant-shape.handoff.md
+- 12:54 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/logs/loop/2026-07-31-g1-reviewed-plan-invariant-shape.plan-v2.md
+- 12:40 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/logs/loop/2026-07-31-g1-reviewed-plan-invariant-shape.plan.md
+- 12:27 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/logs/loop/2026-07-31-g1-reviewed-plan-invariant-frame.evidence.md
+- 12:27 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/logs/loop/2026-07-31-g1-reviewed-plan-invariant-frame.evidence.md
+- 10:43 — logs/missions/lean-prime-2026-07.md
+- 10:42 — logs/missions/lean-prime-2026-07.md
+- 10:42 — logs/loop/2026-07-30-prime-session-entry-ownership-prove.evidence.md
+- 10:42 — logs/loop/2026-07-30-prime-session-entry-ownership-prove.evidence.md
+- 10:42 — logs/loop/2026-07-30-prime-session-entry-ownership-prove.evidence.md
+- 10:41 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/24927795-ba15-427c-8062-dd7b0fd1bd78/scratchpad/prove-brows.sh
+- 10:41 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/24927795-ba15-427c-8062-dd7b0fd1bd78/scratchpad/prove-brows.sh
+- 10:39 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/24927795-ba15-427c-8062-dd7b0fd1bd78/scratchpad/prove-brows.sh
+- 10:26 — logs/loop/2026-07-30-prime-session-entry-ownership-prove.evidence.md
+- 10:25 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 10:25 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 10:24 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 10:23 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/24927795-ba15-427c-8062-dd7b0fd1bd78/scratchpad/prove-contract.sh
+- 10:22 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/24927795-ba15-427c-8062-dd7b0fd1bd78/scratchpad/prove-dup.sh
+- 10:21 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/24927795-ba15-427c-8062-dd7b0fd1bd78/scratchpad/prove-mechanical.sh
+- 10:06 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/24927795-ba15-427c-8062-dd7b0fd1bd78/scratchpad/probe-real-promotion.sh
+- 10:06 — logs/scripts/prime-allocator.test.sh
+- 10:05 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/24927795-ba15-427c-8062-dd7b0fd1bd78/scratchpad/probe-fixture.sh
+- 10:02 — logs/scripts/prime-sync.test.sh
+- 10:01 — logs/scripts/promote-findings.test.sh
+- 10:01 — logs/scripts/promote-findings.sh
+- 10:00 — logs/scripts/prime-collect.test.sh
+- 09:59 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/24927795-ba15-427c-8062-dd7b0fd1bd78/scratchpad/probe-p2-fetch.sh
+- 09:59 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/24927795-ba15-427c-8062-dd7b0fd1bd78/scratchpad/probe-p1-marker.sh
+- 09:58 — logs/scripts/prime-collect.sh
+- 09:58 — logs/scripts/prime-collect.sh
+- 09:58 — logs/scripts/promote-findings.sh
+- 09:58 — logs/scripts/promote-findings.sh
+- 09:57 — logs/scripts/promote-findings.sh
+- 09:57 — logs/scripts/prime-sync.sh
+- 09:57 — logs/scripts/prime-session-entry.sh
+- 23:53 — logs/scratchpads/2026-07-30-23-52-scratchpad.md
+- 23:43 — .claude/commands/session-start.md
+- 23:42 — .claude/commands/prime.md
+- 23:41 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/3feb24e7-0991-4c7b-8de5-985a8c3cdce9/scratchpad/s6-splice.py
+- 23:40 — .claude/commands/session-plan.md
+- 23:40 — .claude/commands/session-start.md
+- 23:40 — .claude/commands/session-start.md
+- 23:40 — .claude/commands/session-start.md
+- 23:39 — .claude/commands/session-plan.md
+- 23:37 — .claude/commands/prime.md
+- 23:35 — .claude/commands/prime.md
+- 23:34 — logs/scripts/prime-collect.test.sh
+- 23:34 — logs/scripts/prime-collect.sh
+- 23:33 — docs/session-marker.md
+- 23:33 — docs/session-marker.md
+- 23:32 — docs/heavy-read-discipline.md
+- 23:32 — docs/heavy-read-discipline.md
+- 23:32 — CLAUDE.md
+- 23:32 — .claude/commands/prime.md
+- 23:32 — .claude/commands/prime.md
+- 23:31 — .claude/commands/prime.md
+- 23:31 — .claude/commands/prime.md
+- 23:31 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/3feb24e7-0991-4c7b-8de5-985a8c3cdce9/scratchpad/s5-splice.py
+- 23:30 — logs/scripts/prime-collect.test.sh
+- 23:29 — logs/scripts/prime-collect.test.sh
+- 23:29 — logs/scripts/prime-collect.test.sh
+- 23:29 — logs/scripts/prime-collect.test.sh
+- 23:29 — logs/scripts/prime-collect.sh
+- 23:28 — logs/scripts/prime-collect.test.sh
+- 23:27 — logs/scripts/prime-collect.sh
+- 23:27 — logs/scripts/prime-collect.sh
+- 23:27 — logs/scripts/prime-collect.sh
+- 23:22 — logs/scratchpads/2026-07-30-23-22-scratchpad.md
+- 23:20 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 23:20 — .claude/commands/prime.md
+- 23:19 — docs/commit-discipline.md
+- 23:19 — .claude/commands/prime.md
+- 23:19 — .claude/commands/prime.md
+- 23:18 — logs/scripts/prime-sync.sh
+- 23:18 — logs/scripts/prime-sync.test.sh
+- 23:17 — logs/scripts/prime-sync.test.sh
+- 23:17 — logs/scripts/prime-sync.test.sh
+- 23:17 — logs/scripts/prime-sync.test.sh
+- 23:17 — logs/scripts/prime-sync.test.sh
+- 23:17 — logs/scripts/prime-sync.sh
+- 23:17 — logs/scripts/prime-sync.sh
+- 23:17 — logs/scripts/prime-sync.sh
+- 23:16 — logs/scripts/prime-sync.test.sh
+- 23:16 — logs/scripts/prime-sync.test.sh
+- 23:16 — logs/scripts/prime-sync.test.sh
+- 23:15 — logs/scripts/prime-sync.sh
+- 23:15 — logs/scripts/prime-sync.test.sh
+- 23:14 — logs/scripts/prime-sync.sh
+- 23:11 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 23:11 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/.claude/commands/wrap-session.md
+- 23:10 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/.claude/commands/wrap-session.md
+- 23:08 — docs/heavy-read-discipline.md
+- 23:08 — docs/heavy-read-discipline.md
+- 23:08 — docs/heavy-read-discipline.md
+- 23:07 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/0ca6eb2a-ef7a-461e-81f5-b00037af551f/scratchpad/repoint.py
+- 23:07 — .claude/commands/wrap-session.md
+- 23:07 — .claude/commands/wrap-session.md
+- 23:06 — .claude/commands/wrap-session.md
+- 23:05 — .claude/commands/prime.md
+- 23:05 — .claude/commands/prime.md
+- 23:05 — .claude/commands/prime.md
+- 23:03 — .gitignore
+- 23:03 — logs/scripts/promote-findings.test.sh
+- 23:02 — logs/scripts/promote-findings.sh
+- 22:58 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 22:57 — .claude/commands/session-start.md
+- 22:57 — .claude/commands/session-plan.md
+- 22:57 — .claude/commands/new-project.md
+- 22:56 — docs/heavy-read-discipline.md
+- 22:56 — .claude/commands/session-plan.md
+- 22:56 — .claude/commands/session-start.md
+- 22:56 — .claude/commands/session-start.md
+- 22:56 — .claude/commands/session-start.md
+- 22:55 — .claude/commands/session-start.md
+- 22:55 — .claude/commands/session-start.md
+- 22:55 — .claude/commands/prime.md
+- 22:55 — .claude/commands/prime.md
+- 22:54 — .claude/commands/prime.md
+- 22:54 — .claude/commands/prime.md
+- 22:53 — .claude/commands/prime.md
+- 22:53 — .claude/commands/prime.md
+- 22:53 — .claude/commands/prime.md
+- 22:53 — .claude/commands/prime.md
+- 22:53 — .claude/commands/prime.md
+- 22:49 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/0ca6eb2a-ef7a-461e-81f5-b00037af551f/scratchpad/f-locator.sh
+- 22:49 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 22:49 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 22:48 — logs/scripts/run-manifest.sh
+- 22:48 — docs/session-marker.md
+- 22:48 — docs/session-marker.md
+- 22:48 — docs/session-marker.md
+- 22:48 — docs/session-marker.md
+- 22:48 — docs/session-marker.md
+- 22:47 — .claude/commands/prime.md
+- 22:47 — .claude/commands/prime.md
+- 22:45 — logs/scripts/prime-allocator.test.sh
+- 22:44 — logs/scripts/prime-allocator.test.sh
+- 22:44 — logs/scripts/prime-allocator.test.sh
+- 22:44 — logs/scripts/prime-allocator.test.sh
+- 22:44 — logs/scripts/prime-allocator.test.sh
+- 22:44 — logs/scripts/prime-allocator.test.sh
+- 22:44 — logs/scripts/prime-allocator.test.sh
+- 22:44 — logs/scripts/prime-allocator.test.sh
+- 22:43 — logs/scripts/prime-session-entry.sh
+- 22:34 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 22:33 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 22:33 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 22:33 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 22:33 — logs/loop/2026-07-30-prime-session-entry-ownership-shape.evidence.md
+- 22:31 — logs/loop/2026-07-30-prime-session-entry-ownership-shape.evidence.md
+- 22:30 — logs/loop/2026-07-30-prime-session-entry-ownership-shape.plan-v3.md
+- 22:25 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/97099764-5255-46d3-adab-a3eade968351/scratchpad/blocks/6.7-session-start-direct.md
+- 22:25 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/97099764-5255-46d3-adab-a3eade968351/scratchpad/blocks/6.6-session-plan-step8.md
+- 22:25 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/97099764-5255-46d3-adab-a3eade968351/scratchpad/blocks/6.5-promote.md
+- 22:24 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/97099764-5255-46d3-adab-a3eade968351/scratchpad/blocks/6.4-dispatch.md
+- 22:24 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/97099764-5255-46d3-adab-a3eade968351/scratchpad/blocks/6.2-collect.md
+- 22:22 — logs/loop/2026-07-30-prime-session-entry-ownership-shape.review-2.md
+- 22:12 — logs/scratchpads/2026-07-30-22-11-scratchpad.md
+- 22:11 — logs/loop/2026-07-30-prime-session-entry-ownership-shape.evidence.md
+- 22:05 — logs/loop/2026-07-30-prime-session-entry-ownership-shape.review-1.md
+- 22:03 — logs/loop/2026-07-30-prime-session-entry-ownership-shape.plan-v2.md
+- 22:03 — logs/loop/2026-07-30-prime-session-entry-ownership-shape.plan-v2.md
+- 20:49 — logs/loop/2026-07-30-prime-session-entry-ownership-shape.plan.md
+- 20:49 — logs/loop/2026-07-30-prime-session-entry-ownership-shape.plan.md
+- 20:49 — logs/loop/2026-07-30-prime-session-entry-ownership-shape.plan.md
+- 20:42 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-ai-system-owner/development/prime-runtime-delegation.md
+- 20:42 — logs/loop/2026-07-30-prime-session-entry-ownership-shape.brief.md
+- 20:38 — logs/scratchpads/2026-07-30-20-45-scratchpad.md
+- 20:36 — logs/loop/2026-07-30-prime-session-entry-ownership-frame.evidence.md
+- 20:35 — logs/loop/2026-07-30-prime-session-entry-ownership-frame.brief.md
+- 20:33 — logs/loop/2026-07-29-prime-minimum-responsibility-land.evidence.md
+- 20:31 — logs/loop/2026-07-29-prime-minimum-responsibility-land.brief.md
+- 20:25 — logs/loop/2026-07-29-prime-minimum-responsibility-prove.evidence.md
+- 20:24 — logs/loop/2026-07-29-prime-minimum-responsibility-prove.evidence.md
+- 20:23 — logs/loop/2026-07-29-prime-minimum-responsibility-prove.review-1.md
+- 20:12 — logs/loop/2026-07-29-prime-minimum-responsibility-prove.evidence.md
+- 20:05 — logs/scratchpads/2026-07-30-20-04-scratchpad.md
+- 20:02 — /Users/patrik.lindeberg/.claude/plans/let-s-fix-prime-command-cozy-puppy.md
+- 19:57 — /Users/patrik.lindeberg/.claude/plans/let-s-fix-prime-command-cozy-puppy.md
+- 19:47 — /Users/patrik.lindeberg/.claude/plans/let-s-fix-prime-command-cozy-puppy.md
 - 19:31 — logs/session-notes.md
 - 19:31 — logs/scratchpads/2026-07-30-19-30-scratchpad.md
 - 19:22 — /Users/patrik.lindeberg/.claude/projects/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/memory/feedback_zsh_tied_parameters.md
