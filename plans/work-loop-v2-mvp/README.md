@@ -59,8 +59,13 @@ reading the Proposal alone would otherwise follow superseded wording.
   into a task-state file in the repository and commits it"). Operator decision, on the Step 2
   evidence that Codex can write repository files but is refused write access to `.git`
   (`step-2-transport-seam-conclusions.md` § 2). Recorded in the executable core, § 4.
-  ⚠ The mission's validation contract still carries the pre-amendment wording — see
-  `logs/missions/work-loop-v2-mvp.md`, acceptance assertion 1.
+  ✓ **Reconciled 2026-08-01 (session S4-1bc).** The mission's validation contract carried the
+  pre-amendment wording, which made the mission unable to satisfy its own definition of done.
+  The operator chose to amend the assertion rather than record a standing divergence: a contract
+  that cannot be satisfied measures nothing, and an assertion waived at closure teaches the habit
+  of waiving assertions. Acceptance assertion 1 in `logs/missions/work-loop-v2-mvp.md` now reads
+  "…Claude commits it", with the date, the original wording and the basis recorded inline. That is
+  the **only** amendment made to that frozen contract; the freeze otherwise stands.
 
 ---
 
