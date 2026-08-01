@@ -2,66 +2,6 @@
 
 > Archive: [session-notes-archive-2026-07.md](session-notes-archive-2026-07.md)
 
-## 2026-07-29 — Session S1-2dd
-
-**Mandate:** Produce the immutable Shape PLAN for `/work-loop` stream `2026-07-29-prime-minimum-responsibility` — an implementable plan reducing canonical `prime.md` from 830 to ≤300 lines without weakening session initialization or changing the operator experience — done when: the PLAN is written to `logs/loop/2026-07-29-prime-minimum-responsibility-shape.plan.md` with a line budget on every retained `/prime` section, one authoritative owner named for every delegated responsibility, vertical Build slices with dependencies and rollback defined, a stated qualification route for any new durable artifact, and the unit stopped at G1 for Codex review.
-- Out of scope: Slices 2, 3, 4 and 5 — this session executes Slice 1 only. Prove and Land are separate units.
-- Files in scope: .claude/commands/prime.md, .claude/commands/session-start.md, .claude/commands/session-plan.md, .claude/commands/build-context.md, .claude/commands/work-loop.md, .claude/agents/context-discovery.md, .claude/hooks/check-foreign-staging.sh, docs/work-loop.md, docs/session-marker.md, docs/context-pack-schema.md, docs/backlog-reconciliation.md, logs/scripts/run-manifest.sh, logs/loop/2026-07-29-prime-minimum-responsibility-frame.evidence.md, logs/loop/2026-07-29-prime-minimum-responsibility-frame.brief.md, logs/missions/lean-prime-2026-07.md
-- Stop if: a stated premise fails verification at execution time — report the failure rather than build the plan on it.
-- Required outputs: logs/loop/2026-07-29-prime-minimum-responsibility-shape.brief.md, logs/loop/2026-07-29-prime-minimum-responsibility-shape.plan.md, logs/loop/2026-07-29-prime-minimum-responsibility-shape.evidence.md, logs/loop/2026-07-29-prime-minimum-responsibility-build-1.brief.md, logs/loop/2026-07-29-prime-minimum-responsibility-build-1.evidence.md
-- Mission: lean-prime-2026-07
-
-**Mandate amended 2026-07-29, after G1.** The block above was written for the **Shape** unit, whose defining property is that the object under work stays untouched — hence its original `Out of scope: editing any object under work`. G1 then approved the slice list, the Shape unit closed, and Build unit `-build-1` opened to execute **Slice 1**, which edits `prime.md` and nine other files by design. The footprint was widened to Slice 1's approved census and the stale out-of-scope clause replaced. Surfaced by `check-foreign-staging.sh`, which blocked the Slice 1 commit against the narrower footprint — the guard working as intended, not overridden. `.codex/agents/context-discovery.toml` was briefly edited by Slice 1 and has been **reverted** (operator call, 2026-07-29): `.gitignore:52-59` classifies `.codex/` as an unmaintained operator experiment whose adoption is a separate lifecycle decision, so syncing it inside a slice was out of bounds. It is correctly absent from the fields above, Slice 1's tracked census is 9 files, and `git revert` on `1b96aa6` is a complete rollback. See the build-1 evidence, R2.
-
-### Summary
-
-Continued `/work-loop` stream `2026-07-29-prime-minimum-responsibility` from the prior handoff.
-Produced `shape.plan-v4.md`, a measured package amendment showing `prime.md` cannot reach ≤430 or
-≤300 under a relocation-only package (behaviour-preserving lands 419, aggressive 316 — both short).
-Then executed an operator decision resolving the mission's outstanding non-negotiable — `/work-loop`
-may edit `/prime` under three conditions, recorded in `logs/decisions.md` with the prior process
-violation left on the record rather than erased. Re-scoped Slice 2 from a narrow allocator-only
-capability to one "Prime runtime delegation" capability and opened its record and hand-off brief,
-suspended pending `/develop-ai-resource` qualification. No edit was made to `prime.md` itself.
-
-### Decisions Made
-
-Both substantive decisions were operator-directed and are formally recorded in `logs/decisions.md`
-(not restated here): (1) the `/work-loop`-may-edit-`/prime` scope resolution — three conditions,
-ratifies Slices 1 and 3, process violation stays on record, `work-loop.md:247` stays stale pending a
-separately scoped fix; (2) plan-v4's falsification conclusion is scoped to the relocation-only
-package, not to ≤300 generally — recorded as a corrected reading, plan-v4 itself left unedited
-(immutable per `docs/work-loop.md` § Artifacts). One routine judgment call: severity levels on the
-two findings queued to `improvement-log.md` at wrap (medium-high, medium — reasoned in each entry).
-
-### Risky actions
-
-**A gate that should have fired but didn't, discovered and recorded this session (not newly risky
-today).** The mission's non-negotiable required an operator decision in `logs/decisions.md` before
-any `/work-loop` unit edited `prime.md`; Slices 1 and 3 (prior sessions) edited it first and the
-decision entry did not exist until this session. Fully disclosed and recorded in `logs/decisions.md`,
-2026-07-29, which explicitly forbids any future session from citing it as evidence the decision
-preceded the edits. No destructive git operation, no push, and no permission bypass occurred this
-session.
-
-### Next Steps
-
-- Run `/develop-ai-resource` in upstream mode against `logs/loop/2026-07-29-prime-minimum-responsibility-build-2.brief.md` (capability: `prime-runtime-delegation`, record at `projects/axcion-ai-system-owner/development/prime-runtime-delegation.md`). Do not preselect a shape — reuse, one script, several scripts, or no build are all admissible.
-- Before Step 3 of that pipeline: confirm the operator's posture on Agent-tool use — `/risk-check` and `/qc-pass` both dispatch subagents, and this session's standing no-Agent-tool-unless-asked instruction is a live, already-logged conflict with no documented precedence rule.
-- After qualification returns: produce the measured package amendment (resulting `prime.md` line count **and** runtime cost) before Slice 2 resumes, per the brief's constraints.
-- Separately: `.claude/commands/work-loop.md:247` needs its own scoped correction — queued to `improvement-log.md` this wrap, not yet actioned.
-- Consider a `/mission` update to `lean-prime-2026-07`'s `## Open threads` reflecting the re-scoped capability.
-
-### Open Questions
-
-None beyond what `projects/axcion-ai-system-owner/development/prime-runtime-delegation.md`'s
-`## Current phase and next action` already states as the pointer.
-
-### Findings Declined
-
-None — both findings surfaced this session (the work-loop amendment-path contract gap, and the stale
-`work-loop.md:247` line) were queued to `logs/improvement-log.md`, not declined.
-
 ## 2026-07-29 — Session S2-5a5
 
 **Work:** Continue `/work-loop` stream `2026-07-29-prime-minimum-responsibility` (mission `lean-prime-2026-07`). Run `/develop-ai-resource` in upstream mode against `logs/loop/2026-07-29-prime-minimum-responsibility-build-2.brief.md` — capability `prime-runtime-delegation`, record at `projects/axcion-ai-system-owner/development/prime-runtime-delegation.md`. Shape is NOT preselected: reuse, one script, several scripts and no build are all admissible.
@@ -538,3 +478,55 @@ which deliberately excludes the standard `/work-loop` review-independence path f
 under an operator-approved scope binding, then operator-directed G2 approval and G3 adoption in lieu of
 a closure `review-2` (explicitly waived by the operator). Reviewed, not unassessed — via the repair
 program's substitute gate rather than this repo's ordinary QC path.
+
+## 2026-08-01 — Installed the Work Loop v2 MVP project (Step 0)
+
+### Summary
+Setup-only session, per the operator's explicit instruction: build nothing, design nothing. Committed
+the four documents governing the Work Loop v2 MVP build into a new project folder, wrote an authority
+README, and created the mission contract. Ran `/placement` first since this was a new top-level project
+folder in an ambiguous layer (`plans/` vs `docs/`); its recommendation (`plans/`) was followed. Corrected
+one factual claim in the README before committing (the Playbook's named commands — `/to-spec`,
+`/implement`, etc. — do exist, as user-level Pocock skills in `~/.claude/skills/`, not in this repo).
+
+### Decisions Made
+- Placed the project folder at `ai-resources/plans/work-loop-v2-mvp/`, not `ai-resources/docs/`, per
+  `/placement`'s recommendation — `docs/` already hosts the live v1 work-loop runtime contract
+  (`work-loop.md`, `work-loop-spec.md`), and colocating the v2 destination-reference document there would
+  invite exactly the authority confusion the README is meant to prevent.
+- Added a canonical-home row to `docs/repo-architecture.md` for "multi-document build project"
+  (`plans/<project-slug>/` with an authority README), since the map's existing plan-artifact row only
+  described a flat file.
+- Added an authority notice directly inside the Complete System explainer file (not just the README), so
+  a session that opens that file directly still sees the destination-reference-only warning.
+- Mission's validation contract, non-negotiables, and off-mission signals were drafted from Proposal § 4
+  and § 6 rather than left as template placeholders, since the operator's setup instruction said "keep it
+  light" but the mission template's own contract calls for writing the validation contract now, while
+  fresh.
+
+### Risky actions
+None.
+
+### Findings Declined
+None — no findings this session (setup-only, no review, no defects observed).
+
+### Next Steps
+Playbook Step 1 (next session): investigate Codex-side resource packaging in the real Codex app — how a
+Codex-side resource is installed, invoked, and reads/writes repository files. Commit a short cited
+findings note. Do not investigate Claude Code command conventions (Claude inspects the repository itself
+when implementation starts).
+
+### Open Questions
+None.
+
+## 2026-08-01 — Session S1-eb7
+
+**Mandate:** Investigate Codex-side resource packaging by inspection of primary sources — how a Codex-side resource is installed, invoked, and reads/writes repository files, plus any format or size constraints — done when: `plans/work-loop-v2-mvp/step-1-codex-packaging-findings.md` exists and is committed, every claim cited to an inspected source, and anything not inspectable from here named as an open gap rather than guessed.
+- Out of scope: Claude Code command conventions (the repository answers repository questions at implementation time); building anything (no command, no resource, no executable core); any capability from the Complete System explainer (Consequential lane, worktrees, reviewer machinery, automation) — destination reference only, creates no requirements.
+- Files in scope: (inferred)
+- Stop if: answering a question would require asserting Codex behaviour that cannot be inspected from here — record it as an operator-checkable gap and continue with the rest.
+- Allowed inputs: plans/work-loop-v2-mvp/README.md, plans/work-loop-v2-mvp/work-loop-v2-mvp-proposal-v0.4.md, plans/work-loop-v2-mvp/pocock-lifecycle-work-loop-mvp-v0.4.md, plans/work-loop-v2-mvp/skill-writing-standard-work-loop-v0.2.md, .agents/skills/work-loop/SKILL.md, docs/work-loop.md, ~/.codex/ and any Codex config or install surface present on this machine, Codex primary documentation
+- Required outputs: plans/work-loop-v2-mvp/step-1-codex-packaging-findings.md
+- Mission: work-loop-v2-mvp
+
+**Work:** Work Loop v2 MVP Step 1 — investigate Codex-side resource packaging; commit a cited findings note

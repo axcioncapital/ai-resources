@@ -195,3 +195,33 @@ adjacent to a separately-tracked open finding (OF-1: a 2026-07-29 package mutate
 different stream). It differs in kind — nothing here is edited, and the decision is explicit, attributed
 and recorded, the opposite of a silent mutation — but the adjacency was surfaced to the operator before
 approval rather than glossed over.
+
+## 2026-08-01 — Work Loop v2 MVP project folder placed in `plans/`, not `docs/`
+
+**Context.** Step 0 of the Work Loop v2 MVP build (a new, separate multi-session project — not the
+Work Loop v1 repair program above) required committing four governing documents plus an authority
+README into a new project folder. This was a new top-level project folder in a genuinely ambiguous
+layer, so `/placement` ran first per the workspace placement-discipline rule.
+
+**Decision.** Placed the folder at `ai-resources/plans/work-loop-v2-mvp/`, following `/placement`'s
+recommendation. Also added a canonical-home row to `docs/repo-architecture.md` for "multi-document
+build project" in the same commit, since the map's existing plan-artifact row only described a flat
+file, not a folder.
+
+**Rationale.** `docs/` already hosts the *live v1* Work Loop runtime contract (`work-loop.md`,
+`work-loop-spec.md`, consulted every `/work-loop` invocation). One of the four v2 documents is an
+explicit destination-reference-only spec describing the full future system, including capabilities
+(Consequential lane, worktree isolation, an independent-reviewer role, automation) that are explicitly
+out of MVP scope. Placing that document beside the v1 runtime contract in `docs/` would create the
+exact authority confusion its own README was written to prevent — a future session opening `docs/`
+would find v1's current contract and v2's destination description sitting as apparent peers.
+`plans/` already holds precedent for this project (`plans/2026-07-28-work-loop-consolidated-build-plan.md`)
+and its plan artifacts are understood to go stale at ship time, at which point the surviving runtime
+contract graduates to `docs/` — matching how this build is meant to end.
+
+**Alternatives considered.**
+- **Option B — `ai-resources/docs/work-loop-v2-mvp/`.** Defensible on the folder-shaped precedent of
+  `docs/emailos-mvp-learning/` and `docs/ai-resource-development-playbook/`, both multi-doc project
+  folders already living under `docs/`. Rejected for now: those folders are read by commands/operators
+  as ongoing reference; this folder governs a one-time construction and is expected to be superseded
+  by its own output. Revisit at ship time if the surviving core belongs in `docs/` anyway.

@@ -1164,3 +1164,31 @@ No additional levers — session was efficient.
 - **When a gate corrects a caller-supplied "verified" fact, write the correction back to the source the fact came from, not only into the audit report (~10–20k per occurrence, compounding).** The mission count was wrong in `/prime` output, in the session plan, and in the brief. A correction that lands only in `audits/risk-checks/` leaves three upstream copies live for the next session to inherit — and this repo has already logged one case (S10-163) of a prior pass's findings sitting on disk unread. Smaller per-occurrence than the levers above; it is what stops a caught error from being re-caught later at full price.
 - **Reach for `Read`/`Glob` before wrapping read-only inspection in compound Bash (~3–6k/session).** Three denials, three round-trips, all on `ls`/`head`/`wc`/`diff` pipelines the harness rules already route to dedicated tools. Cheap, mechanical, and new this session rather than a carried item.
 - **Finish the wrap-tail batch (~2–3k/session).** Fifth consecutive entry carrying this. Genuine movement — 3-in-1 at wrap open and a 2-in-1 mid-tail, up from two batched calls last time — but the tail still fragments. Smallest item here, listed to close the loop rather than to bank the tokens.
+
+### 2026-08-01 | Acceptable
+
+**Task:** Installed a new multi-session build project ("Work Loop v2 MVP") — committed four governing documents plus an authority README into `plans/work-loop-v2-mvp/`, created the project's mission contract, and added a canonical-home row to the repo architecture map; second turn wrapped the session.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | 3 |
+| Files read | 9 (re-reads: 3) |
+| Files written/edited | 9 |
+| Tool calls | 46 total (Bash ~30, Read 2, Write 6, Edit 5, Skill 2, Agent 1) |
+| Subagents | 1 |
+| Rework cycles | 1 |
+
+**Findings:**
+- `docs/repo-architecture.md`, `logs/session-notes.md` (3x), and `logs/decisions.md` were each read more than once with no edits between the repeat reads on the same file — pin the tail content after the first read or extract only the needed section, rather than re-reading to re-orient (Re-reads, Moderate).
+- README's "commands not present" section was drafted, then required a verification pass and rewrite after Bash searches found 3 of 4 claimed-absent commands actually exist as user-level Pocock skills — verify existence claims before drafting them, not after (Rework, Moderate).
+- Several independent wrap-mechanics greps (promote-findings, innovation-registry, improvement-log) and two partial `SKILL.md` reads ran as separate sequential calls with no dependency between them (Tool overhead / Missed parallelization, Minor).
+- Trend: this session breaks a 3-session "Wasteful" streak (S10–S12, compounding scope-mismatched verification and un-batched wrap tails) — improvement, though the same verification/wrap-tail pattern is still visibly present at lower severity.
+
+**Recommendation:** Before asserting a factual claim about repo state (e.g., "command X doesn't exist"), run the verification search first and draft the claim from its result — avoids the draft-then-correct cycle seen on the README.
+
+**Estimated savings:** ~1.5–2k tokens per avoided rework cycle (redraft + re-verification context) × 1 occurrence this session ≈ 2k tokens/session; if the same claim-then-verify pattern recurs at ~1 cycle/session, ~20–30k tokens over a 10–20 session horizon.
+
+**Additional levers (ROI-ranked):**
+- Batch the wrap-tail verification greps (promote-findings/innovation-registry/improvement-log) into one combined Bash call — saves ~3-5 round-trip tool-call overheads/session (~1–2k tokens), smaller than the rework fix since these are cheap reads already.
+- Read `logs/session-notes.md` once per wrap turn instead of up to 3 times (initial tail, post-archive tail, raw-format check) — ~0.5–1k tokens/session; smaller because the file is small and re-reads were partly forced by the archive hook changing file state mid-session.
+- Pull the two `skill-usage-analyzer/SKILL.md` partial reads into a single read covering both needed sections — negligible (~0.2k tokens/session) but free to fix alongside the above.
