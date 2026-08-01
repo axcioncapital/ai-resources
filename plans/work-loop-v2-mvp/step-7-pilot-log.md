@@ -82,22 +82,60 @@ pickup window is this pilot.
 
 ## Unit 1
 
-**Status:** not yet opened — awaiting operator selection of a genuine unit.
+**Status:** selected 2026-08-01, **blocked before opening** — see friction point 1.
 
-- **Task id:** —
-- **Owning project:** —
-- **Objective (operator's words):** —
-- **Lane:** —
-- **State file:** `logs/work-loop/—`
-- **Opened by:** — *(Codex opening this for real retires limitation 2)*
+- **Task id:** *(not yet allocated)*
+- **Owning project:** `projects/axcion-systems-builder`
+- **The work:** `cases/scripts/build-review-packet.sh` carries two linked defects, both already
+  verified and recorded in `cases/axcion-writing-studio/working/phase9-red-team-disposition.md:75-77`:
+  1. The script ships **exactly one brief**, so a resubmission brief listing the first-pass brief as
+     enclosed context describes a file the script structurally cannot include. The disposition note
+     states this "will recur on every future resubmission."
+  2. `verify` against a frozen historical packet prints `PACKET IS STALE — do not send. Rebuild: …`
+     — and following that instruction **overwrites the only surviving copy of what Codex actually
+     reviewed**. A `FROZEN-AFTER-REVIEW.md` marker had to be hand-placed inside the packet directory
+     because the script's own output points the wrong way.
+- **Selected by:** operator, 2026-08-01.
+- **Lane:** not yet classified — that is Codex's call at admission, not Claude's.
+- **State file:** not yet opened.
+- **Opened by:** intended to be Codex, for real *(which would retire limitation 2)*.
 
 ### Friction points
 
-*(none yet)*
+#### FP-1 — v2 is not installed in the project where the first real unit lives
+
+**Class: OBSTRUCTION.** It prevents the unit from running at all.
+
+Observed 2026-08-01, before the unit could be opened. Verified by inspection, not recall:
+
+| Check | Result |
+|---|---|
+| `/work-loop-v2` in `projects/axcion-systems-builder/.claude/commands/` | **Absent.** Only `work-loop.md` (v1) is symlinked, → `ai-resources/.claude/commands/work-loop.md` |
+| `.agents/skills/` in that project | **Does not exist** — Codex has no route to the v2 resource from there |
+| `logs/work-loop/` in that project | **Does not exist**; only `logs/loop/` (v1's folder) |
+| How that project's last loop work ran | Through **v1** — `logs/loop/2026-07-30-writing-studio-phase9-mvp.*` |
+
+**Why this is not a surprise, and why it still counts.** Slice 1 decided deliberately that
+`/work-loop-v2` would stay ai-resources-only for the MVP, with no workspace-root symlink, and named
+**Step 7 as the natural promotion point** (`step-5-slice-1-evidence.md`; session S5-646 decisions).
+So the fix was scheduled for exactly this step. What the pilot adds is the evidence that the
+scheduled work is now *due*: the first genuine unit cannot run without it.
+
+**It compounds with the v1 retirement.** Option A archives v1 (`step-7-v1-retirement-decision.md`),
+and v1 is the only Work Loop currently reachable from this project. Archiving without installing v2
+would leave the project with no loop at all.
+
+**It also lands on disclosed limitation 1** — folder creation from a genuinely absent
+`logs/work-loop/`, recorded as untested because the case was unconstructible during the slices. Here
+the folder genuinely does not exist, so the pilot can construct it for the first time.
+
+**Status:** surfaced to the operator 2026-08-01 before any fix was applied, per the pilot presumption
+(an OBSTRUCTION classification is the one judgment that must not be made unilaterally). Awaiting the
+decision on how to proceed.
 
 ### Verdicts
 
-*(none yet)*
+*(none yet — the unit has not run)*
 
 ---
 
