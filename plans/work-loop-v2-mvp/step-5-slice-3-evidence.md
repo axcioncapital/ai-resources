@@ -53,10 +53,29 @@ lines. The request was made and handled directly: two files edited, said out lou
 opened** — the harness asserts the positive fixes first and the absence of a new task file second
 (an absence-only assertion would pass before anything ran).
 
-**(b) "This feels significant" is refused.** Both artifacts carry the refusal rule, and no task
-file exists for such a request. **Limitation:** the live Codex refusal was offered to the operator
-and not run, so 3.1(b) rests on artifact-level evidence plus the absent file, not on an observed
-refusal. This is the weakest evidence in the slice.
+**(b) "This feels significant" is refused.** Both artifacts carry the refusal rule.
+
+**Closed on live evidence 2026-08-01, session S9-6ba (Step 6).** ~~Limitation: the live Codex
+refusal was offered to the operator and not run, so 3.1(b) rests on artifact-level evidence plus
+the absent file, not on an observed refusal. This is the weakest evidence in the slice.~~ Codex was
+given the request and **refused admission on its own**, with nothing in the request or the prompt
+naming the admission rule. It recorded in `logs/work-loop/fixture-step6-admission.md` that "this
+feels significant" is "explicitly not a qualifying reason under the executable core", declined to
+choose Direct Work because the request was not bounded enough, set `turn: operator`, and routed the
+request back for either a narrow reversible fix or a concrete named reason. No brief, no lane and
+no unit were written. Committed `6e3afa1`.
+
+The harness assertion changed with the evidence: the old absence test
+(`! ls logs/work-loop/ | grep -qi 'significant'`) became meaningless once the request itself had to
+be carried by a state file, and was replaced by seven substance assertions read from history
+(`07afcc4`), six of which were proven to go red against a task that *was* opened with a brief.
+
+**Two findings came out of this run, both carried into the Step 6 review:**
+1. Codex could not see a chat-pasted request at all — the first attempt returned "no task visible".
+   Root cause and options: `issue-codex-request-intake.md`. Second occurrence of this class.
+2. Codex's reply ended `**Next:** run /work-loop-v2 in Claude` while the file it had just written
+   said `turn: operator` — the two disagree. `SKILL.md:22` supplies that exact line as its only
+   worked example of the required Next instruction.
 
 Every task opened this slice carries `Named reason for the loop:` in its opening commit — asserted
 at the opening commit for all four tasks, not in the working tree.
@@ -131,8 +150,8 @@ by a term only it uses, and was proven falsifiable by breaking one term and obse
 
 ## Limitations
 
-1. **3.1(b) has no live refusal** — see behaviour 3.1 above. The strongest available fix is one
-   Codex prompt at the start of Step 6.
+1. ~~**3.1(b) has no live refusal**~~ — **CLOSED 2026-08-01, session S9-6ba.** Codex refused
+   admission live and unprompted; see behaviour 3.1 above. Commit `6e3afa1`, harness `07afcc4`.
 2. **This session built the command and then ran it.** Slice 2's fresh-session pickup (2.1) is what
    proves continuity; this slice did not re-exercise it.
 3. **The 3.4 close task's brief was hand-written by the session that then ran the unit**, so its
