@@ -133,3 +133,37 @@ it at Step 6 would just be the same conversation twice.
 
 **Recorded:** `logs/missions/work-loop-v2-mvp.md` § Open threads (Step 5 Slice 1 entry), verified
 byte-identical against the frozen contract prefix before and after the write.
+
+---
+
+## 2026-08-01 — Narrow § 6's model bullet rather than invert it, to avoid pre-empting a reserved operator decision
+
+**Context:** `docs/harness-and-permission-troubleshooting.md` § 4.5 was corrected the same day it was
+written: the `model` key in `~/.claude/settings.json` is written by `/model` itself, so the original
+advice to delete it was destructive. The correction did not reach § 6 ("What not to do"), whose bullet
+still read *"Do not add a `model` field to any `settings.json` … This rule is non-negotiable."* That
+left the doc contradicting itself at the section a reader is most likely to skim.
+
+**The complication:** that bullet is lifted verbatim from workspace `CLAUDE.md` § Model Tier — the rule
+that is *itself* the subject of a pending operator decision (whether to narrow it to committed layers
+and carve out the user layer). So the obvious fix, inverting the bullet to match § 4.5, would have
+silently decided the very question the doc elsewhere flags as reserved for the operator.
+
+**Decision:** narrow the bullet to committed layers (workspace / ai-resources / project / vault), state
+the user layer as an explicit exception, and point at § 4.5's conflict box rather than restating either
+position as settled. The doc now records the conflict in three places without resolving it.
+
+**Rationale:** the doc's internal consistency and the operator's authority over the `CLAUDE.md` rule are
+both preservable at once. A reader gets correct, non-destructive guidance today; the rule question stays
+open and visible for the operator to rule on.
+
+**Alternatives considered:**
+- *Invert the bullet to match § 4.5.* Rejected — resolves the pending decision by side effect, in a
+  document whose own § 4.5 says the rule "has not been changed" because it is marked non-negotiable.
+- *Leave § 6 alone and rely on § 4.5.* Rejected — leaves live destructive advice in the doc's most
+  skimmable section. Entry-point sections are read *instead of* the body, not after it.
+- *Delete the bullet entirely.* Rejected — the committed-layer half of the rule is correct and worth
+  keeping; deleting it loses real guidance to avoid an editing problem.
+
+**Recorded:** `docs/harness-and-permission-troubleshooting.md` §§ 1, 4.5, 5, 6; commit `2eab561`.
+Pending-decision entry already exists at `logs/improvement-log.md:2301`.

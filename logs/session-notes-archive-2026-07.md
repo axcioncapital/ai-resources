@@ -4224,3 +4224,30 @@ Resolved a git merge conflict on shared log files, combining content from a conc
 
 ### Open Questions
 None.
+## 2026-07-30 — Retired /qc-pass, /risk-check, /resolve, /refinement-deep — Codex is the second opinion
+
+### Summary
+Operator instruction: retire the QC-pass and risk-check gates, since Codex second-opinion review now covers that role. The 2026-07-29 review-layer consolidation had already made Codex the reviewer in policy but explicitly deferred the cross-project migration ("26 projects link to them"); this session completed that migration and executed the retirement. Deleted `/qc-pass`, `/risk-check`, `/resolve`, `/refinement-deep`, the `qc-reviewer` and `risk-check-reviewer` agents, their `.codex` twins, ~180 project symlinks, 3 forked `qc-pass.md` copies, and two `.codex` auto-nudge hooks that were still live-firing on every Write/Edit. Found and fixed five genuine functional breaks (not just stale prose) where deleted resources were still actively invoked or spawned: `/prime` 8c.11, `/new-project`'s symlink scaffolding, `/friday-journal` + `/cleanup-worktree`'s subagent spawns, and the research-workflow template's manifest + commands. Renamed `audit-discipline.md` § "Risk-check change classes" → "Structural change classes" throughout. Verified clean: no dead agent spawns, no broken symlinks, all touched JSON/shell parses.
+
+### Decisions Made
+- **(Operator, via AskUserQuestion)** Blast radius: retire the QC-loop machinery (`/resolve`, `/refinement-deep`) alongside the two named commands, not just the two, and not keeping `/qc-pass` as a Codex-unreachable fallback.
+- **(Operator, via AskUserQuestion)** Sweep depth: fix wiring + docs (commands/agents/hooks/settings/CLAUDE.md/docs/skills/templates/workflow-templates); leave `logs/`, `audits/`, `plans/`, `reports/` untouched as historical record.
+- **(Claude)** Repointed `/friday-journal` and `/cleanup-worktree`'s deleted `qc-reviewer` spawns to a tier-pinned `general-purpose` dispatch with the rubric inlined, rather than leaving them broken or inventing a replacement named agent.
+- **(Claude)** Repointed the research-workflow template's spawns to its own pre-existing local `qc-gate` agent rather than the deleted canonical `qc-reviewer`.
+- Full context, rationale, and alternatives considered logged in `logs/decisions.md` under this same date/title.
+
+### Outcome
+(Step 6.4 skipped — not requested)
+
+### Risky actions
+None — all deletions were of resources whose canonical successor (Codex review) already existed in policy since 2026-07-29; nothing irreversible outside normal git history, and everything deleted is recoverable from git immediately prior to the retirement commits.
+
+### Next Steps
+- Push the two unpushed commits (`ai-resources` `38981e5`, workspace root `dc30c9d`) via this wrap's push gate.
+- Two other session worktrees remain open from a prior session (`ai-resources-leverage-idea`, `ai-resources-work-loop`) — untouched this session, landing each is a separate `/close-worktree-session` call.
+
+### Findings Declined
+None — no findings surfaced this session beyond the retirement work itself, which was fully executed and verified, not deferred.
+
+### Open Questions
+None.

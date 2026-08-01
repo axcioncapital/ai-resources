@@ -816,3 +816,41 @@ review, and the standing checks are stronger this time — the 78-assertion harn
 2.1's real fresh-session exercise of the command, which is precisely the substitute exercise that
 decision named. `unassessed` is recorded here as fact per `docs/qc-independence.md`; Step 6 remains
 the mission's one review and these changes are inside its frozen-commit scope.
+
+---
+
+## 2026-08-01 — Fixed harness-and-permission-troubleshooting runbook (post-correction reconciliation)
+
+**Work:** Correct `docs/harness-and-permission-troubleshooting.md` — reconcile the doc's summary sections with the same-day § 4.5 correction, and verify the correction's own claims independently.
+
+### Summary
+The runbook was written this morning (`c05d298`) and materially corrected later the same day: § 4.5 originally told readers to delete the `model` key from `~/.claude/settings.json`, which is destructive because `/model` writes that key itself. That correction was sound — I verified its central claim independently by observing the key read `opus[1m]` when the doc was written and `claude-fable-5[1m]` at 14:40:08 after the operator ran `/model`, with nothing else writing it. But the rewrite never reached the three sections that *summarise* § 4.5, leaving the doc contradicting itself at its own entry points. Applied seven fixes, all doc-only. Committed as `2eab561` (116 insertions, 25 deletions).
+
+The highest-value find was incidental: widening § 4.1's orphan-hook scan from one directory to two (16 rows → 22) surfaced **two previously unknown orphaned hooks** at the workspace root — `session-start.sh` and `sync-shared-resources.sh`. Both verified genuinely dead before recording (unwired in every settings file, git hook, and other hook script; the `session-start.sh` hits inside `precompact.sh`/`postcompact.sh` are comments, not calls). `sync-shared-resources.sh` is the worse case: a sync mechanism that never fires while ~12 project documents describe it as live. § 5 finding #3 updated from three orphans to five.
+
+### Decisions Made
+- **Deliverable scope = correct the doc only** (operator-directed). Do not apply § 5's recommended fixes to the machine — finding #1's fix is destructive, and #2/#3 are harness-config changes the autonomy rules make operator decisions. Nothing outside the doc was touched; verified `~/.claude/settings.json` mtime unchanged (14:40:08) and workspace `CLAUDE.md` clean.
+- **§ 6's model bullet narrowed rather than inverted.** Its wording is lifted verbatim from workspace `CLAUDE.md` § Model Tier — the non-negotiable rule currently under a pending operator decision. Simply inverting it would pre-empt a ruling the operator reserved, so the bullet was narrowed to committed layers and now points at § 4.5's open conflict box.
+- **§ 3.4's option order changed** so the grep-around-a-`Read`-deny trick is listed last, not first. Its own text calls it "a real gap in the guard, not a blessed workaround"; leading with it taught routing around a confidentiality control.
+- **§ 4.1 scan widened to both hook directories** rather than documenting the limitation — a diagnostic whose job is completeness should not return clean-looking output with a directory silently missing.
+- **Routine:** header gained a revision note; ✅ marker definition widened to cover observed live state (§ 4.5's evidence is an observed value change, not a test); § 3.2's "all four" corrected to "all five".
+
+### Risky actions
+None. The one real hazard was caught and respected: the Step 3.5 pre-write guard fired CONCURRENT on `logs/session-notes.md` because session S7-3fc had uncommitted content in the working tree. I stopped rather than staging the union, and only proceeded after S7-3fc's own wrap (`2aa066f`) landed its content in HEAD and the guard re-ran clean (`FOREIGN=0`, `WT=8 HEAD=8`).
+
+### Next Steps
+Four operator decisions are open and recorded in the doc itself, none blocking:
+1. **`CLAUDE.md` § Model Tier rule conflict** — the rule bans a `model` field in "any" settings layer and names the user layer explicitly, but the user layer is `/model`'s own storage, so the rule as written cannot be complied with while using `/model`. Evidence supports narrowing to committed layers. Recorded in § 4.5's conflict box, § 5 finding #1, and `improvement-log.md:2301`.
+2. **`Bash(rm -rf *)` deny rule** (§ 5 finding #2) — denies by text not effect; has blocked legitimate cleanup three times across sessions.
+3. **Five orphaned hooks** (§ 5 finding #3) — each needs registration or a correction to the documents claiming it runs. `sync-shared-resources.sh` is the priority.
+4. **`warn-fable-model.sh` staleness** — asserts the operator does not want Fable for Axcíon work, but `/model claude-fable-5[1m]` was chosen deliberately this session.
+
+### Open Questions
+None blocking. Items 1–4 above are operator judgment calls, not unknowns.
+
+### Findings Declined
+- **Doc summary sections contradicted the corrected § 4.5** (§ 1 triage row, § 5 preamble, § 6 bullet) — declined as a queue item because it was **fixed this session** in commit `2eab561`. Nothing left to action.
+- **§ 4.1's orphan scan was blind to the workspace-root hooks directory** — declined for the same reason: fixed this session. The *consequence* it revealed (two unrecorded orphans) was queued separately rather than declined.
+- **§ 3.4 listed the grep-around-a-`Read`-deny workaround first**, ahead of the safe options — fixed this session; moved last with its warning kept.
+- **`Bash(rm -rf *)` denies by verb-text, not effect** — declined as a duplicate. Already queued at `improvement-log.md:2304` (2026-08-01, third occurrence), with the same proposal.
+- **`CLAUDE.md` § Model Tier bans a `model` field in a layer `/model` itself owns** — declined as a duplicate. Already queued at `improvement-log.md:2301`, and recorded in the doc at §§ 4.5 and 5.
