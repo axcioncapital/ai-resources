@@ -399,10 +399,29 @@ check "3.1a  the committed targets carry both direct fixes" \
   "git show HEAD:'$TARGET' 2>/dev/null | grep -q 'Slices 1 to 3' && git show HEAD:'$TARGET2' 2>/dev/null | grep -q '^Status: in acceptance use'"
 
 # --- 3.1(b) 'this feels significant' opens nothing ---------------------------
-# The refusal itself is a chat move; its END STATE is that no task file for the
-# refused request exists, while the artifacts carry the refusal rule.
-check "3.1b  no task file exists for the refused 'significant' request" \
-  "admission_res | grep -qi 'feels significant' && ! ls logs/work-loop/ | grep -qi 'significant'"
+# Was: file absence ('! ls logs/work-loop/ | grep -qi significant'). That test died
+# on 2026-08-01 when Codex proved unable to see a chat-pasted request and the
+# operator's request had to be carried BY a state file (issue-codex-request-intake.md).
+# Once a request file legitimately exists before admission, absence measures nothing.
+# Replaced with substance checks on the refusal Codex actually wrote. Read from
+# HEAD, not the working tree — the Slice 1 behaviour-1.1 lesson, twice repeated.
+ADMIT_F="logs/work-loop/fixture-step6-admission.md"
+admit_committed() { git show HEAD:"$ADMIT_F" 2>/dev/null; }
+
+check "3.1b  the refused request is on disk and in history" \
+  "admit_committed | grep -qE '^task:[[:space:]]*fixture-step6-admission'"
+check "3.1b  Codex wrote no brief for the refused request" \
+  "admit_committed | grep -q . && ! admit_committed | grep -qi '^## Brief'"
+check "3.1b  no lane or unit was opened for the refused request" \
+  "admit_committed | grep -q . && ! admit_committed | grep -qiE '^## Lane|Lane and unit'"
+check "3.1b  the refusal names the stated reason as non-qualifying" \
+  "admit_committed | grep -qi 'feels significant' && admit_committed | grep -qiE 'not a qualifying|not a valid|explicitly not'"
+check "3.1b  the refusal routes to Direct Work or a real named reason" \
+  "admit_committed | grep -qi 'direct work' && admit_committed | grep -qi 'named reason'"
+check "3.1b  the refusal did not hand the turn to Claude" \
+  "admit_committed | grep -qE '^turn:[[:space:]]*operator'"
+check "3.1b  the artifacts still carry the refusal rule" \
+  "admission_res | grep -qi 'feels significant'"
 
 # --- 3.2 work that turns out smaller de-escalates and closes ------------------
 # The command must own de-escalation as its own section; the word appears in the
