@@ -130,8 +130,78 @@ would leave the project with no loop at all.
 the folder genuinely does not exist, so the pilot can construct it for the first time.
 
 **Status:** surfaced to the operator 2026-08-01 before any fix was applied, per the pilot presumption
-(an OBSTRUCTION classification is the one judgment that must not be made unilaterally). Awaiting the
-decision on how to proceed.
+(an OBSTRUCTION classification is the one judgment that must not be made unilaterally). **Operator
+directed: install the symlink.** Resolved 2026-08-01 — see Resolution below.
+
+#### FP-2 — the artifacts' own first instruction does not resolve outside `ai-resources`
+
+**Class: OBSTRUCTION.** Found while resolving FP-1; it would have made a bare symlink useless.
+
+Both runtime artifacts open with the same line:
+
+> *"Read `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` before anything else, every
+> invocation."*
+> — `.claude/commands/work-loop-v2.md:11`, `.agents/skills/work-loop-v2/SKILL.md:10`
+
+That path is **relative to the `ai-resources` repository root** and does not resolve from a consuming
+project. Verified: `ls plans/work-loop-v2-mvp/…` from `projects/axcion-systems-builder` returns
+nothing.
+
+**v1 does not have this defect.** `.claude/commands/work-loop.md:11` reads *"Read
+`ai-resources/docs/work-loop.md`"* — with the repository prefix. v2 dropped the prefix. Since v2 was
+built and reviewed entirely inside `ai-resources`, where the bare path resolves, nothing in three
+slices or the candidate review could have exposed it. **The first invocation from outside the repo is
+the first construction of this case** — the same shape as disclosed limitation 1.
+
+**Deliberately NOT fixed in the artifacts.** Editing either runtime file would change the accepted
+candidate, and Proposal Decision 9 (`:44`) states that any subsequent change to the candidate creates
+a new candidate and **makes the Step 6 review stale**. That is far too high a price for a path prefix,
+and it is not a decision to take silently mid-pilot. Resolved by symlink instead (below), which leaves
+every reviewed byte untouched.
+
+**Carried to Step 8** as the natural place to fix the prefix, where a new candidate and its review are
+expected anyway.
+
+#### FP-3 — the install is local-only and will not survive a fresh clone
+
+**Class: TRIGGER.** Not obstructing — the loop works now.
+
+Of the three symlinks installed, the command one is gitignored by that project's own
+`.gitignore:25` (`.claude/commands/*`), consistent with every other command symlink there. The other
+two (`.agents/skills/work-loop-v2`, `plans/work-loop-v2-mvp`) are **not** ignored, so they would be
+committed — as symlinks pointing outside their own repository, which resolve only while
+`ai-resources` sits as a sibling directory. They were left **untracked and uncommitted** rather than
+either committed or hidden by editing that project's `.gitignore`, which was outside the operator's
+instruction.
+
+**This is the same class as an already-tracked repo-health item** — "hook wiring is unversioned; a
+fresh clone silently loses the layer" (`repo-health-backlog-2026-07`, item 3). A new machine would
+get a project that looks installed and is not.
+
+*Reopening trigger: a second checkout, a new machine, or the moment v2 is installed into a third
+project — at which point this stops being one project's local state and becomes a distribution
+problem.*
+
+### Resolution of FP-1 and FP-2
+
+Operator-directed, 2026-08-01. Three symlinks created in `projects/axcion-systems-builder`, each
+verified to resolve by reading through it:
+
+| Link | Target | Tracked? |
+|---|---|---|
+| `.claude/commands/work-loop-v2.md` | `ai-resources/.claude/commands/work-loop-v2.md` | no — gitignored by that repo's existing rule |
+| `.agents/skills/work-loop-v2` | `ai-resources/.agents/skills/work-loop-v2` | no — left untracked (FP-3) |
+| `plans/work-loop-v2-mvp` | `ai-resources/plans/work-loop-v2-mvp` | no — left untracked (FP-3) |
+
+The third exists solely to satisfy FP-2 without editing the reviewed candidate.
+
+`logs/work-loop/` was **not** pre-created — the loop creates it, which is what constructs disclosed
+limitation 1's untested case for the first time.
+
+**Review status: `unassessed`.** This is a structural change class (new symlinks, plus making a
+resource reachable from a repository it was deliberately kept out of). No independent review ran; the
+operator directed the install directly. Recorded as a fact, not smoothed over
+(`docs/qc-independence.md`).
 
 ### Verdicts
 
