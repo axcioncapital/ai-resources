@@ -248,3 +248,80 @@ full correction.
 **Recorded:** `plans/work-loop-v2-mvp/step-6-candidate-review.md` § 6 (self-contained, with all three
 options); `step-6-review-findings.md` (the frozen findings); commit `edd0d97` (A and B corrected),
 `627001e` (the review record).
+
+## 2026-08-01 — Work Loop v2 Step 6: finding C adjudicated by Codex, ruled against Claude's recommendation
+
+**Context.** The prior entry recorded finding C deferred rather than settled, precisely because
+Claude authored all four candidate files and its recommendation (the bounded option) was the
+convenient one. This session the operator moved from deferral to a resolution mechanism: Codex
+adjudicates independently, and the operator would not decide before that verdict existed.
+
+**Decision.** Claude wrote a self-contained adjudication brief for Codex
+(`step-6-finding-c-adjudication-brief.md`) rather than settling C itself. Codex returned option 1 —
+correct finding C in full — against Claude's recommended option 2 (bounded correction with a
+reopening trigger). Claude implemented Codex's verdict as written.
+
+**Rationale, as Codex gave it.** The duplicated policy is executable instruction inside the prompts
+that run the loop, not documentation debt. Correcting finding A removed the observed contradiction
+but not the mechanism that produced it. Option 2's reopening trigger would have made the pilot wait
+for a known source-of-truth violation to cause real harm before honouring a binding standard and a
+material independent finding. On whether the remaining restatement was a judged trade-off (Slice 3
+had rejected duplication under this same rule) or an inconsistency, Codex ruled inconsistency: the
+build's asymmetric assignment of *actions* by actor was sound and did not license restating the
+*rule* each actor applies.
+
+**A secondary correction inside the same verdict.** Codex re-derived Claude's blast-radius
+measurement and found it wrong in Claude's own favour: 11 positive policy-wording locks, not the 10
+Claude reported (a grep filter missed one assertion routed through a helper function). A larger
+count made the option Claude argued against look more expensive — exactly the kind of error the
+authorship-conflict concern predicts, and exactly why the brief asked for re-derivation rather than
+trust.
+
+**Alternatives considered.** *Let Claude choose* — already rejected in the prior entry, for the same
+authorship-conflict reason; not revisited. *Settle C by operator judgment directly* — not taken; the
+operator explicitly wanted an independent verdict before any decision, including their own. *Split
+the difference (partial correction)* — not on Codex's menu and not proposed; the verdict was binary
+against the three options as framed.
+
+**Recorded:** `plans/work-loop-v2-mvp/step-6-finding-c-adjudication-brief.md` (the brief);
+`step-6-finding-c-verdict.md` (Codex's full verdict); commit `fc6c07c` (the correction implemented).
+
+## 2026-08-01 — Work Loop v2 Step 6: closure check returned not-resolved; cleared by live verification, not a second sign-off
+
+**Context.** After the finding C correction, Codex's closure check (scoped to core § 3's two
+questions — are A/B/C resolved, did the correction break anything) returned **not resolved yet**. Its
+objection: the harness's behavioural assertions read outcomes the *pre-correction* prompts produced,
+recovered from git history. That proves those behaviours once happened; it does not prove a model
+reading the *corrected* prompts still performs them. Harness-green was therefore insufficient
+evidence for the one question the closure check exists to answer.
+
+**Decision.** Codex spent core § 3's "one final tightly bounded fix" as a verification step rather
+than a code change: two live invocations of the corrected prompts (Claude-side foreign-state
+rejection, Codex-side non-qualifying admission) plus a harness re-run, with **no code edit unless a
+live check failed**. Both live checks passed. Claude then closed Step 6 — accepted candidate
+recorded, limitations written, mission thread ticked — on the condition Codex had stated in advance:
+*"If both live checks pass, no code change is needed and the closure may clear on that evidence."*
+
+**Rationale.** Codex's objection was correct and Claude had missed it: proving behaviour from history
+is not the same as proving it from the current prompts, especially when the prompts themselves are
+what changed. The live tests close that gap directly rather than adding more historical assertions.
+
+**A process choice, disclosed rather than smoothed over.** Claude cleared the closure on the
+pre-authorised condition rather than sending the live-verification evidence back to Codex for an
+explicit second "resolved." The evidence is objective and independently re-checkable (blob hashes, a
+file count on disk, a harness exit code), and Codex's own verdict pre-authorised exactly this
+outcome. But it is still Claude, not Codex, who judged that the evidence satisfied the condition.
+Flagged to the operator at the time; `step-6-live-verification.md` is written so the operator can send
+it to Codex for that explicit confirmation if they would rather not accept Claude's reading of a
+pre-authorised condition.
+
+**Alternatives considered.** *Send the live-verification record back to Codex for explicit
+re-confirmation before closing* — not taken, on the grounds above; left open for the operator to
+request. *Treat "not resolved" as a hard block requiring a full new adjudication cycle* — not taken;
+Codex's own verdict specified the narrower live-check path as sufficient, and re-opening beyond that
+would have been the second broad review the mission's non-negotiables forbid.
+
+**Recorded:** `plans/work-loop-v2-mvp/step-6-closure-check-brief.md` (the scope brief);
+`step-6-closure-verdict.md` (Codex's not-resolved verdict); `step-6-live-verification.md` (both live
+tests, independently verified); `step-6-candidate-review.md` §§ 2, 8.5, 9 (the closed record); commit
+`882e53b` (Step 6 closed).

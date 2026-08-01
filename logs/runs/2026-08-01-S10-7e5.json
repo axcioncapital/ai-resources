@@ -16,8 +16,26 @@
     "subagents": [],
     "tools_notable": []
   },
-  "files_changed": [],
-  "decisions_refs": [],
+  "files_changed": [
+    "plans/work-loop-v2-mvp/step-6-finding-c-adjudication-brief.md",
+    ".claude/commands/work-loop-v2.md",
+    ".agents/skills/work-loop-v2/SKILL.md",
+    "plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md",
+    "logs/scripts/work-loop-v2-slice-1.test.sh",
+    "plans/work-loop-v2-mvp/step-6-candidate-review.md",
+    "plans/work-loop-v2-mvp/step-6-finding-c-verdict.md",
+    "plans/work-loop-v2-mvp/step-6-closure-check-brief.md",
+    "plans/work-loop-v2-mvp/step-6-closure-verdict.md",
+    "plans/work-loop-v2-mvp/step-6-live-verification.md",
+    "logs/missions/work-loop-v2-mvp.md",
+    "logs/decisions.md",
+    "logs/session-notes.md",
+    "logs/scratchpads/2026-08-01-S10-7e5-scratchpad.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-08-01-work-loop-v2-step-6-finding-c-adjudicated-by",
+    "logs/decisions.md#2026-08-01-work-loop-v2-step-6-closure-check-returned-not"
+  ],
   "validation": [],
   "evaluator_findings": {
     "sidecar_refs": [],
@@ -29,8 +47,8 @@
     "subagents": 0,
     "token_estimate": null
   },
-  "stop_reason": null,
-  "outcome": null,
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
   "failure_class": null,
   "incidents_refs": []
 }

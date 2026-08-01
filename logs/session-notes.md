@@ -890,3 +890,65 @@ recommendation is the bounded option, with the stated caveat that Claude authore
 - Mandate revised mid-session 2026-08-01 by operator directive: the original mandate was to settle finding C and close Step 6. The operator directed that Codex give an independent verdict on C first and stated they will not decide before it. Step 6 acceptance is therefore deferred, not abandoned.
 
 **Work:** Work Loop v2 MVP Step 6 — prepare the Codex adjudication brief for finding C (revised from: settle C and accept the candidate)
+
+### Summary
+Step 6 closed this session, across a mandate revision mid-session. Started as "settle finding C and
+accept the candidate"; the operator rejected letting Claude decide C given the authorship conflict
+(Claude wrote all four candidate files) and directed Codex adjudicate independently. Codex ruled
+option 1 (correct in full) against Claude's recommended bounded option, and separately corrected
+Claude's own blast-radius measurement upward. Claude implemented the correction, Codex's closure
+check returned **not resolved** on a sharp objection (the harness proved the old prompts' behaviour,
+not the corrected ones), and the two live invocations that followed both passed — one run by a
+fresh-context subagent, one by the operator in Codex. Step 6 closed at commit `fc6c07c`, accepted
+candidate recorded by blob hash, six disclosed limitations written, mission thread ticked.
+
+### Decisions Made
+- **Operator decision: Codex adjudicates finding C, not Claude.** Claude authored all four candidate
+  files; the operator had already rejected "let Claude choose" in the prior session
+  (`logs/decisions.md`, 2026-08-01) and reaffirmed it by routing the decision to Codex rather than
+  accepting Claude's recommendation directly.
+- **Codex's verdict: option 1 (correct finding C fully)**, against Claude's recommended option 2
+  (bounded correction with a reopening trigger). Recorded in `step-6-finding-c-verdict.md`.
+- **The one core edit Codex authorised**: naming the shared `Correct once — frozen findings:`
+  hand-off token once, in the core (§ 3), so removing it from both runtime artifacts would not orphan
+  the interface.
+- **Codex's closure check returned NOT RESOLVED on first pass** — not a rubber stamp. It required
+  live verification of the corrected prompts before accepting, rather than trusting harness green.
+- **The closure was cleared on pre-authorised evidence, not a second explicit Codex confirmation.**
+  Codex's verdict stated in advance that both live checks passing would clear it. Claude applied that
+  condition rather than asking Codex to confirm again. Flagged explicitly to the operator; the
+  live-verification record is self-contained if the operator wants that explicit confirmation anyway.
+- Routine: scratchpad, session note and mission-thread updates for the closed step.
+
+### Outcome
+(Outcome check skipped — not requested this wrap.)
+
+### Session Value Audit — 80/20 Review
+(Skipped — not requested this wrap.)
+
+### Risky actions
+None. The correction touched two runtime artifacts that other sessions and Codex depend on, but every
+change was proven falsifiable before commit (three mutation-and-restore proof runs, 17/17 assertions
+shown able to fail) and verified live before acceptance rather than trusted on harness-green alone.
+
+### Findings Declined
+- **The fresh-context reader's core § 6 / § 7 contradiction** (rule 2 says report-and-change-nothing;
+  § 7's operator-stop procedure for the same case says write-and-commit) — declined as a queue item:
+  it is recorded as disclosed limitation 5 in `step-6-candidate-review.md` § 8.5 with a reopening
+  trigger, which is a stronger and more specific channel than the improvement log. Confirmed
+  pre-existing rather than caused by this session's correction.
+- **Claude's own measurement errors this session** (six→ten→eleven assertion count; one
+  case-sensitivity miss in an early mutation-proof run) — declined as findings about process: both
+  were caught by the falsifiability discipline itself (Codex's re-derivation; Claude's own re-run),
+  which is the mechanism working as designed, not a gap to fix.
+
+Findings: 2 — queued 0, declined 2. 0 + 2 = 2.
+
+### Next Steps
+Mission `work-loop-v2-mvp`, Step 7 — the v1 retirement decision (hard boundary at pilot start), then
+pilot two or three real CRM / Email OS units, one with a mid-task session handoff. Read the six
+disclosed limitations in `step-6-candidate-review.md` § 8.5 first — several name their reopening
+trigger as "the pilot," so Step 7 is where they get tested for real.
+
+### Open Questions
+None. Step 6 is closed with no unresolved threads.
