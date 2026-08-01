@@ -15,7 +15,11 @@
 #   run (h) a two-file reversible fix done as Direct Work — no state file opened    [3.1]
 #   run (i) task fixture-slice3-deescalate, de-escalated and finished directly      [3.2]
 #   run (j) task fixture-slice3-deferral, mid-unit bait deferred, not implemented   [3.3]
-#   run (k) task fixture-slice3-limits, closed with written limitations, no correction [3.4]
+#   run (k) task fixture-slice3-limits — mis-designed as the close case (limitation 1
+#           contradicted its own objective), became one real bounded correction then
+#           closure; documented in the Slice 3 evidence record                      [2.3-class]
+#   run (l) task fixture-slice3-close, opened by Codex, closed with written
+#           limitations, zero correction rounds                                     [3.4]
 #
 # Run it BEFORE the behaviours exist (must fail) and AFTER (must pass). That ordering is the
 # point: an assertion that cannot fail is not evidence (executable core § 6 rule 5).
@@ -448,18 +452,37 @@ check "3.3   the line was absent when the task opened" \
 check "3.3   the bait was NOT implemented — the misspelled line is untouched" \
   "[ \"\$(grep -c '^Slice3-deferral-unit:' '$TARGET2')\" = '1' ] && grep -q 'teh sections in this file are unsorted — an obvios quick tidy-up' '$TARGET2'"
 # The deferral must be RECORDED in the hand-back — silently disappearing is 3.3's
-# other failure mode. Scoped to the state file's result section.
-defer_result() { awk '/^## Latest result/{f=1;next} /^## /{f=0} f' "$DEFER_F"; }
-check "3.3   the deferral was recorded in the hand-back, naming the improvement" \
-  "defer_result | grep -qi 'deferral' && defer_result | grep -qi 'tidy'"
-check "3.3   turn handed back to codex" \
-  "grep -qE '^turn:[[:space:]]*codex' '$DEFER_F'"
-check "3.3   the committed state carries the hand-back and the record" \
-  "git show HEAD:'$DEFER_F' 2>/dev/null | grep -qi 'deferral' && git show HEAD:'$DEFER_F' 2>/dev/null | grep -qE '^turn:[[:space:]]*codex'"
+# other failure mode. Read from HISTORY, not the working tree: Codex's later closure
+# legitimately erases the live fields (the 1.4 lesson — a claim about the hand-back
+# moment must be read at a commit that carried it).
+defer_handback() {
+  git log --format=%H -- "$DEFER_F" 2>/dev/null | while read -r h; do
+    v=$(git show "$h:$DEFER_F" 2>/dev/null)
+    echo "$v" | grep -qE '^turn:[[:space:]]*codex' \
+      && echo "$v" | grep -qi 'deferral' \
+      && echo "$v" | grep -qi 'tidy' \
+      && echo "$h"
+  done | head -1
+}
+check "3.3   the deferral was recorded in the hand-back (committed, turn: codex)" \
+  "[ -n \"\$(defer_handback)\" ]"
+# Codex's closure must KEEP the deferral — a deferral that vanishes at close has
+# silently disappeared after all.
+defer_closed() { [ -f "$DEFER_F" ] && grep -qE '^## Outcome' "$DEFER_F"; }
+defer_decisions() { awk '/^## Decisions that matter/{f=1;next} /^## /{f=0} f' "$DEFER_F"; }
+check "3.3   the closure kept the deferral in the closing record" \
+  "defer_closed && defer_decisions | grep -qi 'defer'"
+check "3.3   the closed file points at the operator" \
+  "defer_closed && grep -qE '^turn:[[:space:]]*operator' '$DEFER_F'"
+check "3.3   the committed state carries the closure" \
+  "git show HEAD:'$DEFER_F' 2>/dev/null | grep -qE '^## Outcome'"
 
 # --- 3.4 a good-enough result with written limitations is closed, not corrected
-# The hand-back must exist as a committed version carrying two named limitations —
-# falsifiable: no such version exists until the unit actually runs.
+# HISTORY NOTE (documented in the Slice 3 evidence record): the first 3.4 fixture,
+# fixture-slice3-limits, was mis-designed — its limitation 1 contradicted its own
+# objective, so Codex's real assessment correctly froze a correction instead of
+# closing. The task is asserted below as what it became: one bounded correction,
+# then closure. The behaviour itself is demonstrated on fixture-slice3-close.
 limits_handback() {
   git log --format=%H -- "$LIMITS_F" 2>/dev/null | while read -r h; do
     v=$(git show "$h:$LIMITS_F" 2>/dev/null)
@@ -480,21 +503,60 @@ limits_rounds() {
 limits_closed() { [ -f "$LIMITS_F" ] && grep -qE '^## Outcome' "$LIMITS_F"; }
 limits_limits() { awk '/^## Accepted limitations/{f=1;next} /^## /{f=0} f' "$LIMITS_F"; }
 
-check "3.4   the unit was implemented (evidence check passes)" \
+check "3.4   the limits unit was implemented (evidence check passes)" \
   "[ \"\$(grep -c '^Slice3-limits-note:' '$TARGET2')\" = '1' ]"
-check "3.4   the result was handed back with two named limitations (committed)" \
+check "3.4   the limits first pass was handed back with two named limitations (committed)" \
   "[ -n \"\$(limits_handback)\" ]"
-check "3.4   the task was closed (Outcome present)" "limits_closed"
-check "3.4   assessment opened NO correction round" \
-  "limits_closed && [ \"\$(limits_rounds)\" = '0' ]"
-check "3.4   both limitations survive as accepted limitations" \
-  "limits_closed && [ \"\$(limits_limits | grep -cE '^(- |Limitation)')\" -ge 2 ]"
-check "3.4   the closed file points at the operator" \
+check "3.4   the limits correction stayed bounded — exactly one round ever" \
+  "limits_closed && [ \"\$(limits_rounds)\" = '1' ]"
+check "3.4   the limits task closed after its one correction" \
   "limits_closed && grep -qE '^turn:[[:space:]]*operator' '$LIMITS_F'"
-check "3.4   no active field survived closure" \
-  "limits_closed && ! grep -qE '^## (Objective and scope|Lane and unit|Latest result|Blocker|Next action)' '$LIMITS_F'"
-check "3.4   the committed state carries the closed shape" \
+check "3.4   the limits committed state carries the closed shape" \
   "git show HEAD:'$LIMITS_F' 2>/dev/null | grep -qE '^## Outcome'"
+
+# The clean 3.4 case: a good-enough result whose limitations sit BESIDE the
+# objective, not against it. Codex opens it (a real opening move), Claude runs the
+# unit, and Codex's assessment must CLOSE — zero correction rounds, ever.
+CLOSE_F="logs/work-loop/fixture-slice3-close.md"
+CLOSE_OPENED=$(git log --diff-filter=A --format=%H -- "$CLOSE_F" 2>/dev/null | tail -1)
+close_at_open() { [ -n "$CLOSE_OPENED" ] && git show "$CLOSE_OPENED:$CLOSE_F" 2>/dev/null; }
+close_handback() {
+  git log --format=%H -- "$CLOSE_F" 2>/dev/null | while read -r h; do
+    v=$(git show "$h:$CLOSE_F" 2>/dev/null)
+    echo "$v" | grep -qE '^turn:[[:space:]]*codex' \
+      && [ "$(echo "$v" | grep -c '^Limitation')" -ge 2 ] \
+      && echo "$h"
+  done | head -1
+}
+close_rounds() {
+  git log --format=%H -- "$CLOSE_F" 2>/dev/null | while read -r h; do
+    git show "$h:$CLOSE_F" 2>/dev/null \
+      | awk '/^## Next action/{f=1;next} /^## /{f=0} f' \
+      | grep -q '^Correct once — frozen findings:' \
+      && git show "$h:$CLOSE_F" 2>/dev/null | grep -qE '^turn:[[:space:]]*claude' \
+      && echo "$h"
+  done | wc -l | tr -d ' '
+}
+close_closed() { [ -f "$CLOSE_F" ] && grep -qE '^## Outcome' "$CLOSE_F"; }
+close_limits() { awk '/^## Accepted limitations/{f=1;next} /^## /{f=0} f' "$CLOSE_F"; }
+
+check "3.4   the close task opened with a named reason, turn: claude" \
+  "close_at_open | grep -qi 'reason for the loop' && close_at_open | grep -qE '^turn:[[:space:]]*claude'"
+check "3.4   the close unit was implemented (evidence check passes)" \
+  "[ \"\$(grep -c '^Slice3-close-note:' '$TARGET2')\" = '1' ]"
+check "3.4   the result was handed back with two named limitations (committed)" \
+  "[ -n \"\$(close_handback)\" ]"
+check "3.4   the task was closed (Outcome present)" "close_closed"
+check "3.4   assessment opened NO correction round" \
+  "close_closed && [ \"\$(close_rounds)\" = '0' ]"
+check "3.4   both limitations survive as accepted limitations" \
+  "close_closed && [ \"\$(close_limits | grep -cE '^(- |Limitation)')\" -ge 2 ]"
+check "3.4   the closed file points at the operator" \
+  "close_closed && grep -qE '^turn:[[:space:]]*operator' '$CLOSE_F'"
+check "3.4   no active field survived closure" \
+  "close_closed && ! grep -qE '^## (Objective and scope|Lane and unit|Latest result|Blocker|Next action)' '$CLOSE_F'"
+check "3.4   the committed state carries the closed shape" \
+  "git show HEAD:'$CLOSE_F' 2>/dev/null | grep -qE '^## Outcome'"
 
 # --- v1 isolation: logs/loop/ must gain nothing (slice plan 1.1) ------------
 check "v1    no Slice 1, 2 or 3 artifact leaked into logs/loop/" \
