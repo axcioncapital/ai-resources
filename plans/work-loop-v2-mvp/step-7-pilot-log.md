@@ -39,7 +39,7 @@ The seven conditions from Proposal `:98`. Each unit records a verdict against ev
 | 1 | Useful context preparation | yes | — | — |
 | 2 | Alignment with the approved project plan | yes | — | — |
 | 3 | State recovery | n/a | — | — |
-| 4 | One bounded correction | pending | — | — |
+| 4 | One bounded correction | not exercised | — | — |
 | 5 | The Direct Work bypass | n/a | — | — |
 | 6 | Operator intervention | yes ×2 | — | — |
 | 7 | Clean fresh-session continuation | partly | — | — |
@@ -82,7 +82,9 @@ pickup window is this pilot.
 
 ## Unit 1
 
-**Status:** opened by Codex and executed by Claude 2026-08-01; **with Codex for assessment.**
+**Status:** **CLOSED 2026-08-01** — opened by Codex, executed by Claude, assessed and closed by Codex
+on the first pass with **no correction round**. Closing record in the state file; closure commit
+`761c081`.
 
 - **Task id:** `review-packet-preservation`
 - **Owning project:** `projects/axcion-systems-builder`
@@ -261,7 +263,7 @@ redone rather than merely mis-announced.*
 
 #### FP-5 — the one live check against the real packet was declined at the permission prompt
 
-**Class: LIMITATION.** Accepted for pilot quality; recorded in the state file's hand-back.
+**Class: LIMITATION.** **Resolved at assessment — by Codex, not by Claude.** See the closure note below.
 
 The unit's evidence runs entirely on `mktemp -d` fixtures, by the brief's own instruction. To also
 show the fix covers the **real** Phase 9 packet — whose `FROZEN-AFTER-REVIEW.md` was hand-placed
@@ -276,6 +278,19 @@ in that packet. The gap is written into the hand-back for Codex to weigh rather 
 *This is a limitation of the pilot's evidence, not of the loop.* The loop behaved correctly — the gap
 is disclosed at the point of assessment, which is what should happen.
 
+**Closed at assessment.** Codex did not accept the gap; it ran the check itself, on a disposable copy
+of the Phase 9 case and packet. Frozen `verify` reported the three expected live-source revisions,
+frozen `build` refused, neither recommended a rebuild, and the packet fingerprint was identical before
+and after both commands. **This is the seam working the way the whole design intends** — the party
+that did not write the code produced the missing evidence, and the disclosure in the hand-back is what
+routed it there. Had the gap been smoothed over, nobody would have run it.
+
+Claude verified independently, after the close, that the *real* packet was never touched: every file
+still carries its 2026-07-30 timestamp and the manifest's only `VERIFIED` line is the historical one
+from 2026-07-30T07:43:27Z. (Codex's stated fingerprint differs from Claude's because the two used
+different hashing methods over different copies; it is not evidence about the real packet either way.
+The timestamps and the absent write are.)
+
 ### Verdicts
 
 Against the seven conditions. Rows the unit did not exercise are `n/a`, which is a verdict, not a gap.
@@ -285,10 +300,39 @@ Against the seven conditions. Rows the unit did not exercise are `n/a`, which is
 | 1 | Useful context preparation | **Yes.** Codex reframed two reported defects into the lifecycle contract underneath them, and pre-empted the wrong reading (infer reviewed from stale) before Claude saw the brief. |
 | 2 | Alignment with the approved project plan | **Yes.** The brief's exclusions held the unit off every case artifact and every existing packet; nothing outside them was touched. |
 | 3 | State recovery | `n/a` — single session. The mid-task handoff unit is still owed. |
-| 4 | One bounded correction | **Not yet exercised** — assessment is with Codex. |
+| 4 | One bounded correction | **Not exercised — closed on the first pass.** A correction cannot be manufactured to test the machinery; the slices already exercised it. Still owed by a later unit against real work. |
 | 5 | The Direct Work bypass | `n/a` — this unit was admitted to the loop. |
 | 6 | Operator intervention | **Yes, twice, and both mattered.** The operator's *"wait did you check what codex did?"* caught FP-4; the denied permission prompt produced FP-5. |
 | 7 | Clean fresh-session continuation | **Partly, and by accident.** The executing session was fresh and continued from the state file and Git alone — but only after FP-4 sent it down a wrong path first. |
+
+---
+
+### Closure
+
+Codex assessed from the state file and closed. **No correction round** — the first genuine unit in the
+pilot needed none.
+
+**It did not rubber-stamp.** It re-executed rather than reading Claude's account of the evidence:
+`./cases/scripts/build-review-packet.test.sh` (29/29, exit 0), `bash -n` on both scripts, and the
+Phase 9 copy test that closed FP-5. Three independent re-runs of work it did not write.
+
+**Two accepted limitations, in the closing record** — both are the flagged items from Claude's
+hand-back, decided rather than dropped:
+
+1. `freeze` declares that a review happened; it is not proof the packet was current at handover. The
+   immediately-before-handover `verify` remains the currency control.
+2. Exit 0 from frozen `verify` means *"historical record intact"*, not *"safe to send"*. Codex accepted
+   the mode-specific semantics deliberately, on the ground that the frozen output visibly differs and
+   says not to reassemble the packet. This was the item most likely to come back to the operator as a
+   risk choice; Codex judged it did not need to.
+
+**One deferral, recorded with its reason** (core § 5): do not couple `freeze` to a currency check and
+do not add a force/bypass interface — *"no observed case justifies another control."* Recorded, not
+done, which is the discipline working.
+
+**Condition 4 was not exercised, and that is the honest result.** A correction round cannot be
+manufactured on real work just to prove the machinery; the slices proved it against constructed cases.
+A later pilot unit still owes it.
 
 ---
 
