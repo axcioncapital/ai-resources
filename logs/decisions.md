@@ -167,3 +167,46 @@ open and visible for the operator to rule on.
 
 **Recorded:** `docs/harness-and-permission-troubleshooting.md` §§ 1, 4.5, 5, 6; commit `2eab561`.
 Pending-decision entry already exists at `logs/improvement-log.md:2301`.
+
+---
+
+## 2026-08-01 — Work Loop v2 Slice 3: admission discipline lives in both artifacts, asymmetrically
+
+**Context.** Slice 3 (admission discipline) had to be implemented against a frozen slice plan
+(`plans/work-loop-v2-mvp/step-4-slice-plan.md`) that deliberately delegates file placement to the
+implementing session (`:131-134`). The plan gives Slice 3 no split point — unlike Slice 1, which
+names a Codex-side / Claude-side boundary — and no source says whether the admission test,
+de-escalation and mid-unit deferral belong to the Claude command
+(`.claude/commands/work-loop-v2.md`), the Codex resource (`.agents/skills/work-loop-v2/SKILL.md`),
+or both. The context-discovery engine flagged this as an unknown-scope item before the session
+started.
+
+**Decision.** Both artifacts carry the behaviours, split by what each side can actually act on.
+Claude's command received an `Admission` section (Direct Work default, named-reason requirement,
+the "this feels significant" refusal), a `De-escalating` section, and the mid-unit deferral rule
+inside Step 4. The Codex resource received an `Admission` section (refuse to open on felt
+importance; write the named reason into the file it opens) plus one line in its assessment section
+closing a task found smaller than assumed.
+
+**Rationale.** The Slice-2-era scope-exclusion lines being replaced existed in *both* artifacts —
+`work-loop-v2.md:15` and `SKILL.md:100-102` each named the same three missing behaviours as "not yet
+built, and not to be improvised here". Both files had therefore already promised the behaviour to
+their reader, and leaving either one disclaiming it would have left a live artifact telling its model
+to stop on work the system now supports. The asymmetry follows role ownership from the executable
+core § 1: Codex decides whether a unit opens (so it owns the refusal and writes the named reason);
+Claude owns repository reality (so it owns de-escalation and mid-unit scope discipline, both of which
+are discovered while doing the work).
+
+**Alternatives considered.**
+- *Claude-side only.* Rejected — Codex is the party that opens units, so an admission test absent
+  from the resource cannot prevent a task being opened for a bad reason; it could only refuse one
+  after the file exists.
+- *Codex-side only.* Rejected — de-escalation and mid-unit deferral are discovered during
+  implementation, which is Claude's half. Codex cannot notice mid-unit that a task is smaller than
+  assumed.
+- *Symmetric duplication of all three behaviours in both files.* Rejected — it would restate rules
+  the executable core owns, violating the skill-writing standard § 1 ("link to the core, never
+  restate") and the mission's own off-mission signal about artifacts growing in their final pass.
+
+**Recorded:** `plans/work-loop-v2-mvp/step-5-slice-3-evidence.md` § "The scope decision this slice
+had to make"; commits `f0b06c1` (both artifacts), `59cabcd` (harness green at 136).

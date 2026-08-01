@@ -2,145 +2,6 @@
 
 > Archive: [session-notes-archive-2026-07.md](session-notes-archive-2026-07.md)
 
-## 2026-07-31 — Supervised work-loop repair, Slice 1 Shape — plan reviewed twice, G1 approved
-
-### Summary
-Acquired sole-writer ownership of the dedicated repair worktree (`ai-resources-g1-reviewed-plan`,
-branch `codex/2026-07-31-g1-reviewed-plan-invariant`) per `docs/work-loop-repair-workflow.md`, after
-verifying a prior session's committed release. Ran the Shape unit for Slice 1 (G1 reviewed-plan
-integrity) to completion: transcribed and adjudicated an independent Codex review of plan-v2 (3
-material findings), produced plan-v3, then plan-v4 after an operator-directed proportionality
-withdrawal on one finding's design, transcribed and adjudicated a zero-finding closure review-2, ran
-the mandated pre-G1 identity comparison, and presented the G1 package. **Operator approved G1**, bound
-to the exact plan-v4/review-2 identities. Wrote the implementation handoff, released ownership, and
-verified the worktree clean. No object under repair (`docs/work-loop.md`,
-`.claude/commands/work-loop.md`, `.agents/skills/work-loop/SKILL.md`, `templates/capability-record.md`)
-was touched — this unit is planning-and-review only; nothing has been implemented.
-
-All substantive work happened in the dedicated repair worktree, on a branch not yet merged to `main`.
-Nothing in this `ai-resources` checkout was modified by the repair work itself — only this wrap's own
-bookkeeping touches this checkout.
-
-### Decisions Made
-- **Wrap-routing (mine, stated not asked).** This session's persistent shell cwd was confirmed to be
-  this main checkout, not the repair worktree — verified before writing anything, since the repair
-  workflow forbids writing to that worktree without re-acquiring ownership (already explicitly
-  released) and forbids any diff there outside the approved four-file/`logs/loop/` scope. No conflict
-  needed resolving in practice; confirmed rather than assumed.
-- **Decisions-journal routing (mine, stated not asked).** The session's substantive operator decisions
-  — widening Slice 1's implementation scope from three files to four (plan-v2), and withdrawing the
-  RV2-01 byte-identity/verbatim-persistence requirement as disproportionate (plan-v4) — are **not**
-  duplicated into this checkout's `logs/decisions.md`. They are already durably recorded, append-only,
-  inside the repair unit's own Shape evidence artifact
-  (`logs/loop/2026-07-31-g1-reviewed-plan-invariant-shape.evidence.md`, on the repair branch), per the
-  repair workflow's own artifact discipline (§14: "Do not create multiple permanent planning-document
-  families"). A `logs/decisions.md` pointer entry is the stream-close convention
-  (`docs/work-loop.md` § Closing without a change) and belongs to this stream's eventual close, not to
-  an in-flight Shape unit — recorded here so the omission reads as deliberate, not missed.
-- **G1 approval, operator-issued, on the repair branch.** Bound to `plan-v4` (commit `df45a2b1a42a2140c85a56e71c395407dc9eb903`,
-  blob `9ae4839afc8ccb23c4bd50a2644f32213273ed90`) and `review-2` (commit `12b22dd9acfc76094f0803f29d64b5935ead4f83`,
-  blob `848ee9f940c562f421c6ef727e358d21c73a299f`). Authorizes only the exact one-slice, four-file
-  package plan-v4 states; the zsh-syntax annotation permits safe shell forms during verification only,
-  not additional scope.
-
-### Risky actions
-None. Every write this session was confined to `logs/loop/` on a dedicated branch, staged by explicit
-pathspec; nothing under repair was touched; nothing was pushed mid-session.
-
-### Session Assessment
-Skipped (Step 6.5 not requested — no `+feedback`/`full` flag).
-
-### Next Steps
-- **The real continuation point is the repair handoff, not a command in this checkout:**
-  `logs/loop/2026-07-31-g1-reviewed-plan-invariant-shape.handoff-2.md`
-  (commit `833762c2a0570287f0e9ec31743bdeffbac59a2e`, worktree
-  `ai-resources-g1-reviewed-plan`, branch `codex/2026-07-31-g1-reviewed-plan-invariant`). A new Claude
-  session must verify it, explicitly acquire ownership, then open the Build unit and implement the
-  G1-approved plan-v4 package — exactly the four files it names, nothing else.
-- Two prior-session worktrees remain open and untouched (`ai-resources-leverage-idea`,
-  `ai-resources-work-loop`) — same as noted in the entry above; still someone else's separate
-  `/close-worktree-session` call.
-- This wrap's push gate, if confirmed, ships both this checkout's wrap commit and the repair branch's
-  accumulated commits (same origin, different branch) — see the push prompt below.
-
-### Findings Declined
-- **Shell-syntax hazard in the plan's mandatory shell note** (declined for `improvement-log.md`).
-  Two distinct zsh hazards surfaced this session — unquoted word-splitting (silent false negative,
-  Frame §1) and `:l` read as a lowercase parameter modifier (loud failure, Shape evidence §9.5). Not
-  queued as a general-system finding: it is already actionable and recorded inside the repair stream's
-  own artifacts (plan-v4 §11.5's shell note, and the handoff's method note), which the next Build
-  session will read directly. Duplicating it into this checkout's `improvement-log.md` would be a
-  second, less-precise copy of guidance that already has an owner and a concrete next reader.
-
-### Open Questions
-None. The repair stream's next action is fully specified in the handoff.
-
-## 2026-07-31 — work-loop repair, Slice 1 (G1 reviewed-plan integrity) — Build, Prove, correction, closure
-
-### Summary
-Continued the `/work-loop` repair program from a G1-approved plan (prior session) through the full
-Build → Prove → correction → closure sequence, entirely in the dedicated worktree
-`ai-resources-g1-reviewed-plan` (branch `codex/2026-07-31-g1-reviewed-plan-invariant`). Implemented the
-four-file G1-reviewed-plan-integrity slice, took a full Codex Prove review with two material findings,
-adjudicated both, spent the single bounded correction pass under an explicit operator scope binding,
-and closed the stream at operator direction: **G2 approved, G3 adopted.** Slice 1 is complete.
-
-### Decisions Made
-- **Build unit opened and implemented** — plan-v4's exact G1-approved four-file slice, one atomic
-  commit (`8762fc7f…`). All 20 acceptance criteria and every fixture measured with positive controls
-  in the Build evidence.
-- **Prove review-1 adjudicated** — both material findings reproduced against live files before
-  disposition (not accepted on the reviewer's word alone). G1-PV1-01 (Shape-only `hold-reframe` leaking
-  into Prove/reviewed-route, introduced by my own Build rendering) → `deferred`. G1-PV1-02 (A20/F12 fail
-  because the repair-workflow doc sits outside the approved-base diff, traced to a pre-Shape commit) →
-  `operator`, three options presented, Option A recommended.
-- **Operator approved Option A** — a narrow, Slice-1-only scope binding recognizing
-  `docs/work-loop-repair-workflow.md` at its exact pre-existing blob as pre-Shape governance, not an S1
-  target. Does not touch approved base, plan-v4's identity, or the four-file scope.
-- **Correction pass spent once, on both findings together** — 5 sites corrected in 2 files (3 the
-  review specified, 2 more surfaced by the required negative search — one of which was the most exposed
-  leak of the five and unnamed in the review). Supersession entries appended to Build and Prove
-  evidence; nothing rewritten. All affected criteria re-measured at the final HEAD.
-- **Operator's "speed + 90%" priority override** arrived after the correction was already committed —
-  ran only the four named checks against the completed work, reported nothing further to commit, and
-  named the two ways prior work already exceeded that override's intended scope rather than silently
-  conforming after the fact.
-- **Operator closure override** — waived Prove `review-2` transcription, accepted the resolution,
-  **G2 APPROVED** at candidate HEAD `179bc0d6…`, waived representative Use with residual limitations
-  accepted, **G3 ADOPT**. Wrote and committed the `CLOSE` block (append-only). Released ownership.
-  Chose to retain `logs/loop/` artifacts rather than delete them (this repair does not use
-  `/work-loop`'s own stream-close deletion) — flagged as a judgment call rather than decided silently.
-
-### Findings Declined
-None this session beyond what the repair stream's own evidence already records as deferred (BF-1,
-BF-2, OF-1, OF-3 — each with a reopening trigger, none new).
-
-### Risky actions
-None. Every commit in the worktree was staged by explicit pathspec; no destructive git operation was
-run; every operator override was verified against Git before being acted on rather than taken on trust.
-
-### Next Steps
-Slices 2–8 of `docs/work-loop-repair-workflow.md` § 12 remain (Active-unit routing · G2 candidate
-integrity · working state/ownership · transition/phase enforcement · review quality · Diagnose & Fix
-adoption · legacy consolidation). Slice 1 is the worked template for the Shape→Build→Prove→G2/G3
-sequence in that worktree. Deferred BF-1/BF-2/OF-1/OF-3 are candidates for a future slice's scope, not
-orphaned.
-
-### Open Questions
-None. Slice 1 is closed and adopted; the durable Git pointer is recorded in the Prove evidence CLOSE
-block.
-
-### Review status (Step 12b)
-The structural-class changes this session produced — `docs/work-loop.md`, `.claude/commands/work-loop.md`,
-`.agents/skills/work-loop/SKILL.md`, `templates/capability-record.md` — were made in the separate
-`ai-resources-g1-reviewed-plan` worktree, under `docs/work-loop-repair-workflow.md`'s own governance,
-which deliberately excludes the standard `/work-loop` review-independence path for changes to
-`/work-loop` itself. Independent review ran through that program's own mechanism instead: Codex Prove
-`review-1` (2 material findings), both reproduced and adjudicated by Claude, one bounded correction pass
-under an operator-approved scope binding, then operator-directed G2 approval and G3 adoption in lieu of
-a closure `review-2` (explicitly waived by the operator). Reviewed, not unassessed — via the repair
-program's substitute gate rather than this repo's ordinary QC path.
-
 ## 2026-08-01 — Installed the Work Loop v2 MVP project (Step 0)
 
 ### Summary
@@ -854,3 +715,81 @@ None blocking. Items 1–4 above are operator judgment calls, not unknowns.
 - **§ 3.4 listed the grep-around-a-`Read`-deny workaround first**, ahead of the safe options — fixed this session; moved last with its warning kept.
 - **`Bash(rm -rf *)` denies by verb-text, not effect** — declined as a duplicate. Already queued at `improvement-log.md:2304` (2026-08-01, third occurrence), with the same proposal.
 - **`CLAUDE.md` § Model Tier bans a `model` field in a layer `/model` itself owns** — declined as a duplicate. Already queued at `improvement-log.md:2301`, and recorded in the doc at §§ 4.5 and 5.
+
+## 2026-08-01 — Session S8-7c0
+**Mandate:** Implement Work Loop v2 MVP Step 5, Slice 3 (admission discipline), red-green — done when: Slice 3's four acceptance behaviours (3.1–3.4) are green with red-then-green evidence recorded in step-5-slice-3-evidence.md, the mission's Slice 3 thread is ticked, and the work is committed
+- Out of scope: (none stated)
+- Files in scope: logs/scripts/work-loop-v2-slice-1.test.sh, .claude/commands/work-loop-v2.md, .agents/skills/work-loop-v2/SKILL.md, logs/missions/work-loop-v2-mvp.md, plans/work-loop-v2-mvp/step-4-slice-plan.md, plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md, plans/work-loop-v2-mvp/README.md, plans/work-loop-v2-mvp/skill-writing-standard-work-loop-v0.2.md
+- Stop if: (none stated)
+- Allowed inputs: plans/work-loop-v2-mvp/step-5-slice-2-evidence.md, plans/work-loop-v2-mvp/step-5-slice-1-evidence.md, plans/work-loop-v2-mvp/pocock-lifecycle-work-loop-mvp-v0.4.md, plans/work-loop-v2-mvp/step-2-transport-seam-conclusions.md, logs/decisions.md, logs/work-loop/fixture-slice2-menu.md, logs/work-loop/fixture-slice2-correction.md, logs/work-loop/fixture-target.md, .gitignore
+- Required outputs: plans/work-loop-v2-mvp/step-5-slice-3-evidence.md, logs/scripts/work-loop-v2-slice-1.test.sh
+- Context pack: output/context-packs/project-20260801-b7e41/pack.md
+- Mission: work-loop-v2-mvp
+
+**Work:** Work Loop v2 MVP Step 5 — implement Slice 3 (admission discipline), red-green
+
+### Summary
+Built Slice 3 — admission discipline — red-green in one session. The Work Loop now knows when *not*
+to run: a small reversible fix is Direct Work with no state file, opening a task needs a named reason
+("this feels significant" is refused), work that turns out smaller de-escalates and closes, and an
+adjacent improvement noticed mid-unit is recorded as a deferral rather than done. The acceptance
+harness went 78 → **136 assertions**, all green, every new one observed failing first. Four fixture
+tasks were run; Codex made every closing and assessment call.
+
+The most useful result was a failure I caused. The first behaviour-3.4 fixture was mis-designed — its
+written limitation contradicted the task's own objective — so Codex's real assessment correctly froze
+a correction instead of closing. That task then ran as a clean bounded correction, and a properly
+designed second task (`fixture-slice3-close`) demonstrated 3.4 with zero correction rounds. Two of my
+own harness defects surfaced and were fixed: assertions reading the working tree where they should
+read history (the Slice 1 behaviour-1.1 lesson, repeated), and a limitations assertion testing bullet
+syntax rather than substance.
+
+### Decisions Made
+- **Admission lives in both artifacts, asymmetrically** — the session's one undecided scope question
+  (the slice plan gives Slice 3 no split point). Claude's command took the admission test,
+  de-escalation and the Step 4 deferral rule; the Codex resource took the admission test and one
+  assessment line for de-escalation. Ground: the Slice-2-era scope-exclusion lines being replaced
+  existed in *both* files, so both had already promised the behaviour.
+- **Followed Codex's correction verdict rather than overriding it.** When Codex refused to close
+  `fixture-slice3-limits`, the cheap move was to call the fixture close enough and force it green.
+  Ran the bounded correction instead and rebuilt the close case properly — the behaviour is now
+  demonstrated on a task that actually tests it.
+- **The 3.4 close-task brief was hand-written at the operator's direction** after the Codex opening
+  prompt did not land. Disclosed as fixture material in the evidence record; Codex opening a unit is
+  behaviour 1.1, already proven in Slice 1.
+- **No per-slice review** — held to the operator's settled Slice 1 decision over the Playbook's
+  per-slice review prescription. The context pack surfaced this as a conflict; Step 6's one
+  fresh-context review remains the only review.
+- **Harness assertion loosened on evidence, not convenience.** The last failing assertion required
+  limitations in bullet form; Codex wrote prose. Nothing in the core or slice plan fixes that format,
+  so the assertion was testing punctuation. Replaced with per-limitation substance checks and proved
+  the replacement falsifiable by breaking one term and watching it fail.
+
+### Risky actions
+None. All writes were to this build's own fixtures, artifacts, harness and evidence records, staged
+by explicit path. One deliberate temporary mutation — breaking a limitation term to prove an
+assertion could fail — was backed up first, restored, and verified byte-identical to HEAD. The
+mission file's frozen sections were hash-verified before and after the thread update.
+
+### Findings Declined
+- **Harness assertions read the working tree instead of history (3.3 hand-back)** — declined as a
+  queue item: fixed this session in `149c812`. Same class as the Slice 1 behaviour-1.1 defect, and
+  the fix is now in place for both.
+- **A limitations assertion tested bullet syntax rather than substance (3.4)** — declined for the
+  same reason: fixed this session in `59cabcd`, with falsifiability re-proven.
+- **The first 3.4 fixture was mis-designed** — declined as a defect to queue. It is not a repo defect
+  but a design error inside this slice's own construction, already corrected, and written up in the
+  evidence record where Step 6's reviewer will read it.
+
+Findings: 3 — queued 0, declined 3. 0 + 3 = 3.
+
+### Next Steps
+Mission `work-loop-v2-mvp`, Step 6: one fresh-context candidate review of the whole Work Loop v2
+build, frozen by exact commit, one correction pass, accept with a limitations list. Freeze candidate
+at `59cabcd` (last artifact-affecting commit). **Cheap win first:** behaviour 3.1(b) has no live
+Codex refusal — one prompt (`$work-loop-v2 — open a task to polish the fixture wording. Reason: this
+feels significant.`) closes the weakest evidence in the slice. Do **not** tidy the misspelled `Note:`
+line in `fixture-target-2.md` — it is behaviour 3.3's assertion anchor.
+
+### Open Questions
+None blocking. The 3.1(b) evidence gap is named above with its one-prompt fix.
