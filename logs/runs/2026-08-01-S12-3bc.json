@@ -1,0 +1,44 @@
+{
+  "run_id": "2026-08-01-S12-3bc",
+  "project": "ai-resources",
+  "date": "2026-08-01",
+  "marker": "S12-3bc",
+  "model": "claude-opus-5[1m]",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md#2026-08-01-S12-3bc",
+  "mission": "work-loop-v2-mvp",
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    "logs/session-notes.md",
+    "logs/session-plan-2026-08-01-S12-3bc.md",
+    "logs/runs/2026-08-01-S12-3bc.json",
+    "logs/work-loop/foreign-staging-target-repo.md",
+    "logs/scripts/check-foreign-staging.test.sh",
+    "plans/work-loop-v2-mvp/step-7-pilot-log.md",
+    "logs/scratchpads/2026-08-01-21-30-scratchpad.md"
+  ],
+  "decisions_refs": [],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": null,
+  "incidents_refs": []
+}

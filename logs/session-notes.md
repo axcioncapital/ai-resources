@@ -1060,3 +1060,72 @@ retirement record) **plus** the newly named portable-installation blocker.
 - Mission: work-loop-v2-mvp
 
 **Work:** Continue the Work Loop v2 pilot — unit 3 as the mid-task session-handoff test
+
+### Summary
+Ran Work Loop v2 pilot unit 3 (Step 7), designed from the start as the mid-task session-handoff test —
+the last of three pilot conditions never exercised in units 1 and 2 (state recovery, the Direct Work
+bypass, clean fresh-session continuation). Codex opened the unit against the recorded
+`check-foreign-staging.sh` nested-repo defect; Claude checked all five of Codex's premises by
+execution, built a permanent isolated-repo test harness (4 red / 2 green against the unmodified hook),
+found an unrecorded silent-pass failure mode the original defect entry does not mention, and stopped
+deliberately mid-task with a self-contained checkpoint. The hook itself was never touched this session.
+
+### Decisions Made
+- **(Codex)** Scoped Unit 1 narrowly — canonical hook plus a permanent harness only; docs, the defect
+  record, the `.codex` fork and the sector-intelligence copy explicitly held to later units. Excluded
+  the backlog entry's own "soft warn" fallback (both prior gates rejected it) and the retired
+  `/risk-check`.
+- **(Claude)** Rebuilt the premise-check as an isolated `mktemp -d` harness after Codex's brief
+  required it, discarding an earlier live-working-tree reproduction that depended on ambient dirt and
+  would not have survived a re-run (FP-7).
+- **(Claude)** Corrected the harness's own fixture after running it exposed that C3 was going red for
+  the wrong mechanism (blocking on an untracked `nested/` dir rather than reproducing the documented
+  silent pass) — added a `.gitignore` line mirroring the live workspace's actual invisibility, commented
+  in place (FP-8).
+- **(Claude)** Recorded, rather than silently accepted, that two of six harness assertions (C2, C6)
+  pass even against a dead no-op hook — proved with a stub swap — and named the remedy (a
+  positive-identity assertion on C2) instead of shipping a harness with an undisclosed blind spot (FP-9).
+- **(Claude)** Verdicted pilot conditions 3 and 7 as PENDING rather than yes — the checkpoint is staged
+  and self-contained, but only the resuming session can prove the handoff actually works. Verdicting
+  them now would close by assertion, the exact failure this pilot has avoided twice already.
+- **(Claude)** Did not attempt to exercise condition 5 (Direct Work bypass) inside this unit — the
+  defect is not small and reversible, so it was correctly admitted; manufacturing a small unit to force
+  the condition would breach the pilot's genuine-units constraint. Recorded as still owed.
+
+### Outcome
+Outcome check skipped (not requested).
+
+### Session Value Audit — 80/20 Review
+Skipped (not requested).
+
+### Risky actions
+None destructive. The hook that gates every commit in this repo (`check-foreign-staging.sh`) was the
+subject under test but was never edited — the plan's stop point (state file committed before any hook
+edit) was never reached this session, since the session stopped at the premise-check/harness stage.
+Both mission-file-adjacent writes (pilot log, session notes) were ordinary content edits, not
+frozen-prefix mission-file writes. No destructive git operation, no push, no external write.
+
+### Findings Declined
+None this session beyond FP-7/FP-8/FP-9, which are recorded in full in the pilot log
+(`plans/work-loop-v2-mvp/step-7-pilot-log.md` § Unit 3 § Friction points) and in the state file
+(`logs/work-loop/foreign-staging-target-repo.md`) — not duplicated into `improvement-log.md`, since
+they are pilot-run observations whose correct durable home is the pilot's own record, per the same
+reasoning prior units applied to their own friction points.
+
+Findings: 0 — direct review (this was a build/verify session, not an audit) produced no candidate for
+`improvement-log.md` beyond what's already durably recorded above.
+
+### Session Assessment
+Skipped (not requested).
+
+### Next Steps
+- **Resume Work Loop v2 pilot unit 3 in a fresh session, from `logs/work-loop/foreign-staging-target-repo.md` and Git alone.** First action: settle whether a PreToolUse hook's process cwd equals the Bash tool's cwd or the project root — by execution, not inference. This requires temporarily registering a throwaway probe hook in `~/.claude/settings.json`, which is a gated harness-config change — **ask the operator before doing it.**
+- Once settled, implement the smallest resolver satisfying Codex's four required behaviours (fail closed on any unparseable wide-add shape), re-run `logs/scripts/check-foreign-staging.test.sh` to 6/6 green, and re-verify against a dead-hook stub that it still reports failure.
+- Separately, whenever a genuinely small real fix comes up, route it through `/work-loop-v2` to exercise condition 5 (Direct Work bypass) — do not manufacture one.
+- Continuity scratchpad: `logs/scratchpads/2026-08-01-21-30-scratchpad.md`.
+
+### Open Questions
+**The usefulness judgment, still owed by the operator, asked a third time across three sessions.**
+The mission's definition of done requires the operator's judgment that the loop produced useful real
+work, not merely a count of completed units. Three units have now closed or reached their designed
+stopping point. Not answered this session.
