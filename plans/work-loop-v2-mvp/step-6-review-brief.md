@@ -18,7 +18,7 @@ file changes after this review, the review is stale and a new candidate exists.
 | `.claude/commands/work-loop-v2.md` | 114 | `af411f203ada638fa9d4d459a1043ea87e0837aa` |
 | `.agents/skills/work-loop-v2/SKILL.md` | 112 | `e6650fc7512b1d3036c576b063dc7450fd10aed1` |
 | `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` | 274 | `baf753b1b87e147bbb43a021fb17d821e35d5ac9` |
-| `logs/scripts/work-loop-v2-slice-1.test.sh` | 599 | `06b5b17377a1ef5c2db9d72bad49801356d7da68` |
+| `logs/scripts/work-loop-v2-slice-1.test.sh` | 595 | `06b5b17377a1ef5c2db9d72bad49801356d7da68` |
 
 Verify with `git hash-object <path>` before you start. If a hash differs, stop and say so — you are
 not looking at the candidate.
