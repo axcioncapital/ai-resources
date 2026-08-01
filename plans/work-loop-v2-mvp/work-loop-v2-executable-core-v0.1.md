@@ -205,12 +205,10 @@ Claude: check both claims, then implement if they hold.
 A running log makes the reader work out what is true now, and it grows without limit. Keep the last
 material result and let Git hold the history.
 
-> **Open, and not decided here.** The Proposal says Codex writes the brief into the file **and
-> commits it**. In the Step 2 prototype Codex could write repository files but was refused write
-> access to `.git`, the folder Git keeps its own records in — so Claude made the only commit, and
-> the shared working folder carried the hand-off. Who commits the state file is therefore an open
-> question at Proposal level, and it belongs to the operator. Nothing here depends on the answer:
-> the file is exchanged through the repository either way.
+> **Who commits: Claude.** Codex writes the brief into the file. **Claude makes every commit.**
+> Operator decision, 2026-08-01, amending the Proposal's destination behaviour 1, which has Codex
+> committing. It follows what Step 2 observed: Codex can write repository files, but was refused
+> write access to `.git`, the folder Git keeps its own records in.
 > See `step-2-transport-seam-conclusions.md` § 2.
 
 ---
@@ -256,13 +254,14 @@ These five apply to every unit, in every lane, always.
 
 Stopping is a normal outcome. Each trigger below names who to stop for.
 
-**Hand back to Codex** — write the finding into the state file, set `turn: codex`, and stop:
+**Hand back to Codex** — write the finding into the state file, set `turn: codex`, commit, and stop:
 
 - A claim the brief rests on is false (rule 1).
 - The work would go outside the approved scope, or touch something the brief excluded.
 - The required evidence cannot be produced.
 
-**Stop for the operator** — write the question into the state file, set `turn: operator`, and stop:
+**Stop for the operator** — write the question into the state file, set `turn: operator`, commit, and
+stop:
 
 - The change would be hard to reverse.
 - Proceeding would need a settled decision to be reopened.

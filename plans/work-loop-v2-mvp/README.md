@@ -49,6 +49,21 @@ Two rules follow:
 
 ---
 
+## Decisions taken after v0.4
+
+Recorded here because they amend an authoritative document that is not itself edited. A session
+reading the Proposal alone would otherwise follow superseded wording.
+
+- **2026-08-01 — Claude commits the state file.** Codex writes the brief into the file; Claude makes
+  every commit. This **amends the Proposal's destination behaviour 1** ("Codex writes a bounded brief
+  into a task-state file in the repository and commits it"). Operator decision, on the Step 2
+  evidence that Codex can write repository files but is refused write access to `.git`
+  (`step-2-transport-seam-conclusions.md` § 2). Recorded in the executable core, § 4.
+  ⚠ The mission's validation contract still carries the pre-amendment wording — see
+  `logs/missions/work-loop-v2-mvp.md`, acceptance assertion 1.
+
+---
+
 ## Known inconsistencies in the source documents
 
 Recorded at commit time so a future session does not treat them as findings. None blocks Step 1.
