@@ -1139,3 +1139,50 @@ stopping point. Not answered this session.
 - Mission: work-loop-v2-mvp
 
 **Work:** Resume Work Loop v2 pilot unit 3 from the state file and Git alone — settle the hook-cwd question by execution, then implement the resolver to 6/6 green
+
+## 2026-08-01 — Work Loop v2 pilot task `foreign-staging-target-repo` closed; FP-12 and the pilot's own result
+
+### Summary
+Continuation of S13-ad0 (no `/prime` this session; mandate inherited from S13's block above). Verified
+Codex's Unit 2 assessment against the live repo rather than its summary — all five claims held —
+then executed the closure unit: the operator-facing contract in `docs/commit-discipline.md`, the
+originating defect marked RESOLVED, and its promoted queue item retired. Codex passed the closure unit
+with no correction. Task closed; state file reduced to the closing record at `turn: operator`.
+
+### Decisions Made
+- **`logs/next-up.md` added to the unit's scope (operator decision)** — one checkbox only, to retire
+  promoted item `8c600934fdd0`. Codex had stopped for this. Declining would leave `/prime` re-offering
+  finished work every session.
+- **Codex's claimed prohibition on approving/closing work was rejected on evidence.** No such rule
+  exists — searched `docs/qc-independence.md`, `AGENTS.md`, `.codex/` and the core. The only live rule
+  is *"Who commits: Claude"* (core `:227-231`), a `.git`-access fact, not a verdict restriction; the
+  core assigns closure to Codex explicitly at `:74`. **No authorization was requested or granted.**
+- **Contract statements 4 and 5 documented at disclosure level with no permanent harness case** —
+  accepted by Codex on the grounds that they disclose limitations rather than promise protection.
+- **The live-file falsification is one-off evidence only, not a reusable harness pattern** (Codex).
+- Routine: committed S13's two stray artifacts (run manifest, session plan) alongside the closing
+  record rather than leaving them untracked.
+
+### Risky actions
+The boundary-check falsification run mutates the **live** `logs/next-up.md`, and its first execution
+left a second checkbox (`890b40e5ea5c`) ticked. Caught immediately, restored by hand, and the check
+re-run clean — the PASS on record is post-restore. Disclosed to Codex rather than smoothed over, and
+Codex ruled it acceptable as one-off evidence but explicitly not as a reusable pattern. Separately:
+Codex asked the operator to override a governance rule that does not exist; the override was **not**
+granted, and would have created a standing exception to a non-existent prohibition.
+
+### Findings Declined
+- *The core's § 4 / § 3-step-5 cross-reference gap that produced FP-12* — recorded in the pilot log as
+  a one-line fix to apply during Step 8, not queued separately. Declining a duplicate queue entry: it
+  is already carried where the work will happen, and the mission thread is its owner.
+
+### Next Steps
+- **The pilot exit decision is the operator's** — `plans/work-loop-v2-mvp/step-7-pilot-log.md`
+  § Pilot exit condition. Read § The pilot's own result first; the input is written, the judgment is
+  not made.
+- Mission `work-loop-v2-mvp` Step 8 — retirement obligations plus the installation blocker.
+- Pilot condition 5 (Direct Work bypass) remains owed; it must not be manufactured.
+
+### Open Questions
+- Whether v0.2 keeps the adversarial review and sheds the bookkeeping. The evidence points there; the
+  call is the operator's and is not made here.

@@ -369,3 +369,36 @@ verified dependant list and the execution checklist); Proposal Decision 4 (`:38`
 ## 2026-08-01 — Work Loop v2 portable installation: split into a named Step 8 blocker and a post-MVP install-contract thread, rather than adopted whole
 
 **Decision (operator, with Claude's split) — 2026-08-01. Add portable installation to the MVP pipeline, but split it on the MVP's own boundary rather than adopting the full proposal into Step 8.** **Context:** the operator raised a proposed item — make the shared core resolve from every consuming project, remove the machine-local symlink workarounds, define a canonical installation route, verify in a fresh checkout, and ensure a project cannot appear installed while its core path is broken — and asked whether it was already in the pipeline, directing "if not, we need to add it." Verified against the plan: it was **mostly not**. Only FP-2 (the bare core path) was carried to Step 8, and only as "fix the prefix". FP-1 entered Step 8 by the pilot log's OBSTRUCTION rule but appeared in **no** Step 8 item list — neither the Proposal's five items nor the mission thread names installation. The rest was FP-3, explicitly classified TRIGGER and out of MVP scope. **The classification rested on a count that was already wrong:** FP-3's reopening trigger reads "the moment v2 is installed into a third project", and a scan found v2 in **three** projects — `axcion-design-studio` holds an untracked byte-identical *copy* of the command, dated 2026-08-01 18:33, with no core, no skill and no `logs/work-loop/`. It looks installed; its first instruction cannot resolve; and being a copy rather than a link it will drift silently. The trigger had fired about an hour before FP-3 was written, unobserved. **Decision:** the bounded half is named inside the Step 8 thread — core resolution without a symlink faking a local `plans/` folder, a tracked install route for the command and skill, loud failure when the core is unreachable, and disposal of the stray copy. The full contract — `/new-project` scaffolding, the update path for existing projects, fresh-checkout verification — becomes its own **post-MVP thread**, opened rather than scheduled. **Rationale:** Step 8's own wording is "fix demonstrated blockers only" and it ends "stop; do not keep designing it"; adopting the whole proposal there would turn the MVP's final step into a distribution project, which is the shape this Proposal repeatedly refuses. The split keeps the demonstrated blocker (FP-1 was classified OBSTRUCTION — the pilot could not run until symlinks were hand-made) inside the MVP, and leaves the undemonstrated remainder behind a trigger that has now legitimately fired. **Alternatives considered:** (a) adopt item 14 whole into Step 8 — rejected as scope inflation of the MVP's stop condition, and the operator was explicitly told they may override this and widen it; (b) leave it entirely post-MVP — rejected, because FP-1 materially obstructed the first real pilot unit and the pilot's own rule routes OBSTRUCTION into Step 8; (c) treat the design-studio copy as an install and count v2 as portable — rejected, it is the failure mode itself, not evidence against it. **Consequence:** Step 8 now carries the retirement-execution obligations **and** an installation blocker, and is materially heavier than its five Proposal items suggest. One authoritative core remains the constraint; copying the core into projects is the drift the new thread exists to prevent.
+
+## 2026-08-01 — Codex's claimed prohibition on approving or closing work does not exist; no override was granted
+
+**Decision (Claude, on evidence; operator informed rather than asked) — 2026-08-01.** **Context:**
+Codex assessed the Work Loop v2 closure unit for `foreign-staging-target-repo`, passed it with no
+correction required, and then declined to write the closing record, stating: *"The closure write was
+blocked by this repository's rule prohibiting Codex from approving or closing work, and I did not
+bypass it."* Its stated next action was: *"explicitly authorize Codex to write this Work Loop closure
+despite that repository authority restriction."* The operator relayed this and was positioned to grant
+that authorization. **Decision: refuse to route the operator toward an override, and verify the rule
+first.** Searched `docs/qc-independence.md`, `AGENTS.md`, `.codex/`, and
+`plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` for any bar on Codex approving or
+closing work. **No such rule exists.** The only live rule in that area is core `:227-231`,
+*"**Who commits: Claude.** Codex writes the brief into the file. **Claude makes every commit.**"* —
+whose own stated reason is that *"Codex can write repository files, but was refused write access to
+`.git`"*. That is a restriction on **committing**, not on **judging**. The core assigns closure to
+Codex explicitly at `:74`: *"Codex reads the result and decides one of three things: close, correct
+once, or stop."* **Rationale:** granting the requested authorization would have created a standing
+operator exception to a prohibition that does not exist — permanently weakening a real rule (Claude
+makes every commit) by "clarifying" it against an imagined one, and establishing that a model's
+assertion of a rule is sufficient grounds to override it. The designed path required no exception at
+all: Codex's verdict was already given, and Claude writes and commits the closing record because
+Claude writes and commits everything. **Alternatives considered:** (a) grant the authorization as
+requested — rejected, it overrides nothing real and sets the precedent above; (b) ask the operator to
+adjudicate between Codex's claim and the repo — rejected under Decision-Point Posture, since the
+question is settleable by reading the repository and is therefore not a genuine operator decision;
+(c) have the operator write the closing record by hand — rejected as pure ceremony for zero gain.
+**Consequence:** the task closed normally at `2526ac4` with nothing overridden. Logged as **FP-12** in
+`plans/work-loop-v2-mvp/step-7-pilot-log.md`, with the generalisable lesson stated there: *a model
+citing a rule is not evidence the rule exists; an override request is the moment to read the rule,
+not the moment to grant it.* A one-line core fix is recorded but not applied — § 4's "Who commits"
+note and § 3 step 5's assessment role sit in different sections and neither points at the other,
+which is the gap Codex fell into. It belongs to Step 8, not to a separate queue entry.

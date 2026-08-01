@@ -2386,3 +2386,51 @@ Falsifier 2 was closed here on a structural argument instead (content-only edits
 - **Friction source:** unit 2 repaired `axcion-systems-builder/logs/decisions.md` by inserting five dated `##` headers at **interior** positions — the legitimate and only way to make historical headerless entries referenceable. `check-append-order.sh` identifies additions by diff position and flags any added dated header whose line number is below the last retained one, so every one of those five insertions is indistinguishable to it from a prepend. The script states this itself: *"KNOWN LIMIT: editing a dated header line in place at an interior position registers as an added header above the tail and would be flagged."* It did **not** fire here only because that project has no pre-commit hook wired at all — which is a separate, already-queued problem (`promote:379fec7dc59a`), and means the two defects currently mask each other: wiring the guard would immediately block a class of legitimate repair. **Named consequence:** the moment hook wiring is fixed, any future normalization of a decision journal — including the exact repair this session just shipped, and any repeat of it in another repo — is blocked by a guard that cannot tell repair from regression, and the escape is `--no-verify`, which disables every other check with it.
 - **Proposal:** give the guard a way to recognise a header insertion that does not move any existing entry. The cheapest discriminator is already in the diff it reads: a prepend adds a header **and** displaces retained entries downward relative to it, whereas a normalization inserts a header immediately above an entry that already existed, with no reordering of retained headers among themselves. Checking retained-header *relative order* rather than absolute position would pass the repair and still catch every case the 2026-07-25 Codex R3 hardening was written for. Alternative, weaker: an explicit opt-out token in the commit message, which trades a silent false block for a bypass anyone can reach for.
 - **Target files:** `ai-resources/logs/scripts/check-append-order.sh` (the positional comparison), `ai-resources/logs/scripts/check-append-order.test.sh` (needs a fixture: interior header insertion above a pre-existing entry, retained order unchanged, must pass).
+
+### 2026-08-01 — A verification script is trusted the moment it is written, while the thing it verifies must earn trust by falsification
+
+- **Severity:** medium
+- **Category:** working practice (verification discipline)
+- **Source:** ai-resources, 2026-08-01 session S14-d72, Work Loop v2 closure unit.
+
+**Observed, twice in one session, on the same script.** A boundary-proof script was written to prove that a closure unit changed only its three authorized files and only one checkbox in `logs/next-up.md`. It was run and reported PASS-shaped output before it was ever run against a known-bad input.
+
+1. It counted removed diff lines with `^-[^-]`. A markdown checkbox row is itself `- [ ] …`, so its diff line reads `-- [ ] …` — the second character is `-`, the pattern matches nothing, and the check reported **"0 removed" on exactly the rows it existed to police.** The reassuring answer. Caught only because the count disagreed with the visible diff.
+2. After that repair, its falsification mode mutated the **live** `logs/next-up.md` rather than a scratch copy, leaving a second checkbox flipped that had to be restored by hand and the check re-run.
+
+**Why this is worth an entry rather than a shrug.** The same session applied exactly the right discipline one level down: the *regression harness* was deliberately run against a no-op stub hook to measure how many of its assertions were real (4 of 15 survived a dead guard). That falsification step is what turned "15/15 green" from a claim into a bounded measurement. **The checker script got no such treatment** — the discipline was applied to the artifact under test and not to the instrument doing the testing. Item (1) is the second logged instance of this exact signature; the first is `logs/improvement-log.md` 2026-07-19 (GNU-only `sed` alternation silently matching nothing, harness returns the reassuring answer). Two instances, two different mechanisms, one class.
+
+**Proposal (not built, deliberately).** Two candidate remedies, neither adopted here:
+(a) A habit rule — before trusting any new checker, run it once against an input known to trip it. Cheap, but it is a rule you must remember to read, which `docs/commit-discipline.md` itself argues is a wish rather than a control.
+(b) A template — verification scripts default to operating on a scratch copy and ship with a `SABOTAGE`/known-bad mode that must be exercised before the PASS is quoted. Structural, and closes item (2) as well as item (1).
+
+**Why medium and not higher.** No artifact currently in the repo carries either bug; the cost was ~5 extra tool calls in one session, and the failure was caught in-session both times. It is logged because it is a **repeat class**, not because this instance was expensive. It will not reach the `/prime` task menu at this severity — that is deliberate triage, not an oversight. Reconsider the severity if a third instance appears, or if one of these ever reaches a commit uncaught.
+
+**Related:** `plans/work-loop-v2-mvp/step-7-pilot-log.md` FP-8/FP-9/FP-10 record the same "assertion satisfied for the wrong reason" family on the harness side; this entry is its instrument-side twin.
+
+### 2026-08-01 — `check-foreign-staging.sh` splits the footprint bullet on commas, so a prose annotation becomes a dozen junk "paths" that WIDEN the guard
+
+- **Severity:** medium-high
+- **Category:** hook (staging tripwire, `check-foreign-staging.sh`) — footprint parsing, not target resolution
+- **Source:** ai-resources, 2026-08-01 session S14-d72, observed in the guard's own block message during `/wrap-session`.
+
+**Observed, not inferred.** The wrap commit was blocked, and the block message printed the parsed footprint verbatim:
+
+```
+Declared footprint: logs/work-loop/foreign-staging-target-repo.md,
+.claude/hooks/check-foreign-staging.sh, logs/scripts/check-foreign-staging.test.sh,
+plans/work-loop-v2-mvp/step-7-pilot-log.md, logs/session-notes.md,
+../projects/axcion-sector-intelligence/.claude/hooks/check-foreign-staging.sh,
+mid-session:, Codex, opened, Unit, 2, which, authorises, the, sector-fork, backport,
+declared, rather, than, committed, silently)
+```
+
+Everything from `mid-session:` onward is **not a path**. Session S13-ad0's `- Files in scope:` bullet ended with an inline parenthetical explaining why the footprint had been widened — *"(widened mid-session: Codex opened Unit 2, which authorises the sector-fork backport; declared rather than committed silently)"*. The parser splits the bullet on commas, so that sentence became **fifteen** footprint entries.
+
+**Why this is the dangerous direction.** Junk tokens do not narrow the footprint — they **widen** it. Every one of those words is now a name the guard will accept as in-scope. A staged file called `Codex`, `backport`, or `2` would pass. That is a false-pass surface introduced by prose, and it is invisible: the parse succeeded, the guard armed, and nothing warned. Contrast the failure mode this repo already fixed — the nested-repo defect produced a loud false BLOCK, which is why it got found and fixed within days. **A guard that fails open under ordinary documentation habits is worse than one that fails closed under unusual commands.** Note the irony worth recording: the annotation existed *because* S13 was being careful — it declared a mid-session widening in prose rather than editing silently, and that care is what corrupted the parse.
+
+**Second, smaller observation from the same block:** `logs/friction-log.md` is not in `EXEMPT_BASENAMES` (which holds `session-notes.md`, `decisions.md`, `usage-log.md`, `improvement-log.md`, `coaching-data.md`), yet `docs/commit-discipline.md` § Foreign-staging tripwire describes friction-log as one of the append-only status logs in the exempt family, and every `/wrap-session` stages it as a Write-Activity byproduct. So every wrap that touches it blocks unless it happens to be in the footprint. Same family as the already-logged `next-up.md` case. Worked around this session by unstaging it; the file stays dirty.
+
+**Proposal (not built).** Not adopted here and not to be built from this text alone — the last two attempts at this hook were scored RECONSIDER twice for exactly that reason. Candidates, in rough order of preference: (a) parse the footprint bullet as paths only — require a `/` or a known extension, and **drop with a loud warn** any token that cannot be a path, so prose degrades to a narrower guard rather than a wider one; (b) terminate the parse at the first `(` so annotations are structurally excluded; (c) reconcile `EXEMPT_BASENAMES` with what `docs/commit-discipline.md` claims is exempt, deciding deliberately whether `friction-log.md` belongs there. (a) and (c) are independent and can land separately.
+
+**Related:** the target-resolution defect closed this same day (`logs/improvement-log.md` § 2026-07-19 nested-target, RESOLVED 2026-08-01) touched candidate discovery and scope separation, **not** footprint tokenization — this is a different comparison site and was not in that task's boundary.

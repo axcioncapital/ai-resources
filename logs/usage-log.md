@@ -1192,3 +1192,34 @@ No additional levers — session was efficient.
 - Batch the wrap-tail verification greps (promote-findings/innovation-registry/improvement-log) into one combined Bash call — saves ~3-5 round-trip tool-call overheads/session (~1–2k tokens), smaller than the rework fix since these are cheap reads already.
 - Read `logs/session-notes.md` once per wrap turn instead of up to 3 times (initial tail, post-archive tail, raw-format check) — ~0.5–1k tokens/session; smaller because the file is small and re-reads were partly forced by the archive hook changing file state mid-session.
 - Pull the two `skill-usage-analyzer/SKILL.md` partial reads into a single read covering both needed sections — negligible (~0.2k tokens/session) but free to fix alongside the above.
+
+### 2026-08-01 (S14-d72) | Wasteful
+
+**Task:** Continuation of S13-ad0 (no `/prime` this session — marker `S14-d72` derived from the session-id prefix for record-keeping, mandate inherited). Closed the Work Loop v2 pilot task `foreign-staging-target-repo`: verified all of Codex's assessment and closure premises against the live repo by execution, ran a regression-harness check Codex had not performed (quantifying a previously prose-only blind spot — 4/15 passed against a no-op stub hook), resolved one scope question, made 3 authorized file edits, built a boundary-proof script and a probe script, and wrote the closing record plus a pilot-log reflection. Commits `0bfdf82`, `f041fda`, `2526ac4`, `207ed59`.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | 8 |
+| Files read | 11 (re-reads: 2 — the hook and the core doc, each read via 3 different line-range slices) |
+| Files written/edited | 11 |
+| Tool calls | ~50 total (Bash ~32, Edit ~11, Read ~5, Write ~3, Skill 1, Agent 1) |
+| Subagents | 1 |
+| Rework cycles | 2, both on the same artifact |
+
+**Findings:**
+
+- **A verification script carried two separate defects, each requiring a fix-and-rerun on the same artifact (Rework, Major).** First: the regex `^-[^-]` was meant to count removed checkbox rows in a git diff, but a removed checkbox line reads `-- [ ] …` in the diff, so the pattern matched nothing and the script reported "0 removed" on exactly the rows it existed to police — a repeat of a failure class already logged in this repo's improvement-log on 2026-07-19 (GNU-vs-BSD sed idioms: a pattern silently matches nothing and the harness returns the reassuring answer). Second, after that fix: the script's falsification mode mutated the LIVE `logs/next-up.md` instead of a copy, leaving a stray flipped checkbox that had to be restored by hand and the check rerun (~3 extra tool calls). Two distinct defects on one artifact is the Major case under this log's rubric.
+- **One denied call (Tool overhead, Minor).** An inline multi-line Bash probe (git init + heredocs + env vars) was permission-denied and had to be rewritten as a standalone script file, run via `bash <path>` (~2 extra calls). Flagging as a recurring shape worth watching, not a one-off.
+- **Some wrap-sequence Bash calls ran sequentially with no dependency between them (Missed parallelization, Minor).** Continues a pattern this log has carried across several prior entries under "wrap-tail batching."
+- **Process note, not a waste category: the preceding session S13-ad0 left no usage-log entry at all** — a telemetry gap, and not the first one this log has recorded.
+- **Counter-signal — do not score as waste.** Several Bash calls re-verified claims made by Codex and by Claude's own prior-session turns rather than trusting the summaries. Two claims did not survive checking: a repository rule Codex cited that does not exist, and a Claude claim carried from the prior session. This spend is exactly what this repo's independent-review posture is for and prevented two errors from shipping into a closure record.
+- **Trend:** reverses the immediately preceding entry, which had broken a 3-session Wasteful streak — this session is Wasteful again, but the character is materially smaller than the streak it echoes. S10–S12's Major findings were large-scale rediscovery or fan-out spend (60–330k) or a fabricated premise reaching a dispatched gate; this session's Major finding is a self-contained rework loop inside one small verification script (~5 extra tool calls total), same category (rework) as S11-637 and S12-3cd but roughly an order of magnitude smaller in cost.
+
+**Recommendation:** Apply the same falsifiability discipline this session already used for the regression harness (ran it against a known-bad case — a no-op stub hook — before trusting "15/15 green") to every new verification/checker script, before relying on its output: run it once against a synthetic input KNOWN to trip the check. Had the checkbox-counting script been run against one deliberately-removed checkbox row first, the regex bug would have surfaced immediately instead of after it had already reported a false "0 removed."
+
+**Estimated savings:** ~2–3 extra tool calls for the regex rewrite + rerun (~1–2k tokens) + ~3 extra tool calls for the live-file restore + rerun (~1.5–2k tokens) ≈ **~3–4k tokens this session.** This is the second logged instance of the "pattern silently matches nothing, harness returns the reassuring answer" signature (first: 2026-07-19 sed idioms) — if it recurs at roughly this rate across script-authoring sessions, ~15–25k over a 10–20 session horizon. Modest in absolute size; flagged mainly because it is a repeat failure class, not because of its cost.
+
+**Additional levers (ROI-ranked):**
+- **Default falsification/mutation-testing scripts to write against a scratch copy, never a live tracked file, as a template habit rather than a per-script judgment call.** Closes the whole defect class rather than this one instance — ranked above the primary's raw savings only in durability, not in immediate token size.
+- **Script-ify Bash probes involving heredocs/env vars/git init from the first draft, rather than attempting an inline multi-line command first (~1–2k/occurrence).** Smaller than the primary since it is a single recurring shape, not a two-part failure class.
+- **Finish the wrap-tail batching lever (~1–2k/session), carried across multiple prior entries with partial movement each time.** Smallest item here, listed to close the loop rather than to bank the tokens.
