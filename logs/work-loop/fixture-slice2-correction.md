@@ -1,6 +1,6 @@
 ---
 task: fixture-slice2-correction
-turn: codex
+turn: claude
 ---
 
 ## Objective and scope
@@ -29,8 +29,10 @@ Inspected (2026-08-01):
 Result: a Correction exercise section with its round marker was added at the end of the file.
 Evidence: `grep -c '^Round: one' logs/work-loop/fixture-target.md` — returns 1 now; returned 0 before this unit.
 
-## Blocker
-None.
-
 ## Next action
-Codex: assess the result and the evidence — close, correct once, or stop.
+Correct once — frozen findings:
+
+1. The result and evidence do not establish the required `Scope: frozen` line. Ensure it is present directly after `Round: one` in the `## Correction exercise` section.
+2. The evidence checks only for a `Round: one` match anywhere in the file. It does not establish that `## Correction exercise` is the final section or that its body contains exactly the two required lines. Produce failing-capable evidence for the complete end-of-file shape.
+
+Claude: correct exactly these two findings, then perform the closure check only for whether both are resolved and whether the correction broke something. Record that evidence here, set `turn: codex`, commit the hand-back, and stop. Do not expand the correction if anything new is noticed; record it for Codex as a possible deferral.
