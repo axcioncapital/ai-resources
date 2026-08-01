@@ -16,8 +16,25 @@
     "subagents": [],
     "tools_notable": []
   },
-  "files_changed": [],
-  "decisions_refs": [],
+  "files_changed": [
+    "plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md",
+    "plans/work-loop-v2-mvp/qc-process-v0.1.md",
+    "plans/work-loop-v2-mvp/README.md",
+    "logs/missions/work-loop-v2-mvp.md",
+    "logs/session-notes.md",
+    "logs/session-notes-archive-2026-07.md",
+    "logs/decisions.md",
+    "logs/improvement-log.md",
+    "logs/next-up.md",
+    "logs/session-plan-2026-08-01-S3-19b.md",
+    "logs/scratchpads/2026-08-01-15-40-scratchpad.md",
+    "audits/working/2026-08-01-wl2-core-qc.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-08-01-claude-commits-the-work-loop-v2-state-file-amends",
+    "logs/decisions.md#2026-08-01-the-adopted-qc-process-is-scoped-to-the-work-loop",
+    "logs/decisions.md#2026-08-01-declined-an-external-review-finding-on-verified"
+  ],
   "validation": [],
   "evaluator_findings": {
     "sidecar_refs": [],
@@ -29,8 +46,8 @@
     "subagents": 0,
     "token_estimate": null
   },
-  "stop_reason": null,
-  "outcome": null,
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
   "failure_class": null,
   "incidents_refs": []
 }

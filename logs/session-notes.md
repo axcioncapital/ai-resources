@@ -2,59 +2,6 @@
 
 > Archive: [session-notes-archive-2026-07.md](session-notes-archive-2026-07.md)
 
-## 2026-07-29 — `/work-loop` unit: `/leverage-idea` lifecycle-routing brief routed out to `/develop-ai-resource`
-
-### Summary
-Ran one `/work-loop` unit (skill `work-loop`, worktree `ai-resources-leverage-idea`) against a
-Codex-authored brief asking `/leverage-idea` to become an evidence-grounded routing-and-handoff
-command instead of stopping at an implementation plan. Verified all six of the brief's premises
-(confirmed, with positive controls), classified the route `reviewed` (14 project symlinks), wrote
-Frame evidence diagnosing five defects in the shipped command, and sent it to Codex for review. Codex's
-review reversed the unit's initial judgment: the requested change moves the command's authority, input
-domain and output contract at once, which is a material expansion under `docs/work-loop.md:48` and
-belongs to `/develop-ai-resource`, not to a `/work-loop` settled correction. Adjudicated all four
-review findings, wrote a raw handoff brief to `inbox/`, logged one `/work-loop` contract defect the
-review also surfaced, and closed the unit `routed-out`. `.claude/commands/leverage-idea.md` was never
-edited.
-
-### Decisions Made
-- **`routed-out`, not implemented here** — accepted Codex's MATERIAL 2 finding in full; the command's
-  three-axis expansion (authority / input domain / output contract) is material, not a settled
-  correction. Superseded, did not delete, the Frame evidence's original narrower judgment (append-only
-  rule).
-- **MATERIAL 1 rejected** — Codex's "agent authority gap" claim rested on inspecting 3 files; the
-  governing rules doc `docs/ai-resource-creation.md` names agent definitions under
-  `/develop-ai-resource`'s authority four times, uninspected by the reviewer. Kept the narrower true
-  observation (the command's own list omits the word "agent") as a text-fix note in the handoff.
-- **MATERIAL 3 (a real `/work-loop` contract/command disagreement) logged, not fixed inline** — fixing
-  it would have edited `/work-loop`'s own files, outside this unit's declared object
-  (`leverage-idea.md`). Logged to `logs/improvement-log.md` instead.
-- **D1 (the bridge-matrix bypass) travels with the rest of the expansion rather than being split out**
-  — it is very likely a settled correction on its own, but the brief's stated need was the whole
-  expansion; splitting it out would be a new, narrower brief.
-
-### Outcome
-Outcome check skipped (not requested).
-
-### Session Value Audit — 80/20 Review
-Skipped (not requested).
-
-### Risky actions
-None — no destructive or external action taken; no gate skipped. One notable near-miss avoided: the
-unit's initial route judgment (implement inside `/work-loop`) would have satisfied the brief's own
-falsification condition ("any proposed new durable AI resource bypasses `/develop-ai-resource`") had
-it not been caught by review before any edit was made.
-
-### Next Steps
-Run `/develop-ai-resource inbox/leverage-idea-lifecycle-routing.md` in a fresh session to qualify
-whether and how `/leverage-idea` should be expanded. A legitimate outcome of that command is "no
-build." Full evidentiary trail (premises, route reasoning, all five defects, adjudication) is
-recoverable at commit `1a40c60` (`logs/loop/2026-07-29-leverage-idea-lifecycle-frame.*`, deleted from
-the working tree at stream close per `docs/work-loop.md` § Artifacts).
-
-### Open Questions
-None.
-
 ## 2026-07-29 — /leverage-idea → routing-and-handoff command: qualified, built, gated, committed (merge pending)
 
 ### Summary
@@ -560,3 +507,106 @@ Findings: 3 — queued 1 (severity: medium), declined 2. 1 + 2 = 3.
 - Mission: work-loop-v2-mvp
 
 **Work:** Work Loop v2 MVP Step 3 — write the executable core; operator reads and approves it
+
+### Summary
+Wrote the Work Loop v2 executable core — the one document the Claude command and the Codex resource
+will link to instead of restating rules — from the Proposal's settled decisions plus the Step 1 and
+Step 2 notes. Seven Playbook-mandated sections, one worked state-file example with its negative
+counterpart, 275 lines / ~2,040 words against v1's 260 / 4,859. An independent subagent QC pass
+(the process the operator adopted mid-session) returned PASS WITH CORRECTIONS and caught a genuine
+blocking defect the author had missed; one correction pass fixed the frozen set. The operator then
+settled the one item Step 3 escalated rather than decided — Claude commits the state file — which
+also unblocked a deferred finding. Core approved, mission thread ticked with evidence.
+
+### Decisions Made
+
+**On the core's design (local, reversible, recorded in the core itself)**
+- **`turn` lives in the state file's frontmatter**, named a protocol field and held outside
+  Decision 10's five-field ceiling, which caps *content*. Step 2 flagged this and left it to Step 3.
+  Kept in the same file because it is the only field the prototype demonstrably exercised, and a
+  second file would open a second seam on day one.
+- **State files live at `logs/work-loop/{task-id}.md`, not `logs/loop/`.** v1 is still live and
+  globs `logs/loop/{STREAM}-*` in its own reconciliation, so a v2 file there would be swept into
+  v1's bookkeeping while both systems exist. Verified against `docs/work-loop.md:246,253`.
+
+**On the QC process (operator, adopting a Fable recommendation)**
+- **Adopted**, and **scoped to the Work Loop v2 build only.** Written up at
+  `plans/work-loop-v2-mvp/qc-process-v0.1.md`. The operator was offered three scopes and chose the
+  narrow one. Reason it needed a choice: read workspace-wide, a Claude-side subagent QC pass is
+  exactly what `CLAUDE.md` § Independent Review Rule tells sessions to reject. Inside this build the
+  Proposal itself authorises targeted per-slice review (`:87`) and one candidate review
+  (Decision 2, `:36`), so nothing is contested.
+- The operator's own addition to Fable's advice is the load-bearing part: **the reviewer checks the
+  artifact against the ORIGINAL files received at project start**, named by path — not the latest
+  plan revision and not the conversation. A reviewer comparing against the current plan cannot see
+  drift, because the plan drifted too.
+
+**On the escalated open item (operator)**
+- **Claude commits the state file.** Codex writes the brief; Claude makes every commit. This
+  **amends the Proposal's destination behaviour 1**. The Proposal is not edited — the amendment is
+  recorded in `plans/work-loop-v2-mvp/README.md` § "Decisions taken after v0.4" and in the core § 4,
+  so a session reading the Proposal alone is pointed at the superseding decision. Logged to
+  `decisions.md`.
+
+**On the external review (Claude, per-item triage)**
+- **Fable's finding A declined on verified premise grounds.** It asked to restore "genuine
+  uncertainty" as an admission reason, citing the Proposal. Checked by grep: the Proposal contains
+  **zero** occurrences of "uncertain"; the eight-reason list is at
+  `the-work-loop-explained-complete-system-v0.2.md:45` — Document 4, which the folder README
+  forbids as a requirements source, through the exact phrase ("the loop is entered only for") the
+  README quotes as its example of wording that creates nothing. Adopting it would have been a scope
+  breach, not a fix.
+- **Findings B and C were already fixed** before the review arrived (`cba9bd8`); Fable was reading
+  the pre-correction file. Said so rather than re-fixing.
+
+**QC fixes applied** (independent subagent, verdict PASS WITH CORRECTIONS, scope frozen at 5)
+- **B1, blocking** — the worked example carried a sixth field (`## Brief`) against Decision 10's
+  five-field ceiling, and the core resolved it *silently*: it had written an explicit reconciliation
+  for `turn` against that same ceiling and none for `Brief`. Slice 1 copies the example, so it would
+  have shipped as a breach of the one settled decision Step 3 was bound to. The core now states what
+  the ceiling covers — task **state** — and names `turn`, `task` and the brief as outside it.
+- **C1** — the three-reason admission list was unsourced and narrower than Decision 1 plus
+  destination behaviour 6. The sourced test (small and reversible → Direct) now governs; the three
+  reasons became a guide, not a closed list.
+- **C2** — de-escalation was absent though the Proposal (`:107`) requires demonstrating it in the
+  Phase 4 regression set. Rule added.
+- **C3** — "deferral" was defined and mandated but had no home in either the five active fields or
+  the four closure fields. Now recorded at closure among the decisions that matter.
+- **C4** — "Two notes on this design" was provenance, not behaviour. Cut; the decision it carried
+  survives as a rule.
+
+### Risky actions
+None destructive. Three worth noting. First, the mission-file thread edit: the file forbids
+hand-editing threads from a working session, so it went through the `/mission` update-then-check
+sequence with the frozen prefix (lines 1–70 — Goal, scope, validation contract) hashed before and
+after and verified byte-identical. Second, one dispatched subagent — the standing "no Agent tool
+unless requested" posture was overridden by the operator's explicit instruction to use a subagent
+for QC. Third, **a gate fired and was not overridden**: `check-foreign-staging.sh` BLOCKED the wrap
+commit over `logs/next-up.md`. Verified it was this session's own promotion-sweep output and not a
+concurrent session's, then unstaged it and committed without it rather than forcing past the guard.
+The file is left uncommitted in the working tree; `/prime` still reads it. Root cause queued —
+`wrap-session.md:332` instructs every wrap to stage that path and the hook does not recognise it.
+
+### Findings Declined
+- **`/mission check` cannot carry an evidence pointer, so ticking with evidence needs `update`
+  first.** Not queued — this is designed behaviour, prescribed at the command's own item 24b, not a
+  defect. Followed as documented.
+- **`audits/working/` is gitignored, so the QC report will not survive a fresh clone.** Not queued —
+  working notes are intentionally ephemeral by repo convention; the substance was written into the
+  commit message instead.
+- **External review input arrived with a false premise (Document 4 cited as the Proposal).** Not
+  queued — the existing guidance already covers it (triage external review, do not rubber-stamp),
+  and this session caught it by execution rather than by trust. No system gap to close.
+
+### Next Steps
+- **Step 4 — write the slice plan with acceptance behaviours.** Playbook lines 105–119. Lightweight
+  session; done when the note exists and the operator has glanced at it.
+- **Decide the mission-contract contradiction below** before Step 5 implements the round trip.
+- Continuity scratchpad: `logs/scratchpads/2026-08-01-15-40-scratchpad.md`.
+
+### Open Questions
+The mission's **validation contract, acceptance assertion 1** still reads *"Codex … writes a bounded
+brief into a task-state file, and commits it"* — which the settled "Claude commits" decision
+contradicts. The contract is frozen at mission creation, so this session did not edit it. **As it
+stands, the mission cannot satisfy its own definition of done.** The operator decides: amend the
+assertion, or accept and record the divergence.

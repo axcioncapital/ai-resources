@@ -4031,3 +4031,55 @@ Prove unit is open: `2026-07-29-prime-minimum-responsibility-prove`. Next sessio
 ### Open Questions
 
 None blocking. Noted, not resolved: rationale for the 13 orientation regions is now split across five destination docs — a future editor changing a rule in `prime.md` without reading its cited rationale is a real, unmitigated risk.
+## 2026-07-29 — `/work-loop` unit: `/leverage-idea` lifecycle-routing brief routed out to `/develop-ai-resource`
+
+### Summary
+Ran one `/work-loop` unit (skill `work-loop`, worktree `ai-resources-leverage-idea`) against a
+Codex-authored brief asking `/leverage-idea` to become an evidence-grounded routing-and-handoff
+command instead of stopping at an implementation plan. Verified all six of the brief's premises
+(confirmed, with positive controls), classified the route `reviewed` (14 project symlinks), wrote
+Frame evidence diagnosing five defects in the shipped command, and sent it to Codex for review. Codex's
+review reversed the unit's initial judgment: the requested change moves the command's authority, input
+domain and output contract at once, which is a material expansion under `docs/work-loop.md:48` and
+belongs to `/develop-ai-resource`, not to a `/work-loop` settled correction. Adjudicated all four
+review findings, wrote a raw handoff brief to `inbox/`, logged one `/work-loop` contract defect the
+review also surfaced, and closed the unit `routed-out`. `.claude/commands/leverage-idea.md` was never
+edited.
+
+### Decisions Made
+- **`routed-out`, not implemented here** — accepted Codex's MATERIAL 2 finding in full; the command's
+  three-axis expansion (authority / input domain / output contract) is material, not a settled
+  correction. Superseded, did not delete, the Frame evidence's original narrower judgment (append-only
+  rule).
+- **MATERIAL 1 rejected** — Codex's "agent authority gap" claim rested on inspecting 3 files; the
+  governing rules doc `docs/ai-resource-creation.md` names agent definitions under
+  `/develop-ai-resource`'s authority four times, uninspected by the reviewer. Kept the narrower true
+  observation (the command's own list omits the word "agent") as a text-fix note in the handoff.
+- **MATERIAL 3 (a real `/work-loop` contract/command disagreement) logged, not fixed inline** — fixing
+  it would have edited `/work-loop`'s own files, outside this unit's declared object
+  (`leverage-idea.md`). Logged to `logs/improvement-log.md` instead.
+- **D1 (the bridge-matrix bypass) travels with the rest of the expansion rather than being split out**
+  — it is very likely a settled correction on its own, but the brief's stated need was the whole
+  expansion; splitting it out would be a new, narrower brief.
+
+### Outcome
+Outcome check skipped (not requested).
+
+### Session Value Audit — 80/20 Review
+Skipped (not requested).
+
+### Risky actions
+None — no destructive or external action taken; no gate skipped. One notable near-miss avoided: the
+unit's initial route judgment (implement inside `/work-loop`) would have satisfied the brief's own
+falsification condition ("any proposed new durable AI resource bypasses `/develop-ai-resource`") had
+it not been caught by review before any edit was made.
+
+### Next Steps
+Run `/develop-ai-resource inbox/leverage-idea-lifecycle-routing.md` in a fresh session to qualify
+whether and how `/leverage-idea` should be expanded. A legitimate outcome of that command is "no
+build." Full evidentiary trail (premises, route reasoning, all five defects, adjudication) is
+recoverable at commit `1a40c60` (`logs/loop/2026-07-29-leverage-idea-lifecycle-frame.*`, deleted from
+the working tree at stream close per `docs/work-loop.md` § Artifacts).
+
+### Open Questions
+None.

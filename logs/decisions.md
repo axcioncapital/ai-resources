@@ -262,3 +262,92 @@ not foreclosed by this session's workaround.
   session's scope (`stop_if` / `Out of scope` on the mandate). Left as an operator decision, to be
   made with the additional evidence this session produced (positive control, documented sandbox
   levers, the "workspace-write doesn't fix it" dead end already ruled out).
+
+## 2026-08-01 — Claude commits the Work Loop v2 state file (amends the Proposal)
+
+**Context.** Work Loop v2 MVP Step 3 wrote the executable core. The Proposal's destination
+behaviour 1 states that Codex "writes a bounded brief into a task-state file in the repository and
+commits it." Step 2's transport prototype established by execution — two independent Codex sessions,
+plus a positive control in which Claude ran the identical failing command successfully — that Codex
+can write ordinary repository files but is refused write access to `.git`. In the observed round
+trip Claude made the only commit and the shared working tree carried the hand-off. Step 3 flagged
+this as Proposal-level rather than deciding it.
+
+**Decision (operator).** Codex writes the brief into the state file; **Claude makes every commit.**
+
+**Rationale.** It is what reality demonstrated rather than what the plan assumed. Nothing in the
+design depends on the alternative — the file is exchanged through the repository either way — and
+the `turn` field already enforces one writer at a time. Leaving it open would invite a future
+session to relitigate it from the Proposal's superseded wording.
+
+**Alternatives considered.**
+- **Change the Codex sandbox setting so it can commit.** Rejected for now: Step 2 established that
+  `workspace-write` was already active and `.git` was still blocked, so the only proven lever is
+  `danger-full-access`, which removes the fence for everything rather than for Git. That is a
+  decision about the operator's own machine, not a build decision.
+- **Leave it open until Step 5.** Rejected: Step 5 implements the round trip and would have to
+  invent an answer under implementation pressure.
+
+**Recording mechanism.** The Proposal itself is NOT edited — planning is closed and the workspace
+convention is to version rather than overwrite. The amendment is recorded in
+`plans/work-loop-v2-mvp/README.md` § "Decisions taken after v0.4" and in the executable core § 4, so
+a session reading the Proposal alone is pointed at the superseding decision.
+
+**⚠ Known unresolved consequence.** The mission's validation contract, acceptance assertion 1, still
+reads "Codex … commits it". That contract is frozen at mission creation and was not edited. As it
+stands the mission cannot satisfy its own definition of done. Surfaced to the operator; not decided.
+
+## 2026-08-01 — The adopted QC process is scoped to the Work Loop v2 build, not workspace-wide
+
+**Context.** The operator asked to save a QC process (recommended by Fable, extended with their own
+requirement that the reviewer check against the ORIGINAL project files) as a standing instruction for
+checking Claude's own work. Read workspace-wide, that instruction conflicts head-on with workspace
+`CLAUDE.md` § Independent Review Rule: "Codex is the reviewer — no Claude QC pass runs in addition to
+it", plus an explicit instruction that recommendations to restore a mandatory Claude-side QC gate
+"must be rejected."
+
+**Decision (operator, from three offered scopes).** Keep it scoped to the Work Loop v2 MVP build.
+`CLAUDE.md` is unchanged and Codex remains the reviewer everywhere else.
+
+**Rationale.** Inside this build the conflict does not arise: the Proposal authorises targeted
+per-slice review (`:87`) and one candidate review (Decision 2, `:36`), so a subagent QC pass is a way
+of running a review the build's own governance already provides for. Fable's own opening line is
+"don't invent a new QC layer," which is the same instinct the `CLAUDE.md` rule protects. Widening it
+would have reversed a rule the operator wrote deliberately on 2026-07-30.
+
+**Alternatives considered.**
+- **Amend `CLAUDE.md` to permit Claude-side subagent QC workspace-wide.** Rejected by the operator.
+- **Apply only the method rules workspace-wide** (three dimensions, original-files reference point,
+  freeze-and-fix-once, reviewer-never-fixes) while keeping Codex as the sole reviewer. Offered and
+  not taken; remains available if the narrow scope proves useful.
+
+**Written up at** `plans/work-loop-v2-mvp/qc-process-v0.1.md`, with a paste-ready subagent brief.
+
+## 2026-08-01 — Declined an external review finding on verified-premise grounds
+
+**Context.** An external review (Fable) of the executable core raised three findings. Finding A —
+the substantive one — held that the core had dropped "genuine uncertainty about the problem or
+solution" from the Proposal's named admission reasons, and recommended restoring it.
+
+**Decision (Claude, endorsed by the operator).** Declined. Findings B and C were reported as already
+fixed rather than re-fixed.
+
+**Rationale.** The premise was checked before acting and is false. `grep -i uncertain` returns **zero
+matches** in the Proposal. The eight-reason admission list is at
+`the-work-loop-explained-complete-system-v0.2.md:45` — Document 4, which the folder README designates
+"DESTINATION REFERENCE ONLY. NOT A REQUIREMENTS DOCUMENT." That line opens with "The loop is entered
+only for a named reason", which is the precise phrase the README quotes as its example of imperative
+wording that creates nothing. Adopting the finding would have imported scope from the one document
+the build forbids as a source. Two mitigations also apply: the core's reason list had already been
+opened (it reads "a guide and not a closed list") by an earlier correction Fable had not seen, and
+the five safety rules apply in every lane, so discovery work retains premise verification whether or
+not it enters the loop.
+
+**Alternatives considered.**
+- **Adopt it as recommended.** Rejected on the above.
+- **Adopt it as a deliberate widening rather than a restoration.** Offered to the operator as an
+  available override; not taken.
+
+**Wider point this is an instance of.** External review input is a brief like any other and its
+premises are verified before adoption. Here the reviewer was sincere, specific, and wrong about which
+document it was quoting — which is exactly the failure mode the folder README was written to prevent.
