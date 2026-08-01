@@ -353,6 +353,192 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 20:21 — logs/missions/work-loop-v2-mvp.md
+- 20:17 — logs/scratchpads/2026-08-01-17-16-scratchpad.md
+- 20:14 — plans/work-loop-v2-mvp/step-7-pilot-log.md
+- 20:14 — plans/work-loop-v2-mvp/step-7-pilot-log.md
+- 20:14 — plans/work-loop-v2-mvp/step-7-pilot-log.md
+- 20:14 — plans/work-loop-v2-mvp/step-7-pilot-log.md
+- 20:14 — plans/work-loop-v2-mvp/step-7-pilot-log.md
+- 20:14 — plans/work-loop-v2-mvp/step-7-pilot-log.md
+- 20:05 — plans/work-loop-v2-mvp/step-7-pilot-log.md
+- 20:05 — plans/work-loop-v2-mvp/step-7-pilot-log.md
+- 20:05 — plans/work-loop-v2-mvp/step-7-pilot-log.md
+- 20:05 — plans/work-loop-v2-mvp/step-7-pilot-log.md
+- 20:04 — plans/work-loop-v2-mvp/step-7-pilot-log.md
+- 20:04 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-systems-builder/logs/work-loop/review-packet-preservation.md
+- 20:03 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-systems-builder/logs/work-loop/review-packet-preservation.md
+- 20:03 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-systems-builder/cases/README.md
+- 20:03 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-systems-builder/cases/README.md
+- 20:02 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-systems-builder/cases/scripts/build-review-packet.sh
+- 20:02 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-systems-builder/cases/scripts/build-review-packet.sh
+- 20:01 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-systems-builder/cases/scripts/build-review-packet.sh
+- 20:01 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-systems-builder/cases/scripts/build-review-packet.sh
+- 20:01 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-systems-builder/cases/scripts/build-review-packet.sh
+- 20:01 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-systems-builder/cases/scripts/build-review-packet.sh
+- 20:01 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-systems-builder/cases/scripts/build-review-packet.sh
+- 20:01 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-systems-builder/cases/scripts/build-review-packet.sh
+- 20:00 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-systems-builder/cases/scripts/build-review-packet.test.sh
+- 20:00 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-systems-builder/cases/scripts/build-review-packet.test.sh
+- 19:59 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-systems-builder/cases/scripts/build-review-packet.test.sh
+- 19:49 — logs/scratchpads/2026-08-01-19-50-scratchpad.md
+- 19:44 — plans/work-loop-v2-mvp/step-7-pilot-log.md
+- 19:41 — plans/work-loop-v2-mvp/step-7-pilot-log.md
+- 19:25 — plans/work-loop-v2-mvp/step-7-pilot-log.md
+- 19:24 — plans/work-loop-v2-mvp/step-7-v1-retirement-decision.md
+- 19:16 — logs/session-plan-2026-08-01-S11-cf1.md
+- 19:14 — logs/session-notes.md
+- 19:00 — logs/decisions.md
+- 18:59 — logs/decisions.md
+- 18:59 — logs/session-notes.md
+- 18:59 — logs/scratchpads/2026-08-01-S10-7e5-scratchpad.md
+- 18:55 — logs/missions/work-loop-v2-mvp.md
+- 18:55 — plans/work-loop-v2-mvp/step-6-candidate-review.md
+- 18:54 — plans/work-loop-v2-mvp/step-6-candidate-review.md
+- 18:54 — plans/work-loop-v2-mvp/step-6-candidate-review.md
+- 18:54 — plans/work-loop-v2-mvp/step-6-live-verification.md
+- 18:53 — plans/work-loop-v2-mvp/step-6-live-verification.md
+- 18:44 — plans/work-loop-v2-mvp/step-6-live-verification.md
+- 18:35 — plans/work-loop-v2-mvp/step-6-closure-check-brief.md
+- 18:34 — plans/work-loop-v2-mvp/step-6-candidate-review.md
+- 18:34 — plans/work-loop-v2-mvp/step-6-candidate-review.md
+- 18:31 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 18:30 — .agents/skills/work-loop-v2/SKILL.md
+- 18:30 — .claude/commands/work-loop-v2.md
+- 18:30 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 18:30 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 18:30 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 18:30 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 18:29 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 18:29 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 18:28 — .agents/skills/work-loop-v2/SKILL.md
+- 18:27 — .claude/commands/work-loop-v2.md
+- 18:25 — plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md
+- 18:14 — logs/session-notes.md
+- 18:13 — plans/work-loop-v2-mvp/step-6-finding-c-adjudication-brief.md
+- 18:06 — output/context-packs/qc-20260801-c6f1a/pack.md
+- 17:17 — logs/session-notes.md
+- 17:16 — logs/scratchpads/2026-08-01-S9-6ba-scratchpad.md
+- 17:15 — plans/work-loop-v2-mvp/step-6-candidate-review.md
+- 17:09 — logs/session-notes.md
+- 17:08 — .agents/skills/work-loop-v2/SKILL.md
+- 17:08 — plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md
+- 17:07 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 16:51 — plans/work-loop-v2-mvp/step-6-review-brief.md
+- 16:50 — plans/work-loop-v2-mvp/step-6-review-brief.md
+- 16:50 — plans/work-loop-v2-mvp/step-6-review-brief.md
+- 16:49 — plans/work-loop-v2-mvp/step-5-slice-3-evidence.md
+- 16:49 — plans/work-loop-v2-mvp/step-5-slice-3-evidence.md
+- 16:48 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 16:44 — plans/work-loop-v2-mvp/issue-codex-request-intake.md
+- 16:41 — logs/work-loop/fixture-step6-admission.md
+- 16:34 — logs/session-plan-2026-08-01-S9-6ba.md
+- 16:32 — logs/session-notes.md
+- 16:23 — logs/session-notes.md
+- 16:22 — logs/scratchpads/2026-08-01-S8-7c0-scratchpad.md
+- 16:19 — logs/missions/work-loop-v2-mvp.md
+- 16:19 — logs/missions/work-loop-v2-mvp.md
+- 16:18 — plans/work-loop-v2-mvp/step-5-slice-3-evidence.md
+- 16:17 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 16:15 — logs/work-loop/fixture-slice3-close.md
+- 16:15 — logs/work-loop/fixture-slice3-close.md
+- 16:15 — logs/work-loop/fixture-target-2.md
+- 16:15 — logs/work-loop/fixture-slice3-close.md
+- 16:06 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 16:05 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 16:05 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 16:05 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 16:04 — logs/work-loop/fixture-slice3-limits.md
+- 16:04 — logs/work-loop/fixture-slice3-limits.md
+- 16:04 — logs/work-loop/fixture-target-2.md
+- 15:56 — logs/work-loop/fixture-slice3-limits.md
+- 15:56 — logs/work-loop/fixture-target-2.md
+- 15:56 — logs/work-loop/fixture-slice3-deferral.md
+- 15:56 — logs/work-loop/fixture-target-2.md
+- 15:55 — logs/work-loop/fixture-target-2.md
+- 15:55 — logs/work-loop/fixture-slice3-deescalate.md
+- 15:55 — logs/work-loop/fixture-target-2.md
+- 15:55 — logs/work-loop/fixture-target.md
+- 15:54 — .agents/skills/work-loop-v2/SKILL.md
+- 15:54 — .agents/skills/work-loop-v2/SKILL.md
+- 15:54 — .agents/skills/work-loop-v2/SKILL.md
+- 15:54 — .agents/skills/work-loop-v2/SKILL.md
+- 15:54 — .claude/commands/work-loop-v2.md
+- 15:54 — .claude/commands/work-loop-v2.md
+- 15:53 — .claude/commands/work-loop-v2.md
+- 15:52 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 15:51 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 15:51 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 15:51 — logs/work-loop/fixture-slice3-limits.md
+- 15:51 — logs/work-loop/fixture-slice3-deferral.md
+- 15:51 — logs/work-loop/fixture-slice3-deescalate.md
+- 15:51 — logs/work-loop/fixture-target-2.md
+- 15:45 — logs/session-plan-2026-08-01-S8-7c0.md
+- 15:43 — logs/session-notes.md
+- 15:42 — output/context-packs/project-20260801-b7e41/pack.md
+- 15:31 — logs/session-notes.md
+- 15:30 — logs/scratchpads/2026-08-01-S7-3fc-scratchpad.md
+- 15:28 — logs/missions/work-loop-v2-mvp.md
+- 15:28 — logs/missions/work-loop-v2-mvp.md
+- 15:27 — plans/work-loop-v2-mvp/step-5-slice-2-evidence.md
+- 15:26 — .claude/commands/work-loop-v2.md
+- 15:19 — logs/work-loop/fixture-slice2-menu.md
+- 15:19 — logs/work-loop/fixture-slice2-menu.md
+- 15:19 — logs/work-loop/fixture-target.md
+- 15:18 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 15:18 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 15:18 — logs/work-loop/fixture-slice2-menu.md
+- 15:16 — logs/work-loop/fixture-slice2-correction.md
+- 15:15 — logs/work-loop/fixture-slice2-correction.md
+- 15:15 — logs/work-loop/fixture-target.md
+- 15:11 — logs/work-loop/fixture-slice2-correction.md
+- 15:11 — logs/work-loop/fixture-slice2-correction.md
+- 15:11 — logs/work-loop/fixture-target.md
+- 15:10 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 15:10 — logs/work-loop/fixture-slice2-correction.md
+- 15:10 — .claude/commands/work-loop-v2.md
+- 15:09 — .claude/commands/work-loop-v2.md
+- 15:08 — .agents/skills/work-loop-v2/SKILL.md
+- 15:08 — .agents/skills/work-loop-v2/SKILL.md
+- 15:05 — .claude/commands/work-loop-v2.md
+- 15:05 — .claude/commands/work-loop-v2.md
+- 15:05 — logs/work-loop/fixture-slice2-foreign.md
+- 15:04 — logs/work-loop/fixture-slice2-foreign.md
+- 15:04 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 15:04 — logs/work-loop/fixture-slice2-foreign.md
+- 15:03 — logs/work-loop/fixture-slice2-fresh.md
+- 15:02 — logs/work-loop/fixture-slice2-fresh.md
+- 15:02 — logs/work-loop/fixture-target.md
+- 15:02 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 15:01 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 15:01 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 15:01 — logs/work-loop/fixture-slice2-fresh.md
+- 14:58 — logs/scratchpads/2026-08-01-14-58-scratchpad.md
+- 14:57 — /Users/patrik.lindeberg/.claude/projects/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/memory/MEMORY.md
+- 14:56 — /Users/patrik.lindeberg/.claude/projects/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/memory/feedback_questions_inline_not_tool.md
+- 14:56 — logs/session-plan-2026-08-01-S7-3fc.md
+- 14:56 — docs/harness-and-permission-troubleshooting.md
+- 14:55 — logs/session-notes.md
+- 14:55 — docs/harness-and-permission-troubleshooting.md
+- 14:54 — docs/harness-and-permission-troubleshooting.md
+- 14:54 — docs/harness-and-permission-troubleshooting.md
+- 14:54 — docs/harness-and-permission-troubleshooting.md
+- 14:54 — docs/harness-and-permission-troubleshooting.md
+- 14:54 — docs/harness-and-permission-troubleshooting.md
+- 14:54 — docs/harness-and-permission-troubleshooting.md
+- 14:54 — docs/harness-and-permission-troubleshooting.md
+- 14:53 — output/context-packs/command-20260801-b7e3a/pack.md
+- 14:53 — /Users/patrik.lindeberg/.claude/plans/fix-docs-harness-and-permission-troubles-atomic-perlis.md
+- 14:48 — docs/harness-and-permission-troubleshooting.md
+- 14:48 — docs/harness-and-permission-troubleshooting.md
+- 14:48 — docs/harness-and-permission-troubleshooting.md
+- 14:48 — docs/harness-and-permission-troubleshooting.md
+- 14:48 — docs/harness-and-permission-troubleshooting.md
+- 14:48 — docs/harness-and-permission-troubleshooting.md
+- 14:47 — docs/harness-and-permission-troubleshooting.md
+- 14:47 — docs/harness-and-permission-troubleshooting.md
+- 14:46 — logs/scratchpads/2026-08-01-14-45-scratchpad.md
+- 14:45 — logs/session-notes.md
 - 14:43 — logs/session-notes.md
 - 14:41 — logs/decisions.md
 - 14:41 — logs/session-notes.md

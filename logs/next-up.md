@@ -46,3 +46,7 @@ Promoted findings carry their source and a content-derived id; tick an item to r
 - [ ] `ai-resources/CLAUDE.md` documents a SessionStart hook that does not run — `logs/improvement-log.md` <!-- promote:b9f9d2432470 -->
 
 - [ ] Workspace `CLAUDE.md`'s model-field prohibition names a layer that `/model` owns, so it cannot be complied with — `logs/improvement-log.md` <!-- promote:0d003a541c41 -->
+
+- [ ] Orphaned-hook count is five, not three — the earlier scan was blind to the workspace-root hooks directory — `logs/improvement-log.md` <!-- promote:135e0d8df449 -->
+
+- [ ] `next-up.md` holds 39 urgent items from one source, so the `/prime` menu can never show in-flight mission work — `logs/improvement-log.md` <!-- promote:6aca074e4236 -->
