@@ -11,5 +11,6 @@ It carries no meaning outside the Slice 1 acceptance run.
 
 One paragraph, deliberately dull, so a change to it is unambiguous.
 
-### Correction exercise
+## Correction exercise
 Round: one
+Scope: frozen

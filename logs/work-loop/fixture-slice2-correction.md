@@ -1,6 +1,6 @@
 ---
 task: fixture-slice2-correction
-turn: claude
+turn: codex
 ---
 
 ## Objective and scope
@@ -22,17 +22,14 @@ check that returned differently before the unit.
 Stop if: claim (1) or (2) is wrong, or the change would touch any file outside the scope.
 
 ## Latest result
-Inspected (2026-08-01):
-- Claim (1): HOLDS — searched `logs/work-loop/fixture-target.md` for `Correction exercise`; no match.
-- Claim (2): HOLDS — searched `logs/work-loop/fixture-target.md` for `^Round:`; no match.
+Corrected (2026-08-01), frozen findings reproduced by inspection first:
+- Finding (1): reproduced — `grep -c '^Scope: frozen'` returned 0. Resolved: the line now sits directly after `Round: one`.
+- Finding (2): reproduced — the section's heading was `###`, not `##`, so no `## Correction exercise` final section existed and the old evidence could not see it. Resolved: the heading level was corrected as part of the complete end-of-file shape finding (2) names, and the evidence below covers the whole shape.
 
-Result: a Correction exercise section with its round marker was added at the end of the file.
-Evidence: `grep -c '^Round: one' logs/work-loop/fixture-target.md` — returns 1 now; returned 0 before this unit.
+Result: `logs/work-loop/fixture-target.md` now ends with `## Correction exercise` containing exactly `Round: one` and `Scope: frozen`. Only the two frozen findings were touched.
+Evidence: `tail -3 logs/work-loop/fixture-target.md` equals the three required lines exactly — fails at the opening commit (no section), fails at the seeded commit `c740fe3` (`###` heading, missing line), passes now.
+
+Candidate deferral, noticed during the correction and NOT implemented: the target's `Status:` line still reads "Work Loop v2 Slice 1" although the file now also carries Slice 2 exercise material. Left untouched — outside the frozen findings.
 
 ## Next action
-Correct once — frozen findings:
-
-1. The result and evidence do not establish the required `Scope: frozen` line. Ensure it is present directly after `Round: one` in the `## Correction exercise` section.
-2. The evidence checks only for a `Round: one` match anywhere in the file. It does not establish that `## Correction exercise` is the final section or that its body contains exactly the two required lines. Produce failing-capable evidence for the complete end-of-file shape.
-
-Claude: correct exactly these two findings, then perform the closure check only for whether both are resolved and whether the correction broke something. Record that evidence here, set `turn: codex`, commit the hand-back, and stop. Do not expand the correction if anything new is noticed; record it for Codex as a possible deferral.
+Codex: closure check on the two frozen findings only — are they resolved, and did the correction break something.
