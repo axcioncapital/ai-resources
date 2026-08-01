@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
-# Acceptance harness — Work Loop v2, Slice 1 (behaviours 1.1, 1.2, 1.3, 1.4).
+# Acceptance harness — Work Loop v2, Slices 1 and 2.
 #
-# Asserts the END STATE after the fixture runs have been performed:
+# Slice 1 (behaviours 1.1, 1.2, 1.3, 1.4) asserts the END STATE after the fixture runs:
 #   run (a) against logs/work-loop/fixture-slice1-true.md   — all claims true      [1.2, 1.3]
 #   run (b) against logs/work-loop/fixture-slice1-false.md  — one claim deliberately false [1.2]
 #   run (c) task fixture-slice1-codex, opened and closed by $work-loop-v2 in Codex [1.1, 1.4]
+#
+# Slice 2 (behaviours 2.1, 2.2, 2.3, 2.4) — continuity and correction:
+#   run (d) task fixture-slice2-fresh, executed by a FRESH session via /work-loop-v2 [2.1]
+#   run (e) task fixture-slice2-foreign, whose file's `task:` mismatches its id     [2.2]
+#   run (f) task fixture-slice2-correction, one bounded correction then closure     [2.3, 2.4]
 #
 # Run it BEFORE the behaviours exist (must fail) and AFTER (must pass). That ordering is the
 # point: an assertion that cannot fail is not evidence (executable core § 6 rule 5).
@@ -136,9 +141,52 @@ done
 check "1.4   the committed state carries the closed shape" \
   "git show HEAD:'$CODEX_F' 2>/dev/null | grep -qE '^## Outcome'"
 
+# =============================================================================
+# Slice 2 — continuity and correction
+# =============================================================================
+
+# --- 2.1 a fresh session continues the task from the state file and Git alone
+# The harness cannot see session freshness — that claim lives in the evidence record
+# (which session ran the unit, and that it was not the session that built the command).
+# What it asserts: the unit was completed correctly, and the opening hand-off is read
+# at the commit that added the file (1.4's lesson — later moves may erase live fields).
+FRESH_F="logs/work-loop/fixture-slice2-fresh.md"
+
+check "2.1   fixture present: $FRESH_F" "[ -f '$FRESH_F' ]"
+
+FRESH_OPENED=$(git log --diff-filter=A --format=%H -- "$FRESH_F" 2>/dev/null | tail -1)
+fresh_at_open() { [ -n "$FRESH_OPENED" ] && git show "$FRESH_OPENED:$FRESH_F" 2>/dev/null; }
+
+check "2.1   the opening state was committed pointing at Claude (turn: claude)" \
+  "fresh_at_open | grep -qE '^turn:[[:space:]]*claude'"
+check "2.1   the opening state carried an untouched Latest result" \
+  "fresh_at_open | grep -q '(empty — not started)'"
+
+# The unit's own evidence check: 0 before the work (visible at the opening commit),
+# 1 after. It reads differently depending on whether the work happened.
+check "2.1   the target carried no Continuity: line at open" \
+  "[ -n \"\$FRESH_OPENED\" ] && [ \"\$(git show \"\$FRESH_OPENED:$TARGET\" 2>/dev/null | grep -c '^Continuity:')\" = '0' ]"
+check "2.1   the unit was implemented (evidence check passes)" \
+  "[ \"\$(grep -c '^Continuity:' '$TARGET')\" = '1' ]"
+
+check "2.1   an inspection record was written" \
+  "grep -qi 'inspected' '$FRESH_F'"
+check "2.1   the absence claim names the surface it searched" \
+  "grep -i 'search' '$FRESH_F' | grep -q 'fixture-target.md'"
+check "2.1   the absence claim names the pattern it searched for" \
+  "grep -i 'search' '$FRESH_F' | grep -q 'Continuity:'"
+check "2.1   an evidence pointer was written to the state file" \
+  "grep -qE '^Evidence:' '$FRESH_F'"
+check "2.1   turn handed back to codex" \
+  "grep -qE '^turn:[[:space:]]*codex' '$FRESH_F'"
+check "2.1   the committed target carries the implementation" \
+  "git show HEAD:'$TARGET' 2>/dev/null | grep -qE '^Continuity:'"
+check "2.1   the committed state carries the hand-back" \
+  "git show HEAD:'$FRESH_F' 2>/dev/null | grep -qE '^turn:[[:space:]]*codex'"
+
 # --- v1 isolation: logs/loop/ must gain nothing (slice plan 1.1) ------------
-check "v1    no Slice 1 artifact leaked into logs/loop/" \
-  "! ls logs/loop/ 2>/dev/null | grep -qE 'fixture-slice1|$CODEX_TASK'"
+check "v1    no Slice 1 or Slice 2 artifact leaked into logs/loop/" \
+  "! ls logs/loop/ 2>/dev/null | grep -qE 'fixture-slice1|fixture-slice2|$CODEX_TASK'"
 check "v1    logs/loop/ has no uncommitted change from this work" \
   "[ -z \"\$(git status --porcelain logs/loop/)\" ]"
 
