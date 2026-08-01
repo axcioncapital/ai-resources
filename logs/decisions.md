@@ -210,3 +210,41 @@ are discovered while doing the work).
 
 **Recorded:** `plans/work-loop-v2-mvp/step-5-slice-3-evidence.md` § "The scope decision this slice
 had to make"; commits `f0b06c1` (both artifacts), `59cabcd` (harness green at 136).
+
+## 2026-08-01 — Work Loop v2 Step 6: finding C deferred rather than settled under an authorship conflict
+
+**Context.** Step 6's fresh-context review (Codex) returned *Accept with corrections* on three
+material findings. A (a contradictory operator↔Codex routing contract) and B (a harness assertion
+that tested a filename instead of state) were corrected in the one permitted correction pass.
+Finding C — both runtime artifacts restate executable-core policy instead of linking it, violating
+the skill-writing standard § 10 — was not.
+
+**Decision.** Defer C to the next session rather than settle it inside the correction pass.
+
+**Rationale.** Three things made C unlike A and B. First, correcting it is not contained: six harness
+assertions test *for* the restatement C wants removed, so the fix lands on all three runtime files at
+once, at the freeze, with only a narrow closure check permitted afterward — the mission forbids a
+second broad review. Second, the harm C names is *"the duplicated policy has already drifted into
+finding A's contradictory interface and next-turn rules"* — and that drift is finding A, now fixed;
+the remainder is prospective. Third, and decisively for the deferral: Claude authored all four
+candidate files and its recommendation was not to rewrite them. The convenient answer and the
+recommended answer were the same answer, which is the condition under which the author's judgment is
+least reliable. Escalating is what `pocock-lifecycle-work-loop-mvp-v0.4.md` § Step 6 point 5
+prescribes — *"genuine risk-acceptance choices escalate to the operator."*
+
+**Alternatives considered.** *Correct C fully in the pass* — rejected for now, not on merit but on
+sequencing: the largest change to the candidate would land at the moment with the least review left
+to catch a mistake. *Accept C outright as a disclosed limitation* — rejected as the weakest option;
+it carries no reopening trigger, so the finding would simply stop existing. *Let Claude choose* —
+rejected by the operator, correctly, given the authorship conflict Claude had disclosed.
+
+**Evidence found at wrap that bears on the pending decision.** `logs/decisions.md` (Slice 3, this
+file, ~line 207) records that symmetric duplication of Slice 3's behaviours was *rejected* precisely
+because it "would restate rules the executable core owns, violating the skill-writing standard § 1."
+The rule was therefore understood and applied selectively during the build, which suggests some of
+the remaining restatement is a judged trade-off rather than oversight. Weigh this before choosing
+full correction.
+
+**Recorded:** `plans/work-loop-v2-mvp/step-6-candidate-review.md` § 6 (self-contained, with all three
+options); `step-6-review-findings.md` (the frozen findings); commit `edd0d97` (A and B corrected),
+`627001e` (the review record).
