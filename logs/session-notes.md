@@ -548,3 +548,15 @@ plan's step 8 intended. Flagged in the continuity scratchpad for the operator or
   `improvement-log.md` would split one fact across two owners for no benefit.
 
 Findings: 3 — queued 1 (severity: medium), declined 2. 1 + 2 = 3.
+
+## 2026-08-01 — Session S3-19b
+
+**Mandate:** Write the Work Loop v2 executable core — the single short document the Claude command and the Codex resource link to instead of restating rules — containing the seven sections Playbook Step 3 names, synthesized from the Proposal's settled decisions plus the Step 1 and Step 2 notes, with no decision reopened — done when: `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` exists and is committed with all seven sections present; the task-state interface section consciously decides where hand-off state lives (the `turn` field Step 2 proved is a protocol field the Proposal's content ceiling does not list) rather than silently dropping it; the core is checked against the skill-writing standard's Section 10 checklist; and the operator has read and approved it.
+- Out of scope: Step 4's slice plan; building the Claude command or the Codex resource (Step 5); anything from the Complete System explainer (Consequential lane, worktrees, reviewer machinery, automation) — destination reference only, creates no requirements; editing, retiring or "aligning" Work Loop v1; reopening any settled decision in Proposal Section 3 or changing the Proposal's stated transport; closing the Step 2 § 6 open gaps that need the operator or the Codex app.
+- Files in scope: logs/missions/work-loop-v2-mvp.md, plans/work-loop-v2-mvp/README.md
+- Stop if: a section cannot be written without reopening a settled Proposal decision or making a Proposal-level call (e.g. formalising that Codex cannot write `.git`, or changing the transport from Git to the shared working tree) — surface it to the operator rather than deciding it; or the Complete System explainer is the only source for something the core would contain.
+- Allowed inputs: plans/work-loop-v2-mvp/README.md, plans/work-loop-v2-mvp/work-loop-v2-mvp-proposal-v0.4.md, plans/work-loop-v2-mvp/pocock-lifecycle-work-loop-mvp-v0.4.md, plans/work-loop-v2-mvp/skill-writing-standard-work-loop-v0.2.md, plans/work-loop-v2-mvp/step-1-codex-packaging-findings.md, plans/work-loop-v2-mvp/step-2-transport-seam-conclusions.md, docs/work-loop.md, docs/work-loop-spec.md, .claude/commands/work-loop.md, .agents/skills/work-loop/SKILL.md (v1 read-only, form conventions only), logs/missions/work-loop-v2-mvp.md
+- Required outputs: plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md
+- Mission: work-loop-v2-mvp
+
+**Work:** Work Loop v2 MVP Step 3 — write the executable core; operator reads and approves it
