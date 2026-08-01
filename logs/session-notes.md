@@ -2,89 +2,6 @@
 
 > Archive: [session-notes-archive-2026-07.md](session-notes-archive-2026-07.md)
 
-## 2026-07-29 — Session S2-5a5
-
-**Work:** Continue `/work-loop` stream `2026-07-29-prime-minimum-responsibility` (mission `lean-prime-2026-07`). Run `/develop-ai-resource` in upstream mode against `logs/loop/2026-07-29-prime-minimum-responsibility-build-2.brief.md` — capability `prime-runtime-delegation`, record at `projects/axcion-ai-system-owner/development/prime-runtime-delegation.md`. Shape is NOT preselected: reuse, one script, several scripts and no build are all admissible.
-- Mission: lean-prime-2026-07
-- **Operator directive, this session:** `/risk-check`, `/qc-pass` and all subagent dispatch are **operator-declined** — recorded as declined, never as passed or completed. Verification is by direct inspection and deterministic executable tests only.
-
-### Summary
-
-Corrected a mis-picked task from `/prime` (caught by the operator before any write), then resumed the
-actual open `/work-loop` unit: build-2 of stream `2026-07-29-prime-minimum-responsibility` (mission
-`lean-prime-2026-07`). Ran `/develop-ai-resource` in upstream mode against the build-2 brief under the
-operator directive above. Qualified and built one artifact — `logs/scripts/prime-marker.sh`, the
-marker allocator extracted to a real script, proven equivalent to the live `prime.md` block by a
-20/0 differential test under both bash and zsh — and **declined** the brief's other two candidate
-responsibilities after re-deriving their premises: two of the brief's four premises were false as
-stated. Also found and logged a high-severity harness defect (a shell `grep` wrapper that silently
-mis-evaluates single-quoted `$VAR` patterns), caught only because a positive control was run before
-trusting an empty search result inside this same qualification.
-
-### Decisions Made
-
-- **Capability record `prime-runtime-delegation.md`, D3:** build the allocator only; decline Step 1a's
-  and Step 1d's scans for v1, each with a stated reopening trigger; keep the allocator's 88 comment
-  lines **in the script** rather than relocating them to `docs/session-marker.md` — a deliberate
-  deviation from plan-v3's slice text, reasoned in D3 (zero orientation cost in a script vs. a read
-  cost in a doc; co-location with the code they guard).
-- **Gates:** `/risk-check`, `/qc-pass`, all subagent dispatch — operator-directed decline this session,
-  recorded as declined (never passed, never waived) in the evidence file, the capability record's D3,
-  and both commit messages.
-- **Routine:** logged the `grep`-wrapper finding at `high` severity given its blast radius (several
-  commands decide on an empty `grep` result, one of which writes a session header on that branch) —
-  reasoned inline in the improvement-log entry.
-
-### Risky actions
-
-None taken. One near-miss avoided, not executed: a `grep` instrument bug nearly produced a fabricated
-premise (an empty search read as "this code doesn't exist") inside a qualification decision — caught
-by running a positive control on the instrument before trusting the result, so nothing false shipped.
-Logged as a harness defect below, not a materialized session risk.
-
-### Next Steps
-
-1. Produce the measured package amendment before Slice 2 resumes — two of its three inputs are now
-   measured (`prime.md` 635 → ~493 projected; orientation-cost delta −10,870 chars per read × 29
-   consumers); the third (what merged Slice 4+5 can still reach) is unmeasured.
-2. Resume Build Slice 2: replace `prime.md` Step 8k with a call to `logs/scripts/prime-marker.sh`,
-   **and repoint `logs/scripts/prime-allocator.test.sh` at the script in the same commit** — landing
-   one half without the other recreates the "green run over dead code" defect that file's own header
-   already documents from 2026-07-14.
-3. Decide on independent Codex review before or alongside the wiring — the route is `challenged` and
-   that obligation is currently **unmet**, not waived, per operator direction this session.
-- `/work-loop` picks this up naturally next session via Tier 1 resume (`active_unit` still build-2).
-
-### Open Questions
-
-None beyond what the capability record's `## Current phase and next action` already states.
-
-### Findings Declined
-
-- **The initial mis-pick of the wrong `/prime` menu item** — declined: caught and corrected before any
-  write (zero cost), and matches the already-extensively-logged assert-from-recall failure family;
-  no new prevention beyond what that family already prescribes (verify session state before acting on
-  an ambiguous instruction).
-- **Premise: `mission.md:47-48` does not duplicate Step 1d's scan** — declined for the improvement-log
-  channel: fully recorded durably in the capability record's D3 and the unit's evidence file, which is
-  the correct durable home for a brief-specific verification finding, not a recurring infra defect.
-- **Premise: Step 1a's scan is only partly deterministic (classification half is judgement)** — same
-  disposition and same reasoning as above; recorded in D3 and the evidence file.
-- **`prime-allocator.test.sh`'s awk-extraction fragility** — declined: pre-existing and already
-  self-documented in that file's own header comment (`:8-16`, dated 2026-07-14); not new this session.
-- **`run-manifest.sh` restates `/prime` marker semantics in 11 comment sites** — declined: an
-  informational observation from this session's verification pass, comments only (no duplicated
-  logic), no maintenance-drift risk beyond a future edit updating one without the other — not worth a
-  separate queue entry.
-
-Findings: 6 — queued 1 (severity: high), declined 5. 1 + 5 = 6.
-
-## 2026-07-29 — Session S3-060
-
-**Work:** Continue `/work-loop` stream `2026-07-29-prime-minimum-responsibility`, unit **build-2** (mission `lean-prime-2026-07`). In order: (1) update the measured package amendment — record that **only `prime-marker.sh` qualified**, and that the two judgment-bearing scans (Step 1a's git cross-check, Step 1d's mission scan) **remain in `/prime`**; (2) resume **Build Slice 2** — replace `prime.md` Step 8k with a call to `logs/scripts/prime-marker.sh` **and** repoint `logs/scripts/prime-allocator.test.sh` at the script **in the same commit**; (3) run both test suites; (4) **stop after closing Build-2 — do not begin Slice 4.**
-- Mission: lean-prime-2026-07
-- **Operator directive, this session:** `/risk-check`, `/qc-pass` and all subagent dispatch are **operator-declined** — recorded as declined, never as passed or completed. Verification is by direct inspection and deterministic executable tests only.
-
 ## 2026-07-29 — Session S4-efd
 
 **Work:** Continue `/work-loop` stream `2026-07-29-prime-minimum-responsibility`, unit **build-4** (mission `lean-prime-2026-07`). Resumed from the S3-060 handoff scratchpad. In order: (1) capture the **live smoke test** of the extracted allocator — the first production allocation through `logs/scripts/prime-marker.sh` (directive 7); (2) open Build unit `2026-07-29-prime-minimum-responsibility-build-4` (brief → `active_unit` → commit); (3) verify premises; (4) execute **merged Slice 4+5** under plan-v5 § 3 **Budget A** (behaviour-preserving), aiming ≤430 lines; (5) resolve the retired `prime-marker.test.sh` before Prove.
@@ -530,3 +447,66 @@ None.
 - Mission: work-loop-v2-mvp
 
 **Work:** Work Loop v2 MVP Step 1 — investigate Codex-side resource packaging; commit a cited findings note
+
+### Summary
+Executed Playbook Step 1 for the Work Loop v2 MVP: answered the four Codex-packaging questions by
+inspection, not guesswork. Established locally that `.agents/skills/` is scanned as a repo-level skill
+source and that the five repo-side skills are all visible to Codex — but found that `.gitignore`
+excludes all of them except `work-loop/`, so four exist only on this machine. Drafted a targeted
+question set and handed it to the operator to run inside the real Codex app; verified every citation
+Codex returned against the actual files (three line-number citations were wrong, substance correct each
+time) before writing the findings note. Wrote and committed
+`plans/work-loop-v2-mvp/step-1-codex-packaging-findings.md`.
+
+### Decisions Made
+- Ran the context-discovery engine (Step 2.4 of `/session-start`) — skipped it deliberately: this
+  session reads and produces one new file, it does not modify existing repo structure, so the engine's
+  pre-change routing map has nothing to contribute.
+- Chose not to redesign the Proposal's repository-round-trip transport when local inspection found
+  Codex could write files but not commit in the observed session. Recorded the finding as Step 2's first
+  premise to test rather than treating it as a settled fact or acting on it — the Proposal is
+  authoritative per `plans/work-loop-v2-mvp/README.md`, and a transport redesign is its call, not this
+  session's.
+- Corrected three mis-cited line numbers in the Codex-supplied report (the `description` length cap,
+  the 500-line/5k-word recommendation, and the push-prohibition line) before writing them into the
+  findings note, rather than reproducing the citations uninspected.
+- Recorded `.agents/skills/` being gitignored (except `work-loop/`) as a build-relevant finding for
+  later steps, not as a fix to apply now — out of this step's declared scope.
+
+### Outcome
+Outcome check skipped (not requested).
+
+### Session Value Audit — 80/20 Review
+Skipped (not requested).
+
+### Risky actions
+None. All commands run this session were read-only inspection (file reads, `grep`, `codex --help`,
+config inspection) except the final `git add` + `git commit` of the one new findings-note file, staged
+by explicit path. No destructive or external action taken.
+
+### Findings Declined
+- **`codex --help` on this machine resolves to a macOS-blocked binary and fails silently** — not queued
+  as a new improvement-log entry: it is fully recorded, with evidence and the practical workaround (use
+  the ChatGPT.app path), inside the findings note itself (§5), which is the correct durable home for a
+  Codex-runtime fact this build's later steps will read directly. Duplicating it into
+  `improvement-log.md` would split one fact across two owners for no benefit — it is a fact about the
+  machine's Codex install, not a recurring Claude Code workflow defect.
+
+Findings: 1 — queued 0, declined 1. 0 + 1 = 1.
+
+### Session Assessment
+Feedback collection skipped (not requested).
+
+### Next Steps
+Playbook Step 2 (next session): prototype the transport seam (throwaway). Test the round trip — does a
+minimal repository-based hand-off between Codex and Claude actually work cleanly? Its first, sharpened
+question from this session's findings: **can Codex commit at all** — Step 1 observed `.git` write-protected
+in one session and could not establish whether that is fixed policy or a clearable per-session state.
+Also test whether a new skill placed in `.agents/skills/` needs an explicit `.gitignore` re-include (like
+`!work-loop/`) to survive in the repository. Discard the prototype code; keep only the conclusions note
+and the minimal viable schema, per Playbook Step 2.
+
+### Open Questions
+None blocking. Noted, not resolved: whether Codex's inability to commit in the observed session is a
+fixed runtime property or a configurable/escalatable one — named as Step 2's first thing to test, not
+answered here.
