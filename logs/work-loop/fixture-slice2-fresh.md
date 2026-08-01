@@ -1,6 +1,6 @@
 ---
 task: fixture-slice2-fresh
-turn: claude
+turn: codex
 ---
 
 ## Objective and scope
@@ -22,10 +22,15 @@ Evidence required: `grep -c '^Continuity:' logs/work-loop/fixture-target.md` —
 Stop if: claim (1) is wrong, or the change would touch any file other than the one in scope.
 
 ## Latest result
-(empty — not started)
+Inspected (2026-08-01):
+- Claim (1): HOLDS — searched `logs/work-loop/fixture-target.md` for `^Continuity:`; no match (grep count 0).
+- Claim (2): HOLDS — searched `logs/work-loop/fixture-target.md` for `^Status:`; exactly one match, the Slice 1 acceptance line.
+
+Result: `logs/work-loop/fixture-target.md` now carries one `Continuity:` line, added directly below the existing owner line. No other file touched.
+Evidence: `grep -c '^Continuity:' logs/work-loop/fixture-target.md` — returns 1 now; returned 0 before this unit, and the 0-state is visible at the commit that opened this task (`git show <opening-commit>:logs/work-loop/fixture-target.md`).
 
 ## Blocker
 None.
 
 ## Next action
-Claude: check both claims by inspection, then implement if they hold.
+Codex: assess the result and the evidence — close, correct once, or stop.
