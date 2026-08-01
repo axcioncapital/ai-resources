@@ -1,6 +1,6 @@
 ---
 task: fixture-slice3-limits
-turn: claude
+turn: codex
 ---
 
 ## Objective and scope
@@ -21,10 +21,17 @@ this unit, 1 after, with the 0-state visible at the commit that opened this task
 Stop if: claim (1) is wrong, or the change would touch any file outside the scope.
 
 ## Latest result
-(empty — not started)
+Inspected (2026-08-01):
+- Claim (1): HOLDS — searched `logs/work-loop/fixture-target-2.md` for `^Slice3-limits-note:`; no match (grep count 0).
+- Claim (2): HOLDS — searched `logs/work-loop/fixture-target-2.md` for `^## Body`; exactly one match.
+
+Result: `logs/work-loop/fixture-target-2.md` now carries one `Slice3-limits-note:` line summarising the file's acceptance role. Good enough for the objective; two limitations are written below rather than fixed.
+Limitation 1: the note describes the Slice 3 runs committed so far — a run closing after it will not be reflected in its wording.
+Limitation 2: the note's wording was not cross-checked against the Slice 1/2 fixture's phrasing, so the two targets describe their roles in slightly different words.
+Evidence: `grep -c '^Slice3-limits-note:' logs/work-loop/fixture-target-2.md` — returns 1 now; returned 0 at the commit that opened this task (`8434f34`).
 
 ## Blocker
 None.
 
 ## Next action
-Claude: check both claims, then implement if they hold.
+Codex: assess the result and the evidence — close, correct once, or stop. The two written limitations are part of the result.
