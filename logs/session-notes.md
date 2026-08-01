@@ -670,3 +670,15 @@ first order of business, per this session's own risk note in `logs/session-plan-
 
 ### Open Questions
 None.
+
+## 2026-08-01 — Session S6-974
+
+**Mandate:** Implement Slice 1's Codex side (behaviours 1.1 and 1.4) red-green — clear the two recorded prerequisites, build the Work Loop v2 Codex resource, prepare the prompt the operator pastes into Codex, and test explicit `$name` invocation — done when: 1.1 and 1.4 each have a constructed failing case shown failing before the work and passing after with the implementation committed; the Codex prompt is written and handed over in chat; and the acceptance harness passes with the new assertions included.
+- Out of scope: Slice 2 and Slice 3 behaviours (file-identity rejection, correction rounds, admission discipline); editing, retiring or "aligning" Work Loop v1 (`.claude/commands/work-loop.md`) — Step 7 owns that; reusing the `work-loop` resource name (it would overwrite v1's tracked resource); the Phase 3 pilot (destination behaviour 7); every planning-history document except the three allowed inputs.
+- Files in scope: .gitignore, .agents/skills/wl2-probe, .claude/commands/work-loop-v2.md, logs/scripts/work-loop-v2-slice-1.test.sh, plans/work-loop-v2-mvp/step-5-slice-1-evidence.md, logs/missions/work-loop-v2-mvp.md, logs/session-notes.md
+- Stop if: explicit `$name` invocation proves unreliable under Codex's over-cap (12,963 vs 8,000 char) description budget — that is a finding for the operator, not something to design around inside the slice (slice plan `:99`); a behaviour cannot be given a constructible failing case; Codex cannot be driven at all this session — stop and record, do not have Claude stand in for it.
+- Allowed inputs: plans/work-loop-v2-mvp/step-5-slice-1-evidence.md, plans/work-loop-v2-mvp/step-4-slice-plan.md, plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md, the live repository (convention inspection and fixture material only)
+- Required outputs: the Work Loop v2 Codex resource (`.agents/skills/<v2-name>/SKILL.md` — exact name decided in-session), the Codex prompt delivered in chat, a red-green evidence record covering 1.1 and 1.4
+- Mission: work-loop-v2-mvp
+
+**Work:** Work Loop v2 MVP Step 5 — Codex side: implement behaviours 1.1 and 1.4, prepare the Codex prompt and clear its stated prerequisites

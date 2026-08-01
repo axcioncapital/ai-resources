@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# Acceptance harness — Work Loop v2, Slice 1, Claude side (behaviours 1.2 and 1.3).
+# Acceptance harness — Work Loop v2, Slice 1 (behaviours 1.1, 1.2, 1.3, 1.4).
 #
-# Asserts the END STATE after both fixture runs have been performed by /work-loop-v2:
-#   run (a) against logs/work-loop/fixture-slice1-true.md   — all claims true
-#   run (b) against logs/work-loop/fixture-slice1-false.md  — one claim deliberately false
+# Asserts the END STATE after the fixture runs have been performed:
+#   run (a) against logs/work-loop/fixture-slice1-true.md   — all claims true      [1.2, 1.3]
+#   run (b) against logs/work-loop/fixture-slice1-false.md  — one claim deliberately false [1.2]
+#   run (c) task fixture-slice1-codex, opened and closed by $work-loop-v2 in Codex [1.1, 1.4]
 #
 # Run it BEFORE the behaviours exist (must fail) and AFTER (must pass). That ordering is the
 # point: an assertion that cannot fail is not evidence (executable core § 6 rule 5).
@@ -17,6 +18,7 @@ cd "$ROOT" || exit 2
 TRUE_F="logs/work-loop/fixture-slice1-true.md"
 FALSE_F="logs/work-loop/fixture-slice1-false.md"
 TARGET="logs/work-loop/fixture-target.md"
+CODEX_TASK="fixture-slice1-codex"
 
 pass=0; fail=0
 ok()   { echo "PASS  $1"; pass=$((pass+1)); }
@@ -80,9 +82,53 @@ check "1.3   turn handed back to codex" \
 check "1.3   the committed target carries the implementation" \
   "git show HEAD:'$TARGET' 2>/dev/null | grep -qE '^Status:'"
 
+# --- 1.1 Codex opens the unit: the brief lands in logs/work-loop/ -----------
+# Codex is invoked as $work-loop-v2 and told the task id and the need — NOT the path.
+# Routing to logs/work-loop/ must come from the resource, or the assertion tests nothing.
+CODEX_F="logs/work-loop/$CODEX_TASK.md"
+
+check "1.1   the brief landed in logs/work-loop/, not logs/loop/" \
+  "[ -f '$CODEX_F' ]"
+check "1.1   it did NOT fall back to logs/loop/" \
+  "[ ! -e 'logs/loop/$CODEX_TASK.md' ]"
+check "1.1   turn is claude — the hand-off points at Claude" \
+  "grep -qE '^turn:[[:space:]]*claude' '$CODEX_F'"
+check "1.1   the task id matches the file it was written to" \
+  "grep -qE \"^task:[[:space:]]*$CODEX_TASK\" '$CODEX_F'"
+# A brief must carry claims Claude can CHECK. Asserting the word "brief" appears would
+# pass on any file containing the heading; require a checkable-claims line instead.
+check "1.1   the brief states claims to check against the repository" \
+  "grep -qiE '^check against the repository' '$CODEX_F'"
+# Assert the COMMITTED state, not merely that the file exists in the working tree —
+# Claude committing the file Codex wrote is half of what 1.1 claims.
+check "1.1   Claude committed the brief Codex wrote" \
+  "git show HEAD:'$CODEX_F' 2>/dev/null | grep -qE '^task:[[:space:]]*$CODEX_TASK'"
+
+# --- 1.4 Codex closes: the file reduces to the four closing fields ----------
+# EVERY negative below is conjoined with a positive closure marker. On its own,
+# "the file has no ## Next action" passes trivially before the file exists — the exact
+# class of always-passing assertion this harness caught in its own first red run.
+closed() { [ -f "$CODEX_F" ] && grep -qE '^## Outcome' "$CODEX_F"; }
+
+check "1.4   the closed file carries Outcome" \
+  "closed"
+check "1.4   the closed file carries the decisions that matter" \
+  "closed && grep -qE '^## Decisions that matter' '$CODEX_F'"
+check "1.4   the closed file carries a commit or evidence pointer" \
+  "closed && grep -qE '^## Evidence' '$CODEX_F'"
+check "1.4   the closed file carries accepted limitations" \
+  "closed && grep -qE '^## Accepted limitations' '$CODEX_F'"
+# The behaviour's failing case: ANY of the five active fields surviving closure.
+for active in 'Objective and scope' 'Lane and unit' 'Latest result' 'Blocker' 'Next action'; do
+  check "1.4   active field did NOT survive closure: $active" \
+    "closed && ! grep -qE '^## $active' '$CODEX_F'"
+done
+check "1.4   the committed state carries the closed shape" \
+  "git show HEAD:'$CODEX_F' 2>/dev/null | grep -qE '^## Outcome'"
+
 # --- v1 isolation: logs/loop/ must gain nothing (slice plan 1.1) ------------
 check "v1    no Slice 1 artifact leaked into logs/loop/" \
-  "! ls logs/loop/ 2>/dev/null | grep -q 'fixture-slice1'"
+  "! ls logs/loop/ 2>/dev/null | grep -qE 'fixture-slice1|$CODEX_TASK'"
 check "v1    logs/loop/ has no uncommitted change from this work" \
   "[ -z \"\$(git status --porcelain logs/loop/)\" ]"
 
