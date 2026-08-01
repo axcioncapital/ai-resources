@@ -71,8 +71,8 @@ A working Work Loop v2 MVP exists in this repo — a Claude Code command, a Code
 ## Open threads
 
 - [x] Step 0 — install the project: commit the four governing documents, the authority README, and this mission
-- [ ] Step 1 — investigate Codex-side resource packaging in the real Codex app; commit a short cited findings note
-- [ ] Step 2 — transport-seam prototype (throwaway); keep only the conclusions note and the minimal viable schema
+- [x] Step 1 — investigate Codex-side resource packaging in the real Codex app; commit a short cited findings note — done 2026-08-01 S1-eb7, `plans/work-loop-v2-mvp/step-1-codex-packaging-findings.md` (`592176b`)
+- [x] Step 2 — transport-seam prototype (throwaway); keep only the conclusions note and the minimal viable schema — done 2026-08-01 S2-af1, round trip run once end to end, `plans/work-loop-v2-mvp/step-2-transport-seam-conclusions.md` (`6596d16`), prototype discarded (`a8e175d` → removed)
 - [ ] Step 3 — write the executable core; operator reads and approves it
 - [ ] Step 4 — write the slice plan with acceptance behaviours
 - [ ] Step 5 — implement Slice 1 (core round trip), fresh session, red-green
