@@ -286,6 +286,84 @@ bash logs/scripts/check-decision-refs.sh "$T/orphan.json" >/dev/null 2>&1
 ck 1 $? "an ORPHAN ref exits 1 — the check is falsifiable, not decorative"
 
 echo
+echo "=== HEADERLESS ENTRY SCAN — the class an ORPHAN ref can never surface ==="
+# WHY THIS EXISTS. An ORPHAN ref proves a ref was written and points nowhere. A decision
+# entry with no `## YYYY-MM-DD` header of its own produces NO ref at all — so it produces
+# no orphan either. It is silent negative evidence, and the orphan path above is
+# structurally blind to it (axcion-systems-builder logs/decisions.md, four such entries
+# reachable by no manifest; improvement-log 2026-07-30).
+#
+# The checker walks up from the CALLER's cwd to the nearest logs/decisions.md, so each
+# fixture is a throwaway repo root — the real ai-resources log is never read here.
+CDR="$(pwd)/logs/scripts/check-decision-refs.sh"
+
+# --- fixture A: one headerless entry, PLUS every negative control in one file ---------
+FA="$T/refscan-dirty"; mkdir -p "$FA/logs/runs"
+cat > "$FA/logs/decisions.md" <<'EOF'
+# Decisions — fixture
+
+Each entry uses the canonical shape:
+
+```
+## YYYY-MM-DD — {one-line decision title}
+
+**Decision (operator) — 2099-09-09. A dated decision inside a fenced example.**
+```
+
+## 2099-01-01 — First properly headed decision
+
+**Decision (operator) — 2099-01-01. First properly headed decision.** Context: fixture.
+
+**Decision (operator) — Q2, a sub-decision of the entry above.** Undated, so it opens no
+new entry and must never be flagged.
+
+Prose mentioning **Decision (operator) — 2099-09-08. an inline example.** mid-sentence.
+
+**Decision (operator) — 2099-01-02. A second decision that lost its header.** Context:
+addressable by nothing — this is the entry the scan must find.
+EOF
+printf '{"decisions_refs":[]}' > "$FA/logs/runs/m.json"
+OUT_A="$(cd "$FA" && bash "$CDR" "$FA/logs/runs/m.json" 2>&1)"; RC_A=$?
+ck 1 "$RC_A" "a headerless entry exits 1 even with decisions_refs EMPTY (the silent class)"
+ckv "1" "$(printf '%s' "$OUT_A" | /usr/bin/grep -c 'HEADERLESS')" \
+    "exactly one headerless entry is reported — not zero, not every bold paragraph"
+ckv "1" "$(printf '%s' "$OUT_A" | /usr/bin/grep -c 'line 20:')" \
+    "the finding carries the source line of the headerless entry (repairable, not just 'somewhere')"
+ckv "0" "$(printf '%s' "$OUT_A" | /usr/bin/grep -c 'line 8:\|line 13:\|line 15:\|line 18:')" \
+    "negative controls stay clean: fenced example, header-adjacent entry, undated sub-decision, prose mention"
+
+# --- fixture B: same file, conformant. Must stay silent and exit 0. -------------------
+FB="$T/refscan-clean"; mkdir -p "$FB/logs/runs"
+cat > "$FB/logs/decisions.md" <<'EOF'
+# Decisions — fixture
+
+## 2099-01-01 — First properly headed decision
+
+**Decision (operator) — 2099-01-01. First properly headed decision.** Context: fixture.
+
+**Decision (operator) — Q2, a sub-decision of the entry above.** Undated by design.
+
+## 2099-01-02 — Second properly headed decision
+
+**Decision (operator) — 2099-01-02. Second properly headed decision.** Context: fixture.
+EOF
+printf '{"decisions_refs":[]}' > "$FB/logs/runs/m.json"
+OUT_B="$(cd "$FB" && bash "$CDR" "$FB/logs/runs/m.json" 2>&1)"; RC_B=$?
+ck 0 "$RC_B" "a conformant log with EMPTY refs stays exit 0 (emptiness is still not a failure)"
+ckv "0" "$(printf '%s' "$OUT_B" | /usr/bin/grep -c 'HEADERLESS')" \
+    "a conformant log reports no headerless entry"
+
+# --- fixture B, refs generated from its OWN headers by the shared generator -----------
+# Proves the repaired shape is addressable end to end: header -> slug -> resolves.
+bash "$S" start --date 2099-01-02 --marker RS --runs-dir "$FB/logs/runs" --model opus >/dev/null 2>&1
+bash "$S" update --date 2099-01-02 --marker RS --runs-dir "$FB/logs/runs" \
+  --decision-ref-from-header "## 2099-01-02 — Second properly headed decision" >/dev/null 2>&1
+OUT_C="$(cd "$FB" && bash "$CDR" "$FB/logs/runs/2099-01-02-RS.json" 2>&1)"; RC_C=$?
+ck 0 "$RC_C" "a ref slugged from a real header resolves (generator and validator agree)"
+ckv "1" "$(printf '%s' "$OUT_C" | /usr/bin/grep -c 'RESOLVES')" \
+    "the generated ref RESOLVES — the repair produces an addressable entry"
+
+echo
 echo "=== CROSS-MIDNIGHT CLOSE — a session that wraps after 00:00 must close ITS OWN stub ==="
 # Mission repo-health-backlog-2026-07 thread 8. Reproduced pre-fix: `close` with no flags exits 2
 # and strands the stub at outcome=null forever; with --marker but no --date it writes a SECOND

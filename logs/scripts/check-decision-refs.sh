@@ -107,6 +107,57 @@ echo "REFCHECK: manifest ${MANIFEST}"
 MANIFEST="$MANIFEST" SCRIPT_DIR="$SCRIPT_DIR" python3 - <<'PY'
 import json, os, re, sys, glob
 
+# ── The class an ORPHAN ref can never surface ────────────────────────────────────────
+# An ORPHAN proves a ref was written and points nowhere. A decision entry with no
+# `## YYYY-MM-DD` header of its own produces NO ref at all — so it produces no orphan
+# either. It is SILENT negative evidence: `decisions_refs` stays empty and that reads as
+# "a decision-free session", which is the one state this script says it cannot judge.
+# Found live in axcion-systems-builder: four entries reachable by no manifest, and nobody
+# noticed because nothing was ever wrong-looking (improvement-log 2026-07-30).
+#
+# Runs BEFORE the slug import and before every refs early-exit, deliberately: the whole
+# point is the empty-refs path, and the scan needs no slug definition to do its job.
+#
+# LIVE LOG ONLY. Archives are closed months — this is drift detection on the file still
+# being appended to, not a retro-audit of history nobody will repair.
+def scan_headerless(path='logs/decisions.md'):
+    # A DATED bold decision paragraph opens an entry. An UNDATED one ("**Decision
+    # (operator) — Q2, the boundary, closed**") is a sub-decision of the entry it sits in
+    # and opens nothing — that distinction is the file's own convention, and collapsing it
+    # would flag every well-formed multi-decision entry in the log.
+    entry  = re.compile(r'^\*\*Decisions?\b[^*]*?—\s*\d{4}-\d{2}-\d{2}\.')
+    header = re.compile(r'^#{2,3}\s+\d{4}-')
+    found = []
+    if not os.path.exists(path):
+        return found
+    try:
+        with open(path, encoding='utf-8', errors='replace') as fh:
+            lines = fh.read().splitlines()
+    except OSError:
+        return found
+    fenced, prev = False, None
+    for i, line in enumerate(lines, 1):
+        if line.lstrip().startswith('```'):   # the canonical-shape example at the top of
+            fenced = not fenced               # every decisions.md is a fenced template
+            prev = line                       # — it documents the form, it is not an entry
+            continue
+        if not fenced and entry.match(line) and not (prev and header.match(prev)):
+            found.append((i, line))
+        if line.strip():
+            prev = line
+    return found
+
+headerless = scan_headerless()
+if headerless:
+    print(f"REFCHECK: {len(headerless)} HEADERLESS decision "
+          f"{'entry' if len(headerless) == 1 else 'entries'} in "
+          f"{os.path.abspath('logs/decisions.md')} — addressable by no ref that could ever "
+          f"be written:")
+    for ln, text in headerless:
+        print(f"  line {ln}: {text[:96]}")
+    print("  Each dated decision needs its own `## YYYY-MM-DD — {title}` header — that header "
+          "line is what --decision-ref-from-header slugs. Advisory: nothing is blocked.")
+
 # THE slug definition is imported, never re-implemented. A second copy here is exactly
 # how the validator drifts from the generator and starts calling valid refs orphans.
 #
@@ -119,7 +170,7 @@ try:
 except ImportError:
     print("REFCHECK: decision_ref_slug.py not found — cannot validate refs (advisory, not blocking).")
     print("  Expected at: " + os.path.join(os.environ["SCRIPT_DIR"], "decision_ref_slug.py"))
-    sys.exit(0)
+    sys.exit(1 if headerless else 0)
 
 # Index every decision header — live log AND monthly archives, so a ref whose month has
 # rotated still resolves (the archival-staleness known limit, spine-schemas.md § 1).
@@ -150,13 +201,13 @@ try:
     refs = (json.load(open(mf, encoding='utf-8')).get('decisions_refs') or [])
 except Exception as e:
     print(f"REFCHECK: manifest unreadable ({e}) — advisory, not blocking.")
-    sys.exit(0)
+    sys.exit(1 if headerless else 0)
 
 if not refs:
     print(f"REFCHECK: decisions_refs is empty in {mf}.")
     print("  This is CORRECT for a session that recorded no decisions, and WRONG for one that did.")
     print("  The script cannot tell which — that judgment is the wrap's, not the checker's.")
-    sys.exit(0)
+    sys.exit(1 if headerless else 0)
 
 orphans = []
 for r in refs:
@@ -177,5 +228,5 @@ if orphans:
     print("  - the decision header was retitled after the ref was written;")
     print("  - the slug contract in docs/spine-schemas.md § 1 changed and this script drifted from it.")
     sys.exit(1)
-sys.exit(0)
+sys.exit(1 if headerless else 0)
 PY
