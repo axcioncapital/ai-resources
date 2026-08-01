@@ -549,8 +549,15 @@ check "3.4   the result was handed back with two named limitations (committed)" 
 check "3.4   the task was closed (Outcome present)" "close_closed"
 check "3.4   assessment opened NO correction round" \
   "close_closed && [ \"\$(close_rounds)\" = '0' ]"
-check "3.4   both limitations survive as accepted limitations" \
-  "close_closed && [ \"\$(close_limits | grep -cE '^(- |Limitation)')\" -ge 2 ]"
+# Both limitations must SURVIVE closure. Asserted on substance, not on bullet
+# syntax: the closing record's format is not fixed by the core, and requiring a
+# list shape tests the writer's punctuation rather than the behaviour. Each
+# limitation is identified by a term only it uses — carry one and not the other
+# and this fails.
+check "3.4   limitation 1 (behaviour-level detail) survived closure" \
+  "close_closed && close_limits | grep -qi 'behaviour-level'"
+check "3.4   limitation 2 (no dedicated section) survived closure" \
+  "close_closed && close_limits | grep -qi 'dedicated section'"
 check "3.4   the closed file points at the operator" \
   "close_closed && grep -qE '^turn:[[:space:]]*operator' '$CLOSE_F'"
 check "3.4   no active field survived closure" \
