@@ -1,6 +1,6 @@
 # Fixture target 2
 
-Status: stale — seeded before the Slice 3 runs.
+Status: in acceptance use — Work Loop v2 Slice 3.
 Note: teh sections in this file are unsorted — an obvios quick tidy-up would help.
 
 Second acceptance fixture, added for Work Loop v2 Slice 3. This file is the object the Slice 3

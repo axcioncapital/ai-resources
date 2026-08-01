@@ -1,6 +1,6 @@
 # Fixture target
 
-Status: in acceptance use — Work Loop v2 Slice 1.
+Status: in acceptance use — Work Loop v2 Slices 1 to 3.
 Work Loop owner: v2
 Continuity: unit completed by a fresh session from the state file and Git alone — Work Loop v2 Slice 2, behaviour 2.1.
 
