@@ -36,13 +36,18 @@ The seven conditions from Proposal `:98`. Each unit records a verdict against ev
 
 | # | Condition | Unit 1 | Unit 2 | Unit 3 |
 |---|---|---|---|---|
-| 1 | Useful context preparation | yes | — | — |
-| 2 | Alignment with the approved project plan | yes | — | — |
-| 3 | State recovery | n/a | — | — |
-| 4 | One bounded correction | not exercised | — | — |
-| 5 | The Direct Work bypass | n/a | — | — |
-| 6 | Operator intervention | yes ×2 | — | — |
-| 7 | Clean fresh-session continuation | partly | — | — |
+| 1 | Useful context preparation | yes | yes | — |
+| 2 | Alignment with the approved project plan | yes | yes | — |
+| 3 | State recovery | n/a | n/a | **owed** |
+| 4 | One bounded correction | not exercised | **yes** | — |
+| 5 | The Direct Work bypass | n/a | n/a | **owed** |
+| 6 | Operator intervention | yes ×2 | not needed | — |
+| 7 | Clean fresh-session continuation | partly | n/a | **owed** |
+
+**After two units, three conditions have never been exercised — and all three need the same thing:**
+a unit that crosses a real session boundary (3 and 7), and a request small enough to be refused
+admission (5). Both units so far were opened, executed and closed inside one session, and both were
+admitted to the loop. Unit 3 is where these close or are recorded as untested.
 
 **At least one Standard-lane unit must need a session handoff mid-task** (Proposal `:96`). That unit
 is what exercises rows 3 and 7 for real. It cannot be done inside a single session — it requires a
@@ -61,7 +66,7 @@ pre-emptively fix.
 | 3 | Slice 2's menu task's first pass and assessment block are fixture material | — | Not touched — no menu choice arose |
 | 4 | The writing standard's internal tension is unresolved | Pilot use shows the boundary is unclear or causes drift | **Not observed.** No boundary question arose in unit 1 |
 | 5 | Core § 6 rule 2 contradicts core § 7 for the file-identity case | A unit where the ambiguity produces a wrong action, or the first core revision | **Not reached.** The file's `task:` matched, so the contradictory branch never ran |
-| 6 | Behavioural evidence is largely historical | The pilot is the real test | **Improving.** Premise-checking, red-before-green and the hand-back all ran live in unit 1 on real work |
+| 6 | Behavioural evidence is largely historical | The pilot is the real test | **Largely retired, unit 2.** The last mechanism resting on historical evidence — the bounded correction round — ran live on real work: one frozen finding, one round, closed. Premise-checking, red-before-green and the hand-back had already run live in unit 1 |
 
 One further open item, queued S7-3fc at medium severity: the Codex side currently needs the operator
 to paste a prompt naming the task id, where the resource could resolve the open task itself. Its named
@@ -373,7 +378,120 @@ A later pilot unit still owes it.
 
 ## Unit 2
 
-**Status:** not opened.
+**Status:** **CLOSED 2026-08-01** — opened by Codex, executed by Claude, **one bounded correction
+round**, then closed by Codex. Closing record in the state file; correction commit `583aec5`.
+
+- **Task id:** `decision-entry-referenceability`
+- **Owning project:** `projects/axcion-systems-builder` (fix spans three repositories)
+- **The work:** `logs/decisions.md` had drifted into two entry shapes. `check-decision-refs.sh`
+  indexes `##` headers only, so an entry opening as a bare bold `**Decision …**` paragraph was
+  **structurally unreferenceable** — and produced no orphan to notice, because no ref could ever be
+  written for it. `decisions_refs` simply stayed empty, which the checker itself reports as "correct
+  for a session that recorded no decisions." Silent negative evidence.
+- **Selected by:** operator, from a shortlist Claude compiled; Claude recommended this one.
+- **Lane:** **Standard**, classified by Codex. Its named reason: the unit crosses a shared checker
+  used by every repository, two paired producer instructions and a historical decision record, and
+  *"because the current failure is silent negative evidence, the result needs independent assessment
+  against a fixture that proves the detector can fail without creating false positives."*
+- **State file:** `projects/axcion-systems-builder/logs/work-loop/decision-entry-referenceability.md`.
+
+### What Codex did with the objective
+
+Claude's proposed objective was scoped to one repository. **Codex widened it to the three actual
+owners of one coupled contract** — the project's log, the shared checker plus its regression
+coverage plus the canonical producer command, and the workspace-root mirror of that command — on the
+ground that repairing the log without repairing the detector leaves every other repository blind.
+That widening was correct and Claude would not have proposed it.
+
+It also pre-empted the trap in advance, as it had in unit 1: the brief *required* negative controls
+(undated sub-decisions, fenced examples, prose mentions) before any detector existed. The obvious
+wrong implementation — flag every bold decision paragraph — would have passed a naive test and
+flagged dozens of well-formed entries. Condition 1 doing real work, twice over.
+
+### What Claude did
+
+All six premises checked by inspection and held; no hand-back. Regression fixture written **before**
+the checker changed and run against it: 3 failures. Implemented, 65/65 green, `bash -n` clean.
+Four entries normalized by pure insertion — 8 lines added, 0 removed, no decision body altered.
+
+**The unit found a fifth entry the brief did not name**, and Claude did not normalize it. The brief
+had anticipated exactly this ("report it before changing it; do not expand normalization unless its
+boundary is provable"). Claude's evidence was a dated-vs-undated convention read off the file — real,
+consistent across all 12 dated paragraphs, but a pattern inferred rather than a rule the journal
+states. Against a governance record that was judged too weak, and it was handed back as an open
+question rather than resolved unilaterally.
+
+### The correction round — condition 4, exercised for real
+
+**Codex did not accept Claude's reasoning and did not overrule it by assertion. It went and found
+better evidence.** `logs/session-notes.md` lists the Stage 6 review-correction acceptance and the
+no-push standing instruction as **two separate bullets** under `**Operator decisions:**` — a record
+stating they are distinct decisions, not a pattern suggesting it. On that basis it froze **one**
+finding, with an explicit closure check attached, and named what must not be touched.
+
+Claude reproduced the finding by inspection first — including verifying Codex's own citation against
+the file rather than trusting the hand-back — applied only the frozen finding, and closed on that
+one round. **No second correction, no new deferral.** Codex then re-ran the shared suite, all 11
+manifests and a disposable ref generation itself before closing.
+
+This is the condition unit 1 could not exercise, closed here on real work without anything being
+manufactured to make the machinery fire.
+
+### Friction points
+
+#### FP-6 — the hand-back asks for a commit reference before the commit exists
+
+**Class: TRIGGER.** Caught before it shipped; recorded because the hazard is in the loop's ordering,
+not in one session's carelessness.
+
+Step 5 has Claude write the result and evidence into the state file **and then** commit. A natural
+hand-back therefore wants to cite the commit that carries it — which does not exist yet. Claude
+wrote a plausible-looking hash (`1f8a0e1`) into the `Next action` line, noticed before committing,
+and replaced it with a reference to HEAD. Had it shipped, Codex would have received a fabricated
+citation inside the one artifact the loop treats as current truth, in a field it is supposed to act
+on.
+
+The state file *can* name the commit that carries it only if the reference is written as a
+description ("the HEAD commit of this repository") rather than a value. Nothing in the core or the
+command says so.
+
+*Reopening trigger: a fabricated or wrong commit reference actually reaching Codex, or a second
+occurrence of the same reach for a not-yet-existing value.*
+
+#### Not friction points, recorded so they are not mistaken for them
+
+- **`check-append-order.sh` interaction.** Inserting dated headers at interior positions is exactly
+  the case that script names in its own KNOWN LIMIT, and it would have flagged this legitimate
+  repair as a prepend. It did not fire — the guard is **not wired in that project at all**
+  (`.git/hooks/` holds only samples, `core.hooksPath` unset). Both facts are real and both are about
+  that guard, not about the Work Loop. Codex accepted them as limitations of the unit.
+- **The `axcion-design-studio` install finding** surfaced while answering an operator question during
+  this unit, and belongs to FP-3 above, not here.
+
+### Verdicts
+
+| # | Condition | Verdict |
+|---|---|---|
+| 1 | Useful context preparation | **Yes, and materially.** Codex widened a one-repo objective to the three real owners of the contract, and required negative controls before a detector existed. |
+| 2 | Alignment with the approved project plan | **Yes.** Every exclusion held — no decision body, no archive, no historical manifest, no slug/ref contract, and the wrap stayed non-blocking. |
+| 3 | State recovery | `n/a` — single session again. **The mid-task handoff is now the only pilot condition never exercised.** |
+| 4 | One bounded correction | **Yes — exercised on real work.** One finding frozen, one round, closed. Codex proved the boundary Claude could not, from a record rather than an opinion. |
+| 5 | The Direct Work bypass | `n/a` — admitted to the loop. |
+| 6 | Operator intervention | **Not needed.** The operator selected the unit and asked an unrelated question mid-flight; nothing inside the unit required them. Recorded as an honest `not needed`, not as a pass. |
+| 7 | Clean fresh-session continuation | `n/a` — one session throughout. |
+
+### Closure
+
+Codex closed without a second round. **It re-executed rather than reading Claude's account:** the
+shared 65-assertion suite, the checker against all 11 project manifests (every invocation exit 0; 10
+refs resolving, 0 orphans, 0 headerless findings), and its own disposable ref generated through the
+unchanged shared generator, resolving 1/1 against 38 indexed headers. Three independent re-runs of
+work it did not write — the same pattern as unit 1.
+
+**Two accepted limitations, both Claude's flagged deferrals, decided rather than dropped:** the scan
+does not run when no manifest exists (the absent-manifest early exit is an established legitimate
+advisory path, and moving it was outside the bounded defect); and the append-order guard stays
+unwired and undesigned for this case, as separate infrastructure work.
 
 ---
 
