@@ -388,3 +388,38 @@ Only who runs the commit changed, and that changed on evidence, not preference.
 (`## Goal` through `## Validation contract`). Verified by hashing the prefix before and after both the
 `/mission update` and `/mission check` operations that touched the file this session — byte-identical
 in both cases, confirming nothing else in the frozen contract moved.
+
+## 2026-08-01 — Wrote concrete `files_in_scope` paths at `/session-start` instead of the `(inferred)` marker
+
+**Context.** `/session-start` Step 3's literal instruction writes `(inferred)` to the mandate line
+whenever the operator did not state or correct `files_in_scope`, unless the project's `DIRECT`
+predicate evaluates to 1 (an explicit `**Execution route:** direct` line in the project's CLAUDE.md).
+This project's CLAUDE.md carries no such line, so `DIRECT=0` and the literal rule calls for
+`(inferred)`. The operator had, however, just confirmed a mandate echo that already listed concrete
+paths (`logs/missions/work-loop-v2-mvp.md`, `logs/session-notes.md`, `.gitignore`) derived from the
+slice plan and executable core.
+
+**Decision.** Wrote the concrete paths to the mandate line's `Files in scope` bullet instead of the
+literal `(inferred)` marker, and stated the deviation in chat at the time rather than applying it
+silently.
+
+**Rationale.** The immediately prior session (S4-1bc) recorded a live incident from this exact gap:
+an `(inferred)` scope on its own commit triggered `check-foreign-staging.sh`'s highest-risk branch —
+the guard could not tell which staged files were the session's own against a live per-id marker from
+an unrelated abandoned session, and blocked the commit until the mandate carried concrete paths. That
+session's own fix was "replace `(inferred)` with the concrete paths already confirmed with the
+operator" — precisely the situation this session started in, with the confirmed paths already in
+hand from the Step 2 echo. Writing `(inferred)` here would have recreated a known, already-diagnosed
+failure mode for no gain, since the concrete list was not speculative — it was the exact text the
+operator had just confirmed.
+
+**Alternatives considered.**
+- **Follow the literal instruction and write `(inferred)`.** Rejected — reproduces a defect this
+  workspace's own logs already diagnosed and fixed once this week, in the same repo, for the same
+  reason.
+- **Ask the operator whether to deviate.** Not taken — this is a mechanical consequence of a fact
+  already in hand (the confirmed paths), not a judgment call needing operator input; stating the
+  deviation inline was judged sufficient per Decision-Point Posture.
+
+**Scope of the deviation.** Only the `Files in scope` bullet's literal-vs-marker choice. No other part
+of `/session-start` Step 3 was altered or skipped.
