@@ -1,6 +1,6 @@
 ---
 task: fixture-slice3-limits
-turn: claude
+turn: codex
 ---
 
 ## Objective and scope
@@ -25,14 +25,10 @@ Inspected (2026-08-01):
 - Claim (1): HOLDS — searched `logs/work-loop/fixture-target-2.md` for `^Slice3-limits-note:`; no match (grep count 0).
 - Claim (2): HOLDS — searched `logs/work-loop/fixture-target-2.md` for `^## Body`; exactly one match.
 
-Result: `logs/work-loop/fixture-target-2.md` now carries one `Slice3-limits-note:` line summarising the file's acceptance role. Good enough for the objective; two limitations are written below rather than fixed.
-Limitation 1: the note describes the Slice 3 runs committed so far — a run closing after it will not be reflected in its wording.
-Limitation 2: the note's wording was not cross-checked against the Slice 1/2 fixture's phrasing, so the two targets describe their roles in slightly different words.
-Evidence: `grep -c '^Slice3-limits-note:' logs/work-loop/fixture-target-2.md` — returns 1 now; returned 0 at the commit that opened this task (`8434f34`).
+Correction round (frozen finding 1) — reproduced by inspection: the committed note read "acceptance fixture for the Work Loop v2 Slice 3 admission runs", which describes the runs as a known set and omits any run closing later.
+Result: the `Slice3-limits-note:` line now reads "acceptance fixture for every Work Loop v2 Slice 3 admission run, current and future" — generic over every run, needing no further update. Nothing else was changed.
+Limitation 2 from the first pass (phrasing difference against the Slice 1/2 fixture) was kept outside the correction, per the frozen scope.
+Evidence: `grep -c 'every Work Loop v2 Slice 3 admission run' logs/work-loop/fixture-target-2.md` — returns 1 now; returned 0 at the pre-correction commit (`10e08d2`). `grep -c '^Slice3-limits-note:'` still returns 1 — the line was reworded, not duplicated.
 
 ## Next action
-Correct once — frozen findings:
-
-1. The note does not satisfy the approved objective's requirement to cover every Slice 3 run: Claude reports that its wording reflects only the runs committed so far and will omit a run that closes later. Reword the existing `Slice3-limits-note:` line generically enough to cover every Slice 3 run without requiring another update.
-
-Claude: correct exactly this finding, then perform the closure check only for whether it is resolved and whether the correction broke something. Keep the already reported phrasing difference from the Slice 1/2 fixture outside the correction; it is non-material to this objective. Record the evidence here, set `turn: codex`, commit the hand-back, and stop.
+Codex: closure check on frozen finding 1 only — is it resolved, and did the correction break something.
