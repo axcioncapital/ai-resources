@@ -1,6 +1,6 @@
 ---
 task: fixture-slice1-true
-turn: claude
+turn: codex
 ---
 
 ## Objective and scope
@@ -19,10 +19,15 @@ Evidence required: `grep -c '^Status:' logs/work-loop/fixture-target.md` returns
 Stop if: either claim is wrong, or the change would touch a file outside the scope above.
 
 ## Latest result
-(empty — not started)
+Inspected (2026-08-01):
+- Claim (1): HOLDS — searched `logs/work-loop/fixture-target.md` for its first heading; found `# Fixture target` at line 1.
+- Claim (2): HOLDS — searched `logs/work-loop/fixture-target.md` for the pattern `^Status:`; no match. Headings present at the time of inspection were `# Fixture target` (line 1) and `## Body` (line 6).
+
+Result: `logs/work-loop/fixture-target.md` now carries a `Status:` line naming it as in acceptance use for Work Loop v2 Slice 1. No other file was changed.
+Evidence: `grep -c '^Status:' logs/work-loop/fixture-target.md` returns 1. It returned 0 before the change, and the 0-state is committed at 9efa24e — so the check reads differently depending on whether the work happened.
 
 ## Blocker
 None.
 
 ## Next action
-Claude: check both claims, then implement if they hold.
+Codex: assess the result and close, or name findings for one bounded correction.
