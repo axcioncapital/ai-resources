@@ -12,7 +12,7 @@ Input: `$ARGUMENTS` — a task id, or empty to use the only state file whose `tu
 
 This command is not a session lifecycle command. It does not invoke `/prime`, `/session-start` or `/session-plan`.
 
-**Scope of this version — Slice 1 Claude side, plus Slice 2 continuity.** Behaviours 1.2, 1.3, the fresh-session pickup (2.1) and file-identity rejection (2.2). Not yet built, and not to be improvised here: the bounded single correction exercised end to end (2.3, 2.4), and the admission test that decides Direct Work versus the loop (Slice 3). If the work in front of you needs one of those, say so and stop — do not invent it.
+**Scope of this version — Slices 1 and 2, Claude side.** Behaviours 1.2, 1.3, the fresh-session pickup (2.1), file-identity rejection (2.2), and Claude's half of the bounded correction (2.3, 2.4 — the Correction rounds section below). Not yet built, and not to be improvised here: the admission test that decides Direct Work versus the loop, de-escalation, and mid-unit scope discipline (all Slice 3). If the work in front of you needs one of those, say so and stop — do not invent it.
 
 ---
 
