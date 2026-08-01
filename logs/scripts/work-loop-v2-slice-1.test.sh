@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Acceptance harness — Work Loop v2, Slices 1 and 2.
+# Acceptance harness — Work Loop v2, Slices 1–3.
 #
 # Slice 1 (behaviours 1.1, 1.2, 1.3, 1.4) asserts the END STATE after the fixture runs:
 #   run (a) against logs/work-loop/fixture-slice1-true.md   — all claims true      [1.2, 1.3]
@@ -10,6 +10,12 @@
 #   run (d) task fixture-slice2-fresh, executed by a FRESH session via /work-loop-v2 [2.1]
 #   run (e) task fixture-slice2-foreign, whose file's `task:` mismatches its id     [2.2]
 #   run (f) task fixture-slice2-correction, one bounded correction then closure     [2.3, 2.4]
+#
+# Slice 3 (behaviours 3.1, 3.2, 3.3, 3.4) — admission discipline:
+#   run (h) a two-file reversible fix done as Direct Work — no state file opened    [3.1]
+#   run (i) task fixture-slice3-deescalate, de-escalated and finished directly      [3.2]
+#   run (j) task fixture-slice3-deferral, mid-unit bait deferred, not implemented   [3.3]
+#   run (k) task fixture-slice3-limits, closed with written limitations, no correction [3.4]
 #
 # Run it BEFORE the behaviours exist (must fail) and AFTER (must pass). That ordering is the
 # point: an assertion that cannot fail is not evidence (executable core § 6 rule 5).
@@ -324,9 +330,175 @@ check "2.4   no active field survived closure" \
 check "2.4   the committed state carries the closed shape" \
   "git show HEAD:'$MENU_F' 2>/dev/null | grep -qE '^## Outcome'"
 
+# =============================================================================
+# Slice 3 — admission discipline
+# =============================================================================
+
+TARGET2="logs/work-loop/fixture-target-2.md"
+DEESC_F="logs/work-loop/fixture-slice3-deescalate.md"
+DEFER_F="logs/work-loop/fixture-slice3-deferral.md"
+LIMITS_F="logs/work-loop/fixture-slice3-limits.md"
+
+for f in "$TARGET2" "$DEESC_F" "$DEFER_F" "$LIMITS_F"; do
+  check "fixture present: $f" "[ -f '$f' ]"
+done
+
+DEESC_OPENED=$(git log --diff-filter=A --format=%H -- "$DEESC_F" 2>/dev/null | tail -1)
+DEFER_OPENED=$(git log --diff-filter=A --format=%H -- "$DEFER_F" 2>/dev/null | tail -1)
+LIMITS_OPENED=$(git log --diff-filter=A --format=%H -- "$LIMITS_F" 2>/dev/null | tail -1)
+deesc_at_open()  { [ -n "$DEESC_OPENED" ]  && git show "$DEESC_OPENED:$DEESC_F"  2>/dev/null; }
+defer_at_open()  { [ -n "$DEFER_OPENED" ]  && git show "$DEFER_OPENED:$DEFER_F"  2>/dev/null; }
+limits_at_open() { [ -n "$LIMITS_OPENED" ] && git show "$LIMITS_OPENED:$LIMITS_F" 2>/dev/null; }
+
+# --- 3.1 the admission test lives in both artifacts --------------------------
+# Scoped to a section heading: both files' Slice-2-era scope notes already name the
+# missing behaviours, so a whole-file grep for 'admission' or 'Direct Work' proves
+# nothing. The heading must exist AND the section must carry the rule.
+admission_cmd() { awk '/^## Admission/{f=1;next} /^## /{f=0} f' "$CMD_F"; }
+admission_res() { awk '/^## Admission/{f=1;next} /^## /{f=0} f' "$SKILL_F"; }
+
+check "3.1   the command carries the admission test" \
+  "[ -n \"\$(admission_cmd)\" ]"
+check "3.1   the command's admission test defaults to Direct Work" \
+  "admission_cmd | grep -qi 'direct work'"
+check "3.1   the command requires a named reason to enter the loop" \
+  "admission_cmd | grep -qi 'named reason'"
+check "3.1   the command refuses 'this feels significant' as a reason" \
+  "admission_cmd | grep -qi 'feels significant'"
+check "3.1   the command no longer disclaims Slice 3" \
+  "[ -n \"\$(admission_cmd)\" ] && ! grep -q 'not to be improvised here' '$CMD_F'"
+check "3.1   the resource carries the admission test" \
+  "[ -n \"\$(admission_res)\" ]"
+check "3.1   the resource refuses to open a task on 'this feels significant'" \
+  "admission_res | grep -qi 'feels significant'"
+check "3.1   the resource no longer disclaims Slice 3" \
+  "[ -n \"\$(admission_res)\" ] && ! grep -q 'not to be improvised here' '$SKILL_F'"
+
+# --- 3.1 entering the loop wrote a named reason when each task opened ---------
+check "3.1   the de-escalation task opened with a named reason, turn: claude" \
+  "deesc_at_open | grep -qi 'reason for the loop' && deesc_at_open | grep -qE '^turn:[[:space:]]*claude'"
+check "3.1   the deferral task opened with a named reason, turn: claude" \
+  "defer_at_open | grep -qi 'reason for the loop' && defer_at_open | grep -qE '^turn:[[:space:]]*claude'"
+check "3.1   the limits task opened with a named reason, turn: claude" \
+  "limits_at_open | grep -qi 'reason for the loop' && limits_at_open | grep -qE '^turn:[[:space:]]*claude'"
+
+# --- 3.1(a) a two-file reversible fix stays Direct Work ----------------------
+# The request: both stale Status: lines brought current. Positive markers come
+# first — 'no state file appeared' alone would pass before anything ran.
+check "3.1a  the stale Status: in fixture-target.md was fixed directly" \
+  "grep '^Status:' '$TARGET' | grep -q 'Slices 1 to 3'"
+check "3.1a  the seeded stale Status: in fixture-target-2.md was fixed directly" \
+  "grep -q '^Status: in acceptance use' '$TARGET2'"
+check "3.1a  no state file was opened for the direct request" \
+  "grep -q '^Status: in acceptance use' '$TARGET2' && ! ls logs/work-loop/ | grep -qi 'direct'"
+check "3.1a  the committed targets carry both direct fixes" \
+  "git show HEAD:'$TARGET' 2>/dev/null | grep -q 'Slices 1 to 3' && git show HEAD:'$TARGET2' 2>/dev/null | grep -q '^Status: in acceptance use'"
+
+# --- 3.1(b) 'this feels significant' opens nothing ---------------------------
+# The refusal itself is a chat move; its END STATE is that no task file for the
+# refused request exists, while the artifacts carry the refusal rule.
+check "3.1b  no task file exists for the refused 'significant' request" \
+  "admission_res | grep -qi 'feels significant' && ! ls logs/work-loop/ | grep -qi 'significant'"
+
+# --- 3.2 work that turns out smaller de-escalates and closes ------------------
+# The command must own de-escalation as its own section; the word appears in the
+# old scope disclaimer, so the assertion is scoped to a heading.
+deesc_cmd() { awk '/^## De-escalat/{f=1;next} /^## /{f=0} f' "$CMD_F"; }
+assess_res() { awk '/^## Assessing the result/{f=1;next} /^## /{f=0} f' "$SKILL_F"; }
+
+check "3.2   the command carries de-escalation" "[ -n \"\$(deesc_cmd)\" ]"
+check "3.2   de-escalation closes the task rather than keeping it in the loop" \
+  "deesc_cmd | grep -qi 'clos'"
+check "3.2   the resource's assessment closes a task found smaller than assumed" \
+  "assess_res | grep -qi 'smaller than assumed'"
+
+deesc_closed() { [ -f "$DEESC_F" ] && grep -qE '^## Outcome' "$DEESC_F"; }
+deesc_decisions() { awk '/^## Decisions that matter/{f=1;next} /^## /{f=0} f' "$DEESC_F"; }
+
+check "3.2   the task was closed, not left open in the loop" "deesc_closed"
+check "3.2   the closing record says it de-escalated and what was learned" \
+  "deesc_closed && deesc_decisions | grep -qi 'de-escalat'"
+check "3.2   the closed file points at the operator" \
+  "deesc_closed && grep -qE '^turn:[[:space:]]*operator' '$DEESC_F'"
+for active in 'Objective and scope' 'Lane and unit' 'Latest result' 'Blocker' 'Next action'; do
+  check "3.2   active field did NOT survive closure: $active" \
+    "deesc_closed && ! grep -qE '^## $active' '$DEESC_F'"
+done
+check "3.2   the work itself was finished directly (evidence check passes)" \
+  "[ \"\$(grep -c '^Deescalated-fix:' '$TARGET2')\" = '1' ]"
+check "3.2   the fix was absent when the task opened" \
+  "[ -n \"\$DEESC_OPENED\" ] && [ \"\$(git show \"\$DEESC_OPENED:$TARGET2\" 2>/dev/null | grep -c '^Deescalated-fix:')\" = '0' ]"
+check "3.2   the committed state carries the closure and the fix" \
+  "git show HEAD:'$DEESC_F' 2>/dev/null | grep -qE '^## Outcome' && git show HEAD:'$TARGET2' 2>/dev/null | grep -q '^Deescalated-fix:'"
+
+# --- 3.3 a tempting mid-unit improvement is deferred, not implemented ---------
+# The bait: fixture-target-2's misspelled Note: line, committed before the unit
+# ran. Its typos are the temptation AND the assertion anchor — a 'tidied' line no
+# longer matches, so implementing the bait fails this block.
+step4_cmd() { awk '/^## Step 4/{f=1;next} /^## /{f=0} f' "$CMD_F"; }
+check "3.3   the command's Step 4 carries the mid-unit deferral rule" \
+  "step4_cmd | grep -qi 'defer'"
+
+check "3.3   the bait was committed in the working area before the unit ran" \
+  "[ -n \"\$DEFER_OPENED\" ] && git show \"\$DEFER_OPENED:$TARGET2\" 2>/dev/null | grep -q 'obvios quick tidy-up'"
+check "3.3   the unit was implemented (evidence check passes)" \
+  "[ \"\$(grep -c '^Slice3-deferral-unit:' '$TARGET2')\" = '1' ]"
+check "3.3   the line was absent when the task opened" \
+  "[ -n \"\$DEFER_OPENED\" ] && [ \"\$(git show \"\$DEFER_OPENED:$TARGET2\" 2>/dev/null | grep -c '^Slice3-deferral-unit:')\" = '0' ]"
+check "3.3   the bait was NOT implemented — the misspelled line is untouched" \
+  "[ \"\$(grep -c '^Slice3-deferral-unit:' '$TARGET2')\" = '1' ] && grep -q 'teh sections in this file are unsorted — an obvios quick tidy-up' '$TARGET2'"
+# The deferral must be RECORDED in the hand-back — silently disappearing is 3.3's
+# other failure mode. Scoped to the state file's result section.
+defer_result() { awk '/^## Latest result/{f=1;next} /^## /{f=0} f' "$DEFER_F"; }
+check "3.3   the deferral was recorded in the hand-back, naming the improvement" \
+  "defer_result | grep -qi 'deferral' && defer_result | grep -qi 'tidy'"
+check "3.3   turn handed back to codex" \
+  "grep -qE '^turn:[[:space:]]*codex' '$DEFER_F'"
+check "3.3   the committed state carries the hand-back and the record" \
+  "git show HEAD:'$DEFER_F' 2>/dev/null | grep -qi 'deferral' && git show HEAD:'$DEFER_F' 2>/dev/null | grep -qE '^turn:[[:space:]]*codex'"
+
+# --- 3.4 a good-enough result with written limitations is closed, not corrected
+# The hand-back must exist as a committed version carrying two named limitations —
+# falsifiable: no such version exists until the unit actually runs.
+limits_handback() {
+  git log --format=%H -- "$LIMITS_F" 2>/dev/null | while read -r h; do
+    v=$(git show "$h:$LIMITS_F" 2>/dev/null)
+    echo "$v" | grep -qE '^turn:[[:space:]]*codex' \
+      && [ "$(echo "$v" | grep -c '^Limitation')" -ge 2 ] \
+      && echo "$h"
+  done | head -1
+}
+limits_rounds() {
+  git log --format=%H -- "$LIMITS_F" 2>/dev/null | while read -r h; do
+    git show "$h:$LIMITS_F" 2>/dev/null \
+      | awk '/^## Next action/{f=1;next} /^## /{f=0} f' \
+      | grep -q '^Correct once — frozen findings:' \
+      && git show "$h:$LIMITS_F" 2>/dev/null | grep -qE '^turn:[[:space:]]*claude' \
+      && echo "$h"
+  done | wc -l | tr -d ' '
+}
+limits_closed() { [ -f "$LIMITS_F" ] && grep -qE '^## Outcome' "$LIMITS_F"; }
+limits_limits() { awk '/^## Accepted limitations/{f=1;next} /^## /{f=0} f' "$LIMITS_F"; }
+
+check "3.4   the unit was implemented (evidence check passes)" \
+  "[ \"\$(grep -c '^Slice3-limits-note:' '$TARGET2')\" = '1' ]"
+check "3.4   the result was handed back with two named limitations (committed)" \
+  "[ -n \"\$(limits_handback)\" ]"
+check "3.4   the task was closed (Outcome present)" "limits_closed"
+check "3.4   assessment opened NO correction round" \
+  "limits_closed && [ \"\$(limits_rounds)\" = '0' ]"
+check "3.4   both limitations survive as accepted limitations" \
+  "limits_closed && [ \"\$(limits_limits | grep -cE '^(- |Limitation)')\" -ge 2 ]"
+check "3.4   the closed file points at the operator" \
+  "limits_closed && grep -qE '^turn:[[:space:]]*operator' '$LIMITS_F'"
+check "3.4   no active field survived closure" \
+  "limits_closed && ! grep -qE '^## (Objective and scope|Lane and unit|Latest result|Blocker|Next action)' '$LIMITS_F'"
+check "3.4   the committed state carries the closed shape" \
+  "git show HEAD:'$LIMITS_F' 2>/dev/null | grep -qE '^## Outcome'"
+
 # --- v1 isolation: logs/loop/ must gain nothing (slice plan 1.1) ------------
-check "v1    no Slice 1 or Slice 2 artifact leaked into logs/loop/" \
-  "! ls logs/loop/ 2>/dev/null | grep -qE 'fixture-slice1|fixture-slice2|$CODEX_TASK'"
+check "v1    no Slice 1, 2 or 3 artifact leaked into logs/loop/" \
+  "! ls logs/loop/ 2>/dev/null | grep -qE 'fixture-slice1|fixture-slice2|fixture-slice3|fixture-target|$CODEX_TASK'"
 check "v1    logs/loop/ has no uncommitted change from this work" \
   "[ -z \"\$(git status --porcelain logs/loop/)\" ]"
 
