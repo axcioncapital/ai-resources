@@ -113,8 +113,16 @@ correction, not a way back into it.
 
 ## 4. The task-state file
 
-**One task, one file.** It is the only interface between Codex, Claude and the operator. Its
-physical shape may change later if real use justifies it. Its role as the single interface does not.
+**One task, one file.** It is the only interface **between Codex and Claude** — they never speak to
+each other, so anything one needs the other to know is in the file or it is lost. Its physical shape
+may change later if real use justifies it. Its role as the single interface does not.
+
+**The operator is not behind that interface.** They talk to both models directly, and they carry the
+turn between them. This matters most at the very start: a new request reaches Codex by the operator
+telling it, before any file exists. Requiring the file first would be circular — the file is created
+*by* admitting the request, so it cannot also be the way the request arrives.
+
+**A request that is refused admission opens no file** (§ 2). Direct Work leaves no state behind.
 
 **Where it lives:** `logs/work-loop/{task-id}.md`. Not `logs/loop/` — Work Loop v1 is still live and
 scans that folder for its own files.

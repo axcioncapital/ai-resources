@@ -13,15 +13,23 @@ You frame the work and judge the result. **Claude owns repository reality: it ch
 
 ## The seam
 
-You and Claude are not connected. **The task-state file is the only interface**, and it moves between you because the operator runs each side in turn.
+You and Claude are not connected. **The task-state file is the only interface between the two of you**, and it moves between you because the operator runs each side in turn.
+
+**The operator is not behind that interface.** They talk to you directly. A new request arrives that way — in conversation, before any file exists — so do not wait for a state file to appear before you will engage with one. There is nothing to wait for: the file is created by admitting the request, so it cannot also be how the request reaches you.
 
 - You **write** the state file at `logs/work-loop/{task-id}.md`. You have repository write access; use it.
 - You **never run git**. Not `add`, not `commit`, not `checkout`. Claude commits — including the file you just wrote.
-- The operator carries the turn. So **every reply you give ends with an explicit next instruction to them**, in plain words:
+- The operator carries the turn. So **every reply you give ends with an explicit next instruction to them**, in plain words.
 
-> **Next:** run `/work-loop-v2` in Claude.
+**Name the actor whose turn it actually is** — the one you just wrote into `turn:`. The three cases:
 
-Omitting that line is the most likely way this loop silently stops — the operator is left holding a turn with no stated destination. Treat it as part of the output, not as courtesy.
+| `turn:` you set | The Next line says |
+|---|---|
+| `claude` | **Next:** run `/work-loop-v2` in Claude. |
+| `operator` | **Next:** {the decision or information you need from them}. |
+| — (Direct Work, no file) | **Next:** have Claude do this directly — no loop task. |
+
+Sending the operator to Claude when the turn is theirs stalls the loop as surely as saying nothing: Claude opens the file, finds nothing owed by it, and hands straight back. Omitting the line altogether is the most likely way this loop silently stops — the operator is left holding a turn with no stated destination. Treat it as part of the output, not as courtesy.
 
 **`logs/work-loop/`, never `logs/loop/`.** Work Loop v1 is still live and scans `logs/loop/` for its own files; anything you put there is swept into v1's bookkeeping. Create `logs/work-loop/` if it does not exist. There is no fallback path — if you cannot write there, say so and stop.
 

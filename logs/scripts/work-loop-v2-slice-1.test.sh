@@ -393,8 +393,33 @@ check "3.1a  the stale Status: in fixture-target.md was fixed directly" \
   "grep '^Status:' '$TARGET' | grep -q 'Slices 1 to 3'"
 check "3.1a  the seeded stale Status: in fixture-target-2.md was fixed directly" \
   "grep -q '^Status: in acceptance use' '$TARGET2'"
+# Finding B, Step 6 review: the old predicate was
+#   ! ls logs/work-loop/ | grep -qi 'direct'
+# which only checks that no FILENAME contains the word 'direct'. An arbitrary state
+# file passes it. Proven by creating logs/work-loop/arbitrary-state.md and watching
+# all 142 assertions stay green. The real question is whether ANY state file exists
+# that this build did not deliberately create, so the test is now a closed set.
+# Adding a fixture means adding it here — that friction is the point.
+KNOWN_WORKLOOP_FILES="fixture-slice1-codex.md fixture-slice1-false.md fixture-slice1-true.md \
+fixture-slice2-correction.md fixture-slice2-foreign.md fixture-slice2-fresh.md \
+fixture-slice2-menu.md fixture-slice3-close.md fixture-slice3-deescalate.md \
+fixture-slice3-deferral.md fixture-slice3-limits.md fixture-step6-admission.md \
+fixture-target-2.md fixture-target.md"
+
+unexpected_worklog_files() {
+  local f
+  for f in $(ls logs/work-loop/ 2>/dev/null); do
+    case " $KNOWN_WORKLOOP_FILES " in
+      *" $f "*) ;;
+      *) echo "$f" ;;
+    esac
+  done
+}
+
 check "3.1a  no state file was opened for the direct request" \
-  "grep -q '^Status: in acceptance use' '$TARGET2' && ! ls logs/work-loop/ | grep -qi 'direct'"
+  "grep -q '^Status: in acceptance use' '$TARGET2' && [ -z \"\$(unexpected_worklog_files)\" ]"
+check "3.1a  every task-state file present is one this build created deliberately" \
+  "[ -z \"\$(unexpected_worklog_files)\" ]"
 check "3.1a  the committed targets carry both direct fixes" \
   "git show HEAD:'$TARGET' 2>/dev/null | grep -q 'Slices 1 to 3' && git show HEAD:'$TARGET2' 2>/dev/null | grep -q '^Status: in acceptance use'"
 
