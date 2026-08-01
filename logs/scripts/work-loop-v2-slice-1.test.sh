@@ -184,6 +184,37 @@ check "2.1   the committed target carries the implementation" \
 check "2.1   the committed state carries the hand-back" \
   "git show HEAD:'$FRESH_F' 2>/dev/null | grep -qE '^turn:[[:space:]]*codex'"
 
+# --- 2.2 a stale or foreign state file is rejected read-only -----------------
+# The failing case: a file whose `task:` does not match the task id being run.
+# Pass: reported, nothing mutated. Fail: any write happens before the rejection —
+# in the red world the pre-identity-check command writes its inspection record into
+# the foreign file before any rejection could occur, and these assertions catch it.
+FOREIGN_F="logs/work-loop/fixture-slice2-foreign.md"
+CMD_F=".claude/commands/work-loop-v2.md"
+
+check "2.2   fixture present: $FOREIGN_F" "[ -f '$FOREIGN_F' ]"
+check "2.2   the fixture is genuinely foreign — its task: mismatches its filename" \
+  "grep -qE '^task:[[:space:]]*fixture-slice2-other' '$FOREIGN_F'"
+# The command must declare the identity check inside Step 1 — read-only validation
+# before anything is changed (core § 6 rule 2). Scoped to the Step 1 section: a
+# whole-file grep would match the scope note that merely PROMISES the behaviour.
+step1_of() { awk '/^## Step 1/{f=1;next} /^## Step [0-9]/{f=0} f' "$CMD_F"; }
+check "2.2   the command validates file identity in Step 1" \
+  "step1_of | grep -qi 'belongs to a different task'"
+# END STATE of the rejection run: reported, nothing mutated.
+check "2.2   the foreign file gained no inspection record" \
+  "! grep -qi 'inspected' '$FOREIGN_F'"
+check "2.2   the foreign file's turn was not flipped" \
+  "grep -qE '^turn:[[:space:]]*claude' '$FOREIGN_F'"
+check "2.2   the foreign file's blocker still reads None" \
+  "blocker_of '$FOREIGN_F' | grep -q '^None\.\$'"
+check "2.2   the foreign file is byte-identical to its committed state" \
+  "git diff --quiet -- '$FOREIGN_F'"
+check "2.2   no mutated version of the foreign file was committed" \
+  "! git show HEAD:'$FOREIGN_F' 2>/dev/null | grep -qi 'inspected'"
+check "2.2   the foreign unit never ran — the target gained no Ownership-note:" \
+  "! grep -q '^Ownership-note:' '$TARGET'"
+
 # --- v1 isolation: logs/loop/ must gain nothing (slice plan 1.1) ------------
 check "v1    no Slice 1 or Slice 2 artifact leaked into logs/loop/" \
   "! ls logs/loop/ 2>/dev/null | grep -qE 'fixture-slice1|fixture-slice2|$CODEX_TASK'"
