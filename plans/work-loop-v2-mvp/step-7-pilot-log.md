@@ -36,13 +36,13 @@ The seven conditions from Proposal `:98`. Each unit records a verdict against ev
 
 | # | Condition | Unit 1 | Unit 2 | Unit 3 |
 |---|---|---|---|---|
-| 1 | Useful context preparation | — | — | — |
-| 2 | Alignment with the approved project plan | — | — | — |
-| 3 | State recovery | — | — | — |
-| 4 | One bounded correction | — | — | — |
-| 5 | The Direct Work bypass | — | — | — |
-| 6 | Operator intervention | — | — | — |
-| 7 | Clean fresh-session continuation | — | — | — |
+| 1 | Useful context preparation | yes | — | — |
+| 2 | Alignment with the approved project plan | yes | — | — |
+| 3 | State recovery | n/a | — | — |
+| 4 | One bounded correction | pending | — | — |
+| 5 | The Direct Work bypass | n/a | — | — |
+| 6 | Operator intervention | yes ×2 | — | — |
+| 7 | Clean fresh-session continuation | partly | — | — |
 
 **At least one Standard-lane unit must need a session handoff mid-task** (Proposal `:96`). That unit
 is what exercises rows 3 and 7 for real. It cannot be done inside a single session — it requires a
@@ -56,12 +56,12 @@ pre-emptively fix.
 
 | # | Limitation | Reopening trigger | Observed? |
 |---|---|---|---|
-| 1 | Folder creation from a genuinely absent `logs/work-loop/` is untested | A fresh checkout | — |
-| 2 | Most opening briefs were hand-written fixtures | Codex opening a real unit retires this | — |
-| 3 | Slice 2's menu task's first pass and assessment block are fixture material | — | — |
-| 4 | The writing standard's internal tension is unresolved | Pilot use shows the boundary is unclear or causes drift | — |
-| 5 | Core § 6 rule 2 contradicts core § 7 for the file-identity case | A unit where the ambiguity produces a wrong action, or the first core revision | — |
-| 6 | Behavioural evidence is largely historical | The pilot is the real test | — |
+| 1 | Folder creation from a genuinely absent `logs/work-loop/` is untested | A fresh checkout | **RETIRED, unit 1.** Codex created `projects/axcion-systems-builder/logs/work-loop/` where it genuinely did not exist — verified absent at 19:44 during FP-1, directory mtime 19:49 |
+| 2 | Most opening briefs were hand-written fixtures | Codex opening a real unit retires this | **RETIRED, unit 1.** A genuine Codex opening brief, committed by Claude at `c8b3923` |
+| 3 | Slice 2's menu task's first pass and assessment block are fixture material | — | Not touched — no menu choice arose |
+| 4 | The writing standard's internal tension is unresolved | Pilot use shows the boundary is unclear or causes drift | **Not observed.** No boundary question arose in unit 1 |
+| 5 | Core § 6 rule 2 contradicts core § 7 for the file-identity case | A unit where the ambiguity produces a wrong action, or the first core revision | **Not reached.** The file's `task:` matched, so the contradictory branch never ran |
+| 6 | Behavioural evidence is largely historical | The pilot is the real test | **Improving.** Premise-checking, red-before-green and the hand-back all ran live in unit 1 on real work |
 
 One further open item, queued S7-3fc at medium severity: the Codex side currently needs the operator
 to paste a prompt naming the task id, where the resource could resolve the open task itself. Its named
@@ -82,9 +82,9 @@ pickup window is this pilot.
 
 ## Unit 1
 
-**Status:** selected 2026-08-01, **blocked before opening** — see friction point 1.
+**Status:** opened by Codex and executed by Claude 2026-08-01; **with Codex for assessment.**
 
-- **Task id:** *(not yet allocated)*
+- **Task id:** `review-packet-preservation`
 - **Owning project:** `projects/axcion-systems-builder`
 - **The work:** `cases/scripts/build-review-packet.sh` carries two linked defects, both already
   verified and recorded in `cases/axcion-writing-studio/working/phase9-red-team-disposition.md:75-77`:
@@ -96,9 +96,42 @@ pickup window is this pilot.
      reviewed**. A `FROZEN-AFTER-REVIEW.md` marker had to be hand-placed inside the packet directory
      because the script's own output points the wrong way.
 - **Selected by:** operator, 2026-08-01.
-- **Lane:** not yet classified — that is Codex's call at admission, not Claude's.
-- **State file:** not yet opened.
-- **Opened by:** intended to be Codex, for real *(which would retire limitation 2)*.
+- **Lane:** **Standard**, classified by Codex at admission. Its named reason, in its own words:
+  *"this changes the safety contract of a destructive cross-case evidence tool, so the lifecycle
+  boundary must be bounded and the result independently assessed against failure-capable evidence
+  before it counts as done."*
+- **State file:** `projects/axcion-systems-builder/logs/work-loop/review-packet-preservation.md`.
+- **Opened by:** **Codex, for real** — a genuine opening brief, not a fixture. **Retires limitation 2.**
+- **Committed by:** Claude (`c8b3923`), operator transported nothing by hand — acceptance assertion 1
+  exercised outside a test fixture for the first time.
+
+### What Codex did with the objective
+
+The operator described two defects. Codex did **not** brief the two fixes. It read the script and the
+disposition note, then reframed the unit as a **lifecycle safety contract** — a packet must be
+declarable reviewed, and once declared the script must not mutate it — with the two reported defects
+as symptoms. It also fixed the trap in advance: *"Reviewed status must not be guessed from
+staleness,"* which is the reading that would have looked simplest and would have broken the ordinary
+pre-handover rebuild.
+
+That is condition 1 (useful context preparation) and condition 2 (alignment with the plan) doing real
+work rather than being simulated by a fixture.
+
+### What Claude did
+
+All five premises checked by inspection and held; no hand-back. Regression harness written **before**
+the script changed, then run against the pre-change script from `git HEAD`: 13 failures. Implemented,
+29/29 green, `bash -n` clean on both files. Committed at `e08ffee` with the result and evidence in the
+state file, `turn: codex`.
+
+**The most useful thing that happened was in the red run.** The first red run showed 9 failures — and
+five assertions passed *vacuously*, because with no `freeze` action nothing was ever frozen, so they
+could not have failed. Core § 6 rule 5 makes that a defect in the evidence, not a detail: they were
+rewritten before the script was touched (a sentinel file only a real rebuild destroys; the
+write-nothing check moved onto a frozen-but-not-stale packet, where the old `verify` actually reaches
+its manifest append; a message assertion instead of a bare exit code), taking the red run from 9 to
+13. Two assertions still cannot distinguish pre- from post-change and are labelled regression
+coverage, not defect proof, in the state file.
 
 ### Friction points
 
@@ -203,9 +236,59 @@ resource reachable from a repository it was deliberately kept out of). No indepe
 operator directed the install directly. Recorded as a fact, not smoothed over
 (`docs/qc-independence.md`).
 
+#### FP-4 — a second document about the task went stale against the state file, and misled a fresh session
+
+**Class: TRIGGER.** Not obstructing — the work ran fine once the state file was read.
+
+Observed 2026-08-01, at the start of the session that executed the unit. Codex opened the unit
+between two Claude sessions. The next Claude session oriented from **this pilot log**, which still
+said *"State file: not yet opened"*, and told the operator that Codex had not yet run — including a
+paste-ready prompt asking them to do work that was already done. The operator caught it with one
+question. Reading `logs/work-loop/` would have shown the file immediately.
+
+**This is the exact failure core § 4 legislates against** — *"the state file is current truth, not a
+diary"* — arriving through the side the rule does not cover. The loop's own transport was correct and
+current the whole time. The stale thing was a *second* document about the same task, and the pilot log
+is outside the loop's discipline by construction: it is the pilot's record, not a state file.
+
+**Not proposed as an MVP change.** The presumption is no change, and nothing here obstructed the work.
+It also cannot be fixed by tightening the loop, since the loop was not wrong. What it names is a
+narrow orientation rule: *when a document and a state file disagree about a task, the state file
+wins* — and a session picking up loop work should read the folder before any document about it.
+
+*Reopening trigger: a second occurrence, or any unit where the stale document causes work to be
+redone rather than merely mis-announced.*
+
+#### FP-5 — the one live check against the real packet was declined at the permission prompt
+
+**Class: LIMITATION.** Accepted for pilot quality; recorded in the state file's hand-back.
+
+The unit's evidence runs entirely on `mktemp -d` fixtures, by the brief's own instruction. To also
+show the fix covers the **real** Phase 9 packet — whose `FROZEN-AFTER-REVIEW.md` was hand-placed
+before `freeze` existed — Claude tried to copy the repo skeleton and that packet into a temp tree and
+run `verify` and `build` there, comparing fingerprints. The command was **denied at the permission
+prompt** and was not retried in another form.
+
+So marker compatibility rests on two verified facts rather than an execution: the script tests
+`[ -f "$MARKER" ]` against a fixed filename, and premise 4 confirmed that exact filename is present
+in that packet. The gap is written into the hand-back for Codex to weigh rather than smoothed over.
+
+*This is a limitation of the pilot's evidence, not of the loop.* The loop behaved correctly — the gap
+is disclosed at the point of assessment, which is what should happen.
+
 ### Verdicts
 
-*(none yet — the unit has not run)*
+Against the seven conditions. Rows the unit did not exercise are `n/a`, which is a verdict, not a gap.
+
+| # | Condition | Verdict |
+|---|---|---|
+| 1 | Useful context preparation | **Yes.** Codex reframed two reported defects into the lifecycle contract underneath them, and pre-empted the wrong reading (infer reviewed from stale) before Claude saw the brief. |
+| 2 | Alignment with the approved project plan | **Yes.** The brief's exclusions held the unit off every case artifact and every existing packet; nothing outside them was touched. |
+| 3 | State recovery | `n/a` — single session. The mid-task handoff unit is still owed. |
+| 4 | One bounded correction | **Not yet exercised** — assessment is with Codex. |
+| 5 | The Direct Work bypass | `n/a` — this unit was admitted to the loop. |
+| 6 | Operator intervention | **Yes, twice, and both mattered.** The operator's *"wait did you check what codex did?"* caught FP-4; the denied permission prompt produced FP-5. |
+| 7 | Clean fresh-session continuation | **Partly, and by accident.** The executing session was fresh and continued from the state file and Git alone — but only after FP-4 sent it down a wrong path first. |
 
 ---
 
