@@ -3,388 +3,188 @@ task: foreign-staging-target-repo
 turn: codex
 ---
 
-## Objective and scope
-Make the foreign-staging tripwire judge a gated command against the Git repository that the command will actually affect, while preserving a hard block when that target cannot be resolved safely. The completed task must cover the live canonical hook, permanent executable regression coverage, the maintained-copy decision, the operator-facing contract, and closure of the recorded defect.
+## Objective and approved scope
+Make the foreign-staging tripwire judge a gated command against the Git repository the command will
+actually affect, while preserving a hard block when that target cannot be resolved safely. Complete
+the live canonical hook, permanent executable regression coverage, the maintained-copy disposition,
+the operator-facing contract, and closure of the recorded defect.
 
-Approved task boundary: `.claude/hooks/check-foreign-staging.sh`; a focused executable harness and fixtures under `logs/scripts/`; only the necessary follow-on changes to `docs/commit-discipline.md`, `logs/improvement-log.md`, `.codex/hooks/check-foreign-staging.sh`, and `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-sector-intelligence/.claude/hooks/check-foreign-staging.sh`. The two byte-identical worktree copies may be checked but not edited. Excluded: other hooks, a general shell parser, unrelated cleanup, any soft-warn fallback for an ambiguous command target, and the retired `/risk-check` command.
+Approved boundary: `.claude/hooks/check-foreign-staging.sh`; focused executable coverage under
+`logs/scripts/`; only necessary follow-on changes to `docs/commit-discipline.md`,
+`logs/improvement-log.md`, `.codex/hooks/check-foreign-staging.sh`, and
+`/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-sector-intelligence/.claude/hooks/check-foreign-staging.sh`.
+The two canonical worktree copies may be checked but not edited. Excluded: other hooks, a general
+shell parser, unrelated cleanup, a soft-warn fallback for an ambiguous command target, the retired
+`/risk-check`, and extending `auto-sync-shared.sh` to hooks.
 
-## Lane and unit
-Standard. Named reason for the loop: this is the pilot's designated cross-session handoff task, and the defect spans a globally wired guard, ambiguous shell-command handling, permanent regression evidence, and divergent maintained copies whose disposition must be assessed separately from the implementation.
+## Current lane and unit
+Standard. Named reason for the loop: this pilot task spans a globally wired guard, cross-session
+handoff, fail-capable regression evidence, and divergent copies whose authority differs.
 
-Unit 1 — repair and prove target-repository resolution in the live canonical `.claude/hooks/check-foreign-staging.sh`. Add the focused permanent harness needed to prove it. Do not edit documentation, the defect record, or any other hook copy in this unit.
+Unit 2 — apply the already-authorized maintained-copy dispositions. Park the ignored `.codex` experiment
+unchanged; bring the sector-intelligence project fork up to the accepted canonical behavior while
+preserving exactly its two project-specific exemptions. Do not edit documentation or defect records
+in this unit.
 
 ## Brief
-Why: the guard currently produces both kinds of dangerous error around nested repositories. It can block on dirty paths that the command cannot stage, and it can silently pass while inspecting none of the paths the command is about to stage. An unrecognised subshell form can bypass gating entirely. The required outcome is accurate protection, not merely removal of the false block.
+Why: Unit 1 repaired and proved the live canonical hook, but the task is not complete while a
+project-specific maintained fork remains on the pre-fix behavior. Conversely, synchronizing the
+ignored `.codex` experiment would contradict the operator's existing decision not to maintain it.
 
-Check these premises against repository reality before editing:
+Check these premises before editing:
 
-1. In the 668-line canonical hook, repository and footprint resolution starts from `CLAUDE_PROJECT_DIR` or the hook process cwd, rather than from the repository targeted by the command. Candidate probes then use that resolved repository.
-2. The existing single-leading-`cd` parser scopes candidate path strings inside the already chosen repository; it does not select the nested repository itself. The command-boundary/gating logic recognises `cd <path> && git add .` but does not gate `(cd <path>; git add .)`.
-3. Reproduce the three reported behaviors against the unmodified canonical hook in isolated temporary repositories: simple nested-repo cwd inspects parent-repo paths; root cwd plus `cd nested && git add .` silently inspects no nested changes; the subshell form exits without a protective check. Record actual exit codes and decisive output. Do not run the reproduction against live working-tree state.
-4. No dedicated executable regression harness for `check-foreign-staging.sh` exists under `logs/scripts/` as currently searched; the existing hits there concern other hooks or Work Loop acceptance. Confirm that absence on that named surface before choosing the harness shape.
-5. Confirm that `.claude/hooks/check-foreign-staging.sh` is the live canonical target before changing it. Recheck the reported copy census (668-line canonical, 464-line `.codex` fork, 515-line sector-intelligence copy, plus two worktree copies byte-identical to canonical) for scope safety only; do not modify the other copies in Unit 1.
+1. `ai-resources/.gitignore` still labels `.codex/` an operator experiment and explicitly says it is
+   not maintained; `.codex/hooks.json` still does not register `check-foreign-staging.sh`. If either
+   is false, stop and hand back. If both hold, the disposition is **park unchanged** — do not edit or
+   delete the `.codex` hook.
+2. `projects/axcion-sector-intelligence/logs/decisions.md` Decision 28 still records a follow-up
+   backport of the canonical staging hook and requires preservation of `qc-log.md` and
+   `research-quality-log.md` in `EXEMPT_BASENAMES`. Confirm those two names exist in the project fork
+   and identify any other intentional project-only behavior before replacing anything.
+3. The sector fork remains a regular file materially behind the canonical hook, and no project
+   instruction prohibits the recorded backport. Confirm its local registration status as a fact;
+   registration does not change the disposition and must not be edited in this unit.
+4. The canonical target-repository harness is 15/15 green as recorded by Unit 1. Re-run it before the
+   port so a pre-existing failure is not attributed to this unit.
 
-If a premise that the repair rests on is false, write what was checked and found into this state file, set `turn: codex`, commit the state-file update, and stop.
+If a premise the port rests on is false, record what was inspected and found, set `turn: codex`,
+commit the state-file update, and stop.
 
-Required behavior for Unit 1:
+Implementation boundary:
 
-- A gated command issued while the payload cwd is already inside a nested repository must inspect that nested repository's candidate set and applicable footprint, never parent- or sibling-repository dirt.
-- A single parseable leading `cd <literal-path> &&` must resolve the repository targeted after the directory change and make the same allow/block decision as the equivalent command issued from inside that repository.
-- A compound form that contains a gated wide add but whose target cannot be parsed safely — including `(cd <path>; git add .)` — must fail closed with exit 2 and a clear reason. It must not exit early, warn-and-allow, or infer a repository from the pre-command cwd.
-- Existing ordinary same-repository gated commands and explicit-path `git add <pathspec>` behavior must remain intact.
-
-Implementation freedom: choose the smallest command-target resolver that satisfies those behaviors. A single leading literal `cd` is in scope; nested `cd`s, variable-derived paths, arbitrary shell evaluation, and a general parser are not. Unsupported wide-add shapes are detected and blocked, not evaluated.
+- Make the sector-intelligence hook behaviorally identical to the accepted canonical hook, with only
+  the two project-authorized extra exempt basenames retained: `qc-log.md` and
+  `research-quality-log.md`.
+- Do not add hook synchronization machinery, change settings/registration, edit `.codex/`, edit the
+  two canonical worktree copies, or absorb the deferred subdirectory-byproduct exemption issue.
+- Preserve the sector repository's instructions and make its repository commit separately from the
+  ai-resources state-file commit.
 
 Evidence required:
 
-- Add a permanent isolated harness that first demonstrates the three pre-fix failures and then distinguishes the repaired outcomes. Its assertions must inspect exit status and decisive output/candidate identity, so they can fail if the hook checks the wrong repository or merely stops emitting the old message.
-- At minimum, green fixtures must prove: nested cwd uses only nested-repo dirt; parseable `cd nested && git add .` matches that nested-repo decision; an out-of-footprint nested file still blocks; `(cd nested; git add .)` hard-blocks as unresolved; an ordinary same-repo wide add retains its prior allow/block behavior; and an explicit-path add remains ungated.
-- Run the complete new harness against the built canonical hook and record the command plus case-by-case result in `Latest material result`. A prose inspection, regex-only grep, or test that never went red is insufficient.
+- Run `bash logs/scripts/check-foreign-staging.test.sh` against the canonical hook and via
+  `HOOK_OVERRIDE` against the sector hook; both must report 15/15 green and exit 0.
+- Produce a fail-capable mechanical comparison showing the sector executable differs from canonical
+  only by the two named `EXEMPT_BASENAMES` entries. The check must fail when either authorized extra
+  is removed and when any other executable difference is injected; prose inspection alone is not
+  evidence.
+- Run syntax checks on both hook files and record the commands and decisive results.
 
-Stop if the behavior requires edits outside Unit 1, if correct footprint translation cannot be established from the existing session/marker contract, if a supported command would need arbitrary shell execution to resolve, or if the required executable evidence cannot be produced.
+Stop if the sector fork carries another intentional project behavior, if satisfying its two
+exemptions requires changing canonical behavior, if the canonical pre-check is not green, or if the
+post-port harness/comparison cannot distinguish a real sync from a stale fork.
 
-This task is the pilot's mid-task session-handoff test. If the Claude session ends before Unit 1 is ready for Codex assessment, preserve current truth here: replace `Latest material result` with what is implemented and the latest red/green evidence, name any real blocker, leave one executable resumption instruction under `Next action`, keep `turn: claude`, and commit that checkpoint. Do not present partial work as a completed result.
+## Latest material result
 
-## Latest result
+### Unit 2 — maintained-copy dispositions applied (session S13-ad0)
 
-### Correction round 2 — final bounded fix (session S13-ad0)
+**All four premises hold; nothing was built on an unverified one.**
 
-**Reporting only what was asked: does the fix work, and did it break anything.**
+1. **HOLDS → park `.codex` unchanged.** `.gitignore:63` ignores `.codex/` and `:69` states it
+   "remain[s] ignored and unmaintained"; `.codex/hooks.json` registers `check-foreign-staging.sh`
+   **zero** times. Not edited, not deleted — mtime still Jul 14, verified after the unit.
+2. **HOLDS.** `projects/axcion-sector-intelligence/logs/decisions.md:228` (Decision 28) records the
+   fork as "~213 diff-lines behind", flags the backport as follow-up, and names the two entries to
+   preserve. Both `qc-log.md` and `research-quality-log.md` were present in the fork's
+   `EXEMPT_BASENAMES` before the port.
+   **Other project-only behavior: none.** `EXEMPT_DIR_PREFIXES` is byte-identical to canonical, and a
+   grep for sector/precision-components/industrial-software markers returns hits **only** inside the
+   two authorized entries' own comment. The two exemptions are the whole of the project-specific
+   surface.
+3. **HOLDS.** The fork is a regular file (`-rwxr-xr-x`, not a symlink), 515 lines against canonical's
+   797 — materially behind. **Registration recorded as fact, not acted on:** the fork is registered in
+   *neither* `settings.json` nor `settings.local.json` (0 occurrences in each); the single user-level
+   registration points at the **canonical** hook by absolute path. The fork is therefore dormant. Per
+   instruction, registration was not edited and the disposition is unchanged.
+4. **HOLDS.** Canonical harness re-run **before** the port: 15/15 green, exit 0.
 
-**Does it work: yes.** The premise was verified against the document before building, not taken on
-trust — `docs/session-marker.md:17` makes the marker path cwd-relative, and `:97` records the exact
-supported shape verbatim ("a project that is a plain subdirectory of a repo … is not its own git repo,
-yet keeps its **own** `logs/session-notes.md`"). `git rev-parse --show-toplevel` walks past that
-project to the repo root, so the previous code read a sibling's session state or none at all. Correct
-as reported.
+**What was done.** The sector hook is now the canonical file with exactly the two authorized extra
+exempt basenames re-inserted, their original comment block carried over **verbatim** so its provenance
+survives. Executable bit preserved (0755). No synchronization machinery added, no settings touched, no
+`.codex/` edit, no worktree-copy edit, and the deferred subdirectory-byproduct issue was not absorbed.
 
-Session state now resolves by **walking upward from the active project directory to the first ancestor
-whose `logs/` actually holds this session's state** — per-id marker first (unique to this session, so
-a hit is unambiguous), then the shared marker, then `session-notes.md`, then the git toplevel as a
-last resort. Where the project *is* the repo root — the common case — this returns exactly what the
-toplevel call returned, so nothing changes there.
+**Evidence.**
 
-**Did it break anything: no.** 15/15 green. Target-repository candidate discovery and the quoted-`cd`
-parser were not touched, as instructed.
-
-| Stub | Re-injected defect | Result |
+| Check | Command | Result |
 |---|---|---|
-| toplevel | session root back to `git rev-parse --show-toplevel` | **C14 fails, alone** — 14/15 |
-| defect1 | session scope collapsed into target scope | C10 + C14 fail — 13/15 |
-| defect2 | leading `cd` parsed from `scan` again | C11 fails, alone — 14/15 |
-| no-op | dead hook | 11 failures |
+| canonical behaviour | `bash logs/scripts/check-foreign-staging.test.sh` | **15/15 green, exit 0** |
+| sector behaviour | same harness via `HOOK_OVERRIDE=<sector hook>` | **15/15 green, exit 0** |
+| shell syntax | `bash -n` on both hooks | both OK |
+| python syntax | extract `PYEOF` body → `py_compile`, both hooks | both OK |
+| mechanical comparison | strip the two authorized entries → byte-compare to canonical, **and** assert both names present | **PASS** |
 
-New cases **C13/C14**: a plain-subdirectory project whose marker and mandate exist *only* under
-`<parent repo>/proj/logs`, with the enclosing repo carrying none. Allow and paired block halves, as
-required. Under the `toplevel` stub **C13 still passes and only C14 fails** — the fourth instance in
-this unit of an allow-shaped assertion being unable to discriminate.
+**The comparison is fail-capable — demonstrated, not asserted.** Three injections, each against a
+copy, never the real file:
 
-**One item surfaced that is deliberately NOT fixed here, because it is outside the stated scope.**
-The exempt-list for a session's own byproducts tests `path.startswith("logs/")`, which is
-**repo-root-relative**. In a subdirectory project the marker sits at `proj/logs/.session-marker-*`,
-does not match, and is therefore treated as a foreign file. This is a *different* coordinate gap from
-the footprint-root question this correction was scoped to, and the instruction was explicit that no
-other finding is in scope. Rather than fix it silently or let it contaminate the new cases, the
-fixture commits its session-state files — which is also the realistic shape, since a project's marker
-is normally already tracked — and the gap is reported here for Codex to scope. It was found by C13
-failing on first run, not by inspection.
+| Injection | Verdict |
+|---|---|
+| remove `"qc-log.md"` | **FAIL** — missing authorized exemption |
+| remove `"research-quality-log.md"` | **FAIL** — missing authorized exemption |
+| unrelated executable change (`EXEMPT_DIR_PREFIXES` shortened) | **FAIL** — differs beyond the two authorized entries |
+| the real sector file | PASS |
 
----
+**Commits — separate per repository, as instructed.** Sector repo: `563e3fe` (the hook alone; that
+repo carries unrelated pre-existing dirt, none of it staged). ai-resources: this state-file commit.
 
-### Correction round 1 — both frozen findings resolved (session S13-ad0)
+### Observation surfaced during Unit 2 — NOT fixed, NOT in scope, and it corrects a claim made earlier in this file
 
-**Both findings were real, and finding 1 was a defect this implementation introduced.** Neither was
-argued with; both are corrected. Harness **13/13 green**, falsified per finding.
+Committing the ported hook did **not** trigger the guard, and the reason is not the coordinate fix.
+Chased to ground rather than assumed:
 
-**Finding 1 — session footprint read from the target repository. RESOLVED.**
-Correct as stated. The implementation set `logs_dir = <target repo>/logs`, so a session rooted in the
-workspace repo and staging into a freshly-initialised nested repo would look for its marker and
-mandate in a repository that has never heard of it — finding nothing, falling into the
-no-concrete-footprint branch, and turning the guard **off** for exactly the case the fix existed to
-protect. Worse where a stranger's marker happens to be present: it would judge against another
-session's footprint.
+- The coordinate translation is **sound**. An isolated two-repo probe — session scope in repo A
+  declaring `.claude/hooks/check-foreign-staging.sh`, the *same relative path* staged in a different
+  repo B — returns **exit 2, BLOCKED**. Same-path-different-repo is correctly foreign.
+- The real cause: **`PreToolUse` fires before the command runs, so a combined
+  `git add <explicit-path> && git commit` presents an EMPTY index.** `candidates` is empty and the
+  hook exits 0 at "nothing staged → nothing to guard". Confirmed by execution: the identical foreign
+  file gives `exit 0` in the combined form and `exit 2` when already staged.
+- **Pre-existing, not introduced by Unit 1** — the commit path has always read `git diff --cached` at
+  pre-command time. But it is material, because this workspace's own commit rule prescribes exactly
+  the single-step shape ("stage the relevant files, write the commit message, and commit in a single
+  step"), so in normal use the guard's commit arm is far narrower than it reads. Its remaining real
+  coverage is a bare `git commit`/`--amend`/`-a` over an index a *foreign* session already populated —
+  which is the documented threat model, so this is a scope-of-protection finding, not a break.
+- **Correction to the record:** the earlier hand-back said the fixed hook "gated that very commit and
+  allowed it, which is a live production check on top of the harness." **That was wrong.** The hook
+  exited early on an empty index; it never evaluated the footprint. The harness evidence stands on its
+  own; that one sentence did not, and it is withdrawn here rather than left to be discovered.
 
-The two scopes are now separated explicitly:
-
-- **SESSION scope** — `session_repo_root`, derived from `CLAUDE_PROJECT_DIR` (falling back to
-  `os.getcwd()`, then to the target as a last resort). Owns `logs_dir`, the marker, the mandate, and
-  the `repo_name` used for footprint prefix-stripping.
-- **TARGET scope** — `repo_root`, unchanged. Owns candidate discovery only.
-- **One explicit coordinate system.** `in_footprint()` now resolves *both* sides to absolute paths —
-  candidate against the target root, footprint token against the session root — before comparing.
-  Conversion happens at that single point rather than at two parse sites. In the ordinary
-  same-repository case this is byte-for-byte the old behaviour; across a boundary it is what makes an
-  in-footprint **allow** possible at all (a session declaring `projects/foo/bar.md` and a target
-  candidate `bar.md` in `projects/foo` resolve equal), while parent dirt can never enter the target's
-  candidate set.
-
-**Finding 2 — a quoted leading `cd` did not fail closed. RESOLVED, by resolving rather than blocking.**
-Correct as stated: `_command_text_only()` blanks quoted spans, so `cd "nested dir" && git add .`
-reached the target parser as `cd "" && …`, and the stripped-empty path fell through to `base_dir` —
-the wrong repository, silently. Of the two options offered, **option A (resolve the quoted literal)**
-was taken, because option B would fail closed on ordinary work: every checkout path in this workspace
-contains a space, so quoted `cd` is the normal shape here, not an exotic one. The leading `cd` is now
-parsed from the **raw command** (anchored at position 0, where a heredoc body can never reach),
-handling `"…"`, `'…'` and bare forms. Guards kept tight: `$`/backtick are unresolvable **even inside
-quotes**; glob/`~` are unresolvable when unquoted; an empty path is unresolvable. No shell evaluation
-was introduced.
-
-**Evidence — 13/13 green, exit 0**, and falsified with one stub per finding rather than one generic
-stub:
-
-| Stub | What was re-injected | Result |
-|---|---|---|
-| defect1 | `session_repo_root = repo_root` (scopes collapsed) | **C10 fails**, 12/13 |
-| defect2 | leading `cd` parsed from `scan` again + empty path → base | **C11 fails**, 12/13 |
-| no-op | dead hook | 10 failures, incl. C2b, C10, C11, C12 |
-
-New cases: **C9/C10** (session state present only in the parent, nested target carrying none — allow
-and block halves), **C11** (quoted `cd` with a space resolves to the nested repo), **C12** (`$VAR`
-path still exits 2, so resolving quoted literals did not open a path to shell evaluation).
-
-**One observation worth carrying, because it is the third instance of the same pattern.** Under the
-defect1 stub, **C9 still passes** — an in-footprint *allow* is satisfied by a guard that simply failed
-to find any footprint and gave up. Only C10 discriminates. This is the same shape as FP-9 (C2 green
-against a dead hook) and FP-8 (a red case red for the wrong mechanism): **an allow-shaped assertion is
-almost never evidence on its own.** Codex's instruction to prove both halves is what forced the pair;
-had only the allow case been written, this correction would have shipped looking verified.
-
-**Fixture change that correction 1 forced.** The `infootprint` mode previously gave the nested repo
-its own marker and mandate. Post-correction the nested repo's `logs/` is never read, so the footprint
-now has to be declared in the **parent** (the session repo) naming the nested path. C2/C2b were
-re-pointed accordingly. This is worth naming because the old fixture shape is precisely what hid
-finding 1: every repo owning a valid marker meant the two scopes never diverged in test.
-
-**Nothing else was touched.** The four required behaviours, both controls, and the wide-add-only
-scoping of fail-closed are unchanged; `docs/commit-discipline.md`, `logs/improvement-log.md`, the
-`.codex` fork and the sector-intelligence copy remain untouched per the Unit 1 boundary.
+Left for Codex to scope alongside the deferred exempt-list item. Both are comparison/coverage
+questions about the same guard, and neither belongs inside Unit 2's boundary.
 
 ---
 
-### Original hand-back (pre-correction), retained
+### Unit 1 (accepted)
 
-**Unit 1 complete and handed back for assessment (session S13-ad0, resumed 2026-08-01).**
-Target-repository resolution is repaired in the live canonical hook, the permanent harness is 9/9
-green, and the green was falsified against two deliberately broken hooks. The mid-task checkpoint
-below is preserved unchanged beneath the resumption record, because the handoff it documents is
-itself the thing under test.
+Unit 1 accepted after one correction and one final tightly-bounded fix. The canonical hook now
+separates session and target scopes, supports safely quoted literal leading `cd`, fails closed for
+unresolvable wide-add targets, and supports session state rooted in a plain project subdirectory.
+Claude recorded 15/15 green with defect-specific falsification; the final fix broke no prior case.
 
-### Resumption: the handoff worked, with one disclosed contamination
+Decision carried forward: ambiguous-target fail-closed remains limited to wide adds. An unresolvable
+`cd` on a gated commit falls back to the base cwd; this was outside Unit 1's required behavior, and
+broadly blocking multi-line commits would create a larger false-block regression.
 
-Resumed from this file plus Git. Verified the recorded tree state before trusting it —
-`git log --oneline -3` matched, the hook was unmodified at 668 lines, the harness was present at
-`2135c0c` — then re-ran the harness and reproduced the 4 RED / 2 GREEN baseline exactly. Every action
-taken came from the `Next action` list below, which was executable as written.
-
-**Contamination to record rather than hide:** `/prime` loads the previous `session-notes.md` entry at
-orientation, and that entry summarises this unit. So a prose summary was in context before this file
-was opened. The file was independently sufficient on its own reading, but a clean-room proof is not
-obtainable through the normal orientation path.
-
-### The blocker is settled — by execution, and WITHOUT the gated settings change
-
-The checkpoint proposed a throwaway probe hook in `~/.claude/settings.json` and correctly flagged it
-as needing operator approval. A cheaper route existed: **this hook is already registered and already
-fires on every Bash call**, and it is the one file the unit boundary permits editing. A temporary dump
-was added to it, triggered three times, read, and removed; the file was then verified byte-identical
-to `HEAD`. No settings write, no operator gate.
-
-What the probe established:
-
-1. **The payload DOES carry `cwd`.** Live key set: `cwd`, `effort`, `hook_event_name`,
-   `permission_mode`, `prompt_id`, `session_id`, `tool_input`, `tool_name`, `tool_use_id`,
-   `transcript_path`. Recorded below as unverifiable from repo evidence; it is sent.
-2. **`os.getcwd()` of the hook process equals the Bash tool's cwd**, and both diverge from
-   `CLAUDE_PROJECT_DIR`, which stays pinned to the session root. Premise 1 confirmed as the defect.
-3. **That cwd is the PRE-command cwd — the hook fires before the command runs.** This is the part the
-   checkpoint did not anticipate and it changes the fix: cwd alone resolves C1/C2 but **cannot**
-   resolve `cd nested && git add .`. "Change the precedence and it's nearly free" is half right — the
-   precedence change is necessary, not sufficient, and the leading-`cd` parse is still required.
-
-### What was implemented
-
-Three changes, all within the Unit 1 boundary, in `.claude/hooks/check-foreign-staging.sh`:
-
-- **Target resolution** (replacing the `CLAUDE_PROJECT_DIR`-first line at `:223`): base directory is
-  the payload `cwd`, falling back to `os.getcwd()`. A single leading literal `cd <path> &&` moves the
-  target. `&&` is load-bearing — it is what guarantees the `cd` succeeded before the git verb runs;
-  with `;` or a newline the add still runs, in the *original* cwd, when the `cd` fails.
-- **Fail-closed on unresolvable targets:** subshell `( ... )`, `;`/newline sequencing, multiple `cd`s,
-  or a path containing a variable/glob/`~` → `exit 2` with a reason naming the supported shape.
-  Scoped to **wide adds only**; a gated `git commit` with an unresolvable `cd` falls back to the base
-  cwd. That is a **disclosed limitation**, taken deliberately: blocking every multi-line commit would
-  be a false-block regression worse than the gap it closes.
-- **Wide-add detection widened** so `)` terminates the token, otherwise `(cd x; git add .)` is not
-  even *seen* as wide and exits ungated before any of the above runs. `./docs/x.md` still does not
-  match — the `\.` arm requires the token to be exactly `.`.
-- **`git add .` scoping** now derives from `target_dir`'s path *relative to the resolved repo root*,
-  not from the `cd` token's raw text. This is what makes the nested and same-repo cases share one code
-  path, and it is the direct cause of the C3 silent-pass repair.
-
-### Evidence
-
-`bash logs/scripts/check-foreign-staging.test.sh` → **9/9 pass, exit 0.**
-
-| Case | Assertion | Result |
-|---|---|---|
-| C1 | nested cwd blocks on `nested-dirt.txt`, never `parent-dirt.txt` | PASS |
-| C2 | nested cwd, all dirt in footprint → exit 0 | PASS |
-| C2b | **same fixture, one out-of-footprint file → must block** (FP-9 remedy) | PASS |
-| C3 | `cd nested && git add .` blocks on nested dirt — no silent pass | PASS |
-| C4 | `(cd nested; git add .)` → exit 2 fail-closed | PASS |
-| C5 | ordinary same-repo wide add unchanged (control) | PASS |
-| C6 | explicit pathspec stays ungated (control) | PASS |
-| C7 | **payload `cwd` beats process cwd** | PASS |
-| C8 | **absent payload `cwd` falls back to process cwd** | PASS |
-
-**Falsified twice — the green is not self-certified.**
-
-- **No-op stub** (`HOOK_OVERRIDE` → `exit 0`): 7 failures, `STATE: UNEXPECTED`, exit 1. C2b fails here
-  while C2 still passes — exactly the discrimination FP-9 said was missing.
-- **Payload-cwd-blind stub** (the original `CLAUDE_PROJECT_DIR`-first line re-injected into the fixed
-  hook): 5 failures — C1, C2, C2b, C7, C8 fail while C3 and C4 still pass. This correctly attributes
-  C3/C4 to the `cd`-parsing fix rather than to the cwd fix, which a no-op stub cannot distinguish.
-
-### Harness changes, and why they were needed
-
-Two beyond the fix itself, both announced rather than absorbed silently:
-
-- **C2b** — the FP-9 remedy the checkpoint asked for, item 4 of `Next action`.
-- **C7 / C8 and a reshaped `run_hook`** — a gap found *this* session: `run_hook` sent no `cwd` key at
-  all, so all six original cases exercised the `os.getcwd()` fallback and **none** exercised the
-  production shape. A hook ignoring the payload `cwd` entirely would have gone 6/6 green. `run_hook`
-  now sends `cwd` by default and takes `__OMIT__` to test the fallback deliberately. The generalisable
-  point: a harness written before its interface was verified encodes the author's guess about that
-  interface and then goes green against the guess.
-
----
-
-**The original mid-task checkpoint follows, preserved verbatim. Everything below this line describes
-the state as it stood at the handoff, not the state now.**
-
-**Mid-task checkpoint, not a completed result.** Premises checked and red evidence built; the hook
-itself is UNMODIFIED. This is the pilot's designated session-handoff point.
-
-**Premise checks — all five hold.**
-
-1. HOLDS. `check-foreign-staging.sh:223-224` — `project_dir = os.environ.get("CLAUDE_PROJECT_DIR", "")
-   or os.getcwd()`, and `repo_root` is derived from it. Every candidate probe then runs `git -C
-   repo_root`. The command's own target repository is never consulted.
-2. HOLDS. The leading-`cd` parser at `:521-526` sets `subdir` and filters candidate path *strings*
-   inside the already-chosen repo; it never re-resolves the repository. Gating regex
-   `\bgit\s+add\b[^&|;]*\s\.(\s|$)` matches `cd X && git add .` but NOT `(cd X; git add .)` —
-   confirmed by evaluating the regex directly against all three command shapes.
-3. HOLDS, reproduced in isolated temp repos (see harness below). Exit codes recorded.
-4. HOLDS. Nine `*.test.sh` files exist under `logs/scripts/`; none targets this hook. The only grep
-   hit for the hook's name is `check-citation-resolution.sh`, which merely cites it as an example.
-5. HOLDS. `~/.claude/settings.json:60` registers the canonical hook by absolute path
-   (`ai-resources/.claude/hooks/check-foreign-staging.sh`). Copy census re-measured, not quoted:
-   668 canonical / 464 `.codex` fork / 515 `axcion-sector-intelligence`. The two further copies are
-   git worktrees (`ai-resources-g1-reviewed-plan`, `ai-resources-active-unit-routing`) and are
-   `cmp`-identical to canonical — not forks.
-
-**Evidence built — `logs/scripts/check-foreign-staging.test.sh` (new, permanent, isolated).**
-
-Six cases, all in throwaway `mktemp -d` repos; never touches the live working tree and never runs a
-real `git add`. Current state against the unmodified hook — **4 RED / 2 GREEN**, which is the
-pre-fix baseline and the correct result:
-
-| Case | Expected | Actual today | Reading |
-|---|---|---|---|
-| C1 nested cwd uses nested dirt | block on `nested-dirt.txt` | rc=2, blocks on `parent-dirt.txt` | RED — judged the parent |
-| C2 nested cwd, all dirt in footprint | rc=0 | rc=2 | RED — false block |
-| C3 `cd nested && git add .` | block on `nested-dirt.txt` | **rc=0, no output** | RED — **silent pass** |
-| C4 `(cd nested; git add .)` | rc=2 fail-closed | rc=0, no output | RED — ungated |
-| C5 same-repo wide add | rc=2 on `parent-dirt.txt` | rc=2 | GREEN — control |
-| C6 explicit pathspec | rc=0, silent | rc=0 | GREEN — control |
-
-**Two things about this harness the next session must know.**
-
-- **Fixture fidelity was wrong on the first run and was corrected.** Without `nested/` in the parent's
-  `.gitignore`, the parent lists `nested/` as untracked, C3 blocks on it, and the case goes red for the
-  wrong mechanism — detecting "judged the wrong repo" but never reproducing the silent pass. The
-  `.gitignore` line mirrors the live workspace, where `git -C <root> status -- projects/<nested>`
-  returns zero entries. The correction is commented in the fixture at the line itself.
-- **C2 and C6 are satisfied by a dead hook.** Proven: pointing the harness at a no-op stub via
-  `HOOK_OVERRIDE` leaves both PASSING, while C5 correctly FAILS. Both assert only `exit 0`, so they
-  cannot distinguish "correctly allowed" from "hook never ran". Once the fix lands and C2 turns green,
-  C2 alone is not evidence — give it a positive-identity assertion, or pair it with a must-block
-  variant on the same fixture. The harness's own STATE logic did flag `UNEXPECTED` under the stub
-  rather than reporting success, which is a real property worth keeping.
-
-## Blocker
-
-**RESOLVED — see § Resumption above. The text below is the checkpoint's original statement of the
-question, kept because the resolution corrects part of it.** Settled by execution: the payload does
-carry `cwd`; the hook process's cwd equals the Bash tool's cwd; and — the part not anticipated here —
-that cwd is the *pre-command* one, so the precedence change alone does not resolve
-`cd nested && git add .`.
-
-The second, smaller question below (whose footprint applies) is **answered and still carries a
-caveat**: the target repo's own `logs/` is used, which is what the fixtures assume and what the live
-workspace layout implies. It has been validated against the harness but **not** against the
-session/marker contract as a document. Codex's brief names that as a stop-if; it is flagged here for
-assessment rather than declared settled.
-
----
-
-None blocking, but **one unresolved design question decides the shape of the fix, and it must be
-settled by execution before any resolver is written.**
-
-**Where does the target repo come from?** The hook currently has two candidate sources and needs a
-third that does not exist yet:
-
-- `CLAUDE_PROJECT_DIR` — set by Claude Code, points at the session's project root. Wrong for a nested
-  target. This is the defect.
-- `os.getcwd()` of the *hook process* — used only as a fallback today. **It is unverified whether
-  Claude Code runs a PreToolUse hook with cwd equal to the Bash tool's cwd or to the project dir.**
-  If the former, the fix is nearly free: change the precedence. If the latter, cwd is useless here.
-- The payload's own `cwd` field — **unverified that one is even sent.** Grepped every hook in
-  `.claude/hooks/`: the only payload keys read anywhere are `tool_name`, `tool_input` and
-  `transcript_path`. No hook reads `cwd`, so the repo carries no evidence either way.
-
-**Second, smaller open question, flagged rather than assumed:** after the target repo is resolved,
-whose footprint applies? The harness assumes **the target repo's own `logs/`** (each fixture repo gets
-its own marker and `session-notes.md`), because that is how this workspace is laid out — every
-checkout owns its `logs/`. That assumption is baked into the fixtures and has NOT been validated
-against the session/marker contract. Codex's brief names exactly this as a stop-if: *"if correct
-footprint translation cannot be established from the existing session/marker contract"*.
+Deferral for task closure: the byproduct exempt-list compares target-repo-relative paths, so a plain
+subdirectory project's own `proj/logs/.session-marker-*` can read as foreign. It was newly noticed at
+the final closure check and therefore did not enter another correction round. Defer as a separate
+unit because it is a different comparison site and needs its own behavior decision and evidence.
 
 ## Next action
 
-**Codex — closure check on correction round 2.** Reporting exactly the two things asked for:
+**Codex — assess Unit 2.** Executed within the boundary; all four premises verified by execution
+first. `.codex` parked unchanged, the sector fork brought to canonical with exactly its two authorized
+exemptions, evidence and fail-capable comparison recorded above, both repositories committed
+separately (`563e3fe` in sector).
 
-- **Does the final fix work?** Yes. Session-state and footprint coordinate root is now the actual
-  active project directory where `/prime` wrote `logs/`, resolved by upward walk to this session's own
-  marker rather than by git toplevel. Proven by C13 (allow) + C14 (block) on a plain-subdirectory
-  project, and falsified by a stub restoring git-toplevel resolution, under which **C14 fails alone**.
-- **Did it break any existing case?** No. 15/15 green; target discovery and the quoted-`cd` parser
-  untouched, per scope.
+Two items for you to scope, neither folded in:
 
-**One item for you to scope, not fixed here:** the byproduct exempt-list is repo-root-relative
-(`path.startswith("logs/")`), so a subdirectory project's own marker at `proj/logs/.session-marker-*`
-reads as foreign. Same class of coordinate bug, different site, and explicitly outside this round's
-scope — so it is reported rather than folded in. The new fixture commits its session state to keep the
-two questions from being conflated.
+1. **Deferred from Unit 1** — the byproduct exempt-list compares target-repo-relative paths, so a
+   plain subdirectory project's own `proj/logs/.session-marker-*` reads as foreign.
+2. **New, found in Unit 2** — `PreToolUse` sees the index *before* the command, so a combined
+   `git add <explicit> && git commit` is never gated. Pre-existing and consistent with the documented
+   threat model, but it means the commit arm's practical coverage is much narrower than the header
+   claims, and this workspace's own commit convention prescribes exactly that shape. Includes a
+   withdrawn claim from the earlier hand-back — see the correction note above.
 
----
-
-**Superseded — round 2's instruction, retained for the record.**
-
-Final tightly-bounded fix — correction closure only:
-
-The quoted-`cd` finding is resolved. The session-footprint finding is only partly resolved because
-the new code sets `session_repo_root` to `git -C "$CLAUDE_PROJECT_DIR" rev-parse --show-toplevel` and
-then reads `<session_repo_root>/logs`. `docs/session-marker.md` makes the marker paths cwd-relative
-to the active project and explicitly records that a project may be a plain subdirectory of a larger
-Git repository while keeping its own `logs/session-notes.md` and marker namespace. In that supported
-shape, the current code reads the parent repository's session state and can again disable the guard
-or use the wrong footprint.
-
-Claude: make the session-state and footprint coordinate root the actual active session/project
-directory where `/prime` wrote `logs/`, without changing target-repository candidate discovery or
-the now-correct quoted-`cd` parser. Add one isolated plain-subdirectory-project fixture with its
-marker and mandate only under `<parent repo>/<project>/logs`; prove an in-footprint allow and its
-paired out-of-footprint block, and falsify the block against the current Git-toplevel behavior.
-Re-run the complete harness and report only: whether this final fix works, and whether it broke any
-existing case. Then set `turn: codex`. No other code, documentation, copy, or finding is in scope.
+Both are comparison/coverage questions about the same guard and want one decision each, not a patch.
