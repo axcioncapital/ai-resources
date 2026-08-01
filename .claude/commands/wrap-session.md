@@ -226,7 +226,7 @@ Parse these tokens from `$ARGUMENTS` (whole-token match); everything else in `$A
    - Also surface any new CLAUDE.md rules added this session (from conversation context) and ask if they should graduate to root CLAUDE.md.
 11. **Advisory nudges** (one line each, only when triggered; all advisory — none blocks). Skip any bullet silently when its trigger does not fire.
     - **Mission:** scan today's mandate block (today's `## YYYY-MM-DD` header to the next `##` or EOF) for a `- Mission: <id>` line. If present: "This session served mission `<id>`. Consider updating its `## Open threads` (and closing it if done) with `/mission`."
-    - **Blind-spot scan:** if the session touched `.claude/commands/`, `skills/`, `.claude/hooks/`, any CLAUDE.md, or made a ≥3-file change, emit: "Consider `/blindspot-scan` before commit — checks stale dependent artifacts, real-usage fit, capability validity." Do NOT auto-fire.
+    - *(Blind-spot nudge removed 2026-08-01 — `/blindspot-scan` is operator-invoked only; emit no nudge for it.)*
     - **Improvement-log archival:** `grep -c '^\- \*\*Verified:\*\*' logs/improvement-log.md 2>/dev/null || echo 0` — if ≥ 5, emit: "N resolved entries in improvement-log — consider `/resolve-improvement-log` to archive them."
 
    *(Cut 2026-07-04: former Step 9 shared-command-drift ask — auto-sync-shared.sh already propagates; former Step 11 /improve reminder — redundant with /session-start + /friday-checkup. Former Step 10 improvement-verify relocated to /friday-checkup.)*
