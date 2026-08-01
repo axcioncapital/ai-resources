@@ -1049,3 +1049,14 @@ retirement record) **plus** the newly named portable-installation blocker.
   supply the judgment. Asked twice this session, not yet answered.
 - **The fate of `axcion-design-studio`'s stray command copy** — named in the Step 8 scope, not yet
   actioned.
+
+## 2026-08-01 — Session S12-3bc
+
+**Mandate:** Run pilot unit 3 of the Work Loop v2 MVP (Step 7) as a deliberate mid-task session-handoff test — Codex opens the unit, Claude checks its premises and implements partway, then this session stops so a fresh session finishes from the state file and Git alone — done when: unit 3's state file exists under `logs/work-loop/` carrying Codex's opening brief, Claude's premise-check record and a partial implementation; that state file is committed and this session stops mid-unit, leaving a fresh session able to finish from it and Git alone; and `plans/work-loop-v2-mvp/step-7-pilot-log.md` § Unit 3 records the unit as open with its status against conditions 3, 5 and 7.
+- Out of scope: Step 8 entirely — fixing demonstrated blockers, running the regression set, the post-pilot assessment, executing the v1 retirement, and the portable-installation blocker.
+- Files in scope: plans/work-loop-v2-mvp/step-7-pilot-log.md, plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md, .claude/commands/work-loop-v2.md, .agents/skills/work-loop-v2/SKILL.md, .claude/hooks/check-foreign-staging.sh, .codex/hooks/check-foreign-staging.sh, logs/missions/work-loop-v2-mvp.md, logs/session-notes.md, logs/work-loop
+- Stop if: Codex has not opened unit 3 (no opening brief on disk) — Claude cannot open it, so the loop stalls there by design; or the candidate unit's premise fails the check (the `check-foreign-staging.sh` footprint-tokenizer defect no longer reproduces) — hand back rather than build.
+- Required outputs: logs/work-loop/foreign-staging-target-repo.md, logs/scripts/check-foreign-staging.test.sh
+- Mission: work-loop-v2-mvp
+
+**Work:** Continue the Work Loop v2 pilot — unit 3 as the mid-task session-handoff test

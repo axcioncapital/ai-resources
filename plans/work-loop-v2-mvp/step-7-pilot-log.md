@@ -36,13 +36,13 @@ The seven conditions from Proposal `:98`. Each unit records a verdict against ev
 
 | # | Condition | Unit 1 | Unit 2 | Unit 3 |
 |---|---|---|---|---|
-| 1 | Useful context preparation | yes | yes | — |
-| 2 | Alignment with the approved project plan | yes | yes | — |
-| 3 | State recovery | n/a | n/a | **owed** |
-| 4 | One bounded correction | not exercised | **yes** | — |
-| 5 | The Direct Work bypass | n/a | n/a | **owed** |
-| 6 | Operator intervention | yes ×2 | not needed | — |
-| 7 | Clean fresh-session continuation | partly | n/a | **owed** |
+| 1 | Useful context preparation | yes | yes | **yes** |
+| 2 | Alignment with the approved project plan | yes | yes | **yes** |
+| 3 | State recovery | n/a | n/a | **pending — staged** |
+| 4 | One bounded correction | not exercised | **yes** | n/a so far |
+| 5 | The Direct Work bypass | n/a | n/a | **still owed** |
+| 6 | Operator intervention | yes ×2 | not needed | **yes** |
+| 7 | Clean fresh-session continuation | partly | n/a | **pending — staged** |
 
 **After two units, three conditions have never been exercised — and all three need the same thing:**
 a unit that crosses a real session boundary (3 and 7), and a request small enough to be refused
@@ -497,7 +497,92 @@ unwired and undesigned for this case, as separate infrastructure work.
 
 ## Unit 3
 
-**Status:** not opened.
+**Status:** **OPEN — deliberately stopped mid-task 2026-08-01 (S12-3bc).** Task
+`foreign-staging-target-repo`, state file `logs/work-loop/foreign-staging-target-repo.md`. Opened by
+Codex (`f2f1992`), premises checked and red harness built by Claude (`2135c0c`). The hook is
+unmodified. This is the pilot's designated cross-session handoff test, and **the handoff has been set
+up but not yet proven** — see the verdicts below.
+
+### What Codex did with the objective
+
+Widened a one-line backlog item into a five-premise brief with an explicit unit boundary: Unit 1 is
+the canonical hook plus a permanent harness, and the docs, the defect record, the `.codex` fork and
+the sector-intelligence copy are held back to later units. Two exclusions were load-bearing and both
+were correct: **no soft-warn fallback** (the entry's own Proposal recommends one; both prior gates
+rejected it) and **not the retired `/risk-check`**. Condition 1 doing real work for the third time.
+
+Codex also **corrected Claude's method**. Claude had reproduced the defect against the live working
+tree before the unit opened; premise 3 of the brief requires isolated temporary repositories and says
+so explicitly. Claude's version was informative but depended on ambient dirt and was not
+reproducible. The brief's instrument was better, and the harness was built that way.
+
+### What Claude did
+
+All five premises checked by execution and all five hold. The defect site is
+`check-foreign-staging.sh:223`; the leading-`cd` parser at `:521-526` filters path *strings* inside
+the already-chosen repository and never re-resolves it; the subshell form is not gated at all; no
+existing harness targets this hook; and the canonical copy is the one wired by absolute path in
+`~/.claude/settings.json`. The copy census was **re-measured rather than quoted** (668 / 464 / 515,
+plus two worktree copies proven `cmp`-identical) — a deliberate response to FP-6 and to the
+recall-instead-of-check finding.
+
+Built `logs/scripts/check-foreign-staging.test.sh`: six cases in throwaway `mktemp -d` repositories,
+never touching the live tree and never running a real `git add`. **4 RED / 2 GREEN** against the
+unmodified hook — the correct pre-fix baseline.
+
+The harness surfaced something the defect record does not contain. The recorded symptom is a noisy
+false block; case C3 reproduces a **silent pass** — `cd nested && git add .` exits 0 with no output,
+because the guard scopes to the right path in the wrong repository, finds nothing there, and reports
+safe while every file the command would actually stage goes uninspected. A guard that is silently
+absent is worse than one that is loudly wrong.
+
+### Friction points
+
+**FP-7 — Claude's premise check used a live-state instrument where an isolated one was required.**
+The first reproduction ran against the actual working tree, so the evidence was whatever happened to
+be dirty at that moment. Codex's brief specified isolated temp repos. Not a false conclusion — the
+defect does reproduce — but the method would not have survived being re-run tomorrow. **Caught by
+Codex, not by Claude.** This is condition 1 catching a methodological weakness rather than a factual
+error, which is a stronger result than either prior unit produced.
+
+**FP-8 — the first fixture went red for the wrong mechanism, and only running it revealed that.**
+Without `nested/` in the parent's `.gitignore`, the parent repository lists `nested/` as an untracked
+directory, so C3 *blocked* instead of silently passing. The case was red either way, and reading the
+harness would have shown four reds and looked correct. Only the verbose run exposed that the
+reproduced symptom was the wrong one. Self-caught, corrected, and commented at the fixture line.
+Reinforces the standing rule: an assertion that goes red for an unexamined reason is not evidence.
+
+**FP-9 — two assertions are satisfied by a dead hook.** Proven by pointing the harness at a no-op
+stub: C2 and C6 both keep PASSING, because both assert only `exit 0`. C5 correctly fails. Recorded as
+a limitation in the state file with the remedy named (positive-identity assertion on C2 before its
+green is accepted). The harness's own summary logic did refuse to report success under the stub,
+which is a real property and was not designed in.
+
+### Verdicts
+
+Against the seven conditions. **Rows 3 and 7 are deliberately left unresolved** — they are the whole
+point of this unit and they can only be verdicted by the session that resumes, not by the one that
+set the handoff up. Recording them as `yes` now would close them by assertion, which is the failure
+mode this pilot has avoided twice already.
+
+| # | Condition | Verdict |
+|---|---|---|
+| 1 | Useful context preparation | **yes** — and stronger than prior units: the brief corrected Claude's *instrument*, not just its facts (FP-7) |
+| 2 | Alignment with the approved project plan | **yes** — unit boundary respected; docs, fork and defect record untouched |
+| 3 | State recovery | **PENDING — staged, not proven.** The checkpoint is committed and self-contained. The next session's pickup is the test |
+| 4 | One bounded correction | `n/a` so far — no assessment round has run; the unit is mid-implementation |
+| 5 | The Direct Work bypass | **STILL OWED.** Cannot be carried by this unit: the tokenizer defect is not small and reversible, so it was correctly admitted. Needs a separate genuinely-small request, and manufacturing one would breach the genuine-units constraint |
+| 6 | Operator intervention | **yes** — the operator ran Codex; Claude cannot open a unit |
+| 7 | Clean fresh-session continuation | **PENDING — staged, not proven.** Same test as row 3 |
+
+**What the resuming session settles.** If it can pick the unit up from the state file and Git alone,
+rows 3 and 7 close for real. If it cannot, that is the more valuable result and must be recorded as
+such rather than repaired by re-reading this log.
+
+**The open question that gates the resumption** is recorded in the state file, not here: no hook in
+this repo reads a payload `cwd`, and it is unverified whether a PreToolUse hook runs with the Bash
+tool's cwd or the project directory. Settling that by execution is step 1 of the next session, and it
+requires operator approval because the probe touches `~/.claude/settings.json`.
 
 ---
 
