@@ -37,17 +37,22 @@ Four limits on those roles:
 
 ## 2. When to use the loop
 
-**Direct Work is the default.** Small, reversible work is done directly: no state file, no brief, no
-ceremony. Say that Direct Work applies, then do the work.
+**Direct Work is the default.** A small, reversible fix is done directly: no state file, no brief,
+no ceremony. Say that Direct Work applies, then do the work.
 
-Entering the loop requires a **named reason**. "This feels significant" is not a reason. These are:
+**The loop is for ordinary meaningful work** — work that is not small and reversible. Entering it
+requires a **named reason**, written into the state file when the task opens. "This feels
+significant" is not a reason. Reasons that qualify, as a guide and not a closed list:
 
-1. The work will not finish in one session, so it must survive a session ending.
-2. The scope needs bounding before work starts, or it will spread.
-3. The result needs assessing by someone other than whoever built it before it counts as done.
+- The work will not finish in one session, so it must survive a session ending.
+- The scope needs bounding before work starts, or it will spread.
+- The result needs assessing by someone other than whoever built it before it counts as done.
 
-Name the reason in the state file when the task opens. If none of the three applies, it is Direct
-Work.
+If the work is small and reversible, it is Direct Work even when one of those is tempting.
+
+**De-escalating.** If work already in the loop turns out to be smaller than assumed, say so, record
+what was learned, close the task, and finish the work directly. Do not keep a task in the loop only
+because it started there.
 
 Two lanes exist in this version: **Direct** and **Standard**. There is no third lane. Genuinely
 consequential work stops and goes to the operator instead (§ 7).
@@ -141,6 +146,18 @@ The body carries the **content fields**, and holds **at most** these five while 
 
 Five is a **maximum, not a checklist**. A field with nothing real in it is left out.
 
+### What the ceiling covers, and what it does not
+
+The five fields cap what the file says about the task's **state**. Two other things live in the same
+file and are not state, so the ceiling does not cover them:
+
+- **`turn` and `task`** — protocol fields. They say whose move it is and which task this is. `task`
+  is what § 6 rule 2 checks a file's identity against.
+- **The brief** — a hand-off from Codex to Claude, required by § 3 step 3.
+
+**A deferral needs no field.** Record it at closure among the decisions that matter. If it changes
+what happens next, it belongs in Next action instead.
+
 **When the task closes**, everything above is replaced by four things only: the outcome, the
 decisions that matter, the final commit or evidence pointer, and any accepted limitations.
 
@@ -187,17 +204,6 @@ Claude: check both claims, then implement if they hold.
 
 A running log makes the reader work out what is true now, and it grows without limit. Keep the last
 material result and let Git hold the history.
-
-### Two notes on this design
-
-**Why `turn` sits in the frontmatter.** It is the field that made the hand-off work in the Step 2
-prototype: each side used it to decide whether to act. It says nothing about the task, so it is kept
-out of the content fields and out of the five-field ceiling, which caps content only. Keeping it in
-the same file avoids opening a second seam.
-
-**`task` is retained but unproven.** Its job is to catch a leftover file from a different task. That
-situation cannot arise in a single clean run, so the prototype never exercised it. It stays because
-§ 6 rule 2 depends on it — not because it has been demonstrated.
 
 > **Open, and not decided here.** The Proposal says Codex writes the brief into the file **and
 > commits it**. In the Step 2 prototype Codex could write repository files but was refused write
