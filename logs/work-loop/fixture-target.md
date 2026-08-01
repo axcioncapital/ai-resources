@@ -10,3 +10,6 @@ It carries no meaning outside the Slice 1 acceptance run.
 ## Body
 
 One paragraph, deliberately dull, so a change to it is unambiguous.
+
+### Correction exercise
+Round: one

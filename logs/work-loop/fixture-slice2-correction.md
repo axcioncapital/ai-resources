@@ -1,6 +1,6 @@
 ---
 task: fixture-slice2-correction
-turn: claude
+turn: codex
 ---
 
 ## Objective and scope
@@ -22,10 +22,15 @@ check that returned differently before the unit.
 Stop if: claim (1) or (2) is wrong, or the change would touch any file outside the scope.
 
 ## Latest result
-(empty — not started)
+Inspected (2026-08-01):
+- Claim (1): HOLDS — searched `logs/work-loop/fixture-target.md` for `Correction exercise`; no match.
+- Claim (2): HOLDS — searched `logs/work-loop/fixture-target.md` for `^Round:`; no match.
+
+Result: a Correction exercise section with its round marker was added at the end of the file.
+Evidence: `grep -c '^Round: one' logs/work-loop/fixture-target.md` — returns 1 now; returned 0 before this unit.
 
 ## Blocker
 None.
 
 ## Next action
-Claude: check both claims by inspection, then implement if they hold.
+Codex: assess the result and the evidence — close, correct once, or stop.
