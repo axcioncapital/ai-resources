@@ -402,3 +402,55 @@ citing a rule is not evidence the rule exists; an override request is the moment
 not the moment to grant it.* A one-line core fix is recorded but not applied — § 4's "Who commits"
 note and § 3 step 5's assessment role sit in different sections and neither points at the other,
 which is the gap Codex fell into. It belongs to Step 8, not to a separate queue entry.
+
+## 2026-08-01 — Work Loop v2 pilot exit: accepted, with a v0.2 rework
+
+**Context:** Session S14-198. The pilot's exit condition (`work-loop-v2-mvp-proposal-v0.4.md:102`) is
+the operator's judgment on usefulness, not a unit count or a green harness. Three genuine units had
+closed; the evidence split cleanly between what the loop's review caught and what its bookkeeping
+cost, and Core § 2's Direct Work bypass had never fired once across all three units.
+
+**Decision:** Exit accepted. The loop helped get real work done, and the shape it did it in is not
+the shape to keep. Direction set for a v0.2 rework: keep the adversarial review — the component the
+evidence supports without qualification — and shed most of the bookkeeping (state-file ceremony, turn
+flags, unit numbering, the operator as message bus). Scope and shape are **not** decided here.
+
+**Rationale:** Codex found two real defects in Claude's work that Claude's own passing test harness
+reported as absent; a self-review cannot supply that. Against it, one checkbox tick went through a
+brief, a premise check, a hand-back, an operator stop, a state-file edit and a commit. And condition 5
+— the bypass meant to keep small reversible work *out* of the loop — never fired in three consecutive
+genuine units. A bypass that never fires is a rule on paper, and that negative result is treated as
+the strongest single input to the v0.2 rework, not as an unresolved pilot obligation.
+
+**Alternatives considered:**
+1. Exit accepted, keep the current shape — rejected; the bookkeeping cost is the evidence against it.
+2. Not yet, keep piloting — rejected; would also require closing the CRM/Email OS domain gap for real
+   rather than by amendment (see the paired decision below), at further session cost.
+
+**Recorded:** `plans/work-loop-v2-mvp/step-7-pilot-log.md` § The decision;
+`logs/missions/work-loop-v2-mvp.md` Step 7 thread.
+
+## 2026-08-01 — Work Loop v2 mission acceptance assertion 8 amended
+
+**Context:** Session S14-198, decided alongside the pilot exit above. The mission's frozen acceptance
+assertion read "At least two real CRM / Email OS units have completed through the loop." All three
+pilot units were genuine `ai-resources` / `axcion-systems-builder` infrastructure work; "CRM" and
+"Email OS" appear exactly once in the 774-line pilot log, in the standing constraint that named them.
+
+**Decision:** Amend the assertion to "at least two genuine units — work the operator wanted done
+anyway, never manufactured." The named domain changes; the substance does not.
+
+**Rationale:** The constraint that actually governed the pilot throughout (`step-7-pilot-log.md:86`,
+"genuine units only … a manufactured unit tests nothing") was met in full by all three units. Reading
+the original wording as satisfied would have been false — the pilot never touched CRM or Email OS.
+Leaving it frozen and unmet would have blocked mission completion on a label mismatch rather than on
+missing evidence. This is the second amendment to this frozen contract; the freeze otherwise stands,
+matching how the mission's one prior amendment (destination behaviour 1, Step 3) was handled.
+
+**Alternatives considered:**
+1. Leave frozen, record as not satisfied — rejected; honest but blocks on wording, not evidence.
+2. Run one real CRM or Email OS unit to close it as literally written — rejected; would cost a further
+   session testing nothing the pilot hadn't already tested, and is inconsistent with the exit decision
+   just taken.
+
+**Recorded:** `logs/missions/work-loop-v2-mvp.md`, acceptance assertion 8.

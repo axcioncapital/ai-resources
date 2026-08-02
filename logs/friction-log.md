@@ -353,6 +353,110 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 23:15 — logs/session-notes.md
+- 23:14 — logs/session-notes.md
+- 23:14 — logs/scratchpads/2026-08-01-19-10-scratchpad.md
+- 23:12 — plans/work-loop-v2-mvp/step-8-v1-retirement-review-brief.md
+- 23:10 — logs/missions/work-loop-v2-mvp.md
+- 23:10 — logs/missions/work-loop-v2-mvp.md
+- 23:10 — logs/missions/work-loop-v2-mvp.md
+- 23:09 — logs/missions/work-loop-v2-mvp.md
+- 23:09 — plans/work-loop-v2-mvp/step-7-pilot-log.md
+- 23:09 — plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md
+- 23:09 — plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md
+- 23:06 — plans/work-loop-v2-mvp/step-7-pilot-log.md
+- 23:06 — plans/work-loop-v2-mvp/step-7-pilot-log.md
+- 23:05 — logs/session-plan-2026-08-01-S14-198.md
+- 23:04 — logs/session-notes.md
+- 22:53 — logs/scratchpads/2026-08-01-22-52-scratchpad.md
+- 22:50 — plans/work-loop-v2-mvp/step-7-pilot-log.md
+- 22:50 — logs/work-loop/foreign-staging-target-repo.md
+- 22:41 — logs/work-loop/foreign-staging-target-repo.md
+- 22:41 — logs/work-loop/foreign-staging-target-repo.md
+- 22:41 — logs/work-loop/foreign-staging-target-repo.md
+- 22:40 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/d722a0b6-ce93-4ef9-8027-e0bddc4193b1/scratchpad/scoped-diff-check.sh
+- 22:40 — logs/next-up.md
+- 22:39 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/d722a0b6-ce93-4ef9-8027-e0bddc4193b1/scratchpad/scoped-diff-check.sh
+- 22:38 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/d722a0b6-ce93-4ef9-8027-e0bddc4193b1/scratchpad/scoped-diff-check.sh
+- 22:38 — logs/next-up.md
+- 22:37 — docs/commit-discipline.md
+- 22:37 — docs/commit-discipline.md
+- 22:36 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/d722a0b6-ce93-4ef9-8027-e0bddc4193b1/scratchpad/probe-combined-add-commit.sh
+- 22:32 — logs/work-loop/foreign-staging-target-repo.md
+- 22:32 — logs/work-loop/foreign-staging-target-repo.md
+- 22:32 — logs/work-loop/foreign-staging-target-repo.md
+- 22:31 — logs/work-loop/foreign-staging-target-repo.md
+- 22:31 — logs/work-loop/foreign-staging-target-repo.md
+- 22:28 — logs/scratchpads/2026-08-01-22-27-scratchpad.md
+- 22:24 — logs/work-loop/foreign-staging-target-repo.md
+- 22:24 — logs/work-loop/foreign-staging-target-repo.md
+- 22:14 — logs/work-loop/foreign-staging-target-repo.md
+- 22:13 — logs/work-loop/foreign-staging-target-repo.md
+- 22:12 — logs/scripts/check-foreign-staging.test.sh
+- 22:12 — logs/scripts/check-foreign-staging.test.sh
+- 22:11 — .claude/hooks/check-foreign-staging.sh
+- 22:07 — plans/work-loop-v2-mvp/step-7-pilot-log.md
+- 22:07 — plans/work-loop-v2-mvp/step-7-pilot-log.md
+- 22:06 — logs/work-loop/foreign-staging-target-repo.md
+- 22:06 — logs/work-loop/foreign-staging-target-repo.md
+- 22:05 — logs/scripts/check-foreign-staging.test.sh
+- 22:04 — logs/scripts/check-foreign-staging.test.sh
+- 22:04 — logs/scripts/check-foreign-staging.test.sh
+- 22:04 — logs/scripts/check-foreign-staging.test.sh
+- 22:03 — .claude/hooks/check-foreign-staging.sh
+- 22:03 — .claude/hooks/check-foreign-staging.sh
+- 22:03 — .claude/hooks/check-foreign-staging.sh
+- 21:53 — logs/work-loop/foreign-staging-target-repo.md
+- 21:53 — logs/work-loop/foreign-staging-target-repo.md
+- 21:53 — logs/work-loop/foreign-staging-target-repo.md
+- 21:53 — logs/work-loop/foreign-staging-target-repo.md
+- 21:52 — logs/work-loop/foreign-staging-target-repo.md
+- 21:52 — plans/work-loop-v2-mvp/step-7-pilot-log.md
+- 21:50 — logs/scripts/check-foreign-staging.test.sh
+- 21:50 — logs/scripts/check-foreign-staging.test.sh
+- 21:50 — logs/scripts/check-foreign-staging.test.sh
+- 21:49 — .claude/hooks/check-foreign-staging.sh
+- 21:49 — .claude/hooks/check-foreign-staging.sh
+- 21:48 — .claude/hooks/check-foreign-staging.sh
+- 21:46 — .claude/hooks/check-foreign-staging.sh
+- 21:46 — .claude/hooks/check-foreign-staging.sh
+- 21:44 — logs/session-plan-2026-08-01-S13-ad0.md
+- 21:43 — logs/session-notes.md
+- 21:36 — logs/session-notes.md
+- 21:35 — logs/scratchpads/2026-08-01-21-30-scratchpad.md
+- 21:25 — plans/work-loop-v2-mvp/step-7-pilot-log.md
+- 21:25 — plans/work-loop-v2-mvp/step-7-pilot-log.md
+- 21:24 — logs/session-notes.md
+- 21:24 — logs/work-loop/foreign-staging-target-repo.md
+- 21:22 — logs/scripts/check-foreign-staging.test.sh
+- 21:22 — logs/scripts/check-foreign-staging.test.sh
+- 21:10 — logs/session-plan-2026-08-01-S12-3bc.md
+- 21:07 — logs/session-notes.md
+- 20:59 — logs/scratchpads/2026-08-01-20-58-scratchpad.md
+- 20:57 — plans/work-loop-v2-mvp/step-7-pilot-log.md
+- 20:56 — plans/work-loop-v2-mvp/step-7-pilot-log.md
+- 20:56 — plans/work-loop-v2-mvp/step-7-pilot-log.md
+- 20:50 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-systems-builder/logs/work-loop/decision-entry-referenceability.md
+- 20:49 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-systems-builder/logs/work-loop/decision-entry-referenceability.md
+- 20:49 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-systems-builder/logs/work-loop/decision-entry-referenceability.md
+- 20:49 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-systems-builder/logs/work-loop/decision-entry-referenceability.md
+- 20:48 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-systems-builder/logs/decisions.md
+- 20:47 — logs/missions/work-loop-v2-mvp.md
+- 20:47 — plans/work-loop-v2-mvp/step-7-pilot-log.md
+- 20:42 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-systems-builder/logs/work-loop/decision-entry-referenceability.md
+- 20:40 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-systems-builder/logs/work-loop/decision-entry-referenceability.md
+- 20:40 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-systems-builder/logs/work-loop/decision-entry-referenceability.md
+- 20:39 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/.claude/commands/wrap-session.md
+- 20:39 — .claude/commands/wrap-session.md
+- 20:38 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-systems-builder/logs/decisions.md
+- 20:38 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-systems-builder/logs/decisions.md
+- 20:38 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-systems-builder/logs/decisions.md
+- 20:37 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-systems-builder/logs/decisions.md
+- 20:36 — logs/scripts/check-decision-refs.sh
+- 20:36 — logs/scripts/check-decision-refs.sh
+- 20:36 — logs/scripts/check-decision-refs.sh
+- 20:35 — logs/scripts/run-manifest.test.sh
+- 20:35 — logs/scripts/run-manifest.test.sh
 - 20:21 — logs/missions/work-loop-v2-mvp.md
 - 20:17 — logs/scratchpads/2026-08-01-17-16-scratchpad.md
 - 20:14 — plans/work-loop-v2-mvp/step-7-pilot-log.md

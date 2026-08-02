@@ -50,3 +50,5 @@ Promoted findings carry their source and a content-derived id; tick an item to r
 - [ ] Orphaned-hook count is five, not three — the earlier scan was blind to the workspace-root hooks directory — `logs/improvement-log.md` <!-- promote:135e0d8df449 -->
 
 - [ ] `next-up.md` holds 39 urgent items from one source, so the `/prime` menu can never show in-flight mission work — `logs/improvement-log.md` <!-- promote:6aca074e4236 -->
+
+- [ ] `check-foreign-staging.sh` splits the footprint bullet on commas, so a prose annotation becomes a dozen junk "paths" that WIDEN the guard — `logs/improvement-log.md` <!-- promote:1320cd710d2f -->
