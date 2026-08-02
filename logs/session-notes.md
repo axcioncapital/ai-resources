@@ -2,89 +2,6 @@
 
 > Archive: [session-notes-archive-2026-08.md](session-notes-archive-2026-08.md)
 
-## 2026-08-01 — Session S9-6ba
-
-**Mandate:** Run Work Loop v2 MVP Step 6 — freeze the candidate at an exact commit, run one fresh-context independent review of the whole build on the three QC dimensions, freeze the findings, make one correction pass, and accept the candidate with a written disclosed-limitations list — done when: the candidate is accepted at a named frozen commit with the limitations list written to `plans/work-loop-v2-mvp/step-6-candidate-review.md`; frozen findings A/B/C have had exactly one correction pass closure-checked against those findings plus blocking regressions only; the harness runs green (136+ assertions, exit 0) after any correction; the mission's Step 6 thread is ticked with evidence and the work is committed
-- Out of scope: tidying the misspelled `Note:` line in `logs/work-loop/fixture-target-2.md` (behaviour 3.3's assertion anchor); any second broad review after the correction (mission non-negotiable); Step 7 work (v1 retirement decision, pilot units)
-- Files in scope: .claude/commands/work-loop-v2.md, .agents/skills/work-loop-v2/SKILL.md, logs/scripts/work-loop-v2-slice-1.test.sh, logs/missions/work-loop-v2-mvp.md, plans/work-loop-v2-mvp/step-5-slice-3-evidence.md, plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md
-- Footprint widened mid-session 2026-08-01: the executable core moved from Allowed inputs to Files in scope. Step 6 finding A named it as an edit target (its § 4 carried the contradictory interface claim); the original mandate assumed the core was read-only. Caught by check-foreign-staging.sh, disclosed to the operator, not overridden.
-- Stop if: the closure check finds the correction insufficient — take the Step 6.5 menu once (accept a limitation / one final bounded fix / revert / reframe / stop) and escalate a genuine risk-acceptance choice to the operator
-- Allowed inputs: plans/work-loop-v2-mvp/work-loop-v2-mvp-proposal-v0.4.md, plans/work-loop-v2-mvp/pocock-lifecycle-work-loop-mvp-v0.4.md, plans/work-loop-v2-mvp/skill-writing-standard-work-loop-v0.2.md, plans/work-loop-v2-mvp/qc-process-v0.1.md, plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md, plans/work-loop-v2-mvp/step-4-slice-plan.md, plans/work-loop-v2-mvp/README.md, plans/work-loop-v2-mvp/step-5-slice-1-evidence.md, plans/work-loop-v2-mvp/step-5-slice-2-evidence.md, logs/work-loop/
-- Required outputs: plans/work-loop-v2-mvp/step-6-candidate-review.md
-- Mission: work-loop-v2-mvp
-
-**Work:** Work Loop v2 MVP Step 6 — one fresh-context candidate review of the whole build, frozen by exact commit, one correction pass, accept with a limitations list
-
-### Summary
-Ran Step 6's one candidate review. Codex reviewed the frozen candidate at `cc443e1` and returned
-**Accept with corrections** on three material findings. A and B are corrected and committed
-(`edd0d97`); **C is deferred to next session by operator decision**, so Step 6 is NOT complete and
-the mission thread is deliberately not ticked. Before the review, behaviour 3.1(b) — the weakest
-evidence in the whole build — was closed on a live, unprompted Codex refusal, which also closed the
-bare-invocation deferral open since Slice 2. The harness went 136 → 143 assertions, all green, with
-every new assertion proven able to fail first.
-
-The session's most useful result was a transport failure. Codex could not see a request pasted into
-chat at all, because the artifacts tell it the state file is the only interface while also having it
-question the operator directly — two rules that cannot both hold at the first request, when no file
-exists yet. That became `issue-codex-request-intake.md` at the operator's request, and the reviewer
-independently rated the same contradiction material (finding A).
-
-### Decisions Made
-- **The operator's request was carried to Codex by a state file**, after a chat-pasted request proved
-  invisible to it. Operator-directed. Cost recorded rather than smoothed: a file now exists for a
-  task that was never admitted, which weakens the "Direct Work opens no state file" guarantee.
-- **Finding C deferred to next session.** Claude recommended the bounded option and stated plainly
-  that it authored the artifacts it was recommending not to rewrite; the operator deferred rather
-  than settling it under that conflict.
-- **The review did not run through `$work-loop-v2`.** Caught after Claude had already written the
-  self-hosting version into the brief — running the candidate review through the candidate is
-  forbidden by Proposal § 6 and the mission's non-negotiables. Fixed at `4c77ced`.
-- **The 3.1(b) harness assertion was replaced on evidence, not convenience.** It proved the behaviour
-  by file absence, which became meaningless once the request had to be carried by a file. Seven
-  substance assertions replace it; six were proven to go red against a task that *was* opened.
-- **The session footprint was widened mid-session, disclosed not overridden.** The executable core
-  was declared a read-only input; finding A made it an edit target. `check-foreign-staging.sh`
-  blocked the commit until the mandate was corrected.
-
-### Risky actions
-None irreversible. Two temporary mutations, both inside `logs/work-loop/` and both removed and
-verified: an arbitrary state file planted twice to prove finding B's defect and then the fix's
-falsifiability. One guard fired for real — `check-foreign-staging.sh` blocked a `git add -A` that
-would have swept two files belonging to no session (`logs/friction-log.md`, `logs/next-up.md`, dirty
-before this session began); staging was redone by explicit path and those two remain untouched.
-
-### Findings Declined
-- **Codex cannot see a chat-pasted request** — declined as a queue item: it is finding A, corrected
-  this session at `edd0d97`, and separately written up in full at `issue-codex-request-intake.md`
-  with three options for later. Queueing it again would duplicate a live record.
-- **Codex's Next instruction contradicted the turn it set** — same reason: finding A, corrected.
-- **The 3.1(a) harness assertion tested a filename, not state** — finding B, corrected and
-  falsifiability re-proven this session.
-- **Finding C (both artifacts restate core policy)** — declined as a backlog item because it is the
-  named blocking item in `step-6-candidate-review.md` § 6 and the scratchpad's `resume_with:`, which
-  is a stronger and more specific channel than the improvement log. It is open, not dropped.
-- **Claude's mandate footprint was too narrow** — declined: the existing guard caught it before any
-  commit, which is the guard working as designed. No system change indicated.
-- **Claude wrote a self-hosting review brief** — declined: the rule it broke is already stated in the
-  mission's non-negotiables and Proposal § 6. The failure was reading, not a missing rule.
-
-Findings: 7 — queued 1 (severity: medium-high), declined 6. 1 + 6 = 7.
-
-### Next Steps
-Mission `work-loop-v2-mvp`, Step 6 — **settle finding C**, then run the closure check (A, B, C plus
-blocking regressions only — no second broad review), re-record the accepted commit and its four blob
-hashes, write the disclosed-limitations list, tick the thread and commit. Everything needed is in
-`plans/work-loop-v2-mvp/step-6-candidate-review.md`, which is self-contained. **Read
-`logs/decisions.md:207-208` before choosing on C** — Slice 3 already rejected duplication citing the
-same "link to the core, never restate" rule, which suggests the remaining restatement is partly a
-judged trade-off rather than pure oversight.
-
-### Open Questions
-**One, blocking Step 6:** finding C — correct it fully, bound it to a disclosed limitation with a
-pilot reopening trigger, or accept it outright. Deferred by the operator on 2026-08-01. Claude's
-recommendation is the bounded option, with the stated caveat that Claude authored the artifacts.
-
 ## 2026-08-01 — Session S10-7e5
 
 **Mandate:** Prepare a self-contained adjudication brief that lets Codex give an independent verdict on Work Loop v2 Step 6 finding C — done when: `plans/work-loop-v2-mvp/step-6-finding-c-adjudication-brief.md` exists, names every context file Codex must read by path, states the three recorded options and the two conflicts, discloses Claude's authorship conflict, and is committed
@@ -528,6 +445,76 @@ operator's explicit sign-off before treating anything here as authorizing implem
 corrections are requested, keep applying them in place in this same file — do not create a `-v2` sibling
 ("one file, not two" is load-bearing, per FP-4). Separately: the Work Loop v2 mission's Step 8 v1-retirement
 review brief remains undispatched, untouched this session.
+
+### Open Questions
+None.
+
+## 2026-08-02 — Session S3-e53
+
+**Mandate:** Make two minimal wording corrections in place to `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md` — extend §1's capability definition and replace §4's standing statement — then review the diff and commit only those two changes — done when: both operator-supplied sentences are present verbatim, all 17 behaviour numbers / version v0.1 / draft status are unchanged, the diff shows only those two corrections, and one commit is landed with its hash reported.
+- Out of scope: restructuring, expanding, compressing or otherwise revising the specification; altering the materiality or sequence rules; adding trial metrics, watch items or registers; consolidating the anti-governance provisions; changing or adding behavioural cases; creating implementation or trial plans; pushing.
+- Files in scope: plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md, logs/session-notes.md, logs/friction-log.md
+- Stop if: the §4 statement to be replaced cannot be located as the operator describes it (surface §4's actual wording rather than guessing which sentence to replace), or the diff shows any change beyond the two corrections.
+- Allowed inputs: plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md
+- Footprint widened at wrap (2026-08-02): `logs/friction-log.md`'s auto-tracked write-activity log accumulated this session's own edits (verified by timestamp and filename against the session's actual work) with no clean split from the file's own pre-existing state — the file is auto-tracked, not manually authored. Widened rather than overridden, per the staging guard's own remedy; disclosed here, not silently forced through.
+- Mission: work-loop-v2-mvp
+
+**Work:** Two minimal wording corrections to the Work Loop v2 Context Engineering spec — extend §1's capability definition to cover durable-source maintenance, and correct §4's standing statement to distinguish directional authority from factual/evidentiary standing; commit only those two
+
+### Summary
+Fourth revision round on `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md`, this one bounded
+to two operator-supplied sentences applied verbatim, no derivation. §1's capability definition gained a
+clause covering consuming and — only on material change — maintaining the §5.7 durable sources, so
+context maintenance stays inside the one capability rather than becoming a separate stage. §4's
+standing statement was replaced to separate directional governing authority (operator approval or a
+current operator decision only) from factual/evidentiary standing (which verified reality may carry but
+cannot amend approved direction) — the old wording denied any standing to verified state at all, which
+contradicted §5.3's cited-evidence demotion elsewhere in the same document. Diff reviewed before commit:
+two hunks, sentence-level only. Six other review observations were named and explicitly declined per
+operator instruction, not silently dropped.
+
+### Decisions Made
+- **Scope discipline: two sentences only, no restructuring.** The operator named exactly what to change
+  and what not to touch (materiality/sequence rules, trial metrics, anti-governance consolidation,
+  behavioural cases, implementation plans). Applied as given; declined items logged below rather than
+  silently absorbed.
+- **Verbatim over style-matching.** The old §4 sentence bolded its first clause; the operator's
+  replacement text was plain prose. Applied plain, flagged to the operator as a one-line follow-up if
+  bolding-to-match is wanted — not decided unilaterally.
+- **Skipped the context-discovery engine dispatch at `/session-start` Step 2.4.** A standing instruction
+  in this session forbids calling the Agent tool unless asked; the engine would have added nothing here
+  since the operator stated `files_in_scope` explicitly and operator values override engine output
+  regardless. Surfaced to the operator as a named conflict rather than silently skipped.
+
+### Outcome
+(Outcome check skipped — not requested this wrap.)
+
+### Session Value Audit — 80/20 Review
+(Skipped — not requested this wrap.)
+
+### Risky actions
+None. One file changed (`plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md`), draft-stage spec
+document, no hook/permission/CLAUDE.md/command/agent/symlink surface touched. Diff reviewed before
+commit and confirmed to two hunks only. Push stays gated.
+
+### Findings Declined
+- **§4's old standing sentence read as internally inconsistent with §5.3** (denying all standing to
+  verified repository reality, while §5.3 elsewhere lets cited evidence demote a source) — not queued:
+  the operator had already identified this exact defect and supplied the fix as part of this session's
+  mandate, so there is nothing left to route to the backlog.
+- **Bold-formatting mismatch between the old and new §4 sentence** (old text bolded its lead clause; the
+  operator's replacement is plain prose) — not queued: it is a one-line cosmetic follow-up already
+  flagged inline to the operator in the completion report, not a defect with an independent consequence.
+
+Findings: 2 — queued 0, declined 2. 0 + 2 = 2.
+
+### Next Steps
+Await Codex's closure verdict on this revision (commit `148689d`). If approved, flip the spec's stage
+header from "draft specification — awaiting operator approval" to the approved language and get the
+operator's explicit sign-off before treating anything here as authorizing implementation. If further
+corrections are requested, keep applying them in place in this same file — do not create a `-v2`
+sibling (FP-4). Separately, still undispatched: the Work Loop v2 mission's Step 8 v1-retirement review
+brief.
 
 ### Open Questions
 None.
