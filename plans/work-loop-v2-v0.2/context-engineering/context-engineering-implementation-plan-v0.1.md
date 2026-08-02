@@ -1,6 +1,6 @@
 # Implementation plan: Context Engineering for the Work Loop
 
-**Version:** v0.1 · **Stage:** **draft pending reapproval** — materially edited 2026-08-02 after approval ·
+**Version:** v0.1 · **Stage:** **plan of record** — reapproved 2026-08-02 against commit `e1ce895`, after the material edit recorded below ·
 **Status:** not authorisation to implement — the specification's approval (O-1) is still outstanding.
 
 > **Authority notice.** This plan sequences work; it creates no permission to do it. It is subordinate to
@@ -21,7 +21,16 @@
 > this plan is a proposal.
 >
 > ```
-> Current status:    DRAFT — reapproval outstanding
+> Current status:    APPROVED as the plan of record — operator, 2026-08-02
+> Approved commit:   e1ce895b3da1387bae7ce50623afc3875cb050ba
+> Approved on:       2026-08-02
+> Statement:         "I reapprove `context-engineering-implementation-plan-v0.1.md` as the plan of
+>                    record, bound to commit `e1ce895b3da1387bae7ce50623afc3875cb050ba`, dated
+>                    2026-08-02."
+> Binds to:          the substantive content at e1ce895. The commit carrying this approval record is
+>                    necessarily later than the content it approves — an approval record cannot be part
+>                    of the approved content without becoming self-referential.
+>
 > Prior approval:    APPROVED as the plan of record — operator, 2026-08-02
 > Approved commit:   cc635d4
 > Approved on:       2026-08-02
