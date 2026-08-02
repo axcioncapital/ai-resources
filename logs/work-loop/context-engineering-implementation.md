@@ -29,7 +29,10 @@ CE-3, and CE-15.
 1. `trials/candidate/` contains only `SKILL.md`; at preparation it is 116 lines and byte-identical to
    `.agents/skills/work-loop-v2/SKILL.md` (SHA-256
    `956c76f37230fb2a6b4d1605afecdcb4edd64a5828803464c29a0c9689720868`). It contains none of the named
-   Slice A behaviour. If the red run is green, treat the bootstrap as contaminated and stop.
+   Slice A wording. The red run, not this construction claim, determines whether each case is
+   behaviourally absent. If any case starts green, stop before candidate revision and return it to Codex
+   as a non-discriminating case; call it contamination only if evidence shows the candidate or seed was
+   contaminated.
 2. S2 licenses carriage only when a fresh Codex task is explicitly pointed at the candidate. Ordinary
    installed-skill discovery remains unproved until S8b.
 3. S1's Harbourview scenario and four fixtures exist under `trials/`; each fixture opens with the required
@@ -71,14 +74,17 @@ summaries. Paste the request verbatim for red and green:
    execute the unit, and must not revise the candidate. Its trial-generated state must resolve only inside
    that disposable root.
 2. Preserve the red task reference and its produced state/brief before anything else changes. A red run
-   that does not fail every named case is not proof: stop and return the result to Codex for a Phase 1/S2
-   diagnosis. Do not tune the seed after seeing the output.
+   that does not fail every named case is not proof: stop before candidate revision and return the result
+   to Codex to distinguish pre-existing adjacency from actual contamination. Do not tune the seed after
+   seeing the output.
 3. Only after a genuine red is preserved, the operator drives a separate Codex authoring task to revise
    only `trials/candidate/SKILL.md`. Add the single-pass rule, §4.1 output contract, three-sentence
    orientation, CE-1, CE-2, CE-3, and CE-15; add no later family.
 4. The operator then drives a fresh Codex **green evaluator** in a second disposable root made from the
    same baseline. Copy in only the revised candidate; every other visible file and the seeded input must be
-   identical to red. Preserve its task reference and produced state/brief separately.
+   identical to red. The installed `.agents/skills/work-loop-v2/SKILL.md` must be absent from both roots,
+   leaving the explicitly named candidate as the only Work Loop skill available to either evaluator.
+   Preserve the green task reference and produced state/brief separately.
 5. Return both task references, both primary outputs, and the candidate revision to Codex. Codex will then
    change `turn:` to `claude`; only after that handoff does Claude observe the red/green record, re-derive
    the four counts, and create `trials/slice-a-evidence.md`. Do not send the task to Claude while this file
@@ -109,95 +115,98 @@ S2's accepted isolated rerun established explicit-file carriage without live-sta
 the candidate behaviorally empty. Its rejected live-directory run proved why S3 must isolate trial state
 and preserve red and green outputs separately.
 
-**S3 preparation, Claude, session S8-ff8 — the four premises hold; the red root is built and scrubbed.**
+**Result (Claude, S8-ff8): the evaluation boundary is hardened and preflighted. The root was rebuilt from
+scratch, because the previous one's scrub was cosmetic.**
 
-Premise 1 — **holds.** `trials/candidate/` holds `SKILL.md` alone; 116 lines; SHA-256
-`956c76f37230fb2a6b4d1605afecdcb4edd64a5828803464c29a0c9689720868`, matching the brief's literal hash and
-the live skill's, with `diff` empty. Behavioural emptiness checked four ways — literal `CE-n` references,
-orientation/§4.1/three-sentence language, discovery-unit language, and preparation-pass language — all
-zero, each paired with a positive control that matched. The bounded pattern was necessary: the naive
-case-insensitive `ce-[0-9]+` form false-positives on `slice-1` at candidate line 77, which is the S2 defect
-reproduced exactly.
+*Premises re-checked by inspection this unit; all four hold.* P1 — `trials/candidate/` holds `SKILL.md`
+alone, 116 lines, SHA-256 `956c76f3…`, `diff` against the live skill empty, and zero hits for Slice A
+wording on a bounded `CE-(1|2|3|15|17)`/orientation/discovery-unit/preparation-pass pattern (control
+matched). The bounded form is required: the naive case-insensitive `ce-[0-9]+` false-positives on `slice-1`
+at candidate line 77. P2 — `carriage-trial-record.md` §1 licenses carriage for "a fresh thread pointed at
+that file" and explicitly withholds it for "ordinary skill discovery once installed". P3 — four
+`FIXTURE —` fixtures under `trials/fixtures/ce-9/`; no file in the live `logs/work-loop/` carries a `task:`
+id naming Harbourview. P4 — `trials/slice-a-evidence.md` absent.
 
-Premise 2 — **holds.** `trials/carriage-trial-record.md` §1 states the limit in its own words: carriage is
-licensed for "a fresh thread pointed at that file", and "any claim that the same instruction is picked up
-through **ordinary skill discovery once installed**" is explicitly not licensed, being "unproved until
-S8b's pre/post invocation at the live entrypoint".
+**Why the root was rebuilt rather than amended.** The previous root was a detached git worktree, which was
+Claude's construction choice at preparation and not required by the brief. Inside it, every scrubbed file
+remained fully recoverable — `git show HEAD:…/context-engineering-spec-v0.1.md` returned the governing
+spec, and the implementation plan likewise — while `git status` listed 268 deletions, simultaneously
+announcing that material had been hidden and mapping exactly what to recover. **The scrub was cosmetic; the
+answer key was one command away.** The replacement carries no `.git` at all, so there is no history to read
+and no status to interrogate. Built by `git archive 32d3c26 | tar -x`, which is reproducible for the green
+root.
 
-Premise 3 — **holds.** Four fixtures under `trials/fixtures/ce-9/` (`operator-request.md`,
-`operator-source-note.md`, `project-plan.md`, `task-state.md`), each opening with the `FIXTURE —` notice.
-The fixtures sit one directory deeper than the brief's "under `trials/`" wording implies. No Harbourview
-*state* exists in the live `logs/work-loop/`: no file there carries a `task:` id naming Harbourview
-(checked across all 17 files, control matched). A plain text search does return Harbourview hits in that
-directory, but every one is this state file's own brief prose — not state, and not a contamination.
+**The root.**
+`/private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/ff847f81-f482-4d29-ac4f-caeb88dfadea/scratchpad/wl-root-4c8d`,
+baseline `32d3c26b43348b656bc7ecfabf3e9411b7066ece`, git-less, outside the shared checkout. Its name is
+deliberately opaque and the green root's must be too: the first root was named `s3-red-root`, which put the
+arm and the stage into the first line the thread reads. `trials/candidate/SKILL.md` still reads "trials"
+and "candidate", but that path is fixed by the brief and identical across both arms, so it carries no
+differential signal; a root name has no such defence.
 
-Premise 4 — **holds.** `trials/slice-a-evidence.md` does not exist.
+**Preflight — six properties, every absence check paired with a control that matched.**
 
-**The red root.** Disposable detached worktree at
-`/private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/ff847f81-f482-4d29-ac4f-caeb88dfadea/scratchpad/wl-root-7f3a`,
-baseline `32d3c26b43348b656bc7ecfabf3e9411b7066ece`, outside the shared checkout and its own tree. The
-candidate inside it is byte-identical to the hash above.
+1. Candidate present and unmodified: SHA-256 `956c76f37230fb2a6b4d1605afecdcb4edd64a5828803464c29a0c9689720868`.
+2. Executable core present — the candidate mandates reading it, and it carries no CE content.
+3. **The candidate is the only Work Loop skill in the root**, and `.agents/` now holds zero files. Both
+   installed skills were removed, not only `work-loop-v2`: `work-loop` (v1) is also a Codex Work Loop skill,
+   and its description — "when someone brings a concrete piece of repository work … wants it done properly
+   rather than improvised" — matches the seeded request directly, so it would have been discovered. Codex's
+   requirement is *the only* Work Loop skill; meeting it as stated required removing both. Stated here
+   rather than done quietly (core § 6 rule 4).
+4. No `.git`: `git status` inside the root returns `fatal: not a git repository`.
+5. Answer-key scrub passes: zero files for `CE-(1|2|3|15|17)`, `slice-a-evidence`, `Slice A`, and the
+   count-target phrasings. Harbourview appears in exactly four files, all of them the fixtures. Scrub rule
+   unchanged and reproducible — no `logs/` except `logs/scripts/`, plus four named deletions (the
+   implementation plan, the spec, `carriage-trial-record.md`, and `ce-9-recovery-scenario.md`, whose §6
+   scores what a passing brief must name).
+6. Trial state can resolve only inside the root: `logs/work-loop/` is absent, so the candidate's own rule
+   creates it in-root; and no symlink escapes — see the finding below.
 
-**The root's name is deliberately opaque, and the green root's must be too.** It was first built as
-`s3-red-root`, which put the arm and the stage in a path the thread reads on its first line — a leak I
-introduced and then caught by checking the prompt block against the same answer-key patterns as the root.
-`trials/candidate/SKILL.md` still contains "trials" and "candidate", but that path is fixed by the brief,
-exists in the repository permanently, and is identical across both arms, so it carries no differential
-signal. A root name does not have that defence.
+**Two boundary findings. One fixed inside this unit, one handed to Codex.**
 
-**The scrub, stated as a reproducible rule rather than a file list.** Enumerating answer-key files does not
-survive rebuilding the root from a later commit — the S2 method found three files, whereas at this baseline
-`logs/` alone holds eight-plus, and it grows with every session that writes about this task. The rule
-applied instead: **the red root carries no `logs/` except `logs/scripts/`**, plus four named deletions —
-the implementation plan `-v0.1.md`, the spec `-v0.1.md`, `trials/carriage-trial-record.md`, and
-`trials/ce-9-recovery-scenario.md` (its §6 scores what a passing brief must name, which is the substance of
-the answer). Kept deliberately: the executable core, which the candidate mandates reading and which carries
-no CE content; the two Matt Pocock style documents, checked and carrying neither CE ids nor CE behavioural
-language; and the MVP pilot record.
+- **Fixed — an absolute symlink escaped the root.**
+  `workflows/research-workflow/.claude/commands/session-plan.md` pointed at
+  `/Users/…/Axcion AI Repo/ai-resources/.claude/commands/session-plan.md`, so any read through it left the
+  disposable root and landed in the live checkout. This directly broke the property Codex asked to be
+  verified, so it was fixed rather than deferred. Removed; the three remaining symlinks are relative and
+  resolve in-root. The same deletion must be applied to the green root.
+- **Deferred to Codex — 403 files in the root name the live checkout by absolute path**, 382 of them under
+  `audits/`. This is a disclosure route, not a resolution failure: nothing resolves out of the root by
+  itself, but a thread that reads one of those files learns where a complete, unscrubbed copy of the answer
+  key lives. Removing `audits/` would eliminate 382 of the 403 and costs the trial nothing, but it changes
+  the root's shape and must be applied identically to red and green — a construction decision that is
+  Codex's to ratify, not Claude's to take unilaterally. Not implemented.
 
-Verified after scrubbing, each check paired with a positive control that matched: zero hits for
-`CE-1|CE-2|CE-3|CE-15|CE-17`, zero for `slice-a-evidence`, zero for `Slice A`, zero for the count-target
-phrasings. Two non-zero results were inspected and judged not to be answer key: the English word
-"orientation" in four unrelated documents, none describing an output contract; and "red run"/"green run" in
-`plans/work-loop-v2-mvp/`, which are the MVP pilot's own test-harness runs and say nothing about Slice A.
-Harbourview appears in exactly four files, all of them the fixtures.
+**The green root must be built to match:** `git archive 32d3c26 | tar -x` into an opaquely-named directory
+outside the shared checkout, no `.git`, the same scrub rule, both Work Loop skills absent, the escaping
+symlink removed, and only the revised candidate copied in.
 
-**Three things the observer should carry into the red judgment.**
+**Operator action outstanding — the previous root still exists.**
+`…/scratchpad/wl-root-7f3a` is still registered as a worktree and still carries the recoverable answer key.
+`git worktree remove --force` was attempted and the liveness guard blocked it, correctly: it reads the 268
+scrub deletions as uncommitted work and cannot distinguish them from a live session's. The guard was not
+bypassed. It needs the operator to confirm the root is idle, after which the documented
+`AXCION_LIVENESS_OVERRIDE=1` prefix applies. **Until it is removed, do not use it** — `wl-root-4c8d` is the
+only valid red root.
 
-1. *An adjacency in the pre-existing skill, not a contamination.* Candidate line 51 ("Read the object. Open
-   the file, run the grep, check the line the request cites") sits near CE-1, and line 50 ("one round, not
-   an interrogation") near CE-17 clause 1. Neither is the Slice A behaviour: line 51 presumes the file is
-   already identified and says nothing about locating one, and line 50 limits questioning without barring
-   questions about derivable information. But a red run may partly pass case 1 or case 5 on them. If it
-   does, diagnose the adjacency before concluding the bootstrap is contaminated — the hash proves the
-   candidate is the unmodified live skill.
-2. *A green-root question, raised not answered.* `.agents/skills/work-loop-v2/SKILL.md` is present in the
-   root. It cannot affect red, being byte-identical to the candidate. At green the candidate diverges,
-   and a thread reaching the installed skill by discovery would read behaviourally empty instructions.
-   The brief requires the two roots to differ only in the candidate, so whichever way this is settled must
-   be applied to both. Out of scope for this session.
-3. *This brief was uncommitted when preparation began* — it existed only in the working tree. That is how
-   run 1's control evidence was lost at S2. It is committed with this record.
+*Protocol note:* `## Next action` did not open with core § 3's hand-off token, so this invocation was
+treated as a unit rather than the one bounded correction, despite carrying a closure check. And `turn:` is
+set to `operator` per Codex's explicit instruction rather than the command's `codex` default, because the
+next move genuinely is the operator's.
 
 Carry to task closure as deferrals: candidate-marker wording in plan §7; the plan header's stale O-1
 status; F-10's stale specification line count; and S1's range-based scope check not being duplicated into
 its scenario file.
 
 ## Next action
-Operator: start the red evaluator now in a fresh disposable root outside the shared checkout. Point it
-explicitly at the current `trials/candidate/SKILL.md`, paste only the fixed seeded request above, instruct it
-to prepare but not execute the unit or revise the candidate, and preserve its task reference plus produced
-state/brief; do not begin candidate revision or green unless this genuine red fails every named case.
-
----
-
-**Red evaluator — prepared by Claude, session S8-ff8.** The root is built and scrubbed (see *Latest
-material result*). Paste the block below verbatim into **one fresh Codex task**. Add nothing to it: every
-line it does not contain is deliberate, and the request's three stated unknowns are what cases 1–3 measure.
+Operator: run the red evaluator. Paste the block below verbatim into **one fresh Codex task**. Add nothing
+to it — every line it does not contain is deliberate, and the request's three stated unknowns are what
+cases 1–3 measure. Use `wl-root-4c8d`; the earlier `wl-root-7f3a` is defunct and must not be used.
 
 > You are Codex working in the repository at:
 >
-> `/private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/ff847f81-f482-4d29-ac4f-caeb88dfadea/scratchpad/wl-root-7f3a`
+> `/private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/ff847f81-f482-4d29-ac4f-caeb88dfadea/scratchpad/wl-root-4c8d`
 >
 > Work only inside that directory. Every path you read or write must resolve inside it.
 >
@@ -218,7 +227,11 @@ line it does not contain is deliberate, and the request's three stated unknowns 
 > than guessing. Once the affected set is known, whether guests should be contacted in this unit or later
 > remains my decision.
 
-**After the run, before anything else changes:** preserve the task reference and copy the produced state
-file out of the root. The candidate's `logs/work-loop/` rule resolves *inside* the disposable root, so its
-output lands at `<root>/logs/work-loop/<task-id>.md` — that is the primary evidence, and it is the file S2's
-run 1 destroyed by letting a second run share a root. Do not start the green run in this root.
+**Immediately after the run, before anything else changes:** preserve the task reference and copy the
+produced state file out of the root. The candidate's `logs/work-loop/` rule resolves *inside* the root, so
+the output lands at `<root>/logs/work-loop/<task-id>.md` — that is the primary evidence, and it is the file
+S2's run 1 destroyed by letting a second run share a root. Do not start the green run in this root.
+
+Two items for the operator alongside the run: confirm whether `wl-root-7f3a` is idle so it can be removed
+(the liveness guard blocked removal and was not bypassed), and note that Codex owes a decision on whether
+`audits/` is dropped from both roots — see the deferred finding above.
