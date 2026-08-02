@@ -56,10 +56,6 @@ The file's shape, its five-field ceiling and what sits outside that ceiling are 
 
 **Required evidence must be able to fail** (core § 6 rule 5). Ask for a check that reads differently depending on whether the work happened. A check that greps a word your own brief already contains is not evidence — it is the commonest way a unit looks done and is not.
 
-## Under this carriage
-
-Under this carriage, end every brief with a section named `Carriage check`, listing — in the order you opened them — the repository files you opened while preparing it.
-
 ---
 
 ## Assessing the result
