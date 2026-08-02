@@ -19,6 +19,31 @@ Resolved entries are archived to `improvement-log-archive.md` via `/resolve-impr
 
 ---
 
+### 2026-08-02 — The mandate schema has no field for a file a session **moves or deletes**, so the staging guard blocks every `git mv` commit
+
+- **Status:** logged (pending)
+- **Category:** schema gap — `/session-start` mandate fields vs. `check-foreign-staging.sh` footprint test
+- **Severity:** medium — it does not corrupt repository state and it has a working workaround, but it blocks a legitimate commit and the guard's own prescribed remedy writes a **schema-invalid path** into a durable mandate that six declared readers parse. Recurs on every session that moves, renames, or deletes a tracked file. *(Chosen deliberately over `medium-high`: frequency is limited to move/delete sessions and the blast radius is one blocked commit, not wrong work. Bump it if a second instance lands.)*
+
+**Found by execution, not review** — the guard blocked twice in session `2026-08-02 S1-92b` while committing the `git mv` of the Context Engineering spec from `plans/work-loop-v2-mvp/` to `plans/work-loop-v2-v0.2/`. The block was **correct**; the schema is what has no answer for it.
+
+**The gap, precisely.** A `git mv` stages two paths: the new one, and a **deletion** of the old one. The old path fits neither mandate field:
+
+- `- Files in scope:` **hard-rejects it.** `.claude/commands/session-start.md:288-290` runs an existence test as a HARD REJECT, on the stated reasoning that "everything remaining in `files_in_scope` is by definition something that already exists to be read or edited." A moved-away path does not exist.
+- `- Required outputs:` **does not cover it.** The same passage defines that field as "a file this session will **create**." A deleted path is the opposite.
+
+The guard reads the union of the two bullets and blocks anything in neither (`.claude/hooks/check-foreign-staging.sh:822`), so the commit stops with no schema-valid way to declare the path.
+
+**Mechanical root cause.** `.claude/hooks/check-foreign-staging.sh:690` collects the staged set with `git diff --cached --name-only`. That flattens every change to a bare path and discards the status letter, so the guard cannot tell a `D` (deleted) or `R` (rename source) path from an ordinary edit — and therefore cannot apply a different rule to one. The information needed to close this gap is already in git and is being thrown away at the point of collection.
+
+**What was done in-session, and why it is not the fix.** `Files in scope` was widened with the bare old path — the hook's own prescribed remedy, not a bypass — and the commit went through. But that leaves a path in `Files in scope` that `/session-start` Step 2.5 would have hard-rejected had it been typed at the gate. The workaround defeats the existence test rather than satisfying it, which is why this is logged as a structural item rather than closed as handled.
+
+- **Proposal.** Structural fix (per workspace `CLAUDE.md` § Working Principles — a patch here would mean permanently instructing sessions to write invalid paths into their own mandate). Smallest coherent shape:
+  - **(a) Teach the guard the status letter.** Switch `check-foreign-staging.sh:690` to `git diff --cached --name-status`, and accept a `D`/`R`-source path when it appears in a new `- Files removed:` bullet — or, cheaper, exempt `D`/`R`-source paths from the footprint test entirely when the *destination* path is already inside the declared footprint, which is exactly the `git mv` case and requires no new mandate field. **(a) is the recommended option** — it is one collection-call change plus a conditional, adds no schema surface, and needs no update to the six declared readers of the bullet labels (`session-start.md:371-379`).
+  - **(b) Add a mandate field.** A `- Files removed:` bullet, unioned into the footprint alongside the other two and exempted from the existence test. Honest and explicit, but it widens a parse contract with six declared readers for a case option (a) already covers.
+  - Whichever is chosen, apply it to the `ai-resources/.claude/` copy first; **four other copies of this hook exist** (`ai-resources/.codex/hooks/`, `ai-resources-active-unit-routing/`, `ai-resources-g1-reviewed-plan/`, `projects/axcion-sector-intelligence/`) and drift between them is its own known hazard — decide explicitly whether they are in scope rather than letting them silently diverge.
+- **Target files:** `ai-resources/.claude/hooks/check-foreign-staging.sh:690` (collection call), `ai-resources/.claude/hooks/check-foreign-staging.sh:822` (block message), `ai-resources/.claude/commands/session-start.md:288-290` (existence test rationale) — the last only if option (b) is chosen.
+
 ### 2026-07-29 — `/work-loop` sends every reviewed unit to Codex, but the contract defines the reviewed route as one review *of the result*
 
 - **Status:** logged (pending)
