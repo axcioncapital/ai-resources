@@ -1,7 +1,7 @@
 # Implementation plan: Context Engineering for the Work Loop
 
-**Version:** v0.1 · **Stage:** draft implementation plan — awaiting operator approval · **Status:** not
-authorisation to implement.
+**Version:** v0.1 · **Stage:** approved as the plan of record (2026-08-02) · **Status:** not authorisation
+to implement — the specification's approval (O-1) is still outstanding.
 
 > **Authority notice.** This plan sequences work; it creates no permission to do it. It is subordinate to
 > [`../context-engineering-spec-v0.1.md`](../context-engineering-spec-v0.1.md), which is itself still a
@@ -21,10 +21,19 @@ authorisation to implement.
 > this plan is a proposal.
 >
 > ```
-> Plan approval:   (none — draft)
-> Approved commit: (none)
-> Approved on:     (none)
+> Plan approval:   APPROVED as the plan of record — operator, 2026-08-02
+> Approved commit: cc635d4
+> Approved on:     2026-08-02
 > ```
+>
+> **What this approval does not do.** It answers the second of Phase 0's two questions only. **O-1 — does
+> the specification become governing — is still unanswered**, and §12 states that nothing below starts
+> until both exist. This plan is therefore the plan of record and still not authorisation to implement.
+> S1 cannot open until O-1 is recorded in the specification, bound to a commit.
+>
+> **Assessment status: `unassessed`.** The operator approved before Codex's final closure check on the
+> one-file-candidate fix ran. That check is not owed retrospectively; it is recorded as not run so a later
+> reader does not mistake approval for independent assessment.
 >
 > **This is not "the one canonical project plan" of spec §5.7.** That term names the durable plan a
 > *project* carries so Context Engineering can prepare briefs against it. This is a build plan for the
