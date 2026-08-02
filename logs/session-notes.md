@@ -2,16 +2,6 @@
 
 > Archive: [session-notes-archive-2026-08.md](session-notes-archive-2026-08.md)
 
-## 2026-08-01 — Session S13-ad0
-
-**Mandate:** Resume Work Loop v2 pilot unit 3 from its state file and Git alone — settle the PreToolUse hook cwd question by execution, implement the smallest resolver in check-foreign-staging.sh, and record the unit's outcome in the pilot log — done when: logs/scripts/check-foreign-staging.test.sh reports 6/6 green against the fixed hook; the same harness still reports failure when run against a dead-hook stub; and plans/work-loop-v2-mvp/step-7-pilot-log.md § Unit 3 records the outcome with an evidenced verdict on pilot conditions 3 and 7.
-- Out of scope: Step 8 entirely (demonstrated-blocker fixes, the regression set, the post-pilot assessment, the v1 retirement, the portable-installation blocker); manufacturing a unit to exercise pilot condition 5 (the Direct Work bypass) — it waits for a genuinely small real fix; the .codex fork of the hook, the defect record and the sector-intelligence copy, all three held to later units by Codex's opening brief.
-- Files in scope: logs/work-loop/foreign-staging-target-repo.md, .claude/hooks/check-foreign-staging.sh, logs/scripts/check-foreign-staging.test.sh, plans/work-loop-v2-mvp/step-7-pilot-log.md, logs/session-notes.md, ../projects/axcion-sector-intelligence/.claude/hooks/check-foreign-staging.sh (widened mid-session: Codex opened Unit 2, which authorises the sector-fork backport; declared rather than committed silently)
-- Stop if: the operator declines the throwaway probe hook in ~/.claude/settings.json and no other execution-based way exists to settle the hook-cwd question — stop rather than infer it; or the harness comes back green against the unmodified hook, meaning the recorded defect no longer reproduces — hand back rather than build.
-- Mission: work-loop-v2-mvp
-
-**Work:** Resume Work Loop v2 pilot unit 3 from the state file and Git alone — settle the hook-cwd question by execution, then implement the resolver to 6/6 green
-
 ## 2026-08-01 — Work Loop v2 pilot task `foreign-staging-target-repo` closed; FP-12 and the pilot's own result
 
 ### Summary
@@ -543,3 +533,34 @@ None.
 - Mission: work-loop-v2-mvp
 
 **Work:** Work Loop v2 S3 (Slice A) — verify the brief's four premises and prepare the red evaluator run per Codex's brief
+
+### Summary
+Continued the same session past the original mandate's scope, inside the Work Loop v2 protocol: the
+task-state file (`logs/work-loop/context-engineering-implementation.md`) carried a Codex-authored brief
+for a bounded correction to the implementation plan, and the operator authorised a subsequent one-round
+scope widening. Ran three Claude turns of the loop — the initial bounded plan correction, a frozen
+four-passage correction round, and a final administrative fix recording the exact commit to reapprove —
+each verified by inspection before editing, committed separately, and handed back with `turn:` set to
+whoever owned the next move. The task now sits at `turn: operator`, waiting on the reapproval decision.
+
+### Decisions Made
+- **Operator authorised widening the plan-correction scope beyond the three originally named surfaces**,
+  accepting Codex's recommended option over declining and leaving the plan internally contradictory. Not
+  logged to `decisions.md` — routine within the Work Loop v2 protocol's own correction-round mechanism
+  (core §3), not a fresh scoping judgment outside it.
+- Claude's three turns each followed the executable core's Step 2→3/Step 5 and Correction-rounds paths
+  exactly: verify by inspection, edit only the named surfaces, write falsifiable evidence, flip `turn:`,
+  commit. No QC fixes this session — Codex's own closure checks served that role per the protocol.
+
+### Risky actions
+None. All three commits were plan/state-file edits verified byte-identical against their diff bounds
+before committing; no candidate, runtime, spec, command or hook file was touched at any point.
+
+### Next Steps
+Operator: give the reapproval sentence recorded in `## Next action` of the task-state file (binds to
+commit `e1ce895b3da1387bae7ce50623afc3875cb050ba`), or decline it. Reapproval does not authorise
+implementation — O-1 is still outstanding. Once resolved, the task returns to Codex to brief S3's next
+attempt.
+
+### Open Questions
+None.
