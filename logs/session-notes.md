@@ -1249,3 +1249,13 @@ None — no v1 artifact was moved, edited or archived; the retirement stays behi
 
 ### Open Questions
 None.
+
+## 2026-08-02 — Session S1-92b
+**Mandate:** Revise the Context Engineering spec once against Codex's review (findings A–H), move it out of the MVP mission folder, and commit — done when: the revised document is committed at `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md` and the session stops for Codex closure review.
+- Out of scope: implementing the capability; opening any Work Loop state file or invoking `/work-loop-v2`; the separate Step 8 v1-retirement review, which is a different undispatched review.
+- Files in scope: logs/session-notes.md, logs/friction-log.md, plans/work-loop-v2-mvp/context-engineering-spec-v0.1.md
+- Stop if: the staging guard blocks the commit again on a footprint it reads as foreign — surface it to the operator rather than overriding.
+- Allowed inputs: plans/work-loop-v2-mvp/step-7-pilot-log.md, plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md, logs/missions/work-loop-v2-mvp.md
+- Required outputs: plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md
+
+**Work:** Commit the once-revised Context Engineering spec (post-MVP Work Loop v0.2), then stop for Codex closure review
