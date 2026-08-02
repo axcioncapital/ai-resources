@@ -518,3 +518,13 @@ Findings: 0 — direct route, no review produced findings.
 
 ### Open Questions
 None.
+
+## 2026-08-02 — Session S7-3fb
+
+**Mandate:** Run Claude's half of Work Loop v2 Unit 2 (S2) Stage 1 — check the brief's four premises against the live repository, author the single isolated inline-carriage probe candidate, prepare the two fresh-Codex prompts in the task-state file, set `turn: operator`, commit and stop.
+- Out of scope: running or judging either trial run; creating `trials/carriage-trial-record.md`; stripping the probe; installing the candidate; editing the live skill, the S1 scenario or its fixtures; pushing.
+- Files in scope: plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md, logs/work-loop/context-engineering-implementation.md, logs/session-notes.md
+- Stop if: a brief premise is false, or inline delivery would require a second file or live installation.
+- Mission: work-loop-v2-mvp
+
+**Work:** Work Loop v2 Context Engineering S2 Stage 1 — author the isolated inline-carriage probe candidate and prepare the two fresh-Codex prompts
