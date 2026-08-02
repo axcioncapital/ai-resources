@@ -1,6 +1,6 @@
 ---
 task: context-engineering-implementation
-turn: codex
+turn: operator
 ---
 
 ## Objective and approved scope
@@ -14,9 +14,9 @@ Governing specification: `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.
 against `cc635d4`.
 
 ## Current lane and unit
-Standard. The three-surface plan correction is accepted, and the operator has authorised one correction
-round frozen to four surviving contradictory passages. Exact-content reapproval, S3 candidate revision,
-and green remain stopped until its closure check.
+Standard. Both plan-correction rounds pass Codex's closure check. The plan is internally consistent and
+remains a draft pending exact-content reapproval; S3 candidate revision and green remain stopped. One final
+tightly bounded administrative fix is open because the state does not name the commit to reapprove.
 
 Named reason for the loop: the implementation spans multiple sessions, its scope must remain bounded across
 S1–S12, and each result needs assessment by someone other than its builder before progression.
@@ -62,6 +62,21 @@ the corrected wording cannot be read as all-five red–green causality. Stop if 
 specification change or expands beyond the three named plan surfaces.
 
 ## Latest material result
+**Codex closure decision:** findings 1–4 are resolved. The accepted three-surface contract remains intact;
+the actor, seed, counts, family assignment, later-slice rules, candidate, runtime files, and trial evidence
+are unchanged. The remaining historical phrasing at plan line 573 is the explicit deferral named by the
+freeze, not an executable contradiction.
+
+**The commit to reapprove — `e1ce895b3da1387bae7ce50623afc3875cb050ba`.** That commit carries the fully
+corrected plan content Codex accepted: round 1's three surfaces and round 2's frozen four, together. The
+prior approval binds to `cc635d4` and does not cover this content.
+
+*Verified byte-unchanged at the time of recording.* `git diff --stat e1ce895 -- <plan>` is empty, and the
+plan's blob hash is `8517a7ef871ace5141b50e3ff16e5264913c9e1a` both in that commit and in the working tree.
+The check can fail: `git hash-object` on a one-byte input returns a different hash (`c1b0730e…`), so
+identical hashes are a real match and not a constant. No plan edit was made in this unit — `git status`
+lists only this state file and the hook-written friction log.
+
 **Round 1 — the three-surface correction — is accepted by Codex** and stands unchanged: §4.4's candidate
 contract, the Phase 2 cycle, and S3's evidence and exit language implement all five authorised points,
 preserve the family, actors, fixed seed, counts, isolation contract and later sessions, and do not
@@ -145,16 +160,22 @@ removal of obsolete `wl-root-7f3a` after the operator confirms it is idle; and `
 valid red root and its primary output are preserved and untouched.
 
 ## Next action
-Codex: run the closure check on the frozen findings only. Two questions.
+Operator: reapprove the corrected plan, or decline it. Nothing proceeds until this is recorded.
 
-1. **Are findings 1–4 resolved?** The reproduction record, the per-finding table and the phrase counts are
-   above.
-2. **Did the correction break anything?** Specifically: the already-accepted three-surface contract, or any
-   actor, seed, count, family assignment, later-slice rule, candidate, runtime file or trial evidence. The
-   five-hunk diff bound and the preserved-item checks are above.
+**The exact wording to give, if reapproving:**
 
-Anything newly noticed at closure is a deferral, not a third round (core §3).
+> I reapprove `context-engineering-implementation-plan-v0.1.md` as the plan of record, bound to commit
+> `e1ce895b3da1387bae7ce50623afc3875cb050ba`, dated 2026-08-02.
 
-On close, the plan is ready for the operator's exact-content reapproval, bound to the commit carrying both
-corrections rather than to `cc635d4`. S3's candidate revision, the green root and
-`trials/slice-a-evidence.md` stay stopped until that reapproval is recorded.
+The commit hash is what makes it an approval of *content* rather than of a filename — the plan's own rule
+(header, *Approval binds to content*), and the reason the material edit returned it to draft.
+
+**What reapproval does and does not do.** It restores this plan as the plan of record. It does **not**
+authorise implementation: O-1 — whether the specification becomes governing — is still unanswered, and the
+plan states that nothing starts until both approvals exist. S3's candidate revision, the green root and
+`trials/slice-a-evidence.md` stay stopped either way.
+
+**Declining** returns the task to Codex to reframe S3, with the corrected plan left as a draft.
+
+Writing the approval line into the plan header is a separate unit and was not done here — this fix was
+bounded to recording the hash. No further review is owed on the correction.
