@@ -461,9 +461,11 @@ files. Supersession is explicit.
 
 #### Current state — separate, concise, never invented
 
-Current state carries only what is required to resume correctly: current phase or unit · latest material
-result · unresolved blocker · exact next action · governing-plan reference. **It is not a diary and does
-not duplicate the governing plan.**
+Current state carries only what is required to resume correctly — semantically, things of the kind:
+current phase or unit · latest material result · unresolved blocker · exact next action · governing-plan
+reference. **These are examples of that kind, not a schema this specification prescribes**; the existing
+interface keeps whatever shape it already has. **It is not a diary and does not duplicate the governing
+plan.**
 
 Where no applicable current-state source exists, Context Engineering first derives what it can from the
 governing plan, verified repository evidence, closed task outcomes, and applicable authoritative project
@@ -605,9 +607,10 @@ shape being **casual operator material promoted to a decision because the operat
 *Succeeds if* each is classified by its semantic role under §4 — exploratory idea · clarification ·
 source material · explicit decision — with only W carrying authority, and any materially ambiguous role
 routed under §5.4 rather than resolved toward promotion.
-*Evidence:* each of the four items' disposition under §5.1, plus CE-14's reclassification disclosure. The
-run fails if fewer than four distinct dispositions were possible — a design that cannot tell Z from W
-cannot pass this behaviour.
+*Evidence:* each of the four items classified to its correct **semantic role**, plus CE-14's
+reclassification disclosure. Note that several roles correctly share one §5.1 disposition — X, Y and Z all
+land in non-governing background — so the test is role accuracy, not disposition variety: the run passes
+only if all four roles are correctly identified **and W alone carries authority**.
 
 **CE-6 · Demotion requires a citation; supersession is explicit.**
 *Failing case A:* a source that reads as stale but carries no supersession evidence. *Fails if* it is
@@ -700,8 +703,9 @@ the deviation is silently applied. *Succeeds if* the brief either shows the work
 plan, or **explicitly surfaces the proposed deviation** rather than applying it.
 *Evidence:* the brief's opening orientation, checked against the approved plan; and zero additional
 operator-visible stages, approval gates, review passes, or persistent artifacts beyond the engineered
-brief. *(Objective fidelity — whether the brief is still aimed at the operator's objective at all — is
-CE-11.)*
+brief and §5.7's three permitted categories — maintaining the canonical plan, optional source material or
+the existing current-state interface is not an additional artifact (CE-16). *(Objective fidelity — whether
+the brief is still aimed at the operator's objective at all — is CE-11.)*
 
 **CE-11 · The unit is bounded, what is held back is named, and the operator's objective is not
 substituted.**
@@ -789,9 +793,11 @@ opposite error. *Evidence:* the disclosure section, checked against the four kin
 *Failing case:* the run produces a separate operator-orientation document. *Fails* on production of the
 second document. *Succeeds if* one brief opens with the §4.1 orientation paragraph — three sentences at
 most — and continues into Claude's execution context.
-**A material update to the one canonical plan, or to existing current state, is not a second handoff
-artifact** (§5.7) — those are durable context, not a description of the unit. It must not, however,
-produce *another document describing the same unit*; that is the FP-4 failure either way.
+**Maintaining the one canonical plan, or existing current state, is not automatically a second handoff
+artifact** (§5.7) — it is durable context being kept current, and current state legitimately names the
+open unit and the next action. **The test is duplication, not mention.** It fails only where the update
+restates the brief — becoming a *second description of the same unit* that can drift against it, which is
+the FP-4 failure either way.
 *Evidence:* the count of artifacts describing the unit, which must be one; and the orientation's sentence
 count.
 
@@ -873,7 +879,7 @@ silently reopened.
 
 **One downstream adoption dependency, recorded — not an open specification item.** The behaviour defined
 here takes effect only once the **Work Loop entry protocol** invokes Context Engineering before
-plan-dependent briefing or continuation (CE-9's adoption boundary). That protocol is outside this
+plan-dependent briefing or continuation (CE-17's adoption boundary). That protocol is outside this
 specification and is not edited by it.
 
 ---
