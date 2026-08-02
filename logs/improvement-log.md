@@ -2560,3 +2560,45 @@ executing session cannot reach, surface it *at the moment of detection*, before 
 that evidence begins — and treat it as a named stop condition even when the mandate's own stop list
 does not enumerate it. Whether this belongs in the session-mandate schema, in `/session-plan`'s
 self-check, or purely as posture is undecided and should not be built from this text alone.
+
+### 2026-08-02 — Every Phase 2 trial run needs an isolated root AND an answer-key scrub, and the implementation plan requires neither
+
+- **Severity:** medium-high
+- **Category:** Context Engineering build — trial construction, inherited by S3–S7
+- **Source:** ai-resources, 2026-08-02 session S7-3fb, observed during S2's rejected first run and its bounded correction.
+
+**Two independent mechanisms make an unisolated trial run invalid, and S2 hit both in a single run.**
+
+*Mechanism 1 — the candidate cannot avoid writing into the live directory.* `trials/candidate/SKILL.md`
+is a faithful revision of the live Codex skill, and that skill's line 33 fixes the state-file folder as
+`logs/work-loop/` with "no fallback path". So **any** trial run driven by the candidate writes there.
+S2's first run put a fictional Harbourview task into the live Work Loop directory carrying `turn: claude`,
+where the live command could resolve it — exactly what plan §4.4 rule 2 forbids and names explicitly. It
+also meant both runs shared one output path, so the candidate run overwrote the negative control's state
+file before either was committed, destroying half the evidence unrecoverably.
+
+*Mechanism 2 — a worktree of this repository carries the answer key.* `git grep -l -F 'Carriage check'`
+against the S2 baseline returned three files: the candidate itself, **this task's own state file**, and
+**plan §7 S2** — the latter two stating the probe *and its expected outcome*. A re-run against an
+unscrubbed worktree hands both threads the answer, and the trial is invalid on arrival rather than
+detectably wrong afterwards.
+
+**Why this is not closed by S2's correction.** S2 solved both for itself — two disposable detached
+worktrees outside the repo, answer key scrubbed from each identically. But that construction was invented
+inside the correction round; **the implementation plan does not require it**, and S3–S7 each run further
+trials against the same candidate. The next slice will reproduce mechanism 1 by default unless its brief
+says otherwise, and mechanism 2 grows worse with every session, because each new state-file and record
+entry adds more of the expected outcome to the tree the next trial gets cloned from.
+
+**Shape of the fix (not built — this is a plan amendment, not code).** Add the isolation requirement to
+plan §4.4 or to Phase 2's standing rules, so it is a premise every slice brief inherits rather than a
+thing each session must rediscover: run in a disposable root outside the live repository, scrub the
+answer key from that root before the run, and never satisfy isolation by editing the candidate — the
+candidate is the object under test. S2's trial record
+(`plans/work-loop-v2-v0.2/context-engineering/trials/carriage-trial-record.md`) carries the worked
+example and both construction decisions.
+
+**Why medium-high and not high.** Nothing is currently broken and S2's result is sound — the correction
+caught both mechanisms and the re-run was clean. It is medium-high because it fires again at S3, which is
+the very next unit, and because mechanism 2 fails *silently*: a contaminated run produces a plausible
+green rather than an error.

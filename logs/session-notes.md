@@ -2,86 +2,6 @@
 
 > Archive: [session-notes-archive-2026-08.md](session-notes-archive-2026-08.md)
 
-## 2026-08-01 — Session S12-3bc
-
-**Mandate:** Run pilot unit 3 of the Work Loop v2 MVP (Step 7) as a deliberate mid-task session-handoff test — Codex opens the unit, Claude checks its premises and implements partway, then this session stops so a fresh session finishes from the state file and Git alone — done when: unit 3's state file exists under `logs/work-loop/` carrying Codex's opening brief, Claude's premise-check record and a partial implementation; that state file is committed and this session stops mid-unit, leaving a fresh session able to finish from it and Git alone; and `plans/work-loop-v2-mvp/step-7-pilot-log.md` § Unit 3 records the unit as open with its status against conditions 3, 5 and 7.
-- Out of scope: Step 8 entirely — fixing demonstrated blockers, running the regression set, the post-pilot assessment, executing the v1 retirement, and the portable-installation blocker.
-- Files in scope: plans/work-loop-v2-mvp/step-7-pilot-log.md, plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md, .claude/commands/work-loop-v2.md, .agents/skills/work-loop-v2/SKILL.md, .claude/hooks/check-foreign-staging.sh, .codex/hooks/check-foreign-staging.sh, logs/missions/work-loop-v2-mvp.md, logs/session-notes.md, logs/work-loop
-- Stop if: Codex has not opened unit 3 (no opening brief on disk) — Claude cannot open it, so the loop stalls there by design; or the candidate unit's premise fails the check (the `check-foreign-staging.sh` footprint-tokenizer defect no longer reproduces) — hand back rather than build.
-- Required outputs: logs/work-loop/foreign-staging-target-repo.md, logs/scripts/check-foreign-staging.test.sh
-- Mission: work-loop-v2-mvp
-
-**Work:** Continue the Work Loop v2 pilot — unit 3 as the mid-task session-handoff test
-
-### Summary
-Ran Work Loop v2 pilot unit 3 (Step 7), designed from the start as the mid-task session-handoff test —
-the last of three pilot conditions never exercised in units 1 and 2 (state recovery, the Direct Work
-bypass, clean fresh-session continuation). Codex opened the unit against the recorded
-`check-foreign-staging.sh` nested-repo defect; Claude checked all five of Codex's premises by
-execution, built a permanent isolated-repo test harness (4 red / 2 green against the unmodified hook),
-found an unrecorded silent-pass failure mode the original defect entry does not mention, and stopped
-deliberately mid-task with a self-contained checkpoint. The hook itself was never touched this session.
-
-### Decisions Made
-- **(Codex)** Scoped Unit 1 narrowly — canonical hook plus a permanent harness only; docs, the defect
-  record, the `.codex` fork and the sector-intelligence copy explicitly held to later units. Excluded
-  the backlog entry's own "soft warn" fallback (both prior gates rejected it) and the retired
-  `/risk-check`.
-- **(Claude)** Rebuilt the premise-check as an isolated `mktemp -d` harness after Codex's brief
-  required it, discarding an earlier live-working-tree reproduction that depended on ambient dirt and
-  would not have survived a re-run (FP-7).
-- **(Claude)** Corrected the harness's own fixture after running it exposed that C3 was going red for
-  the wrong mechanism (blocking on an untracked `nested/` dir rather than reproducing the documented
-  silent pass) — added a `.gitignore` line mirroring the live workspace's actual invisibility, commented
-  in place (FP-8).
-- **(Claude)** Recorded, rather than silently accepted, that two of six harness assertions (C2, C6)
-  pass even against a dead no-op hook — proved with a stub swap — and named the remedy (a
-  positive-identity assertion on C2) instead of shipping a harness with an undisclosed blind spot (FP-9).
-- **(Claude)** Verdicted pilot conditions 3 and 7 as PENDING rather than yes — the checkpoint is staged
-  and self-contained, but only the resuming session can prove the handoff actually works. Verdicting
-  them now would close by assertion, the exact failure this pilot has avoided twice already.
-- **(Claude)** Did not attempt to exercise condition 5 (Direct Work bypass) inside this unit — the
-  defect is not small and reversible, so it was correctly admitted; manufacturing a small unit to force
-  the condition would breach the pilot's genuine-units constraint. Recorded as still owed.
-
-### Outcome
-Outcome check skipped (not requested).
-
-### Session Value Audit — 80/20 Review
-Skipped (not requested).
-
-### Risky actions
-None destructive. The hook that gates every commit in this repo (`check-foreign-staging.sh`) was the
-subject under test but was never edited — the plan's stop point (state file committed before any hook
-edit) was never reached this session, since the session stopped at the premise-check/harness stage.
-Both mission-file-adjacent writes (pilot log, session notes) were ordinary content edits, not
-frozen-prefix mission-file writes. No destructive git operation, no push, no external write.
-
-### Findings Declined
-None this session beyond FP-7/FP-8/FP-9, which are recorded in full in the pilot log
-(`plans/work-loop-v2-mvp/step-7-pilot-log.md` § Unit 3 § Friction points) and in the state file
-(`logs/work-loop/foreign-staging-target-repo.md`) — not duplicated into `improvement-log.md`, since
-they are pilot-run observations whose correct durable home is the pilot's own record, per the same
-reasoning prior units applied to their own friction points.
-
-Findings: 0 — direct review (this was a build/verify session, not an audit) produced no candidate for
-`improvement-log.md` beyond what's already durably recorded above.
-
-### Session Assessment
-Skipped (not requested).
-
-### Next Steps
-- **Resume Work Loop v2 pilot unit 3 in a fresh session, from `logs/work-loop/foreign-staging-target-repo.md` and Git alone.** First action: settle whether a PreToolUse hook's process cwd equals the Bash tool's cwd or the project root — by execution, not inference. This requires temporarily registering a throwaway probe hook in `~/.claude/settings.json`, which is a gated harness-config change — **ask the operator before doing it.**
-- Once settled, implement the smallest resolver satisfying Codex's four required behaviours (fail closed on any unparseable wide-add shape), re-run `logs/scripts/check-foreign-staging.test.sh` to 6/6 green, and re-verify against a dead-hook stub that it still reports failure.
-- Separately, whenever a genuinely small real fix comes up, route it through `/work-loop-v2` to exercise condition 5 (Direct Work bypass) — do not manufacture one.
-- Continuity scratchpad: `logs/scratchpads/2026-08-01-21-30-scratchpad.md`.
-
-### Open Questions
-**The usefulness judgment, still owed by the operator, asked a third time across three sessions.**
-The mission's definition of done requires the operator's judgment that the loop produced useful real
-work, not merely a count of completed units. Three units have now closed or reached their designed
-stopping point. Not answered this session.
-
 ## 2026-08-01 — Session S13-ad0
 
 **Mandate:** Resume Work Loop v2 pilot unit 3 from its state file and Git alone — settle the PreToolUse hook cwd question by execution, implement the smallest resolver in check-foreign-staging.sh, and record the unit's outcome in the pilot log — done when: logs/scripts/check-foreign-staging.test.sh reports 6/6 green against the fixed hook; the same harness still reports failure when run against a dead-hook stub; and plans/work-loop-v2-mvp/step-7-pilot-log.md § Unit 3 records the outcome with an evidenced verdict on pilot conditions 3 and 7.
@@ -523,8 +443,91 @@ None.
 
 **Mandate:** Run Claude's half of Work Loop v2 Unit 2 (S2) Stage 1 — check the brief's four premises against the live repository, author the single isolated inline-carriage probe candidate, prepare the two fresh-Codex prompts in the task-state file, set `turn: operator`, commit and stop.
 - Out of scope: running or judging either trial run; creating `trials/carriage-trial-record.md`; stripping the probe; installing the candidate; editing the live skill, the S1 scenario or its fixtures; pushing.
-- Files in scope: plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md, logs/work-loop/context-engineering-implementation.md, logs/session-notes.md
+- Files in scope: plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md, logs/work-loop/context-engineering-implementation.md, logs/session-notes.md, plans/work-loop-v2-v0.2/context-engineering/trials/carriage-trial-record.md, logs/session-notes-archive-2026-08.md, logs/decisions.md, logs/improvement-log.md, logs/next-up.md, logs/friction-log.md, logs/destructive-override.log, logs/runs/2026-08-02-S7-3fb.json, logs/scratchpads/2026-08-02-20-55-scratchpad.md
 - Stop if: a brief premise is false, or inline delivery would require a second file or live installation.
 - Mission: work-loop-v2-mvp
 
 **Work:** Work Loop v2 Context Engineering S2 Stage 1 — author the isolated inline-carriage probe candidate and prepare the two fresh-Codex prompts
+
+### Summary
+Ran Claude's half of Work Loop v2 Unit 2 (S2) — the isolated inline-carriage probe trial — end to end,
+including one bounded correction. Authored the single candidate (`trials/candidate/SKILL.md`: the live
+116-line Codex skill plus one inline probe), prepared two fresh-Codex prompts, and handed to the operator.
+The first trial produced the right signal but was **rejected**: because the candidate faithfully copies the
+live skill's `logs/work-loop/` rule, both runs wrote a fictional Harbourview task into the *live* Work Loop
+directory with `turn: claude`, and the second run overwrote the first's state file before either was
+committed, destroying the control's evidence. Raised both as observer findings; Codex froze a bounded
+correction on them. Built two disposable detached worktrees outside the repo, scrubbed the probe's answer
+key from both, and the operator re-ran. Both findings verified resolved by inspection: live directory clear,
+two independently inspectable state files, control without the probe section and candidate with it listing
+five verified paths. Wrote the trial record, stripped the probe, and confirmed the candidate is now
+byte-identical to the live skill. Codex accepted S2 — Phase 1 complete.
+
+### Decisions Made
+- **Built the candidate without plan §4.4's `FIXTURE —` marker**, despite plan §7 `:551` calling it a
+  fixture. A line telling the trial thread the file "carries no authority" confounds a probe that measures
+  whether the thread *follows* the file; at S8b the candidate's content lands in the live skill, so a marker
+  would be a second thing needing stripping when only the probe is scheduled for removal; and §4.4's box is
+  scoped to seeded project artifacts, not a working revision of a real skill. Recorded for Codex to reverse;
+  it did not, and carried the plan wording as a deferral.
+- **Scrubbed the answer key from both correction roots, identically** — not specified by the frozen finding.
+  The baseline tree carried this task's state file and plan §7 S2, both stating the probe's expected
+  outcome; unscrubbed, the re-run would have handed both threads the answer. Alternative considered and
+  rejected: hand back to Codex, which would have cost a full round for a construction detail resolvable
+  inside the correction's own scope.
+- **Left the candidate file present in the control root**, because the frozen finding required the two roots
+  to differ only in the instruction supplied. Accepted that this makes the control blind *by instruction*
+  rather than *by construction*, and recorded it as a residual weakness rather than fixing it unilaterally.
+- **Judged the task-id variation immaterial and did not escalate.** The two threads chose different task ids
+  though neither prompt prescribed one; Codex asked to be stopped only if that weakened the observer
+  judgment. The probe check is a within-file presence test, so it never depended on the two files sharing a
+  name. Recorded in the trial record.
+- **Declined to implement the fictional Harbourview unit** when the trial output instructed it. Its premise 3
+  (a live Harbourview implementation and booking data exist) is false — a repo-wide search returns no
+  Harbourview artifact. Executing it would have been trial material escaping into real work.
+- Routine: used the audited liveness override to remove the two disposable worktrees only after the operator
+  explicitly confirmed both idle; declared the session mandate footprint mid-session after the staging guard
+  correctly blocked a footprint-less commit.
+
+### Risky actions
+Two destructive-guard interventions, both of which fired correctly and neither of which was bypassed. (1)
+`check-foreign-staging.sh` blocked the first commit because this session reached `/work-loop-v2` without
+`/session-start` and therefore had no declared file footprint; resolved by declaring the mandate, not by
+widening the stage. (2) `check-destructive-liveness.sh` blocked `git worktree remove` twice, reading both
+disposable roots as occupied; resolved only after the operator explicitly confirmed both idle, then via the
+documented `AXCION_LIVENESS_OVERRIDE=1` prefix, which wrote two audit lines to
+`logs/destructive-override.log`. No marker file was deleted to evade a guard. Separately, and more
+seriously: a trial run wrote fictional state into the live `logs/work-loop/` directory with `turn: claude`,
+making a fictional task resolvable by the live command — caught at observation, the run rejected, the
+artifact preserved outside the repo and later removed after its evidence was captured.
+
+### Findings Declined
+- *A case-insensitive `grep` false-positived on `CE-[0-9]+`*, matching the substring `ce-1` inside
+  `slice-1`. Caught in-session by its own positive control before it could produce a false pass, and the
+  general rule (pair every absence check with a control proving the same pattern form can match) is already
+  recorded durably in the trial record and the continuity scratchpad. No consequence reached the artifact.
+- *Reaching `/work-loop-v2` without `/session-start` leaves a session with no mandate footprint, which the
+  staging guard then blocks.* Real, but already queued in a more general form — `logs/next-up.md` carries
+  "A `/clarify`-first session gets no marker, so the wrap guard classifies its own work as foreign and halts
+  the wrap" (`b9a7d0e41983`). A second entry would split one defect across two queue items.
+- *The `harbourview-*` brief Codex produced was substantively strong* — it recovered SD-3, ranked the defect
+  above the email template, and carried the 2026-06-14 boundary. Not queued and not scored: brief quality is
+  CE-9's measurement, taken at S5 against S1's instrument, and S2 measures carriage only.
+
+Findings: 4 — queued 1 (severity: medium-high), declined 3. 1 + 3 = 4.
+
+### Next Steps
+- **Operator decision pending:** authorise Work Loop v2 **S3 (Slice A, the first red–green trial)** or stop
+  after the completed Phase 1. If authorised, the decision goes back to Codex so it writes the S3 brief —
+  do not start S3 from the plan directly.
+- **Read the queued finding before S3 is briefed** (`logs/improvement-log.md`, 2026-08-02, trial isolation).
+  S3 reproduces the live-directory escape by default unless its brief requires a disposable root and an
+  answer-key scrub.
+- Four deferrals still carried on the task: the candidate-marker wording at plan §7 `:551`; the
+  implementation plan header's stale O-1 status; F-10's stale specification line count; and S1's range-based
+  scope check not duplicated into its scenario file.
+- Still undispatched, unchanged from prior sessions: the Work Loop v2 mission's Step 8 v1-retirement review
+  brief.
+
+### Open Questions
+None.

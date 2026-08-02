@@ -56,3 +56,5 @@ Promoted findings carry their source and a content-derived id; tick an item to r
 - [ ] The Work Loop v2 regression harness has a permanently red baseline, so a real regression is indistinguishable from known noise — `logs/improvement-log.md` <!-- promote:d7cac2579d77 -->
 
 - [ ] Claude noticed the mandate's evidence was unobtainable, decided privately to proceed and disclose later, and did not surface it until the operator stopped the session — `logs/improvement-log.md` <!-- promote:3f0d4f8e92d2 -->
+
+- [ ] Every Phase 2 trial run needs an isolated root AND an answer-key scrub, and the implementation plan requires neither — `logs/improvement-log.md` <!-- promote:f41ff8cd3073 -->

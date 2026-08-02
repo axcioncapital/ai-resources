@@ -123,3 +123,51 @@ recorded in `logs/scratchpads/2026-08-02-13-08-scratchpad.md` so it need not be 
 **Not decided here.** Whether the CE spec's stage header flips from "draft specification — awaiting
 operator approval". The approval given was scoped *"for this implementation unit"*, so the spec was
 left untouched.
+
+## 2026-08-02 — Two S2 trial-construction calls taken inside a frozen correction rather than handed back
+
+**Context.** Work Loop v2 Context Engineering S2 built an isolated carriage-probe trial. Twice, the
+governing text was ambiguous or incomplete in a way that changed the artifact, and the loop's correction
+round is explicitly frozen to the findings the assessment named — so "notice and hand back" was a live
+alternative each time, at the cost of a full round.
+
+**Decision 1 — the candidate carries no `FIXTURE —` marker.** Plan §7 `:551` calls the candidate "a
+fixture", and plan §4.4 requires every fixture to open with `FIXTURE — … Carries no authority.` The
+candidate was built without it.
+
+*Rationale.* Three grounds, in order of weight: (a) the marker tells the trial thread the file has no
+authority, which directly confounds a probe measuring whether the thread *follows* that file; (b) at S8b
+the candidate's content lands in the live skill, so a marker becomes a second thing requiring stripping
+when only the probe is scheduled for removal; (c) §4.4's fixture box is scoped to *seeded project
+artifacts* — plans and current-state files that could be mistaken for real authority — whereas the
+candidate is a working revision of a real skill held outside the live path.
+
+*Alternatives considered.* Add the marker and accept the confound — rejected, it degrades the measurement
+the session exists to take. Hand back to Codex for a wording ruling — rejected as disproportionate for a
+one-line, trivially reversible property; the decision was instead written into the state file for Codex to
+overturn at assessment. It did not overturn it, and carried the plan's wording as a deferral.
+
+**Decision 2 — the answer key was scrubbed from both correction roots, identically.** The frozen finding
+prescribed two disposable worktrees of the same committed baseline, differing only in whether the candidate
+instruction is supplied. It did not mention scrubbing.
+
+*Rationale.* A worktree carries the whole committed tree. `git grep -l -F 'Carriage check'` at the baseline
+returned this task's own state file and plan §7 S2, both stating the probe **and its expected outcome**.
+Left in place, the re-run would have handed both threads the answer and been invalid on arrival — silently,
+producing a plausible green rather than an error. Scrubbing serves the frozen finding directly (it is what
+makes the re-run's control evidence meaningful) rather than expanding the correction's scope.
+
+*Alternatives considered.* Run unscrubbed and note the exposure — rejected, it would have wasted the
+operator's two runs on an uninterpretable result. Hand back to Codex — rejected as a full round spent on a
+detail resolvable inside the correction's own purpose. Remove the candidate from the control root as well
+— rejected because the frozen finding required the roots to differ *only* in the instruction supplied;
+that residual weakness (control blind by instruction, not by construction) was recorded rather than fixed.
+
+**Governing principle applied.** Both were surfaced explicitly for the reviewer rather than resolved
+silently, per workspace `CLAUDE.md` § Design Judgment Principles. Codex accepted both at the S2 closure
+check; the worked detail lives in
+`plans/work-loop-v2-v0.2/context-engineering/trials/carriage-trial-record.md`.
+
+**Not decided here.** Whether plan §7 `:551`'s "it is a fixture" wording should change, and whether the
+isolation-plus-scrub requirement should be written into plan §4.4 as a standing Phase 2 rule. The second is
+queued in `logs/improvement-log.md` at medium-high; both remain task deferrals.

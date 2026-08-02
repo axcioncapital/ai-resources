@@ -1,0 +1,50 @@
+{
+  "run_id": "2026-08-02-S7-3fb",
+  "project": "ai-resources",
+  "date": "2026-08-02",
+  "marker": "S7-3fb",
+  "model": "unknown",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md",
+  "mission": null,
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    "plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md",
+    "plans/work-loop-v2-v0.2/context-engineering/trials/carriage-trial-record.md",
+    "logs/work-loop/context-engineering-implementation.md",
+    "logs/session-notes.md",
+    "logs/session-notes-archive-2026-08.md",
+    "logs/decisions.md",
+    "logs/improvement-log.md",
+    "logs/next-up.md",
+    "logs/destructive-override.log",
+    "logs/friction-log.md",
+    "logs/scratchpads/2026-08-02-20-55-scratchpad.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-08-02-two-s2-trial-construction-calls-taken-inside-a"
+  ],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": null,
+  "incidents_refs": []
+}
