@@ -100,104 +100,86 @@ outside the paths allowed above.
 
 ## Latest material result
 
-Inspected (2026-08-02):
-- Claim (1): HOLDS — read `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md:3`; the header still
-  reads `**Stage:** draft specification — awaiting operator approval · **Status:** not requirements`, and
-  the authority notice at `:5-8` still states "nothing here authorises implementation". Searched
-  `logs/decisions.md` for `context.engineering|CE-1[0-9]|withdraw|premature`; the 2026-08-02 entry at
-  `:90` closes with an explicit **"Not decided here"** clause on whether the stage header flips, recording
-  the approval as scoped *"for this implementation unit"*. Searched the repository (`*.md`, `*.sh`,
-  excluding `.git/`) for `context-engineering-spec-v0.1`; the only non-log reference is this state file.
-  `logs/session-plan-2026-08-02-S4-510.md:10` calls it "the approved spec" — but that is the plan file of
-  the session whose mandate was withdrawn, and it names commit `148689d` content, not the file, so it
-  promotes nothing. **No source promotes the specification to governing implementation authority.**
-- Claim (2): HOLDS — read `logs/decisions.md:90-121`. It records the mid-session withdrawal, the operator's
-  words *"implementation call was premature by codex"*, the rationale that the demonstration "cannot be
-  produced by Claude working alone" because Codex is operator-driven in the ChatGPT app, the citation to
-  CE-17's two-proofs table, and under **Consequence for the retry**: *"A future attempt must be structured
-  as a genuinely two-model session."* Read the named continuity scratchpad
-  `logs/scratchpads/2026-08-02-13-08-scratchpad.md` in full; its `resume_with` line reads *"Do NOT resume
-  the CE integration solo … first decide the two-model session shape, not the code."*
-- Claim (3): HOLDS — inspected each of the four surfaces directly, not the scratchpad's summary of them:
-  `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` (300 lines, read in full),
-  `.claude/commands/work-loop-v2.md` (113), `.agents/skills/work-loop-v2/SKILL.md` (116, read in full),
-  `logs/scripts/work-loop-v2-slice-1.test.sh` (673, header and assertion set read). The claim's "at least"
-  is doing real work: a symlink-following sweep (`find -L`) over the workspace found **three** access
-  paths to the one Claude command file and **two** to the one Codex skill file, and a plain `find` misses
-  the third because `axcion-design-studio/.claude/commands` is a symlinked directory. Work Loop **v1**
-  (`.claude/commands/work-loop.md`, `docs/work-loop.md`) is also still live. The full inventory is the
-  plan's §4.2; the scratchpad's three-file seam was not treated as settled.
-- Claim (4): HOLDS — re-derived from the specification, not from recall. `grep -o 'CE-[0-9]*' | sort -u`
-  returns exactly 17 identifiers, CE-1…CE-17, no gaps. The isolated-versus-integrated split is the boxed
-  two-proofs table under CE-17 (§6 Family 1), stating a real adoption claim requires the integrated proof
-  and the isolated one "must never be presented as the integrated one". §7 excludes a separate context-QC
-  pass including a risk-triggered one, a new backlog/register/log, a second project-state system, and a
-  Wayfinder ticket network is absent from §7 by name but rejected in the MVP proposal's settled decision 8
-  — CE-16 carries the per-run and new-machinery prohibitions.
-- Claim (5): HOLDS — `shasum -a 256` on
-  `plans/work-loop-v2-v0.2/context-engineering/work-loop-v2-mvp-proposal-v0.4-reference.md` and
-  `plans/work-loop-v2-mvp/work-loop-v2-mvp-proposal-v0.4.md` both return
-  `9822e196764b5321051b6b402633d94e17dbed652e30ea4f93040bd5f78fe3e1`; `cmp` reports no difference. The
-  canonical file was used as the reference authority for planning form. Both Matt Pocock documents were
-  read and treated as non-governing principles; no lifecycle was copied.
+**Correction round 1 — all four frozen findings reproduced, then corrected.** The prior round's inspection
+record and five evidence items are not repeated here; they are in commit `ab28c66` (core §4: the state
+file is current truth, Git holds history).
 
-Result: the plan was drafted and written to
-`plans/work-loop-v2-v0.2/context-engineering/context-engineering-implementation-plan-v0.1.md` (579 lines).
-It is explicitly draft and non-governing, records that approval must bind to identifiable content rather
-than to the filename, and ends at the first execution session with no implementation performed.
+Reproduced (2026-08-02), by inspection, before any edit:
+- Finding (1): REPRODUCES — `grep -n "Repository output:"` over the plan returned 12 lines. S1–S7 output
+  only `trials/*` evidence and fixture files; the first line naming a live runtime file is S8's
+  (`.agents/skills/...`, core, command). Confirmed: nothing changed between a slice's failing case and its
+  passing case, so Phase 2 could not turn any case green.
+- Finding (2): REPRODUCES — plan `:433-434` read *"every relevant entrypoint invokes the capability, **or**
+  the uncovered ones are named as a stated limitation"*; O-3 at `:218` read *"or accept a stated
+  limitation"*; §11 at `:560` the same; and the Phase 4 decision offered *"adopt with stated limitations"*.
+  Four places, one escape hatch.
+- Finding (3): REPRODUCES — S8's evidence line `:401` listed greps, an item count, an unchanged ceiling
+  and a clean diff. All four can pass on a diff that never runs. Direct Work and false-premise preservation
+  appeared in the *exit* line as "verified intact", with no construction behind them.
+- Finding (4): REPRODUCES — the header `:9` says *"Two approvals are therefore outstanding"*, but Phase 0
+  (`:232-238`) and §12 (`:773`) named only the specification's. `grep -n "successor record"` returned one
+  hit at `:469`, undefined anywhere in the document. No line named what records the live phase across
+  S1–S12; the `Next:` lines are static plan ordering.
 
-**Evidence 2 — CE coverage check.** Derived by `grep -o -E 'CE-[0-9]+' | sort -u` over the specification
-and over the plan, compared with `comm`. Spec: 17 unique ids. Plan: 17 unique ids. **Both set differences
-are empty** — nothing missing, no invented identifier. Numeric presence is not the control: the plan's §8
-assigns each behaviour to a slice, a named session, a constructible failing case and the evidence that
-distinguishes pass from fail (17 table rows, counted). Assignments: CE-1/2/3 → Slice A · S3; CE-4/5/6 →
-Slice B · S4; CE-7/8/9 → Slice C · S5 (instrument built in S1); CE-10/11/12/13/14 → Slice D · S6;
-CE-15 → S3, re-confirmed S7; CE-16 → Slice E · S7; **CE-17 → S3 for clauses 1–2 and S11 for clause 3**,
-which is the isolated/integrated split kept apart by construction.
+Result: all four corrected in
+`plans/work-loop-v2-v0.2/context-engineering/context-engineering-implementation-plan-v0.1.md`
+(579 → 807 lines). What changed, per finding:
 
-**Evidence 3 — boundary audit.** Plan §9 tabulates all fifteen §7/CE-16 prohibitions against an *active*
-handling, not a mention. Representative rows: a context-QC pass is a **falsification criterion** in §5.2
-and fires S6's stop condition; a second state system is refused by S8's evidence requirement that the
-five-field ceiling be unchanged and by its stop condition; approval artifacts are avoided because Phase 0
-records approval *inside the specification*, bound to content; transport is proved in S11 by observing
-delivery, never by building it, and S2's stop condition routes a transport fact to the operator;
-**no CE trial depends on `work-loop-v2-slice-1.test.sh`**, honouring §7's rejection of a harness
-dependency — it appears only in S12's Work Loop regression check. The prohibition on shrinking behaviour
-because packaging is hard is held by Phase 1's boxed note: a carriage failure escalates, and only §9's
-acid test in a real trial shrinks anything.
+1. **A named candidate now exists and evolves.** New §4.4 names it: `trials/candidate/SKILL.md`, a working
+   revision of the Codex skill held outside the live path — a revision of an existing artifact, not a new
+   kind, deleted at S8b when its content lands. Phase 2's preamble states the red–green cycle explicitly
+   (run the failing case against the current candidate → revise → run the *same* case against the revised
+   one), and **every Phase 2 session gained a `Candidate change:` line** naming the family it adds. S2 now
+   states how the two carriages are installed (they are not — both sit under `trials/candidate/`, pointed
+   at by path, with `git diff` on the live skill required empty) and what survives (one file; the loser is
+   deleted, not archived, because a kept alternative is plan-history machinery). §4.4 adds three checkable
+   fixture rules: a mandatory `FIXTURE —` first line, a placement ban on any path a real project's
+   discovery reaches, and an S7 grep for the marker outside `trials/`.
+2. **The entrypoint bar is now a condition, not a preference.** Phase 3 gained **S8a**, whose only job is
+   to classify every access path relevant/not-relevant against a stated three-part test, with the observed
+   condition as evidence and a fail-safe rule (unsettleable → relevant). Phase 3's exit now has three
+   required conditions and no "or named as a limitation" branch. The Phase 4 decision became a four-row
+   condition table, and states that "adopt with stated limitations" is unavailable for conditions 2–4.
+   §11 gained a rule about what may appear in it at all; the `axcion-design-studio` and v1 rows were
+   **removed from the limitations table** and are now decided in S8a and adoption condition 3. O-3's
+   consequence column was rewritten to remove the limitation option.
+3. **S8b proves the seam behaviourally before anything structural counts.** Its evidence is now ordered:
+   (i) a constructed pre/post invocation at the real entrypoint — same seeded request, recorded failing
+   before the wiring and exhibiting the behaviour after, with a green-without-recorded-red run failing the
+   session; (ii) Direct Work as an observed **absence of a state file**, not an assertion; (iii)
+   false-premise refusal with the named target file confirmed unmodified; (iv) *then* the greps, counts
+   and ceiling check. A boxed note under S9 states the review follows this pass and does not substitute
+   for it.
+4. **Both approvals, and one named current-state record.** Phase 0 now requires two approvals — the
+   specification's, recorded in the specification; this plan's, recorded in a new empty slot in the plan's
+   header — each bound to identifiable content, with material-edit demotion stated for both. Phase 0 also
+   names `logs/work-loop/context-engineering-implementation.md`, the existing task-state interface, as
+   what carries the live phase, latest result, blocker and next action across S1–S12 — spec §5.7 category
+   three, no new state system — and says the state file, not the plan's static `Next:` lines, is the live
+   position. `successor record` is deleted; S12 now writes limitations into that state file's closing
+   record in core §4's closure shape. §12 restated as two Phase 0 answers.
 
-**Evidence 4 — fresh-session executability of the first implementation session (S1).** *Inputs:* this
-plan, spec §3.5, §5.7 and CE-9, plus re-verification of §4.1's facts — all repository paths, none of them
-this conversation. *One job:* construct one seeded CE-9 scenario whose durable sources carry a material
-fact the request message does not. *Output:* `trials/ce-9-recovery-scenario.md` plus its seeded sources.
-*Failing evidence:* two greps — the seeded fact must hit in the durable sources and miss in the request
-text; if it appears in the request the instrument is broken and the session has failed. *Stop condition:*
-if no such fact can be seeded, stop and report CE-9 as possibly unmeasurable. *Next handoff:* the operator
-runs S2 with Codex. **Nothing in S1 depends on this chat.**
+Evidence: `grep -c "Candidate change:"` → **5** (S3–S7, one per Phase 2 session);
+`grep -c "trials/candidate/SKILL.md"` → **10**; `grep -c "successor record"` → **0**;
+`grep -c "logs/work-loop/context-engineering-implementation.md"` → **4**. The two surviving
+`stated limitation` hits are both prohibitions (`"a stated limitation cannot discharge it"`, `"deliberately
+not an option"`), not permissions — checked by reading each. Regression on the untouched controls:
+`comm -3` over unique `CE-n` identifiers in specification and plan is **empty** (17/17 preserved), and
+§8's table still carries **17** rows.
 
-**Evidence 5 — exact committed path list** (`git add` by explicit pathspec, five paths, nothing else):
-- `logs/work-loop/context-engineering-implementation-plan.md`
-- `plans/work-loop-v2-v0.2/context-engineering/context-engineering-implementation-plan-v0.1.md`
-- `plans/work-loop-v2-v0.2/context-engineering/work-loop-v2-mvp-proposal-v0.4-reference.md`
-- `plans/work-loop-v2-v0.2/context-engineering/matt-pocock-style-principles.md`
-- `plans/work-loop-v2-v0.2/context-engineering/matt-pocock-wayfinder-led-project-development-lifecycle.md`
-
-The pre-existing unrelated working-tree change to `logs/friction-log.md` was **not** staged and remains
-modified in the tree.
-
-**One deferral, recorded and not done.** The Work Loop v2 mission thread describing
-`axcion-design-studio` as holding *"a copy of the command"* is imprecise — live inspection shows it
-reaches the same bytes through a symlinked `commands/` directory, and what it actually lacks is the Codex
-skill and `logs/work-loop/`. Correcting `logs/missions/work-loop-v2-mvp.md` is outside this unit's allowed
-paths, so it was not touched. The corrected fact is recorded in the plan's §4.2 and §11 instead.
+**One deferral, recorded and not done.** The plan grew 579 → 807 lines in this round. Whether it is still
+inside its own §1 claim — self-contained and executable by a fresh session without design history — is a
+fair question, and compression is outside these four frozen findings. Not attempted. Reopening trigger: an
+implementation session reports that reading the plan cost more than the orientation it saved.
 
 ## Unresolved blocker
 None.
 
 ## Next action
-Codex: assess the plan at
-`plans/work-loop-v2-v0.2/context-engineering/context-engineering-implementation-plan-v0.1.md` against the
-brief's eleven requirements and the five returned evidence items — close, correct once, or stop. Two
-things need a decision rather than an assessment: the plan hands **four** operator decisions up (§6),
-of which O-1 (does the specification become governing?) gates every later phase; and the plan states that
-the integrated CE-17 proof cannot be obtained without a genuinely two-model operator-driven session.
+Codex: run the closure check on the four frozen findings and nothing else — are (1) the isolated
+candidate, (2) the entrypoint adoption bar, (3) S8b's behavioural seam evidence and (4) the two-approval
+and current-state chain resolved, and did the correction break anything? Per core §3 that check asks those
+two questions only; anything newly noticed becomes a deferral, not a second round. One deferral is already
+recorded above (plan length, 579 → 807). If the correction is judged insufficient, the post-correction
+menu is chosen once, on value and risk — and if that choice is really about accepting risk, it is the
+operator's.

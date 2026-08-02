@@ -16,6 +16,16 @@ authorisation to implement.
 > explicit reapproval. This is the specification's own rule (§5.7, CE-4 failing case C) applied to the
 > plan that implements it.
 >
+> **Operator approval of this plan — recorded here, or not at all.** Phase 0 requires both approvals and
+> this is the slot for the second one. It stays empty until the operator fills it, and while it is empty
+> this plan is a proposal.
+>
+> ```
+> Plan approval:   (none — draft)
+> Approved commit: (none)
+> Approved on:     (none)
+> ```
+>
 > **This is not "the one canonical project plan" of spec §5.7.** That term names the durable plan a
 > *project* carries so Context Engineering can prepare briefs against it. This is a build plan for the
 > capability itself. A later reader must not treat this file as the artifact CE-4 and CE-6 reason about.
@@ -149,12 +159,51 @@ Everything below is this plan's proposal. None of it is settled, and an implemen
 discard any of it on live evidence.
 
 - **Trial artifacts live under `plans/work-loop-v2-v0.2/context-engineering/`**, alongside this plan:
-  seeded scenarios in a `trials/` subfolder, one evidence record per phase.
+  seeded scenarios and fixtures in a `trials/` subfolder, one evidence record per session.
 - **The seam edit's starting candidate is the design reverted in S4-510** — recorded in
   `../../../logs/scratchpads/2026-08-02-13-08-scratchpad.md` so it need not be re-derived. It is a
   *starting point re-derived against live files*, not a specification.
 - **Carriage of the behaviour at runtime** (Phase 1, U-1) — the two candidate shapes are described there
   as candidates to test, not as a choice already made.
+
+### 4.4 The candidate — the thing Phase 2 actually builds
+
+F-5 is the reason this section exists: Context Engineering is absent from every live runtime artifact, so
+**nothing today can exhibit the behaviour.** A trial that only writes an evidence file cannot turn a
+constructed failing case green, because nothing changed between the failing run and the passing one. Phase
+2 therefore needs a named object that starts without the behaviour and gains it one family at a time.
+
+**The candidate is one file: `trials/candidate/SKILL.md`** — a working revision of the Codex skill
+(`.agents/skills/work-loop-v2/SKILL.md`, F-3), held *outside* the live path. Three properties make it the
+right object rather than a new invention:
+
+- **It is a revision of an artifact that already exists,** not a new artifact kind. At S8 its content
+  lands in the live skill file and `trials/candidate/` is deleted. Nothing new survives into runtime, so
+  CE-16 is untouched — the prohibition is on new and per-run *runtime* artifacts, and this is development
+  material for a build, deleted when the build lands.
+- **It is what Codex actually reads.** The skill is where Codex's behaviour is defined, so evolving the
+  skill *is* evolving the behaviour. Nothing else has to be built for a slice to demonstrate anything.
+- **It is isolated by construction.** It sits under `trials/`, not under `.agents/skills/`, so no live
+  session can pick it up. The operator points a fresh Codex thread at it explicitly, for the trial only.
+
+**Every Phase 2 session therefore has two outputs, not one:** a revision of the candidate, and the
+evidence record for the behaviours that revision made pass. A session that produces only an evidence
+record has not exited.
+
+> **Fixtures must never look authoritative.** Slices B and C seed plans and current-state files, and a
+> seeded "approved plan" is exactly the shape CE-4 and CE-6 warn about. Three rules, and they are
+> checkable rather than aspirational:
+>
+> 1. Every fixture lives under `trials/` and **opens with a first line reading
+>    `FIXTURE — not a project artifact; seeded for {behaviour}. Carries no authority.`** A fixture without
+>    that line fails its own slice.
+> 2. **No fixture is placed at a path that a real project's discovery would reach** — not in `plans/` root,
+>    not in any `logs/work-loop/` directory, not anywhere §5.7's three durable categories are looked for.
+> 3. At the end of Phase 2, S7's non-accretion run greps the repository for the fixture marker outside
+>    `trials/`. A hit means a fixture escaped, and S7 fails.
+>
+> This is a naming and placement discipline, not a register. Nothing tracks fixtures; the marker and the
+> grep are the whole mechanism.
 
 ---
 
@@ -215,7 +264,7 @@ and stops there.
 |---|---|---|---|
 | O-1 | **Does the CE specification become governing?** Its header still reads *"draft specification — awaiting operator approval · not requirements"*, and `logs/decisions.md` (2026-08-02) explicitly leaves the flip undecided — the approval given on 2026-08-02 was scoped *"for this implementation unit"*. | Approval promotes a draft to governing. Codex may not promote its own plan and neither may Claude. | **Phase 0. Nothing in Phase 1 onward may start without it.** |
 | O-2 | **Ordering against the Work Loop v0.2 rework.** The rework will reshape the same three runtime files this integration edits, and its scope is undecided. | Sequencing two efforts against each other is priority, not technique. | Wire first and re-wire after the rework; or rework first and wire once. Phase 3 is the collision point. |
-| O-3 | **Ordering against v1 retirement** (mission Step 8, still undispatched). | Same. | While v1 lives, entrypoint coverage is incomplete by construction (§4.2). Either retire it before the adoption claim, or accept a stated limitation. |
+| O-3 | **v1 retirement** (mission Step 8, still undispatched). | Retiring a live system is priority and risk, not technique. | **Adoption condition 3.** v1 must be retired, or evidenced as *not relevant* under S8a's test, before an adoption claim. There is no third answer: a stated limitation cannot discharge it. |
 | O-4 | **Will a genuinely two-model session be scheduled?** The integrated proof needs the operator driving Codex while Claude works the same repository. | Only the operator can run Codex. | Without it, Phase 4 cannot run and the honest outcome is the isolated proof plus an owed integrated proof. |
 
 **Where an implementation session hits one of these, it stops and escalates** — it does not pick the
@@ -231,11 +280,34 @@ session below states: *inputs · one job · repository output · evidence capabl
 
 ### Phase 0 — Authority (no session)
 
-The operator answers O-1. If the answer is no, this plan stops here and nothing else in it is authorised.
-If yes, the approval is recorded in the specification itself, bound to identifiable content — a commit
-hash or equivalent — not to the filename (spec §5.7; CE-4 failing case C).
+**Two approvals, both required, neither implied by the other.** Nothing in Phase 1 onward is authorised
+until both exist.
 
-**Exit:** the specification carries a recorded approval identifying the content approved.
+1. **The specification becomes governing.** The operator answers O-1. If no, this plan stops here and
+   nothing else in it is authorised. If yes, the approval is recorded **in the specification itself**,
+   bound to identifiable content — a commit hash or equivalent — not to the filename.
+2. **This plan is approved as the plan of record.** Separately answered, after Codex has assessed it. The
+   approval is recorded **in this document's header**, bound the same way. A specification that is
+   governing does not make its implementation plan approved: the first says the behaviour is settled, the
+   second says this sequence is how it gets built.
+
+Both bindings follow spec §5.7 and CE-4 failing case C — an approval that identifies only a filename fails
+on that shape alone, because the file's meaning can change with nothing appearing to have happened. A
+**material** edit to either document afterwards — objective, scope, exclusions, settled decisions,
+sequence, exit conditions, or authority relationships — returns that document to draft and needs explicit
+reapproval. Genuine uncertainty about whether an edit is material is escalated, not resolved in favour of
+carrying on.
+
+**Where progression is recorded from here.** Phase 1 opens **one Work Loop task-state file** for the
+implementation — `logs/work-loop/context-engineering-implementation.md`, the existing task-state
+interface at the path core §4 fixes. It is spec §5.7's third permitted durable category, **not a new
+state system**, and it is what carries the live phase, the open session, the latest material result, any
+blocker and the exact next action across S1–S12. The per-session `Next:` lines below are the plan's
+*static* ordering; **the state file is what says where the work actually is.** A fresh session reads the
+state file first and this plan second.
+
+**Exit:** the specification carries a recorded approval identifying the content approved; this plan
+carries its own; and neither has been materially edited since.
 
 ---
 
@@ -272,43 +344,72 @@ about it.
 - *Next:* hand to the operator to run S2 with Codex.
 
 **Session S2 — the carriage trial (operator-driven, Codex)**
-- *Inputs:* S1's scenario; the specification; two candidate carriages — **(a)** the skill referencing the
-  specification by path, **(b)** the skill carrying a compressed behavioural checklist with the
+- *Inputs:* S1's scenario; the specification; two candidate carriages, written as two files under
+  `trials/candidate/` — **(a)** `carriage-a-SKILL.md`, the skill referencing the specification by path;
+  **(b)** `carriage-b-SKILL.md`, the skill carrying a compressed behavioural checklist with the
   specification as the cited authority. Both are candidates; neither is chosen in advance.
 - *One job:* run a fresh Codex thread on S1's scenario under each carriage and record which behaviours
   reach the brief.
-- *Repository output:* `trials/carriage-trial-record.md` — the two briefs, and a per-behaviour table of
-  present/absent.
+- *How they are installed and isolated:* **neither is installed.** Both sit under `trials/candidate/`,
+  outside `.agents/skills/`, so Codex's ordinary skill discovery cannot reach either and no live session
+  can pick one up by accident. For each run the operator points a fresh Codex thread at one file
+  explicitly, by path. The live `.agents/skills/work-loop-v2/SKILL.md` is not touched in this phase —
+  `git diff` on it must be empty at S2's exit, and that is part of the evidence.
+- *What survives the trial:* **one file.** The winning carriage is renamed to `trials/candidate/SKILL.md`
+  and becomes the Phase 2 candidate (§4.4). The loser is **deleted**, not archived — a kept-alongside
+  alternative is a second document describing the same thing, which is the FP-4 shape and, retained as a
+  record of what was rejected, is the plan-history machinery §7 prohibits. The trial record states which
+  won and why; that is the only thing preserved about the loser.
+- *Repository output:* `trials/carriage-trial-record.md` — the two briefs and a per-behaviour table of
+  present/absent — **plus** `trials/candidate/SKILL.md`, the surviving carriage.
 - *Evidence capable of failing:* the behaviours are counted against CE-1…CE-16 by an observer who did not
-  write the brief. A carriage that misses a load-bearing behaviour fails, and the record says so.
-- *Exit:* one carriage is demonstrably sufficient, **or** both fail and U-1 escalates to the operator.
+  write the brief. A carriage that misses a load-bearing behaviour fails, and the record says so. Plus:
+  `git diff -- .agents/skills/work-loop-v2/SKILL.md` returns empty, proving nothing was installed.
+- *Exit:* one carriage is demonstrably sufficient and survives as the candidate, **or** both fail and U-1
+  escalates to the operator.
 - *Stop:* if the trial cannot be run because Codex cannot reach the repository as assumed, stop — that is
   a transport fact (C-3) and it belongs to the operator, not to this capability.
 - *Next:* Phase 2, Slice A, with the chosen carriage stated.
 
 *Capacity: one Claude session and one operator-driven Codex session.*
 
-**Phase 1 exit:** U-1 answered by trial, U-2 answered by a working instrument.
+**Phase 1 exit:** U-1 answered by trial, U-2 answered by a working instrument, and one named candidate
+exists at `trials/candidate/SKILL.md`.
 
 ---
 
 ### Phase 2 — The isolated proof, in thin slices
 
-Each slice is one complete observable result, sized for a fresh session: define the behaviour, construct
-the failing case, run it, show it fails, exhibit the behaviour, show it passes, record the evidence. No
-slice builds a layer for a later slice to use.
+Each slice is one complete observable result, sized for a fresh session. **The cycle is red–green against
+the candidate (§4.4), and the candidate revision is what makes it possible:**
+
+```
+run the constructed failing case against the CURRENT candidate  → it fails, recorded
+revise the candidate to carry this family's behaviour           → one file, one family
+run the SAME case against the REVISED candidate                 → it passes, recorded
+```
+
+Both runs are Codex runs on the same seeded input, so the operator drives them; the only variable between
+them is the candidate revision. **A slice that cannot show the red run has not proved anything** — it has
+shown that the behaviour is present, not that its absence was detectable. No slice builds a layer for a
+later slice to use, and no slice touches the live `.agents/skills/work-loop-v2/SKILL.md`: `git diff` on it
+is empty throughout Phase 2, and S8 is the first session that changes it.
 
 **Session S3 — Slice A · one pass, one artifact** *(CE-17 clauses 1–2, CE-1, CE-2, CE-3, CE-15)*
 - *Inputs:* the chosen carriage; spec §2, §4.1, Family 1, CE-15.
 - *One job:* demonstrate that one objective plus material yields exactly one artifact in one pass, that
   only a genuine decision returns to the operator, and that a resolvable unknown becomes a discovery unit
   rather than a refusal.
-- *Repository output:* `trials/slice-a-evidence.md`.
-- *Evidence capable of failing:* a count of preparation passes (target 1); a count of operator context
-  actions (target 1 plus any genuine decision); the count of artifacts describing the unit (must be 1);
-  the orientation's sentence count (≤3). Each seeded case includes one question of a *derivable* kind — if
-  it returns to the operator, CE-1 fails and the record says so.
-- *Exit:* all five behaviours demonstrated against their constructed failing cases.
+- *Candidate change:* the candidate gains Family 1 and CE-15 — the single-pass rule, the §4.1 output
+  contract, and the three-sentence orientation. Nothing else.
+- *Repository output:* `trials/candidate/SKILL.md` (revised) **and** `trials/slice-a-evidence.md`.
+- *Evidence capable of failing:* the red run first — the same seeded input against the pre-revision
+  candidate, recorded as failing. Then, against the revised candidate: a count of preparation passes
+  (target 1); a count of operator context actions (target 1 plus any genuine decision); the count of
+  artifacts describing the unit (must be 1); the orientation's sentence count (≤3). Each seeded case
+  includes one question of a *derivable* kind — if it returns to the operator, CE-1 fails and the record
+  says so. **A green run with no recorded red run fails the slice.**
+- *Exit:* all five behaviours demonstrated red-then-green against their constructed failing cases.
 - *Stop:* if the pass terminates in more than one artifact and the cause is the carriage, return to Phase 1
   rather than adding a reconciliation step.
 - *Next:* S4.
@@ -318,16 +419,22 @@ slice builds a layer for a later slice to use.
 - *One job:* demonstrate that governing authority follows semantic role, that a draft does not govern, that
   an approval bound only to a filename fails on that shape alone, that a materially edited approved plan
   returns to draft, and that demotion requires a citation.
-- *Repository output:* `trials/slice-b-evidence.md` plus the seeded plan fixtures.
-- *Evidence capable of failing:* the specification's own construction — seed an approved plan, apply one
-  editorial and one material edit without touching the approval line. A brief carrying the editorial one as
-  governing and the material one as draft passes; carrying both as governing fails. Separately: four seeded
-  items (non-authoritative imperative, preserved speculative material, a casual operator message, a genuine
-  decision) each classified to its semantic role, with only the decision carrying authority.
-- *Exit:* all three behaviours demonstrated, including CE-6 case C — evidence falsifying a plan's factual
-  premise is surfaced as a conflict, and does **not** re-aim the work.
+- *Candidate change:* the candidate gains Family 2 — the semantic hierarchy, draft-does-not-govern,
+  content-bound approval, material-edit demotion, and citation-required supersession.
+- *Repository output:* `trials/candidate/SKILL.md` (revised); `trials/slice-b-evidence.md`; the seeded
+  plan fixtures under `trials/`, each carrying §4.4's `FIXTURE —` first line.
+- *Evidence capable of failing:* the red run first, against the pre-revision candidate. Then the
+  specification's own construction — seed an approved plan, apply one editorial and one material edit
+  without touching the approval line. A brief carrying the editorial one as governing and the material one
+  as draft passes; carrying both as governing fails. Separately: four seeded items (non-authoritative
+  imperative, preserved speculative material, a casual operator message, a genuine decision) each
+  classified to its semantic role, with only the decision carrying authority.
+- *Exit:* all three behaviours demonstrated red-then-green, including CE-6 case C — evidence falsifying a
+  plan's factual premise is surfaced as a conflict, and does **not** re-aim the work.
 - *Stop:* if the fixtures cannot be built without creating a second plan that appears current, stop —
-  building one would violate CE-6 case B while testing it.
+  building one would violate CE-6 case B while testing it. The §4.4 fixture rules exist to make this
+  avoidable, not to make it acceptable: a fixture that would be reachable by a real project's discovery is
+  the stop, whatever it is marked.
 - *Next:* S5.
 
 **Session S5 — Slice C · claims, absence, and recovery** *(CE-7, CE-8, CE-9 A–C)*
@@ -335,13 +442,16 @@ slice builds a layer for a later slice to use.
 - *One job:* demonstrate that load-bearing repository claims leave as claims naming surface and pattern,
   that discovery expansions each name one of four reasons, and that a fresh thread recovers the unit from
   durable sources.
-- *Repository output:* `trials/slice-c-evidence.md` — including the inspected-source set with each
-  expansion mapped to its reason.
-- *Evidence capable of failing:* the paired memory-only control from S1. If the two briefs are
-  indistinguishable, the trial proved nothing and the record must say so rather than claiming recovery.
-  CE-7 additionally succeeds *while the seeded claim is false* — Claude's later inspection marking it FALSE
-  is the confirming evidence, not a contradiction.
-- *Exit:* CE-7, CE-8 and all three CE-9 cases demonstrated, with the control distinguishing.
+- *Candidate change:* the candidate gains Family 3 — claims-not-facts, absence claims naming surface and
+  pattern, and relevance-gated discovery with the four expansion reasons.
+- *Repository output:* `trials/candidate/SKILL.md` (revised); `trials/slice-c-evidence.md` — including the
+  inspected-source set with each expansion mapped to its reason; any current-state fixture, `FIXTURE —`
+  marked.
+- *Evidence capable of failing:* the red run first, against the pre-revision candidate. Then the paired
+  memory-only control from S1. If the two briefs are indistinguishable, the trial proved nothing and the
+  record must say so rather than claiming recovery. CE-7 additionally succeeds *while the seeded claim is
+  false* — Claude's later inspection marking it FALSE is the confirming evidence, not a contradiction.
+- *Exit:* CE-7, CE-8 and all three CE-9 cases demonstrated red-then-green, with the control distinguishing.
 - *Stop:* if the control cannot be kept blind in practice, stop and report CE-9 as unmeasured. Do **not**
   substitute a weaker control and call it recovery.
 - *Next:* S6.
@@ -352,13 +462,17 @@ slice builds a layer for a later slice to use.
   held-back work named, that Codex's technical preferences stay attributed proposals, that
   uncertain-relevance material is preserved visibly, and that material reclassification is disclosed
   without a discard ledger.
-- *Repository output:* `trials/slice-d-evidence.md`.
-- *Evidence capable of failing:* the specification's constructions — an objective with two load-bearing
-  parts, one inconvenient (a brief silently covering only the convenient part fails, and the seeded second
-  part is what the evidence looks for); and a unit where Codex holds a clear design preference that no
-  governing authority has settled (a "required" section naming the preferred mechanism fails).
-  Additionally, **zero** new operator-visible stages or gates introduced by the alignment justification.
-- *Exit:* all five behaviours demonstrated.
+- *Candidate change:* the candidate gains Families 4 and 5 — the inline plan-alignment field, unit
+  bounding with named held-back work, attributed Codex boundaries and non-prescription, three-way
+  relevance, and reclassification disclosure.
+- *Repository output:* `trials/candidate/SKILL.md` (revised) **and** `trials/slice-d-evidence.md`.
+- *Evidence capable of failing:* the red run first, against the pre-revision candidate. Then the
+  specification's constructions — an objective with two load-bearing parts, one inconvenient (a brief
+  silently covering only the convenient part fails, and the seeded second part is what the evidence looks
+  for); and a unit where Codex holds a clear design preference that no governing authority has settled (a
+  "required" section naming the preferred mechanism fails). Additionally, **zero** new operator-visible
+  stages or gates introduced by the alignment justification.
+- *Exit:* all five behaviours demonstrated red-then-green.
 - *Stop:* if satisfying CE-10 appears to need a separate alignment check, stop — that is failing case A,
   not a design need.
 - *Next:* S7.
@@ -367,50 +481,101 @@ slice builds a layer for a later slice to use.
 - *Inputs:* spec §5.7, §7, CE-16; all prior slice records.
 - *One job:* run a sequence of **routine** invocations — no new operator input, no approval, no materially
   changed understanding — and show the capability writes nothing durable.
+- *Candidate change:* **none.** S7 measures the candidate as it stands; a revision here would mean an
+  earlier slice left a behaviour incomplete, and that is a finding, not a fix to fold in silently.
 - *Repository output:* `trials/slice-e-evidence.md`.
 - *Evidence capable of failing:* `git status` before and after the run, plus a file-count diff of the
   repository. Target: **zero net new durable files**, and zero additional operator-visible stages, gates,
   review passes or persistent artifacts beyond the brief and §5.7's three categories. One file appearing is
   a failure, and the trial records must not be counted as the capability's output — they are this build's
-  development evidence, and the run must be constructed so that distinction is observable.
-- *Exit:* the run is clean, and CE-15's artifact count of one is re-confirmed under real conditions.
+  development evidence, and the run must be constructed so that distinction is observable. **Plus the
+  fixture-escape check (§4.4 rule 3):** grep the repository for the `FIXTURE —` marker outside `trials/`;
+  any hit fails the slice.
+- *Exit:* the run is clean, no fixture escaped, and CE-15's artifact count of one is re-confirmed under
+  real conditions.
 - *Stop:* if a routine invocation genuinely needs to write something durable, stop and escalate — that is a
   specification finding, not an implementation liberty.
 - *Next:* Phase 3, subject to the progression decision below.
 
-**Phase 2 exit:** every behaviour except CE-17 clause 3 demonstrated against a constructed failing case.
-**Then an explicit progression decision by Codex**, stating in writing which proof has been obtained and
-that clause 3 remains owed. Phase 3 does not start on momentum.
+**Phase 2 exit:** every behaviour except CE-17 clause 3 demonstrated **red-then-green** against a
+constructed failing case, carried by one named candidate at `trials/candidate/SKILL.md`, with the live
+skill file still unmodified (`git diff` empty). **Then an explicit progression decision by Codex**,
+stating in writing which proof has been obtained and that clause 3 remains owed. Phase 3 does not start on
+momentum.
 
 *Capacity: five sessions; assume one behaviour family per session and do not compress two families to save
 one session.*
 
 ---
 
-### Phase 3 — Wire the entrypoints, then one review
+### Phase 3 — Classify every entrypoint, wire the relevant ones, prove the seam, then one review
 
-**Session S8 — the seam edit**
-- *Inputs:* §4.2's entrypoint inventory, **re-verified with a symlink-following scan**; the reverted
-  candidate design; F-6, F-7, F-9 re-checked.
-- *One job:* make the Codex skill's two plan-dependent sites and the executable core's orientation step
-  invoke Context Engineering before plan-dependent briefing or continuation. The Claude command changes
+**Session S8a — the entrypoint classification**
+- *Inputs:* a fresh symlink-following scan (`find -L`) of every access path to the Claude command, the
+  Codex skill and Work Loop v1; O-3's answer.
+- *One job:* classify **every** access path as *relevant* or *not relevant*, each with evidence. Nothing
+  is left unclassified and nothing is waived.
+- *The relevance test, stated once:* a path is **relevant** if a Work Loop task can be opened or continued
+  through it in a way that depends on the plan. Concretely, it is relevant if all three hold — a Codex
+  skill is discoverable from it, a `logs/work-loop/` directory exists or can be created by an ordinary
+  session, and plan-dependent briefing or continuation happens there. A path failing any of the three is
+  **not relevant**, and the failing condition is the evidence.
+- *Repository output:* `trials/entrypoint-classification.md` — one row per access path: path, the three
+  conditions with their observed values, verdict, and the command whose output produced it.
+- *Evidence capable of failing:* every row's conditions are re-derivable by running the stated command.
+  A row whose verdict does not follow from its own conditions fails. **A path with no row fails the
+  session** — the scan's output and the table must have the same row count.
+- *Exit:* every access path carries a verdict backed by an observed condition.
+- *Stop:* if a path's relevance genuinely cannot be settled by inspection, it counts as **relevant** —
+  the fail-safe direction — and either gets wired or blocks adoption. Do not resolve an ambiguous path
+  toward "not relevant" because that is the reading that lets the work continue.
+- *Next:* S8b.
+
+> **Why this is a session and not a line in S8.** The plan's earlier version let uncovered entrypoints be
+> named as limitations at Phase 3's exit. That inverted CE-17: the specification makes wiring *every
+> relevant entrypoint* an adoption **condition**, not a preference to be traded away. A limitation can
+> record something unmeasured; it cannot excuse an unmet condition. The two currently-open cases are
+> exactly why the test has to be written down before either is judged — `axcion-design-studio` (no
+> `.agents/`, no `logs/work-loop/`) and Work Loop v1 (live, plan-dependent, retirement undispatched).
+
+**Session S8b — the seam edit**
+- *Inputs:* S8a's classification; the reverted candidate design; the Phase 2 candidate
+  (`trials/candidate/SKILL.md`); F-6, F-7, F-9 re-checked.
+- *One job:* wire **every path S8a classified relevant**. For the canonical files that means the Codex
+  skill's two plan-dependent sites and the executable core's orientation step; the Claude command changes
   only insofar as a richer brief needs consuming.
 - *Repository output:* edits to `.agents/skills/work-loop-v2/SKILL.md`,
   `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md`, and `.claude/commands/work-loop-v2.md`.
-  **No new file.**
-- *Evidence capable of failing:* F-5's greps re-run — they returned zero before and must return non-zero
-  at named surfaces after; core §3 step 3's item count moved from 7 toward §4.1's semantic interface; and
-  the state file's five-field ceiling **unchanged**, which F-9 says is possible because the brief already
-  sits outside it. A diff touching the state schema fails.
-- *Exit:* the three files are edited, the diff contains nothing unrelated, and the Direct Work bypass is
-  verified intact.
+  **No new file.** `trials/candidate/` is deleted in this session — its content has landed.
+- *Evidence capable of failing — behavioural first, structural second.* The structural checks alone are
+  not sufficient: greps, counts and a clean diff can all pass while the entrypoint still produces the
+  wrong brief.
+  1. **The constructed pre/post invocation at the real entrypoint.** Take one seeded request. Run it
+     against the live entrypoint **before** the edit: it must fail to exhibit the required CE behaviour,
+     and that failure is recorded. Run the **same** request after the edit: it must exhibit it. A post-run
+     that passes with no recorded pre-run failure fails the session — that is the same red-run rule
+     Phase 2 works under, applied at the seam.
+  2. **Direct Work, as a fail-capable check.** Construct a small reversible fix and run it through the
+     wired entrypoint. It must stay Direct Work: **no state file appears** in `logs/work-loop/`. The
+     check is the absence of the file, observed — not an assertion that the bypass is intact.
+  3. **False-premise refusal, as a fail-capable check.** Construct a state file whose brief carries one
+     deliberately false claim, run it, and confirm the hand-back happens **and the named target file is
+     unmodified**. The fixture pair for this already exists in the acceptance harness's Slice 1 shape;
+     reuse the construction, not the harness.
+  4. **Then** the structural checks: F-5's greps re-run (zero before, non-zero at named surfaces after);
+     core §3 step 3's item count moved from 7 toward §4.1's semantic interface; the state file's
+     five-field ceiling **unchanged**, which F-9 says is possible because the brief already sits outside
+     it. A diff touching the state schema fails.
+- *Exit:* every relevant path is wired, all three behavioural checks passed with their failing runs
+  recorded, and the diff contains nothing unrelated.
 - *Stop:* if the edit cannot be made without expanding the state schema or adding a fourth durable
   category, stop — the integration has stopped being a seam edit and the operator decides whether it
   proceeds at all.
 - *Next:* S9.
 
 **Session S9 — one fresh-context candidate review**
-- *Inputs:* the candidate, **named by its exact Git commit**; the specification; this plan.
+- *Inputs:* the candidate, **named by its exact Git commit**; S8b's behavioural evidence; the
+  specification; this plan.
 - *One job:* one serious review of the whole candidate — capability plus wiring — under the frozen-findings
   rule. Not a chain, not a per-slice review.
 - *Repository output:* the findings, written into the task-state file.
@@ -419,6 +584,12 @@ one session.*
 - *Exit:* findings frozen, or the candidate accepted.
 - *Stop:* if a finding is really about accepting risk, it goes to the operator (core §7).
 - *Next:* S10 if findings exist; otherwise Phase 4.
+
+> **The review follows the behavioural pass; it does not stand in for it.** S9 cannot start until S8b's
+> three fail-capable checks have run and their failing runs are on record. A review reads a diff and
+> reasons about it — competently, and still without ever invoking the thing. Reversing the order would
+> put the most persuasive evidence (a careful reviewer's approval) in front of the only evidence that can
+> actually fail (the seam refusing to work), which is how a candidate ships looking proved.
 
 **Session S10 — the one bounded correction** *(only if S9 produced findings)*
 - *Inputs:* the frozen findings.
@@ -430,8 +601,14 @@ one session.*
 - *Stop:* menu choices that are really risk acceptance go to the operator.
 - *Next:* Phase 4.
 
-**Phase 3 exit:** every relevant entrypoint invokes the capability, or the uncovered ones are named as a
-stated limitation (v1, and `axcion-design-studio`'s missing Codex skill — §4.2).
+**Phase 3 exit — three conditions, all required:**
+
+1. **Every access path carries a verdict** from S8a, each backed by an observed condition.
+2. **Every path classified relevant is wired.** There is no "named as a limitation" alternative. An
+   uncovered relevant path does not exit Phase 3 and does not reach an adoption claim.
+3. **The seam is proved behaviourally** — S8b's pre/post invocation, plus the Direct Work and
+   false-premise checks, each with its failing run recorded — and the candidate review has run after that
+   evidence exists.
 
 ---
 
@@ -451,12 +628,29 @@ stated limitation (v1, and `axcion-design-studio`'s missing Codex skill — §4.
   specification names that substitution as a failing case, and it is how the previous attempt went wrong.
 - *Next:* the adoption decision.
 
-**The adoption decision.** Operator-owned, informed by Codex's assessment: adopt, adopt with stated
-limitations, or stop. **An adoption claim requires the integrated proof.** If only the isolated proof
-exists, the honest outcome is "isolated proof obtained, integrated proof owed" — and that is a legitimate
-place to stop for a while.
+**The adoption decision.** Operator-owned, informed by Codex's assessment. **Adopt** is available only
+when all four conditions below hold. Otherwise the outcome is **do not adopt yet**, naming the specific
+unmet condition, or **stop**.
 
-**Phase 4 exit:** the adoption decision is recorded, with the proof it rests on named.
+| # | Condition for an adoption claim | Where it is established |
+|---|---|---|
+| 1 | The integrated proof is obtained — clause 3 demonstrated, not owed | S11 |
+| 2 | Every access path is classified, and every *relevant* one is wired | S8a, S8b, Phase 3 exit |
+| 3 | O-3 is settled: Work Loop v1 is retired, or evidenced as not relevant under S8a's test | Operator, before adoption |
+| 4 | The seam is proved behaviourally, with failing runs on record | S8b |
+
+**"Adopt with stated limitations" is deliberately not an option for conditions 2–4.** A limitation records
+something *unmeasured* — an unproved CE-9 control, a deferred second caller. It cannot stand in for an
+unmet adoption **condition**, and CE-17 makes entrypoint coverage a condition. Accepting one as a
+limitation would be exactly the substitution the specification names as a failing case, one level up: the
+weaker result presented as the stronger claim.
+
+If only the isolated proof exists, the honest outcome is "isolated proof obtained, integrated proof owed"
+— and that is a legitimate place to stop for a while. It is not adoption.
+
+**Phase 4 exit:** the adoption decision is recorded — in the implementation task's state file, and at
+closure in its closing record — with the proof it rests on named and each of the four conditions marked
+met or unmet.
 
 ---
 
@@ -466,7 +660,12 @@ place to stop for a while.
 - *Inputs:* every trial record; the friction observed in S11.
 - *One job:* fix demonstrated blockers under the frozen-findings discipline, run the regression checks for
   the affected Work Loop paths, and write the limitations list.
-- *Repository output:* the fixes; a final limitations section appended to this plan's successor record.
+- *Repository output:* the fixes; and the **closing record of the implementation task's state file**
+  (`logs/work-loop/context-engineering-implementation.md`) — core §4's closure shape: the outcome, the
+  decisions that matter, the final commit or evidence pointer, and the accepted limitations. That is the
+  one durable destination for the limitations list. **No successor plan document is written**, and this
+  plan is not rewritten into a v0.2 at closure — a second document describing the same finished work is
+  the FP-4 shape.
 - *Evidence capable of failing:* each fix has its own failing case. The regression set confirms the state
   ceiling, the Direct Work bypass, and the false-premise refusal still behave as before.
 - *Exit:* the capability is useful, stable enough, and its known limitations are written down.
@@ -499,10 +698,15 @@ applied to the plan itself).
 | CE-14 | Material reclassification disclosed; routine compression not | D · S6 | A proposal demoted with no disclosure — or a full discard log, the opposite error | The disclosure section checked against the four kinds |
 | CE-15 | One execution handoff artifact, two audiences | A · S3, re-confirmed E · S7 | The run produces a separate operator-orientation document | Count of artifacts describing the unit (must be 1); orientation sentence count (≤3) |
 | CE-16 | No new or per-run persistent artifacts; maintenance stays allowed | E · S7 | New machinery added; or a routine invocation writing a context file, log or run record | `git status` and file-count diff across a run of routine invocations: **zero net new durable files** |
-| CE-17 | One input, one pass, one consumable brief | A · S3 (clauses 1–2) · **S11 (clause 3)** | An isolated trial reported as demonstrating the one-touch handoff | Pass count (1); operator context-action count (1 + genuine decisions); an explicit statement of which proof was obtained |
+| CE-17 | One input, one pass, one consumable brief | A · S3 (clauses 1–2) · **S11 (clause 3)**; adoption boundary · **S8a + S8b** | An isolated trial reported as demonstrating the one-touch handoff; or an adoption claim made with a relevant entrypoint unwired | Pass count (1); operator context-action count (1 + genuine decisions); an explicit statement of which proof was obtained; and S8a's classification table with every relevant path wired |
 
 **Coverage:** 17 of 17. No behaviour is unassigned, and no new behaviour number is introduced — the count
 stays seventeen, per spec §7.
+
+**CE-17 carries a second obligation the others do not.** Besides its three clauses it states the adoption
+boundary — *every relevant Work Loop entrypoint* must invoke the capability before plan-dependent
+continuation. That is an adoption **condition**, discharged by S8a's classification and S8b's wiring, and
+it is why those two sessions appear in the row above alongside the clause proofs.
 
 ---
 
@@ -515,13 +719,13 @@ A prohibition mentioned only as something to build is not covered. Each row name
 | Any separate context-QC pass, including risk-triggered | §5.2 makes adding one a **falsification criterion**, not a design option. S6's stop condition fires if CE-10 appears to need an alignment check. |
 | Lane classification | Not in any slice. Admission stays core §2's, cited in §4.2 as *not* a CE invocation site. |
 | A new backlog, register, or log | S7 measures **zero net new durable files** across routine invocations; the trial records are development evidence and the run is constructed so the distinction is observable. |
-| Context archive · context-pack lifecycle · decision register · provenance ledger · approval artifact · plan-history system | S7's failing case A lists these as the things whose appearance fails the slice. No phase produces any. |
-| Separate draft / approved / amended plan copies; raw-material archive by default | Phase 0 records approval **in the specification itself**, bound to content. No approval artifact is created. S4's stop condition refuses fixtures that would leave two plans appearing current. |
-| A second project-state file or state system | S8's evidence requires the five-field ceiling **unchanged**, and its stop condition fires if the edit needs schema expansion. F-9 is why that is achievable. |
+| Context archive · context-pack lifecycle · decision register · provenance ledger · approval artifact · plan-history system | S7's failing case A lists these as the things whose appearance fails the slice. No phase produces any. **The Phase 2 candidate is not one:** it is a revision of an existing artifact (the Codex skill), held under `trials/`, and **deleted at S8b** when its content lands. Nothing new survives into runtime. S2's losing carriage is deleted rather than kept, which is what stops the candidate folder becoming a plan-history log. |
+| Separate draft / approved / amended plan copies; raw-material archive by default | Phase 0 records **both** approvals in the approved documents themselves — the specification's in the specification, this plan's in this plan's header — each bound to content. No approval artifact is created and no approved-copy is forked. S4's stop condition refuses fixtures that would leave two plans appearing current, and §4.4's fixture rules keep seeded plans unreachable and marked. |
+| A second project-state file or state system | Progression across S1–S12 is recorded in **the existing task-state interface** at `logs/work-loop/context-engineering-implementation.md` (Phase 0), which is spec §5.7's third permitted category — not a new system. S8b's evidence requires the five-field ceiling **unchanged**, and its stop condition fires if the edit needs schema expansion. F-9 is why that is achievable. |
 | Transport machinery | Owned by the Work Loop, not by this capability. Clause 3 is proved in S11 by *observing* delivery, never by building it. S2's stop condition routes a transport fact to the operator. |
 | General non-repository context engineering | Not in scope; reopening trigger is a real second caller (§11). |
 | Portfolio prioritisation | O-2 and O-3 are handed to the operator rather than sequenced by the plan. |
-| A required task-state file **as the brief format** | The brief stays delivery-mechanism-independent. S8 enriches the brief where core §4 already places it — outside the state ceiling. |
+| A required task-state file **as the brief format** | The brief stays delivery-mechanism-independent. S8b enriches the brief where core §4 already places it — outside the state ceiling. Using the existing state interface to record *progression* (Phase 0) is §5.7 category 3, a different thing from prescribing it as the brief's serialization. |
 | Any dependency on the existing acceptance harness or slice plan | **No CE trial depends on `work-loop-v2-slice-1.test.sh`.** It appears only in S12's regression check on the Work Loop wiring, which is Work Loop work. Its known `KNOWN_WORKLOOP_FILES` defect is a deferral (§11), not a blocker for Phases 1–4. |
 | A separate fresh-session orientation prerequisite, checklist, gate, or orientation-core artifact | CE-9 is proved **inside** the single pass (S5). No phase creates an orientation stage. |
 | Core-versus-opportunistic proving tiers; a new CE behaviour number | §8 assigns all 17 at one tier. The count stays 17. |
@@ -553,20 +757,39 @@ A prohibition mentioned only as something to build is not covered. Each row name
 
 ## 11. Accepted limitations and deferrals
 
+**What may and may not appear in this table.** A limitation records something **unmeasured or deferred**.
+It can never record an unmet *adoption condition* — the four in Phase 4's table — because that would let
+the plan waive by wording what CE-17 makes a requirement. **Entrypoint coverage is therefore not
+listable here.** Both entrypoint questions moved out of this table for exactly that reason and are now
+decided in S8a against a stated test.
+
 | Item | Why not now | Reopening trigger |
 |---|---|---|
 | **The integrated proof is owed until Phase 4 runs.** Everything before S11 is the isolated proof and must be reported as such. | Needs a genuinely two-model operator-driven session (O-4). | The operator schedules that session. |
-| **`axcion-design-studio` cannot open a v2 task** — it reaches the command through a symlinked directory but has no `.agents/` and no `logs/work-loop/`. | Belongs to the Work Loop v2 mission's installation-contract thread, not to this capability. | The operator wants to run a v2 task there. |
-| **Work Loop v1 will not invoke Context Engineering.** | Retirement is mission Step 8 and is undispatched. | Step 8 is dispatched, or the operator accepts it as a stated limitation at adoption. |
 | **The acceptance harness's `KNOWN_WORKLOOP_FILES` allowlist is stale** — 147 passed / 2 failed on a clean tree, because the allowlist predates a committed pilot file. | One-line fix, already queued at medium-high, and **no CE phase depends on the harness** (§9). | S12's regression run, or any session that needs the harness green. |
 | **General (non-repository) context engineering.** | Deferred by the specification. | A real second caller. |
 | **The v0.2 rework may re-shape the wired files.** | Its scope is undecided (C-10). | O-2 is answered, or the rework starts. |
+| **CE-9 may prove unmeasurable** if no material fact can be seeded that the request would not naturally carry. | S1's stop condition; it is a specification finding, not a workaround. | A control design that keeps the fresh thread genuinely blind. |
+
+**Moved out of this table by the correction round — now conditions, not limitations:**
+
+- **`axcion-design-studio`.** It reaches the Claude command through a symlinked directory but has no
+  `.agents/` and no `logs/work-loop/`. That makes it *not relevant* under S8a's test — but the verdict is
+  established there, with the two absences as its evidence, and re-derived at adoption. It is not waived
+  here, and it flips to relevant the moment either directory appears.
+- **Work Loop v1.** Live, plan-dependent, retirement undispatched. Adoption condition 3 requires O-3
+  settled first: v1 retired, or evidenced as not relevant under the same test. Neither this plan nor a
+  limitation can decide it.
 
 ---
 
 ## 12. The exact next session
 
-**Phase 0 first: the operator answers O-1.** Nothing below starts without it.
+**Phase 0 first, and it is two answers, not one.** Nothing below starts until both exist:
+
+1. **O-1 — does the specification become governing?** Recorded in the specification, bound to a commit.
+2. **Is this plan approved as the plan of record?** Recorded in this document's header slot (§ Authority
+   notice), bound to a commit. Answered after Codex has assessed the plan.
 
 Then **Session S1 — build the CE-9 measurement instrument.** It is first because it is the only thing that
 makes the riskiest trial (S2) falsifiable, and because everything in Phase 2 inherits its control design.
@@ -575,5 +798,10 @@ S1 needs, and needs only: this plan, the CE specification's §3.5, §5.7 and CE-
 §4.1's facts. Its output is one scenario file whose seeded material fact is provably present in the durable
 sources and provably absent from the request text. If that cannot be constructed, S1 stops and reports
 CE-9 as possibly unmeasurable — which is a finding worth having, and is not a failure of the session.
+
+**S1 also opens the implementation task's state file**, `logs/work-loop/context-engineering-implementation.md`
+— the existing task-state interface, no new system — and from that point it, not this section, is what says
+where the work actually is. The `Next:` lines in §7 are the plan's static ordering; the state file is the
+live position.
 
 **This unit ends here. No implementation was performed in it.**
