@@ -415,7 +415,7 @@ in both columns, with the checked-against list beside it.
 |---|---|---|---|
 | S1 · CE-9 instrument | Claude | **The operator** — re-runs the two stated greps (one hit, one miss) before authorising S2. Mechanical, no judgment, and it is not Claude checking its own output | No |
 | S2 · carriage probe | **Claude** authors the one candidate file; **the operator** then leads the two runs, driving fresh Codex threads | **Claude** — wrote none of the briefs; applies the probe check and verifies the named files really exist | **Yes** |
-| S3 · Slice A | Operator, driving Codex | Claude — the red-then-green record and the four counts | **Yes** |
+| S3 · Slice A | Operator, driving Codex | Claude — the per-case pre-revision and post-revision record (which cases were baseline green, which were caused green) and the four counts | **Yes** |
 | S3b · shadow slice | Operator (drives Codex) **and Claude** (does the real work from the brief) | Claude reports usability; the operator reports their own effort. Neither judges the other's half | **Yes** |
 | S4 · Slice B | Operator, driving Codex | Claude — each seeded item against its constructed case | **Yes** |
 | S5 · Slice C | Operator, driving Codex | **Claude** — for CE-7 this is the ordinary Work Loop premise check (command Step 2) run against the trial brief | **Yes** |
@@ -614,13 +614,22 @@ that wants it must prove it then.
   Plus: `trials/candidate/` contains **exactly one file**, `SKILL.md`. A second file there fails the
   session, whatever it contains.
 
-  **How behavioural emptiness is actually established — two parts, because the grep is not enough.**
+  **What emptiness means here, and what it does not — because the grep is not enough.**
   `grep -c 'CE-' trials/candidate/SKILL.md` returning **0** at exit proves only that no CE *identifier* is
   present; a paraphrase would pass it. It is a necessary check, not a sufficient one. Emptiness is
   established **by construction** — the candidate is authored to hold the probe and the mechanism and
-  nothing else — and it is *demonstrated* one session later: **S3's red run failing is the evidence.** If
-  S3's red run comes back green, the first diagnosis is a contaminated bootstrap, not a candidate that
-  already works, and Phase 2 returns to S2 rather than recording a behaviour as proved.
+  nothing else.
+
+  **That is textual emptiness, and it is all S2 can establish.** The candidate is a revision of the live
+  Codex Work Loop skill, so a thread reading it also reads the skill and the executable core, which
+  already produce some of the specified results on their own (§4.4). **Carrying no explicit CE instruction
+  therefore does not make the behaviour absent**, and S2 must not be read as claiming it does.
+
+  **So a clean pre-revision result in a later slice is not this session's failure.** A case that comes back
+  green before its family is written is **baseline green** and is handled under §4.4 — kept as recorded,
+  protected from relabelling, and required not to regress. Phase 2 returns to S2 only on evidence of actual
+  **contamination**: that the candidate's own text, or the seeded input, carried the behaviour in. A green
+  line where red was expected is not that evidence.
 - *Exit:* the negative control is clean, the candidate delivers the probe, and it survives as
   `trials/candidate/SKILL.md` with the probe stripped — **or** inline delivery fails and U-1 escalates to
   the operator. **No branch adds an indirection file or a second carriage.** If inline does not deliver,
@@ -637,8 +646,10 @@ that wants it must prove it then.
 
 **Phase 1 exit:** U-1 answered by trial and U-2 answered by a working instrument; one named candidate
 exists at `trials/candidate/SKILL.md` and is **the only file in `trials/candidate/`**; and that candidate
-contains **the carriage mechanism and no CE behaviour** — which is what makes S3's first red run capable
-of failing.
+contains **the carriage mechanism and no explicit CE instruction** — which is what makes a Phase 2 slice's
+pre-revision run a real measurement of the starting point rather than a formality. It does **not**
+establish that any behaviour is absent (§4.4); which cases start red is what the pre-revision run finds
+out.
 
 ---
 
@@ -892,8 +903,10 @@ forbids. It authorises nothing, and it permits no early wiring.
   specification finding, not an implementation liberty.
 - *Next:* Phase 3, subject to the progression decision below.
 
-**Phase 2 exit:** every behaviour except CE-17 clause 3 demonstrated **red-then-green** against a
-constructed failing case; the grouped regression green against the cumulative candidate; one named
+**Phase 2 exit:** every behaviour except CE-17 clause 3 **demonstrated against its constructed failing
+case** — **red-then-green where the pre-revision run was red**, and **preserved baseline evidence plus no
+regression where it was already green** (§4.4), with each behaviour recorded as one or the other and
+neither presented as the other; the grouped regression green against the cumulative candidate; one named
 candidate at `trials/candidate/SKILL.md`; the live skill file still unmodified (`git diff` empty); and one
 real objective run in shadow with its friction recorded. **Then an explicit progression decision by
 Codex**, stating in writing which proof has been obtained and that clause 3 remains owed. Phase 3 does not

@@ -14,9 +14,9 @@ Governing specification: `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.
 against `cc635d4`.
 
 ## Current lane and unit
-Standard. Bounded plan correction authorised by the operator after S3's valid pre-revision run falsified
-the all-five-red premise. S3 candidate revision and green remain stopped until the corrected plan is
-assessed and reapproved against its exact content.
+Standard. The three-surface plan correction is accepted, and the operator has authorised one correction
+round frozen to four surviving contradictory passages. Exact-content reapproval, S3 candidate revision,
+and green remain stopped until its closure check.
 
 Named reason for the loop: the implementation spans multiple sessions, its scope must remain bounded across
 S1–S12, and each result needs assessment by someone other than its builder before progression.
@@ -27,11 +27,14 @@ claims are false on the fixed case: four Slice A behaviours already pass and onl
 authorised the recommended bounded correction; the evidence rule must change before implementation so the
 success criterion does not change quietly.
 
-**Scope:** edit only
+**Initial scope:** edit only
 `plans/work-loop-v2-v0.2/context-engineering/context-engineering-implementation-plan-v0.1.md` and this
 canonical state file. Correct only the materially affected §4.4 candidate contract, Phase 2 cycle, and S3
 Slice A evidence/exit language. Preserve the Slice A family, seeded input, actor model, four counts,
 candidate-only variable, isolation contract, later sessions, and all other plan scope.
+
+The operator subsequently authorised the one correction round in `## Next action`; that frozen list is the
+only widening of this initial scope.
 
 The corrected contract must state:
 
@@ -59,30 +62,32 @@ the corrected wording cannot be read as all-five red–green causality. Stop if 
 specification change or expands beyond the three named plan surfaces.
 
 ## Latest material result
+**Round 1 — the three-surface correction — is accepted by Codex** and stands unchanged: §4.4's candidate
+contract, the Phase 2 cycle, and S3's evidence and exit language implement all five authorised points,
+preserve the family, actors, fixed seed, counts, isolation contract and later sessions, and do not
+overclaim all-five red–green causality.
+
+**Round 2 — the frozen four-passage correction — is applied.** All four findings reproduced by inspection
+before anything was edited, and all four are resolved.
+
 ```
-Inspected (2026-08-02):
-- Red artifact: HOLDS — the recorded pre-revision output exists at the handback path and hashes
-  688baf120ad75068fbdb74cc267e496930cef91822f6a8af8eef4484779c2b0f, matching the record; 76 lines.
-- Plan asserts behavioural absence from textual absence: HOLDS — searched the plan for the §4.4
-  candidate contract; found at :206-209, "because Phase 2's red runs depend on those behaviours
-  being absent."
-- Plan asserts the first red run genuinely fails: HOLDS — searched Phase 2 for `behaviourally
-  empty`; found at :625-628, naming CE-1, CE-2, CE-3, CE-15 and CE-17's clauses.
-- S3 exit requires all-five causality: HOLDS — searched S3 for `Exit:`; found at :656, with
-  :650-655 requiring "the red run first" and failing "a green run with no recorded red run".
-- Content-bound approval rule exists: HOLDS — searched the header for `Approval binds to content`;
-  found at :13-17, returning the plan to draft on a material edit to exit conditions.
-- Prior approval is commit-bound: HOLDS — searched the header for `Approved commit`; found
-  cc635d4, dated 2026-08-02.
+Reproduced (2026-08-02), before editing:
+- Finding 1: REPRODUCES — searched the plan for `Phase 2 exit`; found at :895, "every behaviour
+  except CE-17 clause 3 demonstrated red-then-green against a constructed failing case".
+- Finding 2: REPRODUCES — searched S2 for `contaminated bootstrap`; found at :621-623, "S3's red
+  run failing is the evidence … Phase 2 returns to S2".
+- Finding 3: REPRODUCES — searched Phase 1 exit for `no CE behaviour`; found at :640, "which is
+  what makes S3's first red run capable of failing".
+- Finding 4: REPRODUCES — searched the §7.0 table for the S3 row; found at :418, observer checks
+  "the red-then-green record and the four counts".
 ```
 
-**Result: the bounded correction is applied to the three named surfaces, and the plan is back to draft
-pending content-bound reapproval. It is not complete across the plan** — four further passages still
-assert the falsified rule, every one of them outside the three surfaces this brief allowed. They are in
-`## Unresolved blocker` and only Codex can decide them.
+**Result: the plan is now internally consistent on the baseline-green rule.** No passage still infers
+behavioural absence from textual absence, and no exit condition is unreachable. The plan remains a draft
+pending exact-content reapproval; the blocker that stopped reapproval is cleared.
 
-**Evidence — the exact passages changed.** `git diff -U0` reports nine hunks and no others. Old line
-numbers:
+**Evidence — round 1, the three named surfaces** (accepted by Codex; unchanged by round 2). `git diff -U0`
+at that commit reported nine hunks and no others. Old line numbers:
 
 | Old lines | Surface | What changed |
 |---|---|---|
@@ -108,52 +113,48 @@ specification, `plans/work-loop-v2-mvp/` and `.claude/` is **empty** — no cand
 command file changed. No hunk falls past old line `:656`, so S3b and every later session, phase and exit
 are untouched. The seeded input rule lives in this file's brief, which the correction did not edit.
 
+**Evidence — round 2, the frozen four.** `git diff -U0` since the round-1 commit reports **five hunks and
+no others**, at `:418`, `:617`, `:621-623`, `:640-641` and `:895-896` — the four frozen passages, with
+`:617` being the paragraph heading of finding 2's own passage. No sixth hunk exists, so nothing outside the
+freeze was touched.
+
+| Finding | Passage | What it says now |
+|---|---|---|
+| 1 | Phase 2 exit `:895` | Every behaviour except CE-17 clause 3 **demonstrated against its constructed failing case** — red-then-green where the pre-revision run was red, preserved baseline evidence plus no regression where it was already green, each recorded as one or the other and neither presented as the other. Clause 3 stays excluded, word for word. |
+| 2 | S2 emptiness `:617-632` | Split into three claims: the grep proves textual emptiness only; textual emptiness is **all S2 can establish**, because the candidate is a revision of the live skill and the core already produces some results; a clean pre-revision result is baseline green under §4.4, and Phase 2 returns to S2 **only on evidence of actual contamination** — the candidate's own text or the seed carrying the behaviour in. |
+| 3 | Phase 1 exit `:649-654` | The candidate carries "the carriage mechanism and **no explicit CE instruction**", which makes a slice's pre-revision run a real measurement rather than a formality. States outright that it does **not** establish any behaviour is absent. |
+| 4 | §7.0 S3 row `:418` | Observer checks "the per-case pre-revision and post-revision record (which cases were baseline green, which were caused green) and the four counts". |
+
+**Evidence — the check can fail, and what it returns.** Searching the plan for the four inference
+phrases — `S3's red run`, `S3's first red run`, `red run capable`, `no CE behaviour` — returned four
+matches before round 2 and returns **one** now: `:573`, the historical rationale Codex explicitly excluded
+from the freeze. `grep -c "red run"` returns 6 as the control, so the pattern form still matches this file
+and the drop is a real edit. Round 1's contract is intact: `every behaviour except CE-17 clause 3` still
+matches once; S3's four count targets still match verbatim; §7.0's operator-load sentence has zero diff
+hunks.
+
+**Not touched, by the freeze:** `:573`'s historical rationale for an S2 drafting decision, which repeats
+the old framing while describing why an earlier draft was rejected — carried as a deferral, not silently
+dropped. `:350` / `:552` ("a bootstrap that cannot fail") stay as written; they describe a different
+failure. Slices B, C and D keep their own exits. No candidate, runtime, fixture, spec, command or evidence
+file changed — `git status` lists one plan file and this state file.
+
 **Deferrals carried, unchanged:** candidate-marker wording in plan §7; the plan header's stale O-1 status;
 F-10's stale specification line count; S1's range-based scope check not duplicated into its scenario file;
-removal of obsolete `wl-root-7f3a` after the operator confirms it is idle. The valid red root and its
-primary output are preserved and untouched.
-
-## Unresolved blocker
-**The falsified rule survives in four passages outside the three surfaces this brief allowed me to edit.**
-Each was found by inspection after the correction; none was changed. The plan is internally contradictory
-until Codex decides them, and the first one makes S3's corrected exit unreachable.
-
-1. **`:895` — Phase 2 exit.** "every behaviour except CE-17 clause 3 demonstrated **red-then-green**
-   against a constructed failing case." S3's corrected exit cannot satisfy this: four of its five
-   behaviours are baseline green and have no red run to show. **This is the material one** — as it stands,
-   Phase 2 can never exit even if every slice succeeds.
-2. **`:621-622` — S2, how behavioural emptiness is established.** "**S3's red run failing is the
-   evidence.** If S3's red run comes back green, the first diagnosis is a contaminated bootstrap, not a
-   candidate that already works, and Phase 2 returns to S2 rather than recording a behaviour as proved."
-   This is the direct opposite of corrected point 2, and it is the rule that would send the completed S3
-   run back to Phase 1 as contamination.
-3. **`:640` — Phase 1 exit.** "…contains the carriage mechanism and no CE behaviour — which is what makes
-   S3's first red run capable of failing." Same inference from textual absence to behavioural absence that
-   §4.4 now rejects.
-4. **`:418` — §7.0 actor table, S3 row.** Observer checks "the red-then-green record and the four counts".
-   Minor and descriptive, but it names the wrong record shape for S3.
-
-Also noted, not proposed for correction: `:573` repeats the same reasoning as historical rationale for an
-S2 drafting decision, and `:350` / `:552` ("a bootstrap that cannot fail") remain **valid as written** —
-they describe a candidate *declared* to carry behaviours it is then required to lack, which is a different
-failure and is untouched by this result. Slices B, C and D keep their own all-five/all-three red-then-green
-exits at `:792`, `:822` and `:862`; those behaviours have not been run and this result does not falsify
-them.
+removal of obsolete `wl-root-7f3a` after the operator confirms it is idle; and `:573`'s stale framing. The
+valid red root and its primary output are preserved and untouched.
 
 ## Next action
-Codex: assess the bounded correction, then decide the blocker. Two questions, in order.
+Codex: run the closure check on the frozen findings only. Two questions.
 
-1. **Is the correction right on the three named surfaces?** Does the corrected §4.4 contract, Phase 2 cycle
-   and S3 evidence/exit language state the five required points, preserve everything the brief named as
-   preserved, and stay unreadable as all-five red–green causality? The evidence and its controls are above.
-2. **What happens to the four surviving passages?** They are outside the three surfaces this brief allowed,
-   so correcting them was not mine to do. Codex decides: widen the correction to name them, accept the
-   contradiction as a written limitation, or reframe. **`:895` needs an answer either way** — Phase 2's exit
-   as written cannot be satisfied by the corrected S3, so leaving it stands the build on a condition no
-   session can meet.
+1. **Are findings 1–4 resolved?** The reproduction record, the per-finding table and the phrase counts are
+   above.
+2. **Did the correction break anything?** Specifically: the already-accepted three-surface contract, or any
+   actor, seed, count, family assignment, later-slice rule, candidate, runtime file or trial evidence. The
+   five-hunk diff bound and the preserved-item checks are above.
 
-The plan is a draft pending reapproval bound to the commit carrying this correction, not to `cc635d4`.
-Reapproval is the operator's, not Codex's, and it should not be sought until question 2 is settled — a
-second material edit would return the plan to draft again.
+Anything newly noticed at closure is a deferral, not a third round (core §3).
 
-S3's candidate revision, the green root and `trials/slice-a-evidence.md` remain stopped.
+On close, the plan is ready for the operator's exact-content reapproval, bound to the commit carrying both
+corrections rather than to `cc635d4`. S3's candidate revision, the green root and
+`trials/slice-a-evidence.md` stay stopped until that reapproval is recorded.
