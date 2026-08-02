@@ -6,7 +6,7 @@ turn: codex
 ## Objective and approved scope
 Implement and prove the governing Context Engineering specification according to the approved implementation
 plan, one evidence-gated session at a time. Phase 1 is complete: S1 established a measurable CE-9 recovery
-instrument, and S2 established explicit-file carriage. S3 is authorised as the first Phase 2 slice.
+instrument, and S2 established explicit-file carriage.
 
 Governing specification: `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md`, approved against
 `148689d42ee7817239219417a1b884b961660f86`. Plan of record:
@@ -14,197 +14,146 @@ Governing specification: `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.
 against `cc635d4`.
 
 ## Current lane and unit
-Standard. S3, Slice A — prove the smallest one-touch kernel red then green against the isolated candidate.
+Standard. Bounded plan correction authorised by the operator after S3's valid pre-revision run falsified
+the all-five-red premise. S3 candidate revision and green remain stopped until the corrected plan is
+assessed and reapproved against its exact content.
 
 Named reason for the loop: the implementation spans multiple sessions, its scope must remain bounded across
 S1–S12, and each result needs assessment by someone other than its builder before progression.
 
 ## Brief
-**Why this unit:** S3 is the first isolated behavioural proof licensed by S2. It must show that the absence
-of Slice A is detectable before adding only the first coherent family: CE-17 clauses 1–2, CE-1, CE-2,
-CE-3, and CE-15.
+**Why:** S3's clean pre-revision run proves that the approved plan's “behaviourally empty” and all-five-red
+claims are false on the fixed case: four Slice A behaviours already pass and only CE-3 fails. The operator
+authorised the recommended bounded correction; the evidence rule must change before implementation so the
+success criterion does not change quietly.
 
-**Premises to re-check before accepting evidence:**
+**Scope:** edit only
+`plans/work-loop-v2-v0.2/context-engineering/context-engineering-implementation-plan-v0.1.md` and this
+canonical state file. Correct only the materially affected §4.4 candidate contract, Phase 2 cycle, and S3
+Slice A evidence/exit language. Preserve the Slice A family, seeded input, actor model, four counts,
+candidate-only variable, isolation contract, later sessions, and all other plan scope.
 
-1. `trials/candidate/` contains only `SKILL.md`; at preparation it is 116 lines and byte-identical to
-   `.agents/skills/work-loop-v2/SKILL.md` (SHA-256
-   `956c76f37230fb2a6b4d1605afecdcb4edd64a5828803464c29a0c9689720868`). It contains none of the named
-   Slice A wording. The red run, not this construction claim, determines whether each case is
-   behaviourally absent. If any case starts green, stop before candidate revision and return it to Codex
-   as a non-discriminating case; call it contamination only if evidence shows the candidate or seed was
-   contaminated.
-2. S2 licenses carriage only when a fresh Codex task is explicitly pointed at the candidate. Ordinary
-   installed-skill discovery remains unproved until S8b.
-3. S1's Harbourview scenario and four fixtures exist under `trials/`; each fixture opens with the required
-   `FIXTURE —` notice, and no Harbourview state exists in the live `logs/work-loop/` directory.
-4. `trials/slice-a-evidence.md` does not exist before S3. It is an output of the completed trial, not an
-   input or a preparation artifact.
+The corrected contract must state:
 
-**Fixed seeded input for both evaluation runs:** use the unchanged S1 Harbourview fixture set already in
-the repository, but give each fresh task only the following operator request. Apart from explicitly naming
-the candidate file as its instruction source, do not add hints, expected outcomes, plan/spec excerpts, or
-summaries. Paste the request verbatim for red and green:
+1. “No CE content” means no explicit family instructions; it does not establish behavioural absence where
+   the existing Work Loop skill or executable core already produces the specified result.
+2. A clean pre-revision pass is baseline evidence, not contamination. It cannot be relabelled red or
+   discarded merely to manufacture causality, and the seed cannot be tuned after the result.
+3. For S3, retain the recorded baseline-green evidence for CE-1, CE-2/CE-17 clause 2, CE-15, and CE-17
+   clause 1; require genuine red–green causality for CE-3; and require the unchanged green run to show CE-3
+   passing plus no regression in the four baseline-green behaviours.
+4. The candidate revision still makes all five Slice A behaviours explicit and adds no later family. The
+   completed evidence record must distinguish pre-existing baseline behaviour from behaviour caused by the
+   candidate revision rather than claiming all five were made green by it.
+5. S3 exits only when the same seed passes all five behaviours, the four counts meet their existing
+   targets, the CE-3 red and green primary outputs remain inspectable, and the four baseline-green cases
+   remain green.
 
-> Prepare the next Harbourview Work Loop unit. It must correct the wrong arrival hour and identify every
-> confirmation affected since 2026-06-14, even though identifying all of them is the inconvenient half of
-> the objective. I do not remember where the Harbourview material lives in this repository. I also do not
-> know which repository surface parses the availability timestamp; establish that by inspection rather
-> than guessing. Once the affected set is known, whether guests should be contacted in this unit or later
-> remains my decision.
+Because this changes a material exit condition, follow the plan's content-bound approval rule: make the
+corrected plan a draft pending reapproval of its exact committed content, while preserving the prior
+approval as history. Do not use this unit to repair the separately deferred stale O-1 header text.
 
-**Constructed failing cases — record one red and one green line for each:**
-
-1. **CE-1 · Discoverable location:** asking the operator where the load-bearing Harbourview file is fails;
-   locating and citing it passes.
-2. **CE-2 / CE-17 clause 2 · Mixed unknowns:** returning both the repository question and the genuine
-   guest-contact decision fails; only the genuine decision may return, while the repository question is
-   carried as a claim or discovery target.
-3. **CE-3 · Inspectable unknown:** refusing or guessing which implementation surface parses the timestamp
-   fails; a discovery unit of the form “establish X, inspect Y, return evidence, then reframe or stop,” with
-   a checkable completion condition, passes.
-4. **CE-15 · Second orientation artifact:** producing a separate operator-orientation document fails; one
-   brief opening with the §4.1 orientation and continuing into Claude's execution context passes.
-5. **CE-17 clause 1 · Derivable preparation loop:** a context interview, separate QC pass, or repeated
-   preparation pass for derivable information fails; one preparation pass passes.
-
-**Red–green protocol and actor handoff:**
-
-1. The operator drives a fresh Codex **red evaluator** in a disposable root outside the shared checkout.
-   It uses the current behaviourally empty candidate and the fixed seeded input, prepares but does not
-   execute the unit, and must not revise the candidate. Its trial-generated state must resolve only inside
-   that disposable root.
-2. Preserve the red task reference and its produced state/brief before anything else changes. A red run
-   that does not fail every named case is not proof: stop before candidate revision and return the result
-   to Codex to distinguish pre-existing adjacency from actual contamination. Do not tune the seed after
-   seeing the output.
-3. Only after a genuine red is preserved, the operator drives a separate Codex authoring task to revise
-   only `trials/candidate/SKILL.md`. Add the single-pass rule, §4.1 output contract, three-sentence
-   orientation, CE-1, CE-2, CE-3, and CE-15; add no later family.
-4. The operator then drives a fresh Codex **green evaluator** in a second disposable root made from the
-   same baseline. Copy in only the revised candidate; every other visible file and the seeded input must be
-   identical to red. The installed `.agents/skills/work-loop-v2/SKILL.md` must be absent from both roots,
-   leaving the explicitly named candidate as the only Work Loop skill available to either evaluator.
-   Preserve the green task reference and produced state/brief separately.
-5. Return both task references, both primary outputs, and the candidate revision to Codex. Codex will then
-   change `turn:` to `claude`; only after that handoff does Claude observe the red/green record, re-derive
-   the four counts, and create `trials/slice-a-evidence.md`. Do not send the task to Claude while this file
-   still says `turn: operator`.
-
-The two disposable evaluation roots must remain outside the shared checkout and separate from each other.
-No fictional state may be written to the live `logs/work-loop/` directory, and neither run may overwrite
-the other's output. Keep both primary outputs independently inspectable until Claude has embedded them or
-immutable task references to them in the evidence record; summaries alone are not primary evidence.
-
-**Evidence capable of failing:** the evidence record must show the same input, the red result before the
-candidate revision, the candidate-only behavioural change, and the green result. It must report four
-re-derivable counts: preparation passes (target **1**); operator context actions beyond stating the
-objective (target **0**, excluding genuine decisions); artifacts describing the unit (target **1**); and
-orientation sentences (target **≤3**). A missing red record, a missing per-case line, an uninspectable
-primary output, or a green run with any other behavioural variable fails S3.
-
-**Scope and stop conditions:** only `trials/candidate/SKILL.md` and, after both runs, the single
-`trials/slice-a-evidence.md` may become repository outputs. Do not touch the live
-`.agents/skills/work-loop-v2/SKILL.md`, the executable core, commands, hooks, or other runtime files. Do not
-add CE-17 clause 3, authority, verification, alignment, selection, non-accretion, or later-slice behaviour;
-do not begin S3b. If carriage causes more than one artifact, return to Phase 1 rather than adding a
-reconciliation step. Exit only when all five behaviours are demonstrated red then green and all four
-counts meet their targets.
+**Evidence capable of failing:** show the exact plan passages changed; demonstrate that no later phase,
+family assignment, actor, count target, seeded-input rule, or candidate/runtime file changed; and show that
+the corrected wording cannot be read as all-five red–green causality. Stop if the correction requires a
+specification change or expands beyond the three named plan surfaces.
 
 ## Latest material result
-**Result: the frozen disclosure finding is resolved.** The red root `wl-root-4c8d` no longer contains any
-file naming the live checkout, `audits/` is gone, and every file the trial requires is present and
-byte-unchanged. No new escape, answer-key leak, or red/green asymmetry was introduced. The finding was
-reproduced by inspection before being corrected, and the deletion rule was checked against the
-required-kept files first — none of the candidate, the executable core or the four fixtures contains the
-live-checkout prefix, so the rule could be applied literally without a carve-out.
+```
+Inspected (2026-08-02):
+- Red artifact: HOLDS — the recorded pre-revision output exists at the handback path and hashes
+  688baf120ad75068fbdb74cc267e496930cef91822f6a8af8eef4484779c2b0f, matching the record; 76 lines.
+- Plan asserts behavioural absence from textual absence: HOLDS — searched the plan for the §4.4
+  candidate contract; found at :206-209, "because Phase 2's red runs depend on those behaviours
+  being absent."
+- Plan asserts the first red run genuinely fails: HOLDS — searched Phase 2 for `behaviourally
+  empty`; found at :625-628, naming CE-1, CE-2, CE-3, CE-15 and CE-17's clauses.
+- S3 exit requires all-five causality: HOLDS — searched S3 for `Exit:`; found at :656, with
+  :650-655 requiring "the red run first" and failing "a green run with no recorded red run".
+- Content-bound approval rule exists: HOLDS — searched the header for `Approval binds to content`;
+  found at :13-17, returning the plan to draft on a material edit to exit conditions.
+- Prior approval is commit-bound: HOLDS — searched the header for `Approved commit`; found
+  cc635d4, dated 2026-08-02.
+```
 
-**Evidence.** Before the correction, `grep -rlF '/Users/…/Axcion AI Repo/ai-resources'` over the root
-returned **389 files** (372 under `audits/`, plus 17 across `.claude/commands/`, `logs/scripts/`, `docs/`,
-`inbox/`, `scripts/` and `plans/`). After it, the same search returns **0**, with a positive control on the
-same pattern returning 1 — so the zero is a true negative and not an unreadable-input artifact. The six
-required files hash identically before and after: candidate `956c76f3…`, core `bf657ebb…`, and fixtures
-`f65910cc…`, `c8d29350…`, `9d31c4ef…`, `1a4145c3…`. Re-checked after the deletions and all still true: no
-`.git`; `logs/work-loop/` absent; exactly one Work Loop `SKILL.md` in the root, the candidate; Harbourview
-in exactly four files, all fixtures; zero hits for `CE-(1|2|3|15|17)`, `slice-a-evidence`, `Slice A` and the
-count-target phrasings, each with a matching control; three symlinks remaining, all relative and all
-resolving — none dangling after the `.claude/commands/` deletions; and `logs/scripts/work-loop-v2-slice-1.test.sh`,
-which the candidate cites at line 77, still present.
+**Result: the bounded correction is applied to the three named surfaces, and the plan is back to draft
+pending content-bound reapproval. It is not complete across the plan** — four further passages still
+assert the falsified rule, every one of them outside the three surfaces this brief allowed. They are in
+`## Unresolved blocker` and only Codex can decide them.
 
-**The complete build rule — the green root must reproduce all six steps, differing only in the revised
-candidate.**
+**Evidence — the exact passages changed.** `git diff -U0` reports nine hunks and no others. Old line
+numbers:
 
-1. `git archive 32d3c26 | tar -x` into an opaquely-named directory outside the shared checkout. **Not a git
-   worktree and not a clone:** the root must carry no `.git`. A worktree was the original construction and
-   it left every scrubbed file recoverable by `git show HEAD:…` while `git status` mapped the deletions.
-   An opaque name matters too — the first root was named `s3-red-root`, which put the arm and the stage
-   into the first line the thread reads.
-2. Delete everything under `logs/` except `logs/scripts/`.
-3. Delete four answer-key files: the implementation plan `-v0.1.md`, the spec `-v0.1.md`,
-   `trials/carriage-trial-record.md`, and `trials/ce-9-recovery-scenario.md` (its §6 scores what a passing
-   brief must name).
-4. Delete both installed Work Loop skills — `.agents/skills/work-loop/` and `.agents/skills/work-loop-v2/`.
-   Both, not only v2: v1 is also a Codex Work Loop skill and its description matches the seeded request
-   directly, so it would have been discovered.
-5. Delete `workflows/research-workflow/.claude/commands/session-plan.md` — an absolute symlink resolving
-   into the live checkout.
-6. Delete `audits/`, then delete every remaining file containing the literal string
-   `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources`. Re-run the search until it returns
-   zero.
+| Old lines | Surface | What changed |
+|---|---|---|
+| `:3-4` | Header stage line | `approved as the plan of record` → **`draft pending reapproval`**, materially edited 2026-08-02. |
+| `:24-28` | Approval block | Current status `DRAFT — reapproval outstanding`; the prior approval retained verbatim as history, still bound to `cc635d4`; the material edit and its cause recorded beneath. |
+| `:206-213` | §4.4 candidate contract | "No CE content" redefined as a claim about the candidate's *text*, not the thread's behaviour, because the candidate is a revision of the live skill and the executable core already produces some results. A clean pre-revision pass declared baseline evidence, not contamination — not relabellable, not discardable, seed not tunable after the result. **Baseline green** and **caused green** defined; a slice proves causality for the second and no-regression for the first. |
+| `:619-631` | Phase 2 cycle | Cycle block now reads "record the result, per case" instead of "it fails, recorded" / "it passes, recorded". The pre-revision run is recorded per case, not assumed red. A slice proves causality only for cases it can show failing first; an all-green pre-revision run is a finding handed back, not a proof. |
+| `:642` | S3 candidate change | One clause added: a baseline-green behaviour is still written into the candidate explicitly. Family assignment itself untouched. |
+| `:650-656` | S3 evidence and exit | The recorded four-green/one-red result written in as the pre-revision evidence; the four retained as baseline green and protected from relabelling or re-seeding; **CE-3 named as the one case owing red-then-green**; exit now requires all five passing, CE-3 causal with both primary outputs inspectable, the four baseline cases unregressed, and the four counts met. |
 
-Must remain present and unchanged after all six: the candidate, the executable core, and the four
-`FIXTURE —` fixtures under `trials/fixtures/ce-9/`.
+**Evidence — nothing else moved, and the check can fail.** `grep -n 'all five behaviours demonstrated
+red-then-green'` matched **twice** before the correction (S3 `:656`, S6 `:815`) and matches **once** now
+(S6 only, `:862`). That single surviving match is the control: the pattern form still matches this file, so
+the S3 disappearance is a real edit and not an unreadable-input artifact. `grep -c 'behaviourally empty
+carriage'` went **1 → 0**, with `grep -c 'red-then-green'` returning 8 as its control.
 
-*Premises, re-checked by inspection and all holding.* P1 — `trials/candidate/` holds `SKILL.md` alone, 116
-lines, SHA-256 `956c76f3…`, `diff` against the live skill empty, zero hits for Slice A wording on a bounded
-pattern with a matching control. The bounded form is required: the naive case-insensitive `ce-[0-9]+`
-false-positives on `slice-1` at candidate line 77. P2 — `carriage-trial-record.md` §1 licenses carriage for
-"a fresh thread pointed at that file" and withholds it for "ordinary skill discovery once installed". P3 —
-four `FIXTURE —` fixtures present; no file in the live `logs/work-loop/` carries a `task:` id naming
-Harbourview. P4 — `trials/slice-a-evidence.md` absent.
+**Evidence — what was preserved.** Verified by inspection after the edit: the Slice A family header is
+unchanged (`:672`, CE-17 clauses 1–2, CE-1, CE-2, CE-3, CE-15); all four count targets survive verbatim
+(`:696-699` — passes 1, operator context actions 0, artifacts 1, orientation ≤3); the §7.0 actor table's S3
+row is byte-unchanged (`git diff` on it returns zero hunks), so lead and observer are as approved; and
+`git status` lists exactly one plan file changed. `git diff --stat` over `.agents/skills/`, `trials/`, the
+specification, `plans/work-loop-v2-mvp/` and `.claude/` is **empty** — no candidate, runtime, spec or
+command file changed. No hunk falls past old line `:656`, so S3b and every later session, phase and exit
+are untouched. The seeded input rule lives in this file's brief, which the correction did not edit.
 
-**Carried, not resolved — the obsolete root.** `…/scratchpad/wl-root-7f3a` still exists, is still registered
-as a worktree, and still carries the answer key recoverable through git. Removal was excluded from this
-correction by the brief and remains deferred until the operator confirms it is idle; the liveness guard
-blocked `git worktree remove` and was not bypassed. Until it is gone, `wl-root-4c8d` is the only valid red
-root.
+**Deferrals carried, unchanged:** candidate-marker wording in plan §7; the plan header's stale O-1 status;
+F-10's stale specification line count; S1's range-based scope check not duplicated into its scenario file;
+removal of obsolete `wl-root-7f3a` after the operator confirms it is idle. The valid red root and its
+primary output are preserved and untouched.
 
-Carry to task closure as deferrals: candidate-marker wording in plan §7; the plan header's stale O-1
-status; F-10's stale specification line count; and S1's range-based scope check not being duplicated into
-its scenario file.
+## Unresolved blocker
+**The falsified rule survives in four passages outside the three surfaces this brief allowed me to edit.**
+Each was found by inspection after the correction; none was changed. The plan is internally contradictory
+until Codex decides them, and the first one makes S3's corrected exit unreachable.
+
+1. **`:895` — Phase 2 exit.** "every behaviour except CE-17 clause 3 demonstrated **red-then-green**
+   against a constructed failing case." S3's corrected exit cannot satisfy this: four of its five
+   behaviours are baseline green and have no red run to show. **This is the material one** — as it stands,
+   Phase 2 can never exit even if every slice succeeds.
+2. **`:621-622` — S2, how behavioural emptiness is established.** "**S3's red run failing is the
+   evidence.** If S3's red run comes back green, the first diagnosis is a contaminated bootstrap, not a
+   candidate that already works, and Phase 2 returns to S2 rather than recording a behaviour as proved."
+   This is the direct opposite of corrected point 2, and it is the rule that would send the completed S3
+   run back to Phase 1 as contamination.
+3. **`:640` — Phase 1 exit.** "…contains the carriage mechanism and no CE behaviour — which is what makes
+   S3's first red run capable of failing." Same inference from textual absence to behavioural absence that
+   §4.4 now rejects.
+4. **`:418` — §7.0 actor table, S3 row.** Observer checks "the red-then-green record and the four counts".
+   Minor and descriptive, but it names the wrong record shape for S3.
+
+Also noted, not proposed for correction: `:573` repeats the same reasoning as historical rationale for an
+S2 drafting decision, and `:350` / `:552` ("a bootstrap that cannot fail") remain **valid as written** —
+they describe a candidate *declared* to carry behaviours it is then required to lack, which is a different
+failure and is untouched by this result. Slices B, C and D keep their own all-five/all-three red-then-green
+exits at `:792`, `:822` and `:862`; those behaviours have not been run and this result does not falsify
+them.
 
 ## Next action
-Codex: run the closure check on frozen finding 1 only — is the disclosure resolved, and did the correction
-break a required trial input or introduce any new escape, answer-key leak, or red/green asymmetry? The
-evidence is above. On close, hand to the operator with the prompt below.
+Codex: assess the bounded correction, then decide the blocker. Two questions, in order.
 
-**Ready-to-paste red prompt.** Paste verbatim into **one fresh Codex task**. Add nothing to it — every line
-it does not contain is deliberate, and the request's three stated unknowns are what cases 1–3 measure. Use
-`wl-root-4c8d`; `wl-root-7f3a` is defunct and must not be used.
+1. **Is the correction right on the three named surfaces?** Does the corrected §4.4 contract, Phase 2 cycle
+   and S3 evidence/exit language state the five required points, preserve everything the brief named as
+   preserved, and stay unreadable as all-five red–green causality? The evidence and its controls are above.
+2. **What happens to the four surviving passages?** They are outside the three surfaces this brief allowed,
+   so correcting them was not mine to do. Codex decides: widen the correction to name them, accept the
+   contradiction as a written limitation, or reframe. **`:895` needs an answer either way** — Phase 2's exit
+   as written cannot be satisfied by the corrected S3, so leaving it stands the build on a condition no
+   session can meet.
 
-> You are Codex working in the repository at:
->
-> `/private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/ff847f81-f482-4d29-ac4f-caeb88dfadea/scratchpad/wl-root-4c8d`
->
-> Work only inside that directory. Every path you read or write must resolve inside it.
->
-> Your instructions for how to work are in this file. Read it first and follow it:
->
-> `plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md`
->
-> Do not modify that file.
->
-> Prepare the unit only. Do not execute or implement it.
->
-> The operator's request:
->
-> Prepare the next Harbourview Work Loop unit. It must correct the wrong arrival hour and identify every
-> confirmation affected since 2026-06-14, even though identifying all of them is the inconvenient half of
-> the objective. I do not remember where the Harbourview material lives in this repository. I also do not
-> know which repository surface parses the availability timestamp; establish that by inspection rather
-> than guessing. Once the affected set is known, whether guests should be contacted in this unit or later
-> remains my decision.
+The plan is a draft pending reapproval bound to the commit carrying this correction, not to `cc635d4`.
+Reapproval is the operator's, not Codex's, and it should not be sought until question 2 is settled — a
+second material edit would return the plan to draft again.
 
-**Immediately after the run, before anything else changes:** preserve the task reference and copy the
-produced state file out of the root. The candidate's `logs/work-loop/` rule resolves *inside* the root, so
-the output lands at `<root>/logs/work-loop/<task-id>.md` — that is the primary evidence, and it is the file
-S2's run 1 destroyed by letting a second run share a root. Do not start the green run in this root.
+S3's candidate revision, the green root and `trials/slice-a-evidence.md` remain stopped.

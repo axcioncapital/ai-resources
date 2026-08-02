@@ -1,7 +1,7 @@
 # Implementation plan: Context Engineering for the Work Loop
 
-**Version:** v0.1 · **Stage:** approved as the plan of record (2026-08-02) · **Status:** not authorisation
-to implement — the specification's approval (O-1) is still outstanding.
+**Version:** v0.1 · **Stage:** **draft pending reapproval** — materially edited 2026-08-02 after approval ·
+**Status:** not authorisation to implement — the specification's approval (O-1) is still outstanding.
 
 > **Authority notice.** This plan sequences work; it creates no permission to do it. It is subordinate to
 > [`../context-engineering-spec-v0.1.md`](../context-engineering-spec-v0.1.md), which is itself still a
@@ -21,10 +21,20 @@ to implement — the specification's approval (O-1) is still outstanding.
 > this plan is a proposal.
 >
 > ```
-> Plan approval:   APPROVED as the plan of record — operator, 2026-08-02
-> Approved commit: cc635d4
-> Approved on:     2026-08-02
+> Current status:    DRAFT — reapproval outstanding
+> Prior approval:    APPROVED as the plan of record — operator, 2026-08-02
+> Approved commit:   cc635d4
+> Approved on:       2026-08-02
+> Returned to draft: 2026-08-02, by the material edit recorded below. The prior approval above is
+>                    retained as history; it binds to commit cc635d4 and does not cover this content.
 > ```
+>
+> **The material edit that returned it to draft.** S3's pre-revision run — the same seeded input against
+> the unrevised candidate — falsified this plan's premise that the candidate is *behaviourally* empty and
+> that all five Slice A cases start red. Four came back green and only CE-3 was red. The §4.4 candidate
+> contract, the Phase 2 cycle and S3's evidence and exit conditions were corrected to match, which changes
+> a material exit condition and therefore triggers the content-bound rule above. Reapproval binds to the
+> commit carrying this correction, not to `cc635d4`.
 >
 > **What this approval does not do.** It answers the second of Phase 0's two questions only. **O-1 — does
 > the specification become governing — is still unanswered**, and §12 states that nothing below starts
@@ -203,15 +213,37 @@ right object rather than a new invention:
 - **It is isolated by construction.** It sits under `trials/`, not under `.agents/skills/`, so no live
   session can pick it up. The operator points a fresh Codex thread at it explicitly, for the trial only.
 
-**What the candidate contains when Phase 2 opens — and why it must contain nothing behavioural.** Phase 1
-answers *how* an instruction reaches a fresh Codex thread. It must not answer *which* CE behaviours the
-thread exhibits, because Phase 2's red runs depend on those behaviours being absent. So the candidate at
-Phase 1 exit is a **carriage with no CE content**: the mechanism proved, Families 1–6 not yet written. The
+**What the candidate contains when Phase 2 opens.** Phase 1 answers *how* an instruction reaches a fresh
+Codex thread. It must not answer *which* CE behaviours the thread exhibits, so the candidate at Phase 1
+exit is a **carriage with no CE content**: the mechanism proved, Families 1–6 not yet written. The
 construction S2 uses to keep those two questions apart is stated in S2.
 
+**"No CE content" is a claim about the candidate's text, not about the thread's behaviour.** It means the
+candidate carries no explicit family instruction. It does **not** establish that the specified behaviour is
+absent. The candidate is a revision of the live Codex Work Loop skill (F-3), and that skill and the
+executable core already produce some of the specified results on their own — a thread reading them has
+reasons to behave well that no CE family put there. Where that is so, the pre-revision run comes back
+green, and that is a fact about the starting point, not a defect in the construction and not a failure of
+the slice.
+
+**A clean pre-revision pass is baseline evidence, not contamination.** It records that the behaviour was
+already present before the candidate carried any instruction for it, and it is kept as the evidence for
+that behaviour. It may not be relabelled red, discarded, or re-run against a different scenario in order to
+manufacture causality, and **the seeded input may not be tuned after the result is seen** — that is
+building the instrument around the answer (§5.2, *a control that proves nothing*; core §6 rule 5).
+Contamination is a different finding and needs its own evidence — that the candidate or the seed carried
+the behaviour in — not merely a green line where red was expected.
+
+**Each slice therefore separates two kinds of green.** **Baseline green** — present before the revision,
+proved by the recorded pre-revision run. **Caused green** — red before the revision and green after it,
+with both primary outputs inspectable. A slice proves causality for the second group and **no regression**
+for the first. Presenting a baseline-green behaviour as one the revision made pass is the specific overclaim
+this rule exists to prevent; so is quietly dropping a baseline-green behaviour from the record because it
+demonstrated nothing.
+
 **Every Phase 2 session therefore has two outputs, not one:** a revision of the candidate, and the
-evidence record for the behaviours that revision made pass. A session that produces only an evidence
-record has not exited.
+evidence record — for the behaviours that revision made pass, and for those it had to leave unbroken. A
+session that produces only an evidence record has not exited.
 
 > **Fixtures must never look authoritative.** Slices B and C seed plans and current-state files, and a
 > seeded "approved plan" is exactly the shape CE-4 and CE-6 warn about. Three rules, and they are
@@ -616,19 +648,24 @@ Each slice is one complete observable result, sized for a fresh session. **The c
 the candidate (§4.4):**
 
 ```
-run the constructed failing case against the CURRENT candidate  → it fails, recorded
+run the constructed failing case against the CURRENT candidate  → record the result, per case
 revise the candidate to carry this family's behaviour           → one file, one family
-run the SAME case against the REVISED candidate                 → it passes, recorded
+run the SAME case against the REVISED candidate                 → record the result, per case
 ```
 
 Both runs are Codex runs on the same seeded input, so the operator drives them; the only variable between
-them is the candidate revision. **The first red run can genuinely fail because Phase 1 exits with a
-behaviourally empty carriage** — nothing in it addresses Family 1, so a brief produced under it has no
-reason to satisfy CE-1, CE-2, CE-3, CE-15 or CE-17's clauses. Each later slice's red run fails the same
-way against its own family.
+them is the candidate revision. **The pre-revision run is recorded per case, not assumed red.** Phase 1
+exits with a carriage carrying no explicit family instruction, so a case the live skill and the executable
+core do not already cover has no reason to pass — that is the case whose green the revision can be shown
+to have caused. A case that comes back green before the revision is **baseline green** (§4.4): it is kept
+as recorded, the revision must not regress it, and neither the seed nor the label may be changed to turn
+it red.
 
-**A slice that cannot show the red run has not proved anything** — it has shown that the behaviour is
-present, not that its absence was detectable. No slice builds a layer for a later slice to use, and no
+**A slice proves causality only for the cases it can show failing first** — for those, the red record is
+what makes the later green mean anything; without it the slice has shown the behaviour is present, not
+that its absence was detectable. A slice whose every case comes back green before the revision has proved
+no causality at all, and the honest report of that is a finding about the starting point handed back to
+Codex, not a proof written up as one. No slice builds a layer for a later slice to use, and no
 slice touches the live `.agents/skills/work-loop-v2/SKILL.md`: `git diff` on it is empty throughout Phase
 2, and S8b is the first session that changes it.
 
@@ -639,7 +676,10 @@ slice touches the live `.agents/skills/work-loop-v2/SKILL.md`: `git diff` on it 
   only a genuine decision returns to the operator, and that a resolvable unknown becomes a discovery unit
   rather than a refusal.
 - *Candidate change:* the candidate gains Family 1 and CE-15 — the single-pass rule, the §4.1 output
-  contract, and the three-sentence orientation. Nothing else.
+  contract, and the three-sentence orientation. Nothing else. **Unchanged by the correction below:** a
+  behaviour that is already baseline green is still written into the candidate explicitly, because the
+  slice's job is to put the behaviour into the candidate's own text, not to rely on the live skill
+  continuing to produce it.
 - *Constructed failing cases:* a load-bearing file whose location is unstated but discoverable, where
   asking the operator where it is fails (CE-1); material carrying both a resolvable repository question
   and a genuine intent question, where both returning fails (CE-2); a load-bearing unknown answerable by
@@ -647,13 +687,20 @@ slice touches the live `.agents/skills/work-loop-v2/SKILL.md`: `git diff` on it 
   document, which fails on the second document (CE-15); and a preparation loop or context interview for
   information the pass could derive (CE-17 clause 1).
 - *Repository output:* `trials/candidate/SKILL.md` (revised) **and** `trials/slice-a-evidence.md`.
-- *Evidence capable of failing:* the red run first — the same seeded input against the pre-revision
-  candidate, recorded as failing. Then, against the revised candidate: a count of preparation passes
-  (target 1); a count of operator context actions **beyond stating the objective** (target 0, excluding
-  genuine decisions — the same wording S3b and S11 use, so the three counts compare); the count of
-  artifacts describing the unit (must be 1); the orientation's sentence count (≤3). **A green run with no
-  recorded red run fails the slice.**
-- *Exit:* all five behaviours demonstrated red-then-green.
+- *Evidence capable of failing:* the pre-revision run first — the same seeded input against the
+  pre-revision candidate, its result recorded **per case**. That run has been performed, and it came back
+  **four green and one red**: CE-1, CE-2/CE-17 clause 2, CE-15 and CE-17 clause 1 were already satisfied
+  before the revision; **CE-3 was red**. Those four are **baseline green** (§4.4), and the recorded run is
+  retained as their evidence; it may not be relabelled red, discarded, or re-seeded to widen the red set.
+  **CE-3 is the case this slice must show red-then-green**, with both primary outputs inspectable. Then,
+  against the revised candidate: a count of preparation passes (target 1); a count of operator context
+  actions **beyond stating the objective** (target 0, excluding genuine decisions — the same wording S3b
+  and S11 use, so the three counts compare); the count of artifacts describing the unit (must be 1); the
+  orientation's sentence count (≤3). **CE-3 green with no recorded CE-3 red fails the slice** — and so does
+  an evidence record presenting all five behaviours as caused by the revision, which is the §4.4 overclaim.
+- *Exit:* against the revised candidate and the same seeded input, all five behaviours pass; **CE-3 is
+  demonstrated red-then-green** with the red and green primary outputs both inspectable; the four
+  baseline-green behaviours are **still green — no regression**; and all four counts meet the targets above.
 - *Stop:* if the pass terminates in more than one artifact and the cause is the carriage, return to Phase 1
   rather than adding a reconciliation step.
 - *Next:* S3b.
