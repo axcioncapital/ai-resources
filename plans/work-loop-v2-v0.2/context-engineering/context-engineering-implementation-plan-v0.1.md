@@ -150,7 +150,7 @@ settles the semantic scope.
 | Claude command `/work-loop-v2` | One canonical file (F-2) | Three: `ai-resources`, `projects/axcion-systems-builder` (symlink), `projects/axcion-design-studio` (symlinked `commands/` directory) | **Consumes** a brief; does not prepare one. Not a CE invocation site — it is where a badly-prepared brief surfaces. |
 | Codex skill `work-loop-v2` | One canonical file (F-3) | Two: `ai-resources`, `projects/axcion-systems-builder` (symlinked skill directory). **`axcion-design-studio` has no `.agents/` directory at all.** | **Yes — two sites:** opening a unit and writing the brief, and assessing/continuing a task. Both are plan-dependent. |
 | Executable core | One canonical file (F-1) | Read by both sides; no copies found | Not an invocation site. It is the shared contract both entrypoints obey, so the orientation duty belongs here or it belongs in two places and drifts. |
-| Work Loop **v1** — `.claude/commands/work-loop.md`, `docs/work-loop.md` | ai-resources; reachable from the symlinked project command directories | Still live | **Plan-dependent, and live.** Whether it is *in scope* is O-3, not a fact this table can settle. |
+| Work Loop **v1** — `.claude/commands/work-loop.md` (251 lines), `docs/work-loop.md` (260 lines) | ai-resources; reachable from the symlinked project command directories. **It has its own Codex skill**, `.agents/skills/work-loop/SKILL.md`, and its own state directory, `logs/loop/` | Still live | **Plan-dependent, live, and it authors its own brief.** `work-loop.md:41` — given a plain-English need, *"compose the brief yourself in the contract's `BRIEF` shape."* That is a CE invocation site by any reading of the behaviour. Whether it is *in scope* is O-3, not a fact this table can settle. |
 
 **There is one command file and one skill file, not three copies.** The mission thread that describes
 `axcion-design-studio` as holding *"a copy of the command"* is imprecise: it reaches the same bytes
@@ -229,15 +229,26 @@ evidence, so S8b reuses it and builds no transport artifact and no second state 
 |---|---|---|
 | Where does Codex write the engineered brief? | Into the task-state file's `## Brief` section, at `logs/work-loop/{task-id}.md`. Codex has repository write access and uses it directly. | `SKILL.md:19` *"You **write** the state file, at the path core § 4 fixes."*; `SKILL.md:33` *"The folder is core § 4's, not a choice."*; core §4 *Where it lives* |
 | Where does Claude read it? | The same path. The command resolves the task id from its argument, or from the single file under `logs/work-loop/` whose `turn:` is `claude`. | `work-loop-v2.md:32` |
-| How is task identity checked? | Frontmatter `task:` must match the resolved id. A mismatch is reported and **nothing is changed** — no turn flip, no commit. | `work-loop-v2.md:36`; core §6 rule 2 |
-| How is freshness — whose move it is — checked? | Frontmatter `turn:`. Codex sets `turn: claude` when the brief is ready; Claude stops if it is anything else. | `SKILL.md:46`; `work-loop-v2.md:38` |
-| What does the operator actually do? | Carries the *turn*, not the *context*: one instruction, **"run `/work-loop-v2` in Claude."** | `SKILL.md:21`, `SKILL.md:27` |
+| How is **task identity** checked? | Frontmatter `task:` must match the resolved id. A mismatch is reported and **nothing is changed** — no turn flip, no commit. | `work-loop-v2.md:36`; core §6 rule 2 |
+| How is **turn ownership** checked? | Frontmatter `turn:`. Codex sets `turn: claude` when the brief is ready; Claude stops if it is anything else. This says *whose move it is* — nothing more. | `SKILL.md:46`; `work-loop-v2.md:38` |
+| How is **freshness** checked? | **It is not.** Core §6 rule 2 names four conditions — missing, malformed, stale, belongs to another task — and the live command implements identity, turn and readable-frontmatter. **Nothing checks staleness**: a `turn: claude` file whose brief was written against a repository that has since moved is indistinguishable from one written a minute ago. | `work-loop-v2.md:32-38` read in full; core §6 rule 2 (`:269`) |
+| What does the operator actually do? | Carries the *turn*, not the *context* — but the action count is **conditional, not always one**. Bare `/work-loop-v2` resolves automatically **only when exactly one** file under `logs/work-loop/` has `turn: claude`. With more than one, the command lists them and asks which — so the operator must also **name the task**, a second action. | `work-loop-v2.md:32` *"If more than one qualifies, list them and ask which. Never guess."*; `SKILL.md:21`, `SKILL.md:27` |
 
-**Why that last row is the whole of clause 3.** The operator typing `/work-loop-v2` is a trigger, not a
-context transfer — the context is already in the file Claude opens by itself. Clause 3 fails on
-*ferrying*: the operator assembling, restating or hand-carrying the brief. It does not fail on the
-operator being the one who says "go". S11 measures context actions, and this trigger is not one of them;
-the S11 record states that reading explicitly, so the count cannot be read two ways.
+**Why that last row is the whole of clause 3 — and where it needs care.** The operator typing
+`/work-loop-v2` is a trigger, not a context transfer: the context is already in the file Claude opens by
+itself. Clause 3 fails on *ferrying* — the operator assembling, restating or hand-carrying the brief. It
+does not fail on the operator being the one who says "go". **Naming which task to open is the same kind of
+action:** it identifies a file, it transfers no context, and it is what the live command requires whenever
+more than one task is open. So S11 counts it, states it separately, and does **not** treat it as ferrying.
+The distinction the S11 record must make explicit is between *identifying* a task and *supplying* its
+content; only the second fails clause 3.
+
+**Two things this seam does not provide, named here so no later session assumes them.** There is no
+staleness check — freshness is a property nothing in the live path verifies, and a brief that has aged
+badly is caught, if at all, by Claude's ordinary premise check under core §6 rule 1, which is a different
+mechanism with a different scope. And there is no single-trigger guarantee when several tasks are open.
+Both are live Work Loop facts (C-3, transport), not Context Engineering's to fix; S8b **must not** build a
+freshness field or a task-selection mechanism to close either.
 
 **What S8b must therefore not do:** create a delivery file, a queue, a handoff document, a second state
 system, or a turn mechanism. All five already exist or are prohibited. The seam edit changes *what the
@@ -285,8 +296,10 @@ every row in §9 traces to one of these; they are stated here once.
   demonstrating the one-touch handoff. This fails on the substitution alone, however good the brief is.
   **The shadow slice (S3b) is the same failure in a new place** — it involves both models and still is not
   the integrated proof, because the operator triggers it outside the wired seam.
-- **Counts above one.** More than one preparation pass, or more than one operator context action beyond a
-  genuine decision, in a trial the plan calls successful.
+- **Counts above their target.** More than one preparation pass, or **any** operator *context* action
+  beyond stating the objective and a genuine decision, in a trial the plan calls successful. Trigger
+  actions are counted separately and are not this criterion (§4.5, S11) — but a trial that reports them
+  merged into one number, or omits how many tasks were open, fails on the concealment.
 - **A control that proves nothing.** A CE-9 trial whose memory-only control produces an indistinguishable
   brief has demonstrated only that conversational memory happened to be sufficient. The seeded material
   fact must be absent from the request.
@@ -353,26 +366,32 @@ Every session names a **lead** — who performs the work — and an **observer**
 against a stated list. The observer is never the party whose output is being judged. **This adds no review
 stage:** the observer is always someone already in the loop for that session, doing the checking inside it.
 
-| Session | Lead | Observer | Needs the operator to drive Codex? |
-|---|---|---|---|
-| S1 · CE-9 instrument | Claude | The two greps, stated so a later session re-runs them | No |
-| S2 · carriage probe | Operator, driving fresh Codex threads | **Claude** — wrote none of the briefs; applies the probe check and verifies the named files really exist | **Yes** |
-| S3 · Slice A | Operator, driving Codex | Claude | **Yes** |
-| S3b · shadow slice | Operator (drives Codex) **and Claude** (does the real work from the brief) | Claude reports usability; the operator reports their own effort. Neither judges the other's half | **Yes** |
-| S4 · Slice B | Operator, driving Codex | Claude | **Yes** |
-| S5 · Slice C | Operator, driving Codex | **Claude** — for CE-7 this is the ordinary Work Loop premise check (command Step 2) run against the trial brief | **Yes** |
-| S6 · Slice D | Operator, driving Codex | Claude | **Yes** |
-| S7 · Slice E + first grouped regression | Operator, driving Codex | Claude | **Yes** |
-| S8a · entrypoint classification | Claude | The re-derivable commands in the table itself | No |
-| S8b · seam edit | Claude | Claude's pre/post runs — the pre-run driven by the operator through Codex | **Yes**, for the pre/post pair |
-| S9 · candidate review | Independent reviewer, fresh context | — it *is* the review | No |
-| S10 · bounded correction | Claude | The closure check's two questions (core §3) | No |
-| S11 · integrated proof | Operator + Codex + Claude | Claude records the run; the operator counts their own actions | **Yes** |
-| S12 · hardening, reproof, final regression | Claude | Operator-driven Codex runs for regression cases needing a fresh thread | **Yes**, partly |
+**An observer is a party, never a command.** A grep, a question or a re-derivable table is *what the
+observer checks against*; it cannot be the observer. Every row below therefore names a person or a model
+in both columns, with the checked-against list beside it.
 
-**Operator load, stated rather than implied: nine of the fourteen sessions need the operator to drive
-Codex.** That is the real cost of this build, and it is why the phases are sized to one session each
-rather than compressed.
+| Session | Lead | Observer — and what they check against | Needs the operator to drive Codex? |
+|---|---|---|---|
+| S1 · CE-9 instrument | Claude | **The operator** — re-runs the two stated greps (one hit, one miss) before authorising S2. Mechanical, no judgment, and it is not Claude checking its own output | No |
+| S2 · carriage probe | **Claude** authors the three fixture files; **the operator** then leads the three runs, driving fresh Codex threads | **Claude** — wrote none of the briefs; applies the probe check and verifies the named files really exist | **Yes** |
+| S3 · Slice A | Operator, driving Codex | Claude — the red-then-green record and the four counts | **Yes** |
+| S3b · shadow slice | Operator (drives Codex) **and Claude** (does the real work from the brief) | Claude reports usability; the operator reports their own effort. Neither judges the other's half | **Yes** |
+| S4 · Slice B | Operator, driving Codex | Claude — each seeded item against its constructed case | **Yes** |
+| S5 · Slice C | Operator, driving Codex | **Claude** — for CE-7 this is the ordinary Work Loop premise check (command Step 2) run against the trial brief | **Yes** |
+| S6 · Slice D | Operator, driving Codex | Claude — each seeded item against its constructed case | **Yes** |
+| S7 · Slice E + first grouped regression | Operator, driving Codex | Claude — the file-count diff, the fixture-escape grep, and R-1…R-5 | **Yes** |
+| S8a · entrypoint classification | Claude | **The operator** — re-runs the stated commands per row and confirms the O-3 reading recorded is the one they chose | No |
+| S8b · seam edit | Claude | **Claude** for the structural checks; **the operator** owns both halves of the pre/post pair, since each needs a fresh Codex thread | **Yes**, for **both** the pre-run and the post-run |
+| S9 · candidate review | An independent reviewer, fresh context | **Claude** — checks only that the review names the exact commit examined and that the candidate has not changed since. A staleness check, not a second review | No |
+| S10 · bounded correction | Claude | **Codex** — it owns the closure check's two questions (core §3 step 5) | No |
+| S11 · integrated proof | Operator + Codex + Claude | Claude records the run; the operator counts their own actions | **Yes** |
+| S12 · hardening, reproof, final regression | Claude | **Claude** for the fixes and the affected reproof; **the operator** for the regression cases needing a fresh Codex thread, which they drive and report | **Yes**, for those cases |
+
+**Operator load, stated rather than implied: ten of the fourteen sessions need the operator to drive
+Codex** — every session from S2 to S7, plus S8b, S11 and S12. Only S1, S8a, S9 and S10 do not. (An earlier
+version of this table said nine and assigned the operator to just one half of S8b's pre/post pair; both
+were undercounts.) That is the real cost of this build, and it is why the phases are sized to one session
+each rather than compressed.
 
 ### 7.1 The grouped regression
 
@@ -395,6 +414,17 @@ for a candidate five revisions later. The regression is what makes §5.1 item 9 
 | **R-3 · The blind fresh thread** | S1's seeded material fact — present in durable sources, absent from the request; a false repository claim; an absence claim; one irrelevant repository area | CE-7, CE-8, CE-9 |
 | **R-4 · The unsettled preference** | A design choice Codex prefers that no authority has settled; material of uncertain relevance; material that must be reclassified | CE-10, CE-12, CE-13, CE-14 |
 | **R-5 · The routine run** | A sequence of routine invocations — no new operator input, no approval, no materially changed understanding | CE-16, and CE-15's artifact count re-confirmed |
+
+**The cases are listed by behaviour number; they are not *run* by behaviour number.** A case that reported
+one verdict per behaviour could pass while a subcase inside it was never exercised — R-2 returning "CE-4
+green" while CE-4 A was not seeded, for instance. Two rules close that:
+
+1. **Each regression case inherits the complete seeded subcase set from the slice that built those
+   behaviours** — R-2 carries every CE-4 A–D, CE-5 and CE-6 A–C condition S4 constructed, R-4 every CE-10
+   A–B, CE-11 A–B, CE-12 A–B, CE-13 A–C and CE-14 condition S6 constructed, and so on.
+2. **Each case's record reports one line per subcase, not one per behaviour.** A subcase with no line is a
+   failed regression run, exactly as a behaviour with no row fails §8. This is a reporting granularity
+   rule; it adds no case, no session and no check beyond the ones the slices already built.
 
 **CE-17 clause 3 is deliberately absent from this table.** It cannot be exercised by a seeded case, because
 it needs a genuinely two-model session (S11). Its regression, where S12's hardening touched the seam, is a
@@ -458,7 +488,8 @@ about it.
 
 **Session S1 — build the measurement instrument**
 - *Inputs:* the CE specification §3.5, §5.7, CE-9; F-1…F-11 re-verified; this plan §4, §7.1.
-- *Actors:* lead Claude; observer — the two greps below, written down so a later session re-runs them.
+- *Actors:* lead Claude; observer — **the operator**, who re-runs the two greps below before authorising
+  S2. They are written down so that check is mechanical.
 - *One job:* construct one seeded scenario in which the durable sources carry **at least one material fact
   the operator's request message does not**, and state in writing which fact that is and how the control
   run is kept blind to it.
@@ -490,13 +521,29 @@ The probe is behaviour-shaped rather than a magic string: satisfying it requires
 the instruction, and its content is checkable against reality (do those files exist, and are they the ones
 the scenario makes relevant?). A string the thread could echo would prove only that it read the file.
 
-- *Inputs:* S1's scenario; two candidate carriages, written as two files under `trials/candidate/` —
-  **(a)** `carriage-a-SKILL.md`, the skill referencing the specification by path; **(b)**
-  `carriage-b-SKILL.md`, the skill carrying a compressed behavioural checklist with the specification as
-  the cited authority. Both carry the probe. **Neither carries any CE behaviour.**
-- *Actors:* lead — the operator, driving three fresh Codex threads. Observer — **Claude**, which wrote
-  none of the briefs: it reads the outputs, applies the probe check, and verifies the listed files exist
-  and are the scenario's.
+*What the two carriages differ by — mechanism, and nothing else.* The runtime packaging question U-1
+actually poses is whether an instruction survives **one level of indirection**: the specification is 913
+lines and the skill is 116 (F-10, F-3), so either the skill points at the authority and the thread must
+follow the pointer, or the skill carries the operative text in its own body. That is the choice, and it
+can be tested with the probe alone:
+
+| | `carriage-a-SKILL.md` — **indirect** | `carriage-b-SKILL.md` — **inline** |
+|---|---|---|
+| What the candidate file holds | No instruction of its own. One line naming `trials/candidate/carriage-a-instructions.md` and directing the thread to read and follow it. | The probe text itself, in the file's own body. |
+| Where the probe lives | The referenced file | The candidate file |
+| What a failure means | Indirection does not survive; the operative text must be inline | Inline delivery does not survive either; U-1 escalates |
+
+**Neither file mentions Context Engineering, CE-1…CE-17, or the specification at all.** Earlier drafts of
+this session distinguished the carriages by *content* — one referencing the specification, one carrying a
+compressed behavioural checklist — which contradicted the requirement that the survivor be behaviourally
+empty and would have made S3's red run invalid. Mechanism is the only permitted difference.
+
+- *Inputs:* S1's scenario; the two carriage files and, for (a), its referenced instruction file.
+- *Actors:* **author — Claude**, which writes all three files before any thread runs; they are fixtures,
+  built the way S1 builds its scenario. Lead for the runs — the operator, driving three fresh Codex
+  threads. Observer — **Claude**, which wrote none of the *briefs*: it reads the outputs, applies the
+  probe check, and verifies the listed files exist and are the scenario's. Authoring the instrument and
+  judging Codex's output are not the same output, so the observer independence §7.0 requires holds.
 - *One job:* determine which carriage delivers an instruction to a fresh thread, using the probe and a
   negative control.
 - *How they are installed and isolated:* **neither is installed.** Both sit under `trials/candidate/`,
@@ -504,8 +551,19 @@ the scenario makes relevant?). A string the thread could echo would prove only t
   can pick one up by accident. For each run the operator points a fresh Codex thread at one file
   explicitly, by path. The live `.agents/skills/work-loop-v2/SKILL.md` is not touched in this phase —
   `git diff` on it must be empty at S2's exit, and that is part of the evidence.
+- *What this construction cannot answer, stated so the result is not over-read:* because neither carriage
+  is installed, S2 answers only that an instruction reaching an **explicitly named** file is acted on, and
+  whether it survives indirection. It does **not** show that the same instruction is picked up through
+  ordinary skill discovery once installed. That half of U-1 is answered by S8b's pre/post invocation at
+  the live entrypoint, which is the first run where the carriage is installed — and it is why S8b's
+  behavioural evidence is required and its structural checks are explicitly not sufficient. A carriage
+  that wins S2 and then fails S8b's pre/post pair is a Phase 3 finding, not a Phase 1 one.
 - *Repository output:* `trials/carriage-trial-record.md`, and `trials/candidate/SKILL.md` — the surviving
-  carriage **with the probe removed**, so what enters Phase 2 has no behavioural content at all.
+  carriage **with the probe removed**, so what enters Phase 2 has no behavioural content at all. **Which
+  file the Phase 2 slices then write into follows from which carriage won:** if inline won, the families
+  are written into `SKILL.md` itself; if indirect won, `SKILL.md` keeps its pointer and the families are
+  written into the referenced instruction file, which is renamed to drop the `carriage-a-` prefix. The
+  trial record states which, in one line, because every later slice depends on it.
 - *Evidence capable of failing — three runs, one of which must fail:*
   1. **Negative control.** A fresh thread on the same scenario with **no carriage**. The `Carriage check`
      section must be **absent**. If it appears, the probe is not measuring the carriage, the instrument is
@@ -513,13 +571,20 @@ the scenario makes relevant?). A string the thread could echo would prove only t
   2. **Carriage (a).** The section appears, and the files it names exist and match the scenario.
   3. **Carriage (b).** The same check.
 
-  Plus: `git diff -- .agents/skills/work-loop-v2/SKILL.md` returns empty, proving nothing was installed;
-  and `grep -c 'CE-' trials/candidate/SKILL.md` returns **0** at exit, proving the surviving candidate
-  carries no behaviour.
+  Plus: `git diff -- .agents/skills/work-loop-v2/SKILL.md` returns empty, proving nothing was installed.
+
+  **How behavioural emptiness is actually established — two parts, because the grep is not enough.**
+  `grep -c 'CE-' trials/candidate/SKILL.md` returning **0** at exit proves only that no CE *identifier* is
+  present; a paraphrase would pass it. It is a necessary check, not a sufficient one. Emptiness is
+  established **by construction** — the carriages are authored to hold the probe and the mechanism and
+  nothing else — and it is *demonstrated* one session later: **S3's red run failing is the evidence.** If
+  S3's red run comes back green, the first diagnosis is a contaminated bootstrap, not a candidate that
+  already works, and Phase 2 returns to S2 rather than recording a behaviour as proved.
 - *Exit:* the negative control is clean, at least one carriage delivers the probe, and that carriage
   survives as `trials/candidate/SKILL.md` with the probe stripped — **or** both carriages fail and U-1
   escalates to the operator.
-- *What survives:* **one file.** The losing carriage is **deleted**, not archived — a kept-alongside
+- *What survives:* **one carriage.** The losing carriage is **deleted** — and if indirect lost, its
+  referenced instruction file goes with it — not archived, because a kept-alongside
   alternative is a second document describing the same thing, which is the FP-4 shape and, retained as a
   record of what was rejected, is the plan-history machinery §7 prohibits. The trial record states which
   won and why; that is the only thing preserved about the loser.
@@ -574,7 +639,8 @@ slice touches the live `.agents/skills/work-loop-v2/SKILL.md`: `git diff` on it 
 - *Repository output:* `trials/candidate/SKILL.md` (revised) **and** `trials/slice-a-evidence.md`.
 - *Evidence capable of failing:* the red run first — the same seeded input against the pre-revision
   candidate, recorded as failing. Then, against the revised candidate: a count of preparation passes
-  (target 1); a count of operator context actions (target 1 plus any genuine decision); the count of
+  (target 1); a count of operator context actions **beyond stating the objective** (target 0, excluding
+  genuine decisions — the same wording S3b and S11 use, so the three counts compare); the count of
   artifacts describing the unit (must be 1); the orientation's sentence count (≤3). **A green run with no
   recorded red run fails the slice.**
 - *Exit:* all five behaviours demonstrated red-then-green.
@@ -594,15 +660,27 @@ feedback after they are not.
 entrypoints are untouched, so the operator triggers Claude by hand — which is exactly the ferrying clause 3
 forbids. It authorises nothing, and it permits no early wiring.
 
-- *Inputs:* the S3 candidate; one **genuine** low-risk objective the operator wanted done anyway — small,
-  reversible, and not part of this build.
+- *Inputs:* the S3 candidate; one **genuine Standard-lane unit** the operator wanted done anyway — low
+  risk, but **not small and reversible**, and not part of this build.
+
+  **Why it must be a Standard unit and not Direct Work.** An earlier version of this session specified a
+  *small, reversible* objective and called its output ordinary Direct Work. That contradicts core §2:
+  small and reversible work gets **no state file and no brief**, so running a brief-producing capability
+  over it would have measured a path that is not supposed to exist, and inflated the result. The unit
+  S3b uses is therefore admitted to the loop the ordinary way — with the **named reason core §2 requires**
+  written into its own state file at open, chosen from core §2's list, not from this build's convenience.
+  Low risk is a property of the unit's blast radius; it is not the admission test.
 - *Actors:* lead — the operator (drives Codex) and Claude (does the real work from the brief). Observer —
   Claude reports whether the brief was sufficient to start without asking back; the operator reports their
   own effort. Neither judges the other's half.
 - *One job:* run one real objective end to end in shadow form, and record what the brief was actually like
   to work from.
-- *Repository output:* `trials/shadow-slice-record.md`, plus whatever the genuine objective itself produces
-  — committed as ordinary Direct Work, outside this plan's trial paths.
+- *Repository output:* `trials/shadow-slice-record.md` — **and nothing else belonging to this build.**
+  The genuine unit owns everything of its own: its state file at `logs/work-loop/{its-own-task-id}.md`,
+  its scope, its evidence, and its commits, none of which are this plan's. **Two separations, both
+  checkable:** the real unit's changes and the shadow record are never in the same commit, and the real
+  unit's state file is never edited by this build. A commit carrying both fails the session — that is how
+  an unrelated implementation gets smuggled into the build's evidence.
 - *Evidence capable of failing:* three counts, each able to come back badly — the number of times Claude
   had to ask a question the brief should have answered (target 0); the number of operator actions beyond
   stating the objective and triggering Claude (target 0, excluding genuine decisions); and Claude's stated
@@ -625,13 +703,28 @@ forbids. It authorises nothing, and it permits no early wiring.
   returns to draft, and that demotion requires a citation.
 - *Candidate change:* the candidate gains Family 2 — the semantic hierarchy, draft-does-not-govern,
   content-bound approval, material-edit demotion, and citation-required supersession.
-- *Constructed failing cases:* the specification's own — seed an approved plan, then apply one editorial
-  and one material edit **without touching the approval line**; a brief carrying the editorial one as
-  governing and the material one as draft passes, carrying both as governing fails (CE-4, including case C,
-  approval bound only to a filename). Four seeded items — a non-authoritative imperative file, preserved
-  speculative material, a casual operator message, a genuine decision — where promoting the casual message
-  because the operator wrote it fails (CE-5). Verified evidence falsifying a plan's factual premise, where
-  re-aiming the work instead of surfacing a conflict fails (CE-6 case C).
+- *Constructed failing cases — one seeded condition per subcase, because a subcase named in the header and
+  not separately seeded is not covered:*
+  - **CE-4 A** · a stale plan at a high-authority path, contradicted by a later dated operator decision in
+    the seeded decisions source. *Fails* if the brief carries the plan's requirement.
+  - **CE-4 B** · a Codex-authored plan draft the operator never approved. *Fails* if it is used as
+    governing direction or presented as approved.
+  - **CE-4 C** · an approval line naming **only the file**, with nothing identifying which content was
+    approved. *Fails* on that shape alone — this needs its own seeded plan, because the case is about the
+    approval record's form, not about any edit made to it.
+  - **CE-4 D** · one editorial and one material edit applied to an approved plan **without touching the
+    approval line**. *Passes* if the editorial one stays governing and the material one returns to draft;
+    *fails* if both are carried as governing.
+  - **CE-5** · four seeded items in one run — a non-authoritative imperative file, preserved speculative
+    material, a casual operator message, a genuine decision. *Fails* if any of the first three appears as
+    a requirement; the test is role accuracy, with only the decision carrying authority.
+  - **CE-6 A** · a source that reads as stale but carries **no** supersession evidence. *Fails* if it is
+    silently demoted or dropped; *passes* only if carried as a surfaced conflict or an unknown. This is
+    the case an earlier version of this session named in its header and never seeded.
+  - **CE-6 B** · a second plan document describing the same seeded project. *Fails* if two plans are left
+    able to appear current, or an amendment is applied silently as governing.
+  - **CE-6 C** · verified evidence falsifying a factual premise of the approved plan. *Fails* if the brief
+    re-aims the work at what the evidence suggests instead of surfacing the conflict.
 - *Repository output:* `trials/candidate/SKILL.md` (revised); `trials/slice-b-evidence.md`; the seeded plan
   fixtures under `trials/`, each carrying §4.4's `FIXTURE —` first line. These fixtures are R-2's seed and
   are built to survive (§7.5).
@@ -640,9 +733,12 @@ forbids. It authorises nothing, and it permits no early wiring.
   authority; the count of plans presented as current (must be 1); and the conflict section present for CE-6
   case C, with the required outcome still tracking approved intent.
 - *Exit:* all three behaviours demonstrated red-then-green.
-- *Stop:* if the fixtures cannot be built without creating a second plan that appears current, stop —
-  building one would violate CE-6 case B while testing it. §4.4's fixture rules exist to make this
-  avoidable, not to make it acceptable.
+- *Stop:* CE-6 B **requires** a second plan document, so seeding one is the test, not a breach — but only
+  **inside the seeded scenario**. If a plan fixture cannot be built without a second plan appearing
+  current in the repository's own plan space, stop: that would reproduce the failure in the live
+  repository while testing for it. §4.4's fixture rules — the `FIXTURE —` first line and placement no real
+  discovery reaches — are what keep the two spaces apart, and S7's fixture-escape grep is what proves they
+  stayed apart.
 - *Next:* S5.
 
 **Session S5 — Slice C · claims, absence, and recovery** *(CE-7, CE-8, CE-9 A–C)*
@@ -681,13 +777,25 @@ forbids. It authorises nothing, and it permits no early wiring.
 - *Candidate change:* the candidate gains Families 4 and 5 — the inline plan-alignment field, unit bounding
   with named held-back work, attributed Codex boundaries and non-prescription, three-way relevance, and
   reclassification disclosure.
-- *Constructed failing cases:* an irreconcilable objective proceeding silently, and a separate alignment
-  stage introduced (CE-10 A and B). An objective with two load-bearing parts, one inconvenient, where a
-  brief silently covering only the convenient part fails and the seeded second part is what the evidence
-  looks for (CE-11). A unit where Codex holds a clear design preference no governing authority has settled,
-  where a "required" section naming the preferred mechanism fails (CE-12). Over-inclusion, a silent drop,
-  and the middle relevance class silently promoted or erased (CE-13). A proposal demoted with no
-  disclosure — and its opposite error, a full discard log (CE-14).
+- *Constructed failing cases — one seeded condition per subcase:*
+  - **CE-10 A** · an objective that cannot be reconciled with the approved plan. *Fails* if the brief
+    proceeds silently.
+  - **CE-10 B** · work that **deviates** from the approved canonical plan. *Fails* if the deviation is
+    applied silently; *passes* if the brief either shows alignment or surfaces the proposed deviation
+    rather than applying it. An earlier version of this session labelled the no-gate check as case B; that
+    check is CE-10's *evidence* requirement — zero additional operator-visible stages — and it is kept
+    below, correctly labelled. It is not a substitute for seeding a deviation.
+  - **CE-11 A** · an objective plainly spanning several units. *Fails* if the brief is unbounded, or is
+    bounded silently with nothing naming what was held back.
+  - **CE-11 B** · an objective with two load-bearing parts, one inconvenient. *Fails* if the brief silently
+    covers only the convenient part; the seeded second part is what the evidence looks for.
+  - **CE-12 A** · an exclusion Codex added on its own judgment. *Fails* if it appears without a reason, or
+    in the operator's voice; *passes* if marked as Codex's framing decision with its reason attached.
+  - **CE-12 B** · a unit where Codex holds a clear design preference no governing authority has settled.
+    *Fails* if a "required" section names the preferred mechanism.
+  - **CE-13 A/B/C** · over-inclusion of a stale speculative document; a load-bearing constraint buried in
+    low-value material disappearing entirely; an uncertain-relevance item silently promoted or erased.
+  - **CE-14** · a proposal demoted with no disclosure — and its opposite error, a complete discard ledger.
 - *Repository output:* `trials/candidate/SKILL.md` (revised) **and** `trials/slice-d-evidence.md`. The
   seeded material here is R-4's seed and is built to survive (§7.5).
 - *Evidence capable of failing:* the red run first. Then, against the revised candidate: every technical
@@ -744,27 +852,38 @@ one session.*
 **Session S8a — the entrypoint classification**
 - *Inputs:* a fresh symlink-following scan (`find -L`) of every access path to the Claude command, the
   Codex skill and Work Loop v1; **O-3's answer**, which decides what population the test is applied to.
-- *Actors:* lead Claude; observer — the commands in the table, re-derivable by anyone.
+- *Actors:* lead Claude; observer — **the operator**, who re-runs the stated command for each row and
+  confirms the recorded O-3 reading is the one they chose.
 - *One job:* classify **every** access path as *relevant* or *not relevant*, each with evidence. Nothing is
   left unclassified and nothing is waived.
-- *The technical test, stated once:* a path is **technically relevant** if a Work Loop task can be opened
-  or continued through it in a way that depends on the plan. Concretely, it is relevant if all three hold
-  — a Codex skill is discoverable from it, a `logs/work-loop/` directory exists or can be created by an
-  ordinary session, and plan-dependent briefing or continuation happens there. A path failing any of the
-  three is **not technically relevant**, and the failing condition is the evidence.
-- *The test's limit, stated equally plainly:* the three conditions establish a technical fact. They do not
-  establish whether v1's paths are **in scope** — that is O-3, settled by the operator before this session
-  runs. If O-3 is unanswered, S8a stops rather than picking the reading that shortens the work.
-- *Repository output:* `trials/entrypoint-classification.md` — one row per access path: path, the three
-  conditions with their observed values, the O-3 reading applied, verdict, and the command whose output
-  produced it.
+- *The order is load-bearing: the operator's reading sets the population, then the test runs inside it.*
+  O-3 is applied **first**. Reading A puts only v0.2-generation paths in the population; reading B puts
+  every path through which plan-dependent Work Loop work is opened or continued today, whatever its
+  generation. A path the chosen reading includes **cannot** be classified out by the test below. Getting
+  this order wrong is what an earlier version of this session did, and it silently deleted reading B.
+- *The relevance test, stated once, and it is one condition:* a path in the population is **relevant** if
+  **plan-dependent briefing or continuation actually happens through it**. That is the whole test. It is
+  generation-neutral by construction, because it describes behaviour rather than architecture.
+- *Two further facts are recorded per path — and they decide **how** it gets wired, never **whether** it
+  is relevant:* whether a Codex skill is discoverable from it, and which state directory it uses
+  (`logs/work-loop/`, `logs/loop/`, or none). An earlier version made these two conditions of relevance,
+  conjoined with the first. That was wrong twice over: it encoded v2's architecture as the definition of
+  relevance, and — as §4.2 records — v1 in fact **has** a Codex skill, so the conjunction would have
+  excluded v1 on its state directory alone, which is a naming difference, not a reason to leave a
+  plan-dependent entrypoint unwired.
+- *The test's limit, stated equally plainly:* relevance establishes a fact about behaviour. It does not
+  establish **scope** — that is O-3, settled by the operator before this session runs. If O-3 is
+  unanswered, S8a stops rather than picking the reading that shortens the work.
+- *Repository output:* `trials/entrypoint-classification.md` — one row per access path: path, the O-3
+  reading applied, whether plan-dependent briefing or continuation happens through it (with the observed
+  evidence), the two wiring-shape facts, the verdict, and the command whose output produced it.
 - *Evidence capable of failing:* every row's conditions are re-derivable by running the stated command. A
   row whose verdict does not follow from its own conditions and the recorded O-3 reading fails. **A path
   with no row fails the session** — the scan's output and the table must have the same row count.
 - *Exit:* every access path carries a verdict backed by an observed condition and a named O-3 reading.
-- *Stop:* if a path's technical relevance genuinely cannot be settled by inspection, it counts as
-  **relevant** — the fail-safe direction — and either gets wired or blocks adoption. Do not resolve an
-  ambiguous path toward "not relevant" because that is the reading that lets the work continue.
+- *Stop:* if a path's relevance genuinely cannot be settled by inspection, it counts as **relevant** — the
+  fail-safe direction — and either gets wired or blocks adoption. Do not resolve an ambiguous path toward
+  "not relevant" because that is the reading that lets the work continue.
 - *Next:* S8b.
 
 > **Why this is a session and not a line in S8b.** An earlier version let uncovered entrypoints be named as
@@ -775,8 +894,10 @@ one session.*
 **Session S8b — the seam edit**
 - *Inputs:* S8a's classification; the reverted candidate design; the Phase 2 candidate
   (`trials/candidate/SKILL.md`); §4.5's no-ferry surface; F-6, F-7, F-9 re-checked.
-- *Actors:* lead Claude. The pre-run of the pre/post pair is driven by the operator through Codex, because
-  only a fresh Codex thread can produce the failing brief.
+- *Actors:* lead Claude, which makes the edit and runs the structural checks. **Both halves of the pre/post
+  pair are driven by the operator through Codex** — the pre-run because only a fresh Codex thread can
+  produce the failing brief, and the post-run for exactly the same reason. Claude cannot invoke either.
+  Observer — Claude for the structural checks; the operator reports what their two runs produced.
 - *One job:* wire **every path S8a classified relevant**. For the canonical files that means the Codex
   skill's two plan-dependent sites and the executable core's orientation step; the Claude command changes
   only insofar as a richer brief needs consuming.
@@ -785,9 +906,21 @@ one session.*
   checks whose move it is, and the operator's only action is the trigger line. **No delivery file, queue,
   handoff document, second state system or turn mechanism is created.** A diff that adds one fails the
   session.
-- *Repository output:* edits to `.agents/skills/work-loop-v2/SKILL.md`,
-  `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md`, and `.claude/commands/work-loop-v2.md`.
-  **No new file.** `trials/candidate/` is deleted in this session — its content has landed.
+- *Repository output — and it depends on the O-3 reading, which is the point:*
+  - **Under either reading:** edits to `.agents/skills/work-loop-v2/SKILL.md`,
+    `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md`, and `.claude/commands/work-loop-v2.md`.
+    **No new file.** `trials/candidate/` is deleted in this session — its content has landed.
+  - **Under reading B additionally, and this is not optional:** v1 is in the population and S8a will
+    classify it relevant, because §4.2 records that it authors its own plan-dependent brief. The operator
+    then chooses **one** of two routes at S8a's close, and the choice is recorded there:
+    **wire** — the allowed outputs extend to `.claude/commands/work-loop.md`,
+    `.agents/skills/work-loop/SKILL.md` and `docs/work-loop.md`, and v1 gets the same pre/post behavioural
+    evidence below, run against v1's own entrypoint; or **retire** — S8b makes **no** v1 edit and
+    **stops**, and adoption stays blocked under Phase 6 condition 2 until mission Step 8's retirement
+    actually executes. Retirement is that mission's work, not this plan's, and this plan does not sequence
+    it — it only records that adoption cannot complete before one of the two routes does.
+  - **An earlier version of this session listed only the three v2 files.** That made reading B
+    unexecutable: the plan promised "wire or retire v1" and had no session able to do either.
 - *Evidence capable of failing — behavioural first, structural second.* The structural checks alone are
   not sufficient: greps, counts and a clean diff can all pass while the entrypoint still produces the
   wrong brief.
@@ -818,7 +951,9 @@ one session.*
 - *Inputs:* the candidate, **named by its exact Git commit**; S8b's behavioural evidence; the
   specification; this plan.
 - *Actors:* lead — an independent reviewer with fresh context, which is not the party that wrote the
-  candidate. This is the one review the build gets; it replaces nothing and adds nothing.
+  candidate. This is the one review the build gets; it replaces nothing and adds nothing. Observer —
+  **Claude**, whose check is narrow and mechanical: the review names the exact commit it examined, and the
+  candidate has not changed since. That is a staleness check on the review, not a review of the review.
 - *One job:* one serious review of the whole candidate — capability plus wiring — under the frozen-findings
   rule. Not a chain, not a per-slice review.
 - *Repository output:* the findings, written into the task-state file.
@@ -836,7 +971,8 @@ one session.*
 
 **Session S10 — the one bounded correction** *(only if S9 produced findings)*
 - *Inputs:* the frozen findings.
-- *Actors:* lead Claude; observer — the closure check's two questions.
+- *Actors:* lead Claude; observer — **Codex**, which owns the closure check's two questions (core §3
+  step 5). The questions are what it checks against; they are not themselves the observer.
 - *One job:* correct exactly those. Anything newly noticed is recorded as a deferral and left unimplemented.
 - *Repository output:* the corrected files.
 - *Evidence capable of failing:* the closure check asks two questions only — are the frozen findings
@@ -871,11 +1007,20 @@ one session.*
 - *One job:* the operator gives Codex an objective once. Codex prepares and delivers a brief. Claude picks
   it up and works from it. The operator carries no context.
 - *Repository output:* `trials/integrated-proof-record.md`, plus whatever the genuine unit itself produces.
-- *Evidence capable of failing:* a count of operator context actions from objective to Claude's first
-  action — target one, plus any genuine decision. **Any** hand-carrying of context fails clause 3. The
-  record states explicitly which of the two proofs was obtained, and states §4.5's reading of the trigger
-  line — that typing `/work-loop-v2` carries the turn, not the context — so the count cannot be read two
-  ways.
+- *Evidence capable of failing — two counts, kept apart:*
+  1. **Context actions**, from objective to Claude's first action. Target **zero** beyond stating the
+     objective, plus any genuine decision. **Any** hand-carrying, restating or assembling of the brief
+     fails clause 3 outright.
+  2. **Trigger actions**, counted and reported separately. One if exactly one task was open when Claude
+     was invoked; **two** if more than one was, because the live command then requires the operator to
+     name the task as well (§4.5). The record states **how many `turn: claude` files existed at the moment
+     of invocation**, so the number is derived from an observed repository state rather than asserted, and
+     a run with several tasks open is not silently reported as a one-action run.
+
+  Both counts appear in the record. The record also states which of the two proofs was obtained, and cites
+  §4.5's reading of the trigger — that typing `/work-loop-v2`, and naming which task, carry the turn and
+  not the context — so neither count can be read two ways. **A trigger count of two does not fail clause
+  3**; concealing it would.
 - *Exit:* clause 3 demonstrated, or honestly recorded as not obtained.
 - *Stop:* if a fresh Claude subagent is proposed as a substitute for a fresh Codex thread, stop — the
   specification names that substitution as a failing case, and it is how the previous attempt went wrong.
@@ -891,7 +1036,10 @@ record.
 
 **Session S12**
 - *Inputs:* every trial record; the friction observed in S3b and S11; §7.1's five cases.
-- *Actors:* lead Claude; the regression cases needing a fresh Codex thread are operator-driven.
+- *Actors:* lead Claude, for the fixes, the affected reproof and the checks it can run itself. **The
+  operator drives every regression case that needs a fresh Codex thread and reports what it produced** —
+  which is most of §7.1's five, so this session is only partly Claude's. Observer — Claude for the fixes
+  and the reproof; the operator for their own runs.
 - *One job:* four things, in order. Fix demonstrated blockers under the frozen-findings discipline; re-prove
   the behaviours the fixes touched; run the full grouped regression on the final candidate; and consolidate
   the development evidence per §7.5.
@@ -1012,6 +1160,13 @@ in the §7 session that builds it, and in full in the specification. Repeating i
 intermediate candidate (§7.1); and no new behaviour number is introduced — the count stays seventeen, per
 spec §7.
 
+**This table's unit is the behaviour number; the proof's unit is the subcase.** A row here says *where* a
+behaviour is built and regressed. It does **not** assert that every subcase of that behaviour is
+constructed — that claim lives only in the §7 session's `Constructed failing cases` list, one seeded
+condition per subcase, and in §7.1's per-subcase reporting rule. Reading a green row here as subcase
+coverage is the specific error an earlier version of this plan made: headers promising CE-4 A–D, CE-6 A–C
+and CE-12 over sessions that seeded one subcase each.
+
 **CE-17 carries a second obligation the others do not.** Besides its three clauses it states the adoption
 boundary — *every relevant Work Loop entrypoint* must invoke the capability before plan-dependent
 continuation. That is an adoption **condition**, discharged by S8a's classification and S8b's wiring under
@@ -1085,11 +1240,14 @@ therefore not listable here.**
 | **The grouped regression is five cases, not seventeen.** A case exercising four behaviours can in principle pass while one of them is only weakly satisfied. | Seventeen per-behaviour regression runs would be a session per behaviour, which this build explicitly rejects. The per-behaviour proof is the slice; the regression's job is catching *breakage*, not re-proving. | A behaviour breaks between slices and the regression does not catch it. |
 
 **Not limitations, and recorded here so they are not mistaken for any.** `axcion-design-studio` reaches
-the Claude command through a symlinked directory but has no `.agents/` and no `logs/work-loop/`, so it is
-*not technically relevant* under S8a's test — a verdict established there, with those two absences as its
-evidence, re-derived at adoption, and flipping the moment either directory appears. Work Loop v1 is live
-and plan-dependent, and whether it is in scope is O-3, an operator decision that adoption condition 3
-requires settled.
+the Claude command through a symlinked directory but has no `.agents/` and no `logs/work-loop/`, so **no
+plan-dependent briefing or continuation happens through it** — S8a's one relevance condition fails, and
+those two absences are the evidence for *that*, not conditions in their own right. The verdict is
+established there, re-derived at adoption, and flips the moment briefing becomes possible. **Under reading
+B, S8a must also check whether v1 is reachable from that project** — v1 uses `logs/loop/`, a different
+directory, so the two absences above do not settle it and it is not assumed either way here. Work Loop v1
+in `ai-resources` is live and plan-dependent and authors its own brief (§4.2); whether it is in scope is
+O-3, an operator decision that adoption condition 3 requires settled.
 
 ---
 
