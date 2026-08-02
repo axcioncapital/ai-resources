@@ -86,3 +86,40 @@ matching how the mission's one prior amendment (destination behaviour 1, Step 3)
    just taken.
 
 **Recorded:** `logs/missions/work-loop-v2-mvp.md`, acceptance assertion 8.
+
+## 2026-08-02 — Work Loop v2 Context Engineering integration withdrawn: the required proof needs Codex and Claude running together
+
+**Context.** Codex issued an implementation mandate to wire Context Engineering into the live Work
+Loop v2 Codex-to-Claude path, and the operator approved the CE spec content at commit `148689d` for
+that unit. The mandate's required evidence included a demonstration with fresh contexts: *"Fresh Codex
+recovers that fact and produces the correct bounded brief. Fresh Claude receives the brief without
+operator copying."*
+
+**Decision.** The operator withdrew the mandate mid-session — *"implementation call was premature by
+codex"* — and directed that the five applied edits be discarded. They were, and were verified
+byte-identical to `HEAD` by checksum.
+
+**Rationale.** The demonstration Codex asked for cannot be produced by Claude working alone. Codex
+runs in the ChatGPT desktop app and is operator-driven; Claude cannot invoke it. So a session
+structured as "Claude implements and proves it" could only ever have produced half the evidence and
+then described the other half as owed. The CE specification already anticipates exactly this split in
+CE-17's two-proofs table — the **isolated** proof (one preparation pass produces a consumable brief)
+versus the **integrated** proof (the brief is actually delivered to and consumed by Claude with no
+operator ferrying) — and states that *"a real adoption claim requires the integrated proof"* and that
+the isolated one *"must never be presented as the integrated one."* This is a sequencing problem in
+the brief, not a design problem in the specification.
+
+**Alternatives considered.** (a) Implement anyway and report the integrated proof as owed — rejected
+by the operator as premature, and it would have landed changes to three shared runtime artifacts on
+half the evidence. (b) Substitute a fresh Claude subagent for the fresh Codex thread — rejected by
+Claude before it was proposed: that is precisely the substitution CE-17's proof table names as a
+failing case, and a standing session instruction forbids the Agent tool unless asked. (c) Leave the
+edits uncommitted for a later session to judge — offered, and the operator chose discard instead.
+
+**Consequence for the retry.** A future attempt must be structured as a genuinely two-model session:
+the operator running Codex, Claude running against the same repository. The reverted design is
+recorded in `logs/scratchpads/2026-08-02-13-08-scratchpad.md` so it need not be re-derived.
+
+**Not decided here.** Whether the CE spec's stage header flips from "draft specification — awaiting
+operator approval". The approval given was scoped *"for this implementation unit"*, so the spec was
+left untouched.

@@ -1223,3 +1223,29 @@ No additional levers — session was efficient.
 - **Default falsification/mutation-testing scripts to write against a scratch copy, never a live tracked file, as a template habit rather than a per-script judgment call.** Closes the whole defect class rather than this one instance — ranked above the primary's raw savings only in durability, not in immediate token size.
 - **Script-ify Bash probes involving heredocs/env vars/git init from the first draft, rather than attempting an inline multi-line command first (~1–2k/occurrence).** Smaller than the primary since it is a single recurring shape, not a two-part failure class.
 - **Finish the wrap-tail batching lever (~1–2k/session), carried across multiple prior entries with partial movement each time.** Smallest item here, listed to close the loop rather than to bank the tokens.
+
+### 2026-08-02 (S4-510) | Wasteful
+
+| Metric | Value |
+|---|---|
+| Session type | Implementation, mandate withdrawn mid-session |
+| Files written/edited | 9 written (all log/session artifacts) + 3 edited-then-reverted |
+| Tool calls | ~48 total (Bash ~22, Read ~14, Edit ~7, Write ~2, Skill 3) |
+| Subagents | 0 |
+| Rework cycles | 1, total — the entire implementation was reverted |
+
+**Findings:**
+
+- **~25 tool calls produced output that was discarded, and the blocker was detected before they ran (Rework, Major).** Claude read the governing sources, reached CE-17's two-proofs table, and recognised that the mandate's required demonstration — a fresh Codex thread handing a brief to a fresh Claude session — needs an actor it cannot invoke. It then decided privately to proceed and disclose the gap in the completion report. Roughly twenty further calls of reading and five edits followed before the operator halted the session for substantially that reason. The cost is not attributable to the defect being invisible; it was seen. Full analysis and the narrow corrective distinction (an unobtainable *acceptance* condition is a stop-and-surface, unlike an unobtainable construction detail) are in `logs/improvement-log.md`, 2026-08-02, promoted to `next-up.md`.
+- **Five sequential wrap-tail calls to establish log formats (Missed parallelization, Minor).** `improvement-log` tail → `improvement-log` grep → `Read improvement-log` → `usage-log` tail → `usage-log` header grep ran one at a time with no dependency between them; two calls would have done. This is the **fifth** consecutive entry carrying the "wrap-tail batching" lever with partial movement each time — at this point the repeat itself is the signal, not the token cost.
+- **Counter-signal — do not score as waste: the pre-edit baseline capture.** Checksums, the ceiling/bypass greps and the harness run were taken *before* any edit. That spend is what made the revert verifiable by comparison rather than asserted, and it caught the pre-existing 147/2 harness state so the two red assertions were not misattributed to this session's edits. Roughly 4 calls, and every one of them earned its place.
+- **Also not waste: parallel batching in the governing-source phase.** Six read pairs were issued concurrently (command+SKILL, transport-seam+pilot-structure, FP-4+Unit-3, README+proposal, and two evidence greps). This is a genuine improvement over the sequential-read pattern several prior entries flagged, and it should be read as the lever working where it was applied.
+- **Trend.** Third consecutive Wasteful entry, but the character differs again. S14-d72's Major was a defective verification script looping on itself; this one is a *judgment* loop — no artifact was defective, and every individual step was competently executed. That is the harder class: nothing in the execution looks wrong when read step by step, and the waste is visible only from the decision made at the start.
+
+**Recommendation:** When a mandate's stated evidence requires an actor, tool or resource the executing session cannot reach, surface it at the moment of detection and before any work that depends on that evidence begins — treating it as a stop condition even when the mandate's own stop list does not enumerate it. Deliberately narrow: this is not "ask more often", which would fight the repo's decision-point posture. The test is whether the unobtainable thing sits on the deliverable's critical path for **acceptance** rather than for construction.
+
+**Estimated savings:** ~25 tool calls (~40–60k tokens) this session, had the conflict been raised when it was noticed rather than carried. The reading itself was not wasted — the pre-fix evidence and the reverted design are both preserved and reusable — so the recoverable portion is the edit-and-revert cycle plus the verification around it, ~8–10 calls (~15–20k), with the remainder recoverable only if the retry reuses the scratchpad rather than re-reading the sources.
+
+**Additional levers (ROI-ranked):**
+- **Close the wrap-tail batching lever properly rather than partially.** Five entries have now named it; each session recovers 1–2k and the pattern returns. The structural version is a single wrap-time call that emits every log format probe at once, not a per-session intention to batch.
+- **Reuse the continuity scratchpad on the CE retry instead of re-reading the six governing sources (~30–40k on the next attempt).** Larger than the primary in absolute terms, but conditional on the retry happening.

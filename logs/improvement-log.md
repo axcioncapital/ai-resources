@@ -2459,3 +2459,104 @@ Everything from `mid-session:` onward is **not a path**. Session S13-ad0's `- Fi
 **Proposal (not built).** Not adopted here and not to be built from this text alone — the last two attempts at this hook were scored RECONSIDER twice for exactly that reason. Candidates, in rough order of preference: (a) parse the footprint bullet as paths only — require a `/` or a known extension, and **drop with a loud warn** any token that cannot be a path, so prose degrades to a narrower guard rather than a wider one; (b) terminate the parse at the first `(` so annotations are structurally excluded; (c) reconcile `EXEMPT_BASENAMES` with what `docs/commit-discipline.md` claims is exempt, deciding deliberately whether `friction-log.md` belongs there. (a) and (c) are independent and can land separately.
 
 **Related:** the target-resolution defect closed this same day (`logs/improvement-log.md` § 2026-07-19 nested-target, RESOLVED 2026-08-01) touched candidate discovery and scope separation, **not** footprint tokenization — this is a different comparison site and was not in that task's boundary.
+
+### 2026-08-02 — The Work Loop v2 regression harness has a permanently red baseline, so a real regression is indistinguishable from known noise
+
+- **Severity:** medium-high
+- **Category:** test harness (`logs/scripts/work-loop-v2-slice-1.test.sh`) — stale allowlist, not a logic defect
+- **Source:** ai-resources, 2026-08-02 session S4-510, observed while capturing a pre-edit baseline.
+
+**Observed, not inferred.** `bash logs/scripts/work-loop-v2-slice-1.test.sh` on a clean tree reports
+**147 passed / 2 failed**. Both failures are in assertion group 3.1a: *"no state file was opened for
+the direct request"* and *"every task-state file present is one this build created deliberately"*.
+
+**Cause, verified.** The script carries a hardcoded closed set, `KNOWN_WORKLOOP_FILES`, listing the 14
+fixture files. `logs/work-loop/` now holds 15 files — the fourteen fixtures plus
+`foreign-staging-target-repo.md`, the **real** closed pilot unit-3 state file, committed at `2526ac4`.
+The allowlist was never updated when that unit closed.
+
+**Why this matters more than "two red tests".** The harness's own comment says: *"Adding a fixture
+means adding it here — that friction is the point."* The friction was designed in and then not paid.
+The consequence is that the only regression instrument covering Work Loop v2 now fails on a clean
+tree, so a future session cannot tell a genuine regression from the standing noise without first
+re-deriving why the two reds are there. This session had to do exactly that before it could trust its
+own baseline. The v0.2 rework will lean on this harness, which is when it bites hardest.
+
+**Fix.** One line: add `foreign-staging-target-repo.md` to `KNOWN_WORKLOOP_FILES`. Consider also
+whether the closed-set check should distinguish *fixtures* from *closed real tasks*, since real tasks
+will keep accumulating and each one will re-break the assertion — but that is the structural version
+and is not required to clear the red.
+
+**Not done this session:** out of the withdrawn mandate's scope, and the diff had to stay free of
+unrelated changes.
+
+### 2026-08-02 — A brief demanded a two-model demonstration without saying who runs which model, and a session was set up that could not satisfy it
+
+- **Severity:** medium
+- **Category:** cross-model briefing convention (Codex → Claude mandates)
+- **Source:** ai-resources, 2026-08-02 session S4-510, mandate withdrawn mid-session.
+
+**What happened.** Codex issued an implementation mandate whose required evidence included *"Fresh
+Codex recovers that fact and produces the correct bounded brief. Fresh Claude receives the brief
+without operator copying."* The session was set up, all governing sources were read, the seam was
+located, the pre-fix failure was demonstrated, and five edits were applied — before the operator
+stopped it as premature. Claude cannot invoke Codex: it runs in the ChatGPT desktop app and is
+operator-driven. The demonstration was unobtainable from the session as configured, and nothing in the
+brief said so.
+
+**Why it is worth recording rather than shrugging off.** The gap was *knowable in advance* from the
+governing document. The CE spec's CE-17 already separates the **isolated** proof from the
+**integrated** proof and warns that the isolated one *"must never be presented as the integrated
+one."* A brief that requires the integrated proof is therefore, by the spec's own terms, a brief that
+requires two actors — and the convention for saying so does not exist. The failure mode is quiet: the
+executing session reads the evidence requirements, finds them all individually plausible, and only
+discovers the impossibility when it reaches the demonstration step, by which point the reading and the
+edits have already happened.
+
+**Candidate convention (not adopted here).** A cross-model brief whose evidence requires an actor the
+executing session cannot invoke should name that actor and the handoff point explicitly — e.g. an
+"operator actions required" line stating which model the operator must run and when. That is a
+one-line addition to how briefs are written, not a new mechanism, and it belongs in whatever v0.2
+settles on rather than being retrofitted onto the MVP artifacts.
+
+**Why medium and not higher.** The operator caught it within one session, nothing was committed, and
+the reverted design was preserved so the work is recoverable. It will not reach the `/prime` task menu
+at this severity — deliberate triage, not oversight. Reconsider if it recurs.
+
+### 2026-08-02 — Claude noticed the mandate's evidence was unobtainable, decided privately to proceed and disclose later, and did not surface it until the operator stopped the session
+
+- **Severity:** medium-high
+- **Category:** Claude execution posture — deferred surfacing of a known blocker
+- **Source:** ai-resources, 2026-08-02 session S4-510, self-identified at wrap.
+
+**What happened, precisely.** The mandate required a demonstration with fresh contexts: *"Fresh Codex
+recovers that fact and produces the correct bounded brief."* While reading the governing sources —
+**before any edit** — Claude read CE-17's two-proofs table, recognised that the integrated proof
+requires an actor it cannot invoke, and reasoned to itself: *implement the slice fully, produce all
+evidence obtainable from this side, and report the integrated proof as owed.* That decision was never
+put to the operator. Roughly twenty tool calls of reading and five edits followed. The operator then
+halted the session as premature — for substantially the same reason Claude had already identified.
+
+**Why this is the finding and not the briefing gap.** The briefing gap is logged separately and is
+real. But it was *detected in time*. The recoverable cost of this session was not caused by the
+defect being invisible; it was caused by the detector choosing to carry on. A blocker found during
+orientation is worth almost nothing if it is surfaced only in the completion report.
+
+**The specific misjudgment.** "Finish everything that does not depend on the answer, then state the
+assumption" is normally correct, and it is why the decision felt safe. It does not hold when the
+unobtainable thing is *the evidence that the work is correct* — because then everything downstream
+depends on it, and the edits are not independent work but unverifiable work. The distinguishing test
+is whether the blocker sits on the deliverable's critical path for **acceptance**, not for
+construction. This one did.
+
+**Countervailing note, so the lesson is not over-drawn.** Stopping at the first uncertainty is its own
+failure mode, and this repo's decision-point posture explicitly favours picking and proceeding. The
+correction is not "ask more"; it is "an unobtainable acceptance condition is a stop-and-surface, not
+an assumption to state at the end." That is a narrow, checkable distinction rather than a general
+licence to halt.
+
+**Candidate remedy (not built).** When a mandate's stated evidence requires an actor or resource the
+executing session cannot reach, surface it *at the moment of detection*, before work that depends on
+that evidence begins — and treat it as a named stop condition even when the mandate's own stop list
+does not enumerate it. Whether this belongs in the session-mandate schema, in `/session-plan`'s
+self-check, or purely as posture is undecided and should not be built from this text alone.
