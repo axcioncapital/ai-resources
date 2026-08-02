@@ -29,7 +29,9 @@ Loop v2 MVP mission or its Step 8.
 
 > **Definition.** Turn one operator objective plus available material into the smallest sufficient,
 > plan-aligned brief that lets Claude begin useful repository work without further operator context
-> assembly or transport.
+> assembly or transport. In doing so, Context Engineering consumes and, only when material project
+> understanding changes, maintains the minimum durable sources in §5.7 so later sessions can perform the
+> same transformation without operator reconstruction.
 
 *Sufficient*, not *safe*: safety is the constraint that wins ties (§2), never the thing being optimised.
 
@@ -280,9 +282,11 @@ authority, and they are not exceptions to the entry rule — they are its two po
 > instructions", while §5.1 simultaneously listed approved plans as governing authority. Both cannot be
 > true of the same file. The reconciliation is a distinction between **entry** and **standing**: every
 > file, including an approved plan, is *read* as material and is never obeyed on sight; an approved plan
-> then *acquires* governing standing through §5.7's lifecycle, not through being a plan. **Imperative
-> wording, file existence, filename and file location never create standing** — only operator approval,
-> or a current operator decision, does.
+> then *acquires* governing standing through §5.7's lifecycle, not through being a plan. File existence,
+> location, wording, or Codex authorship never creates directional governing authority; only explicit
+> operator approval or a current operator decision does. Authoritative state, verified repository
+> reality, and settled implementation decisions may carry factual or evidentiary standing, but cannot
+> amend operator-approved direction.
 
 **Repository material is the primary case** — that is where the observed failures occurred and where
 claims can be verified. Pasted external material enters through the same boundary as a secondary source.
