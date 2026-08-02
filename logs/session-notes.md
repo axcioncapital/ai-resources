@@ -540,3 +540,26 @@ and did not surface it until the operator halted the work for the same reason.
   unit. The wording given was *"approves the identifiable Context Engineering specification content at
   commit `148689d` for this implementation unit"* — which is CE-4-clean (bound to identifiable content,
   not a filename) but deliberately narrow. Not resolved here.
+
+## 2026-08-02 — Session S5-8ee
+
+**Mandate:** Land one commit carrying the completed Work Loop v2 unit `context-engineering-implementation-plan` — the drafted Context Engineering implementation plan, the evidenced state file set to `turn: codex`, and the three preserved operator-source snapshots — done when: one commit lands carrying exactly the five declared paths and nothing else, and `logs/friction-log.md` remains unstaged.
+- Out of scope: implementing Context Engineering; editing the specification or its approval status; editing any Work Loop runtime artifact; editing the mission file or the decisions log; staging the pre-existing unrelated change to logs/friction-log.md; pushing.
+- Files in scope: logs/work-loop/context-engineering-implementation-plan.md, plans/work-loop-v2-v0.2/context-engineering/work-loop-v2-mvp-proposal-v0.4-reference.md, plans/work-loop-v2-v0.2/context-engineering/matt-pocock-style-principles.md, plans/work-loop-v2-v0.2/context-engineering/matt-pocock-wayfinder-led-project-development-lifecycle.md
+- Stop if: the staging guard blocks again after this mandate is written — surface it to the operator rather than working around the hook.
+- Allowed inputs: plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md, plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md, logs/decisions.md, logs/scratchpads/2026-08-02-13-08-scratchpad.md
+- Required outputs: plans/work-loop-v2-v0.2/context-engineering/context-engineering-implementation-plan-v0.1.md
+- Mission: work-loop-v2-mvp
+
+**Work:** Land the blocked Work Loop v2 commit for task context-engineering-implementation-plan
+
+## 2026-08-02 — Session S6-6d7
+
+**Mandate:** Complete Phase 0 only of Work Loop v2 Context Engineering — verify the working-tree specification matches a committed version, record the operator's approval of it as the governing Context Engineering specification bound to that commit and dated 2026-08-02, and reconcile only the stale draft/status/authority wording — done when: `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md` carries the operator approval bound to the identified commit, one commit lands carrying that change, and its hash is reported.
+- Out of scope: beginning S1; creating logs/work-loop/context-engineering-implementation.md; any other material edit to the specification; pushing.
+- Files in scope: plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md, logs/session-notes.md
+- Stop if: the working-tree specification matches no committed version — report the discrepancy instead of approving it.
+- Allowed inputs: plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md
+- Mission: work-loop-v2-mvp
+
+**Work:** Work Loop v2 Context Engineering — Phase 0 only: verify spec matches a committed version, record operator approval bound to that commit, commit, report hash

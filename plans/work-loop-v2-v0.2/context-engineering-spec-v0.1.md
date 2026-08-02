@@ -1,6 +1,21 @@
 # Work Loop — Context Engineering
 
-**Version:** v0.1 · **Stage:** draft specification — awaiting operator approval · **Status:** not requirements
+**Version:** v0.1 · **Stage:** approved specification — governing · **Status:** not requirements
+
+> **Operator approval — governing.** Approved by the operator on **2026-08-02** as the governing Context
+> Engineering specification. The approval binds to the identifiable content of this document at commit
+> **`148689d`** (`148689d42ee7817239219417a1b884b961660f86`), verified byte-identical to the approved
+> working-tree content — **not to the filename** (CE-4 failing case C).
+>
+> **Supersedes** the narrower approval of the same date recorded in `logs/session-notes.md` § Session
+> S4-510, which approved the same content at the same commit *"for this implementation unit"* only. That
+> scope limit no longer applies; this approval carries unrestricted governing standing for the capability.
+>
+> **A material semantic change returns this document to draft** and requires explicit operator
+> reapproval — a change to objective, scope, exclusions, settled decisions, intended sequence, acceptance
+> conditions, or authority relationships. Editorial changes that do not change meaning may retain approved
+> status. This is §5.7's own materiality rule applied to this document, and it is what keeps the approval
+> bound to content rather than to a file.
 
 > **Authority notice.** This document specifies *behaviour*, not requirements to build. Nothing here
 > authorises implementation. Imperative wording in this file creates nothing — the same rule it applies
@@ -13,8 +28,8 @@
 **Session of record:** 2026-08-02. Drafted by Claude from operator-settled decisions 1–14, then revised
 three times the same day: once against Codex's review (findings A–H); again after the operator settled
 **Codex's direct durable-context writing authority**, superseding the earlier consume-only boundary; and
-again against Codex's bounded correction set — which found the architecture sound but not yet ready for
-operator approval. Codex guides and assesses.
+again against Codex's bounded correction set — which at that point found the architecture sound but not
+yet ready for operator approval. Codex guides and assesses.
 
 ---
 
