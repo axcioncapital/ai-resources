@@ -10,10 +10,11 @@
 > staleness failure recorded at
 > [`step-7-pilot-log.md` § FP-4](../work-loop-v2-mvp/step-7-pilot-log.md).
 
-**Session of record:** 2026-08-02. Drafted by Claude from operator-settled decisions 1–14, revised once
-against Codex's review (findings A–H), then revised again the same day after the operator settled
-**Codex's direct durable-context writing authority** — which supersedes the earlier consume-only
-boundary. Codex guides and assesses.
+**Session of record:** 2026-08-02. Drafted by Claude from operator-settled decisions 1–14, then revised
+three times the same day: once against Codex's review (findings A–H); again after the operator settled
+**Codex's direct durable-context writing authority**, superseding the earlier consume-only boundary; and
+again against Codex's bounded correction set — which found the architecture sound but not yet ready for
+operator approval. Codex guides and assesses.
 
 ---
 
@@ -93,7 +94,7 @@ conflicts with self-sufficiency — and it is never the product.
 **Target 1 in testable form — one preparation pass.** Context Engineering produces an execution brief, a
 discovery brief, or a genuine escalation **in a single preparation pass**. It must not open an iterative
 context interview, a separate QC pass, or a preparation loop to obtain information it could derive.
-Measured as a count of passes, not as elapsed time. *(Behaviour: CE-17, clause 2.)*
+Measured as a count of passes, not as elapsed time. *(Behaviour: CE-17, clause 1.)*
 
 **Consequence for refusals.** A refusal is *not* automatically a success — routing is §5.4's, and it
 returns to the operator only for genuine intent, priority, authority or risk decisions.
@@ -166,22 +167,36 @@ governing.
 | Judging the result — the adversarial review | Codex's assessment duty, deliberately separate |
 | Repository truth | Claude. Context Engineering marks claims; it never settles them. *Writing a durable context file records direction and state — it does not settle a repository fact* |
 | Implementation, implementation tests, implementation evidence, Git commits | Claude |
-| Transport: commits, turn flags, delivery mechanics, unit numbering, how the brief reaches Claude | Out of scope by operator direction |
+| Transport (defined below) | Out of scope by operator direction |
 | Method inside a specialist Axcíon workflow | That workflow |
 | Business intent, priorities, scope changes | Operator |
 
-> **Persistence is not transport.** The earlier boundary treated every durable write as transport; that is
-> superseded.
+> **Persistence is not transport.** The earlier boundary grouped state files with transport and then
+> prohibited persistent artifacts beyond the brief. That grouping is superseded; the two are different
+> things and only one is excluded.
 >
-> - **Durable-context persistence** preserves approved direction and concise current state for future
->   sessions. Codex owns it, under the expanded authority in §4 and the source model in §5.7.
-> - **Transport** is commits, turn flags, delivery mechanics, unit numbering, and how the brief reaches
->   Claude. Context Engineering still neither implements nor prescribes it.
+> - **Durable persistence** is Codex maintaining the permitted canonical plan, optional operator source
+>   material, and the **existing** current-state interface — the three categories of §5.7, and nothing
+>   else. Codex owns this.
+> - **Transport** is runtime delivery · turn flags · unit numbering · session mechanics · packaging ·
+>   technical identity · Git mechanics · and who carries a runtime turn. All of it remains outside this
+>   specification. Context Engineering neither implements nor prescribes any of it.
 >
 > Context Engineering owns **producing the consumable brief at the Work Loop handoff interface**; the
-> surrounding Work Loop owns making it available to Claude. CE-17 clause 1 is therefore an *integrated
-> Work Loop* acceptance condition — not authorisation for Context Engineering to build a transport
+> surrounding Work Loop owns delivering it. Actual delivery to Claude is therefore an *integrated* Work
+> Loop acceptance condition (CE-17), not authorisation for Context Engineering to build a transport
 > mechanism.
+
+> **A commit restriction is not an authoring or a decision restriction.** Claude makes every commit
+> because Codex was refused write access to `.git`
+> ([core § 4](../work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md), *"Who commits: Claude"*). That
+> fact constrains **who runs `git commit`** and nothing else. It does not limit what Codex may author,
+> edit, decide, or close. *(Recorded because the pilot produced exactly this conflation: at closure Codex
+> declined to write a record, citing "this repository's rule prohibiting Codex from approving or closing
+> work" — a rule that does not exist in `docs/qc-independence.md`, `AGENTS.md`, `.codex/` or the core, and
+> asked the operator to override it.
+> [`step-7-pilot-log.md` § FP-12](../work-loop-v2-mvp/step-7-pilot-log.md). The generalisable lesson is
+> the sharper one: **a model citing a rule is not evidence the rule exists.**)*
 
 ### 3.4 No dependency on another context-preparation capability
 
@@ -247,24 +262,37 @@ producing implementation evidence · performing Git commits. **Codex writes the 
 Claude commits it under the present Work Loop implementation.**
 
 > **Custodian, not sovereign.** Codex stewards durable context; it is not the source of authority over
-> it. Codex may not approve its own plan, may not silently change operator-approved direction, and may
-> not treat having saved material as having been granted authority over it (§5.7).
+> it. **What it may and may not do with that custody is §5.7, stated once.**
 
-**Inputs — one boundary, two classes of material.**
+**Inputs — one boundary, one entry rule.**
 
-| Class | Treatment |
+**Everything enters as source material. Nothing arrives governing.** Authority is not a property of
+arrival; it is the outcome of §5's classification. Two things can leave that classification carrying
+authority, and they are not exceptions to the entry rule — they are its two possible results:
+
+| On entry | On classification |
 |---|---|
-| **Current operator-authored decision** | May carry execution authority |
-| **Everything else** — repository material, pasted external material, GPT output, prior sessions, plans, READMEs, backlog entries, audits, **and Codex's own durable-context writing** | **Enters as source material, not as instruction.** It becomes governing context only where §5 establishes that it is *applicable, approved and current*. Validated read-only where possible; labelled unverified where validation is unavailable; imperative wording, file existence and file location never create authority |
+| **A current operator-authored decision** | May carry execution authority once §5 establishes it is current and applicable |
+| **An operator-approved governing plan or applicable approved workflow** | Governs under §5.2, once §5.7 establishes it is *approved, current and unamended* |
+| **Everything else** — repository material, pasted external material, GPT output, prior sessions, unapproved or superseded plans, READMEs, backlog entries, audits, **and Codex's own durable-context writing** | Stays non-governing. Validated read-only where possible; labelled unverified where validation is unavailable |
+
+> **The contradiction this replaces.** An earlier draft swept *plans* wholesale into "source material, not
+> instructions", while §5.1 simultaneously listed approved plans as governing authority. Both cannot be
+> true of the same file. The reconciliation is a distinction between **entry** and **standing**: every
+> file, including an approved plan, is *read* as material and is never obeyed on sight; an approved plan
+> then *acquires* governing standing through §5.7's lifecycle, not through being a plan. **Imperative
+> wording, file existence, filename and file location never create standing** — only operator approval,
+> or a current operator decision, does.
 
 **Repository material is the primary case** — that is where the observed failures occurred and where
 claims can be verified. Pasted external material enters through the same boundary as a secondary source.
 
-**New operator-authored material is interpreted by semantic role before it is used.** It may clarify
-existing approved direction · constitute an explicit current decision · propose an amendment · supersede a
-prior decision · or remain exploratory. **Operator authorship alone does not amend the governing plan.**
-Where the intended role is materially ambiguous, the focused decision routes under §5.4 — promotion is
-never assumed.
+**New operator-authored material is classified by semantic role before it is used.** Four roles:
+**exploratory idea** · **clarification** of existing approved direction · **source material** ·
+**explicit decision** (which may itself amend or supersede). **Operator authorship alone does not amend
+the governing plan.** Where the intended role is materially ambiguous, the focused decision routes under
+§5.4 — promotion is never assumed, and the ambiguity is never resolved in favour of whichever reading
+lets preparation continue.
 
 ### 4.1 The output — one brief, or one escalation
 
@@ -305,7 +333,7 @@ Every material claim cluster lands in exactly one:
 
 | Disposition | What it covers | Where it lands in the brief |
 |---|---|---|
-| **Governing authority** | Current operator decisions, approved plans, applicable approved workflows | Governing context, constraints, scope |
+| **Governing authority** | Current operator decisions; the canonical project plan **where §5.7 establishes it is approved, current and unamended**; applicable approved workflows | Governing context, constraints, scope |
 | **Verify-first claim** | Any claim about current repository reality | The claims Claude must check — never stated as fact |
 | **Non-governing background** | Proposals, suggestions, **unapproved plan drafts**, preserved operator source material, rejected or demonstrably superseded material | Background reference; never a requirement |
 | **Unknown** | A material question not yet resolved | Disclosed unknown, routed by §5.4 |
@@ -342,6 +370,12 @@ operator decision, an explicit supersession statement, a newer approved plan, a 
 verified repository evidence that the source's factual premise is stale.
 
 **No evidence, no demotion.** The source remains a surfaced conflict or an unknown.
+
+**Repository evidence falsifies premises, not intent.** Verified evidence may show that a plan's *factual*
+premise no longer holds — and that is a real finding, carried into the brief. It does **not** silently
+supersede **approved operator intent**. A plan whose factual premise has been falsified goes back to the
+operator as a surfaced conflict or a focused escalation (§5.4); it is not quietly re-aimed by Codex at
+what the evidence suggests instead.
 
 ### 5.4 Unknown routing
 
@@ -402,14 +436,24 @@ The governing plan **semantically identifies**: that it is operator-approved · 
 identifiable plan state that was approved · what it supersedes, where applicable · where authoritative
 current state is maintained.
 
-**Approval binds to identifiable plan content** — the content presented for approval. Any later change
-affecting **objective, scope, exclusions, settled decisions, intended sequence, acceptance conditions, or
-authority relationships** returns the plan to **draft** until explicitly reapproved. Editorial corrections
-that do not change meaning may retain approved status; where materiality is genuinely uncertain, the
-change is **not** silently treated as editorial.
+**Approval binds to identifiable plan content, not vaguely to a filename.** What was approved is the
+content presented for approval — an approval that means only "the operator approved *that file*" is not
+an approval this specification recognises, because the file's meaning can change underneath it without
+anything appearing to have happened.
 
-**The identity mechanism is not prescribed here.** A Git identity, a revision marker or an equivalent may
-be selected during implementation planning.
+**A material semantic change returns the plan to draft** and requires explicit operator reapproval.
+Material means a change to **objective, scope, exclusions, settled decisions, intended sequence,
+acceptance conditions, or authority relationships**. Editorial changes that do not change meaning may
+retain approved status.
+
+**Genuine uncertainty about materiality is escalated, not resolved by Codex in its own favour.** Where
+Codex cannot tell whether a change is material, the presumption is *not* "editorial, carry on" — the
+question routes under §5.4 as a focused operator decision. Codex is the party whose work proceeds faster
+under the editorial reading, so it is not the party that gets to settle the tie.
+
+**The identity mechanism is not prescribed here.** How identifiable content is pinned — a Git identity, a
+revision marker, a content digest, or an equivalent — is a later implementation-planning choice. This
+specification requires only that the approval **be** bound to identifiable content, not how.
 
 **Only one plan may appear current.** Codex may *propose* an amendment; it may not silently apply one as
 governing direction, create an overlapping current plan, or duplicate the same project context across
@@ -430,13 +474,21 @@ and must **not** create a second state system as a fallback.
 format.* The brief remains delivery-mechanism-independent, and this specification defines no new state
 schema.
 
-#### What Codex may not do
+#### What Codex may and may not do here
 
-Approve its own plan · silently change operator-approved direction · treat saving material as granting it
-authority · create overlapping current plans · save every conversation · infer authority from dates,
-paths, filenames or imperative wording. The machinery prohibitions — archive, context-pack lifecycle,
-decision register, provenance ledger, approval artifact, plan-history system, plan copy, second state
-system — are §7 and CE-16.
+**May:** directly author and edit context files, planning files, and the **existing** state files. No
+operator hand-carrying, no intermediate request, no separate write stage.
+
+**May not:** approve or promote its own plan · silently change operator-approved direction · treat saving
+material as granting it authority · resolve its own materiality uncertainty in its favour · create
+overlapping current plans · save every conversation · infer authority from dates, paths, filenames or
+imperative wording. The machinery prohibitions — archive, context-pack lifecycle, decision register,
+provenance ledger, approval artifact, plan-history system, plan copy, second state system — are §7 and
+CE-16.
+
+*Codex manages progression; it is not sovereign over the project or over the repository*
+([core § 1](../work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md)). Custody of durable context does
+not change that.
 
 ---
 
@@ -459,30 +511,45 @@ number in the review record and were deliberately left stable.*
 **CE-17 · One operator input, one preparation pass, one consumable brief.**
 Delivery-mechanism-independent: this specification does not choose how the brief reaches Claude, only
 that it does so without the operator carrying it.
-*Clause 1 — no transport by the operator.* The operator supplies the objective and optional raw material
-once; Claude receives and can act from the engineered brief without the operator re-entering,
-reconstructing, or transferring context. *Failing case:* the brief is produced somewhere only the
-operator can see, requiring them to paste it into Claude. *Succeeds if* Claude consumes the brief after
-one operator input action and no further context-transfer action. **This clause is an integrated Work
-Loop acceptance condition, not authorisation for Context Engineering to build a transport mechanism**
-(§3.3).
-*Clause 2 — one preparation pass.* *Failing case:* the capability opens an iterative context interview, a
-separate QC pass, or a preparation loop for information it could derive. *Succeeds if* the pass
-terminates in exactly one execution brief, discovery brief, or genuine escalation. **The pass count ends
-when Claude consumes the brief.** Evidence or a false-premise hand-back returned afterward is handled
-through the Work Loop's normal subsequent work; it does not retroactively make completed pre-handoff
-preparation multi-pass, and it creates no re-entry lifecycle or stage.
-*Clause 3 — the integrated one-touch outcome.* The operator provides material once, Codex preserves and
-synthesises it, the operator approves one governing plan, and a later fresh Codex thread recovers the
-approved direction and current state from the repository and produces the next aligned brief without the
-operator reconstructing or transporting context (§5.7, CE-9).
-*Evidence:* a count of operator context actions from objective submission through Claude's consumption —
-target one, plus any genuine operator-owned decision; and a count of preparation passes — target one.
+*Clause 1 — one preparation pass.* *Failing case:* the capability opens an iterative context interview, a
+separate QC pass, or a preparation loop for information it could derive. *Succeeds if* the pass terminates
+in exactly one execution brief, discovery brief, or genuine escalation. **Evidence returned after Claude
+begins work does not retroactively make preparation a second pass** — a false-premise hand-back or a
+result is the Work Loop's normal subsequent work, and creates no re-entry lifecycle or stage.
+*Clause 2 — no operator context assembly.* The operator supplies the objective and optional raw material
+once. *Failing case:* preparation requires them to assemble, reconcile, or restate context that the
+durable sources already carry. *Succeeds if* the only thing returned to them is a genuine operator-owned
+decision (§5.4).
+*Clause 3 — delivery without ferrying.* *Failing case:* the brief is produced somewhere only the operator
+can see, so they must carry it to Claude by hand. *Succeeds if* Claude receives and acts from the brief
+with no operator context-transfer action.
 
-> **Proof split.** Context Engineering's **isolated** trial proves production of a consumable brief at
-> the handoff boundary. Clause 1's operator-free delivery, and clause 3's end-to-end outcome, are proved
-> during **integrated** Work Loop testing. Isolated proving must not be recorded as a failure merely
-> because the surrounding transport integration is not yet implemented.
+> **The two proofs, and why the distinction is load-bearing.** Clause 3 asks for something the isolated
+> capability **cannot** deliver, because delivery is transport and transport is out of scope (§3.3).
+> Collapsing the two would make Context Engineering fail its own contract for a reason outside its
+> boundary.
+>
+> | | What it proves | What proves it |
+> |---|---|---|
+> | **Isolated Context Engineering proof** | One preparation pass produces a complete, consumable brief with no operator context assembly — clauses 1 and 2 | A Context Engineering trial, on its own |
+> | **Integrated Work Loop proof** | The brief is actually delivered to and consumed by Claude with no operator ferrying — clause 3, and with it the end-to-end one-touch outcome | Integrated Work Loop testing, after adoption |
+>
+> **A real adoption claim requires the integrated proof.** The isolated proof is necessary and not
+> sufficient, and must never be presented as the integrated one.
+>
+> *Failing case:* an isolated trial produces a complete brief, and the result is reported as
+> demonstrating the one-touch handoff. *Fails* on the substitution. *Succeeds if* the report states which
+> proof was obtained and which remains owed.
+
+> **Adoption is not implied by this specification.** Later adoption must wire **every relevant Work Loop
+> entrypoint** to invoke Context Engineering before plan-dependent continuation. This document defines the
+> behaviour; it does not itself guarantee automatic invocation, delivery, packaging, or transport. An
+> entrypoint that continues plan-dependent work without invoking the capability is outside this
+> specification's reach, not a failure of it. *(The entry protocol is not edited here.)*
+
+*Evidence:* a count of preparation passes — target one; a count of operator context actions from objective
+submission through Claude's consumption — target one, plus any genuine operator-owned decision; and an
+explicit statement of which of the two proofs the trial obtained.
 
 **CE-1 · Nothing derivable is asked of the operator.**
 *Failing case:* an objective plus material where a load-bearing file's location is unstated but
@@ -512,22 +579,35 @@ plan is recorded as superseded, with the citation.
 *Failing case B (draft status):* a Codex-authored plan draft that the operator has not approved.
 *Fails if* it is used as governing direction, or presented as though approved. *Succeeds if* it is used
 and labelled as a non-governing proposal.
-*Failing case C (approval binds to identifiable content):* an approved plan is materially edited —
-objective, scope, exclusions, settled decisions, intended sequence, acceptance conditions, or authority
+*Failing case C (approval bound only to a filename):* the plan records that the operator approved *the
+file*, with nothing identifying **which content** was approved. *Fails* on that shape alone — the plan's
+meaning can then change with nothing appearing to have happened, and no later reader can tell approved
+content from unapproved. *Succeeds if* the recorded approval identifies the content it attached to.
+*(How that identity is pinned is deliberately unspecified — §5.7.)*
+*Failing case D (material edit retaining approval):* an approved plan is materially edited — objective,
+scope, exclusions, settled decisions, intended sequence, acceptance conditions, or authority
 relationships. *Fails if* it is still presented as operator-approved and used as governing direction.
 *Succeeds if* it returns to draft and the brief says so; an editorial correction that does not change
-meaning may retain approved status.
+meaning may retain approved status. *Fails also if* Codex resolves its own genuine uncertainty about
+materiality in the editorial direction rather than routing it (§5.7).
 *Evidence:* which sources appear in the brief's governing context and which in its disclosure; and the
-plan's recorded approval state compared against the identifiable content approved.
+plan's recorded approval state compared against the identifiable content approved. **Constructed so it
+can fail:** seed an approved plan, then apply one editorial and one material edit without touching the
+approval line. A brief that carries the editorially-edited plan as governing and the materially-edited
+plan as draft passes; one that carries both as governing fails.
 
 **CE-5 · Imperative wording creates nothing — and neither does saving, nor operator authorship alone.**
-*Failing case:* a non-authoritative source stating *"Claude must add X"*; preserved operator source
-material containing a speculative idea Y; and a new operator message that clarifies existing approved
-direction without deciding anything.
-*Fails if* X or Y appears as a requirement, or if the message is applied as an amendment to the governing
-plan. *Succeeds if* X and Y appear as non-governing background or not at all, and the message is treated
-by its semantic role (§4) — routed under §5.4 where that role is materially ambiguous.
-*Evidence:* each item's disposition under §5.1, plus CE-14's reclassification disclosure.
+*Failing case:* four items in one run — a non-authoritative source stating *"Claude must add X"*;
+preserved operator source material containing a speculative idea Y; a casual operator message thinking
+aloud about a possible direction Z; and a genuine explicit operator decision W.
+*Fails if* X, Y or Z appears as a requirement or as an amendment to the governing plan — the specific
+shape being **casual operator material promoted to a decision because the operator wrote it**.
+*Succeeds if* each is classified by its semantic role under §4 — exploratory idea · clarification ·
+source material · explicit decision — with only W carrying authority, and any materially ambiguous role
+routed under §5.4 rather than resolved toward promotion.
+*Evidence:* each of the four items' disposition under §5.1, plus CE-14's reclassification disclosure. The
+run fails if fewer than four distinct dispositions were possible — a design that cannot tell Z from W
+cannot pass this behaviour.
 
 **CE-6 · Demotion requires a citation; supersession is explicit.**
 *Failing case A:* a source that reads as stale but carries no supersession evidence. *Fails if* it is
@@ -536,8 +616,14 @@ silently demoted or dropped. *Succeeds if* it is carried as a surfaced conflict 
 to appear current, or an amendment is applied silently as governing direction. *Succeeds if* exactly one
 plan is identifiable as current, the other is explicitly superseded, and any amendment Codex favours is
 carried as a proposal.
-*Evidence:* the brief's conflict/unknown section names the first; and the count of plans presented as
-current, which must be one.
+*Failing case C (evidence versus intent):* verified repository evidence falsifies a factual premise of
+the approved plan. *Fails if* the brief re-aims the work at what the evidence suggests, treating the
+falsified premise as having superseded the operator's approved intent. *Succeeds if* the falsification is
+carried as a surfaced conflict or a focused escalation, with the approved intent still identifiable as
+what governs until the operator moves it (§5.3).
+*Evidence:* the brief's conflict/unknown section names the first; the count of plans presented as current,
+which must be one; and, for C, whether the brief's required outcome tracks the approved intent or the
+evidence's implication.
 
 ### Family 3 — Verification marking
 
@@ -560,64 +646,112 @@ recorded search boundary. *Succeeds if* every expansion beyond §3.5's starting 
 four reasons, and the unresolved remainder is marked unknown. *Evidence:* the trial's inspected-source
 set, with each expansion mapped to its reason. This is **trial evidence, not a new durable log.**
 
-*Clause — fresh-session continuity.* Fresh-session orientation is **part of the single preparation pass,
-not a prerequisite stage**. Prior conversational memory may help *locate* sources, but cannot establish
-current authority, approved direction, or current state. The current objective, governing plan,
-applicable workflow, authoritative state and material constraints are established from current operator
-input and proportionately discovered durable sources (§5.7).
-*Failing case B:* a fresh Codex thread receives a short continuation request; the repository holds an
-approved plan, current state, and applicable Work Loop principles. *Fails if* Codex drafts from the short
-message or from conversational memory, asks the operator to reconstruct discoverable context, omits a
-material governing source, or contradicts a settled plan decision. *Succeeds if* the durable current
-sources establish the unit and the resulting brief is materially aligned, with discovery inside §3.5's
-relevance boundary. *Evidence:* the inspected-source set and the resulting brief, used to distinguish the
-two. This case may later demonstrate CE-1, CE-9, CE-10 and CE-17 together; **it does not create a new
-behaviour number.**
+*Clause — fresh-session recovery.* Fresh-session orientation happens **inside the single preparation
+pass**; it is not a prerequisite stage and adds no step the operator sees. This restates for Codex what
+[core § 3 step 1](../work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md) already requires of the loop —
+*"read the state file and the repository; do not rebuild the situation from memory or from the chat."*
 
-> **Adoption boundary.** This specification defines Context Engineering's fresh-session orientation
-> *behaviour*. It does not by itself guarantee that every Work Loop entrypoint invokes Context
-> Engineering. Adoption requires the **Work Loop entry protocol** to invoke the capability before
-> plan-dependent briefing or continuation. That protocol is not edited by this specification.
+A fresh Codex thread proportionately recovers seven things: **the current operator request · the canonical
+governing plan · applicable approved workflows · authoritative current state · material settled decisions
+· unresolved blockers · the next justified unit.** Conversational memory may help *locate* a source; it
+cannot establish authority, approved direction, or current state. Recovery stays inside §3.5's relevance
+boundary — **it is not a licence to scan the repository broadly**, and a wide sweep justified as
+"orientation" is failing case A, not diligence.
+
+*Failing case B (fresh thread):* a fresh Codex thread receives a short continuation request; the
+repository holds an approved plan, current state, and applicable Work Loop principles. *Fails if* Codex
+drafts from the short message or from conversational memory, asks the operator to reconstruct
+discoverable context, omits a material governing source, or contradicts a settled plan decision.
+*Succeeds if* the durable sources establish the unit and the brief is materially aligned.
+
+*Failing case C (missing current state):* no applicable current-state source exists for the task.
+*Fails if* the brief states a current phase, a latest result or a next action that no source supports —
+inventing continuity — *or if* it answers the gap by creating a second state system. *Succeeds if* Codex
+derives only what the governing plan, verified repository evidence and closed outcomes support, and routes
+the remaining load-bearing uncertainty honestly under §5.4 (§5.7).
+
+*Evidence — and it must be able to fail.* The inspected-source set plus the resulting brief, **paired
+with a memory-only control**: the same request answered without opening the durable sources. If the two
+briefs are indistinguishable, the trial has proved nothing about recovery — it has only shown that
+conversational memory happened to be sufficient. The case must therefore be constructed so the durable
+sources contain at least one **material fact the conversation does not carry**, and the distinguishing
+evidence is whether that fact reaches the brief.
+
+> **The pilot proved this measurement is the hard part.** Unit 3's fresh-session continuation was scored
+> *"yes, qualified"* — every action taken came from the state file, but `/prime` loads the prior
+> `session-notes.md` entry at orientation, so a summary of the unit was already in context before the
+> state file was opened. The log records this as a property of the measurement, not a defect: *"a
+> genuinely clean proof is not available through the normal orientation path."*
+> ([`step-7-pilot-log.md` § Resumption, FP-11](../work-loop-v2-mvp/step-7-pilot-log.md).) A CE-9 trial
+> that does not control for preloaded context inherits exactly that ambiguity.
+
+This case may later demonstrate CE-1, CE-9, CE-11 and CE-17 together; **it does not create a new
+behaviour number.** The dependency on every entrypoint actually invoking the capability is CE-17's.
 
 ### Family 4 — Framing and plan alignment
 
-**CE-10 · Every brief carries its plan-alignment justification — as a field, not a gate — and never
-substitutes the objective.**
+**CE-10 · Every brief carries its plan-alignment justification — as a field, not a gate.**
 *Failing case A (irreconcilable objective):* an objective that cannot be reconciled with the approved
 plan. *Fails if* the brief proceeds without saying so; *also fails if* the design introduces a separate
 alignment-check stage. *Succeeds if* the brief states the justification inline, or escalates the
 irreconcilability.
-*Failing case B (objective fidelity):* the brief silently presents a narrower, broader or different
-intended outcome as the operator's objective. *Fails* on the substitution. *Succeeds if* the full
-operator objective stays visible, the bounded unit materially advances it, and the work held back is
-named — which is legitimate CE-11 unit-bounding, not substitution. A genuine reframing succeeds only
-where it is attributed as **Codex's proposal** or becomes an operator escalation.
-*Failing case C (plan alignment of later work):* later work that deviates from the approved canonical
-plan. *Fails if* the deviation is silently applied. *Succeeds if* the brief either shows the work aligned
-with the approved plan, or **explicitly surfaces the proposed deviation** rather than applying it.
-*Evidence:* the brief's opening orientation; a comparison of the operator objective against the brief's
-required outcome, scope and named held-back work; and zero additional operator-visible stages, approval
-gates, review passes, or persistent artifacts beyond the engineered brief.
+*Failing case B (silent deviation):* later work that deviates from the approved canonical plan. *Fails if*
+the deviation is silently applied. *Succeeds if* the brief either shows the work aligned with the approved
+plan, or **explicitly surfaces the proposed deviation** rather than applying it.
+*Evidence:* the brief's opening orientation, checked against the approved plan; and zero additional
+operator-visible stages, approval gates, review passes, or persistent artifacts beyond the engineered
+brief. *(Objective fidelity — whether the brief is still aimed at the operator's objective at all — is
+CE-11.)*
 
-**CE-11 · The unit is bounded, and what is held back is named.**
-*Failing case:* an objective plainly spanning several units. *Fails if* the brief takes all of it, or
-bounds it without saying what is excluded. *Succeeds if* it bounds one unit that delivers something
-observable and names the adjacent work held outside. *Evidence:* the brief's scope and exclusions
-sections, compared against the objective's full surface.
+**CE-11 · The unit is bounded, what is held back is named, and the operator's objective is not
+substituted.**
+*Failing case A (unbounded or silently bounded):* an objective plainly spanning several units. *Fails if*
+the brief takes all of it, or bounds it without saying what is excluded. *Succeeds if* it bounds one unit
+that delivers something observable and names the adjacent work held outside.
+*Failing case B (objective substitution):* the brief presents a narrower, broader, or simply *different*
+intended outcome as though it were the operator's objective. *Fails* on the substitution — including the
+common shape where a load-bearing part of the objective is dropped and nothing records that it was.
+*Succeeds if* the operator's actual objective stays visible in the brief, the bounded unit materially
+advances *that* objective, and the held-back work is named rather than deleted.
+**Bounding and reframing are legitimate; substitution is not — and the difference is attribution.**
+Narrowing to one unit succeeds when the full objective remains visible beside it. A genuine reframing —
+Codex concluding the operator is aiming at the wrong problem — succeeds only when carried as **Codex's
+attributed proposal** or escalated as an operator decision. It fails when it arrives wearing the
+operator's voice.
+*Evidence:* the operator's objective as stated, placed beside the brief's required outcome, scope and
+named held-back work. **Constructed so it can fail:** seed an objective with two load-bearing parts, one
+of which is inconvenient to satisfy. A brief that bounds to the convenient part and names the other as
+held back passes; a brief whose required outcome silently covers only the convenient part fails, and the
+seeded second part is what the evidence looks for.
 
 **CE-12 · Codex-added boundaries carry a reason and stay attributed; Codex's technical preferences do not
 become requirements.**
 *Failing case A:* an exclusion Codex added on its own judgment. *Fails if* it appears without a reason, or
 in the operator's voice. *Succeeds if* it is marked as Codex's framing decision with its reason attached.
-*Failing case B (technical non-prescription):* the brief states a preferred implementation, architecture,
-file structure or mechanism that no governing authority has settled. *Fails if* it appears as a
-requirement. *Succeeds if* the brief confines itself to what it may define — the required outcome, unit
-boundaries, established constraints, verification questions, required evidence, completion conditions and
-stop conditions — and leaves the mechanism to Claude, **or** carries the choice explicitly as Codex's
-proposal. *Succeeds also* where governing authority (§5.2) has already settled the choice and the brief
-cites it.
-*Evidence:* the exclusion's text; and each technical element in the brief traced either to a cited
-governing decision or to an attributed proposal.
+*Failing case B (technical non-prescription):* the brief states a preferred architecture, implementation
+mechanism, file structure, abstraction, library, command shape or technical sequence that no governing
+authority has settled. *Fails if* it appears as a requirement. *Succeeds if* the brief confines itself to
+what it may define — **required outcome · unit boundaries · governing constraints · verification questions
+· required evidence · completion conditions · stop conditions** — and leaves the mechanism to Claude,
+**or** carries the choice explicitly as Codex's attributed, non-governing proposal. *Succeeds also* where
+governing authority (§5.2) has already settled the choice and the brief cites it.
+
+> **The boundary, from the pilot — and it is finer than "no technical detail".** In unit 3 Codex's brief
+> required *isolated temporary repositories* as the reproduction instrument, and corrected Claude's
+> live-working-tree method. That is legitimate: it is a **verification and evidence** requirement, and
+> Claude's version *"depended on ambient dirt and was not reproducible"*
+> ([`step-7-pilot-log.md` § Unit 3](../work-loop-v2-mvp/step-7-pilot-log.md)). Had the same brief
+> instead required a particular parser design, file layout or helper abstraction inside the hook, that
+> would be prescription — the fix's shape was Claude's to determine, and in the event the resumption
+> found the checkpoint's predicted fix *"half right"*. **Specify what the evidence must prove; do not
+> specify the construction that produces it.**
+
+*Evidence:* the exclusion's text; and every technical element in the brief traced to one of three
+origins — a cited governing decision, an attributed Codex proposal, or a verification/evidence
+requirement. **Constructed so it can fail:** brief a unit where Codex holds a clear design preference and
+governing authority has settled nothing. A brief specifying the outcome and the evidence passes; a brief
+whose "required" section names the preferred mechanism fails, and the untraceable element is what the
+evidence looks for.
 
 ### Family 5 — Selection: what governs, what is visible, what is cut
 
@@ -661,18 +795,29 @@ produce *another document describing the same unit*; that is the FP-4 failure ei
 *Evidence:* the count of artifacts describing the unit, which must be one; and the orientation's sentence
 count.
 
-**CE-16 · No new governance machinery, no archive, no duplicate plan, no second state system.**
-*Failing case:* the design adds a context-QC pass, an alignment gate, a review stage, a persistent
-per-run record, a new document type, a context archive, a context-pack lifecycle, a decision register, a
-provenance ledger, an approval artifact, a plan-history log, a plan copy, or a second project-state
-system. *Fails* on the addition.
+**CE-16 · No new or per-run persistent artifacts — while maintenance of the permitted canonical sources
+stays allowed.**
+*Failing case A (new machinery):* the design adds a context-QC pass, an alignment gate, a review stage, a
+new document type, a context archive, a context-pack lifecycle, a decision register, a provenance ledger,
+an approval artifact, a plan-history log, a plan copy, or a second project-state system. *Fails* on the
+addition.
+*Failing case B (per-run accretion):* a routine invocation — one where no new operator input, no operator
+approval and no verified evidence has materially changed durable project understanding — nevertheless
+writes a context file, a discovery log, a run record or a session note. *Fails* on the write. *Succeeds
+if* the routine invocation reads the durable sources and produces only the brief (§3.1).
 *Succeeds if* every duty is discharged inside prepare / brief / assess / escalate, and the only durable
-context is §5.7's three permitted categories — materially necessary operator source material, one
-canonical project plan evolving in place, and the existing authoritative current-state interface.
-**Routine preparation creates no context pack, plan copy, state system, approval record or session log.**
+context is §5.7's three permitted categories.
+
+> **The line CE-16 draws, stated so it cannot be read as prohibiting everything durable.** Prohibited:
+> *new* artifact kinds, and *per-run* persistence. Permitted: **maintaining** the one canonical plan, the
+> optional source material, and the existing current-state interface — updating them is not an addition,
+> because no new artifact comes into being and none accumulates per run. A rule that forbade those too
+> would forbid the one-touch outcome it exists to protect.
+
 *Evidence:* **zero additional operator-visible stages, approval gates, review passes, or persistent
-artifacts beyond the engineered brief and those three permitted categories.** Internal discovery and
-reasoning steps inside the single capability are not stages, and are not prohibited.
+artifacts beyond the engineered brief and §5.7's three permitted categories**; and, across a run of
+routine invocations, **zero net new durable files**. Internal discovery and reasoning steps inside the
+single capability are not stages, and are not prohibited.
 
 ---
 
@@ -689,8 +834,9 @@ reasoning steps inside the single capability are not stages, and are not prohibi
 - **Separate draft, approved and amended plan copies**, and a raw-material archive by default. The one
   canonical plan evolves in place; source material is preserved only where §5.7 permits it.
 - **A second project-state file or state system.**
-- **Transport machinery** — commits, turn flags, delivery mechanics, unit numbering, session mechanics.
-  *Durable-context persistence is not transport (§3.3) and is owned, not excluded.*
+- **Transport machinery** — runtime delivery, turn flags, unit numbering, session mechanics, packaging,
+  technical identity, Git mechanics, who carries a runtime turn. *Durable persistence is not transport
+  (§3.3) and is owned, not excluded.*
 - **General non-repository context engineering.** Deferred; reopening trigger is a real second caller.
 - **Portfolio prioritisation.**
 
@@ -740,9 +886,15 @@ evidence capable of failing, and stopping when value ends — **as constraints i
 
 Failure is prevented through how work is framed, not by catching it afterwards.
 
-**No new governance machinery is authorised by this version.** Later evidence may justify a separately
-approved specification revision; it does **not** authorise machinery during implementation. No
-risk-triggered QC pass, and no implementation-level exception.
+**No new governance machinery is authorised by v0.1.** The prohibition is scoped to this version, and it
+is scoped deliberately: an absolute "in any version" would be a claim this specification has no evidence
+to make.
+
+Future evidence may justify machinery — through a **separately specified and operator-approved
+revision**, and only through that. **That possibility is not implementation permission under the present
+specification.** An implementation that adds a QC pass, a gate or a persistent record because it judges
+the evidence sufficient has substituted itself for the revision. No risk-triggered exception, no
+implementation-level exception.
 
 > **The acid test.** Does Context Engineering let the operator provide the objective and material once,
 > then let Claude begin the correct repository work sooner, with load-bearing uncertainty marked for
