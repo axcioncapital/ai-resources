@@ -44,6 +44,17 @@ Three seeded durable sources, one per permitted category in spec §5.7, all unde
 | 3 · The existing current-state interface | `fixtures/ce-9/task-state.md` | Phase, latest material result, the live blocker, and a deliberately undecided next action |
 | 1 · Operator source material (optional) | `fixtures/ce-9/operator-source-note.md` | Raw operator notes. No decisions, no requirements, and **no discriminator** |
 
+**Authority in this scenario has two levels, and the fixtures say so themselves.** Every fixture carries
+plan §4.4's required first line and therefore no authority in this repository — that is the real-world
+level, and it is not negotiable. But the measurement depends on the *opposite* being true one level down:
+the discriminator only changes the next justified unit if SD-3 is genuinely governing **for Harbourview**,
+and the blocker only counts if `task-state.md` is genuinely authoritative **for Harbourview**. The
+source-opened thread receives the three fixture paths and not this file, so it cannot be told the
+difference from here — each of the two role-playing fixtures must say it in its own body, and both now do,
+in a bolded sentence naming the role it plays inside the scenario. A fixture that denied all authority
+without qualifying the level would be correctly read as carrying nothing worth acting on, and the
+instrument would measure nothing.
+
 The operator's continuation request lives in `fixtures/ce-9/operator-request.md`, between the markers
 `<<<REQUEST-BEGIN>>>` and `<<<REQUEST-END>>>`. It is short and natural:
 

@@ -2,7 +2,17 @@ FIXTURE — not a project artifact; seeded for CE-9. Carries no authority.
 
 # Harbourview — booking system plan
 
-*Fictional project. Nothing in this file describes Axcíon work, and no statement in it governs anything.*
+*Fictional project, seeded for a trial. This file carries **no authority over any real Axcíon work** —
+nothing in it describes, governs or constrains anything outside the CE-9 scenario, and no reader should
+act on it in the repository.*
+
+**Inside the CE-9 scenario, this file is Harbourview's governing plan: its phases and settled decisions
+govern that fictional project, and a thread preparing a brief for it should treat them as governing.**
+
+The two statements hold together because they operate at different levels. The authority is
+trial-internal and stops at the boundary of this fixture set. A blanket denial would be the wrong shape
+here: the scenario measures whether a thread recovers a settled decision and acts on it, so a file that
+told the thread nothing in it governs anything would break the very thing being measured.
 
 **Stage:** approved plan of record · **Approved by:** the operator, 2026-05-30 · **Approval binds to:**
 the content of this plan as presented on 2026-05-30 (fixture-internal identity; no Git binding is claimed

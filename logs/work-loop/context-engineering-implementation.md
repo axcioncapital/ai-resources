@@ -67,128 +67,136 @@ evidence here, set `turn: codex`, commit all S1 work including this state file, 
 
 ## Latest result
 
-Inspected (2026-08-02):
+**The bounded correction ran. Both frozen findings reproduced, and both are resolved.** Nothing outside
+findings 1–2 was changed.
 
-- **Claim (1) — both authority bindings hold, neither document materially changed: HOLDS.** Ran
-  `git cat-file -t` and `git merge-base --is-ancestor` on both commits: `148689d42ee7…` and `cc635d4`
-  both exist and are ancestors of HEAD `a718a17`. Searched the specification for `148689d` — found at
-  line 7, inside the approval block; searched the plan for `Approved commit` — found at line 25, citing
-  `cc635d4`. Both files are clean against HEAD (`git diff --quiet HEAD -- <path>`, exit 0), so the
-  working tree is what was approved. Diff since each bound commit: spec `148689d..HEAD` = +18/−3, plan
-  `cc635d4..HEAD` = +14/−5. Read both diffs in full. Every hunk is the Phase 0 approval record itself —
-  the stage header, the approval block, one tense correction in the spec's provenance paragraph, and the
-  plan's filled approval slot with its two qualifying paragraphs. None touches objective, scope,
-  exclusions, settled decisions, intended sequence or acceptance conditions, which is spec §5.7's
-  materiality test. These are the recordings Phase 0 items 1 and 2 prescribe, so treating them as
-  material would make the prescribed act self-invalidating. Phase 0's Exit condition — both approvals
-  recorded, neither document materially edited since — is therefore satisfied and S1 is authorised.
-- **Claim (2) — F-1…F-11 re-derived from plan §4.1 against the live files: HOLDS**, with one difference
-  recorded below. F-1 core 300 lines · F-2 command 113 · F-3 skill 116 · F-4 harness 673 — all by
-  `wc -l`. F-5: searched those three files with `grep -rniE 'context.?engineering'` and with
-  `grep -rniE 'governing|canonical project plan|durable|approved plan'` — no match, exit 1 both times.
-  F-6 read at core lines 67–68; F-7 counted — core §3 step 3 lists 7 items, spec §4.1's semantic
-  interface lists 11; F-8 read at `SKILL.md:18`; F-9 read at core §4 *What the ceiling covers*; F-10:
-  `grep -o 'CE-[0-9]*' | sort -u` returns exactly CE-1…CE-17, 17 unique, no gaps; F-11 confirmed by
-  reading `SKILL.md:19,33,46` and `work-loop-v2.md:32,36,38`.
-- **Claim (3) — `trials/` absent at unit open: HOLDS.** Searched the exact path
-  `plans/work-loop-v2-v0.2/context-engineering/trials/` for existence: `ls -d` returned *No such file or
-  directory*, and `git ls-files` on that path returned nothing. Nothing existed there to conflict with
-  S1.
+**Reproduced first, by inspection:**
 
-**Two differences found, neither load-bearing for S1:**
+- **Finding 1 reproduces.** Searched both fixtures for their scoping lines. `project-plan.md:5` read
+  *"Fictional project. Nothing in this file describes Axcíon work, and no statement in it governs
+  anything."* — an unscoped denial, and the discriminator is material only if that file's SD-3 governs
+  Harbourview. `task-state.md:5` read *"Fictional project. This file is seeded trial material, not a live
+  task-state file."* — the same tension against its role as the simulated authoritative current state. The
+  source-opened thread gets the three fixture paths and not the scenario file, so it could read either
+  denial correctly and refuse the authority relationship the measurement depends on.
+- **Finding 2 reproduces, and is worse than a weak check — it is a check that cannot speak.**
+  `git diff --quiet HEAD -- <path>` compares the working tree to HEAD, so after any commit it reports a
+  clean tree and nothing else. Demonstrated against real history: the specification **was** changed by
+  commit `a718a17`, and the S1-style check still passes when run at that commit, because the change is
+  committed. A run that had modified and committed all five protected files would have produced the
+  identical "UNCHANGED" line for each.
 
-1. **The plan's own header is now stale, and says the opposite of the repository.** Lines 3–4 read
-   *"Status: not authorisation to implement — the specification's approval (O-1) is still outstanding"*;
-   lines 7–9 call the specification *"still a draft specification awaiting operator approval"*; line 30
-   states *"O-1 … is still unanswered"*. Commit `a718a17` answered O-1. The one operative sentence,
-   line 32 — *"S1 cannot open until O-1 is recorded in the specification, bound to a commit"* — is a
-   condition, and it is now met, verified under claim (1). So the gate is satisfied and only the
-   surrounding wording is false. Phase 0 requires O-1 be recorded **in the specification**, which it is;
-   nothing requires the plan's header to be updated too, which is why nobody did. Editing the plan is
-   outside this unit's scope, so it was not touched. Carried below as a deferral.
-2. **F-10's line count has moved: the specification is 928 lines, not 913.** The 15-line difference is
-   exactly the Phase 0 approval block. The behavioural content is unchanged — still 17 unique `CE-n`,
-   CE-1…CE-17 with no gaps, which is the half of F-10 that S1 depends on.
+### Finding 1 — corrected
 
-Result: **S1 is complete. The CE-9 fresh-session-recovery instrument exists and its blind-control
-property is demonstrated.** Five files were created, all under
-`plans/work-loop-v2-v0.2/context-engineering/trials/`: the scenario `ce-9-recovery-scenario.md`, and four
-seeded fixtures in `fixtures/ce-9/` — `project-plan.md` (spec §5.7 category 2), `task-state.md`
-(category 3), `operator-source-note.md` (category 1), and `operator-request.md`, which holds the
-operator's continuation request between the markers `<<<REQUEST-BEGIN>>>` and `<<<REQUEST-END>>>`. The
-seeded project is fictional (*Harbourview*, a marina booking system) so no thread can recover any of it
-from general knowledge. Every one of the five opens with plan §4.4's required first line, `FIXTURE — not
-a project artifact; seeded for CE-9. Carries no authority.`, and all five sit under `trials/`, which is
-not `plans/` root, not any `logs/work-loop/` directory, and not anywhere spec §5.7's three durable
-categories are looked for. `trials/candidate/` was not created — it is S2's.
+Both role-playing fixtures now state the two levels separately, and the scenario says the same thing in
+§2 so the operator's reference and the fixtures cannot drift apart.
 
-**The discriminator**, seeded verbatim in `fixtures/ce-9/task-state.md` and nowhere else in the seeded
-sources, is the sentence: *"the berth-availability API returns local time with no UTC offset, so every
-confirmation sent since 2026-06-14 states the wrong arrival hour"*. It is material to **the next
-justified unit**, not merely informative: the plan's Phase 2 names the booking-confirmation email
-template as the next build item, and settled decision SD-3 says a defect that has already produced
-incorrect operator-visible output takes priority over the next build item and must also identify the
-records already affected. The discriminator is the fact that turns SD-3 from dormant into decisive.
-Recover it and the next unit is the corrective one; miss it and the next unit is the email template. The
-fixture's `Next action` is left undecided on purpose, so the answer exists only when the blocker is read
-against the plan. A real operator omits the fact naturally — *"What's the next unit"* is how a
-continuation request is actually written, and it is short precisely because the sources are expected to
-carry the rest.
+**Evidence.**
 
-Evidence:
+1. **The required first line is preserved in all five files**, unchanged and still first:
+   `FIXTURE — not a project artifact; seeded for CE-9. Carries no authority.` — verified by `head -1` over
+   `git ls-files` on the `trials/` tree; five files, five identical first lines.
+2. **The old unscoped denials are absent.** `grep -rn "no statement in it governs anything" trials/` →
+   exit **1**. `grep -rnF "*Fictional project. This file is seeded trial material, not a live
+   task-state file.*" trials/` → exit **1**.
+3. **The two trial-internal role statements, quoted for the closure check** — each a single bolded
+   sentence, `project-plan.md:9` and `task-state.md:9`:
+   - *"**Inside the CE-9 scenario, this file is Harbourview's governing plan: its phases and settled
+     decisions govern that fictional project, and a thread preparing a brief for it should treat them as
+     governing.**"*
+   - *"**Inside the CE-9 scenario, this file is Harbourview's authoritative current state: its phase,
+     latest material result and blocker are authoritative for that fictional project, and a thread
+     preparing a brief for it should treat them as such.**"*
+   Each sits directly beneath a restated real-world denial — no authority over any real Axcíon work,
+   nothing to act on in the repository — and each is followed by one sentence saying why a blanket denial
+   would break the measurement.
+4. **The correction did not break the instrument.** Both discriminator greps re-run: presence exit **0**,
+   absence exit **1**.
 
-1. **The two greps, run from `ai-resources/`, with `D` bound to the discriminator sentence.**
-   - *Presence* — `grep -rnF "$D" plans/work-loop-v2-v0.2/context-engineering/trials/fixtures/ce-9/`
-     → one hit, `task-state.md:25`, exit **0**.
-   - *Absence* —
-     `awk '/^<<<REQUEST-BEGIN>>>$/{f=1;next} /^<<<REQUEST-END>>>$/{f=0} f' plans/work-loop-v2-v0.2/context-engineering/trials/fixtures/ce-9/operator-request.md | grep -F "$D"`
-     → no output, exit **1**. The `awk` pipes only the lines between the markers into `grep`, so the
-     check searches the request and nothing else — not the file's explanatory prose, not the fixture
-     notice, not the marker lines.
-2. **The absence check is capable of failing, shown rather than asserted.** The discriminator was
-   inserted between the markers in a scratchpad copy of `operator-request.md` and the identical command
-   re-run against it: it returned the line and exited **0**. The live fixture was not modified and
-   re-verified clean at exit **1** afterwards.
-3. **The evidence already failed once, for real, and that is the strongest thing on this list.** On its
-   first run the presence grep returned exit **1** — no match. The discriminator had been written into
-   `task-state.md` wrapped across a line break between "UTC" and "offset", and `grep` is line-based, so
-   the complete sentence was not findable. Had the check been written to pass, this instrument would have
-   shipped measuring nothing. The seed was corrected to hold the sentence on one unbroken line, with a
-   note in the fixture saying why the line must not be re-wrapped, and both greps then returned the
-   required results.
-4. **The control is blind, and what each run receives is stated in the scenario file §4.** The
-   memory-only control receives **only** the text between the two markers, pasted — no fixture path, no
-   fixture file, no summary, and not the scenario file itself, which states the discriminator in §3 and
-   would function as an answer key. It must be a fresh thread with no prior-session note loaded; this is
-   the FP-11 control the pilot showed was missing. The source-opened run receives the same request
-   **plus exactly three additional things**: the paths `fixtures/ce-9/project-plan.md`,
-   `fixtures/ce-9/task-state.md` and `fixtures/ce-9/operator-source-note.md`. Nothing else — no summary
-   of them and no hint about the blocker.
-5. **Nothing live was touched.** `git diff --quiet HEAD` returns clean for all five of: the executable
-   core, `.claude/commands/work-loop-v2.md`, `.agents/skills/work-loop-v2/SKILL.md`, the specification,
-   and the implementation plan.
+`operator-source-note.md` and `operator-request.md` were deliberately left alone. Finding 1 names the two
+role-playing files, and the source note's *"nothing here is a decision or a requirement"* is correct at
+both levels — spec §5.7 category 1 material carries no authority inside a real project either, so scoping
+it would have been a change the finding did not ask for.
 
-**Recorded honestly, not worked around:** a control given only the request may simply ask for context
-rather than draft, which discriminates but weakly — it shows the sources were needed, not that they were
-used well. The stronger control, one holding a plausible but discriminator-free summary, is not
-constructible under S1's own blindness requirement, which forbids handing the control any preloaded
-summary. The limitation is written into the scenario file §6 and is inherited by S5.
+### Finding 2 — corrected
+
+**Baseline:** `a718a1733fd6ccc325c8453a9f50748add15d476` — HEAD at unit open, the Phase 0 commit.
+**Endpoint:** the working tree that becomes this correction commit. The S1 range at the time of writing is
+`a718a17..HEAD`, containing one commit, `26b6bfe`, plus this uncommitted correction.
+
+**Every changed path, baseline → endpoint.** Six paths, all S1's:
+
+```
+logs/work-loop/context-engineering-implementation.md     (this state file)
+plans/…/context-engineering/trials/ce-9-recovery-scenario.md
+plans/…/context-engineering/trials/fixtures/ce-9/operator-request.md
+plans/…/context-engineering/trials/fixtures/ce-9/operator-source-note.md
+plans/…/context-engineering/trials/fixtures/ce-9/project-plan.md
+plans/…/context-engineering/trials/fixtures/ce-9/task-state.md
+```
+
+Separately, and **not S1's**: `logs/friction-log.md` is modified and
+`logs/runs/2026-08-02-S5-8ee.json`, `logs/runs/2026-08-02-S6-6d7.json`,
+`logs/session-plan-2026-08-02-S6-6d7.md` are untracked. All four pre-date this unit, none is staged, and
+none appears in `a718a17..HEAD`.
+
+**The scope check, and it is now range-based rather than tree-based:**
+
+```
+git diff --name-only a718a17 -- \
+  plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md \
+  .claude/commands/work-loop-v2.md \
+  .agents/skills/work-loop-v2/SKILL.md \
+  plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md \
+  plans/work-loop-v2-v0.2/context-engineering/context-engineering-implementation-plan-v0.1.md
+```
+
+Returns **nothing**. Because the left side is a commit and the right side is the working tree, it covers
+committed and uncommitted change together — a committed edit to any of the five would appear.
+
+**The fail-capable comparison.** The identical command over `3845e54..a718a17`, a range where Phase 0 did
+edit a protected file, returns `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md`. So the empty
+result above is a finding, not a command that cannot produce output.
+
+**One more hole closed, because the first attempt at this evidence was itself invalid.** The scope check
+and its fail-capable twin were first run with the five paths held in a shell variable and passed unquoted.
+Under zsh an unquoted parameter is not word-split, so git received one nonsense pathspec matching nothing —
+and *both* commands returned empty. The scope check looked like a pass. The fail-capable comparison is
+what exposed it: it must return a path and did not. The commands above list the paths literally, and
+`git ls-files --error-unmatch` over the same five confirms git recognises every one as a tracked path, so
+"empty" can no longer mean "matched nothing".
+
+**No candidate file, in the tree or in history.**
+`ls -d trials/candidate` → *No such file or directory*.
+`git log --all --diff-filter=A -- 'plans/…/trials/candidate/*'` → no output; it was never added on any
+branch.
+
+Result: **findings 1 and 2 are resolved; S1's instrument is unchanged in what it measures.** The
+discriminator, the blind-control design, the delimited request surface and both discriminator greps are
+exactly as assessed — the correction changed how the fixtures declare their authority, and replaced a
+scope check that could not detect committed drift with one that can and that has been shown failing.
+
+Evidence: the four numbered items under finding 1 and the six under finding 2, all reproducible from the
+repository root. The two operator-observer greps are unaffected and still return exit 0 and exit 1; they
+remain written out with full paths in `trials/ce-9-recovery-scenario.md` §5.
+
+**Newly noticed during the correction, recorded as a deferral and not implemented** (core §3): the
+scope-check command belongs in the scenario file beside the two discriminator greps, so a later session
+re-verifies scope the same way instead of re-deriving it. It is not in the frozen scope, so it was not
+added.
 
 ## Next action
 
-Codex: assess S1 against Phase 1's U-2 half — whether fresh-session recovery is measurable at all — and
-decide close, correct once, or stop. Note that plan §7.0 additionally names **the operator** as S1's
-observer: they re-run the two greps above, which are reproduced with full paths in
-`trials/ce-9-recovery-scenario.md` §5, before S2 is authorised. That check is mechanical and is not
-Claude checking its own output.
+Codex: run the closure check on the frozen findings only — are findings 1 and 2 resolved, and did the
+correction break anything? Everything needed is above; the two role statements are quoted verbatim for
+finding 1, and finding 2's commands are reproducible from the repository root.
 
-Two things carried forward for Codex to decide on, neither actioned:
+Carried forward, none of them actioned and none of them in the correction scope:
 
-1. **Deferral — the implementation plan's header contradicts the repository.** Detailed under difference
-   (1) above. It now asserts O-1 is outstanding and that S1 cannot open, when `a718a17` answered O-1 and
-   the condition is met. Left unedited because plan edits are outside this unit's scope. It should be
-   reconciled before it misleads a later session into stopping, and the reconciliation is the same shape
-   Phase 0 already applied to the specification's stage header. Whether that is a Phase 0 completion or a
-   separate unit is Codex's call.
-2. **Deferral — F-10's stated line count is stale**, 913 against a live 928. One number in plan §4.1.
-   Not load-bearing: the 17-behaviour half of F-10 was re-derived and holds.
+1. **Deferral — the implementation plan's header contradicts the repository.** It asserts O-1 is
+   outstanding and that S1 cannot open; `a718a17` answered O-1 and the condition is met. A plan edit, so
+   outside S1.
+2. **Deferral — F-10's stated line count is stale**, 913 against a live 928. Not load-bearing: the
+   17-behaviour half of F-10 was re-derived and holds.
+3. **Deferral — the scope-check command is not yet recorded in the scenario file.** Noticed during this
+   correction, described above.

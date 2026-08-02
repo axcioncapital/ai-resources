@@ -2,7 +2,19 @@ FIXTURE — not a project artifact; seeded for CE-9. Carries no authority.
 
 # Harbourview — current state
 
-*Fictional project. This file is seeded trial material, not a live task-state file.*
+*Fictional project, seeded for a trial. This file carries **no authority over any real Axcíon work**, and
+it is not a live Work Loop state file — nothing in it describes, governs or constrains anything outside
+the CE-9 scenario, and no reader should act on it in the repository.*
+
+**Inside the CE-9 scenario, this file is Harbourview's authoritative current state: its phase, latest
+material result and blocker are authoritative for that fictional project, and a thread preparing a brief
+for it should treat them as such.**
+
+The two statements hold together because they operate at different levels. The authority is
+trial-internal and stops at the boundary of this fixture set. A blanket denial would be the wrong shape
+here: the scenario measures whether a thread recovers the blocker below and reads it against the
+governing plan, which it cannot do if the file has told it the blocker is not authoritative for
+anything.
 
 This is the durable source that plays spec §5.7 category 3 — *the existing authoritative current-state
 interface* — in the CE-9 recovery scenario. The `FIXTURE —` notice occupies the first line deliberately,
