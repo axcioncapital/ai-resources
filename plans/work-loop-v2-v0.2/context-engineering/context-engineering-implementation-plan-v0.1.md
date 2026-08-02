@@ -171,8 +171,8 @@ discard any of it on live evidence.
 - **The seam edit's starting candidate is the design reverted in S4-510** — recorded in
   `../../../logs/scratchpads/2026-08-02-13-08-scratchpad.md` so it need not be re-derived. It is a
   *starting point re-derived against live files*, not a specification.
-- **Carriage of the behaviour at runtime** (Phase 1, U-1) — the two candidate shapes are described there
-  as candidates to test, not as a choice already made.
+- **Carriage of the behaviour at runtime** (Phase 1, U-1) — the single inline candidate described there is
+  a construction to test, not a settled runtime packaging answer. If it fails to deliver, U-1 escalates.
 
 ### 4.4 The candidate — the thing Phase 2 actually builds
 
@@ -373,7 +373,7 @@ in both columns, with the checked-against list beside it.
 | Session | Lead | Observer — and what they check against | Needs the operator to drive Codex? |
 |---|---|---|---|
 | S1 · CE-9 instrument | Claude | **The operator** — re-runs the two stated greps (one hit, one miss) before authorising S2. Mechanical, no judgment, and it is not Claude checking its own output | No |
-| S2 · carriage probe | **Claude** authors the three fixture files; **the operator** then leads the three runs, driving fresh Codex threads | **Claude** — wrote none of the briefs; applies the probe check and verifies the named files really exist | **Yes** |
+| S2 · carriage probe | **Claude** authors the one candidate file; **the operator** then leads the two runs, driving fresh Codex threads | **Claude** — wrote none of the briefs; applies the probe check and verifies the named files really exist | **Yes** |
 | S3 · Slice A | Operator, driving Codex | Claude — the red-then-green record and the four counts | **Yes** |
 | S3b · shadow slice | Operator (drives Codex) **and Claude** (does the real work from the brief) | Claude reports usability; the operator reports their own effort. Neither judges the other's half | **Yes** |
 | S4 · Slice B | Operator, driving Codex | Claude — each seeded item against its constructed case | **Yes** |
@@ -483,7 +483,7 @@ about it.
   untested.
 
 > **A carriage failure does not shrink the behaviour.** Spec §7 explicitly rejects *"a rule that required
-> behaviour shrinks merely because packaging is difficult."* If both candidate carriages fail, the outcome
+> behaviour shrinks merely because packaging is difficult."* If the candidate carriage fails, the outcome
 > is an escalation, not a smaller contract. Only the §9 acid test, in a real trial, shrinks anything.
 
 **Session S1 — build the measurement instrument**
@@ -511,8 +511,8 @@ is **not** a question about which CE behaviours the thread exhibits. Answering t
 Phase 2's red runs impossible — the candidate cannot both carry CE-1…CE-16 and be missing them (§5.2, *a
 bootstrap that cannot fail*).
 
-*The construction that keeps them apart — the carriage probe.* Each candidate carriage contains **one
-probe instruction that is not any of CE-1…CE-17** and that a fresh thread would not follow by default:
+*The construction that keeps them apart — the carriage probe.* The candidate contains **one probe
+instruction that is not any of CE-1…CE-17** and that a fresh thread would not follow by default:
 
 > Under this carriage, end every brief with a section named `Carriage check`, listing — in the order you
 > opened them — the repository files you opened while preparing it.
@@ -521,82 +521,83 @@ The probe is behaviour-shaped rather than a magic string: satisfying it requires
 the instruction, and its content is checkable against reality (do those files exist, and are they the ones
 the scenario makes relevant?). A string the thread could echo would prove only that it read the file.
 
-*What the two carriages differ by — mechanism, and nothing else.* The runtime packaging question U-1
-actually poses is whether an instruction survives **one level of indirection**: the specification is 913
-lines and the skill is 116 (F-10, F-3), so either the skill points at the authority and the thread must
-follow the pointer, or the skill carries the operative text in its own body. That is the choice, and it
-can be tested with the probe alone:
+*What the candidate carries — mechanism, and nothing else.* S2 tests **one file and no alternative**:
+`trials/candidate/SKILL.md`, holding the probe text **inline, in its own body**. There is no second
+carriage and no referenced instruction file, because §4.4 fixes the Phase 2 candidate at exactly one file
+and any indirection branch would end the session with two.
 
-| | `carriage-a-SKILL.md` — **indirect** | `carriage-b-SKILL.md` — **inline** |
-|---|---|---|
-| What the candidate file holds | No instruction of its own. One line naming `trials/candidate/carriage-a-instructions.md` and directing the thread to read and follow it. | The probe text itself, in the file's own body. |
-| Where the probe lives | The referenced file | The candidate file |
-| What a failure means | Indirection does not survive; the operative text must be inline | Inline delivery does not survive either; U-1 escalates |
-
-**Neither file mentions Context Engineering, CE-1…CE-17, or the specification at all.** Earlier drafts of
-this session distinguished the carriages by *content* — one referencing the specification, one carrying a
+**That file mentions Context Engineering, CE-1…CE-17 and the specification nowhere.** Earlier drafts of
+this session distinguished two carriages by *content* — one referencing the specification, one carrying a
 compressed behavioural checklist — which contradicted the requirement that the survivor be behaviourally
-empty and would have made S3's red run invalid. Mechanism is the only permitted difference.
+empty and would have made S3's red run invalid. A later draft replaced that with an indirect-versus-inline
+competition; it fixed the contamination but broke the one-file invariant, because an indirect winner leaves
+a pointer file plus the file it points at. A single inline candidate is the construction that holds both.
 
-- *Inputs:* S1's scenario; the two carriage files and, for (a), its referenced instruction file.
-- *Actors:* **author — Claude**, which writes all three files before any thread runs; they are fixtures,
-  built the way S1 builds its scenario. Lead for the runs — the operator, driving three fresh Codex
+*What this drops, stated rather than left implicit.* The plan no longer tests whether an instruction
+survives **one level of indirection**. That question is not answered anywhere in this build. Inline is what
+the one-file constraint permits, so indirection is untested here, not ruled out — a later runtime design
+that wants it must prove it then.
+
+- *Inputs:* S1's scenario; the one candidate file.
+- *Actors:* **author — Claude**, which writes that file before any thread runs; it is a fixture, built the
+  way S1 builds its scenario. Lead for the runs — the operator, driving two fresh Codex
   threads. Observer — **Claude**, which wrote none of the *briefs*: it reads the outputs, applies the
   probe check, and verifies the listed files exist and are the scenario's. Authoring the instrument and
   judging Codex's output are not the same output, so the observer independence §7.0 requires holds.
-- *One job:* determine which carriage delivers an instruction to a fresh thread, using the probe and a
-  negative control.
-- *How they are installed and isolated:* **neither is installed.** Both sit under `trials/candidate/`,
-  outside `.agents/skills/`, so Codex's ordinary skill discovery cannot reach either and no live session
-  can pick one up by accident. For each run the operator points a fresh Codex thread at one file
+- *One job:* determine whether an inline candidate delivers an instruction to a fresh thread, using the
+  probe and a negative control.
+- *How it is installed and isolated:* **it is not installed.** It sits under `trials/candidate/`,
+  outside `.agents/skills/`, so Codex's ordinary skill discovery cannot reach it and no live session
+  can pick it up by accident. For the probe run the operator points a fresh Codex thread at that file
   explicitly, by path. The live `.agents/skills/work-loop-v2/SKILL.md` is not touched in this phase —
   `git diff` on it must be empty at S2's exit, and that is part of the evidence.
-- *What this construction cannot answer, stated so the result is not over-read:* because neither carriage
-  is installed, S2 answers only that an instruction reaching an **explicitly named** file is acted on, and
-  whether it survives indirection. It does **not** show that the same instruction is picked up through
+- *What this construction cannot answer, stated so the result is not over-read:* because the candidate
+  is not installed, S2 answers only that an instruction reaching an **explicitly named** file is acted on.
+  It does **not** show that the same instruction is picked up through
   ordinary skill discovery once installed. That half of U-1 is answered by S8b's pre/post invocation at
-  the live entrypoint, which is the first run where the carriage is installed — and it is why S8b's
-  behavioural evidence is required and its structural checks are explicitly not sufficient. A carriage
-  that wins S2 and then fails S8b's pre/post pair is a Phase 3 finding, not a Phase 1 one.
-- *Repository output:* `trials/carriage-trial-record.md`, and `trials/candidate/SKILL.md` — the surviving
-  carriage **with the probe removed**, so what enters Phase 2 has no behavioural content at all. **Which
-  file the Phase 2 slices then write into follows from which carriage won:** if inline won, the families
-  are written into `SKILL.md` itself; if indirect won, `SKILL.md` keeps its pointer and the families are
-  written into the referenced instruction file, which is renamed to drop the `carriage-a-` prefix. The
-  trial record states which, in one line, because every later slice depends on it.
-- *Evidence capable of failing — three runs, one of which must fail:*
-  1. **Negative control.** A fresh thread on the same scenario with **no carriage**. The `Carriage check`
-     section must be **absent**. If it appears, the probe is not measuring the carriage, the instrument is
+  the live entrypoint, which is the first run where the candidate is installed — and it is why S8b's
+  behavioural evidence is required and its structural checks are explicitly not sufficient. A candidate
+  that passes S2 and then fails S8b's pre/post pair is a Phase 3 finding, not a Phase 1 one.
+- *Repository output:* `trials/carriage-trial-record.md`, and `trials/candidate/SKILL.md` — the validated
+  candidate **with the probe removed**, so what enters Phase 2 has no behavioural content at all. **Phase
+  2's slices write their families into that same single file**, under every outcome; there is no second
+  file for a family to go into and none may be created. The trial record states the result in one line,
+  because every later slice depends on it.
+- *Evidence capable of failing — two runs, one of which must fail:*
+  1. **Negative control.** A fresh thread on the same scenario with **no candidate**. The `Carriage check`
+     section must be **absent**. If it appears, the probe is not measuring the candidate, the instrument is
      broken, and the session has failed rather than succeeded.
-  2. **Carriage (a).** The section appears, and the files it names exist and match the scenario.
-  3. **Carriage (b).** The same check.
+  2. **The candidate.** The section appears, and the files it names exist and match the scenario.
 
   Plus: `git diff -- .agents/skills/work-loop-v2/SKILL.md` returns empty, proving nothing was installed.
+  Plus: `trials/candidate/` contains **exactly one file**, `SKILL.md`. A second file there fails the
+  session, whatever it contains.
 
   **How behavioural emptiness is actually established — two parts, because the grep is not enough.**
   `grep -c 'CE-' trials/candidate/SKILL.md` returning **0** at exit proves only that no CE *identifier* is
   present; a paraphrase would pass it. It is a necessary check, not a sufficient one. Emptiness is
-  established **by construction** — the carriages are authored to hold the probe and the mechanism and
+  established **by construction** — the candidate is authored to hold the probe and the mechanism and
   nothing else — and it is *demonstrated* one session later: **S3's red run failing is the evidence.** If
   S3's red run comes back green, the first diagnosis is a contaminated bootstrap, not a candidate that
   already works, and Phase 2 returns to S2 rather than recording a behaviour as proved.
-- *Exit:* the negative control is clean, at least one carriage delivers the probe, and that carriage
-  survives as `trials/candidate/SKILL.md` with the probe stripped — **or** both carriages fail and U-1
-  escalates to the operator.
-- *What survives:* **one carriage.** The losing carriage is **deleted** — and if indirect lost, its
-  referenced instruction file goes with it — not archived, because a kept-alongside
-  alternative is a second document describing the same thing, which is the FP-4 shape and, retained as a
-  record of what was rejected, is the plan-history machinery §7 prohibits. The trial record states which
-  won and why; that is the only thing preserved about the loser.
+- *Exit:* the negative control is clean, the candidate delivers the probe, and it survives as
+  `trials/candidate/SKILL.md` with the probe stripped — **or** inline delivery fails and U-1 escalates to
+  the operator. **No branch adds an indirection file or a second carriage.** If inline does not deliver,
+  the session escalates rather than reaching for a different packaging.
+- *What survives:* **exactly one file** — `trials/candidate/SKILL.md`. Nothing is kept alongside it: a
+  retained alternative would be a second document describing the same thing, which is the FP-4 shape and,
+  held as a record of what was rejected, is the plan-history machinery §7 prohibits. The trial record
+  states the outcome and why; that is the only thing preserved about the trial itself.
 - *Stop:* if the trial cannot be run because Codex cannot reach the repository as assumed, stop — that is
   a transport fact (C-3) and it belongs to the operator, not to this capability.
-- *Next:* Phase 2, Slice A, with the chosen carriage stated.
+- *Next:* Phase 2, Slice A, with the validated candidate stated.
 
-*Capacity: one Claude session and one operator-driven Codex session of three threads.*
+*Capacity: one Claude session and one operator-driven Codex session of two threads.*
 
 **Phase 1 exit:** U-1 answered by trial and U-2 answered by a working instrument; one named candidate
-exists at `trials/candidate/SKILL.md`; and that candidate contains **the carriage mechanism and no CE
-behaviour** — which is what makes S3's first red run capable of failing.
+exists at `trials/candidate/SKILL.md` and is **the only file in `trials/candidate/`**; and that candidate
+contains **the carriage mechanism and no CE behaviour** — which is what makes S3's first red run capable
+of failing.
 
 ---
 
@@ -623,7 +624,7 @@ slice touches the live `.agents/skills/work-loop-v2/SKILL.md`: `git diff` on it 
 2, and S8b is the first session that changes it.
 
 **Session S3 — Slice A · one pass, one artifact** *(CE-17 clauses 1–2, CE-1, CE-2, CE-3, CE-15)*
-- *Inputs:* the chosen carriage; spec §2, §4.1, Family 1, CE-15.
+- *Inputs:* the validated candidate; spec §2, §4.1, Family 1, CE-15.
 - *Actors:* lead — the operator, driving Codex; observer — Claude.
 - *One job:* demonstrate that one objective plus material yields exactly one artifact in one pass, that
   only a genuine decision returns to the operator, and that a resolvable unknown becomes a discovery unit
@@ -1184,7 +1185,7 @@ A prohibition mentioned only as something to build is not covered. Each row name
 | Any separate context-QC pass, including risk-triggered | §5.2 makes adding one a **falsification criterion**, not a design option. S6's stop condition fires if CE-10 appears to need an alignment check. Phase 6's assessment is core §3 step 5, explicitly not a new stage. |
 | Lane classification | Not in any slice. Admission stays core §2's, cited in §4.2 as *not* a CE invocation site. |
 | A new backlog, register, or log | S7 measures **zero net new durable files** across routine invocations; the trial records are development evidence, bounded by §7.5, and the run is constructed so the distinction is observable. |
-| Context archive · context-pack lifecycle · decision register · provenance ledger · approval artifact · plan-history system | S7's failing case A lists these as the things whose appearance fails the slice. No phase produces any. **The Phase 2 candidate is not one:** a revision of an existing artifact, held under `trials/`, deleted at S8b. **§7.5 is not one either:** a single deletion at a named point, not a lifecycle — and S2's losing carriage is deleted rather than kept, which is what stops the candidate folder becoming a plan-history log. |
+| Context archive · context-pack lifecycle · decision register · provenance ledger · approval artifact · plan-history system | S7's failing case A lists these as the things whose appearance fails the slice. No phase produces any. **The Phase 2 candidate is not one:** a revision of an existing artifact, held under `trials/`, deleted at S8b. **§7.5 is not one either:** a single deletion at a named point, not a lifecycle — and S2 leaves exactly one file in the candidate folder rather than a survivor beside a rejected alternative, which is what stops that folder becoming a plan-history log. |
 | Separate draft / approved / amended plan copies; raw-material archive by default | Phase 0 records **both** approvals in the approved documents themselves, each bound to content. No approval artifact is created and no approved copy is forked. S4's stop condition refuses fixtures that would leave two plans appearing current, and §4.4's fixture rules keep seeded plans unreachable and marked. |
 | A second project-state file or state system | Progression across S1–S12 is recorded in **the existing task-state interface** at `logs/work-loop/context-engineering-implementation.md` (Phase 0), spec §5.7's third permitted category. S8b's evidence requires the five-field ceiling **unchanged** and fails on a diff that adds a delivery file, queue, handoff document or turn mechanism (§4.5); its stop condition fires if the edit needs schema expansion. F-9 is why that is achievable. |
 | Transport machinery | Owned by the Work Loop, not by this capability. §4.5 shows the delivery path already exists in full, so S8b *reuses* rather than builds; clause 3 is proved in S11 by *observing* delivery. S2's stop condition routes a transport fact to the operator. |
@@ -1195,7 +1196,7 @@ A prohibition mentioned only as something to build is not covered. Each row name
 | A separate fresh-session orientation prerequisite, checklist, gate, or orientation-core artifact | CE-9 is proved **inside** the single pass (S5). No phase creates an orientation stage. |
 | Core-versus-opportunistic proving tiers; a new CE behaviour number | §8 assigns all 17 at one tier. The count stays 17. The grouped regression re-runs existing behaviours; it defines none. |
 | Behaviour shrinking because packaging is difficult | Phase 1's boxed note: a carriage failure escalates. S2 tests the carriage *mechanism* only, so a packaging result can never be read as a statement about which behaviours are required. Only §9's acid test, in a real trial, shrinks anything. |
-| A runtime packaging decision as a constraint fixed now | U-1 tests two candidates and picks on evidence in S2. Neither is chosen in this plan. |
+| A runtime packaging decision as a constraint fixed now | S2 tests **one** inline candidate and either validates it on evidence or escalates U-1; it never selects a packaging option, and no phase writes one into the runtime. What the one-file candidate constraint does fix is the *trial's* construction — inline — and S2 says so in its own text rather than leaving it implicit: indirection is untested by this build, not decided against. |
 | A new correction lifecycle | C-9. S10 is core §3's one round followed by core §3's menu, chosen once. This plan adds no round, no counter, no second review. |
 
 ---

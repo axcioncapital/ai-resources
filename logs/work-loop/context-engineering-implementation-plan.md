@@ -36,118 +36,68 @@ operator-owned scope change, not a finding silently entering a closure check.
 
 ## Latest material result
 
-**Correction round (2026-08-02). All six frozen findings reproduced by inspection, then corrected.**
-Two reproduced with a correction to the finding's own stated reasoning; both are named below rather than
-absorbed silently.
+**Final bounded fix (2026-08-02) — core §3 menu, option "permit one final tightly-bounded fix."**
+Not a second correction round: `## Next action` carried no `Correct once — frozen findings:` token, and
+findings 2–6 stayed closed and untouched.
 
-**Reproduction record.**
+**Reproduced first, before editing.** Codex's regression is real. §4.4 (`:184`) fixes the candidate as
+*"one file: `trials/candidate/SKILL.md`"*, while S2 (`:532`) named a second file
+`trials/candidate/carriage-a-instructions.md`, and S2's repository-output clause (`:563-565`) said that if
+the indirect carriage won, `SKILL.md` keeps its pointer and the families are written into the referenced
+instruction file. Under that branch Phase 2 opens with **two** files, contradicting §4.4 and the operator's
+preserved one-file constraint. Confirmed by reading both passages, not by recall.
 
-- **F-1 · carriage bootstrap** — REPRODUCES. Read the plan at S2: carriage (a) was *"the skill
-  referencing the specification by path"*, (b) *"carrying a compressed behavioural checklist"*, while the
-  same session asserted *"Neither carries any CE behaviour"* and §4.4 required a Phase 1 exit that is *"a
-  carriage with no CE content"*. Direct contradiction. Searched S1's `Repository output` for the carriage
-  files: absent — no session authored them. `grep -c 'CE-'` proves identifier absence only, as stated.
-- **F-2 · shadow slice** — REPRODUCES. S3b specified *"small, reversible"* and *"committed as ordinary
-  Direct Work"*; core §2 (`:40-42`) gives such work *"no state file, no brief, no ceremony"*.
-- **F-3 · O-3 reading B** — REPRODUCES, **with one stated premise of the finding falsified.** The
-  finding says S8a would exclude v1 *"merely because it has no discoverable Codex skill or
-  `logs/work-loop/`"*. **v1 does have a Codex skill** — `ls .agents/skills/` returns `work-loop`
-  (`SKILL.md`, 9302 bytes, dated Jul 28). So the first half of that reason is false. The finding's
-  substance holds by the *second* half: the test's conjunction requires `logs/work-loop/`, v1 uses
-  `logs/loop/` (`ls -d logs/loop` succeeds), so v1 was excluded on a directory-naming difference; and
-  S8b's outputs named only the three v2 files, leaving reading B with no route. Also confirmed the
-  finding's core premise by inspection: `work-loop.md:41` — *"compose the brief yourself in the
-  contract's `BRIEF` shape"* — v1 authors a plan-dependent brief.
-- **F-4 · actor map** — REPRODUCES exactly. Counted `**Yes**` cells in §7.0: **10**, against the
-  document's claimed *"nine of the fourteen"*. S8b assigned the operator to the pre-run only while its
-  own evidence required a post-edit fresh-thread run. Five observer cells named greps, commands or
-  questions rather than a party (S1, S8a, S9, S10, and S12's partial).
-- **F-5 · CE subcase coverage** — REPRODUCES, **and the finding's example list was incomplete.** Checked
-  each promised subcase against the specification's own case labels. Confirmed uncovered: CE-6 A, CE-4 C,
-  CE-12 A (the three named). **Four more found by the same check:** CE-4 A and CE-4 B (S4 seeded only the
-  editorial/material edit pair, which is case D); CE-11 A (only case B was seeded); and **CE-10 B was
-  mislabelled** — the plan called *"a separate alignment stage introduced"* case B, but spec `:705`
-  defines case B as *silent deviation from the approved plan*; the gate check is CE-10's evidence clause.
-  All seven corrected, since stopping at the three named examples would have left the same defect.
-- **F-6 · no-ferry table** — REPRODUCES. Read `work-loop-v2.md:32-38` in full: it implements identity
-  (`task:`), turn (`turn:`) and readable frontmatter. **No staleness check exists**, though core §6 rule 2
-  (`:269`) names *"stale"* as a separate condition. And `:32` reads *"If more than one qualifies, list
-  them and ask which. Never guess."* — so bare `/work-loop-v2` auto-resolves only at exactly one open
-  task.
+**What the fix did.** S2 now validates **one inline, mechanism-only candidate** —
+`trials/candidate/SKILL.md`, probe text in its own body — against the existing non-CE probe and the
+negative control. The indirect-versus-inline competition, the carriage table, `carriage-a-instructions.md`
+and every branch that could leave a referenced instruction file are gone. Claude authors the file, the
+operator drives the two runs, Claude observes the briefs. **If inline delivery fails, U-1 escalates** — the
+exit clause states in terms that no branch adds an indirection file or a second carriage. Three things were
+deliberately kept: S8b still owns installed discovery (the honest limit that S2 cannot answer it), S3's red
+run remains the semantic-emptiness control, and the `grep -c 'CE-'` check stays necessary-not-sufficient.
 
-Result: **all six corrected in place** in
-`plans/work-loop-v2-v0.2/context-engineering/context-engineering-implementation-plan-v0.1.md`.
-1121 → 1279 lines.
+**One consequence stated rather than smoothed over.** The plan no longer tests whether an instruction
+survives one level of indirection — nothing in the build answers that now. S2 says so in its own text, and
+§9's *"runtime packaging decision as a constraint fixed now"* row was reconciled to match: S2 selects no
+packaging option, but the one-file constraint does fix the **trial's** construction as inline, so
+indirection is untested by this build rather than decided against.
 
-**What each correction did.**
-
-1. **S2 rebuilt around a mechanism-only difference.** The two carriages now differ by **indirection
-   versus inline delivery** and nothing else — (a) holds one pointer line to a separate instruction file,
-   (b) holds the probe in its own body. Neither mentions the specification or any CE identifier, so the
-   Phase 2 baseline is genuinely CE-empty and S3's red run can fail. **Claude is named as the explicit
-   author** of all three fixture files, before any thread runs; observer independence holds because
-   authoring the instrument and judging Codex's briefs are different outputs. The negative control's
-   limit is stated rather than papered over: neither carriage is installed, so S2 answers reachability
-   and indirection only — installed discovery is answered by S8b's pre/post pair, and a carriage that
-   wins S2 then fails S8b is a Phase 3 finding. The `grep -c 'CE-'` check is demoted to
-   necessary-not-sufficient, with behavioural emptiness established by construction and **demonstrated by
-   S3's red run failing**; a green red-run is diagnosed as a contaminated bootstrap first.
-2. **S3b now takes a genuine Standard-lane unit** with the named admission reason core §2 requires,
-   written into that unit's own state file. Low risk is explicitly not the admission test. Two separations
-   made checkable: the real unit owns its own state file, scope, evidence and commits, and a commit
-   carrying both the real unit's changes and the shadow record fails the session.
-3. **O-3's reading now sets the population before any test runs.** The three-condition conjunction is
-   replaced by **one** generation-neutral relevance condition — does plan-dependent briefing or
-   continuation actually happen through this path. The Codex-skill and state-directory facts are demoted
-   to *wiring-shape* facts that decide **how** a path is wired, never **whether** it is relevant. S8b gains
-   an explicit conditional route: under reading B the allowed outputs extend to v1's command, Codex skill
-   and doc — **or** the operator chooses retirement, S8b makes no v1 edit and stops, and adoption stays
-   blocked under Phase 6 condition 2 until mission Step 8 executes it. §4.2's v1 row now records the
-   verified facts (own Codex skill, own `logs/loop/`, authors its own brief at `work-loop.md:41`).
-4. **Actor map corrected and re-counted.** Now **ten of fourteen**. S8b assigns the operator to **both**
-   halves of the pre/post pair. Every observer cell names a party with the list they check against: S1 →
-   the operator (re-runs the two greps); S8a → the operator (re-runs each row's command, confirms the O-3
-   reading); S9 → Claude (staleness check on the review only); S10 → **Codex** (it owns the closure check);
-   S12 → split, Claude for fixes and reproof, the operator for fresh-thread regression cases.
-5. **Every promised subcase now has its own seeded condition.** S4 lists CE-4 A/B/C/D, CE-5, CE-6 A/B/C
-   separately; S6 lists CE-10 A/B, CE-11 A/B, CE-12 A/B, CE-13 A/B/C, CE-14. S4's stop condition was
-   corrected — it previously forbade the second plan document CE-6 B *requires*; it now permits it inside
-   the seeded scenario and stops only if a second plan would appear current in the repository's real plan
-   space. §7.1 gained two reporting rules (each regression case inherits its slice's complete subcase set;
-   each case reports one line per subcase, and a subcase with no line fails the run), and §8 now states
-   explicitly that its unit is the behaviour number while the proof's unit is the subcase.
-6. **§4.5 split into three distinct rows** — task identity, turn ownership, and freshness, which is
-   recorded as **not implemented at all**. The operator-action row states the conditional count: one
-   trigger at exactly one open task, two when several are open. S11's evidence is now two counts kept
-   apart — context actions (target zero beyond the objective) and trigger actions — with the number of
-   `turn: claude` files at invocation recorded, so the count comes from observed state. A trigger count of
-   two does not fail clause 3; concealing it does. §4.5 also names two things the seam does not provide,
-   and forbids S8b from building either.
+Reconciled beyond S2 itself, and nothing else: §4.3's carriage bullet, §7.0's S2 actor row (three fixture
+files/three runs → one file/two runs), Phase 1's boxed escalation note, the Phase 1 exit line, S3's inputs
+line, and the two §9 rows above. Findings 2–6, all prior corrections, the deferral below and every standing
+boundary are preserved. `.agents/skills/wl2-probe/SKILL.md` was not deleted.
 
 Evidence:
 
-- **F-4, by count.** `**Yes**` cells in §7.0 = **10**; `ten of the fourteen sessions` = 1 hit;
-  `nine of the fourteen` = **0** hits. **Fails if** the cell count and the stated count diverge again.
-- **F-1, by absence and presence.** `compressed behavioural checklist with the specification` → **0**;
-  `author — Claude` → **1**; `Negative control` → **1** (the control was not removed while fixing it).
-  **Fails if** either contaminating description returns, or the author line disappears.
-- **F-5, by enumeration.** `grep -oE '\*\*CE-(4|6|10|11|12) [A-D]\*\* ·'` returns exactly **13** seeded
-  subcase lines: CE-4 A/B/C/D, CE-6 A/B/C, CE-10 A/B, CE-11 A/B, CE-12 A/B. **Fails if** any header
-  promises a subcase with no matching seeded line.
-- **F-3, by absence.** `it is relevant if all three hold` → **0**; `Under reading B additionally` → **1**.
-  **Fails if** the conjunction returns, or reading B loses its output route again.
-- **F-2, by absence.** `committed as ordinary Direct Work, outside this plan` → **0**;
-  `genuine Standard-lane unit` → **1**.
-- **F-6, by presence.** The freshness row reading `**It is not.**` → **1**. **Fails if** the table again
-  presents `turn:` as a freshness check.
-- **Regressions checked, not assumed.** CE-1…CE-17 present with **no gaps** (per-number loop, zero
-  missing); §8 map still **17** rows; §9 boundary audit still **17** rows; sessions **14** and
-  `^- \*Actors:` lines **14**, matching; the escape-hatch grep
-  `stated limitation\|with stated limitations` still returns exactly **1**, and it is the prohibition.
-  **Fails if** any count moves.
-- **Committed paths.** Exactly two: the plan and this state file. Pre-existing unrelated working-tree
+- **The regression is gone, by absence.** In the plan: `carriage-a-` → **0** (was 3); `carriage-b-` → **0**
+  (was 1); `losing carriage` → **0** (was 2); `three fixture|three runs|three threads` → **0** (was 4);
+  `both carriages|two carriages|two candidates|two candidate shapes` → **1** (was 4), and the single
+  survivor is the drafting-history sentence that records the rejected design, not a live branch.
+  **Fails if** any of those returns above zero, or if the remaining hit stops being the history sentence.
+- **The invariant is stated, by presence.** `*What survives:* **exactly one file**` → **1**;
+  `No branch adds an indirection file or a second carriage` → **1**;
+  `the only file in `trials/candidate/`` → **1**; and S2's evidence list gains a check that
+  `trials/candidate/` contains exactly one file. **Fails if** any drops to 0.
+- **`referenced instruction file` → 1** (was 2) — and the survivor is the prohibition (*"There is no second
+  carriage and no referenced instruction file"*), not an instruction to create one. **Fails if** the
+  remaining hit becomes constructive again.
+- **Findings 2–6 unmoved, checked not assumed.** `author — Claude` **1**; `Negative control` **1**;
+  `it is relevant if all three hold` **0**; `Under reading B additionally` **1**;
+  `committed as ordinary Direct Work, outside this plan` **0**; `genuine Standard-lane unit` **1**;
+  the freshness row `**It is not.**` **1**. **Fails if** any moves.
+- **Counts unmoved.** `**Yes**` cells **10**; `ten of the fourteen sessions` **1** and
+  `nine of the fourteen` **0**; `^- \*Actors:` lines **14**; seeded-subcase lines **13**; §8 map **17**
+  behaviour rows; §9 boundary audit **17** rows; CE-1…CE-17 present with no gaps; the escape-hatch grep
+  `stated limitation\|with stated limitations` still exactly **1**, and it is still the prohibition.
+  **Fails if** any count moves. File length **1279 → 1280** lines — the one added line is a rewrap of the
+  Phase 1 exit sentence, not new material.
+- **Committed paths.** Exactly two: the plan and this state file. The pre-existing unrelated working-tree
   changes (`logs/friction-log.md`, `logs/session-notes.md`, `logs/runs/2026-08-02-S5-8ee.json`) were not
   staged. **Fails if** `git show --stat` lists a third path.
+
+**Prior round, for reference only** (full record in Git at `cf52736`): all six frozen findings were
+reproduced and corrected; Codex's closure check found findings 2–6 resolved with no material regression,
+and finding 1 only partly resolved — which is what this fix closes.
 
 **One deferral, recorded and not done** (core §5 — noticed during F-3's inspection, outside the frozen
 findings): `.agents/skills/wl2-probe/SKILL.md` is still on disk. Its own body reads *"Throwaway Step 2
@@ -159,21 +109,24 @@ file is outside a plan-correction unit's scope, and it belongs to whoever owns t
 None.
 
 ## Next action
-Codex: the two-question closure check on the frozen findings **only** (core §3 *Correcting once*).
+Codex: the final closure check — **on this one-file-candidate fix only** (core §3, *If the correction was
+not enough*). It is not another broad review, and no closed finding reopens.
 
-1. Are findings 1–6 resolved?
-2. Did the correction introduce a material regression?
+1. Is the one-file invariant restored — does every successful S2 outcome leave exactly
+   `trials/candidate/SKILL.md` and nothing beside it?
+2. Did this fix cause a material regression?
 
-Two things to weigh while answering question 1, both disclosed rather than smoothed over:
+Two things to weigh while answering, disclosed rather than smoothed over:
 
-- **Finding 3's stated reasoning was partly falsified** — v1 *does* have a Codex skill, so the exclusion
-  ran through the state-directory condition, not the missing-skill one. The finding's substance held and
-  was corrected; the mechanism recorded in the plan is the verified one, not the one the finding named.
-- **Finding 5's examples were not exhaustive.** The same check found four more uncovered or mislabelled
-  subcases (CE-4 A, CE-4 B, CE-11 A, and CE-10 B, which was mislabelled). All were corrected, on the
-  ground that correcting only the three named examples would have left the finding's own defect in place.
-  If Codex judges that widening exceeded the frozen scope, say so — it is a scope call, not a fact
-  question.
+- **The indirection question is now untested, not answered.** Removing the competition removed the only
+  place the plan checked whether an instruction survives one level of indirection. S2 states this, and §9's
+  packaging row was reconciled to say the trial's construction is fixed as inline while no packaging option
+  is selected for the runtime. If Codex judges that §9 row now overclaims, say so — it is the one place
+  where the fix touched a boundary-audit claim rather than S2's own text.
+- **Section §9's two edited rows were the only reconciliations outside Phase 1 and §7.0.** Both were direct
+  references to the removed competition, so leaving them would have left the plan self-contradictory. If
+  that is judged wider than the bounded fix allowed, it is a scope call, not a fact question.
 
-Anything newly noticed is a **deferral**, not a second correction round. The plan remains a **draft** and
-is not authorisation to implement; Phase 0's two operator approvals are still outstanding.
+Anything newly noticed is a **deferral**, not another round. The deferral above
+(`.agents/skills/wl2-probe/SKILL.md`) is still open and still belongs to whoever owns the Step 2 cleanup.
+The plan remains a **draft**; Phase 0's two operator approvals are still outstanding.
