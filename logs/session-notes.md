@@ -531,3 +531,15 @@ Findings: 4 — queued 1 (severity: medium-high), declined 3. 1 + 3 = 4.
 
 ### Open Questions
 None.
+
+## 2026-08-02 — Session S8-ff8
+
+**Mandate:** Run Claude's preparation half of Work Loop v2 Context Engineering S3 (Slice A) — re-check the brief's four premises against the live repository, build the disposable red evaluation root outside the shared checkout with the answer key scrubbed, and write the verbatim fresh-Codex red-evaluator prompt into the task-state file — done when: all four premises are checked with evidence recorded, the disposable red root exists outside the shared checkout with the answer key scrubbed, the red-evaluator prompt is written verbatim into the task-state file with `turn: operator` unchanged, and the work is committed.
+- Out of scope: running or judging either the red or the green evaluation; revising trials/candidate/SKILL.md; creating trials/slice-a-evidence.md; touching the live .agents/skills/work-loop-v2/SKILL.md, the executable core, commands or hooks; starting S3b; pushing
+- Files in scope: logs/work-loop/context-engineering-implementation.md, logs/session-notes.md
+- Stop if: any of the four premises is false, or the candidate is not byte-identical to the live skill
+- Allowed inputs: plans/work-loop-v2-v0.2/context-engineering/trials/, .agents/skills/work-loop-v2/SKILL.md, plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md, plans/work-loop-v2-v0.2/context-engineering/context-engineering-implementation-plan-v0.1.md, logs/improvement-log.md
+- Required outputs: one disposable red evaluation root outside the shared checkout with the answer key scrubbed, the verbatim red-evaluator prompt inside logs/work-loop/context-engineering-implementation.md
+- Mission: work-loop-v2-mvp
+
+**Work:** Work Loop v2 S3 (Slice A) — verify the brief's four premises and prepare the red evaluator run per Codex's brief
