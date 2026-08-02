@@ -1,0 +1,45 @@
+{
+  "run_id": "2026-08-02-S6-6d7",
+  "project": "ai-resources",
+  "date": "2026-08-02",
+  "marker": "S6-6d7",
+  "model": "claude-opus-5[1m]",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md#2026-08-02-S6-6d7",
+  "mission": "work-loop-v2-mvp",
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    "plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md",
+    "logs/session-notes.md",
+    "logs/work-loop/context-engineering-implementation.md",
+    "plans/work-loop-v2-v0.2/context-engineering/trials/ce-9-recovery-scenario.md",
+    "plans/work-loop-v2-v0.2/context-engineering/trials/fixtures/ce-9/operator-request.md",
+    "plans/work-loop-v2-v0.2/context-engineering/trials/fixtures/ce-9/operator-source-note.md",
+    "plans/work-loop-v2-v0.2/context-engineering/trials/fixtures/ce-9/project-plan.md",
+    "plans/work-loop-v2-v0.2/context-engineering/trials/fixtures/ce-9/task-state.md"
+  ],
+  "decisions_refs": [],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "blocked",
+  "outcome": "PARTIAL",
+  "failure_class": null,
+  "incidents_refs": []
+}

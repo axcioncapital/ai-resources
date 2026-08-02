@@ -2,103 +2,6 @@
 
 > Archive: [session-notes-archive-2026-08.md](session-notes-archive-2026-08.md)
 
-## 2026-08-01 — Session S11-cf1
-
-**Mandate:** Make the Work Loop v2 v1-retirement decision (the hard boundary at pilot start), then open the Phase 3 pilot — start the pilot log and run the first genuine CRM or Email OS work unit through the MVP — done when: `plans/work-loop-v2-mvp/step-7-v1-retirement-decision.md` exists and the decision is recorded in `logs/decisions.md`; `plans/work-loop-v2-mvp/step-7-pilot-log.md` exists and holds pilot unit 1's record; one real CRM or Email OS unit has run end-to-end through `$work-loop-v2` with its task-state file in `logs/work-loop/`; and the mission's Step 7 threads reflect what actually closed, with evidence.
-- Out of scope: Step 8 entirely (fixing pilot blockers, the regression set, the post-pilot assessment, executing the retirement); pilot units 2 and 3 and the mid-task session-handoff test (the handoff requires a later session by construction); redesigning the MVP; reopening any of the six disclosed limitations in `step-6-candidate-review.md` § 8.5 unless a pilot unit materially obstructs operation.
-- Files in scope: plans/work-loop-v2-mvp/step-6-candidate-review.md, plans/work-loop-v2-mvp/work-loop-v2-mvp-proposal-v0.4.md, docs/work-loop.md, .claude/commands/work-loop.md, .claude/commands/work-loop-v2.md, .agents/skills/work-loop-v2/SKILL.md, logs/missions/work-loop-v2-mvp.md, logs/decisions.md, logs/session-notes.md
-- Stop if: the only available pilot unit would have to be manufactured rather than genuine — Proposal § Phase 3 requires real work units, and a fabricated one tests nothing; or a pilot observation would enter MVP scope without having materially obstructed useful operation (the Proposal's pilot presumption is no change).
-- Allowed inputs: plans/work-loop-v2-mvp/, docs/work-loop.md, docs/work-loop-spec.md, .claude/commands/work-loop.md, .agents/skills/work-loop/SKILL.md, .claude/commands/work-loop-v2.md, .agents/skills/work-loop-v2/SKILL.md, logs/missions/work-loop-v2-mvp.md, logs/decisions.md, logs/work-loop/, projects/axcion-crm/, projects/axcion-systems-builder-email-os/
-- Required outputs: plans/work-loop-v2-mvp/step-7-v1-retirement-decision.md, plans/work-loop-v2-mvp/step-7-pilot-log.md, logs/work-loop/{pilot-unit-1-task-id}.md
-- Mission: work-loop-v2-mvp
-
-**Work:** Work Loop v2 MVP Step 7 — v1 retirement decision, then pilot real CRM / Email OS units
-
-## 2026-08-01 — Work Loop v2 pilot unit 2 closed with one correction round; Step 8 scope amended
-
-### Summary
-
-Resumed mid-pilot from the prior handoff and ran pilot unit 2 (`decision-entry-referenceability`)
-end to end. The defect: `logs/decisions.md` in `axcion-systems-builder` had drifted into two entry
-shapes, and `check-decision-refs.sh` indexes `##` headers only — so an entry opening as a bare bold
-`**Decision …**` paragraph was structurally unreferenceable and produced **no orphan to notice**,
-because no ref could ever be written for it. Silent negative evidence. Codex widened the objective
-from one repo to the three actual owners of the contract; Claude checked six premises (all held),
-wrote the fixture red first (3 failures), implemented, and normalized four entries by pure insertion.
-Codex then froze **one** finding — a fifth entry Claude had reported but deliberately not touched —
-proved its boundary from `session-notes.md` rather than from Claude's style inference, and closed
-after one bounded round. **Condition 4 (one bounded correction on real work) is now exercised**, which
-was the honest gap after unit 1. Separately, an operator question about installation portability
-surfaced that FP-3's reopening trigger had **already fired unnoticed**: v2 is installed in three
-projects, and the third holds an untracked byte-identical *copy* of the command with no core, no
-skill and no `logs/work-loop/`.
-
-### Decisions Made
-
-**Operator decisions:**
-
-- **Accept Claude's unit-2 recommendation** (the `check-decision-refs.sh` headerless defect) over the
-  `check-foreign-staging.sh` tokenizer defect. Claude's stated ranking reason: the tokenizer's target
-  is a shared hook every commit passes through, and editing it live while piloting through that same
-  hook is avoidable risk.
-- **Add portable installation to the pipeline** — *"If not, we need to add it."* Logged to
-  `decisions.md` with the split Claude applied.
-- **Route the fifth-entry question to Codex** rather than have Claude decide it inline.
-
-**Claude decisions, within authority:**
-
-- **Did not normalize the fifth headerless entry.** Evidence was a dated-vs-undated convention read
-  off the file — consistent across all 12 dated paragraphs, but a pattern inferred, not a rule the
-  journal states. Judged too weak against a governance record; handed back as an open question.
-- **Split item 14 rather than adopting it whole** (bounded half → Step 8; full contract → post-MVP
-  thread), because Step 8 is "fix demonstrated blockers only" and ends "stop; do not keep designing
-  it". Operator told they can override and widen it.
-- **Ticked the Step 7 retirement-decision thread**, which was done at `960dcae` and left unchecked.
-- Routine: three scoped commits by explicit pathspec across three repos; the workspace root has eight
-  modified and many untracked files from other sessions, none of which were swept in.
-
-### Risky actions
-
-**Shared-surface change, reviewed:** `logs/scripts/check-decision-refs.sh` is the single copy every
-repo's wrap invokes, and it was modified. Covered by 65 assertions, verified not to fire on
-conformant repos (`ai-resources` and workspace root both 0 findings, exit 0), and independently
-re-run by Codex before closure. **Near-miss:** a fabricated commit hash (`1f8a0e1`) was written into
-the unit's state file before that commit existed — caught before committing and replaced with a
-reference to HEAD; now recorded as FP-6. No destructive git operations, no push, no external write.
-
-### Findings Declined
-
-- **The append-order guard is unwired in `axcion-systems-builder`** (`.git/hooks/` holds only samples,
-  `core.hooksPath` unset) — declined as already covered by the queued item "Hook BODIES are versioned;
-  hook WIRING is not" (`promote:379fec7dc59a`). The *new* half (the guard's KNOWN LIMIT) was queued
-  separately rather than folded in.
-- **Two self-caught recall-instead-of-check errors** (a paragraph count stated as 13 when it was 12;
-  the fabricated commit hash) — declined as duplicates of the queued item "I state repo facts from
-  recall instead of checking them" (`promote:f034f079ad5b`). Both were caught and corrected in-session;
-  the hash one is separately queued as FP-6 because its hazard is in the loop's ordering, not in recall.
-
-### Next Steps
-
-**Unit 3, designed as the mid-task session-handoff test.** Three pilot conditions have never been
-exercised — 3 (state recovery), 5 (Direct Work bypass), 7 (clean fresh-session continuation) — because
-both units so far ran start-to-finish in one session and both were admitted to the loop. Unit 3 must
-carry them or they get recorded as untested. Run it as: Codex opens → Claude checks premises and gets
-partway → session deliberately stops → a fresh session finishes from the state file and Git alone.
-Starting it fresh next session makes the handoff more genuine than forcing it tonight. Recommended
-candidate: the `check-foreign-staging.sh` footprint-tokenizer defect.
-
-Then Step 8, which is now heavier than it looks: the v1 retirement execution obligations (§ 4 of the
-retirement record) **plus** the newly named portable-installation blocker.
-
-### Open Questions
-
-- **The usefulness judgment, still owed by the operator.** Mission acceptance assertion *"At least two
-  real CRM / Email OS units have completed through the loop **and the operator judged the outcomes
-  useful**"* has its count met after unit 2 but remains deliberately unticked — only the operator can
-  supply the judgment. Asked twice this session, not yet answered.
-- **The fate of `axcion-design-studio`'s stray command copy** — named in the Step 8 scope, not yet
-  actioned.
-
 ## 2026-08-01 — Session S12-3bc
 
 **Mandate:** Run pilot unit 3 of the Work Loop v2 MVP (Step 7) as a deliberate mid-task session-handoff test — Codex opens the unit, Claude checks its premises and implements partway, then this session stops so a fresh session finishes from the state file and Git alone — done when: unit 3's state file exists under `logs/work-loop/` carrying Codex's opening brief, Claude's premise-check record and a partial implementation; that state file is committed and this session stops mid-unit, leaving a fresh session able to finish from it and Git alone; and `plans/work-loop-v2-mvp/step-7-pilot-log.md` § Unit 3 records the unit as open with its status against conditions 3, 5 and 7.
@@ -563,3 +466,55 @@ and did not surface it until the operator halted the work for the same reason.
 - Mission: work-loop-v2-mvp
 
 **Work:** Work Loop v2 Context Engineering — Phase 0 only: verify spec matches a committed version, record operator approval bound to that commit, commit, report hash
+
+### Summary
+Completed Phase 0 of Work Loop v2 Context Engineering: verified the working-tree specification matched
+commit `148689d`, recorded the operator's approval as the governing specification bound to that commit,
+reconciled the stale draft/status wording, and committed (`a718a17`). After a handoff resume, Codex
+opened the loop's next task-state file with Unit 1 (S1) briefed — build the CE-9 fresh-session-recovery
+measurement instrument. Ran S1 end to end: verified all brief premises against the live repository,
+built a fictional-project scenario (Harbourview) with four seeded fixtures whose blind-control property
+is demonstrated by two greps, one of which genuinely failed once (a line-wrapped seed) before it was
+fixed and passed. Committed (`26b6bfe`). Codex assessed and returned one bounded correction with two
+frozen findings — an authority-scoping ambiguity in two fixtures, and a scope-drift check that could not
+detect committed change. Both reproduced by inspection, both corrected; the correction's own first
+evidence attempt was itself invalid (an unquoted zsh variable silently emptied a pathspec) and was caught
+by its own fail-capable twin. Committed (`e32210c`). Landed Codex's closure record accepting S1 and
+handing the turn to the operator to authorise S2 (`2405675`).
+
+### Decisions Made
+Phase 0 and S1 both executed against fully specified mandates/briefs (the session plan for Phase 0; the
+Work Loop v2 brief for S1 and its correction) — the judgment exercised was verification (materiality of
+wording changes, reproduction of frozen findings by inspection) rather than open scoping choice, so
+nothing here rose to a decisions.md entry. Routine decisions made in executing those mandates: reconciled
+only the wording the Phase 0 approval made false, leaving the implementation plan's own stale header
+untouched (out of scope for S6-6d7); did not action either of the two informational differences found in
+S1 premise-checking (plan header staleness, F-10's stale line count) — recorded as deferrals in the state
+file instead; in the correction, left the two operator-source-note fixtures unchanged because finding 1
+named only the two role-playing fixtures.
+
+### Risky actions
+None.
+
+### Findings Declined
+None — nothing surfaced this session met the bar for a findings-disposition entry; the deferrals above
+are already recorded as such in the live task-state file (`logs/work-loop/context-engineering-implementation.md`),
+which is where the Work Loop v2 protocol keeps them, not a duplicate log entry.
+
+Findings: 0 — direct route, no review produced findings.
+
+### Next Steps
+- **Operator decision pending:** authorise Work Loop v2 Session S2 (the carriage probe trial) or stop.
+  S2 needs the operator driving two fresh Codex threads — it cannot run from the plan alone. If
+  authorised, the decision goes back to Codex so it writes the S2 brief.
+- Recommended before S2: clear the implementation plan's stale header (still asserts O-1 outstanding and
+  S1 blocked, which `a718a17` already answered) — a small, precedented edit, same shape as Phase 0's spec
+  header fix.
+- Two smaller deferrals carried in the state file: F-10's stale line count (913 vs. live 928), and the
+  corrected range-based scope-check command not yet duplicated into the scenario file for reuse by later
+  sessions.
+- Still undispatched, unchanged from prior sessions: the Work Loop v2 mission's Step 8 v1-retirement
+  review brief.
+
+### Open Questions
+None.
