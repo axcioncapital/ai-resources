@@ -1259,3 +1259,13 @@ None.
 - Required outputs: plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md
 
 **Work:** Commit the once-revised Context Engineering spec (post-MVP Work Loop v0.2), then stop for Codex closure review
+
+## 2026-08-02 — Session S2-384
+**Mandate:** Revise the Context Engineering spec a second time, in place, to integrate the operator's settled decision granting Codex direct durable-context writing authority (superseding the consume-only boundary) — done when: `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md` is committed with the expanded authority, the minimum durable source model, and the persistence/transport split integrated, behaviour count still 17, and the session stops for Codex closure review.
+- Out of scope: implementing the capability; editing the Work Loop skill, executable core, or project-planning resources; creating any actual project-context file; writing an implementation plan; creating a second specification; pushing.
+- Files in scope: logs/session-notes.md, plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md
+- Stop if: the staging guard reads a foreign footprint — surface it rather than overriding. `logs/friction-log.md` is modified by session S1-92b and is NOT this session's to stage.
+- Allowed inputs: plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md, plans/work-loop-v2-mvp/step-7-pilot-log.md, plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md
+- Required outputs: plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md
+
+**Work:** Work Loop v2 Context Engineering — continue the specification session; triage an incoming Codex review answer.
