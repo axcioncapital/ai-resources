@@ -1,6 +1,6 @@
 ---
 task: context-engineering-implementation
-turn: codex
+turn: operator
 ---
 
 ## Objective and approved scope
@@ -15,110 +15,74 @@ Governing specification: `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.
 against `cc635d4`.
 
 ## Current lane and unit
-Standard. Unit 2 — S2, the isolated inline-carriage probe trial. **Both stages are complete.** Claude
-authored and isolated the candidate; the operator ran the two fresh Codex threads; Claude has applied the
-probe check as S2's observer. The unit is with Codex for assessment.
+Standard. Unit 2 — S2, the isolated inline-carriage probe trial. One bounded correction is open, frozen to
+findings 1–2. **Correction setup is complete**; the two isolated re-runs have not happened. Turn is the
+operator's.
 
 Named reason for the loop: the implementation spans multiple sessions, its scope must remain bounded across
 S1–S12, and each result needs assessment by someone other than its builder before progression.
 
 ## Latest material result
 
-Inspected (2026-08-02):
-- Claim (1) state-file identity and turn: HOLDS — read `logs/work-loop/context-engineering-implementation.md`
-  frontmatter; `task:` is `context-engineering-implementation`, matching the resolved id; `turn:` was
-  `claude`. `## Next action` did not open with core § 3's hand-off token, so this was a new unit, not the
-  correction round.
-- Claim (1) S1 accepted, scenario plus four fixtures exist: HOLDS — `trials/ce-9-recovery-scenario.md`
-  present (11457 bytes); `find trials/fixtures/ce-9/ -type f` returns exactly four —
-  `operator-request.md`, `operator-source-note.md`, `project-plan.md`, `task-state.md`. Acceptance is
-  recorded in commit `2405675` ("S1 closed — Codex closure check passed").
-- Claim (2) `trials/candidate/` absent at S2 open: HOLDS — `ls` on the exact path
-  `plans/work-loop-v2-v0.2/context-engineering/trials/candidate/` returned
-  `No such file or directory`, exit 1. No unknown candidate existed to conflict with this unit.
-- Claim (3) live Codex skill is 116 lines and carries no CE behaviour: HOLDS — `wc -l`
-  on `.agents/skills/work-loop-v2/SKILL.md` returns `116`; searched that file for
-  `(Context Engineering|context-engineering|\bCE-[0-9]+\b)` case-sensitively, no match (exit 1). Pre-S2
-  Git baseline recorded before any edit: `2dd9a99534eaaf01879b767ac237ffe70d71e6a6`.
-- Claim (4) plan §4.4 and S2 premises compatible with repository reality: HOLDS — re-read plan §4.4
-  (`:186-229`) and S2 (`:515-597`) in full. The one-file invariant, inline-only construction, behavioural
-  emptiness and the prohibition on live installation are all satisfiable as written; none conflicts with
-  the repository as inspected.
+Reproduced (2026-08-02) — both frozen findings, by inspection, before any correction:
+- Finding (1) the trial escaped into the live Work Loop directory: REPRODUCES — `logs/work-loop/harbourview-arrival-time-correction.md`
+  was present with `task: harbourview-arrival-time-correction` and `turn: claude`;
+  `git ls-files --error-unmatch` reported it untracked. Enumerating `^turn:` across `logs/work-loop/*.md`
+  returned it as one of three `turn: claude` files, so the live command could resolve a fictional task.
+- Finding (2) the negative control is not independently inspectable: REPRODUCES — `git log` for that path
+  is empty, so no version was ever committed; `stat` shows birth 20:05:07 and modification 20:07:33, the
+  two runs writing the same path; a repository-wide `find` for `*harbourview*` returns one artifact. The
+  control's state file is therefore unrecoverable from Git.
 
-**A grep-method correction made during inspection, recorded because it invalidated a first attempt.**
-`grep` in this shell is a function, not the binary. A first case-insensitive absence check with
-`-i` on `CE-[0-9]+` returned a false positive — it matched the substring `ce-1` inside
-`work-loop-v2-slice-1.test.sh` at `SKILL.md:77`. The absence checks above are therefore case-sensitive,
-word-bounded, and run through `command grep`. Each is paired with a positive control proving the same
-pattern form can match a string known present in the same file; without that pairing an absence result is
-indistinguishable from a grep that could not read the file.
-
-Result: **Both S2 runs are complete and the inline carriage delivered.** The negative control produced no
-`Carriage check`; the candidate run produced one naming six repository files in the order it opened them,
-led by the candidate itself. The probe was acted on rather than echoed, so an instruction written inline in
-one explicitly named file reaches a fresh Codex thread and changes what it produces. Scoped as plan §7, S2
-requires: this is evidence about **carriage only**, and it says nothing about installed-path discovery,
-which is S8b's pre/post pair.
-
-**Two S2 findings that qualify the result. Neither is a Codex error and both are the observer's to raise.**
-
-1. **The trial wrote into the live Work Loop directory, and the construction made that unavoidable.** Both
-   runs created `logs/work-loop/harbourview-arrival-time-correction.md`, carrying `turn: claude` — a
-   fictional task now resolvable by the live command. Plan §4.4 rule 2 forbids exactly this and names
-   `logs/work-loop/` explicitly; the `task-state.md` fixture states it sits outside that directory on
-   purpose. The cause is structural: the candidate is a faithful copy of the live skill, whose line 33
-   fixes the state-file folder as `logs/work-loop/` with "no fallback path". **Any** trial run driven by
-   this candidate must therefore write there. Neither the plan nor this brief anticipated it. It is a
-   defect in S2's construction, and Slices A–C at S3–S7 inherit it unchanged unless it is fixed.
-2. **The negative control's state file is unrecoverable, so half its evidence rests on operator
-   attestation.** Both runs wrote to the same path: created 20:05:07, modified 20:07:33, never committed.
-   The candidate run overwrote the control's file, and Git holds no prior version. Recorded as an accepted
-   limitation below rather than presented as repository-verified.
+Result: **Correction setup is complete and both findings are addressed structurally, but neither is yet
+*resolved* — resolution requires the two isolated re-runs, which have not been performed.** The escaped
+artifact is preserved outside the repository, the live directory is clear, and two byte-identical isolated
+roots exist at one committed baseline with the probe's answer key removed from both.
 
 Evidence:
-- **Negative control — `Carriage check` absent.** The operator returned the control's final response
-  verbatim; it contains no `Carriage check` section, and the operator attests the control's state file
-  ended directly at `## Next action`. *Limitation, stated rather than smoothed over:* the control's state
-  file itself is **not independently re-inspectable** — see finding 2. The response half is verbatim
-  primary material; the state-file half is attestation.
-- **Candidate run — `Carriage check` present, and behaviour-shaped.** Present at
-  `logs/work-loop/harbourview-arrival-time-correction.md:70-79`, listing six files in open order.
-  **All six verified to exist** by a per-path `[ -f ]` test. *Fail-capable:* the identical test against
-  `fixtures/ce-9/no-such-file.md` reports `MISSING`, proving it can report absence rather than passing
-  vacuously. The three scenario sources named are exactly S1's seeded set.
-- **The two runs differed only by the candidate instruction.** Verified mechanically before the runs:
-  `diff` of the two extracted prompts returns `7a8,11` — a pure four-line addition, no deletion and no
-  modification. Neither prompt contained the string `Carriage check` (0 hits each), so the expected output
-  was never revealed to either thread.
-- **Nothing was installed.** `git diff --stat 2dd9a99 -- .agents/skills/work-loop-v2/SKILL.md` empty across
-  the whole trial, alongside the executable core, the Claude command, the specification, the implementation
-  plan and the S1 artifacts. *Fail-capable:* the same form against `logs/friction-log.md` prints
-  `1 file changed`.
-- **The candidate folder still holds exactly one file.** `find trials/candidate/ -type f` returns one path,
-  `SKILL.md`. The probe is still present and has **not** been stripped — the brief forbade stripping before
-  the runs, and stripping after them was not briefed.
+- **The escaped artifact is preserved, not deleted, and the live path is clear.** Re-verified before moving:
+  `task:` matched and `git ls-files --error-unmatch` confirmed untracked; the destination was confirmed
+  non-existent first, so nothing was overwritten. Moved to
+  `{scratchpad}/s2-correction/evidence/harbourview-arrival-time-correction.escaped-run1.20260802T202838.md`,
+  4851 bytes — byte count unchanged — retaining its `Carriage check` section as run-1 diagnostic evidence.
+  Re-enumerating `^turn:` across `logs/work-loop/*.md` now returns only this task and the pre-existing
+  acceptance fixture `fixture-slice2-foreign.md`; the fictional task is gone from the live directory.
+- **Two isolated roots exist at one committed baseline.** `git worktree add --detach` created a control
+  root and a candidate root, both at `edd85e1d6ccd1e955a3a125ca2aca52a0fa9c1cc`, confirmed by
+  `git -C <root> rev-parse HEAD` on each. Both sit outside the live repository. The candidate is committed
+  and clean at that baseline (`git diff --stat HEAD` on it is empty; it last changed in `37a29c1`).
+- **The two roots are byte-identical.** `diff -rq control candidate -x .git` returns no output, so they
+  differ only in which prompt is supplied — the symmetry finding 2 requires.
+- **The answer key was removed from both roots, identically.** *This was necessary and is a construction
+  decision, stated rather than taken silently.* A worktree carries the whole committed tree, and
+  `git grep -l -F 'Carriage check'` against the baseline returned three files: the candidate itself, **this
+  task's own state file**, and **plan §7 S2**, the latter two stating the probe and its expected outcome. A
+  re-run against an unscrubbed root would have handed both threads the answer, making finding 2's re-run
+  invalid on arrival. Both files were therefore deleted from both roots. Post-scrub,
+  `grep -rl -F 'Carriage check'` in each root returns exactly one path — `trials/candidate/SKILL.md`, the
+  probe itself. No trial-only output override was added to the candidate and the isolation rule was not
+  relaxed; the candidate is untouched.
+- **Required material survives in both roots**, verified per-path with `[ -f ]`: the candidate, the
+  executable core, and all three ce-9 fixture sources.
 
-Superseded Stage 1 evidence (candidate authored, one file, probe inline, no CE identifier, protected
-surfaces unchanged) is unchanged and is carried by commit `37a29c1`.
+**Residual weakness, recorded rather than smoothed over.** `trials/candidate/SKILL.md` remains present in the
+*control* root, because the frozen finding requires the two roots to differ only in whether the candidate
+instruction is supplied. The control is therefore blind **by instruction**, not **by construction** — a
+control thread that browsed the tree could find the probe. Run 1's control had the same exposure and came
+back clean. Removing it from the control root alone would break the symmetry the finding mandates, so it is
+reported for Codex rather than fixed here.
 
-**Construction decision taken during Stage 1, stated rather than resolved silently.** Plan §7 `:551`
-describes the candidate as "a fixture, built the way S1 builds its scenario", and plan §4.4's fixture rule
-requires every fixture to open with `FIXTURE — … Carries no authority.` The candidate was built **without**
-that marker, for three reasons: (a) a line telling the trial thread the file carries no authority confounds
-the probe, which measures whether the thread *follows* the file; (b) at S8b the candidate's content lands in
-the live skill, so a marker would be a second thing needing stripping and only the probe is scheduled for
-removal; (c) §4.4's fixture box is scoped to seeded project artifacts — plans and current-state files that
-could be mistaken for authority — whereas the candidate is a working revision of a real skill held outside
-the live path. If Codex judges the marker required, this is a one-line change and the trial has not yet run.
+**The stop condition in finding 1 may be live, and the operator must resolve it before running.** Finding 1
+says to stop if fresh Codex tasks cannot be constrained to the assigned roots. Evidence in this repository
+points both ways and cannot settle it: `git worktree list` shows Codex maintains its own worktrees under
+`~/.codex/worktrees/`, which would place a task outside the assigned root — yet run 1 wrote directly into
+the live checkout, so Codex is not always confined to one. This is an environment fact Claude cannot
+determine by inspection. The operator verifies it as step 1 below; if a task cannot be held to its root, the
+runs do not proceed.
 
-Deferrals carried to task closure — one new, three existing:
-- **New:** plan §7 `:551` calls the candidate "a fixture", which reads as invoking §4.4's marker rule and
-  conflicts with the behavioural emptiness §4.4 itself requires. A wording correction to the plan, not
-  actioned here — it is outside this unit's scope.
-- The implementation plan header still describes O-1 as outstanding.
-- F-10's specification line count is stale.
-- S1's corrected range-based scope-check command is not duplicated into its scenario file.
-
+Carried deferrals, unchanged and explicitly not implemented in this round: the candidate-marker wording at
+plan §7 `:551`; the implementation plan's stale header; F-10's stale specification line count; and S1's
+corrected range-based scope-check command not being duplicated into its scenario file.
 ## Brief
 Why: S2 must separate carriage from Context Engineering behaviour. It asks only whether an instruction
 placed inline in one explicitly named candidate file reaches a fresh Codex thread and changes the brief.
@@ -183,35 +147,77 @@ installation, or if a premise is false. Do not try alternative packaging; that w
 
 ## Next action
 
-Codex: assess S2 against plan §7's exit condition — the negative control was clean, the candidate delivered
-the probe. Four things need your decision, and none is Claude's to take:
+Operator: the correction's re-runs are yours. Do them in this order — **step 1 is a gate, not a formality.**
 
-1. **Does S2 exit on this evidence?** The carriage question is answered positively. The qualification is
-   finding 2: the control's state file is unrecoverable and its absence of `Carriage check` rests partly on
-   operator attestation rather than on a re-inspectable artifact. Accept as a written limitation, or require
-   a re-run of the control with the two runs writing to distinct paths.
-2. **Finding 1 — the live-directory contamination — needs a ruling before S3.** The candidate cannot direct
-   state files anywhere but `logs/work-loop/` without diverging from the live skill it is a revision of, and
-   diverging is itself a change to the object under test. Slices A–C inherit the problem unchanged. This is
-   a construction decision about the trial, not a CE behaviour question.
-3. **The stray artifact `logs/work-loop/harbourview-arrival-time-correction.md` is untracked and still in
-   place.** Claude's recommendation is to move it under `trials/` — it is the candidate run's primary
-   evidence and must not be deleted, but it should not sit in the live directory carrying `turn: claude`.
-   Not moved: the operator was asked and has not yet ruled, and Claude does not delete or relocate outside
-   its session scope on its own.
-4. **The probe is still in the candidate, and the trial record does not exist.** Both were correctly out of
-   Stage 1's scope. Brief whichever comes next rather than assuming Claude should have done either.
+**Step 1 — confirm a fresh Codex task can be held to a given root.** Finding 1's stop condition turns on
+this. Open a fresh Codex task, point it at the control root below, and ask it to report its working
+directory and to list the files directly inside `plans/work-loop-v2-v0.2/context-engineering/trials/`.
+If it answers from the control root, proceed. **If it works anywhere else — its own worktree, the live
+checkout — stop and tell Claude.** Do not adapt the prompts to make it fit; the frozen finding forbids
+relaxing the isolation rule, and that call is Codex's, not yours or Claude's.
 
-Not done, and deliberately so: Claude did not implement the Harbourview unit. Its premise 3 — that a live
-Harbourview implementation and authoritative booking data exist — is false; `find` returns no Harbourview
-artifact in this repository other than the brief itself. Executing it would have been trial material
-escaping into real work, which is what plan §4.4's placement rule exists to prevent. Noted separately
-because the brief itself is sound: it recovered SD-3, ranked the defect above the email template, and
-carried the 2026-06-14 boundary. That quality is S5's measurement, not S2's, and is recorded here only so
-the observation is not lost.
+The two roots:
 
-## Accepted limitations
-- The negative control's state file was overwritten by the candidate run before either was committed, and
-  Git holds no prior version. Its `Carriage check` absence is established by the operator's verbatim
-  response plus attestation, not by a re-inspectable repository artifact. The fix for later slices is to
-  give each run a distinct output path.
+```
+control root:   /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/3fb9ea75-bce7-47fa-adc0-cb540c3f5aae/scratchpad/s2-correction/control
+candidate root: /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/3fb9ea75-bce7-47fa-adc0-cb540c3f5aae/scratchpad/s2-correction/candidate
+```
+
+**Step 2 — run the two prompts in two fresh Codex tasks**, one per root, neither carrying any prior-thread
+summary. The two prompts are identical except for the root path and, in the second, the candidate
+instruction. Neither names the expected output.
+
+**Prompt 1 — negative control.** Paste verbatim into a fresh Codex task:
+
+```
+Work exclusively in this repository root, and write nothing outside it:
+/private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/3fb9ea75-bce7-47fa-adc0-cb540c3f5aae/scratchpad/s2-correction/control
+
+Can we pick Harbourview back up? I've got an hour this afternoon.
+What's the next unit — go ahead and brief it.
+
+Sources for this task:
+- plans/work-loop-v2-v0.2/context-engineering/trials/fixtures/ce-9/project-plan.md
+- plans/work-loop-v2-v0.2/context-engineering/trials/fixtures/ce-9/task-state.md
+- plans/work-loop-v2-v0.2/context-engineering/trials/fixtures/ce-9/operator-source-note.md
+```
+
+**Prompt 2 — candidate run.** Paste verbatim into a second fresh Codex task:
+
+```
+Work exclusively in this repository root, and write nothing outside it:
+/private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/3fb9ea75-bce7-47fa-adc0-cb540c3f5aae/scratchpad/s2-correction/candidate
+
+Can we pick Harbourview back up? I've got an hour this afternoon.
+What's the next unit — go ahead and brief it.
+
+Sources for this task:
+- plans/work-loop-v2-v0.2/context-engineering/trials/fixtures/ce-9/project-plan.md
+- plans/work-loop-v2-v0.2/context-engineering/trials/fixtures/ce-9/task-state.md
+- plans/work-loop-v2-v0.2/context-engineering/trials/fixtures/ce-9/operator-source-note.md
+
+For this task, read and follow
+plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md as the Work Loop
+instruction, instead of the installed work-loop-v2 skill.
+```
+
+**Step 3 — leave every produced state file exactly where it is.** Do not move, tidy, rename or open-and-save
+them. Claude inspects both files in place; that is what makes the control independently inspectable this
+time and is the whole point of finding 2. If the same filename appears in *both* roots that is correct and
+expected — they are separate directories, so neither can overwrite the other.
+
+**What to bring back:** both Codex responses verbatim, unsummarised, and for each run whether the task
+opened any file it did not mention. Do not judge whether either run succeeded; the expected output is
+deliberately not stated here so your report cannot be shaped by it.
+
+**One check worth running yourself afterwards**, from the live repository root — it must print nothing:
+
+```
+ls logs/work-loop/harbourview-arrival-time-correction.md 2>/dev/null
+```
+
+Anything printed means a run escaped into the live checkout again, which invalidates it under finding 1.
+
+Then: return to Claude with both outputs and run `/work-loop-v2`. Claude observes the two preserved state
+files, and only if both findings are resolved does it proceed to the closure work Codex staged — the trial
+record, stripping the probe, the protected-file confirmations, and removing the disposable roots.
