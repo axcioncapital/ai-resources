@@ -433,6 +433,7 @@ fixture-slice2-menu.md fixture-slice3-close.md fixture-slice3-deescalate.md \
 fixture-slice3-deferral.md fixture-slice3-limits.md fixture-step6-admission.md \
 fixture-target-2.md fixture-target.md \
 context-engineering-implementation.md context-engineering-implementation-plan.md \
+context-engineering-s7-regression.md \
 foreign-staging-target-repo.md"
 
 unexpected_worklog_files() {

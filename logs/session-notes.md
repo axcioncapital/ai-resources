@@ -600,3 +600,10 @@ scheduled.
 ### Open Questions
 O-3 — which reading of "every relevant Work Loop entrypoint" governs adoption — is still unsettled and is an
 operator decision, not one this loop can resolve from evidence alone.
+
+## 2026-08-03 — Session S3-018
+
+**Work:** Work Loop v2 — build the four missing grouped-regression cases for the Context Engineering S7 instrument
+- Files in scope: logs/work-loop/context-engineering-s7-regression.md, logs/scripts/work-loop-v2-slice-1.test.sh, logs/session-notes.md, logs/friction-log.md
+- Required outputs: plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-1/, plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-3/, plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-4/, plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-5/
+- Mission: work-loop-v2-mvp

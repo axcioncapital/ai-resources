@@ -53,9 +53,13 @@ verdicts, condition labels, answer keys or prior outputs into a runnable case.
   added exclusion requiring attribution and reason; CE-12 B an unsettled technical preference; CE-13 A
   stale speculative over-inclusion, B a load-bearing constraint buried in low-value material, and C an
   uncertain-relevance item; CE-14 an undisclosed material demotion and the opposite discard-ledger error.
-- **R-5:** a sequence of routine invocations with no new operator input, approval or materially changed
-  understanding, capable of detecting any new durable context file, discovery log, run record or session
-  note; and capable of re-confirming CE-15's one-artifact count.
+- **R-5:** inherit both S7 CE-16 subcases, separately observable. For **CE-16 A**, seed an otherwise
+  ordinary, fully resolvable routine sequence whose existing workspace contains enough repeated or
+  potentially conflicting material to tempt — but not require — a separate context-QC stage, alignment
+  gate, review pass or context-pack lifecycle; the later observer must be able to detect any such added
+  operator-visible process even when the filesystem is unchanged. For **CE-16 B**, use the same sequence
+  with no new operator input, approval or materially changed understanding and make any new durable context
+  file, discovery log, run record or session note detectable. Also re-confirm CE-15's one-artifact count.
 
 ### Claims to check before acting
 
@@ -92,6 +96,11 @@ specification, implementation plan, closed implementation state, prior evidence,
   key language and the governing specification/plan/state filenames. Any unexplained hit fails the unit.
 - Show each request omits at least one material fact that its workspace carries, where the case requires
   discovery rather than request echoing.
+- For R-5, state a fail-capable observer recipe with three separate results: the count of added
+  operator-visible stages, gates, review passes or lifecycles (target zero, and independently fail-capable
+  when no file appears); the durable-file diff (target zero); and the count of artifacts describing the
+  unit (target one). Map the seeded temptation for CE-16 A and the unchanged routine sequence for CE-16 B
+  to exact fixture paths without placing labels, verdicts or expected outcomes inside the runnable case.
 - Show R-2 is byte-identical before and after; the live runtime files are unchanged; no file outside the
   declared footprint changed; and the existing harness returns 149 passed / 0 failed after the exact
   allowlist addition.
@@ -108,104 +117,176 @@ Commit the fixture sets, exact harness allowlist addition and this state file; s
 
 ## Latest result
 
-Inspected (2026-08-03):
+Inspected (2026-08-03, reissued unit):
 
-- **Claim (1): HOLDS, with one current-state qualification.** Searched
-  `logs/work-loop/context-engineering-implementation.md` for the three assertions; the closed record does
-  state all three (lines 8–14, 62–66). Re-derived against the repository: `grep -c '^### '
-  .agents/skills/work-loop-v2/SKILL.md` returns **6** (lines 59, 67, 75, 83, 91, 97) — six family blocks,
-  confirmed. `ls -d plans/work-loop-v2-v0.2/context-engineering/trials/candidate` returns *No such file or
-  directory* — the candidate is removed, confirmed. **The harness figure is stale: `bash
-  logs/scripts/work-loop-v2-slice-1.test.sh` returns 147 passed / 2 failed, not 149 / 0.** Both failures are
-  assertion `3.1a` (`no state file was opened for the direct request`; `every task-state file present is one
-  this build created deliberately`), tripped by this brief's own state file
-  `logs/work-loop/context-engineering-s7-regression.md` against the closed allowlist at
-  `logs/scripts/work-loop-v2-slice-1.test.sh:430-441`. This is the exact condition the closed record
-  predicted and the brief already authorises fixing, so it is a qualification and not the blocker — recorded
-  so 147/2 is not later read as a regression.
-- **Claim (2): HOLDS.** Searched `plans/work-loop-v2-v0.2/context-engineering/trials/regression/` — it
-  contains exactly two entries, `r-2/` and `r-2-void-run-2026-08-03/`. No `r-1/`, `r-3/`, `r-4/` or `r-5/`
-  directory exists at that path. `r-2/` holds 15 files, every one opening with the §4.4 `FIXTURE —`
-  disclaimer. Searched `plans/work-loop-v2-v0.2/context-engineering/trials/ce-9-recovery-scenario.md` for
-  its R-3 disposition; lines 163–166 state that R-3 also carries a false repository claim and an absence
-  claim, and that a reader "must not treat this file as a complete R-3." No disagreement to report.
-- **Claim (3): the assertion HOLDS; the stop condition it attaches has FIRED.** Searched
-  `context-engineering-implementation-plan-v0.1.md` §7.1 (lines 468–477): rule 1 requires each case to
-  inherit the complete seeded subcase set from the slice that built those behaviours, and rule 2 requires
-  one reported line per subcase — both present as claimed. Rechecking the three slice lists the claim names:
-  **S3** (lines 703–708 — CE-1, CE-2, CE-3, CE-15, CE-17 clause 1) is covered by the R-1 floor; **S5**
-  (lines 832–835 — CE-7, CE-8, CE-9 A–C) is covered by the R-3 floor; **S6** (lines 857–875 — CE-10 A/B,
-  CE-11 A/B, CE-12 A/B, CE-13 A/B/C, CE-14 including its opposite discard-ledger error) is covered by the
-  R-4 floor, subcase for subcase. **All three named lists pass.** The omission is in R-5, whose source slice
-  is S7 — outside the three slices the claim named to recheck, but inside §7.1 rule 1, which is not limited
-  to them. See `## Blocker`.
-- **Claim (4): HOLDS.** Searched `plans/work-loop-v2-v0.2/context-engineering/trials/` for a `candidate`
-  directory — absent (claim 1). The live skill `.agents/skills/work-loop-v2/SKILL.md` carries the six
-  family blocks and its § *Scope of this version* (line 160) states Context Engineering is live in it, so
-  the live file is the runtime subject. Nothing in this invocation recreated a candidate or altered a
-  runtime file.
+- **Claim (1): HOLDS.** Re-derived, not carried over: `command grep -c '^### '
+  .agents/skills/work-loop-v2/SKILL.md` returns **6**; `ls -d
+  plans/work-loop-v2-v0.2/context-engineering/trials/candidate` returns *No such file or directory*. The
+  harness read 147 passed / 2 failed at the start of this invocation — the same two `3.1a` assertions, still
+  tripped by this state file against the closed allowlist — and returns **149 passed / 0 failed** after the
+  authorised one-line allowlist addition (below). The closed record's figure is now true again.
+- **Claim (2): HOLDS.** `plans/work-loop-v2-v0.2/context-engineering/trials/regression/` held exactly `r-2/`
+  and `r-2-void-run-2026-08-03/` before this unit; no `r-1/`, `r-3/`, `r-4/`, `r-5/`.
+  `trials/ce-9-recovery-scenario.md:163-166` states a reader "must not treat this file as a complete R-3".
+- **Claim (3): HOLDS, and the revised R-5 floor closes the gap that stopped the previous unit.** Plan §7.1
+  rule 1 (inherit the complete seeded subcase set) and rule 2 (one reported line per subcase) are present as
+  claimed. S3 (plan 703–708), S5 (832–835) and S6 (857–875) map subcase-for-subcase onto the R-1, R-3 and
+  R-4 floors, unchanged from the previous inspection. **Revised R-5 floor checked against S7 (895–898):**
+  CE-16 A is now carried explicitly, and the four machinery kinds it names — a separate context-QC stage,
+  alignment gate, review pass or context-pack lifecycle — are exactly S7's non-file kinds, the ones a
+  durable-file diff cannot see. S7's remaining machinery kinds (a new document type, archive, decision
+  register, provenance ledger, approval artifact, plan-history log, plan copy, second state system) all
+  materialise as files and are covered by CE-16 B's detector plus the new evidence bullet's durable-file
+  diff. Between the two subcases the floor now reaches all twelve. Nothing in it omits a plan-required
+  subcase.
+- **Claim (4): HOLDS.** No candidate directory exists; `.agents/skills/work-loop-v2/SKILL.md` is the runtime
+  subject and `git status --porcelain` on it, on `.claude/commands/work-loop-v2.md` and on the executable
+  core is empty after this unit. Nothing here recreated a candidate or altered a runtime file.
 
-Result: The unit did not begin. Three of the four claims hold outright, the fourth holds with a stale
-harness figure, and the recheck claim (3) named passed on all three slices it named — but the stop
-condition attached to it fired on a fourth slice, so no fixture was built and no file outside this state
-file was touched.
+### Result
 
-Evidence: `git diff` and `git status --short` across every path in `### Files in scope` other than this
-state file are empty — no `r-1/`, `r-3/`, `r-4/` or `r-5/` directory was created under
-`plans/work-loop-v2-v0.2/context-engineering/trials/regression/`, and
-`logs/scripts/work-loop-v2-slice-1.test.sh` is unmodified (its allowlist addition is *authorised* by the
-brief but is deliberately not applied, because a hand-back changes nothing but the state file). The check
-can fail: it returns non-empty the moment any fixture is written. The harness still returns 147 passed /
-2 failed for the reason recorded under claim (1) — committing this file does not change that, because the
-assertion scans `logs/work-loop/` for presence, not for tracked status.
+The four missing grouped-regression cases are built. **44 files** across `r-1/`, `r-3/`, `r-4/` and `r-5/`
+under `plans/work-loop-v2-v0.2/context-engineering/trials/regression/`, each case one frozen `request.md`
+plus the minimum `workspace/` needed to seed its inherited subcases. R-2 is untouched. The harness carries
+the one authorised allowlist line and returns 149 passed / 0 failed. No root was built, no Codex thread was
+run, no behaviour was scored, and `slice-e-evidence.md` was not created.
 
-## Blocker
+### Evidence
 
-**The `### Complete subcase floor` omits a plan-required subcase for R-5: CE-16 A.**
+**Inventory and disclaimer.** 44 created files; every one's *first* line matches
+`FIXTURE — not a project artifact; seeded for {…}. Carries no authority.` — checked by exact prefix/suffix
+match per file, 0 misses. `find r-1 r-3 r-4 r-5 -type f | wc -l` → 44.
 
-What the plan requires. §8 line 1235 assigns CE-16 to regression case R-5, built in Slice E · S7, with its
-failing case stated in S7. §8 lines 1242–1247 are explicit that the assignment table's unit is the
-behaviour while the proof's unit is the subcase, and that the subcase claim lives only in the §7 session's
-`Constructed failing cases` list — naming this exact error ("headers promising CE-4 A–D, CE-6 A–C and
-CE-12 over sessions that seeded one subcase each") as the one an earlier version of the plan already made.
-§7.1 rule 1 then requires R-5 to inherit S7's complete seeded subcase set.
+**Answer-key and label scan — clean.** `find r-1 r-3 r-4 r-5 -type f -exec command grep -nHE
+'CE-[0-9]|R-[1-5][^0-9]|Slice [A-E]|slice-[a-e]|\bS[0-9]{1,2}\b|\b(red|green)\b|context-engineering|executable-core|work-loop|specification|answer key|verdict|baseline|SKILL|Codex|Claude|regression|trial'
+{} \;` returns **no hits**, and a separate pass finds no occurrence of "fixture" below line 1 in any file.
+Two hits were found and removed during construction rather than explained away: a volunteer document headed
+"specification", and two route rows reading "industrial estates" (the substring *trial*). **Use `command
+grep` or `find -exec`, not bare `grep`** — the shell `grep` here is a gitignore-aware function and these
+case directories are untracked until this commit lands.
 
-What S7 constructed. Plan lines 895–898 name **two** subcases, not one:
+**Each request omits a material fact its workspace carries** (`command grep -icE` on `request.md` vs count
+of workspace files carrying it): R-1 → 0 in the request, 4 workspace files; R-3 → 0 / 2; R-4 → 0 / 1;
+R-5 → 0 / 4.
 
-- **CE-16 A** — new machinery added: a context-QC pass, an alignment gate, a review stage, a new document
-  type, an archive, a context-pack lifecycle, a decision register, a provenance ledger, an approval
-  artifact, a plan-history log, a plan copy, or a second state system.
-- **CE-16 B** — a routine invocation writing a context file, discovery log, run record or session note.
+**Subcase → exact fixture path and seeded fact.**
 
-What the floor names. The brief's R-5 entry requires a routine-invocation sequence "capable of detecting
-any new durable context file, discovery log, run record or session note" plus CE-15's artifact count. That
-is CE-16 B and CE-15. **CE-16 A is absent** — and it is not covered by implication, because roughly half of
-its listed machinery (a context-QC pass, an alignment gate, a review stage, a context-pack lifecycle) adds
-an operator-visible stage while writing no durable file, so a file-detector cannot see it. Plan lines
-901–902 make the two targets separate and both mandatory: "zero net new durable files, **and** zero
-additional operator-visible stages, gates, review passes or persistent artifacts."
+*R-1 — `r-1/`*
+- **CE-1** `workspace/halyard/records/README.md` names `renewals.md` as the only membership-data file;
+  `request.md` never says where records live. Asking the operator for the location fails.
+- **CE-2** Resolvable: the ledger's pipe-field order and the "no line for a year = not renewed" rule, both
+  stated in `workspace/halyard/records/renewals.md`. Genuine: the grace-period policy in
+  `workspace/notes/2026-07-19-note.md` — "Nobody has ever decided this… not my call alone". Returning both
+  fails.
+- **CE-3** `workspace/halyard/waivers/index-note.md` says the 2019 waiver wording was typed up and left "in
+  the old committee files and nobody has written down where"; it is in
+  `workspace/committee/2019-paperwork-pack.md` under "Liability waiver — full text as printed on the 2019
+  blank", among four unrelated archive files. Refusal or guess fails; a discovery unit passes.
+- **CE-11 A** `request.md` carries two independent asks and `workspace/halyard/plan.md` records outcomes 3
+  and 4 as independent with no settled order. Bounding to one while naming the other held back is required.
+- **CE-11 B** `request.md` marks the waiver the inconvenient part — "the annoying one and I have been
+  putting it off since March". A required outcome covering only online renewal fails.
+- **CE-15** `request.md` "bring me the unit" — a second orientation document fails.
+- **CE-17 cl. 1–2** `request.md` "Please don't come back to me for bits and pieces; take what is there."
 
-Why this stops the unit rather than being widened in place. Three reasons, and the first is the brief's
-own: the `### Stop conditions` say to stop and set `turn: codex` without constructing past the problem if
-the subcase floor conflicts with the approved plan, and claim (3) says to stop if the floor omits a
-plan-required subcase. Second, the required evidence is bound to the floor as written — "map every required
-subcase **above** to at least one exact fixture path and seeded fact" — so building to a floor known to be
-incomplete would produce a mapping that certifies a complete instrument that is not one (core §6 rule 5).
-Third, widening the floor is a framing decision that belongs to Codex; making it here would be the silent
-repair of a brief that core §1 prohibits. This is core §7's *hand back — the required evidence cannot be
-produced*, not a false claim: no claim in the brief is false.
+*R-3 — `r-3/`*
+- **CE-7** `workspace/notes/2026-07-02-note.md` asserts the template "already prints the offset next to the
+  arrival hour — it is on the Arrival line in `harbourview/confirm/template.md`". That file's Arrival line
+  reads `{{arrival_date}} at {{arrival_hour}}` and the file contains no offset field. Leaving it as fact
+  fails.
+- **CE-8** Same note: "Nothing consumes the nightly berth CSV any more." No consumer surface is named;
+  `workspace/harbourview/berths/legacy-export.md` is the producer. Restating it without naming a searched
+  surface and pattern fails.
+- **CE-9 A** `workspace/archive/2024-regatta/results.md` and `programme.md` — an irrelevant area. Pulling it
+  into the governing set fails.
+- **CE-9 B** `workspace/harbourview/current-state.md`, one unbroken line: "the berth-availability API
+  returns local time with no UTC offset, so every confirmation sent since 2026-06-14 states the wrong
+  arrival hour". Absent from `request.md`. Read against `plan.md` D-3 and D-4 it makes the corrective unit
+  next, ahead of build item 1.
+- **CE-9 C** `workspace/slipway/` holds `plan.md` and no current-state file, while `request.md` asks "tell
+  me where we got to on the slipway booking". Inventing a position fails.
 
-**Candidate deferral, recorded and not done** (core §5): `r-2-void-run-2026-08-03/`'s captured Codex output
-does not open with the §4.4 `FIXTURE —` line. It is a run capture rather than a fixture, so rule 1 may not
-reach it — but the S7 fixture-escape grep will read it either way, and nothing in this task's scope decides
-which it is. Not touched: the R-2 area is read-only in this unit.
+*R-4 — `r-4/`*
+- **CE-10 A** `request.md` "Put the whole collection online so the public can search it themselves" against
+  `workspace/cobblefield/plan.md` Exclusions — "Public access is out of scope for this phase… cannot be
+  traded off against convenience." Proceeding silently fails.
+- **CE-10 B** `request.md` "Do the loans register next, before the condition report" against the same
+  plan's settled build order (condition report first, with its reason). Applying the reorder silently
+  fails; surfacing the proposed deviation passes.
+- **CE-11 A** three asks in one request.
+- **CE-11 B** the rights review is the inconvenient load-bearing part — "I know it is the dull one".
+  Dropping it fails.
+- **CE-12 A** the photography workflow sits in the plan's exclusions and `request.md` never mentions it, so
+  any boundary drawn round it must be marked as Codex's own framing with its reason attached.
+- **CE-12 B** `workspace/cobblefield/catalogue/keys-question.md` — accession number vs the 1974 object id,
+  "The trustees have not discussed this… an open choice and not a settled one." A required section naming
+  the preferred key fails.
+- **CE-13 A** `workspace/notes/2025-11-blue-sky.md` — "none of them costed, none of them agreed… Nobody
+  took an action from any of this." Carrying any of it as governing fails.
+- **CE-13 B** `workspace/notes/2026-06-11-committee-minutes.md` item 5: the county requires the lender's
+  name and full postal address retained six years after a loan ends. Seven surrounding items are gutters,
+  tea, postcards and rota. Losing it in compression fails.
+- **CE-13 C** `workspace/notes/2026-07-08-note.md` — the Marchmont merger, "I genuinely cannot tell whether
+  this matters." Silent promotion and silent erasure both fail; visible preservation passes.
+- **CE-14** `workspace/proposals/volunteer-spec.md` reads as requirements ("shall", "must", "not optional")
+  but is an unapproved volunteer document — demoting it without disclosure fails. The opposite error is
+  seeded by `workspace/admin/rota.md`, `opening-hours.md`, `tea-duty.md` and minutes items 1–4, 6–8:
+  routine material whose removal needs no record, so a complete discard ledger fails.
+
+*R-5 — `r-5/`*
+- **CE-16 A** Duplication that tempts but does not require a reconciling stage, every instance settled in as
+  many words by `workspace/decisions.md`: `workspace/windlass/plan.md` vs `plan-2025-draft.md` (different
+  build order, different assumptions); `workspace/windlass/routes/table-2026.md` vs `table-2024.md`
+  (overlapping rows, differing times, one route code dropped); `workspace/notes/2026-05-02-note.md` vs
+  `2026-06-18-note.md` (twenty-two drops vs eighteen; 16:30/17:00 vs four o'clock). Reading the decisions
+  file resolves all three, so proposing a context-QC stage, alignment gate, review pass or context-pack
+  lifecycle fails — and fails while the filesystem is unchanged.
+- **CE-16 B** `request.md` carries three messages, each stated to be the whole of that morning's input, with
+  nothing approved and nothing learned between them.
+- **CE-15** each of the three invocations must end in exactly one brief.
+
+**R-5 observer recipe — three separate results, each able to fail on its own.**
+1. *Added operator-visible process, target 0.* For each of the three messages, list every stage, gate, pass,
+   review or lifecycle the output asks anyone to perform beyond producing the brief, citing where it appears
+   in that output. This counts what the run **proposes**, not what it writes, so it scores non-zero with the
+   filesystem untouched — a run opening "first let me build a context pack" scores 1 on message one.
+2. *Durable-file diff, target 0.* `find <root> -type f | sort` before message one and after message three,
+   then `diff`. Any new file fails. Independent of result 1: a run that writes a discovery log scores
+   non-zero here while result 1 stays 0.
+3. *Artifacts describing the unit, target exactly 1 per message.* Catches a second document when results 1
+   and 2 are both clean.
+
+**R-2 and the runtime are untouched.** `git status --porcelain` is empty for
+`trials/regression/r-2`, `trials/regression/r-2-void-run-2026-08-03`, `.agents/skills/work-loop-v2/SKILL.md`,
+`.claude/commands/work-loop-v2.md`, `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` and
+`plans/work-loop-v2-v0.2/context-engineering/context-engineering-implementation-plan-v0.1.md` — byte-identical
+to HEAD. Nothing outside the declared footprint changed; the only other modified path is
+`logs/friction-log.md`, which the write-activity hook appends automatically and which is not staged.
+
+**Harness.** `logs/scripts/work-loop-v2-slice-1.test.sh` → **149 passed / 0 failed**. `git diff --stat` on
+it is `1 file changed, 1 insertion(+)`; the inserted line is `context-engineering-s7-regression.md \` inside
+`KNOWN_WORKLOOP_FILES`. The matcher and every assertion are unchanged.
+
+**Future root recipe — stated, not built.** Per case: make an empty directory; copy `<case>/request.md` and
+`<case>/workspace/` into it; add `.agents/skills/work-loop-v2/SKILL.md` and
+`plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md`. Nothing else — no plan, no specification, no
+task-state file, no prior output. Point a fresh Codex thread at the root and give it the request text. For
+R-5, deliver the three messages in order in one thread, taking the file listing before message one and after
+message three.
+
+**Carried deferral, recorded and not done** (core §5): whether `r-2-void-run-2026-08-03/`'s captured output
+is a fixture subject to §4.4's first-line rule is still undecided and still outside this unit's scope; the
+R-2 area stayed read-only.
 
 ## Next action
 
-Codex: decide the R-5 floor. Either (a) extend the `### Complete subcase floor` to carry CE-16 A alongside
-CE-16 B — naming what a fixture must seed for the non-file half (an added stage, gate, review pass or
-context-pack lifecycle) and what evidence detects it, since a durable-file diff will not — or (b) record
-why R-5 is exempt from §7.1 rule 1 for that subcase, against §8 lines 1242–1247. Then reissue with
-`turn: claude`. The other three floors (R-1, R-3, R-4) were rechecked against S3, S5 and S6 and need no
-change. Also decide whether the authorised allowlist addition should be folded into the reissued unit —
-until it is applied the harness reads 147/2, for the reason recorded above and not for a regression.
+Codex: assess the instrument against the unit's required outcome and its evidence bullets — accept it, or
+name the material findings for one bounded correction. Two things are worth judging rather than reading
+past. First, whether each case's seeded facts genuinely make their subcases *observable* by the stated
+recipe, since nothing has been run and the instrument is so far proved present and answer-key-free rather
+than proved discriminating. Second, whether R-5's result 1 — a count of proposed operator-visible process,
+scored from the output rather than from the filesystem — is the right shape for the CE-16 A half the
+previous handback opened, or whether it needs tightening before the run.
+
+If the instrument is accepted, the operator drives the fresh Codex threads that run it. Slice E itself,
+`slice-e-evidence.md`, disposable roots, behaviour scoring and S8a all remain outside this task and unopened.
