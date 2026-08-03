@@ -13,48 +13,170 @@ Governing specification: `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.
 by the operator on 2026-08-02 against `e1ce895b3da1387bae7ce50623afc3875cb050ba`.
 
 ## Current lane and unit
-Standard. Phase 2 direct candidate implementation, S5 Family 3. The operator cancelled the additional
-S4 closure run and directed implementation to proceed without another per-slice trial cycle.
+Standard. Phase 2 direct candidate implementation. S6 Families 4 and 5 are implemented and awaiting
+assessment; S5 Family 3 is accepted. Both run at the implementation-verification bar under the operator's
+direction to proceed without per-slice trial cycles.
 
 Named reason for the implementation loop: the work spans multiple sessions, its scope must remain bounded
 across S1–S12, and each result needs assessment by someone other than its builder before progression.
 
 ## Brief
-Continue implementation in the isolated candidate. Do not run the unused S4 closure root. Do not build a
-new root, run Codex, create a slice evidence file, or add another operator handoff.
+Continue implementation in the isolated candidate. Add Families 4 and 5 directly; build no root, run no
+trial, create no slice evidence artifact, and add no operator handoff.
 
-**Required outcome:** add Family 3 to
-`plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md`, preserving the candidate's existing
-structure and Families 1–2. Implement only the governing behaviour from specification §3.5, §5.7 Current
-state, and CE-7–CE-9:
+**Required outcome:** update
+`plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md`, preserving its existing structure
+and Families 1–3. Implement only specification §3.2, §5.6 and CE-10–CE-14:
 
-1. Load-bearing repository assertions leave in the brief as claims to check, naming the file or searched
-   surface and the pattern or expected evidence. They are not presented as facts; a false claim is a valid
-   handoff because Claude's inspection settles it.
-2. Every absence claim names both the searched surface and the pattern used. Nothing beyond that search
-   boundary is asserted.
-3. Discovery starts from the operator objective and supplied material, the approved plan, authoritative
-   current state, and directly named artifacts. Expansion is allowed only for a load-bearing claim, an
-   explicit dependency, an authority conflict, or a cited reference; each expansion is traceable to its
-   reason. Stop once the brief can be written, otherwise return the remaining load-bearing unknown as a
-   discovery unit or genuine escalation. Do not scan unrelated history or adjacent systems.
-4. Fresh-session recovery stays inside the same preparation pass and proportionately recovers the current
-   operator request, governing plan, applicable approved workflows, authoritative current state, settled
-   decisions, unresolved blockers, and next justified unit. Conversation may locate sources but cannot
-   establish authority or current state. If current state is missing, do not invent continuity or create a
-   second state system; derive only what governing sources and verified repository evidence support.
+1. Put the plan-alignment justification inside the brief, not in a separate gate. State how the unit aligns
+   with the approved plan; surface an irreconcilable objective or proposed deviation instead of silently
+   proceeding or applying it.
+2. Keep the operator's full objective visible while bounding one independently useful unit. Name adjacent
+   work held back. A genuine reframing stays attributed as Codex's proposal or becomes an operator decision;
+   it never replaces the objective in the operator's voice.
+3. Mark every Codex-added boundary as Codex's framing decision and attach its reason. Do not turn an
+   unsettled architecture, mechanism, file layout, abstraction, library, command shape or technical
+   sequence into a requirement. Technical detail belongs only when cited to governing authority, labelled
+   as a non-governing Codex proposal, or required as verification/evidence; leave implementation to Claude.
+4. Apply three-way relevance: authoritative and relevant material governs; uncertain-relevance material
+   remains visibly preserved as background, conflict or unknown and does not govern; routine repetition,
+   boilerplate and explanation without execution value are removed without a record.
+5. Disclose only material reclassifications: a proposal that resembled a requirement, a source that lost an
+   authority conflict, a repository claim demoted to unverified, or a material item held outside the unit.
+   Do not create a discard ledger, and do not disclose routine compression.
 
-Keep the wording operational and compact. Add no new artifact, state field, checklist, preparation stage,
-review pass, or Family 4–6 behaviour. Do not alter the live skill, executable core, specification, plan,
-fixtures, prior outputs, or disposable roots.
+Keep the wording operational and compact. Add no new artifact, state field, checklist, stage, gate, review
+pass, or Family 6 instruction. Do not alter the live skill, executable core, specification, plan, fixtures,
+prior outputs, or disposable roots.
 
-**Verification:** report the exact candidate diff and resulting hash; map each of the four requirements
-above to the candidate wording; confirm Families 1–2 remain intact and no Family 4–6 instruction entered.
-This is implementation verification only, not another behavioural trial.
+**Verification:** report the exact candidate diff and resulting hash; map each of the five requirements to
+the candidate wording; confirm Families 1–3 remain intact and no Family 6 instruction entered. This is
+implementation verification only, not a behavioural trial.
 
 Commit the candidate and this state file, set `turn: codex`, and stop. Do not create or run a trial.
 
 ## Latest material result
+
+### S6 Families 4 and 5 implemented in the isolated candidate (2026-08-03)
+
+Inspected (2026-08-03):
+- Claim (1): HOLDS — searched `plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md` for
+  its SHA-256; found `ca1ec62ae9d7171afd44dfd5b8b22bb67220a8d81ed8dd6b397556093f3ab0eb`, the committed S5
+  Family 3 candidate, and `git status --short` on that path returned empty, so the starting point is the
+  committed bytes.
+- Claim (2): HOLDS — searched the candidate for the Family 1–3 headings; found
+  `### Prepare once; write one brief for two audiences` at `:59`,
+  `### Keep authority semantic, content-bound, and explicit` at `:67`, and
+  `### Mark what must be verified, and bound what you go looking at` at `:75`. All three intact before the
+  edit.
+- Claim (3): HOLDS — searched `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md` for the briefed
+  sources; found §3.2 at `:152`, §5.6 at `:415`, Family 4 at `:713`, CE-10 at `:715`, CE-11 at `:729`,
+  CE-12 at `:750`, Family 5 at `:779`, CE-13 at `:781`, CE-14 at `:802`. Each states the behaviour the
+  brief's five requirements summarise; the summaries were checked clause by clause against the source text
+  and are accurate. Requirements 1–3 are Family 4 (CE-10/11/12); requirements 4–5 are Family 5 (CE-13/14).
+- Claim (4): HOLDS — searched
+  `plans/work-loop-v2-v0.2/context-engineering/context-engineering-implementation-plan-v0.1.md` for S6;
+  found the session at `:847` with *Inputs:* "spec §3.2, §5.6, Families 4 and 5" and a *Candidate change:*
+  line reading "the candidate gains Families 4 and 5 — the inline plan-alignment field, unit bounding with
+  named held-back work, attributed Codex boundaries and non-prescription, three-way relevance, and
+  reclassification disclosure." The brief matches the plan of record item for item.
+- Claim (5): HOLDS — searched `.agents/skills/work-loop-v2/SKILL.md` for its SHA-256; found
+  `956c76f37230fb2a6b4d1605afecdcb4edd64a5828803464c29a0c9689720868`, unchanged, and re-hashed after the
+  edit to the same value.
+- **Material finding, surfaced rather than absorbed** — searched the whole candidate for Family 4/5
+  vocabulary (26 patterns: `plan-alignment`, `align`, `justif`, `held back`, `held outside`, `adjacent`,
+  `bounded`, `boundary`, `substitut`, `attribut`, `reframing`, `framing decision`, `technical`,
+  `architecture`, `mechanism`, `library`, `relevance`, `background`, `boilerplate`, `repetition`,
+  `reclassif`, `disclos`, `compression`, `ledger`, `discard`); **Family 4 was not wholly absent.** Line
+  `:65` already carried *"why this unit, why now and how it aligns with the approved plan"*. The brief never
+  claimed absence, so this is not a false premise — but it is load-bearing the same way `:52` was at S5.
+  `:65` requires the orientation paragraph to *state* alignment; it does not carry CE-10's other two
+  observables — no separate alignment stage or gate, and surfacing an irreconcilable objective or a proposed
+  deviation rather than proceeding silently. That gap is what the new wording closes. Because `:65` sits
+  inside Family 1's block and the brief requires Families 1–3 be preserved, the gap was closed in the new
+  Family 4 block, not by editing `:65`. No wording is duplicated between them.
+
+Result: Families 4 and 5 added to the isolated candidate as two new `###` blocks —
+`### Justify the unit against the plan, bound it, and keep your own framing attributed` (`:83`) and
+`### Select on relevance as well as authority, and disclose only what changed materially` (`:91`) — matching
+the one-subsection-per-family pattern Families 1–3 already follow. Resulting candidate SHA-256
+`364107aedd83b9af7fd2386eba1ee8e01a10b2d1e8d776fbd5339d9d36f2578b`. The live skill, executable core,
+specification, plan, fixtures, prior outputs and disposable roots are untouched; no root was built, no trial
+run, no evidence artifact created, and no operator handoff added.
+
+Evidence:
+
+- **Diff shape.** `git diff --numstat` reports **14 added, 0 deleted**, in **one hunk** at `@@ -82,0 +83,14 @@`,
+  immediately after Family 3's closing sentence. **Zero deleted lines** across the whole file, so this is a
+  pure insertion by measurement: every one of the 140 pre-existing lines survives byte-identical, and the
+  file goes 140 → 154 lines. **Fails if** the deleted-line count is non-zero or a second hunk appears.
+- **Requirement-to-wording map**, each of the brief's five requirements to the sentence carrying it:
+
+  | Brief requirement | Candidate wording | Source |
+  |---|---|---|
+  | 1 · Justification inside the brief, not a gate; state plan alignment; surface irreconcilability or deviation instead of proceeding silently | "Carry the unit's plan justification inside the brief as one of its fields, never as a separate stage, gate or review pass standing in front of it… Say how this unit is justified against the approved plan. Where the objective cannot be reconciled with that plan, escalate the irreconcilability instead of proceeding; where the work would depart from the approved canonical plan, surface the proposed deviation explicitly instead of applying it silently." | CE-10 `:715–727`, §3.2 `:152–176` |
+  | 2 · Full objective visible while bounding one useful unit; name held-back work; reframing stays attributed, never in the operator's voice | "Keep the operator's objective as they stated it visible in the brief while bounding one unit that still delivers something observable, and name the adjacent work you are holding outside the unit rather than dropping it unrecorded. Where the objective carries more than one load-bearing part, the required outcome must not quietly cover only the convenient ones. Bounding and reframing are both legitimate and substitution is not; the difference is attribution… never arrives in the operator's voice." | CE-11 `:729–748` |
+  | 3 · Codex boundaries marked with reason; no unsettled mechanism as requirement; technical detail only if cited, attributed, or evidence | "Mark every boundary or exclusion you added on your own judgment as your framing decision and attach its reason, so it is never laundered into an operator requirement. Confine the brief to what it may define — required outcome, unit boundaries, governing constraints, verification questions, required evidence, completion conditions, stop conditions — and leave the mechanism to Claude. Do not turn an architecture, implementation mechanism, file structure, abstraction, library, command shape or technical sequence into a requirement unless governing authority has already settled it and you cite that… Specify what the evidence must prove; do not specify the construction that produces it." | CE-12 `:750–777`, §5.6 `:415–422` |
+  | 4 · Three-way relevance: governs / preserved visibly / removed without record | "Gate material on relevance as well as authority, in three classes rather than two. Material that passes both governs execution. Material whose relevance is uncertain stays visibly preserved as background, conflict or unknown and does not govern. Routine repetition, boilerplate and explanation without execution value is removed, and needs no record. Never silently promote an uncertain-relevance item to governing, and never silently erase one; knowingly dropping load-bearing context is unacceptable, and where the choice is genuinely forced over-inclusion is the worse error…" | CE-13 `:781–800`, all three classes and all three failing cases |
+  | 5 · Disclose only material reclassifications, four kinds; no discard ledger; no routine-compression disclosure | "Disclose material reclassifications, and only those. Four kinds qualify: a proposal that resembled a requirement, a source that lost an authority conflict, a repository claim demoted to unverified, and a material item deliberately held outside the unit. Staying silent about one of those fails. So does the opposite error — do not build a discard ledger or a complete production trace, and do not disclose routine compression." | CE-14 `:802–807` |
+
+  All four disclosure kinds are present and in the spec's order; all three relevance classes are present;
+  CE-12's seven permitted brief elements are present and named exactly. Checked mechanically as 15 literal
+  key phrases across the five requirements: **15 OK / 0 ABSENT**. **Fails if** any requirement maps to no
+  sentence, or a sentence maps to no requirement.
+- **Families 1–3 intact.** 27 literal clauses spanning all three blocks searched by exact string: **27
+  PRESENT / 0 MISSING**, including every Family 2 clause, the CE-4 C correction sentence, and every Family 3
+  clause added at S5. Nothing was reworded, reordered or weakened. Independently corroborated by the
+  zero-deleted-lines measurement above. **Fails if** any count is non-zero.
+- **Family 6 leakage scan over the inserted words only** — searched surface is the 14 added lines, because
+  the claim is about what entered. 17 CE-15/CE-16 patterns (`two audiences`, `second artifact`,
+  `orientation document`, `word count`, `length`, `section order`, `heading order`, `template`,
+  `persistent artifact`, `new artifact`, `additional artifact`, `handoff artifact`, `per-run`,
+  `runtime artifact`, `state system`, `one brief`, `durable`): **zero hits.** Trial-state and fixture terms
+  (`CE-[0-9]`, `Family [0-9]`, `S-[0-9]`, `R-[0-9]`, `baseline green`, `caused green`, `red run`,
+  `green run`, `Slice`): **zero hits.** **Fails if** any pattern hits.
+- **No new artifact, field, checklist, stage, gate or review pass.** The added lines were matched against
+  `^\s*([-*+]|[0-9]+\.|\|)` — list, numbered-step and table markers: **0 hits**, so the insertion is prose
+  under two headings and introduces no checklist or staged structure. Repository footprint: `git status
+  --short` shows the unit touched the candidate and this state file only; no new file exists under
+  `trials/`. **Fails if** the marker count is non-zero or a new path appears.
+- **S3b constraint 2 — no renumbering, no invalidated references.** `grep -nE "§[0-9]|section [0-9]|Family
+  [0-9]|CE-[0-9]"` over the whole candidate returns **0**. Nothing cites by number, so the two added
+  headings cannot invalidate a citation. Checked rather than assumed.
+- **Near-miss terms run down rather than waved through.** Three terms in the added words sit close to other
+  families and each traces to a Family 4/5 source: `background` is CE-13's own middle-class treatment
+  (`:787`), the relevance axis sitting on top of §5.1's authority dispositions at `:69`, not a restatement
+  of them — CE-13 `:782` says explicitly that it "operates on top of §5.1's dispositions"; `ledger` is
+  CE-14 `:806`'s *discard* ledger, a distinct prohibition from §5.1's *authority* ledger already at `:73`,
+  and both are needed; `escalate` overlaps Family 1 and Family 3 wording but here carries CE-10 failing
+  case A's irreconcilable-objective escalation, which neither earlier block states.
+- **One deliberate inclusion, disclosed.** §3.5 point 4's stop list includes *"plan justification"*, which
+  S5 left out of Family 3's `:79` and flagged for Family 4; Codex's S5 assessment confirmed it "is correctly
+  left for Family 4". It is now carried, in the Family 4 block, as *"treat the brief as unfinished until it
+  can state that justification"* — the stop condition stated as a Family 4 obligation rather than by editing
+  the preserved Family 3 sentence at `:79`. **Judgment recorded for Codex to overrule** if it should instead
+  have amended `:79`.
+
+**Two deferrals, recorded and not done** (core § 5):
+
+1. **This state file is still a running log, which core § 4 forbids.** `## Latest material result` now holds
+   eight stacked dated `###` sections and the file is 800+ lines. The prior unit surfaced this and Codex's
+   assessment did not rule on it, so it stays live rather than being quietly dropped. I appended again, and
+   say so plainly: replacing would delete ~730 lines of prior results mid-task, which this brief did not ask
+   for and which Codex may still need. **Codex decides whether to prune, and when.**
+2. **Line `:52`'s absence rule remains weaker than CE-8** — carried unchanged from S5, still unresolved,
+   still worth a decision when Family 1 is next open.
+
+### Codex assessment — S5 accepted; advance directly (2026-08-03)
+
+S5 Family 3 is accepted at the operator-directed implementation-verification bar. Candidate
+`ca1ec62ae9d7171afd44dfd5b8b22bb67220a8d81ed8dd6b397556093f3ab0eb` carries all four briefed Family 3
+requirements as one pure insertion; Families 1–2 remain intact and no later-family instruction entered.
+
+The omitted `plan justification` is correctly left for Family 4: it is CE-10 behaviour and S5 excluded it.
+The weaker earlier absence sentence needs no edit because the Family 3 block supplies the complete surface-
+and-pattern rule for the candidate as a whole. Neither deferral becomes work now. No behavioural-proof
+claim is added, and progression continues without a per-slice trial.
 
 ### S5 Family 3 implemented in the isolated candidate (2026-08-03)
 
@@ -718,17 +840,10 @@ session, which remains a non-blocking gap in that separate repository.
 
 ## Next action
 
-Codex: assess the Family 3 implementation above. Three things need your call, none of which Claude took:
-
-1. **The `plan justification` omission.** §3.5's stop list includes it; I left it out as CE-10 / Family 4
-   behaviour, which this brief excludes. Confirm or overrule.
-2. **The two deferrals** — this state file has become a running log against core § 4, and Family 1's `:52`
-   absence rule is weaker than CE-8. Neither was acted on. Decide whether either becomes work.
-3. **Progression** — whether S5 Family 3 is complete on implementation verification alone, given the
-   operator's direction that no per-slice trial runs.
-
-Claude's completed turn: brief premises checked by inspection (four hold, plus one material finding that
-Family 3 was partly present at `:52`); Family 3 added as one 8-line pure insertion, candidate now
-`ca1ec62ae9d7171afd44dfd5b8b22bb67220a8d81ed8dd6b397556093f3ab0eb`; all four requirements mapped to wording;
-Families 1–2 verified intact at 23/23 clauses; Family 4–6 and fixture leakage scans zero; candidate and state
-file committed. No root built, no trial run, no evidence artifact created, live skill untouched.
+Codex: assess S6 at the implementation-verification bar. The candidate is
+`364107aedd83b9af7fd2386eba1ee8e01a10b2d1e8d776fbd5339d9d36f2578b`, a 14-line pure insertion adding
+Families 4 and 5 as two blocks; Families 1–3 are intact at 27/27 clauses and no Family 6 instruction
+entered. Three items need a verdict: whether the five briefed requirements are carried at the right width;
+whether the §3.5 `plan justification` stop condition was rightly stated inside the new Family 4 block rather
+than by amending Family 3's `:79`; and whether this state file should now be pruned, which the last two
+units both surfaced and no assessment has yet ruled on. Then decide progression to S7 Family 6.
