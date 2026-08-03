@@ -65,10 +65,17 @@ One pass through the loop handles one **unit** — the smallest piece of work wo
 A task usually takes several units.
 
 1. **Orient.** Read the state file and the repository. Do not rebuild the situation from memory or
-   from the chat.
+   from the chat. Proportionately re-establish the governing durable sources — the approved plan,
+   applicable approved workflows, and authoritative current state — and the current open unit from
+   those sources before any plan-dependent work continues. Conversation may point at a source; it
+   never establishes authority or current state.
 2. **Choose the smallest justified unit.** Smallest that still delivers something observable.
 3. **Brief.** Codex writes the brief into the state file: objective, why, claims to check, scope,
-   what is excluded, evidence required, and when to stop.
+   what is excluded, evidence required, and when to stop. It carries the semantic interface the
+   Codex skill defines — the unit's justification against the approved plan, each material source's
+   disposition, the adjacent work held back, Codex's own framing decisions marked as its own, and
+   any material reclassification. That is the brief's content growing, not the state file's: § 4's
+   five-field ceiling is unchanged, and no new field, artifact or stage is created.
 4. **Execute.** Claude checks the brief's claims first (§ 6, rule 1), then implements, then writes
    the result and the evidence into the state file.
 5. **Assess.** Codex reads the result and decides one of three things: close, correct once, or stop.

@@ -13,49 +13,187 @@ Governing specification: `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.
 by the operator on 2026-08-02 against `e1ce895b3da1387bae7ce50623afc3875cb050ba`.
 
 ## Current lane and unit
-Standard. Phase 2 direct candidate implementation. S6 Families 4 and 5 are implemented and awaiting
-assessment; S5 Family 3 is accepted. Both run at the implementation-verification bar under the operator's
-direction to proceed without per-slice trial cycles.
+Standard. Common Work Loop v2 live integration — implemented, awaiting assessment. Families 1–6 now live in
+`.agents/skills/work-loop-v2/SKILL.md`; the development candidate is deleted; the executable core and the
+Claude command consume the engineered brief. Implementation verification only: no behavioural trial was run
+and adoption is not claimed.
 
 Named reason for the implementation loop: the work spans multiple sessions, its scope must remain bounded
 across S1–S12, and each result needs assessment by someone other than its builder before progression.
 
 ## Brief
-Continue implementation in the isolated candidate. Add Families 4 and 5 directly; build no root, run no
-trial, create no slice evidence artifact, and add no operator handoff.
+Land Context Engineering into the common live Work Loop v2 seam. This is implementation, not another
+candidate trial: build no disposable root, invoke no Codex thread, create no slice evidence artifact, and
+add no operator handoff.
 
-**Required outcome:** update
-`plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md`, preserving its existing structure
-and Families 1–3. Implement only specification §3.2, §5.6 and CE-10–CE-14:
+**Required outcome:**
 
-1. Put the plan-alignment justification inside the brief, not in a separate gate. State how the unit aligns
-   with the approved plan; surface an irreconcilable objective or proposed deviation instead of silently
-   proceeding or applying it.
-2. Keep the operator's full objective visible while bounding one independently useful unit. Name adjacent
-   work held back. A genuine reframing stays attributed as Codex's proposal or becomes an operator decision;
-   it never replaces the objective in the operator's voice.
-3. Mark every Codex-added boundary as Codex's framing decision and attach its reason. Do not turn an
-   unsettled architecture, mechanism, file layout, abstraction, library, command shape or technical
-   sequence into a requirement. Technical detail belongs only when cited to governing authority, labelled
-   as a non-governing Codex proposal, or required as verification/evidence; leave implementation to Claude.
-4. Apply three-way relevance: authoritative and relevant material governs; uncertain-relevance material
-   remains visibly preserved as background, conflict or unknown and does not govern; routine repetition,
-   boilerplate and explanation without execution value are removed without a record.
-5. Disclose only material reclassifications: a proposal that resembled a requirement, a source that lost an
-   authority conflict, a repository claim demoted to unverified, or a material item held outside the unit.
-   Do not create a discard ledger, and do not disclose routine compression.
+1. Inspect the cumulative candidate against CE-15 and CE-16. CE-15's one-brief/two-audiences contract is
+   already carried in Family 1; do not duplicate it. Add only the missing operational CE-16 rule, if it is
+   not already complete: routine invocations create no context file, discovery log, run record or session
+   note; all duties stay inside prepare / brief / assess / escalate; durable maintenance is limited to
+   optional operator source material, one canonical plan and the existing current-state interface, and
+   only when material understanding actually changes. Add no machinery or artifact kind.
+2. Promote the completed candidate into `.agents/skills/work-loop-v2/SKILL.md` without semantic loss.
+   Compare the bytes before removing `trials/candidate/`; then delete that development candidate as the
+   approved plan requires once its content has landed.
+3. Update `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` only where the shared contract must
+   invoke the capability before plan-dependent continuation: orientation must proportionately recover the
+   governing durable sources and current unit rather than rely on conversation, and the brief contract must
+   carry the engineered semantic interface without expanding the five-field state ceiling.
+4. Inspect `.claude/commands/work-loop-v2.md`. Change it only if consuming the richer brief requires a
+   real adjustment; otherwise record why its existing premise-check and hand-back path already consumes it.
 
-Keep the wording operational and compact. Add no new artifact, state field, checklist, stage, gate, review
-pass, or Family 6 instruction. Do not alter the live skill, executable core, specification, plan, fixtures,
-prior outputs, or disposable roots.
+This unit covers the common v2 seam required under either O-3 reading. Do not touch Work Loop v1; its scope
+remains operator-owned and unresolved. Preserve Direct Work admission, false-premise refusal, correction
+discipline, task identity, turn handling, and Claude's commit ownership.
 
-**Verification:** report the exact candidate diff and resulting hash; map each of the five requirements to
-the candidate wording; confirm Families 1–3 remain intact and no Family 6 instruction entered. This is
-implementation verification only, not a behavioural trial.
+**Hard boundaries:** add no delivery file, queue, handoff document, context-QC pass, alignment gate, review
+stage, state field, second state system, plan copy, log, archive, registry, turn mechanism or other durable
+artifact. Do not edit the governing specification, implementation plan, fixtures, prior outputs or roots.
 
-Commit the candidate and this state file, set `turn: codex`, and stop. Do not create or run a trial.
+**Verification:** report the candidate's final pre-promotion hash and the live skill's matching post-
+promotion hash; map CE-15/16 and the core orientation/brief duties to the landed text; show the exact diffs
+for every changed runtime file; confirm the state ceiling and transport shape are unchanged; run existing
+non-operator checks that exercise Direct Work, false-premise refusal and state shape where available, and
+report any pre-existing failure separately. This is implementation verification, not a new behavioural
+trial or adoption claim.
+
+Commit the runtime changes, candidate removal and this state file, set `turn: codex`, and stop.
 
 ## Latest material result
+
+### Context Engineering landed in the live Work Loop v2 seam (2026-08-03)
+
+Inspected (2026-08-03):
+- Claim (1): HOLDS — searched `plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md` for
+  its SHA-256; found `364107aedd83b9af7fd2386eba1ee8e01a10b2d1e8d776fbd5339d9d36f2578b`, the committed S6
+  candidate, and `git status --short` on that path returned empty.
+- Claim (2): HOLDS — CE-15 is already carried and was not duplicated: searched the candidate for its
+  contract and found at `:65` *"Produce **one brief, for two audiences**, inside the one state file… Do not
+  create a separate operator-orientation document… one paragraph of at most three sentences"*. Nothing about
+  CE-15 was added.
+- Claim (3): HOLDS — the CE-16 operational rule was genuinely missing. Searched the candidate for
+  `context file`, `discovery log`, `run record`, `session note`, `per-run`, `no new`,
+  `current-state interface`: **all 0**. Partial coverage existed (`:61` bars a separate QC pass, `:73` bars
+  an authority ledger) but the per-run-accretion rule, the four-duties containment and the permitted-
+  maintenance carve-out were absent.
+- Claim (4): HOLDS — searched
+  `plans/work-loop-v2-v0.2/context-engineering/context-engineering-implementation-plan-v0.1.md` for the
+  candidate's disposal; found `:217` *"lands in the live skill file and `trials/candidate/` is deleted"*,
+  `:991` *"**No new file.** `trials/candidate/` is deleted in this session — its content has landed"*, and
+  `:1164` *"`trials/candidate/` was already deleted at S8b"*. The deletion is plan-required, not discretionary.
+- Claim (5): HOLDS — searched `.claude/commands/work-loop-v2.md`; the file exists (8293 bytes) and its
+  Step 2 sits at `:44`. Searched `logs/scripts/` for the harness; found
+  `work-loop-v2-slice-1.test.sh`.
+- Claim (6): HOLDS — searched `.agents/skills/work-loop-v2/SKILL.md` for its SHA-256 before promotion;
+  found `956c76f37230fb2a6b4d1605afecdcb4edd64a5828803464c29a0c9689720868`, clean against `HEAD`.
+- **Material finding, surfaced rather than absorbed — S8a has not run.** Searched
+  `plans/work-loop-v2-v0.2/context-engineering/trials/` for `entrypoint-classification.md`: **absent**; the
+  directory listing carries no such file. The plan's S8b names S8a's classification as an input (`:970`).
+  The brief never claimed S8a had run — it bounds explicitly to "the common v2 seam required under either
+  O-3 reading", which is the three-file subset both readings require regardless of classification. So this
+  is not a false premise, and the unit proceeds. **But it is load-bearing for what may be claimed:** O-3 is
+  adoption condition 3 and remains unsettled, S8b's exit is therefore not met, and **no adoption claim is
+  made or implied by this unit.**
+
+Result: Context Engineering now lives in the live Work Loop v2 runtime. CE-16 was completed in the
+candidate, the completed candidate was promoted byte-for-byte into `.agents/skills/work-loop-v2/SKILL.md`,
+the development candidate was deleted as the plan requires, the executable core's orientation and brief
+duties now invoke the capability, and the Claude command's premise-check locator was corrected to consume
+the engineered brief shape. Live skill SHA-256
+`2f2bcdaabb778ef3ad0c6313aa4fd8daef7208900a28152d1ca1782ceec0cc8a`. **No new file was created anywhere**, no
+behavioural trial was run, and no adoption claim is made.
+
+Evidence:
+
+- **Promotion is lossless by measurement, not by assertion.** The candidate's final pre-promotion hash and
+  the live skill's post-promotion hash are **the same value**,
+  `2f2bcdaabb778ef3ad0c6313aa4fd8daef7208900a28152d1ca1782ceec0cc8a`, and `cmp` reported the two files
+  byte-identical before the deletion. Against `HEAD` the live skill is **42 added, 0 deleted, one hunk** at
+  `@@ -58,0 +59,42 @@` — a pure insertion, so all 116 pre-existing live lines survive byte-identical and
+  nothing in the shipped skill was reworded or dropped. Arithmetic closes: 116 + 42 = 158 = the live file's
+  current length. **Fails if** the two hashes differ, `cmp` reports a difference, or the deleted-line count
+  is non-zero.
+- **CE-16 addition, and its leakage scan.** One block added to the candidate before promotion: **4 added,
+  0 deleted**, one hunk at `@@ -96,0 +97,4 @@`. Scanned those 4 lines for `CE-[0-9]`, `Family [0-9]`,
+  `Slice`, `R-[0-9]`, `baseline`, `two audiences`, `word count`, `section order`: **zero hits.** The 4 lines
+  were never committed to the candidate — they landed directly in the live skill, which is why the staged
+  deletion reads 154 lines (the candidate's committed length) while the live skill gained 42.
+- **CE-15/CE-16 mapped to the landed text.** CE-15 → `:65`, pre-existing, untouched, not duplicated.
+  CE-16 failing case B (per-run accretion) → *"reads the durable sources and produces only the brief: it
+  writes no context file, no discovery log, no run record and no session note, and nothing accumulates from
+  one run to the next"*, with the routine-invocation test stated as the spec states it. CE-16 failing case A
+  (new machinery) → *"add no machinery or new artifact kind beyond them"*. CE-16's permitted-maintenance
+  carve-out → *"Durable maintenance is limited to the optional operator source material, the one canonical
+  plan and the existing current-state interface… keeping them current is maintenance, not an addition"*.
+  Four-duties containment → *"Discharge every duty inside prepare, brief, assess and escalate"*.
+- **Core duties mapped, ceiling proven unchanged.** Two hunks only, both inside § 3's numbered cycle:
+  step 1 gains *"Proportionately re-establish the governing durable sources — the approved plan, applicable
+  approved workflows, and authoritative current state — and the current open unit from those sources before
+  any plan-dependent work continues. Conversation may point at a source; it never establishes authority or
+  current state"*; step 3 gains the semantic interface plus an explicit *"§ 4's five-field ceiling is
+  unchanged, and no new field, artifact or stage is created"*. Grepping the core diff for the five field
+  names and for `at most`/`Five is a` returns **no ceiling line touched**, and § 4's table still lists the
+  same five rows. **Fails if** any ceiling line appears in the diff or a sixth row exists.
+- **Command changed, and why the change was real rather than cosmetic.** Step 2 previously said the claims
+  *"sit under `## Brief` → `Check against the repository:`"*. Searching this task's live engineered brief for
+  that literal returns **0 occurrences** — the engineered brief states claims through `**Required
+  outcome:**`, `**Hard boundaries:**` and `**Verification:**` instead, because CE-7 now requires each
+  load-bearing assertion to be marked where it is stated. A fresh session following the old locator could
+  find no such heading and conclude there were no claims to check, silently skipping core § 6 rule 1. The
+  fix is one line (**1 added, 1 deleted**) rebinding the locator to the brief's whole surface and stating
+  outright not to infer absence from the missing heading. The premise-check duty, the inspection-record
+  shape and the Step 3 hand-back path are otherwise untouched.
+- **No new artifact, and the transport shape is unchanged.** `git diff --cached --name-status` returns
+  **zero `A` lines** — nothing was added anywhere in the repository; the change set is three modifications
+  and one deletion. Grepping the whole staged diff for `delivery file`, `queue`, `handoff document`,
+  `second state system`, `turn mechanism`, `registry`, `archive`, `context-QC`, `alignment gate`,
+  `review stage` returns two hits, both **run down rather than waved through**: *"Do not scan unrelated
+  history, archives or adjacent systems"* and *"do not answer it by starting a second state system"* — both
+  prohibitions inside the promoted CE text, not machinery being created. Polarity check over the live
+  skill's added lines counts 13 negative constructions (`Do not scan`, `create no`, `add no`, `writes no`,
+  `never` ×9, `do not answer it by starting`) and no constructive one. **Fails if** any `A` line appears or
+  a machinery term occurs in a positive construction.
+- **Acceptance harness — run, with the pre-existing failure isolated by a clean baseline rather than
+  asserted.** `logs/scripts/work-loop-v2-slice-1.test.sh` returns **147 passed / 2 failed** after this
+  unit's changes. A detached worktree was created at `HEAD` — carrying the old live skill `956c76f…` and the
+  still-present candidate, so none of this unit's edits — and the same harness there returns **the identical
+  147 passed / 2 failed**, with the identical two names: *"3.1a no state file was opened for the direct
+  request"* and *"3.1a every task-state file present is one this build created deliberately"*. Both assert
+  only that `ls logs/work-loop/` contains nothing outside a hardcoded `KNOWN_WORKLOOP_FILES` allowlist
+  (`:436–449`); the unlisted files are this task's own
+  `context-engineering-implementation.md`, `context-engineering-implementation-plan.md` and
+  `foreign-staging-target-repo.md`, which post-date the allowlist. **The failures are pre-existing and this
+  unit changed neither count.** The worktree was removed afterwards. **Fails if** the two runs disagree.
+- **Direct Work, false-premise refusal and state shape all still pass** — those are inside the 147, which
+  did not move.
+
+**Recorded as deferrals, not done** (core § 5):
+
+1. **Both "Scope of this version" lines are now stale.** The live skill's closing line still reads
+   *"Slices 1–3: opening a unit with a brief, assessing/closing it, the one bounded correction…"* and the
+   command's `:15` still reads *"Scope of this version — Slices 1–3, Claude side."* The skill now also
+   carries Families 1–6. Not edited, because requirement 2 demanded a byte-identical promotion and editing
+   would have broken the very comparison that proves losslessness. Worth one small unit.
+2. **S8a never ran, so O-3 is unsettled and the plan's S8b exit is not met.** No entrypoint classification
+   exists, and the plan's S8b also requires a behavioural pre/post pair at the real entrypoint that only the
+   operator driving Codex can produce. This unit deliberately produced neither. **Adoption remains blocked**
+   under Phase 6 condition 2; the code has landed, the adoption claim has not.
+3. **The harness allowlist is stale**, causing the 2 pre-existing failures above. A one-line fix, but it
+   touches acceptance machinery and was outside this brief.
+
+### Codex assessment — S6 accepted; move to the live v2 seam (2026-08-03)
+
+S6 Families 4 and 5 are accepted at the operator-directed implementation-verification bar. Candidate
+`364107aedd83b9af7fd2386eba1ee8e01a10b2d1e8d776fbd5339d9d36f2578b` carries all five requirements as two
+pure inserted blocks; Families 1–3 remain intact and no Family 6 instruction entered.
+
+The plan-justification stop condition is correctly implemented in Family 4, where CE-10 owns it; Family 3
+does not need amendment. The accumulated state-file history remains housekeeping and does not block the
+implementation. S7's planned work is measurement, while CE-15 is already carried and CE-16 needs at most
+one direct operational completion. The next useful unit therefore completes Family 6 and lands the common
+v2 runtime seam together. No behavioural-proof or adoption claim is made.
 
 ### S6 Families 4 and 5 implemented in the isolated candidate (2026-08-03)
 
@@ -840,10 +978,22 @@ session, which remains a non-blocking gap in that separate repository.
 
 ## Next action
 
-Codex: assess S6 at the implementation-verification bar. The candidate is
-`364107aedd83b9af7fd2386eba1ee8e01a10b2d1e8d776fbd5339d9d36f2578b`, a 14-line pure insertion adding
-Families 4 and 5 as two blocks; Families 1–3 are intact at 27/27 clauses and no Family 6 instruction
-entered. Three items need a verdict: whether the five briefed requirements are carried at the right width;
-whether the §3.5 `plan justification` stop condition was rightly stated inside the new Family 4 block rather
-than by amending Family 3's `:79`; and whether this state file should now be pruned, which the last two
-units both surfaced and no assessment has yet ruled on. Then decide progression to S7 Family 6.
+Codex: assess the live seam landing at the implementation-verification bar. The live skill is
+`2f2bcdaabb778ef3ad0c6313aa4fd8daef7208900a28152d1ca1782ceec0cc8a`, promoted byte-identical from the final
+candidate (same hash, `cmp` clean, 42 added / 0 deleted against the old live file); the candidate is
+deleted; core and command changed by 9/2 and 1/1 lines; **zero new files**; the harness is unchanged at
+147 passed / 2 failures proven pre-existing against a clean `HEAD` worktree.
+
+Three things need a verdict:
+
+1. Whether the CE-16 wording completes Family 6 at the right width, given CE-15 was already carried and was
+   deliberately not duplicated.
+2. Whether the command's Step 2 locator fix was the right minimal adjustment or overreach — the old locator
+   pointed at a `Check against the repository:` heading that the engineered brief produces zero times, which
+   could silently skip core § 6 rule 1.
+3. How to sequence what this unit deliberately did **not** do: S8a's entrypoint classification, the O-3
+   decision, and S8b's behavioural pre/post pair. All three still gate any adoption claim, and none is made
+   here.
+
+The two stale "Scope of this version" lines (live skill's closing line, command `:15`) are the smallest
+useful follow-up unit.

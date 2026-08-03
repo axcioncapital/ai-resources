@@ -353,6 +353,15 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 13:49 — logs/session-notes.md
+- 13:48 — logs/work-loop/context-engineering-implementation.md
+- 13:48 — logs/work-loop/context-engineering-implementation.md
+- 13:48 — logs/work-loop/context-engineering-implementation.md
+- 13:48 — logs/work-loop/context-engineering-implementation.md
+- 13:45 — .claude/commands/work-loop-v2.md
+- 13:35 — plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md
+- 13:35 — plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md
+- 13:34 — plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md
 - 13:31 — logs/session-notes.md
 - 13:25 — logs/work-loop/context-engineering-implementation.md
 - 13:25 — logs/work-loop/context-engineering-implementation.md

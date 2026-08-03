@@ -41,7 +41,7 @@ If `## Next action` opens with core § 3's hand-off token, this invocation is th
 
 ## Step 2 — Check the premises before acting
 
-Core § 6 rule 1 governs this step. The claims sit under `## Brief` → `Check against the repository:`. Check each **by inspection** — open the file, run the grep, read the line. Not by recall.
+Core § 6 rule 1 governs this step. The claims are the brief's load-bearing repository assertions. An engineered brief marks each one where it states it — naming the file or surface to search and the pattern or evidence that settles it — rather than collecting them under a single `Check against the repository:` sub-heading, so read the whole brief for them and do not conclude there are none because that heading is absent. Check each **by inspection** — open the file, run the grep, read the line. Not by recall.
 
 Write an inspection record into `## Latest result`, in this shape. The shape is the command's output contract; the acceptance harness (`logs/scripts/work-loop-v2-slice-1.test.sh`) binds to it:
 
