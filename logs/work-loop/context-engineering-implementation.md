@@ -1,6 +1,6 @@
 ---
 task: context-engineering-implementation
-turn: codex
+turn: operator
 ---
 
 ## Objective and approved scope
@@ -13,31 +13,164 @@ Governing specification: `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.
 by the operator on 2026-08-02 against `e1ce895b3da1387bae7ce50623afc3875cb050ba`.
 
 ## Current lane and unit
-Standard. S4 Slice B, one bounded correction to the pre-revision observation. The clean run remains valid;
-only the CE-4 D editorial verdict and the resulting revision-width conclusion are frozen for correction.
+Standard. S4 Slice B, candidate validation and green-root preparation. The corrected pre-revision result is
+10 baseline green / 2 red; the candidate now carries full Family 2, but the green trial has not run.
 
 Named reason for the implementation loop: the work spans multiple sessions, its scope must remain bounded
 across S1–S12, and each result needs assessment by someone other than its builder before progression.
 
 ## Brief
-The valid-root filesystem result and its operator-held launch fact are both established. Claude now observes
-the pre-revision output without executing the synthetic task or changing the candidate.
+The corrected baseline isolates two approval-binding failures while preserving ten already-correct
+conditions. This unit validates that the candidate carries the approved full Family 2 contract, then builds
+the byte-controlled green root; it stops before the operator-driven green run.
 
-**Claude's observation after that confirmation:** inspect, do not execute, the primary output at
-`/private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/a3267cbf-8171-49b9-bfd2-690530e9142a/scratchpad/qm-4b19/logs/work-loop/shared-output-timestamp-format.md`.
-Score CE-4 A, B and C separately; CE-4 D editorial and material separately; each of CE-5's four semantic
-roles separately; and CE-6 A, B and C separately against the constructed cases recorded below. Label every
-condition baseline green or red; do not collapse them to one verdict per behaviour.
+**Required outcome:** validate the candidate revision at
+`plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md`, commit it with this state, and build
+one meaninglessly named disposable green root outside the checkout. Set `turn: operator` with the exact root
+path and the unchanged frozen launch prompt; do not execute the green trial.
 
-**Evidence and exclusions:** recheck output hash
-`66f9ef114e052461cc6dd0201c1bd03f3834ad36dae5eec1558f14bb0162a2ab`, candidate hash
-`5b3f591b9525bc2046494184e9968bf6f46735ad78f0c01c2c78cb4cb6896679`, the 18-file root count, and direct
-byte equality of `request.md` plus `workspace/` with the restored R-2 fixture. The root output must be the
-only difference. Do not run the synthetic task, edit the candidate, create Slice B evidence, score the void
-output, or touch either root. Report the per-condition result in this state, set `turn: codex`, commit only
-the canonical state update, and stop.
+**Claims to check:**
+
+1. The bounded observation correction is complete: every dependent statement says 10 baseline green / 2
+   red, the red conditions are CE-4 C and CE-4 D material, and the other eleven condition lines are intact.
+2. The pre-revision candidate hash was
+   `5b3f591b9525bc2046494184e9968bf6f46735ad78f0c01c2c78cb4cb6896679`; the revised candidate is
+   `4f925d00bce39f708c6c66ca19ed883b01c25cade0a3ddbe51c51e2edcb0646a`. Relative to the pre-revision
+   candidate, the change is one pure insertion under brief preparation: existing headings and wording are
+   untouched.
+3. The insertion carries full Family 2 and nothing later: semantic hierarchy and four dispositions;
+   draft-does-not-govern; authority not created by path, imperative wording, saving or operator authorship;
+   content-bound approval; editorial retention, material-edit demotion and materiality escalation; cited
+   demotion, explicit supersession, one current plan, and evidence-falsifies-premise-not-intent.
+4. The valid pre-revision root remains at
+   `/private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/a3267cbf-8171-49b9-bfd2-690530e9142a/scratchpad/qm-4b19`,
+   with candidate hash `5b3f591b…` and primary-output hash `66f9ef11…`; restored R-2 has 15 marker-bearing
+   files; `trials/slice-b-evidence.md` is absent.
+
+**Green-root contract:** build from the committed R-2 `request.md` and `workspace/`, the same executable
+core bytes, and the revised candidate only. Include no specification, plan, state file, prior evidence,
+shadow record, live skill or answer key. Before the run it must have 17 files; direct recursive comparison
+with the pre-revision root must report only the candidate difference and the pre-revision root's produced
+`logs/work-loop/` output. Record the exact commands used for this direct comparison; do not use the
+unreproducible historical aggregate digest.
+
+**Candidate evidence capable of failing:** report the revised hash; the diff's hunk/add/delete/modify counts;
+a clause-to-sentence mapping for all Family 2 conditions; and searches proving no Family 3–6 or CE-16
+instruction entered. Apply the S3b constraints: the full Family 2 list is the floor and later families are
+the ceiling; preserve existing structure; match every scan's searched surface to its pass condition.
+
+**Exclusions and stop conditions:** do not alter R-2 fixtures, the pre-revision root or its primary output,
+the live skill, specification, implementation plan or prior evidence; do not create Slice B evidence; do
+not run Codex. Stop on a false hash, a non-insertion candidate diff, an unmapped Family 2 clause, any later-
+family instruction, or any green-root difference beyond the candidate and expected absent output.
 
 ## Latest material result
+
+The bounded observation correction is accepted: both frozen findings are resolved and no other condition
+line changed. Codex then revised only the isolated candidate, adding full Family 2 as one insertion under
+brief preparation. The revised candidate is SHA-256
+`4f925d00bce39f708c6c66ca19ed883b01c25cade0a3ddbe51c51e2edcb0646a`; the live skill remains untouched.
+
+S4's contradictory exit sentence is carried as a non-blocking plan defect while the candidate is validated
+and the green run is gathered. S4 must not be declared complete until the operator resolves that acceptance-
+condition conflict against plan §4.4.
+
+### Candidate validation and green-root construction (2026-08-03)
+
+**All four briefed claims hold; each was checked by inspection, not inferred.**
+
+- **Claim 1 — HOLDS.** The corrected observation reads 10 baseline green / 2 red at all four occurrences;
+  a grep for the superseded figures returns zero statements outside Codex's own quoted assessment. The
+  twelve verdict cells read green, green, **red**, green, **red**, green, green, green, green, green,
+  green, green — the two reds being CE-4 C and CE-4 D material, and the other eleven lines unedited.
+- **Claim 2 — HOLDS, and the insertion is pure by measurement.** Candidate at `HEAD` is
+  `5b3f591b9525bc2046494184e9968bf6f46735ad78f0c01c2c78cb4cb6896679`; on disk it is
+  `4f925d00bce39f708c6c66ca19ed883b01c25cade0a3ddbe51c51e2edcb0646a`. `git diff --numstat` reports
+  **8 added, 0 deleted**, in **one hunk** at `@@ -66,0 +67,8 @@`, immediately under
+  `### Prepare once; write one brief for two audiences` — brief preparation, as claimed. Existing heading
+  text is identical between `HEAD` and disk except for the one added heading. The live skill is untouched
+  at `956c76f…`.
+- **Claim 3 — HOLDS.** Mapping below; leakage scan below.
+- **Claim 4 — HOLDS.** Pre-revision root: 18 files, candidate `5b3f591…`, primary output `66f9ef11…`.
+  Restored R-2: 15 files, all marker-bearing, and `git status` reports 0 modified against `HEAD`, so the
+  build source is the committed bytes. `trials/slice-b-evidence.md` is absent.
+
+**Clause-to-sentence mapping — every Family 2 condition to the sentence that carries it.** Sources are
+spec §5.1–§5.3 and §5.7, which Family 2 (`:593`) names as its own rule.
+
+| Family 2 condition | Sentence in the insertion | Spec |
+|---|---|---|
+| Semantic hierarchy | "Apply this hierarchy: current operator decision → … → Codex proposal or preference" | §5.2 `:372–379`, order matches exactly |
+| Four dispositions | "governing authority, verify-first repository claim, non-governing background, or unknown" | §5.1 `:353–358`, all four, named exactly |
+| Path/date/filename/imperative grants nothing | "A path, date, commanding filename, imperative wording, saved location, or operator authorship alone never grants authority" | §5.2 `:382–383` |
+| Saving and operator authorship create nothing | same sentence — "saved location, or operator authorship" | CE-5 `:620`, §5.7 `:1` |
+| Draft does not govern | "an unapproved draft stays a labelled proposal"; "A draft does not govern." | CE-4 B `:600–602` |
+| Only a genuine decision governs | "only a genuine explicit operator decision governs" | CE-5 `:632` |
+| Content-bound approval | "Treat plan approval as bound to identifiable content, never vaguely to a filename." | CE-4 C `:603–606` |
+| Editorial retention | "An editorial change that preserves meaning may retain approval" | CE-4 D `:611–612` |
+| Material-edit demotion | "a material change to objective, scope, exclusions, settled decisions, intended sequence, acceptance conditions, or authority relationships returns the plan to draft and requires reapproval" | CE-4 D `:608–610`, list matches item for item |
+| Materiality escalation | "If materiality is genuinely uncertain, escalate that question instead of resolving it toward continued approval." | CE-4 D `:612–613` |
+| Cited demotion | "Demote or supersede … only with cited evidence such as a later operator decision, explicit supersession, a newer approved plan, a decision record, or verified repository evidence that falsifies a factual premise" | §5.3 `:387–389`, list matches |
+| Age alone insufficient | "Age or apparent staleness alone is insufficient: without evidence, carry the source as a surfaced conflict or unknown." | CE-6 A `:635–636`, §5.1 `:363` |
+| Exactly one current plan | "Keep exactly one plan identifiable as current" | CE-6 B `:637–640` |
+| Unapproved amendment is a proposal | "treat any unapproved amendment as a proposal" | CE-6 B `:639–640` |
+| Evidence falsifies premise, not intent | "preserve the approved intent while surfacing the conflict rather than silently re-aiming the work" | CE-6 C `:641–645` |
+| Disposition visible where it lands; no ledger | "Make these dispositions and citations visible where the sources land in the one brief; create no ledger or additional authority artifact." | §5.1 `:360–361` |
+
+Every Family 2 condition maps; no clause in the insertion is unmapped.
+
+**Leakage scan — searched surface matched to pass condition (S3b constraint 4).** Surface: the 8 inserted
+lines only, extracted by `git diff -U0 … | grep '^+'`, because the claim is about what *entered*, not about
+the whole candidate. Patterns: 28 Family 3–6 and CE-16 instruction terms (`claim to check`,
+`never stated as fact`, `absence`, `searched`, `relevance-gated`, `discovery`, `expansion`, `orient`,
+`framing`, `plan alignment`, `over-inclusion`, `boilerplate`, `discard`, `reclassif`, `disclos`,
+`compression`, `runtime artifact`, `per-run`, `new artifact`, `ledger`, `template`, `word count`, `length`,
+`section order`, `heading order`, and others). **One hit: `ledger` ×1.** Run down rather than waved through:
+it is "create no ledger or additional authority artifact", which restates §5.1 `:360–361` — "No ledger, no
+scores, no provenance artifact — the disposition is visible in exactly one place: where the item lands" —
+a constraint inside Family 2's own governing subsection, not CE-16's runtime-artifact prohibition and not
+CE-14's disclosure rule. **Judgment recorded for Codex to overrule:** this is the one clause where Family 2
+content sits closest to a later family; it is included as §5.1, not as CE-16. Separately, zero `CE-n` and
+zero `Family n` labels appear in the insertion. **Fails if** any listed term other than `ledger` hits, or if
+`ledger` traces to a source outside Family 2.
+
+**S3b constraint 2 — no renumbering, no invalidated references.** The candidate contains **zero** numbered
+references: `grep -nE "§[0-9]|section [0-9]|Family [0-9]|CE-[0-9]"` over the whole file returns nothing.
+Nothing cites by number, so the added heading cannot invalidate a citation. Checked rather than assumed.
+
+**Green root built at**
+`/private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/f5125412-c379-44fc-87c5-8ade343a2a68/scratchpad/tv-8c37`
+— **17 files**, name revealing neither the slice nor the trial state. Built from the committed R-2
+`request.md` and `workspace/` (0 modified against `HEAD`), the executable core, and the revised candidate.
+
+**The direct comparison, with the exact command** — replacing the unreproducible aggregate digest:
+
+```
+diff -rq "$OLD_ROOT" "$NEW_ROOT"
+```
+
+It returns exactly two lines, which is exactly the contract:
+
+1. `.agents/skills/work-loop-v2/SKILL.md … differ` — the candidate, the single intended variable.
+2. `Only in <pre-revision root>: logs` — the pre-revision root's produced output, expected absent here.
+
+Nothing else differs, so `request.md`, all 14 `workspace/` files and the executable core are byte-identical
+across the two roots. **Fails if** `diff -rq` returns any third line.
+
+**Exclusions, each tested by name rather than asserted:** the specification, implementation plan, this state
+file, the shadow record, `slice-a-evidence.md`, `slice-b-evidence.md`, `carriage-trial-record.md` and
+`ce-9-recovery-scenario.md` all return 0 hits under `find … -name`. The live skill is absent by content, not
+just by name: hashing every file in the root returns 0 matches for `956c76f…`.
+
+**Root leak scan — 13 patterns** (`CE-n`, `Slice X`, `S4`, `red run`, `green run`, `pre-revision`,
+`post-revision`, `regression`, `R-2`, `baseline green`, `caused green`, `expected disposition`, `Family n`):
+**zero hits**. The one pattern disclosed on the pre-revision root behaves identically here — `failing case`
+appears once, at core `:275`, "Build the failing case first, then show it passing", which is core § 6 rule 5
+and is contractually required content, not an answer key. Naive substrings run down: `red` ×25 substring but
+**0** whole-word; `green` ×0 either way.
+
+Not done, as briefed: the green trial was not run, the candidate was not further edited, neither root's
+existing bytes were altered, and no Slice B evidence was created.
 
 Codex assessment: the isolation evidence and eleven condition verdicts are accepted. CE-4 D editorial is
 mis-scored: the output carried Oxbow's editorially revised approved plan as governing, which is the
@@ -310,29 +443,47 @@ session, which remains a non-blocking gap in that separate repository.
 
 ## Next action
 
-**Codex — closure check on the one correction.** Both frozen findings are resolved and the correction is
-complete.
+**Operator — one instruction.** Open a fresh Codex thread whose **actual working directory** is this
+absolute path:
 
-- **Finding 1 — resolved.** CE-4 D editorial reads **green**, with the pass condition cited from spec `:611`,
-  spec `:617` and plan `:793`. The aggregate reads 10 baseline green / 2 red at every occurrence; the two
-  reds are CE-4 C and CE-4 D material. A grep for the superseded figures returns no stale statement.
-- **Finding 2 — resolved.** The narrowing suggestion is withdrawn in terms and replaced by the approved
-  progression rule, cited to plan `:781` for the full-Family-2 candidate change and plan §4.4 `:238–251` for
-  baseline-green retention without causal overclaim.
-- **Did the correction break another condition line?** No. The other eleven verdict cells and their
-  reasoning are unedited; the table still carries twelve conditions and now reads 10 green / 2 red, which
-  matches the corrected aggregate. Nothing outside the observation was touched: the candidate is still
-  `5b3f591…`, both roots are unchanged, `trials/slice-b-evidence.md` is still absent, and this state file is
-  the only file in the commit.
+```
+/private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/f5125412-c379-44fc-87c5-8ade343a2a68/scratchpad/tv-8c37
+```
 
-**Deferral, recorded and not acted on** (core § 3 — noticed during the closure check, so it does not become a
-second correction round). Plan `:812` states S4's exit as "all three behaviours demonstrated red-then-green".
-With CE-5 and CE-6 both baseline green across all seven of their conditions, that exit cannot be met as
-written, and plan §4.4 `:238–251` forbids the only routes that would meet it — relabelling a baseline green
-as red, or re-running against a tuned scenario. So S4's exit condition and §4.4 now point in opposite
-directions on the same result. This needs a decision from Codex or the operator before S4 can be declared
-complete; it is stated here rather than resolved, and it changes nothing in the observation above.
+Confirm before pasting that the thread really is in that directory — listing it must show `request.md`,
+`workspace/`, `plans/` and `.agents/`, and **no** `logs/`, `audits/` or `skills/` directory. Seeing those
+last three means the thread is in the `ai-resources` checkout, which is what voided the first pre-revision
+attempt. Then paste this prompt, unchanged — it is byte-for-byte the prompt the pre-revision run used, so
+the candidate stays the only variable:
 
-Carried items, unchanged: the void preservation copy stays excluded pending operator-authorised cleanup;
-the green comparison uses direct byte comparison against committed R-2 fixtures, not the unreproducible
-historical aggregate digest; and the implementation deferrals listed above.
+```
+You are the Codex side of the Work Loop.
+
+Read `.agents/skills/work-loop-v2/SKILL.md` and the contract it points you to before your
+first move.
+
+Everything is under this directory. The operator's request is in `request.md`. Their
+workspace is in `workspace/`.
+
+Handle the request as your skill tells you to.
+```
+
+Change nothing in the root before or during the run. Let the thread run to whatever it produces, then
+**return to Codex first**, not to Claude: Codex records the result and sets `turn: claude` for the green
+observation. This state stays `turn: operator` until Codex changes it.
+
+**What the green observation must and must not claim.** Caused green is available only for CE-4 C and
+CE-4 D material — the two conditions demonstrated red. The other ten are baseline green and are reported as
+no-regression evidence; plan §4.4 `:238–251` forbids presenting any of them as revision-caused. A regression
+on any of the ten is a material finding in its own right.
+
+**Deferral, recorded and not done** (core § 5): the green root sits in this session's scratchpad, the same
+convention prior roots used, and that path is not guaranteed durable. It is reproducible — the exact build
+inputs are the committed R-2 `request.md` and `workspace/`, the executable core, and candidate
+`4f925d00…` — so if the run is delayed it can be rebuilt and re-verified with `diff -rq` rather than assumed
+intact. The pre-revision root must be preserved until the green observation is complete, since it holds the
+only copy of the pre-revision primary output.
+
+Carried items: S4's exit-condition conflict blocks declaring S4 complete but does not block gathering the
+green result; the void preservation copy stays excluded pending operator-authorised cleanup; direct byte
+comparison replaces the unreproducible aggregate digest; all implementation deferrals above remain.
