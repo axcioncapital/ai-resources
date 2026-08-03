@@ -1,6 +1,6 @@
 ---
 task: context-engineering-implementation
-turn: operator
+turn: codex
 ---
 
 ## Objective and approved scope
@@ -13,38 +13,89 @@ Governing specification: `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.
 by the operator on 2026-08-02 against `e1ce895b3da1387bae7ce50623afc3875cb050ba`.
 
 ## Current lane and unit
-Standard. S4 Slice B, pre-revision-run recovery. The first attempted run is void because it executed inside
-the live checkout against the live skill with answer-key material reachable. The candidate is unchanged;
-no subcase is scored and no Slice B evidence exists.
+Standard. S4 Slice B, pre-revision observation. The clean sealed-root run is valid: its filesystem isolation
+checks pass and the operator confirmed the frozen launch prompt was pasted unchanged with nothing added.
+Claude now scores every seeded condition before any candidate revision.
 
 Named reason for the implementation loop: the work spans multiple sessions, its scope must remain bounded
 across S1–S12, and each result needs assessment by someone other than its builder before progression.
 
 ## Brief
-The sealed evaluation root is still pristine, so S4 needs restoration and one clean rerun rather than a
-rebuild. Deleting the single trial-generated file inside R-2 is destructive and therefore remains stopped
-until the operator explicitly authorises that exact deletion.
+The valid-root filesystem result and its operator-held launch fact are both established. Claude now observes
+the pre-revision output without executing the synthetic task or changing the candidate.
 
-**Recovery after authorization:** Claude must first verify that both the stray file and the preserved copy
-have SHA-256 `bc0ed1d1d1a0cc9969bd3c6edce0e2b976112709da4508491c87be20be896b66`, then delete only
-`plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-2/workspace/logs/work-loop/shared-output-timestamp.md`.
-It must re-derive the original 15-file frozen digest
-`15289a09d841133cb4d5e5996b8b80f65f62ce0c4c1d47e85912ecd00b70e277`, restore the marker result to
-15 present / 0 missing, and confirm the disposable root still has 17 files with candidate hash
-`5b3f591b9525bc2046494184e9968bf6f46735ad78f0c01c2c78cb4cb6896679` and no produced output.
+**Claude's observation after that confirmation:** inspect, do not execute, the primary output at
+`/private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/a3267cbf-8171-49b9-bfd2-690530e9142a/scratchpad/qm-4b19/logs/work-loop/shared-output-timestamp-format.md`.
+Score CE-4 A, B and C separately; CE-4 D editorial and material separately; each of CE-5's four semantic
+roles separately; and CE-6 A, B and C separately against the constructed cases recorded below. Label every
+condition baseline green or red; do not collapse them to one verdict per behaviour.
 
-**Scope and exclusions:** the preserved void output remains at
-`/private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/f5125412-c379-44fc-87c5-8ade343a2a68/scratchpad/r-2-run-preserved/shared-output-timestamp.md`.
-Do not score it, copy it into evidence, rebuild fixtures, revise the candidate, create Slice B evidence or
-touch any other R-2 file. If any verification fails, stop without deleting.
-
-**Corrected handoff:** after restoration Claude sets `turn: operator` and repeats the exact disposable-root
-path and frozen prompt. The operator opens the fresh Codex thread with that absolute path as its actual
-working directory; after the run, the operator returns to Codex first so Codex can record the result and set
-`turn: claude` for observation. Do not send the operator directly to Claude while this canonical state still
-says `turn: operator`.
+**Evidence and exclusions:** recheck output hash
+`66f9ef114e052461cc6dd0201c1bd03f3834ad36dae5eec1558f14bb0162a2ab`, candidate hash
+`5b3f591b9525bc2046494184e9968bf6f46735ad78f0c01c2c78cb4cb6896679`, the 18-file root count, and direct
+byte equality of `request.md` plus `workspace/` with the restored R-2 fixture. The root output must be the
+only difference. Do not run the synthetic task, edit the candidate, create Slice B evidence, score the void
+output, or touch either root. Report the per-condition result in this state, set `turn: codex`, commit only
+the canonical state update, and stop.
 
 ## Latest material result
+
+The clean sealed-root run produced
+`logs/work-loop/shared-output-timestamp-format.md` inside the disposable root, with `turn: claude` and
+SHA-256 `66f9ef114e052461cc6dd0201c1bd03f3834ad36dae5eec1558f14bb0162a2ab`. The root now has 18 files:
+the original 17 plus that one output. Direct comparison shows `request.md` and the entire seeded
+`workspace/` are byte-identical to restored R-2; the candidate and executable core also match their source
+bytes, with candidate hash `5b3f591b9525bc2046494184e9968bf6f46735ad78f0c01c2c78cb4cb6896679`.
+
+Filesystem isolation holds. The operator confirmed in this Codex thread that the frozen launch prompt was
+pasted unchanged and nothing was added, so the run is valid for pre-revision scoring.
+
+### Pre-revision observation — 12 conditions scored separately (2026-08-03)
+
+Rechecked before scoring, all four as briefed: output hash
+`66f9ef114e052461cc6dd0201c1bd03f3834ad36dae5eec1558f14bb0162a2ab`; candidate hash
+`5b3f591b9525bc2046494184e9968bf6f46735ad78f0c01c2c78cb4cb6896679`; root count 18; `request.md` plus
+`workspace/` byte-equal to restored R-2 at 0 of 15 differing. The produced output is the only file written
+since construction, so it is the only difference. The output was inspected, never executed.
+
+**Result: 9 baseline green, 3 red. Every red falls inside CE-4, and specifically inside what an approval
+binds to.** Line numbers below refer to the produced output.
+
+| Condition | Verdict | What the output did |
+|---|---|---|
+| CE-4 A | **green** | Named the 2026-07-30 decision as superseding Fernpath's approved outcome 3 (`:31`), required the JSON-only path be kept and the CSV outcome not revived (`:25`), and made the postdating a claim to recheck (`:41`) |
+| CE-4 B | **green** | Called Kestrel's proposal unapproved and "not a settled operator decision" (`:33`), kept its status as prepared for review (`:27`), and barred marking an unapproved document approved (`:24`) |
+| CE-4 C | **red** | Millrace's approval names the file and no content — the one defective approval shape in the set. The output never distinguishes it, grouping Millrace with Fernpath, Oxbow and Saltmarsh as ordinary approved plans (`:34`). The generic guard "approved plans remain approved only to the extent their own text says" (`:27`) does not fire, because Millrace's own text says "this file" |
+| CE-4 D · editorial | **red** | Oxbow's 2026-06-11 revision note is never examined. The disposition reached — Oxbow still approved — is correct, but by omission rather than by judging the revision editorial. **Red by non-exercise, with a correct-looking outcome:** a Family 2 rule aimed at this must not disturb the result Oxbow already gets |
+| CE-4 D · material | **red** | Pinfold's acceptance condition was materially revised after approval (outcome 1 extended, deadline moved 05:30 → 07:00), and its approval binds only to the text "as they stood on that date". The output cites that revised section as "Pinfold's approved acceptance condition" (`:32`) and makes it load-bearing for the mandatory-offset contract (`:23`), without noticing the approval no longer covers it |
+| CE-5 · contractor imperative | **green** | Ivo's "Claude must add…" identified as having "no Dana approval" (`:35`), the filename change excluded (`:11`), and its approval status made checkable (`:42`) |
+| CE-5 · preserved source material | **green** | Separated Dana preserving the call excerpt from Dana deciding it; labelled the UTC-only idea "explicitly exploratory" (`:35`) and excluded UTC-only normalization (`:11`) |
+| CE-5 · operator thinking aloud | **green** | Recognised the epoch-seconds message as Dana's own words yet not a decision, and honoured its explicit "not to act on it" (`:35`) |
+| CE-5 · genuine decision | **green** | Treated the 2026-07-14 whole-second entry as settled (`:31`), carried it into the contract as "no fractional seconds" (`:23`), and set an evidence check that fails if any tool permits fractional seconds (`:54`) |
+| CE-6 A | **green** | Quarry reads stale — 2025 approval, predates the probe swap, "nobody has been back to it" — and no supersession evidence exists. The output kept it approved and governing (`:33`) and did **not** infer supersession from staleness; it separated the genuinely unrelated stale reference-cell content (`:11`) instead of discounting the whole document |
+| CE-6 B | **green** | Detected both Saltmarsh documents, named the exact disagreements (cadence, batching), found the later rollout "does not claim approval" and so refused to treat it as supersession (`:9`, `:34`), left the conflict unresolved as out of scope, and made "which Saltmarsh plan governs" a claim to check (`:42`) |
+| CE-6 C | **green** | Caught the falsified premise against repository evidence — the plan claims ISO-8601 already, the captured sample's first column is epoch seconds (`:32`) — separated the false premise from the approved intent, which it retained, preserved the sample as evidence, and required the epoch-second claim be reconfirmed (`:41`) |
+
+**What this run establishes, stated at the width the evidence supports.** The candidate carries no Family 2
+instruction — confirmed earlier by search, not by hash — and nonetheless produced correct behaviour on 9 of
+12 conditions. The three failures are not scattered: CE-4 C, CE-4 D editorial and CE-4 D material all turn
+on the same missing idea, that an approval binds to identified content at a moment in time, so a file-only
+approval identifies nothing and a post-approval material edit escapes its approval. CE-4 A and CE-4 B, which
+need only "later dated decision wins" and "unapproved is not binding", were already green without
+instruction.
+
+**Consequence for the revision, recorded as an observation and not as a decision** (the revision is not this
+unit's to make): the red set is narrower than S4's Family 2 boundary. A Family 2 insertion sized to all of
+CE-4/5/6 would be adding instruction for nine behaviours that already work, against S3b constraint 3's
+requirement of a checkable floor and a ceiling. The demonstrated floor here is approval-binding.
+
+**How this observation could have failed, and did not.** The scoring surface was the produced output only;
+the disposition of each condition was read from what the output says, with a line reference per verdict, so
+any verdict can be checked against the file. Three conditions were scored red against an output that reads
+fluent and confident, including one (CE-4 D editorial) where the end state looks right and the reasoning is
+absent — recorded as red rather than rounded up. Had the output merely echoed the request, CE-6 B and CE-6 C
+would have been red too, since neither the Saltmarsh conflict nor the Tinder falsification is mentioned in
+`request.md`.
 
 The first attempted pre-revision run is void and must never be scored. Its output was written inside the
 live checkout at
@@ -231,32 +282,23 @@ session, which remains a non-blocking gap in that separate repository.
 
 ## Next action
 
-Restoration and re-verification are **already done** — see Latest material result. The recovery brief's
-remaining asks are therefore reduced to the two facts it wanted for the record, plus the clean rerun.
+**Codex — assess the pre-revision observation.** All twelve conditions are scored above with a line
+reference each, the four isolation facts were rechecked and hold, and the observation stayed inside its
+bounds: the synthetic task was not executed, the candidate was not edited, no Slice B evidence was created
+and the void output was not scored. The unit stops here as briefed.
 
-**Operator — two things.**
+The progression question for Codex is the width of the Family 2 insertion. The red set is three conditions
+sharing one cause (what an approval binds to), against nine already green without instruction. Whether S4
+revises to the demonstrated floor or to the planned Family 2 ceiling is Codex's call, not Claude's — it is
+recorded above as an observation, deliberately not acted on.
 
-1. **State two facts for the void-run record** (neither blocks the rerun): whether the frozen prompt was
-   pasted unchanged, and the mistaken working directory, or `unknown within the live checkout` if not known.
-2. **Drive the clean rerun.** Open a fresh Codex thread whose actual working directory is the absolute path
-   below — this is the single thing that went wrong last time — and paste the frozen prompt recorded above,
-   unchanged. Change nothing in the root before or during the run.
+Two items to carry, neither blocking:
 
-```
-/private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/a3267cbf-8171-49b9-bfd2-690530e9142a/scratchpad/qm-4b19
-```
+1. **The in-repository preservation copy** of the void output at
+   `trials/regression/r-2-void-run-2026-08-03/` is excluded from all scoring and evidence. Codex still has
+   to decide whether it stays as durable custody or is removed in favour of the scratchpad copy alone.
+2. **The green run's baseline** is direct byte comparison against the committed R-2 fixtures. The historical
+   aggregate digest `15289a09…` is unreproducible and must not be used; whatever replaces it should have its
+   exact command written down beside it.
 
-Confirm before pasting that the thread's working directory really is that path and not the `ai-resources`
-checkout. If the run's output lands anywhere under `plans/work-loop-v2-v0.2/`, the rerun is void for the
-same reason as the first and must be stopped rather than scored.
-
-**Then return to Codex first, not to Claude.** Codex records the result and sets `turn: claude`; only then
-does Claude observe the eight seeded subcases. This state stays `turn: operator` until Codex changes it.
-
-**Two Codex decisions are pending** (both in Latest material result, neither blocking the rerun): whether to
-keep the in-repository preservation copy of the void output, and how to re-base the green run's
-"differs only in the candidate" comparison now that the frozen digest is known to be unreproducible.
-
-Carried recovery deferral: the sealed root is in a scratchpad path and should be rerun promptly. Note that
-rebuilding it "from the frozen digest" is **no longer available** as a fallback — the digest cannot be
-reproduced. The available fallback is rebuilding from the committed R-2 fixtures, which are clean at HEAD.
+Carried implementation deferrals, unchanged, as listed above.
