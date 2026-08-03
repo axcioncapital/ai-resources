@@ -2,80 +2,6 @@
 
 > Archive: [session-notes-archive-2026-08.md](session-notes-archive-2026-08.md)
 
-## 2026-08-02 — Session S1-92b
-**Mandate:** Revise the Context Engineering spec once against Codex's review (findings A–H), move it out of the MVP mission folder, and commit — done when: the revised document is committed at `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md` and the session stops for Codex closure review.
-- Out of scope: implementing the capability; opening any Work Loop state file or invoking `/work-loop-v2`; the separate Step 8 v1-retirement review, which is a different undispatched review.
-- Files in scope: logs/session-notes.md, logs/friction-log.md, plans/work-loop-v2-mvp/context-engineering-spec-v0.1.md
-- Stop if: the staging guard blocks the commit again on a footprint it reads as foreign — surface it to the operator rather than overriding.
-- Allowed inputs: plans/work-loop-v2-mvp/step-7-pilot-log.md, plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md, logs/missions/work-loop-v2-mvp.md
-- Required outputs: plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md
-
-**Work:** Commit the once-revised Context Engineering spec (post-MVP Work Loop v0.2), then stop for Codex closure review
-
-## 2026-08-02 — Session S2-384
-**Mandate:** Revise the Context Engineering spec a second time, in place, to integrate the operator's settled decision granting Codex direct durable-context writing authority (superseding the consume-only boundary) — done when: `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md` is committed with the expanded authority, the minimum durable source model, and the persistence/transport split integrated, behaviour count still 17, and the session stops for Codex closure review.
-- Out of scope: implementing the capability; editing the Work Loop skill, executable core, or project-planning resources; creating any actual project-context file; writing an implementation plan; creating a second specification; pushing.
-- Files in scope: logs/session-notes.md, plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md, logs/friction-log.md
-- Footprint widened at wrap (2026-08-02): `logs/friction-log.md`'s auto-tracked write-activity log accumulated this session's own edits interleaved with S1-92b's already-uncommitted entries in one undifferentiated diff — the file is auto-tracked, not manually authored, so there is no clean split. Widened rather than overridden, per the staging guard's own remedy; disclosed here, not silently forced through.
-- Stop if: the staging guard reads a foreign footprint — surface it rather than overriding.
-- Allowed inputs: plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md, plans/work-loop-v2-mvp/step-7-pilot-log.md, plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md
-- Required outputs: plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md
-
-**Work:** Work Loop v2 Context Engineering — continue the specification session; triage an incoming Codex review answer.
-
-### Summary
-Three rounds of in-place revision to `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md`, each
-triggered by a Codex-side message relayed by the operator, each committed and stopped for the next
-closure review. Round 1 integrated the operator's settled decision granting Codex direct durable-context
-writing authority — superseding the earlier consume-only boundary — and added §5.7 as the single
-authority point for the durable-source lifecycle. Round 2 applied Codex's full bounded correction set
-(six numbered corrections: authority lifecycle contradiction, persistence-vs-transport, fresh-session
-recovery, objective fidelity/non-prescription, CE-17's proof split, the v0.1-scoped anti-governance
-rule), reading the executable core and the Unit 3 / FP-4 / FP-11 / FP-12 pilot-log evidence before
-editing. Round 3 was a minimal correction pass on four contradictions the operator named directly (CE-5's
-disposition-count evidence, CE-10's persistent-artifact wording, CE-15/§5.7's "not a description of the
-unit" wording, and one incidental CE-9→CE-17 cross-reference). Behaviour count held at 17 across all
-three rounds; stage stayed draft, awaiting operator approval throughout.
-
-### Decisions Made
-- **Round 1 architecture:** Codex named custodian of durable context (author/edit authority), Claude
-  keeps repository verification, implementation, tests, evidence and Git commits. Operator-settled,
-  applied directly.
-- **§5.7 placement.** Appended as a new subsection rather than renumbering §5, to avoid breaking the
-  numeric `§5.1`/`§5.4` references used throughout the behavioural contract. Claude's structural choice,
-  not specified by either input.
-- **The FP-12 rule** ("a commit restriction is not an authoring or decision restriction") was added in
-  Round 2 beyond the review's literal ask, because granting Codex writing authority while keeping commits
-  Claude's recreates the exact trap the pilot hit — Codex declining to close work over a rule that does
-  not exist. Flagged in the round-2 report as an addition.
-- **CE-9's evidence redesigned with a memory-only control** (Round 2), grounded in FP-11's finding that
-  `/prime` preloads the prior session-notes summary, so a naive trial cannot distinguish real recovery
-  from conversational reliance. Not explicitly requested; judged necessary to make the behaviour's
-  evidence able to fail, per the mission's own evidentiary standard.
-- **Round 3 scope discipline:** four surgical edits only, no restructuring — each traced directly to the
-  operator's numbered instruction, diff reviewed before commit to confirm nothing else moved.
-
-### Risky actions
-None. All three commits touched one file only (plus `logs/session-notes.md`); no runtime artifact, no
-Work Loop skill or executable core, no state file. Push remains gated (unpushed locally).
-
-### Findings Declined
-None raised this session — pure specification-revision work against explicit review input, no
-independent findings surfaced outside the instructed correction sets.
-
-Findings: 0 — queued 0, declined 0. 0 + 0 = 0.
-
-### Next Steps
-Await Codex's closure verdict on the current revision (commit `d49b8bd`). If approved, flip the stage
-header from "draft specification — awaiting operator approval" to the approved language and get the
-operator's explicit sign-off before treating anything here as authorizing implementation. If further
-corrections are requested, keep applying them in place in this same file — do not create a `-v2` sibling
-("one file, not two" is load-bearing, per FP-4). Separately: the Work Loop v2 mission's Step 8 v1-retirement
-review brief remains undispatched, untouched this session.
-
-### Open Questions
-None.
-
 ## 2026-08-02 — Session S3-e53
 
 **Mandate:** Make two minimal wording corrections in place to `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md` — extend §1's capability definition and replace §4's standing statement — then review the diff and commit only those two changes — done when: both operator-supplied sentences are present verbatim, all 17 behaviour numbers / version v0.1 / draft status are unchanged, the diff shows only those two corrections, and one commit is landed with its hash reported.
@@ -615,32 +541,62 @@ task-state file; needs a decision from Codex or the operator before S4 can be de
 
 ## 2026-08-03 — Session S2-91a
 
-**Work:** Work Loop v2 Context Engineering — run Claude's turns as Codex hands them over
+**Work:** Work Loop v2 Context Engineering — ran Claude's turns as Codex handed them over, across four units,
+ending in the task's close
 - Files in scope: logs/work-loop/context-engineering-implementation.md, plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md, logs/session-notes.md, logs/friction-log.md, .agents/skills/work-loop-v2/SKILL.md, .claude/commands/work-loop-v2.md, plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md, logs/scripts/work-loop-v2-slice-1.test.sh
 
-Footprint widened mid-session (2026-08-03): the live-seam brief required editing the live skill, the Claude
-command and the executable core, none of which the opening footprint anticipated. The staging tripwire
-blocked the commit until they were declared — correctly, since that is the same shape as concurrent-session
-contamination. All three are pre-existing files this session edited, so they belong in Files in scope rather
-than Required outputs.
+### Summary
+Four Work Loop v2 units run back to back, each with premises checked by inspection before acting: S6 added
+Families 4 and 5 to the isolated candidate (`e938647`); the live-seam unit promoted the completed candidate
+byte-for-byte into `.agents/skills/work-loop-v2/SKILL.md`, deleted the development candidate, and updated the
+executable core and Claude command to invoke the capability (`4f3d6ca`); a hardening unit fixed two stale
+scope labels and the harness allowlist, taking the suite from 147/2 to 149 passed / 0 failed (`daebb0c`); and
+Codex then closed the task to core §4's four-part record — **implemented, not adopted** — reducing the state
+file from 1043 to 84 lines (`8c31f105`). Context Engineering now governs how the Codex side prepares every
+brief in this loop; adoption (S8a's entrypoint classification, the O-3 reading, S8b's behavioural pre/post
+pair) remains explicitly outstanding and unclaimed.
 
-One unit run: **S6 — Families 4 and 5 into the isolated candidate** (commit `e938647`). All five briefed
-premises checked and held, so the unit ran rather than handing back. Candidate
-`ca1ec62a…` → `364107ae…`: a 14-line pure insertion (0 deleted, one hunk) adding the inline plan-alignment
-justification, unit bounding with held-back work named, attributed Codex boundaries and non-prescription
-(Family 4), plus three-way relevance and material-reclassification disclosure (Family 5). Families 1–3 held
-at 27/27 literal clauses; zero Family 6 leakage over the inserted words; live skill unchanged. Implementation
-verification only — no root, no trial, no evidence artifact, per the operator's standing direction to skip
-per-slice trial cycles.
+### Decisions Made
+- **Footprint widened mid-session, twice.** The live-seam brief required editing the live skill, the Claude
+  command and the executable core; the hardening unit then also touched the acceptance harness. Neither was
+  in the opening footprint. The staging tripwire blocked each commit until the footprint was declared —
+  correctly, since an undeclared file mid-commit is the same shape as concurrent-session contamination. Both
+  widenings are disclosed above rather than overridden.
+- **Nine carried implementation deferrals were kept in the closing record rather than dropped.** Codex's
+  closing brief specified four sections and did not list them; core §4 places deferrals in the closing record
+  and core §5 makes an unrecorded deferral a failure. The core was followed and the tension stated in the
+  record rather than resolved silently.
+- **One stale hash in the closing brief was corrected rather than copied.** The brief quoted the live skill
+  at `2f2bcda…`, correct at promotion but superseded when the hardening added two lines; the closing record
+  carries the current `c1360acb…` and says why it differs.
 
-Two judgment calls surfaced to Codex rather than absorbed: Family 4 was **not wholly absent** (line `:65`
-already carried part of CE-10), so the gap was closed in the new block rather than by editing Family 1; and
-§3.5's `plan justification` stop condition — which S5 deferred to Family 4 and Codex agreed belonged there —
-is now stated in the new Family 4 block rather than by amending Family 3's `:79`.
+### Outcome
+(Outcome check skipped — not requested this wrap.)
 
-Carried deferral, now two units old and still unruled: the task-state file is a running log, which core § 4
-forbids. It is past 800 lines with eight stacked result sections. Appending continued rather than deleting
-~730 lines of prior results mid-task, but it is now written into `## Next action` so the next assessment has
-to answer it.
+### Session Value Audit — 80/20 Review
+(Skipped — not requested this wrap.)
 
-`turn: codex`. The loop cannot advance from the Claude side until Codex assesses S6.
+### Risky actions
+One near-irreversible action, bounded and pre-verified: deletion of the development candidate
+`plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md`, required by the approved plan once
+its content landed. `git rm` first refused because the file carried uncommitted local edits; rather than
+force it, the completed content was staged into git's object store (`git add` on the promoted live skill,
+confirmed by `cmp` byte-identical) so it was durably recoverable before the only other copy was removed.
+`git rm -f` then ran only after that re-verification.
+
+### Findings Declined
+None — no new findings surfaced this session beyond what each unit's own state-file result already recorded
+and routed (the carried deferrals above, and the standing adoption-blocker list in the closing record).
+
+Findings: 0 — queued 0, declined 0. 0 + 0 = 0.
+
+### Next Steps
+The task is closed (`turn: operator`); no further Claude unit opens from it. If adoption is to be pursued,
+that is separate work to open deliberately: frame S8a's entrypoint classification, settle the O-3 reading,
+then run S8b's operator-driven behavioural pre/post pair at the real entrypoint. The two follow-up items
+named in the closing record — Work Loop v1's wire-or-retire decision, and any smaller cleanup — are not yet
+scheduled.
+
+### Open Questions
+O-3 — which reading of "every relevant Work Loop entrypoint" governs adoption — is still unsettled and is an
+operator decision, not one this loop can resolve from evidence alone.
