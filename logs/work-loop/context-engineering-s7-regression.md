@@ -1,6 +1,6 @@
 ---
 task: context-engineering-s7-regression
-turn: operator
+turn: codex
 ---
 
 ## Objective and approved scope
@@ -371,16 +371,29 @@ R-2 area stayed read-only.
 
 ## Next action
 
-Operator: before any run, have Claude commit this Unit 2 brief update only, leaving `turn: operator` and all
-fixtures/runtime unchanged. Then drive the accepted instrument against the live Work Loop v2 runtime. For
-R-1 through R-4, create
-one disposable root per case using the recorded future-root recipe and run each request in its own fresh
-Codex thread. For R-5, use one fresh thread and deliver its three frozen messages in order, recording the
-file listing before message one and after message three. Give no run the implementation plan,
-specification, this state file, subcase mapping, expected result or prior output.
+**Operator decision, 2026-08-04: Unit 2 is not run. Close the task.** The operator judged the run-and-
+observation ceremony disproportionate to what it would buy, and declined both the full five-case run and the
+reduced two-case option Claude offered. This is a priorities-and-scope call, which core §1 places with the
+operator.
 
-Preserve each raw Codex output without scoring or editing it. When all five cases and the R-5 before/after
-listing are available, return here and say it is Claude's observation turn; Claude will apply the plan's
-one-line-per-subcase rule, the three-part R-5 observer recipe, the fixture-escape check and the Slice E file
-count, then write `trials/slice-e-evidence.md`. Do not decide O-3, begin S8a, change the fixtures, or claim
-adoption.
+Codex: write the closing record to core §4's four-part shape and hand back for Claude to commit. Three
+things the record needs to be straight about.
+
+1. **The grouped regression did not run, so Phase 2's exit condition is not met.** The plan's §7.1 requires
+   it in full at this boundary. Not running it is a deviation from the approved plan and is recorded as the
+   operator's decision, not absorbed silently.
+2. **Nothing already claimed becomes false.** The closed implementation record already states that Context
+   Engineering is implemented and not adopted, and its limitation 2 already says what is proved is that the
+   instructions are present, bounded and lossless — not that they change behaviour. Skipping the run leaves
+   that exactly as it stands; it adds one more unproved item rather than retracting a proved one.
+3. **The instrument survives and is the task's real output.** R-1…R-5 are built, sealed, answer-key-free and
+   committed (`3e28147`, corrected at `e533463`), with the subcase mapping, the three-part R-5 observer
+   recipe and the root recipe recorded above. Plan §7.5 makes the cases and fixtures the material that
+   outlives the build, so a later session can run them without rebuilding anything.
+
+Carry forward as accepted limitations or deferrals, unchanged: the answer-key scan's exit-status construct;
+the standing question of whether `r-2-void-run-2026-08-03/`'s captured output falls under §4.4's first-line
+rule; and the disposable roots at `/Users/patrik.lindeberg/s7-run/`, outside every repository, which the
+operator may delete at will.
+
+Do not decide O-3, begin S8a, change the fixtures, or claim adoption.
