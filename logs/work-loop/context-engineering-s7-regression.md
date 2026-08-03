@@ -1,6 +1,6 @@
 ---
 task: context-engineering-s7-regression
-turn: codex
+turn: operator
 ---
 
 ## Objective and approved scope
@@ -15,7 +15,9 @@ or begin S8a/S8b. The closed implementation record is
 
 ## Current lane and unit
 
-Standard. S7 readiness, Unit 1 — build the missing grouped-regression fixtures and stop before any run.
+Standard. S7 execution, Unit 2 — run Slice E and the full grouped regression against the accepted fixture
+instrument in operator-driven fresh Codex threads, then hand the raw outputs to Claude for observation and
+recording. The instrument is frozen for the run; no fixture changes are authorised in this unit.
 
 Named reason for the loop: the work spans fixture construction, independent assessment and operator-driven
 runs; the scope must stay bounded to S7; and the instrument must be assessed by someone other than its
@@ -116,6 +118,16 @@ condition.
 Commit the fixture sets, exact harness allowlist addition and this state file; set `turn: codex`; stop.
 
 ## Latest result
+
+### Codex closure verdict on Unit 1
+
+Accepted. Both frozen findings are resolved: R-4 now makes a genuinely Codex-owned, reversible unit
+boundary observable without deciding the back shelf's ultimate project scope; R-5 now counts only added
+context-preparation or governance machinery and explicitly excludes ordinary execution, evidence and Work
+Loop duties. The correction did not break the instrument: the read-only closure check found 44 files, no
+first-line disclaimer misses, no condition-label or answer-key leakage, and no repeated fixture marker
+below line one. The grouped regression itself has not run; this verdict accepts the instrument, not its
+behavioural result.
 
 Inspected (2026-08-03, reissued unit):
 
@@ -360,16 +372,14 @@ R-2 area stayed read-only.
 
 ## Next action
 
-Closure check on the two frozen findings only (core §3): are finding 1 and finding 2 resolved, and did the
-correction break anything? Claude's answers to both, and the commands behind them, are in the result above —
-the verdict is Codex's.
+Operator: drive the accepted instrument against the live Work Loop v2 runtime. For R-1 through R-4, create
+one disposable root per case using the recorded future-root recipe and run each request in its own fresh
+Codex thread. For R-5, use one fresh thread and deliver its three frozen messages in order, recording the
+file listing before message one and after message three. Give no run the implementation plan,
+specification, this state file, subcase mapping, expected result or prior output.
 
-Finding 1 turns on a judgment Codex owns rather than a check Claude can run: whether the back-shelf item is
-genuinely a boundary no authority settles, or whether the plan's "about four thousand accessioned objects"
-reads as an implied exclusion. If it reads that way the correction has not landed, and that is the menu in
-core §3, not a second round.
-
-Anything else noticed at the closure check is a deferral rather than a second correction. Two are already
-recorded: the answer-key scan's exit-status construct, and the standing question of whether
-`r-2-void-run-2026-08-03/`'s captured output falls under §4.4's first-line rule. Slice E,
-`slice-e-evidence.md`, disposable roots, behaviour scoring and S8a all remain outside this task and unopened.
+Preserve each raw Codex output without scoring or editing it. When all five cases and the R-5 before/after
+listing are available, return here and say it is Claude's observation turn; Claude will apply the plan's
+one-line-per-subcase rule, the three-part R-5 observer recipe, the fixture-escape check and the Slice E file
+count, then write `trials/slice-e-evidence.md`. Do not decide O-3, begin S8a, change the fixtures, or claim
+adoption.
