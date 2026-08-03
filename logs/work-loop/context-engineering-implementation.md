@@ -33,9 +33,14 @@ this unit records the observation only and must remain separate from that work.
    implementation commit `3855947` and closing-state commit `a0ae384` are separate.
 3. `plans/work-loop-v2-v0.2/context-engineering/trials/shadow-slice-record.md` is absent — searched at
    that exact path — and no genuine-unit change is present in this repository.
-4. Claude's explicit verdict is: **yes, the candidate-produced brief was sufficient**; it asked nothing
-   back, no premise failed, correct work began without guessing, and the unit finished in one pass with no
-   correction round.
+4. The operator's direct 2026-08-03 relay of the genuine `axcion-systems-builder` session supplies the
+   missing source account: **"Was the candidate-produced brief sufficient? Yes. I asked nothing back. No
+   premise failed. I went from reading the brief to running the first inspection with no gap I had to guess
+   across, and the unit finished in one pass with no correction round."** Treat this as an attributed
+   quotation of that session, not as a repository-derived fact. Codex's live task exchange independently
+   shows zero operator context-assembly actions between the initial objective and Claude beginning correct
+   work: the only operator actions were stating the objective and triggering Claude, both excluded by the
+   metric. Later manual Codex↔Claude turn-carrying remains integration friction, not context assembly.
 
 **Scope:** create only `plans/work-loop-v2-v0.2/context-engineering/trials/shadow-slice-record.md` and
 update this canonical state. Record the genuine objective and task path; both Systems Builder commits;
@@ -70,39 +75,60 @@ would require altering the genuine unit or candidate.
 
 ## Latest material result
 
-Inspected (2026-08-03):
+Inspected (2026-08-03), all four revised premises re-checked from scratch:
 
 - Claim (1): HOLDS — ran `shasum -a 256` on
   `plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md`; the digest is
   `5b3f591b9525bc2046494184e9968bf6f46735ad78f0c01c2c78cb4cb6896679`, identical to the stated hash.
-- Claim (2): HOLDS — read `projects/axcion-systems-builder/logs/work-loop/crm-derived-answer-authority.md`
-  in full; it carries exactly the four closing fields (Outcome, Decisions that matter, Evidence, Accepted
-  limitations) and no active-task field. In that repository `git show --no-patch 3855947 a0ae384` resolves
-  two distinct objects — `385594769bc138e10e317a6c4ba9f5393a957a09`, the implementation commit touching
-  five sandbox files plus the state file, and `a0ae38499215ea25ae01d3d5f02181c88a5d7599`, the closing
-  record — adjacent in `git log` and different in purpose.
-- Claim (3): HOLDS — `ls` of the exact path
-  `plans/work-loop-v2-v0.2/context-engineering/trials/shadow-slice-record.md` returns "No such file or
-  directory"; `ls logs/work-loop/` in this repository lists no `crm-derived-answer-authority.md`, and
-  `git status --short` shows no genuine-unit path present here.
-- Claim (4): FALSE — Claude's explicit sufficiency verdict is not recorded anywhere it can be quoted from.
-  Searched, and all five surfaces are negative: (a) both work-loop state files; (b) `grep -rn -i` across
-  the whole workspace, `--include=*.md --include=*.json --include=*.txt`, for `brief was sufficient`,
-  `sufficiency verdict`, `usability verdict`, `shadow slice` and `shadow-slice` — zero hits outside this
-  state file itself; (c) `projects/axcion-systems-builder/logs/session-notes.md`, whose last entry is
-  dated 2026-08-01, so the 2026-08-03 genuine-unit session was never wrapped; (d) that repository's
-  `logs/runs/`, whose newest manifest is `2026-07-31-S8-0c9.json` — no 2026-08-03 run; (e) its
-  `logs/scratchpads/`, whose newest file is `2026-08-01-00-00-scratchpad.md`. The only text carrying the
-  verdict is this state file's own § Brief premise 4 and its previous § Latest material result.
+- Claim (2): HOLDS — `grep -n "^## "` on
+  `projects/axcion-systems-builder/logs/work-loop/crm-derived-answer-authority.md` returns exactly four
+  headings: Outcome, Decisions that matter, Evidence, Accepted limitations — the closing shape, with no
+  active-task field. In that repository `git show --no-patch` resolves `3855947` and `a0ae384` to two
+  distinct objects, `385594769bc138e10e317a6c4ba9f5393a957a09` (implementation, 09:55:07 +0300) and
+  `a0ae38499215ea25ae01d3d5f02181c88a5d7599` (closing state, 10:01:20 +0300), different in purpose.
+- Claim (3): HOLDS — before writing, `ls` of the exact path
+  `plans/work-loop-v2-v0.2/context-engineering/trials/shadow-slice-record.md` returned "No such file or
+  directory"; `ls logs/work-loop/` here lists no `crm-derived-answer-authority.md`, and `git status --short`
+  showed no genuine-unit path present in this repository.
+- Claim (4): HOLDS — read the revised premise in this file: the sufficiency quotation is present verbatim,
+  attributed to the operator's direct 2026-08-03 relay of the genuine `axcion-systems-builder` session, and
+  explicitly labelled not-repository-derived. The premise no longer asserts a repository fact, so it is
+  checked as what it now is — a named, attributed source. Three of the quotation's five assertions are
+  independently corroborated against the repository and two are not; the split is recorded in § 3 of the
+  shadow record rather than smoothed over.
 
-**Three of premise 4's four sub-claims do verify independently, and are recorded here as established
-facts** so the next round does not re-derive them: *no premise failed* — the genuine unit's state file at
-`3855947` records all five of its claims as HOLDS with `## Unresolved blocker` reading `None`; *it asked
-nothing back* — no hand-back commit exists and the file's entire history is implementation then closure;
-*one pass with no correction round* — `a0ae384`'s message states it and no correction commit exists.
+Result: S3b is complete. `plans/work-loop-v2-v0.2/context-engineering/trials/shadow-slice-record.md` was
+created and carries all seven required elements — the genuine objective and task path; both Systems Builder
+commits; the sufficiency verdict quoted verbatim with its provenance named; the ask-back count of 0 and the
+operator-context-assembly count of 0, each with its derivation and each labelled repository-derived or
+attributed; the four negative usability findings as S4–S7 constraints, every one with the attempt that found
+it; the explicit isolated-shadow-proof statement; and the manual Codex↔Claude turn-carrying disclosed
+separately as integration friction. The record states in § 1 that it does not prove CE-17 clause 3 or
+integrated delivery.
 
-Result: S3b did not begin. `trials/shadow-slice-record.md` was not created, and no file outside this state
-file was changed in this repository.
+Evidence, and how each part can fail:
+
+1. **Ask-back count = 0, repository-derived.** `git log -- logs/work-loop/crm-derived-answer-authority.md`
+   in `axcion-systems-builder` returns exactly two commits, `3855947` then `a0ae384`. A hand-back requires a
+   committed state-file change setting `turn: codex` with a non-empty blocker; none exists, and the file at
+   `3855947` carries `## Unresolved blocker: None`. **Fails if** one hand-back commit exists, or that blocker
+   is non-empty. Before the unit ran, this check had never been made — the count was asserted, not derived.
+2. **Operator-context-assembly count = 0, attributed.** Not repository-derived; carried on Codex's live task
+   exchange and labelled as such in § 4 of the record. **This one cannot fail against the repository**, and
+   the record says so in its own § 4 and § 8 rather than presenting it as verified.
+3. **All four negative findings traced, not just one.** Each cites the line that produced it: finding 1 →
+   brief line 40 versus claim 3 at line 46, the two additions in Claude's Claim (3) at line 96, ratified in
+   the closing record line 16; finding 2 → the appended-§12 reasoning at line 100, closing record line 14;
+   finding 3 → required outcome 4 at line 31, the unanswerable question at line 189; finding 4 → evidence
+   requirement 4 at line 81 versus the disclosed whole-tree hit at line 144, closing record line 19.
+   **Fails if** any cited line does not say what the finding claims.
+4. **Real unit and shadow record separated by repository and purpose.** The real unit's commits are in
+   `axcion-systems-builder` and change the CRM sandbox; this record's commits are in `ai-resources` and
+   change only an observation record and this state file. No commit spans both repositories. **Fails if** a
+   sandbox path appears in this repository's commit, or a genuine-unit file was revised.
+5. **Candidate unchanged, footprint minimal.** The hash above is unchanged after the unit, and this unit's
+   commit contains exactly two paths — the shadow record and this file. **Fails if** `git show --stat` on
+   that commit lists a third path, or the hash differs from the pre-unit value.
 
 Carried implementation deferrals, unchanged: candidate-marker wording in plan §7; the plan header's stale
 O-1 wording; F-10's stale specification line count; S1's range-based scope check not copied into its
@@ -110,47 +136,21 @@ scenario file; plan line 573's stale historical framing; the header's historical
 `Assessment status: unassessed` wording; removal of obsolete `wl-root-7f3a` after operator confirmation;
 and recording the S3 green task reference if it becomes available.
 
-## Unresolved blocker
-
-Premise 4 is not established, and with it the brief's first evidence requirement — "quote the explicit
-sufficiency verdict" — cannot be produced.
-
-What is missing is the load-bearing part: Claude's own explicit statement that the candidate-produced brief
-was sufficient. It is in neither repository, on the five surfaces searched above. The only text carrying it
-is this file, written from the operator's relay of a session that was never wrapped.
-
-Quoting that text would make the shadow record cite, as its central evidence, the same assertion the record
-exists to establish. Under core § 6 rule 5 such a check passes whatever happened in the genuine session, so
-it is not evidence. Writing it anyway would ship S3b's headline finding — *the candidate produces a usable
-brief* — resting on a circular quotation, which is the specific failure S3b was designed to detect.
-
-The same defect affects one of the two counts the record must carry. The ask-back count of 0 **is**
-repository-derivable, and is derived above. The operator-context-assembly count of 0 is not: it is a claim
-about what the operator did between stating the objective and Claude beginning work, and no repository
-surface records it. Premise 4's remaining sub-claim, *correct work began without guessing*, is in the same
-class — a judgment only the running session could make.
-
 ## Next action
 
-Codex: decide how the genuine session's account enters the record so the shadow record can quote a source
-other than this file. Two resolutions are available and both are cheap.
+Codex: assess S3b against the brief's evidence requirements and decide — close, correct once, or stop. Then
+brief S4 if S3b closes.
 
-1. The operator supplies the verdict, the operator-action count and the without-guessing judgment as that
-   session gave them, and Codex writes them into this file **attributed as a quotation of the 2026-08-03
-   `axcion-systems-builder` session** — a relayed quotation with a named source, rather than an assertion.
-2. That session is wrapped in `axcion-systems-builder`, putting its own account into that repository's
-   `logs/session-notes.md`, and the shadow record quotes that entry.
+Three things are worth weighing specifically. First, whether § 3's provenance table — three of the
+quotation's five assertions corroborated, two attributed only — is the right way to carry a relayed source,
+or whether it concedes too much for a usability finding to rest on. Second, whether § 4's honest statement
+that the operator-context-assembly count cannot fail against the repository weakens the record below what S4
+can build on, given that it is Codex's own observation and no repository surface can hold it. Third, whether
+the four findings in § 5 are correctly scoped as constraints for S4–S7 rather than as defects in the
+candidate itself — the record asserts the former and flags in § 8 that the call is Codex's.
 
-Resolution 2 is the stronger one: it is the session's own words, in its own repository, written by the
-party that holds the facts — and it also closes the missing 2026-08-03 session record this check surfaced.
-Resolution 1 is acceptable if that session's context is gone; it is weaker because the operator is
-relaying, not the session speaking, but a named relayed source is still not circular.
-
-Whichever is chosen, all three unverifiable items should be resolved together — the verdict, the
-operator-context-assembly count, and the without-guessing judgment. They fail for one reason and fixing
-them one at a time would cost three rounds.
-
-**Deferral, recorded and not done** (core § 5): the 2026-08-03 `axcion-systems-builder` session left no
-`session-notes.md` entry, no `logs/runs/` manifest and no scratchpad. That is a wrap gap in a different
-repository, outside this unit's scope and outside this repository's boundary, so it was not fixed here.
-Resolution 2 above would close it as a side effect.
+**Deferral, recorded and not done** (core § 5): the 2026-08-03 `axcion-systems-builder` session was never
+wrapped — that repository has no `session-notes.md` entry, no `logs/runs/` manifest and no scratchpad for
+the day. That is why § 3's verdict is a relay rather than the session's own words, and it is the single
+change that would most strengthen this record. It is a wrap gap in a different repository, outside this
+unit's scope and this repository's boundary, so it was not fixed here.
