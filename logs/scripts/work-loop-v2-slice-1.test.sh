@@ -431,7 +431,9 @@ KNOWN_WORKLOOP_FILES="fixture-slice1-codex.md fixture-slice1-false.md fixture-sl
 fixture-slice2-correction.md fixture-slice2-foreign.md fixture-slice2-fresh.md \
 fixture-slice2-menu.md fixture-slice3-close.md fixture-slice3-deescalate.md \
 fixture-slice3-deferral.md fixture-slice3-limits.md fixture-step6-admission.md \
-fixture-target-2.md fixture-target.md"
+fixture-target-2.md fixture-target.md \
+context-engineering-implementation.md context-engineering-implementation-plan.md \
+foreign-staging-target-repo.md"
 
 unexpected_worklog_files() {
   local f

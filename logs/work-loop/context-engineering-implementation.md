@@ -13,55 +13,108 @@ Governing specification: `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.
 by the operator on 2026-08-02 against `e1ce895b3da1387bae7ce50623afc3875cb050ba`.
 
 ## Current lane and unit
-Standard. Common Work Loop v2 live integration — implemented, awaiting assessment. Families 1–6 now live in
-`.agents/skills/work-loop-v2/SKILL.md`; the development candidate is deleted; the executable core and the
-Claude command consume the engineered brief. Implementation verification only: no behavioural trial was run
-and adoption is not claimed.
+Standard. Post-landing hardening — complete, awaiting assessment. Both stale scope labels and the harness
+allowlist are fixed; the harness is green at 149 passed / 0 failed. Adoption is not claimed.
 
 Named reason for the implementation loop: the work spans multiple sessions, its scope must remain bounded
 across S1–S12, and each result needs assessment by someone other than its builder before progression.
 
 ## Brief
-Land Context Engineering into the common live Work Loop v2 seam. This is implementation, not another
-candidate trial: build no disposable root, invoke no Codex thread, create no slice evidence artifact, and
-add no operator handoff.
+Harden the landed common Work Loop v2 integration with two direct fixes. Build no root, invoke no Codex
+thread, create no evidence artifact, and add no operator handoff.
 
 **Required outcome:**
 
-1. Inspect the cumulative candidate against CE-15 and CE-16. CE-15's one-brief/two-audiences contract is
-   already carried in Family 1; do not duplicate it. Add only the missing operational CE-16 rule, if it is
-   not already complete: routine invocations create no context file, discovery log, run record or session
-   note; all duties stay inside prepare / brief / assess / escalate; durable maintenance is limited to
-   optional operator source material, one canonical plan and the existing current-state interface, and
-   only when material understanding actually changes. Add no machinery or artifact kind.
-2. Promote the completed candidate into `.agents/skills/work-loop-v2/SKILL.md` without semantic loss.
-   Compare the bytes before removing `trials/candidate/`; then delete that development candidate as the
-   approved plan requires once its content has landed.
-3. Update `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` only where the shared contract must
-   invoke the capability before plan-dependent continuation: orientation must proportionately recover the
-   governing durable sources and current unit rather than rely on conversation, and the brief contract must
-   carry the engineered semantic interface without expanding the five-field state ceiling.
-4. Inspect `.claude/commands/work-loop-v2.md`. Change it only if consuming the richer brief requires a
-   real adjustment; otherwise record why its existing premise-check and hand-back path already consumes it.
+1. Update the stale `Scope of this version` statement at the end of
+   `.agents/skills/work-loop-v2/SKILL.md` so it accurately covers the existing Work Loop duties plus the
+   now-live Context Engineering behaviour. Keep it concise; do not restate the six families.
+2. Update the stale scope statement near the top of `.claude/commands/work-loop-v2.md` so it accurately
+   describes the current Claude-side command without claiming that Claude performs Codex's Context
+   Engineering judgments.
+3. Repair `logs/scripts/work-loop-v2-slice-1.test.sh` only at its exact-file allowlist so the three
+   legitimate committed Work Loop state files identified in the accepted integration result no longer
+   register as foreign. Add only those exact paths; do not weaken the assertion, broaden the pattern, or
+   change any other test behaviour.
 
-This unit covers the common v2 seam required under either O-3 reading. Do not touch Work Loop v1; its scope
-remains operator-owned and unresolved. Preserve Direct Work admission, false-premise refusal, correction
-discipline, task identity, turn handling, and Claude's commit ownership.
+Preserve every landed Context Engineering clause, the core changes, Direct Work admission, false-premise
+refusal, state shape, transport, and v1. Add no file or runtime machinery.
 
-**Hard boundaries:** add no delivery file, queue, handoff document, context-QC pass, alignment gate, review
-stage, state field, second state system, plan copy, log, archive, registry, turn mechanism or other durable
-artifact. Do not edit the governing specification, implementation plan, fixtures, prior outputs or roots.
+**Verification:** show the exact three bounded diffs; rerun the harness and require 149 passed / 0 failed;
+confirm the live skill still contains all six family blocks and the core diff is untouched; confirm no new
+file exists. This is ordinary implementation hardening, not a behavioural trial or adoption claim.
 
-**Verification:** report the candidate's final pre-promotion hash and the live skill's matching post-
-promotion hash; map CE-15/16 and the core orientation/brief duties to the landed text; show the exact diffs
-for every changed runtime file; confirm the state ceiling and transport shape are unchanged; run existing
-non-operator checks that exercise Direct Work, false-premise refusal and state shape where available, and
-report any pre-existing failure separately. This is implementation verification, not a new behavioural
-trial or adoption claim.
-
-Commit the runtime changes, candidate removal and this state file, set `turn: codex`, and stop.
+Commit the three fixes and this state file, set `turn: codex`, and stop.
 
 ## Latest material result
+
+### Post-landing hardening — two scope labels and the harness allowlist (2026-08-03)
+
+Inspected (2026-08-03):
+- Claim (1): HOLDS — searched `.agents/skills/work-loop-v2/SKILL.md` for its closing scope statement; found
+  `## Scope of this version` at `:156` reading *"Slices 1–3: opening a unit with a brief…"* with no mention
+  of Context Engineering, so the label is stale against the six family blocks now in the same file.
+- Claim (2): HOLDS — searched `.claude/commands/work-loop-v2.md` for its scope statement; found at `:15`
+  *"**Scope of this version — Slices 1–3, Claude side.**…"*, likewise silent on the now-live capability.
+- Claim (3): HOLDS — searched `logs/scripts/work-loop-v2-slice-1.test.sh` for the allowlist; found
+  `KNOWN_WORKLOOP_FILES` at `:430–434`, an exact-filename closed set of 14 entries consumed by
+  `unexpected_worklog_files()` at `:436` through a `case` match. The comment at `:429` states the intended
+  repair mechanism outright — *"Adding a fixture means adding it here — that friction is the point"* — so
+  extending the list is the sanctioned fix rather than a workaround.
+- Claim (4): HOLDS — the three unlisted files are legitimate committed state files, not strays. Ran
+  `git ls-files --error-unmatch` and `git log --diff-filter=A` on each: `context-engineering-implementation.md`
+  tracked, added in `26b6bfe`; `context-engineering-implementation-plan.md` tracked, added in `ab28c66`;
+  `foreign-staging-target-repo.md` tracked, added in `f2f1992`. Checked rather than assumed, because the
+  assertion exists precisely to catch files that are *not* deliberate.
+- Claim (5): HOLDS — searched `.agents/skills/work-loop-v2/SKILL.md` for `^### ` headings; found **6**, the
+  full family set, before the edit. `git status --short` on
+  `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` returned empty.
+
+Result: all three fixes applied and the harness is green at **149 passed / 0 failed**, the exact figure the
+brief required. The live skill and command now describe what they actually carry, and the harness recognises
+the three committed state files without its guard being weakened. No Context Engineering clause, core
+change, admission rule, transport shape or v1 file was touched, and no file was created.
+
+Evidence:
+
+- **Three bounded diffs, and nothing else changed.** `git diff --numstat` across exactly the three briefed
+  paths returns **2/0**, **2/0** and **3/1** — 7 added, 1 deleted in total. The single deleted line is the
+  allowlist's old final line, replaced because the list gained a continuation. **Fails if** a fourth path
+  appears in the working tree or any count grows.
+- **The scope labels now match the artifacts.** The skill gains one sentence — *"Context Engineering is live
+  in the sections above, and governs how you prepare that one brief…"* — which names the capability's role
+  without restating the six families, as briefed. The command gains one sentence drawing the side boundary
+  explicitly: *"This command **consumes** the engineered brief — checking its claims against the repository
+  and acting on it — and never performs Codex's preparation, authority or selection judgments itself."*
+  Both are pure additions; the existing Slices 1–3 sentences are untouched in both files.
+- **The allowlist was widened, not weakened — and this is proven by making the guard fail on demand.** The
+  diff touches only the `KNOWN_WORKLOOP_FILES` string: grepping the harness diff for `case`, `esac`,
+  `check `, `grep -q` and `*)` returns **nothing**, so the matcher and both assertions are byte-unchanged,
+  and `unexpected_worklog_files` still appears 3 times exactly as before. Then the guard was tested live:
+  writing one stray `logs/work-loop/zz-stray-probe.md` drops the harness to **147 passed / 2 failed** with
+  precisely the two assertions this unit repaired — *"no state file was opened for the direct request"* and
+  *"every task-state file present is one this build created deliberately"* — and deleting the probe returns
+  it to **149 / 0**. The closed set is still closed; it simply has three more legitimate members. **Fails
+  if** the probe run stays green, which would mean the guard had been disabled rather than extended.
+- **Nothing else moved.** Six `### ` family blocks still present in the live skill. The executable core is
+  clean against `HEAD` — it appears in no diff. `git status --short` shows **no untracked file**, so nothing
+  was created. The 147 assertions that were green before this unit are still green inside the 149.
+
+No deferral is recorded for this unit — all three briefed items were completed, and nothing adjacent was
+noticed that would need one. The standing limits are unchanged and still outside this brief: **S8a has not
+run, O-3 is unsettled, and S8b's behavioural pre/post pair has not been produced, so adoption remains
+unclaimed.**
+
+### Codex assessment — live v2 integration accepted (2026-08-03)
+
+The common v2 seam landing is accepted at the implementation-verification bar. CE-15 was already present;
+the added CE-16 block completes Family 6 at the right width. The live skill was promoted losslessly, the
+core invokes durable-source orientation and the engineered brief without changing the state ceiling, and
+the command's Step 2 locator fix is necessary because the old literal heading no longer exists.
+
+The acceptance harness proves Direct Work, false-premise refusal and state shape unchanged at 147 passed /
+2 pre-existing allowlist failures. O-3, v1 coverage and behavioural adoption proof remain unresolved, so
+the implementation is live but no adoption claim is made. The only implementation hardening now owed is
+the two stale scope labels and the exact allowlist repair.
 
 ### Context Engineering landed in the live Work Loop v2 seam (2026-08-03)
 
@@ -978,22 +1031,13 @@ session, which remains a non-blocking gap in that separate repository.
 
 ## Next action
 
-Codex: assess the live seam landing at the implementation-verification bar. The live skill is
-`2f2bcdaabb778ef3ad0c6313aa4fd8daef7208900a28152d1ca1782ceec0cc8a`, promoted byte-identical from the final
-candidate (same hash, `cmp` clean, 42 added / 0 deleted against the old live file); the candidate is
-deleted; core and command changed by 9/2 and 1/1 lines; **zero new files**; the harness is unchanged at
-147 passed / 2 failures proven pre-existing against a clean `HEAD` worktree.
+Codex: assess the hardening unit. All three briefed fixes are applied as bounded diffs (2/0, 2/0, 3/1); the
+harness is green at **149 passed / 0 failed**; the allowlist guard was proven still able to fail by seeding
+a stray state file and watching it drop to 147/2, then recover. Six family blocks intact, core untouched, no
+new file.
 
-Three things need a verdict:
-
-1. Whether the CE-16 wording completes Family 6 at the right width, given CE-15 was already carried and was
-   deliberately not duplicated.
-2. Whether the command's Step 2 locator fix was the right minimal adjustment or overreach — the old locator
-   pointed at a `Check against the repository:` heading that the engineered brief produces zero times, which
-   could silently skip core § 6 rule 1.
-3. How to sequence what this unit deliberately did **not** do: S8a's entrypoint classification, the O-3
-   decision, and S8b's behavioural pre/post pair. All three still gate any adoption claim, and none is made
-   here.
-
-The two stale "Scope of this version" lines (live skill's closing line, command `:15`) are the smallest
-useful follow-up unit.
+With this, every implementation item the plan assigns to Claude for the common v2 seam is done. What remains
+is not Claude's to start: **S8a's entrypoint classification, the O-3 decision, and S8b's behavioural pre/post
+pair** — the first needs framing, the second is an operator decision, and the third needs the operator
+driving a fresh Codex thread. Decide which comes next and whether this task should now close its
+implementation phase, since the code is live and only adoption evidence is outstanding.

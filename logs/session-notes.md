@@ -616,7 +616,7 @@ task-state file; needs a decision from Codex or the operator before S4 can be de
 ## 2026-08-03 — Session S2-91a
 
 **Work:** Work Loop v2 Context Engineering — run Claude's turns as Codex hands them over
-- Files in scope: logs/work-loop/context-engineering-implementation.md, plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md, logs/session-notes.md, logs/friction-log.md, .agents/skills/work-loop-v2/SKILL.md, .claude/commands/work-loop-v2.md, plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md
+- Files in scope: logs/work-loop/context-engineering-implementation.md, plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md, logs/session-notes.md, logs/friction-log.md, .agents/skills/work-loop-v2/SKILL.md, .claude/commands/work-loop-v2.md, plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md, logs/scripts/work-loop-v2-slice-1.test.sh
 
 Footprint widened mid-session (2026-08-03): the live-seam brief required editing the live skill, the Claude
 command and the executable core, none of which the opening footprint anticipated. The staging tripwire
