@@ -353,6 +353,25 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 13:31 — logs/session-notes.md
+- 13:25 — logs/work-loop/context-engineering-implementation.md
+- 13:25 — logs/work-loop/context-engineering-implementation.md
+- 13:25 — logs/work-loop/context-engineering-implementation.md
+- 13:25 — logs/work-loop/context-engineering-implementation.md
+- 13:23 — plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md
+- 13:20 — logs/scratchpads/2026-08-03-13-19-scratchpad.md
+- 13:01 — logs/work-loop/context-engineering-implementation.md
+- 13:00 — logs/work-loop/context-engineering-implementation.md
+- 12:59 — plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md
+- 12:53 — logs/session-notes.md
+- 12:52 — logs/work-loop/context-engineering-implementation.md
+- 12:52 — logs/work-loop/context-engineering-implementation.md
+- 12:51 — logs/work-loop/context-engineering-implementation.md
+- 12:49 — plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md
+- 12:42 — logs/session-notes.md
+- 12:40 — logs/work-loop/context-engineering-implementation.md
+- 12:40 — logs/work-loop/context-engineering-implementation.md
+- 12:39 — logs/work-loop/context-engineering-implementation.md
 - 11:57 — logs/session-notes.md
 - 11:53 — logs/session-notes.md
 - 11:53 — logs/scratchpads/2026-08-03-11-55-scratchpad.md

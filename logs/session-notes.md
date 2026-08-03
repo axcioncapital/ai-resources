@@ -612,3 +612,29 @@ S4's plan-stated exit condition ("all three behaviours demonstrated red-then-gre
 as written — 7 of the 12 seeded conditions (all of CE-5 and CE-6) came back baseline green with no
 revision needed, and plan §4.4 forbids the only ways to force a red result there. Flagged in the
 task-state file; needs a decision from Codex or the operator before S4 can be declared complete.
+
+## 2026-08-03 — Session S2-91a
+
+**Work:** Work Loop v2 Context Engineering — run Claude's turns as Codex hands them over
+- Files in scope: logs/work-loop/context-engineering-implementation.md, plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md, logs/session-notes.md, logs/friction-log.md
+
+One unit run: **S6 — Families 4 and 5 into the isolated candidate** (commit `e938647`). All five briefed
+premises checked and held, so the unit ran rather than handing back. Candidate
+`ca1ec62a…` → `364107ae…`: a 14-line pure insertion (0 deleted, one hunk) adding the inline plan-alignment
+justification, unit bounding with held-back work named, attributed Codex boundaries and non-prescription
+(Family 4), plus three-way relevance and material-reclassification disclosure (Family 5). Families 1–3 held
+at 27/27 literal clauses; zero Family 6 leakage over the inserted words; live skill unchanged. Implementation
+verification only — no root, no trial, no evidence artifact, per the operator's standing direction to skip
+per-slice trial cycles.
+
+Two judgment calls surfaced to Codex rather than absorbed: Family 4 was **not wholly absent** (line `:65`
+already carried part of CE-10), so the gap was closed in the new block rather than by editing Family 1; and
+§3.5's `plan justification` stop condition — which S5 deferred to Family 4 and Codex agreed belonged there —
+is now stated in the new Family 4 block rather than by amending Family 3's `:79`.
+
+Carried deferral, now two units old and still unruled: the task-state file is a running log, which core § 4
+forbids. It is past 800 lines with eight stacked result sections. Appending continued rather than deleting
+~730 lines of prior results mid-task, but it is now written into `## Next action` so the next assessment has
+to answer it.
+
+`turn: codex`. The loop cannot advance from the Claude side until Codex assesses S6.
