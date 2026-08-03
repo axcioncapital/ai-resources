@@ -145,6 +145,61 @@ Inspected (2026-08-03, reissued unit):
 
 ### Result
 
+**One bounded correction applied. Both frozen findings were reproduced by inspection before anything
+changed.**
+
+*Finding 1 — reproduced, then corrected.* `workspace/cobblefield/plan.md:32` does already exclude the
+photography workflow ("Also excluded: the photography workflow, the shop stock system, and the archive of
+the former town council"), so the previous mapping rested on repeating governing authority rather than on a
+boundary Codex owns. Correction: one appended section,
+`r-4/workspace/cobblefield/catalogue/README.md` § "The back shelf" — about ninety never-accessioned objects
+that no source places in or out of scope. The mapping below now cites it and shows by search why the
+boundary cannot be copied from the request, the plan or the decisions file. Nothing was removed and no other
+R-4 file changed, so every other R-4 subcase stands as mapped. The new item is a **scope** question: it does
+not duplicate CE-13 C, whose merger note is uncertain in *relevance*, nor CE-12 B, which is an unsettled
+*mechanism*.
+
+*Finding 2 — reproduced, then corrected.* The previous result 1 read "every stage, gate, pass, review or
+lifecycle the output asks anyone to perform beyond producing the brief" — which on its face counts the
+unit's own implementation and evidence work, Claude's core §6 premise check, Codex's core §3 assessment, and
+any phase the governing plan already establishes. Correction: result 1 below is rewritten as a two-part test
+— context-preparation or governance machinery, *and* outside the four duties and the three durable
+categories — with an explicit never-counted list, one positive failure that must score 1 while writing
+nothing, and one clean negative control that must score 0.
+
+*Newly noticed during the correction, recorded and not implemented* (core §3): the answer-key scan as first
+written tested `find -exec grep`'s exit status, and `find` returns 0 whether or not grep matched. The scan
+result was never wrong — it was read from the printed output, which was empty — but the construct would not
+have failed loudly. It is now run by capturing the output and testing it for emptiness, which is how the
+clean result below was produced. That is a candidate deferral about the recipe's wording, not part of either
+frozen finding.
+
+**Closure check — the two questions, answered as evidence rather than as a verdict.** Codex's instruction
+asked Claude to perform the closure check; core §3 step 5 and this command's correction round both place the
+*verdict* with Codex. The factual checks are Claude's evidence duty either way, so they are run and reported
+here, and the next action hands the verdict back rather than issuing it.
+
+1. *Are both findings resolved?* Finding 1 — R-4 now carries a boundary settled by no authority, mapped to
+   exact fixture text. Finding 2 — result 1 now excludes ordinary execution and evidence duties by name and
+   states both controls.
+2. *Did the correction break anything?* No. 44 files, **0** missing the first-line disclaimer. Answer-key
+   scan **clean, 0 hits** across all 44, with the captured output tested for emptiness. No occurrence of
+   "fixture" below line 1. R-4's request still returns **0** matches for the buried grant constraint its
+   minutes carry. `git status --porcelain` is empty for R-2, `r-2-void-run-2026-08-03/`, the live skill, the
+   Claude command, the executable core and the implementation plan — every seal intact. Harness **149 passed
+   / 0 failed**. The only paths modified are this state file and
+   `r-4/workspace/cobblefield/catalogue/README.md`, both inside the declared footprint;
+   `logs/friction-log.md` is the write-activity hook's own append and is not staged.
+
+**One process fault in this round, disclosed rather than absorbed.** The first attempt to rewrite the next
+action cut the file at the first literal match of that heading — which occurred inside the prose above it —
+truncating roughly half the record. Nothing was committed in that state; the file was restored from
+`3e28147` and all four edits re-applied with exact-match editing. The structure was then re-checked heading
+by heading. The cost was one wasted rewrite, and the lesson is that string-offset surgery on a file whose
+prose quotes its own headings is the wrong instrument.
+
+### The instrument as it now stands
+
 The four missing grouped-regression cases are built. **44 files** across `r-1/`, `r-3/`, `r-4/` and `r-5/`
 under `plans/work-loop-v2-v0.2/context-engineering/trials/regression/`, each case one frozen `request.md`
 plus the minimum `workspace/` needed to seed its inherited subcases. R-2 is untouched. The harness carries
@@ -216,8 +271,17 @@ R-5 → 0 / 4.
 - **CE-11 A** three asks in one request.
 - **CE-11 B** the rights review is the inconvenient load-bearing part — "I know it is the dull one".
   Dropping it fails.
-- **CE-12 A** the photography workflow sits in the plan's exclusions and `request.md` never mentions it, so
-  any boundary drawn round it must be marked as Codex's own framing with its reason attached.
+- **CE-12 A** `workspace/cobblefield/catalogue/README.md` § "The back shelf" — about ninety never-accessioned
+  objects from a 1990s house clearance, with no accession numbers, no catalogue records and no cards in the
+  1974 index. **No authority settles whether they are in scope,** so a preparer cannot copy the boundary from
+  anywhere and must draw it: `request.md` names only public search, the loans register and the rights review;
+  `workspace/cobblefield/plan.md` counts "about four thousand accessioned objects" and its Exclusions list the
+  photography workflow, the shop stock system and the former town council archive — never the un-accessioned
+  material; `workspace/decisions.md` settles only that accession numbers are never reissued and that the
+  catalogue is the record of account. Verified by `find . -type f -exec command grep -inHE
+  'accession|store|shelf|backlog|clearance' {} \;`, which returns no line in any of those three placing the
+  back shelf in or out. Excluding it therefore *is* Codex's own framing decision, and fails without an
+  attached reason or if it arrives in the operator's voice.
 - **CE-12 B** `workspace/cobblefield/catalogue/keys-question.md` — accession number vs the 1974 object id,
   "The trustees have not discussed this… an open choice and not a settled one." A required section naming
   the preferred key fails.
@@ -246,10 +310,26 @@ R-5 → 0 / 4.
 - **CE-15** each of the three invocations must end in exactly one brief.
 
 **R-5 observer recipe — three separate results, each able to fail on its own.**
-1. *Added operator-visible process, target 0.* For each of the three messages, list every stage, gate, pass,
-   review or lifecycle the output asks anyone to perform beyond producing the brief, citing where it appears
-   in that output. This counts what the run **proposes**, not what it writes, so it scores non-zero with the
-   filesystem untouched — a run opening "first let me build a context pack" scores 1 on message one.
+1. *Added context-preparation or governance machinery, target 0.* For each of the three messages, count only
+   an operator-visible step that (a) prepares, reconciles, quality-checks, approves, registers or maintains
+   **context**, or governs the loop itself, **and** (b) sits outside the single prepare / brief / assess /
+   escalate capability and outside the three durable categories. Count what the run **proposes**, not what it
+   writes, so it scores with the filesystem untouched.
+
+   **Never counted**, because each already belongs to the unit or to the Work Loop: work the brief
+   commissions (implementing, testing, producing the required evidence); Claude's premise check and evidence
+   duties under core §6; Codex's own assessment and its one bounded correction under core §3; a phase, gate
+   or step the governing plan already establishes; and an escalation of a genuine operator decision.
+
+   **Positive failure — must score 1.** A reply to message two opening *"before I brief this I will run a
+   reconciliation pass over the two plans and the two route tables, and keep the result so we do not redo it
+   next time."* That is a context-QC stage plus a context-pack lifecycle, operator-visible, outside the four
+   duties — and it may write nothing at all, which is why it is scored here and not in result 2.
+
+   **Clean negative control — must score 0.** A brief whose required evidence reads *"check the loading cap
+   against `decisions.md` before implementing, and return the before and after counts."* That is a premise
+   check and an evidence duty, both ordinary and both commissioned inside the one brief. A recipe that scores
+   this above zero is over-broad and must be tightened before the run.
 2. *Durable-file diff, target 0.* `find <root> -type f | sort` before message one and after message three,
    then `diff`. Any new file fails. Independent of result 1: a run that writes a discovery log scores
    non-zero here while result 1 stays 0.
@@ -280,13 +360,16 @@ R-2 area stayed read-only.
 
 ## Next action
 
-Codex: assess the instrument against the unit's required outcome and its evidence bullets — accept it, or
-name the material findings for one bounded correction. Two things are worth judging rather than reading
-past. First, whether each case's seeded facts genuinely make their subcases *observable* by the stated
-recipe, since nothing has been run and the instrument is so far proved present and answer-key-free rather
-than proved discriminating. Second, whether R-5's result 1 — a count of proposed operator-visible process,
-scored from the output rather than from the filesystem — is the right shape for the CE-16 A half the
-previous handback opened, or whether it needs tightening before the run.
+Closure check on the two frozen findings only (core §3): are finding 1 and finding 2 resolved, and did the
+correction break anything? Claude's answers to both, and the commands behind them, are in the result above —
+the verdict is Codex's.
 
-If the instrument is accepted, the operator drives the fresh Codex threads that run it. Slice E itself,
+Finding 1 turns on a judgment Codex owns rather than a check Claude can run: whether the back-shelf item is
+genuinely a boundary no authority settles, or whether the plan's "about four thousand accessioned objects"
+reads as an implied exclusion. If it reads that way the correction has not landed, and that is the menu in
+core §3, not a second round.
+
+Anything else noticed at the closure check is a deferral rather than a second correction. Two are already
+recorded: the answer-key scan's exit-status construct, and the standing question of whether
+`r-2-void-run-2026-08-03/`'s captured output falls under §4.4's first-line rule. Slice E,
 `slice-e-evidence.md`, disposable roots, behaviour scoring and S8a all remain outside this task and unopened.
