@@ -1,6 +1,6 @@
 ---
 task: context-engineering-implementation
-turn: operator
+turn: codex
 ---
 
 ## Objective and approved scope
@@ -13,61 +13,141 @@ Governing specification: `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.
 by the operator on 2026-08-02 against `e1ce895b3da1387bae7ce50623afc3875cb050ba`.
 
 ## Current lane and unit
-Standard. S4 Slice B, one bounded correction. The green observation is accepted at 1 caused green,
-1 still red, 10 retained baseline green and 0 regressions. The frozen finding is CE-4 C only.
+Standard. Phase 2 direct candidate implementation, S5 Family 3. The operator cancelled the additional
+S4 closure run and directed implementation to proceed without another per-slice trial cycle.
 
 Named reason for the implementation loop: the work spans multiple sessions, its scope must remain bounded
 across S1–S12, and each result needs assessment by someone other than its builder before progression.
 
 ## Brief
-The green observation is accepted. This is the one correction round: correct CE-4 C in the isolated
-candidate, then build a sealed closure-check root for the operator-driven Codex run. Do not revise the
-instrument, close S4, create another evidence artifact, touch the live skill, or begin S5.
+Continue implementation in the isolated candidate. Do not run the unused S4 closure root. Do not build a
+new root, run Codex, create a slice evidence file, or add another operator handoff.
 
-**Assessment that controls this correction:** CE-4 C is a candidate defect, not a specification-
-observability defect. Spec CE-4 C and plan S4 both name an approval that identifies only a file as a
-failing shape on that fact alone; the green output then positively called Millrace's outcomes approved.
-The instrument distinguished the result cleanly. The candidate's generic content-bound sentence was
-present but did not control classification.
+**Required outcome:** add Family 3 to
+`plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md`, preserving the candidate's existing
+structure and Families 1–2. Implement only the governing behaviour from specification §3.5, §5.7 Current
+state, and CE-7–CE-9:
 
-**Required outcome:** make the smallest generic edit inside the existing Family 2 block of
-`plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md` that operationalises content-bound
-approval during source classification. Before a plan or its outcomes may be described as approved, the
-approval record must identify the content approved. An approval naming only a mutable file establishes no
-approved content: do not promote the file's contents to governing authority, invent a binding, or resolve
-the defect silently; surface the missing content identity as non-governing or unknown. Keep this generic —
-do not mention Millrace, the fixture, CE-4 C, or an expected trial answer in the candidate.
+1. Load-bearing repository assertions leave in the brief as claims to check, naming the file or searched
+   surface and the pattern or expected evidence. They are not presented as facts; a false claim is a valid
+   handoff because Claude's inspection settles it.
+2. Every absence claim names both the searched surface and the pattern used. Nothing beyond that search
+   boundary is asserted.
+3. Discovery starts from the operator objective and supplied material, the approved plan, authoritative
+   current state, and directly named artifacts. Expansion is allowed only for a load-bearing claim, an
+   explicit dependency, an authority conflict, or a cited reference; each expansion is traceable to its
+   reason. Stop once the brief can be written, otherwise return the remaining load-bearing unknown as a
+   discovery unit or genuine escalation. Do not scan unrelated history or adjacent systems.
+4. Fresh-session recovery stays inside the same preparation pass and proportionately recovers the current
+   operator request, governing plan, applicable approved workflows, authoritative current state, settled
+   decisions, unresolved blockers, and next justified unit. Conversation may locate sources but cannot
+   establish authority or current state. If current state is missing, do not invent continuity or create a
+   second state system; derive only what governing sources and verified repository evidence support.
 
-Preserve the rest of Family 2, all earlier candidate behaviour and the existing structure. Do not add a
-new section, a new artifact, a checklist, a second pass, or any Family 3–6 instruction. The edit is to the
-isolated candidate only; the live `.agents/skills/work-loop-v2/SKILL.md` remains untouched.
+Keep the wording operational and compact. Add no new artifact, state field, checklist, preparation stage,
+review pass, or Family 4–6 behaviour. Do not alter the live skill, executable core, specification, plan,
+fixtures, prior outputs, or disposable roots.
 
-**Build the closure-check root:** after validating the candidate edit, build one new meaninglessly named
-17-file disposable root outside the checkout from the frozen R-2 `request.md` and `workspace/`, the same
-executable-core bytes, and the corrected candidate only. Include no prior output, state, specification,
-plan, evidence, live skill or answer key. Direct recursive comparison with the accepted green root at
-`/private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/f5125412-c379-44fc-87c5-8ade343a2a68/scratchpad/tv-8c37`
-must report only the candidate difference and that the accepted root alone contains `logs/`.
+**Verification:** report the exact candidate diff and resulting hash; map each of the four requirements
+above to the candidate wording; confirm Families 1–2 remain intact and no Family 4–6 instruction entered.
+This is implementation verification only, not another behavioural trial.
 
-**Evidence capable of failing:** report the corrected candidate hash; a diff against candidate
-`4f925d00bce39f708c6c66ca19ed883b01c25cade0a3ddbe51c51e2edcb0646a` showing the exact hunk and no
-unrelated change; map the corrected words to the frozen finding; show that all pre-existing Family 2
-clauses remain; scan the added words for fixture-specific or later-family leakage; verify 17 files in the
-new root; verify all 15 frozen request/workspace files and the executable core byte-for-byte; and record
-the exact direct-comparison command and its complete output.
-
-**Handoff:** commit the corrected candidate and this state file, set `turn: operator`, and put the new root's
-absolute path plus the same unchanged launch prompt into `## Next action`. Do not run Codex. The closure
-check after that run asks only whether CE-4 C is resolved and whether the correction broke any of the other
-eleven conditions.
-
-**Stop conditions:** stop and set `turn: codex` if the correction needs fixture-specific wording, changes
-anything outside the existing Family 2 block, weakens another Family 2 clause, enters a later family, or the
-new root differs from its accepted source beyond the candidate and expected absent output. S4's exit-
-sentence conflict remains deferred until the closure evidence exists; do not use it to block this correction
-or to declare S4 complete.
+Commit the candidate and this state file, set `turn: codex`, and stop. Do not create or run a trial.
 
 ## Latest material result
+
+### S5 Family 3 implemented in the isolated candidate (2026-08-03)
+
+Inspected (2026-08-03):
+- Claim (1): HOLDS — searched `plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md` for
+  its SHA-256; found `54a32c9b336743615a8652be0e5e36e351e1bc477e82c6fa5aecb62169bdb6b3`, the committed
+  CE-4 C correction, and `git status --short` on that path returns empty, so the starting point is the
+  committed bytes.
+- Claim (2): HOLDS — searched the candidate for the Family 1 and Family 2 headings; found
+  `### Prepare once; write one brief for two audiences` at `:59` and
+  `### Keep authority semantic, content-bound, and explicit` at `:67`. Both blocks intact before the edit.
+- Claim (3): HOLDS — searched `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md` for the briefed
+  sources; found §3.5 at `:225`, §5.7 at `:424`, Family 3 at `:650`, CE-7 at `:652`, CE-8 at `:658`,
+  CE-9 at `:663`. Each states the behaviour the brief's four requirements summarise; the summaries are
+  accurate against the source text, checked clause by clause.
+- Claim (4): HOLDS — searched `.agents/skills/work-loop-v2/SKILL.md` for its SHA-256; found
+  `956c76f37230fb2a6b4d1605afecdcb4edd64a5828803464c29a0c9689720868`, unchanged, and re-hashed after the
+  edit to the same value.
+- **Material finding, surfaced rather than absorbed** — searched the whole candidate for CE-7/CE-8/CE-9
+  vocabulary (`claims to check`, `checkable claims`, `absence claim`, `name the surface`, `pattern`,
+  `expansion`, `discovery unit`, `fresh thread`, `current state`, `relevance`); **Family 3 was not wholly
+  absent.** Line `:52` already carried *"State premises as checkable claims"* and *"Write absence claims to
+  core § 6 rule 3: name the surface."* The brief never claimed absence, so this is not a false premise —
+  but it is load-bearing two ways. First, `:52` says **name the surface** only, while CE-8 `:658` requires
+  the searched surface **and the pattern**; that gap is real and is what the new wording closes. Second,
+  `:52` sits inside Family 1's block, and the brief requires Families 1–2 be preserved — so the gap was
+  closed by the new Family 3 block stating both, not by editing `:52`. No wording is duplicated between
+  them.
+
+Result: Family 3 added to the isolated candidate as one new `### Mark what must be verified, and bound what
+you go looking at` block, matching the one-subsection-per-family pattern Family 1 (`:59`) and Family 2
+(`:67`) already follow. Resulting candidate SHA-256
+`ca1ec62ae9d7171afd44dfd5b8b22bb67220a8d81ed8dd6b397556093f3ab0eb`. The live skill, executable core,
+specification, plan, fixtures, prior outputs and both disposable roots are untouched; no root was built, no
+trial run, no evidence artifact created.
+
+Evidence:
+
+- **Diff shape.** `git diff --numstat` reports **8 added, 0 deleted**, in **one hunk** at `@@ -74,0 +75,8 @@`,
+  immediately after Family 2's closing sentence. **Zero deleted lines** across the whole file, so this is a
+  pure insertion by measurement: every one of the 132 pre-existing lines survives byte-identical, and the
+  file goes 132 → 140 lines. **Fails if** the deleted-line count is non-zero or a second hunk appears.
+- **Requirement-to-wording map**, each of the brief's four requirements to the sentence carrying it:
+
+  | Brief requirement | Candidate wording | Source |
+  |---|---|---|
+  | 1 · Assertions leave as claims to check, naming surface and pattern; not facts; a false claim is a valid handoff | "Leave every load-bearing repository assertion in the brief as a claim for Claude to check, naming the file or searched surface and the pattern or evidence that settles it. Do not state it as fact… A claim that turns out false is a valid outcome rather than a defect in the brief, because Claude's inspection is what settles it." | CE-7 `:652–657` |
+  | 2 · Absence claims name surface **and** pattern; nothing asserted beyond | "Every absence claim names both the searched surface and the pattern used, and asserts nothing beyond that boundary." | CE-8 `:658–661`, CE-9 `:668` |
+  | 3 · Discovery starting set; four expansion reasons, each traceable; stop condition; no unrelated scanning | "Start from the operator objective and any supplied material, the approved plan, authoritative current state, and directly named artifacts. Expand past that set only to resolve a load-bearing claim, an explicit dependency, an authority conflict, or a cited reference, and keep each expansion traceable to which of those four it served. Stop once the brief can state its outcome, governing sources, boundary, exclusions, verification claims, required evidence and completion condition; where a load-bearing unknown remains, return it as a discovery unit or a genuine escalation… Do not scan unrelated history, archives or adjacent systems." | §3.5 `:225–241`, all five points |
+  | 4 · Fresh-session recovery inside the same pass; seven items; conversation cannot establish authority; missing current state | "A fresh thread recovers its bearings inside this same preparation pass, never as a stage of its own: proportionately re-establish the current operator request, the governing plan, applicable approved workflows, authoritative current state, material settled decisions, unresolved blockers, and the next justified unit. Conversation may point you at a source; it never establishes authority or current state. Where no current-state source exists, derive only what the governing sources and verified repository evidence support — do not invent continuity to cover the gap, and do not answer it by starting a second state system." | CE-9 fresh-session clause `:673–700`, §5.7 category 3 `:436–438` |
+
+  All seven recovery items are present and in the spec's order; all four expansion reasons are present and
+  named exactly. **Fails if** any requirement maps to no sentence, or a sentence maps to no requirement.
+- **Families 1–2 intact.** 23 literal clauses spanning both blocks searched by exact string: **23 PRESENT /
+  0 MISSING**, including every Family 2 clause and the CE-4 C correction sentence added last unit. Nothing
+  was reworded, reordered or weakened. **Fails if** any count is non-zero.
+- **Family 4–6 leakage scan over the inserted words only** — searched surface is the 8 added lines, because
+  the claim is about what entered. 23 CE-10…CE-16 patterns (`plan-alignment`, `alignment justification`,
+  `held back`, `narrow`, `attributed`, `technical preference`, `three-way`, `relevance-gated`, `reclassif`,
+  `disclos`, `compression`, `per-run`, `persistent artifact`, `new artifact`, `handoff artifact`,
+  `two audiences`, `word count`, `length`, `section order`, `template`, `ledger`, …): **zero hits.**
+  Fixture and trial-state terms (eight tool names, both persona names, `CE-n`, `Family n`, `S-n`, `R-2`,
+  `baseline green`, `caused green`): **zero hits.** **Fails if** any pattern hits.
+- **Near-miss terms run down rather than waved through.** Four terms in the added words sit close to other
+  families and each traces to a Family 3 source: `boundary` ×2 is CE-9 `:668`'s *"recorded search boundary"*,
+  a search bound, not CE-11/CE-12's unit boundary; `exclusions` ×1 and `discovery unit` ×1 and `escalation`
+  ×1 come from §3.5 point 4's own stop-condition list and CE-9's remainder rule; `second state system` ×1 is
+  CE-9 failing case C's literal wording and §5.7 category 3, not CE-16's persistent-artifact prohibition.
+  **One deliberate omission, disclosed:** §3.5 point 4's stop list includes *"plan justification"*, which I
+  left out because it is CE-10 — Family 4 — and the brief excludes Family 4–6 behaviour. **Judgment
+  recorded for Codex to overrule** if the stop condition is meant to carry it now.
+
+**Two deferrals, recorded and not done** (core § 5):
+
+1. **This state file is a running log, which core § 4 forbids.** `## Latest material result` now holds seven
+   stacked dated `###` sections and the file is 640+ lines; core § 4 is explicit that the field holds *"what
+   actually happened last — not a history"* and that *"a running log makes the reader work out what is true
+   now, and it grows without limit."* The `/work-loop-v2` command's Step 5 says to replace the previous
+   result rather than append. **I appended anyway, and say so plainly:** replacing would delete ~570 lines
+   of prior results mid-task, which this brief did not ask for and which Codex may still need for
+   assessment. Not my call to make silently — Codex decides whether to prune, and when.
+2. **Line `:52`'s absence rule is weaker than CE-8** — it says *name the surface*, where CE-8 requires the
+   surface and the pattern. The new Family 3 block states the full rule, so the candidate is correct as a
+   whole, but the Family 1 sentence remains individually incomplete. Left alone because the brief requires
+   Families 1–2 be preserved. Worth a decision when Family 1 is next open.
+
+### Operator direction — stop the S4 closure cycle and proceed (2026-08-03)
+
+The operator cancelled the additional sealed-root closure run and directed implementation to proceed.
+The unused root at `.../scratchpad/hr-5d02` must not be run. Claude's committed CE-4 C correction at
+candidate hash `54a32c9b336743615a8652be0e5e36e351e1bc477e82c6fa5aecb62169bdb6b3` is retained as implementation;
+no additional behavioural-proof claim is made for it. Work advances directly to Family 3 in the isolated
+candidate, without a per-slice trial or evidence artifact.
 
 ### CE-4 C correction applied and validated; closure-check root built (2026-08-03)
 
@@ -638,42 +718,17 @@ session, which remains a non-blocking gap in that separate repository.
 
 ## Next action
 
-**Operator: run the closure check.** Open a fresh Codex thread whose working directory is exactly:
+Codex: assess the Family 3 implementation above. Three things need your call, none of which Claude took:
 
-```
-/private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/91a88dea-d6d0-4a70-ae0d-547b35194edc/scratchpad/hr-5d02
-```
+1. **The `plan justification` omission.** §3.5's stop list includes it; I left it out as CE-10 / Family 4
+   behaviour, which this brief excludes. Confirm or overrule.
+2. **The two deferrals** — this state file has become a running log against core § 4, and Family 1's `:52`
+   absence rule is weaker than CE-8. Neither was acted on. Decide whether either becomes work.
+3. **Progression** — whether S5 Family 3 is complete on implementation verification alone, given the
+   operator's direction that no per-slice trial runs.
 
-**Before pasting, confirm the listing shows no `logs/`, `audits/` or `skills/` directory at the top level.**
-That check is the one that would have caught the voided first attempt: the correct root shows exactly
-`request.md`, `workspace/`, `.agents/` and `plans/`, and nothing else.
-
-Then paste the prompt below **unchanged** — it is the same launch prompt used for the pre-revision and green
-runs, and it names no behaviour, no expected disposition and no trial state. Changing a word breaks
-comparability with both accepted runs.
-
-```
-You are the Codex side of the Work Loop.
-
-Read `.agents/skills/work-loop-v2/SKILL.md` and the contract it points you to before your
-first move.
-
-Everything is under this directory. The operator's request is in `request.md`. Their
-workspace is in `workspace/`.
-
-Handle the request as your skill tells you to.
-```
-
-**After the run, return to Codex first — not to Claude.** Codex records the result and sets `turn: claude`
-for the closure observation. Going straight to Claude leaves this file at `turn: operator` with no valid
-move, which is the protocol step the earlier handoff skipped.
-
-The closure check asks only two questions: is CE-4 C resolved, and did the correction break any of the
-other eleven conditions. S4 stays open — its exit-sentence conflict with plan §4.4 is still unresolved and
-is not settled by this run.
-
-Claude's completed turn: briefed claims rechecked by execution; the CE-4 C correction applied as one
-inserted sentence inside the existing Family 2 block (`54a32c9b…`), proved pure by reconstruction; all 17
-pre-existing Family 2 clauses verified present; leakage scans clean; the 17-file closure-check root built
-and verified against frozen R-2 and the accepted green root; candidate and state file committed;
-`turn: operator` set.
+Claude's completed turn: brief premises checked by inspection (four hold, plus one material finding that
+Family 3 was partly present at `:52`); Family 3 added as one 8-line pure insertion, candidate now
+`ca1ec62ae9d7171afd44dfd5b8b22bb67220a8d81ed8dd6b397556093f3ab0eb`; all four requirements mapped to wording;
+Families 1–2 verified intact at 23/23 clauses; Family 4–6 and fixture leakage scans zero; candidate and state
+file committed. No root built, no trial run, no evidence artifact created, live skill untouched.
