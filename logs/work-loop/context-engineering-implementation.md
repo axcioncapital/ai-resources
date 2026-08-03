@@ -13,9 +13,8 @@ Governing specification: `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.
 by the operator on 2026-08-02 against `e1ce895b3da1387bae7ce50623afc3875cb050ba`.
 
 ## Current lane and unit
-Standard. S4 Slice B, pre-revision observation. The clean sealed-root run is valid: its filesystem isolation
-checks pass and the operator confirmed the frozen launch prompt was pasted unchanged with nothing added.
-Claude now scores every seeded condition before any candidate revision.
+Standard. S4 Slice B, one bounded correction to the pre-revision observation. The clean run remains valid;
+only the CE-4 D editorial verdict and the resulting revision-width conclusion are frozen for correction.
 
 Named reason for the implementation loop: the work spans multiple sessions, its scope must remain bounded
 across S1–S12, and each result needs assessment by someone other than its builder before progression.
@@ -40,6 +39,17 @@ the canonical state update, and stop.
 
 ## Latest material result
 
+Codex assessment: the isolation evidence and eleven condition verdicts are accepted. CE-4 D editorial is
+mis-scored: the output carried Oxbow's editorially revised approved plan as governing, which is the
+specification's observable success condition; explicit reasoning about editoriality is not separately
+required. The correct aggregate is therefore 10 baseline green and 2 red (CE-4 C and CE-4 D material).
+
+The observation's suggested choice between an approval-binding-only insertion and full Family 2 also
+conflicts with the approved plan. Plan §4.4 requires baseline-green behaviours to be retained without causal
+overclaim, while S4's candidate-change contract requires the candidate to gain all of Family 2. The revision
+must therefore carry full Family 2, claim causality only for the two red conditions, and show no regression
+for the ten baseline-green conditions.
+
 The clean sealed-root run produced
 `logs/work-loop/shared-output-timestamp-format.md` inside the disposable root, with `turn: claude` and
 SHA-256 `66f9ef114e052461cc6dd0201c1bd03f3834ad36dae5eec1558f14bb0162a2ab`. The root now has 18 files:
@@ -58,15 +68,17 @@ Rechecked before scoring, all four as briefed: output hash
 `workspace/` byte-equal to restored R-2 at 0 of 15 differing. The produced output is the only file written
 since construction, so it is the only difference. The output was inspected, never executed.
 
-**Result: 9 baseline green, 3 red. Every red falls inside CE-4, and specifically inside what an approval
-binds to.** Line numbers below refer to the produced output.
+**Result: 10 baseline green, 2 red — CE-4 C and CE-4 D material. Both reds fall inside CE-4, and
+specifically inside what an approval binds to.** Line numbers below refer to the produced output.
+*(Corrected once, finding 1: CE-4 D editorial was first scored red and is reclassified baseline green —
+see the correction note below the table.)*
 
 | Condition | Verdict | What the output did |
 |---|---|---|
 | CE-4 A | **green** | Named the 2026-07-30 decision as superseding Fernpath's approved outcome 3 (`:31`), required the JSON-only path be kept and the CSV outcome not revived (`:25`), and made the postdating a claim to recheck (`:41`) |
 | CE-4 B | **green** | Called Kestrel's proposal unapproved and "not a settled operator decision" (`:33`), kept its status as prepared for review (`:27`), and barred marking an unapproved document approved (`:24`) |
 | CE-4 C | **red** | Millrace's approval names the file and no content — the one defective approval shape in the set. The output never distinguishes it, grouping Millrace with Fernpath, Oxbow and Saltmarsh as ordinary approved plans (`:34`). The generic guard "approved plans remain approved only to the extent their own text says" (`:27`) does not fire, because Millrace's own text says "this file" |
-| CE-4 D · editorial | **red** | Oxbow's 2026-06-11 revision note is never examined. The disposition reached — Oxbow still approved — is correct, but by omission rather than by judging the revision editorial. **Red by non-exercise, with a correct-looking outcome:** a Family 2 rule aimed at this must not disturb the result Oxbow already gets |
+| CE-4 D · editorial | **green** | The output carries Oxbow — approved, then editorially revised without the approval line being touched — as governing (`:34`, `:9`). That is the pass condition exactly as written: spec `:611` "an editorial correction that does not change meaning may retain approved status", spec `:617` and plan `:793` both making the test *which document is carried as governing*, not whether editoriality is reasoned about aloud |
 | CE-4 D · material | **red** | Pinfold's acceptance condition was materially revised after approval (outcome 1 extended, deadline moved 05:30 → 07:00), and its approval binds only to the text "as they stood on that date". The output cites that revised section as "Pinfold's approved acceptance condition" (`:32`) and makes it load-bearing for the mandatory-offset contract (`:23`), without noticing the approval no longer covers it |
 | CE-5 · contractor imperative | **green** | Ivo's "Claude must add…" identified as having "no Dana approval" (`:35`), the filename change excluded (`:11`), and its approval status made checkable (`:42`) |
 | CE-5 · preserved source material | **green** | Separated Dana preserving the call excerpt from Dana deciding it; labelled the UTC-only idea "explicitly exploratory" (`:35`) and excluded UTC-only normalization (`:11`) |
@@ -76,26 +88,42 @@ binds to.** Line numbers below refer to the produced output.
 | CE-6 B | **green** | Detected both Saltmarsh documents, named the exact disagreements (cadence, batching), found the later rollout "does not claim approval" and so refused to treat it as supersession (`:9`, `:34`), left the conflict unresolved as out of scope, and made "which Saltmarsh plan governs" a claim to check (`:42`) |
 | CE-6 C | **green** | Caught the falsified premise against repository evidence — the plan claims ISO-8601 already, the captured sample's first column is epoch seconds (`:32`) — separated the false premise from the approved intent, which it retained, preserved the sample as evidence, and required the epoch-second claim be reconfirmed (`:41`) |
 
-**What this run establishes, stated at the width the evidence supports.** The candidate carries no Family 2
-instruction — confirmed earlier by search, not by hash — and nonetheless produced correct behaviour on 9 of
-12 conditions. The three failures are not scattered: CE-4 C, CE-4 D editorial and CE-4 D material all turn
-on the same missing idea, that an approval binds to identified content at a moment in time, so a file-only
-approval identifies nothing and a post-approval material edit escapes its approval. CE-4 A and CE-4 B, which
-need only "later dated decision wins" and "unapproved is not binding", were already green without
-instruction.
+**Correction applied (finding 1), and why the first verdict was wrong.** CE-4 D editorial was scored red for
+the absence of explicit reasoning about editoriality. No source requires that reasoning. Spec `:611` says an
+editorial correction that does not change meaning *may retain approved status*; spec `:617` sets the test as
+"a brief that carries the editorially-edited plan as governing and the materially-edited plan as draft
+passes"; plan `:793` repeats it as "*Passes* if the editorial one stays governing and the material one
+returns to draft". All three make the observable a **disposition**, not an articulated rationale. The
+original verdict imposed a bar the specification does not set, which is scoring against a private standard
+rather than the contract — the same class of error the observation is supposed to catch, found here by
+Codex rather than by Claude. Codex's three supporting claims were each checked against the documents before
+this correction was applied, and each holds.
 
-**Consequence for the revision, recorded as an observation and not as a decision** (the revision is not this
-unit's to make): the red set is narrower than S4's Family 2 boundary. A Family 2 insertion sized to all of
-CE-4/5/6 would be adding instruction for nine behaviours that already work, against S3b constraint 3's
-requirement of a checkable floor and a ceiling. The demonstrated floor here is approval-binding.
+**What this run establishes, stated at the width the evidence supports.** The candidate carries no Family 2
+instruction — confirmed earlier by search, not by hash — and nonetheless produced correct behaviour on 10 of
+12 conditions. The two failures are not scattered: CE-4 C and CE-4 D material turn on the same missing idea,
+that an approval binds to identified content at a moment in time, so a file-only approval identifies nothing
+and a post-approval material edit escapes its approval. CE-4 A and CE-4 B, which need only "later dated
+decision wins" and "unapproved is not binding", were already green without instruction.
+
+**The approved progression rule governs what happens next (finding 2).** The earlier suggestion — narrow the
+insertion toward a demonstrated floor — is withdrawn; it conflicted with the plan of record and was not
+Claude's call to propose as a direction. The rule is: **S4 adds full Family 2** (plan `:781` — semantic
+hierarchy, draft-does-not-govern, content-bound approval, material-edit demotion, citation-required
+supersession); **caused green may be claimed only for conditions demonstrated red-then-green**, which is
+CE-4 C and CE-4 D material and nothing else; and **the ten baseline-green conditions are retained as
+no-regression evidence without causal overclaim**. Plan §4.4 `:238–251` is explicit that a clean
+pre-revision pass is baseline evidence rather than contamination, that it may not be relabelled red or
+dropped from the record, and that presenting a baseline green as revision-caused is the precise overclaim
+the rule exists to prevent.
 
 **How this observation could have failed, and did not.** The scoring surface was the produced output only;
-the disposition of each condition was read from what the output says, with a line reference per verdict, so
-any verdict can be checked against the file. Three conditions were scored red against an output that reads
-fluent and confident, including one (CE-4 D editorial) where the end state looks right and the reasoning is
-absent — recorded as red rather than rounded up. Had the output merely echoed the request, CE-6 B and CE-6 C
-would have been red too, since neither the Saltmarsh conflict nor the Tinder falsification is mentioned in
-`request.md`.
+each condition's disposition was read from what the output says, with a line reference per verdict, so every
+verdict can be checked against the file. Two conditions were scored red against an output that reads fluent
+and confident. Had the output merely echoed the request, CE-6 B and CE-6 C would have been red too, since
+neither the Saltmarsh conflict nor the Tinder falsification is mentioned in `request.md`. The observation
+also proved able to fail in the other direction: one of its own verdicts was overturned on assessment, with
+the correcting citations recorded above.
 
 The first attempted pre-revision run is void and must never be scored. Its output was written inside the
 live checkout at
@@ -282,23 +310,29 @@ session, which remains a non-blocking gap in that separate repository.
 
 ## Next action
 
-**Codex — assess the pre-revision observation.** All twelve conditions are scored above with a line
-reference each, the four isolation facts were rechecked and hold, and the observation stayed inside its
-bounds: the synthetic task was not executed, the candidate was not edited, no Slice B evidence was created
-and the void output was not scored. The unit stops here as briefed.
+**Codex — closure check on the one correction.** Both frozen findings are resolved and the correction is
+complete.
 
-The progression question for Codex is the width of the Family 2 insertion. The red set is three conditions
-sharing one cause (what an approval binds to), against nine already green without instruction. Whether S4
-revises to the demonstrated floor or to the planned Family 2 ceiling is Codex's call, not Claude's — it is
-recorded above as an observation, deliberately not acted on.
+- **Finding 1 — resolved.** CE-4 D editorial reads **green**, with the pass condition cited from spec `:611`,
+  spec `:617` and plan `:793`. The aggregate reads 10 baseline green / 2 red at every occurrence; the two
+  reds are CE-4 C and CE-4 D material. A grep for the superseded figures returns no stale statement.
+- **Finding 2 — resolved.** The narrowing suggestion is withdrawn in terms and replaced by the approved
+  progression rule, cited to plan `:781` for the full-Family-2 candidate change and plan §4.4 `:238–251` for
+  baseline-green retention without causal overclaim.
+- **Did the correction break another condition line?** No. The other eleven verdict cells and their
+  reasoning are unedited; the table still carries twelve conditions and now reads 10 green / 2 red, which
+  matches the corrected aggregate. Nothing outside the observation was touched: the candidate is still
+  `5b3f591…`, both roots are unchanged, `trials/slice-b-evidence.md` is still absent, and this state file is
+  the only file in the commit.
 
-Two items to carry, neither blocking:
+**Deferral, recorded and not acted on** (core § 3 — noticed during the closure check, so it does not become a
+second correction round). Plan `:812` states S4's exit as "all three behaviours demonstrated red-then-green".
+With CE-5 and CE-6 both baseline green across all seven of their conditions, that exit cannot be met as
+written, and plan §4.4 `:238–251` forbids the only routes that would meet it — relabelling a baseline green
+as red, or re-running against a tuned scenario. So S4's exit condition and §4.4 now point in opposite
+directions on the same result. This needs a decision from Codex or the operator before S4 can be declared
+complete; it is stated here rather than resolved, and it changes nothing in the observation above.
 
-1. **The in-repository preservation copy** of the void output at
-   `trials/regression/r-2-void-run-2026-08-03/` is excluded from all scoring and evidence. Codex still has
-   to decide whether it stays as durable custody or is removed in favour of the scratchpad copy alone.
-2. **The green run's baseline** is direct byte comparison against the committed R-2 fixtures. The historical
-   aggregate digest `15289a09…` is unreproducible and must not be used; whatever replaces it should have its
-   exact command written down beside it.
-
-Carried implementation deferrals, unchanged, as listed above.
+Carried items, unchanged: the void preservation copy stays excluded pending operator-authorised cleanup;
+the green comparison uses direct byte comparison against committed R-2 fixtures, not the unreproducible
+historical aggregate digest; and the implementation deferrals listed above.
