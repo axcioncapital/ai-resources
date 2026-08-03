@@ -1178,3 +1178,65 @@ granted, and would have created a standing exception to a non-existent prohibiti
 ### Open Questions
 - Whether v0.2 keeps the adversarial review and sheds the bookkeeping. The evidence points there; the
   call is the operator's and is not made here.
+## 2026-08-01 — Session S14-198
+**Mandate:** Make the Work Loop v2 pilot exit decision (Step 7), then execute Step 8 — retirement obligations plus the installation blocker — done when: the exit decision is written into `plans/work-loop-v2-mvp/step-7-pilot-log.md` § Pilot exit condition, Step 8's retirement obligations are executed with the mission's Step 8 thread ticked and evidenced, and the installation blocker has either a landed fix or a written scoped decision on disk.
+- Out of scope: manufacturing pilot condition 5 (the Direct Work bypass) — it must arrive on its own from a genuinely small real fix; the v0.2 redesign question (keep the adversarial review, shed the bookkeeping), which is an open operator question.
+- Files in scope: plans/work-loop-v2-mvp/step-7-pilot-log.md, plans/work-loop-v2-mvp/step-7-v1-retirement-decision.md, plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md, logs/missions/work-loop-v2-mvp.md, .claude/commands/work-loop-v2.md, .agents/skills/work-loop-v2, logs/friction-log.md, logs/next-up.md (widened at wrap — Step 6.6's promotion sweep and the write-activity tracker touched both; operator-confirmed 2026-08-01)
+- Stop if: the pilot exit decision cannot be made from what is already written (surface to the operator rather than deciding it); or the installation contract turns out to need a new subsystem rather than a bounded fix.
+- Mission: work-loop-v2-mvp
+
+**Work:** Continue Work Loop v2 — pilot exit decision (Step 7) then Step 8 retirement obligations and the installation blocker
+
+### Summary
+Continuation of the Work Loop v2 mission after S14-d72's pilot closure. Reconciled the pilot's
+seven-condition summary table against Unit 3's own verdicts (three rows were stale), put the pilot
+exit decision to the operator with the review/bookkeeping split stated plainly, recorded the decision
+("accepted, with a v0.2 rework") and amended the mission's CRM/Email OS acceptance assertion to match
+what the pilot actually ran on. Applied the one-line core fix that caused FP-12. Re-scoped Step 8
+around the decision and wrote — but did not run — the risk-aware Codex review brief the v1 retirement
+is gated on, after verifying the retirement record's premises by execution and finding two things it
+understated.
+
+### Decisions Made
+- **Pilot exit accepted, with a v0.2 rework** (operator) — keep the adversarial review, shed most of
+  the bookkeeping. Direction only; scope not designed. Logged: `logs/decisions.md`.
+- **Acceptance assertion 8 amended** (operator) — the pilot ran on genuine `ai-resources` /
+  `axcion-systems-builder` work, not CRM/Email OS as literally worded; the substance ("genuine, never
+  manufactured") held. Second amendment to this frozen contract. Logged: `logs/decisions.md`.
+- **Step 8 re-scoped, routine**: portable installation deferred to v0.2; regression set held as
+  baseline; post-pilot assessment folded into the exit decision. What remains in Step 8 is the v1
+  retirement alone.
+- **v1 retirement not executed this session** (routine, per the standing gate) — structural change
+  class, gated on one risk-aware Codex review that has not run. Brief written; nothing on disk moved.
+
+### Risky actions
+None — no v1 artifact was moved, edited or archived; the retirement stays behind its review gate.
+
+### Findings Declined
+- *`docs/repo-architecture.md:113` as an unlisted v1 consumer* — raised while premise-checking the
+  retirement record, then re-checked and found to be a v2 reference (`plans/work-loop-v2-mvp/`), not
+  a v1 consumer. Withdrawn before it reached the review brief; recorded there explicitly so a reviewer
+  doesn't "fix" a non-problem. No queue entry — already corrected in-session, no residual risk.
+- *The pilot log's conditions table was stale against Unit 3's own verdicts* — found and fixed
+  in-session (Execution Sequence step 1). No queue entry needed.
+- *FP-12's cause — § 4 and § 3 step 5 not cross-referencing* — found (recorded, not applied, at prior
+  session's closure) and applied in-session. No queue entry needed.
+- *The retirement record's § 3.3 consumer list is presented as exhaustive and is not
+  (`logs/innovation-registry.md:167` missing)* — surfaced directly to the Codex reviewer inside
+  `step-8-v1-retirement-review-brief.md` § 2. Low-stakes documentation completeness gap; no separate
+  queue entry.
+- *`docs/qc-independence.md:25` and `:27` break when v1 is archived* — already tracked as
+  `step-7-v1-retirement-decision.md` § 4 item 4 ("repair the six documentation and routing
+  consumers"); this session's brief sharpens why it matters (§ 3) rather than adding a new obligation.
+  No separate queue entry — would duplicate an existing action item.
+
+### Next Steps
+- Dispatch Codex against `plans/work-loop-v2-mvp/step-8-v1-retirement-review-brief.md` — the only
+  thing blocking Step 8's completion.
+- On that review returning, execute `step-7-v1-retirement-decision.md` § 4's six-item sequence,
+  corrected by whatever the review surfaces.
+- Separately: design the v0.2 rework (post-MVP thread, `logs/missions/work-loop-v2-mvp.md`). Start
+  from condition 5's negative result — the Direct Work bypass never fired in three genuine units.
+
+### Open Questions
+None.

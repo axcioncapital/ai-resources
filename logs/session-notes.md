@@ -2,69 +2,6 @@
 
 > Archive: [session-notes-archive-2026-08.md](session-notes-archive-2026-08.md)
 
-## 2026-08-01 — Session S14-198
-**Mandate:** Make the Work Loop v2 pilot exit decision (Step 7), then execute Step 8 — retirement obligations plus the installation blocker — done when: the exit decision is written into `plans/work-loop-v2-mvp/step-7-pilot-log.md` § Pilot exit condition, Step 8's retirement obligations are executed with the mission's Step 8 thread ticked and evidenced, and the installation blocker has either a landed fix or a written scoped decision on disk.
-- Out of scope: manufacturing pilot condition 5 (the Direct Work bypass) — it must arrive on its own from a genuinely small real fix; the v0.2 redesign question (keep the adversarial review, shed the bookkeeping), which is an open operator question.
-- Files in scope: plans/work-loop-v2-mvp/step-7-pilot-log.md, plans/work-loop-v2-mvp/step-7-v1-retirement-decision.md, plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md, logs/missions/work-loop-v2-mvp.md, .claude/commands/work-loop-v2.md, .agents/skills/work-loop-v2, logs/friction-log.md, logs/next-up.md (widened at wrap — Step 6.6's promotion sweep and the write-activity tracker touched both; operator-confirmed 2026-08-01)
-- Stop if: the pilot exit decision cannot be made from what is already written (surface to the operator rather than deciding it); or the installation contract turns out to need a new subsystem rather than a bounded fix.
-- Mission: work-loop-v2-mvp
-
-**Work:** Continue Work Loop v2 — pilot exit decision (Step 7) then Step 8 retirement obligations and the installation blocker
-
-### Summary
-Continuation of the Work Loop v2 mission after S14-d72's pilot closure. Reconciled the pilot's
-seven-condition summary table against Unit 3's own verdicts (three rows were stale), put the pilot
-exit decision to the operator with the review/bookkeeping split stated plainly, recorded the decision
-("accepted, with a v0.2 rework") and amended the mission's CRM/Email OS acceptance assertion to match
-what the pilot actually ran on. Applied the one-line core fix that caused FP-12. Re-scoped Step 8
-around the decision and wrote — but did not run — the risk-aware Codex review brief the v1 retirement
-is gated on, after verifying the retirement record's premises by execution and finding two things it
-understated.
-
-### Decisions Made
-- **Pilot exit accepted, with a v0.2 rework** (operator) — keep the adversarial review, shed most of
-  the bookkeeping. Direction only; scope not designed. Logged: `logs/decisions.md`.
-- **Acceptance assertion 8 amended** (operator) — the pilot ran on genuine `ai-resources` /
-  `axcion-systems-builder` work, not CRM/Email OS as literally worded; the substance ("genuine, never
-  manufactured") held. Second amendment to this frozen contract. Logged: `logs/decisions.md`.
-- **Step 8 re-scoped, routine**: portable installation deferred to v0.2; regression set held as
-  baseline; post-pilot assessment folded into the exit decision. What remains in Step 8 is the v1
-  retirement alone.
-- **v1 retirement not executed this session** (routine, per the standing gate) — structural change
-  class, gated on one risk-aware Codex review that has not run. Brief written; nothing on disk moved.
-
-### Risky actions
-None — no v1 artifact was moved, edited or archived; the retirement stays behind its review gate.
-
-### Findings Declined
-- *`docs/repo-architecture.md:113` as an unlisted v1 consumer* — raised while premise-checking the
-  retirement record, then re-checked and found to be a v2 reference (`plans/work-loop-v2-mvp/`), not
-  a v1 consumer. Withdrawn before it reached the review brief; recorded there explicitly so a reviewer
-  doesn't "fix" a non-problem. No queue entry — already corrected in-session, no residual risk.
-- *The pilot log's conditions table was stale against Unit 3's own verdicts* — found and fixed
-  in-session (Execution Sequence step 1). No queue entry needed.
-- *FP-12's cause — § 4 and § 3 step 5 not cross-referencing* — found (recorded, not applied, at prior
-  session's closure) and applied in-session. No queue entry needed.
-- *The retirement record's § 3.3 consumer list is presented as exhaustive and is not
-  (`logs/innovation-registry.md:167` missing)* — surfaced directly to the Codex reviewer inside
-  `step-8-v1-retirement-review-brief.md` § 2. Low-stakes documentation completeness gap; no separate
-  queue entry.
-- *`docs/qc-independence.md:25` and `:27` break when v1 is archived* — already tracked as
-  `step-7-v1-retirement-decision.md` § 4 item 4 ("repair the six documentation and routing
-  consumers"); this session's brief sharpens why it matters (§ 3) rather than adding a new obligation.
-  No separate queue entry — would duplicate an existing action item.
-
-### Next Steps
-- Dispatch Codex against `plans/work-loop-v2-mvp/step-8-v1-retirement-review-brief.md` — the only
-  thing blocking Step 8's completion.
-- On that review returning, execute `step-7-v1-retirement-decision.md` § 4's six-item sequence,
-  corrected by whatever the review surfaces.
-- Separately: design the v0.2 rework (post-MVP thread, `logs/missions/work-loop-v2-mvp.md`). Start
-  from condition 5's negative result — the Direct Work bypass never fired in three genuine units.
-
-### Open Questions
-None.
-
 ## 2026-08-02 — Session S1-92b
 **Mandate:** Revise the Context Engineering spec once against Codex's review (findings A–H), move it out of the MVP mission folder, and commit — done when: the revised document is committed at `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md` and the session stops for Codex closure review.
 - Out of scope: implementing the capability; opening any Work Loop state file or invoking `/work-loop-v2`; the separate Step 8 v1-retirement review, which is a different undispatched review.
@@ -576,3 +513,102 @@ Once S3b completes, the task returns to Codex to brief S4.
 
 ### Open Questions
 None.
+
+## 2026-08-03 — Session S1-a32
+**Mandate:** Run Claude's turn of Work Loop v2 Context Engineering unit S3b (shadow slice) — verify the four stated premises, write the shadow observation record, update the canonical task-state file, set `turn: codex`, and stop — done when: all four premises are checked with recorded evidence, `plans/work-loop-v2-v0.2/context-engineering/trials/shadow-slice-record.md` exists carrying the genuine objective and task path, both Systems Builder commits, Claude's explicit sufficiency verdict, both counts with their derivation, the four negative usability findings as S4–S7 constraints, the separate integration-friction disclosure and an explicit isolated-shadow-proof statement, the task-state file records the result and carries `turn: codex`, and record and state are committed together in `ai-resources`.
+- Out of scope: the candidate, the specification, the plan, the S3 evidence; the Systems Builder repository and the real unit's state; revising the genuine unit; opening S4; adding a second review or any further artifact; the carried implementation deferrals listed in the state file
+- Files in scope: logs/work-loop/context-engineering-implementation.md, logs/session-notes.md, logs/session-notes-archive-2026-08.md, logs/session-plan-2026-08-03-S1-a32.md, logs/runs/2026-08-03-S1-a32.json, logs/runs/2026-08-02-S5-8ee.json, plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md, plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-2-void-run-2026-08-03/, logs/friction-log.md, logs/improvement-log.md, logs/next-up.md
+- Stop if: any premise is false, or writing the record would require altering the genuine unit or the candidate
+- Allowed inputs: plans/work-loop-v2-v0.2/context-engineering/trials/, plans/work-loop-v2-v0.2/context-engineering/context-engineering-implementation-plan-v0.1.md, plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md, plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md, logs/work-loop/context-engineering-implementation.md, projects/axcion-systems-builder/logs/work-loop/crm-derived-answer-authority.md
+- Required outputs: plans/work-loop-v2-v0.2/context-engineering/trials/shadow-slice-record.md, plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-2/
+- Footprint note: the mandate opened on the S3b shadow record only. Codex re-briefed the session repeatedly beyond that — S3b was handed back on a false premise, re-briefed and completed, then S4 Slice B ran through recovery, observation, correction and candidate validation across four further Codex turns, carried under this same marker in the continued entry below. `trials/candidate/SKILL.md`, the void-run preservation copy, the executable core, and the wrap's own always-staged logs (`friction-log.md`, `improvement-log.md`, `next-up.md`, the session-notes archive, both run manifests) are added above as they entered scope. Widened for accuracy, not to pass a guard.
+- Mission: work-loop-v2-mvp
+
+**Work:** Work Loop v2 Context Engineering — run /work-loop-v2 for the next unit
+
+## 2026-08-03 — Session S1-a32 (continued)
+**Mandate:** Resume the Work Loop v2 Context Engineering task at S4 — run every Claude turn Codex
+hands over, verifying each brief's claims by inspection before acting, until the turn returns to
+the operator — done when: the pre-revision observation is scored and, if corrected, the
+correction is accepted; the revised candidate is validated against the specification; a
+byte-verified green evaluation root is built; and the task-state file carries `turn: operator`
+with one exact instruction for the green Codex run.
+- Out of scope: running the green trial itself (operator-driven); revising the candidate further;
+  resolving S4's exit-condition conflict against plan §4.4; the void-run preservation-copy
+  disposition (Codex's call); replacing the unreproducible historical digest with a permanent
+  mechanism (worked around this session with `diff -rq`, not fixed at the source)
+- Files in scope: logs/work-loop/context-engineering-implementation.md,
+  plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md,
+  plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-2/,
+  plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-2-void-run-2026-08-03/,
+  logs/session-notes.md
+- Stop if: a briefed claim fails inspection, a fixture is found altered, or the candidate diff is
+  not a pure insertion
+- Allowed inputs: plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md,
+  plans/work-loop-v2-v0.2/context-engineering/context-engineering-implementation-plan-v0.1.md,
+  plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md, both disposable evaluation roots
+  (scratchpad paths recorded in the state file)
+- Mission: work-loop-v2-mvp
+
+**Work:** Work Loop v2 Context Engineering — S4 Slice B, four Claude turns across a Codex-driven
+recovery, observation, correction and candidate-validation cycle
+
+### Summary
+Picked up a resumed S4 Slice B unit already in progress. The operator's first attempt to launch
+the pre-revision Codex run was accidentally aimed at the live `ai-resources` checkout rather than
+the sealed evaluation root, reaching the live skill and the build's answer-key material — voided
+before scoring, with the stray file preserved (two copies, hash-verified) and the sealed 15-file
+R-2 fixture set restored to its exact frozen state. A second, correctly-directed run produced a
+valid pre-revision result; Claude scored all 12 seeded authority-integrity conditions against it,
+line-citing each verdict. Codex's assessment found one scoring error — a red verdict imposed a
+requirement (articulated reasoning) the specification does not set — corrected against three cited
+sources, moving the result to 10 baseline green / 2 red. Codex then revised the candidate,
+inserting Family 2 as one pure 8-line addition; Claude independently validated the insertion
+(diff shape, clause-to-sentence mapping against the spec, a leakage scan for later-family content)
+and built a second disposable root for the green run, replacing the prior session's unreproducible
+verification digest with a direct `diff -rq` comparison. The unit stops before the green trial,
+per protocol — that run is the operator's.
+
+### Decisions Made
+- **Withdrew a progression-direction suggestion mid-session, on Codex's correction (routine, within
+  protocol).** Claude had proposed narrowing the candidate revision to only the two conditions
+  that actually failed. Codex cited plan `:781` (candidate must gain full Family 2) and plan §4.4
+  `:238–251` (baseline-green behaviours are retained as no-regression evidence, not treated as
+  license to write less) — both checked and confirmed before the suggestion was withdrawn. Sizing
+  the revision was never Claude's call to make.
+- **One void-run artifact preserved beyond what Codex's recovery brief asked for**, flagged rather
+  than silently added: a second copy of the stray output was placed inside the repo (outside the
+  frozen fixture directory) because the scratchpad location holding the sole existing copy is not
+  guaranteed durable. Left for Codex to keep or remove.
+- Not logged to `decisions.md` — both are in-protocol judgment calls with the reasoning already on
+  record in the task-state file, not standalone project decisions.
+
+### Outcome
+Not run — outcome check skipped (not requested; core wrap only).
+
+### Risky actions
+One irreversible action taken, but bounded and pre-verified rather than reckless: a stray file was
+deleted from inside the frozen R-2 fixture set to recover from the void run. Both the file and its
+preserved copy were hash-verified identical *before* deletion, and the deletion target was named
+exactly by Codex's brief — not inferred. No gate was skipped; this was inside the correction the
+brief specified. Separately, the historical verification digest recorded by a prior session proved
+unreproducible under four independent reconstruction attempts this session — a defect in how that
+evidence was recorded, not a sign of tampering, and it is now flagged in the task-state file so no
+future session relies on it.
+
+### Session Assessment
+Not run — feedback collection skipped (not requested; core wrap only).
+
+### Next Steps
+Operator: open a fresh Codex thread with working directory
+`/private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/f5125412-c379-44fc-87c5-8ade343a2a68/scratchpad/tv-8c37`
+— verify before pasting that the listing shows no `logs/`, `audits/` or `skills/` directory, which
+is exactly the mistake that voided the first attempt — then paste the frozen prompt recorded in
+`logs/work-loop/context-engineering-implementation.md`, unchanged. After the run, return to Codex
+first, not to Claude; Codex records the result and sets `turn: claude` for the green observation.
+
+### Open Questions
+S4's plan-stated exit condition ("all three behaviours demonstrated red-then-green") cannot be met
+as written — 7 of the 12 seeded conditions (all of CE-5 and CE-6) came back baseline green with no
+revision needed, and plan §4.4 forbids the only ways to force a red result there. Flagged in the
+task-state file; needs a decision from Codex or the operator before S4 can be declared complete.

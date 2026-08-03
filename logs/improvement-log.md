@@ -2604,3 +2604,55 @@ example and both construction decisions.
 caught both mechanisms and the re-run was clean. It is medium-high because it fires again at S3, which is
 the very next unit, and because mechanism 2 fails *silently*: a contaminated run produces a plausible
 green rather than an error.
+
+### 2026-08-03 — A verification digest recorded as prose, not as an exact command, becomes unreproducible evidence
+
+- **Severity:** medium-high
+- **Category:** Context Engineering build — trial construction, inherited by any future slice that freezes bytes for later comparison
+- **Source:** ai-resources, 2026-08-03 session S1-a32, discovered restoring the S4 Slice B R-2 instrument after a void run.
+
+S4 Slice B's construction session recorded a frozen digest — `15289a09…` — described only as "a SHA-256
+over the `LC_ALL=C`-sorted list of per-file digests and their paths." No literal command accompanied it.
+This session needed to re-verify the instrument's integrity after an unrelated recovery and could not:
+four independently plausible reconstructions of that description (`find | sort | xargs shasum | shasum`,
+the same with an added intermediate sort, a null-delimited variant, a bare-digest variant) produced four
+different values, none matching the recorded one and none matching each other. The digest was recorded to
+prove the later green run "differs only in the candidate" — a claim central to S4's causal-attribution
+requirement (plan §4.4) — and it cannot serve that purpose for anyone who did not personally run the
+original command.
+
+**Worked around this session, not fixed at the source.** `diff -rq <old-root> <new-root>` replaced the
+digest for the actual S4 comparison and is arguably a stronger check (it names *which* file differs,
+not just *that* something does). But the underlying practice — freezing a value from a description rather
+than a runnable command — will recur at S5 or later unless the construction convention itself is written
+down.
+
+**Shape of the fix (not built).** Wherever a slice's construction step records a verification digest or
+hash-of-a-set for later reproduction, require the exact command alongside the value, or record the
+value only as the output of a named, checked-in script rather than an ad hoc one-liner described in
+prose. Belongs in plan §4.4 or wherever S4's R-2 pattern gets generalized for future slices.
+
+### 2026-08-03 — Operator-driven Codex launch instructions lack a built-in working-directory check, and a wrong directory silently voids the trial
+
+- **Severity:** medium
+- **Category:** Work Loop v2 protocol — operator handoff instructions for any unit that hands a fresh-Codex-thread launch prompt to the operator
+- **Source:** ai-resources, 2026-08-03 session S1-a32, S4 Slice B's first pre-revision run.
+
+The task-state file's handoff gave the operator an absolute path and a prompt to paste into a fresh Codex
+thread. The operator instead launched Codex against the `ai-resources` checkout itself. The run was not
+loud about this — it produced a plausible, well-reasoned brief, and the mistake was caught only because
+this session happened to inspect the disposable root's file timestamps before scoring anything. Had that
+inspection not run, a contaminated result (wrong skill version, answer-key material reachable) would have
+been scored as if valid.
+
+**Same failure shape as the 2026-08-02 entry above** ("every Phase 2 trial run needs an isolated root AND
+an answer-key scrub") — a different actor (the operator, not Codex) and a different mechanism (wrong `cwd`
+for a manually-launched thread, not the candidate's own hard-coded write path), but the same consequence:
+silent contamination that reads as a normal result rather than an error.
+
+**Shape of the fix (not built).** The task-state file's handoff instruction to the operator could include
+a one-line self-check the operator runs *inside the fresh Codex thread* before pasting the real prompt —
+e.g., "list this directory; if you see `logs/`, `audits/` or `skills/`, stop, this is the wrong directory"
+— folded into the prompt template itself rather than left to whichever session happens to remember to say
+it in chat. This session added that check ad hoc when re-issuing the instruction after the void run; it is
+not yet part of the protocol's own template.
