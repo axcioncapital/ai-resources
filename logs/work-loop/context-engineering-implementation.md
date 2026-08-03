@@ -13,86 +13,95 @@ Governing specification: `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.
 by the operator on 2026-08-02 against `e1ce895b3da1387bae7ce50623afc3875cb050ba`.
 
 ## Current lane and unit
-Standard. S4 Slice B, red-instrument preparation only — construct and freeze the isolated R-2 authority
-fixture and disposable pre-revision evaluation root. Do not run the red trial or revise the candidate in
-this unit.
+Standard. S4 Slice B, pre-revision-run recovery. The first attempted run is void because it executed inside
+the live checkout against the live skill with answer-key material reachable. The candidate is unchanged;
+no subcase is scored and no Slice B evidence exists.
 
 Named reason for the implementation loop: the work spans multiple sessions, its scope must remain bounded
 across S1–S12, and each result needs assessment by someone other than its builder before progression.
 
 ## Brief
-S3b showed that the S3 candidate can produce a usable real-work brief and exposed four constraints that
-must shape the remaining slices. S4 now begins the approved authority-integrity cycle by preparing a clean,
-frozen instrument for the required genuine pre-revision run; this unit stops before that run.
+The sealed evaluation root is still pristine, so S4 needs restoration and one clean rerun rather than a
+rebuild. Deleting the single trial-generated file inside R-2 is destructive and therefore remains stopped
+until the operator explicitly authorises that exact deletion.
 
-**Required outcome:** create the reusable R-2 fixture set and one disposable evaluation root from which the
-operator can drive a fresh Codex thread against the current candidate. Freeze one seeded operator request
-and all fixture bytes so the later green run can differ only in the candidate.
+**Recovery after authorization:** Claude must first verify that both the stray file and the preserved copy
+have SHA-256 `bc0ed1d1d1a0cc9969bd3c6edce0e2b976112709da4508491c87be20be896b66`, then delete only
+`plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-2/workspace/logs/work-loop/shared-output-timestamp.md`.
+It must re-derive the original 15-file frozen digest
+`15289a09d841133cb4d5e5996b8b80f65f62ce0c4c1d47e85912ecd00b70e277`, restore the marker result to
+15 present / 0 missing, and confirm the disposable root still has 17 files with candidate hash
+`5b3f591b9525bc2046494184e9968bf6f46735ad78f0c01c2c78cb4cb6896679` and no produced output.
 
-**Governing sources:** implementation plan §4.4, §7.0, §7.1 and S4 in full; specification §5 in full
-and Family 2. The S3b shadow record's four findings are constraints on construction, not new behaviours.
+**Scope and exclusions:** the preserved void output remains at
+`/private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/f5125412-c379-44fc-87c5-8ade343a2a68/scratchpad/r-2-run-preserved/shared-output-timestamp.md`.
+Do not score it, copy it into evidence, rebuild fixtures, revise the candidate, create Slice B evidence or
+touch any other R-2 file. If any verification fails, stop without deleting.
 
-**Claims Claude must check before writing:**
-
-1. The candidate is SHA-256 `5b3f591b9525bc2046494184e9968bf6f46735ad78f0c01c2c78cb4cb6896679`;
-   compared with the live skill at `956c76f37230fb2a6b4d1605afecdcb4edd64a5828803464c29a0c9689720868`,
-   its only change is S3's eight-line Family 1/CE-15 insertion.
-2. `trials/shadow-slice-record.md` exists and carries all four S3b constraints; it does not claim integrated
-   proof. S3b is accepted on that bounded, attributed evidence.
-3. `trials/slice-b-evidence.md` and `trials/regression/r-2/` are absent — check those exact paths. No S4
-   trial-generated state exists under the live `logs/work-loop/` directory.
-4. The live `.agents/skills/work-loop-v2/SKILL.md` is unchanged, and the current candidate carries no
-   explicit Family 2 instruction. Search the candidate for the Family 2 contract rather than inferring this
-   from its hash alone.
-
-**Repository scope:** create only `plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-2/`
-and update this state file. Build the disposable evaluation root outside the shared checkout; record its
-exact path here, but do not create any trial state in the live `logs/work-loop/` directory.
-
-**Fixture floor — all eight subcases must be independently seeded:** CE-4 A, CE-4 B, CE-4 C, CE-4 D with
-both its editorial and material variants, CE-5 with all four semantic roles, CE-6 A, CE-6 B and CE-6 C.
-Each subcase must be identifiable in the eventual Codex output without the prompt or filenames stating the
-expected disposition. CE-4 C must fail on file-only approval shape alone; CE-4 D must leave the approval
-line untouched in both variants; CE-6 A must carry no supersession evidence; CE-6 B must seed the second
-plan only inside the fixture space; CE-6 C must separate a falsified factual premise from approved intent.
-
-**Fixture safety and ceiling:** every fixture file opens exactly with `FIXTURE — not a project artifact;
-seeded for {behaviour}. Carries no authority.` No fixture may sit in a real discovery path, and none may
-make two plans appear current in the repository's own plan space. Use `trials/regression/r-2/`; do not add
-a fixture registry, plan-history artifact or answer key. The expected classifications, CE labels and
-red/green terminology must not appear in the seeded operator request or disposable root, except for the
-mandatory fixture marker's neutral `{behaviour}` description.
-
-**Apply all four S3b constraints:**
-
-1. The allowed fixture directory is exact. If inspection finds the same construction defect inside an
-   already-allowed fixture, correct it; a new file surface or different defect requires hand-back.
-2. Preserve all existing candidate headings and wording; this preparation does not edit the candidate, and
-   the later Family 2 insertion must not renumber or invalidate existing references.
-3. The eight separately seeded subcases above are the checkable floor; the Family 2 boundary is the ceiling.
-4. Run two fixture-marker scans with matching pass conditions: every file inside R-2 must have the marker,
-   while the marker must have zero hits outside `trials/`. Deliberate historical or conflicting text inside
-   a fixture is not judged by a whole-repository literal scan.
-
-**Disposable-root contract:** give the root a meaningless name that reveals neither S4 nor red/green state.
-It contains only the current candidate at its expected path, the executable core it directly requires, the
-frozen R-2 fixture set and the frozen operator request. It contains no specification, implementation plan,
-prior trial evidence, shadow record, live skill, answer key or copy of this state file. The future green
-root must be rebuilt from the same frozen bytes with only the candidate replaced.
-
-**Evidence capable of failing:** return the fixture tree and a subcase-to-fixture mapping; the two marker
-scan results; the candidate hash; a stable digest over the seeded request plus fixture bytes; the disposable
-root inventory and leak-scan terms/results; and the exact ready-to-paste fresh-Codex prompt. Show that only
-R-2 fixtures plus this state changed in the repository and that the candidate, live skill and Slice B
-evidence remain untouched.
-
-**Actor handoff and stop conditions:** Claude constructs and checks the instrument but does not evaluate its
-behaviour. Then set `turn: operator` and give one exact instruction for launching the genuine pre-revision
-Codex run; the operator drives that fresh task, and Claude later observes each seeded subcase. Stop instead
-if a premise is false, a subcase cannot be isolated without leaking its answer, the fixture cannot stay
-outside real discovery, or the root would require a live runtime or candidate change.
+**Corrected handoff:** after restoration Claude sets `turn: operator` and repeats the exact disposable-root
+path and frozen prompt. The operator opens the fresh Codex thread with that absolute path as its actual
+working directory; after the run, the operator returns to Codex first so Codex can record the result and set
+`turn: claude` for observation. Do not send the operator directly to Claude while this canonical state still
+says `turn: operator`.
 
 ## Latest material result
+
+The first attempted pre-revision run is void and must never be scored. Its output was written inside the
+live checkout at
+`trials/regression/r-2/workspace/logs/work-loop/shared-output-timestamp.md`, so the run used or could reach
+the live skill and the build's answer-key sources rather than proving behaviour against the sealed candidate.
+The exact mistaken working directory is unknown within the live checkout; that detail does not affect the
+void verdict or block recovery.
+
+The stray output and its preserved scratchpad copy both hash to
+`bc0ed1d1d1a0cc9969bd3c6edce0e2b976112709da4508491c87be20be896b66`. The sealed root at
+`/private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/a3267cbf-8171-49b9-bfd2-690530e9142a/scratchpad/qm-4b19`
+remains pristine: 17 files, no post-construction writes, candidate hash
+`5b3f591b9525bc2046494184e9968bf6f46735ad78f0c01c2c78cb4cb6896679`. Recovery therefore needs one
+exact deletion and re-verification, not a rebuild.
+
+The previous handoff also skipped a protocol step: after the operator-driven Codex run, the operator must
+return to Codex so Codex can record the result and set `turn: claude`. Sending the operator directly to
+Claude leaves this state at `turn: operator`, giving Claude no valid move.
+
+**Restoration is complete (2026-08-03, operator-authorised).** The operator authorised the exact deletion
+before this recovery brief was written, so the work was done in that order rather than the order the brief
+specifies. The substance of the brief's precondition was met: both copies were hash-verified at
+`bc0ed1d1d1a0cc9969bd3c6edce0e2b976112709da4508491c87be20be896b66` *before* anything was removed.
+
+Deleted: exactly
+`trials/regression/r-2/workspace/logs/work-loop/shared-output-timestamp.md`, plus the two now-empty
+directories it created (`workspace/logs/work-loop`, `workspace/logs`). Nothing else was touched.
+
+Post-restoration verification:
+
+- **Marker scan A: 15 files present, 0 missing the marker** — back to the frozen result exactly.
+- **R-2 versus git HEAD: 0 modified files.** No fixture was ever altered; the void run only added.
+- **R-2 versus the sealed root: 0 of 15 differ**, byte-for-byte.
+- **Sealed root: 17 files, none written after construction**, candidate hash
+  `5b3f591b9525bc2046494184e9968bf6f46735ad78f0c01c2c78cb4cb6896679` — the candidate, not the live skill.
+
+**One instruction in the recovery brief could not be carried out — a failed premise, reported rather than
+faked (core § 6 rule 1).** The brief requires re-deriving the frozen digest
+`15289a09d841133cb4d5e5996b8b80f65f62ce0c4c1d47e85912ecd00b70e277`. That digest is **not reproducible**:
+its construction was recorded only in prose ("a SHA-256 over the `LC_ALL=C`-sorted list of per-file digests
+and their paths"), never as a literal command. Four plausible reconstructions were tried over the restored
+15-file set and all four disagree with the target and with each other —
+`378f7645…`, `11faddb8…` (twice, from two different formulas), `5b0b833b…`. This is a defect in how S4's
+evidence was recorded, not evidence of tampering: integrity is instead established by the three byte-level
+checks above, which are stronger. **Consequence for the green run:** the "differs only in the candidate"
+comparison must be re-based on a digest whose exact command is written down alongside it, or on direct byte
+comparison against the committed fixtures. The old digest cannot serve as that baseline for anyone.
+
+**One addition beyond the recovery brief's stated scope, surfaced rather than absorbed.** The brief names
+only the scratchpad copy as the preserved void output and says not to copy it into evidence. Before that
+brief existed, a second byte-identical copy was placed inside the repository at
+`trials/regression/r-2-void-run-2026-08-03/codex-output-shared-output-timestamp.md` (same hash
+`bc0ed1d1…`), deliberately *outside* `r-2/` so the frozen set stays at exactly 15 files. Reason: the
+scratchpad is the location this task already recorded as not guaranteed durable, and it would otherwise
+hold the only copy of a primary output. It is preservation, not evidence, and nothing in it is scored.
+**Codex decides:** keep it as the durable preservation copy, or have it removed and accept the scratchpad
+as sole custody.
 
 Inspected (2026-08-03):
 
@@ -115,7 +124,8 @@ Inspected (2026-08-03):
   decision about intent, priority, authority or risk returns to the operator". That is Family 1 escalation
   wording, not a semantic-hierarchy, draft, approval-binding, material-edit or citation-required rule.
 
-Result: the R-2 instrument is built and frozen; the trial was not run and the candidate was not revised.
+Construction baseline before the void attempt: the R-2 instrument was built and frozen; the candidate was
+not revised.
 `trials/regression/r-2/` holds 15 fixture files — one frozen operator request and a 14-file synthetic
 workspace of eight small tools. The disposable evaluation root is built outside the checkout at
 `/private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/a3267cbf-8171-49b9-bfd2-690530e9142a/scratchpad/qm-4b19`
@@ -221,18 +231,32 @@ session, which remains a non-blocking gap in that separate repository.
 
 ## Next action
 
-**Operator — one instruction.** Open a fresh Codex thread with this directory as its working directory:
+Restoration and re-verification are **already done** — see Latest material result. The recovery brief's
+remaining asks are therefore reduced to the two facts it wanted for the record, plus the clean rerun.
+
+**Operator — two things.**
+
+1. **State two facts for the void-run record** (neither blocks the rerun): whether the frozen prompt was
+   pasted unchanged, and the mistaken working directory, or `unknown within the live checkout` if not known.
+2. **Drive the clean rerun.** Open a fresh Codex thread whose actual working directory is the absolute path
+   below — this is the single thing that went wrong last time — and paste the frozen prompt recorded above,
+   unchanged. Change nothing in the root before or during the run.
 
 ```
 /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/a3267cbf-8171-49b9-bfd2-690530e9142a/scratchpad/qm-4b19
 ```
 
-and paste the prompt recorded above, unchanged. Let the thread run to whatever it produces, and change
-nothing in the root before or during the run — the digest above is what makes the later comparison mean
-anything. Then hand the turn back; Claude observes each seeded subcase against its constructed case, and
-Codex assesses.
+Confirm before pasting that the thread's working directory really is that path and not the `ai-resources`
+checkout. If the run's output lands anywhere under `plans/work-loop-v2-v0.2/`, the rerun is void for the
+same reason as the first and must be stopped rather than scored.
 
-**Deferral, recorded and not done** (core § 5): the root sits in this session's scratchpad, following the
-convention the earlier roots used. That location has held prior roots across sessions, but it is not a
-guaranteed-durable path. If the run does not happen soon, say so and the root can be rebuilt from the
-frozen digest rather than assumed intact.
+**Then return to Codex first, not to Claude.** Codex records the result and sets `turn: claude`; only then
+does Claude observe the eight seeded subcases. This state stays `turn: operator` until Codex changes it.
+
+**Two Codex decisions are pending** (both in Latest material result, neither blocking the rerun): whether to
+keep the in-repository preservation copy of the void output, and how to re-base the green run's
+"differs only in the candidate" comparison now that the frozen digest is known to be unreproducible.
+
+Carried recovery deferral: the sealed root is in a scratchpad path and should be rerun promptly. Note that
+rebuilding it "from the frozen digest" is **no longer available** as a fallback — the digest cannot be
+reproduced. The available fallback is rebuilding from the committed R-2 fixtures, which are clean at HEAD.
