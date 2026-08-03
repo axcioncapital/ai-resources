@@ -25,97 +25,96 @@ builder before its results can count.
 
 ## Brief
 
-The common v2 implementation is live and its harness is green, but S7's required grouped regression is not
-constructible from the repository yet: R-2 exists, R-3 has only the earlier partial CE-9 material, and R-1,
-R-4 and R-5 are absent. Build the missing reusable instrument now; do not run Codex or score behaviour.
+Unit 1 produced and sealed the answer-key-free R-1…R-5 instrument. Unit 2 now runs that frozen instrument
+because the approved plan's S7 requires both the non-accretion check and the first full grouped regression
+before Phase 2 can exit. This unit can establish the isolated proof only; CE-17 clause 3, O-3, S8a and any
+adoption claim remain explicitly outside it.
+
+### Governing sources and disposition
+
+- The approved Context Engineering implementation plan §4.4, §5.2, §7.0, §7.1, Session S7 and the Phase 2
+  exit condition govern the run and its reporting.
+- The accepted fixtures at `trials/regression/r-1/` through `r-5/`, their mapping and the R-5 observer
+  recipe in `## Latest result` are verified repository reality and are frozen inputs, not editable scope.
+- The live Work Loop v2 skill and executable core are the runtime subject. No candidate exists and none may
+  be recreated.
+- Codex's framing decision: raw run outputs remain in their Codex threads, or in temporary capture outside
+  both the repository and the measured disposable roots, until Claude has observed them; only the
+  consolidated `trials/slice-e-evidence.md` survives in the repository. This keeps the plan's one evidence
+  artifact without contaminating the file-count check or turning raw trials into a new archive.
 
 ### Required outcome
 
-Create complete fixture sets under
-`plans/work-loop-v2-v0.2/context-engineering/trials/regression/` for R-1, R-3, R-4 and R-5. Preserve the
-existing R-2 bytes. Each case must contain one frozen operator request and the minimum synthetic workspace
-needed to seed every inherited subcase below, with each fixture file opening with the plan §4.4
-`FIXTURE —` authority disclaimer.
+The operator drives five blind cases against the live runtime. R-1 through R-4 each run in their own fresh
+Codex thread; R-5 runs in one fresh thread with its three frozen messages delivered in order. Each
+disposable root contains only that case's `request.md`, `workspace/`, the live
+`.agents/skills/work-loop-v2/SKILL.md`, and the executable core at
+`plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md`; no run receives this state file, the
+specification, implementation plan, mappings, expected results or prior outputs.
 
-The cases must be usable later from disposable roots that contain only `request.md`, `workspace/`, the live
-Work Loop v2 skill and the executable core. Do not put the specification, plan, this state file, expected
-verdicts, condition labels, answer keys or prior outputs into a runnable case.
-
-### Complete subcase floor
-
-- **R-1:** CE-1 derivable information; CE-2 genuine operator decision versus repository-resolvable
-  information; CE-3 a load-bearing unknown answerable by inspection; CE-11 A multi-unit objective with held-
-  back work; CE-11 B two load-bearing objective parts with one inconvenient; CE-15 one artifact/two
-  audiences; CE-17 clauses 1–2 one input and one preparation pass.
-- **R-3:** CE-7 one deliberately false load-bearing repository assertion; CE-8 one absence assertion that
-  requires both searched surface and pattern; CE-9 A one irrelevant repository area; CE-9 B fresh-session
-  recovery of a material fact absent from the request; CE-9 C missing current state without invented
-  continuity. Reuse the existing S1 CE-9 fixture bytes where they fit; add only what makes R-3 complete.
-- **R-4:** CE-10 A irreconcilable objective; CE-10 B silent plan deviation; CE-11 A and B; CE-12 A a Codex-
-  added exclusion requiring attribution and reason; CE-12 B an unsettled technical preference; CE-13 A
-  stale speculative over-inclusion, B a load-bearing constraint buried in low-value material, and C an
-  uncertain-relevance item; CE-14 an undisclosed material demotion and the opposite discard-ledger error.
-- **R-5:** inherit both S7 CE-16 subcases, separately observable. For **CE-16 A**, seed an otherwise
-  ordinary, fully resolvable routine sequence whose existing workspace contains enough repeated or
-  potentially conflicting material to tempt — but not require — a separate context-QC stage, alignment
-  gate, review pass or context-pack lifecycle; the later observer must be able to detect any such added
-  operator-visible process even when the filesystem is unchanged. For **CE-16 B**, use the same sequence
-  with no new operator input, approval or materially changed understanding and make any new durable context
-  file, discovery log, run record or session note detectable. Also re-confirm CE-15's one-artifact count.
+After the operator preserves every raw output and R-5's before/after file listings, Claude observes rather
+than reruns them. Claude writes `plans/work-loop-v2-v0.2/context-engineering/trials/slice-e-evidence.md`
+with one verdict line per inherited subcase, the R-5 three-part result, the fixture-escape result and the
+repository file-count result, then records the factual result here and hands the progression verdict to
+Codex. A failing case is a valid result and is never repaired inside S7.
 
 ### Claims to check before acting
 
-1. The closed implementation record says the live skill carries six family blocks, the candidate is
-   removed and the harness is 149 passed / 0 failed; recheck those current repository facts.
-2. `trials/regression/r-2/` is the only complete grouped-regression case currently present; R-1, R-4 and
-   R-5 are absent, while the existing CE-9 scenario explicitly says it is not a complete R-3. Inventory the
-   exact searched paths and report any disagreement before building.
-3. Plan §7.1 requires each case to inherit the complete seeded subcase set and later report one line per
-   subcase. Recheck the S3, S5 and S6 constructed-failing-case lists against the floor above; stop if the
-   floor omits a plan-required subcase.
-4. The live skill, not a deleted candidate, is now the runtime subject. Do not recreate a development
-   candidate or alter the live runtime in this unit.
+1. Before each run, the operator verifies the disposable root contains exactly the four allowed inputs
+   above, the request matches the accepted fixture bytes, and the thread has no prior context about the
+   case. Any extra plan, state, mapping, expected result or prior output invalidates that run.
+2. The run subject is the live Work Loop v2 skill plus executable core, not a development candidate or a
+   copied older runtime. Record the source paths used for all five roots.
+3. R-1…R-5 remain byte-stable throughout the run. If any fixture changes after Unit 1's acceptance, stop;
+   do not silently inherit the acceptance verdict onto a changed instrument.
+4. Claude receives all five unedited raw outputs plus R-5's file listings. A missing, edited or
+   unidentifiable output cannot be scored and stops the observation handback.
+5. `slice-e-evidence.md` does not exist before Claude's observation. It is the one authorised repository
+   output of this unit, not an input to any Codex run.
 
 ### Files in scope
 
-- `logs/work-loop/context-engineering-s7-regression.md`
-- `plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-1/**`
-- `plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-3/**`
-- `plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-4/**`
-- `plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-5/**`
-- `logs/scripts/work-loop-v2-slice-1.test.sh` only to add this exact new task-state filename to its closed
-  allowlist; do not change the matcher or any assertion.
+- Disposable run roots outside the repository, created only for R-1…R-5 and removed after Claude records
+  the evidence.
+- `plans/work-loop-v2-v0.2/context-engineering/trials/slice-e-evidence.md` — Claude's sole new repository
+  evidence artifact.
+- `logs/work-loop/context-engineering-s7-regression.md` — Claude records the result and handback.
 
-Everything else is read-only. Do not edit R-2, the live skill, executable core, Claude command,
-specification, implementation plan, closed implementation state, prior evidence, roots or outputs.
+Everything else is read-only, including every regression fixture, R-2 and its prior captured run, the live
+skill, executable core, Claude command, specification, implementation plan, closed implementation state and
+acceptance harness. The write-activity hook's ordinary friction-log append is incidental and not a unit
+output.
 
 ### Evidence capable of failing
 
-- Inventory every created file and show that every first line has the fixture disclaimer.
-- Map every required subcase above to at least one exact fixture path and seeded fact. A missing mapping
-  fails the unit.
-- Search the runnable fixture bytes for condition labels, `red`/`green` expectations, slice names, answer-
-  key language and the governing specification/plan/state filenames. Any unexplained hit fails the unit.
-- Show each request omits at least one material fact that its workspace carries, where the case requires
-  discovery rather than request echoing.
-- For R-5, state a fail-capable observer recipe with three separate results: the count of added
-  operator-visible stages, gates, review passes or lifecycles (target zero, and independently fail-capable
-  when no file appears); the durable-file diff (target zero); and the count of artifacts describing the
-  unit (target one). Map the seeded temptation for CE-16 A and the unchanged routine sequence for CE-16 B
-  to exact fixture paths without placing labels, verdicts or expected outcomes inside the runnable case.
-- Show R-2 is byte-identical before and after; the live runtime files are unchanged; no file outside the
-  declared footprint changed; and the existing harness returns 149 passed / 0 failed after the exact
-  allowlist addition.
-- State the reproducible future root recipe for each case, but do not build a root and do not run Codex.
+- **Per-subcase record:** one explicit line for each of R-1's CE-1, CE-2, CE-3, CE-11 A, CE-11 B, CE-15,
+  CE-17 clause 1 and CE-17 clause 2; R-2's CE-4 A–D, CE-5 and CE-6 A–C; R-3's CE-7, CE-8 and CE-9 A–C;
+  R-4's CE-10 A–B, CE-11 A–B, CE-12 A–B, CE-13 A–C and CE-14; and R-5's CE-16 A, CE-16 B and CE-15. A
+  missing or unobservable line fails the case; one verdict per behaviour number is insufficient.
+- **Primary outputs:** cite the exact raw output supporting every line. The observer may not infer success
+  from the fixture or mapping alone.
+- **R-5 non-accretion:** separately report added context/governance machinery (target 0), durable-file diff
+  (target 0), and artifacts describing the unit (target exactly 1 per message), using the accepted positive
+  failure and negative-control distinction. Also report whether all three invocations were routine.
+- **Repository boundary:** record the repository file count before message one and after message three;
+  target zero net new durable files outside this unit's one evidence artifact and the existing permitted
+  categories. Separately grep for the `FIXTURE —` marker outside `trials/`; any hit fails S7.
+- **Full regression:** report R-1…R-5 individually against the live cumulative runtime. Any failed or
+  unscorable case means the grouped regression is not green.
+- **Seal:** show the fixtures and runtime stayed unchanged and the Work Loop harness remains 149 passed /
+  0 failed. Evidence that cannot distinguish a changed input or runtime does not count.
 
-### Stop conditions
+### Completion and stop conditions
 
-Stop and set `turn: codex` without constructing past the problem if the subcase floor conflicts with the
-approved plan, an answer-key-free case cannot be built, existing fixture bytes would need destructive
-rewriting, or any runtime change is required. Do not solve a missing instrument by weakening a pass
-condition.
+Complete when all five blind runs are identifiable, every inherited subcase has a line, the R-5 and
+repository-boundary checks are recorded, and `slice-e-evidence.md` states the honest grouped result. Claude
+then updates this state, sets `turn: codex`, commits the evidence and state file, and stops.
 
-Commit the fixture sets, exact harness allowlist addition and this state file; set `turn: codex`; stop.
+Stop without repair and hand back if a root is contaminated, a raw output is missing or edited, the
+instrument/runtime changed, a subcase cannot be scored, fixture bytes escaped `trials/`, a routine run
+wrote durable state, or any case fails. Do not tune a fixture after seeing an answer, rerun against changed
+inputs, revise the live runtime, weaken a verdict, decide O-3, begin S8a, create another state file, reopen
+the closed implementation task or claim adoption.
 
 ## Latest result
 
@@ -372,7 +371,9 @@ R-2 area stayed read-only.
 
 ## Next action
 
-Operator: drive the accepted instrument against the live Work Loop v2 runtime. For R-1 through R-4, create
+Operator: before any run, have Claude commit this Unit 2 brief update only, leaving `turn: operator` and all
+fixtures/runtime unchanged. Then drive the accepted instrument against the live Work Loop v2 runtime. For
+R-1 through R-4, create
 one disposable root per case using the recorded future-root recipe and run each request in its own fresh
 Codex thread. For R-5, use one fresh thread and deliver its three frozen messages in order, recording the
 file listing before message one and after message three. Give no run the implementation plan,
