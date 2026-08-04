@@ -1,6 +1,6 @@
 ---
 task: context-engineering-s8b-seam-proof
-turn: operator
+turn: codex
 ---
 
 ## Objective and approved scope
@@ -76,7 +76,33 @@ substitution. Do not begin S9.
 
 ## Latest material result
 
-Correction round in progress. Claude reproduced all three frozen findings by inspection before acting:
+Correction round ended by operator decision without the three runs producing results. Closure state of
+the frozen findings, recorded from repository inspection, not from assertion:
+
+- **Finding 1 (causal post half) — UNMET, not run.** No state file from the seeded request exists in the
+  post root; its `logs/work-loop/` holds exactly the 17 snapshot files. Re-inspected twice on 2026-08-04,
+  the second time immediately after the operator reported results; the root is byte-identical to its
+  reset-committed snapshot (`git status` empty).
+- **Finding 2 (Direct Work) — UNMET, not run.** `fixture-target.md` in the post root still reads "dull";
+  no edit, no new file. Same double inspection as above. No transcript or alternative location was
+  supplied; if one exists, this record can be amended on evidence.
+- **Finding 3 (false-premise refusal) — UNMET, declined.** The operator explicitly declined Run 3
+  (2026-08-04). Recorded as declined, not as satisfied, per the brief's stop conditions; no further
+  substitution is offered.
+
+Structural checks, permitted scope only: the three live runtime files still hash-match their
+integration-era blobs (skill and command = `daebb0c`, core = `4f3d6ca`) and their worktree entries are
+clean — the correction round changed nothing live. PASS.
+
+What the unit still holds as positive evidence, unchanged: the executed pre-root red run (red condition
+met, narration preserved), the reproduced findings record, the verified historical boundary
+(`4165043` → `4f3d6ca`+`daebb0c`), and the intact isolated roots — the packet in the reference section
+below remains runnable at any later date; the roots are volatile but re-creatable from the recorded
+commands.
+
+Discrepancy, stated for the assessment: the operator's decline instruction asked to "preserve the actual
+Run 1 and Run 2 results"; repository inspection found none to preserve. The record above therefore
+carries disk truth. Claude's earlier correction record below is retained for the closure check:
 
 - Finding 1 REPRODUCED — no state file from the seeded request exists in the post root (`ls` of its
   `logs/work-loop/` has no `document-*` entry); the recorded post half was indeed this task's own brief,
@@ -101,7 +127,16 @@ Codex without another substitution, per the brief's stop conditions.
 
 ## Next action
 
-Operator: three runs against the isolated post root, in this order. `POST` =
+Codex: closure check on frozen findings 1–3 only. Their state: 1 unmet (not run), 2 unmet (not run),
+3 unmet (declined by operator decision, 2026-08-04). The correction changed nothing live (structural
+checks PASS above). Positive evidence on record: the pre-root red run and the reproduced-findings
+determinations. Decide per core §3's menu — accept as written limitations, permit one final
+tightly-bounded fix, revert, reframe, or stop; if the choice is really about accepting risk, it goes to
+the operator.
+
+*(Run packet below retained for reference — runnable later if a closure route wants it.)*
+
+Operator packet (reference): three runs against the isolated post root, in this order. `POST` =
 `/private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/76eaf9ff-ea9f-40de-bb4d-7388070c9308/scratchpad/work-loop-s8b-roots/post-daebb0c`.
 The correction scope stays frozen at Codex's findings 1–3 (reproduced in Latest material result); you may
 decline any run, and that check is then recorded as unmet.
