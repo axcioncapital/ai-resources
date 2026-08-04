@@ -1,6 +1,6 @@
 ---
 task: context-engineering-s8a-entrypoint-classification
-turn: operator
+turn: codex
 ---
 
 ## Objective and approved scope
@@ -123,6 +123,28 @@ made complete, required evidence cannot be produced, or work would cross the exc
 
 ## Latest material result
 
+**Operator decision, 2026-08-04: the observer run is declined.** The operator judged it ceremony and
+directed the unit to Codex for assessment without it. This is an explicit, disclosed deviation, not a
+silently satisfied condition:
+
+- **S8a's exit condition is not met.** Plan § 7, Phase 3 names the operator as this session's observer, and
+  the brief requires the confirmation recorded "before claiming the unit complete." No operator
+  re-derivation of the rows happened, and no confirmation of reading A was recorded. The unit is handed to
+  Codex **with that condition open**, stated rather than implied.
+- **What is unverified as a result:** every row in the classification rests on Claude's own inspection
+  alone. The independent re-derivation the plan asked for has not occurred. The instrument that would
+  produce it is built, tested, and left in place at § 6.1 of the record — 26 checks, verified fail-capable —
+  so it can be run at any later point, including at adoption, without reconstruction.
+- **Reading A is applied but never operator-confirmed in the repository.** It reached this unit through
+  this state file, which Codex ruled its durable home. That ruling stands for the loop; it remains the case
+  that no confirmation of the reading exists outside it. This matters at adoption condition 3, not here.
+- **Nothing already proved is retracted.** The scan, the count reconciliation, the file-identity work and
+  the 14 verdicts stand exactly as committed.
+
+The correction that preceded this decision is recorded below, because it is what Codex assesses.
+
+---
+
 The one bounded correction ran against the three frozen findings. Each was reproduced by inspection first;
 all three reproduced, and all three are resolved.
 
@@ -195,27 +217,19 @@ implication.
 
 ## Next action
 
-Findings 1–3 are corrected and committed. The observer run is what remains, and until it is recorded the
-unit is **provisional, not complete**.
+Codex: run the closure check on the frozen findings only — are findings 1, 2 and 3 resolved, and did the
+correction break anything? Both questions are answerable from the committed record and the evidence above;
+no re-review of the unit at large belongs here.
 
-Two things are asked of you.
+Then decide the unit against a **known-unmet exit condition**: the operator declined the observer run, so
+the independent re-derivation S8a requires did not happen, and every verdict rests on Claude's inspection
+alone. The available dispositions are Codex's to weigh — accept the classification as a written limitation
+carrying that gap; or stop and put the unmet condition to the operator, since it bears on adoption
+condition 3 rather than on this unit's internal quality.
 
-1. **Run the observer check.** Open
-   `plans/work-loop-v2-v0.2/context-engineering/trials/entrypoint-classification.md` § 6.1 and copy the
-   whole `bash` block into a terminal. It re-derives every row: both scans and their exit status and
-   stderr, the 14-path reconciliation with a duplicate test, set-equality against the recorded paths, the
-   five-canonical-file grouping, each in-population row's own evidence, and the out-of-population count.
+Do not begin S8b. Do not treat the declined observation as satisfied.
 
-   Expected on an unchanged repository: **26 PASS, 0 FAIL, exit 0.** Anything else is the check doing its
-   job — a missing path is printed by name, and an unsupported row fails on its own line.
-
-2. **Confirm the O-3 reading.** Confirm reading A — "the v0.2 entry protocol only" — is the reading you
-   chose, accepting the narrowing § 3 of the record states: Work Loop v1 stays outside the adoption
-   boundary, plan-dependent work can still continue through it without Context Engineering, and that gap
-   goes into the adoption record rather than being left implied.
-
-Once both are recorded the unit closes to `turn: codex` for assessment. Do not begin S8b.
-
-*(Turn set to `operator` per Codex's instruction in the frozen findings and the brief's own completion
-condition, which both direct the observer run next. This departs from the command's generic correction
-default of `turn: codex`; the brief is the more specific instruction and governs.)*
+*(Turn set to `codex` on the operator's instruction, superseding the `turn: operator` that Codex's frozen
+findings directed and that the brief's completion condition assumed. The decision to skip the observer run
+is the operator's to make; recording it as an open condition rather than a met one is what keeps the
+skip honest.)*

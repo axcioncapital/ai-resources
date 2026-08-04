@@ -2,7 +2,9 @@
 
 **Session:** S8a, per `../context-engineering-implementation-plan-v0.1.md` § 7, Phase 3.
 **Date of scan:** 2026-08-04. **Lead:** Claude. **Observer:** the operator (confirmation still owed — see § 6).
-**Status:** provisional. The operator has not yet run the observer check or confirmed the O-3 reading.
+**Status:** classification complete; **S8a's exit condition is not met.** The operator declined the observer
+run on 2026-08-04, so every verdict below rests on Claude's own inspection with no independent
+re-derivation. See § 6.
 **Revision:** corrected once against Codex's assessment (findings 1–3), 2026-08-04.
 
 **Repository root**, written in full once and used verbatim in every command below:
@@ -373,10 +375,12 @@ reading.*
 | Every scanned access path has exactly one row | **Met** — 14 scanned, 14 rows, no duplicates |
 | Every in-population path has an evidence-backed verdict | **Met** — 6 of 6, all on observed conditions: 4 relevant, 2 not relevant. No verdict rests on the fail-safe. |
 | Every v1 path visibly outside reading A's population | **Met** — 8 rows preserved in § 3 with dispositions |
-| Counts reconcile | **Met** — 14 = 14, stated in § 1 and re-derived by § 6 |
-| Operator confirmation recorded | **NOT MET** — owed; see § 6 |
+| Counts reconcile | **Met** — 14 = 14, stated in § 1 and re-derivable by § 6.1 |
+| Operator confirmation recorded | **NOT MET — declined, not outstanding.** The operator judged the observer run disproportionate on 2026-08-04. See § 6. |
 
-**The unit is therefore provisional, not complete.**
+**S8a's exit condition is therefore not met.** Four of its five requirements are satisfied; the fifth was
+declined by the operator rather than left pending. The classification is complete as a piece of work and
+unverified as an independent result — those are different claims and this record makes both.
 
 ## 5. Limitations
 
@@ -399,12 +403,29 @@ reading.*
 *Entrypoint coverage and the O-3 reading are deliberately absent from this list — plan § 11 forbids
 recording either as a limitation, because that would let wording waive what CE-17 makes a condition.*
 
-## 6. Operator observation — owed
+## 6. Operator observation — declined
 
-Per plan § 7, Phase 3, S8a, the operator is this session's observer. Two things are needed before the unit
-can be called complete.
+Per plan § 7, Phase 3, S8a, the operator is this session's observer, and the brief required the
+confirmation recorded before the unit could be called complete.
 
-### 6.1 Run the observer check
+**On 2026-08-04 the operator declined the observer run**, judging it ceremony, and directed the unit to
+Codex for assessment without it. Recorded here as an explicit deviation rather than absorbed:
+
+- **No independent re-derivation of any row took place.** Every verdict in § 2 and every disposition in
+  § 3 rests on Claude's own inspection. The plan asked for a second pair of eyes on exactly this, and it
+  did not happen.
+- **Reading A was never confirmed in the repository.** It reached this unit through the task-state file,
+  which Codex ruled its durable home for loop purposes. That ruling stands; it remains true that no
+  confirmation exists outside it. This bears on **adoption condition 3**, which requires O-3 settled — not
+  on this record's internal consistency.
+- **Nothing is retracted.** The scan, its exit statuses, the count reconciliation, the file-identity
+  grouping and the 14 verdicts stand as committed.
+- **The check below is retained, not deleted.** It is built, run once against the live repository (26 PASS,
+  0 FAIL, exit 0) and verified fail-capable. Any later session — including adoption, where plan § 11
+  already requires Row 3's verdict re-derived — can run it in seconds without reconstruction. That is the
+  cheapest available route back to the evidence this session did not produce.
+
+### 6.1 The observer check (built and retained; not run by the operator)
 
 Copy the whole block below into a terminal and run it. It re-derives **every row** of this record: the two
 scans and their exit status, the 14-path reconciliation with a duplicate test, the set-equality test against
@@ -544,12 +565,16 @@ exit "$FAILED"
 Expected result on an unchanged repository: **26 PASS, 0 FAIL, exit 0** — which is what it produced when
 run on 2026-08-04.
 
-### 6.2 Confirm the O-3 reading
+### 6.2 The O-3 confirmation (not obtained)
 
-Confirm that **reading A** — "the v0.2 entry protocol only" — is the reading you chose, accepting the
-consequence § 3 states: Work Loop v1 stays outside the adoption boundary, plan-dependent work can still
-continue through it without Context Engineering, and that narrowing goes into the adoption record rather
-than being left implied.
+The confirmation this section originally requested — that **reading A**, "the v0.2 entry protocol only", is
+the reading the operator chose — was not given, because the observer step it belonged to was declined.
+
+The consequence § 3 states is therefore applied but unconfirmed: Work Loop v1 stays outside the adoption
+boundary, plan-dependent work can still continue through it without Context Engineering, and that narrowing
+must go into the adoption record rather than being left implied. **An adoption claim will need this
+confirmation**, since adoption condition 3 requires O-3 settled; classification did not need it and did not
+wait for it.
 
 ---
 
