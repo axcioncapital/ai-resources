@@ -2,69 +2,6 @@
 
 > Archive: [session-notes-archive-2026-08.md](session-notes-archive-2026-08.md)
 
-## 2026-08-02 — Session S6-6d7
-
-**Mandate:** Complete Phase 0 only of Work Loop v2 Context Engineering — verify the working-tree specification matches a committed version, record the operator's approval of it as the governing Context Engineering specification bound to that commit and dated 2026-08-02, and reconcile only the stale draft/status/authority wording — done when: `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md` carries the operator approval bound to the identified commit, one commit lands carrying that change, and its hash is reported.
-- Out of scope: beginning S1; creating logs/work-loop/context-engineering-implementation.md; any other material edit to the specification; pushing.
-- Files in scope: plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md, logs/session-notes.md
-- Stop if: the working-tree specification matches no committed version — report the discrepancy instead of approving it.
-- Allowed inputs: plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md
-- Mission: work-loop-v2-mvp
-
-**Work:** Work Loop v2 Context Engineering — Phase 0 only: verify spec matches a committed version, record operator approval bound to that commit, commit, report hash
-
-### Summary
-Completed Phase 0 of Work Loop v2 Context Engineering: verified the working-tree specification matched
-commit `148689d`, recorded the operator's approval as the governing specification bound to that commit,
-reconciled the stale draft/status wording, and committed (`a718a17`). After a handoff resume, Codex
-opened the loop's next task-state file with Unit 1 (S1) briefed — build the CE-9 fresh-session-recovery
-measurement instrument. Ran S1 end to end: verified all brief premises against the live repository,
-built a fictional-project scenario (Harbourview) with four seeded fixtures whose blind-control property
-is demonstrated by two greps, one of which genuinely failed once (a line-wrapped seed) before it was
-fixed and passed. Committed (`26b6bfe`). Codex assessed and returned one bounded correction with two
-frozen findings — an authority-scoping ambiguity in two fixtures, and a scope-drift check that could not
-detect committed change. Both reproduced by inspection, both corrected; the correction's own first
-evidence attempt was itself invalid (an unquoted zsh variable silently emptied a pathspec) and was caught
-by its own fail-capable twin. Committed (`e32210c`). Landed Codex's closure record accepting S1 and
-handing the turn to the operator to authorise S2 (`2405675`).
-
-### Decisions Made
-Phase 0 and S1 both executed against fully specified mandates/briefs (the session plan for Phase 0; the
-Work Loop v2 brief for S1 and its correction) — the judgment exercised was verification (materiality of
-wording changes, reproduction of frozen findings by inspection) rather than open scoping choice, so
-nothing here rose to a decisions.md entry. Routine decisions made in executing those mandates: reconciled
-only the wording the Phase 0 approval made false, leaving the implementation plan's own stale header
-untouched (out of scope for S6-6d7); did not action either of the two informational differences found in
-S1 premise-checking (plan header staleness, F-10's stale line count) — recorded as deferrals in the state
-file instead; in the correction, left the two operator-source-note fixtures unchanged because finding 1
-named only the two role-playing fixtures.
-
-### Risky actions
-None.
-
-### Findings Declined
-None — nothing surfaced this session met the bar for a findings-disposition entry; the deferrals above
-are already recorded as such in the live task-state file (`logs/work-loop/context-engineering-implementation.md`),
-which is where the Work Loop v2 protocol keeps them, not a duplicate log entry.
-
-Findings: 0 — direct route, no review produced findings.
-
-### Next Steps
-- **Operator decision pending:** authorise Work Loop v2 Session S2 (the carriage probe trial) or stop.
-  S2 needs the operator driving two fresh Codex threads — it cannot run from the plan alone. If
-  authorised, the decision goes back to Codex so it writes the S2 brief.
-- Recommended before S2: clear the implementation plan's stale header (still asserts O-1 outstanding and
-  S1 blocked, which `a718a17` already answered) — a small, precedented edit, same shape as Phase 0's spec
-  header fix.
-- Two smaller deferrals carried in the state file: F-10's stale line count (913 vs. live 928), and the
-  corrected range-based scope-check command not yet duplicated into the scenario file for reuse by later
-  sessions.
-- Still undispatched, unchanged from prior sessions: the Work Loop v2 mission's Step 8 v1-retirement
-  review brief.
-
-### Open Questions
-None.
-
 ## 2026-08-02 — Session S7-3fb
 
 **Mandate:** Run Claude's half of Work Loop v2 Unit 2 (S2) Stage 1 — check the brief's four premises against the live repository, author the single isolated inline-carriage probe candidate, prepare the two fresh-Codex prompts in the task-state file, set `turn: operator`, commit and stop.
@@ -646,3 +583,77 @@ authorised task from Codex — this closed task is not reopened. Continuity deta
 The recurring pattern across S7, S8a and S8b — every Codex-framed exit condition wants an operator-driven
 staged run, and three in a row have now been declined or reduced — is already the pilot's stated design
 input for the v0.2 rework; worth keeping in view rather than re-litigating if a successor unit opens.
+
+## 2026-08-04 — Session (unmarked) — Work Loop v2 Context Engineering Route 3 plan deviation, run to approval
+
+**Work:** Ran Claude's side of `context-engineering-plan-deviation` end to end in one session — premise
+check, the §7.2 plan amendment, Codex's one bounded correction, Codex's closing record, and the operator's
+content-bound reapproval of the amended plan.
+
+### Summary
+This session carried no marker: `/prime` produced its orientation menu, but the operator's next message
+was `/work-loop-v2` directly rather than a menu pick, so `/prime`'s dispatch never ran. The first two
+invocations produced no work by design — the only `turn: claude` file was the Slice 2 identity-mismatch
+fixture (correctly rejected read-only), and the named task's state file did not yet exist anywhere in the
+workspace, so it was reported missing and nothing was created on Codex's behalf. Once Codex wrote the
+brief to disk, all four verification claims were checked by inspection and held: the plan really did bar
+S9 until S8b's three behavioural checks ran, Phase 3's exit really did require the seam proof before
+Phase 4, Phase 6 really did make it a non-waivable adoption condition, and the three closed records said
+what the brief said they said. The amendment added **§7.2 — The Route 3 deviation**, one named exception
+permitting progression past the missing S8b proof, and qualified six passages to cite it. The adoption bar
+did not move: condition 4 is marked unmet, and the debt is deliberately kept out of §11's limitations
+table because that table cannot record an unmet adoption condition. Codex then froze two findings — a
+false live authority block claiming O-1 outstanding when the specification is approved and governing at
+`148689d`, and §12 still routing to Phase 0 → S1 — both of which reproduced on inspection. The correction
+reached three passages the findings did not name (§6's O-1 row, §6's preamble, Phase 0's status note),
+because correcting only the header would have left the plan contradicting itself; that was disclosed and
+Codex accepted it. Codex closed the unit; the operator then approved the amended plan bound to `1283d99`,
+recorded in the plan's own Authority notice slot.
+
+### Decisions Made
+- **Operator: approved the amended plan**, bound to commit `1283d99`, after Codex's acceptance. Recorded
+  in the plan's Authority notice per its content-bound rule. Logged to `logs/decisions.md`.
+- **Operator: chose Route 3** on 2026-08-04 — continue while S8b stays closed and unproved. This session
+  implemented that decision; it did not take it.
+- Claude, within authority: kept the S8b evidence debt **out** of §11's limitations table and gave it its
+  own section instead, because §11's own rule forbids recording an unmet adoption condition there. Listing
+  it would have converted a blocked condition into a written limitation.
+- Claude, within authority: extended the correction to §6's O-1 row, §6's preamble and Phase 0's status
+  note — not named in the frozen findings, but required so that correcting the header did not create a
+  fresh self-contradiction. Disclosed in the hand-back rather than absorbed; Codex accepted all three.
+- Claude, within authority: rebuilt check D4b mid-round after observing it PASS on the uncorrected plan,
+  and re-ran it red before relying on it.
+- Codex, within its role: accepted the amendment after one bounded correction, chose no further round, and
+  recorded the three carried deferrals unchanged.
+
+### Risky actions
+Four commits, each staged by explicit pathspec. `logs/friction-log.md` was modified continuously by the
+write-logging hook and was deliberately never staged — machine telemetry, not this task's content. No
+destructive git operation, no external write, no prompt injection encountered. One deliberate deviation
+from a strict reading of the command: the closing record was committed while `turn: operator` rather than
+stopping at "it's the operator's move", because core §4 assigns every commit to Claude and leaving a
+written closing record uncommitted is the exact orphan failure that required two recovery commits earlier
+the same day.
+
+### Findings Declined
+- **The named task's state file did not exist at first invocation** — the brief existed only in the
+  operator's Codex conversation. Declined: the protocol behaved correctly (reported, changed nothing,
+  Codex then wrote the file), and the cost was one round trip. The core already states that a brief which
+  has not reached `logs/work-loop/` has not reached Claude.
+- **This session produced no marker, so the run manifest cannot resolve one.** Declined as a dedupe — the
+  root cause (a session that skips `/prime`'s dispatch gets no marker, degrading wrap-time ceremony) is
+  already queued at `logs/next-up.md` via the `/clarify`-first entry, with a fix direction recorded. This
+  is now at least the fourth occurrence in two days and adds confirmation, not information.
+
+### Next Steps
+`context-engineering-plan-deviation` is closed and the plan is approved — no further action on it. **S9,
+the one fresh-context candidate review, is now unblocked** and is the plan's stated next step, but opening
+it is a deliberate decision rather than automatic continuation, and it needs a fresh explicitly authorised
+task from Codex with `turn: claude`. Anything S9 produces is non-adoption evidence while condition 4 is
+unmet. Continuity detail: `logs/scratchpads/2026-08-04-16-22-scratchpad.md`.
+
+### Open Questions
+S8b's three owed checks (causal post half, passing Direct Work check, post-integration false-premise
+refusal) can only be obtained by a separate, explicitly authorised proof task. Nothing schedules one. Until
+one runs, adoption stays unavailable no matter how much downstream evidence accumulates — worth deciding
+deliberately rather than discovering at Phase 6.

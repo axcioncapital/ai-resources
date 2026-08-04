@@ -2656,3 +2656,34 @@ e.g., "list this directory; if you see `logs/`, `audits/` or `skills/`, stop, th
 — folded into the prompt template itself rather than left to whichever session happens to remember to say
 it in chat. This session added that check ad hoc when re-issuing the instruction after the void run; it is
 not yet part of the protocol's own template.
+
+## 2026-08-04 — A grep-based evidence check passed on the unedited file because the sentence it searched for was wrapped and blockquoted
+
+- **Severity:** medium
+- **Category:** Evidence construction — fail-capable textual checks over Markdown
+- **Source:** ai-resources, 2026-08-04 (unmarked session), Work Loop v2 task `context-engineering-plan-deviation`, correction round.
+
+The correction round's check set included D4b, asserting that no passage of the plan still said O-1 was
+unanswered. It was written as a single-line `grep -q 'O-1 — does the specification become governing — is
+still unanswered'`. Run against the **uncorrected** plan — where that sentence was demonstrably present —
+it reported PASS. The sentence spans two lines and each line carries a `> ` blockquote prefix, so no
+single line ever contains the whole pattern.
+
+**What it cost, and what it nearly cost.** Nothing, because the red run was executed before the fix and
+the vacuous PASS was visible against 8 genuine failures. Had the check been written and trusted without a
+red run first, it would have reported the finding resolved whether or not the correction happened —
+exactly the "check that would pass whatever happened" that the Work Loop core forbids (§ 6 rule 5). The
+same mistake in a check that only ever runs *after* the work is undetectable.
+
+**Why it is not covered by the existing entries.** The 2026-07-19 entry on `grep` being a shell function
+concerns variable expansion and gitignore-awareness; the entry on verification digests recorded as prose
+concerns reproducibility. This is a third, independent mechanism: **line-oriented matching over
+line-wrapped, prefixed Markdown**, which is the dominant shape of every plan, spec and log in this
+repository. Any check written against wrapped prose is exposed to it.
+
+**Shape of the fix (not built).** Where a check must match prose rather than a structural marker,
+normalise before matching — `sed 's/^> *//' | tr '\n' ' '` was what made D4b real — or anchor on a
+structural token (a table cell, a heading, a bolded label) that cannot wrap. The durable rule is cheaper
+than either: **a check is not evidence until it has been observed failing on the pre-change state.** That
+rule already exists; what is missing is any place where the wrapping trap is named as the reason the rule
+keeps earning its keep.

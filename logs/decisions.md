@@ -284,3 +284,37 @@ evidence claims are stated out loud, not resolved quietly.
 a mistaken premise. (2) Silently correct the instruction without flagging it — rejected: the discrepancy
 is itself information Codex's closure call needs. (3) State the disk truth and flag the discrepancy
 openly — **chosen**.
+
+## 2026-08-04 — Operator approves the Route 3 amendment to the Context Engineering implementation plan, bound to commit 1283d99
+
+**Context.** S8b closed on 2026-08-04 without the behavioural seam proof — its causal post half, its
+passing Direct Work check and its post-integration false-premise refusal were all unmet, and the closed
+record states S8b may be proved later only by a new explicitly authorised task. The approved implementation
+plan barred S9 until those three checks ran, made the seam proof a Phase 3 exit condition, and made it
+Phase 6 adoption condition 4. Progression was therefore blocked at three altitudes simultaneously.
+
+**Decision.** The operator selected **Route 3** — permit continued work while S8b stays skipped — and,
+after Codex assessed the resulting amendment and its one bounded correction, **approved the amended plan
+bound to commit `1283d99`**, recorded in the plan's own Authority notice slot per its content-bound
+approval rule.
+
+**Rationale.** The block was real but it was a *progression* block, not an adoption question. Three
+consecutive Codex-framed exit conditions (S7, S8a, S8b) had each wanted an operator-driven staged run, and
+each was declined or reduced; a fourth stall would have parked the whole capability on evidence the
+operator had already judged disproportionate to obtain. Route 3 separates the two things the plan had
+fused: work may continue, and the capability still may not be called adopted. The amendment states both
+halves in one place (§7.2) so neither can be read without the other.
+
+**What the approval deliberately does not do.** It does not make the missing evidence exist, does not
+reopen S8b, does not make adoption available — Phase 6 condition 4 stays **unmet** — and is not a reusable
+waiver mechanism. Everything S9 and later phases produce is non-adoption evidence until a separate,
+explicitly authorised proof task establishes the seam proof.
+
+**Alternatives considered.** (1) Record the missing seam proof as an accepted limitation in §11 — rejected,
+and rejected structurally: §11's own rule forbids recording an unmet adoption condition, because that
+converts a block into a shrug. It is the substitution the plan's §5.2 already names as a falsification.
+(2) Run the three S8b checks now and unblock on real evidence — rejected by the operator as
+disproportionate ceremony, consistent with the S7 and S8a declines. (3) Stop the capability here with the
+isolated proof owed — rejected: it discards work that is already live in the seam, over evidence that can
+still be obtained later. (4) **Amend the plan to permit progression under a named, bounded evidence debt
+while leaving the adoption bar exactly where it was — chosen.**
