@@ -64,6 +64,8 @@ A manufactured unit tests nothing, so this was a real piece of work with its own
 
 **One `turn: claude` file existed.** The live command therefore resolved the task without the operator naming it, so the trigger cost was **one action — typing `/work-loop-v2` with no argument.**
 
+> **These are working-tree values — what the command actually reads — and two of them differ from what is committed.** §7 sets out which, and shows the count of one holds under either reading. A reader checking git alone would otherwise find an apparent contradiction here.
+
 **This count could have read two.** Had a second `turn: claude` file existed, the command would have listed the candidates and asked which — a second operator action. **The number is a property of the repository at that moment, not a claim about how well the run went.**
 
 ### Why the second count does not fail clause 3
@@ -138,9 +140,27 @@ Stated plainly, because the boundary matters more than the verdict.
 |---|---|
 | The genuine unit's state file, with its inspection record and result | `projects/axcion-systems-builder/logs/work-loop/axcion-writing-studio-phase-11-v3.md` (in the `axcion-systems-builder` repository) |
 | The unit's deliverable | `cases/axcion-writing-studio/05-approved-solution-definition-v3.md`, same repository |
-| The open-task count at invocation | The four files listed in §3, count 2 — re-derivable from that directory's `turn:` frontmatter at the commit recorded in the unit's state file |
+| The open-task count at invocation | The four files listed in §3, count 2 — **partly re-derivable from git; see the note below, which says exactly how far** |
 | The trigger/context distinction cited in §3 | `../context-engineering-implementation-plan-v0.1.md` §4.5 |
 | The Route 3 deviation and the three owed checks | `../context-engineering-implementation-plan-v0.1.md` §7.2; `logs/work-loop/context-engineering-s8b-seam-proof.md` |
 | The isolated shadow proof, which this does **not** extend | `shadow-slice-record.md` |
 
-**The open-task count is the one number here capable of failing on its own terms** — it is read off repository state that could have said two, three or four, and a run with several tasks open would have produced a different trigger count. **The context-action count is capable of failing too, and did not:** any value above zero would have failed clause 3 outright, and the operator was asked in a form that made a non-zero answer available.
+**The two artifact commits**, both made by Claude at the close of the unit:
+
+| Commit | Repository | Contains |
+|---|---|---|
+| `d2f967e9fb28a1898ce6e352ee390ce3df945547` | `axcion-systems-builder` | The V3 draft, the Phase 10 decision record, the case-index status, and the unit's state file — 4 files |
+| `d985043c8524d586c9e0ab164942f7d77152ac4b` | `ai-resources` | This record — 1 file |
+
+### How far the open-task count is re-derivable from git — stated exactly
+
+**It is not fully re-derivable, and the earlier wording in this table implied it was.** Corrected here rather than left standing. Two of the four files' invocation-time states lived only in the working tree:
+
+- **This unit's own state file was untracked at invocation.** It first enters git at `d2f967e`, by which point Claude had already set `turn: codex`. **Git therefore holds no commit showing it as `turn: claude`**, which is the very value the count turns on.
+- **`decision-entry-referenceability.md` was modified-uncommitted**, and still is. Its working-tree value at invocation was `turn: operator` — which is what §3 records, because that is what the command reads. **Its committed value at the pre-unit HEAD `a0ae384` is `turn: codex`.** A reader checking git alone would see a different value and could reasonably think §3 was wrong.
+
+**The count of one is unaffected by either gap, and that is checkable.** `codex` is not `claude`, and `operator` is not `claude`. At `a0ae384` the three tracked files read `operator`, `codex`, `operator`; in the working tree at invocation they read `operator`, `operator`, `operator`. **Under both readings, none of the three is `claude`**, so the only `turn: claude` file was this unit's own — exactly one, and the trigger count of 1 stands.
+
+**What a later reader can and cannot verify:** they can verify the three other files were never `claude` in either form, and they can verify both commits above contain what is attributed to them. **They cannot verify from git alone that this unit's file read `turn: claude` at invocation** — that rests on the run's own record, which is this document and the unit's state file. The distinction is recorded because the alternative is an evidence pointer that looks stronger than it is.
+
+**The context-action count is capable of failing and did not:** any value above zero would have failed clause 3 outright, and the operator was asked in a form that made a non-zero answer available.
