@@ -1,7 +1,7 @@
 # Implementation plan: Context Engineering for the Work Loop
 
-**Version:** v0.1 · **Stage:** **draft — returned to draft 2026-08-04** by the Route 3 deviation recorded in §7.2. The 2026-08-02 approval against commit `e1ce895` is retained as history and does not cover this content ·
-**Status:** exactly one authorisation is outstanding, and it is this document's own — the operator's content-bound reapproval of the 2026-08-04 amendment.
+**Version:** v0.1 · **Stage:** **plan of record** — reapproved 2026-08-04 against commit `1283d99`, after the Route 3 amendment recorded at §7.2 ·
+**Status:** no authorisation is outstanding. This plan governs. Phase 6's adoption condition 4 is a separate matter and remains **unmet** (§7.2).
 
 > **Authority notice.** This plan sequences work; it creates no permission to do it. It is subordinate to
 > [`../context-engineering-spec-v0.1.md`](../context-engineering-spec-v0.1.md), which is the **approved
@@ -21,12 +21,18 @@
 > this plan is a proposal.
 >
 > ```
-> Current status:    RETURNED TO DRAFT — 2026-08-04, by the Route 3 material edit recorded below and
->                    stated in full at §7.2. Needs explicit content-bound reapproval, after Codex has
->                    assessed the amendment.
-> Note:              Route 3 authorised the deviation. It did not approve this wording, which did not
->                    exist when the route was chosen — an authorisation to prepare an amendment is not
->                    an approval of the amendment.
+> Current status:    APPROVED as the plan of record — operator, 2026-08-04
+> Approved commit:   1283d998f9cfa085348e52db551279f05d535f06
+> Approved on:       2026-08-04
+> Statement:         "Approved." Given after Codex accepted the Route 3 amendment and its one bounded
+>                    correction, in response to the amended content being presented at `1283d99`.
+> Binds to:          the substantive content at 1283d99 — the Route 3 amendment (§7.2) and the passages
+>                    that cite it. The commit carrying this approval record is necessarily later than
+>                    the content it approves; an approval record cannot be part of the approved content
+>                    without becoming self-referential.
+> What it approves:  progression under an explicit evidence debt. It does **not** approve adoption and
+>                    it does not establish S8b's missing seam proof — Phase 6 condition 4 stays unmet
+>                    until a separate, explicitly authorised proof task establishes it (§7.2).
 >
 > Prior approval:    APPROVED as the plan of record — operator, 2026-08-02
 > Approved commit:   e1ce895b3da1387bae7ce50623afc3875cb050ba
@@ -34,10 +40,8 @@
 > Statement:         "I reapprove `context-engineering-implementation-plan-v0.1.md` as the plan of
 >                    record, bound to commit `e1ce895b3da1387bae7ce50623afc3875cb050ba`, dated
 >                    2026-08-02."
-> Binds to:          the substantive content at e1ce895. The commit carrying this approval record is
->                    necessarily later than the content it approves — an approval record cannot be part
->                    of the approved content without becoming self-referential. It does not cover the
->                    2026-08-04 amendment.
+> Returned to draft: 2026-08-04, by the Route 3 amendment recorded below. Retained as history; it binds
+>                    to e1ce895 and does not cover the amended content.
 >
 > Earlier approval:  APPROVED as the plan of record — operator, 2026-08-02
 > Approved commit:   cc635d4
@@ -65,15 +69,15 @@
 > Phase 0's two questions only; O-1 was genuinely unanswered when it was given. **O-1 has since been
 > answered — yes**, recorded in the specification itself and bound to commit `148689d`, superseding the
 > narrower *"for this implementation unit"* scope of the same date. Both of Phase 0's approvals therefore
-> exist. What is outstanding is neither of them: it is the reapproval this document's 2026-08-04 amendment
-> now needs, and until the operator gives it, this plan is a draft.
+> exist. The 2026-08-04 amendment then returned this document to draft and needed its own reapproval;
+> **the operator gave it on 2026-08-04, bound to `1283d99`**. Nothing is outstanding.
 >
 > **Assessment status of the 2026-08-02 approval: `unassessed` — historical, and it does not describe the
 > 2026-08-04 amendment.** That approval was given before Codex's final closure check on the
 > one-file-candidate fix ran. The check is not owed retrospectively; it is recorded so a later reader does
 > not mistake *that* approval for independent assessment. **The amendment is on the opposite footing:** it
-> goes to Codex for assessment *before* the operator is asked to reapprove it, so this paragraph must not
-> be read forward onto it.
+> went to Codex for assessment *before* the operator was asked to reapprove it, and both happened in that
+> order on 2026-08-04. This paragraph must not be read forward onto it.
 >
 > **This is not "the one canonical project plan" of spec §5.7.** That term names the durable plan a
 > *project* carries so Context Engineering can prepare briefs against it. This is a build plan for the
@@ -566,9 +570,9 @@ until both exist.
    second says this sequence is how it gets built.
 
 **Status, 2026-08-04.** Item 1 is **answered**: the specification is approved and governing at commit
-`148689d`. Item 2 was answered on 2026-08-02 at `e1ce895` and is **open again**, because the Route 3
-amendment (§7.2) materially edited this plan and the rule below returns it to draft. Phase 0 is satisfied
-for the specification and outstanding for this plan alone.
+`148689d`. Item 2 is **answered twice**: on 2026-08-02 at `e1ce895`, then again on 2026-08-04 at
+`1283d99` after the Route 3 amendment (§7.2) materially edited this plan and the rule below returned it to
+draft. Phase 0 is satisfied for both documents.
 
 Both bindings follow spec §5.7 and CE-4 failing case C — an approval that identifies only a filename fails
 on that shape alone, because the file's meaning can change with nothing appearing to have happened. A
@@ -1445,23 +1449,23 @@ O-3, an operator decision that adoption condition 3 requires settled.
 
 1. **O-1 — does the specification become governing?** **Answered 2026-08-02: yes**, recorded in the
    specification and bound to commit `148689d`.
-2. **Is this plan approved as the plan of record?** **Open again.** It was answered on 2026-08-02 at
-   `e1ce895`; the Route 3 amendment (§7.2) materially edited this document and returned it to draft.
+2. **Is this plan approved as the plan of record?** **Answered 2026-08-04: yes**, bound to commit
+   `1283d99` — after the Route 3 amendment (§7.2) returned this document to draft and Codex assessed it.
 
 **O-3 was settled before S8a** — the operator chose reading A, and the narrower adoption boundary that
 follows from it is recorded in
 [`../../../logs/work-loop/context-engineering-s8a-entrypoint-classification.md`](../../../logs/work-loop/context-engineering-s8a-entrypoint-classification.md),
 to be re-derived at adoption (condition 3).
 
-**The exact sequence from here, in order:**
+**The sequence that governed this amendment — complete as of 2026-08-04:**
 
-1. **Codex assesses this amendment** — §7.2 and the passages that cite it.
-2. **The operator explicitly reapproves the amended plan**, bound to an identifiable commit, recorded in
-   the § Authority notice slot above. Route 3 authorised the deviation; it is **not** that approval, and
-   Codex's assessment is not it either.
-3. **Only then may S9 open**, under §7.2 and nothing else.
+1. **Codex assessed the amendment** — accepted after one bounded correction.
+2. **The operator reapproved the amended plan**, bound to `1283d99`, recorded in the § Authority notice
+   slot above. Route 3 authorised the deviation; it was **not** that approval, and Codex's assessment was
+   not it either.
+3. **S9 may now open**, under §7.2 and nothing else.
 
-**What none of those three steps changes.** S8b stays closed and its behavioural seam proof unobtained;
+**What none of those three steps changed.** S8b stays closed and its behavioural seam proof unobtained;
 Phase 6's adoption **condition 4** stays **unmet**; and everything S9 and any later phase produces is
 non-adoption evidence until a separate, explicitly authorised proof task establishes that condition.
 
