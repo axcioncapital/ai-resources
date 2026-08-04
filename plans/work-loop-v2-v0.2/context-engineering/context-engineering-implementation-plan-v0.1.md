@@ -1,6 +1,6 @@
 # Implementation plan: Context Engineering for the Work Loop
 
-**Version:** v0.1 · **Stage:** **plan of record** — reapproved 2026-08-02 against commit `e1ce895`, after the material edit recorded below ·
+**Version:** v0.1 · **Stage:** **draft — returned to draft 2026-08-04** by the Route 3 deviation recorded in §7.2. The 2026-08-02 approval against commit `e1ce895` is retained as history and does not cover this content ·
 **Status:** not authorisation to implement — the specification's approval (O-1) is still outstanding.
 
 > **Authority notice.** This plan sequences work; it creates no permission to do it. It is subordinate to
@@ -21,7 +21,14 @@
 > this plan is a proposal.
 >
 > ```
-> Current status:    APPROVED as the plan of record — operator, 2026-08-02
+> Current status:    RETURNED TO DRAFT — 2026-08-04, by the Route 3 material edit recorded below and
+>                    stated in full at §7.2. Needs explicit content-bound reapproval, after Codex has
+>                    assessed the amendment.
+> Note:              Route 3 authorised the deviation. It did not approve this wording, which did not
+>                    exist when the route was chosen — an authorisation to prepare an amendment is not
+>                    an approval of the amendment.
+>
+> Prior approval:    APPROVED as the plan of record — operator, 2026-08-02
 > Approved commit:   e1ce895b3da1387bae7ce50623afc3875cb050ba
 > Approved on:       2026-08-02
 > Statement:         "I reapprove `context-engineering-implementation-plan-v0.1.md` as the plan of
@@ -29,16 +36,25 @@
 >                    2026-08-02."
 > Binds to:          the substantive content at e1ce895. The commit carrying this approval record is
 >                    necessarily later than the content it approves — an approval record cannot be part
->                    of the approved content without becoming self-referential.
+>                    of the approved content without becoming self-referential. It does not cover the
+>                    2026-08-04 amendment.
 >
-> Prior approval:    APPROVED as the plan of record — operator, 2026-08-02
+> Earlier approval:  APPROVED as the plan of record — operator, 2026-08-02
 > Approved commit:   cc635d4
 > Approved on:       2026-08-02
-> Returned to draft: 2026-08-02, by the material edit recorded below. The prior approval above is
->                    retained as history; it binds to commit cc635d4 and does not cover this content.
+> Returned to draft: 2026-08-02, by the earlier material edit recorded below. It binds to commit
+>                    cc635d4 and does not cover this content.
 > ```
 >
-> **The material edit that returned it to draft.** S3's pre-revision run — the same seeded input against
+> **The material edit of 2026-08-04 that returned it to draft again.** S8b closed without the behavioural
+> seam proof, and the operator chose Route 3 — continue while S8b stays skipped. The amendment adds §7.2
+> and qualifies the five passages that carried the proof as a progression gate: S8b's exit, S9's
+> precondition, Phase 3's exit condition 3, the Phase 4 and Phase 5 entries, and Phase 6's adoption
+> condition 4. That changes the phase sequence and an exit condition, so the content-bound rule above
+> fires. **Nothing about the adoption bar moved:** condition 4 is unmet, adoption is unavailable, and
+> §7.2 says so where the permission is granted.
+>
+> **The earlier material edit (2026-08-02).** S3's pre-revision run — the same seeded input against
 > the unrevised candidate — falsified this plan's premise that the candidate is *behaviourally* empty and
 > that all five Slice A cases start red. Four came back green and only CE-3 was red. The §4.4 candidate
 > contract, the Phase 2 cycle and S3's evidence and exit conditions were corrected to match, which changes
@@ -482,6 +498,50 @@ re-run of S11 — stated in S12.
 
 **Retention.** The regression's cases and fixtures are the material that *survives* the build (§7.5).
 Everything else under `trials/` is temporary.
+
+---
+
+### 7.2 The Route 3 deviation — progression under an explicit evidence debt
+
+**What the operator decided.** On 2026-08-04, with S8b closed and the behavioural seam proof not obtained,
+the operator chose **Route 3**: work continues while S8b stays skipped. This section records that decision
+and its exact boundary. It is the only place in this plan where progression past an unmet evidence
+condition is permitted, and it permits it once, here, for this one debt.
+
+**The debt, named so it cannot be mislaid.** `../../../logs/work-loop/context-engineering-s8b-seam-proof.md`
+closes S8b with three checks unmet. This plan carries them forward as **owed**, never as obtained:
+
+1. **The causal post half** of the pre/post pair at the real entrypoint. A pre-integration red run exists
+   and is retained as evidence; no byte-identical post half does.
+2. **The Direct Work check, passing** — the observed absence of a state file after a small reversible fix
+   is run through the wired entrypoint.
+3. **The post-integration false-premise refusal**, with the named target file observably unmodified.
+
+**What Route 3 permits.** S9 may open with the debt outstanding, and — subject to this plan's ordinary
+session-by-session decisions, not automatically — Phases 4 and 5 may follow. What those sessions do is
+evidence-gathering, review, correction, integration and hardening. That is the whole permission.
+
+**What Route 3 does not do**, stated plainly because a deviation is exactly where these slip:
+
+- **It does not make the missing evidence exist.** No passage of this plan, and no record produced
+  downstream of it, may describe the seam as behaviourally proved.
+- **It does not make adoption available.** Phase 6 condition 4 is **unmet** and stays unmet until a
+  separate, explicitly authorised proof task establishes it. Everything produced while the debt stands is
+  **non-adoption evidence**, whatever else it demonstrates.
+- **It does not reopen S8b.** That task is closed and this section changes nothing in its record.
+- **It is not a waiver mechanism.** No general route exists by which an unmet condition becomes optional,
+  and this section is not precedent for one. A further deviation is a fresh operator decision, taken and
+  recorded the same way.
+
+**Why this is not a limitation.** §11's table records what is *unmeasured or deferred*, and it explicitly
+cannot record an unmet adoption condition. The seam proof is one of the five, so it does not go there — it
+lives here, where the permission and the block are stated in the same place and cannot be read apart.
+Moving it into §11 would turn a blocked condition into a written limitation, which is the substitution
+§5.2 names, one level up.
+
+**How this section stops being needed.** A separate, explicitly authorised task obtains the three checks
+above with their failing runs on record. Condition 4 is then met, this deviation has nothing left to
+permit, and the passages citing it revert to their unqualified form.
 
 ---
 
@@ -1021,14 +1081,19 @@ one session.*
      touching the state schema fails.
 - *Exit:* every relevant path is wired, all three behavioural checks passed with their failing runs
   recorded, and the diff contains nothing unrelated.
+- *Exit status, 2026-08-04 — **not met**.* S8b closed with all three behavioural checks unmet
+  (`../../../logs/work-loop/context-engineering-s8b-seam-proof.md`). The exit condition above is unchanged
+  and is **not** treated as satisfied; progression past it runs under §7.2 and under nothing else.
 - *Stop:* if the edit cannot be made without expanding the state schema, adding a fourth durable category,
   or building any part of the delivery path §4.5 shows already exists, stop — the integration has stopped
   being a seam edit and the operator decides whether it proceeds at all.
 - *Next:* S9.
 
 **Session S9 — one fresh-context candidate review**
-- *Inputs:* the candidate, **named by its exact Git commit**; S8b's behavioural evidence; the
-  specification; this plan.
+- *Inputs:* the candidate, **named by its exact Git commit**; the specification; this plan; and S8b's
+  behavioural evidence — **which does not exist** (§7.2). Under the deviation that input is replaced by
+  S8b's closing record and the retained pre-integration red run, and the reviewer is **told** the seam is
+  unproved rather than left to infer it from a gap in the pack.
 - *Actors:* lead — an independent reviewer with fresh context, which is not the party that wrote the
   candidate. This is the one review the build gets; it replaces nothing and adds nothing. Observer —
   **Claude**, whose check is narrow and mechanical: the review names the exact commit it examined, and the
@@ -1047,6 +1112,12 @@ one session.*
 > reasons about it — competently, and still without ever invoking the thing. Reversing the order would put
 > the most persuasive evidence (a careful reviewer's approval) in front of the only evidence that can
 > actually fail (the seam refusing to work), which is how a candidate ships looking proved.
+>
+> **Under §7.2 this ordering is deviated from once, by operator decision.** S9 may open with S8b's three
+> checks unmet. The reasoning above is not withdrawn — it is precisely what the deviation costs. A review
+> that runs before the behavioural evidence cannot supply it, so S9's acceptance says the candidate *reads*
+> correctly and never that the seam *works*, and its output is non-adoption evidence while condition 4 is
+> unmet.
 
 **Session S10 — the one bounded correction** *(only if S9 produced findings)*
 - *Inputs:* the frozen findings.
@@ -1074,9 +1145,19 @@ one session.*
    false-premise checks, each with its failing run recorded — and the candidate review has run after that
    evidence exists.
 
+**Status of condition 3, 2026-08-04: not met, and deviated from once under §7.2.** Phase 3 is exited for
+**progression** purposes only. Condition 3 stays outstanding, keeps its full force as Phase 6's adoption
+condition 4, and no downstream session may report Phase 3 as cleanly exited. Conditions 1 and 2 are
+unaffected by the deviation and are assessed on their own evidence.
+
 ---
 
 ### Phase 4 — The integrated proof
+
+**Entry, 2026-08-04.** Phase 3's condition 3 is unmet, so Phase 4 is entered under §7.2's deviation and
+not on a clean Phase 3 exit. S11's result is **non-adoption evidence** while the seam-proof debt stands,
+whatever it demonstrates about clause 3 — obtaining the integrated proof satisfies condition 1 and leaves
+condition 4 exactly where it was.
 
 **Session S11 — the two-model trial (operator-driven)**
 - *Inputs:* the accepted candidate; one **genuine** unit of work the operator wanted done anyway. A
@@ -1112,6 +1193,12 @@ record.
 ---
 
 ### Phase 5 — Harden from evidence, reprove what changed
+
+**Entry, 2026-08-04.** As Phase 4 — entered under §7.2, and its hardening evidence is non-adoption
+evidence while the seam-proof debt stands. One consequence is worth stating here rather than discovering
+later: if a separate authorised task obtains S8b's three checks and a Phase 5 fix then touches the seam,
+those checks are **owed again** against the changed candidate — §5.2's *proof inherited by a changed
+candidate*, applied to a proof obtained out of sequence.
 
 **Session S12**
 - *Inputs:* every trial record; the friction observed in S3b and S11; §7.1's five cases.
@@ -1189,7 +1276,7 @@ once against the final candidate — not an added review stage.
 | 1 | The integrated proof is obtained — clause 3 demonstrated, not owed | S11 |
 | 2 | Every access path is classified, and every *relevant* one is wired | S8a, S8b, Phase 3 exit |
 | 3 | O-3 is settled — the operator has chosen reading A or B, and the classification and wiring were done under the reading chosen | Operator, before S8a; re-derived at adoption |
-| 4 | The seam is proved behaviourally, with failing runs on record | S8b |
+| 4 | The seam is proved behaviourally, with failing runs on record | S8b — **unmet as of 2026-08-04** (§7.2). Establishable only by a separate, explicitly authorised proof task. The Route 3 deviation neither establishes it nor waives it |
 | 5 | The shipped candidate is the proved candidate — affected behaviours re-proved after hardening, and the full grouped regression green on the final candidate | S12 |
 
 **"Adopt with stated limitations" is deliberately not an option for conditions 1–5.** A limitation records
@@ -1200,6 +1287,12 @@ weaker result presented as the stronger claim.
 
 If only the isolated proof exists, the honest outcome is "isolated proof obtained, integrated proof owed" —
 and that is a legitimate place to stop for a while. It is not adoption.
+
+**The Route 3 deviation (§7.2) does not touch any of this.** It permits progression while condition 4 is
+unmet; it does not convert condition 4 into a limitation, and adoption stays unavailable for exactly as
+long as the condition is unmet. A deviation that permitted continuation *and* adoption would be the same
+substitution again, one level higher: the permission to keep working read as the proof that the work is
+done.
 
 3. **Then stop.** The adoption decision is recorded in the implementation task's state file and, at
    closure, in its closing record — core §4's closure shape: the outcome, the decisions that matter, the
@@ -1308,6 +1401,10 @@ A prohibition mentioned only as something to build is not covered. Each row name
 It can never record an unmet *adoption condition* — the five in Phase 6's table — because that would let
 the plan waive by wording what CE-17 makes a requirement. **Entrypoint coverage and the O-3 reading are
 therefore not listable here.**
+
+**The S8b seam-proof debt is not listable here either**, for the same reason: it is adoption condition 4,
+not something unmeasured. It is recorded in §7.2, together with the permission it runs under. Adding a row
+for it in this table would be the waiver §7.2 refuses.
 
 | Item | Why not now | Reopening trigger |
 |---|---|---|
