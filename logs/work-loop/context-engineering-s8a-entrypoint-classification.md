@@ -1,6 +1,6 @@
 ---
 task: context-engineering-s8a-entrypoint-classification
-turn: codex
+turn: operator
 ---
 
 ## Objective and approved scope
@@ -123,86 +123,79 @@ made complete, required evidence cannot be produced, or work would cross the exc
 
 ## Latest material result
 
+Blocker resolved by Codex: the state file is O-3 reading A's durable home under core §4, and claims (1)
+and (2) were inherited as verified. Claims (3)–(5) then ran.
+
 Inspected (2026-08-04):
 
-- Claim (1) — the plan's S8a-governing content is still covered by its `e1ce895` approval binding:
-  **HOLDS** — ran `git diff e1ce895 HEAD -- plans/work-loop-v2-v0.2/context-engineering/context-engineering-implementation-plan-v0.1.md`;
-  the only change is 11 insertions / 2 deletions, entirely inside the header approval block (the stage
-  line flipped from "draft pending reapproval" to "plan of record", plus the reapproval record itself).
-  §4.2, §6 O-3 and Session S8a are byte-identical to the approved content. No material change to S8a's
-  scope, sequence, exit or authority relationships.
-- Claim (2a) — this state file's identity: **HOLDS** — frontmatter `task:` reads
-  `context-engineering-s8a-entrypoint-classification`, matching the filename; `turn: claude`;
-  `## Next action` does not open with core §3's correction token, so this is a new unit.
-- Claim (2b) — the two referenced Context Engineering state files are closed: **HOLDS** — read
-  `logs/work-loop/context-engineering-implementation.md` and
-  `logs/work-loop/context-engineering-s7-regression.md`; both carry `turn: operator` and core §4's
-  four-part closing shape (`## Outcome`, `## Decisions that matter`), not the five active fields.
-  Neither was opened for edit.
-- Claim (2c) — the target record does not already carry a current result: **HOLDS** — listed
-  `plans/work-loop-v2-v0.2/context-engineering/trials/`; searched it for `entrypoint-classification.md`;
-  no match. The directory holds `carriage-trial-record.md`, `ce-9-recovery-scenario.md`,
-  `shadow-slice-record.md`, `slice-a-evidence.md`, `fixtures/` and `regression/` only.
-- Governing premise — "S7 is deliberately skipped for value/cost reasons": **HOLDS** — read
-  `logs/decisions.md` (2026-08-04 entry) and the closed S7 state file; both record the operator declining
-  both the five-case and the reduced two-case run, and both state the unmet §7.1 exit condition
-  explicitly rather than implying it.
-- Governing premise — "O-3 is reading A, settled by the operator on 2026-08-04": **FALSE as a repository
-  fact** — searched every tracked `*.md` for `O-3` and for `reading A` (`git grep -n`). There is no record
-  of the decision anywhere, and the three most recent durable statements say the opposite:
-  `logs/session-notes.md:597` (the 2026-08-04 entry, § Open Questions) — "O-3 … remains the standing open
-  question"; `logs/work-loop/context-engineering-implementation.md:77` — "O-3 is unsettled";
-  `logs/decisions.md` — searched end to end for `O-3` and `reading A`, zero matches, and its final entry
-  (the S7 decline) does not touch O-3. Today's scratchpad
-  (`logs/scratchpads/2026-08-04-10-10-scratchpad.md:61`) records O-3 as "untouched". The plan's own §6 O-3
-  row and its Session S8a bullet both require the reading to be settled *before* this session runs.
+- Claim (3) — fresh symlink-following scan: **HOLDS, and it corrects the plan.** Ran `find -L` over both
+  briefed roots with the four patterns for the five plan §4.2 artifacts (`work-loop-v2.md`,
+  `work-loop.md`, `*/work-loop-v2/SKILL.md`, `*/work-loop/SKILL.md`), no pruning. Exit 0 for both, no
+  stderr, no symlink-cycle diagnostic. Found **14 access paths** — 5 under `ai-resources`, 9 under
+  `projects`. Plan §4.2 recorded **three** access paths to the v2 Claude command; there are **four**, the
+  new one being `projects/axcion-systems-builder-email-os/`, a project that postdates the 2026-08-02
+  inventory. The exact commands and complete raw output are recorded in § 1 of the classification record.
+- Claim (4) — per-path inspection of v0.2 paths: **HOLDS.** Resolved every path's identity by inode rather
+  than filename (`stat -Lf '%i'` plus `readlink`): the 14 paths reach **five** canonical files, and no
+  content is duplicated anywhere in either root. Every project path is a symlink — the file itself, or a
+  directory above it. Per-path evidence for plan-dependent briefing or continuation is in § 2 of the
+  record.
+- Claim (5) — v1 paths preserved as outside reading A's population: **HOLDS.** All 8 v1 paths carry a row
+  with a disposition and no relevance verdict (§ 3 of the record). They were not inspected as a pretext to
+  decide wiring, retirement, or O-3.
 
-Claims (3), (4) and (5) are method instructions for the unit rather than checkable premises, and were not
-reached: the unit does not begin.
+**Result:** `plans/work-loop-v2-v0.2/context-engineering/trials/entrypoint-classification.md` now exists,
+classifying all 14 discovered access paths. Counts reconcile: 14 scanned, 14 rows, no duplicates. Six paths
+are in reading A's population and **all six are relevant** — four by observed evidence (the two canonical
+`ai-resources` paths, plus `axcion-systems-builder`'s two symlinked paths, which carry three real v2 state
+files), and **two by the plan's fail-safe** (`axcion-design-studio` and
+`axcion-systems-builder-email-os`, where the v2 command is reachable but no `logs/work-loop/`, no
+`.agents/` and no resolvable executable core exist). Those two rest on Session S8a's Stop clause, which
+directs the unsettled case to *relevant* and forbids resolving it toward *not relevant* on skill or
+state-directory grounds — which is exactly what two of the three observed absences are.
 
-## Blocker
+**Evidence:** the record's own rows are the evidence, and each is capable of failing — every row states a
+re-runnable command whose output produced it, and a row whose verdict does not follow from its own
+conditions plus reading A fails. The scan is capable of failing at the count reconciliation: a missing or
+duplicate path breaks the stated 14 = 14. It has already demonstrated it can fail against a prior belief —
+it contradicted plan §4.2's three-path inventory rather than confirming it.
 
-**The brief's governing O-3 premise has no source the repository can confirm, and the durable record
-contradicts it.** The brief states as a governing current operator decision that "O-3 is reading A, 'the
-v0.2 entry protocol only'", chosen on 2026-08-04. Nothing in the repository records that decision — not
-`logs/decisions.md`, not `logs/session-notes.md`, not the plan, not any state file — while the last three
-durable statements on the question all say O-3 is unsettled (cited in the inspection record above).
+**Two observations recorded, neither implemented** (core §5 deferrals):
 
-This is load-bearing rather than procedural, for three reasons:
-
-1. **The reading sets the population, and the population is the artifact.** Under reading A the v1 paths
-   are recorded as outside the population; under reading B they are in it and, per plan §4.2, classify as
-   relevant. The same scan produces two materially different records. Building on the wrong one does not
-   produce a fixable record — it produces a wrongly-scoped one.
-2. **Reading A is the reading that shortens the work**, and the plan names picking it exactly this way as
-   the failure to avoid: §6 — "Where an implementation session hits one of these, it stops and escalates —
-   it does not pick the reading that lets work continue"; Session S8a — "If O-3 is unanswered, S8a stops
-   rather than picking the reading that shortens the work." An earlier version of this session got this
-   order wrong and "silently deleted reading B" (plan §7, Phase 3).
-3. **The brief's own safeguard is placed too late to serve.** Its evidence list asks the operator to
-   confirm "that reading A is the reading chosen" *after* Claude prepares the record. If the confirmation
-   comes back as reading B, the whole record is rescoped, so the confirmation cannot function as the check
-   the plan asks for.
-
-Core §3 step 1 governs the disposition: conversation may point at a source, but it never establishes
-authority or current state. The operator may well have settled O-3 in conversation with Codex — that is
-outside the repository, and Claude cannot verify it or act on it.
-
-No other file was touched. `plans/work-loop-v2-v0.2/context-engineering/trials/entrypoint-classification.md`
-was not created; no scan was run; the two closed state files were read only.
+1. Plan §4.2's entrypoint inventory is now stale on the v2 command's access-path count. Amending the
+   approved plan is not this unit's work.
+2. Under reading A the record's § 3 states plainly what the narrowing gives up: six paths reach a live v1
+   command that authors its own plan-dependent brief, and they stay outside the boundary. Plan §6 requires
+   this to be written into the **adoption record** — a later artifact this unit does not create.
 
 ## Next action
 
-Codex: decide one of two things, and record the decision durably before reissuing.
+Operator observation is owed, so this unit is **provisional, not complete**, per the brief's stated path.
 
-1. **If O-3 genuinely was settled as reading A** — the decision needs a durable home before it can govern
-   a classification: an entry in `logs/decisions.md` and/or the plan's §6 O-3 row, written by whoever owns
-   that record. Reissue the brief citing it. Note the plan requires the *operator* to settle O-3; neither
-   Codex nor Claude may pick the reading.
-2. **If it was not settled** — S8a stops for the operator per plan §6 and the S8a "Stop" clause. The
-   escalation is the operator choosing reading A or reading B, with the consequence each carries (plan §6:
-   reading A narrows the adoption claim and writes that narrowing into the adoption record; reading B puts
-   v1 in the population and requires it wired or retired before adoption).
+Please confirm two things:
 
-Unchanged either way: claims (1) and (2) hold, so nothing else in the brief needs re-establishing when it
-is reissued.
+1. **Re-run the scan** and confirm it returns the same 14 paths, exit 0, no stderr:
+
+   ```
+   find -L "/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources" \
+     \( -name 'work-loop-v2.md' -o -name 'work-loop.md' \
+        -o -path '*/work-loop-v2/SKILL.md' -o -path '*/work-loop/SKILL.md' \) \
+     -type f -print
+
+   find -L "/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects" \
+     \( -name 'work-loop-v2.md' -o -name 'work-loop.md' \
+        -o -path '*/work-loop-v2/SKILL.md' -o -path '*/work-loop/SKILL.md' \) \
+     -type f -print
+   ```
+
+2. **Confirm reading A is the reading you chose** — "the v0.2 entry protocol only" — accepting the
+   consequence the record's § 3 states: Work Loop v1 stays outside the adoption boundary, plan-dependent
+   work can still continue through it without Context Engineering, and that narrowing goes into the
+   adoption record rather than being left implied.
+
+One judgment call is worth your attention before you confirm: rows 3 and 4 (`axcion-design-studio`,
+`axcion-systems-builder-email-os`) are classified relevant by the fail-safe rather than by evidence. If you
+read the S8a test as settled by inspection in those two cases, the verdicts flip to *not relevant* and
+S8b's wiring scope shrinks by two paths.
+
+Once confirmed, the unit closes to `turn: codex` for assessment. Do not begin S8b.
