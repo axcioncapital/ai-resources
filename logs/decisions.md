@@ -171,3 +171,36 @@ check; the worked detail lives in
 **Not decided here.** Whether plan §7 `:551`'s "it is a fixture" wording should change, and whether the
 isolation-plus-scrub requirement should be written into plan §4.4 as a standing Phase 2 rule. The second is
 queued in `logs/improvement-log.md` at medium-high; both remain task deferrals.
+
+## 2026-08-04 — Decline the S7 grouped-regression run
+
+**Context.** The Context Engineering implementation plan's §7.1 requires the grouped regression (five
+seeded cases, R-1…R-5) to run in full at the Phase 2 exit boundary, driven by the operator across five
+fresh Codex threads. Task `context-engineering-s7-regression` had built and Codex-accepted an
+answer-key-free instrument for all five cases and prepared five disposable roots outside the repository,
+ready to run.
+
+**Decision.** The operator declined to run it — both the full five-case scope and a reduced two-case
+(R-3, R-4) alternative Claude offered as carrying most of the value at a fraction of the cost. Judged the
+run-and-observation ceremony disproportionate to what it would establish.
+
+**Rationale.** The instructions' *presence* in the live skill was already proved by the prior implementation
+task; what the run would add is evidence that the instructions *change behaviour*, on five fabricated
+projects, at a cost of five operator-driven fresh Codex threads (one with three sequential turns) plus a
+full Claude observation pass. Weighed against that cost, the operator judged the marginal evidence not
+worth the ceremony required to produce it.
+
+**Consequence, stated rather than absorbed.** This is an explicit deviation from the approved plan's §7.1
+requirement. Phase 2's exit condition is not met, and the closed task record says so plainly rather than
+implying it. Nothing previously proved is retracted — the implementation task's standing limitation that
+the instructions are proved present but not proved effective stands exactly as it did before this task
+opened.
+
+**Alternatives considered.** (1) Run all five cases as planned — rejected as the ceremony being objected
+to. (2) Run a reduced two-case subset (R-3 false-claim-as-fact, R-4 plan-contradicting request) covering the
+two failure modes with real downstream consequence — offered, also declined. (3) Decline entirely and close
+— **chosen**.
+
+**What survives.** The accepted instrument is retained rather than discarded — plan §7.5 already treats the
+regression cases and fixtures as material that outlives the build, so a later session can run them without
+reconstruction if the plan is ever revisited.

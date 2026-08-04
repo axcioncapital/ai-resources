@@ -2,76 +2,6 @@
 
 > Archive: [session-notes-archive-2026-08.md](session-notes-archive-2026-08.md)
 
-## 2026-08-02 — Session S3-e53
-
-**Mandate:** Make two minimal wording corrections in place to `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md` — extend §1's capability definition and replace §4's standing statement — then review the diff and commit only those two changes — done when: both operator-supplied sentences are present verbatim, all 17 behaviour numbers / version v0.1 / draft status are unchanged, the diff shows only those two corrections, and one commit is landed with its hash reported.
-- Out of scope: restructuring, expanding, compressing or otherwise revising the specification; altering the materiality or sequence rules; adding trial metrics, watch items or registers; consolidating the anti-governance provisions; changing or adding behavioural cases; creating implementation or trial plans; pushing.
-- Files in scope: plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md, logs/session-notes.md, logs/friction-log.md
-- Stop if: the §4 statement to be replaced cannot be located as the operator describes it (surface §4's actual wording rather than guessing which sentence to replace), or the diff shows any change beyond the two corrections.
-- Allowed inputs: plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md
-- Footprint widened at wrap (2026-08-02): `logs/friction-log.md`'s auto-tracked write-activity log accumulated this session's own edits (verified by timestamp and filename against the session's actual work) with no clean split from the file's own pre-existing state — the file is auto-tracked, not manually authored. Widened rather than overridden, per the staging guard's own remedy; disclosed here, not silently forced through.
-- Mission: work-loop-v2-mvp
-
-**Work:** Two minimal wording corrections to the Work Loop v2 Context Engineering spec — extend §1's capability definition to cover durable-source maintenance, and correct §4's standing statement to distinguish directional authority from factual/evidentiary standing; commit only those two
-
-### Summary
-Fourth revision round on `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md`, this one bounded
-to two operator-supplied sentences applied verbatim, no derivation. §1's capability definition gained a
-clause covering consuming and — only on material change — maintaining the §5.7 durable sources, so
-context maintenance stays inside the one capability rather than becoming a separate stage. §4's
-standing statement was replaced to separate directional governing authority (operator approval or a
-current operator decision only) from factual/evidentiary standing (which verified reality may carry but
-cannot amend approved direction) — the old wording denied any standing to verified state at all, which
-contradicted §5.3's cited-evidence demotion elsewhere in the same document. Diff reviewed before commit:
-two hunks, sentence-level only. Six other review observations were named and explicitly declined per
-operator instruction, not silently dropped.
-
-### Decisions Made
-- **Scope discipline: two sentences only, no restructuring.** The operator named exactly what to change
-  and what not to touch (materiality/sequence rules, trial metrics, anti-governance consolidation,
-  behavioural cases, implementation plans). Applied as given; declined items logged below rather than
-  silently absorbed.
-- **Verbatim over style-matching.** The old §4 sentence bolded its first clause; the operator's
-  replacement text was plain prose. Applied plain, flagged to the operator as a one-line follow-up if
-  bolding-to-match is wanted — not decided unilaterally.
-- **Skipped the context-discovery engine dispatch at `/session-start` Step 2.4.** A standing instruction
-  in this session forbids calling the Agent tool unless asked; the engine would have added nothing here
-  since the operator stated `files_in_scope` explicitly and operator values override engine output
-  regardless. Surfaced to the operator as a named conflict rather than silently skipped.
-
-### Outcome
-(Outcome check skipped — not requested this wrap.)
-
-### Session Value Audit — 80/20 Review
-(Skipped — not requested this wrap.)
-
-### Risky actions
-None. One file changed (`plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md`), draft-stage spec
-document, no hook/permission/CLAUDE.md/command/agent/symlink surface touched. Diff reviewed before
-commit and confirmed to two hunks only. Push stays gated.
-
-### Findings Declined
-- **§4's old standing sentence read as internally inconsistent with §5.3** (denying all standing to
-  verified repository reality, while §5.3 elsewhere lets cited evidence demote a source) — not queued:
-  the operator had already identified this exact defect and supplied the fix as part of this session's
-  mandate, so there is nothing left to route to the backlog.
-- **Bold-formatting mismatch between the old and new §4 sentence** (old text bolded its lead clause; the
-  operator's replacement is plain prose) — not queued: it is a one-line cosmetic follow-up already
-  flagged inline to the operator in the completion report, not a defect with an independent consequence.
-
-Findings: 2 — queued 0, declined 2. 0 + 2 = 2.
-
-### Next Steps
-Await Codex's closure verdict on this revision (commit `148689d`). If approved, flip the spec's stage
-header from "draft specification — awaiting operator approval" to the approved language and get the
-operator's explicit sign-off before treating anything here as authorizing implementation. If further
-corrections are requested, keep applying them in place in this same file — do not create a `-v2`
-sibling (FP-4). Separately, still undispatched: the Work Loop v2 mission's Step 8 v1-retirement review
-brief.
-
-### Open Questions
-None.
-
 ## 2026-08-02 — Session S4-510
 
 **Mandate:** Implement the smallest coherent vertical slice that integrates Context Engineering into the Work Loop's real Codex-to-Claude path — CE invoked before plan-dependent briefing, Codex recovering plan/state/decisions/blocker/next-unit from durable repository sources, one minimum-sufficient brief delivered through the existing handoff interface with no operator ferrying, consumable and premise-checkable by a fresh Claude session — done when: the pre-fix failure is demonstrated at the real seam with evidence; the corrected vertical path is demonstrated with fresh contexts across all six conditions plus the false premise, the stale document and confirmation that no new durable artifact or state field was introduced; focused regression checks for the affected Work Loop paths have run; the existing state ceiling and the Direct Work bypass are verified intact; runtime resources are verified not to restate shared core policy; the diff is inspected and free of unrelated changes and new artifacts; and one commit is landed with its hash reported alongside files changed, scenarios run, and an honest split of integrated vs unproven entrypoints.
@@ -607,3 +537,70 @@ operator decision, not one this loop can resolve from evidence alone.
 - Files in scope: logs/work-loop/context-engineering-s7-regression.md, logs/scripts/work-loop-v2-slice-1.test.sh, logs/session-notes.md, logs/friction-log.md
 - Required outputs: plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-1/, plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-3/, plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-4/, plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-5/
 - Mission: work-loop-v2-mvp
+
+## 2026-08-04 — Session S3-018 (continued)
+
+**Work:** Work Loop v2 Context Engineering S7 — grouped-regression instrument built, corrected, accepted, run declined and task closed
+- Files in scope: logs/work-loop/context-engineering-s7-regression.md, logs/scripts/work-loop-v2-slice-1.test.sh, logs/session-notes.md, logs/friction-log.md
+- Required outputs: plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-1/, plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-3/, plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-4/, plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-5/
+- Mission: work-loop-v2-mvp
+
+### Summary
+Ran Claude's side of the S7 task turn-by-turn as Codex handed it over, start to close, across seven commits.
+A first handback correctly stopped construction when the brief's R-5 subcase floor omitted CE-16 A
+(`61c0e68`); Codex repaired the floor and the reissued unit built 44 answer-key-free fixture files across
+R-1/R-3/R-4/R-5, applied the one authorised harness-allowlist line, and left the harness at 149 passed /
+0 failed (`3e28147`). One bounded correction followed — R-4's CE-12 A mapping just repeated an exclusion
+the plan already stated, and R-5's non-file detector would have counted the unit's own execution and
+evidence work as forbidden machinery; both reproduced by inspection and fixed (`e533463`). Codex accepted
+Unit 1 and opened Unit 2 (run + observe), but its first Unit-2 brief left stale Unit-1 sections that
+forbade the very run it commissioned — flagged rather than worked around, then corrected by Codex
+(`4f6035a`). Five disposable roots were built and verified outside the repository for the operator-driven
+run. After walking through why the tests exist and what running two cases versus five would cost and buy,
+the operator judged the run-and-observation step disproportionate and declined it. The decision was
+recorded as an explicit, disclosed deviation from the plan's §7.1 requirement rather than absorbed
+silently (`35b438b`), and Codex closed the task to the four-part shape; the close was verified and
+committed (`1d5c5cd`).
+
+### Decisions Made
+- **Operator: decline the S7 grouped-regression run**, both the full five-case scope and a reduced
+  two-case (R-3/R-4) alternative Claude offered. Judged disproportionate to what it would buy. Recorded in
+  the closed task record as an explicit deviation from plan §7.1, not silently skipped — Phase 2's exit
+  condition is stated as unmet rather than implied met.
+- **Operator: relocate the disposable run roots** from the session scratchpad to `/Users/patrik.lindeberg/s7-run/`,
+  outside every repository, for durability across sessions (moot once the run was declined, but done before
+  that decision landed).
+- **Claude, within authority: stopped construction rather than widen the R-5 floor itself** when Unit 1's
+  first brief omitted CE-16 A. Deciding what belongs in the floor is Codex's framing call, not Claude's to
+  make silently.
+- **Claude, within authority: restored and re-applied rather than papered over** a self-inflicted file
+  truncation mid-correction (a heading-offset edit cut the state file at a false match). Disclosed in the
+  commit rather than left unmentioned.
+- **Claude, within authority: flagged the stale Unit-2 brief rather than working around it** — the brief as
+  first written forbade the run its own next action commissioned; surfaced to the operator instead of
+  guessing which half was authoritative.
+
+### Risky actions
+None. The one near-destructive step in this task's history (the earlier S6 candidate deletion) happened in
+a prior session; this session's file-truncation incident was self-corrected from git history with no data
+loss and is recorded above.
+
+### Next Steps
+None open on this task — it is closed. If S7 is ever revisited, the accepted R-1…R-5 instrument at
+`plans/work-loop-v2-v0.2/context-engineering/trials/regression/` is ready to run without rebuilding. Two
+carried deferrals for that future session: rewrite the answer-key scan to capture-and-test-emptiness rather
+than rely on `find -exec grep`'s exit status; and settle whether `r-2-void-run-2026-08-03/`'s captured
+output falls under the §4.4 fixture first-line rule. Disposable roots at `/Users/patrik.lindeberg/s7-run/`
+are inert and may be deleted at will.
+
+### Open Questions
+None new. O-3 (which reading of "every relevant Work Loop entrypoint" governs adoption) remains the
+standing open question from the prior implementation task, untouched by this session.
+
+### Findings Declined
+- The closed task record's `## Evidence` section cites `81e7b4f` as "the operator-ready Unit 2 brief" —
+  that commit is where Unit 2 was *opened* with the still-stale Unit-1 brief; the corrected brief is
+  `4f6035a`. Flagged to the operator in chat rather than fixed, since the closed record is Codex's to
+  write and correcting a citation inside an already-closed file is a bigger intervention than the citation
+  error itself. Declined rather than queued: cosmetic, self-correcting via `git log`, no downstream
+  consumer reads the closed record's prose for the hash.

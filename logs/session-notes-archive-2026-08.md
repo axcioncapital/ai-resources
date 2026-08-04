@@ -1313,3 +1313,72 @@ review brief remains undispatched, untouched this session.
 
 ### Open Questions
 None.
+## 2026-08-02 — Session S3-e53
+
+**Mandate:** Make two minimal wording corrections in place to `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md` — extend §1's capability definition and replace §4's standing statement — then review the diff and commit only those two changes — done when: both operator-supplied sentences are present verbatim, all 17 behaviour numbers / version v0.1 / draft status are unchanged, the diff shows only those two corrections, and one commit is landed with its hash reported.
+- Out of scope: restructuring, expanding, compressing or otherwise revising the specification; altering the materiality or sequence rules; adding trial metrics, watch items or registers; consolidating the anti-governance provisions; changing or adding behavioural cases; creating implementation or trial plans; pushing.
+- Files in scope: plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md, logs/session-notes.md, logs/friction-log.md
+- Stop if: the §4 statement to be replaced cannot be located as the operator describes it (surface §4's actual wording rather than guessing which sentence to replace), or the diff shows any change beyond the two corrections.
+- Allowed inputs: plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md
+- Footprint widened at wrap (2026-08-02): `logs/friction-log.md`'s auto-tracked write-activity log accumulated this session's own edits (verified by timestamp and filename against the session's actual work) with no clean split from the file's own pre-existing state — the file is auto-tracked, not manually authored. Widened rather than overridden, per the staging guard's own remedy; disclosed here, not silently forced through.
+- Mission: work-loop-v2-mvp
+
+**Work:** Two minimal wording corrections to the Work Loop v2 Context Engineering spec — extend §1's capability definition to cover durable-source maintenance, and correct §4's standing statement to distinguish directional authority from factual/evidentiary standing; commit only those two
+
+### Summary
+Fourth revision round on `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md`, this one bounded
+to two operator-supplied sentences applied verbatim, no derivation. §1's capability definition gained a
+clause covering consuming and — only on material change — maintaining the §5.7 durable sources, so
+context maintenance stays inside the one capability rather than becoming a separate stage. §4's
+standing statement was replaced to separate directional governing authority (operator approval or a
+current operator decision only) from factual/evidentiary standing (which verified reality may carry but
+cannot amend approved direction) — the old wording denied any standing to verified state at all, which
+contradicted §5.3's cited-evidence demotion elsewhere in the same document. Diff reviewed before commit:
+two hunks, sentence-level only. Six other review observations were named and explicitly declined per
+operator instruction, not silently dropped.
+
+### Decisions Made
+- **Scope discipline: two sentences only, no restructuring.** The operator named exactly what to change
+  and what not to touch (materiality/sequence rules, trial metrics, anti-governance consolidation,
+  behavioural cases, implementation plans). Applied as given; declined items logged below rather than
+  silently absorbed.
+- **Verbatim over style-matching.** The old §4 sentence bolded its first clause; the operator's
+  replacement text was plain prose. Applied plain, flagged to the operator as a one-line follow-up if
+  bolding-to-match is wanted — not decided unilaterally.
+- **Skipped the context-discovery engine dispatch at `/session-start` Step 2.4.** A standing instruction
+  in this session forbids calling the Agent tool unless asked; the engine would have added nothing here
+  since the operator stated `files_in_scope` explicitly and operator values override engine output
+  regardless. Surfaced to the operator as a named conflict rather than silently skipped.
+
+### Outcome
+(Outcome check skipped — not requested this wrap.)
+
+### Session Value Audit — 80/20 Review
+(Skipped — not requested this wrap.)
+
+### Risky actions
+None. One file changed (`plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md`), draft-stage spec
+document, no hook/permission/CLAUDE.md/command/agent/symlink surface touched. Diff reviewed before
+commit and confirmed to two hunks only. Push stays gated.
+
+### Findings Declined
+- **§4's old standing sentence read as internally inconsistent with §5.3** (denying all standing to
+  verified repository reality, while §5.3 elsewhere lets cited evidence demote a source) — not queued:
+  the operator had already identified this exact defect and supplied the fix as part of this session's
+  mandate, so there is nothing left to route to the backlog.
+- **Bold-formatting mismatch between the old and new §4 sentence** (old text bolded its lead clause; the
+  operator's replacement is plain prose) — not queued: it is a one-line cosmetic follow-up already
+  flagged inline to the operator in the completion report, not a defect with an independent consequence.
+
+Findings: 2 — queued 0, declined 2. 0 + 2 = 2.
+
+### Next Steps
+Await Codex's closure verdict on this revision (commit `148689d`). If approved, flip the spec's stage
+header from "draft specification — awaiting operator approval" to the approved language and get the
+operator's explicit sign-off before treating anything here as authorizing implementation. If further
+corrections are requested, keep applying them in place in this same file — do not create a `-v2`
+sibling (FP-4). Separately, still undispatched: the Work Loop v2 mission's Step 8 v1-retirement review
+brief.
+
+### Open Questions
+None.
