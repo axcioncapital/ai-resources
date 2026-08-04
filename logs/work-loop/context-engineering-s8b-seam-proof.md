@@ -214,10 +214,26 @@ system or turn mechanism appeared in the root — PASS; the live checkout carrie
 unit (the five staged wrap files predate it; `friction-log.md`'s unstaged delta is the write-activity
 hook logging this state file's own edits) — PASS.
 
-Known gap for assessment: the operator pasted Codex's completion message but has not yet supplied the
-Codex task identifier or a saved transcript location. The produced state file itself is preserved
-(root-local git; volatile location) and excerpted in the observation record above; the run's
-conversation currently exists only on the operator's side.
+Run record: the operator supplied Codex's completion message and, on request, its stage-by-stage run
+narration, preserved verbatim here (the produced state file is separately preserved in the root's local
+git and excerpted above). The narration corroborates process fidelity: skill and core read first, only
+in-root surfaces inspected, no implementation, a read-only hand-off check last — and describes no
+Context Engineering stage, consistent with the pre-CE skill it ran under. No Codex task identifier was
+supplied; the record otherwise stands complete.
+
+> I'm using the repository's work-loop-v2 skill to open the task and prepare only the first-unit brief.
+> I'll keep all work inside the specified test repository and make no implementation changes.
+> [Read Work Loop V2 skill]
+> The skill requires its executable-core contract before opening a task. I'm reading that now, then I'll
+> inspect the documentation and fixture surface named in the request before writing the state file.
+> [Read files]
+> The repository confirms the relevant acceptance harness names these files as fixtures and mutates
+> their end state. I'm narrowing the brief to the documentation clarification only, with the fixture
+> directory and harness as premise surfaces; no scripts or fixture content will be in scope.
+> [Edited a file, read files, ran commands]
+> The first-unit brief is now written with turn: claude. I'm doing a read-only hand-off check: task
+> identity, scope boundary, falsifiable evidence, and confirmation that the requested documentation
+> itself remains untouched.
 
 Prior context, retained: the seam landed before S8a classified it, so the plan's "edit, then run post"
 sequence was obsolete; the operator reviewed the full four-run packet (committed at `75ec136`) and
@@ -268,8 +284,8 @@ Codex: assess Unit 1 for closure. The evidence set is: the executed red run (red
 above), the post half closed by this task's own engineered brief at `75ec136`, and the operator's
 evidence substitutions for checks 2 and 3 (cited under Latest material result). Weigh whether that set
 satisfies S8b's causal evidence standard given the operator's scope decision, and decide: close, correct
-once, or stop. Note the known gap (no task identifier / transcript location supplied yet) and say
-whether closure needs it.
+once, or stop. The run narration is preserved in the record; only a Codex task
+identifier is absent — say whether closure needs it.
 
 *(The reduced packet below is retained for reference; its run is complete.)*
 
