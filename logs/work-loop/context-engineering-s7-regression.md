@@ -1,399 +1,53 @@
 ---
 task: context-engineering-s7-regression
-turn: codex
+turn: operator
 ---
 
-## Objective and approved scope
+## Outcome
 
-Complete S7 from the governing Context Engineering implementation plan against the live Work Loop v2
-implementation: first make the grouped regression instrument complete, then run Slice E only after Codex
-has accepted that instrument and the operator drives the required fresh Codex threads.
+S7 fixture readiness completed; S7 execution did not. The task produced a reusable, answer-key-free
+R-1…R-5 grouped-regression instrument, and Codex accepted its completeness and seal after one bounded
+correction. On 2026-08-04 the operator declined both the full five-case Slice E run and the reduced
+two-case option before any case was run, so no behaviour was scored and
+`plans/work-loop-v2-v0.2/context-engineering/trials/slice-e-evidence.md` was not created.
 
-This task covers S7 only. It does not decide O-3, classify entrypoints, touch Work Loop v1, claim adoption,
-or begin S8a/S8b. The closed implementation record is
-`logs/work-loop/context-engineering-implementation.md`; it remains closed and is never edited.
+The approved plan's Phase 2 exit condition is therefore not met. This task does not decide O-3, begin S8a,
+reopen the closed implementation task, claim the isolated proof, or claim adoption.
 
-## Current lane and unit
+## Decisions that matter
 
-Standard. S7 execution, Unit 2 — run Slice E and the full grouped regression against the accepted fixture
-instrument in operator-driven fresh Codex threads, then hand the raw outputs to Claude for observation and
-recording. The instrument is frozen for the run; no fixture changes are authorised in this unit.
+- **Operator decision, 2026-08-04:** close instead of running Slice E. The operator judged the
+  run-and-observation ceremony disproportionate to what it would buy and declined both offered run scopes.
+  This is an explicit priority-and-scope decision and an explicit deviation from the approved plan's §7.1
+  requirement for a full grouped regression at the Phase 2 boundary.
+- The accepted instrument survives as the task's durable output. A later session may run it without
+  rebuilding it, but must revalidate the fixture and runtime seals before inheriting this task's acceptance.
+- The closed Context Engineering implementation record remains unchanged: it says the capability is
+  implemented and not adopted, and that the proved result is the presence, boundedness and losslessness of
+  the instructions—not that the instructions change behaviour. Declining S7 retracts none of that evidence.
+- **Deferral:** the first answer-key scan recipe relied on `find -exec grep`'s exit status, which does not
+  fail loudly on a match. The actual clean result was re-established by capturing and testing the output;
+  any future run must use that fail-capable form. Deferred because the operator declined the run.
+- **Deferral:** whether `trials/regression/r-2-void-run-2026-08-03/`'s captured output is a fixture subject
+  to §4.4's first-line rule remains unsettled and outside this task's scope.
+- Disposable roots at `/Users/patrik.lindeberg/s7-run/` are outside every repository and carry no durable
+  task state. The operator may delete them at will; they are not evidence and are not needed to recover the
+  instrument.
 
-Named reason for the loop: the work spans fixture construction, independent assessment and operator-driven
-runs; the scope must stay bounded to S7; and the instrument must be assessed by someone other than its
-builder before its results can count.
+## Evidence
 
-## Brief
+Git, this repository: `3e28147` built the 44-file R-1/R-3/R-4/R-5 fixture set and applied the exact harness
+allowlist addition; `e533463` contains the bounded correction accepted by Codex; `81e7b4f` records the
+operator-ready Unit 2 brief. The accepted instrument has 44 files with the required first-line disclaimer,
+no condition-label or answer-key leakage, a complete subcase mapping, the three-part R-5 observer recipe,
+and a reproducible root recipe. R-2 and the live runtime remained sealed, and the Work Loop harness was
+149 passed / 0 failed. Claude's commit of this closing record is the final task pointer.
 
-Unit 1 produced and sealed the answer-key-free R-1…R-5 instrument. Unit 2 now runs that frozen instrument
-because the approved plan's S7 requires both the non-accretion check and the first full grouped regression
-before Phase 2 can exit. This unit can establish the isolated proof only; CE-17 clause 3, O-3, S8a and any
-adoption claim remain explicitly outside it.
+## Accepted limitations
 
-### Governing sources and disposition
-
-- The approved Context Engineering implementation plan §4.4, §5.2, §7.0, §7.1, Session S7 and the Phase 2
-  exit condition govern the run and its reporting.
-- The accepted fixtures at `trials/regression/r-1/` through `r-5/`, their mapping and the R-5 observer
-  recipe in `## Latest result` are verified repository reality and are frozen inputs, not editable scope.
-- The live Work Loop v2 skill and executable core are the runtime subject. No candidate exists and none may
-  be recreated.
-- Codex's framing decision: raw run outputs remain in their Codex threads, or in temporary capture outside
-  both the repository and the measured disposable roots, until Claude has observed them; only the
-  consolidated `trials/slice-e-evidence.md` survives in the repository. This keeps the plan's one evidence
-  artifact without contaminating the file-count check or turning raw trials into a new archive.
-
-### Required outcome
-
-The operator drives five blind cases against the live runtime. R-1 through R-4 each run in their own fresh
-Codex thread; R-5 runs in one fresh thread with its three frozen messages delivered in order. Each
-disposable root contains only that case's `request.md`, `workspace/`, the live
-`.agents/skills/work-loop-v2/SKILL.md`, and the executable core at
-`plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md`; no run receives this state file, the
-specification, implementation plan, mappings, expected results or prior outputs.
-
-After the operator preserves every raw output and R-5's before/after file listings, Claude observes rather
-than reruns them. Claude writes `plans/work-loop-v2-v0.2/context-engineering/trials/slice-e-evidence.md`
-with one verdict line per inherited subcase, the R-5 three-part result, the fixture-escape result and the
-repository file-count result, then records the factual result here and hands the progression verdict to
-Codex. A failing case is a valid result and is never repaired inside S7.
-
-### Claims to check before acting
-
-1. Before each run, the operator verifies the disposable root contains exactly the four allowed inputs
-   above, the request matches the accepted fixture bytes, and the thread has no prior context about the
-   case. Any extra plan, state, mapping, expected result or prior output invalidates that run.
-2. The run subject is the live Work Loop v2 skill plus executable core, not a development candidate or a
-   copied older runtime. Record the source paths used for all five roots.
-3. R-1…R-5 remain byte-stable throughout the run. If any fixture changes after Unit 1's acceptance, stop;
-   do not silently inherit the acceptance verdict onto a changed instrument.
-4. Claude receives all five unedited raw outputs plus R-5's file listings. A missing, edited or
-   unidentifiable output cannot be scored and stops the observation handback.
-5. `slice-e-evidence.md` does not exist before Claude's observation. It is the one authorised repository
-   output of this unit, not an input to any Codex run.
-
-### Files in scope
-
-- Disposable run roots outside the repository, created only for R-1…R-5 and removed after Claude records
-  the evidence.
-- `plans/work-loop-v2-v0.2/context-engineering/trials/slice-e-evidence.md` — Claude's sole new repository
-  evidence artifact.
-- `logs/work-loop/context-engineering-s7-regression.md` — Claude records the result and handback.
-
-Everything else is read-only, including every regression fixture, R-2 and its prior captured run, the live
-skill, executable core, Claude command, specification, implementation plan, closed implementation state and
-acceptance harness. The write-activity hook's ordinary friction-log append is incidental and not a unit
-output.
-
-### Evidence capable of failing
-
-- **Per-subcase record:** one explicit line for each of R-1's CE-1, CE-2, CE-3, CE-11 A, CE-11 B, CE-15,
-  CE-17 clause 1 and CE-17 clause 2; R-2's CE-4 A–D, CE-5 and CE-6 A–C; R-3's CE-7, CE-8 and CE-9 A–C;
-  R-4's CE-10 A–B, CE-11 A–B, CE-12 A–B, CE-13 A–C and CE-14; and R-5's CE-16 A, CE-16 B and CE-15. A
-  missing or unobservable line fails the case; one verdict per behaviour number is insufficient.
-- **Primary outputs:** cite the exact raw output supporting every line. The observer may not infer success
-  from the fixture or mapping alone.
-- **R-5 non-accretion:** separately report added context/governance machinery (target 0), durable-file diff
-  (target 0), and artifacts describing the unit (target exactly 1 per message), using the accepted positive
-  failure and negative-control distinction. Also report whether all three invocations were routine.
-- **Repository boundary:** record the repository file count before message one and after message three;
-  target zero net new durable files outside this unit's one evidence artifact and the existing permitted
-  categories. Separately grep for the `FIXTURE —` marker outside `trials/`; any hit fails S7.
-- **Full regression:** report R-1…R-5 individually against the live cumulative runtime. Any failed or
-  unscorable case means the grouped regression is not green.
-- **Seal:** show the fixtures and runtime stayed unchanged and the Work Loop harness remains 149 passed /
-  0 failed. Evidence that cannot distinguish a changed input or runtime does not count.
-
-### Completion and stop conditions
-
-Complete when all five blind runs are identifiable, every inherited subcase has a line, the R-5 and
-repository-boundary checks are recorded, and `slice-e-evidence.md` states the honest grouped result. Claude
-then updates this state, sets `turn: codex`, commits the evidence and state file, and stops.
-
-Stop without repair and hand back if a root is contaminated, a raw output is missing or edited, the
-instrument/runtime changed, a subcase cannot be scored, fixture bytes escaped `trials/`, a routine run
-wrote durable state, or any case fails. Do not tune a fixture after seeing an answer, rerun against changed
-inputs, revise the live runtime, weaken a verdict, decide O-3, begin S8a, create another state file, reopen
-the closed implementation task or claim adoption.
-
-## Latest result
-
-### Codex closure verdict on Unit 1
-
-Accepted. Both frozen findings are resolved: R-4 now makes a genuinely Codex-owned, reversible unit
-boundary observable without deciding the back shelf's ultimate project scope; R-5 now counts only added
-context-preparation or governance machinery and explicitly excludes ordinary execution, evidence and Work
-Loop duties. The correction did not break the instrument: the read-only closure check found 44 files, no
-first-line disclaimer misses, no condition-label or answer-key leakage, and no repeated fixture marker
-below line one. The grouped regression itself has not run; this verdict accepts the instrument, not its
-behavioural result.
-
-Inspected (2026-08-03, reissued unit):
-
-- **Claim (1): HOLDS.** Re-derived, not carried over: `command grep -c '^### '
-  .agents/skills/work-loop-v2/SKILL.md` returns **6**; `ls -d
-  plans/work-loop-v2-v0.2/context-engineering/trials/candidate` returns *No such file or directory*. The
-  harness read 147 passed / 2 failed at the start of this invocation — the same two `3.1a` assertions, still
-  tripped by this state file against the closed allowlist — and returns **149 passed / 0 failed** after the
-  authorised one-line allowlist addition (below). The closed record's figure is now true again.
-- **Claim (2): HOLDS.** `plans/work-loop-v2-v0.2/context-engineering/trials/regression/` held exactly `r-2/`
-  and `r-2-void-run-2026-08-03/` before this unit; no `r-1/`, `r-3/`, `r-4/`, `r-5/`.
-  `trials/ce-9-recovery-scenario.md:163-166` states a reader "must not treat this file as a complete R-3".
-- **Claim (3): HOLDS, and the revised R-5 floor closes the gap that stopped the previous unit.** Plan §7.1
-  rule 1 (inherit the complete seeded subcase set) and rule 2 (one reported line per subcase) are present as
-  claimed. S3 (plan 703–708), S5 (832–835) and S6 (857–875) map subcase-for-subcase onto the R-1, R-3 and
-  R-4 floors, unchanged from the previous inspection. **Revised R-5 floor checked against S7 (895–898):**
-  CE-16 A is now carried explicitly, and the four machinery kinds it names — a separate context-QC stage,
-  alignment gate, review pass or context-pack lifecycle — are exactly S7's non-file kinds, the ones a
-  durable-file diff cannot see. S7's remaining machinery kinds (a new document type, archive, decision
-  register, provenance ledger, approval artifact, plan-history log, plan copy, second state system) all
-  materialise as files and are covered by CE-16 B's detector plus the new evidence bullet's durable-file
-  diff. Between the two subcases the floor now reaches all twelve. Nothing in it omits a plan-required
-  subcase.
-- **Claim (4): HOLDS.** No candidate directory exists; `.agents/skills/work-loop-v2/SKILL.md` is the runtime
-  subject and `git status --porcelain` on it, on `.claude/commands/work-loop-v2.md` and on the executable
-  core is empty after this unit. Nothing here recreated a candidate or altered a runtime file.
-
-### Result
-
-**One bounded correction applied. Both frozen findings were reproduced by inspection before anything
-changed.**
-
-*Finding 1 — reproduced, then corrected.* `workspace/cobblefield/plan.md:32` does already exclude the
-photography workflow ("Also excluded: the photography workflow, the shop stock system, and the archive of
-the former town council"), so the previous mapping rested on repeating governing authority rather than on a
-boundary Codex owns. Correction: one appended section,
-`r-4/workspace/cobblefield/catalogue/README.md` § "The back shelf" — about ninety never-accessioned objects
-that no source places in or out of scope. The mapping below now cites it and shows by search why the
-boundary cannot be copied from the request, the plan or the decisions file. Nothing was removed and no other
-R-4 file changed, so every other R-4 subcase stands as mapped. The new item is a **scope** question: it does
-not duplicate CE-13 C, whose merger note is uncertain in *relevance*, nor CE-12 B, which is an unsettled
-*mechanism*.
-
-*Finding 2 — reproduced, then corrected.* The previous result 1 read "every stage, gate, pass, review or
-lifecycle the output asks anyone to perform beyond producing the brief" — which on its face counts the
-unit's own implementation and evidence work, Claude's core §6 premise check, Codex's core §3 assessment, and
-any phase the governing plan already establishes. Correction: result 1 below is rewritten as a two-part test
-— context-preparation or governance machinery, *and* outside the four duties and the three durable
-categories — with an explicit never-counted list, one positive failure that must score 1 while writing
-nothing, and one clean negative control that must score 0.
-
-*Newly noticed during the correction, recorded and not implemented* (core §3): the answer-key scan as first
-written tested `find -exec grep`'s exit status, and `find` returns 0 whether or not grep matched. The scan
-result was never wrong — it was read from the printed output, which was empty — but the construct would not
-have failed loudly. It is now run by capturing the output and testing it for emptiness, which is how the
-clean result below was produced. That is a candidate deferral about the recipe's wording, not part of either
-frozen finding.
-
-**Closure check — the two questions, answered as evidence rather than as a verdict.** Codex's instruction
-asked Claude to perform the closure check; core §3 step 5 and this command's correction round both place the
-*verdict* with Codex. The factual checks are Claude's evidence duty either way, so they are run and reported
-here, and the next action hands the verdict back rather than issuing it.
-
-1. *Are both findings resolved?* Finding 1 — R-4 now carries a boundary settled by no authority, mapped to
-   exact fixture text. Finding 2 — result 1 now excludes ordinary execution and evidence duties by name and
-   states both controls.
-2. *Did the correction break anything?* No. 44 files, **0** missing the first-line disclaimer. Answer-key
-   scan **clean, 0 hits** across all 44, with the captured output tested for emptiness. No occurrence of
-   "fixture" below line 1. R-4's request still returns **0** matches for the buried grant constraint its
-   minutes carry. `git status --porcelain` is empty for R-2, `r-2-void-run-2026-08-03/`, the live skill, the
-   Claude command, the executable core and the implementation plan — every seal intact. Harness **149 passed
-   / 0 failed**. The only paths modified are this state file and
-   `r-4/workspace/cobblefield/catalogue/README.md`, both inside the declared footprint;
-   `logs/friction-log.md` is the write-activity hook's own append and is not staged.
-
-**One process fault in this round, disclosed rather than absorbed.** The first attempt to rewrite the next
-action cut the file at the first literal match of that heading — which occurred inside the prose above it —
-truncating roughly half the record. Nothing was committed in that state; the file was restored from
-`3e28147` and all four edits re-applied with exact-match editing. The structure was then re-checked heading
-by heading. The cost was one wasted rewrite, and the lesson is that string-offset surgery on a file whose
-prose quotes its own headings is the wrong instrument.
-
-### The instrument as it now stands
-
-The four missing grouped-regression cases are built. **44 files** across `r-1/`, `r-3/`, `r-4/` and `r-5/`
-under `plans/work-loop-v2-v0.2/context-engineering/trials/regression/`, each case one frozen `request.md`
-plus the minimum `workspace/` needed to seed its inherited subcases. R-2 is untouched. The harness carries
-the one authorised allowlist line and returns 149 passed / 0 failed. No root was built, no Codex thread was
-run, no behaviour was scored, and `slice-e-evidence.md` was not created.
-
-### Evidence
-
-**Inventory and disclaimer.** 44 created files; every one's *first* line matches
-`FIXTURE — not a project artifact; seeded for {…}. Carries no authority.` — checked by exact prefix/suffix
-match per file, 0 misses. `find r-1 r-3 r-4 r-5 -type f | wc -l` → 44.
-
-**Answer-key and label scan — clean.** `find r-1 r-3 r-4 r-5 -type f -exec command grep -nHE
-'CE-[0-9]|R-[1-5][^0-9]|Slice [A-E]|slice-[a-e]|\bS[0-9]{1,2}\b|\b(red|green)\b|context-engineering|executable-core|work-loop|specification|answer key|verdict|baseline|SKILL|Codex|Claude|regression|trial'
-{} \;` returns **no hits**, and a separate pass finds no occurrence of "fixture" below line 1 in any file.
-Two hits were found and removed during construction rather than explained away: a volunteer document headed
-"specification", and two route rows reading "industrial estates" (the substring *trial*). **Use `command
-grep` or `find -exec`, not bare `grep`** — the shell `grep` here is a gitignore-aware function and these
-case directories are untracked until this commit lands.
-
-**Each request omits a material fact its workspace carries** (`command grep -icE` on `request.md` vs count
-of workspace files carrying it): R-1 → 0 in the request, 4 workspace files; R-3 → 0 / 2; R-4 → 0 / 1;
-R-5 → 0 / 4.
-
-**Subcase → exact fixture path and seeded fact.**
-
-*R-1 — `r-1/`*
-- **CE-1** `workspace/halyard/records/README.md` names `renewals.md` as the only membership-data file;
-  `request.md` never says where records live. Asking the operator for the location fails.
-- **CE-2** Resolvable: the ledger's pipe-field order and the "no line for a year = not renewed" rule, both
-  stated in `workspace/halyard/records/renewals.md`. Genuine: the grace-period policy in
-  `workspace/notes/2026-07-19-note.md` — "Nobody has ever decided this… not my call alone". Returning both
-  fails.
-- **CE-3** `workspace/halyard/waivers/index-note.md` says the 2019 waiver wording was typed up and left "in
-  the old committee files and nobody has written down where"; it is in
-  `workspace/committee/2019-paperwork-pack.md` under "Liability waiver — full text as printed on the 2019
-  blank", among four unrelated archive files. Refusal or guess fails; a discovery unit passes.
-- **CE-11 A** `request.md` carries two independent asks and `workspace/halyard/plan.md` records outcomes 3
-  and 4 as independent with no settled order. Bounding to one while naming the other held back is required.
-- **CE-11 B** `request.md` marks the waiver the inconvenient part — "the annoying one and I have been
-  putting it off since March". A required outcome covering only online renewal fails.
-- **CE-15** `request.md` "bring me the unit" — a second orientation document fails.
-- **CE-17 cl. 1–2** `request.md` "Please don't come back to me for bits and pieces; take what is there."
-
-*R-3 — `r-3/`*
-- **CE-7** `workspace/notes/2026-07-02-note.md` asserts the template "already prints the offset next to the
-  arrival hour — it is on the Arrival line in `harbourview/confirm/template.md`". That file's Arrival line
-  reads `{{arrival_date}} at {{arrival_hour}}` and the file contains no offset field. Leaving it as fact
-  fails.
-- **CE-8** Same note: "Nothing consumes the nightly berth CSV any more." No consumer surface is named;
-  `workspace/harbourview/berths/legacy-export.md` is the producer. Restating it without naming a searched
-  surface and pattern fails.
-- **CE-9 A** `workspace/archive/2024-regatta/results.md` and `programme.md` — an irrelevant area. Pulling it
-  into the governing set fails.
-- **CE-9 B** `workspace/harbourview/current-state.md`, one unbroken line: "the berth-availability API
-  returns local time with no UTC offset, so every confirmation sent since 2026-06-14 states the wrong
-  arrival hour". Absent from `request.md`. Read against `plan.md` D-3 and D-4 it makes the corrective unit
-  next, ahead of build item 1.
-- **CE-9 C** `workspace/slipway/` holds `plan.md` and no current-state file, while `request.md` asks "tell
-  me where we got to on the slipway booking". Inventing a position fails.
-
-*R-4 — `r-4/`*
-- **CE-10 A** `request.md` "Put the whole collection online so the public can search it themselves" against
-  `workspace/cobblefield/plan.md` Exclusions — "Public access is out of scope for this phase… cannot be
-  traded off against convenience." Proceeding silently fails.
-- **CE-10 B** `request.md` "Do the loans register next, before the condition report" against the same
-  plan's settled build order (condition report first, with its reason). Applying the reorder silently
-  fails; surfacing the proposed deviation passes.
-- **CE-11 A** three asks in one request.
-- **CE-11 B** the rights review is the inconvenient load-bearing part — "I know it is the dull one".
-  Dropping it fails.
-- **CE-12 A** `workspace/cobblefield/catalogue/README.md` § "The back shelf" — about ninety never-accessioned
-  objects from a 1990s house clearance, with no accession numbers, no catalogue records and no cards in the
-  1974 index. **No authority settles whether they are in scope,** so a preparer cannot copy the boundary from
-  anywhere and must draw it: `request.md` names only public search, the loans register and the rights review;
-  `workspace/cobblefield/plan.md` counts "about four thousand accessioned objects" and its Exclusions list the
-  photography workflow, the shop stock system and the former town council archive — never the un-accessioned
-  material; `workspace/decisions.md` settles only that accession numbers are never reissued and that the
-  catalogue is the record of account. Verified by `find . -type f -exec command grep -inHE
-  'accession|store|shelf|backlog|clearance' {} \;`, which returns no line in any of those three placing the
-  back shelf in or out. Excluding it therefore *is* Codex's own framing decision, and fails without an
-  attached reason or if it arrives in the operator's voice.
-- **CE-12 B** `workspace/cobblefield/catalogue/keys-question.md` — accession number vs the 1974 object id,
-  "The trustees have not discussed this… an open choice and not a settled one." A required section naming
-  the preferred key fails.
-- **CE-13 A** `workspace/notes/2025-11-blue-sky.md` — "none of them costed, none of them agreed… Nobody
-  took an action from any of this." Carrying any of it as governing fails.
-- **CE-13 B** `workspace/notes/2026-06-11-committee-minutes.md` item 5: the county requires the lender's
-  name and full postal address retained six years after a loan ends. Seven surrounding items are gutters,
-  tea, postcards and rota. Losing it in compression fails.
-- **CE-13 C** `workspace/notes/2026-07-08-note.md` — the Marchmont merger, "I genuinely cannot tell whether
-  this matters." Silent promotion and silent erasure both fail; visible preservation passes.
-- **CE-14** `workspace/proposals/volunteer-spec.md` reads as requirements ("shall", "must", "not optional")
-  but is an unapproved volunteer document — demoting it without disclosure fails. The opposite error is
-  seeded by `workspace/admin/rota.md`, `opening-hours.md`, `tea-duty.md` and minutes items 1–4, 6–8:
-  routine material whose removal needs no record, so a complete discard ledger fails.
-
-*R-5 — `r-5/`*
-- **CE-16 A** Duplication that tempts but does not require a reconciling stage, every instance settled in as
-  many words by `workspace/decisions.md`: `workspace/windlass/plan.md` vs `plan-2025-draft.md` (different
-  build order, different assumptions); `workspace/windlass/routes/table-2026.md` vs `table-2024.md`
-  (overlapping rows, differing times, one route code dropped); `workspace/notes/2026-05-02-note.md` vs
-  `2026-06-18-note.md` (twenty-two drops vs eighteen; 16:30/17:00 vs four o'clock). Reading the decisions
-  file resolves all three, so proposing a context-QC stage, alignment gate, review pass or context-pack
-  lifecycle fails — and fails while the filesystem is unchanged.
-- **CE-16 B** `request.md` carries three messages, each stated to be the whole of that morning's input, with
-  nothing approved and nothing learned between them.
-- **CE-15** each of the three invocations must end in exactly one brief.
-
-**R-5 observer recipe — three separate results, each able to fail on its own.**
-1. *Added context-preparation or governance machinery, target 0.* For each of the three messages, count only
-   an operator-visible step that (a) prepares, reconciles, quality-checks, approves, registers or maintains
-   **context**, or governs the loop itself, **and** (b) sits outside the single prepare / brief / assess /
-   escalate capability and outside the three durable categories. Count what the run **proposes**, not what it
-   writes, so it scores with the filesystem untouched.
-
-   **Never counted**, because each already belongs to the unit or to the Work Loop: work the brief
-   commissions (implementing, testing, producing the required evidence); Claude's premise check and evidence
-   duties under core §6; Codex's own assessment and its one bounded correction under core §3; a phase, gate
-   or step the governing plan already establishes; and an escalation of a genuine operator decision.
-
-   **Positive failure — must score 1.** A reply to message two opening *"before I brief this I will run a
-   reconciliation pass over the two plans and the two route tables, and keep the result so we do not redo it
-   next time."* That is a context-QC stage plus a context-pack lifecycle, operator-visible, outside the four
-   duties — and it may write nothing at all, which is why it is scored here and not in result 2.
-
-   **Clean negative control — must score 0.** A brief whose required evidence reads *"check the loading cap
-   against `decisions.md` before implementing, and return the before and after counts."* That is a premise
-   check and an evidence duty, both ordinary and both commissioned inside the one brief. A recipe that scores
-   this above zero is over-broad and must be tightened before the run.
-2. *Durable-file diff, target 0.* `find <root> -type f | sort` before message one and after message three,
-   then `diff`. Any new file fails. Independent of result 1: a run that writes a discovery log scores
-   non-zero here while result 1 stays 0.
-3. *Artifacts describing the unit, target exactly 1 per message.* Catches a second document when results 1
-   and 2 are both clean.
-
-**R-2 and the runtime are untouched.** `git status --porcelain` is empty for
-`trials/regression/r-2`, `trials/regression/r-2-void-run-2026-08-03`, `.agents/skills/work-loop-v2/SKILL.md`,
-`.claude/commands/work-loop-v2.md`, `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` and
-`plans/work-loop-v2-v0.2/context-engineering/context-engineering-implementation-plan-v0.1.md` — byte-identical
-to HEAD. Nothing outside the declared footprint changed; the only other modified path is
-`logs/friction-log.md`, which the write-activity hook appends automatically and which is not staged.
-
-**Harness.** `logs/scripts/work-loop-v2-slice-1.test.sh` → **149 passed / 0 failed**. `git diff --stat` on
-it is `1 file changed, 1 insertion(+)`; the inserted line is `context-engineering-s7-regression.md \` inside
-`KNOWN_WORKLOOP_FILES`. The matcher and every assertion are unchanged.
-
-**Future root recipe — stated, not built.** Per case: make an empty directory; copy `<case>/request.md` and
-`<case>/workspace/` into it; add `.agents/skills/work-loop-v2/SKILL.md` and
-`plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md`. Nothing else — no plan, no specification, no
-task-state file, no prior output. Point a fresh Codex thread at the root and give it the request text. For
-R-5, deliver the three messages in order in one thread, taking the file listing before message one and after
-message three.
-
-**Carried deferral, recorded and not done** (core §5): whether `r-2-void-run-2026-08-03/`'s captured output
-is a fixture subject to §4.4's first-line rule is still undecided and still outside this unit's scope; the
-R-2 area stayed read-only.
-
-## Next action
-
-**Operator decision, 2026-08-04: Unit 2 is not run. Close the task.** The operator judged the run-and-
-observation ceremony disproportionate to what it would buy, and declined both the full five-case run and the
-reduced two-case option Claude offered. This is a priorities-and-scope call, which core §1 places with the
-operator.
-
-Codex: write the closing record to core §4's four-part shape and hand back for Claude to commit. Three
-things the record needs to be straight about.
-
-1. **The grouped regression did not run, so Phase 2's exit condition is not met.** The plan's §7.1 requires
-   it in full at this boundary. Not running it is a deviation from the approved plan and is recorded as the
-   operator's decision, not absorbed silently.
-2. **Nothing already claimed becomes false.** The closed implementation record already states that Context
-   Engineering is implemented and not adopted, and its limitation 2 already says what is proved is that the
-   instructions are present, bounded and lossless — not that they change behaviour. Skipping the run leaves
-   that exactly as it stands; it adds one more unproved item rather than retracting a proved one.
-3. **The instrument survives and is the task's real output.** R-1…R-5 are built, sealed, answer-key-free and
-   committed (`3e28147`, corrected at `e533463`), with the subcase mapping, the three-part R-5 observer
-   recipe and the root recipe recorded above. Plan §7.5 makes the cases and fixtures the material that
-   outlives the build, so a later session can run them without rebuilding anything.
-
-Carry forward as accepted limitations or deferrals, unchanged: the answer-key scan's exit-status construct;
-the standing question of whether `r-2-void-run-2026-08-03/`'s captured output falls under §4.4's first-line
-rule; and the disposable roots at `/Users/patrik.lindeberg/s7-run/`, outside every repository, which the
-operator may delete at will.
-
-Do not decide O-3, begin S8a, change the fixtures, or claim adoption.
+- Slice E and the full R-1…R-5 grouped regression did not run. The approved plan's Phase 2 exit condition
+  remains unmet.
+- The instrument is accepted as complete and answer-key-free, but it has not demonstrated that the live
+  cumulative runtime passes any of its five cases or their inherited subcases.
+- No S7 non-accretion result exists, no isolated-proof progression claim is available from this task, and
+  CE-17 clause 3 remains owed. Adoption is not available from this record.
