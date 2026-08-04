@@ -1,6 +1,6 @@
 ---
 task: context-engineering-s8b-seam-proof
-turn: operator
+turn: codex
 ---
 
 ## Objective and approved scope
@@ -188,16 +188,43 @@ Inspected (2026-08-04):
   `git init`-ed as a standalone local repository with zero remotes, so in-root commits (the v2 flow
   commits) physically cannot reach the canonical checkout. Roots live outside every repository.
 
-Result: outcome 1 — an executable run packet, **reduced by operator decision (2026-08-04) to its one
-novel-evidence component.** The seam landed at `4f3d6ca`+`daebb0c` before S8a classified it, so the
-plan's "edit, then run post" sequence is obsolete; the honest before/after pair is reconstructed from
-repository history: pre = `4165043`, post = `daebb0c` (byte-identical to live on all three surfaces).
-The operator reviewed the full four-run packet (committed at `75ec136`) and reduced it: the staged
-post-run, Direct Work run and false-premise run duplicate evidence that already exists from real use,
-so only the pre-root red run — the single piece with no live equivalent — is executed. The substitutions
-are explicit, cited below, and are the operator's scope decision under core §6 rule 4, made openly for
-Codex to weigh at assessment. Nothing outside this state file was changed in the repository except the
-claim-(1) contingency commit `90e579e`.
+Result: **the red run executed and the red condition is MET.** The operator opened a fresh Codex task
+against the pre root (snapshot of `4165043`) with the seeded request; Codex produced
+`logs/work-loop/document-work-loop-fixtures.md` in that root (31 lines, preserved verbatim in the root's
+local git as its second commit) and touched nothing else (`git status` in the root: exactly one new
+file). The produced brief follows the pre-CE shape faithfully — `Why:` / `Check against the repository:`
+/ `Evidence required:` / `Stop if:` — and shows **none** of the three defined observations:
+
+- OBS-1 ABSENT — the brief opens with the old single-purpose `Why:` line ("a reader who opens one of the
+  task-shaped fixture files cold currently has no documentation…"). No why-now, no plan-alignment
+  statement; the word "plan" does not occur in the file.
+- OBS-2 ABSENT — sources are cited (`docs/work-loop.md`, the acceptance test script) but carry no
+  authority dispositions; grep for `governing|verify-first|disposition|semantic role` returns 0.
+- OBS-3 ABSENT — no framing attribution and no reclassification disclosure anywhere in the file.
+
+With the post half already on record (this task's own `## Brief` at `75ec136`, exhibiting all three),
+check 1 is complete: same seed shape, pre fails, post exhibits, and the only difference between the two
+skill files is the seam landing (`4f3d6ca`+`daebb0c`).
+
+Structural checks, re-run after the run: the three live runtime files still hash-match their
+integration-era blobs (skill and command = `daebb0c`, core = `4f3d6ca`) — PASS; CE greps 0 in the pre
+root's skill vs 6 in the live skill — PASS; the produced state file stays within the five-field ceiling
+(four content fields plus the brief) — PASS; no new delivery file, queue, handoff document, second state
+system or turn mechanism appeared in the root — PASS; the live checkout carries no diff caused by this
+unit (the five staged wrap files predate it; `friction-log.md`'s unstaged delta is the write-activity
+hook logging this state file's own edits) — PASS.
+
+Known gap for assessment: the operator pasted Codex's completion message but has not yet supplied the
+Codex task identifier or a saved transcript location. The produced state file itself is preserved
+(root-local git; volatile location) and excerpted in the observation record above; the run's
+conversation currently exists only on the operator's side.
+
+Prior context, retained: the seam landed before S8a classified it, so the plan's "edit, then run post"
+sequence was obsolete; the operator reviewed the full four-run packet (committed at `75ec136`) and
+reduced it to this one run because the other three checks duplicate live evidence. That scope decision
+(core §6 rule 4) and its substitutions are below, for Codex to weigh together with the red run. Nothing
+outside this state file was changed in the canonical repository except the claim-(1) contingency commit
+`90e579e`.
 
 Evidence substitutions (operator decision, option 1 of the two Claude presented):
 - **Check 1, post half — closed by live evidence:** this task's own `## Brief` (first committed at
@@ -237,8 +264,14 @@ Deferrals (noticed mid-unit, recorded, not done):
 
 ## Next action
 
-Operator: **one run** — the pre-root red half of check 1. Everything else is closed by the live
-evidence cited in `## Latest material result`.
+Codex: assess Unit 1 for closure. The evidence set is: the executed red run (red condition met, recorded
+above), the post half closed by this task's own engineered brief at `75ec136`, and the operator's
+evidence substitutions for checks 2 and 3 (cited under Latest material result). Weigh whether that set
+satisfies S8b's causal evidence standard given the operator's scope decision, and decide: close, correct
+once, or stop. Note the known gap (no task identifier / transcript location supplied yet) and say
+whether closure needs it.
+
+*(The reduced packet below is retained for reference; its run is complete.)*
 
 **The root (already built and verified).** `PRE` =
 `/private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/76eaf9ff-ea9f-40de-bb4d-7388070c9308/scratchpad/work-loop-s8b-roots/pre-4165043`
