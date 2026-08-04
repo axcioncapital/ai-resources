@@ -2687,3 +2687,61 @@ structural token (a table cell, a heading, a bolded label) that cannot wrap. The
 than either: **a check is not evidence until it has been observed failing on the pre-change state.** That
 rule already exists; what is missing is any place where the wrapping trap is named as the reason the rule
 keeps earning its keep.
+
+## 2026-08-04 — `/work-loop-v2`'s empty-argument resolution is permanently ambiguous because of its own permanent acceptance fixture
+
+- **Severity:** medium
+- **Category:** Test-fixture pollution of a live default path
+- **Source:** ai-resources, 2026-08-04 (unmarked session), Work Loop v2 task `context-engineering-s9-candidate-review`, noticed during S9 and carried through S10's closing record.
+
+`.claude/commands/work-loop-v2.md` Step 1 resolves an argument-free invocation to "the single file under
+`logs/work-loop/` whose frontmatter `turn:` is `claude`" — and lists+asks when more than one qualifies.
+`logs/work-loop/fixture-slice2-foreign.md` is a **permanent** acceptance fixture (behaviour 2.2, file-
+identity rejection) whose `turn:` is deliberately `claude` and whose `task:` deliberately does not match
+its filename. It is not cleaned up after the harness runs — it is meant to stay. So every future
+argument-free `/work-loop-v2` invocation that also has a genuine live task open will find two
+`turn: claude` files and ask which one, permanently, by construction — not a transient state that clears.
+
+**What it costs.** One extra round-trip per argument-free invocation, forever, once any real task is open
+alongside the fixture corpus. Small per-occurrence, structurally permanent.
+
+**Shape of the fix (not built).** Either exclude the known fixture corpus from Step 1's resolution scan
+(the harness already maintains a `KNOWN_WORKLOOP_FILES` allowlist for a related reason — see the harness's
+own stale-allowlist finding, already queued), or move permanent fixtures outside `logs/work-loop/` into a
+sibling fixtures directory the command never scans.
+
+## 2026-08-04 — A mission thread's stated reopening trigger rests on a premise that stopped being true
+
+- **Severity:** low-medium
+- **Category:** Stale factual premise in a durable authority document
+- **Source:** ai-resources, 2026-08-04 (unmarked session), Work Loop v2 task `context-engineering-s9-candidate-review`, S9's claim-2 absence search.
+
+`logs/missions/work-loop-v2-mvp.md`'s installation thread states that `axcion-design-studio` "holds a
+*copy* of the command with no core, no skill and no `logs/work-loop/`," and gives that as part of why the
+thread's stated reopening trigger ("the moment v2 is installed into a third project") fired. Checked with
+`[ -L ]`: `projects/axcion-design-studio/.claude/commands` is a **symlink** to
+`ai-resources/.claude/commands`, resolving to the canonical `work-loop-v2.md` — not a divergent copy.
+
+**What it costs.** A future reader trusts the mission's own account of why its trigger fired, rather than
+re-deriving it — and the account is wrong on the specific fact it leads with. The trigger may still have
+fired for other reasons the thread names, but the copy claim itself does not hold.
+
+**Shape of the fix (not built).** Correct the one sentence in the installation thread from "holds a copy"
+to "is a symlink resolving to the canonical file," and re-check whether the reopening trigger still fires
+on the thread's remaining stated grounds once that correction is made.
+
+## 2026-08-04 — A throwaway probe skill, explicitly marked for deletion, is still live in the skill library
+
+- **Severity:** low
+- **Category:** Dead scaffolding left in a live resource directory
+- **Source:** ai-resources, 2026-08-04 (unmarked session), Work Loop v2 task `context-engineering-s9-candidate-review`, S9's claim-2 workspace-wide search.
+
+`.agents/skills/work-loop-v2/wl2-probe/` — correction: `.agents/skills/wl2-probe/SKILL.md`. 95 bytes.
+`description: "Throwaway Step 2 transport probe. Delete me."`; body is literally `Probe body.`. It carries
+no Context Engineering behaviour and does not affect any live consumer, but it is a real skill entry, self-
+labelled as scaffolding meant to be removed once its one-time transport probe concluded.
+
+**What it costs.** Minimal today — clutter in the skill inventory, and a small tax on any future audit or
+search that has to notice and dismiss it. The cost grows only if it is mistaken for something live.
+
+**Shape of the fix (not built).** Delete `.agents/skills/wl2-probe/SKILL.md`.

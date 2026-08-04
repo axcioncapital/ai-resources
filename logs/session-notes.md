@@ -2,99 +2,6 @@
 
 > Archive: [session-notes-archive-2026-08.md](session-notes-archive-2026-08.md)
 
-## 2026-08-02 — Session S7-3fb
-
-**Mandate:** Run Claude's half of Work Loop v2 Unit 2 (S2) Stage 1 — check the brief's four premises against the live repository, author the single isolated inline-carriage probe candidate, prepare the two fresh-Codex prompts in the task-state file, set `turn: operator`, commit and stop.
-- Out of scope: running or judging either trial run; creating `trials/carriage-trial-record.md`; stripping the probe; installing the candidate; editing the live skill, the S1 scenario or its fixtures; pushing.
-- Files in scope: plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md, logs/work-loop/context-engineering-implementation.md, logs/session-notes.md, plans/work-loop-v2-v0.2/context-engineering/trials/carriage-trial-record.md, logs/session-notes-archive-2026-08.md, logs/decisions.md, logs/improvement-log.md, logs/next-up.md, logs/friction-log.md, logs/destructive-override.log, logs/runs/2026-08-02-S7-3fb.json, logs/scratchpads/2026-08-02-20-55-scratchpad.md
-- Stop if: a brief premise is false, or inline delivery would require a second file or live installation.
-- Mission: work-loop-v2-mvp
-
-**Work:** Work Loop v2 Context Engineering S2 Stage 1 — author the isolated inline-carriage probe candidate and prepare the two fresh-Codex prompts
-
-### Summary
-Ran Claude's half of Work Loop v2 Unit 2 (S2) — the isolated inline-carriage probe trial — end to end,
-including one bounded correction. Authored the single candidate (`trials/candidate/SKILL.md`: the live
-116-line Codex skill plus one inline probe), prepared two fresh-Codex prompts, and handed to the operator.
-The first trial produced the right signal but was **rejected**: because the candidate faithfully copies the
-live skill's `logs/work-loop/` rule, both runs wrote a fictional Harbourview task into the *live* Work Loop
-directory with `turn: claude`, and the second run overwrote the first's state file before either was
-committed, destroying the control's evidence. Raised both as observer findings; Codex froze a bounded
-correction on them. Built two disposable detached worktrees outside the repo, scrubbed the probe's answer
-key from both, and the operator re-ran. Both findings verified resolved by inspection: live directory clear,
-two independently inspectable state files, control without the probe section and candidate with it listing
-five verified paths. Wrote the trial record, stripped the probe, and confirmed the candidate is now
-byte-identical to the live skill. Codex accepted S2 — Phase 1 complete.
-
-### Decisions Made
-- **Built the candidate without plan §4.4's `FIXTURE —` marker**, despite plan §7 `:551` calling it a
-  fixture. A line telling the trial thread the file "carries no authority" confounds a probe that measures
-  whether the thread *follows* the file; at S8b the candidate's content lands in the live skill, so a marker
-  would be a second thing needing stripping when only the probe is scheduled for removal; and §4.4's box is
-  scoped to seeded project artifacts, not a working revision of a real skill. Recorded for Codex to reverse;
-  it did not, and carried the plan wording as a deferral.
-- **Scrubbed the answer key from both correction roots, identically** — not specified by the frozen finding.
-  The baseline tree carried this task's state file and plan §7 S2, both stating the probe's expected
-  outcome; unscrubbed, the re-run would have handed both threads the answer. Alternative considered and
-  rejected: hand back to Codex, which would have cost a full round for a construction detail resolvable
-  inside the correction's own scope.
-- **Left the candidate file present in the control root**, because the frozen finding required the two roots
-  to differ only in the instruction supplied. Accepted that this makes the control blind *by instruction*
-  rather than *by construction*, and recorded it as a residual weakness rather than fixing it unilaterally.
-- **Judged the task-id variation immaterial and did not escalate.** The two threads chose different task ids
-  though neither prompt prescribed one; Codex asked to be stopped only if that weakened the observer
-  judgment. The probe check is a within-file presence test, so it never depended on the two files sharing a
-  name. Recorded in the trial record.
-- **Declined to implement the fictional Harbourview unit** when the trial output instructed it. Its premise 3
-  (a live Harbourview implementation and booking data exist) is false — a repo-wide search returns no
-  Harbourview artifact. Executing it would have been trial material escaping into real work.
-- Routine: used the audited liveness override to remove the two disposable worktrees only after the operator
-  explicitly confirmed both idle; declared the session mandate footprint mid-session after the staging guard
-  correctly blocked a footprint-less commit.
-
-### Risky actions
-Two destructive-guard interventions, both of which fired correctly and neither of which was bypassed. (1)
-`check-foreign-staging.sh` blocked the first commit because this session reached `/work-loop-v2` without
-`/session-start` and therefore had no declared file footprint; resolved by declaring the mandate, not by
-widening the stage. (2) `check-destructive-liveness.sh` blocked `git worktree remove` twice, reading both
-disposable roots as occupied; resolved only after the operator explicitly confirmed both idle, then via the
-documented `AXCION_LIVENESS_OVERRIDE=1` prefix, which wrote two audit lines to
-`logs/destructive-override.log`. No marker file was deleted to evade a guard. Separately, and more
-seriously: a trial run wrote fictional state into the live `logs/work-loop/` directory with `turn: claude`,
-making a fictional task resolvable by the live command — caught at observation, the run rejected, the
-artifact preserved outside the repo and later removed after its evidence was captured.
-
-### Findings Declined
-- *A case-insensitive `grep` false-positived on `CE-[0-9]+`*, matching the substring `ce-1` inside
-  `slice-1`. Caught in-session by its own positive control before it could produce a false pass, and the
-  general rule (pair every absence check with a control proving the same pattern form can match) is already
-  recorded durably in the trial record and the continuity scratchpad. No consequence reached the artifact.
-- *Reaching `/work-loop-v2` without `/session-start` leaves a session with no mandate footprint, which the
-  staging guard then blocks.* Real, but already queued in a more general form — `logs/next-up.md` carries
-  "A `/clarify`-first session gets no marker, so the wrap guard classifies its own work as foreign and halts
-  the wrap" (`b9a7d0e41983`). A second entry would split one defect across two queue items.
-- *The `harbourview-*` brief Codex produced was substantively strong* — it recovered SD-3, ranked the defect
-  above the email template, and carried the 2026-06-14 boundary. Not queued and not scored: brief quality is
-  CE-9's measurement, taken at S5 against S1's instrument, and S2 measures carriage only.
-
-Findings: 4 — queued 1 (severity: medium-high), declined 3. 1 + 3 = 4.
-
-### Next Steps
-- **Operator decision pending:** authorise Work Loop v2 **S3 (Slice A, the first red–green trial)** or stop
-  after the completed Phase 1. If authorised, the decision goes back to Codex so it writes the S3 brief —
-  do not start S3 from the plan directly.
-- **Read the queued finding before S3 is briefed** (`logs/improvement-log.md`, 2026-08-02, trial isolation).
-  S3 reproduces the live-directory escape by default unless its brief requires a disposable root and an
-  answer-key scrub.
-- Four deferrals still carried on the task: the candidate-marker wording at plan §7 `:551`; the
-  implementation plan header's stale O-1 status; F-10's stale specification line count; and S1's range-based
-  scope check not duplicated into its scenario file.
-- Still undispatched, unchanged from prior sessions: the Work Loop v2 mission's Step 8 v1-retirement review
-  brief.
-
-### Open Questions
-None.
-
 ## 2026-08-02 — Session S8-ff8
 
 **Mandate:** Run Claude's preparation half of Work Loop v2 Context Engineering S3 (Slice A) — re-check the brief's four premises against the live repository, build the disposable red evaluation root outside the shared checkout with the answer key scrubbed, and write the verbatim fresh-Codex red-evaluator prompt into the task-state file — done when: all four premises are checked with evidence recorded, the disposable red root exists outside the shared checkout with the answer key scrubbed, the red-evaluator prompt is written verbatim into the task-state file with `turn: operator` unchanged, and the work is committed.
@@ -657,3 +564,79 @@ S8b's three owed checks (causal post half, passing Direct Work check, post-integ
 refusal) can only be obtained by a separate, explicitly authorised proof task. Nothing schedules one. Until
 one runs, adoption stays unavailable no matter how much downstream evidence accumulates — worth deciding
 deliberately rather than discovering at Phase 6.
+
+## 2026-08-04 — Session (unmarked) — Work Loop v2 Context Engineering S9 reviewed, S10 corrected, task closed
+
+**Work:** Ran two consecutive Work Loop v2 units on task `context-engineering-s9-candidate-review` in one
+session — the S9 candidate review, Codex's S10 correction round, and the task's close, which was also the
+first live exercise of the correction's own close-token fix.
+
+### Summary
+This session ran entirely on `/work-loop-v2`, no session marker. S9 first: all five of the brief's
+verification claims held on inspection (plan approval bound to `1283d99`, the review surface really is
+exactly the three named runtime files — confirmed by a workspace-wide content search that found no fourth
+live file and classified three project-level "copies" as symlinks to the canonical files — one unchanged
+commit `4f98cec1`, S8b's three checks genuinely unmet, and independence achievable via a fresh-context
+subagent with no authorship of the candidate). The commissioned reviewer returned four material findings
+(two high, two medium), all producer/consumer contradictions between the three runtime files — not the
+candidate reading unsoundly overall, and not touching the Route 3 boundary, which the reviewer explicitly
+cleared. Codex froze the four findings and opened an S10 correction unit. All four reproduced on disk
+before any fix was made. Three were resolved in full: the core now permits both claim-placement shapes
+instead of contradicting the command; the core's five field headings are now normative and exact instead
+of drifting from what the command reads; the core and command both gained a discovery-unit consumer path
+instead of forcing every brief through "implement". The fourth — contradictory closing-record authorship
+that left no reachable path to a committed closed file — was resolved structurally (a new close token,
+symmetric to the existing hand-off token) but handed back as **partly resolved**, because demonstrating
+the fixed terminal path required actually invoking it, which this correction unit could not manufacture as
+evidence. Codex accepted the corrected candidate under the core §3 menu with four written limitations —
+not a second correction round — and closed the task using exactly that new close-token path. The
+successful close commit is itself the terminal-path proof finding 1 was missing: Codex wrote the verdict
+and handed the turn to Claude, Claude reduced the file to the four-section closing record and committed
+it. Nothing about adoption moved — S8b's three checks are still owed, now against the corrected candidate,
+and Phase 6 adoption condition 4 stays explicitly unmet rather than recorded as an accepted limitation.
+
+### Decisions Made
+- **Operator (as Codex): accepted the S10-corrected candidate with four written limitations**, chosen once
+  from the core §3 menu rather than opening a further correction round. Ground: all four runtime
+  contradictions removed, no critical finding remained, the acceptance harness held steady, and the
+  approved plan already requires the affected regression (R-1, R-5) before any adoption decision.
+- Claude, within authority: commissioned the S9 reviewer as a fresh-context subagent rather than reviewing
+  the candidate itself, per the brief's explicit prohibition on Claude reviewing its own implementation and
+  relabelling that independent.
+- Claude, within authority: handed back finding 1 as **partly resolved** rather than stretching the
+  structural fix to claim behavioural proof — the evidence class (invoking the seam) is exactly what S8b
+  still owes and this unit could not supply it honestly.
+- Claude, within authority: left the harness's stale `KNOWN_WORKLOOP_FILES` allowlist unfixed — it did not
+  make any of the four frozen findings fail-capable, so touching it was outside the correction's scope;
+  recorded as a deferral instead.
+- Claude, within authority: removed the superseded frozen-findings text from the state file's `Next
+  action` once the correction round completed, per core §4's "current truth, not a diary" rule, rather
+  than carrying it forward for the closure check to re-read.
+
+### Outcome
+Skipped (not requested).
+
+### Session Value Audit — 80/20 Review
+Skipped (not requested).
+
+### Risky actions
+None. Every commit was staged by explicit pathspec across all three units (S9 review, S10 correction,
+close). No destructive git operation, no external write, no prompt injection encountered.
+
+### Findings Declined
+- **The harness's stale `KNOWN_WORKLOOP_FILES` allowlist** (cause of the standing 147/2 result) — declined
+  as a duplicate: already queued at `logs/improvement-log.md` via
+  `<!-- promote:d7cac2579d77 -->` ("The Work Loop v2 regression harness has a permanently red baseline").
+- **Core §4's worked example now partly duplicating its own normative heading table** — declined as
+  cosmetic, no named consequence beyond a future editor needing to keep two copies in sync by hand.
+
+### Next Steps
+`context-engineering-s9-candidate-review` is closed; no further action on it. Two things are next in the
+Context Engineering thread and neither is scheduled: (1) an operator-driven Codex session to run regression
+cases R-1 and R-5 against the corrected candidate, or (2) a separate, explicitly authorised proof task to
+obtain S8b's three owed behavioural checks. Do not open S11, S12 or Phase 4 without one of those.
+Continuity detail: `logs/scratchpads/2026-08-04-17-30-scratchpad.md`.
+
+### Open Questions
+Whether and when either follow-on (R-1/R-5 regression, or the S8b proof task) gets scheduled remains
+undecided. Nothing in this session commits to a timeline.
