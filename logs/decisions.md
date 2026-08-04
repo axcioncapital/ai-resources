@@ -204,3 +204,36 @@ two failure modes with real downstream consequence — offered, also declined. (
 **What survives.** The accepted instrument is retained rather than discarded — plan §7.5 already treats the
 regression cases and fixtures as material that outlives the build, so a later session can run them without
 reconstruction if the plan is ever revisited.
+
+## 2026-08-04 — Operator declines the S8a observer run
+
+**Context.** `context-engineering-s8a-entrypoint-classification` (Work Loop v2, plan
+`context-engineering-implementation-plan-v0.1.md` § 7 Phase 3) required the operator, as the session's
+named observer, to re-run a stated command for each classified access path and confirm both the output and
+the chosen O-3 reading before the unit could be called complete. Claude built the classification (14 access
+paths, 6 in-population verdicts on evidence, 8 v1 paths outside the population) and, separately, a 26-check
+observer script — verified fail-capable by running it against a simulated repository with one path removed
+before shipping it.
+
+**Decision.** The operator declined to run the observer check, judging it ceremony given the low cost of
+what it would confirm relative to what had already been inspected once by Claude.
+
+**Rationale.** Unlike the S7 grouped-regression decline (five fabricated projects, multiple fresh Codex
+threads, a full observation pass), this check is a single copy-paste of a pre-built script. The operator
+weighed that low cost against the value of independent re-derivation and judged it not worth running for
+this unit.
+
+**Consequence, stated rather than absorbed.** S8a's exit condition is not met: the classification record's
+status line, its exit-condition table, and its § 6 observation section were all rewritten from "owed" to
+"declined" so nothing implies a pending check nobody will run. Every one of the 14 verdicts rests on
+Claude's own inspection with no independent re-derivation. Reading A is applied but confirmed nowhere in
+the repository outside the task-state file. This bears on adoption condition 3 (O-3 must be settled before
+an adoption claim), not on the classification's internal consistency — nothing already proved is retracted.
+
+**What survives.** The 26-check observer script is retained in the record rather than deleted. It requires
+no reconstruction to run later — including the re-derivation plan §11 already requires for one of its rows
+at adoption time.
+
+**Alternatives considered.** (1) Run the observer check as the brief required — rejected as the ceremony
+being objected to. (2) Decline entirely and hand the unit to Codex with the exit condition stated as
+unmet — **chosen**.

@@ -1,0 +1,41 @@
+{
+  "run_id": "2026-08-04-S3-018",
+  "project": "ai-resources",
+  "date": "2026-08-04",
+  "marker": "S3-018",
+  "model": "unknown",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md",
+  "mission": null,
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    "logs/work-loop/context-engineering-s8a-entrypoint-classification.md",
+    "plans/work-loop-v2-v0.2/context-engineering/trials/entrypoint-classification.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-08-04-operator-declines-the-s8a-observer-run"
+  ],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": null,
+  "incidents_refs": []
+}
