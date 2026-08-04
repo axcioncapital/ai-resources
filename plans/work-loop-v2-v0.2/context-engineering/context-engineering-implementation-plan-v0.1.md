@@ -1,13 +1,13 @@
 # Implementation plan: Context Engineering for the Work Loop
 
 **Version:** v0.1 · **Stage:** **draft — returned to draft 2026-08-04** by the Route 3 deviation recorded in §7.2. The 2026-08-02 approval against commit `e1ce895` is retained as history and does not cover this content ·
-**Status:** not authorisation to implement — the specification's approval (O-1) is still outstanding.
+**Status:** exactly one authorisation is outstanding, and it is this document's own — the operator's content-bound reapproval of the 2026-08-04 amendment.
 
 > **Authority notice.** This plan sequences work; it creates no permission to do it. It is subordinate to
-> [`../context-engineering-spec-v0.1.md`](../context-engineering-spec-v0.1.md), which is itself still a
-> draft specification awaiting operator approval and states that *"nothing here authorises
-> implementation."* Two approvals are therefore outstanding, and the specification's is the first
-> (§ Phase 0). Where this plan and the specification disagree, the specification wins and the
+> [`../context-engineering-spec-v0.1.md`](../context-engineering-spec-v0.1.md), which is the **approved
+> governing** specification — approved by the operator on 2026-08-02, bound to commit
+> `148689d42ee7817239219417a1b884b961660f86`, and stating that *"nothing here authorises implementation."*
+> **O-1 is answered: yes.** Where this plan and the specification disagree, the specification wins and the
 > disagreement is a defect in this plan.
 >
 > **Approval binds to content, not to this filename.** If the operator approves this plan, the approval
@@ -61,14 +61,19 @@
 > a material exit condition and therefore triggers the content-bound rule above. Reapproval binds to the
 > commit carrying this correction, not to `cc635d4`.
 >
-> **What this approval does not do.** It answers the second of Phase 0's two questions only. **O-1 — does
-> the specification become governing — is still unanswered**, and §12 states that nothing below starts
-> until both exist. This plan is therefore the plan of record and still not authorisation to implement.
-> S1 cannot open until O-1 is recorded in the specification, bound to a commit.
+> **What the 2026-08-02 approval did not do, and what has changed since.** It answered the second of
+> Phase 0's two questions only; O-1 was genuinely unanswered when it was given. **O-1 has since been
+> answered — yes**, recorded in the specification itself and bound to commit `148689d`, superseding the
+> narrower *"for this implementation unit"* scope of the same date. Both of Phase 0's approvals therefore
+> exist. What is outstanding is neither of them: it is the reapproval this document's 2026-08-04 amendment
+> now needs, and until the operator gives it, this plan is a draft.
 >
-> **Assessment status: `unassessed`.** The operator approved before Codex's final closure check on the
-> one-file-candidate fix ran. That check is not owed retrospectively; it is recorded as not run so a later
-> reader does not mistake approval for independent assessment.
+> **Assessment status of the 2026-08-02 approval: `unassessed` — historical, and it does not describe the
+> 2026-08-04 amendment.** That approval was given before Codex's final closure check on the
+> one-file-candidate fix ran. The check is not owed retrospectively; it is recorded so a later reader does
+> not mistake *that* approval for independent assessment. **The amendment is on the opposite footing:** it
+> goes to Codex for assessment *before* the operator is asked to reapprove it, so this paragraph must not
+> be read forward onto it.
 >
 > **This is not "the one canonical project plan" of spec §5.7.** That term names the durable plan a
 > *project* carries so Context Engineering can prepare briefs against it. This is a build plan for the
@@ -385,12 +390,14 @@ every row in §9 traces to one of these; they are stated here once.
 
 ## 6. Operator decisions this plan does not take
 
-Identified, not resolved. Each is genuinely operator-owned; the plan states the consequence of each answer
-and stops there.
+Identified, not resolved **by this plan**. Each is genuinely operator-owned; the plan states the
+consequence of each answer and stops there. **Two have since been answered by the operator** — O-1 (yes;
+§ Authority notice) and O-3 (reading A, recorded in S8a's closing record). The plan still takes neither
+decision; it records them.
 
 | # | Decision | Why it is the operator's | Consequence |
 |---|---|---|---|
-| O-1 | **Does the CE specification become governing?** Its header still reads *"draft specification — awaiting operator approval · not requirements"*, and `logs/decisions.md` (2026-08-02) explicitly leaves the flip undecided — the approval given on 2026-08-02 was scoped *"for this implementation unit"*. | Approval promotes a draft to governing. Codex may not promote its own plan and neither may Claude. | **Phase 0. Nothing in Phase 1 onward may start without it.** |
+| O-1 | **Does the CE specification become governing?** — **ANSWERED 2026-08-02: yes.** The specification's own header now records the operator's governing approval bound to commit `148689d`, which explicitly supersedes the narrower *"for this implementation unit"* scope of the same date that this row was written against. | Approval promotes a draft to governing. Codex may not promote its own plan and neither may Claude. | **Phase 0, satisfied.** Phase 1 onward is authorised by this answer. |
 | O-2 | **Ordering against the Work Loop v0.2 rework.** The rework will reshape the same three runtime files this integration edits, and its scope is undecided. | Sequencing two efforts against each other is priority, not technique. | Wire first and re-wire after the rework; or rework first and wire once. Phase 3 is the collision point. |
 | O-3 | **What does "every relevant Work Loop entrypoint" mean?** — the two readings are below. | A question about the *scope of the adoption boundary*: semantics and priority, not a technical fact. Evidence informs it; evidence cannot answer it. | **Adoption condition 3.** It decides what population S8a classifies, and it must be settled before an adoption claim. |
 | O-4 | **Will a genuinely two-model session be scheduled?** The integrated proof needs the operator driving Codex while Claude works the same repository. | Only the operator can run Codex. | Without it, Phase 4 cannot run and the honest outcome is the isolated proof plus an owed integrated proof. |
@@ -557,6 +564,11 @@ until both exist.
    approval is recorded **in this document's header**, bound the same way. A specification that is
    governing does not make its implementation plan approved: the first says the behaviour is settled, the
    second says this sequence is how it gets built.
+
+**Status, 2026-08-04.** Item 1 is **answered**: the specification is approved and governing at commit
+`148689d`. Item 2 was answered on 2026-08-02 at `e1ce895` and is **open again**, because the Route 3
+amendment (§7.2) materially edited this plan and the rule below returns it to draft. Phase 0 is satisfied
+for the specification and outstanding for this plan alone.
 
 Both bindings follow spec §5.7 and CE-4 failing case C — an approval that identifies only a filename fails
 on that shape alone, because the file's meaning can change with nothing appearing to have happened. A
@@ -1429,27 +1441,33 @@ O-3, an operator decision that adoption condition 3 requires settled.
 
 ## 12. The exact next session
 
-**Phase 0 first, and it is two answers, not one.** Nothing below starts until both exist:
+**Phase 0's two answers, and where they now stand.**
 
-1. **O-1 — does the specification become governing?** Recorded in the specification, bound to a commit.
-2. **Is this plan approved as the plan of record?** Recorded in this document's header slot (§ Authority
-   notice), bound to a commit. Answered after Codex has assessed the plan.
+1. **O-1 — does the specification become governing?** **Answered 2026-08-02: yes**, recorded in the
+   specification and bound to commit `148689d`.
+2. **Is this plan approved as the plan of record?** **Open again.** It was answered on 2026-08-02 at
+   `e1ce895`; the Route 3 amendment (§7.2) materially edited this document and returned it to draft.
 
-**O-3 is not needed to start, but is needed before S8a.** It decides the population S8a classifies, and
-S8a stops rather than guessing. Answering it early costs nothing; answering it late stalls Phase 3.
+**O-3 was settled before S8a** — the operator chose reading A, and the narrower adoption boundary that
+follows from it is recorded in
+[`../../../logs/work-loop/context-engineering-s8a-entrypoint-classification.md`](../../../logs/work-loop/context-engineering-s8a-entrypoint-classification.md),
+to be re-derived at adoption (condition 3).
 
-Then **Session S1 — build the CE-9 measurement instrument.** It is first because it is the only thing that
-makes the riskiest trial (S2) falsifiable, and because everything in Phase 2 inherits its control design.
+**The exact sequence from here, in order:**
 
-S1 needs, and needs only: this plan's §4, §7.0, §7.1 and Phase 1; the CE specification's §3.5, §5.7 and
-CE-9; and a re-verification of §4.1's facts. Its output is one scenario file whose seeded material fact is
-provably present in the durable sources and provably absent from the request text. If that cannot be
-constructed, S1 stops and reports CE-9 as possibly unmeasurable — which is a finding worth having, and is
-not a failure of the session.
+1. **Codex assesses this amendment** — §7.2 and the passages that cite it.
+2. **The operator explicitly reapproves the amended plan**, bound to an identifiable commit, recorded in
+   the § Authority notice slot above. Route 3 authorised the deviation; it is **not** that approval, and
+   Codex's assessment is not it either.
+3. **Only then may S9 open**, under §7.2 and nothing else.
 
-**S1 also opens the implementation task's state file**, `logs/work-loop/context-engineering-implementation.md`
-— the existing task-state interface, no new system — and from that point it, not this section, is what says
-where the work actually is. The `Next:` lines in §7 are the plan's static ordering; the state file is the
-live position.
+**What none of those three steps changes.** S8b stays closed and its behavioural seam proof unobtained;
+Phase 6's adoption **condition 4** stays **unmet**; and everything S9 and any later phase produces is
+non-adoption evidence until a separate, explicitly authorised proof task establishes that condition.
+
+**Where the live position is recorded.** Not here. The per-task state files under `logs/work-loop/` say
+where the work actually is — `context-engineering-implementation.md` holds the implementation task's
+closing record, and this amendment has its own. The `Next:` lines in §7 are this plan's *static* ordering
+and were never the live position.
 
 **This unit ends here. No implementation was performed in it.**

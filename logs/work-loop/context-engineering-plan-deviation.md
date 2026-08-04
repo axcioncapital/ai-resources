@@ -94,58 +94,44 @@ Route 3 choice. Challenge any false premise rather than improvising past it.
 
 ## Latest material result
 
-Inspected (2026-08-04) — every claim checked against the plan as it stood at `4db05c1`, the commit this
-unit started from. `P` below is
+The one bounded correction ran on Codex's two frozen findings. Both reproduced by inspection before
+anything was changed. `P` is
 `plans/work-loop-v2-v0.2/context-engineering/context-engineering-implementation-plan-v0.1.md`.
 
-- Claim (1): HOLDS — searched `P` for the S9 precondition and the S8b exit/evidence text; found the boxed
-  note "S9 cannot start until S8b's three fail-capable checks have run and their failing runs are on
-  record", and S8b's exit "all three behavioural checks passed with their failing runs recorded".
-  S8b's evidence list numbers the three behavioural checks 1–3 (pre/post at the real entrypoint, Direct
-  Work, false-premise refusal) and the structural checks 4th, so "three" is consistent across both
-  passages.
-- Claim (2): HOLDS — searched `P` for the complete Phase 3 exit cluster and every later phase entry;
-  found three required exit conditions, of which 3 is "The seam is proved behaviourally … and the
-  candidate review has run after that evidence exists". The dependent entries are S9's `Inputs`
-  ("S8b's behavioural evidence"), S9 `Next:` → Phase 4, S10 `Next:` → Phase 4, S11's `Inputs` ("the
-  accepted candidate"), and §7's rule that "a phase exits when its exit condition is demonstrated".
-- Claim (3): HOLDS — searched `P` for the Phase 6 adoption table and the adoption-with-limitations text;
-  found condition 4 "The seam is proved behaviourally, with failing runs on record | S8b", and the
-  paragraph "'Adopt with stated limitations' is deliberately not an option for conditions 1–5", reinforced
-  by §11's rule that a limitation "can never record an unmet adoption condition — the five in Phase 6's
-  table".
-- Claim (4): HOLDS — read all three closed records in full.
-  `logs/work-loop/context-engineering-s8b-seam-proof.md` states S8b closed without the proof, lists the
-  three unmet checks as accepted limitations, and says "S8b may be proved later only by a new explicitly
-  authorised task; this closed task is not reopened".
-  `logs/work-loop/context-engineering-s8a-entrypoint-classification.md` records O-3 reading A, the
-  classification accepted after one bounded correction, and the unrun observer recipe as a written
-  evidence gap. `logs/work-loop/context-engineering-implementation.md` states "Adoption is not claimed.
-  The implementation is live; it does not satisfy the plan's adoption conditions."
+Inspected (2026-08-04):
 
-Result: the plan carries the Route 3 deviation as one named exception. A new §7.2 states the operator's
-2026-08-04 decision, names the three owed checks, bounds what the deviation permits (S9, then Phases 4–5
-subject to the plan's ordinary decisions) and what it does not (no evidence claimed, no adoption, no
-reopening of S8b, no reusable waiver), and says why the debt is deliberately not listed in §11. Six
-load-bearing passages were qualified to point at it, and the header returns the document to draft.
+- Finding (1): REPRODUCES — searched `P` for every O-1 and approval-status assertion (`grep -n
+  "O-1\|outstanding\|awaiting operator approval\|Assessment status"`). Six live passages claimed the
+  specification was unapproved: the status line "the specification's approval (O-1) is still
+  outstanding"; the Authority notice's "still a draft specification awaiting operator approval … two
+  approvals are therefore outstanding"; "**O-1 … is still unanswered**" and "S1 cannot open until O-1 is
+  recorded"; the unscoped "**Assessment status: `unassessed`**" paragraph; §6's O-1 row, which cited the
+  specification's header as reading *"draft specification — awaiting operator approval"*; and Phase 0,
+  which left both approvals open. Against that, `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md`
+  reads at its own header: "**Stage:** approved specification — governing", "Approved by the operator on
+  **2026-08-02** … binds to the identifiable content of this document at commit
+  **`148689d`** (`148689d42ee7817239219417a1b884b961660f86`)", and explicitly "**Supersedes** the narrower
+  approval of the same date … which approved the same content at the same commit *'for this
+  implementation unit'* only." That superseded scope is precisely the evidence §6's row cited for O-1
+  being undecided. `logs/work-loop/context-engineering-implementation.md` already carries "The plan
+  header's stale O-1 wording" as deferral 2 and the `Assessment status: unassessed` wording as deferral 6.
+- Finding (2): REPRODUCES — searched `P` §12 for its routing; found "**Phase 0 first, and it is two
+  answers, not one.** Nothing below starts until both exist", followed by "Then **Session S1 — build the
+  CE-9 measurement instrument.**" S1 ran long ago and §7.2 now permits progression to S9, so §12 routed
+  the reader to a session two phases behind the plan's own position.
 
-| Passage | Before | After |
+Result: both frozen findings are resolved, and §7.2 and the adoption bar are unchanged.
+
+| Frozen finding | Before | After |
 |---|---|---|
-| Header / approval block | `Stage: plan of record`, approved against `e1ce895` | `RETURNED TO DRAFT — 2026-08-04`; `e1ce895` retained as prior approval and stated not to cover this content; the Route 3 edit described; reapproval owed after Codex assessment |
-| §7.2 | did not exist | the deviation, its three owed checks, its limits, and how it stops being needed |
-| S8b exit | exit condition only | exit condition unchanged, plus `Exit status, 2026-08-04 — not met`, progression past it permitted by §7.2 "and nothing else" |
-| S9 `Inputs` | "S8b's behavioural evidence" listed as an input | that input marked as not existing; replaced by S8b's closing record and the retained pre-integration red run, with the reviewer told the seam is unproved |
-| S9 precondition (boxed note) | "S9 cannot start until S8b's three fail-capable checks have run" | reasoning retained, deviated from once; S9's acceptance can say the candidate reads correctly, never that the seam works; its output is non-adoption evidence |
-| Phase 3 exit | three conditions, all required | conditions unchanged; condition 3 marked not met, Phase 3 exited "for progression purposes only", conditions 1–2 unaffected |
-| Phase 4 entry / Phase 5 entry | no entry qualification | each entered under §7.2; results are non-adoption evidence; Phase 5 adds that an out-of-sequence S8b proof is owed again if a later fix touches the seam (§5.2) |
-| Phase 6 condition 4 | "S8b" | "S8b — **unmet as of 2026-08-04** (§7.2)", establishable only by a separate authorised proof task, "neither establishes it nor waives it"; plus a paragraph that the deviation does not convert condition 4 into a limitation |
-| §11 limitations | rule naming entrypoint coverage and O-3 as unlistable | the same rule extended to the seam-proof debt, pointing at §7.2 — no row added |
+| (1) authority cluster | status line "the specification's approval (O-1) is still outstanding"; Authority notice calls the spec "still a draft specification awaiting operator approval", two approvals outstanding; "O-1 … is still unanswered"; "S1 cannot open until O-1 is recorded"; unscoped `Assessment status: unassessed` | status line: "exactly one authorisation is outstanding, and it is this document's own — the operator's content-bound reapproval of the 2026-08-04 amendment"; Authority notice names the spec **approved governing**, bound to `148689d`, "**O-1 is answered: yes**"; the 2026-08-02 paragraph rewritten as history with the change since; `Assessment status` scoped to the 2026-08-02 approval and stated **not** to describe the amendment, which goes to Codex *before* reapproval |
+| (1) knock-on, disclosed below | §6's O-1 row cited the spec's header as "draft — awaiting operator approval"; §6 preamble "Identified, not resolved"; Phase 0 left both approvals open | §6 row "**ANSWERED 2026-08-02: yes**", consequence "**Phase 0, satisfied**"; preamble "not resolved **by this plan**", naming O-1 and O-3 as since answered; Phase 0 gains a status note — item 1 answered, item 2 open again because the amendment returned this plan to draft |
+| (2) §12 | "Phase 0 first … Then **Session S1**", plus S1's input list | Phase 0's two answers with where each stands; then the three-step sequence — Codex assesses → the operator reapproves bound to a commit → **only then may S9 open**, under §7.2; plus what none of the three steps changes (S8b stays closed and unproved, condition 4 stays unmet, downstream output is non-adoption evidence); plus O-3 recorded as settled at reading A, and the live position located in the state files rather than in §12 |
 
-Evidence: an 11-check script, run against the pre-edit plan (red), the amended plan (green), and two
-deliberately weakened copies (each caught). C1–C7 assert the progression passages now cite the deviation
-and that condition 4 is marked unmet; C8–C10 assert the adoption bar was **not** weakened — condition 4
-still requires the seam proof, the adopt-with-limitations refusal is intact, and §11's table has no row
-for the debt. Copy-pasteable, run from the repository root with the plan path as its argument:
+Evidence: the amendment's 11 checks (C1–C10) were re-run unchanged and are joined by 9 checks for the two
+findings (D1–D6c). C1–C10 are the no-weakening guard: if this correction had loosened §7.2, the deviation
+citations, or the adoption bar, they would have gone red. Copy-pasteable, run from the repository root
+with the plan path as its argument:
 
 ```bash
 F="$1"; pass=0; fail=0
@@ -163,41 +149,67 @@ grep '^| 4 |' "$F" | grep -qi 'unmet'; chk "C7  adoption condition 4 is marked u
 grep '^| 4 |' "$F" | grep -q 'seam is proved behaviourally'; chk "C8  condition 4 still requires the seam proof" 0 $?
 grep -q '"Adopt with stated limitations" is deliberately not an option' "$F"; chk "C9  the adopt-with-limitations bar is intact" 0 $?
 sec '^## 11\.' '^## 12\.' | grep '^| ' | grep -qi 'seam'; chk "C10 no limitations-table row for the seam-proof debt" 1 $?
+grep -q "specification's approval (O-1) is still outstanding" "$F"; chk "D1  status line no longer calls O-1 outstanding" 1 $?
+grep -q 'draft specification awaiting operator approval' "$F"; chk "D2  no passage calls the spec a draft awaiting approval" 1 $?
+grep -q '148689d' "$F"; chk "D3  the spec's governing approval commit is recorded" 0 $?
+grep -qE '^> \*\*Assessment status: `unassessed`' "$F"; chk "D4  the unassessed note is no longer unscoped" 1 $?
+sed 's/^> *//' "$F" | tr '\n' ' ' | grep -q 'O-1 — does the specification become governing — is still unanswered'; chk "D4b no passage says O-1 is unanswered" 1 $?
+sec '^## 12\.' '^$XX' | grep -q 'Session S1 — build the CE-9 measurement instrument'; chk "D5  §12 no longer routes to S1 as the next session" 1 $?
+sec '^## 12\.' '^$XX' | grep -qi 'only then may S9 open'; chk "D6a §12 states S9 opens only after reapproval" 0 $?
+sec '^## 12\.' '^$XX' | grep -qi 'condition 4'; chk "D6b §12 preserves the unmet adoption condition" 0 $?
+sec '^## 12\.' '^$XX' | grep -qi 'S8b stays closed'; chk "D6c §12 preserves S8b closed and unproved" 0 $?
 echo "  $pass passed / $fail failed"; [ "$fail" -eq 0 ]
 ```
 
 Runs and results:
 
-- **Red** — `git show 4db05c1:<P> > /tmp/pre.md; bash check.sh /tmp/pre.md` → **3 passed / 8 failed**
-  (C1–C7 fail; C8–C10 pass). The checks could all have passed vacuously; they did not.
-- **Green** — `bash check.sh <P>` on the amended plan → **11 passed / 0 failed**.
-- **Mutation 1** — a limitations row "The behavioural seam proof was not obtained" inserted into §11's
-  table → **C10 FAIL**, 10/1. The check catches the waiver-by-listing route.
-- **Mutation 2** — the `**unmet as of 2026-08-04**` marker stripped from adoption condition 4 →
-  **C7 FAIL**, 10/1. The check catches adoption being quietly made available.
+- **Red** — against the plan at `0d1e77d`, the commit this correction started from: **11 passed / 9
+  failed.** C1–C10 green (the amendment was intact), every D check red.
+- **Green** — against the corrected plan: **20 passed / 0 failed.**
+- **Mutation 1** — the Authority notice reverted to "draft specification awaiting operator approval" and
+  "O-1 is answered: yes" removed → **D2 FAIL**, 19/1.
+- **Mutation 2** — §12's "Only then may S9 open" changed to "S9 may open at any time" → **D6a FAIL**,
+  19/1.
+- **One check was rewritten before it was trusted.** D4b, which asserts no passage still says O-1 is
+  unanswered, passed on the *uncorrected* plan — the sentence it looks for spans two lines and carries a
+  `> ` blockquote prefix, so a plain single-line grep missed it. It was rebuilt to strip the prefix and
+  join lines, re-run against the uncorrected plan, and only then relied on. A check that passes before the
+  work happens is not evidence (core § 6 rule 5), and this one would have been.
 
-Diff scope: `git status --porcelain` shows this state file and the plan, and nothing else that this unit
-wrote. `git status --porcelain` restricted to the three live runtime files, the three closed records and
-`plans/work-loop-v2-v0.2/context-engineering/trials/` returns **zero lines** — no runtime, closed-record
-or trial file changed.
+**Scope, verified.** `git status --porcelain` restricted to the three live runtime files, the three closed
+records, the specification, and
+`plans/work-loop-v2-v0.2/context-engineering/trials/` returns **zero lines** — none changed. The
+correction's diff is the plan (50 insertions / 32 deletions against `0d1e77d`) and this state file.
 
-**Disclosed, because it is in the working tree and is not mine:** `logs/friction-log.md` is modified — 12
-appended `Write Activity` timestamp lines written automatically by the repository's write-logging hook as
-this unit edited the plan. It is machine-appended telemetry, not content this unit authored, and it is
-**left unstaged and uncommitted**, outside the approved scope.
+**Disclosed — the correction reached two passages the findings did not name.** Finding 1 required the
+header to say the specification is governing. §6's O-1 row and Phase 0 both asserted the opposite, so
+correcting only the header would have left the plan contradicting itself — a new contradiction created by
+this correction, which the hand-back instruction requires me to prevent. Both were therefore corrected as
+part of finding 1, minimally: the row's verdict and consequence, §6's one-line preamble, and a status note
+under Phase 0. **Nothing else in §6 or Phase 0 was touched.** If Codex judges this outside the frozen
+scope, it is a reversion of three edits, not a rebuild.
 
-**Deferrals — noticed during this unit, deliberately not implemented** (core § 5):
+**Also disclosed:** `logs/friction-log.md` remains modified in the working tree by the repository's
+automatic write-logging hook, as it was at the first hand-back. Machine-appended telemetry, not this
+unit's content, and still left unstaged.
 
-1. Phase 1's U-1 text says the second half of U-1 "is answered by S8b's pre/post invocation at the live
-   entrypoint". That run never happened, so that half of U-1 is in fact unanswered. Not edited: it is not
-   one of the passages the brief named and it gates nothing downstream — §7.2's debt already covers the
-   substance. Codex decides whether it needs its own line.
-2. §12 "The exact next session" still names Phase 0 and S1 as what happens next, which the work has long
-   passed. Left alone as unrelated plan staleness, which this task's scope excludes.
+**Deferrals — newly noticed during the correction, not implemented** (core § 3, core § 5):
+
+1. §6's **O-3 row** still reads as an open question in its own text. The fact that the operator settled it
+   at reading A is now recorded in §6's preamble and in §12, but the row itself was left as written.
+   Correcting it is a third edit to §6, beyond what avoiding self-contradiction required.
+2. Phase 0's item 1 is still phrased as a future choice ("The operator answers O-1. If no, this plan stops
+   here…"). The status note directly beneath now says it is answered, so the section is not contradictory
+   — but the tense is stale.
+3. Carried forward, unchanged from the first hand-back: Phase 1's U-1 text still says the second half of
+   U-1 is answered by S8b's pre/post invocation, which never ran.
 
 ## Next action
 
-Codex: assess the amendment. Is §7.2 the right shape and boundary for the Route 3 exception; are the
-six qualified passages sufficient to unblock progression without any of them implying the missing evidence
-exists; and does the plan now correctly present itself as draft pending the operator's content-bound
-reapproval? Approval of the amended plan is the operator's, not this assessment's.
+Codex: run the closure check on the frozen findings only — are findings 1 and 2 resolved, and did the
+correction break anything? The specific things worth checking are that no passage of the plan still
+presents the specification as unapproved, that §12 now routes to Codex-assessment → operator reapproval →
+S9 and nowhere else, and that C1–C10's green run means what it claims — that §7.2, the deviation
+citations, and the unmet adoption condition 4 all survived the correction untouched. The three edits
+outside the named passages (§6's row, §6's preamble, Phase 0's status note) are disclosed above and are
+yours to accept or reject. Approval of the amended plan remains the operator's, and is a separate step.
