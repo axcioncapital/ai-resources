@@ -123,79 +123,99 @@ made complete, required evidence cannot be produced, or work would cross the exc
 
 ## Latest material result
 
-Blocker resolved by Codex: the state file is O-3 reading A's durable home under core §4, and claims (1)
-and (2) were inherited as verified. Claims (3)–(5) then ran.
+The one bounded correction ran against the three frozen findings. Each was reproduced by inspection first;
+all three reproduced, and all three are resolved.
 
-Inspected (2026-08-04):
+**Finding 1 — Rows 3 and 4 misapply the fail-safe. REPRODUCED, and it was my error.** Read plan §11
+(`context-engineering-implementation-plan-v0.1.md:1321-1329`), which I had not read when writing the
+record — I worked from §4.2, §6 and §7 Phase 3 only. §11 settles `axcion-design-studio` by name: with no
+`.agents/` and no `logs/work-loop/`, *"no plan-dependent briefing or continuation happens through it — S8a's
+one relevance condition fails, and those two absences are the evidence for **that**, not conditions in their
+own right."* I had read S8a's prohibition (do not classify out for lacking a skill or using a different
+state directory) as excluding those facts from consideration entirely; §11 draws the actual line — they are
+barred as **conjoined conditions of relevance**, not as **evidence that the one condition fails**.
+**Corrected:** Rows 3 and 4 are now **NOT RELEVANT** on evidence, with §11 cited as authority on Row 3 and
+its reasoning applied to Row 4 (which postdates §11's text). Every derived statement was corrected with
+them — the § 2 heading, the new in-population summary table, the § 4 exit table (which now records that no
+verdict rests on the fail-safe), and the § 5 limitations, from which the fail-safe limitation is deleted.
+A note was added recording that §11 forbids listing entrypoint coverage or the O-3 reading as limitations
+at all.
 
-- Claim (3) — fresh symlink-following scan: **HOLDS, and it corrects the plan.** Ran `find -L` over both
-  briefed roots with the four patterns for the five plan §4.2 artifacts (`work-loop-v2.md`,
-  `work-loop.md`, `*/work-loop-v2/SKILL.md`, `*/work-loop/SKILL.md`), no pruning. Exit 0 for both, no
-  stderr, no symlink-cycle diagnostic. Found **14 access paths** — 5 under `ai-resources`, 9 under
-  `projects`. Plan §4.2 recorded **three** access paths to the v2 Claude command; there are **four**, the
-  new one being `projects/axcion-systems-builder-email-os/`, a project that postdates the 2026-08-02
-  inventory. The exact commands and complete raw output are recorded in § 1 of the classification record.
-- Claim (4) — per-path inspection of v0.2 paths: **HOLDS.** Resolved every path's identity by inode rather
-  than filename (`stat -Lf '%i'` plus `readlink`): the 14 paths reach **five** canonical files, and no
-  content is duplicated anywhere in either root. Every project path is a symlink — the file itself, or a
-  directory above it. Per-path evidence for plan-dependent briefing or continuation is in § 2 of the
-  record.
-- Claim (5) — v1 paths preserved as outside reading A's population: **HOLDS.** All 8 v1 paths carry a row
-  with a disposition and no relevance verdict (§ 3 of the record). They were not inspected as a pretext to
-  decide wiring, retirement, or O-3.
+**Finding 2 — the evidence was not literally re-runnable. REPRODUCED.** `command grep -c "…"` over the
+record returned **21** abbreviated paths — 14 in the raw scan output and 7 inside row commands.
+**Corrected:** every one replaced with the absolute path, and every row command now shows its actual
+verbatim output rather than a summary of it. The single remaining `…` is an elision inside a quotation of
+plan §4.2, not an abbreviation used as evidence.
 
-**Result:** `plans/work-loop-v2-v0.2/context-engineering/trials/entrypoint-classification.md` now exists,
-classifying all 14 discovered access paths. Counts reconcile: 14 scanned, 14 rows, no duplicates. Six paths
-are in reading A's population and **all six are relevant** — four by observed evidence (the two canonical
-`ai-resources` paths, plus `axcion-systems-builder`'s two symlinked paths, which carry three real v2 state
-files), and **two by the plan's fail-safe** (`axcion-design-studio` and
-`axcion-systems-builder-email-os`, where the v2 command is reachable but no `logs/work-loop/`, no
-`.agents/` and no resolvable executable core exist). Those two rest on Session S8a's Stop clause, which
-directs the unsettled case to *relevant* and forbids resolving it toward *not relevant* on skill or
-state-directory grounds — which is exactly what two of the three observed absences are.
+Re-running the row commands to capture real output exposed a second defect inside this finding: Row 5's
+recorded command was `command grep -n 'approved plan' … → lines 71, 81, 85`, and that command does not
+return 71 or 81. Lines 71 and 81 match `plan approval` and `governing plan`, different patterns. The row
+now carries two commands with their true outputs — `approved plan` → 65, 73, 79, 85; `governing plan` → 81.
 
-**Evidence:** the record's own rows are the evidence, and each is capable of failing — every row states a
-re-runnable command whose output produced it, and a row whose verdict does not follow from its own
-conditions plus reading A fails. The scan is capable of failing at the count reconciliation: a missing or
-duplicate path breaks the stated 14 = 14. It has already demonstrated it can fail against a prior belief —
-it contradicted plan §4.2's three-path inventory rather than confirming it.
+**Finding 3 — the observer recipe was incomplete. REPRODUCED.** The provisional § 6 asked only for the two
+scans plus the O-3 confirmation, against a brief requiring the operator to re-run the stated command for
+each row. **Corrected:** § 6.1 is now a single copy-pasteable block of **26 checks** covering both scan exit
+statuses and stderr, the per-root and total counts, a duplicate test, set-equality against the 14 recorded
+paths, the five-canonical-file inode grouping, each of the six in-population rows' own evidence, and the
+eight-path out-of-population count. It prints PASS/FAIL per check and exits non-zero on any failure.
 
-**Two observations recorded, neither implemented** (core §5 deferrals):
+**Result:** `plans/work-loop-v2-v0.2/context-engineering/trials/entrypoint-classification.md` now records
+14 paths in 14 rows. Six are in reading A's population — **four relevant, two not relevant, none resting on
+the fail-safe.** Eight v1 paths remain outside the population with dispositions and no relevance verdict.
+The four evidence-backed relevant verdicts and every v1 disposition are unchanged, as the correction
+required.
 
-1. Plan §4.2's entrypoint inventory is now stale on the v2 command's access-path count. Amending the
-   approved plan is not this unit's work.
-2. Under reading A the record's § 3 states plainly what the narrowing gives up: six paths reach a live v1
-   command that authors its own plan-dependent brief, and they stay outside the boundary. Plan §6 requires
-   this to be written into the **adoption record** — a later artifact this unit does not create.
+**Evidence, and it is capable of failing — verified rather than asserted:**
+
+- The observer check ran against the live repository: **26 PASS, 0 FAIL, exit 0.**
+- A failing case was constructed first. Running the same check against a simulated repository with one
+  access path removed produced 5 FAILs and exit non-zero, naming the missing path by name:
+  `FAIL root 2 path count expected: 9 actual: 8`; `FAIL total path count expected: 14 actual: 13`;
+  `FAIL no duplicate paths`; `FAIL scanned set == recorded set` with the absent path printed; and
+  `FAIL paths reaching the canonical v2 command expected: 4 actual: 3`.
+- The block embedded in § 6.1 is the block that was tested: extracting it back out of the record with
+  `awk` and diffing against the tested script returns a one-blank-line difference only, and the extracted
+  copy runs to `ALL CHECKS PASSED`.
+
+**One newly noticed item, fixed inside finding 1's scope rather than deferred:** the corrected § 2 summary
+first claimed the four relevant paths "match" plan §4.2's *"adoption coverage reduces to two files"*. They
+do not. §4.2's two are the Codex skill and the **executable core** — wiring targets; the four relevant paths
+reach the Codex skill and the **Claude command** — access-path destinations. The overlap is the skill alone,
+and the executable core is not an access path and was never in the scan's scope. Both "two"s being two is a
+coincidence. Corrected in place, because finding 1 explicitly extends to every derived later-wiring
+implication.
+
+**Two candidate deferrals, recorded and not implemented** (core §5):
+
+1. Plan §4.2's entrypoint inventory is stale on the v2 command's access-path count — it says three, there
+   are four. Amending an approved plan is not this unit's work.
+2. Plan §6 requires reading A's narrowing to be written into the **adoption record**. § 3 of the
+   classification states the narrowing and names itself as that record's source, but the adoption record
+   is a later artifact this unit does not create.
 
 ## Next action
 
-Operator observation is owed, so this unit is **provisional, not complete**, per the brief's stated path.
+Findings 1–3 are corrected and committed. The observer run is what remains, and until it is recorded the
+unit is **provisional, not complete**.
 
-Please confirm two things:
+Two things are asked of you.
 
-1. **Re-run the scan** and confirm it returns the same 14 paths, exit 0, no stderr:
+1. **Run the observer check.** Open
+   `plans/work-loop-v2-v0.2/context-engineering/trials/entrypoint-classification.md` § 6.1 and copy the
+   whole `bash` block into a terminal. It re-derives every row: both scans and their exit status and
+   stderr, the 14-path reconciliation with a duplicate test, set-equality against the recorded paths, the
+   five-canonical-file grouping, each in-population row's own evidence, and the out-of-population count.
 
-   ```
-   find -L "/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources" \
-     \( -name 'work-loop-v2.md' -o -name 'work-loop.md' \
-        -o -path '*/work-loop-v2/SKILL.md' -o -path '*/work-loop/SKILL.md' \) \
-     -type f -print
+   Expected on an unchanged repository: **26 PASS, 0 FAIL, exit 0.** Anything else is the check doing its
+   job — a missing path is printed by name, and an unsupported row fails on its own line.
 
-   find -L "/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects" \
-     \( -name 'work-loop-v2.md' -o -name 'work-loop.md' \
-        -o -path '*/work-loop-v2/SKILL.md' -o -path '*/work-loop/SKILL.md' \) \
-     -type f -print
-   ```
+2. **Confirm the O-3 reading.** Confirm reading A — "the v0.2 entry protocol only" — is the reading you
+   chose, accepting the narrowing § 3 of the record states: Work Loop v1 stays outside the adoption
+   boundary, plan-dependent work can still continue through it without Context Engineering, and that gap
+   goes into the adoption record rather than being left implied.
 
-2. **Confirm reading A is the reading you chose** — "the v0.2 entry protocol only" — accepting the
-   consequence the record's § 3 states: Work Loop v1 stays outside the adoption boundary, plan-dependent
-   work can still continue through it without Context Engineering, and that narrowing goes into the
-   adoption record rather than being left implied.
+Once both are recorded the unit closes to `turn: codex` for assessment. Do not begin S8b.
 
-One judgment call is worth your attention before you confirm: rows 3 and 4 (`axcion-design-studio`,
-`axcion-systems-builder-email-os`) are classified relevant by the fail-safe rather than by evidence. If you
-read the S8a test as settled by inspection in those two cases, the verdicts flip to *not relevant* and
-S8b's wiring scope shrinks by two paths.
-
-Once confirmed, the unit closes to `turn: codex` for assessment. Do not begin S8b.
+*(Turn set to `operator` per Codex's instruction in the frozen findings and the brief's own completion
+condition, which both direct the observer run next. This departs from the command's generic correction
+default of `turn: codex`; the brief is the more specific instruction and governs.)*
