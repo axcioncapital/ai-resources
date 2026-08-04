@@ -126,6 +126,12 @@ check "1.1   turn was claude at open — the hand-off points at Claude" \
   "at_open | grep -qE '^turn:[[:space:]]*claude'"
 # A brief must carry claims Claude can CHECK. Asserting the word "brief" appears would
 # pass on any file containing the heading; require a checkable-claims line instead.
+#
+# S10 finding 2: core § 3 step 3 now permits BOTH claim placements — marked in place, or
+# gathered under one collecting heading. This assertion is not a statement that the
+# collecting heading is mandatory. It reads fixture-slice1-codex at its immutable opening
+# commit, where the brief used that shape, so it asserts what that one brief actually did.
+# A brief in the other valid shape is not tested here and is not a failure.
 check "1.1   the brief stated claims to check against the repository" \
   "at_open | grep -qiE '^check against the repository'"
 

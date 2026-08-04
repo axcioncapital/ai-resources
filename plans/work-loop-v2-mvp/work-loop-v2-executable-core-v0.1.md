@@ -76,8 +76,17 @@ A task usually takes several units.
    disposition, the adjacent work held back, Codex's own framing decisions marked as its own, and
    any material reclassification. That is the brief's content growing, not the state file's: § 4's
    five-field ceiling is unchanged, and no new field, artifact or stage is created.
-4. **Execute.** Claude checks the brief's claims first (§ 6, rule 1), then implements, then writes
-   the result and the evidence into the state file.
+   Where the brief places its claims to check is free in either of two shapes — each claim marked in
+   place where the brief states it, or the claims gathered under one collecting heading such as
+   `Check against the repository:`. Both are valid; the marking is what is mandatory. Every claim
+   names the file or searched surface and the pattern or evidence that settles it (§ 6, rules 1
+   and 3), and the reader reads the whole brief for marked claims rather than relying on any one
+   heading.
+4. **Execute.** Claude checks the brief's claims first (§ 6, rule 1), then does what the brief's
+   completion condition asks. An execution brief is implemented. A **discovery unit** is inspected,
+   not implemented: Claude examines the named unknown and returns what is actually there, changing
+   nothing beyond the state file, and the hand-back is for Codex to reframe the work or stop. Either
+   way, Claude writes the result and the evidence into the state file.
 5. **Assess.** Codex reads the result and decides one of three things: close, correct once, or stop.
    **The closing decision is Codex's.** § 4's "Who commits: Claude" is a `.git`-access fact and does
    not restrict Codex's verdict — Codex closes, Claude writes and commits the closing record.
@@ -88,6 +97,25 @@ A task usually takes several units.
 At assessment, Codex's job is the executive call — *is this good enough to move on?* — not finding
 more things to improve. The quality bar is pilot quality with limitations written down, not
 completeness.
+
+### Closing — the verdict and the record are two moves
+
+Closure is Codex's verdict (step 5) and Claude's write (§ 4, Who commits). Codex does not write the
+closed file, and Claude does not decide closure.
+
+**The close token.** Codex writes its close verdict into the state file's `Next action`, opening with
+this exact line:
+
+```
+Close the task:
+```
+
+followed by what the closing record must carry beyond the repository facts: the outcome as Codex
+judges it, any deferral recorded at the closure check with its reason, the menu choice and its
+value-and-risk ground if one was used, and any accepted limitation. Codex sets `turn: claude`. Claude
+reads that line as the signal to reduce the file to § 4's closing record, set `turn: operator`, and
+commit. Like the hand-off token below, it is a protocol token shared by both sides: named here, once,
+so the producer and the consumer cannot drift apart. Change it here or nowhere.
 
 ### Correcting once
 
@@ -162,15 +190,17 @@ turn: claude               # whose move it is: claude | codex | operator
 ---
 ```
 
-The body carries the **content fields**, and holds **at most** these five while the task is active:
+The body carries the **content fields**, and holds **at most** these five while the task is active.
+The heading strings in the left column are **normative and exact** — the producer writes them and the
+consumer reads them literally, so a file written under different headings is malformed:
 
-| Field | What it holds |
+| Field heading (exact) | What it holds |
 |---|---|
-| Objective and approved scope | What is being achieved, and the agreed boundary |
-| Current lane and unit | Direct or Standard, and which unit is open |
-| Latest material result | What actually happened last — not a history |
-| Unresolved blocker | What is in the way, or nothing |
-| Next action | The single next thing |
+| `## Objective and scope` | What is being achieved, and the agreed boundary |
+| `## Lane and unit` | Direct or Standard, which unit is open, and the named reason for the loop (§ 2) |
+| `## Latest result` | What actually happened last — not a history |
+| `## Blocker` | What is in the way, or `None.` |
+| `## Next action` | The single next thing |
 
 Five is a **maximum, not a checklist**. A field with nothing real in it is left out.
 
@@ -186,8 +216,29 @@ file and are not state, so the ceiling does not cover them:
 **A deferral needs no field.** Record it at closure among the decisions that matter. If it changes
 what happens next, it belongs in Next action instead.
 
-**When the task closes**, everything above is replaced by four things only: the outcome, the
-decisions that matter, the final commit or evidence pointer, and any accepted limitations.
+**When the task closes**, everything above is replaced by the closing record — exactly these four
+sections, under these exact headings, ending at `turn: operator`. Claude writes and commits this
+reduction on Codex's close verdict (§ 3, The close token); the shape below is the closed file's
+contract for both sides:
+
+```markdown
+---
+task: {task-id}
+turn: operator
+---
+
+## Outcome
+{what was achieved}
+
+## Decisions that matter
+{the decisions, including any deferral recorded at closure with its reason}
+
+## Evidence
+{the final commit or evidence pointer}
+
+## Accepted limitations
+{or "None."}
+```
 
 ### Example
 
@@ -256,6 +307,7 @@ file, not "review round" for correction.
 | **Task** | The whole thing being pursued through the loop, from objective to close. One task, one state file. |
 | **Unit** | The smallest piece of work worth doing on its own. A task takes several. |
 | **Brief** | What Codex writes to tell Claude what to do. Bounded and checkable; it does not dictate the implementation. |
+| **Discovery unit** | A unit whose deliverable is evidence about a named unknown, not a change. It ends in a hand-back for reframing or stopping — never in implementing the eventual target. |
 | **State file** | The single file holding the task's current truth. § 4. |
 | **Lane** | How work is handled: Direct or Standard. |
 | **Correction** | One bounded round of fixes, frozen to the findings the assessment named. |

@@ -41,9 +41,11 @@ If `turn:` is not `claude`, stop and say whose move it is. Change nothing.
 
 If `## Next action` opens with core § 3's hand-off token, this invocation is the one bounded correction, not a new unit — go to **Correction rounds** below and skip Steps 2–5.
 
+If `## Next action` opens with core § 3's close token, Codex has decided closure and this invocation writes the closing record — go to **Closing the task** below and skip Steps 2–5.
+
 ## Step 2 — Check the premises before acting
 
-Core § 6 rule 1 governs this step. The claims are the brief's load-bearing repository assertions. An engineered brief marks each one where it states it — naming the file or surface to search and the pattern or evidence that settles it — rather than collecting them under a single `Check against the repository:` sub-heading, so read the whole brief for them and do not conclude there are none because that heading is absent. Check each **by inspection** — open the file, run the grep, read the line. Not by recall.
+Core § 6 rule 1 governs this step. The claims are the brief's load-bearing repository assertions. Core § 3 owns their placement: a brief may mark each claim in place where it states it, or gather them under one collecting heading — both are valid, and each claim names the surface and the pattern or evidence that settles it. So read the whole brief for them, and do not conclude there are none because any particular heading is absent. Check each **by inspection** — open the file, run the grep, read the line. Not by recall.
 
 Write an inspection record into `## Latest result`, in this shape. The shape is the command's output contract; the acceptance harness (`logs/scripts/work-loop-v2-slice-1.test.sh`) binds to it:
 
@@ -77,6 +79,8 @@ Stay inside `## Objective and scope`. A change that would touch anything the sco
 
 **An adjacent improvement noticed mid-unit is a deferral, not work** (core § 5). Record it in the hand-back in plain words — what it is, and why it is not being done now — and leave it unimplemented. A deferral that is neither recorded nor implemented has silently disappeared, which is the failure.
 
+**A discovery unit is inspected, not implemented** (core § 3 step 4). When the brief's completion condition is to establish and return evidence about a named unknown rather than to change the repository, the unit's work is the inspection itself: examine the named surfaces, and write what was found into `## Latest result` with evidence that could have read differently (core § 6 rules 3 and 5). The inspection record still appears even when such a brief pre-states few or no claims — the discovery's own findings are the record. Then hand back under Step 5 for Codex to reframe or stop. Do not implement the eventual target, and do not treat the returned evidence as permission to proceed with it.
+
 ## De-escalating — when the work turns out smaller
 
 Core § 2 *De-escalating* decides when this applies — inspection or implementation is where Claude notices it. When it does apply:
@@ -109,6 +113,13 @@ Core § 3 *Correcting once* governs this round, including what may and may not e
 2. Correct exactly the frozen findings. Anything newly noticed goes into the hand-back in plain words as a candidate deferral, and is not implemented.
 3. A finding you can only partly resolve is handed back as exactly that: what was resolved, what was not, and why. Do not stretch the evidence to cover the gap (core § 6 rule 5).
 4. Write the result and evidence into `## Latest result` per Step 5's shape. Set `turn: codex`. Set `## Next action` to the closure check on the frozen findings only. `git add` the state file and the corrected files by explicit pathspec, commit, stop.
+
+## Closing the task
+
+Core § 3's close token in `## Next action` is Codex's close verdict; core § 4 owns what a closed file holds. Claude writes and commits the record — the verdict is not re-judged here. The general turn guard and the identity check in Step 1 apply to this invocation like any other.
+
+1. Reduce the state file to core § 4's closing record — its exact four headings, nothing else surviving — carrying what the verdict names: the outcome, the decisions that matter (including any deferral the verdict records, with its reason), the final commit or evidence pointer, and the accepted limitations (or `None.`). Set `turn: operator`.
+2. `git add` the state file by explicit pathspec, commit, stop. A closing invocation changes no other file.
 
 ## Step 6 — Report in one line
 

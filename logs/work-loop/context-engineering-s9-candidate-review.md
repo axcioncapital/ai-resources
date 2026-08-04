@@ -5,27 +5,32 @@ turn: codex
 
 ## Objective and approved scope
 
-Run Session S9: one independent, fresh-context review of the complete live Context Engineering candidate
-and its Work Loop v2 wiring, named by the exact Git commit examined. Produce a single frozen finding set
-or accept the candidate as readable and internally sound; do not claim behavioural seam proof.
+Run Session S10: correct exactly the four material findings frozen from S9, then return evidence for the
+closure check's two questions — are all four resolved, and did the correction break anything?
 
-Scope: read-only review of `.agents/skills/work-loop-v2/SKILL.md`,
-`plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md`, and
-`.claude/commands/work-loop-v2.md`, using the governing specification, approved implementation plan, and
-named closed records below. The only repository content this unit may change is this state file.
+Scope: `.agents/skills/work-loop-v2/SKILL.md`,
+`plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md`, `.claude/commands/work-loop-v2.md`, this
+state file, and the existing acceptance harness or existing fixtures only where a narrow change is
+necessary to make the four corrections fail-capable. The three runtime files are one candidate and must
+remain mutually consistent.
 
-Excluded: editing the candidate; correcting findings; reopening S8b; producing or substituting S8b's
-missing behavioural evidence; starting S10, S11, S12, or Phase 4; changing plans, trials, runtime files,
-or closed records; adoption assessment or claims; and unrelated cleanup.
+Excluded: any finding outside the frozen four; the three S9 deferrals; new machinery, stages, artifacts,
+or state fields; reopening S8b or substituting its missing evidence; starting S11, S12, or Phase 4;
+changing the specification, implementation plan, trials, or closed records; adoption assessment or
+claims; and unrelated cleanup.
 
 ## Lane and unit
 
-Standard. Unit 1 — S9 fresh-context candidate review.
+Standard. Unit 2 — S10 one bounded correction of S9's frozen findings.
 
-Named reason for the loop: the governing plan requires one independent review of the whole candidate,
-and its findings must be bounded and assessed before they can control correction or progression.
+Named reason for the loop: the correction changes the shared Work Loop contract and both entrypoints, and
+its result must be assessed against the frozen findings before the new candidate can control progression.
 
 ## Brief
+
+**Unit 2 correction note.** The S9 review brief below is retained only as the source context for the
+frozen findings. Its read-only outcome and exclusions are superseded for S10 by `## Objective and
+approved scope` and the exact frozen set in `## Next action`; no other part of it expands the correction.
 
 The Route 3 amendment is approved and now permits S9 despite the missing S8b proof. This session is the
 plan's one serious fresh-context review of the capability plus wiring; its output can establish that the
@@ -100,7 +105,28 @@ about accepting risk. Do not repair anything in S9.
 
 ## Latest material result
 
-Inspected (2026-08-04):
+Inspected (2026-08-04) — S10 correction round, reproducing the four frozen findings before correcting
+them. Every finding reproduced; none was dropped and none was found not to reproduce.
+
+- Finding (1): REPRODUCED — read `.agents/skills/work-loop-v2/SKILL.md` § Closing the task and
+  `.claude/commands/work-loop-v2.md`. The skill ended "Set `turn: operator` and tell the operator that
+  Claude must commit the closed file" (grep for `tell the operator that Claude must commit`: 1 hit); the
+  command had no closing section at all (grep for `^## Closing the task`: 0 hits) and its Step 1 turn
+  guard (`If turn: is not claude, stop`: 1 hit) refuses exactly the `turn: operator` file the skill
+  produces. Dead end confirmed on disk, in both directions the reviewer named.
+- Finding (2): REPRODUCED — `.claude/commands/work-loop-v2.md` carried "rather than collecting them
+  under a single `Check against the repository:` sub-heading" (1 hit), while the core's worked example
+  uses that exact heading and the core owned no placement rule at all (grep for `placement` in the core:
+  0 hits). The producer was told neither shape.
+- Finding (3): REPRODUCED — the core's §4 field table used prose labels (`| Objective and approved scope |`:
+  1 hit) and pinned no exact heading strings (grep for a normative `| \`## ` row: 0 hits), while the
+  command binds literally to `## Objective and scope`, `## Latest result`, `## Blocker`, `## Next action`.
+  Four of five names differed.
+- Finding (4): REPRODUCED — searched all three runtime files for `discovery`: `SKILL.md` 4 hits, the core
+  0, the command 0. The producer is required to emit discovery briefs that no consumer path receives.
+
+Inspected (2026-08-04) — S9 unit, retained: the five brief claims checked before the review was
+commissioned. All five held.
 
 - Claim (1): HOLDS — read `plans/work-loop-v2-v0.2/context-engineering/context-engineering-implementation-plan-v0.1.md`.
   The § Authority notice block reads `Current status: APPROVED as the plan of record — operator, 2026-08-04`
@@ -130,7 +156,82 @@ Inspected (2026-08-04):
   Searched the file for any passage claiming seam proof; none present.
 - Claim (5): HOLDS, with its basis recorded rather than asserted — see Evidence below.
 
-Result: the one independent fresh-context review ran against the unchanged candidate at
+Result: all four frozen findings were corrected in one bounded round, three of the four fully and
+finding 1 **partly** — its structural half is resolved and its behavioural half cannot be produced by
+this unit (see the per-finding disposition). The candidate changed, so **S9's acceptance no longer
+covers it**: the review examined `4f98cec1…`, and the corrected candidate is the content committed with
+this record. Nothing outside the correction was implemented; the three deferrals below stayed deferrals.
+
+**Per-finding disposition — before → after, each check able to read differently:**
+
+1. **Partly resolved.** *Structural half — resolved.* The core now separates the two moves in a new §3
+   block "Closing — the verdict and the record are two moves" and names a **close token**, `Close the
+   task:`, owned in the core alone (literal present in the core 1×, in the command 0×, in the skill 0× —
+   the same one-owner discipline the hand-off token already has, which remains 1/0/0). The skill's
+   § Closing the task no longer writes the closed file: the dead-end sentence is gone
+   (`tell the operator that Claude must commit` 1 → 0), replaced by "the closing decision is yours; the
+   closed file is not", with Codex setting `turn: claude`. The command gained a `## Closing the task`
+   section (`^## Closing the task` 0 → 1) and a Step 1 routing line on the close token (`close token`
+   0 → 2 occurrences), reducing the file to core §4's record and setting `turn: operator`. **Both guards
+   are preserved unchanged:** the identity check and the general turn guard still sit ahead of the new
+   branch (`If turn: is not claude, stop` still 1), so an unrelated wrong-turn file is still refused —
+   the new branch is reached only when `turn:` is already `claude`, which is the condition the old dead
+   end could never satisfy. *Behavioural half — NOT resolved, and not stretched.* The frozen finding
+   asked for a demonstration of the complete corrected terminal path. That demonstration requires
+   invoking the seam, which is precisely the class of evidence S8b owes and this unit cannot manufacture.
+   What is established is structural: one reachable path now exists in text where two contradictory ones
+   did before, provable by the greps above. What is not established is that running it works. Recorded as
+   partly resolved rather than covered.
+2. **Resolved.** Core §3 step 3 now owns claim placement and permits **both** shapes explicitly —
+   marked in place, or gathered under one collecting heading — with the marking, not the location, as
+   the mandatory part (`Both are valid; the marking is what is mandatory` 0 → 1 in the core). The
+   command's contradicting clause is gone (`rather than collecting them` 1 → 0) and now defers to core
+   §3; the skill points the producer at the same rule (`with both shapes valid` 0 → 1). The core's
+   worked example is no longer in conflict, because the shape it uses is now one of the two the core
+   permits. The harness assertion the finding named (`work-loop-v2-slice-1.test.sh:129-130`) reads
+   `fixture-slice1-codex` at its **immutable opening commit**, so it tests what that one historical brief
+   did and cannot see a future brief; it was left passing and given a comment recording that it is not a
+   statement that the collecting heading is mandatory. Loosening a passing assertion would have weakened
+   evidence rather than aligned it.
+3. **Resolved.** Core §4's field table now carries the five **exact** heading strings as its normative
+   column — `## Objective and scope`, `## Lane and unit`, `## Latest result`, `## Blocker`,
+   `## Next action` (rows matching a literal `| \`## ` 0 → 5) — under an explicit statement that they
+   are "normative and exact" (0 → 1) and that a file under different headings is malformed. The
+   five-field ceiling and the leave-out-an-empty-field rule are unchanged beside it. The skill now tells
+   the producer to write those exact strings (`exact heading strings` 0 → 1). The consumer was already
+   bound to them, so this closes the gap at the producer end rather than moving the consumer.
+4. **Resolved.** Core §3 step 4 now distinguishes the two brief kinds: an execution brief is
+   implemented, a **discovery unit** is inspected and handed back for Codex to reframe or stop, changing
+   nothing beyond the state file (`A **discovery unit** is inspected` 0 → 1). `Discovery unit` is now a
+   §5 vocabulary row (0 → 1). The command gained the matching consumer path in Step 4 (`A discovery unit
+   is inspected, not implemented` 0 → 1), including what its inspection record looks like when the brief
+   pre-states few claims. The skill now requires the producer to write a completion condition that reads
+   as *return evidence and hand back* rather than *implement*. The execution path, false-premise refusal,
+   the one-state-file rule and the no-new-stage prohibition are all untouched.
+
+**Regression — what was re-run and what was not.** The one runtime regression instrument for the paths
+touched is the Slice 1–3 acceptance harness, `logs/scripts/work-loop-v2-slice-1.test.sh`. It was run
+**before** the correction and **again after**: both runs returned **147 passed / 2 failed**, and the two
+failures are the *identical* pair in both runs (`3.1a no state file was opened for the direct request`
+and `3.1a every task-state file present is one this build created deliberately`). Those two are a
+**pre-existing** harness defect, not a regression from this correction: the harness's
+`KNOWN_WORKLOOP_FILES` allowlist (`:430-437`) was last updated before the later Context Engineering
+state files existed, so every new task file — including this one — fails the closed-set check. It is
+already on the backlog as the permanently-red-baseline item and was deliberately **not** fixed here:
+scope permits a harness change only where one is necessary to make these four corrections fail-capable,
+and this one is not.
+
+The plan's five grouped-regression cases **R-1…R-5** (`implementation-plan:489-493`) were **not** re-run.
+Reason, stated rather than skipped: each requires the operator to drive a fresh Codex thread against a
+seeded fixture (`implementation-plan:459` — S7's row, "Needs the operator to drive Codex? **Yes**"), so
+Claude cannot run them alone. Of the five, **R-1** (CE-3, the discovery-unit behaviour) and **R-5**
+(CE-15/CE-16, artifact count and non-accretion) are the ones this correction could plausibly disturb —
+R-1 because finding 4 changed what a discovery unit means on the consumer side, R-5 because findings 1
+and 3 changed what gets written at close. R-2, R-3 and R-4 touch authority, blind-thread orientation and
+relevance selection, none of which this correction reached. Whoever schedules the next operator-driven
+session should treat R-1 and R-5 as owed against the changed candidate.
+
+Result (S9, retained for context): the one independent fresh-context review ran against the unchanged candidate at
 `4f98cec122a23149406eaa19f8e737f6394973b9` and returned **four material findings, none critical** — it did
 not accept the candidate outright. Findings 1 and 2 are high, 3 and 4 medium; all four sit in the
 producer/consumer seam between the three runtime files, and all are read-level defects correctable by
@@ -192,7 +293,34 @@ file.
    consumer contract. A correction must state what Claude does when the completion condition is *return
    evidence and hand back* rather than *implement*.
 
-Evidence:
+Evidence (S10 correction):
+
+- **The corrected candidate, pinned by content.** The four files this round changed, with their exact
+  new blob hashes: `.agents/skills/work-loop-v2/SKILL.md` `553d3176`,
+  `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` `88b0f834`,
+  `.claude/commands/work-loop-v2.md` `125de530`, `logs/scripts/work-loop-v2-slice-1.test.sh` `4405fe61`.
+  The corrected candidate commit is the commit carrying this record; a record cannot name its own hash
+  without being self-referential, which is why the blob hashes are given — they identify the content
+  exactly and are checkable with `git hash-object`. Pre-correction blobs, for the before half:
+  `372eb9a8` / `08398f6e` / `30182ff1` and the harness's prior blob.
+- **The checks, and what they returned before and after.** Every per-finding disposition above states its
+  probe as a count that changed — `tell the operator that Claude must commit` 1 → 0, `^## Closing the
+  task` 0 → 1, `rather than collecting them` 1 → 0, normative `| \`## ` rows 0 → 5, `discovery` in the
+  command 0 → 1, and the close-token literal 1/0/0 across core/command/skill. Each reads differently
+  depending on whether the correction happened, and each would have returned the opposite value against
+  the pre-correction blobs above. The harness run is the composite check: 147/2 before, 147/2 after,
+  identical failure set.
+- **What the evidence does NOT cover, stated plainly.** No behavioural run of the corrected seam was
+  performed. Finding 1's demonstration of the working terminal path, and any confirmation that the
+  corrected discovery path behaves as written, are behavioural claims this unit did not and could not
+  establish. All evidence here is structural: text that now says one thing where it said two.
+- **S8b and adoption, against the changed candidate.** S8b's three checks — the causal post half, the
+  passing Direct Work check, and the post-integration false-premise refusal — **remain owed**, and they
+  are now owed against **this** corrected candidate, not the one S9 examined. Phase 6 adoption
+  **condition 4 remains unmet**. This correction produced non-adoption evidence, and correcting the four
+  findings did not move that bar in any direction.
+
+Evidence (S9 review, retained):
 
 - **Reviewer identity and independence basis.** A single dispatched fresh-context subagent
   (`general-purpose`, model pinned to `opus` per the workspace per-dispatch pinning rule), holding no
@@ -239,9 +367,26 @@ Deferrals noticed during this unit, recorded and not done (core §5; all outside
   `.claude/commands` is a symlink to `ai-resources/.claude/commands`, so it resolves to the canonical
   file. The thread's stated reopening trigger rests on a premise that no longer holds.
 
+Newly noticed during this correction — candidate deferrals, not implemented (core §3, closure-check
+discipline):
+
+- **The harness's `KNOWN_WORKLOOP_FILES` allowlist is stale and fails on every new task file**
+  (`work-loop-v2-slice-1.test.sh:430-437`). It is the sole cause of the two standing failures. Not
+  corrected: outside the frozen four, and the scope permits harness edits only where needed to make
+  these corrections fail-capable.
+- **Core §4's worked example now partly duplicates the normative table** it sits below, since the table
+  carries the exact headings the example was previously the only source of. Harmless today, but it is
+  the same one-owner drift that produced finding 3.
+
 ## Next action
 
-Codex: assess this unit. The review is complete against the unchanged candidate at
-`4f98cec122a23149406eaa19f8e737f6394973b9`, and the four findings above are final and ready to be frozen
-for S10 under core §3 *Correcting once*. Note that S10 would touch runtime files, so the owed S8b checks
-would then be owed against the changed candidate. Adoption condition 4 stays unmet either way.
+Closure check on the frozen findings only (core §3): are findings 1–4 resolved, and did the correction
+break anything? Finding 1 is offered as **partly resolved** — structural half done, behavioural half not
+producible by this unit — so core §3's menu applies to it and to nothing else. The correction broke
+nothing detectable: the harness returned an identical 147/2 with the same two pre-existing failures
+before and after. Note for the verdict: the candidate has changed, so S9's review no longer covers it,
+and R-1 and R-5 are owed against the new candidate whenever an operator-driven session next runs them.
+
+The frozen findings themselves are not restated here — the state file is current truth and Git holds
+them at the commit that froze them (`turn: claude`, hand-off token in `## Next action`).
+
