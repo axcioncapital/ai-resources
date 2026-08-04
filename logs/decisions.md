@@ -237,3 +237,50 @@ at adoption time.
 **Alternatives considered.** (1) Run the observer check as the brief required — rejected as the ceremony
 being objected to. (2) Decline entirely and hand the unit to Codex with the exit condition stated as
 unmet — **chosen**.
+
+## 2026-08-04 — Reduce the S8b evidence packet to the pre-root red run
+
+**Context.** S8b's Unit 1 opened with a four-check behavioural evidence packet (a byte-identical
+causal pre/post pair, a Direct Work check, a false-premise refusal check, and structural checks), each
+requiring an operator-driven staged run in a disposable test root. The operator questioned whether this
+was ceremony, echoing the same tension already raised and resolved by declining S7's and S8a's own
+staged runs.
+
+**Decision.** Reduce the packet to its one component with no live equivalent — the pre-root red run —
+and close the other three checks with existing evidence: this task's own engineered brief (for the causal
+post half), the Step-7 pilot log's recorded finding that the Direct Work bypass never fired (for the
+Direct Work check), and the pre-integration acceptance fixture's hand-back (for false-premise refusal).
+
+**Rationale.** A staged post-run would be weaker evidence than the real brief already on record; a staged
+Direct Work pass could not outweigh the pilot's stronger recorded negative; a staged false-premise run
+would duplicate an effect already demonstrated live. The one genuinely missing piece — proof the *old*
+skill produces an old-shape brief — has no live equivalent and stays in the packet.
+
+**Alternatives considered.** (1) Run the full four-check packet as briefed — rejected as the ceremony
+being questioned. (2) Decline S8b's evidence requirement entirely, as with S7 and S8a — rejected because
+the red run's evidence is genuinely cheap and genuinely new, unlike the declined runs in the prior two
+units. (3) The reduction as executed — **chosen**.
+
+## 2026-08-04 — Decline Run 3 and record all three correction findings as unmet
+
+**Context.** Codex's bounded correction on the reduced S8b packet froze three findings; the follow-up
+packet needed three operator-driven runs (Direct Work, the causal post half, false-premise refusal) to
+resolve them. The operator instructed declining the false-premise run (Run 3) and asked to preserve "the
+actual Run 1 and Run 2 results."
+
+**Decision.** Record Run 3 as declined. On checking the isolated test root directly, no evidence existed
+that Runs 1 or 2 had executed either — the root was byte-identical to its reset snapshot. Recorded all
+three findings as unmet (two not-run, one declined), stated the discrepancy against the operator's
+instruction openly in the state file, and handed the unit to Codex for closure rather than writing results
+that were not on disk.
+
+**Rationale.** The state file is current truth, not a diary — it cannot record a result that did not
+happen. Surfacing the discrepancy rather than silently reconciling it lets Codex (and the operator) see
+exactly what evidence exists, consistent with the S8b correction's own governing rule that scope and
+evidence claims are stated out loud, not resolved quietly.
+
+**Alternatives considered.** (1) Write the results as instructed, trusting the operator's characterisation
+— rejected: the record must reflect repository reality, not an instruction that turned out to be based on
+a mistaken premise. (2) Silently correct the instruction without flagging it — rejected: the discrepancy
+is itself information Codex's closure call needs. (3) State the disk truth and flag the discrepancy
+openly — **chosen**.

@@ -353,6 +353,46 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 15:31 — logs/session-notes.md
+- 15:29 — logs/session-notes.md
+- 15:29 — logs/scratchpads/2026-08-04-15-28-scratchpad.md
+- 14:22 — logs/work-loop/context-engineering-s8b-seam-proof.md
+- 14:22 — logs/work-loop/context-engineering-s8b-seam-proof.md
+- 14:22 — logs/work-loop/context-engineering-s8b-seam-proof.md
+- 13:51 — logs/work-loop/context-engineering-s8b-seam-proof.md
+- 13:50 — logs/work-loop/context-engineering-s8b-seam-proof.md
+- 13:50 — logs/work-loop/context-engineering-s8b-seam-proof.md
+- 13:39 — logs/work-loop/context-engineering-s8b-seam-proof.md
+- 13:39 — logs/work-loop/context-engineering-s8b-seam-proof.md
+- 13:35 — logs/work-loop/context-engineering-s8b-seam-proof.md
+- 13:34 — logs/work-loop/context-engineering-s8b-seam-proof.md
+- 13:34 — logs/work-loop/context-engineering-s8b-seam-proof.md
+- 13:34 — logs/work-loop/context-engineering-s8b-seam-proof.md
+- 12:58 — logs/work-loop/context-engineering-s8b-seam-proof.md
+- 12:58 — logs/work-loop/context-engineering-s8b-seam-proof.md
+- 12:51 — logs/work-loop/context-engineering-s8b-seam-proof.md
+- 12:50 — logs/work-loop/context-engineering-s8b-seam-proof.md
+- 12:25 — logs/session-notes.md
+- 12:24 — logs/session-notes.md
+- 12:22 — logs/decisions.md
+- 12:22 — logs/session-notes.md
+- 12:21 — logs/scratchpads/2026-08-04-12-20-scratchpad.md
+- 12:14 — plans/work-loop-v2-v0.2/context-engineering/trials/entrypoint-classification.md
+- 12:14 — plans/work-loop-v2-v0.2/context-engineering/trials/entrypoint-classification.md
+- 12:14 — plans/work-loop-v2-v0.2/context-engineering/trials/entrypoint-classification.md
+- 12:14 — plans/work-loop-v2-v0.2/context-engineering/trials/entrypoint-classification.md
+- 12:14 — logs/work-loop/context-engineering-s8a-entrypoint-classification.md
+- 12:13 — logs/work-loop/context-engineering-s8a-entrypoint-classification.md
+- 12:12 — logs/work-loop/context-engineering-s8a-entrypoint-classification.md
+- 12:12 — logs/work-loop/context-engineering-s8a-entrypoint-classification.md
+- 12:11 — plans/work-loop-v2-v0.2/context-engineering/trials/entrypoint-classification.md
+- 12:10 — plans/work-loop-v2-v0.2/context-engineering/trials/entrypoint-classification.md
+- 12:07 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/cb6b5300-93b0-40b2-8ec4-a7cc70d1d6cc/scratchpad/observer-check.sh
+- 12:01 — logs/work-loop/context-engineering-s8a-entrypoint-classification.md
+- 12:01 — logs/work-loop/context-engineering-s8a-entrypoint-classification.md
+- 12:01 — plans/work-loop-v2-v0.2/context-engineering/trials/entrypoint-classification.md
+- 11:53 — logs/work-loop/context-engineering-s8a-entrypoint-classification.md
+- 11:53 — logs/work-loop/context-engineering-s8a-entrypoint-classification.md
 - 10:13 — logs/session-notes.md
 - 10:12 — logs/decisions.md
 - 10:11 — logs/session-notes.md
