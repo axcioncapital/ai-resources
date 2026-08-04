@@ -188,12 +188,34 @@ Inspected (2026-08-04):
   `git init`-ed as a standalone local repository with zero remotes, so in-root commits (the v2 flow
   commits) physically cannot reach the canonical checkout. Roots live outside every repository.
 
-Result: outcome 1 — an executable run packet. The seam landed at `4f3d6ca`+`daebb0c` before S8a
-classified it, so the plan's "edit, then run post" sequence is obsolete; an honest before/after pair is
-reconstructed from repository history instead: pre = `4165043`, post = `daebb0c` (byte-identical to live
-on all three surfaces). The packet in `## Next action` covers S8b's three behavioural checks, each with a
-defined fail condition. Nothing outside this state file was changed in the repository except the
+Result: outcome 1 — an executable run packet, **reduced by operator decision (2026-08-04) to its one
+novel-evidence component.** The seam landed at `4f3d6ca`+`daebb0c` before S8a classified it, so the
+plan's "edit, then run post" sequence is obsolete; the honest before/after pair is reconstructed from
+repository history: pre = `4165043`, post = `daebb0c` (byte-identical to live on all three surfaces).
+The operator reviewed the full four-run packet (committed at `75ec136`) and reduced it: the staged
+post-run, Direct Work run and false-premise run duplicate evidence that already exists from real use,
+so only the pre-root red run — the single piece with no live equivalent — is executed. The substitutions
+are explicit, cited below, and are the operator's scope decision under core §6 rule 4, made openly for
+Codex to weigh at assessment. Nothing outside this state file was changed in the repository except the
 claim-(1) contingency commit `90e579e`.
+
+Evidence substitutions (operator decision, option 1 of the two Claude presented):
+- **Check 1, post half — closed by live evidence:** this task's own `## Brief` (first committed at
+  `75ec136`) was produced by Codex through the live seam on a genuine task, and exhibits all three
+  defined observations: OBS-1 — it opens with exactly three sentences answering why this unit, why now,
+  and alignment with the approved method; OBS-2 — its `### Governing sources and dispositions` section
+  labels each source (governing / plan of record / authoritative current state / verify-first); OBS-3 —
+  it explicitly reclassifies the plan's candidate-present premise as "a verify-first claim, not current
+  fact". A staged post-run in a disposable root would be weaker evidence than this real one.
+- **Check 2 (Direct Work) — closed by the pilot's stronger live finding:** the constructed fixture pass
+  is superseded by `plans/work-loop-v2-mvp/step-7-pilot-log.md:747-752` — the Direct Work bypass never
+  fired once in the entire pilot (condition 5 `STILL OWED` at closure). A staged pass could not outweigh
+  that recorded real-use negative; the finding is already the v0.2 rework's design input.
+- **Check 3 (false-premise refusal) — closed by live instances:** the acceptance hand-back recorded in
+  `logs/work-loop/fixture-slice1-false.md` (landed at `9efa24e`), and the real S8a first-turn hand-back
+  (`cc00625`) where a false operator-settlement premise was refused with the target files untouched. A
+  same-shape identity rejection also ran live this session (`fixture-slice2-foreign` — tracelessly, by
+  design, reported in chat).
 
 Evidence: the pre/post asymmetry the packet observes is already measured and can fail — the six-term CE
 grep returns 0 in the pre root's skill and 6 in the post root's (`grep -c "operator
@@ -215,19 +237,18 @@ Deferrals (noticed mid-unit, recorded, not done):
 
 ## Next action
 
-Operator: run the S8b packet below. You drive both Codex halves in fresh Codex tasks; do not interpret
-success — save the raw outputs and report back, Claude records the observations, Codex judges them.
+Operator: **one run** — the pre-root red half of check 1. Everything else is closed by the live
+evidence cited in `## Latest material result`.
 
-**Roots (already built and verified).** `PRE` =
+**The root (already built and verified).** `PRE` =
 `/private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/76eaf9ff-ea9f-40de-bb4d-7388070c9308/scratchpad/work-loop-s8b-roots/pre-4165043`
-(snapshot of `4165043`), `POST` = same parent directory, `post-daebb0c` (snapshot of `daebb0c`;
-byte-identical to live on all three seam files). If either root is missing, any session can rebuild it
-from the canonical repo:
-`git archive <commit> | tar -x -C <fresh dir>` then `find <dir> -type l -delete`, `git init`, one
-snapshot commit; then re-apply the fixture reset in POST (see check 3).
+— a snapshot of `4165043`, the commit immediately before the seam landed. If it is missing (the
+scratchpad clears on reboot), any session rebuilds it from the canonical repo:
+`git archive 4165043 | tar -x -C <fresh dir>`, then `find <dir> -type l -delete`, `git init`, one
+snapshot commit. (A `post-daebb0c` sibling root was built before the reduction; it is retained unused.)
 
-**Check 1 — historical pre/post pair.** One seeded request, byte-identical in both roots, one fresh
-Codex task per root, pre first. Give each Codex task this text verbatim, with only `<ROOT>` substituted:
+**The run.** Open one fresh Codex task and give it this text verbatim, with only `<ROOT>` substituted
+for the PRE path above:
 
 > Work in the repository at `<ROOT>` only. Act as the Work Loop's Codex per
 > `.agents/skills/work-loop-v2/SKILL.md` in that repository. Request: `docs/work-loop.md` never explains
@@ -236,37 +257,17 @@ Codex task per root, pre first. Give each Codex task this text verbatim, with on
 > fixture files are, that acceptance runs edit them, and that they carry no meaning outside those runs.
 > Prepare the brief for the first unit only; implement nothing.
 
-Observations, defined now, recorded later by Claude on each produced state file's `## Brief`:
+**Observations, defined now, recorded later by Claude** on the produced state file's `## Brief`:
 OBS-1 an operator-orientation opening of at most three sentences (why this unit, why now, plan
 alignment); OBS-2 explicit per-source authority dispositions (governing / verify-first / background /
 unknown or equivalent); OBS-3 Codex's own framing marked as its own, or an explicit reclassification
-disclosure. Red condition: the PRE brief must show **none** of the three (the pre skill contains none of
-the six CE instruction terms — grep 0). Green condition: the POST brief must show **all** three. Any
-OBS present in PRE, or absent in POST, fails check 1 — record it either way. Preserve raw outputs: the
-full transcript of each Codex task and the produced `logs/work-loop/<task-id>.md` from each root.
+disclosure. **Red condition: the PRE brief must show none of the three** (the pre skill contains none of
+the six CE instruction terms — grep 0). Any OBS present in the PRE brief fails the red condition — it is
+recorded either way, not retried. The post half of the comparison is this task's own `## Brief` at
+`75ec136`, already recorded as exhibiting all three.
 
-**Check 2 — Direct Work stays Direct (POST root).** Fresh Codex task, same preamble sentence about
-`<ROOT>` and the skill, request: "In `logs/work-loop/fixture-target.md`, change the word 'dull' to
-'plain' in the `## Body` paragraph." Baseline recorded now: `logs/work-loop/` in POST holds exactly 17
-files (list committed in the root's snapshot commit). Pass: the edit is made and `logs/work-loop/` still
-holds exactly those 17 files. Fail: any new state file appears. Preserve the transcript.
-
-**Check 3 — false-premise refusal (POST root).** The fixture is already reset in POST
-(`fixture-slice1-false.md`: `turn: claude`, empty result; reset committed in the root). Before-hash of
-the named target, recorded now:
-`fixture-target.md` sha256 `c24317aa973cc9d92e2eceafca0973697e51ce12b959277bc423a48a4d64829a`.
-Open a fresh Claude Code session with POST as its working folder and run
-`/work-loop-v2 fixture-slice1-false` (name the task — a second `turn: claude` fixture exists there by
-design). Pass: the session writes a hand-back (claim 2 marked FALSE with the searched surface and
-pattern, `## Blocker` filled, `turn: codex`) and `shasum -a 256 logs/work-loop/fixture-target.md` still
-returns `c24317aa…`. Fail: the target's hash changes, or the run builds the missing section.
-
-**Claude's structural checks after your runs (no action needed from you):** re-verify the three-file
-blob identities (`4165043` / `daebb0c` / HEAD), re-run the CE greps (0 pre / non-zero post at the named
-surfaces), confirm the produced state files respect the five-field ceiling, confirm no new delivery
-file / queue / handoff / state system / turn mechanism appeared in either root, and confirm the live
-checkout has no unrelated diff.
-
-**Report back, per run:** which root, the Codex task identifier (or Claude session, for check 3), the
-path of the produced or edited state file, and where you saved the raw transcript. Nothing else — no
-verdicts.
+**Report back:** the Codex task identifier, the path of the state file it produced under
+`<ROOT>/logs/work-loop/`, and where you saved the raw transcript. No verdict — Claude records the
+observations and the structural checks (three-file blob identities, CE greps, five-field ceiling, no new
+delivery artifact, no unrelated live diff), then sets `turn: codex` for assessment. Codex weighs the red
+run together with the evidence substitutions above and makes the closure call.
