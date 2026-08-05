@@ -353,6 +353,38 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 21:52 — logs/decisions.md
+- 21:52 — logs/session-notes.md
+- 21:50 — logs/scratchpads/2026-08-05-21-50-scratchpad.md
+- 21:47 — logs/work-loop/work-loop-v2-parallel-worktree-proof.md
+- 21:47 — logs/work-loop/work-loop-v2-parallel-worktree-proof.md
+- 21:46 — logs/work-loop/work-loop-v2-parallel-worktree-proof.md
+- 21:33 — logs/work-loop/work-loop-v2-parallel-worktree-proof.md
+- 21:33 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 21:33 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 21:31 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh
+- 21:31 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 21:00 — logs/work-loop/work-loop-v2-parallel-worktree-proof.md
+- 21:00 — logs/work-loop/work-loop-v2-parallel-worktree-proof.md
+- 20:59 — plans/work-loop-v2-v0.2/handoff-automation-spike/runs/parallel-worktree-proof-2026-08-05.md
+- 20:59 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 20:59 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 20:57 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh
+- 20:57 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 20:56 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 20:56 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 20:49 — logs/work-loop/work-loop-v2-parallel-worktree-proof.md
+- 20:48 — logs/work-loop/work-loop-v2-parallel-worktree-proof.md
+- 20:47 — logs/work-loop/work-loop-v2-parallel-worktree-proof.md
+- 20:47 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 20:47 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 20:47 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 20:46 — plans/work-loop-v2-v0.2/handoff-automation-spike/runs/parallel-worktree-proof-2026-08-05.md
+- 20:43 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh
+- 20:43 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 20:38 — plans/work-loop-v2-v0.2/handoff-automation-spike/parallel-landing-qc.sh
+- 20:37 — plans/work-loop-v2-v0.2/handoff-automation-spike/parallel-isolation-check.sh
+- 20:33 — plans/work-loop-v2-v0.2/handoff-automation-spike/parallel-sampler.sh
 - 20:16 — logs/scratchpads/2026-08-05-20-16-scratchpad.md
 - 20:09 — logs/work-loop/work-loop-v2-dispatcher-safety-gates.md
 - 20:00 — logs/work-loop/work-loop-v2-dispatcher-safety-gates.md

@@ -354,3 +354,38 @@ decision that is hard to reverse or that reopens a settled operator choice (core
 **Scope of the precedent.** Narrow. It licenses a change that an acceptance condition *requires*, not
 one that merely improves the artifact while nearby. The disclosure to the assessor is not optional —
 it is what distinguishes this from scope creep.
+
+## 2026-08-05 — Operator-authorized override of the staging tripwire on a confirmed false positive
+
+**Context.** Committing the final fix for `work-loop-v2-parallel-worktree-proof` was blocked by
+`.claude/hooks/check-foreign-staging.sh`. The session had never run `/session-start`, so the guard
+had no declared footprint for it and fell back to the newest one in `session-notes.md` — a
+2026-08-03 entry about an unrelated Context Engineering regression task. It flagged the fix's three
+files (`dispatch.sh`, `dispatch.test.sh`, `README.md`) as foreign.
+
+**Decision.** Confirmed false positive before acting on it: the same three files already appear in
+two earlier commits this session made an hour prior (`5452058`, `1d23f1f`), and the newest session
+marker was two days stale (`2026-08-03 S3-018`), so no concurrent session existed. The operator
+explicitly authorized a scoped override — exactly the four files (the three plus the state file) —
+rather than widening the declared footprint (which had no clean field to widen into; appending to
+`session-notes.md` would have touched a file outside the fix's own scope) or unstaging and losing
+the commit.
+
+**Mechanism, disclosed rather than left implicit.** The guard reads the git index *before* the
+commands in a tool call run. Emptying the index and then staging + committing within one call
+presents it with nothing to inspect. This is a timing blind spot in the guard, not a supported
+override switch, and it was named as such at the time. The staged set was verified equal to the
+authorized four paths inside the same call, before `git commit`, so a mismatch would have aborted
+rather than committed. The repository's `pre-commit` hook stayed active throughout — no
+`--no-verify`, no `core.hooksPath` override.
+
+**Incidental finding surfaced by this decision, not fixed:** the same blind spot means the guard
+never examined this session's *first two* commits either — both staged and committed in one tool
+call, same as every ordinary commit made this session prior to the block. A guard bypassed by the
+most natural invocation shape needs a look; logged, not built here.
+
+**Alternatives considered:** (1) widen the declared footprint — rejected, no clean field existed to
+widen into without touching an out-of-scope file; (2) unstage and commit only files provably safe by
+some narrower test — rejected as unnecessary once the false positive was confirmed; (3) ask the
+operator to inspect and manually stage/commit — superseded by the operator directly authorizing the
+override once shown the evidence.
