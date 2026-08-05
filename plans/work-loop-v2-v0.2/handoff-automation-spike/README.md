@@ -160,7 +160,7 @@ Cases 14–20 are the safety gates added on 2026-08-05:
 | `19` | A duplicate completion event relaunches nothing. |
 | `20` | A core § 7 operator question reaches `turn: operator`, is preserved in the file, is surfaced in the output, and is marked unanswered. |
 | `21` | `turn: operator` reached by a core § 4 **close** is announced as a close — not as an unanswered question above an empty block. |
-| `22` | A `turn: operator` file that is **neither** shape — a partial record, or one where an active field survived the reduction — stops `26` for inspection instead of being labelled closed. |
+| `22` | A `turn: operator` file that is **neither** shape stops `26` for inspection instead of being labelled closed — a partial record, an active field surviving the reduction, the four headings **out of core § 4 order**, or one of them written **twice**. |
 
 Red-to-green for those seven, against the pre-change controller from `HEAD`:
 
@@ -169,12 +169,19 @@ DISPATCH_BIN=<pre-change dispatch.sh> bash dispatch.test.sh   →  pass=49 fail=
 bash dispatch.test.sh                                         →  pass=69 fail=0   (exit 0)
 ```
 
-Cases `21` and `22` were added later, by the parallel proof below, each with its own red-to-green:
-`21` — `pass=71 fail=2` against the pre-correction controller, `pass=73 fail=0` after.
-`22` — `pass=74 fail=4` against the controller that had `21` but not `22`, `pass=78 fail=0` after.
-`22` exists because `21`'s first fix was too generous: absence of `## Blocker` and `## Next action`
-is *necessary* for a closing record and not *sufficient*, so a hop that died mid-reduction was being
-announced as a clean close.
+Cases `21` and `22` were added later, by the parallel proof below, and `22` took three passes — each
+with its own red-to-green against the controller that immediately preceded it:
+
+```
+21           pass=71 fail=2  →  pass=73 fail=0
+22           pass=74 fail=4  →  pass=78 fail=0
+22 (order)   pass=80 fail=2  →  pass=82 fail=0
+```
+
+The chain is the point. `21` said "no `## Blocker` and no `## Next action` means closed" — necessary,
+not sufficient, so a hop that died mid-reduction was announced as a clean close. `22` required the
+four headings and nothing else — but compared them through `sort -u`, so the same four shuffled, or
+one of them written twice, still passed. The classifier now compares the literal heading sequence.
 
 **Live product evidence lives in `runs/`, never in this suite.** `runs/live-permission-denial-2026-08-05.md`
 records what the real binary does when it is refused permission — the half of safety cluster 1 no

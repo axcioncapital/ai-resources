@@ -572,6 +572,66 @@ git -C "$d" commit -qm "fixture: extra-task" >/dev/null 2>&1
 run_dispatch "$d" extra-task
 expect_rc 26 "$RC" "stops 26 when an active field survived the reduction" "$OUT"
 
+# The four headings present with nothing else, but SHUFFLED. Core § 4 names the
+# closing record as an exact shape; "the right sections in some order" is a
+# different, weaker claim. A classifier that sorts before comparing cannot see this.
+d="$(new_sandbox)"
+cat >"$d/logs/work-loop/shuffled-task.md" <<'EOF'
+---
+task: shuffled-task
+turn: operator
+---
+
+## Evidence
+Commit deadbeef.
+
+## Outcome
+Done.
+
+## Accepted limitations
+None.
+
+## Decisions that matter
+None.
+EOF
+git -C "$d" add logs/work-loop/shuffled-task.md >/dev/null 2>&1
+git -C "$d" commit -qm "fixture: shuffled-task" >/dev/null 2>&1
+run_dispatch "$d" shuffled-task
+expect_rc 26 "$RC" "stops 26 when the four headings are out of core § 4 order" "$OUT"
+[ "$(calls "$d")" = "0" ] && ok "no actor was launched on the out-of-order record" \
+                          || bad "no actor was launched on the out-of-order record" "calls=$(calls "$d")"
+
+# The four headings in the right order, but one written TWICE. Deduplicating
+# before comparing hides this the same way sorting hides the case above.
+d="$(new_sandbox)"
+cat >"$d/logs/work-loop/dup-task.md" <<'EOF'
+---
+task: dup-task
+turn: operator
+---
+
+## Outcome
+Done.
+
+## Decisions that matter
+None.
+
+## Evidence
+Commit deadbeef.
+
+## Evidence
+Commit cafebabe.
+
+## Accepted limitations
+None.
+EOF
+git -C "$d" add logs/work-loop/dup-task.md >/dev/null 2>&1
+git -C "$d" commit -qm "fixture: dup-task" >/dev/null 2>&1
+run_dispatch "$d" dup-task
+expect_rc 26 "$RC" "stops 26 when a closing section appears twice" "$OUT"
+[ "$(calls "$d")" = "0" ] && ok "no actor was launched on the duplicated-section record" \
+                          || bad "no actor was launched on the duplicated-section record" "calls=$(calls "$d")"
+
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"

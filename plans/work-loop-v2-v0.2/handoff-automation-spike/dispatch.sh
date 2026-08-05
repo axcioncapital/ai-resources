@@ -287,16 +287,20 @@ git_hazards() {
 # fields and before writing the record leaves a file with neither section and no
 # closing record either. Classifying that as "closed" is the seam this checks.
 #
-# What is enforced: the four core § 4 headings are all present, and NO other `## `
-# heading survives — the core's "exactly these four sections, nothing else
-# surviving". What is deliberately NOT enforced: their order, and their contents.
-# Order is presentational and the core states the rule as which headings exist;
-# contents are the actors' business, not the dispatcher's. Anything this does not
-# recognise stops for inspection rather than being labelled either way.
+# What is enforced: the heading sequence is EXACTLY core § 4's four, once each, in
+# that order, with nothing else surviving. The comparison is against the literal
+# sequence, so it settles presence, order, duplication and extras in one test —
+# an earlier version piped through `sort -u`, which silently accepted a record
+# with the four sections shuffled or one of them written twice.
+#
+# What is deliberately NOT enforced: section contents. Those are the actors'
+# business, not the dispatcher's, and validating prose is the general state
+# validation this must not become. Anything unrecognised stops for inspection
+# rather than being labelled either way.
 closing_record_ok() {
   local heads
-  heads="$(grep -E '^## ' "$STATE_FILE" 2>/dev/null | sed 's/[[:space:]]*$//' | sort -u)"
-  [ "$heads" = "$(printf '## Accepted limitations\n## Decisions that matter\n## Evidence\n## Outcome')" ]
+  heads="$(grep -E '^## ' "$STATE_FILE" 2>/dev/null | sed 's/[[:space:]]*$//')"
+  [ "$heads" = "$(printf '## Outcome\n## Decisions that matter\n## Evidence\n## Accepted limitations')" ]
 }
 
 # The state file's operator-facing content, for the stop message. Read-only.
