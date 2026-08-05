@@ -322,6 +322,167 @@ else
   bad "an uncommitted turn: claude file is accepted as the Codex handoff and runs" "rc=$RC calls=$(calls "$d")"
 fi
 
+# ================================================================= case 14
+# Cluster 1 (controller side). An unattended actor that blocks on an approval
+# nobody will ever give must be killed on the clock, not waited on forever, and
+# the dispatcher must not touch any permission surface to get past it.
+echo
+echo "Case 14 — an actor blocked on an approval prompt is killed, not waited on"
+d="$(new_sandbox)"; state_file "$d" "approval-task" "claude"
+mkdir -p "$d/.claude"
+printf '{\n  "permissions": { "defaultMode": "default" }\n}\n' >"$d/.claude/settings.json"
+git -C "$d" add .claude/settings.json >/dev/null 2>&1
+git -C "$d" commit -qm "fixture: sandbox settings" >/dev/null 2>&1
+set_before="$(shasum -a 256 "$d/.claude/settings.json" | cut -d' ' -f1)"
+BLOCKED_ON_APPROVAL='printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.calls";
+      echo "Claude needs your permission to use Bash. Allow? (y/n)";
+      sleep 120'
+t0="$(date '+%s')"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task approval-task --log-dir "$d/runs" \
+       --timeout 4 --actor-cmd "$BLOCKED_ON_APPROVAL" 2>&1)"; RC=$?
+took=$(( $(date '+%s') - t0 ))
+expect_rc 21 "$RC" "exits 21 when the actor blocks on an approval it never gets" "$OUT"
+if [ "$took" -lt 25 ]; then
+  ok "the blocked actor was killed on the clock (${took}s for a 4s deadline)"
+else
+  bad "the blocked actor was killed on the clock" "took ${took}s for a 4s deadline"
+fi
+grep -q "Allow? (y/n)" "$d/runs/"*.hop1.claude.out 2>/dev/null \
+  && ok "the captured output shows it stopped ON the approval prompt, not on work" \
+  || bad "the captured output shows it stopped ON the approval prompt, not on work"
+set_after="$(shasum -a 256 "$d/.claude/settings.json" | cut -d' ' -f1)"
+[ "$set_before" = "$set_after" ] && ok "no permission surface was touched to get past it" \
+                                || bad "no permission surface was touched to get past it"
+grep -q '^turn: claude$' "$d/logs/work-loop/approval-task.md" \
+  && ok "the state file did not move" || bad "the state file did not move"
+
+# ================================================================= case 15
+# Cluster 2. A crash BEFORE the actor changed anything is retried once from
+# repository truth. A crash AFTER it changed something is not.
+echo
+echo "Case 15 — a pre-edit crash is retried exactly once"
+d="$(new_sandbox)"; state_file "$d" "retry-task" "claude"
+RETRY_ONCE='if [ ! -f "$WL_CHECKOUT.attempt" ]; then touch "$WL_CHECKOUT.attempt"; exit 7; fi;
+      '"$FLIP_TO_OPERATOR"
+run_dispatch "$d" retry-task --actor-cmd "$RETRY_ONCE"
+expect_rc 0 "$RC" "the retried hop completes and reaches turn: operator" "$OUT"
+printf '%s' "$OUT" | grep -q "retrying this hop once" \
+  && ok "the run log says it retried, and why" || bad "the run log says it retried, and why"
+if [ "$(ls "$d/runs/" 2>/dev/null | grep -c '\.hop1r\.claude\.out$')" = "1" ]; then
+  ok "the first attempt's output was kept as separate evidence"
+else
+  bad "the first attempt's output was kept as separate evidence" "no hop1r capture in $d/runs/"
+fi
+[ "$(calls "$d")" = "1" ] && ok "exactly one successful actor call was recorded" \
+                          || bad "exactly one successful actor call was recorded" "calls=$(calls "$d")"
+
+echo
+echo "Case 15b — a crash AFTER a repository change is not retried"
+d="$(new_sandbox)"; state_file "$d" "partial-task" "codex"
+CRASH_AFTER_EDIT="$FLIP_BODY"'; exit 9'
+run_dispatch "$d" partial-task --actor-cmd "$CRASH_AFTER_EDIT"
+expect_rc 20 "$RC" "exits 20 without retrying over a partial effect" "$OUT"
+printf '%s' "$OUT" | grep -q "not retried" \
+  && ok "the stop names the partial effect as the reason" || bad "the stop names the partial effect as the reason"
+[ "$(calls "$d")" = "1" ] && ok "the failed actor was launched once, not twice" \
+                          || bad "the failed actor was launched once, not twice" "calls=$(calls "$d")"
+
+# ================================================================= case 16
+# Cluster 3. Foreign work that was ALREADY in the working tree. The before/after
+# delta cannot see this — both snapshots contain it — so it used to pass through.
+echo
+echo "Case 16 — foreign UNSTAGED work stops the run before any launch"
+d="$(new_sandbox)"; state_file "$d" "unstaged-task" "codex"
+printf 'foreign unstaged edit\n' >>"$d/other.txt"
+run_dispatch "$d" unstaged-task --actor-cmd "$FLIP"
+expect_rc 18 "$RC" "exits 18 on a modified tracked file outside the allowlist" "$OUT"
+[ "$(calls "$d")" = "0" ] && ok "no actor launched over foreign unstaged work" \
+                          || bad "no actor launched over foreign unstaged work" "calls=$(calls "$d")"
+printf '%s' "$OUT" | grep -q "Recoverable next action" \
+  && ok "the stop names a recoverable next action" || bad "the stop names a recoverable next action"
+
+d="$(new_sandbox)"; state_file "$d" "untracked-task" "codex"
+printf 'stray\n' >"$d/somebody-elses-file.txt"
+run_dispatch "$d" untracked-task --actor-cmd "$FLIP"
+expect_rc 18 "$RC" "exits 18 on an untracked file outside the allowlist" "$OUT"
+
+# The expected uncommitted Codex handoff must still run: the state file is inside
+# the allowlist, so it is never foreign work.
+d="$(new_sandbox)"; state_file "$d" "still-runs-task" "claude"
+printf '\nCodex wrote this and cannot commit it.\n' >>"$d/logs/work-loop/still-runs-task.md"
+run_dispatch "$d" still-runs-task --max-hops 1 --actor-cmd "$FLIP"
+if [ "$RC" -eq 23 ] && [ "$(calls "$d")" = "1" ]; then
+  ok "the uncommitted Codex handoff still launches under the new gate"
+else
+  bad "the uncommitted Codex handoff still launches under the new gate" "rc=$RC calls=$(calls "$d")"
+fi
+
+# ================================================================= case 17
+echo
+echo "Case 17 — Git lock contention stops the run before any launch"
+d="$(new_sandbox)"; state_file "$d" "lockfile-task" "codex"
+touch "$d/.git/index.lock"
+run_dispatch "$d" lockfile-task --actor-cmd "$FLIP"
+expect_rc 19 "$RC" "exits 19 while a Git index.lock is held" "$OUT"
+[ "$(calls "$d")" = "0" ] && ok "no actor launched while another Git process is writing" \
+                          || bad "no actor launched while another Git process is writing"
+rm -f "$d/.git/index.lock"
+
+# ================================================================= case 18
+echo
+echo "Case 18 — an in-progress merge, rebase or cherry-pick stops the run"
+for marker in MERGE_HEAD CHERRY_PICK_HEAD REVERT_HEAD; do
+  d="$(new_sandbox)"; state_file "$d" "midop-task" "codex"
+  printf '0000000000000000000000000000000000000000\n' >"$d/.git/$marker"
+  run_dispatch "$d" midop-task --actor-cmd "$FLIP"
+  expect_rc 19 "$RC" "exits 19 with $marker present" "$OUT"
+  [ "$(calls "$d")" = "0" ] && ok "no actor launched with $marker present" \
+                           || bad "no actor launched with $marker present" "calls=$(calls "$d")"
+done
+for dir in rebase-merge rebase-apply; do
+  d="$(new_sandbox)"; state_file "$d" "midop-task" "codex"
+  mkdir -p "$d/.git/$dir"
+  run_dispatch "$d" midop-task --actor-cmd "$FLIP"
+  expect_rc 19 "$RC" "exits 19 with $dir/ present" "$OUT"
+done
+
+# ================================================================= case 19
+echo
+echo "Case 19 — a duplicate completion event relaunches nothing"
+d="$(new_sandbox)"; state_file "$d" "dup-task" "claude"
+run_dispatch "$d" dup-task --actor-cmd "$FLIP_TO_OPERATOR"
+expect_rc 0 "$RC" "the first run reaches turn: operator" "$OUT"
+first_calls="$(calls "$d")"
+run_dispatch "$d" dup-task --actor-cmd "$FLIP_TO_OPERATOR"
+expect_rc 0 "$RC" "the duplicate run also exits 0" "$OUT"
+[ "$(calls "$d")" = "$first_calls" ] \
+  && ok "the duplicate run launched nothing (calls stayed at $first_calls)" \
+  || bad "the duplicate run launched nothing" "was $first_calls, now $(calls "$d")"
+
+# ================================================================= case 20
+# Cluster 4. turn: operator reached by a genuine core § 7 question, not by a
+# normal close — and the question survives, visibly unanswered.
+echo
+echo "Case 20 — a core § 7 operator question is preserved and left unanswered"
+d="$(new_sandbox)"; state_file "$d" "opq-task" "claude"
+ASK_OPERATOR='printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.calls";
+      { printf -- "---\ntask: %s\nturn: operator\n---\n\n" "$WL_TASK";
+        printf "## Objective and scope\nSandbox fixture.\n\n";
+        printf "## Blocker\nOPERATOR-Q7: this change is hard to reverse. Authorise it?\n\n";
+        printf "## Next action\nOperator decides. Neither model may answer this.\n"; } > "$WL_STATE_FILE.tmp";
+      mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"'"$COMMIT_IF_CLAUDE"
+run_dispatch "$d" opq-task --actor-cmd "$ASK_OPERATOR"
+expect_rc 0 "$RC" "stops at turn: operator on a genuine question" "$OUT"
+[ "$(calls "$d")" = "1" ] && ok "zero further launches after the question was raised" \
+                          || bad "zero further launches after the question was raised" "calls=$(calls "$d")"
+grep -q 'OPERATOR-Q7' "$d/logs/work-loop/opq-task.md" \
+  && ok "the question is preserved in the state file" || bad "the question is preserved in the state file"
+printf '%s' "$OUT" | grep -q 'OPERATOR-Q7' \
+  && ok "the dispatcher surfaces the question rather than swallowing it" \
+  || bad "the dispatcher surfaces the question rather than swallowing it"
+printf '%s' "$OUT" | grep -q 'UNANSWERED' \
+  && ok "the output states that nobody answered it" || bad "the output states that nobody answered it"
+
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"

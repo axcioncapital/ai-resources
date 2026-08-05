@@ -38,7 +38,9 @@
 #   15  BAD_TURN               turn: not in {codex, claude, operator}
 #   16  FOREIGN_STAGED         something already staged; refuse to sweep it in
 #   17  LOCK_HELD              another dispatcher owns this checkout/task
-#   20  ACTOR_FAILED           non-zero exit
+#   18  FOREIGN_UNSTAGED       out-of-allowlist working-tree changes already present
+#   19  GIT_HAZARD             index.lock held, or a merge/rebase/cherry-pick in progress
+#   20  ACTOR_FAILED           non-zero exit (retried once when nothing changed)
 #   21  ACTOR_TIMEOUT
 #   22  NO_TRANSITION          state did not move in an allowed direction
 #   23  HOP_LIMIT
@@ -90,7 +92,9 @@ while [ $# -gt 0 ]; do
     --log-dir)     LOG_DIR="${2:-}"; shift 2 ;;
     --actor-cmd)   ACTOR_CMD="${2:-}"; shift 2 ;;
     --dry-run)     DRY_RUN=1; shift ;;
-    -h|--help)     sed -n '2,45p' "${BASH_SOURCE[0]}"; exit 0 ;;
+    # Print the whole leading comment block, whatever length it grows to. A fixed
+    # line window silently truncated the exit-code list as codes were added.
+    -h|--help)     awk 'NR==1{next} /^#/{print; next} {exit}' "${BASH_SOURCE[0]}"; exit 0 ;;
     *)             printf 'STOP [10] unknown argument: %s\n' "$1" >&2; exit 10 ;;
   esac
 done
@@ -160,6 +164,16 @@ acquire_lock
 # ------------------------------------------------------------ run evidence
 [ -n "$LOG_DIR" ] || LOG_DIR="$SPIKE_DIR/runs"
 mkdir -p "$LOG_DIR" || { printf 'STOP [10] cannot create log dir\n' >&2; exit 10; }
+# The dispatcher's own evidence directory is not "foreign work". When --log-dir
+# points inside the checkout, the run log this process is about to write would
+# otherwise register as an out-of-allowlist change made by the dispatcher itself,
+# and the pre-hop gate below would stop on it.
+LOG_DIR_ABS="$(cd "$LOG_DIR" && pwd -P)" || { printf 'STOP [10] cannot canonicalize log dir\n' >&2; exit 10; }
+if [ "$LOG_DIR_ABS" != "$CHECKOUT" ] && [ "${LOG_DIR_ABS#"$CHECKOUT"/}" != "$LOG_DIR_ABS" ]; then
+  LOG_REL="${LOG_DIR_ABS#"$CHECKOUT"/}"
+  ALLOW_PATHS+=("^$(printf '%s' "$LOG_REL" | sed 's|[][\.*^$]|\\&|g')/")
+fi
+
 RUN_ID="$(date '+%Y%m%dT%H%M%S')-$TASK"
 RUN_LOG="$LOG_DIR/$RUN_ID.log"
 : >"$RUN_LOG"
@@ -243,6 +257,35 @@ staged_paths() { git -C "$CHECKOUT" diff --cached --name-only 2>/dev/null | sort
 # rather than be retried blind.
 state_dirty() {
   [ -n "$(git -C "$CHECKOUT" status --porcelain -- "logs/work-loop/$TASK.md" 2>/dev/null)" ]
+}
+
+# Repository conditions an actor must never be launched on top of, because a
+# second writer compounds them into something no automated step can unpick.
+# Emitted one per line, empty when the checkout is safe to work in.
+#
+# index.lock is included deliberately: it means another Git process is mid-write
+# in this checkout right now. Launching an actor that will itself run Git turns a
+# transient lock into two racing writers.
+git_hazards() {
+  local gd
+  gd="$(git -C "$CHECKOUT" rev-parse --absolute-git-dir 2>/dev/null)" || return 0
+  [ -e "$gd/index.lock" ]        && printf 'a Git index.lock is held (%s)\n' "$gd/index.lock"
+  [ -e "$gd/MERGE_HEAD" ]        && printf 'a merge is in progress (MERGE_HEAD)\n'
+  [ -d "$gd/rebase-merge" ]      && printf 'a rebase is in progress (rebase-merge)\n'
+  [ -d "$gd/rebase-apply" ]      && printf 'a rebase or am is in progress (rebase-apply)\n'
+  [ -e "$gd/CHERRY_PICK_HEAD" ]  && printf 'a cherry-pick is in progress (CHERRY_PICK_HEAD)\n'
+  [ -e "$gd/REVERT_HEAD" ]       && printf 'a revert is in progress (REVERT_HEAD)\n'
+  return 0
+}
+
+# The state file's operator-facing content, for the stop message. Read-only.
+# Bounded so a long brief cannot flood the run log.
+operator_question() {
+  awk '
+    /^## (Blocker|Next action)$/ { keep=1; print; next }
+    /^## / { keep=0 }
+    keep && n < 24 { print; n++ }
+  ' "$STATE_FILE" 2>/dev/null
 }
 
 # -------------------------------------------------------------- actor launch
@@ -356,6 +399,12 @@ fi
 
 if [ "$DRY_RUN" -eq 1 ]; then
   say "dry-run: would launch actor '$ST_TURN' for task '$TASK'; launching nothing."
+  # Dry-run inspects; it never launches, so it reports hazards instead of failing
+  # on them. Loop mode stops on the same conditions before every hop.
+  dr_haz="$(git_hazards)"
+  [ -n "$dr_haz" ] && say "dry-run: repository hazards present — loop mode would stop:"$'\n'"$dr_haz"
+  dr_foreign="$(foreign_worktree)"
+  [ -n "$dr_foreign" ] && say "dry-run: out-of-allowlist working-tree changes present — loop mode would stop:"$'\n'"$dr_foreign"
   [ "$ST_TURN" = "operator" ] && say "dry-run: turn is operator — automation is terminal here."
   release_lock
   exit 0
@@ -367,12 +416,24 @@ while :; do
 
   if [ "$ST_TURN" = "operator" ]; then
     say "hop=$hop turn=operator — stopping for the operator (core § 7). No further launches."
+    say "The question below is UNANSWERED. Neither model nor this dispatcher answered it,"
+    say "and nothing here is a decision — the operator owns it (core § 7)."
+    say "--- state file, as the actors left it ---"
+    say "$(operator_question)"
+    say "--- end ---"
     release_lock
     exit 0
   fi
 
   if [ "$hop" -ge "$MAX_HOPS" ]; then
     die 23 "hop limit reached ($MAX_HOPS) with turn still '$ST_TURN' — stopping rather than continuing"
+  fi
+
+  # Hazards are checked before every hop, not once at startup, because a restart
+  # re-enters here and because the checkout can change between hops.
+  hazards="$(git_hazards)"
+  if [ -n "$hazards" ]; then
+    die 19 "the checkout is in a hazardous Git state before launching $ST_TURN — task '$TASK':"$'\n'"$hazards"$'\n'"Recoverable next action: finish or abort the operation above, then re-run this dispatcher."
   fi
 
   # Foreign staged state stops the spike rather than being swept into a commit.
@@ -382,6 +443,14 @@ while :; do
   fi
 
   before_foreign="$(foreign_worktree)"
+
+  # Out-of-allowlist working-tree changes that were ALREADY there. The before/after
+  # delta below cannot see these: it compares two snapshots that both contain them,
+  # so pre-existing foreign work used to pass straight through. The allowlist keeps
+  # the expected uncommitted Codex state-file handoff out of this set.
+  if [ -n "$before_foreign" ]; then
+    die 18 "out-of-allowlist working-tree changes are already present before launching $ST_TURN — task '$TASK':"$'\n'"$before_foreign"$'\n'"Recoverable next action: commit, stash or revert the paths above, then re-run this dispatcher."
+  fi
   before_hash="$(file_hash "$STATE_FILE")"
   before_turn="$ST_TURN"
   before_head="$(git_head)"
@@ -391,6 +460,8 @@ while :; do
   say "hop=$hop actor=$before_turn"
   say "  before: sha256=$before_hash turn=$before_turn head=$before_head"
 
+  before_dirty=0; state_dirty && before_dirty=1
+
   started="$(date '+%s')"
   launch_actor "$before_turn" "$hop"
   rc=$?
@@ -399,8 +470,33 @@ while :; do
   if [ "$rc" -eq 124 ]; then
     die 21 "actor '$before_turn' exceeded ${ACTOR_TIMEOUT}s and was killed (hop $hop)"
   fi
+
+  # A crash BEFORE the actor changed anything is retried exactly once, from what
+  # the repository says rather than from anything this process remembers. "Before
+  # edits" is proven, not assumed: the state file, HEAD, the foreign working tree
+  # and the state file's committed-ness must all be byte-for-byte where they were.
+  # Any doubt and this is a partial side effect, which stops (rc 20 / 25) instead.
+  # One retry only — a second failure is a real failure, not a transient one.
   if [ "$rc" -ne 0 ]; then
-    die 20 "actor '$before_turn' exited $rc after ${duration}s (hop $hop); see $LOG_DIR/$RUN_ID.hop$hop.$before_turn.out"
+    now_dirty=0; state_dirty && now_dirty=1
+    if [ "$(file_hash "$STATE_FILE")" = "$before_hash" ] \
+       && [ "$(git_head)" = "$before_head" ] \
+       && [ "$(foreign_worktree)" = "$before_foreign" ] \
+       && [ "$now_dirty" -eq "$before_dirty" ]; then
+      say "  exit=$rc after ${duration}s, and the repository is unchanged (state sha256, HEAD, working tree, committed-ness all identical) — retrying this hop once."
+      started="$(date '+%s')"
+      launch_actor "$before_turn" "${hop}r"   # separate .out — the first attempt's output is evidence
+      rc=$?
+      duration=$(( $(date '+%s') - started ))
+      [ "$rc" -eq 124 ] && die 21 "actor '$before_turn' exceeded ${ACTOR_TIMEOUT}s and was killed on the retry (hop $hop)"
+      [ "$rc" -eq 0 ] && say "  retry succeeded"
+    else
+      die 20 "actor '$before_turn' exited $rc after ${duration}s (hop $hop) AFTER changing the repository — not retried, because a retry would run over a partial effect; see $LOG_DIR/$RUN_ID.hop$hop.$before_turn.out"
+    fi
+  fi
+
+  if [ "$rc" -ne 0 ]; then
+    die 20 "actor '$before_turn' exited $rc after ${duration}s (hop $hop), and the retry failed too; see $LOG_DIR/$RUN_ID.hop$hop.$before_turn.out"
   fi
   say "  exit=0 duration=${duration}s"
 
