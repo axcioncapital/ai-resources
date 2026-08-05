@@ -2745,3 +2745,34 @@ labelled as scaffolding meant to be removed once its one-time transport probe co
 search that has to notice and dismiss it. The cost grows only if it is mistaken for something live.
 
 **Shape of the fix (not built).** Delete `.agents/skills/wl2-probe/SKILL.md`.
+
+---
+
+## 2026-08-05 — The worktree-per-task spike is now unblocked, and it lives only inside a closed task record
+
+- **Status:** logged (pending)
+- **Category:** Work Loop v2 — next unit, reachability of a deferral
+- **Severity:** medium-high — it is not a defect; it is the deliberately-deferred next step of an active mission whose blocking precondition has just been met, and the only durable record of it is a **closed, read-only** state file that no orientation path reads. `/prime` builds its menu from mission threads and `next-up.md`; `logs/work-loop/work-loop-v2-dispatcher-safety-gates.md` is neither, and mission `work-loop-v2-mvp` carries no worktree thread. Left unqueued it is invisible from the next session onward — the exact evaporation `wrap-session.md` Step 12e exists to prevent. *(Deliberately not `high`: nothing breaks while it waits, and the work is genuinely optional. Not `medium` either — a finding that is unreachable by design is worse than a low-priority one, and `medium` would keep it off the menu that is the whole point of queueing it.)*
+
+**Why it is unblocked now.** The worktree-per-task proof was held back with a stated precondition:
+parallelising an incompletely-bounded failure mode would multiply risk across worktrees, so the
+single-checkout failures had to be shown to stop safely first. As of today they are. Task
+`work-loop-v2-dispatcher-safety-gates` closed on Codex's verdict having proven all four required
+safety clusters — permission/approval stop, crash and restart safety, repository-state safety, and
+the operator boundary — with `pass=69 fail=0` against `pass=49 fail=20` on the pre-change controller,
+plus a live permission denial carried through `dispatch.sh` itself.
+
+**Where the record currently lives.** `logs/work-loop/work-loop-v2-dispatcher-safety-gates.md`,
+§ Decisions that matter, "Deferral — the worktree-per-task proof. A separate future unit, held until
+these single-checkout failures were shown to stop safely. They now are." That file is at
+`turn: operator` and is read-only; nothing routes it to orientation.
+
+**Shape of the next unit (not built, and not to be designed from this text).** Open a *new* Work Loop
+v2 task — do not reopen the closed one. Codex frames it; this entry is a pointer, not a brief. The
+constraint that survives from the closed record: `docs/parallel-sessions-playbook.md` § 4 holds
+same-checkout concurrency unsafe, which is *why* worktrees are the candidate mechanism rather than
+parallel tasks in one checkout. The dispatcher's lock is keyed on `checkout|task` and has only ever
+been exercised for one pair.
+
+**Target files:** none yet — the unit opens a new state file under `logs/work-loop/`. The spike lives
+at `plans/work-loop-v2-v0.2/handoff-automation-spike/`.

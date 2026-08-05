@@ -318,3 +318,39 @@ disproportionate ceremony, consistent with the S7 and S8a declines. (3) Stop the
 isolated proof owed — rejected: it discards work that is already live in the seam, over evidence that can
 still be obtained later. (4) **Amend the plan to permit progression under a named, bounded evidence debt
 while leaving the adoption bar exactly where it was — chosen.**
+
+## 2026-08-05 — A fix inside a frozen correction round is in scope when the finding's own acceptance condition demands it
+
+**Context.** Work Loop v2 task `work-loop-v2-dispatcher-safety-gates`. Codex froze one correction
+finding: run a controlled live Claude permission denial through `dispatch.sh` itself. Its acceptance
+condition read, in part, "…if the live run proves the denial remains visible and the dispatcher stops
+with **a recoverable next action**." The live run landed on exit `25`, whose message at the time said
+only "stopping for inspection rather than relaunching over a partial edit" — a description, not a next
+action. Correcting that message was not in the finding's literal text, and core § 3 *Correcting once*
+freezes the correction scope at the findings the assessment named.
+
+**Decision.** Treat a change as **inside** a frozen finding when the finding's own stated acceptance
+condition cannot be satisfied without it — and say so explicitly in the hand-back rather than absorbing
+it silently. The exit-`25` message was corrected to name a recoverable next action, and the hand-back
+flagged it to Codex as possible broadening for Codex to rule on. Codex accepted it as part of the
+frozen finding.
+
+**Rationale.** The alternative readings both fail. Correcting silently would make the frozen scope
+unenforceable — any change can be rationalised as "needed", and the assessor never sees the judgment
+call. Refusing to correct would satisfy the finding's letter while failing its stated condition, and
+hand back work the assessor would have to reject on its own terms. Naming the judgment and letting the
+assessor rule keeps the freeze real: the boundary is still Codex's to draw, and the record shows where
+it was drawn and why. This is the same discipline core § 5 applies to deferrals — the failure mode is
+silence, not the judgment itself.
+
+**Alternatives considered.** (1) Correct silently as an obvious necessity — rejected: it converts a
+frozen scope into an advisory one and hides the decision from the only party entitled to make it.
+(2) Leave the message untouched and hand back with the condition unmet, noting it — rejected: it
+manufactures a second correction round for something a one-line change resolves, and core § 3 is
+explicit that anything newly noticed becomes a deferral rather than a second round. (3) Ask the
+operator — rejected: this is a scope question between the two models about work already framed, not a
+decision that is hard to reverse or that reopens a settled operator choice (core § 7).
+
+**Scope of the precedent.** Narrow. It licenses a change that an acceptance condition *requires*, not
+one that merely improves the artifact while nearby. The disclosure to the assessor is not optional —
+it is what distinguishes this from scope creep.

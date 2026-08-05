@@ -353,6 +353,45 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 20:16 — logs/scratchpads/2026-08-05-20-16-scratchpad.md
+- 20:09 — logs/work-loop/work-loop-v2-dispatcher-safety-gates.md
+- 20:00 — logs/work-loop/work-loop-v2-dispatcher-safety-gates.md
+- 19:59 — logs/work-loop/work-loop-v2-dispatcher-safety-gates.md
+- 19:59 — logs/work-loop/work-loop-v2-dispatcher-safety-gates.md
+- 19:59 — logs/work-loop/work-loop-v2-dispatcher-safety-gates.md
+- 19:59 — logs/work-loop/work-loop-v2-dispatcher-safety-gates.md
+- 19:58 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 19:58 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 19:58 — plans/work-loop-v2-v0.2/handoff-automation-spike/runs/live-permission-denial-2026-08-05.md
+- 19:58 — plans/work-loop-v2-v0.2/handoff-automation-spike/runs/live-permission-denial-2026-08-05.md
+- 19:58 — plans/work-loop-v2-v0.2/handoff-automation-spike/runs/live-permission-denial-2026-08-05.md
+- 19:56 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 19:56 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 19:55 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/39ef39a7-3e10-4650-832b-0895f0a4f245/scratchpad/live-denial-through-dispatcher.sh
+- 17:07 — logs/work-loop/work-loop-v2-dispatcher-safety-gates.md
+- 17:07 — logs/work-loop/work-loop-v2-dispatcher-safety-gates.md
+- 17:07 — logs/work-loop/work-loop-v2-dispatcher-safety-gates.md
+- 17:05 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 17:05 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 17:05 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 17:05 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 17:05 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 17:04 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 17:04 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 17:04 — plans/work-loop-v2-v0.2/handoff-automation-spike/runs/live-permission-denial-2026-08-05.md
+- 17:00 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh
+- 17:00 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh
+- 16:57 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh
+- 16:55 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 16:54 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 16:54 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 16:54 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 16:54 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 16:54 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 16:53 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 16:53 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 16:53 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 16:52 — logs/work-loop/work-loop-v2-dispatcher-safety-gates.md
 - 16:28 — logs/session-notes.md
 - 16:25 — logs/scratchpads/2026-08-05-16-24-scratchpad.md
 - 16:23 — logs/work-loop/work-loop-v2-handoff-dispatcher.md

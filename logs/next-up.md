@@ -60,3 +60,5 @@ Promoted findings carry their source and a content-derived id; tick an item to r
 - [ ] Every Phase 2 trial run needs an isolated root AND an answer-key scrub, and the implementation plan requires neither — `logs/improvement-log.md` <!-- promote:f41ff8cd3073 -->
 
 - [ ] A verification digest recorded as prose, not as an exact command, becomes unreproducible evidence — `logs/improvement-log.md` <!-- promote:22d5e5a49619 -->
+
+- [ ] The worktree-per-task spike is now unblocked, and it lives only inside a closed task record — `logs/improvement-log.md` <!-- promote:6fc967378619 -->
