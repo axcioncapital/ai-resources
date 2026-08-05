@@ -168,7 +168,8 @@ bash dispatch.test.sh                                         →  pass=69 fail=
 
 **Live product evidence lives in `runs/`, never in this suite.** `runs/live-permission-denial-2026-08-05.md`
 records what the real binary does when it is refused permission — the half of safety cluster 1 no
-controller test can establish.
+controller test can establish — including one denial carried **through `dispatch.sh` itself**, with
+the dispatcher's own exit, launch count and before/after state hashes.
 
 ---
 
@@ -227,10 +228,12 @@ verdict — plus one stdout capture per hop. That is the whole evidence base. No
 - **Unattended handling of operator decisions.** Reaching `turn: operator` is where the automation
   *stops*. The dispatcher now prints the question and states that nobody answered it (case 20), but
   what happens to the decision after that is outside the dispatcher entirely.
-- **What exit `22` means when an actor was refused permission.** A denied actor exits `0`, so a real
-  permission denial reaches the dispatcher as `22 NO_TRANSITION`, not as `20 ACTOR_FAILED`. The stop
-  is correct and bounded; the exit code alone does not tell you a denial was the cause. Measured in
-  `runs/live-permission-denial-2026-08-05.md`.
+- **Which exit code a refused actor produces.** A denied actor exits `0`, so a real permission denial
+  never reaches the dispatcher as `20 ACTOR_FAILED`. It arrives as `22 NO_TRANSITION` if the actor
+  changed nothing, or as `25 UNCOMMITTED_HANDBACK` if it edited the state file and was then refused
+  the commit — the second measured end-to-end through `dispatch.sh` on 2026-08-05. Both stops are
+  correct and bounded, and neither code *names* denial as the cause; the hop capture's
+  `permission_denials` does. Full measurement: `runs/live-permission-denial-2026-08-05.md`.
 - **Anything about the quality of the work the models did.** The dispatcher checks that the file
   moved in an allowed direction and that no unexpected repository effect occurred. It does not read
   the content.

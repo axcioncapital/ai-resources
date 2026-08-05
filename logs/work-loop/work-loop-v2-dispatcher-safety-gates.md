@@ -115,19 +115,35 @@ Inspected (2026-08-05):
   product's own denial behaviour cannot be established by a controller test, so it was measured live
   in throwaway sandboxes **outside** this repository (see Evidence).
 
-Result: All four safety clusters are demonstrated, and the proofs exposed **four real dispatcher
-defects**, each minimally corrected and regression-covered.
+Reproduced (correction round, 2026-08-05):
 
-- **Cluster 1 — permission and approval stop: PROVEN, in two halves.** Live: a real `claude -p` run
-  refused permission does **not** hang — it terminated on its own in 10 s (tool unavailable) and 14 s
-  (call denied at runtime, `permission_denials` carrying the exact rejected `tool_input`), exit 0 in
-  both, with every permission surface byte-identical afterwards. Simulated: harness case 14 pins the
-  controller's own bound for the actor that *does* hang — killed on the clock, the capture proving it
-  stopped on the approval prompt, the sandbox settings file untouched, the state file unmoved.
-  **Named finding, and it is not the obvious one:** a denied actor exits **0**, so a real denial
-  reaches the dispatcher as `22 NO_TRANSITION`, never as `20 ACTOR_FAILED`. The stop is correct and
-  bounded; the exit code alone does not name denial as the cause. Recorded in the README's "what this
-  does not establish" list rather than papered over.
+- Frozen finding (1): REPRODUCES — searched `runs/live-permission-denial-2026-08-05.md` for the
+  composition claim; line 106 of the pre-correction file said in its own words that "Neither run went
+  through `dispatch.sh`". Searched `runs/*.log` for `mode=live`: two live runs existed, both from the
+  prior transport task, neither a denial proof. Parsed every `runs/*.claude.out` for
+  `permission_denials`: two prior hops did carry incidental denials, but they were unrecorded
+  side-effects of ordinary work, not a controlled denial path. The finding was correct as stated.
+
+Result: All four safety clusters are demonstrated, the proofs exposed **four real dispatcher
+defects** — each minimally corrected and regression-covered — and the correction round closed the one
+composition gap Codex named.
+
+- **Cluster 1 — permission and approval stop: PROVEN end-to-end, including through the dispatcher.**
+  The correction round ran a live Claude actor **launched by `dispatch.sh`** in a throwaway sandbox
+  checkout whose own narrowing policy denied `Bash(git:*)` — the exact authority core § 4 depends on.
+  The child attempted `git add … && git commit …`, was denied at runtime, **refused to retry the
+  command in another form**, and exited on its own in 28 s. The dispatcher stopped at
+  `25 UNCOMMITTED_HANDBACK` with one actor launch and zero subsequent launches, `HEAD` unmoved, and
+  both the sandbox policy file and this repository's `.claude/settings.json` byte-identical
+  afterwards. Two runs, identical post-run state hash. Product-alone behaviour (Runs A and B) still
+  stands: a refused actor does **not** hang, terminating in 10 s and 14 s.
+  **Named finding, corrected by measurement:** a denied actor exits **0**, so a denial never arrives
+  as `20 ACTOR_FAILED`. My pre-correction draft said it arrives as `22 NO_TRANSITION`; the live run
+  showed that is only the case when the actor changed nothing. When it edits the state file and is
+  then refused the commit, it arrives as **`25`**. Both codes are now documented, and neither *names*
+  denial — so the `25` message was corrected to say a refused git permission looks exactly like this
+  and to point at the hop capture, where `permission_denials` records it precisely. **No new exit
+  code was added**, per the finding's instruction not to add one for taxonomy.
 - **Cluster 2 — crash and restart safety: PROVEN, one defect corrected.** Defect: no retry existed at
   all, so a crash that changed nothing still ended the run. Correction: exactly one retry, gated on
   the repository being *provably* unchanged — state-file `sha256`, `HEAD`, foreign working tree and
@@ -168,6 +184,10 @@ Evidence:
   `pass=69 fail=0`** (was `pass=34 fail=0`). The 20 named failures are listed in the run capture and
   map one-to-one onto the four corrections. Case 0 still points the suite at an absent dispatcher and
   asserts it fails, so a green run means something.
+- **Nothing previously green went red.** The harness was re-run after the correction round's message
+  change: `bash dispatch.test.sh` → **exit 0, `pass=69 fail=0`**, unchanged. The basic-transport
+  cases (1, 11, 13b's Codex-handoff block) are inside that count. The correction touched one `die`
+  message string and no control flow.
 - **The evidence can fail, and 20 assertions were observed failing.** Two of the new assertions
   (case 14's timeout bound, case 19's duplicate-completion check) passed against the *pre-change*
   controller too. That is stated rather than hidden: those two document behaviour that already
@@ -176,9 +196,21 @@ Evidence:
   `plans/work-loop-v2-v0.2/handoff-automation-spike/runs/live-permission-denial-2026-08-05.md` —
   binary `claude 2.1.220`, exact invocations, the denied action, elapsed time, process exit,
   `permission_denials`, the dispatcher-visible consequence, and `sha256` before/after for both the
-  sandbox policy file and this repository's `.claude/settings.json`. Both runs ran in `TMPDIR`
+  sandbox policy file and this repository's `.claude/settings.json`. All runs ran in `TMPDIR`
   sandboxes outside this repository, under narrowing `deny` rules only. No
   `--dangerously-skip-permissions` was authored or used.
+- **The correction round's denial-through-dispatcher run — every field the finding asked for**, in
+  that file's Run C table: checkout, task, policy, binary and version, denied action, elapsed
+  (child 27.6 s / wall 30 s), child result (`exit 0`, `subtype: success`, 5 turns), dispatcher exit
+  (`25`), state `sha256` `d8863584…` → `83958616…`, `turn:` `claude` → `codex`, `HEAD` unmoved,
+  **1 actor launch and zero subsequent**, and byte-identical settings on both surfaces. The run was
+  driven by a scripted fixture kept out of the repository
+  (session scratchpad, `live-denial-through-dispatcher.sh`), so no fixture code entered `plans/`.
+  It used `--max-hops 1`, so no Codex actor could launch even in the branch where the child commits.
+- **The correction changed one message and nothing else in behaviour.** The exit-`25` stop now names
+  a recoverable next action (read the diff, check the hop capture for a denial, commit-and-re-run or
+  discard-and-re-run) instead of saying only "stopping for inspection". Run C-1 and C-2 straddle that
+  change and are both recorded, so the correction's effect is visible rather than asserted.
 - **Simulated vs. live is marked at the source.** Every harness case runs through `--actor-cmd`,
   which forces `mode=simulated` into all run evidence; the suite's own summary line says so. The live
   file above is the only live evidence and says so in its first paragraph.
@@ -204,9 +236,15 @@ Deferrals — recorded, not done:
 - **The line-31 header contradiction in `dispatch.sh`** ("0 is the ONLY success") still disagrees with
   the lines-48/49 note. Not corrected: no proof in this unit exposed it, and the README already
   documents it. Correcting it was not needed to add the new codes.
-- **Codex-side denial behaviour was not measured.** Only the Claude actor was exercised live. Doing
-  Codex too would have meant a second product's permission model, which this unit's four clusters did
-  not require.
+- **Codex-side denial behaviour was not measured.** Only the Claude actor was exercised live. The
+  correction's scope note excluded it explicitly.
+- **Run C used a fixture `/work-loop-v2` command, not the real one.** A four-step stand-in, so the
+  sandbox never became a partial copy of this repository. It proves the transport and the denial, not
+  that the real command behaves identically under denial. Newly noticed during the correction and
+  recorded rather than acted on.
+- **Only one denied authority was exercised through the dispatcher** — `git` via Bash. A denied file
+  write, or a denied `Read` of the state file itself, would land on different codes and were not
+  measured. Newly noticed during the correction and recorded rather than acted on.
 - **Retry breadth.** Exactly one retry, and only for a provably-unchanged repository. No backoff, no
   retry on timeout (a timeout is not a pre-edit crash and a retry would just burn a second deadline).
 - **The worktree-per-task proof** remains held outside the unit, as the brief states.
@@ -217,20 +255,28 @@ None.
 
 ## Next action
 
-Codex: assess Unit 1. All seven marked claims were checked and hold; the four safety clusters are
-demonstrated; four dispatcher defects were exposed and minimally corrected, plus one `--help`
-truncation the new exit codes forced. Red-to-green is `pass=49 fail=20` (pre-change) → `pass=69
-fail=0` (corrected), same harness.
+Codex: run the closure check on frozen finding 1 only.
 
-The judgment calls worth your attention:
+1. **Resolved.** A controlled live Claude permission denial was carried through `dispatch.sh` itself,
+   twice, and every field the finding listed is recorded in Run C of
+   `…/runs/live-permission-denial-2026-08-05.md`. The denial stayed visible (the child's own
+   `permission_denials` entry names the exact refused command) and the dispatcher stopped with a
+   recoverable next action. No distinct exit code was added.
 
-1. Whether the cluster-1 split is acceptable — the product's denial behaviour measured live outside
-   the repository, the controller's hang-bound proven simulated — or whether you require a live
-   denial carried through `dispatch.sh` itself.
-2. Whether the one-retry rule is bounded correctly, given it deliberately does not retry timeouts.
-3. Whether "a real permission denial arrives as exit `22`, not exit `20`" should stay a documented
-   limitation or become a distinct exit code.
-4. Whether gate `18` stopping every live run in this repo until `logs/friction-log.md` is
-   allowlisted is the right strictness, or too strict for a throwaway spike.
+Two things you should weigh rather than take as given:
+
+- The finding anticipated exit `22`; the measured code was **`25`**, because the denial bit *after*
+  the actor edited the state file. I treated the acceptance condition as being about visibility and
+  recoverability rather than about the specific number, and corrected the `25` message to carry a
+  recoverable next action instead of "stopping for inspection". If you intended the `22` path
+  specifically, that one is still only covered simulated, by case 6.
+- That message correction is the **only** behaviour change in this round. It was not in the finding's
+  literal text; I judged it inside the finding's own acceptance condition ("stops with a recoverable
+  next action"). Say so if you read that as broadening.
+
+Nothing previously green went red: `bash dispatch.test.sh` → exit 0, `pass=69 fail=0`, unchanged
+before and after the correction. Two candidate deferrals were newly noticed and recorded, not
+implemented: Run C used a fixture command rather than the real one, and only one denied authority
+(`git` via Bash) was exercised end-to-end.
 
 Do not begin the worktree or production task.

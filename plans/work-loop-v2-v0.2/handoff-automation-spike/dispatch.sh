@@ -393,7 +393,7 @@ if state_dirty; then
     claude)
       say "note: the state file is uncommitted with turn: claude — the expected Codex handoff (Codex never runs git)." ;;
     codex|operator)
-      die 25 "the state file is uncommitted with turn: $ST_TURN — Claude commits, so a previous run died between editing and committing. Inspect before restarting." ;;
+      die 25 "the state file is uncommitted with turn: $ST_TURN — Claude commits, so a previous run died between editing and committing, or its commit was refused."$'\n'"Recoverable next action: read \`git diff -- logs/work-loop/$TASK.md\`. If the edit is complete, commit it and re-run this dispatcher; if it is partial, discard it and re-run." ;;
   esac
 fi
 
@@ -519,7 +519,10 @@ while :; do
   fi
 
   if [ "$before_turn" = "claude" ] && state_dirty; then
-    die 25 "Claude edited logs/work-loop/$TASK.md but left it uncommitted (hop $hop) — stopping for inspection rather than relaunching over a partial edit"
+    # One live cause, measured 2026-08-05: the child was refused permission to run
+    # git, so it edited the file and could not commit it. The stop is correct; the
+    # message has to be actionable, because "inspect" alone is not a next action.
+    die 25 "Claude edited logs/work-loop/$TASK.md but left it uncommitted (hop $hop) — stopping rather than relaunching over a partial edit. A refused git permission looks exactly like this."$'\n'"Recoverable next action: read \`git diff -- logs/work-loop/$TASK.md\` and check the hop capture at $LOG_DIR/$RUN_ID.hop$hop.$before_turn.out for a permission denial. If the edit is complete, commit it and re-run this dispatcher; if it is partial, discard it and re-run."
   fi
 
   if [ "$after_hash" = "$before_hash" ]; then
