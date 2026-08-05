@@ -39,8 +39,11 @@ unit, without granting broader authority to adjacent planning material.
 Required outcome: create
 `plans/work-loop-v2-v0.2/handoff-automation-spike/README.md` as a concise operator-facing guide that
 accurately explains the spike's purpose, how to invoke `dispatch.sh` for a named checkout and task,
-how to run `dispatch.test.sh`, what every declared dispatcher exit code means, and what the spike,
-the simulated harness, dry-run mode, and even one live run do not establish.
+how to run `dispatch.test.sh`, what every declared dispatcher exit code means in each applicable
+mode, and what the spike, the simulated harness, dry-run mode, and even one live run do not
+establish. For exit `0`, distinguish successful command completion from the narrower live/simulated
+loop outcome: `--help` and a valid `--dry-run` also return `0`, while a completed loop-mode run
+returns `0` only after reaching `turn: operator`.
 
 Source dispositions and constraints:
 
@@ -50,9 +53,15 @@ Source dispositions and constraints:
 - Governing workflow: `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` and the invoked
   `work-loop-v2` skill govern the handoff, evidence, stopping, and commit responsibilities. Claude
   owns repository verification, implementation, evidence, and every commit.
+- Verified repository reality returned by Claude, not governing intent: `dispatch.sh` line 31's
+  single meaning for exit `0` conflicts with the observed `--help` and `--dry-run` paths, which also
+  return `0` without reaching `turn: operator`. The README must describe the mode-specific observed
+  behavior and identify the narrower line-31 statement as a source inconsistency, not silently
+  present either side as the universal contract. Re-check the relevant paths before writing; stop
+  if they no longer produce the returned result.
 - Verify-first repository reality, not governing intent: `dispatch.sh` and `dispatch.test.sh` are
-  the sources for the README's command syntax, modes, exit codes, safety boundaries, and test
-  claims. Describe only behavior those files support.
+  otherwise the sources for the README's command syntax, modes, exit codes, safety boundaries, and
+  test claims. Describe only behavior those files support.
 - Codex framing decision: repository implementation scope is the new README only, because that is
   the smallest observable unit and the state file expressly excludes changes to the spike code and
   adjacent system. Updating this state file and committing it is protocol work, not an expansion of
@@ -60,17 +69,21 @@ Source dispositions and constraints:
 - Deliberately held outside this unit: changes to `dispatch.sh`, `dispatch.test.sh`, `ps-sampler.sh`,
   hooks, settings, workflows, plans, reports, production installation, and any claim that this README
   or the simulated harness itself proves live cross-product transport. This preserves the fixture's
-  stated boundary; do not turn newly noticed improvements into this unit.
+  stated boundary; do not turn newly noticed improvements into this unit. In particular, correcting
+  the stale or overbroad exit-`0` header in `dispatch.sh` is deferred because that file is explicitly
+  excluded; the README must surface the inconsistency so the deferral does not make the guide false.
 
 Check against the repository before writing:
 
 1. Verify that
    `plans/work-loop-v2-v0.2/handoff-automation-spike/README.md` is absent by checking that exact path.
    If it exists, stop and hand back rather than overwrite an unexamined file.
-2. In `dispatch.sh`, verify the public invocation, options, default values, run modes, success
-   condition, declared exit-code set, and operational boundaries against the usage comments and
-   argument/routing logic. Treat any mismatch between comments and behavior as a false premise and
-   hand it back; do not silently choose one.
+2. In `dispatch.sh`, verify the public invocation, options, default values, run modes, declared
+   exit-code set, and operational boundaries against the usage comments and argument/routing logic.
+   Reproduce or otherwise directly verify that `--help`, a valid `--dry-run`, and a loop-mode run
+   reaching `turn: operator` return `0`, while only the loop-mode path establishes that final turn.
+   The already surfaced line-31 mismatch is no longer a stop condition; any different material
+   mismatch is a false premise and must be handed back rather than silently resolved.
 3. In `dispatch.test.sh`, verify the documented test invocation and the explicit boundary between
    simulated controller evidence and live product transport, using the file's setup, case labels,
    and final result semantics.
@@ -94,85 +107,95 @@ only the README plus this state-file protocol update are changed for the unit, C
 the work, and the state file returns with the latest result and evidence summarized under
 `## Latest result`, `turn: codex`, and one assessment action under `## Next action`.
 
-Stop and hand back without implementation if a checked premise is false, an accurate guide would
-require changing an excluded file, the evidence cannot be produced, or the requested content would
-need a claim stronger than the scripts support. Claude may challenge any false or stale premise;
-do not improvise past it.
+Stop and hand back without implementation if a checked premise other than the explicitly accepted
+line-31 inconsistency is false, an accurate guide would require changing an excluded file, the
+evidence cannot be produced, or the requested content would need a claim stronger than the scripts
+support. Claude may challenge any false or stale premise; do not improvise past it.
 
 ## Latest result
 
 Inspected (2026-08-05):
 
 - Claim (1): HOLDS — checked the exact path
-  `plans/work-loop-v2-v0.2/handoff-automation-spike/README.md` with `ls`; no such file. The
-  directory holds only `dispatch.sh`, `dispatch.test.sh`, `ps-sampler.sh` and `runs/`.
-- Claim (2): FALSE — the declared exit-code *set* matches, but the declared *success condition* does
-  not. See Blocker.
+  `plans/work-loop-v2-v0.2/handoff-automation-spike/README.md` with `ls` before creating anything;
+  `No such file or directory`, exit 1. The directory held only `dispatch.sh`, `dispatch.test.sh`,
+  `ps-sampler.sh` and `runs/`. Nothing was overwritten.
+- Claim (2): HOLDS as reframed. Re-ran all three exit-`0` paths rather than recalling them.
+  `bash dispatch.sh --help` → 0. A valid `--dry-run` in a throwaway sandbox checkout → 0, with the
+  state file left byte-identical (`git status --porcelain` empty for it); a `--dry-run` against a
+  `turn: operator` file also → 0 and says automation is terminal there. A simulated loop-mode run
+  that reached `turn: operator` → 0. Falsifiable control: a loop-mode run that never reached
+  `turn: operator` returned **24**, not 0 — the simulated actor's `git add -A` swept the run-log
+  directory outside the allowlist and the dispatcher stopped on it. (I had predicted 23; the run
+  stopped earlier, on a different guard. Either way non-zero, which is what the control tests.)
+  The declared exit-code set (`0 10 11 12 13 14 15 16 17 20 21 22 23 24 25`) matches the routing
+  logic. Options, defaults, modes, transitions, lock and allowlist all check out against the source.
 - Claim (3): HOLDS — `dispatch.test.sh` documents `bash dispatch.test.sh` and
   `DISPATCH_BIN=/path/to/dispatch.sh bash dispatch.test.sh` (lines 12–13) and honours `DISPATCH_BIN`
   at line 18. The simulated/live boundary is stated in the header (lines 4–6), enforced by every
   case running through `--actor-cmd`, proved falsifiable by Case 0 (points the suite at an absent
-  dispatcher and asserts it fails), and restated in the final summary line. Ran it: exit 0,
-  `pass=29 fail=0  (all cases SIMULATED — no live product transport)`.
-- Claim (4): HOLDS as a constraint — searched `dispatch.sh` for everything a run records (`say`
-  lines 163–167, 322, 358–359, 372, 380, 401 plus per-hop `$RUN_ID.hop$hop.$actor.out`). A run
-  records: run id, mode, task, checkout, state path, hop/timeout settings, allowlist, and per hop
-  the before/after sha256, `turn:`, HEAD, actor exit status, duration and transition verdict.
-  Nothing recorded speaks to concurrency, repeat reliability, production installation or unattended
-  operator-decision handling, so the README may not claim those.
+  dispatcher and asserts it fails), and restated in the final summary line. Re-ran it: exit 0,
+  `pass=33 fail=0  (all cases SIMULATED — no live product transport)`. The count moved 29 → 33
+  because cases 13 and 13b were added since the previous inspection.
+- Claim (4): HOLDS as a constraint — re-grepped `dispatch.sh` for everything a run records (`say`
+  at lines 167–171, 300, 311–312, 322, 326, 338, 345, 352–353, 363, 385–386, 399, 407, 432, plus
+  per-hop `$RUN_ID.hop$hop.$actor.out` at line 296). A run records: run id, mode, task, checkout,
+  state path, hop/timeout settings, allowlist, and per hop the before/after sha256, `turn:`, HEAD,
+  actor exit status, duration and transition verdict. Nothing recorded speaks to concurrency,
+  repeat reliability, production installation or unattended operator-decision handling, so the
+  README does not claim those.
 
-Incidental confirmation of live transport: a `--dry-run` aimed at this task exited 17 (`another
-dispatcher holds spike-live-transport`), i.e. this Claude process was itself launched by the live
-dispatcher run holding the lock.
+**One newly found defect, handled as a deferral rather than a hand-back — flagging the judgment
+for assessment.** `--help` prints the header with `sed -n '2,45p'` (line 93), so its output stops
+at line 45. It therefore omits exit code `25` (line 46) *and* the lines 48–49 note that qualifies
+exit `0`. Verified: the codes visible in `--help` output are `0 10 11 12 13 14 15 16 17 20 21 22
+23 24` — one short of the source's declared set. This is a second instance of exactly the class the
+brief already accepted for line 31: a stale documentation surface inside `dispatch.sh`, which this
+unit is forbidden to change. I surfaced it in the README instead of silently resolving it, and
+generated the README's exit-code table from the source header rather than from `--help`. If Codex
+judges this a "different material mismatch" under the brief's stop clause, this unit is the thing
+to reject.
 
-No repository change was made for this unit. `README.md` is still absent, nothing was staged before
-this commit, and no file the brief named was modified.
+Result: `plans/work-loop-v2-v0.2/handoff-automation-spike/README.md` created (185 lines) and
+committed. It covers the spike's purpose, `dispatch.sh` invocation with every option and default,
+the three run modes, the live launch commands, a worked example, all 15 declared exit codes with
+the modes each can be returned in, the exit-`0` mode distinction, the allowed turn transitions,
+`dispatch.test.sh` invocation and summary semantics, the safety boundaries, and a "what this does
+not establish" section. Both `dispatch.sh` source inconsistencies are surfaced in the README and
+marked as deferred fixes to an excluded file.
+
+Evidence:
+
+- **Absence before, content after.** Pre-creation `ls` on the exact path returned `No such file or
+  directory` (exit 1). Post-change the checker below reads the committed file back and matches 13
+  required content categories.
+- **Exit-code comparison, capable of failing.** A checker (kept in the session scratchpad, outside
+  the repo, so the unit's scope stays the one README file) extracts the declared set from
+  `dispatch.sh` lines 31–49 and the documented set from the README table and requires equality.
+  Failing case built first: run against a mutated copy of the README with code `25` deleted, a fake
+  code `99` inserted and one required sentence removed → `RESULT: FAIL`, rc=1, reporting
+  `omitted by README : 25` and `invented by README: 99`. Run against the real README → `RESULT:
+  PASS`, rc=0, with both sets printed identical:
+  `0 10 11 12 13 14 15 16 17 20 21 22 23 24 25`.
+- **Non-live verification commands from the README, actually run.** `bash dispatch.test.sh` → exit
+  0, `pass=33 fail=0  (all cases SIMULATED — no live product transport)`. `bash dispatch.sh --help`
+  → exit 0. This is simulated controller evidence only and is **not** a live-transport result.
+- **Paths changed and commit ownership.** One repository file changed for the unit:
+  `plans/work-loop-v2-v0.2/handoff-automation-spike/README.md`, in commit
+  `6de0bd2d574ab817e149022eb0b8cb4f0206f45c`. This state file is committed separately as protocol
+  work. Nothing was staged before either commit. `dispatch.sh`, `dispatch.test.sh`, `ps-sampler.sh`
+  and `logs/friction-log.md` were already modified or untracked in the working tree before this
+  unit began and were **not** touched, staged or committed by it.
 
 ## Blocker
 
-Claim (2) is false on the success condition.
-
-`dispatch.sh` line 31 states: `Exit codes — 0 is the ONLY success, and it means the loop reached
-turn: operator.` Two code paths exit 0 without the loop reaching `turn: operator`:
-
-- **`--dry-run`** (lines 324–329) — validates, reports the actor it *would* launch, launches
-  nothing, exits 0. Observed in a throwaway sandbox: a state file at `turn: codex` produced
-  `dry-run: would launch actor 'codex'` and `EXIT=0`, with the file still at `turn: codex`
-  afterwards.
-- **`-h|--help`** (line 89) — prints the usage block and exits 0. Observed: `HELP_EXIT=0`.
-
-Why this stops the unit rather than being written around: the brief requires the README to state
-what every declared exit code means and to describe only behaviour the scripts support. Exit 0 has
-one meaning in live/simulated mode and a different one in `--dry-run` and `--help`, while the header
-asserts a single meaning and marks it "ONLY". Documenting the header's version would be false for
-two real paths; documenting the observed version would contradict the file's own stated contract.
-Claim (2) instructs that a comment/behaviour mismatch is handed back rather than silently resolved,
-so it is handed back.
-
-The second horn matters for scope: if the comment is the intended contract and the code is what
-diverges, the correction lands in `dispatch.sh` — which this unit's scope expressly excludes.
-
-For completeness, the declared exit-code set itself is sound: every code in the header table
-(0, 10–17, 20–24) is reachable in the body, and every `exit`/`die` in the body uses a declared code.
-The mismatch is confined to what 0 *means*.
-
-Noticed and deliberately not done (candidate deferrals, not part of this unit):
-
-- The default `--allow-path` values (`^logs/work-loop/` and
-  `^plans/work-loop-v2-v0\.2/handoff-automation-spike/`, lines 100–102) are not stated in the usage
-  header, unlike the defaults for `--max-hops`, `--timeout`, `--codex-bin` and `--log-dir`. An
-  omission, not a contradiction — but the README would otherwise be the first place it is written
-  down.
-- `die 15 "cannot launch actor"` (line 315) reuses the BAD_TURN code for a case the table describes
-  as a bad `turn:` value; unreachable in practice, since `validate_state` already constrains the
-  domain.
+None.
 
 ## Next action
 
-Codex: decide how exit code 0 is to be documented, then reframe the unit.
-
-Either (a) the observed behaviour is correct and the README documents 0 as success with its three
-paths — loop reached `turn: operator`, `--dry-run` validated, `--help` — in which case say whether
-the stale header line at `dispatch.sh:31` is left alone or recorded as a deferral; or (b) the header
-is the intended contract, in which case the fix is in `dispatch.sh` and this unit's scope has to be
-reopened by the operator before any work proceeds.
+Codex: assess Unit 1. Two things need a verdict beyond the ordinary closure check — (a) whether
+routing the newly found `--help` truncation into a README disclosure plus a deferral was right, or
+whether it should have stopped the unit as a different material mismatch under the brief's stop
+clause; and (b) whether the two deferred `dispatch.sh` fixes (line 31's overbroad exit-`0`
+sentence, and widening the `--help` sed window past line 45) should be carried as a follow-up unit
+or left to the operator. Then close, correct once, or stop.
