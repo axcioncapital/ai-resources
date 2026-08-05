@@ -100,6 +100,7 @@ where the code's meaning actually differs.
 | `23` | `HOP_LIMIT` | loop only | `--max-hops` was reached with `turn:` still on an actor. |
 | `24` | `UNEXPECTED_EFFECT` | loop only | An actor changed paths outside the allowlist, or the Codex actor moved `HEAD`. |
 | `25` | `UNCOMMITTED_HANDBACK` | dry-run, loop | The state file is uncommitted where Claude should have committed it — either found that way at startup with `turn: codex`/`operator`, or left that way after a Claude hop. |
+| `26` | `MALFORMED_TERMINAL` | loop only | `turn: operator`, but the file is neither a core § 7 question (it has no `## Blocker` and no `## Next action`) nor a core § 4 closing record (its four headings, and nothing else, are not what survived). No actor is launched; the stop names a recoverable next action. |
 
 **Exit `0` means three different things depending on how you invoked the dispatcher:**
 
@@ -159,6 +160,7 @@ Cases 14–20 are the safety gates added on 2026-08-05:
 | `19` | A duplicate completion event relaunches nothing. |
 | `20` | A core § 7 operator question reaches `turn: operator`, is preserved in the file, is surfaced in the output, and is marked unanswered. |
 | `21` | `turn: operator` reached by a core § 4 **close** is announced as a close — not as an unanswered question above an empty block. |
+| `22` | A `turn: operator` file that is **neither** shape — a partial record, or one where an active field survived the reduction — stops `26` for inspection instead of being labelled closed. |
 
 Red-to-green for those seven, against the pre-change controller from `HEAD`:
 
@@ -167,8 +169,12 @@ DISPATCH_BIN=<pre-change dispatch.sh> bash dispatch.test.sh   →  pass=49 fail=
 bash dispatch.test.sh                                         →  pass=69 fail=0   (exit 0)
 ```
 
-Case `21` was added later, by the parallel proof below, and has its own red-to-green:
-`pass=71 fail=2` against the pre-correction controller, `pass=73 fail=0` after.
+Cases `21` and `22` were added later, by the parallel proof below, each with its own red-to-green:
+`21` — `pass=71 fail=2` against the pre-correction controller, `pass=73 fail=0` after.
+`22` — `pass=74 fail=4` against the controller that had `21` but not `22`, `pass=78 fail=0` after.
+`22` exists because `21`'s first fix was too generous: absence of `## Blocker` and `## Next action`
+is *necessary* for a closing record and not *sufficient*, so a hop that died mid-reduction was being
+announced as a clean close.
 
 **Live product evidence lives in `runs/`, never in this suite.** `runs/live-permission-denial-2026-08-05.md`
 records what the real binary does when it is refused permission — the half of safety cluster 1 no

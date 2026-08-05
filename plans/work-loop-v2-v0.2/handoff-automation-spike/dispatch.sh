@@ -46,6 +46,8 @@
 #   23  HOP_LIMIT
 #   24  UNEXPECTED_EFFECT      out-of-allowlist change, or Codex moved HEAD
 #   25  UNCOMMITTED_HANDBACK   Claude handed back without committing the state file
+#   26  MALFORMED_TERMINAL     turn: operator, but the file is neither a core § 7
+#                              question nor a core § 4 closing record
 #
 # Note that 0 is returned by --help and by a completed --dry-run too. Only in
 # loop mode does 0 additionally mean "reached turn: operator".
@@ -278,6 +280,25 @@ git_hazards() {
   return 0
 }
 
+# Is this file a core § 4 closing record? Read-only.
+#
+# The absence of ## Blocker and ## Next action is NECESSARY for a closing record
+# and nowhere near SUFFICIENT: a Claude hop that died after deleting the active
+# fields and before writing the record leaves a file with neither section and no
+# closing record either. Classifying that as "closed" is the seam this checks.
+#
+# What is enforced: the four core § 4 headings are all present, and NO other `## `
+# heading survives — the core's "exactly these four sections, nothing else
+# surviving". What is deliberately NOT enforced: their order, and their contents.
+# Order is presentational and the core states the rule as which headings exist;
+# contents are the actors' business, not the dispatcher's. Anything this does not
+# recognise stops for inspection rather than being labelled either way.
+closing_record_ok() {
+  local heads
+  heads="$(grep -E '^## ' "$STATE_FILE" 2>/dev/null | sed 's/[[:space:]]*$//' | sort -u)"
+  [ "$heads" = "$(printf '## Accepted limitations\n## Decisions that matter\n## Evidence\n## Outcome')" ]
+}
+
 # The state file's operator-facing content, for the stop message. Read-only.
 # Bounded so a long brief cannot flood the run log.
 operator_question() {
@@ -429,10 +450,16 @@ while :; do
       say "--- state file, as the actors left it ---"
       say "$op_q"
       say "--- end ---"
+    elif closing_record_ok; then
+      say "The task is CLOSED: the state file carries the core § 4 closing record and"
+      say "nothing else — ## Outcome, ## Decisions that matter, ## Evidence and"
+      say "## Accepted limitations. There is no unanswered question here."
+      say "The closing record is at $STATE_FILE."
     else
-      say "The task is CLOSED: the state file carries no ## Blocker and no ## Next action,"
-      say "which is what a core § 4 closing record looks like. There is no unanswered"
-      say "question here — the closing record is at $STATE_FILE."
+      # Neither shape. Saying "closed" here would be a guess dressed as a verdict,
+      # so the run stops visibly instead — still with no further actor launch,
+      # because turn: operator is terminal for automation whatever the file says.
+      die 26 "turn: operator, but $STATE_FILE is neither a core § 7 question (no ## Blocker, no ## Next action) nor a core § 4 closing record (its headings are: $(grep -E '^## ' "$STATE_FILE" 2>/dev/null | tr '\n' ' ' | sed 's/ *$//'))."$'\n'"Recoverable next action: read the file. If a hop died mid-write, restore or complete it, then re-run this dispatcher. No actor was launched."
     fi
     release_lock
     exit 0

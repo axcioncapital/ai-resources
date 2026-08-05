@@ -274,6 +274,31 @@ The two failures are exactly case 21's two new assertions. The previous 69 staye
 still points the suite at an absent dispatcher and asserts it fails, so a green run still means
 something.
 
+### The correction round — that first fix was too generous
+
+Codex's assessment froze one finding against it: announcing `CLOSED` on the mere *absence* of
+`## Blocker` and `## Next action` is a guess. Absence is **necessary** for a core § 4 closing record
+and nowhere near **sufficient** — a Claude hop that dies after deleting the active fields and before
+writing the record leaves a file with neither section and no closing record either, and the first
+fix labelled that a clean close. Reproduced before correcting: the committed controller announced
+"The task is CLOSED" over a file whose `## Outcome` was cut off mid-word, and exited `0`.
+
+`turn: operator` now resolves three ways, not two: a core § 7 question (unchanged), a verified core
+§ 4 closing record — all four headings present and **no other `## ` heading surviving** — or, for
+anything else, a new `26 MALFORMED_TERMINAL` stop that names a recoverable next action and launches
+nothing. Order and section contents are deliberately not enforced; the core states the rule as which
+headings exist, and contents are the actors' business.
+
+Second red-to-green, same harness:
+
+| Controller | Exit | Result |
+|---|---|---|
+| had case 21's fix, not case 22's | 1 | **`pass=74 fail=4`** |
+| corrected | 0 | **`pass=78 fail=0`** |
+
+The four failures are case 22's assertions: the partial record was labelled `CLOSED` at exit `0`,
+and so was a record where an active field survived the reduction. The 73 already green stayed green.
+
 ---
 
 ## 10. Changed paths in the real repository

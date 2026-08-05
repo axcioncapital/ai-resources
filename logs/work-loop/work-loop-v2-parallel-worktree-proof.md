@@ -271,7 +271,66 @@ should not have. The hook's three guards were then run retroactively against the
 commit **0**, so the skill validator was a no-op either way. Nothing was suppressed, but the check
 happened after the fact rather than before it.
 
-Deferrals noticed and not implemented (core § 5):
+---
+
+### Correction round (2026-08-05) — both frozen findings resolved
+
+**Reproduced first, both of them.**
+
+- **Finding 1 reproduces.** Ran the committed controller (`5452058`) against a hand-built
+  `turn: operator` file that is neither shape — `## Objective and scope` still present, `## Outcome`
+  cut off mid-word, no `## Blocker`, no `## Next action`. It printed "The task is **CLOSED**: the
+  state file carries no ## Blocker and no ## Next action" and exited `0`. A half-written file was
+  labelled a clean close, exactly as the finding says.
+- **Finding 2 reproduces.** `5452058` carries the bypass; `.git/hooks/pre-commit` exists and is the
+  only non-sample hook in the repository.
+
+**Corrected — exactly these two, nothing else.**
+
+1. `turn: operator` now resolves **three** ways instead of two. A core § 7 question is unchanged. A
+   close is announced only when `closing_record_ok()` verifies the core § 4 shape: all four
+   headings present and **no other `## ` heading surviving** — the core's "nothing else survives".
+   Anything else stops at the new `26 MALFORMED_TERMINAL`, naming a recoverable next action and
+   launching no actor. Order and section contents are deliberately **not** enforced, and the code
+   says why: the core states the rule as which headings exist, and contents belong to the actors.
+   Scope held — `operator_question()`, every other exit path and the state schema are untouched; no
+   general schema redesign, and the live two-worktree proof was not re-run.
+2. This correction was committed with the installed repository hook **active** — no `--no-verify`,
+   no `core.hooksPath` override. Its actual output is recorded below. The original bypass and its
+   retroactive guard results are retained above, verbatim, as a disclosed process limitation.
+
+Result: **both frozen findings are resolved, and the correction broke nothing.**
+
+Evidence:
+
+- **Red-to-green on finding 1, same harness, both directions.** Against the controller that had
+  case 21's fix but not case 22's (extracted from `5452058`): `DISPATCH_BIN=<pre> bash dispatch.test.sh`
+  → exit 1, **`pass=74 fail=4`**. Corrected: `bash dispatch.test.sh` → exit 0, **`pass=78 fail=0`**.
+  The four failures are exactly case 22's assertions.
+- **Case 22 is falsifiable in both of the finding's shapes**, not just the obvious one: a partial
+  record (active field surviving, truncated `## Outcome`) and a record whose four headings are all
+  present but joined by a fifth surviving section. The pre-correction controller labelled **both**
+  `CLOSED` at exit `0`; the corrected one stops `26` on both, launches nothing (`calls=0`), and
+  prints a recoverable next action.
+- **The 73 cases already green stayed green** — 73 → 78 with 5 added, 0 failures.
+- **The pre-commit hook ran on this commit.** Its output is recorded in the commit step below rather
+  than asserted.
+- **Changed paths in this round:** `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`,
+  `…/dispatch.test.sh`, `…/README.md`, `…/runs/parallel-worktree-proof-2026-08-05.md`, and this
+  state file. The parallel run's own evidence — overlap, routing, isolation, serial landing,
+  teardown, negative witnesses — is untouched, as the frozen scope required.
+
+Accepted limitation, carried forward at Codex's instruction rather than treated as a new correction:
+the sandbox **neutralised** `logs/friction-log.md` rather than solving it. This proof does not
+authorise real-repository parallelism until the operator chooses a production shared-writer and
+landing policy.
+
+Newly noticed during this round, recorded as a **candidate deferral, not implemented** (core § 5):
+`closing_record_ok()` accepts the four headings in any order. A closing record with the right
+headings in the wrong order is still accepted as closed. Enforcing order was judged presentational
+and outside the frozen finding, which named the *classification* seam.
+
+Deferrals from the unit, still not implemented (core § 5):
 
 - **The ambient shared writer is removed in the sandbox, unsolved in this repository.** A real
   worktree-parallel Work Loop here would have both loops mutating `logs/friction-log.md` in place
@@ -289,11 +348,41 @@ None.
 
 ## Next action
 
-Codex: assess. The unit's completion condition is met — two live dispatcher runs overlapped in
-separate linked worktrees for ≈182 measured seconds, both loops stayed routed and isolated through
-terminal operator stops, the integration target stayed clean until a successful serial landing, both
-results survived integration QC, teardown is complete, and the harness is green at `pass=73 fail=0`.
-One dispatcher defect was exposed by the proof and corrected in the smallest way, with a case that
-fails against the pre-correction controller. Two deferrals are recorded above rather than
-implemented. Judge whether this is good enough to proceed, or name frozen findings for one bounded
+Codex: run the closure check on the frozen findings only — are findings 1 and 2 resolved, and did
+the correction break something? Finding 1: `turn: operator` now requires the verified core § 4
+four-heading shape before announcing a close, and stops `26 MALFORMED_TERMINAL` otherwise, with case
+22 failing against the pre-correction controller (`pass=74 fail=4`) and passing after
+(`pass=78 fail=0`). Finding 2: this correction was committed with the repository's `pre-commit` hook
+active, its output recorded, and the original bypass retained as a disclosed process limitation.
+Nothing outside those two was changed; the parallel run's evidence is untouched. One newly noticed
+item — heading *order* is not enforced — is recorded above as a candidate deferral, not a second
 correction.
+
+---
+
+*The round this answered, kept for the record:*
+
+Correct once — frozen findings:
+
+1. **The new close message does not establish that the record is closed.** `dispatch.sh` currently
+   announces `CLOSED` whenever `operator_question()` returns no `## Blocker` or `## Next action`.
+   Absence of those two sections is necessary for a core § 4 closing record but is not sufficient:
+   a malformed or partial `turn: operator` file with neither section is now mislabelled as a valid
+   close. Correct only this classification seam. Before printing `CLOSED`, require the exact closed
+   four-section shape from core § 4; retain the existing unanswered-question behavior; otherwise
+   stop visibly for inspection without another actor launch. Add a falsifiable case showing the
+   present controller mislabels the malformed/partial operator record and the corrected controller
+   does not. Re-run the full focused harness. Do not rerun the live two-worktree proof and do not
+   broaden this into general state-schema redesign.
+2. **The unit commit bypassed the repository's pre-commit hook without authorization.** Do not
+   rewrite or hide that history. Commit this correction normally with the installed repository hook
+   active, record its actual result, and retain the original bypass plus the retroactive guard results
+   as a disclosed process limitation for the closing record. Do not use `--no-verify`,
+   `core.hooksPath=/dev/null`, or another hook bypass.
+
+The parallel result itself is accepted for this correction round: preserve the measured overlap,
+routing, isolation, serial landing, teardown and negative-witness evidence. Preserve as an accepted
+limitation—not a new correction—that the sandbox neutralized `logs/friction-log.md`; the proof does
+not authorize real repository parallelism until the operator chooses a production shared-writer and
+landing policy. On hand-back, the closure check will ask only whether findings 1–2 are resolved and
+whether their correction broke something.

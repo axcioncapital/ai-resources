@@ -509,6 +509,69 @@ printf '%s' "$OUT" | grep -q 'UNANSWERED' \
 printf '%s' "$OUT" | grep -q 'CLOSED' \
   && ok "the output names the close" || bad "the output names the close" "$OUT"
 
+# ================================================================= case 22
+# The classification seam case 21 opened. Absence of ## Blocker and ## Next action
+# is NECESSARY for a core § 4 closing record and not SUFFICIENT: a Claude hop that
+# died after deleting the active fields and before writing the record leaves a file
+# with neither section and no closing record either. Calling that "closed" is a
+# guess dressed as a verdict, so it must stop for inspection instead.
+echo
+echo "Case 22 — a malformed turn: operator record is NOT labelled closed"
+d="$(new_sandbox)"
+cat >"$d/logs/work-loop/partial-task.md" <<'EOF'
+---
+task: partial-task
+turn: operator
+---
+
+## Objective and scope
+A half-written file: the active fields are gone and the closing record was never
+finished. Neither a core § 7 question nor a core § 4 closing record.
+
+## Outcome
+Unit 1 pro
+EOF
+git -C "$d" add logs/work-loop/partial-task.md >/dev/null 2>&1
+git -C "$d" commit -qm "fixture: partial-task" >/dev/null 2>&1
+run_dispatch "$d" partial-task
+expect_rc 26 "$RC" "stops 26 on a turn: operator file that is neither shape" "$OUT"
+printf '%s' "$OUT" | grep -q 'CLOSED' \
+  && bad "a malformed record is not announced as closed" "it printed CLOSED for a partial file" \
+  || ok "a malformed record is not announced as closed"
+printf '%s' "$OUT" | grep -q 'Recoverable next action' \
+  && ok "the stop names a recoverable next action" || bad "the stop names a recoverable next action" "$OUT"
+[ "$(calls "$d")" = "0" ] && ok "no actor was launched on the malformed terminal record" \
+                          || bad "no actor was launched on the malformed terminal record" "calls=$(calls "$d")"
+
+# A closing record whose four headings are present but joined by a FIFTH surviving
+# section is also not a closing record — core § 4 says nothing else survives.
+d="$(new_sandbox)"
+cat >"$d/logs/work-loop/extra-task.md" <<'EOF'
+---
+task: extra-task
+turn: operator
+---
+
+## Outcome
+Done.
+
+## Decisions that matter
+None.
+
+## Evidence
+Commit deadbeef.
+
+## Accepted limitations
+None.
+
+## Objective and scope
+This active field should not have survived the reduction.
+EOF
+git -C "$d" add logs/work-loop/extra-task.md >/dev/null 2>&1
+git -C "$d" commit -qm "fixture: extra-task" >/dev/null 2>&1
+run_dispatch "$d" extra-task
+expect_rc 26 "$RC" "stops 26 when an active field survived the reduction" "$OUT"
+
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"
