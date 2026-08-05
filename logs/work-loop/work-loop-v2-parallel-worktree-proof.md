@@ -384,9 +384,20 @@ exactly as it is, unrewritten.
 
 **Correction to the previous round's wording.** That round wrote "the commit carrying this fix ran
 the same hook" *before* any such commit existed — a claim about the future stated in the past tense,
-which is the same defect as saying the output was "recorded below" and not recording it. The commit
-identifier is therefore not asserted here; it is written into this file by the follow-up commit that
-can actually observe it.
+which is the same defect as saying the output was "recorded below" and not recording it. So the
+commit identifier was not asserted in advance; it is recorded here by the follow-up commit that
+could actually observe it.
+
+**The commit carrying this final fix is `d8349b8`.** Four files, exactly the authorised set. The
+repository's `pre-commit` hook ran on it and printed, verbatim:
+
+```
+Running skill validation...
+No SKILL.md files in this commit. Skipping skill validation.
+```
+
+`git commit` exited `0`. This paragraph is itself carried by the follow-up commit, whose own
+identifier is bookkeeping and is not asserted anywhere — the regress stops here deliberately.
 
 **Operator-authorised override of the staging tripwire.** The commit was first blocked by
 `.claude/hooks/check-foreign-staging.sh`, which flagged `dispatch.sh`, `dispatch.test.sh` and
