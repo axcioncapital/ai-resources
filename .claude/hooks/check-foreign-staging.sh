@@ -702,7 +702,7 @@ if not candidates:
 # ---- Exempt-list ----
 EXEMPT_BASENAMES = {
     "session-notes.md", "decisions.md", "usage-log.md",
-    "improvement-log.md", "coaching-data.md",
+    "improvement-log.md", "coaching-data.md", "next-up.md",
 }
 # Write-once / append-only process-artifact directories (repo-relative prefixes).
 EXEMPT_DIR_PREFIXES = ("audits/risk-checks/", "audits/working/")
