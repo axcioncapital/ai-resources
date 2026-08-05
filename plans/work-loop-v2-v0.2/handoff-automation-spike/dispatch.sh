@@ -43,6 +43,10 @@
 #   22  NO_TRANSITION          state did not move in an allowed direction
 #   23  HOP_LIMIT
 #   24  UNEXPECTED_EFFECT      out-of-allowlist change, or Codex moved HEAD
+#   25  UNCOMMITTED_HANDBACK   Claude handed back without committing the state file
+#
+# Note that 0 is returned by --help and by a completed --dry-run too. Only in
+# loop mode does 0 additionally mean "reached turn: operator".
 
 set -uo pipefail
 
@@ -229,21 +233,40 @@ foreign_worktree() {
 
 staged_paths() { git -C "$CHECKOUT" diff --cached --name-only 2>/dev/null | sort; }
 
+# Is the state file itself uncommitted right now?
+#
+# This is deliberately asymmetric, because the two sides differ (core § 4):
+# Codex writes the file and never runs git, so an uncommitted file with
+# turn: claude is the *expected* handoff. Claude commits, so an uncommitted file
+# after a Claude hop means the hop died between editing and committing — the
+# partial-side-effect case the investigation says must stop for inspection
+# rather than be retried blind.
+state_dirty() {
+  [ -n "$(git -C "$CHECKOUT" status --porcelain -- "logs/work-loop/$TASK.md" 2>/dev/null)" ]
+}
+
 # -------------------------------------------------------------- actor launch
 
 # Wall-clock timeout without timeout(1) — not installed on this machine.
 # Runs the command in the background, polls, escalates TERM then KILL, and also
 # sweeps direct children so a wrapper does not strand the real process.
+#
+# The deadline is wall-clock, not a count of poll iterations. Counting
+# iterations drifts badly: each pass costs `sleep 1` PLUS the polling work, so
+# the counter runs slower than real time and the timeout silently becomes a
+# lower bound. The 2026-08-05 live run showed the size of that drift — a hop
+# logged duration=420s against a --timeout of 420 and still exited 0.
 run_bounded() { # timeout, logfile, cmd...
   local limit="$1"; shift
   local out="$1"; shift
-  local pid elapsed=0 rc
+  local pid start rc
 
   "$@" >>"$out" 2>&1 &
   pid=$!
+  start="$(date '+%s')"
 
   while kill -0 "$pid" 2>/dev/null; do
-    if [ "$elapsed" -ge "$limit" ]; then
+    if [ "$(( $(date '+%s') - start ))" -ge "$limit" ]; then
       pkill -TERM -P "$pid" 2>/dev/null
       kill -TERM "$pid" 2>/dev/null
       sleep 2
@@ -253,7 +276,6 @@ run_bounded() { # timeout, logfile, cmd...
       return 124
     fi
     sleep 1
-    elapsed=$((elapsed + 1))
   done
 
   wait "$pid"; rc=$?
@@ -321,6 +343,17 @@ launch_actor() { # actor -> exit status of the launch
 validate_state
 say "initial: turn=$ST_TURN sha256=$(file_hash "$STATE_FILE") head=$(git_head)"
 
+# Restart safety. Truth comes from the file and Git, never from an old in-memory
+# turn — this process has no memory beyond the task id it was given.
+if state_dirty; then
+  case "$ST_TURN" in
+    claude)
+      say "note: the state file is uncommitted with turn: claude — the expected Codex handoff (Codex never runs git)." ;;
+    codex|operator)
+      die 25 "the state file is uncommitted with turn: $ST_TURN — Claude commits, so a previous run died between editing and committing. Inspect before restarting." ;;
+  esac
+fi
+
 if [ "$DRY_RUN" -eq 1 ]; then
   say "dry-run: would launch actor '$ST_TURN' for task '$TASK'; launching nothing."
   [ "$ST_TURN" = "operator" ] && say "dry-run: turn is operator — automation is terminal here."
@@ -387,6 +420,10 @@ while :; do
 
   if [ "$before_turn" = "codex" ] && [ "$before_head" != "$after_head" ]; then
     die 24 "Codex moved HEAD ($before_head -> $after_head) — Codex never runs git (core § 4)"
+  fi
+
+  if [ "$before_turn" = "claude" ] && state_dirty; then
+    die 25 "Claude edited logs/work-loop/$TASK.md but left it uncommitted (hop $hop) — stopping for inspection rather than relaunching over a partial edit"
   fi
 
   if [ "$after_hash" = "$before_hash" ]; then

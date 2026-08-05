@@ -49,6 +49,12 @@ None.
 ## Next action
 Harness fixture. Nothing real depends on this file.
 EOF
+  # Fixtures are committed, so "the state file is uncommitted" means what it
+  # means in the live repo rather than being true of every fixture by default.
+  if git -C "$dir" rev-parse --git-dir >/dev/null 2>&1; then
+    git -C "$dir" add "logs/work-loop/$task.md" >/dev/null 2>&1
+    git -C "$dir" commit -qm "fixture: $task" >/dev/null 2>&1
+  fi
 }
 
 new_sandbox() { # -> path on stdout
@@ -70,8 +76,18 @@ new_sandbox() { # -> path on stdout
   printf '%s' "$d"
 }
 
+# A simulated Claude commits the state file, because the real one does (core § 4).
+# Appended to the actors below so the well-behaved cases are not tripped by the
+# uncommitted-handback guard, which case 13 exercises on its own.
+# `|| true` because these ping-pong actors sometimes flip the turn back to the
+# committed value, leaving nothing to stage. That is a fixture artifact, not a
+# failed commit — the dispatcher still sees a clean state file either way.
+COMMIT_IF_CLAUDE='; if [ "$WL_ACTOR" = "claude" ]; then
+        git -C "$WL_CHECKOUT" add "logs/work-loop/$WL_TASK.md" >/dev/null 2>&1;
+        git -C "$WL_CHECKOUT" commit -qm "actor commit" >/dev/null 2>&1 || true; fi'
+
 # Records which task an actor was invoked for, then flips the turn.
-FLIP='printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.calls";
+FLIP_BODY='printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.calls";
       t=$(awk "NR==3" "$WL_STATE_FILE");
       case "$t" in
         "turn: codex")  n="turn: claude" ;;
@@ -81,9 +97,11 @@ FLIP='printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.calls";
       awk -v n="$n" "NR==3{print n; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp";
       mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"'
 
+FLIP="$FLIP_BODY$COMMIT_IF_CLAUDE"
+
 FLIP_TO_OPERATOR='printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.calls";
       awk "NR==3{print \"turn: operator\"; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp";
-      mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"'
+      mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"'"$COMMIT_IF_CLAUDE"
 
 NOOP='printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.calls"; exit 0'
 
@@ -194,9 +212,20 @@ d="$(new_sandbox)"; state_file "$d" "fail-task" "codex"
 run_dispatch "$d" fail-task --actor-cmd 'exit 3'
 expect_rc 20 "$RC" "exits 20 when the actor exits non-zero" "$OUT"
 d="$(new_sandbox)"; state_file "$d" "slow-task" "codex"
+t0="$(date '+%s')"
 OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task slow-task --log-dir "$d/runs" \
        --timeout 3 --actor-cmd 'sleep 60' 2>&1)"; RC=$?
+took=$(( $(date '+%s') - t0 ))
 expect_rc 21 "$RC" "exits 21 when the actor exceeds the timeout" "$OUT"
+# Regression for the drift the 2026-08-05 live run exposed: the deadline used to
+# count poll iterations, so real elapsed time ran well past --timeout. 3s
+# requested + 2s TERM->KILL grace; anything at or beyond 20s means it is
+# counting loops again rather than the clock.
+if [ "$took" -lt 20 ]; then
+  ok "the timeout fired on wall-clock time (${took}s for a 3s deadline)"
+else
+  bad "the timeout fired on wall-clock time" "took ${took}s for a 3s deadline — the deadline is drifting"
+fi
 
 # ================================================================== case 8
 echo
@@ -238,7 +267,7 @@ TRIP='printf "%s:%s\n" "$WL_HOP" "$WL_ACTOR" >> "$WL_CHECKOUT.calls";
       if [ "$WL_HOP" -ge 3 ]; then n="turn: operator";
       elif [ "$WL_ACTOR" = "codex" ]; then n="turn: claude"; else n="turn: codex"; fi;
       awk -v n="$n" "NR==3{print n; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp";
-      mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"'
+      mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"'"$COMMIT_IF_CLAUDE"
 run_dispatch "$d" trip-task --max-hops 6 --actor-cmd "$TRIP"
 expect_rc 0 "$RC" "codex -> claude -> codex -> operator completes and exits 0" "$OUT"
 if [ "$(tr '\n' ' ' <"$d.calls")" = "1:codex 2:claude 3:codex " ]; then
@@ -260,6 +289,38 @@ sleep 2
 run_dispatch "$d" lock-task --actor-cmd "$FLIP"
 expect_rc 17 "$RC" "exits 17 while another dispatcher holds the task" "$OUT"
 wait "$outer" 2>/dev/null
+
+# ================================================================= case 13
+# Regression for the gap the 2026-08-05 live run exposed: a Claude hop killed
+# between editing and committing left a partial state file, and nothing stopped.
+echo
+echo "Case 13 — a Claude hop that edits but does not commit"
+d="$(new_sandbox)"; state_file "$d" "dirty-task" "claude"
+NO_COMMIT="$FLIP_BODY"   # deliberately WITHOUT COMMIT_IF_CLAUDE
+run_dispatch "$d" dirty-task --actor-cmd "$NO_COMMIT"
+expect_rc 25 "$RC" "exits 25 when Claude hands back without committing" "$OUT"
+
+echo
+echo "Case 13b — restart over a partial edit vs. the expected Codex handoff"
+d="$(new_sandbox)"; state_file "$d" "restart-task" "codex"
+# Claude's side of the seam: turn says codex, but the file is uncommitted, so a
+# previous Claude died mid-hop. Must stop for inspection.
+perl -pi -e 's/^turn: codex$/turn: codex/' "$d/logs/work-loop/restart-task.md"
+printf '\nleftover partial edit\n' >>"$d/logs/work-loop/restart-task.md"
+run_dispatch "$d" restart-task --actor-cmd "$FLIP"
+expect_rc 25 "$RC" "exits 25 restarting over an uncommitted turn: codex file" "$OUT"
+[ "$(calls "$d")" = "0" ] && ok "no actor launched over a partial edit" || bad "no actor launched over a partial edit"
+
+# Codex's side of the same seam: uncommitted with turn: claude is the expected
+# handoff, because Codex writes the file and never runs git. Must proceed.
+d="$(new_sandbox)"; state_file "$d" "handoff-task" "claude"
+printf '\nCodex just wrote this and cannot commit it.\n' >>"$d/logs/work-loop/handoff-task.md"
+run_dispatch "$d" handoff-task --max-hops 1 --actor-cmd "$FLIP"
+if [ "$RC" -eq 23 ] && [ "$(calls "$d")" = "1" ]; then
+  ok "an uncommitted turn: claude file is accepted as the Codex handoff and runs"
+else
+  bad "an uncommitted turn: claude file is accepted as the Codex handoff and runs" "rc=$RC calls=$(calls "$d")"
+fi
 
 # ==================================================================== done
 echo
