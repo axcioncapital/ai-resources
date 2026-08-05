@@ -483,6 +483,32 @@ printf '%s' "$OUT" | grep -q 'OPERATOR-Q7' \
 printf '%s' "$OUT" | grep -q 'UNANSWERED' \
   && ok "the output states that nobody answered it" || bad "the output states that nobody answered it"
 
+# ================================================================= case 21
+# Cluster 4, the other cause. turn: operator reached by a core § 4 CLOSE, which
+# deletes ## Blocker and ## Next action. The stop is still correct; the message
+# must not claim an unanswered question that the closing record does not contain.
+# Exposed live on 2026-08-05 by the two-worktree parallel proof: both tasks
+# closed, and both printed "The question below is UNANSWERED" above nothing.
+echo
+echo "Case 21 — turn: operator reached by a close is announced as a close, not as a question"
+d="$(new_sandbox)"; state_file "$d" "closed-task" "claude"
+CLOSE_TASK='printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.calls";
+      { printf -- "---\ntask: %s\nturn: operator\n---\n\n" "$WL_TASK";
+        printf "## Outcome\nUnit 1 done.\n\n";
+        printf "## Decisions that matter\nNone.\n\n";
+        printf "## Evidence\nCommit deadbeef.\n\n";
+        printf "## Accepted limitations\nNone.\n"; } > "$WL_STATE_FILE.tmp";
+      mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"'"$COMMIT_IF_CLAUDE"
+run_dispatch "$d" closed-task --actor-cmd "$CLOSE_TASK"
+expect_rc 0 "$RC" "stops at turn: operator on a close" "$OUT"
+[ "$(calls "$d")" = "1" ] && ok "zero further launches after the close" \
+                          || bad "zero further launches after the close" "calls=$(calls "$d")"
+printf '%s' "$OUT" | grep -q 'UNANSWERED' \
+  && bad "the output does not claim an unanswered question" "it printed UNANSWERED for a closed task" \
+  || ok "the output does not claim an unanswered question"
+printf '%s' "$OUT" | grep -q 'CLOSED' \
+  && ok "the output names the close" || bad "the output names the close" "$OUT"
+
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"

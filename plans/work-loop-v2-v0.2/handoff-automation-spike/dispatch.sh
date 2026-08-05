@@ -416,11 +416,24 @@ while :; do
 
   if [ "$ST_TURN" = "operator" ]; then
     say "hop=$hop turn=operator — stopping for the operator (core § 7). No further launches."
-    say "The question below is UNANSWERED. Neither model nor this dispatcher answered it,"
-    say "and nothing here is a decision — the operator owns it (core § 7)."
-    say "--- state file, as the actors left it ---"
-    say "$(operator_question)"
-    say "--- end ---"
+    # turn: operator has two causes and they are not the same message. A core § 7
+    # question leaves `## Blocker` / `## Next action` in place; a core § 4 close
+    # deletes them, so operator_question() comes back empty. Announcing an
+    # UNANSWERED question above an empty block asserts a question that does not
+    # exist — measured on the 2026-08-05 parallel proof, where both tasks reached
+    # turn: operator by closing.
+    op_q="$(operator_question)"
+    if [ -n "$op_q" ]; then
+      say "The question below is UNANSWERED. Neither model nor this dispatcher answered it,"
+      say "and nothing here is a decision — the operator owns it (core § 7)."
+      say "--- state file, as the actors left it ---"
+      say "$op_q"
+      say "--- end ---"
+    else
+      say "The task is CLOSED: the state file carries no ## Blocker and no ## Next action,"
+      say "which is what a core § 4 closing record looks like. There is no unanswered"
+      say "question here — the closing record is at $STATE_FILE."
+    fi
     release_lock
     exit 0
   fi

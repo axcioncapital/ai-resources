@@ -158,6 +158,7 @@ Cases 14–20 are the safety gates added on 2026-08-05:
 | `18` | `MERGE_HEAD`, `CHERRY_PICK_HEAD`, `REVERT_HEAD`, `rebase-merge/` and `rebase-apply/` each stop the run before any launch. |
 | `19` | A duplicate completion event relaunches nothing. |
 | `20` | A core § 7 operator question reaches `turn: operator`, is preserved in the file, is surfaced in the output, and is marked unanswered. |
+| `21` | `turn: operator` reached by a core § 4 **close** is announced as a close — not as an unanswered question above an empty block. |
 
 Red-to-green for those seven, against the pre-change controller from `HEAD`:
 
@@ -166,17 +167,32 @@ DISPATCH_BIN=<pre-change dispatch.sh> bash dispatch.test.sh   →  pass=49 fail=
 bash dispatch.test.sh                                         →  pass=69 fail=0   (exit 0)
 ```
 
+Case `21` was added later, by the parallel proof below, and has its own red-to-green:
+`pass=71 fail=2` against the pre-correction controller, `pass=73 fail=0` after.
+
 **Live product evidence lives in `runs/`, never in this suite.** `runs/live-permission-denial-2026-08-05.md`
 records what the real binary does when it is refused permission — the half of safety cluster 1 no
 controller test can establish — including one denial carried **through `dispatch.sh` itself**, with
 the dispatcher's own exit, launch count and before/after state hashes.
+`runs/parallel-worktree-proof-2026-08-05.md` records the two-worktree parallel run (§ below).
+
+## The parallel instruments
+
+Three scripts exist for the two-worktree proof and are not used by the single-checkout suite:
+
+| Script | What it does |
+|---|---|
+| `parallel-sampler.sh` | Samples the process table every 2 s, recording each dispatcher/actor's pid, ppid, routing argument and **kernel `cwd`** (via `lsof -a -d cwd`). Answers "did the runs genuinely overlap?" and "did each child live in the worktree it was routed to?" |
+| `parallel-isolation-check.sh` | Reads a finished run back and asserts nine isolation properties (A1–A9). Expectations are overridable so the checker can be made to fail on purpose — a checker nobody has seen fail is an untested instrument. |
+| `parallel-landing-qc.sh` | Both-sides-present integration QC after a serial landing (B1–B9): presence of each result and closing record first, conflict/`[IN FLIGHT]` sweeps second. |
 
 ---
 
 ## Safety boundaries
 
-- **One task, one checkout, serial.** Not multi-loop. Same-checkout concurrency is unsafe — see
-  `docs/parallel-sessions-playbook.md` § 4.
+- **One task, one checkout, serial — per dispatcher instance.** A single instance is never
+  multi-loop. Two *instances* in two linked worktrees were proven to overlap safely on 2026-08-05;
+  same-checkout concurrency is still unsafe — see `docs/parallel-sessions-playbook.md` § 4.
 - **The dispatcher never writes the state file.** Only the actors do. It reads, hashes and compares.
 - **A lock** keyed on `checkout|task` (a directory under `TMPDIR`) refuses a second dispatcher on the
   same pair.
@@ -221,8 +237,11 @@ verdict — plus one stdout capture per hop. That is the whole evidence base. No
   `--actor-cmd`. The suite proves controller logic only. A green suite is not a live run.
 - **Production readiness.** This is a throwaway spike in a `plans/` directory, deliberately not
   installed as a hook, command or service.
-- **Concurrency safety.** The lock is exercised for one checkout + task pair. Nothing here tests
-  parallel checkouts or parallel tasks.
+- **Concurrency safety beyond two isolated worktrees.** The lock is exercised for one checkout +
+  task pair. Two dispatchers in two *linked worktrees* were proven to overlap safely on 2026-08-05
+  (`runs/parallel-worktree-proof-2026-08-05.md`) — two tasks, one observation, fixture-sized units,
+  and both tasks created only new files. Same-checkout concurrency remains untested and unsafe, and
+  nothing here speaks to three or more loops.
 - **Repeat reliability.** One successful run is one observation. The run log records that run and
   nothing about the distribution of outcomes across runs.
 - **Unattended handling of operator decisions.** Reaching `turn: operator` is where the automation
