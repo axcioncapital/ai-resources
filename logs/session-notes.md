@@ -2,49 +2,6 @@
 
 > Archive: [session-notes-archive-2026-08.md](session-notes-archive-2026-08.md)
 
-## 2026-08-02 — Session S8-ff8
-
-**Mandate:** Run Claude's preparation half of Work Loop v2 Context Engineering S3 (Slice A) — re-check the brief's four premises against the live repository, build the disposable red evaluation root outside the shared checkout with the answer key scrubbed, and write the verbatim fresh-Codex red-evaluator prompt into the task-state file — done when: all four premises are checked with evidence recorded, the disposable red root exists outside the shared checkout with the answer key scrubbed, the red-evaluator prompt is written verbatim into the task-state file with `turn: operator` unchanged, and the work is committed.
-- Out of scope: running or judging either the red or the green evaluation; revising trials/candidate/SKILL.md; creating trials/slice-a-evidence.md; touching the live .agents/skills/work-loop-v2/SKILL.md, the executable core, commands or hooks; starting S3b; pushing
-- Files in scope: logs/work-loop/context-engineering-implementation.md, logs/session-notes.md
-- Stop if: any of the four premises is false, or the candidate is not byte-identical to the live skill
-- Allowed inputs: plans/work-loop-v2-v0.2/context-engineering/trials/, .agents/skills/work-loop-v2/SKILL.md, plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md, plans/work-loop-v2-v0.2/context-engineering/context-engineering-implementation-plan-v0.1.md, logs/improvement-log.md
-- Required outputs: one disposable red evaluation root outside the shared checkout with the answer key scrubbed, the verbatim red-evaluator prompt inside logs/work-loop/context-engineering-implementation.md
-- Mission: work-loop-v2-mvp
-
-**Work:** Work Loop v2 S3 (Slice A) — verify the brief's four premises and prepare the red evaluator run per Codex's brief
-
-### Summary
-Continued the same session past the original mandate's scope, inside the Work Loop v2 protocol: the
-task-state file (`logs/work-loop/context-engineering-implementation.md`) carried a Codex-authored brief
-for a bounded correction to the implementation plan, and the operator authorised a subsequent one-round
-scope widening. Ran three Claude turns of the loop — the initial bounded plan correction, a frozen
-four-passage correction round, and a final administrative fix recording the exact commit to reapprove —
-each verified by inspection before editing, committed separately, and handed back with `turn:` set to
-whoever owned the next move. The task now sits at `turn: operator`, waiting on the reapproval decision.
-
-### Decisions Made
-- **Operator authorised widening the plan-correction scope beyond the three originally named surfaces**,
-  accepting Codex's recommended option over declining and leaving the plan internally contradictory. Not
-  logged to `decisions.md` — routine within the Work Loop v2 protocol's own correction-round mechanism
-  (core §3), not a fresh scoping judgment outside it.
-- Claude's three turns each followed the executable core's Step 2→3/Step 5 and Correction-rounds paths
-  exactly: verify by inspection, edit only the named surfaces, write falsifiable evidence, flip `turn:`,
-  commit. No QC fixes this session — Codex's own closure checks served that role per the protocol.
-
-### Risky actions
-None. All three commits were plan/state-file edits verified byte-identical against their diff bounds
-before committing; no candidate, runtime, spec, command or hook file was touched at any point.
-
-### Next Steps
-Operator: give the reapproval sentence recorded in `## Next action` of the task-state file (binds to
-commit `e1ce895b3da1387bae7ce50623afc3875cb050ba`), or decline it. Reapproval does not authorise
-implementation — O-1 is still outstanding. Once resolved, the task returns to Codex to brief S3's next
-attempt.
-
-### Open Questions
-None.
-
 ## 2026-08-02 — Session S9-d4a
 **Mandate:** Run Claude's turn of Work Loop v2 Context Engineering per Codex's brief — verify the brief's premises, write the operator's exact content-bound reapproval into the implementation plan's approval header, update the task-state file to current truth, and hand back to Codex — done when: all premises are checked with recorded evidence, the plan header carries the exact reapproval statement plus commit `e1ce895b3da1387bae7ce50623afc3875cb050ba` and date 2026-08-02 with status restored to plan of record and the prior `cc635d4` approval retained, the task-state file records the reapproval and carries `turn: codex`, and plan and state are committed together.
 - Out of scope: the candidate revision; the green run; S3b; `trials/slice-a-evidence.md`; the corrected §4.4/Phase 2/S3 contract; the spec; the executable core; runtime files; fixtures; trial roots; actors; seed; counts; later phases; carried deferrals; the separately deferred stale O-1 header wording
@@ -640,3 +597,59 @@ Continuity detail: `logs/scratchpads/2026-08-04-17-30-scratchpad.md`.
 ### Open Questions
 Whether and when either follow-on (R-1/R-5 regression, or the S8b proof task) gets scheduled remains
 undecided. Nothing in this session commits to a timeline.
+
+## 2026-08-05 — Work Loop v2 handoff dispatcher: live Codex/Claude transport proven, then closed
+
+### Summary
+Ran two `/work-loop-v2` invocations against task `work-loop-v2-handoff-dispatcher`. Unit 1 built a
+throwaway task-scoped dispatcher spike (`plans/work-loop-v2-v0.2/handoff-automation-spike/`) that
+carries one exact Work Loop task through Codex and Claude non-interactive turns without an operator
+carrying the handoff, then executed a real live sequence: seven live actor launches, six completed
+allowed transitions, ending unattended at `turn: operator`. The loop's own safety rule fired live — a
+child Claude refused a brief resting on a false premise and handed back — and Codex's close token
+crossed the seam cleanly. Codex then assessed and closed the task; this session wrote and committed
+the closing record.
+
+### Decisions Made
+- **Task closed on Codex's verdict, not re-judged.** Per core § 3, closure is Codex's call; Claude's
+  role is to write and commit the closing record. Routine protocol decision, not logged separately to
+  `decisions.md`.
+- **Two dispatcher defects found by the live run were fixed and regression-tested within the unit**,
+  rather than merely noted: an uncommitted-handback gap (new exit code 25, asymmetric by actor) and a
+  timeout that counted poll iterations instead of wall-clock seconds. Both are now covered by new
+  harness cases (13, 13b, and the timeout case).
+- **Two stated deviations from the brief's literal isolation instruction**, both justified in the
+  state file rather than absorbed silently: the live fixture's state file at
+  `logs/work-loop/spike-live-transport.md` (outside the spike directory, because both entrypoints
+  resolve that path from the checkout root), and a live-run-only `--allow-path` for
+  `logs/friction-log.md` (a PostToolUse hook writes to it constantly; the dispatcher's built-in
+  allowlist is unchanged).
+
+### Risky actions
+None. No hook, daemon, settings file, schema, or production installation was touched. No permission
+was widened — the live `claude -p` launch used no `--dangerously-skip-permissions` and inherited the
+project's existing `defaultMode: bypassPermissions`. My own 10-minute foreground tool timeout killed
+one live Claude hop mid-run (SIGTERM, not a product failure); the dispatcher stopped correctly on it
+and the retry from disk succeeded.
+
+### Findings Declined
+- **Actor timeout counted poll iterations, not wall-clock seconds** (so `--timeout` silently became a
+  lower bound). Declined — already fixed within this session (measured against `date '+%s'` instead)
+  and regression-tested by `dispatch.test.sh`'s timeout case; no residual risk.
+- **A Claude hop killed between editing and committing left a partial state file with nothing
+  stopping.** Declined — already fixed within this session (new exit code 25, asymmetric by actor)
+  and regression-tested by harness cases 13/13b; no residual risk.
+- **`dispatch.sh --help` output is truncated** (`sed -n '2,45p'`), omitting exit code 25 and the
+  exit-`0` mode qualifier. Declined — cosmetic, already recorded as an accepted limitation in the
+  closed task's own record (`logs/work-loop/work-loop-v2-handoff-dispatcher.md`); the complete
+  exit-code set stays inspectable in the source and the README, so it carries no named consequence
+  beyond documentation completeness.
+
+### Next Steps
+Nothing is queued. The task is closed; its closing record names three deferred options (worktree-per-
+task spike for parallel loops, wider crash-recovery proof, production hook/daemon triggering) but none
+is scheduled. If a follow-on unit is wanted, start with `/work-loop-v2` against a newly opened task —
+the closed record itself stays read-only.
+
+### Open Questions
+None.

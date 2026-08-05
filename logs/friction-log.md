@@ -353,6 +353,42 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 16:28 — logs/session-notes.md
+- 16:25 — logs/scratchpads/2026-08-05-16-24-scratchpad.md
+- 16:23 — logs/work-loop/work-loop-v2-handoff-dispatcher.md
+- 15:58 — logs/work-loop/work-loop-v2-handoff-dispatcher.md
+- 15:57 — logs/work-loop/work-loop-v2-handoff-dispatcher.md
+- 15:56 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh
+- 15:56 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 15:55 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 15:55 — logs/work-loop/spike-live-transport.md
+- 15:52 — logs/work-loop/spike-live-transport.md
+- 15:52 — logs/work-loop/spike-live-transport.md
+- 15:51 — logs/work-loop/spike-live-transport.md
+- 15:50 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/8420e9c9-4d1f-4ce7-b85b-88e7435b40d3/scratchpad/check-readme.sh
+- 15:50 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/8420e9c9-4d1f-4ce7-b85b-88e7435b40d3/scratchpad/prove-check-fails.sh
+- 15:50 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/8420e9c9-4d1f-4ce7-b85b-88e7435b40d3/scratchpad/check-readme.sh
+- 15:50 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 15:47 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/8420e9c9-4d1f-4ce7-b85b-88e7435b40d3/scratchpad/verify-exit0.sh
+- 15:45 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh
+- 15:44 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/065078c7-7fa8-4ddb-9f7a-6739036a88ae/scratchpad/dbg2.sh
+- 15:43 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/065078c7-7fa8-4ddb-9f7a-6739036a88ae/scratchpad/dbg.sh
+- 15:42 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh
+- 15:42 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh
+- 15:42 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh
+- 15:41 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh
+- 15:41 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 15:41 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 15:41 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 15:41 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 15:41 — plans/work-loop-v2-v0.2/handoff-automation-spike/ps-sampler.sh
+- 15:39 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/96f27a85-e79f-4273-8d80-7336f14c28ba/scratchpad/verify-exit0.sh
+- 15:35 — logs/work-loop/spike-live-transport.md
+- 15:35 — logs/work-loop/spike-live-transport.md
+- 15:29 — plans/work-loop-v2-v0.2/handoff-automation-spike/ps-sampler.sh
+- 15:28 — logs/work-loop/spike-live-transport.md
+- 15:26 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh
+- 15:25 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
 - 18:49 — logs/session-notes.md
 - 18:45 — logs/session-notes.md
 - 18:45 — logs/session-notes.md

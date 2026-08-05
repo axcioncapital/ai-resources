@@ -1644,3 +1644,45 @@ Findings: 4 — queued 1 (severity: medium-high), declined 3. 1 + 3 = 4.
 
 ### Open Questions
 None.
+## 2026-08-02 — Session S8-ff8
+
+**Mandate:** Run Claude's preparation half of Work Loop v2 Context Engineering S3 (Slice A) — re-check the brief's four premises against the live repository, build the disposable red evaluation root outside the shared checkout with the answer key scrubbed, and write the verbatim fresh-Codex red-evaluator prompt into the task-state file — done when: all four premises are checked with evidence recorded, the disposable red root exists outside the shared checkout with the answer key scrubbed, the red-evaluator prompt is written verbatim into the task-state file with `turn: operator` unchanged, and the work is committed.
+- Out of scope: running or judging either the red or the green evaluation; revising trials/candidate/SKILL.md; creating trials/slice-a-evidence.md; touching the live .agents/skills/work-loop-v2/SKILL.md, the executable core, commands or hooks; starting S3b; pushing
+- Files in scope: logs/work-loop/context-engineering-implementation.md, logs/session-notes.md
+- Stop if: any of the four premises is false, or the candidate is not byte-identical to the live skill
+- Allowed inputs: plans/work-loop-v2-v0.2/context-engineering/trials/, .agents/skills/work-loop-v2/SKILL.md, plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md, plans/work-loop-v2-v0.2/context-engineering/context-engineering-implementation-plan-v0.1.md, logs/improvement-log.md
+- Required outputs: one disposable red evaluation root outside the shared checkout with the answer key scrubbed, the verbatim red-evaluator prompt inside logs/work-loop/context-engineering-implementation.md
+- Mission: work-loop-v2-mvp
+
+**Work:** Work Loop v2 S3 (Slice A) — verify the brief's four premises and prepare the red evaluator run per Codex's brief
+
+### Summary
+Continued the same session past the original mandate's scope, inside the Work Loop v2 protocol: the
+task-state file (`logs/work-loop/context-engineering-implementation.md`) carried a Codex-authored brief
+for a bounded correction to the implementation plan, and the operator authorised a subsequent one-round
+scope widening. Ran three Claude turns of the loop — the initial bounded plan correction, a frozen
+four-passage correction round, and a final administrative fix recording the exact commit to reapprove —
+each verified by inspection before editing, committed separately, and handed back with `turn:` set to
+whoever owned the next move. The task now sits at `turn: operator`, waiting on the reapproval decision.
+
+### Decisions Made
+- **Operator authorised widening the plan-correction scope beyond the three originally named surfaces**,
+  accepting Codex's recommended option over declining and leaving the plan internally contradictory. Not
+  logged to `decisions.md` — routine within the Work Loop v2 protocol's own correction-round mechanism
+  (core §3), not a fresh scoping judgment outside it.
+- Claude's three turns each followed the executable core's Step 2→3/Step 5 and Correction-rounds paths
+  exactly: verify by inspection, edit only the named surfaces, write falsifiable evidence, flip `turn:`,
+  commit. No QC fixes this session — Codex's own closure checks served that role per the protocol.
+
+### Risky actions
+None. All three commits were plan/state-file edits verified byte-identical against their diff bounds
+before committing; no candidate, runtime, spec, command or hook file was touched at any point.
+
+### Next Steps
+Operator: give the reapproval sentence recorded in `## Next action` of the task-state file (binds to
+commit `e1ce895b3da1387bae7ce50623afc3875cb050ba`), or decline it. Reapproval does not authorise
+implementation — O-1 is still outstanding. Once resolved, the task returns to Codex to brief S3's next
+attempt.
+
+### Open Questions
+None.
