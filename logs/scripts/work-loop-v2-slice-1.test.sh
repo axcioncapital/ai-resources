@@ -445,6 +445,7 @@ fixture-target-2.md fixture-target.md fixture-target-3.md fixture-continue.md \
 fixture-continue-opening.md fixture-continue-close.md \
 fixture-continue-correction.md fixture-continue-malformed.md \
 fixture-continue-unaccepted.md \
+fixture-mode-discovery.md fixture-mode-implementation.md fixture-mode-adoption.md \
 context-engineering-implementation.md context-engineering-implementation-plan.md \
 context-engineering-s7-regression.md \
 foreign-staging-target-repo.md"
@@ -1121,8 +1122,225 @@ check "ridx  the description still preserves Direct Work" \
 # stay within a stated ceiling. Both are cheap proxies for "names, not methods".
 check "ridx  ask-matt's prose was not copied into the skill" \
   "! grep -qi 'the route most work travels' '$RIDX_F' && ! grep -qi 'smart zone' '$RIDX_F'"
-check "ridx  the skill stays under its 320-line ceiling" \
-  "[ \"\$(wc -l < '$RIDX_F')\" -le 320 ]"
+# Ceiling raised 320 -> 340 by the mode-contract unit. It is an implementation
+# guard against the index turning into a catalogue, not operator authority: the
+# mode contract added the classification step, the three worked examples and the
+# scope note, taking the file 314 -> 331. The guard is kept and re-based, not
+# deleted — 340 leaves 9 lines of headroom, so the next addition still has to
+# justify itself rather than sliding under an open-ended limit.
+check "ridx  the skill stays under its 340-line ceiling" \
+  "[ \"\$(wc -l < '$RIDX_F')\" -le 340 ]"
+
+# =============================================================================
+# MODE CONTRACT — Unit 3 of work-loop-v2-intake-router
+# =============================================================================
+# Discovery / Implementation / Adoption, recorded inside `## Lane and unit`.
+#
+# What this block proves: the contract exists in one owner, both runtimes agree
+# with it, the state shape is exactly one legal mode in the right place, and a
+# recorded mode that CONTRADICTS its own completion condition is caught. What it
+# does not prove: that a fresh Codex session classifies a real request well. No
+# static check reaches that; the state file records the live proof still owed.
+#
+# The wrong-classification detector deliberately does NOT read the mode name out
+# of the prose. It derives the unit shape the COMPLETION CONDITION requires, then
+# compares that with the mode actually recorded. Keyword-matching the word
+# "discovery" would pass on a mislabelled file, which is the failure under test.
+MODE_D="logs/work-loop/fixture-mode-discovery.md"
+MODE_I="logs/work-loop/fixture-mode-implementation.md"
+MODE_A="logs/work-loop/fixture-mode-adoption.md"
+ALLOWED_MODES="Discovery Implementation Adoption"
+
+lane_of() { awk '/^## Lane and unit/{f=1;next} /^## /{f=0} f' "$1"; }
+# The RECORD is positional: core § 3 fixes the shape `Standard. <Mode> mode. Unit N — …`,
+# so the mode is read from the text BEFORE the unit marker. Reading the whole field
+# instead was wrong and the live state file proved it — Unit 3's own description
+# legitimately names all three modes in prose, and a whole-field scan counted them
+# as three records. Position is what distinguishes the record from prose about it.
+lane_head() { lane_of "$1" | tr '\n' ' ' | sed 's/ Unit .*//'; }
+# Every `<word> mode` token in the record position, deduplicated. Catches an
+# invented fourth mode as surely as a missing one — it does not look only for the three.
+modes_in_lane() { lane_head "$1" | grep -oE '[A-Za-z][A-Za-z-]* mode' | sed 's/ mode$//' | sort -u; }
+mode_of() { modes_in_lane "$1" | tr '\n' ' ' | sed 's/ $//'; }
+
+# --- the contract has ONE owner, and both runtimes defer to it ---------------
+mode_core() { awk '/^### The unit.s mode/{f=1;next} /^### /{f=0} f' "$CORE_F"; }
+check "mode  the core owns the mode contract as its own subsection" \
+  "[ -n \"\$(mode_core)\" ]"
+for m in Discovery Implementation Adoption; do
+  check "mode  the core defines $m" "mode_core | grep -q '$m'"
+done
+check "mode  the core binds mode to Lane and unit, adding no field" \
+  "grep -qE '^\| \`## Lane and unit\`' '$CORE_F' && grep -E '^\| \`## Lane and unit\`' '$CORE_F' | grep -qi 'mode'"
+check "mode  core § 5 pins Mode as vocabulary" \
+  "grep -q '| \*\*Mode\*\*' '$CORE_F'"
+check "mode  the core still allows exactly two lanes" \
+  "grep -q 'There is no third lane' '$CORE_F'"
+check "mode  the core still holds five active fields, not six" \
+  "[ \"\$(grep -cE '^\| \`## (Objective and scope|Lane and unit|Latest result|Blocker|Next action)\`' '$CORE_F')\" = 5 ]"
+# Mode must not become a heading or a frontmatter key anywhere.
+check "mode  no '## Mode' heading was invented in any artifact" \
+  "! grep -qE '^## Mode' '$CORE_F' '$SKILL_F' '$CMD_F'"
+check "mode  no 'mode:' frontmatter key was invented in any artifact" \
+  "! grep -qE '^mode:' '$CORE_F' '$SKILL_F' '$CMD_F'"
+
+# Each runtime carries its own half and links the rule, without copying it.
+check "mode  the Codex skill says when it classifies the mode" \
+  "grep -qi 'classify the mode' '$SKILL_F'"
+# Specific sentence, not the bare words "after" and "admission" — both already
+# appeared in the routing section before this unit, so the loose form passed red.
+check "mode  the skill classifies the mode only after owner and admission" \
+  "routing_res | grep -qiE 'classify the (unit.s )?mode' && \
+   routing_res | grep -qi 'only once admission has succeeded'"
+check "mode  the Claude command says what each mode requires of the evidence" \
+  "awk '/^## The unit.s mode/{f=1;next} /^## /{f=0} f' '$CMD_F' | grep -q ."
+# Flattened on both sides: the core hard-wraps its prose, so a plain grep for a
+# sentence that spans a line break finds nothing and the check passes for the
+# wrong reason. Same lesson as core_flat() above, re-learned here.
+flat_of() { tr '\n' ' ' < "$1"; }
+NOCOPY='is not a third lane, a new unit type, or a project phase'
+check "mode  neither runtime copies the core's mode definitions verbatim" \
+  "flat_of '$CORE_F' | grep -q '$NOCOPY' && \
+   ! flat_of '$SKILL_F' | grep -q '$NOCOPY' && \
+   ! flat_of '$CMD_F' | grep -q '$NOCOPY'"
+# Adoption must reuse the core's existing unit vocabulary, not invent a type.
+check "mode  Adoption is fitted to an existing unit kind, not a new one" \
+  "mode_core | grep -qi 'discovery unit' && ! grep -qi 'adoption unit' '$CORE_F' '$SKILL_F' '$CMD_F'"
+
+# --- no deferred-mode wording survives ---------------------------------------
+# Scoped to lines that mention mode AND a deferral word: "deferral" is legitimate
+# core § 5 vocabulary elsewhere, and courier mode is legitimately optional.
+deferred_mode_lines() {
+  grep -hiE '(unit.s )?mode' "$CORE_F" "$SKILL_F" "$CMD_F" \
+    | grep -viE 'courier mode' \
+    | grep -iE 'is a later unit|deliberately still unimplemented|not classified here|do not improvise it now|mode is deferred'
+}
+check "mode  no deferred-mode wording remains in any artifact" \
+  "[ -z \"\$(deferred_mode_lines)\" ]"
+check "mode  courier mode is disambiguated from the unit's mode" \
+  "grep -qi 'courier mode' '$SKILL_F' && mode_core | grep -qi 'courier'"
+
+# --- the three operator classification examples ------------------------------
+# Present as worked examples with the RIGHT mode attached, so a reader has a
+# calibration point rather than three abstract definitions.
+ex_block() { awk '/^### Classifying the mode/{f=1;next} /^### /{f=0} f' "$SKILL_F"; }
+check "mode  the skill carries the operator's worked examples" "[ -n \"\$(ex_block)\" ]"
+check "mode  Email OS classifies as Discovery" \
+  "ex_block | grep -i 'Email OS' | grep -q 'Discovery'"
+check "mode  a CRM correction classifies as Implementation" \
+  "ex_block | grep -i 'CRM correction' | grep -q 'Implementation'"
+check "mode  the CRM operating trial classifies as Adoption" \
+  "ex_block | grep -i 'CRM operating trial' | grep -q 'Adoption'"
+
+# --- state shape: exactly one legal mode, inside Lane and unit ---------------
+for f in "$MODE_D" "$MODE_I" "$MODE_A"; do
+  check "mode  fixture present: $f" "[ -f '$f' ]"
+done
+check "mode  the Discovery fixture records exactly Discovery" \
+  "[ \"\$(mode_of '$MODE_D')\" = Discovery ]"
+check "mode  the Implementation fixture records exactly Implementation" \
+  "[ \"\$(mode_of '$MODE_I')\" = Implementation ]"
+check "mode  the Adoption fixture records exactly Adoption" \
+  "[ \"\$(mode_of '$MODE_A')\" = Adoption ]"
+# Subshell: `check` evals in the current shell, so a bare `exit` here would kill
+# the harness mid-run — it did, twice, before this was caught.
+check "mode  every mode fixture carries task and turn frontmatter and nothing else" \
+  "( for f in '$MODE_D' '$MODE_I' '$MODE_A'; do \
+       [ \"\$(grep -cE '^(task|turn):' \"\$f\")\" = 2 ] || exit 1; \
+       [ \"\$(grep -cE '^[a-z-]+:' \"\$f\")\" = 2 ] || exit 1; done )"
+check "mode  the live task's own state file records exactly one legal mode" \
+  "[ \"\$(mode_of 'logs/work-loop/work-loop-v2-intake-router.md')\" = Implementation ]"
+
+# The four state-file failing cases, DERIVED from the valid fixture so they
+# cannot drift away from it and the live fixtures are never doctored.
+derive_mode() {  # $1 = sed expression applied to the Discovery fixture
+  local t; t=$(mktemp) || return 1
+  sed -E "$1" "$MODE_D" > "$t"; echo "$t"
+}
+T_MISSING=$(derive_mode 's/Discovery mode\. //')
+T_TWO=$(derive_mode 's/Discovery mode\./Discovery mode. Adoption mode./')
+T_UNKNOWN=$(derive_mode 's/Discovery mode/Exploration mode/')
+# Conjoined with fixture presence: on a missing fixture the derivation yields an
+# empty file and this passes for the wrong reason. It did, on the red run.
+check "mode  a state file with NO mode is rejected" \
+  "[ -f '$MODE_D' ] && [ -z \"\$(mode_of \"\$T_MISSING\")\" ]"
+check "mode  a state file with TWO modes is rejected" \
+  "[ \"\$(modes_in_lane \"\$T_TWO\" | wc -l | tr -d ' ')\" -gt 1 ]"
+check "mode  an unknown mode is rejected, not silently accepted" \
+  "[ \"\$(mode_of \"\$T_UNKNOWN\")\" = Exploration ] && \
+   ! printf '%s\n' \$ALLOWED_MODES | grep -qx \"\$(mode_of \"\$T_UNKNOWN\")\""
+check "mode  the valid fixture is a legal mode — the control for the three above" \
+  "printf '%s\n' \$ALLOWED_MODES | grep -qx \"\$(mode_of '$MODE_D')\""
+
+# --- wrong classification: the mode contradicts its own completion condition --
+# required_shape() reads ONLY the completion condition and never the mode name.
+# The whole Completion PARAGRAPH, not its first physical line: these documents
+# hard-wrap, so a line-scoped read silently truncated the condition and every
+# classification came back UNDETERMINED.
+completion_of() {
+  awk '/^## Brief/{f=1;next} /^## /{f=0} f' "$1" \
+    | awk '/^Completion:/{p=1} p{ if ($0 ~ /^[[:space:]]*$/) exit; print }'
+}
+required_shape() {
+  local c no_impl impl lifecycle back
+  # Flattened: the condition is one sentence to a reader but several physical
+  # lines in the file, and every phrase below can straddle a break.
+  c=$(completion_of "$1" | tr '\n' ' ')
+  [ -n "$c" ] || { echo NOCOMPLETION; return; }
+  no_impl=$(printf '%s' "$c"   | grep -ci 'do not implement\|without implementing')
+  back=$(printf '%s' "$c"      | grep -ci 'hand back\|return the evidence')
+  impl=$(printf '%s' "$c"      | grep -ci 'implemented result\|implement the unit')
+  lifecycle=$(printf '%s' "$c" | grep -ci 'adopt, revise, continue the trial or stop')
+  if   [ "$lifecycle" -gt 0 ] && [ "$no_impl" -gt 0 ]; then echo Adoption
+  elif [ "$no_impl" -gt 0 ] && [ "$back" -gt 0 ];      then echo Discovery
+  elif [ "$impl" -gt 0 ] && [ "$no_impl" -eq 0 ];      then echo Implementation
+  else echo UNDETERMINED; fi
+}
+mode_agrees() { [ "$(required_shape "$1")" = "$(mode_of "$1")" ]; }
+
+check "mode  the Discovery fixture's completion condition agrees with its mode" \
+  "mode_agrees '$MODE_D'"
+check "mode  the Implementation fixture's completion condition agrees with its mode" \
+  "mode_agrees '$MODE_I'"
+check "mode  the Adoption fixture's completion condition agrees with its mode" \
+  "mode_agrees '$MODE_A'"
+# The three wrong-classification cases: relabel each fixture with a mode its own
+# completion condition does not support. Derived, so the fixtures stay clean.
+relabel() {
+  local t; t=$(mktemp) || return 1
+  sed -E "s/(Discovery|Implementation|Adoption) mode/$2 mode/" "$1" > "$t"; echo "$t"
+}
+W_D=$(relabel "$MODE_D" Implementation)
+W_I=$(relabel "$MODE_I" Discovery)
+W_A=$(relabel "$MODE_A" Implementation)
+check "mode  a Discovery unit mislabelled Implementation is caught" \
+  "[ \"\$(required_shape \"\$W_D\")\" = Discovery ] && ! mode_agrees \"\$W_D\""
+check "mode  an Implementation unit mislabelled Discovery is caught" \
+  "[ \"\$(required_shape \"\$W_I\")\" = Implementation ] && ! mode_agrees \"\$W_I\""
+check "mode  an Adoption unit mislabelled Implementation is caught" \
+  "[ \"\$(required_shape \"\$W_A\")\" = Adoption ] && ! mode_agrees \"\$W_A\""
+# Discrimination: the detector must distinguish the three, not reject everything.
+check "mode  required_shape discriminates all three, not blanket-rejects" \
+  "[ \"\$(for f in '$MODE_D' '$MODE_I' '$MODE_A'; do required_shape \"\$f\"; done | sort -u | wc -l | tr -d ' ')\" = 3 ]"
+
+# --- what each mode requires of the evidence ---------------------------------
+check "mode  Discovery evidence resolves a question without implementing the target" \
+  "mode_core | grep -qi 'resolves the named question' && mode_core | grep -qi 'not implement'"
+check "mode  Implementation evidence covers failing case, result and regression" \
+  "mode_core | grep -qi 'failing case' && mode_core | grep -qi 'regression'"
+check "mode  Implementation does not demand ceremonial tests where none apply" \
+  "mode_core | grep -qi 'say so' || mode_core | grep -qi 'no meaningful regression'"
+for term in 'reliability' 'burden' 'failure conditions' 'usefulness'; do
+  check "mode  Adoption evidence covers $term" "mode_core | grep -qi '$term'"
+done
+check "mode  Adoption ends in an explicit lifecycle decision" \
+  "mode_core | grep -qi 'adopt, revise, continue the trial or stop'"
+
+# --- mode never attaches to Direct Work or a specialist flow -----------------
+check "mode  Direct Work and specialist-owned work gain no mode record" \
+  "mode_core | grep -qi 'Direct Work' && mode_core | grep -qi 'specialist'"
+
+rm -f "$T_MISSING" "$T_TWO" "$T_UNKNOWN" "$W_D" "$W_I" "$W_A"
 
 # --- v1 isolation: logs/loop/ must gain nothing (slice plan 1.1) ------------
 check "v1    no Slice 1, 2 or 3 artifact leaked into logs/loop/" \

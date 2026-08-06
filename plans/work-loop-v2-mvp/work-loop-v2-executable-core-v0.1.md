@@ -92,6 +92,53 @@ A task usually takes several units.
    not restrict Codex's verdict — Codex closes, Claude writes and commits the closing record.
 6. **Close, continue, correct once, or stop.**
 
+### The unit's mode
+
+Every open **Standard** unit is in exactly one of three modes, recorded inside `## Lane and unit`
+beside the lane and the unit. Mode classifies the unit that is already open: it **is not a third
+lane, a new unit type, or a project phase**, and it adds no field, heading or frontmatter key to
+§ 4's state file. Direct Work opens no state file and specialist-owned work stays outside the loop,
+so neither carries a mode. (Nothing to do with the **courier** of § 4, which is transport, not work.)
+
+**The three are not a sequence.** They are not stages a task passes through, and there is no order
+to work down. Each unit is classified on its own, from what is uncertain *now*: a task may run every
+unit in one mode and never touch the other two, and a later unit may return to a mode an earlier one
+already used. Reading the table below as a pipeline — discover, then implement, then adopt — is the
+misreading it most invites, and it would turn mode into the project phase model this section just
+said it is not.
+
+**Where the record sits.** Write it as the second sentence of `## Lane and unit`, before the unit:
+
+```
+Standard. Implementation mode. Unit 3 — {what this unit does}.
+```
+
+The position is what makes it a record rather than prose. A unit whose *subject* is modes will name
+all three further down that field, and a reader that scanned the whole field would count three
+records where there is one.
+
+Each mode binds to a unit kind step 4 already defines, so no new kind is invented:
+
+| Mode | Use it when | Unit kind | The evidence must |
+|---|---|---|---|
+| **Discovery** | the problem, requirement, ownership boundary or solution is still uncertain | discovery unit | resolves the named question by inspection, comparison, research or experiment — and does **not implement** the eventual target |
+| **Implementation** | objective, authority and boundaries are settled enough to build | execution brief | show the **failing case**, the implemented result, and the regression protection relevant to the change |
+| **Adoption** | the capability already exists and the question is whether it enters normal operations | discovery unit | cover real or representative operation, reliability, operator burden, failure conditions and usefulness, and end in an explicit lifecycle decision: **adopt, revise, continue the trial or stop** |
+
+Three rules keep that honest:
+
+- **Implementation does not demand ceremonial tests.** Where a change has no meaningful regression
+  check, say so and say why, rather than inventing one that cannot fail (§ 6 rule 5).
+- **Adoption asks about operation; it is not a licence to build.** Its named unknown is whether the
+  capability should enter normal operations. Where a trial needs the capability actually operated,
+  that operating is separate work — Direct Work, a specialist flow, or its own unit — and the unit
+  in Adoption mode reads the evidence it produced. It changes nothing beyond the state file, exactly
+  as step 4 requires of any discovery unit. This is what lets Adoption exist without a new unit kind.
+- **The mode must match the unit's own completion condition.** A unit recorded as Implementation
+  whose completion condition asks only for evidence and a hand-back is misclassified, and so is a
+  unit recorded as Discovery whose completion condition asks for a built result. The completion
+  condition settles it, not the label.
+
 ### The "good enough, proceed" judgment
 
 At assessment, Codex's job is the executive call — *is this good enough to move on?* — not finding
@@ -245,7 +292,7 @@ consumer reads them literally, so a file written under different headings is mal
 | Field heading (exact) | What it holds |
 |---|---|
 | `## Objective and scope` | What is being achieved, and the agreed boundary |
-| `## Lane and unit` | Direct or Standard, which unit is open, and the named reason for the loop (§ 2) |
+| `## Lane and unit` | Direct or Standard, which unit is open, its mode (§ 3), and the named reason for the loop (§ 2) |
 | `## Latest result` | What actually happened last — not a history |
 | `## Blocker` | What is in the way, or `None.` |
 | `## Next action` | The single next thing |
@@ -358,6 +405,7 @@ file, not "review round" for correction.
 | **Discovery unit** | A unit whose deliverable is evidence about a named unknown, not a change. It ends in a hand-back for reframing or stopping — never in implementing the eventual target. |
 | **State file** | The single file holding the task's current truth. § 4. |
 | **Lane** | How work is handled: Direct or Standard. |
+| **Mode** | Which of three kinds an open Standard unit is: Discovery, Implementation or Adoption. § 3. |
 | **Correction** | One bounded round of fixes, frozen to the findings the assessment named. |
 | **Evidence** | What shows the result is real. It must be capable of showing that it is not. |
 | **Deferral** | A good idea, recorded and not done now, with the reason. |

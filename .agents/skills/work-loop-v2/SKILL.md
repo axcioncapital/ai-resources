@@ -75,9 +75,10 @@ The operator describes what they want in ordinary language and rarely names a ca
 1. **Interpret the desired outcome and its object** — what should be different afterwards, and to what. Not the remedy they proposed; the outcome behind it.
 2. **Choose one owner** from the index below — the single capability whose purpose covers that outcome.
 3. **If the Work Loop is the owner**, apply the Direct-versus-Standard admission test (Admission below). Where any other capability owns it, admission does not arise.
-4. **If the loop admitted it**, choose the bounded unit and write the brief.
+4. **Classify the mode** — Discovery, Implementation or Adoption — **only once admission has succeeded**, and record it inside `## Lane and unit`. Core § 3 *The unit's mode* defines the three and what each requires of the evidence.
+5. **Choose the bounded unit** and write the brief.
 
-The unit's **mode** — Discovery, Implementation or Adoption — is not classified here. That contract is a later unit; do not improvise it now.
+Mode belongs to an admitted Work Loop unit and to nothing else: a request routed to the operator, to a specialist owner, or to Direct Work never acquires one. It is also not the **courier** mode of core § 4, which is transport.
 
 **Who owns the next move** has three kinds of answer:
 
@@ -86,6 +87,20 @@ The unit's **mode** — Discovery, Implementation or Adoption — is not classif
 - **The Work Loop** — bounded repository work no specialist owns. Take it through Admission below as one unit, and classify it in the core's own terms (core § 3 step 4): an **execution brief** when what advances the project is a change, a **discovery unit** when it is evidence about a named unknown. Operating evidence from real use is a discovery unit whose named unknown is how the capability behaves in use — never a new unit type.
 
 **"Continue this project" is one intake case, not a second router.** Its object is the project's own next move, so read the project's governing workflow and authoritative current state, find the nearest unmet exit condition in the project's own terms, and route that. Map the project's position using its own phase model and vocabulary. Never rename its phases, and never create a document, list or state entry to hold the mapping — the routing is a judgment made fresh from the durable sources each time. Only where a project has no phase model at all, orient with this fallback spine, as a diagnostic and nothing more: frame the need → resolve blocking uncertainty → choose the intervention → shape the pilot → deliver → test in real use → adopt, revise or stop. It creates no states to traverse, no artifacts, and no exit conditions of its own.
+
+### Classifying the mode
+
+Core § 3 owns the definitions. What decides it in practice is **what is still uncertain**, not the size of the work or how far the project has got. Three worked cases, calibrated by the operator:
+
+| Case | Mode | Because |
+|---|---|---|
+| Email OS — the shape of the thing is not settled yet | **Discovery** | the requirement and the ownership boundary are the unknowns; evidence has to resolve them before anything is built |
+| A CRM correction — a known defect in a known place | **Implementation** | objective, authority and boundary are settled; what remains is to build it and show it works |
+| The CRM operating trial — it exists, is it good enough to keep | **Adoption** | the capability is already there; the unknown is whether it enters normal operations, and the answer is a lifecycle decision |
+
+The trap the middle row sets: a large or important change is still **Implementation** where nothing about it is uncertain, and a small one is still **Discovery** where something load-bearing is. Read the uncertainty, not the size.
+
+Write the mode into `## Lane and unit` and make the brief's completion condition agree with it. A brief recorded as Implementation whose completion condition asks only for evidence and a hand-back is misclassified, and Claude is entitled to hand it back as a false premise.
 
 ### What an intake result contains
 
@@ -309,6 +324,8 @@ Context Engineering is live in the sections above, and governs how you prepare t
 
 The project-progression change (2026-08-06) adds the Routing section above and the core's fourth assessment outcome, Continue.
 
-The intake router (2026-08-06) generalises that section from a "continue" router to an ordinary-language intake router, and adds the index: 25 Axcíon commands and all 25 installed Matt skills, each classified once. The unit's **mode** — Discovery, Implementation or Adoption — is deliberately still unimplemented and is a later unit; nothing above classifies it.
+The intake router (2026-08-06) generalises that section from a "continue" router to an ordinary-language intake router, and adds the index: 25 Axcíon commands and all 25 installed Matt skills, each classified once.
+
+The mode contract (2026-08-06) makes Discovery, Implementation and Adoption operational. Core § 3 *The unit's mode* owns the definitions; you classify at routing step 4 and record the mode inside `## Lane and unit`. No state field, lane, unit kind or project phase was added.
 
 Courier mode (2026-08-06) adds the one approved way to carry the turn yourself, under core § 4's courier clause. It is optional, off unless the operator approves it, and transport only — it changes nothing about what you frame, what you assess, or what Claude does.

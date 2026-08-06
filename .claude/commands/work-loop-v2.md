@@ -12,7 +12,7 @@ Input: `$ARGUMENTS` — a task id, or empty to use the only state file whose `tu
 
 This command is not a session lifecycle command. It does not invoke `/prime`, `/session-start` or `/session-plan`.
 
-**Scope of this version — Slices 1–3, Claude side.** Behaviours 1.2, 1.3, the fresh-session pickup (2.1), file-identity rejection (2.2), Claude's half of the bounded correction (2.3, 2.4 — the Correction rounds section below), and admission discipline: the admission test (Admission below), de-escalation (De-escalating below), and mid-unit deferrals (Step 4).
+**Scope of this version — Slices 1–3, Claude side.** Behaviours 1.2, 1.3, the fresh-session pickup (2.1), file-identity rejection (2.2), Claude's half of the bounded correction (2.3, 2.4 — the Correction rounds section below), and admission discipline: the admission test (Admission below), de-escalation (De-escalating below), and mid-unit deferrals (Step 4). Plus the unit's mode (2026-08-06 — The unit's mode below), which Codex classifies and you execute against.
 
 Context Engineering is live on the Codex side. This command **consumes** the engineered brief — checking its claims against the repository and acting on it — and never performs Codex's preparation, authority or selection judgments itself.
 
@@ -80,6 +80,16 @@ Stay inside `## Objective and scope`. A change that would touch anything the sco
 **An adjacent improvement noticed mid-unit is a deferral, not work** (core § 5). Record it in the hand-back in plain words — what it is, and why it is not being done now — and leave it unimplemented. A deferral that is neither recorded nor implemented has silently disappeared, which is the failure.
 
 **A discovery unit is inspected, not implemented** (core § 3 step 4). When the brief's completion condition is to establish and return evidence about a named unknown rather than to change the repository, the unit's work is the inspection itself: examine the named surfaces, and write what was found into `## Latest result` with evidence that could have read differently (core § 6 rules 3 and 5). The inspection record still appears even when such a brief pre-states few or no claims — the discovery's own findings are the record. Then hand back under Step 5 for Codex to reframe or stop. Do not implement the eventual target, and do not treat the returned evidence as permission to proceed with it.
+
+## The unit's mode
+
+Core § 3 *The unit's mode* owns the three modes and what each requires. `## Lane and unit` records which one is open. This is what each changes for you:
+
+- **Discovery** — inspect, do not implement. Step 4's discovery-unit rule already describes the work; the mode is what tells you in advance that it applies.
+- **Implementation** — build it, and return the failing case, the implemented result, and the regression protection relevant to the change. Where no meaningful regression check exists, say so and say why, rather than inventing one that cannot fail (core § 6 rule 5).
+- **Adoption** — the capability already exists. Return evidence about how it behaves in operation — reliability, operator burden, failure conditions, usefulness — and end with the lifecycle decision the brief asks for. Do not build the eventual target, and do not read operating evidence as permission to proceed with it.
+
+**A mode that disagrees with the brief's own completion condition is a false premise** — hand back under Step 3. A unit recorded as Implementation whose completion condition asks only for evidence and a hand-back has not been classified; it has been mislabelled, and building from it is the error the check exists to prevent.
 
 ## De-escalating — when the work turns out smaller
 
