@@ -783,8 +783,14 @@ run (271/2 → 275/2, both remaining failures pre-existing and unrelated).
 Skipped (not requested).
 
 ### Next Steps
-- Whose move: `turn: codex` — Codex runs the closure check on the Unit 3 correction just handed
-  back (commit `a963360`). Next Claude action is `/work-loop-v2` once `turn:` flips back.
+- **Update mid-wrap:** while this wrap was in progress, Codex's closure check on the Unit 3
+  correction (`a963360`) found that my own correction had accidentally merged the
+  `## Latest result` heading into the Brief's Completion sentence. Codex wrote the exact
+  structural repair into the working tree (core § 3's "final tightly-bounded fix" menu option)
+  and handed back with `turn: claude`. Verified the repair (one each of the five headings intact,
+  Completion sentence complete) and committed it separately from this wrap, `f6acf26`. Whose move
+  now: `turn: codex` — Codex runs the final-fix closure check. Next Claude action is
+  `/work-loop-v2` once `turn:` flips back.
 - The task's exit condition still needs a fresh natural-language routing proof: one live Codex
   session routing a request to a Claude-side-only Matt skill, one live Codex session correctly
   classifying an Adoption-mode request. No static check can produce this.
