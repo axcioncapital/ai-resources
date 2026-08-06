@@ -2,13 +2,6 @@
 
 > Archive: [session-notes-archive-2026-08.md](session-notes-archive-2026-08.md)
 
-## 2026-08-03 — Session S3-018
-
-**Work:** Work Loop v2 — build the four missing grouped-regression cases for the Context Engineering S7 instrument
-- Files in scope: logs/work-loop/context-engineering-s7-regression.md, logs/scripts/work-loop-v2-slice-1.test.sh, logs/session-notes.md, logs/friction-log.md
-- Required outputs: plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-1/, plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-3/, plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-4/, plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-5/
-- Mission: work-loop-v2-mvp
-
 ## 2026-08-04 — Session S3-018 (continued)
 
 **Work:** Work Loop v2 Context Engineering S7 — grouped-regression instrument built, corrected, accepted, run declined and task closed
@@ -643,3 +636,60 @@ Feedback collection skipped (not requested).
 
 ### Open Questions
 None.
+
+## 2026-08-06 — Session S2-2de
+**Mandate:** Evaluate the project-progression-protocol original proposal against the live Work Loop v2 system and deliver a chat-only recommendation — done when: the recommendation with all seven components (verdict, reasoning, minimum scope, non-goals, affected seams, two-month trial approach, operator decisions) is delivered in chat
+- Out of scope: implementation or any repo file change this pass; a competing universal project lifecycle; duplicating specialist workflows, reviews, or project-state systems; mandatory artifacts, checklists, scoring, or calendar gates; the multi-unit Continue ambiguity (separate track); running the investigation under Work Loop v2 itself
+- Files in scope: (investigation itself touched no repo file — deliverable is a chat recommendation. Wrap-time footprint, added at close: logs/session-notes.md, logs/session-notes-archive-2026-08.md, logs/decisions.md, logs/friction-log.md, logs/session-plan-2026-08-06-S2-2de.md, logs/runs/2026-08-06-S2-2de.json)
+- Stop if: the evaluation cannot proceed without a repo write or without routing the work through Work Loop v2 itself
+- Allowed inputs: plans/work-loop-v2-v0.2/, the Work Loop v2 core doc, .claude/commands/work-loop-v2.md, the Codex skill file, mission state (work-loop-v2-mvp) and logs/work-loop/, EmailOS and Systems Builder project directories
+- Mission: work-loop-v2-mvp
+
+**Work:** Evaluate the Work Loop v2 project-progression proposal — recommendation only, no repo changes
+
+### Summary
+Read the operator-supplied `project-progression-protocol-original-proposal.md` against the live Work Loop v2
+system (executable core, `.claude/commands/work-loop-v2.md`, the Codex-side skill at
+`.agents/skills/work-loop-v2/SKILL.md`), the `work-loop-v2-mvp` mission state and pilot log, and
+project-pipeline evidence from EmailOS/Systems Builder rehaul docs and the CRM project state. Delivered a
+first recommendation (adopt with revisions; smaller than proposed) covering all seven requested points. The
+operator agreed with the direction but sent back four corrections — workflow-owner routing ahead of
+discovery/delivery classification, `Continue`'s real seam footprint, corrected review sizing, and
+records/mission placement — and Claude delivered a revised recommendation applying all four. No repo file
+was changed; the whole session was read-only analysis producing two chat deliverables.
+
+### Decisions Made
+- **Operator: adopt the proposal's core idea with revisions**, not as originally written — keep the
+  governing question and next-move classification, reject the standalone protocol document and the
+  seven-state lifecycle as authority (fallback-only).
+- **Operator: four corrections to Claude's first recommendation** — (1) route the next move by owner
+  (operator / specialist workflow / Work Loop) before classifying a Work Loop unit as discovery or delivery,
+  and treat "real-use observation" as a discovery unit rather than a new core unit type; (2) size `Continue`
+  as a real seam change (core outcome + skill assessment mechanics + behavioral tests), not one small edit;
+  (3) correct review sizing to one coherent-capability Codex review by default, risk-aware only if
+  blast-radius inspection proves it structurally high-consequence; (4) do not revise the historical Step 6
+  acceptance record — a new candidate/review record is created instead — and place this work under the
+  existing post-MVP v0.2 rework thread on `work-loop-v2-mvp` rather than a new mission.
+- **Operator's final verdict:** approve the design direction after those corrections; **do not** approve
+  implementation scope yet. A concrete implementation proposal (skill/core wording, unit boundaries and
+  sequencing, blast-radius inspection, review brief, trial project selection) is owed back before any edit
+  is made.
+
+### Risky actions
+None. Read-only investigation session; no repository file was changed, no Work Loop task was opened, and the
+operator's instruction to respond "directly and without opening a Work Loop task" was followed.
+
+### Next Steps
+- Prepare the concrete implementation proposal for operator scope approval: the actual Codex-skill wording
+  for the ownership-routing subsection, the core's `Continue` outcome and its behavioral test(s), the
+  blast-radius/consumer inspection that decides normal-vs-risk-aware review, and trial-project selection
+  (recommended: EmailOS rehaul + one project without a native phase model).
+- File the accepted direction as a new open thread under the `work-loop-v2-mvp` mission's existing post-MVP
+  v0.2 rework entry (`logs/missions/work-loop-v2-mvp.md`), not a new mission.
+- `work-loop-v2-production-readiness-policy` (the discovery unit) is still open from the prior session and
+  was not touched this session.
+- `logs/next-up.md` still carries the large `[urgent]` backlog — unchanged this session.
+
+### Open Questions
+- Sequencing of the `Continue` core edit and the Codex-skill ownership-routing edit — one combined change or
+  two sequential units — deferred to the implementation proposal per the operator's correction 2.

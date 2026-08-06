@@ -389,3 +389,65 @@ widen into without touching an out-of-scope file; (2) unstage and commit only fi
 some narrower test — rejected as unnecessary once the false positive was confirmed; (3) ask the
 operator to inspect and manually stage/commit — superseded by the operator directly authorizing the
 override once shown the evidence.
+
+## 2026-08-06 — Work Loop v2 project-progression proposal: adopt with revisions, implementation scope not yet approved
+
+**Context.** The operator supplied a Codex-drafted proposal — a "Work Loop v2 Project Progression
+Protocol" — recommending a new standalone lifecycle-tracking artifact (a seven-state spine) for the
+Codex/controller side, plus a `Continue` outcome for the executable core. Claude was asked to evaluate
+what, if anything, should be built, against the live core, the Codex skill, mission state, the pilot
+log, and EmailOS/Systems Builder/CRM pipeline evidence — recommendation only, no implementation, and
+explicitly not run under Work Loop v2 itself.
+
+**Decision.** Adopt the proposal's core idea with revisions, materially smaller than proposed:
+- Keep the governing question ("where is this project, what transition is next, smallest unit that
+  advances it") and a next-move classification routine.
+- Reject the standalone protocol document and the seven-state lifecycle as authority — the Codex skill
+  already forbids new artifact kinds, and CRM/Systems Builder own their own stage/phase systems. The
+  seven states survive only as a fallback diagnostic for projects with no native phase model.
+- Place any new behavior in the Codex skill (`.agents/skills/work-loop-v2/SKILL.md`), not in Claude's
+  command, which stays unchanged.
+- Handle the `Continue` core outcome as a separate concern from lifecycle routing.
+- Trial only on genuine "continue a project" requests over two months, judged by the operator's own
+  usefulness call — no counters, no scoring.
+
+**Four corrections the operator required to Claude's first pass**, all accepted into the final
+recommendation:
+1. **Route by owner first.** Before classifying a Work Loop unit as discovery or delivery, first ask
+   who owns the next move: operator, the project's own specialist workflow, or Work Loop. "Real-use
+   observation" is not a new core unit type — it is a discovery unit whose named unknown is the
+   operating evidence. This ownership seam is the central EmailOS-rehaul lesson (duplicated review
+   layers and process added faster than removed).
+2. **`Continue` is a real seam change, not one small edit.** It touches the core's assessment outcome
+   mechanics, the Codex skill's assessment section (what `Continue` obliges and forbids), and needs a
+   constructed behavioral test — the harness currently has no multi-unit case at all.
+3. **Review sizing corrected.** The Independent Review Rule does not mean one risk-aware review per
+   edited file. The core-and-skill work is one coherent capability change: one normal Codex review by
+   default, after deterministic evidence; risk-aware only if a blast-radius/consumer inspection
+   establishes the change as structurally high-consequence.
+4. **Records and mission placement corrected.** The Step 6 acceptance record (pinned by exact blob
+   hashes, `fc6c07c`) is not revised — it stays historical evidence, and a revised artifact earns a new
+   candidate/review record instead. This work is placed under the existing post-MVP v0.2 rework thread
+   on the `work-loop-v2-mvp` mission, not a new or parallel mission, so `/drift-check` has one contract
+   rather than two.
+
+**Operator's final verdict.** Approve the design direction after the four corrections. **Do not**
+approve implementation scope — the actual skill/core wording, unit sequencing (combined vs. sequential
+edit), the blast-radius inspection, the resulting review brief, and trial-project selection are owed
+back as a separate, concrete implementation proposal before anything is edited.
+
+**Rationale.** The proposal's own non-duplication boundary and the workspace's own accumulated
+evidence (rehaul `problems-and-lessons.md`: memory-dependent fixes don't stick, the system adds
+process faster than it removes it, build-ahead-of-demand is a proven repeated failure) argue against a
+new document and for extending the one mechanism Codex already reads every task. The four corrections
+each close a gap between Claude's first-pass reasoning and how this workspace actually governs
+consequential change: ownership-before-classification (EmailOS's real lesson), honest scope sizing for
+`Continue`, review sizing bound to the Independent Review Rule's actual text rather than a per-file
+reading of it, and keeping one authoritative acceptance record and one mission per capability.
+
+**Alternatives considered:** (1) adopt the proposal largely as written, including the new protocol
+document — rejected by the operator as over-scoped given what the skill already covers; (2) reject the
+proposal outright — rejected; the governing-question gap and the `Continue` gap are both real; (3) fold
+this work directly into the v0.2 rework's broader redesign rather than treating `Continue` and
+ownership-routing as separable — not decided here; left for the implementation proposal's sequencing
+question.
