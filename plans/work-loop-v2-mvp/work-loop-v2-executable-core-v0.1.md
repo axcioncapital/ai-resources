@@ -191,6 +191,33 @@ turn between them. This matters most at the very start: a new request reaches Co
 telling it, before any file exists. Requiring the file first would be circular — the file is created
 *by* admitting the request, so it cannot also be the way the request arrives.
 
+### An approved courier may carry the turn
+
+Carrying the turn is transport, not judgment. The operator may approve a **courier** — any mechanism
+that moves an *already explicit* turn from one actor to the other — and delegate that carrying to it.
+What the courier is made of is deliberately unsaid here; § 24 of the reference document keeps this
+document about behaviour rather than transport, and naming a product inside the contract would date it.
+
+A courier may carry a turn the state file **already states**. It may never:
+
+- change the task, the brief, the result, or any other content of the state file;
+- choose which actor moves next, or decide that a turn exists — it carries what `turn:` already says;
+- continue past `turn: operator`, which stays terminal for all automation (§ 7 is unchanged by this);
+- stand in as evidence. A courier's screen, terminal, exit status or user interface is **never
+  authoritative**. The state file and the repository are, and whoever reads a courier's result reads
+  the file before acting on it.
+
+A courier that would do any of those is not carrying a turn — it is taking one, and the loop no longer
+has three parties. The test is whether removing the courier changes any decision: if it does, it was
+never transport.
+
+The operator carrying the turn themselves remains valid and is the default. A courier is an option
+they approve, not a stage the loop acquires.
+
+> *Added 2026-08-06. This clause was approved on its own; the document's header still reads
+> **draft for operator approval** and that is deliberately unchanged. Do not read this amendment as
+> approval of the rest of the file.*
+
 **A request that is refused admission opens no file** (§ 2). Direct Work leaves no state behind.
 
 **Where it lives:** `logs/work-loop/{task-id}.md`. Not `logs/loop/` — Work Loop v1 is still live and

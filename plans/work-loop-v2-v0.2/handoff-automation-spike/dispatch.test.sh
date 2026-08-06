@@ -632,6 +632,104 @@ expect_rc 26 "$RC" "stops 26 when a closing section appears twice" "$OUT"
 [ "$(calls "$d")" = "0" ] && ok "no actor was launched on the duplicated-section record" \
                           || bad "no actor was launched on the duplicated-section record" "calls=$(calls "$d")"
 
+# ================================================================= case 23
+echo
+echo "Case 23 — --carry-one carries exactly one hop and exits 0"
+# The defect this mode exists for: without --carry-one, a one-hop carry ends at the
+# hop limit, which is exit 23 — a failure code for the expected outcome. Both halves
+# are asserted here, so the mode cannot silently regress into the old behaviour.
+d="$(new_sandbox)"; state_file "$d" "carry-task" "claude"
+run_dispatch "$d" carry-task --carry-one --actor-cmd "$FLIP"
+expect_rc 0 "$RC" "exits 0 after one carried hop" "$OUT"
+[ "$(calls "$d")" = "1" ] && ok "exactly one actor call" || bad "exactly one actor call" "calls=$(calls "$d")"
+grep -qx "turn: codex" "$d/logs/work-loop/carry-task.md" \
+  && ok "the turn moved claude -> codex" \
+  || bad "the turn moved claude -> codex" "$(sed -n '3p' "$d/logs/work-loop/carry-task.md")"
+printf '%s' "$OUT" | grep -q "carry-one: the turn moved claude -> codex" \
+  && ok "the carry is announced with both turns named" \
+  || bad "the carry is announced with both turns named" "$OUT"
+
+# The same fixture WITHOUT --carry-one, to prove the exit code actually differs.
+# A green case 23 above means nothing if the default path already returned 0.
+d="$(new_sandbox)"; state_file "$d" "carry-task" "claude"
+run_dispatch "$d" carry-task --max-hops 1 --actor-cmd "$FLIP"
+expect_rc 23 "$RC" "the same single hop WITHOUT --carry-one exits 23 HOP_LIMIT" "$OUT"
+
+# ================================================================= case 24
+echo
+echo "Case 24 — --carry-one keeps every post-hop guard"
+# The mode must be a shorter run, not a weaker one. Each guard below would stop a
+# full loop; each must still stop a carry.
+d="$(new_sandbox)"
+run_dispatch "$d" decoy-mismatch --carry-one --actor-cmd "$FLIP"
+expect_rc 14 "$RC" "identity mismatch still stops the carry (14)" "$OUT"
+[ "$(calls "$d")" = "0" ] && ok "no actor launched on the mismatched file" \
+                          || bad "no actor launched on the mismatched file" "calls=$(calls "$d")"
+
+d="$(new_sandbox)"; state_file "$d" "carry-noop" "claude"
+run_dispatch "$d" carry-noop --carry-one --actor-cmd "$NOOP"
+expect_rc 22 "$RC" "a no-op actor still stops the carry (22)" "$OUT"
+
+# An actor that edits a path the allowlist does not cover. The carry must fail 24
+# rather than reporting a clean one-hop success.
+d="$(new_sandbox)"; state_file "$d" "carry-stray" "claude"
+STRAY="$FLIP_BODY"'; printf "stray\n" >> "$WL_CHECKOUT/other.txt"'"$COMMIT_IF_CLAUDE"
+run_dispatch "$d" carry-stray --carry-one --actor-cmd "$STRAY"
+expect_rc 24 "$RC" "an out-of-allowlist change still stops the carry (24)" "$OUT"
+
+# Claude edits the state file and does not commit it — the measured live shape of
+# a refused git permission. It must stop the carry, not pass as a moved turn.
+d="$(new_sandbox)"; state_file "$d" "carry-uncommitted" "claude"
+run_dispatch "$d" carry-uncommitted --carry-one --actor-cmd "$FLIP_BODY"
+expect_rc 25 "$RC" "an uncommitted Claude handback still stops the carry (25)" "$OUT"
+
+# ================================================================= case 25
+echo
+echo "Case 25 — --carry-one on a turn that is already operator"
+# Exit 0 here means "nothing to carry", not "a turn was carried". The two are told
+# apart by reading turn: from the file, which is why the run says so explicitly.
+d="$(new_sandbox)"
+cat >"$d/logs/work-loop/closed-task.md" <<'EOF'
+---
+task: closed-task
+turn: operator
+---
+
+## Outcome
+Done.
+
+## Decisions that matter
+None.
+
+## Evidence
+Commit deadbeef.
+
+## Accepted limitations
+None.
+EOF
+git -C "$d" add logs/work-loop/closed-task.md >/dev/null 2>&1
+git -C "$d" commit -qm "fixture: closed-task" >/dev/null 2>&1
+run_dispatch "$d" closed-task --carry-one --actor-cmd "$FLIP"
+expect_rc 0 "$RC" "exits 0 on turn: operator" "$OUT"
+[ "$(calls "$d")" = "0" ] && ok "no actor was launched" || bad "no actor was launched" "calls=$(calls "$d")"
+printf '%s' "$OUT" | grep -q "carry-one: the turn moved" \
+  && bad "does NOT claim a turn was carried" "$OUT" \
+  || ok "does NOT claim a turn was carried"
+
+# ================================================================= case 26
+echo
+echo "Case 26 — --carry-one --dry-run launches nothing"
+d="$(new_sandbox)"; state_file "$d" "carry-dry" "claude"
+before="$(shasum -a 256 "$d/logs/work-loop/carry-dry.md" | cut -d' ' -f1)"
+run_dispatch "$d" carry-dry --carry-one --dry-run --actor-cmd "$FLIP"
+expect_rc 0 "$RC" "exits 0" "$OUT"
+[ "$(calls "$d")" = "0" ] && ok "no actor was launched" || bad "no actor was launched" "calls=$(calls "$d")"
+[ "$before" = "$(shasum -a 256 "$d/logs/work-loop/carry-dry.md" | cut -d' ' -f1)" ] \
+  && ok "the state file is byte-identical afterwards" \
+  || bad "the state file is byte-identical afterwards"
+printf '%s' "$OUT" | grep -q "carry-one would launch actor 'claude'" \
+  && ok "names the actor it would carry" || bad "names the actor it would carry" "$OUT"
+
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"

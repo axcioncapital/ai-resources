@@ -32,6 +32,39 @@ Sending the operator to Claude when the turn is theirs stalls the loop as surely
 
 **The folder is core § 4's, not a choice.** Create `logs/work-loop/` if it does not exist. There is no fallback path — if you cannot write there, say so and stop.
 
+### Courier mode — carrying the turn yourself
+
+Core § 4 *An approved courier may carry the turn* permits this and sets its limits. Read them there. This section is the one approved courier and how you operate it. **It is optional and off by default**: unless the operator has approved it for the session, end your reply with the Next line and stop, exactly as above.
+
+**What you drive is a terminal command, not Claude.** You never type into a Claude window, never read Claude's interface for progress, and never click through its prompts. You run one command and read its exit code. The dispatcher launches Claude, validates the state file before and after, and stops on anything unexpected — that instrumentation is the reason this is the approved courier and screen-driving Claude directly is not.
+
+The command, in full — all three `--allow-path` values are required, because supplying any one **replaces both defaults**, and a `PostToolUse` hook keeps `logs/friction-log.md` modified in this repository:
+
+```
+plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh \
+  --checkout <absolute checkout path> \
+  --task <task-id> \
+  --carry-one \
+  --allow-path '^logs/work-loop/' \
+  --allow-path '^plans/work-loop-v2-v0\.2/handoff-automation-spike/' \
+  --allow-path '^logs/friction-log\.md$'
+```
+
+**The hard rules.** Each is a stop, not a preference:
+
+1. **Read the state file first.** Confirm the exact task id and that `turn:` is `claude`, by opening the file. Not from what you remember writing.
+2. **Run the command once.** `--carry-one` carries exactly one hop, so Claude moves and you assess — the loop does not run on without you.
+3. **The exit code is the result.** `0` means the carry completed. Anything else is a stop: report the code and its meaning to the operator, and do not re-run.
+4. **Read the file before assessing.** Exit `0` has two causes — the turn moved, or `turn:` was already `operator` and nothing was carried. Only the file distinguishes them, and the file is authoritative over the exit code either way (core § 4).
+5. **Never re-run to "try again".** A second run is only ever justified when the dispatcher's own run log shows the first launch never started. A completed run that did not produce what you expected is something to inspect, not to repeat.
+6. **`turn: operator`, a malformed state file, and a permission prompt are terminal.** Stop and tell the operator. You do not approve prompts and you do not work around them.
+
+**An unchanged `turn: claude` does not mean the command failed to land.** Claude leaves the file *completely untouched* when it rejects one — an identity mismatch or unreadable frontmatter is a correct read-only refusal (core § 6 rule 2), not a lost message. There are three causes and the dispatcher already separates them: `14` identity mismatch (Claude was never launched), `22` no transition (Claude ran and changed nothing), `21` timeout (Claude was still working). Read the code. Do not infer the cause from the turn, and never treat an unchanged turn as permission to send again.
+
+**Operating defaults — preferences, not protocol.** Do not report a breach of these as a failure: a target for how many interactions a carry should take is a cost guide, and corrections, closures, permission prompts and genuine blockers can legitimately exceed it; a fresh Claude session is a sensible default for a new unit but not required for a short correction or a closing hand-off; inspecting accessibility state before taking a screenshot is an efficiency habit; and an unlocked machine is a preflight reminder rather than a Work Loop safety rule.
+
+**This does not loosen "you never run git."** Launching the dispatcher is not running git. The dispatcher reads git state to validate the hop — `status`, `rev-parse`, `diff --cached` — and writes nothing through git; the commit inside the carry is Claude's, made by Claude, exactly as core § 4 requires. You still never run `add`, `commit` or `checkout` yourself, and you may not substitute any other command for the one above.
+
 ---
 
 ## Routing a "continue" request — who owns the next move
@@ -153,3 +186,5 @@ Slices 1–3: opening a unit with a brief, assessing/closing it, the one bounded
 Context Engineering is live in the sections above, and governs how you prepare that one brief — what you go looking at, what governs it, what Claude must verify, how the unit is framed and bounded, and what stays out of it.
 
 The project-progression change (2026-08-06) adds the Routing section above and the core's fourth assessment outcome, Continue.
+
+Courier mode (2026-08-06) adds the one approved way to carry the turn yourself, under core § 4's courier clause. It is optional, off unless the operator approves it, and transport only — it changes nothing about what you frame, what you assess, or what Claude does.

@@ -24,12 +24,19 @@
 #   --allow-path RE     repeatable regex of repo-relative paths actors may change
 #   --log-dir DIR       run evidence directory (default <spike>/runs)
 #   --dry-run           validate and route; launch nothing
+#   --carry-one         COURIER MODE. Launch exactly the actor named by the
+#                       current turn:, then stop once the turn has moved in an
+#                       allowed direction — exit 0 rather than continuing to the
+#                       next actor. Every validation and post-hop check is
+#                       unchanged; this is a terminal condition, not a weaker
+#                       one. Implies a single hop, so --max-hops is moot.
 #   --actor-cmd CMD     TEST SEAM. Replaces the live product launch with CMD.
 #                       Marks the run mode=simulated in all evidence so a
 #                       simulated pass can never be read as live transport.
 #
-# Exit codes — 0 is the ONLY success, and it means the loop reached turn: operator.
-#   0   STOP_OPERATOR          terminal for automation (core § 7)
+# Exit codes — 0 is the only success. WHAT it means depends on how you invoked
+# this script; the four meanings are spelled out under the table.
+#   0   SUCCESS                see the four meanings below — it is not one thing
 #   10  BAD_USAGE
 #   11  BAD_CHECKOUT
 #   12  BAD_TASK_ID            traversal or illegal characters
@@ -49,8 +56,21 @@
 #   26  MALFORMED_TERMINAL     turn: operator, but the file is neither a core § 7
 #                              question nor a core § 4 closing record
 #
-# Note that 0 is returned by --help and by a completed --dry-run too. Only in
-# loop mode does 0 additionally mean "reached turn: operator".
+# The four meanings of 0 — do NOT read one as another:
+#   --help          printed the header. Nothing was validated, nothing launched.
+#   --dry-run       validation passed and the actor was named. NO turn was taken.
+#   --carry-one     EITHER the turn moved exactly once in an allowed direction,
+#                   OR turn: was already operator and nothing was carried. Read
+#                   turn: from the state file to tell them apart — a courier does
+#                   that anyway, because no screen or exit code is authoritative
+#                   over the file (core § 4).
+#   loop mode       the state file reached turn: operator. This is the only
+#                   invocation for which 0 carries the whole-loop meaning.
+#
+# (The line above this block used to read "0 is the ONLY success, and it means the
+# loop reached turn: operator" — true of loop mode alone, and recorded as a standing
+# contradiction in README.md. Corrected 2026-08-06 when --carry-one added a fourth
+# meaning and left the old wording actively wrong rather than merely incomplete.)
 
 set -uo pipefail
 
@@ -64,6 +84,7 @@ CODEX_BIN="/Applications/ChatGPT.app/Contents/Resources/codex"
 CLAUDE_BIN=""
 LOG_DIR=""
 DRY_RUN=0
+CARRY_ONE=0
 ACTOR_CMD=""
 ALLOW_PATHS=()
 
@@ -94,6 +115,7 @@ while [ $# -gt 0 ]; do
     --log-dir)     LOG_DIR="${2:-}"; shift 2 ;;
     --actor-cmd)   ACTOR_CMD="${2:-}"; shift 2 ;;
     --dry-run)     DRY_RUN=1; shift ;;
+    --carry-one)   CARRY_ONE=1; shift ;;
     # Print the whole leading comment block, whatever length it grows to. A fixed
     # line window silently truncated the exit-code list as codes were added.
     -h|--help)     awk 'NR==1{next} /^#/{print; next} {exit}' "${BASH_SOURCE[0]}"; exit 0 ;;
@@ -110,6 +132,12 @@ case "$ACTOR_TIMEOUT" in ''|*[!0-9]*) printf 'STOP [10] --timeout must be a posi
 if [ "${#ALLOW_PATHS[@]}" -eq 0 ]; then
   ALLOW_PATHS=('^logs/work-loop/' '^plans/work-loop-v2-v0\.2/handoff-automation-spike/')
 fi
+
+# A carry is one hop by definition. Pinning MAX_HOPS makes that true of the loop
+# guard as well as of the terminal condition below, so the two cannot disagree if
+# one of them is later edited. Set AFTER --max-hops validation, so an explicitly
+# malformed --max-hops still fails as usage rather than being silently overwritten.
+[ "$CARRY_ONE" -eq 1 ] && MAX_HOPS=1
 
 MODE="live"
 [ -n "$ACTOR_CMD" ] && MODE="simulated"
@@ -183,7 +211,7 @@ RUN_LOG="$LOG_DIR/$RUN_ID.log"
 say "run=$RUN_ID mode=$MODE task=$TASK"
 say "checkout=$CHECKOUT"
 say "state=$STATE_FILE"
-say "max_hops=$MAX_HOPS timeout=${ACTOR_TIMEOUT}s"
+say "max_hops=$MAX_HOPS timeout=${ACTOR_TIMEOUT}s carry_one=$CARRY_ONE"
 say "allow_paths=${ALLOW_PATHS[*]}"
 
 # ------------------------------------------------------- state file reading
@@ -423,7 +451,11 @@ if state_dirty; then
 fi
 
 if [ "$DRY_RUN" -eq 1 ]; then
-  say "dry-run: would launch actor '$ST_TURN' for task '$TASK'; launching nothing."
+  if [ "$CARRY_ONE" -eq 1 ]; then
+    say "dry-run: --carry-one would launch actor '$ST_TURN' for task '$TASK' and stop after that one hop; launching nothing."
+  else
+    say "dry-run: would launch actor '$ST_TURN' for task '$TASK'; launching nothing."
+  fi
   # Dry-run inspects; it never launches, so it reports hazards instead of failing
   # on them. Loop mode stops on the same conditions before every hop.
   dr_haz="$(git_hazards)"
@@ -582,4 +614,26 @@ while :; do
     *)
       die 22 "transition $before_turn -> $after_turn is not allowed" ;;
   esac
+
+  # Courier mode's terminal condition. It sits AFTER every post-hop check above —
+  # the allowlist delta, the Codex-HEAD guard, the uncommitted-handback guard, the
+  # byte-identical and unchanged-turn guards, and the transition table — so a carry
+  # succeeds on exactly the evidence a full loop would have required to continue.
+  # Stopping earlier would make --carry-one a weaker check rather than a shorter run,
+  # which is the one thing it must not be.
+  #
+  # Why exit here rather than let the hop limit end it: MAX_HOPS is pinned to 1 in
+  # carry-one mode, so the next pass would die 23 HOP_LIMIT — a failure code for the
+  # expected outcome, unusable as a courier's success signal. That defect is the
+  # reason this mode exists.
+  if [ "$CARRY_ONE" -eq 1 ]; then
+    say ""
+    say "carry-one: the turn moved $before_turn -> $after_turn. One hop carried; not continuing to '$after_turn'."
+    if [ "$after_turn" = "operator" ]; then
+      say "carry-one: turn is now operator — automation is terminal there (core § 7)."
+    fi
+    say "carry-one: read turn: from $STATE_FILE. Neither this exit code nor any screen is authoritative over the file (core § 4)."
+    release_lock
+    exit 0
+  fi
 done

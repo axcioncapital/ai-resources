@@ -33,7 +33,8 @@ built from it.
 
 | Option | Default |
 |---|---|
-| `--max-hops N` | `4` — absolute hop limit |
+| `--carry-one` | off — carry exactly one hop, then exit `0` (see below) |
+| `--max-hops N` | `4` — absolute hop limit; forced to `1` by `--carry-one` |
 | `--timeout S` | `900` — per-actor wall-clock seconds |
 | `--codex-bin PATH` | `/Applications/ChatGPT.app/Contents/Resources/codex` |
 | `--claude-bin PATH` | `claude` resolved from `PATH` |
@@ -50,6 +51,20 @@ built from it.
   nothing to the state file.
 - **loop mode** (`mode=live`, or `mode=simulated` when `--actor-cmd` is given) — actually runs the
   turns until the state file reaches `turn: operator`, or until something stops it.
+
+`--carry-one` is a **terminal condition on loop mode**, not a fourth mode: it launches exactly the
+actor the current `turn:` names, applies every validation and post-hop check unchanged, and then
+exits `0` once the turn has moved in an allowed direction instead of continuing to the next actor.
+
+It exists because a one-hop carry otherwise ends at `23 HOP_LIMIT` — a failure code for the expected
+outcome, which no caller can use as a success signal. `--carry-one` pins `--max-hops` to 1, so the
+loop guard and the terminal condition cannot drift apart.
+
+This is the mode a **courier** uses (core § 4, *An approved courier may carry the turn*). It keeps
+the framing and assessing model in the conversation: the courier carries one turn, then reads the
+state file and assesses, rather than handing the whole task to a chain of headless processes.
+`dispatch.test.sh` cases 23–26 assert both halves — that a carry exits `0`, and that the same single
+hop *without* `--carry-one` still exits `23`.
 
 `--actor-cmd` is the **test seam**. It replaces the live product launch with an arbitrary command
 and marks the run `mode=simulated` in all evidence, so a simulated pass can never be read as live
@@ -102,22 +117,26 @@ where the code's meaning actually differs.
 | `25` | `UNCOMMITTED_HANDBACK` | dry-run, loop | The state file is uncommitted where Claude should have committed it — either found that way at startup with `turn: codex`/`operator`, or left that way after a Claude hop. |
 | `26` | `MALFORMED_TERMINAL` | loop only | `turn: operator`, but the file is neither a core § 7 question (it has no `## Blocker` and no `## Next action`) nor a core § 4 closing record (its four headings, and nothing else, are not what survived). No actor is launched; the stop names a recoverable next action. |
 
-**Exit `0` means three different things depending on how you invoked the dispatcher:**
+**Exit `0` means four different things depending on how you invoked the dispatcher:**
 
 - `--help` returns `0` after printing the header. Nothing was validated.
 - A completed `--dry-run` returns `0` after validation. **No turn was taken.**
+- A `--carry-one` run returns `0` when the turn moved exactly once in an allowed direction — **or**
+  when `turn:` was already `operator` and nothing was carried. Read `turn:` from the state file to
+  tell those apart; the file is authoritative over the exit code either way (core § 4).
 - A loop-mode run returns `0` **only** after the state file reached `turn: operator` — automation is
-  terminal there (core § 7). This is the only invocation for which `0` carries the loop meaning.
+  terminal there (core § 7). This is the only invocation for which `0` carries the whole-loop meaning.
 
-> **Known source inconsistency — do not treat either side as the whole contract.**
-> `dispatch.sh` line 31 says *"0 is the ONLY success, and it means the loop reached turn: operator"*.
-> That sentence is true of loop mode only; `--help` and `--dry-run` both return `0` without reaching
-> `turn: operator`. Lines 48–49 of the same header now say so, but line 31 was left standing, so the
-> header disagrees with itself.
-> The `--help` truncation recorded here is **fixed** (2026-08-05): it printed a fixed line window
-> (`sed -n '2,45p'`) and so under-reported the exit-code set. It now prints the whole leading comment
-> block whatever length it grows to, which is what let codes `18` and `19` be added without silently
-> re-truncating. The line-31 wording contradiction is still standing and still a deferral.
+> **The line-31 contradiction recorded here is now fixed** (2026-08-06). The header's opening line
+> read *"0 is the ONLY success, and it means the loop reached turn: operator"* — true of loop mode
+> alone, and left standing as a deferral when `--help` and `--dry-run` were documented beneath it.
+> Adding `--carry-one` gave `0` a fourth meaning and made that wording actively wrong rather than
+> merely incomplete, so it was corrected rather than deferred again. The header now states all four
+> meanings in one block.
+> The `--help` truncation recorded here was fixed earlier (2026-08-05): it printed a fixed line
+> window (`sed -n '2,45p'`) and so under-reported the exit-code set. It now prints the whole leading
+> comment block whatever length it grows to, which is what let codes `18` and `19` — and this
+> block — be added without silently re-truncating.
 > This table is generated from the source header, not from `--help`.
 
 ### Allowed turn transitions
@@ -137,8 +156,13 @@ The suite builds throwaway sandbox checkouts under `TMPDIR` and removes them on 
 real repository. It ends with a summary line and exits `1` if any case failed:
 
 ```
-pass=69 fail=0  (all cases SIMULATED — no live product transport)
+pass=99 fail=0  (all cases SIMULATED — no live product transport)
 ```
+
+> **This count was stale.** It read `pass=69` until 2026-08-06, when the suite actually stood at 82 —
+> cases had been added without updating the line. Re-measured that day: the pre-`--carry-one` suite
+> from `HEAD` returns **82**, and cases 23–26 bring it to **99**. A hand-maintained count drifts
+> silently, so treat the number as documentation and the run as the evidence.
 
 **Case 0 is the harness's own falsifiability proof:** it points the suite at an *absent* dispatcher
 and asserts that the suite fails. A harness that stays green with the thing under test removed is not
