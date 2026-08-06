@@ -460,6 +460,14 @@ before that scope approval was given. The operator's response was: *"I didn't ap
 yet. Let's do a work loop."* That authorises **one bounded recovery task**
 (`logs/work-loop/project-progression-candidate-recovery.md`) to bring the candidate to a
 review-ready, evidence-honest state — not approval of the candidate, not adoption, not installation.
-The candidate remains pending independent Codex review, after which adoption is a separate operator
-decision. Full authority status: `plans/work-loop-v2-mvp/project-progression-candidate-review.md`
-§ 0.
+Full authority status: `plans/work-loop-v2-mvp/project-progression-candidate-review.md` § 0.
+
+**Status, later the same day (2).** The independent fresh-context Codex review has now **run** and
+returned **Accept with corrections**, freezing two material findings (the skill copying core-owned
+Continue mechanics; constructed evidence that did not discriminate Continue from a first-unit
+opening, a close, a correction or a malformed file). The operator authorised one bounded correction
+round — "authorized" — and nothing broader; that round has been applied under
+`logs/work-loop/project-progression-candidate-review-correction.md`. The closure check on those two
+findings is Codex's next move. **The candidate is still not approved and not adopted**: an artifact
+review verdict is not adoption, and adoption remains a separate operator decision. Verdict and both
+findings in full: the candidate record § 5.

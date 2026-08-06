@@ -1,7 +1,10 @@
 # Project Progression — Candidate and Review Record
 
-**Status:** candidate pinned; **not approved, not adopted**; independent Codex review PENDING (fresh
-context — not yet run).
+**Status:** candidate pinned; **not approved, not adopted**. Independent Codex review has **run**
+(fresh context) and returned **Accept with corrections** — verdict and both findings in § 5. One
+bounded correction round was authorised by the operator and has been applied; the closure check on
+those two findings is Codex's next move. Acceptance of the artifact is not adoption of the
+capability — see § 0.
 **Created:** 2026-08-06, session S3-92e. Historical Step 6 acceptance record (`fc6c07c`,
 `step-6-candidate-review.md`) is untouched and remains evidence for the v0.1 candidate; this
 record supersedes it as the current-candidate pointer per the operator's correction 4
@@ -36,10 +39,14 @@ deliberately). Pre-recovery blobs are given alongside so the reviewer can diff.
 
 | Artifact | Path | Blob (current) | Blob (`6ba4c3f`) |
 |---|---|---|---|
-| Codex skill | `.agents/skills/work-loop-v2/SKILL.md` | `1552a300` | `b411785e` |
-| Executable core | `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` | `8f30da6c` | `04f94e00` |
-| Harness | `logs/scripts/work-loop-v2-slice-1.test.sh` | `794da6d4` | `1ba6d8c8` |
-| Continue fixture | `logs/work-loop/fixture-continue.md` | `19e35c28` | `45e57cae` |
+| Codex skill | `.agents/skills/work-loop-v2/SKILL.md` | `8a88139c` | `b411785e` |
+| Executable core (control — unchanged since recovery) | `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` | `8f30da6c` | `04f94e00` |
+| Harness | `logs/scripts/work-loop-v2-slice-1.test.sh` | `3a79718d` | `1ba6d8c8` |
+| Continue fixture (valid case) | `logs/work-loop/fixture-continue.md` | `19e35c28` | `45e57cae` |
+| Negative fixture — first-unit opening | `logs/work-loop/fixture-continue-opening.md` | `c8765a57` | *(new)* |
+| Negative fixture — close token | `logs/work-loop/fixture-continue-close.md` | `f497e7f8` | *(new)* |
+| Negative fixture — correction token | `logs/work-loop/fixture-continue-correction.md` | `826a1b9b` | *(new)* |
+| Negative fixture — malformed | `logs/work-loop/fixture-continue-malformed.md` | `44b829e6` | *(new)* |
 | Claude command (unchanged — control) | `.claude/commands/work-loop-v2.md` | `125de530` | `125de530` |
 
 Commit `6ba4c3f` is the **pre-recovery** state of the candidate: it is the unapproved implementation
@@ -170,4 +177,39 @@ verdict on the artifact only; adoption remains the operator's separate decision 
 
 ## 5. Verdict
 
-*(pending — filled when the review runs)*
+**Independent fresh-context Codex review, 2026-08-06: Accept with corrections.** It reproduced
+`passed: 167   failed: 2`, exit 1, with the candidate-specific `cont`/`rout` block at 20/20, and
+judged direction fidelity, constraint compliance, recovery sufficiency and the authority boundary
+sound. Two material findings were frozen; the other dimensions passed and were not reopened.
+
+**Finding 1 — the skill copied core-owned Continue mechanics.** Its `**Continuing.**` paragraph
+restated recording the accepted result, writing the next brief and setting `turn: claude`, while
+also pointing at core § 3 for them. Consequence: a later core change leaves two conflicting
+operational instructions and defeats the single-owner boundary.
+
+**Finding 2 — the constructed evidence did not discriminate.** One positive fixture and a set of
+affirmative greps over core prose, with no negative case for a first-unit opening, a close token, a
+correction token or a malformed file. Consequence: the `cont` block could stay green for a state the
+protocol defines as non-Continue.
+
+**Correction round (operator-authorised, bounded to these two).** Both applied under task
+`logs/work-loop/project-progression-candidate-review-correction.md`:
+
+1. The `**Continuing.**` paragraph now defers all mechanics to core § 3 and keeps only the
+   skill-owned judgment (justify the next unit; route by owner first; Continue is an acceptance, so
+   it neither dodges closure nor disguises a correction). A scoped negative assertion guards the
+   paragraph against a future re-copy, and was shown red against the pre-correction text.
+2. A `classify_state()` discriminator was added to the harness. It reads the state file itself —
+   frontmatter validity, core § 4's exact active headings, the two core-owned protocol tokens, and
+   the Continue precondition — and reads no core or skill prose, so no documentation can make it
+   pass. Four constructed negative fixtures now resolve to four distinct verdicts (OPENING, CLOSE,
+   CORRECT, MALFORMED) against the valid fixture's CONTINUE, and one assertion requires that the
+   four stay distinct so a blanket-reject classifier cannot satisfy them.
+
+**Harness after the correction: `passed: 174   failed: 2`, exit 1.** The `cont`/`rout` block is
+27/27. The two failures remain the pre-existing `3.1a` closed-set reds described in § 2b, which this
+round did not touch and does not claim to fix.
+
+**What this verdict is not.** Accept-with-corrections is a review verdict on the artifact. The
+candidate is still not approved and not adopted; the closure check on these two findings is Codex's
+next move, and adoption remains a separate operator decision (§ 0).

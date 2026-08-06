@@ -442,6 +442,8 @@ fixture-slice2-correction.md fixture-slice2-foreign.md fixture-slice2-fresh.md \
 fixture-slice2-menu.md fixture-slice3-close.md fixture-slice3-deescalate.md \
 fixture-slice3-deferral.md fixture-slice3-limits.md fixture-step6-admission.md \
 fixture-target-2.md fixture-target.md fixture-continue.md \
+fixture-continue-opening.md fixture-continue-close.md \
+fixture-continue-correction.md fixture-continue-malformed.md \
 context-engineering-implementation.md context-engineering-implementation-plan.md \
 context-engineering-s7-regression.md \
 foreign-staging-target-repo.md"
@@ -713,6 +715,84 @@ check "cont  the fixture invents no continue pseudo-token" \
   "! cont_next | grep -qE '^[[:space:]]*Continue[[:space:]]*(—|-|:)'"
 check "cont  the core's tokenless rule excludes a task's first unit" \
   "core_flat | grep -qi 'accepted result from a previous unit of the same task'"
+
+# --- Continue CLASSIFICATION: structure and tokens, not prose ----------------
+# Review finding 2 (independent fresh-context review): the block above proves the
+# core and skill SAY the right things and that one positive fixture is shaped
+# right. It cannot tell a Continue from a close, a correction, a first-unit
+# opening or a malformed file — so it could stay green for a state the protocol
+# defines as non-Continue. classify_state() reads the STATE ITSELF: frontmatter
+# validity, the required active headings, the two core-owned protocol tokens, and
+# the Continue precondition (an accepted result from a previous unit). It reads no
+# core or skill prose at all, so no amount of documentation can make it pass.
+CONT_OPEN_F="logs/work-loop/fixture-continue-opening.md"
+CONT_CLOSE_F="logs/work-loop/fixture-continue-close.md"
+CONT_CORR_F="logs/work-loop/fixture-continue-correction.md"
+CONT_MAL_F="logs/work-loop/fixture-continue-malformed.md"
+
+classify_state() {
+  local f="$1" nx lr
+  [ -f "$f" ] || { echo ABSENT; return; }
+  # Frontmatter must carry a task id and a legal turn, or the file is malformed.
+  grep -qE '^task:[[:space:]]*[A-Za-z0-9._-]+[[:space:]]*$' "$f" || { echo MALFORMED; return; }
+  grep -qE '^turn:[[:space:]]*(claude|codex|operator)[[:space:]]*$' "$f" || { echo MALFORMED; return; }
+  # An ACTIVE task file carries core § 4's active headings. A closed file does not,
+  # and is not a Continue candidate either way.
+  for h in '## Objective and scope' '## Lane and unit' '## Latest result' '## Next action'; do
+    grep -qxF "$h" "$f" || { echo MALFORMED; return; }
+  done
+  nx=$(awk '/^## Next action/{f=1;next} /^## /{f=0} f' "$f" | sed '/^[[:space:]]*$/d')
+  # The two core-owned protocol tokens, matched at the start of Next action.
+  printf '%s\n' "$nx" | head -1 | grep -q '^Close the task:' && { echo CLOSE; return; }
+  printf '%s\n' "$nx" | head -1 | grep -q '^Correct once — frozen findings:' && { echo CORRECT; return; }
+  # Tokenless. Continue REQUIRES the precondition: an accepted result from a
+  # previous unit. Without it the same tokenless shape is an ordinary opening.
+  #
+  # The precondition is semantic, so any test is a proxy — but it must not be a
+  # proxy for one fixture's WORDING. A probe run during this correction round
+  # caught exactly that: a valid Continue whose result read "taken as good enough
+  # to move on" instead of "accepted" was misclassified OPENING. Two independent
+  # proxies are therefore accepted, either alone sufficient: an explicit
+  # acceptance in the result, or a unit ordinal of 2+ in Lane and unit (which
+  # cannot be reached without a prior unit). Both are gated on the result not
+  # being a placeholder. A task that numbers no units and states no acceptance
+  # falls to OPENING — conservative in the safe direction: never call something a
+  # Continue without evidence of the prior unit.
+  lr=$(awk '/^## Latest result/{f=1;next} /^## /{f=0} f' "$f" | sed '/^[[:space:]]*$/d')
+  printf '%s' "$lr" | grep -qE '\(empty — not started\)|^Not started\.' && { echo OPENING; return; }
+  [ -z "$lr" ] && { echo OPENING; return; }
+  printf '%s' "$lr" | grep -qi 'accepted' && { echo CONTINUE; return; }
+  local lane ord
+  lane=$(awk '/^## Lane and unit/{f=1;next} /^## /{f=0} f' "$f")
+  ord=$(printf '%s' "$lane" | grep -oE 'Unit[[:space:]]+[0-9]+' | head -1 | grep -oE '[0-9]+')
+  if [ -n "$ord" ] && [ "$ord" -ge 2 ] 2>/dev/null; then echo CONTINUE; return; fi
+  echo OPENING
+}
+
+check "cont  the valid Continue fixture classifies as CONTINUE" \
+  "[ \"\$(classify_state '$CONT_F')\" = CONTINUE ]"
+check "cont  an ordinary Unit 1 opening is not a Continue" \
+  "[ \"\$(classify_state '$CONT_OPEN_F')\" = OPENING ]"
+check "cont  a close-token hand-off is not a Continue" \
+  "[ \"\$(classify_state '$CONT_CLOSE_F')\" = CLOSE ]"
+check "cont  a correction-token hand-off is not a Continue" \
+  "[ \"\$(classify_state '$CONT_CORR_F')\" = CORRECT ]"
+check "cont  a malformed state file is not a Continue" \
+  "[ \"\$(classify_state '$CONT_MAL_F')\" = MALFORMED ]"
+# Discrimination, not blanket rejection: the four negatives must resolve to four
+# DIFFERENT verdicts. A classifier that answered MALFORMED to everything would
+# satisfy the four checks above and prove nothing.
+check "cont  the four negative cases are discriminated, not blanket-rejected" \
+  "[ \$(for f in '$CONT_OPEN_F' '$CONT_CLOSE_F' '$CONT_CORR_F' '$CONT_MAL_F'; do classify_state \"\$f\"; done | sort -u | wc -l | tr -d ' ') -eq 4 ]"
+# Review finding 1: the skill must not restate core § 3's continue MECHANICS.
+# Scoped to the `**Continuing.**` paragraph, which is what the finding names. A
+# whole-section scan was tried first and caught `turn: claude` in the CORRECTION
+# paragraph — a different (and separately deferred) question, not this finding.
+# Narrowing here keeps the guard aimed at the frozen scope rather than silently
+# widening the correction round.
+cont_para() { awk '/^\*\*Continuing\.\*\*/{f=1} f&&/^[[:space:]]*$/{exit} f' "$SKILL_F"; }
+check "cont  the resource does not copy the core's continue mechanics" \
+  "[ -n \"\$(cont_para)\" ] && ! cont_para | grep -qiE 'record the accepted result|the next unit.s brief|turn: claude'"
 
 # --- Routing: who owns the next move, before any unit opens ------------------
 # The routing section is the ownership seam: operator / specialist workflow /

@@ -116,7 +116,7 @@ Claude hands back with `turn: codex`. Read the result and the evidence, then app
 
 When core § 2 *De-escalating* applies, this is where you act on it: close the task here rather than carrying it further.
 
-**Continuing.** When the accepted unit leaves the task's named exit condition unmet, continue: record the accepted result, write the next unit's brief, and set `turn: claude` — the mechanics are core § 3's. Justify the next unit against the objective as Routing above requires; if the next move is not the loop's to own, close instead and route it. Continue is not a way to avoid closing a finished task, and not a correction in disguise — findings go through the correction round.
+**Continuing.** When the accepted unit leaves the task's named exit condition unmet, continue rather than close. Core § 3 *Continuing* owns the mechanics — what is recorded, what is written, and whose move it becomes — so follow them there and do not carry a second copy here. Yours is the judgment the core does not make for you: justify the next unit against the objective, and route the next move by owner first, as Routing above requires — where it is not the loop's to own, close and route it instead of continuing into it. Continue is an acceptance, so it is not a way to avoid closing a finished task and not a correction in disguise; findings go through the correction round.
 
 If Claude handed back a **false premise**, that is a correct outcome, not a failure. Your brief rested on something untrue. Fix the brief or drop the unit; do not ask Claude to proceed anyway.
 
