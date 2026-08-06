@@ -4,8 +4,9 @@
 (fresh context) and returned **Accept with corrections** — verdict and both findings in § 5. The
 bounded correction round and its final tightly-bounded fix are applied and closed. Since then the
 live cross-actor `Continue` seam has been **proved by execution** and that task closed (§ 5a), and the
-one evidence gap it deferred has been corrected under its own task (§ 5b), which is awaiting
-assessment. Acceptance of the artifact is not adoption of the capability — see § 0.
+one evidence gap it deferred has been corrected under its own task (§ 5b), which Codex has now
+**assessed and closed**. The next authority move is the operator's adoption decision. Acceptance of
+the artifact is not adoption of the capability — see § 0.
 **Created:** 2026-08-06, session S3-92e. Historical Step 6 acceptance record (`fc6c07c`,
 `step-6-candidate-review.md`) is untouched and remains evidence for the v0.1 candidate; this
 record supersedes it as the current-candidate pointer per the operator's correction 4
@@ -288,5 +289,6 @@ to fix. The full suite is **not** green.
 
 **What this verdict is not.** Accept-with-corrections is a review verdict on the artifact. The
 candidate is still not approved and not adopted. The correction round's closure check is done (§ 5),
-the live seam is proved (§ 5a), and § 5b's correction is awaiting Codex's assessment; adoption remains
-a separate operator decision afterwards (§ 0). Reviewed evidence is not adoption.
+the live seam is proved (§ 5a), and § 5b's correction was independently assessed by Codex — which
+reproduced `passed: 183   failed: 2`, exit 1 — and closed. **The next authority move is the operator's
+adoption decision** (§ 0). Reviewed evidence is not adoption.
