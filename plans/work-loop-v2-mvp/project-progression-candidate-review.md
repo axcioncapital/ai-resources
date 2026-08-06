@@ -26,9 +26,10 @@ review-ready, evidence-honest state. That authorisation covers the recovery work
 It is **not** approval of the candidate, not adoption of the capability, and not permission to
 install or propagate it.
 
-**Therefore:** this candidate remains pending independent Codex review, and pending a separate
-operator decision on adoption after that review. Later sections describe what the candidate *is*,
-never what has been accepted.
+**Therefore:** the independent Codex review has run and returned Accept with corrections (§ 5); what
+remains pending is **artifact closure** — the closure check on the correction round's final
+tightly-bounded fix — and, separately and afterwards, **the operator's adoption decision**. Neither
+has happened. Later sections describe what the candidate *is*, never what has been accepted.
 
 ## 1. The candidate
 
@@ -41,12 +42,13 @@ deliberately). Pre-recovery blobs are given alongside so the reviewer can diff.
 |---|---|---|---|
 | Codex skill | `.agents/skills/work-loop-v2/SKILL.md` | `8a88139c` | `b411785e` |
 | Executable core (control — unchanged since recovery) | `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` | `8f30da6c` | `04f94e00` |
-| Harness | `logs/scripts/work-loop-v2-slice-1.test.sh` | `3a79718d` | `1ba6d8c8` |
+| Harness | `logs/scripts/work-loop-v2-slice-1.test.sh` | `7974b597` | `1ba6d8c8` |
 | Continue fixture (valid case) | `logs/work-loop/fixture-continue.md` | `19e35c28` | `45e57cae` |
 | Negative fixture — first-unit opening | `logs/work-loop/fixture-continue-opening.md` | `c8765a57` | *(new)* |
 | Negative fixture — close token | `logs/work-loop/fixture-continue-close.md` | `f497e7f8` | *(new)* |
 | Negative fixture — correction token | `logs/work-loop/fixture-continue-correction.md` | `826a1b9b` | *(new)* |
 | Negative fixture — malformed | `logs/work-loop/fixture-continue-malformed.md` | `44b829e6` | *(new)* |
+| Negative fixture — later unit, no accepted predecessor | `logs/work-loop/fixture-continue-unaccepted.md` | `e2fa822c` | *(new)* |
 | Claude command (unchanged — control) | `.claude/commands/work-loop-v2.md` | `125de530` | `125de530` |
 
 Commit `6ba4c3f` is the **pre-recovery** state of the candidate: it is the unapproved implementation
@@ -206,9 +208,27 @@ protocol defines as non-Continue.
    CORRECT, MALFORMED) against the valid fixture's CONTINUE, and one assertion requires that the
    four stay distinct so a blanket-reject classifier cannot satisfy them.
 
-**Harness after the correction: `passed: 174   failed: 2`, exit 1.** The `cont`/`rout` block is
-27/27. The two failures remain the pre-existing `3.1a` closed-set reds described in § 2b, which this
-round did not touch and does not claim to fix.
+**Final tightly-bounded fix (core § 3's menu, used once).** The closure check resolved finding 1 and
+accepted finding 2's substance, then found one material evidence defect in the correction itself and
+one stale sentence in this record. Both fixed, and nothing else:
+
+1. **The classifier had invented a broader acceptance rule than the core.** It treated a unit ordinal
+   of 2+ as sufficient evidence of an accepted predecessor. Reaching Unit 2 is not that — a unit can
+   open after a hand-back, a false premise or a reframing, none of which accepted anything. The
+   ordinal rule is removed; the precondition is now an affirmative acceptance matched per line and
+   rejected when the line negates it. A sixth fixture, `fixture-continue-unaccepted.md`, holds that
+   state (Unit 2 lane, real non-placeholder result, explicitly no acceptance) and was **red under the
+   ordinal rule** — it classified CONTINUE — and is OPENING after. Known and accepted limit: the test
+   is lexical, so a result recording an acceptance in words it does not recognise falls to OPENING.
+   That under-calls a real Continue, which is the safe direction, and is the conservatism the closure
+   check expressly permitted.
+2. **§ 0's stale sentence corrected.** It still said the candidate "remains pending independent Codex
+   review" after that review had run. It now states the truthful current boundary: artifact closure
+   is pending, and adoption is a separate operator decision afterwards.
+
+**Harness after the final fix: `passed: 175   failed: 2`, exit 1.** The `cont`/`rout` block is 28/28.
+The two failures remain the pre-existing `3.1a` closed-set reds described in § 2b, which neither the
+correction round nor this fix touched or claims to fix.
 
 **What this verdict is not.** Accept-with-corrections is a review verdict on the artifact. The
 candidate is still not approved and not adopted; the closure check on these two findings is Codex's

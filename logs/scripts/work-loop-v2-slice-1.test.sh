@@ -444,6 +444,7 @@ fixture-slice3-deferral.md fixture-slice3-limits.md fixture-step6-admission.md \
 fixture-target-2.md fixture-target.md fixture-continue.md \
 fixture-continue-opening.md fixture-continue-close.md \
 fixture-continue-correction.md fixture-continue-malformed.md \
+fixture-continue-unaccepted.md \
 context-engineering-implementation.md context-engineering-implementation-plan.md \
 context-engineering-s7-regression.md \
 foreign-staging-target-repo.md"
@@ -729,6 +730,7 @@ CONT_OPEN_F="logs/work-loop/fixture-continue-opening.md"
 CONT_CLOSE_F="logs/work-loop/fixture-continue-close.md"
 CONT_CORR_F="logs/work-loop/fixture-continue-correction.md"
 CONT_MAL_F="logs/work-loop/fixture-continue-malformed.md"
+CONT_UNACC_F="logs/work-loop/fixture-continue-unaccepted.md"
 
 classify_state() {
   local f="$1" nx lr
@@ -748,24 +750,30 @@ classify_state() {
   # Tokenless. Continue REQUIRES the precondition: an accepted result from a
   # previous unit. Without it the same tokenless shape is an ordinary opening.
   #
-  # The precondition is semantic, so any test is a proxy — but it must not be a
-  # proxy for one fixture's WORDING. A probe run during this correction round
-  # caught exactly that: a valid Continue whose result read "taken as good enough
-  # to move on" instead of "accepted" was misclassified OPENING. Two independent
-  # proxies are therefore accepted, either alone sufficient: an explicit
-  # acceptance in the result, or a unit ordinal of 2+ in Lane and unit (which
-  # cannot be reached without a prior unit). Both are gated on the result not
-  # being a placeholder. A task that numbers no units and states no acceptance
-  # falls to OPENING — conservative in the safe direction: never call something a
-  # Continue without evidence of the prior unit.
+  # The precondition is semantic, so any deterministic test is a proxy. Two rules
+  # govern which proxies are legitimate, both learned the hard way in this round:
+  #
+  #   It may be CONSERVATIVE. A result that records an acceptance in words this
+  #   test does not recognise falls to OPENING. That under-calls a real Continue,
+  #   which is the safe direction.
+  #
+  #   It may NOT be BROADER than the core. A unit ordinal of 2+ was tried as a
+  #   second sufficient proxy and is now removed: core § 3 requires an accepted
+  #   result from a previous unit, and reaching Unit 2 is not that — a unit can
+  #   open after a hand-back, a false premise or a reframing, none of which
+  #   accepted anything. `fixture-continue-unaccepted.md` is exactly that state and
+  #   the ordinal rule classified it CONTINUE.
+  #
+  # So: an affirmative acceptance, matched per line and rejected when the line
+  # negates it. Line-scoped because a result legitimately discusses both an
+  # accepted unit and an unaccepted one.
   lr=$(awk '/^## Latest result/{f=1;next} /^## /{f=0} f' "$f" | sed '/^[[:space:]]*$/d')
-  printf '%s' "$lr" | grep -qE '\(empty — not started\)|^Not started\.' && { echo OPENING; return; }
   [ -z "$lr" ] && { echo OPENING; return; }
-  printf '%s' "$lr" | grep -qi 'accepted' && { echo CONTINUE; return; }
-  local lane ord
-  lane=$(awk '/^## Lane and unit/{f=1;next} /^## /{f=0} f' "$f")
-  ord=$(printf '%s' "$lane" | grep -oE 'Unit[[:space:]]+[0-9]+' | head -1 | grep -oE '[0-9]+')
-  if [ -n "$ord" ] && [ "$ord" -ge 2 ] 2>/dev/null; then echo CONTINUE; return; fi
+  printf '%s' "$lr" | grep -qE '\(empty — not started\)|^Not started\.' && { echo OPENING; return; }
+  if printf '%s\n' "$lr" | grep -i 'accepted' \
+       | grep -qivE 'not |never |nothing |no unit|un-accepted|rather than|without'; then
+    echo CONTINUE; return
+  fi
   echo OPENING
 }
 
@@ -779,6 +787,13 @@ check "cont  a correction-token hand-off is not a Continue" \
   "[ \"\$(classify_state '$CONT_CORR_F')\" = CORRECT ]"
 check "cont  a malformed state file is not a Continue" \
   "[ \"\$(classify_state '$CONT_MAL_F')\" = MALFORMED ]"
+# A later unit with NO accepted predecessor is not a Continue. Core § 3 requires an
+# accepted result from a previous unit; a unit ordinal is not that, and treating it
+# as sufficient invents a broader acceptance rule than the core's. This case keeps a
+# Unit 2 lane and a real, non-placeholder result that explicitly records a hand-back
+# rather than an acceptance — so it is red against any ordinal-based proxy.
+check "cont  a later unit with no accepted predecessor is not a Continue" \
+  "[ \"\$(classify_state '$CONT_UNACC_F')\" = OPENING ]"
 # Discrimination, not blanket rejection: the four negatives must resolve to four
 # DIFFERENT verdicts. A classifier that answered MALFORMED to everything would
 # satisfy the four checks above and prove nothing.

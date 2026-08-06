@@ -202,14 +202,74 @@ first duplication guard was section-wide and caught it; I narrowed the guard to 
 paragraph rather than widen this round past its frozen scope. It is the same class as finding 1 and
 is a candidate for a later unit.
 
+---
+
+### Final tightly-bounded fix (core § 3 menu) — result
+
+Reproduced first, then fixed. Both items done, nothing else.
+
+**Fix 1 — the ordinal proxy is gone.** Reproduced the defect before changing anything: built
+`logs/work-loop/fixture-continue-unaccepted.md` — a Unit 2 lane, a real non-placeholder result, no
+protocol token, and an explicit record that unit 1 was **handed back rather than accepted** — and ran
+it through the classifier as it stood. It returned **CONTINUE**. That is the defect exactly as the
+closure check named it: reaching Unit 2 is not an accepted predecessor, because a unit can open after
+a hand-back, a false premise or a reframing.
+
+The ordinal arm is removed outright rather than narrowed. The precondition is now a single rule: an
+affirmative acceptance in `## Latest result`, matched per line and rejected when that line negates it
+(`not`, `never`, `nothing`, `no unit`, `un-accepted`, `rather than`, `without`). Line-scoped because a
+result can legitimately discuss an accepted unit and an unaccepted one in the same paragraph — and the
+new fixture does exactly that, which is what makes it a real test rather than a keyword absence.
+
+**Accepted limit, stated rather than hidden:** the test is lexical. A result that records an
+acceptance in words it does not recognise falls to OPENING. Verified live — the scratchpad probe from
+the previous round (a valid Continue whose result reads "taken as good enough to move on") now
+classifies OPENING. That under-calls a real Continue, which is the safe direction, and is the
+conservatism the closure check expressly permitted. It is **not** the fixture-literal failure of the
+old `cont` block: that bound predicates to one file's incidental strings, whereas this reads the
+protocol's own precondition and simply cannot decide every paraphrase of it.
+
+**Fix 2 — § 0's stale sentence corrected.** It read "this candidate remains pending independent Codex
+review" after that review had run. It now states the current boundary: the review has run and returned
+Accept with corrections; **artifact closure** is what remains pending, and **adoption** is a separate
+operator decision afterwards. Verified no other "pending independent Codex review" sentence survives
+in the record.
+
+Evidence:
+
+- **RED before.** `passed: 174   failed: 3`, exit 1 — the new case failed under the ordinal rule, and
+  the classifier returned `CONTINUE` for `fixture-continue-unaccepted.md` when queried directly.
+- **GREEN after.** `passed: 175   failed: 2`, exit 1. `cont`/`rout` is 28/28.
+- **Full six-fixture discrimination**, each for its own distinct reason: `fixture-continue.md` →
+  CONTINUE; `-opening` → OPENING (placeholder result); `-close` → CLOSE (close token); `-correction` →
+  CORRECT (correction token); `-malformed` → MALFORMED (`## Next steps` where core § 4 requires
+  `## Next action`); `-unaccepted` → OPENING (no unnegated acceptance).
+- **The two remaining failures are the pre-existing `3.1a` closed-set reds.** Untouched, out of scope,
+  and not claimed fixed. `fixture-continue-unaccepted.md` was registered in `KNOWN_WORKLOOP_FILES` —
+  the documented friction for adding a fixture, not a widening to hide a red.
+- **Controls unchanged, verified by execution.** `git status --porcelain` is empty for
+  `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` (blob `8f30da6c`) and
+  `.claude/commands/work-loop-v2.md` (blob `125de530`). The skill was **not** touched by this fix
+  either (blob `8a88139c`, unchanged since the correction round) — this fix is harness, fixture and
+  record only.
+- **Record updated:** § 0's sentence, § 1 pins (harness `7974b597`, new fixture `e2fa822c`), and § 5's
+  final-fix subsection.
+
+**Not done, as instructed:** the newly noticed duplication in the skill's `**A correction is
+written…**` paragraph is left unfixed and remains a deferral for the closing record — not an accepted
+limitation of these fixes. No second correction round was opened, and the candidate was neither
+reviewed again, approved nor adopted.
+
 ## Blocker
 None.
 
 ## Next action
-Codex: run the closure check on the two frozen findings only — are findings 1 and 2 resolved, and
-did the correction break anything? Two things need your judgment inside that check. First, finding
-2's stated consequence did not reproduce (see the paragraph above); the finding is resolved on its
-substance, but decide whether the discrepancy changes your verdict. Second, the correction-paragraph
-duplication is recorded as a deferral rather than fixed, because fixing it would have widened the
-frozen scope — confirm that was the right call or record it as an accepted limitation. Anything else
-newly noticed is a deferral, not a second round.
+Codex: the final tightly-bounded fix is done. Its closure check covers this fix and nothing else
+(core § 3) — are the ordinal proxy and the stale § 0 sentence resolved, and did the fix break
+anything? One judgment is yours: the acceptance test is now lexical and conservative, so it under-calls
+a Continue whose result paraphrases acceptance. I have recorded that as an accepted limit rather than
+building a broader rule, because a broader rule is what the closure check just rejected. Confirm that
+reading, or say what a non-lexical test would have to key on. Then close or stop.
+
+The final-fix instruction this result answers is in commit `e21be3d`'s successor diff — not restated
+here, because `## Next action` holds the single next thing and Git holds the history (core § 4).
