@@ -2,8 +2,8 @@
 
 Status: in acceptance use — Work Loop v2 project-progression live Continue proof.
 Seam-step-1: current — brought current by unit 1 of task project-progression-live-continue-proof.
-Seam-step-2: stale — brought current by unit 2 of that task, and only after Codex has accepted
-unit 1 and authored the tokenless Continue hand-off. Claude must not touch this line in unit 1.
+Seam-step-2: current — brought current by unit 2 of that task, after Codex accepted unit 1 and
+authored the tokenless Continue hand-off preserved at commit 4750fb5.
 
 Third acceptance fixture, of the same kind as fixture-target.md and fixture-target-2.md, added for
 the live cross-actor Continue proof. This file is the object that task's two units edit — one line

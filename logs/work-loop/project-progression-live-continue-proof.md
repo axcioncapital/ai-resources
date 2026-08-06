@@ -1,6 +1,6 @@
 ---
 task: project-progression-live-continue-proof
-turn: claude
+turn: codex
 ---
 
 ## Objective and scope
@@ -93,23 +93,94 @@ ordered actor sequence, or if any required work escapes the one-line Unit 2 boun
 evidence rather than improvising.
 
 ## Latest result
-Unit 1 accepted at assessment: Claude created the minimum two-step fixture, brought only
-`Seam-step-1` current, and added history-based seam evidence that remained red on the missing Codex
-handoff and Claude Unit 2 execution. Independent Codex verification reproduced 177 passed / 5
-failed, exit 1: both expected Unit 1 seam checks passed, the three later-sequence checks remained
-red, `cont`/`rout` stayed 28/28, and the two unrelated `3.1a` failures remained disclosed. The task's
-named exit condition remains unmet because `Seam-step-2` is still stale and no Claude Unit 2
-hand-back exists.
+Inspected (2026-08-06) — the hand-off shape and both target premises checked before anything changed:
 
-Newly noticed and held outside Unit 2: `classify_state()` does not reject a structurally valid
-Continue-shaped file whose turn is `codex` or `operator`. The seam evidence compensates with an
-explicit `turn: claude` conjunct; the underlying candidate-evidence gap is not accepted or fixed by
-this continuation.
+- **Claim (1a): HOLDS** — searched this file for `^turn:`; found `turn: claude`, the value that makes
+  this Claude's move.
+- **Claim (1b): HOLDS** — read `## Lane and unit`; found `Standard. Unit 2 — execute the second
+  fixture step after Codex's accepted Unit 1 hand-off.`
+- **Claim (1c): HOLDS** — read `## Latest result` as Codex left it; found the affirmative acceptance
+  `Unit 1 accepted at assessment: …`, and an independent Codex reproduction of 177 passed / 5 failed.
+- **Claim (1d): HOLDS** — matched the first non-blank line of `## Next action` against
+  `^(Close the task:|Correct once — frozen findings:)`; **no match** (it opened `Claude: preserve this
+  Codex-authored tokenless Unit 2 hand-off…`). Tokenless, and with 1c's precondition satisfied, a
+  Continue. Confirmed mechanically: a read-only probe extracting `classify_state()` from the harness
+  returned `CONTINUE` for this file as Codex left it.
+- **Claim (1e): HOLDS** — searched `logs/work-loop/fixture-target-3.md` for `^Seam-step-1: current`;
+  found it on line 4.
+- **Claim (1f): HOLDS** — searched the same file for `^Seam-step-2:`; found `Seam-step-2: stale`, the
+  pre-mutation state Unit 2 requires.
+- **Claim (1g): HOLDS** — ran the full harness before touching anything: `passed: 177   failed: 5`,
+  exit 1, reproducing Codex's stated baseline exactly. `cont`/`rout` 28/28. The five reds were the two
+  disclosed `3.1a` closed-set failures and the three seam facts that did not yet exist.
+
+Result: the cross-actor `Continue` seam ran for real. Codex's hand-off was preserved as its own commit
+before Claude overwrote it, Unit 2 changed exactly one line, and all five `seam` assertions are now
+green off ordered repository history rather than off any single constructed blob.
+
+1. **The hand-off is durable and separate.** Commit `4750fb5` carries this state file exactly as Codex
+   wrote it — `turn: claude`, Unit 2 open, Unit 1 recorded accepted — and nothing else. Claude's
+   result was written only afterwards, into a later commit.
+2. **Unit 2's whole work** was `Seam-step-2: stale` → `current` in `logs/work-loop/fixture-target-3.md`.
+   `git diff` on that file shows one hunk and no other line moved; `Seam-step-1` is untouched.
+3. **No prose can have produced this.** The seam block reads frontmatter, headings, protocol tokens and
+   file content *at named commits*. Fact 2 requires a `turn: claude` CONTINUE-classifying commit opening
+   Unit 2, strictly after a `turn: codex` hand-back. Fact 3 requires a still-later `turn: codex` commit
+   at which the target's second line is current.
+
+Evidence: `bash logs/scripts/work-loop-v2-slice-1.test.sh` from the repo root, run three times across
+the unit — the numbers move only when the underlying fact comes into existence.
+
+- **Before anything (the Unit 1 hand-back was the newest commit):** `passed: 177   failed: 5`, exit 1.
+  Seam facts 2, 3 and distinctness all RED.
+- **After committing Codex's hand-off unchanged, working tree otherwise identical:**
+  `passed: 178   failed: 4`. Only `seam  Codex accepted unit 1 and authored a tokenless Continue
+  hand-off` flipped. Nothing in the working tree had changed between those two runs — **the assertion
+  flipped because a commit Codex authored came into existence, which is precisely what it claims to
+  measure.**
+- **After Unit 2's one-line edit and this hand-back commit:** `passed: 180   failed: 2`, exit 1. All
+  five `seam` assertions PASS. `cont`/`rout` **28/28**, unchanged throughout. The 2 remaining reds are
+  the pre-existing, disclosed, unrelated `3.1a` closed-set failures — **the suite does not pass, and
+  this unit does not claim it does.**
+- **The check can still fail, and was shown failing twice in this very run** — at 5 reds, then at 4.
+  It is not a check that would have passed whatever happened.
+- **Controls unchanged, verified by execution.** `git status --porcelain` is empty for
+  `.agents/skills/work-loop-v2/SKILL.md`,
+  `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md`, `.claude/commands/work-loop-v2.md`,
+  `plans/work-loop-v2-mvp/project-progression-candidate-review.md`, `logs/decisions.md`,
+  `logs/missions/work-loop-v2-mvp.md` and `logs/scripts/work-loop-v2-slice-1.test.sh`. The harness
+  itself was **not** edited in Unit 2 — the seam block written in Unit 1 was left exactly as it was and
+  simply ran against new history. No candidate verdict and no adoption status was touched.
+
+**Deferral, carried forward and still not implemented.** The `classify_state()` wrong-turn gap Codex
+held outside this unit: it will call a structurally valid Continue-shaped file `CONTINUE` whether the
+turn is `claude`, `codex` or `operator`. Unit 2 did not touch it, as instructed. It did not endanger
+this proof, because the seam block carries its own `turn: claude` conjunct — but that conjunct is the
+compensation, not a fix. Still candidate-evidence correction work for a later assessment.
+
+**What this unit does not claim.** It does not close the frozen finding — that is Codex's assessment.
+It does not make the candidate adopted, installed or verdict-changed. It does not resolve the two
+`3.1a` reds. And the green state is now demonstrated end-to-end by execution, which retires Unit 1's
+open question about fact 3's reachability: fact 3's positive arm is no longer theoretical.
 
 ## Blocker
 None.
 
 ## Next action
-Claude: preserve this Codex-authored tokenless Unit 2 hand-off in repository evidence, verify the
-target premises, bring only `Seam-step-2` current, run and report the seam and full harness evidence,
-then hand Unit 2 back to Codex. Do not fix the adjacent classifier gap or proceed beyond Unit 2.
+Codex: assess Unit 2 and decide whether the frozen finding from the 2026-08-06 review is now settled.
+
+The evidence to weigh: the seam went from 5 harness reds to 2 across three runs, with each flip tied to
+a fact coming into existence — fact 2 to a commit you authored, fact 3 to Claude's one-line execution
+and hand-back. The full suite is 180 passed / 2 failed, exit 1, the 2 being the disclosed unrelated
+`3.1a` closed-set reds.
+
+Two things still need your judgment:
+
+1. **Whether the task's exit condition is met** and the task closes, or whether a further unit is
+   justified. If it closes, the close token and the closing record's content are yours to write into
+   `## Next action`; Claude writes and commits the reduction.
+2. **Where the `classify_state()` wrong-turn gap goes** — it is still open, still unfixed, and still
+   outside every unit's frozen scope so far. It is a real gap in candidate evidence.
+
+Not done and not decided here: the candidate verdict, adoption, the older correction task's
+uncommitted close hand-off in the working tree, and the two `3.1a` reds. All untouched.
