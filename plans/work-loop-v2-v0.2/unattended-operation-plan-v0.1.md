@@ -120,16 +120,53 @@ a Claude+Codex pair is roughly 10 minutes; 40 minutes ≈ 8 hops, and 12 leaves 
 the launching session is not blocked for 40 minutes. Operator leaves. Evidence written to `runs/` as
 a dated live-run record, in the style of `runs/live-carry-one-2026-08-06.md`.
 
+**1d. Launch on a branch, not on `main`.** `git checkout -b work-loop/<task-id>` before launching.
+Claude commits every hop, so an unattended run puts several commits somewhere; a branch keeps `main`
+clean and makes the whole run droppable with one command. This is the cheap 90% of the isolated-worktree
+proposal (see the triage section) and costs one line in the launch habit rather than a subsystem.
+
+**Phase 1 acceptance** (borrowed from the recommendations doc, Addition 2 — the useful part):
+one command starts the run with no manual prompt copying; Claude → Codex → Claude → Codex completes
+without operator transport; a `turn: operator` stop produces zero subsequent actor launches.
+
 **Exit condition for Phase 1:** a written record naming what stopped the run, at which hop, and
 whether the stop was correct.
 
 ---
 
-## Phase 2 — The two guards
+## Phase 2 — The guards
 
-Small, and both are consequences of the loop being able to repeat.
+Three items. 2a is the highest-value change in this whole plan; 2b and 2c are consequences of the
+loop being able to repeat.
 
-**2a. `--expect-turn ACTOR` (new flag, new exit code 27).**
+**2a. Make the run stoppable. `SIGINT`/`SIGTERM` must actually stop it.**
+
+The trap is `trap 'release_lock' EXIT INT TERM` (`dispatch.sh:190`). A bash trap handler that does
+not call `exit` returns control to where the script was interrupted. So on `SIGTERM` the dispatcher:
+
+- releases its lock, then **carries on running**;
+- never signals the actor, which keeps working;
+- and, because the lock is now free, allows a *second* dispatcher to start on the same checkout and
+  task — two dispatchers driving one state file, which is the exact failure the lock exists to prevent.
+
+Ctrl-C in an interactive terminal probably escapes this, because the terminal signals the whole
+foreground process group and the actor dies with it. A **detached** run — which is what walking away
+requires — does not: `kill` reaches the dispatcher alone.
+
+> **Evidence status: INFERRED, not OBSERVED.** Derived from reading `dispatch.sh:190` and bash trap
+> semantics. The recommendations doc reports a live probe (dispatcher still alive 2s after `SIGTERM`),
+> and an attempt to reproduce that probe in this session was denied at the permission prompt. **The
+> implementation session must confirm by execution before fixing, and must separately establish
+> whether actor descendants survive** — neither this analysis nor the doc's probe settles that.
+
+*Minimum fix, not the doc's full version:* the trap sets a shutdown flag so the loop cannot launch
+another actor, terminates the actor's process tree (`run_bounded` already has the TERM-then-KILL
+sweep at `dispatch.sh:355-379` — reuse it rather than write a second one), waits, releases the lock
+once, and exits non-zero with an `interrupted` message naming the task, hop and state-file path. An
+interrupted actor is **never** retried — interruption may have landed after an unobserved partial
+effect. Two or three test cases, not the doc's nine.
+
+**2b. `--expect-turn ACTOR` (new flag, new exit code 27).**
 This run may launch `ACTOR` and nothing else; if `turn:` names the other actor, exit 27 without
 launching. Requires `--carry-one` — in loop mode the turn alternates by design, so the guard would
 end a healthy run on a failure code.
@@ -141,7 +178,7 @@ actor writing one state file. Core § 4 forbids a courier from choosing which ac
 that a check rather than a trust. Add `dispatch.test.sh` case 27, both halves (guard fires on the
 wrong turn; guard is silent on the right one).
 
-**2b. No hand-editing while a run is in flight.**
+**2c. No hand-editing while a run is in flight.**
 The lock (`dispatch.sh:177-192`, exit 17) stops a second *dispatcher* on the same checkout+task. It
 does **not** stop the chat Codex from writing the state file directly while a loop run is mid-hop —
 and Codex writes that file by hand, never through the dispatcher. For an unattended run this is a
@@ -181,8 +218,15 @@ the run is not context-bounded.
 **3d. Do not mix the shapes.** A chat Codex running courier hops *and* a loop running headless Codex
 turns is two instances of one actor. State it plainly.
 
-**3e. `README.md` + exit-code table** for `--expect-turn` / 27, and the walk-away invocation as a
-worked example.
+**3e. `README.md` + exit-code table** for `--expect-turn` / 27 and the interrupted exit from 2a, plus
+the walk-away invocation as a worked example.
+
+**3f. What Codex says when the operator gets back — one rule, not a report format.** On return,
+Codex reports from the state file and the run log, and **separates repository facts from model
+claims**: *"the dispatcher observed exit 0"* and *"Claude reports the tests passed"* are different
+statements, and neither means Codex accepted the evidence. This is the whole of Addition 10 that is
+worth having; the doc's eight-element report specification is not needed when Codex is reading two
+files it already knows how to read.
 
 ---
 
@@ -218,13 +262,68 @@ supervisor thinking, it is gone. Worth one look in the Codex hop output before r
 
 ---
 
+## Triage of `dispatcher-context-material-recommendations-2026-08-06.md`
+
+Reviewed against one operator constraint, stated verbatim: *"I don't want to make the system too
+complex with too much governance and safeguards. I also don't want to run the risk of overbuilding
+and overengineering."*
+
+Net result: **one real new build item** (safe interruption), **one launch habit** (branch), **two
+documentation lines**. Everything else is already true, or deferred.
+
+| # | Recommendation | Verdict | Why |
+|---|---|---|---|
+| 1 | One-command intake and launch from Codex | **Adopt, thin** | The valuable half is *"and then launch"*. Framing the brief, deriving the task id and recording boundaries is what Codex already does under the skill. Already Phase 3a; the doc's preflight/worktree/cost-ceiling launcher is not adopted. |
+| 2 | Unattended Claude ↔ Codex cycling | **Already exists** | Loop mode, live-proven 2026-08-05. The doc's own inventory says so. Its acceptance list is useful and is now Phase 1 acceptance. |
+| 3 | Total run budgets | **Partial** | Keep a plain wall-clock `--deadline` (Phase 4). Drop the checkpoint margin, the cost ceiling (no reliable telemetry) and telling the actor its own deadline — that last one changes the actor prompt, which is protocol, for a convenience. |
+| 4 | Automatic checkpoints | **Already true** | Every handback *is* a checkpoint: state file plus Claude's commit, validated structurally by exits 22 and 25. The only new part is deadline-aware handback, which depends on adopting the part of 3 that was dropped. |
+| 5 | Fresh-session continuity | **Already true** | This is the architecture, not an addition. The doc agrees, and its own advice on context rollover is *don't, until telemetry or observed failures justify it*. Agreed. |
+| 6 | Isolated worktree | **Substitute** | Real value (unattended commits stay off `main`) at real cost (worktree lifecycle, the parallel-sessions gates, the friction-log co-edit). A branch buys ~90% of it for one command. Phase 1d. Revisit only for parallel runs. |
+| 7 | Ten derived operational states | **No** | Ten labels for one serial process. The doc's own test — *"removing the display changes no decision"* — is the argument against building it now. Revisit if several loops ever run at once. |
+| 8 | Safe interruption and recovery | **Adopt — top priority** | Directly serves walk-away: you must be able to stop a run you left behind. Scoped to the minimum in Phase 2a: shutdown flag, kill the tree, exit non-zero, 2–3 tests — not 8 required behaviours and 9 acceptance tests. |
+| 9 | Structured JSON outcome + notification observer | **No, keep the cheap part** | A JSON event tells nobody anything until something consumes it, and the observer is a second process to maintain. The run log's closing lines already say what happened in English. Phase 4 already has a one-line final summary; a two-line desktop notification at run end is optional if wanted. |
+| 10 | Final return report | **Adopt as one rule** | Phase 3f. The fact-versus-claim distinction is the valuable part and costs one sentence. The eight-element report specification is not needed — Codex reads two files it already knows. |
+
+**The doc's *"Ideas that should not be added"* section is well-judged and adopted wholesale.** It
+rejects a second state directory, a SQLite ledger, automatic evidence judgment, autonomous worktree
+landing/teardown, a VS Code extension, a second workflow state machine, and hidden session resume.
+That section is the reason this document is worth reading rather than merely long.
+
+### One disagreement on order
+
+The doc's recommended order hardens the dispatcher (its steps 2–4) *before* proving unattended
+cycling (its step 5). **This plan proves first, deliberately.**
+
+Loop mode already works; nothing in Phases 2–4 is needed to run it once. Hardening first means
+designing three guards against a model of how an unattended run behaves, when one real run would
+replace that model with evidence — and this repo's most-logged failure family is exactly a plan whose
+load-bearing claims came from reading rather than execution (`logs/friction-log.md`, wrap-collector
+entry). The single exception is 2a, which is a defect rather than a design guess; if the operator
+would rather be able to abort the first walk-away run, 2a can move ahead of Phase 1c at low cost.
+
+### One scoping correction
+
+The doc's *"Existing prerequisites that remain higher priority"* (headless session identity, the
+ambient `friction-log.md` writer) reads as a blocker on everything here. It is not, for this use case.
+Both are scoped to **parallel** operation:
+`logs/work-loop/work-loop-v2-production-readiness-policy.md:374` states *"U1 and U2 are both
+prerequisites to any real parallel run"*, and its blocked steps concern worktrees and a maximum
+fan-out of 2.
+
+This plan is single-task, single-checkout, serial. That path is already proven: the 2026-08-06 hop
+ran headless in the main checkout and committed successfully (`9fb59b1` → `c2036d5`). The
+prerequisites gate Addition 6's worktrees, which this plan does not adopt.
+
+---
+
 ## Sequencing
 
 ```
-Phase 1  prove       →  1a launch path · 1b attended · 1c walk-away  (no code changes)
-Phase 2  guard       →  2a --expect-turn + test 27 · 2b in-flight rule
-Phase 3  document    →  3a-3e skill + README
-Phase 4  harden      →  only what Phase 1 justifies
+Phase 1  prove       →  1a launch path · 1b attended · 1c walk-away · 1d branch  (no code changes)
+Phase 2  guard       →  2a stoppable run (confirm, then fix) · 2b --expect-turn + test 27
+                        2c in-flight rule
+Phase 3  document    →  3a-3f skill + README
+Phase 4  harden      →  only what Phase 1 justifies (--deadline, summary line)
 Deferred supervisor  →  qualify separately, or not at all
 ```
 
@@ -243,3 +342,18 @@ get rewritten against the evidence rather than defended.
    wall-clock deadline (Phase 4) and let hops fall where they fall?
 4. **Review.** This plan authorises execution, and this repo's own record says execution-authorising
    plans carry unverified claims. Should Codex review it before the implementation session starts?
+5. **Order.** Phase 2a (making the run stoppable) is a defect fix, not a design guess. Do you want it
+   *before* the first walk-away run so you can abort it, or are you content to let the first proof run
+   to its hop limit unabortable?
+6. **Notification.** Optional two-line desktop notification when a run ends — worth it, or noise?
+
+---
+
+## Revision note
+
+**v0.1 → this revision (2026-08-06):** triaged against
+`dispatcher-context-material-recommendations-2026-08-06.md`. Adopted: safe interruption (new Phase
+2a, promoted to top priority), a branch instead of a worktree (1d), Phase 1 acceptance criteria, and
+the fact-versus-claim reporting rule (3f). Rejected for now: derived operational states, the JSON
+outcome event and observer, isolated worktrees, the full budget envelope, and the specified return
+report. Recorded one disagreement on order and one scoping correction.
