@@ -41,7 +41,13 @@
     "logs/work-loop/project-progression-classifier-turn-correction.md",
     "logs/improvement-log.md",
     "logs/next-up.md",
-    "logs/scratchpads/2026-08-06-16-21-scratchpad.md"
+    "logs/scratchpads/2026-08-06-16-21-scratchpad.md",
+    "logs/work-loop/work-loop-v2-intake-router.md",
+    ".claude/commands/work-loop-v2.md",
+    "logs/work-loop/fixture-mode-discovery.md",
+    "logs/work-loop/fixture-mode-implementation.md",
+    "logs/work-loop/fixture-mode-adoption.md",
+    "logs/scratchpads/2026-08-07-00-01-scratchpad.md"
   ],
   "decisions_refs": [
     "logs/decisions.md#2026-08-06-a-finding-that-contradicts-a-closed-record-is",

@@ -1975,3 +1975,78 @@ standing open question from the prior implementation task, untouched by this ses
   write and correcting a citation inside an already-closed file is a bigger intervention than the citation
   error itself. Declined rather than queued: cosmetic, self-correcting via `git log`, no downstream
   consumer reads the closed record's prose for the hash.
+## 2026-08-04 — Session S3-018 (continued) — Work Loop v2 Context Engineering S8a
+
+**Work:** Ran Claude's side of task `context-engineering-s8a-entrypoint-classification` through a
+premise-check hand-back, a Codex override, a full classification, and one bounded correction
+- Files in scope: `logs/work-loop/context-engineering-s8a-entrypoint-classification.md`,
+  `plans/work-loop-v2-v0.2/context-engineering/trials/entrypoint-classification.md`
+- Mission: work-loop-v2-mvp
+
+### Summary
+Four turns on one Work Loop v2 task. First turn: the brief claimed the operator had settled O-3 as reading
+A on 2026-08-04; `git grep` over every tracked file found no such record, and the three most recent durable
+statements said O-3 was unsettled — handed back to Codex with the inspection record, no other file touched
+(`cc00625`). Second turn: Codex ruled the task-state file is O-3's durable home under core §4 and reissued;
+ran a fresh symlink-following scan (14 access paths, exit 0), resolved file identity by inode (14 paths → 5
+canonical files), and classified all 6 in-population paths — 4 relevant by evidence, 2 by the plan's
+fail-safe (`9b9feb0`). Third turn: Codex froze three findings — the fail-safe misapplication on two rows
+that plan §11 already settles by evidence (my own miss, since I had not read §11), non-re-runnable `…`
+path abbreviations (fixing them exposed a wrong line-number citation on another row), and a thin observer
+recipe. Corrected all three, built a 26-check observer script, and proved it fail-capable by running it
+against a simulated repository with one path removed before shipping it (`b566d5a`). Fourth turn: the
+operator declined the observer run as ceremony; recorded as an explicit deviation across the record's
+status line, exit table and observation section rather than left implied as still-pending (`48ef174`).
+
+### Decisions Made
+- **Operator: decline the S8a observer run.** Judged the re-derivation ceremony not worth running given
+  the low cost of what it would confirm was already inspected once. Recorded explicitly: S8a's exit
+  condition is stated as unmet (declined, not outstanding), and the retained 26-check script is left in
+  place for later use — including the re-derivation plan §11 already requires at adoption.
+- **Codex, within its role: ruled the task-state file is O-3 reading A's durable home**, overruling
+  Claude's first-turn hand-back. Read as a fair application of core §4 — the state file is the sanctioned
+  Codex↔Claude channel and the operator carries the turn between both models.
+- **Codex, within its role: froze three correction findings** rather than re-reviewing the unit at large,
+  per core §3's one-bounded-round contract.
+- **Claude, within authority: set `turn: codex` on the final commit**, superseding Codex's own
+  `turn: operator` instruction from the frozen findings — the operator's decision to skip the observation
+  is theirs to make, and recording it as an open condition (not a met one) is what keeps the skip honest.
+
+### Outcome
+Skipped (not requested — bare `/wrap-session`).
+
+### Session Value Audit — 80/20 Review
+Skipped (not requested — bare `/wrap-session`).
+
+### Risky actions
+None. No irreversible or destructive action was taken or nearly taken. No prompt injection encountered.
+
+### Session Assessment
+Skipped (not requested — bare `/wrap-session`).
+
+### Next Steps
+`context-engineering-s8a-entrypoint-classification` closed during this wrap (`turn: operator` now, reduced
+to the four-part closing record). Codex accepted the classification with the observer gap written down as
+an accepted limitation rather than treated as satisfied. S8a's classification and its retained 26-check
+observer recipe are ready for reuse. Next real work: S8b (wiring the four relevant paths) is a separately
+opened task, not started; the two not-relevant verdicts must be re-derived before any adoption decision if
+those projects gain a v2 briefing surface.
+
+### Open Questions
+O-3 remains formally unconfirmed in the repository outside the task-state file — not a blocker for this
+session; relevant if S8a's classification is later used to support an adoption claim.
+
+### Findings Declined
+- **Claude built the first classification pass without reading plan §11**, missing a section that directly
+  settled two of the rows, and had to correct it. Declined rather than queued: the Work Loop v2 loop's own
+  one-bounded-correction mechanism (core §3) caught and fixed it exactly as designed — this is the loop
+  working, not a repo-level defect, and no recurring pattern beyond ordinary task-preparation care is
+  established by one instance.
+- **`run-manifest.sh close` hard-errored (exit 2, no advisory stub)** when this session's marker could not
+  resolve — no per-id marker existed (this session ran no `/prime`) and the shared marker was stale
+  (dated 2026-08-03, not today). Declined as a dedupe: this is the same root-cause family already tracked
+  across multiple `friction-log.md` entries (2026-06-12, 2026-07-03, and others) — "non-`/prime`
+  session-start paths write no per-id marker" — with a fix direction already routed to
+  `improvement-log.md` ("generalize per-id marker establishment to non-`/prime` session-start paths").
+  This instance adds no new information; logging it again would duplicate, not extend, the existing
+  record.

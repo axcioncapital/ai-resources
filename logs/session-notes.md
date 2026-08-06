@@ -2,82 +2,6 @@
 
 > Archive: [session-notes-archive-2026-08.md](session-notes-archive-2026-08.md)
 
-## 2026-08-04 — Session S3-018 (continued) — Work Loop v2 Context Engineering S8a
-
-**Work:** Ran Claude's side of task `context-engineering-s8a-entrypoint-classification` through a
-premise-check hand-back, a Codex override, a full classification, and one bounded correction
-- Files in scope: `logs/work-loop/context-engineering-s8a-entrypoint-classification.md`,
-  `plans/work-loop-v2-v0.2/context-engineering/trials/entrypoint-classification.md`
-- Mission: work-loop-v2-mvp
-
-### Summary
-Four turns on one Work Loop v2 task. First turn: the brief claimed the operator had settled O-3 as reading
-A on 2026-08-04; `git grep` over every tracked file found no such record, and the three most recent durable
-statements said O-3 was unsettled — handed back to Codex with the inspection record, no other file touched
-(`cc00625`). Second turn: Codex ruled the task-state file is O-3's durable home under core §4 and reissued;
-ran a fresh symlink-following scan (14 access paths, exit 0), resolved file identity by inode (14 paths → 5
-canonical files), and classified all 6 in-population paths — 4 relevant by evidence, 2 by the plan's
-fail-safe (`9b9feb0`). Third turn: Codex froze three findings — the fail-safe misapplication on two rows
-that plan §11 already settles by evidence (my own miss, since I had not read §11), non-re-runnable `…`
-path abbreviations (fixing them exposed a wrong line-number citation on another row), and a thin observer
-recipe. Corrected all three, built a 26-check observer script, and proved it fail-capable by running it
-against a simulated repository with one path removed before shipping it (`b566d5a`). Fourth turn: the
-operator declined the observer run as ceremony; recorded as an explicit deviation across the record's
-status line, exit table and observation section rather than left implied as still-pending (`48ef174`).
-
-### Decisions Made
-- **Operator: decline the S8a observer run.** Judged the re-derivation ceremony not worth running given
-  the low cost of what it would confirm was already inspected once. Recorded explicitly: S8a's exit
-  condition is stated as unmet (declined, not outstanding), and the retained 26-check script is left in
-  place for later use — including the re-derivation plan §11 already requires at adoption.
-- **Codex, within its role: ruled the task-state file is O-3 reading A's durable home**, overruling
-  Claude's first-turn hand-back. Read as a fair application of core §4 — the state file is the sanctioned
-  Codex↔Claude channel and the operator carries the turn between both models.
-- **Codex, within its role: froze three correction findings** rather than re-reviewing the unit at large,
-  per core §3's one-bounded-round contract.
-- **Claude, within authority: set `turn: codex` on the final commit**, superseding Codex's own
-  `turn: operator` instruction from the frozen findings — the operator's decision to skip the observation
-  is theirs to make, and recording it as an open condition (not a met one) is what keeps the skip honest.
-
-### Outcome
-Skipped (not requested — bare `/wrap-session`).
-
-### Session Value Audit — 80/20 Review
-Skipped (not requested — bare `/wrap-session`).
-
-### Risky actions
-None. No irreversible or destructive action was taken or nearly taken. No prompt injection encountered.
-
-### Session Assessment
-Skipped (not requested — bare `/wrap-session`).
-
-### Next Steps
-`context-engineering-s8a-entrypoint-classification` closed during this wrap (`turn: operator` now, reduced
-to the four-part closing record). Codex accepted the classification with the observer gap written down as
-an accepted limitation rather than treated as satisfied. S8a's classification and its retained 26-check
-observer recipe are ready for reuse. Next real work: S8b (wiring the four relevant paths) is a separately
-opened task, not started; the two not-relevant verdicts must be re-derived before any adoption decision if
-those projects gain a v2 briefing surface.
-
-### Open Questions
-O-3 remains formally unconfirmed in the repository outside the task-state file — not a blocker for this
-session; relevant if S8a's classification is later used to support an adoption claim.
-
-### Findings Declined
-- **Claude built the first classification pass without reading plan §11**, missing a section that directly
-  settled two of the rows, and had to correct it. Declined rather than queued: the Work Loop v2 loop's own
-  one-bounded-correction mechanism (core §3) caught and fixed it exactly as designed — this is the loop
-  working, not a repo-level defect, and no recurring pattern beyond ordinary task-preparation care is
-  established by one instance.
-- **`run-manifest.sh close` hard-errored (exit 2, no advisory stub)** when this session's marker could not
-  resolve — no per-id marker existed (this session ran no `/prime`) and the shared marker was stale
-  (dated 2026-08-03, not today). Declined as a dedupe: this is the same root-cause family already tracked
-  across multiple `friction-log.md` entries (2026-06-12, 2026-07-03, and others) — "non-`/prime`
-  session-start paths write no per-id marker" — with a fix direction already routed to
-  `improvement-log.md` ("generalize per-id marker establishment to non-`/prime` session-start paths").
-  This instance adds no new information; logging it again would duplicate, not extend, the existing
-  record.
-
 ## 2026-08-04 — Session (unmarked) — Work Loop v2 Context Engineering S8b, run to closure
 
 **Work:** Ran Claude's side of `context-engineering-s8b-seam-proof` through claims-checking, an
@@ -811,3 +735,76 @@ and was left unaddressed.
 ### Open Questions
 - Is the proof worktree at `.../scratchpad/carry-proof-wt` idle? Blocks its own cleanup only —
   nothing else depends on the answer.
+
+## 2026-08-07 — Work Loop v2: intake router Units 1 correction, 2, 3, 3 correction
+
+### Summary
+Four consecutive `/work-loop-v2` hops on `work-loop-v2-intake-router`, each Claude's half of one
+Codex ⇄ Claude cycle: closed out Unit 1's correction, implemented Unit 2 (the ordinary-language
+intake router index) and Unit 3 (the Discovery/Implementation/Adoption mode contract), then
+corrected two frozen findings on Unit 3. Every hop followed the same shape — reproduce or check
+premises by inspection, write evidence red-before/green-after, implement inside the allowed
+scope, hand back with `turn: codex`. Nothing closed; the task is still open, `turn: codex`,
+awaiting Codex's closure check on the correction just handed back.
+
+### Decisions Made
+- Unit 1 correction: fixed the Class-1 Matt-route count/arithmetic, replaced three false
+  "operator choices" with resolutions already implied by the brief's own governing decisions,
+  widened the index recommendation to name all 25 Matt skills instead of 13, split the
+  implementation boundary into a router-index unit and a separate mode-contract unit.
+- Unit 2: implemented the 50-entry ordinary-language router index inside the existing Routing
+  section (no second router). Corrected a real Unit-1 factual error found along the way — Axcíon
+  `/grill-me` delegates to an Axcíon-owned skill, not the Matt primitive, so the three name
+  collisions are fully independent rather than wrapper/primitive.
+- Unit 3: implemented mode as a classification bound to existing unit kinds (no new field, lane
+  or unit type). Resolved the brief's one real tension — Adoption's "real operation" evidence
+  requirement vs. the discovery-unit no-target-implementation boundary — by having the
+  Adoption-mode unit read evidence that separate work produced, rather than performing the
+  operating itself.
+- Unit 3 correction: replaced a stale/self-contradicting harness assertion with two positional
+  ones, and rewrote a fixture's Standard-lane admission reason that had (accidentally) cited the
+  exact reason core § 2 excludes ("the change is small").
+- Routine: harness line-guard on the Codex skill re-based 320→340 lines (reported, not hidden);
+  three fixtures (`fixture-mode-{discovery,implementation,adoption}.md`) added and registered in
+  the harness's closed-set fixture list.
+
+### Outcome
+Skipped (not requested).
+
+### Session Value Audit — 80/20 Review
+Skipped (not requested).
+
+### Risky actions
+None — every unit stayed inside its brief's allowed-path scope; two false premises were caught
+and corrected rather than built around; nothing was committed to `main` without a green harness
+run (271/2 → 275/2, both remaining failures pre-existing and unrelated).
+
+### Session Assessment
+Skipped (not requested).
+
+### Next Steps
+- Whose move: `turn: codex` — Codex runs the closure check on the Unit 3 correction just handed
+  back (commit `a963360`). Next Claude action is `/work-loop-v2` once `turn:` flips back.
+- The task's exit condition still needs a fresh natural-language routing proof: one live Codex
+  session routing a request to a Claude-side-only Matt skill, one live Codex session correctly
+  classifying an Adoption-mode request. No static check can produce this.
+- A recorded-not-actioned deferral: sweep the harness for other assertions sharing the "passes
+  for an unrelated reason" defect class caught in the Unit 3 correction.
+- The two pre-existing `unexpected_worklog_files` harness failures (14 untracked live state files
+  outside `KNOWN_WORKLOOP_FILES`) remain unrepaired — out of scope for every unit this session.
+
+### Open Questions
+None.
+
+### Findings Declined
+- The Unit 3 correction's recorded candidate deferral — a sweep for other harness assertions that
+  can pass for an unrelated reason, same defect class as the two Codex caught — is not queued to
+  `improvement-log.md`. It is already owned inside `work-loop-v2-intake-router.md`'s own record,
+  which Codex reviews at closure; a duplicate entry would fragment the same finding across two
+  trackers.
+- The two pre-existing `unexpected_worklog_files` harness failures, reproduced again in all four
+  baseline runs this session (183/2 → 222/2 → 271/2 → 275/2, same two lines every time), are not
+  re-queued. Already logged 2026-08-06, `medium-high`, `logs/improvement-log.md` ("The `3.1a`
+  closed-set assertion reddens on normal repository growth"), with the structural fix already
+  named (fixture-prefix convention rather than an enumerated allow-list). No new information from
+  this session's reproduction.

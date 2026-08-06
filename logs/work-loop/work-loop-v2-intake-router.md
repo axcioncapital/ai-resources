@@ -1,6 +1,6 @@
 ---
 task: work-loop-v2-intake-router
-turn: codex
+turn: claude
 ---
 
 ## Objective and scope
@@ -186,7 +186,10 @@ authority or risk is required.
 
 Completion: Claude commits only the allowed paths by explicit pathspec; every premise is
 dispositioned; red/green evidence and the honest full-harness result are summarized in
-`## Latest result
+`## Latest result`; the remaining fresh-session proof is stated precisely; `turn: codex`; stop for
+assessment.
+
+## Latest result
 
 Reproduced both frozen findings by inspection before correcting either.
 
@@ -254,20 +257,15 @@ None.
 
 ## Next action
 
-Closure check on the two frozen findings only — are they resolved, and did the correction break
-anything?
+Final tightly-bounded fix:
 
-1. Finding 1 — the stale assertion is gone; two positional assertions replace it, and the table
-   above shows the old predicate passing on both mutants while the corrected one fails on both.
-2. Finding 2 — the fixture's named reason now cites core § 2's scope-bounding reason and is
-   factually grounded in the live-seam target; three assertions stop the contradiction recurring.
+The two frozen findings are resolved, but their correction accidentally removed the
+`## Latest result` heading and the end of the Brief's Completion sentence, leaving the result
+embedded inside `## Brief`. Codex has restored only that exact state-file boundary so the interface
+is valid again.
 
-Nothing else was changed: the Adoption-as-discovery-unit decision, the positional record shape, the
-340-line guard and the registered fixtures were accepted for pilot quality and were left alone.
-
-One candidate deferral is recorded under `## Latest result` — a sweep for other assertions that can
-pass for an unrelated reason, which is the class Finding 1 belongs to. It is yours to record or drop
-at closure, not a second correction.
-
-The task's exit condition is unchanged and remains one item: the fresh-session natural-language
-proof — one request for owner selection, one for Adoption-mode classification.
+Claude: verify this file now has exactly one each of the five active headings, that the correction
+result sits under `## Latest result`, and that the Brief's Completion sentence is complete. Change
+nothing unless that exact structural repair is still incomplete; commit only this state file by
+explicit pathspec, set `turn: codex`, and hand back for the final-fix closure check. Do not alter the
+runtime, harness, fixtures or the accepted correction.
