@@ -87,16 +87,29 @@ A task usually takes several units.
    not implemented: Claude examines the named unknown and returns what is actually there, changing
    nothing beyond the state file, and the hand-back is for Codex to reframe the work or stop. Either
    way, Claude writes the result and the evidence into the state file.
-5. **Assess.** Codex reads the result and decides one of three things: close, correct once, or stop.
+5. **Assess.** Codex reads the result and decides one of four things: close, continue, correct once, or stop.
    **The closing decision is Codex's.** § 4's "Who commits: Claude" is a `.git`-access fact and does
    not restrict Codex's verdict — Codex closes, Claude writes and commits the closing record.
-6. **Close, correct once, or stop.**
+6. **Close, continue, correct once, or stop.**
 
 ### The "good enough, proceed" judgment
 
 At assessment, Codex's job is the executive call — *is this good enough to move on?* — not finding
 more things to improve. The quality bar is pilot quality with limitations written down, not
 completeness.
+
+### Continuing — accepting the unit and opening the next
+
+Continue accepts the completed unit and opens the next one in the same task, because the task's
+objective — a named exit condition — remains unmet. It is an acceptance, not a correction: findings
+go through the correction round below, and a task whose objective is met closes rather than
+continues.
+
+On a continue, Codex records the accepted result as the last material result in `## Latest result`,
+writes the next unit's brief (step 3), updates `## Lane and unit`, and sets `turn: claude`. **There
+is no continue token.** A `Next action` that opens with neither the close token nor the correction
+token, and carries a new brief, is a continue. The task stays open; nothing is reduced to the
+closing record.
 
 ### Closing — the verdict and the record are two moves
 
@@ -313,6 +326,7 @@ file, not "review round" for correction.
 | **Correction** | One bounded round of fixes, frozen to the findings the assessment named. |
 | **Evidence** | What shows the result is real. It must be capable of showing that it is not. |
 | **Deferral** | A good idea, recorded and not done now, with the reason. |
+| **Continue** | The unit is accepted and the next unit opens in the same task, because a named exit condition of the objective remains unmet. § 3. |
 | **Close** | The task ends. The state file is reduced to the closing record in § 4. |
 
 ---

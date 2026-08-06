@@ -34,6 +34,16 @@ Sending the operator to Claude when the turn is theirs stalls the loop as surely
 
 ---
 
+## Routing a "continue" request — who owns the next move
+
+When the operator asks you to continue a project rather than naming a unit, do not open a brief yet. Read the project's own governing workflow and its authoritative current state, find the nearest unmet exit condition in the project's own terms, and answer one question first: **who owns the next move?**
+
+- **The operator** — the nearest unmet exit condition is a decision only they can make: intent, priority, authority, or risk. Open nothing. End with the Next line naming the decision you need.
+- **The project's specialist workflow** — the next move belongs to a stage or phase that workflow owns. Its method, reviews and gates are its own (core § 1); do not wrap its work in a unit or add anything on top. Say which stage owns the move, and end with the Next line sending the operator there.
+- **The Work Loop** — the next move is bounded repository work no specialist workflow owns. Take it through Admission below as one unit: a **delivery unit** when what advances the project is a change, or a **discovery unit** when it is evidence. Operating evidence from real use is a discovery unit whose named unknown is how the capability behaves in use — never a new unit type.
+
+Map the project's position using its own phase model and vocabulary. Never rename its phases, and never create a document, list or state entry to hold the mapping — the routing is a judgment made fresh from the durable sources each time. Only where a project has no phase model at all, orient with this fallback spine, as a diagnostic and nothing more: frame the need → resolve blocking uncertainty → choose the intervention → shape the pilot → deliver → test in real use → adopt, revise or stop. It creates no states to traverse, no artifacts, and no exit conditions of its own.
+
 ## Admission — Direct Work or the loop
 
 **Core § 2 owns this test.** Read it there and apply it before opening anything. What you do with each outcome:
@@ -102,9 +112,11 @@ Discharge every duty inside prepare, brief, assess and escalate, and add no mach
 
 ## Assessing the result
 
-Claude hands back with `turn: codex`. Read the result and the evidence, then apply core § 3: the "good enough, proceed" judgment and the three outcomes it allows are defined there. Yours is the executive call, not a hunt for more to improve.
+Claude hands back with `turn: codex`. Read the result and the evidence, then apply core § 3: the "good enough, proceed" judgment and the four outcomes it allows are defined there. Yours is the executive call, not a hunt for more to improve.
 
 When core § 2 *De-escalating* applies, this is where you act on it: close the task here rather than carrying it further.
+
+**Continuing.** When the accepted unit leaves the task's named exit condition unmet, continue: record the accepted result, write the next unit's brief, and set `turn: claude` — the mechanics are core § 3's. Justify the next unit against the objective as Routing above requires; if the next move is not the loop's to own, close instead and route it. Continue is not a way to avoid closing a finished task, and not a correction in disguise — findings go through the correction round.
 
 If Claude handed back a **false premise**, that is a correct outcome, not a failure. Your brief rested on something untrue. Fix the brief or drop the unit; do not ask Claude to proceed anyway.
 
@@ -139,3 +151,5 @@ Core § 1 sets the limits on your role and core § 7 reserves hard-to-reverse de
 Slices 1–3: opening a unit with a brief, assessing/closing it, the one bounded correction with its closure-check discipline, and admission discipline — the admission test (Admission above), de-escalation at assessment, and the deferral discipline that keeps mid-unit improvements out of the work.
 
 Context Engineering is live in the sections above, and governs how you prepare that one brief — what you go looking at, what governs it, what Claude must verify, how the unit is framed and bounded, and what stays out of it.
+
+The project-progression change (2026-08-06) adds the Routing section above and the core's fourth assessment outcome, Continue.

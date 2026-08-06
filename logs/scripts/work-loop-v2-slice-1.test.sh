@@ -21,6 +21,10 @@
 #   run (l) task fixture-slice3-close, opened by Codex, closed with written
 #           limitations, zero correction rounds                                     [3.4]
 #
+# Continue (post-MVP project progression, accepted 2026-08-06):
+#   run (m) fixture-continue — a constructed multi-unit end state: unit 1 accepted
+#           via Continue, unit 2's brief open in the same file, task not closed
+#
 # Run it BEFORE the behaviours exist (must fail) and AFTER (must pass). That ordering is the
 # point: an assertion that cannot fail is not evidence (executable core § 6 rule 5).
 #
@@ -437,7 +441,7 @@ KNOWN_WORKLOOP_FILES="fixture-slice1-codex.md fixture-slice1-false.md fixture-sl
 fixture-slice2-correction.md fixture-slice2-foreign.md fixture-slice2-fresh.md \
 fixture-slice2-menu.md fixture-slice3-close.md fixture-slice3-deescalate.md \
 fixture-slice3-deferral.md fixture-slice3-limits.md fixture-step6-admission.md \
-fixture-target-2.md fixture-target.md \
+fixture-target-2.md fixture-target.md fixture-continue.md \
 context-engineering-implementation.md context-engineering-implementation-plan.md \
 context-engineering-s7-regression.md \
 foreign-staging-target-repo.md"
@@ -670,6 +674,55 @@ check "3.4   no active field survived closure" \
   "close_closed && ! grep -qE '^## (Objective and scope|Lane and unit|Latest result|Blocker|Next action)' '$CLOSE_F'"
 check "3.4   the committed state carries the closed shape" \
   "git show HEAD:'$CLOSE_F' 2>/dev/null | grep -qE '^## Outcome'"
+
+# --- Continue: a multi-unit task accepts a unit and opens the next -----------
+# Post-MVP project-progression change (mission thread, accepted 2026-08-06).
+# fixture-continue is a CONSTRUCTED state file showing the end state after a
+# Continue assessment: unit 1 accepted, unit 2's brief open, task not closed.
+# The artifact assertions go RED before the core/skill edits exist — this block
+# ran red against the pre-change artifacts before going green.
+CONT_F="logs/work-loop/fixture-continue.md"
+cont_lane()   { awk '/^## Lane and unit/{f=1;next} /^## /{f=0} f' "$CONT_F"; }
+cont_latest() { awk '/^## Latest result/{f=1;next} /^## /{f=0} f' "$CONT_F"; }
+cont_next()   { awk '/^## Next action/{f=1;next} /^## /{f=0} f' "$CONT_F"; }
+
+check "cont  fixture present: $CONT_F" "[ -f '$CONT_F' ]"
+check "cont  core allows four outcomes at assessment" \
+  "core_flat | grep -qi 'close, continue, correct once, or stop'"
+check "cont  core owns the continue mechanics as its own subsection" \
+  "grep -q '^### Continuing' '$CORE_F'"
+check "cont  core § 5 pins Continue as vocabulary" \
+  "grep -q '| \*\*Continue\*\*' '$CORE_F'"
+check "cont  the resource's assessment names four outcomes" \
+  "assess_res | grep -qi 'four outcomes'"
+check "cont  the resource does not copy the core's outcome list" \
+  "[ -n \"\$(assess_res)\" ] && ! assess_res | grep -qi 'close, continue, correct once, or stop'"
+check "cont  after a continue the task stays open — active fields survive" \
+  "grep -qE '^## Objective and scope' '$CONT_F' && grep -qE '^## Next action' '$CONT_F' && ! grep -qE '^## Outcome' '$CONT_F'"
+check "cont  the turn passes to claude with the next brief" \
+  "grep -qE '^turn:[[:space:]]*claude' '$CONT_F'"
+check "cont  lane and unit names the next unit, not the accepted one" \
+  "cont_lane | grep -q 'Unit 2'"
+check "cont  latest result carries the accepted result, not a placeholder" \
+  "cont_latest | grep -qi 'accepted' && ! cont_latest | grep -q '(empty — not started)'"
+check "cont  the continue names the unmet exit condition" \
+  "cont_latest | grep -qi 'remains unmet'"
+check "cont  next action opens with neither protocol token" \
+  "[ -n \"\$(cont_next)\" ] && ! cont_next | grep -q '^Close the task:' && ! cont_next | grep -q '^Correct once — frozen findings:'"
+
+# --- Routing: who owns the next move, before any unit opens ------------------
+# The routing section is the ownership seam: operator / specialist workflow /
+# Work Loop, decided before any discovery-vs-delivery classification.
+routing_res() { awk '/^## Routing a "continue" request/{f=1;next} /^## /{f=0} f' "$SKILL_F"; }
+check "rout  the resource owns a routing section" "[ -n \"\$(routing_res)\" ]"
+check "rout  routing asks who owns the next move first" \
+  "routing_res | grep -qi 'who owns the next move'"
+check "rout  real-use observation stays a discovery unit" \
+  "routing_res | grep -qi 'never a new unit type'"
+check "rout  the fallback spine is diagnostic only and creates nothing" \
+  "routing_res | grep -qi 'no states to traverse, no artifacts'"
+check "rout  routing creates no mapping document" \
+  "routing_res | grep -qi 'never create a document'"
 
 # --- v1 isolation: logs/loop/ must gain nothing (slice plan 1.1) ------------
 check "v1    no Slice 1, 2 or 3 artifact leaked into logs/loop/" \
