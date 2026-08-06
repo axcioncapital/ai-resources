@@ -136,8 +136,9 @@ whether the stop was correct.
 
 ## Phase 2 — The guards
 
-Three items. 2a is the highest-value change in this whole plan; 2b and 2c are consequences of the
-loop being able to repeat.
+Four items, in value order. 2a is the highest-value change in this whole plan. 2b bounds the run the
+way the operator actually thinks about it. 2c is conditional and may never be built. 2d is a rule,
+not code.
 
 **2a. Make the run stoppable. `SIGINT`/`SIGTERM` must actually stop it.**
 
@@ -166,19 +167,32 @@ once, and exits non-zero with an `interrupted` message naming the task, hop and 
 interrupted actor is **never** retried — interruption may have landed after an unobserved partial
 effect. Two or three test cases, not the doc's nine.
 
-**2b. `--expect-turn ACTOR` (new flag, new exit code 27).**
-This run may launch `ACTOR` and nothing else; if `turn:` names the other actor, exit 27 without
-launching. Requires `--carry-one` — in loop mode the turn alternates by design, so the guard would
-end a healthy run on a failure code.
+**2b. `--deadline SECONDS` — a wall-clock budget for the whole run.**
+The operator's unit of planning is time (*"I step out for 40 minutes"*), and the current bound is
+hops. `--max-hops 12 --timeout 900` is an upper bound of **three hours**, which is not a bound in any
+useful sense for someone expecting to be back in forty minutes.
 
-*Why:* `SKILL.md:55` tells Codex to confirm `turn:` is `claude` before running the courier command.
-That is a disposition with no check behind it. If a repeating courier misreads the file while
-`turn: codex`, `dispatch.sh:409-418` launches a **second, headless Codex** — two instances of the same
-actor writing one state file. Core § 4 forbids a courier from choosing which actor moves; this makes
-that a check rather than a trust. Add `dispatch.test.sh` case 27, both halves (guard fires on the
-wrong turn; guard is silent on the right one).
+Behaviour, kept minimal: refuse to launch another actor once the deadline has passed, and exit with a
+named `budget exhausted` reason that is **not** confused with completion. Do not implement the
+recommendations doc's checkpoint margin, cost ceiling, or deadline-aware actor prompting — the first
+two are machinery and the third changes the actor prompt, which is protocol, for a convenience. A
+run that hits the deadline stops in a resumable state; the state file and Git are untouched by the
+stop, so the next run continues from them.
 
-**2c. No hand-editing while a run is in flight.**
+**2c. `--expect-turn ACTOR` — conditional, and probably not needed.**
+*Demoted from Phase 2a on review.* This flag guards the **repeating-courier** shape: Codex running
+one-hop carries back to back. If the answer to the operator's goal is unattended loop mode, that
+shape never gets built and the flag guards a hazard that cannot occur. The residual two-Codex
+collision — a chat Codex carrying a hop while a loop run is in flight — is already refused by the
+lock (`dispatch.sh:177-192`, exit 17: one dispatcher per checkout+task).
+
+**Build this only if Phase 1 concludes that the repeating courier is a shape worth keeping.** If it
+is: this run may launch `ACTOR` and nothing else; if `turn:` names the other actor, exit 27 without
+launching; requires `--carry-one`, since in loop mode the turn alternates by design. It would turn
+`SKILL.md:55` (*confirm `turn:` is `claude`*) from a disposition into a check. Add `dispatch.test.sh`
+case 27, both halves.
+
+**2d. No hand-editing while a run is in flight.**
 The lock (`dispatch.sh:177-192`, exit 17) stops a second *dispatcher* on the same checkout+task. It
 does **not** stop the chat Codex from writing the state file directly while a loop run is mid-hop —
 and Codex writes that file by hand, never through the dispatcher. For an unattended run this is a
@@ -233,10 +247,9 @@ files it already knows how to read.
 ## Phase 4 — Optional hardening
 
 Only if Phase 1 shows a need. Listed so they are not silently forgotten.
+*(`--deadline` was here; promoted to 2b on review — it is worth more to this operator than the flag
+it replaced.)*
 
-- **`--deadline SECONDS`** — total wall-clock budget for the run. `--max-hops × --timeout` is an upper
-  bound but a very loose one (12 × 900 = 3 hours), and "I am away for 40 minutes" maps to a clock, not
-  a hop count.
 - **End-of-run summary line** in the run log — final `turn:`, hop count, stop reason, in one place, so
   the returning operator reads one line instead of reconstructing the run.
 - **Raising the `--max-hops` default** from 4. Prefer documenting the walk-away invocation over
@@ -246,15 +259,22 @@ Only if Phase 1 shows a need. Listed so they are not silently forgotten.
 
 ## Deferred — the supervisor
 
-**Recommendation: do not build it in the implementation session.**
+**Recommendation: do not build it in the implementation session. But be honest about what that costs.**
 
 Loop mode carries one task. When that task closes, the run ends — even with 25 minutes left. Filling
 the whole window across several units needs something that picks what to work on next.
 
-That is not transport, so core § 4 does not license it, and it is exactly the kind of component that
-`/develop-ai-resource` exists to qualify — including the outcome *no build*. Reopen it once Phase 1
-shows how long a single unit actually runs unattended. If the answer is "40 minutes on one unit," the
-supervisor buys nothing.
+**This is the one deferral in this plan that may fail the operator's actual goal rather than protect
+it.** The goal was *"40 minutes of work while I am away."* What this plan delivers is *"one unit,
+unattended."* If a unit typically closes in 15 minutes, those are very different things, and every
+other item here is trim by comparison.
+
+The principled objection stands — picking the next unit is judgment, not transport, so core § 4 does
+not license it, and it is exactly what `/develop-ai-resource` exists to qualify, including the
+outcome *no build*. But the principle is not the reason to wait. **The reason to wait is that Phase 1
+measures the gap.** If one unit runs 40 minutes unattended, the supervisor buys nothing. If it runs
+15, the supervisor becomes the main item and this plan's ordering is wrong. That is one measurement
+away, not one argument away.
 
 *Loose end:* an untracked file `logs/work-loop/work-loop-v2-supervisor-ideas-assessment.md` existed at
 the start of the 2026-08-06 session and is no longer on disk. It was never committed. If it held
@@ -275,7 +295,7 @@ documentation lines**. Everything else is already true, or deferred.
 |---|---|---|---|
 | 1 | One-command intake and launch from Codex | **Adopt, thin** | The valuable half is *"and then launch"*. Framing the brief, deriving the task id and recording boundaries is what Codex already does under the skill. Already Phase 3a; the doc's preflight/worktree/cost-ceiling launcher is not adopted. |
 | 2 | Unattended Claude ↔ Codex cycling | **Already exists** | Loop mode, live-proven 2026-08-05. The doc's own inventory says so. Its acceptance list is useful and is now Phase 1 acceptance. |
-| 3 | Total run budgets | **Partial** | Keep a plain wall-clock `--deadline` (Phase 4). Drop the checkpoint margin, the cost ceiling (no reliable telemetry) and telling the actor its own deadline — that last one changes the actor prompt, which is protocol, for a convenience. |
+| 3 | Total run budgets | **Adopt the clock only** | A plain wall-clock `--deadline` is now Phase 2b — *promoted on review*, because the operator plans in time and the current bound is a 3-hour hop ceiling. Drop the checkpoint margin, the cost ceiling (no reliable telemetry) and telling the actor its own deadline — that last one changes the actor prompt, which is protocol, for a convenience. |
 | 4 | Automatic checkpoints | **Already true** | Every handback *is* a checkpoint: state file plus Claude's commit, validated structurally by exits 22 and 25. The only new part is deadline-aware handback, which depends on adopting the part of 3 that was dropped. |
 | 5 | Fresh-session continuity | **Already true** | This is the architecture, not an addition. The doc agrees, and its own advice on context rollover is *don't, until telemetry or observed failures justify it*. Agreed. |
 | 6 | Isolated worktree | **Substitute** | Real value (unattended commits stay off `main`) at real cost (worktree lifecycle, the parallel-sessions gates, the friction-log co-edit). A branch buys ~90% of it for one command. Phase 1d. Revisit only for parallel runs. |
@@ -320,11 +340,12 @@ prerequisites gate Addition 6's worktrees, which this plan does not adopt.
 
 ```
 Phase 1  prove       →  1a launch path · 1b attended · 1c walk-away · 1d branch  (no code changes)
-Phase 2  guard       →  2a stoppable run (confirm, then fix) · 2b --expect-turn + test 27
-                        2c in-flight rule
+                        MEASURE: how long does one unit actually run unattended?
+Phase 2  guard       →  2a stoppable run (confirm, then fix) · 2b --deadline
+                        2c --expect-turn (conditional, may be dropped) · 2d in-flight rule
 Phase 3  document    →  3a-3f skill + README
-Phase 4  harden      →  only what Phase 1 justifies (--deadline, summary line)
-Deferred supervisor  →  qualify separately, or not at all
+Phase 4  harden      →  only what Phase 1 justifies (summary line, optional notification)
+Deferred supervisor  →  decided by Phase 1's measurement, not by argument
 ```
 
 Phase 1 gates the rest. If the walk-away run reveals something none of this anticipates, Phases 2–4
@@ -351,7 +372,20 @@ get rewritten against the evidence rather than defended.
 
 ## Revision note
 
-**v0.1 → this revision (2026-08-06):** triaged against
+**Second revision (2026-08-06), after the operator challenged the restraint.** Re-ran every rejection
+against one test — *what breaks during a 40-minute unattended run if this is absent?* The rejections
+of Additions 4, 5, 6, 7, 9 and the heavy halves of 1, 3 and 10 all survived: nothing breaks. Three
+changes made:
+
+- `--deadline` **promoted** from optional Phase 4 to Phase 2b. The operator plans in wall-clock and
+  the existing bound is a 3-hour hop ceiling. It is worth more than the flag it overtook.
+- `--expect-turn` **demoted** to conditional Phase 2c. It guards the repeating-courier shape, which
+  unattended loop mode makes unnecessary, and the lock already refuses a second dispatcher. It was
+  ranked on novelty rather than on value.
+- The supervisor deferral now states plainly that it is the one restraint that may fail the goal
+  rather than protect it, and that Phase 1's measurement decides it.
+
+**v0.1 → first revision (2026-08-06):** triaged against
 `dispatcher-context-material-recommendations-2026-08-06.md`. Adopted: safe interruption (new Phase
 2a, promoted to top priority), a branch instead of a worktree (1d), Phase 1 acceptance criteria, and
 the fact-versus-claim reporting rule (3f). Rejected for now: derived operational states, the JSON
