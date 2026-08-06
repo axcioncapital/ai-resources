@@ -748,3 +748,66 @@ from the shared file and passed legitimately on every commit.
 - Whether a non-lexical test for the Continue precondition is possible at all, or whether
   conservative lexical matching is the honest ceiling for a deterministic classifier. Asked of Codex
   in the final hand-back.
+
+## 2026-08-06 — Work Loop v2 courier mode: core clause, Codex rules, `dispatch.sh --carry-one`
+
+### Summary
+Investigated and built an optional Computer Use "courier mode" for Work Loop v2, from an operator-
+pasted Codex review through `/clarify` to an approved plan to a live-verified implementation.
+Clarification surfaced that the operator's own picked answer (a fresh Claude window, not the live
+one) combined with "sits beside the dispatcher, doesn't replace it" meant the courier's real job is
+to drive a terminal, not Claude — `dispatch.sh` already does the latter, better. Built `--carry-one`
+on the existing spike dispatcher, a transport-neutral courier clause in the executable core, and the
+Codex-side operating rules, then proved the carry live against the real repository in an isolated
+worktree.
+
+### Decisions Made
+- **Operator, via `/clarify`:** courier mode sits *beside* the existing `dispatch.sh` spike, not in
+  place of it (Q1).
+- **Operator, via `/clarify`:** amend core § 4 despite its "draft for operator approval" header
+  status; the amendment does not itself approve the rest of the document (Q4).
+- **Operator, via `/clarify`:** this build does not run through Work Loop v2 itself — the proposal's
+  standing no-self-hosting rule applies (Q5).
+- **Claude, recommended and adopted without objection:** core § 4's courier clause names no product
+  — "Computer Use" appears only in the Codex skill — per core § 24's *behaviour, not transport* rule
+  (Q3, operator deferred to Claude's judgment).
+- **Claude, design pivot after operator picked "a fresh window" (Q2):** a courier typing into a
+  fresh Claude window duplicates `dispatch.sh`'s own job with worse instrumentation. Redesigned the
+  courier to drive the dispatcher via one terminal command instead, reading its exit code rather
+  than any screen. Flagged explicitly to the operator as a deviation from the literal "b" answer,
+  not silently substituted.
+- **Claude: corrected the pasted review's guardrail 6** in the built artifact. "Unchanged
+  `turn: claude` = failed handoff" is wrong — Claude leaves the file completely untouched on a
+  correct read-only refusal (core § 6 rule 2). The skill now instructs reading the dispatcher's exit
+  code (`14`/`22`/`21`), never inferring from the turn.
+- **Routine:** fixed two stale records found while implementing rather than deferring them — the
+  dispatcher header's "0 is the ONLY success" line (now states all four meanings of exit 0), and the
+  spike README's `pass=69` test count, which was already stale at 82 before this session's 17 new
+  assertions brought it to 99.
+
+### Risky actions
+None irreversible against tracked state. One near-miss handled correctly rather than worked around:
+removing the throwaway proof worktree tripped `check-destructive-liveness.sh`, which refused to
+guess whether the checkout might be occupied (it saw `logs/friction-log.md` modified inside its
+120-minute window — the ambient PostToolUse hook firing during the dispatcher run, not real work).
+Surfaced the question to the operator rather than overriding or deleting the guard's evidence;
+unanswered as of this wrap.
+
+### Findings Declined
+None — the two stale records found this session (see Decisions Made) were fixed directly as part of
+the implementation rather than queued or declined; nothing else surfaced that named a real problem
+and was left unaddressed.
+
+### Next Steps
+- Resolve the worktree-cleanup question (see Risky actions) — operator confirms idle, or leaves it.
+- **The courier's own proof is still owed.** This session proved `dispatch.sh --carry-one` carries a
+  turn live. Nobody has proved Codex can drive it through Computer Use — needs the operator and
+  Codex together.
+- One Codex review before calling this adopted, per the plan's sizing
+  (`docs/qc-independence.md`: consequential, not risk-aware).
+- Only the Claude direction (`turn: claude → codex`) was exercised live under `--carry-one`. The
+  Codex direction is covered by the simulated suite only.
+
+### Open Questions
+- Is the proof worktree at `.../scratchpad/carry-proof-wt` idle? Blocks its own cleanup only —
+  nothing else depends on the answer.

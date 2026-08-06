@@ -66,3 +66,5 @@ Promoted findings carry their source and a content-derived id; tick an item to r
 - [ ] `/work-loop-v2`'s direct-admission path leaves every closing commit blocked by a stale-footprint false positive — `logs/improvement-log.md` <!-- promote:aabb5ab88a83 -->
 
 - [ ] The `3.1a` closed-set assertion reddens on normal repository growth — `logs/improvement-log.md` <!-- promote:6c396d56cbb8 -->
+
+- [ ] Closing-invocation instruction conflicts with a real Codex close verdict — `logs/improvement-log.md` <!-- promote:c260c3a50377 -->

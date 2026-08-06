@@ -232,3 +232,42 @@ the code. (2) Broaden the lexical vocabulary until the probe case passed — rej
 paraphrases forever and is exactly the fixture-literal failure being corrected. (3) Add a mandatory
 machine-readable acceptance marker to the state file — rejected here: it changes the core's field
 contract, which was an excluded control, and would be a real proposal rather than a test fix.
+
+## 2026-08-06 — Work Loop v2 courier mode drives the dispatcher, not Claude's UI
+
+**Context:** Operator pasted a Codex-authored review proposing a "Computer Use courier mode" —
+Codex driving the Mac's screen to type `/work-loop-v2 <task-id>` into a Claude window, removing the
+operator from routine turn transport. `/clarify` surfaced that this repository already has a working
+transport spike (`dispatch.sh`, live transport proven 2026-08-05) that does the same job with real
+instrumentation — exit codes, a path allowlist, before/after hashing — none of which a screen-driving
+courier would have.
+
+**Decision:** The courier's job is to start `dispatch.sh` from a terminal and read its exit code,
+never to type into or read a Claude window. Codex opens Terminal, runs one
+`dispatch.sh --carry-one` command, and assesses from the state file afterward.
+
+**Rationale:** The operator explicitly rejected the courier touching their live VS Code window
+(collision risk with their own work), and separately confirmed courier mode should sit *beside* the
+existing dispatcher rather than replace it. Combined, those two answers rule out both ways a
+screen-driving courier could work — it cannot use the operator's live window, and a courier that
+opens a fresh window instead is reimplementing `dispatch.sh`'s own job with worse tools. Routing
+through the dispatcher keeps the review's intended architecture (core permits an approved courier;
+Codex skill holds the operating rules; Claude's command stays transport-agnostic) while giving the
+courier a result it can actually verify — an exit code — instead of a screen it would have to read.
+
+**Alternatives considered:**
+1. **Courier types into the operator's live window (review's original shape).** Rejected outright —
+   operator declined it for collision risk before a design was even drafted.
+2. **Courier opens a fresh Claude window and types the command (the operator's own picked answer to
+   "which window," taken literally).** Rejected on inspection: this duplicates `dispatch.sh`'s
+   existing live-proven transport through a screen instead of an exit code, with none of its
+   validation. Surfaced explicitly to the operator as a deviation from their literal answer, in the
+   session's completion message, rather than silently substituted.
+3. **Let the dispatcher run its default multi-hop loop instead of one carried turn.** Rejected: that
+   would hand assessment to a fresh headless `codex exec` each round and remove the operator's own
+   Codex conversation from the loop. `--carry-one` was built specifically to keep exactly one turn
+   per courier invocation, so conversational Codex stays the framer and assessor.
+
+**Related:** `plans/work-loop-v2-v0.2/handoff-automation-investigation-2026-08-05.md` (the dispatcher
+this decision builds on); `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` § 4 (the
+resulting courier clause).
