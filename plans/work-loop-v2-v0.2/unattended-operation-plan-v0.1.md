@@ -1,5 +1,10 @@
 # Work Loop v2 — unattended operation
 
+> **SUPERSEDED 2026-08-06 by `unattended-operation-plan-v0.2.md`.** Retained for its triage table
+> (§ *Triage of `dispatcher-context-material-recommendations-2026-08-06.md`*), which v0.2 still cites
+> as the standing record of what was rejected and why. **Do not execute this version:** it schedules
+> the walk-away run before the run can be stopped, and it carried two false claims corrected below.
+
 **Plan for the next session. Nothing here has been implemented.**
 Written 2026-08-06 from an investigate-only session. Author: Claude. Not yet reviewed.
 
