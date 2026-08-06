@@ -21,10 +21,24 @@ having carried nothing by hand in between.
 
 Five findings, each verified against the files rather than recalled. They set the scope below.
 
-**1. Loop mode already does this, and is live-proven.** `dispatch.sh` without `--carry-one`
-alternates Codex and Claude until `turn: operator`. The 2026-08-05 run carried four real hops
-(codex → claude → codex → claude) end to end with no operator transport:
-`runs/20260805T152939-spike-live-transport.log`. No new transport machinery is needed.
+**1. Loop mode exists and the basic transport works. It is NOT proven for unattended reliability.**
+`dispatch.sh` without `--carry-one` alternates Codex and Claude until `turn: operator`. What the
+2026-08-05 evidence actually shows, re-read line by line:
+
+- `runs/20260805T152939-spike-live-transport.log` — carried three hops, then **failed at hop 4**:
+  `STOP [20] actor 'claude' exited 143 after 100s`. Exit 143 is 128+15, i.e. the Claude child was
+  killed by `SIGTERM` from outside the dispatcher (a dispatcher timeout would have surfaced as 124).
+  What sent that signal was never established.
+- `runs/20260805T154555-spike-live-transport.log` — reached `turn: operator` cleanly at hop 3.
+
+> **Correction.** Revisions v0.1 and its first two updates described this as *"four real hops end to
+> end with no operator transport."* That is wrong: the four-hop run **ended in a failure**. The
+> correct claim is that alternation works and the longest clean run was three hops to an operator
+> handoff. The error was mine — asserted from a directory listing of per-hop `.out` files rather than
+> from reading the run log's last line. Caught by Codex review, 2026-08-06.
+
+No new transport machinery is needed. Unattended *reliability* remains unproven, and an unexplained
+external `SIGTERM` killing an actor mid-run is directly relevant to a walk-away run.
 
 **2. The stop the operator hit was a skill rule, not a script defect.** The 2026-08-06 run
 (`runs/20260806T223538-work-loop-v2-intake-router.log`) carried its hop correctly, passed every gate,
@@ -261,13 +275,18 @@ it replaced.)*
 
 **Recommendation: do not build it in the implementation session. But be honest about what that costs.**
 
-Loop mode carries one task. When that task closes, the run ends — even with 25 minutes left. Filling
-the whole window across several units needs something that picks what to work on next.
+**Correction to this section, 2026-08-06 (Codex review).** An earlier revision said this plan
+delivers *"one unit, unattended"* and treated the gap to *"40 minutes of work"* as large. That
+understated what the loop already does. **A task spans many units, and Codex opens the next one
+itself:** `SKILL.md:289` — *"When the accepted unit leaves the task's named exit condition unmet,
+continue rather than close"* — with the mechanics in core § 3 *Continuing*. Codex writes the next
+unit's brief and sets `turn: claude`, and the loop carries straight on. No supervisor is involved.
 
-**This is the one deferral in this plan that may fail the operator's actual goal rather than protect
-it.** The goal was *"40 minutes of work while I am away."* What this plan delivers is *"one unit,
-unattended."* If a unit typically closes in 15 minutes, those are very different things, and every
-other item here is trim by comparison.
+So the correct statement of the gap is narrower: **a supervisor is only needed to choose an entirely
+new task once the current task's exit condition is met.** Within one task, the 40 minutes can already
+fill themselves.
+
+Loop mode carries one task. When that *task* closes — not each unit — the run ends.
 
 The principled objection stands — picking the next unit is judgment, not transport, so core § 4 does
 not license it, and it is exactly what `/develop-ai-resource` exists to qualify, including the
