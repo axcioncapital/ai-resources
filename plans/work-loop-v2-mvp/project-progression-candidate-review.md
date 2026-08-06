@@ -1,10 +1,11 @@
 # Project Progression — Candidate and Review Record
 
 **Status:** candidate pinned; **not approved, not adopted**. Independent Codex review has **run**
-(fresh context) and returned **Accept with corrections** — verdict and both findings in § 5. One
-bounded correction round was authorised by the operator and has been applied; the closure check on
-those two findings is Codex's next move. Acceptance of the artifact is not adoption of the
-capability — see § 0.
+(fresh context) and returned **Accept with corrections** — verdict and both findings in § 5. The
+bounded correction round and its final tightly-bounded fix are applied and closed. Since then the
+live cross-actor `Continue` seam has been **proved by execution** and that task closed (§ 5a), and the
+one evidence gap it deferred has been corrected under its own task (§ 5b), which is awaiting
+assessment. Acceptance of the artifact is not adoption of the capability — see § 0.
 **Created:** 2026-08-06, session S3-92e. Historical Step 6 acceptance record (`fc6c07c`,
 `step-6-candidate-review.md`) is untouched and remains evidence for the v0.1 candidate; this
 record supersedes it as the current-candidate pointer per the operator's correction 4
@@ -42,13 +43,14 @@ deliberately). Pre-recovery blobs are given alongside so the reviewer can diff.
 |---|---|---|---|
 | Codex skill | `.agents/skills/work-loop-v2/SKILL.md` | `8a88139c` | `b411785e` |
 | Executable core (control — unchanged since recovery) | `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` | `8f30da6c` | `04f94e00` |
-| Harness | `logs/scripts/work-loop-v2-slice-1.test.sh` | `7974b597` | `1ba6d8c8` |
+| Harness | `logs/scripts/work-loop-v2-slice-1.test.sh` | `a24b5303` | `1ba6d8c8` |
 | Continue fixture (valid case) | `logs/work-loop/fixture-continue.md` | `19e35c28` | `45e57cae` |
 | Negative fixture — first-unit opening | `logs/work-loop/fixture-continue-opening.md` | `c8765a57` | *(new)* |
 | Negative fixture — close token | `logs/work-loop/fixture-continue-close.md` | `f497e7f8` | *(new)* |
 | Negative fixture — correction token | `logs/work-loop/fixture-continue-correction.md` | `826a1b9b` | *(new)* |
 | Negative fixture — malformed | `logs/work-loop/fixture-continue-malformed.md` | `44b829e6` | *(new)* |
 | Negative fixture — later unit, no accepted predecessor | `logs/work-loop/fixture-continue-unaccepted.md` | `e2fa822c` | *(new)* |
+| Live-seam target fixture (two-step, one step per unit) | `logs/work-loop/fixture-target-3.md` | `e1e7583a` | *(new)* |
 | Claude command (unchanged — control) | `.claude/commands/work-loop-v2.md` | `125de530` | `125de530` |
 
 Commit `6ba4c3f` is the **pre-recovery** state of the candidate: it is the unapproved implementation
@@ -109,8 +111,10 @@ logs/scripts/work-loop-v2-slice-1.test.sh`, from the repo root:
 | Before the recovery corrections (3 new assertions present) | 164 | 5 | 1 |
 | After the recovery corrections | 167 | 2 | 1 |
 
-- **The change-specific result is 20/20**: every `cont` and `rout` assertion passes, including the
-  three added by the recovery unit. This is the block that speaks to this capability.
+- **The change-specific result was 20/20 at the recovery unit**: every `cont` and `rout` assertion
+  passed, including the three the recovery unit added. This is the block that speaks to this
+  capability; it has grown since, and its current figure is in § 5b — read that for the live total
+  rather than this historical one.
 - **The 2 remaining failures are the pre-existing `3.1a` baseline reds**, both caused by closed-set
   drift — real task-state files created after `KNOWN_WORKLOOP_FILES` was last widened, including
   this task's own state file. They are unrelated to this capability and were **not** widened away,
@@ -230,6 +234,59 @@ one stale sentence in this record. Both fixed, and nothing else:
 The two failures remain the pre-existing `3.1a` closed-set reds described in § 2b, which neither the
 correction round nor this fix touched or claims to fix.
 
+## 5a. The live cross-actor `Continue` seam — proved by execution
+
+The review's evidence up to this point was **static**: every `cont` assertion read fixture structure,
+protocol tokens, prose or `classify_state()` output, and every fixture it read had been hand-authored
+by Claude in one sitting. The whole block would have stayed green on a candidate where the
+Codex→Claude seam had never run once. A fresh-context Codex review on 2026-08-06 froze that as its one
+material finding.
+
+It was settled by running the seam, under task `logs/work-loop/project-progression-live-continue-proof.md`
+(now closed, `turn: operator`):
+
+- A new `seam` block was added to the harness. It reads the **commit history of that task's own state
+  file**, in order, and requires three facts to coincide: a `turn: codex` hand-back; a later `turn: claude`
+  commit whose blob classifies CONTINUE and opens Unit 2; and a later commit still, back at `turn: codex`,
+  at which the second line of `logs/work-loop/fixture-target-3.md` is current.
+- Unit 1 (Claude) built the two-step target fixture, brought only step 1 current, and left the block
+  honestly RED on the two facts that did not yet exist. Codex assessed it and authored the tokenless
+  Continue hand-off. Unit 2 (Claude) brought step 2 current and handed back.
+- The harness moved **177/5 → 178/4 → 180/2** across the unit. The middle flip is the load-bearing one:
+  nothing in the working tree changed between the first two runs, and the "Codex authored a tokenless
+  Continue hand-off" assertion went green solely because a commit Codex authored came into existence.
+- Evidence commits: `4750fb5` (Codex's hand-off, preserved unchanged and alone) and `e1d40a4` (Claude's
+  one-line execution and hand-back). Codex independently reproduced 180 passed / 2 failed, exit 1.
+
+Prose cannot satisfy this block — it reads only frontmatter, headings, tokens and file content at named
+commits — and `classify_state()` alone cannot either, being one conjunct of one of the three facts.
+
+## 5b. Bounded correction — the classifier is now turn-sensitive
+
+The live proof deferred one material evidence gap: `classify_state()` read no turn at all, so it
+returned `CONTINUE` for a Continue-shaped state whether the frontmatter said `claude`, `codex` or
+`operator`. The seam block compensated with its own separate `turn: claude` conjunct — a compensation,
+not a fix. Corrected under task `logs/work-loop/project-progression-classifier-turn-correction.md`:
+
+- The tokenless branch of `classify_state()` now requires `turn: claude` before `CONTINUE`, on the
+  ground that core § 3's Continue *is* the move that passes the next unit to Claude. A wrong turn falls
+  through to `OPENING` — the classifier's existing conservative verdict, so **no new verdict, protocol
+  token or lifecycle state was added**.
+- Three assertions were added, using states **derived** from the valid fixture by rewriting only the
+  frontmatter turn — so the sole difference from a real Continue is the thing under test, and no new
+  persistent fixture was created. The two wrong-turn assertions were shown RED against the pre-fix
+  classifier (`181 passed / 4 failed`) and are green after. The third is a control proving the
+  derivation is faithful; it passes before and after by design, and without it the other two could pass
+  from a corrupted file rather than from a rejected turn.
+- Runtime was not touched: the skill, the executable core and the Claude command are unchanged. The
+  correction is entirely inside the deterministic harness.
+
+**Harness after this correction: `passed: 183   failed: 2`, exit 1.** The `cont`/`rout` block is
+**31/31** and the `seam` block is **5/5** — the live proof did not regress. The two failures remain the
+pre-existing `3.1a` closed-set reds described in § 2b, which this correction neither touches nor claims
+to fix. The full suite is **not** green.
+
 **What this verdict is not.** Accept-with-corrections is a review verdict on the artifact. The
-candidate is still not approved and not adopted; the closure check on these two findings is Codex's
-next move, and adoption remains a separate operator decision (§ 0).
+candidate is still not approved and not adopted. The correction round's closure check is done (§ 5),
+the live seam is proved (§ 5a), and § 5b's correction is awaiting Codex's assessment; adoption remains
+a separate operator decision afterwards (§ 0). Reviewed evidence is not adoption.

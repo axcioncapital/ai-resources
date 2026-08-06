@@ -747,8 +747,15 @@ classify_state() {
   # The two core-owned protocol tokens, matched at the start of Next action.
   printf '%s\n' "$nx" | head -1 | grep -q '^Close the task:' && { echo CLOSE; return; }
   printf '%s\n' "$nx" | head -1 | grep -q '^Correct once — frozen findings:' && { echo CORRECT; return; }
-  # Tokenless. Continue REQUIRES the precondition: an accepted result from a
-  # previous unit. Without it the same tokenless shape is an ordinary opening.
+  # Tokenless. Continue REQUIRES two things, and the turn is the first of them.
+  # Core § 3's Continue sets `turn: claude`: it is the move that opens the next unit
+  # and passes it to Claude. A Continue-shaped state resting at `turn: codex` or
+  # `turn: operator` is therefore not a Continue, whatever else it looks like. This
+  # is checked before the precondition because it is cheaper and because a wrong
+  # turn disqualifies regardless of what the result records.
+  grep -qE '^turn:[[:space:]]*claude[[:space:]]*$' "$f" || { echo OPENING; return; }
+  # The precondition: an accepted result from a previous unit. Without it the same
+  # tokenless shape is an ordinary opening.
   #
   # The precondition is semantic, so any deterministic test is a proxy. Two rules
   # govern which proxies are legitimate, both learned the hard way in this round:
@@ -799,6 +806,37 @@ check "cont  a later unit with no accepted predecessor is not a Continue" \
 # satisfy the four checks above and prove nothing.
 check "cont  the four negative cases are discriminated, not blanket-rejected" \
   "[ \$(for f in '$CONT_OPEN_F' '$CONT_CLOSE_F' '$CONT_CORR_F' '$CONT_MAL_F'; do classify_state \"\$f\"; done | sort -u | wc -l | tr -d ' ') -eq 4 ]"
+# The turn is part of what a Continue IS, not decoration on it. Core § 3's Continue
+# sets `turn: claude` — it is by definition the move that passes the work back to
+# Claude — so a state that is Continue-shaped in every other respect while sitting
+# at `turn: codex` or `turn: operator` is not one. Before this, the classifier read
+# no turn at all and called all three CONTINUE, which is why the live seam block had
+# to carry its own separate `turn: claude` conjunct to avoid counting a Claude
+# hand-back as Codex's hand-off.
+#
+# The wrong-turn states are DERIVED from the valid fixture, not stored as new
+# fixtures. Two reasons: the only difference from a real Continue is then the
+# frontmatter turn — which is exactly the discrimination under test — and a derived
+# state cannot drift away from the fixture it is derived from.
+classify_at_turn() {
+  local t rc
+  t=$(mktemp) || { echo ABSENT; return; }
+  sed -E "s/^turn:.*/turn: $1/" "$CONT_F" > "$t"
+  rc=$(classify_state "$t"); rm -f "$t"
+  echo "$rc"
+}
+# Control, and it earns its place: without it the two checks below could pass
+# because the derivation corrupted the file rather than because the turn was wrong.
+check "cont  the derived state at turn: claude is still the valid Continue" \
+  "[ \"\$(classify_at_turn claude)\" = CONTINUE ]"
+# OPENING, not a new verdict: the classifier already falls through to OPENING when
+# a tokenless state fails the Continue precondition, and a wrong turn is one more
+# way to fail it. Adding a verdict here would be adding a lifecycle state.
+check "cont  a Continue-shaped state at turn: codex is not a Continue" \
+  "[ \"\$(classify_at_turn codex)\" = OPENING ]"
+check "cont  a Continue-shaped state at turn: operator is not a Continue" \
+  "[ \"\$(classify_at_turn operator)\" = OPENING ]"
+
 # Review finding 1: the skill must not restate core § 3's continue MECHANICS.
 # Scoped to the `**Continuing.**` paragraph, which is what the finding names. A
 # whole-section scan was tried first and caught `turn: claude` in the CORRECTION
