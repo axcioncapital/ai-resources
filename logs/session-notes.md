@@ -693,3 +693,15 @@ operator's instruction to respond "directly and without opening a Work Loop task
 ### Open Questions
 - Sequencing of the `Continue` core edit and the Codex-skill ownership-routing edit — one combined change or
   two sequential units — deferred to the implementation proposal per the operator's correction 2.
+
+## 2026-08-06 — Session S3-92e
+**Mandate:** Prepare the Work Loop v2 project-progression implementation proposal, file the accepted direction under the mission's post-MVP v0.2 rework thread, present it for operator scope approval, then implement the approved scope — done when: the proposal with all four components is presented in chat, the new open thread is filed in logs/missions/work-loop-v2-mvp.md, and the approved scope is implemented, reviewed per the sizing decision, and committed
+- Out of scope: any implementation edit before operator scope approval; revising the historical Step 6 acceptance record; a standalone protocol document or universal seven-state lifecycle as authority; a new parallel mission
+- Files in scope: .agents/skills/work-loop-v2/SKILL.md, plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md, logs/scripts/work-loop-v2-slice-1.test.sh, logs/missions/work-loop-v2-mvp.md, logs/decisions.md, .claude/commands/work-loop-v2.md, .claude/commands/mission.md, docs/qc-independence.md, docs/audit-discipline.md, plans/work-loop-v2-mvp/skill-writing-standard-work-loop-v0.2.md, .claude/commands/work-loop.md, .claude/commands/new-project.md
+- Stop if: the operator rejects or withholds approval of the proposal's scope — stop before any implementation edit
+- Allowed inputs: plans/work-loop-v2-v0.2/project-progression-protocol-original-proposal.md, logs/session-notes.md, plans/work-loop-v2-mvp/README.md, plans/work-loop-v2-mvp/step-7-pilot-log.md, plans/work-loop-v2-mvp/step-6-candidate-review.md, plans/work-loop-v2-v0.2/command-instruction-release-pass-guide.md, projects/axcion-systems-builder/rehaul/README.md, projects/axcion-systems-builder-email-os/CLAUDE.md, CLAUDE.md
+- Required outputs: new Continue behavioral-test fixture(s) under logs/work-loop/ (post-approval), new candidate/review record under plans/work-loop-v2-mvp/ (post-approval)
+- Context pack: output/context-packs/architecture-20260806-92e77/pack.md
+- Mission: work-loop-v2-mvp
+
+**Work:** Prepare the concrete Work Loop v2 project-progression implementation proposal for operator scope approval — Codex-skill ownership-routing wording, Continue core outcome + assessment mechanics + behavioral tests, blast-radius inspection deciding normal vs risk-aware review, trial-project selection; file the accepted direction as a new open thread under work-loop-v2-mvp's post-MVP v0.2 rework entry

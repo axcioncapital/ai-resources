@@ -2819,3 +2819,30 @@ stale prior session's footprint. Do not build from this text — the exact attac
 verification by execution first, per this repo's own premise-check discipline.
 
 **Target files:** `.claude/commands/work-loop-v2.md`, `.claude/hooks/check-foreign-staging.sh`.
+
+## 2026-08-06 — `/work-loop` (v1) retired; three routing surfaces still name it and v2 has no capability route to inherit them
+
+- **Status:** logged (pending)
+
+**What happened.** The v1 `/work-loop` command was removed on operator instruction (superseded by
+`/work-loop-v2`, which keeps its own name for now). The command file and its six deployed symlinks
+(workspace root + five projects) are gone, and `work-loop` was dropped from `/new-project`'s CORE
+symlink set. Not rewired, deliberately: the prose routes that send work to `/work-loop`.
+
+**What still points at the retired command.**
+- `.claude/commands/develop-ai-resource.md` — the capability route (Step 1.0 upstream-brief clause and
+  the disposition return path) names `/work-loop` as the owner of capability records and the adoption
+  decision.
+- `.claude/commands/leverage-idea.md` — the routing table sends "operating capability" and "settled
+  correction" ideas to `/work-loop`.
+- `docs/work-loop.md` and `docs/work-loop-spec.md` — the v1 contract and spec remain on disk as the
+  referenced doctrine.
+
+**Why not rewired now.** `/work-loop-v2`'s stated scope is Slices 1–3 of the executable core — it
+consumes Codex-authored state files and has no capability route, no capability-record authority, and
+no plain-English ingest. Pointing the v1 routes at v2 would route work into a command that rejects it
+by design. Whether v2 grows a capability route, the routes move elsewhere, or the capability doctrine
+retires with v1 is a design decision for the v2 build stream, not a mechanical substitution.
+
+**Target files:** `.claude/commands/develop-ai-resource.md`, `.claude/commands/leverage-idea.md`,
+`docs/work-loop.md`, `docs/work-loop-spec.md`.

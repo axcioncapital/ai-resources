@@ -394,7 +394,7 @@ All steps are idempotent — re-running `/new-project` on an existing direct pro
    while [ "$d" != "/" ]; do d=$(dirname "$d"); [ -d "$d/ai-resources" ] && AI_RES="$d/ai-resources" && break; done
    [ -n "$AI_RES" ] || { echo "ERROR: ai-resources not found in any ancestor — cannot symlink core commands"; exit 1; }
 
-   CORE="prime wrap-session session-start session-plan open-items clarify scope recommend work-loop"
+   CORE="prime wrap-session session-start session-plan open-items clarify scope recommend"
    mkdir -p "projects/{project-name}/.claude/commands"
    for c in $CORE; do
      SRCCMD="$AI_RES/.claude/commands/${c}.md"
