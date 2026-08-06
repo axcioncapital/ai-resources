@@ -155,6 +155,22 @@ findings is Codex's next move. **The candidate is still not approved and not ado
 review verdict is not adoption, and adoption remains a separate operator decision. Verdict and both
 findings in full: the candidate record § 5.
 
+**Status, later the same day (3) — adopted.** Asked whether to adopt the corrected candidate as live
+Work Loop v2 project-progression behaviour, the operator answered **"adopt"**. Everything above
+remains the record of how the candidate got here and is unchanged. What was adopted is the
+**corrected** candidate pinned by blob in `plans/work-loop-v2-mvp/project-progression-candidate-review.md`
+§ 1 — skill `8a88139c`, executable core `8f30da6c`, harness `a24b5303` and the fixtures listed there —
+and evidenced in §§ 5a–5b: the live cross-actor `Continue` seam proved by execution, and the
+turn-sensitive classifier. **Commit `6ba4c3f` alone is the superseded pre-recovery baseline, not what
+was adopted.** Adoption accepts two already-disclosed limitations: the full harness is
+`passed: 183   failed: 2`, exit 1, the two failures being the unrelated `3.1a` closed-set reds, so the
+suite is not green; and the closure-process inconsistency between the Claude command's absolute
+single-file closing instruction and a Codex close verdict requiring a scoped record update stays
+deferred and non-runtime. Boundary: adoption does **not** authorise installation or propagation to any
+consumer, a change to `.claude/commands/work-loop-v2.md`, fixing the two `3.1a` failures, the broader
+v0.2 rework, or a standing no-self-hosting exception — the three task-specific exceptions were granted
+per task. Full authority status: the candidate record § 0.
+
 ## 2026-08-06 — A finding that contradicts a closed record is reported, not designed around
 
 **Context.** Two separate times this session, a governing input turned out to be wrong about the

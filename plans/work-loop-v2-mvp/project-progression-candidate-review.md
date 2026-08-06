@@ -1,12 +1,13 @@
 # Project Progression — Candidate and Review Record
 
-**Status:** candidate pinned; **not approved, not adopted**. Independent Codex review has **run**
-(fresh context) and returned **Accept with corrections** — verdict and both findings in § 5. The
-bounded correction round and its final tightly-bounded fix are applied and closed. Since then the
-live cross-actor `Continue` seam has been **proved by execution** and that task closed (§ 5a), and the
-one evidence gap it deferred has been corrected under its own task (§ 5b), which Codex has now
-**assessed and closed**. The next authority move is the operator's adoption decision. Acceptance of
-the artifact is not adoption of the capability — see § 0.
+**Status: approved and adopted.** The operator adopted the corrected candidate on **2026-08-06** as
+live Work Loop v2 project-progression behaviour. What was adopted is the corrected candidate pinned by
+blob in § 1 and evidenced in §§ 5a–5b — **not** commit `6ba4c3f`, which is the superseded pre-recovery
+baseline. The path to it: independent fresh-context Codex review **ran** and returned **Accept with
+corrections** (§ 5); the bounded correction round and its final tightly-bounded fix were applied and
+closed; the live cross-actor `Continue` seam was **proved by execution** and that task closed (§ 5a);
+and the one evidence gap it deferred was corrected and independently assessed and closed (§ 5b).
+Adoption's scope and the limitations it accepts are in § 0 — read it before acting on this record.
 **Created:** 2026-08-06, session S3-92e. Historical Step 6 acceptance record (`fc6c07c`,
 `step-6-candidate-review.md`) is untouched and remains evidence for the v0.1 candidate; this
 record supersedes it as the current-candidate pointer per the operator's correction 4
@@ -36,12 +37,33 @@ and none inheriting anything from the others:
 covered its own bounded work and nothing else, and the no-self-hosting exceptions were granted per
 task rather than as a standing permission.
 
+**The adoption decision — separate from all three, and taken after them.** On **2026-08-06** the
+operator was asked whether to adopt the corrected candidate as live Work Loop v2 project-progression
+behaviour and answered **"adopt"**. This is that decision recorded, not a re-derivation of it.
+
+**What was adopted, content-bound:** the corrected candidate as pinned by blob hash in § 1 — skill
+`8a88139c`, executable core `8f30da6c`, harness `a24b5303`, and the fixtures listed there — and as
+evidenced in § 5a (the live cross-actor `Continue` seam, proved by execution) and § 5b (the
+turn-sensitive classifier). **Commit `6ba4c3f` alone is the superseded pre-recovery baseline and is
+not what was adopted**; it is retained as history only.
+
+**Limitations adoption accepts, both already disclosed above:** the full harness stands at
+`passed: 183   failed: 2`, exit 1 — it is **not** green, and the two failures are the unrelated
+`3.1a` closed-set reds described in § 2b; and the closure-process inconsistency recorded in § 5b
+between the Claude command's absolute single-file closing instruction and a Codex close verdict
+requiring a scoped record update remains **deferred and non-runtime**.
+
+**What adoption does not authorise.** It does not authorise installation or propagation to any
+consumer, a change to `.claude/commands/work-loop-v2.md`, fixing or suppressing the two unrelated
+`3.1a` failures, the broader v0.2 rework, or a standing no-self-hosting exception — the three
+exceptions above were granted per task and remain so.
+
 **Therefore:** the independent Codex review has run and returned Accept with corrections (§ 5); the
 correction round and its final tightly-bounded fix are closed, the live seam is proved and its task
 closed (§ 5a), and the classifier-turn correction was independently assessed by Codex and closed
-(§ 5b). Artifact-side work is complete. The candidate is **still not approved and not adopted**, and
-the **operator's adoption decision is the next authority move**. Later sections describe what the
-candidate *is*, never what has been accepted.
+(§ 5b). Artifact-side work is complete, and the operator has **adopted** the corrected candidate as
+live Work Loop v2 project-progression behaviour within the boundary stated just above. Later sections
+describe what the candidate *is*, and remain accurate as written.
 
 ## 1. The candidate
 
@@ -305,8 +327,10 @@ restriction, so the core was followed and both files stayed inside the closed ta
 Recorded here as a known inconsistency only: it affects no runtime behaviour and no evidence in this
 record, and **it is not decided or fixed here** — the command was deliberately left untouched.
 
-**What this verdict is not.** Accept-with-corrections is a review verdict on the artifact. The
-candidate is still not approved and not adopted. The correction round's closure check is done (§ 5),
-the live seam is proved (§ 5a), and § 5b's correction was independently assessed by Codex — which
-reproduced `passed: 183   failed: 2`, exit 1 — and closed. **The next authority move is the operator's
-adoption decision** (§ 0). Reviewed evidence is not adoption.
+**What this verdict is and is not.** Accept-with-corrections was a review verdict on the artifact, and
+a review verdict is never adoption. The correction round's closure check is done (§ 5), the live seam
+is proved (§ 5a), and § 5b's correction was independently assessed by Codex — which reproduced
+`passed: 183   failed: 2`, exit 1 — and closed. **Adoption then followed as a separate operator
+decision, taken on 2026-08-06** (§ 0): the corrected candidate pinned in § 1 is live Work Loop v2
+project-progression behaviour, within the boundary § 0 states — no installation, no propagation, no
+Claude-command change, no `3.1a` fix, no v0.2 rework, and no standing no-self-hosting exception.
