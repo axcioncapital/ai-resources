@@ -441,7 +441,7 @@ KNOWN_WORKLOOP_FILES="fixture-slice1-codex.md fixture-slice1-false.md fixture-sl
 fixture-slice2-correction.md fixture-slice2-foreign.md fixture-slice2-fresh.md \
 fixture-slice2-menu.md fixture-slice3-close.md fixture-slice3-deescalate.md \
 fixture-slice3-deferral.md fixture-slice3-limits.md fixture-step6-admission.md \
-fixture-target-2.md fixture-target.md fixture-continue.md \
+fixture-target-2.md fixture-target.md fixture-target-3.md fixture-continue.md \
 fixture-continue-opening.md fixture-continue-close.md \
 fixture-continue-correction.md fixture-continue-malformed.md \
 fixture-continue-unaccepted.md \
@@ -824,6 +824,98 @@ check "rout  routing creates no mapping document" \
   "routing_res | grep -qi 'never create a document'"
 check "rout  routing uses only the core's pinned unit vocabulary" \
   "! routing_res | grep -qi 'delivery unit'"
+
+# --- LIVE SEAM: the cross-actor Continue, read from immutable history --------
+# Frozen finding, fresh-context review 2026-08-06: everything above proves the
+# STATIC shape of a Continue. Every surface it reads is either core/skill prose or
+# a fixture Claude hand-authored in one sitting — so the whole block would be green
+# on a candidate where the Codex→Claude seam had never run once.
+#
+# These assertions read something Claude cannot author in a single invocation: the
+# COMMIT HISTORY of the live task's own state file, in order. Three separate facts
+# must coincide, and no one of them is sufficient:
+#
+#   1. a hand-back commit — the file at `turn: codex` (Claude finished unit 1);
+#   2. a LATER commit whose blob classifies CONTINUE and opens unit 2 (Codex
+#      accepted unit 1 and authored the tokenless hand-off);
+#   3. a LATER commit still, back at `turn: codex`, in which the two-step target's
+#      SECOND line is current (Claude executed unit 2 and handed back).
+#
+# Why this cannot go green the cheap ways the brief names. Prose cannot satisfy it:
+# nothing here reads an explanation, only frontmatter, headings, tokens and a file's
+# content at a given commit. classify_state() alone cannot satisfy it either: it is
+# one conjunct of fact 2, and facts 1 and 3 are commit-ordering and a real edit to a
+# different file. Writing all three commits by hand in one invocation would mean
+# Claude authoring Codex's hand-off, which core § 1 forbids and which is the exact
+# thing under test — so the honest way to turn this green is to run the seam.
+SEAM_STATE="logs/work-loop/project-progression-live-continue-proof.md"
+SEAM_TARGET="logs/work-loop/fixture-target-3.md"
+SEAM_STEP1='^Seam-step-1: current'
+SEAM_STEP2='^Seam-step-2: current'
+
+seam_commits() { git log --reverse --format=%H -- "$SEAM_STATE" 2>/dev/null; }
+seam_turn_is()  { git show "$1:$SEAM_STATE" 2>/dev/null | grep -qE "^turn:[[:space:]]*$2[[:space:]]*$"; }
+
+# classify_state() reads a path, so a historical blob is materialised first.
+seam_classify_at() {
+  local t rc
+  t=$(mktemp) || { echo ABSENT; return; }
+  if git show "$1:$SEAM_STATE" > "$t" 2>/dev/null; then rc=$(classify_state "$t"); else rc=ABSENT; fi
+  rm -f "$t"
+  echo "$rc"
+}
+
+# Fact 2, gated on fact 1: the first CONTINUE-classifying commit that opens unit 2
+# AND is preceded by a hand-back. Order is enforced by the walk, not asserted.
+#
+# `turn: claude` is a REQUIRED conjunct, not decoration. classify_state() accepts any
+# legal turn, so on its own it will call a file CONTINUE while the turn sits at
+# `codex` — verified against real history: the recovery task's blob at 4fb2ce7 is
+# `turn: codex` and classifies CONTINUE. That blob is a Claude hand-back, not a Codex
+# hand-off. Since the whole point here is that CODEX wrote this commit and passed the
+# move to Claude, the turn is the discriminator, and without it Claude's own hand-back
+# could be counted as Codex's hand-off — the seam proving itself.
+seam_continue_commit() {
+  local c handback=0
+  for c in $(seam_commits); do
+    if [ "$handback" -eq 0 ]; then
+      seam_turn_is "$c" codex && handback=1
+      continue
+    fi
+    if seam_turn_is "$c" claude \
+       && [ "$(seam_classify_at "$c")" = CONTINUE ] \
+       && git show "$c:$SEAM_STATE" 2>/dev/null \
+            | awk '/^## Lane and unit/{f=1;next} /^## /{f=0} f' | grep -q 'Unit 2'; then
+      echo "$c"; return
+    fi
+  done
+}
+
+# Fact 3: strictly after the hand-off, the turn returns to codex with the target's
+# second line current AT THAT COMMIT. The target edit is what stops a state-file-only
+# narrative from passing.
+seam_unit2_commit() {
+  local cont c past=0
+  cont=$(seam_continue_commit); [ -n "$cont" ] || return
+  for c in $(seam_commits); do
+    if [ "$past" -eq 0 ]; then [ "$c" = "$cont" ] && past=1; continue; fi
+    if seam_turn_is "$c" codex \
+       && git show "$c:$SEAM_TARGET" 2>/dev/null | grep -qE "$SEAM_STEP2"; then
+      echo "$c"; return
+    fi
+  done
+}
+
+check "seam  the two-step target fixture exists" \
+  "[ -f '$SEAM_TARGET' ]"
+check "seam  unit 1 brought the first step current" \
+  "grep -qE '$SEAM_STEP1' '$SEAM_TARGET'"
+check "seam  Codex accepted unit 1 and authored a tokenless Continue hand-off" \
+  "[ -n \"\$(seam_continue_commit)\" ]"
+check "seam  Claude then executed unit 2 and handed back with the target changed" \
+  "[ -n \"\$(seam_unit2_commit)\" ]"
+check "seam  the hand-off and the unit-2 hand-back are two commits, not one" \
+  "[ -n \"\$(seam_continue_commit)\" ] && [ \"\$(seam_continue_commit)\" != \"\$(seam_unit2_commit)\" ] && [ -n \"\$(seam_unit2_commit)\" ]"
 
 # --- v1 isolation: logs/loop/ must gain nothing (slice plan 1.1) ------------
 check "v1    no Slice 1, 2 or 3 artifact leaked into logs/loop/" \
