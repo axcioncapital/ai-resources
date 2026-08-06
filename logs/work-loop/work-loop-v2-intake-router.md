@@ -323,21 +323,44 @@ router cannot enumerate them by inspection. They stay out of the router.
 `/open-items` · `/resolve-repo-problem` · `/resolve-incident` · `/repo-dd` · `/analyze-workflow` ·
 `/lean-repo` · `/implementation-triage` · `/reconcile`.
 
-*Matt (12):* `grill-with-docs` (idea, repo present) · `grill-me` (idea, no repo) · `wayfinder` (fog
-too big for one session) · `diagnosing-bugs` (something broken) · `triage` (unowned issues piling
-up) · `implement` (build from spec/ticket) · `prototype` (design question needing a runnable answer)
-· `research` (reading legwork) · `resolving-merge-conflicts` (already mid-conflict) · `wizard`
-(steps only a human can take) · `to-questionnaire` (the knowledge is in someone else's head) ·
-`teach` (learn a concept). `improve-codebase-architecture` sits at the edge — it is upkeep the
-operator initiates, so it is a route, but it *generates* an idea rather than delivering one.
+*Matt (13)* — *(C)* marks the seven that are **Claude-side only**: Codex may select them and must
+then say the work runs Claude-side.
+
+`grill-with-docs` *(C)* (idea, repo present) · `grill-me` (idea, no repo) · `wayfinder` (fog
+too big for one session) · `diagnosing-bugs` *(C)* (something broken) · `triage` *(C)* (unowned
+issues piling up) · `implement` (build from spec/ticket) · `prototype` (design question needing a
+runnable answer) · `research` (reading legwork) · `resolving-merge-conflicts` *(C)* (already
+mid-conflict) · `wizard` *(C)* (steps only a human can take) · `to-questionnaire` *(C)* (the
+knowledge is in someone else's head) · `teach` (learn a concept) ·
+`improve-codebase-architecture` *(C)* (the codebase is getting hard to work in).
+
+`improve-codebase-architecture` is a **primary route, not an edge case** — the earlier draft left it
+counted out of the 12 while calling it a route, and that ambiguity is corrected here. Evidence:
+`~/.claude/skills/improve-codebase-architecture/SKILL.md` carries `disable-model-invocation: true`,
+so it is entered by the operator and never auto-selected, and `ask-matt` files it under its own
+top-level heading `Codebase health` — "run whenever you have a spare moment", not inside another
+skill. That it then *generates* an idea which enters the main flow at `grill-with-docs` is a
+hand-off at its own phase boundary, exactly like `wayfinder` handing to `to-spec`; handing onward is
+what an owner does at the end of its turn, not what makes it a phase of someone else's.
+
+Class-1 count after this correction: **16 Axcíon + 13 Matt = 29 primary intake routes.**
 
 **Class 2 — Flow phases or supporting skills (selected inside an owner or at a phase boundary).**
 
-*Matt:* `to-spec` · `to-tickets` (phases after grilling or wayfinder) · `tdd` (driven inside
-`implement`; a route only for a single concrete behaviour) · `code-review` (closes `implement`; a
-route only for an explicit branch/PR review) · `grilling` (the primitive under `grill-me`,
-`grill-with-docs`, `triage`, `wayfinder`, `improve-codebase-architecture`) · `handoff` (phase-
-boundary transport).
+*Matt (6), each with its direct-use boundary — the one case where the operator may enter it head-on:*
+
+- `to-spec` — phase after grilling or wayfinder. **No direct entry:** it collapses an existing
+  thread or decision map; with neither in hand there is nothing to collapse.
+- `to-tickets` — phase after `to-spec`. **No direct entry:** it splits an existing spec.
+- `tdd` — driven inside `implement`. **Direct entry:** one concrete behaviour, built test-first,
+  with no spec behind it.
+- `code-review` — closes `implement`. **Direct entry:** an explicit branch or PR reviewed against a
+  fixed point.
+- `grilling` — the interview primitive under `grill-me`, `grill-with-docs`, `triage`, `wayfinder`
+  and `improve-codebase-architecture`. **Direct entry:** the interview with no wrapper and no
+  artifact wanted.
+- `handoff` *(Claude-side only)* — phase-boundary transport. **Direct entry, narrow:** a new
+  harness, a new directory, a colleague, or forking a side task mid-phase.
 
 *Axcíon lifecycle phases:* `/create-skill` · `/improve-skill` · `/request-skill` · `/migrate-skill`
 · `/graduate-resource`.
@@ -348,10 +371,20 @@ generic fallback: `/audit-repo` · `/architecture-review` · `/systems-review` �
 
 **Class 3 — Setup, corrective or vocabulary helpers (retained, discoverable, not first routes).**
 
-*Matt:* `setup-matt-pocock-skills` (run-once precondition) · `domain-modeling` and `codebase-design`
-(the two vocabulary layers that run underneath) · `writing-for-agents` (reference) · `wait-what`
-(mid-conversation corrective) · `ask-matt` (the Matt router itself — a router, so including it as a
-destination would nest routers, exactly the ground on which `/leverage-idea` was excluded).
+*Matt (6), with direct-use boundaries:*
+
+- `setup-matt-pocock-skills` — run-once precondition before the first engineering flow. **Direct
+  entry:** first-time setup only.
+- `domain-modeling` — the domain-language layer underneath. **Direct entry:** when the *words* are
+  the problem — a fuzzy term, an overloaded word, a decision to record as an ADR.
+- `codebase-design` *(Claude-side only)* — the deep-module vocabulary layer. **Direct entry:** when
+  designing one module's shape and the vocabulary, not the process, is what is missing.
+- `writing-for-agents` *(Claude-side only)* — reference. **Direct entry:** writing a skill,
+  AGENTS.md, or a doc an agent will consume.
+- `wait-what` *(Claude-side only)* — mid-conversation corrective. **Direct entry:** inside any other
+  skill, when the last message did not land.
+- `ask-matt` *(Claude-side only)* — the Matt router itself. **No entry from this router:** naming it
+  as a destination would nest routers, exactly the ground on which `/leverage-idea` was excluded.
 
 *Axcíon conversational controls:* `/clarify` · `/decide` · `/recommend` · `/triage` · `/explain` ·
 `/scope` · `/summary` · `/note` · `/grill-me`.
@@ -363,7 +396,10 @@ destination would nest routers, exactly the ground on which `/leverage-idea` was
 
 **Class 4 — Unavailable, legacy, duplicate or uncertain.**
 
-- *Unavailable to Codex:* the 12 Claude-only Matt skills in Inventory C.
+- *Not invocable from Codex:* the 12 Claude-only Matt skills in Inventory C. This is a **marker that
+  crosses the other three classes, not a fourth membership** — each of the 12 keeps its single
+  Class 1/2/3 place above and additionally carries `Claude-side only`. Treating "Codex cannot run
+  it" as a class of its own is what would have dropped them from the router (finding 2, choice 2).
 - *Excluded by the operator:* the six Codex-only design/motion skills.
 - *Legacy / throwaway:* `.agents/skills/wl2-probe` (marked for deletion) · `.agents/skills/work-loop`
   (v1, being superseded) · `/save-session` (its own file opens "**Deprecated — use `/handoff`
@@ -374,7 +410,9 @@ destination would nest routers, exactly the ground on which `/leverage-idea` was
   standalone skills and phases inside `implement`.
 - *Router-shaped, excluded:* `/leverage-idea` (verified: "Route a rough idea to the command that
   owns its next step") and `ask-matt`.
-- *Uncertain current use — awaiting the operator:* the 6 workspace-root-only commands in Inventory E.
+- *Present but unapproved, excluded:* the 6 workspace-root-only commands in Inventory E
+  (`harness-start`, `session-report`, `resolve-improvements`, `run-qc`, `update-md`, `validate`).
+  Recorded so membership can be reopened deliberately; presence alone does not promote them.
 - *Stale:* the README inventory (claim 4).
 
 ### The three name collisions — reported, not resolved
@@ -388,9 +426,24 @@ these without saying which it means.
 | `handoff` | **Session** state save, or fork a scoped child session | Compact the conversation into a **portable file** for another agent |
 | `triage` | Independent review of **suggestions Claude just proposed** | Move **incoming issues and PRs** through a triage state machine |
 
-`triage` is the worst: the two meanings do not overlap at all. Which one wins at `/triage` is a
-harness precedence question I could not settle by file inspection — flagged below as an operator/
-Codex item, not guessed.
+`triage` is the worst: the two meanings do not overlap at all. Which one wins at a bare `/triage` is
+a harness precedence question that file inspection cannot settle — **and the router does not need it
+settled, because the router never writes a bare name.** Applying the governing decisions, each
+colliding entry is named by product plus purpose:
+
+| Router label | Resolves to |
+|---|---|
+| `Axcíon /triage — review the suggestions Claude just proposed` | `ai-resources/.claude/commands/triage.md` |
+| `Matt triage — move incoming issues and PRs to agent-ready` | `~/.claude/skills/triage/SKILL.md` |
+| `Axcíon /handoff — save session state, or fork a scoped child session` | `ai-resources/.claude/commands/handoff.md` |
+| `Matt handoff — compact this thread into a portable file for another agent or directory` | `~/.claude/skills/handoff/SKILL.md` |
+| `Axcíon /grill-me — pre-plan interview producing a structured mandate brief` | `ai-resources/.claude/commands/grill-me.md` |
+| `Matt grill-me — stateless relentless interview, saves nothing` | `~/.claude/skills/grill-me/SKILL.md` |
+
+One caveat carried forward rather than resolved: Axcíon `/grill-me` **delegates to**
+`~/.claude/skills/grill-me/SKILL.md`, so those two are wrapper and primitive rather than rivals —
+the label still distinguishes them, because what the operator gets back differs (a mandate brief
+versus nothing saved).
 
 ### Answers to the seven questions
 
@@ -410,11 +463,39 @@ Codex item, not guessed.
    94+25-entry file drifting from two directories and 94 command files, which is a maintenance
    liability with no owner; *a compact in-skill index* — trigger conditions and names only, inside
    `work-loop-v2/SKILL.md`'s existing Routing section — is the smallest shape that is current across
-   both products. **Recommendation: the compact in-skill index, listing Class 1 only** (16 Axcíon +
-   12 Matt = 28 entries), with Classes 2–4 named as non-routes in one line each rather than
-   enumerated. Drift risk, stated plainly: a renamed or retired command silently misroutes, and
-   nothing detects it — so the index should carry a one-line existence check the acceptance harness
-   can run, which is the same mechanism that caught the stale README here.
+   both products. **Recommendation: a compact in-skill index inside `work-loop-v2/SKILL.md`'s
+   existing Routing section — trigger conditions and names only, never procedures.**
+
+   The earlier draft scoped that index to Class 1 only. That was wrong and is corrected here: a
+   Class-1-only index names 13 of the 25 installed Matt skills and silently drops the other 12, which
+   is the omission governing decisions 2 and 3 forbid. **Every one of the 25 Matt skills is named
+   and classified in the index**, in three groups:
+
+   - **13 Matt primary routes** — may own an ordinary-language request outright.
+   - **6 Matt phases/supporting skills** — each with the direct-use boundary stated in Class 2 above,
+     so the operator can still enter `tdd`, `code-review`, `grilling` or `handoff` head-on in the one
+     case where that is right, and knows when it is not.
+   - **6 Matt helpers** — setup, vocabulary, corrective and the Matt router itself, each with its
+     boundary from Class 3 above.
+
+   One-owner routing is preserved by the shape of the entry, not by shortening the list: a
+   supporting skill's line states the condition under which it may be entered directly, and every
+   other line routes to a flow's **entry** rather than its stack (answer 6).
+
+   On the Axcíon side the index stays at the approved sets — **16 primary + 9 specialist = 25 named
+   commands** — and does not expand toward 94. The remaining Axcíon classes (5 lifecycle phases, 9
+   conversational controls, 13 session-machinery commands, 6 fixed-cadence commands) are named **by
+   class in one line each**, so the router says why they are not routes without listing them.
+
+   Index size after this correction: **50 named entries** (25 Matt + 25 Axcíon), of which 29 are
+   primary intake routes, plus four one-line non-route class notes. That is larger than the
+   28-entry draft and still far short of a catalogue: no procedure is copied, and nothing is
+   duplicated from a command file beyond its trigger condition.
+
+   Drift risk, stated plainly: a renamed or retired command silently misroutes, and nothing detects
+   it — so the index carries a one-line existence check the acceptance harness can run, which is the
+   same mechanism that caught the stale README here. With all 25 Matt names present, that check also
+   catches a future installed skill going unclassified.
 4. **Answered in the four classes above.** The dividing test that did the work: a capability is a
    top-level owner only if an ordinary-language request can *arrive* at it; if it is only ever
    reached because another owner is already running, it is a phase.
@@ -429,22 +510,58 @@ Codex item, not guessed.
    `code-review` are then reached by the owner at its own phase boundaries. The router names the
    entry and stops. This matches how `work-loop-v2/SKILL.md`'s Routing section already answers "who
    owns the next move?" — one owner, decided fresh, no stack.
-7. **The implementation boundary before Unit 2.** Four things must be settled first, three of them
-   operator calls (below), plus one design decision Codex owns: whether the index lives in
-   `work-loop-v2/SKILL.md`'s Routing section (recommended) or in the core. The core is contract, the
-   index is content that changes when commands change — so it belongs in the skill. Once those are
-   settled, Unit 2 is bounded: extend one section of one file, plus a name-existence check. Nothing
-   in the core, the Claude command, the harness or any installation needs to move.
+7. **The implementation boundary — corrected and stated precisely.** The earlier draft made this
+   answer wait on three operator calls and then described the whole remainder of the task as
+   "Unit 2". Both parts were wrong: the three calls are resolved above from decisions already in the
+   file, and the router index is **not** the whole remainder.
 
-### Unresolved operator choices — reported, not guessed
+   One design decision Codex owns and this unit recommends: the index lives in
+   `.agents/skills/work-loop-v2/SKILL.md`'s existing Routing section, not in the core. The core is
+   contract; the index is content that changes whenever a command or skill changes.
 
-1. **`/triage`, `/handoff`, `/grill-me` collide.** Which definition should the router name for each?
-   Or should the router use disambiguating labels rather than the bare names?
-2. **Should the router advertise the 12 Claude-only Matt skills?** They are real destinations for
-   the operator working in Claude, but Codex cannot invoke them. Advertise with a "Claude-side only"
-   marker, or omit them from a Codex-hosted router?
-3. **The 6 workspace-root-only commands** (`harness-start`, `session-report`, `resolve-improvements`,
-   `run-qc`, `update-md`, `validate`) appear in none of the brief's lists. In current use or not?
+   **What remains, as two separate bounded units:**
+
+   - **The router index — one Implementation unit, ready to brief now.** Extend one section of one
+     file with the 50 named entries and four class notes, plus a name-existence check in the
+     acceptance harness. Nothing in the core, the Claude command, the harness contract or any
+     installation moves.
+   - **The Discovery / Implementation / Adoption mode contract — still unimplemented, still
+     required, and a later bounded unit of its own.** The objective (lines 8–11 of this file)
+     requires that when Work Loop v2 owns a request, Codex classifies the active mode and records it
+     inside `## Lane and unit`. This unit did not implement it and this correction does not: the
+     brief's exclusions name "mode-contract implementation" explicitly. It is a change to how Codex
+     writes `## Lane and unit`, which is a different surface from the router index and must not be
+     smuggled into the index unit.
+
+   The task therefore does not close when the index ships. Its stated exit condition — inventory
+   established, router implemented from that evidence, and representative ordinary-language cases
+   able to expose a wrong route — additionally needs the mode contract and the exposure cases, which
+   are not yet briefed.
+
+### Operator choices — resolved from the governing decisions already in this file
+
+The earlier draft raised three questions for the operator. None of them was a genuine open choice:
+each is settled by a decision the brief already carries, so asking would have handed back work the
+operator had already done. All three are applied above and recorded here.
+
+1. **The `triage` / `handoff` / `grill-me` collisions — resolved by disambiguating labels.**
+   Product-plus-purpose, never a bare name; the six labels are in the collision table above. Ground:
+   governing decision 4 (one-owner routing). A bare name that resolves two ways cannot name one
+   owner, so the label is what makes one-owner routing true rather than merely asserted.
+2. **The 12 Claude-only Matt skills — advertised, each carrying a `Claude-side only` marker.**
+   Ground: governing decisions 2 and 3 (the router must account for every relevant installed Matt
+   skill, and the list must include all current core skills, not a hand-picked sample) plus the fact
+   established in Inventory C — Claude is where they execute, and the operator works in both
+   products. Omitting them would hide 12 real destinations to spare a Codex-hosted router the
+   inconvenience of naming what it cannot itself run. The marker states the boundary instead: Codex
+   may select such an owner and must then say the work runs Claude-side.
+3. **The 6 workspace-root-only commands — excluded.** Ground: governing decision 8 approves an
+   Axcíon personal-command set drawn from `ai-resources`, and decision 1's superseded-list rule
+   ("repository presence cannot promote another command into the router"). `harness-start`,
+   `session-report`, `resolve-improvements`, `run-qc`, `update-md` and `validate` are present but
+   unapproved, which is exactly the case that rule covers. They stay out; their existence is
+   recorded in Inventory E so a later unit can reopen membership deliberately rather than by
+   accident.
 
 ### Deferrals noticed and not done
 
@@ -453,38 +570,67 @@ Codex item, not guessed.
   than a runtime contract. Worth a one-line fix in a later unit.
 - `.agents/skills/wl2-probe` self-describes as throwaway and marked for deletion. Not deleted — out
   of scope, and deletion is the operator's call.
+- *Noticed during this correction, not implemented:* advertising 12 destinations Codex cannot invoke
+  creates a case the router must answer in one line — what Codex **does** when the selected owner is
+  Claude-side only. The answer is almost certainly "name it and hand the turn to the operator",
+  which is already how `turn: operator` works, but it is router wording and belongs to the index
+  Implementation unit, not to this correction.
+- *Noticed during this correction, not implemented:* the classification and marker checks below run
+  from the shell and are not persisted anywhere, because this brief allows changing the state file
+  only. The index Implementation unit should fold them into
+  `logs/scripts/work-loop-v2-slice-1.test.sh`, or the next drift goes undetected exactly as the
+  README's did.
 
-Result: Discovery complete. The live inventories are established (25 Claude skills, 19 Codex skills,
-7 repo-local Codex skills, 94 Axcíon commands), all eight brief claims hold, and every named skill
-is classified exactly once. The material finding is that the Claude and Codex skill surfaces are
-asymmetric — 12 of the 25 Matt destinations are Claude-only, including `ask-matt` itself — so a
-Codex-hosted router cannot link to `ask-matt` and must decide what to do about destinations Codex
-cannot reach. Recommended shape: a compact Class-1-only index (28 entries) inside the existing
-Routing section of `.agents/skills/work-loop-v2/SKILL.md`. No repository artifact was changed except
-this state file.
+Result: Discovery complete, and the four frozen findings are corrected. The live inventories stand
+unchanged (25 Claude skills, 19 Codex skills, 7 repo-local Codex skills, 94 Axcíon commands) and all
+eight brief claims still hold. What changed: `improve-codebase-architecture` is placed
+unambiguously as a primary route, so the Matt primary set is **13, not 12**, and the index
+arithmetic is **16 + 13 = 29** primary intake routes; the three questions previously put to the
+operator are resolved from governing decisions already in this file (disambiguating
+product-plus-purpose labels for the `triage` / `handoff` / `grill-me` collisions, all 12 Claude-only
+Matt skills advertised with a `Claude-side only` marker, the 6 workspace-root-only commands
+excluded); the recommended index now names **all 25 Matt skills** — 13 routes, 6 phases, 6 helpers,
+each supporting skill carrying its direct-use boundary — alongside the 16 approved Axcíon primary
+and 9 specialist commands, 50 named entries plus four one-line class notes, still without expanding
+toward 94 or copying any procedure; and the implementation boundary is split into two units, the
+router index (ready to brief) and the still-unimplemented Discovery / Implementation / Adoption mode
+contract, which the objective requires and which the index unit must not absorb. Two candidate
+deferrals were noticed and recorded, not done. No repository artifact was changed except this state
+file.
 
-Evidence: the omission check runs from the shell and creates no repository artifact — the brief
-allows changing this state file only, so it was **not** written to `logs/scripts/`. It extracts the
-text between `## Latest result` and `## Blocker`, then requires every directory carrying a
-`SKILL.md` under `~/.claude/skills/`, `~/.codex/skills/` and `.agents/skills/` to appear in that
-text, exiting 1 on the first miss:
+Evidence: three checks, run from the shell against this file. They create no repository artifact —
+the brief allows changing this state file only, so nothing was written to `logs/scripts/`.
 
-```bash
-BODY=$(awk '/^## Latest result$/{f=1;next} /^## Blocker$/{f=0} f' "$SF")
-for d in "$DIR"/*/; do [ -f "$d/SKILL.md" ] || continue
-  printf '%s' "$BODY" | grep -qF -- "$(basename "$d")" || { echo "FAIL: $(basename "$d")"; exit 1; }
-done
-```
+- **A — omission** (unchanged from the previous round): every directory carrying a `SKILL.md` under
+  `~/.claude/skills/`, `~/.codex/skills/` and `.agents/skills/` must appear in the text between
+  `## Latest result` and `## Blocker`.
+- **B — classification** (new, and the check the corrected findings needed): the 25 Matt skills are
+  parsed back out of the three class blocks — all backticked names in the Class 1 paragraph, the
+  first backticked name of each Class 2 and Class 3 bullet — and must equal the installed set with
+  **no name classified twice and none unclassified**, with each block's listed length matching the
+  count its own heading states. It also requires the literal line `16 Axcíon + 13 Matt = 29 primary
+  intake routes`, which is the arithmetic finding 1 was about.
+- **C — Claude-side-only markers** (new): the marked set is parsed from the `*(C)*` markers in
+  Class 1 and the `(Claude-side only)` markers in Classes 2–3, and must equal
+  `comm -23 ~/.claude/skills ~/.codex/skills` exactly — neither short nor over-marked.
 
-Run against this file on 2026-08-06: `claude: 25/25`, `codex: 19/19`, `agents: 7/7`, `PASS`,
-exit 0. **The failing case was built first and in both directions**, against throwaway copies so
-this file was never doctored: replacing `to-questionnaire` throughout a copy produced
-`FAIL: missing from Latest result: to-questionnaire (claude)`, `claude: 24/25`, exit 1; replacing
-`improve-animations` produced `FAIL: … improve-animations (codex)`, `codex: 18/19`, exit 1. The
-original still contains `to-questionnaire` (6 occurrences). It is a name-presence check, so it
-proves no name was silently dropped; it does not judge whether a name was classified correctly.
-Before this unit no such check existed, which is why the README's 14-name gap survived undetected
-since 2026-08-01.
+Run against this file on 2026-08-06: `A/claude 25/25`, `A/codex 19/19`, `A/agents 7/7`,
+`B/class sizes: 1=13 2=6 3=6 (sum 25)`, `C/marked 12 (Claude-only set: 12)`, `PASS`, exit 0.
+
+**Six failing cases were built first**, each against a throwaway copy so this file was never
+doctored: (1) deleting `to-questionnaire` from the Class 1 list → `class 1 says (13), lists 12` +
+`installed but unclassified: to-questionnaire`, exit 1; (2) adding `wizard` as a second Class 2
+bullet → `classified more than once: wizard`, exit 1; (3) restating the Class 1 heading as `(12)` →
+`class 1 says (12), lists 0` plus 13 unclassified, exit 1; (4) stripping the `*(C)*` from `wizard` →
+`Claude-only but unmarked: wizard`, exit 1; (5) marking `research`, which does run on Codex →
+`marked but runs on Codex too: research`, exit 1; (6) reverting the arithmetic line to `12 Matt =
+28` → `Class-1 arithmetic line absent or wrong`, exit 1.
+
+Case 1 is the one that shows why check B had to exist: check A passed at `25/25` on that same
+mutated copy, because `to-questionnaire` still appeared elsewhere in the prose. A name-presence
+check proves nothing was dropped from the *document*; only B proves nothing was dropped from the
+*classification*. Neither judges whether a name was classified **correctly** — that is Codex's
+closure check, not something a script can settle.
 
 ## Blocker
 
@@ -492,8 +638,22 @@ None.
 
 ## Next action
 
-Codex: assess this discovery and decide whether to reframe or stop. Three operator choices are
-open — the three name collisions, whether to advertise the 12 Claude-only Matt skills in a
-Codex-hosted router, and the current-use status of the 6 workspace-root-only commands. Unit 2 cannot
-be safely briefed as Implementation mode until at least choices 1 and 2 are settled, since both
-change what the index names.
+Closure check on the four frozen findings only — are they resolved, and did the correction break
+anything?
+
+1. Finding 1 — `improve-codebase-architecture` is placed in Class 1 with its ground stated; the Matt
+   set reads 13 and the arithmetic line reads `16 Axcíon + 13 Matt = 29 primary intake routes`.
+2. Finding 2 — the three questions are replaced by *Operator choices — resolved from the governing
+   decisions already in this file*, with the collision labels in the table above, 12 markers applied,
+   and the 6 workspace-root-only commands moved from "uncertain" to "present but unapproved".
+3. Finding 3 — the recommendation now names all 25 Matt skills across three groups with direct-use
+   boundaries, plus 16 Axcíon primary and 9 specialist commands; 50 named entries and four class
+   notes.
+4. Finding 4 — answer 7 now splits the remainder into the router-index unit and a separate,
+   still-required mode-contract unit, and states that the task does not close when the index ships.
+
+Two candidate deferrals are recorded under *Deferrals noticed and not done* and were not
+implemented: the router's one-line answer for a Claude-side-only owner, and folding checks B and C
+into `logs/scripts/work-loop-v2-slice-1.test.sh`. Both are Codex's to accept or drop at closure.
+
+Only this state file changed.
