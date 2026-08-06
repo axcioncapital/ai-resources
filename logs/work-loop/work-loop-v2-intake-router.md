@@ -186,116 +186,67 @@ authority or risk is required.
 
 Completion: Claude commits only the allowed paths by explicit pathspec; every premise is
 dispositioned; red/green evidence and the honest full-harness result are summarized in
-`## Latest result`; the remaining fresh-session proof is stated precisely; `turn: codex`; stop for
-assessment.
+`## Latest result
 
-## Latest result
+Reproduced both frozen findings by inspection before correcting either.
 
-Inspected (2026-08-06):
+- Finding (1) REPRODUCES — searched `logs/scripts/work-loop-v2-slice-1.test.sh`; line 1104 carried
+  `check "ridx  mode classification is deferred, not implemented here"` with the predicate
+  `routing_res | grep -qi 'mode' && routing_res | grep -qi 'later'`. Searched the skill's routing
+  section for `later`: the only occurrence is "a flow's **later** phases are reached by its owner"
+  in the intake-result contract — nothing to do with mode. The section meanwhile reads
+  "**Classify the mode** … **only once admission has succeeded**", so the assertion's own claim was
+  false while the assertion stayed green.
+- Finding (2) REPRODUCES — `logs/work-loop/fixture-mode-implementation.md` line 15 read "the change
+  is small but its result is asserted by the acceptance harness, so it needs assessing by someone
+  other than whoever wrote it". Core § 2 line 51 reads "If the work is small and reversible, it is
+  Direct Work even when one of those is tempting." The fixture named as its qualifying reason the
+  exact reason the core excludes, so it was not a valid Standard unit.
 
-- Claim (1) the core still defines exactly two lanes, keeps its execution/discovery unit
-  distinction, and `## Lane and unit` is the field for lane and unit: HOLDS — searched the core;
-  line 57 reads "There is no third lane", line 86 carries "An execution brief is implemented. A
-  **discovery unit** is inspected, not implemented", and § 4's field table row for
-  `` `## Lane and unit` `` was present as stated.
-- Claim (2) the Codex skill still holds the accepted 50-entry router and explicitly defers mode:
-  HOLDS — counted 50 `^- \`` index bullets; the deferral was at line 80 ("is not classified here.
-  That contract is a later unit") and line 312.
-- Claim (3) the Claude command carries no independent mode contract: HOLDS — searched
-  `.claude/commands/work-loop-v2.md` for `mode`; the only match was `model: opus` frontmatter.
-- Claim (4) the harness baseline: RECORDED — **222 passed, 2 failed, exit 1** before any edit. The
-  two failures are the same `unexpected_worklog_files` pair as Unit 2's baseline. Distinguished from
-  new failures throughout; not repaired, not allowlisted.
-- Claim (5) no overlapping uncommitted change in the core, skill, command or harness: HOLDS —
-  `git status --porcelain` over all four returned only this state file (Codex's own brief write).
-- Claim (6) the three modes can be added with no new state field, third lane, new unit type or
-  renamed project phase: HOLDS by construction, and the harness now asserts each of the four
-  separately. Mode sits inside `## Lane and unit`; the five-field ceiling is untouched; each mode
-  binds to a unit kind core § 3 step 4 already defines.
+Result: both findings corrected, and nothing else touched.
 
-Result: the mode contract is implemented across the core and both runtimes.
+**Finding 1** — the stale assertion is replaced by two that read the boundary actually implemented.
+`ridx  mode is classified after admission, never at intake` reads the routing steps **positionally**
+and requires the Classify-the-mode step to fall after the admission step; `ridx  only an admitted
+Work Loop unit acquires a mode` requires the exclusion sentence. Order is the claim, so reordering
+the steps turns it red — which loose word-matching could never do.
 
-The core owns it in a new § 3 subsection, *The unit's mode*: every open Standard unit is in exactly
-one of Discovery, Implementation or Adoption, recorded inside `## Lane and unit`, and each binds to
-an existing unit kind — Discovery and Adoption are **discovery units**, Implementation is an
-**execution brief**. No new field, heading, frontmatter key, lane or unit kind was created; § 4's
-five-field ceiling and § 5's vocabulary gained one row each (`## Lane and unit`'s description, and
-**Mode**). The Codex skill classifies at routing step 4, only once admission has succeeded, and
-carries the operator's three worked cases (Email OS → Discovery, CRM correction → Implementation,
-CRM operating trial → Adoption) with the trap named: read the uncertainty, not the size. The Claude
-command carries what each mode requires of the evidence it returns, and treats a mode that
-contradicts its own completion condition as a false premise to hand back. All deferred-mode wording
-is gone from all three artifacts.
+**Finding 2** — the fixture's named reason is rewritten to core § 2's second qualifying reason, and
+it is factually true rather than decorative: the scope needs bounding because `fixture-target-3.md`
+is the live-seam target whose `Seam-step-1:`/`Seam-step-2:` lines the seam assertions read at
+specific commits, so "add a line to it" reaches into what those assertions depend on. The
+Implementation completion condition is unchanged, and the fixture still classifies as Implementation.
+Three new assertions stop the contradiction recurring: every mode fixture must state a named reason,
+no mode fixture's reason may defeat its own admission, and the same check runs against this live
+task's own reason.
 
-**Required outcome 7 — Adoption without a new unit type — resolved rather than handed back.**
-Adoption's named unknown is whether an existing capability should enter normal operations, which is
-evidence about a named unknown, so it is a discovery unit. The apparent conflict is with "real or
-representative operation" against the discovery boundary "changing nothing beyond the state file".
-The core now resolves it explicitly: where a trial needs the capability actually operated, that
-operating is separate work — Direct Work, a specialist flow, or its own unit — and the unit in
-Adoption mode reads the evidence it produced. Neither rule is weakened and no "adoption unit"
-exists; the harness asserts that string appears in none of the three artifacts.
+Evidence: full harness **275 passed, 2 failed, exit 1** — up from 271/2, with the two failures the
+same pre-existing `unexpected_worklog_files` pair, still unrepaired and unallowlisted. No other
+block changed outcome.
 
-Evidence: 49 new `mode` assertions, red before the contract and green after.
+*Finding 1's required demonstration — the old predicate passes for the wrong reason, the corrected
+one cannot.* Run against the corrected skill and two mutated copies:
 
-- **Red run:** 227 passed, 46 failed, exit 1 — 44 of the 49 red. The 5 green were non-invention
-  guards (two lanes, five fields, no `## Mode` heading, no `mode:` key, and one control) which must
-  hold in both states by design.
-- **Green run:** **271 passed, 2 failed, exit 1.** All 49 `mode` assertions green. The 2 failures
-  are the same pre-existing `unexpected_worklog_files` pair as the baseline — unchanged, unrepaired.
-- **No regression:** `ridx` 39/39, `cont` 25/25, `seam` 5/5, and the Slice 1–3 admission and
-  correction blocks all retained their outcomes.
+| Artifact | Old predicate | Corrected predicate |
+|---|---|---|
+| the corrected skill | PASS | PASS |
+| mutant A — mode classification reverted to the Unit-2 deferral | **PASS** | fail |
+| mutant B — Classify-the-mode moved *before* the admission step | **PASS** | fail |
 
-The wrong-classification detector is the load-bearing piece. It never reads the mode name from the
-prose: `required_shape()` derives the unit shape the **completion condition** requires, then compares
-that with the mode actually recorded. Keyword-matching "discovery" would pass on a mislabelled file,
-which is the failure under test. Three mislabelling cases are derived from the valid fixtures and
-asserted caught — a Discovery unit relabelled Implementation, an Implementation unit relabelled
-Discovery, an Adoption unit relabelled Implementation — plus a discrimination check that the detector
-returns three distinct verdicts rather than blanket-rejecting.
+The old predicate cannot tell the three apart: it is green whether mode is classified after
+admission, before it, or not at all. That is the defect, shown rather than asserted.
 
-Four state-file failing cases are derived the same way, so the fixtures are never doctored. Read at
-the record position, they produce: missing → `Standard.`; two modes → `Standard. Discovery mode.
-Adoption mode.`; unknown → `Standard. Exploration mode.` (parsed, then rejected as not one of the
-three); valid control → `Standard. Discovery mode.` A `## Mode` heading and a `mode:` frontmatter
-key are asserted absent from all three artifacts.
+*Finding 2's required demonstration.* The admission-honesty check is green on the corrected fixture
+and red on a copy with the original wording reinstated — `RED — defeats its own admission`. It reads
+the named reason only, so it fails on the contradiction itself rather than on any fixture identity.
 
-Four defects in my own harness block were found and fixed before the green run, three of them the
-same lesson: **bare `exit` inside `check`'s `eval`** killed the run at assertion 27 (exit 0, no
-summary); one assertion passed vacuously on an absent fixture; and **hard-wrapped prose broke three
-separate greps** — the no-copy sentinel spans a line break in the core, the `Completion:` condition
-is a paragraph rather than a line, and "Do not\nimplement" straddles a break. Each is now flattened
-or paragraph-scoped.
-
-One real design correction came out of the live state file rather than from a fixture. The first
-version read the whole `## Lane and unit` field for mode tokens, and Unit 3's own description
-legitimately names all three modes in prose — so the live file counted as three records. The record
-is now **positional**: core § 3 fixes the shape `Standard. <Mode> mode. Unit N — …`, the mode is the
-second sentence, and prose further down the field cannot be mistaken for the record. That is a
-contract improvement the harness would not have surfaced against fixtures alone.
-
-The Misinterpretation Check disproved three of the four misreadings the brief names and found one
-real gap. Modes-as-a-third-lane and implement-during-Discovery were already closed by the core's own
-wording; three-simultaneous-labels is closed by the positional record and "exactly one". **Modes as
-sequential phases was open** — the table's order reads as a pipeline (discover → implement → adopt),
-and nothing forbade that reading. The core now states that the three are not a sequence: each unit
-is classified from what is uncertain now, a task may run every unit in one mode, and a later unit may
-return to a mode an earlier one used.
-
-Line counts, per required outcome 10: core 408 → 456, skill **314 → 331**, command 126 → 136. The
-skill's 320-line implementation guard was exceeded, so it was **re-based to 340 and kept, not
-deleted** — 9 lines of headroom, so the next addition still has to justify itself.
-
-**What static evidence cannot reach, and the exit condition that remains.** Everything above proves
-the contract exists in one owner, both runtimes agree with it, the state shape is right, and a
-recorded mode that contradicts its own completion condition is caught. None of it shows that a fresh
-Codex session *chooses* the right mode for a real request — that is natural-language judgment, and
-no assertion here reaches it. The remaining proof is unchanged in kind from Unit 2 and now has two
-parts, both needing one fresh session each: a request whose correct owner is a Claude-side-only Matt
-skill (proving intake, one-owner selection, the marker and the no-state-file rule together), and a
-request whose correct mode is **Adoption** — the newest and least obvious of the three, and the one
-whose misclassification as Implementation would license building something that was only meant to be
-judged.
+Newly noticed, recorded and **not** implemented: Finding 1 is an instance of a class, not a one-off.
+At least one other assertion I wrote has the same looseness — `ridx  /leverage-idea is named as
+excluded, with its router-within-router reason` conjoins a real check with `grep -qi 'router'`, a
+word that appears throughout the file, and `mode  Implementation does not demand ceremonial tests`
+is a disjunction where a conjunction was meant. A sweep for predicates that can pass for an
+unrelated reason is a bounded unit of its own; it is out of this frozen scope and is a candidate
+deferral for the closure check.
 
 ## Blocker
 
@@ -303,26 +254,20 @@ None.
 
 ## Next action
 
-Codex: assess Unit 3 — the mode contract against the ten required outcomes, and the red/green
-evidence against what it claims.
+Closure check on the two frozen findings only — are they resolved, and did the correction break
+anything?
 
-Four things to disposition, none of them a correction request:
+1. Finding 1 — the stale assertion is gone; two positional assertions replace it, and the table
+   above shows the old predicate passing on both mutants while the corrected one fails on both.
+2. Finding 2 — the fixture's named reason now cites core § 2's scope-bounding reason and is
+   factually grounded in the live-seam target; three assertions stop the contradiction recurring.
 
-1. **Required outcome 7 was resolved, not handed back.** Adoption is a discovery unit about
-   operation; where a trial needs the capability operated, that operating is separate work and the
-   Adoption-mode unit reads its evidence. Confirm that reading is what you intended, because it is
-   the load-bearing sentence of the whole contract.
-2. **The record is now positional** — `Standard. <Mode> mode. Unit N — …`. This was not in your
-   brief; it came out of your own Unit 3 state file, whose description names all three modes in
-   prose. Accept the shape or name a different one.
-3. **The skill's line guard was re-based 320 → 340, not deleted**, per required outcome 10. Exact
-   counts are in `## Latest result`.
-4. **Three new fixtures** were added under `logs/work-loop/` and registered in the harness's
-   `KNOWN_WORKLOOP_FILES`. That registration is the harness's designed friction for new fixtures,
-   not a repair of the two pre-existing worklog-inventory failures, which remain failing and
-   untouched.
+Nothing else was changed: the Adoption-as-discovery-unit decision, the positional record shape, the
+340-line guard and the registered fixtures were accepted for pilot quality and were left alone.
 
-The task's exit condition is now one item, not two: the router and the mode contract are both
-implemented, and what remains is the fresh-session natural-language proof described at the end of
-`## Latest result` — two requests, one for owner selection and one for Adoption-mode classification.
-That is a later unit, and it is the last thing standing between this task and closure.
+One candidate deferral is recorded under `## Latest result` — a sweep for other assertions that can
+pass for an unrelated reason, which is the class Finding 1 belongs to. It is yours to record or drop
+at closure, not a second correction.
+
+The task's exit condition is unchanged and remains one item: the fresh-session natural-language
+proof — one request for owner selection, one for Adoption-mode classification.

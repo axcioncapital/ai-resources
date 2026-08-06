@@ -1101,8 +1101,25 @@ check "ridx  routing interprets the desired outcome and object first" \
 check "ridx  the owner is chosen before admission is applied" \
   "[ \"\$(routing_res | grep -ni 'choose one owner' | head -1 | cut -d: -f1)\" -lt \
     \"\$(routing_res | grep -ni 'Direct.*Standard' | head -1 | cut -d: -f1)\" ]"
-check "ridx  mode classification is deferred, not implemented here" \
-  "routing_res | grep -qi 'mode' && routing_res | grep -qi 'later'"
+# Was: "mode classification is deferred, not implemented here", predicated on
+#   routing_res | grep -qi 'mode' && routing_res | grep -qi 'later'
+# It survived Unit 3, which implemented mode classification and made the assertion's
+# own claim false — and it stayed green, because 'later' matches "a flow's later
+# phases" in the intake-result contract, nothing to do with mode. A predicate that
+# passes on unrelated words cannot fail for the reason it names.
+#
+# Replaced with the boundary that is actually implemented, read POSITIONALLY from
+# the routing steps: mode is classified after admission, never at intake. Order is
+# the claim, so reordering the steps turns it red — which loose word-matching could
+# never do.
+route_step() {
+  awk '/^## Routing/{f=1;next} /^## /{f=0} f' "$RIDX_F" | grep -n -- "$1" | head -1 | cut -d: -f1
+}
+check "ridx  mode is classified after admission, never at intake" \
+  "[ -n \"\$(route_step 'Classify the mode')\" ] && [ -n \"\$(route_step 'admission test')\" ] && \
+   [ \"\$(route_step 'Classify the mode')\" -gt \"\$(route_step 'admission test')\" ]"
+check "ridx  only an admitted Work Loop unit acquires a mode" \
+  "awk '/^## Routing/{f=1;next} /^## /{f=0} f' '$RIDX_F' | grep -qi 'never acquires one'"
 check "ridx  Direct Work is preserved as the default for small reversible work" \
   "grep -qi 'Direct Work' '$RIDX_F'"
 check "ridx  a specialist owner is not wrapped in a Work Loop unit" \
@@ -1248,6 +1265,27 @@ check "mode  every mode fixture carries task and turn frontmatter and nothing el
   "( for f in '$MODE_D' '$MODE_I' '$MODE_A'; do \
        [ \"\$(grep -cE '^(task|turn):' \"\$f\")\" = 2 ] || exit 1; \
        [ \"\$(grep -cE '^[a-z-]+:' \"\$f\")\" = 2 ] || exit 1; done )"
+# A Standard unit's named reason may not defeat its own admission. Core § 2: "If the
+# work is small and reversible, it is Direct Work even when one of those is tempting."
+# fixture-mode-implementation opened with "the change is small but ... it needs
+# assessing by someone other than whoever wrote it" — which is precisely the reason
+# core § 2 excludes, so the fixture was not a valid Standard unit at all. Nothing
+# checked the reason against the test that admitted it; this does.
+reason_of() {
+  awk '/^## Lane and unit/{f=1;next} /^## /{f=0} f' "$1" \
+    | awk '/^Named reason for the loop:/{p=1} p{ if ($0 ~ /^[[:space:]]*$/) exit; print }' \
+    | tr '\n' ' '
+}
+SELF_DEFEATING='the (change|work|fix|unit) is small|small but|small and reversible|is reversible'
+check "mode  every mode fixture states a named reason at all" \
+  "( for f in '$MODE_D' '$MODE_I' '$MODE_A'; do [ -n \"\$(reason_of \"\$f\")\" ] || exit 1; done )"
+check "mode  no mode fixture's named reason defeats its own admission" \
+  "( for f in '$MODE_D' '$MODE_I' '$MODE_A'; do \
+       printf '%s' \"\$(reason_of \"\$f\")\" | grep -qiE '$SELF_DEFEATING' && exit 1; done; exit 0 )"
+check "mode  the live task's named reason does not defeat its own admission either" \
+  "[ -n \"\$(reason_of 'logs/work-loop/work-loop-v2-intake-router.md')\" ] && \
+   ! printf '%s' \"\$(reason_of 'logs/work-loop/work-loop-v2-intake-router.md')\" | grep -qiE '$SELF_DEFEATING'"
+
 check "mode  the live task's own state file records exactly one legal mode" \
   "[ \"\$(mode_of 'logs/work-loop/work-loop-v2-intake-router.md')\" = Implementation ]"
 

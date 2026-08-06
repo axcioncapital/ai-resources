@@ -12,8 +12,10 @@ Scope: that one file and this state file. Excluded: every other file.
 
 Standard. Implementation mode. Unit 1 — add the line and show it.
 
-Named reason for the loop: the change is small but its result is asserted by the acceptance harness,
-so it needs assessing by someone other than whoever wrote it before it counts as done.
+Named reason for the loop: the scope needs bounding before work starts, or it will spread.
+`fixture-target-3.md` is the live-seam target — the seam assertions read its `Seam-step-1:` and
+`Seam-step-2:` lines at specific commits — so "add a line to it" reaches into the ordering and
+content those assertions depend on unless the boundary is fixed first.
 
 ## Brief
 
