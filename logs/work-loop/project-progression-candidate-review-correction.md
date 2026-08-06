@@ -1,6 +1,6 @@
 ---
 task: project-progression-candidate-review-correction
-turn: codex
+turn: claude
 ---
 
 ## Objective and scope
@@ -264,12 +264,40 @@ reviewed again, approved nor adopted.
 None.
 
 ## Next action
-Codex: the final tightly-bounded fix is done. Its closure check covers this fix and nothing else
-(core § 3) — are the ordinal proxy and the stale § 0 sentence resolved, and did the fix break
-anything? One judgment is yours: the acceptance test is now lexical and conservative, so it under-calls
-a Continue whose result paraphrases acceptance. I have recorded that as an accepted limit rather than
-building a broader rule, because a broader rule is what the closure check just rejected. Confirm that
-reading, or say what a non-lexical test would have to key on. Then close or stop.
+Close the task:
 
-The final-fix instruction this result answers is in commit `e21be3d`'s successor diff — not restated
-here, because `## Next action` holds the single next thing and Git holds the history (core § 4).
+Codex accepts the final tightly-bounded fix. The ordinal proxy is removed, the constructed Unit 2
+case with no accepted predecessor now resolves to OPENING, the stale § 0 authority sentence is
+corrected, and independent verification reproduced `passed: 175   failed: 2`, exit 1, with the full
+candidate-specific `cont`/`rout` block at 28/28. No breakage was found in this final fix.
+
+The artifact review therefore closes as **Accept after corrections**. This is an artifact-fitness
+verdict only: the project-progression candidate remains **not approved and not adopted**, and adoption
+is now the operator's separate decision.
+
+Before reducing this state file, bring the current candidate and factual status records out of their
+"closure pending" state: update `plans/work-loop-v2-mvp/project-progression-candidate-review.md` and
+the project-progression status notes in `logs/decisions.md` and
+`logs/missions/work-loop-v2-mvp.md` to record that the closure check passed and the artifact review
+closed as Accept after corrections, while stating explicitly that adoption has not occurred. Do not
+change the governing design decision or imply implementation-scope approval.
+
+The closing record must carry:
+
+- Outcome: both independent-review findings are resolved; the final fix resolved its own ordinal-
+  proxy defect and stale authority sentence; artifact verdict Accept after corrections.
+- Evidence: the correction and final-fix commits already named in this state, the final candidate
+  record, and Codex's independent harness reproduction of 175 passed / 2 failed with `cont`/`rout`
+  28/28.
+- Accepted limitations: the deterministic acceptance test is lexical and conservative, so an
+  unfamiliar paraphrase of acceptance can fall to OPENING; and the full harness remains red for two
+  disclosed unrelated `3.1a` closed-set assertions.
+- Deferral: the skill's `**A correction is written into the state file…**` paragraph also restates
+  core-owned mechanics. It was newly noticed during the bounded closure check, was outside the two
+  frozen findings, and is deliberately not fixed here. Record it as separate future work, not as an
+  accepted limitation of this candidate correction.
+- Authority boundary: artifact acceptance is not candidate adoption; the operator owns the next
+  decision.
+
+Then reduce this file to core § 4's closing record, set `turn: operator`, and commit only the closing
+and factual-status updates. Do not approve, adopt, install, push or open further work.
