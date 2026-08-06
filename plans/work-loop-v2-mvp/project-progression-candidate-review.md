@@ -238,8 +238,8 @@ one stale sentence in this record. Both fixed, and nothing else:
    That under-calls a real Continue, which is the safe direction, and is the conservatism the closure
    check expressly permitted.
 2. **§ 0's stale sentence corrected.** It still said the candidate "remains pending independent Codex
-   review" after that review had run. It now states the truthful current boundary: artifact closure
-   is pending, and adoption is a separate operator decision afterwards.
+   review" after that review had run. At that point it stated the then-current boundary: artifact
+   closure was pending, and adoption would be a separate operator decision afterwards.
 
 **Harness after the final fix: `passed: 175   failed: 2`, exit 1.** The `cont`/`rout` block is 28/28.
 The two failures remain the pre-existing `3.1a` closed-set reds described in § 2b, which neither the
