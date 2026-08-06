@@ -22,16 +22,26 @@ the proposal for exactly that approval. The stop was crossed and the edits lande
 recorded here as fact, not framing: nothing below inherits approval from the fact that it exists in
 the repository.
 
-**What the operator has authorised since:** one bounded recovery task —
-`logs/work-loop/project-progression-candidate-recovery.md` — to bring this candidate to a
-review-ready, evidence-honest state. That authorisation covers the recovery work and nothing else.
-It is **not** approval of the candidate, not adoption of the capability, and not permission to
-install or propagate it.
+**What the operator has authorised since** — three separate bounded tasks, each authorised on its own
+and none inheriting anything from the others:
 
-**Therefore:** the independent Codex review has run and returned Accept with corrections (§ 5); what
-remains pending is **artifact closure** — the closure check on the correction round's final
-tightly-bounded fix — and, separately and afterwards, **the operator's adoption decision**. Neither
-has happened. Later sections describe what the candidate *is*, never what has been accepted.
+1. `logs/work-loop/project-progression-candidate-recovery.md` — bring the candidate to a review-ready,
+   evidence-honest state.
+2. `logs/work-loop/project-progression-live-continue-proof.md` — prove the live cross-actor `Continue`
+   seam by execution (§ 5a), with the task-specific no-self-hosting exception that required.
+3. `logs/work-loop/project-progression-classifier-turn-correction.md` — the bounded classifier
+   turn-sensitivity correction (§ 5b), with the same task-specific exception.
+
+**None of those three authorisations approved, adopted, installed or propagated the candidate.** Each
+covered its own bounded work and nothing else, and the no-self-hosting exceptions were granted per
+task rather than as a standing permission.
+
+**Therefore:** the independent Codex review has run and returned Accept with corrections (§ 5); the
+correction round and its final tightly-bounded fix are closed, the live seam is proved and its task
+closed (§ 5a), and the classifier-turn correction was independently assessed by Codex and closed
+(§ 5b). Artifact-side work is complete. The candidate is **still not approved and not adopted**, and
+the **operator's adoption decision is the next authority move**. Later sections describe what the
+candidate *is*, never what has been accepted.
 
 ## 1. The candidate
 
@@ -286,6 +296,14 @@ not a fix. Corrected under task `logs/work-loop/project-progression-classifier-t
 **31/31** and the `seam` block is **5/5** — the live proof did not regress. The two failures remain the
 pre-existing `3.1a` closed-set reds described in § 2b, which this correction neither touches nor claims
 to fix. The full suite is **not** green.
+
+**Deferred, and non-runtime — one closure-process inconsistency.** Closing § 5b's task surfaced a
+conflict between two instructions: `.claude/commands/work-loop-v2.md` states absolutely that a closing
+invocation changes no other file, while Codex's close verdict required the scoped status update to
+this record alongside the state-file reduction. The executable core carries no such single-file
+restriction, so the core was followed and both files stayed inside the closed task's declared scope.
+Recorded here as a known inconsistency only: it affects no runtime behaviour and no evidence in this
+record, and **it is not decided or fixed here** — the command was deliberately left untouched.
 
 **What this verdict is not.** Accept-with-corrections is a review verdict on the artifact. The
 candidate is still not approved and not adopted. The correction round's closure check is done (§ 5),
