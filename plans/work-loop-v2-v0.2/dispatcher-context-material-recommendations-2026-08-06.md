@@ -5,19 +5,30 @@
 
 ## Decision
 
-The context material contains two ideas that would materially improve the current dispatcher:
+The target experience is:
 
-1. **Safe operator interruption and recovery.**
-2. **A small machine-readable outcome and notification boundary.**
+> The operator describes the task in Codex, invokes one command, leaves the computer for roughly
+> 40 minutes, and returns to either completed work or one clearly explained decision that requires
+> operator judgment.
 
-A third idea—**context-aware session rollover**—is worth preserving as a later option, but there is
-not enough evidence to implement it now.
+The current dispatcher is a strong transport core, but this experience requires a bounded
+supervisory layer around it. The plan should include:
 
-The rest of the proposed Supervisor should not be added to the dispatcher. In particular, the
-dispatcher should not acquire a second project-state system, decide whether tests or review findings
-are valid, decide that work is complete, create worktrees autonomously, or become a Visual Studio
-Code application. Those duties either already exist elsewhere or would turn a transport mechanism
-into a fourth decision-maker.
+1. **One-command intake and launch from Codex.**
+2. **Automatic routine Claude ↔ Codex cycling.**
+3. **A total unattended-run time, hop, and cost budget.**
+4. **Clean checkpoints before deadlines and between actors.**
+5. **Fresh-session and context-window continuity through the state file and Git.**
+6. **Mechanical preparation of an isolated worktree after the task boundary is approved.**
+7. **A small derived operational state model for monitoring.**
+8. **Safe operator interruption and recovery.**
+9. **Machine-readable outcomes and operator notifications.**
+10. **A final return report.**
+
+This is a bounded unattended Work Loop Supervisor, not unrestricted autonomy. It may carry routine
+turns and manage processes inside a task the operator approved. It must still stop for scope,
+architecture, risk, permissions, destructive recovery, external effects, merge conflicts, or any
+other decision owned by the operator.
 
 ## Why the boundary matters
 
@@ -71,9 +82,239 @@ The dispatcher has therefore already implemented the useful core of:
 - Codex review routing;
 - operator escalation through `turn: operator`.
 
-The Supervisor proposal should not cause those capabilities to be rebuilt under new names.
+The Supervisor proposal should extend this core rather than rebuild those capabilities under new
+names.
 
-## Addition 1 — safe operator interruption and recovery
+## Intended unattended run
+
+The normal path should be:
+
+1. The operator writes the objective in Codex.
+2. The operator invokes one command, including an unattended time budget.
+3. Codex prepares the bounded brief, exact task id, allowed paths, completion conditions, and stop
+   conditions.
+4. The launcher performs preflight checks and prepares an isolated worktree.
+5. The supervisor launches Claude in that worktree.
+6. Claude verifies, works, tests, records evidence, commits, and hands back.
+7. The supervisor launches Codex to assess the result.
+8. Codex closes, continues with the next bounded unit, corrects once, or sets `turn: operator`.
+9. Routine Claude ↔ Codex turns continue while the approved task and run budgets permit.
+10. The supervisor stops at completion, a deadline checkpoint, a technical failure, or an
+    operator-owned decision and sends a notification.
+
+The operator may observe the run, but the run must not depend on the operator watching or moving
+prompts between products.
+
+## Addition 1 — one-command intake and launch
+
+### Required behavior
+
+Codex should expose one operator-facing command whose meaning is approximately:
+
+> Prepare this request as one bounded Work Loop task and run it unattended for up to the supplied
+> duration within the approved safety policy.
+
+The command should:
+
+- turn the current operator request into the canonical Work Loop brief;
+- create or identify the exact task-state file;
+- derive an exact task id;
+- record the approved objective, boundaries, required evidence, stop conditions, and allowed paths;
+- accept a total run duration and optional cost or turn ceiling;
+- run preflight checks;
+- prepare the isolated execution location;
+- start the supervisor with the exact task and checkout;
+- return the run id and where progress can be observed.
+
+Invoking the command is approval to carry routine turns only within those written limits. It is not
+approval for merging, deployment, destructive recovery, external communication, new credentials,
+new infrastructure, or a material scope change.
+
+### Acceptance evidence
+
+- One command starts a fixture task without manual prompt copying.
+- The launched task id and checkout exactly match the prepared brief.
+- A malformed, ambiguous, consequential, or unbounded request does not start a run.
+- Starting fails safely if the repository or worktree preflight fails.
+- No second task-state or handoff system is created.
+
+## Addition 2 — unattended Claude ↔ Codex cycling
+
+The supervisor should support a deliberately approved full-loop mode, not only one-hop courier
+mode.
+
+After each actor exits, it should re-read the state file and repository and:
+
+- launch Claude only when the file says `turn: claude`;
+- launch Codex only when the file says `turn: codex`;
+- stop without another launch when the file says `turn: operator`;
+- stop on a malformed file, illegal transition, unexpected effect, or uncommitted handback;
+- continue only while the task and global run budgets permit.
+
+The supervisor does not decide whether the next turn exists. Each actor writes that decision into
+the existing state file. The supervisor only carries it.
+
+### Acceptance evidence
+
+- A live or appropriately isolated proof completes Claude → Codex → Claude → Codex without operator
+  transport.
+- A Codex close verdict reaches Claude and finishes at `turn: operator`.
+- A Codex continuation opens the next bounded unit and returns to Claude.
+- A correction remains frozen to its named findings.
+- Every operator stop produces zero subsequent actor launches.
+
+## Addition 3 — total unattended-run budgets
+
+The current per-actor timeout and hop limit should be supplemented by a total run envelope.
+
+At launch, the supervisor should receive:
+
+- an absolute run deadline or total duration;
+- a maximum number of actor hops;
+- a maximum number of correction or continuation transitions already permitted by the Work Loop;
+- an optional model-cost or turn ceiling where reliable telemetry exists;
+- a reserved checkpoint margin before the hard deadline.
+
+For a 40-minute run, an example policy would be:
+
+- no new substantial unit begins once only the checkpoint margin remains;
+- the current actor is told the absolute deadline and expected handback margin;
+- the supervisor stops at the next valid checkpoint;
+- a hard deadline still terminates safely if cooperative handback fails.
+
+Budget exhaustion is not task completion. It means the work stops in a resumable state and reports
+what remains.
+
+### Acceptance evidence
+
+- The supervisor never starts a new actor after the global deadline.
+- Per-actor timeouts cannot make the total run silently exceed its hard bound.
+- The checkpoint margin is observable in the actor's assignment.
+- Reaching a hop, time, or cost ceiling reports `budget_exhausted`, not `completed`.
+- Repository and state-file truth are preserved for a later resume.
+
+## Addition 4 — automatic checkpoints
+
+Every actor handback should be treated as a durable checkpoint. Before yielding, the actor should
+leave:
+
+- the latest material result in the canonical state file;
+- the exact next actor or operator turn;
+- evidence and limitations needed by the next actor;
+- a commit where the Work Loop contract requires Claude to commit;
+- no unstated dependency on the previous conversation.
+
+When the global deadline approaches, the current actor should prefer handing back the smallest
+coherent result rather than starting another substantial step.
+
+The supervisor validates the checkpoint structurally. Claude and Codex remain responsible for the
+meaning and adequacy of the evidence.
+
+### Acceptance evidence
+
+- A fresh actor can continue from the state file and Git without the previous transcript.
+- A deadline checkpoint does not claim unfinished work is complete.
+- An incomplete or uncommitted handback stops for inspection rather than being retried.
+- No separate wrap document is created.
+
+## Addition 5 — fresh-session and context-window continuity
+
+The system should obtain continuity primarily by starting fresh actors from repository truth, not by
+preserving one ever-growing chat.
+
+At every routine handoff:
+
+- the state file carries the current task truth;
+- Git carries repository history and the committed implementation;
+- the next actor receives the immediate brief, exact task id, governing sources, and remaining run
+  budget;
+- old transcripts are diagnostic evidence, not required working memory.
+
+This design resets most context pressure naturally because Claude and Codex can start fresh on their
+respective turns.
+
+### Context-aware rollover inside one actor
+
+One long Claude unit may still approach its own context limit. The supervisor should preserve an
+extension point for cooperative rollover, but it should not guess from an arbitrary 75–80% token
+threshold.
+
+Rollover becomes justified when either:
+
+- reliable live product telemetry identifies real remaining context;
+- the actor reports that compaction or context pressure threatens the handback;
+- repeated run evidence shows context-related timeout, no-transition, or incomplete-handback
+  failures.
+
+When triggered, rollover should ask the actor to reach a safe repository checkpoint, update the
+existing state file, and end. A fresh actor then continues from that checkpoint. If the current
+process interface cannot accept a cooperative checkpoint request, use bounded units and deadlines
+until an SDK or app-server control surface is justified; do not simulate continuity by copying a
+full transcript.
+
+### Acceptance evidence
+
+- Several actor sessions can continue the same task from the canonical state and Git.
+- Completed work is not repeated after a fresh-session transition.
+- A rollover leaves no second handoff artifact.
+- Context percentage alone never causes an unsafe mid-edit termination.
+- Hidden conversation resume is optional, never the sole recovery mechanism.
+
+## Addition 6 — isolated worktree preparation
+
+Unattended implementation should normally run in a dedicated worktree rather than directly in the
+main checkout.
+
+The launcher may mechanically:
+
+- confirm that the task and allowed-path boundary are explicit;
+- confirm that the integration target is safe;
+- create a named branch and linked worktree;
+- launch both Claude and Codex in that exact worktree;
+- register the task, worktree, branch, and run id in operational evidence;
+- prevent another supervisor from using the same task/worktree pair.
+
+The launcher must not independently decide file ownership or resolve overlap with another active
+task. Those are admission decisions. It also must not automatically merge, delete the branch, or
+remove the worktree when the unattended run ends.
+
+### Acceptance evidence
+
+- Both actors' kernel working directories are the intended worktree.
+- The main checkout remains unchanged by the run.
+- A second supervisor cannot claim the same task/worktree.
+- A file-ownership conflict prevents launch.
+- Completion leaves the branch and worktree available for operator inspection.
+- Landing and teardown remain separate, operator-gated actions.
+
+## Addition 7 — derived operational state
+
+The supervisor needs a small process-lifecycle model so the operator and notification layer can
+understand what it is doing. Suggested derived states are:
+
+- `preparing`;
+- `running_claude`;
+- `running_codex`;
+- `checkpointing`;
+- `waiting_for_operator`;
+- `completed`;
+- `failed`;
+- `timed_out`;
+- `budget_exhausted`;
+- `interrupted`.
+
+These labels describe the supervisor, not the task's meaning. They should be derived from live
+process state, the latest state-file read, and the terminal outcome. They must not replace `turn:` or
+become a second semantic workflow.
+
+### Acceptance evidence
+
+- Every displayed state can be re-derived from process and repository facts.
+- Removing the operational-state display changes no Work Loop decision.
+- `completed`, `waiting_for_operator`, and `failed` cannot be confused.
+- Restart does not trust a stale operational label over the state file and Git.
+
+## Addition 8 — safe operator interruption and recovery
 
 ### The problem
 
@@ -135,7 +376,7 @@ Tests should demonstrate all of the following:
 This is the highest-value addition because it closes a measured safety defect without changing the
 Work Loop's semantics.
 
-## Addition 2 — structured terminal outcome and notification boundary
+## Addition 9 — structured terminal outcome and notification boundary
 
 ### The problem
 
@@ -194,44 +435,36 @@ Tests should demonstrate that:
 
 This addition materially reduces watching while preserving the dispatcher as transport only.
 
-## Preserve for later — context-aware session rollover
+## Addition 10 — final return report
 
-The context material proposes monitoring context usage, waiting for a safe checkpoint, asking the
-actor to wrap, and starting a fresh session before reliability deteriorates.
+When the run ends, Codex should present a concise report in the operator's original Codex task. It
+should say:
 
-The problem is plausible, but it has not been observed in the dispatcher evidence:
+- whether the task completed, stopped at a checkpoint, failed, timed out, was interrupted, or needs
+  an operator decision;
+- what outcome was achieved;
+- which worktree, branch, commits, and material paths contain the work;
+- what Claude reports it tested and what Codex assessed;
+- what remains incomplete or limited;
+- why the supervisor stopped;
+- the exact next action for the operator;
+- where the canonical state file and operational logs live.
 
-- dispatcher actors are already launched as fresh one-shot sessions;
-- the state file and Git already support fresh-session continuation;
-- a recent Claude dispatcher run completed 26 turns successfully and reported its context window in
-  the final structured output;
-- current captures expose useful token or context information mainly at completion, not as a proven
-  reliable live control signal;
-- no recorded dispatcher stop has been attributed to context exhaustion.
+The report must distinguish repository facts from model claims. “Claude reports these tests passed”
+is different from “the supervisor observed a zero exit code,” and neither automatically means Codex
+accepted the evidence.
 
-The proposed 75–80% threshold is therefore not justified. Adding rollover now would introduce
-session intervention, checkpoint selection, partial-effect handling, and new failure modes without
-an observed failure to solve.
+If the operator was away when the run ended, the same report should remain available when they
+return. A notification may link to it, but notification delivery is not part of task correctness.
 
-### Trigger for reconsideration
+### Acceptance evidence
 
-Reopen this idea only when run evidence shows one of the following:
-
-- an actor fails or times out because its context is exhausted;
-- compaction repeatedly causes an inaccurate or incomplete handback;
-- long units repeatedly need manual session replacement;
-- both products expose reliable live context telemetry that can be consumed without guessing.
-
-If triggered, the rollover design must still:
-
-- hand back through the existing Work Loop state file;
-- use a safe repository checkpoint, not token percentage alone;
-- start from repository truth rather than hidden transcript memory;
-- never create a second handoff document;
-- never let the dispatcher invent a new turn or completion decision.
-
-This capability would probably belong in an actor adapter or a thin supervisor above the courier,
-not in the dispatcher's semantic core.
+- Every terminal outcome produces one operator-facing report.
+- The report distinguishes completed, operator decision, technical failure, budget exhaustion, and
+  interruption.
+- Commit and path claims agree with Git and the final state file.
+- The report never claims a merge, deployment, or adoption that did not occur.
+- The exact next action is present even when the task did not complete.
 
 ## Ideas that should not be added
 
@@ -273,15 +506,14 @@ It must not decide:
 
 Those are repository and progression judgments owned by Claude and Codex.
 
-### Automatic worktree selection, creation, landing, and teardown
+### Autonomous worktree decisions, landing, and teardown
 
-The dispatcher should continue to receive an exact checkout and task. Worktree creation is preceded
-by a file-ownership decision; landing may expose content conflicts; destructive cleanup requires
-liveness checks. These are governed by `docs/parallel-sessions-playbook.md` and include operator
-gates.
+The one-command launcher may mechanically create a worktree as described in Addition 6, but only
+after Codex has prepared an explicit task and path boundary under an approved operating policy.
 
-A separate operator-invoked launcher may automate mechanical steps after the operator supplies the
-approved task, branch, worktree, and file boundary. The dispatcher itself should not choose them.
+It must not independently choose overlapping file ownership, resolve a content conflict, merge the
+result, delete a live worktree, or remove a branch. Those actions are governed by
+`docs/parallel-sessions-playbook.md` and include operator gates.
 
 ### A Visual Studio Code extension
 
@@ -324,19 +556,27 @@ The Supervisor context does not replace those prerequisites.
 ## Recommended order
 
 1. Assess and settle the existing production-readiness policy.
-2. Add safe signal-driven interruption and recovery.
-3. Add the structured terminal outcome.
-4. Connect an optional notification-only observer.
-5. Run several real tasks and record failure and operator-attention evidence.
-6. Reconsider context-aware rollover only if those runs produce its trigger.
-7. Reconsider a UI or persistent service only if the minimal CLI shape proves insufficient.
+2. Harden the dispatcher with safe interruption, a total run budget, and structured terminal
+   outcomes.
+3. Add the one-command Codex intake and launch path.
+4. Add mechanical isolated-worktree preparation behind the existing admission and file-ownership
+   gates.
+5. Prove full unattended Claude ↔ Codex cycling with checkpoints and fresh-session continuation.
+6. Add the derived operational state, notification observer, and final return report.
+7. Run several real 40-minute tasks and record completion, interruption, escalation, context, cost,
+   and operator-attention evidence.
+8. Add cooperative context rollover only if live telemetry or observed failures justify it.
+9. Reconsider a Visual Studio Code UI or persistent service only if the CLI, Codex task, and
+   notifications prove insufficient.
 
 ## Bottom line
 
-The valuable lesson from the Supervisor context is not “build a supervisor.” It is:
+The plan should build a bounded unattended supervisor around the proven dispatcher:
 
-> Make the existing courier safer to stop and easier to observe.
+> One Codex command prepares the task, starts isolated execution, carries routine Claude ↔ Codex
+> turns for the approved time, checkpoints safely, and returns either completed work or one clear
+> operator decision.
 
-That closes a measured safety gap and reduces the remaining need to watch terminals. The broader
-proposal would add duplicate state, premature infrastructure, and semantic decisions that do not
-belong in the dispatcher.
+The supervisor should manage sessions, budgets, worktree mechanics, observation, notifications, and
+safe recovery. It should not manage strategy, evidence judgment, risk acceptance, merging,
+deployment, or any other operator-owned decision.
