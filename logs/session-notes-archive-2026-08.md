@@ -1909,3 +1909,69 @@ operator decision, not one this loop can resolve from evidence alone.
 - Files in scope: logs/work-loop/context-engineering-s7-regression.md, logs/scripts/work-loop-v2-slice-1.test.sh, logs/session-notes.md, logs/friction-log.md
 - Required outputs: plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-1/, plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-3/, plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-4/, plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-5/
 - Mission: work-loop-v2-mvp
+## 2026-08-04 — Session S3-018 (continued)
+
+**Work:** Work Loop v2 Context Engineering S7 — grouped-regression instrument built, corrected, accepted, run declined and task closed
+- Files in scope: logs/work-loop/context-engineering-s7-regression.md, logs/scripts/work-loop-v2-slice-1.test.sh, logs/session-notes.md, logs/friction-log.md
+- Required outputs: plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-1/, plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-3/, plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-4/, plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-5/
+- Mission: work-loop-v2-mvp
+
+### Summary
+Ran Claude's side of the S7 task turn-by-turn as Codex handed it over, start to close, across seven commits.
+A first handback correctly stopped construction when the brief's R-5 subcase floor omitted CE-16 A
+(`61c0e68`); Codex repaired the floor and the reissued unit built 44 answer-key-free fixture files across
+R-1/R-3/R-4/R-5, applied the one authorised harness-allowlist line, and left the harness at 149 passed /
+0 failed (`3e28147`). One bounded correction followed — R-4's CE-12 A mapping just repeated an exclusion
+the plan already stated, and R-5's non-file detector would have counted the unit's own execution and
+evidence work as forbidden machinery; both reproduced by inspection and fixed (`e533463`). Codex accepted
+Unit 1 and opened Unit 2 (run + observe), but its first Unit-2 brief left stale Unit-1 sections that
+forbade the very run it commissioned — flagged rather than worked around, then corrected by Codex
+(`4f6035a`). Five disposable roots were built and verified outside the repository for the operator-driven
+run. After walking through why the tests exist and what running two cases versus five would cost and buy,
+the operator judged the run-and-observation step disproportionate and declined it. The decision was
+recorded as an explicit, disclosed deviation from the plan's §7.1 requirement rather than absorbed
+silently (`35b438b`), and Codex closed the task to the four-part shape; the close was verified and
+committed (`1d5c5cd`).
+
+### Decisions Made
+- **Operator: decline the S7 grouped-regression run**, both the full five-case scope and a reduced
+  two-case (R-3/R-4) alternative Claude offered. Judged disproportionate to what it would buy. Recorded in
+  the closed task record as an explicit deviation from plan §7.1, not silently skipped — Phase 2's exit
+  condition is stated as unmet rather than implied met.
+- **Operator: relocate the disposable run roots** from the session scratchpad to `/Users/patrik.lindeberg/s7-run/`,
+  outside every repository, for durability across sessions (moot once the run was declined, but done before
+  that decision landed).
+- **Claude, within authority: stopped construction rather than widen the R-5 floor itself** when Unit 1's
+  first brief omitted CE-16 A. Deciding what belongs in the floor is Codex's framing call, not Claude's to
+  make silently.
+- **Claude, within authority: restored and re-applied rather than papered over** a self-inflicted file
+  truncation mid-correction (a heading-offset edit cut the state file at a false match). Disclosed in the
+  commit rather than left unmentioned.
+- **Claude, within authority: flagged the stale Unit-2 brief rather than working around it** — the brief as
+  first written forbade the run its own next action commissioned; surfaced to the operator instead of
+  guessing which half was authoritative.
+
+### Risky actions
+None. The one near-destructive step in this task's history (the earlier S6 candidate deletion) happened in
+a prior session; this session's file-truncation incident was self-corrected from git history with no data
+loss and is recorded above.
+
+### Next Steps
+None open on this task — it is closed. If S7 is ever revisited, the accepted R-1…R-5 instrument at
+`plans/work-loop-v2-v0.2/context-engineering/trials/regression/` is ready to run without rebuilding. Two
+carried deferrals for that future session: rewrite the answer-key scan to capture-and-test-emptiness rather
+than rely on `find -exec grep`'s exit status; and settle whether `r-2-void-run-2026-08-03/`'s captured
+output falls under the §4.4 fixture first-line rule. Disposable roots at `/Users/patrik.lindeberg/s7-run/`
+are inert and may be deleted at will.
+
+### Open Questions
+None new. O-3 (which reading of "every relevant Work Loop entrypoint" governs adoption) remains the
+standing open question from the prior implementation task, untouched by this session.
+
+### Findings Declined
+- The closed task record's `## Evidence` section cites `81e7b4f` as "the operator-ready Unit 2 brief" —
+  that commit is where Unit 2 was *opened* with the still-stale Unit-1 brief; the corrected brief is
+  `4f6035a`. Flagged to the operator in chat rather than fixed, since the closed record is Codex's to
+  write and correcting a citation inside an already-closed file is a bigger intervention than the citation
+  error itself. Declined rather than queued: cosmetic, self-correcting via `git log`, no downstream
+  consumer reads the closed record's prose for the hash.

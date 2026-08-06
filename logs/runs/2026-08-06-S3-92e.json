@@ -1,0 +1,59 @@
+{
+  "run_id": "2026-08-06-S3-92e",
+  "project": "ai-resources",
+  "date": "2026-08-06",
+  "marker": "S3-92e",
+  "model": "claude-fable-5",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md#2026-08-06-S3-92e",
+  "mission": "work-loop-v2-mvp",
+  "context": {
+    "pack_path": "output/context-packs/architecture-20260806-92e77/pack.md",
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    ".agents/skills/work-loop-v2/SKILL.md",
+    "plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md",
+    "plans/work-loop-v2-mvp/project-progression-candidate-review.md",
+    "logs/scripts/work-loop-v2-slice-1.test.sh",
+    "logs/work-loop/fixture-continue.md",
+    "logs/work-loop/fixture-continue-opening.md",
+    "logs/work-loop/fixture-continue-close.md",
+    "logs/work-loop/fixture-continue-correction.md",
+    "logs/work-loop/fixture-continue-malformed.md",
+    "logs/work-loop/fixture-continue-unaccepted.md",
+    "logs/work-loop/project-progression-candidate-recovery.md",
+    "logs/work-loop/project-progression-candidate-review-correction.md",
+    "logs/work-loop/work-loop-v2-production-readiness-policy.md",
+    "logs/missions/work-loop-v2-mvp.md",
+    "logs/decisions.md",
+    "logs/session-notes.md",
+    "logs/session-notes-archive-2026-08.md",
+    "logs/decisions-archive-2026-08.md",
+    "logs/scratchpads/2026-08-06-14-12-scratchpad.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-08-06-a-finding-that-contradicts-a-closed-record-is",
+    "logs/decisions.md#2026-08-06-a-deterministic-proxy-may-be-conservative-never"
+  ],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": null,
+  "incidents_refs": []
+}

@@ -2,73 +2,6 @@
 
 > Archive: [session-notes-archive-2026-08.md](session-notes-archive-2026-08.md)
 
-## 2026-08-04 — Session S3-018 (continued)
-
-**Work:** Work Loop v2 Context Engineering S7 — grouped-regression instrument built, corrected, accepted, run declined and task closed
-- Files in scope: logs/work-loop/context-engineering-s7-regression.md, logs/scripts/work-loop-v2-slice-1.test.sh, logs/session-notes.md, logs/friction-log.md
-- Required outputs: plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-1/, plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-3/, plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-4/, plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-5/
-- Mission: work-loop-v2-mvp
-
-### Summary
-Ran Claude's side of the S7 task turn-by-turn as Codex handed it over, start to close, across seven commits.
-A first handback correctly stopped construction when the brief's R-5 subcase floor omitted CE-16 A
-(`61c0e68`); Codex repaired the floor and the reissued unit built 44 answer-key-free fixture files across
-R-1/R-3/R-4/R-5, applied the one authorised harness-allowlist line, and left the harness at 149 passed /
-0 failed (`3e28147`). One bounded correction followed — R-4's CE-12 A mapping just repeated an exclusion
-the plan already stated, and R-5's non-file detector would have counted the unit's own execution and
-evidence work as forbidden machinery; both reproduced by inspection and fixed (`e533463`). Codex accepted
-Unit 1 and opened Unit 2 (run + observe), but its first Unit-2 brief left stale Unit-1 sections that
-forbade the very run it commissioned — flagged rather than worked around, then corrected by Codex
-(`4f6035a`). Five disposable roots were built and verified outside the repository for the operator-driven
-run. After walking through why the tests exist and what running two cases versus five would cost and buy,
-the operator judged the run-and-observation step disproportionate and declined it. The decision was
-recorded as an explicit, disclosed deviation from the plan's §7.1 requirement rather than absorbed
-silently (`35b438b`), and Codex closed the task to the four-part shape; the close was verified and
-committed (`1d5c5cd`).
-
-### Decisions Made
-- **Operator: decline the S7 grouped-regression run**, both the full five-case scope and a reduced
-  two-case (R-3/R-4) alternative Claude offered. Judged disproportionate to what it would buy. Recorded in
-  the closed task record as an explicit deviation from plan §7.1, not silently skipped — Phase 2's exit
-  condition is stated as unmet rather than implied met.
-- **Operator: relocate the disposable run roots** from the session scratchpad to `/Users/patrik.lindeberg/s7-run/`,
-  outside every repository, for durability across sessions (moot once the run was declined, but done before
-  that decision landed).
-- **Claude, within authority: stopped construction rather than widen the R-5 floor itself** when Unit 1's
-  first brief omitted CE-16 A. Deciding what belongs in the floor is Codex's framing call, not Claude's to
-  make silently.
-- **Claude, within authority: restored and re-applied rather than papered over** a self-inflicted file
-  truncation mid-correction (a heading-offset edit cut the state file at a false match). Disclosed in the
-  commit rather than left unmentioned.
-- **Claude, within authority: flagged the stale Unit-2 brief rather than working around it** — the brief as
-  first written forbade the run its own next action commissioned; surfaced to the operator instead of
-  guessing which half was authoritative.
-
-### Risky actions
-None. The one near-destructive step in this task's history (the earlier S6 candidate deletion) happened in
-a prior session; this session's file-truncation incident was self-corrected from git history with no data
-loss and is recorded above.
-
-### Next Steps
-None open on this task — it is closed. If S7 is ever revisited, the accepted R-1…R-5 instrument at
-`plans/work-loop-v2-v0.2/context-engineering/trials/regression/` is ready to run without rebuilding. Two
-carried deferrals for that future session: rewrite the answer-key scan to capture-and-test-emptiness rather
-than rely on `find -exec grep`'s exit status; and settle whether `r-2-void-run-2026-08-03/`'s captured
-output falls under the §4.4 fixture first-line rule. Disposable roots at `/Users/patrik.lindeberg/s7-run/`
-are inert and may be deleted at will.
-
-### Open Questions
-None new. O-3 (which reading of "every relevant Work Loop entrypoint" governs adoption) remains the
-standing open question from the prior implementation task, untouched by this session.
-
-### Findings Declined
-- The closed task record's `## Evidence` section cites `81e7b4f` as "the operator-ready Unit 2 brief" —
-  that commit is where Unit 2 was *opened* with the still-stale Unit-1 brief; the corrected brief is
-  `4f6035a`. Flagged to the operator in chat rather than fixed, since the closed record is Codex's to
-  write and correcting a citation inside an already-closed file is a bigger intervention than the citation
-  error itself. Declined rather than queued: cosmetic, self-correcting via `git log`, no downstream
-  consumer reads the closed record's prose for the hash.
-
 ## 2026-08-04 — Session S3-018 (continued) — Work Loop v2 Context Engineering S8a
 
 **Work:** Ran Claude's side of task `context-engineering-s8a-entrypoint-classification` through a
@@ -705,3 +638,73 @@ operator's instruction to respond "directly and without opening a Work Loop task
 - Mission: work-loop-v2-mvp
 
 **Work:** Prepare the concrete Work Loop v2 project-progression implementation proposal for operator scope approval — Codex-skill ownership-routing wording, Continue core outcome + assessment mechanics + behavioral tests, blast-radius inspection deciding normal vs risk-aware review, trial-project selection; file the accepted direction as a new open thread under work-loop-v2-mvp's post-MVP v0.2 rework entry
+
+### Summary
+Ran four Work Loop v2 units end-to-end on the project-progression capability, all under the
+`work-loop-v2-mvp` mission's post-MVP v0.2 thread. Session opened on a crossed approval gate: the
+implementation had been committed (`6ba4c3f`, `badedf5`) before the operator approved scope. The
+operator's response — "I didn't approve the candidate yet, let's do a work loop" — authorised a
+bounded recovery, and the rest of the session ran the capability through its own protocol: recovery
+(closed), a production-readiness discovery unit (handed back), an independent-review correction
+round, and one final tightly-bounded fix from core § 3's menu. The candidate is now operator-accepted
+but explicitly **not adopted**; Codex holds `turn: codex` on artifact closure. Harness moved
+149 → 177 assertions across the session.
+
+### Decisions Made
+- **Operator: bounded recovery over acceptance.** Faced with an implementation that had crossed its
+  own approval gate, the operator authorised one recovery task to make the candidate review-ready
+  and evidence-honest — explicitly not approval, adoption or installation. Recorded in the candidate
+  record § 0, `decisions.md` and the mission thread so the repository cannot be read as consent.
+- **Operator: one bounded correction round** ("authorized") after the independent review returned
+  Accept with corrections on two material findings. Then **one final tightly-bounded fix** via core
+  § 3's menu when the closure check found a defect in the correction itself.
+- **Operator: accepted** the final fix.
+- **Claude: reported two findings that contradict written records rather than designing around
+  them.** (a) The closed parallel-worktree proof record misdescribes the staging tripwire's
+  mechanism — there is no "newest entry in session-notes.md" scan; the stale read comes from the
+  shared-marker fallback. Proposed correcting a *closed* record (D5/U5), pending Codex. (b) Review
+  finding 2's stated consequence did not reproduce — the old predicates never classified anything
+  and tested one fixture's literal strings.
+- **Claude: disclosed a defect in own correction rather than shipping it.** A scratchpad probe caught
+  the first `classify_state()` keying acceptance on the literal word "accepted", reproducing the
+  fixture-literal failure being corrected. Codex then caught a second: treating a unit ordinal of 2+
+  as evidence of an accepted predecessor invented a rule broader than the core's. Both fixed; the
+  ordinal rule removed outright rather than narrowed.
+- **Claude: narrowed a guard rather than widen a frozen scope.** A section-wide duplication assertion
+  caught core-owned mechanics in the skill's *correction* paragraph — outside the frozen finding. The
+  guard was scoped to the Continuing paragraph and the extra instance recorded as a deferral; Codex
+  confirmed it stays deferred, not accepted as a limitation.
+- **Routine:** committed five times, pushed none (push gated to wrap); left `logs/friction-log.md`
+  unstaged throughout as ambient-hook output.
+
+### Risky actions
+None irreversible. Two worth naming. (1) The session began by discovering that a hard approval stop
+in its own session plan had been crossed and edits committed — handled by recording the crossing as
+fact in three places rather than normalising it. (2) The read-only discovery unit still caused
+`logs/friction-log.md` to be modified, because the PostToolUse write-activity hook fired on its own
+state-file writes. Disclosed in the discovery record rather than claimed as a clean scope; left
+unstaged. No override of any guard was used this session — the staging tripwire recovered the marker
+from the shared file and passed legitimately on every commit.
+
+### Findings Declined
+- **Widening `KNOWN_WORKLOOP_FILES` to clear the two `3.1a` reds.** Declined: editing the closed set
+  to turn a red green is the exact failure that assertion exists to catch. The reds are disclosed in
+  every record instead, and the real fix (distinguish fixtures from live task files) is queued.
+- **Fixing the skill's correction-paragraph duplication inside this round.** Declined: outside the
+  frozen findings, and Codex explicitly instructed it remain a deferral for the closing record.
+
+### Next Steps
+- **Codex holds two turns.** Artifact closure check on the final tightly-bounded fix, and assessment
+  of the production-readiness discovery. Neither needs Claude until it hands back.
+- **Operator adoption decision** on the project-progression candidate remains open and is separate
+  from every review verdict recorded so far.
+- The production-readiness discovery carries **five operator decisions** (D1 shared-writer
+  disposition, D2 fan-out cap at 2, D3 dispatcher stays under `plans/`, D4 operator creates
+  worktrees, D5 correct the proof record) and **five ordered implementation units** U1–U5. U2 is a
+  hook edit — structural class, needs a risk-aware review before implementation.
+- `logs/next-up.md` still carries the `[urgent]` backlog from 2026-08-05, untouched this session.
+
+### Open Questions
+- Whether a non-lexical test for the Continue precondition is possible at all, or whether
+  conservative lexical matching is the honest ceiling for a deterministic classifier. Asked of Codex
+  in the final hand-back.

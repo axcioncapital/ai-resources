@@ -2846,3 +2846,31 @@ retires with v1 is a design decision for the v2 build stream, not a mechanical s
 
 **Target files:** `.claude/commands/develop-ai-resource.md`, `.claude/commands/leverage-idea.md`,
 `docs/work-loop.md`, `docs/work-loop-spec.md`.
+
+## 2026-08-06 — The `3.1a` closed-set assertion reddens on normal repository growth
+
+- **Severity:** medium-high
+- **Source:** `logs/scripts/work-loop-v2-slice-1.test.sh` (`3.1a` block, `KNOWN_WORKLOOP_FILES`)
+
+**What happens.** Two assertions — `3.1a no state file was opened for the direct request` and
+`3.1a every task-state file present is one this build created deliberately` — compare the contents of
+`logs/work-loop/` against a hand-maintained allow-list. Every genuine Work Loop task file added since
+the list was last widened counts as "unexpected", so the two assertions fail. They have been red
+across four sessions and are red now (`passed: 175  failed: 2`, exit 1).
+
+**Why it matters.** The suite can never report green, so "did this change break anything?" has to be
+answered by comparing failure *counts* rather than by exit status — which is exactly the kind of
+manual baseline-tracking that hides a real regression behind an expected one. Three separate records
+this session had to carry a paragraph explaining that the suite is honestly red for unrelated reasons.
+
+**Why it has not been patched.** Widening `KNOWN_WORKLOOP_FILES` is the obvious move and is the wrong
+one: turning the red green by editing the closed set defeats the precise thing the assertion tests.
+It was deliberately declined twice this session for that reason.
+
+**The structural fix.** Distinguish fixtures from live task files by a property the file itself
+carries — a `fixture-` name prefix is already the de-facto convention and every current fixture obeys
+it — rather than by an enumerated list a human must remember to update. Then the closed-set test can
+assert over fixtures only, and live task files stop being anomalies. Verify the convention holds
+across `logs/work-loop/` before building.
+
+**Target files:** `logs/scripts/work-loop-v2-slice-1.test.sh`.
