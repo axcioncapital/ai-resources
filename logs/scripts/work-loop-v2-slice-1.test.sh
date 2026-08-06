@@ -850,7 +850,11 @@ check "cont  the resource does not copy the core's continue mechanics" \
 # --- Routing: who owns the next move, before any unit opens ------------------
 # The routing section is the ownership seam: operator / specialist workflow /
 # Work Loop, decided before any discovery-vs-delivery classification.
-routing_res() { awk '/^## Routing a "continue" request/{f=1;next} /^## /{f=0} f' "$SKILL_F"; }
+# Unit 2 (intake router) generalises the section from a "continue" router to an
+# ordinary-language intake router, so the anchor is widened to the heading's stable
+# prefix. All six assertions below are unchanged and still test real properties —
+# only what they are pointed at moved.
+routing_res() { awk '/^## Routing/{f=1;next} /^## /{f=0} f' "$SKILL_F"; }
 check "rout  the resource owns a routing section" "[ -n \"\$(routing_res)\" ]"
 check "rout  routing asks who owns the next move first" \
   "routing_res | grep -qi 'who owns the next move'"
@@ -954,6 +958,171 @@ check "seam  Claude then executed unit 2 and handed back with the target changed
   "[ -n \"\$(seam_unit2_commit)\" ]"
 check "seam  the hand-off and the unit-2 hand-back are two commits, not one" \
   "[ -n \"\$(seam_continue_commit)\" ] && [ \"\$(seam_continue_commit)\" != \"\$(seam_unit2_commit)\" ] && [ -n \"\$(seam_unit2_commit)\" ]"
+
+# =============================================================================
+# INTAKE ROUTER — Unit 2 of work-loop-v2-intake-router
+# =============================================================================
+# What this block can and cannot prove. It reads the index STRUCTURALLY: the
+# per-class bullet lists, their head tokens, their markers and the normative
+# sentences that bound them. It proves inventory, classification, marking and
+# wording. It does NOT prove that a fresh natural-language request routes
+# correctly — no static check can, and the state file records the live proof
+# still owed.
+#
+# Every set below is FROZEN from the brief's accepted discovery result, spelled
+# out here rather than derived from the skill: a check that read its expectations
+# out of the artifact under test would pass on any artifact.
+#
+# WL2_ROUTER_FILE lets a mutated copy be substituted, which is how the five
+# required failing cases are demonstrated. Existing checks keep reading $SKILL_F.
+RIDX_F="${WL2_ROUTER_FILE:-$SKILL_F}"
+
+AX_PRIMARY="/work-loop-v2 /develop-ai-resource /scope-project /new-project /project-next-steps \
+/consult /pm /tech-consult /open-items /resolve-repo-problem /resolve-incident /repo-dd \
+/analyze-workflow /lean-repo /implementation-triage /reconcile"
+AX_SPECIALIST="/audit-repo /architecture-review /systems-review /token-audit /permission-sweep \
+/pipeline-review /blindspot-scan /contract-check /expert-check"
+MATT_PRIMARY="grill-with-docs grill-me wayfinder diagnosing-bugs triage implement prototype \
+research resolving-merge-conflicts wizard to-questionnaire teach improve-codebase-architecture"
+MATT_PHASE="to-spec to-tickets tdd code-review grilling handoff"
+MATT_HELPER="setup-matt-pocock-skills domain-modeling codebase-design writing-for-agents \
+wait-what ask-matt"
+CLAUDE_ONLY="ask-matt codebase-design diagnosing-bugs grill-with-docs handoff \
+improve-codebase-architecture resolving-merge-conflicts to-questionnaire triage wait-what \
+wizard writing-for-agents"
+# Never a route: the router-within-router, the operator-excluded design/motion skills,
+# the unapproved workspace-root-only commands, live v1 and the throwaway probe.
+NEVER_ROUTES="/leverage-idea animation-vocabulary apple-design emil-design-eng \
+find-animation-opportunities improve-animations review-animations /harness-start \
+/session-report /resolve-improvements /run-qc /update-md /validate work-loop wl2-probe"
+
+# One index class -> its bullet head tokens, in file order.
+idx() { awk -v h="$1" '$0 ~ h {f=1;next} /^### /{f=0} f' "$RIDX_F" \
+        | grep '^- `' | sed 's/^- `\([^`]*\)`.*/\1/'; }
+sorted() { printf '%s\n' $1 | sort; }
+same_set() { [ "$(printf '%s\n' "$1" | sort | tr '\n' ' ')" = "$(sorted "$2" | tr '\n' ' ')" ]; }
+
+IDX_AXP=$(idx '^### The index — Axcíon commands that may own a request')
+IDX_AXS=$(idx '^### The index — Axcíon narrow specialist destinations')
+IDX_MP=$(idx  '^### The index — Matt skills that may own a request')
+IDX_MPH=$(idx '^### The index — Matt phases and supporting skills')
+IDX_MH=$(idx  '^### The index — Matt helpers and references')
+IDX_ALL=$(printf '%s\n%s\n%s\n%s\n%s\n' "$IDX_AXP" "$IDX_AXS" "$IDX_MP" "$IDX_MPH" "$IDX_MH" | grep .)
+
+# --- inventory: every accepted name present, exactly where its class requires --
+check "ridx  the 16 Axcíon primary commands are indexed as owners" \
+  "same_set \"\$IDX_AXP\" \"\$AX_PRIMARY\""
+check "ridx  the 9 Axcíon narrow specialists are indexed as specialists" \
+  "same_set \"\$IDX_AXS\" \"\$AX_SPECIALIST\""
+check "ridx  the 13 Matt primary routes are indexed as owners" \
+  "same_set \"\$IDX_MP\" \"\$MATT_PRIMARY\""
+check "ridx  the 6 Matt phases/supporting skills are indexed as phases" \
+  "same_set \"\$IDX_MPH\" \"\$MATT_PHASE\""
+check "ridx  the 6 Matt helpers/references are indexed as helpers" \
+  "same_set \"\$IDX_MH\" \"\$MATT_HELPER\""
+# All 25 installed Matt skills accounted for, and none classified twice. This is
+# the omission and duplicate-classification guard in one.
+check "ridx  all 25 installed Matt skills are classified exactly once" \
+  "[ \"\$(printf '%s\n%s\n%s\n' \"\$IDX_MP\" \"\$IDX_MPH\" \"\$IDX_MH\" | grep . | sort -u | wc -l | tr -d ' ')\" = 25 ]"
+# Every negative below is conjoined with a positive count. On an EMPTY index all
+# three pass vacuously — verified on the red run, which is why the counts are here.
+# The predicates run in subshells: `check` evals in the current shell, so a bare
+# `exit` inside one would kill the harness (also learned on the red run).
+check "ridx  the index holds 50 entries, none classified twice" \
+  "[ \"\$(printf '%s\n' \"\$IDX_ALL\" | grep -c .)\" = 50 ] && [ -z \"\$(printf '%s\n' \"\$IDX_ALL\" | sort | uniq -d)\" ]"
+# Cross-check against the LIVE installation, so a renamed or retired skill breaks
+# this rather than drifting silently — the failure mode that left the README wrong.
+check "ridx  all 25 indexed Matt names resolve under ~/.claude/skills/" \
+  "[ \"\$(printf '%s\n%s\n%s\n' \"\$IDX_MP\" \"\$IDX_MPH\" \"\$IDX_MH\" | grep -c .)\" = 25 ] && \
+   ( for n in \$IDX_MP \$IDX_MPH \$IDX_MH; do [ -f \"\$HOME/.claude/skills/\$n/SKILL.md\" ] || exit 1; done )"
+check "ridx  all 25 indexed Axcíon commands resolve under .claude/commands/" \
+  "[ \"\$(printf '%s\n%s\n' \"\$IDX_AXP\" \"\$IDX_AXS\" | grep -c .)\" = 25 ] && \
+   ( for c in \$IDX_AXP \$IDX_AXS; do [ -f \".claude/commands/\${c#/}.md\" ] || exit 1; done )"
+
+# --- Claude-side-only markers, cross-checked against both installations -------
+marked_idx() { awk '/^### The index — Matt/{f=1} /^### The index — names that are not routes/{f=0} f' "$RIDX_F" \
+               | grep '^- `' | grep -F '[Claude-side only]' | sed 's/^- `\([^`]*\)`.*/\1/'; }
+live_claude_only() {
+  comm -23 <(for d in "$HOME"/.claude/skills/*/; do [ -f "$d/SKILL.md" ] && basename "$d"; done | sort) \
+           <(for d in "$HOME"/.codex/skills/*/;  do [ -f "$d/SKILL.md" ] && basename "$d"; done | sort)
+}
+check "ridx  exactly the 12 Claude-side-only skills carry the marker" \
+  "same_set \"\$(marked_idx)\" \"\$CLAUDE_ONLY\""
+check "ridx  the marked set matches the live installations, not just the brief" \
+  "[ \"\$(marked_idx | sort | tr '\n' ' ')\" = \"\$(live_claude_only | tr '\n' ' ')\" ]"
+check "ridx  the router states what Codex does with a Claude-side-only owner" \
+  "grep -qi 'invoke that exact skill in Claude' '$RIDX_F'"
+check "ridx  a Claude-side-only owner opens no state file around the specialist flow" \
+  "awk '/^### When the owner is Claude-side only/{f=1;next} /^### /{f=0} f' '$RIDX_F' | grep -qi 'no.*state file'"
+
+# --- the three collisions are never named bare -------------------------------
+# Each colliding Matt bullet must carry its product-plus-purpose qualifier, and the
+# router must name all six labels. A bare `triage` is the ambiguity under test.
+for n in triage handoff grill-me; do
+  check "ridx  the Matt \`$n\` bullet is qualified by product, not bare" \
+    "printf '%s\n%s\n%s\n' \"\$(awk '/^### The index — Matt skills/{f=1;next} /^### /{f=0} f' '$RIDX_F')\" \
+       \"\$(awk '/^### The index — Matt phases/{f=1;next} /^### /{f=0} f' '$RIDX_F')\" \
+       \"\$(awk '/^### The index — Matt helpers/{f=1;next} /^### /{f=0} f' '$RIDX_F')\" \
+       | grep -F -- '- \`$n\`' | grep -q '(Matt —'"
+done
+collide() { awk '/^### Naming a colliding capability/{f=1;next} /^### /{f=0} f' "$RIDX_F"; }
+check "ridx  the collision block names all three colliding capabilities" \
+  "collide | grep -q 'triage' && collide | grep -q 'handoff' && collide | grep -q 'grill-me'"
+check "ridx  the collision block gives the Axcíon side of each label" \
+  "[ \"\$(collide | grep -c 'Axcíon /')\" -ge 3 ]"
+check "ridx  the router forbids naming a colliding capability bare" \
+  "collide | grep -qi 'never a bare name'"
+
+# --- nothing excluded was promoted into a route ------------------------------
+check "ridx  the index holds 50 entries, none of them excluded names" \
+  "[ \"\$(printf '%s\n' \"\$IDX_ALL\" | grep -c .)\" = 50 ] && \
+   ( for n in \$NEVER_ROUTES; do printf '%s\n' \"\$IDX_ALL\" | grep -qxF \"\$n\" && exit 1; done; exit 0 )"
+check "ridx  the non-route classes are named without listing all 94 commands" \
+  "[ -n \"\$(awk '/^### The index — names that are not routes/{f=1;next} /^### /{f=0} f' '$RIDX_F')\" ]"
+check "ridx  /leverage-idea is named as excluded, with its router-within-router reason" \
+  "grep -q 'leverage-idea' '$RIDX_F' && grep -qi 'router' '$RIDX_F'"
+
+# --- the intake result contract: one owner, four parts, no default stack ------
+result_block() { awk '/^### What an intake result contains/{f=1;next} /^### /{f=0} f' "$RIDX_F"; }
+check "ridx  the intake result contract exists" "[ -n \"\$(result_block)\" ]"
+for part in 'interpreted outcome' 'one owner' 'one short reason' 'next instruction'; do
+  check "ridx  the intake result names its required part: $part" \
+    "result_block | grep -qi '$part'"
+done
+check "ridx  the contract forbids a default supporting stack (two-owner output)" \
+  "result_block | grep -qi 'never a default' && result_block | grep -qi 'stack'"
+check "ridx  exactly one owner is selected, not a set" \
+  "result_block | grep -qi 'exactly one owner'"
+
+# --- routing order, owner-first boundary, Direct Work preserved --------------
+check "ridx  routing interprets the desired outcome and object first" \
+  "routing_res | grep -qi 'desired outcome'"
+check "ridx  the owner is chosen before admission is applied" \
+  "[ \"\$(routing_res | grep -ni 'choose one owner' | head -1 | cut -d: -f1)\" -lt \
+    \"\$(routing_res | grep -ni 'Direct.*Standard' | head -1 | cut -d: -f1)\" ]"
+check "ridx  mode classification is deferred, not implemented here" \
+  "routing_res | grep -qi 'mode' && routing_res | grep -qi 'later'"
+check "ridx  Direct Work is preserved as the default for small reversible work" \
+  "grep -qi 'Direct Work' '$RIDX_F'"
+check "ridx  a specialist owner is not wrapped in a Work Loop unit" \
+  "routing_res | grep -qi 'do not wrap'"
+check "ridx  a continue request is one intake case, not a parallel router" \
+  "routing_res | grep -qi 'continue' && ! grep -c '^## Routing' '$RIDX_F' | grep -qv '^1\$'"
+
+# --- the description makes the router reachable without naming the skill -----
+desc_line() { awk 'NR<=6 && /^description:/' "$RIDX_F"; }
+check "ridx  the skill description offers routing, not only framing" \
+  "desc_line | grep -qi 'rout'"
+check "ridx  the description still preserves Direct Work" \
+  "desc_line | grep -qi 'Direct Work'"
+
+# --- attention efficiency: an index, not a copied catalogue ------------------
+# ask-matt's distinctive prose must not have been pasted in, and the file must
+# stay within a stated ceiling. Both are cheap proxies for "names, not methods".
+check "ridx  ask-matt's prose was not copied into the skill" \
+  "! grep -qi 'the route most work travels' '$RIDX_F' && ! grep -qi 'smart zone' '$RIDX_F'"
+check "ridx  the skill stays under its 320-line ceiling" \
+  "[ \"\$(wc -l < '$RIDX_F')\" -le 320 ]"
 
 # --- v1 isolation: logs/loop/ must gain nothing (slice plan 1.1) ------------
 check "v1    no Slice 1, 2 or 3 artifact leaked into logs/loop/" \

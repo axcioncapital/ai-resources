@@ -1,6 +1,6 @@
 ---
 name: "work-loop-v2"
-description: "Frame and assess one unit of repository work in the Work Loop: write the bounded brief that opens a unit, and judge the evidence that comes back. Claude executes and makes every commit; you do neither. Not for small reversible fixes — those are Direct Work and open no state file."
+description: "Route an ordinary-language request for repository or project work to the one capability that owns it — the operator, an Axcíon command, a Matt skill, or the Work Loop itself — and then, where the Work Loop owns it, frame and assess one bounded unit: write the brief that opens it, and judge the evidence that comes back. Use whenever work is described without naming the capability to use, including 'continue this project'. Claude executes and makes every commit; you do neither. Small reversible fixes are Direct Work and open no state file."
 ---
 
 # work-loop-v2 — Codex side
@@ -27,6 +27,7 @@ Core § 4 defines the interface between you and Claude, and places the operator 
 | `claude` | **Next:** run `/work-loop-v2` in Claude. |
 | `operator` | **Next:** {the decision or information you need from them}. |
 | — (Direct Work, no file) | **Next:** have Claude do this directly — no loop task. |
+| — (a specialist owner, no file) | **Next:** run {the owner} — naming it, and saying `in Claude` where it is Claude-side only. |
 
 Sending the operator to Claude when the turn is theirs stalls the loop as surely as saying nothing: Claude opens the file, finds nothing owed by it, and hands straight back. Omitting the line altogether is the most likely way this loop silently stops — the operator is left holding a turn with no stated destination. Treat it as part of the output, not as courtesy.
 
@@ -67,15 +68,136 @@ plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh \
 
 ---
 
-## Routing a "continue" request — who owns the next move
+## Routing a request — who owns the next move
 
-When the operator asks you to continue a project rather than naming a unit, do not open a brief yet. Read the project's own governing workflow and its authoritative current state, find the nearest unmet exit condition in the project's own terms, and answer one question first: **who owns the next move?**
+The operator describes what they want in ordinary language and rarely names a capability. Route it before anything else, in this order:
 
-- **The operator** — the nearest unmet exit condition is a decision only they can make: intent, priority, authority, or risk. Open nothing. End with the Next line naming the decision you need.
-- **The project's specialist workflow** — the next move belongs to a stage or phase that workflow owns. Its method, reviews and gates are its own (core § 1); do not wrap its work in a unit or add anything on top. Say which stage owns the move, and end with the Next line sending the operator there.
-- **The Work Loop** — the next move is bounded repository work no specialist workflow owns. Take it through Admission below as one unit, and classify it in the core's own terms (core § 3 step 4): an **execution brief** when what advances the project is a change, a **discovery unit** when it is evidence about a named unknown. Operating evidence from real use is a discovery unit whose named unknown is how the capability behaves in use — never a new unit type.
+1. **Interpret the desired outcome and its object** — what should be different afterwards, and to what. Not the remedy they proposed; the outcome behind it.
+2. **Choose one owner** from the index below — the single capability whose purpose covers that outcome.
+3. **If the Work Loop is the owner**, apply the Direct-versus-Standard admission test (Admission below). Where any other capability owns it, admission does not arise.
+4. **If the loop admitted it**, choose the bounded unit and write the brief.
 
-Map the project's position using its own phase model and vocabulary. Never rename its phases, and never create a document, list or state entry to hold the mapping — the routing is a judgment made fresh from the durable sources each time. Only where a project has no phase model at all, orient with this fallback spine, as a diagnostic and nothing more: frame the need → resolve blocking uncertainty → choose the intervention → shape the pilot → deliver → test in real use → adopt, revise or stop. It creates no states to traverse, no artifacts, and no exit conditions of its own.
+The unit's **mode** — Discovery, Implementation or Adoption — is not classified here. That contract is a later unit; do not improvise it now.
+
+**Who owns the next move** has three kinds of answer:
+
+- **The operator** — the next move is a decision only they can make: intent, priority, authority, or risk. Open nothing. End with the Next line naming the decision you need.
+- **A specialist owner** — an Axcíon command or Matt skill from the index, or a stage of the project's own workflow. Its method, reviews and gates are its own (core § 1); **do not wrap** its work in a unit and add nothing on top. Say which one owns the move, and end with the Next line sending the operator there.
+- **The Work Loop** — bounded repository work no specialist owns. Take it through Admission below as one unit, and classify it in the core's own terms (core § 3 step 4): an **execution brief** when what advances the project is a change, a **discovery unit** when it is evidence about a named unknown. Operating evidence from real use is a discovery unit whose named unknown is how the capability behaves in use — never a new unit type.
+
+**"Continue this project" is one intake case, not a second router.** Its object is the project's own next move, so read the project's governing workflow and authoritative current state, find the nearest unmet exit condition in the project's own terms, and route that. Map the project's position using its own phase model and vocabulary. Never rename its phases, and never create a document, list or state entry to hold the mapping — the routing is a judgment made fresh from the durable sources each time. Only where a project has no phase model at all, orient with this fallback spine, as a diagnostic and nothing more: frame the need → resolve blocking uncertainty → choose the intervention → shape the pilot → deliver → test in real use → adopt, revise or stop. It creates no states to traverse, no artifacts, and no exit conditions of its own.
+
+### What an intake result contains
+
+Exactly four parts:
+
+1. **The interpreted outcome** — what you understood them to want, in one sentence.
+2. **One owner** — exactly one owner, named. Not a shortlist and not a sequence.
+3. **One short reason** — why that owner rather than the nearest alternative.
+4. **One actionable next instruction** — the Next line, naming the actor whose turn it is.
+
+Name an excluded tempting route only where saying so prevents a likely mistake. **Never a default supporting stack**: a flow's later phases are reached by its owner at its own boundaries, so returning them alongside the owner would hand back several simultaneous owners and lose the one-owner rule. Concretely, a request to build from a ticket returns `implement` alone — not `implement` + `tdd` + `code-review`, which is the flow `implement` already runs for itself.
+
+The index names triggers, boundaries and hand-offs — never a capability's method. **It is a menu to select one entry from, not a list of things to do**: an entry appearing here says only that a request of that shape has somewhere to land. Read the owner's own definition when you need its method.
+
+### The index — Axcíon commands that may own a request (16)
+
+- `/work-loop-v2` — bounded repository work no specialist owner covers.
+- `/develop-ai-resource` — a durable skill, command or agent may need to exist.
+- `/scope-project` — a complex build needs its control documents before it starts.
+- `/new-project` — the need is already qualified and the project scaffold is what is missing.
+- `/project-next-steps` — where a project stands and what to do next.
+- `/consult` — a workspace-structure or architecture judgment call.
+- `/pm` — a question about an active project's own content.
+- `/tech-consult` — a business need with no technical plan yet.
+- `/open-items` — what is still unresolved in a project.
+- `/resolve-repo-problem` — something is wrong and the cause is not yet established.
+- `/resolve-incident` — a fault to classify, fix, verify and log end to end.
+- `/repo-dd` — due diligence on a repository's actual state.
+- `/analyze-workflow` — a deployed workflow's infrastructure end to end.
+- `/lean-repo` — accumulated operational complexity to diagnose.
+- `/implementation-triage` — is this proposed implementation worth doing.
+- `/reconcile` — did the output actually fulfil its mandate.
+
+### The index — Axcíon narrow specialist destinations (9)
+
+Selected only where the request names their purpose. Never a generic fallback.
+
+- `/audit-repo` — a workspace health audit.
+- `/architecture-review` — a prioritised architecture-health report from existing audits.
+- `/systems-review` — the workspace through a systems-thinking lens.
+- `/token-audit` — token-usage efficiency.
+- `/permission-sweep` — permission-prompt drift across settings layers.
+- `/pipeline-review` — a deep design review of one named pipeline.
+- `/blindspot-scan` — an adversarial blind-spot scan; operator-invoked only.
+- `/contract-check` — has the artifact drifted from its original mandate.
+- `/expert-check` — a draft against reference principles.
+
+### The index — Matt skills that may own a request (13)
+
+`[Claude-side only]` marks a skill installed for Claude but not for Codex.
+
+- `grill-with-docs` `[Claude-side only]` — an idea to sharpen, with a repo to leave the paper trail in.
+- `grill-me` (Matt — stateless interview, saves nothing) — an idea to sharpen with no repo under it.
+- `wayfinder` — an effort too foggy for one session; it produces decisions, not deliverables.
+- `diagnosing-bugs` `[Claude-side only]` — something is broken and resists a first glance.
+- `triage` (Matt — incoming issues and PRs) `[Claude-side only]` — requests you did not create, piling up.
+- `implement` — build from a spec or a ticket.
+- `prototype` — a design question needing a runnable answer.
+- `research` — reading legwork against primary sources.
+- `resolving-merge-conflicts` `[Claude-side only]` — already mid-merge or mid-rebase.
+- `wizard` `[Claude-side only]` — steps only a human can take.
+- `to-questionnaire` `[Claude-side only]` — the blocking knowledge is in someone else's head.
+- `teach` — learn a concept across sessions.
+- `improve-codebase-architecture` `[Claude-side only]` — the codebase is getting hard for agents to work in.
+
+### The index — Matt phases and supporting skills (6)
+
+Reached by an owner at its own phase boundary. Direct entry only in the case named.
+
+- `to-spec` — no direct entry: it collapses an existing thread or decision map.
+- `to-tickets` — no direct entry: it splits an existing spec.
+- `tdd` — direct entry only for one concrete behaviour with no spec behind it.
+- `code-review` — direct entry only for an explicit branch or PR against a fixed point.
+- `grilling` — direct entry only where the interview is wanted with no wrapper and no artifact.
+- `handoff` (Matt — a portable file for another agent or directory) `[Claude-side only]` — direct entry only for a new harness, a new directory, a colleague, or forking a side task mid-phase.
+
+### The index — Matt helpers and references (6)
+
+Discoverable, never a first route.
+
+- `setup-matt-pocock-skills` — the run-once precondition before a first engineering flow.
+- `domain-modeling` — direct entry where the domain *words* are the problem, not the process.
+- `codebase-design` `[Claude-side only]` — direct entry where one module's shape is being designed.
+- `writing-for-agents` `[Claude-side only]` — reference for documents agents consume.
+- `wait-what` `[Claude-side only]` — a mid-conversation corrective, inside any other skill.
+- `ask-matt` `[Claude-side only]` — the Matt router. Never a destination from here: routing into a router nests them.
+
+### The index — names that are not routes
+
+Named by class, not enumerated. The Axcíon surface is 94 commands and this index carries 25 of them on purpose; the rest are reachable, just not as first owners.
+
+- **Lifecycle phases** — `/create-skill`, `/improve-skill`, `/request-skill`, `/migrate-skill`, `/graduate-resource`: build phases under durable-resource work, reached by its owner.
+- **Conversational controls** — operator controls and duplicate entry points, not capability owners.
+- **Session machinery** — state, transport and session control.
+- **Fixed cadence** — the Friday and Monday operations and the monthly review: scheduled, not intake destinations.
+- **Deployment, migration, cleanup, logging and backlog-fix commands** — explicit operations chosen after an owner established the need.
+- **`/leverage-idea`** — itself a router. Indexing it, or copying its route map here, would nest one router inside another.
+- **Installed but excluded** — the six design/motion skills the operator excluded; the six workspace-root-only commands no approved set names; Work Loop v1 and the `wl2-probe` throwaway.
+
+### Naming a colliding capability
+
+Three names resolve to two different capabilities. Name them by product plus purpose — **never a bare name**, which would route to whichever the harness happened to resolve first.
+
+| Say | Because |
+|---|---|
+| Matt `triage` — incoming issues and PRs | Axcíon /triage reviews the suggestions Claude just proposed |
+| Matt `handoff` — a portable file for another agent | Axcíon /handoff saves session state or forks a child session |
+| Matt `grill-me` — a stateless interview | Axcíon /grill-me produces a structured mandate brief |
+
+### When the owner is Claude-side only
+
+You cannot invoke a `[Claude-side only]` skill. Name it, label it `Claude-side only`, and tell the operator to **invoke that exact skill in Claude**. Do not substitute a Codex-side near-equivalent, and open **no state file** around the specialist flow — wrapping it is the second state system core § 1 forbids.
 
 ## Admission — Direct Work or the loop
 
@@ -186,5 +308,7 @@ Slices 1–3: opening a unit with a brief, assessing/closing it, the one bounded
 Context Engineering is live in the sections above, and governs how you prepare that one brief — what you go looking at, what governs it, what Claude must verify, how the unit is framed and bounded, and what stays out of it.
 
 The project-progression change (2026-08-06) adds the Routing section above and the core's fourth assessment outcome, Continue.
+
+The intake router (2026-08-06) generalises that section from a "continue" router to an ordinary-language intake router, and adds the index: 25 Axcíon commands and all 25 installed Matt skills, each classified once. The unit's **mode** — Discovery, Implementation or Adoption — is deliberately still unimplemented and is a later unit; nothing above classifies it.
 
 Courier mode (2026-08-06) adds the one approved way to carry the turn yourself, under core § 4's courier clause. It is optional, off unless the operator approves it, and transport only — it changes nothing about what you frame, what you assess, or what Claude does.
