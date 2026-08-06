@@ -106,10 +106,18 @@ go through the correction round below, and a task whose objective is met closes 
 continues.
 
 On a continue, Codex records the accepted result as the last material result in `## Latest result`,
-writes the next unit's brief (step 3), updates `## Lane and unit`, and sets `turn: claude`. **There
-is no continue token.** A `Next action` that opens with neither the close token nor the correction
-token, and carries a new brief, is a continue. The task stays open; nothing is reduced to the
-closing record.
+writes the next unit's brief (step 3), updates `## Lane and unit`, and sets `turn: claude`. The task
+stays open; nothing is reduced to the closing record.
+
+**There is no continue token.** A continue is recognised by its precondition, not by a marker: the
+file already carries an accepted result from a previous unit of the same task. Where that
+precondition holds, a `Next action` that opens with neither the close token nor the correction token,
+and carries a new brief, is a continue. Where it does not — a task's first unit, whose
+`## Latest result` records no accepted unit — the same tokenless shape is an ordinary opening, and
+reading it as a continue is the mistake this precondition exists to prevent. Because the recognition
+rests on the precondition, writing `Continue` as though it were a token is wrong twice over: it
+invents a marker the protocol does not have, and it lets a file claim a continue its own state does
+not support.
 
 ### Closing — the verdict and the record are two moves
 

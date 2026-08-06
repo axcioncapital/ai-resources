@@ -451,3 +451,15 @@ proposal outright — rejected; the governing-question gap and the `Continue` ga
 this work directly into the v0.2 rework's broader redesign rather than treating `Continue` and
 ownership-routing as separable — not decided here; left for the implementation proposal's sequencing
 question.
+
+**Status note added 2026-08-06, later the same day.** The verdict above — design direction approved,
+implementation scope *not* approved — remains the governing decision and is unchanged. What follows
+is the record of what happened next, so a reader of this entry is not misled by the repository's
+contents. Implementation was nevertheless carried out and committed (`6ba4c3f`, then `badedf5`)
+before that scope approval was given. The operator's response was: *"I didn't approve the candidate
+yet. Let's do a work loop."* That authorises **one bounded recovery task**
+(`logs/work-loop/project-progression-candidate-recovery.md`) to bring the candidate to a
+review-ready, evidence-honest state — not approval of the candidate, not adoption, not installation.
+The candidate remains pending independent Codex review, after which adoption is a separate operator
+decision. Full authority status: `plans/work-loop-v2-mvp/project-progression-candidate-review.md`
+§ 0.

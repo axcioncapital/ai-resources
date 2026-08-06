@@ -709,6 +709,10 @@ check "cont  the continue names the unmet exit condition" \
   "cont_latest | grep -qi 'remains unmet'"
 check "cont  next action opens with neither protocol token" \
   "[ -n \"\$(cont_next)\" ] && ! cont_next | grep -q '^Close the task:' && ! cont_next | grep -q '^Correct once — frozen findings:'"
+check "cont  the fixture invents no continue pseudo-token" \
+  "! cont_next | grep -qE '^[[:space:]]*Continue[[:space:]]*(—|-|:)'"
+check "cont  the core's tokenless rule excludes a task's first unit" \
+  "core_flat | grep -qi 'accepted result from a previous unit of the same task'"
 
 # --- Routing: who owns the next move, before any unit opens ------------------
 # The routing section is the ownership seam: operator / specialist workflow /
@@ -723,6 +727,8 @@ check "rout  the fallback spine is diagnostic only and creates nothing" \
   "routing_res | grep -qi 'no states to traverse, no artifacts'"
 check "rout  routing creates no mapping document" \
   "routing_res | grep -qi 'never create a document'"
+check "rout  routing uses only the core's pinned unit vocabulary" \
+  "! routing_res | grep -qi 'delivery unit'"
 
 # --- v1 isolation: logs/loop/ must gain nothing (slice plan 1.1) ------------
 check "v1    no Slice 1, 2 or 3 artifact leaked into logs/loop/" \

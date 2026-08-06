@@ -31,5 +31,4 @@ evidence, and the assessment continued the task because its named exit condition
 None.
 
 ## Next action
-Continue — unit 1 is accepted; unit 2 opens on the brief above. Claude: check claim
-(1), then implement.
+Claude: check claim (1), then implement unit 2 on the brief above.
