@@ -2776,3 +2776,46 @@ been exercised for one pair.
 
 **Target files:** none yet — the unit opens a new state file under `logs/work-loop/`. The spike lives
 at `plans/work-loop-v2-v0.2/handoff-automation-spike/`.
+
+---
+
+## 2026-08-06 — `/work-loop-v2`'s direct-admission path leaves every closing commit blocked by a stale-footprint false positive
+
+- **Status:** logged (pending)
+- **Category:** Work Loop v2 — session-lifecycle / staging-tripwire interaction
+- **Severity:** high — this is not a one-off false positive, it is a structural gap that fires on
+  every `/work-loop-v2` session invoked the way the command is documented to be invoked. Three of the
+  four 2026-08-05 Work Loop v2 sessions already show it (no footprint declared); today's closing
+  commit for `work-loop-v2-parallel-worktree-proof` hit it too and required a manual workaround
+  mid-wrap.
+
+**What breaks.** `.claude/hooks/check-foreign-staging.sh` judges a commit against the footprint
+declared under the header matching `logs/.session-marker`'s **exact date and S-number**
+(`check-foreign-staging.sh:503`-ish, the `header_re` anchor). `/work-loop-v2.md` states explicitly:
+"This command is not a session lifecycle command. It does not invoke `/prime`, `/session-start` or
+`/session-plan`." A session that opens with `/work-loop-v2` directly — the command's own stated normal
+use — therefore never runs `/prime` Step 8h, never allocates a marker, and `logs/.session-marker`
+keeps whatever a prior session left in it. Today it read `2026-08-03 S3-018`, three days stale. The
+guard then judged this session's closing commit against that unrelated session's `- Files in scope:`
+bullet and blocked it — twice, once before the footprint fix and once more because the first
+hand-written fix didn't anchor on a real header the guard could find.
+
+**Why yesterday's record understated this.** The closed `work-loop-v2-parallel-worktree-proof` task
+recorded a narrower deferral: "the staging tripwire can miss stage-and-commit in one tool call and can
+fall back to stale footprints." That framed the fallback as an edge case. It is not — it is the
+*default* outcome for the command's documented normal invocation shape, because that shape structurally
+skips the only step that would prevent it.
+
+**Resolved today, not by override.** Ran `logs/scripts/prime-session-entry.sh` directly mid-wrap to
+allocate a real marker and footprint (the guard's own sanctioned remedy — widen the declared
+footprint), rather than exploiting the guard's stage-then-commit-in-one-call timing blind spot used
+for yesterday's override. No guard was bypassed.
+
+**Shape of the fix (not built).** Either (a) `/work-loop-v2`'s Step 1 orient step allocates a session
+marker itself when none exists for today (making the command self-sufficient for the guard's purposes
+without becoming a session-lifecycle command), or (b) the guard's fallback, on finding no same-day
+marker, degrades to "no footprint declared — warn, don't block" rather than silently substituting a
+stale prior session's footprint. Do not build from this text — the exact attach point needs
+verification by execution first, per this repo's own premise-check discipline.
+
+**Target files:** `.claude/commands/work-loop-v2.md`, `.claude/hooks/check-foreign-staging.sh`.

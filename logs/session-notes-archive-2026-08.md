@@ -1755,3 +1755,151 @@ None.
 - Mission: work-loop-v2-mvp
 
 **Work:** Work Loop v2 Context Engineering — run /work-loop-v2 for the next unit
+## 2026-08-03 — Session S1-a32 (continued)
+**Mandate:** Resume the Work Loop v2 Context Engineering task at S4 — run every Claude turn Codex
+hands over, verifying each brief's claims by inspection before acting, until the turn returns to
+the operator — done when: the pre-revision observation is scored and, if corrected, the
+correction is accepted; the revised candidate is validated against the specification; a
+byte-verified green evaluation root is built; and the task-state file carries `turn: operator`
+with one exact instruction for the green Codex run.
+- Out of scope: running the green trial itself (operator-driven); revising the candidate further;
+  resolving S4's exit-condition conflict against plan §4.4; the void-run preservation-copy
+  disposition (Codex's call); replacing the unreproducible historical digest with a permanent
+  mechanism (worked around this session with `diff -rq`, not fixed at the source)
+- Files in scope: logs/work-loop/context-engineering-implementation.md,
+  plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md,
+  plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-2/,
+  plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-2-void-run-2026-08-03/,
+  logs/session-notes.md
+- Stop if: a briefed claim fails inspection, a fixture is found altered, or the candidate diff is
+  not a pure insertion
+- Allowed inputs: plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md,
+  plans/work-loop-v2-v0.2/context-engineering/context-engineering-implementation-plan-v0.1.md,
+  plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md, both disposable evaluation roots
+  (scratchpad paths recorded in the state file)
+- Mission: work-loop-v2-mvp
+
+**Work:** Work Loop v2 Context Engineering — S4 Slice B, four Claude turns across a Codex-driven
+recovery, observation, correction and candidate-validation cycle
+
+### Summary
+Picked up a resumed S4 Slice B unit already in progress. The operator's first attempt to launch
+the pre-revision Codex run was accidentally aimed at the live `ai-resources` checkout rather than
+the sealed evaluation root, reaching the live skill and the build's answer-key material — voided
+before scoring, with the stray file preserved (two copies, hash-verified) and the sealed 15-file
+R-2 fixture set restored to its exact frozen state. A second, correctly-directed run produced a
+valid pre-revision result; Claude scored all 12 seeded authority-integrity conditions against it,
+line-citing each verdict. Codex's assessment found one scoring error — a red verdict imposed a
+requirement (articulated reasoning) the specification does not set — corrected against three cited
+sources, moving the result to 10 baseline green / 2 red. Codex then revised the candidate,
+inserting Family 2 as one pure 8-line addition; Claude independently validated the insertion
+(diff shape, clause-to-sentence mapping against the spec, a leakage scan for later-family content)
+and built a second disposable root for the green run, replacing the prior session's unreproducible
+verification digest with a direct `diff -rq` comparison. The unit stops before the green trial,
+per protocol — that run is the operator's.
+
+### Decisions Made
+- **Withdrew a progression-direction suggestion mid-session, on Codex's correction (routine, within
+  protocol).** Claude had proposed narrowing the candidate revision to only the two conditions
+  that actually failed. Codex cited plan `:781` (candidate must gain full Family 2) and plan §4.4
+  `:238–251` (baseline-green behaviours are retained as no-regression evidence, not treated as
+  license to write less) — both checked and confirmed before the suggestion was withdrawn. Sizing
+  the revision was never Claude's call to make.
+- **One void-run artifact preserved beyond what Codex's recovery brief asked for**, flagged rather
+  than silently added: a second copy of the stray output was placed inside the repo (outside the
+  frozen fixture directory) because the scratchpad location holding the sole existing copy is not
+  guaranteed durable. Left for Codex to keep or remove.
+- Not logged to `decisions.md` — both are in-protocol judgment calls with the reasoning already on
+  record in the task-state file, not standalone project decisions.
+
+### Outcome
+Not run — outcome check skipped (not requested; core wrap only).
+
+### Risky actions
+One irreversible action taken, but bounded and pre-verified rather than reckless: a stray file was
+deleted from inside the frozen R-2 fixture set to recover from the void run. Both the file and its
+preserved copy were hash-verified identical *before* deletion, and the deletion target was named
+exactly by Codex's brief — not inferred. No gate was skipped; this was inside the correction the
+brief specified. Separately, the historical verification digest recorded by a prior session proved
+unreproducible under four independent reconstruction attempts this session — a defect in how that
+evidence was recorded, not a sign of tampering, and it is now flagged in the task-state file so no
+future session relies on it.
+
+### Session Assessment
+Not run — feedback collection skipped (not requested; core wrap only).
+
+### Next Steps
+Operator: open a fresh Codex thread with working directory
+`/private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/f5125412-c379-44fc-87c5-8ade343a2a68/scratchpad/tv-8c37`
+— verify before pasting that the listing shows no `logs/`, `audits/` or `skills/` directory, which
+is exactly the mistake that voided the first attempt — then paste the frozen prompt recorded in
+`logs/work-loop/context-engineering-implementation.md`, unchanged. After the run, return to Codex
+first, not to Claude; Codex records the result and sets `turn: claude` for the green observation.
+
+### Open Questions
+S4's plan-stated exit condition ("all three behaviours demonstrated red-then-green") cannot be met
+as written — 7 of the 12 seeded conditions (all of CE-5 and CE-6) came back baseline green with no
+revision needed, and plan §4.4 forbids the only ways to force a red result there. Flagged in the
+task-state file; needs a decision from Codex or the operator before S4 can be declared complete.
+
+## 2026-08-03 — Session S2-91a
+
+**Work:** Work Loop v2 Context Engineering — ran Claude's turns as Codex handed them over, across four units,
+ending in the task's close
+- Files in scope: logs/work-loop/context-engineering-implementation.md, plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md, logs/session-notes.md, logs/friction-log.md, .agents/skills/work-loop-v2/SKILL.md, .claude/commands/work-loop-v2.md, plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md, logs/scripts/work-loop-v2-slice-1.test.sh
+
+### Summary
+Four Work Loop v2 units run back to back, each with premises checked by inspection before acting: S6 added
+Families 4 and 5 to the isolated candidate (`e938647`); the live-seam unit promoted the completed candidate
+byte-for-byte into `.agents/skills/work-loop-v2/SKILL.md`, deleted the development candidate, and updated the
+executable core and Claude command to invoke the capability (`4f3d6ca`); a hardening unit fixed two stale
+scope labels and the harness allowlist, taking the suite from 147/2 to 149 passed / 0 failed (`daebb0c`); and
+Codex then closed the task to core §4's four-part record — **implemented, not adopted** — reducing the state
+file from 1043 to 84 lines (`8c31f105`). Context Engineering now governs how the Codex side prepares every
+brief in this loop; adoption (S8a's entrypoint classification, the O-3 reading, S8b's behavioural pre/post
+pair) remains explicitly outstanding and unclaimed.
+
+### Decisions Made
+- **Footprint widened mid-session, twice.** The live-seam brief required editing the live skill, the Claude
+  command and the executable core; the hardening unit then also touched the acceptance harness. Neither was
+  in the opening footprint. The staging tripwire blocked each commit until the footprint was declared —
+  correctly, since an undeclared file mid-commit is the same shape as concurrent-session contamination. Both
+  widenings are disclosed above rather than overridden.
+- **Nine carried implementation deferrals were kept in the closing record rather than dropped.** Codex's
+  closing brief specified four sections and did not list them; core §4 places deferrals in the closing record
+  and core §5 makes an unrecorded deferral a failure. The core was followed and the tension stated in the
+  record rather than resolved silently.
+- **One stale hash in the closing brief was corrected rather than copied.** The brief quoted the live skill
+  at `2f2bcda…`, correct at promotion but superseded when the hardening added two lines; the closing record
+  carries the current `c1360acb…` and says why it differs.
+
+### Outcome
+(Outcome check skipped — not requested this wrap.)
+
+### Session Value Audit — 80/20 Review
+(Skipped — not requested this wrap.)
+
+### Risky actions
+One near-irreversible action, bounded and pre-verified: deletion of the development candidate
+`plans/work-loop-v2-v0.2/context-engineering/trials/candidate/SKILL.md`, required by the approved plan once
+its content landed. `git rm` first refused because the file carried uncommitted local edits; rather than
+force it, the completed content was staged into git's object store (`git add` on the promoted live skill,
+confirmed by `cmp` byte-identical) so it was durably recoverable before the only other copy was removed.
+`git rm -f` then ran only after that re-verification.
+
+### Findings Declined
+None — no new findings surfaced this session beyond what each unit's own state-file result already recorded
+and routed (the carried deferrals above, and the standing adoption-blocker list in the closing record).
+
+Findings: 0 — queued 0, declined 0. 0 + 0 = 0.
+
+### Next Steps
+The task is closed (`turn: operator`); no further Claude unit opens from it. If adoption is to be pursued,
+that is separate work to open deliberately: frame S8a's entrypoint classification, settle the O-3 reading,
+then run S8b's operator-driven behavioural pre/post pair at the real entrypoint. The two follow-up items
+named in the closing record — Work Loop v1's wire-or-retire decision, and any smaller cleanup — are not yet
+scheduled.
+
+### Open Questions
+O-3 — which reading of "every relevant Work Loop entrypoint" governs adoption — is still unsettled and is an
+operator decision, not one this loop can resolve from evidence alone.
