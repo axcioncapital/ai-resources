@@ -64,3 +64,5 @@ Promoted findings carry their source and a content-derived id; tick an item to r
 - [ ] The worktree-per-task spike is now unblocked, and it lives only inside a closed task record — `logs/improvement-log.md` <!-- promote:6fc967378619 -->
 
 - [ ] `/work-loop-v2`'s direct-admission path leaves every closing commit blocked by a stale-footprint false positive — `logs/improvement-log.md` <!-- promote:aabb5ab88a83 -->
+
+- [ ] The `3.1a` closed-set assertion reddens on normal repository growth — `logs/improvement-log.md` <!-- promote:6c396d56cbb8 -->

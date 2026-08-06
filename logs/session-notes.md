@@ -640,15 +640,19 @@ operator's instruction to respond "directly and without opening a Work Loop task
 **Work:** Prepare the concrete Work Loop v2 project-progression implementation proposal for operator scope approval — Codex-skill ownership-routing wording, Continue core outcome + assessment mechanics + behavioral tests, blast-radius inspection deciding normal vs risk-aware review, trial-project selection; file the accepted direction as a new open thread under work-loop-v2-mvp's post-MVP v0.2 rework entry
 
 ### Summary
-Ran four Work Loop v2 units end-to-end on the project-progression capability, all under the
-`work-loop-v2-mvp` mission's post-MVP v0.2 thread. Session opened on a crossed approval gate: the
-implementation had been committed (`6ba4c3f`, `badedf5`) before the operator approved scope. The
-operator's response — "I didn't approve the candidate yet, let's do a work loop" — authorised a
-bounded recovery, and the rest of the session ran the capability through its own protocol: recovery
-(closed), a production-readiness discovery unit (handed back), an independent-review correction
-round, and one final tightly-bounded fix from core § 3's menu. The candidate is now operator-accepted
-but explicitly **not adopted**; Codex holds `turn: codex` on artifact closure. Harness moved
-149 → 177 assertions across the session.
+Ran the Work Loop v2 project-progression candidate through its own protocol end to end, under the
+`work-loop-v2-mvp` mission's post-MVP v0.2 thread, from a crossed approval gate to full adoption.
+Session opened on the implementation having been committed (`6ba4c3f`, `badedf5`) before operator
+scope approval; the operator's response — "I didn't approve the candidate yet, let's do a work loop" —
+authorised a bounded recovery, and the candidate then moved through recovery (closed), a
+production-readiness discovery unit (handed back), an independent-review correction round with one
+final tightly-bounded fix, a live cross-actor `Continue` seam proved by real execution (two commits,
+one per actor, not one constructed blob), a bounded correction to the one evidence gap that proof
+deferred (`classify_state()` was turn-blind), and three operator-authorised Direct Work passes
+reconciling the candidate's authority record — ending in the operator's explicit **"adopt"**. The
+corrected candidate (skill `8a88139c`, core `8f30da6c`, harness `a24b5303`) is now live Work Loop v2
+project-progression behaviour. Harness moved 149 → 183 assertions across the session; the two
+remaining failures are the disclosed, unrelated `3.1a` closed-set reds.
 
 ### Decisions Made
 - **Operator: bounded recovery over acceptance.** Faced with an implementation that had crossed its
@@ -674,8 +678,26 @@ but explicitly **not adopted**; Codex holds `turn: codex` on artifact closure. H
   caught core-owned mechanics in the skill's *correction* paragraph — outside the frozen finding. The
   guard was scoped to the Continuing paragraph and the extra instance recorded as a deferral; Codex
   confirmed it stays deferred, not accepted as a limitation.
-- **Routine:** committed five times, pushed none (push gated to wrap); left `logs/friction-log.md`
-  unstaged throughout as ambient-hook output.
+- **Routine:** committed five times in the session's first stretch, pushed none (push gated to wrap);
+  left `logs/friction-log.md` unstaged throughout as ambient-hook output.
+- **Codex: accepted the live-seam proof and authored the tokenless Continue hand-off** opening Unit 2,
+  preserved as its own commit (`4750fb5`) before Claude's execution overwrote it — the load-bearing
+  move the whole proof exists to demonstrate.
+- **Codex: closed the live-continue-proof task**, judging the seam's before/after evidence (177/5 →
+  178/4 → 180/2, each flip tied to a fact coming into existence) sufficient to settle the frozen
+  finding. Deferred the newly discovered `classify_state()` turn-blindness rather than folding it in.
+- **Codex: closed the classifier-turn-correction task**, and its close verdict directed a scoped
+  one-line status update to the candidate record alongside the state-file reduction — which the
+  Claude command's absolute "a closing invocation changes no other file" instruction does not permit.
+  Claude followed the core, which carries no such restriction, and reported the conflict as a defect
+  rather than silently resolving it either way.
+- **Operator: three Direct Work passes reconciling the candidate authority record**, each explicitly
+  authorised and scoped to that one file (then three files for the final pass) — no state file opened
+  for any of them, per core § 2's Direct Work test.
+- **Operator: "adopt."** Answered the standing adoption question explicitly. Recorded across the
+  candidate record, `decisions.md`, and the mission thread, content-bound to the corrected candidate's
+  blob pins and explicit that commit `6ba4c3f` alone — the pre-recovery baseline — was not what was
+  adopted.
 
 ### Risky actions
 None irreversible. Two worth naming. (1) The session began by discovering that a hard approval stop
@@ -692,16 +714,34 @@ from the shared file and passed legitimately on every commit.
   every record instead, and the real fix (distinguish fixtures from live task files) is queued.
 - **Fixing the skill's correction-paragraph duplication inside this round.** Declined: outside the
   frozen findings, and Codex explicitly instructed it remain a deferral for the closing record.
+- **Restructuring the candidate record's accumulating-history shape** (§ 2a, § 5, § 5a/§ 5b as
+  sequential correction narratives). Declined: no named consequence yet — it is a readability
+  preference, not a defect — and it was out of scope for every bounded task and Direct Work pass that
+  touched the file this session. Recorded in place twice (candidate record § 5b, mission thread) for
+  whoever next has reason to restructure it.
 
 ### Next Steps
-- **Codex holds two turns.** Artifact closure check on the final tightly-bounded fix, and assessment
-  of the production-readiness discovery. Neither needs Claude until it hands back.
-- **Operator adoption decision** on the project-progression candidate remains open and is separate
-  from every review verdict recorded so far.
-- The production-readiness discovery carries **five operator decisions** (D1 shared-writer
-  disposition, D2 fan-out cap at 2, D3 dispatcher stays under `plans/`, D4 operator creates
-  worktrees, D5 correct the proof record) and **five ordered implementation units** U1–U5. U2 is a
-  hook edit — structural class, needs a risk-aware review before implementation.
+- **Project-progression is done as a thread.** Adopted, no further Work Loop v2 task needed for it
+  specifically. The live/adopted state, its evidence, and its boundary (no install, no propagation,
+  no `.claude/commands/work-loop-v2.md` change, no `3.1a` fix, no v0.2 rework, no standing
+  no-self-hosting exception) are recorded in `plans/work-loop-v2-mvp/project-progression-candidate-review.md`
+  § 0.
+- **Deferred, unresolved:** the closure-process inconsistency between the command's absolute
+  single-file closing instruction and a Codex close verdict that required a scoped record update.
+  Recorded, not fixed. Worth a small Direct Work fix to the command itself if the operator wants it
+  closed rather than left as a standing note.
+- **The production-readiness discovery** (separate task, still open) carries **five operator
+  decisions** (D1 shared-writer disposition, D2 fan-out cap at 2, D3 dispatcher stays under `plans/`,
+  D4 operator creates worktrees, D5 correct the proof record) and **five ordered implementation
+  units** U1–U5. U2 is a hook edit — structural class, needs a risk-aware review before
+  implementation. Untouched this session past its earlier hand-back.
+- The candidate record's accumulating-history shape (§ 2a, § 5, § 5a/§ 5b as sequential correction
+  narratives) was noted twice this session as worth restructuring, and deliberately left alone both
+  times — out of scope for every bounded task and Direct Work pass that touched the file.
+- Two pre-existing, unrelated working-tree modifications (`logs/friction-log.md`,
+  `logs/work-loop/project-progression-candidate-review-correction.md`) were preserved untouched
+  throughout, per explicit operator instruction on every pass. Worth checking what session they
+  belong to before this wrap's commit, so they are not swept in by accident.
 - `logs/next-up.md` still carries the `[urgent]` backlog from 2026-08-05, untouched this session.
 
 ### Open Questions

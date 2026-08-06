@@ -2874,3 +2874,35 @@ assert over fixtures only, and live task files stop being anomalies. Verify the 
 across `logs/work-loop/` before building.
 
 **Target files:** `logs/scripts/work-loop-v2-slice-1.test.sh`.
+
+## 2026-08-06 — Closing-invocation instruction conflicts with a real Codex close verdict
+
+- **Severity:** medium-high
+- **Source:** `.claude/commands/work-loop-v2.md` § "Closing the task"; observed in Work Loop v2 task
+  `project-progression-classifier-turn-correction`, closing commit `fd338d4`.
+
+**What happens.** The command states absolutely: "A closing invocation changes no other file."
+Codex's close verdict for the classifier-turn-correction task required a scoped one-line status
+update to `plans/work-loop-v2-mvp/project-progression-candidate-review.md` alongside the state-file
+reduction. `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` — which the command defers to
+on any disagreement — carries no such single-file restriction; § 3's close token section only says
+Codex writes the verdict and Claude writes and commits the reduction.
+
+**Why it matters.** The command and the core disagree on what a closing invocation may touch, and the
+command's wording is absolute ("no other file"), not advisory. Followed literally, it would have
+required either silently dropping a scoped update the close verdict explicitly directed, or violating
+the command's own stated contract to honor it. Both were surfaced in chat rather than resolved
+silently; the core was followed because it governs on disagreement (per the command's own preamble),
+and the second file was scoped to what the verdict named.
+
+**Why it has not been patched.** Fixing the command is outside every bounded task this session ran —
+each was scoped to specific files that excluded the command, and the operator's Direct Work passes
+were likewise scoped to the candidate record, decisions log and mission log only.
+
+**The structural fix.** Either loosen the command's "changes no other file" line to allow a
+verdict-directed scoped update alongside the state-file reduction, or have the core state explicitly
+that a close verdict may never direct changes beyond the state file (in which case Codex should not be
+able to issue one that does). Whichever direction is chosen, the command and the core need to agree.
+
+**Target files:** `.claude/commands/work-loop-v2.md`, possibly
+`plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md`.
