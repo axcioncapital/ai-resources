@@ -1,8 +1,48 @@
 # Work Loop v2 — unattended operation, v0.2
 
-**Plan for the implementation session. Nothing here has been implemented.**
-Supersedes `unattended-operation-plan-v0.1.md`, which is retained. Written 2026-08-06.
+**Supersedes `unattended-operation-plan-v0.1.md`, which is retained. Written 2026-08-06.**
 Author: Claude. Revised after independent Codex review of v0.1.
+
+> ## Implementation status — 2026-08-07
+>
+> | Item | State |
+> |---|---|
+> | **Phase 0** — attended launcher proof (0a nested launch, 0b detached checklist, 0c multi-hop) | **not started** — needs the operator at the keyboard with Codex; cannot be done by Claude alone |
+> | **1a** stoppable run | **done.** Defect confirmed by execution first (`runs/probe-interruption-2026-08-07.md`), then fixed. Exit `28`. Tests: case 27 |
+> | **1b** true deadline | **done.** `--deadline`, clamps the actor timeout before every launch and every retry. Exit `29`. Tests: cases 28–28d |
+> | **1c** committed-path check | **done.** Exit `30`. Tests: cases 29–29c |
+> | **1d** unattended authority | **mechanism verified** (`runs/probe-unattended-authority-2026-08-07.md`); `--claude-deny` plumbing added, **default off**. *The policy decision itself is still open and still the operator's* |
+> | **1e** no sleep | **done as documentation** — `caffeinate -i` in the worked invocation, spike `README.md` |
+> | **1f** branch isolation | **done as documentation** — branch + clean tree + the worktree blocker, spike `README.md` § Safety boundaries |
+> | **1g** read-only status | **done.** `--status`. Tests: cases 30–30c |
+> | **Phase 2** — walk-away pilot | **blocked**, correctly: Phase 0 has not run and 1d is unsettled |
+> | **Phase 3** — documentation (3a–3h) | **done.** `SKILL.md` § Courier mode + § The seam; spike `README.md` |
+> | Core § 4 decision | **recorded** in `logs/decisions.md`, 2026-08-07 |
+>
+> Suite: **149 pass, 0 fail** — all simulated. **No live unattended run has happened.**
+>
+> **One finding changes the plan's own text.** § 1d proposes offering the operator *"no push, no
+> network"*. The push half works. **The network half does not exist by this mechanism** — denying
+> `WebFetch`/`WebSearch` sends the child to `curl` via Bash, observed twice. Network containment
+> needs an OS-level sandbox, not a permission rule. § 1d's option should be read as *"no push"*
+> alone, with the network exposure stated in the risk envelope rather than designed around.
+>
+> ### Review round — 2026-08-07, operator-supplied review of the above
+>
+> Verdict was **not approved**, Phase 2 not to begin. Five findings; four accepted and fixed, one
+> disputed on the facts.
+>
+> | # | Finding | Disposition |
+> |---|---|---|
+> | 1 | Phase 0 gate skipped | **Disputed in part.** Phase 0 genuinely has not run and Phase 2 stays blocked — that conclusion stands and was already this plan's own status. But it was a *disclosed* deviation, not a skip: 0a/0c need the operator at the keyboard with Codex, and 1a/1b/1c/1g are dispatcher-internal — none changes shape with the launch path. The plan's own 0b item 4 makes the *stop* question depend on 1a, not the reverse. |
+> | 2 | `--claude-deny` had no end-to-end test | **Accepted.** Cases 31 / 31b added: a fake `claude` binary records the argv the dispatcher builds, asserting the flag reaches the child (metacharacters intact, repeatable) and that its absence changes nothing. |
+> | 3 | "Whole process tree" overstated | **Accepted — the sharpest finding.** It is a process-*group* kill. Wording corrected in `dispatch.sh`, the probe record and `README.md`; case 27b now asserts the real boundary (a `setsid`'d descendant survives, and the case fails if that silently changes). |
+> | 4 | Deadline clock start, grace period, loose test | **Accepted, all three.** `RUN_START` moved to the script's first statement; the worst-case overrun is now stated as `1s poll + 5s TERM→KILL grace + reaping ≈ 6s` instead of "the poll interval"; case 28's bound tightened from `< 20s` to `<= 11s` derived from that arithmetic. Case 28b was also rewritten — it was asserting a timing-dependent hop count and could land on the wrong branch. |
+> | 5 | Probe records not reproducible | **Accepted.** The interruption record claimed a verbatim script and showed pseudocode. Real scripts and raw captures now live in `runs/probes/`, including a genuine **before/after** capture produced by running the probe against the pre-fix dispatcher retrieved from git (`2dd2112`). |
+>
+> Nothing in this round changes what is proven: controller logic only. Live transport, detached
+> survival, sleep prevention, isolation and the permission flag under a real model remain unproven,
+> and Phase 0 is still the gate.
 
 **Evidence convention, used throughout.** Every load-bearing claim is marked **OBSERVED** (a command
 was run, or a file re-read at a cited line) or **INFERRED** (derived by reasoning). v0.1 carried two
@@ -120,7 +160,17 @@ incident waiting for a name.*
 
 ### 1a. Make the run stoppable
 
-**Evidence status: INFERRED.** Derived from `dispatch.sh:190` (`trap 'release_lock' EXIT INT TERM`)
+> **Promoted INFERRED → OBSERVED, 2026-08-07, and it was worse than predicted.**
+> `runs/probe-interruption-2026-08-07.md` ran the probe this section demanded. All three predictions
+> below held, plus the two things the section could not settle:
+> **actor descendants survived** (a grandchild outlived the sweep, because `pkill -P` reaches one
+> generation only), and the lock was **released**, so a second dispatcher was admitted at exit `0`
+> while the first was still running. The signal did not stop the run — it *unlocked* it.
+> Fixed: the actor now runs in its own process group (`set -m`) and the handler terminates the group,
+> releases the lock once, and exits `28`.
+
+**Evidence status: INFERRED** *(as written 2026-08-06; superseded by the note above)*. Derived from
+`dispatch.sh:190` (`trap 'release_lock' EXIT INT TERM`)
 and bash trap semantics: a handler that does not call `exit` returns control to where the script was
 interrupted. The consequence would be that `SIGTERM`:
 

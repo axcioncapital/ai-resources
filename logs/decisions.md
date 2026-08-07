@@ -271,3 +271,45 @@ courier a result it can actually verify — an exit code — instead of a screen
 **Related:** `plans/work-loop-v2-v0.2/handoff-automation-investigation-2026-08-05.md` (the dispatcher
 this decision builds on); `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` § 4 (the
 resulting courier clause).
+
+---
+
+## 2026-08-07 — Multi-hop unattended loop mode is an approved courier under core § 4; no amendment needed
+
+**Context:** `unattended-operation-plan-v0.2.md` schedules a walk-away run in which `dispatch.sh`
+alternates Claude and Codex without the operator present. A multi-hop courier *looks* like a larger
+thing than the one-hop `--carry-one` courier the core § 4 clause was written beside, so whether it is
+still covered had to be settled before the safety work was built on top of it.
+
+**Decision:** Loop mode is an approved courier under core § 4 as written. **The core is not amended**
+and `turn: operator` stays terminal for all automation.
+
+**Rationale:** Core § 4
+(`plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md:194-215`) forbids a courier from four
+things, and loop mode does none of them: it never changes state-file content (the dispatcher writes
+that file at no point); it never chooses which actor moves next (it launches whoever `turn:` already
+names); it never continues past `turn: operator` (`dispatch.sh` stops dead there); and its exit code
+is explicitly not authoritative over the file. The clause's own test — *does removing the courier
+change any decision?* — is passed: remove it and the operator pastes the same turns by hand, and the
+same decisions get made by the same parties. Hop count is not one of the clause's dimensions, so
+carrying twelve hops is the same act as carrying one, twelve times.
+
+**What this does NOT license.** Choosing the next *task* once the current one's exit condition is met
+is judgment, not transport, and core § 4 does not cover it. That is the deferred supervisor, and it
+needs its own qualification through `/develop-ai-resource` — including the outcome *no build*. Note
+that this gap is narrower than it first appears: a task spans many units and Codex already opens the
+next unit itself (`SKILL.md` § Assessing the result, core § 3 *Continuing*), so a single task can
+fill a 40-minute absence with no supervisor involved.
+
+**Alternatives considered:**
+1. **Amend core § 4 to name multi-hop couriers explicitly.** Rejected: the clause is written in terms
+   of what a courier may not *do*, not how many times it may act. Adding a hop dimension would make
+   the clause longer without making it stricter, and would invite the reading that some hop count
+   requires re-approval.
+2. **Treat loop mode as outside the clause and gate it behind a new approval.** Rejected: it would
+   create a second courier doctrine for what is mechanically the same act, and the existing clause
+   already carries the test that settles it.
+
+**Related:** `plans/work-loop-v2-v0.2/unattended-operation-plan-v0.2.md` § Scope;
+`runs/probe-interruption-2026-08-07.md` (the stop control this decision assumes);
+the 2026-08-06 entry above (courier drives the dispatcher, not Claude's UI).

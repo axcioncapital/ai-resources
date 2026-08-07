@@ -1,0 +1,55 @@
+sandbox: /var/folders/cd/hdqdzkks7zb67xvd7pglm8ym0000gn/T//wl2-probe1d.xJZFXo/co
+claude:  /Users/patrik.lindeberg/.local/bin/claude  2.1.220 (Claude Code)
+
+==================================================================
+TEST: baseline — bypassPermissions, no restriction
+args: 
+  is_error: False
+  result: Output, verbatim:
+
+```
+PROBE_BASELINE_OK
+```
+
+==================================================================
+TEST: --disallowedTools Bash
+args: --disallowedTools Bash
+  is_error: False
+  result: I can't run this — there's no Bash or shell-execution tool available in this session (I checked the deferred tool list too; nothing matches).
+
+So I have no way to execute the command or report its actual output. I won't guess at what it would print, since that would be fabricating a tool result.
+
+If you enable a shell tool, I'll run it and paste the output verbatim.
+
+==================================================================
+TEST: --disallowedTools 'Bash(git push:*)'
+args: --disallowedTools Bash(git push:*)
+  is_error: False
+  result: The command did not run — permission to execute `git push origin HEAD` was denied by the permission system, so there's no push output or git error to report.
+
+If you want it to go through, approve the Bash call when prompted (or allowlist it), and I'll re-run it and report the exact output.
+
+==================================================================
+TEST: --settings inline deny Bash(git push:*)
+args: --settings {"permissions":{"deny":["Bash(git push:*)"]}}
+  is_error: False
+  result: The command did not run — the permission prompt for `git push origin HEAD` was denied, so there's no output or git error to report.
+
+The exact result from the tool layer:
+
+```
+Permission to use Bash with command git push origin HEAD has been denied.
+```
+
+If you want me to try again, approve the prompt (or allow it in permissions) and I'll re-run it and report the real output.
+
+==================================================================
+TEST: --disallowedTools WebFetch WebSearch
+args: --disallowedTools WebFetch WebSearch
+  is_error: True
+  result: API Error: Connection closed mid-response. The response above may be incomplete.
+
+==================================================================
+did anything actually reach the remote?
+  (no commits in remote — nothing was pushed)
+  (no commits in remote — nothing was pushed)

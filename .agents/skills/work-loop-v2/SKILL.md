@@ -28,6 +28,9 @@ Core § 4 defines the interface between you and Claude, and places the operator 
 | `operator` | **Next:** {the decision or information you need from them}. |
 | — (Direct Work, no file) | **Next:** have Claude do this directly — no loop task. |
 | — (a specialist owner, no file) | **Next:** run {the owner} — naming it, and saying `in Claude` where it is Claude-side only. |
+| `claude`, **with an unattended run in flight** | **Next:** nothing to do — the run is carrying it. Name the deadline and where the evidence will be. See *Unattended runs*. |
+
+**The carve-out in the last row matters.** "The operator carries the turn" is why every reply ends with an instruction to them. While an unattended run is in flight, the dispatcher carries the turn instead, and an instruction to go and paste something would be wrong. The Next line then reports rather than directs.
 
 Sending the operator to Claude when the turn is theirs stalls the loop as surely as saying nothing: Claude opens the file, finds nothing owed by it, and hands straight back. Omitting the line altogether is the most likely way this loop silently stops — the operator is left holding a turn with no stated destination. Treat it as part of the output, not as courtesy.
 
@@ -35,9 +38,20 @@ Sending the operator to Claude when the turn is theirs stalls the loop as surely
 
 ### Courier mode — carrying the turn yourself
 
-Core § 4 *An approved courier may carry the turn* permits this and sets its limits. Read them there. This section is the one approved courier and how you operate it. **It is optional and off by default**: unless the operator has approved it for the session, end your reply with the Next line and stop, exactly as above.
+Core § 4 *An approved courier may carry the turn* permits this and sets its limits. Read them there. This section is the approved courier and how you operate it. **It is optional and off by default**: unless the operator has approved it for the session, end your reply with the Next line and stop, exactly as above.
+
+**There are two approved shapes, and the operator's presence picks which.**
+
+| Shape | Flag | Use it when |
+|---|---|---|
+| **Attended carry** | `--carry-one` | The operator is at the machine. You carry **one** hop, then read the file and assess. The loop does not run on without you. |
+| **Unattended run** | loop mode (no `--carry-one`) | The operator is leaving. You frame the unit, launch, and get out of the way. The loop alternates Claude ↔ Codex until `turn: operator`, the deadline, or a guard. |
+
+Everything below applies to both unless it names one. The hard rules are written for the attended carry, which is the default; *Unattended runs* at the end of this section states what changes.
 
 **What you drive is a terminal command, not Claude.** You never type into a Claude window, never read Claude's interface for progress, and never click through its prompts. You run one command and read its exit code. The dispatcher launches Claude, validates the state file before and after, and stops on anything unexpected — that instrumentation is the reason this is the approved courier and screen-driving Claude directly is not.
+
+**Neither shape is context-bounded, and it is worth being clear why.** Every hop is a **fresh process** (`claude -p`, `codex exec`). Nothing accumulates across hops; `logs/work-loop/{task-id}.md` is the entire shared memory. A run ends at `turn: operator`, at its hop limit, at its deadline, or at a guard — never because a context window filled. Do not plan around a context budget that does not exist.
 
 The command, in full — all three `--allow-path` values are required, because supplying any one **replaces both defaults**, and a `PostToolUse` hook keeps `logs/friction-log.md` modified in this repository:
 
@@ -54,7 +68,7 @@ plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh \
 **The hard rules.** Each is a stop, not a preference:
 
 1. **Read the state file first.** Confirm the exact task id and that `turn:` is `claude`, by opening the file. Not from what you remember writing.
-2. **Run the command once.** `--carry-one` carries exactly one hop, so Claude moves and you assess — the loop does not run on without you.
+2. **Run the command once.** In the **attended carry**, `--carry-one` carries exactly one hop, so Claude moves and you assess — the loop does not run on without you. *This is a property of the attended shape, not of the dispatcher:* an unattended run is defined by the loop running on without you, and is governed by the deadline and hop limit instead. Either way you run the command **once** and never re-run it to try again (rule 5).
 3. **The exit code is the result.** `0` means the carry completed. Anything else is a stop: report the code and its meaning to the operator, and do not re-run.
 4. **Read the file before assessing.** Exit `0` has two causes — the turn moved, or `turn:` was already `operator` and nothing was carried. Only the file distinguishes them, and the file is authoritative over the exit code either way (core § 4).
 5. **Never re-run to "try again".** A second run is only ever justified when the dispatcher's own run log shows the first launch never started. A completed run that did not produce what you expected is something to inspect, not to repeat.
@@ -65,6 +79,38 @@ plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh \
 **Operating defaults — preferences, not protocol.** Do not report a breach of these as a failure: a target for how many interactions a carry should take is a cost guide, and corrections, closures, permission prompts and genuine blockers can legitimately exceed it; a fresh Claude session is a sensible default for a new unit but not required for a short correction or a closing hand-off; inspecting accessibility state before taking a screenshot is an efficiency habit; and an unlocked machine is a preflight reminder rather than a Work Loop safety rule.
 
 **This does not loosen "you never run git."** Launching the dispatcher is not running git. The dispatcher reads git state to validate the hop — `status`, `rev-parse`, `diff --cached` — and writes nothing through git; the commit inside the carry is Claude's, made by Claude, exactly as core § 4 requires. You still never run `add`, `commit` or `checkout` yourself, and you may not substitute any other command for the one above.
+
+#### Unattended runs — when the operator is leaving
+
+Same dispatcher, same guards, `--carry-one` dropped. What changes:
+
+**Add a clock, and isolate the run.** `--deadline <seconds>` is the operator's absence in seconds; without it the real bound is `--max-hops × --timeout`, which is hours. The run goes on a branch off a **clean** tree, and the launch is wrapped in `caffeinate -i` — a Mac that sleeps kills the run. The worked invocation is in the spike `README.md`; use it rather than assembling one.
+
+**The allowlist becomes a per-task input.** The dispatcher now checks what Claude **committed** against `--allow-path`, not only what it left uncommitted. So the allowlist has to describe what *this unit* may legitimately touch. Derive it when you write the brief. Too narrow stops correct work; too wide and the check means nothing.
+
+**The Next line changes shape.** The rule that every reply ends with an explicit next instruction (§ The seam) assumes the operator carries the turn. While a run is in flight they do not, and telling them to go and paste something would be wrong. **When you have launched a run, the Next line names the run, its deadline, and where its evidence will be** — not an instruction to act.
+
+**Once you have launched, the state file is not yours until the run exits.** You write that file by hand and the lock does not stop you; a hand-edit mid-hop is a real corruption path. Check before touching it:
+
+```
+dispatch.sh --checkout <path> --task <task-id> --status
+```
+
+`--status` is read-only — no lock, no log, no write — and safe against a live run. It reports whether a run is in flight, its pid, how to stop it, the current `turn:`, and where the log is.
+
+**Do not mix the shapes.** A chat Codex carrying hops while a loop run is in flight is two instances of one actor driving one state file. `--status` is how you tell.
+
+**Three outcomes, never blurred.** When the operator returns, the run ended in exactly one of these, and saying which is the first thing you owe them:
+
+| Outcome | Looks like |
+|---|---|
+| **Finished** | `0` — and `turn: operator` with a core § 4 closing record |
+| **A decision is theirs** | `0` — and `turn: operator` with `## Blocker` / `## Next action` still present |
+| **Stopped** | any other code — a guard (`18`,`19`,`24`,`25`,`30`), a failure (`20`,`21`,`22`), the hop limit (`23`), an interruption (`28`), or the budget (`29`) |
+
+**`29` is not completion.** A run that ran out of clock is unfinished and resumable. Never report it as done.
+
+**Separate repository facts from model claims.** Report from the state file and the run log, and keep the two kinds of statement apart: *"the dispatcher observed exit 0"* is a repository fact; *"Claude reports the tests passed"* is a claim Claude made. Neither means you accepted the evidence — that is still your assessment to make (§ Assessing the result), and an unattended run does not do it for you.
 
 ---
 

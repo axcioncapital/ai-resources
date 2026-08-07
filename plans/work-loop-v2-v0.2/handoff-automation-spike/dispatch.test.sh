@@ -730,6 +730,339 @@ expect_rc 0 "$RC" "exits 0" "$OUT"
 printf '%s' "$OUT" | grep -q "carry-one would launch actor 'claude'" \
   && ok "names the actor it would carry" || bad "names the actor it would carry" "$OUT"
 
+# ================================================================= case 27
+# Phase 1a. The defect these cases pin down was OBSERVED before it was fixed —
+# runs/probe-interruption-2026-08-07.md. The old handler released the lock and let
+# the run continue, so a stop attempt UNLOCKED the task instead of ending it.
+echo
+echo "Case 27 — SIGTERM stops the run, the actor, and the actor's descendants"
+d="$(new_sandbox)"; state_file "$d" "sig-task" "claude"
+SIGROOT="$SANDBOX_ROOT/sig27"; mkdir -p "$SIGROOT"
+# An actor that spawns a grandchild, then hangs. The grandchild is the point:
+# `pkill -P` reaches one generation, and a live Claude hop runs deeper than that.
+SLOW_ACTOR='( sleep 300 ) & echo "$!" > "'"$SIGROOT"'/gc.pid"; echo $$ > "'"$SIGROOT"'/actor.pid"; sleep 300'
+bash "$DISPATCH_BIN" --checkout "$d" --task sig-task --log-dir "$d/runs" \
+  --timeout 300 --actor-cmd "$SLOW_ACTOR" >"$SIGROOT/out" 2>&1 &
+DPID=$!
+for _ in $(seq 1 40); do [ -f "$SIGROOT/gc.pid" ] && break; sleep 0.5; done
+sleep 1
+APID="$(cat "$SIGROOT/actor.pid" 2>/dev/null)"; GPID="$(cat "$SIGROOT/gc.pid" 2>/dev/null)"
+LK="${TMPDIR:-/tmp}/work-loop-dispatch-$(printf '%s|%s' "$(cd "$d" && pwd -P)" "sig-task" | shasum -a 256 | cut -c1-16).lock"
+
+if [ -z "$APID" ]; then
+  bad "the simulated actor started" "no actor pid file; case 27 is inconclusive"
+else
+  ok "the simulated actor started (pid $APID, grandchild $GPID)"
+  kill -TERM "$DPID" 2>/dev/null
+  sleep 6
+  kill -0 "$DPID" 2>/dev/null && bad "the dispatcher exits on SIGTERM" "still alive 6s later" \
+                              || ok "the dispatcher exits on SIGTERM"
+  kill -0 "$APID" 2>/dev/null && bad "the actor is terminated" "actor $APID survived" \
+                              || ok "the actor is terminated"
+  kill -0 "$GPID" 2>/dev/null && bad "the actor's DESCENDANTS are terminated" "grandchild $GPID survived" \
+                              || ok "the actor's DESCENDANTS are terminated"
+  wait "$DPID" 2>/dev/null; SRC=$?
+  expect_rc 28 "$SRC" "exits 28 INTERRUPTED (not 0 — an interrupted run is not a finished one)" "$(cat "$SIGROOT/out")"
+  [ -d "$LK" ] && bad "the lock is released" "$LK still held" || ok "the lock is released"
+  grep -q "STOP \[28\]" "$SIGROOT/out" && ok "the run log records the interruption" \
+                                       || bad "the run log records the interruption" "$(cat "$SIGROOT/out")"
+  grep -q "Nothing is retried" "$SIGROOT/out" && ok "states that nothing is retried" \
+                                              || bad "states that nothing is retried"
+  # The whole point of the old defect: it let a SECOND dispatcher onto the same
+  # state file while the first was still running. Now the first is gone, so a
+  # second is legitimate — this asserts the lock is not merely leaked.
+  kill -KILL "$APID" "$GPID" 2>/dev/null
+fi
+rm -rf "$LK" 2>/dev/null
+
+# ================================================================ case 27b
+# The BOUNDARY of case 27, asserted rather than assumed.
+#
+# The fix kills a process GROUP. Case 27 proves an ordinary grandchild dies with
+# it. It does NOT prove a descendant that LEAVES the group dies, and an earlier
+# draft of this work described the fix as a "whole process tree" kill, which
+# overstates it (caught in review, 2026-08-07).
+#
+# This case pins the real limit: a setsid'd descendant SURVIVES. It is expected to
+# survive. If a future change ever makes it die, this case fails and the comment
+# in dispatch.sh gets revisited — which is the point of testing a limitation.
+echo
+echo "Case 27b — the group kill does NOT reach a descendant that leaves the group"
+d="$(new_sandbox)"; state_file "$d" "setsid-task" "claude"
+SR="$SANDBOX_ROOT/sig27b"; mkdir -p "$SR"
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "  SKIP — python3 unavailable; cannot create a detached session portably"
+else
+  # python3 os.setsid() puts the child in its OWN session and process group.
+  ESCAPEE='python3 -c "
+import os, sys, time
+os.setsid()
+open(\"'"$SR"'/escapee.pid\",\"w\").write(str(os.getpid()))
+time.sleep(300)
+" &
+    echo $$ > "'"$SR"'/actor.pid"; sleep 300'
+  bash "$DISPATCH_BIN" --checkout "$d" --task setsid-task --log-dir "$d/runs" \
+    --timeout 300 --actor-cmd "$ESCAPEE" >"$SR/out" 2>&1 &
+  DPID=$!
+  for _ in $(seq 1 40); do [ -f "$SR/escapee.pid" ] && break; sleep 0.5; done
+  sleep 1
+  EPID="$(cat "$SR/escapee.pid" 2>/dev/null)"; APID="$(cat "$SR/actor.pid" 2>/dev/null)"
+  if [ -z "$EPID" ]; then
+    bad "the detached descendant started" "no pid file; case 27b inconclusive"
+  else
+    ok "the detached descendant started (pid $EPID, own session)"
+    kill -TERM "$DPID" 2>/dev/null
+    sleep 6
+    kill -0 "$APID" 2>/dev/null && bad "the in-group actor still dies" "actor survived" \
+                                || ok "the in-group actor still dies"
+    if kill -0 "$EPID" 2>/dev/null; then
+      ok "the OUT-OF-GROUP descendant survives — the documented limit holds"
+    else
+      bad "the OUT-OF-GROUP descendant survives — the documented limit holds" \
+          "it died; the group kill reaches further than dispatch.sh claims, so update that comment"
+    fi
+    kill -KILL "$EPID" "$APID" "$DPID" 2>/dev/null
+  fi
+  rm -rf "${TMPDIR:-/tmp}/work-loop-dispatch-$(printf '%s|%s' "$(cd "$d" && pwd -P)" "setsid-task" | shasum -a 256 | cut -c1-16).lock" 2>/dev/null
+fi
+
+# ================================================================= case 28
+echo
+echo "Case 28 — --deadline is a deadline, not a start gate"
+d="$(new_sandbox)"; state_file "$d" "budget-task" "claude"
+# The actor outlives the deadline by a wide margin. If --deadline only gated the
+# START of a hop, this would run the full 60s; the clamp must kill it near 3s.
+HANG='printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.calls"; sleep 60'
+t0="$(date '+%s')"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task budget-task --log-dir "$d/runs" \
+      --timeout 60 --deadline 3 --actor-cmd "$HANG" 2>&1)"; RC=$?
+elapsed=$(( $(date '+%s') - t0 ))
+expect_rc 29 "$RC" "exits 29 BUDGET_EXHAUSTED" "$OUT"
+# The bound is asserted from the arithmetic, not from a round number.
+#   deadline 3 + 1s poll + TERM_GRACE_SECS 5 + reaping slack 2 = 11
+# The previous version of this case accepted anything under 20s, which a 60s
+# timeout could have slipped through on a slow machine — too loose to prove a hard
+# clock (caught in review, 2026-08-07). If TERM_GRACE_SECS changes in dispatch.sh,
+# this number changes with it.
+DEADLINE_CEILING=11
+if [ "$elapsed" -le "$DEADLINE_CEILING" ]; then
+  ok "terminated within the stated worst case (${elapsed}s <= ${DEADLINE_CEILING}s; the timeout was 60s)"
+else
+  bad "terminated within the stated worst case" \
+      "took ${elapsed}s, bound is ${DEADLINE_CEILING}s (deadline 3 + poll 1 + grace 5 + slack 2)"
+fi
+printf '%s' "$OUT" | grep -q "THIS IS NOT COMPLETION" \
+  && ok "refuses to be read as completion" || bad "refuses to be read as completion" "$OUT"
+printf '%s' "$OUT" | grep -qi "resumable\|re-run this dispatcher" \
+  && ok "says the work is resumable" || bad "says the work is resumable" "$OUT"
+
+echo
+echo "Case 28b — an expired clock REFUSES the next hop rather than starting it"
+d="$(new_sandbox)"; state_file "$d" "budget-none" "claude"
+# The other half of 1b: a DIFFERENT code path from case 28. Case 28 kills a
+# running actor at the clock; this asserts the check at the TOP of the loop, which
+# declines to launch at all.
+#
+# --deadline 1 is what makes the branch deterministic. Whichever way the timing
+# falls, the refuse branch is the one that fires: either the clock is already gone
+# at the first check (no hop runs), or hop 1's instant actor completes and the
+# check before hop 2 finds it gone. What is NOT asserted is the hop count — that
+# genuinely is timing-dependent, and asserting it was what made an earlier version
+# of this case fail intermittently by landing on the mid-hop kill instead.
+#
+# The branch is identified by its message: "with turn still" is unique to the
+# refuse path; the kill path says "expired during hop".
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task budget-none --log-dir "$d/runs" \
+      --timeout 30 --deadline 1 --max-hops 200 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+expect_rc 29 "$RC" "exits 29 once the clock is gone" "$OUT"
+if printf '%s' "$OUT" | grep -q "with turn still"; then
+  ok "the stop is the refuse-to-launch branch (no actor was launched into an expired clock)"
+elif printf '%s' "$OUT" | grep -q "expired during hop"; then
+  bad "the stop is the refuse-to-launch branch" "took the mid-hop kill path instead — case 28 already covers that"
+else
+  bad "the stop is the refuse-to-launch branch" "neither 29 message matched: $OUT"
+fi
+printf '%s' "$OUT" | grep -q "THIS IS NOT COMPLETION" \
+  && ok "the refuse branch also refuses to be read as completion" \
+  || bad "the refuse branch also refuses to be read as completion" "$OUT"
+
+echo
+echo "Case 28c — no --deadline keeps the old unbounded-by-clock behaviour"
+d="$(new_sandbox)"; state_file "$d" "nodeadline" "claude"
+run_dispatch "$d" nodeadline --actor-cmd "$FLIP_TO_OPERATOR"
+expect_rc 0 "$RC" "reaches turn: operator and exits 0 with no deadline set" "$OUT"
+printf '%s' "$OUT" | grep -q "deadline=none" \
+  && ok "states the real upper bound when no deadline is set" || bad "states the real upper bound" "$OUT"
+
+echo
+echo "Case 28d — --deadline must be a positive integer"
+d="$(new_sandbox)"; state_file "$d" "badbudget" "claude"
+run_dispatch "$d" badbudget --deadline abc --actor-cmd "$FLIP"
+expect_rc 10 "$RC" "rejects a non-numeric --deadline" "$OUT"
+run_dispatch "$d" badbudget --deadline 0 --actor-cmd "$FLIP"
+expect_rc 10 "$RC" "rejects --deadline 0" "$OUT"
+
+# ================================================================= case 29
+# Phase 1c. Established fact 5 of the plan: foreign_worktree() reads
+# `git status --porcelain`, so anything an actor COMMITS leaves a clean tree and
+# passes the guard. These cases pin the gap shut.
+echo
+echo "Case 29 — an actor that COMMITS outside the allowlist is stopped"
+d="$(new_sandbox)"; state_file "$d" "commit-task" "claude"
+COMMIT_FOREIGN='printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.calls";
+  awk "NR==3{print \"turn: codex\"; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp";
+  mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE";
+  printf "actor wrote this\n" > "$WL_CHECKOUT/outside.txt";
+  git -C "$WL_CHECKOUT" add -A >/dev/null 2>&1;
+  git -C "$WL_CHECKOUT" commit -qm "actor commit outside the allowlist" >/dev/null 2>&1'
+run_dispatch "$d" commit-task --actor-cmd "$COMMIT_FOREIGN"
+expect_rc 30 "$RC" "exits 30 UNEXPECTED_COMMIT" "$OUT"
+printf '%s' "$OUT" | grep -q "outside.txt" \
+  && ok "names the committed path" || bad "names the committed path" "$OUT"
+printf '%s' "$OUT" | grep -qi "already exists\|detection" \
+  && ok "is honest that the commit already happened" || bad "is honest that the commit already happened" "$OUT"
+[ "$(calls "$d")" = "1" ] && ok "stopped after the offending hop; no further launch" \
+                          || bad "stopped after the offending hop" "calls=$(calls "$d")"
+
+echo
+echo "Case 29b — committing INSIDE the allowlist is normal work and passes"
+d="$(new_sandbox)"; state_file "$d" "commit-ok" "claude"
+run_dispatch "$d" commit-ok --actor-cmd "$FLIP_TO_OPERATOR"
+expect_rc 0 "$RC" "a Claude hop that commits only the state file reaches operator" "$OUT"
+
+echo
+echo "Case 29c — a widened --allow-path admits the same commit"
+d="$(new_sandbox)"; state_file "$d" "commit-allowed" "claude"
+# --carry-one bounds this to the single hop under test. Without it the turn moves
+# to codex and the NEXT hop trips the Codex-moved-HEAD guard instead, which would
+# make the assertion pass for the wrong reason.
+run_dispatch "$d" commit-allowed --carry-one \
+  --allow-path '^logs/work-loop/' --allow-path '^outside\.txt' \
+  --actor-cmd "$COMMIT_FOREIGN"
+expect_rc 0 "$RC" "the same commit is admitted once its path is allowlisted" "$OUT"
+printf '%s' "$OUT" | grep -q "within the allowlist" \
+  && ok "reports the commit as allowlisted rather than silently ignoring it" \
+  || bad "reports the commit as allowlisted" "$OUT"
+
+# ================================================================= case 30
+echo
+echo "Case 30 — --status is read-only and takes no lock"
+d="$(new_sandbox)"; state_file "$d" "status-task" "claude"
+before="$(shasum -a 256 "$d/logs/work-loop/status-task.md" | cut -d' ' -f1)"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task status-task --status 2>&1)"; RC=$?
+expect_rc 0 "$RC" "exits 0" "$OUT"
+[ "$before" = "$(shasum -a 256 "$d/logs/work-loop/status-task.md" | cut -d' ' -f1)" ] \
+  && ok "the state file is byte-identical afterwards" || bad "the state file is byte-identical afterwards"
+printf '%s' "$OUT" | grep -q "turn=claude" && ok "reports the current turn" || bad "reports the current turn" "$OUT"
+printf '%s' "$OUT" | grep -q "none in flight" && ok "reports no run in flight" || bad "reports no run in flight" "$OUT"
+[ "$(calls "$d")" = "0" ] && ok "no actor was launched" || bad "no actor was launched" "calls=$(calls "$d")"
+# The contract that makes it usable mid-run: it must create nothing.
+[ ! -d "$d/runs" ] && ok "created no run-log directory" || bad "created no run-log directory" "$d/runs exists"
+LK="${TMPDIR:-/tmp}/work-loop-dispatch-$(printf '%s|%s' "$(cd "$d" && pwd -P)" "status-task" | shasum -a 256 | cut -c1-16).lock"
+[ ! -d "$LK" ] && ok "acquired no lock" || { bad "acquired no lock" "$LK exists"; rm -rf "$LK"; }
+
+echo
+echo "Case 30b — --status detects a run in flight and does not disturb it"
+d="$(new_sandbox)"; state_file "$d" "inflight" "claude"
+SIGROOT="$SANDBOX_ROOT/sig30"; mkdir -p "$SIGROOT"
+SLOW='echo $$ > "'"$SIGROOT"'/actor.pid"; sleep 300'
+bash "$DISPATCH_BIN" --checkout "$d" --task inflight --log-dir "$d/runs" \
+  --timeout 300 --actor-cmd "$SLOW" >"$SIGROOT/out" 2>&1 &
+DPID=$!
+for _ in $(seq 1 40); do [ -f "$SIGROOT/actor.pid" ] && break; sleep 0.5; done
+sleep 1
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task inflight --log-dir "$d/runs" --status 2>&1)"; RC=$?
+expect_rc 0 "$RC" "exits 0 while another dispatcher holds the lock (17 would be wrong here)" "$OUT"
+printf '%s' "$OUT" | grep -q "IN FLIGHT" && ok "reports the run as in flight" || bad "reports the run as in flight" "$OUT"
+printf '%s' "$OUT" | grep -q "kill -TERM" && ok "tells the operator how to stop it" || bad "tells the operator how to stop it" "$OUT"
+kill -0 "$DPID" 2>/dev/null && ok "the in-flight run is undisturbed by --status" \
+                            || bad "the in-flight run is undisturbed by --status" "dispatcher died"
+kill -TERM "$DPID" 2>/dev/null; sleep 4
+kill -KILL "$DPID" "$(cat "$SIGROOT/actor.pid" 2>/dev/null)" 2>/dev/null
+rm -rf "${TMPDIR:-/tmp}/work-loop-dispatch-$(printf '%s|%s' "$(cd "$d" && pwd -P)" "inflight" | shasum -a 256 | cut -c1-16).lock" 2>/dev/null
+
+echo
+echo "Case 30c — --status and --dry-run are not interchangeable"
+d="$(new_sandbox)"; state_file "$d" "bothmodes" "claude"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task bothmodes --status --dry-run 2>&1)"; RC=$?
+expect_rc 10 "$RC" "refuses --status --dry-run together rather than silently picking one" "$OUT"
+
+# ================================================================= case 31
+# --claude-deny had NO dispatcher-level coverage when it was added (caught in
+# review, 2026-08-07). --actor-cmd cannot exercise it, because the flag only
+# affects the live `claude` branch of launch_actor.
+#
+# A FAKE claude binary closes that gap without a live model call: it records the
+# exact argv the dispatcher built, then behaves like a well-behaved Claude hop
+# (flip the turn, commit the state file). What is under test is the dispatcher's
+# argument construction — which is the whole of what --claude-deny does.
+echo
+echo "Case 31 — --claude-deny reaches the Claude child as --disallowedTools"
+d="$(new_sandbox)"; state_file "$d" "deny-task" "claude"
+FAKE="$SANDBOX_ROOT/fake-claude.sh"
+cat >"$FAKE" <<'FAKEEOF'
+#!/bin/bash
+# Stands in for the claude binary. Records argv, then acts like a good hop.
+if [ "${1:-}" = "--version" ]; then echo "0.0.0-fake (test double)"; exit 0; fi
+printf '%s\n' "$@" > "$WL_ARGV_FILE"
+sf="$WL_SF"
+awk 'NR==3{print "turn: codex"; next}{print}' "$sf" > "$sf.tmp" && mv "$sf.tmp" "$sf"
+git -C "$WL_CO" add "$sf" >/dev/null 2>&1
+git -C "$WL_CO" commit -qm "fake claude hop" >/dev/null 2>&1
+exit 0
+FAKEEOF
+chmod +x "$FAKE"
+
+export WL_ARGV_FILE="$SANDBOX_ROOT/argv-with-deny.txt"
+export WL_SF="$d/logs/work-loop/deny-task.md"
+export WL_CO="$d"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task deny-task --log-dir "$d/runs" \
+      --carry-one --claude-bin "$FAKE" \
+      --claude-deny 'Bash(git push:*)' --claude-deny 'WebFetch' 2>&1)"; RC=$?
+expect_rc 0 "$RC" "the hop completes with --claude-deny set" "$OUT"
+if [ -f "$WL_ARGV_FILE" ]; then
+  grep -qx -- "--disallowedTools" "$WL_ARGV_FILE" \
+    && ok "--disallowedTools was passed to the child" \
+    || bad "--disallowedTools was passed to the child" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
+  # -F matters: the rule contains ( and *, which grep would otherwise read as a
+  # pattern. Without it this assertion fails on an argv that is in fact correct.
+  grep -Fqx -- "Bash(git push:*)" "$WL_ARGV_FILE" \
+    && ok "the push rule reached the child verbatim, metacharacters intact" \
+    || bad "the push rule reached the child verbatim" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
+  grep -qx -- "WebFetch" "$WL_ARGV_FILE" \
+    && ok "a second --claude-deny is passed too (the flag is repeatable)" \
+    || bad "a second --claude-deny is passed too" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
+  grep -qx -- "-p" "$WL_ARGV_FILE" && grep -q "work-loop-v2 deny-task" "$WL_ARGV_FILE" \
+    && ok "the normal prompt arguments are unchanged" \
+    || bad "the normal prompt arguments are unchanged" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
+else
+  bad "the fake claude binary was invoked" "no argv file at $WL_ARGV_FILE"
+fi
+printf '%s' "$OUT" | grep -q "claude_deny=Bash(git push:\*) WebFetch" \
+  && ok "the run log records the deny rules the run was launched under" \
+  || bad "the run log records the deny rules" "$OUT"
+
+echo
+echo "Case 31b — WITHOUT --claude-deny the child's arguments are unchanged"
+d="$(new_sandbox)"; state_file "$d" "nodeny-task" "claude"
+export WL_ARGV_FILE="$SANDBOX_ROOT/argv-no-deny.txt"
+export WL_SF="$d/logs/work-loop/nodeny-task.md"
+export WL_CO="$d"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task nodeny-task --log-dir "$d/runs" \
+      --carry-one --claude-bin "$FAKE" 2>&1)"; RC=$?
+expect_rc 0 "$RC" "the hop completes with no --claude-deny" "$OUT"
+if [ -f "$WL_ARGV_FILE" ]; then
+  grep -qx -- "--disallowedTools" "$WL_ARGV_FILE" \
+    && bad "no --disallowedTools is passed when none was asked for" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")" \
+    || ok "no --disallowedTools is passed when none was asked for"
+else
+  bad "the fake claude binary was invoked" "no argv file"
+fi
+printf '%s' "$OUT" | grep -q "claude_deny=none" \
+  && ok "the run log says plainly that the child holds normal authority" \
+  || bad "the run log says plainly that the child holds normal authority" "$OUT"
+unset WL_ARGV_FILE WL_SF WL_CO
+
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"

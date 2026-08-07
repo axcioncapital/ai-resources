@@ -36,21 +36,74 @@ built from it.
 | `--carry-one` | off — carry exactly one hop, then exit `0` (see below) |
 | `--max-hops N` | `4` — absolute hop limit; forced to `1` by `--carry-one` |
 | `--timeout S` | `900` — per-actor wall-clock seconds |
+| `--deadline S` | none — whole-run wall-clock budget (see below) |
 | `--codex-bin PATH` | `/Applications/ChatGPT.app/Contents/Resources/codex` |
 | `--claude-bin PATH` | `claude` resolved from `PATH` |
 | `--allow-path RE` | `^logs/work-loop/` and `^plans/work-loop-v2-v0\.2/handoff-automation-spike/` (repeatable; supplying any replaces both defaults) |
+| `--claude-deny RULE` | none — repeatable; passed to the Claude child as `--disallowedTools RULE` |
 | `--log-dir DIR` | `<spike>/runs` |
 | `--dry-run` | off |
+| `--status` | off — read-only report; takes no lock, writes nothing |
 | `--actor-cmd CMD` | none |
 
-### The three modes
+### The four modes
 
 - **`--help`** — prints the header block and exits. Validates nothing, launches nothing.
+- **`--status`** (`mode=status`) — reports whether a run is in flight for this checkout + task, what
+  the state file says, which branch `HEAD` is on, and where the run log is. It takes **no lock**,
+  creates **no log directory**, and writes nothing at all, so it is safe to run against a live run —
+  which is the whole point of it. Returns `0` even while another dispatcher holds the lock.
 - **`--dry-run`** (`mode=dry-run`) — validates the checkout, the task id, the state file and the
   restart condition, then names the actor it *would* launch and stops. Launches nothing and writes
-  nothing to the state file.
+  nothing to the state file. Unlike `--status`, it **does** take the lock.
 - **loop mode** (`mode=live`, or `mode=simulated` when `--actor-cmd` is given) — actually runs the
   turns until the state file reaches `turn: operator`, or until something stops it.
+
+`--status` and `--dry-run` answer different questions and are refused together (`10`) rather than one
+silently winning.
+
+### `--deadline` — a wall-clock budget for the whole run
+
+Without it, the real upper bound is `--max-hops × --timeout`; the defaults make that **one hour**, and
+a walk-away invocation of `--max-hops 12 --timeout 900` makes it **three hours**. That is not a bound
+for someone expecting to be back in forty minutes, so the dispatcher now prints the bound it is
+actually running under at startup either way.
+
+`--deadline` is a deadline, not a start gate. The clock starts at the **first statement of the
+script**, before argument parsing or any setup. Before every launch — including a retry — the actor's
+effective timeout is clamped to `min(--timeout, time remaining)`, and an actor still running when the
+clock expires is terminated through the same path as an interruption. The run then exits `29`.
+
+**The honest worst case**, because a deadline is worth what its bound is:
+
+```
+overrun <= 1s (poll interval) + 5s (TERM→KILL grace) + reaping  ≈ 6s
+```
+
+So `--deadline 2400` ends at roughly 2406s. It never ends at exactly 2400s, and — the point of the
+clamp — it never ends at `2400 + --timeout`. Test case 28 asserts this arithmetic rather than a round
+number.
+
+**`29` is not completion.** The state file and Git are untouched by the stop, so the work is
+resumable: re-run the dispatcher and it continues from the file. But a killed actor carries the same
+partial-effect risk as an interruption, so it is **never** retried automatically — inspect first.
+
+### `--claude-deny` — narrowing the unattended child's authority
+
+Plumbing, not a policy. With no `--claude-deny` the Claude launch is byte-for-byte what it always
+was, and the child holds the checkout's normal authority.
+
+What it is for: a run nobody is watching may warrant less authority than an attended one. A rule
+passed here reaches the child as `--disallowedTools`, applies to **that child only**, and does not
+touch any `settings.json` or the operator's interactive sessions.
+
+**Two facts about it are measured, not assumed** (`runs/probe-unattended-authority-2026-08-07.md`):
+
+- A deny passed this way **beats `bypassPermissions`**. `--claude-deny 'Bash(git push:*)'` stops the
+  child pushing, moving that guarantee off a model-side CLAUDE.md rule and onto the permission layer.
+- It **cannot** buy network isolation. Denying `WebFetch`/`WebSearch` just sends the child to `curl`
+  via Bash — observed, twice, unprompted. Denying `Bash` outright works but stops the child doing the
+  work it was launched for. Network containment needs an OS-level sandbox, not a permission rule.
 
 `--carry-one` is a **terminal condition on loop mode**, not a fourth mode: it launches exactly the
 actor the current `turn:` names, applies every validation and post-hop check unchanged, and then
@@ -77,8 +130,8 @@ codex exec --sandbox workspace-write -C <checkout> --json <prompt>
 claude -p "/work-loop-v2 <task-id>" --output-format json      (cwd = <checkout>)
 ```
 
-The dispatcher adds no permission flags of its own — the Claude child inherits the project's normal
-settings policy.
+The dispatcher adds no permission flags of its own unless `--claude-deny` is given — otherwise the
+Claude child inherits the project's normal settings policy.
 
 ### Example
 
@@ -88,6 +141,43 @@ bash dispatch.sh \
   --task spike-live-transport \
   --dry-run
 ```
+
+### The walk-away invocation, as a worked example
+
+Four things around the command matter as much as the command. Copying the middle line alone is not
+the invocation.
+
+```bash
+# 1. Clean tree, own branch. Unattended hops commit; this keeps them off main and
+#    makes the whole run droppable with one command.
+git -C "$REPO" status --porcelain          # must be empty
+git -C "$REPO" checkout -b "work-loop/$TASK"
+
+# 2. Prevent sleep. Without this the Mac sleeps and the run dies mid-hop.
+#    caffeinate -i wraps the command and lifts as soon as it exits.
+caffeinate -i bash dispatch.sh \
+  --checkout "$REPO" \
+  --task "$TASK" \
+  --max-hops 12 \
+  --timeout 900 \
+  --deadline 2400 \
+  --allow-path '^logs/work-loop/' \
+  --allow-path '<what THIS unit may legitimately touch>' \
+  > "runs/walkaway-$TASK.console" 2>&1 &
+echo $! > /tmp/walkaway.pid          # 3. how you stop it later
+
+# 4. On return — or at any point, from another terminal:
+bash dispatch.sh --checkout "$REPO" --task "$TASK" --status
+```
+
+- **`--deadline 2400`** is the forty minutes. `--max-hops 12` is the secondary bound.
+- **`--allow-path` is a per-task input, not boilerplate.** `1c` checks what the actor *committed*
+  against it, so it has to describe what this unit may legitimately change. Too narrow gives false
+  stops; too wide and the check means nothing. Whoever writes the unit brief derives it.
+- **To stop the run:** `kill -TERM $(cat /tmp/walkaway.pid)`. The dispatcher terminates the actor's
+  process group and exits `28`. `--status` prints this same command back at you.
+- **Nobody opens the checkout while the run is live.** A branch shares the working directory and index
+  with any other session in that checkout — see *Isolation* under Safety boundaries.
 
 ---
 
@@ -116,10 +206,20 @@ where the code's meaning actually differs.
 | `24` | `UNEXPECTED_EFFECT` | loop only | An actor changed paths outside the allowlist, or the Codex actor moved `HEAD`. |
 | `25` | `UNCOMMITTED_HANDBACK` | dry-run, loop | The state file is uncommitted where Claude should have committed it — either found that way at startup with `turn: codex`/`operator`, or left that way after a Claude hop. |
 | `26` | `MALFORMED_TERMINAL` | loop only | `turn: operator`, but the file is neither a core § 7 question (it has no `## Blocker` and no `## Next action`) nor a core § 4 closing record (its four headings, and nothing else, are not what survived). No actor is launched; the stop names a recoverable next action. |
+| `28` | `INTERRUPTED` | loop only | `SIGINT`/`SIGTERM`. The actor's **process group** is terminated (see the caveat under Safety boundaries — group, not tree), the lock is released once, and the run stops. **Never retried** — the signal may have landed after an effect nobody observed, so the state file and `git status` are where the operator has to look. |
+| `29` | `BUDGET_EXHAUSTED` | loop only | `--deadline` expired: either the loop refused to launch the next hop, or a running actor was terminated at the clock. **Not completion.** Resumable — the state file and Git are untouched by the stop — but never retried automatically. Worst-case overrun is `1s poll + 5s TERM→KILL grace + reaping`, roughly 6s — not exact-to-the-second. |
+| `30` | `UNEXPECTED_COMMIT` | loop only | An actor **committed** paths outside the allowlist. Detection, not prevention: the commit already exists, and the value is stopping rather than compounding it over the rest of an unattended run. Distinct from `24`, which is the working-tree case, because the recovery differs — `24` is reverted from the working tree, `30` from history. |
 
-**Exit `0` means four different things depending on how you invoked the dispatcher:**
+> **Why `28`–`30` exist.** `27` is deliberately unused: it was reserved in plan v0.1 for
+> `--expect-turn`, which v0.2 dropped (unattended loop mode makes the repeating-courier shape it
+> guarded unnecessary, and the lock already refuses a second dispatcher). Leaving the gap is cheaper
+> than renumbering if it is ever built.
+
+**Exit `0` means five different things depending on how you invoked the dispatcher:**
 
 - `--help` returns `0` after printing the header. Nothing was validated.
+- `--status` returns `0` after reporting what it could read. Nothing was validated beyond
+  readability, nothing was launched, nothing was written — including when a run is in flight.
 - A completed `--dry-run` returns `0` after validation. **No turn was taken.**
 - A `--carry-one` run returns `0` when the turn moved exactly once in an allowed direction — **or**
   when `turn:` was already `operator` and nothing was carried. Read `turn:` from the state file to
@@ -234,9 +334,17 @@ Three scripts exist for the two-worktree proof and are not used by the single-ch
 - **A lock** keyed on `checkout|task` (a directory under `TMPDIR`) refuses a second dispatcher on the
   same pair.
 - **An allowlist** bounds which repo-relative paths an actor may change; anything else stops the run.
-  It is checked in two directions: as a *delta* across each hop (`24`), and as a **pre-hop gate** on
-  work that was already there (`18`). The dispatcher's own `--log-dir` is added to the allowlist when
-  it sits inside the checkout, so a run never flags its own evidence as foreign work.
+  It is checked in three directions: as a *delta* across each hop's working tree (`24`), as a
+  **pre-hop gate** on work that was already there (`18`), and against what the actor **committed**
+  between the hop's before- and after-`HEAD` (`30`). The dispatcher's own `--log-dir` is added to the
+  allowlist when it sits inside the checkout, so a run never flags its own evidence as foreign work.
+  > **The committed-path check (`30`) closed a real gap, and it is not free.** `18`/`24` read
+  > `git status --porcelain`. Claude commits its work each hop, so a clean tree passed them no matter
+  > what went into the commit — only stray *uncommitted* files ever tripped the guard. `30` compares
+  > `before_head..after_head`, which means the allowlist now has to describe what **this unit** may
+  > legitimately touch rather than what the spike touches in general. That makes it a per-task input
+  > derived when the unit brief is written. Too narrow gives false stops; too wide and the check is
+  > decoration.
   > **Consequence for live runs in *this* repository — read before launching one.** A PostToolUse
   > hook appends to `logs/friction-log.md` continuously, so that file is almost always modified. Gate
   > `18` therefore stops a live run here unless the allowlist covers it. A `--dry-run` on 2026-08-05
@@ -261,6 +369,44 @@ Three scripts exist for the two-worktree proof and are not used by the single-ch
   Codex handoff, because Codex writes the file and never runs Git. An uncommitted file with
   `turn: codex` or `turn: operator` means a Claude hop died between editing and committing, and the
   run stops for inspection instead of relaunching over a partial edit.
+- **The run can be stopped.** `SIGINT`/`SIGTERM` terminates the actor's **process group**, releases
+  the lock once, and exits `28`. This was not true before 2026-08-07: the old handler released the
+  lock without exiting, so a stop attempt left the run going *and* admitted a second dispatcher onto
+  the same state file. Both the defect and the fix are OBSERVED —
+  `runs/probe-interruption-2026-08-07.md`, with the probe script and a before/after raw capture under
+  `runs/probes/`.
+  > **It is a process-*group* kill, not a process-*tree* kill.** Descendants that stay in the actor's
+  > group die with it; a descendant that leaves the group — `setsid(2)`, its own process group, a
+  > double fork — survives. `dispatch.test.sh` case 27b asserts that boundary rather than assuming
+  > it. Sufficient for `claude -p` and `codex exec`, which keep their children in-group; not a
+  > general guarantee.
+- **Isolation is a branch, and a branch is not a worktree.** The pilot runs on
+  `work-loop/<task-id>` off a clean tree. This keeps unattended commits off `main` and makes the run
+  droppable, but a branch **shares the working directory and index** with anything else open in that
+  checkout, and switching it switches what the operator sees. The containment is therefore *"nobody
+  opens the checkout while the run is live"*, which walking away satisfies by definition.
+  > **Temporary limitation, with a named reason.** A dedicated worktree is the right answer and is
+  > blocked: the ambient `friction-log.md` writer appends to a tracked file, which
+  > `logs/work-loop/work-loop-v2-production-readiness-policy.md:252` marks as a guaranteed landing
+  > conflict under worktrees. Worktrees become available once that is fixed — not before.
+
+### The honest risk envelope for an unattended run
+
+What actually contains a walk-away run, stated plainly because the operator reads this before
+leaving rather than after:
+
+| Contains it | Does **not** contain it |
+|---|---|
+| One task, one checkout, serial (the lock) | Anything outside the checkout — the filesystem at large |
+| Local commits on a branch off a clean tree | `main` is protected; the *network* is not |
+| A hard `--deadline`, plus `--max-hops` | Nothing bounds what a single hop *does* within its allowlist |
+| Stop control that reaches the actor's whole tree (`28`) | An effect that landed before the signal — never retried, always inspected |
+| Allowlist on working tree (`18`/`24`) **and** commits (`30`) | Both are **detection, not prevention**. The change has happened; the run stops rather than compounding |
+| `--claude-deny 'Bash(git push:*)'` if the operator chooses it | Network access. Denying `WebFetch` sends the child to `curl` — measured, `runs/probe-unattended-authority-2026-08-07.md` |
+
+`git push` is otherwise held only by a CLAUDE.md rule — a model-side rule, which is weakest exactly
+when nobody is watching. `--claude-deny` is how that moves to the permission layer, for the
+unattended child alone, if the operator wants it there.
 
 ---
 
