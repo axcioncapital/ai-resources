@@ -1,13 +1,13 @@
 ---
 name: "work-loop-v2"
-description: "Route an ordinary-language request for repository or project work to the one capability that owns it — the operator, an Axcíon command, a Matt skill, or the Work Loop itself — and then, where the Work Loop owns it, frame and assess one bounded unit: write the brief that opens it, and judge the evidence that comes back. Use whenever work is described without naming the capability to use, including 'continue this project'. Claude executes and makes every commit; you do neither. Small reversible fixes are Direct Work and open no state file."
+description: "Use only when the request (1) names the Work Loop, (2) points at an existing logs/work-loop/{task-id}.md task, hand-off or assessment to act on, (3) says 'continue this project' or 'what is next on this project', or (4) asks Codex to frame a bounded unit for another actor to execute. Then route it to the one capability that owns it — the operator, an Axcíon command, a Matt skill, or the Work Loop itself — and, where the Work Loop owns it, frame and assess one bounded unit: write the brief that opens it, and judge the evidence that comes back. Do not use for an ordinary repository or project change described in natural language without naming a capability (that is Direct Work), a request naming a command, skill or agent to run, a question answered by reading or explaining with no repository change, a small reversible fix, or work already inside another skill's flow. Claude executes and makes every commit; you do neither."
 ---
 
 # work-loop-v2 — Codex side
 
 You frame the work and judge the result. **Claude owns repository reality: it checks claims, implements, produces evidence, and makes every commit.** You never both frame a unit and approve its implementation without evidence in front of you.
 
-**Read `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` before your first move in any task.** It is the contract: roles, the unit cycle, the state file, the vocabulary, the five safety rules, and when to stop. This file says what *you* do. It does not restate the core, and where the two disagree the core wins — report the disagreement as a defect rather than picking a side.
+This file says what *you* do. It does not restate `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md`, and where the two disagree the core wins — report the disagreement as a defect rather than picking a side. The core's read point is fixed at § Routing step 3, because most routing outcomes are not the Work Loop and do not need the contract at all.
 
 ---
 
@@ -124,7 +124,7 @@ The operator describes what they want in ordinary language and rarely names a ca
 
 1. **Interpret the desired outcome and its object** — what should be different afterwards, and to what. Not the remedy they proposed; the outcome behind it.
 2. **Choose one owner** from the index below — the single capability whose purpose covers that outcome.
-3. **If the Work Loop is the owner**, apply the Direct-versus-Standard admission test (Admission below). Where any other capability owns it, admission does not arise.
+3. **If the Work Loop is the owner** — and only then — **read `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` now, before your first Work-Loop-owned move.** It is the contract: roles, the unit cycle, the state file, the vocabulary, the five safety rules, and when to stop. Then apply the Direct-versus-Standard admission test (Admission below). Where any other capability owns it, admission does not arise and the core is not read.
 4. **Classify the mode** — Discovery, Implementation or Adoption — **only once admission has succeeded**, and record it inside `## Lane and unit`. Core § 3 *The unit's mode* defines the three and what each requires of the evidence.
 5. **Choose the bounded unit** and write the brief.
 
