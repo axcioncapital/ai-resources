@@ -11,17 +11,17 @@ Author: Claude. Revised after independent Codex review of v0.1.
 > | **1a** stoppable run | **PARTIAL — still blocking.** The group kill works (exit `28`, case 27, and observed live in Phase 0 § 0b item 4). **A descendant that leaves the actor's process group survives it** — asserted deliberately by case 27b. Stop control is a process-*group* boundary, not a whole-tree one |
 > | **1b** true deadline | **done.** `--deadline`, clamps the actor timeout before every launch and every retry. Exit `29`. Tests: cases 28–28d |
 > | **1c** committed-path check | **done.** Exit `30`. Tests: cases 29–29c |
-> | **1d** unattended authority | **COMPLETE — built, measured live, NOT blocking.** Policy settled by the operator (`runs/probe-contained-authority-2026-08-07.md`); integration shipped as `dispatch.sh --unattended`, delivered by CLI `--settings` on every Claude hop because `strictAllowlist` has no effect from a repository settings file. Fails closed, exit `31`, on a non-Darwin host, an unresolvable binary, claude < 2.1.219 or an unreadable version string; refuses to combine with `--actor-cmd`; `--claude-deny` composes and is additive. Simulated suite **273/0** (matched red pair **212/22** against the pre-change dispatcher). **Effective policy measured from inside a child the dispatcher launched** (`runs/probe-unattended-integration-2026-08-07.md`, **18/0**): network refused, write outside the checkout refused, home read refused, `git push` denied before execution, sentinel cloud credential scrubbed from the subprocess, tools `Bash, Skill`, no MCP, and a repository-declared `SessionStart` hook that never fired — measured by its absent marker file, not reported by the model. **One named exception inside the denied home tree:** `denyRead: ["~/"]` also blocked `~/.gitconfig`, which Git reads every invocation, so the child's Git exited 128 before touching the repository; check 6b established the repository was reachable and config discovery was the only obstacle. The zero-read alternative (`GIT_CONFIG_GLOBAL=/dev/null`) was rejected on evidence — the identity lives only in the global config here, so that child could not commit, and core § 4 has Claude commit every hop. Operator decision 2026-08-07: allow the minimum Git configuration paths, broaden home no further. `allowRead` carries `~/.gitconfig` and nothing else; `~/.config/git/config` proved unnecessary. Guarded at both ends — live: `~/.gitconfig` readable **and** `~/.config` still refused; simulated: no widening form in `allowRead`, the broad `denyRead` still present, exactly three entries. Residual, measured: `~/.gitconfig` names credential helpers, and the child obtained **no** token (`gh` credentials stay under the denied `~/.config/gh/`) — **if a real secret is ever put in `~/.gitconfig`, this exception stops being safe.** The old `--claude-deny` plumbing is still *not* this profile; it is the narrowing flag that composes with it |
+> | **1d** unattended authority | **COMPLETE — built, measured live, NOT blocking.** Policy settled by the operator (`runs/probe-contained-authority-2026-08-07.md`); integration shipped as `dispatch.sh --unattended`, delivered by CLI `--settings` on every Claude hop because `strictAllowlist` has no effect from a repository settings file. Fails closed, exit `31`, on a non-Darwin host, an unresolvable binary, claude < 2.1.219 or an unreadable version string; refuses to combine with `--actor-cmd`; `--claude-deny` composes and is additive. Simulated suite **284/0** (matched red pair **216/24**, the same current test file against the pre-1d dispatcher at `22fedf8`). **Effective policy measured from inside a child the dispatcher launched** (`runs/probe-unattended-integration-2026-08-07.md`, **21/0**): network refused, write outside the checkout refused, home read refused, `git push` denied before execution, sentinel cloud credential scrubbed from the subprocess, and a repository-declared `SessionStart` hook that never fired — measured by its absent marker file, not reported by the model. **The tool roster and MCP absence are measurements too, as of the 2026-08-07 correction:** unattended hops capture `--output-format stream-json`, so the hop's own `system/init` event states what the runtime resolved — observed `tools: Bash, Skill` and `mcp_servers: []` despite the checkout declaring an MCP server, with a control run on the same host reading 27 tools and a loaded server once the flags are removed. Codex's assessment had correctly found both scored as passes while they were still the child's own prose. **One named exception inside the denied home tree:** `denyRead: ["~/"]` also blocked `~/.gitconfig`, which Git reads every invocation, so the child's Git exited 128 before touching the repository; check 6b established the repository was reachable and config discovery was the only obstacle. The zero-read alternative (`GIT_CONFIG_GLOBAL=/dev/null`) was rejected on evidence — the identity lives only in the global config here, so that child could not commit, and core § 4 has Claude commit every hop. Operator decision 2026-08-07: allow the minimum Git configuration paths, broaden home no further. `allowRead` carries `~/.gitconfig` and nothing else; `~/.config/git/config` proved unnecessary. Guarded at both ends — live: `~/.gitconfig` readable **and** `~/.config` still refused; simulated: no widening form in `allowRead`, the broad `denyRead` still present, exactly three entries. Residual, measured: `~/.gitconfig` names credential helpers, and the child obtained **no** token (`gh` credentials stay under the denied `~/.config/gh/`) — **if a real secret is ever put in `~/.gitconfig`, this exception stops being safe.** The old `--claude-deny` plumbing is still *not* this profile; it is the narrowing flag that composes with it |
 > | **1e** no sleep | **done — observed in the supervised Phase 0 proof under `caffeinate -i`.** The 0c run held the machine awake across five hops and 301 seconds of actor time without dying mid-hop. Also documented in the worked invocation, spike `README.md` |
 > | **1f** branch isolation | **UNPROVEN — still blocking.** Documented only (branch + clean tree + the worktree blocker, spike `README.md` § Safety boundaries). No run has demonstrated a clean branch/isolation boundary in practice. Written down is not proven |
 > | **1g** read-only status | **COMPLETE — independently accepted, NOT blocking.** `--status` answers in **three** states: `IN FLIGHT` (pid visibly alive), `STALE LOCK` (pid **positively** absent — `kill -0` said *no such process*) and `UNKNOWN — CANNOT INSPECT` (permission denied, unreadable or invalid pid, or any ambiguous failure). `UNKNOWN` says the lock may belong to a live dispatcher, still reports pid/lock/state/log, and **never** recommends removing the lock. Read-only and exit-`0` contracts unchanged. A valid lock pid must match `[1-9][0-9]*`; empty, non-numeric, zero and zero-prefixed values (`0`, `00`, `007`) report `UNKNOWN` and emit no `IN FLIGHT`, `STALE LOCK`, `kill -TERM` or `rm -rf`. Tests: 30d (forced `EPERM`), 30f (unreadable, non-numeric and invalid-numeric pids, plus `1`/`10` pinned valid), **30e positive control** (a genuinely absent pid must still read `STALE LOCK`) — red-to-green `162/9 → 171/0` against `c8b2172`, then `186/12 → 198/0` against `e1ebb2f`. **Independently accepted by Codex against the CORRECTED build (2026-08-07):** all three live status states passed — sandbox-hidden live PID → `UNKNOWN`, the same PID outside the sandbox → `IN FLIGHT`, terminated PID → `STALE LOCK` — the invalid-PID checks passed, and the suite passed **198/0**. The temporary review lock and process were removed; no repository files were changed by the check. Nothing outstanding |
 > | **Phase 2** — walk-away pilot | **BLOCKED**, correctly. Phase 0 is no longer among the blockers; 1d is complete and cleared; 1g is complete and cleared. **Two remain — see the list below the table.** Neither is a decision; both are unbuilt or unproven work |
-> | **Phase 3** — documentation (3a–3h) | **done, except 3c and 3d, both RE-OPENED by the 1d correction and now UNBLOCKED.** `SKILL.md` § Courier mode, § The seam and § Unattended runs (which now carries the `--unattended` guidance) stand, as does spike `README.md`. 3c (what stays forbidden) and 3d (the risk envelope) still describe a pre-sandbox world. They were waiting on the contained profile being built; it is built and measured, so they are writable now and are the natural next documentation unit — they are **not** Phase 2 blockers |
+> | **Phase 3** — documentation (3a–3h) | **done.** `SKILL.md` § Courier mode, § The seam and § Unattended runs (which carries the `--unattended` guidance) stand, as does spike `README.md`. **3c and 3d were re-opened by 1d and are now rewritten against the built profile** (2026-08-07 correction) — 3c lists what the sandbox and permission layer actually refuse, 3d lists what they still do not cover, with settings-scope merging named as the one residual that stays open. Neither was ever a Phase 2 blocker |
 > | Core § 4 decision | **recorded** in `logs/decisions.md`, 2026-08-07 |
 >
-> Suite: **273 pass, 0 fail** — all simulated (149 at `c8b2172`, plus 22 for the 1g three-state fix,
-> 27 for the pid-validation correction that followed it, and 70 for the 1d contained-profile
-> integration). **Two live shapes have now happened.** Phase 0c — **an attended five-hop live run with
+> Suite: **284 pass, 0 fail** — all simulated (149 at `c8b2172`, plus 22 for the 1g three-state fix,
+> 27 for the pid-validation correction that followed it, 70 for the 1d contained-profile integration,
+> and 11 for the 1d correction of 2026-08-07). **Two live shapes have now happened.** Phase 0c — **an attended five-hop live run with
 > no operator transport during the run**: three commits, closed at `turn: operator`, the operator
 > present at a supervised terminal, and **without** the contained profile. And the 1d integration
 > probe — **an attended single-hop live run WITH the contained profile**, in which the Work Loop's own
@@ -40,9 +40,9 @@ Author: Claude. Revised after independent Codex review of v0.1.
 > believes everything is stopped.
 >
 > **Cleared 2026-08-07: the contained profile (1d).** It was blocker 1 of the previous three. Built as
-> `dispatch.sh --unattended`, covered by the simulated suite (**273/0**, matched red pair **212/22**),
+> `dispatch.sh --unattended`, covered by the simulated suite (**284/0**, matched red pair **216/24**),
 > and — the part that actually cleared it — **measured from inside a child the dispatcher launched**
-> (`runs/probe-unattended-integration-2026-08-07.md`, **18/0**). Recorded as closed rather than
+> (`runs/probe-unattended-integration-2026-08-07.md`, **21/0**). Recorded as closed rather than
 > deleted, because the run that cleared it also found the defect that nearly did not clear it: the
 > ratified profile blocked Git, and finding that needed a live child rather than a harness. The
 > operator settled it the same day with a one-file exception, guarded at both ends.
@@ -305,10 +305,11 @@ rule, which is weaker than usual precisely when nobody is watching.
    one can be scoped to that child would repeat exactly the failure that produced this revision.
 
 *Sequence:* verify the mechanism → put the narrow option to the operator (no push, no network) rather
-than a broad denylist → implement only what they choose. **This is a blocking item for the walk-away
-run in Phase 2, and the only one in this plan the operator must personally settle.**
+than a broad denylist → implement only what they choose. **This *was* a blocking item for the
+walk-away run in Phase 2, and the only one in this plan the operator had to personally settle —
+settled, built and measured on 2026-08-07; see immediately below.**
 
-> **SETTLED 2026-08-07 — first two steps of that sequence are complete; the third is not.**
+> **SETTLED AND BUILT 2026-08-07 — all three steps of that sequence are complete.**
 >
 > *Mechanism (reason 2) — resolved.* A headless child can be given a policy scoped to itself, and it
 > is enforced by the OS rather than by the model. Proven in
@@ -324,14 +325,29 @@ run in Phase 2, and the only one in this plan the operator must personally settl
 > allowlist; no MCP, web, hooks, connectors, remote control, subagents, built-in file tools, or push;
 > credential scrubbing; no unsandboxed-command escape.
 >
-> **What is NOT done: implementation.** The dispatcher does not apply this profile. Its existing
-> `--claude-deny` flag is a permission-layer denial and is *not* the contained profile — the probe
-> that motivated it also proved a deny rule alone leaves `curl` reachable. Building the real thing is
-> the remaining 1d work, and its shape is set out in the corrected record's *Decision and remaining
-> work*: one explicit unattended mode, applied on every Claude hop, logging the active restrictions
-> **and the settings scope they arrived through**, failing closed below v2.1.219 or when the sandbox
-> is unavailable, with an end-to-end live test that asserts the *effective* policy from inside the
-> child. Attended and courier launches keep their current behaviour unchanged.
+> *Implementation (the third step) — done.* `dispatch.sh --unattended` applies the profile on every
+> Claude hop, delivered by CLI `--settings` because `strictAllowlist` has no effect from a repository
+> settings file. It logs the requested restrictions and the delivery scope, fails closed with exit
+> `31` on a non-Darwin host, an unresolvable binary, claude below `2.1.219` or an unreadable version
+> string, and refuses to combine with `--actor-cmd`. Attended and courier launches are unchanged and
+> asserted so (case 32j). The pre-existing `--claude-deny` flag is *not* this profile — it is a
+> permission-layer denial, and the probe that motivated it proved a deny rule alone leaves `curl`
+> reachable; it now composes on top of `--unattended` and can only narrow further.
+>
+> *And it was tested end to end, from inside the child.* `runs/probes/unattended-effective-policy.sh`
+> launches a real Claude child **through the dispatcher** and asserts the effective policy from within
+> it — recorded in `runs/probe-unattended-integration-2026-08-07.md`. Two claims that were once the
+> child's own prose, the tool roster and MCP absence, are now read from the product's `system/init`
+> event in the hop capture, with a control run on the same host showing the same fields reading 27
+> tools and a loaded MCP server when the flags are absent.
+>
+> **One exception, and the residual risk.** `denyRead: ["~/"]` also blocks `~/.gitconfig`, which Git
+> reads on every invocation, so the child's Git exited 128 before touching the repository. Operator
+> decision, 2026-08-07: allow the minimum Git configuration paths, broaden home no further. `allowRead`
+> carries `~/.gitconfig` and nothing else. That file names credential helpers; the child obtained no
+> token, and **if a real secret is ever placed there the exception stops being safe.** Separately,
+> array settings keys merge across scopes, so another scope on the host can widen the profile — closing
+> that needs managed settings, which is outside any dispatcher's reach.
 
 ### 1e. Stop the machine going to sleep
 
@@ -479,29 +495,36 @@ flight, the Next line names the run and where its evidence will be.
 **3b. Three outcomes, never blurred:** finished, operator decision required, and stopped by a
 guard/failure/budget. `budget exhausted` is not completion.
 
-**3c. What stays forbidden unattended** — the outcome of 1d, written where it will be read before
-launching.
+**3c. What stays forbidden unattended.** *Rewritten 2026-08-07 against the built profile — the
+pre-sandbox version of this item is superseded, not deferred.* Under `--unattended` these are
+refused by the OS sandbox or the permission layer, not by a model-side rule: any network connection
+outside the empty strict allowlist; any write outside the checkout; any read under `~/` except the
+single file `~/.gitconfig`; `git push`; MCP servers; hooks; connectors, remote control and
+subagents; every built-in file tool (the child has `Bash` and `Skill` and nothing else); credentials
+inheriting into subprocesses; and the `dangerouslyDisableSandbox` escape. Below claude `2.1.219`, or
+on a host where the sandbox cannot be established, the run **refuses to start** (exit `31`) rather
+than proceeding with weaker containment it does not advertise. Written where it is read before
+launching: spike `README.md` § *The honest risk envelope*, and `SKILL.md` § *Unattended runs*.
 
-**3d. The honest risk envelope.** The allowlist catches stray uncommitted files; 1c adds committed
-paths; neither prevents, both detect. Real containment is: one task, one branch, local commits, hard
-deadline, push gated.
+**3d. The honest risk envelope.** *Rewritten 2026-08-07.* The allowlist catches stray uncommitted
+files and 1c adds committed paths — **both detect rather than prevent**, and that is unchanged. What
+changed is that a layer which genuinely *prevents* now sits underneath them, listed in 3c. What that
+layer still does **not** cover, and what a reader must not infer from it:
 
-> **REVISED 2026-08-07 — containment is now stronger than this line says, and its residue is
-> different.** With 1d settled, the list above gains a layer that genuinely *prevents* rather than
-> detects: the OS sandbox stops non-allowlisted network connections and writes outside the checkout
-> before they happen. Rewrite 3c and 3d against the contained profile once it is built — and keep
-> them honest about what still is not contained:
->
-> - **The Claude process itself runs outside the Bash sandbox**, so the model connection continues.
->   Containment applies to what Claude *runs*, not to Claude.
-> - **The profile can be silently widened from another settings scope** (`allowRead` and other array
->   keys merge across scopes; `strictAllowlist` is ignored entirely from a repo settings file).
->   Locking this needs managed settings, which is outside the dispatcher's reach.
-> - **Prevention is only as good as the version.** Below v2.1.219 there is no strict allowlist, so
->   the run must fail closed rather than proceed with weaker containment it does not advertise.
->
-> Until the profile is wired in, the envelope as originally written is the accurate one — nothing
-> above is in force during a run today.
+- **The Claude process itself runs outside the Bash sandbox**, so the model connection continues.
+  Containment applies to what Claude *runs*, not to Claude.
+- **The profile can be silently widened from another settings scope** (`allowRead` and other array
+  keys merge across scopes; `strictAllowlist` is ignored entirely from a repo settings file — which
+  is why the dispatcher delivers it by CLI `--settings`). Locking this needs managed settings, which
+  is outside the dispatcher's reach. **This remains open.**
+- **`~/.gitconfig` is a deliberate exception** inside the denied home tree, and it names credential
+  helpers. The child obtained no token from it, measured rather than reasoned — but if a real secret
+  is ever put in that file, the exception stops being safe.
+- **Effective policy was measured once, on one host.** `runs/probe-unattended-integration-2026-08-07.md`,
+  21/0, attended and fixture-scoped. That is a safety check, not a reliability claim.
+- **The rest of the envelope is unchanged and still load-bearing:** one task, one branch off a clean
+  tree, local commits, a hard deadline, push gated — and a stop that reaches a process *group*, not
+  a tree.
 
 **3e. Correct the context model.** Fresh process per hop, state file is the memory, not
 context-bounded.

@@ -1299,6 +1299,19 @@ if [ -f "$WL_ARGV_FILE" ]; then
   grep -qx -- "-p" "$WL_ARGV_FILE" && grep -q "work-loop-v2 unatt-task" "$WL_ARGV_FILE" \
     && ok "the normal prompt arguments are unchanged under --unattended" \
     || bad "the normal prompt arguments are unchanged" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
+  # stream-json is what makes the EFFECTIVE tool roster and MCP list auditable:
+  # its first event is the product's own system/init. Asserted per-token, because
+  # the failure that matters is a silent drop back to --output-format json, which
+  # would leave the live probe with nothing but the child's prose to read.
+  argv_has "$WL_ARGV_FILE" "stream-json" \
+    && ok "--output-format stream-json under --unattended (the hop capture carries system/init)" \
+    || bad "--output-format stream-json under --unattended" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
+  argv_has "$WL_ARGV_FILE" "--verbose" \
+    && ok "--verbose accompanies stream-json (required under --print)" \
+    || bad "--verbose accompanies stream-json" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
+  argv_has "$WL_ARGV_FILE" "json" \
+    && bad "the plain json output format is NOT used under --unattended" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")" \
+    || ok "the plain json output format is NOT used under --unattended"
 else
   bad "the fake claude binary was invoked" "no argv file at $WL_ARGV_FILE"
 fi
@@ -1529,6 +1542,17 @@ if [ -f "$WL_ARGV_FILE" ]; then
       && bad "no $f without --unattended" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")" \
       || ok "no $f without --unattended"
   done
+  # The stream-json switch is scoped to the contained path and nowhere else.
+  # Attended and courier hops keep the compact single-object capture they have
+  # always had, so required outcome 3 stays true after this change.
+  argv_has "$WL_ARGV_FILE" "json" \
+    && ok "an attended hop still uses --output-format json" \
+    || bad "an attended hop still uses --output-format json" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
+  for f in "stream-json" "--verbose"; do
+    argv_has "$WL_ARGV_FILE" "$f" \
+      && bad "no $f without --unattended" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")" \
+      || ok "no $f without --unattended"
+  done
 else
   bad "the fake claude binary was invoked" "no argv file"
 fi
@@ -1637,6 +1661,59 @@ if [ -n "$BASEPROF" ] && [ -s "$BASEPROF" ]; then
 else
   bad "a profile was generated for the widening check" "nothing under $d/runs"
 fi
+echo
+echo "Case 32n — the stream-json assertions can actually fail"
+# Same reasoning as 32m, applied to the assertions case 32 gained on 2026-08-07.
+# The pre-1d dispatcher has no --unattended at all, so case 32 never reaches its
+# argv assertions in the red half — the matched pair cannot show them capable of
+# failing, and "obviously it would fail" is the phrase that hid the last defect.
+#
+# So this builds a dispatcher that has --unattended and has REGRESSED the output
+# format back to --output-format json, and asserts case 32's three checks flip.
+# That regression matters more than it looks: without stream-json the hop capture
+# carries no system/init event, and the live probe loses the only surface on
+# which the effective tool roster and MCP absence can be measured rather than
+# taken from the child's own prose.
+d="$(new_sandbox)"; state_file "$d" "regress-task" "claude"
+export WL_ARGV_FILE="$SANDBOX_ROOT/argv-regress.txt"; rm -f "$WL_ARGV_FILE"
+export WL_ENV_FILE="$SANDBOX_ROOT/env-regress.txt"
+export WL_SF="$d/logs/work-loop/regress-task.md"
+export WL_CO="$d"
+export WL_FAKE_VERSION="2.1.220 (Claude Code)"
+
+REGRESSED="$SANDBOX_ROOT/dispatch-regressed.sh"
+sed 's|--output-format stream-json --verbose \\|--output-format json \\|' \
+    "$DISPATCH_BIN" >"$REGRESSED"
+chmod +x "$REGRESSED"
+
+if ! grep -q -- '--output-format json \\' "$REGRESSED"; then
+  bad "the regression mutant was actually built" "the sed found nothing to change in $DISPATCH_BIN"
+else
+  ok "the regression mutant was actually built (stream-json reverted to json)"
+  bash "$REGRESSED" --checkout "$d" --task regress-task --log-dir "$d/runs" \
+        --carry-one --claude-bin "$FAKE2" --unattended >/dev/null 2>&1
+  if [ -f "$WL_ARGV_FILE" ]; then
+    argv_has "$WL_ARGV_FILE" "stream-json" \
+      && bad "the stream-json assertion goes red on the regressed dispatcher" "it still found stream-json" \
+      || ok "the stream-json assertion goes red on the regressed dispatcher"
+    argv_has "$WL_ARGV_FILE" "--verbose" \
+      && bad "the --verbose assertion goes red on the regressed dispatcher" "it still found --verbose" \
+      || ok "the --verbose assertion goes red on the regressed dispatcher"
+    # And the inverse assertion — "plain json is NOT used" — must go red too,
+    # otherwise it is a check that only ever agrees with itself.
+    argv_has "$WL_ARGV_FILE" "json" \
+      && ok "the no-plain-json assertion goes red on the regressed dispatcher" \
+      || bad "the no-plain-json assertion goes red on the regressed dispatcher" "no plain json in the mutant's argv"
+    # The rest of the profile must be untouched by the mutation, or this case
+    # would be measuring a broken dispatcher rather than one regressed change.
+    argv_has "$WL_ARGV_FILE" "--settings" && argv_has "$WL_ARGV_FILE" "Bash,Skill" \
+      && ok "the mutation changed only the output format (the profile still ships)" \
+      || bad "the mutation changed only the output format" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
+  else
+    bad "the regressed dispatcher invoked the fake claude binary" "no argv file at $WL_ARGV_FILE"
+  fi
+fi
+
 unset WL_ARGV_FILE WL_ENV_FILE WL_SF WL_CO WL_FAKE_VERSION
 
 # ==================================================================== done

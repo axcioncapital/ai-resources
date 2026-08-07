@@ -67,175 +67,118 @@ The repository contains a fail-closed unattended mode whose requested policy is 
 Stop and hand back to Codex if any verify-first claim is false, concurrent edits make ownership unsafe, the effective live policy differs from the settled profile, required evidence cannot be produced, or completing the unit would cross an exclusion. Stop for the operator if proceeding would require weakening or changing the settled profile or any phase gate.
 
 ## Latest result
-Inspected (2026-08-07):
+**This invocation was the one bounded correction, frozen to Codex's four findings.** All four are
+resolved. Nothing outside them was implemented; what was newly noticed is recorded as a deferral
+below.
 
-- **Claim (1): HOLDS, and the answer is "partial work" — but the concurrent work is THIS SESSION'S.**
-  Read `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` and `dispatch.test.sh` in full.
-  `--unattended` exists with its generated profile, the Darwin + `>= 2.1.219` + readable-version gate
-  (exit `31`), the contained child argv, additive `--claude-deny`, and cases 32–32l. All of it is
-  **uncommitted work made in this same session before this brief was read** — `git status --porcelain`
-  shows `M dispatch.sh`, `M dispatch.test.sh`, `M README.md`, `?? runs/probes/unattended-effective-policy.sh`.
-  This matters for the brief's "do not overwrite concurrent work" instruction: there is no third party
-  to protect. Treating it as unknown concurrent work would have been the false statement.
-  The work was complete for required outcomes 1–3 and absent for outcome 4 (live proof) at inspection.
-- **Claim (2): FALSE NOW, TRUE WHEN CODEX MADE IT.** Searched
-  `plans/work-loop-v2-v0.2/` for `unattended-effective-policy`: four files reference it
-  (`dispatch.sh`, `dispatch.test.sh`, `README.md`, and the script itself), and
-  `runs/probes/unattended-effective-policy.sh` **exists**, created by this session at 13:12 today —
-  after Codex's inspection and because of it, not independently of it. Searched
-  `runs/` for a live record: `ls runs/ | grep -i unattended` returns only
-  `probe-unattended-authority-2026-08-07.md`, the superseded negative-result record. **No live
-  effective-policy record existed at inspection**, so the load-bearing half of Codex's claim held.
-- **Claim (3): SPLIT — two thirds HOLD, one third FALSE.**
-  `plans/work-loop-v2-v0.2/unattended-operation-plan-v0.2.md` line 14 still reads "policy SETTLED by
-  the operator; dispatcher integration NOT built" — **HOLDS**.
-  `.agents/skills/work-loop-v2/SKILL.md`: grepped for `unattended|contained|sandbox|--claude-deny`;
-  five hits, all about unattended runs *in general* (who carries the turn, `--carry-one`, separating
-  repository facts from model claims). **No contained-launch guidance — HOLDS.**
-  The spike `README.md` is **FALSE**: this session already replaced its "the dispatcher does not
-  implement it yet" sentence and added a `--unattended` section. Reported rather than quietly kept:
-  the brief said to treat claim 3 as a claim to verify, "not permission to change the documents
-  before live proof," and that change was made before this brief was read. It is left in place
-  because it claims only what the simulated suite supports and states explicitly that effective
-  policy needs the live probe — but it is a deviation from the brief's constraint, not a compliance.
-- **Claim (4): HOLDS.** `claude --version` → `2.1.220 (Claude Code)`, at
-  `/Users/patrik.lindeberg/.local/bin/claude` — at or above the `2.1.219` that
-  `probe-contained-authority-2026-08-07.md` names for `strictAllowlist`. No required key or flag
-  differed from the record: `--settings`, `--tools`, `--strict-mcp-config`,
-  `--no-session-persistence` and `--disallowedTools` were all accepted by the real binary in the live
-  launch below, and the dispatcher's gate read the same binary it then launched.
+Reproduced first, by inspection, before anything was changed:
 
-No claim failed in a way that stops the unit. Claims (1) and (2) are framed by the brief as questions
-to settle ("verify whether … partial work, complete work, or have changed again"; "bound any contrary
-conclusion to the exact paths searched"), so a contrary answer is the inspection working, not a false
-premise. Claim (3)'s README third is a deviation this session caused, reported above.
+- **Finding 1 — reproduced.** `unattended-effective-policy.sh` called `ok()` on `PROBE_TOOLS:` and on
+  `PROBE_MCP_NONE`, so both counted toward the headline `18/0`, while the record's own *Limits*
+  section called them model claims. The two disagreed and the score followed the weaker one.
+- **Finding 2 — reproduced.** The lock assertion tested `$d/.dispatch-lock*`; `dispatch.sh` line 420
+  writes `${TMPDIR}/work-loop-dispatch-<sha>.lock`, so the assertion could not detect a leaked lock
+  and passed unconditionally. `DRC` was captured and never asserted. The raw capture was written
+  before the assertion block, so it held the inputs and none of the verdicts.
+- **Finding 3 — reproduced.** Plan lines 311/327 and the 3c/3d envelope still described an unbuilt
+  profile; README's walk-away notice said three blockers, said the profile was not wired, and omitted
+  `--unattended`; the risk envelope repeated it.
+- **Finding 4 — reproduced, and Codex is right.** Ran the *then-current* `dispatch.test.sh` against
+  the pre-1d dispatcher at `22fedf8`: **212 pass, 23 fail**, not `212/22`. The state file had carried
+  a count from an earlier version of the test file and called it a run of the same one.
 
-Result: **all five required outcomes are met.** 1d is complete and the Phase 2 blocker count drops
-from three to **two** (1a escaped descendants, 1f branch isolation). Phase 2 remains forbidden and
-was not begun; neither were 1a or 1f.
+**Finding 1 — resolved by changing where the answer comes from, not by re-labelling it.**
+Unattended hops now launch with `--output-format stream-json --verbose`. The stream's first event is
+the product's own `system/init`, which states the tool roster and MCP servers **the runtime
+resolved** — the one surface where a silently dropped `--tools` or `--strict-mcp-config` would show,
+and the thing configured argv and child prose both cannot establish. The stream's final `result`
+event is byte-identical to what `--output-format json` produced, so the capture is a superset; the
+switch is scoped to `--unattended` and attended hops are asserted unchanged (case 32j).
 
-The unit ran in two parts. The first built and measured the mode, and **stopped for the operator**:
-containment held on every dimension, but the ratified profile also stopped the child using Git. The
-operator settled it on 2026-08-07 — *allow the minimum Git configuration paths, broaden home no
-further* — and the second part implemented exactly that, re-ran both proofs, and reconciled the
-documentation.
+Observed: `tools: Bash,Skill` and `mcp_servers: <none>`. Both are falsifiable, and were falsified:
 
-- **Outcome 1 — one explicit unattended mode, delivered by CLI `--settings`.** `--unattended` writes
-  a per-run profile to the evidence directory and passes it as `--settings` on every Claude hop, plus
-  `--tools Bash,Skill`, `--strict-mcp-config`, `--no-session-persistence`, the base denies and
-  `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1`.
-- **Outcome 2 — fails closed before launch.** Exit `31` on a non-Darwin host, an unresolvable binary,
-  claude below `2.1.219`, or an unreadable version string. "Cannot tell" and "too old" are refused in
-  different words, because folding them together is how a gate starts lying.
-- **Outcome 3 — attended and courier launches unchanged.** Asserted directly: no `--settings`,
-  `--tools`, `--strict-mcp-config`, `--no-session-persistence`, no profile file and no credential
-  scrub without the flag.
-- **Outcome 4 — effective policy measured from inside a dispatcher-launched child: 18/0.** Network
-  refused, write outside the checkout refused, home read refused, `git push` denied before execution,
-  repository readable, `~/.gitconfig` readable but `~/.config` still refused, `gh auth token`
-  blocked, sentinel cloud credential scrubbed, tools `Bash, Skill`, no MCP, and a repository-declared
-  `SessionStart` hook that never fired — measured by its absent marker file, not reported.
-- **Outcome 5 — reconciled, after everything passed.** Plan (1d row, blocker table 3→2, suite count,
-  the `DO NOT RUN` note), spike `README.md`, and `SKILL.md`'s *Unattended runs* section now agree on
-  what is built, what is proven, and what remains blocked.
+- The fixture now declares a project-scope MCP server in `.mcp.json`, so an empty `mcp_servers` is a
+  refusal of something that was there to find rather than a fact about an empty directory.
+- A **control run** — same binary, same host, **without** `--tools` and `--strict-mcp-config`,
+  stopped at the init event by SIGPIPE before any turn completes — reads **27 tools and 1 MCP
+  server**. The fields vary with the flags. Without this the assertion would be a constant.
+- In the simulated suite, **case 32n** builds a dispatcher regressed to `--output-format json` and
+  asserts case 32's three new argv checks go red on it. That case exists because the matched red pair
+  cannot reach them: the pre-1d dispatcher has no `--unattended`, so everything under it is skipped —
+  the same gap that produced case 32m.
 
-**The Git exception, and why it is one file.** `denyRead: ["~/"]` also blocked `~/.gitconfig`, which
-Git reads every invocation, so the child's Git exited 128 *before touching the repository*. Check 6b
-established the repository was reachable and config discovery was the only obstacle. The zero-read
-alternative (`GIT_CONFIG_GLOBAL=/dev/null`) was rejected on evidence, not preference: the identity
-lives only in the global config here, so that child could not commit, and core § 4 has Claude commit
-every hop. Per the operator's decision, `allowRead` carries `~/.gitconfig` and nothing else —
-`~/.config/git/config` proved unnecessary (`PROBE_REPO_6B_SKIPPED`).
+The child's own `PROBE_TOOLS:` and `PROBE_MCP_NONE` lines are still collected, still agree, and are
+now printed as `NOTE` and **counted nowhere**.
 
-**The exception is guarded at both ends**, because "Git works now" is equally true of a profile that
-re-opened all of home. Live: `~/.gitconfig` readable **and** `~/.config` refused. Simulated: no `~/`,
-`~`, `~/.config`, `~/*`, `~/.*` or `$HOME` entry in `allowRead`, the broad `denyRead` still present,
-and exactly three `allowRead` entries.
+**Finding 2 — resolved; all three evidence paths.** The lock assertion recomputes the dispatcher's
+own key (canonical checkout + task, sha256, first 16 chars) and checks the real path. The dispatcher's
+exit status is asserted `0` rather than recorded. Assertion and cleanup output is buffered and the
+raw capture assembled at the end, so it now carries the verdicts and the final count. The attended
+live probe was rerun in full.
 
-**Residual risk, measured rather than reasoned.** `~/.gitconfig` also names credential helpers, so
-the child can read that a GitHub credential path is configured. It obtained **no** token — `gh` keeps
-its credentials under the still-denied `~/.config/gh/` — and `PROBE_GH_TOKEN_BLOCKED` is the
-observation, not the inference. **If a real secret is ever put in `~/.gitconfig`, this exception
-stops being safe**, recorded at the exception in `dispatch.sh` and not only here.
+**Finding 3 — resolved, and replaced rather than deferred.** Plan: the 1d body now says the third
+step is done and how, the status table's Phase 3 row records 3c/3d as rewritten, and the sequence
+line no longer calls 1d blocking. **3c** now lists what the sandbox and permission layer actually
+refuse; **3d** lists what they still do not cover, with settings-scope merging named as the residual
+that stays open. README: the walk-away notice names exactly two blockers (1a, 1f), the worked command
+carries `--unattended`, and the risk envelope was rewritten with the prevented set moved to the left
+column and the Claude-process and settings-scope limits kept explicit. `SKILL.md` § *Unattended runs*
+gains one sentence on where the effective policy is readable. Phase 2 stays forbidden throughout.
+
+**Finding 4 — resolved by reporting the current pair exactly.** See Evidence.
 
 Evidence:
 
-- **Simulated suite — RED before, GREEN after, matched pair on the same test file.**
-  `bash dispatch.test.sh` → **273 pass, 0 fail**. The same file against the pre-change dispatcher
-  recovered from `git show HEAD:…/dispatch.sh` → **212 pass, 22 fail**.
-- **The red pair does not cover the minimality guards, and case 32m exists because of that.**
-  Those assertions sit inside a "a profile was written" branch, so against a dispatcher that writes
-  no profile they never execute — the red count stayed 22 while the green pass count rose. An
-  assertion that does not run in the red half is not shown capable of failing by it (core § 6
-  rule 5). Case 32m builds a real profile from the dispatcher, widens it four ways — the whole home
-  tree, a config directory, an extra fourth entry, and the broad `denyRead` removed — and asserts the
-  guards fire on each, with the shipping profile as a positive control that they stay silent on.
-  The fourth-entry case is the one no named pattern would have caught, which is why the entry-count
-  assertion sits beside the pattern list.
-- **Live, through the dispatcher** — `runs/probes/unattended-effective-policy.sh`, recorded in
-  `runs/probe-unattended-integration-2026-08-07.md`, raw capture in
-  `runs/probes/unattended-effective-policy-2026-08-07.raw.txt`. The child is launched by
-  `dispatch.sh --unattended`, not by a profile assembled around it. Observed **from inside the
-  child**: network refused, write outside the checkout denied, home read denied, `git push` denied
-  before execution, sentinel cloud credential scrubbed from the subprocess, tools `Bash, Skill`,
-  no MCP. A repository-declared `SessionStart` hook **never fired** — measured by the absence of the
-  marker file it would have written, not reported by the model.
-- **The markers come from a results file the child writes, and from nothing else.** Not the state
-  file, not the transcript, not the dispatcher log. That separation is the fix for a real defect
-  below, not fastidiousness.
-- **Cleanup asserted, not assumed:** out-of-checkout read target intact, no out-of-checkout file
-  created, no lock left, no process left.
-- **Commit: `9c66f26`.** Required evidence 7 asks for the commit identifier *in this file*, which a
-  single commit cannot contain — the id does not exist until the commit is made. Recorded here in a
-  follow-up commit rather than left out or approximated.
+- **Simulated suite, current matched pair on the same current test file:** green **284 pass, 0 fail**
+  against the shipping dispatcher; red **216 pass, 24 fail** against the pre-1d dispatcher recovered
+  from `22fedf8`. Case 32n supplies the twenty-fourth failure — its mutant cannot be built from a
+  dispatcher that has no `stream-json` line to revert.
+- **The `212/23` figure is reported separately and belongs to the pre-correction test file**, run
+  today against the same `22fedf8` dispatcher. It is not the same file as the pair above, and is not
+  described as one.
+- **Live, attended, through the dispatcher:** `runs/probes/unattended-effective-policy.sh` →
+  **21 pass, 0 fail**, dispatcher exit `0`. Raw capture
+  `runs/probes/unattended-effective-policy-2026-08-07.raw.txt`, which now contains the assertion and
+  cleanup verdicts and the `pass=21 fail=0` line itself. Record updated:
+  `runs/probe-unattended-integration-2026-08-07.md`.
+- **Every containment result from the earlier run held on the rerun** — network refused, write
+  outside the checkout refused, home read refused, push denied before execution, `~/.gitconfig`
+  readable while `~/.config` stayed refused, `gh auth token` blocked, sentinel credential scrubbed,
+  `SessionStart` hook never fired. The count moved 18 → 21 because three fail-capable assertions were
+  added, not because anything was rescored.
 
-**Two defects in this unit's own probe, found by running it and reported rather than smoothed over.**
+Deferrals — newly noticed during this correction, recorded and not implemented:
 
-1. **The evidence surface contained the question.** The first version searched the whole state file
-   for markers — and the brief inside it names *both* markers of every check as instructions. It
-   matched the question as though it were the answer and reported **seven confident containment
-   failures on a run in which no check had executed**. A probe whose evidence surface includes its
-   own prompt cannot fail honestly.
-2. **The fixture brief was misclassified, and the contained child caught it.** Labelled
-   *Implementation mode* while its completion condition asked only for evidence and a hand-back —
-   Discovery, by core § 3. The child applied the mode rule, refused to start, and handed back
-   correctly. That is a result in its own right: **the loop's own safety rules operate inside the
-   contained profile**, on a real defect, with no built-in file tools available.
-
-Deferrals — noticed, not done:
-
-- **Phase 3 items 3c and 3d** are re-opened by 1d and describe a pre-sandbox world. They wait on the
-  operator decision below, since what "stays forbidden" depends on how it is settled.
-- **The plan's 1d row and `SKILL.md`'s contained-launch guidance** are unwritten, by instruction.
-- **Scope merging remains untested.** Array keys such as `allowRead` merge across settings scopes, so
-  this run measured the containment *this host* produces. Another checkout is not covered.
+- **The declared sandbox write policy does not read like the enforced one.** The child reported that
+  the policy shown to it lists `**` among write-allowed paths, yet its write outside the checkout was
+  refused. Enforcement is the stricter of the two, so the containment result is the safe one — but
+  the *description* cannot be used to predict behaviour, which matters for anyone reasoning about the
+  profile without running it. Not investigated here: it is outside the four frozen findings.
+- **A refusal cannot be double-checked from inside the child.** Confirming no file was created at the
+  denied path requires reading that path, which is itself denied. The probe checks it from outside
+  and it held; the asymmetry is worth knowing when writing future in-child checks.
+- **The marker vocabulary does not distinguish a sandbox refusal from a permission-layer refusal.**
+  `PROBE_PUSH_DENIED` and `PROBE_NET_REFUSED` come from different layers and read the same.
+- **Scope merging remains untested and open.** Array keys such as `allowRead` merge across settings
+  scopes, so this measured the containment *this host* produces. Closing it needs managed settings,
+  which no dispatcher can set for itself. Carried forward, not new.
 
 ## Blocker
 None.
 
-*Resolved during this unit, kept because it is the reason 1d nearly did not clear:* the settled
-profile contained the child and also stopped it using Git — a property of the ratified profile, not
-a wiring defect, and one only a live child could find. Settled by operator decision on 2026-08-07
-and implemented as the one-file exception above.
-
 ## Next action
-Codex: assess this unit. The two questions are whether the five required outcomes are met, and
-whether the Git exception is genuinely minimal rather than merely working.
+Codex: run the closure check on the four frozen findings only — are 1, 2, 3 and 4 resolved, and did
+the correction break anything? The specific things to look at, since each finding changed a different
+surface:
 
-Specifically worth checking rather than taking on trust:
+1. Whether `system/init` in the hop capture, plus the control run and case 32n, is evidence the brief
+   would accept for the tool roster and MCP absence — and whether moving unattended hops to
+   `--output-format stream-json` broke anything attended (case 32j asserts not).
+2. Whether the lock path, the dispatcher-exit assertion and the end-written raw capture close the
+   evidence gaps, on the rerun rather than on the old run.
+3. Whether plan, README and `SKILL.md` now agree, name exactly two blockers, keep Phase 2 forbidden,
+   and whether 3c/3d were genuinely replaced rather than restated.
+4. Whether the counts are reported exactly: **284/0** green, **216/24** red on the current file, with
+   `212/23` attributed to the pre-correction file.
 
-- The exception is **one file**, not a tree — `allowRead` holds exactly three entries and no widening
-  form, and `~/.config` is refused live. Both halves are asserted; a profile that re-opened all of
-  home would satisfy "Git works" alone.
-- The documentation reconciliation is **not ahead of the evidence**: plan, README and `SKILL.md` say
-  1d is complete and the blocker count is two, and nothing in them claims a walk-away pilot, Phase 2
-  readiness, or reliability from one attended run on one host.
-- The three probe defects are recorded as defects, not smoothed away, and the probe's evidence
-  surface can still fail.
-
-Deferrals for a later unit, recorded and not done: Phase 3 items **3c** and **3d** are re-opened by
-1d and describe a pre-sandbox world — they are now unblocked and should be rewritten against the
-contained profile. **Scope merging across settings scopes remains untested**; closing it needs
-managed settings the dispatcher cannot set.
-
-Do not begin Phase 2, 1a or 1f. Nothing was approved, adopted, installed or pushed.
+Anything newly noticed at this check is a deferral, not a second correction round (core § 3).

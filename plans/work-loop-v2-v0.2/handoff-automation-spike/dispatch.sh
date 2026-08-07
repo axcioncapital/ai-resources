@@ -1103,9 +1103,29 @@ launch_actor() { # actor, hop, effective-timeout -> exit status of the launch
         # this flag may narrow the profile further, never widen it.
         local -a u_deny=("${UNATTENDED_BASE_DENY[@]}")
         [ "${#CLAUDE_DENY[@]}" -gt 0 ] && u_deny+=("${CLAUDE_DENY[@]}")
-        say "  cmd: claude -p '/work-loop-v2 $TASK' --output-format json --settings <profile> --tools Bash,Skill --strict-mcp-config --no-session-persistence --disallowedTools ${u_deny[*]} (cwd=<checkout>, CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1)"
+        # stream-json rather than json, and ONLY on this path.
+        #
+        # The stream's first event is the product's own `system/init`, which
+        # states the tool roster and the MCP servers the runtime ACTUALLY
+        # resolved. That is the one surface on which "only Bash and Skill are
+        # exposed" and "no MCP is loaded" can be checked as effective behaviour
+        # rather than taken from the argv we asked for or from the child's own
+        # prose — and both of those were scored as passes here until Codex's
+        # 2026-08-07 assessment caught it.
+        #
+        # Nothing is lost: the stream's final `result` event is byte-identical
+        # to what --output-format json produced, so this is a superset of the
+        # previous capture, not a different one. --verbose is required for
+        # stream-json under --print.
+        #
+        # Attended and courier hops keep --output-format json. The extra volume
+        # is the price of an auditable roster, and it is only worth paying where
+        # nobody is watching.
+        say "  cmd: claude -p '/work-loop-v2 $TASK' --output-format stream-json --verbose --settings <profile> --tools Bash,Skill --strict-mcp-config --no-session-persistence --disallowedTools ${u_deny[*]} (cwd=<checkout>, CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1)"
+        say "  note: the hop capture's system/init event records the EFFECTIVE tool roster and MCP servers; this log records only what was REQUESTED"
         CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1 \
-        run_bounded "$limit" "$out" "$cb" -p "/work-loop-v2 $TASK" --output-format json \
+        run_bounded "$limit" "$out" "$cb" -p "/work-loop-v2 $TASK" \
+          --output-format stream-json --verbose \
           --settings "$UNATTENDED_SETTINGS" \
           --tools 'Bash,Skill' \
           --strict-mcp-config \

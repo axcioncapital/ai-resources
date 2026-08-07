@@ -191,7 +191,16 @@ What the child gets:
 | `--strict-mcp-config` with no config — no MCP tools | CLI |
 | `--disallowedTools` for push (both rule spellings), `WebFetch`, `WebSearch`, `mcp__*` | CLI |
 | `--no-session-persistence` | CLI |
+| `--output-format stream-json --verbose` — so the hop capture opens with the product's `system/init` event, stating the **effective** tool roster and MCP servers | CLI |
 | `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1` — credentials stripped from subprocesses | environment |
+
+**Why the output format differs from an attended hop.** Everything else in that table is a request:
+the run log can only say what was *asked for*. `system/init` is the runtime's answer, and it is the
+one place a silently-dropped `--tools` or `--strict-mcp-config` would show. The stream's final
+`result` event is identical to what `--output-format json` produces, so this capture is a superset of
+the attended one, not a different thing. Attended and courier hops keep `json` (case 32j). Added
+2026-08-07, after a Codex assessment found the live probe scoring the child's own account of its
+tools as though it were a measurement.
 
 **Delivered by CLI `--settings` on every hop, never by a repository settings file.** That is a
 correctness requirement, not a preference: `sandbox.network.strictAllowlist` has **no effect** from
@@ -239,10 +248,12 @@ costs a real model call and is deliberately not part of `dispatch.test.sh`.
 >
 > Containment was measured from inside a child that **the dispatcher launched**, not from a profile
 > assembled around it. Every check holds: network refused, write outside the checkout refused, home
-> read refused, `git push` denied before execution, credentials scrubbed from subprocesses, tools
-> `Bash, Skill` only, no MCP, and a repository-declared `SessionStart` hook that never fired. Git
-> works. Final run **18 pass, 0 fail**. Record:
-> `runs/probe-unattended-integration-2026-08-07.md`.
+> read refused, `git push` denied before execution, credentials scrubbed from subprocesses, and a
+> repository-declared `SessionStart` hook that never fired. The **effective** tool roster reads
+> `Bash,Skill` and **no MCP server loaded** — taken from the hop's own `system/init` event, with a
+> control on the same host reading 27 tools and a loaded server once the flags are removed, so the
+> two are measurements rather than the child's account of itself. Git works. Final run
+> **21 pass, 0 fail**. Record: `runs/probe-unattended-integration-2026-08-07.md`.
 >
 > **One named exception exists inside the denied home tree, and it is one file.** `denyRead: ["~/"]`
 > also blocks `~/.gitconfig`, which Git reads on every invocation — the child's Git exited 128
@@ -307,17 +318,20 @@ bash dispatch.sh \
 
 > # ⛔ DO NOT RUN — 2026-08-07
 >
-> **This is a worked example of a shape that is not cleared for use.** Three Phase 2 blockers stand
-> between it and a real walk-away run (full list: `unattended-operation-plan-v0.2.md`, status block).
-> Two of them change how *this very command* behaves:
+> **This is a worked example of a shape that is not cleared for use.** **Two** Phase 2 blockers stand
+> between it and a real walk-away run (full list: `unattended-operation-plan-v0.2.md`, status block):
 >
-> 1. **The contained profile is not wired in.** Nothing below restricts the child. The run has an
->    open network and full file authority, whatever the settled 1d policy says.
-> 2. **The stop (step 3) reaches a process group, not a tree.** A descendant that calls `setsid`
->    survives `kill`, after you believe the run is stopped.
+> 1. **The stop (step 3) reaches a process group, not a tree.** A descendant that calls `setsid`
+>    survives `kill`, after you believe the run is stopped. This one changes how *this very command*
+>    behaves.
+> 2. **Branch/isolation unproven** — what step 1 below is *supposed* to guarantee, never demonstrated
+>    in a live run.
 >
-> The third, **branch/isolation unproven**, is what step 1 below is *supposed* to guarantee and has
-> never been demonstrated in a live run.
+> **The contained profile is no longer among them.** It was the first blocker here until 2026-08-07;
+> `--unattended` is built, and its effective policy was measured from inside a child this dispatcher
+> launched (`runs/probe-unattended-integration-2026-08-07.md`). It is in the command below because a
+> walk-away run without it is the shape nobody approved. What it does **not** cover: it contains what
+> Claude *runs*, not the Claude process itself, and another settings scope on the host can widen it.
 >
 > **The launch shape below has been corrected and is no longer a blocker.** Phase 0 proved the
 > supervised terminal under `caffeinate -i`; it disproved the detached `… &` form, which a Codex
@@ -354,6 +368,7 @@ git -C "$REPO" checkout -b "work-loop/$TASK"
 caffeinate -i bash dispatch.sh \
   --checkout "$REPO" \
   --task "$TASK" \
+  --unattended \
   --max-hops 12 \
   --timeout 900 \
   --deadline 2400 \
@@ -376,6 +391,13 @@ Two cautions on step 4, both measured rather than assumed. First: from inside a 
 ordinary terminal when you need a real one. Second: a `28` stop reaches the actor's process *group*,
 so a descendant that called `setsid` is still running afterwards.
 
+- **`--unattended` is not optional in this shape.** It is what gives the child less authority than an
+  attended one: OS sandbox, empty network allowlist, `Bash` and `Skill` only, no MCP, no hooks, no
+  push, credentials stripped from subprocesses. It fails closed (exit `31`) rather than running
+  uncontained. Run `--dry-run --unattended` first — it is a real preflight and writes the profile the
+  live run would use. Note that unattended hops capture `--output-format stream-json`, so each hop's
+  `.out` opens with the product's own `system/init` event: that is where the **effective** tool
+  roster and MCP list are, as opposed to the requested ones in the run log.
 - **`--deadline 2400`** is the forty minutes. `--max-hops 12` is the secondary bound.
 - **`--allow-path` is a per-task input, not boilerplate.** `1c` checks what the actor *committed*
   against it, so it has to describe what this unit may legitimately change. Too narrow gives false
@@ -464,7 +486,7 @@ The suite builds throwaway sandbox checkouts under `TMPDIR` and removes them on 
 real repository. It ends with a summary line and exits `1` if any case failed:
 
 ```
-pass=273 fail=0  (all cases SIMULATED — no live product transport)
+pass=284 fail=0  (all cases SIMULATED — no live product transport)
 ```
 
 > **This count drifts, twice over now.** It read `pass=69` until 2026-08-06, when the suite actually
@@ -472,9 +494,12 @@ pass=273 fail=0  (all cases SIMULATED — no live product transport)
 > pre-`--carry-one` suite from `HEAD` returns **82**, and cases 23–26 brought it to **99**. The line
 > then sat at `99` while Phase 1 took the suite to **149** (commit `c8b2172`), the `--status`
 > three-state fix on 2026-08-07 added 22 to reach **171**, the pid-validation correction that
-> followed it added 27 more to reach **198**, and the 1d contained-profile integration the same day
-> added 75 to reach **273**. A hand-maintained count drifts silently every time; treat the number as
-> documentation and the run as the evidence.
+> followed it added 27 more to reach **198**, the 1d contained-profile integration the same day added
+> 75 to reach **273**, and the 1d correction later that day added 11 to reach **284**. A
+> hand-maintained count drifts silently every time; treat the number as documentation and the run as
+> the evidence. **The correction was itself an instance of the drift:** the red-pair figure recorded
+> alongside this one read `212/22` when the current test file actually returns `216/24` against the
+> pre-1d dispatcher — a stale count carried forward from an earlier version of the file.
 
 **Case 0 is the harness's own falsifiability proof:** it points the suite at an *absent* dispatcher
 and asserts that the suite fails. A harness that stays green with the thing under test removed is not
@@ -633,26 +658,30 @@ Three scripts exist for the two-worktree proof and are not used by the single-ch
 What actually contains a walk-away run, stated plainly because the operator reads this before
 leaving rather than after:
 
+**Read this table as describing a run launched with `--unattended`.** Without that flag the whole
+right-hand column is larger: the child has an open network and ordinary file authority, and the first
+three "prevented" rows drop back to detection. The table changed on 2026-08-07, when the contained
+profile was built and measured.
+
 | Contains it | Does **not** contain it |
 |---|---|
-| One task, one checkout, serial (the lock) | Anything outside the checkout — the filesystem at large |
-| Local commits on a branch off a clean tree | `main` is protected; the *network* is not |
-| A hard `--deadline`, plus `--max-hops` | Nothing bounds what a single hop *does* within its allowlist |
+| One task, one checkout, serial (the lock) | Anything outside the checkout — the filesystem at large is **denied by the sandbox**, but the *Claude process itself* runs outside that sandbox |
+| Local commits on a branch off a clean tree | `main` is protected. The **child's** network is closed by an empty strict allowlist; the model connection is not, and cannot be |
+| A hard `--deadline`, plus `--max-hops` | Nothing bounds what a single hop *does* within its allowlist and its sandbox |
 | Stop control that reaches the actor's process **group** (`28`) | **A descendant that leaves the group survives the stop** — anything that calls `setsid` outlives the run. Asserted, not assumed: case 27b. Also: an effect that landed before the signal — never retried, always inspected |
 | Allowlist on working tree (`18`/`24`) **and** commits (`30`) | Both are **detection, not prevention**. The change has happened; the run stops rather than compounding |
-| `--claude-deny 'Bash(git push:*)'` if the operator chooses it | Network access. Denying `WebFetch` sends the child to `curl` — measured, `runs/probe-unattended-authority-2026-08-07.md` |
+| **Prevented, not detected, under `--unattended`:** non-allowlisted network, writes outside the checkout, reads under `~/`, `git push`, MCP, hooks, built-in file tools, credentials reaching subprocesses | **The profile can be widened from another settings scope.** Array keys such as `allowRead` merge across scopes, and `strictAllowlist` is ignored entirely from a *repository* settings file — which is why the dispatcher delivers the profile by CLI `--settings`. Closing this needs managed settings, which no dispatcher can set for itself |
+| The version gate: below `2.1.219` there is no strict allowlist, so the run **refuses to start** (exit `31`) rather than running uncontained | **One named exception inside the denied home tree:** `~/.gitconfig`, because Git exits 128 before touching the repository without it. It names credential helpers; the child obtained no token, but **if a real secret is ever put in that file the exception stops being safe** |
 
-`git push` is otherwise held only by a CLAUDE.md rule — a model-side rule, which is weakest exactly
-when nobody is watching. `--claude-deny` is how that moves to the permission layer, for the
-unattended child alone, if the operator wants it there.
+`git push` is held at the permission layer under `--unattended`, and `--claude-deny` composes on top
+to narrow further. Without `--unattended` it is held only by a CLAUDE.md rule — a model-side rule,
+which is weakest exactly when nobody is watching.
 
-**This table describes the dispatcher as it is built today, and it is still accurate today.** The
-operator has since settled on a contained profile that would move three of these rows from the right
-column to the left — network access, writes outside the checkout, and push all become OS- or
-permission-enforced rather than merely detected (`runs/probe-contained-authority-2026-08-07.md`).
-**The dispatcher does not implement that profile yet.** Do not read the settled decision as a
-containment you currently have; until the unattended mode is built and live-tested, the table above
-is what a walk-away run actually gets.
+**What the left column rests on.** The simulated suite proves the dispatcher *requests* the profile
+(**284/0**; matched red pair **216/24** against the pre-1d dispatcher `22fedf8`). The effective policy
+was measured **once, on one host**, from inside a child this dispatcher launched
+(`runs/probe-unattended-integration-2026-08-07.md`, **21/0**). That is a Phase 1 safety check, not a
+reliability claim and not the Phase 2 walk-away pilot — which has still never happened.
 
 ---
 
