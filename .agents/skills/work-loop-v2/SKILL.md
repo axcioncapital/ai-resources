@@ -36,6 +36,35 @@ Sending the operator to Claude when the turn is theirs stalls the loop as surely
 
 **The folder is core § 4's, not a choice.** Create `logs/work-loop/` if it does not exist. There is no fallback path — if you cannot write there, say so and stop.
 
+### The checkout a task lives in, and starting a new one
+
+**The task file's location is the binding.** The checkout holding `logs/work-loop/{task-id}.md` is the checkout that task lives in. Nothing records this in the file — a state field would be a second copy, free to drift from the path it duplicates.
+
+- **Verify before you create.** Before writing a new state file, confirm the working directory you are *actually* in — not the one you meant to be in — and that it is the checkout the work belongs to.
+- **Both actors verify at every handoff.** Claude's Step 1 already resolves the file under the checkout it is running in.
+- **A mismatch stops and goes to the operator** (core § 7). **Never copy the task file to another checkout as a repair.** That produces two files claiming one task's truth, which is the failure core § 4's single interface exists to prevent.
+
+**Isolation — the whole policy, applied where a new task or run starts:**
+
+| Situation | Default |
+|---|---|
+| Concurrent work in **different repositories** | Each uses its own local checkout. **No worktree.** |
+| Ordinary work in one repository, one writer | Local checkout. |
+| **Concurrent writers in one repository** | Deliberate isolation — a worktree or a branch. |
+| **Unattended run** | Isolation, on a branch off a clean tree (§ *Unattended runs*). |
+| **Genuinely large implementation** | Isolation. |
+
+A worktree is a cost, not a default. The table is the policy — do not build a decision procedure on top of it.
+
+**When a new Codex task starts at all.** Only where the thread has ended or must end: a fresh session, a compaction that lost the thread, or a deliberate hand-off. **Ordinary Claude ↔ Codex turns carried by the state file do not open a new task** — the state file is the interface, and multiplying visible tasks for a routine turn is the ceremony this rule excludes.
+
+- **Prefer a genuinely fresh task over a transcript-preserving fork.** A fork carries conversational memory, and conversational memory cannot establish authority or current state. A fresh task is forced to read the durable sources, which is the property wanted.
+- **Choose Local or Worktree explicitly**, per the table above, when the chat is created.
+- **Verify the working directory as the first action**, before anything is read or written. Do not infer it.
+- **Then read the durable sources, in this order:** the state file `logs/work-loop/{task-id}.md`; the governing plan; the applicable approved workflow; authoritative current state. Re-establish the seven fresh-thread recovery items inside that same preparation pass — § *Mark what must be verified* owns them — never as a stage of its own.
+
+**The existing-worktree fallback.** Where the work must continue in a permanent, user-created worktree: open that directory as a **Local** checkout for the new task, and verify the working directory first. Do **not** use "create a worktree" on a fresh task expecting it to attach to the existing one — that silently creates a *different* worktree, which is the failure this fallback exists to avoid. Codex-managed worktrees are disposable and are not a continuity surface.
+
 ### Courier mode — carrying the turn yourself
 
 Core § 4 *An approved courier may carry the turn* permits this and sets its limits. Read them there. This section is the approved courier and how you operate it. **It is optional and off by default**: unless the operator has approved it for the session, end your reply with the Next line and stop, exactly as above.
