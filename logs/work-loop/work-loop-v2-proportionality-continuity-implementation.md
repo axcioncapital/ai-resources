@@ -126,134 +126,89 @@ paths, weaken the accepted § 4.7 content, or claim P-4 from simulated evidence.
 
 ## Latest result
 
-Inspected (2026-08-07) — the four premises the brief requires before editing:
+Correction round — one frozen finding, reproduced first, then partly resolved and handed back as
+exactly that.
 
-- **Checkout: HOLDS** — `pwd -P` returned exactly
-  `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources`. The saved Local checkout, no
-  worktree created or entered at any point in this unit.
-- **State identity and turn: HOLDS** — `task:` matches the filename, `turn:` was `claude`, active
-  headings are core § 4's five plus `## Brief`, one file for the task.
-- **Target freshness: HOLDS** — `git status --porcelain` on `.agents/skills/work-loop-v2/SKILL.md`
-  was empty; the file stood at `520f98e` (S3), blob `1e482cfc`. It had not moved under another
-  writer since I last committed it.
-- **Concurrent ownership: HOLDS** — three tasks sit at `turn: claude`. This one;
-  `project-progression-candidate-review-correction`, whose close verdict confines it to its own state
-  file; and `work-loop-v2-escaped-descendant-termination`, which is actively editing `dispatch.sh`
-  and `dispatch.test.sh` in the tree and whose scope excludes "Work Loop core, skill or rule
-  changes". `work-loop-v2-intake-router` and `work-loop-v2-production-readiness-policy` are at
-  `turn: codex`. **No other writer owns the skill.** No dispatcher run is in flight.
+**Reproduced (2026-08-07), before anything was changed.** Re-inspected the retained treated-run
+capture from S4a's P-8. Its first four commands were:
 
-Result: plan § 4.7 is implemented in `.agents/skills/work-loop-v2/SKILL.md` § *The seam*, as one new
-subsection. 29 insertions, 0 deletions. Nothing else changed.
+```
+1. sed -n '1,240p' 'skills/work-loop-v2/SKILL.md'          (wrong path, failed probe)
+2. sed -n '1,280p' '.agents/skills/work-loop-v2/SKILL.md'
+3. sed -n '281,620p' '.agents/skills/work-loop-v2/SKILL.md'
+4. pwd  &&  rg --files -g 'plans/**' -g 'logs/work-loop/**' …
+```
 
-**Old text — what was there.** § *The seam* ended at: "**The folder is core § 4's, not a choice.**
-Create `logs/work-loop/` if it does not exist. There is no fallback path — if you cannot write there,
-say so and stop." The section said nothing about which checkout a task belongs to, nothing about
-isolation, and nothing about when a new Codex task starts. Verified by the eight-phrase presence
-check returning MISSING for all eight before the edit.
+The finding holds exactly as frozen: three reads preceded `pwd`, and `pwd` arrived bundled inside the
+same command as the first project-file search. **Nothing was changed until this reproduced.**
 
-**New text — `### The checkout a task lives in, and starting a new one`**, inserted between that
-paragraph and § *Courier mode*. Its five parts, in the accepted plan's own terms:
+**The correction.** One block, six lines, at the very top of the skill body — the first thing in
+context the moment the body is read, ahead of every other instruction in the file:
 
-> "**The task file's location is the binding.** The checkout holding `logs/work-loop/{task-id}.md` is
-> the checkout that task lives in. Nothing records this in the file — a state field would be a second
-> copy, free to drift from the path it duplicates. … **Verify before you create** … confirm the
-> working directory you are *actually* in — not the one you meant to be in* … **Both actors verify at
-> every handoff** … **A mismatch stops and goes to the operator** (core § 7). **Never copy the task
-> file to another checkout as a repair.** That produces two files claiming one task's truth …
->
-> **Isolation — the whole policy** … {the five-row table, verbatim from § 4.7b} … A worktree is a
-> cost, not a default. The table is the policy — do not build a decision procedure on top of it.
->
-> **When a new Codex task starts at all.** Only where the thread has ended or must end … **Ordinary
-> Claude ↔ Codex turns carried by the state file do not open a new task** … **Prefer a genuinely
-> fresh task over a transcript-preserving fork** … **Choose Local or Worktree explicitly** … **Verify
-> the working directory as the first action** … **Then read the durable sources, in this order:** the
-> state file …; the governing plan; the applicable approved workflow; authoritative current state.
-> Re-establish the seven fresh-thread recovery items inside that same preparation pass — § *Mark what
-> must be verified* owns them — never as a stage of its own.
->
-> **The existing-worktree fallback.** … open that directory as a **Local** checkout … Do **not** use
-> 'create a worktree' on a fresh task expecting it to attach to the existing one … Codex-managed
-> worktrees are disposable and are not a continuity surface."
+> "**Run `pwd` now, on its own, before you read anything else in this repository.** Not bundled with
+> a search or a listing — one command, one answer. The directory you are *actually* in decides which
+> tasks exist and which checkout a state file would be written into, and § *The checkout a task lives
+> in* owns why that matters. Verifying costs one command. Discovering it late costs a task file
+> written into the wrong checkout, which no later step can undo cleanly."
 
-**Why there is no automated test for this.** These are English continuity instructions for another
-model. No check can decide whether "verify the working directory you are actually in" is correctly
-worded; it can only confirm the sentence exists, which is a grep for words this brief supplied. The
-behavioural proof is P-8 below, and P-4 — which is the proof for the checkout-binding half — is
-deliberately unexecuted.
+It is an action plus a pointer to the section that owns the policy — not a second copy of § 4.7.
 
-**The verification questions, answered against the committed file.**
+**The new treated run — what actually changed, and what did not.** A genuinely fresh `codex exec`
+process, same one-line request ("Continue this project."), same read-only sandbox, same checkout:
 
-1. All three § 4.7 parts are present — checkout binding, isolation, fresh-task handoff — and were
-   absent before. No new state field: `grep -cE '^(checkout|worktree|isolation)[[:space:]]*:'`
-   returns **0**. No decision procedure was added beside the table.
-2. Yes — binding by file location, actual-cwd verification before creation and at every handoff,
-   mismatch-stops-to-operator, and the explicit no-copy rule.
-3. All five situations and their defaults are preserved verbatim, and Local remains the default for
-   ordinary one-writer work. A worktree is named a cost.
-4. Yes — the three genuine start conditions are distinguished from routine state-file turns, fresh is
-   preferred over fork, the four durable-source classes are ordered, the seven recovery items are
-   recovered in the same pass **by pointer** to the section that owns them rather than a second copy,
-   and the fallback is preserved.
-5. See P-8 — with one part not met, reported below rather than smoothed over.
-6. S1–S3 are intact and unrestated. Verified by fixed-string presence: the S1 activation description,
-   the S1 routing-step-3 core read, the S3 verification division and the S3 negative sentence are all
-   **INTACT**. The harness is unchanged at **292 passed, 3 failed** — the same three as before this
-   unit.
-
-**P-8 — fresh-task recovery, with its memory-only control.** Two genuinely fresh `codex exec`
-processes from this saved Local checkout, read-only sandbox, same one-line continuation request
-("Continue this project."). The control adds only: answer from this conversation alone, do not open
-any file.
-
-| | Commands run | What it produced |
+| | Before the correction | After |
 |---|---|---|
-| **Treated** | 13 | A full S4a execution brief naming the current slice, the five-row isolation table, the CE-9 recovery order, and the operator's do-not-create-a-worktree constraint |
-| **Control** | **0** | Refused: "I can't produce a reliable continuation brief from this conversation alone: it contains repository rules, but no project objective, current state, completed work, or proposed next unit. Inventing those would risk sending the project in the wrong direction." |
+| First command | `sed …SKILL.md` | `sed …SKILL.md` — **unchanged** |
+| `pwd` position | command 4 | command 4 |
+| `pwd` form | **bundled** with `rg --files …` | **`/bin/zsh -lc pwd`, alone** |
+| First durable-source read | the same bundled command 4 | command 5, **after** `pwd` |
 
-**The material difference is the whole point of the control.** The treated run named S3 as accepted
-and S4a as the open unit, and carried the operator's worktree constraint — facts present only in this
-state file and the governing plan, and absent from the request. The control could name none of them
-and said so. The two briefs are not indistinguishable, so the case proved something.
+**Resolved.** The two defects the finding names in its own words are gone. `pwd` now runs *on its
+own* — "bundling `pwd` first inside the fourth command" no longer describes what happens — and it now
+runs *before any durable source is read*, where previously the bundled command was itself the first
+durable-source read. Both are binary and read straight off the run capture.
 
-**The part of P-8 that was not met, stated plainly.** The brief requires recording that `pwd` was the
-first command before any read. It was not. The treated run's first three commands were reads of
-`SKILL.md` itself — the skill body loading, which happens before the model has read the instruction
-that governs it — and the fourth was `pwd rg --files …`, which puts `pwd` first inside a command that
-also lists files. So on the fairest reading the first action *after* the instruction was in context
-did begin with `pwd`; on the strict reading of "before anything is read", it did not. Both readings
-are given because the observation genuinely supports each, and it is Codex's to judge.
+**Not resolved, and I am not stretching the evidence to cover it.** `pwd` still does not precede
+reading the skill file. Commands 1–3 are still reads of `SKILL.md`.
 
-**Limits on P-8:** one observation per arm, headless `codex exec` rather than the Codex app, and the
-treated run wrote nothing because the sandbox is read-only — so the binding rule that matters most,
-*verify before you create the state file*, was never exercised. Reading files is harmless; creating a
-task file in the wrong checkout is not, and that path has no evidence in this unit.
+**Why, structurally.** In `codex exec`, a repository skill's body is not in the model's context until
+the model fetches it with its own shell commands. So no instruction placed inside the body can
+govern the commands that fetch the body — by the time the top-of-file block is readable, the reads
+that fetched it have already happened. This is not a wording failure and more forceful wording will
+not move it. The pattern is identical in **every** fresh run observed across this task: S1's
+seven-shape activation matrix, both P-2 assessments, and both P-8 arms all open by reading
+`SKILL.md`.
 
-**P-4 is unexecuted, and is not simulated.** The accepted construction needs a real second checkout
-with `logs/work-loop/{task}.md` present in A while Codex operates in B. The operator's governing
-constraint is to stay in this saved Local checkout and neither create nor switch to a worktree, so
-the case cannot be built here. No worktree was created, no second checkout was used, no state file
-was copied, and no directory was faked to stand in for one. **The checkout-binding half of § 4.7
-therefore ships with its instruction written and its proof outstanding** — that is the truthful
-position, and routing the remaining proof is Codex's move.
+**What would close it, and why neither is mine to do in this round.** Exactly two surfaces load
+before the skill body:
 
-**Changed paths:** `.agents/skills/work-loop-v2/SKILL.md` and this state file. Nothing else was
-touched or staged. `dispatch.sh`, `dispatch.test.sh` and their run log are dirty in the tree from the
-concurrent escaped-descendant task; `logs/friction-log.md` is written by a `PostToolUse` hook. None
-is mine and none is staged.
+1. **The frontmatter `description`** — the only part of `SKILL.md` read at startup. It is S1's
+   accepted, closed content, and this correction is expressly forbidden from altering S1–S3
+   behaviour. Verified untouched: the diff contains **0** changed `description:` lines.
+2. **`AGENTS.md`** — read at session start, before any skill fires. It is an S6 target and outside
+   this round's allowed paths.
 
-**Pre-existing failures, reported and not repaired.** The same three as before this unit: two `3.1a`
-closed-set reds, and `ridx  the skill stays under its 340-line ceiling`. S4a adds 29 lines, taking
-the skill to **423** — the gap is now 83 lines. The verdict was already red and does not change, but
-this is the third consecutive unit to widen it, which strengthens rather than weakens the case for
-the deferral below.
+Either would work. Both are Codex's to route or the operator's to authorise, and neither may be taken
+inside a frozen correction round.
 
-**Deferrals carried forward, none implemented.**
+**The durable-source property still holds.** The new treated run carried material facts available
+only in the durable sources — it named the escaped-descendant task's `325/0` regression result and
+its governing plan path, neither of which is in the one-line request. That is the P-8 property the
+finding did not dispute, re-established on the corrected file rather than assumed to survive.
 
-1. An ordinary unnamed request still activates **Work Loop v1**. Outside this plan's targets.
-2. The `ridx` 340-line ceiling. Now exceeded by 83 lines. It needs its own decision — re-base the
-   guard or trim the skill — and it is not S4a's to make.
+**The correction altered nothing else, verified by fixed-string check.** All six § 4.7 anchors are
+INTACT; S1's activation description, S1's routing-step-3 core read, S3's verification division and
+S3's negative sentence are INTACT. The diff is **6 insertions, 0 deletions** in `SKILL.md`. The
+harness is unchanged at **292 passed, 3 failed** — the same three pre-existing failures. Nothing
+newly noticed was implemented.
+
+**P-4 remains unexecuted and unsimulated.** No worktree was created or entered, no second checkout
+used, no directory faked. Unchanged by this round.
+
+**Changed paths:** `.agents/skills/work-loop-v2/SKILL.md` and this state file.
+
+**Deferrals carried forward, none implemented.** (1) An ordinary unnamed request still activates Work
+Loop v1. (2) The `ridx` 340-line ceiling, now exceeded by 89 lines — this round added 6.
 
 ## Blocker
 
@@ -263,10 +218,24 @@ can be fully closed.
 
 ## Next action
 
-Codex: assess S4a. Three judgments are yours. First, whether the § 4.7 instruction change is complete
-as written, given that its behavioural proof is split. Second, how to route the outstanding P-4: it
-needs a real second checkout, which the operator's current constraint forbids here, so it is either
-an operator decision to lift that constraint, a later unit, or an accepted limitation on S4. Third,
-whether P-8's `pwd`-first observation counts as met — the first action after the instruction was in
-context did begin with `pwd`, but it was bundled with a file listing, and the three commands before
-it were the skill body loading. Then close, continue to S5, or correct once.
+Codex: run the closure check on the frozen finding only — is it resolved, and did the correction
+break anything? It is **partly** resolved and reported as such: `pwd` now runs alone and ahead of
+every durable-source read, but it still cannot precede the reads that fetch the skill body, because
+no instruction inside that body can govern them. Closing the remainder needs either the frontmatter
+description (S1's accepted content) or `AGENTS.md` (an S6 target) — both outside this round. That is
+core § 3's menu decision, not a second correction round.
+
+Superseded frozen finding, retained for the closure check:
+
+1. **P-8 did not satisfy the unit's cwd-first condition.** The treated fresh task read
+   `.agents/skills/work-loop-v2/SKILL.md` in three commands before it ran `pwd`; bundling `pwd` first
+   inside the fourth command does not establish that the checkout was verified before anything was
+   read. This is the precise safety behavior the accepted plan and S4a completion condition require,
+   not a presentation detail. Correct the instruction's discoverability or placement so a genuinely
+   fresh `codex exec` process given only the same one-line continuation request runs `pwd` as its
+   first command, before reading the skill or any durable source, while still completing the
+   required full skill read afterwards. Demonstrate the correction with a new fail-capable treated
+   run that records the actual first command and still carries a material fact available only in the
+   durable sources. Check that the correction did not alter the accepted § 4.7 content or S1–S3
+   behavior. Stay inside the existing allowed paths. Do not execute or simulate P-4, create or
+   switch to a worktree, or broaden this correction to the stale line ceiling or any other finding.

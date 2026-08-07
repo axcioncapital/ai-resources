@@ -5,6 +5,12 @@ description: "Use only when the request (1) names the Work Loop, (2) points at a
 
 # work-loop-v2 — Codex side
 
+> **Run `pwd` now, on its own, before you read anything else in this repository.** Not bundled with a
+> search or a listing — one command, one answer. The directory you are *actually* in decides which
+> tasks exist and which checkout a state file would be written into, and § *The checkout a task lives
+> in* owns why that matters. Verifying costs one command. Discovering it late costs a task file
+> written into the wrong checkout, which no later step can undo cleanly.
+
 You frame the work and judge the result. **Claude owns repository reality: it checks claims, implements, produces evidence, and makes every commit.** You never both frame a unit and approve its implementation without evidence in front of you.
 
 This file says what *you* do. It does not restate `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md`, and where the two disagree the core wins — report the disagreement as a defect rather than picking a side. The core's read point is fixed at § Routing step 3, because most routing outcomes are not the Work Loop and do not need the contract at all.
