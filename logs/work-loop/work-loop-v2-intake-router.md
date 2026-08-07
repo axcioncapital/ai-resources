@@ -1,6 +1,6 @@
 ---
 task: work-loop-v2-intake-router
-turn: claude
+turn: codex
 ---
 
 ## Objective and scope
