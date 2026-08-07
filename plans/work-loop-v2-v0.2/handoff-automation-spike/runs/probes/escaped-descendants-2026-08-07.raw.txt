@@ -1,80 +1,107 @@
 ==================================================================
  Phase 1a probe — escaped descendants
- date:       2026-08-07 18:52:39 EEST
+ date:       2026-08-07 19:58:23 EEST
  host:       Darwin 25.5.0 arm64
  macOS:      26.5.2 (25F84)
  dispatcher: /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
- sha256:     09477c15ac70e1853464fbf01a94502b53ea7ec7df937c1a3e655f47f003f485
+ sha256:     6950177e045a201d453c9b0dfc36fdc5fa44d8e29e661c5ca5bdf1ada93325de
  python3:    /Library/Frameworks/Python.framework/Versions/3.14/bin/python3
  lsof:       /usr/sbin/lsof
 ==================================================================
 
 ### PART A — which handle reaches which escape shape?
 
-Three descendant shapes are started under one parent, which is itself a
+FOUR descendant shapes are started under one parent, which is itself a
 process-group leader, with stdout/stderr redirected to a file exactly as
-the dispatcher redirects a hop.
+the dispatcher redirects a hop, and with a PRIVATE MARKER file on fd 9
+exactly as the dispatcher now opens one per hop.
 
-parent pid=47787 pgid=47787
+The fourth shape is the one that decides Phase 1a: a conventional daemon
+that double-forks, leaves the session, and then CLOSES EVERY inherited
+descriptor. It keeps the working directory it inherited, which is the only
+thing left that still links it to the actor.
+
+parent pid=60077 pgid=60077
   PID  PPID  PGID
-47787 47770 47787
-47790 47787 47787
-47791 47787 47791
-47794     1 47793
+60077 60059 60077
+60080 60077 60077
+60081 60077 60081
+60086     1 60085
+60087     1 60084
 
-  in-group child      = 47790
-  setsid, parented    = 47791   (ppid 47787, own pgid 47791)
-  double-fork orphan  = 47794   (ppid 1, own pgid 47793, exec'd /bin/sleep)
+  in-group child      = 60080
+  setsid, parented    = 60081   (ppid 60077, own pgid 60081)
+  double-fork orphan  = 60087   (ppid 1, own pgid 60084, exec'd /bin/sleep)
+  detached daemon     = 60086   (ppid 1, own pgid 60085, closerange(0,1024) then exec'd /bin/sleep)
 
-handle                           in-group     setsid       orphan      
--------------------------------- ------------ ------------ ------------
-1 process group                  reaches      MISSES       MISSES      
-2 recursive PPID walk            reaches      reaches      MISSES      
-3 environment tag                MISSES       reaches      MISSES      
-4 inherited fd (lsof)            reaches      reaches      reaches     
+  open descriptors held by the daemon: []
 
-  raw: group=[ 47787 47790 47792 ] ancestry=[ 47790 47791 ] envtag=[ 47791 47841 ] fd=[ 47787 47790 47791 47794 ]
+handle                             in-group   setsid     orphan     daemon    
+---------------------------------- ---------- ---------- ---------- ----------
+1 process group                    reaches    MISSES     MISSES     MISSES    
+2 recursive PPID walk              reaches    reaches    MISSES     MISSES    
+3 environment tag                  MISSES     reaches    MISSES     MISSES    
+4 inherited fd, hop log            reaches    reaches    reaches    MISSES    
+5 inherited fd, MARKER             reaches    reaches    reaches    MISSES    
+6 inherited cwd                    reaches    reaches    reaches    reaches   
+
+  raw: group=[ 60077 60080 60082 60083 ] ancestry=[ 60080 60081 ] envtag=[ 60081 60148 ]
+       hoplog=[ 60077 60080 60081 60087 ] marker=[ 60077 60080 60081 60087 ] cwd=[ 60077 60080 60081 60086 60087 ]
+
+-- can handle 6 be used? an UNRELATED process sits in the same directory --
+   unrelated bystander pid   = 60190 (never touched the actor, the hop log or the marker)
+   handle 6 now returns        [ 60077 60080 60081 60086 60087 60190 ]
+   VERDICT: handle 6 REACHES THE BYSTANDER — unusable as a kill list.
+            and it still reaches the daemon, so the over-reach is not incidental.
 
 -- why handle 3 misses what it misses: SIP-protected platform binaries --
+runs/probes/escaped-descendants-2026-08-07.sh: line 223: 60190 Killed: 9               ( cd "$CWDDIR" && exec sleep 60 )
    /bin/sleep                                                     env NOT readable
    /bin/bash                                                      env NOT readable
    /Library/Frameworks/Python.framework/Versions/3.14/bin/python3 env READABLE
 
 -- handle rejected on availability: kqueue NOTE_TRACK --
    NOTE_TRACK: UNAVAILABLE — [Errno 45] Operation not supported
-escaped-descendants-2026-08-07.sh: line 174: 47872 Killed: 9               env "WLPROBE_TAG=$WLPROBE_ENVTAG" "$b" -c 'import time;time.sleep(20)' > /dev/null 2>&1
-escaped-descendants-2026-08-07.sh: line 177: 47787 Killed: 9               env "WLPROBE_TAG=$WLPROBE_ENVTAG" bash -c "$PARENT_SH" >> "$OUTFILE" 2>&1
+runs/probes/escaped-descendants-2026-08-07.sh: line 250: 60205 Killed: 9               env "WLPROBE_TAG=$WLPROBE_ENVTAG" "$b" -c 'import time;time.sleep(20)' > /dev/null 2>&1
+runs/probes/escaped-descendants-2026-08-07.sh: line 253: 60077 Killed: 9               env "WLPROBE_TAG=$WLPROBE_ENVTAG" bash -c "$PARENT_SH" >> "$OUTFILE" 2>&1
 
-  Part A processes cleaned: in-group=GONE setsid=GONE orphan=GONE
+  Part A processes cleaned: in-group=GONE setsid=GONE orphan=GONE daemon=GONE
 
 
 ### PART B — the real dispatcher's stop, observed as process state
 
 === BEFORE the stop ===
-dispatcher=47891 actor=47983 setsid-escapee=47985 orphan-escapee=47990
+dispatcher=60225 actor=60317 setsid-escapee=60319 orphan-escapee=60327 daemon=60326
+unrelated operator tail -f on the hop log = 60347  (log: /var/folders/cd/hdqdzkks7zb67xvd7pglm8ym0000gn/T//wl2-escape-probe.jvwjVP/checkout/runs/20260807T195829-escape-probe.hop1.claude.out)
   PID  PPID  PGID COMMAND
-47891 47770 47768 bash /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/plans/work-lo
-47983 47891 47983 sleep 300
-47985 47983 47985 /Library/Frameworks/Python.framework/Versions/3.14/Resources/Python.app/Contents/M
-47990     1 47989 sleep 300
-actor=ALIVE setsid=ALIVE orphan=ALIVE  lock present: yes
+60225 60059 60056 bash /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/plans/work-lo
+60317 60225 60317 sleep 300
+60319 60317 60319 /Library/Frameworks/Python.framework/Versions/3.14/Resources/Python.app/Contents/M
+60326     1 60325 sleep 300
+60327     1 60324 sleep 300
+actor=ALIVE setsid=ALIVE orphan=ALIVE daemon=ALIVE  lock present: yes
 
-=== sending SIGTERM to the dispatcher (47891), and to nothing else ===
-  +3s  dispatcher=ALIVE actor=GONE setsid-escapee=ALIVE orphan-escapee=GONE  lock: held
-  +8s  dispatcher=ALIVE actor=GONE setsid-escapee=GONE orphan-escapee=GONE  lock: held
-  +13s  dispatcher=GONE actor=GONE setsid-escapee=GONE orphan-escapee=GONE  lock: released
+=== sending SIGTERM to the dispatcher (60225), and to nothing else ===
+  +3s  dispatcher=ALIVE actor=GONE setsid=ALIVE orphan=GONE daemon=ALIVE  lock: held
+  +8s  dispatcher=ALIVE actor=GONE setsid=GONE orphan=GONE daemon=ALIVE  lock: held
+  +13s  dispatcher=GONE actor=GONE setsid=GONE orphan=GONE daemon=ALIVE  lock: released
 
 === AFTER: effective post-stop process state ===
   dispatcher exit code : 28   (28 = INTERRUPTED)
   actor                : GONE
   setsid escapee       : GONE   <- survived every group-only teardown before this unit
   double-fork orphan   : GONE   <- reachable by NO ancestry link
+  DETACHED DAEMON      : ALIVE   <- THE RESIDUAL: 1a is not closed while this is ALIVE
+  unrelated tail -f    : ALIVE   <- finding 3: must be ALIVE; the first round killed it
   lock                 : released
-  any pid still holding the hop output file: []
+  pinned?              : no
+  pids holding the PRIVATE marker: []
+  pids holding the PUBLIC hop log: [60347 ]  <- a bystander here is NOT a descendant
 
 === what the dispatcher SAID (for comparison with the state above) ===
   STOP [28] interrupted by SIGTERM during hop 1 (actor 'claude') — task escape-probe
-    terminating actor descendant tree (pgid 47983)
+    terminating actor descendant tree (pgid 60317)
     teardown verified: no descendant reachable by group, ancestry or inherited descriptor is still running
 
+runs/probes/escaped-descendants-2026-08-07.sh: line 378: 60347 Killed: 9               tail -f "$HOPLOG" > /dev/null 2>&1
 probe complete

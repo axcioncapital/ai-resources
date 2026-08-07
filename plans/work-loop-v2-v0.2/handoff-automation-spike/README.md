@@ -318,18 +318,24 @@ bash dispatch.sh \
 
 > # ⛔ DO NOT RUN — 2026-08-07
 >
-> **This is a worked example of a shape that is not cleared for use.** **One** Phase 2 blocker stands
+> **This is a worked example of a shape that is not cleared for use.** **Two** Phase 2 blockers stand
 > between it and a real walk-away run (full list: `unattended-operation-plan-v0.2.md`, status block):
 >
-> 1. **Branch/isolation unproven** — what step 1 below is *supposed* to guarantee, never demonstrated
+> 1. **A fully detached descendant survives the stop** — narrowed on 2026-08-07, not closed.
+> 2. **Branch/isolation unproven** — what step 1 below is *supposed* to guarantee, never demonstrated
 >    in a live run.
 >
-> **The stop is no longer among them.** Until 2026-08-07 the stop reached a process group and not a
-> tree, so a descendant that called `setsid` survived `kill` after you believed the run was stopped.
-> Teardown now clears the union of the process group, a recursive ancestry walk and the holders of the
-> hop's inherited output descriptor, and **verifies** that before releasing the lock
-> (`runs/probe-escaped-descendants-2026-08-07.md`). A descendant that *also* closes both inherited
-> descriptors still escapes; the dispatcher's success line is scoped accordingly.
+> **On blocker 1, what changed and what did not.** Until 2026-08-07 the stop reached a process group
+> and not a tree, so a descendant that called `setsid` survived `kill` after you believed the run was
+> stopped. Teardown now clears the union of the process group, a recursive ancestry walk and the
+> holders of a **private per-hop marker descriptor**, and **verifies** that before releasing the lock;
+> a sweep that cannot see says `UNVERIFIED`, and a stop that cannot account for the tree pins the lock
+> rather than admitting a second dispatcher. **But a conventional detached daemon — double fork,
+> `setsid`, then close every descriptor — still survives, observed alive after the dispatcher exited**
+> (`runs/probe-escaped-descendants-2026-08-07.md`). The only handle that reaches it is the inherited
+> working directory, and that also reaches unrelated processes in the same directory, so it cannot be
+> used as a kill list. This is a measured limit, and closing it needs a supervisor that tracks
+> descendants at creation time — a new subsystem, and an operator decision.
 >
 > **The contained profile is no longer among them either.** It was the first blocker here until 2026-08-07;
 > `--unattended` is built, and its effective policy was measured from inside a child this dispatcher
@@ -392,9 +398,11 @@ Two cautions on step 4, both measured rather than assumed. First: from inside a 
 `--status` cannot inspect the PID. It no longer calls that `STALE LOCK` — it answers
 `UNKNOWN — CANNOT INSPECT` and tells you the lock may still be live, confirmed live cross-sandbox on
 2026-08-07 — but `UNKNOWN` is still not an answer to *"is it still going?"*, so run step 4 from an
-ordinary terminal when you need a real one. Second: a `28` stop clears the actor's descendant tree
-and says so — read the `teardown verified:` line. If it instead prints a `WARNING:` naming survivors,
-those processes are still running and are yours to terminate by hand.
+ordinary terminal when you need a real one. Second: a `28` stop clears every descendant it can reach
+and says exactly which handles it checked — read the `teardown verified:` line, and note that its
+wording is scoped on purpose. If it instead prints a `WARNING:` naming survivors, or
+`teardown UNVERIFIED` with a reason, those processes may still be running and are yours to terminate
+by hand; the lock stays **pinned** until you do, and the next dispatcher is refused with exit `17`.
 
 - **`--unattended` is not optional in this shape.** It is what gives the child less authority than an
   attended one: OS sandbox, empty network allowlist, `Bash` and `Skill` only, no MCP, no hooks, no
@@ -407,8 +415,9 @@ those processes are still running and are yours to terminate by hand.
 - **`--allow-path` is a per-task input, not boilerplate.** `1c` checks what the actor *committed*
   against it, so it has to describe what this unit may legitimately change. Too narrow gives false
   stops; too wide and the check means nothing. Whoever writes the unit brief derives it.
-- **To stop the run:** `kill -TERM $(cat /tmp/walkaway.pid)`. The dispatcher terminates the actor's
-  process group and exits `28`. `--status` prints this same command back at you.
+- **To stop the run:** `kill -TERM $(cat /tmp/walkaway.pid)`. The dispatcher tears down the actor's
+  descendants across three handles, verifies the result, and exits `28`. If it cannot confirm the
+  tree is gone it pins the lock and says so. `--status` prints this same command back at you.
 - **Nobody opens the checkout while the run is live.** A branch shares the working directory and index
   with any other session in that checkout — see *Isolation* under Safety boundaries.
 
@@ -439,7 +448,7 @@ where the code's meaning actually differs.
 | `24` | `UNEXPECTED_EFFECT` | loop only | An actor changed paths outside the allowlist, or the Codex actor moved `HEAD`. |
 | `25` | `UNCOMMITTED_HANDBACK` | dry-run, loop | The state file is uncommitted where Claude should have committed it — either found that way at startup with `turn: codex`/`operator`, or left that way after a Claude hop. |
 | `26` | `MALFORMED_TERMINAL` | loop only | `turn: operator`, but the file is neither a core § 7 question (it has no `## Blocker` and no `## Next action`) nor a core § 4 closing record (its four headings, and nothing else, are not what survived). No actor is launched; the stop names a recoverable next action. |
-| `28` | `INTERRUPTED` | loop only | `SIGINT`/`SIGTERM`. The actor's **whole descendant tree** is terminated and **verified gone** before the lock is released and the run stops (see Safety boundaries for the one shape that still escapes). If a descendant could not be confirmed dead it is named in a `WARNING:` line — read that before treating the halt as clean. **Never retried** — the signal may have landed after an effect nobody observed, so the state file and `git status` are where the operator has to look. |
+| `28` | `INTERRUPTED` | loop only | `SIGINT`/`SIGTERM`. Every descendant reachable by the three handles is terminated and **verified gone** before the lock is released and the run stops — the success line names those handles rather than claiming the tree is empty (see Safety boundaries for the shape that still escapes, which is a live Phase 2 blocker). A descendant that could not be confirmed dead is named in a `WARNING:` line; a sweep that could not run at all prints `teardown UNVERIFIED` with the reason. In both cases the lock is **pinned**, not released. Read that before treating the halt as clean. **Never retried** — the signal may have landed after an effect nobody observed, so the state file and `git status` are where the operator has to look. |
 | `29` | `BUDGET_EXHAUSTED` | loop only | `--deadline` expired: either the loop refused to launch the next hop, or a running actor was terminated at the clock. **Not completion.** Resumable — the state file and Git are untouched by the stop — but never retried automatically. Worst-case overrun is `1s poll + 5s TERM→KILL grace + 2s KILL settle + verification census + reaping`, roughly 9s — not exact-to-the-second. It was ~6s before 2026-08-07; whole-tree teardown added the settle window and the census that confirms the tree is actually gone. |
 | `30` | `UNEXPECTED_COMMIT` | loop only | An actor **committed** paths outside the allowlist. Detection, not prevention: the commit already exists, and the value is stopping rather than compounding it over the rest of an unattended run. Distinct from `24`, which is the working-tree case, because the recovery differs — `24` is reverted from the working tree, `30` from history. |
 
@@ -637,25 +646,41 @@ Three scripts exist for the two-worktree proof and are not used by the single-ch
   Codex handoff, because Codex writes the file and never runs Git. An uncommitted file with
   `turn: codex` or `turn: operator` means a Claude hop died between editing and committing, and the
   run stops for inspection instead of relaunching over a partial edit.
-- **The run can be stopped, and the stop clears the actor's descendants.** `SIGINT`/`SIGTERM`
-  terminates the actor's whole descendant tree, **verifies** it is gone, releases the lock once, and
-  exits `28`. This was not true before 2026-08-07: the old handler released the lock without exiting,
-  so a stop attempt left the run going *and* admitted a second dispatcher onto the same state file.
-  Both the defect and the fix are OBSERVED — `runs/probe-interruption-2026-08-07.md`, with the probe
-  script and a before/after raw capture under `runs/probes/`.
+- **The run can be stopped, and the stop clears most of the actor's descendants — not all of them.**
+  `SIGINT`/`SIGTERM` terminates what the dispatcher can reach, **verifies** the result, releases the
+  lock once, and exits `28`. The lock part was not true before 2026-08-07: the old handler released
+  the lock without exiting, so a stop attempt left the run going *and* admitted a second dispatcher
+  onto the same state file. Both that defect and its fix are OBSERVED —
+  `runs/probe-interruption-2026-08-07.md`, with the probe script and a before/after raw capture under
+  `runs/probes/`.
   > **Three handles, because no single one reaches every escape** — measured, not assumed
   > (`runs/probe-escaped-descendants-2026-08-07.md`): the actor's **process group**, a **recursive
-  > ancestry walk**, and the holders of the **hop's inherited output descriptor**. The group alone
+  > ancestry walk**, and the holders of a **private per-hop marker descriptor**. The group alone
   > misses anything that calls `setsid(2)`; ancestry alone misses a double-forked orphan, whose parent
-  > link the kernel destroys before any stop happens. The inherited descriptor reaches both, and costs
-  > nothing new because every actor is already redirected to that file. Teardown TERMs, then KILLs,
-  > then **re-censuses to confirm** — it does not assume the signal worked.
+  > link the kernel destroys before any stop happens. The marker reaches both. Teardown TERMs, then
+  > KILLs, then **re-censuses to confirm** — it does not assume the signal worked.
   >
-  > **The residual, stated:** a descendant that *also* closes or redirects both inherited descriptors
-  > escapes all three handles and survives. A conventional daemon does exactly that. So the success
-  > line is scoped — *"no descendant reachable by group, ancestry or inherited descriptor"* — and
-  > `dispatch.test.sh` case 27h fails if that wording is ever widened. Narrower than what it replaced:
-  > one line of `setsid` used to be enough to escape.
+  > **Why a private marker rather than the hop log.** Both have the same reach, but the hop log is
+  > public: an operator may `tail -f` it while a run is in flight, and an earlier version of this
+  > teardown killed exactly that process. The marker `${hop}.tree` is opened just before the actor is
+  > backgrounded and closed in the dispatcher immediately after, so only the actor's tree holds it.
+  >
+  > **A sweep that cannot see says so.** Missing `lsof` or `pgrep`, a failing `ps`, a missing marker
+  > or an actor sharing the dispatcher's own process group all yield `teardown UNVERIFIED` with the
+  > reason — never a silent `teardown verified` on an empty census.
+  >
+  > **Survivors, or an unverifiable sweep, PIN THE LOCK.** The lock is deliberately not released, a
+  > `survivors` file inside it records what was left, the next dispatcher is refused with exit `17`,
+  > and `--status` reports `PINNED LOCK` rather than calling it stale. Clear it by hand once the pids
+  > are confirmed gone.
+  >
+  > **The residual, and it is still a Phase 2 blocker.** A descendant that double-forks, leaves the
+  > session **and** drops every inherited descriptor — a conventional daemon — escapes all three
+  > handles and survives, observed alive after the dispatcher exited. The only handle that reaches it
+  > is the inherited working directory, which also lists unrelated processes in the same directory, so
+  > it cannot be used to kill. `dispatch.test.sh` case 27h builds that shape, asserts it survives, and
+  > fails if the success wording is ever widened. Narrower than what it replaced — one line of
+  > `setsid` used to be enough to escape — but **not closed**.
   >
   > **Cost:** worst-case teardown ~6s → ~13s, and the `--deadline` overrun bound ~6s → ~9s.
 - **Isolation is a branch, and a branch is not a worktree.** The pilot runs on
@@ -683,7 +708,7 @@ profile was built and measured.
 | One task, one checkout, serial (the lock) | Anything outside the checkout — the filesystem at large is **denied by the sandbox**, but the *Claude process itself* runs outside that sandbox |
 | Local commits on a branch off a clean tree | `main` is protected. The **child's** network is closed by an empty strict allowlist; the model connection is not, and cannot be |
 | A hard `--deadline`, plus `--max-hops` | Nothing bounds what a single hop *does* within its allowlist and its sandbox |
-| Stop control that clears the actor's **descendant tree** and verifies it (`28`) — group, ancestry and inherited descriptor | **A descendant that also closes both inherited descriptors survives** — it is reachable by none of the three handles. Asserted, not assumed: case 27h, which also fails if the success wording is widened. Also: an effect that landed before the signal — never retried, always inspected |
+| Stop control that clears what it can reach and **verifies** it (`28`) — group, ancestry and a private per-hop descriptor; an unverifiable sweep says `UNVERIFIED` and **pins the lock** (`17`) rather than admitting a second dispatcher | **A fully detached daemon survives** — double fork, `setsid`, then every descriptor closed. Reachable by none of the three handles, and the one handle that would reach it also reaches unrelated processes. Asserted, not assumed: case 27h, which also fails if the success wording is widened. **Still a Phase 2 blocker.** Also: an effect that landed before the signal — never retried, always inspected |
 | Allowlist on working tree (`18`/`24`) **and** commits (`30`) | Both are **detection, not prevention**. The change has happened; the run stops rather than compounding |
 | **Prevented, not detected, under `--unattended`:** non-allowlisted network, writes outside the checkout, reads under `~/`, `git push`, MCP, hooks, built-in file tools, credentials reaching subprocesses | **The profile can be widened from another settings scope.** Array keys such as `allowRead` merge across scopes, and `strictAllowlist` is ignored entirely from a *repository* settings file — which is why the dispatcher delivers the profile by CLI `--settings`. Closing this needs managed settings, which no dispatcher can set for itself |
 | The version gate: below `2.1.219` there is no strict allowlist, so the run **refuses to start** (exit `31`) rather than running uncontained | **One named exception inside the denied home tree:** `~/.gitconfig`, because Git exits 128 before touching the repository without it. It names credential helpers; the child obtained no token, but **if a real secret is ever put in that file the exception stops being safe** |
@@ -693,7 +718,7 @@ to narrow further. Without `--unattended` it is held only by a CLAUDE.md rule �
 which is weakest exactly when nobody is watching.
 
 **What the left column rests on.** The simulated suite proves the dispatcher *requests* the profile
-(**284/0** as the suite stood at 1d's close, **309/0** since the 1a teardown work; matched red pair
+(**284/0** as the suite stood at 1d's close, **325/0** since the 1a teardown work; matched red pair
 **216/24** against the pre-1d dispatcher `22fedf8`). The effective policy
 was measured **once, on one host**, from inside a child this dispatcher launched
 (`runs/probe-unattended-integration-2026-08-07.md`, **21/0**). That is a Phase 1 safety check, not a

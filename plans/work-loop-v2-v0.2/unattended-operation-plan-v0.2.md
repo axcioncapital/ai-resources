@@ -8,48 +8,44 @@ Author: Claude. Revised after independent Codex review of v0.1.
 > | Item | State |
 > |---|---|
 > | **Phase 0** — attended launcher proof (0a nested launch, 0b detached checklist, 0c multi-hop) | **COMPLETE** — run by Codex, `runs/phase0-attended-launcher-proof-2026-08-07.md`. Nested launch works, but only *outside* the ordinary command sandbox. Direct detachment fails: a `nohup … &` launch from a Codex command is reaped before the dispatcher starts. **This selects the approved launch shape rather than blocking anything** — § 0b already named the supervised shell session as the fallback, and Phase 0 proved it. 0c was **an attended five-hop live run with no operator transport during the run**, closing correctly at `turn: operator` |
-> | **1a** stoppable run | **COMPLETE — built, measured, NOT blocking (2026-08-07).** Teardown now terminates the union of three handles — the actor's process group, a recursive ancestry walk, and the holders of the hop's inherited output descriptor — and then **verifies** the result before releasing the lock or exiting. The mechanism was chosen by measurement, not assumption (`runs/probe-escaped-descendants-2026-08-07.md`): the process group misses a `setsid` descendant, the ancestry walk misses a double-forked orphan whose link the kernel destroyed, an environment tag cannot read SIP-protected platform binaries (`/bin/sleep`, `/bin/bash`), and kqueue `NOTE_TRACK` returns `ENOTSUP` on this host. The inherited descriptor reaches all three shapes and costs nothing new — `launch_actor` already redirects every actor to the hop file. Covered on **every** controlled stop path: `SIGTERM` and `SIGINT` (asserted separately, not assumed to share routing), per-actor timeout (`21`), and deadline expiry (`29`). Simulated suite **309/0** (matched red pair **301/8**, the same current test file against the pre-unit dispatcher at `085db35`). Live-observed ordering: at +3s a TERM-resistant escapee was still alive and the lock was **still held**; the dispatcher released it only after every descendant was gone. **Residual, pinned by case 27h:** a descendant that also closes both inherited descriptors escapes all three handles and survives — so the success line is scoped to *"no descendant reachable by group, ancestry or inherited descriptor"* rather than claiming the tree is gone. **Disclosed cost:** worst-case teardown ~6s → ~13s, and the deadline's honest overrun bound ~6s → ~9s (`DEADLINE_CEILING` 11 → 14) |
+> | **1a** stoppable run | **NARROWED, NOT CLOSED — still blocking (2026-08-07, second round).** The reachable escape surface is much smaller and the stop's claims are now honest, but **full-descendant termination was not achieved and 1a is not complete.** *What was built:* teardown terminates the union of three handles — the actor's process group, a recursive ancestry walk, and the holders of a **private per-hop marker descriptor** — and **verifies** the result before releasing the lock or exiting, on every controlled stop path (`SIGTERM`, `SIGINT`, per-actor timeout `21`, deadline `29`). A sweep that cannot see reports `teardown UNVERIFIED` instead of success, and a stop that cannot account for the tree **pins the lock** so no second dispatcher is admitted (exit `17`; `--status` explains). *What still escapes:* a conventional detached daemon — double fork, `setsid`, then `closerange`, holding **no** inherited descriptors — survives the stop, observed alive after exit (`runs/probe-escaped-descendants-2026-08-07.md` Part B). *Why it was not fixed:* six handles were measured on this host, and the **only** one that reaches such a daemon is its inherited working directory, which also lists unrelated processes sitting in the same directory — measured, pid 60190 in Part A. A handle broad enough to catch the daemon is broad enough to kill the operator's shell, which is the defect that removed the public-hop-log handle in the first place. Closing 1a needs a supervisory mechanism that tracks descendants at creation time (cgroup-equivalent, launchd job, ptrace-class supervisor) — a new subsystem and a new authority, and an operator decision rather than a bounded fix. Simulated suite **325/0** (matched red pair **317/8** against `5680a44`). **Disclosed cost:** worst-case teardown ~6s → ~13s, deadline overrun bound ~6s → ~9s (`DEADLINE_CEILING` 11 → 14) |
 > | **1b** true deadline | **done.** `--deadline`, clamps the actor timeout before every launch and every retry. Exit `29`. Tests: cases 28–28d |
 > | **1c** committed-path check | **done.** Exit `30`. Tests: cases 29–29c |
-> | **1d** unattended authority | **COMPLETE — built, measured live, NOT blocking.** Policy settled by the operator (`runs/probe-contained-authority-2026-08-07.md`); integration shipped as `dispatch.sh --unattended`, delivered by CLI `--settings` on every Claude hop because `strictAllowlist` has no effect from a repository settings file. Fails closed, exit `31`, on a non-Darwin host, an unresolvable binary, claude < 2.1.219 or an unreadable version string; refuses to combine with `--actor-cmd`; `--claude-deny` composes and is additive. Simulated suite **284/0 as the suite stood at 1d's close** (matched red pair **216/24**, that test file against the pre-1d dispatcher at `22fedf8`); the suite is **309/0** since 1a added the whole-tree teardown cases. **Effective policy measured from inside a child the dispatcher launched** (`runs/probe-unattended-integration-2026-08-07.md`, **21/0**): network refused, write outside the checkout refused, home read refused, `git push` denied before execution, sentinel cloud credential scrubbed from the subprocess, and a repository-declared `SessionStart` hook that never fired — measured by its absent marker file, not reported by the model. **The tool roster and MCP absence are measurements too, as of the 2026-08-07 correction:** unattended hops capture `--output-format stream-json`, so the hop's own `system/init` event states what the runtime resolved — observed `tools: Bash, Skill` and `mcp_servers: []` despite the checkout declaring an MCP server, with a control run on the same host reading 27 tools and a loaded server once the flags are removed. Codex's assessment had correctly found both scored as passes while they were still the child's own prose. **One named exception inside the denied home tree:** `denyRead: ["~/"]` also blocked `~/.gitconfig`, which Git reads every invocation, so the child's Git exited 128 before touching the repository; check 6b established the repository was reachable and config discovery was the only obstacle. The zero-read alternative (`GIT_CONFIG_GLOBAL=/dev/null`) was rejected on evidence — the identity lives only in the global config here, so that child could not commit, and core § 4 has Claude commit every hop. Operator decision 2026-08-07: allow the minimum Git configuration paths, broaden home no further. `allowRead` carries `~/.gitconfig` and nothing else; `~/.config/git/config` proved unnecessary. Guarded at both ends — live: `~/.gitconfig` readable **and** `~/.config` still refused; simulated: no widening form in `allowRead`, the broad `denyRead` still present, exactly three entries. Residual, measured: `~/.gitconfig` names credential helpers, and the child obtained **no** token (`gh` credentials stay under the denied `~/.config/gh/`) — **if a real secret is ever put in `~/.gitconfig`, this exception stops being safe.** The old `--claude-deny` plumbing is still *not* this profile; it is the narrowing flag that composes with it |
+> | **1d** unattended authority | **COMPLETE — built, measured live, NOT blocking.** Policy settled by the operator (`runs/probe-contained-authority-2026-08-07.md`); integration shipped as `dispatch.sh --unattended`, delivered by CLI `--settings` on every Claude hop because `strictAllowlist` has no effect from a repository settings file. Fails closed, exit `31`, on a non-Darwin host, an unresolvable binary, claude < 2.1.219 or an unreadable version string; refuses to combine with `--actor-cmd`; `--claude-deny` composes and is additive. Simulated suite **284/0 as the suite stood at 1d's close** (matched red pair **216/24**, that test file against the pre-1d dispatcher at `22fedf8`); the suite is **325/0** since the 1a teardown work added its cases. **Effective policy measured from inside a child the dispatcher launched** (`runs/probe-unattended-integration-2026-08-07.md`, **21/0**): network refused, write outside the checkout refused, home read refused, `git push` denied before execution, sentinel cloud credential scrubbed from the subprocess, and a repository-declared `SessionStart` hook that never fired — measured by its absent marker file, not reported by the model. **The tool roster and MCP absence are measurements too, as of the 2026-08-07 correction:** unattended hops capture `--output-format stream-json`, so the hop's own `system/init` event states what the runtime resolved — observed `tools: Bash, Skill` and `mcp_servers: []` despite the checkout declaring an MCP server, with a control run on the same host reading 27 tools and a loaded server once the flags are removed. Codex's assessment had correctly found both scored as passes while they were still the child's own prose. **One named exception inside the denied home tree:** `denyRead: ["~/"]` also blocked `~/.gitconfig`, which Git reads every invocation, so the child's Git exited 128 before touching the repository; check 6b established the repository was reachable and config discovery was the only obstacle. The zero-read alternative (`GIT_CONFIG_GLOBAL=/dev/null`) was rejected on evidence — the identity lives only in the global config here, so that child could not commit, and core § 4 has Claude commit every hop. Operator decision 2026-08-07: allow the minimum Git configuration paths, broaden home no further. `allowRead` carries `~/.gitconfig` and nothing else; `~/.config/git/config` proved unnecessary. Guarded at both ends — live: `~/.gitconfig` readable **and** `~/.config` still refused; simulated: no widening form in `allowRead`, the broad `denyRead` still present, exactly three entries. Residual, measured: `~/.gitconfig` names credential helpers, and the child obtained **no** token (`gh` credentials stay under the denied `~/.config/gh/`) — **if a real secret is ever put in `~/.gitconfig`, this exception stops being safe.** The old `--claude-deny` plumbing is still *not* this profile; it is the narrowing flag that composes with it |
 > | **1e** no sleep | **done — observed in the supervised Phase 0 proof under `caffeinate -i`.** The 0c run held the machine awake across five hops and 301 seconds of actor time without dying mid-hop. Also documented in the worked invocation, spike `README.md` |
 > | **1f** branch isolation | **UNPROVEN — still blocking.** Documented only (branch + clean tree + the worktree blocker, spike `README.md` § Safety boundaries). No run has demonstrated a clean branch/isolation boundary in practice. Written down is not proven |
 > | **1g** read-only status | **COMPLETE — independently accepted, NOT blocking.** `--status` answers in **three** states: `IN FLIGHT` (pid visibly alive), `STALE LOCK` (pid **positively** absent — `kill -0` said *no such process*) and `UNKNOWN — CANNOT INSPECT` (permission denied, unreadable or invalid pid, or any ambiguous failure). `UNKNOWN` says the lock may belong to a live dispatcher, still reports pid/lock/state/log, and **never** recommends removing the lock. Read-only and exit-`0` contracts unchanged. A valid lock pid must match `[1-9][0-9]*`; empty, non-numeric, zero and zero-prefixed values (`0`, `00`, `007`) report `UNKNOWN` and emit no `IN FLIGHT`, `STALE LOCK`, `kill -TERM` or `rm -rf`. Tests: 30d (forced `EPERM`), 30f (unreadable, non-numeric and invalid-numeric pids, plus `1`/`10` pinned valid), **30e positive control** (a genuinely absent pid must still read `STALE LOCK`) — red-to-green `162/9 → 171/0` against `c8b2172`, then `186/12 → 198/0` against `e1ebb2f`. **Independently accepted by Codex against the CORRECTED build (2026-08-07):** all three live status states passed — sandbox-hidden live PID → `UNKNOWN`, the same PID outside the sandbox → `IN FLIGHT`, terminated PID → `STALE LOCK` — the invalid-PID checks passed, and the suite passed **198/0**. The temporary review lock and process were removed; no repository files were changed by the check. Nothing outstanding |
-> | **Phase 2** — walk-away pilot | **BLOCKED**, correctly. Phase 0 is no longer among the blockers; 1d, 1g and now 1a are complete and cleared. **One remains — see the list below the table.** It is not a decision; it is unproven work |
+> | **Phase 2** — walk-away pilot | **BLOCKED**, correctly. Phase 0 is no longer among the blockers; 1d and 1g are complete and cleared. **Two remain — see the list below the table.** Neither is a decision; both are unfinished or unproven work |
 > | **Phase 3** — documentation (3a–3h) | **done.** `SKILL.md` § Courier mode, § The seam and § Unattended runs (which carries the `--unattended` guidance) stand, as does spike `README.md`. **3c and 3d were re-opened by 1d and are now rewritten against the built profile** (2026-08-07 correction) — 3c lists what the sandbox and permission layer actually refuse, 3d lists what they still do not cover, with settings-scope merging named as the one residual that stays open. Neither was ever a Phase 2 blocker |
 > | Core § 4 decision | **recorded** in `logs/decisions.md`, 2026-08-07 |
 >
-> Suite: **309 pass, 0 fail** — all simulated (149 at `c8b2172`, plus 22 for the 1g three-state fix,
+> Suite: **325 pass, 0 fail** — all simulated (149 at `c8b2172`, plus 22 for the 1g three-state fix,
 > 27 for the pid-validation correction that followed it, 75 for the 1d contained-profile integration,
-> 11 for the 1d correction of 2026-08-07, and 25 for the 1a whole-tree teardown). **Two live shapes have now happened.** Phase 0c — **an attended five-hop live run with
+> 11 for the 1d correction of 2026-08-07, and 41 for the two 1a teardown rounds). **Two live shapes have now happened.** Phase 0c — **an attended five-hop live run with
 > no operator transport during the run**: three commits, closed at `turn: operator`, the operator
 > present at a supervised terminal, and **without** the contained profile. And the 1d integration
 > probe — **an attended single-hop live run WITH the contained profile**, in which the Work Loop's own
 > mode rule caught a defect in the fixture brief and handed back correctly, using no built-in file
-> tools. **The Phase 2 walk-away pilot has never happened**, and the blocker below stands between
+> tools. **The Phase 2 walk-away pilot has never happened**, and the two blockers below stand between
 > here and it.
 >
-> ### Phase 2 blockers — one remaining, and it is not a decision
+> ### Phase 2 blockers — both remaining, neither of them a decision
 >
 > | # | Blocker | Why it blocks a walk-away run |
 > |---|---|---|
-> | 1 | **Branch/isolation unproven** (1f) | Documented, never demonstrated. The claim that `main` is protected has not been exercised |
+> | 1 | **A fully detached descendant survives the stop** (1a) | Narrowed, not closed. `setsid`, a new process group, a double fork and SIP-protected binaries are now all reached, but a descendant that also drops every inherited descriptor is invisible to every usable handle. It outlives the run, unsupervised and unbounded, while the operator believes everything halted |
+> | 2 | **Branch/isolation unproven** (1f) | Documented, never demonstrated. The claim that `main` is protected has not been exercised |
 >
-> **Cleared 2026-08-07: escaped descendants surviving the stop (1a).** It was blocker 1 of the
-> previous two, and the one that would have hurt most unattended — it left a process running after the
-> operator believed everything was stopped. Teardown now clears the union of the process group, the
-> ancestry walk and the holders of the hop's inherited descriptor, and verifies that result before the
-> lock is released. Recorded as cleared rather than deleted because the run that cleared it also fixed
-> the shape of the claim: the dispatcher's success line is now **scoped to the handles it actually
-> checked**, since a descendant that closes its descriptors as well still escapes (case 27h). The
-> mechanism was selected by measuring four candidates and rejecting two on evidence — an environment
-> tag cannot read SIP-protected binaries, and kqueue `NOTE_TRACK` is unavailable on this host.
-> Evidence: `runs/probe-escaped-descendants-2026-08-07.md`, suite **309/0**, matched red pair
-> **301/8**.
+> Blocker 1 is still the one that would hurt most unattended. **It is smaller than it was** — before
+> this work a single `setsid` escaped, which is one line in a shell; now an escape has to be a
+> deliberate daemonisation. It is not gone, and the second round's measurement says why it cannot be
+> closed inside this spike: the only handle that reaches the surviving shape (inherited working
+> directory) also reaches unrelated processes, so using it would reintroduce bystander kills. See
+> `runs/probe-escaped-descendants-2026-08-07.md` § *The deciding measurement*.
 >
 > **Cleared 2026-08-07: the contained profile (1d).** It was blocker 1 of the previous three. Built as
-> `dispatch.sh --unattended`, covered by the simulated suite (**284/0** at the time, **309/0** since
-> 1a; matched red pair **216/24**),
+> `dispatch.sh --unattended`, covered by the simulated suite (**284/0** at the time, **325/0** since
+> the 1a teardown work; matched red pair **216/24**),
 > and — the part that actually cleared it — **measured from inside a child the dispatcher launched**
 > (`runs/probe-unattended-integration-2026-08-07.md`, **21/0**). Recorded as closed rather than
 > deleted, because the run that cleared it also found the defect that nearly did not clear it: the
@@ -231,19 +227,31 @@ incident waiting for a name.*
 > Fixed: the actor now runs in its own process group (`set -m`) and the handler terminates the group,
 > releases the lock once, and exits `28`.
 >
-> **PARTIAL → COMPLETE, 2026-08-07. No longer a Phase 2 blocker.**
+> **NARROWED, NOT CLOSED — 2026-08-07, second round. Still a Phase 2 blocker.**
 >
-> *The partial state this note used to describe:* the fix reached the actor's process **group**, not
-> its whole tree. An earlier draft called it a "whole process tree" kill; that overstated it and was
-> caught in review, after which case 27b asserted the real boundary deliberately — a descendant that
-> calls `setsid` left the group and **survived** the stop. Phase 0 § 0b item 4 had observed the group
-> kill working live (`terminating actor process group 79425`, exit `28`), which confirmed the
-> mechanism and not the reach.
+> *A first round of this work claimed completion and was rejected on independent assessment.* The
+> claim rested on narrowing the dispatcher's **success sentence** to the handles it had implemented.
+> That is not the same as narrowing the **objective**, which says the actor's *full descendant tree*.
+> A conventional detached daemon is still a descendant. This note records the corrected result; the
+> earlier "PARTIAL → COMPLETE" wording is withdrawn, not amended.
 >
-> *What closed it.* Teardown now terminates the **union of three handles** — the process group, a
-> recursive ancestry walk from the actor, and the holders of the hop's inherited output descriptor —
-> and then **verifies** the tree is gone before releasing the lock or exiting. The mechanism was
-> chosen by measuring four candidates rather than by picking one
+> *The state before any of this work:* the fix reached the actor's process **group**, not its tree.
+> An earlier draft called it a "whole process tree" kill; that overstated it and was caught in review,
+> after which case 27b asserted the real boundary deliberately — a descendant that calls `setsid` left
+> the group and **survived** the stop. Phase 0 § 0b item 4 had observed the group kill working live
+> (`terminating actor process group 79425`, exit `28`), which confirmed the mechanism and not the reach.
+>
+> *What the two rounds did build.* Teardown terminates the **union of three handles** — the process
+> group, a recursive ancestry walk from the actor, and the holders of a **private per-hop marker
+> descriptor** — and then **verifies** the result before releasing the lock or exiting, on every
+> controlled stop path: both signal traps (asserted separately rather than assumed to share routing),
+> the per-actor timeout, and deadline expiry. Three further properties came out of the second round:
+> a sweep that could not run says `teardown UNVERIFIED` rather than printing success; a stop that
+> leaves survivors or cannot account for the tree **pins the lock**, refusing a second dispatcher with
+> exit `17` and explaining itself through `--status`; and the marker is private, so an operator's
+> `tail -f` on the hop log is no longer mistaken for a descendant and killed.
+>
+> *Why it is still not closed.* Six handles were measured on this host
 > (`runs/probe-escaped-descendants-2026-08-07.md`):
 >
 > - the process group misses any `setsid` descendant;
@@ -253,19 +261,28 @@ incident waiting for a name.*
 >   SIP-protected platform binary (`/bin/sleep` and `/bin/bash` both refuse), which is exactly what an
 >   escaped shell job usually is;
 > - **kqueue `NOTE_TRACK` was rejected on availability** — `ENOTSUP` on this host. It would have been
->   the clean answer had it existed here.
+>   the clean answer had it existed here;
+> - the **public hop log** descriptor was rejected on measurement in the second round: it reaches the
+>   three escaping shapes, but an operator watching the run holds the same file, and the first round
+>   killed exactly that process;
+> - the **inherited working directory** is the only handle that reaches a fully detached daemon — and
+>   it also lists unrelated processes that merely sit in the same directory, measured directly.
 >
-> The inherited descriptor reaches all three shapes and costs nothing new, because `launch_actor`
-> already redirects every actor to the hop file. Applied to **every** controlled stop path: both
-> signal traps (asserted separately rather than assumed to share routing), the per-actor timeout, and
-> deadline expiry. Case 27b's expectation is **inverted** rather than deleted — its old expectation
-> *was* the defect.
+> **So the two requirements are in opposition on this host.** A handle broad enough to catch the
+> daemon is broad enough to kill the operator's shell. That is a measured limit, not a shortage of
+> effort, and it is why this unit stops here rather than improvising something broader.
 >
-> **The residual, stated rather than papered over.** A descendant that also closes both inherited
-> descriptors escapes all three handles and survives. So the dispatcher's success line is scoped —
-> *"no descendant reachable by group, ancestry or inherited descriptor"* — and case 27h fails if that
-> wording is ever widened. The residual is narrower than what it replaces: before this unit, one line
-> of `setsid` escaped the stop; now an escape must close its descriptors too.
+> **What would close it** is a supervisory mechanism that tracks descendants as they are *created*
+> rather than discovering them at stop time — a per-run cgroup-equivalent, a launchd job, or a
+> ptrace-class supervisor. Each is a new subsystem and a new authority. Choosing one is an operator
+> decision, outside this spike's bounds.
+>
+> **The residual, stated exactly.** A descendant that double-forks, leaves the session **and** drops
+> every inherited descriptor survives the stop — observed alive after the dispatcher exited (probe
+> Part B). Case 27h builds that shape, asserts it survives, and fails if the dispatcher's success
+> wording is ever widened to cover it. The residual is narrower than what it replaces: before this
+> work one line of `setsid` escaped; now an escape must be a deliberate daemonisation. Narrower is
+> not closed.
 >
 > **Disclosed cost, not hidden.** Worst-case teardown latency ~6s → ~13s, and the whole-run deadline's
 > honest overrun bound ~6s → ~9s. Case 28's `DEADLINE_CEILING` moves 11 → 14 for that reason. This
@@ -501,10 +518,11 @@ it does not stop the parent Codex task from editing the file by hand.
 
 Only after every Phase 1 item lands, with 1d settled by the operator.
 
-> **DO NOT RUN — 2026-08-07.** 1a, 1d and 1g are complete and cleared, but Phase 1 has *not* landed.
-> **One blocker stands** (full list in the status block at the top of this document): branch
-> isolation is unproven. The preconditions below are the *target*, not the current state, and Phase 2
-> stays forbidden until 1f closes — it has never run.
+> **DO NOT RUN — 2026-08-07.** 1d and 1g are complete and cleared, but Phase 1 has *not* landed.
+> **Two blockers stand** (full list in the status block at the top of this document): a fully
+> detached descendant still survives the stop (1a — narrowed, not closed), and branch isolation is
+> unproven (1f). The preconditions below are the *target*, not the current state, and Phase 2 stays
+> forbidden until both close — it has never run.
 >
 > The launch shape is **not** among the blockers: Phase 0 settled it as a supervised terminal under
 > `caffeinate -i`, which is § 0b's own stated fallback.
@@ -512,8 +530,10 @@ Only after every Phase 1 item lands, with 1d settled by the operator.
 - one task, one isolated location (1f — **unproven**, documented only), on a branch off a clean tree;
 - a hard ~40-minute deadline (1b), hop limit as a secondary bound;
 - no push, no merge, no deployment, no external side effects;
-- sleep prevented (1e), stop control proven (1a — **met.** Whole-tree teardown across group, ancestry
-  and inherited descriptor, verified before the lock is released; residual pinned by case 27h),
+- sleep prevented (1e), stop control proven (1a — **NOT met.** Teardown reaches the process group,
+  the ancestry walk and the holders of a private per-hop descriptor, and verifies that before the
+  lock is released — but a fully detached daemon survives, and the one handle that would reach it
+  also reaches unrelated processes. Case 27h pins the surviving shape),
   status readable (1g — **met.** Three states, harness-proven and independently live-accepted by
   Codex: hidden live PID → `UNKNOWN`, same PID unsandboxed → `IN FLIGHT`, terminated → `STALE LOCK`);
 - an end-state notification — the Codex task-completion notification if it serves, rather than a
@@ -664,8 +684,10 @@ no.
    `runs/probe-contained-authority-2026-08-07.md`). No longer an open question — and **no longer a
    blocker at all.** The profile was built as `dispatch.sh --unattended` and its effective policy
    measured from inside a child the dispatcher launched (`runs/probe-unattended-integration-2026-08-07.md`,
-   21/0). 1d is complete. **Updated 2026-08-07:** 1a is now complete as well, so the single remaining
-   Phase 2 blocker is **1f** (branch/worktree isolation unproven).
+   21/0). 1d is complete. **Updated 2026-08-07 (second round):** the Phase 2 blockers are **1a**
+   (a fully detached descendant still survives the stop — narrowed, not closed) and **1f**
+   (branch/worktree isolation unproven). An earlier revision of this line said 1a was complete; that
+   was withdrawn when the completion claim was rejected on assessment.
 2. ~~**Launch path (0a).**~~ **ANSWERED 2026-08-07 by Phase 0.** Nested children *do* work from inside
    a Codex task, but only outside the ordinary command sandbox — inside it, the child fails before
    initializing (`Operation not permitted`, and Claude reports `Not logged in`). **Direct detachment

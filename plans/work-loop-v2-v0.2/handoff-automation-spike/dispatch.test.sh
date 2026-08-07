@@ -1035,14 +1035,14 @@ reap "$EPID" "$IPID" "$CTRL"
 # ================================================================ case 27h
 # THE RESIDUAL, pinned. This is the honest successor to what old-27b guarded.
 #
-# A descendant that escapes the group, is re-parented away, AND closes both
-# inherited descriptors is invisible to all three handles: no group, no ancestry,
-# no fd. It survives, and — this is the part that matters — the dispatcher must
-# not claim otherwise. Its success line is deliberately scoped to what it can see.
-# If someone later widens that wording to an unqualified "the tree is gone", this
-# case fails, which is the point of testing a limitation.
+# NOTE THE SHAPE CHANGE (2026-08-07 correction). This case used to close only
+# fds 0/1/2, because the fd handle then read the hop's `.out` log. The handle now
+# reads a PRIVATE marker descriptor, which such a process still holds — so that
+# shape is now CAUGHT, and using it here would have quietly turned the residual
+# test into a pass that proves nothing. The residual shape is now what a real
+# daemon does: `closerange` over every inherited descriptor.
 echo
-echo "Case 27h — a descendant that also CLOSES its inherited descriptors survives, and the claim stays scoped"
+echo "Case 27h — a descendant that closes EVERY inherited descriptor survives, and the claim stays scoped"
 d="$(new_sandbox)"; state_file "$d" "residual-task" "claude"
 SR="$SANDBOX_ROOT/sig27h"; mkdir -p "$SR"
 INVISIBLE='python3 -c "
@@ -1051,8 +1051,7 @@ if os.fork() > 0: os._exit(0)
 os.setsid()
 if os.fork() > 0: os._exit(0)
 with open(\"'"$SR"'/escapee.pid\",\"w\") as f: f.write(str(os.getpid()))
-n = os.open(os.devnull, os.O_RDWR)
-os.dup2(n,0); os.dup2(n,1); os.dup2(n,2)
+os.closerange(0, 64)
 os.execv(\"/bin/sleep\", [\"sleep\", \"300\"])
 " &'
 ACT="$INVISIBLE
@@ -1092,6 +1091,164 @@ else
   ok "case 27h cleaned up its own escapee"
 fi
 drop_lock "$d" residual-task
+
+# ================================================================ case 27i
+# THE NEGATIVE CONTROL for the fd handle, and the regression test for a defect
+# this work introduced and had to be told about.
+#
+# The first version censused holders of the hop's `.out` log. That reached the
+# escapees, and it also reached anything ELSE holding the file — an operator's
+# `tail -f` was sent TERM and then KILL. Reproduced before the fix: a `tail`
+# started outside the run went from ALIVE to GONE across one teardown.
+#
+# The handle now reads a private per-hop marker descriptor that only descendants
+# inherit. This case pins that: an unrelated reader of the hop log must be
+# untouched, while the escapee in the same run must still die. Both halves matter
+# — asserting only the survival of `tail` would pass on a teardown that had
+# stopped working altogether.
+echo
+echo "Case 27i — an UNRELATED holder of the hop log is never signalled by teardown"
+d="$(new_sandbox)"; state_file "$d" "bystander-task" "claude"
+SR="$SANDBOX_ROOT/sig27i"; mkdir -p "$SR"
+ACT="$(mk_stubborn "$SR/escapee.pid")
+    echo \$\$ > \"$SR/actor.pid\"; sleep 300"
+bash "$DISPATCH_BIN" --checkout "$d" --task bystander-task --log-dir "$d/runs" \
+  --timeout 300 --actor-cmd "$ACT" >"$SR/out" 2>&1 &
+DPID=$!
+wait_for "$SR/escapee.pid" "$SR/actor.pid"
+sleep 1
+EPID="$(cat "$SR/escapee.pid" 2>/dev/null)"; APID="$(cat "$SR/actor.pid" 2>/dev/null)"
+HOPLOG="$(ls "$d"/runs/*.hop1.claude.out 2>/dev/null | head -1)"
+if [ -z "$HOPLOG" ]; then
+  bad "27i — control: the hop log exists to be watched" "no hop .out file found"
+else
+  tail -f "$HOPLOG" >/dev/null 2>&1 &
+  BYSTANDER=$!
+  sleep 1
+  if kill -0 "$BYSTANDER" 2>/dev/null; then
+    ok "27i — control: an unrelated reader is holding the hop log ($BYSTANDER)"
+  else
+    bad "27i — control: an unrelated reader is holding the hop log" "the tail did not start"
+  fi
+  if escapee_is_real "$APID" "$EPID" "27i"; then
+    kill -TERM "$DPID" 2>/dev/null
+    sleep 11
+    must_be_dead "$EPID" "the escapee still dies (the handle did not stop working)"
+    if kill -0 "$BYSTANDER" 2>/dev/null; then
+      ok "the UNRELATED reader of the hop log SURVIVES teardown"
+    else
+      bad "the UNRELATED reader of the hop log SURVIVES teardown" \
+          "pid $BYSTANDER was killed — teardown is signalling processes it does not own"
+    fi
+  fi
+  reap "$BYSTANDER"
+fi
+reap "$EPID" "$APID" "$DPID"
+drop_lock "$d" bystander-task
+
+# ================================================================ case 27j
+# DISCOVERY FAILURE MUST NOT READ AS SUCCESS.
+#
+# When `lsof` cannot be found, the fd handle — the only one that reaches an
+# escapee at all — is simply absent. The first version printed `teardown verified`
+# in that state whenever the two remaining handles happened to come back empty:
+# the script's strongest claim, on no evidence. It must now say UNVERIFIED and
+# pin the lock.
+#
+# `lsof` is hidden by giving the dispatcher a PATH without it, while keeping the
+# directories its other tools live in.
+echo
+echo "Case 27j — with lsof absent, teardown reports UNVERIFIED and does not claim success"
+d="$(new_sandbox)"; state_file "$d" "degraded-task" "claude"
+SR="$SANDBOX_ROOT/sig27j"; mkdir -p "$SR"
+# Hide lsof by dropping ONLY the directory it lives in, rather than building a
+# PATH of hand-picked symlinks. The hand-built version was tried first and was
+# wrong: it silently starved the dispatcher of tools it needs, so the actor never
+# started and the case "passed its way" into proving nothing. Removing one
+# directory changes exactly one thing.
+NOLSOF_PATH="$(printf '%s' "$PATH" | tr ':' '\n' | grep -v "^$(dirname "$(command -v lsof 2>/dev/null || echo /usr/sbin/lsof)")$" | paste -sd: -)"
+if PATH="$NOLSOF_PATH" command -v lsof >/dev/null 2>&1; then
+  bad "27j — control: lsof is absent from the constructed PATH" "it is still resolvable; the case would prove nothing"
+else
+  ok "27j — control: lsof is absent from the constructed PATH"
+fi
+ACT="$(mk_stubborn "$SR/escapee.pid")
+    echo \$\$ > \"$SR/actor.pid\"; sleep 300"
+PATH="$NOLSOF_PATH" bash "$DISPATCH_BIN" --checkout "$d" --task degraded-task --log-dir "$d/runs" \
+  --timeout 300 --actor-cmd "$ACT" >"$SR/out" 2>&1 &
+DPID=$!
+wait_for "$SR/escapee.pid" "$SR/actor.pid"
+sleep 1
+EPID="$(cat "$SR/escapee.pid" 2>/dev/null)"; APID="$(cat "$SR/actor.pid" 2>/dev/null)"
+if escapee_is_real "$APID" "$EPID" "27j"; then
+  kill -TERM "$DPID" 2>/dev/null
+  sleep 11
+  if grep -q "teardown UNVERIFIED" "$SR/out"; then
+    ok "teardown reports UNVERIFIED when a load-bearing handle is unavailable"
+  else
+    bad "teardown reports UNVERIFIED when a load-bearing handle is unavailable" \
+        "output said: $(grep -i teardown "$SR/out" | head -2)"
+  fi
+  if grep -q "teardown verified" "$SR/out"; then
+    bad "a degraded sweep must NOT print the success line" "it printed 'teardown verified' with lsof missing"
+  else
+    ok "a degraded sweep does NOT print the success line"
+  fi
+  grep -q "lsof is not installed" "$SR/out" \
+    && ok "the reason names the missing handle" || bad "the reason names the missing handle" "$(grep -i unverified -A2 "$SR/out" | head -4)"
+  LK="${TMPDIR:-/tmp}/work-loop-dispatch-$(printf '%s|%s' "$(cd "$d" && pwd -P)" "degraded-task" | shasum -a 256 | cut -c1-16).lock"
+  if [ -f "$LK/survivors" ]; then
+    ok "the lock is PINNED after an unverified teardown"
+  else
+    bad "the lock is PINNED after an unverified teardown" "no survivors file at $LK"
+  fi
+fi
+reap "$EPID" "$APID" "$DPID"
+drop_lock "$d" degraded-task
+
+# ================================================================ case 27k
+# THE LOCK INVARIANT. The plan requires that no second dispatcher is admitted
+# while a descendant of the stopped actor may still be alive. Teardown knew about
+# survivors and released the lock anyway, because both call sites discarded its
+# return value — so the invariant existed only in prose.
+#
+# A survivor is manufactured here rather than waited for: the escapee that
+# teardown cannot see (case 27h's shape) is the one that leaves the lock pinned
+# via the UNKNOWN path, so this case uses the lsof-less PATH to make an
+# unverifiable teardown deterministic, then asserts what the operator actually
+# experiences — a second dispatcher refused, and `--status` saying why.
+echo
+echo "Case 27k — an unverified teardown REFUSES a second dispatcher (exit 17) and --status explains"
+d="$(new_sandbox)"; state_file "$d" "pinned-task" "claude"
+SR="$SANDBOX_ROOT/sig27k"; mkdir -p "$SR"
+ACT="$(mk_stubborn "$SR/escapee.pid")
+    echo \$\$ > \"$SR/actor.pid\"; sleep 300"
+PATH="$NOLSOF_PATH" bash "$DISPATCH_BIN" --checkout "$d" --task pinned-task --log-dir "$d/runs" \
+  --timeout 300 --actor-cmd "$ACT" >"$SR/out" 2>&1 &
+DPID=$!
+wait_for "$SR/escapee.pid" "$SR/actor.pid"
+sleep 1
+EPID="$(cat "$SR/escapee.pid" 2>/dev/null)"; APID="$(cat "$SR/actor.pid" 2>/dev/null)"
+kill -TERM "$DPID" 2>/dev/null
+sleep 11
+wait "$DPID" 2>/dev/null; SRC=$?
+expect_rc 28 "$SRC" "the interrupted run still exits 28 (the pin does not change the exit code)" "$(cat "$SR/out")"
+# The invariant, as the next dispatcher experiences it.
+run_dispatch "$d" pinned-task --actor-cmd "$NOOP"
+expect_rc 17 "$RC" "a SECOND dispatcher is REFUSED while the tree is unaccounted for" "$OUT"
+printf '%s' "$OUT" | grep -q "PINNED" \
+  && ok "the refusal says the lock is pinned, not merely held" || bad "the refusal says the lock is pinned" "$OUT"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task pinned-task --log-dir "$d/runs" --status 2>&1)"; RC=$?
+expect_rc 0 "$RC" "--status stays read-only and exits 0 over a pinned lock" "$OUT"
+printf '%s' "$OUT" | grep -q "PINNED LOCK" \
+  && ok "--status reports a PINNED LOCK" || bad "--status reports a PINNED LOCK" "$OUT"
+if printf '%s' "$OUT" | grep -q "STALE LOCK"; then
+  bad "--status must NOT call a pinned lock stale" "it told the operator to remove the one thing holding the invariant"
+else
+  ok "--status does NOT call a pinned lock stale"
+fi
+reap "$EPID" "$APID" "$DPID"
+drop_lock "$d" pinned-task
 
 fi   # python3 available
 

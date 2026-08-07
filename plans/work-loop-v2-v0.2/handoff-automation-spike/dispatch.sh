@@ -223,13 +223,17 @@ UNATTENDED_BIN=""        # the claude binary the gate actually inspected
 # flight, or empty between hops — the signal handler needs it to reach the whole
 # tree, and "empty" is what tells it there is nothing to terminate.
 #
-# ACTOR_OUT is the same actor's hop output file, published for the same reason.
-# It is not logging bookkeeping: it is the THIRD identification handle (see
-# actor_tree_census below), and the only one that survives a double fork. A
-# signal handler that knows the pgid but not the file can only reach the group.
+# ACTOR_MARKER is that actor's private per-hop tree-marker file, published for the
+# same reason. It is not logging: it is the THIRD identification handle (see
+# actor_tree_census below), and the only one that survives a double fork. A signal
+# handler that knows the pgid but not the marker can only reach the group.
+#
+# Deliberately NOT the hop's `.out` log, which it briefly was: an operator running
+# `tail -f` on that log became a census hit and was killed by teardown. Measured,
+# not theorised.
 SHUTDOWN=0
 ACTOR_PGID=""
-ACTOR_OUT=""
+ACTOR_MARKER=""
 CUR_HOP=0
 CUR_ACTOR=""
 
@@ -435,11 +439,47 @@ acquire_lock() {
     LOCK_OWNED=1
     printf '%s\n' "$$" >"$LOCK_DIR/pid"
   else
+    if [ -f "$LOCK_DIR/survivors" ]; then
+      printf 'STOP [17] the previous run of %s could not confirm its actor tree was stopped, so this lock is PINNED (%s)\n' "$TASK" "$LOCK_DIR" >&2
+      sed 's/^/  /' "$LOCK_DIR/survivors" >&2
+      exit 17
+    fi
     printf 'STOP [17] another dispatcher holds %s (%s)\n' "$TASK" "$LOCK_DIR" >&2
     exit 17
   fi
 }
+
+# A pinned lock is NOT released, by anything, including the EXIT trap. It is the
+# mechanism behind the plan's requirement that no second dispatcher is admitted
+# while a descendant of the stopped actor may still be alive: the process that
+# knows about the survivors is about to exit, so the only thing that can carry
+# that knowledge forward is the lock it leaves behind.
+LOCK_PINNED=0
+pin_lock() { # survivor-pids, unknown-reason
+  local survivors="${1:-}" unknown="${2:-}"
+  [ "$LOCK_OWNED" -eq 1 ] || return 0
+  LOCK_PINNED=1
+  {
+    printf 'PINNED by dispatcher pid %s at %s\n' "$$" "$(date '+%Y-%m-%dT%H:%M:%S')"
+    printf 'task: %s\n' "$TASK"
+    [ -n "$survivors" ] && printf 'descendants still running: %s\n' "$survivors"
+    [ -n "$unknown" ]   && printf 'sweep incomplete: %s\n' "$unknown"
+    printf '\n'
+    printf 'This lock is deliberately NOT released. A second dispatcher must not run on this\n'
+    printf 'task while a descendant of the stopped actor may still be alive.\n'
+    printf 'To clear it: confirm the pids above are gone (`ps -o pid,ppid,pgid,command -p <pid>`),\n'
+    printf 'kill any that remain, then `rm -rf %s`.\n' "$LOCK_DIR"
+  } >"$LOCK_DIR/survivors" 2>/dev/null
+  local msg="  the task lock is PINNED at $LOCK_DIR — a second dispatcher is refused (exit 17) until you clear it by hand."
+  printf '%s\n' "$msg" >&2
+  [ -n "${RUN_LOG:-}" ] && printf '%s\n' "$msg" >>"$RUN_LOG"
+}
+
 release_lock() {
+  # Pinned beats owned. Every exit path calls this — die(), the EXIT trap, the
+  # signal handler — so the check belongs here rather than at each call site,
+  # where one missed caller would silently undo the invariant.
+  [ "$LOCK_PINNED" -eq 1 ] && return 0
   [ "$LOCK_OWNED" -eq 1 ] && rm -rf "$LOCK_DIR" 2>/dev/null
   LOCK_OWNED=0
 }
@@ -464,7 +504,7 @@ release_lock() {
 #   process group (kill -- -PGID)  reaches   MISSES     MISSES      n/a
 #   recursive PPID census          reaches   reaches    MISSES      n/a
 #   environment tag (ps -E)        MISSES    reaches    reaches     MISSES
-#   inherited fd on the hop log    reaches   reaches    reaches     reaches
+#   inherited fd (private marker)  reaches   reaches    reaches     reaches
 #
 # What each row means, since the reasons are the whole argument:
 #   - setsid(2) gives a new session AND a new process group, so the group kill
@@ -482,18 +522,29 @@ release_lock() {
 #     answer. It returns ENOTSUP on this host (Darwin 26.5) — measured, same
 #     record. It is not available to be chosen.
 #
-# So the union of handles 1, 2 and 4 is used. Handle 4 is the load-bearing one and
-# it is free: launch_actor already runs every actor as `"$@" >>"$out" 2>&1`, so
-# each descendant inherits fd 1 and 2 pointing at that hop's output file, and
-# `lsof -t` lists holders regardless of session, process group, ancestry or code
-# signing. Nothing new is spawned, and nothing has to be tracked during the hop.
+# So the union of handles 1, 2 and 4 is used, with handle 4 reading a PRIVATE
+# per-hop marker descriptor rather than the hop log (see TREE_MARKER_FD below for
+# why that distinction is a safety property and not a detail).
 #
-# THE RESIDUAL, stated rather than papered over: a descendant that closes or
-# redirects BOTH inherited descriptors, AND has left the process group, AND has
-# been re-parented away, is invisible to all three handles. A conventional daemon
-# does exactly this. That is why teardown VERIFIES and reports survivors instead
-# of asserting success — see terminate_actor_tree. dispatch.test.sh case 27h
-# pins the residual so it stays a measured boundary rather than a belief.
+# THE RESIDUAL, stated rather than papered over, and it is NOT closed:
+# a descendant that closes EVERY inherited descriptor — `closefrom`/`closerange`,
+# which is what a conventional daemon does — AND has left the process group AND
+# has been re-parented away is invisible to all three handles. Measured, not
+# assumed: such a process was built and it survived.
+#
+# There is no fourth handle available. The only remaining property such a process
+# still shares with the run is its working directory, and `lsof -d cwd` reaches it
+# — together with every unrelated process sitting in the same directory, which is
+# precisely the defect that forced the private marker in the first place. A handle
+# broad enough to catch a fully-detached daemon is broad enough to kill the
+# operator's shell. That is why this is reported as a platform limit rather than
+# solved: see runs/probe-escaped-descendants-2026-08-07.md § The residual.
+#
+# Because the guarantee is therefore partial, teardown VERIFIES and reports —
+# survivors by name, and an incomplete sweep as UNKNOWN rather than as success —
+# and pins the task lock in both cases. dispatch.test.sh cases 27h and 27i pin the
+# residual and the unrelated-holder guarantee so both stay measured boundaries
+# rather than beliefs.
 
 # Pids this dispatcher must never signal, whatever a census says: itself and its
 # own ancestors, plus 0 and 1. This is the same lesson pid_state() carries — pid 0
@@ -511,10 +562,37 @@ unset _p
 
 SELF_PGID="$(ps -o pgid= -p "$$" 2>/dev/null | tr -d ' ')"
 
-# Handle 4 needs lsof. It ships with macOS, but its absence must be loud rather
-# than a silent downgrade to the group-only reach this unit exists to remove.
+# Handle 3 needs lsof. It ships with macOS, but its absence must be treated as
+# "cannot establish", not as a quiet downgrade to the group-only reach this work
+# exists to remove.
 FD_HANDLE=1
 command -v lsof >/dev/null 2>&1 || FD_HANDLE=0
+PGREP_OK=1
+command -v pgrep >/dev/null 2>&1 || PGREP_OK=0
+
+# WHY A PRIVATE MARKER FILE AND NOT THE HOP LOG.
+#
+# The first version of this censused holders of the hop's `.out` file, because
+# every descendant inherits stdout/stderr. It worked, and it was unsafe: `lsof`
+# returns EVERY holder, so an operator running `tail -f` on the hop log was swept
+# into the census and sent TERM then KILL. That is not a hypothetical — it was
+# reproduced (an unrelated `tail` went from ALIVE to GONE across one teardown) and
+# it is the reason this indirection exists.
+#
+# The marker is a per-hop file with the run id in its name that nothing else has
+# any reason to open. The dispatcher opens it on fd 9, launches the actor so every
+# descendant inherits that descriptor, then closes its OWN copy so it is never a
+# holder itself. A holder of this file is therefore something the actor started —
+# ownership by construction, rather than ownership assumed from a shared log.
+#
+# Measured bonus: it also reaches a descendant that closes 0/1/2, which the hop
+# log could not. It does NOT reach one that closes every descriptor.
+TREE_MARKER_FD=9
+
+# Set by actor_tree_census when a load-bearing handle could not be consulted.
+# Empty means every handle answered. Non-empty means the census is INCOMPLETE, and
+# an empty result from an incomplete census means "cannot establish", never "gone".
+CENSUS_UNKNOWN=""
 
 signallable_pid() { # pid -> 0 if this dispatcher may signal it
   local pid="${1:-}"
@@ -525,40 +603,75 @@ signallable_pid() { # pid -> 0 if this dispatcher may signal it
 }
 
 # The union of the three usable handles, filtered and deduplicated. Live pids
-# only, one per line. Empty output means "nothing of this actor is still running",
-# and that is the claim the whole unit rests on, so it is computed from three
-# independent sources rather than one.
-actor_tree_census() { # pgid, outfile -> live descendant pids
-  local pgid="${1:-}" out="${2:-}" acc="" seen="" p pid pgrp frontier next kid c
+# only, space-separated.
+#
+# RESULTS COME BACK IN GLOBALS, NOT ON STDOUT, and that is load-bearing rather
+# than a style choice. This function reports TWO things — the pids it found and
+# whether it could see at all — and a caller writing `census="$(actor_tree_census
+# ...)"` runs it in a SUBSHELL, so the second one is silently discarded on the way
+# out. That is exactly how the first version of this fix failed: every call site
+# used command substitution, CENSUS_UNKNOWN was assigned in a child that then
+# exited, and the parent read the empty string it had cleared a moment earlier.
+# The degraded sweep then printed `teardown verified` — the strongest claim in the
+# script, on no evidence, which is the defect finding 4 names. Returning through
+# globals removes the subshell, so the two results cannot be separated again.
+# Callers must read BOTH: an empty CENSUS_PIDS means "no descendant these handles
+# can see is running", and that only means "nothing is running" when
+# CENSUS_UNKNOWN is empty too.
+CENSUS_PIDS=""
+actor_tree_census() { # pgid, markerfile -> sets CENSUS_PIDS and CENSUS_UNKNOWN
+  local pgid="${1:-}" marker="${2:-}" acc="" seen="" p pid pgrp frontier next kid c
+  local ps_out rc out=""
+  CENSUS_UNKNOWN=""
+  CENSUS_PIDS=""
 
   [ -n "$pgid" ] || return 0
   # Refuse to census our OWN group. If `set -m` ever failed, the actor would share
   # the dispatcher's group and this sweep would enumerate the operator's other
-  # jobs. Returning nothing is wrong-but-safe; the alternative is unbounded.
-  [ -n "$SELF_PGID" ] && [ "$pgid" = "$SELF_PGID" ] && return 0
+  # jobs. Refusing is right, but it is NOT an empty tree — say so, or the refusal
+  # would read as proof that nothing is running.
+  if [ -n "$SELF_PGID" ] && [ "$pgid" = "$SELF_PGID" ]; then
+    CENSUS_UNKNOWN="the actor shares this dispatcher's process group, so no sweep can distinguish its descendants from the operator's own jobs"
+    return 0
+  fi
 
-  # (1) process group members
-  while read -r pid pgrp; do
-    [ "$pgrp" = "$pgid" ] && acc="$acc $pid"
-  done < <(ps -ax -o pid=,pgid= 2>/dev/null)
+  # (1) process group members. A failing `ps` is unknown, not empty.
+  ps_out="$(ps -ax -o pid=,pgid= 2>/dev/null)"; rc=$?
+  if [ "$rc" -ne 0 ] || [ -z "$ps_out" ]; then
+    CENSUS_UNKNOWN="${CENSUS_UNKNOWN:+$CENSUS_UNKNOWN; }\`ps -ax\` returned nothing usable (exit $rc), so process-group membership could not be read"
+  else
+    while read -r pid pgrp; do
+      [ "$pgrp" = "$pgid" ] && acc="$acc $pid"
+    done <<EOF
+$ps_out
+EOF
+  fi
 
   # (2) recursive ancestry walk from the actor. Bounded by a visited set, so a
   #     pid-reuse cycle cannot spin here.
-  frontier="$pgid"; seen=" $pgid "
-  while [ -n "$frontier" ]; do
-    next=""
-    for kid in $frontier; do
-      for c in $(pgrep -P "$kid" 2>/dev/null); do
-        case "$seen" in *" $c "*) continue ;; esac
-        seen="$seen$c "; next="$next $c"; acc="$acc $c"
+  if [ "$PGREP_OK" -eq 0 ]; then
+    CENSUS_UNKNOWN="${CENSUS_UNKNOWN:+$CENSUS_UNKNOWN; }pgrep is not installed, so the ancestry walk could not run"
+  else
+    frontier="$pgid"; seen=" $pgid "
+    while [ -n "$frontier" ]; do
+      next=""
+      for kid in $frontier; do
+        for c in $(pgrep -P "$kid" 2>/dev/null); do
+          case "$seen" in *" $c "*) continue ;; esac
+          seen="$seen$c "; next="$next $c"; acc="$acc $c"
+        done
       done
+      frontier="$next"
     done
-    frontier="$next"
-  done
+  fi
 
-  # (3) holders of the hop's inherited output descriptor
-  if [ "$FD_HANDLE" -eq 1 ] && [ -n "$out" ] && [ -e "$out" ]; then
-    acc="$acc $(lsof -t -- "$out" 2>/dev/null | tr '\n' ' ')"
+  # (3) holders of the hop's private inherited descriptor
+  if [ "$FD_HANDLE" -eq 0 ]; then
+    CENSUS_UNKNOWN="${CENSUS_UNKNOWN:+$CENSUS_UNKNOWN; }lsof is not installed, so descendants that left the process group and the ancestry chain could not be looked for at all"
+  elif [ -z "$marker" ] || [ ! -e "$marker" ]; then
+    CENSUS_UNKNOWN="${CENSUS_UNKNOWN:+$CENSUS_UNKNOWN; }the hop's tree marker file is missing (${marker:-<unset>}), so the inherited-descriptor handle had nothing to consult"
+  else
+    acc="$acc $(lsof -t -- "$marker" 2>/dev/null | tr '\n' ' ')"
   fi
 
   seen=" "
@@ -566,8 +679,9 @@ actor_tree_census() { # pgid, outfile -> live descendant pids
     case "$seen" in *" $p "*) continue ;; esac
     signallable_pid "$p" || continue
     seen="$seen$p "
-    printf '%s\n' "$p"
+    out="$out $p"
   done
+  CENSUS_PIDS="${out# }"
 }
 
 # TERM first, then KILL after a grace period, because an actor that can exit
@@ -580,32 +694,36 @@ actor_tree_census() { # pgid, outfile -> live descendant pids
 TERM_GRACE_SECS=5
 KILL_SETTLE_SECS=2
 
-# Set by terminate_actor_tree: the pids it could NOT confirm dead. Empty is the
-# normal case and the only one that permits a "teardown completed" claim.
+# Set by terminate_actor_tree: the pids it could NOT confirm dead, and the reason
+# the sweep was incomplete if it was. Empty BOTH is the only state that permits a
+# "teardown verified" claim.
 TEARDOWN_SURVIVORS=""
+TEARDOWN_UNKNOWN=""
 
-terminate_actor_tree() { # pgid, outfile -> 0 when the tree is verified gone
-  local pgid="${1:-}" out="${2:-}" census p waited
+terminate_actor_tree() { # pgid, markerfile -> 0 when the tree is verified gone
+  local pgid="${1:-}" marker="${2:-}" census p waited
   TEARDOWN_SURVIVORS=""
+  TEARDOWN_UNKNOWN=""
   [ -n "$pgid" ] || return 0
 
   # Re-censused on every pass, not computed once: a descendant can be spawned
   # DURING teardown, and one that appears after the first sweep would otherwise
-  # never be signalled at all.
-  census="$(actor_tree_census "$pgid" "$out")"
+  # never be signalled at all. Every call reads CENSUS_PIDS rather than capturing
+  # stdout, so CENSUS_UNKNOWN survives to the verification below — see the census.
+  actor_tree_census "$pgid" "$marker"; census="$CENSUS_PIDS"
   kill -TERM -- "-$pgid" 2>/dev/null
   for p in $census; do kill -TERM "$p" 2>/dev/null; done
 
   waited=0
   while [ "$waited" -lt "$TERM_GRACE_SECS" ]; do
-    census="$(actor_tree_census "$pgid" "$out")"
+    actor_tree_census "$pgid" "$marker"; census="$CENSUS_PIDS"
     [ -z "$census" ] && break
     for p in $census; do kill -TERM "$p" 2>/dev/null; done
     sleep 1
     waited=$((waited + 1))
   done
 
-  census="$(actor_tree_census "$pgid" "$out")"
+  actor_tree_census "$pgid" "$marker"; census="$CENSUS_PIDS"
   if [ -n "$census" ]; then
     kill -KILL -- "-$pgid" 2>/dev/null
     for p in $census; do kill -KILL "$p" 2>/dev/null; done
@@ -613,17 +731,18 @@ terminate_actor_tree() { # pgid, outfile -> 0 when the tree is verified gone
     while [ "$waited" -lt "$KILL_SETTLE_SECS" ]; do
       sleep 1
       waited=$((waited + 1))
-      census="$(actor_tree_census "$pgid" "$out")"
+      actor_tree_census "$pgid" "$marker"; census="$CENSUS_PIDS"
       [ -z "$census" ] && break
       for p in $census; do kill -KILL "$p" 2>/dev/null; done
     done
   fi
 
-  # The verification the objective actually rests on. Whatever is still here is
-  # reported, never rounded down to success.
-  TEARDOWN_SURVIVORS="$(actor_tree_census "$pgid" "$out" | tr '\n' ' ')"
-  TEARDOWN_SURVIVORS="${TEARDOWN_SURVIVORS%% }"
-  [ -z "$TEARDOWN_SURVIVORS" ]
+  # The verification the objective rests on. Two ways it can fail, and they are
+  # NOT the same: something is still running, or the sweep could not see.
+  actor_tree_census "$pgid" "$marker"
+  TEARDOWN_SURVIVORS="$CENSUS_PIDS"
+  TEARDOWN_UNKNOWN="$CENSUS_UNKNOWN"
+  [ -z "$TEARDOWN_SURVIVORS" ] && [ -z "$TEARDOWN_UNKNOWN" ]
 }
 
 # The disclosure half. A stop that could not clear the tree must say so BEFORE the
@@ -631,7 +750,7 @@ terminate_actor_tree() { # pgid, outfile -> 0 when the tree is verified gone
 # to notice. Silence here would restore exactly the defect 1a describes.
 report_teardown() { # -> 0 when the tree was verified gone
   local msg
-  if [ -z "$TEARDOWN_SURVIVORS" ]; then
+  if [ -z "$TEARDOWN_SURVIVORS" ] && [ -z "$TEARDOWN_UNKNOWN" ]; then
     # SCOPED ON PURPOSE. "The tree is gone" would be a stronger claim than three
     # handles can support — see the residual above, and dispatch.test.sh case 27h,
     # which fails if this sentence is ever widened.
@@ -640,16 +759,32 @@ report_teardown() { # -> 0 when the tree was verified gone
     [ -n "${RUN_LOG:-}" ] && printf '%s\n' "$msg" >>"$RUN_LOG"
     return 0
   fi
-  msg="  WARNING: teardown could NOT confirm the actor's tree is gone. Still running: $TEARDOWN_SURVIVORS
+
+  # An INCOMPLETE sweep that found nothing is not a clean teardown. It used to
+  # print "teardown verified" here, which is the strongest claim in the script made
+  # on the weakest evidence there is — no evidence. It is now its own state.
+  if [ -z "$TEARDOWN_SURVIVORS" ]; then
+    msg="  WARNING: teardown UNVERIFIED — the sweep could not establish whether descendants are still running.
+  Reason: $TEARDOWN_UNKNOWN
+  Nothing was found, but a sweep that cannot look is not a sweep that found nothing. Treat this run as
+  possibly leaving processes behind: check with \`ps -ax\` before re-running."
+  else
+    msg="  WARNING: teardown could NOT confirm the actor's tree is gone. Still running: $TEARDOWN_SURVIVORS
   These processes were signalled and did not go. They are NOT stopped, and this run is not a clean halt.
   Inspect with \`ps -o pid,ppid,pgid,command -p <pid>\` and terminate them by hand before re-running."
+    [ -n "$TEARDOWN_UNKNOWN" ] && msg="$msg
+  The sweep was ALSO incomplete: $TEARDOWN_UNKNOWN"
+  fi
   printf '%s\n' "$msg" >&2
   [ -n "${RUN_LOG:-}" ] && printf '%s\n' "$msg" >>"$RUN_LOG"
-  if [ "$FD_HANDLE" -eq 0 ]; then
-    msg="  NOTE: lsof was not found, so the inherited-descriptor handle was unavailable for this teardown."
-    printf '%s\n' "$msg" >&2
-    [ -n "${RUN_LOG:-}" ] && printf '%s\n' "$msg" >>"$RUN_LOG"
-  fi
+
+  # THE LOCK INVARIANT. The plan requires that no second dispatcher is admitted
+  # while any descendant of the stopped actor may still be alive. Releasing the
+  # lock here — which is what every exit path does by default, via die() and the
+  # EXIT trap — would admit one. So the lock is PINNED: left in place, with the
+  # reason written inside it, and `--status` reads that rather than reporting a
+  # removable stale lock.
+  pin_lock "$TEARDOWN_SURVIVORS" "$TEARDOWN_UNKNOWN"
   return 1
 }
 
@@ -679,7 +814,7 @@ on_signal() { # signal name
   if [ -n "$ACTOR_PGID" ]; then
     printf '  terminating actor descendant tree (pgid %s)\n' "$ACTOR_PGID" >&2
     [ -n "${RUN_LOG:-}" ] && printf '  terminating actor descendant tree (pgid %s)\n' "$ACTOR_PGID" >>"$RUN_LOG"
-    terminate_actor_tree "$ACTOR_PGID" "$ACTOR_OUT"
+    terminate_actor_tree "$ACTOR_PGID" "$ACTOR_MARKER"
     # Reported here, before release_lock and exit below: the lock must not be
     # handed on, and this process must not go, while the operator still believes
     # everything halted.
@@ -719,7 +854,28 @@ if [ "$STATUS_MODE" -eq 1 ]; then
   printf 'status: task=%s\n' "$TASK"
   printf 'checkout=%s\n' "$CHECKOUT"
 
-  if [ -d "$LOCK_DIR" ]; then
+  if [ -d "$LOCK_DIR" ] && [ -f "$LOCK_DIR/survivors" ]; then
+    # A PINNED lock, checked before the three pid states below. Its dispatcher is
+    # gone by definition, so pid_state() would answer ABSENT and this command would
+    # tell the operator to `rm -rf` the one thing standing between a second
+    # dispatcher and a still-live descendant. The pin is the answer, not the pid.
+    printf 'run: PINNED LOCK — the previous run could not confirm it stopped everything it started.\n'
+    printf '     %s\n' "$LOCK_DIR"
+    sed 's/^/     /' "$LOCK_DIR/survivors" 2>/dev/null
+    printf '     a new dispatcher is REFUSED (exit 17) until this is cleared by hand.\n'
+    st_left=""
+    while read -r st_p; do
+      case "$st_p" in ''|*[!0-9]*) continue ;; esac
+      kill -0 "$st_p" 2>/dev/null && st_left="$st_left $st_p"
+    done <<EOF
+$(sed -n 's/^descendants still running: //p' "$LOCK_DIR/survivors" 2>/dev/null | tr ' ' '\n')
+EOF
+    if [ -n "$st_left" ]; then
+      printf '     STILL ALIVE NOW:%s — kill these before removing the lock.\n' "$st_left"
+    else
+      printf '     none of the recorded pids is alive now; the lock is safe to remove once you have checked.\n'
+    fi
+  elif [ -d "$LOCK_DIR" ]; then
     st_pid="$(cat "$LOCK_DIR/pid" 2>/dev/null)"
     # Three states, not two. See pid_state() above for why "kill -0 failed" is
     # not the same question as "the process is gone".
@@ -1165,27 +1321,37 @@ operator_question() {
 run_bounded() { # timeout, logfile, cmd...
   local limit="$1"; shift
   local out="$1"; shift
-  local pid start rc
+  local pid start rc marker
+
+  # The per-hop tree marker. Opened here, inherited by the actor and everything
+  # below it, and closed in THIS process immediately afterwards so the dispatcher
+  # never appears in its own census. Nothing else has a reason to open this file —
+  # which is exactly why holding it is evidence of descent from the actor, and why
+  # the public hop log (which an operator may `tail -f`) must not be used instead.
+  marker="${out%.out}.tree"
+  : >"$marker" 2>/dev/null
 
   set -m
+  eval "exec ${TREE_MARKER_FD}>\"\$marker\""
   "$@" >>"$out" 2>&1 &
   pid=$!
+  eval "exec ${TREE_MARKER_FD}>&-"
   set +m
 
   ACTOR_PGID="$pid"
-  ACTOR_OUT="$out"
+  ACTOR_MARKER="$marker"
   start="$(date '+%s')"
 
   while kill -0 "$pid" 2>/dev/null; do
     if [ "$(( $(date '+%s') - start ))" -ge "$limit" ]; then
-      terminate_actor_tree "$pid" "$out"
+      terminate_actor_tree "$pid" "$marker"
       # Reported at the teardown, not at the die() below, because both the
       # per-actor timeout (21) and the deadline (29) come through here and the
       # disclosure must not depend on which of them the caller picks.
       report_teardown
       wait "$pid" 2>/dev/null
       ACTOR_PGID=""
-      ACTOR_OUT=""
+      ACTOR_MARKER=""
       return 124
     fi
     # 1s poll. This is also the worst-case latency between an operator's
@@ -1196,7 +1362,7 @@ run_bounded() { # timeout, logfile, cmd...
 
   wait "$pid"; rc=$?
   ACTOR_PGID=""
-  ACTOR_OUT=""
+  ACTOR_MARKER=""
   return "$rc"
 }
 
