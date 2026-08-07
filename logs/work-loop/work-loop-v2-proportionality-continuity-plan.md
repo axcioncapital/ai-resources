@@ -293,7 +293,7 @@ Evidence:
   whatever was written — the failure mode the core's § 6 rule 5 names. The fail-capable checks are the two
   above: the requirement-to-owner and decision-to-section coverage counts, and the empty diff across every
   named target. Both would read differently had the unit implemented instead of planned.
-- *Commit:* recorded below once made — this unit's single commit carries only the plan and this state file.
+- *Commit:* `b155316` — two files, 1167 insertions, no deletions: this state file and the plan. No other path staged.
 
 ## Blocker
 
