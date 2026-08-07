@@ -313,3 +313,50 @@ fill a 40-minute absence with no supervisor involved.
 **Related:** `plans/work-loop-v2-v0.2/unattended-operation-plan-v0.2.md` § Scope;
 `runs/probe-interruption-2026-08-07.md` (the stop control this decision assumes);
 the 2026-08-06 entry above (courier drives the dispatcher, not Claude's UI).
+
+## 2026-08-07 — Contained-profile Git access: allow the minimum config paths (option A)
+
+**Context.** Work Loop v2 item 1d's operator-ratified contained profile (`denyRead: ["~/"]`) was
+wired into the dispatcher as `--unattended` and measured from inside a live dispatcher-launched
+child. The measurement found the profile also broke Git: Git reads `~/.gitconfig` on every
+invocation, the sandbox refused the read, and Git exited 128 **before touching the repository**. A
+follow-up check (6b) established the repository itself was reachable all along — `allowRead` was
+working, and Git's config discovery was the only obstacle.
+
+**Decision.** Allow the minimum Git configuration paths and broaden home access no further. Chosen
+option: **A** — add `~/.gitconfig` alone to `sandbox.filesystem.allowRead`. `~/.config/git/config`
+was considered and not added; the live probe confirmed Git needed no further help once the one file
+was readable.
+
+**Alternatives considered and rejected:**
+- **B — supply Git identity at launch instead of reading it.** Neutralise config discovery
+  (`GIT_CONFIG_GLOBAL=/dev/null`) and pass identity via `GIT_AUTHOR_*`/`GIT_COMMITTER_*` environment
+  variables. Grants no new filesystem read at all. Rejected on evidence, not preference: this
+  repository's Git identity (`user.name`/`user.email`) is set **only** in the global config —
+  `git config --local --get user.email` is empty — so a child launched this way would have no Git
+  identity, and Work Loop core § 4 has Claude commit every hop. Every hop's commit would fail.
+- **C — decide the profile is right and the loop is wrong.** An unattended child should not commit
+  at all; the dispatcher should carry commits itself. Named as an option, not recommended: it is a
+  materially larger change and would reopen core § 4's "Claude commits" assignment, which is settled
+  authority outside this unit's scope.
+
+**Rationale.** A is the smallest change, keeps commit authorship truthful (the child that did the
+work is the child whose identity signs the commit), and re-opens one named file rather than a
+directory tree. The exception was guarded at both ends rather than merely implemented: live checks
+confirm `~/.gitconfig` is readable **and** `~/.config` remains refused; the simulated suite asserts
+no widening pattern appears in `allowRead` and the entry count stays at exactly three. A dedicated
+harness case (32m) was added specifically because the ordinary red/green regression pair does not
+exercise these guards — they sit inside a branch the pre-change dispatcher never enters — so a
+mutated-profile check was needed to prove the guards can actually fail.
+
+**Residual risk, accepted with a standing condition.** `~/.gitconfig` also names credential-helper
+commands (`gh auth git-credential`). The live child could read that a GitHub credential path is
+configured but could not obtain a token — `gh`'s own credentials live under the still-denied
+`~/.config/gh/`, confirmed by direct measurement inside the child, not by inference. **If a real
+secret is ever placed in `~/.gitconfig`, this exception stops being safe and must be revisited** —
+recorded at the exception in `dispatch.sh` itself, not only here, so the condition travels with the
+code.
+
+**Related:** `plans/work-loop-v2-v0.2/unattended-operation-plan-v0.2.md` § 1d;
+`plans/work-loop-v2-v0.2/handoff-automation-spike/runs/probe-unattended-integration-2026-08-07.md`;
+`logs/work-loop/work-loop-v2-contained-unattended-profile.md` (the closed Work Loop task).

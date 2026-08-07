@@ -2,80 +2,6 @@
 
 > Archive: [session-notes-archive-2026-08.md](session-notes-archive-2026-08.md)
 
-## 2026-08-04 — Session (unmarked) — Work Loop v2 Context Engineering Route 3 plan deviation, run to approval
-
-**Work:** Ran Claude's side of `context-engineering-plan-deviation` end to end in one session — premise
-check, the §7.2 plan amendment, Codex's one bounded correction, Codex's closing record, and the operator's
-content-bound reapproval of the amended plan.
-
-### Summary
-This session carried no marker: `/prime` produced its orientation menu, but the operator's next message
-was `/work-loop-v2` directly rather than a menu pick, so `/prime`'s dispatch never ran. The first two
-invocations produced no work by design — the only `turn: claude` file was the Slice 2 identity-mismatch
-fixture (correctly rejected read-only), and the named task's state file did not yet exist anywhere in the
-workspace, so it was reported missing and nothing was created on Codex's behalf. Once Codex wrote the
-brief to disk, all four verification claims were checked by inspection and held: the plan really did bar
-S9 until S8b's three behavioural checks ran, Phase 3's exit really did require the seam proof before
-Phase 4, Phase 6 really did make it a non-waivable adoption condition, and the three closed records said
-what the brief said they said. The amendment added **§7.2 — The Route 3 deviation**, one named exception
-permitting progression past the missing S8b proof, and qualified six passages to cite it. The adoption bar
-did not move: condition 4 is marked unmet, and the debt is deliberately kept out of §11's limitations
-table because that table cannot record an unmet adoption condition. Codex then froze two findings — a
-false live authority block claiming O-1 outstanding when the specification is approved and governing at
-`148689d`, and §12 still routing to Phase 0 → S1 — both of which reproduced on inspection. The correction
-reached three passages the findings did not name (§6's O-1 row, §6's preamble, Phase 0's status note),
-because correcting only the header would have left the plan contradicting itself; that was disclosed and
-Codex accepted it. Codex closed the unit; the operator then approved the amended plan bound to `1283d99`,
-recorded in the plan's own Authority notice slot.
-
-### Decisions Made
-- **Operator: approved the amended plan**, bound to commit `1283d99`, after Codex's acceptance. Recorded
-  in the plan's Authority notice per its content-bound rule. Logged to `logs/decisions.md`.
-- **Operator: chose Route 3** on 2026-08-04 — continue while S8b stays closed and unproved. This session
-  implemented that decision; it did not take it.
-- Claude, within authority: kept the S8b evidence debt **out** of §11's limitations table and gave it its
-  own section instead, because §11's own rule forbids recording an unmet adoption condition there. Listing
-  it would have converted a blocked condition into a written limitation.
-- Claude, within authority: extended the correction to §6's O-1 row, §6's preamble and Phase 0's status
-  note — not named in the frozen findings, but required so that correcting the header did not create a
-  fresh self-contradiction. Disclosed in the hand-back rather than absorbed; Codex accepted all three.
-- Claude, within authority: rebuilt check D4b mid-round after observing it PASS on the uncorrected plan,
-  and re-ran it red before relying on it.
-- Codex, within its role: accepted the amendment after one bounded correction, chose no further round, and
-  recorded the three carried deferrals unchanged.
-
-### Risky actions
-Four commits, each staged by explicit pathspec. `logs/friction-log.md` was modified continuously by the
-write-logging hook and was deliberately never staged — machine telemetry, not this task's content. No
-destructive git operation, no external write, no prompt injection encountered. One deliberate deviation
-from a strict reading of the command: the closing record was committed while `turn: operator` rather than
-stopping at "it's the operator's move", because core §4 assigns every commit to Claude and leaving a
-written closing record uncommitted is the exact orphan failure that required two recovery commits earlier
-the same day.
-
-### Findings Declined
-- **The named task's state file did not exist at first invocation** — the brief existed only in the
-  operator's Codex conversation. Declined: the protocol behaved correctly (reported, changed nothing,
-  Codex then wrote the file), and the cost was one round trip. The core already states that a brief which
-  has not reached `logs/work-loop/` has not reached Claude.
-- **This session produced no marker, so the run manifest cannot resolve one.** Declined as a dedupe — the
-  root cause (a session that skips `/prime`'s dispatch gets no marker, degrading wrap-time ceremony) is
-  already queued at `logs/next-up.md` via the `/clarify`-first entry, with a fix direction recorded. This
-  is now at least the fourth occurrence in two days and adds confirmation, not information.
-
-### Next Steps
-`context-engineering-plan-deviation` is closed and the plan is approved — no further action on it. **S9,
-the one fresh-context candidate review, is now unblocked** and is the plan's stated next step, but opening
-it is a deliberate decision rather than automatic continuation, and it needs a fresh explicitly authorised
-task from Codex with `turn: claude`. Anything S9 produces is non-adoption evidence while condition 4 is
-unmet. Continuity detail: `logs/scratchpads/2026-08-04-16-22-scratchpad.md`.
-
-### Open Questions
-S8b's three owed checks (causal post half, passing Direct Work check, post-integration false-premise
-refusal) can only be obtained by a separate, explicitly authorised proof task. Nothing schedules one. Until
-one runs, adoption stays unavailable no matter how much downstream evidence accumulates — worth deciding
-deliberately rather than discovering at Phase 6.
-
 ## 2026-08-04 — Session (unmarked) — Work Loop v2 Context Engineering S9 reviewed, S10 corrected, task closed
 
 **Work:** Ran two consecutive Work Loop v2 units on task `context-engineering-s9-candidate-review` in one
@@ -782,3 +708,86 @@ None blocking. Three deferrals carried in the closed task's evidence, each with 
 trigger, none urgent: ownership for retiring a non-AI repository feature; the v1 capability method's
 and its one live record's disposition (pending a future per-section gap-analysis unit); a possible
 read-scope weakness in how I established other Matt-skill claims (see Findings below).
+
+## 2026-08-07 — Work Loop v2: unattended operation 1d, contained profile wired and measured live
+
+### Summary
+Picked up from a handoff pointing at Phase 1 item 1d (the contained-profile blocker). Built
+`dispatch.sh --unattended` outside the Work Loop protocol first, then the operator surfaced the
+governing state file (`work-loop-v2-contained-unattended-profile`) and the work continued properly
+inside it. Checked the brief's four verify-first claims by inspection — three held, one (the spike
+`README.md` already describing the built mode) was a deviation this session had caused, reported
+rather than smoothed over. Built the contained-profile integration: fails closed (exit 31) below
+claude 2.1.219 or off Darwin, delivers the profile by CLI `--settings` (not a repo settings file,
+since `strictAllowlist` has no effect from one), refuses to pair with `--actor-cmd`, and leaves
+attended/courier launches unchanged. Wrote a live probe that launches a real child **through**
+`dispatch.sh --unattended` rather than around it. First two probe runs found real defects in the
+probe itself — an evidence surface that searched its own prompt and reported seven confident failures
+on checks that never ran, and a fixture brief the contained child correctly refused as misclassified.
+The third, corrected run found a real defect in the settled profile: `denyRead: ["~/"]` also blocked
+`~/.gitconfig`, so Git exited 128 before touching the repository — the zero-read workaround was
+rejected on evidence, since this repo's Git identity lives only in the global config and an unattended
+child would then be unable to commit. Stopped for the operator rather than picking a fix. Operator
+decided: allow the minimum Git configuration paths, broaden home no further (option A). Implemented as
+one named file in `allowRead` — `~/.gitconfig` and nothing else, `~/.config/git/config` proved
+unnecessary. Added guards asserting the exception stayed one file (live: `~/.gitconfig` readable AND
+`~/.config` still refused; simulated: no widening pattern, exactly three `allowRead` entries) — then
+found those guards were never proven capable of failing, because they sit inside a branch the
+pre-change dispatcher never enters, so the ordinary red/green pair doesn't exercise them. Added case
+32m, which mutates a real generated profile four ways and asserts the guards catch each. Final state:
+simulated suite 273/0 (matched red pair 212/22), live probe through the dispatcher 18/0. Reconciled
+plan, spike README and `SKILL.md` only after everything passed. 1d is complete; Phase 2 blockers drop
+from three to two (1a escaped descendants, 1f branch isolation); Phase 2 remains forbidden and
+untouched. Three commits landed this session plus two more from the prior 1g work already in the
+branch; all pushed at the operator's confirmation, sweeping up two other sessions' commits in the same
+two repos (7 in `ai-resources`, 1 in the workspace root) — reported honestly as more than the three
+originally estimated, since fetch showed the true ahead-count before pushing.
+
+### Decisions Made
+- **Operator: contained-profile Git access, option A** — allow the minimum Git configuration paths
+  (`~/.gitconfig`), broaden home no further. Rejected implicitly: option B (neutralise Git's config
+  discovery and supply identity via `GIT_AUTHOR_*`/`GIT_COMMITTER_*` env vars, granting no new read
+  but losing global Git settings and adding a new thing to keep correct) and option C (decide the
+  loop itself is wrong to have an unattended child commit at all, reopening core § 4). Ground: A was
+  the smallest change, kept commit authorship truthful, and reopened one named file rather than a
+  directory tree; B's workaround does not survive contact with this repo, since the Git identity here
+  lives only in the global config and B would leave every hop's commit failing.
+- **Operator: push all 8 accumulated commits across both repos**, after being shown the corrected
+  count (not the originally-reported 3) and the repo/commit breakdown.
+- Claude, within authority: recommended option A explicitly in the state file before the operator
+  decided, on the stated grounds above — not acted on until the operator chose.
+
+### Outcome
+Skipped (not requested — `+audit` not passed).
+
+### Session Value Audit — 80/20 Review
+Skipped (not requested — `+audit` not passed).
+
+### Risky actions
+The unattended contained-profile mechanism itself is the risk surface this session worked on
+directly — an authority-narrowing change to how an unattended Claude child runs. Handled as the loop
+intends: implementation was bounded to a Standard-lane state file with a named loop reason, the one
+load-bearing policy question (Git access inside the sandbox) was not resolved unilaterally but
+written back to the operator as a real decision with costs on both named options, and nothing was
+approved, adopted or run unattended at scale — every live run was attended, single-hop and
+fixture-scoped. No gate that should have fired failed to fire. No prompt injection encountered.
+
+### Findings Declined
+None — this session's findings (three probe defects, one profile defect) were each resolved in place
+as part of the unit rather than queued or declined; none were left as an open finding at wrap.
+
+### Next Steps
+- The Work Loop task `work-loop-v2-contained-unattended-profile` is closed (`turn: codex`, assessed
+  and pushed). Natural next unit per the plan: **1a** (escaped descendants surviving the stop — named
+  as the blocker that would hurt most unattended, since it leaves a process running after the
+  operator believes everything stopped), then **1f** (branch/worktree isolation, unproven). Phase 3
+  docs 3c/3d are now unblocked and writable against the real sandbox whenever wanted.
+- Standing condition to carry forward, not a task: if a real secret is ever placed in `~/.gitconfig`,
+  the one-file exception approved this session stops being safe. Recorded next to the exception in
+  `dispatch.sh`, in the plan, and in the probe record — not only here.
+- Run `/wrap-session +telemetry` (or `full`) another day if a fuller audit/coaching/telemetry pass is
+  wanted; none were requested this session.
+
+### Open Questions
+None blocking. Phase 2 (the walk-away pilot) stays forbidden until 1a and 1f close — not a question,
+a known remaining gate.
