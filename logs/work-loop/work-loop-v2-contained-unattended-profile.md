@@ -150,6 +150,9 @@ Evidence:
   below, not fastidiousness.
 - **Cleanup asserted, not assumed:** out-of-checkout read target intact, no out-of-checkout file
   created, no lock left, no process left.
+- **Commit: `9c66f26`.** Required evidence 7 asks for the commit identifier *in this file*, which a
+  single commit cannot contain — the id does not exist until the commit is made. Recorded here in a
+  follow-up commit rather than left out or approximated.
 
 **Two defects in this unit's own probe, found by running it and reported rather than smoothed over.**
 
