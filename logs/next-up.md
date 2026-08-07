@@ -68,3 +68,5 @@ Promoted findings carry their source and a content-derived id; tick an item to r
 - [ ] The `3.1a` closed-set assertion reddens on normal repository growth — `logs/improvement-log.md` <!-- promote:6c396d56cbb8 -->
 
 - [ ] Closing-invocation instruction conflicts with a real Codex close verdict — `logs/improvement-log.md` <!-- promote:c260c3a50377 -->
+
+- [ ] Partial-file reads produced a false operability claim about an installed skill — `logs/improvement-log.md` <!-- promote:d59275d731a8 -->

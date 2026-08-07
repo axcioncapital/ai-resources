@@ -2906,3 +2906,32 @@ able to issue one that does). Whichever direction is chosen, the command and the
 
 **Target files:** `.claude/commands/work-loop-v2.md`, possibly
 `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md`.
+
+## 2026-08-07 — Partial-file reads produced a false operability claim about an installed skill
+
+- **Severity:** medium-high
+- **Source:** `logs/work-loop/work-loop-v2-resource-capability-plan.md` (Unit 1 → correction round)
+
+**What happened.** While inspecting `~/.claude/skills/wayfinder/SKILL.md` and
+`~/.claude/skills/to-tickets/SKILL.md` for a Work Loop v2 planning unit, I read only the opening
+lines of each (through the sentence "the issue tracker should have been provided to you — run
+`/setup-matt-pocock-skills` if not") and concluded both skills were unusable in a repository with no
+configured tracker. I built a preparatory Discovery unit into the plan on that basis. The very next
+clause in `wayfinder/SKILL.md:25` states "If no tracker has been provided, default to the
+local-markdown tracker," and `to-tickets/SKILL.md:62` specifies that local form concretely. The claim
+was false, and it was not caught by my own inspection — Codex's independent review caught it and froze
+it as one of four correction findings.
+
+**Why it matters.** The failure mode is generic: establishing a skill's or a document's behaviour from
+a partial read, stopping at the first sentence that looks like a hard constraint, rather than reading
+to the section's actual end. Nothing about this instance is Wayfinder-specific. It cost one correction
+round here because Codex's review caught it before the plan was closed; a future occurrence without an
+independent review in front of it would ship the false claim.
+
+**What would catch it earlier.** No mechanical check is proposed — this is a reading-discipline lapse,
+not a missing tool. Recorded so the pattern is visible if it recurs: the concrete signal to watch for
+is a "must configure X first" / "requires Y" conclusion drawn from a skill or doc's opening lines
+without confirming there is no fallback or exception stated later in the same file.
+
+**Target files:** none — this is a working-method finding, not a file defect. No fix is proposed;
+reopen only if the same shape of partial-read error surfaces again in an inspection task.

@@ -2050,3 +2050,78 @@ session; relevant if S8a's classification is later used to support an adoption c
   `improvement-log.md` ("generalize per-id marker establishment to non-`/prime` session-start paths").
   This instance adds no new information; logging it again would duplicate, not extend, the existing
   record.
+## 2026-08-04 — Session (unmarked) — Work Loop v2 Context Engineering S8b, run to closure
+
+**Work:** Ran Claude's side of `context-engineering-s8b-seam-proof` through claims-checking, an
+evidence-packet reduction, a pre-root red run, a bounded correction round, and closure — plus a
+mid-wrap orphan recovery.
+
+### Summary
+This session carried no marker: `/prime` produced its orientation menu, but the operator's next message
+was `/work-loop-v2` directly rather than a menu pick, so `/prime`'s dispatch (marker allocation,
+`/session-start`) never ran. S8b's Unit 1 opened with Codex's brief on `turn: claude`. Verified all seven
+claims by inspection — state-file identity, the plan's approval binding to `e1ce895`, the exact commit
+history of the three v2 runtime files (`4165043` pre-integration → `4f3d6ca`+`daebb0c` integration and
+hardening), the deleted candidate's Git-recoverable bytes, S8a's four relevant paths against live wiring,
+fixture suitability, and disposable-root isolation — and recovered the S8a closing record a prior session
+had staged but never committed (`90e579e`). Built two isolated snapshot roots outside every repository and
+wrote a four-check run packet (`75ec136`). The operator challenged it as ceremony; assessed honestly that
+three of the four checks duplicated evidence that already existed from real use, and the operator reduced
+the packet to the one novel piece — the pre-root red run (`881285f`). Guided the operator through that run;
+Codex's pre-integration brief showed none of the three defined behaviours (red condition met, `33b60f7`,
+narration added at `3b4be7a`). Codex then froze a bounded correction of three findings, all of which
+reproduced as real on inspection — the cited "post half" used a different request, the Direct Work
+substitution actually cited a pilot *failure*, and the false-premise fixture evidence predated the
+integration by two days. Prepared a three-run correction packet (`28d7077`); the operator declined the
+false-premise run and, when re-checked against disk, the other two runs also turned out not to have
+executed — recorded all three findings as honestly unmet, with the discrepancy against the operator's own
+instruction stated openly (`33ade28`). Codex closed the unit without the behavioural seam proof, recording
+the three gaps as accepted limitations and retaining the red run and commit boundary as evidence
+(`6910254`, committed on explicit operator instruction). Mid-wrap, `/wrap-session`'s foreign-session guard
+fired `UNKNOWN` on `logs/session-notes.md` in a checkout with 13 live Claude CLI processes; investigated by
+hand rather than assumed, confirmed the extra content was the same prior-session orphan this session's own
+`/prime` had already reported that morning, and recovered it as two standalone wrap-recovery commits
+(`5f5d250`, `dfad256`) before continuing.
+
+### Decisions Made
+- **Operator: reduced the S8b evidence packet to the pre-root red run only**, substituting cited live
+  evidence (this task's own engineered brief, the pilot log's Direct Work finding, the pre-integration
+  acceptance fixture) for the other three checks. Logged to `logs/decisions.md`.
+- **Operator: declined the false-premise refusal run (Run 3)** and, separately, the other two runs turned
+  out not to have executed either — all three correction findings recorded as unmet rather than papered
+  over. Logged to `logs/decisions.md`.
+- Codex, within its role: froze three correction findings on the reduced packet's substitutions, all of
+  which Claude reproduced as genuinely real before acting on them.
+- Codex, within its role: chose the core §3 stop route at closure rather than opening a further correction
+  round or treating absent evidence as satisfied.
+- Claude, within authority: classified the mid-wrap foreign-session-guard `UNKNOWN` firing as REMNANT by
+  hand (checked git history and this session's own earlier `/prime` output) rather than assuming either
+  shape, and recovered the orphan as two scoped wrap-recovery commits.
+
+### Risky actions
+Two `git commit` calls (`90e579e`, `75ec136` and others across the session) proceeded past the
+staging-tripwire hook's advisory exempt-file-sweep warning, each verified beforehand by inspecting the
+staged diff to confirm single-file scope. None were destructive or external; no prompt injection
+encountered.
+
+### Findings Declined
+- `check-foreign-staging.sh`'s same-day-header shadowing (the guard reads the *first* of two same-day
+  headers under one marker, so a continued session's corrected footprint is shadowed by the earlier one)
+  produced two advisory false-positive-shaped warnings this session. Declined as a fresh log entry: the
+  root-cause family is already tracked in `improvement-log.md`; this instance adds confirmation, not new
+  information.
+- `run-manifest.sh close` could not resolve a session marker at wrap (no per-id marker; no today-dated
+  shared marker) because this session never ran `/prime`'s dispatch. The exact same failure, same root
+  cause, is already recorded two entries above in this file (2026-08-04, this session's own predecessor)
+  and tracked across multiple `friction-log.md` entries with a fix direction already routed to
+  `improvement-log.md`. Declined as a dedupe — this is now at least two occurrences in one day.
+
+### Next Steps
+S8b is closed; no further action on it. The next real Work Loop v2 unit needs a fresh, explicitly
+authorised task from Codex — this closed task is not reopened. Continuity detail: see
+`logs/scratchpads/2026-08-04-15-28-scratchpad.md`.
+
+### Open Questions
+The recurring pattern across S7, S8a and S8b — every Codex-framed exit condition wants an operator-driven
+staged run, and three in a row have now been declined or reduced — is already the pilot's stated design
+input for the v0.2 rework; worth keeping in view rather than re-litigating if a successor unit opens.
