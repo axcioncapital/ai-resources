@@ -67,118 +67,65 @@ The repository contains a fail-closed unattended mode whose requested policy is 
 Stop and hand back to Codex if any verify-first claim is false, concurrent edits make ownership unsafe, the effective live policy differs from the settled profile, required evidence cannot be produced, or completing the unit would cross an exclusion. Stop for the operator if proceeding would require weakening or changing the settled profile or any phase gate.
 
 ## Latest result
-**This invocation was the one bounded correction, frozen to Codex's four findings.** All four are
-resolved. Nothing outside them was implemented; what was newly noticed is recorded as a deferral
-below.
+**This invocation was the protocol's final tightly bounded fix** (core § 3, *If the correction was
+not enough*) — Codex's menu choice after accepting findings 1, 2 and 4 and finding 3 not fully
+resolved. Documentation only. The three named plan edits were made and nothing else was touched.
 
-Reproduced first, by inspection, before anything was changed:
+**Where the unit stands.** 1d is built, measured live, and complete. The two remaining Phase 2
+blockers are 1a (escaped descendants survive the stop) and 1f (branch/worktree isolation unproven).
+Phase 2 remains forbidden. Codex's independent checks confirmed the `system/init` evidence and its
+control sound, the raw capture complete at 21/0, the real lock and probe artifacts absent, the
+shipping suite at 284/0, and the pre-1d pair at 216/24 on the same current test file.
 
-- **Finding 1 — reproduced.** `unattended-effective-policy.sh` called `ok()` on `PROBE_TOOLS:` and on
-  `PROBE_MCP_NONE`, so both counted toward the headline `18/0`, while the record's own *Limits*
-  section called them model claims. The two disagreed and the score followed the weaker one.
-- **Finding 2 — reproduced.** The lock assertion tested `$d/.dispatch-lock*`; `dispatch.sh` line 420
-  writes `${TMPDIR}/work-loop-dispatch-<sha>.lock`, so the assertion could not detect a leaked lock
-  and passed unconditionally. `DRC` was captured and never asserted. The raw capture was written
-  before the assertion block, so it held the inputs and none of the verdicts.
-- **Finding 3 — reproduced.** Plan lines 311/327 and the 3c/3d envelope still described an unbuilt
-  profile; README's walk-away notice said three blockers, said the profile was not wired, and omitted
-  `--unattended`; the risk envelope repeated it.
-- **Finding 4 — reproduced, and Codex is right.** Ran the *then-current* `dispatch.test.sh` against
-  the pre-1d dispatcher at `22fedf8`: **212 pass, 23 fail**, not `212/22`. The state file had carried
-  a count from an earlier version of the test file and called it a run of the same one.
+Result: the three stale statements in `plans/work-loop-v2-v0.2/unattended-operation-plan-v0.2.md` are
+corrected. The plan no longer contradicts its own status block or the accepted evidence.
 
-**Finding 1 — resolved by changing where the answer comes from, not by re-labelling it.**
-Unattended hops now launch with `--output-format stream-json --verbose`. The stream's first event is
-the product's own `system/init`, which states the tool roster and MCP servers **the runtime
-resolved** — the one surface where a silently dropped `--tools` or `--strict-mcp-config` would show,
-and the thing configured argv and child prose both cannot establish. The stream's final `result`
-event is byte-identical to what `--output-format json` produced, so the capture is a superset; the
-switch is scoped to `--unattended` and attended hops are asserted unchanged (case 32j).
+Evidence — the three corrected passages, quoted:
 
-Observed: `tools: Bash,Skill` and `mcp_servers: <none>`. Both are falsifiable, and were falsified:
+1. **Suite arithmetic** (status block): "*all simulated (149 at `c8b2172`, plus 22 for the 1g
+   three-state fix, 27 for the pid-validation correction that followed it, **75** for the 1d
+   contained-profile integration, and 11 for the 1d correction of 2026-08-07)*". The stated components
+   now add to the stated total: 149 + 22 + 27 + 75 + 11 = **284**. They previously summed to 279.
+2. **Open question 1**: "*No longer an open question — and **no longer a blocker at all.** The profile
+   was built as `dispatch.sh --unattended` and its effective policy measured from inside a child the
+   dispatcher launched (`runs/probe-unattended-integration-2026-08-07.md`, 21/0). 1d is complete. The
+   two remaining Phase 2 blockers are **1a** (escaped descendants survive the stop) and **1f**
+   (branch/worktree isolation unproven).*"
+3. **Final sentence**: "*What is left is unbuilt and unproven work — the **two** Phase 2 blockers —
+   not decisions.*"
 
-- The fixture now declares a project-scope MCP server in `.mcp.json`, so an empty `mcp_servers` is a
-  refusal of something that was there to find rather than a fact about an empty directory.
-- A **control run** — same binary, same host, **without** `--tools` and `--strict-mcp-config`,
-  stopped at the init event by SIGPIPE before any turn completes — reads **27 tools and 1 MCP
-  server**. The fields vary with the flags. Without this the assertion would be a constant.
-- In the simulated suite, **case 32n** builds a dispatcher regressed to `--output-format json` and
-  asserts case 32's three new argv checks go red on it. That case exists because the matched red pair
-  cannot reach them: the pre-1d dispatcher has no `--unattended`, so everything under it is skipped —
-  the same gap that produced case 32m.
+Evidence — searches of the whole plan file, each returning **0** matches:
 
-The child's own `PROBE_TOOLS:` and `PROBE_MCP_NONE` lines are still collected, still agree, and are
-now printed as `NOTE` and **counted nowhere**.
+- `70 for the 1d` → 0
+- `still blocking it` → 0
+- `the three Phase 2 blockers` → 0
 
-**Finding 2 — resolved; all three evidence paths.** The lock assertion recomputes the dispatcher's
-own key (canonical checkout + task, sha256, first 16 chars) and checks the real path. The dispatcher's
-exit status is asserted `0` rather than recorded. Assertion and cleanup output is buffered and the
-raw capture assembled at the end, so it now carries the verdicts and the final count. The attended
-live probe was rerun in full.
+Evidence — scope held. `git status` across `plans/` and `.agents/` shows exactly two modified files:
+this state file and the plan. No code, test, README, `SKILL.md`, run record, raw evidence or phase
+gate was touched.
 
-**Finding 3 — resolved, and replaced rather than deferred.** Plan: the 1d body now says the third
-step is done and how, the status table's Phase 3 row records 3c/3d as rewritten, and the sequence
-line no longer calls 1d blocking. **3c** now lists what the sandbox and permission layer actually
-refuse; **3d** lists what they still do not cover, with settings-scope merging named as the residual
-that stays open. README: the walk-away notice names exactly two blockers (1a, 1f), the worked command
-carries `--unattended`, and the risk envelope was rewritten with the prevented set moved to the left
-column and the Claude-process and settings-scope limits kept explicit. `SKILL.md` § *Unattended runs*
-gains one sentence on where the effective policy is readable. Phase 2 stays forbidden throughout.
+Commit: recorded below in a follow-up commit. The identifier cannot exist inside the commit that
+creates it, so it is added afterwards rather than left out or approximated — the same way the two
+earlier rounds of this task handled it.
 
-**Finding 4 — resolved by reporting the current pair exactly.** See Evidence.
+Deferrals — carried forward from the correction round, still recorded and still not done:
 
-Evidence:
-
-- **Simulated suite, current matched pair on the same current test file:** green **284 pass, 0 fail**
-  against the shipping dispatcher; red **216 pass, 24 fail** against the pre-1d dispatcher recovered
-  from `22fedf8`. Case 32n supplies the twenty-fourth failure — its mutant cannot be built from a
-  dispatcher that has no `stream-json` line to revert.
-- **The `212/23` figure is reported separately and belongs to the pre-correction test file**, run
-  today against the same `22fedf8` dispatcher. It is not the same file as the pair above, and is not
-  described as one.
-- **Live, attended, through the dispatcher:** `runs/probes/unattended-effective-policy.sh` →
-  **21 pass, 0 fail**, dispatcher exit `0`. Raw capture
-  `runs/probes/unattended-effective-policy-2026-08-07.raw.txt`, which now contains the assertion and
-  cleanup verdicts and the `pass=21 fail=0` line itself. Record updated:
-  `runs/probe-unattended-integration-2026-08-07.md`.
-- **Every containment result from the earlier run held on the rerun** — network refused, write
-  outside the checkout refused, home read refused, push denied before execution, `~/.gitconfig`
-  readable while `~/.config` stayed refused, `gh auth token` blocked, sentinel credential scrubbed,
-  `SessionStart` hook never fired. The count moved 18 → 21 because three fail-capable assertions were
-  added, not because anything was rescored.
-
-Deferrals — newly noticed during this correction, recorded and not implemented:
-
-- **The declared sandbox write policy does not read like the enforced one.** The child reported that
-  the policy shown to it lists `**` among write-allowed paths, yet its write outside the checkout was
-  refused. Enforcement is the stricter of the two, so the containment result is the safe one — but
-  the *description* cannot be used to predict behaviour, which matters for anyone reasoning about the
-  profile without running it. Not investigated here: it is outside the four frozen findings.
-- **A refusal cannot be double-checked from inside the child.** Confirming no file was created at the
-  denied path requires reading that path, which is itself denied. The probe checks it from outside
-  and it held; the asymmetry is worth knowing when writing future in-child checks.
+- **The declared sandbox write policy does not read like the enforced one.** The policy shown to the
+  child lists `**` among write-allowed paths, yet its write outside the checkout was refused.
+  Enforcement is the stricter of the two, so the result is the safe one — but the description cannot
+  be used to predict behaviour.
+- **A refusal cannot be double-checked from inside the child.** Confirming no file was created at a
+  denied path requires reading that path, which is itself denied. The probe checks it from outside.
 - **The marker vocabulary does not distinguish a sandbox refusal from a permission-layer refusal.**
-  `PROBE_PUSH_DENIED` and `PROBE_NET_REFUSED` come from different layers and read the same.
 - **Scope merging remains untested and open.** Array keys such as `allowRead` merge across settings
   scopes, so this measured the containment *this host* produces. Closing it needs managed settings,
-  which no dispatcher can set for itself. Carried forward, not new.
+  which no dispatcher can set for itself.
 
 ## Blocker
 None.
 
 ## Next action
-Codex: run the closure check on the four frozen findings only — are 1, 2, 3 and 4 resolved, and did
-the correction break anything? The specific things to look at, since each finding changed a different
-surface:
-
-1. Whether `system/init` in the hop capture, plus the control run and case 32n, is evidence the brief
-   would accept for the tool roster and MCP absence — and whether moving unattended hops to
-   `--output-format stream-json` broke anything attended (case 32j asserts not).
-2. Whether the lock path, the dispatcher-exit assertion and the end-written raw capture close the
-   evidence gaps, on the rerun rather than on the old run.
-3. Whether plan, README and `SKILL.md` now agree, name exactly two blockers, keep Phase 2 forbidden,
-   and whether 3c/3d were genuinely replaced rather than restated.
-4. Whether the counts are reported exactly: **284/0** green, **216/24** red on the current file, with
-   `212/23` attributed to the pre-correction file.
-
-Anything newly noticed at this check is a deferral, not a second correction round (core § 3).
+Codex: the closure check covers **only** the three plan edits above and whether they introduced an
+immediate contradiction. Specifically — does the suite arithmetic now add to 284, does open question 1
+state 1d complete with 1a and 1f as the two blockers, and does the final sentence say two. Anything
+else noticed is a deferral, not a further round.

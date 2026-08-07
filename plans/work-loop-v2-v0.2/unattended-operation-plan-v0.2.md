@@ -20,7 +20,7 @@ Author: Claude. Revised after independent Codex review of v0.1.
 > | Core § 4 decision | **recorded** in `logs/decisions.md`, 2026-08-07 |
 >
 > Suite: **284 pass, 0 fail** — all simulated (149 at `c8b2172`, plus 22 for the 1g three-state fix,
-> 27 for the pid-validation correction that followed it, 70 for the 1d contained-profile integration,
+> 27 for the pid-validation correction that followed it, 75 for the 1d contained-profile integration,
 > and 11 for the 1d correction of 2026-08-07). **Two live shapes have now happened.** Phase 0c — **an attended five-hop live run with
 > no operator transport during the run**: three commits, closed at `turn: operator`, the operator
 > present at a supervised terminal, and **without** the contained profile. And the 1d integration
@@ -620,8 +620,11 @@ no.
 1. ~~**Unattended authority (1d).**~~ **ANSWERED 2026-08-07.** The operator revisited narrowly, as
    recommended: no push, no tool-side network, for unattended runs only. The attended posture is
    unchanged. The mechanism was verified first (§ 1d, and
-   `runs/probe-contained-authority-2026-08-07.md`). No longer an open question — but note it no
-   longer blocks Phase 2 *as a decision* while still blocking it *as unbuilt work*.
+   `runs/probe-contained-authority-2026-08-07.md`). No longer an open question — and **no longer a
+   blocker at all.** The profile was built as `dispatch.sh --unattended` and its effective policy
+   measured from inside a child the dispatcher launched (`runs/probe-unattended-integration-2026-08-07.md`,
+   21/0). 1d is complete. The two remaining Phase 2 blockers are **1a** (escaped descendants survive
+   the stop) and **1f** (branch/worktree isolation unproven).
 2. ~~**Launch path (0a).**~~ **ANSWERED 2026-08-07 by Phase 0.** Nested children *do* work from inside
    a Codex task, but only outside the ordinary command sandbox — inside it, the child fails before
    initializing (`Operation not permitted`, and Claude reports `Not logged in`). **Direct detachment
@@ -637,5 +640,5 @@ no.
    note the review round's own row 1 has since been superseded, because Phase 0 showed part of my
    reply to it was wrong.
 
-**No questions remain open for the operator.** What is left is unbuilt and unproven work — the three
+**No questions remain open for the operator.** What is left is unbuilt and unproven work — the two
 Phase 2 blockers — not decisions.
