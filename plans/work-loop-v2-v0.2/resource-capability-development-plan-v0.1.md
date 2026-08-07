@@ -37,10 +37,26 @@ That is this plan's mandate, stated by the repository itself. The resulting stat
 | One live capability record has no executor | `projects/axcion-ai-system-owner/development/prime-runtime-delegation.md` |
 | `/develop-ai-resource`'s upstream-verification path can never fire | Step 1.0's own note: "**No executable component emits these fields yet** — the producer ships with `/work-loop`'s capability route." The producer is now deleted, so "yet" became "never". |
 
-**Retirement is represented nowhere.** No command, skill or document in the live checkout owns
-retiring a resource or capability. `/develop-ai-resource`'s eleven verdicts (§ 1.6) cover create,
-reuse, improve, defer and no-build; none is *retire*. This is the one genuinely missing lifecycle
-concept, and it is why the v1 retirement above had to be executed by hand.
+**Retirement is defined, but only in the layer that can no longer run, and only for one object
+class.** The v1 capability layer defines it properly: `templates/capability-record.md:7` puts
+`retired` in the TERMINAL status set, `:83` makes a *retirement condition* a required element of the
+implementation package, and `:136` records it with the lifecycle status.
+`skills/capability-development/SKILL.md:326` gives it substance — "`retired` | TERMINAL | Withdrawn
+from use | **The machinery removed, and a record of what was removed**" — and `:340` states the rule
+plainly: "Retirement that leaves the machinery in place is not retirement. Remove it, and record what
+was removed."
+
+Two things follow, and they are different problems:
+
+- **That definition is unreachable.** It lives in the layer whose executor was deleted, so nothing
+  can apply it.
+- **It covers operating capabilities only.** Nothing owns retiring a **durable AI artifact** —
+  `/develop-ai-resource`'s eleven verdicts (§ 1.6) cover create, reuse, improve, defer and no-build,
+  and none is *retire* — and nothing owns retiring a **non-AI repository feature**.
+
+The `0516bf6` retirement is the demonstration: it retired an AI artifact by hand, under no owner's
+rule, and left the three broken routes above. Had `capability-development:340` governed it, "record
+what was removed" would have surfaced the dangling references at decision time.
 
 **What is NOT broken, and must not be rebuilt.** Work Loop v2 already delivers most of what the
 operator's objective asks for. Section 2 establishes this by inspection, because the largest risk to
@@ -88,8 +104,15 @@ Checked against the brief's five named questions. All five are **already impleme
    and … an explicit lifecycle decision: **adopt, revise, continue the trial or stop**" (core `:126`).
 
 **Consequence for this plan.** The operator's stated requirement to "keep technical completion
-separate from operational adoption" is already met by Adoption mode. It does not need designing. It
-needs *reaching* — which is the gap § 1 describes.
+separate from operational adoption" — the *decision point* itself — is already met by Adoption mode.
+It does not need designing. It needs *reaching*, which is the gap § 1 describes.
+
+**The limit of that claim, stated here so it is not over-read downstream.** Adoption mode is a
+decision point, not a capability-development method. It does not carry trial design, seam selection,
+the intervention ladder, retirement conditions or a durable capability address — all of which
+`skills/capability-development/SKILL.md` does carry. Whether v2 needs any of them is **Unit 4's gap
+analysis**, not a question this section answers. Row 5 above says the lifecycle *decision* exists; it
+does not say the method it belongs to has been replaced.
 
 ### 2b. Authority status — what is settled and what is not
 
@@ -114,61 +137,85 @@ can route *into* them. Naming one is therefore always an instruction to the oper
 what the Codex skill's `[Claude-side only]` handling already does (`:213–215`). The four freely
 invocable ones are `prototype`, `tdd`, `code-review`, `diagnosing-bugs`.
 
-**`wayfinder`, `to-spec` and `to-tickets` require a configured issue tracker, and this repo has
-none.** `setup-matt-pocock-skills` records the choice in `docs/agents/issue-tracker.md`. Searched:
-`docs/agents/` is **absent**, no `issue-tracker.md` exists anywhere under the repo, and no `.scratch/`
-convention is present. `to-spec` and `to-tickets` both state "The issue tracker … should have been
-provided to you — run `/setup-matt-pocock-skills` if not."
+**No tracker configuration is required in advance.** `wayfinder`, `to-spec` and `to-tickets` publish
+to an issue tracker, and `docs/agents/issue-tracker.md` is absent here — but the installed definitions
+carry their own fallback. `wayfinder/SKILL.md:25`: "**If no tracker has been provided, default to the
+local-markdown tracker.**" `to-tickets/SKILL.md:62` specifies that local form concretely — "write one
+file per ticket under `.scratch/<feature-slug>/issues/<NN>-<slug>.md`". The skills degrade to a
+local-markdown tracker rather than refusing.
 
-> **This is a premise correction the brief did not anticipate.** Settled constraint 5 treats
-> `wayfinder` as an available alternative planning owner and `to-tickets` as available when several
-> slices are needed. Today, in `ai-resources`, neither can run. The constraint's *philosophy* stands;
-> its *operability* does not, and any unit that assumed it would have failed at execution. Unit 0
-> below exists solely because of this finding.
+**The proportional consequence.** Setup is not a prerequisite and does not earn a preparatory unit.
+If a genuinely foggy initiative reaches one of these specialist boundaries and the installed skill
+asks for configuration *at that point*, the operator handles it then — inside the specialist's own
+flow, which owns its method (core § 1 limit 4). Building a Discovery unit in advance to answer a
+question the skill answers for itself would be exactly the over-preparation this plan exists to
+prevent.
 
 ---
 
 ## 3. The recommended minimum design
 
-> **Reconcile the ownership that already exists. Add no new workflow component.**
+> **Reconcile the ownership that already exists. Add no new workflow component. Decide nothing about
+> the v1 doctrine before the gap analysis that would justify the decision.**
 
 The design is three moves, in dependency order:
 
 1. **Give the orphaned routes a live destination.** Repoint the operating-capability and
    settled-correction routes in `/develop-ai-resource` and `/leverage-idea` at Work Loop v2's intake
-   router, which is the capability that now performs owner selection.
-2. **Retire the v1 doctrine that cannot execute**, rather than porting it. Adoption mode already
-   carries the lifecycle decision the capability record was invented to hold; the eight-step contract,
-   the stream/unit/phase machinery and the four-gate route table are v1 process that v2 replaced.
-3. **Add `retire` as a verdict to the owner that already owns lifecycle verdicts** —
-   `/develop-ai-resource` § 1.6 — instead of building a retirement command.
+   router, which is the capability that now performs owner selection. This is the part the repository
+   evidence already settles, and it is safe to do now.
+2. **Establish, by inspection, what the v1 capability method contains that nothing in v2 covers** —
+   and hand that gap analysis to the operator. This plan does **not** recommend retiring, porting or
+   keeping the v1 doctrine. Unit 4 produces the evidence; the disposition is the operator's.
+3. **Give each object class an owner for `retire`, or state precisely who is missing one.** For a
+   durable AI artifact, add the verdict to `/develop-ai-resource` § 1.6. For an operating capability
+   and a non-AI repository feature, § 5 states the open ownership question rather than answering it.
+   No new retirement component is proposed for symmetry.
 
-**Component arithmetic: −1 command already gone, −0 added, and up to −4 documents retired.** This
-clears complexity-budget prong **(a)**, net-simplification, without needing prong (b). It also clears
-prong (b) independently on cited evidence (`logs/improvement-log.md:2823`, commit `0516bf6`), so the
-budget is satisfied twice over. No unit below proposes a new command, skill, agent, mandatory gate,
-always-loaded rule, registry, lifecycle record or state system.
+**Why move 2 is deliberately unresolved.** An earlier draft of this plan recommended retiring the v1
+doctrine on the reasoning that Adoption mode already carried its load-bearing part. Inspection does
+not support that. `skills/capability-development/SKILL.md` contains, under its own headings,
+**the intervention ladder** (`:108`), **owner selection and seam procedure** (`:127–159`), **trial
+design and its stop condition** (`:226`), **slice standards** (`:245`), **evidence-to-claim** (`:261`)
+and a **lifecycle status table** (`:313–340`). Adoption mode is one decision point — real-operation
+evidence ending in adopt / revise / continue / stop (core `:126`). A decision point does not replace
+a method, and having the same four options is not evidence of equivalent coverage.
+
+**Nor does the task-state file replace the capability record.** Core § 4 defines the state file as
+**current truth for one task**, and reduces it to four sections at closure. It is not durable
+operating-capability state: a capability outlives its tasks, and the record's *retirement condition*,
+*real-use result* and *lifecycle status* (`templates/capability-record.md:83`, `:131`, `:136`) have
+nowhere to live once a task closes. Whether that matters in practice — with exactly one live record —
+is Unit 4's question, not this section's assertion.
+
+**Component arithmetic: 0 added in every class.** Nothing is counted as removed, because this plan
+recommends removing nothing. It clears complexity-budget prong **(a)** by holding every count flat
+while restoring capability, and independently clears prong **(b)** on cited evidence
+(`logs/improvement-log.md:2823`, commit `0516bf6`). No unit below proposes a new command, skill,
+agent, mandatory gate, always-loaded rule, registry, lifecycle record or state system.
 
 ### The strongest rejected alternative
 
-**Build a capability route into Work Loop v2** — a fourth mode, or a `capability-development-v2`
-skill with a v2 capability register, so the v1 lifecycle survives with a new executor.
+**Build a v2 capability route now** — a fourth mode, or a `capability-development-v2` skill with its
+own v2 capability register, so the v1 lifecycle survives with a new executor.
 
-Rejected on four grounds, the first two decisive:
+Rejected — but on sequencing and cost, **not** on the claim that v1's content is redundant:
 
-- **It is a second state system.** A capability register alongside the task-state file is exactly what
-  core § 1 limit 4 and core § 4 forbid. The v1 record existed because v1 had no cross-session state
-  for a capability; v2's state file *is* that state.
-- **Adoption mode already does the load-bearing part** — real-operation evidence ending in an explicit
-  adopt/revise/continue/stop decision (core `:126`). This is ~80% coverage, which
-  `ai-resource-creation.md` rule #7 question 5 answers with *extend it, don't add*.
+- **It builds before the gap is known.** Move 2 has not run. Designing a replacement register before
+  establishing what the existing method actually contributes is the speculative-abstraction failure
+  `ai-resource-creation.md:29` names. If Unit 4 shows the trial-design and retirement-condition
+  content is load-bearing, the right answer may well be to *keep* it — which costs nothing and is not
+  available once it has been replaced.
+- **A second concurrent state system is the specific risk.** Core § 1 limit 4 and core § 4 forbid
+  standing a second state system beside the task-state file. That objection applies to a *new v2
+  register* built now; it is not an argument that the v1 record was wrong to exist.
 - **A fourth mode would break the mode contract's own rule** that modes classify what is uncertain
   *now*, not what kind of object is being worked on (core `:96–108`).
-- **It reinstates 1,321 lines of doctrine** to serve one live record.
 
-*What the rejected option was right about:* v1 correctly insisted that the operating outcome and the
-artifact are different things, and that the adoption decision belongs to the outcome's owner, not the
-artifact's builder. Unit 3 preserves exactly that boundary, in one sentence, without the machinery.
+*What the rejected option is right about:* v1 correctly insisted that the operating outcome and the
+artifact are different things, that the adoption decision belongs to the outcome's owner, and that a
+capability needs a durable address that outlives any one unit. The first two are preserved in § 4's
+route 6 → 7 seam. **The third is an open question this plan does not close.**
 
 ---
 
@@ -182,7 +229,7 @@ today except where marked.
 |---|---|---|---|
 | 1 | A small settled improvement, reversible | **Direct Work** (core § 2) — no state file, no brief | The change is made. Nothing else happens. |
 | 2 | An ordinary unresolved feature or resource change | **Work Loop v2**, admitted Standard, mode by what is uncertain | Codex closes the task, or routes it out to a specialist |
-| 3 | A large, foggy initiative with dependent decisions | **`wayfinder`** (operator-invoked) — **blocked today**, § 2c | The decision map's tickets are resolved and the way is clear |
+| 3 | A large, foggy initiative with dependent decisions | **`wayfinder`** (operator-invoked) | The decision map's tickets are resolved and the way is clear |
 | 4 | A difficult defect | **`diagnosing-bugs`** | The cause is established; the fix is then route 1 or 2 |
 | 5 | An architecture-health concern | **`improve-codebase-architecture`** (operator-invoked) for code; **`/consult`** for workspace structure | The deepening opportunity is chosen and grilled |
 | 6 | A new AI resource supporting an existing operating capability | **`/develop-ai-resource`** | A disposition is returned — including no-build. Adoption stays with the capability's owner. |
@@ -194,8 +241,9 @@ component* of an operating outcome. `/develop-ai-resource` returns a disposition
 whether the outcome is achieved is route 7's question, and the adoption decision is Adoption mode's.
 This is v1's outcome-versus-artifact boundary, preserved without v1's record.
 
-**Why route 3 is listed while blocked.** Removing it would silently narrow the operator's options and
-hide a real dependency. Unit 0 resolves the block, or records that the operator chooses not to.
+**Route 3 needs no preparation.** It falls back to a local-markdown tracker when none is configured
+(§ 2c). Fogginess is what selects it — not size and not importance; § 9 row 5 is the case that would
+expose the drift.
 
 ---
 
@@ -214,11 +262,22 @@ Two mechanisms already resist build-bias, and both are load-bearing here:
 | **Create** | `/develop-ai-resource` → `/create-skill` | None |
 | **Improve** | `/improve-skill` direct when settled; `/develop-ai-resource` first when uncertain or contested | None — the settled-mechanism test already sizes this correctly |
 | **Replace** | `/develop-ai-resource` § 1.4, via the inflow rule's "state which existing command it replaces" | None. Replacement is a create whose budget answer names the removal. |
-| **Retire** | **Nothing owns it** | **Unit 3** — add `retire` to § 1.6's verdict list, with the evidence a retirement must cite |
+| **Retire** | **Depends on the object class — see below** | **Unit 3**, scoped per class |
 
-Retirement earns its place on cited evidence rather than symmetry: it had to be performed by hand at
-`0516bf6`, and it left the repository in the broken state § 1 documents. A verdict with a stated
-evidence requirement would have surfaced the three dangling routes at decision time.
+### Retire, per object class
+
+Retirement is not one gap. It is defined well for one class, undefined for two, and the plan must say
+which is which rather than adding a component for symmetry.
+
+| Object class | Who owns retiring it today | Proposed |
+|---|---|---|
+| **Operating capability** | **Defined, but unreachable.** `capability-development/SKILL.md:326`, `:340` and `templates/capability-record.md:7`, `:83`, `:136` define `retired` — machinery removed, and a record of what was removed | **No change here. This is Unit 4's question**, because the answer depends on whether that layer is kept, folded into v2, or retired. Deciding it now would pre-empt the operator. |
+| **Durable AI artifact** (skill, command, agent, hook, doc) | **Nobody.** `/develop-ai-resource` § 1.6's eleven verdicts contain no retire | **Unit 3** — add `retire` to § 1.6, borrowing the substance already proven at `capability-development:340` rather than inventing it: remove the machinery, and record what was removed |
+| **Non-AI repository feature** | **Nobody, and no candidate owner exists** | **Stated as an open ownership question, not answered.** Work Loop v2 can *execute* a retirement as an ordinary unit, but no rule tells anyone what a repository-feature retirement must record. § 11 carries it as a deferral with a reopening trigger. |
+
+Retirement earns its place on cited evidence rather than symmetry: `0516bf6` retired an AI artifact
+by hand, under no owner's rule, and left three broken routes. Unit 3 is confined to the one class
+where the gap is both real and unambiguous.
 
 ---
 
@@ -254,28 +313,6 @@ no meaningful regression check exists, say so and say why, rather than inventing
 
 Vertical, independently verifiable, sequenced by dependency and uncertainty. Each is a candidate for
 one Work Loop v2 task; **none is authorized by this document.**
-
----
-
-### Unit 0 — Discovery: can the Matt planning flow actually run here?
-
-- **Outcome and why now.** Route 3 and settled constraint 5 both depend on `wayfinder`/`to-spec`/
-  `to-tickets`, which need a tracker this repo does not have. Every later unit that would route a foggy
-  initiative there rests on this. It is first because it is the only load-bearing unknown remaining.
-- **Owner.** Work Loop v2, **Discovery mode**.
-- **Owned paths.** The state file only. This unit changes nothing else.
-- **Holds outside.** Actually running `setup-matt-pocock-skills`. That is an operator decision about
-  adopting a tracker convention in `ai-resources`, not a finding.
-- **Claims to verify.** `docs/agents/issue-tracker.md` absent (searched `docs/agents/`, repo-wide for
-  the filename, and for `.scratch/`); the three skills' stated tracker dependency; whether GitHub
-  issues are a live surface for this repo.
-- **Fail-capable evidence.** The unit returns one of: *tracker exists and the flow runs*, *no tracker
-  and the operator must choose*, or *the flow is unsuitable for a docs-and-skills repo*. It reads
-  differently in each case; a run that could only conclude "fine" is not this unit.
-- **Review.** None. Discovery changes nothing.
-- **Rollback.** Nothing to roll back.
-- **Operator decision it precedes.** Whether to configure a tracker, or to accept that route 3 is
-  unavailable in `ai-resources` and record that as a limitation.
 
 ---
 
@@ -329,23 +366,28 @@ one Work Loop v2 task; **none is authorized by this document.**
 
 ---
 
-### Unit 3 — Implementation: give `retire` an owner
+### Unit 3 — Implementation: give `retire` an owner **for durable AI artifacts only**
 
-- **Outcome and why now.** Retirement is performed but unowned; the v1 retirement is the cited
-  instance and it left three broken routes. Adding a verdict to an existing list costs one component
-  count of zero.
+- **Outcome and why now.** Of the three object classes in § 5, exactly one has a gap that is both real
+  and unambiguous: a durable AI artifact has no retirement owner. Operating capabilities already have
+  a definition (unreachable — Unit 4's question), and repository features have no candidate owner at
+  all (§ 11 deferral). This unit is confined to the unambiguous class.
 - **Owner.** Work Loop v2, **Implementation mode**.
 - **Owned paths.** `.claude/commands/develop-ai-resource.md` § 1.6 and Step 4's disposition list.
   Possibly one line in `docs/ai-resource-creation.md`.
-- **Prerequisites.** Unit 1 (same file). **Holds outside:** any retirement *command*, any retirement
-  register, and retiring anything.
+- **Prerequisites.** Unit 1 (same file). **Holds outside:** any retirement *command* or register;
+  retirement of an operating capability (Unit 4 decides whether that definition survives); retirement
+  of a non-AI repository feature; and retiring anything at all.
 - **Claims to verify.** § 1.6's verdict list contains no retire-equivalent; Step 4's operator choices
   (`Ship` / `Revise` / `Defer` / `Delete candidate`) cover only a candidate under construction, not a
-  resource in service; the complexity budget names no retirement obligation.
+  resource in service; `capability-development:326`/`:340` and `templates/capability-record.md:7`
+  already define retirement for capabilities, so the substance is borrowed rather than invented.
 - **Fail-capable evidence.** Replay the `0516bf6` retirement against the amended verdict: does it
-  require naming every surface that references the retiring resource? Against the current text the
-  answer is no — which is why three routes broke. A verdict that would not have caught that case has
-  not earned its place. This is the counterexample the unit must survive.
+  require naming every surface that references the retiring resource, and recording what was removed?
+  Against the current text the answer is no — which is why three routes broke. A verdict that would
+  not have caught that case has not earned its place. Second case: an *operating capability*
+  retirement must **not** be claimed as covered by this verdict — if the amended text reads as though
+  it were, the unit has overreached.
 - **Review.** One Codex review. Adding a lifecycle verdict to a governing command is consequential but
   not destructive.
 - **Rollback.** Revert; nothing depends on the verdict until it is used.
@@ -354,25 +396,37 @@ one Work Loop v2 task; **none is authorized by this document.**
 
 ---
 
-### Unit 4 — Discovery: what happens to 1,321 lines of v1 doctrine
+### Unit 4 — Discovery: the v1 capability gap analysis
 
-- **Outcome and why now.** After Units 1–3 nothing routes into v1 doctrine, but five files still
-  describe it as live. Last because the earlier units change what the answer should be.
+- **Outcome and why now.** § 3 move 2 deliberately left the v1 disposition open, because the evidence
+  to settle it does not exist yet. This unit produces it. Last, because Units 1–3 change what the
+  answer should be — after them, the *routing* problem is solved and only the *method* question
+  remains.
 - **Owner.** Work Loop v2, **Discovery mode**.
-- **Owned paths.** The state file only. **This unit deletes nothing.**
-- **Claims to verify.** Every remaining inbound reference to each of the five files; whether
-  `capability-development`'s method contains anything Adoption mode does not; the disposition of the
-  one live capability record; what `docs/repo-architecture.md` says about archival placement.
-- **Fail-capable evidence.** A per-file disposition — keep / archive / retire / fold-into-v2 — each
-  with the inbound references that justify it. The evidence fails if it cannot distinguish a file with
-  live inbound references from one with none.
-- **Review.** None — Discovery. The *execution* of any disposition is a separate unit and a
-  **structural change class** (retiring active resources), owed one **risk-aware** Codex review before
-  implementation per `docs/qc-independence.md`.
+- **Owned paths.** The state file only. **This unit deletes nothing and recommends nothing.**
+- **Claims to verify.**
+  1. **The gap analysis itself, section by section.** For each heading of
+     `skills/capability-development/SKILL.md` — the intervention ladder (`:108`), owner selection and
+     seam (`:127`), the five phases (`:160`), trial design and its stop condition (`:226`), slice
+     standards (`:245`), evidence-to-claim (`:261`), lifecycle decisions (`:313`) — state whether v2
+     covers it, partly covers it, or does not. **Do not treat "Adoption mode has four options" as
+     covering the lifecycle section**; compare content, not option counts.
+  2. Whether the capability **record** holds anything the task-state file cannot, given core § 4
+     reduces the state file at closure — specifically `retirement condition`, `real-use result` and
+     `lifecycle status`.
+  3. Every remaining inbound reference to each of the five v1 files.
+  4. The disposition of the one live capability record.
+- **Fail-capable evidence.** A per-section coverage verdict and a per-file disposition option, each
+  with the citation that supports it. The evidence fails if it cannot distinguish a section v2 genuinely
+  covers from one it merely resembles, or a file with live inbound references from one with none. An
+  analysis that concludes "retire it all" without a per-section comparison has not run.
+- **Review.** None — Discovery changes nothing. The *execution* of any disposition is a separate unit
+  and a **structural change class** (retiring active resources), owed one **risk-aware** Codex review
+  before implementation per `docs/qc-independence.md`.
 - **Rollback.** Nothing to roll back; git holds the files regardless.
 - **Operator decision it precedes.** **Yes, and it is the one consequential decision in this plan.**
-  Retiring or migrating the v1 capability system is reserved to the operator. Unit 4 produces the
-  evidence; it does not decide.
+  Whether the v1 capability layer is kept, folded into v2, or retired is reserved to the operator.
+  Unit 4 produces the evidence; **neither it nor this plan decides.**
 
 ---
 
@@ -384,10 +438,10 @@ Every dependency, and what this plan does with it. Nothing is silently ported.
 |---|---|---|
 | `/work-loop` command | **Already gone** | `0516bf6` |
 | `.agents/skills/work-loop/SKILL.md` (Codex v1 controller) | **Operator decision** — Unit 4 | Tracked, unreferenced by v2 |
-| `docs/work-loop.md` — eight steps, streams, routes, artifacts | **Replaced** by core §§ 2–4 | v2 owns admission, units, state and evidence |
+| `docs/work-loop.md` — **loop process**: eight steps, streams, artifacts | **Superseded for process** by core §§ 2–4 | v2 owns admission, units, state and evidence. This covers the *process* half only; the file's capability-boundary content goes to Unit 4. |
 | `docs/work-loop-spec.md` | **Operator decision** — Unit 4 | Specification of intent for a deleted command |
-| `skills/capability-development/SKILL.md` — method | **Operator decision** — Unit 4. Its *lifecycle* half is covered by Adoption mode; its *trial-design* half may be worth keeping as method. | Unreachable today (`disable-model-invocation`) |
-| `templates/capability-record.md` — status vocabulary | **Keep while a live record exists.** Cited by `develop-ai-resource.md:55` as the ACTIVE/TERMINAL authority. | One live record |
+| `skills/capability-development/SKILL.md` — method | **Operator decision** — Unit 4, per-section. **No half is asserted as covered here.** Its intervention ladder, owner/seam procedure, trial design, slice standards, evidence-to-claim and lifecycle statuses are compared section by section, not assumed replaced by Adoption mode. | Unreachable today (`disable-model-invocation`), but unreachable is not the same as redundant |
+| `templates/capability-record.md` — status vocabulary and durable capability state | **Keep.** Cited by `develop-ai-resource.md:55` as the ACTIVE/TERMINAL authority, and it holds retirement condition, real-use result and lifecycle status that the task-state file discards at closure (core § 4). Whether v2 needs an equivalent is Unit 4's question. | One live record |
 | The one live capability record | **Operator decision** — Unit 4 | No executor |
 | `**Capability:**` / `**Settled upstream:**` handoff contract | **Adapt** — Unit 1 | Producer deleted; checks still sound |
 | v1's outcome-versus-artifact boundary | **Keep** — carried in route 6 → 7 | Correct and independent of v1 machinery |
@@ -452,11 +506,14 @@ Contrast with **A**, which stops at step 1 with no build, and **B**, which never
 
 **No-build conditions — any one means the affected unit does not run.**
 
-- Unit 0 finds the tracker question already settled → route 3 needs no work.
+- Unit 4's gap analysis finds v2 does **not** cover a load-bearing section of the v1 method → that
+  section stays, and no retirement is proposed for it.
 - Unit 4 finds live inbound references to a v1 file → that file stays, unchanged.
 - Any unit's premise check finds the dangling reference already repaired → hand back, do not re-fix.
 - The operator decides the v1 doctrine stays as historical reference → Unit 4 ends in a recorded
   decision and nothing else.
+- Unit 3 cannot state a retirement rule for AI artifacts without also claiming the capability class →
+  it is narrowed or dropped, not broadened.
 
 **Exclusions — outside this plan entirely.** A new command, skill, agent, hook or registry; any
 capability register or second state system; a fourth mode; changes to the executable core, the Codex
@@ -468,15 +525,18 @@ running `setup-matt-pocock-skills`.
 
 | Deferred | Reopening trigger |
 |---|---|
-| A capability register or lifecycle record for v2 | A second live capability record appears and Adoption mode is observed to lose its evidence across sessions |
-| Configuring a Matt issue tracker for `ai-resources` | An initiative arrives that Unit 0 shows is genuinely too foggy for one session |
-| Folding `capability-development`'s trial-design method into v2 | Two Adoption-mode units run and both need trial-design guidance the core does not give |
+| A durable capability address for v2 (register or record equivalent) | Unit 4 shows the task-state file loses retirement condition, real-use result or lifecycle status at closure **and** a second live capability record appears |
+| An owner for retiring a **non-AI repository feature** | A repository feature is actually retired and nobody can say what the retirement had to record — the `0516bf6` pattern repeating in a second class |
+| Configuring a non-default Matt issue tracker for `ai-resources` | The local-markdown fallback (§ 2c) proves insufficient during a real Wayfinder run |
+| Folding `capability-development`'s trial-design method into v2 | Unit 4 finds it uncovered **and** two Adoption-mode units need guidance the core does not give |
 | Automating the dangling-reference check | A third routing surface is found dangling after a retirement |
 
-**Stopping condition for the whole build.** Stop when every route in § 4 reaches a live owner, `retire`
-has an owner, and Unit 4's dispositions are recorded. **Do not continue into** generalising the router,
-building capability machinery, or improving the Matt integration. If § 9's matrix passes and § 4's
-routes resolve, this work is finished — the next question belongs to the v0.2 rework thread, not here.
+**Stopping condition for the whole build.** Stop when every route in § 4 reaches a live owner,
+durable AI artifacts have a `retire` owner, and Unit 4's gap analysis is recorded and in front of the
+operator. **Do not continue into** generalising the router, building capability machinery, acting on
+Unit 4's findings without an operator decision, or improving the Matt integration. If § 9's matrix
+passes and § 4's routes resolve, this work is finished — the next question belongs to the v0.2 rework
+thread, not here.
 
 ---
 
@@ -503,16 +563,20 @@ core `:132–136`, the three requests are operated as separate work; the unit re
 
 **Approving this document would authorize:**
 
-- Opening Units 0–4 as Work Loop v2 tasks, **one at a time**, each with its own brief and premise
+- Opening Units 1–4 as Work Loop v2 tasks, **one at a time**, each with its own brief and premise
   checks.
 - Editing exactly two files — `.claude/commands/develop-ai-resource.md` and
   `.claude/commands/leverage-idea.md` — plus possibly one line of `docs/ai-resource-creation.md`.
-- Adding `retire` to `/develop-ai-resource` § 1.6.
+- Adding `retire` to `/develop-ai-resource` § 1.6, **for durable AI artifacts only**.
 
 **Approval would NOT authorize, and each remains a separate decision:**
 
 - **Deleting, archiving or retiring any v1 file.** Unit 4 produces evidence only. Execution is a
   structural change class owed a risk-aware Codex review.
+- **Retiring the v1 capability method, or treating it as superseded.** This plan makes no such
+  recommendation; § 3 and § 8 both leave it open, and § 5 leaves capability retirement with the v1
+  definition pending Unit 4.
+- Retiring an operating capability or a non-AI repository feature under Unit 3's verdict.
 - Disposing of the one live capability record.
 - Configuring an issue tracker, or installing/updating any Matt skill.
 - Any new command, skill, agent, hook, registry, mode or state system.
@@ -521,6 +585,7 @@ core `:132–136`, the three requests are operated as separate work; the unit re
 - Treating the mode contract as closed. It is `turn: claude` and mid-fix; § 2b applies.
 
 **The one decision the operator should expect to make** is Unit 4's: whether the v1 capability
-doctrine is archived, retired, or partly folded into v2. This plan deliberately does not pre-empt it,
-because `docs/work-loop.md` describes a system that ran real work, and its trial-design method may
-outlive its machinery.
+doctrine is kept, partly folded into v2, or retired. This plan deliberately does not pre-empt it —
+`docs/work-loop.md` describes a system that ran real work, and its trial design, seam selection and
+retirement conditions may well outlive its machinery. **Unreachable is not the same as redundant**,
+and only the gap analysis can tell them apart.

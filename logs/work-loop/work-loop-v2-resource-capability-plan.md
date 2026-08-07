@@ -288,180 +288,165 @@ accepts a risk that current authority reserves for the operator. Record the exac
 
 ## Latest result
 
-Inspected (2026-08-07). Every verify-first item checked by opening the file or running the search.
+Reproduced all four frozen findings by inspection before correcting any of them. All four reproduce.
 
-- Claim (1): HOLDS — this file's `task:` is `work-loop-v2-resource-capability-plan`, matching its
-  filename; `turn:` was `claude`. Validated read-only before anything else.
-- Claim (2): HOLDS, with the status sharpened — `logs/work-loop/work-loop-v2-intake-router.md` is
-  **open**, `turn: claude`, and its `## Next action` opens `Final tightly-bounded fix:`. The mode
-  contract is **implemented** in all three artifacts (core `:95–140`; `.agents/skills/work-loop-v2/
-  SKILL.md:91–103`; `.claude/commands/work-loop-v2.md` § The unit's mode) and asserted in
-  `logs/scripts/work-loop-v2-slice-1.test.sh`. It is **not closed**, so it is repository reality, not
-  accepted authority. The brief's reclassification was correct.
-- Claim (3): HOLDS — all five named v2 behaviours are already implemented. Owner selection
-  (skill `:71–201`, 25 Axcíon commands + 25 Matt skills); Direct/Standard admission (core § 2, both
-  runtimes); mode classification (above); project progression and specialist ownership (skill
-  `:83–89`, **adopted** 2026-08-06 per `logs/missions/work-loop-v2-mvp.md:90`); real-use evidence and
-  lifecycle decisions (Adoption mode, core `:126`).
-- Claim (4): HOLDS — `/develop-ai-resource` (`:30–172`) qualifies and routes to `/create-skill`,
-  `/improve-skill`, `/migrate-skill`; `/improve-skill` stays directly reachable for a settled
-  improvement (`ai-resource-creation.md:21`); `/request-skill` writes to `inbox/` (4 briefs queued);
-  `/graduate-resource` owns shared graduation with consumer consent (`:23`).
-- Claim (5): HOLDS, and is **materially worse than the brief states**. The seam is not merely
-  "v1-specific" — it is **dangling**. `.claude/commands/work-loop.md` was **deleted** at commit
-  `0516bf6` ("batch: retire /work-loop (v1) — superseded by /work-loop-v2"); searched the working tree
-  and `git ls-files` for `work-loop.md` under `.claude/commands/` — absent from both. Its dependants
-  survive: `develop-ai-resource.md` names `/work-loop` on 7 lines (8 occurrences), `leverage-idea.md`
-  on 7 lines, searched with `grep -o "/work-loop[^-a-z]"` which excludes every `/work-loop-v2` form.
-  `skills/capability-development/SKILL.md` carries `disable-model-invocation: true` and states "Never
-  invoked directly … developed through `/work-loop`", so it is now structurally unreachable. One live
-  capability record exists — searched `projects/*/development/*.md`, exactly one match,
-  `axcion-ai-system-owner/development/prime-runtime-delegation.md` — with no executor. The retirement
-  commit's own message names this as "a v2-stream design decision", and `logs/improvement-log.md:2823`
-  logs it pending.
-- Claim (6): HOLDS for installation, **FALSE for operability** — see Blocker. All ten Matt definitions
-  were read from the installed files at `~/.claude/skills/`, not inferred from the contextual essays.
-  Six carry `disable-model-invocation: true` (`grill-with-docs`, `wayfinder`, `to-spec`, `to-tickets`,
-  `implement`, `improve-codebase-architecture`) and are operator-invoked only; four are freely
-  invocable (`prototype`, `tdd`, `code-review`, `diagnosing-bugs`).
-- Claim (7): HOLDS — the minimum design needs exactly two command files, plus possibly one line of
-  `docs/ai-resource-creation.md`. The list was deliberately not inflated: the core, the Codex skill,
-  the Claude command and the harness need **no** behavioural change.
-- Claim (8): HOLDS — `docs/ai-resource-creation.md:27–46` carries the two prongs, the five questions,
-  the inflow rule and OP-12. Applied to every proposal in the plan; none adds a component.
+- **Finding (1) REPRODUCES.** Searched `~/.claude/skills/wayfinder/SKILL.md` for `tracker`: line 25
+  reads "Consult the tracker doc's 'Wayfinding operations' section for how _this_ repo expresses them.
+  **If no tracker has been provided, default to the local-markdown tracker.**" Searched
+  `~/.claude/skills/to-tickets/SKILL.md` for `scratch`: line 62 specifies the local form — "**Local
+  files** → write one file per ticket under `.scratch/<feature-slug>/issues/<NN>-<slug>.md`". My
+  blocker was **false**. Its cause is stated plainly rather than excused: I read only the first 12
+  lines of each skill, saw "The issue tracker should have been provided to you — run
+  `/setup-matt-pocock-skills` if not", and inferred a hard dependency from a sentence whose very next
+  clause supplies the fallback. That is a read-scope failure, and the plan carried a preparatory unit
+  built entirely on it.
+- **Finding (2) REPRODUCES.** Searched `skills/capability-development/SKILL.md` for its headings:
+  it owns **the intervention ladder** (`:108`), **owner selection and the seam** (`:127`, `:129`,
+  `:145`), **the five phases** (`:160`), **trial design and its stop condition** (`:226`), **slice
+  standards** (`:245`), **evidence to claim** (`:261`), **adjudicating findings** (`:297`) and
+  **lifecycle decisions** (`:313`), whose status table at `:326` reads "`retired` | TERMINAL |
+  Withdrawn from use | The machinery removed, and a record of what was removed". Adoption mode is one
+  decision point (core `:126`). Having the same four options is not coverage of a method. Separately,
+  core § 4 defines the state file as current truth for one task and reduces it to four sections at
+  closure, so it does **not** hold `retirement condition` (`templates/capability-record.md:83`),
+  `real-use result` (`:131`) or `lifecycle status` (`:136`) past a task's close. Both claims in the
+  finding are correct; the plan asserted equivalence it had not established.
+- **Finding (3) REPRODUCES.** Searched `templates/capability-record.md` for `retire`: `:7` places
+  `retired` in the TERMINAL set, `:83` makes a *retirement condition* a required element of the
+  implementation package, `:136` records it with the lifecycle status. With
+  `capability-development:326` and `:340` ("Retirement that leaves the machinery in place is not
+  retirement. Remove it, and record what was removed."), retirement **is** defined — for operating
+  capabilities, in the layer that cannot run. "Represented nowhere" was false.
+- **Finding (4) REPRODUCES**, including the specific contradiction it names: § 3 move 2 read "Retire
+  the v1 doctrine that cannot execute" while § 8 and § 13 reserved that disposition to the operator.
+  The plan recommended the decision it also claimed not to make.
 
-Result: the draft plan exists at `plans/work-loop-v2-v0.2/resource-capability-development-plan-v0.1.md`
-(13 sections, marked Draft — not approved). Its recommended design is **reconciliation, not
-construction**: repoint two dangling command routes at Work Loop v2, give `retire` an owner inside an
-existing verdict list, and hand the v1-doctrine disposition to the operator as evidence rather than
-deciding it. **No new command, skill, agent, mode, gate, registry, lifecycle record or state system is
-proposed**, and the strongest rejected alternative (a v2 capability route with its own register) is
-recorded with the reason — it would be the second state system core § 1 forbids.
+Result: all four findings corrected in the plan; nothing else touched. Section by section:
 
-### Evidence
+**Finding 1** — § 2c now cites `wayfinder:25` and `to-tickets:62` and states that the skills degrade
+to a local-markdown tracker rather than refusing. **Unit 0 is deleted entirely.** Route 3 in § 4 is no
+longer marked blocked, and its note now says setup is not a prerequisite. The § 11 deferral is
+rewritten from "configuring a tracker" to "configuring a *non-default* tracker", triggered only if the
+fallback proves insufficient during a real run. The proportional rule is stated where the temptation
+sits: configuration is handled at the specialist boundary, by the specialist, if and when its own
+definition asks — never in advance.
 
-**1. Source table.**
+**Finding 2** — § 3's recommended design no longer recommends retiring anything. Move 2 is now
+"establish, by inspection, what the v1 method contains that nothing in v2 covers — and hand that gap
+analysis to the operator". Two new paragraphs state the limits explicitly: a decision point does not
+replace a method, and the task-state file does not replace the capability record, with core § 4 cited
+for why. The rejected alternative is re-grounded on **sequencing and cost** rather than on v1 being
+redundant, and now says the right answer may well be to *keep* the v1 content. § 2a gained a stated
+limit so row 5 cannot be over-read downstream. The component arithmetic dropped its "≤ −4 documents
+retired" line — nothing is counted as removed, because nothing is recommended for removal. § 8's
+`capability-development` row no longer asserts a covered half; § 7's Unit 4 is rebuilt as a
+**per-section** gap analysis whose evidence explicitly may not treat "Adoption mode has four options"
+as coverage.
 
-| Source | Verified status | Plan consequence |
+**Finding 3** — § 1 replaces "represented nowhere" with the citations above. § 5 gains a per-class
+table: **operating capability** — defined but unreachable, deferred to Unit 4; **durable AI
+artifact** — genuinely unowned, Unit 3's narrow target; **non-AI repository feature** — no candidate
+owner, stated as an open ownership question and carried to § 11 with a reopening trigger. Unit 3 is
+retitled "for durable AI artifacts only", its exclusions name the other two classes, and it gains a
+second fail-capable case: if the amended verdict reads as though it covered capability retirement, the
+unit has overreached. No retirement component is added for symmetry.
+
+**Finding 4** — the contradiction is gone (verified below), and the evidence is re-run.
+
+### Re-run evidence, against the corrected recommendation
+
+**1. Source table — corrections only.** Three rows changed; the rest stand as previously recorded.
+
+| Source | Corrected status | Corrected plan consequence |
 |---|---|---|
-| `work-loop-v2-executable-core-v0.1.md` | Present, 456 lines; header still "draft for operator approval"; § 4 courier clause separately approved | Governing for mechanics; § 2b warns against reading courier approval as approval of the rest |
-| `.agents/skills/work-loop-v2/SKILL.md` | Present, 331 lines; **uncommitted modifications present** (see Limitations) | Established that all five named v2 behaviours already exist |
-| `.claude/commands/work-loop-v2.md` | Present, 136 lines | Confirms Claude's boundary needs no change |
-| `work-loop-v2-mvp-proposal-v0.4.md` | Present, 170 lines; § 3 ten settled decisions, § 7 deferred list | Plan proposes nothing inside either; not amended |
-| `logs/work-loop/work-loop-v2-intake-router.md` | **Open**, `turn: claude`, mid-final-fix | Mode is reality, not closed authority — § 2b |
-| `logs/missions/work-loop-v2-mvp.md` | Present; progression **adopted** 2026-08-06; Step 8 and v0.2 rework open | Progression safe to depend on; rework excluded |
-| `.claude/commands/develop-ai-resource.md` | Present, 182 lines; 7 dangling lines | Unit 1 target |
-| `.claude/commands/leverage-idea.md` | Present; 7 dangling lines | Unit 2 target |
-| `skills/capability-development/SKILL.md` | Present, 442 lines; **unreachable** (`disable-model-invocation`, deleted invoker) | Unit 4 evidence |
-| `templates/capability-record.md` | Present, 140 lines; cited by `develop-ai-resource.md:55` as status authority | Keep while a live record exists |
-| `docs/work-loop.md` / `docs/work-loop-spec.md` | Present, 260 / 360 lines; describe a deleted command | Unit 4 operator decision |
-| `docs/ai-resource-creation.md` | Present, 84 lines; rule #7 complexity budget | Applied to every proposal |
-| `docs/repo-architecture.md` | Present, 289 lines; Q1–Q8 placement heuristics | No new artifact class proposed, so no placement question arises |
-| Ten Matt skills at `~/.claude/skills/` | All present; six model-invocation-disabled | § 2c; Unit 0 |
-| `docs/agents/issue-tracker.md` | **ABSENT** — searched `docs/agents/` (directory absent), repo-wide for the filename, and for `.scratch/` | Unit 0 exists solely because of this |
+| `~/.claude/skills/wayfinder/SKILL.md` | `:25` **provides a local-markdown default** when no tracker is configured | Route 3 is operable today. Unit 0 deleted. |
+| `~/.claude/skills/to-tickets/SKILL.md` | `:62` specifies the local form, `.scratch/<feature-slug>/issues/` | Confirms the fallback is concrete, not nominal |
+| `skills/capability-development/SKILL.md` | Nine substantive method sections (`:108`–`:340`), incl. a lifecycle status table | **Not** asserted as covered by Adoption mode. Per-section comparison moved into Unit 4. |
+| `templates/capability-record.md` | `:7`, `:83`, `:136` define `retired` and hold durable state the task file discards at closure | Capability retirement stays with v1's definition pending Unit 4; § 5 says so |
+| `docs/agents/issue-tracker.md` | Still absent — but **absence is not a blocker** | Row's former consequence ("Unit 0 exists solely because of this") is withdrawn |
 
-**2. Constraint traceability — all twelve dispositioned.**
+**2. Constraint traceability — the two rows the corrections moved.**
 
-| # | Settled constraint | Where it lands |
+| # | Settled constraint | Corrected landing site |
 |---|---|---|
-| 1 | Start from the outcome, never an assumed mechanism | § 5 (ten-rung ladder, building last); § 10A ends in no build |
-| 2 | Full lifecycle: create, improve, replace, retire | § 5 table; retire is the only gap → Unit 3 |
-| 3 | Depth earned by uncertainty, not importance | § 4 route 1 (Direct Work); § 6 mode table; § 9 row 5 |
-| 4 | Keep mode / project phase / Matt flow distinct | § 6, the whole section; § 9 rows 2 and 7 |
-| 5 | Matt philosophy used through its owners | § 2c; § 4 routes 3–5; **Unit 0** — operability correction |
-| 6 | Matt method applied semantically to non-code | § 6 closing paragraph; § 9 row 6 (ceremonial TDD) |
-| 7 | Work Loop routes; it does not reproduce a specialist | § 2 map; § 6 three boundaries; § 3 rejected alternative |
-| 8 | `/develop-ai-resource` owns whether an artifact exists | § 2 map; § 4 route 6; § 5 improve row |
-| 9 | The operating project owns real-use adoption | § 4 route 6→7 seam; § 10C three owners; § 12 |
-| 10 | Failure-mode governance enters via an existing unit | § 10A (**no build**); § 9 row 8 (OP-12) |
-| 11 | One deep capability, small public seam | § 3 (zero new components); § 13 boundary |
-| 12 | Final test is demonstrated usefulness | § 12 adoption proof — real requests, not static checks |
+| 2 | Full lifecycle: create, improve, replace, retire | § 5 **per-class table** — one owner, one deferral, one open question. Unit 3 covers the AI-artifact class only. |
+| 5 | Matt philosophy used through its owners | § 2c (fallback cited); § 4 routes 3–5 **unblocked**. The former "Unit 0 — operability correction" landing site is withdrawn. |
 
-**3. Component count — current versus proposed.**
+The other ten rows are unchanged and were re-checked against the edited sections.
 
-| Class | Current (verified) | Proposed | Delta |
-|---|---|---|---|
-| Axcíon commands (`.claude/commands/*.md`) | 88 | 88 | **0** |
-| Agents (`.claude/agents/*.md`) | 40 | 40 | **0** |
-| Repo skills (`skills/*/`) | 81 | 81 | **0** |
-| Codex skills (`.agents/skills/*/`) | 7 | 7 | **0** |
-| Mandatory stages / gates | unchanged | unchanged | **0** |
-| Always-loaded rules | unchanged | unchanged | **0** |
-| Persistent state artifacts | task-state file only | task-state file only | **0** |
-| v1 doctrine documents | 5 (1,321 lines) | 5, pending Unit 4 | **0 now; ≤ −4 later, operator-decided** |
+**3. Component count — unchanged and now internally consistent.** All classes still **0**, and the
+v1-doctrine row no longer claims a prospective `≤ −4`: it reads *5 → 5, disposition open (Unit 4)*.
+This matters because the earlier row was itself a quiet recommendation to retire, expressed as
+arithmetic. Prong **(a)** is now claimed on holding every count flat while restoring capability, not
+on a removal the plan does not recommend; prong **(b)** still holds independently on `0516bf6` and
+`logs/improvement-log.md:2823`.
 
-No increase in any class, so no complexity-budget prong needs to be cited for an addition. The plan
-clears prong **(a)** (net-simplification, since it can only reduce) and independently clears prong
-**(b)** on cited evidence (`0516bf6`; `logs/improvement-log.md:2823`).
+**4. One-owner scenario matrix.** Eight routes, unchanged in count. Route 3 no longer carries a
+blocked marker. No owner collision was introduced: Unit 3's narrowing to AI artifacts *removes* a
+potential collision, since the previous wording would have had `/develop-ai-resource` implicitly
+owning capability retirement alongside the v1 layer.
 
-**4. One-owner scenario matrix — eight routes, first owner only.** Plan § 4 carries the table. Every
-row returns exactly one owner and states the condition that ends its responsibility. Route 3
-(`wayfinder`) is marked **blocked today** rather than removed, so the dependency stays visible.
+**5. v1/v2 seam map.** Ten dependencies. Three rows corrected: `docs/work-loop.md` is now "superseded
+**for process**" rather than "replaced"; `capability-development` asserts **no** covered half;
+`templates/capability-record.md` moves from "keep while a live record exists" to "**keep**", with the
+durable-state reason stated. Operator decisions rise from four to five — the capability method's
+disposition is now explicitly one, where before it was half-decided in § 3.
 
-**5. v1/v2 seam map.** Plan § 8 — ten dependencies, each marked keep / adapt / replace / operator
-decision. Four are operator decisions and none is pre-empted.
+**6. Counterexamples.** Re-walked against the corrected text; all three still produce different
+outcomes, and none depended on Unit 0 or on retiring v1 (verified by search — zero hits for `Unit 0`
+or `retire` inside § 10).
 
-**6. Three counterexample walkthroughs.** Plan § 10, producing three different outcomes:
-A speculative governance → **no build** (stops at owner 1); B verified dispatcher failure → **one
-bounded Implementation unit** (never reaches an artifact owner); C capability needing a new resource →
-**three owners in sequence**, each ending cleanly, with adoption last and separate.
+**7. Plan boundary — unchanged.** Still exactly two files: the plan and this state file. No
+implementation surface touched. Verified by `git status --porcelain` before committing.
 
-**7. Plan-boundary check.** `git status --porcelain` was run. This unit created exactly one file —
-`plans/work-loop-v2-v0.2/resource-capability-development-plan-v0.1.md` — and modified exactly one —
-this state file. Both are committed by explicit pathspec. **No implementation surface was touched**:
-no command, skill, agent, core, template, hook, setting or test file changed.
+**8. Contradiction sweep (finding 4's explicit ask).** Searched the corrected plan for each retracted
+claim: `Unit 0` — **0 hits**; `blocked today` / `cannot run` / `neither can run` — **0**;
+`represented nowhere` / `Nothing owns it` — **0**; `Retire the v1 doctrine` / `already does the
+load-bearing` / `v2's state file *is* that state` — **0**; `≤ −4` — **0**. The § 3-versus-§ 8/§ 13
+contradiction is resolved by removing the recommendation, not by softening the reservation.
 
-### Why this evidence can fail
+### Why this correction's evidence can fail
 
-It is not a restatement of the plan's headings. Each table could have read differently: the source
-table could have shown a missing or closed source (claim 2 nearly did); the traceability table could
-have left a constraint with no landing site (constraint 5 forced Unit 0 into existence); the component
-count could have shown an increase requiring a budget prong; the seam map could have shown a
-dependency with nowhere to go; the counterexamples could have collapsed into one route, which would
-have proven the design a funnel. Claim 5 was returned **worse** than the brief stated, and claim 6 was
-returned **partly false** — neither outcome is available to evidence that merely echoes its own plan.
+Each finding was reproduced against a **named line that could have read otherwise**. Had
+`wayfinder:25` carried no fallback clause, finding 1 would not have reproduced and the blocker would
+have stood. Had `capability-development` turned out to be a thin wrapper over the same four lifecycle
+options, finding 2 would have failed. Had `templates/capability-record.md` lacked `retired`, finding 3
+would have failed. The contradiction sweep is a search that returns a count: it reads `0` now and read
+non-zero before the edits, so it distinguishes a corrected plan from an uncorrected one.
 
 ## Blocker
 
-None blocking the plan. One **premise correction** to record, which changed the plan rather than
-stopping it:
+None.
 
-**Settled design constraint 5 is not operable in this repository today.** It treats `wayfinder` as an
-available planning owner and `to-tickets` as available when several slices are needed. All three of
-`wayfinder`, `to-spec` and `to-tickets` require a configured issue tracker recorded at
-`docs/agents/issue-tracker.md` — searched `docs/agents/` (the directory does not exist), searched the
-repo for the filename (no match), searched for a `.scratch/` convention (no match). `setup-matt-pocock-
-skills` has never run here. The constraint's philosophy stands; its operability does not. The plan
-records this in § 2c, keeps route 3 visible-but-blocked in § 4, and opens **Unit 0** as a Discovery
-unit to resolve it — rather than silently dropping the route or writing units that would fail at
-execution.
+The previous `## Blocker` content is **withdrawn**, not carried forward: it asserted that settled
+constraint 5 was inoperable, and finding 1 disproved that. Withdrawing it is part of the correction.
 
-**Accepted limitation, reported rather than smoothed.** `.agents/skills/work-loop-v2/SKILL.md` carries
-**uncommitted modifications** (48 insertions, 2 deletions) at the time of inspection. I read the
-working-tree state. The diff is unattended-run and courier-mode work; it does not touch the routing,
-admission or mode sections the plan cites. Nothing was committed from it. If that change lands
-differently, § 2a should be re-checked against the committed version.
+**Accepted limitation, still standing.** `.agents/skills/work-loop-v2/SKILL.md` carried uncommitted
+modifications at inspection time (unattended-run and courier-mode work, not touching routing,
+admission or mode). Nothing was committed from it.
 
-**Newly noticed, recorded and not implemented** (candidate deferrals, per core § 5):
+**Nothing newly noticed entered this round as work.** Two candidate deferrals recorded and **not**
+implemented, per core § 3:
 
-1. `docs/work-loop-spec.md` is 360 lines specifying a deleted command — larger than the contract it
-   specifies. Folded into Unit 4's scope rather than actioned.
-2. `develop-ai-resource.md:67` says "No executable component emits these fields **yet**". With the
-   producer deleted, "yet" is now false. Carried as Unit 1 content, not fixed here.
-3. Two stale worktrees (`ai-resources-active-unit-routing`, `ai-resources-g1-reviewed-plan`) hold v1
-   capability work on unmerged branches. Out of scope entirely; noted because a future v1 retirement
-   would need to account for them.
+1. **The read-scope failure behind finding 1 may not be isolated.** I established two other skills'
+   behaviour from their opening lines during Unit 1. Those conclusions happened to survive, but the
+   method that produced them is the one that failed here. A re-check of the § 2c skill claims against
+   full definitions is a bounded unit of its own, outside this frozen scope.
+2. The three deferrals recorded in Unit 1's hand-back (`work-loop-spec.md` size, the stale "yet" at
+   `develop-ai-resource.md:67`, the two unmerged worktrees) are unchanged and still not implemented.
 
 ## Next action
 
-Codex: assess the draft plan against this session's settled context.
+Codex: run the closure check on the four frozen findings only.
 
-The four judgments that matter, in order: (1) is **reconciliation rather than construction** the right
-minimum, given that § 2a shows all five named v2 behaviours already implemented; (2) is **Unit 0**
-justified, or should the tracker finding simply be recorded as a limitation and route 3 dropped;
-(3) is the **v1-doctrine disposition** correctly left to the operator in Unit 4, rather than
-recommended here; (4) does the evidence above genuinely discriminate — could it have exposed an
-uncovered constraint, an owner collision or a budget failure.
+1. Is the Matt-operability blocker gone, Unit 0 removed, and the proportional rule preserved — setup
+   handled only at the specialist boundary, if the installed skill asks then?
+2. Does the plan now avoid claiming the task-state file replaces a durable capability record, avoid
+   claiming Adoption mode replaces the capability method, and leave the v1 disposition as an
+   evidence-first operator decision?
+3. Is retirement coverage honest across all three object classes — one owner, one deferral, one
+   precisely stated open ownership question — with no component added for symmetry?
+4. Is the QC evidence re-run, and is the § 3-versus-§ 8/§ 13 contradiction gone?
 
-The plan is a **draft and authorizes nothing**. Do not read this hand-back as approval to open Units
-0–4; § 13 states what operator approval would and would not authorize.
+And the second closure question only: did the correction break anything? The plan remains a **draft
+authorizing nothing**; anything newly noticed is a deferral, not a second correction round.
