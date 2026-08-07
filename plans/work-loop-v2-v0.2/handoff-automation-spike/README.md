@@ -165,8 +165,97 @@ touch any `settings.json` or the operator's interactive sessions.
 
   **`--claude-deny` is therefore not the operator's chosen unattended profile, and must not be
   described as it.** The operator settled on the contained profile (sandbox settings + a restricted
-  tool set + push denial together). The dispatcher does not implement it yet. Until it does, running
-  unattended with `--claude-deny` alone leaves the network open.
+  tool set + push denial together). **The dispatcher now implements it, as `--unattended`** — see the
+  next section. `--claude-deny` on its own still leaves the network open, and is now best understood
+  as the *narrowing* flag that composes with `--unattended` rather than as an alternative to it.
+
+### `--unattended` — the contained profile (item 1d)
+
+One flag that applies the operator-settled contained profile to **every Claude hop**. The policy and
+the mechanism were settled and proven first, in `runs/probe-contained-authority-2026-08-07.md`; this
+flag is the part that ships them.
+
+```
+dispatch.sh --checkout <abs-path> --task <task-id> --unattended
+```
+
+What the child gets:
+
+| Layer | Delivered by |
+|---|---|
+| OS sandbox on, fail closed if unavailable, no `dangerouslyDisableSandbox` escape | profile JSON |
+| Empty network allowlist, `strictAllowlist: true` — no Bash network, no approval prompt | profile JSON |
+| `denyRead: ["~/"]`, with `allowRead` re-opening the checkout and its Git common dir | profile JSON |
+| Hooks, connectors, remote control, agent view, artifacts and auto-memory off | profile JSON |
+| `--tools Bash,Skill` — no built-in `Read`/`Edit`/`Write`, so file access goes through the sandbox | CLI |
+| `--strict-mcp-config` with no config — no MCP tools | CLI |
+| `--disallowedTools` for push (both rule spellings), `WebFetch`, `WebSearch`, `mcp__*` | CLI |
+| `--no-session-persistence` | CLI |
+| `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1` — credentials stripped from subprocesses | environment |
+
+**Delivered by CLI `--settings` on every hop, never by a repository settings file.** That is a
+correctness requirement, not a preference: `sandbox.network.strictAllowlist` has **no effect** from
+`.claude/settings.json`, so writing the profile there would drop the network containment silently —
+and would still *look* contained on a machine whose user settings already carry the key. Case 32d
+asserts the negative directly: no repo settings file is created, and the delivered path is not inside
+the checkout's `.claude/`.
+
+**It fails closed, exit `31`, before anything launches.** The installed `claude` must be **≥ 2.1.219**
+(the release that added `strictAllowlist`), the version string must be *readable*, and the platform
+must be Darwin. An unreadable version is refused with different words from an old one — "cannot tell"
+and "too old" want the same refusal but are not the same fact. `sandbox.failIfUnavailable` makes the
+child fail closed at its end too.
+
+**`--claude-deny` composes and is additive.** Operator rules append to the profile's base denies; they
+can narrow it further, never widen it (case 32i).
+
+**It refuses to combine with `--actor-cmd`** (exit `10`). A simulated actor cannot be contained, so
+the pair would produce a run log reading "unattended" for a run in which no profile reached anything.
+
+**`--dry-run --unattended` is a real preflight.** The version gate, the platform check and the profile
+write all run, so reaching exit `0` means the profile is deliverable on this host — and the written
+profile is there to read. It refuses an under-version host just as a live run would (case 32l).
+
+Every run logs the active restrictions **and the scope they arrived through**, plus two limits stated
+at every launch rather than in a document nobody opens mid-incident:
+
+- Array settings keys such as `allowRead` **merge across every scope**, so another scope on the host
+  can widen what the child may read. Closing that needs managed settings
+  (`allowManagedReadPathsOnly` / `allowManagedDomainsOnly`), which a dispatcher cannot set for itself.
+- The log records the **requested** policy. Only a check from inside a live child establishes the
+  **effective** one.
+
+**What the harness proves, and what it does not.** Cases 32–32l prove the dispatcher *requests* the
+profile: correct argv, correct JSON, correct delivery scope, a gate that fails closed, and attended
+and courier launches left byte-for-byte unchanged. They cannot prove the effective policy, because
+they contain no real child. That is `runs/probes/unattended-effective-policy.sh`, which builds the
+profile *by asking the dispatcher for it* and then observes containment from inside a live child. It
+costs a real model call and is deliberately not part of `dispatch.test.sh`.
+
+**Codex hops are not covered by this profile.** Their containment is Codex's own
+`--sandbox workspace-write`. The run log says so, so no reader has to infer it.
+
+> ### NOT READY FOR A WALK-AWAY RUN — one open defect, 2026-08-07
+>
+> Containment was measured from inside a live dispatcher-launched child and holds on every dimension
+> checked: network refused, write outside the checkout refused, home read refused, `git push` denied
+> before execution, credentials scrubbed from subprocesses, tools `Bash, Skill` only, no MCP, and a
+> repository-declared `SessionStart` hook that never fired. Record:
+> `runs/probe-unattended-integration-2026-08-07.md`.
+>
+> **`denyRead: ["~/"]` also breaks Git.** Git reads `~/.gitconfig` on every invocation, the sandbox
+> refuses, and Git exits 128 *before touching the repository*:
+> `fatal: unable to access '/Users/…/.gitconfig': Operation not permitted`. The repository itself is
+> reachable — the same command succeeds with Git's config discovery neutralised — so `allowRead` is
+> working and the obstacle is config discovery alone.
+>
+> **The obvious workaround does not survive contact with this repo.** `GIT_CONFIG_GLOBAL=/dev/null`
+> works only where the identity is set locally. In `ai-resources` it is set **only** globally, so a
+> child launched that way would have no Git identity and every hop's commit would fail — and core § 4
+> makes Claude commit every hop.
+>
+> Fixing this changes a profile the operator ratified, so it is **an operator decision, not a patch**.
+> Item 1d stays open and the Phase 2 blocker count stays at **three** until it is settled.
 
 `--carry-one` is a **terminal condition on loop mode**, not a fourth mode: it launches exactly the
 actor the current `turn:` names, applies every validation and post-hop check unchanged, and then

@@ -1233,6 +1233,315 @@ printf '%s' "$OUT" | grep -q "claude_deny=none" \
   || bad "the run log says plainly that the child holds normal authority" "$OUT"
 unset WL_ARGV_FILE WL_SF WL_CO
 
+# ================================================================= case 32
+# --unattended: the contained 1d profile, wired into the dispatcher.
+#
+# The same fake-binary technique as case 31, extended in two ways it needed:
+# the double now ANSWERS --version (the profile is gated on it) and records the
+# environment it was launched with (one layer of the profile is env-only).
+#
+# What these cases can and cannot prove, stated once so no reader has to infer
+# it: they prove the dispatcher REQUESTS the profile — correct argv, correct
+# JSON, correct delivery scope, and a gate that fails closed. They cannot prove
+# the EFFECTIVE policy inside a real child, because there is no real child here.
+# That is runs/probes/unattended-effective-policy.sh, and it is a live check.
+
+FAKE2="$SANDBOX_ROOT/fake-claude-versioned.sh"
+cat >"$FAKE2" <<'FAKE2EOF'
+#!/bin/bash
+# Stands in for the claude binary, with a settable version and an env record.
+if [ "${1:-}" = "--version" ]; then echo "${WL_FAKE_VERSION:-2.1.220 (Claude Code)}"; exit 0; fi
+printf '%s\n' "$@" > "$WL_ARGV_FILE"
+printf 'SCRUB=%s\n' "${CLAUDE_CODE_SUBPROCESS_ENV_SCRUB:-<unset>}" > "$WL_ENV_FILE"
+sf="$WL_SF"
+awk 'NR==3{print "turn: codex"; next}{print}' "$sf" > "$sf.tmp" && mv "$sf.tmp" "$sf"
+git -C "$WL_CO" add "$sf" >/dev/null 2>&1
+git -C "$WL_CO" commit -qm "fake claude hop" >/dev/null 2>&1
+exit 0
+FAKE2EOF
+chmod +x "$FAKE2"
+
+# Argv assertions run often enough below to be worth a helper. -F throughout:
+# the profile's rules contain (, ) and *, which grep would otherwise interpret.
+argv_has()  { grep -Fqx -- "$2" "$1"; }
+
+echo
+echo "Case 32 — --unattended builds the contained child argv"
+d="$(new_sandbox)"; state_file "$d" "unatt-task" "claude"
+export WL_ARGV_FILE="$SANDBOX_ROOT/argv-unatt.txt"
+export WL_ENV_FILE="$SANDBOX_ROOT/env-unatt.txt"
+export WL_SF="$d/logs/work-loop/unatt-task.md"
+export WL_CO="$d"
+export WL_FAKE_VERSION="2.1.220 (Claude Code)"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task unatt-task --log-dir "$d/runs" \
+      --carry-one --claude-bin "$FAKE2" --unattended 2>&1)"; RC=$?
+expect_rc 0 "$RC" "the hop completes under --unattended" "$OUT"
+if [ -f "$WL_ARGV_FILE" ]; then
+  argv_has "$WL_ARGV_FILE" "--settings" \
+    && ok "the profile is delivered by --settings (CLI scope)" \
+    || bad "the profile is delivered by --settings" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
+  argv_has "$WL_ARGV_FILE" "Bash,Skill" \
+    && ok "--tools restricts the child to Bash,Skill (no built-in Read/Edit/Write)" \
+    || bad "--tools restricts the child to Bash,Skill" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
+  argv_has "$WL_ARGV_FILE" "--strict-mcp-config" \
+    && ok "--strict-mcp-config loads no MCP tools" \
+    || bad "--strict-mcp-config loads no MCP tools" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
+  argv_has "$WL_ARGV_FILE" "--no-session-persistence" \
+    && ok "--no-session-persistence is passed" \
+    || bad "--no-session-persistence is passed" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
+  # Each base deny individually. A single "some deny reached the child" assertion
+  # would stay green if the push rule were the one that got dropped.
+  for r in 'Bash(git push:*)' 'Bash(git push *)' 'WebFetch' 'WebSearch' 'mcp__*'; do
+    argv_has "$WL_ARGV_FILE" "$r" \
+      && ok "base deny reached the child verbatim: $r" \
+      || bad "base deny reached the child: $r" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
+  done
+  grep -qx -- "-p" "$WL_ARGV_FILE" && grep -q "work-loop-v2 unatt-task" "$WL_ARGV_FILE" \
+    && ok "the normal prompt arguments are unchanged under --unattended" \
+    || bad "the normal prompt arguments are unchanged" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
+else
+  bad "the fake claude binary was invoked" "no argv file at $WL_ARGV_FILE"
+fi
+
+echo
+echo "Case 32b — the credential-scrub env var actually reaches the child"
+# Not a formality. The scrub is the one profile layer that travels by environment
+# rather than by flag or settings file, so it is the one layer a shell-scoping
+# mistake could drop while every other assertion here stayed green.
+if [ -f "$WL_ENV_FILE" ]; then
+  grep -qx "SCRUB=1" "$WL_ENV_FILE" \
+    && ok "CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1 was set in the child's environment" \
+    || bad "CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1 reaches the child" "got: $(cat "$WL_ENV_FILE")"
+else
+  bad "the child recorded its environment" "no env file at $WL_ENV_FILE"
+fi
+
+echo
+echo "Case 32c — the generated profile carries every settings-side layer"
+PROF="$(ls -t "$d"/runs/*.unattended-settings.json 2>/dev/null | head -1)"
+if [ -n "$PROF" ] && [ -s "$PROF" ]; then
+  ok "a per-run profile file was written to the evidence directory"
+  # Whitespace-tolerant: the assertions are about policy, not about formatting.
+  prof_has() { # regex label
+    grep -Eq "$1" "$PROF" && ok "$2" || bad "$2" "profile: $PROF"
+  }
+  prof_has '"enabled"[[:space:]]*:[[:space:]]*true'                  "sandbox.enabled: true"
+  prof_has '"failIfUnavailable"[[:space:]]*:[[:space:]]*true'        "sandbox.failIfUnavailable: true — the child fails closed if the sandbox is missing"
+  prof_has '"allowUnsandboxedCommands"[[:space:]]*:[[:space:]]*false' "sandbox.allowUnsandboxedCommands: false — no dangerouslyDisableSandbox escape"
+  prof_has '"allowedDomains"[[:space:]]*:[[:space:]]*\[\]'           "network.allowedDomains: [] — empty allowlist"
+  prof_has '"strictAllowlist"[[:space:]]*:[[:space:]]*true'          "network.strictAllowlist: true — no approval prompt to widen it"
+  prof_has '"denyRead"[[:space:]]*:[[:space:]]*\["~/"\]'             "filesystem.denyRead: [\"~/\"] — home is closed to sandboxed Bash"
+  prof_has '"disableAllHooks"[[:space:]]*:[[:space:]]*true'          "disableAllHooks: true"
+  prof_has '"disableClaudeAiConnectors"[[:space:]]*:[[:space:]]*true' "disableClaudeAiConnectors: true"
+  prof_has '"disableRemoteControl"[[:space:]]*:[[:space:]]*true'     "disableRemoteControl: true"
+  prof_has '"disableAgentView"[[:space:]]*:[[:space:]]*true'         "disableAgentView: true"
+  prof_has '"disableArtifact"[[:space:]]*:[[:space:]]*true'          "disableArtifact: true"
+  prof_has '"autoMemoryEnabled"[[:space:]]*:[[:space:]]*false'       "autoMemoryEnabled: false"
+  # The child works through sandboxed Bash, so the checkout MUST be readable or
+  # the run cannot read the repository it was launched against.
+  #
+  # Asserted against the CANONICAL path, and that is the point rather than a
+  # detail: on macOS the temp path handed to --checkout here is /var/..., which
+  # is a symlink to /private/var/.... An allowRead entry naming the symlinked
+  # form would not describe the path Seatbelt actually evaluates. The dispatcher
+  # canonicalizes --checkout before anything else, so the profile gets the real
+  # one — this case would have caught the opposite. (It caught the reverse
+  # mistake in this case's own first draft, which compared the raw path.)
+  d_canon="$(cd "$d" && pwd -P)"
+  grep -Fq "$d_canon" "$PROF" \
+    && ok "filesystem.allowRead re-opens the checkout, by its canonical path" \
+    || bad "filesystem.allowRead re-opens the checkout by canonical path" "wanted $d_canon in $PROF"
+  # The argv --settings path must be the file that was actually written.
+  argv_has "$WL_ARGV_FILE" "$PROF" \
+    && ok "the --settings argument points at exactly the profile that was written" \
+    || bad "the --settings argument points at the written profile" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
+else
+  bad "a per-run profile file was written" "nothing matching $d/runs/*.unattended-settings.json"
+fi
+
+echo
+echo "Case 32d — the profile is NOT delivered through a repository settings file"
+# The silent-failure path this whole design is shaped around: strictAllowlist has
+# no effect from .claude/settings.json, and on a machine whose USER settings
+# already carry the key the mistake is invisible. So assert the negative
+# directly — the dispatcher must not have created either repo settings file, and
+# the delivered path must not be inside the checkout's .claude/ directory.
+if [ -e "$d/.claude/settings.json" ] || [ -e "$d/.claude/settings.local.json" ]; then
+  bad "the dispatcher wrote no repository settings file" "found one under $d/.claude/"
+else
+  ok "the dispatcher wrote no repository settings file"
+fi
+case "$PROF" in
+  "$d"/.claude/*) bad "the profile does not live in the checkout's .claude/ directory" "$PROF" ;;
+  *)              ok "the profile does not live in the checkout's .claude/ directory" ;;
+esac
+
+echo
+echo "Case 32e — the run log records the restrictions and the delivery scope"
+printf '%s' "$OUT" | grep -q "unattended=ON" \
+  && ok "the log says the run is contained" \
+  || bad "the log says the run is contained" "$OUT"
+printf '%s' "$OUT" | grep -q "scope: CLI --settings" \
+  && ok "the log records the SCOPE the profile arrived through, not just that one was sent" \
+  || bad "the log records the delivery scope" "$OUT"
+printf '%s' "$OUT" | grep -q "gate: claude 2.1.220 >= 2.1.219" \
+  && ok "the log records the version the gate actually read" \
+  || bad "the log records the version the gate read" "$OUT"
+printf '%s' "$OUT" | grep -q "strictAllowlist=true" \
+  && ok "the log names the network policy in force" \
+  || bad "the log names the network policy in force" "$OUT"
+printf '%s' "$OUT" | grep -q "LIMIT: this records the REQUESTED policy" \
+  && ok "the log states plainly that this is the requested, not the effective, policy" \
+  || bad "the log states requested-vs-effective" "$OUT"
+printf '%s' "$OUT" | grep -q "codex hops are NOT covered" \
+  && ok "the log does not let the reader assume Codex hops are contained by this profile" \
+  || bad "the log scopes the profile to Claude hops" "$OUT"
+
+echo
+echo "Case 32f — the version gate FAILS CLOSED below 2.1.219"
+d="$(new_sandbox)"; state_file "$d" "oldver-task" "claude"
+export WL_ARGV_FILE="$SANDBOX_ROOT/argv-oldver.txt"; rm -f "$WL_ARGV_FILE"
+export WL_ENV_FILE="$SANDBOX_ROOT/env-oldver.txt"
+export WL_SF="$d/logs/work-loop/oldver-task.md"
+export WL_CO="$d"
+export WL_FAKE_VERSION="2.1.218 (Claude Code)"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task oldver-task --log-dir "$d/runs" \
+      --carry-one --claude-bin "$FAKE2" --unattended 2>&1)"; RC=$?
+expect_rc 31 "$RC" "2.1.218 is refused with UNATTENDED_UNAVAILABLE" "$OUT"
+[ -f "$WL_ARGV_FILE" ] \
+  && bad "nothing launched when the gate refused" "the child ran anyway: $(tr '\n' ' ' <"$WL_ARGV_FILE")" \
+  || ok "nothing launched when the gate refused"
+printf '%s' "$OUT" | grep -q "strictAllowlist" \
+  && ok "the refusal names WHY the version matters, not just that it is old" \
+  || bad "the refusal names why the version matters" "$OUT"
+
+echo
+echo "Case 32g — the gate passes at exactly 2.1.219, and reads past a build suffix"
+d="$(new_sandbox)"; state_file "$d" "minver-task" "claude"
+export WL_ARGV_FILE="$SANDBOX_ROOT/argv-minver.txt"; rm -f "$WL_ARGV_FILE"
+export WL_ENV_FILE="$SANDBOX_ROOT/env-minver.txt"
+export WL_SF="$d/logs/work-loop/minver-task.md"
+export WL_CO="$d"
+export WL_FAKE_VERSION="2.1.219-beta.4 (Claude Code)"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task minver-task --log-dir "$d/runs" \
+      --carry-one --claude-bin "$FAKE2" --unattended 2>&1)"; RC=$?
+expect_rc 0 "$RC" "the boundary version 2.1.219 is accepted, suffix and all" "$OUT"
+# A major bump must not be read as "lower" by string comparison.
+d="$(new_sandbox)"; state_file "$d" "newver-task" "claude"
+export WL_ARGV_FILE="$SANDBOX_ROOT/argv-newver.txt"; rm -f "$WL_ARGV_FILE"
+export WL_ENV_FILE="$SANDBOX_ROOT/env-newver.txt"
+export WL_SF="$d/logs/work-loop/newver-task.md"
+export WL_CO="$d"
+export WL_FAKE_VERSION="10.0.1 (Claude Code)"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task newver-task --log-dir "$d/runs" \
+      --carry-one --claude-bin "$FAKE2" --unattended 2>&1)"; RC=$?
+expect_rc 0 "$RC" "10.0.1 is accepted — the comparison is numeric, not lexical" "$OUT"
+
+echo
+echo "Case 32h — an unreadable version FAILS CLOSED rather than being assumed fine"
+d="$(new_sandbox)"; state_file "$d" "noverr-task" "claude"
+export WL_ARGV_FILE="$SANDBOX_ROOT/argv-noverr.txt"; rm -f "$WL_ARGV_FILE"
+export WL_ENV_FILE="$SANDBOX_ROOT/env-noverr.txt"
+export WL_SF="$d/logs/work-loop/noverr-task.md"
+export WL_CO="$d"
+export WL_FAKE_VERSION="claude code, build unknown"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task noverr-task --log-dir "$d/runs" \
+      --carry-one --claude-bin "$FAKE2" --unattended 2>&1)"; RC=$?
+expect_rc 31 "$RC" "a version string with no dotted number is refused" "$OUT"
+[ -f "$WL_ARGV_FILE" ] \
+  && bad "nothing launched on an unreadable version" "the child ran anyway" \
+  || ok "nothing launched on an unreadable version"
+printf '%s' "$OUT" | grep -q "refusing to assume" \
+  && ok "the refusal distinguishes 'cannot tell' from 'too old'" \
+  || bad "the refusal distinguishes cannot-tell from too-old" "$OUT"
+
+echo
+echo "Case 32i — --claude-deny under --unattended is ADDITIVE, never a replacement"
+d="$(new_sandbox)"; state_file "$d" "adddeny-task" "claude"
+export WL_ARGV_FILE="$SANDBOX_ROOT/argv-adddeny.txt"; rm -f "$WL_ARGV_FILE"
+export WL_ENV_FILE="$SANDBOX_ROOT/env-adddeny.txt"
+export WL_SF="$d/logs/work-loop/adddeny-task.md"
+export WL_CO="$d"
+export WL_FAKE_VERSION="2.1.220 (Claude Code)"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task adddeny-task --log-dir "$d/runs" \
+      --carry-one --claude-bin "$FAKE2" --unattended \
+      --claude-deny 'Bash(rm:*)' 2>&1)"; RC=$?
+expect_rc 0 "$RC" "the hop completes with --unattended plus an extra deny" "$OUT"
+if [ -f "$WL_ARGV_FILE" ]; then
+  argv_has "$WL_ARGV_FILE" 'Bash(rm:*)' \
+    && ok "the operator's extra deny reached the child" \
+    || bad "the operator's extra deny reached the child" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
+  argv_has "$WL_ARGV_FILE" 'Bash(git push:*)' && argv_has "$WL_ARGV_FILE" 'WebFetch' \
+    && ok "the base profile denies SURVIVE the extra deny — narrowing only, never widening" \
+    || bad "the base profile denies survive" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
+else
+  bad "the fake claude binary was invoked" "no argv file"
+fi
+
+echo
+echo "Case 32j — WITHOUT --unattended the child is unchanged (attended and courier)"
+d="$(new_sandbox)"; state_file "$d" "attended-task" "claude"
+export WL_ARGV_FILE="$SANDBOX_ROOT/argv-attended.txt"; rm -f "$WL_ARGV_FILE"
+export WL_ENV_FILE="$SANDBOX_ROOT/env-attended.txt"
+export WL_SF="$d/logs/work-loop/attended-task.md"
+export WL_CO="$d"
+export WL_FAKE_VERSION="2.1.220 (Claude Code)"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task attended-task --log-dir "$d/runs" \
+      --carry-one --claude-bin "$FAKE2" 2>&1)"; RC=$?
+expect_rc 0 "$RC" "an ordinary courier hop still completes" "$OUT"
+if [ -f "$WL_ARGV_FILE" ]; then
+  for f in "--settings" "--tools" "--strict-mcp-config" "--no-session-persistence"; do
+    argv_has "$WL_ARGV_FILE" "$f" \
+      && bad "no $f without --unattended" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")" \
+      || ok "no $f without --unattended"
+  done
+else
+  bad "the fake claude binary was invoked" "no argv file"
+fi
+[ -f "$WL_ENV_FILE" ] && grep -qx "SCRUB=<unset>" "$WL_ENV_FILE" \
+  && ok "the credential scrub is not set on an attended hop either" \
+  || bad "the credential scrub is not set on an attended hop" "got: $(cat "$WL_ENV_FILE" 2>/dev/null)"
+ls "$d"/runs/*.unattended-settings.json >/dev/null 2>&1 \
+  && bad "no profile file is written without --unattended" "one exists under $d/runs" \
+  || ok "no profile file is written without --unattended"
+printf '%s' "$OUT" | grep -q "unattended=off" \
+  && ok "the log says out loud that a live run is NOT contained" \
+  || bad "the log says a live run is not contained" "$OUT"
+
+echo
+echo "Case 32k — --unattended refuses to combine with --actor-cmd"
+# A simulated actor cannot be contained. Allowing the pair would produce a run
+# log reading "unattended" for a run in which no profile reached anything.
+d="$(new_sandbox)"; state_file "$d" "simunatt-task" "claude"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task simunatt-task --log-dir "$d/runs" \
+      --carry-one --unattended --actor-cmd "$NOOP" 2>&1)"; RC=$?
+expect_rc 10 "$RC" "--unattended with --actor-cmd is a usage error" "$OUT"
+[ "$(calls "$d")" = "0" ] \
+  && ok "the simulated actor was never invoked" \
+  || bad "the simulated actor was never invoked" "calls=$(calls "$d")"
+
+echo
+echo "Case 32l — --dry-run --unattended is a real preflight"
+d="$(new_sandbox)"; state_file "$d" "dryunatt-task" "claude"
+export WL_ARGV_FILE="$SANDBOX_ROOT/argv-dryunatt.txt"; rm -f "$WL_ARGV_FILE"
+export WL_FAKE_VERSION="2.1.220 (Claude Code)"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task dryunatt-task --log-dir "$d/runs" \
+      --dry-run --claude-bin "$FAKE2" --unattended 2>&1)"; RC=$?
+expect_rc 0 "$RC" "a dry run under --unattended passes the gate" "$OUT"
+[ -f "$WL_ARGV_FILE" ] \
+  && bad "a dry run launches nothing" "the child ran" \
+  || ok "a dry run launches nothing"
+ls "$d"/runs/*.unattended-settings.json >/dev/null 2>&1 \
+  && ok "the profile was written, so the operator can inspect what a live run would use" \
+  || bad "the profile was written during the dry run" "nothing under $d/runs"
+# And the same dry run must FAIL on a host that could not deliver the profile —
+# otherwise it is a preflight that only ever says yes.
+export WL_FAKE_VERSION="2.1.218 (Claude Code)"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task dryunatt-task --log-dir "$d/runs" \
+      --dry-run --claude-bin "$FAKE2" --unattended 2>&1)"; RC=$?
+expect_rc 31 "$RC" "the dry-run preflight refuses an under-version host too" "$OUT"
+unset WL_ARGV_FILE WL_ENV_FILE WL_SF WL_CO WL_FAKE_VERSION
+
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"

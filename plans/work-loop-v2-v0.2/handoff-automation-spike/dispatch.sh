@@ -40,6 +40,44 @@
 #                       OBSERVED, runs/probe-unattended-authority-2026-08-07.md.
 #                       It does NOT buy network isolation: denying WebFetch just
 #                       sends the child to curl. See the same record.
+#   --unattended        CONTAINED MODE. Apply the operator-settled 1d profile to
+#                       every Claude hop: OS-backed Bash sandbox, strict empty
+#                       network allowlist, shell + Skill tools only, no MCP, web,
+#                       hooks, connectors, remote control, subagents, built-in
+#                       file tools or push, credentials scrubbed from
+#                       subprocesses, and no unsandboxed-command escape.
+#                       Policy and mechanism: runs/probe-contained-authority-2026-08-07.md.
+#
+#                       Delivered by CLI `--settings` on EVERY hop, never by a
+#                       repository settings file. That is not a style choice:
+#                       `sandbox.network.strictAllowlist` has NO EFFECT from
+#                       `.claude/settings.json`, so writing the profile there
+#                       would silently lose the network containment — and would
+#                       still look contained on a machine whose USER settings
+#                       already carry the key. See the same record, § 1 of the
+#                       verification addendum.
+#
+#                       FAILS CLOSED, exit 31, before anything launches: the
+#                       installed claude must be >= 2.1.219 (the release that
+#                       added strictAllowlist), the version string must be
+#                       readable, and the platform must be one this profile was
+#                       proven on. `sandbox.failIfUnavailable` makes the child
+#                       fail closed too, if the sandbox is missing at its end.
+#
+#                       Refuses to combine with --actor-cmd: a simulated actor
+#                       cannot be contained, and a run labelled unattended that
+#                       was never contained is exactly the evidence this spike
+#                       exists to not produce.
+#
+#                       --claude-deny still works and is ADDITIVE — it can only
+#                       narrow this profile further, never widen it.
+#
+#                       What this flag proves and does not: it applies and logs
+#                       the REQUESTED policy. Array-valued settings keys such as
+#                       `allowRead` merge across every settings scope, so another
+#                       scope on this machine can widen what the child may read.
+#                       Only a live check from INSIDE the child establishes the
+#                       EFFECTIVE policy — runs/probes/unattended-effective-policy.sh.
 #   --log-dir DIR       run evidence directory (default <spike>/runs)
 #   --dry-run           validate and route; launch nothing
 #   --status            READ-ONLY. Report whether a run is in flight for this
@@ -96,6 +134,15 @@
 #                              happened; the value is stopping rather than
 #                              compounding. Distinct from 24, which is the
 #                              working-tree case, because the recovery differs.
+#   31  UNATTENDED_UNAVAILABLE --unattended was asked for and the contained
+#                              profile cannot be delivered: claude older than
+#                              2.1.219, an unreadable version string, an
+#                              unproven platform, or a profile file that could
+#                              not be written. NOTHING launches. Failing closed
+#                              is the whole point — a run that quietly proceeds
+#                              uncontained is worse than one that stops.
+#                              (27 is a deliberate gap in this table, left as
+#                              found rather than filled by this addition.)
 #
 # The five meanings of 0 — do NOT read one as another:
 #   --help          printed the header. Nothing was validated, nothing launched.
@@ -145,6 +192,28 @@ CARRY_ONE=0
 ACTOR_CMD=""
 ALLOW_PATHS=()
 CLAUDE_DENY=()
+UNATTENDED=0
+
+# The contained profile's own deny rules (1d). These are the dispatcher's, not
+# the operator's: --claude-deny appends to them and can only narrow further.
+#
+# Both `git push:*` and `git push *` are listed on purpose. The permission
+# reference documents the colon form; the probe that settled 1d recorded the
+# space form as the rule it observed denying `git push --help`. Which one the
+# installed build honours is not something this dispatcher should be guessing at
+# when the cost of listing both is one array entry.
+UNATTENDED_BASE_DENY=(
+  'Bash(git push:*)'
+  'Bash(git push *)'
+  'WebFetch'
+  'WebSearch'
+  'mcp__*'
+)
+# The minimum claude version that honours sandbox.network.strictAllowlist.
+UNATTENDED_MIN_VERSION="2.1.219"
+UNATTENDED_SETTINGS=""   # path to the generated per-run profile; set at preflight
+UNATTENDED_VERSION=""    # the version string the gate actually read
+UNATTENDED_BIN=""        # the claude binary the gate actually inspected
 
 # Interruption state. ACTOR_PGID is the process group of the actor currently in
 # flight, or empty between hops — the signal handler needs it to reach the whole
@@ -185,6 +254,7 @@ while [ $# -gt 0 ]; do
     --dry-run)     DRY_RUN=1; shift ;;
     --status)      STATUS_MODE=1; shift ;;
     --carry-one)   CARRY_ONE=1; shift ;;
+    --unattended)  UNATTENDED=1; shift ;;
     # Print the whole leading comment block, whatever length it grows to. A fixed
     # line window silently truncated the exit-code list as codes were added.
     -h|--help)     awk 'NR==1{next} /^#/{print; next} {exit}' "${BASH_SOURCE[0]}"; exit 0 ;;
@@ -217,6 +287,16 @@ fi
 # acquires the lock. Silently letting one win would misreport which check ran.
 if [ "$STATUS_MODE" -eq 1 ] && [ "$DRY_RUN" -eq 1 ]; then
   printf 'STOP [10] --status and --dry-run are separate read-only modes; pass one\n' >&2; exit 10
+fi
+
+# --unattended cannot be honoured for a simulated actor. --actor-cmd replaces the
+# live product launch entirely, so no settings file, no tool restriction and no
+# sandbox reaches anything: the containment would be requested and silently not
+# applied, while every line of evidence the run produced said "unattended". That
+# is the precise failure this spike is built to refuse, so it is usage, not a
+# warning.
+if [ "$UNATTENDED" -eq 1 ] && [ -n "$ACTOR_CMD" ]; then
+  printf 'STOP [10] --unattended and --actor-cmd are incompatible: a simulated actor cannot be contained, and labelling an uncontained run "unattended" would falsify its evidence\n' >&2; exit 10
 fi
 
 MODE="live"
@@ -567,6 +647,152 @@ else
   say "claude_deny=none — the Claude child holds this checkout's normal authority"
 fi
 
+# ------------------------------------------------- unattended contained profile
+#
+# Item 1d. The operator settled the policy and a probe proved the mechanism; this
+# section is the part that applies it. Everything here runs BEFORE the first hop,
+# so a profile that cannot be delivered stops the run instead of degrading it.
+
+# Compare two dotted versions. Returns 0 when $1 >= $2, 1 when lower, 2 when $1
+# is not a readable dotted version at all. The third case is deliberately NOT
+# folded into "lower": an unreadable version and an old version want the same
+# refusal but different words, and guessing which one happened is how a gate
+# starts lying.
+version_at_least() { # have, want
+  local have="$1" want="$2" i
+  case "$have" in ''|*[!0-9.]*) return 2 ;; esac
+  local -a h w
+  IFS='.' read -r -a h <<<"$have"
+  IFS='.' read -r -a w <<<"$want"
+  [ "${#h[@]}" -ge 1 ] || return 2
+  for i in 0 1 2; do
+    local hv="${h[$i]:-0}" wv="${w[$i]:-0}"
+    case "$hv" in ''|*[!0-9]*) return 2 ;; esac
+    if [ "$hv" -gt "$wv" ]; then return 0; fi
+    if [ "$hv" -lt "$wv" ]; then return 1; fi
+  done
+  return 0
+}
+
+# Pull the first dotted numeric version out of a `claude --version` line.
+# The real output is `2.1.220 (Claude Code)`; this must not be fooled by a build
+# suffix, and must come back empty rather than approximate when there is none.
+version_number() { # raw version line
+  printf '%s' "$1" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1
+}
+
+# The whole profile, as one JSON document delivered by CLI --settings.
+#
+# Every key here traces to a numbered layer of the proven profile in
+# runs/probe-contained-authority-2026-08-07.md § Safe profile tested. The layers
+# that are CLI-only (--tools, --strict-mcp-config, --disallowedTools,
+# --no-session-persistence) and the env-only one (subprocess credential scrub)
+# are applied in launch_actor, not here, and are logged alongside these.
+write_unattended_profile() { # path -> 0 on success
+  local path="$1" gitdir esc_checkout esc_gitdir
+  # The child's Bash is sandboxed and home reads are denied, so the checkout has
+  # to be re-allowed or the actor cannot read the repository it is working in.
+  # Linked worktrees keep their objects in the common dir, which is elsewhere —
+  # deny it and Git stops working inside the sandbox, silently and confusingly.
+  gitdir="$(git -C "$CHECKOUT" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)"
+  [ -n "$gitdir" ] || gitdir="$CHECKOUT/.git"
+
+  # Minimal JSON string escaping. Paths can legitimately contain spaces (this
+  # workspace's own do) and backslashes; unescaped they would produce a settings
+  # file the child rejects, which reads as "sandbox unavailable" rather than as
+  # "the dispatcher wrote bad JSON".
+  esc_checkout="$(printf '%s' "$CHECKOUT" | sed 's/\\/\\\\/g; s/"/\\"/g')"
+  esc_gitdir="$(printf '%s' "$gitdir"    | sed 's/\\/\\\\/g; s/"/\\"/g')"
+
+  cat >"$path" <<PROFILE_EOF || return 1
+{
+  "sandbox": {
+    "enabled": true,
+    "failIfUnavailable": true,
+    "allowUnsandboxedCommands": false,
+    "network": {
+      "allowedDomains": [],
+      "strictAllowlist": true
+    },
+    "filesystem": {
+      "denyRead": ["~/"],
+      "allowRead": ["$esc_checkout", "$esc_gitdir"]
+    }
+  },
+  "disableAllHooks": true,
+  "disableClaudeAiConnectors": true,
+  "disableRemoteControl": true,
+  "disableAgentView": true,
+  "disableArtifact": true,
+  "autoMemoryEnabled": false
+}
+PROFILE_EOF
+  [ -s "$path" ] || return 1
+  return 0
+}
+
+if [ "$UNATTENDED" -eq 1 ]; then
+  # 1. Platform. The proven profile is macOS Seatbelt. Claude Code sandboxes
+  #    Linux too, but nobody has run this profile there, and "probably fine" is
+  #    not what fail-closed means.
+  u_os="$(uname -s 2>/dev/null)"
+  [ "$u_os" = "Darwin" ] || die 31 "--unattended is proven on Darwin (macOS Seatbelt) only; this host reports '$u_os'."$'\n'"Recoverable next action: run without --unattended and accept the open authority, or prove the profile on this platform first."
+
+  # 2. The binary, resolved the same way launch_actor resolves it. Gating a
+  #    different binary from the one that will run is a gate in name only.
+  UNATTENDED_BIN="$CLAUDE_BIN"
+  [ -n "$UNATTENDED_BIN" ] || UNATTENDED_BIN="$(command -v claude 2>/dev/null)"
+  [ -n "$UNATTENDED_BIN" ] && [ -x "$UNATTENDED_BIN" ] \
+    || die 31 "--unattended cannot check the claude version: binary not resolvable"
+
+  # 3. Version. strictAllowlist landed in 2.1.219; below that the network half
+  #    of the profile is accepted and ignored, which is the silent failure.
+  u_raw="$("$UNATTENDED_BIN" --version 2>&1 | head -1)"
+  UNATTENDED_VERSION="$(version_number "$u_raw")"
+  if [ -z "$UNATTENDED_VERSION" ]; then
+    die 31 "--unattended cannot read a version from '$UNATTENDED_BIN' (got: ${u_raw:-<empty>}); refusing to assume it supports sandbox.network.strictAllowlist"
+  fi
+  version_at_least "$UNATTENDED_VERSION" "$UNATTENDED_MIN_VERSION"
+  case $? in
+    0) : ;;
+    1) die 31 "--unattended needs claude >= $UNATTENDED_MIN_VERSION for sandbox.network.strictAllowlist; '$UNATTENDED_BIN' is $UNATTENDED_VERSION."$'\n'"Recoverable next action: upgrade claude, or run without --unattended and accept an open network." ;;
+    *) die 31 "--unattended read an unusable version '$UNATTENDED_VERSION' from '$UNATTENDED_BIN'" ;;
+  esac
+
+  # 4. The profile itself, written per run so the evidence directory holds the
+  #    exact bytes the child was launched under.
+  UNATTENDED_SETTINGS="$LOG_DIR/$RUN_ID.unattended-settings.json"
+  write_unattended_profile "$UNATTENDED_SETTINGS" \
+    || die 31 "--unattended could not write its profile to $UNATTENDED_SETTINGS"
+
+  # 5. Say what was applied, and through which scope. The scope is load-bearing,
+  #    not decoration: the same JSON in a repository settings file would drop the
+  #    network containment without a word, so "we sent a profile" is not the
+  #    claim worth logging — "we sent it by CLI --settings" is.
+  say "unattended=ON — contained profile applied to every Claude hop (item 1d)"
+  say "  scope: CLI --settings (NOT a repository settings file — strictAllowlist has no effect from one)"
+  say "  profile: $UNATTENDED_SETTINGS"
+  say "  gate: claude $UNATTENDED_VERSION >= $UNATTENDED_MIN_VERSION at $UNATTENDED_BIN, platform $u_os"
+  say "  sandbox: enabled, failIfUnavailable, allowUnsandboxedCommands=false"
+  say "  network: allowedDomains=[] strictAllowlist=true (no Bash network, no approval prompt)"
+  say "  filesystem: denyRead ~/ ; allowRead <checkout> and its git common dir"
+  say "  tools: Bash,Skill only — no built-in Read/Edit/Write, so file access goes through the sandbox"
+  say "  mcp: --strict-mcp-config with no config — no MCP tools"
+  say "  deny: ${UNATTENDED_BASE_DENY[*]}"
+  say "  also: hooks, connectors, remote control, agent view, artifacts and auto-memory disabled; no session persistence"
+  say "  env: CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1 — credentials stripped from subprocesses"
+  say "  codex hops are NOT covered by this profile; their containment is codex's own --sandbox workspace-write"
+  # The two known ways this can be true on the log and false in the child. Both
+  # are stated at every run rather than in a document nobody opens mid-incident.
+  say "  LIMIT: this records the REQUESTED policy. Array keys such as allowRead MERGE across settings scopes,"
+  say "         so another scope on this host can widen what the child may read. Closing that needs managed"
+  say "         settings (allowManagedReadPathsOnly / allowManagedDomainsOnly), which this dispatcher cannot set."
+  say "  LIMIT: only a check from INSIDE a live child establishes the EFFECTIVE policy —"
+  say "         runs/probes/unattended-effective-policy.sh"
+elif [ "$MODE" = "live" ]; then
+  say "unattended=off — Claude hops run with this checkout's normal authority, including network"
+fi
+
 # ------------------------------------------------------- state file reading
 # Read-only throughout. This dispatcher never writes the state file; only the
 # actors do (core § 4 — Claude commits, Codex writes the brief).
@@ -844,7 +1070,21 @@ launch_actor() { # actor, hop, effective-timeout -> exit status of the launch
       # Claude ones. cd and restore instead.
       local prev_pwd="$PWD" rc_claude
       cd "$CHECKOUT" || die 11 "cannot enter checkout: $CHECKOUT"
-      if [ "${#CLAUDE_DENY[@]}" -gt 0 ]; then
+      if [ "$UNATTENDED" -eq 1 ]; then
+        # The contained profile (1d). Built as an array so the operator's own
+        # --claude-deny rules append to the base set rather than replacing it:
+        # this flag may narrow the profile further, never widen it.
+        local -a u_deny=("${UNATTENDED_BASE_DENY[@]}")
+        [ "${#CLAUDE_DENY[@]}" -gt 0 ] && u_deny+=("${CLAUDE_DENY[@]}")
+        say "  cmd: claude -p '/work-loop-v2 $TASK' --output-format json --settings <profile> --tools Bash,Skill --strict-mcp-config --no-session-persistence --disallowedTools ${u_deny[*]} (cwd=<checkout>, CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1)"
+        CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1 \
+        run_bounded "$limit" "$out" "$cb" -p "/work-loop-v2 $TASK" --output-format json \
+          --settings "$UNATTENDED_SETTINGS" \
+          --tools 'Bash,Skill' \
+          --strict-mcp-config \
+          --no-session-persistence \
+          --disallowedTools "${u_deny[@]}"
+      elif [ "${#CLAUDE_DENY[@]}" -gt 0 ]; then
         say "  cmd: claude -p '/work-loop-v2 $TASK' --output-format json --disallowedTools ${CLAUDE_DENY[*]} (cwd=<checkout>)"
         run_bounded "$limit" "$out" "$cb" -p "/work-loop-v2 $TASK" --output-format json \
           --disallowedTools "${CLAUDE_DENY[@]}"
@@ -889,6 +1129,10 @@ if [ "$DRY_RUN" -eq 1 ]; then
   dr_foreign="$(foreign_worktree)"
   [ -n "$dr_foreign" ] && say "dry-run: out-of-allowlist working-tree changes present — loop mode would stop:"$'\n'"$dr_foreign"
   [ "$ST_TURN" = "operator" ] && say "dry-run: turn is operator — automation is terminal here."
+  # --dry-run --unattended is a real preflight, not a formality: the version gate,
+  # the platform check and the profile write have all already run above, so
+  # reaching this line means the contained profile is deliverable on this host.
+  [ "$UNATTENDED" -eq 1 ] && say "dry-run: the contained profile passed its gate and was written; a live run would launch under it."
   release_lock
   exit 0
 fi
