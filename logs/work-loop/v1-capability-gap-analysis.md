@@ -1,6 +1,6 @@
 ---
 task: v1-capability-gap-analysis
-turn: codex
+turn: claude
 ---
 
 ## Objective and scope
@@ -521,25 +521,31 @@ the trigger-by-trigger depth classification or the escalation/de-escalation prot
 the losses above, not the supersessions. A separate decision that these triggers should not be ported
 would be a disposition, not evidence of coverage, and is not treated as either here.
 
-**Files that cannot move while live inbound references remain:**
+**Per-file constraints — three blocked, two not:**
+
+*Cannot move while live inbound references remain:*
 
 - `templates/capability-record.md` — blocked by `develop-ai-resource.md:57` (Class A, executable).
 - `docs/work-loop.md` — blocked by `docs/qc-independence.md:25/:27`, `develop-ai-resource.md:165`,
   `templates/capability-record.md:20` and the live record's three citations.
 - `skills/capability-development/SKILL.md` — blocked by the template `:19`, `templates/README.md:11`,
   `docs/ai-resource-creation.md:17`.
-- `docs/work-loop-spec.md` — **no live inbound reference found** (live-surface column empty; only
-  self/internal and historical). The least entangled of the five.
-- `.agents/skills/work-loop/SKILL.md` — tracked, re-included at `.gitignore:81`; its only live tie is
-  that ignore line.
+
+*No live inbound reference found — not blocked:*
+
+- `docs/work-loop-spec.md` — live-surface column empty; only self/internal and historical hits.
+- `.agents/skills/work-loop/SKILL.md` — no live inbound dependency either. It is tracked, and
+  `.gitignore:81` re-includes it for tracking, but that line is inert: it consumes none of the skill's
+  behaviour and breaks nothing if the skill goes. Recorded as **cleanup only, if the skill is
+  removed** — not a blocker.
 
 **Implications of the three options, without a recommendation:**
 
-- **Keep the capability layer.** Preserves eight partly/uncovered method capabilities and the record's
+- **Keep the capability layer.** Preserves nine partly/uncovered method capabilities and the record's
   durable fields at zero migration cost. Costs: five files and ~2,200 lines stay live while their
   executor does not exist, so `docs/qc-independence.md` keeps routing review through a deleted
   command and the record stays unresumable. Keeping does not fix mismatch 3.
-- **Fold only named gaps into a live owner.** Targets the eight capabilities above rather than the
+- **Fold only named gaps into a live owner.** Targets the nine capabilities above rather than the
   whole layer, and matches option C from 2026-08-01 (recorded "Not taken (Claude's recommendation)").
   Costs: a destination must be chosen for each gap; § 2 shows v2 has no durable home for three of five
   long-lived fields, and the plan's own reopening test for creating one is **not met**.
@@ -597,11 +603,19 @@ None.
 
 ## Next action
 
-Codex: run the closure check on the three frozen findings only — (1) row 3 re-evaluated against actual
-behaviour with the downstream statements corrected, (2) the worktrees inspected and classified and
-`.gitignore:81` reclassified, (3) the advocacy removed with the evidence preserved — and whether the
-correction broke anything.
+Final tightly-bounded fix — the correction resolved the three frozen findings, but two downstream
+sentences still contradict those resolutions:
 
-One thing surfaced by finding 2 that is new evidence rather than a correction: 62 unmerged commits on
-two branches still carry the deleted v1 command. It is recorded as operator choice 5 and is not
-resolved by choices 1–4.
+1. Row 3 added route triggers to the partly-covered gaps, so the keep/fold option analysis must say
+   **nine**, not **eight**. Correct those two remaining counts only.
+2. `.gitignore:81` is now correctly classified as an inert cleanup/tracking prerequisite, but
+   `.agents/skills/work-loop/SKILL.md` still appears under “Files that cannot move while live inbound
+   references remain” and calls that ignore rule its “only live tie.” Make the per-file constraints
+   internally consistent: the first three files have live blockers; `docs/work-loop-spec.md` has no
+   live inbound reference; the Codex v1 skill also has no live inbound dependency, with the inert
+   re-include line recorded only as cleanup if the skill is removed.
+
+Change only those statements in this state file. Do not re-open the analysis, alter any evidence,
+change an option, or act on a disposition. Set `turn: codex`, commit only this file by explicit
+pathspec, and stop. The next closure check covers only these two residual inconsistencies and whether
+this final fix broke the package.
