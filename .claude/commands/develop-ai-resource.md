@@ -1,7 +1,7 @@
 ---
-description: Decide whether a durable AI resource should exist, then build, verify and demonstrate the smallest one that does. Qualify → Build → Verify → Decide. No build is a valid outcome; nothing is adopted without the operator.
+description: Decide whether a durable AI resource should exist, then build, verify and demonstrate the smallest one that does. Qualify → Build → Verify → Decide. No build is a valid outcome; nothing is adopted without the operator. Also the owner for retiring a durable AI resource already in service — nothing is removed without the operator, and retirement is not complete while a live reference remains.
 model: opus
-argument-hint: "[a need in plain English, a path to an inbox brief, or an existing resource to improve]"
+argument-hint: "[a need in plain English, a path to an inbox brief, an existing resource to improve, or an existing resource to retire]"
 ---
 
 # /develop-ai-resource — need → mechanism → candidate → demonstrated decision
@@ -14,6 +14,8 @@ Decide whether a durable Axcíon AI resource should exist — skill, agent defin
 - **Improving an existing skill** — go straight to `/improve-skill` when the skill, the requested improvement and the mechanism are all already identified and settled. That is the ordinary path, not a bypass; `/improve-skill` stays independently reachable in v1.
 - **Qualify the improvement here first** when the underlying need, scope, mechanism or system fit is materially uncertain or contested, or when the improvement may justify a different or a materially expanded resource.
 
+- **Retiring an existing durable resource** — this command owns withdrawing a durable AI artifact that is already in service. It covers **AI artifacts only**: retiring an **operating capability** belongs to that capability's own owner and is recorded against its capability record, and retiring a **non-AI repository feature** is ordinary repository work. This command neither owns nor performs either of those — it names the owner and routes.
+
 This command is never mandatory or standard for *every* material improvement. The settled-mechanism test above is what decides.
 
 **Boundary vs neighbours.**
@@ -23,7 +25,7 @@ This command is never mandatory or standard for *every* material improvement. Th
 - An independent Codex review (risk-aware when the change is high-consequence) and `/implementation-triage` are the specialist capabilities Step 3 draws on when the claim and consequence warrant it.
 - `/work-loop-v2` owns **operating outcomes** — bounded repository and project work no specialist owner covers, including whether a capability that already exists enters normal operations. The boundary is sequential, never simultaneous: while the operating outcome is unresolved Work Loop v2 owns it, and once the open question is whether a *durable AI artifact* should exist, that question is this command's and Work Loop v2 routes it here. This command returns a disposition on the artifact and never takes the operating outcome back. The skill is not the capability; it is one implementation component. The v1 `/work-loop` command that once held this seam has been deleted — `skills/capability-development/SKILL.md` and `docs/work-loop.md` survive as v1 method documents with no live executor, and their disposition is not this command's to make. **No component emits the two reserved upstream provenance fields today**, so a brief carrying them is an unverified *claim* that Step 1.0 checks against a record on disk before honouring — see Step 1's upstream-brief clause.
 
-Input: `$ARGUMENTS` — a plain-English need, a path to a brief in `ai-resources/inbox/`, or an existing resource to improve. If empty, ask for the need in one line and wait.
+Input: `$ARGUMENTS` — a plain-English need, a path to a brief in `ai-resources/inbox/`, an existing resource to improve, or an existing resource to retire. If empty, ask for the need in one line and wait.
 
 ---
 
@@ -88,9 +90,9 @@ A thinking aid — go straight to a later rung when the evidence warrants it.
 
 Where two applicable authoritative sources appear to conflict, establish precedence first: the governing specification and the foundational principles set it. Bring the conflict to the operator **only** when the sources genuinely conflict *and* precedence cannot be established that way. A review judges premise and consequence, not which document wins.
 
-**1.6 Verdict.** One of: **no build · accept the limitation · normal prompting · change an operating habit · reuse as-is · improve an existing resource · use an external resource · bounded experiment · project-local resource · shared resource · defer** (with a concrete trigger — a date, a quarter or a named event).
+**1.6 Verdict.** One of: **no build · accept the limitation · normal prompting · change an operating habit · reuse as-is · improve an existing resource · use an external resource · bounded experiment · project-local resource · shared resource · defer** (with a concrete trigger — a date, a quarter or a named event) **· retire an existing resource** (an artifact already in service should be withdrawn).
 
-**Completion criterion:** the verdict names the mechanism *and* the evidence it rests on, and every near-match from 1.3 is dispositioned. On no build, reuse as-is or defer — go to Step 4 and stop.
+**Completion criterion:** the verdict names the mechanism *and* the evidence it rests on, and every near-match from 1.3 is dispositioned. On no build, reuse as-is or defer — go to Step 4 and stop. On **retire an existing resource** — go to Step 4's retirement branch and stop: there is no candidate to build or verify, and the dependency inventory that branch requires is the evidence.
 
 ---
 
@@ -165,11 +167,23 @@ Two consequences worth stating, because each would otherwise leave a step unsati
 
 **When no candidate was built,** give the recommendation, the evidence, and the existing capability or habit that serves the need instead. The operator chooses **Accept** or **Reconsider with additional evidence**.
 
+**When the verdict is to retire an existing resource,** this branch runs instead of the two above. It is reached by a direct invocation naming an in-service artifact, or by the 1.6 retirement verdict. Upstream mode (1.0) does not reach it — an upstream brief asks for an artifact to *exist*, not for one to be withdrawn — so the disposition rule above still covers exactly the two branches it names.
+
+**Retirement is not `Delete candidate`.** `Delete candidate` disposes of an unadopted candidate this run produced: nothing depended on it, so removing it leaves the system unchanged. Retirement withdraws something already in service, which by definition has dependents. The two are never interchangeable.
+
+**Before the operator decides, put the proposal in front of them:** the artifact and where it lives; **every live surface that depends on it** — references, consumers, invocation paths, deployments, symlinks, automatic or scheduled triggers, and documentation that routes to it — established **by search, not by recall**; and for each surface, the **replacement or the accepted loss**. A surface that was never named was never dispositioned.
+
+The operator then chooses **Retire** (remove it, on the plan above) · **Revise** (change the plan — usually one dependent's disposition) · **Defer** (leave it in service, with the concrete trigger that would reopen retirement) · **Keep** (retirement rejected). **Nothing is removed before that choice.**
+
+**Retirement is complete only when** the machinery is gone or each remaining piece is explicitly dispositioned; every surface in the inventory is removed, repointed or recorded as an accepted loss; a re-run of the same search that built the inventory shows **no dangling route to the retired artifact**; and what was removed is stated in the ordinary task and commit evidence. No retirement register, tracker or status file — the commit is the record.
+
+**A dependency that cannot yet be removed or safely dispositioned stops the retirement.** Name it, and take Revise or Defer. Declaring retirement complete with that dependency outstanding is a false retirement — which is exactly what happened when the v1 `/work-loop` command was deleted on 2026-08-06 (`0516bf6`) and four surfaces went on naming it.
+
 **Closing an `inbox/` brief.** When the input was a brief in `inbox/` and the operator accepts a disposition of **no build · reuse as-is · rejection · deferral**, move the brief to `inbox/archive/` — the same convention a fulfilled brief follows. Add one line at the top of the archived file: the date, the disposition, and the reason in a clause. For a **deferral**, that line names the concrete trigger that would reopen it — a date, a quarter or a named event. The intake queue then holds only briefs still awaiting a decision. No register, tracker or status file.
 
 Where the recommendation is an external resource, state which is proposed — **reference without installing · install or enable · adapt or copy into Axcíon · use only its method now**. Each is a separate decision.
 
-**Completion criterion:** candidate built — before/after demonstrated and a disposition obtained. No candidate — recommendation explained, and accepted or reconsidered. Either way, if the input was an `inbox/` brief, it has left the intake queue.
+**Completion criterion:** candidate built — before/after demonstrated and a disposition obtained. No candidate — recommendation explained, and accepted or reconsidered. Retirement — the dependency inventory was established by search, the operator chose, and on **Retire** the re-run of that same search returns no dangling route. Either way, if the input was an `inbox/` brief, it has left the intake queue.
 
 ---
 
