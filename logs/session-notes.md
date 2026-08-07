@@ -2,82 +2,6 @@
 
 > Archive: [session-notes-archive-2026-08.md](session-notes-archive-2026-08.md)
 
-## 2026-08-04 — Session (unmarked) — Work Loop v2 Context Engineering S9 reviewed, S10 corrected, task closed
-
-**Work:** Ran two consecutive Work Loop v2 units on task `context-engineering-s9-candidate-review` in one
-session — the S9 candidate review, Codex's S10 correction round, and the task's close, which was also the
-first live exercise of the correction's own close-token fix.
-
-### Summary
-This session ran entirely on `/work-loop-v2`, no session marker. S9 first: all five of the brief's
-verification claims held on inspection (plan approval bound to `1283d99`, the review surface really is
-exactly the three named runtime files — confirmed by a workspace-wide content search that found no fourth
-live file and classified three project-level "copies" as symlinks to the canonical files — one unchanged
-commit `4f98cec1`, S8b's three checks genuinely unmet, and independence achievable via a fresh-context
-subagent with no authorship of the candidate). The commissioned reviewer returned four material findings
-(two high, two medium), all producer/consumer contradictions between the three runtime files — not the
-candidate reading unsoundly overall, and not touching the Route 3 boundary, which the reviewer explicitly
-cleared. Codex froze the four findings and opened an S10 correction unit. All four reproduced on disk
-before any fix was made. Three were resolved in full: the core now permits both claim-placement shapes
-instead of contradicting the command; the core's five field headings are now normative and exact instead
-of drifting from what the command reads; the core and command both gained a discovery-unit consumer path
-instead of forcing every brief through "implement". The fourth — contradictory closing-record authorship
-that left no reachable path to a committed closed file — was resolved structurally (a new close token,
-symmetric to the existing hand-off token) but handed back as **partly resolved**, because demonstrating
-the fixed terminal path required actually invoking it, which this correction unit could not manufacture as
-evidence. Codex accepted the corrected candidate under the core §3 menu with four written limitations —
-not a second correction round — and closed the task using exactly that new close-token path. The
-successful close commit is itself the terminal-path proof finding 1 was missing: Codex wrote the verdict
-and handed the turn to Claude, Claude reduced the file to the four-section closing record and committed
-it. Nothing about adoption moved — S8b's three checks are still owed, now against the corrected candidate,
-and Phase 6 adoption condition 4 stays explicitly unmet rather than recorded as an accepted limitation.
-
-### Decisions Made
-- **Operator (as Codex): accepted the S10-corrected candidate with four written limitations**, chosen once
-  from the core §3 menu rather than opening a further correction round. Ground: all four runtime
-  contradictions removed, no critical finding remained, the acceptance harness held steady, and the
-  approved plan already requires the affected regression (R-1, R-5) before any adoption decision.
-- Claude, within authority: commissioned the S9 reviewer as a fresh-context subagent rather than reviewing
-  the candidate itself, per the brief's explicit prohibition on Claude reviewing its own implementation and
-  relabelling that independent.
-- Claude, within authority: handed back finding 1 as **partly resolved** rather than stretching the
-  structural fix to claim behavioural proof — the evidence class (invoking the seam) is exactly what S8b
-  still owes and this unit could not supply it honestly.
-- Claude, within authority: left the harness's stale `KNOWN_WORKLOOP_FILES` allowlist unfixed — it did not
-  make any of the four frozen findings fail-capable, so touching it was outside the correction's scope;
-  recorded as a deferral instead.
-- Claude, within authority: removed the superseded frozen-findings text from the state file's `Next
-  action` once the correction round completed, per core §4's "current truth, not a diary" rule, rather
-  than carrying it forward for the closure check to re-read.
-
-### Outcome
-Skipped (not requested).
-
-### Session Value Audit — 80/20 Review
-Skipped (not requested).
-
-### Risky actions
-None. Every commit was staged by explicit pathspec across all three units (S9 review, S10 correction,
-close). No destructive git operation, no external write, no prompt injection encountered.
-
-### Findings Declined
-- **The harness's stale `KNOWN_WORKLOOP_FILES` allowlist** (cause of the standing 147/2 result) — declined
-  as a duplicate: already queued at `logs/improvement-log.md` via
-  `<!-- promote:d7cac2579d77 -->` ("The Work Loop v2 regression harness has a permanently red baseline").
-- **Core §4's worked example now partly duplicating its own normative heading table** — declined as
-  cosmetic, no named consequence beyond a future editor needing to keep two copies in sync by hand.
-
-### Next Steps
-`context-engineering-s9-candidate-review` is closed; no further action on it. Two things are next in the
-Context Engineering thread and neither is scheduled: (1) an operator-driven Codex session to run regression
-cases R-1 and R-5 against the corrected candidate, or (2) a separate, explicitly authorised proof task to
-obtain S8b's three owed behavioural checks. Do not open S11, S12 or Phase 4 without one of those.
-Continuity detail: `logs/scratchpads/2026-08-04-17-30-scratchpad.md`.
-
-### Open Questions
-Whether and when either follow-on (R-1/R-5 regression, or the S8b proof task) gets scheduled remains
-undecided. Nothing in this session commits to a timeline.
-
 ## 2026-08-05 — Work Loop v2 handoff dispatcher: live Codex/Claude transport proven, then closed
 
 ### Summary
@@ -791,3 +715,68 @@ as part of the unit rather than queued or declined; none were left as an open fi
 ### Open Questions
 None blocking. Phase 2 (the walk-away pilot) stays forbidden until 1a and 1f close — not a question,
 a known remaining gate.
+
+## 2026-08-07 — Unattended operation 1d: correction round, final bounded fix, task closed
+
+### Summary
+Ran two Claude-side Work Loop v2 units on `work-loop-v2-contained-unattended-profile`, continuing
+the same Phase 1 item 1d as the prior entry. Resolved Codex's four frozen correction findings — most
+significantly, replaced two model-claim assertions (tool roster, MCP absence) with measurements read
+from the product's own `system/init` event. Took the § 3 menu's final tightly-bounded fix on three
+remaining stale plan statements. Closed the task on Codex's close verdict.
+
+### Decisions Made
+- **Unattended hops now capture `--output-format stream-json --verbose` instead of `json`**, scoped
+  to `--unattended` only. Reason: the stream's first event, `system/init`, states the tool roster and
+  MCP servers the runtime actually resolved — the one surface where a silently dropped `--tools` or
+  `--strict-mcp-config` would show. The final `result` event is unchanged, so this is a superset
+  capture, not a different one. Attended/courier hops keep `json` (asserted, case 32j).
+- **The live probe's lock-detection was rewritten to check the dispatcher's real lock path**
+  (`${TMPDIR}/work-loop-dispatch-<sha>.lock`) instead of a path `dispatch.sh` has never written; the
+  dispatcher's exit code is now asserted, not merely recorded; the raw capture is assembled after the
+  assertions run, so it carries the verdicts instead of only the inputs.
+- **Codex's § 3 menu choice (final tightly-bounded fix, not a second correction round)**, taken
+  because the one unresolved finding (documentation) reduced to three exact stale statements with
+  known, low-risk replacements — accepting them as a limitation would have left the phase gate
+  internally contradictory.
+- **Routine:** reported the red-pair count exactly as measured (216/24 on the current test file
+  against the preserved pre-1d dispatcher) rather than reusing an earlier, now-stale figure (212/23,
+  attributed to the pre-correction test file instead).
+
+### Outcome
+Outcome check skipped (not requested).
+
+### Session Value Audit — 80/20 Review
+Skipped (not requested).
+
+### Risky actions
+One self-caught near-miss: while drafting the second unit's state-file evidence, a commit identifier
+was written into `## Latest result` *before* the commit that would create it existed — a fabricated
+value presented as evidence. Caught before commit, replaced with the real id in a follow-up commit,
+and reported to the operator rather than silently corrected. No externally-visible action was taken
+on the fabricated value.
+
+### Session Assessment
+Skipped (not requested).
+
+### Findings Declined
+- **Commit-id-before-commit near miss (see Risky actions).** Declined for the backlog: caught and
+  corrected within the same turn, no external artifact was ever affected, and the task's own
+  protocol already has an established mitigation this session followed correctly afterward
+  (recording the real id in a follow-up commit once it exists). No new repo-level fix is needed.
+
+### Next Steps
+- The Work Loop task `work-loop-v2-contained-unattended-profile` is closed (`turn: operator`).
+  Natural next unit per the plan: **1a** (escaped descendants surviving the stop — the one that would
+  hurt most unattended, since it leaves a process running after the operator believes the run is
+  stopped), then **1f** (branch/worktree isolation, documented but unproven).
+- Phase 3 docs 3c/3d are already rewritten against the real sandbox from this session's correction —
+  nothing further needed there.
+- Standing condition to carry forward, not a task: if a real secret is ever placed in `~/.gitconfig`,
+  the one-file exception stops being safe. Recorded at the exception in `dispatch.sh`, in the plan,
+  and in the probe record.
+- Run `/wrap-session +telemetry` (or `full`) another day if a fuller audit/coaching/telemetry pass is
+  wanted; none were requested this session.
+
+### Open Questions
+None blocking. Phase 2 stays forbidden until 1a and 1f close.

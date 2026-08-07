@@ -2198,3 +2198,78 @@ S8b's three owed checks (causal post half, passing Direct Work check, post-integ
 refusal) can only be obtained by a separate, explicitly authorised proof task. Nothing schedules one. Until
 one runs, adoption stays unavailable no matter how much downstream evidence accumulates — worth deciding
 deliberately rather than discovering at Phase 6.
+## 2026-08-04 — Session (unmarked) — Work Loop v2 Context Engineering S9 reviewed, S10 corrected, task closed
+
+**Work:** Ran two consecutive Work Loop v2 units on task `context-engineering-s9-candidate-review` in one
+session — the S9 candidate review, Codex's S10 correction round, and the task's close, which was also the
+first live exercise of the correction's own close-token fix.
+
+### Summary
+This session ran entirely on `/work-loop-v2`, no session marker. S9 first: all five of the brief's
+verification claims held on inspection (plan approval bound to `1283d99`, the review surface really is
+exactly the three named runtime files — confirmed by a workspace-wide content search that found no fourth
+live file and classified three project-level "copies" as symlinks to the canonical files — one unchanged
+commit `4f98cec1`, S8b's three checks genuinely unmet, and independence achievable via a fresh-context
+subagent with no authorship of the candidate). The commissioned reviewer returned four material findings
+(two high, two medium), all producer/consumer contradictions between the three runtime files — not the
+candidate reading unsoundly overall, and not touching the Route 3 boundary, which the reviewer explicitly
+cleared. Codex froze the four findings and opened an S10 correction unit. All four reproduced on disk
+before any fix was made. Three were resolved in full: the core now permits both claim-placement shapes
+instead of contradicting the command; the core's five field headings are now normative and exact instead
+of drifting from what the command reads; the core and command both gained a discovery-unit consumer path
+instead of forcing every brief through "implement". The fourth — contradictory closing-record authorship
+that left no reachable path to a committed closed file — was resolved structurally (a new close token,
+symmetric to the existing hand-off token) but handed back as **partly resolved**, because demonstrating
+the fixed terminal path required actually invoking it, which this correction unit could not manufacture as
+evidence. Codex accepted the corrected candidate under the core §3 menu with four written limitations —
+not a second correction round — and closed the task using exactly that new close-token path. The
+successful close commit is itself the terminal-path proof finding 1 was missing: Codex wrote the verdict
+and handed the turn to Claude, Claude reduced the file to the four-section closing record and committed
+it. Nothing about adoption moved — S8b's three checks are still owed, now against the corrected candidate,
+and Phase 6 adoption condition 4 stays explicitly unmet rather than recorded as an accepted limitation.
+
+### Decisions Made
+- **Operator (as Codex): accepted the S10-corrected candidate with four written limitations**, chosen once
+  from the core §3 menu rather than opening a further correction round. Ground: all four runtime
+  contradictions removed, no critical finding remained, the acceptance harness held steady, and the
+  approved plan already requires the affected regression (R-1, R-5) before any adoption decision.
+- Claude, within authority: commissioned the S9 reviewer as a fresh-context subagent rather than reviewing
+  the candidate itself, per the brief's explicit prohibition on Claude reviewing its own implementation and
+  relabelling that independent.
+- Claude, within authority: handed back finding 1 as **partly resolved** rather than stretching the
+  structural fix to claim behavioural proof — the evidence class (invoking the seam) is exactly what S8b
+  still owes and this unit could not supply it honestly.
+- Claude, within authority: left the harness's stale `KNOWN_WORKLOOP_FILES` allowlist unfixed — it did not
+  make any of the four frozen findings fail-capable, so touching it was outside the correction's scope;
+  recorded as a deferral instead.
+- Claude, within authority: removed the superseded frozen-findings text from the state file's `Next
+  action` once the correction round completed, per core §4's "current truth, not a diary" rule, rather
+  than carrying it forward for the closure check to re-read.
+
+### Outcome
+Skipped (not requested).
+
+### Session Value Audit — 80/20 Review
+Skipped (not requested).
+
+### Risky actions
+None. Every commit was staged by explicit pathspec across all three units (S9 review, S10 correction,
+close). No destructive git operation, no external write, no prompt injection encountered.
+
+### Findings Declined
+- **The harness's stale `KNOWN_WORKLOOP_FILES` allowlist** (cause of the standing 147/2 result) — declined
+  as a duplicate: already queued at `logs/improvement-log.md` via
+  `<!-- promote:d7cac2579d77 -->` ("The Work Loop v2 regression harness has a permanently red baseline").
+- **Core §4's worked example now partly duplicating its own normative heading table** — declined as
+  cosmetic, no named consequence beyond a future editor needing to keep two copies in sync by hand.
+
+### Next Steps
+`context-engineering-s9-candidate-review` is closed; no further action on it. Two things are next in the
+Context Engineering thread and neither is scheduled: (1) an operator-driven Codex session to run regression
+cases R-1 and R-5 against the corrected candidate, or (2) a separate, explicitly authorised proof task to
+obtain S8b's three owed behavioural checks. Do not open S11, S12 or Phase 4 without one of those.
+Continuity detail: `logs/scratchpads/2026-08-04-17-30-scratchpad.md`.
+
+### Open Questions
+Whether and when either follow-on (R-1/R-5 regression, or the S8b proof task) gets scheduled remains
+undecided. Nothing in this session commits to a timeline.
