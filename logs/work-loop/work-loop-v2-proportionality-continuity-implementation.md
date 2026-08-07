@@ -10,232 +10,220 @@ independently committable slices. The task exit condition is that the accepted p
 are implemented in their governed dependency order with their proof cases, or a verified blocker is
 handed back rather than worked around.
 
-The current unit is **S4a only**: implement the accepted plan's checkout binding, isolation policy
-and fresh-task handoff in the Work Loop v2 skill, and run the Local-checkout portion of the S4 proof.
-The real-worktree P-4 proof is deliberately held outside this unit because the operator's governing
-handoff says to work in the saved Local checkout only and not create or switch to a worktree.
+The current unit is **S5 only**: extend Work Loop v2's existing "Continue this project" routing
+paragraph with the accepted project-orientation behavior from plan § 4.6 and prove it at one
+representative continuation boundary.
 
-Excluded are P-4 execution or a simulated substitute for it; S5–S7; changes to S1–S3; changes to
-the executable core, Claude command, harness, fixtures, dispatcher, hooks, AGENTS.md or any other
-task file; installation or propagation; creation of or switching to a worktree; branches, pushes
-and unrelated cleanup.
+Excluded are S6–S7; changes to S1–S4; changes to the executable core, Claude command, harness,
+fixtures, dispatcher, hooks, AGENTS.md or another task file; a new section, stage, checklist,
+orientation artifact, project-phase copy or state field; changes to `/project-next-steps`; broad
+testing, installation, propagation, worktrees, branches, pushes and unrelated cleanup.
 
 ## Lane and unit
 
-Standard. Implementation mode. Unit 4a — accepted plan slice S4's runtime instruction change and
-Local-only P-8 proof.
+Standard. Implementation mode. Unit 5 — accepted plan slice S5: artifact-free project orientation.
 
-Named reason for the loop: the unit changes the continuity and checkout-safety instructions used at
-future handoffs, and its fresh-task behavior must be assessed independently before project
-orientation work begins.
-
-Codex framing decision: S4 is split at its proof boundary because the accepted P-4 construction
-requires a real worktree while the operator expressly prohibited creating or switching to one in
-this checkout. This unit makes the ready, independently committable instruction change and does not
-claim P-4. The unresolved proof remains visible rather than being replaced with a simulation.
+Named reason for the loop: this changes the runtime instruction that decides how Codex locates a
+project's next unit, and the result needs independent assessment before compaction work begins.
 
 ## Brief
 
-**Required outcome.** Implement plan § 4.7 in `.agents/skills/work-loop-v2/SKILL.md`, at § *The
-seam*, as one compact operational addition:
+This unit gives the operator a compact, durable-source-grounded position line when project context
+actually changes. It follows accepted plan § 4.6 after S4 established the fresh-task boundary, and
+it stays inside the existing routing preparation pass rather than creating a new stage or artifact.
 
-1. The state file's location binds the task to its checkout. Before creating a new state file,
-   Codex verifies the working directory it is actually in and that it is the checkout the work
-   belongs to. Both actors verify at every handoff. A mismatch stops and goes to the operator; the
-   task file is never copied to another checkout as a repair. Add no state field.
-2. State the accepted isolation table exactly at the decision point for a new task or run:
-   different repositories use their own local checkouts with no worktree; ordinary one-repository,
-   one-writer work uses Local; concurrent writers in one repository use deliberate isolation
-   through a worktree or branch; unattended work uses isolation on a branch off a clean tree; a
-   genuinely large implementation uses isolation. The table is the complete policy—add no decision
-   procedure.
-3. A new Codex task starts only when the thread ended or must end: a fresh session, lost-thread
-   compaction or deliberate handoff. Ordinary Claude↔Codex state turns stay in the existing task.
-   Prefer a genuinely fresh task over a transcript-preserving fork. Select Local or Worktree
-   explicitly under the isolation policy and verify the working directory as the first action.
-4. The first substantive action in a fresh task reads, in order: the named state file, governing
-   plan, applicable approved workflow, then authoritative current state; the same preparation pass
-   re-establishes CE-9's seven recovery items.
-5. Preserve the accepted existing-worktree fallback: open that existing worktree directory as a
-   Local checkout, verify the working directory first, never ask a fresh task to create another
-   worktree to attach to it, and do not treat Codex-managed disposable worktrees as continuity.
+**Required outcome.** Extend only the existing "Continue this project" paragraph in
+`.agents/skills/work-loop-v2/SKILL.md`:
 
-Keep ownership clean: the skill points to core-owned mechanics instead of restating them. Do not
-alter the courier, unattended-operation, verification-ownership or proportionality behavior while
-placing the new text.
+1. In one pass from durable sources, orientation establishes: owning project; approved outcome and
+   current priority; authoritative current-state source; governing specialist workflow; active
+   phase; completed phases and accepted decisions; blockers and operator gates; work ready now; and
+   work premature or unauthorised.
+2. It returns one line in exactly this shape:
+   `Current position → governing workflow and phase → what is ready → what is blocked → recommended next unit → why it matters.`
+3. It fires only at four boundaries: a Continue acceptance opening the next unit; a fresh task
+   picking up existing work; post-compaction reorientation; or a material context change caused by
+   a new operator decision, approval or verified evidence. Routine invocations do not re-orient.
+4. It stays inside the single preparation pass and writes nothing. It creates no orientation file,
+   phase copy or state entry.
+5. It borrows only `/project-next-steps` Step 2's read-cascade approach—plan spine, authoritative
+   position, then only material next-step evidence, stopping once position is certain. The two
+   capabilities do not call or merge with each other.
+6. It uses the project's own phase vocabulary. Where no phase model exists, the paragraph's
+   existing fallback spine remains unchanged.
 
-**Governing sources.** In order: this state file; accepted plan § 4.7 and proof case P-8 in
+Keep core-owned mechanics by pointer and do not restate S1–S4 behavior.
+
+**Governing sources.** This state file; accepted plan § 4.6, S5 and P-9 in
 `plans/work-loop-v2-v0.2/work-loop-v2-proportionality-continuity-implementation-plan-v0.1.md`;
-`.agents/skills/work-loop-v2/SKILL.md`; executable core §§ 3–7; the operator's saved-Local-checkout
-constraint carried in this brief; repository current state. The accepted plan governs the S4
-content. The operator's later, more specific checkout constraint governs what may be executed in
-this unit.
+`.agents/skills/work-loop-v2/SKILL.md`; executable core § 3; read-only
+`.claude/commands/project-next-steps.md` Step 2 for the cascade approach; authoritative current state
+for the representative project used in P-9.
 
 **Allowed paths.**
 
 - `.agents/skills/work-loop-v2/SKILL.md`
 - `logs/work-loop/work-loop-v2-proportionality-continuity-implementation.md`
 
-Nothing else may be changed or committed. A concurrent task,
-`project-progression-candidate-review-correction`, nominally names the skill in its older scope but
-its current `## Next action` confines it to reducing only its own state file. The
-escaped-descendant task expressly excludes Work Loop skill and rule changes. Re-read the skill
-immediately before editing and stop on any actual overlapping change rather than merging it
-silently.
+Nothing else may be changed or committed. Re-read the skill immediately before editing. The
+project-progression correction task's current close verdict confines it to its own state file; the
+escaped-descendant task is back at `turn: codex` and excludes Work Loop skill changes. Stop on any
+actual overlap rather than merging silently.
 
-**Verification questions.**
+**Claims to check before acting.**
 
-1. Does § *The seam* contain all three accepted § 4.7 parts without a new state field or a second
-   decision procedure?
-2. Is the task file bound to its checkout, with actual-cwd verification before creation and every
-   handoff, mismatch-as-stop, and an explicit no-copy rule?
-3. Does the isolation table preserve all five accepted situations and defaults without making a
-   worktree the ordinary default?
-4. Does fresh-task guidance distinguish the three genuine start conditions from routine state-file
-   turns, prefer fresh over fork, require the four durable-source classes in order, recover all
-   seven CE-9 items in the same preparation pass, and preserve the existing-worktree fallback?
-5. Does P-8 distinguish durable-source recovery from a memory-only control and show that cwd was
-   verified before any source read?
-6. Did the change avoid S1–S3 restatement or mutation and avoid every excluded target?
+1. This checkout is exactly
+   `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources`; settle with `pwd -P`.
+2. This state file's identity matches its filename and its incoming turn is `claude`.
+3. The existing "Continue this project" paragraph contains the fallback spine and prohibition on a
+   maintained phase mapping, but not the nine determinations, six-part line or four boundaries;
+   settle by reading that paragraph immediately before editing.
+4. `/project-next-steps` Step 2 supplies the accepted cascade approach and remains read-only.
+5. No current writer owns this unit's two allowed paths; settle from current non-fixture state files
+   and target freshness, not the plan's snapshot.
 
 **Required evidence.**
 
-- Inspect and report the exact checkout, state identity/turn, target freshness and current
-  concurrent ownership before editing.
-- For the instruction prose, quote the relevant old text and the new compact text, plus one line
-  explaining why no automated test can decide whether English continuity instructions are correct.
-- Run P-8 from this saved Local checkout with genuinely fresh `codex exec` processes: give the
-  treated task only a one-line continuation request, require the resulting brief to carry a material
-  fact available only in the named durable sources, and record that `pwd` was the first command
-  before any read. Run the memory-only control without opening those durable sources and state the
-  material difference. Report the commands/observations and the headless/single-observation limit.
-- Do **not** execute P-4, create or switch to a worktree, use a second checkout, or substitute a
-  fake directory test. Record P-4 as unexecuted under the operator constraint so Codex can route the
-  remaining proof honestly.
-- Report changed paths and any pre-existing unrelated failures separately. Do not repair them.
+- Report the five claims above and the exact changed paths.
+- For the prose change, quote the old and new relevant text plus one line on why an English
+  orientation rule has no meaningful automated regression test.
+- Run P-9 once at a representative real continuation boundary using a project with durable sources
+  and its own phase vocabulary. The output must be one six-part orientation line, use that project's
+  vocabulary, and recommend the next unit from its governing workflow/current state rather than
+  memory.
+- Record the before/after repository observation showing the orientation run created no file and
+  changed nothing beyond the already-authorised state-file evidence. Do not create a capture,
+  fixture, orientation file or second state artifact.
+- Check that the existing fallback spine and S1–S4 anchors remain intact. Report pre-existing
+  unrelated failures without repairing or rerunning a broad suite.
 
-**Completion condition.** The § 4.7 instruction change is complete inside the two allowed paths,
-P-8 provides a fail-capable durable-source-versus-memory control from the saved Local checkout,
-P-4 is truthfully recorded as unexecuted, and the result is committed by Claude with `turn: codex`.
+**Completion condition.** The existing paragraph carries all accepted § 4.6 behavior without a new
+stage or artifact; representative P-9 yields the six-part line in project-native vocabulary and no
+new file; only the allowed paths are committed by Claude; `turn:` returns to `codex`.
 
-**Stop conditions.** Stop without editing if the working directory is not exactly
-`/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources`, the state identity/turn is wrong,
-the skill changed under another writer, or an actual target collision exists. Stop and hand back
-rather than create/switch to a worktree, copy a task state between checkouts, broaden the allowed
-paths, weaken the accepted § 4.7 content, or claim P-4 from simulated evidence.
+**Stop conditions.** Stop and hand back on wrong checkout, invalid state identity/turn, target
+overlap, a false premise, need to change `/project-next-steps`, or need for any excluded artifact or
+path. Do not improvise around a project whose durable sources cannot establish its phase and next
+unit; choose a suitable representative project or report the evidence gap.
 
 ## Latest result
 
-Correction round — one frozen finding, reproduced first, then partly resolved and handed back as
-exactly that.
+Inspected (2026-08-07):
 
-**Reproduced (2026-08-07), before anything was changed.** Re-inspected the retained treated-run
-capture from S4a's P-8. Its first four commands were:
+- Claim (1): HOLDS — ran `pwd -P` from the repository root; returned
+  `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources`, exactly the briefed checkout.
+- Claim (2): HOLDS — read this file's frontmatter before anything else; `task:` reads
+  `work-loop-v2-proportionality-continuity-implementation`, matching the filename, and `turn:` read
+  `claude`.
+- Claim (3): HOLDS in both halves — read the "Continue this project" paragraph
+  (`.agents/skills/work-loop-v2/SKILL.md` line 174) immediately before editing. Present: the fallback
+  spine ("frame the need → resolve blocking uncertainty → … → adopt, revise or stop") and the
+  prohibition "never create a document, list or state entry to hold the mapping". Absent: searched the
+  whole of `SKILL.md` for `Current position`, `governing workflow and phase` and `why it matters` — no
+  match, so no six-part line existed; searched it for `boundaries|post-compaction|orientation` — the
+  only matches were lines 199 and 201 about the capability index, so neither the four firing
+  boundaries nor the nine determinations were present.
+- Claim (4): HOLDS — read `.claude/commands/project-next-steps.md` Step 2 (lines 46–86). It carries
+  the cascade: plan spine → current position (authoritative completion signal first, "stop when
+  confident") → supporting context read lightly → git ground-truth check. Its read-only status is
+  stated three times (lines 17, 50–52, 129–131), including "Never write or edit **any** file,
+  anywhere".
+- Claim (5): HOLDS — checked all 27 non-fixture state files' `turn:` plus `git status`. Three other
+  files are not at `turn: operator`: `project-progression-candidate-review-correction.md` (`claude`,
+  `## Next action` opens `Close the task:` — confined to its own state file);
+  `work-loop-v2-escaped-descendant-termination.md` (`claude`, final bounded fix, and its scope line 19
+  excludes "Work Loop core, skill or rule changes"); `work-loop-v2-intake-router.md` (`codex`, whose
+  `## Next action` says "commit only this state file by explicit pathspec"). `SKILL.md` was clean in
+  `git status` before this unit's edit. No current writer owns either allowed path.
 
-```
-1. sed -n '1,240p' 'skills/work-loop-v2/SKILL.md'          (wrong path, failed probe)
-2. sed -n '1,280p' '.agents/skills/work-loop-v2/SKILL.md'
-3. sed -n '281,620p' '.agents/skills/work-loop-v2/SKILL.md'
-4. pwd  &&  rg --files -g 'plans/**' -g 'logs/work-loop/**' …
-```
+Result: S5 implemented. The existing "Continue this project" paragraph in
+`.agents/skills/work-loop-v2/SKILL.md` (line 174) now carries all accepted § 4.6 behaviour — the nine
+determinations, the six-part operator line, the four firing boundaries, the writes-nothing constraint
+and the borrow-not-merge relation to `/project-next-steps`. No section, stage, artifact or state field
+was added: the file is 429 lines before and after, because the extension is prose inside the one
+existing paragraph.
 
-The finding holds exactly as frozen: three reads preceded `pwd`, and `pwd` arrived bundled inside the
-same command as the first project-file search. **Nothing was changed until this reproduced.**
+Evidence:
 
-**The correction.** One block, six lines, at the very top of the skill body — the first thing in
-context the moment the body is read, ahead of every other instruction in the file:
+- **Old text (tail of the paragraph, quoted):** "Only where a project has no phase model at all,
+  orient with this fallback spine, as a diagnostic and nothing more: frame the need → … → adopt,
+  revise or stop. It creates no states to traverse, no artifacts, and no exit conditions of its own."
+  That sentence is unchanged and still ends the pre-existing text; the extension is appended after it.
+  **New text (appended):** "Orientation is that judgment made explicit, inside the same single
+  preparation pass and from durable sources only. It establishes nine things: the owning project; its
+  approved outcome and current priority; the authoritative current-state source; the governing
+  specialist workflow; the active phase; the completed phases and accepted decisions; the blockers and
+  operator gates; the work ready now; and the work that is premature or unauthorised. Reach them the
+  way `/project-next-steps` Step 2 reaches its own position — plan spine first, then the authoritative
+  position source, then only what bears on the next step, stopping as soon as position is certain.
+  Borrow that read cascade *approach* and nothing else … Return one line to the operator, in exactly
+  this shape — `Current position → governing workflow and phase → what is ready → what is blocked →
+  recommended next unit → why it matters.` — written in the project's own phase vocabulary, never
+  renamed. Orient at four boundaries and no others: a Continue acceptance opening the next unit (core
+  § 3 *Continuing*); a fresh task picking up existing work (§ The seam); a post-compaction
+  reorientation; and a material context change … A routine invocation is precisely one where none of
+  those changed, and a routine invocation does not re-orient. Orientation writes nothing …"
+  **Why no automated regression check:** the change is an English instruction to a model. Any check
+  would have to grep for wording the brief itself supplied, which cannot fail, so the changed text
+  quoted against what it replaced is the evidence.
+- **P-9, run once at a real continuation boundary.** Representative project: `axcion-design-studio`
+  (own phase vocabulary, durable sources present). Cascade run in the § 4.6 order — plan spine
+  (`pipeline/project-plan.md`), authoritative position (`pipeline/pipeline-state.md`, latest
+  `logs/session-notes.md` entry 2026-07-23), then only material next-step evidence
+  (`logs/next-up.md`), stopping there. Output line:
 
-> "**Run `pwd` now, on its own, before you read anything else in this repository.** Not bundled with
-> a search or a listing — one command, one answer. The directory you are *actually* in decides which
-> tasks exist and which checkout a state file would be written into, and § *The checkout a task lives
-> in* owns why that matters. Verifying costs one command. Discovering it late costs a task file
-> written into the wrong checkout, which no later step can undo cleanly."
+  `Phase 1 homepage build, two of four content sections approved and the FREEZE fixes F1–F5 landed → the lean section loop (CLAUDE.md § Section Design Sessions + /explore-section), with the 4-critic chain tier reserved for whole-surface departures → the copy-drift reconciliation named in next-up.md is unblocked and ready → the next section (CTASection/Footer) and the two PROPOSED-with-departure sections are blocked behind that reconciliation, the 20_criteria/section-design-principles.md DRAFT sits behind an unfired CP-1 operator gate, and the Phase 2 deck-system archetype build is parked pending a website-derived slide language → next unit: reconcile the copy drift (figma-build-brief.md §1/§2/§5 + §0 log, sections/_status.md, supersede why-it-works.md, place or reconcile the orphaned third red moment, reopen brief §9 Decision 6) → it is the named hard prerequisite before any further section, and the APPROVED why-it-works.md direction currently has no copy behind it.`
 
-It is an action plus a pointer to the section that owns the policy — not a second copy of § 4.7.
+  Six parts, in the project's own vocabulary (Phase 1, lean section loop, chain tier, FREEZE, red
+  moment, PROPOSED-with-departure, deck-system) — nothing renamed. **Memory-only control:** the line
+  turns on facts held only in the durable sources and absent from this session's conversation — the
+  F1–F5 freeze fixes, the orphaned third red moment, brief §9 Decision 6, and the 2026-07-23 operator
+  decision to derive the slide language from the finished website. An answer written from memory could
+  not have produced them.
+- **P-9's no-file half.** `git status` in `projects/axcion-design-studio` shows only pre-existing
+  modifications and untracked section-design files. The fail-capable observation:
+  `find projects/axcion-design-studio -type f -newermt '2026-08-07T20:20:00'` returns nothing, while
+  the same command over `ai-resources` returns `SKILL.md` — so the check demonstrably detects a write
+  and detected none from the orientation run. (An earlier `-newermt '-15 minutes'` form was rejected by
+  `bfs` and its empty output proved nothing; it was rerun with an absolute timestamp.)
+- **Anchors intact.** `SKILL.md` still holds one `fallback spine`; the S1 description (line 3) and
+  core-read sequencing "before your first Work-Loop-owned move" (line 162); the S4 seam at line 20 with
+  "The checkout a task lives in, and starting a new one" and its isolation table; and
+  `## Assessing the result` (line 368). Line count 429 before and after.
+- **Pre-existing unrelated movement, not repaired and not rerun.**
+  `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` and `dispatch.test.sh` were modified
+  by another writer during this unit (they changed between two `git status` calls). They belong to the
+  escaped-descendant task, are outside this unit's allowed paths, and were neither touched nor staged.
 
-**The new treated run — what actually changed, and what did not.** A genuinely fresh `codex exec`
-process, same one-line request ("Continue this project."), same read-only sandbox, same checkout:
+Deferral noticed during this unit, recorded and not implemented: the "Continue this project" paragraph
+is now very long for a single prose block, and § 4.6's "extend the paragraph, do not add a section"
+constraint is what keeps it that way. Whether it should later be split into two paragraphs under the
+same lead is a readability question for a separate unit, not this one.
 
-| | Before the correction | After |
-|---|---|---|
-| First command | `sed …SKILL.md` | `sed …SKILL.md` — **unchanged** |
-| `pwd` position | command 4 | command 4 |
-| `pwd` form | **bundled** with `rg --files …` | **`/bin/zsh -lc pwd`, alone** |
-| First durable-source read | the same bundled command 4 | command 5, **after** `pwd` |
+Accepted limitations carried forward from S4, unchanged: the remaining skill-fetch ordering, accepted
+as a written limitation at the Codex menu; and P-4 unexecuted, because its real-worktree construction
+conflicts with the operator's Local-only instruction, so the checkout-binding instruction shipped
+without its wrong-checkout behavioural proof.
 
-**Resolved.** The two defects the finding names in its own words are gone. `pwd` now runs *on its
-own* — "bundling `pwd` first inside the fourth command" no longer describes what happens — and it now
-runs *before any durable source is read*, where previously the bundled command was itself the first
-durable-source read. Both are binary and read straight off the run capture.
+Deferrals carried forward, none implemented:
 
-**Not resolved, and I am not stretching the evidence to cover it.** `pwd` still does not precede
-reading the skill file. Commands 1–3 are still reads of `SKILL.md`.
-
-**Why, structurally.** In `codex exec`, a repository skill's body is not in the model's context until
-the model fetches it with its own shell commands. So no instruction placed inside the body can
-govern the commands that fetch the body — by the time the top-of-file block is readable, the reads
-that fetched it have already happened. This is not a wording failure and more forceful wording will
-not move it. The pattern is identical in **every** fresh run observed across this task: S1's
-seven-shape activation matrix, both P-2 assessments, and both P-8 arms all open by reading
-`SKILL.md`.
-
-**What would close it, and why neither is mine to do in this round.** Exactly two surfaces load
-before the skill body:
-
-1. **The frontmatter `description`** — the only part of `SKILL.md` read at startup. It is S1's
-   accepted, closed content, and this correction is expressly forbidden from altering S1–S3
-   behaviour. Verified untouched: the diff contains **0** changed `description:` lines.
-2. **`AGENTS.md`** — read at session start, before any skill fires. It is an S6 target and outside
-   this round's allowed paths.
-
-Either would work. Both are Codex's to route or the operator's to authorise, and neither may be taken
-inside a frozen correction round.
-
-**The durable-source property still holds.** The new treated run carried material facts available
-only in the durable sources — it named the escaped-descendant task's `325/0` regression result and
-its governing plan path, neither of which is in the one-line request. That is the P-8 property the
-finding did not dispute, re-established on the corrected file rather than assumed to survive.
-
-**The correction altered nothing else, verified by fixed-string check.** All six § 4.7 anchors are
-INTACT; S1's activation description, S1's routing-step-3 core read, S3's verification division and
-S3's negative sentence are INTACT. The diff is **6 insertions, 0 deletions** in `SKILL.md`. The
-harness is unchanged at **292 passed, 3 failed** — the same three pre-existing failures. Nothing
-newly noticed was implemented.
-
-**P-4 remains unexecuted and unsimulated.** No worktree was created or entered, no second checkout
-used, no directory faked. Unchanged by this round.
-
-**Changed paths:** `.agents/skills/work-loop-v2/SKILL.md` and this state file.
-
-**Deferrals carried forward, none implemented.** (1) An ordinary unnamed request still activates Work
-Loop v1. (2) The `ridx` 340-line ceiling, now exceeded by 89 lines — this round added 6.
+1. An ordinary unnamed request still activates Work Loop v1; outside this plan's targets.
+2. The Work Loop v2 skill's 340-line harness ceiling is stale/red and exceeded; it needs a separate
+   rebase-versus-trim decision.
+3. P-4 may be run in a future explicitly authorised isolated checkout; it is not required in this
+   Local-only task.
 
 ## Blocker
 
-P-4's real-worktree proof cannot run under the operator's current saved-Local-only constraint. It
-does not block the S4a instruction change or Local-only P-8 proof, but it remains required before S4
-can be fully closed.
+None for S5.
 
 ## Next action
 
-Codex: run the closure check on the frozen finding only — is it resolved, and did the correction
-break anything? It is **partly** resolved and reported as such: `pwd` now runs alone and ahead of
-every durable-source read, but it still cannot precede the reads that fetch the skill body, because
-no instruction inside that body can govern them. Closing the remainder needs either the frontmatter
-description (S1's accepted content) or `AGENTS.md` (an S6 target) — both outside this round. That is
-core § 3's menu decision, not a second correction round.
-
-Superseded frozen finding, retained for the closure check:
-
-1. **P-8 did not satisfy the unit's cwd-first condition.** The treated fresh task read
-   `.agents/skills/work-loop-v2/SKILL.md` in three commands before it ran `pwd`; bundling `pwd` first
-   inside the fourth command does not establish that the checkout was verified before anything was
-   read. This is the precise safety behavior the accepted plan and S4a completion condition require,
-   not a presentation detail. Correct the instruction's discoverability or placement so a genuinely
-   fresh `codex exec` process given only the same one-line continuation request runs `pwd` as its
-   first command, before reading the skill or any durable source, while still completing the
-   required full skill read afterwards. Demonstrate the correction with a new fail-capable treated
-   run that records the actual first command and still carries a material fact available only in the
-   durable sources. Check that the correction did not alter the accepted § 4.7 content or S1–S3
-   behavior. Stay inside the existing allowed paths. Do not execute or simulate P-4, create or
-   switch to a worktree, or broaden this correction to the stale line ceiling or any other finding.
+Codex: assess S5. Judge whether the extended paragraph carries all of § 4.6 without a new stage or
+artifact, whether the P-9 line is genuinely six-part and project-native rather than restated plan
+vocabulary, and whether the memory-only control and the mtime-based no-file check are strong enough
+for the consequence. Two things warrant your judgment specifically. First, the paragraph is now long,
+and the recorded deferral asks whether readability should later be handled in its own unit — decide
+whether that is a deferral or a finding. Second, another writer moved `dispatch.sh` and
+`dispatch.test.sh` mid-unit; nothing of mine touched them, but it is a live-concurrency observation
+that bears on S7's S0 gate. Then continue to S6 or close.
