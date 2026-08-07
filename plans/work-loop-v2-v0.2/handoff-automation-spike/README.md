@@ -105,6 +105,17 @@ touch any `settings.json` or the operator's interactive sessions.
   via Bash — observed, twice, unprompted. Denying `Bash` outright works but stops the child doing the
   work it was launched for. Network containment needs an OS-level sandbox, not a permission rule.
 
+  **That last sentence is true, and Claude Code provides the sandbox** (corrected 2026-08-07,
+  `runs/probe-contained-authority-2026-08-07.md`). A macOS Seatbelt sandbox covers Bash and every
+  child process, and `strictAllowlist` with an empty `allowedDomains` refuses non-allowlisted hosts
+  outright — `curl` was measured being refused. So network isolation *is* available; it simply is not
+  available through `--claude-deny`, which remains a permission-layer flag only.
+
+  **`--claude-deny` is therefore not the operator's chosen unattended profile, and must not be
+  described as it.** The operator settled on the contained profile (sandbox settings + a restricted
+  tool set + push denial together). The dispatcher does not implement it yet. Until it does, running
+  unattended with `--claude-deny` alone leaves the network open.
+
 `--carry-one` is a **terminal condition on loop mode**, not a fourth mode: it launches exactly the
 actor the current `turn:` names, applies every validation and post-hop check unchanged, and then
 exits `0` once the turn has moved in an allowed direction instead of continuing to the next actor.
@@ -407,6 +418,14 @@ leaving rather than after:
 `git push` is otherwise held only by a CLAUDE.md rule — a model-side rule, which is weakest exactly
 when nobody is watching. `--claude-deny` is how that moves to the permission layer, for the
 unattended child alone, if the operator wants it there.
+
+**This table describes the dispatcher as it is built today, and it is still accurate today.** The
+operator has since settled on a contained profile that would move three of these rows from the right
+column to the left — network access, writes outside the checkout, and push all become OS- or
+permission-enforced rather than merely detected (`runs/probe-contained-authority-2026-08-07.md`).
+**The dispatcher does not implement that profile yet.** Do not read the settled decision as a
+containment you currently have; until the unattended mode is built and live-tested, the table above
+is what a walk-away run actually gets.
 
 ---
 

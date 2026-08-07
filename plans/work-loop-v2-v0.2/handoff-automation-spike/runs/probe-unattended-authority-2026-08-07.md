@@ -62,6 +62,18 @@ Real network isolation would need OS-level containment — a container, or `sand
 permission rule. There is no CLI flag for it: `--help`'s only mentions of sandboxes describe the
 *environment* an operator should run in, not something the tool provides.
 
+> **CORRECTED 2026-08-07 — the paragraph immediately above is wrong, and superseded by
+> `probe-contained-authority-2026-08-07.md`.** The first half of its claim holds: OS-level
+> containment is indeed what is required, and no permission rule delivers it. The conclusion drawn
+> from it does not. Claude Code 2.1.220 *ships* that containment — a built-in macOS Seatbelt sandbox
+> covering Bash and every child process, with a strict network allowlist (`strictAllowlist`,
+> v2.1.219+) that refuses non-allowlisted hosts outright. Codex demonstrated `curl` being refused
+> under an empty allowlist. The error was searching `--help` for a flag and concluding from its
+> absence that the capability was absent; the mechanism is configured through sandbox *settings*,
+> which `--help` does not enumerate. **Everything above this box still stands as written** — the
+> `WebFetch`/`WebSearch` deny rules really are insufficient on their own, and that negative result is
+> what made the contained profile necessary. Only this conclusion was wrong.
+
 ---
 
 ## What this does and does not authorise
@@ -71,6 +83,12 @@ per-invocation flag, with the live default left exactly as it is today.
 
 **Does not authorise:** claiming an unattended run can be made network-isolated by configuration. It
 cannot. That has to be stated in the risk envelope (Phase 3d) rather than designed around.
+
+> **CORRECTED 2026-08-07.** The "Does not authorise" paragraph is withdrawn. An unattended run *can*
+> be made network-isolated by configuration — through sandbox settings, not permission rules. See
+> `probe-contained-authority-2026-08-07.md`. The risk envelope still carries a network entry, but it
+> now describes the residual exposure under the contained profile (the Claude process itself stays
+> outside the Bash sandbox, so the model connection continues), not an unbounded one.
 
 **Still an operator decision:** whether to apply any of this at all. § 1d notes it revisits a
 standing decision (bypass plus model-side rules, no deny-list expansion) that was made for

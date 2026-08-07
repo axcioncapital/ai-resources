@@ -11,21 +11,36 @@ Author: Claude. Revised after independent Codex review of v0.1.
 > | **1a** stoppable run | **done.** Defect confirmed by execution first (`runs/probe-interruption-2026-08-07.md`), then fixed. Exit `28`. Tests: case 27 |
 > | **1b** true deadline | **done.** `--deadline`, clamps the actor timeout before every launch and every retry. Exit `29`. Tests: cases 28–28d |
 > | **1c** committed-path check | **done.** Exit `30`. Tests: cases 29–29c |
-> | **1d** unattended authority | **mechanism verified** (`runs/probe-unattended-authority-2026-08-07.md`); `--claude-deny` plumbing added, **default off**. *The policy decision itself is still open and still the operator's* |
+> | **1d** unattended authority | **policy SETTLED by the operator; dispatcher integration NOT built.** The contained profile is proven (`runs/probe-contained-authority-2026-08-07.md`) and chosen: no push, no tool-side network. The existing `--claude-deny` plumbing is *not* that profile and does not deliver it |
 > | **1e** no sleep | **done as documentation** — `caffeinate -i` in the worked invocation, spike `README.md` |
 > | **1f** branch isolation | **done as documentation** — branch + clean tree + the worktree blocker, spike `README.md` § Safety boundaries |
 > | **1g** read-only status | **done.** `--status`. Tests: cases 30–30c |
-> | **Phase 2** — walk-away pilot | **blocked**, correctly: Phase 0 has not run and 1d is unsettled |
-> | **Phase 3** — documentation (3a–3h) | **done.** `SKILL.md` § Courier mode + § The seam; spike `README.md` |
+> | **Phase 2** — walk-away pilot | **blocked**, correctly. 1d's *policy* is now settled, but four blockers remain: Phase 0 has not run; the contained profile is not wired into the dispatcher; `--status` returns a false `STALE LOCK` under PID-visibility denial; and clean branch/isolation proof plus the supervised `caffeinate -i` launch are outstanding |
+> | **Phase 3** — documentation (3a–3h) | **done, except 3c and 3d, both RE-OPENED by the 1d correction.** `SKILL.md` § Courier mode + § The seam and spike `README.md` stand. 3c (what stays forbidden) and 3d (the risk envelope) describe a pre-sandbox world and must be rewritten once the contained profile is built |
 > | Core § 4 decision | **recorded** in `logs/decisions.md`, 2026-08-07 |
 >
 > Suite: **149 pass, 0 fail** — all simulated. **No live unattended run has happened.**
 >
-> **One finding changes the plan's own text.** § 1d proposes offering the operator *"no push, no
-> network"*. The push half works. **The network half does not exist by this mechanism** — denying
-> `WebFetch`/`WebSearch` sends the child to `curl` via Bash, observed twice. Network containment
-> needs an OS-level sandbox, not a permission rule. § 1d's option should be read as *"no push"*
-> alone, with the network exposure stated in the risk envelope rather than designed around.
+> **~~One finding changes the plan's own text.~~ WITHDRAWN 2026-08-07 — the finding was wrong, and
+> § 1d's original "no push, no network" stands as first written.** The withdrawn text said the
+> network half "does not exist by this mechanism" and that containment "needs an OS-level sandbox,
+> not a permission rule." The second clause was right; the inference was not. Claude Code 2.1.220
+> *ships* an OS-level sandbox — macOS Seatbelt over Bash and all its children, with a strict network
+> allowlist (`strictAllowlist`, v2.1.219+). Codex demonstrated `curl` refused under an empty
+> allowlist; Claude independently confirmed the version, the flags and the documented behaviour.
+> The error was searching `--help` for a flag and reading its absence as the capability's absence —
+> the mechanism lives in sandbox *settings*, which `--help` does not list. Corrected record:
+> `runs/probe-contained-authority-2026-08-07.md`. The `WebFetch`/`WebSearch` deny rules genuinely
+> are insufficient alone — that negative result stands and is why the contained profile exists.
+>
+> **The operator has settled 1d on the contained profile:** shell and Work Loop skill only; strict
+> empty Bash network allowlist; no MCP, web, hooks, connectors, remote control, subagents, built-in
+> file tools, or push; credential scrubbing; no unsandboxed-command escape. Two conditions carry
+> with it, both silent-failure paths and both stated in the corrected record: `strictAllowlist` has
+> **no effect** from a repo-level settings file, so the profile must arrive by CLI `--settings` on
+> every hop; and array keys such as `allowRead` merge across all scopes, so the containment observed
+> on one machine is not automatically what another checkout gets. The live test must therefore assert
+> the *effective* policy from inside the child, not that the profile was passed.
 >
 > ### Review round — 2026-08-07, operator-supplied review of the above
 >
@@ -246,6 +261,31 @@ rule, which is weaker than usual precisely when nobody is watching.
 than a broad denylist → implement only what they choose. **This is a blocking item for the walk-away
 run in Phase 2, and the only one in this plan the operator must personally settle.**
 
+> **SETTLED 2026-08-07 — first two steps of that sequence are complete; the third is not.**
+>
+> *Mechanism (reason 2) — resolved.* A headless child can be given a policy scoped to itself, and it
+> is enforced by the OS rather than by the model. Proven in
+> `runs/probe-contained-authority-2026-08-07.md`; independently confirmed against the official
+> sandboxing documentation and the installed 2.1.220 binary.
+>
+> *Standing decision (reason 1) — revisited and changed, deliberately, by the operator.* The
+> attended posture is untouched: bypass plus model-side rules, no deny-list expansion, exactly as
+> before. The unattended child is now a separate case with its own contained profile. This is the
+> revisit that reason 1 called for, not a quiet override — and it holds only for unattended runs.
+>
+> *The operator's chosen profile:* shell and Work Loop skill only; strict empty Bash network
+> allowlist; no MCP, web, hooks, connectors, remote control, subagents, built-in file tools, or push;
+> credential scrubbing; no unsandboxed-command escape.
+>
+> **What is NOT done: implementation.** The dispatcher does not apply this profile. Its existing
+> `--claude-deny` flag is a permission-layer denial and is *not* the contained profile — the probe
+> that motivated it also proved a deny rule alone leaves `curl` reachable. Building the real thing is
+> the remaining 1d work, and its shape is set out in the corrected record's *Decision and remaining
+> work*: one explicit unattended mode, applied on every Claude hop, logging the active restrictions
+> **and the settings scope they arrived through**, failing closed below v2.1.219 or when the sandbox
+> is unavailable, with an end-to-end live test that asserts the *effective* policy from inside the
+> child. Attended and courier launches keep their current behaviour unchanged.
+
 ### 1e. Stop the machine going to sleep
 
 *Codex review #9 — missed entirely by v0.1, and a hard blocker: if the Mac sleeps, the run dies.*
@@ -316,6 +356,23 @@ launching.
 **3d. The honest risk envelope.** The allowlist catches stray uncommitted files; 1c adds committed
 paths; neither prevents, both detect. Real containment is: one task, one branch, local commits, hard
 deadline, push gated.
+
+> **REVISED 2026-08-07 — containment is now stronger than this line says, and its residue is
+> different.** With 1d settled, the list above gains a layer that genuinely *prevents* rather than
+> detects: the OS sandbox stops non-allowlisted network connections and writes outside the checkout
+> before they happen. Rewrite 3c and 3d against the contained profile once it is built — and keep
+> them honest about what still is not contained:
+>
+> - **The Claude process itself runs outside the Bash sandbox**, so the model connection continues.
+>   Containment applies to what Claude *runs*, not to Claude.
+> - **The profile can be silently widened from another settings scope** (`allowRead` and other array
+>   keys merge across scopes; `strictAllowlist` is ignored entirely from a repo settings file).
+>   Locking this needs managed settings, which is outside the dispatcher's reach.
+> - **Prevention is only as good as the version.** Below v2.1.219 there is no strict allowlist, so
+>   the run must fail closed rather than proceed with weaker containment it does not advertise.
+>
+> Until the profile is wired in, the envelope as originally written is the accurate one — nothing
+> above is in force during a run today.
 
 **3e. Correct the context model.** Fresh process per hop, state file is the memory, not
 context-bounded.
@@ -408,9 +465,11 @@ no.
 
 ## Open questions for the operator
 
-1. **Unattended authority (1d).** Revisit bypass-plus-model-side-rules for unattended runs only, or
-   keep the standing decision and accept the exposure? This blocks Phase 2. *(Recommendation: revisit,
-   narrowly — no push, no network — once the mechanism is verified.)*
+1. ~~**Unattended authority (1d).**~~ **ANSWERED 2026-08-07.** The operator revisited narrowly, as
+   recommended: no push, no tool-side network, for unattended runs only. The attended posture is
+   unchanged. The mechanism was verified first (§ 1d, and
+   `runs/probe-contained-authority-2026-08-07.md`). No longer an open question — but note it no
+   longer blocks Phase 2 *as a decision* while still blocking it *as unbuilt work*.
 2. **Launch path (0a).** If nesting `codex exec` inside a Codex task fails, is launching one command
    yourself from VS Code acceptable? It is still one action before you leave.
 3. **Review.** This plan authorises execution. v0.1 carried two false load-bearing claims that a
