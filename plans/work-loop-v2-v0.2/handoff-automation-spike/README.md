@@ -91,6 +91,20 @@ alive?", so read the `run:` line and never the exit status.
 > costs a live run. Cases 30d/30f cover the uninspectable pid; **case 30e is the positive control**
 > that keeps a genuinely absent pid reporting `STALE LOCK` rather than everything collapsing to
 > `UNKNOWN`.
+>
+> **Independently accepted, 2026-08-07 — 1g is complete and not a Phase 2 blocker.** The Codex
+> sandbox that found the defect re-ran the check against the **corrected** dispatcher (three states
+> plus PID validation) and confirmed every state live:
+>
+> | Checked | Result |
+> |---|---|
+> | Live dispatcher PID hidden by sandbox policy | `UNKNOWN — CANNOT INSPECT` |
+> | The **same** live PID inspected from outside the sandbox | `IN FLIGHT` |
+> | Terminated PID | `STALE LOCK` |
+> | Invalid-PID checks (`0`, `00`, zero-prefixed, non-numeric, empty) | passed |
+> | Full dispatcher suite | **198 pass, 0 fail** |
+>
+> The temporary review lock and process were removed; no repository files were changed by the check.
 - **`--dry-run`** (`mode=dry-run`) — validates the checkout, the task id, the state file and the
   restart condition, then names the actor it *would* launch and stops. Launches nothing and writes
   nothing to the state file. Unlike `--status`, it **does** take the lock.
@@ -201,12 +215,7 @@ bash dispatch.sh \
 >
 > 1. **The contained profile is not wired in.** Nothing below restricts the child. The run has an
 >    open network and full file authority, whatever the settled 1d policy says.
-> 2. **`--status` (step 4) — FIXED and independently live-accepted; no longer a blocker.** It no
->    longer collapses "cannot inspect the PID" into `STALE LOCK`; it answers `UNKNOWN — CANNOT
->    INSPECT` and refuses to recommend removing the lock (cases 30d/30e/30f). Confirmed live by the
->    Codex sandbox that found the defect, 2026-08-07: hidden live PID → `UNKNOWN`, the same PID
->    unsandboxed → `IN FLIGHT`, terminated PID → `STALE LOCK`.
-> 3. **The stop (step 3) reaches a process group, not a tree.** A descendant that calls `setsid`
+> 2. **The stop (step 3) reaches a process group, not a tree.** A descendant that calls `setsid`
 >    survives `kill`, after you believe the run is stopped.
 >
 > The third, **branch/isolation unproven**, is what step 1 below is *supposed* to guarantee and has
@@ -215,6 +224,12 @@ bash dispatch.sh \
 > **The launch shape below has been corrected and is no longer a blocker.** Phase 0 proved the
 > supervised terminal under `caffeinate -i`; it disproved the detached `… &` form, which a Codex
 > command reaps before the dispatcher starts. The example now shows the proven shape.
+>
+> **`--status` (step 4) is no longer a blocker either — cleared 2026-08-07.** It was the fourth item
+> here. The false `STALE LOCK` is fixed and **independently accepted against the corrected build** by
+> the Codex sandbox that found it: hidden live PID → `UNKNOWN`, the same PID unsandboxed →
+> `IN FLIGHT`, terminated PID → `STALE LOCK`, invalid-PID checks passed, suite 198/0. Step 4 can be
+> trusted to tell you which of the three it is.
 >
 > Keep this example for its structure — the four surrounding steps are right. Do not execute it
 > until the blockers are cleared and this notice is removed.
