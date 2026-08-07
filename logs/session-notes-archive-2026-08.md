@@ -2328,3 +2328,72 @@ the closed record itself stays read-only.
 
 ### Open Questions
 None.
+## 2026-08-05 — Work Loop v2 dispatcher safety gates: four clusters proven, task closed
+
+### Summary
+Carried one Work Loop v2 task end-to-end — `work-loop-v2-dispatcher-safety-gates` — through a unit, a
+Codex correction round, and the closing record, in three commits (`2d55077`, `180e275`, `bfe6c68`).
+All seven of the brief's marked claims were checked by inspection and held, so the unit ran: it proved
+the four remaining single-checkout safety clusters for the throwaway handoff dispatcher and corrected
+the four real defects the proofs exposed. The focused harness went from `pass=34 fail=0` to
+`pass=69 fail=0`; run against the pre-change controller from `HEAD`, the same suite reports
+`pass=49 fail=20`, which is what makes it evidence rather than decoration. The correction round closed
+the one gap Codex named: a controlled live Claude permission denial carried through `dispatch.sh`
+itself. The task is closed on Codex's verdict and rests at `turn: operator`.
+
+No `/session-start` ran this session — `/prime` reached its menu and the operator invoked
+`/work-loop-v2` directly — so there is no mandate block, no marker and no session plan for today.
+
+### Decisions Made
+- **Exit `25`, not `22`, is the correct classification for a denied actor that had already edited the
+  state file.** `UNCOMMITTED_HANDBACK` is repository truth: the edit exists and is uncommitted. This
+  corrected a claim I had made in the prior round, where I asserted `22` from reasoning rather than
+  measurement. Codex accepted the correction.
+- **No denial-specific exit code was added** — for a throwaway spike that is taxonomy, not safety.
+  The `25` message instead names the denial as a likely cause and points at the hop capture.
+- **The exit-`25` message correction was surfaced to Codex as possible scope-broadening rather than
+  absorbed.** It was not in the frozen finding's literal text; I judged it inside the finding's own
+  acceptance condition ("stops with a recoverable next action") and said so. Codex accepted it as part
+  of the frozen finding. Logged to `decisions.md` — it sets Work Loop correction-round precedent.
+- **`logs/friction-log.md` was deliberately never committed** by any of the three commits. It is
+  pre-existing PostToolUse hook telemetry, not this task's work product; disclosed in the state file
+  rather than swept into a commit.
+- **The live denial fixture was kept out of the repository** (session scratchpad, not `plans/`), so no
+  fixture code entered the spike directory. Run C used a fixture `/work-loop-v2` command rather than
+  the real one, so the sandbox never became a partial copy of this repo.
+- **Two live runs were spent deliberately** — the denial proof was re-run after the exit-`25` message
+  changed, so the recorded evidence shows final behaviour rather than superseded behaviour.
+
+### Risky actions
+None. Three live `claude -p` child processes were launched, all in throwaway `TMPDIR` sandboxes
+outside this repository, all under *narrowing* `deny` rules. No `--dangerously-skip-permissions` was
+authored or used, no settings file in this repo was read as policy or edited, no permission was
+widened, no product installed or authenticated, no destructive cleanup, no push. `sha256` before/after
+confirms this repo's `.claude/settings.json` is byte-identical. The one new failure mode introduced is
+disclosed, not hidden: gate `18` will now stop a live dispatcher run in *this* repo until
+`logs/friction-log.md` is allowlisted, because a hook modifies it continuously.
+
+### Findings Declined
+- **`dispatch.sh` line-31 header contradiction** ("0 is the ONLY success" vs. the lines-48/49 note).
+  Declined — cosmetic, already documented in the spike README and recorded as an accepted limitation
+  in the closed record. No proof in this unit exposed it, and it was not needed to add the new codes.
+- **Codex-side denial behaviour unmeasured.** Declined — Codex's own correction scope note excluded
+  it explicitly. Recorded as an accepted limitation.
+- **Run C used a fixture `/work-loop-v2` command, not the real one.** Declined — recorded as an
+  accepted limitation. Using the real command would have made the sandbox a partial copy of this repo
+  and confused what was being measured.
+- **Only one denied authority (`git` via Bash) exercised end-to-end.** Declined — recorded as an
+  accepted limitation; the four clusters did not require a second.
+- **Gate `18` blocks live runs here until `friction-log.md` is allowlisted.** Declined as a queue item
+  — it is self-revealing at the moment it matters (`--dry-run` reports it) and the exact three-pattern
+  invocation is in the spike README.
+
+### Next Steps
+Nothing is queued on this task — it is closed and read-only. The next unit, if wanted, is the
+**worktree-per-task spike** (parallel Work Loop tasks in separate git worktrees), which this session
+unblocked: stopping safely in a single checkout was its stated precondition, and that is now proven.
+Open it as a *new* task via `/work-loop-v2` against a newly opened state file; do not reopen the closed
+one. Queued to `improvement-log.md` at `medium-high` so it reaches the `/prime` menu.
+
+### Open Questions
+None.

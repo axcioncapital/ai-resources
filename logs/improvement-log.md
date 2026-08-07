@@ -2969,3 +2969,24 @@ reopen only if the same shape of partial-read error surfaces again in an inspect
 - **Not fixed here** — this session's wrap proceeded without a manifest per the documented advisory rule
   ("surface it and continue the wrap"), which is what happened; the finding is that the *script* didn't
   self-heal the way the rule describes, not that this session's wrap was blocked.
+
+## 2026-08-07 — `/wrap-session`'s foreign-session guard does not cover `logs/work-loop/*.md` task files
+- **Severity:** medium — Step 3.5's guard (`foreign-session-guard.sh`) detects concurrent/foreign
+  content only in `logs/session-notes.md` (today-header and mandate-line deltas). It has no
+  equivalent for `logs/work-loop/{task-id}.md` files, which are the single interface between Codex
+  and Claude in the Work Loop v2 protocol and can legitimately be rewritten by a concurrent Codex
+  turn while a wrap is in progress. Observed live: mid-`/wrap-session`, Codex closed a correction
+  round and opened the next unit in `work-loop-v2-proportionality-continuity-implementation.md`,
+  landing 101 insertions / 198 deletions uncommitted in the working tree. This was caught only by
+  manually running `git diff` on the file before staging it — the wrap's own documented procedure
+  (enumerate explicit paths from conversation-context memory) does not include a check for this, so a
+  wrap that trusted its own path list rather than diffing first could ship a Codex brief that Claude
+  never implemented, under an unrelated "session: wrap" commit message.
+- **Target file:** `.claude/commands/wrap-session.md` Step 3.5 (and its shared script,
+  `logs/scripts/foreign-session-guard.sh`) — needs either an extension to scan `logs/work-loop/*.md`
+  files for uncommitted turn/brief changes not authored by this session, or an explicit staging
+  discipline requiring a `git diff` check on any Work Loop task file before it enters the always-
+  staged or explicit-path list.
+- **Not fixed here** — this wrap excluded the affected file from its own commit once the concurrent
+  write was noticed, so no harm occurred this time. The finding is that the guard didn't catch it
+  structurally; a future wrap without a manual diff habit would not be protected the same way.
