@@ -57,8 +57,17 @@ Inspected (YYYY-MM-DD):
 
 Two rules govern that record:
 
-- **Every claim gets a line, including the ones that hold.** The record appears even when nothing is wrong — a run that found no problem must still show what it looked at, or a later reader cannot tell inspection from assumption.
+- **Every claim gets a line, including the ones that hold.** A run that found no problem must still show what it looked at, or a later reader cannot tell inspection from assumption.
 - **An absence claim names the surface *and* the pattern** (core § 6 rule 3). In this record that is the `searched <path> for <pattern>` clause, not a bare "there is no `Status:` line".
+
+**Premise checking is not proportional; the record is.** Wherever being wrong about a claim could change the work, check it by inspection before acting and write down what you looked at — core § 6 rules 1 and 3 are untouched. Two cases legitimately produce no record at all:
+
+- **Direct Work** — no state file exists, so no record arises.
+- **A simple prose or documentation change with no load-bearing premise to test.** Omit the `Inspected (YYYY-MM-DD):` block and write one line saying there was no load-bearing premise to check. That line is cheaper than a fabricated claim and more honest than a record listing claims invented to fill it.
+
+**The deciding question is not "is this unit small?" but "would being wrong about a premise here change the work?"** A one-line prose fix that rests on a file existing where the brief says it does still has a premise worth checking. A rewrite whose only premise is the current text — visible in the change itself — does not.
+
+**Nothing replaces the absent record.** No proportionality statement, no tier label, no justification field, no checklist. The absence *is* the lighter path; anything new to fill in on every run would trade one ceremony for another and cost more than the record it replaced.
 
 ## Step 3 — If a claim is false, hand back and stop
 
@@ -77,6 +86,8 @@ Core § 1 and core § 7 *Hand back to Codex* govern this step. Do all of this an
 
 Stay inside `## Objective and scope`. A change that would touch anything the scope excludes is a hand-back under Step 3's rules, not a judgement call (core § 6 rule 4).
 
+**How much work, and how much evidence, is core § 3's *good enough, proceed* judgment.** Read it there; it is not restated here.
+
 **An adjacent improvement noticed mid-unit is a deferral, not work** (core § 5). Record it in the hand-back in plain words — what it is, and why it is not being done now — and leave it unimplemented. A deferral that is neither recorded nor implemented has silently disappeared, which is the failure.
 
 **A discovery unit is inspected, not implemented** (core § 3 step 4). When the brief's completion condition is to establish and return evidence about a named unknown rather than to change the repository, the unit's work is the inspection itself: examine the named surfaces, and write what was found into `## Latest result` with evidence that could have read differently (core § 6 rules 3 and 5). The inspection record still appears even when such a brief pre-states few or no claims — the discovery's own findings are the record. Then hand back under Step 5 for Codex to reframe or stop. Do not implement the eventual target, and do not treat the returned evidence as permission to proceed with it.
@@ -86,7 +97,7 @@ Stay inside `## Objective and scope`. A change that would touch anything the sco
 Core § 3 *The unit's mode* owns the three modes and what each requires. `## Lane and unit` records which one is open. This is what each changes for you:
 
 - **Discovery** — inspect, do not implement. Step 4's discovery-unit rule already describes the work; the mode is what tells you in advance that it applies.
-- **Implementation** — build it, and return the failing case, the implemented result, and the regression protection relevant to the change. Where no meaningful regression check exists, say so and say why, rather than inventing one that cannot fail (core § 6 rule 5).
+- **Implementation** — build it, and return the failing case, the implemented result, and the regression protection relevant to the change. Where no meaningful regression check exists, say so and say why, rather than inventing one that cannot fail (core § 6 rule 5). **A prose, documentation or instruction-file change is the ordinary instance of that case, not an exception to argue for.** Its evidence is the changed text quoted against what it replaced, plus one line on why no automated check would distinguish success from failure. A check that greps for a word the brief already supplied is not evidence — the Codex skill names that as the commonest way a unit looks done and is not. **Where the artifact is executable** — a script, a hook, a test harness — the failing case is still required, unchanged.
 - **Adoption** — the capability already exists. Return evidence about how it behaves in operation — reliability, operator burden, failure conditions, usefulness — and end with the lifecycle decision the brief asks for. Do not build the eventual target, and do not read operating evidence as permission to proceed with it.
 
 **A mode that disagrees with the brief's own completion condition is a false premise** — hand back under Step 3. A unit recorded as Implementation whose completion condition asks only for evidence and a hand-back has not been classified; it has been mislabelled, and building from it is the error the check exists to prevent.

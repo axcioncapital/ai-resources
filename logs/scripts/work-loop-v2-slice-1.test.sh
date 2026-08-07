@@ -446,6 +446,7 @@ fixture-continue-opening.md fixture-continue-close.md \
 fixture-continue-correction.md fixture-continue-malformed.md \
 fixture-continue-unaccepted.md \
 fixture-mode-discovery.md fixture-mode-implementation.md fixture-mode-adoption.md \
+fixture-noprem-prose.md \
 context-engineering-implementation.md context-engineering-implementation-plan.md \
 context-engineering-s7-regression.md \
 foreign-staging-target-repo.md"
@@ -1379,6 +1380,73 @@ check "mode  Direct Work and specialist-owned work gain no mode record" \
   "mode_core | grep -qi 'Direct Work' && mode_core | grep -qi 'specialist'"
 
 rm -f "$T_MISSING" "$T_TWO" "$T_UNKNOWN" "$W_D" "$W_I" "$W_A"
+
+# --- proportionality: the record scales, the premise check does not ---------
+# Plan § 4.5 / proof case P-3a. The old rule was universal — "the record appears
+# even when nothing is wrong" — so a documentation unit with no load-bearing
+# premise had to invent claims to fill the format. The opposite case is what the
+# harness lacked, and it is the case that fails if the rule stays universal.
+#
+# Read these as a pair. NOPREM_F is the unit that legitimately writes no record;
+# TRUE_F is the unit that must still write one line per claim. A change that made
+# either one alone pass has not implemented proportionality — it has moved the
+# universal rule to the other end.
+NOPREM_F="logs/work-loop/fixture-noprem-prose.md"
+CMD_F=".claude/commands/work-loop-v2.md"
+SKILL_F=".agents/skills/work-loop-v2/SKILL.md"
+
+check "prop  fixture present: $NOPREM_F" "[ -f '$NOPREM_F' ]"
+# Scoped to the record itself. A whole-file grep would pass on the fixture's own
+# description of what it is, which is prose about the rule rather than the rule's
+# output — the same fixture-literal mistake the Continue block was corrected for.
+latest_of() { awk '/^## Latest result/{f=1;next} /^## /{f=0} f' "$1"; }
+check "prop  the no-premise prose unit wrote no Inspected block" \
+  "! latest_of '$NOPREM_F' | grep -qi 'inspected'"
+check "prop  it says instead that there was no load-bearing premise to check" \
+  "latest_of '$NOPREM_F' | grep -qi 'no load-bearing premise'"
+check "prop  it still returns a real result and fail-capable evidence" \
+  "grep -q '^Result:' '$NOPREM_F' && grep -q '^Evidence:' '$NOPREM_F'"
+# The other half of the pair. Two claims are stated in that fixture's brief and two
+# lines must answer them — proportionality is not permission to stop recording.
+check "prop  a claims-bearing unit still writes one line for every claim" \
+  "[ \"\$(grep -c '^- Claim (' '$TRUE_F')\" -ge 2 ]"
+# The over-correction P-3a exists to catch: swapping the record for a new thing to
+# fill in every run. The state file's active headings are core § 4's, and no tier,
+# proportionality statement or justification label may appear beside them.
+check "prop  nothing new became mandatory on every run" \
+  "! grep -qiE '^(Proportionality|Tier|Record tier|Justification|Ceremony)[[:space:]]*:' '$NOPREM_F'"
+
+# The command owns this behaviour (plan § 3). These read the contract, not the fixture.
+check "prop  the command names the two cases where the record is legitimately absent" \
+  "grep -qi 'no load-bearing premise' '$CMD_F' && grep -qi 'Direct Work' '$CMD_F'"
+check "prop  the command keeps the per-claim rule where claims exist" \
+  "grep -qi 'Every claim gets a line' '$CMD_F'"
+check "prop  the command states the deciding question, not a size test" \
+  "grep -qi 'would being wrong about a premise here change the work' '$CMD_F'"
+check "prop  the command forbids a replacement artifact" \
+  "grep -qiE 'no proportionality statement|nothing replaces the absent record' '$CMD_F'"
+# Prose evidence (plan § 4.5) and its over-correction guard: an executable artifact
+# still owes a failing case, so the relief cannot be read as a general exemption.
+check "prop  prose and documentation are named as the ordinary no-regression case" \
+  "grep -qiE 'prose, documentation or instruction-file change is the ordinary' '$CMD_F'"
+check "prop  executable artifacts still owe a failing case" \
+  "grep -qiE 'the failing case is still required' '$CMD_F'"
+# The core § 3 pointer, bidirectional: present as a pointer, absent as a copy.
+check "prop  the command points at core § 3's judgment" \
+  "grep -q 'good enough, proceed' '$CMD_F'"
+check "prop  the command does not restate core § 3's four statements" \
+  "! grep -qiE '85|minimum necessary work|scaled to consequence|perfection pass' '$CMD_F'"
+
+# The skill owns the division (plan § 4.4). Reproduction is permitted but conditional;
+# an unconditional 'never reproduce' rule would fail P-2's inconsistent-evidence control.
+check "prop  the skill assigns the checks to Claude and the assessment to Codex" \
+  "grep -qiE 'Claude runs the checks and reports the evidence' '$SKILL_F'"
+check "prop  the skill names re-running a reported check as duplication, not diligence" \
+  "grep -qi 'not diligence' '$SKILL_F'"
+check "prop  the skill keeps reproduction conditional and countable" \
+  "[ \"\$(grep -c '^[0-9]\. \*\*' '$SKILL_F')\" -ge 4 ] && grep -qi 'say which one applies' '$SKILL_F'"
+check "prop  the skill does not restate core § 3's four statements" \
+  "! grep -qiE '85–90|minimum necessary work|scaled to consequence|perfection pass' '$SKILL_F'"
 
 # --- v1 isolation: logs/loop/ must gain nothing (slice plan 1.1) ------------
 check "v1    no Slice 1, 2 or 3 artifact leaked into logs/loop/" \

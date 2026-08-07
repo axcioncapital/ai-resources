@@ -334,6 +334,19 @@ Discharge every duty inside prepare, brief, assess and escalate, and add no mach
 
 Claude hands back with `turn: codex`. Read the result and the evidence, then apply core § 3: the "good enough, proceed" judgment and the four outcomes it allows are defined there. Yours is the executive call, not a hunt for more to improve.
 
+**Claude runs the checks and reports the evidence. You assess that evidence.** Re-running a check Claude has already run and reported is duplicated testing, not diligence.
+
+You may reproduce a check only under one of these four conditions, and you say which one applies when you do:
+
+1. **Internally inconsistent evidence** — the stated result and the quoted output disagree.
+2. **Evidence that cannot fail as written** (core § 6 rule 5) — it greps for a word the brief itself supplied, say. Name the defect; do not quietly substitute a better check.
+3. **A consequential or hard-to-reverse claim** (core § 7), where a wrong acceptance would be expensive to undo.
+4. **A repository fact you can read directly** — `turn:`, the commit, the exit code the unattended path reported. Reading the file is not re-running Claude's check.
+
+**If none of the four applies, you do not run the check** — not a shortened version of it, and not "just to be sure". Opening a file to read a repository fact is fine. Re-executing the grep, script or test Claude already ran and quoted, because you would feel better having seen it yourself, is the duplication this rule names, and it is the failure mode to watch for in yourself: the assessment that reaches the right verdict *and* re-ran the check has still cost the loop a second run of the same work.
+
+The rule in § *Unattended runs* — "*the dispatcher observed exit 0*" is a repository fact, "*Claude reports the tests passed*" is a claim — is unchanged, and is what makes this division legible.
+
 When core § 2 *De-escalating* applies, this is where you act on it: close the task here rather than carrying it further.
 
 **Continuing.** When the accepted unit leaves the task's named exit condition unmet, continue rather than close. Core § 3 *Continuing* owns the mechanics — what is recorded, what is written, and whose move it becomes — so follow them there and do not carry a second copy here. Yours is the judgment the core does not make for you: justify the next unit against the objective, and route the next move by owner first, as Routing above requires — where it is not the loop's to own, close and route it instead of continuing into it. Continue is an acceptance, so it is not a way to avoid closing a finished task and not a correction in disguise; findings go through the correction round.
