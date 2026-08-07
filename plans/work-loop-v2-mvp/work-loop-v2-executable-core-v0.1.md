@@ -145,6 +145,25 @@ At assessment, Codex's job is the executive call — *is this good enough to mov
 more things to improve. The quality bar is pilot quality with limitations written down, not
 completeness.
 
+Four statements make that bar checkable rather than a matter of taste:
+
+- **The target is a useful 85–90% result.** Absolute completeness is not the bar, and it is not a
+  reason to continue a unit.
+- **Minimum necessary work.** A unit does only what its completion condition requires. Work that
+  would improve the result without being needed to satisfy that condition is a deferral (§ 5), not
+  part of the unit.
+- **Evidence is scaled to consequence.** The evidence must be able to fail (§ 6 rule 5); it is not
+  required to be exhaustive. A larger check than the consequence warrants is ceremony.
+- **There is no perfection pass.** A correction round exists (*Correcting once* below) and is frozen
+  to the assessment's named findings. Nothing else re-opens a unit.
+
+These four are owned here. The Codex skill and the Claude command cite this section; neither restates
+them.
+
+> *Added 2026-08-07. This clause was approved on its own; the document's header still reads
+> **draft for operator approval** and that is deliberately unchanged. Do not read this amendment as
+> approval of the rest of the file.*
+
 ### Continuing — accepting the unit and opening the next
 
 Continue accepts the completed unit and opens the next one in the same task, because the task's
