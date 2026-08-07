@@ -318,16 +318,20 @@ bash dispatch.sh \
 
 > # ⛔ DO NOT RUN — 2026-08-07
 >
-> **This is a worked example of a shape that is not cleared for use.** **Two** Phase 2 blockers stand
+> **This is a worked example of a shape that is not cleared for use.** **One** Phase 2 blocker stands
 > between it and a real walk-away run (full list: `unattended-operation-plan-v0.2.md`, status block):
 >
-> 1. **The stop (step 3) reaches a process group, not a tree.** A descendant that calls `setsid`
->    survives `kill`, after you believe the run is stopped. This one changes how *this very command*
->    behaves.
-> 2. **Branch/isolation unproven** — what step 1 below is *supposed* to guarantee, never demonstrated
+> 1. **Branch/isolation unproven** — what step 1 below is *supposed* to guarantee, never demonstrated
 >    in a live run.
 >
-> **The contained profile is no longer among them.** It was the first blocker here until 2026-08-07;
+> **The stop is no longer among them.** Until 2026-08-07 the stop reached a process group and not a
+> tree, so a descendant that called `setsid` survived `kill` after you believed the run was stopped.
+> Teardown now clears the union of the process group, a recursive ancestry walk and the holders of the
+> hop's inherited output descriptor, and **verifies** that before releasing the lock
+> (`runs/probe-escaped-descendants-2026-08-07.md`). A descendant that *also* closes both inherited
+> descriptors still escapes; the dispatcher's success line is scoped accordingly.
+>
+> **The contained profile is no longer among them either.** It was the first blocker here until 2026-08-07;
 > `--unattended` is built, and its effective policy was measured from inside a child this dispatcher
 > launched (`runs/probe-unattended-integration-2026-08-07.md`). It is in the command below because a
 > walk-away run without it is the shape nobody approved. What it does **not** cover: it contains what
@@ -388,8 +392,9 @@ Two cautions on step 4, both measured rather than assumed. First: from inside a 
 `--status` cannot inspect the PID. It no longer calls that `STALE LOCK` — it answers
 `UNKNOWN — CANNOT INSPECT` and tells you the lock may still be live, confirmed live cross-sandbox on
 2026-08-07 — but `UNKNOWN` is still not an answer to *"is it still going?"*, so run step 4 from an
-ordinary terminal when you need a real one. Second: a `28` stop reaches the actor's process *group*,
-so a descendant that called `setsid` is still running afterwards.
+ordinary terminal when you need a real one. Second: a `28` stop clears the actor's descendant tree
+and says so — read the `teardown verified:` line. If it instead prints a `WARNING:` naming survivors,
+those processes are still running and are yours to terminate by hand.
 
 - **`--unattended` is not optional in this shape.** It is what gives the child less authority than an
   attended one: OS sandbox, empty network allowlist, `Bash` and `Skill` only, no MCP, no hooks, no
@@ -434,8 +439,8 @@ where the code's meaning actually differs.
 | `24` | `UNEXPECTED_EFFECT` | loop only | An actor changed paths outside the allowlist, or the Codex actor moved `HEAD`. |
 | `25` | `UNCOMMITTED_HANDBACK` | dry-run, loop | The state file is uncommitted where Claude should have committed it — either found that way at startup with `turn: codex`/`operator`, or left that way after a Claude hop. |
 | `26` | `MALFORMED_TERMINAL` | loop only | `turn: operator`, but the file is neither a core § 7 question (it has no `## Blocker` and no `## Next action`) nor a core § 4 closing record (its four headings, and nothing else, are not what survived). No actor is launched; the stop names a recoverable next action. |
-| `28` | `INTERRUPTED` | loop only | `SIGINT`/`SIGTERM`. The actor's **process group** is terminated (see the caveat under Safety boundaries — group, not tree), the lock is released once, and the run stops. **Never retried** — the signal may have landed after an effect nobody observed, so the state file and `git status` are where the operator has to look. |
-| `29` | `BUDGET_EXHAUSTED` | loop only | `--deadline` expired: either the loop refused to launch the next hop, or a running actor was terminated at the clock. **Not completion.** Resumable — the state file and Git are untouched by the stop — but never retried automatically. Worst-case overrun is `1s poll + 5s TERM→KILL grace + reaping`, roughly 6s — not exact-to-the-second. |
+| `28` | `INTERRUPTED` | loop only | `SIGINT`/`SIGTERM`. The actor's **whole descendant tree** is terminated and **verified gone** before the lock is released and the run stops (see Safety boundaries for the one shape that still escapes). If a descendant could not be confirmed dead it is named in a `WARNING:` line — read that before treating the halt as clean. **Never retried** — the signal may have landed after an effect nobody observed, so the state file and `git status` are where the operator has to look. |
+| `29` | `BUDGET_EXHAUSTED` | loop only | `--deadline` expired: either the loop refused to launch the next hop, or a running actor was terminated at the clock. **Not completion.** Resumable — the state file and Git are untouched by the stop — but never retried automatically. Worst-case overrun is `1s poll + 5s TERM→KILL grace + 2s KILL settle + verification census + reaping`, roughly 9s — not exact-to-the-second. It was ~6s before 2026-08-07; whole-tree teardown added the settle window and the census that confirms the tree is actually gone. |
 | `30` | `UNEXPECTED_COMMIT` | loop only | An actor **committed** paths outside the allowlist. Detection, not prevention: the commit already exists, and the value is stopping rather than compounding it over the rest of an unattended run. Distinct from `24`, which is the working-tree case, because the recovery differs — `24` is reverted from the working tree, `30` from history. |
 
 > **Why `28`–`30` exist.** `27` is deliberately unused: it was reserved in plan v0.1 for
@@ -632,17 +637,27 @@ Three scripts exist for the two-worktree proof and are not used by the single-ch
   Codex handoff, because Codex writes the file and never runs Git. An uncommitted file with
   `turn: codex` or `turn: operator` means a Claude hop died between editing and committing, and the
   run stops for inspection instead of relaunching over a partial edit.
-- **The run can be stopped.** `SIGINT`/`SIGTERM` terminates the actor's **process group**, releases
-  the lock once, and exits `28`. This was not true before 2026-08-07: the old handler released the
-  lock without exiting, so a stop attempt left the run going *and* admitted a second dispatcher onto
-  the same state file. Both the defect and the fix are OBSERVED —
-  `runs/probe-interruption-2026-08-07.md`, with the probe script and a before/after raw capture under
-  `runs/probes/`.
-  > **It is a process-*group* kill, not a process-*tree* kill.** Descendants that stay in the actor's
-  > group die with it; a descendant that leaves the group — `setsid(2)`, its own process group, a
-  > double fork — survives. `dispatch.test.sh` case 27b asserts that boundary rather than assuming
-  > it. Sufficient for `claude -p` and `codex exec`, which keep their children in-group; not a
-  > general guarantee.
+- **The run can be stopped, and the stop clears the actor's descendants.** `SIGINT`/`SIGTERM`
+  terminates the actor's whole descendant tree, **verifies** it is gone, releases the lock once, and
+  exits `28`. This was not true before 2026-08-07: the old handler released the lock without exiting,
+  so a stop attempt left the run going *and* admitted a second dispatcher onto the same state file.
+  Both the defect and the fix are OBSERVED — `runs/probe-interruption-2026-08-07.md`, with the probe
+  script and a before/after raw capture under `runs/probes/`.
+  > **Three handles, because no single one reaches every escape** — measured, not assumed
+  > (`runs/probe-escaped-descendants-2026-08-07.md`): the actor's **process group**, a **recursive
+  > ancestry walk**, and the holders of the **hop's inherited output descriptor**. The group alone
+  > misses anything that calls `setsid(2)`; ancestry alone misses a double-forked orphan, whose parent
+  > link the kernel destroys before any stop happens. The inherited descriptor reaches both, and costs
+  > nothing new because every actor is already redirected to that file. Teardown TERMs, then KILLs,
+  > then **re-censuses to confirm** — it does not assume the signal worked.
+  >
+  > **The residual, stated:** a descendant that *also* closes or redirects both inherited descriptors
+  > escapes all three handles and survives. A conventional daemon does exactly that. So the success
+  > line is scoped — *"no descendant reachable by group, ancestry or inherited descriptor"* — and
+  > `dispatch.test.sh` case 27h fails if that wording is ever widened. Narrower than what it replaced:
+  > one line of `setsid` used to be enough to escape.
+  >
+  > **Cost:** worst-case teardown ~6s → ~13s, and the `--deadline` overrun bound ~6s → ~9s.
 - **Isolation is a branch, and a branch is not a worktree.** The pilot runs on
   `work-loop/<task-id>` off a clean tree. This keeps unattended commits off `main` and makes the run
   droppable, but a branch **shares the working directory and index** with anything else open in that
@@ -668,7 +683,7 @@ profile was built and measured.
 | One task, one checkout, serial (the lock) | Anything outside the checkout — the filesystem at large is **denied by the sandbox**, but the *Claude process itself* runs outside that sandbox |
 | Local commits on a branch off a clean tree | `main` is protected. The **child's** network is closed by an empty strict allowlist; the model connection is not, and cannot be |
 | A hard `--deadline`, plus `--max-hops` | Nothing bounds what a single hop *does* within its allowlist and its sandbox |
-| Stop control that reaches the actor's process **group** (`28`) | **A descendant that leaves the group survives the stop** — anything that calls `setsid` outlives the run. Asserted, not assumed: case 27b. Also: an effect that landed before the signal — never retried, always inspected |
+| Stop control that clears the actor's **descendant tree** and verifies it (`28`) — group, ancestry and inherited descriptor | **A descendant that also closes both inherited descriptors survives** — it is reachable by none of the three handles. Asserted, not assumed: case 27h, which also fails if the success wording is widened. Also: an effect that landed before the signal — never retried, always inspected |
 | Allowlist on working tree (`18`/`24`) **and** commits (`30`) | Both are **detection, not prevention**. The change has happened; the run stops rather than compounding |
 | **Prevented, not detected, under `--unattended`:** non-allowlisted network, writes outside the checkout, reads under `~/`, `git push`, MCP, hooks, built-in file tools, credentials reaching subprocesses | **The profile can be widened from another settings scope.** Array keys such as `allowRead` merge across scopes, and `strictAllowlist` is ignored entirely from a *repository* settings file — which is why the dispatcher delivers the profile by CLI `--settings`. Closing this needs managed settings, which no dispatcher can set for itself |
 | The version gate: below `2.1.219` there is no strict allowlist, so the run **refuses to start** (exit `31`) rather than running uncontained | **One named exception inside the denied home tree:** `~/.gitconfig`, because Git exits 128 before touching the repository without it. It names credential helpers; the child obtained no token, but **if a real secret is ever put in that file the exception stops being safe** |
@@ -678,7 +693,8 @@ to narrow further. Without `--unattended` it is held only by a CLAUDE.md rule �
 which is weakest exactly when nobody is watching.
 
 **What the left column rests on.** The simulated suite proves the dispatcher *requests* the profile
-(**284/0**; matched red pair **216/24** against the pre-1d dispatcher `22fedf8`). The effective policy
+(**284/0** as the suite stood at 1d's close, **309/0** since the 1a teardown work; matched red pair
+**216/24** against the pre-1d dispatcher `22fedf8`). The effective policy
 was measured **once, on one host**, from inside a child this dispatcher launched
 (`runs/probe-unattended-integration-2026-08-07.md`, **21/0**). That is a Phase 1 safety check, not a
 reliability claim and not the Phase 2 walk-away pilot — which has still never happened.

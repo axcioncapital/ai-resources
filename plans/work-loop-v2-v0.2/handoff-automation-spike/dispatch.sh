@@ -121,9 +121,13 @@
 #   25  UNCOMMITTED_HANDBACK   Claude handed back without committing the state file
 #   26  MALFORMED_TERMINAL     turn: operator, but the file is neither a core § 7
 #                              question nor a core § 4 closing record
-#   28  INTERRUPTED            SIGINT/SIGTERM. The actor's process group was
-#                              terminated and the run stopped. NEVER retried —
-#                              the signal may have landed after a partial effect.
+#   28  INTERRUPTED            SIGINT/SIGTERM. The actor's whole descendant tree
+#                              was terminated, VERIFIED gone, and the run stopped.
+#                              If any descendant could not be confirmed dead it is
+#                              named in a WARNING before the lock is released —
+#                              read that line before treating the halt as clean.
+#                              NEVER retried — the signal may have landed after a
+#                              partial effect.
 #   29  BUDGET_EXHAUSTED       --deadline expired. NOT completion. The state file
 #                              and Git are untouched by the stop, so the next run
 #                              resumes from them; inspect before re-running,
@@ -218,8 +222,14 @@ UNATTENDED_BIN=""        # the claude binary the gate actually inspected
 # Interruption state. ACTOR_PGID is the process group of the actor currently in
 # flight, or empty between hops — the signal handler needs it to reach the whole
 # tree, and "empty" is what tells it there is nothing to terminate.
+#
+# ACTOR_OUT is the same actor's hop output file, published for the same reason.
+# It is not logging bookkeeping: it is the THIRD identification handle (see
+# actor_tree_census below), and the only one that survives a double fork. A
+# signal handler that knows the pgid but not the file can only reach the group.
 SHUTDOWN=0
 ACTOR_PGID=""
+ACTOR_OUT=""
 CUR_HOP=0
 CUR_ACTOR=""
 
@@ -434,44 +444,213 @@ release_lock() {
   LOCK_OWNED=0
 }
 
-# Terminate the actor's PROCESS GROUP, then reap it.
+# ------------------------------------------------- descendant identification
 #
-# Why the group and not the direct children: `pkill -P` gets one generation, and a
-# live Claude hop runs tool subprocesses below that. The 2026-08-07 probe
-# (runs/probe-interruption-2026-08-07.md) OBSERVED a grandchild surviving a
-# children-only sweep. launch_actor runs each actor under `set -m`, so the actor
-# is a process-group leader (pgid == its pid) and `kill -- -PGID` reaches every
-# descendant that stayed in that group.
+# Terminate the actor's WHOLE DESCENDANT TREE, then verify it is gone.
 #
-# WHAT THIS DOES NOT REACH — state it plainly rather than calling this a "tree
-# kill", which it is not. A descendant that leaves the group survives:
-#   - anything that calls setsid(2) or otherwise starts its own session;
-#   - anything that creates its own process group (a job-control shell);
-#   - a process re-parented after a double fork into a different group.
-# dispatch.test.sh case 27b asserts this limit rather than papering over it, so it
-# is a measured boundary and not an assumption. In practice the actors here
-# (`claude -p`, `codex exec`) keep their children in-group, which is why the group
-# kill is sufficient TODAY — not why it is sufficient in general.
+# This replaces a group-only sweep (`kill -- -PGID`) that was honest about its own
+# reach and insufficient anyway: a descendant which leaves the actor's process
+# group outlived every stop, so the dispatcher reported a clean halt while a
+# process it started kept running unsupervised. That is Phase 1a, and the reason
+# it blocked the walk-away pilot.
 #
+# THE MECHANISM IS MEASURED, NOT ASSUMED. Four candidate handles were probed on
+# this host; the table is the measurement, not a design intention:
+# runs/probe-escaped-descendants-2026-08-07.md.
+#
+#   handle                       in-group  setsid,   double-fork  SIP system
+#                                 child    parented    orphan      binary
+#   ---------------------------------------------------------------------------
+#   process group (kill -- -PGID)  reaches   MISSES     MISSES      n/a
+#   recursive PPID census          reaches   reaches    MISSES      n/a
+#   environment tag (ps -E)        MISSES    reaches    reaches     MISSES
+#   inherited fd on the hop log    reaches   reaches    reaches     reaches
+#
+# What each row means, since the reasons are the whole argument:
+#   - setsid(2) gives a new session AND a new process group, so the group kill
+#     cannot see it. It does NOT change PPID, so an ancestry walk still can.
+#   - a double fork leaves the grandchild re-parented to pid 1 the moment the
+#     intermediate exits. The ancestry link is destroyed by the kernel, before any
+#     stop happens, so no walk taken at stop time can recover it.
+#   - `ps -E` cannot read the environment of a SIP-protected platform binary
+#     (/bin/sh, /bin/sleep, /usr/bin/git all refuse; a user-installed python3
+#     does not). An env tag is therefore blind to exactly the binaries an escaped
+#     shell job is most likely to be. It is rejected on that measurement, and
+#     because matching it means matching argv text too, which invents a
+#     false-positive class the other handles do not have.
+#   - kqueue NOTE_TRACK, the BSD fork-following filter, would have been the clean
+#     answer. It returns ENOTSUP on this host (Darwin 26.5) — measured, same
+#     record. It is not available to be chosen.
+#
+# So the union of handles 1, 2 and 4 is used. Handle 4 is the load-bearing one and
+# it is free: launch_actor already runs every actor as `"$@" >>"$out" 2>&1`, so
+# each descendant inherits fd 1 and 2 pointing at that hop's output file, and
+# `lsof -t` lists holders regardless of session, process group, ancestry or code
+# signing. Nothing new is spawned, and nothing has to be tracked during the hop.
+#
+# THE RESIDUAL, stated rather than papered over: a descendant that closes or
+# redirects BOTH inherited descriptors, AND has left the process group, AND has
+# been re-parented away, is invisible to all three handles. A conventional daemon
+# does exactly this. That is why teardown VERIFIES and reports survivors instead
+# of asserting success — see terminate_actor_tree. dispatch.test.sh case 27h
+# pins the residual so it stays a measured boundary rather than a belief.
+
+# Pids this dispatcher must never signal, whatever a census says: itself and its
+# own ancestors, plus 0 and 1. This is the same lesson pid_state() carries — pid 0
+# means "the caller's own process group", and signalling our own ancestry would
+# reach the operator's shell. A census is untrusted input; this is its filter.
+SELF_PIDS=" 0 1 "
+_p="$$"
+while :; do
+  case "$_p" in ''|*[!0-9]*|0*) break ;; esac
+  [ "$_p" -le 1 ] && break
+  SELF_PIDS="$SELF_PIDS$_p "
+  _p="$(ps -o ppid= -p "$_p" 2>/dev/null | tr -d ' ')"
+done
+unset _p
+
+SELF_PGID="$(ps -o pgid= -p "$$" 2>/dev/null | tr -d ' ')"
+
+# Handle 4 needs lsof. It ships with macOS, but its absence must be loud rather
+# than a silent downgrade to the group-only reach this unit exists to remove.
+FD_HANDLE=1
+command -v lsof >/dev/null 2>&1 || FD_HANDLE=0
+
+signallable_pid() { # pid -> 0 if this dispatcher may signal it
+  local pid="${1:-}"
+  case "$pid" in ''|*[!0-9]*|0*) return 1 ;; esac
+  case "$SELF_PIDS" in *" $pid "*) return 1 ;; esac
+  ps -p "$pid" -o pid= >/dev/null 2>&1 || return 1   # liveness WITHOUT needing
+  return 0                                          # signal permission
+}
+
+# The union of the three usable handles, filtered and deduplicated. Live pids
+# only, one per line. Empty output means "nothing of this actor is still running",
+# and that is the claim the whole unit rests on, so it is computed from three
+# independent sources rather than one.
+actor_tree_census() { # pgid, outfile -> live descendant pids
+  local pgid="${1:-}" out="${2:-}" acc="" seen="" p pid pgrp frontier next kid c
+
+  [ -n "$pgid" ] || return 0
+  # Refuse to census our OWN group. If `set -m` ever failed, the actor would share
+  # the dispatcher's group and this sweep would enumerate the operator's other
+  # jobs. Returning nothing is wrong-but-safe; the alternative is unbounded.
+  [ -n "$SELF_PGID" ] && [ "$pgid" = "$SELF_PGID" ] && return 0
+
+  # (1) process group members
+  while read -r pid pgrp; do
+    [ "$pgrp" = "$pgid" ] && acc="$acc $pid"
+  done < <(ps -ax -o pid=,pgid= 2>/dev/null)
+
+  # (2) recursive ancestry walk from the actor. Bounded by a visited set, so a
+  #     pid-reuse cycle cannot spin here.
+  frontier="$pgid"; seen=" $pgid "
+  while [ -n "$frontier" ]; do
+    next=""
+    for kid in $frontier; do
+      for c in $(pgrep -P "$kid" 2>/dev/null); do
+        case "$seen" in *" $c "*) continue ;; esac
+        seen="$seen$c "; next="$next $c"; acc="$acc $c"
+      done
+    done
+    frontier="$next"
+  done
+
+  # (3) holders of the hop's inherited output descriptor
+  if [ "$FD_HANDLE" -eq 1 ] && [ -n "$out" ] && [ -e "$out" ]; then
+    acc="$acc $(lsof -t -- "$out" 2>/dev/null | tr '\n' ' ')"
+  fi
+
+  seen=" "
+  for p in $acc; do
+    case "$seen" in *" $p "*) continue ;; esac
+    signallable_pid "$p" || continue
+    seen="$seen$p "
+    printf '%s\n' "$p"
+  done
+}
+
 # TERM first, then KILL after a grace period, because an actor that can exit
 # cleanly should be allowed to. Callers: the per-actor timeout, the deadline, and
 # the signal handler — one sweep, three callers, so they cannot drift apart.
 #
-# GRACE_SECS is load-bearing for the deadline's accuracy: it is the upper bound on
-# how far past its budget a terminated run can extend. Named so the arithmetic can
-# be quoted rather than rediscovered.
+# Both constants are load-bearing for the deadline's accuracy: together they are
+# the upper bound on how far past its budget a terminated run can extend. Named so
+# the arithmetic can be quoted rather than rediscovered — see effective_timeout.
 TERM_GRACE_SECS=5
-terminate_actor_group() { # pgid
-  local pgid="${1:-}"
+KILL_SETTLE_SECS=2
+
+# Set by terminate_actor_tree: the pids it could NOT confirm dead. Empty is the
+# normal case and the only one that permits a "teardown completed" claim.
+TEARDOWN_SURVIVORS=""
+
+terminate_actor_tree() { # pgid, outfile -> 0 when the tree is verified gone
+  local pgid="${1:-}" out="${2:-}" census p waited
+  TEARDOWN_SURVIVORS=""
   [ -n "$pgid" ] || return 0
+
+  # Re-censused on every pass, not computed once: a descendant can be spawned
+  # DURING teardown, and one that appears after the first sweep would otherwise
+  # never be signalled at all.
+  census="$(actor_tree_census "$pgid" "$out")"
   kill -TERM -- "-$pgid" 2>/dev/null
-  local waited=0
-  while kill -0 -- "-$pgid" 2>/dev/null && [ "$waited" -lt "$TERM_GRACE_SECS" ]; do
+  for p in $census; do kill -TERM "$p" 2>/dev/null; done
+
+  waited=0
+  while [ "$waited" -lt "$TERM_GRACE_SECS" ]; do
+    census="$(actor_tree_census "$pgid" "$out")"
+    [ -z "$census" ] && break
+    for p in $census; do kill -TERM "$p" 2>/dev/null; done
     sleep 1
     waited=$((waited + 1))
   done
-  kill -KILL -- "-$pgid" 2>/dev/null
-  return 0
+
+  census="$(actor_tree_census "$pgid" "$out")"
+  if [ -n "$census" ]; then
+    kill -KILL -- "-$pgid" 2>/dev/null
+    for p in $census; do kill -KILL "$p" 2>/dev/null; done
+    waited=0
+    while [ "$waited" -lt "$KILL_SETTLE_SECS" ]; do
+      sleep 1
+      waited=$((waited + 1))
+      census="$(actor_tree_census "$pgid" "$out")"
+      [ -z "$census" ] && break
+      for p in $census; do kill -KILL "$p" 2>/dev/null; done
+    done
+  fi
+
+  # The verification the objective actually rests on. Whatever is still here is
+  # reported, never rounded down to success.
+  TEARDOWN_SURVIVORS="$(actor_tree_census "$pgid" "$out" | tr '\n' ' ')"
+  TEARDOWN_SURVIVORS="${TEARDOWN_SURVIVORS%% }"
+  [ -z "$TEARDOWN_SURVIVORS" ]
+}
+
+# The disclosure half. A stop that could not clear the tree must say so BEFORE the
+# lock is released and the process exits, because after that there is nobody left
+# to notice. Silence here would restore exactly the defect 1a describes.
+report_teardown() { # -> 0 when the tree was verified gone
+  local msg
+  if [ -z "$TEARDOWN_SURVIVORS" ]; then
+    # SCOPED ON PURPOSE. "The tree is gone" would be a stronger claim than three
+    # handles can support — see the residual above, and dispatch.test.sh case 27h,
+    # which fails if this sentence is ever widened.
+    msg="  teardown verified: no descendant reachable by group, ancestry or inherited descriptor is still running"
+    printf '%s\n' "$msg" >&2
+    [ -n "${RUN_LOG:-}" ] && printf '%s\n' "$msg" >>"$RUN_LOG"
+    return 0
+  fi
+  msg="  WARNING: teardown could NOT confirm the actor's tree is gone. Still running: $TEARDOWN_SURVIVORS
+  These processes were signalled and did not go. They are NOT stopped, and this run is not a clean halt.
+  Inspect with \`ps -o pid,ppid,pgid,command -p <pid>\` and terminate them by hand before re-running."
+  printf '%s\n' "$msg" >&2
+  [ -n "${RUN_LOG:-}" ] && printf '%s\n' "$msg" >>"$RUN_LOG"
+  if [ "$FD_HANDLE" -eq 0 ]; then
+    msg="  NOTE: lsof was not found, so the inherited-descriptor handle was unavailable for this teardown."
+    printf '%s\n' "$msg" >&2
+    [ -n "${RUN_LOG:-}" ] && printf '%s\n' "$msg" >>"$RUN_LOG"
+  fi
+  return 1
 }
 
 # SIGINT / SIGTERM.
@@ -498,9 +677,13 @@ on_signal() { # signal name
   [ -n "${RUN_LOG:-}" ] && printf 'STOP [28] interrupted by SIG%s %s — task %s\n' "$sig" "$where" "$TASK" >>"$RUN_LOG"
 
   if [ -n "$ACTOR_PGID" ]; then
-    printf '  terminating actor process group %s\n' "$ACTOR_PGID" >&2
-    [ -n "${RUN_LOG:-}" ] && printf '  terminating actor process group %s\n' "$ACTOR_PGID" >>"$RUN_LOG"
-    terminate_actor_group "$ACTOR_PGID"
+    printf '  terminating actor descendant tree (pgid %s)\n' "$ACTOR_PGID" >&2
+    [ -n "${RUN_LOG:-}" ] && printf '  terminating actor descendant tree (pgid %s)\n' "$ACTOR_PGID" >>"$RUN_LOG"
+    terminate_actor_tree "$ACTOR_PGID" "$ACTOR_OUT"
+    # Reported here, before release_lock and exit below: the lock must not be
+    # handed on, and this process must not go, while the operator still believes
+    # everything halted.
+    report_teardown
   fi
 
   # An interrupted actor is NEVER retried and this run never resumes: the signal
@@ -990,13 +1173,19 @@ run_bounded() { # timeout, logfile, cmd...
   set +m
 
   ACTOR_PGID="$pid"
+  ACTOR_OUT="$out"
   start="$(date '+%s')"
 
   while kill -0 "$pid" 2>/dev/null; do
     if [ "$(( $(date '+%s') - start ))" -ge "$limit" ]; then
-      terminate_actor_group "$pid"
+      terminate_actor_tree "$pid" "$out"
+      # Reported at the teardown, not at the die() below, because both the
+      # per-actor timeout (21) and the deadline (29) come through here and the
+      # disclosure must not depend on which of them the caller picks.
+      report_teardown
       wait "$pid" 2>/dev/null
       ACTOR_PGID=""
+      ACTOR_OUT=""
       return 124
     fi
     # 1s poll. This is also the worst-case latency between an operator's
@@ -1007,6 +1196,7 @@ run_bounded() { # timeout, logfile, cmd...
 
   wait "$pid"; rc=$?
   ACTOR_PGID=""
+  ACTOR_OUT=""
   return "$rc"
 }
 
@@ -1042,13 +1232,23 @@ remaining_seconds() {
 #
 # THE HONEST BOUND, since a deadline is only worth what its worst case is:
 #
-#   overrun <= 1s (poll interval) + TERM_GRACE_SECS (TERM->KILL) + reaping
+#   overrun <= 1s (poll interval)
+#            + TERM_GRACE_SECS      (TERM -> KILL)
+#            + KILL_SETTLE_SECS     (KILL -> verified gone)
+#            + census cost          (~0.3s per pass, several passes)
+#            + reaping
 #
-# — about 6 seconds with the current grace of 5. It is NOT "the poll interval",
-# which is what this comment claimed before review on 2026-08-07. A run given
-# --deadline 2400 can therefore end at roughly 2406s, never at 2400s exactly, and
+# — about 9 seconds with the current grace of 5 and settle of 2. A run given
+# --deadline 2400 can therefore end at roughly 2409s, never at 2400s exactly, and
 # never at 2400 + --timeout. Case 28 asserts the arithmetic rather than a round
-# number, so tightening the grace tightens the test with it.
+# number, so tightening either constant tightens the test with it.
+#
+# THIS BOUND GREW ON 2026-08-07, from ~6s, and the growth is deliberate. Truthful
+# whole-tree teardown costs a verification pass the group-only sweep never did:
+# it re-censuses after SIGKILL instead of assuming the signal worked. The plan
+# forbids relaxing the hard clock silently, so the new worst case is stated here
+# and asserted in the suite rather than left to be discovered by a run that
+# overshot. It is NOT "about 6 seconds" — that was true of the weaker teardown.
 effective_timeout() {
   local left; left="$(remaining_seconds)"
   if [ "$left" -lt "$ACTOR_TIMEOUT" ]; then printf '%s' "$left"; else printf '%s' "$ACTOR_TIMEOUT"; fi

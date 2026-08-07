@@ -775,56 +775,325 @@ else
 fi
 rm -rf "$LK" 2>/dev/null
 
+# ====================================================== cases 27b .. 27h
+# Phase 1a, the escaped-descendant half.
+#
+# WHAT CHANGED, AND WHY THE OLD EXPECTATION WAS THE DEFECT. Case 27b used to
+# assert that a `setsid` descendant SURVIVES the stop, and it was right to: the
+# teardown killed a process GROUP, so that was the measured boundary and pinning
+# it was better than pretending otherwise. That boundary is now gone. dispatch.sh
+# terminates the union of the process group, the recursive ancestry walk and the
+# holders of the hop's inherited output descriptor, and VERIFIES the result before
+# releasing the lock. So 27b now asserts the opposite outcome — not because the
+# old coverage was inconvenient, but because the behaviour it described was the
+# thing 1a called a blocker: a stop that leaves a process running is not a stop.
+# The surviving limitation is pinned by 27h, which is the honest replacement for
+# what 27b used to guard.
+#
+# Every case below asserts the escapee was REAL before the stop — alive, and
+# genuinely outside the actor's process group. Without that, a case could go green
+# because the escapee never started, or never escaped.
+
+escapee_is_real() { # actor-pid escapee-pid label -> 0 when the control holds
+  local ap="$1" ep="$2" lab="$3" apg epg
+  if [ -z "$ep" ] || ! kill -0 "$ep" 2>/dev/null; then
+    bad "$lab — control: the escapee is running before the stop" "pid '${ep:-<none>}' is not alive; the case proves nothing"
+    return 1
+  fi
+  apg="$(ps -o pgid= -p "$ap" 2>/dev/null | tr -d ' ')"
+  epg="$(ps -o pgid= -p "$ep" 2>/dev/null | tr -d ' ')"
+  if [ -z "$apg" ] || [ -z "$epg" ] || [ "$apg" = "$epg" ]; then
+    bad "$lab — control: the escapee really left the actor's process group" \
+        "actor pgid='$apg' escapee pgid='$epg'; an in-group child would pass this case trivially"
+    return 1
+  fi
+  ok "$lab — control: escapee alive and OUTSIDE the actor's group (actor pgid=$apg, escapee pgid=$epg)"
+  return 0
+}
+
+must_be_dead() { # pid label
+  if [ -n "$1" ] && kill -0 "$1" 2>/dev/null; then bad "$2" "pid $1 survived the stop"; else ok "$2"; fi
+}
+
+reap() { local p; for p in "$@"; do [ -n "$p" ] && kill -KILL "$p" 2>/dev/null; done; }
+
+drop_lock() { # sandbox task
+  rm -rf "${TMPDIR:-/tmp}/work-loop-dispatch-$(printf '%s|%s' "$(cd "$1" && pwd -P)" "$2" | shasum -a 256 | cut -c1-16).lock" 2>/dev/null
+}
+
+if ! command -v python3 >/dev/null 2>&1; then
+  echo
+  echo "Cases 27b-27h — SKIP: python3 unavailable; cannot create a detached session portably"
+else
+
+# A descendant in its own session AND process group that also IGNORES SIGTERM.
+# The TERM-resistance is what stops the KILL half of the escalation being prose:
+# this process can only be removed by SIGKILL.
+mk_stubborn() { # pidfile -> actor fragment
+  printf '%s' 'python3 -c "
+import os, sys, signal, time
+os.setsid()
+signal.signal(signal.SIGTERM, signal.SIG_IGN)
+with open(\"'"$1"'\",\"w\") as f: f.write(str(os.getpid()))
+time.sleep(300)
+" &'
+}
+
+# A double-forked grandchild: re-parented to pid 1 the instant the intermediate
+# exits, so no ancestry walk can find it, then exec'd into /bin/sleep so it is
+# also a SIP-protected platform binary whose environment cannot be read. This is
+# the hardest shape — only the inherited descriptor reaches it.
+mk_orphan() { # pidfile -> actor fragment
+  printf '%s' 'python3 -c "
+import os, sys
+if os.fork() > 0: os._exit(0)
+os.setsid()
+if os.fork() > 0: os._exit(0)
+with open(\"'"$1"'\",\"w\") as f: f.write(str(os.getpid()))
+os.execv(\"/bin/sleep\", [\"sleep\", \"300\"])
+" &'
+}
+
+wait_for() { # file [file...] -> waits up to 20s
+  local f _
+  for _ in $(seq 1 40); do
+    local all=1
+    for f in "$@"; do [ -s "$f" ] || all=0; done
+    [ "$all" -eq 1 ] && return 0
+    sleep 0.5
+  done
+  return 1
+}
+
 # ================================================================ case 27b
-# The BOUNDARY of case 27, asserted rather than assumed.
-#
-# The fix kills a process GROUP. Case 27 proves an ordinary grandchild dies with
-# it. It does NOT prove a descendant that LEAVES the group dies, and an earlier
-# draft of this work described the fix as a "whole process tree" kill, which
-# overstates it (caught in review, 2026-08-07).
-#
-# This case pins the real limit: a setsid'd descendant SURVIVES. It is expected to
-# survive. If a future change ever makes it die, this case fails and the comment
-# in dispatch.sh gets revisited — which is the point of testing a limitation.
 echo
-echo "Case 27b — the group kill does NOT reach a descendant that leaves the group"
+echo "Case 27b — SIGTERM reaches a TERM-RESISTANT descendant that left the group"
 d="$(new_sandbox)"; state_file "$d" "setsid-task" "claude"
 SR="$SANDBOX_ROOT/sig27b"; mkdir -p "$SR"
-if ! command -v python3 >/dev/null 2>&1; then
-  echo "  SKIP — python3 unavailable; cannot create a detached session portably"
-else
-  # python3 os.setsid() puts the child in its OWN session and process group.
-  ESCAPEE='python3 -c "
-import os, sys, time
-os.setsid()
-open(\"'"$SR"'/escapee.pid\",\"w\").write(str(os.getpid()))
-time.sleep(300)
-" &
-    echo $$ > "'"$SR"'/actor.pid"; sleep 300'
-  bash "$DISPATCH_BIN" --checkout "$d" --task setsid-task --log-dir "$d/runs" \
-    --timeout 300 --actor-cmd "$ESCAPEE" >"$SR/out" 2>&1 &
-  DPID=$!
-  for _ in $(seq 1 40); do [ -f "$SR/escapee.pid" ] && break; sleep 0.5; done
-  sleep 1
-  EPID="$(cat "$SR/escapee.pid" 2>/dev/null)"; APID="$(cat "$SR/actor.pid" 2>/dev/null)"
-  if [ -z "$EPID" ]; then
-    bad "the detached descendant started" "no pid file; case 27b inconclusive"
-  else
-    ok "the detached descendant started (pid $EPID, own session)"
-    kill -TERM "$DPID" 2>/dev/null
-    sleep 6
-    kill -0 "$APID" 2>/dev/null && bad "the in-group actor still dies" "actor survived" \
-                                || ok "the in-group actor still dies"
-    if kill -0 "$EPID" 2>/dev/null; then
-      ok "the OUT-OF-GROUP descendant survives — the documented limit holds"
-    else
-      bad "the OUT-OF-GROUP descendant survives — the documented limit holds" \
-          "it died; the group kill reaches further than dispatch.sh claims, so update that comment"
-    fi
-    kill -KILL "$EPID" "$APID" "$DPID" 2>/dev/null
-  fi
-  rm -rf "${TMPDIR:-/tmp}/work-loop-dispatch-$(printf '%s|%s' "$(cd "$d" && pwd -P)" "setsid-task" | shasum -a 256 | cut -c1-16).lock" 2>/dev/null
+ACT="$(mk_stubborn "$SR/escapee.pid")
+    echo \$\$ > \"$SR/actor.pid\"; sleep 300"
+bash "$DISPATCH_BIN" --checkout "$d" --task setsid-task --log-dir "$d/runs" \
+  --timeout 300 --actor-cmd "$ACT" >"$SR/out" 2>&1 &
+DPID=$!
+wait_for "$SR/escapee.pid" "$SR/actor.pid"
+sleep 1
+EPID="$(cat "$SR/escapee.pid" 2>/dev/null)"; APID="$(cat "$SR/actor.pid" 2>/dev/null)"
+if escapee_is_real "$APID" "$EPID" "27b"; then
+  kill -TERM "$DPID" 2>/dev/null
+  sleep 11
+  must_be_dead "$APID" "the in-group actor dies"
+  must_be_dead "$EPID" "the OUT-OF-GROUP, TERM-RESISTANT descendant is GONE (SIGKILL half proven)"
+  wait "$DPID" 2>/dev/null; SRC=$?
+  expect_rc 28 "$SRC" "still exits 28 INTERRUPTED" "$(cat "$SR/out")"
+  grep -q "teardown verified" "$SR/out" \
+    && ok "the run log records a VERIFIED teardown" || bad "the run log records a VERIFIED teardown" "$(cat "$SR/out")"
 fi
+reap "$EPID" "$APID" "$DPID"
+drop_lock "$d" setsid-task
+
+# ================================================================ case 27c
+echo
+echo "Case 27c — SIGTERM reaches a DOUBLE-FORKED orphan re-parented to pid 1"
+d="$(new_sandbox)"; state_file "$d" "orphan-task" "claude"
+SR="$SANDBOX_ROOT/sig27c"; mkdir -p "$SR"
+ACT="$(mk_orphan "$SR/escapee.pid")
+    echo \$\$ > \"$SR/actor.pid\"; sleep 300"
+bash "$DISPATCH_BIN" --checkout "$d" --task orphan-task --log-dir "$d/runs" \
+  --timeout 300 --actor-cmd "$ACT" >"$SR/out" 2>&1 &
+DPID=$!
+wait_for "$SR/escapee.pid" "$SR/actor.pid"
+sleep 1
+EPID="$(cat "$SR/escapee.pid" 2>/dev/null)"; APID="$(cat "$SR/actor.pid" 2>/dev/null)"
+# The extra control this case needs: the orphan must really be re-parented, or it
+# would be reachable by the ancestry walk and prove nothing about the fd handle.
+OPPID="$(ps -o ppid= -p "$EPID" 2>/dev/null | tr -d ' ')"
+if [ "$OPPID" = "1" ]; then
+  ok "27c — control: the orphan is re-parented to pid 1 (no ancestry link survives)"
+else
+  bad "27c — control: the orphan is re-parented to pid 1" "ppid is '$OPPID'; the double fork did not take"
+fi
+if escapee_is_real "$APID" "$EPID" "27c"; then
+  kill -TERM "$DPID" 2>/dev/null
+  sleep 11
+  must_be_dead "$APID" "the in-group actor dies"
+  must_be_dead "$EPID" "the ORPHANED, re-parented, SIP-binary descendant is GONE"
+  wait "$DPID" 2>/dev/null; SRC=$?
+  expect_rc 28 "$SRC" "still exits 28 INTERRUPTED" "$(cat "$SR/out")"
+fi
+reap "$EPID" "$APID" "$DPID"
+drop_lock "$d" orphan-task
+
+# ================================================================ case 27d
+echo
+echo "Case 27d — SIGINT (the other trap) reaches an escaped descendant too"
+d="$(new_sandbox)"; state_file "$d" "sigint-task" "claude"
+SR="$SANDBOX_ROOT/sig27d"; mkdir -p "$SR"
+ACT="$(mk_stubborn "$SR/escapee.pid")
+    echo \$\$ > \"$SR/actor.pid\"; sleep 300"
+# `set -m` is load-bearing here, and it took a failing run to find out. A command
+# backgrounded from a NON-interactive shell has SIGINT set to IGNORED by POSIX
+# rule, and bash cannot trap a signal that was ignored on entry — so without job
+# control the dispatcher never saw this signal, ran its actor to completion, and
+# the case "failed" for a reason that has nothing to do with the dispatcher. Job
+# control gives the child its own process group and default dispositions, which is
+# the shape an operator's Ctrl-C actually reaches.
+set -m
+bash "$DISPATCH_BIN" --checkout "$d" --task sigint-task --log-dir "$d/runs" \
+  --timeout 300 --actor-cmd "$ACT" >"$SR/out" 2>&1 &
+DPID=$!
+set +m
+wait_for "$SR/escapee.pid" "$SR/actor.pid"
+sleep 1
+EPID="$(cat "$SR/escapee.pid" 2>/dev/null)"; APID="$(cat "$SR/actor.pid" 2>/dev/null)"
+if escapee_is_real "$APID" "$EPID" "27d"; then
+  kill -INT "$DPID" 2>/dev/null
+  sleep 11
+  must_be_dead "$EPID" "SIGINT clears the escaped descendant (both traps asserted, not assumed shared)"
+  wait "$DPID" 2>/dev/null; SRC=$?
+  expect_rc 28 "$SRC" "SIGINT also exits 28" "$(cat "$SR/out")"
+  grep -q "SIGINT" "$SR/out" && ok "the stop names SIGINT" || bad "the stop names SIGINT" "$(cat "$SR/out")"
+fi
+reap "$EPID" "$APID" "$DPID"
+drop_lock "$d" sigint-task
+
+# ================================================================ case 27e
+echo
+echo "Case 27e — the PER-ACTOR TIMEOUT path (exit 21) clears escaped descendants"
+d="$(new_sandbox)"; state_file "$d" "timeout-esc" "claude"
+SR="$SANDBOX_ROOT/sig27e"; mkdir -p "$SR"
+ACT="$(mk_stubborn "$SR/escapee.pid")
+    $(mk_orphan "$SR/orphan.pid")
+    echo \$\$ > \"$SR/actor.pid\"; sleep 300"
+( bash "$DISPATCH_BIN" --checkout "$d" --task timeout-esc --log-dir "$d/runs" \
+    --timeout 6 --actor-cmd "$ACT" >"$SR/out" 2>&1; echo $? >"$SR/rc" ) &
+DPID=$!
+wait_for "$SR/escapee.pid" "$SR/orphan.pid" "$SR/actor.pid"
+EPID="$(cat "$SR/escapee.pid" 2>/dev/null)"; OPID="$(cat "$SR/orphan.pid" 2>/dev/null)"
+APID="$(cat "$SR/actor.pid" 2>/dev/null)"
+escapee_is_real "$APID" "$EPID" "27e"
+wait "$DPID" 2>/dev/null
+sleep 1
+expect_rc 21 "$(cat "$SR/rc" 2>/dev/null || echo 99)" "exits 21 ACTOR_TIMEOUT" "$(cat "$SR/out")"
+must_be_dead "$EPID" "the timeout path clears the TERM-resistant escapee"
+must_be_dead "$OPID" "the timeout path clears the double-forked orphan"
+reap "$EPID" "$OPID" "$APID"
+drop_lock "$d" timeout-esc
+
+# ================================================================ case 27f
+echo
+echo "Case 27f — the GLOBAL DEADLINE path (exit 29) clears escaped descendants"
+d="$(new_sandbox)"; state_file "$d" "deadline-esc" "claude"
+SR="$SANDBOX_ROOT/sig27f"; mkdir -p "$SR"
+ACT="$(mk_stubborn "$SR/escapee.pid")
+    echo \$\$ > \"$SR/actor.pid\"; sleep 300"
+( bash "$DISPATCH_BIN" --checkout "$d" --task deadline-esc --log-dir "$d/runs" \
+    --timeout 300 --deadline 6 --actor-cmd "$ACT" >"$SR/out" 2>&1; echo $? >"$SR/rc" ) &
+DPID=$!
+wait_for "$SR/escapee.pid" "$SR/actor.pid"
+EPID="$(cat "$SR/escapee.pid" 2>/dev/null)"; APID="$(cat "$SR/actor.pid" 2>/dev/null)"
+escapee_is_real "$APID" "$EPID" "27f"
+wait "$DPID" 2>/dev/null
+sleep 1
+expect_rc 29 "$(cat "$SR/rc" 2>/dev/null || echo 99)" "exits 29 BUDGET_EXHAUSTED" "$(cat "$SR/out")"
+must_be_dead "$EPID" "the deadline path clears the escaped descendant"
+reap "$EPID" "$APID"
+drop_lock "$d" deadline-esc
+
+# ================================================================ case 27g
+# The evidence guard. Every case above would go green if the teardown were simply
+# killing everything in sight, so this proves the OLD mechanism could not have
+# passed them: a group-only TERM, applied to the same escapee, leaves it running.
+# It also proves the harness can tell an in-group child from an escaped one.
+echo
+echo "Case 27g — positive control: a GROUP-ONLY kill does NOT reach these escapees"
+SR="$SANDBOX_ROOT/sig27g"; mkdir -p "$SR"
+set -m
+bash -c "$(mk_stubborn "$SR/escapee.pid")
+  ( sleep 300 ) & echo \$! > \"$SR/ingroup.pid\"
+  echo \$\$ > \"$SR/actor.pid\"; sleep 300" >"$SR/out" 2>&1 &
+CTRL=$!
+set +m
+wait_for "$SR/escapee.pid" "$SR/ingroup.pid"
+sleep 1
+EPID="$(cat "$SR/escapee.pid" 2>/dev/null)"; IPID="$(cat "$SR/ingroup.pid" 2>/dev/null)"
+CPG="$(ps -o pgid= -p "$CTRL" 2>/dev/null | tr -d ' ')"
+kill -TERM -- "-$CPG" 2>/dev/null
+sleep 3
+if [ -n "$IPID" ] && kill -0 "$IPID" 2>/dev/null; then
+  bad "the group-only kill DOES reach an in-group child" "in-group child $IPID survived; the control is broken"
+else
+  ok "the group-only kill DOES reach an in-group child"
+fi
+if [ -n "$EPID" ] && kill -0 "$EPID" 2>/dev/null; then
+  ok "the group-only kill does NOT reach the escapee — so cases 27b-27f are not passing trivially"
+else
+  bad "the group-only kill does NOT reach the escapee" \
+      "the escapee died from a group kill alone; the escape shape is wrong and 27b-27f prove nothing"
+fi
+reap "$EPID" "$IPID" "$CTRL"
+
+# ================================================================ case 27h
+# THE RESIDUAL, pinned. This is the honest successor to what old-27b guarded.
+#
+# A descendant that escapes the group, is re-parented away, AND closes both
+# inherited descriptors is invisible to all three handles: no group, no ancestry,
+# no fd. It survives, and — this is the part that matters — the dispatcher must
+# not claim otherwise. Its success line is deliberately scoped to what it can see.
+# If someone later widens that wording to an unqualified "the tree is gone", this
+# case fails, which is the point of testing a limitation.
+echo
+echo "Case 27h — a descendant that also CLOSES its inherited descriptors survives, and the claim stays scoped"
+d="$(new_sandbox)"; state_file "$d" "residual-task" "claude"
+SR="$SANDBOX_ROOT/sig27h"; mkdir -p "$SR"
+INVISIBLE='python3 -c "
+import os, sys
+if os.fork() > 0: os._exit(0)
+os.setsid()
+if os.fork() > 0: os._exit(0)
+with open(\"'"$SR"'/escapee.pid\",\"w\") as f: f.write(str(os.getpid()))
+n = os.open(os.devnull, os.O_RDWR)
+os.dup2(n,0); os.dup2(n,1); os.dup2(n,2)
+os.execv(\"/bin/sleep\", [\"sleep\", \"300\"])
+" &'
+ACT="$INVISIBLE
+    echo \$\$ > \"$SR/actor.pid\"; sleep 300"
+bash "$DISPATCH_BIN" --checkout "$d" --task residual-task --log-dir "$d/runs" \
+  --timeout 300 --actor-cmd "$ACT" >"$SR/out" 2>&1 &
+DPID=$!
+wait_for "$SR/escapee.pid" "$SR/actor.pid"
+sleep 1
+EPID="$(cat "$SR/escapee.pid" 2>/dev/null)"; APID="$(cat "$SR/actor.pid" 2>/dev/null)"
+if escapee_is_real "$APID" "$EPID" "27h"; then
+  kill -TERM "$DPID" 2>/dev/null
+  sleep 11
+  must_be_dead "$APID" "the in-group actor still dies"
+  if kill -0 "$EPID" 2>/dev/null; then
+    ok "the fd-closing orphan SURVIVES — the residual is real and measured, not assumed"
+  else
+    bad "the fd-closing orphan SURVIVES — the residual is real and measured" \
+        "it died; the teardown reaches further than dispatch.sh claims, so widen that comment and this case"
+  fi
+  # The claim must be scoped to what the handles can see. An unqualified success
+  # line here would be the 1a defect wearing a verification badge.
+  if grep -q "no descendant reachable by group, ancestry or inherited descriptor" "$SR/out"; then
+    ok "the success line is SCOPED to the handles that were actually checked"
+  else
+    bad "the success line is SCOPED to the handles that were actually checked" \
+        "teardown reported something else: $(grep -i teardown "$SR/out" | head -2)"
+  fi
+fi
+# This case deliberately creates the very escapee 1a exists to prevent. It does
+# not leave with one running.
+reap "$EPID" "$APID" "$DPID"
+sleep 1
+if [ -n "$EPID" ] && kill -0 "$EPID" 2>/dev/null; then
+  bad "case 27h cleaned up its own escapee" "pid $EPID is STILL running after the case"
+else
+  ok "case 27h cleaned up its own escapee"
+fi
+drop_lock "$d" residual-task
+
+fi   # python3 available
 
 # ================================================================= case 28
 echo
@@ -839,12 +1108,19 @@ OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task budget-task --log-dir "$d/run
 elapsed=$(( $(date '+%s') - t0 ))
 expect_rc 29 "$RC" "exits 29 BUDGET_EXHAUSTED" "$OUT"
 # The bound is asserted from the arithmetic, not from a round number.
-#   deadline 3 + 1s poll + TERM_GRACE_SECS 5 + reaping slack 2 = 11
+#   deadline 3 + 1s poll + TERM_GRACE_SECS 5 + KILL_SETTLE_SECS 2
+#             + census/reaping slack 3 = 14
 # The previous version of this case accepted anything under 20s, which a 60s
 # timeout could have slipped through on a slow machine — too loose to prove a hard
-# clock (caught in review, 2026-08-07). If TERM_GRACE_SECS changes in dispatch.sh,
-# this number changes with it.
-DEADLINE_CEILING=11
+# clock (caught in review, 2026-08-07). If TERM_GRACE_SECS or KILL_SETTLE_SECS
+# changes in dispatch.sh, this number changes with it.
+#
+# RAISED 11 -> 14 on 2026-08-07 by the whole-tree teardown, which adds a SIGKILL
+# settle window and a verification census the group-only sweep never ran. That is
+# a real, disclosed widening of the worst case, not a loosened test: the plan
+# forbids relaxing the hard clock silently, so the arithmetic above and the
+# comment in dispatch.sh's effective_timeout state the same new bound.
+DEADLINE_CEILING=14
 if [ "$elapsed" -le "$DEADLINE_CEILING" ]; then
   ok "terminated within the stated worst case (${elapsed}s <= ${DEADLINE_CEILING}s; the timeout was 60s)"
 else

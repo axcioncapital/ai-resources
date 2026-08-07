@@ -1,0 +1,80 @@
+==================================================================
+ Phase 1a probe — escaped descendants
+ date:       2026-08-07 18:52:39 EEST
+ host:       Darwin 25.5.0 arm64
+ macOS:      26.5.2 (25F84)
+ dispatcher: /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+ sha256:     09477c15ac70e1853464fbf01a94502b53ea7ec7df937c1a3e655f47f003f485
+ python3:    /Library/Frameworks/Python.framework/Versions/3.14/bin/python3
+ lsof:       /usr/sbin/lsof
+==================================================================
+
+### PART A — which handle reaches which escape shape?
+
+Three descendant shapes are started under one parent, which is itself a
+process-group leader, with stdout/stderr redirected to a file exactly as
+the dispatcher redirects a hop.
+
+parent pid=47787 pgid=47787
+  PID  PPID  PGID
+47787 47770 47787
+47790 47787 47787
+47791 47787 47791
+47794     1 47793
+
+  in-group child      = 47790
+  setsid, parented    = 47791   (ppid 47787, own pgid 47791)
+  double-fork orphan  = 47794   (ppid 1, own pgid 47793, exec'd /bin/sleep)
+
+handle                           in-group     setsid       orphan      
+-------------------------------- ------------ ------------ ------------
+1 process group                  reaches      MISSES       MISSES      
+2 recursive PPID walk            reaches      reaches      MISSES      
+3 environment tag                MISSES       reaches      MISSES      
+4 inherited fd (lsof)            reaches      reaches      reaches     
+
+  raw: group=[ 47787 47790 47792 ] ancestry=[ 47790 47791 ] envtag=[ 47791 47841 ] fd=[ 47787 47790 47791 47794 ]
+
+-- why handle 3 misses what it misses: SIP-protected platform binaries --
+   /bin/sleep                                                     env NOT readable
+   /bin/bash                                                      env NOT readable
+   /Library/Frameworks/Python.framework/Versions/3.14/bin/python3 env READABLE
+
+-- handle rejected on availability: kqueue NOTE_TRACK --
+   NOTE_TRACK: UNAVAILABLE — [Errno 45] Operation not supported
+escaped-descendants-2026-08-07.sh: line 174: 47872 Killed: 9               env "WLPROBE_TAG=$WLPROBE_ENVTAG" "$b" -c 'import time;time.sleep(20)' > /dev/null 2>&1
+escaped-descendants-2026-08-07.sh: line 177: 47787 Killed: 9               env "WLPROBE_TAG=$WLPROBE_ENVTAG" bash -c "$PARENT_SH" >> "$OUTFILE" 2>&1
+
+  Part A processes cleaned: in-group=GONE setsid=GONE orphan=GONE
+
+
+### PART B — the real dispatcher's stop, observed as process state
+
+=== BEFORE the stop ===
+dispatcher=47891 actor=47983 setsid-escapee=47985 orphan-escapee=47990
+  PID  PPID  PGID COMMAND
+47891 47770 47768 bash /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/plans/work-lo
+47983 47891 47983 sleep 300
+47985 47983 47985 /Library/Frameworks/Python.framework/Versions/3.14/Resources/Python.app/Contents/M
+47990     1 47989 sleep 300
+actor=ALIVE setsid=ALIVE orphan=ALIVE  lock present: yes
+
+=== sending SIGTERM to the dispatcher (47891), and to nothing else ===
+  +3s  dispatcher=ALIVE actor=GONE setsid-escapee=ALIVE orphan-escapee=GONE  lock: held
+  +8s  dispatcher=ALIVE actor=GONE setsid-escapee=GONE orphan-escapee=GONE  lock: held
+  +13s  dispatcher=GONE actor=GONE setsid-escapee=GONE orphan-escapee=GONE  lock: released
+
+=== AFTER: effective post-stop process state ===
+  dispatcher exit code : 28   (28 = INTERRUPTED)
+  actor                : GONE
+  setsid escapee       : GONE   <- survived every group-only teardown before this unit
+  double-fork orphan   : GONE   <- reachable by NO ancestry link
+  lock                 : released
+  any pid still holding the hop output file: []
+
+=== what the dispatcher SAID (for comparison with the state above) ===
+  STOP [28] interrupted by SIGTERM during hop 1 (actor 'claude') — task escape-probe
+    terminating actor descendant tree (pgid 47983)
+    teardown verified: no descendant reachable by group, ancestry or inherited descriptor is still running
+
+probe complete
