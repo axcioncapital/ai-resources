@@ -293,7 +293,7 @@ preserved from `085db35`.
   `.../runs/probes/escaped-descendants-2026-08-07.sh`,
   `.../runs/probes/escaped-descendants-2026-08-07.raw.txt`,
   `plans/work-loop-v2-v0.2/unattended-operation-plan-v0.2.md`, and this state file.
-- Commit id recorded below once it exists.
+- **Implementation commit `cd87e5b`.**
 
 ## Blocker
 None.
