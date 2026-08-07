@@ -224,6 +224,35 @@ disposition under any circumstance in this unit.
 
 Discovery unit — read-only. Nothing outside this state file changed.
 
+### Correction round (2026-08-07)
+
+All three frozen findings reproduced by inspection before any edit; all three corrected. Nothing else
+was changed, and no disposition was selected or executed.
+
+- Finding (1): REPRODUCES — row 3 read "**covered**", citing the v2 intake router and core § 2
+  admission. Re-read against `capability-development/SKILL.md:54–107`, v1's job is a trigger-by-trigger
+  depth classification (H1–H6 challenged, M1–M5 reviewed, Solo residual) plus an
+  escalation/de-escalation protocol. The cited v2 clauses pick an *owner* and a *lane*; `qc-independence.md`
+  sizes *review*. Overlapping concern, different job. **Corrected to partly covered**, with the residual
+  named, and the downstream "demonstrably superseded" list corrected to drop route triggers. The losses
+  list and choice 1 now read nine gaps rather than eight.
+- Finding (2): REPRODUCES — the inventory excluded both sibling worktrees by assertion. Inspected:
+  `codex/2026-07-31-active-unit-routing` is **37 commits** ahead of `main` and
+  `codex/2026-07-31-g1-reviewed-plan-invariant` **25**, neither merged, both clean, and **both still
+  carry `.claude/commands/work-loop.md` at 309 lines**. This is the exact case
+  `step-7-v1-retirement-decision.md:115` warned of, now actual. Added as a third constraint class with
+  its own operator choice (now choice 5). Separately, `.gitignore:81` **reclassified** out of Class B:
+  it re-includes the skill for tracking, consumes none of its behaviour, and is inert if the skill goes
+  — a cleanup prerequisite, not an inbound dependency.
+- Finding (3): REPRODUCES — two sentences advocated. "Option C … is the shape § 1's split most directly
+  supports" and "`docs/work-loop-spec.md` could go first and alone". **Both removed.** The evidence each
+  rested on is preserved: which rows are superseded and which are not, the differing separability of the
+  five files by dependency class, the August 1 history, and the symmetric keep/fold/retire costs.
+
+**Did the correction break anything?** No. The Class A finding, the § 2 durable-state verdicts, the
+§ 4 record analysis and the reopening-test conclusion are untouched; main's live-surface counts are
+unchanged apart from the one reclassification, which is stated in place rather than silently dropped.
+
 ### Claim verification
 
 - Claim (1): HOLDS — `develop-ai-resource-v2-capability-seam`, `leverage-idea-v2-routing-seam` and
@@ -278,7 +307,7 @@ uses the same word.
 |---|---|---|---|---|---|---|
 | 1 | Boundary sentences | fix what the method is and is not | `develop-ai-resource.md:24` (Unit 1) + v2 skill index `:166–167` | **covered** | — | no |
 | 2 | What an operating capability is | define the object under work | none — v2 uses "capability" in Adoption mode without defining it | **partly covered** | the object definition itself | yes (identity) |
-| 3 | Route triggers | capability-specific triggers atop the universal set | v2 intake router `SKILL.md:117–176` + core § 2 admission | **covered** | — | no |
+| 3 | Route triggers | classify a unit **trigger by trigger** — H1–H6 challenged, M1–M5 reviewed, Solo as the residual — to set its **depth**, and re-test the route at every phase boundary | partial overlap only, and no clause performs the classification: the v2 intake router picks an *owner*, core § 2 picks Direct-versus-Standard, `docs/qc-independence.md` sizes *independent review* | **partly covered** | the trigger enumeration itself; H6's create-versus-change split (changing a shared resource fires *reviewed* universally but *challenged* for capability units); Solo's "**depth is what the route changes; presence is not**"; and the escalation/de-escalation protocol — additive escalation, re-test on discovering a second consumer or an irreversible step, and "de-escalation requires a trigger to be **disproven by evidence**, not merely doubted" | **yes** — `route: challenged`, § Route |
 | 4 | The intervention ladder | 8 rungs, stop at the first that works; a required Frame output | `develop-ai-resource.md` § 1.4 — a 10-rung ladder, but for **artifact mechanism** only | **partly covered** | no live ladder for a non-artifact operating capability; v2 hits for "intervention ladder" = **0** (v1 = 4) | no |
 | 5 | Ownership and seams | 4-criteria owner selection; the 7-field seam; technical **and operating** seam | none. v2's "owner" (20 hits) is *which command owns the request*; v2's "seam" (3 hits) is the **transport** seam — `step-2-transport-seam-conclusions.md` and the Codex skill's `## The seam` | **not covered** | owner-selection procedure, 7-field seam, the operating-seam concept, "dependencies never become co-owners" | **yes** — § Ownership and seams |
 | 6 | The five phases | Frame·Shape·Build·Prove·Land, each with an exit | v2 unit cycle (core § 3) + three modes | **partly covered** | the capability-level arc and its G1/G2/G3 gates; v2's cycle is per-unit | **yes** — `phase: build`, § Units |
@@ -341,8 +370,10 @@ stays deferred.
 
 Searched: workspace root, `ai-resources/`, `projects/`, `knowledge-bases/`, `.claude/`, `CLAUDE.md`,
 by exact path, basename, skill/resource name and invocation text, plus a `find -type l` symlink pass.
-Excluded: `.git` internals and the two sibling worktrees (`ai-resources-active-unit-routing`,
-`ai-resources-g1-reviewed-plan`), confirmed as separate branches by `git worktree list`.
+Excluded: `.git` internals only. **The two sibling worktrees are included** — see the worktree
+subsection below. An earlier pass excluded them as "separate branches"; that was wrong, because the
+brief requires the workspace-root search and current-state dependencies, and the August 1 decision
+names in-flight v1 branches as a specific risk.
 
 **Positive control for each family:** every pattern returns non-zero somewhere (40 / 27 / 13 / 65 / 31
 files), so a zero in the live-surface column is a real absence rather than a blind search.
@@ -367,7 +398,11 @@ files), so a zero in the live-surface column is a real absence rather than a bli
 | `docs/emailos-mvp-learning/RESOURCES.md:21`, `:23`; `NOTES.md:12` | contract + method | learning material presented as current |
 | `.claude/commands/develop-ai-resource.md:26`, `:66`, `:165` | method, template, contract | Unit 1 text naming the survivors as v1 documents; `:165` cites `docs/work-loop.md` § Execution boundary |
 | `projects/axcion-ai-system-owner/development/prime-runtime-delegation.md:82`, `:135`, `:340` | `docs/work-loop.md` §§ Artifacts, Block formats, Resume order | **live current-state record depending on a deleted executor's contract** |
-| `.gitignore:81` | `!.agents/skills/work-loop/` | explicit re-include; the v1 Codex skill **is tracked** (`git ls-files` confirms) |
+**Not a Class B dependency — reclassified.** `.gitignore:81` (`!.agents/skills/work-loop/`) only
+re-includes the v1 Codex skill so Git tracks it. It does not consume the skill's behaviour, and it
+does not break or become unreachable if the skill is later removed — a re-include line matching
+nothing is inert. It is a **cleanup/tracking prerequisite** attached to any removal of that skill, not
+an inbound dependency of it. (The skill *is* tracked: `git ls-files .agents/skills/` confirms.)
 
 **Class C — self/internal v1.** The five files citing each other: `.agents/skills/work-loop/SKILL.md:10`,
 `:85`; `capability-development/SKILL.md` (12 citations of `docs/work-loop.md`, plus `:331` on the
@@ -388,6 +423,31 @@ work-loop symlink resolves to `work-loop-v2` (`.claude/commands/work-loop-v2.md`
 elsewhere in the workspace (`projects/project-planning/`, `projects/strategic-os/.backup-untracked/`)
 but none targets these files. **v1's six deployed symlinks are already gone** — consistent with the
 `0516bf6` log.
+
+**The two sibling worktrees — branch-local, and materially live.** Both were inspected rather than
+excluded:
+
+| Worktree | Branch | Ahead of `main` | Merged | Working tree | Carries `.claude/commands/work-loop.md` |
+|---|---|---|---|---|---|
+| `ai-resources-active-unit-routing` | `codex/2026-07-31-active-unit-routing` | **37 commits** | no | clean | **yes — 309 lines** |
+| `ai-resources-g1-reviewed-plan` | `codex/2026-07-31-g1-reviewed-plan-invariant` | **25 commits** | no | clean | **yes — 309 lines** |
+
+Both carry the deleted v1 command and four of the five v1 files (`docs/work-loop-spec.md` is absent
+from both; it postdates their branch point). Neither branch is merged: `git branch --merged main`
+returns neither, and `git branch --contains` on each tip returns only that branch. **62 unmerged
+commits in total.**
+
+Classification: these are **live branch-local dependencies**, not historical mentions. They are not
+inbound references *from* main's live surface — nothing on main reads them — but they are current
+repository state whose only driver is the deleted command. This is precisely the risk
+`step-7-v1-retirement-decision.md:115` names: "archive v1 while a branch that only v1 can drive is
+unmerged — the work becomes unreachable by any". That risk is **presently realised on two branches**,
+independent of any option chosen here.
+
+Effect on the counts: main's live-surface classification is unchanged (Class A stays one; Class B
+loses the `.gitignore` row, reclassified above). The worktrees add a third constraint class that the
+earlier exclusion had hidden entirely — a merge-or-abandon decision on 62 commits, which no option
+below can avoid and which this unit does not make.
 
 **No-build rule engaged.** `templates/capability-record.md` (Class A) and the Class B set cannot be
 retired unchanged. The migration/repair prerequisites are recorded above and **were not performed**.
@@ -447,13 +507,19 @@ build-stopping condition (**not covered**); slice standards (**not covered**); d
 covered**); the 9-status lifecycle vocabulary with its ACTIVE set (**partly** — and consumed by a live
 executable check); the claim-type→evidence table and observed·unassessed·blocked marking (**partly**);
 the intervention ladder for non-artifact capabilities (**partly**); the five-phase arc and its gates
-(**partly**).
+(**partly**); and the capability route triggers with their escalation/de-escalation protocol
+(**partly** — added by the correction to row 3).
 
-**v1 process content demonstrably superseded by v2:** route triggers, the self-review questions,
-finding adjudication, the boundary sentences and "what this skill never does" (rows 1, 3, 10, 11, 17)
-— plus the whole of `docs/work-loop.md`'s admission/unit/state/resume machinery and
-`docs/work-loop-spec.md`, whose `Applies to:` target is a deleted file. Row 16 is obsolete rather than
-superseded.
+**v1 process content demonstrably superseded by v2:** the self-review questions, finding adjudication,
+the boundary sentences and "what this skill never does" (rows 1, 10, 11, 17) — plus the whole of
+`docs/work-loop.md`'s admission/unit/state/resume machinery and `docs/work-loop-spec.md`, whose
+`Applies to:` target is a deleted file. Row 16 is obsolete rather than superseded.
+
+**Route triggers (row 3) are deliberately not in that list.** They were re-evaluated as *partly
+covered*: v2 picks an owner and a lane, and `qc-independence.md` sizes review, but nothing performs
+the trigger-by-trigger depth classification or the escalation/de-escalation protocol. They belong with
+the losses above, not the supersessions. A separate decision that these triggers should not be ported
+would be a disposition, not evidence of coverage, and is not treated as either here.
 
 **Files that cannot move while live inbound references remain:**
 
@@ -480,7 +546,10 @@ superseded.
 - **Retire the layer after named prerequisites.** Prerequisites are enumerated above: relocate the
   status vocabulary check 4 depends on; repoint `qc-independence.md`, `ai-resource-creation.md:17`,
   `RESOURCES.md:13`, `templates/README.md:31`; disposition the live record's open S2/S4+5 claims and
-  the active mission; remove `.gitignore:81`. `docs/work-loop-spec.md` could go first and alone.
+  the active mission; remove the `.gitignore:81` re-include. Separability differs across the five:
+  `docs/work-loop-spec.md` has no live inbound reference, `templates/capability-record.md` has an
+  executable one, and the remaining three have normative ones — a fact about constraints, carrying no
+  view on sequence.
 
 **The August 1 decision beside what has changed.**
 
@@ -492,13 +561,19 @@ was executed without; and `0516bf6`'s pattern is now measured, not asserted, at 
 *Unchanged since August 1:* the five files still exist with no executor; the capability method's seven
 load-bearing sections remain zero-of-seven fully covered; exactly one capability record exists and it
 is still ACTIVE; and `templates/capability-record.md` still carries a live executable dependency.
-Option C — retire only the half v2 replaces — remains untaken and is the shape § 1's split (rows 1, 3,
-10, 11, 17 superseded; rows 4–9, 12–14 not) most directly supports. **This unit does not declare the
-August 1 decision superseded, reaffirmed or still executable.**
+Option C — retire only the half v2 replaces — remains untaken; § 1 records which rows are superseded
+(1, 10, 11, 17) and which are not (3–9, 12–15), which is the evidence any option is judged against.
+
+*Newly visible, and not weighed on August 1:* two unmerged branches, 62 commits, both carrying the
+deleted command. `step-7-v1-retirement-decision.md:115` anticipated this case; § 3 shows it is now
+actual.
+
+**This unit does not declare the August 1 decision superseded, reaffirmed or still executable, and
+recommends no option.**
 
 **Smallest set of explicit operator choices needed next:**
 
-1. Keep, fold or retire the capability **method** (`capability-development/SKILL.md`) — the eight
+1. Keep, fold or retire the capability **method** (`capability-development/SKILL.md`) — the nine
    named gaps are the object of this choice.
 2. Where the **status vocabulary** lives, given `develop-ai-resource.md:57` depends on it — this
    choice is a precondition for retiring `templates/capability-record.md` under any option.
@@ -507,7 +582,10 @@ August 1 decision superseded, reaffirmed or still executable.**
 4. Whether the **v1 process files** (`docs/work-loop.md`, `docs/work-loop-spec.md`,
    `.agents/skills/work-loop/SKILL.md`) are retired now on the superseded-by-v2 finding, separately
    from choice 1.
-5. How the **August 1 Option A decision** is reconciled with the current evidence — the one choice
+5. What happens to the **two unmerged branches** — 62 commits whose only driver is the deleted
+   command: merge, rebase onto the v2 world, or abandon. This choice is independent of choices 1–4
+   and is not resolved by any of them.
+6. How the **August 1 Option A decision** is reconciled with the current evidence — the one choice
    this unit is forbidden to make.
 
 Every file above carries an option set with constraints. No disposition was selected, no repository
@@ -519,8 +597,11 @@ None.
 
 ## Next action
 
-Codex: assess this discovery. The five-part package is above. Two things a reader should weigh
-explicitly — the plan's reopening test for a new v2 durable address is **not met** (loss at closure is
-shown for three of five fields, but only one live record exists), and `docs/work-loop-spec.md` is the
-only one of the five files with **no live inbound reference**, so it is separable from the rest under
-any option.
+Codex: run the closure check on the three frozen findings only — (1) row 3 re-evaluated against actual
+behaviour with the downstream statements corrected, (2) the worktrees inspected and classified and
+`.gitignore:81` reclassified, (3) the advocacy removed with the evidence preserved — and whether the
+correction broke anything.
+
+One thing surfaced by finding 2 that is new evidence rather than a correction: 62 unmerged commits on
+two branches still carry the deleted v1 command. It is recorded as operator choice 5 and is not
+resolved by choices 1–4.
