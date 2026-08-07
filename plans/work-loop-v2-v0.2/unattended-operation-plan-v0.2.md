@@ -604,5 +604,5 @@ no.
    note the review round's own row 1 has since been superseded, because Phase 0 showed part of my
    reply to it was wrong.
 
-**No questions remain open for the operator.** What is left is unbuilt and unproven work — the four
+**No questions remain open for the operator.** What is left is unbuilt and unproven work — the three
 Phase 2 blockers — not decisions.
