@@ -104,8 +104,8 @@ Evidence — scope held. `git status` across `plans/` and `.agents/` shows exact
 this state file and the plan. No code, test, README, `SKILL.md`, run record, raw evidence or phase
 gate was touched.
 
-Commit: recorded below in a follow-up commit. The identifier cannot exist inside the commit that
-creates it, so it is added afterwards rather than left out or approximated — the same way the two
+Commit: **`32b3239`**. The identifier cannot exist inside the commit that creates it, so it is
+recorded here in a follow-up commit rather than left out or approximated — the same way the two
 earlier rounds of this task handled it.
 
 Deferrals — carried forward from the correction round, still recorded and still not done:
