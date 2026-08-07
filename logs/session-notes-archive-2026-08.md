@@ -2273,3 +2273,58 @@ Continuity detail: `logs/scratchpads/2026-08-04-17-30-scratchpad.md`.
 ### Open Questions
 Whether and when either follow-on (R-1/R-5 regression, or the S8b proof task) gets scheduled remains
 undecided. Nothing in this session commits to a timeline.
+## 2026-08-05 — Work Loop v2 handoff dispatcher: live Codex/Claude transport proven, then closed
+
+### Summary
+Ran two `/work-loop-v2` invocations against task `work-loop-v2-handoff-dispatcher`. Unit 1 built a
+throwaway task-scoped dispatcher spike (`plans/work-loop-v2-v0.2/handoff-automation-spike/`) that
+carries one exact Work Loop task through Codex and Claude non-interactive turns without an operator
+carrying the handoff, then executed a real live sequence: seven live actor launches, six completed
+allowed transitions, ending unattended at `turn: operator`. The loop's own safety rule fired live — a
+child Claude refused a brief resting on a false premise and handed back — and Codex's close token
+crossed the seam cleanly. Codex then assessed and closed the task; this session wrote and committed
+the closing record.
+
+### Decisions Made
+- **Task closed on Codex's verdict, not re-judged.** Per core § 3, closure is Codex's call; Claude's
+  role is to write and commit the closing record. Routine protocol decision, not logged separately to
+  `decisions.md`.
+- **Two dispatcher defects found by the live run were fixed and regression-tested within the unit**,
+  rather than merely noted: an uncommitted-handback gap (new exit code 25, asymmetric by actor) and a
+  timeout that counted poll iterations instead of wall-clock seconds. Both are now covered by new
+  harness cases (13, 13b, and the timeout case).
+- **Two stated deviations from the brief's literal isolation instruction**, both justified in the
+  state file rather than absorbed silently: the live fixture's state file at
+  `logs/work-loop/spike-live-transport.md` (outside the spike directory, because both entrypoints
+  resolve that path from the checkout root), and a live-run-only `--allow-path` for
+  `logs/friction-log.md` (a PostToolUse hook writes to it constantly; the dispatcher's built-in
+  allowlist is unchanged).
+
+### Risky actions
+None. No hook, daemon, settings file, schema, or production installation was touched. No permission
+was widened — the live `claude -p` launch used no `--dangerously-skip-permissions` and inherited the
+project's existing `defaultMode: bypassPermissions`. My own 10-minute foreground tool timeout killed
+one live Claude hop mid-run (SIGTERM, not a product failure); the dispatcher stopped correctly on it
+and the retry from disk succeeded.
+
+### Findings Declined
+- **Actor timeout counted poll iterations, not wall-clock seconds** (so `--timeout` silently became a
+  lower bound). Declined — already fixed within this session (measured against `date '+%s'` instead)
+  and regression-tested by `dispatch.test.sh`'s timeout case; no residual risk.
+- **A Claude hop killed between editing and committing left a partial state file with nothing
+  stopping.** Declined — already fixed within this session (new exit code 25, asymmetric by actor)
+  and regression-tested by harness cases 13/13b; no residual risk.
+- **`dispatch.sh --help` output is truncated** (`sed -n '2,45p'`), omitting exit code 25 and the
+  exit-`0` mode qualifier. Declined — cosmetic, already recorded as an accepted limitation in the
+  closed task's own record (`logs/work-loop/work-loop-v2-handoff-dispatcher.md`); the complete
+  exit-code set stays inspectable in the source and the README, so it carries no named consequence
+  beyond documentation completeness.
+
+### Next Steps
+Nothing is queued. The task is closed; its closing record names three deferred options (worktree-per-
+task spike for parallel loops, wider crash-recovery proof, production hook/daemon triggering) but none
+is scheduled. If a follow-on unit is wanted, start with `/work-loop-v2` against a newly opened task —
+the closed record itself stays read-only.
+
+### Open Questions
+None.

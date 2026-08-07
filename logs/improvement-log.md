@@ -2935,3 +2935,37 @@ without confirming there is no fallback or exception stated later in the same fi
 
 **Target files:** none — this is a working-method finding, not a file defect. No fix is proposed;
 reopen only if the same shape of partial-read error surfaces again in an inspection task.
+
+## 2026-08-07 — A dispatcher lock can outlive the checkout that created it
+- **Severity:** medium — `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` keys its lock
+  directory on `sha256(checkout|task)`. Found live in this repository during the proportionality-continuity
+  Work Loop task: two `work-loop-dispatch-*.lock` directories in `$TMPDIR`, both with dead pids, matched
+  against every task in this checkout and all 8 live worktrees — zero matches, because the checkout that
+  created them (one worktree in the list is already marked `prunable`) no longer exists. `--status` cannot
+  resolve a lock like this either, since it also needs the checkout to recompute the key. Nothing recommends
+  removal automatically in this state — a human has to notice the lock, guess its origin, and remove it by
+  hand, which is what happened here.
+- **Target file:** `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` — `LOCK_DIR` construction
+  and `pid_state()`.
+- **Related:** documented as a deferral in the closed task
+  `logs/work-loop/work-loop-v2-proportionality-continuity-plan.md`, and noted as adjacent to but out of
+  scope for RC-6/§4.8 in `plans/work-loop-v2-v0.2/work-loop-v2-proportionality-continuity-implementation-plan-v0.1.md`
+  (the run-ID/log-dir collision fix, which does not cover this failure mode). Not fixed here — recorded so
+  it is not lost between the deferral note and an eventual S7-adjacent slice.
+
+## 2026-08-07 — `run-manifest.sh close` hard-errors on a genuinely markerless session instead of the documented stub-and-continue
+- **Severity:** medium — `wrap-session.md`'s "THE ADVISORY RULE" states an absent manifest is a routine,
+  legitimate path and `close` "writes a wrap-time stub when none exists, says so in one advisory line, and
+  exits 0." Observed live this session (which began via a direct `/work-loop-v2` skill invocation, no
+  `/prime`, so neither a per-id nor a today-dated shared marker existed): `run-manifest.sh close` exited
+  **2** with "could not resolve the session marker … Run /prime to seed the marker, or pass --marker
+  explicitly" — not the documented stub-and-exit-0 behaviour. The two paths are distinguishable in the
+  script's own design (shared-file-fallback-while-`CLAUDE_CODE_SESSION_ID`-set prints a NOTICE and exits 0;
+  this is the same underlying situation — no per-id marker — but with no shared marker at all either), so the
+  no-marker-anywhere case appears to fall through to a hard error rather than the advisory stub path the wrap
+  documentation promises for exactly this session shape.
+- **Target file:** `logs/scripts/run-manifest.sh` — the marker-resolution branch `close` takes when neither
+  a per-id nor a shared marker exists at all.
+- **Not fixed here** — this session's wrap proceeded without a manifest per the documented advisory rule
+  ("surface it and continue the wrap"), which is what happened; the finding is that the *script* didn't
+  self-heal the way the rule describes, not that this session's wrap was blocked.
