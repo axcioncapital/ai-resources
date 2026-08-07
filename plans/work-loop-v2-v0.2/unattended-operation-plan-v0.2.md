@@ -7,25 +7,25 @@ Author: Claude. Revised after independent Codex review of v0.1.
 >
 > | Item | State |
 > |---|---|
-> | **Phase 0** — attended launcher proof (0a nested launch, 0b detached checklist, 0c multi-hop) | **COMPLETE** — run by Codex, `runs/phase0-attended-launcher-proof-2026-08-07.md`. Nested launch works but only *outside* the ordinary command sandbox. **The detached shape does not survive**: a `nohup … &` launch from a Codex command is reaped before the dispatcher starts, so the supervised terminal fallback is the only viable launch. 0c ran five hops unattended and closed correctly at `turn: operator` |
+> | **Phase 0** — attended launcher proof (0a nested launch, 0b detached checklist, 0c multi-hop) | **COMPLETE** — run by Codex, `runs/phase0-attended-launcher-proof-2026-08-07.md`. Nested launch works, but only *outside* the ordinary command sandbox. Direct detachment fails: a `nohup … &` launch from a Codex command is reaped before the dispatcher starts. **This selects the approved launch shape rather than blocking anything** — § 0b already named the supervised shell session as the fallback, and Phase 0 proved it. 0c was **an attended five-hop live run with no operator transport during the run**, closing correctly at `turn: operator` |
 > | **1a** stoppable run | **PARTIAL — still blocking.** The group kill works (exit `28`, case 27, and observed live in Phase 0 § 0b item 4). **A descendant that leaves the actor's process group survives it** — asserted deliberately by case 27b. Stop control is a process-*group* boundary, not a whole-tree one |
 > | **1b** true deadline | **done.** `--deadline`, clamps the actor timeout before every launch and every retry. Exit `29`. Tests: cases 28–28d |
 > | **1c** committed-path check | **done.** Exit `30`. Tests: cases 29–29c |
 > | **1d** unattended authority | **policy SETTLED by the operator; dispatcher integration NOT built.** The contained profile is proven (`runs/probe-contained-authority-2026-08-07.md`) and chosen: no push, no tool-side network. The existing `--claude-deny` plumbing is *not* that profile and does not deliver it |
-> | **1e** no sleep | **done as documentation** — `caffeinate -i` in the worked invocation, spike `README.md` |
+> | **1e** no sleep | **done — observed in the supervised Phase 0 proof under `caffeinate -i`.** The 0c run held the machine awake across five hops and 301 seconds of actor time without dying mid-hop. Also documented in the worked invocation, spike `README.md` |
 > | **1f** branch isolation | **UNPROVEN — still blocking.** Documented only (branch + clean tree + the worktree blocker, spike `README.md` § Safety boundaries). No run has demonstrated a clean branch/isolation boundary in practice. Written down is not proven |
 > | **1g** read-only status | **PARTIAL — still blocking.** `--status` works unsandboxed (cases 30–30c, and observed live in Phase 0 § 0b item 3). **It reports a live run as `STALE LOCK` when `kill -0` is refused by sandbox policy** — it cannot tell "permission denied while checking" from "PID does not exist". Measured in Phase 0. This is the failure mode that matters most, because it misreports a *running* dispatcher as dead |
-> | **Phase 2** — walk-away pilot | **BLOCKED**, correctly. Phase 0 is no longer among the blockers; 1d's *policy* is settled. **Five remain — see the list below the table.** None is a decision; all are unbuilt or unproven work |
+> | **Phase 2** — walk-away pilot | **BLOCKED**, correctly. Phase 0 is no longer among the blockers; 1d's *policy* is settled. **Four remain — see the list below the table.** None is a decision; all are unbuilt or unproven work |
 > | **Phase 3** — documentation (3a–3h) | **done, except 3c and 3d, both RE-OPENED by the 1d correction.** `SKILL.md` § Courier mode + § The seam and spike `README.md` stand. 3c (what stays forbidden) and 3d (the risk envelope) describe a pre-sandbox world and must be rewritten once the contained profile is built |
 > | Core § 4 decision | **recorded** in `logs/decisions.md`, 2026-08-07 |
 >
-> Suite: **149 pass, 0 fail** — all simulated. **One live multi-hop run has now happened** (Phase 0c:
-> five hops, three commits, closed at `turn: operator`, no operator transport during the run). It was
-> launched from a supervised terminal by the operator and ran **without** the contained profile.
-> **The Phase 2 walk-away pilot has not happened**, and the five blockers below stand between here
-> and it.
+> Suite: **149 pass, 0 fail** — all simulated. **One live multi-hop run has now happened** — Phase 0c,
+> **an attended five-hop live run with no operator transport during the run**: three commits, closed
+> at `turn: operator`. The operator was present at a supervised terminal throughout; it was not a
+> walk-away run and it ran **without** the contained profile. **The Phase 2 walk-away pilot has never
+> happened**, and the four blockers below stand between here and it.
 >
-> ### Phase 2 blockers — all five, none of them a decision
+> ### Phase 2 blockers — all four, none of them a decision
 >
 > | # | Blocker | Why it blocks a walk-away run |
 > |---|---|---|
@@ -33,10 +33,15 @@ Author: Claude. Revised after independent Codex review of v0.1.
 > | 2 | **`--status` false `STALE LOCK`** (1g) | A live run reads as dead whenever PID inspection is refused. The operator's one read-only instrument lies in exactly the situation it exists for |
 > | 3 | **Escaped descendants survive the stop** (1a) | `kill -TERM` reaches the actor's process *group*. Anything that calls `setsid` outlives the run, unsupervised and unbounded |
 > | 4 | **Branch/isolation unproven** (1f) | Documented, never demonstrated. The claim that `main` is protected has not been exercised |
-> | 5 | **Detached launch does not survive** (Phase 0b) | A `nohup … &` launch from a Codex command is reaped before the dispatcher starts. Only a supervised terminal works, which constrains what "walk away" can mean |
 >
 > Blockers 2 and 3 are the ones that would hurt most unattended: one misreports a running system as
 > stopped, the other leaves a process running after the operator believes everything is stopped.
+>
+> **Not a blocker: the failed detached launch.** § 0b already specified a supervised shell session as
+> the fallback if detachment failed, and Phase 0 proved that fallback works. Detachment failure
+> **selects the approved launch shape** — supervised terminal under `caffeinate -i` — rather than
+> standing in the way of Phase 2. It does bound what "walk away" can mean: the operator starts the
+> run from a terminal that stays open, then leaves.
 >
 > **~~One finding changes the plan's own text.~~ WITHDRAWN 2026-08-07 — the finding was wrong, and
 > § 1d's original "no push, no network" stands as first written.** The withdrawn text said the
@@ -367,11 +372,14 @@ it does not stop the parent Codex task from editing the file by hand.
 
 Only after every Phase 1 item lands, with 1d settled by the operator.
 
-> **DO NOT RUN — 2026-08-07.** 1d's decision is settled, but Phase 1 has *not* landed. Five blockers
+> **DO NOT RUN — 2026-08-07.** 1d's decision is settled, but Phase 1 has *not* landed. Four blockers
 > stand (listed in full in the status block at the top of this document): the contained profile is
-> unbuilt, `--status` lies under PID-visibility denial, escaped descendants survive the stop, branch
-> isolation is unproven, and the detached launch shape does not survive. The preconditions below are
-> the *target*, not the current state — read every one of them as unmet.
+> unbuilt, `--status` lies under PID-visibility denial, escaped descendants survive the stop, and
+> branch isolation is unproven. The preconditions below are the *target*, not the current state —
+> read every one of them as unmet.
+>
+> The launch shape is **not** among the blockers: Phase 0 settled it as a supervised terminal under
+> `caffeinate -i`, which is § 0b's own stated fallback.
 
 - one task, one isolated location (1f — **unproven**, documented only), on a branch off a clean tree;
 - a hard ~40-minute deadline (1b), hop limit as a secondary bound;
@@ -519,7 +527,20 @@ no.
    unchanged. The mechanism was verified first (§ 1d, and
    `runs/probe-contained-authority-2026-08-07.md`). No longer an open question — but note it no
    longer blocks Phase 2 *as a decision* while still blocking it *as unbuilt work*.
-2. **Launch path (0a).** If nesting `codex exec` inside a Codex task fails, is launching one command
-   yourself from VS Code acceptable? It is still one action before you leave.
-3. **Review.** This plan authorises execution. v0.1 carried two false load-bearing claims that a
-   review caught. Should Codex review v0.2 before implementation begins?
+2. ~~**Launch path (0a).**~~ **ANSWERED 2026-08-07 by Phase 0.** Nested children *do* work from inside
+   a Codex task, but only outside the ordinary command sandbox — inside it, the child fails before
+   initializing (`Operation not permitted`, and Claude reports `Not logged in`). **Direct detachment
+   fails**: the background process is reaped before the dispatcher starts, leaving an empty console,
+   no lock and no run log. **The accepted and proven launch shape is the supervised terminal session
+   under `caffeinate -i`** — § 0b's own stated fallback, exercised end-to-end by the 0c run. So yes:
+   launching one command yourself is acceptable, and it is now the only shape with evidence behind
+   it. Nothing here blocks Phase 2.
+3. ~~**Review.**~~ **ANSWERED — independent review has happened.** v0.2 was reviewed, returning a
+   not-approved verdict with five findings; four were accepted and fixed and one was disputed on the
+   facts (see *Review round* in the status block). Codex has since independently corrected the 1d
+   network finding and produced the Phase 0 evidence. Review is no longer a pending question — though
+   note the review round's own row 1 has since been superseded, because Phase 0 showed part of my
+   reply to it was wrong.
+
+**No questions remain open for the operator.** What is left is unbuilt and unproven work — the four
+Phase 2 blockers — not decisions.

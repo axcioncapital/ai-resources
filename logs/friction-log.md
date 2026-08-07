@@ -353,6 +353,15 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 10:58 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 10:58 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 10:58 — plans/work-loop-v2-v0.2/unattended-operation-plan-v0.2.md
+- 10:57 — plans/work-loop-v2-v0.2/unattended-operation-plan-v0.2.md
+- 10:57 — plans/work-loop-v2-v0.2/unattended-operation-plan-v0.2.md
+- 10:57 — plans/work-loop-v2-v0.2/unattended-operation-plan-v0.2.md
+- 10:57 — plans/work-loop-v2-v0.2/unattended-operation-plan-v0.2.md
+- 10:56 — plans/work-loop-v2-v0.2/unattended-operation-plan-v0.2.md
+- 10:55 — logs/work-loop/leverage-idea-v2-routing-seam.md
 - 10:51 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
 - 10:51 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
 - 10:51 — plans/work-loop-v2-v0.2/unattended-operation-plan-v0.2.md

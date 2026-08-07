@@ -157,9 +157,9 @@ bash dispatch.sh \
 
 > # ⛔ DO NOT RUN — 2026-08-07
 >
-> **This is a worked example of a shape that is not cleared for use.** Five Phase 2 blockers stand
+> **This is a worked example of a shape that is not cleared for use.** Four Phase 2 blockers stand
 > between it and a real walk-away run (full list: `unattended-operation-plan-v0.2.md`, status block).
-> Four of them change how *this very command* behaves:
+> Three of them change how *this very command* behaves:
 >
 > 1. **The contained profile is not wired in.** Nothing below restricts the child. The run has an
 >    open network and full file authority, whatever the settled 1d policy says.
@@ -168,9 +168,13 @@ bash dispatch.sh \
 >    example offers for checking on the run is the one that misreports it as dead.
 > 3. **The stop (step 3) reaches a process group, not a tree.** A descendant that calls `setsid`
 >    survives `kill`, after you believe the run is stopped.
-> 4. **The `… &` detached shape does not survive a Codex-command launch.** Phase 0 § 0b: the
->    background process is reaped before the dispatcher starts — empty console, no lock, no run log.
->    A supervised terminal is currently the only launch that works, so `&` here is misleading.
+>
+> The fourth, **branch/isolation unproven**, is what step 1 below is *supposed* to guarantee and has
+> never been demonstrated in a live run.
+>
+> **The launch shape below has been corrected and is no longer a blocker.** Phase 0 proved the
+> supervised terminal under `caffeinate -i`; it disproved the detached `… &` form, which a Codex
+> command reaps before the dispatcher starts. The example now shows the proven shape.
 >
 > Keep this example for its structure — the four surrounding steps are right. Do not execute it
 > until the blockers are cleared and this notice is removed.
@@ -178,14 +182,22 @@ bash dispatch.sh \
 Four things around the command matter as much as the command. Copying the middle line alone is not
 the invocation.
 
+**Run this in a supervised terminal that stays open** — a real terminal window you leave running,
+not a background process launched from a Codex command. Phase 0 measured the detached `… &` form
+being reaped before the dispatcher even starts (empty console, no lock, no run log). The supervised
+session is the shape with evidence behind it, and it is what § 0b named as the fallback.
+
 ```bash
 # 1. Clean tree, own branch. Unattended hops commit; this keeps them off main and
 #    makes the whole run droppable with one command.
 git -C "$REPO" status --porcelain          # must be empty
 git -C "$REPO" checkout -b "work-loop/$TASK"
 
-# 2. Prevent sleep. Without this the Mac sleeps and the run dies mid-hop.
-#    caffeinate -i wraps the command and lifts as soon as it exits.
+# 2. Prevent sleep, and stay in the foreground. Without caffeinate the Mac sleeps
+#    and the run dies mid-hop; caffeinate -i lifts as soon as the command exits.
+#    Do NOT append '&' — the detached form does not survive a Codex-command launch,
+#    and in a supervised terminal the foreground run is what you want anyway:
+#    the console output is right there, and Ctrl-C signals the whole group.
 caffeinate -i bash dispatch.sh \
   --checkout "$REPO" \
   --task "$TASK" \
@@ -194,12 +206,20 @@ caffeinate -i bash dispatch.sh \
   --deadline 2400 \
   --allow-path '^logs/work-loop/' \
   --allow-path '<what THIS unit may legitimately touch>' \
-  > "runs/walkaway-$TASK.console" 2>&1 &
-echo $! > /tmp/walkaway.pid          # 3. how you stop it later
+  2>&1 | tee "runs/walkaway-$TASK.console"
 
-# 4. On return — or at any point, from another terminal:
+# 3. How you stop it: Ctrl-C in this terminal, or from another one:
+#    dispatch.sh --status prints the pid and the exact kill command.
+#    Either way the dispatcher exits 28 and retries nothing.
+
+# 4. On return — or at any point, from a SECOND terminal:
 bash dispatch.sh --checkout "$REPO" --task "$TASK" --status
 ```
+
+Two cautions on step 4, both measured rather than assumed. Run it from an ordinary terminal, **not**
+from inside a Codex command sandbox — there it cannot inspect the PID and reports a live run as
+`STALE LOCK`. And a `28` stop reaches the actor's process *group*: a descendant that called `setsid`
+is still running afterwards.
 
 - **`--deadline 2400`** is the forty minutes. `--max-hops 12` is the secondary bound.
 - **`--allow-path` is a per-task input, not boilerplate.** `1c` checks what the actor *committed*
