@@ -64,9 +64,10 @@ output/
 AGENTS.md
 
 # `.agents/` stays ignored EXCEPT the skills deliberately adopted (operator call, 2026-07-28 S3;
-# extended to work-loop-v2, 2026-08-01 S6). This is the "deliberate decision to track" the note above
-# reserves — narrowed to named subtrees, not an adoption of the mirror. `.codex/`, `AGENTS.md`, the
-# four `source-command-*` skills and the `wl2-probe` throwaway remain ignored and unmaintained.
+# extended to work-loop-v2, 2026-08-01 S6, and handoff-thread, 2026-08-07). This is the "deliberate
+# decision to track" the note above reserves — narrowed to named subtrees, not an adoption of the
+# mirror. `.codex/`, `AGENTS.md`, the four `source-command-*` skills and the `wl2-probe` throwaway
+# remain ignored and unmaintained.
 #
 # Why a ladder and not one `!.agents/skills/work-loop/`: git does not descend into an excluded
 # directory, so a negation for a path inside `.agents/` never gets evaluated. Each level must be
@@ -80,3 +81,4 @@ AGENTS.md
 .agents/skills/*
 !.agents/skills/work-loop/
 !.agents/skills/work-loop-v2/
+!.agents/skills/handoff-thread/

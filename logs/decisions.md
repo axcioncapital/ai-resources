@@ -360,3 +360,51 @@ code.
 **Related:** `plans/work-loop-v2-v0.2/unattended-operation-plan-v0.2.md` § 1d;
 `plans/work-loop-v2-v0.2/handoff-automation-spike/runs/probe-unattended-integration-2026-08-07.md`;
 `logs/work-loop/work-loop-v2-contained-unattended-profile.md` (the closed Work Loop task).
+
+## 2026-08-07 — Codex thread handoff is a tracked skill using a fresh task
+
+**Context.** The operator requested a Codex command that hands the current work
+to a new Codex thread. This need already appears in two durable surfaces:
+Claude's `/handoff` command handles session transfer on the Claude side, and
+`plans/work-loop-v2-v0.2/work-loop-v2-proportionality-continuity-implementation-plan-v0.1.md`
+§ 4.7c requires a clean handoff when a new Codex task deliberately takes over.
+Codex custom prompts are deprecated and local `source-command-*` mirrors are
+deliberately ignored in this repository, so neither is a durable shared home.
+
+**Decision.** Adopt `.agents/skills/handoff-thread/` as a tracked Codex skill.
+It creates one fresh task through `create_thread` and supplies a concise,
+self-contained five-field Brief. The Brief preserves the governing project,
+workflow position, ordered authority paths, settled state and exact next
+action. The receiving task verifies its working directory and re-reads the
+original plans, specifications and implementation sources before acting; the
+Brief navigates to authority rather than replacing it. The skill does not use
+`fork_thread`, which copies conversation history, or `handoff_thread`, which
+moves an existing task between execution locations.
+
+**Complexity-budget answers.**
+
+1. **Failure prevented:** a fresh Codex task starts without the active
+   instruction, settled constraints, key paths, or exact next action.
+2. **Likelihood:** the need exists in both the established Claude handoff
+   workflow and the Codex fresh-task contract, and the operator requested the
+   missing Codex action directly.
+3. **Cost:** one small skill in trigger metadata and, per invocation, one
+   project lookup, bounded read-only authority resolution, and one
+   task-creation call. It writes no handoff artifact.
+4. **Conditionality:** it fires only on an explicit new-task request or an
+   explicit `$handoff-thread` invocation.
+5. **Existing coverage:** Claude `/handoff` cannot create a Codex task; ignored
+   source-command mirrors are unmaintained; the Codex thread tools provide the
+   action but not the reusable context-transfer contract.
+
+**Invocation path.** Natural-language requests such as "hand this task off to
+a new Codex thread" trigger the skill, and `$handoff-thread` remains the
+explicit route. It is therefore not dependent on remembering an unwired slash
+command.
+
+**Reversibility and blast radius.** Removal is one skill subtree plus its
+single `.gitignore` re-include. Runtime authority is limited to creating the
+user-requested task; it changes no files, Git refs, permissions, models, or
+existing threads. The Brief stays within a five-field ceiling. Repository state
+remains event-driven under its governing workflow; the handoff creates no
+snapshot, checkpoint, progress log, or diary.
